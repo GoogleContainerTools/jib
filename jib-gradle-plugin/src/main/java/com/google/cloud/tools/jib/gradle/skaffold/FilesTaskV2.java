@@ -14,8 +14,9 @@
  * the License.
  */
 
-package com.google.cloud.tools.jib.gradle;
+package com.google.cloud.tools.jib.gradle.skaffold;
 
+import com.google.cloud.tools.jib.gradle.JibExtension;
 import com.google.cloud.tools.jib.plugins.common.SkaffoldFilesOutput;
 import com.google.common.base.Preconditions;
 import java.io.File;
@@ -102,7 +103,8 @@ public class FilesTaskV2 extends DefaultTask {
     }
 
     // Print files
-    System.out.println("\nBEGIN JIB JSON");
+    System.out.println();
+    System.out.println("BEGIN JIB JSON");
     System.out.println(skaffoldFilesOutput.getJsonString());
   }
 

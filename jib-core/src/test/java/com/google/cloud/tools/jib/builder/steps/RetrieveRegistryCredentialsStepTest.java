@@ -21,7 +21,7 @@ import com.google.cloud.tools.jib.api.CredentialRetriever;
 import com.google.cloud.tools.jib.api.ImageReference;
 import com.google.cloud.tools.jib.api.LogEvent;
 import com.google.cloud.tools.jib.builder.ProgressEventDispatcher;
-import com.google.cloud.tools.jib.configuration.BuildConfiguration;
+import com.google.cloud.tools.jib.configuration.BuildContext;
 import com.google.cloud.tools.jib.configuration.ImageConfiguration;
 import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.event.events.ProgressEvent;
@@ -48,8 +48,8 @@ public class RetrieveRegistryCredentialsStepTest {
 
   @Test
   public void testCall_retrieved() throws CredentialRetrievalException, IOException {
-    BuildConfiguration buildConfiguration =
-        makeFakeBuildConfiguration(
+    BuildContext buildContext =
+        makeFakeBuildContext(
             Arrays.asList(
                 Optional::empty,
                 () -> Optional.of(Credential.from("baseusername", "basepassword"))),
@@ -60,25 +60,25 @@ public class RetrieveRegistryCredentialsStepTest {
     Assert.assertEquals(
         Optional.of(Credential.from("baseusername", "basepassword")),
         RetrieveRegistryCredentialsStep.forBaseImage(
-                buildConfiguration,
+                buildContext,
                 ProgressEventDispatcher.newRoot(mockEventHandlers, "ignored", 1).newChildProducer())
             .call());
     Assert.assertEquals(
         Optional.of(Credential.from("targetusername", "targetpassword")),
         RetrieveRegistryCredentialsStep.forTargetImage(
-                buildConfiguration,
+                buildContext,
                 ProgressEventDispatcher.newRoot(mockEventHandlers, "ignored", 1).newChildProducer())
             .call());
   }
 
   @Test
   public void testCall_none() throws CredentialRetrievalException, IOException {
-    BuildConfiguration buildConfiguration =
-        makeFakeBuildConfiguration(
+    BuildContext buildContext =
+        makeFakeBuildContext(
             Arrays.asList(Optional::empty, Optional::empty), Collections.emptyList());
     Assert.assertFalse(
         RetrieveRegistryCredentialsStep.forBaseImage(
-                buildConfiguration,
+                buildContext,
                 ProgressEventDispatcher.newRoot(mockEventHandlers, "ignored", 1).newChildProducer())
             .call()
             .isPresent());
@@ -90,7 +90,7 @@ public class RetrieveRegistryCredentialsStepTest {
 
     Assert.assertFalse(
         RetrieveRegistryCredentialsStep.forTargetImage(
-                buildConfiguration,
+                buildContext,
                 ProgressEventDispatcher.newRoot(mockEventHandlers, "ignored", 1).newChildProducer())
             .call()
             .isPresent());
@@ -103,8 +103,8 @@ public class RetrieveRegistryCredentialsStepTest {
   public void testCall_exception() throws IOException {
     CredentialRetrievalException credentialRetrievalException =
         Mockito.mock(CredentialRetrievalException.class);
-    BuildConfiguration buildConfiguration =
-        makeFakeBuildConfiguration(
+    BuildContext buildContext =
+        makeFakeBuildContext(
             Collections.singletonList(
                 () -> {
                   throw credentialRetrievalException;
@@ -112,7 +112,7 @@ public class RetrieveRegistryCredentialsStepTest {
             Collections.emptyList());
     try {
       RetrieveRegistryCredentialsStep.forBaseImage(
-              buildConfiguration,
+              buildContext,
               ProgressEventDispatcher.newRoot(mockEventHandlers, "ignored", 1).newChildProducer())
           .call();
       Assert.fail("Should have thrown exception");
@@ -122,13 +122,13 @@ public class RetrieveRegistryCredentialsStepTest {
     }
   }
 
-  private BuildConfiguration makeFakeBuildConfiguration(
+  private BuildContext makeFakeBuildContext(
       List<CredentialRetriever> baseCredentialRetrievers,
       List<CredentialRetriever> targetCredentialRetrievers)
       throws IOException {
     ImageReference baseImage = ImageReference.of("baseregistry", "ignored", null);
     ImageReference targetImage = ImageReference.of("targetregistry", "ignored", null);
-    return BuildConfiguration.builder()
+    return BuildContext.builder()
         .setEventHandlers(mockEventHandlers)
         .setBaseImageConfiguration(
             ImageConfiguration.builder(baseImage)

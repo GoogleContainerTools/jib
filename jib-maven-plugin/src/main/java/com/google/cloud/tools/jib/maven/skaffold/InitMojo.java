@@ -30,8 +30,8 @@ import org.apache.maven.project.MavenProject;
  *
  * <p>Expected use: {@code ./mvnw jib:_skaffold-init -q}
  */
-@Mojo(name = SkaffoldInitMojo.GOAL_NAME, requiresDependencyCollection = ResolutionScope.NONE)
-public class SkaffoldInitMojo extends JibPluginConfiguration {
+@Mojo(name = InitMojo.GOAL_NAME, requiresDependencyCollection = ResolutionScope.NONE)
+public class InitMojo extends JibPluginConfiguration {
 
   @VisibleForTesting static final String GOAL_NAME = "_skaffold-init";
 
@@ -49,7 +49,8 @@ public class SkaffoldInitMojo extends JibPluginConfiguration {
     if (project.getParent() != null && project.getParent().getFile() != null) {
       skaffoldInitOutput.setProject(project.getArtifactId());
     }
-    System.out.println("\nBEGIN JIB JSON");
+    System.out.println();
+    System.out.println("BEGIN JIB JSON");
     try {
       System.out.println(skaffoldInitOutput.getJsonString());
     } catch (IOException ex) {

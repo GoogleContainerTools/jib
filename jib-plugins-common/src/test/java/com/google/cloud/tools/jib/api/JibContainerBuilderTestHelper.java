@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Google LLC. All rights reserved.
+ * Copyright 2018 Google LLC.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,19 +16,16 @@
 
 package com.google.cloud.tools.jib.api;
 
-import com.google.cloud.tools.jib.configuration.BuildConfiguration;
-import com.google.common.util.concurrent.MoreExecutors;
+import com.google.cloud.tools.jib.configuration.BuildContext;
 import java.io.IOException;
 
 /** Test helper to expose package-private members of {@link JibContainerBuilder}. */
 public class JibContainerBuilderTestHelper {
 
-  public static BuildConfiguration toBuildConfiguration(
+  public static BuildContext toBuildContext(
       JibContainerBuilder jibContainerBuilder, Containerizer containerizer)
       throws IOException, CacheDirectoryCreationException {
-    return jibContainerBuilder.toBuildConfiguration(
-        containerizer,
-        containerizer.getExecutorService().orElseGet(MoreExecutors::newDirectExecutorService));
+    return jibContainerBuilder.toBuildContext(containerizer);
   }
 
   private JibContainerBuilderTestHelper() {}

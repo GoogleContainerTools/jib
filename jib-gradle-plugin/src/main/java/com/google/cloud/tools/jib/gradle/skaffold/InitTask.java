@@ -14,8 +14,9 @@
  * the License.
  */
 
-package com.google.cloud.tools.jib.gradle;
+package com.google.cloud.tools.jib.gradle.skaffold;
 
+import com.google.cloud.tools.jib.gradle.JibExtension;
 import com.google.cloud.tools.jib.plugins.common.SkaffoldInitOutput;
 import com.google.common.base.Preconditions;
 import java.io.IOException;
@@ -29,11 +30,11 @@ import org.gradle.api.tasks.TaskAction;
  *
  * <p>Expected use: {@code ./gradlew _jibSkaffoldInit -q}
  */
-public class SkaffoldInitTask extends DefaultTask {
+public class InitTask extends DefaultTask {
 
   @Nullable private JibExtension jibExtension;
 
-  public SkaffoldInitTask setJibExtension(JibExtension jibExtension) {
+  public InitTask setJibExtension(JibExtension jibExtension) {
     this.jibExtension = jibExtension;
     return this;
   }
@@ -50,7 +51,8 @@ public class SkaffoldInitTask extends DefaultTask {
     if (!project.equals(project.getRootProject())) {
       skaffoldInitOutput.setProject(project.getName());
     }
-    System.out.println("\nBEGIN JIB JSON");
+    System.out.println();
+    System.out.println("BEGIN JIB JSON");
     System.out.println(skaffoldInitOutput.getJsonString());
   }
 }

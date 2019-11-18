@@ -26,7 +26,7 @@
         <dropwizard-template-config.version>1.5.0</dropwizard-template-config.version>
 
         <jib.container.appRoot>/app</jib.container.appRoot>
-        <jib-maven-plugin.version>1.7.0</jib-maven-plugin.version>
+        <jib-maven-plugin.version>1.8.0</jib-maven-plugin.version>
     </properties>
 
     <dependencyManagement>
@@ -72,14 +72,14 @@
 
                         <!-- good defaults intended for Java 8 (>= 8u191) containers -->
                         <jvmFlags>
-                            <jmxFlag>-server</jmxFlag>
-                            <jmxFlag>-Djava.awt.headless=true</jmxFlag>
-                            <jmxFlag>-XX:InitialRAMFraction=2</jmxFlag>
-                            <jmxFlag>-XX:MinRAMFraction=2</jmxFlag>
-                            <jmxFlag>-XX:MaxRAMFraction=2</jmxFlag>
-                            <jmxFlag>-XX:+UseG1GC</jmxFlag>
-                            <jmxFlag>-XX:MaxGCPauseMillis=100</jmxFlag>
-                            <jmxFlag>-XX:+UseStringDeduplication</jmxFlag>
+                            <jvmFlag>-server</jvmFlag>
+                            <jvmFlag>-Djava.awt.headless=true</jvmFlag>
+                            <jvmFlag>-XX:InitialRAMFraction=2</jvmFlag>
+                            <jvmFlag>-XX:MinRAMFraction=2</jvmFlag>
+                            <jvmFlag>-XX:MaxRAMFraction=2</jvmFlag>
+                            <jvmFlag>-XX:+UseG1GC</jvmFlag>
+                            <jvmFlag>-XX:MaxGCPauseMillis=100</jvmFlag>
+                            <jvmFlag>-XX:+UseStringDeduplication</jvmFlag>
                         </jvmFlags>
                     </container>
                 </configuration>

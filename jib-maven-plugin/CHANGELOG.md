@@ -12,8 +12,17 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
-- Fixed reporting wrong module name when `skaffold init` is run on multi-module projects ([#2088](https://github.com/GoogleContainerTools/jib/issues/2088)).
-- `<allowInsecureRegistries>` and the `sendCredentialsOverHttp` system property are now effective for authentication service server connections. ([#2074](https://github.com/GoogleContainerTools/jib/pull/2074)
+## 1.8.0
+
+## Changed
+
+- Optimized building to a registry with local base images. ([#1913](https://github.com/GoogleContainerTools/jib/issues/1913))
+
+### Fixed
+
+- Fixed reporting wrong module name when `skaffold init` is run on multi-module projects. ([#2088](https://github.com/GoogleContainerTools/jib/issues/2088))
+- `<allowInsecureRegistries>` and the `sendCredentialsOverHttp` system property are now effective for authentication service server connections. ([#2074](https://github.com/GoogleContainerTools/jib/pull/2074))
+- Fixed inefficient communications when interacting with insecure registries and servers (when `<allowInsecureRegistries>` is set). ([#946](https://github.com/GoogleContainerTools/jib/issues/946))
 
 ## 1.7.0
 

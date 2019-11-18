@@ -23,6 +23,7 @@
   <modules>
     <module>name-service</module>
     <module>hello-service</module>
+    <module>shared-library</module>
   </modules>
 
   <!-- Uses Java 8. -->
@@ -40,7 +41,7 @@
         <plugin>
           <groupId>com.google.cloud.tools</groupId>
           <artifactId>jib-maven-plugin</artifactId>
-          <version>1.7.0</version>
+          <version>1.8.0</version>
         </plugin>
       </plugins>
     </pluginManagement>

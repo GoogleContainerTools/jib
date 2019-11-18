@@ -14,28 +14,32 @@
  * the License.
  */
 
-package com.google.cloud.tools.jib.gradle;
+package com.google.cloud.tools.jib.maven.skaffold;
 
+import com.google.cloud.tools.jib.maven.TestProject;
 import com.google.cloud.tools.jib.plugins.common.SkaffoldInitOutput;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import org.gradle.testkit.runner.BuildResult;
-import org.gradle.testkit.runner.BuildTask;
-import org.gradle.testkit.runner.TaskOutcome;
+import org.apache.maven.it.VerificationException;
+import org.apache.maven.it.Verifier;
 import org.hamcrest.CoreMatchers;
 import org.junit.Assert;
 import org.junit.ClassRule;
 import org.junit.Test;
 
-/** Tests for {@link SkaffoldInitTask}. */
-public class SkaffoldInitTaskTest {
+/** Tests for {@link InitMojo}. */
+public class InitMojoTest {
 
   @ClassRule public static final TestProject simpleTestProject = new TestProject("simple");
 
-  @ClassRule public static final TestProject multiTestProject = new TestProject("multi-service");
+  @ClassRule public static final TestProject multiTestProject = new TestProject("multi");
 
   /**
    * Verifies that the files task succeeded and returns the list of JSON strings printed by the
@@ -44,13 +48,17 @@ public class SkaffoldInitTaskTest {
    * @param project the project to run the task on
    * @return the JSON strings printed by the task
    */
-  private static List<String> getJsons(TestProject project) {
-    BuildResult buildResult =
-        project.build(JibPlugin.INIT_TASK_NAME, "-q", "-D_TARGET_IMAGE=testimage");
-    BuildTask jibTask = buildResult.task(":" + JibPlugin.INIT_TASK_NAME);
-    Assert.assertNotNull(jibTask);
-    Assert.assertEquals(TaskOutcome.SUCCESS, jibTask.getOutcome());
-    String output = buildResult.getOutput().trim();
+  private static List<String> getJsons(TestProject project)
+      throws VerificationException, IOException {
+    Verifier verifier = new Verifier(project.getProjectRoot().toString());
+    verifier.setAutoclean(false);
+    verifier.addCliOption("-q");
+    verifier.addCliOption("-Dimage=testimage");
+    verifier.executeGoal("jib:" + InitMojo.GOAL_NAME);
+
+    verifier.verifyErrorFreeLog();
+    Path logFile = Paths.get(verifier.getBasedir()).resolve(verifier.getLogFileName());
+    String output = String.join("\n", Files.readAllLines(logFile, StandardCharsets.UTF_8)).trim();
     Assert.assertThat(output, CoreMatchers.startsWith("BEGIN JIB JSON"));
 
     Pattern pattern = Pattern.compile("BEGIN JIB JSON\r?\n(\\{.*})");
@@ -60,12 +68,11 @@ public class SkaffoldInitTaskTest {
       jsons.add(matcher.group(1));
     }
 
-    // Return task output with header removed
     return jsons;
   }
 
   @Test
-  public void testFilesTask_singleProject() throws IOException {
+  public void testFilesMojo_singleModule() throws IOException, VerificationException {
     List<String> outputs = getJsons(simpleTestProject);
     Assert.assertEquals(1, outputs.size());
 
@@ -75,16 +82,20 @@ public class SkaffoldInitTaskTest {
   }
 
   @Test
-  public void testFilesTask_multiProject() throws IOException {
+  public void testFilesMojo_multiModule() throws IOException, VerificationException {
     List<String> outputs = getJsons(multiTestProject);
-    Assert.assertEquals(2, outputs.size());
+    Assert.assertEquals(3, outputs.size());
 
     SkaffoldInitOutput skaffoldInitOutput = new SkaffoldInitOutput(outputs.get(0));
     Assert.assertEquals("testimage", skaffoldInitOutput.getImage());
-    Assert.assertEquals("complex-service", skaffoldInitOutput.getProject());
+    Assert.assertEquals("simple-service", skaffoldInitOutput.getProject());
 
     skaffoldInitOutput = new SkaffoldInitOutput(outputs.get(1));
     Assert.assertEquals("testimage", skaffoldInitOutput.getImage());
-    Assert.assertEquals("simple-service", skaffoldInitOutput.getProject());
+    Assert.assertEquals("lib", skaffoldInitOutput.getProject());
+
+    skaffoldInitOutput = new SkaffoldInitOutput(outputs.get(2));
+    Assert.assertEquals("testimage", skaffoldInitOutput.getImage());
+    Assert.assertEquals("complex-service", skaffoldInitOutput.getProject());
   }
 }

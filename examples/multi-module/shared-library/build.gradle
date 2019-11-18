@@ -1,0 +1,15 @@
+plugins {
+  id 'java'
+  id 'eclipse'
+  id 'idea'
+}
+
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+// Since this library is included as a jar in our jib projects, we want the
+// jar to built reproducibly.
+jar {
+  preserveFileTimestamps false
+  reproducibleFileOrder true
+}

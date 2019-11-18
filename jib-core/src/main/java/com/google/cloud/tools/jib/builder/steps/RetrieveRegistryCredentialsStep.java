@@ -21,7 +21,7 @@ import com.google.cloud.tools.jib.api.CredentialRetriever;
 import com.google.cloud.tools.jib.api.LogEvent;
 import com.google.cloud.tools.jib.builder.ProgressEventDispatcher;
 import com.google.cloud.tools.jib.builder.TimerEventDispatcher;
-import com.google.cloud.tools.jib.configuration.BuildConfiguration;
+import com.google.cloud.tools.jib.configuration.BuildContext;
 import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.registry.credentials.CredentialRetrievalException;
 import com.google.common.collect.ImmutableList;
@@ -33,38 +33,36 @@ class RetrieveRegistryCredentialsStep implements Callable<Optional<Credential>> 
 
   /** Retrieves credentials for the base image. */
   static RetrieveRegistryCredentialsStep forBaseImage(
-      BuildConfiguration buildConfiguration,
-      ProgressEventDispatcher.Factory progressEventDispatcherFactory) {
+      BuildContext buildContext, ProgressEventDispatcher.Factory progressEventDispatcherFactory) {
     return new RetrieveRegistryCredentialsStep(
-        buildConfiguration,
+        buildContext,
         progressEventDispatcherFactory,
-        buildConfiguration.getBaseImageConfiguration().getImageRegistry(),
-        buildConfiguration.getBaseImageConfiguration().getCredentialRetrievers());
+        buildContext.getBaseImageConfiguration().getImageRegistry(),
+        buildContext.getBaseImageConfiguration().getCredentialRetrievers());
   }
 
   /** Retrieves credentials for the target image. */
   static RetrieveRegistryCredentialsStep forTargetImage(
-      BuildConfiguration buildConfiguration,
-      ProgressEventDispatcher.Factory progressEventDispatcherFactory) {
+      BuildContext buildContext, ProgressEventDispatcher.Factory progressEventDispatcherFactory) {
     return new RetrieveRegistryCredentialsStep(
-        buildConfiguration,
+        buildContext,
         progressEventDispatcherFactory,
-        buildConfiguration.getTargetImageConfiguration().getImageRegistry(),
-        buildConfiguration.getTargetImageConfiguration().getCredentialRetrievers());
+        buildContext.getTargetImageConfiguration().getImageRegistry(),
+        buildContext.getTargetImageConfiguration().getCredentialRetrievers());
   }
 
-  private final BuildConfiguration buildConfiguration;
+  private final BuildContext buildContext;
   private final ProgressEventDispatcher.Factory progressEventDispatcherFactory;
 
   private final String registry;
   private final ImmutableList<CredentialRetriever> credentialRetrievers;
 
   RetrieveRegistryCredentialsStep(
-      BuildConfiguration buildConfiguration,
+      BuildContext buildContext,
       ProgressEventDispatcher.Factory progressEventDispatcherFactory,
       String registry,
       ImmutableList<CredentialRetriever> credentialRetrievers) {
-    this.buildConfiguration = buildConfiguration;
+    this.buildContext = buildContext;
     this.progressEventDispatcherFactory = progressEventDispatcherFactory;
     this.registry = registry;
     this.credentialRetrievers = credentialRetrievers;
@@ -73,7 +71,7 @@ class RetrieveRegistryCredentialsStep implements Callable<Optional<Credential>> 
   @Override
   public Optional<Credential> call() throws CredentialRetrievalException {
     String description = "Retrieving registry credentials for " + registry;
-    EventHandlers eventHandlers = buildConfiguration.getEventHandlers();
+    EventHandlers eventHandlers = buildContext.getEventHandlers();
     eventHandlers.dispatch(LogEvent.progress(description + "..."));
 
     try (ProgressEventDispatcher ignored =

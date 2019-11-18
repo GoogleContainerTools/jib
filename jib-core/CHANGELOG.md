@@ -9,9 +9,12 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
+- Each local base image layer is pushed immediately after being compressed, rather than waiting for all layers to finish compressing before starting to push. ([#1913](https://github.com/GoogleContainerTools/jib/issues/1913))
+
 ### Fixed
 
-- `Containerizer#setAllowInsecureRegistries(boolean)` and the `sendCredentialsOverHttp` system property are now effective for authentication service server connections. ([#2074](https://github.com/GoogleContainerTools/jib/pull/2074)
+- `Containerizer#setAllowInsecureRegistries(boolean)` and the `sendCredentialsOverHttp` system property are now effective for authentication service server connections. ([#2074](https://github.com/GoogleContainerTools/jib/pull/2074))
+- Fixed inefficient communications when interacting with insecure registries and servers (when `Containerizer#setAllowInsecureRegistries(boolean)` is set). ([#946](https://github.com/GoogleContainerTools/jib/issues/946))
 
 ## 0.12.0
 

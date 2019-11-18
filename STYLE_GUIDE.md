@@ -23,6 +23,8 @@ Class members should be in the following order, in decreasing priority:
 
 User-facing methods (such as those in Jib Core) should not have types in their signature that are not standard JDK classes. For example, a parameter should take type `List` rather than Guava's `ImmutableList`.
 
+Jib Core's formal API should not expose internal Jib types. In other words, public classes in the `com.google.cloud.tools.jib.api` package should not contain any public methods that have internal types (Jib classes outside of the `api` package) in the method signature. This includes return types, parameters, thrown types, and javadoc links on public methods.
+
 ### Package hierarchy
 
 Packages should depend on each other without cycles.
