@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <!-- Defines artifact information for this module. -->
+  <artifactId>shared-library</artifactId>
+  <version>0.1.0</version>
+
+  <!-- Inherits from the Jib Multimodule parent POM. -->
+  <parent>
+    <groupId>com.example</groupId>
+    <artifactId>jib-multimodule</artifactId>
+    <version>0.1.0</version>
+  </parent>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>com.google.cloud.tools</groupId>
+        <artifactId>jib-maven-plugin</artifactId>
+        <configuration>
+          <!-- we don't want jib to execute on this module -->
+          <skip>true</skip>
+        </configuration>
+      </plugin>
+      <!-- we want this library to be built reproducibly -->
+      <plugin>
+        <groupId>io.github.zlika</groupId>
+        <artifactId>reproducible-build-maven-plugin</artifactId>
+        <version>0.11</version>
+        <executions>
+          <execution>
+            <id>run-when-packaged</id>
+            <goals>
+              <goal>strip-jar</goal>
+            </goals>
+            <phase>package</phase>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+</project>

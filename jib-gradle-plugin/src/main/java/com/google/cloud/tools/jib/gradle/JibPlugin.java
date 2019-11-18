@@ -20,6 +20,7 @@ import com.google.cloud.tools.jib.ProjectInfo;
 import com.google.cloud.tools.jib.gradle.skaffold.CheckJibVersionTask;
 import com.google.cloud.tools.jib.gradle.skaffold.FilesTaskV2;
 import com.google.cloud.tools.jib.gradle.skaffold.InitTask;
+import com.google.cloud.tools.jib.gradle.skaffold.SyncMapTask;
 import com.google.cloud.tools.jib.plugins.common.VersionChecker;
 import com.google.common.annotations.VisibleForTesting;
 import java.util.ArrayList;
@@ -48,6 +49,7 @@ public class JibPlugin implements Plugin<Project> {
   public static final String BUILD_DOCKER_TASK_NAME = "jibDockerBuild";
   public static final String SKAFFOLD_FILES_TASK_V2_NAME = "_jibSkaffoldFilesV2";
   public static final String SKAFFOLD_INIT_TASK_NAME = "_jibSkaffoldInit";
+  public static final String SKAFFOLD_SYNC_MAP_TASK_NAME = "_jibSkaffoldSyncMap";
   public static final String SKAFFOLD_CHECK_REQUIRED_VERSION_TASK_NAME =
       "_skaffoldFailIfJibOutOfDate";
 
@@ -153,6 +155,11 @@ public class JibPlugin implements Plugin<Project> {
     tasks
         .register(SKAFFOLD_INIT_TASK_NAME, InitTask.class)
         .configure(task -> task.setJibExtension(jibExtension));
+    TaskProvider<SyncMapTask> syncMapTask =
+        tasks.register(
+            SKAFFOLD_SYNC_MAP_TASK_NAME,
+            SyncMapTask.class,
+            task -> task.setJibExtension(jibExtension));
 
     // A check to catch older versions of Jib.  This can be removed once we are certain people
     // are using Jib 1.3.1 or later.
@@ -182,6 +189,7 @@ public class JibPlugin implements Plugin<Project> {
             buildImageTask.configure(task -> task.dependsOn(dependsOnTask));
             buildDockerTask.configure(task -> task.dependsOn(dependsOnTask));
             buildTarTask.configure(task -> task.dependsOn(dependsOnTask));
+            syncMapTask.configure(task -> task.dependsOn(dependsOnTask));
 
             // Find project dependencies and add a dependency to their assemble task. We make sure
             // to only add the dependency after BasePlugin is evaluated as otherwise the assemble
