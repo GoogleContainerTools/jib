@@ -82,8 +82,8 @@
             </volumes>
             <format>Docker</format>
           </container>
-          <extraDirectory>
-            <path>${project.basedir}/src/main/jib-custom</path>
+          <extraDirectories>
+            <paths><path>${project.basedir}/src/main/jib-custom</path></paths>
             <permissions>
               <permission>
                 <file>/foo</file>
@@ -94,7 +94,7 @@
                 <mode>777</mode>
               </permission>
             </permissions>
-          </extraDirectory>
+          </extraDirectories>
           <outputPaths>
             <digest>${project.build.directory}/different-jib-image.digest</digest>
             <imageId>different-jib-image.id</imageId>

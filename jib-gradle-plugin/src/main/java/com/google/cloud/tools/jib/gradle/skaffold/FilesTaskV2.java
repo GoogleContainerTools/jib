@@ -43,8 +43,8 @@ import org.gradle.api.tasks.TaskAction;
 /**
  * Prints out changing source dependencies on a project.
  *
- * <p>Expected use: {@code ./gradlew _jibSkaffoldFiles -q} or {@code ./gradlew
- * :<subproject>:_jibSkaffoldFiles -q}
+ * <p>Expected use: {@code ./gradlew _jibSkaffoldFilesV2 -q} or {@code ./gradlew
+ * :<subproject>:_jibSkaffoldFilesV2 -q}
  */
 public class FilesTaskV2 extends DefaultTask {
 
@@ -103,7 +103,8 @@ public class FilesTaskV2 extends DefaultTask {
     }
 
     // Print files
-    System.out.println("\nBEGIN JIB JSON");
+    System.out.println();
+    System.out.println("BEGIN JIB JSON");
     System.out.println(skaffoldFilesOutput.getJsonString());
   }
 
