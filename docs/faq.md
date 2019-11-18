@@ -300,7 +300,11 @@ In Maven, you can use the `maven-resources-plugin` to copy files to your extra d
     <artifact>jib-maven-plugin</artifact>
     ...
     <configuration>
-      <extraDirectory>${project.basedir}/target/extra-directory/</extraDirectory>
+      <extraDirectories>
+        <paths>
+          <path>${project.basedir}/target/extra-directory/</path>
+        </paths>
+      </extraDirectories>
     </configuration>
   </plugin>
   ...
@@ -331,7 +335,7 @@ mvn compile resources:copy-resources jib:build
 The same can be accomplished in Gradle by using a `Copy` task. In your `build.gradle`:
 
 ```groovy
-jib.extraDirectory = file('build/extra-directory')
+jib.extraDirectories = file('build/extra-directory')
 
 task setupExtraDir(type: Copy) {
   from file('build/generated/files')

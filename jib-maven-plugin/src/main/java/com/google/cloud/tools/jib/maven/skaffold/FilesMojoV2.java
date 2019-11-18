@@ -216,26 +216,17 @@ public class FilesMojoV2 extends SkaffoldBindingMojo {
     }
   }
 
-  private List<Path> resolveExtraDirectories(MavenProject project) throws MojoExecutionException {
+  private List<Path> resolveExtraDirectories(MavenProject project) {
     return collectExtraDirectories(project)
         .stream()
         .map(path -> path.isAbsolute() ? path : project.getBasedir().toPath().resolve(path))
         .collect(Collectors.toList());
   }
 
-  private List<Path> collectExtraDirectories(MavenProject project) throws MojoExecutionException {
+  private List<Path> collectExtraDirectories(MavenProject project) {
     // Try getting extra directory from project/session properties
-    String deprecatedProperty =
-        MavenProjectProperties.getProperty(PropertyNames.EXTRA_DIRECTORY_PATH, project, session);
-    String newProperty =
+    String property =
         MavenProjectProperties.getProperty(PropertyNames.EXTRA_DIRECTORIES_PATHS, project, session);
-
-    if (deprecatedProperty != null && newProperty != null) {
-      throw new MojoExecutionException(
-          "You cannot configure both 'jib.extraDirectory.path' and 'jib.extraDirectories.paths'");
-    }
-
-    String property = newProperty != null ? newProperty : deprecatedProperty;
     if (property != null) {
       List<String> paths = ConfigurationPropertyValidator.parseListProperty(property);
       return paths.stream().map(Paths::get).collect(Collectors.toList());
@@ -246,14 +237,7 @@ public class FilesMojoV2 extends SkaffoldBindingMojo {
     if (jibMavenPlugin != null) {
       Xpp3Dom pluginConfiguration = (Xpp3Dom) jibMavenPlugin.getConfiguration();
       if (pluginConfiguration != null) {
-
-        Xpp3Dom extraDirectoryConfiguration = pluginConfiguration.getChild("extraDirectory");
         Xpp3Dom extraDirectoriesConfiguration = pluginConfiguration.getChild("extraDirectories");
-        if (extraDirectoryConfiguration != null && extraDirectoriesConfiguration != null) {
-          throw new MojoExecutionException(
-              "You cannot configure both <extraDirectory> and <extraDirectories>");
-        }
-
         if (extraDirectoriesConfiguration != null) {
           Xpp3Dom child = extraDirectoriesConfiguration.getChild("paths");
           if (child != null) {
@@ -262,19 +246,6 @@ public class FilesMojoV2 extends SkaffoldBindingMojo {
                 .map(Xpp3Dom::getValue)
                 .map(Paths::get)
                 .collect(Collectors.toList());
-          }
-        }
-
-        if (extraDirectoryConfiguration != null) {
-          Xpp3Dom child = extraDirectoryConfiguration.getChild("path");
-          if (child != null) {
-            // <extraDirectory><path>...</path></extraDirectory>
-            return Collections.singletonList(Paths.get(child.getValue()));
-          }
-          // <extraDirectory>...</extraDirectory>
-          String value = extraDirectoryConfiguration.getValue();
-          if (value != null) {
-            return Collections.singletonList(Paths.get(extraDirectoryConfiguration.getValue()));
           }
         }
       }
