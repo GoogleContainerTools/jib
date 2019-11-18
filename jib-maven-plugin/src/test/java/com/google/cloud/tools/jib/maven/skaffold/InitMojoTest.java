@@ -34,8 +34,8 @@ import org.junit.Assert;
 import org.junit.ClassRule;
 import org.junit.Test;
 
-/** Tests for {@link SkaffoldInitMojo}. */
-public class SkaffoldInitMojoTest {
+/** Tests for {@link InitMojo}. */
+public class InitMojoTest {
 
   @ClassRule public static final TestProject simpleTestProject = new TestProject("simple");
 
@@ -54,7 +54,7 @@ public class SkaffoldInitMojoTest {
     verifier.setAutoclean(false);
     verifier.addCliOption("-q");
     verifier.addCliOption("-Dimage=testimage");
-    verifier.executeGoal("jib:" + SkaffoldInitMojo.GOAL_NAME);
+    verifier.executeGoal("jib:" + InitMojo.GOAL_NAME);
 
     verifier.verifyErrorFreeLog();
     Path logFile = Paths.get(verifier.getBasedir()).resolve(verifier.getLogFileName());

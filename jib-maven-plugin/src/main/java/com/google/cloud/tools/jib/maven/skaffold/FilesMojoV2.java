@@ -208,7 +208,8 @@ public class FilesMojoV2 extends SkaffoldBindingMojo {
 
     try {
       // Print JSON string
-      System.out.println("\nBEGIN JIB JSON");
+      System.out.println();
+      System.out.println("BEGIN JIB JSON");
       System.out.println(skaffoldFilesOutput.getJsonString());
     } catch (IOException ex) {
       throw new MojoExecutionException(ex.getMessage(), ex);
