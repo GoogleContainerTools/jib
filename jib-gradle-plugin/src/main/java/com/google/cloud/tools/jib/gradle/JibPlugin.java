@@ -18,7 +18,6 @@ package com.google.cloud.tools.jib.gradle;
 
 import com.google.cloud.tools.jib.ProjectInfo;
 import com.google.cloud.tools.jib.gradle.skaffold.CheckJibVersionTask;
-import com.google.cloud.tools.jib.gradle.skaffold.FilesTask;
 import com.google.cloud.tools.jib.gradle.skaffold.FilesTaskV2;
 import com.google.cloud.tools.jib.gradle.skaffold.InitTask;
 import com.google.cloud.tools.jib.gradle.skaffold.SyncMapTask;
@@ -48,7 +47,6 @@ public class JibPlugin implements Plugin<Project> {
   public static final String BUILD_IMAGE_TASK_NAME = "jib";
   public static final String BUILD_TAR_TASK_NAME = "jibBuildTar";
   public static final String BUILD_DOCKER_TASK_NAME = "jibDockerBuild";
-  public static final String SKAFFOLD_FILES_TASK_NAME = "_jibSkaffoldFiles";
   public static final String SKAFFOLD_FILES_TASK_V2_NAME = "_jibSkaffoldFilesV2";
   public static final String SKAFFOLD_INIT_TASK_NAME = "_jibSkaffoldInit";
   public static final String SKAFFOLD_SYNC_MAP_TASK_NAME = "_jibSkaffoldSyncMap";
@@ -151,9 +149,6 @@ public class JibPlugin implements Plugin<Project> {
               task.setJibExtension(jibExtension);
             });
 
-    tasks
-        .register(SKAFFOLD_FILES_TASK_NAME, FilesTask.class)
-        .configure(task -> task.setJibExtension(jibExtension));
     tasks
         .register(SKAFFOLD_FILES_TASK_V2_NAME, FilesTaskV2.class)
         .configure(task -> task.setJibExtension(jibExtension));
