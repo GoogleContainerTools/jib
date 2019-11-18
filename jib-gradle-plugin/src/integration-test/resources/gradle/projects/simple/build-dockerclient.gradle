@@ -18,9 +18,6 @@ jib {
   to {
     image = System.getProperty("_TARGET_IMAGE")
   }
-}
-
-jibDockerBuild {
   dockerClient {
     executable = file('mock-docker.sh')
     environment = [envvar1:'value1', envvar2:'value2']
