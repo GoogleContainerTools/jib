@@ -24,7 +24,7 @@ import com.google.cloud.tools.jib.builder.TimerEventDispatcher;
 import com.google.cloud.tools.jib.cache.Cache;
 import com.google.cloud.tools.jib.cache.CacheCorruptedException;
 import com.google.cloud.tools.jib.cache.CachedLayer;
-import com.google.cloud.tools.jib.configuration.BuildConfiguration;
+import com.google.cloud.tools.jib.configuration.BuildContext;
 import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.image.ReproducibleLayerBuilder;
 import com.google.common.collect.ImmutableList;
@@ -43,16 +43,15 @@ class BuildAndCacheApplicationLayerStep implements Callable<PreparedLayer> {
    * classes layers. Optionally adds an extra layer if configured to do so.
    */
   static ImmutableList<BuildAndCacheApplicationLayerStep> makeList(
-      BuildConfiguration buildConfiguration,
-      ProgressEventDispatcher.Factory progressEventDispatcherFactory) {
-    List<LayerConfiguration> layerConfigurations = buildConfiguration.getLayerConfigurations();
+      BuildContext buildContext, ProgressEventDispatcher.Factory progressEventDispatcherFactory) {
+    List<LayerConfiguration> layerConfigurations = buildContext.getLayerConfigurations();
 
     try (ProgressEventDispatcher progressEventDispatcher =
             progressEventDispatcherFactory.create(
                 "launching application layer builders", layerConfigurations.size());
         TimerEventDispatcher ignored =
             new TimerEventDispatcher(
-                buildConfiguration.getEventHandlers(), "Preparing application layer builders")) {
+                buildContext.getEventHandlers(), "Preparing application layer builders")) {
       return layerConfigurations
           .stream()
           // Skips the layer if empty.
@@ -60,7 +59,7 @@ class BuildAndCacheApplicationLayerStep implements Callable<PreparedLayer> {
           .map(
               layerConfiguration ->
                   new BuildAndCacheApplicationLayerStep(
-                      buildConfiguration,
+                      buildContext,
                       progressEventDispatcher.newChildProducer(),
                       layerConfiguration.getName(),
                       layerConfiguration))
@@ -68,18 +67,18 @@ class BuildAndCacheApplicationLayerStep implements Callable<PreparedLayer> {
     }
   }
 
-  private final BuildConfiguration buildConfiguration;
+  private final BuildContext buildContext;
   private final ProgressEventDispatcher.Factory progressEventDispatcherFactory;
 
   private final String layerName;
   private final LayerConfiguration layerConfiguration;
 
   private BuildAndCacheApplicationLayerStep(
-      BuildConfiguration buildConfiguration,
+      BuildContext buildContext,
       ProgressEventDispatcher.Factory progressEventDispatcherFactory,
       String layerName,
       LayerConfiguration layerConfiguration) {
-    this.buildConfiguration = buildConfiguration;
+    this.buildContext = buildContext;
     this.progressEventDispatcherFactory = progressEventDispatcherFactory;
     this.layerName = layerName;
     this.layerConfiguration = layerConfiguration;
@@ -89,13 +88,13 @@ class BuildAndCacheApplicationLayerStep implements Callable<PreparedLayer> {
   public PreparedLayer call() throws IOException, CacheCorruptedException {
     String description = String.format(DESCRIPTION, layerName);
 
-    EventHandlers eventHandlers = buildConfiguration.getEventHandlers();
+    EventHandlers eventHandlers = buildContext.getEventHandlers();
     eventHandlers.dispatch(LogEvent.progress(description + "..."));
 
     try (ProgressEventDispatcher ignored =
             progressEventDispatcherFactory.create("building " + layerName + " layer", 1);
         TimerEventDispatcher ignored2 = new TimerEventDispatcher(eventHandlers, description)) {
-      Cache cache = buildConfiguration.getApplicationLayersCache();
+      Cache cache = buildContext.getApplicationLayersCache();
 
       // Don't build the layer if it exists already.
       Optional<CachedLayer> optionalCachedLayer =

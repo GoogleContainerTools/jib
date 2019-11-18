@@ -23,6 +23,7 @@ import com.google.cloud.tools.jib.api.RegistryException;
 import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.http.BlobHttpContent;
 import com.google.cloud.tools.jib.http.Response;
+import com.google.cloud.tools.jib.http.ResponseException;
 import com.google.common.net.MediaType;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
@@ -107,6 +108,12 @@ class BlobPusher {
     public String getActionDescription() {
       return BlobPusher.this.getActionDescription();
     }
+
+    @Override
+    public Optional<URL> handleHttpResponseException(ResponseException responseException)
+        throws ResponseException, RegistryErrorException {
+      throw responseException;
+    }
   }
 
   /** Writes the BLOB content to the upload location. */
@@ -152,6 +159,12 @@ class BlobPusher {
       this.location = location;
       this.writtenByteCountListener = writtenByteCountListener;
     }
+
+    @Override
+    public URL handleHttpResponseException(ResponseException responseException)
+        throws ResponseException, RegistryErrorException {
+      throw responseException;
+    }
   }
 
   /** Commits the written BLOB. */
@@ -193,6 +206,12 @@ class BlobPusher {
 
     private Committer(URL location) {
       this.location = location;
+    }
+
+    @Override
+    public Void handleHttpResponseException(ResponseException responseException)
+        throws ResponseException, RegistryErrorException {
+      throw responseException;
     }
   }
 

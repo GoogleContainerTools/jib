@@ -1,0 +1,23 @@
+plugins {
+  id 'java'
+  id 'eclipse'
+  id 'idea'
+  id 'org.springframework.boot'
+  id 'io.spring.dependency-management'
+  id 'com.google.cloud.tools.jib'
+}
+
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+repositories {
+  mavenCentral()
+}
+
+dependencies {
+  implementation 'org.springframework.boot:spring-boot-starter-web'
+  implementation project(":shared-library")
+}
+
+// IMPORTANT: Set the environment variable PROJECT_ID to your own Google Cloud Platform project.
+jib.to.image = "gcr.io/${System.getenv('PROJECT_ID')}/${project.name}:${version}"

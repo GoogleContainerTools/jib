@@ -219,7 +219,7 @@ public class BuildImageMojoIntegrationTest {
       String password,
       LocalRegistry targetRegistry,
       String pomFile)
-      throws VerificationException, IOException, InterruptedException, DigestException {
+      throws VerificationException, IOException, InterruptedException {
     Verifier verifier = new Verifier(simpleTestProject.getProjectRoot().toString());
     verifier.setSystemProperty("jib.useOnlyProjectCache", "true");
     verifier.setSystemProperty("_TARGET_IMAGE", imageReference);
@@ -576,7 +576,7 @@ public class BuildImageMojoIntegrationTest {
 
   @Test
   public void testExecute_timestampCustom()
-      throws IOException, InterruptedException, VerificationException, DigestException {
+      throws IOException, InterruptedException, VerificationException {
     String targetImage = "localhost:6000/simpleimage:maven" + System.nanoTime();
     String pom = "pom-timestamps-custom.xml";
     Assert.assertEquals(
@@ -619,7 +619,7 @@ public class BuildImageMojoIntegrationTest {
 
   @Test
   public void testExecute_complex_sameFromAndToRegistry()
-      throws IOException, InterruptedException, VerificationException, DigestException {
+      throws IOException, InterruptedException, VerificationException {
     String targetImage = "localhost:5000/compleximage:maven" + System.nanoTime();
     Assert.assertEquals(
         "Hello, world. An argument.\n1970-01-01T00:00:01Z\nrwxr-xr-x\nrwxrwxrwx\nfoo\ncat\n"
@@ -632,7 +632,7 @@ public class BuildImageMojoIntegrationTest {
 
   @Test
   public void testExecute_complexProperties()
-      throws InterruptedException, DigestException, VerificationException, IOException {
+      throws InterruptedException, VerificationException, IOException {
     String targetImage = "localhost:6000/compleximage:maven" + System.nanoTime();
     Assert.assertEquals(
         "Hello, world. An argument.\n1970-01-01T00:00:01Z\nrwxr-xr-x\nrwxrwxrwx\nfoo\ncat\n"

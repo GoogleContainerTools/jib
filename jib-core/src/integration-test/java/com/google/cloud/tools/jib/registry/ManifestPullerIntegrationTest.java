@@ -19,6 +19,7 @@ package com.google.cloud.tools.jib.registry;
 import com.google.cloud.tools.jib.api.RegistryException;
 import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.http.Authorization;
+import com.google.cloud.tools.jib.http.FailoverHttpClient;
 import com.google.cloud.tools.jib.image.json.ManifestTemplate;
 import com.google.cloud.tools.jib.image.json.V21ManifestTemplate;
 import com.google.cloud.tools.jib.image.json.V22ManifestListTemplate;
@@ -44,11 +45,12 @@ public class ManifestPullerIntegrationTest {
     localRegistry.pullAndPushToLocal("busybox", "busybox");
   }
 
+  private final FailoverHttpClient httpClient = new FailoverHttpClient(true, false, ignored -> {});
+
   @Test
   public void testPull_v21() throws IOException, RegistryException {
     RegistryClient registryClient =
-        RegistryClient.factory(EventHandlers.NONE, "localhost:5000", "busybox")
-            .setAllowInsecureRegistries(true)
+        RegistryClient.factory(EventHandlers.NONE, "localhost:5000", "busybox", httpClient)
             .newRegistryClient();
     V21ManifestTemplate manifestTemplate =
         registryClient.pullManifest("latest", V21ManifestTemplate.class).getManifest();
@@ -60,7 +62,8 @@ public class ManifestPullerIntegrationTest {
   @Test
   public void testPull_v22() throws IOException, RegistryException {
     RegistryClient registryClient =
-        RegistryClient.factory(EventHandlers.NONE, "gcr.io", "distroless/java").newRegistryClient();
+        RegistryClient.factory(EventHandlers.NONE, "gcr.io", "distroless/java", httpClient)
+            .newRegistryClient();
     ManifestTemplate manifestTemplate = registryClient.pullManifest("latest").getManifest();
 
     Assert.assertEquals(2, manifestTemplate.getSchemaVersion());
@@ -71,7 +74,8 @@ public class ManifestPullerIntegrationTest {
   @Test
   public void testPull_v22ManifestList() throws IOException, RegistryException {
     RegistryClient.Factory factory =
-        RegistryClient.factory(EventHandlers.NONE, "registry-1.docker.io", "library/openjdk");
+        RegistryClient.factory(
+            EventHandlers.NONE, "registry-1.docker.io", "library/openjdk", httpClient);
     Authorization authorization =
         factory.newRegistryClient().getRegistryAuthenticator().get().authenticatePull(null);
     RegistryClient registryClient = factory.setAuthorization(authorization).newRegistryClient();
@@ -107,8 +111,7 @@ public class ManifestPullerIntegrationTest {
   public void testPull_unknownManifest() throws RegistryException, IOException {
     try {
       RegistryClient registryClient =
-          RegistryClient.factory(EventHandlers.NONE, "localhost:5000", "busybox")
-              .setAllowInsecureRegistries(true)
+          RegistryClient.factory(EventHandlers.NONE, "localhost:5000", "busybox", httpClient)
               .newRegistryClient();
       registryClient.pullManifest("nonexistent-tag");
       Assert.fail("Trying to pull nonexistent image should have errored");

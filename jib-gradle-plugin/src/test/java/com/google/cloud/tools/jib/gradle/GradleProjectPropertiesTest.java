@@ -28,7 +28,7 @@ import com.google.cloud.tools.jib.api.JibContainerBuilderTestHelper;
 import com.google.cloud.tools.jib.api.LayerConfiguration;
 import com.google.cloud.tools.jib.api.LayerEntry;
 import com.google.cloud.tools.jib.api.RegistryImage;
-import com.google.cloud.tools.jib.configuration.BuildConfiguration;
+import com.google.cloud.tools.jib.configuration.BuildContext;
 import com.google.cloud.tools.jib.filesystem.DirectoryWalker;
 import com.google.cloud.tools.jib.filesystem.TempDirectoryProvider;
 import com.google.cloud.tools.jib.plugins.common.ContainerizingMode;
@@ -37,7 +37,6 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.Resources;
-import com.google.common.util.concurrent.MoreExecutors;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -56,16 +55,13 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
-import org.gradle.StartParameter;
 import org.gradle.api.JavaVersion;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
-import org.gradle.api.artifacts.ConfigurationContainer;
 import org.gradle.api.file.ConfigurableFileCollection;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.internal.file.AbstractFileCollection;
 import org.gradle.api.internal.file.FileResolver;
-import org.gradle.api.invocation.Gradle;
 import org.gradle.api.java.archives.Manifest;
 import org.gradle.api.java.archives.internal.DefaultManifest;
 import org.gradle.api.logging.Logger;
@@ -73,7 +69,6 @@ import org.gradle.api.logging.configuration.ConsoleOutput;
 import org.gradle.api.plugins.Convention;
 import org.gradle.api.plugins.JavaPlugin;
 import org.gradle.api.plugins.JavaPluginConvention;
-import org.gradle.api.plugins.PluginContainer;
 import org.gradle.api.plugins.WarPlugin;
 import org.gradle.api.tasks.SourceSet;
 import org.gradle.api.tasks.SourceSetContainer;
@@ -127,7 +122,7 @@ public class GradleProjectPropertiesTest {
     }
   }
 
-  /** Helper for reading back layers in a {@code BuildConfiguration}. */
+  /** Helper for reading back layers in a {@link buildContext}. */
   private static class ContainerBuilderLayers {
 
     private final List<LayerConfiguration> resourcesLayerEntries;
@@ -135,21 +130,20 @@ public class GradleProjectPropertiesTest {
     private final List<LayerConfiguration> dependenciesLayerEntries;
     private final List<LayerConfiguration> snapshotsLayerEntries;
 
-    private ContainerBuilderLayers(BuildConfiguration configuration) {
+    private ContainerBuilderLayers(BuildContext buildContext) {
       resourcesLayerEntries =
-          getLayerConfigurationsByName(configuration, LayerType.RESOURCES.getName());
-      classesLayerEntries =
-          getLayerConfigurationsByName(configuration, LayerType.CLASSES.getName());
+          getLayerConfigurationsByName(buildContext, LayerType.RESOURCES.getName());
+      classesLayerEntries = getLayerConfigurationsByName(buildContext, LayerType.CLASSES.getName());
       dependenciesLayerEntries =
-          getLayerConfigurationsByName(configuration, LayerType.DEPENDENCIES.getName());
+          getLayerConfigurationsByName(buildContext, LayerType.DEPENDENCIES.getName());
       snapshotsLayerEntries =
-          getLayerConfigurationsByName(configuration, LayerType.SNAPSHOT_DEPENDENCIES.getName());
+          getLayerConfigurationsByName(buildContext, LayerType.SNAPSHOT_DEPENDENCIES.getName());
     }
   }
 
   private static List<LayerConfiguration> getLayerConfigurationsByName(
-      BuildConfiguration buildConfiguration, String name) {
-    return buildConfiguration
+      BuildContext buildContext, String name) {
+    return buildContext
         .getLayerConfigurations()
         .stream()
         .filter(layer -> layer.getName().equals(name))
@@ -191,21 +185,22 @@ public class GradleProjectPropertiesTest {
 
   @Mock private TempDirectoryProvider mockTempDirectoryProvider;
   @Mock private FileResolver mockFileResolver;
-  @Mock private Jar mockJar;
-  @Mock private Project mockProject;
   @Mock private Convention mockConvention;
   @Mock private TaskContainer mockTaskContainer;
-  @Mock private PluginContainer mockPluginContainer;
   @Mock private Logger mockLogger;
-  @Mock private Gradle mockGradle;
-  @Mock private StartParameter mockStartParameter;
   @Mock private JavaPluginConvention mockJavaPluginConvention;
   @Mock private SourceSetContainer mockSourceSetContainer;
   @Mock private SourceSet mockMainSourceSet;
   @Mock private SourceSetOutput mockMainSourceSetOutput;
 
   @Mock(answer = Answers.RETURNS_DEEP_STUBS)
+  private Project mockProject;
+
+  @Mock(answer = Answers.RETURNS_DEEP_STUBS)
   private TaskProvider<Task> mockWarTaskProvider;
+
+  @Mock(answer = Answers.RETURNS_DEEP_STUBS)
+  private TaskProvider<Task> mockBootWarTaskProvider;
 
   private Manifest manifest;
   private GradleProjectProperties gradleProjectProperties;
@@ -218,15 +213,10 @@ public class GradleProjectPropertiesTest {
         .thenReturn(mockJavaPluginConvention);
     Mockito.when(mockJavaPluginConvention.getSourceSets()).thenReturn(mockSourceSetContainer);
     Mockito.when(mockProject.getTasks()).thenReturn(mockTaskContainer);
-    Mockito.when(mockProject.getPlugins()).thenReturn(mockPluginContainer);
-    Mockito.when(mockJar.getManifest()).thenReturn(manifest);
-    Mockito.when(mockProject.getGradle()).thenReturn(mockGradle);
-    Mockito.when(mockGradle.getStartParameter()).thenReturn(mockStartParameter);
-    Mockito.when(mockStartParameter.getConsoleOutput()).thenReturn(ConsoleOutput.Auto);
+    Mockito.when(mockProject.getGradle().getStartParameter().getConsoleOutput())
+        .thenReturn(ConsoleOutput.Auto);
 
     // mocking to complete ignore project dependency resolution
-    Mockito.when(mockProject.getConfigurations())
-        .thenReturn(Mockito.mock(ConfigurationContainer.class, Mockito.RETURNS_DEEP_STUBS));
     Mockito.when(
             mockProject
                 .getConfigurations()
@@ -270,6 +260,8 @@ public class GradleProjectPropertiesTest {
   @Test
   public void testGetMainClassFromJar_success() {
     manifest.attributes(ImmutableMap.of("Main-Class", "some.main.class"));
+    Jar mockJar = Mockito.mock(Jar.class);
+    Mockito.when(mockJar.getManifest()).thenReturn(manifest);
     Mockito.when(mockTaskContainer.findByName("jar")).thenReturn(mockJar);
     Assert.assertEquals("some.main.class", gradleProjectProperties.getMainClassFromJar());
   }
@@ -282,26 +274,8 @@ public class GradleProjectPropertiesTest {
 
   @Test
   public void testIsWarProject() {
-    Mockito.when(mockPluginContainer.hasPlugin(WarPlugin.class)).thenReturn(true);
+    Mockito.when(mockProject.getPlugins().hasPlugin(WarPlugin.class)).thenReturn(true);
     Assert.assertTrue(gradleProjectProperties.isWarProject());
-  }
-
-  @Test
-  public void testGetWar_warProject() {
-    Mockito.when(mockPluginContainer.hasPlugin(WarPlugin.class)).thenReturn(true);
-    Mockito.when(mockTaskContainer.named("war")).thenReturn(mockWarTaskProvider);
-    Assert.assertNotNull(TaskCommon.getWarTaskProvider(mockProject));
-  }
-
-  @Test
-  public void testGetWar_noWarPlugin() {
-    Mockito.when(mockPluginContainer.hasPlugin(WarPlugin.class)).thenReturn(false);
-    Assert.assertNull(TaskCommon.getWarTaskProvider(mockProject));
-  }
-
-  @Test
-  public void testGetWar_noWarTask() {
-    Assert.assertNull(TaskCommon.getWarTaskProvider(mockProject));
   }
 
   @Test
@@ -359,8 +333,8 @@ public class GradleProjectPropertiesTest {
   public void testCreateContainerBuilder_correctFiles()
       throws URISyntaxException, IOException, InvalidImageReferenceException,
           CacheDirectoryCreationException {
-    BuildConfiguration configuration = setupBuildConfiguration("/app", DEFAULT_CONTAINERIZING_MODE);
-    ContainerBuilderLayers layers = new ContainerBuilderLayers(configuration);
+    BuildContext buildContext = setupBuildContext("/app", DEFAULT_CONTAINERIZING_MODE);
+    ContainerBuilderLayers layers = new ContainerBuilderLayers(buildContext);
 
     Path applicationDirectory = getResource("gradle/application");
     assertSourcePathsUnordered(
@@ -407,9 +381,8 @@ public class GradleProjectPropertiesTest {
   @Test
   public void testCreateContainerBuilder_nonDefaultAppRoot()
       throws IOException, InvalidImageReferenceException, CacheDirectoryCreationException {
-    BuildConfiguration configuration =
-        setupBuildConfiguration("/my/app", DEFAULT_CONTAINERIZING_MODE);
-    ContainerBuilderLayers layers = new ContainerBuilderLayers(configuration);
+    BuildContext buildContext = setupBuildContext("/my/app", DEFAULT_CONTAINERIZING_MODE);
+    ContainerBuilderLayers layers = new ContainerBuilderLayers(buildContext);
 
     assertExtractionPathsUnordered(
         Arrays.asList(
@@ -437,9 +410,9 @@ public class GradleProjectPropertiesTest {
   @Test
   public void testCreateContainerBuilder_defaultAppRoot()
       throws IOException, InvalidImageReferenceException, CacheDirectoryCreationException {
-    BuildConfiguration configuration =
-        setupBuildConfiguration(JavaContainerBuilder.DEFAULT_APP_ROOT, DEFAULT_CONTAINERIZING_MODE);
-    ContainerBuilderLayers layers = new ContainerBuilderLayers(configuration);
+    BuildContext buildContext =
+        setupBuildContext(JavaContainerBuilder.DEFAULT_APP_ROOT, DEFAULT_CONTAINERIZING_MODE);
+    ContainerBuilderLayers layers = new ContainerBuilderLayers(buildContext);
     assertExtractionPathsUnordered(
         Arrays.asList(
             "/app/libs/dependency-1.0.0-770.jar",
@@ -468,9 +441,8 @@ public class GradleProjectPropertiesTest {
     Path webAppDirectory = getResource("gradle/webapp");
     Path unzipTarget = setUpWarProject(webAppDirectory);
 
-    BuildConfiguration configuration =
-        setupBuildConfiguration("/my/app", DEFAULT_CONTAINERIZING_MODE);
-    ContainerBuilderLayers layers = new ContainerBuilderLayers(configuration);
+    BuildContext buildContext = setupBuildContext("/my/app", DEFAULT_CONTAINERIZING_MODE);
+    ContainerBuilderLayers layers = new ContainerBuilderLayers(buildContext);
     assertSourcePathsUnordered(
         ImmutableList.of(unzipTarget.resolve("WEB-INF/lib/dependency-1.0.0.jar")),
         layers.dependenciesLayerEntries.get(0).getLayerEntries());
@@ -532,10 +504,9 @@ public class GradleProjectPropertiesTest {
           CacheDirectoryCreationException {
     Path unzipTarget = setUpWarProject(getResource("gradle/webapp"));
 
-    BuildConfiguration configuration =
-        setupBuildConfiguration(
-            JavaContainerBuilder.DEFAULT_WEB_APP_ROOT, DEFAULT_CONTAINERIZING_MODE);
-    ContainerBuilderLayers layers = new ContainerBuilderLayers(configuration);
+    BuildContext buildContext =
+        setupBuildContext(JavaContainerBuilder.DEFAULT_WEB_APP_ROOT, DEFAULT_CONTAINERIZING_MODE);
+    ContainerBuilderLayers layers = new ContainerBuilderLayers(buildContext);
     assertSourcePathsUnordered(
         ImmutableList.of(unzipTarget.resolve("WEB-INF/lib/dependency-1.0.0.jar")),
         layers.dependenciesLayerEntries.get(0).getLayerEntries());
@@ -569,7 +540,7 @@ public class GradleProjectPropertiesTest {
       throws IOException, InvalidImageReferenceException, CacheDirectoryCreationException {
     temporaryFolder.newFolder("WEB-INF", "lib");
     setUpWarProject(temporaryFolder.getRoot().toPath());
-    setupBuildConfiguration("/anything", DEFAULT_CONTAINERIZING_MODE); // should pass
+    setupBuildContext("/anything", DEFAULT_CONTAINERIZING_MODE); // should pass
   }
 
   @Test
@@ -577,18 +548,53 @@ public class GradleProjectPropertiesTest {
       throws IOException, InvalidImageReferenceException, CacheDirectoryCreationException {
     temporaryFolder.newFolder("WEB-INF", "classes");
     setUpWarProject(temporaryFolder.getRoot().toPath());
-    setupBuildConfiguration("/anything", DEFAULT_CONTAINERIZING_MODE); // should pass
+    setupBuildContext("/anything", DEFAULT_CONTAINERIZING_MODE); // should pass
   }
 
   @Test
   public void testCreateContainerBuilder_noErrorIfWebInfDoesNotExist()
       throws IOException, InvalidImageReferenceException, CacheDirectoryCreationException {
     setUpWarProject(temporaryFolder.getRoot().toPath());
-    setupBuildConfiguration("/anything", DEFAULT_CONTAINERIZING_MODE); // should pass
+    setupBuildContext("/anything", DEFAULT_CONTAINERIZING_MODE); // should pass
   }
 
-  private BuildConfiguration setupBuildConfiguration(
-      String appRoot, ContainerizingMode containerizingMode)
+  @Test
+  public void testGetWarFilePath() {
+    Mockito.when(mockProject.getPlugins().hasPlugin(WarPlugin.class)).thenReturn(true);
+    Mockito.when(mockTaskContainer.named("war")).thenReturn(mockWarTaskProvider);
+    Mockito.when(mockWarTaskProvider.get().getOutputs().getFiles().getAsPath())
+        .thenReturn("/war/file/here.war");
+
+    Assert.assertEquals("/war/file/here.war", gradleProjectProperties.getWarFilePath());
+  }
+
+  @Test
+  public void testGetWarFilePath_bootWar() {
+    Mockito.when(mockProject.getPlugins().hasPlugin("org.springframework.boot")).thenReturn(true);
+    Mockito.when(mockTaskContainer.named("bootWar")).thenReturn(mockBootWarTaskProvider);
+    Mockito.when(mockBootWarTaskProvider.get().getEnabled()).thenReturn(true);
+    Mockito.when(mockBootWarTaskProvider.get().getOutputs().getFiles().getAsPath())
+        .thenReturn("/boot/war/file.war");
+
+    Assert.assertEquals("/boot/war/file.war", gradleProjectProperties.getWarFilePath());
+  }
+
+  @Test
+  public void testGetWarFilePath_bootWarDisabled() {
+    Mockito.when(mockProject.getPlugins().hasPlugin("org.springframework.boot")).thenReturn(true);
+    Mockito.when(mockTaskContainer.named("bootWar")).thenReturn(mockBootWarTaskProvider);
+    Mockito.when(mockBootWarTaskProvider.get().getOutputs().getFiles().getAsPath())
+        .thenReturn("boot.war");
+
+    Mockito.when(mockProject.getPlugins().hasPlugin(WarPlugin.class)).thenReturn(true);
+    Mockito.when(mockTaskContainer.named("war")).thenReturn(mockWarTaskProvider);
+    Mockito.when(mockWarTaskProvider.get().getOutputs().getFiles().getAsPath())
+        .thenReturn("war.war");
+
+    Assert.assertEquals("war.war", gradleProjectProperties.getWarFilePath());
+  }
+
+  private BuildContext setupBuildContext(String appRoot, ContainerizingMode containerizingMode)
       throws InvalidImageReferenceException, IOException, CacheDirectoryCreationException {
     JavaContainerBuilder javaContainerBuilder =
         JavaContainerBuilder.from(RegistryImage.named("base"))
@@ -597,21 +603,18 @@ public class GradleProjectPropertiesTest {
     JibContainerBuilder jibContainerBuilder =
         new GradleProjectProperties(mockProject, mockLogger, mockTempDirectoryProvider)
             .createJibContainerBuilder(javaContainerBuilder, containerizingMode);
-    return JibContainerBuilderTestHelper.toBuildConfiguration(
-        jibContainerBuilder,
-        Containerizer.to(RegistryImage.named("to"))
-            .setExecutorService(MoreExecutors.newDirectExecutorService()));
+    return JibContainerBuilderTestHelper.toBuildContext(
+        jibContainerBuilder, Containerizer.to(RegistryImage.named("to")));
   }
 
   private Path setUpWarProject(Path webAppDirectory) throws IOException {
     Path targetZip =
         zipUpDirectory(webAppDirectory, temporaryFolder.getRoot().toPath().resolve("my-app.war"));
 
-    Mockito.when(mockPluginContainer.hasPlugin(WarPlugin.class)).thenReturn(true);
+    Mockito.when(mockProject.getPlugins().hasPlugin(WarPlugin.class)).thenReturn(true);
     Mockito.when(mockTaskContainer.named("war")).thenReturn(mockWarTaskProvider);
     Mockito.when(mockWarTaskProvider.get().getOutputs().getFiles().getAsPath())
         .thenReturn(targetZip.toString());
-    Mockito.when(gradleProjectProperties.getWarFilePath()).thenReturn(targetZip.toString());
 
     // Make "GradleProjectProperties" use this folder to explode the WAR into.
     Path unzipTarget = temporaryFolder.newFolder("exploded").toPath();

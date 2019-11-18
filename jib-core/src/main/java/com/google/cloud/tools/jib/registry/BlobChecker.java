@@ -17,12 +17,12 @@
 package com.google.cloud.tools.jib.registry;
 
 import com.google.api.client.http.HttpMethods;
-import com.google.api.client.http.HttpResponseException;
 import com.google.api.client.http.HttpStatusCodes;
 import com.google.cloud.tools.jib.api.DescriptorDigest;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.http.BlobHttpContent;
 import com.google.cloud.tools.jib.http.Response;
+import com.google.cloud.tools.jib.http.ResponseException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Collections;
@@ -60,8 +60,8 @@ class BlobChecker implements RegistryEndpointProvider<Optional<BlobDescriptor>> 
   }
 
   @Override
-  public Optional<BlobDescriptor> handleHttpResponseException(
-      HttpResponseException responseException) throws HttpResponseException {
+  public Optional<BlobDescriptor> handleHttpResponseException(ResponseException responseException)
+      throws ResponseException {
     if (responseException.getStatusCode() != HttpStatusCodes.STATUS_CODE_NOT_FOUND) {
       throw responseException;
     }

@@ -22,7 +22,7 @@ import com.google.cloud.tools.jib.api.Port;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.builder.ProgressEventDispatcher;
 import com.google.cloud.tools.jib.cache.CachedLayer;
-import com.google.cloud.tools.jib.configuration.BuildConfiguration;
+import com.google.cloud.tools.jib.configuration.BuildContext;
 import com.google.cloud.tools.jib.configuration.ContainerConfiguration;
 import com.google.cloud.tools.jib.configuration.DockerHealthCheck;
 import com.google.cloud.tools.jib.event.EventHandlers;
@@ -50,7 +50,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 public class BuildImageStepTest {
 
   @Mock private ProgressEventDispatcher.Factory mockProgressEventDispatcherFactory;
-  @Mock private BuildConfiguration mockBuildConfiguration;
+  @Mock private BuildContext mockBuildContext;
   @Mock private ContainerConfiguration mockContainerConfiguration;
   @Mock private CachedLayer mockCachedLayer;
 
@@ -68,10 +68,10 @@ public class BuildImageStepTest {
         DescriptorDigest.fromHash(
             "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
 
-    Mockito.when(mockBuildConfiguration.getEventHandlers()).thenReturn(EventHandlers.NONE);
-    Mockito.when(mockBuildConfiguration.getContainerConfiguration())
+    Mockito.when(mockBuildContext.getEventHandlers()).thenReturn(EventHandlers.NONE);
+    Mockito.when(mockBuildContext.getContainerConfiguration())
         .thenReturn(mockContainerConfiguration);
-    Mockito.when(mockBuildConfiguration.getToolName()).thenReturn("jib");
+    Mockito.when(mockBuildContext.getToolName()).thenReturn("jib");
     Mockito.when(mockContainerConfiguration.getCreationTime()).thenReturn(Instant.EPOCH);
     Mockito.when(mockContainerConfiguration.getEnvironmentMap()).thenReturn(ImmutableMap.of());
     Mockito.when(mockContainerConfiguration.getProgramArguments()).thenReturn(ImmutableList.of());
@@ -137,7 +137,7 @@ public class BuildImageStepTest {
   public void test_basicCase() {
     Image image =
         new BuildImageStep(
-                mockBuildConfiguration,
+                mockBuildContext,
                 mockProgressEventDispatcherFactory,
                 baseImage,
                 baseImageLayers,
@@ -161,7 +161,7 @@ public class BuildImageStepTest {
                 AbsoluteUnixPath.get("/new/path1"), AbsoluteUnixPath.get("/new/path2")));
     Image image =
         new BuildImageStep(
-                mockBuildConfiguration,
+                mockBuildContext,
                 mockProgressEventDispatcherFactory,
                 baseImage,
                 baseImageLayers,
@@ -220,7 +220,7 @@ public class BuildImageStepTest {
 
     Image image =
         new BuildImageStep(
-                mockBuildConfiguration,
+                mockBuildContext,
                 mockProgressEventDispatcherFactory,
                 baseImage,
                 baseImageLayers,
@@ -238,7 +238,7 @@ public class BuildImageStepTest {
 
     Image image =
         new BuildImageStep(
-                mockBuildConfiguration,
+                mockBuildContext,
                 mockProgressEventDispatcherFactory,
                 baseImage,
                 baseImageLayers,
@@ -256,7 +256,7 @@ public class BuildImageStepTest {
 
     Image image =
         new BuildImageStep(
-                mockBuildConfiguration,
+                mockBuildContext,
                 mockProgressEventDispatcherFactory,
                 baseImage,
                 baseImageLayers,
@@ -275,7 +275,7 @@ public class BuildImageStepTest {
 
     Image image =
         new BuildImageStep(
-                mockBuildConfiguration,
+                mockBuildContext,
                 mockProgressEventDispatcherFactory,
                 baseImage,
                 baseImageLayers,
@@ -290,7 +290,7 @@ public class BuildImageStepTest {
   public void test_generateHistoryObjects() {
     Image image =
         new BuildImageStep(
-                mockBuildConfiguration,
+                mockBuildContext,
                 mockProgressEventDispatcherFactory,
                 baseImage,
                 baseImageLayers,

@@ -41,8 +41,8 @@ public class ResponseTest {
 
     Mockito.when(httpResponseMock.getContent()).thenReturn(responseInputStream);
 
-    Response response = new Response(httpResponseMock);
-
-    Assert.assertArrayEquals(expectedResponse, ByteStreams.toByteArray(response.getBody()));
+    try (Response response = new Response(httpResponseMock)) {
+      Assert.assertArrayEquals(expectedResponse, ByteStreams.toByteArray(response.getBody()));
+    }
   }
 }

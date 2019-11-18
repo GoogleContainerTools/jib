@@ -16,8 +16,6 @@
 
 package com.google.cloud.tools.jib.registry;
 
-import com.google.api.client.http.GenericUrl;
-import com.google.api.client.http.HttpResponseException;
 import com.google.api.client.http.HttpStatusCodes;
 import com.google.cloud.tools.jib.api.InsecureRegistryException;
 import com.google.cloud.tools.jib.api.LogEvent;
@@ -26,19 +24,17 @@ import com.google.cloud.tools.jib.api.RegistryUnauthorizedException;
 import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.global.JibSystemProperties;
 import com.google.cloud.tools.jib.http.Authorization;
-import com.google.cloud.tools.jib.http.Connection;
+import com.google.cloud.tools.jib.http.FailoverHttpClient;
 import com.google.cloud.tools.jib.http.Request;
 import com.google.cloud.tools.jib.http.Response;
+import com.google.cloud.tools.jib.http.ResponseException;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import com.google.cloud.tools.jib.registry.json.ErrorEntryTemplate;
 import com.google.cloud.tools.jib.registry.json.ErrorResponseTemplate;
 import com.google.common.annotations.VisibleForTesting;
 import java.io.IOException;
-import java.net.ConnectException;
 import java.net.URL;
-import java.security.GeneralSecurityException;
 import java.util.Locale;
-import java.util.function.Function;
 import javax.annotation.Nullable;
 import javax.net.ssl.SSLException;
 
@@ -54,10 +50,6 @@ class RegistryEndpointCaller<T> {
    *     href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/308">https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/308</a>
    */
   @VisibleForTesting static final int STATUS_CODE_PERMANENT_REDIRECT = 308;
-
-  private static boolean isHttpsProtocol(URL url) {
-    return "https".equals(url.getProtocol());
-  }
 
   // https://github.com/GoogleContainerTools/jib/issues/1316
   @VisibleForTesting
@@ -82,13 +74,7 @@ class RegistryEndpointCaller<T> {
   private final RegistryEndpointProvider<T> registryEndpointProvider;
   @Nullable private final Authorization authorization;
   private final RegistryEndpointRequestProperties registryEndpointRequestProperties;
-  private final boolean allowInsecureRegistries;
-
-  /** Makes a {@link Connection} to the specified {@link URL}. */
-  private final Function<URL, Connection> connectionFactory;
-
-  /** Makes an insecure {@link Connection} to the specified {@link URL}. */
-  @Nullable private Function<URL, Connection> insecureConnectionFactory;
+  private final FailoverHttpClient httpClient;
 
   /**
    * Constructs with parameters for making the request.
@@ -98,26 +84,8 @@ class RegistryEndpointCaller<T> {
    * @param registryEndpointProvider the {@link RegistryEndpointProvider} to the endpoint
    * @param authorization optional authentication credentials to use
    * @param registryEndpointRequestProperties properties of the registry endpoint request
-   * @param allowInsecureRegistries if {@code true}, insecure connections will be allowed
+   * @param httpClient HTTP client
    */
-  RegistryEndpointCaller(
-      EventHandlers eventHandlers,
-      String userAgent,
-      RegistryEndpointProvider<T> registryEndpointProvider,
-      @Nullable Authorization authorization,
-      RegistryEndpointRequestProperties registryEndpointRequestProperties,
-      boolean allowInsecureRegistries) {
-    this(
-        eventHandlers,
-        userAgent,
-        registryEndpointProvider,
-        authorization,
-        registryEndpointRequestProperties,
-        allowInsecureRegistries,
-        Connection.getConnectionFactory(),
-        null /* might never be used, so create lazily to delay throwing potential GeneralSecurityException */);
-  }
-
   @VisibleForTesting
   RegistryEndpointCaller(
       EventHandlers eventHandlers,
@@ -125,17 +93,13 @@ class RegistryEndpointCaller<T> {
       RegistryEndpointProvider<T> registryEndpointProvider,
       @Nullable Authorization authorization,
       RegistryEndpointRequestProperties registryEndpointRequestProperties,
-      boolean allowInsecureRegistries,
-      Function<URL, Connection> connectionFactory,
-      @Nullable Function<URL, Connection> insecureConnectionFactory) {
+      FailoverHttpClient httpClient) {
     this.eventHandlers = eventHandlers;
     this.userAgent = userAgent;
     this.registryEndpointProvider = registryEndpointProvider;
     this.authorization = authorization;
     this.registryEndpointRequestProperties = registryEndpointRequestProperties;
-    this.allowInsecureRegistries = allowInsecureRegistries;
-    this.connectionFactory = connectionFactory;
-    this.insecureConnectionFactory = insecureConnectionFactory;
+    this.httpClient = httpClient;
   }
 
   /**
@@ -148,73 +112,7 @@ class RegistryEndpointCaller<T> {
   T call() throws IOException, RegistryException {
     String apiRouteBase = "https://" + registryEndpointRequestProperties.getServerUrl() + "/v2/";
     URL initialRequestUrl = registryEndpointProvider.getApiRoute(apiRouteBase);
-    return callWithAllowInsecureRegistryHandling(initialRequestUrl);
-  }
-
-  private T callWithAllowInsecureRegistryHandling(URL url) throws IOException, RegistryException {
-    if (!isHttpsProtocol(url) && !allowInsecureRegistries) {
-      throw new InsecureRegistryException(url);
-    }
-
-    try {
-      return call(url, connectionFactory);
-
-    } catch (SSLException ex) {
-      return handleUnverifiableServerException(url);
-
-    } catch (ConnectException ex) {
-      // It is observed that Open/Oracle JDKs sometimes throw SocketTimeoutException but other times
-      // ConnectException for connection timeout. (Could be a JDK bug.) Note SocketTimeoutException
-      // does not extend ConnectException (or vice versa), and we want to be consistent to error out
-      // on timeouts: https://github.com/GoogleContainerTools/jib/issues/1895#issuecomment-527544094
-      if (ex.getMessage() != null && ex.getMessage().contains("timed out")) {
-        throw ex;
-      }
-
-      if (allowInsecureRegistries && isHttpsProtocol(url) && url.getPort() == -1) {
-        // Fall back to HTTP only if "url" had no port specified (i.e., we tried the default HTTPS
-        // port 443) and we could not connect to 443. It's worth trying port 80.
-        return fallBackToHttp(url);
-      }
-      throw ex;
-    }
-  }
-
-  private T handleUnverifiableServerException(URL url) throws IOException, RegistryException {
-    if (!allowInsecureRegistries) {
-      throw new InsecureRegistryException(url);
-    }
-
-    try {
-      eventHandlers.dispatch(
-          LogEvent.info(
-              "Cannot verify server at " + url + ". Attempting again with no TLS verification."));
-      return call(url, getInsecureConnectionFactory());
-
-    } catch (SSLException ex) {
-      return fallBackToHttp(url);
-    }
-  }
-
-  private T fallBackToHttp(URL url) throws IOException, RegistryException {
-    GenericUrl httpUrl = new GenericUrl(url);
-    httpUrl.setScheme("http");
-    eventHandlers.dispatch(
-        LogEvent.info(
-            "Failed to connect to " + url + " over HTTPS. Attempting again with HTTP: " + httpUrl));
-    return call(httpUrl.toURL(), connectionFactory);
-  }
-
-  private Function<URL, Connection> getInsecureConnectionFactory() throws RegistryException {
-    try {
-      if (insecureConnectionFactory == null) {
-        insecureConnectionFactory = Connection.getInsecureConnectionFactory();
-      }
-      return insecureConnectionFactory;
-
-    } catch (GeneralSecurityException ex) {
-      throw new RegistryException("cannot turn off TLS peer verification", ex);
-    }
+    return call(initialRequestUrl);
   }
 
   /**
@@ -225,34 +123,29 @@ class RegistryEndpointCaller<T> {
    * @throws IOException for most I/O exceptions when making the request
    * @throws RegistryException for known exceptions when interacting with the registry
    */
-  private T call(URL url, Function<URL, Connection> connectionFactory)
-      throws IOException, RegistryException {
-    // Only sends authorization if using HTTPS or explicitly forcing over HTTP.
-    boolean sendCredentials = isHttpsProtocol(url) || JibSystemProperties.sendCredentialsOverHttp();
+  private T call(URL url) throws IOException, RegistryException {
     String serverUrl = registryEndpointRequestProperties.getServerUrl();
     String imageName = registryEndpointRequestProperties.getImageName();
 
-    try (Connection connection = connectionFactory.apply(url)) {
-      Request.Builder requestBuilder =
-          Request.builder()
-              .setUserAgent(userAgent)
-              .setHttpTimeout(JibSystemProperties.getHttpTimeout())
-              .setAccept(registryEndpointProvider.getAccept())
-              .setBody(registryEndpointProvider.getContent());
-      if (sendCredentials) {
-        requestBuilder.setAuthorization(authorization);
-      }
-      Response response =
-          connection.send(registryEndpointProvider.getHttpMethod(), requestBuilder.build());
+    Request.Builder requestBuilder =
+        Request.builder()
+            .setUserAgent(userAgent)
+            .setHttpTimeout(JibSystemProperties.getHttpTimeout())
+            .setAccept(registryEndpointProvider.getAccept())
+            .setBody(registryEndpointProvider.getContent())
+            .setAuthorization(authorization);
+
+    try (Response response =
+        httpClient.call(registryEndpointProvider.getHttpMethod(), url, requestBuilder.build())) {
 
       return registryEndpointProvider.handleResponse(response);
 
-    } catch (HttpResponseException ex) {
+    } catch (ResponseException ex) {
       // First, see if the endpoint provider handles an exception as an expected response.
       try {
         return registryEndpointProvider.handleHttpResponseException(ex);
 
-      } catch (HttpResponseException responseException) {
+      } catch (ResponseException responseException) {
         if (responseException.getStatusCode() == HttpStatusCodes.STATUS_CODE_BAD_REQUEST
             || responseException.getStatusCode() == HttpStatusCodes.STATUS_CODE_NOT_FOUND
             || responseException.getStatusCode()
@@ -264,20 +157,21 @@ class RegistryEndpointCaller<T> {
           throw new RegistryUnauthorizedException(serverUrl, imageName, responseException);
 
         } else if (responseException.getStatusCode() == HttpStatusCodes.STATUS_CODE_UNAUTHORIZED) {
-          if (sendCredentials) {
+          if (responseException.requestAuthorizationCleared()) {
+            throw new RegistryCredentialsNotSentException(serverUrl, imageName);
+          } else {
             // Credentials are either missing or wrong.
             throw new RegistryUnauthorizedException(serverUrl, imageName, responseException);
-          } else {
-            throw new RegistryCredentialsNotSentException(serverUrl, imageName);
           }
 
-        } else if (responseException.getStatusCode()
-                == HttpStatusCodes.STATUS_CODE_TEMPORARY_REDIRECT
-            || responseException.getStatusCode() == HttpStatusCodes.STATUS_CODE_MOVED_PERMANENTLY
-            || responseException.getStatusCode() == STATUS_CODE_PERMANENT_REDIRECT) {
+          // 301 (Moved Permanently), 302 (Found), 303 (See Other), and 307 (Temporary Redirect) are
+          // automatically followed by Google HTTP Client (setFollowRedirects(true)), but 308 isn't.
+          // https://github.com/googleapis/google-http-java-client/issues/873
+          // TODO: remove this when the bug is fixed.
+        } else if (responseException.getStatusCode() == STATUS_CODE_PERMANENT_REDIRECT) {
           // 'Location' header can be relative or absolute.
           URL redirectLocation = new URL(url, responseException.getHeaders().getLocation());
-          return callWithAllowInsecureRegistryHandling(redirectLocation);
+          return call(redirectLocation);
 
         } else {
           // Unknown
@@ -285,20 +179,20 @@ class RegistryEndpointCaller<T> {
         }
       }
 
-    } catch (SSLException ex) {
-      logErrorIfBrokenPipe(ex);
-      throw ex;
-
     } catch (IOException ex) {
       logError("I/O error for image [" + serverUrl + "/" + imageName + "]:");
       logError("    " + ex.getMessage());
       logErrorIfBrokenPipe(ex);
+
+      if (ex instanceof SSLException) {
+        throw new InsecureRegistryException(url, ex);
+      }
       throw ex;
     }
   }
 
   @VisibleForTesting
-  RegistryErrorException newRegistryErrorException(HttpResponseException responseException) {
+  RegistryErrorException newRegistryErrorException(ResponseException responseException) {
     RegistryErrorExceptionBuilder registryErrorExceptionBuilder =
         new RegistryErrorExceptionBuilder(
             registryEndpointProvider.getActionDescription(), responseException);

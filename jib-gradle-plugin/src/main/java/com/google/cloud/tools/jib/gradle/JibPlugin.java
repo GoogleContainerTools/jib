@@ -17,8 +17,14 @@
 package com.google.cloud.tools.jib.gradle;
 
 import com.google.cloud.tools.jib.ProjectInfo;
+import com.google.cloud.tools.jib.gradle.skaffold.CheckJibVersionTask;
+import com.google.cloud.tools.jib.gradle.skaffold.FilesTask;
+import com.google.cloud.tools.jib.gradle.skaffold.FilesTaskV2;
+import com.google.cloud.tools.jib.gradle.skaffold.InitTask;
+import com.google.cloud.tools.jib.gradle.skaffold.SyncMapTask;
 import com.google.cloud.tools.jib.plugins.common.VersionChecker;
 import com.google.common.annotations.VisibleForTesting;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.gradle.api.GradleException;
@@ -38,19 +44,18 @@ public class JibPlugin implements Plugin<Project> {
 
   @VisibleForTesting static final GradleVersion GRADLE_MIN_VERSION = GradleVersion.version("4.9");
 
-  @VisibleForTesting static final String JIB_EXTENSION_NAME = "jib";
-  @VisibleForTesting static final String BUILD_IMAGE_TASK_NAME = "jib";
-  @VisibleForTesting static final String BUILD_TAR_TASK_NAME = "jibBuildTar";
-  @VisibleForTesting static final String BUILD_DOCKER_TASK_NAME = "jibDockerBuild";
-  @VisibleForTesting static final String FILES_TASK_NAME = "_jibSkaffoldFiles";
-  @VisibleForTesting static final String FILES_TASK_V2_NAME = "_jibSkaffoldFilesV2";
-  @VisibleForTesting static final String INIT_TASK_NAME = "_jibSkaffoldInit";
+  public static final String JIB_EXTENSION_NAME = "jib";
+  public static final String BUILD_IMAGE_TASK_NAME = "jib";
+  public static final String BUILD_TAR_TASK_NAME = "jibBuildTar";
+  public static final String BUILD_DOCKER_TASK_NAME = "jibDockerBuild";
+  public static final String SKAFFOLD_FILES_TASK_NAME = "_jibSkaffoldFiles";
+  public static final String SKAFFOLD_FILES_TASK_V2_NAME = "_jibSkaffoldFilesV2";
+  public static final String SKAFFOLD_INIT_TASK_NAME = "_jibSkaffoldInit";
+  public static final String SKAFFOLD_SYNC_MAP_TASK_NAME = "_jibSkaffoldSyncMap";
+  public static final String SKAFFOLD_CHECK_REQUIRED_VERSION_TASK_NAME =
+      "_skaffoldFailIfJibOutOfDate";
 
-  @VisibleForTesting static final String EXPLODED_WAR_TASK_NAME = "jibExplodedWar";
-
-  static final String CHECK_REQUIRED_VERSION_TASK_NAME = "_skaffoldFailIfJibOutOfDate";
-
-  static final String REQUIRED_VERSION_PROPERTY_NAME = "jib.requiredVersion";
+  public static final String REQUIRED_VERSION_PROPERTY_NAME = "jib.requiredVersion";
 
   /**
    * Collects all project dependencies of the style "compile project(':mylib')" for any kind of
@@ -147,37 +152,49 @@ public class JibPlugin implements Plugin<Project> {
             });
 
     tasks
-        .register(FILES_TASK_NAME, FilesTask.class)
+        .register(SKAFFOLD_FILES_TASK_NAME, FilesTask.class)
         .configure(task -> task.setJibExtension(jibExtension));
     tasks
-        .register(FILES_TASK_V2_NAME, FilesTaskV2.class)
+        .register(SKAFFOLD_FILES_TASK_V2_NAME, FilesTaskV2.class)
         .configure(task -> task.setJibExtension(jibExtension));
     tasks
-        .register(INIT_TASK_NAME, SkaffoldInitTask.class)
+        .register(SKAFFOLD_INIT_TASK_NAME, InitTask.class)
         .configure(task -> task.setJibExtension(jibExtension));
+    TaskProvider<SyncMapTask> syncMapTask =
+        tasks.register(
+            SKAFFOLD_SYNC_MAP_TASK_NAME,
+            SyncMapTask.class,
+            task -> task.setJibExtension(jibExtension));
 
     // A check to catch older versions of Jib.  This can be removed once we are certain people
     // are using Jib 1.3.1 or later.
-    tasks.register(CHECK_REQUIRED_VERSION_TASK_NAME, CheckJibVersionTask.class);
+    tasks.register(SKAFFOLD_CHECK_REQUIRED_VERSION_TASK_NAME, CheckJibVersionTask.class);
 
     project.afterEvaluate(
         projectAfterEvaluation -> {
           try {
             TaskProvider<Task> warTask = TaskCommon.getWarTaskProvider(project);
-            TaskProvider<?> dependsOnTask;
-            if (warTask != null) {
-              // Have all tasks depend on the 'war' task.
-              dependsOnTask = warTask;
+            TaskProvider<Task> bootWarTask = TaskCommon.getBootWarTaskProvider(project);
+            List<TaskProvider<?>> dependsOnTask = new ArrayList<>();
+            if (warTask != null || bootWarTask != null) {
+              // Have all tasks depend on the 'war' and/or 'bootWar' task.
+              if (warTask != null) {
+                dependsOnTask.add(warTask);
+              }
+              if (bootWarTask != null) {
+                dependsOnTask.add(bootWarTask);
+              }
             } else if ("packaged".equals(jibExtension.getContainerizingMode())) {
               // Have all tasks depend on the 'jar' task.
-              dependsOnTask = projectAfterEvaluation.getTasks().named("jar");
+              dependsOnTask.add(projectAfterEvaluation.getTasks().named("jar"));
             } else {
               // Have all tasks depend on the 'classes' task.
-              dependsOnTask = projectAfterEvaluation.getTasks().named("classes");
+              dependsOnTask.add(projectAfterEvaluation.getTasks().named("classes"));
             }
             buildImageTask.configure(task -> task.dependsOn(dependsOnTask));
             buildDockerTask.configure(task -> task.dependsOn(dependsOnTask));
             buildTarTask.configure(task -> task.dependsOn(dependsOnTask));
+            syncMapTask.configure(task -> task.dependsOn(dependsOnTask));
 
             // Find project dependencies and add a dependency to their assemble task. We make sure
             // to only add the dependency after BasePlugin is evaluated as otherwise the assemble
