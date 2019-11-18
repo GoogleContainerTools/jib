@@ -48,8 +48,6 @@ public class TaskCommonTest {
 
   @Before
   public void setUp() {
-    System.clearProperty("jib.extraDirectory.path");
-    System.clearProperty("jib.extraDirectory.permissions");
     System.clearProperty("jib.extraDirectories.paths");
     System.clearProperty("jib.extraDirectories.permissions");
     Mockito.when(jibExtension.getContainer()).thenReturn(containerParameters);
@@ -59,75 +57,6 @@ public class TaskCommonTest {
   public void testCheckDeprecatedUsage_default() {
     TaskCommon.checkDeprecatedUsage(jibExtension, logger);
     Mockito.verify(logger, Mockito.never()).warn(Mockito.anyString());
-  }
-
-  @Test
-  public void testCheckDeprecatedUsage_extraDirectoriesConfigured() {
-    jibExtension.extraDirectoriesConfigured = true;
-    TaskCommon.checkDeprecatedUsage(jibExtension, logger);
-    Mockito.verify(logger, Mockito.never()).warn(Mockito.anyString());
-  }
-
-  @Test
-  public void testCheckDeprecatedUsage_extraDirectoryPathPropertySet() {
-    System.setProperty("jib.extraDirectory.path", "something");
-    TaskCommon.checkDeprecatedUsage(jibExtension, logger);
-    Mockito.verify(logger, Mockito.times(1))
-        .warn(
-            "'jib.extraDirectory', 'jib.extraDirectory.path', and 'jib.extraDirectory.permissions' "
-                + "are deprecated; use 'jib.extraDirectories.paths' and "
-                + "'jib.extraDirectories.permissions'");
-  }
-
-  @Test
-  public void testCheckDeprecatedUsage_extraDirectoryPermissionsPropertySet() {
-    System.setProperty("jib.extraDirectory.permissions", "something");
-    TaskCommon.checkDeprecatedUsage(jibExtension, logger);
-    Mockito.verify(logger, Mockito.times(1))
-        .warn(
-            "'jib.extraDirectory', 'jib.extraDirectory.path', and 'jib.extraDirectory.permissions' "
-                + "are deprecated; use 'jib.extraDirectories.paths' and "
-                + "'jib.extraDirectories.permissions'");
-  }
-
-  @Test
-  public void testCheckDeprecatedUsage_extraDirectoryAndExtraDirectoriesPropertiesSet() {
-    System.setProperty("jib.extraDirectory.path", "something");
-    System.setProperty("jib.extraDirectories.permissions", "something");
-
-    try {
-      TaskCommon.checkDeprecatedUsage(jibExtension, logger);
-      Assert.fail();
-    } catch (IllegalArgumentException ex) {
-      Assert.assertEquals(
-          "You cannot configure both 'jib.extraDirectory.path' and 'jib.extraDirectories.paths'",
-          ex.getMessage());
-    }
-  }
-
-  @Test
-  public void testCheckDeprecatedUsage_extraDirectoryConfigured() {
-    jibExtension.extraDirectoryConfigured = true;
-    TaskCommon.checkDeprecatedUsage(jibExtension, logger);
-    Mockito.verify(logger, Mockito.times(1))
-        .warn(
-            "'jib.extraDirectory', 'jib.extraDirectory.path', and 'jib.extraDirectory.permissions' "
-                + "are deprecated; use 'jib.extraDirectories.paths' and "
-                + "'jib.extraDirectories.permissions'");
-  }
-
-  @Test
-  public void testCheckDeprecatedUsage_extraDirectoryAndExtraDirectoriesConfigured() {
-    jibExtension.extraDirectoryConfigured = true;
-    jibExtension.extraDirectoriesConfigured = true;
-    try {
-      TaskCommon.checkDeprecatedUsage(jibExtension, logger);
-      Assert.fail();
-    } catch (IllegalArgumentException ex) {
-      Assert.assertEquals(
-          "You cannot configure both 'jib.extraDirectory.path' and 'jib.extraDirectories.paths'",
-          ex.getMessage());
-    }
   }
 
   @Test

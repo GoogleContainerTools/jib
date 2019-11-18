@@ -7,6 +7,8 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
+- Removed deprecated `jib.extraDirectory` configuration in favor of `jib.extraDirectories`. ([#1691](https://github.com/GoogleContainerTools/jib/issues/1691))
+
 ### Fixed
 
 ## 1.8.0

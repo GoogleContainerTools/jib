@@ -34,15 +34,13 @@ import org.gradle.api.tasks.Internal;
 public class ExtraDirectoriesParameters {
 
   private final Project project;
-  @Deprecated private final JibExtension jibExtension;
 
   private List<Path> paths;
   private Map<String, String> permissions = Collections.emptyMap();
 
   @Inject
-  public ExtraDirectoriesParameters(Project project, JibExtension jibExtension) {
+  public ExtraDirectoriesParameters(Project project) {
     this.project = project;
-    this.jibExtension = jibExtension;
     paths =
         Collections.singletonList(
             project.getProjectDir().toPath().resolve("src").resolve("main").resolve("jib"));
@@ -59,9 +57,7 @@ public class ExtraDirectoriesParameters {
   public List<Path> getPaths() {
     // Gradle warns about @Input annotations on File objects, so we have to expose a getter for a
     // String to make them go away.
-    String deprecatedProperty = System.getProperty(PropertyNames.EXTRA_DIRECTORY_PATH);
-    String newProperty = System.getProperty(PropertyNames.EXTRA_DIRECTORIES_PATHS);
-    String property = newProperty != null ? newProperty : deprecatedProperty;
+    String property = System.getProperty(PropertyNames.EXTRA_DIRECTORIES_PATHS);
     if (property != null) {
       List<String> pathStrings = ConfigurationPropertyValidator.parseListProperty(property);
       return pathStrings.stream().map(Paths::get).collect(Collectors.toList());
@@ -76,15 +72,8 @@ public class ExtraDirectoriesParameters {
    * @param paths paths to set.
    */
   public void setPaths(Object paths) {
-    jibExtension.extraDirectoriesConfigured = true;
     this.paths =
         project.files(paths).getFiles().stream().map(File::toPath).collect(Collectors.toList());
-  }
-
-  @Deprecated
-  public void setPath(File path) {
-    jibExtension.extraDirectoryConfigured = true;
-    this.paths = Collections.singletonList(path.toPath());
   }
 
   /**
@@ -96,9 +85,7 @@ public class ExtraDirectoriesParameters {
    */
   @Input
   public Map<String, String> getPermissions() {
-    String deprecatedProperty = System.getProperty(PropertyNames.EXTRA_DIRECTORY_PERMISSIONS);
-    String newProperty = System.getProperty(PropertyNames.EXTRA_DIRECTORIES_PERMISSIONS);
-    String property = newProperty != null ? newProperty : deprecatedProperty;
+    String property = System.getProperty(PropertyNames.EXTRA_DIRECTORIES_PERMISSIONS);
     if (property != null) {
       return ConfigurationPropertyValidator.parseMapProperty(property);
     }

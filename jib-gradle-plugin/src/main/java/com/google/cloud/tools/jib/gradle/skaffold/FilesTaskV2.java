@@ -103,7 +103,8 @@ public class FilesTaskV2 extends DefaultTask {
     }
 
     // Print files
-    System.out.println("\nBEGIN JIB JSON");
+    System.out.println();
+    System.out.println("BEGIN JIB JSON");
     System.out.println(skaffoldFilesOutput.getJsonString());
   }
 

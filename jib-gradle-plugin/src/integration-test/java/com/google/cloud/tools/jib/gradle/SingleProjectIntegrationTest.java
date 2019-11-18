@@ -127,23 +127,6 @@ public class SingleProjectIntegrationTest {
     return DescriptorDigest.fromDigest(digest).toString();
   }
 
-  private static void assertExtraDirectoryDeprecationWarning(String buildFile)
-      throws DigestException, IOException, InterruptedException {
-    String targetImage = "localhost:6000/simpleimage:gradle" + System.nanoTime();
-    BuildResult buildResult =
-        JibRunHelper.buildToDockerDaemon(simpleTestProject, targetImage, buildFile);
-    Assert.assertEquals(
-        "Hello, world. \n1970-01-01T00:00:01Z\nrw-r--r--\nrw-r--r--\nfoo\ncat\n"
-            + "1970-01-01T00:00:01Z\n1970-01-01T00:00:01Z\n",
-        new Command("docker", "run", "--rm", targetImage).run());
-    Assert.assertThat(
-        buildResult.getOutput(),
-        CoreMatchers.containsString(
-            "'jib.extraDirectory', 'jib.extraDirectory.path', and 'jib.extraDirectory.permissions' "
-                + "are deprecated; use 'jib.extraDirectories.paths' and "
-                + "'jib.extraDirectories.permissions'"));
-  }
-
   private static String buildAndRunComplex(
       String imageReference, String username, String password, LocalRegistry targetRegistry)
       throws IOException, InterruptedException {
@@ -316,24 +299,6 @@ public class SingleProjectIntegrationTest {
                   + "parameter, or set targetCompatibility = 8 or below in your build "
                   + "configuration"));
     }
-  }
-
-  @Test
-  public void testDockerDaemon_simple_deprecatedExtraDirectory()
-      throws DigestException, IOException, InterruptedException {
-    assertExtraDirectoryDeprecationWarning("build-extra-dir-deprecated.gradle");
-  }
-
-  @Test
-  public void testDockerDaemon_simple_deprecatedExtraDirectory2()
-      throws DigestException, IOException, InterruptedException {
-    assertExtraDirectoryDeprecationWarning("build-extra-dir-deprecated2.gradle");
-  }
-
-  @Test
-  public void testDockerDaemon_simple_deprecatedExtraDirectory3()
-      throws DigestException, IOException, InterruptedException {
-    assertExtraDirectoryDeprecationWarning("build-extra-dir-deprecated3.gradle");
   }
 
   @Test
