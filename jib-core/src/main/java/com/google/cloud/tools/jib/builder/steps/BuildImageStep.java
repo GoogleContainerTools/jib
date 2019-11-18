@@ -20,7 +20,7 @@ import com.google.cloud.tools.jib.ProjectInfo;
 import com.google.cloud.tools.jib.api.LogEvent;
 import com.google.cloud.tools.jib.builder.ProgressEventDispatcher;
 import com.google.cloud.tools.jib.builder.TimerEventDispatcher;
-import com.google.cloud.tools.jib.configuration.BuildConfiguration;
+import com.google.cloud.tools.jib.configuration.BuildContext;
 import com.google.cloud.tools.jib.configuration.ContainerConfiguration;
 import com.google.cloud.tools.jib.image.Image;
 import com.google.cloud.tools.jib.image.LayerPropertyNotFoundException;
@@ -36,19 +36,19 @@ class BuildImageStep implements Callable<Image> {
 
   private static final String DESCRIPTION = "Building container configuration";
 
-  private final BuildConfiguration buildConfiguration;
+  private final BuildContext buildContext;
   private final ProgressEventDispatcher.Factory progressEventDispatcherFactory;
   private final Image baseImage;
   private final List<PreparedLayer> baseImageLayers;
   private final List<PreparedLayer> applicationLayers;
 
   BuildImageStep(
-      BuildConfiguration buildConfiguration,
+      BuildContext buildContext,
       ProgressEventDispatcher.Factory progressEventDispatcherFactory,
       Image baseImage,
       List<PreparedLayer> baseImageLayers,
       List<PreparedLayer> applicationLayers) {
-    this.buildConfiguration = buildConfiguration;
+    this.buildContext = buildContext;
     this.progressEventDispatcherFactory = progressEventDispatcherFactory;
     this.baseImage = baseImage;
     this.baseImageLayers = baseImageLayers;
@@ -60,11 +60,10 @@ class BuildImageStep implements Callable<Image> {
     try (ProgressEventDispatcher ignored =
             progressEventDispatcherFactory.create("building image format", 1);
         TimerEventDispatcher ignored2 =
-            new TimerEventDispatcher(buildConfiguration.getEventHandlers(), DESCRIPTION)) {
+            new TimerEventDispatcher(buildContext.getEventHandlers(), DESCRIPTION)) {
       // Constructs the image.
-      Image.Builder imageBuilder = Image.builder(buildConfiguration.getTargetFormat());
-      ContainerConfiguration containerConfiguration =
-          buildConfiguration.getContainerConfiguration();
+      Image.Builder imageBuilder = Image.builder(buildContext.getTargetFormat());
+      ContainerConfiguration containerConfiguration = buildContext.getContainerConfiguration();
 
       // Base image layers
       baseImageLayers.stream().forEach(imageBuilder::addLayer);
@@ -108,7 +107,7 @@ class BuildImageStep implements Callable<Image> {
                 HistoryEntry.builder()
                     .setCreationTimestamp(layerCreationTime)
                     .setAuthor("Jib")
-                    .setCreatedBy(buildConfiguration.getToolName() + ":" + ProjectInfo.VERSION)
+                    .setCreatedBy(buildContext.getToolName() + ":" + ProjectInfo.VERSION)
                     .setComment(applicationLayer.getName())
                     .build());
       }
@@ -153,8 +152,8 @@ class BuildImageStep implements Callable<Image> {
     if (entrypointToUse != null) {
       String logSuffix = shouldInherit ? " (inherited from base image)" : "";
       String message = "Container entrypoint set to " + entrypointToUse + logSuffix;
-      buildConfiguration.getEventHandlers().dispatch(LogEvent.lifecycle(""));
-      buildConfiguration.getEventHandlers().dispatch(LogEvent.lifecycle(message));
+      buildContext.getEventHandlers().dispatch(LogEvent.lifecycle(""));
+      buildContext.getEventHandlers().dispatch(LogEvent.lifecycle(message));
     }
 
     return entrypointToUse;
@@ -187,7 +186,7 @@ class BuildImageStep implements Callable<Image> {
     if (programArgumentsToUse != null) {
       String logSuffix = shouldInherit ? " (inherited from base image)" : "";
       String message = "Container program arguments set to " + programArgumentsToUse + logSuffix;
-      buildConfiguration.getEventHandlers().dispatch(LogEvent.lifecycle(message));
+      buildContext.getEventHandlers().dispatch(LogEvent.lifecycle(message));
     }
 
     return programArgumentsToUse;

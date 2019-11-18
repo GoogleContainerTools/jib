@@ -282,7 +282,7 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
 
   @Component protected SettingsDecrypter settingsDecrypter;
 
-  MavenSession getSession() {
+  protected MavenSession getSession() {
     return Preconditions.checkNotNull(session);
   }
 

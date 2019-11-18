@@ -21,7 +21,7 @@ import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.builder.ProgressEventDispatcher;
 import com.google.cloud.tools.jib.builder.steps.LocalBaseImageSteps.LocalImage;
 import com.google.cloud.tools.jib.builder.steps.PullBaseImageStep.ImageAndAuthorization;
-import com.google.cloud.tools.jib.configuration.BuildConfiguration;
+import com.google.cloud.tools.jib.configuration.BuildContext;
 import com.google.cloud.tools.jib.configuration.ImageConfiguration;
 import com.google.cloud.tools.jib.docker.DockerClient;
 import com.google.cloud.tools.jib.filesystem.TempDirectoryProvider;
@@ -77,16 +77,16 @@ public class StepsRunner {
   /**
    * Starts building the steps to run.
    *
-   * @param buildConfiguration the {@link BuildConfiguration}
+   * @param buildContext the {@link BuildContext}
    * @return a new {@link StepsRunner}
    */
-  public static StepsRunner begin(BuildConfiguration buildConfiguration) {
+  public static StepsRunner begin(BuildContext buildContext) {
     ExecutorService executorService =
         JibSystemProperties.serializeExecution()
             ? MoreExecutors.newDirectExecutorService()
-            : buildConfiguration.getExecutorService();
+            : buildContext.getExecutorService();
 
-    return new StepsRunner(MoreExecutors.listeningDecorator(executorService), buildConfiguration);
+    return new StepsRunner(MoreExecutors.listeningDecorator(executorService), buildContext);
   }
 
   private static <E> List<E> realizeFutures(List<Future<E>> futures)
@@ -101,7 +101,7 @@ public class StepsRunner {
   private final StepResults results = new StepResults();
 
   private final ExecutorService executorService;
-  private final BuildConfiguration buildConfiguration;
+  private final BuildContext buildContext;
   private final TempDirectoryProvider tempDirectoryProvider = new TempDirectoryProvider();
 
   // We save steps to run by wrapping each step into a Runnable, only because of the unfortunate
@@ -116,10 +116,9 @@ public class StepsRunner {
   @Nullable private String rootProgressDescription;
   @Nullable private ProgressEventDispatcher rootProgressDispatcher;
 
-  private StepsRunner(
-      ListeningExecutorService executorService, BuildConfiguration buildConfiguration) {
+  private StepsRunner(ListeningExecutorService executorService, BuildContext buildContext) {
     this.executorService = executorService;
-    this.buildConfiguration = buildConfiguration;
+    this.buildContext = buildContext;
   }
 
   public StepsRunner dockerLoadSteps(DockerClient dockerClient) {
@@ -148,7 +147,7 @@ public class StepsRunner {
 
   public StepsRunner registryPushSteps() {
     rootProgressDescription = "building image to registry";
-    boolean layersRequiredLocally = buildConfiguration.getAlwaysCacheBaseImage();
+    boolean layersRequiredLocally = buildContext.getAlwaysCacheBaseImage();
 
     stepsToRun.add(this::retrieveTargetRegistryCredentials);
     stepsToRun.add(this::authenticatePush);
@@ -170,7 +169,7 @@ public class StepsRunner {
 
     try (ProgressEventDispatcher progressEventDispatcher =
         ProgressEventDispatcher.newRoot(
-            buildConfiguration.getEventHandlers(), rootProgressDescription, stepsToRun.size())) {
+            buildContext.getEventHandlers(), rootProgressDescription, stepsToRun.size())) {
       rootProgressDispatcher = progressEventDispatcher;
 
       stepsToRun.forEach(Runnable::run);
@@ -189,7 +188,7 @@ public class StepsRunner {
   }
 
   private void addRetrievalSteps(boolean layersRequiredLocally) {
-    ImageConfiguration baseImageConfiguration = buildConfiguration.getBaseImageConfiguration();
+    ImageConfiguration baseImageConfiguration = buildContext.getBaseImageConfiguration();
 
     if (baseImageConfiguration.getTarPath().isPresent()) {
       // If tarPath is present, a TarImage was used
@@ -213,7 +212,7 @@ public class StepsRunner {
     results.targetRegistryCredentials =
         executorService.submit(
             RetrieveRegistryCredentialsStep.forTargetImage(
-                buildConfiguration, childProgressDispatcherFactory));
+                buildContext, childProgressDispatcherFactory));
   }
 
   private void authenticatePush() {
@@ -224,7 +223,7 @@ public class StepsRunner {
         executorService.submit(
             () ->
                 new AuthenticatePushStep(
-                        buildConfiguration,
+                        buildContext,
                         childProgressDispatcherFactory,
                         results.targetRegistryCredentials.get().orElse(null))
                     .call());
@@ -232,46 +231,42 @@ public class StepsRunner {
 
   private void saveDocker() {
     Optional<DockerClient> dockerClient =
-        buildConfiguration.getBaseImageConfiguration().getDockerClient();
+        buildContext.getBaseImageConfiguration().getDockerClient();
     Preconditions.checkArgument(dockerClient.isPresent());
     ProgressEventDispatcher.Factory childProgressDispatcherFactory =
         Verify.verifyNotNull(rootProgressDispatcher).newChildProducer();
     assignLocalImageResult(
         executorService.submit(
-            LocalBaseImageSteps.retrieveDockerDaemonImageStep(
-                executorService,
-                buildConfiguration,
+            LocalBaseImageSteps.retrieveDockerDaemonLayersStep(
+                buildContext,
                 childProgressDispatcherFactory,
-                dockerClient.get())));
+                dockerClient.get(),
+                tempDirectoryProvider)));
   }
 
   private void extractTar() {
-    Optional<Path> tarPath = buildConfiguration.getBaseImageConfiguration().getTarPath();
+    Optional<Path> tarPath = buildContext.getBaseImageConfiguration().getTarPath();
     Preconditions.checkArgument(tarPath.isPresent());
     ProgressEventDispatcher.Factory childProgressDispatcherFactory =
         Verify.verifyNotNull(rootProgressDispatcher).newChildProducer();
     assignLocalImageResult(
         executorService.submit(
-            LocalBaseImageSteps.retrieveTarImageStep(
-                executorService,
-                buildConfiguration,
+            LocalBaseImageSteps.retrieveTarLayersStep(
+                buildContext,
                 childProgressDispatcherFactory,
-                tarPath.get())));
+                tarPath.get(),
+                tempDirectoryProvider)));
   }
 
-  private void assignLocalImageResult(Future<LocalImage> localImageFuture) {
+  private void assignLocalImageResult(Future<LocalImage> localImage) {
+    results.baseImageLayers = executorService.submit(() -> localImage.get().layers);
     results.baseImageAndAuth =
         executorService.submit(
-            () -> new ImageAndAuthorization(localImageFuture.get().baseImage, null));
-    results.baseImageLayers =
-        executorService.submit(
             () ->
-                localImageFuture
-                    .get()
-                    .layers
-                    .stream()
-                    .map(Futures::immediateFuture)
-                    .collect(Collectors.toList()));
+                LocalBaseImageSteps.returnImageAndAuthorizationStep(
+                        realizeFutures(results.baseImageLayers.get()),
+                        localImage.get().configurationTemplate)
+                    .call());
   }
 
   private void pullBaseImage() {
@@ -279,8 +274,7 @@ public class StepsRunner {
         Verify.verifyNotNull(rootProgressDispatcher).newChildProducer();
 
     results.baseImageAndAuth =
-        executorService.submit(
-            new PullBaseImageStep(buildConfiguration, childProgressDispatcherFactory));
+        executorService.submit(new PullBaseImageStep(buildContext, childProgressDispatcherFactory));
   }
 
   private void obtainBaseImageLayers(boolean layersRequiredLocally) {
@@ -293,11 +287,11 @@ public class StepsRunner {
                 scheduleCallables(
                     layersRequiredLocally
                         ? ObtainBaseImageLayerStep.makeListForForcedDownload(
-                            buildConfiguration,
+                            buildContext,
                             childProgressDispatcherFactory,
                             results.baseImageAndAuth.get())
                         : ObtainBaseImageLayerStep.makeListForSelectiveDownload(
-                            buildConfiguration,
+                            buildContext,
                             childProgressDispatcherFactory,
                             results.baseImageAndAuth.get(),
                             results.pushAuthorization.get().orElse(null))));
@@ -312,7 +306,7 @@ public class StepsRunner {
             () ->
                 scheduleCallables(
                     PushLayerStep.makeList(
-                        buildConfiguration,
+                        buildContext,
                         childProgressDispatcherFactory,
                         results.pushAuthorization.get().orElse(null),
                         results.baseImageLayers.get())));
@@ -325,7 +319,7 @@ public class StepsRunner {
     results.applicationLayers =
         scheduleCallables(
             BuildAndCacheApplicationLayerStep.makeList(
-                buildConfiguration, childProgressDispatcherFactory));
+                buildContext, childProgressDispatcherFactory));
   }
 
   private void buildImage() {
@@ -336,7 +330,7 @@ public class StepsRunner {
         executorService.submit(
             () ->
                 new BuildImageStep(
-                        buildConfiguration,
+                        buildContext,
                         childProgressDispatcherFactory,
                         results.baseImageAndAuth.get().getImage(),
                         realizeFutures(results.baseImageLayers.get()),
@@ -352,7 +346,7 @@ public class StepsRunner {
         executorService.submit(
             () ->
                 new PushContainerConfigurationStep(
-                        buildConfiguration,
+                        buildContext,
                         childProgressDispatcherFactory,
                         results.pushAuthorization.get().orElse(null),
                         results.builtImage.get())
@@ -368,7 +362,7 @@ public class StepsRunner {
             () ->
                 scheduleCallables(
                     PushLayerStep.makeList(
-                        buildConfiguration,
+                        buildContext,
                         childProgressDispatcherFactory,
                         results.pushAuthorization.get().orElse(null),
                         Verify.verifyNotNull(results.applicationLayers))));
@@ -387,7 +381,7 @@ public class StepsRunner {
               List<Future<BuildResult>> manifestPushResults =
                   scheduleCallables(
                       PushImageStep.makeList(
-                          buildConfiguration,
+                          buildContext,
                           childProgressDispatcherFactory,
                           results.pushAuthorization.get().orElse(null),
                           results.containerConfigurationPushResult.get(),
@@ -406,7 +400,7 @@ public class StepsRunner {
         executorService.submit(
             () ->
                 new LoadDockerStep(
-                        buildConfiguration,
+                        buildContext,
                         childProgressDispatcherFactory,
                         dockerClient,
                         results.builtImage.get())
@@ -421,7 +415,7 @@ public class StepsRunner {
         executorService.submit(
             () ->
                 new WriteTarFileStep(
-                        buildConfiguration,
+                        buildContext,
                         childProgressDispatcherFactory,
                         outputPath,
                         results.builtImage.get())

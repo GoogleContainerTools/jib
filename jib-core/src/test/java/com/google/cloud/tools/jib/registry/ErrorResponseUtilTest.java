@@ -1,22 +1,22 @@
 /*
- * Copyright 2018 Google Inc.
+ * Copyright 2018 Google LLC.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
  */
 
 package com.google.cloud.tools.jib.registry;
 
-import com.google.api.client.http.HttpResponseException;
+import com.google.cloud.tools.jib.http.ResponseException;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -28,10 +28,10 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class ErrorResponseUtilTest {
 
-  @Mock HttpResponseException responseException;
+  @Mock private ResponseException responseException;
 
   @Test
-  public void testGetErrorCode_knownErrorCode() throws HttpResponseException {
+  public void testGetErrorCode_knownErrorCode() throws ResponseException {
     Mockito.when(responseException.getContent())
         .thenReturn(
             "{\"errors\":[{\"code\":\"MANIFEST_INVALID\",\"message\":\"manifest invalid\",\"detail\":{}}]}");
@@ -49,7 +49,7 @@ public class ErrorResponseUtilTest {
     try {
       ErrorResponseUtil.getErrorCode(responseException);
       Assert.fail();
-    } catch (HttpResponseException ex) {
+    } catch (ResponseException ex) {
       Assert.assertSame(responseException, ex);
     }
   }
@@ -66,7 +66,7 @@ public class ErrorResponseUtilTest {
     try {
       ErrorResponseUtil.getErrorCode(responseException);
       Assert.fail();
-    } catch (HttpResponseException ex) {
+    } catch (ResponseException ex) {
       Assert.assertSame(responseException, ex);
     }
   }
@@ -79,7 +79,7 @@ public class ErrorResponseUtilTest {
     try {
       ErrorResponseUtil.getErrorCode(responseException);
       Assert.fail();
-    } catch (HttpResponseException ex) {
+    } catch (ResponseException ex) {
       Assert.assertSame(responseException, ex);
     }
   }

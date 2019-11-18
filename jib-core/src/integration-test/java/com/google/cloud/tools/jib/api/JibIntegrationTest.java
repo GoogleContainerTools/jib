@@ -337,11 +337,13 @@ public class JibIntegrationTest {
             .setAllowInsecureRegistries(true);
 
     ExecutorService executorService = Executors.newCachedThreadPool();
-    containerizer.setExecutorService(executorService);
-    Jib.from("busybox").setEntrypoint("echo", "Hello World").containerize(containerizer);
-    Assert.assertFalse(executorService.isShutdown());
-
-    executorService.shutdown();
+    try {
+      containerizer.setExecutorService(executorService);
+      Jib.from("busybox").setEntrypoint("echo", "Hello World").containerize(containerizer);
+      Assert.assertFalse(executorService.isShutdown());
+    } finally {
+      executorService.shutdown();
+    }
   }
 
   @Test

@@ -19,7 +19,7 @@ package com.google.cloud.tools.jib.builder.steps;
 import com.google.cloud.tools.jib.api.LogEvent;
 import com.google.cloud.tools.jib.builder.ProgressEventDispatcher;
 import com.google.cloud.tools.jib.builder.TimerEventDispatcher;
-import com.google.cloud.tools.jib.configuration.BuildConfiguration;
+import com.google.cloud.tools.jib.configuration.BuildContext;
 import com.google.cloud.tools.jib.docker.DockerClient;
 import com.google.cloud.tools.jib.docker.ImageTarball;
 import com.google.cloud.tools.jib.event.EventHandlers;
@@ -31,18 +31,18 @@ import java.util.concurrent.Callable;
 /** Adds image layers to a tarball and loads into Docker daemon. */
 class LoadDockerStep implements Callable<BuildResult> {
 
-  private final BuildConfiguration buildConfiguration;
+  private final BuildContext buildContext;
   private final ProgressEventDispatcher.Factory progressEventDispatcherFactory;
 
   private final DockerClient dockerClient;
   private final Image builtImage;
 
   LoadDockerStep(
-      BuildConfiguration buildConfiguration,
+      BuildContext buildContext,
       ProgressEventDispatcher.Factory progressEventDispatcherFactory,
       DockerClient dockerClient,
       Image builtImage) {
-    this.buildConfiguration = buildConfiguration;
+    this.buildContext = buildContext;
     this.progressEventDispatcherFactory = progressEventDispatcherFactory;
     this.dockerClient = dockerClient;
     this.builtImage = builtImage;
@@ -50,15 +50,15 @@ class LoadDockerStep implements Callable<BuildResult> {
 
   @Override
   public BuildResult call() throws InterruptedException, IOException {
-    EventHandlers eventHandlers = buildConfiguration.getEventHandlers();
+    EventHandlers eventHandlers = buildContext.getEventHandlers();
     try (TimerEventDispatcher ignored =
         new TimerEventDispatcher(eventHandlers, "Loading to Docker daemon")) {
       eventHandlers.dispatch(LogEvent.progress("Loading to Docker daemon..."));
       ImageTarball imageTarball =
           new ImageTarball(
               builtImage,
-              buildConfiguration.getTargetImageConfiguration().getImage(),
-              buildConfiguration.getAllTargetImageTags());
+              buildContext.getTargetImageConfiguration().getImage(),
+              buildContext.getAllTargetImageTags());
 
       // Note: The progress reported here is not entirely accurate. The total allocation units is
       // the size of the layers, but the progress being reported includes the config and manifest
@@ -73,7 +73,7 @@ class LoadDockerStep implements Callable<BuildResult> {
         eventHandlers.dispatch(
             LogEvent.debug(dockerClient.load(imageTarball, throttledProgressReporter)));
 
-        return BuildResult.fromImage(builtImage, buildConfiguration.getTargetFormat());
+        return BuildResult.fromImage(builtImage, buildContext.getTargetFormat());
       }
     }
   }

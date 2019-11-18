@@ -23,6 +23,7 @@ import com.google.cloud.tools.jib.api.DescriptorDigest;
 import com.google.cloud.tools.jib.hash.Digests;
 import com.google.cloud.tools.jib.http.BlobHttpContent;
 import com.google.cloud.tools.jib.http.Response;
+import com.google.cloud.tools.jib.http.ResponseException;
 import com.google.cloud.tools.jib.image.json.ManifestTemplate;
 import com.google.cloud.tools.jib.image.json.OCIManifestTemplate;
 import com.google.cloud.tools.jib.image.json.UnknownManifestFormatException;
@@ -159,5 +160,11 @@ class ManifestPuller<T extends ManifestTemplate>
     }
     throw new UnknownManifestFormatException(
         "Unknown schemaVersion: " + schemaVersion + " - only 1 and 2 are supported");
+  }
+
+  @Override
+  public ManifestAndDigest<T> handleHttpResponseException(ResponseException responseException)
+      throws ResponseException, RegistryErrorException {
+    throw responseException;
   }
 }
