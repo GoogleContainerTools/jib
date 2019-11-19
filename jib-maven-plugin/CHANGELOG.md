@@ -11,6 +11,8 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
+- Fixed `<extraDirectories><permissions>` are ignored if `<paths>` are not defined together. ([#2106](https://github.com/GoogleContainerTools/jib/issues/2160))
+
 ## 1.8.0
 
 ## Changed
