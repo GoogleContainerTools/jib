@@ -9,9 +9,9 @@ please check our Frequently Asked Questions before filing an issue:
 
 **Environment**:
 
-- *Jib version:*
+- *Jib version:* 
 - *Build tool:* <!-- Maven/Gradle, including version -->
-- *OS:*
+- *OS:* 
 
 **Description of the issue**:
 
