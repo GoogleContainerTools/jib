@@ -409,37 +409,6 @@ public class SingleProjectIntegrationTest {
   }
 
   @Test
-  public void testDockerDaemon_timestampDeprecated()
-      throws DigestException, IOException, InterruptedException {
-    Instant beforeBuild = Instant.now();
-    String targetImage = "simpleimage:gradle" + System.nanoTime();
-    BuildResult buildResult =
-        JibRunHelper.buildToDockerDaemon(
-            simpleTestProject, targetImage, "build-usecurrent-deprecated.gradle");
-    JibRunHelper.assertSimpleCreationTimeIsAfter(beforeBuild, targetImage);
-    Assert.assertThat(
-        buildResult.getOutput(),
-        CoreMatchers.containsString(
-            "'jib.container.useCurrentTimestamp' is deprecated; use 'jib.container.creationTime' with the value 'USE_CURRENT_TIMESTAMP' instead"));
-  }
-
-  @Test
-  public void testDockerDaemon_timestampFail()
-      throws InterruptedException, IOException, DigestException {
-    try {
-      String targetImage = "simpleimage:gradle" + System.nanoTime();
-      JibRunHelper.buildToDockerDaemonAndRun(
-          simpleTestProject, targetImage, "build-usecurrent-deprecated2.gradle");
-      Assert.fail();
-    } catch (UnexpectedBuildFailure ex) {
-      Assert.assertThat(
-          ex.getMessage(),
-          CoreMatchers.containsString(
-              "You cannot configure both 'jib.container.useCurrentTimestamp' and 'jib.container.creationTime'"));
-    }
-  }
-
-  @Test
   public void testBuild_dockerClient() throws IOException, InterruptedException, DigestException {
     Assume.assumeFalse(System.getProperty("os.name").startsWith("Windows"));
     new Command(

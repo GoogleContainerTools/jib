@@ -58,8 +58,6 @@ public class BuildImageMojo extends JibPluginConfiguration {
       return;
     }
 
-    MojoCommon.checkUseCurrentTimestampDeprecation(this);
-
     // Validates 'format'.
     if (Arrays.stream(ImageFormat.values()).noneMatch(value -> value.name().equals(getFormat()))) {
       throw new MojoFailureException(

@@ -18,7 +18,6 @@
     <jib.to.image>${_TARGET_IMAGE}</jib.to.image>
     <jib.to.auth.username>${_TARGET_USERNAME}</jib.to.auth.username>
     <jib.to.auth.password>${_TARGET_PASSWORD}</jib.to.auth.password>
-    <jib.container.useCurrentTimestamp>true</jib.container.useCurrentTimestamp>
     <jib.container.args>An argument.</jib.container.args>
     <jib.container.mainClass>com.test.HelloWorld</jib.container.mainClass>
     <jib.container.jvmFlags>-Xms512m,-Xdebug</jib.container.jvmFlags>

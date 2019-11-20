@@ -87,7 +87,6 @@ public class BuildDockerTask extends DefaultTask implements JibTask {
           HelpfulSuggestions.forDockerNotInstalled(HELPFUL_SUGGESTIONS_PREFIX));
     }
 
-    TaskCommon.checkDeprecatedUsage(jibExtension, getLogger());
     TaskCommon.disableHttpLogging();
     TempDirectoryProvider tempDirectoryProvider = new TempDirectoryProvider();
 

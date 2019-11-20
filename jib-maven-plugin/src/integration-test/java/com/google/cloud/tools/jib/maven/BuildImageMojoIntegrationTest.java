@@ -591,33 +591,6 @@ public class BuildImageMojoIntegrationTest {
   }
 
   @Test
-  public void testDockerDaemon_timestampDeprecated()
-      throws IOException, VerificationException, InterruptedException {
-    Instant before = Instant.now();
-    String targetImage = getTestImageReference("simpleimage:gradle" + System.nanoTime());
-    build(simpleTestProject.getProjectRoot(), targetImage, "pom-usecurrent-deprecated.xml", false)
-        .verifyTextInLog(
-            "<container><useCurrentTimestamp> is deprecated; use <container><creationTime> with the value USE_CURRENT_TIMESTAMP instead");
-    new Command("docker", "pull", targetImage).run();
-    assertCreationTimeIsAfter(before, targetImage);
-  }
-
-  @Test
-  public void testDockerDaemon_timestampFail() throws IOException {
-    try {
-      String targetImage = getTestImageReference("simpleimage:gradle" + System.nanoTime());
-      build(
-          simpleTestProject.getProjectRoot(), targetImage, "pom-usecurrent-deprecated2.xml", false);
-      Assert.fail();
-    } catch (VerificationException ex) {
-      Assert.assertThat(
-          ex.getMessage(),
-          CoreMatchers.containsString(
-              "You cannot configure both <container><useCurrentTimestamp> and <container><creationTime>"));
-    }
-  }
-
-  @Test
   public void testExecute_complex_sameFromAndToRegistry()
       throws IOException, InterruptedException, VerificationException {
     String targetImage = "localhost:5000/compleximage:maven" + System.nanoTime();

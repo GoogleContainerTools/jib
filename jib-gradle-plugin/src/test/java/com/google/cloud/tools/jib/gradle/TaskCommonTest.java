@@ -18,7 +18,6 @@ package com.google.cloud.tools.jib.gradle;
 
 import org.gradle.api.Project;
 import org.gradle.api.Task;
-import org.gradle.api.logging.Logger;
 import org.gradle.api.plugins.JavaPlugin;
 import org.gradle.api.plugins.WarPlugin;
 import org.gradle.api.tasks.TaskProvider;
@@ -30,8 +29,6 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.contrib.java.lang.system.RestoreSystemProperties;
 import org.junit.runner.RunWith;
-import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.boot.gradle.plugin.SpringBootPlugin;
 import org.springframework.boot.gradle.tasks.bundling.BootWar;
@@ -42,47 +39,10 @@ public class TaskCommonTest {
 
   @Rule public final RestoreSystemProperties systemPropertyRestorer = new RestoreSystemProperties();
 
-  @Mock private JibExtension jibExtension;
-  @Mock private ContainerParameters containerParameters;
-  @Mock private Logger logger;
-
   @Before
   public void setUp() {
     System.clearProperty("jib.extraDirectories.paths");
     System.clearProperty("jib.extraDirectories.permissions");
-    Mockito.when(jibExtension.getContainer()).thenReturn(containerParameters);
-  }
-
-  @Test
-  public void testCheckDeprecatedUsage_default() {
-    TaskCommon.checkDeprecatedUsage(jibExtension, logger);
-    Mockito.verify(logger, Mockito.never()).warn(Mockito.anyString());
-  }
-
-  @Test
-  public void testCheckDeprecatedUsage_useCurrentTimestampConfigured() {
-    Mockito.when(containerParameters.getUseCurrentTimestamp()).thenReturn(true);
-    Mockito.when(containerParameters.getCreationTime()).thenReturn("EPOCH");
-    TaskCommon.checkDeprecatedUsage(jibExtension, logger);
-    Mockito.verify(logger)
-        .warn(
-            "'jib.container.useCurrentTimestamp' is deprecated; use 'jib.container.creationTime' "
-                + "with the value 'USE_CURRENT_TIMESTAMP' instead");
-  }
-
-  @Test
-  public void testCheckDeprecatedUsage_useCurrentTimestampAndCreationTimeConfigured() {
-    Mockito.when(containerParameters.getUseCurrentTimestamp()).thenReturn(true);
-    Mockito.when(containerParameters.getCreationTime()).thenReturn("USE_CURRENT_TIMESTAMP");
-    try {
-      TaskCommon.checkDeprecatedUsage(jibExtension, logger);
-      Assert.fail();
-    } catch (IllegalArgumentException ex) {
-      Assert.assertEquals(
-          "You cannot configure both 'jib.container.useCurrentTimestamp' and "
-              + "'jib.container.creationTime'",
-          ex.getMessage());
-    }
   }
 
   @Test

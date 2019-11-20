@@ -9,6 +9,7 @@ All notable changes to this project will be documented in this file.
 
 - Removed `jibDockerBuild.dockerClient` in favor of `jib.dockerClient`. ([#1983](https://github.com/GoogleContainerTools/jib/issues/1983))
 - Removed deprecated `jib.extraDirectory` configuration in favor of `jib.extraDirectories`. ([#1691](https://github.com/GoogleContainerTools/jib/issues/1691))
+- Removed deprecated `jib.container.useCurrentTimestamp` configuration in favor of `jib.container.creationTime` with `USE_CURRENT_TIMESTAMP`. ([#1897](https://github.com/GoogleContainerTools/jib/issues/1897))
 
 ### Fixed
 

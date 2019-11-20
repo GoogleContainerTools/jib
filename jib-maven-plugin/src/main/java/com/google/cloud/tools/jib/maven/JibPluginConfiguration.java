@@ -157,8 +157,6 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
 
     // Note: `entrypoint` and `args` are @Nullable to handle inheriting values from the base image
 
-    @Parameter private boolean useCurrentTimestamp = false;
-
     @Nullable @Parameter private List<String> entrypoint;
 
     @Parameter private List<String> jvmFlags = Collections.emptyList();
@@ -352,20 +350,6 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
   AuthConfiguration getTargetImageAuth() {
     // System/pom properties for auth are handled in ConfigurationPropertyValidator
     return to.auth;
-  }
-
-  /**
-   * Gets whether or not to use the current timestamp for the container build.
-   *
-   * @return {@code true} if the build should use the current timestamp, {@code false} if not
-   */
-  @Deprecated
-  boolean getUseCurrentTimestamp() {
-    String property = getProperty(PropertyNames.CONTAINER_USE_CURRENT_TIMESTAMP);
-    if (property != null) {
-      return Boolean.parseBoolean(property);
-    }
-    return container.useCurrentTimestamp;
   }
 
   /**

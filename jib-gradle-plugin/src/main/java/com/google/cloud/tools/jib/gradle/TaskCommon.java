@@ -26,7 +26,6 @@ import javax.annotation.Nullable;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
 import org.gradle.api.UnknownTaskException;
-import org.gradle.api.logging.Logger;
 import org.gradle.api.plugins.WarPlugin;
 import org.gradle.api.tasks.TaskProvider;
 import org.gradle.internal.logging.events.LogEvent;
@@ -72,20 +71,6 @@ class TaskCommon {
 
     // Disables Google HTTP client logging.
     java.util.logging.Logger.getLogger(HttpTransport.class.getName()).setLevel(Level.OFF);
-  }
-
-  @Deprecated
-  static void checkDeprecatedUsage(JibExtension jibExtension, Logger logger) {
-    if (jibExtension.getContainer().getUseCurrentTimestamp()) {
-      if (!jibExtension.getContainer().getCreationTime().equals("EPOCH")) {
-        throw new IllegalArgumentException(
-            "You cannot configure both 'jib.container.useCurrentTimestamp' and "
-                + "'jib.container.creationTime'");
-      }
-      logger.warn(
-          "'jib.container.useCurrentTimestamp' is deprecated; use 'jib.container.creationTime' "
-              + "with the value 'USE_CURRENT_TIMESTAMP' instead");
-    }
   }
 
   /**
