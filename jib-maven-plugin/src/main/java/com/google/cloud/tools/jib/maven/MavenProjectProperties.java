@@ -444,10 +444,7 @@ public class MavenProjectProperties implements ProjectProperties {
           Optional<String> directoryString = getChildValue(configuration, "outputDirectory");
 
           if (directoryString.isPresent()) {
-            outputDirectory = Paths.get(directoryString.get());
-            if (!outputDirectory.isAbsolute()) {
-              outputDirectory = project.getBasedir().toPath().resolve(outputDirectory);
-            }
+            outputDirectory = project.getBasedir().toPath().resolve(directoryString.get());
           }
         }
       }

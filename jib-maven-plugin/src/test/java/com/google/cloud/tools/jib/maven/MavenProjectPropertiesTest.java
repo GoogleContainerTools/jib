@@ -805,6 +805,7 @@ public class MavenProjectPropertiesTest {
 
   @Test
   public void testGetJarArtifact_outputDirectoryFromJarPlugin() {
+    Mockito.when(mockMavenProject.getBasedir()).thenReturn(new File("/should/ignore"));
     Mockito.when(mockBuild.getDirectory()).thenReturn("/should/ignore");
     Mockito.when(mockBuild.getFinalName()).thenReturn("helloworld-1");
 
@@ -886,6 +887,7 @@ public class MavenProjectPropertiesTest {
 
   @Test
   public void testGetJarArtifact_originalJarIfSpringBoot_differentDirectories() {
+    Mockito.when(mockMavenProject.getBasedir()).thenReturn(new File("/should/ignore"));
     Mockito.when(mockBuild.getDirectory()).thenReturn("/should/ignore");
     Mockito.when(mockBuild.getFinalName()).thenReturn("helloworld-1");
 
