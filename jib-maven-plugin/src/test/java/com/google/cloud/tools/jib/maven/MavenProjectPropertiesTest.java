@@ -427,7 +427,7 @@ public class MavenProjectPropertiesTest {
   public void testCreateContainerBuilder_correctFiles()
       throws URISyntaxException, IOException, InvalidImageReferenceException,
           CacheDirectoryCreationException {
-    BuildContext buildContext = setupBuildContext("/app", DEFAULT_CONTAINERIZING_MODE);
+    BuildContext buildContext = setUpBuildContext("/app", DEFAULT_CONTAINERIZING_MODE);
     ContainerBuilderLayers layers = new ContainerBuilderLayers(buildContext);
 
     Path dependenciesPath = getResource("maven/application/dependencies");
@@ -472,7 +472,7 @@ public class MavenProjectPropertiesTest {
   @Test
   public void testCreateContainerBuilder_nonDefaultAppRoot()
       throws IOException, InvalidImageReferenceException, CacheDirectoryCreationException {
-    BuildContext buildContext = setupBuildContext("/my/app", DEFAULT_CONTAINERIZING_MODE);
+    BuildContext buildContext = setUpBuildContext("/my/app", DEFAULT_CONTAINERIZING_MODE);
     assertNonDefaultAppRoot(buildContext);
   }
 
@@ -484,7 +484,7 @@ public class MavenProjectPropertiesTest {
     Mockito.when(mockBuild.getDirectory()).thenReturn(temporaryFolder.getRoot().toString());
     Mockito.when(mockBuild.getFinalName()).thenReturn("final-name");
 
-    BuildContext buildContext = setupBuildContext("/app-root", ContainerizingMode.PACKAGED);
+    BuildContext buildContext = setUpBuildContext("/app-root", ContainerizingMode.PACKAGED);
 
     ContainerBuilderLayers layers = new ContainerBuilderLayers(buildContext);
     Assert.assertEquals(1, layers.dependenciesLayers.size());
@@ -533,7 +533,7 @@ public class MavenProjectPropertiesTest {
           CacheDirectoryCreationException {
     Path unzipTarget = setUpWar(getResource("maven/webapp/final-name"));
 
-    BuildContext buildContext = setupBuildContext("/my/app", DEFAULT_CONTAINERIZING_MODE);
+    BuildContext buildContext = setUpBuildContext("/my/app", DEFAULT_CONTAINERIZING_MODE);
     ContainerBuilderLayers layers = new ContainerBuilderLayers(buildContext);
     assertSourcePathsUnordered(
         ImmutableList.of(unzipTarget.resolve("WEB-INF/lib/dependency-1.0.0.jar")),
@@ -595,7 +595,7 @@ public class MavenProjectPropertiesTest {
       throws IOException, InvalidImageReferenceException, CacheDirectoryCreationException {
     // Test when the default packaging is set
     Mockito.when(mockMavenProject.getPackaging()).thenReturn("jar");
-    BuildContext buildContext = setupBuildContext("/my/app", DEFAULT_CONTAINERIZING_MODE);
+    BuildContext buildContext = setUpBuildContext("/my/app", DEFAULT_CONTAINERIZING_MODE);
     assertNonDefaultAppRoot(buildContext);
   }
 
@@ -604,7 +604,7 @@ public class MavenProjectPropertiesTest {
       throws IOException, InvalidImageReferenceException, CacheDirectoryCreationException {
     setUpWar(temporaryFolder.newFolder("final-name").toPath());
 
-    setupBuildContext("/anything", DEFAULT_CONTAINERIZING_MODE); // should pass
+    setUpBuildContext("/anything", DEFAULT_CONTAINERIZING_MODE); // should pass
   }
 
   @Test
@@ -613,7 +613,7 @@ public class MavenProjectPropertiesTest {
     temporaryFolder.newFolder("final-name", "WEB-INF", "classes");
     setUpWar(temporaryFolder.getRoot().toPath());
 
-    setupBuildContext("/anything", DEFAULT_CONTAINERIZING_MODE); // should pass
+    setUpBuildContext("/anything", DEFAULT_CONTAINERIZING_MODE); // should pass
   }
 
   @Test
@@ -622,7 +622,7 @@ public class MavenProjectPropertiesTest {
     temporaryFolder.newFolder("final-name", "WEB-INF", "lib");
     setUpWar(temporaryFolder.getRoot().toPath());
 
-    setupBuildContext("/anything", DEFAULT_CONTAINERIZING_MODE); // should pass
+    setUpBuildContext("/anything", DEFAULT_CONTAINERIZING_MODE); // should pass
   }
 
   @Test
@@ -780,7 +780,7 @@ public class MavenProjectPropertiesTest {
     Mockito.when(mockMavenProject.getPlugin("org.springframework.boot:spring-boot-maven-plugin"))
         .thenReturn(mockPlugin);
     Mockito.when(mockPlugin.getExecutions()).thenReturn(Arrays.asList(mockPluginExecution));
-    Mockito.when(mockPluginExecution.getGoals()).thenReturn(Arrays.asList("goal", "repackage"));
+    Mockito.when(mockPluginExecution.getGoals()).thenReturn(Arrays.asList("repackage"));
     Mockito.when(mockPluginExecution.getConfiguration()).thenReturn(pluginConfiguration);
     addXpp3DomChild(pluginConfiguration, "skip", "true");
     Assert.assertFalse(mavenProjectProperties.jarRepackagedBySpringBoot());
@@ -791,7 +791,7 @@ public class MavenProjectPropertiesTest {
     Mockito.when(mockMavenProject.getPlugin("org.springframework.boot:spring-boot-maven-plugin"))
         .thenReturn(mockPlugin);
     Mockito.when(mockPlugin.getExecutions()).thenReturn(Arrays.asList(mockPluginExecution));
-    Mockito.when(mockPluginExecution.getGoals()).thenReturn(Arrays.asList("goal", "repackage"));
+    Mockito.when(mockPluginExecution.getGoals()).thenReturn(Arrays.asList("repackage"));
     Mockito.when(mockPluginExecution.getConfiguration()).thenReturn(pluginConfiguration);
     addXpp3DomChild(pluginConfiguration, "skip", null);
     Assert.assertTrue(mavenProjectProperties.jarRepackagedBySpringBoot());
@@ -816,10 +816,10 @@ public class MavenProjectPropertiesTest {
     Mockito.when(mockPlugin.getExecutions()).thenReturn(Arrays.asList(mockPluginExecution));
     Mockito.when(mockPluginExecution.getId()).thenReturn("default-jar");
     Mockito.when(mockPluginExecution.getConfiguration()).thenReturn(pluginConfiguration);
-    addXpp3DomChild(pluginConfiguration, "outputDirectory", Paths.get("/jar/outDir").toString());
+    addXpp3DomChild(pluginConfiguration, "outputDirectory", Paths.get("/jar/out").toString());
 
     Assert.assertEquals(
-        Paths.get("/jar/outDir/helloworld-1.jar"), mavenProjectProperties.getJarArtifact());
+        Paths.get("/jar/out/helloworld-1.jar"), mavenProjectProperties.getJarArtifact());
   }
 
   @Test
@@ -833,11 +833,10 @@ public class MavenProjectPropertiesTest {
     Mockito.when(mockPlugin.getExecutions()).thenReturn(Arrays.asList(mockPluginExecution));
     Mockito.when(mockPluginExecution.getId()).thenReturn("default-jar");
     Mockito.when(mockPluginExecution.getConfiguration()).thenReturn(pluginConfiguration);
-    addXpp3DomChild(pluginConfiguration, "outputDirectory", Paths.get("target/jar").toString());
+    addXpp3DomChild(pluginConfiguration, "outputDirectory", Paths.get("relative").toString());
 
     Assert.assertEquals(
-        Paths.get("/base/dir/target/jar/helloworld-1.jar"),
-        mavenProjectProperties.getJarArtifact());
+        Paths.get("/base/dir/relative/helloworld-1.jar"), mavenProjectProperties.getJarArtifact());
   }
 
   @Test
@@ -878,10 +877,7 @@ public class MavenProjectPropertiesTest {
     Mockito.when(mockBuild.getDirectory()).thenReturn(Paths.get("/foo/bar").toString());
     Mockito.when(mockBuild.getFinalName()).thenReturn("helloworld-1");
 
-    Mockito.when(mockMavenProject.getPlugin("org.springframework.boot:spring-boot-maven-plugin"))
-        .thenReturn(mockPlugin);
-    Mockito.when(mockPlugin.getExecutions()).thenReturn(Arrays.asList(mockPluginExecution));
-    Mockito.when(mockPluginExecution.getGoals()).thenReturn(Arrays.asList("repackage"));
+    setUpSpringBootFatJar();
 
     Assert.assertEquals(
         Paths.get("/foo/bar/helloworld-1.jar.original"), mavenProjectProperties.getJarArtifact());
@@ -892,7 +888,7 @@ public class MavenProjectPropertiesTest {
   }
 
   @Test
-  public void testGetJarArtifact_originalJarAndSpringBootJarInDifferentDirectories() {
+  public void testGetJarArtifact_originalJarIfSpringBoot_differentDirectories() {
     Mockito.when(mockBuild.getDirectory()).thenReturn("/should/ignore");
     Mockito.when(mockBuild.getFinalName()).thenReturn("helloworld-1");
 
@@ -901,25 +897,44 @@ public class MavenProjectPropertiesTest {
     Mockito.when(mockPlugin.getExecutions()).thenReturn(Arrays.asList(mockPluginExecution));
     Mockito.when(mockPluginExecution.getId()).thenReturn("default-jar");
     Mockito.when(mockPluginExecution.getConfiguration()).thenReturn(pluginConfiguration);
-    addXpp3DomChild(pluginConfiguration, "outputDirectory", Paths.get("/tmp/jarOutDir").toString());
+    addXpp3DomChild(pluginConfiguration, "outputDirectory", Paths.get("/jar/out").toString());
 
-    PluginExecution mockSpringBootExecution = Mockito.mock(PluginExecution.class);
-    Plugin mockSpringBootPlugin = Mockito.mock(Plugin.class);
-    Mockito.when(mockMavenProject.getPlugin("org.springframework.boot:spring-boot-maven-plugin"))
-        .thenReturn(mockSpringBootPlugin);
-    Mockito.when(mockSpringBootPlugin.getExecutions())
-        .thenReturn(Arrays.asList(mockSpringBootExecution));
-    Mockito.when(mockSpringBootExecution.getGoals()).thenReturn(Arrays.asList("repackage"));
+    setUpSpringBootFatJar();
 
     Assert.assertEquals(
-        Paths.get("/tmp/jarOutDir/helloworld-1.jar"), mavenProjectProperties.getJarArtifact());
+        Paths.get("/jar/out/helloworld-1.jar"), mavenProjectProperties.getJarArtifact());
 
     mavenProjectProperties.waitForLoggingThread();
     Mockito.verify(mockLog)
         .info("Spring Boot repackaging (fat JAR) detected; using the original JAR");
   }
 
-  private BuildContext setupBuildContext(String appRoot, ContainerizingMode containerizingMode)
+  @Test
+  public void testGetJarArtifact_originalJarIfSpringBoot_sameDirectory() {
+    Path baseDir = Paths.get("/project");
+    Mockito.when(mockMavenProject.getBasedir()).thenReturn(baseDir.toFile());
+    Mockito.when(mockBuild.getDirectory()).thenReturn(baseDir.resolve("target").toString());
+    Mockito.when(mockBuild.getFinalName()).thenReturn("helloworld-1");
+
+    Mockito.when(mockMavenProject.getPlugin("org.apache.maven.plugins:maven-jar-plugin"))
+        .thenReturn(mockPlugin);
+    Mockito.when(mockPlugin.getExecutions()).thenReturn(Arrays.asList(mockPluginExecution));
+    Mockito.when(mockPluginExecution.getId()).thenReturn("default-jar");
+    Mockito.when(mockPluginExecution.getConfiguration()).thenReturn(pluginConfiguration);
+    addXpp3DomChild(pluginConfiguration, "outputDirectory", "target");
+
+    setUpSpringBootFatJar();
+
+    Assert.assertEquals(
+        Paths.get("/project/target/helloworld-1.jar.original"),
+        mavenProjectProperties.getJarArtifact());
+
+    mavenProjectProperties.waitForLoggingThread();
+    Mockito.verify(mockLog)
+        .info("Spring Boot repackaging (fat JAR) detected; using the original JAR");
+  }
+
+  private BuildContext setUpBuildContext(String appRoot, ContainerizingMode containerizingMode)
       throws InvalidImageReferenceException, IOException, CacheDirectoryCreationException {
     JavaContainerBuilder javaContainerBuilder =
         JavaContainerBuilder.from(RegistryImage.named("base"))
@@ -945,5 +960,14 @@ public class MavenProjectPropertiesTest {
     Path unzipTarget = temporaryFolder.newFolder("exploded").toPath();
     Mockito.when(mockTempDirectoryProvider.newDirectory()).thenReturn(unzipTarget);
     return unzipTarget;
+  }
+
+  private void setUpSpringBootFatJar() {
+    PluginExecution execution = Mockito.mock(PluginExecution.class);
+    Plugin plugin = Mockito.mock(Plugin.class);
+    Mockito.when(mockMavenProject.getPlugin("org.springframework.boot:spring-boot-maven-plugin"))
+        .thenReturn(plugin);
+    Mockito.when(plugin.getExecutions()).thenReturn(Arrays.asList(execution));
+    Mockito.when(execution.getGoals()).thenReturn(Arrays.asList("repackage"));
   }
 }
