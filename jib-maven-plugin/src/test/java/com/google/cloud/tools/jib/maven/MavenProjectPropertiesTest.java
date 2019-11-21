@@ -226,6 +226,8 @@ public class MavenProjectPropertiesTest {
   @Rule public final TestRepository testRepository = new TestRepository();
   @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
+  private final Xpp3Dom pluginConfiguration = new Xpp3Dom("configuration");
+
   @Mock private Build mockBuild;
   @Mock private MavenProject mockMavenProject;
   @Mock private MavenSession mockMavenSession;
@@ -235,8 +237,6 @@ public class MavenProjectPropertiesTest {
   @Mock private PluginExecution mockPluginExecution;
   @Mock private Log mockLog;
   @Mock private TempDirectoryProvider mockTempDirectoryProvider;
-
-  private Xpp3Dom pluginConfiguration = new Xpp3Dom("configuration");
 
   private MavenProjectProperties mavenProjectProperties;
 
@@ -275,29 +275,26 @@ public class MavenProjectPropertiesTest {
 
   @Test
   public void testGetMainClassFromJar_success() {
-    Xpp3Dom archive = new Xpp3Dom("archive");
-    Xpp3Dom manifest = new Xpp3Dom("manifest");
-
-    pluginConfiguration.addChild(archive);
-    archive.addChild(manifest);
-    manifest.addChild(newXpp3Dom("mainClass", "some.main.class"));
-
     Mockito.when(mockMavenProject.getPlugin("org.apache.maven.plugins:maven-jar-plugin"))
         .thenReturn(mockPlugin);
     Mockito.when(mockPlugin.getConfiguration()).thenReturn(pluginConfiguration);
+    Xpp3Dom archive = new Xpp3Dom("archive");
+    Xpp3Dom manifest = new Xpp3Dom("manifest");
+    pluginConfiguration.addChild(archive);
+    archive.addChild(manifest);
+    manifest.addChild(newXpp3Dom("mainClass", "some.main.class"));
 
     Assert.assertEquals("some.main.class", mavenProjectProperties.getMainClassFromJar());
   }
 
   @Test
   public void testGetMainClassFromJar_missingMainClass() {
-    Xpp3Dom archive = new Xpp3Dom("archive");
-    archive.addChild(new Xpp3Dom("manifest"));
-    pluginConfiguration.addChild(archive);
-
     Mockito.when(mockMavenProject.getPlugin("org.apache.maven.plugins:maven-jar-plugin"))
         .thenReturn(mockPlugin);
     Mockito.when(mockPlugin.getConfiguration()).thenReturn(pluginConfiguration);
+    Xpp3Dom archive = new Xpp3Dom("archive");
+    archive.addChild(new Xpp3Dom("manifest"));
+    pluginConfiguration.addChild(archive);
 
     Assert.assertNull(mavenProjectProperties.getMainClassFromJar());
   }
