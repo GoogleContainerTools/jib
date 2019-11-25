@@ -205,7 +205,12 @@ public class GradleProjectPropertiesTest {
   private GradleProjectProperties gradleProjectProperties;
 
   @Before
-  public void setup() throws URISyntaxException, IOException {
+  public void setUp() throws URISyntaxException, IOException {
+    Mockito.when(mockLogger.isDebugEnabled()).thenReturn(true);
+    Mockito.when(mockLogger.isInfoEnabled()).thenReturn(true);
+    Mockito.when(mockLogger.isWarnEnabled()).thenReturn(true);
+    Mockito.when(mockLogger.isErrorEnabled()).thenReturn(true);
+
     manifest = new DefaultManifest(mockFileResolver);
     Mockito.when(mockProject.getConvention()).thenReturn(mockConvention);
     Mockito.when(mockConvention.getPlugin(JavaPluginConvention.class))
@@ -374,6 +379,7 @@ public class GradleProjectPropertiesTest {
         .thenReturn(new TestFileCollection(ImmutableSet.of(nonexistentFile)));
     gradleProjectProperties.createJibContainerBuilder(
         JavaContainerBuilder.from(RegistryImage.named("base")), ContainerizingMode.EXPLODED);
+    gradleProjectProperties.waitForLoggingThread();
     Mockito.verify(mockLogger).warn("No classes files were found - did you compile your project?");
   }
 

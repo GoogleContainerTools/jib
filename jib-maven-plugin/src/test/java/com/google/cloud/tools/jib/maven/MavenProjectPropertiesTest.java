@@ -222,6 +222,10 @@ public class MavenProjectPropertiesTest {
 
   @Before
   public void setUp() throws IOException, URISyntaxException {
+    Mockito.when(mockLog.isDebugEnabled()).thenReturn(true);
+    Mockito.when(mockLog.isWarnEnabled()).thenReturn(true);
+    Mockito.when(mockLog.isErrorEnabled()).thenReturn(true);
+
     Mockito.when(mockMavenSession.getRequest()).thenReturn(mockMavenRequest);
     mavenProjectProperties =
         new MavenProjectProperties(
