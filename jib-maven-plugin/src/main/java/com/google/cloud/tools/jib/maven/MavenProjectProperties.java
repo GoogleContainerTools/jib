@@ -461,7 +461,7 @@ public class MavenProjectProperties implements ProjectProperties {
 
     String jarName =
         project.getBuild().getFinalName() + (classifier == null ? "" : '-' + classifier) + suffix;
-    consoleLogger.log(Level.LIFECYCLE, "Using JAR: " + outputDirectory.resolve(jarName));
+    consoleLogger.log(Level.DEBUG, "Using JAR: " + outputDirectory.resolve(jarName));
     return outputDirectory.resolve(jarName);
   }
 
