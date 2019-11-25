@@ -206,7 +206,6 @@ public class GradleProjectPropertiesTest {
 
   @Before
   public void setup() throws URISyntaxException, IOException {
-    Mockito.when(mockLogger.isLifecycleEnabled()).thenReturn(true);
     Mockito.when(mockLogger.isDebugEnabled()).thenReturn(true);
     Mockito.when(mockLogger.isInfoEnabled()).thenReturn(true);
     Mockito.when(mockLogger.isWarnEnabled()).thenReturn(true);
