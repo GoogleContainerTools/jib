@@ -206,6 +206,12 @@ public class GradleProjectPropertiesTest {
 
   @Before
   public void setup() throws URISyntaxException, IOException {
+    Mockito.when(mockLogger.isLifecycleEnabled()).thenReturn(true);
+    Mockito.when(mockLogger.isDebugEnabled()).thenReturn(true);
+    Mockito.when(mockLogger.isInfoEnabled()).thenReturn(true);
+    Mockito.when(mockLogger.isWarnEnabled()).thenReturn(true);
+    Mockito.when(mockLogger.isErrorEnabled()).thenReturn(true);
+
     manifest = new DefaultManifest(mockFileResolver);
     Mockito.when(mockProject.getConvention()).thenReturn(mockConvention);
     Mockito.when(mockConvention.getPlugin(JavaPluginConvention.class))
