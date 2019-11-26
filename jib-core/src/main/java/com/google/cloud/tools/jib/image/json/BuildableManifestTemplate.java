@@ -20,6 +20,7 @@ import com.google.cloud.tools.jib.api.DescriptorDigest;
 import com.google.cloud.tools.jib.json.JsonTemplate;
 import com.google.common.annotations.VisibleForTesting;
 import java.util.List;
+import java.util.Map;
 import javax.annotation.Nullable;
 
 /**
@@ -43,6 +44,7 @@ public interface BuildableManifestTemplate extends ManifestTemplate {
     @Nullable private String mediaType;
     @Nullable private DescriptorDigest digest;
     private long size;
+    @Nullable private Map<String, String> annotations;
 
     ContentDescriptorTemplate(String mediaType, long size, DescriptorDigest digest) {
       this.mediaType = mediaType;
@@ -70,6 +72,10 @@ public interface BuildableManifestTemplate extends ManifestTemplate {
 
     void setDigest(DescriptorDigest digest) {
       this.digest = digest;
+    }
+
+    void setAnnotations(Map<String, String> annotations) {
+      this.annotations = annotations;
     }
   }
 

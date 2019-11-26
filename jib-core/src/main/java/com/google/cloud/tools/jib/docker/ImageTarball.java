@@ -16,17 +16,24 @@
 
 package com.google.cloud.tools.jib.docker;
 
+import com.google.cloud.tools.jib.api.DescriptorDigest;
 import com.google.cloud.tools.jib.api.ImageReference;
+import com.google.cloud.tools.jib.blob.BlobDescriptor;
+import com.google.cloud.tools.jib.blob.Blobs;
 import com.google.cloud.tools.jib.docker.json.DockerManifestEntryTemplate;
 import com.google.cloud.tools.jib.image.Image;
 import com.google.cloud.tools.jib.image.Layer;
 import com.google.cloud.tools.jib.image.json.ImageToJsonTranslator;
+import com.google.cloud.tools.jib.image.json.OCIIndexTemplate;
+import com.google.cloud.tools.jib.image.json.OCIManifestTemplate;
 import com.google.cloud.tools.jib.json.JsonTemplate;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import com.google.cloud.tools.jib.tar.TarStreamBuilder;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.io.ByteStreams;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 
 /** Translates an {@link Image} to a tarball that can be loaded into Docker. */
@@ -61,6 +68,55 @@ public class ImageTarball {
   }
 
   public void writeTo(OutputStream out) throws IOException {
+    if (image.getImageFormat() == OCIManifestTemplate.class) {
+      ociWriteTo(out);
+    } else {
+      dockerWriteTo(out);
+    }
+  }
+
+  private void ociWriteTo(OutputStream out) throws IOException {
+    TarStreamBuilder tarStreamBuilder = new TarStreamBuilder();
+    OCIManifestTemplate manifest = new OCIManifestTemplate();
+
+    // Adds all the layers to the tarball and manifest
+    for (Layer layer : image.getLayers()) {
+      DescriptorDigest digest = layer.getBlobDescriptor().getDigest();
+      long size = layer.getBlobDescriptor().getSize();
+
+      tarStreamBuilder.addBlobEntry(layer.getBlob(), size, "blobs/sha256/" + digest.getHash());
+      manifest.addLayer(size, digest);
+    }
+
+    // Adds the container configuration to the tarball
+    JsonTemplate containerConfiguration =
+        new ImageToJsonTranslator(image).getContainerConfiguration();
+    BlobDescriptor configDescriptor =
+        Blobs.from(containerConfiguration).writeTo(ByteStreams.nullOutputStream());
+    manifest.setContainerConfiguration(configDescriptor.getSize(), configDescriptor.getDigest());
+    tarStreamBuilder.addByteEntry(
+        JsonTemplateMapper.toByteArray(containerConfiguration),
+        "blobs/sha256/" + configDescriptor.getDigest().getHash());
+
+    // Adds the manifest to the tarball
+    BlobDescriptor manifestDescriptor =
+        Blobs.from(manifest).writeTo(ByteStreams.nullOutputStream());
+    tarStreamBuilder.addByteEntry(
+        JsonTemplateMapper.toByteArray(manifest),
+        "blobs/sha256/" + manifestDescriptor.getDigest().getHash());
+
+    // Adds the oci-layout and index.json
+    tarStreamBuilder.addByteEntry(
+        "{\"imageLayoutVersion\": \"1.0.0\"}".getBytes(StandardCharsets.UTF_8), "oci-layout");
+    OCIIndexTemplate index = new OCIIndexTemplate();
+    index.addManifest(manifestDescriptor, imageReference.getTag());
+
+    // TODO: Look into how to add additional tags
+
+    tarStreamBuilder.writeAsTarArchiveTo(out);
+  }
+
+  private void dockerWriteTo(OutputStream out) throws IOException {
     TarStreamBuilder tarStreamBuilder = new TarStreamBuilder();
     DockerManifestEntryTemplate manifestTemplate = new DockerManifestEntryTemplate();
 
