@@ -13,7 +13,7 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
-- Now `jib.containerizingMode='packaged'` works as intended with Spring Boot projects that generate a fat JAR. ([]())
+- Now `jib.containerizingMode='packaged'` works as intended with Spring Boot projects that generate a fat JAR. ([#2178](https://github.com/GoogleContainerTools/jib/pull/2178))
 
 ## 1.8.0
 
