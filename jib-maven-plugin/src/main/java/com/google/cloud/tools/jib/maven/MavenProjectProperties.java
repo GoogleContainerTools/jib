@@ -40,6 +40,7 @@ import com.google.cloud.tools.jib.plugins.common.logging.SingleThreadedExecutor;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Duration;
@@ -427,9 +428,10 @@ public class MavenProjectProperties implements ProjectProperties {
    * https://github.com/apache/maven-jar-plugin/blob/80f58a84aacff6e671f5a601d62a3a3800b507dc/src/main/java/org/apache/maven/plugins/jar/AbstractJarMojo.java#L177
    *
    * @return the path of the JAR
+   * @throws IOException
    */
   @VisibleForTesting
-  Path getJarArtifact() {
+  Path getJarArtifact() throws IOException {
     String classifier = null;
     Path buildDirectory = Paths.get(project.getBuild().getDirectory());
     Path outputDirectory = buildDirectory;
@@ -459,10 +461,21 @@ public class MavenProjectProperties implements ProjectProperties {
       }
     }
 
-    String jarName =
-        project.getBuild().getFinalName() + (classifier == null ? "" : '-' + classifier) + suffix;
-    consoleLogger.log(Level.DEBUG, "Using JAR: " + outputDirectory.resolve(jarName));
-    return outputDirectory.resolve(jarName);
+    String noSuffixJarName =
+        project.getBuild().getFinalName() + (classifier == null ? "" : '-' + classifier);
+    Path jarPath = outputDirectory.resolve(noSuffixJarName + suffix);
+    consoleLogger.log(Level.DEBUG, "Using JAR: " + jarPath);
+
+    if (".jar".equals(suffix)) {
+      return jarPath;
+    }
+
+    // "*" in "java -cp *" doesn't work if JAR doesn't end with ".jar". Copy the JAR with a new name
+    // ending with ".jar".
+    Path tempDirectory = tempDirectoryProvider.newDirectory();
+    Path newJarPath = tempDirectory.resolve(noSuffixJarName + ".original.jar");
+    Files.copy(jarPath, newJarPath);
+    return newJarPath;
   }
 
   @VisibleForTesting

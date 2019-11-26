@@ -795,7 +795,7 @@ public class MavenProjectPropertiesTest {
   }
 
   @Test
-  public void testGetJarArtifact() {
+  public void testGetJarArtifact() throws IOException {
     Mockito.when(mockBuild.getDirectory()).thenReturn(Paths.get("/foo/bar").toString());
     Mockito.when(mockBuild.getFinalName()).thenReturn("helloworld-1");
 
@@ -804,7 +804,7 @@ public class MavenProjectPropertiesTest {
   }
 
   @Test
-  public void testGetJarArtifact_outputDirectoryFromJarPlugin() {
+  public void testGetJarArtifact_outputDirectoryFromJarPlugin() throws IOException {
     Mockito.when(mockMavenProject.getBasedir()).thenReturn(new File("/should/ignore"));
     Mockito.when(mockBuild.getDirectory()).thenReturn("/should/ignore");
     Mockito.when(mockBuild.getFinalName()).thenReturn("helloworld-1");
@@ -821,7 +821,7 @@ public class MavenProjectPropertiesTest {
   }
 
   @Test
-  public void testGetJarArtifact_relativeOutputDirectoryFromJarPlugin() {
+  public void testGetJarArtifact_relativeOutputDirectoryFromJarPlugin() throws IOException {
     Mockito.when(mockMavenProject.getBasedir()).thenReturn(new File("/base/dir"));
     Mockito.when(mockBuild.getDirectory()).thenReturn(temporaryFolder.getRoot().toString());
     Mockito.when(mockBuild.getFinalName()).thenReturn("helloworld-1");
@@ -838,7 +838,7 @@ public class MavenProjectPropertiesTest {
   }
 
   @Test
-  public void testGetJarArtifact_classifier() {
+  public void testGetJarArtifact_classifier() throws IOException {
     Mockito.when(mockBuild.getDirectory()).thenReturn(Paths.get("/foo/bar").toString());
     Mockito.when(mockBuild.getFinalName()).thenReturn("helloworld-1");
 
@@ -854,7 +854,7 @@ public class MavenProjectPropertiesTest {
   }
 
   @Test
-  public void testGetJarArtifact_executionIdNotMatched() {
+  public void testGetJarArtifact_executionIdNotMatched() throws IOException {
     Mockito.when(mockBuild.getDirectory()).thenReturn(Paths.get("/foo/bar").toString());
     Mockito.when(mockBuild.getFinalName()).thenReturn("helloworld-1");
 
@@ -871,14 +871,18 @@ public class MavenProjectPropertiesTest {
   }
 
   @Test
-  public void testGetJarArtifact_originalJarIfSpringBoot() {
-    Mockito.when(mockBuild.getDirectory()).thenReturn(Paths.get("/foo/bar").toString());
+  public void testGetJarArtifact_originalJarCopiedIfSpringBoot() throws IOException {
+    temporaryFolder.newFile("helloworld-1.jar.original");
+    Mockito.when(mockBuild.getDirectory()).thenReturn(temporaryFolder.getRoot().toString());
     Mockito.when(mockBuild.getFinalName()).thenReturn("helloworld-1");
 
     setUpSpringBootFatJar();
+    Path tempDirectory = temporaryFolder.newFolder("tmp").toPath();
+    Mockito.when(mockTempDirectoryProvider.newDirectory()).thenReturn(tempDirectory);
 
     Assert.assertEquals(
-        Paths.get("/foo/bar/helloworld-1.jar.original"), mavenProjectProperties.getJarArtifact());
+        tempDirectory.resolve("helloworld-1.original.jar"),
+        mavenProjectProperties.getJarArtifact());
 
     mavenProjectProperties.waitForLoggingThread();
     Mockito.verify(mockLog)
@@ -886,7 +890,7 @@ public class MavenProjectPropertiesTest {
   }
 
   @Test
-  public void testGetJarArtifact_originalJarIfSpringBoot_differentDirectories() {
+  public void testGetJarArtifact_originalJarIfSpringBoot_differentDirectories() throws IOException {
     Mockito.when(mockMavenProject.getBasedir()).thenReturn(new File("/should/ignore"));
     Mockito.when(mockBuild.getDirectory()).thenReturn("/should/ignore");
     Mockito.when(mockBuild.getFinalName()).thenReturn("helloworld-1");
@@ -909,10 +913,11 @@ public class MavenProjectPropertiesTest {
   }
 
   @Test
-  public void testGetJarArtifact_originalJarIfSpringBoot_sameDirectory() {
-    Path baseDir = Paths.get("/project");
-    Mockito.when(mockMavenProject.getBasedir()).thenReturn(baseDir.toFile());
-    Mockito.when(mockBuild.getDirectory()).thenReturn(baseDir.resolve("target").toString());
+  public void testGetJarArtifact_originalJarCopiedIfSpringBoot_sameDirectory() throws IOException {
+    Path buildDirectory = temporaryFolder.newFolder("target").toPath();
+    Files.createFile(buildDirectory.resolve("helloworld-1.jar.original"));
+    Mockito.when(mockMavenProject.getBasedir()).thenReturn(temporaryFolder.getRoot());
+    Mockito.when(mockBuild.getDirectory()).thenReturn(buildDirectory.toString());
     Mockito.when(mockBuild.getFinalName()).thenReturn("helloworld-1");
 
     Mockito.when(mockMavenProject.getPlugin("org.apache.maven.plugins:maven-jar-plugin"))
@@ -923,9 +928,11 @@ public class MavenProjectPropertiesTest {
     addXpp3DomChild(pluginConfiguration, "outputDirectory", "target");
 
     setUpSpringBootFatJar();
+    Path tempDirectory = temporaryFolder.newFolder("tmp").toPath();
+    Mockito.when(mockTempDirectoryProvider.newDirectory()).thenReturn(tempDirectory);
 
     Assert.assertEquals(
-        Paths.get("/project/target/helloworld-1.jar.original"),
+        tempDirectory.resolve("helloworld-1.original.jar"),
         mavenProjectProperties.getJarArtifact());
 
     mavenProjectProperties.waitForLoggingThread();

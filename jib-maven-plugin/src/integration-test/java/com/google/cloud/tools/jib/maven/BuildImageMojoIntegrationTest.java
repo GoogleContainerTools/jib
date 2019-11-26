@@ -692,9 +692,9 @@ public class BuildImageMojoIntegrationTest {
                 detachedContainerName,
                 "/busybox/wc",
                 "-c",
-                "/app/classpath/spring-boot-0.1.0.jar")
+                "/app/classpath/spring-boot-0.1.0.original.jar")
             .run();
-    Assert.assertEquals("2749 /app/classpath/spring-boot-0.1.0.jar\n", sizeOutput);
+    Assert.assertEquals("2749 /app/classpath/spring-boot-0.1.0.original.jar\n", sizeOutput);
 
     HttpGetVerifier.verifyBody("Hello world", new URL("http://localhost:8080"));
   }
