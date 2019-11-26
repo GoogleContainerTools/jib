@@ -422,7 +422,7 @@ public class MavenProjectProperties implements ProjectProperties {
   }
 
   /**
-   * Gets the path of the JAR that the Maven JAR Plugin would generate.
+   * Gets the path of the JAR that the Maven JAR Plugin generates.
    *
    * <p>https://maven.apache.org/plugins/maven-jar-plugin/jar-mojo.html
    * https://github.com/apache/maven-jar-plugin/blob/80f58a84aacff6e671f5a601d62a3a3800b507dc/src/main/java/org/apache/maven/plugins/jar/AbstractJarMojo.java#L177
