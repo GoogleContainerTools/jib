@@ -82,7 +82,7 @@ public class MavenProjectPropertiesTest {
   private static final ContainerizingMode DEFAULT_CONTAINERIZING_MODE = ContainerizingMode.EXPLODED;
   private static final Instant SAMPLE_FILE_MODIFICATION_TIME = Instant.ofEpochSecond(32);
 
-  /** Helper for reading back layers in a {@link buildContext}. */
+  /** Helper for reading back layers in a {@link BuildContext}. */
   private static class ContainerBuilderLayers {
 
     private final List<LayerConfiguration> resourcesLayers;
@@ -242,6 +242,10 @@ public class MavenProjectPropertiesTest {
 
   @Before
   public void setUp() throws IOException, URISyntaxException {
+    Mockito.when(mockLog.isDebugEnabled()).thenReturn(true);
+    Mockito.when(mockLog.isWarnEnabled()).thenReturn(true);
+    Mockito.when(mockLog.isErrorEnabled()).thenReturn(true);
+
     Mockito.when(mockMavenSession.getRequest()).thenReturn(mockMavenRequest);
     mavenProjectProperties =
         new MavenProjectProperties(

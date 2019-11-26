@@ -20,6 +20,7 @@ import com.google.cloud.tools.jib.api.Containerizer;
 import com.google.cloud.tools.jib.api.JavaContainerBuilder;
 import com.google.cloud.tools.jib.api.JibContainerBuilder;
 import com.google.cloud.tools.jib.api.LogEvent;
+import com.google.cloud.tools.jib.api.LogEvent.Level;
 import com.google.cloud.tools.jib.event.events.ProgressEvent;
 import com.google.cloud.tools.jib.event.events.TimerEvent;
 import com.google.cloud.tools.jib.event.progress.ProgressEventHandler;
@@ -123,7 +124,6 @@ public class GradleProjectProperties implements ProjectProperties {
 
   private final Project project;
   private final SingleThreadedExecutor singleThreadedExecutor = new SingleThreadedExecutor();
-  private final Logger logger;
   private final ConsoleLogger consoleLogger;
   private final TempDirectoryProvider tempDirectoryProvider;
 
@@ -131,7 +131,6 @@ public class GradleProjectProperties implements ProjectProperties {
   GradleProjectProperties(
       Project project, Logger logger, TempDirectoryProvider tempDirectoryProvider) {
     this.project = project;
-    this.logger = logger;
     this.tempDirectoryProvider = tempDirectoryProvider;
     ConsoleLoggerBuilder consoleLoggerBuilder =
         (isProgressFooterEnabled(project)
@@ -159,7 +158,8 @@ public class GradleProjectProperties implements ProjectProperties {
     try {
       if (isWarProject()) {
         String warFilePath = getWarFilePath();
-        logger.info("WAR project identified, creating WAR image from: " + warFilePath);
+        consoleLogger.log(
+            Level.INFO, "WAR project identified, creating WAR image from: " + warFilePath);
         Path explodedWarPath = tempDirectoryProvider.newDirectory();
         ZipUtil.unzip(Paths.get(warFilePath), explodedWarPath);
         return JavaContainerBuilderHelper.fromExplodedWar(javaContainerBuilder, explodedWarPath);
@@ -229,7 +229,8 @@ public class GradleProjectProperties implements ProjectProperties {
             javaContainerBuilder.addClasses(classesOutputDirectory.toPath());
           }
           if (classesOutputDirectories.isEmpty()) {
-            logger.warn("No classes files were found - did you compile your project?");
+            consoleLogger.log(
+                Level.WARN, "No classes files were found - did you compile your project?");
           }
           break;
 
