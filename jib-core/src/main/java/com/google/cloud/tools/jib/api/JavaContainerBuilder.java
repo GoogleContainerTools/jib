@@ -30,6 +30,7 @@ import java.nio.file.Path;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.EnumMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -523,6 +524,22 @@ public class JavaContainerBuilder {
       BiFunction<Path, AbsoluteUnixPath, Instant> modificationTimeProvider) {
     this.modificationTimeProvider = modificationTimeProvider;
     return this;
+  }
+
+  /** Configure for containerizing a Graal {@ native-image} executable. */
+  public JibContainerBuilder forNativeImage(Path executable) {
+    AbsoluteUnixPath containerExecutable = appRoot.resolve(executable.getFileName());
+    Instant modificationTime = modificationTimeProvider.apply(executable, containerExecutable);
+    FilePermissions executablePermission = new FilePermissions(0555);
+    LayerConfiguration layer =
+        LayerConfiguration.builder()
+            .setName(LayerType.EXTRA_FILES.getName())
+            .addEntry(executable, containerExecutable, executablePermission, modificationTime)
+            .build();
+
+    jibContainerBuilder.setLayers(Collections.singletonList(layer));
+    jibContainerBuilder.setEntrypoint(containerExecutable.toString());
+    return jibContainerBuilder;
   }
 
   /**

@@ -26,6 +26,7 @@ public class ContainerizingModeTest {
   public void testFrom_validValues() throws InvalidContainerizingModeException {
     Assert.assertEquals(ContainerizingMode.EXPLODED, ContainerizingMode.from("exploded"));
     Assert.assertEquals(ContainerizingMode.PACKAGED, ContainerizingMode.from("packaged"));
+    Assert.assertEquals(ContainerizingMode.NATIVE_IMAGE, ContainerizingMode.from("native_image"));
   }
 
   @Test

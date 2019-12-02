@@ -218,6 +218,8 @@ public class MavenProjectPropertiesTest {
   @Mock private Xpp3Dom compilerTarget;
   @Mock private Xpp3Dom compilerRelease;
 
+  @Mock private Plugin mockNativeImagePlugin;
+
   private MavenProjectProperties mavenProjectProperties;
 
   @Before
@@ -681,6 +683,42 @@ public class MavenProjectPropertiesTest {
             newArtifact("com.test", "projectA", "1.0").getFile().toPath(),
             newArtifact("com.test", "projectB", "1.0-SNAPSHOT").getFile().toPath(),
             newArtifact("com.test", "projectC", "3.0").getFile().toPath()));
+  }
+
+  @Test
+  public void testGetNativeImageExecutableName_noDefinition() {
+    try {
+      mavenProjectProperties.getNativeImageExecutableName();
+      Assert.fail("should error fail when native-image-maven-plugin not configured");
+    } catch (IllegalStateException ex) {
+      // as expected
+    }
+  }
+
+  @Test
+  public void testGetNativeImageExecutableName_imageName() {
+    Mockito.when(mockMavenProject.getPlugin("org.graalvm.nativeimage:native-image-maven-plugin"))
+        .thenReturn(mockNativeImagePlugin);
+    Xpp3Dom nativeImagePluginConfiguration = new Xpp3Dom("configuration");
+    Xpp3Dom imageName = new Xpp3Dom("imageName");
+    imageName.setValue("theExecutable");
+    nativeImagePluginConfiguration.addChild(imageName);
+    Mockito.when(mockNativeImagePlugin.getConfiguration())
+        .thenReturn(nativeImagePluginConfiguration);
+
+    Assert.assertEquals("theExecutable", mavenProjectProperties.getNativeImageExecutableName());
+  }
+
+  @Test
+  public void testGetNativeImageExecutableName_artifact() {
+    Mockito.when(mockMavenProject.getPlugin("org.graalvm.nativeimage:native-image-maven-plugin"))
+        .thenReturn(mockNativeImagePlugin);
+    Xpp3Dom nativeImagePluginConfiguration = new Xpp3Dom("configuration");
+    Mockito.when(mockNativeImagePlugin.getConfiguration())
+        .thenReturn(nativeImagePluginConfiguration);
+    Mockito.when(mockMavenProject.getArtifactId()).thenReturn("crepecake");
+
+    Assert.assertEquals("crepecake", mavenProjectProperties.getNativeImageExecutableName());
   }
 
   private BuildContext setupBuildContext(String appRoot, ContainerizingMode containerizingMode)

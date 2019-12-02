@@ -241,6 +241,11 @@ public class GradleProjectProperties implements ProjectProperties {
               jarTask.getDestinationDir().toPath().resolve(jarTask.getArchiveName()));
           break;
 
+        case NATIVE_IMAGE:
+          // TODO: decide on implementation strategy.  In the meantime...
+          throw new IllegalStateException(
+              "unimplemented containerizing mode: " + containerizingMode);
+
         default:
           throw new IllegalStateException("unknown containerizing mode: " + containerizingMode);
       }
@@ -380,5 +385,10 @@ public class GradleProjectProperties implements ProjectProperties {
   @Override
   public boolean isOffline() {
     return project.getGradle().getStartParameter().isOffline();
+  }
+
+  @Override
+  public String getNativeImageExecutableName() {
+    throw new IllegalStateException("Unimplemented");
   }
 }

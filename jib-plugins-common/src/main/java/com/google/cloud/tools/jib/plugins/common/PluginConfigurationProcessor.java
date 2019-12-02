@@ -46,6 +46,7 @@ import java.time.Instant;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -381,7 +382,14 @@ public class PluginConfigurationProcessor {
       RawConfiguration rawConfiguration, ProjectProperties projectProperties)
       throws MainClassInferenceException, InvalidAppRootException, IOException,
           InvalidContainerizingModeException {
+    ContainerizingMode mode = getContainerizingModeChecked(rawConfiguration, projectProperties);
     AbsoluteUnixPath appRoot = getAppRootChecked(rawConfiguration, projectProperties);
+
+    if (mode == ContainerizingMode.NATIVE_IMAGE) {
+      AbsoluteUnixPath containerExecutable =
+          appRoot.resolve(projectProperties.getNativeImageExecutableName());
+      return Collections.singletonList(containerExecutable.toString());
+    }
 
     Optional<List<String>> rawEntrypoint = rawConfiguration.getEntrypoint();
     List<String> rawExtraClasspath = rawConfiguration.getExtraClasspath();
@@ -411,7 +419,6 @@ public class PluginConfigurationProcessor {
     }
 
     List<String> classpath = new ArrayList<>(rawExtraClasspath);
-    ContainerizingMode mode = getContainerizingModeChecked(rawConfiguration, projectProperties);
     switch (mode) {
       case EXPLODED:
         classpath.add(appRoot.resolve("resources").toString());

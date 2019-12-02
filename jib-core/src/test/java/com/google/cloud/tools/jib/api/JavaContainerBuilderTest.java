@@ -284,4 +284,38 @@ public class JavaContainerBuilderTest {
           ex.getMessage());
     }
   }
+
+  @Test
+  public void testForNativeImage()
+      throws InvalidImageReferenceException, IOException, CacheDirectoryCreationException {
+    BuildContext buildContext =
+        JavaContainerBuilder.fromDistroless()
+            .setAppRoot("/hello")
+            .forNativeImage(Paths.get("/local/path/executable"))
+            .toBuildContext(Containerizer.to(RegistryImage.named("hello")));
+
+    // Check entrypoint
+    ContainerConfiguration containerConfiguration = buildContext.getContainerConfiguration();
+    Assert.assertNotNull(containerConfiguration);
+    Assert.assertEquals(
+        ImmutableList.of("/hello/executable"), containerConfiguration.getEntrypoint());
+
+    // Check dependencies
+    Assert.assertEquals(0, getExtractionPaths(buildContext, "dependencies").size());
+
+    // Check snapshots
+    Assert.assertEquals(0, getExtractionPaths(buildContext, "snapshot dependencies").size());
+    Assert.assertEquals(0, getExtractionPaths(buildContext, "project dependencies").size());
+
+    // Check resources
+    Assert.assertEquals(0, getExtractionPaths(buildContext, "resources").size());
+
+    // Check classes
+    Assert.assertEquals(0, getExtractionPaths(buildContext, "classes").size());
+
+    // Check additional classpath files
+    List<AbsoluteUnixPath> expectedOthers =
+        ImmutableList.of(AbsoluteUnixPath.get("/hello/executable"));
+    Assert.assertEquals(expectedOthers, getExtractionPaths(buildContext, "extra files"));
+  }
 }

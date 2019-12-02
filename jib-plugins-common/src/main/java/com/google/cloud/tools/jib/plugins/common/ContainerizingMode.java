@@ -24,11 +24,13 @@ import java.util.Locale;
  * <ul>
  *   <li>{@code EXPLODED} puts individual application files without packaging.
  *   <li>{@code PACKAGED} puts a single packaged artifact for an application.
+ *   <li>{@code NATIVE_IMAGE} adds a single packaged artifact for an application.
  * </ul>
  */
 public enum ContainerizingMode {
   EXPLODED,
-  PACKAGED;
+  PACKAGED,
+  NATIVE_IMAGE;
 
   /**
    * Converts a string representation of ContainerizingMode to Enum. It requires an all lowercase

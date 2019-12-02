@@ -38,7 +38,9 @@ import com.google.cloud.tools.jib.plugins.common.logging.ProgressDisplayGenerato
 import com.google.cloud.tools.jib.plugins.common.logging.SingleThreadedExecutor;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Duration;
@@ -199,6 +201,7 @@ public class MavenProjectProperties implements ProjectProperties {
   public JibContainerBuilder createJibContainerBuilder(
       JavaContainerBuilder javaContainerBuilder, ContainerizingMode containerizingMode)
       throws IOException {
+
     try {
       if (isWarProject()) {
         Build build = project.getBuild();
@@ -223,6 +226,10 @@ public class MavenProjectProperties implements ProjectProperties {
           // Add a JAR
           javaContainerBuilder.addToClasspath(getJarArtifact());
           break;
+
+        case NATIVE_IMAGE:
+          Path executable = findNativeImageExecutable();
+          return javaContainerBuilder.forNativeImage(executable);
 
         default:
           throw new IllegalStateException("unknown containerizing mode: " + containerizingMode);
@@ -260,6 +267,46 @@ public class MavenProjectProperties implements ProjectProperties {
               + " jib:build\"?)",
           ex);
     }
+  }
+
+  /**
+   * Find and returns the {@code native-image-maven-plugin}'s executable.
+   *
+   * @throws IllegalStateException if the executable cannot be determined or does not exist
+   */
+  private Path findNativeImageExecutable() {
+    String executableName = getNativeImageExecutableName();
+    Build build = project.getBuild();
+    String outputDirectory = build.getDirectory();
+
+    Path executable = Paths.get(outputDirectory, executableName);
+    if (!Files.exists(executable)) {
+      throw new IllegalStateException("native-image executable does not exist: " + executable);
+    } else if (!Files.isRegularFile(executable)) {
+      throw new IllegalStateException("native-image executable is not a file: " + executable);
+    }
+    return executable;
+  }
+
+  @Override
+  public String getNativeImageExecutableName() {
+    Plugin nativeImagePlugin =
+        project.getPlugin("org.graalvm.nativeimage:native-image-maven-plugin");
+    if (nativeImagePlugin == null) {
+      throw new IllegalStateException("native-image-maven-plugin configuration not found");
+    }
+
+    String executableName = project.getArtifactId(); // default binary name
+    if (nativeImagePlugin.getConfiguration() != null) {
+      Xpp3Dom imageBody = ((Xpp3Dom) nativeImagePlugin.getConfiguration()).getChild("imageName");
+      if (imageBody != null) {
+        executableName = imageBody.getValue();
+      }
+    }
+    if (Strings.isNullOrEmpty(executableName)) {
+      throw new IllegalStateException("cannot determine native-image executable name");
+    }
+    return executableName;
   }
 
   @VisibleForTesting

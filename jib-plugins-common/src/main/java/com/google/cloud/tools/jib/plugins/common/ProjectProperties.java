@@ -66,6 +66,13 @@ public interface ProjectProperties {
 
   String getJarPluginName();
 
+  /**
+   * Find and returns the Graal's {@code native-image}'s configured executable name.
+   *
+   * @throws IllegalStateException if the executable cannot be determined or does not exist
+   */
+  String getNativeImageExecutableName();
+
   /** @return the name of the main class configured in a jar plugin, or null if none is found. */
   @Nullable
   String getMainClassFromJar();
