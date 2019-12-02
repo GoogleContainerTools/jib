@@ -2,10 +2,11 @@
 
 Relevant issues: [#1945](https://github.com/GoogleContainerTools/jib/issues/1945)
 
-# Aborted
-This proposal is archived but un-implemented, in favor of documentation in the
+| ❌ Aborted ❌ |
+| :----- |
+| This proposal is archived but unimplemented, in favor of documentation in the
 multimodule example:
-https://github.com/GoogleContainerTools/jib/tree/master/examples/multi-module
+https://github.com/GoogleContainerTools/jib/tree/master/examples/multi-module |
 
 ## Motivation
 
