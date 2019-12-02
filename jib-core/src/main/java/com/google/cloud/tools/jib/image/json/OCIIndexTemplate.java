@@ -28,12 +28,12 @@ public class OCIIndexTemplate implements JsonTemplate {
   private final List<BuildableManifestTemplate.ContentDescriptorTemplate> manifests =
       new ArrayList<>();
 
-  public void addManifest(BlobDescriptor descriptor, String tag) {
+  public void addManifest(BlobDescriptor descriptor, String imageReferenceName) {
     BuildableManifestTemplate.ContentDescriptorTemplate contentDescriptorTemplate =
         new BuildableManifestTemplate.ContentDescriptorTemplate(
             OCIManifestTemplate.MANIFEST_MEDIA_TYPE, descriptor.getSize(), descriptor.getDigest());
     contentDescriptorTemplate.setAnnotations(
-        ImmutableMap.of("org.opencontainers.image.ref.name", tag));
+        ImmutableMap.of("org.opencontainers.image.ref.name", imageReferenceName));
     manifests.add(contentDescriptorTemplate);
   }
 }

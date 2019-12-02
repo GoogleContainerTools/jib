@@ -109,9 +109,9 @@ public class ImageTarball {
     tarStreamBuilder.addByteEntry(
         "{\"imageLayoutVersion\": \"1.0.0\"}".getBytes(StandardCharsets.UTF_8), "oci-layout");
     OCIIndexTemplate index = new OCIIndexTemplate();
-    index.addManifest(manifestDescriptor, imageReference.getTag());
-
-    // TODO: Look into how to add additional tags
+    // TODO: figure out how to tag with allTargetImageTags
+    index.addManifest(manifestDescriptor, imageReference.toStringWithTag());
+    tarStreamBuilder.addByteEntry(JsonTemplateMapper.toByteArray(index), "index.json");
 
     tarStreamBuilder.writeAsTarArchiveTo(out);
   }
