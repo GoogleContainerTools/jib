@@ -2,10 +2,15 @@
 
 Relevant issues: [#1945](https://github.com/GoogleContainerTools/jib/issues/1945)
 
+# Aborted
+This proposal is archived but un-implemented, in favor of documentation in the
+multimodule example:
+https://github.com/GoogleContainerTools/jib/tree/master/examples/multi-module
+
 ## Motivation
 
 Currently in multimodule builds, jib takes the jars produced by submodule (and subproject) directly from
-the build system. This means if the build system (gradle, maven) doesn't produce reproducible jars, and 
+the build system. This means if the build system (gradle, maven) doesn't produce reproducible jars, and
 jib includes them in the final container, the reproducibility guarantees of jib are not satisfied.
 
 What we want to do is to rewrite these jars to remove any information that could make builds not reproducible.
@@ -19,7 +24,7 @@ In order to achieve reproducibility for jars, we need to:
 
 ## Non-goals
 
-Signed archives will/should not be touched by this process. While we expect that submodule dependencies will 
+Signed archives will/should not be touched by this process. While we expect that submodule dependencies will
 not be signed, there's no way for us to know what all users are doing eveywhere. A warning should be presented
 to the user that signed archives are processed by jib to be reproducible.
 
@@ -28,7 +33,7 @@ to the user that signed archives are processed by jib to be reproducible.
 Currently the user must configure their build to be reproducible. (we will borrow from these two solutions in our own solution with
 proper attribution)
 
-### Gradle 
+### Gradle
 In gradle that means configuring the jar task explicitly: https://docs.gradle.org/current/dsl/org.gradle.api.tasks.bundling.Jar.html
 
 ```
@@ -56,7 +61,7 @@ Jib *will not* do this for any other layer
 
 ### Configuration
 
-Jib can make this configurable, but it should be `true` by default. A system property like 
+Jib can make this configurable, but it should be `true` by default. A system property like
 
 ```
 -Djib.projectDependencies.reproducible=true/false
