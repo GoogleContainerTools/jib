@@ -88,7 +88,7 @@ public class ImageTarball {
       manifest.addLayer(size, digest);
     }
 
-    // Adds the container configuration to the tarball
+    // Adds the container configuration to the tarball and manifest
     JsonTemplate containerConfiguration =
         new ImageToJsonTranslator(image).getContainerConfiguration();
     BlobDescriptor configDescriptor =

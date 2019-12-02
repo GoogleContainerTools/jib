@@ -22,12 +22,42 @@ import com.google.common.collect.ImmutableMap;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * JSON template for OCI archive "index.json" file.
+ *
+ * <p>Example manifest JSON:
+ *
+ * <pre>{@code
+ * {
+ *   "schemaVersion": 2,
+ *   "manifests": [
+ *     {
+ *       "mediaType": "application/vnd.oci.image.config.v1+json",
+ *       "digest": "sha256:e684b1dceef404268f17d4adf7f755fd9912b8ae64864b3954a83ebb8aa628b3",
+ *       "size": 1132,
+ *       "annotations": {
+ *         "org.opencontainers.image.ref.name": "gcr.io/project/image:tag"
+ *       }
+ *     }
+ *   ]
+ * }
+ * }</pre>
+ *
+ * @see <a href="https://github.com/opencontainers/image-spec/blob/master/image-index.md">OCI Image
+ *     Index Specification</a>
+ */
 public class OCIIndexTemplate implements JsonTemplate {
 
   private final int schemaVersion = 2;
   private final List<BuildableManifestTemplate.ContentDescriptorTemplate> manifests =
       new ArrayList<>();
 
+  /**
+   * Adds a manifest reference with the given {@link BlobDescriptor}.
+   *
+   * @param descriptor the manifest blob descriptor
+   * @param imageReferenceName the image reference name
+   */
   public void addManifest(BlobDescriptor descriptor, String imageReferenceName) {
     BuildableManifestTemplate.ContentDescriptorTemplate contentDescriptorTemplate =
         new BuildableManifestTemplate.ContentDescriptorTemplate(
