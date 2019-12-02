@@ -15,6 +15,7 @@ All notable changes to this project will be documented in this file.
 
 - `Containerizer#setAllowInsecureRegistries(boolean)` and the `sendCredentialsOverHttp` system property are now effective for authentication service server connections. ([#2074](https://github.com/GoogleContainerTools/jib/pull/2074))
 - Fixed inefficient communications when interacting with insecure registries and servers (when `Containerizer#setAllowInsecureRegistries(boolean)` is set). ([#946](https://github.com/GoogleContainerTools/jib/issues/946))
+- Building a tarball with `OCI` format now builds a correctly formatted OCI archive. ([#2124](https://github.com/GoogleContainerTools/jib/issues/2124))
 
 ## 0.12.0
 

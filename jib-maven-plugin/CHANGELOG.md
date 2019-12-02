@@ -13,6 +13,7 @@ All notable changes to this project will be documented in this file.
 ### Fixed
 
 - Fixed `<extraDirectories><permissions>` being ignored if `<paths>` are not explicitly defined. ([#2106](https://github.com/GoogleContainerTools/jib/issues/2160))
+- `jib:buildTar` with `<container><format>OCI` now builds a correctly formatted OCI archive. ([#2124](https://github.com/GoogleContainerTools/jib/issues/2124))
 
 ## 1.8.0
 
