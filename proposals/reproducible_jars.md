@@ -1,11 +1,11 @@
 # Proposal: Make sub project/module jars included in container reproducible
 
-Relevant issues: [#1945](https://github.com/GoogleContainerTools/jib/issues/1945)
+Relevant issue: [#1945](https://github.com/GoogleContainerTools/jib/issues/1945)
+Relevent PR: [#2070](https://github.com/GoogleContainerTools/jib/pull/2070)
 
 | ❌ Aborted ❌ |
 | :----- |
-| This proposal is archived but unimplemented, in favor of documentation in the
-  multimodule example: https://github.com/GoogleContainerTools/jib/tree/master/examples/multi-module |
+| This proposal is archived but unimplemented, in favor of documentation in the multimodule example: https://github.com/GoogleContainerTools/jib/tree/master/examples/multi-module |
 
 ## Motivation
 
