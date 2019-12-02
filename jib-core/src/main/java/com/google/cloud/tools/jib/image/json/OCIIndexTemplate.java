@@ -18,6 +18,7 @@ package com.google.cloud.tools.jib.image.json;
 
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.json.JsonTemplate;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
 import java.util.ArrayList;
 import java.util.List;
@@ -65,5 +66,10 @@ public class OCIIndexTemplate implements JsonTemplate {
     contentDescriptorTemplate.setAnnotations(
         ImmutableMap.of("org.opencontainers.image.ref.name", imageReferenceName));
     manifests.add(contentDescriptorTemplate);
+  }
+
+  @VisibleForTesting
+  public List<BuildableManifestTemplate.ContentDescriptorTemplate> getManifests() {
+    return manifests;
   }
 }

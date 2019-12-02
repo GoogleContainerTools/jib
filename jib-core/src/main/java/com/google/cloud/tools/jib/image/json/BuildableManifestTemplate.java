@@ -74,6 +74,12 @@ public interface BuildableManifestTemplate extends ManifestTemplate {
       this.digest = digest;
     }
 
+    @VisibleForTesting
+    @Nullable
+    public Map<String, String> getAnnotations() {
+      return annotations;
+    }
+
     void setAnnotations(Map<String, String> annotations) {
       this.annotations = annotations;
     }
