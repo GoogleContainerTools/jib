@@ -193,11 +193,11 @@ public class ImageTarballTest {
       DescriptorDigest manifestDescriptor =
           DescriptorDigest.fromHash(
               "5e476c912767bd5a872e78c8c86b5b6e87dc9a725d61c0f617f9823f38d99cc5");
-      Assert.assertEquals("blobs/sha256/" + manifestDescriptor.getHash(), headerManifest.getName());
       String manifestJson =
           CharStreams.toString(
               new InputStreamReader(tarArchiveInputStream, StandardCharsets.UTF_8));
       Assert.assertEquals("", manifestJson);
+      Assert.assertEquals("blobs/sha256/" + manifestDescriptor.getHash(), headerManifest.getName());
       JsonTemplateMapper.readJson(manifestJson, OCIManifestTemplate.class);
 
       // Verifies oci-layout was added.
