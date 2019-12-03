@@ -196,7 +196,7 @@ public class ImageTarballTest {
       String manifestJson =
           CharStreams.toString(
               new InputStreamReader(tarArchiveInputStream, StandardCharsets.UTF_8));
-      Assert.assertEquals("", manifestJson);
+      Assert.assertEquals(" ", manifestJson);
       Assert.assertEquals("blobs/sha256/" + manifestDescriptor.getHash(), headerManifest.getName());
       JsonTemplateMapper.readJson(manifestJson, OCIManifestTemplate.class);
 
