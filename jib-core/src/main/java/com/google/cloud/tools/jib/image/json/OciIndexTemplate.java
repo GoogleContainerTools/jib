@@ -33,7 +33,7 @@ import java.util.List;
  *   "schemaVersion": 2,
  *   "manifests": [
  *     {
- *       "mediaType": "application/vnd.oci.image.config.v1+json",
+ *       "mediaType": "application/vnd.oci.image.manifest.v1+json",
  *       "digest": "sha256:e684b1dceef404268f17d4adf7f755fd9912b8ae64864b3954a83ebb8aa628b3",
  *       "size": 1132,
  *       "annotations": {
