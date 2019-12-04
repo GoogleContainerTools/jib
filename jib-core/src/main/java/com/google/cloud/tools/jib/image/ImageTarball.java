@@ -14,15 +14,13 @@
  * the License.
  */
 
-package com.google.cloud.tools.jib.docker;
+package com.google.cloud.tools.jib.image;
 
 import com.google.cloud.tools.jib.api.DescriptorDigest;
 import com.google.cloud.tools.jib.api.ImageReference;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.blob.Blobs;
 import com.google.cloud.tools.jib.docker.json.DockerManifestEntryTemplate;
-import com.google.cloud.tools.jib.image.Image;
-import com.google.cloud.tools.jib.image.Layer;
 import com.google.cloud.tools.jib.image.json.ImageToJsonTranslator;
 import com.google.cloud.tools.jib.image.json.OCIIndexTemplate;
 import com.google.cloud.tools.jib.image.json.OCIManifestTemplate;
@@ -53,7 +51,7 @@ public class ImageTarball {
   private final ImmutableSet<String> allTargetImageTags;
 
   /**
-   * Instantiate with an {@link Image}.
+   * Instantiate with an {@link com.google.cloud.tools.jib.image.Image}.
    *
    * @param image the image to convert into a tarball
    * @param imageReference image reference to set in the manifest (note that the tag portion of the

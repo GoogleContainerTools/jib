@@ -14,7 +14,7 @@
  * the License.
  */
 
-package com.google.cloud.tools.jib.docker;
+package com.google.cloud.tools.jib.image;
 
 import com.google.cloud.tools.jib.api.DescriptorDigest;
 import com.google.cloud.tools.jib.api.ImageReference;
@@ -22,9 +22,6 @@ import com.google.cloud.tools.jib.api.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.blob.Blobs;
 import com.google.cloud.tools.jib.docker.json.DockerManifestEntryTemplate;
-import com.google.cloud.tools.jib.image.Image;
-import com.google.cloud.tools.jib.image.Layer;
-import com.google.cloud.tools.jib.image.LayerPropertyNotFoundException;
 import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
 import com.google.cloud.tools.jib.image.json.ContainerConfigurationTemplate;
 import com.google.cloud.tools.jib.image.json.OCIIndexTemplate;
