@@ -19,6 +19,7 @@ package com.google.cloud.tools.jib.maven;
 import com.google.cloud.tools.jib.api.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.api.FilePermissions;
 import com.google.cloud.tools.jib.maven.JibPluginConfiguration.PermissionConfiguration;
+import com.google.cloud.tools.jib.plugins.common.PropertyNames;
 import com.google.cloud.tools.jib.plugins.common.VersionChecker;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
@@ -30,6 +31,7 @@ import java.util.Map;
 import org.apache.maven.artifact.versioning.DefaultArtifactVersion;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.descriptor.PluginDescriptor;
+import org.apache.maven.plugin.logging.Log;
 import org.apache.maven.project.MavenProject;
 
 /** Collection of common methods to share between Maven goals. */
@@ -37,22 +39,6 @@ public class MojoCommon {
   /** Describes a minimum required version or version range for Jib. */
   @VisibleForTesting
   public static final String REQUIRED_VERSION_PROPERTY_NAME = "jib.requiredVersion";
-
-  @Deprecated
-  static void checkUseCurrentTimestampDeprecation(JibPluginConfiguration jibPluginConfiguration) {
-    if (jibPluginConfiguration.getUseCurrentTimestamp()) {
-      if (!jibPluginConfiguration.getCreationTime().equals("EPOCH")) {
-        throw new IllegalArgumentException(
-            "You cannot configure both <container><useCurrentTimestamp> and "
-                + "<container><creationTime>");
-      }
-      jibPluginConfiguration
-          .getLog()
-          .warn(
-              "<container><useCurrentTimestamp> is deprecated; use <container><creationTime> with "
-                  + "the value USE_CURRENT_TIMESTAMP instead");
-    }
-  }
 
   /**
    * Gets the list of extra directory paths from a {@link JibPluginConfiguration}. Returns {@code
@@ -120,6 +106,33 @@ public class MojoCommon {
               actualVersion, acceptableVersionSpec);
       throw new MojoExecutionException(failure);
     }
+  }
+
+  /**
+   * Determines if Jib goal execution on this project/module should be skipped due to configuration.
+   *
+   * @param jibPluginConfiguration usually {@code this}, the Mojo this check is applied in.
+   * @return {@code true} if Jib should be skipped (should not execute goal), or {@code false} if it
+   *     should continue with execution.
+   */
+  public static boolean shouldSkipJibExecution(JibPluginConfiguration jibPluginConfiguration) {
+    Log log = jibPluginConfiguration.getLog();
+    if (jibPluginConfiguration.isSkipped()) {
+      log.info("Skipping containerization because jib-maven-plugin: skip = true");
+      return true;
+    }
+    if (!jibPluginConfiguration.isContainerizable()) {
+      log.info(
+          "Skipping containerization of this module (not specified in "
+              + PropertyNames.CONTAINERIZE
+              + ")");
+      return true;
+    }
+    if ("pom".equals(jibPluginConfiguration.getProject().getPackaging())) {
+      log.info("Skipping containerization because packaging is 'pom'...");
+      return true;
+    }
+    return false;
   }
 
   private MojoCommon() {}

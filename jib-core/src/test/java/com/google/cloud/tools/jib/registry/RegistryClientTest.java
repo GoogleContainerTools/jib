@@ -42,7 +42,7 @@ public class RegistryClientTest {
   @Before
   public void setUp() {
     testRegistryClientFactory =
-        RegistryClient.factory(eventHandlers, "some.server.url", "some image name");
+        RegistryClient.factory(eventHandlers, "some.server.url", "some image name", null);
   }
 
   @Rule public final RestoreSystemProperties systemPropertyRestorer = new RestoreSystemProperties();
@@ -68,10 +68,7 @@ public class RegistryClientTest {
   @Test
   public void testGetUserAgent() {
     RegistryClient registryClient =
-        testRegistryClientFactory
-            .setAllowInsecureRegistries(true)
-            .setUserAgentSuffix("some user agent suffix")
-            .newRegistryClient();
+        testRegistryClientFactory.setUserAgentSuffix("some user agent suffix").newRegistryClient();
 
     Assert.assertTrue(registryClient.getUserAgent().startsWith("jib "));
     Assert.assertTrue(registryClient.getUserAgent().endsWith(" some user agent suffix"));
@@ -82,21 +79,8 @@ public class RegistryClientTest {
     System.setProperty(JibSystemProperties.UPSTREAM_CLIENT, "skaffold/0.34.0");
 
     RegistryClient registryClient =
-        testRegistryClientFactory
-            .setAllowInsecureRegistries(true)
-            .setUserAgentSuffix("foo")
-            .newRegistryClient();
+        testRegistryClientFactory.setUserAgentSuffix("foo").newRegistryClient();
     Assert.assertTrue(registryClient.getUserAgent().startsWith("jib "));
     Assert.assertTrue(registryClient.getUserAgent().endsWith(" skaffold/0.34.0"));
-  }
-
-  @Test
-  public void testGetApiRouteBase() {
-    Assert.assertEquals(
-        "some.server.url/v2/",
-        testRegistryClientFactory
-            .setAllowInsecureRegistries(true)
-            .newRegistryClient()
-            .getApiRouteBase());
   }
 }

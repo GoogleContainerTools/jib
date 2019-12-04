@@ -23,6 +23,8 @@ import java.util.Objects;
 /**
  * Represents an entry in the layer. A layer consists of many entries that can be converted into tar
  * archive entries.
+ *
+ * <p>This class is immutable and thread-safe.
  */
 public class LayerEntry {
 

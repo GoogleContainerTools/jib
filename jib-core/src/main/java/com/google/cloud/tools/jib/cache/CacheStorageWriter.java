@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Google LLC. All rights reserved.
+ * Copyright 2018 Google LLC.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -144,7 +144,7 @@ class CacheStorageWriter {
           StandardCopyOption.ATOMIC_MOVE,
           StandardCopyOption.REPLACE_EXISTING);
 
-    } catch (AtomicMoveNotSupportedException ignored2) {
+    } catch (AtomicMoveNotSupportedException ignored) {
       Files.move(temporaryFile, destination, StandardCopyOption.REPLACE_EXISTING);
     }
   }
@@ -330,6 +330,21 @@ class CacheStorageWriter {
     try (LockFile ignored = LockFile.lock(imageDirectory.resolve("lock"))) {
       writeMetadata(manifestTemplate, imageDirectory.resolve("manifest.json"));
     }
+  }
+
+  /**
+   * Writes a container configuration to {@code (cache directory)/local/config/(image id)}.
+   *
+   * @param imageId the ID of the image to store the container configuration for
+   * @param containerConfiguration the container configuration
+   * @throws IOException if an I/O exception occurs
+   */
+  void writeLocalConfig(
+      DescriptorDigest imageId, ContainerConfigurationTemplate containerConfiguration)
+      throws IOException {
+    Path configDirectory = cacheStorageFiles.getLocalDirectory().resolve("config");
+    Files.createDirectories(configDirectory);
+    writeMetadata(containerConfiguration, configDirectory.resolve(imageId.getHash()));
   }
 
   /**

@@ -18,6 +18,7 @@ package com.google.cloud.tools.jib.maven;
 
 import com.google.cloud.tools.jib.api.CacheDirectoryCreationException;
 import com.google.cloud.tools.jib.api.InvalidImageReferenceException;
+import com.google.cloud.tools.jib.filesystem.TempDirectoryProvider;
 import com.google.cloud.tools.jib.plugins.common.BuildStepsExecutionException;
 import com.google.cloud.tools.jib.plugins.common.HelpfulSuggestions;
 import com.google.cloud.tools.jib.plugins.common.IncompatibleBaseImageJavaVersionException;
@@ -29,7 +30,6 @@ import com.google.cloud.tools.jib.plugins.common.InvalidFilesModificationTimeExc
 import com.google.cloud.tools.jib.plugins.common.InvalidWorkingDirectoryException;
 import com.google.cloud.tools.jib.plugins.common.MainClassInferenceException;
 import com.google.cloud.tools.jib.plugins.common.PluginConfigurationProcessor;
-import com.google.cloud.tools.jib.plugins.common.PropertyNames;
 import com.google.common.annotations.VisibleForTesting;
 import java.io.IOException;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -38,7 +38,8 @@ import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.ResolutionScope;
 
 /**
- * Builds a container image and exports to disk at {@code ${project.build.directory}/jib-image.tar}.
+ * Builds a container image and exports to disk at the configured location ({@code
+ * ${project.build.directory}/jib-image.tar} by default).
  */
 @Mojo(
     name = BuildTarMojo.GOAL_NAME,
@@ -53,29 +54,17 @@ public class BuildTarMojo extends JibPluginConfiguration {
   @Override
   public void execute() throws MojoExecutionException, MojoFailureException {
     checkJibVersion();
-    if (isSkipped()) {
-      getLog().info("Skipping containerization because jib-maven-plugin: skip = true");
-      return;
-    } else if (!isContainerizable()) {
-      getLog()
-          .info(
-              "Skipping containerization of this module (not specified in "
-                  + PropertyNames.CONTAINERIZE
-                  + ")");
+    if (MojoCommon.shouldSkipJibExecution(this)) {
       return;
     }
-    if ("pom".equals(getProject().getPackaging())) {
-      getLog().info("Skipping containerization because packaging is 'pom'...");
-      return;
-    }
-
-    MojoCommon.checkUseCurrentTimestampDeprecation(this);
 
     MavenSettingsProxyProvider.activateHttpAndHttpsProxies(
         getSession().getSettings(), getSettingsDecrypter());
 
+    TempDirectoryProvider tempDirectoryProvider = new TempDirectoryProvider();
     MavenProjectProperties projectProperties =
-        MavenProjectProperties.getForProject(getProject(), getSession(), getLog());
+        MavenProjectProperties.getForProject(
+            getProject(), getSession(), getLog(), tempDirectoryProvider);
     try {
       PluginConfigurationProcessor.createJibBuildRunnerForTarImage(
               new MavenRawConfiguration(this),
@@ -136,6 +125,7 @@ public class BuildTarMojo extends JibPluginConfiguration {
       throw new MojoExecutionException(ex.getMessage(), ex.getCause());
 
     } finally {
+      tempDirectoryProvider.close();
       projectProperties.waitForLoggingThread();
       getLog().info("");
     }

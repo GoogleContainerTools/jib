@@ -18,7 +18,7 @@ package com.google.cloud.tools.jib.api;
 
 import com.google.cloud.tools.jib.builder.steps.BuildResult;
 import com.google.cloud.tools.jib.builder.steps.StepsRunner;
-import com.google.cloud.tools.jib.configuration.BuildConfiguration;
+import com.google.cloud.tools.jib.configuration.BuildContext;
 import com.google.cloud.tools.jib.configuration.ImageConfiguration;
 import com.google.cloud.tools.jib.docker.DockerClient;
 import com.google.cloud.tools.jib.event.EventHandlers;
@@ -66,8 +66,8 @@ public class Containerizer {
             .setCredentialRetrievers(registryImage.getCredentialRetrievers())
             .build();
 
-    Function<BuildConfiguration, StepsRunner> stepsRunnerFactory =
-        buildConfiguration -> StepsRunner.begin(buildConfiguration).registryPushSteps();
+    Function<BuildContext, StepsRunner> stepsRunnerFactory =
+        buildContext -> StepsRunner.begin(buildContext).registryPushSteps();
 
     return new Containerizer(
         DESCRIPTION_FOR_DOCKER_REGISTRY, imageConfiguration, stepsRunnerFactory, true);
@@ -86,8 +86,8 @@ public class Containerizer {
     DockerClient dockerClient =
         new DockerClient(
             dockerDaemonImage.getDockerExecutable(), dockerDaemonImage.getDockerEnvironment());
-    Function<BuildConfiguration, StepsRunner> stepsRunnerFactory =
-        buildConfiguration -> StepsRunner.begin(buildConfiguration).dockerLoadSteps(dockerClient);
+    Function<BuildContext, StepsRunner> stepsRunnerFactory =
+        buildContext -> StepsRunner.begin(buildContext).dockerLoadSteps(dockerClient);
 
     return new Containerizer(
         DESCRIPTION_FOR_DOCKER_DAEMON, imageConfiguration, stepsRunnerFactory, false);
@@ -109,9 +109,8 @@ public class Containerizer {
     ImageConfiguration imageConfiguration =
         ImageConfiguration.builder(tarImage.getImageReference().get()).build();
 
-    Function<BuildConfiguration, StepsRunner> stepsRunnerFactory =
-        buildConfiguration ->
-            StepsRunner.begin(buildConfiguration).tarBuildSteps(tarImage.getPath());
+    Function<BuildContext, StepsRunner> stepsRunnerFactory =
+        buildContext -> StepsRunner.begin(buildContext).tarBuildSteps(tarImage.getPath());
 
     return new Containerizer(
         DESCRIPTION_FOR_TARBALL, imageConfiguration, stepsRunnerFactory, false);
@@ -119,7 +118,7 @@ public class Containerizer {
 
   private final String description;
   private final ImageConfiguration imageConfiguration;
-  private final Function<BuildConfiguration, StepsRunner> stepsRunnerFactory;
+  private final Function<BuildContext, StepsRunner> stepsRunnerFactory;
   private final boolean mustBeOnline;
   private final Set<String> additionalTags = new HashSet<>();
   private final EventHandlers.Builder eventHandlersBuilder = EventHandlers.builder();
@@ -130,12 +129,13 @@ public class Containerizer {
   private boolean allowInsecureRegistries = false;
   private boolean offline = false;
   private String toolName = DEFAULT_TOOL_NAME;
+  private boolean alwaysCacheBaseImage = false;
 
   /** Instantiate with {@link #to}. */
   private Containerizer(
       String description,
       ImageConfiguration imageConfiguration,
-      Function<BuildConfiguration, StepsRunner> stepsRunnerFactory,
+      Function<BuildContext, StepsRunner> stepsRunnerFactory,
       boolean mustBeOnline) {
     this.description = description;
     this.imageConfiguration = imageConfiguration;
@@ -269,6 +269,20 @@ public class Containerizer {
     return this;
   }
 
+  /**
+   * Controls the optimization which skips downloading base image layers that exist in a target
+   * registry. If the user does not set this property, then read as false.
+   *
+   * @param alwaysCacheBaseImage if {@code true}, base image layers are always pulled and cached. If
+   *     {@code false}, base image layers will not be pulled/cached if they already exist on the
+   *     target registry.
+   * @return this
+   */
+  public Containerizer setAlwaysCacheBaseImage(boolean alwaysCacheBaseImage) {
+    this.alwaysCacheBaseImage = alwaysCacheBaseImage;
+    return this;
+  }
+
   Set<String> getAdditionalTags() {
     return additionalTags;
   }
@@ -311,6 +325,10 @@ public class Containerizer {
     return toolName;
   }
 
+  boolean getAlwaysCacheBaseImage() {
+    return alwaysCacheBaseImage;
+  }
+
   String getDescription() {
     return description;
   }
@@ -319,8 +337,7 @@ public class Containerizer {
     return imageConfiguration;
   }
 
-  BuildResult run(BuildConfiguration buildConfiguration)
-      throws ExecutionException, InterruptedException {
-    return stepsRunnerFactory.apply(buildConfiguration).run();
+  BuildResult run(BuildContext buildContext) throws ExecutionException, InterruptedException {
+    return stepsRunnerFactory.apply(buildContext).run();
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Google LLC. All rights reserved.
+ * Copyright 2018 Google LLC.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -221,6 +221,26 @@ class CacheStorageReader {
               .setLayerDiffId(diffId)
               .build());
     }
+  }
+
+  /**
+   * Retrieves the {@link ContainerConfigurationTemplate} for the image with the given image ID.
+   *
+   * @param imageId the image ID
+   * @return the {@link ContainerConfigurationTemplate} referenced by the image ID, if found
+   * @throws IOException if an I/O exception occurs
+   */
+  Optional<ContainerConfigurationTemplate> retrieveLocalConfig(DescriptorDigest imageId)
+      throws IOException {
+    Path configPath =
+        cacheStorageFiles.getLocalDirectory().resolve("config").resolve(imageId.getHash());
+    if (!Files.exists(configPath)) {
+      return Optional.empty();
+    }
+
+    ContainerConfigurationTemplate config =
+        JsonTemplateMapper.readJsonFromFile(configPath, ContainerConfigurationTemplate.class);
+    return Optional.of(config);
   }
 
   /**

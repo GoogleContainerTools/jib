@@ -19,7 +19,6 @@ package com.google.cloud.tools.jib.builder.steps;
 import com.google.cloud.tools.jib.api.Credential;
 import com.google.cloud.tools.jib.api.DescriptorDigest;
 import com.google.cloud.tools.jib.api.ImageReference;
-import com.google.cloud.tools.jib.api.InsecureRegistryException;
 import com.google.cloud.tools.jib.api.LogEvent;
 import com.google.cloud.tools.jib.api.RegistryException;
 import com.google.cloud.tools.jib.api.RegistryUnauthorizedException;
@@ -28,8 +27,7 @@ import com.google.cloud.tools.jib.builder.ProgressEventDispatcher;
 import com.google.cloud.tools.jib.builder.TimerEventDispatcher;
 import com.google.cloud.tools.jib.builder.steps.PullBaseImageStep.ImageAndAuthorization;
 import com.google.cloud.tools.jib.cache.CacheCorruptedException;
-import com.google.cloud.tools.jib.configuration.BuildConfiguration;
-import com.google.cloud.tools.jib.configuration.ImageConfiguration;
+import com.google.cloud.tools.jib.configuration.BuildContext;
 import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.event.events.ProgressEvent;
 import com.google.cloud.tools.jib.http.Authorization;
@@ -46,6 +44,7 @@ import com.google.cloud.tools.jib.image.json.UnknownManifestFormatException;
 import com.google.cloud.tools.jib.image.json.V21ManifestTemplate;
 import com.google.cloud.tools.jib.image.json.V22ManifestListTemplate;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
+import com.google.cloud.tools.jib.registry.ManifestAndDigest;
 import com.google.cloud.tools.jib.registry.RegistryAuthenticator;
 import com.google.cloud.tools.jib.registry.RegistryClient;
 import com.google.cloud.tools.jib.registry.credentials.CredentialRetrievalException;
@@ -83,13 +82,12 @@ class PullBaseImageStep implements Callable<ImageAndAuthorization> {
     }
   }
 
-  private final BuildConfiguration buildConfiguration;
+  private final BuildContext buildContext;
   private final ProgressEventDispatcher.Factory progressEventDispatcherFactory;
 
   PullBaseImageStep(
-      BuildConfiguration buildConfiguration,
-      ProgressEventDispatcher.Factory progressEventDispatcherFactory) {
-    this.buildConfiguration = buildConfiguration;
+      BuildContext buildContext, ProgressEventDispatcher.Factory progressEventDispatcherFactory) {
+    this.buildContext = buildContext;
     this.progressEventDispatcherFactory = progressEventDispatcherFactory;
   }
 
@@ -98,46 +96,46 @@ class PullBaseImageStep implements Callable<ImageAndAuthorization> {
       throws IOException, RegistryException, LayerPropertyNotFoundException,
           LayerCountMismatchException, BadContainerConfigurationFormatException,
           CacheCorruptedException, CredentialRetrievalException {
-    EventHandlers eventHandlers = buildConfiguration.getEventHandlers();
+    EventHandlers eventHandlers = buildContext.getEventHandlers();
     // Skip this step if this is a scratch image
-    ImageConfiguration baseImageConfiguration = buildConfiguration.getBaseImageConfiguration();
-    if (baseImageConfiguration.getImage().isScratch()) {
+    ImageReference imageReference = buildContext.getBaseImageConfiguration().getImage();
+    if (imageReference.isScratch()) {
       eventHandlers.dispatch(LogEvent.progress("Getting scratch base image..."));
-      return new ImageAndAuthorization(
-          Image.builder(buildConfiguration.getTargetFormat()).build(), null);
+      return new ImageAndAuthorization(Image.builder(buildContext.getTargetFormat()).build(), null);
     }
 
     eventHandlers.dispatch(
-        LogEvent.progress(
-            "Getting base image "
-                + buildConfiguration.getBaseImageConfiguration().getImage()
-                + "..."));
+        LogEvent.progress("Getting manifest for base image " + imageReference + "..."));
 
-    if (buildConfiguration.isOffline()) {
-      return new ImageAndAuthorization(pullBaseImageOffline(), null);
+    if (buildContext.isOffline() || imageReference.isTagDigest()) {
+      Optional<Image> image = getCachedBaseImage();
+      if (image.isPresent()) {
+        return new ImageAndAuthorization(image.get(), null);
+      }
+      if (buildContext.isOffline()) {
+        throw new IOException(
+            "Cannot run Jib in offline mode; " + imageReference + " not found in local Jib cache");
+      }
     }
 
     try (ProgressEventDispatcher progressEventDispatcher =
             progressEventDispatcherFactory.create("pulling base image manifest", 2);
-        TimerEventDispatcher ignored =
-            new TimerEventDispatcher(buildConfiguration.getEventHandlers(), DESCRIPTION)) {
+        TimerEventDispatcher ignored1 = new TimerEventDispatcher(eventHandlers, DESCRIPTION)) {
       // First, try with no credentials.
       try {
         return new ImageAndAuthorization(pullBaseImage(null, progressEventDispatcher), null);
 
-      } catch (RegistryUnauthorizedException ex) {
+      } catch (RegistryUnauthorizedException ignored2) {
         eventHandlers.dispatch(
             LogEvent.lifecycle(
-                "The base image requires auth. Trying again for "
-                    + buildConfiguration.getBaseImageConfiguration().getImage()
-                    + "..."));
+                "The base image requires auth. Trying again for " + imageReference + "..."));
 
         // If failed, then, retrieve base registry credentials and try with retrieved credentials.
         // TODO: Refactor the logic in RetrieveRegistryCredentialsStep out to
         // registry.credentials.RegistryCredentialsRetriever.
         Credential registryCredential =
             RetrieveRegistryCredentialsStep.forBaseImage(
-                    buildConfiguration, progressEventDispatcher.newChildProducer())
+                    buildContext, progressEventDispatcher.newChildProducer())
                 .call()
                 .orElse(null);
 
@@ -154,26 +152,22 @@ class PullBaseImageStep implements Callable<ImageAndAuthorization> {
         } catch (RegistryUnauthorizedException registryUnauthorizedException) {
           // The registry requires us to authenticate using the Docker Token Authentication.
           // See https://docs.docker.com/registry/spec/auth/token
-          try {
-            Optional<RegistryAuthenticator> registryAuthenticator =
-                buildConfiguration
-                    .newBaseImageRegistryClientFactory()
-                    .newRegistryClient()
-                    .getRegistryAuthenticator();
-            if (registryAuthenticator.isPresent()) {
-              Authorization pullAuthorization =
-                  registryAuthenticator.get().authenticatePull(registryCredential);
+          Optional<RegistryAuthenticator> registryAuthenticator =
+              buildContext
+                  .newBaseImageRegistryClientFactory()
+                  .newRegistryClient()
+                  .getRegistryAuthenticator();
+          if (registryAuthenticator.isPresent()) {
+            Authorization pullAuthorization =
+                registryAuthenticator.get().authenticatePull(registryCredential);
 
-              return new ImageAndAuthorization(
-                  pullBaseImage(pullAuthorization, progressEventDispatcher), pullAuthorization);
-            }
-
-          } catch (InsecureRegistryException insecureRegistryException) {
-            // Cannot skip certificate validation or use HTTP; fall through.
+            return new ImageAndAuthorization(
+                pullBaseImage(pullAuthorization, progressEventDispatcher), pullAuthorization);
           }
           eventHandlers.dispatch(
               LogEvent.error(
-                  "Failed to retrieve authentication challenge for registry that required token authentication"));
+                  "Failed to retrieve authentication challenge for registry that required token "
+                      + "authentication"));
           throw registryUnauthorizedException;
         }
       }
@@ -200,38 +194,41 @@ class PullBaseImageStep implements Callable<ImageAndAuthorization> {
       ProgressEventDispatcher progressEventDispatcher)
       throws IOException, RegistryException, LayerPropertyNotFoundException,
           LayerCountMismatchException, BadContainerConfigurationFormatException {
+    EventHandlers eventHandlers = buildContext.getEventHandlers();
     RegistryClient registryClient =
-        buildConfiguration
+        buildContext
             .newBaseImageRegistryClientFactory()
             .setAuthorization(registryAuthorization)
             .newRegistryClient();
 
-    ManifestTemplate manifestTemplate =
-        registryClient.pullManifest(buildConfiguration.getBaseImageConfiguration().getImageTag());
+    ManifestAndDigest<?> manifestAndDigest =
+        registryClient.pullManifest(buildContext.getBaseImageConfiguration().getImageTag());
+    ManifestTemplate manifestTemplate = manifestAndDigest.getManifest();
 
     // special handling if we happen upon a manifest list, redirect to a manifest and continue
     // handling it normally
     if (manifestTemplate instanceof V22ManifestListTemplate) {
-      buildConfiguration
-          .getEventHandlers()
-          .dispatch(
-              LogEvent.lifecycle(
-                  "The base image reference is manifest list, searching for linux/amd64"));
-      manifestTemplate =
+      eventHandlers.dispatch(
+          LogEvent.lifecycle(
+              "The base image reference is manifest list, searching for linux/amd64"));
+      manifestAndDigest =
           obtainPlatformSpecificImageManifest(
               registryClient, (V22ManifestListTemplate) manifestTemplate);
+      manifestTemplate = manifestAndDigest.getManifest();
     }
 
     switch (manifestTemplate.getSchemaVersion()) {
       case 1:
         V21ManifestTemplate v21ManifestTemplate = (V21ManifestTemplate) manifestTemplate;
-        buildConfiguration
+        buildContext
             .getBaseImageLayersCache()
             .writeMetadata(
-                buildConfiguration.getBaseImageConfiguration().getImage(), v21ManifestTemplate);
+                buildContext.getBaseImageConfiguration().getImage(), v21ManifestTemplate);
         return JsonToImageTranslator.toImage(v21ManifestTemplate);
 
       case 2:
+        eventHandlers.dispatch(
+            LogEvent.lifecycle("Using base image with digest: " + manifestAndDigest.getDigest()));
         BuildableManifestTemplate buildableManifestTemplate =
             (BuildableManifestTemplate) manifestTemplate;
         if (buildableManifestTemplate.getContainerConfiguration() == null
@@ -258,10 +255,10 @@ class PullBaseImageStep implements Callable<ImageAndAuthorization> {
           ContainerConfigurationTemplate containerConfigurationTemplate =
               JsonTemplateMapper.readJson(
                   containerConfigurationString, ContainerConfigurationTemplate.class);
-          buildConfiguration
+          buildContext
               .getBaseImageLayersCache()
               .writeMetadata(
-                  buildConfiguration.getBaseImageConfiguration().getImage(),
+                  buildContext.getBaseImageConfiguration().getImage(),
                   buildableManifestTemplate,
                   containerConfigurationTemplate);
           return JsonToImageTranslator.toImage(
@@ -276,7 +273,7 @@ class PullBaseImageStep implements Callable<ImageAndAuthorization> {
    * Looks through a manifest list for any amd64/linux manifest and downloads and returns the first
    * manifest it finds.
    */
-  private ManifestTemplate obtainPlatformSpecificImageManifest(
+  private ManifestAndDigest<?> obtainPlatformSpecificImageManifest(
       RegistryClient registryClient, V22ManifestListTemplate manifestListTemplate)
       throws RegistryException, IOException {
 
@@ -284,8 +281,8 @@ class PullBaseImageStep implements Callable<ImageAndAuthorization> {
     if (digests.size() == 0) {
       String errorMessage =
           "Unable to find amd64/linux manifest in manifest list at: "
-              + buildConfiguration.getBaseImageConfiguration().getImage();
-      buildConfiguration.getEventHandlers().dispatch(LogEvent.error(errorMessage));
+              + buildContext.getBaseImageConfiguration().getImage();
+      buildContext.getEventHandlers().dispatch(LogEvent.error(errorMessage));
       throw new RegistryException(errorMessage);
     }
     return registryClient.pullManifest(digests.get(0));
@@ -294,32 +291,32 @@ class PullBaseImageStep implements Callable<ImageAndAuthorization> {
   /**
    * Retrieves the cached base image.
    *
-   * @return the cached image
+   * @return the cached image, if found
    * @throws IOException when an I/O exception occurs
    * @throws CacheCorruptedException if the cache is corrupted
    * @throws LayerPropertyNotFoundException if adding image layers fails
    * @throws BadContainerConfigurationFormatException if the container configuration is in a bad
    *     format
    */
-  private Image pullBaseImageOffline()
+  private Optional<Image> getCachedBaseImage()
       throws IOException, CacheCorruptedException, BadContainerConfigurationFormatException,
           LayerCountMismatchException {
-    ImageReference baseImage = buildConfiguration.getBaseImageConfiguration().getImage();
+    ImageReference baseImage = buildContext.getBaseImageConfiguration().getImage();
     Optional<ManifestAndConfig> metadata =
-        buildConfiguration.getBaseImageLayersCache().retrieveMetadata(baseImage);
+        buildContext.getBaseImageLayersCache().retrieveMetadata(baseImage);
     if (!metadata.isPresent()) {
-      throw new IOException(
-          "Cannot run Jib in offline mode; " + baseImage + " not found in local Jib cache");
+      return Optional.empty();
     }
 
     ManifestTemplate manifestTemplate = metadata.get().getManifest();
     if (manifestTemplate instanceof V21ManifestTemplate) {
-      return JsonToImageTranslator.toImage((V21ManifestTemplate) manifestTemplate);
+      return Optional.of(JsonToImageTranslator.toImage((V21ManifestTemplate) manifestTemplate));
     }
 
     ContainerConfigurationTemplate configurationTemplate =
         metadata.get().getConfig().orElseThrow(IllegalStateException::new);
-    return JsonToImageTranslator.toImage(
-        (BuildableManifestTemplate) manifestTemplate, configurationTemplate);
+    return Optional.of(
+        JsonToImageTranslator.toImage(
+            (BuildableManifestTemplate) manifestTemplate, configurationTemplate));
   }
 }

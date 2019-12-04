@@ -23,7 +23,7 @@ import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.builder.ProgressEventDispatcher;
 import com.google.cloud.tools.jib.builder.TimerEventDispatcher;
-import com.google.cloud.tools.jib.configuration.BuildConfiguration;
+import com.google.cloud.tools.jib.configuration.BuildContext;
 import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.event.progress.ThrottledAccumulatingConsumer;
 import com.google.cloud.tools.jib.http.Authorization;
@@ -37,7 +37,7 @@ class PushBlobStep implements Callable<BlobDescriptor> {
 
   private static final String DESCRIPTION = "Pushing BLOB ";
 
-  private final BuildConfiguration buildConfiguration;
+  private final BuildContext buildContext;
   private final ProgressEventDispatcher.Factory progressEventDispatcherFactory;
 
   @Nullable private final Authorization authorization;
@@ -46,13 +46,13 @@ class PushBlobStep implements Callable<BlobDescriptor> {
   private final boolean forcePush;
 
   PushBlobStep(
-      BuildConfiguration buildConfiguration,
+      BuildContext buildContext,
       ProgressEventDispatcher.Factory progressEventDispatcherFactory,
       @Nullable Authorization authorization,
       BlobDescriptor blobDescriptor,
       Blob blob,
       boolean forcePush) {
-    this.buildConfiguration = buildConfiguration;
+    this.buildContext = buildContext;
     this.progressEventDispatcherFactory = progressEventDispatcherFactory;
     this.authorization = authorization;
     this.blobDescriptor = blobDescriptor;
@@ -62,7 +62,7 @@ class PushBlobStep implements Callable<BlobDescriptor> {
 
   @Override
   public BlobDescriptor call() throws IOException, RegistryException {
-    EventHandlers eventHandlers = buildConfiguration.getEventHandlers();
+    EventHandlers eventHandlers = buildContext.getEventHandlers();
     DescriptorDigest blobDigest = blobDescriptor.getDigest();
     try (ProgressEventDispatcher progressEventDispatcher =
             progressEventDispatcherFactory.create(
@@ -72,7 +72,7 @@ class PushBlobStep implements Callable<BlobDescriptor> {
         ThrottledAccumulatingConsumer throttledProgressReporter =
             new ThrottledAccumulatingConsumer(progressEventDispatcher::dispatchProgress)) {
       RegistryClient registryClient =
-          buildConfiguration
+          buildContext
               .newTargetImageRegistryClientFactory()
               .setAuthorization(authorization)
               .newRegistryClient();
@@ -80,7 +80,8 @@ class PushBlobStep implements Callable<BlobDescriptor> {
       // check if the BLOB is available
       if (!forcePush && registryClient.checkBlob(blobDigest).isPresent()) {
         eventHandlers.dispatch(
-            LogEvent.info("BLOB : " + blobDescriptor + " already exists on registry"));
+            LogEvent.info(
+                "Skipping push; BLOB already exists on target registry : " + blobDescriptor));
         return blobDescriptor;
       }
 
@@ -88,9 +89,9 @@ class PushBlobStep implements Callable<BlobDescriptor> {
       // BLOB from the base image repository to the target image repository and possibly avoid
       // having to push the BLOB. See
       // https://docs.docker.com/registry/spec/api/#cross-repository-blob-mount for details.
-      String baseRegistry = buildConfiguration.getBaseImageConfiguration().getImageRegistry();
-      String baseRepository = buildConfiguration.getBaseImageConfiguration().getImageRepository();
-      String targetRegistry = buildConfiguration.getTargetImageConfiguration().getImageRegistry();
+      String baseRegistry = buildContext.getBaseImageConfiguration().getImageRegistry();
+      String baseRepository = buildContext.getBaseImageConfiguration().getImageRepository();
+      String targetRegistry = buildContext.getTargetImageConfiguration().getImageRegistry();
       String sourceRepository = targetRegistry.equals(baseRegistry) ? baseRepository : null;
       registryClient.pushBlob(blobDigest, blob, sourceRepository, throttledProgressReporter);
 

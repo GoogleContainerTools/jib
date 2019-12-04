@@ -28,11 +28,11 @@ import java.util.Optional;
 import java.util.Set;
 
 /** Gradle-specific adapter for providing raw configuration parameter values. */
-class GradleRawConfiguration implements RawConfiguration {
+public class GradleRawConfiguration implements RawConfiguration {
 
   private final JibExtension jibExtension;
 
-  GradleRawConfiguration(JibExtension jibExtension) {
+  public GradleRawConfiguration(JibExtension jibExtension) {
     this.jibExtension = jibExtension;
   }
 
@@ -132,11 +132,6 @@ class GradleRawConfiguration implements RawConfiguration {
   }
 
   @Override
-  public boolean getUseCurrentTimestamp() {
-    return jibExtension.getContainer().getUseCurrentTimestamp();
-  }
-
-  @Override
   public boolean getAllowInsecureRegistries() {
     return jibExtension.getAllowInsecureRegistries();
   }
@@ -184,5 +179,20 @@ class GradleRawConfiguration implements RawConfiguration {
   @Override
   public String getContainerizingMode() {
     return jibExtension.getContainerizingMode();
+  }
+
+  @Override
+  public Path getTarOutputPath() {
+    return jibExtension.getOutputPaths().getTarPath();
+  }
+
+  @Override
+  public Path getDigestOutputPath() {
+    return jibExtension.getOutputPaths().getDigestPath();
+  }
+
+  @Override
+  public Path getImageIdOutputPath() {
+    return jibExtension.getOutputPaths().getImageIdPath();
   }
 }

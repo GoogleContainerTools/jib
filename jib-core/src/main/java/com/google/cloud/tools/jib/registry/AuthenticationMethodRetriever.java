@@ -17,11 +17,12 @@
 package com.google.cloud.tools.jib.registry;
 
 import com.google.api.client.http.HttpMethods;
-import com.google.api.client.http.HttpResponseException;
 import com.google.api.client.http.HttpStatusCodes;
 import com.google.cloud.tools.jib.api.RegistryAuthenticationFailedException;
 import com.google.cloud.tools.jib.http.BlobHttpContent;
+import com.google.cloud.tools.jib.http.FailoverHttpClient;
 import com.google.cloud.tools.jib.http.Response;
+import com.google.cloud.tools.jib.http.ResponseException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Collections;
@@ -35,11 +36,15 @@ class AuthenticationMethodRetriever
 
   private final RegistryEndpointRequestProperties registryEndpointRequestProperties;
   private final String userAgent;
+  private final FailoverHttpClient httpClient;
 
   AuthenticationMethodRetriever(
-      RegistryEndpointRequestProperties registryEndpointRequestProperties, String userAgent) {
+      RegistryEndpointRequestProperties registryEndpointRequestProperties,
+      String userAgent,
+      FailoverHttpClient httpClient) {
     this.registryEndpointRequestProperties = registryEndpointRequestProperties;
     this.userAgent = userAgent;
+    this.httpClient = httpClient;
   }
 
   @Nullable
@@ -81,17 +86,16 @@ class AuthenticationMethodRetriever
 
   @Override
   public Optional<RegistryAuthenticator> handleHttpResponseException(
-      HttpResponseException httpResponseException)
-      throws HttpResponseException, RegistryErrorException {
+      ResponseException responseException) throws ResponseException, RegistryErrorException {
     // Only valid for status code of '401 Unauthorized'.
-    if (httpResponseException.getStatusCode() != HttpStatusCodes.STATUS_CODE_UNAUTHORIZED) {
-      throw httpResponseException;
+    if (responseException.getStatusCode() != HttpStatusCodes.STATUS_CODE_UNAUTHORIZED) {
+      throw responseException;
     }
 
     // Checks if the 'WWW-Authenticate' header is present.
-    String authenticationMethod = httpResponseException.getHeaders().getAuthenticate();
+    String authenticationMethod = responseException.getHeaders().getAuthenticate();
     if (authenticationMethod == null) {
-      throw new RegistryErrorExceptionBuilder(getActionDescription(), httpResponseException)
+      throw new RegistryErrorExceptionBuilder(getActionDescription(), responseException)
           .addReason("'WWW-Authenticate' header not found")
           .build();
     }
@@ -99,7 +103,7 @@ class AuthenticationMethodRetriever
     // Parses the header to retrieve the components.
     try {
       return RegistryAuthenticator.fromAuthenticationMethod(
-          authenticationMethod, registryEndpointRequestProperties, userAgent);
+          authenticationMethod, registryEndpointRequestProperties, userAgent, httpClient);
 
     } catch (RegistryAuthenticationFailedException ex) {
       throw new RegistryErrorExceptionBuilder(getActionDescription(), ex)

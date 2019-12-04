@@ -19,6 +19,7 @@ package com.google.cloud.tools.jib.registry;
 import com.google.cloud.tools.jib.api.DescriptorDigest;
 import com.google.cloud.tools.jib.api.RegistryException;
 import com.google.cloud.tools.jib.event.EventHandlers;
+import com.google.cloud.tools.jib.http.FailoverHttpClient;
 import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
 import java.io.IOException;
 import java.security.DigestException;
@@ -37,14 +38,15 @@ public class BlobCheckerIntegrationTest {
     localRegistry.pullAndPushToLocal("busybox", "busybox");
   }
 
+  private final FailoverHttpClient httpClient = new FailoverHttpClient(true, false, ignored -> {});
+
   @Test
   public void testCheck_exists() throws IOException, RegistryException {
     RegistryClient registryClient =
-        RegistryClient.factory(EventHandlers.NONE, "localhost:5000", "busybox")
-            .setAllowInsecureRegistries(true)
+        RegistryClient.factory(EventHandlers.NONE, "localhost:5000", "busybox", httpClient)
             .newRegistryClient();
     V22ManifestTemplate manifestTemplate =
-        registryClient.pullManifest("latest", V22ManifestTemplate.class);
+        registryClient.pullManifest("latest", V22ManifestTemplate.class).getManifest();
     DescriptorDigest blobDigest = manifestTemplate.getLayers().get(0).getDigest();
 
     Assert.assertEquals(blobDigest, registryClient.checkBlob(blobDigest).get().getDigest());
@@ -53,8 +55,7 @@ public class BlobCheckerIntegrationTest {
   @Test
   public void testCheck_doesNotExist() throws IOException, RegistryException, DigestException {
     RegistryClient registryClient =
-        RegistryClient.factory(EventHandlers.NONE, "localhost:5000", "busybox")
-            .setAllowInsecureRegistries(true)
+        RegistryClient.factory(EventHandlers.NONE, "localhost:5000", "busybox", httpClient)
             .newRegistryClient();
     DescriptorDigest fakeBlobDigest =
         DescriptorDigest.fromHash(

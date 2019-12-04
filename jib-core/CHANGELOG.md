@@ -5,13 +5,36 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- New method: `JibContainerBuilder#describeContainer` which returns new class: `JibContainerDescription`, containing a selection of information used for the Jib build. ([#2115](https://github.com/GoogleContainerTools/jib/issues/2115))
+
+### Changed
+
+- Each local base image layer is pushed immediately after being compressed, rather than waiting for all layers to finish compressing before starting to push. ([#1913](https://github.com/GoogleContainerTools/jib/issues/1913))
+
+### Fixed
+
+- `Containerizer#setAllowInsecureRegistries(boolean)` and the `sendCredentialsOverHttp` system property are now effective for authentication service server connections. ([#2074](https://github.com/GoogleContainerTools/jib/pull/2074))
+- Fixed inefficient communications when interacting with insecure registries and servers (when `Containerizer#setAllowInsecureRegistries(boolean)` is set). ([#946](https://github.com/GoogleContainerTools/jib/issues/946))
+
+## 0.12.0
+
+### Added
+
+- Main class inference support for Java 13/14. ([#2015](https://github.com/GoogleContainerTools/jib/issues/2015))
+- `Containerizer#setAlwaysCacheBaseImage(boolean)` controls the optimization to skip downloading base image layers that exist in a target registry. ([#1870](https://github.com/GoogleContainerTools/jib/pull/1870))
+
 ### Changed
 
 - Local base image layers are now processed in parallel, speeding up builds using large local base images. ([#1913](https://github.com/GoogleContainerTools/jib/issues/1913))
+- The base image manifest is no longer pulled from the registry if a digest is provided and the manifest is already cached. ([#1881](https://github.com/GoogleContainerTools/jib/issues/1881))
+- Docker daemon base images are now cached more effectively, speeding up builds using `DockerDaemonImage` base images. ([#1912](https://github.com/GoogleContainerTools/jib/issues/1912))
+- Now ignores `jib.alwaysCacheBaseImage` system property. Use `Containerizer#setAlwaysCacheBaseImage(boolean)` instead. ([#1870](https://github.com/GoogleContainerTools/jib/pull/1870))
 
 ### Fixed
 
 - Fixed temporary directory cleanup during builds using local base images. ([#2016](https://github.com/GoogleContainerTools/jib/issues/2016))
+- Fixed additional tags being ignored when building to a tarball. ([#2043](https://github.com/GoogleContainerTools/jib/issues/2043))
+- Fixed `TarImage` base image failing if tar does not contain explicit directory entries. ([#2067](https://github.com/GoogleContainerTools/jib/issues/2067))
 
 ## 0.11.0
 

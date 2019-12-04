@@ -28,7 +28,7 @@ import com.google.cloud.tools.jib.api.JibContainerBuilderTestHelper;
 import com.google.cloud.tools.jib.api.LayerEntry;
 import com.google.cloud.tools.jib.api.LogEvent;
 import com.google.cloud.tools.jib.api.RegistryImage;
-import com.google.cloud.tools.jib.configuration.BuildConfiguration;
+import com.google.cloud.tools.jib.configuration.BuildContext;
 import com.google.cloud.tools.jib.configuration.ImageConfiguration;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -64,9 +64,9 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class PluginConfigurationProcessorTest {
 
-  private static BuildConfiguration getBuildConfiguration(JibContainerBuilder jibContainerBuilder)
+  private static BuildContext getBuildContext(JibContainerBuilder jibContainerBuilder)
       throws InvalidImageReferenceException, IOException, CacheDirectoryCreationException {
-    return JibContainerBuilderTestHelper.toBuildConfiguration(
+    return JibContainerBuilderTestHelper.toBuildContext(
         jibContainerBuilder, Containerizer.to(RegistryImage.named("ignored")));
   }
 
@@ -137,12 +137,12 @@ public class PluginConfigurationProcessorTest {
           InvalidContainerVolumeException, IncompatibleBaseImageJavaVersionException,
           NumberFormatException, InvalidContainerizingModeException,
           InvalidFilesModificationTimeException, InvalidCreationTimeException {
-    BuildConfiguration buildConfiguration = getBuildConfiguration(processCommonConfiguration());
+    BuildContext buildContext = getBuildContext(processCommonConfiguration());
 
-    Assert.assertNotNull(buildConfiguration.getContainerConfiguration());
+    Assert.assertNotNull(buildContext.getContainerConfiguration());
     Assert.assertEquals(
         Arrays.asList("java", "-cp", "/app/resources:/app/classes:/app/libs/*", "java.lang.Object"),
-        buildConfiguration.getContainerConfiguration().getEntrypoint());
+        buildContext.getContainerConfiguration().getEntrypoint());
 
     Mockito.verify(containerizer)
         .setBaseImageLayersCache(Containerizer.DEFAULT_BASE_CACHE_DIRECTORY);
@@ -166,9 +166,9 @@ public class PluginConfigurationProcessorTest {
         .thenReturn(
             ImmutableMap.of(AbsoluteUnixPath.get("/foo"), FilePermissions.fromOctalString("123")));
 
-    BuildConfiguration buildConfiguration = getBuildConfiguration(processCommonConfiguration());
+    BuildContext buildContext = getBuildContext(processCommonConfiguration());
     List<LayerEntry> extraFiles =
-        buildConfiguration
+        buildContext
             .getLayerConfigurations()
             .stream()
             .filter(layer -> layer.getName().equals("extra files"))
@@ -224,13 +224,13 @@ public class PluginConfigurationProcessorTest {
     Mockito.when(rawConfiguration.getEntrypoint())
         .thenReturn(Optional.of(Arrays.asList("custom", "entrypoint")));
 
-    BuildConfiguration buildConfiguration = getBuildConfiguration(processCommonConfiguration());
+    BuildContext buildContext = getBuildContext(processCommonConfiguration());
 
-    Assert.assertNotNull(buildConfiguration.getContainerConfiguration());
+    Assert.assertNotNull(buildContext.getContainerConfiguration());
     Assert.assertEquals(
         Arrays.asList("custom", "entrypoint"),
-        buildConfiguration.getContainerConfiguration().getEntrypoint());
-    Mockito.verifyZeroInteractions(logger);
+        buildContext.getContainerConfiguration().getEntrypoint());
+    Mockito.verifyNoInteractions(logger);
   }
 
   @Test
@@ -284,11 +284,11 @@ public class PluginConfigurationProcessorTest {
     Mockito.when(rawConfiguration.getEntrypoint()).thenReturn(Optional.empty());
     Mockito.when(projectProperties.isWarProject()).thenReturn(true);
 
-    BuildConfiguration buildConfiguration = getBuildConfiguration(processCommonConfiguration());
+    BuildContext buildContext = getBuildContext(processCommonConfiguration());
 
-    Assert.assertNotNull(buildConfiguration.getContainerConfiguration());
-    Assert.assertNull(buildConfiguration.getContainerConfiguration().getEntrypoint());
-    Mockito.verifyZeroInteractions(logger);
+    Assert.assertNotNull(buildContext.getContainerConfiguration());
+    Assert.assertNull(buildContext.getContainerConfiguration().getEntrypoint());
+    Mockito.verifyNoInteractions(logger);
   }
 
   @Test
@@ -301,12 +301,12 @@ public class PluginConfigurationProcessorTest {
     Mockito.when(rawConfiguration.getEntrypoint()).thenReturn(Optional.empty());
     Mockito.when(projectProperties.isWarProject()).thenReturn(false);
 
-    BuildConfiguration buildConfiguration = getBuildConfiguration(processCommonConfiguration());
+    BuildContext buildContext = getBuildContext(processCommonConfiguration());
 
-    Assert.assertNotNull(buildConfiguration.getContainerConfiguration());
+    Assert.assertNotNull(buildContext.getContainerConfiguration());
     Assert.assertEquals(
         Arrays.asList("java", "-cp", "/app/resources:/app/classes:/app/libs/*", "java.lang.Object"),
-        buildConfiguration.getContainerConfiguration().getEntrypoint());
+        buildContext.getContainerConfiguration().getEntrypoint());
 
     ArgumentMatcher<LogEvent> isLogWarn = logEvent -> logEvent.getLevel() == LogEvent.Level.WARN;
     Mockito.verify(logger, Mockito.never()).accept(Mockito.argThat(isLogWarn));
@@ -324,13 +324,13 @@ public class PluginConfigurationProcessorTest {
         .thenReturn(Collections.singletonList("/foo"));
     Mockito.when(projectProperties.isWarProject()).thenReturn(false);
 
-    BuildConfiguration buildConfiguration = getBuildConfiguration(processCommonConfiguration());
+    BuildContext buildContext = getBuildContext(processCommonConfiguration());
 
-    Assert.assertNotNull(buildConfiguration.getContainerConfiguration());
+    Assert.assertNotNull(buildContext.getContainerConfiguration());
     Assert.assertEquals(
         Arrays.asList(
             "java", "-cp", "/foo:/app/resources:/app/classes:/app/libs/*", "java.lang.Object"),
-        buildConfiguration.getContainerConfiguration().getEntrypoint());
+        buildContext.getContainerConfiguration().getEntrypoint());
 
     ArgumentMatcher<LogEvent> isLogWarn = logEvent -> logEvent.getLevel() == LogEvent.Level.WARN;
     Mockito.verify(logger, Mockito.never()).accept(Mockito.argThat(isLogWarn));
@@ -345,10 +345,10 @@ public class PluginConfigurationProcessorTest {
           InvalidFilesModificationTimeException, InvalidCreationTimeException {
     Mockito.when(rawConfiguration.getUser()).thenReturn(Optional.of("customUser"));
 
-    BuildConfiguration buildConfiguration = getBuildConfiguration(processCommonConfiguration());
+    BuildContext buildContext = getBuildContext(processCommonConfiguration());
 
-    Assert.assertNotNull(buildConfiguration.getContainerConfiguration());
-    Assert.assertEquals("customUser", buildConfiguration.getContainerConfiguration().getUser());
+    Assert.assertNotNull(buildContext.getContainerConfiguration());
+    Assert.assertEquals("customUser", buildContext.getContainerConfiguration().getUser());
   }
 
   @Test
@@ -358,10 +358,10 @@ public class PluginConfigurationProcessorTest {
           InvalidContainerVolumeException, IncompatibleBaseImageJavaVersionException,
           NumberFormatException, InvalidContainerizingModeException,
           InvalidFilesModificationTimeException, InvalidCreationTimeException {
-    BuildConfiguration buildConfiguration = getBuildConfiguration(processCommonConfiguration());
+    BuildContext buildContext = getBuildContext(processCommonConfiguration());
 
-    Assert.assertNotNull(buildConfiguration.getContainerConfiguration());
-    Assert.assertNull(buildConfiguration.getContainerConfiguration().getUser());
+    Assert.assertNotNull(buildContext.getContainerConfiguration());
+    Assert.assertNull(buildContext.getContainerConfiguration().getUser());
   }
 
   @Test
@@ -375,12 +375,12 @@ public class PluginConfigurationProcessorTest {
         .thenReturn(Optional.of(Arrays.asList("custom", "entrypoint")));
     Mockito.when(rawConfiguration.getJvmFlags()).thenReturn(Collections.singletonList("jvmFlag"));
 
-    BuildConfiguration buildConfiguration = getBuildConfiguration(processCommonConfiguration());
+    BuildContext buildContext = getBuildContext(processCommonConfiguration());
 
-    Assert.assertNotNull(buildConfiguration.getContainerConfiguration());
+    Assert.assertNotNull(buildContext.getContainerConfiguration());
     Assert.assertEquals(
         Arrays.asList("custom", "entrypoint"),
-        buildConfiguration.getContainerConfiguration().getEntrypoint());
+        buildContext.getContainerConfiguration().getEntrypoint());
     Mockito.verify(projectProperties)
         .log(
             LogEvent.warn(
@@ -398,12 +398,12 @@ public class PluginConfigurationProcessorTest {
         .thenReturn(Optional.of(Arrays.asList("custom", "entrypoint")));
     Mockito.when(rawConfiguration.getMainClass()).thenReturn(Optional.of("java.util.Object"));
 
-    BuildConfiguration buildConfiguration = getBuildConfiguration(processCommonConfiguration());
+    BuildContext buildContext = getBuildContext(processCommonConfiguration());
 
-    Assert.assertNotNull(buildConfiguration.getContainerConfiguration());
+    Assert.assertNotNull(buildContext.getContainerConfiguration());
     Assert.assertEquals(
         Arrays.asList("custom", "entrypoint"),
-        buildConfiguration.getContainerConfiguration().getEntrypoint());
+        buildContext.getContainerConfiguration().getEntrypoint());
     Mockito.verify(projectProperties)
         .log(
             LogEvent.warn(
@@ -420,10 +420,10 @@ public class PluginConfigurationProcessorTest {
     Mockito.when(rawConfiguration.getMainClass()).thenReturn(Optional.of("java.util.Object"));
     Mockito.when(projectProperties.isWarProject()).thenReturn(true);
 
-    BuildConfiguration buildConfiguration = getBuildConfiguration(processCommonConfiguration());
+    BuildContext buildContext = getBuildContext(processCommonConfiguration());
 
-    Assert.assertNotNull(buildConfiguration.getContainerConfiguration());
-    Assert.assertNull(buildConfiguration.getContainerConfiguration().getEntrypoint());
+    Assert.assertNotNull(buildContext.getContainerConfiguration());
+    Assert.assertNull(buildContext.getContainerConfiguration().getEntrypoint());
     Mockito.verify(projectProperties)
         .log(LogEvent.warn("mainClass, extraClasspath, and jvmFlags are ignored for WAR projects"));
   }
@@ -437,17 +437,15 @@ public class PluginConfigurationProcessorTest {
           InvalidFilesModificationTimeException, InvalidCreationTimeException {
     Mockito.when(rawConfiguration.getAppRoot()).thenReturn("/my/app");
 
-    BuildConfiguration buildConfiguration = getBuildConfiguration(processCommonConfiguration());
+    BuildContext buildContext = getBuildContext(processCommonConfiguration());
 
-    Assert.assertNotNull(buildConfiguration.getContainerConfiguration());
-    Assert.assertNotNull(buildConfiguration.getContainerConfiguration().getEntrypoint());
-    Assert.assertEquals(
-        "java", buildConfiguration.getContainerConfiguration().getEntrypoint().get(0));
-    Assert.assertEquals(
-        "-cp", buildConfiguration.getContainerConfiguration().getEntrypoint().get(1));
+    Assert.assertNotNull(buildContext.getContainerConfiguration());
+    Assert.assertNotNull(buildContext.getContainerConfiguration().getEntrypoint());
+    Assert.assertEquals("java", buildContext.getContainerConfiguration().getEntrypoint().get(0));
+    Assert.assertEquals("-cp", buildContext.getContainerConfiguration().getEntrypoint().get(1));
     Assert.assertEquals(
         "/my/app/resources:/my/app/classes:/my/app/libs/*",
-        buildConfiguration.getContainerConfiguration().getEntrypoint().get(2));
+        buildContext.getContainerConfiguration().getEntrypoint().get(2));
   }
 
   @Test
@@ -459,10 +457,10 @@ public class PluginConfigurationProcessorTest {
           InvalidFilesModificationTimeException, InvalidCreationTimeException {
     Mockito.when(projectProperties.isWarProject()).thenReturn(true);
 
-    BuildConfiguration buildConfiguration = getBuildConfiguration(processCommonConfiguration());
+    BuildContext buildContext = getBuildContext(processCommonConfiguration());
 
-    Assert.assertNotNull(buildConfiguration.getContainerConfiguration());
-    Assert.assertNull(buildConfiguration.getContainerConfiguration().getEntrypoint());
+    Assert.assertNotNull(buildContext.getContainerConfiguration());
+    Assert.assertNull(buildContext.getContainerConfiguration().getEntrypoint());
   }
 
   @Test
@@ -528,56 +526,6 @@ public class PluginConfigurationProcessorTest {
     Assert.assertEquals(
         AbsoluteUnixPath.get("/jetty/webapps/ROOT"),
         PluginConfigurationProcessor.getAppRootChecked(rawConfiguration, projectProperties));
-  }
-
-  @Test
-  public void testGetContainerizingModeChecked_exploded()
-      throws InvalidContainerizingModeException {
-    Mockito.when(rawConfiguration.getContainerizingMode()).thenReturn("exploded");
-
-    Assert.assertEquals(
-        ContainerizingMode.EXPLODED,
-        PluginConfigurationProcessor.getContainerizingModeChecked(
-            rawConfiguration, projectProperties));
-  }
-
-  @Test
-  public void testGetContainerizingModeChecked_packaged()
-      throws InvalidContainerizingModeException {
-    Mockito.when(rawConfiguration.getContainerizingMode()).thenReturn("packaged");
-
-    Assert.assertEquals(
-        ContainerizingMode.PACKAGED,
-        PluginConfigurationProcessor.getContainerizingModeChecked(
-            rawConfiguration, projectProperties));
-  }
-
-  @Test
-  public void testGetContainerizingModeChecked_caseSensitive() {
-    Mockito.when(rawConfiguration.getContainerizingMode()).thenReturn("PACKAGED");
-
-    try {
-      PluginConfigurationProcessor.getContainerizingModeChecked(
-          rawConfiguration, projectProperties);
-      Assert.fail();
-    } catch (InvalidContainerizingModeException ex) {
-      Assert.assertEquals("PACKAGED", ex.getInvalidContainerizingMode());
-      Assert.assertEquals("PACKAGED", ex.getMessage());
-    }
-  }
-
-  @Test
-  public void testGetContainerizingModeChecked_invalidValue() {
-    Mockito.when(rawConfiguration.getContainerizingMode()).thenReturn("this is wrong");
-
-    try {
-      PluginConfigurationProcessor.getContainerizingModeChecked(
-          rawConfiguration, projectProperties);
-      Assert.fail();
-    } catch (InvalidContainerizingModeException ex) {
-      Assert.assertEquals("this is wrong", ex.getInvalidContainerizingMode());
-      Assert.assertEquals("this is wrong", ex.getMessage());
-    }
   }
 
   @Test
@@ -979,7 +927,7 @@ public class PluginConfigurationProcessorTest {
   private ImageConfiguration getCommonImageConfiguration()
       throws IncompatibleBaseImageJavaVersionException, IOException, InvalidImageReferenceException,
           CacheDirectoryCreationException {
-    return getBuildConfiguration(
+    return getBuildContext(
             PluginConfigurationProcessor.getJavaContainerBuilderWithBaseImage(
                     rawConfiguration, projectProperties, inferredAuthProvider)
                 .addClasses(temporaryFolder.getRoot().toPath())

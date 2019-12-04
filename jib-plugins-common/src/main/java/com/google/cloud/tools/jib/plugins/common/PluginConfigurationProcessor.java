@@ -23,8 +23,10 @@ import com.google.cloud.tools.jib.api.DockerDaemonImage;
 import com.google.cloud.tools.jib.api.ImageReference;
 import com.google.cloud.tools.jib.api.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.api.JavaContainerBuilder;
+import com.google.cloud.tools.jib.api.JavaContainerBuilder.LayerType;
 import com.google.cloud.tools.jib.api.Jib;
 import com.google.cloud.tools.jib.api.JibContainerBuilder;
+import com.google.cloud.tools.jib.api.LayerConfiguration;
 import com.google.cloud.tools.jib.api.LogEvent;
 import com.google.cloud.tools.jib.api.Ports;
 import com.google.cloud.tools.jib.api.RegistryImage;
@@ -34,6 +36,7 @@ import com.google.cloud.tools.jib.global.JibSystemProperties;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Verify;
+import com.google.common.collect.ImmutableList;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -45,7 +48,6 @@ import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Locale;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.BiFunction;
@@ -56,6 +58,19 @@ import javax.annotation.Nullable;
  * configuration values and project properties.
  */
 public class PluginConfigurationProcessor {
+
+  // Known "generated" dependencies -- these require that the underlying system run a build step
+  // before they are available for sync'ing
+  private static final ImmutableList<String> GENERATED_LAYERS =
+      ImmutableList.of(
+          LayerType.PROJECT_DEPENDENCIES.getName(),
+          LayerType.RESOURCES.getName(),
+          LayerType.CLASSES.getName());
+
+  // Known "constant" layers -- changes to these layers require a change to the build definition,
+  // which we consider non-syncable. These should not be included in the sync-map.
+  private static final ImmutableList<String> CONST_LAYERS =
+      ImmutableList.of(LayerType.DEPENDENCIES.getName());
 
   public static JibBuildRunner createJibBuildRunnerForDockerDaemonImage(
       RawConfiguration rawConfiguration,
@@ -87,8 +102,8 @@ public class PluginConfigurationProcessor {
             helpfulSuggestions,
             targetImageReference,
             rawConfiguration.getToTags())
-        .writeImageDigest(projectProperties.getOutputDirectory().resolve("jib-image.digest"))
-        .writeImageId(projectProperties.getOutputDirectory().resolve("jib-image.id"));
+        .writeImageDigest(rawConfiguration.getDigestOutputPath())
+        .writeImageId(rawConfiguration.getImageIdOutputPath());
   }
 
   public static JibBuildRunner createJibBuildRunnerForTarImage(
@@ -101,10 +116,10 @@ public class PluginConfigurationProcessor {
           IncompatibleBaseImageJavaVersionException, NumberFormatException,
           InvalidContainerizingModeException, InvalidFilesModificationTimeException,
           InvalidCreationTimeException {
-    Path tarImagePath = projectProperties.getOutputDirectory().resolve("jib-image.tar");
     ImageReference targetImageReference =
         getGeneratedTargetDockerTag(rawConfiguration, projectProperties, helpfulSuggestions);
-    TarImage targetImage = TarImage.at(tarImagePath).named(targetImageReference);
+    TarImage targetImage =
+        TarImage.at(rawConfiguration.getTarOutputPath()).named(targetImageReference);
 
     Containerizer containerizer = Containerizer.to(targetImage);
     JibContainerBuilder jibContainerBuilder =
@@ -116,9 +131,9 @@ public class PluginConfigurationProcessor {
             containerizer,
             projectProperties::log,
             helpfulSuggestions,
-            tarImagePath)
-        .writeImageDigest(projectProperties.getOutputDirectory().resolve("jib-image.digest"))
-        .writeImageId(projectProperties.getOutputDirectory().resolve("jib-image.id"));
+            rawConfiguration.getTarOutputPath())
+        .writeImageDigest(rawConfiguration.getDigestOutputPath())
+        .writeImageId(rawConfiguration.getImageIdOutputPath());
   }
 
   public static JibBuildRunner createJibBuildRunnerForRegistryImage(
@@ -147,7 +162,14 @@ public class PluginConfigurationProcessor {
         inferredAuthProvider,
         rawConfiguration.getToCredHelper().orElse(null));
 
-    Containerizer containerizer = Containerizer.to(targetImage);
+    boolean alwaysCacheBaseImage =
+        Boolean.valueOf(
+            rawConfiguration
+                .getProperty(PropertyNames.ALWAYS_CACHE_BASE_IMAGE)
+                .orElse(Boolean.FALSE.toString()));
+    Containerizer containerizer =
+        Containerizer.to(targetImage).setAlwaysCacheBaseImage(alwaysCacheBaseImage);
+
     JibContainerBuilder jibContainerBuilder =
         processCommonConfiguration(
             rawConfiguration, inferredAuthProvider, projectProperties, containerizer);
@@ -162,8 +184,90 @@ public class PluginConfigurationProcessor {
             helpfulSuggestions,
             targetImageReference,
             rawConfiguration.getToTags())
-        .writeImageDigest(projectProperties.getOutputDirectory().resolve("jib-image.digest"))
-        .writeImageId(projectProperties.getOutputDirectory().resolve("jib-image.id"));
+        .writeImageDigest(rawConfiguration.getDigestOutputPath())
+        .writeImageId(rawConfiguration.getImageIdOutputPath());
+  }
+
+  public static String getSkaffoldSyncMap(
+      RawConfiguration rawConfiguration, ProjectProperties projectProperties)
+      throws IOException, InvalidCreationTimeException, InvalidImageReferenceException,
+          IncompatibleBaseImageJavaVersionException, InvalidContainerVolumeException,
+          MainClassInferenceException, InvalidAppRootException, InvalidWorkingDirectoryException,
+          InvalidFilesModificationTimeException, InvalidContainerizingModeException {
+    JibContainerBuilder jibContainerBuilder =
+        processCommonConfiguration(
+            rawConfiguration, ignored -> Optional.empty(), projectProperties);
+    SkaffoldSyncMapTemplate syncMap = new SkaffoldSyncMapTemplate();
+    // since jib has already expanded out directories after processing everything, we just
+    // ignore directories and provide only files to watch
+    for (LayerConfiguration layer : jibContainerBuilder.describeContainer().getLayers()) {
+      if (CONST_LAYERS.contains(layer.getName())) {
+        continue;
+      }
+      if (GENERATED_LAYERS.contains(layer.getName())) {
+        layer
+            .getLayerEntries()
+            .stream()
+            .filter(layerEntry -> Files.isRegularFile(layerEntry.getSourceFile()))
+            .forEach(syncMap::addGenerated);
+      } else { // this is a direct layer
+        layer
+            .getLayerEntries()
+            .stream()
+            .filter(layerEntry -> Files.isRegularFile(layerEntry.getSourceFile()))
+            .forEach(syncMap::addDirect);
+      }
+    }
+    return syncMap.getJsonString();
+  }
+
+  @VisibleForTesting
+  static JibContainerBuilder processCommonConfiguration(
+      RawConfiguration rawConfiguration,
+      InferredAuthProvider inferredAuthProvider,
+      ProjectProperties projectProperties)
+      throws InvalidFilesModificationTimeException, InvalidAppRootException,
+          IncompatibleBaseImageJavaVersionException, IOException, InvalidImageReferenceException,
+          InvalidContainerizingModeException, MainClassInferenceException,
+          InvalidContainerVolumeException, InvalidWorkingDirectoryException,
+          InvalidCreationTimeException {
+
+    // Create and configure JibContainerBuilder
+    BiFunction<Path, AbsoluteUnixPath, Instant> modificationTimeProvider =
+        createModificationTimeProvider(rawConfiguration.getFilesModificationTime());
+    JavaContainerBuilder javaContainerBuilder =
+        getJavaContainerBuilderWithBaseImage(
+                rawConfiguration, projectProperties, inferredAuthProvider)
+            .setAppRoot(getAppRootChecked(rawConfiguration, projectProperties))
+            .setModificationTimeProvider(modificationTimeProvider);
+    JibContainerBuilder jibContainerBuilder =
+        projectProperties
+            .createJibContainerBuilder(
+                javaContainerBuilder,
+                getContainerizingModeChecked(rawConfiguration, projectProperties))
+            .setEntrypoint(computeEntrypoint(rawConfiguration, projectProperties))
+            .setProgramArguments(rawConfiguration.getProgramArguments().orElse(null))
+            .setEnvironment(rawConfiguration.getEnvironment())
+            .setExposedPorts(Ports.parse(rawConfiguration.getPorts()))
+            .setVolumes(getVolumesSet(rawConfiguration))
+            .setLabels(rawConfiguration.getLabels())
+            .setUser(rawConfiguration.getUser().orElse(null));
+    getWorkingDirectoryChecked(rawConfiguration)
+        .ifPresent(jibContainerBuilder::setWorkingDirectory);
+    jibContainerBuilder.setCreationTime(
+        getCreationTime(rawConfiguration.getCreationTime(), projectProperties));
+
+    // Adds all the extra files.
+    for (Path directory : rawConfiguration.getExtraDirectories()) {
+      if (Files.exists(directory)) {
+        jibContainerBuilder.addLayer(
+            JavaContainerBuilderHelper.extraDirectoryLayerConfiguration(
+                directory,
+                rawConfiguration.getExtraDirectoryPermissions(),
+                modificationTimeProvider));
+      }
+    }
+    return jibContainerBuilder;
   }
 
   @VisibleForTesting
@@ -189,49 +293,7 @@ public class PluginConfigurationProcessor {
 
     configureContainerizer(containerizer, rawConfiguration, projectProperties);
 
-    // Create and configure JibContainerBuilder
-    BiFunction<Path, AbsoluteUnixPath, Instant> modificationTimeProvider =
-        createModificationTimeProvider(rawConfiguration.getFilesModificationTime());
-    JavaContainerBuilder javaContainerBuilder =
-        getJavaContainerBuilderWithBaseImage(
-                rawConfiguration, projectProperties, inferredAuthProvider)
-            .setAppRoot(getAppRootChecked(rawConfiguration, projectProperties))
-            .setModificationTimeProvider(modificationTimeProvider);
-    JibContainerBuilder jibContainerBuilder =
-        projectProperties
-            .createJibContainerBuilder(
-                javaContainerBuilder,
-                getContainerizingModeChecked(rawConfiguration, projectProperties))
-            .setEntrypoint(computeEntrypoint(rawConfiguration, projectProperties))
-            .setProgramArguments(rawConfiguration.getProgramArguments().orElse(null))
-            .setEnvironment(rawConfiguration.getEnvironment())
-            .setExposedPorts(Ports.parse(rawConfiguration.getPorts()))
-            .setVolumes(getVolumesSet(rawConfiguration))
-            .setLabels(rawConfiguration.getLabels())
-            .setUser(rawConfiguration.getUser().orElse(null));
-    getWorkingDirectoryChecked(rawConfiguration)
-        .ifPresent(jibContainerBuilder::setWorkingDirectory);
-    if (rawConfiguration.getUseCurrentTimestamp()) {
-      projectProperties.log(
-          LogEvent.warn(
-              "Setting image creation time to current time; your image may not be reproducible."));
-      jibContainerBuilder.setCreationTime(Instant.now());
-    } else {
-      jibContainerBuilder.setCreationTime(
-          getCreationTime(rawConfiguration.getCreationTime(), projectProperties));
-    }
-
-    // Adds all the extra files.
-    for (Path directory : rawConfiguration.getExtraDirectories()) {
-      if (Files.exists(directory)) {
-        jibContainerBuilder.addLayer(
-            JavaContainerBuilderHelper.extraDirectoryLayerConfiguration(
-                directory,
-                rawConfiguration.getExtraDirectoryPermissions(),
-                modificationTimeProvider));
-      }
-    }
-    return jibContainerBuilder;
+    return processCommonConfiguration(rawConfiguration, inferredAuthProvider, projectProperties);
   }
 
   /**
@@ -456,25 +518,15 @@ public class PluginConfigurationProcessor {
     }
   }
 
-  @VisibleForTesting
   static ContainerizingMode getContainerizingModeChecked(
       RawConfiguration rawConfiguration, ProjectProperties projectProperties)
       throws InvalidContainerizingModeException {
-    String rawMode = rawConfiguration.getContainerizingMode();
-    try {
-      if (!rawMode.toLowerCase(Locale.US).equals(rawMode)) {
-        throw new InvalidContainerizingModeException(rawMode, rawMode);
-      }
-
-      ContainerizingMode mode = ContainerizingMode.valueOf(rawMode.toUpperCase(Locale.US));
-      if (mode == ContainerizingMode.PACKAGED && projectProperties.isWarProject()) {
-        throw new UnsupportedOperationException(
-            "packaged containerizing mode for WAR is not yet supported");
-      }
-      return mode;
-    } catch (IllegalArgumentException ex) {
-      throw new InvalidContainerizingModeException(rawMode, rawMode);
+    ContainerizingMode mode = ContainerizingMode.from(rawConfiguration.getContainerizingMode());
+    if (mode == ContainerizingMode.PACKAGED && projectProperties.isWarProject()) {
+      throw new UnsupportedOperationException(
+          "packaged containerizing mode for WAR is not yet supported");
     }
+    return mode;
   }
 
   @VisibleForTesting

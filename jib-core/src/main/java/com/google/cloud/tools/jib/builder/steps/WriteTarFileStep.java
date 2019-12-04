@@ -18,7 +18,7 @@ package com.google.cloud.tools.jib.builder.steps;
 
 import com.google.cloud.tools.jib.api.LogEvent;
 import com.google.cloud.tools.jib.builder.ProgressEventDispatcher;
-import com.google.cloud.tools.jib.configuration.BuildConfiguration;
+import com.google.cloud.tools.jib.configuration.BuildContext;
 import com.google.cloud.tools.jib.docker.ImageTarball;
 import com.google.cloud.tools.jib.filesystem.FileOperations;
 import com.google.cloud.tools.jib.image.Image;
@@ -28,44 +28,46 @@ import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
 
 public class WriteTarFileStep implements Callable<BuildResult> {
 
-  private final BuildConfiguration buildConfiguration;
+  private final BuildContext buildContext;
   private final ProgressEventDispatcher.Factory progressEventDispatcherFactory;
 
   private final Path outputPath;
   private final Image builtImage;
 
   WriteTarFileStep(
-      BuildConfiguration buildConfiguration,
+      BuildContext buildContext,
       ProgressEventDispatcher.Factory progressEventDispatcherFactory,
       Path outputPath,
       Image builtImage) {
-    this.buildConfiguration = buildConfiguration;
+    this.buildContext = buildContext;
     this.progressEventDispatcherFactory = progressEventDispatcherFactory;
     this.outputPath = outputPath;
     this.builtImage = builtImage;
   }
 
   @Override
-  public BuildResult call() throws ExecutionException, InterruptedException, IOException {
-    buildConfiguration
-        .getEventHandlers()
-        .dispatch(LogEvent.progress("Building image to tar file..."));
+  public BuildResult call() throws IOException {
+    buildContext.getEventHandlers().dispatch(LogEvent.progress("Building image to tar file..."));
 
     try (ProgressEventDispatcher ignored =
         progressEventDispatcherFactory.create("writing to tar file", 1)) {
       // Builds the image to a tarball.
-      Files.createDirectories(outputPath.getParent());
+      if (outputPath.getParent() != null) {
+        Files.createDirectories(outputPath.getParent());
+      }
       try (OutputStream outputStream =
           new BufferedOutputStream(FileOperations.newLockingOutputStream(outputPath))) {
-        new ImageTarball(builtImage, buildConfiguration.getTargetImageConfiguration().getImage())
+        new ImageTarball(
+                builtImage,
+                buildContext.getTargetImageConfiguration().getImage(),
+                buildContext.getAllTargetImageTags())
             .writeTo(outputStream);
       }
 
-      return BuildResult.fromImage(builtImage, buildConfiguration.getTargetFormat());
+      return BuildResult.fromImage(builtImage, buildContext.getTargetFormat());
     }
   }
 }

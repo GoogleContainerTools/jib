@@ -17,8 +17,8 @@
 package com.google.cloud.tools.jib.docker.json;
 
 import com.google.cloud.tools.jib.json.JsonTemplate;
+import com.google.common.annotations.VisibleForTesting;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -48,15 +48,15 @@ import java.util.List;
 public class DockerManifestEntryTemplate implements JsonTemplate {
 
   private String config = "config.json";
-  private List<String> repoTags = Collections.singletonList(null);
+  private final List<String> repoTags = new ArrayList<>();
   private final List<String> layers = new ArrayList<>();
 
   public void setConfig(String config) {
     this.config = config;
   }
 
-  public void setRepoTags(String repoTags) {
-    this.repoTags = Collections.singletonList(repoTags);
+  public void addRepoTag(String repoTag) {
+    repoTags.add(repoTag);
   }
 
   public void addLayerFile(String layer) {
@@ -69,5 +69,10 @@ public class DockerManifestEntryTemplate implements JsonTemplate {
 
   public List<String> getLayerFiles() {
     return layers;
+  }
+
+  @VisibleForTesting
+  public List<String> getRepoTags() {
+    return repoTags;
   }
 }

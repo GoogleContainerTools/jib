@@ -69,9 +69,6 @@ public interface RawConfiguration {
 
   Optional<String> getWorkingDirectory();
 
-  @Deprecated
-  boolean getUseCurrentTimestamp();
-
   boolean getAllowInsecureRegistries();
 
   ImageFormat getImageFormat();
@@ -91,4 +88,10 @@ public interface RawConfiguration {
   Map<String, String> getDockerEnvironment();
 
   String getContainerizingMode();
+
+  Path getTarOutputPath();
+
+  Path getDigestOutputPath();
+
+  Path getImageIdOutputPath();
 }

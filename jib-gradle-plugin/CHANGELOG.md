@@ -7,11 +7,47 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
+- Removed `jibDockerBuild.dockerClient` in favor of `jib.dockerClient`. ([#1983](https://github.com/GoogleContainerTools/jib/issues/1983))
+- Removed deprecated `jib.extraDirectory` configuration in favor of `jib.extraDirectories`. ([#1691](https://github.com/GoogleContainerTools/jib/issues/1691))
+- Removed deprecated `jib.container.useCurrentTimestamp` configuration in favor of `jib.container.creationTime` with `USE_CURRENT_TIMESTAMP`. ([#1897](https://github.com/GoogleContainerTools/jib/issues/1897))
+
+### Fixed
+
+## 1.8.0
+
+### Changed
+
+- Requires Gradle 4.9 or newer (up from 4.6).
+- Optimized building to a registry with local base images. ([#1913](https://github.com/GoogleContainerTools/jib/issues/1913))
+
+### Fixed
+
+- Fixed reporting parent build file when `skaffold init` is run on multi-module projects. ([#2091](https://github.com/GoogleContainerTools/jib/pull/2091))
+- Now correctly uses the `war` task if it is enabled and the `bootWar` task is disabled for Spring WAR projects. ([#2096](https://github.com/GoogleContainerTools/jib/issues/2096))
+- `allowInsecureRegistries` and the `sendCredentialsOverHttp` system property are now effective for authentication service server connections. ([#2074](https://github.com/GoogleContainerTools/jib/pull/2074))
+- Fixed inefficient communications when interacting with insecure registries and servers (when `allowInsecureRegistries` is set). ([#946](https://github.com/GoogleContainerTools/jib/issues/946))
+
+## 1.7.0
+
+### Added
+
+- `jib.outputPaths` object for configuration output file locations ([#1561](https://github.com/GoogleContainerTools/jib/issues/1561))
+  - `jib.outputPaths.tar` configures output path of `jibBuildTar` (`build/jib-image.tar` by default)
+  - `jib.outputPaths.digest` configures the output path of the image digest (`build/jib-image.digest` by default)
+  - `jib.outputPaths.imageId` configures output path of the image id  (`build/jib-image.id` by default)
+- Main class inference support for Java 13/14. ([#2015](https://github.com/GoogleContainerTools/jib/issues/2015))
+
+### Changed
+
 - Local base image layers are now processed in parallel, speeding up builds using large local base images. ([#1913](https://github.com/GoogleContainerTools/jib/issues/1913))
+- The base image manifest is no longer pulled from the registry if a digest is provided and the manifest is already cached. ([#1881](https://github.com/GoogleContainerTools/jib/issues/1881))
+- Docker daemon base images are now cached more effectively, speeding up builds using `docker://` base images. ([#1912](https://github.com/GoogleContainerTools/jib/issues/1912))
 
 ### Fixed
 
 - Fixed temporary directory cleanup during builds using local base images. ([#2016](https://github.com/GoogleContainerTools/jib/issues/2016))
+- Fixed additional tags being ignored when building to a tarball. ([#2043](https://github.com/GoogleContainerTools/jib/issues/2043))
+- Fixed `tar://` base image failing if tar does not contain explicit directory entries. ([#2067](https://github.com/GoogleContainerTools/jib/issues/2067))
 
 ## 1.6.1
 

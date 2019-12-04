@@ -17,7 +17,6 @@
 package com.google.cloud.tools.jib.gradle;
 
 import com.google.cloud.tools.jib.plugins.common.PropertyNames;
-import java.io.File;
 import org.gradle.api.Action;
 import org.gradle.api.Project;
 import org.gradle.api.model.ObjectFactory;
@@ -56,6 +55,11 @@ import org.gradle.api.tasks.Optional;
  *       '/path/on/container/file2': 123
  *     ]
  *   }
+ *   outputPaths {
+ *     tar = file('reative/to/project/root/jib-image.tar')
+ *     digest = file('/absolute/path/jib-image.digest')
+ *     imageId = file("$buildDir/jib-image.id")
+ *   }
  *   allowInsecureRegistries = false
  *   containerizingMode = 'exploded'
  * }
@@ -72,11 +76,9 @@ public class JibExtension {
   private final ContainerParameters container;
   private final ExtraDirectoriesParameters extraDirectories;
   private final DockerClientParameters dockerClient;
+  private final OutputPathsParameters outputPaths;
   private final Property<Boolean> allowInsecureRegistries;
   private final Property<String> containerizingMode;
-
-  @Deprecated boolean extraDirectoryConfigured;
-  @Deprecated boolean extraDirectoriesConfigured;
 
   public JibExtension(Project project) {
     ObjectFactory objectFactory = project.getObjects();
@@ -84,8 +86,9 @@ public class JibExtension {
     from = objectFactory.newInstance(BaseImageParameters.class);
     to = objectFactory.newInstance(TargetImageParameters.class);
     container = objectFactory.newInstance(ContainerParameters.class);
-    extraDirectories = objectFactory.newInstance(ExtraDirectoriesParameters.class, project, this);
+    extraDirectories = objectFactory.newInstance(ExtraDirectoriesParameters.class, project);
     dockerClient = objectFactory.newInstance(DockerClientParameters.class);
+    outputPaths = objectFactory.newInstance(OutputPathsParameters.class, project);
 
     allowInsecureRegistries = objectFactory.property(Boolean.class);
     containerizingMode = objectFactory.property(String.class);
@@ -107,14 +110,7 @@ public class JibExtension {
     action.execute(container);
   }
 
-  @Deprecated
-  public void extraDirectory(Action<? super ExtraDirectoriesParameters> action) {
-    extraDirectoryConfigured = true;
-    action.execute(extraDirectories);
-  }
-
   public void extraDirectories(Action<? super ExtraDirectoriesParameters> action) {
-    extraDirectoriesConfigured = true;
     action.execute(extraDirectories);
   }
 
@@ -122,11 +118,8 @@ public class JibExtension {
     action.execute(dockerClient);
   }
 
-  @Deprecated
-  // for the deprecated "jib.extraDirectory" config parameter
-  public void setExtraDirectory(File extraDirectory) {
-    extraDirectoryConfigured = true;
-    extraDirectories.setPath(extraDirectory);
+  public void outputPaths(Action<? super OutputPathsParameters> action) {
+    action.execute(outputPaths);
   }
 
   public void setAllowInsecureRegistries(boolean allowInsecureRegistries) {
@@ -155,13 +148,6 @@ public class JibExtension {
     return container;
   }
 
-  @Deprecated
-  @Nested
-  @Optional
-  public ExtraDirectoriesParameters getExtraDirectory() {
-    return extraDirectories;
-  }
-
   @Nested
   @Optional
   public ExtraDirectoriesParameters getExtraDirectories() {
@@ -174,8 +160,13 @@ public class JibExtension {
     return dockerClient;
   }
 
-  @Input
+  @Nested
   @Optional
+  public OutputPathsParameters getOutputPaths() {
+    return outputPaths;
+  }
+
+  @Input
   boolean getAllowInsecureRegistries() {
     if (System.getProperty(PropertyNames.ALLOW_INSECURE_REGISTRIES) != null) {
       return Boolean.getBoolean(PropertyNames.ALLOW_INSECURE_REGISTRIES);

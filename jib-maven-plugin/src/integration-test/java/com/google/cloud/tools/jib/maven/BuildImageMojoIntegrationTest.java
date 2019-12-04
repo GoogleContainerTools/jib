@@ -69,6 +69,8 @@ public class BuildImageMojoIntegrationTest {
 
   @ClassRule public static final TestProject servlet25Project = new TestProject("war_servlet25");
 
+  @ClassRule public static final TestProject springBootProject = new TestProject("spring-boot");
+
   @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
   private static String getTestImageReference(String label) {
@@ -76,18 +78,10 @@ public class BuildImageMojoIntegrationTest {
     return nameBase + label + System.nanoTime();
   }
 
-  static String assertImageDigest(Path projectRoot) throws IOException, DigestException {
-    Path digestPath = projectRoot.resolve("target/jib-image.digest");
-    Assert.assertTrue(Files.exists(digestPath));
+  static String readDigestFile(Path digestPath) throws IOException, DigestException {
+    Assert.assertTrue("File missing: " + digestPath, Files.exists(digestPath));
     String digest = new String(Files.readAllBytes(digestPath), StandardCharsets.UTF_8);
     return DescriptorDigest.fromDigest(digest).toString();
-  }
-
-  static String assertImageId(Path projectRoot) throws IOException, DigestException {
-    Path idPath = projectRoot.resolve("target/jib-image.id");
-    Assert.assertTrue(Files.exists(idPath));
-    String id = new String(Files.readAllBytes(idPath), StandardCharsets.UTF_8);
-    return DescriptorDigest.fromDigest(id).toString();
   }
 
   private static boolean isJava11RuntimeOrHigher() {
@@ -141,13 +135,13 @@ public class BuildImageMojoIntegrationTest {
 
     try {
       // Test pulling/running using image digest
-      String digest = assertImageDigest(projectRoot);
+      String digest = readDigestFile(projectRoot.resolve("target/jib-image.digest"));
       String imageReferenceWithDigest =
           ImageReference.parse(imageReference).withTag(digest).toString();
       Assert.assertEquals(output, pullAndRunBuiltImage(imageReferenceWithDigest));
 
       // Test running using image id
-      String id = assertImageId(projectRoot);
+      String id = readDigestFile(projectRoot.resolve("target/jib-image.id"));
       Assert.assertNotEquals(digest, id);
       Assert.assertEquals(output, new Command("docker", "run", "--rm", id).run());
 
@@ -210,7 +204,7 @@ public class BuildImageMojoIntegrationTest {
     String additionalOutput = pullAndRunBuiltImage(additionalImageReference);
     Assert.assertEquals(output, additionalOutput);
 
-    String digest = assertImageDigest(projectRoot);
+    String digest = readDigestFile(projectRoot.resolve("target/jib-image.digest"));
     String digestImageReference = ImageReference.parse(imageReference).withTag(digest).toString();
     String digestOutput = pullAndRunBuiltImage(digestImageReference);
     Assert.assertEquals(output, digestOutput);
@@ -227,7 +221,7 @@ public class BuildImageMojoIntegrationTest {
       String password,
       LocalRegistry targetRegistry,
       String pomFile)
-      throws VerificationException, IOException, InterruptedException, DigestException {
+      throws VerificationException, IOException, InterruptedException {
     Verifier verifier = new Verifier(simpleTestProject.getProjectRoot().toString());
     verifier.setSystemProperty("jib.useOnlyProjectCache", "true");
     verifier.setSystemProperty("_TARGET_IMAGE", imageReference);
@@ -239,8 +233,6 @@ public class BuildImageMojoIntegrationTest {
     verifier.addCliOption("--file=" + pomFile);
     verifier.executeGoals(Arrays.asList("clean", "compile", "jib:build"));
     verifier.verifyErrorFreeLog();
-
-    assertImageDigest(simpleTestProject.getProjectRoot());
 
     // Verify output
     targetRegistry.pull(imageReference);
@@ -537,29 +529,6 @@ public class BuildImageMojoIntegrationTest {
   }
 
   @Test
-  public void testExecute_bothDeprecatedAndNewExtraDirectoryConfigUsed() throws IOException {
-    try {
-      build(
-          simpleTestProject.getProjectRoot(), "foo", "pom-deprecated-and-new-extra-dir.xml", false);
-      Assert.fail();
-    } catch (VerificationException ex) {
-      Assert.assertThat(
-          ex.getMessage(),
-          CoreMatchers.containsString(
-              "You cannot configure both <extraDirectory> and <extraDirectories>"));
-    }
-  }
-
-  @Test
-  public void testExecute_deprecatedExtraDirectoryConfigUsed()
-      throws IOException, VerificationException {
-    String targetImage = getTestImageReference("simpleimage:maven");
-    build(simpleTestProject.getProjectRoot(), targetImage, "pom-deprecated-extra-dir.xml", false)
-        .verifyTextInLog(
-            "<extraDirectory> is deprecated; use <extraDirectories> with <paths><path>");
-  }
-
-  @Test
   public void testExecute_defaultTarget() throws IOException {
     // Test error when 'to' is missing
     try {
@@ -583,12 +552,22 @@ public class BuildImageMojoIntegrationTest {
       throws IOException, InterruptedException, VerificationException, DigestException {
     String targetImage = "localhost:6000/compleximage:maven" + System.nanoTime();
     Instant before = Instant.now();
+    String output =
+        buildAndRunComplex(
+            targetImage, "testuser2", "testpassword2", localRegistry2, "pom-complex.xml");
     Assert.assertEquals(
         "Hello, world. An argument.\n1970-01-01T00:00:01Z\nrwxr-xr-x\nrwxrwxrwx\nfoo\ncat\n"
             + "1970-01-01T00:00:01Z\n1970-01-01T00:00:01Z\n"
             + "-Xms512m\n-Xdebug\nenvvalue1\nenvvalue2\n",
-        buildAndRunComplex(
-            targetImage, "testuser2", "testpassword2", localRegistry2, "pom-complex.xml"));
+        output);
+    String digest =
+        readDigestFile(
+            simpleTestProject.getProjectRoot().resolve("target/different-jib-image.digest"));
+    String id =
+        readDigestFile(simpleTestProject.getProjectRoot().resolve("different-jib-image.id"));
+    Assert.assertNotEquals(digest, id);
+    Assert.assertEquals(output, new Command("docker", "run", "--rm", id).run());
+
     assertCreationTimeIsAfter(before, targetImage);
     assertWorkingDirectory("", targetImage);
     assertEntrypoint(
@@ -599,7 +578,7 @@ public class BuildImageMojoIntegrationTest {
 
   @Test
   public void testExecute_timestampCustom()
-      throws IOException, InterruptedException, VerificationException, DigestException {
+      throws IOException, InterruptedException, VerificationException {
     String targetImage = "localhost:6000/simpleimage:maven" + System.nanoTime();
     String pom = "pom-timestamps-custom.xml";
     Assert.assertEquals(
@@ -614,35 +593,8 @@ public class BuildImageMojoIntegrationTest {
   }
 
   @Test
-  public void testDockerDaemon_timestampDeprecated()
-      throws IOException, VerificationException, InterruptedException {
-    Instant before = Instant.now();
-    String targetImage = getTestImageReference("simpleimage:gradle" + System.nanoTime());
-    build(simpleTestProject.getProjectRoot(), targetImage, "pom-usecurrent-deprecated.xml", false)
-        .verifyTextInLog(
-            "<container><useCurrentTimestamp> is deprecated; use <container><creationTime> with the value USE_CURRENT_TIMESTAMP instead");
-    new Command("docker", "pull", targetImage).run();
-    assertCreationTimeIsAfter(before, targetImage);
-  }
-
-  @Test
-  public void testDockerDaemon_timestampFail() throws IOException {
-    try {
-      String targetImage = getTestImageReference("simpleimage:gradle" + System.nanoTime());
-      build(
-          simpleTestProject.getProjectRoot(), targetImage, "pom-usecurrent-deprecated2.xml", false);
-      Assert.fail();
-    } catch (VerificationException ex) {
-      Assert.assertThat(
-          ex.getMessage(),
-          CoreMatchers.containsString(
-              "You cannot configure both <container><useCurrentTimestamp> and <container><creationTime>"));
-    }
-  }
-
-  @Test
   public void testExecute_complex_sameFromAndToRegistry()
-      throws IOException, InterruptedException, VerificationException, DigestException {
+      throws IOException, InterruptedException, VerificationException {
     String targetImage = "localhost:5000/compleximage:maven" + System.nanoTime();
     Assert.assertEquals(
         "Hello, world. An argument.\n1970-01-01T00:00:01Z\nrwxr-xr-x\nrwxrwxrwx\nfoo\ncat\n"
@@ -655,7 +607,7 @@ public class BuildImageMojoIntegrationTest {
 
   @Test
   public void testExecute_complexProperties()
-      throws InterruptedException, DigestException, VerificationException, IOException {
+      throws InterruptedException, VerificationException, IOException {
     String targetImage = "localhost:6000/compleximage:maven" + System.nanoTime();
     Assert.assertEquals(
         "Hello, world. An argument.\n1970-01-01T00:00:01Z\nrwxr-xr-x\nrwxrwxrwx\nfoo\ncat\n"
@@ -717,22 +669,41 @@ public class BuildImageMojoIntegrationTest {
   @Test
   public void testExecute_jettyServlet25()
       throws VerificationException, IOException, InterruptedException {
-    buildAndRunWar("jetty-servlet25:maven", "pom.xml");
+    buildAndRunWebApp(servlet25Project, "jetty-servlet25:maven", "pom.xml");
     HttpGetVerifier.verifyBody("Hello world", new URL("http://localhost:8080/hello"));
   }
 
   @Test
   public void testExecute_tomcatServlet25()
       throws VerificationException, IOException, InterruptedException {
-    buildAndRunWar("tomcat-servlet25:maven", "pom-tomcat.xml");
+    buildAndRunWebApp(servlet25Project, "tomcat-servlet25:maven", "pom-tomcat.xml");
     HttpGetVerifier.verifyBody("Hello world", new URL("http://localhost:8080/hello"));
   }
 
-  private void buildAndRunWar(String label, String pomXml)
+  @Test
+  public void testExecute_springBootPackaged()
+      throws VerificationException, IOException, InterruptedException {
+    buildAndRunWebApp(springBootProject, "spring-boot:maven", "pom.xml");
+
+    String sizeOutput =
+        new Command(
+                "docker",
+                "exec",
+                detachedContainerName,
+                "/busybox/wc",
+                "-c",
+                "/app/classpath/spring-boot-0.1.0.original.jar")
+            .run();
+    Assert.assertEquals("2749 /app/classpath/spring-boot-0.1.0.original.jar\n", sizeOutput);
+
+    HttpGetVerifier.verifyBody("Hello world", new URL("http://localhost:8080"));
+  }
+
+  private void buildAndRunWebApp(TestProject project, String label, String pomXml)
       throws VerificationException, IOException, InterruptedException {
     String targetImage = getTestImageReference(label);
 
-    Verifier verifier = new Verifier(servlet25Project.getProjectRoot().toString());
+    Verifier verifier = new Verifier(project.getProjectRoot().toString());
     verifier.setSystemProperty("jib.useOnlyProjectCache", "true");
     verifier.setSystemProperty("_TARGET_IMAGE", targetImage);
     if (targetImage.startsWith("localhost")) {

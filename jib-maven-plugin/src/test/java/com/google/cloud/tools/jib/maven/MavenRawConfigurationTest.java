@@ -75,13 +75,15 @@ public class MavenRawConfigurationTest {
     Mockito.when(jibPluginConfiguration.getMainClass()).thenReturn("com.example.Main");
     Mockito.when(jibPluginConfiguration.getTargetImageAdditionalTags())
         .thenReturn(new HashSet<>(Arrays.asList("additional", "tags")));
-    Mockito.when(jibPluginConfiguration.getUseCurrentTimestamp()).thenReturn(true);
     Mockito.when(jibPluginConfiguration.getUser()).thenReturn("admin:wheel");
     Mockito.when(jibPluginConfiguration.getFilesModificationTime())
         .thenReturn("2011-12-03T22:42:05Z");
     Mockito.when(jibPluginConfiguration.getDockerClientExecutable()).thenReturn(Paths.get("test"));
     Mockito.when(jibPluginConfiguration.getDockerClientEnvironment())
         .thenReturn(new HashMap<>(ImmutableMap.of("docker", "client")));
+    Mockito.when(jibPluginConfiguration.getDigestOutputPath()).thenReturn(Paths.get("digest/path"));
+    Mockito.when(jibPluginConfiguration.getImageIdOutputPath()).thenReturn(Paths.get("id/path"));
+    Mockito.when(jibPluginConfiguration.getTarOutputPath()).thenReturn(Paths.get("tar/path"));
 
     MavenRawConfiguration rawConfiguration = new MavenRawConfiguration(jibPluginConfiguration);
 
@@ -108,13 +110,15 @@ public class MavenRawConfigurationTest {
     Assert.assertEquals(
         new HashSet<>(Arrays.asList("additional", "tags")),
         Sets.newHashSet(rawConfiguration.getToTags()));
-    Assert.assertTrue(rawConfiguration.getUseCurrentTimestamp());
     Assert.assertEquals("admin:wheel", rawConfiguration.getUser().get());
     Assert.assertEquals("2011-12-03T22:42:05Z", rawConfiguration.getFilesModificationTime());
     Assert.assertEquals(Paths.get("test"), rawConfiguration.getDockerExecutable().get());
     Assert.assertEquals(
         new HashMap<>(ImmutableMap.of("docker", "client")),
         rawConfiguration.getDockerEnvironment());
+    Assert.assertEquals(Paths.get("digest/path"), jibPluginConfiguration.getDigestOutputPath());
+    Assert.assertEquals(Paths.get("id/path"), jibPluginConfiguration.getImageIdOutputPath());
+    Assert.assertEquals(Paths.get("tar/path"), jibPluginConfiguration.getTarOutputPath());
 
     Mockito.verifyNoMoreInteractions(eventHandlers);
   }

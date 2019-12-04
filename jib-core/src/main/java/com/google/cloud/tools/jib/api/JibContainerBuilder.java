@@ -18,7 +18,7 @@ package com.google.cloud.tools.jib.api;
 
 import com.google.cloud.tools.jib.builder.TimerEventDispatcher;
 import com.google.cloud.tools.jib.builder.steps.BuildResult;
-import com.google.cloud.tools.jib.configuration.BuildConfiguration;
+import com.google.cloud.tools.jib.configuration.BuildContext;
 import com.google.cloud.tools.jib.configuration.ContainerConfiguration;
 import com.google.cloud.tools.jib.configuration.ImageConfiguration;
 import com.google.cloud.tools.jib.docker.DockerClient;
@@ -35,9 +35,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.function.Supplier;
 import javax.annotation.Nullable;
 import org.apache.http.conn.HttpHostConnectException;
 
@@ -68,7 +65,7 @@ public class JibContainerBuilder {
 
   private final ContainerConfiguration.Builder containerConfigurationBuilder =
       ContainerConfiguration.builder();
-  private final BuildConfiguration.Builder buildConfigurationBuilder;
+  private final BuildContext.Builder buildContextBuilder;
 
   private List<LayerConfiguration> layerConfigurations = new ArrayList<>();
 
@@ -78,7 +75,7 @@ public class JibContainerBuilder {
         ImageConfiguration.builder(baseImage.getImageReference())
             .setCredentialRetrievers(baseImage.getCredentialRetrievers())
             .build(),
-        BuildConfiguration.builder());
+        BuildContext.builder());
   }
 
   /** Instantiate with {@link Jib#from}. */
@@ -88,7 +85,7 @@ public class JibContainerBuilder {
             .setDockerClient(
                 new DockerClient(baseImage.getDockerExecutable(), baseImage.getDockerEnvironment()))
             .build(),
-        BuildConfiguration.builder());
+        BuildContext.builder());
   }
 
   /** Instantiate with {@link Jib#from}. */
@@ -98,14 +95,13 @@ public class JibContainerBuilder {
         ImageConfiguration.builder(baseImage.getImageReference().orElse(ImageReference.scratch()))
             .setTarPath(baseImage.getPath())
             .build(),
-        BuildConfiguration.builder());
+        BuildContext.builder());
   }
 
   @VisibleForTesting
   JibContainerBuilder(
-      ImageConfiguration imageConfiguration, BuildConfiguration.Builder buildConfigurationBuilder) {
-    this.buildConfigurationBuilder =
-        buildConfigurationBuilder.setBaseImageConfiguration(imageConfiguration);
+      ImageConfiguration imageConfiguration, BuildContext.Builder buildContextBuilder) {
+    this.buildContextBuilder = buildContextBuilder.setBaseImageConfiguration(imageConfiguration);
   }
 
   /**
@@ -403,7 +399,7 @@ public class JibContainerBuilder {
    * @return this
    */
   public JibContainerBuilder setFormat(ImageFormat imageFormat) {
-    buildConfigurationBuilder.setTargetFormat(imageFormat);
+    buildContextBuilder.setTargetFormat(imageFormat);
     return this;
   }
 
@@ -474,26 +470,13 @@ public class JibContainerBuilder {
   public JibContainer containerize(Containerizer containerizer)
       throws InterruptedException, RegistryException, IOException, CacheDirectoryCreationException,
           ExecutionException {
-    return containerize(containerizer, Executors::newCachedThreadPool);
-  }
+    try (BuildContext buildContext = toBuildContext(containerizer);
+        TimerEventDispatcher ignored =
+            new TimerEventDispatcher(
+                buildContext.getEventHandlers(), containerizer.getDescription())) {
+      logSources(buildContext.getEventHandlers());
 
-  @VisibleForTesting
-  JibContainer containerize(
-      Containerizer containerizer, Supplier<ExecutorService> defaultExecutorServiceFactory)
-      throws IOException, CacheDirectoryCreationException, InterruptedException, RegistryException,
-          ExecutionException {
-    boolean shutdownExecutorService = !containerizer.getExecutorService().isPresent();
-    ExecutorService executorService =
-        containerizer.getExecutorService().orElseGet(defaultExecutorServiceFactory);
-
-    BuildConfiguration buildConfiguration = toBuildConfiguration(containerizer, executorService);
-
-    EventHandlers eventHandlers = buildConfiguration.getEventHandlers();
-    logSources(eventHandlers);
-
-    try (TimerEventDispatcher ignored =
-        new TimerEventDispatcher(eventHandlers, containerizer.getDescription())) {
-      BuildResult result = containerizer.run(buildConfiguration);
+      BuildResult result = containerizer.run(buildContext);
       return new JibContainer(result.getImageDigest(), result.getImageId());
 
     } catch (ExecutionException ex) {
@@ -502,29 +485,31 @@ public class JibContainerBuilder {
         throw (RegistryException) ex.getCause();
       }
       throw ex;
-
-    } finally {
-      if (shutdownExecutorService) {
-        executorService.shutdown();
-      }
     }
   }
 
   /**
-   * Builds a {@link BuildConfiguration} using this and a {@link Containerizer}.
+   * Describes the container contents and configuration without actually physically building a
+   * container.
+   *
+   * @return a description of the container being built
+   */
+  public JibContainerDescription describeContainer() {
+    return new JibContainerDescription(layerConfigurations);
+  }
+
+  /**
+   * Builds a {@link BuildContext} using this and a {@link Containerizer}.
    *
    * @param containerizer the {@link Containerizer}
-   * @param executorService the {@link ExecutorService} to use, overriding the executor in the
-   *     {@link Containerizer}
-   * @return the {@link BuildConfiguration}
+   * @return the {@link BuildContext}
    * @throws CacheDirectoryCreationException if a cache directory could not be created
    * @throws IOException if an I/O exception occurs
    */
   @VisibleForTesting
-  BuildConfiguration toBuildConfiguration(
-      Containerizer containerizer, ExecutorService executorService)
+  BuildContext toBuildContext(Containerizer containerizer)
       throws CacheDirectoryCreationException, IOException {
-    return buildConfigurationBuilder
+    return buildContextBuilder
         .setTargetImageConfiguration(containerizer.getImageConfiguration())
         .setAdditionalTargetImageTags(containerizer.getAdditionalTags())
         .setBaseImageLayersCacheDirectory(containerizer.getBaseImageLayersCacheDirectory())
@@ -534,8 +519,9 @@ public class JibContainerBuilder {
         .setAllowInsecureRegistries(containerizer.getAllowInsecureRegistries())
         .setOffline(containerizer.isOfflineMode())
         .setToolName(containerizer.getToolName())
-        .setExecutorService(executorService)
+        .setExecutorService(containerizer.getExecutorService().orElse(null))
         .setEventHandlers(containerizer.buildEventHandlers())
+        .setAlwaysCacheBaseImage(containerizer.getAlwaysCacheBaseImage())
         .build();
   }
 

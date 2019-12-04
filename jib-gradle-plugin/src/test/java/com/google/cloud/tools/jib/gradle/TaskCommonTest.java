@@ -17,9 +17,10 @@
 package com.google.cloud.tools.jib.gradle;
 
 import org.gradle.api.Project;
-import org.gradle.api.logging.Logger;
+import org.gradle.api.Task;
 import org.gradle.api.plugins.JavaPlugin;
 import org.gradle.api.plugins.WarPlugin;
+import org.gradle.api.tasks.TaskProvider;
 import org.gradle.api.tasks.bundling.War;
 import org.gradle.testfixtures.ProjectBuilder;
 import org.junit.Assert;
@@ -28,8 +29,6 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.contrib.java.lang.system.RestoreSystemProperties;
 import org.junit.runner.RunWith;
-import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.boot.gradle.plugin.SpringBootPlugin;
 import org.springframework.boot.gradle.tasks.bundling.BootWar;
@@ -40,118 +39,10 @@ public class TaskCommonTest {
 
   @Rule public final RestoreSystemProperties systemPropertyRestorer = new RestoreSystemProperties();
 
-  @Mock private JibExtension jibExtension;
-  @Mock private ContainerParameters containerParameters;
-  @Mock private Logger logger;
-
   @Before
   public void setUp() {
-    System.clearProperty("jib.extraDirectory.path");
-    System.clearProperty("jib.extraDirectory.permissions");
     System.clearProperty("jib.extraDirectories.paths");
     System.clearProperty("jib.extraDirectories.permissions");
-    Mockito.when(jibExtension.getContainer()).thenReturn(containerParameters);
-  }
-
-  @Test
-  public void testCheckDeprecatedUsage_default() {
-    TaskCommon.checkDeprecatedUsage(jibExtension, logger);
-    Mockito.verify(logger, Mockito.never()).warn(Mockito.anyString());
-  }
-
-  @Test
-  public void testCheckDeprecatedUsage_extraDirectoriesConfigured() {
-    jibExtension.extraDirectoriesConfigured = true;
-    TaskCommon.checkDeprecatedUsage(jibExtension, logger);
-    Mockito.verify(logger, Mockito.never()).warn(Mockito.anyString());
-  }
-
-  @Test
-  public void testCheckDeprecatedUsage_extraDirectoryPathPropertySet() {
-    System.setProperty("jib.extraDirectory.path", "something");
-    TaskCommon.checkDeprecatedUsage(jibExtension, logger);
-    Mockito.verify(logger, Mockito.times(1))
-        .warn(
-            "'jib.extraDirectory', 'jib.extraDirectory.path', and 'jib.extraDirectory.permissions' "
-                + "are deprecated; use 'jib.extraDirectories.paths' and "
-                + "'jib.extraDirectories.permissions'");
-  }
-
-  @Test
-  public void testCheckDeprecatedUsage_extraDirectoryPermissionsPropertySet() {
-    System.setProperty("jib.extraDirectory.permissions", "something");
-    TaskCommon.checkDeprecatedUsage(jibExtension, logger);
-    Mockito.verify(logger, Mockito.times(1))
-        .warn(
-            "'jib.extraDirectory', 'jib.extraDirectory.path', and 'jib.extraDirectory.permissions' "
-                + "are deprecated; use 'jib.extraDirectories.paths' and "
-                + "'jib.extraDirectories.permissions'");
-  }
-
-  @Test
-  public void testCheckDeprecatedUsage_extraDirectoryAndExtraDirectoriesPropertiesSet() {
-    System.setProperty("jib.extraDirectory.path", "something");
-    System.setProperty("jib.extraDirectories.permissions", "something");
-
-    try {
-      TaskCommon.checkDeprecatedUsage(jibExtension, logger);
-      Assert.fail();
-    } catch (IllegalArgumentException ex) {
-      Assert.assertEquals(
-          "You cannot configure both 'jib.extraDirectory.path' and 'jib.extraDirectories.paths'",
-          ex.getMessage());
-    }
-  }
-
-  @Test
-  public void testCheckDeprecatedUsage_extraDirectoryConfigured() {
-    jibExtension.extraDirectoryConfigured = true;
-    TaskCommon.checkDeprecatedUsage(jibExtension, logger);
-    Mockito.verify(logger, Mockito.times(1))
-        .warn(
-            "'jib.extraDirectory', 'jib.extraDirectory.path', and 'jib.extraDirectory.permissions' "
-                + "are deprecated; use 'jib.extraDirectories.paths' and "
-                + "'jib.extraDirectories.permissions'");
-  }
-
-  @Test
-  public void testCheckDeprecatedUsage_extraDirectoryAndExtraDirectoriesConfigured() {
-    jibExtension.extraDirectoryConfigured = true;
-    jibExtension.extraDirectoriesConfigured = true;
-    try {
-      TaskCommon.checkDeprecatedUsage(jibExtension, logger);
-      Assert.fail();
-    } catch (IllegalArgumentException ex) {
-      Assert.assertEquals(
-          "You cannot configure both 'jib.extraDirectory.path' and 'jib.extraDirectories.paths'",
-          ex.getMessage());
-    }
-  }
-
-  @Test
-  public void testCheckDeprecatedUsage_useCurrentTimestampConfigured() {
-    Mockito.when(containerParameters.getUseCurrentTimestamp()).thenReturn(true);
-    Mockito.when(containerParameters.getCreationTime()).thenReturn("EPOCH");
-    TaskCommon.checkDeprecatedUsage(jibExtension, logger);
-    Mockito.verify(logger)
-        .warn(
-            "'jib.container.useCurrentTimestamp' is deprecated; use 'jib.container.creationTime' "
-                + "with the value 'USE_CURRENT_TIMESTAMP' instead");
-  }
-
-  @Test
-  public void testCheckDeprecatedUsage_useCurrentTimestampAndCreationTimeConfigured() {
-    Mockito.when(containerParameters.getUseCurrentTimestamp()).thenReturn(true);
-    Mockito.when(containerParameters.getCreationTime()).thenReturn("USE_CURRENT_TIMESTAMP");
-    try {
-      TaskCommon.checkDeprecatedUsage(jibExtension, logger);
-      Assert.fail();
-    } catch (IllegalArgumentException ex) {
-      Assert.assertEquals(
-          "You cannot configure both 'jib.container.useCurrentTimestamp' and "
-              + "'jib.container.creationTime'",
-          ex.getMessage());
-    }
   }
 
   @Test
@@ -159,20 +50,8 @@ public class TaskCommonTest {
     Project project = ProjectBuilder.builder().build();
     project.getPlugins().apply(JavaPlugin.class);
 
-    War warTask = TaskCommon.getWarTask(project);
-
-    Assert.assertNull(warTask);
-  }
-
-  @Test
-  public void testGetWarTask_bootJavaProject() {
-    Project project = ProjectBuilder.builder().build();
-    project.getPlugins().apply(JavaPlugin.class);
-    project.getPlugins().apply(SpringBootPlugin.class);
-
-    War warTask = TaskCommon.getWarTask(project);
-
-    Assert.assertNull(warTask);
+    TaskProvider<Task> warProviderTask = TaskCommon.getWarTaskProvider(project);
+    Assert.assertNull(warProviderTask);
   }
 
   @Test
@@ -180,20 +59,19 @@ public class TaskCommonTest {
     Project project = ProjectBuilder.builder().build();
     project.getPlugins().apply(WarPlugin.class);
 
-    War warTask = TaskCommon.getWarTask(project);
-
+    TaskProvider<Task> warTask = TaskCommon.getWarTaskProvider(project);
     Assert.assertNotNull(warTask);
+    Assert.assertNotNull(warTask instanceof War);
   }
 
   @Test
-  public void testGetWarTask_bootWarProject() {
+  public void testGetBootWarTask_bootWarProject() {
     Project project = ProjectBuilder.builder().build();
     project.getPlugins().apply(WarPlugin.class);
     project.getPlugins().apply(SpringBootPlugin.class);
 
-    War warTask = TaskCommon.getWarTask(project);
-
-    Assert.assertNotNull(warTask);
-    Assert.assertTrue(warTask instanceof BootWar);
+    TaskProvider<Task> bootWarTask = TaskCommon.getBootWarTaskProvider(project);
+    Assert.assertNotNull(bootWarTask);
+    Assert.assertNotNull(bootWarTask instanceof BootWar);
   }
 }

@@ -18,6 +18,7 @@ package com.google.cloud.tools.jib.gradle;
 
 import com.google.cloud.tools.jib.api.CacheDirectoryCreationException;
 import com.google.cloud.tools.jib.api.InvalidImageReferenceException;
+import com.google.cloud.tools.jib.filesystem.TempDirectoryProvider;
 import com.google.cloud.tools.jib.plugins.common.BuildStepsExecutionException;
 import com.google.cloud.tools.jib.plugins.common.HelpfulSuggestions;
 import com.google.cloud.tools.jib.plugins.common.IncompatibleBaseImageJavaVersionException;
@@ -91,7 +92,7 @@ public class BuildTarTask extends DefaultTask implements JibTask {
    */
   @OutputFile
   public String getOutputFile() {
-    return getTargetPath().toString();
+    return Preconditions.checkNotNull(jibExtension).getOutputPaths().getTarPath().toString();
   }
 
   @TaskAction
@@ -100,11 +101,11 @@ public class BuildTarTask extends DefaultTask implements JibTask {
           MainClassInferenceException {
     // Asserts required @Input parameters are not null.
     Preconditions.checkNotNull(jibExtension);
-    TaskCommon.checkDeprecatedUsage(jibExtension, getLogger());
     TaskCommon.disableHttpLogging();
+    TempDirectoryProvider tempDirectoryProvider = new TempDirectoryProvider();
 
     GradleProjectProperties projectProperties =
-        GradleProjectProperties.getForProject(getProject(), getLogger());
+        GradleProjectProperties.getForProject(getProject(), getLogger(), tempDirectoryProvider);
     try {
       PluginConfigurationProcessor.createJibBuildRunnerForTarImage(
               new GradleRawConfiguration(jibExtension),
@@ -157,6 +158,7 @@ public class BuildTarTask extends DefaultTask implements JibTask {
           HelpfulSuggestions.forInvalidImageReference(ex.getInvalidReference()), ex);
 
     } finally {
+      tempDirectoryProvider.close();
       projectProperties.waitForLoggingThread();
     }
   }
@@ -165,14 +167,5 @@ public class BuildTarTask extends DefaultTask implements JibTask {
   public BuildTarTask setJibExtension(JibExtension jibExtension) {
     this.jibExtension = jibExtension;
     return this;
-  }
-
-  /**
-   * Returns the output directory for the tarball. By default, it is {@code build/jib-image.tar}.
-   *
-   * @return the output directory
-   */
-  private Path getTargetPath() {
-    return getProject().getBuildDir().toPath().resolve("jib-image.tar");
   }
 }

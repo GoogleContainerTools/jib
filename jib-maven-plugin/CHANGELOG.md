@@ -7,11 +7,49 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
+- Removed deprecated `<extraDirectory>` configuration in favor of `<extraDirectories>`. ([#1691](https://github.com/GoogleContainerTools/jib/issues/1691))
+- Removed deprecated `<container><useCurrentTimestamp>` configuration in favor of `<container><creationTime>` with `USE_CURRENT_TIMESTAMP`. ([#1897](https://github.com/GoogleContainerTools/jib/issues/1897))
+
+### Fixed
+
+- Fixed `<extraDirectories><permissions>` being ignored if `<paths>` are not explicitly defined. ([#2106](https://github.com/GoogleContainerTools/jib/issues/2160))
+- Now `<containerizingMode>packaged` works as intended with Spring Boot projects that generate a fat JAR. ([#2170](https://github.com/GoogleContainerTools/jib/issues/2170))
+- Now `<containerizingMode>packaged` correctly identifies the packaged JAR generated at a non-default location when configured with the Maven Jar Plugin's `<classifier>` and `<outputDirectory>`. ([#2170](https://github.com/GoogleContainerTools/jib/issues/2170))
+
+## 1.8.0
+
+### Changed
+
+- Optimized building to a registry with local base images. ([#1913](https://github.com/GoogleContainerTools/jib/issues/1913))
+
+### Fixed
+
+- Fixed reporting wrong module name when `skaffold init` is run on multi-module projects. ([#2088](https://github.com/GoogleContainerTools/jib/issues/2088))
+- `<allowInsecureRegistries>` and the `sendCredentialsOverHttp` system property are now effective for authentication service server connections. ([#2074](https://github.com/GoogleContainerTools/jib/pull/2074))
+- Fixed inefficient communications when interacting with insecure registries and servers (when `<allowInsecureRegistries>` is set). ([#946](https://github.com/GoogleContainerTools/jib/issues/946))
+
+## 1.7.0
+
+### Added
+
+- `<outputPaths>` object for configuration output file locations ([#1561](https://github.com/GoogleContainerTools/jib/issues/1561))
+  - `<outputPaths><tar>` configures output path of `jib:buildTar` (`target/jib-image.tar` by default)
+  - `<outputPaths><digest>` configures the output path of the image digest (`target/jib-image.digest` by default)
+  - `<outputPaths><imageId>` configures output path of the image id  (`target/jib-image.id` by default)
+- Main class inference support for Java 13/14. ([#2015](https://github.com/GoogleContainerTools/jib/issues/2015))
+
+### Changed
+
 - Local base image layers are now processed in parallel, speeding up builds using large local base images. ([#1913](https://github.com/GoogleContainerTools/jib/issues/1913))
+- The base image manifest is no longer pulled from the registry if a digest is provided and the manifest is already cached. ([#1881](https://github.com/GoogleContainerTools/jib/issues/1881))
+- Docker daemon base images are now cached more effectively, speeding up builds using `docker://` base images. ([#1912](https://github.com/GoogleContainerTools/jib/issues/1912))
 
 ### Fixed
 
 - Fixed temporary directory cleanup during builds using local base images. ([#2016](https://github.com/GoogleContainerTools/jib/issues/2016))
+- Fixed additional tags being ignored when building to a tarball. ([#2043](https://github.com/GoogleContainerTools/jib/issues/2043))
+- Fixed `tar://` base image failing if tar does not contain explicit directory entries. ([#2067](https://github.com/GoogleContainerTools/jib/issues/2067))
+- Fixed an issue for WAR projects where Jib used an intermediate exploded WAR directory instead of exploding the final WAR file. ([#1091](https://github.com/GoogleContainerTools/jib/issues/1091))
 
 ## 1.6.1
 

@@ -17,11 +17,10 @@
 package com.google.cloud.tools.jib.builder.steps;
 
 import com.google.cloud.tools.jib.api.Credential;
-import com.google.cloud.tools.jib.api.InsecureRegistryException;
 import com.google.cloud.tools.jib.api.RegistryException;
 import com.google.cloud.tools.jib.builder.ProgressEventDispatcher;
 import com.google.cloud.tools.jib.builder.TimerEventDispatcher;
-import com.google.cloud.tools.jib.configuration.BuildConfiguration;
+import com.google.cloud.tools.jib.configuration.BuildContext;
 import com.google.cloud.tools.jib.http.Authorization;
 import com.google.cloud.tools.jib.registry.RegistryAuthenticator;
 import java.io.IOException;
@@ -39,37 +38,35 @@ class AuthenticatePushStep implements Callable<Optional<Authorization>> {
 
   private static final String DESCRIPTION = "Authenticating push to %s";
 
-  private final BuildConfiguration buildConfiguration;
+  private final BuildContext buildContext;
   private final ProgressEventDispatcher.Factory progressEventDispatcherFactory;
   @Nullable private final Credential registryCredential;
 
   AuthenticatePushStep(
-      BuildConfiguration buildConfiguration,
+      BuildContext buildContext,
       ProgressEventDispatcher.Factory progressEventDispatcherFactory,
       @Nullable Credential registryCredential) {
-    this.buildConfiguration = buildConfiguration;
+    this.buildContext = buildContext;
     this.progressEventDispatcherFactory = progressEventDispatcherFactory;
     this.registryCredential = registryCredential;
   }
 
   @Override
   public Optional<Authorization> call() throws IOException, RegistryException {
-    String registry = buildConfiguration.getTargetImageConfiguration().getImageRegistry();
+    String registry = buildContext.getTargetImageConfiguration().getImageRegistry();
     try (ProgressEventDispatcher ignored =
             progressEventDispatcherFactory.create("authenticating push to " + registry, 1);
         TimerEventDispatcher ignored2 =
             new TimerEventDispatcher(
-                buildConfiguration.getEventHandlers(), String.format(DESCRIPTION, registry))) {
+                buildContext.getEventHandlers(), String.format(DESCRIPTION, registry))) {
       Optional<RegistryAuthenticator> registryAuthenticator =
-          buildConfiguration
+          buildContext
               .newTargetImageRegistryClientFactory()
               .newRegistryClient()
               .getRegistryAuthenticator();
       if (registryAuthenticator.isPresent()) {
         return Optional.of(registryAuthenticator.get().authenticatePush(registryCredential));
       }
-    } catch (InsecureRegistryException ex) {
-      // Cannot skip certificate validation or use HTTP; fall through.
     }
 
     return (registryCredential == null || registryCredential.isOAuth2RefreshToken())

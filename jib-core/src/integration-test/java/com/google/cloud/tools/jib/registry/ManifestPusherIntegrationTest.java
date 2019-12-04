@@ -16,7 +16,6 @@
 
 package com.google.cloud.tools.jib.registry;
 
-import com.google.api.client.http.HttpResponseException;
 import com.google.api.client.http.HttpStatusCodes;
 import com.google.cloud.tools.jib.api.DescriptorDigest;
 import com.google.cloud.tools.jib.api.RegistryException;
@@ -24,6 +23,8 @@ import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.blob.Blobs;
 import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.hash.Digests;
+import com.google.cloud.tools.jib.http.FailoverHttpClient;
+import com.google.cloud.tools.jib.http.ResponseException;
 import com.google.cloud.tools.jib.image.json.ManifestTemplate;
 import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
 import java.io.IOException;
@@ -43,24 +44,26 @@ public class ManifestPusherIntegrationTest {
     localRegistry.pullAndPushToLocal("busybox", "busybox");
   }
 
+  private final FailoverHttpClient httpClient = new FailoverHttpClient(true, false, ignored -> {});
+
   @Test
   public void testPush_missingBlobs() throws IOException, RegistryException {
     RegistryClient registryClient =
-        RegistryClient.factory(EventHandlers.NONE, "gcr.io", "distroless/java").newRegistryClient();
-    ManifestTemplate manifestTemplate = registryClient.pullManifest("latest");
+        RegistryClient.factory(EventHandlers.NONE, "gcr.io", "distroless/java", httpClient)
+            .newRegistryClient();
+    ManifestTemplate manifestTemplate = registryClient.pullManifest("latest").getManifest();
 
     registryClient =
-        RegistryClient.factory(EventHandlers.NONE, "localhost:5000", "busybox")
-            .setAllowInsecureRegistries(true)
+        RegistryClient.factory(EventHandlers.NONE, "localhost:5000", "busybox", httpClient)
             .newRegistryClient();
     try {
       registryClient.pushManifest((V22ManifestTemplate) manifestTemplate, "latest");
       Assert.fail("Pushing manifest without its BLOBs should fail");
 
     } catch (RegistryErrorException ex) {
-      HttpResponseException httpResponseException = (HttpResponseException) ex.getCause();
+      ResponseException responseException = (ResponseException) ex.getCause();
       Assert.assertEquals(
-          HttpStatusCodes.STATUS_CODE_BAD_REQUEST, httpResponseException.getStatusCode());
+          HttpStatusCodes.STATUS_CODE_BAD_REQUEST, responseException.getStatusCode());
     }
   }
 
@@ -84,8 +87,7 @@ public class ManifestPusherIntegrationTest {
 
     // Pushes the BLOBs.
     RegistryClient registryClient =
-        RegistryClient.factory(EventHandlers.NONE, "localhost:5000", "testimage")
-            .setAllowInsecureRegistries(true)
+        RegistryClient.factory(EventHandlers.NONE, "localhost:5000", "testimage", httpClient)
             .newRegistryClient();
     Assert.assertFalse(
         registryClient.pushBlob(testLayerBlobDigest, testLayerBlob, null, ignored -> {}));
@@ -101,7 +103,7 @@ public class ManifestPusherIntegrationTest {
 
     // Pulls the manifest.
     V22ManifestTemplate manifestTemplate =
-        registryClient.pullManifest("latest", V22ManifestTemplate.class);
+        registryClient.pullManifest("latest", V22ManifestTemplate.class).getManifest();
     Assert.assertEquals(1, manifestTemplate.getLayers().size());
     Assert.assertEquals(testLayerBlobDigest, manifestTemplate.getLayers().get(0).getDigest());
     Assert.assertNotNull(manifestTemplate.getContainerConfiguration());
@@ -111,7 +113,9 @@ public class ManifestPusherIntegrationTest {
 
     // Pulls the manifest by digest.
     V22ManifestTemplate manifestTemplateByDigest =
-        registryClient.pullManifest(imageDigest.toString(), V22ManifestTemplate.class);
+        registryClient
+            .pullManifest(imageDigest.toString(), V22ManifestTemplate.class)
+            .getManifest();
     Assert.assertEquals(
         Digests.computeJsonDigest(manifestTemplate),
         Digests.computeJsonDigest(manifestTemplateByDigest));

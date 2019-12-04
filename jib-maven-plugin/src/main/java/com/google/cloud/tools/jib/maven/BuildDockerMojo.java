@@ -19,6 +19,7 @@ package com.google.cloud.tools.jib.maven;
 import com.google.cloud.tools.jib.api.CacheDirectoryCreationException;
 import com.google.cloud.tools.jib.api.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.docker.DockerClient;
+import com.google.cloud.tools.jib.filesystem.TempDirectoryProvider;
 import com.google.cloud.tools.jib.plugins.common.BuildStepsExecutionException;
 import com.google.cloud.tools.jib.plugins.common.HelpfulSuggestions;
 import com.google.cloud.tools.jib.plugins.common.IncompatibleBaseImageJavaVersionException;
@@ -30,7 +31,6 @@ import com.google.cloud.tools.jib.plugins.common.InvalidFilesModificationTimeExc
 import com.google.cloud.tools.jib.plugins.common.InvalidWorkingDirectoryException;
 import com.google.cloud.tools.jib.plugins.common.MainClassInferenceException;
 import com.google.cloud.tools.jib.plugins.common.PluginConfigurationProcessor;
-import com.google.cloud.tools.jib.plugins.common.PropertyNames;
 import com.google.common.annotations.VisibleForTesting;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -52,19 +52,7 @@ public class BuildDockerMojo extends JibPluginConfiguration {
   @Override
   public void execute() throws MojoExecutionException, MojoFailureException {
     checkJibVersion();
-    if (isSkipped()) {
-      getLog().info("Skipping containerization because jib-maven-plugin: skip = true");
-      return;
-    } else if (!isContainerizable()) {
-      getLog()
-          .info(
-              "Skipping containerization of this module (not specified in "
-                  + PropertyNames.CONTAINERIZE
-                  + ")");
-      return;
-    }
-    if ("pom".equals(getProject().getPackaging())) {
-      getLog().info("Skipping containerization because packaging is 'pom'...");
+    if (MojoCommon.shouldSkipJibExecution(this)) {
       return;
     }
 
@@ -78,13 +66,13 @@ public class BuildDockerMojo extends JibPluginConfiguration {
           HelpfulSuggestions.forDockerNotInstalled(HELPFUL_SUGGESTIONS_PREFIX));
     }
 
-    MojoCommon.checkUseCurrentTimestampDeprecation(this);
-
     MavenSettingsProxyProvider.activateHttpAndHttpsProxies(
         getSession().getSettings(), getSettingsDecrypter());
 
+    TempDirectoryProvider tempDirectoryProvider = new TempDirectoryProvider();
     MavenProjectProperties projectProperties =
-        MavenProjectProperties.getForProject(getProject(), getSession(), getLog());
+        MavenProjectProperties.getForProject(
+            getProject(), getSession(), getLog(), tempDirectoryProvider);
     try {
       PluginConfigurationProcessor.createJibBuildRunnerForDockerDaemonImage(
               new MavenRawConfiguration(this),
@@ -145,6 +133,7 @@ public class BuildDockerMojo extends JibPluginConfiguration {
       throw new MojoExecutionException(ex.getMessage(), ex.getCause());
 
     } finally {
+      tempDirectoryProvider.close();
       projectProperties.waitForLoggingThread();
       getLog().info("");
     }

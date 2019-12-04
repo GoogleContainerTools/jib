@@ -16,6 +16,8 @@
 
 package com.google.cloud.tools.jib.registry;
 
+import com.google.cloud.tools.jib.api.DescriptorDigest;
+import com.google.cloud.tools.jib.hash.Digests;
 import com.google.cloud.tools.jib.http.Response;
 import com.google.cloud.tools.jib.image.json.ManifestTemplate;
 import com.google.cloud.tools.jib.image.json.OCIManifestTemplate;
@@ -52,13 +54,13 @@ public class ManifestPullerTest {
     return new ByteArrayInputStream(string.getBytes(StandardCharsets.UTF_8));
   }
 
-  @Mock private Response mockResponse;
-
   private final RegistryEndpointRequestProperties fakeRegistryEndpointRequestProperties =
       new RegistryEndpointRequestProperties("someServerUrl", "someImageName");
   private final ManifestPuller<ManifestTemplate> testManifestPuller =
       new ManifestPuller<>(
           fakeRegistryEndpointRequestProperties, "test-image-tag", ManifestTemplate.class);
+
+  @Mock private Response mockResponse;
 
   @Test
   public void testHandleResponse_v21()
@@ -66,13 +68,18 @@ public class ManifestPullerTest {
     Path v21ManifestFile = Paths.get(Resources.getResource("core/json/v21manifest.json").toURI());
     InputStream v21Manifest = new ByteArrayInputStream(Files.readAllBytes(v21ManifestFile));
 
+    DescriptorDigest expectedDigest = Digests.computeDigest(v21Manifest).getDigest();
+    v21Manifest.reset();
+
     Mockito.when(mockResponse.getBody()).thenReturn(v21Manifest);
-    ManifestTemplate manifestTemplate =
+    ManifestAndDigest<?> manifestAndDigest =
         new ManifestPuller<>(
                 fakeRegistryEndpointRequestProperties, "test-image-tag", V21ManifestTemplate.class)
             .handleResponse(mockResponse);
 
-    Assert.assertThat(manifestTemplate, CoreMatchers.instanceOf(V21ManifestTemplate.class));
+    Assert.assertThat(
+        manifestAndDigest.getManifest(), CoreMatchers.instanceOf(V21ManifestTemplate.class));
+    Assert.assertEquals(expectedDigest, manifestAndDigest.getDigest());
   }
 
   @Test
@@ -81,13 +88,18 @@ public class ManifestPullerTest {
     Path v22ManifestFile = Paths.get(Resources.getResource("core/json/v22manifest.json").toURI());
     InputStream v22Manifest = new ByteArrayInputStream(Files.readAllBytes(v22ManifestFile));
 
+    DescriptorDigest expectedDigest = Digests.computeDigest(v22Manifest).getDigest();
+    v22Manifest.reset();
+
     Mockito.when(mockResponse.getBody()).thenReturn(v22Manifest);
-    ManifestTemplate manifestTemplate =
+    ManifestAndDigest<?> manifestAndDigest =
         new ManifestPuller<>(
                 fakeRegistryEndpointRequestProperties, "test-image-tag", V22ManifestTemplate.class)
             .handleResponse(mockResponse);
 
-    Assert.assertThat(manifestTemplate, CoreMatchers.instanceOf(V22ManifestTemplate.class));
+    Assert.assertThat(
+        manifestAndDigest.getManifest(), CoreMatchers.instanceOf(V22ManifestTemplate.class));
+    Assert.assertEquals(expectedDigest, manifestAndDigest.getDigest());
   }
 
   @Test
@@ -114,15 +126,19 @@ public class ManifestPullerTest {
     Path v22ManifestListFile =
         Paths.get(Resources.getResource("core/json/v22manifest_list.json").toURI());
     InputStream v22ManifestList = new ByteArrayInputStream(Files.readAllBytes(v22ManifestListFile));
+    DescriptorDigest expectedDigest = Digests.computeDigest(v22ManifestList).getDigest();
+    v22ManifestList.reset();
 
     Mockito.when(mockResponse.getBody()).thenReturn(v22ManifestList);
-    ManifestTemplate manifestTemplate =
+    ManifestAndDigest<?> manifestAndDigest =
         new ManifestPuller<>(
                 fakeRegistryEndpointRequestProperties, "test-image-tag", ManifestTemplate.class)
             .handleResponse(mockResponse);
+    ManifestTemplate manifestTemplate = manifestAndDigest.getManifest();
 
     Assert.assertThat(manifestTemplate, CoreMatchers.instanceOf(V22ManifestListTemplate.class));
     Assert.assertTrue(((V22ManifestListTemplate) manifestTemplate).getManifests().size() > 0);
+    Assert.assertEquals(expectedDigest, manifestAndDigest.getDigest());
   }
 
   @Test
@@ -132,16 +148,21 @@ public class ManifestPullerTest {
         Paths.get(Resources.getResource("core/json/v22manifest_list.json").toURI());
     InputStream v22ManifestList = new ByteArrayInputStream(Files.readAllBytes(v22ManifestListFile));
 
+    DescriptorDigest expectedDigest = Digests.computeDigest(v22ManifestList).getDigest();
+    v22ManifestList.reset();
+
     Mockito.when(mockResponse.getBody()).thenReturn(v22ManifestList);
-    V22ManifestListTemplate manifestTemplate =
+    ManifestAndDigest<V22ManifestListTemplate> manifestAndDigest =
         new ManifestPuller<>(
                 fakeRegistryEndpointRequestProperties,
                 "test-image-tag",
                 V22ManifestListTemplate.class)
             .handleResponse(mockResponse);
+    V22ManifestListTemplate manifestTemplate = manifestAndDigest.getManifest();
 
     Assert.assertThat(manifestTemplate, CoreMatchers.instanceOf(V22ManifestListTemplate.class));
     Assert.assertTrue(manifestTemplate.getManifests().size() > 0);
+    Assert.assertEquals(expectedDigest, manifestAndDigest.getDigest());
   }
 
   @Test

@@ -17,7 +17,6 @@
 package com.google.cloud.tools.jib.registry;
 
 import com.google.api.client.http.HttpMethods;
-import com.google.api.client.http.HttpResponseException;
 import com.google.cloud.tools.jib.api.DescriptorDigest;
 import com.google.cloud.tools.jib.api.LogEvent;
 import com.google.cloud.tools.jib.blob.Blobs;
@@ -25,6 +24,7 @@ import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.hash.Digests;
 import com.google.cloud.tools.jib.http.BlobHttpContent;
 import com.google.cloud.tools.jib.http.Response;
+import com.google.cloud.tools.jib.http.ResponseException;
 import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -92,8 +92,8 @@ class ManifestPusher implements RegistryEndpointProvider<DescriptorDigest> {
   }
 
   @Override
-  public DescriptorDigest handleHttpResponseException(HttpResponseException httpResponseException)
-      throws HttpResponseException, RegistryErrorException {
+  public DescriptorDigest handleHttpResponseException(ResponseException responseException)
+      throws ResponseException, RegistryErrorException {
     // docker registry 2.0 and 2.1 returns:
     //   400 Bad Request
     //   {"errors":[{"code":"TAG_INVALID","message":"manifest tag did not match URI"}]}
@@ -105,21 +105,21 @@ class ManifestPusher implements RegistryEndpointProvider<DescriptorDigest> {
     //   {"errors":[{"code":"MANIFEST_INVALID","detail":
     //   {"message":"manifest schema version not supported"},"message":"manifest invalid"}]}
 
-    if (httpResponseException.getStatusCode() != HttpStatus.SC_BAD_REQUEST
-        && httpResponseException.getStatusCode() != HttpStatus.SC_UNSUPPORTED_MEDIA_TYPE) {
-      throw httpResponseException;
+    if (responseException.getStatusCode() != HttpStatus.SC_BAD_REQUEST
+        && responseException.getStatusCode() != HttpStatus.SC_UNSUPPORTED_MEDIA_TYPE) {
+      throw responseException;
     }
 
-    ErrorCodes errorCode = ErrorResponseUtil.getErrorCode(httpResponseException);
+    ErrorCodes errorCode = ErrorResponseUtil.getErrorCode(responseException);
     if (errorCode == ErrorCodes.MANIFEST_INVALID || errorCode == ErrorCodes.TAG_INVALID) {
-      throw new RegistryErrorExceptionBuilder(getActionDescription(), httpResponseException)
+      throw new RegistryErrorExceptionBuilder(getActionDescription(), responseException)
           .addReason(
               "Registry may not support pushing OCI Manifest or "
                   + "Docker Image Manifest Version 2, Schema 2")
           .build();
     }
     // rethrow: unhandled error response code.
-    throw httpResponseException;
+    throw responseException;
   }
 
   @Override

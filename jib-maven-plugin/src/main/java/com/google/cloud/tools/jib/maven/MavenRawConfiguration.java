@@ -28,7 +28,7 @@ import java.util.Optional;
 import java.util.Set;
 
 /** Maven-specific adapter for providing raw configuration parameter values. */
-class MavenRawConfiguration implements RawConfiguration {
+public class MavenRawConfiguration implements RawConfiguration {
 
   private final JibPluginConfiguration jibPluginConfiguration;
 
@@ -37,7 +37,7 @@ class MavenRawConfiguration implements RawConfiguration {
    *
    * @param jibPluginConfiguration the Jib plugin configuration
    */
-  MavenRawConfiguration(JibPluginConfiguration jibPluginConfiguration) {
+  public MavenRawConfiguration(JibPluginConfiguration jibPluginConfiguration) {
     this.jibPluginConfiguration = jibPluginConfiguration;
   }
 
@@ -137,11 +137,6 @@ class MavenRawConfiguration implements RawConfiguration {
   }
 
   @Override
-  public boolean getUseCurrentTimestamp() {
-    return jibPluginConfiguration.getUseCurrentTimestamp();
-  }
-
-  @Override
   public boolean getAllowInsecureRegistries() {
     return jibPluginConfiguration.getAllowInsecureRegistries();
   }
@@ -189,5 +184,20 @@ class MavenRawConfiguration implements RawConfiguration {
   @Override
   public String getContainerizingMode() {
     return jibPluginConfiguration.getContainerizingMode();
+  }
+
+  @Override
+  public Path getTarOutputPath() {
+    return jibPluginConfiguration.getTarOutputPath();
+  }
+
+  @Override
+  public Path getDigestOutputPath() {
+    return jibPluginConfiguration.getDigestOutputPath();
+  }
+
+  @Override
+  public Path getImageIdOutputPath() {
+    return jibPluginConfiguration.getImageIdOutputPath();
   }
 }

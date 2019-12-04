@@ -16,8 +16,11 @@
 
 package com.google.cloud.tools.jib.docker;
 
+import com.google.cloud.tools.jib.api.DescriptorDigest;
 import com.google.cloud.tools.jib.api.ImageReference;
 import com.google.cloud.tools.jib.http.NotifyingOutputStream;
+import com.google.cloud.tools.jib.json.JsonTemplate;
+import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.ByteStreams;
@@ -32,8 +35,10 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.security.DigestException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
@@ -41,6 +46,41 @@ import java.util.function.Function;
 
 /** Calls out to the {@code docker} CLI. */
 public class DockerClient {
+
+  /**
+   * Contains the size, image ID, and diff IDs of an image inspected with {@code docker inspect}.
+   */
+  public static class DockerImageDetails implements JsonTemplate {
+    private long size;
+    private String imageId = "";
+    private List<String> diffIds = Collections.emptyList();
+
+    // Required for JSON
+    public DockerImageDetails() {}
+
+    @VisibleForTesting
+    public DockerImageDetails(long size, String imageId, List<String> diffIds) {
+      this.size = size;
+      this.imageId = imageId;
+      this.diffIds = diffIds;
+    }
+
+    public long getSize() {
+      return size;
+    }
+
+    public DescriptorDigest getImageId() throws DigestException {
+      return DescriptorDigest.fromDigest(imageId);
+    }
+
+    public List<DescriptorDigest> getDiffIds() throws DigestException {
+      List<DescriptorDigest> processedDiffIds = new ArrayList<>(diffIds.size());
+      for (String diffId : diffIds) {
+        processedDiffIds.add(DescriptorDigest.fromDigest(diffId.trim()));
+      }
+      return processedDiffIds;
+    }
+  }
 
   /** Default path to the docker executable. */
   public static final Path DEFAULT_DOCKER_CLIENT = Paths.get("docker");
@@ -93,6 +133,27 @@ public class DockerClient {
 
       return processBuilder;
     };
+  }
+
+  /**
+   * Parses the results of {@code docker inspect} into an {@link DockerImageDetails}.
+   *
+   * @param inspectOutput the output of the {@code docker inspect} command containing the size,
+   *     image ID, and diff IDs
+   * @return the {@link DockerImageDetails}
+   */
+  @VisibleForTesting
+  static DockerImageDetails parseInspectResults(String inspectOutput) throws IOException {
+    return JsonTemplateMapper.readJson(inspectOutput, DockerImageDetails.class);
+  }
+
+  private static String getStderrOutput(Process process) {
+    try (InputStreamReader stderr =
+        new InputStreamReader(process.getErrorStream(), StandardCharsets.UTF_8)) {
+      return CharStreams.toString(stderr);
+    } catch (IOException ex) {
+      return "unknown (failed to read error message from stderr due to " + ex.getMessage() + ")";
+    }
   }
 
   /** Factory for generating the {@link ProcessBuilder} for running {@code docker} commands. */
@@ -193,60 +254,35 @@ public class DockerClient {
   }
 
   /**
-   * Tags the image referenced by {@code originalImageReference} with a new image reference {@code
-   * newImageReference}.
+   * Gets the size, image ID, and diff IDs of an image in the Docker daemon.
    *
-   * @param originalImageReference the existing image reference on the Docker daemon
-   * @param newImageReference the new image reference
-   * @see <a
-   *     href="https://docs.docker.com/engine/reference/commandline/tag/">https://docs.docker.com/engine/reference/commandline/tag/</a>
-   * @throws InterruptedException if the 'docker tag' process is interrupted
-   * @throws IOException if an I/O exception occurs or {@code docker tag} failed
+   * @param imageReference the image to inspect
+   * @return the size, image ID, and diff IDs of the image
+   * @throws IOException if an I/O exception occurs or {@code docker inspect} failed
+   * @throws InterruptedException if the {@code docker inspect} process was interrupted
    */
-  public void tag(ImageReference originalImageReference, ImageReference newImageReference)
+  public DockerImageDetails inspect(ImageReference imageReference)
       throws IOException, InterruptedException {
-    // Runs 'docker tag'.
-    Process dockerProcess =
-        docker("tag", originalImageReference.toString(), newImageReference.toString());
-    if (dockerProcess.waitFor() != 0) {
+    Process inspectProcess =
+        docker(
+            "inspect",
+            "-f",
+            "{\"size\":{{.Size}},\"imageId\":\"{{.Id}}\",\"diffIds\":{{json .RootFS.Layers}}}",
+            "--type",
+            "image",
+            imageReference.toString());
+    if (inspectProcess.waitFor() != 0) {
       throw new IOException(
-          "'docker tag' command failed with error: " + getStderrOutput(dockerProcess));
+          "'docker inspect' command failed with error: " + getStderrOutput(inspectProcess));
     }
-  }
-
-  /**
-   * Gets the size of an image in the Docker daemon.
-   *
-   * @param imageReference the image to find the size of
-   * @return the size in bytes
-   * @throws IOException if an I/O exception occurs
-   * @throws InterruptedException if the 'docker inspect' process is interrupted
-   */
-  public long sizeOf(ImageReference imageReference) throws IOException, InterruptedException {
-    Process sizeProcess = docker("inspect", "-f", "{{.Size}}", imageReference.toString());
-
-    if (sizeProcess.waitFor() != 0) {
-      throw new IOException(
-          "'docker inspect' command failed with error: " + getStderrOutput(sizeProcess));
-    }
-
-    return Long.parseLong(
+    return parseInspectResults(
         CharStreams.toString(
-                new InputStreamReader(sizeProcess.getInputStream(), StandardCharsets.UTF_8))
+                new InputStreamReader(inspectProcess.getInputStream(), StandardCharsets.UTF_8))
             .trim());
   }
 
   /** Runs a {@code docker} command. */
   private Process docker(String... subCommand) throws IOException {
     return processBuilderFactory.apply(Arrays.asList(subCommand)).start();
-  }
-
-  private static String getStderrOutput(Process process) {
-    try (InputStreamReader stderr =
-        new InputStreamReader(process.getErrorStream(), StandardCharsets.UTF_8)) {
-      return CharStreams.toString(stderr);
-    } catch (IOException ex) {
-      return "unknown (failed to read error message from stderr due to " + ex.getMessage() + ")";
-    }
   }
 }
