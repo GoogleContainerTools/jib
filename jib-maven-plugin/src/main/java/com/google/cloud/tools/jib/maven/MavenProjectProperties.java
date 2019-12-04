@@ -21,6 +21,7 @@ import com.google.cloud.tools.jib.api.JavaContainerBuilder;
 import com.google.cloud.tools.jib.api.JavaContainerBuilder.LayerType;
 import com.google.cloud.tools.jib.api.JibContainerBuilder;
 import com.google.cloud.tools.jib.api.LogEvent;
+import com.google.cloud.tools.jib.api.LogEvent.Level;
 import com.google.cloud.tools.jib.event.events.ProgressEvent;
 import com.google.cloud.tools.jib.event.events.TimerEvent;
 import com.google.cloud.tools.jib.event.progress.ProgressEventHandler;
@@ -39,6 +40,7 @@ import com.google.cloud.tools.jib.plugins.common.logging.SingleThreadedExecutor;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Duration;
@@ -46,6 +48,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -54,6 +57,7 @@ import org.apache.maven.artifact.Artifact;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.model.Build;
 import org.apache.maven.model.Plugin;
+import org.apache.maven.model.PluginExecution;
 import org.apache.maven.plugin.logging.Log;
 import org.apache.maven.project.MavenProject;
 import org.apache.maven.shared.utils.Os;
@@ -158,6 +162,22 @@ public class MavenProjectProperties implements ProjectProperties {
     } catch (NumberFormatException ex) {
       return 0;
     }
+  }
+
+  @VisibleForTesting
+  static Optional<String> getChildValue(@Nullable Xpp3Dom dom, String... childNodePath) {
+    if (dom == null) {
+      return Optional.empty();
+    }
+
+    Xpp3Dom node = dom;
+    for (String child : childNodePath) {
+      node = node.getChild(child);
+      if (node == null) {
+        return Optional.empty();
+      }
+    }
+    return Optional.ofNullable(node.getValue());
   }
 
   private final MavenProject project;
@@ -330,23 +350,9 @@ public class MavenProjectProperties implements ProjectProperties {
   public String getMainClassFromJar() {
     Plugin mavenJarPlugin = project.getPlugin("org.apache.maven.plugins:maven-jar-plugin");
     if (mavenJarPlugin != null) {
-      Xpp3Dom jarConfiguration = (Xpp3Dom) mavenJarPlugin.getConfiguration();
-      if (jarConfiguration == null) {
-        return null;
-      }
-      Xpp3Dom archiveObject = jarConfiguration.getChild("archive");
-      if (archiveObject == null) {
-        return null;
-      }
-      Xpp3Dom manifestObject = archiveObject.getChild("manifest");
-      if (manifestObject == null) {
-        return null;
-      }
-      Xpp3Dom mainClassObject = manifestObject.getChild("mainClass");
-      if (mainClassObject == null) {
-        return null;
-      }
-      return mainClassObject.getValue();
+      return getChildValue(
+              (Xpp3Dom) mavenJarPlugin.getConfiguration(), "archive", "manifest", "mainClass")
+          .orElse(null);
     }
     return null;
   }
@@ -398,15 +404,13 @@ public class MavenProjectProperties implements ProjectProperties {
         project.getPlugin("org.apache.maven.plugins:maven-compiler-plugin");
     if (mavenCompilerPlugin != null) {
       Xpp3Dom pluginConfiguration = (Xpp3Dom) mavenCompilerPlugin.getConfiguration();
-      if (pluginConfiguration != null) {
-        Xpp3Dom target = pluginConfiguration.getChild("target");
-        if (target != null) {
-          return getVersionFromString(target.getValue());
-        }
-        Xpp3Dom release = pluginConfiguration.getChild("release");
-        if (release != null) {
-          return getVersionFromString(release.getValue());
-        }
+      Optional<String> target = getChildValue(pluginConfiguration, "target");
+      if (target.isPresent()) {
+        return getVersionFromString(target.get());
+      }
+      Optional<String> release = getChildValue(pluginConfiguration, "release");
+      if (release.isPresent()) {
+        return getVersionFromString(release.get());
       }
     }
     return 6; // maven-compiler-plugin default is 1.6
@@ -424,12 +428,69 @@ public class MavenProjectProperties implements ProjectProperties {
    * https://github.com/apache/maven-jar-plugin/blob/80f58a84aacff6e671f5a601d62a3a3800b507dc/src/main/java/org/apache/maven/plugins/jar/AbstractJarMojo.java#L177
    *
    * @return the path of the JAR
+   * @throws IOException
    */
   @VisibleForTesting
-  Path getJarArtifact() {
-    // TODO: use maven-jar-plugin's <outputDirectory> and <classifier> (i.e.,
-    // "<outputDirectory>/<finalName>-<classifier>.jar").
-    String jarName = project.getBuild().getFinalName() + ".jar";
-    return Paths.get(project.getBuild().getDirectory(), jarName);
+  Path getJarArtifact() throws IOException {
+    String classifier = null;
+    Path buildDirectory = Paths.get(project.getBuild().getDirectory());
+    Path outputDirectory = buildDirectory;
+
+    // Read <classifier> and <outputDirectory> from maven-jar-plugin.
+    Plugin jarPlugin = project.getPlugin("org.apache.maven.plugins:maven-jar-plugin");
+    if (jarPlugin != null) {
+      for (PluginExecution execution : jarPlugin.getExecutions()) {
+        if ("default-jar".equals(execution.getId())) {
+          Xpp3Dom configuration = (Xpp3Dom) execution.getConfiguration();
+          classifier = getChildValue(configuration, "classifier").orElse(null);
+          Optional<String> directoryString = getChildValue(configuration, "outputDirectory");
+
+          if (directoryString.isPresent()) {
+            outputDirectory = project.getBasedir().toPath().resolve(directoryString.get());
+          }
+        }
+      }
+    }
+
+    String suffix = ".jar";
+    if (jarRepackagedBySpringBoot()) {
+      consoleLogger.log(
+          Level.LIFECYCLE, "Spring Boot repackaging (fat JAR) detected; using the original JAR");
+      if (outputDirectory.equals(buildDirectory)) { // Spring renames original only when needed
+        suffix += ".original";
+      }
+    }
+
+    String noSuffixJarName =
+        project.getBuild().getFinalName() + (classifier == null ? "" : '-' + classifier);
+    Path jarPath = outputDirectory.resolve(noSuffixJarName + suffix);
+    consoleLogger.log(Level.DEBUG, "Using JAR: " + jarPath);
+
+    if (".jar".equals(suffix)) {
+      return jarPath;
+    }
+
+    // "*" in "java -cp *" doesn't work if JAR doesn't end with ".jar". Copy the JAR with a new name
+    // ending with ".jar".
+    Path tempDirectory = tempDirectoryProvider.newDirectory();
+    Path newJarPath = tempDirectory.resolve(noSuffixJarName + ".original.jar");
+    Files.copy(jarPath, newJarPath);
+    return newJarPath;
+  }
+
+  @VisibleForTesting
+  boolean jarRepackagedBySpringBoot() {
+    Plugin springBootPlugin =
+        project.getPlugin("org.springframework.boot:spring-boot-maven-plugin");
+    if (springBootPlugin != null) {
+      for (PluginExecution execution : springBootPlugin.getExecutions()) {
+        if (execution.getGoals().contains("repackage")) {
+          Optional<String> skip = getChildValue((Xpp3Dom) execution.getConfiguration(), "skip");
+          boolean skipped = "true".equals(skip.orElse("false"));
+          return !skipped;
+        }
+      }
+    }
+    return false;
   }
 }
