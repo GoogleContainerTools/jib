@@ -47,7 +47,7 @@ import java.util.List;
  * @see <a href="https://github.com/opencontainers/image-spec/blob/master/image-index.md">OCI Image
  *     Index Specification</a>
  */
-public class OCIIndexTemplate implements JsonTemplate {
+public class OciIndexTemplate implements JsonTemplate {
 
   private final int schemaVersion = 2;
   private final List<BuildableManifestTemplate.ContentDescriptorTemplate> manifests =
@@ -62,7 +62,7 @@ public class OCIIndexTemplate implements JsonTemplate {
   public void addManifest(BlobDescriptor descriptor, String imageReferenceName) {
     BuildableManifestTemplate.ContentDescriptorTemplate contentDescriptorTemplate =
         new BuildableManifestTemplate.ContentDescriptorTemplate(
-            OCIManifestTemplate.MANIFEST_MEDIA_TYPE, descriptor.getSize(), descriptor.getDigest());
+            OciManifestTemplate.MANIFEST_MEDIA_TYPE, descriptor.getSize(), descriptor.getDigest());
     contentDescriptorTemplate.setAnnotations(
         ImmutableMap.of("org.opencontainers.image.ref.name", imageReferenceName));
     manifests.add(contentDescriptorTemplate);

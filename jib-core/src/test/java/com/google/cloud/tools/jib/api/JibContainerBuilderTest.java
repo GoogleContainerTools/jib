@@ -19,7 +19,7 @@ package com.google.cloud.tools.jib.api;
 import com.google.cloud.tools.jib.configuration.BuildContext;
 import com.google.cloud.tools.jib.configuration.ContainerConfiguration;
 import com.google.cloud.tools.jib.configuration.ImageConfiguration;
-import com.google.cloud.tools.jib.image.json.OCIManifestTemplate;
+import com.google.cloud.tools.jib.image.json.OciManifestTemplate;
 import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
 import com.google.cloud.tools.jib.registry.credentials.CredentialRetrievalException;
 import com.google.common.collect.ImmutableMap;
@@ -197,7 +197,7 @@ public class JibContainerBuilderTest {
                     .withAdditionalTag("tag1")
                     .withAdditionalTag("tag2")
                     .setToolName("toolName"));
-    Assert.assertSame(OCIManifestTemplate.class, buildContext.getTargetFormat());
+    Assert.assertSame(OciManifestTemplate.class, buildContext.getTargetFormat());
     Assert.assertEquals(
         ImmutableSet.of("latest", "tag1", "tag2"), buildContext.getAllTargetImageTags());
     Assert.assertEquals("toolName", buildContext.getToolName());

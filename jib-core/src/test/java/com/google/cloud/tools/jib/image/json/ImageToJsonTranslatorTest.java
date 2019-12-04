@@ -140,8 +140,8 @@ public class ImageToJsonTranslatorTest {
 
   @Test
   public void testGetManifest_oci() throws URISyntaxException, IOException, DigestException {
-    setUp(OCIManifestTemplate.class);
-    testGetManifest(OCIManifestTemplate.class, "core/json/translated_ocimanifest.json");
+    setUp(OciManifestTemplate.class);
+    testGetManifest(OciManifestTemplate.class, "core/json/translated_ocimanifest.json");
   }
 
   @Test

@@ -25,7 +25,7 @@ import com.google.cloud.tools.jib.filesystem.LockFile;
 import com.google.cloud.tools.jib.image.json.ContainerConfigurationTemplate;
 import com.google.cloud.tools.jib.image.json.ManifestAndConfig;
 import com.google.cloud.tools.jib.image.json.ManifestTemplate;
-import com.google.cloud.tools.jib.image.json.OCIManifestTemplate;
+import com.google.cloud.tools.jib.image.json.OciManifestTemplate;
 import com.google.cloud.tools.jib.image.json.V21ManifestTemplate;
 import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
@@ -122,9 +122,9 @@ class CacheStorageReader {
         if (V22ManifestTemplate.MANIFEST_MEDIA_TYPE.equals(mediaType)) {
           manifestTemplate =
               JsonTemplateMapper.readJsonFromFile(manifestPath, V22ManifestTemplate.class);
-        } else if (OCIManifestTemplate.MANIFEST_MEDIA_TYPE.equals(mediaType)) {
+        } else if (OciManifestTemplate.MANIFEST_MEDIA_TYPE.equals(mediaType)) {
           manifestTemplate =
-              JsonTemplateMapper.readJsonFromFile(manifestPath, OCIManifestTemplate.class);
+              JsonTemplateMapper.readJsonFromFile(manifestPath, OciManifestTemplate.class);
         } else {
           throw new CacheCorruptedException(
               cacheStorageFiles.getCacheDirectory(), "Unknown manifest mediaType: " + mediaType);

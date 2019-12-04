@@ -24,8 +24,8 @@ import com.google.cloud.tools.jib.blob.Blobs;
 import com.google.cloud.tools.jib.docker.json.DockerManifestEntryTemplate;
 import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
 import com.google.cloud.tools.jib.image.json.ContainerConfigurationTemplate;
-import com.google.cloud.tools.jib.image.json.OCIIndexTemplate;
-import com.google.cloud.tools.jib.image.json.OCIManifestTemplate;
+import com.google.cloud.tools.jib.image.json.OciIndexTemplate;
+import com.google.cloud.tools.jib.image.json.OciManifestTemplate;
 import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import com.google.common.collect.ImmutableList;
@@ -145,7 +145,7 @@ public class ImageTarballTest {
       throws InvalidImageReferenceException, IOException, LayerPropertyNotFoundException,
           DigestException {
     Image testImage =
-        Image.builder(OCIManifestTemplate.class).addLayer(mockLayer1).addLayer(mockLayer2).build();
+        Image.builder(OciManifestTemplate.class).addLayer(mockLayer1).addLayer(mockLayer2).build();
     ImageTarball imageToTarball =
         new ImageTarball(
             testImage,
@@ -194,7 +194,7 @@ public class ImageTarballTest {
       String manifestJson =
           CharStreams.toString(
               new InputStreamReader(tarArchiveInputStream, StandardCharsets.UTF_8));
-      JsonTemplateMapper.readJson(manifestJson, OCIManifestTemplate.class);
+      JsonTemplateMapper.readJson(manifestJson, OciManifestTemplate.class);
 
       // Verifies oci-layout was added.
       TarArchiveEntry headerOciLayout = tarArchiveInputStream.getNextTarEntry();
@@ -210,7 +210,7 @@ public class ImageTarballTest {
       String indexJson =
           CharStreams.toString(
               new InputStreamReader(tarArchiveInputStream, StandardCharsets.UTF_8));
-      OCIIndexTemplate index = JsonTemplateMapper.readJson(indexJson, OCIIndexTemplate.class);
+      OciIndexTemplate index = JsonTemplateMapper.readJson(indexJson, OciIndexTemplate.class);
       BuildableManifestTemplate.ContentDescriptorTemplate indexManifest =
           index.getManifests().get(0);
       Assert.assertEquals(manifestDescriptor.getHash(), indexManifest.getDigest().getHash());

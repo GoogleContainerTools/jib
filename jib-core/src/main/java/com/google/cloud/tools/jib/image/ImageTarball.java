@@ -22,8 +22,8 @@ import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.blob.Blobs;
 import com.google.cloud.tools.jib.docker.json.DockerManifestEntryTemplate;
 import com.google.cloud.tools.jib.image.json.ImageToJsonTranslator;
-import com.google.cloud.tools.jib.image.json.OCIIndexTemplate;
-import com.google.cloud.tools.jib.image.json.OCIManifestTemplate;
+import com.google.cloud.tools.jib.image.json.OciIndexTemplate;
+import com.google.cloud.tools.jib.image.json.OciManifestTemplate;
 import com.google.cloud.tools.jib.json.JsonTemplate;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import com.google.cloud.tools.jib.tar.TarStreamBuilder;
@@ -66,7 +66,7 @@ public class ImageTarball {
   }
 
   public void writeTo(OutputStream out) throws IOException {
-    if (image.getImageFormat() == OCIManifestTemplate.class) {
+    if (image.getImageFormat() == OciManifestTemplate.class) {
       ociWriteTo(out);
     } else {
       dockerWriteTo(out);
@@ -75,7 +75,7 @@ public class ImageTarball {
 
   private void ociWriteTo(OutputStream out) throws IOException {
     TarStreamBuilder tarStreamBuilder = new TarStreamBuilder();
-    OCIManifestTemplate manifest = new OCIManifestTemplate();
+    OciManifestTemplate manifest = new OciManifestTemplate();
 
     // Adds all the layers to the tarball and manifest
     for (Layer layer : image.getLayers()) {
@@ -106,7 +106,7 @@ public class ImageTarball {
     // Adds the oci-layout and index.json
     tarStreamBuilder.addByteEntry(
         "{\"imageLayoutVersion\": \"1.0.0\"}".getBytes(StandardCharsets.UTF_8), "oci-layout");
-    OCIIndexTemplate index = new OCIIndexTemplate();
+    OciIndexTemplate index = new OciIndexTemplate();
     // TODO: figure out how to tag with allTargetImageTags
     index.addManifest(manifestDescriptor, imageReference.toStringWithTag());
     tarStreamBuilder.addByteEntry(JsonTemplateMapper.toByteArray(index), "index.json");
