@@ -91,14 +91,14 @@ public class ImageTarballTest {
       throws InvalidImageReferenceException, IOException, LayerPropertyNotFoundException {
     Image testImage =
         Image.builder(V22ManifestTemplate.class).addLayer(mockLayer1).addLayer(mockLayer2).build();
-    ImageTarball imageToTarball =
+    ImageTarball imageTarball =
         new ImageTarball(
             testImage,
             ImageReference.parse("my/image:tag"),
             ImmutableSet.of("tag", "another-tag", "tag3"));
 
     ByteArrayOutputStream out = new ByteArrayOutputStream();
-    imageToTarball.writeTo(out);
+    imageTarball.writeTo(out);
     ByteArrayInputStream in = new ByteArrayInputStream(out.toByteArray());
     try (TarArchiveInputStream tarArchiveInputStream = new TarArchiveInputStream(in)) {
 
@@ -146,14 +146,14 @@ public class ImageTarballTest {
           DigestException {
     Image testImage =
         Image.builder(OciManifestTemplate.class).addLayer(mockLayer1).addLayer(mockLayer2).build();
-    ImageTarball imageToTarball =
+    ImageTarball imageTarball =
         new ImageTarball(
             testImage,
             ImageReference.parse("my/image:tag"),
             ImmutableSet.of("tag", "another-tag", "tag3"));
 
     ByteArrayOutputStream out = new ByteArrayOutputStream();
-    imageToTarball.writeTo(out);
+    imageTarball.writeTo(out);
     ByteArrayInputStream in = new ByteArrayInputStream(out.toByteArray());
     try (TarArchiveInputStream tarArchiveInputStream = new TarArchiveInputStream(in)) {
 
@@ -175,26 +175,17 @@ public class ImageTarballTest {
 
       // Verifies container configuration was added.
       TarArchiveEntry headerContainerConfiguration = tarArchiveInputStream.getNextTarEntry();
-      DescriptorDigest configDescriptor =
-          DescriptorDigest.fromHash(
-              "011212cff4d5d6b18c7d3a00a7a2701514a1fdd3ec0d250a03756f84f3d955d4");
       Assert.assertEquals(
-          "blobs/sha256/" + configDescriptor.getHash(), headerContainerConfiguration.getName());
-      String containerConfigJson =
-          CharStreams.toString(
-              new InputStreamReader(tarArchiveInputStream, StandardCharsets.UTF_8));
-      JsonTemplateMapper.readJson(containerConfigJson, ContainerConfigurationTemplate.class);
+          "blobs/sha256/011212cff4d5d6b18c7d3a00a7a2701514a1fdd3ec0d250a03756f84f3d955d4",
+          headerContainerConfiguration.getName());
+      JsonTemplateMapper.readJson(tarArchiveInputStream, ContainerConfigurationTemplate.class);
 
       // Verifies manifest was added.
       TarArchiveEntry headerManifest = tarArchiveInputStream.getNextTarEntry();
-      DescriptorDigest manifestDescriptor =
-          DescriptorDigest.fromHash(
-              "1543d061159a8d6877087938bfd62681cdeff873e1fa3e1fcf12dec358c112a4");
-      Assert.assertEquals("blobs/sha256/" + manifestDescriptor.getHash(), headerManifest.getName());
-      String manifestJson =
-          CharStreams.toString(
-              new InputStreamReader(tarArchiveInputStream, StandardCharsets.UTF_8));
-      JsonTemplateMapper.readJson(manifestJson, OciManifestTemplate.class);
+      Assert.assertEquals(
+          "blobs/sha256/1543d061159a8d6877087938bfd62681cdeff873e1fa3e1fcf12dec358c112a4",
+          headerManifest.getName());
+      JsonTemplateMapper.readJson(tarArchiveInputStream, OciManifestTemplate.class);
 
       // Verifies oci-layout was added.
       TarArchiveEntry headerOciLayout = tarArchiveInputStream.getNextTarEntry();
@@ -207,13 +198,13 @@ public class ImageTarballTest {
       // Verifies index.json was added.
       TarArchiveEntry headerIndex = tarArchiveInputStream.getNextTarEntry();
       Assert.assertEquals("index.json", headerIndex.getName());
-      String indexJson =
-          CharStreams.toString(
-              new InputStreamReader(tarArchiveInputStream, StandardCharsets.UTF_8));
-      OciIndexTemplate index = JsonTemplateMapper.readJson(indexJson, OciIndexTemplate.class);
+      OciIndexTemplate index =
+          JsonTemplateMapper.readJson(tarArchiveInputStream, OciIndexTemplate.class);
       BuildableManifestTemplate.ContentDescriptorTemplate indexManifest =
           index.getManifests().get(0);
-      Assert.assertEquals(manifestDescriptor.getHash(), indexManifest.getDigest().getHash());
+      Assert.assertEquals(
+          "1543d061159a8d6877087938bfd62681cdeff873e1fa3e1fcf12dec358c112a4",
+          indexManifest.getDigest().getHash());
     }
   }
 }

@@ -19,8 +19,8 @@ package com.google.cloud.tools.jib.image;
 import com.google.cloud.tools.jib.api.DescriptorDigest;
 import com.google.cloud.tools.jib.api.ImageReference;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
-import com.google.cloud.tools.jib.blob.Blobs;
 import com.google.cloud.tools.jib.docker.json.DockerManifestEntryTemplate;
+import com.google.cloud.tools.jib.hash.Digests;
 import com.google.cloud.tools.jib.image.json.ImageToJsonTranslator;
 import com.google.cloud.tools.jib.image.json.OciIndexTemplate;
 import com.google.cloud.tools.jib.image.json.OciManifestTemplate;
@@ -28,7 +28,6 @@ import com.google.cloud.tools.jib.json.JsonTemplate;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import com.google.cloud.tools.jib.tar.TarStreamBuilder;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.io.ByteStreams;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
@@ -89,16 +88,14 @@ public class ImageTarball {
     // Adds the container configuration to the tarball and manifest
     JsonTemplate containerConfiguration =
         new ImageToJsonTranslator(image).getContainerConfiguration();
-    BlobDescriptor configDescriptor =
-        Blobs.from(containerConfiguration).writeTo(ByteStreams.nullOutputStream());
+    BlobDescriptor configDescriptor = Digests.computeDigest(containerConfiguration);
     manifest.setContainerConfiguration(configDescriptor.getSize(), configDescriptor.getDigest());
     tarStreamBuilder.addByteEntry(
         JsonTemplateMapper.toByteArray(containerConfiguration),
         "blobs/sha256/" + configDescriptor.getDigest().getHash());
 
     // Adds the manifest to the tarball
-    BlobDescriptor manifestDescriptor =
-        Blobs.from(manifest).writeTo(ByteStreams.nullOutputStream());
+    BlobDescriptor manifestDescriptor = Digests.computeDigest(manifest);
     tarStreamBuilder.addByteEntry(
         JsonTemplateMapper.toByteArray(manifest),
         "blobs/sha256/" + manifestDescriptor.getDigest().getHash());
