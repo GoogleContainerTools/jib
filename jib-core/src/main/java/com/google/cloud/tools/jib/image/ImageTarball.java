@@ -51,7 +51,7 @@ public class ImageTarball {
   private final ImmutableSet<String> allTargetImageTags;
 
   /**
-   * Instantiate with an {@link com.google.cloud.tools.jib.image.Image}.
+   * Instantiate with an {@link Image}.
    *
    * @param image the image to convert into a tarball
    * @param imageReference image reference to set in the manifest (note that the tag portion of the
