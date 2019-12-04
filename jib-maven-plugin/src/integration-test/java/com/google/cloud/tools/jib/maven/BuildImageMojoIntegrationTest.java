@@ -69,6 +69,8 @@ public class BuildImageMojoIntegrationTest {
 
   @ClassRule public static final TestProject servlet25Project = new TestProject("war_servlet25");
 
+  @ClassRule public static final TestProject springBootProject = new TestProject("spring-boot");
+
   @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
   private static String getTestImageReference(String label) {
@@ -667,22 +669,41 @@ public class BuildImageMojoIntegrationTest {
   @Test
   public void testExecute_jettyServlet25()
       throws VerificationException, IOException, InterruptedException {
-    buildAndRunWar("jetty-servlet25:maven", "pom.xml");
+    buildAndRunWebApp(servlet25Project, "jetty-servlet25:maven", "pom.xml");
     HttpGetVerifier.verifyBody("Hello world", new URL("http://localhost:8080/hello"));
   }
 
   @Test
   public void testExecute_tomcatServlet25()
       throws VerificationException, IOException, InterruptedException {
-    buildAndRunWar("tomcat-servlet25:maven", "pom-tomcat.xml");
+    buildAndRunWebApp(servlet25Project, "tomcat-servlet25:maven", "pom-tomcat.xml");
     HttpGetVerifier.verifyBody("Hello world", new URL("http://localhost:8080/hello"));
   }
 
-  private void buildAndRunWar(String label, String pomXml)
+  @Test
+  public void testExecute_springBootPackaged()
+      throws VerificationException, IOException, InterruptedException {
+    buildAndRunWebApp(springBootProject, "spring-boot:maven", "pom.xml");
+
+    String sizeOutput =
+        new Command(
+                "docker",
+                "exec",
+                detachedContainerName,
+                "/busybox/wc",
+                "-c",
+                "/app/classpath/spring-boot-0.1.0.original.jar")
+            .run();
+    Assert.assertEquals("2749 /app/classpath/spring-boot-0.1.0.original.jar\n", sizeOutput);
+
+    HttpGetVerifier.verifyBody("Hello world", new URL("http://localhost:8080"));
+  }
+
+  private void buildAndRunWebApp(TestProject project, String label, String pomXml)
       throws VerificationException, IOException, InterruptedException {
     String targetImage = getTestImageReference(label);
 
-    Verifier verifier = new Verifier(servlet25Project.getProjectRoot().toString());
+    Verifier verifier = new Verifier(project.getProjectRoot().toString());
     verifier.setSystemProperty("jib.useOnlyProjectCache", "true");
     verifier.setSystemProperty("_TARGET_IMAGE", targetImage);
     if (targetImage.startsWith("localhost")) {
