@@ -53,4 +53,4 @@ Learn [more about Jib](https://github.com/GoogleContainerTools/jib).
 
 ## Build and run on Google Cloud
 
-[![Run on Google Cloud](https://storage.googleapis.com/cloudrun/button.svg)](https://console.cloud.google.com/cloudshell/editor?shellonly=true&cloudshell_image=gcr.io/chanseok-playground-new/cloud-run-button&cloudshell_git_repo=https://github.com/GoogleContainerTools/jib.git&cloudshell_working_dir=examples/spring-boot)
+[![Run on Google Cloud](https://deploy.cloud.run/button.svg)](https://deploy.cloud.run?git_repo=https://github.com/GoogleContainerTools/jib.git&dir=examples/spring-boot)
