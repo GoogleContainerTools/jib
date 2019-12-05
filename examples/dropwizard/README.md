@@ -6,7 +6,7 @@
 1. Start the application
     - **With Docker**: `docker run --rm -p 8080:8080 dropwizard-jib-example:1`
     - **Without Docker**: `./mvnw exec:java`
-1. Check that your application is running at http://localhost:8080/hello-world
+1. Check that your application is running at http://localhost:8080
 
 ## Health Check
 
@@ -36,3 +36,7 @@ The remainder of the archetype code was filled-in following the above guide.
 Learn [more about Jib](https://github.com/GoogleContainerTools/jib).
 
 Learn [more about Dropwizard](https://dropwizard.io).
+
+## Build and run on Google Cloud
+
+[![Run on Google Cloud](https://deploy.cloud.run/button.svg)](https://deploy.cloud.run?git_repo=https://github.com/GoogleContainerTools/jib.git&dir=examples/dropwizard)
