@@ -72,7 +72,7 @@ public class SyncMapTaskTest {
     List<String> outputLines =
         Splitter.on(System.lineSeparator()).omitEmptyStrings().splitToList(buildResult.getOutput());
     Assert.assertEquals(2, outputLines.size());
-    Assert.assertEquals("BEGIN JIB JSON", outputLines.get(0));
+    Assert.assertEquals("BEGIN JIB SYNCMAP JSON", outputLines.get(0));
     return SkaffoldSyncMapTemplate.from(outputLines.get(1));
   }
 
