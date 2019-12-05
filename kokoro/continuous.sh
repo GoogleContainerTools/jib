@@ -3,14 +3,17 @@
 set -e
 set -x
 
-gcloud components install docker-credential-gcr
+# On Mac, the default "credsStore" is set to "desktop". However, "desktop" is a
+# protected credential store, so "docker login" fails to modify it.
+# https://github.com/GoogleContainerTools/jib/issues/2189
+if [ "${KOKORO_JOB_CLUSTER}" = "MACOS_EXTERNAL" ]; then
+  cat <<< '{"credsStore":"gcr"}' > "${HOME}/.docker/config.json"
+fi
 
-# For macOS to find docker-credential-gcr
-export PATH=$PATH:/usr/local/Caskroom/google-cloud-sdk/latest/google-cloud-sdk/bin/
+gcloud components install docker-credential-gcr
 
 # docker-credential-gcr uses GOOGLE_APPLICATION_CREDENTIALS as the credentials key file
 export GOOGLE_APPLICATION_CREDENTIALS=${KOKORO_KEYSTORE_DIR}/72743_jib_integration_testing_key
-docker-credential-gcr configure-docker
 
 # Stops any left-over containers.
 docker stop $(docker ps --all --quiet) || true
