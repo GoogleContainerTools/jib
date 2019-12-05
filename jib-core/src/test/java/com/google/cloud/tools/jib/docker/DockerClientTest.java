@@ -19,6 +19,7 @@ package com.google.cloud.tools.jib.docker;
 import com.google.cloud.tools.jib.api.DescriptorDigest;
 import com.google.cloud.tools.jib.api.ImageReference;
 import com.google.cloud.tools.jib.docker.DockerClient.DockerImageDetails;
+import com.google.cloud.tools.jib.image.ImageTarball;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.ByteStreams;
 import java.io.ByteArrayInputStream;

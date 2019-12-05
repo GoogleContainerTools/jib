@@ -126,6 +126,9 @@ public class PluginConfigurationProcessor {
         processCommonConfiguration(
             rawConfiguration, inferredAuthProvider, projectProperties, containerizer);
 
+    // Note Docker build doesn't set the configured format.
+    jibContainerBuilder.setFormat(rawConfiguration.getImageFormat());
+
     return JibBuildRunner.forBuildTar(
             jibContainerBuilder,
             containerizer,
@@ -174,7 +177,7 @@ public class PluginConfigurationProcessor {
         processCommonConfiguration(
             rawConfiguration, inferredAuthProvider, projectProperties, containerizer);
 
-    // Note Docker and tar builds don't set the configured format.
+    // Note Docker build doesn't set the configured format.
     jibContainerBuilder.setFormat(rawConfiguration.getImageFormat());
 
     return JibBuildRunner.forBuildImage(

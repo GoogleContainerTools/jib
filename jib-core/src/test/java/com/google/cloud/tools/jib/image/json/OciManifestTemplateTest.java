@@ -29,8 +29,8 @@ import java.security.DigestException;
 import org.junit.Assert;
 import org.junit.Test;
 
-/** Tests for {@link OCIManifestTemplate}. */
-public class OCIManifestTemplateTest {
+/** Tests for {@link OciManifestTemplate}. */
+public class OciManifestTemplateTest {
 
   @Test
   public void testToJson() throws DigestException, IOException, URISyntaxException {
@@ -39,7 +39,7 @@ public class OCIManifestTemplateTest {
     String expectedJson = new String(Files.readAllBytes(jsonFile), StandardCharsets.UTF_8);
 
     // Creates the JSON object to serialize.
-    OCIManifestTemplate manifestJson = new OCIManifestTemplate();
+    OciManifestTemplate manifestJson = new OciManifestTemplate();
 
     manifestJson.setContainerConfiguration(
         1000,
@@ -61,8 +61,8 @@ public class OCIManifestTemplateTest {
     Path jsonFile = Paths.get(Resources.getResource("core/json/ocimanifest.json").toURI());
 
     // Deserializes into a manifest JSON object.
-    OCIManifestTemplate manifestJson =
-        JsonTemplateMapper.readJsonFromFile(jsonFile, OCIManifestTemplate.class);
+    OciManifestTemplate manifestJson =
+        JsonTemplateMapper.readJsonFromFile(jsonFile, OciManifestTemplate.class);
 
     Assert.assertEquals(
         DescriptorDigest.fromDigest(

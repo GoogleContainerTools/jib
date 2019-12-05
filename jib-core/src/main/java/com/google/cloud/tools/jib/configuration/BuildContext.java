@@ -24,7 +24,7 @@ import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.global.JibSystemProperties;
 import com.google.cloud.tools.jib.http.FailoverHttpClient;
 import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
-import com.google.cloud.tools.jib.image.json.OCIManifestTemplate;
+import com.google.cloud.tools.jib.image.json.OciManifestTemplate;
 import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
 import com.google.cloud.tools.jib.registry.RegistryClient;
 import com.google.common.annotations.VisibleForTesting;
@@ -156,7 +156,7 @@ public class BuildContext implements Closeable {
       this.targetFormat =
           targetFormat == ImageFormat.Docker
               ? V22ManifestTemplate.class
-              : OCIManifestTemplate.class;
+              : OciManifestTemplate.class;
       return this;
     }
 
