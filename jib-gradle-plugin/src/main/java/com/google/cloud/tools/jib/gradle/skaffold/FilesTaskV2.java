@@ -36,6 +36,7 @@ import org.gradle.api.artifacts.Dependency;
 import org.gradle.api.artifacts.ProjectDependency;
 import org.gradle.api.artifacts.PublishArtifact;
 import org.gradle.api.initialization.Settings;
+import org.gradle.api.plugins.JavaPlugin;
 import org.gradle.api.plugins.JavaPluginConvention;
 import org.gradle.api.tasks.SourceSet;
 import org.gradle.api.tasks.TaskAction;
@@ -95,7 +96,8 @@ public class FilesTaskV2 extends DefaultTask {
     }
 
     // Add SNAPSHOT, non-project dependency jars
-    for (File file : project.getConfigurations().getByName("runtime")) {
+    for (File file :
+        project.getConfigurations().getByName(JavaPlugin.RUNTIME_CLASSPATH_CONFIGURATION_NAME)) {
       if (!projectDependencyJars.contains(file) && file.toString().contains("SNAPSHOT")) {
         skaffoldFilesOutput.addInput(file.toPath());
         projectDependencyJars.add(file); // Add to set to avoid printing the same files twice
@@ -176,7 +178,10 @@ public class FilesTaskV2 extends DefaultTask {
 
       // Search through all dependencies
       for (Configuration configuration :
-          currentProject.getConfigurations().getByName("runtime").getHierarchy()) {
+          currentProject
+              .getConfigurations()
+              .getByName(JavaPlugin.RUNTIME_CLASSPATH_CONFIGURATION_NAME)
+              .getHierarchy()) {
         for (Dependency dependency : configuration.getDependencies()) {
           if (dependency instanceof ProjectDependency) {
             // If this is a project dependency, save it
