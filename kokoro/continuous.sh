@@ -14,6 +14,7 @@ gcloud components install docker-credential-gcr
 
 # docker-credential-gcr uses GOOGLE_APPLICATION_CREDENTIALS as the credentials key file
 export GOOGLE_APPLICATION_CREDENTIALS=${KOKORO_KEYSTORE_DIR}/72743_jib_integration_testing_key
+docker-credential-gcr configure-docker
 
 # Stops any left-over containers.
 docker stop $(docker ps --all --quiet) || true
