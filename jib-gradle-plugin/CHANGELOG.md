@@ -14,6 +14,8 @@ All notable changes to this project will be documented in this file.
 ### Fixed
 - `jibBuildTar` with `jib.container.format='OCI'` now builds a correctly formatted OCI archive. ([#2124](https://github.com/GoogleContainerTools/jib/issues/2124))
 
+- Now `jib.containerizingMode='packaged'` works as intended with Spring Boot projects that generate a fat JAR. ([#2178](https://github.com/GoogleContainerTools/jib/pull/2178))
+
 ## 1.8.0
 
 ### Changed

@@ -34,6 +34,7 @@ import org.gradle.api.UnknownTaskException;
 import org.gradle.api.internal.project.ProjectInternal;
 import org.gradle.api.tasks.TaskContainer;
 import org.gradle.api.tasks.TaskProvider;
+import org.gradle.jvm.tasks.Jar;
 import org.gradle.testfixtures.ProjectBuilder;
 import org.gradle.testkit.runner.GradleRunner;
 import org.gradle.testkit.runner.UnexpectedBuildFailure;
@@ -262,6 +263,28 @@ public class JibPluginTest {
           ImmutableSet.of(warTask, bootWarTask),
           taskProviders.stream().map(TaskProvider::get).collect(Collectors.toSet()));
     }
+  }
+
+  @Test
+  public void testSpringBootJarProject_nonPackagedMode() {
+    Project project =
+        createProject("java", "org.springframework.boot", "com.google.cloud.tools.jib");
+
+    Jar jarTask = (Jar) project.getTasks().getByPath(":jar");
+    Assert.assertFalse(jarTask.getEnabled());
+    Assert.assertEquals("", jarTask.getClassifier());
+  }
+
+  @Test
+  public void testSpringBootJarProject_packagedMode() {
+    Project project =
+        createProject("java", "org.springframework.boot", "com.google.cloud.tools.jib");
+    JibExtension jibExtension = (JibExtension) project.getExtensions().getByName("jib");
+    jibExtension.setContainerizingMode("packaged");
+
+    Jar jarTask = (Jar) project.getTasks().getByPath(":jar");
+    Assert.assertTrue(jarTask.getEnabled());
+    Assert.assertEquals("original", jarTask.getClassifier());
   }
 
   @Test

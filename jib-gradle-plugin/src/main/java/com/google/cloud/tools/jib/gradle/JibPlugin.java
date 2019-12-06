@@ -37,6 +37,7 @@ import org.gradle.api.artifacts.ProjectDependency;
 import org.gradle.api.plugins.BasePlugin;
 import org.gradle.api.tasks.TaskContainer;
 import org.gradle.api.tasks.TaskProvider;
+import org.gradle.jvm.tasks.Jar;
 import org.gradle.util.GradleVersion;
 
 public class JibPlugin implements Plugin<Project> {
@@ -168,8 +169,9 @@ public class JibPlugin implements Plugin<Project> {
     project.afterEvaluate(
         projectAfterEvaluation -> {
           try {
-            TaskProvider<Task> warTask = TaskCommon.getWarTaskProvider(project);
-            TaskProvider<Task> bootWarTask = TaskCommon.getBootWarTaskProvider(project);
+            TaskProvider<Task> warTask = TaskCommon.getWarTaskProvider(projectAfterEvaluation);
+            TaskProvider<Task> bootWarTask =
+                TaskCommon.getBootWarTaskProvider(projectAfterEvaluation);
             List<TaskProvider<?>> dependsOnTask = new ArrayList<>();
             if (warTask != null || bootWarTask != null) {
               // Have all tasks depend on the 'war' and/or 'bootWar' task.
@@ -181,7 +183,14 @@ public class JibPlugin implements Plugin<Project> {
               }
             } else if ("packaged".equals(jibExtension.getContainerizingMode())) {
               // Have all tasks depend on the 'jar' task.
-              dependsOnTask.add(projectAfterEvaluation.getTasks().named("jar"));
+              TaskProvider<Task> jarTask = projectAfterEvaluation.getTasks().named("jar");
+              dependsOnTask.add(jarTask);
+
+              if (projectAfterEvaluation.getPlugins().hasPlugin("org.springframework.boot")) {
+                Jar jar = (Jar) jarTask.get();
+                jar.setEnabled(true);
+                jar.setClassifier("original");
+              }
             } else {
               // Have all tasks depend on the 'classes' task.
               dependsOnTask.add(projectAfterEvaluation.getTasks().named("classes"));
