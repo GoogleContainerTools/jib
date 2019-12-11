@@ -46,7 +46,7 @@ class HttpGetVerifier {
             return Blobs.writeToString(Blobs.from(in));
           }
         }
-      } catch (IOException ex) {
+      } catch (IOException ignored) {
       }
     }
     return null;

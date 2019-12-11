@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Google LLC.
+ * Copyright 2019 Google LLC.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -27,10 +27,10 @@ import org.junit.Assert;
 import org.junit.ClassRule;
 import org.junit.Test;
 
-/** Integration tests for building WAR images. */
-public class WarProjectIntegrationTest {
+/** Integration tests for building Spring Boot images. */
+public class SpringBootProjectIntegrationTest {
 
-  @ClassRule public static final TestProject servlet25Project = new TestProject("war_servlet25");
+  @ClassRule public static final TestProject springBootProject = new TestProject("spring-boot");
 
   @Nullable private String containerName;
 
@@ -42,25 +42,30 @@ public class WarProjectIntegrationTest {
   }
 
   @Test
-  public void testBuild_jettyServlet25() throws IOException, InterruptedException, DigestException {
-    verifyBuildAndRun(servlet25Project, "war_jetty_servlet25:gradle", "build.gradle");
+  public void testBuild_packagedMode() throws IOException, InterruptedException, DigestException {
+    buildAndRunWebApp(springBootProject, "springboot:gradle", "build.gradle");
+
+    String output =
+        new Command(
+                "docker",
+                "exec",
+                containerName,
+                "/busybox/wc",
+                "-c",
+                "/app/classpath/spring-boot-original.jar")
+            .run();
+    Assert.assertEquals("1360 /app/classpath/spring-boot-original.jar\n", output);
+
+    Assert.assertEquals("Hello world", JibRunHelper.getContent(new URL("http://localhost:8080")));
   }
 
-  @Test
-  public void testBuild_tomcatServlet25()
-      throws IOException, InterruptedException, DigestException {
-    verifyBuildAndRun(servlet25Project, "war_tomcat_servlet25:gradle", "build-tomcat.gradle");
-  }
-
-  private void verifyBuildAndRun(TestProject project, String label, String gradleBuildFile)
+  private void buildAndRunWebApp(TestProject project, String label, String gradleBuildFile)
       throws IOException, InterruptedException, DigestException {
     String nameBase = IntegrationTestingConfiguration.getTestRepositoryLocation() + '/';
     String targetImage = nameBase + label + System.nanoTime();
     String output =
-        JibRunHelper.buildAndRun(project, targetImage, gradleBuildFile, "--detach", "-p8080:8080");
+        JibRunHelper.buildAndRun(
+            springBootProject, targetImage, gradleBuildFile, "--detach", "-p8080:8080");
     containerName = output.trim();
-
-    Assert.assertEquals(
-        "Hello world", JibRunHelper.getContent(new URL("http://localhost:8080/hello")));
   }
 }
