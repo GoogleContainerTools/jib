@@ -1,8 +1,8 @@
 plugins {
- id 'io.freefair.maven-plugin'
- id 'net.researchgate.release'
- id 'maven-publish'
- id 'eclipse'
+  id 'io.freefair.maven-plugin'
+  id 'net.researchgate.release'
+  id 'maven-publish'
+  id 'eclipse'
 }
 
 // only maven specific dependencies should be versioned, everything else should be defined by constrains in

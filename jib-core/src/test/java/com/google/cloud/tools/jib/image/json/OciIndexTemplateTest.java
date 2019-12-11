@@ -17,7 +17,6 @@
 package com.google.cloud.tools.jib.image.json;
 
 import com.google.cloud.tools.jib.api.DescriptorDigest;
-import com.google.cloud.tools.jib.api.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import com.google.common.io.Resources;
@@ -35,8 +34,7 @@ import org.junit.Test;
 public class OciIndexTemplateTest {
 
   @Test
-  public void testToJson()
-      throws DigestException, IOException, URISyntaxException, InvalidImageReferenceException {
+  public void testToJson() throws DigestException, IOException, URISyntaxException {
     // Loads the expected JSON string.
     Path jsonFile = Paths.get(Resources.getResource("core/json/ociindex.json").toURI());
     String expectedJson = new String(Files.readAllBytes(jsonFile), StandardCharsets.UTF_8);

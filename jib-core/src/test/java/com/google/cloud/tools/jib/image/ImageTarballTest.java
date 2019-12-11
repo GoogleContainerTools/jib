@@ -142,8 +142,7 @@ public class ImageTarballTest {
 
   @Test
   public void testWriteTo_oci()
-      throws InvalidImageReferenceException, IOException, LayerPropertyNotFoundException,
-          DigestException {
+      throws InvalidImageReferenceException, IOException, LayerPropertyNotFoundException {
     Image testImage =
         Image.builder(OciManifestTemplate.class).addLayer(mockLayer1).addLayer(mockLayer2).build();
     ImageTarball imageTarball =
