@@ -21,7 +21,6 @@ import com.google.cloud.tools.jib.api.JavaContainerBuilder;
 import com.google.cloud.tools.jib.api.JavaContainerBuilder.LayerType;
 import com.google.cloud.tools.jib.api.JibContainerBuilder;
 import com.google.cloud.tools.jib.api.LogEvent;
-import com.google.cloud.tools.jib.api.LogEvent.Level;
 import com.google.cloud.tools.jib.event.events.ProgressEvent;
 import com.google.cloud.tools.jib.event.events.TimerEvent;
 import com.google.cloud.tools.jib.event.progress.ProgressEventHandler;
@@ -319,8 +318,7 @@ public class MavenProjectProperties implements ProjectProperties {
     containerizer
         .addEventHandler(LogEvent.class, this::log)
         .addEventHandler(
-            TimerEvent.class,
-            new TimerEventHandler(message -> consoleLogger.log(LogEvent.Level.DEBUG, message)))
+            TimerEvent.class, new TimerEventHandler(message -> log(LogEvent.debug(message))))
         .addEventHandler(
             ProgressEvent.class,
             new ProgressEventHandler(
@@ -454,8 +452,7 @@ public class MavenProjectProperties implements ProjectProperties {
 
     String suffix = ".jar";
     if (jarRepackagedBySpringBoot()) {
-      consoleLogger.log(
-          Level.LIFECYCLE, "Spring Boot repackaging (fat JAR) detected; using the original JAR");
+      log(LogEvent.lifecycle("Spring Boot repackaging (fat JAR) detected; using the original JAR"));
       if (outputDirectory.equals(buildDirectory)) { // Spring renames original only when needed
         suffix += ".original";
       }
@@ -464,7 +461,7 @@ public class MavenProjectProperties implements ProjectProperties {
     String noSuffixJarName =
         project.getBuild().getFinalName() + (classifier == null ? "" : '-' + classifier);
     Path jarPath = outputDirectory.resolve(noSuffixJarName + suffix);
-    consoleLogger.log(Level.DEBUG, "Using JAR: " + jarPath);
+    log(LogEvent.debug("Using JAR: " + jarPath));
 
     if (".jar".equals(suffix)) {
       return jarPath;

@@ -568,7 +568,7 @@ public class JavaContainerBuilder {
           appRoot.resolve(resourcesDestination));
     }
 
-    // Detect duplicate filenames across all layer types
+    // Detect duplicate filenames across all dependency layer types
     List<String> duplicates =
         Streams.concat(
                 addedDependencies.stream(),
