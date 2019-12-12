@@ -66,7 +66,7 @@ public class SyncMapMojoTest {
     Path logFile = runBuild(projectRoot, module, null);
     List<String> outputLines = Files.readAllLines(logFile, StandardCharsets.UTF_8);
     Assert.assertEquals(3, outputLines.size()); // we expect ["\n", "<marker>", "<sync-json>"]
-    Assert.assertEquals("BEGIN JIB SYNCMAP JSON", outputLines.get(1));
+    Assert.assertEquals("BEGIN JIB JSON: SYNCMAP/1", outputLines.get(1));
     return outputLines.get(2); // this is the JSON output
   }
 

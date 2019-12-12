@@ -79,7 +79,7 @@ public class SyncMapMojo extends JibPluginConfiguration {
             PluginConfigurationProcessor.getSkaffoldSyncMap(configuration, projectProperties);
 
         System.out.println();
-        System.out.println("BEGIN JIB SYNCMAP JSON");
+        System.out.println("BEGIN JIB JSON: SYNCMAP/1");
         System.out.println(syncMapJson);
 
       } catch (Exception ex) {
