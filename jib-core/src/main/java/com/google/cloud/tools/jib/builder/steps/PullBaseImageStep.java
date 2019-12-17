@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.builder.steps;
 
+import com.google.api.client.http.HttpResponseException;
 import com.google.cloud.tools.jib.api.Credential;
 import com.google.cloud.tools.jib.api.DescriptorDigest;
 import com.google.cloud.tools.jib.api.ImageReference;
@@ -122,35 +123,63 @@ class PullBaseImageStep implements Callable<ImageAndAuthorization> {
             progressEventDispatcherFactory.create("pulling base image manifest", 2);
         TimerEventDispatcher ignored1 = new TimerEventDispatcher(eventHandlers, DESCRIPTION)) {
 
-      // TODO: Refactor the logic in RetrieveRegistryCredentialsStep out to
-      // registry.credentials.RegistryCredentialsRetriever.
-      Optional<Credential> credential =
-          RetrieveRegistryCredentialsStep.forBaseImage(
-                  buildContext, progressEventDispatcher.newChildProducer())
-              .call();
       try {
-        Authorization authorization =
-            (!credential.isPresent() || credential.get().isOAuth2RefreshToken())
-                ? null
-                : Authorization.fromBasicCredentials(
-                    credential.get().getUsername(), credential.get().getPassword());
-
-        return new ImageAndAuthorization(
-            pullBaseImage(authorization, progressEventDispatcher), authorization);
-
+        // First, try with no credentials.
+        return new ImageAndAuthorization(pullBaseImage(null, progressEventDispatcher), null);
       } catch (RegistryUnauthorizedException ex) {
         eventHandlers.dispatch(
             LogEvent.lifecycle(
                 "The base image requires auth. Trying again for " + imageReference + "..."));
 
-        String wwwAuthenticate = ex.getHttpResponseException().getHeaders().getAuthenticate();
-        RegistryAuthenticator registryAuthenticator =
-            getRegistryAuthenticator(wwwAuthenticate).orElseThrow(() -> ex);
-        Authorization authorization =
-            registryAuthenticator.authenticatePull(credential.orElse(null));
+        // TODO: Refactor the logic in RetrieveRegistryCredentialsStep out to
+        // registry.credentials.RegistryCredentialsRetriever.
+        Credential credentials =
+            RetrieveRegistryCredentialsStep.forBaseImage(
+                    buildContext, progressEventDispatcher.newChildProducer())
+                .call()
+                .orElse(null);
 
-        return new ImageAndAuthorization(
-            pullBaseImage(authorization, progressEventDispatcher), authorization);
+        RegistryClient registryClient =
+            buildContext.newBaseImageRegistryClientFactory().newRegistryClient();
+
+        String wwwAuthenticate = ex.getHttpResponseException().getHeaders().getAuthenticate();
+        if (wwwAuthenticate != null) {
+          // The registry requires us to authenticate using the Docker Token Authentication.
+          // See https://docs.docker.com/registry/spec/auth/token
+          RegistryAuthenticator registryAuthenticator =
+              registryClient.getRegistryAuthenticator(wwwAuthenticate).orElseThrow(() -> ex);
+          Authorization authorization = registryAuthenticator.authenticatePull(credentials);
+
+          return new ImageAndAuthorization(
+              pullBaseImage(authorization, progressEventDispatcher), authorization);
+        }
+
+        if (credentials == null || credentials.isOAuth2RefreshToken()) {
+          // Try <server url>/v2/ and hope the registry will return the WWW-Authenticate header.
+          RegistryAuthenticator registryAuthenticator =
+              registryClient.getRegistryAuthenticator().orElseThrow(() -> ex);
+          Authorization authorization = registryAuthenticator.authenticatePull(credentials);
+
+          return new ImageAndAuthorization(
+              pullBaseImage(authorization, progressEventDispatcher), authorization);
+        }
+
+        try {
+          Authorization authorization =
+              Authorization.fromBasicCredentials(
+                  credentials.getUsername(), credentials.getPassword());
+          return new ImageAndAuthorization(
+              pullBaseImage(authorization, progressEventDispatcher), authorization);
+
+        } catch (RegistryUnauthorizedException ex2) {
+          // Try <server url>/v2/ and hope the registry will return the WWW-Authenticate header.
+          RegistryAuthenticator registryAuthenticator =
+              registryClient.getRegistryAuthenticator().orElseThrow(() -> ex);
+          Authorization authorization = registryAuthenticator.authenticatePull(credentials);
+
+          return new ImageAndAuthorization(
+              pullBaseImage(authorization, progressEventDispatcher), authorization);
+        }
       }
     }
   }
@@ -301,10 +330,11 @@ class PullBaseImageStep implements Callable<ImageAndAuthorization> {
             (BuildableManifestTemplate) manifestTemplate, configurationTemplate));
   }
 
-  private Optional<RegistryAuthenticator> getRegistryAuthenticator(String wwwAuthenticate)
-      throws RegistryException, IOException {
+  private Optional<RegistryAuthenticator> getRegistryAuthenticator(
+      HttpResponseException httpResponseException) throws RegistryException, IOException {
     RegistryClient registryClient =
         buildContext.newBaseImageRegistryClientFactory().newRegistryClient();
+    String wwwAuthenticate = httpResponseException.getHeaders().getAuthenticate();
     if (wwwAuthenticate != null) {
       // The registry requires us to authenticate using the Docker Token Authentication.
       // See https://docs.docker.com/registry/spec/auth/token
