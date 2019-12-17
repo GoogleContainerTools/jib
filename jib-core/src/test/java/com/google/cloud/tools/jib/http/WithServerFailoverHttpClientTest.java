@@ -175,7 +175,7 @@ public class WithServerFailoverHttpClientTest {
     String url2 = "?id=302&Signature=2wYOD0a%2BDAkK%2F9lQJUOuIpYti8o%3D&Expires=1569997614";
     String url3 = "?id=303&_auth_=exp=1572285389~hmac=f0a387f0";
     String url4 = "?id=307&Signature=2wYOD0a%2BDAkK%2F9lQJUOuIpYti8o%3D&Expires=1569997614";
-    String url5 = "?id=308&&_auth_=exp=1572285389~hmac=f0a387f0";
+    String url5 = "?id=308&_auth_=exp=1572285389~hmac=f0a387f0";
 
     String redirect301 =
         "HTTP/1.1 301 Moved Permanently\nLocation: " + url1 + "\nContent-Length: 0\n\n";
@@ -195,21 +195,21 @@ public class WithServerFailoverHttpClientTest {
 
       Assert.assertThat(
           server.getInputRead(),
-          CoreMatchers.containsString("GET /?id=301&_auth_=exp%3D1572285389~hmac%3Df0a387f0 "));
+          CoreMatchers.containsString("GET /?id=301&_auth_=exp=1572285389~hmac=f0a387f0 "));
       Assert.assertThat(
           server.getInputRead(),
           CoreMatchers.containsString(
-              "GET /?id=302&Signature=2wYOD0a%2BDAkK/9lQJUOuIpYti8o%3D&Expires=1569997614 "));
+              "GET /?id=302&Signature=2wYOD0a%2BDAkK%2F9lQJUOuIpYti8o%3D&Expires=1569997614 "));
       Assert.assertThat(
           server.getInputRead(),
-          CoreMatchers.containsString("GET /?id=303&_auth_=exp%3D1572285389~hmac%3Df0a387f0 "));
+          CoreMatchers.containsString("GET /?id=303&_auth_=exp=1572285389~hmac=f0a387f0 "));
       Assert.assertThat(
           server.getInputRead(),
           CoreMatchers.containsString(
-              "GET /?id=307&Signature=2wYOD0a%2BDAkK/9lQJUOuIpYti8o%3D&Expires=1569997614 "));
+              "GET /?id=307&Signature=2wYOD0a%2BDAkK%2F9lQJUOuIpYti8o%3D&Expires=1569997614 "));
       Assert.assertThat(
           server.getInputRead(),
-          CoreMatchers.containsString("GET /?id=308&_auth_=exp%3D1572285389~hmac%3Df0a387f0 "));
+          CoreMatchers.containsString("GET /?id=308&_auth_=exp=1572285389~hmac=f0a387f0 "));
     }
   }
 }

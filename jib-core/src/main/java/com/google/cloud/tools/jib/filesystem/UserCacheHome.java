@@ -51,7 +51,7 @@ public class UserCacheHome {
    * Returns {@code $XDG_CACHE_HOME}, if available, or resolves the OS-specific user cache home
    * based.
    *
-   * <p>For Linus, this is {@code $HOME/.cache/}.
+   * <p>For Linux, this is {@code $HOME/.cache/}.
    *
    * <p>For Windows, this is {@code %LOCALAPPDATA%}.
    *
