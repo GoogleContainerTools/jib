@@ -148,32 +148,12 @@ public class JibExtensionTest {
   }
 
   @Test
-  public void testExtraDirectories_deprecatedConfig() {
-    testJibExtension.extraDirectory(
-        extraDirectory -> {
-          extraDirectory.setPath(Paths.get("test", "path").toFile());
-          extraDirectory.setPermissions(ImmutableMap.of("file1", "123", "file2", "456"));
-        });
-    Assert.assertTrue(testJibExtension.extraDirectoryConfigured);
-    Assert.assertFalse(testJibExtension.extraDirectoriesConfigured);
-
-    Assert.assertEquals(
-        Arrays.asList(Paths.get("test", "path")),
-        testJibExtension.getExtraDirectories().getPaths());
-    Assert.assertEquals(
-        ImmutableMap.of("file1", "123", "file2", "456"),
-        testJibExtension.getExtraDirectories().getPermissions());
-  }
-
-  @Test
   public void testExtraDirectories() {
     testJibExtension.extraDirectories(
         extraDirectories -> {
           extraDirectories.setPaths("test/path");
           extraDirectories.setPermissions(ImmutableMap.of("file1", "123", "file2", "456"));
         });
-    Assert.assertFalse(testJibExtension.extraDirectoryConfigured);
-    Assert.assertTrue(testJibExtension.extraDirectoriesConfigured);
 
     Assert.assertEquals(
         Arrays.asList(Paths.get(fakeProject.getProjectDir().getPath(), "test", "path")),
@@ -305,8 +285,6 @@ public class JibExtensionTest {
     System.setProperty("jib.container.ports", "port1,port2,port3");
     Assert.assertEquals(
         ImmutableList.of("port1", "port2", "port3"), testJibExtension.getContainer().getPorts());
-    System.setProperty("jib.container.useCurrentTimestamp", "true");
-    Assert.assertTrue(testJibExtension.getContainer().getUseCurrentTimestamp());
     System.setProperty("jib.container.user", "myUser");
     Assert.assertEquals("myUser", testJibExtension.getContainer().getUser());
     System.setProperty("jib.container.filesModificationTime", "2011-12-03T22:42:05Z");
@@ -356,17 +334,5 @@ public class JibExtensionTest {
     Assert.assertEquals(
         fakeProject.getProjectDir().toPath().resolve(Paths.get("tar/path")),
         testJibExtension.getOutputPaths().getTarPath());
-  }
-
-  @Test
-  public void testDeprecatedProperties() {
-    System.setProperty("jib.extraDirectory.path", "/foo,/bar/baz");
-    Assert.assertEquals(
-        Arrays.asList(Paths.get("/foo"), Paths.get("/bar/baz")),
-        testJibExtension.getExtraDirectories().getPaths());
-    System.setProperty("jib.extraDirectory.permissions", "/foo/bar=707,/baz=456");
-    Assert.assertEquals(
-        ImmutableMap.of("/foo/bar", "707", "/baz", "456"),
-        testJibExtension.getExtraDirectories().getPermissions());
   }
 }

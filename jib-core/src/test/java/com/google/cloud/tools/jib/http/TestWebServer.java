@@ -158,6 +158,8 @@ public class TestWebServer implements Closeable {
    * connections can be intermixed. However, no lines will ever be broken in the middle.
    */
   public String getInputRead() {
-    return inputRead.toString();
+    synchronized (inputRead) {
+      return inputRead.toString();
+    }
   }
 }

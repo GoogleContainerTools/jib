@@ -92,7 +92,7 @@ public class WithServerFailoverHttpClientTest {
       String endpoint = server.getEndpoint();
       String expectedLog =
           "Cannot verify server at " + endpoint + ". Attempting again with no TLS verification.";
-      Mockito.verify(logger).accept(LogEvent.info(expectedLog));
+      Mockito.verify(logger).accept(LogEvent.warn(expectedLog));
     }
   }
 
@@ -114,8 +114,8 @@ public class WithServerFailoverHttpClientTest {
             "Cannot verify server at " + httpsUrl + ". Attempting again with no TLS verification.";
         String expectedLog2 =
             "Failed to connect to " + httpsUrl + " over HTTPS. Attempting again with HTTP.";
-        Mockito.verify(logger).accept(LogEvent.info(expectedLog1));
-        Mockito.verify(logger).accept(LogEvent.info(expectedLog2));
+        Mockito.verify(logger).accept(LogEvent.warn(expectedLog1));
+        Mockito.verify(logger).accept(LogEvent.warn(expectedLog2));
       }
     }
   }

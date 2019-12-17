@@ -157,8 +157,6 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
 
     // Note: `entrypoint` and `args` are @Nullable to handle inheriting values from the base image
 
-    @Parameter private boolean useCurrentTimestamp = false;
-
     @Nullable @Parameter private List<String> entrypoint;
 
     @Parameter private List<String> jvmFlags = Collections.emptyList();
@@ -202,29 +200,6 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
     }
   }
 
-  /** Configuration for the {@code extraDirectory} parameter. */
-  @Deprecated
-  public static class ExtraDirectoryParameters {
-
-    // retained for backward-compatibility for <extraDirectory><path>...<path></extraDirectory>
-    @Deprecated @Nullable @Parameter private File path;
-
-    @Deprecated @Parameter
-    private List<PermissionConfiguration> permissions = Collections.emptyList();
-
-    // Allows users to configure a single path using just <extraDirectory> instead of
-    // <extraDirectory><path>.
-    @Deprecated
-    public void set(File path) {
-      this.path = path;
-    }
-
-    @Deprecated
-    public List<File> getPaths() {
-      return path == null ? Collections.emptyList() : Collections.singletonList(path);
-    }
-  }
-
   /** Configuration for the {@code dockerClient} parameter. */
   public static class DockerClientParameters {
 
@@ -259,10 +234,6 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
   @Parameter private ToConfiguration to = new ToConfiguration();
 
   @Parameter private ContainerParameters container = new ContainerParameters();
-
-  // this parameter is cloned in FilesMojo
-  @Deprecated @Parameter
-  private ExtraDirectoryParameters extraDirectory = new ExtraDirectoryParameters();
 
   // this parameter is cloned in FilesMojo
   @Parameter private ExtraDirectoriesParameters extraDirectories = new ExtraDirectoriesParameters();
@@ -379,20 +350,6 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
   AuthConfiguration getTargetImageAuth() {
     // System/pom properties for auth are handled in ConfigurationPropertyValidator
     return to.auth;
-  }
-
-  /**
-   * Gets whether or not to use the current timestamp for the container build.
-   *
-   * @return {@code true} if the build should use the current timestamp, {@code false} if not
-   */
-  @Deprecated
-  boolean getUseCurrentTimestamp() {
-    String property = getProperty(PropertyNames.CONTAINER_USE_CURRENT_TIMESTAMP);
-    if (property != null) {
-      return Boolean.parseBoolean(property);
-    }
-    return container.useCurrentTimestamp;
   }
 
   /**
@@ -602,38 +559,12 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
    */
   List<Path> getExtraDirectories() {
     // TODO: Should inform user about nonexistent directory if using custom directory.
-    String deprecatedProperty = getProperty(PropertyNames.EXTRA_DIRECTORY_PATH);
-    String newProperty = getProperty(PropertyNames.EXTRA_DIRECTORIES_PATHS);
-
-    List<File> deprecatedPaths = extraDirectory.getPaths();
-    List<File> newPaths = extraDirectories.getPaths();
-
-    if (deprecatedProperty != null) {
-      getLog()
-          .warn(
-              "The property 'jib.extraDirectory.path' is deprecated; "
-                  + "use 'jib.extraDirectories.paths' instead");
-    }
-    if (!deprecatedPaths.isEmpty()) {
-      getLog().warn("<extraDirectory> is deprecated; use <extraDirectories> with <paths><path>");
-    }
-    if (deprecatedProperty != null && newProperty != null) {
-      throw new IllegalArgumentException(
-          "You cannot configure both 'jib.extraDirectory.path' and 'jib.extraDirectories.paths'");
-    }
-    if (!deprecatedPaths.isEmpty() && !newPaths.isEmpty()) {
-      throw new IllegalArgumentException(
-          "You cannot configure both <extraDirectory> and <extraDirectories>");
-    }
-
-    String property = newProperty != null ? newProperty : deprecatedProperty;
+    String property = getProperty(PropertyNames.EXTRA_DIRECTORIES_PATHS);
     if (property != null) {
       List<String> paths = ConfigurationPropertyValidator.parseListProperty(property);
       return paths.stream().map(Paths::get).collect(Collectors.toList());
     }
-
-    List<File> paths = !newPaths.isEmpty() ? newPaths : deprecatedPaths;
-    return paths.stream().map(File::toPath).collect(Collectors.toList());
+    return extraDirectories.getPaths().stream().map(File::toPath).collect(Collectors.toList());
   }
 
   /**
@@ -642,29 +573,7 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
    * @return the configured extra layer file permissions
    */
   List<PermissionConfiguration> getExtraDirectoryPermissions() {
-    String deprecatedProperty = getProperty(PropertyNames.EXTRA_DIRECTORY_PERMISSIONS);
-    String newProperty = getProperty(PropertyNames.EXTRA_DIRECTORIES_PERMISSIONS);
-
-    List<PermissionConfiguration> deprecatedPermissions = extraDirectory.permissions;
-    List<PermissionConfiguration> newPermissions = extraDirectories.permissions;
-
-    if (deprecatedProperty != null) {
-      getLog()
-          .warn(
-              "The property 'jib.extraDirectory.permissions' is deprecated; "
-                  + "use 'jib.extraDirectories.permissions' instead");
-    }
-    if (deprecatedProperty != null && newProperty != null) {
-      throw new IllegalArgumentException(
-          "You cannot configure both 'jib.extraDirectory.permissions' and "
-              + "'jib.extraDirectories.permissions'");
-    }
-    if (!deprecatedPermissions.isEmpty() && !newPermissions.isEmpty()) {
-      throw new IllegalArgumentException(
-          "You cannot configure both <extraDirectory> and <extraDirectories>");
-    }
-
-    String property = newProperty != null ? newProperty : deprecatedProperty;
+    String property = getProperty(PropertyNames.EXTRA_DIRECTORIES_PERMISSIONS);
     if (property != null) {
       return ConfigurationPropertyValidator.parseMapProperty(property)
           .entrySet()
@@ -672,10 +581,7 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
           .map(entry -> new PermissionConfiguration(entry.getKey(), entry.getValue()))
           .collect(Collectors.toList());
     }
-
-    return !extraDirectories.getPaths().isEmpty()
-        ? extraDirectories.permissions
-        : extraDirectory.permissions;
+    return extraDirectories.permissions;
   }
 
   @Nullable

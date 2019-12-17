@@ -94,7 +94,6 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class GradleProjectPropertiesTest {
 
-  private static final ContainerizingMode DEFAULT_CONTAINERIZING_MODE = ContainerizingMode.EXPLODED;
   private static final Instant SAMPLE_FILE_MODIFICATION_TIME = Instant.ofEpochSecond(32);
 
   /** Implementation of {@link FileCollection} that just holds a set of {@link File}s. */
@@ -122,7 +121,7 @@ public class GradleProjectPropertiesTest {
     }
   }
 
-  /** Helper for reading back layers in a {@link buildContext}. */
+  /** Helper for reading back layers in a {@link BuildContext}. */
   private static class ContainerBuilderLayers {
 
     private final List<LayerConfiguration> resourcesLayerEntries;
@@ -206,7 +205,12 @@ public class GradleProjectPropertiesTest {
   private GradleProjectProperties gradleProjectProperties;
 
   @Before
-  public void setup() throws URISyntaxException, IOException {
+  public void setUp() throws URISyntaxException, IOException {
+    Mockito.when(mockLogger.isDebugEnabled()).thenReturn(true);
+    Mockito.when(mockLogger.isInfoEnabled()).thenReturn(true);
+    Mockito.when(mockLogger.isWarnEnabled()).thenReturn(true);
+    Mockito.when(mockLogger.isErrorEnabled()).thenReturn(true);
+
     manifest = new DefaultManifest(mockFileResolver);
     Mockito.when(mockProject.getConvention()).thenReturn(mockConvention);
     Mockito.when(mockConvention.getPlugin(JavaPluginConvention.class))
@@ -333,7 +337,7 @@ public class GradleProjectPropertiesTest {
   public void testCreateContainerBuilder_correctFiles()
       throws URISyntaxException, IOException, InvalidImageReferenceException,
           CacheDirectoryCreationException {
-    BuildContext buildContext = setupBuildContext("/app", DEFAULT_CONTAINERIZING_MODE);
+    BuildContext buildContext = setupBuildContext("/app");
     ContainerBuilderLayers layers = new ContainerBuilderLayers(buildContext);
 
     Path applicationDirectory = getResource("gradle/application");
@@ -374,14 +378,15 @@ public class GradleProjectPropertiesTest {
     Mockito.when(mockMainSourceSetOutput.getClassesDirs())
         .thenReturn(new TestFileCollection(ImmutableSet.of(nonexistentFile)));
     gradleProjectProperties.createJibContainerBuilder(
-        JavaContainerBuilder.from(RegistryImage.named("base")), DEFAULT_CONTAINERIZING_MODE);
+        JavaContainerBuilder.from(RegistryImage.named("base")), ContainerizingMode.EXPLODED);
+    gradleProjectProperties.waitForLoggingThread();
     Mockito.verify(mockLogger).warn("No classes files were found - did you compile your project?");
   }
 
   @Test
   public void testCreateContainerBuilder_nonDefaultAppRoot()
       throws IOException, InvalidImageReferenceException, CacheDirectoryCreationException {
-    BuildContext buildContext = setupBuildContext("/my/app", DEFAULT_CONTAINERIZING_MODE);
+    BuildContext buildContext = setupBuildContext("/my/app");
     ContainerBuilderLayers layers = new ContainerBuilderLayers(buildContext);
 
     assertExtractionPathsUnordered(
@@ -410,8 +415,7 @@ public class GradleProjectPropertiesTest {
   @Test
   public void testCreateContainerBuilder_defaultAppRoot()
       throws IOException, InvalidImageReferenceException, CacheDirectoryCreationException {
-    BuildContext buildContext =
-        setupBuildContext(JavaContainerBuilder.DEFAULT_APP_ROOT, DEFAULT_CONTAINERIZING_MODE);
+    BuildContext buildContext = setupBuildContext(JavaContainerBuilder.DEFAULT_APP_ROOT);
     ContainerBuilderLayers layers = new ContainerBuilderLayers(buildContext);
     assertExtractionPathsUnordered(
         Arrays.asList(
@@ -441,7 +445,7 @@ public class GradleProjectPropertiesTest {
     Path webAppDirectory = getResource("gradle/webapp");
     Path unzipTarget = setUpWarProject(webAppDirectory);
 
-    BuildContext buildContext = setupBuildContext("/my/app", DEFAULT_CONTAINERIZING_MODE);
+    BuildContext buildContext = setupBuildContext("/my/app");
     ContainerBuilderLayers layers = new ContainerBuilderLayers(buildContext);
     assertSourcePathsUnordered(
         ImmutableList.of(unzipTarget.resolve("WEB-INF/lib/dependency-1.0.0.jar")),
@@ -504,8 +508,7 @@ public class GradleProjectPropertiesTest {
           CacheDirectoryCreationException {
     Path unzipTarget = setUpWarProject(getResource("gradle/webapp"));
 
-    BuildContext buildContext =
-        setupBuildContext(JavaContainerBuilder.DEFAULT_WEB_APP_ROOT, DEFAULT_CONTAINERIZING_MODE);
+    BuildContext buildContext = setupBuildContext(JavaContainerBuilder.DEFAULT_WEB_APP_ROOT);
     ContainerBuilderLayers layers = new ContainerBuilderLayers(buildContext);
     assertSourcePathsUnordered(
         ImmutableList.of(unzipTarget.resolve("WEB-INF/lib/dependency-1.0.0.jar")),
@@ -540,7 +543,7 @@ public class GradleProjectPropertiesTest {
       throws IOException, InvalidImageReferenceException, CacheDirectoryCreationException {
     temporaryFolder.newFolder("WEB-INF", "lib");
     setUpWarProject(temporaryFolder.getRoot().toPath());
-    setupBuildContext("/anything", DEFAULT_CONTAINERIZING_MODE); // should pass
+    setupBuildContext("/anything"); // should pass
   }
 
   @Test
@@ -548,14 +551,14 @@ public class GradleProjectPropertiesTest {
       throws IOException, InvalidImageReferenceException, CacheDirectoryCreationException {
     temporaryFolder.newFolder("WEB-INF", "classes");
     setUpWarProject(temporaryFolder.getRoot().toPath());
-    setupBuildContext("/anything", DEFAULT_CONTAINERIZING_MODE); // should pass
+    setupBuildContext("/anything"); // should pass
   }
 
   @Test
   public void testCreateContainerBuilder_noErrorIfWebInfDoesNotExist()
       throws IOException, InvalidImageReferenceException, CacheDirectoryCreationException {
     setUpWarProject(temporaryFolder.getRoot().toPath());
-    setupBuildContext("/anything", DEFAULT_CONTAINERIZING_MODE); // should pass
+    setupBuildContext("/anything"); // should pass
   }
 
   @Test
@@ -594,7 +597,7 @@ public class GradleProjectPropertiesTest {
     Assert.assertEquals("war.war", gradleProjectProperties.getWarFilePath());
   }
 
-  private BuildContext setupBuildContext(String appRoot, ContainerizingMode containerizingMode)
+  private BuildContext setupBuildContext(String appRoot)
       throws InvalidImageReferenceException, IOException, CacheDirectoryCreationException {
     JavaContainerBuilder javaContainerBuilder =
         JavaContainerBuilder.from(RegistryImage.named("base"))
@@ -602,7 +605,7 @@ public class GradleProjectPropertiesTest {
             .setModificationTimeProvider((ignored1, ignored2) -> SAMPLE_FILE_MODIFICATION_TIME);
     JibContainerBuilder jibContainerBuilder =
         new GradleProjectProperties(mockProject, mockLogger, mockTempDirectoryProvider)
-            .createJibContainerBuilder(javaContainerBuilder, containerizingMode);
+            .createJibContainerBuilder(javaContainerBuilder, ContainerizingMode.EXPLODED);
     return JibContainerBuilderTestHelper.toBuildContext(
         jibContainerBuilder, Containerizer.to(RegistryImage.named("to")));
   }

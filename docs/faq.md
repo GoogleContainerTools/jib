@@ -108,7 +108,7 @@ See [Extended Usage](../jib-gradle-plugin#extended-usage) for the `container.for
 
 ### Why is my image created 48+ years ago?
 
-For reproducibility purposes, Jib sets the creation time of the container images to the Unix epoch (00:00:00, January 1st, 1970 in UTC). If you would like to use a different timestamp, set the `jib.container.creationTime` / `<container><creationTime>` parameter to an ISO 8601 date-time. You may also use the value `USE_CURRENT TIMESTAMP` to set the creation time to the actual build time, but this sacrifices reproducibility since the timestamp will change with every build.
+For reproducibility purposes, Jib sets the creation time of the container images to the Unix epoch (00:00:00, January 1st, 1970 in UTC). If you would like to use a different timestamp, set the `jib.container.creationTime` / `<container><creationTime>` parameter to an ISO 8601 date-time. You may also use the value `USE_CURRENT_TIMESTAMP` to set the creation time to the actual build time, but this sacrifices reproducibility since the timestamp will change with every build.
 
 <details>
 <summary>Setting `creationTime` parameter</summary>
@@ -139,7 +139,7 @@ Note that the modification time of the files in the built image put by Jib will 
 
 _Reproducible_ means that given the same inputs, a build should produce the same outputs.  Container images are uniquely identified by a digest (or a hash) of the image contents and image metadata.  Tools and infrastructure such the Docker daemon, Docker Hub, registries, Kubernetes, etc) treat images with different digests as being different.
 
-To ensure that a Jib build is reproducible — that the rebuilt container image has the same digest — Jib adds files and directories in a consistent order, and sets consistent creation- and modification-times and permissions for all files and directories.  Jib also ensures that the image metadata is recorded in a consistent order, and that the container image has a consistent creation time.  To ensure consistent times, files and directories are recorded as having a creation and modification time of 1 second past the Unix Epoch (1970-01-01 00:00:01.000 UTC), and the container image is recorded as being created on the Unix Epoch.  Setting `container.useCurrentTimestamp=true` and then rebuilding an image will produce a different timestamp for the image creation time, and so the container images will have different digests and appear to be different.
+To ensure that a Jib build is reproducible — that the rebuilt container image has the same digest — Jib adds files and directories in a consistent order, and sets consistent creation- and modification-times and permissions for all files and directories.  Jib also ensures that the image metadata is recorded in a consistent order, and that the container image has a consistent creation time.  To ensure consistent times, files and directories are recorded as having a creation and modification time of 1 second past the Unix Epoch (1970-01-01 00:00:01.000 UTC), and the container image is recorded as being created on the Unix Epoch.  Setting `container.creationTime` to `USE_CURRENT_TIMESTAMP` and then rebuilding an image will produce a different timestamp for the image creation time, and so the container images will have different digests and appear to be different.
 
 For more details see [reproducible-builds.org](https://reproducible-builds.org).
 
@@ -300,7 +300,11 @@ In Maven, you can use the `maven-resources-plugin` to copy files to your extra d
     <artifact>jib-maven-plugin</artifact>
     ...
     <configuration>
-      <extraDirectory>${project.basedir}/target/extra-directory/</extraDirectory>
+      <extraDirectories>
+        <paths>
+          <path>${project.basedir}/target/extra-directory/</path>
+        </paths>
+      </extraDirectories>
     </configuration>
   </plugin>
   ...
@@ -331,7 +335,7 @@ mvn compile resources:copy-resources jib:build
 The same can be accomplished in Gradle by using a `Copy` task. In your `build.gradle`:
 
 ```groovy
-jib.extraDirectory = file('build/extra-directory')
+jib.extraDirectories = file('build/extra-directory')
 
 task setupExtraDir(type: Copy) {
   from file('build/generated/files')

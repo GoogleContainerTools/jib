@@ -82,7 +82,7 @@ public class JsonToImageTranslatorTest {
   public void testToImage_oci()
       throws IOException, LayerPropertyNotFoundException, LayerCountMismatchException,
           DigestException, URISyntaxException, BadContainerConfigurationFormatException {
-    testToImage_buildable("core/json/ocimanifest.json", OCIManifestTemplate.class);
+    testToImage_buildable("core/json/ocimanifest.json", OciManifestTemplate.class);
   }
 
   @Test

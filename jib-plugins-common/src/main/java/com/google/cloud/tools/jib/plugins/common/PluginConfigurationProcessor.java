@@ -126,6 +126,9 @@ public class PluginConfigurationProcessor {
         processCommonConfiguration(
             rawConfiguration, inferredAuthProvider, projectProperties, containerizer);
 
+    // Note Docker build doesn't set the configured format.
+    jibContainerBuilder.setFormat(rawConfiguration.getImageFormat());
+
     return JibBuildRunner.forBuildTar(
             jibContainerBuilder,
             containerizer,
@@ -174,7 +177,7 @@ public class PluginConfigurationProcessor {
         processCommonConfiguration(
             rawConfiguration, inferredAuthProvider, projectProperties, containerizer);
 
-    // Note Docker and tar builds don't set the configured format.
+    // Note Docker build doesn't set the configured format.
     jibContainerBuilder.setFormat(rawConfiguration.getImageFormat());
 
     return JibBuildRunner.forBuildImage(
@@ -254,15 +257,8 @@ public class PluginConfigurationProcessor {
             .setUser(rawConfiguration.getUser().orElse(null));
     getWorkingDirectoryChecked(rawConfiguration)
         .ifPresent(jibContainerBuilder::setWorkingDirectory);
-    if (rawConfiguration.getUseCurrentTimestamp()) {
-      projectProperties.log(
-          LogEvent.warn(
-              "Setting image creation time to current time; your image may not be reproducible."));
-      jibContainerBuilder.setCreationTime(Instant.now());
-    } else {
-      jibContainerBuilder.setCreationTime(
-          getCreationTime(rawConfiguration.getCreationTime(), projectProperties));
-    }
+    jibContainerBuilder.setCreationTime(
+        getCreationTime(rawConfiguration.getCreationTime(), projectProperties));
 
     // Adds all the extra files.
     for (Path directory : rawConfiguration.getExtraDirectories()) {

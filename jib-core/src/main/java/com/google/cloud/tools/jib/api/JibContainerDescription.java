@@ -35,7 +35,7 @@ public class JibContainerDescription {
   }
 
   /**
-   * Returns a list of "user configured" layers, does *not* include base layer information.
+   * Returns a list of "user configured" layers, does <em>not</em> include base layer information.
    *
    * @return An {@link ImmutableList} of {@link LayerConfiguration}s
    */

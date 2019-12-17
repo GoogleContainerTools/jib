@@ -64,7 +64,7 @@ import org.gradle.api.tasks.TaskProvider;
 import org.gradle.jvm.tasks.Jar;
 
 /** Obtains information about a Gradle {@link Project} that uses Jib. */
-class GradleProjectProperties implements ProjectProperties {
+public class GradleProjectProperties implements ProjectProperties {
 
   /** Used to generate the User-Agent header and history metadata. */
   private static final String TOOL_NAME = "jib-gradle-plugin";
@@ -80,8 +80,15 @@ class GradleProjectProperties implements ProjectProperties {
 
   private static final Duration LOGGING_THREAD_SHUTDOWN_TIMEOUT = Duration.ofSeconds(1);
 
-  /** @return a GradleProjectProperties from the given project and logger. */
-  static GradleProjectProperties getForProject(
+  /**
+   * Generate an instance for a gradle project.
+   *
+   * @param project a gradle project
+   * @param logger a gradle logging instance to use for logging during the build
+   * @param tempDirectoryProvider for scratch space during the build
+   * @return a GradleProjectProperties instance to use in a jib build
+   */
+  public static GradleProjectProperties getForProject(
       Project project, Logger logger, TempDirectoryProvider tempDirectoryProvider) {
     return new GradleProjectProperties(project, logger, tempDirectoryProvider);
   }
@@ -116,7 +123,6 @@ class GradleProjectProperties implements ProjectProperties {
 
   private final Project project;
   private final SingleThreadedExecutor singleThreadedExecutor = new SingleThreadedExecutor();
-  private final Logger logger;
   private final ConsoleLogger consoleLogger;
   private final TempDirectoryProvider tempDirectoryProvider;
 
@@ -124,7 +130,6 @@ class GradleProjectProperties implements ProjectProperties {
   GradleProjectProperties(
       Project project, Logger logger, TempDirectoryProvider tempDirectoryProvider) {
     this.project = project;
-    this.logger = logger;
     this.tempDirectoryProvider = tempDirectoryProvider;
     ConsoleLoggerBuilder consoleLoggerBuilder =
         (isProgressFooterEnabled(project)
@@ -152,7 +157,7 @@ class GradleProjectProperties implements ProjectProperties {
     try {
       if (isWarProject()) {
         String warFilePath = getWarFilePath();
-        logger.info("WAR project identified, creating WAR image from: " + warFilePath);
+        log(LogEvent.info("WAR project identified, creating WAR image from: " + warFilePath));
         Path explodedWarPath = tempDirectoryProvider.newDirectory();
         ZipUtil.unzip(Paths.get(warFilePath), explodedWarPath);
         return JavaContainerBuilderHelper.fromExplodedWar(javaContainerBuilder, explodedWarPath);
@@ -222,15 +227,16 @@ class GradleProjectProperties implements ProjectProperties {
             javaContainerBuilder.addClasses(classesOutputDirectory.toPath());
           }
           if (classesOutputDirectories.isEmpty()) {
-            logger.warn("No classes files were found - did you compile your project?");
+            log(LogEvent.warn("No classes files were found - did you compile your project?"));
           }
           break;
 
         case PACKAGED:
           // Add a JAR
           Jar jarTask = (Jar) project.getTasks().findByName("jar");
-          javaContainerBuilder.addToClasspath(
-              jarTask.getDestinationDir().toPath().resolve(jarTask.getArchiveName()));
+          Path jarPath = jarTask.getDestinationDir().toPath().resolve(jarTask.getArchiveName());
+          log(LogEvent.debug("Using JAR: " + jarPath));
+          javaContainerBuilder.addToClasspath(jarPath);
           break;
 
         default:
@@ -269,8 +275,7 @@ class GradleProjectProperties implements ProjectProperties {
     containerizer
         .addEventHandler(LogEvent.class, this::log)
         .addEventHandler(
-            TimerEvent.class,
-            new TimerEventHandler(message -> consoleLogger.log(LogEvent.Level.DEBUG, message)))
+            TimerEvent.class, new TimerEventHandler(message -> log(LogEvent.debug(message))))
         .addEventHandler(
             ProgressEvent.class,
             new ProgressEventHandler(

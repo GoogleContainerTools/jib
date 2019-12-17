@@ -127,23 +127,6 @@ public class SingleProjectIntegrationTest {
     return DescriptorDigest.fromDigest(digest).toString();
   }
 
-  private static void assertExtraDirectoryDeprecationWarning(String buildFile)
-      throws DigestException, IOException, InterruptedException {
-    String targetImage = "localhost:6000/simpleimage:gradle" + System.nanoTime();
-    BuildResult buildResult =
-        JibRunHelper.buildToDockerDaemon(simpleTestProject, targetImage, buildFile);
-    Assert.assertEquals(
-        "Hello, world. \n1970-01-01T00:00:01Z\nrw-r--r--\nrw-r--r--\nfoo\ncat\n"
-            + "1970-01-01T00:00:01Z\n1970-01-01T00:00:01Z\n",
-        new Command("docker", "run", "--rm", targetImage).run());
-    Assert.assertThat(
-        buildResult.getOutput(),
-        CoreMatchers.containsString(
-            "'jib.extraDirectory', 'jib.extraDirectory.path', and 'jib.extraDirectory.permissions' "
-                + "are deprecated; use 'jib.extraDirectories.paths' and "
-                + "'jib.extraDirectories.permissions'"));
-  }
-
   private static String buildAndRunComplex(
       String imageReference, String username, String password, LocalRegistry targetRegistry)
       throws IOException, InterruptedException {
@@ -319,24 +302,6 @@ public class SingleProjectIntegrationTest {
   }
 
   @Test
-  public void testDockerDaemon_simple_deprecatedExtraDirectory()
-      throws DigestException, IOException, InterruptedException {
-    assertExtraDirectoryDeprecationWarning("build-extra-dir-deprecated.gradle");
-  }
-
-  @Test
-  public void testDockerDaemon_simple_deprecatedExtraDirectory2()
-      throws DigestException, IOException, InterruptedException {
-    assertExtraDirectoryDeprecationWarning("build-extra-dir-deprecated2.gradle");
-  }
-
-  @Test
-  public void testDockerDaemon_simple_deprecatedExtraDirectory3()
-      throws DigestException, IOException, InterruptedException {
-    assertExtraDirectoryDeprecationWarning("build-extra-dir-deprecated3.gradle");
-  }
-
-  @Test
   public void testDockerDaemon_simple_multipleExtraDirectories()
       throws DigestException, IOException, InterruptedException {
     String targetImage = "localhost:6000/simpleimage:gradle" + System.nanoTime();
@@ -441,37 +406,6 @@ public class SingleProjectIntegrationTest {
             simpleTestProject, targetImage, "build-timestamps-custom.gradle"));
     JibRunHelper.assertSimpleCreationTimeIsEqual(
         Instant.parse("2013-11-04T21:29:30Z"), targetImage);
-  }
-
-  @Test
-  public void testDockerDaemon_timestampDeprecated()
-      throws DigestException, IOException, InterruptedException {
-    Instant beforeBuild = Instant.now();
-    String targetImage = "simpleimage:gradle" + System.nanoTime();
-    BuildResult buildResult =
-        JibRunHelper.buildToDockerDaemon(
-            simpleTestProject, targetImage, "build-usecurrent-deprecated.gradle");
-    JibRunHelper.assertSimpleCreationTimeIsAfter(beforeBuild, targetImage);
-    Assert.assertThat(
-        buildResult.getOutput(),
-        CoreMatchers.containsString(
-            "'jib.container.useCurrentTimestamp' is deprecated; use 'jib.container.creationTime' with the value 'USE_CURRENT_TIMESTAMP' instead"));
-  }
-
-  @Test
-  public void testDockerDaemon_timestampFail()
-      throws InterruptedException, IOException, DigestException {
-    try {
-      String targetImage = "simpleimage:gradle" + System.nanoTime();
-      JibRunHelper.buildToDockerDaemonAndRun(
-          simpleTestProject, targetImage, "build-usecurrent-deprecated2.gradle");
-      Assert.fail();
-    } catch (UnexpectedBuildFailure ex) {
-      Assert.assertThat(
-          ex.getMessage(),
-          CoreMatchers.containsString(
-              "You cannot configure both 'jib.container.useCurrentTimestamp' and 'jib.container.creationTime'"));
-    }
   }
 
   @Test

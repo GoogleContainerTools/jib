@@ -62,13 +62,5 @@ public class PropertyNames {
   public static final String CONTAINERIZE = "jib.containerize";
   public static final String ALWAYS_CACHE_BASE_IMAGE = "jib.alwaysCacheBaseImage";
 
-  @Deprecated
-  public static final String CONTAINER_USE_CURRENT_TIMESTAMP = "jib.container.useCurrentTimestamp";
-
-  @Deprecated public static final String EXTRA_DIRECTORY_PATH = "jib.extraDirectory.path";
-
-  @Deprecated
-  public static final String EXTRA_DIRECTORY_PERMISSIONS = "jib.extraDirectory.permissions";
-
   private PropertyNames() {}
 }

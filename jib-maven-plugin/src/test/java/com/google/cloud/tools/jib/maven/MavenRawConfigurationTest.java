@@ -75,7 +75,6 @@ public class MavenRawConfigurationTest {
     Mockito.when(jibPluginConfiguration.getMainClass()).thenReturn("com.example.Main");
     Mockito.when(jibPluginConfiguration.getTargetImageAdditionalTags())
         .thenReturn(new HashSet<>(Arrays.asList("additional", "tags")));
-    Mockito.when(jibPluginConfiguration.getUseCurrentTimestamp()).thenReturn(true);
     Mockito.when(jibPluginConfiguration.getUser()).thenReturn("admin:wheel");
     Mockito.when(jibPluginConfiguration.getFilesModificationTime())
         .thenReturn("2011-12-03T22:42:05Z");
@@ -111,7 +110,6 @@ public class MavenRawConfigurationTest {
     Assert.assertEquals(
         new HashSet<>(Arrays.asList("additional", "tags")),
         Sets.newHashSet(rawConfiguration.getToTags()));
-    Assert.assertTrue(rawConfiguration.getUseCurrentTimestamp());
     Assert.assertEquals("admin:wheel", rawConfiguration.getUser().get());
     Assert.assertEquals("2011-12-03T22:42:05Z", rawConfiguration.getFilesModificationTime());
     Assert.assertEquals(Paths.get("test"), rawConfiguration.getDockerExecutable().get());

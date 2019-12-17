@@ -24,6 +24,7 @@ import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.List;
 import org.gradle.testkit.runner.BuildResult;
 import org.gradle.testkit.runner.GradleRunner;
 import org.junit.rules.TemporaryFolder;
@@ -83,6 +84,10 @@ public class TestProject extends TemporaryFolder implements Closeable {
   }
 
   public BuildResult build(String... gradleArguments) {
+    return gradleRunner.withArguments(gradleArguments).build();
+  }
+
+  public BuildResult build(List<String> gradleArguments) {
     return gradleRunner.withArguments(gradleArguments).build();
   }
 

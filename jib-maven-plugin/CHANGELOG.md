@@ -7,12 +7,27 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
+- Removed deprecated `<extraDirectory>` configuration in favor of `<extraDirectories>`. ([#1691](https://github.com/GoogleContainerTools/jib/issues/1691))
+- Removed deprecated `<container><useCurrentTimestamp>` configuration in favor of `<container><creationTime>` with `USE_CURRENT_TIMESTAMP`. ([#1897](https://github.com/GoogleContainerTools/jib/issues/1897))
+
+### Fixed
+
+- Fixed `<extraDirectories><permissions>` being ignored if `<paths>` are not explicitly defined. ([#2106](https://github.com/GoogleContainerTools/jib/issues/2160))
+- Now `<containerizingMode>packaged` works as intended with Spring Boot projects that generate a fat JAR. ([#2170](https://github.com/GoogleContainerTools/jib/issues/2170))
+- Now `<containerizingMode>packaged` correctly identifies the packaged JAR generated at a non-default location when configured with the Maven Jar Plugin's `<classifier>` and `<outputDirectory>`. ([#2170](https://github.com/GoogleContainerTools/jib/issues/2170))
+- `jib:buildTar` with `<container><format>OCI` now builds a correctly formatted OCI archive. ([#2124](https://github.com/GoogleContainerTools/jib/issues/2124))
+
+## 1.8.0
+
+### Changed
+
 - Optimized building to a registry with local base images. ([#1913](https://github.com/GoogleContainerTools/jib/issues/1913))
 
 ### Fixed
 
-- Fixed reporting wrong module name when `skaffold init` is run on multi-module projects ([#2088](https://github.com/GoogleContainerTools/jib/issues/2088)).
-- `<allowInsecureRegistries>` and the `sendCredentialsOverHttp` system property are now effective for authentication service server connections. ([#2074](https://github.com/GoogleContainerTools/jib/pull/2074)
+- Fixed reporting wrong module name when `skaffold init` is run on multi-module projects. ([#2088](https://github.com/GoogleContainerTools/jib/issues/2088))
+- `<allowInsecureRegistries>` and the `sendCredentialsOverHttp` system property are now effective for authentication service server connections. ([#2074](https://github.com/GoogleContainerTools/jib/pull/2074))
+- Fixed inefficient communications when interacting with insecure registries and servers (when `<allowInsecureRegistries>` is set). ([#946](https://github.com/GoogleContainerTools/jib/issues/946))
 
 ## 1.7.0
 

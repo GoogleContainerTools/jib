@@ -43,6 +43,7 @@ public class SyncMapMojo extends JibPluginConfiguration {
       return;
     }
 
+    // TODO: move these shared checks with SyncMapTask into plugins-common
     // add check that means this is only for jars
     if (!"jar".equals(getProject().getPackaging())) {
       throw new MojoExecutionException(
@@ -77,7 +78,8 @@ public class SyncMapMojo extends JibPluginConfiguration {
         String syncMapJson =
             PluginConfigurationProcessor.getSkaffoldSyncMap(configuration, projectProperties);
 
-        System.out.println("\nBEGIN JIB JSON");
+        System.out.println();
+        System.out.println("BEGIN JIB JSON");
         System.out.println(syncMapJson);
 
       } catch (Exception ex) {

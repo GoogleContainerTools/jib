@@ -66,8 +66,6 @@ public class BuildDockerMojo extends JibPluginConfiguration {
           HelpfulSuggestions.forDockerNotInstalled(HELPFUL_SUGGESTIONS_PREFIX));
     }
 
-    MojoCommon.checkUseCurrentTimestampDeprecation(this);
-
     MavenSettingsProxyProvider.activateHttpAndHttpsProxies(
         getSession().getSettings(), getSettingsDecrypter());
 

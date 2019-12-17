@@ -19,6 +19,7 @@ package com.google.cloud.tools.jib.docker;
 import com.google.cloud.tools.jib.api.DescriptorDigest;
 import com.google.cloud.tools.jib.api.ImageReference;
 import com.google.cloud.tools.jib.http.NotifyingOutputStream;
+import com.google.cloud.tools.jib.image.ImageTarball;
 import com.google.cloud.tools.jib.json.JsonTemplate;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import com.google.common.annotations.VisibleForTesting;

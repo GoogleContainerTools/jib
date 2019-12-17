@@ -31,7 +31,7 @@ import example.JibExampleConfiguration;
 import example.api.Saying;
 import example.config.HelloWorldConfiguration;
 
-@Path("/hello-world")
+@Path("/")
 @Produces(MediaType.APPLICATION_JSON)
 public class HelloWorldResource {
 

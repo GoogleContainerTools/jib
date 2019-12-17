@@ -26,12 +26,15 @@ import com.google.api.client.http.apache.v2.ApacheHttpTransport;
 import com.google.api.client.util.SslUtils;
 import com.google.cloud.tools.jib.api.LogEvent;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Preconditions;
 import java.io.IOException;
 import java.net.ConnectException;
 import java.net.URL;
 import java.security.GeneralSecurityException;
 import java.util.ArrayDeque;
 import java.util.Deque;
+import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import javax.net.ssl.SSLException;
@@ -71,6 +74,13 @@ import org.apache.http.impl.client.HttpClientBuilder;
  */
 public class FailoverHttpClient {
 
+  /** Represents failover actions taken. To be recorded in the failover history. */
+  private static enum Failover {
+    NONE, // no failover (secure HTTPS)
+    INSECURE_HTTPS, // HTTPS with certificate validation disabled
+    HTTP // plain HTTP
+  }
+
   private static boolean isHttpsProtocol(URL url) {
     return "https".equals(url.getProtocol());
   }
@@ -109,6 +119,8 @@ public class FailoverHttpClient {
   private final Consumer<LogEvent> logger;
   private final Supplier<HttpTransport> secureHttpTransportFactory;
   private final Supplier<HttpTransport> insecureHttpTransportFactory;
+
+  private final ConcurrentHashMap<String, Failover> failoverHistory = new ConcurrentHashMap<>();
 
   private final Deque<HttpTransport> transportsCreated = new ArrayDeque<>();
   private final Deque<Response> responsesCreated = new ArrayDeque<>();
@@ -209,8 +221,16 @@ public class FailoverHttpClient {
    * @throws IOException if building the HTTP request fails.
    */
   public Response call(String httpMethod, URL url, Request request) throws IOException {
-    if (!isHttpsProtocol(url) && !enableHttpAndInsecureFailover) {
+    if (!isHttpsProtocol(url)) {
+      if (enableHttpAndInsecureFailover) { // HTTP requested. We only care if HTTP is enabled.
+        return call(httpMethod, url, request, getHttpTransport(true));
+      }
       throw new SSLException("insecure HTTP connection not allowed: " + url);
+    }
+
+    Optional<Response> fastPathResponse = followFailoverHistory(httpMethod, url, request);
+    if (fastPathResponse.isPresent()) {
+      return fastPathResponse.get();
     }
 
     try {
@@ -223,11 +243,15 @@ public class FailoverHttpClient {
 
       try {
         logInsecureHttpsFailover(url);
-        return call(httpMethod, url, request, getHttpTransport(false));
+        Response response = call(httpMethod, url, request, getHttpTransport(false));
+        failoverHistory.put(url.getHost() + ":" + url.getPort(), Failover.INSECURE_HTTPS);
+        return response;
 
       } catch (SSLException ignored) { // This is usually when the server is plain-HTTP.
         logHttpFailover(url);
-        return call(httpMethod, toHttp(url), request, getHttpTransport(true));
+        Response response = call(httpMethod, toHttp(url), request, getHttpTransport(true));
+        failoverHistory.put(url.getHost() + ":" + url.getPort(), Failover.HTTP);
+        return response;
       }
 
     } catch (ConnectException ex) {
@@ -235,17 +259,30 @@ public class FailoverHttpClient {
       // ConnectException for connection timeout. (Could be a JDK bug.) Note SocketTimeoutException
       // does not extend ConnectException (or vice versa), and we want to be consistent to error out
       // on timeouts: https://github.com/GoogleContainerTools/jib/issues/1895#issuecomment-527544094
-      if (ex.getMessage() != null && ex.getMessage().contains("timed out")) {
-        throw ex;
-      }
-
-      // Fall back to HTTP only if "url" had no port specified (i.e., we tried the default HTTPS
-      // port 443) and we could not connect to 443. It's worth trying port 80.
-      if (enableHttpAndInsecureFailover && isHttpsProtocol(url) && url.getPort() == -1) {
-        logHttpFailover(url);
-        return call(httpMethod, toHttp(url), request, getHttpTransport(true));
+      if (ex.getMessage() == null || !ex.getMessage().contains("timed out")) {
+        // Fall back to HTTP only if "url" had no port specified (i.e., we tried the default HTTPS
+        // port 443) and we could not connect to 443. It's worth trying port 80.
+        if (enableHttpAndInsecureFailover && isHttpsProtocol(url) && url.getPort() == -1) {
+          logHttpFailover(url);
+          Response response = call(httpMethod, toHttp(url), request, getHttpTransport(true));
+          failoverHistory.put(url.getHost() + ":" + url.getPort(), Failover.HTTP);
+          return response;
+        }
       }
       throw ex;
+    }
+  }
+
+  private Optional<Response> followFailoverHistory(String httpMethod, URL url, Request request)
+      throws IOException {
+    Preconditions.checkArgument(isHttpsProtocol(url));
+    switch (failoverHistory.getOrDefault(url.getHost() + ":" + url.getPort(), Failover.NONE)) {
+      case HTTP:
+        return Optional.of(call(httpMethod, toHttp(url), request, getHttpTransport(true)));
+      case INSECURE_HTTPS:
+        return Optional.of(call(httpMethod, url, request, getHttpTransport(false)));
+      default:
+        return Optional.empty(); // No history found. Should go for normal execution path.
     }
   }
 
@@ -272,7 +309,7 @@ public class FailoverHttpClient {
     try {
       Response response = new Response(httpRequest.execute());
       synchronized (responsesCreated) {
-        responsesCreated.addLast(response);
+        responsesCreated.add(response);
       }
       return response;
     } catch (HttpResponseException ex) {
@@ -284,18 +321,18 @@ public class FailoverHttpClient {
     HttpTransport transport =
         secureTransport ? secureHttpTransportFactory.get() : insecureHttpTransportFactory.get();
     synchronized (transportsCreated) {
-      transportsCreated.addLast(transport);
+      transportsCreated.add(transport);
     }
     return transport;
   }
 
   private void logHttpFailover(URL url) {
     String log = "Failed to connect to " + url + " over HTTPS. Attempting again with HTTP.";
-    logger.accept(LogEvent.info(log));
+    logger.accept(LogEvent.warn(log));
   }
 
   private void logInsecureHttpsFailover(URL url) {
     String log = "Cannot verify server at " + url + ". Attempting again with no TLS verification.";
-    logger.accept(LogEvent.info(log));
+    logger.accept(LogEvent.warn(log));
   }
 }

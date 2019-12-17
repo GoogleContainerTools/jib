@@ -33,7 +33,6 @@ import org.gradle.api.tasks.Optional;
  */
 public class ContainerParameters {
 
-  private boolean useCurrentTimestamp = false;
   private List<String> jvmFlags = Collections.emptyList();
   private Map<String, String> environment = Collections.emptyMap();
   @Nullable private List<String> entrypoint;
@@ -49,18 +48,6 @@ public class ContainerParameters {
   @Nullable private String workingDirectory;
   private String filesModificationTime = "EPOCH_PLUS_SECOND";
   private String creationTime = "EPOCH";
-
-  @Input
-  public boolean getUseCurrentTimestamp() {
-    if (System.getProperty(PropertyNames.CONTAINER_USE_CURRENT_TIMESTAMP) != null) {
-      return Boolean.getBoolean(PropertyNames.CONTAINER_USE_CURRENT_TIMESTAMP);
-    }
-    return useCurrentTimestamp;
-  }
-
-  public void setUseCurrentTimestamp(boolean useCurrentTimestamp) {
-    this.useCurrentTimestamp = useCurrentTimestamp;
-  }
 
   @Input
   @Nullable

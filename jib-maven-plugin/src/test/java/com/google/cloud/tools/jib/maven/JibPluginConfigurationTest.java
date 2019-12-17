@@ -121,8 +121,6 @@ public class JibPluginConfigurationTest {
     sessionProperties.put("jib.container.ports", "port1,port2,port3");
     Assert.assertEquals(
         ImmutableList.of("port1", "port2", "port3"), testPluginConfiguration.getExposedPorts());
-    sessionProperties.put("jib.container.useCurrentTimestamp", "true");
-    Assert.assertTrue(testPluginConfiguration.getUseCurrentTimestamp());
     sessionProperties.put("jib.container.user", "myUser");
     Assert.assertEquals("myUser", testPluginConfiguration.getUser());
     sessionProperties.put("jib.container.workingDirectory", "/working/directory");
@@ -219,8 +217,6 @@ public class JibPluginConfigurationTest {
     project.getProperties().setProperty("jib.container.ports", "port1,port2,port3");
     Assert.assertEquals(
         ImmutableList.of("port1", "port2", "port3"), testPluginConfiguration.getExposedPorts());
-    project.getProperties().setProperty("jib.container.useCurrentTimestamp", "true");
-    Assert.assertTrue(testPluginConfiguration.getUseCurrentTimestamp());
     project.getProperties().setProperty("jib.container.user", "myUser");
     Assert.assertEquals("myUser", testPluginConfiguration.getUser());
     project.getProperties().setProperty("jib.container.workingDirectory", "/working/directory");
@@ -277,112 +273,6 @@ public class JibPluginConfigurationTest {
       Assert.fail();
     } catch (IllegalArgumentException ex) {
       Assert.assertEquals("jib.to.tags has empty tag", ex.getMessage());
-    }
-  }
-
-  @Test
-  public void testDeprecatedSystemProperties_extraDirectory() {
-    sessionProperties.put("jib.extraDirectory.path", "custom-jib");
-    Assert.assertEquals(
-        Arrays.asList(Paths.get("custom-jib")), testPluginConfiguration.getExtraDirectories());
-    sessionProperties.put("jib.extraDirectory.permissions", "/test/file13=650,/another/file24=777");
-    List<PermissionConfiguration> permissions =
-        testPluginConfiguration.getExtraDirectoryPermissions();
-    Assert.assertEquals("/test/file13", permissions.get(0).getFile().get());
-    Assert.assertEquals("650", permissions.get(0).getMode().get());
-    Assert.assertEquals("/another/file24", permissions.get(1).getFile().get());
-    Assert.assertEquals("777", permissions.get(1).getMode().get());
-
-    Mockito.verify(log, Mockito.times(1))
-        .warn(
-            "The property 'jib.extraDirectory.path' is deprecated; "
-                + "use 'jib.extraDirectories.paths' instead");
-  }
-
-  @Test
-  public void testDeprecatedProperties_extraDirectory() {
-    Properties projectProperties = project.getProperties();
-
-    projectProperties.setProperty("jib.extraDirectory.path", "this-is-extra");
-    Assert.assertEquals(
-        Arrays.asList(Paths.get("this-is-extra")), testPluginConfiguration.getExtraDirectories());
-
-    projectProperties.setProperty(
-        "jib.extraDirectory.permissions", "/test/file1=654,/dir/file2=321");
-    List<PermissionConfiguration> permissions =
-        testPluginConfiguration.getExtraDirectoryPermissions();
-    Assert.assertEquals("/test/file1", permissions.get(0).getFile().get());
-    Assert.assertEquals("654", permissions.get(0).getMode().get());
-    Assert.assertEquals("/dir/file2", permissions.get(1).getFile().get());
-    Assert.assertEquals("321", permissions.get(1).getMode().get());
-
-    Mockito.verify(log, Mockito.times(1))
-        .warn(
-            "The property 'jib.extraDirectory.path' is deprecated; "
-                + "use 'jib.extraDirectories.paths' instead");
-  }
-
-  @Test
-  public void testGetExtraDirectories_bothSystemPropertiesUsed() {
-    sessionProperties.put("jib.extraDirectory.path", "deprecated-property");
-    sessionProperties.put("jib.extraDirectories.paths", "new-property");
-
-    try {
-      testPluginConfiguration.getExtraDirectories();
-      Assert.fail();
-    } catch (IllegalArgumentException ex) {
-      Assert.assertEquals(
-          "You cannot configure both 'jib.extraDirectory.path' and 'jib.extraDirectories.paths'",
-          ex.getMessage());
-    }
-  }
-
-  @Test
-  public void testGetExtraDirectories_bothPropertiesUsed() {
-    Properties projectProperties = project.getProperties();
-    projectProperties.setProperty("jib.extraDirectory.path", "deprecated-property");
-    projectProperties.setProperty("jib.extraDirectories.paths", "new-property");
-
-    try {
-      testPluginConfiguration.getExtraDirectories();
-      Assert.fail();
-    } catch (IllegalArgumentException ex) {
-      Assert.assertEquals(
-          "You cannot configure both 'jib.extraDirectory.path' and 'jib.extraDirectories.paths'",
-          ex.getMessage());
-    }
-  }
-
-  @Test
-  public void testGetExtraDirectoryPermissions_bothSystemPropertiesUsed() {
-    sessionProperties.put("jib.extraDirectory.permissions", "deprecated-property");
-    sessionProperties.put("jib.extraDirectories.permissions", "new-property");
-
-    try {
-      testPluginConfiguration.getExtraDirectoryPermissions();
-      Assert.fail();
-    } catch (IllegalArgumentException ex) {
-      Assert.assertEquals(
-          "You cannot configure both 'jib.extraDirectory.permissions' and "
-              + "'jib.extraDirectories.permissions'",
-          ex.getMessage());
-    }
-  }
-
-  @Test
-  public void testGetExtraDirectoryPermissions_bothPropertiesUsed() {
-    Properties projectProperties = project.getProperties();
-    projectProperties.setProperty("jib.extraDirectory.permissions", "deprecated-property");
-    projectProperties.setProperty("jib.extraDirectories.permissions", "new-property");
-
-    try {
-      testPluginConfiguration.getExtraDirectoryPermissions();
-      Assert.fail();
-    } catch (IllegalArgumentException ex) {
-      Assert.assertEquals(
-          "You cannot configure both 'jib.extraDirectory.permissions' and "
-              + "'jib.extraDirectories.permissions'",
-          ex.getMessage());
     }
   }
 
