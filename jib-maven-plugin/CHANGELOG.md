@@ -9,6 +9,7 @@ All notable changes to this project will be documented in this file.
 
 - Removed deprecated `<extraDirectory>` configuration in favor of `<extraDirectories>`. ([#1691](https://github.com/GoogleContainerTools/jib/issues/1691))
 - Removed deprecated `<container><useCurrentTimestamp>` configuration in favor of `<container><creationTime>` with `USE_CURRENT_TIMESTAMP`. ([#1897](https://github.com/GoogleContainerTools/jib/issues/1897))
+- HTTP redirection URLs are no longer sanitized in order to work around an issue with certain registries that do not conform to HTTP standards. This resolves an issue with using Red Hat OpenShift and Quay registries. ([#2106](https://github.com/GoogleContainerTools/jib/issues/2106), [#1986](https://github.com/GoogleContainerTools/jib/issues/1986#issuecomment-547610104))
 
 ### Fixed
 

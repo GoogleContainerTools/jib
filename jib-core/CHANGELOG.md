@@ -10,6 +10,7 @@ All notable changes to this project will be documented in this file.
 ### Changed
 
 - Each local base image layer is pushed immediately after being compressed, rather than waiting for all layers to finish compressing before starting to push. ([#1913](https://github.com/GoogleContainerTools/jib/issues/1913))
+- HTTP redirection URLs are no longer sanitized in order to work around an issue with certain registries that do not conform to HTTP standards. This resolves an issue with using Red Hat OpenShift and Quay registries. ([#2106](https://github.com/GoogleContainerTools/jib/issues/2106), [#1986](https://github.com/GoogleContainerTools/jib/issues/1986#issuecomment-547610104))
 
 ### Fixed
 
