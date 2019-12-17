@@ -86,7 +86,8 @@ public class RetrieveRegistryCredentialsStepTest {
     Mockito.verify(mockEventHandlers, Mockito.atLeastOnce())
         .dispatch(Mockito.any(ProgressEvent.class));
     Mockito.verify(mockEventHandlers)
-        .dispatch(LogEvent.info("No credentials could be retrieved for registry baseregistry"));
+        .dispatch(
+            LogEvent.lifecycle("No credentials could be retrieved for registry baseregistry"));
 
     Assert.assertFalse(
         RetrieveRegistryCredentialsStep.forTargetImage(
@@ -96,7 +97,8 @@ public class RetrieveRegistryCredentialsStepTest {
             .isPresent());
 
     Mockito.verify(mockEventHandlers)
-        .dispatch(LogEvent.info("No credentials could be retrieved for registry baseregistry"));
+        .dispatch(
+            LogEvent.lifecycle("No credentials could be retrieved for registry baseregistry"));
   }
 
   @Test
