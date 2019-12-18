@@ -175,7 +175,7 @@ class PullBaseImageStep implements Callable<ImageAndAuthorization> {
         }
 
         // Last resort. Access "<registry URL>/v2/" and hope the registry will return
-        // "WWW-Authenticate: Bearer ...".
+        // "WWW-Authenticate: Bearer ...". Perhaps it's rare to reach here.
         RegistryAuthenticator registryAuthenticator =
             registryClient.getRegistryAuthenticator().orElseThrow(() -> ex);
         Authorization authorization = registryAuthenticator.authenticatePull(credentials);
