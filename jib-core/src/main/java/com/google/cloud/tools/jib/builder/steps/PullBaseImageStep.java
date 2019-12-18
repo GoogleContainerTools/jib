@@ -124,8 +124,12 @@ class PullBaseImageStep implements Callable<ImageAndAuthorization> {
         TimerEventDispatcher ignored1 = new TimerEventDispatcher(eventHandlers, DESCRIPTION)) {
 
       try {
-        // First, try with no credentials.
+        // First, try with no credentials. This works with public GCR images (but not Docker Hub).
+        // TODO: investigate if we should just pass credentials up front. However, this involves
+        // some risk. https://github.com/GoogleContainerTools/jib/pull/2200#discussion_r359069026
+        // contains some related discussions.
         return new ImageAndAuthorization(pullBaseImage(null, progressEventDispatcher), null);
+
       } catch (RegistryUnauthorizedException ex) {
         eventHandlers.dispatch(
             LogEvent.lifecycle(
@@ -142,44 +146,41 @@ class PullBaseImageStep implements Callable<ImageAndAuthorization> {
         RegistryClient registryClient =
             buildContext.newBaseImageRegistryClientFactory().newRegistryClient();
 
+        // If we reached here, most registries would have returned "WWW-Authenticate: Bearer ...".
+        // (Note, a local Docker registry may return "WWW-Authenticate: Basic ...".)
         String wwwAuthenticate = ex.getHttpResponseException().getHeaders().getAuthenticate();
         if (wwwAuthenticate != null) {
-          // The registry requires us to authenticate using the Docker Token Authentication.
-          // See https://docs.docker.com/registry/spec/auth/token
-          RegistryAuthenticator registryAuthenticator =
-              registryClient.getRegistryAuthenticator(wwwAuthenticate).orElseThrow(() -> ex);
-          Authorization authorization = registryAuthenticator.authenticatePull(credentials);
-
-          return new ImageAndAuthorization(
-              pullBaseImage(authorization, progressEventDispatcher), authorization);
+          Optional<RegistryAuthenticator> registryAuthenticator =
+              registryClient.getRegistryAuthenticator(wwwAuthenticate);
+          if (registryAuthenticator.isPresent()) {
+            // The registry did return "WWW-Authenticate: Bearer ...". Initiate the Docker Token
+            // Authentication flow (https://docs.docker.com/registry/spec/auth/token).
+            Authorization authorization = registryAuthenticator.get().authenticatePull(credentials);
+            return new ImageAndAuthorization(
+                pullBaseImage(authorization, progressEventDispatcher), authorization);
+          }
         }
 
-        if (credentials == null || credentials.isOAuth2RefreshToken()) {
-          // Try <server url>/v2/ and hope the registry will return the WWW-Authenticate header.
-          RegistryAuthenticator registryAuthenticator =
-              registryClient.getRegistryAuthenticator().orElseThrow(() -> ex);
-          Authorization authorization = registryAuthenticator.authenticatePull(credentials);
-
-          return new ImageAndAuthorization(
-              pullBaseImage(authorization, progressEventDispatcher), authorization);
+        if (credentials != null && !credentials.isOAuth2RefreshToken()) {
+          // A local Docker registry (docker run registry:2) may set up "basic authentication."
+          try {
+            Authorization authorization =
+                Authorization.fromBasicCredentials(
+                    credentials.getUsername(), credentials.getPassword());
+            return new ImageAndAuthorization(
+                pullBaseImage(authorization, progressEventDispatcher), authorization);
+          } catch (RegistryUnauthorizedException ignored) {
+            // "Basic authentication" didn't work either. Fall through.
+          }
         }
 
-        try {
-          Authorization authorization =
-              Authorization.fromBasicCredentials(
-                  credentials.getUsername(), credentials.getPassword());
-          return new ImageAndAuthorization(
-              pullBaseImage(authorization, progressEventDispatcher), authorization);
-
-        } catch (RegistryUnauthorizedException ex2) {
-          // Try <server url>/v2/ and hope the registry will return the WWW-Authenticate header.
-          RegistryAuthenticator registryAuthenticator =
-              registryClient.getRegistryAuthenticator().orElseThrow(() -> ex);
-          Authorization authorization = registryAuthenticator.authenticatePull(credentials);
-
-          return new ImageAndAuthorization(
-              pullBaseImage(authorization, progressEventDispatcher), authorization);
-        }
+        // Last resort. Access "<registry URL>/v2/" and hope the registry will return
+        // "WWW-Authenticate: Bearer ...".
+        RegistryAuthenticator registryAuthenticator =
+            registryClient.getRegistryAuthenticator().orElseThrow(() -> ex);
+        Authorization authorization = registryAuthenticator.authenticatePull(credentials);
+        return new ImageAndAuthorization(
+            pullBaseImage(authorization, progressEventDispatcher), authorization);
       }
     }
   }
