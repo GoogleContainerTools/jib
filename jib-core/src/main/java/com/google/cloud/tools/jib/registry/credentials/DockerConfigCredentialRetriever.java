@@ -66,6 +66,10 @@ public class DockerConfigCredentialRetriever {
     this.dockerConfigFile = dockerConfigFile;
   }
 
+  public Path getDockerConfigFile() {
+    return dockerConfigFile;
+  }
+
   /**
    * Retrieves credentials for a registry. Tries all possible known aliases.
    *
@@ -99,7 +103,7 @@ public class DockerConfigCredentialRetriever {
       if (dockerCredentialHelper != null) {
         try {
           Path helperPath = dockerCredentialHelper.getCredentialHelper();
-          logger.accept(LogEvent.debug("trying " + helperPath + " for " + registryAlias));
+          logger.accept(LogEvent.info("trying " + helperPath + " for " + registryAlias));
           // Tries with the given registry alias (may be the original registry).
           return Optional.of(dockerCredentialHelper.retrieve());
 
@@ -125,7 +129,7 @@ public class DockerConfigCredentialRetriever {
         String username = usernameColonPassword.substring(0, usernameColonPassword.indexOf(":"));
         String password = usernameColonPassword.substring(usernameColonPassword.indexOf(":") + 1);
         logger.accept(
-            LogEvent.debug("Docker config auths section defines credentials for " + registryAlias));
+            LogEvent.info("Docker config auths section defines credentials for " + registryAlias));
         return Optional.of(Credential.from(username, password));
       }
     }

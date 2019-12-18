@@ -255,15 +255,16 @@ public class CredentialRetrieverFactory {
   CredentialRetriever dockerConfig(
       DockerConfigCredentialRetriever dockerConfigCredentialRetriever) {
     return () -> {
+      Path configFile = dockerConfigCredentialRetriever.getDockerConfigFile();
       try {
         Optional<Credential> credentials = dockerConfigCredentialRetriever.retrieve(logger);
         if (credentials.isPresent()) {
-          logGotCredentialsFrom("credentials from Docker config file");
+          logGotCredentialsFrom("credentials from Docker config (" + configFile + ")");
           return credentials;
         }
 
       } catch (IOException ex) {
-        logger.accept(LogEvent.info("Unable to parse Docker config file"));
+        logger.accept(LogEvent.info("Unable to parse Docker config file: " + configFile));
       }
       return Optional.empty();
     };

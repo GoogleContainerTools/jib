@@ -85,7 +85,7 @@ class RetrieveRegistryCredentialsStep implements Callable<Optional<Credential>> 
       }
 
       eventHandlers.dispatch(
-          LogEvent.lifecycle("No credentials could be retrieved for registry " + registry));
+          LogEvent.info("No credentials could be retrieved for registry " + registry));
       return Optional.empty();
     }
   }
