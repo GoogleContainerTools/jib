@@ -16,7 +16,6 @@
 
 package com.google.cloud.tools.jib.builder.steps;
 
-import com.google.api.client.http.HttpResponseException;
 import com.google.cloud.tools.jib.api.Credential;
 import com.google.cloud.tools.jib.api.DescriptorDigest;
 import com.google.cloud.tools.jib.api.ImageReference;
@@ -329,22 +328,5 @@ class PullBaseImageStep implements Callable<ImageAndAuthorization> {
     return Optional.of(
         JsonToImageTranslator.toImage(
             (BuildableManifestTemplate) manifestTemplate, configurationTemplate));
-  }
-
-  private Optional<RegistryAuthenticator> getRegistryAuthenticator(
-      HttpResponseException httpResponseException) throws RegistryException, IOException {
-    RegistryClient registryClient =
-        buildContext.newBaseImageRegistryClientFactory().newRegistryClient();
-    String wwwAuthenticate = httpResponseException.getHeaders().getAuthenticate();
-    if (wwwAuthenticate != null) {
-      // The registry requires us to authenticate using the Docker Token Authentication.
-      // See https://docs.docker.com/registry/spec/auth/token
-      return registryClient.getRegistryAuthenticator(wwwAuthenticate);
-    } else {
-      // It's unexpected to reach here; the registry should have returned WWW-Authenticate on
-      // the first manifest request. However, for one last attempt, let's try <server url>/v2/
-      // and hope the registry will return the header.
-      return registryClient.getRegistryAuthenticator();
-    }
   }
 }
