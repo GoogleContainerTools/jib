@@ -125,12 +125,12 @@ public class CredentialRetrieverFactoryTest {
     CredentialRetrieverFactory credentialRetrieverFactory =
         createCredentialRetrieverFactory("registry", "repo");
 
+    Path dockerConfig = Paths.get("/foo/config.json");
     DockerConfigCredentialRetriever dockerConfigCredentialRetriever =
         Mockito.mock(DockerConfigCredentialRetriever.class);
     Mockito.when(dockerConfigCredentialRetriever.retrieve(mockLogger))
         .thenReturn(Optional.of(FAKE_CREDENTIALS));
-    Mockito.when(dockerConfigCredentialRetriever.getDockerConfigFile())
-        .thenReturn(Paths.get("/foo/config.json"));
+    Mockito.when(dockerConfigCredentialRetriever.getDockerConfigFile()).thenReturn(dockerConfig);
 
     Assert.assertEquals(
         Optional.of(FAKE_CREDENTIALS),
@@ -139,7 +139,7 @@ public class CredentialRetrieverFactoryTest {
     Mockito.verify(mockLogger)
         .accept(
             LogEvent.lifecycle(
-                "Using credentials from Docker config (/foo/config.json) for registry/repo"));
+                "Using credentials from Docker config (" + dockerConfig + ") for registry/repo"));
   }
 
   @Test
