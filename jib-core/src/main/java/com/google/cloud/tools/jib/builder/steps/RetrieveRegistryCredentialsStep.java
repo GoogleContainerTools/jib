@@ -84,8 +84,6 @@ class RetrieveRegistryCredentialsStep implements Callable<Optional<Credential>> 
         }
       }
 
-      // If no credentials found, give an info (not warning because in most cases, the base image is
-      // public and does not need extra credentials) and return empty.
       eventHandlers.dispatch(
           LogEvent.info("No credentials could be retrieved for registry " + registry));
       return Optional.empty();

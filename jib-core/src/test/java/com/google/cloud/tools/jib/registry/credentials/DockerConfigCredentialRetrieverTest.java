@@ -70,20 +70,26 @@ public class DockerConfigCredentialRetrieverTest {
     Assert.assertTrue(credentials.isPresent());
     Assert.assertEquals("some", credentials.get().getUsername());
     Assert.assertEquals("other:auth", credentials.get().getPassword());
+    Mockito.verify(mockLogger)
+        .accept(
+            LogEvent.info(
+                "Docker config auths section defines credentials for some other registry"));
   }
 
   @Test
   public void testRetrieve_credentialHelperTakesPrecedenceOverAuth() {
     Mockito.when(mockDockerConfig.getCredentialHelperFor("some registry"))
         .thenReturn(mockDockerCredentialHelper);
+    Mockito.when(mockDockerCredentialHelper.getCredentialHelper())
+        .thenReturn(Paths.get("docker-credential-foo"));
     DockerConfigCredentialRetriever dockerConfigCredentialRetriever =
         new DockerConfigCredentialRetriever("some registry", dockerConfigFile);
-
-    dockerConfigCredentialRetriever.retrieve(mockDockerConfig, mockLogger);
 
     Assert.assertEquals(
         Optional.of(FAKE_CREDENTIAL),
         dockerConfigCredentialRetriever.retrieve(mockDockerConfig, mockLogger));
+    Mockito.verify(mockLogger)
+        .accept(LogEvent.info("trying docker-credential-foo for some registry"));
   }
 
   @Test
