@@ -408,6 +408,8 @@ public class FailoverHttpClientTest {
             mockHttpRequestFactory.buildRequest(Mockito.any(), urlCaptor.capture(), Mockito.any()))
         .thenReturn(mockHttpRequest);
 
+    Mockito.when(mockHttpRequest.setUseRawRedirectUrls(Mockito.anyBoolean()))
+        .thenReturn(mockHttpRequest);
     Mockito.when(mockHttpRequest.setHeaders(httpHeadersCaptor.capture()))
         .thenReturn(mockHttpRequest);
     Mockito.when(mockHttpRequest.setConnectTimeout(Mockito.anyInt())).thenReturn(mockHttpRequest);

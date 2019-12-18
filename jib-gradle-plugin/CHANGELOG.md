@@ -10,10 +10,10 @@ All notable changes to this project will be documented in this file.
 - Removed `jibDockerBuild.dockerClient` in favor of `jib.dockerClient`. ([#1983](https://github.com/GoogleContainerTools/jib/issues/1983))
 - Removed deprecated `jib.extraDirectory` configuration in favor of `jib.extraDirectories`. ([#1691](https://github.com/GoogleContainerTools/jib/issues/1691))
 - Removed deprecated `jib.container.useCurrentTimestamp` configuration in favor of `jib.container.creationTime` with `USE_CURRENT_TIMESTAMP`. ([#1897](https://github.com/GoogleContainerTools/jib/issues/1897))
+- HTTP redirection URLs are no longer sanitized in order to work around an issue with certain registries that do not conform to HTTP standards. This resolves an issue with using Red Hat OpenShift and Quay registries. ([#2106](https://github.com/GoogleContainerTools/jib/issues/2106), [#1986](https://github.com/GoogleContainerTools/jib/issues/1986#issuecomment-547610104))
 
 ### Fixed
 - `jibBuildTar` with `jib.container.format='OCI'` now builds a correctly formatted OCI archive. ([#2124](https://github.com/GoogleContainerTools/jib/issues/2124))
-
 - Now `jib.containerizingMode='packaged'` works as intended with Spring Boot projects that generate a fat JAR. ([#2178](https://github.com/GoogleContainerTools/jib/pull/2178))
 
 ## 1.8.0
