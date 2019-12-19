@@ -504,19 +504,19 @@ If the registry returns `401 Unauthorized` or `"code":"UNAUTHORIZED"`, it is oft
 Note, if Jib was able to retrieve credentials, you should see a log message like these:
 
 ```
-[INFO] Using credentials from Docker config (/home/user/.docker/config.json) for localhost:5000/java
+Using credentials from Docker config (/home/user/.docker/config.json) for localhost:5000/java
 ```
 ```
-[INFO] Using credential helper docker-credential-gcr for gcr.io/project/repo
+Using credential helper docker-credential-gcr for gcr.io/project/repo
 ```
 ```
-[INFO] Using credentials from Maven settings file for gcr.io/project/repo
+Using credentials from Maven settings file for gcr.io/project/repo
 ```
 ```
-[INFO] Using credentials from <from><auth> for gcr.io/project/repo
+Using credentials from <from><auth> for gcr.io/project/repo
 ```
 ```
-[INFO] Using credentials from to.auth for gcr.io/project/repo
+Using credentials from to.auth for gcr.io/project/repo
 ```
 
 If you encounter issues interacting with a registry other than `UNAUTHORIZED`, check ["How can I diagnose problems pulling or pushing from remote registries?"](#how-can-i-diagnose-problems-pulling-or-pushing-from-remote-registries).
