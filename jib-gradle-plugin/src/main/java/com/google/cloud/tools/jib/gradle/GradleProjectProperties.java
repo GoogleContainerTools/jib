@@ -234,8 +234,6 @@ public class GradleProjectProperties implements ProjectProperties {
         case PACKAGED:
           // Add a JAR
           Jar jarTask = (Jar) project.getTasks().findByName("jar");
-          // TODO: in newer Gradle API (6.0?), maybe
-          // "Path jarPath = jarTask.getArchiveFile().get().getAsFile().toPath()" (untested).
           Path jarPath = jarTask.getDestinationDir().toPath().resolve(jarTask.getArchiveName());
           log(LogEvent.debug("Using JAR: " + jarPath));
           javaContainerBuilder.addToClasspath(jarPath);
