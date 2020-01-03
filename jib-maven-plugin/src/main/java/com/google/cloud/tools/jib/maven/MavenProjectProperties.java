@@ -220,8 +220,7 @@ public class MavenProjectProperties implements ProjectProperties {
       throws IOException {
     try {
       if (isWarProject()) {
-        Build build = project.getBuild();
-        Path war = Paths.get(build.getDirectory(), build.getFinalName() + ".war");
+        Path war = getWarArtifact();
         Path explodedWarPath = tempDirectoryProvider.newDirectory();
         ZipUtil.unzip(war, explodedWarPath);
         return JavaContainerBuilderHelper.fromExplodedWar(javaContainerBuilder, explodedWarPath);
@@ -417,6 +416,24 @@ public class MavenProjectProperties implements ProjectProperties {
   @Override
   public boolean isOffline() {
     return session.isOffline();
+  }
+
+  @VisibleForTesting
+  Path getWarArtifact() {
+    Build build = project.getBuild();
+    String warName = build.getFinalName();
+
+    Plugin warPlugin = project.getPlugin("org.apache.maven.plugins:maven-war-plugin");
+    if (warPlugin != null) {
+      for (PluginExecution execution : warPlugin.getExecutions()) {
+        if ("default-war".equals(execution.getId())) {
+          Xpp3Dom configuration = (Xpp3Dom) execution.getConfiguration();
+          warName = getChildValue(configuration, "warName").orElse(warName);
+        }
+      }
+    }
+
+    return Paths.get(build.getDirectory(), warName + ".war");
   }
 
   /**
