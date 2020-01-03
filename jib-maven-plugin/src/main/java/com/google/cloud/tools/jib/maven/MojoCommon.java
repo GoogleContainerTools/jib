@@ -40,6 +40,8 @@ public class MojoCommon {
   @VisibleForTesting
   public static final String REQUIRED_VERSION_PROPERTY_NAME = "jib.requiredVersion";
 
+  public static final String VERSION_URL = "https://storage.googleapis.com/jib-versions/jib-maven";
+
   /**
    * Gets the list of extra directory paths from a {@link JibPluginConfiguration}. Returns {@code
    * (project dir)/src/main/jib} by default if not configured.

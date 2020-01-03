@@ -36,6 +36,8 @@ import org.slf4j.LoggerFactory;
 /** Collection of common methods to share between Gradle tasks. */
 class TaskCommon {
 
+  public static final String VERSION_URL = "https://storage.googleapis.com/jib-versions/jib-gradle";
+
   @Nullable
   static TaskProvider<Task> getWarTaskProvider(Project project) {
     if (project.getPlugins().hasPlugin(WarPlugin.class)) {
