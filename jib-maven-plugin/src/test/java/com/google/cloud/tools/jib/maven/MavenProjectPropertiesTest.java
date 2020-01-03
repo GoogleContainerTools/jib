@@ -944,6 +944,61 @@ public class MavenProjectPropertiesTest {
         .info("Spring Boot repackaging (fat JAR) detected; using the original JAR");
   }
 
+  @Test
+  public void testGetWarArtifact() {
+    Mockito.when(mockBuild.getDirectory()).thenReturn(Paths.get("/foo/bar").toString());
+    Mockito.when(mockBuild.getFinalName()).thenReturn("helloworld-1");
+
+    Assert.assertEquals(
+        Paths.get("/foo/bar/helloworld-1.war"), mavenProjectProperties.getWarArtifact());
+  }
+
+  @Test
+  public void testGetWarArtifact_warNameProperty() {
+    Mockito.when(mockBuild.getDirectory()).thenReturn(Paths.get("/foo/bar").toString());
+    Mockito.when(mockBuild.getFinalName()).thenReturn("helloworld-1");
+
+    Mockito.when(mockMavenProject.getPlugin("org.apache.maven.plugins:maven-war-plugin"))
+        .thenReturn(mockPlugin);
+    Mockito.when(mockPlugin.getExecutions()).thenReturn(Arrays.asList(mockPluginExecution));
+    Mockito.when(mockPluginExecution.getId()).thenReturn("default-war");
+    Mockito.when(mockPluginExecution.getConfiguration()).thenReturn(pluginConfiguration);
+    addXpp3DomChild(pluginConfiguration, "warName", "baz");
+
+    Assert.assertEquals(Paths.get("/foo/bar/baz.war"), mavenProjectProperties.getWarArtifact());
+  }
+
+  @Test
+  public void testGetWarArtifact_noWarNameProperty() {
+    Mockito.when(mockBuild.getDirectory()).thenReturn(Paths.get("/foo/bar").toString());
+    Mockito.when(mockBuild.getFinalName()).thenReturn("helloworld-1");
+
+    Mockito.when(mockMavenProject.getPlugin("org.apache.maven.plugins:maven-war-plugin"))
+        .thenReturn(mockPlugin);
+    Mockito.when(mockPlugin.getExecutions()).thenReturn(Arrays.asList(mockPluginExecution));
+    Mockito.when(mockPluginExecution.getId()).thenReturn("default-war");
+    Mockito.lenient().when(mockPluginExecution.getConfiguration()).thenReturn(pluginConfiguration);
+
+    Assert.assertEquals(
+        Paths.get("/foo/bar/helloworld-1.war"), mavenProjectProperties.getWarArtifact());
+  }
+
+  @Test
+  public void testGetWarArtifact_executionIdNotMatched() {
+    Mockito.when(mockBuild.getDirectory()).thenReturn(Paths.get("/foo/bar").toString());
+    Mockito.when(mockBuild.getFinalName()).thenReturn("helloworld-1");
+
+    Mockito.when(mockMavenProject.getPlugin("org.apache.maven.plugins:maven-war-plugin"))
+        .thenReturn(mockPlugin);
+    Mockito.when(mockPlugin.getExecutions()).thenReturn(Arrays.asList(mockPluginExecution));
+    Mockito.when(mockPluginExecution.getId()).thenReturn("no-id-match");
+    Mockito.lenient().when(mockPluginExecution.getConfiguration()).thenReturn(pluginConfiguration);
+    addXpp3DomChild(pluginConfiguration, "warName", "baz");
+
+    Assert.assertEquals(
+        Paths.get("/foo/bar/helloworld-1.war"), mavenProjectProperties.getWarArtifact());
+  }
+
   private BuildContext setUpBuildContext(String appRoot, ContainerizingMode containerizingMode)
       throws InvalidImageReferenceException, IOException, CacheDirectoryCreationException {
     JavaContainerBuilder javaContainerBuilder =
