@@ -22,7 +22,7 @@ import com.google.cloud.tools.jib.configuration.BuildContext;
 import com.google.cloud.tools.jib.configuration.ImageConfiguration;
 import com.google.cloud.tools.jib.docker.DockerClient;
 import com.google.cloud.tools.jib.event.EventHandlers;
-import com.google.cloud.tools.jib.filesystem.UserCacheHome;
+import com.google.cloud.tools.jib.filesystem.XdgDirectories;
 import com.google.common.base.Preconditions;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -45,7 +45,7 @@ public class Containerizer {
    * home]/google-cloud-tools-java/jib}.
    */
   public static final Path DEFAULT_BASE_CACHE_DIRECTORY =
-      UserCacheHome.getCacheHome().resolve("google-cloud-tools-java").resolve("jib");
+      XdgDirectories.getCacheHome().resolve("google-cloud-tools-java").resolve("jib");
 
   private static final String DEFAULT_TOOL_NAME = "jib-core";
 
