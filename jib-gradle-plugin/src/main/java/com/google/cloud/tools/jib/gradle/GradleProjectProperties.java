@@ -20,7 +20,6 @@ import com.google.cloud.tools.jib.api.Containerizer;
 import com.google.cloud.tools.jib.api.JavaContainerBuilder;
 import com.google.cloud.tools.jib.api.JibContainerBuilder;
 import com.google.cloud.tools.jib.api.LogEvent;
-import com.google.cloud.tools.jib.api.LogEvent.Level;
 import com.google.cloud.tools.jib.event.events.ProgressEvent;
 import com.google.cloud.tools.jib.event.events.TimerEvent;
 import com.google.cloud.tools.jib.event.progress.ProgressEventHandler;
@@ -158,8 +157,7 @@ public class GradleProjectProperties implements ProjectProperties {
     try {
       if (isWarProject()) {
         String warFilePath = getWarFilePath();
-        consoleLogger.log(
-            Level.INFO, "WAR project identified, creating WAR image from: " + warFilePath);
+        log(LogEvent.info("WAR project identified, creating WAR image from: " + warFilePath));
         Path explodedWarPath = tempDirectoryProvider.newDirectory();
         ZipUtil.unzip(Paths.get(warFilePath), explodedWarPath);
         return JavaContainerBuilderHelper.fromExplodedWar(javaContainerBuilder, explodedWarPath);
@@ -229,8 +227,7 @@ public class GradleProjectProperties implements ProjectProperties {
             javaContainerBuilder.addClasses(classesOutputDirectory.toPath());
           }
           if (classesOutputDirectories.isEmpty()) {
-            consoleLogger.log(
-                Level.WARN, "No classes files were found - did you compile your project?");
+            log(LogEvent.warn("No classes files were found - did you compile your project?"));
           }
           break;
 
@@ -238,7 +235,7 @@ public class GradleProjectProperties implements ProjectProperties {
           // Add a JAR
           Jar jarTask = (Jar) project.getTasks().findByName("jar");
           Path jarPath = jarTask.getDestinationDir().toPath().resolve(jarTask.getArchiveName());
-          consoleLogger.log(Level.DEBUG, "Using JAR: " + jarPath);
+          log(LogEvent.debug("Using JAR: " + jarPath));
           javaContainerBuilder.addToClasspath(jarPath);
           break;
 
@@ -278,8 +275,7 @@ public class GradleProjectProperties implements ProjectProperties {
     containerizer
         .addEventHandler(LogEvent.class, this::log)
         .addEventHandler(
-            TimerEvent.class,
-            new TimerEventHandler(message -> consoleLogger.log(LogEvent.Level.DEBUG, message)))
+            TimerEvent.class, new TimerEventHandler(message -> log(LogEvent.debug(message))))
         .addEventHandler(
             ProgressEvent.class,
             new ProgressEventHandler(

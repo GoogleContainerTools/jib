@@ -31,16 +31,18 @@ import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.mockito.Mockito;
 
-/** Tests for {@link UserCacheHome}. */
-public class UserCacheHomeTest {
+/** Tests for {@link XdgDirectories}. */
+public class XdgDirectoriesTest {
 
   @Rule public TemporaryFolder temporaryFolder = new TemporaryFolder();
 
   private String fakeCacheHome;
+  private String fakeConfigHome;
 
   @Before
   public void setUp() throws IOException {
     fakeCacheHome = temporaryFolder.newFolder().getPath();
+    fakeConfigHome = temporaryFolder.newFolder().getPath();
   }
 
   @Test
@@ -49,7 +51,7 @@ public class UserCacheHomeTest {
 
     Assert.assertEquals(
         Paths.get(fakeCacheHome),
-        UserCacheHome.getCacheHome(Mockito.mock(Properties.class), fakeEnvironment));
+        XdgDirectories.getCacheHome(Mockito.mock(Properties.class), fakeEnvironment));
   }
 
   @Test
@@ -60,7 +62,7 @@ public class UserCacheHomeTest {
 
     Assert.assertEquals(
         Paths.get(fakeCacheHome, ".cache"),
-        UserCacheHome.getCacheHome(fakeProperties, Collections.emptyMap()));
+        XdgDirectories.getCacheHome(fakeProperties, Collections.emptyMap()));
   }
 
   @Test
@@ -72,7 +74,7 @@ public class UserCacheHomeTest {
     Map<String, String> fakeEnvironment = ImmutableMap.of("LOCALAPPDATA", fakeCacheHome);
 
     Assert.assertEquals(
-        Paths.get(fakeCacheHome), UserCacheHome.getCacheHome(fakeProperties, fakeEnvironment));
+        Paths.get(fakeCacheHome), XdgDirectories.getCacheHome(fakeProperties, fakeEnvironment));
   }
 
   @Test
@@ -86,6 +88,52 @@ public class UserCacheHomeTest {
 
     Assert.assertEquals(
         libraryApplicationSupport,
-        UserCacheHome.getCacheHome(fakeProperties, Collections.emptyMap()));
+        XdgDirectories.getCacheHome(fakeProperties, Collections.emptyMap()));
+  }
+
+  @Test
+  public void testGetConfigHome_hasXdgConfigHome() {
+    Map<String, String> fakeEnvironment = ImmutableMap.of("XDG_CONFIG_HOME", fakeConfigHome);
+
+    Assert.assertEquals(
+        Paths.get(fakeConfigHome),
+        XdgDirectories.getConfigHome(Mockito.mock(Properties.class), fakeEnvironment));
+  }
+
+  @Test
+  public void testGetConfigHome_linux() {
+    Properties fakeProperties = new Properties();
+    fakeProperties.setProperty("user.home", fakeConfigHome);
+    fakeProperties.setProperty("os.name", "os is LiNuX");
+
+    Assert.assertEquals(
+        Paths.get(fakeConfigHome, ".config"),
+        XdgDirectories.getConfigHome(fakeProperties, Collections.emptyMap()));
+  }
+
+  @Test
+  public void testGetConfigHome_windows() {
+    Properties fakeProperties = new Properties();
+    fakeProperties.setProperty("user.home", "nonexistent");
+    fakeProperties.setProperty("os.name", "os is WiNdOwS");
+
+    Map<String, String> fakeEnvironment = ImmutableMap.of("LOCALAPPDATA", fakeConfigHome);
+
+    Assert.assertEquals(
+        Paths.get(fakeConfigHome), XdgDirectories.getConfigHome(fakeProperties, fakeEnvironment));
+  }
+
+  @Test
+  public void testGetConfigHome_mac() throws IOException {
+    Path libraryApplicationSupport = Paths.get(fakeConfigHome, "Library", "Preferences");
+    Files.createDirectories(libraryApplicationSupport);
+
+    Properties fakeProperties = new Properties();
+    fakeProperties.setProperty("user.home", fakeConfigHome);
+    fakeProperties.setProperty("os.name", "os is mAc or DaRwIn");
+
+    Assert.assertEquals(
+        libraryApplicationSupport,
+        XdgDirectories.getConfigHome(fakeProperties, Collections.emptyMap()));
   }
 }

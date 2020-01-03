@@ -353,7 +353,7 @@ public class Image {
   }
 
   public Class<? extends ManifestTemplate> getImageFormat() {
-    return this.imageFormat;
+    return imageFormat;
   }
 
   @Nullable

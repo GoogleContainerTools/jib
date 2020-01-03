@@ -110,7 +110,7 @@ public class CredentialRetrieverFactory {
    */
   public CredentialRetriever known(Credential credential, String credentialSource) {
     return () -> {
-      logGotCredentialsFrom(credentialSource);
+      logGotCredentialsFrom("credentials from " + credentialSource);
       return Optional.of(credential);
     };
   }
@@ -255,15 +255,16 @@ public class CredentialRetrieverFactory {
   CredentialRetriever dockerConfig(
       DockerConfigCredentialRetriever dockerConfigCredentialRetriever) {
     return () -> {
+      Path configFile = dockerConfigCredentialRetriever.getDockerConfigFile();
       try {
         Optional<Credential> credentials = dockerConfigCredentialRetriever.retrieve(logger);
         if (credentials.isPresent()) {
-          logGotCredentialsFrom("credentials from Docker config");
+          logGotCredentialsFrom("credentials from Docker config (" + configFile + ")");
           return credentials;
         }
 
       } catch (IOException ex) {
-        logger.accept(LogEvent.info("Unable to parse Docker config"));
+        logger.accept(LogEvent.info("Unable to parse Docker config file: " + configFile));
       }
       return Optional.empty();
     };
@@ -276,12 +277,11 @@ public class CredentialRetrieverFactory {
         dockerCredentialHelperFactory
             .create(imageReference.getRegistry(), credentialHelper)
             .retrieve();
-    logGotCredentialsFrom("credentials from " + credentialHelper.getFileName().toString());
+    logGotCredentialsFrom("credential helper " + credentialHelper.getFileName().toString());
     return credentials;
   }
 
   private void logGotCredentialsFrom(String credentialSource) {
-    logger.accept(
-        LogEvent.info("Using " + credentialSource + " for " + imageReference.getRegistry()));
+    logger.accept(LogEvent.lifecycle("Using " + credentialSource + " for " + imageReference));
   }
 }

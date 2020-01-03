@@ -108,7 +108,6 @@ public class RegistryEndpointCallerTest {
       int statusCode, @Nullable HttpHeaders headers) {
     ResponseException mock = Mockito.mock(ResponseException.class);
     Mockito.when(mock.getStatusCode()).thenReturn(statusCode);
-    Mockito.when(mock.getHeaders()).thenReturn(headers != null ? headers : new HttpHeaders());
     return mock;
   }
 
@@ -239,25 +238,6 @@ public class RegistryEndpointCallerTest {
     } catch (ResponseException ex) {
       Assert.assertSame(responseException, ex);
     }
-  }
-
-  @Test
-  public void testCall_permanentRedirect() throws IOException, RegistryException {
-    ResponseException redirectException =
-        mockResponseException(
-            RegistryEndpointCaller.STATUS_CODE_PERMANENT_REDIRECT,
-            new HttpHeaders().setLocation("https://newlocation"));
-
-    // Make httpClient.call() throw first, then succeed.
-    setUpRegistryResponse(redirectException);
-    Mockito.when(
-            mockHttpClient.call(
-                Mockito.eq("httpMethod"),
-                Mockito.eq(new URL("https://newlocation")),
-                Mockito.any()))
-        .thenReturn(mockResponse);
-
-    Assert.assertEquals("body", endpointCaller.call());
   }
 
   @Test

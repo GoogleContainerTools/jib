@@ -9,6 +9,7 @@ All notable changes to this project will be documented in this file.
 
 - Removed deprecated `<extraDirectory>` configuration in favor of `<extraDirectories>`. ([#1691](https://github.com/GoogleContainerTools/jib/issues/1691))
 - Removed deprecated `<container><useCurrentTimestamp>` configuration in favor of `<container><creationTime>` with `USE_CURRENT_TIMESTAMP`. ([#1897](https://github.com/GoogleContainerTools/jib/issues/1897))
+- HTTP redirection URLs are no longer sanitized in order to work around an issue with certain registries that do not conform to HTTP standards. This resolves an issue with using Red Hat OpenShift and Quay registries. ([#2106](https://github.com/GoogleContainerTools/jib/issues/2106), [#1986](https://github.com/GoogleContainerTools/jib/issues/1986#issuecomment-547610104))
 
 ### Fixed
 
@@ -16,6 +17,7 @@ All notable changes to this project will be documented in this file.
 - Now `<containerizingMode>packaged` works as intended with Spring Boot projects that generate a fat JAR. ([#2170](https://github.com/GoogleContainerTools/jib/issues/2170))
 - Now `<containerizingMode>packaged` correctly identifies the packaged JAR generated at a non-default location when configured with the Maven Jar Plugin's `<classifier>` and `<outputDirectory>`. ([#2170](https://github.com/GoogleContainerTools/jib/issues/2170))
 - `jib:buildTar` with `<container><format>OCI` now builds a correctly formatted OCI archive. ([#2124](https://github.com/GoogleContainerTools/jib/issues/2124))
+- Fixed an issue where configuring the `<warName>` property of the Maven WAR plugin fails the build. ([#2206](https://github.com/GoogleContainerTools/jib/issues/2206))
 
 ## 1.8.0
 

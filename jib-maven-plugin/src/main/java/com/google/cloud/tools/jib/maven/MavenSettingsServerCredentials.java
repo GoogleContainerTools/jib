@@ -34,7 +34,7 @@ import org.apache.maven.settings.crypto.SettingsDecryptionResult;
  */
 class MavenSettingsServerCredentials implements InferredAuthProvider {
 
-  static final String CREDENTIAL_SOURCE = "Maven settings";
+  static final String CREDENTIAL_SOURCE = "Maven settings file";
 
   private final Settings settings;
   private final SettingsDecrypter decrypter;
