@@ -17,6 +17,7 @@ All notable changes to this project will be documented in this file.
 - Now `<containerizingMode>packaged` works as intended with Spring Boot projects that generate a fat JAR. ([#2170](https://github.com/GoogleContainerTools/jib/issues/2170))
 - Now `<containerizingMode>packaged` correctly identifies the packaged JAR generated at a non-default location when configured with the Maven Jar Plugin's `<classifier>` and `<outputDirectory>`. ([#2170](https://github.com/GoogleContainerTools/jib/issues/2170))
 - `jib:buildTar` with `<container><format>OCI` now builds a correctly formatted OCI archive. ([#2124](https://github.com/GoogleContainerTools/jib/issues/2124))
+- Fixed an issue where configuring the `<warName>` property of the Maven WAR plugin does not work. ([#2206](https://github.com/GoogleContainerTools/jib/issues/2206))
 
 ## 1.8.0
 
