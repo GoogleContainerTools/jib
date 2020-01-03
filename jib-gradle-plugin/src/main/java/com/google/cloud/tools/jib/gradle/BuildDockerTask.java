@@ -18,6 +18,7 @@ package com.google.cloud.tools.jib.gradle;
 
 import com.google.cloud.tools.jib.api.CacheDirectoryCreationException;
 import com.google.cloud.tools.jib.api.InvalidImageReferenceException;
+import com.google.cloud.tools.jib.api.LogEvent;
 import com.google.cloud.tools.jib.docker.DockerClient;
 import com.google.cloud.tools.jib.filesystem.TempDirectoryProvider;
 import com.google.cloud.tools.jib.plugins.common.BuildStepsExecutionException;
@@ -31,9 +32,11 @@ import com.google.cloud.tools.jib.plugins.common.InvalidFilesModificationTimeExc
 import com.google.cloud.tools.jib.plugins.common.InvalidWorkingDirectoryException;
 import com.google.cloud.tools.jib.plugins.common.MainClassInferenceException;
 import com.google.cloud.tools.jib.plugins.common.PluginConfigurationProcessor;
+import com.google.cloud.tools.jib.plugins.common.UpdateChecker;
 import com.google.common.base.Preconditions;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.concurrent.Executors;
 import javax.annotation.Nullable;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.GradleException;
@@ -92,6 +95,9 @@ public class BuildDockerTask extends DefaultTask implements JibTask {
 
     GradleProjectProperties projectProperties =
         GradleProjectProperties.getForProject(getProject(), getLogger(), tempDirectoryProvider);
+    UpdateChecker updateChecker =
+        UpdateChecker.checkForUpdate(
+            projectProperties, TaskCommon.VERSION_URL, Executors.newSingleThreadExecutor());
     try {
       PluginConfigurationProcessor.createJibBuildRunnerForDockerDaemonImage(
               new GradleRawConfiguration(jibExtension),
@@ -145,6 +151,9 @@ public class BuildDockerTask extends DefaultTask implements JibTask {
 
     } finally {
       tempDirectoryProvider.close();
+      updateChecker
+          .finishUpdateCheck()
+          .ifPresent(s -> projectProperties.log(LogEvent.lifecycle(s)));
       projectProperties.waitForLoggingThread();
     }
   }

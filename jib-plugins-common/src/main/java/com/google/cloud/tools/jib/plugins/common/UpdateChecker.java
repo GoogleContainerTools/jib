@@ -16,8 +16,10 @@
 
 package com.google.cloud.tools.jib.plugins.common;
 
+import com.google.cloud.tools.jib.filesystem.XdgDirectories;
 import com.google.cloud.tools.jib.json.JsonTemplate;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
+import com.google.common.annotations.VisibleForTesting;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -44,20 +46,28 @@ public class UpdateChecker {
   /**
    * Begins checking for an update in a separate thread.
    *
-   * @param currentVersion the current version of Jib in use
+   * @param projectProperties the {@link ProjectProperties} used to get the current version/check
+   *     for offline mode
    * @param versionUrl the location to check for the latest version
    * @param executorService the {@link ExecutorService}
    * @return a new {@link UpdateChecker}
    */
   public static UpdateChecker checkForUpdate(
-      String currentVersion, String versionUrl, ExecutorService executorService) {
+      ProjectProperties projectProperties, String versionUrl, ExecutorService executorService) {
     return new UpdateChecker(
-        executorService.submit(() -> performUpdateCheck(currentVersion, versionUrl, CONFIG_DIR)));
+        executorService.submit(
+            () ->
+                performUpdateCheck(
+                    projectProperties.getVersion(),
+                    versionUrl,
+                    XdgDirectories.getConfigHome().resolve("com-google-cloud-tools").resolve("jib"),
+                    projectProperties.isOffline())));
   }
 
-  private static Optional<String> performUpdateCheck(
-      String currentVersion, String versionUrl, Path configDir) {
-    if (Boolean.getBoolean(PropertyNames.DISABLE_UPDATE_CHECKS)) {
+  @VisibleForTesting
+  static Optional<String> performUpdateCheck(
+      String currentVersion, String versionUrl, Path configDir, boolean offline) {
+    if (offline || Boolean.getBoolean(PropertyNames.DISABLE_UPDATE_CHECKS)) {
       return Optional.empty();
     }
 
@@ -72,6 +82,7 @@ public class UpdateChecker {
       } else {
         ConfigJsonTemplate config = new ConfigJsonTemplate();
         config.disableUpdateCheck = true;
+        Files.createDirectories(configDir);
         JsonTemplateMapper.writeTo(config, Files.newOutputStream(configFile));
       }
 

@@ -18,6 +18,7 @@ package com.google.cloud.tools.jib.maven;
 
 import com.google.cloud.tools.jib.api.CacheDirectoryCreationException;
 import com.google.cloud.tools.jib.api.InvalidImageReferenceException;
+import com.google.cloud.tools.jib.api.LogEvent;
 import com.google.cloud.tools.jib.filesystem.TempDirectoryProvider;
 import com.google.cloud.tools.jib.plugins.common.BuildStepsExecutionException;
 import com.google.cloud.tools.jib.plugins.common.HelpfulSuggestions;
@@ -30,8 +31,10 @@ import com.google.cloud.tools.jib.plugins.common.InvalidFilesModificationTimeExc
 import com.google.cloud.tools.jib.plugins.common.InvalidWorkingDirectoryException;
 import com.google.cloud.tools.jib.plugins.common.MainClassInferenceException;
 import com.google.cloud.tools.jib.plugins.common.PluginConfigurationProcessor;
+import com.google.cloud.tools.jib.plugins.common.UpdateChecker;
 import com.google.common.annotations.VisibleForTesting;
 import java.io.IOException;
+import java.util.concurrent.Executors;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.Mojo;
@@ -65,6 +68,9 @@ public class BuildTarMojo extends JibPluginConfiguration {
     MavenProjectProperties projectProperties =
         MavenProjectProperties.getForProject(
             getProject(), getSession(), getLog(), tempDirectoryProvider);
+    UpdateChecker updateChecker =
+        UpdateChecker.checkForUpdate(
+            projectProperties, MojoCommon.VERSION_URL, Executors.newSingleThreadExecutor());
     try {
       PluginConfigurationProcessor.createJibBuildRunnerForTarImage(
               new MavenRawConfiguration(this),
@@ -126,6 +132,9 @@ public class BuildTarMojo extends JibPluginConfiguration {
 
     } finally {
       tempDirectoryProvider.close();
+      updateChecker
+          .finishUpdateCheck()
+          .ifPresent(s -> projectProperties.log(LogEvent.lifecycle(s)));
       projectProperties.waitForLoggingThread();
       getLog().info("");
     }
