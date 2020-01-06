@@ -28,9 +28,9 @@ import java.net.URLConnection;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.attribute.FileTime;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.format.DateTimeParseException;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -100,12 +100,16 @@ public class UpdateChecker {
       // Check time of last update check
       Path lastUpdateCheck = configDir.resolve("lastUpdateCheck");
       if (Files.exists(lastUpdateCheck)) {
-        FileTime modifiedTime = Files.getLastModifiedTime(lastUpdateCheck);
-        if (modifiedTime.toInstant().plus(Duration.ofDays(1)).isAfter(Instant.now())) {
-          return Optional.empty();
+        String fileContents =
+            new String(Files.readAllBytes(lastUpdateCheck), StandardCharsets.UTF_8);
+        try {
+          Instant modifiedTime = Instant.parse(fileContents);
+          if (modifiedTime.plus(Duration.ofDays(1)).isAfter(Instant.now())) {
+            return Optional.empty();
+          }
+        } catch (DateTimeParseException ex) {
+          // Ignore parse failure; assume update check hasn't been performed
         }
-      } else {
-        Files.createFile(lastUpdateCheck);
       }
 
       // Check for update
@@ -114,7 +118,7 @@ public class UpdateChecker {
           new BufferedReader(
               new InputStreamReader(connection.getInputStream(), StandardCharsets.UTF_8));
       String latestVersion = bufferedReader.readLine().trim();
-      Files.setLastModifiedTime(lastUpdateCheck, FileTime.from(Instant.now()));
+      Files.write(lastUpdateCheck, Instant.now().toString().getBytes(StandardCharsets.UTF_8));
       if (currentVersion.equals(latestVersion)) {
         return Optional.empty();
       }

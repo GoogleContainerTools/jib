@@ -20,6 +20,7 @@ import com.google.cloud.tools.jib.http.TestWebServer;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.FileTime;
@@ -72,10 +73,10 @@ public class UpdateCheckerTest {
         "A new version of Jib (2.0.0) is available (currently using 1.0.2). Update your build "
             + "configuration to use the latest features and fixes!",
         message.get());
-    Assert.assertTrue(
-        Files.getLastModifiedTime(configDir.resolve("lastUpdateCheck"))
-            .toInstant()
-            .isAfter(before));
+    String modifiedTime =
+        new String(
+            Files.readAllBytes(configDir.resolve("lastUpdateCheck")), StandardCharsets.UTF_8);
+    Assert.assertTrue(Instant.parse(modifiedTime).isAfter(before));
   }
 
   @Test
@@ -85,10 +86,10 @@ public class UpdateCheckerTest {
     Optional<String> message =
         UpdateChecker.performUpdateCheck(false, "2.0.0", testWebServer.getEndpoint(), configDir);
     Assert.assertFalse(message.isPresent());
-    Assert.assertTrue(
-        Files.getLastModifiedTime(configDir.resolve("lastUpdateCheck"))
-            .toInstant()
-            .isAfter(before));
+    String modifiedTime =
+        new String(
+            Files.readAllBytes(configDir.resolve("lastUpdateCheck")), StandardCharsets.UTF_8);
+    Assert.assertTrue(Instant.parse(modifiedTime).isAfter(before));
   }
 
   @Test
@@ -101,24 +102,29 @@ public class UpdateCheckerTest {
         "A new version of Jib (2.0.0) is available (currently using 1.0.2). Update your build "
             + "configuration to use the latest features and fixes!",
         message.get());
-    Assert.assertTrue(
-        Files.getLastModifiedTime(configDir.resolve("lastUpdateCheck"))
-            .toInstant()
-            .isAfter(before));
+    String modifiedTime =
+        new String(
+            Files.readAllBytes(configDir.resolve("lastUpdateCheck")), StandardCharsets.UTF_8);
+    Assert.assertTrue(Instant.parse(modifiedTime).isAfter(before));
   }
 
   @Test
   public void testPerformUpdateCheck_lastUpdateCheckTooSoon() throws IOException {
     FileTime modifiedTime = FileTime.from(Instant.now().minusSeconds(12));
     setupConfigAndLastUpdateCheck();
+    Files.write(
+        configDir.resolve("lastUpdateCheck"),
+        modifiedTime.toString().getBytes(StandardCharsets.UTF_8));
     Files.setLastModifiedTime(configDir.resolve("lastUpdateCheck"), modifiedTime);
     Optional<String> message =
         UpdateChecker.performUpdateCheck(false, "1.0.2", testWebServer.getEndpoint(), configDir);
     Assert.assertFalse(message.isPresent());
 
     // lastUpdateCheck should not have changed
-    Assert.assertEquals(
-        Files.getLastModifiedTime(configDir.resolve("lastUpdateCheck")), modifiedTime);
+    String lastUpdateTime =
+        new String(
+            Files.readAllBytes(configDir.resolve("lastUpdateCheck")), StandardCharsets.UTF_8);
+    Assert.assertEquals(Instant.parse(lastUpdateTime), modifiedTime.toInstant());
   }
 
   @Test
@@ -188,9 +194,8 @@ public class UpdateCheckerTest {
   private void setupConfigAndLastUpdateCheck() throws IOException {
     UpdateChecker.ConfigJsonTemplate config = new UpdateChecker.ConfigJsonTemplate();
     JsonTemplateMapper.writeTo(config, Files.newOutputStream(configDir.resolve("config.json")));
-    Files.createFile(configDir.resolve("lastUpdateCheck"));
-    Files.setLastModifiedTime(
+    Files.write(
         configDir.resolve("lastUpdateCheck"),
-        FileTime.from(Instant.now().minus(Duration.ofDays(2))));
+        Instant.now().minus(Duration.ofDays(2)).toString().getBytes(StandardCharsets.UTF_8));
   }
 }
