@@ -542,7 +542,7 @@ See more at [Using Google Container Registry (GCR) with Minikube](https://ryanes
 
 Sometimes when upgrading your gradle build plugin versions, you may experience errors due to mismatching versions of dependencies pulled in (for example: [issues/2183](https://github.com/GoogleContainerTools/jib/issues/2183)). This can be due to the buildscript classpath loading behavior described [on gradle forums](https://discuss.gradle.org/t/version-is-root-build-gradle-buildscript-is-overriding-subproject-buildscript-dependency-versions/20746/3). 
 
-This commonly appears in multi module gradle projects. A solution to this problem is to define all your plugins in the base project and apply them selectively in your subprojects as needed. This should help alleviate the problem of the buildscript classpath using older versions of a library.
+This commonly appears in multi module gradle projects. A solution to this problem is to define all of your plugins in the base project and apply them selectively in your subprojects as needed. This should help alleviate the problem of the buildscript classpath using older versions of a library.
 
 `build.gradle` (root)
 ```
