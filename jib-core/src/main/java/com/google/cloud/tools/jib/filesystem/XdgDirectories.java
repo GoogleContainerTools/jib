@@ -33,8 +33,9 @@ import java.util.logging.Logger;
  * <ul>
  *   <li>These directories are defined by the environment variables {@code $XDG_CACHE_HOME} and
  *       {@code $XDG_CONFIG_HOME}.
- *   <li>If {@code $XDG_CACHE_HOME} / {@code $XDG_CONFIG_HOME} is either not set or empty, a default
- *       equal to {@code $HOME/.cache} / {@code $HOME/.config} should be used.
+ *   <li>If {@code $XDG_CACHE_HOME} / {@code $XDG_CONFIG_HOME} is either not set or empty, a
+ *       platform-specific equivalent of {@code $HOME/.cache} / {@code $HOME/.config} should be
+ *       used.
  * </ul>
  *
  * @see <a
