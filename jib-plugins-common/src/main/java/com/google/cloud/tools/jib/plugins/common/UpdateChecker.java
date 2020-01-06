@@ -25,6 +25,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URL;
 import java.net.URLConnection;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.FileTime;
@@ -39,71 +40,84 @@ import java.util.concurrent.Future;
 public class UpdateChecker {
 
   /** JSON template for the configuration file used to enable/disable update checks. */
-  private static class ConfigJsonTemplate implements JsonTemplate {
+  @VisibleForTesting
+  static class ConfigJsonTemplate implements JsonTemplate {
     private boolean disableUpdateCheck;
+
+    @VisibleForTesting
+    void setDisableUpdateCheck(boolean disableUpdateCheck) {
+      this.disableUpdateCheck = disableUpdateCheck;
+    }
   }
 
   /**
    * Begins checking for an update in a separate thread.
    *
-   * @param projectProperties the {@link ProjectProperties} used to get the current version/check
-   *     for offline mode
+   * @param skip if {@code true}, the update check itself will be skipped
+   * @param version the current version of Jib being used
    * @param versionUrl the location to check for the latest version
    * @param executorService the {@link ExecutorService}
    * @return a new {@link UpdateChecker}
    */
   public static UpdateChecker checkForUpdate(
-      ProjectProperties projectProperties, String versionUrl, ExecutorService executorService) {
+      boolean skip, String version, String versionUrl, ExecutorService executorService) {
     return new UpdateChecker(
         executorService.submit(
             () ->
                 performUpdateCheck(
-                    projectProperties.getVersion(),
+                    skip,
+                    version,
                     versionUrl,
-                    XdgDirectories.getConfigHome().resolve("com-google-cloud-tools").resolve("jib"),
-                    projectProperties.isOffline())));
+                    XdgDirectories.getConfigHome()
+                        .resolve("com-google-cloud-tools")
+                        .resolve("jib"))));
   }
 
   @VisibleForTesting
   static Optional<String> performUpdateCheck(
-      String currentVersion, String versionUrl, Path configDir, boolean offline) {
-    if (offline || Boolean.getBoolean(PropertyNames.DISABLE_UPDATE_CHECKS)) {
+      boolean skip, String currentVersion, String versionUrl, Path configDir) {
+    // Abort if offline or update checks are disabled
+    if (skip || Boolean.getBoolean(PropertyNames.DISABLE_UPDATE_CHECKS)) {
       return Optional.empty();
     }
 
     try {
       Path configFile = configDir.resolve("config.json");
       if (Files.exists(configFile)) {
+        // Abort of update checks are disabled
         ConfigJsonTemplate config =
             JsonTemplateMapper.readJsonFromFile(configFile, ConfigJsonTemplate.class);
         if (config.disableUpdateCheck) {
           return Optional.empty();
         }
       } else {
+        // Generate config file if it doesn't exist
         ConfigJsonTemplate config = new ConfigJsonTemplate();
-        config.disableUpdateCheck = true;
         Files.createDirectories(configDir);
         JsonTemplateMapper.writeTo(config, Files.newOutputStream(configFile));
       }
 
+      // Check time of last update check
       Path lastUpdateCheck = configDir.resolve("lastUpdateCheck");
       if (Files.exists(lastUpdateCheck)) {
         FileTime modifiedTime = Files.getLastModifiedTime(lastUpdateCheck);
         if (modifiedTime.toInstant().plus(Duration.ofDays(1)).isAfter(Instant.now())) {
           return Optional.empty();
         }
+      } else {
+        Files.createFile(lastUpdateCheck);
       }
 
+      // Check for update
       URLConnection connection = new URL(versionUrl).openConnection();
       BufferedReader bufferedReader =
-          new BufferedReader(new InputStreamReader(connection.getInputStream()));
-      String latestVersion = bufferedReader.readLine();
-
+          new BufferedReader(
+              new InputStreamReader(connection.getInputStream(), StandardCharsets.UTF_8));
+      String latestVersion = bufferedReader.readLine().trim();
       Files.setLastModifiedTime(lastUpdateCheck, FileTime.from(Instant.now()));
       if (currentVersion.equals(latestVersion)) {
         return Optional.empty();
       }
-
       return Optional.of(
           "A new version of Jib ("
               + latestVersion
@@ -120,7 +134,8 @@ public class UpdateChecker {
 
   private final Future<Optional<String>> updateMessageFuture;
 
-  private UpdateChecker(Future<Optional<String>> updateMessageFuture) {
+  @VisibleForTesting
+  UpdateChecker(Future<Optional<String>> updateMessageFuture) {
     this.updateMessageFuture = updateMessageFuture;
   }
 

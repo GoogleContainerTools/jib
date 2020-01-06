@@ -78,7 +78,10 @@ public class BuildDockerMojo extends JibPluginConfiguration {
             getProject(), getSession(), getLog(), tempDirectoryProvider);
     UpdateChecker updateChecker =
         UpdateChecker.checkForUpdate(
-            projectProperties, MojoCommon.VERSION_URL, Executors.newSingleThreadExecutor());
+            projectProperties.isOffline() || !getLog().isInfoEnabled(),
+            projectProperties.getVersion(),
+            MojoCommon.VERSION_URL,
+            Executors.newSingleThreadExecutor());
     try {
       PluginConfigurationProcessor.createJibBuildRunnerForDockerDaemonImage(
               new MavenRawConfiguration(this),
