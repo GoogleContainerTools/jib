@@ -116,7 +116,7 @@ public class XdgDirectories {
    *
    * <p>For Linux, this is {@code $HOME/.config/google-cloud-tools-java/jib/}.
    *
-   * <p>For Windows, this is {@code %LOCALAPPDATA%/Google/Jib/}.
+   * <p>For Windows, this is {@code %LOCALAPPDATA%\Google\Jib/}.
    *
    * <p>For macOS, this is {@code $HOME/Library/Preferences/Google/Jib/}.
    */
