@@ -68,43 +68,49 @@ public class XdgDirectories {
    */
   @VisibleForTesting
   static Path getCacheHome(Properties properties, Map<String, String> environment) {
+    Path windowsSubDirectory = JIB_SUBDIRECTORY_OTHER.resolve("Cache");
+    String rawOsName = properties.getProperty("os.name");
+    String osName = rawOsName.toLowerCase(Locale.ENGLISH);
+
     // Use environment variable $XDG_CACHE_HOME if set and not empty.
     String xdgCacheHome = environment.get("XDG_CACHE_HOME");
     if (xdgCacheHome != null && !xdgCacheHome.trim().isEmpty()) {
-      return Paths.get(xdgCacheHome);
+      if (osName.contains("linux")) {
+        return Paths.get(xdgCacheHome).resolve(JIB_SUBDIRECTORY_LINUX);
+      } else if (osName.contains("windows")) {
+        return Paths.get(xdgCacheHome).resolve(windowsSubDirectory);
+      }
+      return Paths.get(xdgCacheHome).resolve(JIB_SUBDIRECTORY_OTHER);
     }
 
     String userHome = properties.getProperty("user.home");
     Path xdgPath = Paths.get(userHome, ".cache");
 
-    String rawOsName = properties.getProperty("os.name");
-    String osName = rawOsName.toLowerCase(Locale.ENGLISH);
-
     if (osName.contains("linux")) {
-      return xdgPath;
+      return xdgPath.resolve(JIB_SUBDIRECTORY_LINUX);
 
     } else if (osName.contains("windows")) {
       // Use %LOCALAPPDATA% for Windows.
       String localAppDataEnv = environment.get("LOCALAPPDATA");
       if (localAppDataEnv == null || localAppDataEnv.trim().isEmpty()) {
         LOGGER.warning("LOCALAPPDATA environment is invalid or missing");
-        return xdgPath;
+        return xdgPath.resolve(windowsSubDirectory);
       }
       Path localAppData = Paths.get(localAppDataEnv);
       if (!Files.exists(localAppData)) {
         LOGGER.warning(localAppData + " does not exist");
-        return xdgPath;
+        return xdgPath.resolve(windowsSubDirectory);
       }
-      return localAppData;
+      return localAppData.resolve(windowsSubDirectory);
 
     } else if (osName.contains("mac") || osName.contains("darwin")) {
       // Use '~/Library/Application Support/' for macOS.
       Path applicationSupport = Paths.get(userHome, "Library", "Application Support");
       if (!Files.exists(applicationSupport)) {
         LOGGER.warning(applicationSupport + " does not exist");
-        return xdgPath;
+        return xdgPath.resolve(JIB_SUBDIRECTORY_OTHER);
       }
-      return applicationSupport;
+      return applicationSupport.resolve(JIB_SUBDIRECTORY_OTHER);
     }
 
     throw new IllegalStateException("Unknown OS: " + rawOsName);

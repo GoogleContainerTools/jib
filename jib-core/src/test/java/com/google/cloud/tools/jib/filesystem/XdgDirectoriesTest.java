@@ -29,7 +29,6 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
-import org.mockito.Mockito;
 
 /** Tests for {@link XdgDirectories}. */
 public class XdgDirectoriesTest {
@@ -47,11 +46,24 @@ public class XdgDirectoriesTest {
 
   @Test
   public void testGetCacheHome_hasXdgCacheHome() {
+    Properties fakeProperties = new Properties();
+    fakeProperties.setProperty("user.home", fakeCacheHome);
     Map<String, String> fakeEnvironment = ImmutableMap.of("XDG_CACHE_HOME", fakeCacheHome);
 
+    fakeProperties.setProperty("os.name", "linux");
     Assert.assertEquals(
-        Paths.get(fakeCacheHome),
-        XdgDirectories.getCacheHome(Mockito.mock(Properties.class), fakeEnvironment));
+        Paths.get(fakeCacheHome).resolve("google-cloud-tools-java").resolve("jib"),
+        XdgDirectories.getCacheHome(fakeProperties, fakeEnvironment));
+
+    fakeProperties.setProperty("os.name", "windows");
+    Assert.assertEquals(
+        Paths.get(fakeCacheHome).resolve("Google").resolve("Jib").resolve("Cache"),
+        XdgDirectories.getCacheHome(fakeProperties, fakeEnvironment));
+
+    fakeProperties.setProperty("os.name", "mac");
+    Assert.assertEquals(
+        Paths.get(fakeCacheHome).resolve("Google").resolve("Jib"),
+        XdgDirectories.getCacheHome(fakeProperties, fakeEnvironment));
   }
 
   @Test
@@ -61,7 +73,7 @@ public class XdgDirectoriesTest {
     fakeProperties.setProperty("os.name", "os is LiNuX");
 
     Assert.assertEquals(
-        Paths.get(fakeCacheHome, ".cache"),
+        Paths.get(fakeCacheHome, ".cache").resolve("google-cloud-tools-java").resolve("jib"),
         XdgDirectories.getCacheHome(fakeProperties, Collections.emptyMap()));
   }
 
@@ -74,7 +86,8 @@ public class XdgDirectoriesTest {
     Map<String, String> fakeEnvironment = ImmutableMap.of("LOCALAPPDATA", fakeCacheHome);
 
     Assert.assertEquals(
-        Paths.get(fakeCacheHome), XdgDirectories.getCacheHome(fakeProperties, fakeEnvironment));
+        Paths.get(fakeCacheHome).resolve("Google").resolve("Jib").resolve("Cache"),
+        XdgDirectories.getCacheHome(fakeProperties, fakeEnvironment));
   }
 
   @Test
@@ -87,7 +100,7 @@ public class XdgDirectoriesTest {
     fakeProperties.setProperty("os.name", "os is mAc or DaRwIn");
 
     Assert.assertEquals(
-        libraryApplicationSupport,
+        libraryApplicationSupport.resolve("Google").resolve("Jib"),
         XdgDirectories.getCacheHome(fakeProperties, Collections.emptyMap()));
   }
 

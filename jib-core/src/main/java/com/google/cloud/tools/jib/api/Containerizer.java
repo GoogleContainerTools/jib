@@ -44,8 +44,7 @@ public class Containerizer {
    * The default directory for caching the base image layers, in {@code [user cache
    * home]/google-cloud-tools-java/jib}.
    */
-  public static final Path DEFAULT_BASE_CACHE_DIRECTORY =
-      XdgDirectories.getCacheHome().resolve("google-cloud-tools-java").resolve("jib");
+  public static final Path DEFAULT_BASE_CACHE_DIRECTORY = XdgDirectories.getCacheHome();
 
   private static final String DEFAULT_TOOL_NAME = "jib-core";
 
