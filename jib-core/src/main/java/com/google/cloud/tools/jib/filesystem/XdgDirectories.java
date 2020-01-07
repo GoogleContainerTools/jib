@@ -60,60 +60,16 @@ public class XdgDirectories {
    * Returns {@code $XDG_CACHE_HOME}, if available, or resolves the OS-specific user cache home
    * based.
    *
-   * <p>For Linux, this is {@code $HOME/.cache/}.
+   * <p>For Linux, this is {@code $HOME/.cache/google-cloud-tools-java/jib/}.
    *
-   * <p>For Windows, this is {@code %LOCALAPPDATA%}.
+   * <p>For Windows, this is {@code %LOCALAPPDATA%\Google\Jib\Cache\}.
    *
-   * <p>For macOS, this is {@code $HOME/Library/Application Support/}.
+   * <p>For macOS, this is {@code $HOME/Library/Caches/Google/Jib/}.
    */
   @VisibleForTesting
   static Path getCacheHome(Properties properties, Map<String, String> environment) {
-    Path windowsSubDirectory = JIB_SUBDIRECTORY_OTHER.resolve("Cache");
-    String rawOsName = properties.getProperty("os.name");
-    String osName = rawOsName.toLowerCase(Locale.ENGLISH);
-
-    // Use environment variable $XDG_CACHE_HOME if set and not empty.
-    String xdgCacheHome = environment.get("XDG_CACHE_HOME");
-    if (xdgCacheHome != null && !xdgCacheHome.trim().isEmpty()) {
-      if (osName.contains("linux")) {
-        return Paths.get(xdgCacheHome).resolve(JIB_SUBDIRECTORY_LINUX);
-      } else if (osName.contains("windows")) {
-        return Paths.get(xdgCacheHome).resolve(windowsSubDirectory);
-      }
-      return Paths.get(xdgCacheHome).resolve(JIB_SUBDIRECTORY_OTHER);
-    }
-
-    String userHome = properties.getProperty("user.home");
-    Path xdgPath = Paths.get(userHome, ".cache");
-
-    if (osName.contains("linux")) {
-      return xdgPath.resolve(JIB_SUBDIRECTORY_LINUX);
-
-    } else if (osName.contains("windows")) {
-      // Use %LOCALAPPDATA% for Windows.
-      String localAppDataEnv = environment.get("LOCALAPPDATA");
-      if (localAppDataEnv == null || localAppDataEnv.trim().isEmpty()) {
-        LOGGER.warning("LOCALAPPDATA environment is invalid or missing");
-        return xdgPath.resolve(windowsSubDirectory);
-      }
-      Path localAppData = Paths.get(localAppDataEnv);
-      if (!Files.exists(localAppData)) {
-        LOGGER.warning(localAppData + " does not exist");
-        return xdgPath.resolve(windowsSubDirectory);
-      }
-      return localAppData.resolve(windowsSubDirectory);
-
-    } else if (osName.contains("mac") || osName.contains("darwin")) {
-      // Use '~/Library/Application Support/' for macOS.
-      Path applicationSupport = Paths.get(userHome, "Library", "Application Support");
-      if (!Files.exists(applicationSupport)) {
-        LOGGER.warning(applicationSupport + " does not exist");
-        return xdgPath.resolve(JIB_SUBDIRECTORY_OTHER);
-      }
-      return applicationSupport.resolve(JIB_SUBDIRECTORY_OTHER);
-    }
-
-    throw new IllegalStateException("Unknown OS: " + rawOsName);
+    return getOsSpecificDirectory(
+        properties, environment, "XDG_CACHE_HOME", ".cache", "Cache", "Caches");
   }
 
   /**
@@ -122,34 +78,54 @@ public class XdgDirectories {
    *
    * <p>For Linux, this is {@code $HOME/.config/google-cloud-tools-java/jib/}.
    *
-   * <p>For Windows, this is {@code %LOCALAPPDATA%\Google\Jib/}.
+   * <p>For Windows, this is {@code %LOCALAPPDATA%\Google\Jib\Config\}.
    *
    * <p>For macOS, this is {@code $HOME/Library/Preferences/Google/Jib/}.
    */
   @VisibleForTesting
   static Path getConfigHome(Properties properties, Map<String, String> environment) {
-    Path windowsSubDirectory = JIB_SUBDIRECTORY_OTHER.resolve("Config");
+    return getOsSpecificDirectory(
+        properties, environment, "XDG_CONFIG_HOME", ".config", "Config", "Preferences");
+  }
+
+  /**
+   * Helper method for resolving directories on different operating systems.
+   *
+   * @param xdgEnvVariable the name of the environment variable used to resolve the XDG base
+   *     directory
+   * @param linuxFolder ".config" or ".cache"
+   * @param windowsFolder "Config" or "Cache"
+   * @param macFolder "Preferences" or "Caches"
+   * @return the full path constructed from the given parameters
+   */
+  private static Path getOsSpecificDirectory(
+      Properties properties,
+      Map<String, String> environment,
+      String xdgEnvVariable,
+      String linuxFolder,
+      String windowsFolder,
+      String macFolder) {
+
+    Path windowsSubDirectory = JIB_SUBDIRECTORY_OTHER.resolve(windowsFolder);
     String rawOsName = properties.getProperty("os.name");
     String osName = rawOsName.toLowerCase(Locale.ENGLISH);
-
-    // Use environment variable $XDG_CONFIG_HOME if set and not empty.
-    String xdgConfigHome = environment.get("XDG_CONFIG_HOME");
-    if (xdgConfigHome != null && !xdgConfigHome.trim().isEmpty()) {
-      if (osName.contains("linux")) {
-        return Paths.get(xdgConfigHome).resolve(JIB_SUBDIRECTORY_LINUX);
-      } else if (osName.contains("windows")) {
-        return Paths.get(xdgConfigHome).resolve(windowsSubDirectory);
-      }
-      return Paths.get(xdgConfigHome).resolve(JIB_SUBDIRECTORY_OTHER);
-    }
-
+    String xdgConfigHome = environment.get(xdgEnvVariable);
     String userHome = properties.getProperty("user.home");
-    Path xdgPath = Paths.get(userHome, ".config");
+    Path xdgPath = Paths.get(userHome, linuxFolder);
 
     if (osName.contains("linux")) {
+      // Use environment variable $XDG_CONFIG_HOME if set and not empty.
+      if (xdgConfigHome != null && !xdgConfigHome.trim().isEmpty()) {
+        return Paths.get(xdgConfigHome).resolve(JIB_SUBDIRECTORY_LINUX);
+      }
       return xdgPath.resolve(JIB_SUBDIRECTORY_LINUX);
 
     } else if (osName.contains("windows")) {
+      // Use environment variable $XDG_CONFIG_HOME if set and not empty.
+      if (xdgConfigHome != null && !xdgConfigHome.trim().isEmpty()) {
+        return Paths.get(xdgConfigHome).resolve(windowsSubDirectory);
+      }
+
       // Use %LOCALAPPDATA% for Windows.
       String localAppDataEnv = environment.get("LOCALAPPDATA");
       if (localAppDataEnv == null || localAppDataEnv.trim().isEmpty()) {
@@ -164,8 +140,13 @@ public class XdgDirectories {
       return localAppData.resolve(windowsSubDirectory);
 
     } else if (osName.contains("mac") || osName.contains("darwin")) {
+      // Use environment variable $XDG_CONFIG_HOME if set and not empty.
+      if (xdgConfigHome != null && !xdgConfigHome.trim().isEmpty()) {
+        return Paths.get(xdgConfigHome).resolve(JIB_SUBDIRECTORY_OTHER);
+      }
+
       // Use '~/Library/Preferences/' for macOS.
-      Path applicationSupport = Paths.get(userHome, "Library", "Preferences");
+      Path applicationSupport = Paths.get(userHome, "Library", macFolder);
       if (!Files.exists(applicationSupport)) {
         LOGGER.warning(applicationSupport + " does not exist");
         return xdgPath.resolve(JIB_SUBDIRECTORY_OTHER);
