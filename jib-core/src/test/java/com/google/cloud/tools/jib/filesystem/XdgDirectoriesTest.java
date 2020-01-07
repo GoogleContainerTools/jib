@@ -92,7 +92,7 @@ public class XdgDirectoriesTest {
 
   @Test
   public void testGetCacheHome_mac() throws IOException {
-    Path libraryApplicationSupport = Paths.get(fakeCacheHome, "Library", "Application Support");
+    Path libraryApplicationSupport = Paths.get(fakeCacheHome, "Library", "Caches");
     Files.createDirectories(libraryApplicationSupport);
 
     Properties fakeProperties = new Properties();
