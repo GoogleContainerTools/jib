@@ -42,7 +42,7 @@ import org.gradle.util.GradleVersion;
 
 public class JibPlugin implements Plugin<Project> {
 
-  @VisibleForTesting static final GradleVersion GRADLE_MIN_VERSION = GradleVersion.version("5.0");
+  @VisibleForTesting static final GradleVersion GRADLE_MIN_VERSION = GradleVersion.version("5.1");
 
   public static final String JIB_EXTENSION_NAME = "jib";
   public static final String BUILD_IMAGE_TASK_NAME = "jib";
@@ -189,7 +189,7 @@ public class JibPlugin implements Plugin<Project> {
               if (projectAfterEvaluation.getPlugins().hasPlugin("org.springframework.boot")) {
                 Jar jar = (Jar) jarTask.get();
                 jar.setEnabled(true);
-                jar.setClassifier("original");
+                jar.getArchiveClassifier().set("original");
               }
             } else {
               // Have all tasks depend on the 'classes' task.
