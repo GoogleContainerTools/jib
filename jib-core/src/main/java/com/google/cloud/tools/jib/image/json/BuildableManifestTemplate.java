@@ -19,6 +19,7 @@ package com.google.cloud.tools.jib.image.json;
 import com.google.cloud.tools.jib.api.DescriptorDigest;
 import com.google.cloud.tools.jib.json.JsonTemplate;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import java.util.List;
 import java.util.Map;
@@ -45,6 +46,7 @@ public interface BuildableManifestTemplate extends ManifestTemplate {
     @Nullable private String mediaType;
     @Nullable private DescriptorDigest digest;
     private long size;
+    @Nullable private List<String> urls;
     @Nullable private Map<String, String> annotations;
 
     ContentDescriptorTemplate(String mediaType, long size, DescriptorDigest digest) {
@@ -73,6 +75,16 @@ public interface BuildableManifestTemplate extends ManifestTemplate {
 
     void setDigest(DescriptorDigest digest) {
       this.digest = digest;
+    }
+
+    @VisibleForTesting
+    @Nullable
+    public List<String> getUrls() {
+      return urls;
+    }
+
+    void setUrls(List<String> urls) {
+      this.urls = ImmutableList.copyOf(urls);
     }
 
     @VisibleForTesting
