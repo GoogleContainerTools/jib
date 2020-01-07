@@ -93,11 +93,24 @@ public class XdgDirectoriesTest {
 
   @Test
   public void testGetConfigHome_hasXdgConfigHome() {
+    Properties fakeProperties = new Properties();
+    fakeProperties.setProperty("user.home", fakeConfigHome);
     Map<String, String> fakeEnvironment = ImmutableMap.of("XDG_CONFIG_HOME", fakeConfigHome);
 
+    fakeProperties.setProperty("os.name", "linux");
     Assert.assertEquals(
-        Paths.get(fakeConfigHome),
-        XdgDirectories.getConfigHome(Mockito.mock(Properties.class), fakeEnvironment));
+        Paths.get(fakeConfigHome).resolve("google-cloud-tools-java").resolve("jib"),
+        XdgDirectories.getConfigHome(fakeProperties, fakeEnvironment));
+
+    fakeProperties.setProperty("os.name", "windows");
+    Assert.assertEquals(
+        Paths.get(fakeConfigHome).resolve("Google").resolve("Jib").resolve("Config"),
+        XdgDirectories.getConfigHome(fakeProperties, fakeEnvironment));
+
+    fakeProperties.setProperty("os.name", "mac");
+    Assert.assertEquals(
+        Paths.get(fakeConfigHome).resolve("Google").resolve("Jib"),
+        XdgDirectories.getConfigHome(fakeProperties, fakeEnvironment));
   }
 
   @Test
@@ -107,7 +120,7 @@ public class XdgDirectoriesTest {
     fakeProperties.setProperty("os.name", "os is LiNuX");
 
     Assert.assertEquals(
-        Paths.get(fakeConfigHome, ".config"),
+        Paths.get(fakeConfigHome, ".config").resolve("google-cloud-tools-java").resolve("jib"),
         XdgDirectories.getConfigHome(fakeProperties, Collections.emptyMap()));
   }
 
@@ -120,7 +133,8 @@ public class XdgDirectoriesTest {
     Map<String, String> fakeEnvironment = ImmutableMap.of("LOCALAPPDATA", fakeConfigHome);
 
     Assert.assertEquals(
-        Paths.get(fakeConfigHome), XdgDirectories.getConfigHome(fakeProperties, fakeEnvironment));
+        Paths.get(fakeConfigHome).resolve("Google").resolve("Jib").resolve("Config"),
+        XdgDirectories.getConfigHome(fakeProperties, fakeEnvironment));
   }
 
   @Test
@@ -133,7 +147,7 @@ public class XdgDirectoriesTest {
     fakeProperties.setProperty("os.name", "os is mAc or DaRwIn");
 
     Assert.assertEquals(
-        libraryApplicationSupport,
+        libraryApplicationSupport.resolve("Google").resolve("Jib"),
         XdgDirectories.getConfigHome(fakeProperties, Collections.emptyMap()));
   }
 }
