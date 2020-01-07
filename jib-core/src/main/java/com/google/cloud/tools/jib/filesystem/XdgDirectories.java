@@ -43,7 +43,7 @@ import java.util.logging.Logger;
  */
 public class XdgDirectories {
 
-  private static final Logger logger = Logger.getLogger(XdgDirectories.class.getName());
+  private static final Logger LOGGER = Logger.getLogger(XdgDirectories.class.getName());
   private static final Path JIB_SUBDIRECTORY_LINUX =
       Paths.get("google-cloud-tools-java").resolve("jib");
   private static final Path JIB_SUBDIRECTORY_OTHER = Paths.get("Google").resolve("Jib");
@@ -87,12 +87,12 @@ public class XdgDirectories {
       // Use %LOCALAPPDATA% for Windows.
       String localAppDataEnv = environment.get("LOCALAPPDATA");
       if (localAppDataEnv == null || localAppDataEnv.trim().isEmpty()) {
-        logger.warning("LOCALAPPDATA environment is invalid or missing");
+        LOGGER.warning("LOCALAPPDATA environment is invalid or missing");
         return xdgPath;
       }
       Path localAppData = Paths.get(localAppDataEnv);
       if (!Files.exists(localAppData)) {
-        logger.warning(localAppData + " does not exist");
+        LOGGER.warning(localAppData + " does not exist");
         return xdgPath;
       }
       return localAppData;
@@ -101,7 +101,7 @@ public class XdgDirectories {
       // Use '~/Library/Application Support/' for macOS.
       Path applicationSupport = Paths.get(userHome, "Library", "Application Support");
       if (!Files.exists(applicationSupport)) {
-        logger.warning(applicationSupport + " does not exist");
+        LOGGER.warning(applicationSupport + " does not exist");
         return xdgPath;
       }
       return applicationSupport;
@@ -147,12 +147,12 @@ public class XdgDirectories {
       // Use %LOCALAPPDATA% for Windows.
       String localAppDataEnv = environment.get("LOCALAPPDATA");
       if (localAppDataEnv == null || localAppDataEnv.trim().isEmpty()) {
-        logger.warning("LOCALAPPDATA environment is invalid or missing");
+        LOGGER.warning("LOCALAPPDATA environment is invalid or missing");
         return xdgPath.resolve(windowsSubDirectory);
       }
       Path localAppData = Paths.get(localAppDataEnv);
       if (!Files.exists(localAppData)) {
-        logger.warning(localAppData + " does not exist");
+        LOGGER.warning(localAppData + " does not exist");
         return xdgPath.resolve(windowsSubDirectory);
       }
       return localAppData.resolve(windowsSubDirectory);
@@ -161,7 +161,7 @@ public class XdgDirectories {
       // Use '~/Library/Preferences/' for macOS.
       Path applicationSupport = Paths.get(userHome, "Library", "Preferences");
       if (!Files.exists(applicationSupport)) {
-        logger.warning(applicationSupport + " does not exist");
+        LOGGER.warning(applicationSupport + " does not exist");
         return xdgPath.resolve(JIB_SUBDIRECTORY_OTHER);
       }
       return applicationSupport.resolve(JIB_SUBDIRECTORY_OTHER);
