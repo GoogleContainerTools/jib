@@ -272,7 +272,7 @@ public class JibPluginTest {
 
     Jar jarTask = (Jar) project.getTasks().getByPath(":jar");
     Assert.assertFalse(jarTask.getEnabled());
-    Assert.assertEquals("", jarTask.getClassifier());
+    Assert.assertEquals("", jarTask.getArchiveClassifier().get());
   }
 
   @Test
@@ -284,7 +284,7 @@ public class JibPluginTest {
 
     Jar jarTask = (Jar) project.getTasks().getByPath(":jar");
     Assert.assertTrue(jarTask.getEnabled());
-    Assert.assertEquals("original", jarTask.getClassifier());
+    Assert.assertEquals("original", jarTask.getArchiveClassifier().get());
   }
 
   @Test

@@ -189,7 +189,7 @@ public class JibPlugin implements Plugin<Project> {
               if (projectAfterEvaluation.getPlugins().hasPlugin("org.springframework.boot")) {
                 Jar jar = (Jar) jarTask.get();
                 jar.setEnabled(true);
-                jar.setClassifier("original");
+                jar.getArchiveClassifier().set("original");
               }
             } else {
               // Have all tasks depend on the 'classes' task.
