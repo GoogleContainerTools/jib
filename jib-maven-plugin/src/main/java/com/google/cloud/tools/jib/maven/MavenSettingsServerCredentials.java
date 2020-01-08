@@ -114,12 +114,12 @@ class MavenSettingsServerCredentials implements InferredAuthProvider {
   @Nullable
   @VisibleForTesting
   Server getServerFromMavenSettings(String registry) {
-    // Find and remove port (if present)
     Server server = settings.getServer(registry);
     if (server != null) {
       return server;
     }
 
+    // try without port
     int index = registry.lastIndexOf(':');
     if (index != -1) {
       return settings.getServer(registry.substring(0, index));
