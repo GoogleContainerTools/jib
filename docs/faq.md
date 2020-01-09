@@ -545,15 +545,14 @@ Sometimes when upgrading your gradle build plugin versions, you may experience e
 This commonly appears in multi module gradle projects. A solution to this problem is to define all of your plugins in the base project and apply them selectively in your subprojects as needed. This should help alleviate the problem of the buildscript classpath using older versions of a library.
 
 `build.gradle` (root)
-```
+```groovy
 plugins {
   id 'com.google.cloud.tools.jib' version 'x.y.z' apply false
-  ...
 }
 ```
 
 `build.gradle` (sub-project)
-```
+```groovy
 plugins {
   id 'com.google.cloud.tools.jib'
 }
