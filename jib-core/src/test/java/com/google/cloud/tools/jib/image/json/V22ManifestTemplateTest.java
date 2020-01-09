@@ -17,7 +17,9 @@
 package com.google.cloud.tools.jib.image.json;
 
 import com.google.cloud.tools.jib.api.DescriptorDigest;
+import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate.ContentDescriptorTemplate;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.io.Resources;
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -26,6 +28,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.DigestException;
+import java.util.Arrays;
+import java.util.List;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -77,5 +81,29 @@ public class V22ManifestTemplateTest {
         manifestJson.getLayers().get(0).getDigest());
 
     Assert.assertEquals(1000_000, manifestJson.getLayers().get(0).getSize());
+  }
+
+  @Test
+  public void testFromJson_optionalProperties() throws IOException, URISyntaxException {
+    Path jsonFile =
+        Paths.get(Resources.getResource("core/json/v22manifest_optional_properties.json").toURI());
+
+    V22ManifestTemplate manifestJson =
+        JsonTemplateMapper.readJsonFromFile(jsonFile, V22ManifestTemplate.class);
+
+    List<ContentDescriptorTemplate> layers = manifestJson.getLayers();
+    Assert.assertEquals(4, layers.size());
+    Assert.assertNull(layers.get(0).getUrls());
+    Assert.assertNull(layers.get(0).getAnnotations());
+
+    Assert.assertEquals(Arrays.asList("url-foo", "url-bar"), layers.get(1).getUrls());
+    Assert.assertNull(layers.get(1).getAnnotations());
+
+    Assert.assertNull(layers.get(2).getUrls());
+    Assert.assertEquals(ImmutableMap.of("key-foo", "value-foo"), layers.get(2).getAnnotations());
+
+    Assert.assertEquals(Arrays.asList("cool-url"), layers.get(3).getUrls());
+    Assert.assertEquals(
+        ImmutableMap.of("key1", "value1", "key2", "value2"), layers.get(3).getAnnotations());
   }
 }
