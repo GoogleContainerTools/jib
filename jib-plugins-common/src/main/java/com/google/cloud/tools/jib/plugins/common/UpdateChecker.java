@@ -20,6 +20,7 @@ import com.google.cloud.tools.jib.filesystem.XdgDirectories;
 import com.google.cloud.tools.jib.json.JsonTemplate;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Strings;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -28,6 +29,7 @@ import java.net.URLConnection;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.format.DateTimeParseException;
@@ -63,7 +65,7 @@ public class UpdateChecker {
       boolean skip, String version, String versionUrl, ExecutorService executorService) {
     return new UpdateChecker(
         executorService.submit(
-            () -> performUpdateCheck(skip, version, versionUrl, XdgDirectories.getConfigHome())));
+            () -> performUpdateCheck(skip, version, versionUrl, getConfigDir())));
   }
 
   @VisibleForTesting
@@ -127,6 +129,21 @@ public class UpdateChecker {
     }
 
     return Optional.empty();
+  }
+
+  /**
+   * Returns the config directory set by {@link PropertyNames#CONFIG_DIRECTORY} if not null,
+   * otherwise returns the default config directory.
+   *
+   * @return the config directory set by {@link PropertyNames#CONFIG_DIRECTORY} if not null,
+   *     otherwise returns the default config directory.
+   */
+  private static Path getConfigDir() {
+    String configDirProperty = System.getProperty(PropertyNames.CONFIG_DIRECTORY);
+    if (!Strings.isNullOrEmpty(configDirProperty)) {
+      return Paths.get(configDirProperty);
+    }
+    return XdgDirectories.getConfigHome();
   }
 
   private final Future<Optional<String>> updateMessageFuture;
