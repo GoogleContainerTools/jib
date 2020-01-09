@@ -63,14 +63,7 @@ public class UpdateChecker {
       boolean skip, String version, String versionUrl, ExecutorService executorService) {
     return new UpdateChecker(
         executorService.submit(
-            () ->
-                performUpdateCheck(
-                    skip,
-                    version,
-                    versionUrl,
-                    XdgDirectories.getConfigHome()
-                        .resolve("com-google-cloud-tools")
-                        .resolve("jib"))));
+            () -> performUpdateCheck(skip, version, versionUrl, XdgDirectories.getConfigHome())));
   }
 
   @VisibleForTesting
