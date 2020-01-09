@@ -66,7 +66,7 @@ class BuildImageStep implements Callable<Image> {
       ContainerConfiguration containerConfiguration = buildContext.getContainerConfiguration();
 
       // Base image layers
-      baseImageLayers.stream().forEach(imageBuilder::addLayer);
+      baseImageLayers.forEach(imageBuilder::addLayer);
 
       // Passthrough config and count non-empty history entries
       int nonEmptyLayerCount = 0;
