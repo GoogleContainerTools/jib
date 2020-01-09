@@ -20,6 +20,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.google.api.client.util.Base64;
 import com.google.cloud.tools.jib.ProjectInfo;
 import com.google.cloud.tools.jib.api.DescriptorDigest;
+import com.google.cloud.tools.jib.api.RegistryAuthenticationFailedException;
 import com.google.cloud.tools.jib.api.RegistryException;
 import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
@@ -282,6 +283,12 @@ public class RegistryClient {
     return callRegistryEndpoint(
         new AuthenticationMethodRetriever(
             registryEndpointRequestProperties, getUserAgent(), httpClient));
+  }
+
+  public Optional<RegistryAuthenticator> getRegistryAuthenticator(String wwwAuthenticate)
+      throws RegistryAuthenticationFailedException {
+    return RegistryAuthenticator.fromAuthenticationMethod(
+        wwwAuthenticate, registryEndpointRequestProperties, userAgent, httpClient);
   }
 
   /**

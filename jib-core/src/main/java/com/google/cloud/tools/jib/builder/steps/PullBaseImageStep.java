@@ -130,14 +130,8 @@ class PullBaseImageStep implements Callable<ImageAndAuthorization> {
             LogEvent.lifecycle(
                 "The base image requires auth. Trying again for " + imageReference + "..."));
 
-        // If failed, then, retrieve base registry credentials and try with retrieved credentials.
-        // TODO: Refactor the logic in RetrieveRegistryCredentialsStep out to
-        // registry.credentials.RegistryCredentialsRetriever.
         Credential registryCredential =
-            RetrieveRegistryCredentialsStep.forBaseImage(
-                    buildContext, progressEventDispatcher.newChildProducer())
-                .call()
-                .orElse(null);
+            RegistryCredentialRetriever.getBaseImageCredential(buildContext).orElse(null);
 
         Authorization registryAuthorization =
             registryCredential == null || registryCredential.isOAuth2RefreshToken()

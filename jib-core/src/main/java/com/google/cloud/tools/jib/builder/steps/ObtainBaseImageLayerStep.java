@@ -63,13 +63,13 @@ class ObtainBaseImageLayerStep implements Callable<PreparedLayer> {
       BuildContext buildContext,
       ProgressEventDispatcher.Factory progressEventDispatcherFactory,
       ImageAndAuthorization baseImageAndAuth,
-      Authorization pushAuthorization) {
+      PushAuthenticator pushAuthenticator) {
     Verify.verify(!buildContext.isOffline());
 
     RegistryClient targetRegistryClient =
         buildContext
             .newTargetImageRegistryClientFactory()
-            .setAuthorization(pushAuthorization)
+            .setAuthorization(pushAuthenticator.getAuthorization().orElse(null))
             .newRegistryClient();
     // TODO: also check if cross-repo blob mount is possible.
     BlobExistenceChecker blobExistenceChecker =

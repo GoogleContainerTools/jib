@@ -16,7 +16,6 @@
 
 package com.google.cloud.tools.jib.builder.steps;
 
-import com.google.cloud.tools.jib.api.Credential;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.builder.ProgressEventDispatcher;
 import com.google.cloud.tools.jib.builder.steps.LocalBaseImageSteps.LocalImage;
@@ -26,7 +25,6 @@ import com.google.cloud.tools.jib.configuration.ImageConfiguration;
 import com.google.cloud.tools.jib.docker.DockerClient;
 import com.google.cloud.tools.jib.filesystem.TempDirectoryProvider;
 import com.google.cloud.tools.jib.global.JibSystemProperties;
-import com.google.cloud.tools.jib.http.Authorization;
 import com.google.cloud.tools.jib.image.Image;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Verify;
@@ -66,8 +64,7 @@ public class StepsRunner {
     private Future<List<Future<PreparedLayer>>> baseImageLayers = failedFuture();
     @Nullable private List<Future<PreparedLayer>> applicationLayers;
     private Future<Image> builtImage = failedFuture();
-    private Future<Optional<Credential>> targetRegistryCredentials = failedFuture();
-    private Future<Optional<Authorization>> pushAuthorization = failedFuture();
+    private Future<PushAuthenticator> pushAuthenticator = failedFuture();
     private Future<List<Future<BlobDescriptor>>> baseImageLayerPushResults = failedFuture();
     private Future<List<Future<BlobDescriptor>>> applicationLayerPushResults = failedFuture();
     private Future<BlobDescriptor> containerConfigurationPushResult = failedFuture();
@@ -149,7 +146,6 @@ public class StepsRunner {
     rootProgressDescription = "building image to registry";
     boolean layersRequiredLocally = buildContext.getAlwaysCacheBaseImage();
 
-    stepsToRun.add(this::retrieveTargetRegistryCredentials);
     stepsToRun.add(this::authenticatePush);
 
     addRetrievalSteps(layersRequiredLocally);
@@ -205,28 +201,13 @@ public class StepsRunner {
     }
   }
 
-  private void retrieveTargetRegistryCredentials() {
-    ProgressEventDispatcher.Factory childProgressDispatcherFactory =
-        Verify.verifyNotNull(rootProgressDispatcher).newChildProducer();
-
-    results.targetRegistryCredentials =
-        executorService.submit(
-            RetrieveRegistryCredentialsStep.forTargetImage(
-                buildContext, childProgressDispatcherFactory));
-  }
-
   private void authenticatePush() {
     ProgressEventDispatcher.Factory childProgressDispatcherFactory =
         Verify.verifyNotNull(rootProgressDispatcher).newChildProducer();
 
-    results.pushAuthorization =
+    results.pushAuthenticator =
         executorService.submit(
-            () ->
-                new AuthenticatePushStep(
-                        buildContext,
-                        childProgressDispatcherFactory,
-                        results.targetRegistryCredentials.get().orElse(null))
-                    .call());
+            () -> new AuthenticatePushStep(buildContext, childProgressDispatcherFactory).call());
   }
 
   private void saveDocker() {
@@ -294,7 +275,7 @@ public class StepsRunner {
                             buildContext,
                             childProgressDispatcherFactory,
                             results.baseImageAndAuth.get(),
-                            results.pushAuthorization.get().orElse(null))));
+                            results.pushAuthenticator.get())));
   }
 
   private void pushBaseImageLayers() {
@@ -308,7 +289,7 @@ public class StepsRunner {
                     PushLayerStep.makeList(
                         buildContext,
                         childProgressDispatcherFactory,
-                        results.pushAuthorization.get().orElse(null),
+                        results.pushAuthenticator.get(),
                         results.baseImageLayers.get())));
   }
 
@@ -348,7 +329,7 @@ public class StepsRunner {
                 new PushContainerConfigurationStep(
                         buildContext,
                         childProgressDispatcherFactory,
-                        results.pushAuthorization.get().orElse(null),
+                        results.pushAuthenticator.get(),
                         results.builtImage.get())
                     .call());
   }
@@ -364,7 +345,7 @@ public class StepsRunner {
                     PushLayerStep.makeList(
                         buildContext,
                         childProgressDispatcherFactory,
-                        results.pushAuthorization.get().orElse(null),
+                        results.pushAuthenticator.get(),
                         Verify.verifyNotNull(results.applicationLayers))));
   }
 
@@ -383,7 +364,7 @@ public class StepsRunner {
                       PushImageStep.makeList(
                           buildContext,
                           childProgressDispatcherFactory,
-                          results.pushAuthorization.get().orElse(null),
+                          results.pushAuthenticator.get(),
                           results.containerConfigurationPushResult.get(),
                           results.builtImage.get()));
               realizeFutures(manifestPushResults);
