@@ -547,7 +547,7 @@ This commonly appears in multi module gradle projects. A solution to this proble
 `build.gradle` (root)
 ```
 plugins {
-  id `com.google.cloud.tools.jib` version `x.y.z` apply false
+  id 'com.google.cloud.tools.jib' version 'x.y.z' apply false
   ...
 }
 ```
@@ -555,7 +555,7 @@ plugins {
 `build.gradle` (sub-project)
 ```
 plugins {
-  id `com.google.cloud.tools.jib`
+  id 'com.google.cloud.tools.jib'
 }
 ```
 
