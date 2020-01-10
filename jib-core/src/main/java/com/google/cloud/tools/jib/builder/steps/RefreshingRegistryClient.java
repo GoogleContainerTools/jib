@@ -15,6 +15,7 @@ import com.google.cloud.tools.jib.registry.RegistryAuthenticator;
 import com.google.cloud.tools.jib.registry.RegistryClient;
 import com.google.cloud.tools.jib.registry.RegistryCredentialsNotSentException;
 import com.google.cloud.tools.jib.registry.credentials.CredentialRetrievalException;
+import com.google.common.base.Verify;
 import java.io.IOException;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
@@ -24,7 +25,7 @@ import javax.annotation.Nullable;
 public class RefreshingRegistryClient {
 
   private static interface RegistryAction<T> {
-    T call(RegistryClient registryClient) throws IOException, RegistryException;
+    T run(RegistryClient registryClient) throws IOException, RegistryException;
   }
 
   public static RefreshingRegistryClient create(BuildContext buildContext)
@@ -52,11 +53,10 @@ public class RefreshingRegistryClient {
 
   private final BuildContext buildContext;
   private final Credential credential;
-
-  private AtomicReference<RegistryClient> registryClient;
+  private final AtomicReference<RegistryClient> registryClient = new AtomicReference<>();
 
   RefreshingRegistryClient(
-      BuildContext buildContext, Credential credential, Authorization authorization) {
+      BuildContext buildContext, Credential credential, @Nullable Authorization authorization) {
     this.buildContext = buildContext;
     this.credential = credential;
     registryClient.set(
@@ -68,12 +68,12 @@ public class RefreshingRegistryClient {
 
   Optional<BlobDescriptor> checkBlob(DescriptorDigest blobDigest)
       throws IOException, RegistryException {
-    return run(registryClient -> registryClient.checkBlob(blobDigest));
+    return execute(registryClient -> registryClient.checkBlob(blobDigest));
   }
 
   DescriptorDigest pushManifest(BuildableManifestTemplate manifestTemplate, String imageTag)
       throws IOException, RegistryException {
-    return run(registryClient -> registryClient.pushManifest(manifestTemplate, imageTag));
+    return execute(registryClient -> registryClient.pushManifest(manifestTemplate, imageTag));
   }
 
   boolean pushBlob(
@@ -82,20 +82,20 @@ public class RefreshingRegistryClient {
       String sourceRepository,
       Consumer<Long> writtenByteCountListener)
       throws IOException, RegistryException {
-    return run(
+    return execute(
         registryClient ->
             registryClient.pushBlob(blobDigest, blob, sourceRepository, writtenByteCountListener));
   }
 
-  private <T> T run(RegistryAction<T> action) throws IOException, RegistryException {
+  private <T> T execute(RegistryAction<T> action) throws IOException, RegistryException {
     int refreshCount = 0;
     while (true) {
       try {
-        return action.call(registryClient.get());
+        return action.run(Verify.verifyNotNull(registryClient.get()));
 
       } catch (RegistryUnauthorizedException ex) {
         int code = ex.getHttpResponseException().getStatusCode();
-        if (code != HttpStatusCodes.STATUS_CODE_UNAUTHORIZED || refreshCount++ > 3) {
+        if (code != HttpStatusCodes.STATUS_CODE_UNAUTHORIZED || refreshCount++ >= 5) {
           throw ex;
         }
 

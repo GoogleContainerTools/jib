@@ -59,17 +59,20 @@ public class PushAuthenticator {
 
   public synchronized void refreshBearerToken(@Nullable String wwwAuthenticate)
       throws RegistryAuthenticationFailedException, RegistryCredentialsNotSentException {
-    Optional<RegistryAuthenticator> authenticator =
-        buildContext
-            .newTargetImageRegistryClientFactory()
-            .newRegistryClient()
-            .getRegistryAuthenticator(wwwAuthenticate);
-    if (!authenticator.isPresent()) {
-      String registry = buildContext.getTargetImageConfiguration().getImageRegistry();
-      String repository = buildContext.getTargetImageConfiguration().getImageRepository();
-      throw new RegistryAuthenticationFailedException(
-          registry, repository, "server returned 'WWW-Authenticate: Basic' HTTP header");
+    if (wwwAuthenticate != null) {
+      Optional<RegistryAuthenticator> authenticator =
+          buildContext
+              .newTargetImageRegistryClientFactory()
+              .newRegistryClient()
+              .getRegistryAuthenticator(wwwAuthenticate);
+      if (authenticator.isPresent()) {
+        authorization = authenticator.get().authenticatePush(credential);
+      }
     }
-    authorization = authenticator.get().authenticatePush(credential);
+
+    throw new RegistryAuthenticationFailedException(
+        buildContext.getTargetImageConfiguration().getImageRegistry(),
+        buildContext.getTargetImageConfiguration().getImageRepository(),
+        "server did not return 'WWW-Authenticate: Bearer' header; actual: " + wwwAuthenticate);
   }
 }
