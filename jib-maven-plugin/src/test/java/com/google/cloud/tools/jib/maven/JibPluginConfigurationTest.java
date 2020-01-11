@@ -24,6 +24,7 @@ import java.io.File;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import java.util.Properties;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.model.Build;
@@ -324,5 +325,17 @@ public class JibPluginConfigurationTest {
 
     projectProperties.setProperty("jib.containerize", "project2");
     Assert.assertFalse(testPluginConfiguration.isContainerizable());
+  }
+
+  @Test
+  public void testImageName_emptyByDefault() {
+    Assert.assertEquals(Optional.empty(), testPluginConfiguration.getImageNameOutputPath());
+  }
+
+  @Test
+  public void testImageName_setFromProperty() {
+    project.getProperties().setProperty("jib.outputPaths.imageName", "/image/path");
+    Assert.assertEquals(
+        Paths.get("/image/path"), testPluginConfiguration.getImageNameOutputPath().get());
   }
 }

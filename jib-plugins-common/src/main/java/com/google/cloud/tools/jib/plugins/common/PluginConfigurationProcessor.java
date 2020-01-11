@@ -103,7 +103,8 @@ public class PluginConfigurationProcessor {
             targetImageReference,
             rawConfiguration.getToTags())
         .writeImageDigest(rawConfiguration.getDigestOutputPath())
-        .writeImageId(rawConfiguration.getImageIdOutputPath());
+        .writeImageId(rawConfiguration.getImageIdOutputPath())
+        .writeImageName(rawConfiguration.getImageNameOutputPath().orElse(null));
   }
 
   public static JibBuildRunner createJibBuildRunnerForTarImage(
@@ -188,7 +189,8 @@ public class PluginConfigurationProcessor {
             targetImageReference,
             rawConfiguration.getToTags())
         .writeImageDigest(rawConfiguration.getDigestOutputPath())
-        .writeImageId(rawConfiguration.getImageIdOutputPath());
+        .writeImageId(rawConfiguration.getImageIdOutputPath())
+        .writeImageName(rawConfiguration.getImageNameOutputPath().orElse(null));
   }
 
   public static String getSkaffoldSyncMap(

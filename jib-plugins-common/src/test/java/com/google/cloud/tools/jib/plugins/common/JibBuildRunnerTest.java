@@ -20,6 +20,7 @@ import com.google.api.client.http.HttpResponseException;
 import com.google.api.client.http.HttpStatusCodes;
 import com.google.cloud.tools.jib.api.CacheDirectoryCreationException;
 import com.google.cloud.tools.jib.api.Containerizer;
+import com.google.cloud.tools.jib.api.ImageReference;
 import com.google.cloud.tools.jib.api.InsecureRegistryException;
 import com.google.cloud.tools.jib.api.JibContainerBuilder;
 import com.google.cloud.tools.jib.api.RegistryException;
@@ -27,6 +28,9 @@ import com.google.cloud.tools.jib.api.RegistryUnauthorizedException;
 import com.google.cloud.tools.jib.registry.RegistryCredentialsNotSentException;
 import java.io.IOException;
 import java.net.UnknownHostException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import org.apache.http.conn.HttpHostConnectException;
 import org.junit.Assert;
@@ -63,6 +67,7 @@ public class JibBuildRunnerTest {
         new JibBuildRunner(
             mockJibContainerBuilder,
             mockContainerizer,
+            Optional.empty(),
             ignored -> {},
             TEST_HELPFUL_SUGGESTIONS,
             "ignored",
@@ -214,5 +219,27 @@ public class JibBuildRunnerTest {
     } catch (BuildStepsExecutionException ex) {
       Assert.assertEquals(TEST_HELPFUL_SUGGESTIONS.none(), ex.getMessage());
     }
+  }
+
+  @Test
+  public void testBuildImage_writesImageName() throws Exception {
+    final ImageReference targetImageReference = ImageReference.parse("gcr.io/distroless/java:11");
+    final Path outputPath = temporaryFolder.newFile("jib-image.name").toPath();
+
+    final JibBuildRunner runner =
+        new JibBuildRunner(
+                mockJibContainerBuilder,
+                mockContainerizer,
+                Optional.of(targetImageReference),
+                ignored -> {},
+                TEST_HELPFUL_SUGGESTIONS,
+                "ignored",
+                "ignored")
+            .writeImageName(outputPath);
+
+    runner.runBuild();
+
+    final String output = Files.readString(outputPath);
+    Assert.assertEquals(targetImageReference.toString(), output);
   }
 }

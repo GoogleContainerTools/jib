@@ -215,6 +215,8 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
     @Nullable @Parameter private File digest;
 
     @Nullable @Parameter private File imageId;
+
+    @Nullable @Parameter private File imageName;
   }
 
   @Nullable
@@ -625,9 +627,29 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
     return getRelativeToProjectRoot(configuredPath, PropertyNames.OUTPUT_PATHS_IMAGE_ID);
   }
 
+  Optional<Path> getImageNameOutputPath() {
+    String propertyValue = getProperty(PropertyNames.OUTPUT_PATHS_IMAGE_NAME);
+    File pomValue = outputPaths.imageName;
+
+    final Path configuredPath;
+    if (propertyValue != null) {
+      configuredPath = Paths.get(propertyValue);
+    } else if (pomValue != null) {
+      configuredPath = pomValue.toPath();
+    } else {
+      configuredPath = null;
+    }
+
+    return Optional.ofNullable(configuredPath).map(this::getRelativeToProjectRoot);
+  }
+
   private Path getRelativeToProjectRoot(Path configuration, String propertyName) {
     String property = getProperty(propertyName);
     Path path = property != null ? Paths.get(property) : configuration;
+    return getRelativeToProjectRoot(path);
+  }
+
+  private Path getRelativeToProjectRoot(Path path) {
     return path.isAbsolute() ? path : getProject().getBasedir().toPath().resolve(path);
   }
 
