@@ -28,6 +28,7 @@ import com.google.cloud.tools.jib.api.RegistryUnauthorizedException;
 import com.google.cloud.tools.jib.registry.RegistryCredentialsNotSentException;
 import java.io.IOException;
 import java.net.UnknownHostException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Optional;
@@ -239,7 +240,7 @@ public class JibBuildRunnerTest {
 
     runner.runBuild();
 
-    final String output = Files.readString(outputPath);
+    final String output = new String(Files.readAllBytes(outputPath), StandardCharsets.UTF_8);
     Assert.assertEquals(targetImageReference.toString(), output);
   }
 }
