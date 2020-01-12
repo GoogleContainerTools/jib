@@ -36,7 +36,6 @@ import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Optional;
 import java.util.Set;
 import java.util.StringJoiner;
 import java.util.concurrent.ExecutionException;
@@ -100,7 +99,6 @@ public class JibBuildRunner {
     return new JibBuildRunner(
         jibContainerBuilder,
         containerizer,
-        Optional.of(targetImageReference),
         logger,
         helpfulSuggestions,
         buildMessageWithTargetImageReferences(
@@ -133,7 +131,6 @@ public class JibBuildRunner {
     return new JibBuildRunner(
         jibContainerBuilder,
         containerizer,
-        Optional.of(targetImageReference),
         logger,
         helpfulSuggestions,
         buildMessageWithTargetImageReferences(
@@ -161,7 +158,6 @@ public class JibBuildRunner {
     return new JibBuildRunner(
         jibContainerBuilder,
         containerizer,
-        Optional.empty(),
         logger,
         helpfulSuggestions,
         String.format(STARTUP_MESSAGE_FORMAT_FOR_TARBALL, outputPath.toString()),
@@ -192,7 +188,6 @@ public class JibBuildRunner {
   private final String successMessage;
   private final JibContainerBuilder jibContainerBuilder;
   private final Containerizer containerizer;
-  private final Optional<ImageReference> targetImageReference;
   private final Consumer<LogEvent> logger;
   private final HelpfulSuggestions helpfulSuggestions;
   @Nullable private Path imageDigestOutputPath;
@@ -203,14 +198,12 @@ public class JibBuildRunner {
   JibBuildRunner(
       JibContainerBuilder jibContainerBuilder,
       Containerizer containerizer,
-      Optional<ImageReference> targetImageReference,
       Consumer<LogEvent> logger,
       HelpfulSuggestions helpfulSuggestions,
       String startupMessage,
       String successMessage) {
     this.jibContainerBuilder = jibContainerBuilder;
     this.containerizer = containerizer;
-    this.targetImageReference = targetImageReference;
     this.logger = logger;
     this.helpfulSuggestions = helpfulSuggestions;
     this.startupMessage = startupMessage;
@@ -245,8 +238,8 @@ public class JibBuildRunner {
         String imageId = jibContainer.getImageId().toString();
         Files.write(imageIdOutputPath, imageId.getBytes(StandardCharsets.UTF_8));
       }
-      if (imageNameOutputPath != null && targetImageReference.isPresent()) {
-        String imageName = targetImageReference.get().toString();
+      if (imageNameOutputPath != null) {
+        String imageName = jibContainer.getTargetImage().toString();
         Files.write(imageNameOutputPath, imageName.getBytes(StandardCharsets.UTF_8));
       }
 

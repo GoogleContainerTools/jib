@@ -28,12 +28,16 @@ public class JibContainerTest {
 
   @Rule public TemporaryFolder temporaryDirectory = new TemporaryFolder();
 
+  private ImageReference targetImage1;
+  private ImageReference targetImage2;
   private DescriptorDigest digest1;
   private DescriptorDigest digest2;
   private DescriptorDigest digest3;
 
   @Before
-  public void setUp() throws DigestException {
+  public void setUp() throws DigestException, InvalidImageReferenceException {
+    targetImage1 = ImageReference.parse("gcr.io/project/image:tag");
+    targetImage2 = ImageReference.parse("gcr.io/project/image:tag2");
     digest1 =
         DescriptorDigest.fromDigest(
             "sha256:abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789");
@@ -47,20 +51,27 @@ public class JibContainerTest {
 
   @Test
   public void testCreation() {
-    JibContainer container = new JibContainer(digest1, digest2);
+    JibContainer container = new JibContainer(targetImage1, digest1, digest2);
 
+    Assert.assertEquals(targetImage1, container.getTargetImage());
     Assert.assertEquals(digest1, container.getDigest());
     Assert.assertEquals(digest2, container.getImageId());
   }
 
   @Test
   public void testEquality() {
-    JibContainer container1 = new JibContainer(digest1, digest2);
-    JibContainer container2 = new JibContainer(digest1, digest2);
-    JibContainer container3 = new JibContainer(digest2, digest3);
+    JibContainer container1 = new JibContainer(targetImage1, digest1, digest2);
+    JibContainer container2 = new JibContainer(targetImage1, digest1, digest2);
+    JibContainer container3 = new JibContainer(targetImage1, digest2, digest3);
+    JibContainer container4 = new JibContainer(targetImage2, digest2, digest3);
 
     Assert.assertEquals(container1, container2);
     Assert.assertEquals(container1.hashCode(), container2.hashCode());
+
     Assert.assertNotEquals(container1, container3);
+    Assert.assertNotEquals(container1.hashCode(), container3.hashCode());
+
+    Assert.assertNotEquals(container3, container4);
+    Assert.assertNotEquals(container3.hashCode(), container4.hashCode());
   }
 }

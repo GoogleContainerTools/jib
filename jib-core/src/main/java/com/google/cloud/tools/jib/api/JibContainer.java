@@ -16,17 +16,39 @@
 
 package com.google.cloud.tools.jib.api;
 
+import com.google.cloud.tools.jib.builder.steps.BuildResult;
+import com.google.cloud.tools.jib.configuration.BuildContext;
+import com.google.common.annotations.VisibleForTesting;
 import java.util.Objects;
 
 /** The container built by Jib. */
 public class JibContainer {
 
+  private final ImageReference targetImage;
   private final DescriptorDigest imageDigest;
   private final DescriptorDigest imageId;
 
-  JibContainer(DescriptorDigest imageDigest, DescriptorDigest imageId) {
+  @VisibleForTesting
+  JibContainer(ImageReference targetImage, DescriptorDigest imageDigest, DescriptorDigest imageId) {
+    this.targetImage = targetImage;
     this.imageDigest = imageDigest;
     this.imageId = imageId;
+  }
+
+  static JibContainer from(BuildContext buildContext, BuildResult buildResult) {
+    ImageReference targetImage = buildContext.getTargetImageConfiguration().getImage();
+    DescriptorDigest imageDigest = buildResult.getImageDigest();
+    DescriptorDigest imageId = buildResult.getImageId();
+    return new JibContainer(targetImage, imageDigest, imageId);
+  }
+
+  /**
+   * Get the target image that was built.
+   *
+   * @return the target image reference.
+   */
+  public ImageReference getTargetImage() {
+    return targetImage;
   }
 
   /**
@@ -50,7 +72,7 @@ public class JibContainer {
 
   @Override
   public int hashCode() {
-    return Objects.hash(imageDigest, imageId);
+    return Objects.hash(targetImage, imageDigest, imageId);
   }
 
   @Override
@@ -62,6 +84,8 @@ public class JibContainer {
       return false;
     }
     JibContainer otherContainer = (JibContainer) other;
-    return imageDigest.equals(otherContainer.imageDigest) && imageId.equals(otherContainer.imageId);
+    return targetImage.equals(otherContainer.targetImage)
+        && imageDigest.equals(otherContainer.imageDigest)
+        && imageId.equals(otherContainer.imageId);
   }
 }

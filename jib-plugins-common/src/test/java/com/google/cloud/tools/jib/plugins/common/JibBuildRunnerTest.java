@@ -22,6 +22,7 @@ import com.google.cloud.tools.jib.api.CacheDirectoryCreationException;
 import com.google.cloud.tools.jib.api.Containerizer;
 import com.google.cloud.tools.jib.api.ImageReference;
 import com.google.cloud.tools.jib.api.InsecureRegistryException;
+import com.google.cloud.tools.jib.api.JibContainer;
 import com.google.cloud.tools.jib.api.JibContainerBuilder;
 import com.google.cloud.tools.jib.api.RegistryException;
 import com.google.cloud.tools.jib.api.RegistryUnauthorizedException;
@@ -31,7 +32,6 @@ import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import org.apache.http.conn.HttpHostConnectException;
 import org.junit.Assert;
@@ -55,6 +55,7 @@ public class JibBuildRunnerTest {
   @Rule public TemporaryFolder temporaryFolder = new TemporaryFolder();
 
   @Mock private JibContainerBuilder mockJibContainerBuilder;
+  @Mock private JibContainer mockJibContainer;
   @Mock private Containerizer mockContainerizer;
   @Mock private RegistryUnauthorizedException mockRegistryUnauthorizedException;
   @Mock private RegistryCredentialsNotSentException mockRegistryCredentialsNotSentException;
@@ -68,7 +69,6 @@ public class JibBuildRunnerTest {
         new JibBuildRunner(
             mockJibContainerBuilder,
             mockContainerizer,
-            Optional.empty(),
             ignored -> {},
             TEST_HELPFUL_SUGGESTIONS,
             "ignored",
@@ -227,18 +227,10 @@ public class JibBuildRunnerTest {
     final ImageReference targetImageReference = ImageReference.parse("gcr.io/distroless/java:11");
     final Path outputPath = temporaryFolder.newFile("jib-image.name").toPath();
 
-    final JibBuildRunner runner =
-        new JibBuildRunner(
-                mockJibContainerBuilder,
-                mockContainerizer,
-                Optional.of(targetImageReference),
-                ignored -> {},
-                TEST_HELPFUL_SUGGESTIONS,
-                "ignored",
-                "ignored")
-            .writeImageName(outputPath);
-
-    runner.runBuild();
+    Mockito.when(mockJibContainer.getTargetImage()).thenReturn(targetImageReference);
+    Mockito.when(mockJibContainerBuilder.containerize(mockContainerizer))
+        .thenReturn(mockJibContainer);
+    testJibBuildRunner.writeImageName(outputPath).runBuild();
 
     final String output = new String(Files.readAllBytes(outputPath), StandardCharsets.UTF_8);
     Assert.assertEquals(targetImageReference.toString(), output);
