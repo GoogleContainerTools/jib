@@ -37,7 +37,6 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.concurrent.Executors;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.Mojo;
@@ -92,10 +91,7 @@ public class BuildImageMojo extends JibPluginConfiguration {
             getProject(), getSession(), getLog(), tempDirectoryProvider);
     UpdateChecker updateChecker =
         UpdateChecker.checkForUpdate(
-            projectProperties.isOffline() || !getLog().isInfoEnabled(),
-            projectProperties.getVersion(),
-            MojoCommon.VERSION_URL,
-            Executors.newSingleThreadExecutor());
+            projectProperties.isOffline() || !getLog().isInfoEnabled(), MojoCommon.VERSION_URL);
     try {
       PluginConfigurationProcessor.createJibBuildRunnerForRegistryImage(
               new MavenRawConfiguration(this),
@@ -159,7 +155,8 @@ public class BuildImageMojo extends JibPluginConfiguration {
       tempDirectoryProvider.close();
       updateChecker
           .finishUpdateCheck()
-          .ifPresent(s -> projectProperties.log(LogEvent.lifecycle(s)));
+          .ifPresent(
+              s -> projectProperties.log(LogEvent.lifecycle("\n\u001B[33m" + s + "\u001B[0m\n")));
       projectProperties.waitForLoggingThread();
       getLog().info("");
     }

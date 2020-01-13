@@ -16,16 +16,18 @@
 
 package com.google.cloud.tools.jib.plugins.common;
 
+import com.google.cloud.tools.jib.ProjectInfo;
 import com.google.cloud.tools.jib.filesystem.XdgDirectories;
 import com.google.cloud.tools.jib.json.JsonTemplate;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
 import java.net.URL;
-import java.net.URLConnection;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -36,6 +38,7 @@ import java.time.format.DateTimeParseException;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 /** Checks if Jib is up-to-date. */
@@ -56,16 +59,21 @@ public class UpdateChecker {
    * Begins checking for an update in a separate thread.
    *
    * @param skip if {@code true}, the update check itself will be skipped
-   * @param version the current version of Jib being used
    * @param versionUrl the location to check for the latest version
-   * @param executorService the {@link ExecutorService}
    * @return a new {@link UpdateChecker}
    */
-  public static UpdateChecker checkForUpdate(
-      boolean skip, String version, String versionUrl, ExecutorService executorService) {
-    return new UpdateChecker(
+  public static UpdateChecker checkForUpdate(boolean skip, String versionUrl) {
+    ExecutorService executorService = Executors.newSingleThreadExecutor();
+    Future<Optional<String>> messageFuture =
         executorService.submit(
-            () -> performUpdateCheck(skip, version, versionUrl, getConfigDir())));
+            () ->
+                performUpdateCheck(
+                    skip,
+                    Preconditions.checkNotNull(ProjectInfo.VERSION),
+                    versionUrl,
+                    getConfigDir()));
+    executorService.shutdown();
+    return new UpdateChecker(messageFuture);
   }
 
   @VisibleForTesting
@@ -79,7 +87,7 @@ public class UpdateChecker {
     try {
       Path configFile = configDir.resolve("config.json");
       if (Files.exists(configFile)) {
-        // Abort of update checks are disabled
+        // Abort if update checks are disabled
         ConfigJsonTemplate config =
             JsonTemplateMapper.readJsonFromFile(configFile, ConfigJsonTemplate.class);
         if (config.disableUpdateCheck) {
@@ -108,11 +116,14 @@ public class UpdateChecker {
       }
 
       // Check for update
-      URLConnection connection = new URL(versionUrl).openConnection();
+      HttpURLConnection connection = (HttpURLConnection) new URL(versionUrl).openConnection();
+      connection.setConnectTimeout(3000);
       BufferedReader bufferedReader =
           new BufferedReader(
               new InputStreamReader(connection.getInputStream(), StandardCharsets.UTF_8));
       String latestVersion = bufferedReader.readLine().trim();
+      connection.disconnect();
+
       Files.write(lastUpdateCheck, Instant.now().toString().getBytes(StandardCharsets.UTF_8));
       if (currentVersion.equals(latestVersion)) {
         return Optional.empty();
@@ -124,8 +135,13 @@ public class UpdateChecker {
               + currentVersion
               + "). Update your build configuration to use the latest features and fixes!");
 
-    } catch (IOException ignored) {
-      // Fail silently
+    } catch (IOException ex) {
+      try {
+        Files.deleteIfExists(configDir.resolve("config.json"));
+        Files.deleteIfExists(configDir.resolve("lastUpdateCheck"));
+      } catch (IOException ignored) {
+        // Fail silently
+      }
     }
 
     return Optional.empty();

@@ -17,7 +17,7 @@
 package com.google.cloud.tools.jib.plugins.common;
 
 import com.google.cloud.tools.jib.http.TestWebServer;
-import com.google.cloud.tools.jib.json.JsonTemplateMapper;
+import com.google.common.util.concurrent.MoreExecutors;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
@@ -30,7 +30,7 @@ import java.time.Instant;
 import java.util.Collections;
 import java.util.Optional;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -38,8 +38,12 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.contrib.java.lang.system.RestoreSystemProperties;
 import org.junit.rules.TemporaryFolder;
+import org.junit.runner.RunWith;
+import org.mockito.Mockito;
+import org.mockito.junit.MockitoJUnitRunner;
 
 /** Tests for {@link UpdateChecker} */
+@RunWith(MockitoJUnitRunner.class)
 public class UpdateCheckerTest {
 
   @Rule public final RestoreSystemProperties systemPropertyRestorer = new RestoreSystemProperties();
@@ -54,7 +58,7 @@ public class UpdateCheckerTest {
     testWebServer =
         new TestWebServer(
             false, Collections.singletonList("HTTP/1.1 200 OK\nContent-Length:5\n\n2.0.0"), 1);
-    configDir = temporaryFolder.newFolder().toPath();
+    configDir = temporaryFolder.getRoot().toPath();
   }
 
   @After
@@ -144,10 +148,9 @@ public class UpdateCheckerTest {
 
   @Test
   public void testPerformUpdateCheck_configDisabled() throws IOException {
-    UpdateChecker.ConfigJsonTemplate config = new UpdateChecker.ConfigJsonTemplate();
-    config.setDisableUpdateCheck(true);
-    JsonTemplateMapper.writeTo(config, Files.newOutputStream(configDir.resolve("config.json")));
-
+    Files.write(
+        configDir.resolve("config.json"),
+        "{\"disableUpdateCheck\":true}".getBytes(StandardCharsets.UTF_8));
     Optional<String> message =
         UpdateChecker.performUpdateCheck(true, "1.0.2", testWebServer.getEndpoint(), configDir);
     Assert.assertFalse(message.isPresent());
@@ -164,11 +167,10 @@ public class UpdateCheckerTest {
   }
 
   @Test
-  public void testFinishUpdateCheck_success() throws InterruptedException {
-    ExecutorService executorService = Executors.newSingleThreadExecutor();
+  public void testFinishUpdateCheck_success() {
+    ExecutorService executorService = MoreExecutors.newDirectExecutorService();
     UpdateChecker updateChecker =
         new UpdateChecker(executorService.submit(() -> Optional.of("Hello")));
-    Thread.sleep(100);
     Optional<String> result = updateChecker.finishUpdateCheck();
     Assert.assertTrue(result.isPresent());
     Assert.assertEquals("Hello", result.get());
@@ -176,24 +178,19 @@ public class UpdateCheckerTest {
 
   @Test
   public void testFinishUpdateCheck_notDone() {
-    ExecutorService executorService = Executors.newSingleThreadExecutor();
-    UpdateChecker updateChecker =
-        new UpdateChecker(
-            executorService.submit(
-                () -> {
-                  try {
-                    Thread.sleep(100);
-                  } catch (InterruptedException ignored) {
-                  }
-                  return Optional.of("Hello");
-                }));
+    @SuppressWarnings("unchecked")
+    Future<Optional<String>> future = (Future<Optional<String>>) Mockito.mock(Future.class);
+    Mockito.when(future.isDone()).thenReturn(false);
+
+    UpdateChecker updateChecker = new UpdateChecker(future);
     Optional<String> result = updateChecker.finishUpdateCheck();
     Assert.assertFalse(result.isPresent());
   }
 
   private void setupConfigAndLastUpdateCheck() throws IOException {
-    UpdateChecker.ConfigJsonTemplate config = new UpdateChecker.ConfigJsonTemplate();
-    JsonTemplateMapper.writeTo(config, Files.newOutputStream(configDir.resolve("config.json")));
+    Files.write(
+        configDir.resolve("config.json"),
+        "{\"disableUpdateCheck\":false}".getBytes(StandardCharsets.UTF_8));
     Files.write(
         configDir.resolve("lastUpdateCheck"),
         Instant.now().minus(Duration.ofDays(2)).toString().getBytes(StandardCharsets.UTF_8));

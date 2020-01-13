@@ -36,7 +36,6 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import java.io.IOException;
 import java.util.Optional;
-import java.util.concurrent.Executors;
 import javax.annotation.Nullable;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.GradleException;
@@ -86,10 +85,8 @@ public class BuildImageTask extends DefaultTask implements JibTask {
         GradleProjectProperties.getForProject(getProject(), getLogger(), tempDirectoryProvider);
     UpdateChecker updateChecker =
         UpdateChecker.checkForUpdate(
-            projectProperties.isOffline() || getLogger().isQuietEnabled(),
-            projectProperties.getVersion(),
-            TaskCommon.VERSION_URL,
-            Executors.newSingleThreadExecutor());
+            projectProperties.isOffline() || !getLogger().isLifecycleEnabled(),
+            TaskCommon.VERSION_URL);
     try {
       if (Strings.isNullOrEmpty(jibExtension.getTo().getImage())) {
         throw new GradleException(
@@ -154,7 +151,8 @@ public class BuildImageTask extends DefaultTask implements JibTask {
       tempDirectoryProvider.close();
       updateChecker
           .finishUpdateCheck()
-          .ifPresent(s -> projectProperties.log(LogEvent.lifecycle(s)));
+          .ifPresent(
+              s -> projectProperties.log(LogEvent.lifecycle("\n\u001B[33m" + s + "\u001B[0m\n")));
       projectProperties.waitForLoggingThread();
     }
   }

@@ -36,7 +36,6 @@ import com.google.cloud.tools.jib.plugins.common.UpdateChecker;
 import com.google.common.annotations.VisibleForTesting;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.concurrent.Executors;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.Mojo;
@@ -78,10 +77,7 @@ public class BuildDockerMojo extends JibPluginConfiguration {
             getProject(), getSession(), getLog(), tempDirectoryProvider);
     UpdateChecker updateChecker =
         UpdateChecker.checkForUpdate(
-            projectProperties.isOffline() || !getLog().isInfoEnabled(),
-            projectProperties.getVersion(),
-            MojoCommon.VERSION_URL,
-            Executors.newSingleThreadExecutor());
+            projectProperties.isOffline() || !getLog().isInfoEnabled(), MojoCommon.VERSION_URL);
     try {
       PluginConfigurationProcessor.createJibBuildRunnerForDockerDaemonImage(
               new MavenRawConfiguration(this),
@@ -145,7 +141,8 @@ public class BuildDockerMojo extends JibPluginConfiguration {
       tempDirectoryProvider.close();
       updateChecker
           .finishUpdateCheck()
-          .ifPresent(s -> projectProperties.log(LogEvent.lifecycle(s)));
+          .ifPresent(
+              s -> projectProperties.log(LogEvent.lifecycle("\n\u001B[33m" + s + "\u001B[0m\n")));
       projectProperties.waitForLoggingThread();
       getLog().info("");
     }
