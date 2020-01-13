@@ -21,11 +21,12 @@ import com.google.cloud.tools.jib.filesystem.XdgDirectories;
 import com.google.cloud.tools.jib.json.JsonTemplate;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import com.google.common.base.Verify;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
@@ -68,10 +69,7 @@ public class UpdateChecker {
         executorService.submit(
             () ->
                 performUpdateCheck(
-                    skip,
-                    Preconditions.checkNotNull(ProjectInfo.VERSION),
-                    versionUrl,
-                    getConfigDir()));
+                    skip, Verify.verifyNotNull(ProjectInfo.VERSION), versionUrl, getConfigDir()));
     executorService.shutdown();
     return new UpdateChecker(messageFuture);
   }
@@ -84,8 +82,9 @@ public class UpdateChecker {
       return Optional.empty();
     }
 
+    Path configFile = configDir.resolve("config.json");
+    Path lastUpdateCheck = configDir.resolve("lastUpdateCheck");
     try {
-      Path configFile = configDir.resolve("config.json");
       if (Files.exists(configFile)) {
         // Abort if update checks are disabled
         ConfigJsonTemplate config =
@@ -97,11 +96,12 @@ public class UpdateChecker {
         // Generate config file if it doesn't exist
         ConfigJsonTemplate config = new ConfigJsonTemplate();
         Files.createDirectories(configDir);
-        JsonTemplateMapper.writeTo(config, Files.newOutputStream(configFile));
+        try (OutputStream outputStream = Files.newOutputStream(configFile)) {
+          JsonTemplateMapper.writeTo(config, outputStream);
+        }
       }
 
       // Check time of last update check
-      Path lastUpdateCheck = configDir.resolve("lastUpdateCheck");
       if (Files.exists(lastUpdateCheck)) {
         String fileContents =
             new String(Files.readAllBytes(lastUpdateCheck), StandardCharsets.UTF_8);
@@ -117,28 +117,31 @@ public class UpdateChecker {
 
       // Check for update
       HttpURLConnection connection = (HttpURLConnection) new URL(versionUrl).openConnection();
-      connection.setConnectTimeout(3000);
-      BufferedReader bufferedReader =
-          new BufferedReader(
-              new InputStreamReader(connection.getInputStream(), StandardCharsets.UTF_8));
-      String latestVersion = bufferedReader.readLine().trim();
-      connection.disconnect();
+      try {
+        connection.setConnectTimeout(3000);
+        BufferedReader bufferedReader =
+            new BufferedReader(
+                new InputStreamReader(connection.getInputStream(), StandardCharsets.UTF_8));
+        String latestVersion = bufferedReader.readLine().trim();
+        Files.write(lastUpdateCheck, Instant.now().toString().getBytes(StandardCharsets.UTF_8));
+        if (currentVersion.equals(latestVersion)) {
+          return Optional.empty();
+        }
+        return Optional.of(
+            "A new version of Jib ("
+                + latestVersion
+                + ") is available (currently using "
+                + currentVersion
+                + "). Update your build configuration to use the latest features and fixes!");
 
-      Files.write(lastUpdateCheck, Instant.now().toString().getBytes(StandardCharsets.UTF_8));
-      if (currentVersion.equals(latestVersion)) {
-        return Optional.empty();
+      } finally {
+        connection.disconnect();
       }
-      return Optional.of(
-          "A new version of Jib ("
-              + latestVersion
-              + ") is available (currently using "
-              + currentVersion
-              + "). Update your build configuration to use the latest features and fixes!");
 
     } catch (IOException ex) {
       try {
-        Files.deleteIfExists(configDir.resolve("config.json"));
-        Files.deleteIfExists(configDir.resolve("lastUpdateCheck"));
+        Files.deleteIfExists(configFile);
+        Files.deleteIfExists(lastUpdateCheck);
       } catch (IOException ignored) {
         // Fail silently
       }

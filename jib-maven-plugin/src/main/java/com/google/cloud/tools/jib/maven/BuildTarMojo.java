@@ -134,7 +134,9 @@ public class BuildTarMojo extends JibPluginConfiguration {
       updateChecker
           .finishUpdateCheck()
           .ifPresent(
-              s -> projectProperties.log(LogEvent.lifecycle("\n\u001B[33m" + s + "\u001B[0m\n")));
+              updateMessage ->
+                  projectProperties.log(
+                      LogEvent.lifecycle("\n\u001B[33m" + updateMessage + "\u001B[0m\n")));
       projectProperties.waitForLoggingThread();
       getLog().info("");
     }

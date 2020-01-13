@@ -119,7 +119,6 @@ public class UpdateCheckerTest {
     Files.write(
         configDir.resolve("lastUpdateCheck"),
         modifiedTime.toString().getBytes(StandardCharsets.UTF_8));
-    Files.setLastModifiedTime(configDir.resolve("lastUpdateCheck"), modifiedTime);
     Optional<String> message =
         UpdateChecker.performUpdateCheck(false, "1.0.2", testWebServer.getEndpoint(), configDir);
     Assert.assertFalse(message.isPresent());

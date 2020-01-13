@@ -152,7 +152,9 @@ public class BuildImageTask extends DefaultTask implements JibTask {
       updateChecker
           .finishUpdateCheck()
           .ifPresent(
-              s -> projectProperties.log(LogEvent.lifecycle("\n\u001B[33m" + s + "\u001B[0m\n")));
+              updateMessage ->
+                  projectProperties.log(
+                      LogEvent.lifecycle("\n\u001B[33m" + updateMessage + "\u001B[0m\n")));
       projectProperties.waitForLoggingThread();
     }
   }
