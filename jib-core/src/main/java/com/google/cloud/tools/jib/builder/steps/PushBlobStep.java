@@ -77,8 +77,7 @@ class PushBlobStep implements Callable<BlobDescriptor> {
         return blobDescriptor;
       }
 
-      // If base and target images are in the same registry, then use mount/from to try mounting
-      // the
+      // If base and target images are in the same registry, then use mount/from to try mounting the
       // BLOB from the base image repository to the target image repository and possibly avoid
       // having to push the BLOB. See
       // https://docs.docker.com/registry/spec/api/#cross-repository-blob-mount for details.
