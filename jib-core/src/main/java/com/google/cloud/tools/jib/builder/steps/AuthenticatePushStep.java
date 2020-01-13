@@ -30,7 +30,7 @@ import java.util.concurrent.Callable;
  * @see <a
  *     href="https://docs.docker.com/registry/spec/auth/token/">https://docs.docker.com/registry/spec/auth/token/</a>
  */
-class AuthenticatePushStep implements Callable<PushAuthenticator> {
+class AuthenticatePushStep implements Callable<TokenRefreshingRegistryClient> {
 
   private static final String DESCRIPTION = "Authenticating push to %s";
 
@@ -44,7 +44,7 @@ class AuthenticatePushStep implements Callable<PushAuthenticator> {
   }
 
   @Override
-  public PushAuthenticator call()
+  public TokenRefreshingRegistryClient call()
       throws CredentialRetrievalException, IOException, RegistryException {
     String registry = buildContext.getTargetImageConfiguration().getImageRegistry();
     try (ProgressEventDispatcher ignored =
@@ -52,7 +52,7 @@ class AuthenticatePushStep implements Callable<PushAuthenticator> {
         TimerEventDispatcher ignored2 =
             new TimerEventDispatcher(
                 buildContext.getEventHandlers(), String.format(DESCRIPTION, registry))) {
-      return PushAuthenticator.create(buildContext);
+      return TokenRefreshingRegistryClient.create(buildContext);
     }
   }
 }

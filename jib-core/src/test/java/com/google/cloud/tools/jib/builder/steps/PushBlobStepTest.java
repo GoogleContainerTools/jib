@@ -22,7 +22,6 @@ import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.builder.ProgressEventDispatcher;
 import com.google.cloud.tools.jib.configuration.BuildContext;
 import com.google.cloud.tools.jib.configuration.ImageConfiguration;
-import com.google.cloud.tools.jib.registry.RegistryClient;
 import java.io.IOException;
 import java.util.Optional;
 import org.junit.Before;
@@ -38,7 +37,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 public class PushBlobStepTest {
 
   @Mock private BlobDescriptor blobDescriptor;
-  @Mock private RegistryClient registryClient;
+  @Mock private TokenRefreshingRegistryClient registryClient;
 
   @Mock(answer = Answers.RETURNS_MOCKS)
   private ProgressEventDispatcher.Factory progressDispatcherFactory;
@@ -48,12 +47,6 @@ public class PushBlobStepTest {
 
   @Before
   public void setUp() {
-    RegistryClient.Factory registryClientFactory =
-        Mockito.mock(RegistryClient.Factory.class, Answers.RETURNS_SELF);
-    Mockito.when(registryClientFactory.newRegistryClient()).thenReturn(registryClient);
-
-    Mockito.when(buildContext.newTargetImageRegistryClientFactory())
-        .thenReturn(registryClientFactory);
     Mockito.when(buildContext.getTargetImageConfiguration())
         .thenReturn(ImageConfiguration.builder(ImageReference.scratch()).build());
   }
@@ -90,7 +83,13 @@ public class PushBlobStepTest {
   }
 
   private void call(boolean forcePush) throws IOException, RegistryException {
-    new PushBlobStep(buildContext, progressDispatcherFactory, null, blobDescriptor, null, forcePush)
+    new PushBlobStep(
+            buildContext,
+            progressDispatcherFactory,
+            registryClient,
+            blobDescriptor,
+            null,
+            forcePush)
         .call();
   }
 }

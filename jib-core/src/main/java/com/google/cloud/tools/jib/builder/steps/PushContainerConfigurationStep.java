@@ -37,17 +37,17 @@ class PushContainerConfigurationStep implements Callable<BlobDescriptor> {
   private final BuildContext buildContext;
   private final ProgressEventDispatcher.Factory progressEventDispatcherFactory;
 
-  private final PushAuthenticator pushAuthenticator;
+  private final TokenRefreshingRegistryClient targetRegistryClient;
   private final Image builtImage;
 
   PushContainerConfigurationStep(
       BuildContext buildContext,
       ProgressEventDispatcher.Factory progressEventDispatcherFactory,
-      PushAuthenticator pushAuthenticator,
+      TokenRefreshingRegistryClient targetRegistryClient,
       Image builtImage) {
     this.buildContext = buildContext;
     this.progressEventDispatcherFactory = progressEventDispatcherFactory;
-    this.pushAuthenticator = pushAuthenticator;
+    this.targetRegistryClient = targetRegistryClient;
     this.builtImage = builtImage;
   }
 
@@ -63,7 +63,7 @@ class PushContainerConfigurationStep implements Callable<BlobDescriptor> {
       return new PushBlobStep(
               buildContext,
               progressEventDispatcher.newChildProducer(),
-              pushAuthenticator,
+              targetRegistryClient,
               Digests.computeDigest(containerConfiguration),
               Blobs.from(containerConfiguration),
               false)

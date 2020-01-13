@@ -16,11 +16,9 @@
 
 package com.google.cloud.tools.jib.builder.steps;
 
-import com.google.api.client.http.HttpStatusCodes;
 import com.google.cloud.tools.jib.api.DescriptorDigest;
 import com.google.cloud.tools.jib.api.LogEvent;
 import com.google.cloud.tools.jib.api.RegistryException;
-import com.google.cloud.tools.jib.api.RegistryUnauthorizedException;
 import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.builder.ProgressEventDispatcher;
@@ -28,7 +26,6 @@ import com.google.cloud.tools.jib.builder.TimerEventDispatcher;
 import com.google.cloud.tools.jib.configuration.BuildContext;
 import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.event.progress.ThrottledAccumulatingConsumer;
-import com.google.cloud.tools.jib.registry.RegistryClient;
 import java.io.IOException;
 import java.util.concurrent.Callable;
 
@@ -40,7 +37,7 @@ class PushBlobStep implements Callable<BlobDescriptor> {
   private final BuildContext buildContext;
   private final ProgressEventDispatcher.Factory progressEventDispatcherFactory;
 
-  private final PushAuthenticator pushAuthenticator;
+  private final TokenRefreshingRegistryClient targetRegistryClient;
   private final BlobDescriptor blobDescriptor;
   private final Blob blob;
   private final boolean forcePush;
@@ -48,13 +45,13 @@ class PushBlobStep implements Callable<BlobDescriptor> {
   PushBlobStep(
       BuildContext buildContext,
       ProgressEventDispatcher.Factory progressEventDispatcherFactory,
-      PushAuthenticator pushAuthenticator,
+      TokenRefreshingRegistryClient targetRegistryClient,
       BlobDescriptor blobDescriptor,
       Blob blob,
       boolean forcePush) {
     this.buildContext = buildContext;
     this.progressEventDispatcherFactory = progressEventDispatcherFactory;
-    this.pushAuthenticator = pushAuthenticator;
+    this.targetRegistryClient = targetRegistryClient;
     this.blobDescriptor = blobDescriptor;
     this.blob = blob;
     this.forcePush = forcePush;
@@ -72,47 +69,25 @@ class PushBlobStep implements Callable<BlobDescriptor> {
         ThrottledAccumulatingConsumer throttledProgressReporter =
             new ThrottledAccumulatingConsumer(progressEventDispatcher::dispatchProgress)) {
 
-      int refreshCount = 0;
-      while (true) {
-        try {
-          RegistryClient registryClient =
-              buildContext
-                  .newTargetImageRegistryClientFactory()
-                  .setAuthorization(pushAuthenticator.getAuthorization().orElse(null))
-                  .newRegistryClient();
-
-          // check if the BLOB is available
-          if (!forcePush && registryClient.checkBlob(blobDigest).isPresent()) {
-            eventHandlers.dispatch(
-                LogEvent.info(
-                    "Skipping push; BLOB already exists on target registry : " + blobDescriptor));
-            return blobDescriptor;
-          }
-
-          // If base and target images are in the same registry, then use mount/from to try mounting
-          // the
-          // BLOB from the base image repository to the target image repository and possibly avoid
-          // having to push the BLOB. See
-          // https://docs.docker.com/registry/spec/api/#cross-repository-blob-mount for details.
-          String baseRegistry = buildContext.getBaseImageConfiguration().getImageRegistry();
-          String baseRepository = buildContext.getBaseImageConfiguration().getImageRepository();
-          String targetRegistry = buildContext.getTargetImageConfiguration().getImageRegistry();
-          String sourceRepository = targetRegistry.equals(baseRegistry) ? baseRepository : null;
-          registryClient.pushBlob(blobDigest, blob, sourceRepository, throttledProgressReporter);
-          return blobDescriptor;
-
-        } catch (RegistryUnauthorizedException ex) {
-          int code = ex.getHttpResponseException().getStatusCode();
-          if (code != HttpStatusCodes.STATUS_CODE_UNAUTHORIZED || refreshCount++ > 5) {
-            throw ex;
-          }
-
-          // Because "pushAuthenticator" successfully authenticated with the registry initially,
-          // getting 401 here probably means the token was expired.
-          String wwwAuthenticate = ex.getHttpResponseException().getHeaders().getAuthenticate();
-          pushAuthenticator.refreshBearerToken(wwwAuthenticate);
-        }
+      // check if the BLOB is available
+      if (!forcePush && targetRegistryClient.checkBlob(blobDigest).isPresent()) {
+        eventHandlers.dispatch(
+            LogEvent.info(
+                "Skipping push; BLOB already exists on target registry : " + blobDescriptor));
+        return blobDescriptor;
       }
+
+      // If base and target images are in the same registry, then use mount/from to try mounting
+      // the
+      // BLOB from the base image repository to the target image repository and possibly avoid
+      // having to push the BLOB. See
+      // https://docs.docker.com/registry/spec/api/#cross-repository-blob-mount for details.
+      String baseRegistry = buildContext.getBaseImageConfiguration().getImageRegistry();
+      String baseRepository = buildContext.getBaseImageConfiguration().getImageRepository();
+      String targetRegistry = buildContext.getTargetImageConfiguration().getImageRegistry();
+      String sourceRepository = targetRegistry.equals(baseRegistry) ? baseRepository : null;
+      targetRegistryClient.pushBlob(blobDigest, blob, sourceRepository, throttledProgressReporter);
+      return blobDescriptor;
     }
   }
 }

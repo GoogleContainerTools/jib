@@ -55,7 +55,8 @@ public class ObtainBaseImageLayerStepTest {
   private DescriptorDigest freshLayerDigest;
 
   @Mock private Image image;
-  @Mock private RegistryClient registryClient;
+  @Mock private RegistryClient baseRegistryClient;
+  @Mock private TokenRefreshingRegistryClient targetRegistryClient;
 
   @Mock(answer = Answers.RETURNS_MOCKS)
   private BuildContext buildContext;
@@ -79,18 +80,16 @@ public class ObtainBaseImageLayerStepTest {
     Layer freshLayer = new ReferenceLayer(new BlobDescriptor(freshLayerDigest), diffId);
     Mockito.when(image.getLayers()).thenReturn(ImmutableList.of(existingLayer, freshLayer));
 
-    Mockito.when(registryClient.checkBlob(existingLayerDigest))
+    Mockito.when(targetRegistryClient.checkBlob(existingLayerDigest))
         .thenReturn(Optional.of(Mockito.mock(BlobDescriptor.class)));
-    Mockito.when(registryClient.checkBlob(freshLayerDigest)).thenReturn(Optional.empty());
+    Mockito.when(targetRegistryClient.checkBlob(freshLayerDigest)).thenReturn(Optional.empty());
 
     RegistryClient.Factory registryClientFactory =
         Mockito.mock(RegistryClient.Factory.class, Answers.RETURNS_SELF);
-    Mockito.when(registryClientFactory.newRegistryClient()).thenReturn(registryClient);
+    Mockito.when(registryClientFactory.newRegistryClient()).thenReturn(baseRegistryClient);
 
     Mockito.lenient()
         .when(buildContext.newBaseImageRegistryClientFactory())
-        .thenReturn(registryClientFactory);
-    Mockito.when(buildContext.newTargetImageRegistryClientFactory())
         .thenReturn(registryClientFactory);
 
     // necessary to prevent error from classes dealing with progress report
@@ -99,7 +98,7 @@ public class ObtainBaseImageLayerStepTest {
           progressSizeConsumer.accept(Long.valueOf(12345));
           return null;
         };
-    Mockito.when(registryClient.pullBlob(Mockito.any(), Mockito.any(), Mockito.any()))
+    Mockito.when(baseRegistryClient.pullBlob(Mockito.any(), Mockito.any(), Mockito.any()))
         .thenAnswer(AdditionalAnswers.answer(progressSizeSetter));
   }
 
@@ -108,7 +107,7 @@ public class ObtainBaseImageLayerStepTest {
       throws IOException, CacheCorruptedException, RegistryException {
     ImmutableList<ObtainBaseImageLayerStep> pullers =
         ObtainBaseImageLayerStep.makeListForSelectiveDownload(
-            buildContext, progressDispatcherFactory, baseImageAndAuth, null);
+            buildContext, progressDispatcherFactory, baseImageAndAuth, targetRegistryClient);
 
     Assert.assertEquals(2, pullers.size());
     PreparedLayer preparedExistingLayer = pullers.get(0).call();
@@ -118,13 +117,13 @@ public class ObtainBaseImageLayerStepTest {
     Assert.assertEquals(StateInTarget.MISSING, preparedFreshLayer.getStateInTarget());
 
     // Should have queried all blobs.
-    Mockito.verify(registryClient).checkBlob(existingLayerDigest);
-    Mockito.verify(registryClient).checkBlob(freshLayerDigest);
+    Mockito.verify(targetRegistryClient).checkBlob(existingLayerDigest);
+    Mockito.verify(targetRegistryClient).checkBlob(freshLayerDigest);
 
     // Only the missing layer should be pulled.
-    Mockito.verify(registryClient, Mockito.never())
+    Mockito.verify(baseRegistryClient, Mockito.never())
         .pullBlob(Mockito.eq(existingLayerDigest), Mockito.any(), Mockito.any());
-    Mockito.verify(registryClient)
+    Mockito.verify(baseRegistryClient)
         .pullBlob(Mockito.eq(freshLayerDigest), Mockito.any(), Mockito.any());
   }
 
@@ -144,13 +143,13 @@ public class ObtainBaseImageLayerStepTest {
     Assert.assertEquals(StateInTarget.UNKNOWN, preparedFreshLayer.getStateInTarget());
 
     // No blob checking should happen.
-    Mockito.verify(registryClient, Mockito.never()).checkBlob(existingLayerDigest);
-    Mockito.verify(registryClient, Mockito.never()).checkBlob(freshLayerDigest);
+    Mockito.verify(targetRegistryClient, Mockito.never()).checkBlob(existingLayerDigest);
+    Mockito.verify(targetRegistryClient, Mockito.never()).checkBlob(freshLayerDigest);
 
     // All layers should be pulled.
-    Mockito.verify(registryClient)
+    Mockito.verify(baseRegistryClient)
         .pullBlob(Mockito.eq(existingLayerDigest), Mockito.any(), Mockito.any());
-    Mockito.verify(registryClient)
+    Mockito.verify(baseRegistryClient)
         .pullBlob(Mockito.eq(freshLayerDigest), Mockito.any(), Mockito.any());
   }
 

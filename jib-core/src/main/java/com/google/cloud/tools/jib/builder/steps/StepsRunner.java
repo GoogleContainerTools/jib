@@ -64,7 +64,7 @@ public class StepsRunner {
     private Future<List<Future<PreparedLayer>>> baseImageLayers = failedFuture();
     @Nullable private List<Future<PreparedLayer>> applicationLayers;
     private Future<Image> builtImage = failedFuture();
-    private Future<PushAuthenticator> pushAuthenticator = failedFuture();
+    private Future<TokenRefreshingRegistryClient> targetRegistryClient = failedFuture();
     private Future<List<Future<BlobDescriptor>>> baseImageLayerPushResults = failedFuture();
     private Future<List<Future<BlobDescriptor>>> applicationLayerPushResults = failedFuture();
     private Future<BlobDescriptor> containerConfigurationPushResult = failedFuture();
@@ -205,7 +205,7 @@ public class StepsRunner {
     ProgressEventDispatcher.Factory childProgressDispatcherFactory =
         Verify.verifyNotNull(rootProgressDispatcher).newChildProducer();
 
-    results.pushAuthenticator =
+    results.targetRegistryClient =
         executorService.submit(
             () -> new AuthenticatePushStep(buildContext, childProgressDispatcherFactory).call());
   }
@@ -275,7 +275,7 @@ public class StepsRunner {
                             buildContext,
                             childProgressDispatcherFactory,
                             results.baseImageAndAuth.get(),
-                            results.pushAuthenticator.get())));
+                            results.targetRegistryClient.get())));
   }
 
   private void pushBaseImageLayers() {
@@ -289,7 +289,7 @@ public class StepsRunner {
                     PushLayerStep.makeList(
                         buildContext,
                         childProgressDispatcherFactory,
-                        results.pushAuthenticator.get(),
+                        results.targetRegistryClient.get(),
                         results.baseImageLayers.get())));
   }
 
@@ -329,7 +329,7 @@ public class StepsRunner {
                 new PushContainerConfigurationStep(
                         buildContext,
                         childProgressDispatcherFactory,
-                        results.pushAuthenticator.get(),
+                        results.targetRegistryClient.get(),
                         results.builtImage.get())
                     .call());
   }
@@ -345,7 +345,7 @@ public class StepsRunner {
                     PushLayerStep.makeList(
                         buildContext,
                         childProgressDispatcherFactory,
-                        results.pushAuthenticator.get(),
+                        results.targetRegistryClient.get(),
                         Verify.verifyNotNull(results.applicationLayers))));
   }
 
@@ -364,7 +364,7 @@ public class StepsRunner {
                       PushImageStep.makeList(
                           buildContext,
                           childProgressDispatcherFactory,
-                          results.pushAuthenticator.get(),
+                          results.targetRegistryClient.get(),
                           results.containerConfigurationPushResult.get(),
                           results.builtImage.get()));
               realizeFutures(manifestPushResults);

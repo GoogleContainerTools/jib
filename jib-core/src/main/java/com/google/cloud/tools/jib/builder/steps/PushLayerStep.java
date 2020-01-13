@@ -34,7 +34,7 @@ class PushLayerStep implements Callable<BlobDescriptor> {
   static ImmutableList<PushLayerStep> makeList(
       BuildContext buildContext,
       ProgressEventDispatcher.Factory progressEventDispatcherFactory,
-      PushAuthenticator pushAuthenticator,
+      TokenRefreshingRegistryClient targetRegistryClient,
       List<Future<PreparedLayer>> cachedLayers) {
     try (TimerEventDispatcher ignored =
             new TimerEventDispatcher(buildContext.getEventHandlers(), "Preparing layer pushers");
@@ -49,7 +49,7 @@ class PushLayerStep implements Callable<BlobDescriptor> {
                   new PushLayerStep(
                       buildContext,
                       progressEventDispatcher.newChildProducer(),
-                      pushAuthenticator,
+                      targetRegistryClient,
                       layer))
           .collect(ImmutableList.toImmutableList());
     }
@@ -58,17 +58,17 @@ class PushLayerStep implements Callable<BlobDescriptor> {
   private final BuildContext buildContext;
   private final ProgressEventDispatcher.Factory progressEventDispatcherFactory;
 
-  private final PushAuthenticator pushAuthenticator;
+  private final TokenRefreshingRegistryClient targetRegistryClient;
   private final Future<PreparedLayer> preparedLayer;
 
   private PushLayerStep(
       BuildContext buildContext,
       ProgressEventDispatcher.Factory progressEventDispatcherFactory,
-      PushAuthenticator pushAuthenticator,
+      TokenRefreshingRegistryClient targetRegistryClient,
       Future<PreparedLayer> preparedLayer) {
     this.buildContext = buildContext;
     this.progressEventDispatcherFactory = progressEventDispatcherFactory;
-    this.pushAuthenticator = pushAuthenticator;
+    this.targetRegistryClient = targetRegistryClient;
     this.preparedLayer = preparedLayer;
   }
 
@@ -85,7 +85,7 @@ class PushLayerStep implements Callable<BlobDescriptor> {
     return new PushBlobStep(
             buildContext,
             progressEventDispatcherFactory,
-            pushAuthenticator,
+            targetRegistryClient,
             layer.getBlobDescriptor(),
             layer.getBlob(),
             forcePush)

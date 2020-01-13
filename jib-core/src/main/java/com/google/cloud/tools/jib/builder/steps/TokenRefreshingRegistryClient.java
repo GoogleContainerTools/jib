@@ -1,3 +1,19 @@
+/*
+ * Copyright 2018 Google LLC.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
 package com.google.cloud.tools.jib.builder.steps;
 
 import com.google.api.client.http.HttpStatusCodes;
@@ -22,13 +38,14 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import javax.annotation.Nullable;
 
-public class RefreshingRegistryClient {
+/** This class is stateful and thread-safe. */
+public class TokenRefreshingRegistryClient {
 
   private static interface RegistryAction<T> {
     T run(RegistryClient registryClient) throws IOException, RegistryException;
   }
 
-  public static RefreshingRegistryClient create(BuildContext buildContext)
+  public static TokenRefreshingRegistryClient create(BuildContext buildContext)
       throws CredentialRetrievalException, IOException, RegistryException {
     Credential credential =
         RegistryCredentialRetriever.getTargetImageCredential(buildContext).orElse(null);
@@ -48,14 +65,14 @@ public class RefreshingRegistryClient {
           Authorization.fromBasicCredentials(credential.getUsername(), credential.getPassword());
     }
 
-    return new RefreshingRegistryClient(buildContext, credential, authorization);
+    return new TokenRefreshingRegistryClient(buildContext, credential, authorization);
   }
 
   private final BuildContext buildContext;
   private final Credential credential;
   private final AtomicReference<RegistryClient> registryClient = new AtomicReference<>();
 
-  RefreshingRegistryClient(
+  TokenRefreshingRegistryClient(
       BuildContext buildContext, Credential credential, @Nullable Authorization authorization) {
     this.buildContext = buildContext;
     this.credential = credential;
@@ -79,7 +96,7 @@ public class RefreshingRegistryClient {
   boolean pushBlob(
       DescriptorDigest blobDigest,
       Blob blob,
-      String sourceRepository,
+      @Nullable String sourceRepository,
       Consumer<Long> writtenByteCountListener)
       throws IOException, RegistryException {
     return execute(

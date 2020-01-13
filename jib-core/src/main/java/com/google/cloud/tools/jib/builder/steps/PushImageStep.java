@@ -16,11 +16,9 @@
 
 package com.google.cloud.tools.jib.builder.steps;
 
-import com.google.api.client.http.HttpStatusCodes;
 import com.google.cloud.tools.jib.api.DescriptorDigest;
 import com.google.cloud.tools.jib.api.LogEvent;
 import com.google.cloud.tools.jib.api.RegistryException;
-import com.google.cloud.tools.jib.api.RegistryUnauthorizedException;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.builder.ProgressEventDispatcher;
 import com.google.cloud.tools.jib.builder.TimerEventDispatcher;
@@ -30,7 +28,6 @@ import com.google.cloud.tools.jib.hash.Digests;
 import com.google.cloud.tools.jib.image.Image;
 import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
 import com.google.cloud.tools.jib.image.json.ImageToJsonTranslator;
-import com.google.cloud.tools.jib.registry.RegistryClient;
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
 import java.util.Set;
@@ -47,7 +44,7 @@ class PushImageStep implements Callable<BuildResult> {
   static ImmutableList<PushImageStep> makeList(
       BuildContext buildContext,
       ProgressEventDispatcher.Factory progressEventDispatcherFactory,
-      PushAuthenticator pushAuthenticator,
+      TokenRefreshingRegistryClient targetRegistryClient,
       BlobDescriptor containerConfigurationDigestAndSize,
       Image builtImage)
       throws IOException {
@@ -73,7 +70,7 @@ class PushImageStep implements Callable<BuildResult> {
                   new PushImageStep(
                       buildContext,
                       progressEventDispatcher.newChildProducer(),
-                      pushAuthenticator,
+                      targetRegistryClient,
                       manifestTemplate,
                       tag,
                       manifestDigest,
@@ -86,7 +83,7 @@ class PushImageStep implements Callable<BuildResult> {
   private final ProgressEventDispatcher.Factory progressEventDispatcherFactory;
 
   private final BuildableManifestTemplate manifestTemplate;
-  private final PushAuthenticator pushAuthenticator;
+  private final TokenRefreshingRegistryClient targetRegistryClient;
   private final String tag;
   private final DescriptorDigest imageDigest;
   private final DescriptorDigest imageId;
@@ -94,14 +91,14 @@ class PushImageStep implements Callable<BuildResult> {
   PushImageStep(
       BuildContext buildContext,
       ProgressEventDispatcher.Factory progressEventDispatcherFactory,
-      PushAuthenticator pushAuthenticator,
+      TokenRefreshingRegistryClient targetRegistryClient,
       BuildableManifestTemplate manifestTemplate,
       String tag,
       DescriptorDigest imageDigest,
       DescriptorDigest imageId) {
     this.buildContext = buildContext;
     this.progressEventDispatcherFactory = progressEventDispatcherFactory;
-    this.pushAuthenticator = pushAuthenticator;
+    this.targetRegistryClient = targetRegistryClient;
     this.manifestTemplate = manifestTemplate;
     this.tag = tag;
     this.imageDigest = imageDigest;
@@ -116,30 +113,8 @@ class PushImageStep implements Callable<BuildResult> {
             progressEventDispatcherFactory.create("pushing manifest for " + tag, 1)) {
       eventHandlers.dispatch(LogEvent.info("Pushing manifest for " + tag + "..."));
 
-      int refreshCount = 0;
-      while (true) {
-        try {
-          RegistryClient registryClient =
-              buildContext
-                  .newTargetImageRegistryClientFactory()
-                  .setAuthorization(pushAuthenticator.getAuthorization().orElse(null))
-                  .newRegistryClient();
-
-          registryClient.pushManifest(manifestTemplate, tag);
-          return new BuildResult(imageDigest, imageId);
-
-        } catch (RegistryUnauthorizedException ex) {
-          int code = ex.getHttpResponseException().getStatusCode();
-          if (code != HttpStatusCodes.STATUS_CODE_UNAUTHORIZED || refreshCount++ > 5) {
-            throw ex;
-          }
-
-          // Because "pushAuthenticator" successfully authenticated with the registry initially,
-          // getting 401 here probably means the token was expired.
-          String wwwAuthenticate = ex.getHttpResponseException().getHeaders().getAuthenticate();
-          pushAuthenticator.refreshBearerToken(wwwAuthenticate);
-        }
-      }
+      targetRegistryClient.pushManifest(manifestTemplate, tag);
+      return new BuildResult(imageDigest, imageId);
     }
   }
 }
