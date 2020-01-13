@@ -19,6 +19,7 @@ package com.google.cloud.tools.jib.builder.steps;
 import com.google.api.client.http.HttpStatusCodes;
 import com.google.cloud.tools.jib.api.Credential;
 import com.google.cloud.tools.jib.api.DescriptorDigest;
+import com.google.cloud.tools.jib.api.LogEvent;
 import com.google.cloud.tools.jib.api.RegistryAuthenticationFailedException;
 import com.google.cloud.tools.jib.api.RegistryException;
 import com.google.cloud.tools.jib.api.RegistryUnauthorizedException;
@@ -126,6 +127,11 @@ public class TokenRefreshingRegistryClient {
 
   private void refreshBearerToken(@Nullable String wwwAuthenticate)
       throws RegistryAuthenticationFailedException, RegistryCredentialsNotSentException {
+    String registry = buildContext.getTargetImageConfiguration().getImageRegistry();
+    String repository = buildContext.getTargetImageConfiguration().getImageRepository();
+    String message = "refreshing Bearer auth token for " + registry + "/" + repository + "...";
+    buildContext.getEventHandlers().dispatch(LogEvent.debug(message));
+
     if (wwwAuthenticate != null) {
       Optional<RegistryAuthenticator> authenticator =
           buildContext
@@ -139,12 +145,13 @@ public class TokenRefreshingRegistryClient {
                 .newTargetImageRegistryClientFactory()
                 .setAuthorization(authorization)
                 .newRegistryClient());
+        return;
       }
     }
 
     throw new RegistryAuthenticationFailedException(
-        buildContext.getTargetImageConfiguration().getImageRegistry(),
-        buildContext.getTargetImageConfiguration().getImageRepository(),
-        "server did not return 'WWW-Authenticate: Bearer' header; actual: " + wwwAuthenticate);
+        registry,
+        repository,
+        "server did not return 'WWW-Authenticate: Bearer' header: " + wwwAuthenticate);
   }
 }
