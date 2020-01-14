@@ -10,6 +10,6 @@ To disable the update check you have two options:
 
 1. set the `jib.disableUpdateChecks` system property to `true`
 2. set `disableUpdateChecks` to `true` in Jib's global config. The global config is in the following locations by default:
-    * Linux: `$HOME/.config/google-cloud-tools-java/jib/config.json`
-    * Mac: `$HOME/Library/Preferences/Google/Jib/config.json`
-    * Windows: `%LOCALAPPDATA%\Google\Jib\Config\config.json`
+    * Linux: `$XDG_CONFIG_HOME/google-cloud-tools-java/jib/config.json` (if `$XDG_CONFIG_HOME` is defined), else `$HOME/.config/google-cloud-tools-java/jib/config.json`
+    * Mac: `$XDG_CONFIG_HOME/Google/Jib/config.json` (if `$XDG_CONFIG_HOME` is defined), else `$HOME/Library/Preferences/Google/Jib/config.json`
+    * Windows: `$XDG_CONFIG_HOME\Google\Jib\Config\config.json` (if `$XDG_CONFIG_HOME` is defined), else `%LOCALAPPDATA%\Google\Jib\Config\config.json`
