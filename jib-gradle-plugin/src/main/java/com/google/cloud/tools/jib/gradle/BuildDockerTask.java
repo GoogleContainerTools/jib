@@ -36,6 +36,7 @@ import com.google.cloud.tools.jib.plugins.common.UpdateChecker;
 import com.google.common.base.Preconditions;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.Optional;
 import javax.annotation.Nullable;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.GradleException;
@@ -94,10 +95,8 @@ public class BuildDockerTask extends DefaultTask implements JibTask {
 
     GradleProjectProperties projectProperties =
         GradleProjectProperties.getForProject(getProject(), getLogger(), tempDirectoryProvider);
-    UpdateChecker updateChecker =
-        UpdateChecker.checkForUpdate(
-            projectProperties.isOffline() || !getLogger().isLifecycleEnabled(),
-            TaskCommon.VERSION_URL);
+    Optional<UpdateChecker> updateChecker =
+        TaskCommon.newUpdateChecker(projectProperties, getLogger());
     try {
       PluginConfigurationProcessor.createJibBuildRunnerForDockerDaemonImage(
               new GradleRawConfiguration(jibExtension),
@@ -152,7 +151,7 @@ public class BuildDockerTask extends DefaultTask implements JibTask {
     } finally {
       tempDirectoryProvider.close();
       updateChecker
-          .finishUpdateCheck()
+          .flatMap(UpdateChecker::finishUpdateCheck)
           .ifPresent(
               updateMessage ->
                   projectProperties.log(

@@ -59,26 +59,25 @@ public class UpdateChecker {
   /**
    * Begins checking for an update in a separate thread.
    *
-   * @param skip if {@code true}, the update check itself will be skipped
    * @param versionUrl the location to check for the latest version
    * @return a new {@link UpdateChecker}
    */
-  public static UpdateChecker checkForUpdate(boolean skip, String versionUrl) {
+  public static UpdateChecker checkForUpdate(String versionUrl) {
     ExecutorService executorService = Executors.newSingleThreadExecutor();
     Future<Optional<String>> messageFuture =
         executorService.submit(
             () ->
                 performUpdateCheck(
-                    skip, Verify.verifyNotNull(ProjectInfo.VERSION), versionUrl, getConfigDir()));
+                    Verify.verifyNotNull(ProjectInfo.VERSION), versionUrl, getConfigDir()));
     executorService.shutdown();
     return new UpdateChecker(messageFuture);
   }
 
   @VisibleForTesting
   static Optional<String> performUpdateCheck(
-      boolean skip, String currentVersion, String versionUrl, Path configDir) {
+      String currentVersion, String versionUrl, Path configDir) {
     // Abort if offline or update checks are disabled
-    if (skip || Boolean.getBoolean(PropertyNames.DISABLE_UPDATE_CHECKS)) {
+    if (Boolean.getBoolean(PropertyNames.DISABLE_UPDATE_CHECKS)) {
       return Optional.empty();
     }
 

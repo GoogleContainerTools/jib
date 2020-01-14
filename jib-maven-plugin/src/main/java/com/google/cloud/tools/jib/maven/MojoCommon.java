@@ -19,7 +19,9 @@ package com.google.cloud.tools.jib.maven;
 import com.google.cloud.tools.jib.api.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.api.FilePermissions;
 import com.google.cloud.tools.jib.maven.JibPluginConfiguration.PermissionConfiguration;
+import com.google.cloud.tools.jib.plugins.common.ProjectProperties;
 import com.google.cloud.tools.jib.plugins.common.PropertyNames;
+import com.google.cloud.tools.jib.plugins.common.UpdateChecker;
 import com.google.cloud.tools.jib.plugins.common.VersionChecker;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
@@ -28,6 +30,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import org.apache.maven.artifact.versioning.DefaultArtifactVersion;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.descriptor.PluginDescriptor;
@@ -41,6 +44,13 @@ public class MojoCommon {
   public static final String REQUIRED_VERSION_PROPERTY_NAME = "jib.requiredVersion";
 
   public static final String VERSION_URL = "https://storage.googleapis.com/jib-versions/jib-maven";
+
+  static Optional<UpdateChecker> newUpdateChecker(ProjectProperties projectProperties, Log logger) {
+    if (projectProperties.isOffline() || !logger.isInfoEnabled()) {
+      return Optional.of(UpdateChecker.checkForUpdate(VERSION_URL));
+    }
+    return Optional.empty();
+  }
 
   /**
    * Gets the list of extra directory paths from a {@link JibPluginConfiguration}. Returns {@code

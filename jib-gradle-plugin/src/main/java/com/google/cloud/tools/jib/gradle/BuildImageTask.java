@@ -83,10 +83,8 @@ public class BuildImageTask extends DefaultTask implements JibTask {
 
     GradleProjectProperties projectProperties =
         GradleProjectProperties.getForProject(getProject(), getLogger(), tempDirectoryProvider);
-    UpdateChecker updateChecker =
-        UpdateChecker.checkForUpdate(
-            projectProperties.isOffline() || !getLogger().isLifecycleEnabled(),
-            TaskCommon.VERSION_URL);
+    Optional<UpdateChecker> updateChecker =
+        TaskCommon.newUpdateChecker(projectProperties, getLogger());
     try {
       if (Strings.isNullOrEmpty(jibExtension.getTo().getImage())) {
         throw new GradleException(
@@ -150,7 +148,7 @@ public class BuildImageTask extends DefaultTask implements JibTask {
     } finally {
       tempDirectoryProvider.close();
       updateChecker
-          .finishUpdateCheck()
+          .flatMap(UpdateChecker::finishUpdateCheck)
           .ifPresent(
               updateMessage ->
                   projectProperties.log(

@@ -71,7 +71,7 @@ public class UpdateCheckerTest {
     Instant before = Instant.now();
     setupConfigAndLastUpdateCheck();
     Optional<String> message =
-        UpdateChecker.performUpdateCheck(false, "1.0.2", testWebServer.getEndpoint(), configDir);
+        UpdateChecker.performUpdateCheck("1.0.2", testWebServer.getEndpoint(), configDir);
     Assert.assertTrue(message.isPresent());
     Assert.assertEquals(
         "A new version of Jib (2.0.0) is available (currently using 1.0.2). Update your build "
@@ -88,7 +88,7 @@ public class UpdateCheckerTest {
     Instant before = Instant.now();
     setupConfigAndLastUpdateCheck();
     Optional<String> message =
-        UpdateChecker.performUpdateCheck(false, "2.0.0", testWebServer.getEndpoint(), configDir);
+        UpdateChecker.performUpdateCheck("2.0.0", testWebServer.getEndpoint(), configDir);
     Assert.assertFalse(message.isPresent());
     String modifiedTime =
         new String(
@@ -100,7 +100,7 @@ public class UpdateCheckerTest {
   public void testPerformUpdateCheck_noConfigOrLastUpdateCheck() throws IOException {
     Instant before = Instant.now();
     Optional<String> message =
-        UpdateChecker.performUpdateCheck(false, "1.0.2", testWebServer.getEndpoint(), configDir);
+        UpdateChecker.performUpdateCheck("1.0.2", testWebServer.getEndpoint(), configDir);
     Assert.assertTrue(message.isPresent());
     Assert.assertEquals(
         "A new version of Jib (2.0.0) is available (currently using 1.0.2). Update your build "
@@ -120,7 +120,7 @@ public class UpdateCheckerTest {
         configDir.resolve("lastUpdateCheck"),
         modifiedTime.toString().getBytes(StandardCharsets.UTF_8));
     Optional<String> message =
-        UpdateChecker.performUpdateCheck(false, "1.0.2", testWebServer.getEndpoint(), configDir);
+        UpdateChecker.performUpdateCheck("1.0.2", testWebServer.getEndpoint(), configDir);
     Assert.assertFalse(message.isPresent());
 
     // lastUpdateCheck should not have changed
@@ -131,17 +131,10 @@ public class UpdateCheckerTest {
   }
 
   @Test
-  public void testPerformUpdateCheck_skip() {
-    Optional<String> message =
-        UpdateChecker.performUpdateCheck(true, "1.0.2", testWebServer.getEndpoint(), configDir);
-    Assert.assertFalse(message.isPresent());
-  }
-
-  @Test
   public void testPerformUpdateCheck_systemProperty() {
     System.setProperty(PropertyNames.DISABLE_UPDATE_CHECKS, "true");
     Optional<String> message =
-        UpdateChecker.performUpdateCheck(true, "1.0.2", testWebServer.getEndpoint(), configDir);
+        UpdateChecker.performUpdateCheck("1.0.2", testWebServer.getEndpoint(), configDir);
     Assert.assertFalse(message.isPresent());
   }
 
@@ -151,16 +144,17 @@ public class UpdateCheckerTest {
         configDir.resolve("config.json"),
         "{\"disableUpdateCheck\":true}".getBytes(StandardCharsets.UTF_8));
     Optional<String> message =
-        UpdateChecker.performUpdateCheck(true, "1.0.2", testWebServer.getEndpoint(), configDir);
+        UpdateChecker.performUpdateCheck("1.0.2", testWebServer.getEndpoint(), configDir);
     Assert.assertFalse(message.isPresent());
   }
 
   @Test
   public void testPerformUpdateCheck_failSilently()
       throws InterruptedException, GeneralSecurityException, URISyntaxException, IOException {
-    try (TestWebServer badServer = new TestWebServer(false, Collections.singletonList("bad"), 1)) {
+    try (TestWebServer badServer =
+        new TestWebServer(false, Collections.singletonList("HTTP/1.1 400 Bad Request\n\n"), 1)) {
       Optional<String> message =
-          UpdateChecker.performUpdateCheck(true, "1.0.2", badServer.getEndpoint(), configDir);
+          UpdateChecker.performUpdateCheck("1.0.2", badServer.getEndpoint(), configDir);
       Assert.assertFalse(message.isPresent());
     }
   }

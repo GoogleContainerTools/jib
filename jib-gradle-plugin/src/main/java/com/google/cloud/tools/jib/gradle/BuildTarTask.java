@@ -108,10 +108,8 @@ public class BuildTarTask extends DefaultTask implements JibTask {
 
     GradleProjectProperties projectProperties =
         GradleProjectProperties.getForProject(getProject(), getLogger(), tempDirectoryProvider);
-    UpdateChecker updateChecker =
-        UpdateChecker.checkForUpdate(
-            projectProperties.isOffline() || !getLogger().isLifecycleEnabled(),
-            TaskCommon.VERSION_URL);
+    Optional<UpdateChecker> updateChecker =
+        TaskCommon.newUpdateChecker(projectProperties, getLogger());
     try {
       PluginConfigurationProcessor.createJibBuildRunnerForTarImage(
               new GradleRawConfiguration(jibExtension),
@@ -166,7 +164,7 @@ public class BuildTarTask extends DefaultTask implements JibTask {
     } finally {
       tempDirectoryProvider.close();
       updateChecker
-          .finishUpdateCheck()
+          .flatMap(UpdateChecker::finishUpdateCheck)
           .ifPresent(
               updateMessage ->
                   projectProperties.log(

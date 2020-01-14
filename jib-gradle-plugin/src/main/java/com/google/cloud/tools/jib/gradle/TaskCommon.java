@@ -19,13 +19,17 @@ package com.google.cloud.tools.jib.gradle;
 import com.google.api.client.http.HttpTransport;
 import com.google.cloud.tools.jib.api.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.api.FilePermissions;
+import com.google.cloud.tools.jib.plugins.common.ProjectProperties;
+import com.google.cloud.tools.jib.plugins.common.UpdateChecker;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.logging.Level;
 import javax.annotation.Nullable;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
 import org.gradle.api.UnknownTaskException;
+import org.gradle.api.logging.Logger;
 import org.gradle.api.plugins.WarPlugin;
 import org.gradle.api.tasks.TaskProvider;
 import org.gradle.internal.logging.events.LogEvent;
@@ -37,6 +41,14 @@ import org.slf4j.LoggerFactory;
 class TaskCommon {
 
   public static final String VERSION_URL = "https://storage.googleapis.com/jib-versions/jib-gradle";
+
+  static Optional<UpdateChecker> newUpdateChecker(
+      ProjectProperties projectProperties, Logger logger) {
+    if (projectProperties.isOffline() || !logger.isLifecycleEnabled()) {
+      return Optional.of(UpdateChecker.checkForUpdate(VERSION_URL));
+    }
+    return Optional.empty();
+  }
 
   @Nullable
   static TaskProvider<Task> getWarTaskProvider(Project project) {
