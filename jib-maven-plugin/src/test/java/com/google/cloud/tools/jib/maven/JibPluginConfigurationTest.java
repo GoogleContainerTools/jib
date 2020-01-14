@@ -24,7 +24,6 @@ import java.io.File;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Optional;
 import java.util.Properties;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.model.Build;
@@ -170,6 +169,10 @@ public class JibPluginConfigurationTest {
     sessionProperties.put("jib.outputPaths.imageId", "id/path");
     Assert.assertEquals(
         Paths.get("/repository/project/id/path"), testPluginConfiguration.getImageIdOutputPath());
+    sessionProperties.put("jib.outputPaths.imageJson", "json/path");
+    Assert.assertEquals(
+        Paths.get("/repository/project/json/path"),
+        testPluginConfiguration.getImageJsonOutputPath());
     sessionProperties.put("jib.outputPaths.tar", "tar/path");
     Assert.assertEquals(
         Paths.get("/repository/project/tar/path"), testPluginConfiguration.getTarOutputPath());
@@ -259,6 +262,8 @@ public class JibPluginConfigurationTest {
     Assert.assertEquals(Paths.get("/digest/path"), testPluginConfiguration.getDigestOutputPath());
     project.getProperties().setProperty("jib.outputPaths.imageId", "/id/path");
     Assert.assertEquals(Paths.get("/id/path"), testPluginConfiguration.getImageIdOutputPath());
+    project.getProperties().setProperty("jib.outputPaths.imageJson", "/json/path");
+    Assert.assertEquals(Paths.get("/json/path"), testPluginConfiguration.getImageJsonOutputPath());
     project.getProperties().setProperty("jib.outputPaths.tar", "tar/path");
     Assert.assertEquals(
         Paths.get("/repository/project/tar/path"), testPluginConfiguration.getTarOutputPath());
@@ -325,17 +330,5 @@ public class JibPluginConfigurationTest {
 
     projectProperties.setProperty("jib.containerize", "project2");
     Assert.assertFalse(testPluginConfiguration.isContainerizable());
-  }
-
-  @Test
-  public void testImageName_emptyByDefault() {
-    Assert.assertEquals(Optional.empty(), testPluginConfiguration.getImageNameOutputPath());
-  }
-
-  @Test
-  public void testImageName_setFromProperty() {
-    project.getProperties().setProperty("jib.outputPaths.imageName", "/image/path");
-    Assert.assertEquals(
-        Paths.get("/image/path"), testPluginConfiguration.getImageNameOutputPath().get());
   }
 }

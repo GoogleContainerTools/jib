@@ -80,6 +80,7 @@ public class GradleRawConfigurationTest {
 
     Mockito.when(outputPathsParameters.getDigestPath()).thenReturn(Paths.get("digest/path"));
     Mockito.when(outputPathsParameters.getImageIdPath()).thenReturn(Paths.get("id/path"));
+    Mockito.when(outputPathsParameters.getImageJsonPath()).thenReturn(Paths.get("json/path"));
     Mockito.when(outputPathsParameters.getTarPath()).thenReturn(Paths.get("tar/path"));
 
     GradleRawConfiguration rawConfiguration = new GradleRawConfiguration(jibExtension);
@@ -115,6 +116,7 @@ public class GradleRawConfigurationTest {
         rawConfiguration.getDockerEnvironment());
     Assert.assertEquals(Paths.get("digest/path"), rawConfiguration.getDigestOutputPath());
     Assert.assertEquals(Paths.get("id/path"), rawConfiguration.getImageIdOutputPath());
+    Assert.assertEquals(Paths.get("json/path"), rawConfiguration.getImageJsonOutputPath());
     Assert.assertEquals(Paths.get("tar/path"), rawConfiguration.getTarOutputPath());
   }
 }

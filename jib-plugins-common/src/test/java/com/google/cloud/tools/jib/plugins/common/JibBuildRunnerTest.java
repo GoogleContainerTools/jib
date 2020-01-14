@@ -20,6 +20,7 @@ import com.google.api.client.http.HttpResponseException;
 import com.google.api.client.http.HttpStatusCodes;
 import com.google.cloud.tools.jib.api.CacheDirectoryCreationException;
 import com.google.cloud.tools.jib.api.Containerizer;
+import com.google.cloud.tools.jib.api.DescriptorDigest;
 import com.google.cloud.tools.jib.api.ImageReference;
 import com.google.cloud.tools.jib.api.InsecureRegistryException;
 import com.google.cloud.tools.jib.api.JibContainer;
@@ -223,16 +224,25 @@ public class JibBuildRunnerTest {
   }
 
   @Test
-  public void testBuildImage_writesImageName() throws Exception {
+  public void testBuildImage_writesImageJson() throws Exception {
     final ImageReference targetImageReference = ImageReference.parse("gcr.io/distroless/java:11");
-    final Path outputPath = temporaryFolder.newFile("jib-image.name").toPath();
+    final String imageId =
+        "sha256:61bb3ec31a47cb730eb58a38bbfa813761a51dca69d10e39c24c3d00a7b2c7a9";
+    final String digest = "sha256:3f1be7e19129edb202c071a659a4db35280ab2bb1a16f223bfd5d1948657b6fc";
+
+    final Path outputPath = temporaryFolder.newFile("jib-image.json").toPath();
 
     Mockito.when(mockJibContainer.getTargetImage()).thenReturn(targetImageReference);
+    Mockito.when(mockJibContainer.getImageId()).thenReturn(DescriptorDigest.fromDigest(imageId));
+    Mockito.when(mockJibContainer.getDigest()).thenReturn(DescriptorDigest.fromDigest(digest));
     Mockito.when(mockJibContainerBuilder.containerize(mockContainerizer))
         .thenReturn(mockJibContainer);
-    testJibBuildRunner.writeImageName(outputPath).runBuild();
+    testJibBuildRunner.writeImageJson(outputPath).runBuild();
 
-    final String output = new String(Files.readAllBytes(outputPath), StandardCharsets.UTF_8);
-    Assert.assertEquals(targetImageReference.toString(), output);
+    final String outputJson = new String(Files.readAllBytes(outputPath), StandardCharsets.UTF_8);
+    final ImageMetadataOutput metadataOutput = ImageMetadataOutput.fromJson(outputJson);
+    Assert.assertEquals(targetImageReference.toString(), metadataOutput.getImage());
+    Assert.assertEquals(imageId, metadataOutput.getImageId());
+    Assert.assertEquals(digest, metadataOutput.getImageDigest());
   }
 }

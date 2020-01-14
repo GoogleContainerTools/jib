@@ -202,7 +202,7 @@ public class MavenRawConfiguration implements RawConfiguration {
   }
 
   @Override
-  public Optional<Path> getImageNameOutputPath() {
-    return jibPluginConfiguration.getImageNameOutputPath();
+  public Path getImageJsonOutputPath() {
+    return jibPluginConfiguration.getImageJsonOutputPath();
   }
 }

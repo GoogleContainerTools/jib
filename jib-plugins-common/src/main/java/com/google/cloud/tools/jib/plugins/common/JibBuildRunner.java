@@ -192,7 +192,7 @@ public class JibBuildRunner {
   private final HelpfulSuggestions helpfulSuggestions;
   @Nullable private Path imageDigestOutputPath;
   @Nullable private Path imageIdOutputPath;
-  @Nullable private Path imageNameOutputPath;
+  @Nullable private Path imageJsonOutputPath;
 
   @VisibleForTesting
   JibBuildRunner(
@@ -238,9 +238,10 @@ public class JibBuildRunner {
         String imageId = jibContainer.getImageId().toString();
         Files.write(imageIdOutputPath, imageId.getBytes(StandardCharsets.UTF_8));
       }
-      if (imageNameOutputPath != null) {
-        String imageName = jibContainer.getTargetImage().toString();
-        Files.write(imageNameOutputPath, imageName.getBytes(StandardCharsets.UTF_8));
+      if (imageJsonOutputPath != null) {
+        ImageMetadataOutput metadataOutput = ImageMetadataOutput.fromJibContainer(jibContainer);
+        String imageJson = metadataOutput.toJson();
+        Files.write(imageJsonOutputPath, imageJson.getBytes(StandardCharsets.UTF_8));
       }
 
       return jibContainer;
@@ -311,14 +312,14 @@ public class JibBuildRunner {
   }
 
   /**
-   * Set the location where the image name will be saved. If {@code null} then the name is not
-   * saved.
+   * Set the location where the image metadata json will be saved. If {@code null} then the metadata
+   * is not saved.
    *
-   * @param imageNameOutputPath the location to write the image name or {@code null} to skip
+   * @param imageJsonOutputPath the location to write the image metadata, or {@code null} to skip
    * @return this
    */
-  public JibBuildRunner writeImageName(@Nullable Path imageNameOutputPath) {
-    this.imageNameOutputPath = imageNameOutputPath;
+  public JibBuildRunner writeImageJson(@Nullable Path imageJsonOutputPath) {
+    this.imageJsonOutputPath = imageJsonOutputPath;
     return this;
   }
 }

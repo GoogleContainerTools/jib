@@ -55,7 +55,7 @@ public class PropertyNames {
   public static final String DOCKER_CLIENT_ENVIRONMENT = "jib.dockerClient.environment";
   public static final String OUTPUT_PATHS_DIGEST = "jib.outputPaths.digest";
   public static final String OUTPUT_PATHS_IMAGE_ID = "jib.outputPaths.imageId";
-  public static final String OUTPUT_PATHS_IMAGE_NAME = "jib.outputPaths.imageName";
+  public static final String OUTPUT_PATHS_IMAGE_JSON = "jib.outputPaths.imageJson";
   public static final String OUTPUT_PATHS_TAR = "jib.outputPaths.tar";
   public static final String CONTAINERIZING_MODE = "jib.containerizingMode";
   public static final String SKIP = "jib.skip";
