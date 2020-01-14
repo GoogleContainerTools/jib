@@ -20,7 +20,7 @@ import com.google.cloud.tools.jib.api.ImageReference;
 import com.google.cloud.tools.jib.api.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.api.RegistryException;
 import com.google.cloud.tools.jib.builder.ProgressEventDispatcher;
-import com.google.cloud.tools.jib.builder.steps.PullBaseImageStep.ImageAndAuthorization;
+import com.google.cloud.tools.jib.builder.steps.PullBaseImageStep.ImageAndRegistryClient;
 import com.google.cloud.tools.jib.cache.Cache;
 import com.google.cloud.tools.jib.cache.CacheCorruptedException;
 import com.google.cloud.tools.jib.configuration.BuildContext;
@@ -32,6 +32,7 @@ import com.google.cloud.tools.jib.image.json.BadContainerConfigurationFormatExce
 import com.google.cloud.tools.jib.image.json.ContainerConfigurationTemplate;
 import com.google.cloud.tools.jib.image.json.ManifestAndConfig;
 import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
+import com.google.cloud.tools.jib.registry.RegistryClient;
 import com.google.cloud.tools.jib.registry.credentials.CredentialRetrievalException;
 import java.io.IOException;
 import java.util.Optional;
@@ -54,6 +55,7 @@ public class PullBaseImageStepTest {
 
   @Mock private ProgressEventDispatcher.Factory progressDispatcherFactory;
   @Mock private BuildContext buildContext;
+  @Mock private RegistryClient registryClient;
   @Mock private ImageConfiguration imageConfiguration;
   @Mock private Cache cache;
 
@@ -66,6 +68,11 @@ public class PullBaseImageStepTest {
     Mockito.when(buildContext.getBaseImageConfiguration()).thenReturn(imageConfiguration);
     Mockito.when(buildContext.getEventHandlers()).thenReturn(EventHandlers.NONE);
     Mockito.when(buildContext.getBaseImageLayersCache()).thenReturn(cache);
+
+    RegistryClient.Factory registryClientFactory = Mockito.mock(RegistryClient.Factory.class);
+    Mockito.when(buildContext.newBaseImageRegistryClientFactory())
+        .thenReturn(registryClientFactory);
+    Mockito.when(registryClientFactory.newRegistryClient()).thenReturn(registryClient);
 
     pullBaseImageStep = new PullBaseImageStep(buildContext, progressDispatcherFactory);
   }
@@ -82,11 +89,9 @@ public class PullBaseImageStepTest {
     Mockito.when(imageConfiguration.getImage()).thenReturn(imageReference);
     Mockito.when(cache.retrieveMetadata(imageReference)).thenReturn(Optional.of(manifestAndConfig));
 
-    ImageAndAuthorization result = pullBaseImageStep.call();
-    Assert.assertEquals("fat system", result.getImage().getOs());
-    Assert.assertNull(result.getAuthorization());
-
-    Mockito.verify(buildContext, Mockito.never()).newBaseImageRegistryClientFactory();
+    ImageAndRegistryClient result = pullBaseImageStep.call();
+    Assert.assertEquals("fat system", result.image.getOs());
+    Assert.assertEquals(registryClient, result.registryClient);
   }
 
   @Test
@@ -116,9 +121,9 @@ public class PullBaseImageStepTest {
     Mockito.when(buildContext.isOffline()).thenReturn(true);
     Mockito.when(cache.retrieveMetadata(imageReference)).thenReturn(Optional.of(manifestAndConfig));
 
-    ImageAndAuthorization result = pullBaseImageStep.call();
-    Assert.assertEquals("fat system", result.getImage().getOs());
-    Assert.assertNull(result.getAuthorization());
+    ImageAndRegistryClient result = pullBaseImageStep.call();
+    Assert.assertEquals("fat system", result.image.getOs());
+    Assert.assertNull(result.registryClient);
 
     Mockito.verify(buildContext, Mockito.never()).newBaseImageRegistryClientFactory();
   }

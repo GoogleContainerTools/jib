@@ -18,14 +18,12 @@ package com.google.cloud.tools.jib.registry;
 
 import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.global.JibSystemProperties;
-import com.google.cloud.tools.jib.http.Authorization;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.contrib.java.lang.system.RestoreSystemProperties;
 import org.junit.runner.RunWith;
-import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 /**
@@ -34,15 +32,12 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class RegistryClientTest {
 
-  @Mock private EventHandlers eventHandlers;
-  @Mock private Authorization mockAuthorization;
-
   private RegistryClient.Factory testRegistryClientFactory;
 
   @Before
   public void setUp() {
     testRegistryClientFactory =
-        RegistryClient.factory(eventHandlers, "some.server.url", "some image name", null);
+        RegistryClient.factory(EventHandlers.NONE, "some.server.url", "some image name", null);
   }
 
   @Rule public final RestoreSystemProperties systemPropertyRestorer = new RestoreSystemProperties();
@@ -50,15 +45,10 @@ public class RegistryClientTest {
   @Test
   public void testGetUserAgent_null() {
     Assert.assertTrue(
-        testRegistryClientFactory
-            .setAuthorization(mockAuthorization)
-            .newRegistryClient()
-            .getUserAgent()
-            .startsWith("jib"));
+        testRegistryClientFactory.newRegistryClient().getUserAgent().startsWith("jib"));
 
     Assert.assertTrue(
         testRegistryClientFactory
-            .setAuthorization(mockAuthorization)
             .setUserAgentSuffix(null)
             .newRegistryClient()
             .getUserAgent()

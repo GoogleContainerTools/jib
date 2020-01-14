@@ -22,13 +22,12 @@ import com.google.cloud.tools.jib.api.RegistryException;
 import com.google.cloud.tools.jib.builder.ProgressEventDispatcher;
 import com.google.cloud.tools.jib.builder.TimerEventDispatcher;
 import com.google.cloud.tools.jib.builder.steps.PreparedLayer.StateInTarget;
-import com.google.cloud.tools.jib.builder.steps.PullBaseImageStep.ImageAndAuthorization;
 import com.google.cloud.tools.jib.cache.Cache;
 import com.google.cloud.tools.jib.cache.CacheCorruptedException;
 import com.google.cloud.tools.jib.cache.CachedLayer;
 import com.google.cloud.tools.jib.configuration.BuildContext;
 import com.google.cloud.tools.jib.event.EventHandlers;
-import com.google.cloud.tools.jib.http.Authorization;
+import com.google.cloud.tools.jib.image.Image;
 import com.google.cloud.tools.jib.image.Layer;
 import com.google.cloud.tools.jib.registry.RegistryClient;
 import com.google.common.base.Verify;
@@ -54,16 +53,19 @@ class ObtainBaseImageLayerStep implements Callable<PreparedLayer> {
   static ImmutableList<ObtainBaseImageLayerStep> makeListForForcedDownload(
       BuildContext buildContext,
       ProgressEventDispatcher.Factory progressEventDispatcherFactory,
-      ImageAndAuthorization baseImageAndAuth) {
+      Image baseImage,
+      @Nullable RegistryClient sourceRegistryClient) {
     BlobExistenceChecker noOpChecker = ignored -> StateInTarget.UNKNOWN;
-    return makeList(buildContext, progressEventDispatcherFactory, baseImageAndAuth, noOpChecker);
+    return makeList(
+        buildContext, progressEventDispatcherFactory, baseImage, sourceRegistryClient, noOpChecker);
   }
 
   static ImmutableList<ObtainBaseImageLayerStep> makeListForSelectiveDownload(
       BuildContext buildContext,
       ProgressEventDispatcher.Factory progressEventDispatcherFactory,
-      ImageAndAuthorization baseImageAndAuth,
-      TokenRefreshingRegistryClient targetRegistryClient) {
+      Image baseImage,
+      @Nullable RegistryClient sourceRegistryClient,
+      RegistryClient targetRegistryClient) {
     Verify.verify(!buildContext.isOffline());
 
     // TODO: also check if cross-repo blob mount is possible.
@@ -74,31 +76,34 @@ class ObtainBaseImageLayerStep implements Callable<PreparedLayer> {
                 : StateInTarget.MISSING;
 
     return makeList(
-        buildContext, progressEventDispatcherFactory, baseImageAndAuth, blobExistenceChecker);
+        buildContext,
+        progressEventDispatcherFactory,
+        baseImage,
+        sourceRegistryClient,
+        blobExistenceChecker);
   }
 
   private static ImmutableList<ObtainBaseImageLayerStep> makeList(
       BuildContext buildContext,
       ProgressEventDispatcher.Factory progressEventDispatcherFactory,
-      ImageAndAuthorization baseImageAndAuth,
+      Image baseImage,
+      @Nullable RegistryClient registryClient,
       BlobExistenceChecker blobExistenceChecker) {
-    ImmutableList<Layer> baseImageLayers = baseImageAndAuth.getImage().getLayers();
-
     try (ProgressEventDispatcher progressEventDispatcher =
             progressEventDispatcherFactory.create(
-                "launching base image layer pullers", baseImageLayers.size());
+                "launching base image layer pullers", baseImage.getLayers().size());
         TimerEventDispatcher ignored =
             new TimerEventDispatcher(
                 buildContext.getEventHandlers(), "Preparing base image layer pullers")) {
 
       List<ObtainBaseImageLayerStep> layerPullers = new ArrayList<>();
-      for (Layer layer : baseImageLayers) {
+      for (Layer layer : baseImage.getLayers()) {
         layerPullers.add(
             new ObtainBaseImageLayerStep(
                 buildContext,
                 progressEventDispatcher.newChildProducer(),
                 layer,
-                baseImageAndAuth.getAuthorization(),
+                registryClient,
                 blobExistenceChecker));
       }
       return ImmutableList.copyOf(layerPullers);
@@ -109,19 +114,19 @@ class ObtainBaseImageLayerStep implements Callable<PreparedLayer> {
   private final ProgressEventDispatcher.Factory progressEventDispatcherFactory;
 
   private final Layer layer;
-  private final @Nullable Authorization pullAuthorization;
+  private final @Nullable RegistryClient registryClient;
   private final BlobExistenceChecker blobExistenceChecker;
 
   private ObtainBaseImageLayerStep(
       BuildContext buildContext,
       ProgressEventDispatcher.Factory progressEventDispatcherFactory,
       Layer layer,
-      @Nullable Authorization pullAuthorization,
+      @Nullable RegistryClient registryClient,
       BlobExistenceChecker blobExistenceChecker) {
     this.buildContext = buildContext;
     this.progressEventDispatcherFactory = progressEventDispatcherFactory;
     this.layer = layer;
-    this.pullAuthorization = pullAuthorization;
+    this.registryClient = registryClient;
     this.blobExistenceChecker = blobExistenceChecker;
   }
 
@@ -158,22 +163,17 @@ class ObtainBaseImageLayerStep implements Callable<PreparedLayer> {
                 + "re-download the base image layers.");
       }
 
-      RegistryClient registryClient =
-          buildContext
-              .newBaseImageRegistryClientFactory()
-              .setAuthorization(pullAuthorization)
-              .newRegistryClient();
-
       try (ThrottledProgressEventDispatcherWrapper progressEventDispatcherWrapper =
           new ThrottledProgressEventDispatcherWrapper(
               progressEventDispatcher.newChildProducer(),
               "pulling base image layer " + layerDigest)) {
         CachedLayer cachedLayer =
             cache.writeCompressedLayer(
-                registryClient.pullBlob(
-                    layerDigest,
-                    progressEventDispatcherWrapper::setProgressTarget,
-                    progressEventDispatcherWrapper::dispatchProgress));
+                Verify.verifyNotNull(registryClient)
+                    .pullBlob(
+                        layerDigest,
+                        progressEventDispatcherWrapper::setProgressTarget,
+                        progressEventDispatcherWrapper::dispatchProgress));
         return new PreparedLayer.Builder(cachedLayer).setStateInTarget(stateInTarget).build();
       }
     }

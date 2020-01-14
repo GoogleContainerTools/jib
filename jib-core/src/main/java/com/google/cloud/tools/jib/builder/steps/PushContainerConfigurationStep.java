@@ -26,6 +26,7 @@ import com.google.cloud.tools.jib.hash.Digests;
 import com.google.cloud.tools.jib.image.Image;
 import com.google.cloud.tools.jib.image.json.ImageToJsonTranslator;
 import com.google.cloud.tools.jib.json.JsonTemplate;
+import com.google.cloud.tools.jib.registry.RegistryClient;
 import java.io.IOException;
 import java.util.concurrent.Callable;
 
@@ -37,17 +38,17 @@ class PushContainerConfigurationStep implements Callable<BlobDescriptor> {
   private final BuildContext buildContext;
   private final ProgressEventDispatcher.Factory progressEventDispatcherFactory;
 
-  private final TokenRefreshingRegistryClient targetRegistryClient;
+  private final RegistryClient registryClient;
   private final Image builtImage;
 
   PushContainerConfigurationStep(
       BuildContext buildContext,
       ProgressEventDispatcher.Factory progressEventDispatcherFactory,
-      TokenRefreshingRegistryClient targetRegistryClient,
+      RegistryClient registryClient,
       Image builtImage) {
     this.buildContext = buildContext;
     this.progressEventDispatcherFactory = progressEventDispatcherFactory;
-    this.targetRegistryClient = targetRegistryClient;
+    this.registryClient = registryClient;
     this.builtImage = builtImage;
   }
 
@@ -63,7 +64,7 @@ class PushContainerConfigurationStep implements Callable<BlobDescriptor> {
       return new PushBlobStep(
               buildContext,
               progressEventDispatcher.newChildProducer(),
-              targetRegistryClient,
+              registryClient,
               Digests.computeDigest(containerConfiguration),
               Blobs.from(containerConfiguration),
               false)

@@ -26,6 +26,7 @@ import com.google.cloud.tools.jib.builder.TimerEventDispatcher;
 import com.google.cloud.tools.jib.configuration.BuildContext;
 import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.event.progress.ThrottledAccumulatingConsumer;
+import com.google.cloud.tools.jib.registry.RegistryClient;
 import java.io.IOException;
 import java.util.concurrent.Callable;
 
@@ -37,7 +38,7 @@ class PushBlobStep implements Callable<BlobDescriptor> {
   private final BuildContext buildContext;
   private final ProgressEventDispatcher.Factory progressEventDispatcherFactory;
 
-  private final TokenRefreshingRegistryClient targetRegistryClient;
+  private final RegistryClient registryClient;
   private final BlobDescriptor blobDescriptor;
   private final Blob blob;
   private final boolean forcePush;
@@ -45,13 +46,13 @@ class PushBlobStep implements Callable<BlobDescriptor> {
   PushBlobStep(
       BuildContext buildContext,
       ProgressEventDispatcher.Factory progressEventDispatcherFactory,
-      TokenRefreshingRegistryClient targetRegistryClient,
+      RegistryClient registryClient,
       BlobDescriptor blobDescriptor,
       Blob blob,
       boolean forcePush) {
     this.buildContext = buildContext;
     this.progressEventDispatcherFactory = progressEventDispatcherFactory;
-    this.targetRegistryClient = targetRegistryClient;
+    this.registryClient = registryClient;
     this.blobDescriptor = blobDescriptor;
     this.blob = blob;
     this.forcePush = forcePush;
@@ -70,7 +71,7 @@ class PushBlobStep implements Callable<BlobDescriptor> {
             new ThrottledAccumulatingConsumer(progressEventDispatcher::dispatchProgress)) {
 
       // check if the BLOB is available
-      if (!forcePush && targetRegistryClient.checkBlob(blobDigest).isPresent()) {
+      if (!forcePush && registryClient.checkBlob(blobDigest).isPresent()) {
         eventHandlers.dispatch(
             LogEvent.info(
                 "Skipping push; BLOB already exists on target registry : " + blobDescriptor));
@@ -85,7 +86,7 @@ class PushBlobStep implements Callable<BlobDescriptor> {
       String baseRepository = buildContext.getBaseImageConfiguration().getImageRepository();
       String targetRegistry = buildContext.getTargetImageConfiguration().getImageRegistry();
       String sourceRepository = targetRegistry.equals(baseRegistry) ? baseRepository : null;
-      targetRegistryClient.pushBlob(blobDigest, blob, sourceRepository, throttledProgressReporter);
+      registryClient.pushBlob(blobDigest, blob, sourceRepository, throttledProgressReporter);
       return blobDescriptor;
     }
   }

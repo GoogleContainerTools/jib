@@ -17,11 +17,15 @@
 package com.google.cloud.tools.jib.registry;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.google.api.client.http.HttpStatusCodes;
 import com.google.api.client.util.Base64;
 import com.google.cloud.tools.jib.ProjectInfo;
+import com.google.cloud.tools.jib.api.Credential;
 import com.google.cloud.tools.jib.api.DescriptorDigest;
+import com.google.cloud.tools.jib.api.LogEvent;
 import com.google.cloud.tools.jib.api.RegistryAuthenticationFailedException;
 import com.google.cloud.tools.jib.api.RegistryException;
+import com.google.cloud.tools.jib.api.RegistryUnauthorizedException;
 import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.blob.Blobs;
@@ -36,18 +40,21 @@ import com.google.cloud.tools.jib.image.json.ManifestTemplate;
 import com.google.cloud.tools.jib.json.JsonTemplate;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import com.google.common.base.Verify;
 import com.google.common.collect.ImmutableSetMultimap;
 import com.google.common.collect.Multimap;
 import java.io.IOException;
 import java.net.URL;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
 
-/** Interfaces with a registry. */
+/** Interfaces with a registry. Thread-safe. */
 public class RegistryClient {
 
   /** Factory for creating {@link RegistryClient}s. */
@@ -58,7 +65,7 @@ public class RegistryClient {
     private final FailoverHttpClient httpClient;
 
     @Nullable private String userAgentSuffix;
-    @Nullable private Authorization authorization;
+    @Nullable private Credential credential;
 
     private Factory(
         EventHandlers eventHandlers,
@@ -72,11 +79,11 @@ public class RegistryClient {
     /**
      * Sets the authentication credentials to use to authenticate with the registry.
      *
-     * @param authorization the {@link Authorization} to access the registry/repository
+     * @param credential the {@link Credential} to access the registry/repository
      * @return this
      */
-    public Factory setAuthorization(@Nullable Authorization authorization) {
-      this.authorization = authorization;
+    public Factory setCredential(@Nullable Credential credential) {
+      this.credential = credential;
       return this;
     }
 
@@ -99,7 +106,7 @@ public class RegistryClient {
     public RegistryClient newRegistryClient() {
       return new RegistryClient(
           eventHandlers,
-          authorization,
+          credential,
           registryEndpointRequestProperties,
           makeUserAgent(),
           httpClient);
@@ -243,52 +250,112 @@ public class RegistryClient {
   }
 
   private final EventHandlers eventHandlers;
-  @Nullable private final Authorization authorization;
   private final RegistryEndpointRequestProperties registryEndpointRequestProperties;
   private final String userAgent;
   private final FailoverHttpClient httpClient;
+
+  private final AtomicReference<Authorization> authorization = new AtomicReference<>();
+  @Nullable private final Credential credential;
+  private boolean readOnlyBearerAuth;
 
   /**
    * Instantiate with {@link #factory}.
    *
    * @param eventHandlers the event handlers used for dispatching log events
-   * @param authorization the {@link Authorization} to access the registry/repository
+   * @param credential credential for registry/repository; will not be used unless {@link
+   *     #configureBasicAuth} or {@link #doBearerAuth} is called
    * @param registryEndpointRequestProperties properties of registry endpoint requests
    * @param userAgent {@code User-Agent} header to send with the request
    * @param httpClient HTTP client
    */
   private RegistryClient(
       EventHandlers eventHandlers,
-      @Nullable Authorization authorization,
+      @Nullable Credential credential,
       RegistryEndpointRequestProperties registryEndpointRequestProperties,
       String userAgent,
       FailoverHttpClient httpClient) {
     this.eventHandlers = eventHandlers;
-    this.authorization = authorization;
+    this.credential = credential;
     this.registryEndpointRequestProperties = registryEndpointRequestProperties;
     this.userAgent = userAgent;
     this.httpClient = httpClient;
   }
 
-  /**
-   * @return the {@link RegistryAuthenticator} to authenticate pulls/pushes with the registry, or
-   *     {@link Optional#empty()} if no token authentication is necessary
-   * @throws IOException if communicating with the endpoint fails
-   * @throws RegistryException if communicating with the endpoint fails
-   */
-  public Optional<RegistryAuthenticator> getRegistryAuthenticator()
-      throws IOException, RegistryException {
-    // Gets the WWW-Authenticate header (eg. 'WWW-Authenticate: Bearer
-    // realm="https://gcr.io/v2/token",service="gcr.io"')
-    return callRegistryEndpoint(
-        new AuthenticationMethodRetriever(
-            registryEndpointRequestProperties, getUserAgent(), httpClient));
+  public void configureBasicAuth() {
+    Preconditions.checkNotNull(credential);
+    Preconditions.checkState(!credential.isOAuth2RefreshToken());
+
+    authorization.set(
+        Authorization.fromBasicCredentials(credential.getUsername(), credential.getPassword()));
+
+    String registry = registryEndpointRequestProperties.getServerUrl();
+    String repository = registryEndpointRequestProperties.getImageName();
+    eventHandlers.dispatch(
+        LogEvent.debug("configured basic auth for " + registry + "/" + repository));
   }
 
-  public Optional<RegistryAuthenticator> getRegistryAuthenticator(String wwwAuthenticate)
-      throws RegistryAuthenticationFailedException {
-    return RegistryAuthenticator.fromAuthenticationMethod(
-        wwwAuthenticate, registryEndpointRequestProperties, userAgent, httpClient);
+  /**
+   * Attempts bearer authentication.
+   *
+   * @param readOnlyBearerAuth true to request pull scope only; false for pull and push
+   * @return true if bearer authentication succeeded; false if the server expects basic
+   *     authentication (and thus bearer authentication was not attempted)
+   * @throws IOException if communicating with the endpoint fails
+   * @throws RegistryException if communicating with the endpoint fails
+   * @throws RegistryAuthenticationFailedException if authentication fails
+   * @throws RegistryCredentialsNotSentException if authentication failed and credentials were not
+   *     sent over plain HTTP
+   */
+  public boolean doBearerAuth(boolean readOnlyBearerAuth) throws IOException, RegistryException {
+    this.readOnlyBearerAuth = readOnlyBearerAuth;
+
+    String registry = registryEndpointRequestProperties.getServerUrl();
+    String repository = registryEndpointRequestProperties.getImageName();
+    String image = registry + "/" + repository;
+    eventHandlers.dispatch(LogEvent.debug("attempting bearer auth for " + image + "..."));
+
+    Optional<RegistryAuthenticator> authenticator =
+        callRegistryEndpoint(
+            new AuthenticationMethodRetriever(
+                registryEndpointRequestProperties, getUserAgent(), httpClient));
+    if (!authenticator.isPresent()) {
+      eventHandlers.dispatch(LogEvent.debug("server requires basic auth for " + image));
+      return false; // server returned "WWW-Authenticate: Basic ..."
+    }
+
+    if (readOnlyBearerAuth) {
+      authorization.set(authenticator.get().authenticatePull(credential));
+    }
+    authorization.set(authenticator.get().authenticatePush(credential));
+    eventHandlers.dispatch(LogEvent.debug("bearer auth succeeded for " + image));
+    return true;
+  }
+
+  private Authorization refreshBearerAuth(@Nullable String wwwAuthenticate)
+      throws RegistryAuthenticationFailedException, RegistryCredentialsNotSentException {
+    Preconditions.checkState(isBearerAuth(authorization.get()));
+
+    String registry = registryEndpointRequestProperties.getServerUrl();
+    String repository = registryEndpointRequestProperties.getImageName();
+    eventHandlers.dispatch(
+        LogEvent.debug("refreshing bearer auth token for " + registry + "/" + repository + "..."));
+
+    if (wwwAuthenticate != null) {
+      Optional<RegistryAuthenticator> authenticator =
+          RegistryAuthenticator.fromAuthenticationMethod(
+              wwwAuthenticate, registryEndpointRequestProperties, getUserAgent(), httpClient);
+      if (authenticator.isPresent()) {
+        if (readOnlyBearerAuth) {
+          return authenticator.get().authenticatePull(credential);
+        }
+        return authenticator.get().authenticatePush(credential);
+      }
+    }
+
+    throw new RegistryAuthenticationFailedException(
+        registry,
+        repository,
+        "server did not return 'WWW-Authenticate: Bearer' header: " + wwwAuthenticate);
   }
 
   /**
@@ -397,7 +464,7 @@ public class RegistryClient {
 
     if (sourceRepository != null
         && !(JibSystemProperties.useCrossRepositoryBlobMounts()
-            && canAttemptBlobMount(authorization, sourceRepository))) {
+            && canAttemptBlobMount(authorization.get(), sourceRepository))) {
       // don't bother requesting a cross-repository blob-mount if we don't have access
       sourceRepository = null;
     }
@@ -443,7 +510,7 @@ public class RegistryClient {
    */
   @VisibleForTesting
   static boolean canAttemptBlobMount(@Nullable Authorization authorization, String repository) {
-    if (authorization == null || !"bearer".equalsIgnoreCase(authorization.getScheme())) {
+    if (!isBearerAuth(authorization)) {
       // Authorization methods other than the Docker Container Registry Token don't provide
       // information as to which repositories are accessible.  The caller should attempt the mount
       // and rely on the registry fallback as required by the spec.
@@ -452,8 +519,12 @@ public class RegistryClient {
     }
     // if null then does not appear to be a DCRT
     Multimap<String, String> repositoryGrants =
-        decodeTokenRepositoryGrants(authorization.getToken());
+        decodeTokenRepositoryGrants(Verify.verifyNotNull(authorization).getToken());
     return repositoryGrants == null || repositoryGrants.containsEntry(repository, "pull");
+  }
+
+  private static boolean isBearerAuth(@Nullable Authorization authorization) {
+    return authorization != null && "bearer".equalsIgnoreCase(authorization.getScheme());
   }
 
   @VisibleForTesting
@@ -470,13 +541,31 @@ public class RegistryClient {
    */
   private <T> T callRegistryEndpoint(RegistryEndpointProvider<T> registryEndpointProvider)
       throws IOException, RegistryException {
-    return new RegistryEndpointCaller<>(
-            eventHandlers,
-            userAgent,
-            registryEndpointProvider,
-            authorization,
-            registryEndpointRequestProperties,
-            httpClient)
-        .call();
+    int bearerTokenRefreshes = 0;
+    while (true) {
+      try {
+        return new RegistryEndpointCaller<>(
+                eventHandlers,
+                getUserAgent(),
+                registryEndpointProvider,
+                authorization.get(),
+                registryEndpointRequestProperties,
+                httpClient)
+            .call();
+
+      } catch (RegistryUnauthorizedException ex) {
+        if (ex.getHttpResponseException().getStatusCode()
+                != HttpStatusCodes.STATUS_CODE_UNAUTHORIZED
+            || !isBearerAuth(authorization.get())
+            || ++bearerTokenRefreshes >= 5) {
+          throw ex;
+        }
+
+        // Because we successfully did bearer authentication initially, getting 401 here probably
+        // means the token was expired.
+        String wwwAuthenticate = ex.getHttpResponseException().getHeaders().getAuthenticate();
+        authorization.set(refreshBearerAuth(wwwAuthenticate));
+      }
+    }
   }
 }

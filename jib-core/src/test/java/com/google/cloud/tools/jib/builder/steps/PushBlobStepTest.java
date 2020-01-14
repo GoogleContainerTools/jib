@@ -22,6 +22,7 @@ import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.builder.ProgressEventDispatcher;
 import com.google.cloud.tools.jib.configuration.BuildContext;
 import com.google.cloud.tools.jib.configuration.ImageConfiguration;
+import com.google.cloud.tools.jib.registry.RegistryClient;
 import java.io.IOException;
 import java.util.Optional;
 import org.junit.Before;
@@ -37,7 +38,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 public class PushBlobStepTest {
 
   @Mock private BlobDescriptor blobDescriptor;
-  @Mock private TokenRefreshingRegistryClient registryClient;
+  @Mock private RegistryClient registryClient;
 
   @Mock(answer = Answers.RETURNS_MOCKS)
   private ProgressEventDispatcher.Factory progressDispatcherFactory;

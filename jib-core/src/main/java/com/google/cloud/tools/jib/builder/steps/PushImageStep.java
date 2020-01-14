@@ -28,6 +28,7 @@ import com.google.cloud.tools.jib.hash.Digests;
 import com.google.cloud.tools.jib.image.Image;
 import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
 import com.google.cloud.tools.jib.image.json.ImageToJsonTranslator;
+import com.google.cloud.tools.jib.registry.RegistryClient;
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
 import java.util.Set;
@@ -44,7 +45,7 @@ class PushImageStep implements Callable<BuildResult> {
   static ImmutableList<PushImageStep> makeList(
       BuildContext buildContext,
       ProgressEventDispatcher.Factory progressEventDispatcherFactory,
-      TokenRefreshingRegistryClient targetRegistryClient,
+      RegistryClient registryClient,
       BlobDescriptor containerConfigurationDigestAndSize,
       Image builtImage)
       throws IOException {
@@ -70,7 +71,7 @@ class PushImageStep implements Callable<BuildResult> {
                   new PushImageStep(
                       buildContext,
                       progressEventDispatcher.newChildProducer(),
-                      targetRegistryClient,
+                      registryClient,
                       manifestTemplate,
                       tag,
                       manifestDigest,
@@ -83,7 +84,7 @@ class PushImageStep implements Callable<BuildResult> {
   private final ProgressEventDispatcher.Factory progressEventDispatcherFactory;
 
   private final BuildableManifestTemplate manifestTemplate;
-  private final TokenRefreshingRegistryClient targetRegistryClient;
+  private final RegistryClient registryClient;
   private final String tag;
   private final DescriptorDigest imageDigest;
   private final DescriptorDigest imageId;
@@ -91,14 +92,14 @@ class PushImageStep implements Callable<BuildResult> {
   PushImageStep(
       BuildContext buildContext,
       ProgressEventDispatcher.Factory progressEventDispatcherFactory,
-      TokenRefreshingRegistryClient targetRegistryClient,
+      RegistryClient registryClient,
       BuildableManifestTemplate manifestTemplate,
       String tag,
       DescriptorDigest imageDigest,
       DescriptorDigest imageId) {
     this.buildContext = buildContext;
     this.progressEventDispatcherFactory = progressEventDispatcherFactory;
-    this.targetRegistryClient = targetRegistryClient;
+    this.registryClient = registryClient;
     this.manifestTemplate = manifestTemplate;
     this.tag = tag;
     this.imageDigest = imageDigest;
@@ -113,7 +114,7 @@ class PushImageStep implements Callable<BuildResult> {
             progressEventDispatcherFactory.create("pushing manifest for " + tag, 1)) {
       eventHandlers.dispatch(LogEvent.info("Pushing manifest for " + tag + "..."));
 
-      targetRegistryClient.pushManifest(manifestTemplate, tag);
+      registryClient.pushManifest(manifestTemplate, tag);
       return new BuildResult(imageDigest, imageId);
     }
   }
