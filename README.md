@@ -60,6 +60,10 @@ See also [rules_docker](https://github.com/bazelbuild/rules_docker) for a simila
 
 See the [Frequently Asked Questions (FAQ) page](docs/faq.md).
 
+## Privacy
+
+See the [Privacy page](docs/privacy.md).
+
 ## Get involved with the community
 
 We welcome contributions! Here's how you can contribute:
