@@ -44,7 +44,7 @@ class TaskCommon {
 
   static Optional<UpdateChecker> newUpdateChecker(
       ProjectProperties projectProperties, Logger logger) {
-    if (projectProperties.isOffline() || !logger.isLifecycleEnabled()) {
+    if (!projectProperties.isOffline() && logger.isLifecycleEnabled()) {
       return Optional.of(UpdateChecker.checkForUpdate(VERSION_URL));
     }
     return Optional.empty();

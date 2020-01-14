@@ -46,7 +46,7 @@ public class MojoCommon {
   public static final String VERSION_URL = "https://storage.googleapis.com/jib-versions/jib-maven";
 
   static Optional<UpdateChecker> newUpdateChecker(ProjectProperties projectProperties, Log logger) {
-    if (projectProperties.isOffline() || !logger.isInfoEnabled()) {
+    if (!projectProperties.isOffline() && logger.isInfoEnabled()) {
       return Optional.of(UpdateChecker.checkForUpdate(VERSION_URL));
     }
     return Optional.empty();
