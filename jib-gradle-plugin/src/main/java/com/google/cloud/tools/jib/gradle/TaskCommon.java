@@ -50,6 +50,17 @@ class TaskCommon {
     return Optional.empty();
   }
 
+  static void finishUpdateChecker(
+      ProjectProperties projectProperties, Optional<UpdateChecker> updateChecker) {
+    updateChecker
+        .flatMap(UpdateChecker::finishUpdateCheck)
+        .ifPresent(
+            updateMessage ->
+                projectProperties.log(
+                    com.google.cloud.tools.jib.api.LogEvent.lifecycle(
+                        "\n\u001B[33m" + updateMessage + "\u001B[0m\n")));
+  }
+
   @Nullable
   static TaskProvider<Task> getWarTaskProvider(Project project) {
     if (project.getPlugins().hasPlugin(WarPlugin.class)) {

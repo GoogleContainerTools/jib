@@ -18,7 +18,6 @@ package com.google.cloud.tools.jib.gradle;
 
 import com.google.cloud.tools.jib.api.CacheDirectoryCreationException;
 import com.google.cloud.tools.jib.api.InvalidImageReferenceException;
-import com.google.cloud.tools.jib.api.LogEvent;
 import com.google.cloud.tools.jib.filesystem.TempDirectoryProvider;
 import com.google.cloud.tools.jib.plugins.common.BuildStepsExecutionException;
 import com.google.cloud.tools.jib.plugins.common.HelpfulSuggestions;
@@ -147,12 +146,7 @@ public class BuildImageTask extends DefaultTask implements JibTask {
 
     } finally {
       tempDirectoryProvider.close();
-      updateChecker
-          .flatMap(UpdateChecker::finishUpdateCheck)
-          .ifPresent(
-              updateMessage ->
-                  projectProperties.log(
-                      LogEvent.lifecycle("\n\u001B[33m" + updateMessage + "\u001B[0m\n")));
+      TaskCommon.finishUpdateChecker(projectProperties, updateChecker);
       projectProperties.waitForLoggingThread();
     }
   }
