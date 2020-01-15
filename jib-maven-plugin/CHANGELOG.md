@@ -4,7 +4,6 @@ All notable changes to this project will be documented in this file.
 ## [unreleased]
 
 ### Added
-- When giving registry credentials in `settings.xml`, specifying port in `<server><id>` is now optional. ([#2135](https://github.com/GoogleContainerTools/jib/issues/2135))
 
 ### Changed
 
@@ -17,6 +16,7 @@ All notable changes to this project will be documented in this file.
     - Windows (`$XDG_CACHE_HOME` defined): from `$XDG_CACHE_HOME\google-cloud-tools-java\jib\` to `$XDG_CACHE_HOME\Google\Jib\Cache\`
     - Windows (`$XDG_CACHE_HOME` not defined): from `%LOCALAPPDATA%\google-cloud-tools-java\jib\` to `%LOCALAPPDATA%\Google\Jib\Cache\`
     - Initial builds will be slower until the cache is repopulated, unless you manually move the cache from the old location to the new location
+- When giving registry credentials in `settings.xml`, specifying port in `<server><id>` is no longer required. ([#2135](https://github.com/GoogleContainerTools/jib/issues/2135))
 
 ### Fixed
 
