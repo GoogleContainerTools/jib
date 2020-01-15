@@ -60,6 +60,7 @@ public class UpdateChecker {
   /**
    * Begins checking for an update in a separate thread.
    *
+   * @param warningLogger {@link Consumer} used to log warnings
    * @param versionUrl the location to check for the latest version
    * @return a new {@link UpdateChecker}
    */
@@ -100,7 +101,7 @@ public class UpdateChecker {
           }
         } catch (IOException ex) {
           warningLogger.accept(
-              "Global Jib config may be corrupt; you may need to fix or delete " + configFile);
+              "Failed to read global Jib config; you may need to fix or delete " + configFile);
           return Optional.empty();
         }
       } else {
