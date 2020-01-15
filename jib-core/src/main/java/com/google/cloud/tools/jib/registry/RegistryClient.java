@@ -250,12 +250,13 @@ public class RegistryClient {
   }
 
   private final EventHandlers eventHandlers;
+  @Nullable private final Credential credential;
   private final RegistryEndpointRequestProperties registryEndpointRequestProperties;
   private final String userAgent;
   private final FailoverHttpClient httpClient;
 
+  // mutable
   private final AtomicReference<Authorization> authorization = new AtomicReference<>();
-  @Nullable private final Credential credential;
   private boolean readOnlyBearerAuth;
 
   /**

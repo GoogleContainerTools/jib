@@ -159,6 +159,10 @@ class PullBaseImageStep implements Callable<ImageAndRegistryClient> {
             return new ImageAndRegistryClient(
                 pullBaseImage(registryClient, progressEventDispatcher), registryClient);
           }
+          eventHandlers.dispatch(
+              LogEvent.error(
+                  "The registry asked for basic authentication, but the registry had refused basic"
+                      + "authentication previously"));
           throw registryUnauthorizedException;
         }
       }
