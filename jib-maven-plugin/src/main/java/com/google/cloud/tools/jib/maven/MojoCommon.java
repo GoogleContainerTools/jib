@@ -18,6 +18,7 @@ package com.google.cloud.tools.jib.maven;
 
 import com.google.cloud.tools.jib.api.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.api.FilePermissions;
+import com.google.cloud.tools.jib.api.LogEvent;
 import com.google.cloud.tools.jib.maven.JibPluginConfiguration.PermissionConfiguration;
 import com.google.cloud.tools.jib.plugins.common.ProjectProperties;
 import com.google.cloud.tools.jib.plugins.common.PropertyNames;
@@ -50,6 +51,18 @@ public class MojoCommon {
       return Optional.of(UpdateChecker.checkForUpdate(VERSION_URL));
     }
     return Optional.empty();
+  }
+
+  static void finishUpdateChecker(
+      ProjectProperties projectProperties, Optional<UpdateChecker> updateChecker) {
+    updateChecker
+        .flatMap(UpdateChecker::finishUpdateCheck)
+        .ifPresent(
+            updateMessage -> {
+              projectProperties.log(LogEvent.lifecycle(""));
+              projectProperties.log(LogEvent.lifecycle("\u001B[33m" + updateMessage + "\u001B[0m"));
+              projectProperties.log(LogEvent.lifecycle(""));
+            });
   }
 
   /**
