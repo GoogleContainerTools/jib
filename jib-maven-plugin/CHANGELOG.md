@@ -4,6 +4,7 @@ All notable changes to this project will be documented in this file.
 ## [unreleased]
 
 ### Added
+- When giving registry credentials in `settings.xml`, specifying port in `<server><id>` is now optional. ([#2135](https://github.com/GoogleContainerTools/jib/issues/2135))
 
 ### Changed
 
