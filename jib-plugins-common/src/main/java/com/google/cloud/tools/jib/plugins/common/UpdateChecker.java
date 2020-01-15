@@ -41,6 +41,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.function.Consumer;
 
 /** Checks if Jib is up-to-date. */
 public class UpdateChecker {
@@ -62,20 +63,23 @@ public class UpdateChecker {
    * @param versionUrl the location to check for the latest version
    * @return a new {@link UpdateChecker}
    */
-  public static UpdateChecker checkForUpdate(String versionUrl) {
+  public static UpdateChecker checkForUpdate(Consumer<String> warningLogger, String versionUrl) {
     ExecutorService executorService = Executors.newSingleThreadExecutor();
     Future<Optional<String>> messageFuture =
         executorService.submit(
             () ->
                 performUpdateCheck(
-                    Verify.verifyNotNull(ProjectInfo.VERSION), versionUrl, getConfigDir()));
+                    warningLogger,
+                    Verify.verifyNotNull(ProjectInfo.VERSION),
+                    versionUrl,
+                    getConfigDir()));
     executorService.shutdown();
     return new UpdateChecker(messageFuture);
   }
 
   @VisibleForTesting
   static Optional<String> performUpdateCheck(
-      String currentVersion, String versionUrl, Path configDir) {
+      Consumer<String> warningLogger, String currentVersion, String versionUrl, Path configDir) {
     // Abort if offline or update checks are disabled
     if (Boolean.getBoolean(PropertyNames.DISABLE_UPDATE_CHECKS)) {
       return Optional.empty();
@@ -83,12 +87,20 @@ public class UpdateChecker {
 
     Path configFile = configDir.resolve("config.json");
     Path lastUpdateCheck = configDir.resolve("lastUpdateCheck");
+
     try {
+      // Check global config
       if (Files.exists(configFile)) {
         // Abort if update checks are disabled
-        ConfigJsonTemplate config =
-            JsonTemplateMapper.readJsonFromFile(configFile, ConfigJsonTemplate.class);
-        if (config.disableUpdateCheck) {
+        try {
+          ConfigJsonTemplate config =
+              JsonTemplateMapper.readJsonFromFile(configFile, ConfigJsonTemplate.class);
+          if (config.disableUpdateCheck) {
+            return Optional.empty();
+          }
+        } catch (IOException ex) {
+          warningLogger.accept(
+              "Global Jib config may be corrupt; you may need to fix or delete " + configFile);
           return Optional.empty();
         }
       } else {
@@ -97,20 +109,24 @@ public class UpdateChecker {
         Files.createDirectories(configDir);
         try (OutputStream outputStream = Files.newOutputStream(configFile)) {
           JsonTemplateMapper.writeTo(config, outputStream);
+        } catch (IOException ex) {
+          // If attempt to generate new config file failed, delete so we can try again next time
+          Files.deleteIfExists(configFile);
         }
       }
 
       // Check time of last update check
       if (Files.exists(lastUpdateCheck)) {
-        String fileContents =
-            new String(Files.readAllBytes(lastUpdateCheck), StandardCharsets.UTF_8);
         try {
+          String fileContents =
+              new String(Files.readAllBytes(lastUpdateCheck), StandardCharsets.UTF_8);
           Instant modifiedTime = Instant.parse(fileContents);
           if (modifiedTime.plus(Duration.ofDays(1)).isAfter(Instant.now())) {
             return Optional.empty();
           }
-        } catch (DateTimeParseException ex) {
-          // Ignore parse failure; assume update check hasn't been performed
+        } catch (DateTimeParseException | IOException ex) {
+          // If reading update time failed, file might be corrupt, so delete it
+          Files.delete(lastUpdateCheck);
         }
       }
 
@@ -137,13 +153,8 @@ public class UpdateChecker {
         connection.disconnect();
       }
 
-    } catch (IOException ex) {
-      try {
-        Files.deleteIfExists(configFile);
-        Files.deleteIfExists(lastUpdateCheck);
-      } catch (IOException ignored) {
-        // Fail silently
-      }
+    } catch (IOException ignored) {
+      // Fail other exceptions silently
     }
 
     return Optional.empty();

@@ -19,6 +19,7 @@ package com.google.cloud.tools.jib.gradle;
 import com.google.api.client.http.HttpTransport;
 import com.google.cloud.tools.jib.api.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.api.FilePermissions;
+import com.google.cloud.tools.jib.api.LogEvent;
 import com.google.cloud.tools.jib.plugins.common.ProjectProperties;
 import com.google.cloud.tools.jib.plugins.common.UpdateChecker;
 import java.util.HashMap;
@@ -32,7 +33,6 @@ import org.gradle.api.UnknownTaskException;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.plugins.WarPlugin;
 import org.gradle.api.tasks.TaskProvider;
-import org.gradle.internal.logging.events.LogEvent;
 import org.gradle.internal.logging.events.OutputEventListener;
 import org.gradle.internal.logging.slf4j.OutputEventListenerBackedLoggerContext;
 import org.slf4j.LoggerFactory;
@@ -45,7 +45,8 @@ class TaskCommon {
   static Optional<UpdateChecker> newUpdateChecker(
       ProjectProperties projectProperties, Logger logger) {
     if (!projectProperties.isOffline() && logger.isLifecycleEnabled()) {
-      return Optional.of(UpdateChecker.checkForUpdate(VERSION_URL));
+      return Optional.of(
+          UpdateChecker.checkForUpdate(s -> projectProperties.log(LogEvent.warn(s)), VERSION_URL));
     }
     return Optional.empty();
   }
@@ -57,8 +58,7 @@ class TaskCommon {
         .ifPresent(
             updateMessage ->
                 projectProperties.log(
-                    com.google.cloud.tools.jib.api.LogEvent.lifecycle(
-                        "\n\u001B[33m" + updateMessage + "\u001B[0m\n")));
+                    LogEvent.lifecycle("\n\u001B[33m" + updateMessage + "\u001B[0m\n")));
   }
 
   @Nullable
@@ -88,7 +88,8 @@ class TaskCommon {
     OutputEventListener defaultOutputEventListener = context.getOutputEventListener();
     context.setOutputEventListener(
         event -> {
-          LogEvent logEvent = (LogEvent) event;
+          org.gradle.internal.logging.events.LogEvent logEvent =
+              (org.gradle.internal.logging.events.LogEvent) event;
           if (!logEvent.getCategory().contains("org.apache")) {
             defaultOutputEventListener.onOutput(event);
           }
