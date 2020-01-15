@@ -48,8 +48,7 @@ public class MojoCommon {
 
   static Optional<UpdateChecker> newUpdateChecker(ProjectProperties projectProperties, Log logger) {
     if (!projectProperties.isOffline() && logger.isInfoEnabled()) {
-      return Optional.of(
-          UpdateChecker.checkForUpdate(s -> projectProperties.log(LogEvent.warn(s)), VERSION_URL));
+      return Optional.of(UpdateChecker.checkForUpdate(projectProperties::log, VERSION_URL));
     }
     return Optional.empty();
   }

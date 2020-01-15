@@ -17,6 +17,7 @@
 package com.google.cloud.tools.jib.plugins.common;
 
 import com.google.cloud.tools.jib.ProjectInfo;
+import com.google.cloud.tools.jib.api.LogEvent;
 import com.google.cloud.tools.jib.filesystem.XdgDirectories;
 import com.google.cloud.tools.jib.json.JsonTemplate;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
@@ -60,27 +61,24 @@ public class UpdateChecker {
   /**
    * Begins checking for an update in a separate thread.
    *
-   * @param warningLogger {@link Consumer} used to log warnings
+   * @param log {@link Consumer} used to log messages
    * @param versionUrl the location to check for the latest version
    * @return a new {@link UpdateChecker}
    */
-  public static UpdateChecker checkForUpdate(Consumer<String> warningLogger, String versionUrl) {
+  public static UpdateChecker checkForUpdate(Consumer<LogEvent> log, String versionUrl) {
     ExecutorService executorService = Executors.newSingleThreadExecutor();
     Future<Optional<String>> messageFuture =
         executorService.submit(
             () ->
                 performUpdateCheck(
-                    warningLogger,
-                    Verify.verifyNotNull(ProjectInfo.VERSION),
-                    versionUrl,
-                    getConfigDir()));
+                    log, Verify.verifyNotNull(ProjectInfo.VERSION), versionUrl, getConfigDir()));
     executorService.shutdown();
     return new UpdateChecker(messageFuture);
   }
 
   @VisibleForTesting
   static Optional<String> performUpdateCheck(
-      Consumer<String> warningLogger, String currentVersion, String versionUrl, Path configDir) {
+      Consumer<LogEvent> log, String currentVersion, String versionUrl, Path configDir) {
     // Abort if offline or update checks are disabled
     if (Boolean.getBoolean(PropertyNames.DISABLE_UPDATE_CHECKS)) {
       return Optional.empty();
@@ -100,8 +98,13 @@ public class UpdateChecker {
             return Optional.empty();
           }
         } catch (IOException ex) {
-          warningLogger.accept(
-              "Failed to read global Jib config; you may need to fix or delete " + configFile);
+          log.accept(
+              LogEvent.warn(
+                  "Failed to read global Jib config: "
+                      + ex.getMessage()
+                      + "; you may need to fix or delete "
+                      + configFile
+                      + "; "));
           return Optional.empty();
         }
       } else {
@@ -113,6 +116,7 @@ public class UpdateChecker {
         } catch (IOException ex) {
           // If attempt to generate new config file failed, delete so we can try again next time
           Files.deleteIfExists(configFile);
+          log.accept(LogEvent.debug("Failed to generate global Jib config; " + ex.getMessage()));
         }
       }
 
@@ -128,6 +132,7 @@ public class UpdateChecker {
         } catch (DateTimeParseException | IOException ex) {
           // If reading update time failed, file might be corrupt, so delete it
           Files.delete(lastUpdateCheck);
+          log.accept(LogEvent.debug("Failed to read lastUpdateCheck; " + ex.getMessage()));
         }
       }
 
@@ -154,8 +159,8 @@ public class UpdateChecker {
         connection.disconnect();
       }
 
-    } catch (IOException ignored) {
-      // Fail other exceptions silently
+    } catch (IOException ex) {
+      log.accept(LogEvent.debug("Update check failed; " + ex.getMessage()));
     }
 
     return Optional.empty();
