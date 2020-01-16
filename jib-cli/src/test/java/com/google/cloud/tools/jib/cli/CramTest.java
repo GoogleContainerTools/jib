@@ -19,7 +19,6 @@ package com.google.cloud.tools.jib.cli;
 import com.google.cloud.tools.jib.api.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.api.ImageReference;
 import com.google.cloud.tools.jib.api.Port;
-import com.google.cloud.tools.jib.cli.Cram;
 import com.google.common.collect.Sets;
 import java.time.Duration;
 import java.time.Instant;

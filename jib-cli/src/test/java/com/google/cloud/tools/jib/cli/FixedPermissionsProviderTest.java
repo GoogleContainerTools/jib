@@ -18,7 +18,6 @@ package com.google.cloud.tools.jib.cli;
 
 import com.google.cloud.tools.jib.api.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.api.FilePermissions;
-import com.google.cloud.tools.jib.cli.FixedPermissionsProvider;
 import java.io.File;
 import java.io.IOException;
 import org.junit.Assert;
