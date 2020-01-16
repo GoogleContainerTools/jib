@@ -28,11 +28,13 @@ import com.google.cloud.tools.jib.api.JibContainerBuilder;
 import com.google.cloud.tools.jib.api.RegistryException;
 import com.google.cloud.tools.jib.api.RegistryUnauthorizedException;
 import com.google.cloud.tools.jib.registry.RegistryCredentialsNotSentException;
+import com.google.common.collect.ImmutableSet;
 import java.io.IOException;
 import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import org.apache.http.conn.HttpHostConnectException;
 import org.junit.Assert;
@@ -229,12 +231,14 @@ public class JibBuildRunnerTest {
     final String imageId =
         "sha256:61bb3ec31a47cb730eb58a38bbfa813761a51dca69d10e39c24c3d00a7b2c7a9";
     final String digest = "sha256:3f1be7e19129edb202c071a659a4db35280ab2bb1a16f223bfd5d1948657b6fc";
+    final Set<String> tags = ImmutableSet.of("latest", "0.1.41-69d10e-20200116T101403");
 
     final Path outputPath = temporaryFolder.newFile("jib-image.json").toPath();
 
     Mockito.when(mockJibContainer.getTargetImage()).thenReturn(targetImageReference);
     Mockito.when(mockJibContainer.getImageId()).thenReturn(DescriptorDigest.fromDigest(imageId));
     Mockito.when(mockJibContainer.getDigest()).thenReturn(DescriptorDigest.fromDigest(digest));
+    Mockito.when(mockJibContainer.getTags()).thenReturn(tags);
     Mockito.when(mockJibContainerBuilder.containerize(mockContainerizer))
         .thenReturn(mockJibContainer);
     testJibBuildRunner.writeImageJson(outputPath).runBuild();
@@ -244,5 +248,6 @@ public class JibBuildRunnerTest {
     Assert.assertEquals(targetImageReference.toString(), metadataOutput.getImage());
     Assert.assertEquals(imageId, metadataOutput.getImageId());
     Assert.assertEquals(digest, metadataOutput.getImageDigest());
+    Assert.assertEquals(tags, ImmutableSet.copyOf(metadataOutput.getTags()));
   }
 }

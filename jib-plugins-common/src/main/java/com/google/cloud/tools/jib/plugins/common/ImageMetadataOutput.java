@@ -23,6 +23,8 @@ import com.google.cloud.tools.jib.json.JsonTemplate;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import com.google.common.annotations.VisibleForTesting;
 import java.io.IOException;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Builds a JSON string containing metadata about a {@link JibContainer} from a build.
@@ -31,9 +33,10 @@ import java.io.IOException;
  *
  * <pre>{@code
  * {
- *   "image":"gcr.io/project/image:tag",
+ *   "image": "gcr.io/project/image:tag",
  *   "imageId": "sha256:61bb3ec31a47cb730eb58a38bbfa813761a51dca69d10e39c24c3d00a7b2c7a9",
- *   "imageDigest": "sha256:3f1be7e19129edb202c071a659a4db35280ab2bb1a16f223bfd5d1948657b6f"
+ *   "imageDigest": "sha256:3f1be7e19129edb202c071a659a4db35280ab2bb1a16f223bfd5d1948657b6f",
+ *   "tags": ["latest", "tag"]
  * }
  * }</pre>
  */
@@ -42,15 +45,18 @@ public class ImageMetadataOutput implements JsonTemplate {
   private final String image;
   private final String imageId;
   private final String imageDigest;
+  private final List<String> tags;
 
   @JsonCreator
   ImageMetadataOutput(
       @JsonProperty(value = "image", required = true) String image,
       @JsonProperty(value = "imageId", required = true) String imageId,
-      @JsonProperty(value = "imageDigest", required = true) String imageDigest) {
+      @JsonProperty(value = "imageDigest", required = true) String imageDigest,
+      @JsonProperty(value = "tags", required = true) List<String> tags) {
     this.image = image;
     this.imageId = imageId;
     this.imageDigest = imageDigest;
+    this.tags = tags;
   }
 
   @VisibleForTesting
@@ -62,7 +68,11 @@ public class ImageMetadataOutput implements JsonTemplate {
     String image = jibContainer.getTargetImage().toString();
     String imageId = jibContainer.getImageId().toString();
     String imageDigest = jibContainer.getDigest().toString();
-    return new ImageMetadataOutput(image, imageId, imageDigest);
+
+    // Make sure tags always appear in a predictable way, by sorting them into a list
+    List<String> tags = jibContainer.getTags().stream().sorted().collect(Collectors.toList());
+
+    return new ImageMetadataOutput(image, imageId, imageDigest, tags);
   }
 
   public String getImage() {
@@ -75,6 +85,10 @@ public class ImageMetadataOutput implements JsonTemplate {
 
   public String getImageDigest() {
     return imageDigest;
+  }
+
+  public List<String> getTags() {
+    return tags;
   }
 
   public String toJson() throws IOException {
