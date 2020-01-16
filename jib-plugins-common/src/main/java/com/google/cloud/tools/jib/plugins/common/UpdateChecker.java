@@ -115,8 +115,8 @@ public class UpdateChecker {
           JsonTemplateMapper.writeTo(config, outputStream);
         } catch (IOException ex) {
           // If attempt to generate new config file failed, delete so we can try again next time
-          Files.deleteIfExists(configFile);
           log.accept(LogEvent.debug("Failed to generate global Jib config; " + ex.getMessage()));
+          Files.deleteIfExists(configFile);
         }
       }
 
@@ -131,8 +131,8 @@ public class UpdateChecker {
           }
         } catch (DateTimeParseException | IOException ex) {
           // If reading update time failed, file might be corrupt, so delete it
-          Files.delete(lastUpdateCheck);
           log.accept(LogEvent.debug("Failed to read lastUpdateCheck; " + ex.getMessage()));
+          Files.delete(lastUpdateCheck);
         }
       }
 
