@@ -121,7 +121,7 @@ public class RegistryClientTest {
         "HTTP/1.1 401 Unauthorized\nContent-Length: 0\nWWW-Authenticate: Basic foo\n\n";
     registry = new TestWebServer(false, Arrays.asList(basicAuth), 1);
 
-    RegistryClient registryClient = createpRegistryClient();
+    RegistryClient registryClient = createRegistryClient();
     Assert.assertFalse(registryClient.doBearerAuth(false));
 
     Mockito.verify(eventHandlers).dispatch(logContains("attempting bearer auth"));
@@ -134,7 +134,7 @@ public class RegistryClientTest {
           RegistryException {
     setUpAuthServerAndRegistry(1, "HTTP/1.1 200 OK\nContent-Length: 1234\n\n");
 
-    RegistryClient registryClient = createpRegistryClient();
+    RegistryClient registryClient = createRegistryClient();
     Assert.assertTrue(registryClient.doBearerAuth(false));
 
     Optional<BlobDescriptor> digestAndSize = registryClient.checkBlob(digest);
@@ -150,7 +150,7 @@ public class RegistryClientTest {
           RegistryException {
     setUpAuthServerAndRegistry(3, "HTTP/1.1 200 OK\nContent-Length: 5678\n\n");
 
-    RegistryClient registryClient = createpRegistryClient();
+    RegistryClient registryClient = createRegistryClient();
     Assert.assertTrue(registryClient.doBearerAuth(false));
 
     Optional<BlobDescriptor> digestAndSize = registryClient.checkBlob(digest);
@@ -189,7 +189,7 @@ public class RegistryClientTest {
     registry = new TestWebServer(false, responses, responses.size(), true);
   }
 
-  private RegistryClient createpRegistryClient() {
+  private RegistryClient createRegistryClient() {
     return RegistryClient.factory(
             eventHandlers,
             "localhost:" + registry.getLocalPort(),
