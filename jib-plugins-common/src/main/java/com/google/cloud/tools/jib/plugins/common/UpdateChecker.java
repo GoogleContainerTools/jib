@@ -72,13 +72,10 @@ public class UpdateChecker {
    */
   public static Future<Optional<String>> checkForUpdate(
       ExecutorService executorService, Consumer<LogEvent> log, String versionUrl) {
-    Future<Optional<String>> messageFuture =
-        executorService.submit(
-            () ->
-                performUpdateCheck(
-                    log, Verify.verifyNotNull(ProjectInfo.VERSION), versionUrl, getConfigDir()));
-    executorService.shutdown();
-    return messageFuture;
+    return executorService.submit(
+        () ->
+            performUpdateCheck(
+                log, Verify.verifyNotNull(ProjectInfo.VERSION), versionUrl, getConfigDir()));
   }
 
   @VisibleForTesting
