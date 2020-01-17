@@ -18,7 +18,7 @@ package com.google.cloud.tools.jib.plugins.common;
 
 import com.google.cloud.tools.jib.api.LogEvent.Level;
 import com.google.cloud.tools.jib.http.TestWebServer;
-import com.google.common.util.concurrent.MoreExecutors;
+import com.google.common.util.concurrent.Futures;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
@@ -30,7 +30,6 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.Collections;
 import java.util.Optional;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import org.junit.After;
 import org.junit.Assert;
@@ -207,8 +206,7 @@ public class UpdateCheckerTest {
 
   @Test
   public void testFinishUpdateCheck_success() {
-    ExecutorService executorService = MoreExecutors.newDirectExecutorService();
-    Future<Optional<String>> updateCheckFuture = executorService.submit(() -> Optional.of("Hello"));
+    Future<Optional<String>> updateCheckFuture = Futures.immediateFuture(Optional.of("Hello"));
     Optional<String> result = UpdateChecker.finishUpdateCheck(updateCheckFuture);
     Assert.assertTrue(result.isPresent());
     Assert.assertEquals("Hello", result.get());

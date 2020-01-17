@@ -34,6 +34,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import org.apache.maven.artifact.versioning.DefaultArtifactVersion;
@@ -55,8 +56,12 @@ public class MojoCommon {
     if (projectProperties.isOffline() || !logger.isInfoEnabled()) {
       return Futures.immediateFuture(Optional.empty());
     }
-    return UpdateChecker.checkForUpdate(
-        Executors.newSingleThreadExecutor(), projectProperties::log, VERSION_URL);
+    ExecutorService executorService = Executors.newSingleThreadExecutor();
+    try {
+      return UpdateChecker.checkForUpdate(executorService, projectProperties::log, VERSION_URL);
+    } finally {
+      executorService.shutdown();
+    }
   }
 
   static void finishUpdateChecker(
