@@ -36,7 +36,8 @@ If a question you have is not answered below, please [submit an issue](/../../is
 [How do I configure a proxy?](#how-do-i-configure-a-proxy)\
 [How can I examine network traffic?](#how-can-i-examine-network-traffic)\
 [How do I view debug logs for Jib?](#how-do-i-view-debug-logs-for-jib)\
-[I am seeing `ImagePullBackoff` on my pods.](#i-am-seeing-imagepullbackoff-on-my-pods-in-minikube)
+[I am seeing `ImagePullBackoff` on my pods.](#i-am-seeing-imagepullbackoff-on-my-pods-in-minikube)\
+[I am seeing `Method Not Found` or `Class Not Found` errors when building.](#i-am-seeing-method-not-found-or-class-not-found-errors-when-building)
 
 ---
 
@@ -537,6 +538,25 @@ kubectl patch serviceaccount default \
 
 See more at [Using Google Container Registry (GCR) with Minikube](https://ryaneschinger.com/blog/using-google-container-registry-gcr-with-minikube/).
 
+### I am seeing `Method Not Found` or `Class Not Found` errors when building.
+
+Sometimes when upgrading your gradle build plugin versions, you may experience errors due to mismatching versions of dependencies pulled in (for example: [issues/2183](https://github.com/GoogleContainerTools/jib/issues/2183)). This can be due to the buildscript classpath loading behavior described [on gradle forums](https://discuss.gradle.org/t/version-is-root-build-gradle-buildscript-is-overriding-subproject-buildscript-dependency-versions/20746/3). 
+
+This commonly appears in multi module gradle projects. A solution to this problem is to define all of your plugins in the base project and apply them selectively in your subprojects as needed. This should help alleviate the problem of the buildscript classpath using older versions of a library.
+
+`build.gradle` (root)
+```groovy
+plugins {
+  id 'com.google.cloud.tools.jib' version 'x.y.z' apply false
+}
+```
+
+`build.gradle` (sub-project)
+```groovy
+plugins {
+  id 'com.google.cloud.tools.jib'
+}
+```
 
 ### How can I examine network traffic?
 
