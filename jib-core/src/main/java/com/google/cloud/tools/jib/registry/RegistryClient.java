@@ -53,8 +53,10 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
+import javax.annotation.concurrent.ThreadSafe;
 
 /** Interfaces with a registry. Thread-safe. */
+@ThreadSafe
 public class RegistryClient {
 
   /** Factory for creating {@link RegistryClient}s. */

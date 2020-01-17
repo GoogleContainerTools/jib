@@ -24,9 +24,9 @@ import java.io.IOException;
 import java.net.URL;
 
 /** Forces sending all requests in plain-HTTP protocol. For testing only. */
-class HttpOnlyFailoverHttpClient extends FailoverHttpClient {
+class PlainHttpClient extends FailoverHttpClient {
 
-  HttpOnlyFailoverHttpClient() {
+  PlainHttpClient() {
     super(true, true, ignored -> {});
   }
 

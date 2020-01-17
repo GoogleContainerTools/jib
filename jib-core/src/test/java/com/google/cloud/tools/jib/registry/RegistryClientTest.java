@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.registry;
 
+import com.google.cloud.tools.jib.api.Credential;
 import com.google.cloud.tools.jib.api.DescriptorDigest;
 import com.google.cloud.tools.jib.api.LogEvent;
 import com.google.cloud.tools.jib.api.RegistryException;
@@ -33,6 +34,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import javax.annotation.Nullable;
+import org.hamcrest.CoreMatchers;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -121,7 +123,7 @@ public class RegistryClientTest {
         "HTTP/1.1 401 Unauthorized\nContent-Length: 0\nWWW-Authenticate: Basic foo\n\n";
     registry = new TestWebServer(false, Arrays.asList(basicAuth), 1);
 
-    RegistryClient registryClient = createRegistryClient();
+    RegistryClient registryClient = createRegistryClient(null);
     Assert.assertFalse(registryClient.doBearerAuth(false));
 
     Mockito.verify(eventHandlers).dispatch(logContains("attempting bearer auth"));
@@ -134,7 +136,7 @@ public class RegistryClientTest {
           RegistryException {
     setUpAuthServerAndRegistry(1, "HTTP/1.1 200 OK\nContent-Length: 1234\n\n");
 
-    RegistryClient registryClient = createRegistryClient();
+    RegistryClient registryClient = createRegistryClient(null);
     Assert.assertTrue(registryClient.doBearerAuth(false));
 
     Optional<BlobDescriptor> digestAndSize = registryClient.checkBlob(digest);
@@ -150,7 +152,7 @@ public class RegistryClientTest {
           RegistryException {
     setUpAuthServerAndRegistry(3, "HTTP/1.1 200 OK\nContent-Length: 5678\n\n");
 
-    RegistryClient registryClient = createRegistryClient();
+    RegistryClient registryClient = createRegistryClient(null);
     Assert.assertTrue(registryClient.doBearerAuth(false));
 
     Optional<BlobDescriptor> digestAndSize = registryClient.checkBlob(digest);
@@ -189,12 +191,25 @@ public class RegistryClientTest {
     registry = new TestWebServer(false, responses, responses.size(), true);
   }
 
-  private RegistryClient createRegistryClient() {
+  @Test
+  public void testConfigureBasicAuth()
+      throws IOException, InterruptedException, GeneralSecurityException, URISyntaxException,
+          RegistryException {
+    String basicAuth = "HTTP/1.1 200 OK\nContent-Length: 56789\n\n";
+    registry = new TestWebServer(false, Arrays.asList(basicAuth), 1);
+    RegistryClient registryClient = createRegistryClient(Credential.from("user", "pass"));
+    registryClient.configureBasicAuth();
+
+    Optional<BlobDescriptor> digestAndSize = registryClient.checkBlob(digest);
+    Assert.assertEquals(56789, digestAndSize.get().getSize());
+    Assert.assertThat(
+        registry.getInputRead(), CoreMatchers.containsString("Authorization: Basic dXNlcjpwYXNz"));
+  }
+
+  private RegistryClient createRegistryClient(@Nullable Credential credential) {
     return RegistryClient.factory(
-            eventHandlers,
-            "localhost:" + registry.getLocalPort(),
-            "foo/bar",
-            new HttpOnlyFailoverHttpClient())
+            eventHandlers, "localhost:" + registry.getLocalPort(), "foo/bar", new PlainHttpClient())
+        .setCredential(credential)
         .newRegistryClient();
   }
 

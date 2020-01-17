@@ -31,17 +31,17 @@ class RegistryCredentialRetriever {
   /** Retrieves credentials for the base image. */
   static Optional<Credential> getBaseImageCredential(BuildContext buildContext)
       throws CredentialRetrievalException {
-    return retrieve(buildContext.getEventHandlers(), buildContext.getBaseImageConfiguration());
+    return retrieve(buildContext.getBaseImageConfiguration(), buildContext.getEventHandlers());
   }
 
   /** Retrieves credentials for the target image. */
   static Optional<Credential> getTargetImageCredential(BuildContext buildContext)
       throws CredentialRetrievalException {
-    return retrieve(buildContext.getEventHandlers(), buildContext.getTargetImageConfiguration());
+    return retrieve(buildContext.getTargetImageConfiguration(), buildContext.getEventHandlers());
   }
 
   private static Optional<Credential> retrieve(
-      EventHandlers eventHandlers, ImageConfiguration imageConfiguration)
+      ImageConfiguration imageConfiguration, EventHandlers eventHandlers)
       throws CredentialRetrievalException {
     for (CredentialRetriever retriever : imageConfiguration.getCredentialRetrievers()) {
       Optional<Credential> credential = retriever.retrieve();
