@@ -133,7 +133,10 @@ public class TestWebServer implements Closeable {
       OutputStream out = socket.getOutputStream();
 
       int firstByte = in.read();
-      if (firstByte != 'G' && firstByte != 'P' && firstByte != 'H') { // GET, POST, HEAD, ...
+      int secondByte = in.read();
+      if (!(firstByte == 'G' && secondByte == 'E')
+          && !(firstByte == 'P' && secondByte == 'O')
+          && !(firstByte == 'H' && secondByte == 'E')) { // GET, POST, HEAD, ...
         out.write("HTTP/1.1 400 Bad Request\n\n".getBytes(StandardCharsets.UTF_8));
         return null;
       }
@@ -145,7 +148,7 @@ public class TestWebServer implements Closeable {
             line = reader.readLine()) {
           synchronized (inputRead) {
             if (firstByte != -1) {
-              inputRead.append((char) firstByte);
+              inputRead.append((char) firstByte).append((char) secondByte);
               firstByte = -1;
             }
             inputRead.append(line).append('\n');
