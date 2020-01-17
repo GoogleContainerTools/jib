@@ -60,6 +60,7 @@ public class UpdateChecker {
   /**
    * Begins checking for an update in a separate thread.
    *
+   * @param executorService the {@link ExecutorService}
    * @param log {@link Consumer} used to log messages
    * @param versionUrl the location to check for the latest version
    * @return a new {@link UpdateChecker}
