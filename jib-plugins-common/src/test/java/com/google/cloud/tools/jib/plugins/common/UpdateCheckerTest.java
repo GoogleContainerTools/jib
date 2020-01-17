@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.plugins.common;
 
+import com.google.cloud.tools.jib.api.LogEvent.Level;
 import com.google.cloud.tools.jib.http.TestWebServer;
 import com.google.common.util.concurrent.MoreExecutors;
 import java.io.IOException;
@@ -155,13 +156,48 @@ public class UpdateCheckerTest {
   }
 
   @Test
+  public void testPerformUpdateCheck_badConfig() throws IOException {
+    Files.write(
+        configDir.resolve("config.json"), "corrupt config".getBytes(StandardCharsets.UTF_8));
+    Optional<String> message =
+        UpdateChecker.performUpdateCheck(
+            ignored -> {}, "1.0.2", testWebServer.getEndpoint(), configDir);
+    Assert.assertFalse(message.isPresent());
+  }
+
+  @Test
+  public void testPerformUpdateCheck_badLastUpdateTime() throws IOException {
+    Instant before = Instant.now();
+    Files.write(
+        configDir.resolve("lastUpdateCheck"), "bad timestamp".getBytes(StandardCharsets.UTF_8));
+    Optional<String> message =
+        UpdateChecker.performUpdateCheck(
+            ignored -> {}, "1.0.2", testWebServer.getEndpoint(), configDir);
+    String modifiedTime =
+        new String(
+            Files.readAllBytes(configDir.resolve("lastUpdateCheck")), StandardCharsets.UTF_8);
+    Assert.assertTrue(Instant.parse(modifiedTime).isAfter(before));
+    Assert.assertTrue(message.isPresent());
+    Assert.assertEquals(
+        "A new version of Jib (2.0.0) is available (currently using 1.0.2). Update your build "
+            + "configuration to use the latest features and fixes!",
+        message.get());
+  }
+
+  @Test
   public void testPerformUpdateCheck_failSilently()
       throws InterruptedException, GeneralSecurityException, URISyntaxException, IOException {
     try (TestWebServer badServer =
         new TestWebServer(false, Collections.singletonList("HTTP/1.1 400 Bad Request\n\n"), 1)) {
       Optional<String> message =
           UpdateChecker.performUpdateCheck(
-              ignored -> {}, "1.0.2", badServer.getEndpoint(), configDir);
+              logEvent -> {
+                Assert.assertEquals(logEvent.getLevel(), Level.DEBUG);
+                Assert.assertTrue(logEvent.getMessage().contains("Update check failed; "));
+              },
+              "1.0.2",
+              badServer.getEndpoint(),
+              configDir);
       Assert.assertFalse(message.isPresent());
     }
   }
