@@ -17,6 +17,7 @@
 package com.google.cloud.tools.jib.gradle;
 
 import com.google.api.client.http.HttpTransport;
+import com.google.cloud.tools.jib.ProjectInfo;
 import com.google.cloud.tools.jib.api.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.api.FilePermissions;
 import com.google.cloud.tools.jib.api.LogEvent;
@@ -44,10 +45,10 @@ class TaskCommon {
 
   static Optional<UpdateChecker> newUpdateChecker(
       ProjectProperties projectProperties, Logger logger) {
-    if (!projectProperties.isOffline() && logger.isLifecycleEnabled()) {
-      return Optional.of(UpdateChecker.checkForUpdate(projectProperties::log, VERSION_URL));
+    if (projectProperties.isOffline() || !logger.isLifecycleEnabled()) {
+      return Optional.empty();
     }
-    return Optional.empty();
+    return Optional.of(UpdateChecker.checkForUpdate(projectProperties::log, VERSION_URL));
   }
 
   static void finishUpdateChecker(
@@ -57,7 +58,12 @@ class TaskCommon {
         .ifPresent(
             updateMessage ->
                 projectProperties.log(
-                    LogEvent.lifecycle("\n\u001B[33m" + updateMessage + "\u001B[0m\n")));
+                    LogEvent.lifecycle(
+                        "\n\u001B[33m"
+                            + updateMessage
+                            + "\n"
+                            + ProjectInfo.GITHUB_URL
+                            + "/blob/master/jib-gradle-plugin/CHANGELOG.md\u001B[0m\n")));
   }
 
   @Nullable

@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.maven;
 
+import com.google.cloud.tools.jib.ProjectInfo;
 import com.google.cloud.tools.jib.api.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.api.FilePermissions;
 import com.google.cloud.tools.jib.api.LogEvent;
@@ -47,10 +48,10 @@ public class MojoCommon {
   public static final String VERSION_URL = "https://storage.googleapis.com/jib-versions/jib-maven";
 
   static Optional<UpdateChecker> newUpdateChecker(ProjectProperties projectProperties, Log logger) {
-    if (!projectProperties.isOffline() && logger.isInfoEnabled()) {
-      return Optional.of(UpdateChecker.checkForUpdate(projectProperties::log, VERSION_URL));
+    if (projectProperties.isOffline() || !logger.isInfoEnabled()) {
+      return Optional.empty();
     }
-    return Optional.empty();
+    return Optional.of(UpdateChecker.checkForUpdate(projectProperties::log, VERSION_URL));
   }
 
   static void finishUpdateChecker(
@@ -61,6 +62,11 @@ public class MojoCommon {
             updateMessage -> {
               projectProperties.log(LogEvent.lifecycle(""));
               projectProperties.log(LogEvent.lifecycle("\u001B[33m" + updateMessage + "\u001B[0m"));
+              projectProperties.log(
+                  LogEvent.lifecycle(
+                      "\u001B[33m"
+                          + ProjectInfo.GITHUB_URL
+                          + "/blob/master/jib-maven-plugin/CHANGELOG.md\u001B[0m"));
               projectProperties.log(LogEvent.lifecycle(""));
             });
   }
