@@ -57,6 +57,11 @@ public class UpdateChecker {
     }
   }
 
+  /** JSON template for content downloaded during version check. */
+  private static class VersionJsonTemplate implements JsonTemplate {
+    private String latest = "";
+  }
+
   /**
    * Begins checking for an update in a separate thread.
    *
@@ -143,14 +148,16 @@ public class UpdateChecker {
         BufferedReader bufferedReader =
             new BufferedReader(
                 new InputStreamReader(connection.getInputStream(), StandardCharsets.UTF_8));
-        String latestVersion = bufferedReader.readLine().trim();
+        VersionJsonTemplate version =
+            JsonTemplateMapper.readJson(
+                bufferedReader.readLine().trim(), VersionJsonTemplate.class);
         Files.write(lastUpdateCheck, Instant.now().toString().getBytes(StandardCharsets.UTF_8));
-        if (currentVersion.equals(latestVersion)) {
+        if (currentVersion.equals(version.latest)) {
           return Optional.empty();
         }
         return Optional.of(
             "A new version of Jib ("
-                + latestVersion
+                + version.latest
                 + ") is available (currently using "
                 + currentVersion
                 + "). Update your build configuration to use the latest features and fixes!");

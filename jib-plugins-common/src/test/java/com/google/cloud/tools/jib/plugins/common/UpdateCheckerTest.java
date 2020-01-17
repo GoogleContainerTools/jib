@@ -58,7 +58,10 @@ public class UpdateCheckerTest {
       throws InterruptedException, GeneralSecurityException, URISyntaxException, IOException {
     testWebServer =
         new TestWebServer(
-            false, Collections.singletonList("HTTP/1.1 200 OK\nContent-Length:5\n\n2.0.0"), 1);
+            false,
+            Collections.singletonList(
+                "HTTP/1.1 200 OK\nContent-Length:18\n\n{\"latest\":\"2.0.0\"}"),
+            1);
     configDir = temporaryFolder.getRoot().toPath();
   }
 
