@@ -205,9 +205,8 @@ public class UpdateCheckerTest {
   @Test
   public void testFinishUpdateCheck_success() {
     ExecutorService executorService = MoreExecutors.newDirectExecutorService();
-    UpdateChecker updateChecker =
-        new UpdateChecker(executorService.submit(() -> Optional.of("Hello")));
-    Optional<String> result = updateChecker.finishUpdateCheck();
+    Future<Optional<String>> updateCheckFuture = executorService.submit(() -> Optional.of("Hello"));
+    Optional<String> result = UpdateChecker.finishUpdateCheck(updateCheckFuture);
     Assert.assertTrue(result.isPresent());
     Assert.assertEquals("Hello", result.get());
   }
@@ -215,11 +214,11 @@ public class UpdateCheckerTest {
   @Test
   public void testFinishUpdateCheck_notDone() {
     @SuppressWarnings("unchecked")
-    Future<Optional<String>> future = (Future<Optional<String>>) Mockito.mock(Future.class);
-    Mockito.when(future.isDone()).thenReturn(false);
+    Future<Optional<String>> updateCheckFuture =
+        (Future<Optional<String>>) Mockito.mock(Future.class);
+    Mockito.when(updateCheckFuture.isDone()).thenReturn(false);
 
-    UpdateChecker updateChecker = new UpdateChecker(future);
-    Optional<String> result = updateChecker.finishUpdateCheck();
+    Optional<String> result = UpdateChecker.finishUpdateCheck(updateCheckFuture);
     Assert.assertFalse(result.isPresent());
   }
 

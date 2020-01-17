@@ -31,11 +31,11 @@ import com.google.cloud.tools.jib.plugins.common.InvalidFilesModificationTimeExc
 import com.google.cloud.tools.jib.plugins.common.InvalidWorkingDirectoryException;
 import com.google.cloud.tools.jib.plugins.common.MainClassInferenceException;
 import com.google.cloud.tools.jib.plugins.common.PluginConfigurationProcessor;
-import com.google.cloud.tools.jib.plugins.common.UpdateChecker;
 import com.google.common.annotations.VisibleForTesting;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Optional;
+import java.util.concurrent.Future;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.Mojo;
@@ -75,7 +75,7 @@ public class BuildDockerMojo extends JibPluginConfiguration {
     MavenProjectProperties projectProperties =
         MavenProjectProperties.getForProject(
             getProject(), getSession(), getLog(), tempDirectoryProvider);
-    Optional<UpdateChecker> updateChecker =
+    Future<Optional<String>> updateCheckFuture =
         MojoCommon.newUpdateChecker(projectProperties, getLog());
     try {
       PluginConfigurationProcessor.createJibBuildRunnerForDockerDaemonImage(
@@ -138,7 +138,7 @@ public class BuildDockerMojo extends JibPluginConfiguration {
 
     } finally {
       tempDirectoryProvider.close();
-      MojoCommon.finishUpdateChecker(projectProperties, updateChecker);
+      MojoCommon.finishUpdateChecker(projectProperties, updateCheckFuture);
       projectProperties.waitForLoggingThread();
       getLog().info("");
     }

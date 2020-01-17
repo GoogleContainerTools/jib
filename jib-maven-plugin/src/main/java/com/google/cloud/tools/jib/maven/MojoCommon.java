@@ -27,12 +27,15 @@ import com.google.cloud.tools.jib.plugins.common.UpdateChecker;
 import com.google.cloud.tools.jib.plugins.common.VersionChecker;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
+import com.google.common.util.concurrent.Futures;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import org.apache.maven.artifact.versioning.DefaultArtifactVersion;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.descriptor.PluginDescriptor;
@@ -47,17 +50,18 @@ public class MojoCommon {
 
   public static final String VERSION_URL = "https://storage.googleapis.com/jib-versions/jib-maven";
 
-  static Optional<UpdateChecker> newUpdateChecker(ProjectProperties projectProperties, Log logger) {
+  static Future<Optional<String>> newUpdateChecker(
+      ProjectProperties projectProperties, Log logger) {
     if (projectProperties.isOffline() || !logger.isInfoEnabled()) {
-      return Optional.empty();
+      return Futures.immediateFuture(Optional.empty());
     }
-    return Optional.of(UpdateChecker.checkForUpdate(projectProperties::log, VERSION_URL));
+    return UpdateChecker.checkForUpdate(
+        Executors.newSingleThreadExecutor(), projectProperties::log, VERSION_URL);
   }
 
   static void finishUpdateChecker(
-      ProjectProperties projectProperties, Optional<UpdateChecker> updateChecker) {
-    updateChecker
-        .flatMap(UpdateChecker::finishUpdateCheck)
+      ProjectProperties projectProperties, Future<Optional<String>> updateCheckFuture) {
+    UpdateChecker.finishUpdateCheck(updateCheckFuture)
         .ifPresent(
             updateMessage -> {
               projectProperties.log(LogEvent.lifecycle(""));

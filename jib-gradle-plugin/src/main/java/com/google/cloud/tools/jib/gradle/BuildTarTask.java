@@ -30,12 +30,12 @@ import com.google.cloud.tools.jib.plugins.common.InvalidFilesModificationTimeExc
 import com.google.cloud.tools.jib.plugins.common.InvalidWorkingDirectoryException;
 import com.google.cloud.tools.jib.plugins.common.MainClassInferenceException;
 import com.google.cloud.tools.jib.plugins.common.PluginConfigurationProcessor;
-import com.google.cloud.tools.jib.plugins.common.UpdateChecker;
 import com.google.common.base.Preconditions;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.Future;
 import javax.annotation.Nullable;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.GradleException;
@@ -107,7 +107,7 @@ public class BuildTarTask extends DefaultTask implements JibTask {
 
     GradleProjectProperties projectProperties =
         GradleProjectProperties.getForProject(getProject(), getLogger(), tempDirectoryProvider);
-    Optional<UpdateChecker> updateChecker =
+    Future<Optional<String>> updateCheckFuture =
         TaskCommon.newUpdateChecker(projectProperties, getLogger());
     try {
       PluginConfigurationProcessor.createJibBuildRunnerForTarImage(
@@ -162,7 +162,7 @@ public class BuildTarTask extends DefaultTask implements JibTask {
 
     } finally {
       tempDirectoryProvider.close();
-      TaskCommon.finishUpdateChecker(projectProperties, updateChecker);
+      TaskCommon.finishUpdateChecker(projectProperties, updateCheckFuture);
       projectProperties.waitForLoggingThread();
     }
   }

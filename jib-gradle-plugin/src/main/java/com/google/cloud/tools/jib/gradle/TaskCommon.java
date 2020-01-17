@@ -23,9 +23,12 @@ import com.google.cloud.tools.jib.api.FilePermissions;
 import com.google.cloud.tools.jib.api.LogEvent;
 import com.google.cloud.tools.jib.plugins.common.ProjectProperties;
 import com.google.cloud.tools.jib.plugins.common.UpdateChecker;
+import com.google.common.util.concurrent.Futures;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.logging.Level;
 import javax.annotation.Nullable;
 import org.gradle.api.Project;
@@ -43,18 +46,18 @@ class TaskCommon {
 
   public static final String VERSION_URL = "https://storage.googleapis.com/jib-versions/jib-gradle";
 
-  static Optional<UpdateChecker> newUpdateChecker(
+  static Future<Optional<String>> newUpdateChecker(
       ProjectProperties projectProperties, Logger logger) {
     if (projectProperties.isOffline() || !logger.isLifecycleEnabled()) {
-      return Optional.empty();
+      return Futures.immediateFuture(Optional.empty());
     }
-    return Optional.of(UpdateChecker.checkForUpdate(projectProperties::log, VERSION_URL));
+    return UpdateChecker.checkForUpdate(
+        Executors.newSingleThreadExecutor(), projectProperties::log, VERSION_URL);
   }
 
   static void finishUpdateChecker(
-      ProjectProperties projectProperties, Optional<UpdateChecker> updateChecker) {
-    updateChecker
-        .flatMap(UpdateChecker::finishUpdateCheck)
+      ProjectProperties projectProperties, Future<Optional<String>> updateCheckFuture) {
+    UpdateChecker.finishUpdateCheck(updateCheckFuture)
         .ifPresent(
             updateMessage ->
                 projectProperties.log(

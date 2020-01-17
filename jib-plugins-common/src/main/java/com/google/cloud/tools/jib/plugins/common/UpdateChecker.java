@@ -40,7 +40,6 @@ import java.time.format.DateTimeParseException;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.function.Consumer;
 
@@ -65,15 +64,15 @@ public class UpdateChecker {
    * @param versionUrl the location to check for the latest version
    * @return a new {@link UpdateChecker}
    */
-  public static UpdateChecker checkForUpdate(Consumer<LogEvent> log, String versionUrl) {
-    ExecutorService executorService = Executors.newSingleThreadExecutor();
+  public static Future<Optional<String>> checkForUpdate(
+      ExecutorService executorService, Consumer<LogEvent> log, String versionUrl) {
     Future<Optional<String>> messageFuture =
         executorService.submit(
             () ->
                 performUpdateCheck(
                     log, Verify.verifyNotNull(ProjectInfo.VERSION), versionUrl, getConfigDir()));
     executorService.shutdown();
-    return new UpdateChecker(messageFuture);
+    return messageFuture;
   }
 
   @VisibleForTesting
@@ -167,6 +166,27 @@ public class UpdateChecker {
   }
 
   /**
+   * Returns a message indicating Jib should be upgraded if the check succeeded and the current
+   * version is outdated, or returns {@code Optional.empty()} if the check was interrupted or did
+   * not determine that a later version was available.
+   *
+   * @param updateMessageFuture the {@link Future} returned by {@link UpdateChecker#checkForUpdate}
+   * @return the {@link Optional} message to upgrade Jib if a later version was found, else {@code
+   *     Optional.empty()}.
+   */
+  public static Optional<String> finishUpdateCheck(Future<Optional<String>> updateMessageFuture) {
+    if (updateMessageFuture.isDone()) {
+      try {
+        return updateMessageFuture.get();
+      } catch (InterruptedException | ExecutionException ignored) {
+        // Fail silently;
+      }
+    }
+    updateMessageFuture.cancel(true);
+    return Optional.empty();
+  }
+
+  /**
    * Returns the config directory set by {@link PropertyNames#CONFIG_DIRECTORY} if not null,
    * otherwise returns the default config directory.
    *
@@ -181,30 +201,5 @@ public class UpdateChecker {
     return XdgDirectories.getConfigHome();
   }
 
-  private final Future<Optional<String>> updateMessageFuture;
-
-  @VisibleForTesting
-  UpdateChecker(Future<Optional<String>> updateMessageFuture) {
-    this.updateMessageFuture = updateMessageFuture;
-  }
-
-  /**
-   * Returns a message indicating Jib should be upgraded if the check succeeded and the current
-   * version is outdated, or returns {@code Optional.empty()} if the check was interrupted or did
-   * not determine that a later version was available.
-   *
-   * @return the {@link Optional} message to upgrade Jib if a later version was found, else {@code
-   *     Optional.empty()}.
-   */
-  public Optional<String> finishUpdateCheck() {
-    if (updateMessageFuture.isDone()) {
-      try {
-        return updateMessageFuture.get();
-      } catch (InterruptedException | ExecutionException ignored) {
-        // Fail silently;
-      }
-    }
-    updateMessageFuture.cancel(true);
-    return Optional.empty();
-  }
+  private UpdateChecker() {}
 }
