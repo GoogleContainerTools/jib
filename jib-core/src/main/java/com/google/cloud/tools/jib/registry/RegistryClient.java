@@ -140,6 +140,8 @@ public class RegistryClient {
     }
   }
 
+  private static final int MAX_BEARER_TOKEN_REFRESHES = 5;
+
   /**
    * Creates a new {@link Factory} for building a {@link RegistryClient}.
    *
@@ -310,8 +312,6 @@ public class RegistryClient {
    *     sent over plain HTTP
    */
   public boolean doBearerAuth(boolean readOnlyBearerAuth) throws IOException, RegistryException {
-    this.readOnlyBearerAuth = readOnlyBearerAuth;
-
     String registry = registryEndpointRequestProperties.getServerUrl();
     String repository = registryEndpointRequestProperties.getImageName();
     String image = registry + "/" + repository;
@@ -330,6 +330,7 @@ public class RegistryClient {
       authorization.set(authenticator.get().authenticatePull(credential));
     }
     authorization.set(authenticator.get().authenticatePush(credential));
+    this.readOnlyBearerAuth = readOnlyBearerAuth;
     eventHandlers.dispatch(LogEvent.debug("bearer auth succeeded for " + image));
     return true;
   }
@@ -395,6 +396,10 @@ public class RegistryClient {
    */
   public DescriptorDigest pushManifest(BuildableManifestTemplate manifestTemplate, String imageTag)
       throws IOException, RegistryException {
+    if (isBearerAuth(authorization.get()) && readOnlyBearerAuth) {
+      throw new IllegalStateException("push may fail with pull-only bearer auth token");
+    }
+
     return callRegistryEndpoint(
         new ManifestPusher(
             registryEndpointRequestProperties, manifestTemplate, imageTag, eventHandlers));
@@ -464,6 +469,9 @@ public class RegistryClient {
       @Nullable String sourceRepository,
       Consumer<Long> writtenByteCountListener)
       throws IOException, RegistryException {
+    if (isBearerAuth(authorization.get()) && readOnlyBearerAuth) {
+      throw new IllegalStateException("push may fail with pull-only bearer auth token");
+    }
 
     if (sourceRepository != null
         && !(JibSystemProperties.useCrossRepositoryBlobMounts()
@@ -560,7 +568,7 @@ public class RegistryClient {
         if (ex.getHttpResponseException().getStatusCode()
                 != HttpStatusCodes.STATUS_CODE_UNAUTHORIZED
             || !isBearerAuth(authorization.get())
-            || ++bearerTokenRefreshes >= 5) {
+            || ++bearerTokenRefreshes >= MAX_BEARER_TOKEN_REFRESHES) {
           throw ex;
         }
 
