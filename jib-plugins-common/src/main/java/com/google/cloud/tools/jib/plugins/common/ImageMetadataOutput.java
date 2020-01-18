@@ -22,9 +22,9 @@ import com.google.cloud.tools.jib.api.JibContainer;
 import com.google.cloud.tools.jib.json.JsonTemplate;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.ImmutableList;
 import java.io.IOException;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * Builds a JSON string containing metadata about a {@link JibContainer} from a build.
@@ -70,7 +70,7 @@ public class ImageMetadataOutput implements JsonTemplate {
     String imageDigest = jibContainer.getDigest().toString();
 
     // Make sure tags always appear in a predictable way, by sorting them into a list
-    List<String> tags = jibContainer.getTags().stream().sorted().collect(Collectors.toList());
+    List<String> tags = ImmutableList.sortedCopyOf(jibContainer.getTags());
 
     return new ImageMetadataOutput(image, imageId, imageDigest, tags);
   }
