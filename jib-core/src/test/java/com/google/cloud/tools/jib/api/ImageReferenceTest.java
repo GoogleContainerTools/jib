@@ -202,6 +202,42 @@ public class ImageReferenceTest {
     Assert.assertEquals("gcr.io", ImageReference.of("gcr.io", "someimage", null).getRegistry());
   }
 
+  @Test
+  public void testEquality() throws InvalidImageReferenceException {
+    ImageReference image1 = ImageReference.parse("gcr.io/project/image:tag");
+    ImageReference image2 = ImageReference.parse("gcr.io/project/image:tag");
+
+    Assert.assertEquals(image1, image2);
+    Assert.assertEquals(image1.hashCode(), image2.hashCode());
+  }
+
+  @Test
+  public void testEquality_differentRegistry() throws InvalidImageReferenceException {
+    ImageReference image1 = ImageReference.parse("gcr.io/project/image:tag");
+    ImageReference image2 = ImageReference.parse("registry-1.docker.io/project/image:tag");
+
+    Assert.assertNotEquals(image1, image2);
+    Assert.assertNotEquals(image1.hashCode(), image2.hashCode());
+  }
+
+  @Test
+  public void testEquality_differentRepository() throws InvalidImageReferenceException {
+    ImageReference image1 = ImageReference.parse("gcr.io/project/image:tag");
+    ImageReference image2 = ImageReference.parse("gcr.io/project2/image:tag");
+
+    Assert.assertNotEquals(image1, image2);
+    Assert.assertNotEquals(image1.hashCode(), image2.hashCode());
+  }
+
+  @Test
+  public void testEquality_differentTag() throws InvalidImageReferenceException {
+    ImageReference image1 = ImageReference.parse("gcr.io/project/image:tag1");
+    ImageReference image2 = ImageReference.parse("gcr.io/project/image:tag2");
+
+    Assert.assertNotEquals(image1, image2);
+    Assert.assertNotEquals(image1.hashCode(), image2.hashCode());
+  }
+
   private void verifyParse(String registry, String repository, String tagSeparator, String tag)
       throws InvalidImageReferenceException {
     // Gets the expected parsed components.
