@@ -21,19 +21,26 @@ import com.google.cloud.tools.jib.api.FilePermissions;
 import com.google.cloud.tools.jib.api.LayerConfiguration;
 import com.google.common.annotations.VisibleForTesting;
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
-import java.time.format.FormatStyle;
 import java.util.function.BiFunction;
 import picocli.CommandLine;
 
 /**
- * Parses a layer mapping of the form of {@code
- * local-path:container-path:permissions=755,644:timestamps=actual}. A shortcut form, {@code
- * local-path} is also supported, equivalent to {@code local-path:/}.
+ * Parses a set of layer definitions of the form of
+ *
+ * <pre>
+ * layerConfig := layerSpec (";" layerSpec)*
+ * layerSpec := localPath ("," containerPath ("," directive)*)?
+ * directive := ("name=" string{layer-name})
+ *         | (("p" | "permissions") "=" ("actual" | (octal{files} (":" octal{folders})?)))
+ *         | (("ts" | "timestamps") "=" ("actual" | integer{since-epoch} | iso8601-date-time))
+ * </pre>
+ *
+ * If the {@code containerPath} is unspecified, it is treated as equivalent to the container root
+ * ({@code /}).
  */
 class LayerDefinitionParser implements CommandLine.ITypeConverter<LayerConfiguration> {
 
@@ -53,27 +60,25 @@ class LayerDefinitionParser implements CommandLine.ITypeConverter<LayerConfigura
     BiFunction<Path, AbsoluteUnixPath, Instant> timestampProvider =
         LayerConfiguration.DEFAULT_MODIFICATION_TIME_PROVIDER;
 
-    String[] definition = subspecification.split(":", -1);
+    String[] definition = subspecification.split(",", -1);
     String containerRoot = definition.length == 1 ? "/" : definition[1];
     for (int i = 2; i < definition.length; i++) {
       String[] directive = definition[i].split("=", 2);
       switch (directive[0]) {
         case "permissions":
-        case "perms":
         case "p":
           if (directive.length == 1) {
             throw new CommandLine.TypeConversionException("missing permissions configuration");
           }
-          permissionsProvider = configurePermissionsProvider(directive[1]);
+          permissionsProvider = parsePermissionsDirective(directive[1]);
           break;
 
         case "timestamps":
-        case "timestamp":
         case "ts":
           if (directive.length == 1) {
             throw new CommandLine.TypeConversionException("missing timestamps configuration");
           }
-          timestampProvider = configureTimestampsProvider(directive[1]);
+          timestampProvider = parseTimestampsDirective(directive[1]);
           break;
 
         case "name":
@@ -96,16 +101,9 @@ class LayerDefinitionParser implements CommandLine.ITypeConverter<LayerConfigura
   }
 
   @VisibleForTesting
-  static BiFunction<Path, AbsoluteUnixPath, Instant> configureTimestampsProvider(String directive) {
+  static BiFunction<Path, AbsoluteUnixPath, Instant> parseTimestampsDirective(String directive) {
     if ("actual".equals(directive)) {
-      return (local, inContainer) -> {
-        try {
-          return Files.getLastModifiedTime(local).toInstant();
-        } catch (IOException ex) {
-          System.err.printf("%s: %s\n", local, ex);
-          throw new RuntimeException(ex);
-        }
-      };
+      return new ActualTimestampProvider();
     }
 
     // absolute time
@@ -113,31 +111,22 @@ class LayerDefinitionParser implements CommandLine.ITypeConverter<LayerConfigura
     // treat as seconds since epoch
     if (directive.matches("\\d+")) {
       long secondsSinceEpoch = Long.parseLong(directive);
-      fixed = Instant.ofEpochSecond(secondsSinceEpoch);
-    } else {
-      fixed =
-          DateTimeFormatter.ofLocalizedDateTime(FormatStyle.SHORT).parse(directive, Instant::from);
+      return new FixedTimestampProvider(Instant.ofEpochSecond(secondsSinceEpoch));
     }
-    return (local, inContainer) -> fixed;
+    return new FixedTimestampProvider(
+        DateTimeFormatter.ISO_DATE_TIME.parse(directive, Instant::from));
   }
 
   @VisibleForTesting
-  static BiFunction<Path, AbsoluteUnixPath, FilePermissions> configurePermissionsProvider(
+  static BiFunction<Path, AbsoluteUnixPath, FilePermissions> parsePermissionsDirective(
       String directive) {
     if ("actual".equals(directive)) {
-      return (local, inContainer) -> {
-        try {
-          return FilePermissions.fromPosixFilePermissions(Files.getPosixFilePermissions(local));
-        } catch (IOException ex) {
-          System.err.printf("%s: %s\n", local, ex);
-          throw new RuntimeException(ex);
-        }
-      };
+      return new ActualPermissionsProvider();
     }
 
     FilePermissions filesPermission = FilePermissions.DEFAULT_FILE_PERMISSIONS;
     FilePermissions directoriesPermission = FilePermissions.DEFAULT_FOLDER_PERMISSIONS;
-    String[] spec = directive.split("/", -1);
+    String[] spec = directive.split(":", -1);
     filesPermission = FilePermissions.fromOctalString(spec[0]);
     if (spec.length > 1) {
       directoriesPermission = FilePermissions.fromOctalString(spec[1]);

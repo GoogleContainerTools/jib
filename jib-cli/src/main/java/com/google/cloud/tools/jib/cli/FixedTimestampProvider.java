@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Google LLC.
+ * Copyright 2020 Google LLC.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,23 +17,21 @@
 package com.google.cloud.tools.jib.cli;
 
 import com.google.cloud.tools.jib.api.AbsoluteUnixPath;
-import com.google.cloud.tools.jib.api.FilePermissions;
 import com.google.common.annotations.VisibleForTesting;
-import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Instant;
 import java.util.function.BiFunction;
 
-class FixedPermissionsProvider implements BiFunction<Path, AbsoluteUnixPath, FilePermissions> {
-  @VisibleForTesting final FilePermissions filePermissions;
-  @VisibleForTesting final FilePermissions directoryPermissions;
+/** A timetamp provider that returns a specific timestamp. */
+class FixedTimestampProvider implements BiFunction<Path, AbsoluteUnixPath, Instant> {
+  @VisibleForTesting final Instant fixed;
 
-  FixedPermissionsProvider(FilePermissions filesPermission, FilePermissions directoriesPermission) {
-    this.filePermissions = filesPermission;
-    this.directoryPermissions = directoriesPermission;
+  FixedTimestampProvider(Instant instant) {
+    this.fixed = instant;
   }
 
   @Override
-  public FilePermissions apply(Path local, AbsoluteUnixPath inContainer) {
-    return Files.isDirectory(local) ? directoryPermissions : filePermissions;
+  public Instant apply(Path local, AbsoluteUnixPath inContainer) {
+    return fixed;
   }
 }

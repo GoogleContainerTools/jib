@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Google LLC.
+ * Copyright 2020 Google LLC.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,22 +18,19 @@ package com.google.cloud.tools.jib.cli;
 
 import com.google.cloud.tools.jib.api.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.api.FilePermissions;
-import com.google.common.annotations.VisibleForTesting;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.function.BiFunction;
 
-class FixedPermissionsProvider implements BiFunction<Path, AbsoluteUnixPath, FilePermissions> {
-  @VisibleForTesting final FilePermissions filePermissions;
-  @VisibleForTesting final FilePermissions directoryPermissions;
-
-  FixedPermissionsProvider(FilePermissions filesPermission, FilePermissions directoriesPermission) {
-    this.filePermissions = filesPermission;
-    this.directoryPermissions = directoriesPermission;
-  }
-
+/** A permission provider that uses the actual file permissions from the file-system. */
+class ActualPermissionsProvider implements BiFunction<Path, AbsoluteUnixPath, FilePermissions> {
   @Override
   public FilePermissions apply(Path local, AbsoluteUnixPath inContainer) {
-    return Files.isDirectory(local) ? directoryPermissions : filePermissions;
+    try {
+      return FilePermissions.fromPosixFilePermissions(Files.getPosixFilePermissions(local));
+    } catch (IOException ex) {
+      throw new RuntimeException(local.toString(), ex);
+    }
   }
 }

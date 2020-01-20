@@ -24,9 +24,13 @@ import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.format.DateTimeParseException;
+import java.util.function.BiFunction;
+import org.hamcrest.CoreMatchers;
 import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
@@ -37,10 +41,93 @@ import picocli.CommandLine;
 public class LayerDefinitionParserTest {
   private LayerDefinitionParser fixture = new LayerDefinitionParser();
 
-  @Rule public final TemporaryFolder temporaryFolder = new org.junit.rules.TemporaryFolder();
+  @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
   @Test
-  public void testSource() throws Exception {
+  public void testParseTimestampsDirective_actual() {
+    Assert.assertThat(
+        LayerDefinitionParser.parseTimestampsDirective("actual"),
+        CoreMatchers.instanceOf(ActualTimestampProvider.class));
+  }
+
+  @Test
+  public void testParseTimestampsDirective_secondsSinceEpoch() {
+    BiFunction<Path, AbsoluteUnixPath, Instant> provider =
+        LayerDefinitionParser.parseTimestampsDirective("1");
+    Assert.assertThat(provider, CoreMatchers.instanceOf(FixedTimestampProvider.class));
+    Assert.assertEquals(Instant.ofEpochSecond(1), ((FixedTimestampProvider) provider).fixed);
+  }
+
+  @Test
+  public void testParseTimestampsDirective_is8601Date() {
+    BiFunction<Path, AbsoluteUnixPath, Instant> provider =
+        LayerDefinitionParser.parseTimestampsDirective("1970-01-01T00:00:01.000Z");
+    Assert.assertThat(provider, CoreMatchers.instanceOf(FixedTimestampProvider.class));
+    Assert.assertEquals(Instant.ofEpochSecond(1), ((FixedTimestampProvider) provider).fixed);
+  }
+
+  @Test
+  public void testParseTimestampsDirective_invalid() {
+    try {
+      LayerDefinitionParser.parseTimestampsDirective("invalid");
+      Assert.fail();
+    } catch (RuntimeException ex) {
+      Assert.assertThat(ex, CoreMatchers.instanceOf(DateTimeParseException.class));
+    }
+  }
+
+  @Test
+  public void testParsePermissionsDirective_actual() {
+    Assert.assertThat(
+        LayerDefinitionParser.parsePermissionsDirective("actual"),
+        CoreMatchers.instanceOf(ActualPermissionsProvider.class));
+  }
+
+  @Test
+  public void testParsePermissionsDirective_fileOnly() {
+    BiFunction<Path, AbsoluteUnixPath, FilePermissions> provider =
+        LayerDefinitionParser.parsePermissionsDirective("555");
+    Assert.assertThat(provider, CoreMatchers.instanceOf(FixedPermissionsProvider.class));
+    Assert.assertEquals(
+        0555, ((FixedPermissionsProvider) provider).filePermissions.getPermissionBits());
+    Assert.assertSame(
+        FilePermissions.DEFAULT_FOLDER_PERMISSIONS,
+        ((FixedPermissionsProvider) provider).directoryPermissions);
+  }
+
+  @Test
+  public void testParsePermissionsDirective_fileOAndDirectory() {
+    BiFunction<Path, AbsoluteUnixPath, FilePermissions> provider =
+        LayerDefinitionParser.parsePermissionsDirective("555:666");
+    Assert.assertThat(provider, CoreMatchers.instanceOf(FixedPermissionsProvider.class));
+    Assert.assertEquals(
+        0555, ((FixedPermissionsProvider) provider).filePermissions.getPermissionBits());
+    Assert.assertEquals(
+        0666, ((FixedPermissionsProvider) provider).directoryPermissions.getPermissionBits());
+  }
+
+  @Test
+  public void testParsePermissionsDirective_nonOctal() {
+    try {
+      LayerDefinitionParser.parsePermissionsDirective("811:922");
+      Assert.fail();
+    } catch (RuntimeException ex) {
+      Assert.assertThat(ex, CoreMatchers.instanceOf(IllegalArgumentException.class));
+    }
+  }
+
+  @Test
+  public void testParsePermissionsDirective_invalid() {
+    try {
+      LayerDefinitionParser.parsePermissionsDirective("invalid");
+      Assert.fail();
+    } catch (RuntimeException ex) {
+      Assert.assertThat(ex, CoreMatchers.instanceOf(IllegalArgumentException.class));
+    }
+  }
+
+  @Test
+  public void testConvert_sourceAndName() throws Exception {
     LayerConfiguration result = fixture.convert("foo");
     Assert.assertEquals("", result.getName());
     Assert.assertEquals(1, result.getLayerEntries().size());
@@ -53,8 +140,8 @@ public class LayerDefinitionParserTest {
   }
 
   @Test
-  public void testSourceDestination() throws Exception {
-    LayerConfiguration result = fixture.convert("foo:/dest");
+  public void testConvert_sourceDestination() throws Exception {
+    LayerConfiguration result = fixture.convert("foo,/dest");
     Assert.assertEquals("", result.getName());
     Assert.assertEquals(1, result.getLayerEntries().size());
     LayerEntry layerEntry = result.getLayerEntries().get(0);
@@ -66,9 +153,9 @@ public class LayerDefinitionParserTest {
   }
 
   @Test
-  public void testSourceDestinationWithInvalidDirective() throws Exception {
+  public void testConvert_sourceDestinationWithInvalidDirective() throws Exception {
     try {
-      fixture.convert("foo:/dest:baz=bop");
+      fixture.convert("foo,/dest,baz=bop");
       Assert.fail("Should have errored on invalid attribute");
     } catch (CommandLine.TypeConversionException ex) {
       Assert.assertEquals("unknown layer configuration directive: baz", ex.getMessage());
@@ -76,8 +163,8 @@ public class LayerDefinitionParserTest {
   }
 
   @Test
-  public void testSourceDestinationName() throws Exception {
-    LayerConfiguration result = fixture.convert("foo:/dest:name=name=name");
+  public void testConvert_sourceDestinationName() throws Exception {
+    LayerConfiguration result = fixture.convert("foo,/dest,name=name=name");
     Assert.assertEquals("name=name", result.getName());
     Assert.assertEquals(1, result.getLayerEntries().size());
     LayerEntry layerEntry = result.getLayerEntries().get(0);
@@ -89,14 +176,14 @@ public class LayerDefinitionParserTest {
   }
 
   @Test
-  public void testSourceDestinationPermissions() throws Exception {
+  public void testConvert_sourceDestinationPermissions() throws Exception {
     File root = temporaryFolder.getRoot();
     File subdir = new File(root, "sub");
     Assert.assertTrue(subdir.mkdir());
     File file = new File(subdir, "file.txt");
     Files.copy(new ByteArrayInputStream("foo".getBytes(StandardCharsets.UTF_8)), file.toPath());
 
-    LayerConfiguration result = fixture.convert(root.toString() + ":/dest:permissions=111/222");
+    LayerConfiguration result = fixture.convert(root.toString() + ",/dest,permissions=111:222");
     Assert.assertEquals(3, result.getLayerEntries().size());
 
     LayerEntry layerEntry = result.getLayerEntries().get(0);
@@ -122,14 +209,14 @@ public class LayerDefinitionParserTest {
   }
 
   @Test
-  public void testSourceDestinationTimestamps() throws Exception {
+  public void testConvert_sourceDestinationTimestamps() throws Exception {
     File root = temporaryFolder.getRoot();
     File subdir = new File(root, "sub");
     Assert.assertTrue(subdir.mkdir());
     File file = new File(subdir, "file.txt");
     Files.copy(new ByteArrayInputStream("foo".getBytes(StandardCharsets.UTF_8)), file.toPath());
 
-    LayerConfiguration result = fixture.convert(root.toString() + ":/dest:timestamps=actual");
+    LayerConfiguration result = fixture.convert(root.toString() + ",/dest,timestamps=actual");
     Assert.assertEquals(3, result.getLayerEntries().size());
 
     LayerEntry layerEntry = result.getLayerEntries().get(0);
