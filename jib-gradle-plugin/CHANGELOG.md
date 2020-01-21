@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
-- Added json output to file of image reference information after build. Defaults to `build/jib-image.json`, configurable with `jib.outputPaths.imageJson`. ([#2227](https://github.com/GoogleContainerTools/jib/pull/2227))
+- Added json output file for image metadata after a build is complete. Writes to `build/jib-image.json` by default, configurable with `jib.outputPaths.imageJson`. ([#2227](https://github.com/GoogleContainerTools/jib/pull/2227))
 
 ### Changed
 
