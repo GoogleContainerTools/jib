@@ -62,6 +62,8 @@ public class PropertyNames {
   public static final String CONSOLE = "jib.console";
   public static final String CONTAINERIZE = "jib.containerize";
   public static final String ALWAYS_CACHE_BASE_IMAGE = "jib.alwaysCacheBaseImage";
+  public static final String DISABLE_UPDATE_CHECKS = "jib.disableUpdateChecks";
+  public static final String CONFIG_DIRECTORY = "jib.configDirectory";
 
   private PropertyNames() {}
 }

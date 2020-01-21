@@ -168,10 +168,8 @@ public class PluginConfigurationProcessor {
         rawConfiguration.getToCredHelper().orElse(null));
 
     boolean alwaysCacheBaseImage =
-        Boolean.valueOf(
-            rawConfiguration
-                .getProperty(PropertyNames.ALWAYS_CACHE_BASE_IMAGE)
-                .orElse(Boolean.FALSE.toString()));
+        Boolean.parseBoolean(
+            rawConfiguration.getProperty(PropertyNames.ALWAYS_CACHE_BASE_IMAGE).orElse("false"));
     Containerizer containerizer =
         Containerizer.to(targetImage).setAlwaysCacheBaseImage(alwaysCacheBaseImage);
 

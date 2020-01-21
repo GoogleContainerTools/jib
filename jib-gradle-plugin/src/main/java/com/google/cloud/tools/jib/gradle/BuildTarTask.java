@@ -35,6 +35,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.Future;
 import javax.annotation.Nullable;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.GradleException;
@@ -106,6 +107,8 @@ public class BuildTarTask extends DefaultTask implements JibTask {
 
     GradleProjectProperties projectProperties =
         GradleProjectProperties.getForProject(getProject(), getLogger(), tempDirectoryProvider);
+    Future<Optional<String>> updateCheckFuture =
+        TaskCommon.newUpdateChecker(projectProperties, getLogger());
     try {
       PluginConfigurationProcessor.createJibBuildRunnerForTarImage(
               new GradleRawConfiguration(jibExtension),
@@ -159,6 +162,7 @@ public class BuildTarTask extends DefaultTask implements JibTask {
 
     } finally {
       tempDirectoryProvider.close();
+      TaskCommon.finishUpdateChecker(projectProperties, updateCheckFuture);
       projectProperties.waitForLoggingThread();
     }
   }
