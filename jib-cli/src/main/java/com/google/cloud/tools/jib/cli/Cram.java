@@ -48,6 +48,7 @@ import java.util.concurrent.Executors;
 import java.util.function.Consumer;
 import javax.annotation.Nullable;
 import picocli.CommandLine;
+import picocli.CommandLine.ArgGroup;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Option;
@@ -91,6 +92,22 @@ public class Cram implements Callable<Integer> {
     }
   }
 
+  static class PushMode {
+    @Option(
+        names = {"-d", "--docker"},
+        description = "load result to local Docker daemon",
+        required = true)
+    @VisibleForTesting
+    boolean toDocker = false;
+
+    @Option(
+        names = {"-r", "--registry"},
+        description = "push to registry",
+        required = true)
+    @VisibleForTesting
+    boolean toRegistry = false;
+  }
+
   /**
    * The magic starts here.
    *
@@ -106,24 +123,17 @@ public class Cram implements Callable<Integer> {
   @SuppressWarnings("NullAway.Init")
   private CommandSpec commandSpec;
 
-  @Option(
-      names = {"-d", "--docker"},
-      paramLabel = "image",
-      description = "push result to local Docker daemon")
-  @VisibleForTesting
-  boolean toDocker = false;
-
-  @Option(
-      names = {"-r", "--registry"},
-      description = "push to registry")
-  @VisibleForTesting
-  boolean toRegistry = false;
+  @ArgGroup(exclusive = true, multiplicity = "1") // mutually-exclusive options
+  @SuppressWarnings("NullAway.Init")
+  PushMode pushMode;
 
   @Option(
       names = {"-c", "--creation-time"},
-      description = "set the image creation time")
+      paramLabel = "time",
+      description = "set the image creation time (default: 1970-01-01T00:00:00Z)")
   @VisibleForTesting
-  Instant creationTime = Instant.now();
+  @Nullable
+  Instant creationTime;
 
   @Option(
       names = {"-v", "--verbose"},
@@ -135,6 +145,7 @@ public class Cram implements Callable<Integer> {
       names = {"-e", "--entrypoint"},
       paramLabel = "arg",
       split = ",",
+      hideParamSyntax = true,
       description = "set the container entrypoint")
   @VisibleForTesting
   @Nullable
@@ -143,6 +154,8 @@ public class Cram implements Callable<Integer> {
   @Option(
       names = {"-a", "--arguments"},
       split = ",",
+      paramLabel = "arg",
+      hideParamSyntax = true,
       description = "set the container entrypoint's default arguments")
   @VisibleForTesting
   @Nullable
@@ -179,7 +192,7 @@ public class Cram implements Callable<Integer> {
       names = {"-p", "--port"},
       split = ",",
       paramLabel = "port",
-      description = "expose port/type (e.g., 25 or 25/tcp)",
+      description = "expose port/type (ex: 25 or 25/tcp)",
       converter = PortParser.class)
   @VisibleForTesting
   @Nullable
@@ -212,7 +225,7 @@ public class Cram implements Callable<Integer> {
   @Parameters(
       index = "0",
       paramLabel = "base-image",
-      description = "the base image (e.g., busybox, nginx, gcr.io/distroless/java)",
+      description = "the base image (ex: busybox, nginx, gcr.io/distroless/java)",
       converter = ImageReferenceParser.class)
   @VisibleForTesting
   @SuppressWarnings("NullAway.Init") // initialized by picocli
@@ -222,8 +235,7 @@ public class Cram implements Callable<Integer> {
       index = "1",
       paramLabel = "destination-image",
       description =
-          "the destination image (e.g., localhost:5000/image:1.0, "
-              + "gcr.io/project/image:latest)",
+          "the destination image (ex: localhost:5000/image:1.0, " + "gcr.io/project/image:latest)",
       converter = ImageReferenceParser.class)
   @VisibleForTesting
   @SuppressWarnings("NullAway.Init") // initialized by picocli
@@ -231,21 +243,26 @@ public class Cram implements Callable<Integer> {
 
   @Parameters(
       index = "2..*",
-      paramLabel = "local/path[,/container/path[,directive1,...]]",
+      paramLabel = "layer-spec",
       description =
-          "Copies content from the local file system as a new layer. "
-              + "Container path defaults to '/' if omitted. "
+          "create a layer from local file-system. A layer-spec "
+              + "is a set of mappings of the form:\n"
+              + "    local/path[,/container/path[,directive1,...]]\n"
+              + "Container path defaults to '/' if omitted.\n"
               + "Directives include:\n"
-              + "  name=xxx      to set the layer name\n"
-              + "  p=perms       to set file and directory permissions:\n"
-              + "      actual    use actual values in file-system\n"
-              + "      fff:ddd   octal file and directory permissions (octal)\n"
-              + "  ts=timestamp  to set last-modified timestamps:\n"
-              + "      actual    use last-modified timestamps in file-system\n"
-              + "      number    seconds since Unix epoch\n"
-              + "      xxx       date in ISO8601 format\n"
-              + "File permission default to 0644 and directories to 0755. "
-              + "Timestamps default to 1 second after Unix epoch (1970-01-01T00:00:01Z)",
+              + "\n"
+              + "  name=<xxx>    set the layer name\n"
+              + "  p=perms       set file and directory permissions:\n"
+              + "    actual      use actual values in file-system\n"
+              + "    <fff>:<ddd> octal file and directory permissions\n"
+              + "  ts=timestamp  set last-modified timestamps:\n"
+              + "    actual      use actual values in file-system\n"
+              + "    <number>    seconds since Unix epoch\n"
+              + "    <xxx>       date-time in ISO8601 format\n"
+              + "\n"
+              + "Default permissions are 644 for files and 755 for directories. "
+              + "Default timestamps are 1970-01-01 00:00:01 UTC. "
+              + "Multiple mappings may be specified, separated by a semi-colon ';'.",
       converter = LayerDefinitionParser.class)
   @VisibleForTesting
   @Nullable
@@ -254,13 +271,11 @@ public class Cram implements Callable<Integer> {
   @Override
   public Integer call() throws Exception {
     Consumer<LogEvent> logger = System.out::println;
-    if (toDocker == toRegistry) {
-      throw new CommandLine.ParameterException(
-          commandSpec.commandLine(), "One of --docker or --registry is required");
-    }
     JibContainerBuilder builder = Jib.from(toCredentialedImage(baseImage, logger));
     verbose("FROM " + baseImage);
-    builder.setCreationTime(creationTime);
+    if (creationTime != null) {
+      builder.setCreationTime(creationTime);
+    }
     if (entrypoint != null) {
       verbose("ENTRYPOINT [" + Joiner.on(",").join(entrypoint) + "]");
       builder.setEntrypoint(entrypoint);
@@ -303,11 +318,11 @@ public class Cram implements Callable<Integer> {
       }
     }
     Containerizer containerizer =
-        toDocker
+        pushMode.toDocker
             ? Containerizer.to(DockerDaemonImage.named(destinationImage))
             : Containerizer.to(toCredentialedImage(destinationImage, logger));
     containerizer.setAllowInsecureRegistries(insecure);
-    containerizer.setToolName("cram");
+    containerizer.setToolName("jib");
     containerizer.addEventHandler(LogEvent.class, logger);
 
     ExecutorService executor = Executors.newCachedThreadPool();

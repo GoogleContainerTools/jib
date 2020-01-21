@@ -126,13 +126,15 @@ public class CramTest {
   @Test
   public void testShortForms_docker() {
     Cram fixture = CommandLine.populateCommand(new Cram(), "-d", "scratch", "foo");
-    Assert.assertTrue(fixture.toDocker);
+    Assert.assertTrue(fixture.pushMode.toDocker);
+    Assert.assertFalse(fixture.pushMode.toRegistry);
   }
 
   @Test
   public void testShortForms_registry() {
     Cram fixture = CommandLine.populateCommand(new Cram(), "-r", "scratch", "foo");
-    Assert.assertTrue(fixture.toRegistry);
+    Assert.assertFalse(fixture.pushMode.toDocker);
+    Assert.assertTrue(fixture.pushMode.toRegistry);
   }
 
   @Test
