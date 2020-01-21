@@ -165,7 +165,7 @@ public class TestWebServer implements Closeable {
   }
 
   private synchronized String getNextResponse(int index) {
-    if (index > responses.size() || globalResponseIndex >= responses.size()) {
+    if (index >= responses.size() || globalResponseIndex >= responses.size()) {
       return null;
     }
     totalResponsesServed++;
