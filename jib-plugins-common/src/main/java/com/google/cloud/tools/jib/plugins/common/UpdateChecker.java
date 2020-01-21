@@ -25,9 +25,7 @@ import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
 import com.google.common.base.Verify;
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -144,12 +142,8 @@ public class UpdateChecker {
       HttpURLConnection connection = (HttpURLConnection) new URL(versionUrl).openConnection();
       try {
         connection.setConnectTimeout(3000);
-        BufferedReader bufferedReader =
-            new BufferedReader(
-                new InputStreamReader(connection.getInputStream(), StandardCharsets.UTF_8));
         VersionJsonTemplate version =
-            JsonTemplateMapper.readJson(
-                bufferedReader.readLine().trim(), VersionJsonTemplate.class);
+            JsonTemplateMapper.readJson(connection.getInputStream(), VersionJsonTemplate.class);
         Files.write(lastUpdateCheck, Instant.now().toString().getBytes(StandardCharsets.UTF_8));
         if (currentVersion.equals(version.latest)) {
           return Optional.empty();
