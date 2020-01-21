@@ -103,7 +103,8 @@ public class PluginConfigurationProcessor {
             targetImageReference,
             rawConfiguration.getToTags())
         .writeImageDigest(rawConfiguration.getDigestOutputPath())
-        .writeImageId(rawConfiguration.getImageIdOutputPath());
+        .writeImageId(rawConfiguration.getImageIdOutputPath())
+        .writeImageJson(rawConfiguration.getImageJsonOutputPath());
   }
 
   public static JibBuildRunner createJibBuildRunnerForTarImage(
@@ -136,7 +137,8 @@ public class PluginConfigurationProcessor {
             helpfulSuggestions,
             rawConfiguration.getTarOutputPath())
         .writeImageDigest(rawConfiguration.getDigestOutputPath())
-        .writeImageId(rawConfiguration.getImageIdOutputPath());
+        .writeImageId(rawConfiguration.getImageIdOutputPath())
+        .writeImageJson(rawConfiguration.getImageJsonOutputPath());
   }
 
   public static JibBuildRunner createJibBuildRunnerForRegistryImage(
@@ -166,10 +168,8 @@ public class PluginConfigurationProcessor {
         rawConfiguration.getToCredHelper().orElse(null));
 
     boolean alwaysCacheBaseImage =
-        Boolean.valueOf(
-            rawConfiguration
-                .getProperty(PropertyNames.ALWAYS_CACHE_BASE_IMAGE)
-                .orElse(Boolean.FALSE.toString()));
+        Boolean.parseBoolean(
+            rawConfiguration.getProperty(PropertyNames.ALWAYS_CACHE_BASE_IMAGE).orElse("false"));
     Containerizer containerizer =
         Containerizer.to(targetImage).setAlwaysCacheBaseImage(alwaysCacheBaseImage);
 
@@ -188,7 +188,8 @@ public class PluginConfigurationProcessor {
             targetImageReference,
             rawConfiguration.getToTags())
         .writeImageDigest(rawConfiguration.getDigestOutputPath())
-        .writeImageId(rawConfiguration.getImageIdOutputPath());
+        .writeImageId(rawConfiguration.getImageIdOutputPath())
+        .writeImageJson(rawConfiguration.getImageJsonOutputPath());
   }
 
   public static String getSkaffoldSyncMap(

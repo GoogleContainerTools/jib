@@ -12,6 +12,12 @@ All notable changes to this project will be documented in this file.
 - Removed deprecated `jib.container.useCurrentTimestamp` configuration in favor of `jib.container.creationTime` with `USE_CURRENT_TIMESTAMP`. ([#1897](https://github.com/GoogleContainerTools/jib/issues/1897))
 - HTTP redirection URLs are no longer sanitized in order to work around an issue with certain registries that do not conform to HTTP standards. This resolves an issue with using Red Hat OpenShift and Quay registries. ([#2106](https://github.com/GoogleContainerTools/jib/issues/2106), [#1986](https://github.com/GoogleContainerTools/jib/issues/1986#issuecomment-547610104))
 - Requires Gradle 5.1 or newer (up from 4.9).
+- The default base image cache location has been changed on MacOS and Windows. ([#2216](https://github.com/GoogleContainerTools/jib/issues/2216))
+    - MacOS (`$XDG_CACHE_HOME` defined): from `$XDG_CACHE_HOME/google-cloud-tools-java/jib/` to `$XDG_CACHE_HOME/Google/Jib/`
+    - MacOS (`$XDG_CACHE_HOME` not defined): from `$HOME/Library/Application Support/google-cloud-tools-java/jib/` to `$HOME/Library/Caches/Google/Jib/`
+    - Windows (`$XDG_CACHE_HOME` defined): from `$XDG_CACHE_HOME\google-cloud-tools-java\jib\` to `$XDG_CACHE_HOME\Google\Jib\Cache\`
+    - Windows (`$XDG_CACHE_HOME` not defined): from `%LOCALAPPDATA%\google-cloud-tools-java\jib\` to `%LOCALAPPDATA%\Google\Jib\Cache\`
+    - Initial builds will be slower until the cache is repopulated, unless you manually move the cache from the old location to the new location
 
 ### Fixed
 - `jibBuildTar` with `jib.container.format='OCI'` now builds a correctly formatted OCI archive. ([#2124](https://github.com/GoogleContainerTools/jib/issues/2124))

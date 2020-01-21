@@ -17,24 +17,62 @@
 package com.google.cloud.tools.jib.gradle;
 
 import com.google.api.client.http.HttpTransport;
+import com.google.cloud.tools.jib.ProjectInfo;
 import com.google.cloud.tools.jib.api.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.api.FilePermissions;
+import com.google.cloud.tools.jib.api.LogEvent;
+import com.google.cloud.tools.jib.plugins.common.ProjectProperties;
+import com.google.cloud.tools.jib.plugins.common.UpdateChecker;
+import com.google.common.util.concurrent.Futures;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.logging.Level;
 import javax.annotation.Nullable;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
 import org.gradle.api.UnknownTaskException;
+import org.gradle.api.logging.Logger;
 import org.gradle.api.plugins.WarPlugin;
 import org.gradle.api.tasks.TaskProvider;
-import org.gradle.internal.logging.events.LogEvent;
 import org.gradle.internal.logging.events.OutputEventListener;
 import org.gradle.internal.logging.slf4j.OutputEventListenerBackedLoggerContext;
 import org.slf4j.LoggerFactory;
 
 /** Collection of common methods to share between Gradle tasks. */
 class TaskCommon {
+
+  public static final String VERSION_URL = "https://storage.googleapis.com/jib-versions/jib-gradle";
+
+  static Future<Optional<String>> newUpdateChecker(
+      ProjectProperties projectProperties, Logger logger) {
+    if (projectProperties.isOffline() || !logger.isLifecycleEnabled()) {
+      return Futures.immediateFuture(Optional.empty());
+    }
+    ExecutorService executorService = Executors.newSingleThreadExecutor();
+    try {
+      return UpdateChecker.checkForUpdate(executorService, projectProperties::log, VERSION_URL);
+    } finally {
+      executorService.shutdown();
+    }
+  }
+
+  static void finishUpdateChecker(
+      ProjectProperties projectProperties, Future<Optional<String>> updateCheckFuture) {
+    UpdateChecker.finishUpdateCheck(updateCheckFuture)
+        .ifPresent(
+            updateMessage ->
+                projectProperties.log(
+                    LogEvent.lifecycle(
+                        "\n\u001B[33m"
+                            + updateMessage
+                            + "\n"
+                            + ProjectInfo.GITHUB_URL
+                            + "/blob/master/jib-gradle-plugin/CHANGELOG.md\u001B[0m\n")));
+  }
 
   @Nullable
   static TaskProvider<Task> getWarTaskProvider(Project project) {
@@ -63,7 +101,8 @@ class TaskCommon {
     OutputEventListener defaultOutputEventListener = context.getOutputEventListener();
     context.setOutputEventListener(
         event -> {
-          LogEvent logEvent = (LogEvent) event;
+          org.gradle.internal.logging.events.LogEvent logEvent =
+              (org.gradle.internal.logging.events.LogEvent) event;
           if (!logEvent.getCategory().contains("org.apache")) {
             defaultOutputEventListener.onOutput(event);
           }

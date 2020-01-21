@@ -55,12 +55,15 @@ public class PropertyNames {
   public static final String DOCKER_CLIENT_ENVIRONMENT = "jib.dockerClient.environment";
   public static final String OUTPUT_PATHS_DIGEST = "jib.outputPaths.digest";
   public static final String OUTPUT_PATHS_IMAGE_ID = "jib.outputPaths.imageId";
+  public static final String OUTPUT_PATHS_IMAGE_JSON = "jib.outputPaths.imageJson";
   public static final String OUTPUT_PATHS_TAR = "jib.outputPaths.tar";
   public static final String CONTAINERIZING_MODE = "jib.containerizingMode";
   public static final String SKIP = "jib.skip";
   public static final String CONSOLE = "jib.console";
   public static final String CONTAINERIZE = "jib.containerize";
   public static final String ALWAYS_CACHE_BASE_IMAGE = "jib.alwaysCacheBaseImage";
+  public static final String DISABLE_UPDATE_CHECKS = "jib.disableUpdateChecks";
+  public static final String CONFIG_DIRECTORY = "jib.configDirectory";
 
   private PropertyNames() {}
 }

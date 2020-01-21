@@ -476,8 +476,8 @@ public class JibContainerBuilder {
                 buildContext.getEventHandlers(), containerizer.getDescription())) {
       logSources(buildContext.getEventHandlers());
 
-      BuildResult result = containerizer.run(buildContext);
-      return new JibContainer(result.getImageDigest(), result.getImageId());
+      BuildResult buildResult = containerizer.run(buildContext);
+      return JibContainer.from(buildContext, buildResult);
 
     } catch (ExecutionException ex) {
       // If an ExecutionException occurs, re-throw the cause to be more easily handled by the user
