@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.plugins.common;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.google.cloud.tools.jib.ProjectInfo;
 import com.google.cloud.tools.jib.api.LogEvent;
 import com.google.cloud.tools.jib.filesystem.XdgDirectories;
@@ -58,6 +59,7 @@ public class UpdateChecker {
   }
 
   /** JSON template for content downloaded during version check. */
+  @JsonIgnoreProperties(ignoreUnknown = true)
   private static class VersionJsonTemplate implements JsonTemplate {
     private String latest = "";
   }
