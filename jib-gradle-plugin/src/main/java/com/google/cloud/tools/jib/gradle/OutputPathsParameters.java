@@ -32,12 +32,14 @@ public class OutputPathsParameters {
   private Path digest;
   private Path tar;
   private Path imageId;
+  private Path imageJson;
 
   @Inject
   public OutputPathsParameters(Project project) {
     this.project = project;
     digest = project.getBuildDir().toPath().resolve("jib-image.digest");
     imageId = project.getBuildDir().toPath().resolve("jib-image.id");
+    imageJson = project.getBuildDir().toPath().resolve("jib-image.json");
     tar = project.getBuildDir().toPath().resolve("jib-image.tar");
   }
 
@@ -67,6 +69,20 @@ public class OutputPathsParameters {
 
   public void setImageId(String id) {
     this.imageId = Paths.get(id);
+  }
+
+  @Input
+  public String getImageJson() {
+    return getRelativeToProjectRoot(imageJson, PropertyNames.OUTPUT_PATHS_IMAGE_JSON).toString();
+  }
+
+  @Internal
+  Path getImageJsonPath() {
+    return getRelativeToProjectRoot(imageJson, PropertyNames.OUTPUT_PATHS_IMAGE_JSON);
+  }
+
+  public void setImageJson(String imageJson) {
+    this.imageJson = Paths.get(imageJson);
   }
 
   @Input

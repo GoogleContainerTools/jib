@@ -192,6 +192,7 @@ public class JibBuildRunner {
   private final HelpfulSuggestions helpfulSuggestions;
   @Nullable private Path imageDigestOutputPath;
   @Nullable private Path imageIdOutputPath;
+  @Nullable private Path imageJsonOutputPath;
 
   @VisibleForTesting
   JibBuildRunner(
@@ -236,6 +237,11 @@ public class JibBuildRunner {
       if (imageIdOutputPath != null) {
         String imageId = jibContainer.getImageId().toString();
         Files.write(imageIdOutputPath, imageId.getBytes(StandardCharsets.UTF_8));
+      }
+      if (imageJsonOutputPath != null) {
+        ImageMetadataOutput metadataOutput = ImageMetadataOutput.fromJibContainer(jibContainer);
+        String imageJson = metadataOutput.toJson();
+        Files.write(imageJsonOutputPath, imageJson.getBytes(StandardCharsets.UTF_8));
       }
 
       return jibContainer;
@@ -302,6 +308,18 @@ public class JibBuildRunner {
    */
   public JibBuildRunner writeImageId(@Nullable Path imageIdOutputPath) {
     this.imageIdOutputPath = imageIdOutputPath;
+    return this;
+  }
+
+  /**
+   * Set the location where the image metadata json will be saved. If {@code null} then the metadata
+   * is not saved.
+   *
+   * @param imageJsonOutputPath the location to write the image metadata, or {@code null} to skip
+   * @return this
+   */
+  public JibBuildRunner writeImageJson(@Nullable Path imageJsonOutputPath) {
+    this.imageJsonOutputPath = imageJsonOutputPath;
     return this;
   }
 }
