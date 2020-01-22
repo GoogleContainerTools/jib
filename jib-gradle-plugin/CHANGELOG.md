@@ -5,6 +5,8 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- Added json output file for image metadata after a build is complete. Writes to `build/jib-image.json` by default, configurable with `jib.outputPaths.imageJson`. ([#2227](https://github.com/GoogleContainerTools/jib/pull/2227))
+
 ### Changed
 
 - Removed `jibDockerBuild.dockerClient` in favor of `jib.dockerClient`. ([#1983](https://github.com/GoogleContainerTools/jib/issues/1983))
@@ -20,6 +22,7 @@ All notable changes to this project will be documented in this file.
     - Initial builds will be slower until the cache is repopulated, unless you manually move the cache from the old location to the new location
 
 ### Fixed
+
 - `jibBuildTar` with `jib.container.format='OCI'` now builds a correctly formatted OCI archive. ([#2124](https://github.com/GoogleContainerTools/jib/issues/2124))
 - Now `jib.containerizingMode='packaged'` works as intended with Spring Boot projects that generate a fat JAR. ([#2178](https://github.com/GoogleContainerTools/jib/pull/2178))
 
