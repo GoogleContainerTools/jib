@@ -34,7 +34,7 @@ public class BearerAuthenticationIntegrationTest {
                 EventHandlers.NONE, "registry.hub.docker.com", "library/busybox", httpClient)
             .newRegistryClient();
     // For public images, Docker Hub still requires bearer authentication (without credentials)
-    registryClient.doBearerAuth(true);
+    registryClient.doPullBearerAuth();
     registryClient.pullManifest("latest");
   }
 }

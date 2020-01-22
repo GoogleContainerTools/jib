@@ -76,7 +76,7 @@ public class ManifestPullerIntegrationTest {
         RegistryClient.factory(
                 EventHandlers.NONE, "registry-1.docker.io", "library/openjdk", httpClient)
             .newRegistryClient();
-    registryClient.doBearerAuth(true);
+    registryClient.doPullBearerAuth();
 
     // Ensure 11-jre-slim is a manifest list
     V22ManifestListTemplate manifestListTemplate =

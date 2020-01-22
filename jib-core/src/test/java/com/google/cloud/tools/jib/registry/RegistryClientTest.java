@@ -124,7 +124,7 @@ public class RegistryClientTest {
     registry = new TestWebServer(false, Arrays.asList(basicAuth), 1);
 
     RegistryClient registryClient = createRegistryClient(null);
-    Assert.assertFalse(registryClient.doBearerAuth(false));
+    Assert.assertFalse(registryClient.doPullBearerAuth());
 
     Mockito.verify(eventHandlers).dispatch(logContains("attempting bearer auth"));
     Mockito.verify(eventHandlers).dispatch(logContains("server requires basic auth"));
@@ -137,7 +137,7 @@ public class RegistryClientTest {
     setUpAuthServerAndRegistry(1, "HTTP/1.1 200 OK\nContent-Length: 1234\n\n");
 
     RegistryClient registryClient = createRegistryClient(null);
-    Assert.assertTrue(registryClient.doBearerAuth(false));
+    Assert.assertTrue(registryClient.doPushBearerAuth());
 
     Optional<BlobDescriptor> digestAndSize = registryClient.checkBlob(digest);
     Assert.assertEquals(1234, digestAndSize.get().getSize());
@@ -153,7 +153,7 @@ public class RegistryClientTest {
     setUpAuthServerAndRegistry(3, "HTTP/1.1 200 OK\nContent-Length: 5678\n\n");
 
     RegistryClient registryClient = createRegistryClient(null);
-    Assert.assertTrue(registryClient.doBearerAuth(false));
+    Assert.assertTrue(registryClient.doPushBearerAuth());
 
     Optional<BlobDescriptor> digestAndSize = registryClient.checkBlob(digest);
     Assert.assertEquals(5678, digestAndSize.get().getSize());

@@ -155,13 +155,13 @@ class PullBaseImageStep implements Callable<ImageAndRegistryClient> {
           // See https://docs.docker.com/registry/spec/auth/token
           eventHandlers.dispatch(
               LogEvent.debug("Trying bearer auth for " + imageReference + "..."));
-          if (registryClient.doBearerAuth(true)) {
+          if (registryClient.doPullBearerAuth()) {
             return new ImageAndRegistryClient(
                 pullBaseImage(registryClient, progressEventDispatcher), registryClient);
           }
           eventHandlers.dispatch(
               LogEvent.error(
-                  "The registry asked for basic authentication, but the registry had refused basic"
+                  "The registry asked for basic authentication, but the registry had refused basic "
                       + "authentication previously"));
           throw registryUnauthorizedException;
         }

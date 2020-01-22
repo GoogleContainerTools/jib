@@ -300,9 +300,8 @@ public class RegistryClient {
   }
 
   /**
-   * Attempts bearer authentication.
+   * Attempts bearer authentication for pull.
    *
-   * @param readOnlyBearerAuth true to request pull scope only; false for pull and push
    * @return true if bearer authentication succeeded; false if the server expects basic
    *     authentication (and thus bearer authentication was not attempted)
    * @throws IOException if communicating with the endpoint fails
@@ -311,7 +310,26 @@ public class RegistryClient {
    * @throws RegistryCredentialsNotSentException if authentication failed and credentials were not
    *     sent over plain HTTP
    */
-  public boolean doBearerAuth(boolean readOnlyBearerAuth) throws IOException, RegistryException {
+  public boolean doPullBearerAuth() throws IOException, RegistryException {
+    return doBearerAuth(true);
+  }
+
+  /**
+   * Attempts bearer authentication for pull and push.
+   *
+   * @return true if bearer authentication succeeded; false if the server expects basic
+   *     authentication (and thus bearer authentication was not attempted)
+   * @throws IOException if communicating with the endpoint fails
+   * @throws RegistryException if communicating with the endpoint fails
+   * @throws RegistryAuthenticationFailedException if authentication fails
+   * @throws RegistryCredentialsNotSentException if authentication failed and credentials were not
+   *     sent over plain HTTP
+   */
+  public boolean doPushBearerAuth() throws IOException, RegistryException {
+    return doBearerAuth(false);
+  }
+
+  private boolean doBearerAuth(boolean readOnlyBearerAuth) throws IOException, RegistryException {
     String registry = registryEndpointRequestProperties.getServerUrl();
     String repository = registryEndpointRequestProperties.getImageName();
     String image = registry + "/" + repository;
@@ -328,8 +346,9 @@ public class RegistryClient {
 
     if (readOnlyBearerAuth) {
       authorization.set(authenticator.get().authenticatePull(credential));
+    } else {
+      authorization.set(authenticator.get().authenticatePush(credential));
     }
-    authorization.set(authenticator.get().authenticatePush(credential));
     this.readOnlyBearerAuth = readOnlyBearerAuth;
     eventHandlers.dispatch(LogEvent.debug("bearer auth succeeded for " + image));
     return true;

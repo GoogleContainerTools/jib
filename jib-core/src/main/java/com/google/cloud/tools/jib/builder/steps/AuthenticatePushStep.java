@@ -61,7 +61,7 @@ class AuthenticatePushStep implements Callable<RegistryClient> {
               .newTargetImageRegistryClientFactory()
               .setCredential(credential)
               .newRegistryClient();
-      if (!registryClient.doBearerAuth(false)) {
+      if (!registryClient.doPushBearerAuth()) {
         // server returned "WWW-Authenticate: Basic ..." (e.g., local Docker registry)
         if (credential != null && !credential.isOAuth2RefreshToken()) {
           registryClient.configureBasicAuth();
