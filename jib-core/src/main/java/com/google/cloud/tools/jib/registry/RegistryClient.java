@@ -140,7 +140,7 @@ public class RegistryClient {
     }
   }
 
-  private static final int MAX_BEARER_TOKEN_REFRESHES = 5;
+  private static final int MAX_BEARER_TOKEN_REFRESH_TRIES = 5;
 
   /**
    * Creates a new {@link Factory} for building a {@link RegistryClient}.
@@ -302,8 +302,8 @@ public class RegistryClient {
   /**
    * Attempts bearer authentication for pull.
    *
-   * @return true if bearer authentication succeeded; false if the server expects basic
-   *     authentication (and thus bearer authentication was not attempted)
+   * @return {@code true} if bearer authentication succeeded; {@code false} if the server expects
+   *     basic authentication (and thus bearer authentication was not attempted)
    * @throws IOException if communicating with the endpoint fails
    * @throws RegistryException if communicating with the endpoint fails
    * @throws RegistryAuthenticationFailedException if authentication fails
@@ -587,7 +587,7 @@ public class RegistryClient {
         if (ex.getHttpResponseException().getStatusCode()
                 != HttpStatusCodes.STATUS_CODE_UNAUTHORIZED
             || !isBearerAuth(authorization.get())
-            || ++bearerTokenRefreshes >= MAX_BEARER_TOKEN_REFRESHES) {
+            || ++bearerTokenRefreshes >= MAX_BEARER_TOKEN_REFRESH_TRIES) {
           throw ex;
         }
 

@@ -168,10 +168,25 @@ public class RegistryClientTest {
         .dispatch(logContains("refreshing bearer auth token"));
   }
 
+  @Test
+  public void testConfigureBasicAuth()
+      throws IOException, InterruptedException, GeneralSecurityException, URISyntaxException,
+          RegistryException {
+    String basicAuth = "HTTP/1.1 200 OK\nContent-Length: 56789\n\n";
+    registry = new TestWebServer(false, Arrays.asList(basicAuth), 1);
+    RegistryClient registryClient = createRegistryClient(Credential.from("user", "pass"));
+    registryClient.configureBasicAuth();
+
+    Optional<BlobDescriptor> digestAndSize = registryClient.checkBlob(digest);
+    Assert.assertEquals(56789, digestAndSize.get().getSize());
+    Assert.assertThat(
+        registry.getInputRead(), CoreMatchers.containsString("Authorization: Basic dXNlcjpwYXNz"));
+  }
+
   /**
-   * Sets up an auth server and a registry. The auth server can return an bearer token up to {@code
-   * maxAuthTokens} times. The registry will initially return 401 Unauthorized for {@code
-   * maxTokenResponses} times. (Therefore, a registry client should get auth tokens from the auth
+   * Sets up an auth server and a registry. The auth server can return a bearer token up to {@code
+   * maxAuthTokens} times. The registry will initially return "401 Unauthorized" for {@code
+   * maxTokenResponses} times. (Therefore, a registry client has to get auth tokens from the auth
    * server {@code maxAuthTokens} times. After that, the registry returns {@code finalResponse}.
    */
   private void setUpAuthServerAndRegistry(int maxAuthTokens, @Nullable String finalResponse)
@@ -189,21 +204,6 @@ public class RegistryClientTest {
     }
 
     registry = new TestWebServer(false, responses, responses.size(), true);
-  }
-
-  @Test
-  public void testConfigureBasicAuth()
-      throws IOException, InterruptedException, GeneralSecurityException, URISyntaxException,
-          RegistryException {
-    String basicAuth = "HTTP/1.1 200 OK\nContent-Length: 56789\n\n";
-    registry = new TestWebServer(false, Arrays.asList(basicAuth), 1);
-    RegistryClient registryClient = createRegistryClient(Credential.from("user", "pass"));
-    registryClient.configureBasicAuth();
-
-    Optional<BlobDescriptor> digestAndSize = registryClient.checkBlob(digest);
-    Assert.assertEquals(56789, digestAndSize.get().getSize());
-    Assert.assertThat(
-        registry.getInputRead(), CoreMatchers.containsString("Authorization: Basic dXNlcjpwYXNz"));
   }
 
   private RegistryClient createRegistryClient(@Nullable Credential credential) {
