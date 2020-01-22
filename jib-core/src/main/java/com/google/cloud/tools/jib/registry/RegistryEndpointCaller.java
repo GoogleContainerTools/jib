@@ -172,7 +172,8 @@ class RegistryEndpointCaller<T> {
 
     } catch (IOException ex) {
       logError("I/O error for image [" + serverUrl + "/" + imageName + "]:");
-      logError("    " + ex.getMessage());
+      logError("    " + ex.getClass().getName());
+      logError("    " + (ex.getMessage() == null ? "(null exception message)" : ex.getMessage()));
       logErrorIfBrokenPipe(ex);
 
       if (ex instanceof SSLException) {
