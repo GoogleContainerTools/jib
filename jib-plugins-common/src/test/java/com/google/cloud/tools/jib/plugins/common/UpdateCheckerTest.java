@@ -76,6 +76,7 @@ public class UpdateCheckerTest {
     Optional<String> message =
         UpdateChecker.performUpdateCheck(
             ignored -> {}, "1.0.2", testWebServer.getEndpoint(), configDir, "tool name");
+    Assert.assertTrue(testWebServer.getInputRead().contains("User-Agent: jib 1.0.2 tool name"));
     Assert.assertTrue(message.isPresent());
     Assert.assertEquals(
         "A new version of Jib (2.0.0) is available (currently using 1.0.2). Update your build "
@@ -118,6 +119,7 @@ public class UpdateCheckerTest {
     String modifiedTime =
         new String(
             Files.readAllBytes(configDir.resolve("lastUpdateCheck")), StandardCharsets.UTF_8);
+    Assert.assertTrue(testWebServer.getInputRead().contains("User-Agent: jib 2.0.0 tool name"));
     Assert.assertTrue(Instant.parse(modifiedTime).isAfter(before));
   }
 

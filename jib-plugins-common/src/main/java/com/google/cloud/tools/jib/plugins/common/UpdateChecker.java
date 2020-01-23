@@ -151,14 +151,14 @@ public class UpdateChecker {
 
       // Check for update
       FailoverHttpClient httpClient = new FailoverHttpClient(true, false, log);
-      Response response =
-          httpClient.get(
-              new URL(versionUrl),
-              Request.builder()
-                  .setHttpTimeout(3000)
-                  .setUserAgent("jib " + ProjectInfo.VERSION + " " + toolName)
-                  .build());
       try {
+        Response response =
+            httpClient.get(
+                new URL(versionUrl),
+                Request.builder()
+                    .setHttpTimeout(3000)
+                    .setUserAgent("jib " + currentVersion + " " + toolName)
+                    .build());
         VersionJsonTemplate version =
             JsonTemplateMapper.readJson(response.getBody(), VersionJsonTemplate.class);
         Files.write(lastUpdateCheck, Instant.now().toString().getBytes(StandardCharsets.UTF_8));
