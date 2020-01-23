@@ -48,13 +48,14 @@ class AuthenticatePushStep implements Callable<RegistryClient> {
   @Override
   public RegistryClient call() throws CredentialRetrievalException, IOException, RegistryException {
     String registry = buildContext.getTargetImageConfiguration().getImageRegistry();
-    try (ProgressEventDispatcher ignored =
-            progressEventDispatcherFactory.create("authenticating push to " + registry, 1);
+    try (ProgressEventDispatcher progressDispatcher =
+            progressEventDispatcherFactory.create("authenticating push to " + registry, 2);
         TimerEventDispatcher ignored2 =
             new TimerEventDispatcher(
                 buildContext.getEventHandlers(), String.format(DESCRIPTION, registry))) {
       Credential credential =
           RegistryCredentialRetriever.getTargetImageCredential(buildContext).orElse(null);
+      progressDispatcher.dispatchProgress(1);
 
       RegistryClient registryClient =
           buildContext
