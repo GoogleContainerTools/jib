@@ -150,7 +150,7 @@ public class UpdateChecker {
       }
 
       // Check for update
-      FailoverHttpClient httpClient = new FailoverHttpClient(true, false, log);
+      FailoverHttpClient httpClient = new FailoverHttpClient(true, false, ignored -> {});
       try {
         Response response =
             httpClient.get(
