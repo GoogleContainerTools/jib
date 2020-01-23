@@ -75,7 +75,7 @@ public class UpdateCheckerTest {
     setupConfigAndLastUpdateCheck();
     Optional<String> message =
         UpdateChecker.performUpdateCheck(
-            ignored -> {}, "1.0.2", testWebServer.getEndpoint(), configDir);
+            ignored -> {}, "1.0.2", testWebServer.getEndpoint(), configDir, "tool name");
     Assert.assertTrue(message.isPresent());
     Assert.assertEquals(
         "A new version of Jib (2.0.0) is available (currently using 1.0.2). Update your build "
@@ -94,12 +94,12 @@ public class UpdateCheckerTest {
         new TestWebServer(
             false,
             Collections.singletonList(
-                "HTTP/1.1 200 OK\nContent-Length:18\n\n{\"latest\":\"2.0.0\",\"unknownField\":\"unknown\"}"),
+                "HTTP/1.1 200 OK\nContent-Length:43\n\n{\"latest\":\"2.0.0\",\"unknownField\":\"unknown\"}"),
             1);
     setupConfigAndLastUpdateCheck();
     Optional<String> message =
         UpdateChecker.performUpdateCheck(
-            ignored -> {}, "1.0.2", testWebServer.getEndpoint(), configDir);
+            ignored -> {}, "1.0.2", testWebServer.getEndpoint(), configDir, "tool name");
     Assert.assertTrue(message.isPresent());
     Assert.assertEquals(
         "A new version of Jib (2.0.0) is available (currently using 1.0.2). Update your build "
@@ -113,7 +113,7 @@ public class UpdateCheckerTest {
     setupConfigAndLastUpdateCheck();
     Optional<String> message =
         UpdateChecker.performUpdateCheck(
-            ignored -> {}, "2.0.0", testWebServer.getEndpoint(), configDir);
+            ignored -> {}, "2.0.0", testWebServer.getEndpoint(), configDir, "tool name");
     Assert.assertFalse(message.isPresent());
     String modifiedTime =
         new String(
@@ -126,7 +126,7 @@ public class UpdateCheckerTest {
     Instant before = Instant.now();
     Optional<String> message =
         UpdateChecker.performUpdateCheck(
-            ignored -> {}, "1.0.2", testWebServer.getEndpoint(), configDir);
+            ignored -> {}, "1.0.2", testWebServer.getEndpoint(), configDir, "tool name");
     Assert.assertTrue(message.isPresent());
     Assert.assertEquals(
         "A new version of Jib (2.0.0) is available (currently using 1.0.2). Update your build "
@@ -147,7 +147,7 @@ public class UpdateCheckerTest {
         modifiedTime.toString().getBytes(StandardCharsets.UTF_8));
     Optional<String> message =
         UpdateChecker.performUpdateCheck(
-            ignored -> {}, "1.0.2", testWebServer.getEndpoint(), configDir);
+            ignored -> {}, "1.0.2", testWebServer.getEndpoint(), configDir, "tool name");
     Assert.assertFalse(message.isPresent());
 
     // lastUpdateCheck should not have changed
@@ -162,7 +162,7 @@ public class UpdateCheckerTest {
     System.setProperty(PropertyNames.DISABLE_UPDATE_CHECKS, "true");
     Optional<String> message =
         UpdateChecker.performUpdateCheck(
-            ignored -> {}, "1.0.2", testWebServer.getEndpoint(), configDir);
+            ignored -> {}, "1.0.2", testWebServer.getEndpoint(), configDir, "tool name");
     Assert.assertFalse(message.isPresent());
   }
 
@@ -173,7 +173,7 @@ public class UpdateCheckerTest {
         "{\"disableUpdateCheck\":true}".getBytes(StandardCharsets.UTF_8));
     Optional<String> message =
         UpdateChecker.performUpdateCheck(
-            ignored -> {}, "1.0.2", testWebServer.getEndpoint(), configDir);
+            ignored -> {}, "1.0.2", testWebServer.getEndpoint(), configDir, "tool name");
     Assert.assertFalse(message.isPresent());
   }
 
@@ -183,7 +183,7 @@ public class UpdateCheckerTest {
         configDir.resolve("config.json"), "corrupt config".getBytes(StandardCharsets.UTF_8));
     Optional<String> message =
         UpdateChecker.performUpdateCheck(
-            ignored -> {}, "1.0.2", testWebServer.getEndpoint(), configDir);
+            ignored -> {}, "1.0.2", testWebServer.getEndpoint(), configDir, "tool name");
     Assert.assertFalse(message.isPresent());
   }
 
@@ -194,7 +194,7 @@ public class UpdateCheckerTest {
         configDir.resolve("lastUpdateCheck"), "bad timestamp".getBytes(StandardCharsets.UTF_8));
     Optional<String> message =
         UpdateChecker.performUpdateCheck(
-            ignored -> {}, "1.0.2", testWebServer.getEndpoint(), configDir);
+            ignored -> {}, "1.0.2", testWebServer.getEndpoint(), configDir, "tool name");
     String modifiedTime =
         new String(
             Files.readAllBytes(configDir.resolve("lastUpdateCheck")), StandardCharsets.UTF_8);
@@ -219,7 +219,8 @@ public class UpdateCheckerTest {
               },
               "1.0.2",
               badServer.getEndpoint(),
-              configDir);
+              configDir,
+              "tool name");
       Assert.assertFalse(message.isPresent());
     }
   }

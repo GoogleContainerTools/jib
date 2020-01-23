@@ -20,6 +20,9 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.google.cloud.tools.jib.ProjectInfo;
 import com.google.cloud.tools.jib.api.LogEvent;
 import com.google.cloud.tools.jib.filesystem.XdgDirectories;
+import com.google.cloud.tools.jib.http.FailoverHttpClient;
+import com.google.cloud.tools.jib.http.Request;
+import com.google.cloud.tools.jib.http.Response;
 import com.google.cloud.tools.jib.json.JsonTemplate;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import com.google.common.annotations.VisibleForTesting;
@@ -27,7 +30,6 @@ import com.google.common.base.Strings;
 import com.google.common.base.Verify;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -68,19 +70,28 @@ public class UpdateChecker {
    * @param executorService the {@link ExecutorService}
    * @param log {@link Consumer} used to log messages
    * @param versionUrl the location to check for the latest version
+   * @param toolName the tool name
    * @return a new {@link UpdateChecker}
    */
   public static Future<Optional<String>> checkForUpdate(
-      ExecutorService executorService, Consumer<LogEvent> log, String versionUrl) {
+      ExecutorService executorService, Consumer<LogEvent> log, String versionUrl, String toolName) {
     return executorService.submit(
         () ->
             performUpdateCheck(
-                log, Verify.verifyNotNull(ProjectInfo.VERSION), versionUrl, getConfigDir()));
+                log,
+                Verify.verifyNotNull(ProjectInfo.VERSION),
+                versionUrl,
+                getConfigDir(),
+                toolName));
   }
 
   @VisibleForTesting
   static Optional<String> performUpdateCheck(
-      Consumer<LogEvent> log, String currentVersion, String versionUrl, Path configDir) {
+      Consumer<LogEvent> log,
+      String currentVersion,
+      String versionUrl,
+      Path configDir,
+      String toolName) {
     // Abort if offline or update checks are disabled
     if (Boolean.getBoolean(PropertyNames.DISABLE_UPDATE_CHECKS)) {
       return Optional.empty();
@@ -139,11 +150,17 @@ public class UpdateChecker {
       }
 
       // Check for update
-      HttpURLConnection connection = (HttpURLConnection) new URL(versionUrl).openConnection();
+      FailoverHttpClient httpClient = new FailoverHttpClient(true, false, log);
+      Response response =
+          httpClient.get(
+              new URL(versionUrl),
+              Request.builder()
+                  .setHttpTimeout(3000)
+                  .setUserAgent("jib " + ProjectInfo.VERSION + " " + toolName)
+                  .build());
       try {
-        connection.setConnectTimeout(3000);
         VersionJsonTemplate version =
-            JsonTemplateMapper.readJson(connection.getInputStream(), VersionJsonTemplate.class);
+            JsonTemplateMapper.readJson(response.getBody(), VersionJsonTemplate.class);
         Files.write(lastUpdateCheck, Instant.now().toString().getBytes(StandardCharsets.UTF_8));
         if (currentVersion.equals(version.latest)) {
           return Optional.empty();
@@ -156,7 +173,7 @@ public class UpdateChecker {
                 + "). Update your build configuration to use the latest features and fixes!");
 
       } finally {
-        connection.disconnect();
+        httpClient.shutDown();
       }
 
     } catch (IOException ex) {
