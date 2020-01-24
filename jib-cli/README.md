@@ -11,12 +11,13 @@ are almost certain to change.
 
 ## Building
 
-Use the `application` plugin's `installDist` task to create a runnable installation.
+Use the `application` plugin's `installDist` task to create a runnable installation in
+`build/install/jib`.  A zip and tar file are also created in `build/distributions`.
 ```sh
 $ ../gradlew installDist
 $ ./build/install/jib/bin/jib
 Missing required parameters: base-image, destination-image
-Usage: jib [-dkrv] [-c=<creationTime>] [-u=user] [-a=<arguments>[,
+Usage: jib (-d | -r) [-kv] [-c=<creationTime>] [-u=user] [-a=<arguments>[,
 ...
 ```
 
