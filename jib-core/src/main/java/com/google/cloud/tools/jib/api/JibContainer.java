@@ -16,17 +16,47 @@
 
 package com.google.cloud.tools.jib.api;
 
+import com.google.cloud.tools.jib.builder.steps.BuildResult;
+import com.google.cloud.tools.jib.configuration.BuildContext;
+import com.google.common.annotations.VisibleForTesting;
 import java.util.Objects;
+import java.util.Set;
 
 /** The container built by Jib. */
 public class JibContainer {
 
+  private final ImageReference targetImage;
   private final DescriptorDigest imageDigest;
   private final DescriptorDigest imageId;
+  private final Set<String> tags;
 
-  JibContainer(DescriptorDigest imageDigest, DescriptorDigest imageId) {
+  @VisibleForTesting
+  JibContainer(
+      ImageReference targetImage,
+      DescriptorDigest imageDigest,
+      DescriptorDigest imageId,
+      Set<String> tags) {
+    this.targetImage = targetImage;
     this.imageDigest = imageDigest;
     this.imageId = imageId;
+    this.tags = tags;
+  }
+
+  static JibContainer from(BuildContext buildContext, BuildResult buildResult) {
+    ImageReference targetImage = buildContext.getTargetImageConfiguration().getImage();
+    DescriptorDigest imageDigest = buildResult.getImageDigest();
+    DescriptorDigest imageId = buildResult.getImageId();
+    Set<String> tags = buildContext.getAllTargetImageTags();
+    return new JibContainer(targetImage, imageDigest, imageId, tags);
+  }
+
+  /**
+   * Get the target image that was built.
+   *
+   * @return the target image reference.
+   */
+  public ImageReference getTargetImage() {
+    return targetImage;
   }
 
   /**
@@ -48,9 +78,18 @@ public class JibContainer {
     return imageId;
   }
 
+  /**
+   * Get the tags applied to the container.
+   *
+   * @return the set of all tags
+   */
+  public Set<String> getTags() {
+    return tags;
+  }
+
   @Override
   public int hashCode() {
-    return Objects.hash(imageDigest, imageId);
+    return Objects.hash(targetImage, imageDigest, imageId, tags);
   }
 
   @Override
@@ -62,6 +101,9 @@ public class JibContainer {
       return false;
     }
     JibContainer otherContainer = (JibContainer) other;
-    return imageDigest.equals(otherContainer.imageDigest) && imageId.equals(otherContainer.imageId);
+    return targetImage.equals(otherContainer.targetImage)
+        && imageDigest.equals(otherContainer.imageDigest)
+        && imageId.equals(otherContainer.imageId)
+        && tags.equals(otherContainer.tags);
   }
 }

@@ -42,14 +42,6 @@ public class Authorization {
 
   /**
    * @param token the token
-   * @return an {@link Authorization} with a base64-encoded {@code username:password} string
-   */
-  public static Authorization fromBasicToken(String token) {
-    return new Authorization("Basic", token);
-  }
-
-  /**
-   * @param token the token
    * @return an {@link Authorization} with a {@code Bearer} token
    */
   public static Authorization fromBearerToken(String token) {

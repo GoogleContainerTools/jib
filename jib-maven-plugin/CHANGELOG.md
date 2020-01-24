@@ -5,6 +5,8 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- Added json output file for image metadata after a build is complete. Writes to `target/jib-image.json` by default, configurable with `<outputPaths><imageJson>`. ([#2227](https://github.com/GoogleContainerTools/jib/pull/2227))
+
 ### Changed
 
 - Removed deprecated `<extraDirectory>` configuration in favor of `<extraDirectories>`. ([#1691](https://github.com/GoogleContainerTools/jib/issues/1691))
@@ -16,6 +18,7 @@ All notable changes to this project will be documented in this file.
     - Windows (`$XDG_CACHE_HOME` defined): from `$XDG_CACHE_HOME\google-cloud-tools-java\jib\` to `$XDG_CACHE_HOME\Google\Jib\Cache\`
     - Windows (`$XDG_CACHE_HOME` not defined): from `%LOCALAPPDATA%\google-cloud-tools-java\jib\` to `%LOCALAPPDATA%\Google\Jib\Cache\`
     - Initial builds will be slower until the cache is repopulated, unless you manually move the cache from the old location to the new location
+- When giving registry credentials in `settings.xml`, specifying port in `<server><id>` is no longer required. ([#2135](https://github.com/GoogleContainerTools/jib/issues/2135))
 
 ### Fixed
 
@@ -24,6 +27,7 @@ All notable changes to this project will be documented in this file.
 - Now `<containerizingMode>packaged` correctly identifies the packaged JAR generated at a non-default location when configured with the Maven Jar Plugin's `<classifier>` and `<outputDirectory>`. ([#2170](https://github.com/GoogleContainerTools/jib/issues/2170))
 - `jib:buildTar` with `<container><format>OCI` now builds a correctly formatted OCI archive. ([#2124](https://github.com/GoogleContainerTools/jib/issues/2124))
 - Fixed an issue where configuring the `<warName>` property of the Maven WAR plugin fails the build. ([#2206](https://github.com/GoogleContainerTools/jib/issues/2206))
+- Now automatically refreshes Docker registry authentication tokens when expired, fixing the issue that long-running builds may fail with "401 unauthorized." ([#691](https://github.com/GoogleContainerTools/jib/issues/691))
 
 ## 1.8.0
 

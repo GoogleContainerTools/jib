@@ -25,7 +25,6 @@ import com.google.cloud.tools.jib.builder.TimerEventDispatcher;
 import com.google.cloud.tools.jib.configuration.BuildContext;
 import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.hash.Digests;
-import com.google.cloud.tools.jib.http.Authorization;
 import com.google.cloud.tools.jib.image.Image;
 import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
 import com.google.cloud.tools.jib.image.json.ImageToJsonTranslator;
@@ -34,7 +33,6 @@ import com.google.common.collect.ImmutableList;
 import java.io.IOException;
 import java.util.Set;
 import java.util.concurrent.Callable;
-import javax.annotation.Nullable;
 
 /**
  * Pushes a manifest for a tag. Returns the manifest digest ("image digest") and the container
@@ -47,7 +45,7 @@ class PushImageStep implements Callable<BuildResult> {
   static ImmutableList<PushImageStep> makeList(
       BuildContext buildContext,
       ProgressEventDispatcher.Factory progressEventDispatcherFactory,
-      Authorization pushAuthorization,
+      RegistryClient registryClient,
       BlobDescriptor containerConfigurationDigestAndSize,
       Image builtImage)
       throws IOException {
@@ -73,7 +71,7 @@ class PushImageStep implements Callable<BuildResult> {
                   new PushImageStep(
                       buildContext,
                       progressEventDispatcher.newChildProducer(),
-                      pushAuthorization,
+                      registryClient,
                       manifestTemplate,
                       tag,
                       manifestDigest,
@@ -86,7 +84,7 @@ class PushImageStep implements Callable<BuildResult> {
   private final ProgressEventDispatcher.Factory progressEventDispatcherFactory;
 
   private final BuildableManifestTemplate manifestTemplate;
-  @Nullable private final Authorization pushAuthorization;
+  private final RegistryClient registryClient;
   private final String tag;
   private final DescriptorDigest imageDigest;
   private final DescriptorDigest imageId;
@@ -94,14 +92,14 @@ class PushImageStep implements Callable<BuildResult> {
   PushImageStep(
       BuildContext buildContext,
       ProgressEventDispatcher.Factory progressEventDispatcherFactory,
-      @Nullable Authorization pushAuthorization,
+      RegistryClient registryClient,
       BuildableManifestTemplate manifestTemplate,
       String tag,
       DescriptorDigest imageDigest,
       DescriptorDigest imageId) {
     this.buildContext = buildContext;
     this.progressEventDispatcherFactory = progressEventDispatcherFactory;
-    this.pushAuthorization = pushAuthorization;
+    this.registryClient = registryClient;
     this.manifestTemplate = manifestTemplate;
     this.tag = tag;
     this.imageDigest = imageDigest;
@@ -115,12 +113,6 @@ class PushImageStep implements Callable<BuildResult> {
         ProgressEventDispatcher ignored2 =
             progressEventDispatcherFactory.create("pushing manifest for " + tag, 1)) {
       eventHandlers.dispatch(LogEvent.info("Pushing manifest for " + tag + "..."));
-
-      RegistryClient registryClient =
-          buildContext
-              .newTargetImageRegistryClientFactory()
-              .setAuthorization(pushAuthorization)
-              .newRegistryClient();
 
       registryClient.pushManifest(manifestTemplate, tag);
       return new BuildResult(imageDigest, imageId);

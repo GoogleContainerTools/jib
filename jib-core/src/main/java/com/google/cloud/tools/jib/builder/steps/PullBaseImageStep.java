@@ -25,12 +25,11 @@ import com.google.cloud.tools.jib.api.RegistryUnauthorizedException;
 import com.google.cloud.tools.jib.blob.Blobs;
 import com.google.cloud.tools.jib.builder.ProgressEventDispatcher;
 import com.google.cloud.tools.jib.builder.TimerEventDispatcher;
-import com.google.cloud.tools.jib.builder.steps.PullBaseImageStep.ImageAndAuthorization;
+import com.google.cloud.tools.jib.builder.steps.PullBaseImageStep.ImageAndRegistryClient;
 import com.google.cloud.tools.jib.cache.CacheCorruptedException;
 import com.google.cloud.tools.jib.configuration.BuildContext;
 import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.event.events.ProgressEvent;
-import com.google.cloud.tools.jib.http.Authorization;
 import com.google.cloud.tools.jib.image.Image;
 import com.google.cloud.tools.jib.image.LayerCountMismatchException;
 import com.google.cloud.tools.jib.image.LayerPropertyNotFoundException;
@@ -45,10 +44,8 @@ import com.google.cloud.tools.jib.image.json.V21ManifestTemplate;
 import com.google.cloud.tools.jib.image.json.V22ManifestListTemplate;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import com.google.cloud.tools.jib.registry.ManifestAndDigest;
-import com.google.cloud.tools.jib.registry.RegistryAuthenticator;
 import com.google.cloud.tools.jib.registry.RegistryClient;
 import com.google.cloud.tools.jib.registry.credentials.CredentialRetrievalException;
-import com.google.common.annotations.VisibleForTesting;
 import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
@@ -56,29 +53,19 @@ import java.util.concurrent.Callable;
 import javax.annotation.Nullable;
 
 /** Pulls the base image manifest. */
-class PullBaseImageStep implements Callable<ImageAndAuthorization> {
+class PullBaseImageStep implements Callable<ImageAndRegistryClient> {
 
   private static final String DESCRIPTION = "Pulling base image manifest";
 
   /** Structure for the result returned by this step. */
-  static class ImageAndAuthorization {
+  static class ImageAndRegistryClient {
 
-    private final Image image;
-    private final @Nullable Authorization authorization;
+    final Image image;
+    @Nullable final RegistryClient registryClient;
 
-    @VisibleForTesting
-    ImageAndAuthorization(Image image, @Nullable Authorization authorization) {
+    ImageAndRegistryClient(Image image, @Nullable RegistryClient registryClient) {
       this.image = image;
-      this.authorization = authorization;
-    }
-
-    Image getImage() {
-      return image;
-    }
-
-    @Nullable
-    Authorization getAuthorization() {
-      return authorization;
+      this.registryClient = registryClient;
     }
   }
 
@@ -92,7 +79,7 @@ class PullBaseImageStep implements Callable<ImageAndAuthorization> {
   }
 
   @Override
-  public ImageAndAuthorization call()
+  public ImageAndRegistryClient call()
       throws IOException, RegistryException, LayerPropertyNotFoundException,
           LayerCountMismatchException, BadContainerConfigurationFormatException,
           CacheCorruptedException, CredentialRetrievalException {
@@ -101,73 +88,81 @@ class PullBaseImageStep implements Callable<ImageAndAuthorization> {
     ImageReference imageReference = buildContext.getBaseImageConfiguration().getImage();
     if (imageReference.isScratch()) {
       eventHandlers.dispatch(LogEvent.progress("Getting scratch base image..."));
-      return new ImageAndAuthorization(Image.builder(buildContext.getTargetFormat()).build(), null);
+      return new ImageAndRegistryClient(
+          Image.builder(buildContext.getTargetFormat()).build(), null);
     }
 
     eventHandlers.dispatch(
         LogEvent.progress("Getting manifest for base image " + imageReference + "..."));
 
-    if (buildContext.isOffline() || imageReference.isTagDigest()) {
+    if (buildContext.isOffline()) {
       Optional<Image> image = getCachedBaseImage();
       if (image.isPresent()) {
-        return new ImageAndAuthorization(image.get(), null);
+        return new ImageAndRegistryClient(image.get(), null);
       }
-      if (buildContext.isOffline()) {
-        throw new IOException(
-            "Cannot run Jib in offline mode; " + imageReference + " not found in local Jib cache");
+      throw new IOException(
+          "Cannot run Jib in offline mode; " + imageReference + " not found in local Jib cache");
+
+    } else if (imageReference.isTagDigest()) {
+      Optional<Image> image = getCachedBaseImage();
+      if (image.isPresent()) {
+        RegistryClient noAuthRegistryClient =
+            buildContext.newBaseImageRegistryClientFactory().newRegistryClient();
+        // TODO: passing noAuthRegistryClient may be problematic. It may return 401 unauthorized if
+        // layers have to be downloaded. https://github.com/GoogleContainerTools/jib/issues/2220
+        return new ImageAndRegistryClient(image.get(), noAuthRegistryClient);
       }
     }
 
     try (ProgressEventDispatcher progressEventDispatcher =
             progressEventDispatcherFactory.create("pulling base image manifest", 2);
         TimerEventDispatcher ignored1 = new TimerEventDispatcher(eventHandlers, DESCRIPTION)) {
-      // First, try with no credentials.
-      try {
-        return new ImageAndAuthorization(pullBaseImage(null, progressEventDispatcher), null);
 
-      } catch (RegistryUnauthorizedException ignored2) {
+      // First, try with no credentials.
+      RegistryClient noAuthRegistryClient =
+          buildContext.newBaseImageRegistryClientFactory().newRegistryClient();
+      try {
+        return new ImageAndRegistryClient(
+            pullBaseImage(noAuthRegistryClient, progressEventDispatcher), noAuthRegistryClient);
+
+      } catch (RegistryUnauthorizedException ex) {
         eventHandlers.dispatch(
             LogEvent.lifecycle(
                 "The base image requires auth. Trying again for " + imageReference + "..."));
 
-        // If failed, then, retrieve base registry credentials and try with retrieved credentials.
-        // TODO: Refactor the logic in RetrieveRegistryCredentialsStep out to
-        // registry.credentials.RegistryCredentialsRetriever.
         Credential registryCredential =
-            RetrieveRegistryCredentialsStep.forBaseImage(
-                    buildContext, progressEventDispatcher.newChildProducer())
-                .call()
-                .orElse(null);
+            RegistryCredentialRetriever.getBaseImageCredential(buildContext).orElse(null);
 
-        Authorization registryAuthorization =
-            registryCredential == null || registryCredential.isOAuth2RefreshToken()
-                ? null
-                : Authorization.fromBasicCredentials(
-                    registryCredential.getUsername(), registryCredential.getPassword());
+        RegistryClient registryClient =
+            buildContext
+                .newBaseImageRegistryClientFactory()
+                .setCredential(registryCredential)
+                .newRegistryClient();
 
         try {
-          return new ImageAndAuthorization(
-              pullBaseImage(registryAuthorization, progressEventDispatcher), registryAuthorization);
+          // TODO: refactor the code (https://github.com/GoogleContainerTools/jib/pull/2202)
+          if (registryCredential == null || registryCredential.isOAuth2RefreshToken()) {
+            throw ex;
+          }
+
+          eventHandlers.dispatch(LogEvent.debug("Trying basic auth for " + imageReference + "..."));
+          registryClient.configureBasicAuth();
+          return new ImageAndRegistryClient(
+              pullBaseImage(registryClient, progressEventDispatcher), registryClient);
 
         } catch (RegistryUnauthorizedException registryUnauthorizedException) {
           // The registry requires us to authenticate using the Docker Token Authentication.
           // See https://docs.docker.com/registry/spec/auth/token
-          Optional<RegistryAuthenticator> registryAuthenticator =
-              buildContext
-                  .newBaseImageRegistryClientFactory()
-                  .newRegistryClient()
-                  .getRegistryAuthenticator();
-          if (registryAuthenticator.isPresent()) {
-            Authorization pullAuthorization =
-                registryAuthenticator.get().authenticatePull(registryCredential);
-
-            return new ImageAndAuthorization(
-                pullBaseImage(pullAuthorization, progressEventDispatcher), pullAuthorization);
+          eventHandlers.dispatch(
+              LogEvent.debug("Trying bearer auth for " + imageReference + "..."));
+          if (registryClient.doPullBearerAuth()) {
+            return new ImageAndRegistryClient(
+                pullBaseImage(registryClient, progressEventDispatcher), registryClient);
           }
           eventHandlers.dispatch(
               LogEvent.error(
-                  "Failed to retrieve authentication challenge for registry that required token "
-                      + "authentication"));
+                  "The registry asked for basic authentication, but the registry had refused basic "
+                      + "authentication previously"));
           throw registryUnauthorizedException;
         }
       }
@@ -190,16 +185,10 @@ class PullBaseImageStep implements Callable<ImageAndAuthorization> {
    *     format
    */
   private Image pullBaseImage(
-      @Nullable Authorization registryAuthorization,
-      ProgressEventDispatcher progressEventDispatcher)
+      RegistryClient registryClient, ProgressEventDispatcher progressEventDispatcher)
       throws IOException, RegistryException, LayerPropertyNotFoundException,
           LayerCountMismatchException, BadContainerConfigurationFormatException {
     EventHandlers eventHandlers = buildContext.getEventHandlers();
-    RegistryClient registryClient =
-        buildContext
-            .newBaseImageRegistryClientFactory()
-            .setAuthorization(registryAuthorization)
-            .newRegistryClient();
 
     ManifestAndDigest<?> manifestAndDigest =
         registryClient.pullManifest(buildContext.getBaseImageConfiguration().getImageTag());

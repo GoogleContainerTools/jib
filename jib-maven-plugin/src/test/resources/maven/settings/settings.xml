@@ -15,5 +15,10 @@
       <username>badUser</username>
       <password>{i-made-this-up=}</password>
     </server>
+    <server>
+      <id>docker.example.com</id>
+      <username>registryUser</username>
+      <password>registryPassword</password>
+    </server>
   </servers>
 </settings>

@@ -23,13 +23,12 @@ import com.google.cloud.tools.jib.builder.ProgressEventDispatcher;
 import com.google.cloud.tools.jib.builder.TimerEventDispatcher;
 import com.google.cloud.tools.jib.configuration.BuildContext;
 import com.google.cloud.tools.jib.hash.Digests;
-import com.google.cloud.tools.jib.http.Authorization;
 import com.google.cloud.tools.jib.image.Image;
 import com.google.cloud.tools.jib.image.json.ImageToJsonTranslator;
 import com.google.cloud.tools.jib.json.JsonTemplate;
+import com.google.cloud.tools.jib.registry.RegistryClient;
 import java.io.IOException;
 import java.util.concurrent.Callable;
-import javax.annotation.Nullable;
 
 /** Pushes the container configuration. */
 class PushContainerConfigurationStep implements Callable<BlobDescriptor> {
@@ -39,17 +38,17 @@ class PushContainerConfigurationStep implements Callable<BlobDescriptor> {
   private final BuildContext buildContext;
   private final ProgressEventDispatcher.Factory progressEventDispatcherFactory;
 
-  @Nullable private final Authorization pushAuthorization;
+  private final RegistryClient registryClient;
   private final Image builtImage;
 
   PushContainerConfigurationStep(
       BuildContext buildContext,
       ProgressEventDispatcher.Factory progressEventDispatcherFactory,
-      @Nullable Authorization authenticatePushStep,
+      RegistryClient registryClient,
       Image builtImage) {
     this.buildContext = buildContext;
     this.progressEventDispatcherFactory = progressEventDispatcherFactory;
-    this.pushAuthorization = authenticatePushStep;
+    this.registryClient = registryClient;
     this.builtImage = builtImage;
   }
 
@@ -65,7 +64,7 @@ class PushContainerConfigurationStep implements Callable<BlobDescriptor> {
       return new PushBlobStep(
               buildContext,
               progressEventDispatcher.newChildProducer(),
-              pushAuthorization,
+              registryClient,
               Digests.computeDigest(containerConfiguration),
               Blobs.from(containerConfiguration),
               false)

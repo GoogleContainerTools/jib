@@ -16,18 +16,27 @@
 
 package com.google.cloud.tools.jib.maven;
 
+import com.google.cloud.tools.jib.ProjectInfo;
 import com.google.cloud.tools.jib.api.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.api.FilePermissions;
+import com.google.cloud.tools.jib.api.LogEvent;
 import com.google.cloud.tools.jib.maven.JibPluginConfiguration.PermissionConfiguration;
+import com.google.cloud.tools.jib.plugins.common.ProjectProperties;
 import com.google.cloud.tools.jib.plugins.common.PropertyNames;
+import com.google.cloud.tools.jib.plugins.common.UpdateChecker;
 import com.google.cloud.tools.jib.plugins.common.VersionChecker;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
+import com.google.common.util.concurrent.Futures;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import org.apache.maven.artifact.versioning.DefaultArtifactVersion;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.descriptor.PluginDescriptor;
@@ -39,6 +48,38 @@ public class MojoCommon {
   /** Describes a minimum required version or version range for Jib. */
   @VisibleForTesting
   public static final String REQUIRED_VERSION_PROPERTY_NAME = "jib.requiredVersion";
+
+  public static final String VERSION_URL = "https://storage.googleapis.com/jib-versions/jib-maven";
+
+  static Future<Optional<String>> newUpdateChecker(
+      ProjectProperties projectProperties, Log logger) {
+    if (projectProperties.isOffline() || !logger.isInfoEnabled()) {
+      return Futures.immediateFuture(Optional.empty());
+    }
+    ExecutorService executorService = Executors.newSingleThreadExecutor();
+    try {
+      return UpdateChecker.checkForUpdate(
+          executorService, projectProperties::log, VERSION_URL, projectProperties.getToolName());
+    } finally {
+      executorService.shutdown();
+    }
+  }
+
+  static void finishUpdateChecker(
+      ProjectProperties projectProperties, Future<Optional<String>> updateCheckFuture) {
+    UpdateChecker.finishUpdateCheck(updateCheckFuture)
+        .ifPresent(
+            updateMessage -> {
+              projectProperties.log(LogEvent.lifecycle(""));
+              projectProperties.log(LogEvent.lifecycle("\u001B[33m" + updateMessage + "\u001B[0m"));
+              projectProperties.log(
+                  LogEvent.lifecycle(
+                      "\u001B[33m"
+                          + ProjectInfo.GITHUB_URL
+                          + "/blob/master/jib-maven-plugin/CHANGELOG.md\u001B[0m"));
+              projectProperties.log(LogEvent.lifecycle(""));
+            });
+  }
 
   /**
    * Gets the list of extra directory paths from a {@link JibPluginConfiguration}. Returns {@code

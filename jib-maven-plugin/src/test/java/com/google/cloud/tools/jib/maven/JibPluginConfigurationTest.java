@@ -169,6 +169,10 @@ public class JibPluginConfigurationTest {
     sessionProperties.put("jib.outputPaths.imageId", "id/path");
     Assert.assertEquals(
         Paths.get("/repository/project/id/path"), testPluginConfiguration.getImageIdOutputPath());
+    sessionProperties.put("jib.outputPaths.imageJson", "json/path");
+    Assert.assertEquals(
+        Paths.get("/repository/project/json/path"),
+        testPluginConfiguration.getImageJsonOutputPath());
     sessionProperties.put("jib.outputPaths.tar", "tar/path");
     Assert.assertEquals(
         Paths.get("/repository/project/tar/path"), testPluginConfiguration.getTarOutputPath());
@@ -258,6 +262,8 @@ public class JibPluginConfigurationTest {
     Assert.assertEquals(Paths.get("/digest/path"), testPluginConfiguration.getDigestOutputPath());
     project.getProperties().setProperty("jib.outputPaths.imageId", "/id/path");
     Assert.assertEquals(Paths.get("/id/path"), testPluginConfiguration.getImageIdOutputPath());
+    project.getProperties().setProperty("jib.outputPaths.imageJson", "/json/path");
+    Assert.assertEquals(Paths.get("/json/path"), testPluginConfiguration.getImageJsonOutputPath());
     project.getProperties().setProperty("jib.outputPaths.tar", "tar/path");
     Assert.assertEquals(
         Paths.get("/repository/project/tar/path"), testPluginConfiguration.getTarOutputPath());

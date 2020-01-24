@@ -164,8 +164,8 @@ public class RegistryAuthenticator {
    * @param credential the credential used to authenticate
    * @return an {@code Authorization} authenticating the pull
    * @throws RegistryAuthenticationFailedException if authentication fails
-   * @throws RegistryCredentialsNotSentException if authentication is failed and credentials were
-   *     not sent over plain HTTP
+   * @throws RegistryCredentialsNotSentException if authentication failed and credentials were not
+   *     sent over plain HTTP
    */
   public Authorization authenticatePull(@Nullable Credential credential)
       throws RegistryAuthenticationFailedException, RegistryCredentialsNotSentException {
@@ -178,8 +178,8 @@ public class RegistryAuthenticator {
    * @param credential the credential used to authenticate
    * @return an {@code Authorization} authenticating the push
    * @throws RegistryAuthenticationFailedException if authentication fails
-   * @throws RegistryCredentialsNotSentException if authentication is failed and credentials were
-   *     not sent over plain HTTP
+   * @throws RegistryCredentialsNotSentException if authentication failed and credentials were not
+   *     sent over plain HTTP
    */
   public Authorization authenticatePush(@Nullable Credential credential)
       throws RegistryAuthenticationFailedException, RegistryCredentialsNotSentException {

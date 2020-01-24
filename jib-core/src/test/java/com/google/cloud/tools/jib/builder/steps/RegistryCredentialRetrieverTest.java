@@ -20,11 +20,9 @@ import com.google.cloud.tools.jib.api.Credential;
 import com.google.cloud.tools.jib.api.CredentialRetriever;
 import com.google.cloud.tools.jib.api.ImageReference;
 import com.google.cloud.tools.jib.api.LogEvent;
-import com.google.cloud.tools.jib.builder.ProgressEventDispatcher;
 import com.google.cloud.tools.jib.configuration.BuildContext;
 import com.google.cloud.tools.jib.configuration.ImageConfiguration;
 import com.google.cloud.tools.jib.event.EventHandlers;
-import com.google.cloud.tools.jib.event.events.ProgressEvent;
 import com.google.cloud.tools.jib.registry.credentials.CredentialRetrievalException;
 import com.google.common.util.concurrent.MoreExecutors;
 import java.io.IOException;
@@ -40,9 +38,9 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
-/** Tests for {@link RetrieveRegistryCredentialsStep}. */
+/** Tests for {@link RegistryCredentialRetriever}. */
 @RunWith(MockitoJUnitRunner.class)
-public class RetrieveRegistryCredentialsStepTest {
+public class RegistryCredentialRetrieverTest {
 
   @Mock private EventHandlers mockEventHandlers;
 
@@ -59,16 +57,10 @@ public class RetrieveRegistryCredentialsStepTest {
 
     Assert.assertEquals(
         Optional.of(Credential.from("baseusername", "basepassword")),
-        RetrieveRegistryCredentialsStep.forBaseImage(
-                buildContext,
-                ProgressEventDispatcher.newRoot(mockEventHandlers, "ignored", 1).newChildProducer())
-            .call());
+        RegistryCredentialRetriever.getBaseImageCredential(buildContext));
     Assert.assertEquals(
         Optional.of(Credential.from("targetusername", "targetpassword")),
-        RetrieveRegistryCredentialsStep.forTargetImage(
-                buildContext,
-                ProgressEventDispatcher.newRoot(mockEventHandlers, "ignored", 1).newChildProducer())
-            .call());
+        RegistryCredentialRetriever.getTargetImageCredential(buildContext));
   }
 
   @Test
@@ -77,26 +69,16 @@ public class RetrieveRegistryCredentialsStepTest {
         makeFakeBuildContext(
             Arrays.asList(Optional::empty, Optional::empty), Collections.emptyList());
     Assert.assertFalse(
-        RetrieveRegistryCredentialsStep.forBaseImage(
-                buildContext,
-                ProgressEventDispatcher.newRoot(mockEventHandlers, "ignored", 1).newChildProducer())
-            .call()
-            .isPresent());
+        RegistryCredentialRetriever.getBaseImageCredential(buildContext).isPresent());
 
-    Mockito.verify(mockEventHandlers, Mockito.atLeastOnce())
-        .dispatch(Mockito.any(ProgressEvent.class));
     Mockito.verify(mockEventHandlers)
-        .dispatch(LogEvent.info("No credentials could be retrieved for registry baseregistry"));
+        .dispatch(LogEvent.info("No credentials could be retrieved for baseregistry/baserepo"));
 
     Assert.assertFalse(
-        RetrieveRegistryCredentialsStep.forTargetImage(
-                buildContext,
-                ProgressEventDispatcher.newRoot(mockEventHandlers, "ignored", 1).newChildProducer())
-            .call()
-            .isPresent());
+        RegistryCredentialRetriever.getTargetImageCredential(buildContext).isPresent());
 
     Mockito.verify(mockEventHandlers)
-        .dispatch(LogEvent.info("No credentials could be retrieved for registry baseregistry"));
+        .dispatch(LogEvent.info("No credentials could be retrieved for targetregistry/targetrepo"));
   }
 
   @Test
@@ -111,10 +93,7 @@ public class RetrieveRegistryCredentialsStepTest {
                 }),
             Collections.emptyList());
     try {
-      RetrieveRegistryCredentialsStep.forBaseImage(
-              buildContext,
-              ProgressEventDispatcher.newRoot(mockEventHandlers, "ignored", 1).newChildProducer())
-          .call();
+      RegistryCredentialRetriever.getBaseImageCredential(buildContext);
       Assert.fail("Should have thrown exception");
 
     } catch (CredentialRetrievalException ex) {
@@ -126,8 +105,8 @@ public class RetrieveRegistryCredentialsStepTest {
       List<CredentialRetriever> baseCredentialRetrievers,
       List<CredentialRetriever> targetCredentialRetrievers)
       throws IOException {
-    ImageReference baseImage = ImageReference.of("baseregistry", "ignored", null);
-    ImageReference targetImage = ImageReference.of("targetregistry", "ignored", null);
+    ImageReference baseImage = ImageReference.of("baseregistry", "baserepo", null);
+    ImageReference targetImage = ImageReference.of("targetregistry", "targetrepo", null);
     return BuildContext.builder()
         .setEventHandlers(mockEventHandlers)
         .setBaseImageConfiguration(

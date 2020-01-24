@@ -21,12 +21,10 @@ import com.google.cloud.tools.jib.api.RegistryException;
 import com.google.cloud.tools.jib.builder.ProgressEventDispatcher;
 import com.google.cloud.tools.jib.builder.TimerEventDispatcher;
 import com.google.cloud.tools.jib.configuration.BuildContext;
-import com.google.cloud.tools.jib.http.Authorization;
-import com.google.cloud.tools.jib.registry.RegistryAuthenticator;
+import com.google.cloud.tools.jib.registry.RegistryClient;
+import com.google.cloud.tools.jib.registry.credentials.CredentialRetrievalException;
 import java.io.IOException;
-import java.util.Optional;
 import java.util.concurrent.Callable;
-import javax.annotation.Nullable;
 
 /**
  * Authenticates push to a target registry using Docker Token Authentication.
@@ -34,45 +32,43 @@ import javax.annotation.Nullable;
  * @see <a
  *     href="https://docs.docker.com/registry/spec/auth/token/">https://docs.docker.com/registry/spec/auth/token/</a>
  */
-class AuthenticatePushStep implements Callable<Optional<Authorization>> {
+class AuthenticatePushStep implements Callable<RegistryClient> {
 
   private static final String DESCRIPTION = "Authenticating push to %s";
 
   private final BuildContext buildContext;
   private final ProgressEventDispatcher.Factory progressEventDispatcherFactory;
-  @Nullable private final Credential registryCredential;
 
   AuthenticatePushStep(
-      BuildContext buildContext,
-      ProgressEventDispatcher.Factory progressEventDispatcherFactory,
-      @Nullable Credential registryCredential) {
+      BuildContext buildContext, ProgressEventDispatcher.Factory progressEventDispatcherFactory) {
     this.buildContext = buildContext;
     this.progressEventDispatcherFactory = progressEventDispatcherFactory;
-    this.registryCredential = registryCredential;
   }
 
   @Override
-  public Optional<Authorization> call() throws IOException, RegistryException {
+  public RegistryClient call() throws CredentialRetrievalException, IOException, RegistryException {
     String registry = buildContext.getTargetImageConfiguration().getImageRegistry();
-    try (ProgressEventDispatcher ignored =
-            progressEventDispatcherFactory.create("authenticating push to " + registry, 1);
+    try (ProgressEventDispatcher progressDispatcher =
+            progressEventDispatcherFactory.create("authenticating push to " + registry, 2);
         TimerEventDispatcher ignored2 =
             new TimerEventDispatcher(
                 buildContext.getEventHandlers(), String.format(DESCRIPTION, registry))) {
-      Optional<RegistryAuthenticator> registryAuthenticator =
+      Credential credential =
+          RegistryCredentialRetriever.getTargetImageCredential(buildContext).orElse(null);
+      progressDispatcher.dispatchProgress(1);
+
+      RegistryClient registryClient =
           buildContext
               .newTargetImageRegistryClientFactory()
-              .newRegistryClient()
-              .getRegistryAuthenticator();
-      if (registryAuthenticator.isPresent()) {
-        return Optional.of(registryAuthenticator.get().authenticatePush(registryCredential));
+              .setCredential(credential)
+              .newRegistryClient();
+      if (!registryClient.doPushBearerAuth()) {
+        // server returned "WWW-Authenticate: Basic ..." (e.g., local Docker registry)
+        if (credential != null && !credential.isOAuth2RefreshToken()) {
+          registryClient.configureBasicAuth();
+        }
       }
+      return registryClient;
     }
-
-    return (registryCredential == null || registryCredential.isOAuth2RefreshToken())
-        ? Optional.empty()
-        : Optional.of(
-            Authorization.fromBasicCredentials(
-                registryCredential.getUsername(), registryCredential.getPassword()));
   }
 }
