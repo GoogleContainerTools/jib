@@ -142,7 +142,9 @@ public class JibPluginTest {
     // root project is our jib packaged service
     Project rootProject = createProject("java");
 
-    // our service DOES depend on this, and jib should trigger an assemble from this project
+    // our service DOES depend on this, but since it's a regular 'java' project it should not
+    // trigger
+    // an assemble
     Project subProject =
         ProjectBuilder.builder()
             .withParent(rootProject)
@@ -150,6 +152,16 @@ public class JibPluginTest {
             .withName("sub")
             .build();
     subProject.getPluginManager().apply("java");
+
+    // our service DOES depend on this, and since it's a 'java-library' it should trigger an
+    // assemble
+    Project subProjectLibrary =
+        ProjectBuilder.builder()
+            .withParent(rootProject)
+            .withProjectDir(testProjectRoot.getRoot())
+            .withName("sub-lib")
+            .build();
+    subProjectLibrary.getPluginManager().apply("java-library");
 
     // our service doesn't depend on this, and jib should NOT trigger an assemble from this project
     Project unrelatedSubProject =
@@ -165,11 +177,18 @@ public class JibPluginTest {
         .getConfigurations()
         .getByName("compile")
         .getDependencies()
-        .add(rootProject.getDependencies().project(ImmutableMap.of("path", subProject.getPath())));
+        .addAll(
+            ImmutableSet.of(
+                rootProject
+                    .getDependencies()
+                    .project(ImmutableMap.of("path", subProject.getPath())),
+                rootProject
+                    .getDependencies()
+                    .project(ImmutableMap.of("path", subProjectLibrary.getPath()))));
 
     // programmatic check
     Assert.assertEquals(
-        Collections.singletonList(":sub"),
+        ImmutableList.of(":sub", ":sub-lib"),
         JibPlugin.getProjectDependencies(rootProject)
             .stream()
             .map(Project::getPath)
@@ -188,7 +207,7 @@ public class JibPluginTest {
     KNOWN_JIB_TASKS.forEach(
         taskName ->
             Assert.assertEquals(
-                ImmutableSet.of(":sub:assemble", ":classes", ":myCustomTask"),
+                ImmutableSet.of(":sub-lib:assemble", ":classes", ":myCustomTask"),
                 tasks
                     .getByPath(taskName)
                     .getDependsOn()

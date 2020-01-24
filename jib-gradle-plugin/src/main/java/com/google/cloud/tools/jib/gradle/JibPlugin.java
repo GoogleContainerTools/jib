@@ -35,6 +35,7 @@ import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.artifacts.DependencySet;
 import org.gradle.api.artifacts.ProjectDependency;
 import org.gradle.api.plugins.BasePlugin;
+import org.gradle.api.plugins.JavaLibraryPlugin;
 import org.gradle.api.tasks.TaskContainer;
 import org.gradle.api.tasks.TaskProvider;
 import org.gradle.jvm.tasks.Jar;
@@ -200,15 +201,14 @@ public class JibPlugin implements Plugin<Project> {
             buildTarTask.configure(task -> task.dependsOn(dependsOnTask));
             syncMapTask.configure(task -> task.dependsOn(dependsOnTask));
 
-            // Find project dependencies and add a dependency to their assemble task. We make sure
-            // to only add the dependency after BasePlugin is evaluated as otherwise the assemble
-            // task may not be available yet.
+            // for project dependencies that use 'java-library' we need to do something special
+            // since 'classes' will not automatically depend on 'jar' or 'war' or whatever
             List<Project> computedDependencies = getProjectDependencies(projectAfterEvaluation);
             for (Project dependencyProject : computedDependencies) {
               dependencyProject
                   .getPlugins()
                   .withType(
-                      BasePlugin.class,
+                      JavaLibraryPlugin.class,
                       unused -> {
                         TaskProvider<Task> assembleTask =
                             dependencyProject.getTasks().named(BasePlugin.ASSEMBLE_TASK_NAME);
