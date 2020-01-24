@@ -22,21 +22,20 @@ import com.google.cloud.tools.jib.builder.ProgressEventDispatcher;
 import com.google.cloud.tools.jib.builder.TimerEventDispatcher;
 import com.google.cloud.tools.jib.builder.steps.PreparedLayer.StateInTarget;
 import com.google.cloud.tools.jib.configuration.BuildContext;
-import com.google.cloud.tools.jib.http.Authorization;
+import com.google.cloud.tools.jib.registry.RegistryClient;
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
-import javax.annotation.Nullable;
 
 class PushLayerStep implements Callable<BlobDescriptor> {
 
   static ImmutableList<PushLayerStep> makeList(
       BuildContext buildContext,
       ProgressEventDispatcher.Factory progressEventDispatcherFactory,
-      @Nullable Authorization pushAuthorization,
+      RegistryClient registryClient,
       List<Future<PreparedLayer>> cachedLayers) {
     try (TimerEventDispatcher ignored =
             new TimerEventDispatcher(buildContext.getEventHandlers(), "Preparing layer pushers");
@@ -51,7 +50,7 @@ class PushLayerStep implements Callable<BlobDescriptor> {
                   new PushLayerStep(
                       buildContext,
                       progressEventDispatcher.newChildProducer(),
-                      pushAuthorization,
+                      registryClient,
                       layer))
           .collect(ImmutableList.toImmutableList());
     }
@@ -60,17 +59,17 @@ class PushLayerStep implements Callable<BlobDescriptor> {
   private final BuildContext buildContext;
   private final ProgressEventDispatcher.Factory progressEventDispatcherFactory;
 
-  @Nullable private final Authorization pushAuthorization;
+  private final RegistryClient registryClient;
   private final Future<PreparedLayer> preparedLayer;
 
   private PushLayerStep(
       BuildContext buildContext,
       ProgressEventDispatcher.Factory progressEventDispatcherFactory,
-      @Nullable Authorization pushAuthorization,
+      RegistryClient registryClient,
       Future<PreparedLayer> preparedLayer) {
     this.buildContext = buildContext;
     this.progressEventDispatcherFactory = progressEventDispatcherFactory;
-    this.pushAuthorization = pushAuthorization;
+    this.registryClient = registryClient;
     this.preparedLayer = preparedLayer;
   }
 
@@ -87,7 +86,7 @@ class PushLayerStep implements Callable<BlobDescriptor> {
     return new PushBlobStep(
             buildContext,
             progressEventDispatcherFactory,
-            pushAuthorization,
+            registryClient,
             layer.getBlobDescriptor(),
             layer.getBlob(),
             forcePush)

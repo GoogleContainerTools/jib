@@ -18,15 +18,12 @@ package com.google.cloud.tools.jib.registry;
 
 import com.google.cloud.tools.jib.api.RegistryException;
 import com.google.cloud.tools.jib.event.EventHandlers;
-import com.google.cloud.tools.jib.http.Authorization;
 import com.google.cloud.tools.jib.http.FailoverHttpClient;
 import java.io.IOException;
-import java.util.Optional;
-import org.junit.Assert;
 import org.junit.Test;
 
-/** Integration tests for {@link AuthenticationMethodRetriever}. */
-public class AuthenticationMethodRetrieverIntegrationTest {
+/** Integration tests for bearer authentication. */
+public class BearerAuthenticationIntegrationTest {
 
   private final FailoverHttpClient httpClient = new FailoverHttpClient(false, false, ignored -> {});
 
@@ -36,16 +33,8 @@ public class AuthenticationMethodRetrieverIntegrationTest {
         RegistryClient.factory(
                 EventHandlers.NONE, "registry.hub.docker.com", "library/busybox", httpClient)
             .newRegistryClient();
-    Optional<RegistryAuthenticator> registryAuthenticator =
-        registryClient.getRegistryAuthenticator();
-    Assert.assertTrue(registryAuthenticator.isPresent());
-    Authorization authorization = registryAuthenticator.get().authenticatePull(null);
-
-    RegistryClient authorizedRegistryClient =
-        RegistryClient.factory(
-                EventHandlers.NONE, "registry.hub.docker.com", "library/busybox", httpClient)
-            .setAuthorization(authorization)
-            .newRegistryClient();
-    authorizedRegistryClient.pullManifest("latest");
+    // For public images, Docker Hub still requires bearer authentication (without credentials)
+    registryClient.doPullBearerAuth();
+    registryClient.pullManifest("latest");
   }
 }

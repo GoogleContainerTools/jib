@@ -126,7 +126,7 @@ public class RegistryEndpointCallerTest {
             mockEventHandlers,
             "userAgent",
             new TestRegistryEndpointProvider(),
-            Authorization.fromBasicToken("token"),
+            Authorization.fromBasicCredentials("user", "pass"),
             new RegistryEndpointRequestProperties("serverUrl", "imageName"),
             mockHttpClient);
 

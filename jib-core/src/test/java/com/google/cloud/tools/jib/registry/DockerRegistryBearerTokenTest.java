@@ -102,15 +102,7 @@ public class DockerRegistryBearerTokenTest {
   public void testCanAttemptBlobMount_basicCredential() {
     Authorization fixture = Authorization.fromBasicCredentials("foo", "bar");
     Assert.assertTrue(RegistryClient.canAttemptBlobMount(fixture, "random"));
-  }
-
-  /** Basic token should allow access to all. */
-  @Test
-  public void testCanAttemptBlobMount_basicToken() {
-    // basic tokens are assumed to allow all repositories to be mounted
-    Authorization fixture = Authorization.fromBasicToken("gobbledygook");
     Assert.assertTrue(RegistryClient.canAttemptBlobMount(fixture, "library/openjdk"));
-    Assert.assertTrue(RegistryClient.canAttemptBlobMount(fixture, "randomrepo"));
   }
 
   @Test
