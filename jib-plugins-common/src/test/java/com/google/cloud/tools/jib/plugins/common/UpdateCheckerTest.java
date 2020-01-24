@@ -212,7 +212,10 @@ public class UpdateCheckerTest {
   public void testPerformUpdateCheck_failSilently()
       throws InterruptedException, GeneralSecurityException, URISyntaxException, IOException {
     try (TestWebServer badServer =
-        new TestWebServer(false, Collections.singletonList("HTTP/1.1 400 Bad Request\n\n"), 1)) {
+        new TestWebServer(
+            false,
+            Collections.singletonList("HTTP/1.1 400 Bad Request\nContent-Length: 0\n\n"),
+            1)) {
       Optional<String> message =
           UpdateChecker.performUpdateCheck(
               logEvent -> {

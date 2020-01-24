@@ -137,7 +137,8 @@ public class TestWebServer implements Closeable {
       if (!(firstByte == 'G' && secondByte == 'E')
           && !(firstByte == 'P' && secondByte == 'O')
           && !(firstByte == 'H' && secondByte == 'E')) { // GET, POST, HEAD, ...
-        out.write("HTTP/1.1 400 Bad Request\n\n".getBytes(StandardCharsets.UTF_8));
+        out.write(
+            "HTTP/1.1 400 Bad Request\nContent-Length: 0\n\n".getBytes(StandardCharsets.UTF_8));
         return null;
       }
 
