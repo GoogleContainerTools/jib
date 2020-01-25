@@ -148,7 +148,7 @@ public class JibPluginTest {
         jibDependenciesTask
             .getDependsOn()
             .stream()
-            .filter(it -> it instanceof TaskProvider)
+            .filter(TaskProvider.class::isInstance)
             .map(it -> ((TaskProvider<?>) it).get())
             .collect(Collectors.toSet());
 
@@ -179,7 +179,7 @@ public class JibPluginTest {
         jibDependenciesTask
             .getDependsOn()
             .stream()
-            .filter(it -> it instanceof TaskProvider)
+            .filter(TaskProvider.class::isInstance)
             .map(it -> ((TaskProvider<?>) it).get())
             .collect(Collectors.toSet());
 
@@ -211,7 +211,7 @@ public class JibPluginTest {
         jibDependenciesTask
             .getDependsOn()
             .stream()
-            .filter(it -> it instanceof TaskProvider)
+            .filter(TaskProvider.class::isInstance)
             .map(it -> ((TaskProvider<?>) it).get())
             .collect(Collectors.toSet());
 
