@@ -165,7 +165,8 @@ public class JibPlugin implements Plugin<Project> {
             SyncMapTask.class,
             task -> task.setJibExtension(jibExtension));
 
-    Set<TaskProvider<?>> jibTaskProviders = ImmutableSet.of(buildImageTask, buildDockerTask, buildTarTask, syncMapTask);
+    Set<TaskProvider<?>> jibTaskProviders =
+        ImmutableSet.of(buildImageTask, buildDockerTask, buildTarTask, syncMapTask);
 
     // A check to catch older versions of Jib.  This can be removed once we are certain people
     // are using Jib 1.3.1 or later.
@@ -197,10 +198,16 @@ public class JibPlugin implements Plugin<Project> {
             }
           }
 
-          SourceSet mainSourceSet = project.getConvention().getPlugin(JavaPluginConvention.class).getSourceSets().getByName(MAIN_SOURCE_SET_NAME);
+          SourceSet mainSourceSet =
+              project
+                  .getConvention()
+                  .getPlugin(JavaPluginConvention.class)
+                  .getSourceSets()
+                  .getByName(MAIN_SOURCE_SET_NAME);
           jibDependenciesTask.configure(it -> it.dependsOn(mainSourceSet.getRuntimeClasspath()));
 
-          jibTaskProviders.forEach(provider -> provider.configure(task -> task.dependsOn(jibDependenciesTask)));
+          jibTaskProviders.forEach(
+              provider -> provider.configure(task -> task.dependsOn(jibDependenciesTask)));
         });
   }
 }

@@ -132,7 +132,7 @@ public class JibPluginTest {
       Assert.assertEquals("Could not determine Jib plugin version", ex.getCause().getMessage());
     }
   }
-  
+
   @SuppressWarnings("unchecked")
   @Test
   public void testWebAppProject() {
@@ -144,11 +144,13 @@ public class JibPluginTest {
     Assert.assertNotNull(warTask);
 
     Task jibDependenciesTask = tasks.getByPath(":jibDependencies");
-    Set<Task> taskDependencies = jibDependenciesTask.getDependsOn()
-        .stream()
-        .filter(it -> it instanceof TaskProvider)
-        .map(it -> ((TaskProvider<?>) it).get())
-        .collect(Collectors.toSet());
+    Set<Task> taskDependencies =
+        jibDependenciesTask
+            .getDependsOn()
+            .stream()
+            .filter(it -> it instanceof TaskProvider)
+            .map(it -> ((TaskProvider<?>) it).get())
+            .collect(Collectors.toSet());
 
     Assert.assertTrue(taskDependencies.contains(warTask));
 
@@ -173,11 +175,13 @@ public class JibPluginTest {
     Assert.assertNotNull(warTask);
     Assert.assertNotNull(bootWarTask);
 
-    Set<Task> taskDependencies = jibDependenciesTask.getDependsOn()
-        .stream()
-        .filter(it -> it instanceof TaskProvider)
-        .map(it -> ((TaskProvider<?>) it).get())
-        .collect(Collectors.toSet());
+    Set<Task> taskDependencies =
+        jibDependenciesTask
+            .getDependsOn()
+            .stream()
+            .filter(it -> it instanceof TaskProvider)
+            .map(it -> ((TaskProvider<?>) it).get())
+            .collect(Collectors.toSet());
 
     Assert.assertTrue(taskDependencies.containsAll(Arrays.asList(warTask, bootWarTask)));
 
@@ -203,11 +207,13 @@ public class JibPluginTest {
     Assert.assertNotNull(bootWarTask);
     bootWarTask.setEnabled(false); // should depend on bootWar even if disabled
 
-    Set<Task> taskDependencies = jibDependenciesTask.getDependsOn()
-        .stream()
-        .filter(it -> it instanceof TaskProvider)
-        .map(it -> ((TaskProvider<?>) it).get())
-        .collect(Collectors.toSet());
+    Set<Task> taskDependencies =
+        jibDependenciesTask
+            .getDependsOn()
+            .stream()
+            .filter(it -> it instanceof TaskProvider)
+            .map(it -> ((TaskProvider<?>) it).get())
+            .collect(Collectors.toSet());
 
     Assert.assertTrue(taskDependencies.containsAll(Arrays.asList(warTask, bootWarTask)));
 
