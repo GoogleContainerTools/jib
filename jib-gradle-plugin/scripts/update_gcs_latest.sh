@@ -28,7 +28,6 @@ versionString="{\"latest\":\"$1\"}"
 destination="gs://jib-versions/jib-gradle"
 
 echo $versionString > jib-gradle
-gsutil rm $destination
 gsutil cp jib-gradle $destination
 gsutil acl ch -u allUsers:READ $destination
 rm jib-gradle

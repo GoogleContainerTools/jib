@@ -28,7 +28,6 @@ versionString="{\"latest\":\"$1\"}"
 destination="gs://jib-versions/jib-maven"
 
 echo $versionString > jib-maven
-gsutil rm $destination
 gsutil cp jib-maven $destination
 gsutil acl ch -u allUsers:READ $destination
 rm jib-maven
