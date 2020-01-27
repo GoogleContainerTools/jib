@@ -58,3 +58,4 @@ EchoGreen 'File a PR for the new release branch:'
 echo https://github.com/GoogleContainerTools/jib/pull/new/${BRANCH}
 
 EchoGreen "Merge the PR after the plugin is released."
+EchoGreen "Run './scripts/update_gcs_latest.sh ${VERSION}' when the release is complete to update the latest version string on GCS."
