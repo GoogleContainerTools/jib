@@ -25,11 +25,12 @@ CheckVersion() {
 CheckVersion $1
 
 versionString="{\"latest\":\"$1\"}"
+destination="gs://jib-versions/jib-maven"
 
 echo $versionString > jib-maven
-gsutil rm gs://jib-versions/jib-maven
-gsutil cp jib-maven gs://jib-versions/jib-maven
-gsutil acl ch -u allUsers:READ gs://jib-versions/jib-maven
+gsutil rm $destination
+gsutil cp jib-maven $destination
+gsutil acl ch -u allUsers:READ $destination
 rm jib-maven
 
 gcsResult=$(curl https://storage.googleapis.com/jib-versions/jib-maven)

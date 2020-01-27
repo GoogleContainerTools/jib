@@ -25,11 +25,12 @@ CheckVersion() {
 CheckVersion $1
 
 versionString="{\"latest\":\"$1\"}"
+destination="gs://jib-versions/jib-gradle"
 
 echo $versionString > jib-gradle
-gsutil rm gs://jib-versions/jib-gradle
-gsutil cp jib-gradle gs://jib-versions/jib-gradle
-gsutil acl ch -u allUsers:READ gs://jib-versions/jib-gradle
+gsutil rm $destination
+gsutil cp jib-gradle $destination
+gsutil acl ch -u allUsers:READ $destination
 rm jib-gradle
 
 gcsResult=$(curl https://storage.googleapis.com/jib-versions/jib-gradle)
