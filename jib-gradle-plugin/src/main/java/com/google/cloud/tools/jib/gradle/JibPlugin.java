@@ -51,6 +51,7 @@ public class JibPlugin implements Plugin<Project> {
   public static final String BUILD_IMAGE_TASK_NAME = "jib";
   public static final String BUILD_TAR_TASK_NAME = "jibBuildTar";
   public static final String BUILD_DOCKER_TASK_NAME = "jibDockerBuild";
+  public static final String DEPENDENCIES_TASK_NAME = "jibDependencies";
   public static final String SKAFFOLD_FILES_TASK_V2_NAME = "_jibSkaffoldFilesV2";
   public static final String SKAFFOLD_INIT_TASK_NAME = "_jibSkaffoldInit";
   public static final String SKAFFOLD_SYNC_MAP_TASK_NAME = "_jibSkaffoldSyncMap";
@@ -177,7 +178,7 @@ public class JibPlugin implements Plugin<Project> {
           TaskProvider<Task> warTask = TaskCommon.getWarTaskProvider(projectAfterEvaluation);
           TaskProvider<Task> bootWarTask =
               TaskCommon.getBootWarTaskProvider(projectAfterEvaluation);
-          TaskProvider<Task> jibDependenciesTask = tasks.register("jibDependencies");
+          TaskProvider<Task> jibDependenciesTask = tasks.register(DEPENDENCIES_TASK_NAME);
           if (warTask != null || bootWarTask != null) {
             // Have all tasks depend on the 'war' and/or 'bootWar' task.
             if (warTask != null) {

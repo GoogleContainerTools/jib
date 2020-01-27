@@ -143,7 +143,7 @@ public class JibPluginTest {
     Task warTask = tasks.getByPath(":war");
     Assert.assertNotNull(warTask);
 
-    Task jibDependenciesTask = tasks.getByPath(":jibDependencies");
+    Task jibDependenciesTask = tasks.getByPath(":" + JibPlugin.DEPENDENCIES_TASK_NAME);
     Set<Task> taskDependencies =
         jibDependenciesTask
             .getDependsOn()
@@ -171,7 +171,7 @@ public class JibPluginTest {
     TaskContainer tasks = project.getTasks();
     Task warTask = tasks.getByPath(":war");
     Task bootWarTask = tasks.getByPath(":bootWar");
-    Task jibDependenciesTask = tasks.getByPath(":jibDependencies");
+    Task jibDependenciesTask = tasks.getByPath(":" + JibPlugin.DEPENDENCIES_TASK_NAME);
     Assert.assertNotNull(warTask);
     Assert.assertNotNull(bootWarTask);
 
@@ -202,7 +202,7 @@ public class JibPluginTest {
     TaskContainer tasks = project.getTasks();
     Task warTask = tasks.getByPath(":war");
     Task bootWarTask = tasks.getByPath(":bootWar");
-    Task jibDependenciesTask = tasks.getByPath(":jibDependencies");
+    Task jibDependenciesTask = tasks.getByPath(":" + JibPlugin.DEPENDENCIES_TASK_NAME);
     Assert.assertNotNull(warTask);
     Assert.assertNotNull(bootWarTask);
     bootWarTask.setEnabled(false); // should depend on bootWar even if disabled
