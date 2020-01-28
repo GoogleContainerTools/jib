@@ -34,7 +34,7 @@
             <plugin>
                 <groupId>com.google.cloud.tools</groupId>
                 <artifactId>jib-maven-plugin</artifactId>
-                <version>1.8.1-SNAPSHOT</version>
+                <version>@@PluginVersion@@</version>
                 <configuration>
                   <from><image>gcr.io/distroless/java:debug</image></from>
                   <to><image>${_TARGET_IMAGE}</image></to>
