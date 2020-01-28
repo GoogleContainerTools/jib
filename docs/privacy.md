@@ -2,11 +2,13 @@ The privacy of our users is very important to us.
 Your use of this software is subject to the <a href=https://policies.google.com/privacy>Google Privacy Policy</a>.
 
 ## Update check
+Many Jib users are unaware of new releases. To encourage users to stay up-to-date, Jib 2.0.0 and later will
+periodically check to see if there is a new version of Jib is available. This check fetches a simple text
+file hosted in Google Cloud Storage. As a side effect this request is logged, which includes the request path,
+source IP address, and the user-agent string. The user-agent which is set by Jib and includes the Jib plugin
+type and version.
 
-To keep Jib up to date, update checks are made to Google servers to see if a new version of
-Jib is available. By default, this behavior is enabled. As a side effect this request is logged.
-
-To disable the update check you have two options:
+### How to disable update checks
 
 1. set the `jib.disableUpdateChecks` system property to `true`
 2. set `disableUpdateChecks` to `true` in Jib's global config. The global config is in the following locations by default:
