@@ -445,6 +445,10 @@ jib {
 
 See the [Jib project FAQ](../docs/faq.md).
 
+## Privacy
+
+See the [Privacy page](docs/privacy.md).
+
 ## Upcoming Features
 
 See [Milestones](https://github.com/GoogleContainerTools/jib/milestones) for planned features. [Get involved with the community](https://github.com/GoogleContainerTools/jib/tree/master#get-involved-with-the-community) for the latest updates.
