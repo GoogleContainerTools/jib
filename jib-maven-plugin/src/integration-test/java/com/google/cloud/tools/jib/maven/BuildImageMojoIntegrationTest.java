@@ -697,7 +697,7 @@ public class BuildImageMojoIntegrationTest {
     Assert.assertThat(
         sizeOutput, CoreMatchers.containsString(" /app/classpath/spring-boot-0.1.0.original.jar"));
     int fileSize = Integer.parseInt(sizeOutput.substring(0, sizeOutput.indexOf(' ')));
-    Assert.assertTrue(fileSize < 3000);
+    Assert.assertTrue(fileSize < 3000); // should not be a large fat jar
 
     HttpGetVerifier.verifyBody("Hello world", new URL("http://localhost:8080"));
   }
