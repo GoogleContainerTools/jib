@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+### Changed
+
+### Fixed
+
+## 2.0.0
+
+### Added
+
 - Added json output file for image metadata after a build is complete. Writes to `target/jib-image.json` by default, configurable with `<outputPaths><imageJson>`. ([#2227](https://github.com/GoogleContainerTools/jib/pull/2227))
 - Added automatic update checks. Jib will now display a message if there is a new version of Jib available. See the [privacy page](../docs/privacy.md) for more details. ([#2193](https://github.com/GoogleContainerTools/jib/issues/2193))
 
