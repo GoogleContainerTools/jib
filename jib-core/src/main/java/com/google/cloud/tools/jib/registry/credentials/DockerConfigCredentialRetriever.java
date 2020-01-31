@@ -27,7 +27,6 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Optional;
 import java.util.function.Consumer;
 
@@ -47,19 +46,8 @@ import java.util.function.Consumer;
  */
 public class DockerConfigCredentialRetriever {
 
-  /**
-   * @see <a
-   *     href="https://docs.docker.com/engine/reference/commandline/login/#privileged-user-requirement">https://docs.docker.com/engine/reference/commandline/login/#privileged-user-requirement</a>
-   */
-  private static final Path DOCKER_CONFIG_FILE =
-      Paths.get(System.getProperty("user.home"), ".docker", "config.json");
-
   private final String registry;
   private final Path dockerConfigFile;
-
-  public DockerConfigCredentialRetriever(String registry) {
-    this(registry, DOCKER_CONFIG_FILE);
-  }
 
   public DockerConfigCredentialRetriever(String registry, Path dockerConfigFile) {
     this.registry = registry;
