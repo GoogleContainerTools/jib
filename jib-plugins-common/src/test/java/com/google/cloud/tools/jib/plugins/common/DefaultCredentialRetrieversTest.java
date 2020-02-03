@@ -52,8 +52,10 @@ public class DefaultCredentialRetrieversTest {
   @Mock private CredentialRetriever mockInferredCredentialRetriever;
   @Mock private CredentialRetriever mockWellKnownCredentialHelpersCredentialRetriever;
   @Mock private CredentialRetriever mockSystemHomeDockerConfigCredentialRetriever;
+  @Mock private CredentialRetriever mockSystemHomeKubernetesDockerConfigCredentialRetriever;
   @Mock private CredentialRetriever mockSystemHomeLegacyDockerConfigCredentialRetriever;
   @Mock private CredentialRetriever mockEnvHomeDockerConfigCredentialRetriever;
+  @Mock private CredentialRetriever mockEnvHomeKubernetesDockerConfigCredentialRetriever;
   @Mock private CredentialRetriever mockEnvHomeLegacyDockerConfigCredentialRetriever;
   @Mock private CredentialRetriever mockApplicationDefaultCredentialRetriever;
 
@@ -83,12 +85,20 @@ public class DefaultCredentialRetrieversTest {
                 Paths.get("/system/home/.docker/config.json")))
         .thenReturn(mockSystemHomeDockerConfigCredentialRetriever);
     Mockito.when(
+            mockCredentialRetrieverFactory.dockerConfig(
+                Paths.get("/system/home/.docker/.dockerconfigjson")))
+        .thenReturn(mockSystemHomeKubernetesDockerConfigCredentialRetriever);
+    Mockito.when(
             mockCredentialRetrieverFactory.legacyDockerConfig(
                 Paths.get("/system/home/.docker/.dockercfg")))
         .thenReturn(mockSystemHomeLegacyDockerConfigCredentialRetriever);
     Mockito.when(
             mockCredentialRetrieverFactory.dockerConfig(Paths.get("/env/home/.docker/config.json")))
         .thenReturn(mockEnvHomeDockerConfigCredentialRetriever);
+    Mockito.when(
+            mockCredentialRetrieverFactory.dockerConfig(
+                Paths.get("/env/home/.docker/.dockerconfigjson")))
+        .thenReturn(mockEnvHomeKubernetesDockerConfigCredentialRetriever);
     Mockito.when(
             mockCredentialRetrieverFactory.legacyDockerConfig(
                 Paths.get("/env/home/.docker/.dockercfg")))
@@ -105,8 +115,10 @@ public class DefaultCredentialRetrieversTest {
     Assert.assertEquals(
         Arrays.asList(
             mockSystemHomeDockerConfigCredentialRetriever,
+            mockSystemHomeKubernetesDockerConfigCredentialRetriever,
             mockSystemHomeLegacyDockerConfigCredentialRetriever,
             mockEnvHomeDockerConfigCredentialRetriever,
+            mockEnvHomeKubernetesDockerConfigCredentialRetriever,
             mockEnvHomeLegacyDockerConfigCredentialRetriever,
             mockWellKnownCredentialHelpersCredentialRetriever,
             mockApplicationDefaultCredentialRetriever),
@@ -127,8 +139,10 @@ public class DefaultCredentialRetrieversTest {
             mockDockerCredentialHelperCredentialRetriever,
             mockInferredCredentialRetriever,
             mockSystemHomeDockerConfigCredentialRetriever,
+            mockSystemHomeKubernetesDockerConfigCredentialRetriever,
             mockSystemHomeLegacyDockerConfigCredentialRetriever,
             mockEnvHomeDockerConfigCredentialRetriever,
+            mockEnvHomeKubernetesDockerConfigCredentialRetriever,
             mockEnvHomeLegacyDockerConfigCredentialRetriever,
             mockWellKnownCredentialHelpersCredentialRetriever,
             mockApplicationDefaultCredentialRetriever),
@@ -153,8 +167,10 @@ public class DefaultCredentialRetrieversTest {
         Arrays.asList(
             mockDockerCredentialHelperCredentialRetriever,
             mockSystemHomeDockerConfigCredentialRetriever,
+            mockSystemHomeKubernetesDockerConfigCredentialRetriever,
             mockSystemHomeLegacyDockerConfigCredentialRetriever,
             mockEnvHomeDockerConfigCredentialRetriever,
+            mockEnvHomeKubernetesDockerConfigCredentialRetriever,
             mockEnvHomeLegacyDockerConfigCredentialRetriever,
             mockWellKnownCredentialHelpersCredentialRetriever,
             mockApplicationDefaultCredentialRetriever),
@@ -195,6 +211,7 @@ public class DefaultCredentialRetrieversTest {
     Assert.assertEquals(
         Arrays.asList(
             mockEnvHomeDockerConfigCredentialRetriever,
+            mockEnvHomeKubernetesDockerConfigCredentialRetriever,
             mockEnvHomeLegacyDockerConfigCredentialRetriever,
             mockWellKnownCredentialHelpersCredentialRetriever,
             mockApplicationDefaultCredentialRetriever),

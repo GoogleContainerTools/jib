@@ -77,6 +77,28 @@ public class DockerConfigCredentialRetrieverTest {
   }
 
   @Test
+  public void testRetrieve_hasAuth_legacyConfigFormat() throws IOException, URISyntaxException {
+    dockerConfigFile = Paths.get(Resources.getResource("core/json/legacy_dockercfg").toURI());
+
+    DockerConfigCredentialRetriever retriever1 =
+        DockerConfigCredentialRetriever.createForLegacyFormat("some registry", dockerConfigFile);
+    Optional<Credential> credentials1 = retriever1.retrieve(mockLogger);
+    Assert.assertEquals("some", credentials1.get().getUsername());
+    Assert.assertEquals("other:auth", credentials1.get().getPassword());
+
+    DockerConfigCredentialRetriever retriever2 =
+        DockerConfigCredentialRetriever.createForLegacyFormat("example.com", dockerConfigFile);
+    Optional<Credential> credentials2 = retriever2.retrieve(mockLogger);
+    Assert.assertEquals("user", credentials2.get().getUsername());
+    Assert.assertEquals("pass", credentials2.get().getPassword());
+
+    Mockito.verify(mockLogger)
+        .accept(LogEvent.info("Docker config auths section defines credentials for some registry"));
+    Mockito.verify(mockLogger)
+        .accept(LogEvent.info("Docker config auths section defines credentials for example.com"));
+  }
+
+  @Test
   public void testRetrieve_credentialHelperTakesPrecedenceOverAuth() {
     Mockito.when(mockDockerConfig.getCredentialHelperFor("some registry"))
         .thenReturn(mockDockerCredentialHelper);
