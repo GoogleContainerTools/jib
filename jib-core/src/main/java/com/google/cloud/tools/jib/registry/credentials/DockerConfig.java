@@ -34,8 +34,7 @@ class DockerConfig {
    * predicates).
    */
   @Nullable
-  private static <K, T> Map.Entry<K, T> findFirstInMapByKey(
-      Map<K, T> map, List<Predicate<K>> keyMatches) {
+  static <K, T> Map.Entry<K, T> findFirstInMapByKey(Map<K, T> map, List<Predicate<K>> keyMatches) {
     return keyMatches
         .stream()
         .map(keyMatch -> findFirstInMapByKey(map, keyMatch))
@@ -46,7 +45,7 @@ class DockerConfig {
 
   /** Returns the first entry matching the given key predicate. */
   @Nullable
-  private static <K, T> Map.Entry<K, T> findFirstInMapByKey(Map<K, T> map, Predicate<K> keyMatch) {
+  static <K, T> Map.Entry<K, T> findFirstInMapByKey(Map<K, T> map, Predicate<K> keyMatch) {
     return map.entrySet()
         .stream()
         .filter(entry -> keyMatch.test(entry.getKey()))
@@ -128,7 +127,7 @@ class DockerConfig {
    * @param registry the registry to get matchers for
    * @return the list of predicates to match possible aliases
    */
-  private List<Predicate<String>> getRegistryMatchersFor(String registry) {
+  static List<Predicate<String>> getRegistryMatchersFor(String registry) {
     Predicate<String> exactMatch = registry::equals;
     Predicate<String> withHttps = ("https://" + registry)::equals;
     Predicate<String> withSuffix = name -> name.startsWith(registry + "/");
