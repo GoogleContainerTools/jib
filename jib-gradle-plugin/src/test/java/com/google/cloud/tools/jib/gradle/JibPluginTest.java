@@ -143,21 +143,16 @@ public class JibPluginTest {
     Task warTask = tasks.getByPath(":war");
     Assert.assertNotNull(warTask);
 
-    Task jibDependenciesTask = tasks.getByPath(":" + JibPlugin.DEPENDENCIES_TASK_NAME);
-    Set<Task> taskDependencies =
-        jibDependenciesTask
-            .getDependsOn()
-            .stream()
-            .filter(TaskProvider.class::isInstance)
-            .map(it -> ((TaskProvider<?>) it).get())
-            .collect(Collectors.toSet());
-
-    Assert.assertTrue(taskDependencies.contains(warTask));
-
     for (String taskName : KNOWN_JIB_TASKS) {
-      TaskProvider<?> jibDependenciesTaskProvider =
-          (TaskProvider<?>) tasks.getByPath(taskName).getDependsOn().iterator().next();
-      Assert.assertEquals(jibDependenciesTaskProvider.get(), jibDependenciesTask);
+      Set<Task> taskDependencies =
+          tasks.getByPath(taskName)
+              .getDependsOn()
+              .stream()
+              .filter(TaskProvider.class::isInstance)
+              .map(it -> ((TaskProvider<?>) it).get())
+              .collect(Collectors.toSet());
+
+      Assert.assertTrue(taskDependencies.contains(warTask));
     }
   }
 
@@ -171,24 +166,19 @@ public class JibPluginTest {
     TaskContainer tasks = project.getTasks();
     Task warTask = tasks.getByPath(":war");
     Task bootWarTask = tasks.getByPath(":bootWar");
-    Task jibDependenciesTask = tasks.getByPath(":" + JibPlugin.DEPENDENCIES_TASK_NAME);
     Assert.assertNotNull(warTask);
     Assert.assertNotNull(bootWarTask);
 
-    Set<Task> taskDependencies =
-        jibDependenciesTask
-            .getDependsOn()
-            .stream()
-            .filter(TaskProvider.class::isInstance)
-            .map(it -> ((TaskProvider<?>) it).get())
-            .collect(Collectors.toSet());
-
-    Assert.assertTrue(taskDependencies.containsAll(Arrays.asList(warTask, bootWarTask)));
-
     for (String taskName : KNOWN_JIB_TASKS) {
-      TaskProvider<?> jibTaskProvider =
-          (TaskProvider<?>) tasks.getByPath(taskName).getDependsOn().iterator().next();
-      Assert.assertEquals(jibTaskProvider.get(), jibDependenciesTask);
+      Set<Task> taskDependencies =
+          tasks.getByPath(taskName)
+              .getDependsOn()
+              .stream()
+              .filter(TaskProvider.class::isInstance)
+              .map(it -> ((TaskProvider<?>) it).get())
+              .collect(Collectors.toSet());
+
+      Assert.assertTrue(taskDependencies.containsAll(Arrays.asList(warTask, bootWarTask)));
     }
   }
 
@@ -202,25 +192,23 @@ public class JibPluginTest {
     TaskContainer tasks = project.getTasks();
     Task warTask = tasks.getByPath(":war");
     Task bootWarTask = tasks.getByPath(":bootWar");
-    Task jibDependenciesTask = tasks.getByPath(":" + JibPlugin.DEPENDENCIES_TASK_NAME);
     Assert.assertNotNull(warTask);
     Assert.assertNotNull(bootWarTask);
     bootWarTask.setEnabled(false); // should depend on bootWar even if disabled
 
-    Set<Task> taskDependencies =
-        jibDependenciesTask
-            .getDependsOn()
-            .stream()
-            .filter(TaskProvider.class::isInstance)
-            .map(it -> ((TaskProvider<?>) it).get())
-            .collect(Collectors.toSet());
 
-    Assert.assertTrue(taskDependencies.containsAll(Arrays.asList(warTask, bootWarTask)));
+
 
     for (String taskName : KNOWN_JIB_TASKS) {
-      TaskProvider<?> jibTaskProvider =
-          (TaskProvider<?>) tasks.getByPath(taskName).getDependsOn().iterator().next();
-      Assert.assertEquals(jibTaskProvider.get(), jibDependenciesTask);
+      Set<Task> taskDependencies =
+          tasks.getByPath(taskName)
+              .getDependsOn()
+              .stream()
+              .filter(TaskProvider.class::isInstance)
+              .map(it -> ((TaskProvider<?>) it).get())
+              .collect(Collectors.toSet());
+
+      Assert.assertTrue(taskDependencies.containsAll(Arrays.asList(warTask, bootWarTask)));
     }
   }
 
