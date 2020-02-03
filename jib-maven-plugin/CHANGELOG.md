@@ -9,6 +9,8 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
+- Fixed a `skaffold init` issue with projects containing submodules specifying different parent poms. ([#2262](https://github.com/GoogleContainerTools/jib/issues/2262))
+
 ## 2.0.0
 
 ### Added
