@@ -16,6 +16,8 @@
 
 package com.google.cloud.tools.jib.registry.credentials;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.type.MapType;
 import com.google.api.client.util.Base64;
 import com.google.cloud.tools.jib.api.Credential;
 import com.google.cloud.tools.jib.api.LogEvent;
@@ -24,9 +26,11 @@ import com.google.cloud.tools.jib.registry.RegistryAliasGroup;
 import com.google.cloud.tools.jib.registry.credentials.json.DockerConfigTemplate;
 import com.google.common.annotations.VisibleForTesting;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Map;
 import java.util.Optional;
 import java.util.function.Consumer;
 
@@ -48,10 +52,22 @@ public class DockerConfigCredentialRetriever {
 
   private final String registry;
   private final Path dockerConfigFile;
+  private final boolean legacyConfigFormat;
 
-  public DockerConfigCredentialRetriever(String registry, Path dockerConfigFile) {
+  public static DockerConfigCredentialRetriever create(String registry, Path dockerConfigFile) {
+    return new DockerConfigCredentialRetriever(registry, dockerConfigFile, false);
+  }
+
+  public static DockerConfigCredentialRetriever createForLegacyFormat(
+      String registry, Path dockerConfigFile) {
+    return new DockerConfigCredentialRetriever(registry, dockerConfigFile, true);
+  }
+
+  private DockerConfigCredentialRetriever(
+      String registry, Path dockerConfigFile, boolean legacyConfigFormat) {
     this.registry = registry;
     this.dockerConfigFile = dockerConfigFile;
+    this.legacyConfigFormat = legacyConfigFormat;
   }
 
   public Path getDockerConfigFile() {
@@ -69,6 +85,20 @@ public class DockerConfigCredentialRetriever {
     if (!Files.exists(dockerConfigFile)) {
       return Optional.empty();
     }
+
+    if (legacyConfigFormat) {
+      ObjectMapper objectMapper = new ObjectMapper();
+      MapType mapType =
+          objectMapper
+              .getTypeFactory()
+              .constructMapType(Map.class, String.class, DockerConfigTemplate.AuthTemplate.class);
+      try (InputStream fileIn = Files.newInputStream(dockerConfigFile)) {
+        DockerConfig dockerConfig =
+            new DockerConfig(new DockerConfigTemplate(objectMapper.readValue(fileIn, mapType)));
+        return retrieve(dockerConfig, logger);
+      }
+    }
+
     DockerConfig dockerConfig =
         new DockerConfig(
             JsonTemplateMapper.readJsonFromFile(dockerConfigFile, DockerConfigTemplate.class));

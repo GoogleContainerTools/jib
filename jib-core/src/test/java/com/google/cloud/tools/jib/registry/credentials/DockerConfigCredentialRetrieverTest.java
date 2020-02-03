@@ -56,7 +56,7 @@ public class DockerConfigCredentialRetrieverTest {
   @Test
   public void testRetrieve_nonExistentDockerConfigFile() throws IOException {
     DockerConfigCredentialRetriever dockerConfigCredentialRetriever =
-        new DockerConfigCredentialRetriever("some registry", Paths.get("fake/path"));
+        DockerConfigCredentialRetriever.create("some registry", Paths.get("fake/path"));
 
     Assert.assertFalse(dockerConfigCredentialRetriever.retrieve(mockLogger).isPresent());
   }
@@ -64,7 +64,7 @@ public class DockerConfigCredentialRetrieverTest {
   @Test
   public void testRetrieve_hasAuth() throws IOException {
     DockerConfigCredentialRetriever dockerConfigCredentialRetriever =
-        new DockerConfigCredentialRetriever("some other registry", dockerConfigFile);
+        DockerConfigCredentialRetriever.create("some other registry", dockerConfigFile);
 
     Optional<Credential> credentials = dockerConfigCredentialRetriever.retrieve(mockLogger);
     Assert.assertTrue(credentials.isPresent());
@@ -83,7 +83,7 @@ public class DockerConfigCredentialRetrieverTest {
     Mockito.when(mockDockerCredentialHelper.getCredentialHelper())
         .thenReturn(Paths.get("docker-credential-foo"));
     DockerConfigCredentialRetriever dockerConfigCredentialRetriever =
-        new DockerConfigCredentialRetriever("some registry", dockerConfigFile);
+        DockerConfigCredentialRetriever.create("some registry", dockerConfigFile);
 
     Assert.assertEquals(
         Optional.of(FAKE_CREDENTIAL),
@@ -103,7 +103,7 @@ public class DockerConfigCredentialRetrieverTest {
             new CredentialHelperNotFoundException(
                 Paths.get("docker-credential-path"), new Throwable("cause")));
 
-    new DockerConfigCredentialRetriever("another registry", dockerConfigFile)
+    DockerConfigCredentialRetriever.create("another registry", dockerConfigFile)
         .retrieve(mockDockerConfig, mockLogger);
 
     Mockito.verify(mockLogger)
@@ -114,7 +114,7 @@ public class DockerConfigCredentialRetrieverTest {
   @Test
   public void testRetrieve_none() throws IOException {
     DockerConfigCredentialRetriever dockerConfigCredentialRetriever =
-        new DockerConfigCredentialRetriever("unknown registry", dockerConfigFile);
+        DockerConfigCredentialRetriever.create("unknown registry", dockerConfigFile);
 
     Assert.assertFalse(dockerConfigCredentialRetriever.retrieve(mockLogger).isPresent());
   }
@@ -124,7 +124,7 @@ public class DockerConfigCredentialRetrieverTest {
     Mockito.when(mockDockerConfig.getCredentialHelperFor("registry.hub.docker.com"))
         .thenReturn(mockDockerCredentialHelper);
     DockerConfigCredentialRetriever dockerConfigCredentialRetriever =
-        new DockerConfigCredentialRetriever("registry.hub.docker.com", dockerConfigFile);
+        DockerConfigCredentialRetriever.create("registry.hub.docker.com", dockerConfigFile);
 
     Assert.assertEquals(
         Optional.of(FAKE_CREDENTIAL),
@@ -137,7 +137,7 @@ public class DockerConfigCredentialRetrieverTest {
         Paths.get(Resources.getResource("core/json/dockerconfig_index_docker_io_v1.json").toURI());
 
     DockerConfigCredentialRetriever dockerConfigCredentialRetriever =
-        new DockerConfigCredentialRetriever("index.docker.io", dockerConfigFile);
+        DockerConfigCredentialRetriever.create("index.docker.io", dockerConfigFile);
 
     Optional<Credential> credentials = dockerConfigCredentialRetriever.retrieve(mockLogger);
     Assert.assertTrue(credentials.isPresent());
@@ -151,7 +151,7 @@ public class DockerConfigCredentialRetrieverTest {
         Paths.get(Resources.getResource("core/json/dockerconfig_index_docker_io_v1.json").toURI());
 
     DockerConfigCredentialRetriever dockerConfigCredentialRetriever =
-        new DockerConfigCredentialRetriever("registry.hub.docker.com", dockerConfigFile);
+        DockerConfigCredentialRetriever.create("registry.hub.docker.com", dockerConfigFile);
 
     Optional<Credential> credentials = dockerConfigCredentialRetriever.retrieve(mockLogger);
     Assert.assertTrue(credentials.isPresent());

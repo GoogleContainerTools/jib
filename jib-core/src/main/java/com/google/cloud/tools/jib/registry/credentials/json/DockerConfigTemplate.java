@@ -18,6 +18,7 @@ package com.google.cloud.tools.jib.registry.credentials.json;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.google.cloud.tools.jib.json.JsonTemplate;
+import com.google.common.collect.ImmutableMap;
 import java.util.HashMap;
 import java.util.Map;
 import javax.annotation.Nullable;
@@ -71,12 +72,20 @@ public class DockerConfigTemplate implements JsonTemplate {
   }
 
   /** Maps from registry to its {@link AuthTemplate}. */
-  private final Map<String, AuthTemplate> auths = new HashMap<>();
+  private final Map<String, AuthTemplate> auths;
 
   @Nullable private String credsStore;
 
   /** Maps from registry to credential helper name. */
   private final Map<String, String> credHelpers = new HashMap<>();
+
+  public DockerConfigTemplate(Map<String, AuthTemplate> auths) {
+    this.auths = ImmutableMap.copyOf(auths);
+  }
+
+  private DockerConfigTemplate() {
+    auths = new HashMap<>();
+  }
 
   public Map<String, AuthTemplate> getAuths() {
     return auths;

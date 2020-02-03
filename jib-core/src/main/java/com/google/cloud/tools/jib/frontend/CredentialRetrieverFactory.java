@@ -197,7 +197,13 @@ public class CredentialRetrieverFactory {
    */
   public CredentialRetriever dockerConfig(Path dockerConfigFile) {
     return dockerConfig(
-        new DockerConfigCredentialRetriever(imageReference.getRegistry(), dockerConfigFile));
+        DockerConfigCredentialRetriever.create(imageReference.getRegistry(), dockerConfigFile));
+  }
+
+  public CredentialRetriever legacyDockerConfig(Path dockerConfigFile) {
+    return dockerConfig(
+        DockerConfigCredentialRetriever.createForLegacyFormat(
+            imageReference.getRegistry(), dockerConfigFile));
   }
 
   /**

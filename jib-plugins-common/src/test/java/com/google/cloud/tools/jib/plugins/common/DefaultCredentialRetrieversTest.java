@@ -52,9 +52,9 @@ public class DefaultCredentialRetrieversTest {
   @Mock private CredentialRetriever mockInferredCredentialRetriever;
   @Mock private CredentialRetriever mockWellKnownCredentialHelpersCredentialRetriever;
   @Mock private CredentialRetriever mockSystemHomeDockerConfigCredentialRetriever;
-  @Mock private CredentialRetriever mockSystemHomeOldDockerConfigCredentialRetriever;
+  @Mock private CredentialRetriever mockSystemHomeLegacyDockerConfigCredentialRetriever;
   @Mock private CredentialRetriever mockEnvHomeDockerConfigCredentialRetriever;
-  @Mock private CredentialRetriever mockEnvHomeOldDockerConfigCredentialRetriever;
+  @Mock private CredentialRetriever mockEnvHomeLegacyDockerConfigCredentialRetriever;
   @Mock private CredentialRetriever mockApplicationDefaultCredentialRetriever;
 
   private Properties properties;
@@ -83,15 +83,16 @@ public class DefaultCredentialRetrieversTest {
                 Paths.get("/system/home/.docker/config.json")))
         .thenReturn(mockSystemHomeDockerConfigCredentialRetriever);
     Mockito.when(
-            mockCredentialRetrieverFactory.dockerConfig(
+            mockCredentialRetrieverFactory.legacyDockerConfig(
                 Paths.get("/system/home/.docker/.dockercfg")))
-        .thenReturn(mockSystemHomeOldDockerConfigCredentialRetriever);
+        .thenReturn(mockSystemHomeLegacyDockerConfigCredentialRetriever);
     Mockito.when(
             mockCredentialRetrieverFactory.dockerConfig(Paths.get("/env/home/.docker/config.json")))
         .thenReturn(mockEnvHomeDockerConfigCredentialRetriever);
     Mockito.when(
-            mockCredentialRetrieverFactory.dockerConfig(Paths.get("/env/home/.docker/.dockercfg")))
-        .thenReturn(mockEnvHomeOldDockerConfigCredentialRetriever);
+            mockCredentialRetrieverFactory.legacyDockerConfig(
+                Paths.get("/env/home/.docker/.dockercfg")))
+        .thenReturn(mockEnvHomeLegacyDockerConfigCredentialRetriever);
     Mockito.when(mockCredentialRetrieverFactory.googleApplicationDefaultCredentials())
         .thenReturn(mockApplicationDefaultCredentialRetriever);
   }
@@ -104,9 +105,9 @@ public class DefaultCredentialRetrieversTest {
     Assert.assertEquals(
         Arrays.asList(
             mockSystemHomeDockerConfigCredentialRetriever,
-            mockSystemHomeOldDockerConfigCredentialRetriever,
+            mockSystemHomeLegacyDockerConfigCredentialRetriever,
             mockEnvHomeDockerConfigCredentialRetriever,
-            mockEnvHomeOldDockerConfigCredentialRetriever,
+            mockEnvHomeLegacyDockerConfigCredentialRetriever,
             mockWellKnownCredentialHelpersCredentialRetriever,
             mockApplicationDefaultCredentialRetriever),
         credentialRetrievers);
@@ -126,9 +127,9 @@ public class DefaultCredentialRetrieversTest {
             mockDockerCredentialHelperCredentialRetriever,
             mockInferredCredentialRetriever,
             mockSystemHomeDockerConfigCredentialRetriever,
-            mockSystemHomeOldDockerConfigCredentialRetriever,
+            mockSystemHomeLegacyDockerConfigCredentialRetriever,
             mockEnvHomeDockerConfigCredentialRetriever,
-            mockEnvHomeOldDockerConfigCredentialRetriever,
+            mockEnvHomeLegacyDockerConfigCredentialRetriever,
             mockWellKnownCredentialHelpersCredentialRetriever,
             mockApplicationDefaultCredentialRetriever),
         credentialRetrievers);
@@ -152,9 +153,9 @@ public class DefaultCredentialRetrieversTest {
         Arrays.asList(
             mockDockerCredentialHelperCredentialRetriever,
             mockSystemHomeDockerConfigCredentialRetriever,
-            mockSystemHomeOldDockerConfigCredentialRetriever,
+            mockSystemHomeLegacyDockerConfigCredentialRetriever,
             mockEnvHomeDockerConfigCredentialRetriever,
-            mockEnvHomeOldDockerConfigCredentialRetriever,
+            mockEnvHomeLegacyDockerConfigCredentialRetriever,
             mockWellKnownCredentialHelpersCredentialRetriever,
             mockApplicationDefaultCredentialRetriever),
         credentialRetrievers);
@@ -194,7 +195,7 @@ public class DefaultCredentialRetrieversTest {
     Assert.assertEquals(
         Arrays.asList(
             mockEnvHomeDockerConfigCredentialRetriever,
-            mockEnvHomeOldDockerConfigCredentialRetriever,
+            mockEnvHomeLegacyDockerConfigCredentialRetriever,
             mockWellKnownCredentialHelpersCredentialRetriever,
             mockApplicationDefaultCredentialRetriever),
         credentialRetrievers);

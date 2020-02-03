@@ -170,14 +170,14 @@ public class DefaultCredentialRetrievers {
       credentialRetrievers.add(
           credentialRetrieverFactory.dockerConfig(home.resolve(DOCKER_CONFIG_FILE)));
       credentialRetrievers.add(
-          credentialRetrieverFactory.dockerConfig(home.resolve(OLD_DOCKER_CONFIG_FILE)));
+          credentialRetrieverFactory.legacyDockerConfig(home.resolve(OLD_DOCKER_CONFIG_FILE)));
     }
     if (homeEnvVar != null && !homeEnvVar.equals(homeProperty)) {
       Path home = Paths.get(homeEnvVar);
       credentialRetrievers.add(
           credentialRetrieverFactory.dockerConfig(home.resolve(DOCKER_CONFIG_FILE)));
       credentialRetrievers.add(
-          credentialRetrieverFactory.dockerConfig(home.resolve(OLD_DOCKER_CONFIG_FILE)));
+          credentialRetrieverFactory.legacyDockerConfig(home.resolve(OLD_DOCKER_CONFIG_FILE)));
     }
 
     credentialRetrievers.add(credentialRetrieverFactory.wellKnownCredentialHelpers());
