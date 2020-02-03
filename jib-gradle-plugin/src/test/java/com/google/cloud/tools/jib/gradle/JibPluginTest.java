@@ -145,7 +145,8 @@ public class JibPluginTest {
 
     for (String taskName : KNOWN_JIB_TASKS) {
       Set<Task> taskDependencies =
-          tasks.getByPath(taskName)
+          tasks
+              .getByPath(taskName)
               .getDependsOn()
               .stream()
               .filter(TaskProvider.class::isInstance)
@@ -171,7 +172,8 @@ public class JibPluginTest {
 
     for (String taskName : KNOWN_JIB_TASKS) {
       Set<Task> taskDependencies =
-          tasks.getByPath(taskName)
+          tasks
+              .getByPath(taskName)
               .getDependsOn()
               .stream()
               .filter(TaskProvider.class::isInstance)
@@ -196,12 +198,10 @@ public class JibPluginTest {
     Assert.assertNotNull(bootWarTask);
     bootWarTask.setEnabled(false); // should depend on bootWar even if disabled
 
-
-
-
     for (String taskName : KNOWN_JIB_TASKS) {
       Set<Task> taskDependencies =
-          tasks.getByPath(taskName)
+          tasks
+              .getByPath(taskName)
               .getDependsOn()
               .stream()
               .filter(TaskProvider.class::isInstance)
