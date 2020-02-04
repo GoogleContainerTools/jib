@@ -230,6 +230,8 @@ public class RegistryClientTest {
     } catch (RegistryUnauthorizedException ex) {
       Assert.assertEquals(401, ex.getHttpResponseException().getStatusCode());
       Assert.assertEquals(5, authServer.getTotalResponsesServed());
+      // 1 response asking to do bearer auth + 4 unauth responses for 4 refresh attempts + 1 final
+      // unauth response propagated as RegistryUnauthorizedException here
       Assert.assertEquals(6, registry.getTotalResponsesServed());
     }
   }
