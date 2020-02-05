@@ -203,7 +203,7 @@ public class DefaultCredentialRetrieversTest {
   }
 
   @Test
-  public void testDockerConfigRetrievers_noDuplicateRetrivers() throws FileNotFoundException {
+  public void testDockerConfigRetrievers_noDuplicateRetrievers() throws FileNotFoundException {
     properties.setProperty("user.home", Paths.get("/env/home").toString());
     List<CredentialRetriever> credentialRetrievers =
         new DefaultCredentialRetrievers(mockCredentialRetrieverFactory, properties, environment)
