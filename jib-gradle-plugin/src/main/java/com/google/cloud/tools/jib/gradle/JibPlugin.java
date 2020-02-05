@@ -16,6 +16,8 @@
 
 package com.google.cloud.tools.jib.gradle;
 
+import static org.gradle.api.tasks.SourceSet.MAIN_SOURCE_SET_NAME;
+
 import com.google.cloud.tools.jib.ProjectInfo;
 import com.google.cloud.tools.jib.gradle.skaffold.CheckJibVersionTask;
 import com.google.cloud.tools.jib.gradle.skaffold.FilesTaskV2;
@@ -23,18 +25,20 @@ import com.google.cloud.tools.jib.gradle.skaffold.InitTask;
 import com.google.cloud.tools.jib.gradle.skaffold.SyncMapTask;
 import com.google.cloud.tools.jib.plugins.common.VersionChecker;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.ImmutableSet;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 import org.gradle.api.GradleException;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
-import org.gradle.api.UnknownTaskException;
 import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.artifacts.DependencySet;
 import org.gradle.api.artifacts.ProjectDependency;
-import org.gradle.api.plugins.BasePlugin;
+import org.gradle.api.plugins.JavaPluginConvention;
+import org.gradle.api.tasks.SourceSet;
 import org.gradle.api.tasks.TaskContainer;
 import org.gradle.api.tasks.TaskProvider;
 import org.gradle.jvm.tasks.Jar;
@@ -162,68 +166,49 @@ public class JibPlugin implements Plugin<Project> {
             SyncMapTask.class,
             task -> task.setJibExtension(jibExtension));
 
+    Set<TaskProvider<?>> jibTaskProviders =
+        ImmutableSet.of(buildImageTask, buildDockerTask, buildTarTask, syncMapTask);
+
     // A check to catch older versions of Jib.  This can be removed once we are certain people
     // are using Jib 1.3.1 or later.
     tasks.register(SKAFFOLD_CHECK_REQUIRED_VERSION_TASK_NAME, CheckJibVersionTask.class);
 
     project.afterEvaluate(
         projectAfterEvaluation -> {
-          try {
-            TaskProvider<Task> warTask = TaskCommon.getWarTaskProvider(projectAfterEvaluation);
-            TaskProvider<Task> bootWarTask =
-                TaskCommon.getBootWarTaskProvider(projectAfterEvaluation);
-            List<TaskProvider<?>> dependsOnTask = new ArrayList<>();
-            if (warTask != null || bootWarTask != null) {
-              // Have all tasks depend on the 'war' and/or 'bootWar' task.
-              if (warTask != null) {
-                dependsOnTask.add(warTask);
-              }
-              if (bootWarTask != null) {
-                dependsOnTask.add(bootWarTask);
-              }
-            } else if ("packaged".equals(jibExtension.getContainerizingMode())) {
-              // Have all tasks depend on the 'jar' task.
-              TaskProvider<Task> jarTask = projectAfterEvaluation.getTasks().named("jar");
-              dependsOnTask.add(jarTask);
-
-              if (projectAfterEvaluation.getPlugins().hasPlugin("org.springframework.boot")) {
-                Jar jar = (Jar) jarTask.get();
-                jar.setEnabled(true);
-                jar.getArchiveClassifier().set("original");
-              }
-            } else {
-              // Have all tasks depend on the 'classes' task.
-              dependsOnTask.add(projectAfterEvaluation.getTasks().named("classes"));
+          TaskProvider<Task> warTask = TaskCommon.getWarTaskProvider(projectAfterEvaluation);
+          TaskProvider<Task> bootWarTask =
+              TaskCommon.getBootWarTaskProvider(projectAfterEvaluation);
+          List<Object> jibDependencies = new ArrayList<>();
+          if (warTask != null || bootWarTask != null) {
+            // Have all tasks depend on the 'war' and/or 'bootWar' task.
+            if (warTask != null) {
+              jibDependencies.add(warTask);
             }
-            buildImageTask.configure(task -> task.dependsOn(dependsOnTask));
-            buildDockerTask.configure(task -> task.dependsOn(dependsOnTask));
-            buildTarTask.configure(task -> task.dependsOn(dependsOnTask));
-            syncMapTask.configure(task -> task.dependsOn(dependsOnTask));
-
-            // Find project dependencies and add a dependency to their assemble task. We make sure
-            // to only add the dependency after BasePlugin is evaluated as otherwise the assemble
-            // task may not be available yet.
-            List<Project> computedDependencies = getProjectDependencies(projectAfterEvaluation);
-            for (Project dependencyProject : computedDependencies) {
-              dependencyProject
-                  .getPlugins()
-                  .withType(
-                      BasePlugin.class,
-                      unused -> {
-                        TaskProvider<Task> assembleTask =
-                            dependencyProject.getTasks().named(BasePlugin.ASSEMBLE_TASK_NAME);
-                        buildImageTask.configure(task -> task.dependsOn(assembleTask));
-                        buildDockerTask.configure(task -> task.dependsOn(assembleTask));
-                        buildTarTask.configure(task -> task.dependsOn(assembleTask));
-                      });
+            if (bootWarTask != null) {
+              jibDependencies.add(bootWarTask);
             }
-          } catch (UnknownTaskException ex) {
-            throw new GradleException(
-                "Could not find task 'classes' on project "
-                    + projectAfterEvaluation.getDisplayName()
-                    + " - perhaps you did not apply the 'java' plugin?",
-                ex);
+          } else if ("packaged".equals(jibExtension.getContainerizingMode())) {
+            // Have all tasks depend on the 'jar' task.
+            TaskProvider<Task> jarTask = projectAfterEvaluation.getTasks().named("jar");
+            jibDependencies.add(jarTask);
+
+            if (projectAfterEvaluation.getPlugins().hasPlugin("org.springframework.boot")) {
+              Jar jar = (Jar) jarTask.get();
+              jar.setEnabled(true);
+              jar.getArchiveClassifier().set("original");
+            }
           }
+
+          SourceSet mainSourceSet =
+              project
+                  .getConvention()
+                  .getPlugin(JavaPluginConvention.class)
+                  .getSourceSets()
+                  .getByName(MAIN_SOURCE_SET_NAME);
+          jibDependencies.add(mainSourceSet.getRuntimeClasspath());
+
+          jibTaskProviders.forEach(
+              provider -> provider.configure(task -> task.setDependsOn(jibDependencies)));
         });
   }
 }
