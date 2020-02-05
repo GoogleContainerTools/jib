@@ -188,6 +188,20 @@ public class CredentialRetrieverFactory {
   }
 
   /**
+   * Creates a new {@link CredentialRetriever} that tries to retrieve credentials from Docker config
+   * (located at {@code System.getProperty("user.home")/.docker/config.json}).
+   *
+   * @return a new {@link CredentialRetriever}
+   * @see DockerConfigCredentialRetriever
+   */
+  public CredentialRetriever dockerConfig() {
+    return dockerConfig(
+        DockerConfigCredentialRetriever.create(
+            imageReference.getRegistry(),
+            Paths.get(System.getProperty("user.home"), ".docker", "config.json")));
+  }
+
+  /**
    * Creates a new {@link CredentialRetriever} that tries to retrieve credentials from a custom path
    * to a Docker config.
    *
