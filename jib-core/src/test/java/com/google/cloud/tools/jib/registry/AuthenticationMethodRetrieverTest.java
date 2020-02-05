@@ -97,7 +97,7 @@ public class AuthenticationMethodRetrieverTest {
   }
 
   @Test
-  public void tsetHandleHttpResponseException_noHeader() throws ResponseException {
+  public void testHandleHttpResponseException_noHeader() throws ResponseException {
     Mockito.when(mockResponseException.getStatusCode())
         .thenReturn(HttpStatusCodes.STATUS_CODE_UNAUTHORIZED);
     Mockito.when(mockResponseException.getHeaders()).thenReturn(mockHeaders);
