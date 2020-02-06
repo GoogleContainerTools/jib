@@ -69,7 +69,7 @@ public interface ProjectProperties {
   /**
    * Find and returns the Graal's {@code native-image}'s configured executable name.
    *
-   * @returns the configured executable name
+   * @return the configured executable name
    * @throws IllegalStateException if the executable cannot be determined or does not exist
    */
   String getNativeImageExecutableName();
