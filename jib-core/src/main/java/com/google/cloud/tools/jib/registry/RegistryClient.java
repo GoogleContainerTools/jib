@@ -262,6 +262,8 @@ public class RegistryClient {
   // mutable
   private final AtomicReference<Authorization> authorization = new AtomicReference<>();
   private boolean readOnlyBearerAuth;
+  private final AtomicReference<RegistryAuthenticator> initialBearerAuthenticator =
+      new AtomicReference<>();
 
   /**
    * Instantiate with {@link #factory}.
@@ -344,6 +346,7 @@ public class RegistryClient {
       return false; // server returned "WWW-Authenticate: Basic ..."
     }
 
+    initialBearerAuthenticator.set(authenticator.get());
     if (readOnlyBearerAuth) {
       authorization.set(authenticator.get().authenticatePull(credential));
     } else {
@@ -375,10 +378,13 @@ public class RegistryClient {
       }
     }
 
-    throw new RegistryAuthenticationFailedException(
-        registry,
-        repository,
-        "server did not return 'WWW-Authenticate: Bearer' header: " + wwwAuthenticate);
+    eventHandlers.dispatch(
+        LogEvent.debug(
+            "server did not return 'WWW-Authenticate: Bearer' header. Actual: " + wwwAuthenticate));
+    if (readOnlyBearerAuth) {
+      return Verify.verifyNotNull(initialBearerAuthenticator.get()).authenticatePull(credential);
+    }
+    return Verify.verifyNotNull(initialBearerAuthenticator.get()).authenticatePush(credential);
   }
 
   /**

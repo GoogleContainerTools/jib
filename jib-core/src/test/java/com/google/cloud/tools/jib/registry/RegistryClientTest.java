@@ -20,6 +20,7 @@ import com.google.cloud.tools.jib.api.Credential;
 import com.google.cloud.tools.jib.api.DescriptorDigest;
 import com.google.cloud.tools.jib.api.LogEvent;
 import com.google.cloud.tools.jib.api.RegistryException;
+import com.google.cloud.tools.jib.api.RegistryUnauthorizedException;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.global.JibSystemProperties;
@@ -166,6 +167,73 @@ public class RegistryClientTest {
     Mockito.verify(eventHandlers).dispatch(logContains("bearer auth succeeded"));
     Mockito.verify(eventHandlers, Mockito.times(2))
         .dispatch(logContains("refreshing bearer auth token"));
+  }
+
+  @Test
+  public void testAutomaticTokenRefresh_badWwwAuthenticateResponse()
+      throws IOException, InterruptedException, GeneralSecurityException, URISyntaxException,
+          RegistryException {
+    String tokenResponse = "HTTP/1.1 200 OK\nContent-Length: 26\n\n{\"token\":\"awesome-token!\"}";
+    authServer = new TestWebServer(false, Arrays.asList(tokenResponse), 3);
+
+    List<String> responses =
+        Arrays.asList(
+            "HTTP/1.1 401 Unauthorized\nContent-Length: 0\nWWW-Authenticate: Bearer realm=\""
+                + authServer.getEndpoint()
+                + "\"\n\n",
+            "HTTP/1.1 401 Unauthorized\nContent-Length: 0\nWWW-Authenticate: Basic realm=foo\n\n",
+            "HTTP/1.1 401 Unauthorized\nContent-Length: 0\n\n",
+            "HTTP/1.1 200 OK\nContent-Length: 5678\n\n");
+    registry = new TestWebServer(false, responses, responses.size(), true);
+
+    RegistryClient registryClient = createRegistryClient(null);
+    Assert.assertTrue(registryClient.doPushBearerAuth());
+
+    Optional<BlobDescriptor> digestAndSize = registryClient.checkBlob(digest);
+    Assert.assertEquals(5678, digestAndSize.get().getSize());
+
+    // Verify authServer returned bearer token three times (i.e., refreshed twice)
+    Assert.assertEquals(3, authServer.getTotalResponsesServed());
+    Assert.assertEquals(4, registry.getTotalResponsesServed());
+
+    Mockito.verify(eventHandlers)
+        .dispatch(
+            logContains("server did not return 'WWW-Authenticate: Bearer' header. Actual: Basic"));
+    Mockito.verify(eventHandlers)
+        .dispatch(
+            logContains("server did not return 'WWW-Authenticate: Bearer' header. Actual: null"));
+  }
+
+  @Test
+  public void testAutomaticTokenRefresh_refreshLimit()
+      throws IOException, InterruptedException, GeneralSecurityException, URISyntaxException,
+          RegistryException {
+    String tokenResponse = "HTTP/1.1 200 OK\nContent-Length: 26\n\n{\"token\":\"awesome-token!\"}";
+    authServer = new TestWebServer(false, Arrays.asList(tokenResponse), 5);
+
+    String bearerAuth =
+        "HTTP/1.1 401 Unauthorized\nContent-Length: 0\nWWW-Authenticate: Bearer realm=\""
+            + authServer.getEndpoint()
+            + "\"\n\n";
+    String unauthorized = "HTTP/1.1 401 Unauthorized\nContent-Length: 0\n\n";
+    List<String> responses =
+        Arrays.asList(
+            bearerAuth, unauthorized, unauthorized, unauthorized, unauthorized, unauthorized);
+    registry = new TestWebServer(false, responses, responses.size(), true);
+
+    RegistryClient registryClient = createRegistryClient(null);
+    Assert.assertTrue(registryClient.doPushBearerAuth());
+
+    try {
+      registryClient.checkBlob(digest);
+      Assert.fail("Should have given up refreshing after 4 attempts");
+    } catch (RegistryUnauthorizedException ex) {
+      Assert.assertEquals(401, ex.getHttpResponseException().getStatusCode());
+      Assert.assertEquals(5, authServer.getTotalResponsesServed());
+      // 1 response asking to do bearer auth + 4 unauth responses for 4 refresh attempts + 1 final
+      // unauth response propagated as RegistryUnauthorizedException here
+      Assert.assertEquals(6, registry.getTotalResponsesServed());
+    }
   }
 
   @Test

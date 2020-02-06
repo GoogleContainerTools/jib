@@ -9,6 +9,8 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
+- Fixed authentication failure with error `server did not return 'WWW-Authenticate: Bearer' header` in certain cases (for example, on OpenShift). ([#2258](https://github.com/GoogleContainerTools/jib/issues/2258))
+
 ## 0.13.0
 
 ### Added
