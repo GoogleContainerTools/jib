@@ -19,7 +19,9 @@ package com.google.cloud.tools.jib.maven;
 import com.google.cloud.tools.jib.plugins.common.AuthProperty;
 import com.google.cloud.tools.jib.plugins.common.InferredAuthException;
 import com.google.cloud.tools.jib.plugins.common.InferredAuthProvider;
+import com.google.common.annotations.VisibleForTesting;
 import java.util.Optional;
+import javax.annotation.Nullable;
 import org.apache.maven.settings.Server;
 import org.apache.maven.settings.Settings;
 import org.apache.maven.settings.building.SettingsProblem;
@@ -34,7 +36,7 @@ import org.apache.maven.settings.crypto.SettingsDecryptionResult;
  */
 class MavenSettingsServerCredentials implements InferredAuthProvider {
 
-  static final String CREDENTIAL_SOURCE = "Maven settings";
+  static final String CREDENTIAL_SOURCE = "Maven settings file";
 
   private final Settings settings;
   private final SettingsDecrypter decrypter;
@@ -58,7 +60,7 @@ class MavenSettingsServerCredentials implements InferredAuthProvider {
   @Override
   public Optional<AuthProperty> inferAuth(String registry) throws InferredAuthException {
 
-    Server server = settings.getServer(registry);
+    Server server = getServerFromMavenSettings(registry);
     if (server == null) {
       return Optional.empty();
     }
@@ -107,5 +109,21 @@ class MavenSettingsServerCredentials implements InferredAuthProvider {
             return CREDENTIAL_SOURCE;
           }
         });
+  }
+
+  @Nullable
+  @VisibleForTesting
+  Server getServerFromMavenSettings(String registry) {
+    Server server = settings.getServer(registry);
+    if (server != null) {
+      return server;
+    }
+
+    // try without port
+    int index = registry.lastIndexOf(':');
+    if (index != -1) {
+      return settings.getServer(registry.substring(0, index));
+    }
+    return null;
   }
 }

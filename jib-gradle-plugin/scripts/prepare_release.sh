@@ -59,3 +59,4 @@ echo https://github.com/GoogleContainerTools/jib/pull/new/${BRANCH}
 
 EchoGreen "Once approved, checkout the 'v${VERSION}-gradle' tag and run './gradlew jib-gradle-plugin:publishPlugins'."
 EchoGreen "Merge the PR after the plugin is released."
+EchoGreen "Run './scripts/update_gcs_latest.sh ${VERSION}' when the release is complete to update the latest version string on GCS."

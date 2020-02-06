@@ -87,6 +87,34 @@ public class MavenSettingsServerCredentialsTest {
   }
 
   @Test
+  public void testInferredAuth_registryWithHostAndPort() throws InferredAuthException {
+    Optional<AuthProperty> auth =
+        mavenSettingsServerCredentialsNoMasterPassword.inferAuth("docker.example.com:8080");
+    Assert.assertTrue(auth.isPresent());
+    Assert.assertEquals("registryUser", auth.get().getUsername());
+    Assert.assertEquals("registryPassword", auth.get().getPassword());
+  }
+
+  @Test
+  public void testInferredAuth_registryWithHostWithoutPort() throws InferredAuthException {
+    Optional<AuthProperty> auth =
+        mavenSettingsServerCredentialsNoMasterPassword.inferAuth("docker.example.com");
+    Assert.assertTrue(auth.isPresent());
+    Assert.assertEquals("registryUser", auth.get().getUsername());
+    Assert.assertEquals("registryPassword", auth.get().getPassword());
+  }
+
+  @Test
+  public void testInferredAuth_registrySettingsWithPort() throws InferredAuthException {
+    // Attempt to resolve WITHOUT the port. Should work as well.
+    Optional<AuthProperty> auth =
+        mavenSettingsServerCredentialsNoMasterPassword.inferAuth("docker.example.com:5432");
+    Assert.assertTrue(auth.isPresent());
+    Assert.assertEquals("registryUser", auth.get().getUsername());
+    Assert.assertEquals("registryPassword", auth.get().getPassword());
+  }
+
+  @Test
   public void testInferredAuth_notFound() throws InferredAuthException {
     Assert.assertFalse(mavenSettingsServerCredentials.inferAuth("serverUnknown").isPresent());
   }

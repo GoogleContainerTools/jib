@@ -25,7 +25,7 @@ import com.google.cloud.tools.jib.http.BlobHttpContent;
 import com.google.cloud.tools.jib.http.Response;
 import com.google.cloud.tools.jib.http.ResponseException;
 import com.google.cloud.tools.jib.image.json.ManifestTemplate;
-import com.google.cloud.tools.jib.image.json.OCIManifestTemplate;
+import com.google.cloud.tools.jib.image.json.OciManifestTemplate;
 import com.google.cloud.tools.jib.image.json.UnknownManifestFormatException;
 import com.google.cloud.tools.jib.image.json.V21ManifestTemplate;
 import com.google.cloud.tools.jib.image.json.V22ManifestListTemplate;
@@ -72,8 +72,8 @@ class ManifestPuller<T extends ManifestTemplate>
     if (manifestTemplateClass.equals(V22ManifestTemplate.class)) {
       return Collections.singletonList(V22ManifestTemplate.MANIFEST_MEDIA_TYPE);
     }
-    if (manifestTemplateClass.equals(OCIManifestTemplate.class)) {
-      return Collections.singletonList(OCIManifestTemplate.MANIFEST_MEDIA_TYPE);
+    if (manifestTemplateClass.equals(OciManifestTemplate.class)) {
+      return Collections.singletonList(OciManifestTemplate.MANIFEST_MEDIA_TYPE);
     }
     if (manifestTemplateClass.equals(V22ManifestListTemplate.class)) {
       return Collections.singletonList(V22ManifestListTemplate.MANIFEST_MEDIA_TYPE);
@@ -83,7 +83,7 @@ class ManifestPuller<T extends ManifestTemplate>
     // it, we only handle it if referenced by sha256 (see getManifestTemplateFromJson) in which
     // case registries ignore the "accept" directive and just return a manifest list anyway.
     return Arrays.asList(
-        OCIManifestTemplate.MANIFEST_MEDIA_TYPE,
+        OciManifestTemplate.MANIFEST_MEDIA_TYPE,
         V22ManifestTemplate.MANIFEST_MEDIA_TYPE,
         V21ManifestTemplate.MEDIA_TYPE);
   }
@@ -148,9 +148,9 @@ class ManifestPuller<T extends ManifestTemplate>
         return manifestTemplateClass.cast(
             JsonTemplateMapper.readJson(jsonString, V22ManifestTemplate.class));
       }
-      if (OCIManifestTemplate.MANIFEST_MEDIA_TYPE.equals(mediaType)) {
+      if (OciManifestTemplate.MANIFEST_MEDIA_TYPE.equals(mediaType)) {
         return manifestTemplateClass.cast(
-            JsonTemplateMapper.readJson(jsonString, OCIManifestTemplate.class));
+            JsonTemplateMapper.readJson(jsonString, OciManifestTemplate.class));
       }
       if (V22ManifestListTemplate.MANIFEST_MEDIA_TYPE.equals(mediaType)) {
         return manifestTemplateClass.cast(

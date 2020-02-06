@@ -22,7 +22,6 @@ import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.builder.ProgressEventDispatcher;
 import com.google.cloud.tools.jib.builder.steps.PreparedLayer.StateInTarget;
-import com.google.cloud.tools.jib.builder.steps.PullBaseImageStep.ImageAndAuthorization;
 import com.google.cloud.tools.jib.cache.CacheCorruptedException;
 import com.google.cloud.tools.jib.configuration.BuildContext;
 import com.google.cloud.tools.jib.image.Image;
@@ -49,8 +48,6 @@ import org.mockito.stubbing.Answer3;
 @RunWith(MockitoJUnitRunner.class)
 public class ObtainBaseImageLayerStepTest {
 
-  private ImageAndAuthorization baseImageAndAuth;
-
   private DescriptorDigest existingLayerDigest;
   private DescriptorDigest freshLayerDigest;
 
@@ -65,8 +62,6 @@ public class ObtainBaseImageLayerStepTest {
 
   @Before
   public void setUp() throws IOException, RegistryException, DigestException {
-    baseImageAndAuth = new ImageAndAuthorization(image, null);
-
     existingLayerDigest =
         DescriptorDigest.fromHash(
             "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
@@ -83,16 +78,6 @@ public class ObtainBaseImageLayerStepTest {
         .thenReturn(Optional.of(Mockito.mock(BlobDescriptor.class)));
     Mockito.when(registryClient.checkBlob(freshLayerDigest)).thenReturn(Optional.empty());
 
-    RegistryClient.Factory registryClientFactory =
-        Mockito.mock(RegistryClient.Factory.class, Answers.RETURNS_SELF);
-    Mockito.when(registryClientFactory.newRegistryClient()).thenReturn(registryClient);
-
-    Mockito.lenient()
-        .when(buildContext.newBaseImageRegistryClientFactory())
-        .thenReturn(registryClientFactory);
-    Mockito.when(buildContext.newTargetImageRegistryClientFactory())
-        .thenReturn(registryClientFactory);
-
     // necessary to prevent error from classes dealing with progress report
     Answer3<Blob, DescriptorDigest, Consumer<Long>, Consumer<Long>> progressSizeSetter =
         (ignored1, progressSizeConsumer, ignored2) -> {
@@ -108,7 +93,7 @@ public class ObtainBaseImageLayerStepTest {
       throws IOException, CacheCorruptedException, RegistryException {
     ImmutableList<ObtainBaseImageLayerStep> pullers =
         ObtainBaseImageLayerStep.makeListForSelectiveDownload(
-            buildContext, progressDispatcherFactory, baseImageAndAuth, null);
+            buildContext, progressDispatcherFactory, image, registryClient, registryClient);
 
     Assert.assertEquals(2, pullers.size());
     PreparedLayer preparedExistingLayer = pullers.get(0).call();
@@ -133,7 +118,7 @@ public class ObtainBaseImageLayerStepTest {
       throws IOException, CacheCorruptedException, RegistryException {
     ImmutableList<ObtainBaseImageLayerStep> pullers =
         ObtainBaseImageLayerStep.makeListForForcedDownload(
-            buildContext, progressDispatcherFactory, baseImageAndAuth);
+            buildContext, progressDispatcherFactory, image, registryClient);
 
     Assert.assertEquals(2, pullers.size());
     PreparedLayer preparedExistingLayer = pullers.get(0).call();
@@ -161,7 +146,7 @@ public class ObtainBaseImageLayerStepTest {
 
     ImmutableList<ObtainBaseImageLayerStep> pullers =
         ObtainBaseImageLayerStep.makeListForForcedDownload(
-            buildContext, progressDispatcherFactory, baseImageAndAuth);
+            buildContext, progressDispatcherFactory, image, registryClient);
     try {
       pullers.get(1).call();
       Assert.fail();

@@ -54,7 +54,7 @@ import javax.annotation.Nullable;
  * @see <a href="https://github.com/opencontainers/image-spec/blob/master/manifest.md">OCI Image
  *     Manifest Specification</a>
  */
-public class OCIManifestTemplate implements BuildableManifestTemplate {
+public class OciManifestTemplate implements BuildableManifestTemplate {
 
   /** The OCI manifest media type. */
   public static final String MANIFEST_MEDIA_TYPE = "application/vnd.oci.image.manifest.v1+json";

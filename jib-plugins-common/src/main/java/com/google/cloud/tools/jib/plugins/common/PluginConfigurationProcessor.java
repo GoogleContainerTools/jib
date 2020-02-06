@@ -104,7 +104,8 @@ public class PluginConfigurationProcessor {
             targetImageReference,
             rawConfiguration.getToTags())
         .writeImageDigest(rawConfiguration.getDigestOutputPath())
-        .writeImageId(rawConfiguration.getImageIdOutputPath());
+        .writeImageId(rawConfiguration.getImageIdOutputPath())
+        .writeImageJson(rawConfiguration.getImageJsonOutputPath());
   }
 
   public static JibBuildRunner createJibBuildRunnerForTarImage(
@@ -127,6 +128,9 @@ public class PluginConfigurationProcessor {
         processCommonConfiguration(
             rawConfiguration, inferredAuthProvider, projectProperties, containerizer);
 
+    // Note Docker build doesn't set the configured format.
+    jibContainerBuilder.setFormat(rawConfiguration.getImageFormat());
+
     return JibBuildRunner.forBuildTar(
             jibContainerBuilder,
             containerizer,
@@ -134,7 +138,8 @@ public class PluginConfigurationProcessor {
             helpfulSuggestions,
             rawConfiguration.getTarOutputPath())
         .writeImageDigest(rawConfiguration.getDigestOutputPath())
-        .writeImageId(rawConfiguration.getImageIdOutputPath());
+        .writeImageId(rawConfiguration.getImageIdOutputPath())
+        .writeImageJson(rawConfiguration.getImageJsonOutputPath());
   }
 
   public static JibBuildRunner createJibBuildRunnerForRegistryImage(
@@ -164,10 +169,8 @@ public class PluginConfigurationProcessor {
         rawConfiguration.getToCredHelper().orElse(null));
 
     boolean alwaysCacheBaseImage =
-        Boolean.valueOf(
-            rawConfiguration
-                .getProperty(PropertyNames.ALWAYS_CACHE_BASE_IMAGE)
-                .orElse(Boolean.FALSE.toString()));
+        Boolean.parseBoolean(
+            rawConfiguration.getProperty(PropertyNames.ALWAYS_CACHE_BASE_IMAGE).orElse("false"));
     Containerizer containerizer =
         Containerizer.to(targetImage).setAlwaysCacheBaseImage(alwaysCacheBaseImage);
 
@@ -175,7 +178,7 @@ public class PluginConfigurationProcessor {
         processCommonConfiguration(
             rawConfiguration, inferredAuthProvider, projectProperties, containerizer);
 
-    // Note Docker and tar builds don't set the configured format.
+    // Note Docker build doesn't set the configured format.
     jibContainerBuilder.setFormat(rawConfiguration.getImageFormat());
 
     return JibBuildRunner.forBuildImage(
@@ -186,7 +189,8 @@ public class PluginConfigurationProcessor {
             targetImageReference,
             rawConfiguration.getToTags())
         .writeImageDigest(rawConfiguration.getDigestOutputPath())
-        .writeImageId(rawConfiguration.getImageIdOutputPath());
+        .writeImageId(rawConfiguration.getImageIdOutputPath())
+        .writeImageJson(rawConfiguration.getImageJsonOutputPath());
   }
 
   public static String getSkaffoldSyncMap(

@@ -18,10 +18,7 @@ package com.google.cloud.tools.jib.gradle;
 
 import com.google.cloud.tools.jib.Command;
 import com.google.cloud.tools.jib.IntegrationTestingConfiguration;
-import com.google.cloud.tools.jib.blob.Blobs;
 import java.io.IOException;
-import java.io.InputStream;
-import java.net.HttpURLConnection;
 import java.net.URL;
 import java.security.DigestException;
 import javax.annotation.Nullable;
@@ -34,23 +31,6 @@ import org.junit.Test;
 public class WarProjectIntegrationTest {
 
   @ClassRule public static final TestProject servlet25Project = new TestProject("war_servlet25");
-
-  @Nullable
-  private static String getContent(URL url) throws InterruptedException {
-    for (int i = 0; i < 40; i++) {
-      Thread.sleep(500);
-      try {
-        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-        if (connection.getResponseCode() == HttpURLConnection.HTTP_OK) {
-          try (InputStream in = connection.getInputStream()) {
-            return Blobs.writeToString(Blobs.from(in));
-          }
-        }
-      } catch (IOException ex) {
-      }
-    }
-    return null;
-  }
 
   @Nullable private String containerName;
 
@@ -80,6 +60,7 @@ public class WarProjectIntegrationTest {
         JibRunHelper.buildAndRun(project, targetImage, gradleBuildFile, "--detach", "-p8080:8080");
     containerName = output.trim();
 
-    Assert.assertEquals("Hello world", getContent(new URL("http://localhost:8080/hello")));
+    Assert.assertEquals(
+        "Hello world", JibRunHelper.getContent(new URL("http://localhost:8080/hello")));
   }
 }

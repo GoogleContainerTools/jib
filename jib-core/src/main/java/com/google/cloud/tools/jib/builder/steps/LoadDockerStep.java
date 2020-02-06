@@ -21,10 +21,10 @@ import com.google.cloud.tools.jib.builder.ProgressEventDispatcher;
 import com.google.cloud.tools.jib.builder.TimerEventDispatcher;
 import com.google.cloud.tools.jib.configuration.BuildContext;
 import com.google.cloud.tools.jib.docker.DockerClient;
-import com.google.cloud.tools.jib.docker.ImageTarball;
 import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.event.progress.ThrottledAccumulatingConsumer;
 import com.google.cloud.tools.jib.image.Image;
+import com.google.cloud.tools.jib.image.ImageTarball;
 import java.io.IOException;
 import java.util.concurrent.Callable;
 

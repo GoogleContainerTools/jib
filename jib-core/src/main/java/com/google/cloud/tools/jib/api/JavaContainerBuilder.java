@@ -526,7 +526,12 @@ public class JavaContainerBuilder {
     return this;
   }
 
-  /** Configure for containerizing a Graal {@ native-image} executable. */
+  /**
+   * Configure for containerizing a Graal {@code native-image} executable.
+   *
+   * @param executable path to the executable produced by {@code native-image}
+   * @return this
+   */
   public JibContainerBuilder forNativeImage(Path executable) {
     AbsoluteUnixPath containerExecutable = appRoot.resolve(executable.getFileName());
     Instant modificationTime = modificationTimeProvider.apply(executable, containerExecutable);
@@ -585,7 +590,7 @@ public class JavaContainerBuilder {
           appRoot.resolve(resourcesDestination));
     }
 
-    // Detect duplicate filenames across all layer types
+    // Detect duplicate filenames across all dependency layer types
     List<String> duplicates =
         Streams.concat(
                 addedDependencies.stream(),

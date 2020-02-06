@@ -94,4 +94,6 @@ public interface RawConfiguration {
   Path getDigestOutputPath();
 
   Path getImageIdOutputPath();
+
+  Path getImageJsonOutputPath();
 }

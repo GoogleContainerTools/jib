@@ -27,7 +27,7 @@ import com.google.cloud.tools.jib.api.LogEvent;
 import com.google.cloud.tools.jib.api.Port;
 import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
-import com.google.cloud.tools.jib.image.json.OCIManifestTemplate;
+import com.google.cloud.tools.jib.image.json.OciManifestTemplate;
 import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -68,7 +68,7 @@ public class BuildContextTest {
     Map<String, String> expectedEnvironment = ImmutableMap.of("key", "value");
     ImmutableSet<Port> expectedExposedPorts = ImmutableSet.of(Port.tcp(1000), Port.tcp(2000));
     Map<String, String> expectedLabels = ImmutableMap.of("key1", "value1", "key2", "value2");
-    Class<? extends BuildableManifestTemplate> expectedTargetFormat = OCIManifestTemplate.class;
+    Class<? extends BuildableManifestTemplate> expectedTargetFormat = OciManifestTemplate.class;
     Path expectedApplicationLayersCacheDirectory = Paths.get("application/layers");
     Path expectedBaseImageLayersCacheDirectory = Paths.get("base/image/layers");
     List<LayerConfiguration> expectedLayerConfigurations =

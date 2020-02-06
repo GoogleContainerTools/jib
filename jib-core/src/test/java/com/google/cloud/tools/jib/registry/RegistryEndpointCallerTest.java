@@ -108,7 +108,6 @@ public class RegistryEndpointCallerTest {
       int statusCode, @Nullable HttpHeaders headers) {
     ResponseException mock = Mockito.mock(ResponseException.class);
     Mockito.when(mock.getStatusCode()).thenReturn(statusCode);
-    Mockito.when(mock.getHeaders()).thenReturn(headers != null ? headers : new HttpHeaders());
     return mock;
   }
 
@@ -127,7 +126,7 @@ public class RegistryEndpointCallerTest {
             mockEventHandlers,
             "userAgent",
             new TestRegistryEndpointProvider(),
-            Authorization.fromBasicToken("token"),
+            Authorization.fromBasicCredentials("user", "pass"),
             new RegistryEndpointRequestProperties("serverUrl", "imageName"),
             mockHttpClient);
 
@@ -242,25 +241,6 @@ public class RegistryEndpointCallerTest {
   }
 
   @Test
-  public void testCall_permanentRedirect() throws IOException, RegistryException {
-    ResponseException redirectException =
-        mockResponseException(
-            RegistryEndpointCaller.STATUS_CODE_PERMANENT_REDIRECT,
-            new HttpHeaders().setLocation("https://newlocation"));
-
-    // Make httpClient.call() throw first, then succeed.
-    setUpRegistryResponse(redirectException);
-    Mockito.when(
-            mockHttpClient.call(
-                Mockito.eq("httpMethod"),
-                Mockito.eq(new URL("https://newlocation")),
-                Mockito.any()))
-        .thenReturn(mockResponse);
-
-    Assert.assertEquals("body", endpointCaller.call());
-  }
-
-  @Test
   public void testCall_logErrorOnIoExceptions() throws IOException, RegistryException {
     IOException ioException = new IOException("detailed exception message");
     setUpRegistryResponse(ioException);
@@ -274,6 +254,8 @@ public class RegistryEndpointCallerTest {
       Mockito.verify(mockEventHandlers)
           .dispatch(
               LogEvent.error("\u001B[31;1mI/O error for image [serverUrl/imageName]:\u001B[0m"));
+      Mockito.verify(mockEventHandlers)
+          .dispatch(LogEvent.error("\u001B[31;1m    java.io.IOException\u001B[0m"));
       Mockito.verify(mockEventHandlers)
           .dispatch(LogEvent.error("\u001B[31;1m    detailed exception message\u001B[0m"));
       Mockito.verifyNoMoreInteractions(mockEventHandlers);
@@ -295,6 +277,8 @@ public class RegistryEndpointCallerTest {
           .dispatch(
               LogEvent.error("\u001B[31;1mI/O error for image [serverUrl/imageName]:\u001B[0m"));
       Mockito.verify(mockEventHandlers)
+          .dispatch(LogEvent.error("\u001B[31;1m    java.io.IOException\u001B[0m"));
+      Mockito.verify(mockEventHandlers)
           .dispatch(LogEvent.error("\u001B[31;1m    this is due to broken pipe\u001B[0m"));
       Mockito.verify(mockEventHandlers)
           .dispatch(
@@ -302,6 +286,26 @@ public class RegistryEndpointCallerTest {
                   "\u001B[31;1mbroken pipe: the server shut down the connection. Check the server "
                       + "log if possible. This could also be a proxy issue. For example, a proxy "
                       + "may prevent sending packets that are too large.\u001B[0m"));
+      Mockito.verifyNoMoreInteractions(mockEventHandlers);
+    }
+  }
+
+  @Test
+  public void testCall_logNullExceptionMessage() throws IOException, RegistryException {
+    setUpRegistryResponse(new IOException());
+
+    try {
+      endpointCaller.call();
+      Assert.fail();
+
+    } catch (IOException ex) {
+      Mockito.verify(mockEventHandlers)
+          .dispatch(
+              LogEvent.error("\u001B[31;1mI/O error for image [serverUrl/imageName]:\u001B[0m"));
+      Mockito.verify(mockEventHandlers)
+          .dispatch(LogEvent.error("\u001B[31;1m    java.io.IOException\u001B[0m"));
+      Mockito.verify(mockEventHandlers)
+          .dispatch(LogEvent.error("\u001B[31;1m    (null exception message)\u001B[0m"));
       Mockito.verifyNoMoreInteractions(mockEventHandlers);
     }
   }
