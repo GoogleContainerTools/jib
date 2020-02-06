@@ -240,6 +240,8 @@ public class MavenProjectPropertiesTest {
 
   private MavenProjectProperties mavenProjectProperties;
 
+  @Mock private Plugin mockNativeImagePlugin;
+
   @Before
   public void setUp() throws IOException, URISyntaxException {
     Mockito.when(mockLog.isDebugEnabled()).thenReturn(true);
@@ -998,6 +1000,41 @@ public class MavenProjectPropertiesTest {
     Assert.assertEquals(
         Paths.get("/foo/bar/helloworld-1.war"), mavenProjectProperties.getWarArtifact());
   }
+
+  @Test
+  public void testGetNativeImageExecutableName_noDefinition() {
+    try {
+      mavenProjectProperties.getNativeImageExecutableName();
+      Assert.fail("should error fail when native-image-maven-plugin not configured");
+    } catch (IllegalStateException ex) {
+      // as expected
+    }
+  }
+
+  @Test
+  public void testGetNativeImageExecutableName_imageName() {
+    Mockito.when(mockMavenProject.getPlugin("org.graalvm.nativeimage:native-image-maven-plugin"))
+        .thenReturn(mockNativeImagePlugin);
+    Xpp3Dom nativeImagePluginConfiguration = new Xpp3Dom("configuration");
+    addXpp3DomChild(nativeImagePluginConfiguration, "imageName", "theExecutable");
+    Mockito.when(mockNativeImagePlugin.getConfiguration())
+        .thenReturn(nativeImagePluginConfiguration);
+
+    Assert.assertEquals("theExecutable", mavenProjectProperties.getNativeImageExecutableName());
+  }
+
+  @Test
+  public void testGetNativeImageExecutableName_artifact() {
+    Mockito.when(mockMavenProject.getPlugin("org.graalvm.nativeimage:native-image-maven-plugin"))
+        .thenReturn(mockNativeImagePlugin);
+    Xpp3Dom nativeImagePluginConfiguration = new Xpp3Dom("configuration");
+    Mockito.when(mockNativeImagePlugin.getConfiguration())
+        .thenReturn(nativeImagePluginConfiguration);
+    Mockito.when(mockMavenProject.getArtifactId()).thenReturn("crepecake");
+
+    Assert.assertEquals("crepecake", mavenProjectProperties.getNativeImageExecutableName());
+  }
+
 
   private BuildContext setUpBuildContext(String appRoot, ContainerizingMode containerizingMode)
       throws InvalidImageReferenceException, IOException, CacheDirectoryCreationException {
