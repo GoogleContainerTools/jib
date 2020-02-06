@@ -10,6 +10,7 @@ All notable changes to this project will be documented in this file.
 ### Fixed
 
 - Fixed a `skaffold init` issue with projects containing submodules specifying different parent poms. ([#2262](https://github.com/GoogleContainerTools/jib/issues/2262))
+- Fixed authentication failure with error `server did not return 'WWW-Authenticate: Bearer' header` in certain cases (for example, on OpenShift). ([#2258](https://github.com/GoogleContainerTools/jib/issues/2258))
 
 ## 2.0.0
 

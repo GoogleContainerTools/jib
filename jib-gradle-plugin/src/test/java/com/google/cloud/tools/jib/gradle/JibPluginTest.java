@@ -17,15 +17,12 @@
 package com.google.cloud.tools.jib.gradle;
 
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 import org.gradle.api.GradleException;
 import org.gradle.api.Project;
@@ -138,72 +135,6 @@ public class JibPluginTest {
 
   @SuppressWarnings("unchecked")
   @Test
-  public void testProjectDependencyAssembleTasksAreRun() {
-    // root project is our jib packaged service
-    Project rootProject = createProject("java");
-
-    // our service DOES depend on this, and jib should trigger an assemble from this project
-    Project subProject =
-        ProjectBuilder.builder()
-            .withParent(rootProject)
-            .withProjectDir(testProjectRoot.getRoot())
-            .withName("sub")
-            .build();
-    subProject.getPluginManager().apply("java");
-
-    // our service doesn't depend on this, and jib should NOT trigger an assemble from this project
-    Project unrelatedSubProject =
-        ProjectBuilder.builder()
-            .withParent(rootProject)
-            .withProjectDir(testProjectRoot.getRoot())
-            .withName("unrelated")
-            .build();
-    unrelatedSubProject.getPluginManager().apply("java");
-
-    // equivalent of "compile project(':sub')" on the root(jib) project
-    rootProject
-        .getConfigurations()
-        .getByName("compile")
-        .getDependencies()
-        .add(rootProject.getDependencies().project(ImmutableMap.of("path", subProject.getPath())));
-
-    // programmatic check
-    Assert.assertEquals(
-        Collections.singletonList(":sub"),
-        JibPlugin.getProjectDependencies(rootProject)
-            .stream()
-            .map(Project::getPath)
-            .collect(Collectors.toList()));
-
-    // check by applying the jib plugin and inspect the task dependencies
-    rootProject.getPluginManager().apply("com.google.cloud.tools.jib");
-
-    TaskContainer tasks = rootProject.getTasks();
-    // add a custom task that our jib tasks depend on to ensure we do not overwrite this dependsOn
-    TaskProvider<Task> dependencyTask = rootProject.getTasks().register("myCustomTask", task -> {});
-    KNOWN_JIB_TASKS.forEach(taskName -> tasks.getByPath(taskName).dependsOn(dependencyTask));
-
-    ((ProjectInternal) rootProject).evaluate();
-
-    KNOWN_JIB_TASKS.forEach(
-        taskName ->
-            Assert.assertEquals(
-                ImmutableSet.of(":sub:assemble", ":classes", ":myCustomTask"),
-                tasks
-                    .getByPath(taskName)
-                    .getDependsOn()
-                    .stream()
-                    .map(
-                        object ->
-                            object instanceof List ? object : Collections.singletonList(object))
-                    .map(List.class::cast)
-                    .flatMap(List::stream)
-                    .map(object -> ((TaskProvider<Task>) object).get().getPath())
-                    .collect(Collectors.toSet())));
-  }
-
-  @SuppressWarnings("unchecked")
-  @Test
   public void testWebAppProject() {
     Project project = createProject("java", "war", "com.google.cloud.tools.jib");
 
@@ -213,10 +144,16 @@ public class JibPluginTest {
     Assert.assertNotNull(warTask);
 
     for (String taskName : KNOWN_JIB_TASKS) {
-      List<TaskProvider<?>> taskProviders =
-          (List<TaskProvider<?>>) tasks.getByPath(taskName).getDependsOn().iterator().next();
-      Assert.assertEquals(1, taskProviders.size());
-      Assert.assertEquals(warTask, taskProviders.get(0).get());
+      Set<Task> taskDependencies =
+          tasks
+              .getByPath(taskName)
+              .getDependsOn()
+              .stream()
+              .filter(TaskProvider.class::isInstance)
+              .map(it -> ((TaskProvider<?>) it).get())
+              .collect(Collectors.toSet());
+
+      Assert.assertTrue(taskDependencies.contains(warTask));
     }
   }
 
@@ -234,11 +171,16 @@ public class JibPluginTest {
     Assert.assertNotNull(bootWarTask);
 
     for (String taskName : KNOWN_JIB_TASKS) {
-      List<TaskProvider<?>> taskProviders =
-          (List<TaskProvider<?>>) tasks.getByPath(taskName).getDependsOn().iterator().next();
-      Assert.assertEquals(
-          ImmutableSet.of(warTask, bootWarTask),
-          taskProviders.stream().map(TaskProvider::get).collect(Collectors.toSet()));
+      Set<Task> taskDependencies =
+          tasks
+              .getByPath(taskName)
+              .getDependsOn()
+              .stream()
+              .filter(TaskProvider.class::isInstance)
+              .map(it -> ((TaskProvider<?>) it).get())
+              .collect(Collectors.toSet());
+
+      Assert.assertTrue(taskDependencies.containsAll(Arrays.asList(warTask, bootWarTask)));
     }
   }
 
@@ -257,11 +199,16 @@ public class JibPluginTest {
     bootWarTask.setEnabled(false); // should depend on bootWar even if disabled
 
     for (String taskName : KNOWN_JIB_TASKS) {
-      List<TaskProvider<?>> taskProviders =
-          (List<TaskProvider<?>>) tasks.getByPath(taskName).getDependsOn().iterator().next();
-      Assert.assertEquals(
-          ImmutableSet.of(warTask, bootWarTask),
-          taskProviders.stream().map(TaskProvider::get).collect(Collectors.toSet()));
+      Set<Task> taskDependencies =
+          tasks
+              .getByPath(taskName)
+              .getDependsOn()
+              .stream()
+              .filter(TaskProvider.class::isInstance)
+              .map(it -> ((TaskProvider<?>) it).get())
+              .collect(Collectors.toSet());
+
+      Assert.assertTrue(taskDependencies.containsAll(Arrays.asList(warTask, bootWarTask)));
     }
   }
 
