@@ -39,8 +39,8 @@ public class InitMojo extends JibPluginConfiguration {
   public void execute() throws MojoExecutionException {
     checkJibVersion();
     MavenProject project = getProject();
-    // Ignore projects with submodules
-    if (project.getModules().size() > 0) {
+    // Ignore pom projects
+    if ("pom".equals(project.getPackaging())) {
       return;
     }
 
