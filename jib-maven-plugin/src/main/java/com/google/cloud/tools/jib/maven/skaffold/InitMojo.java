@@ -20,8 +20,6 @@ import com.google.cloud.tools.jib.maven.JibPluginConfiguration;
 import com.google.cloud.tools.jib.plugins.common.SkaffoldInitOutput;
 import com.google.common.annotations.VisibleForTesting;
 import java.io.IOException;
-import java.util.HashSet;
-import java.util.Set;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.ResolutionScope;
@@ -41,43 +39,14 @@ public class InitMojo extends JibPluginConfiguration {
   public void execute() throws MojoExecutionException {
     checkJibVersion();
     MavenProject project = getProject();
-    MavenProject topLevelProject = getSession().getTopLevelProject();
-    if (!project.equals(topLevelProject)) {
+    // Ignore projects with submodules
+    if (project.getModules().size() > 0) {
       return;
     }
 
-    if (isParentProject(project)) {
-      Set<MavenProject> leafProjects = collectLeafProjects(project);
-      for (MavenProject leafProject : leafProjects) {
-        print(leafProject, true);
-      }
-    } else {
-      print(project, false);
-    }
-  }
-
-  private Set<MavenProject> collectLeafProjects(MavenProject project) {
-    Set<MavenProject> projects = new HashSet<>();
-    for (MavenProject p : project.getCollectedProjects()) {
-      if (isParentProject(p)) {
-        projects.addAll(collectLeafProjects(p));
-      } else {
-        projects.add(p);
-      }
-    }
-    return projects;
-  }
-
-  private boolean isParentProject(MavenProject project) {
-    return project.getPackaging().equals("pom") && project.getModules().size() > 0;
-  }
-
-  private void print(MavenProject project, boolean setProject) throws MojoExecutionException {
     SkaffoldInitOutput skaffoldInitOutput = new SkaffoldInitOutput();
     skaffoldInitOutput.setImage(getTargetImage());
-    if (setProject) {
-      skaffoldInitOutput.setProject(project.getGroupId() + ":" + project.getArtifactId());
-    }
+    skaffoldInitOutput.setProject(project.getGroupId() + ":" + project.getArtifactId());
     System.out.println();
     System.out.println("BEGIN JIB JSON");
     try {

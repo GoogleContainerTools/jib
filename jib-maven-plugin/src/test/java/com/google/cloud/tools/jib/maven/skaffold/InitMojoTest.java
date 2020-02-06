@@ -81,7 +81,7 @@ public class InitMojoTest {
 
     SkaffoldInitOutput skaffoldInitOutput = new SkaffoldInitOutput(outputs.get(0));
     Assert.assertEquals("testimage", skaffoldInitOutput.getImage());
-    Assert.assertNull(skaffoldInitOutput.getProject());
+    Assert.assertEquals("com.test:hello-world", skaffoldInitOutput.getProject());
   }
 
   @Test
@@ -91,15 +91,15 @@ public class InitMojoTest {
 
     SkaffoldInitOutput skaffoldInitOutput = new SkaffoldInitOutput(outputs.get(0));
     Assert.assertEquals("testimage", skaffoldInitOutput.getImage());
-    Assert.assertEquals("com.jib.test:complex-service", skaffoldInitOutput.getProject());
+    Assert.assertEquals("com.jib.test:simple-service", skaffoldInitOutput.getProject());
 
     skaffoldInitOutput = new SkaffoldInitOutput(outputs.get(1));
     Assert.assertEquals("testimage", skaffoldInitOutput.getImage());
-    Assert.assertEquals("com.jib.test:simple-service", skaffoldInitOutput.getProject());
+    Assert.assertEquals("com.jib.test:lib", skaffoldInitOutput.getProject());
 
     skaffoldInitOutput = new SkaffoldInitOutput(outputs.get(2));
     Assert.assertEquals("testimage", skaffoldInitOutput.getImage());
-    Assert.assertEquals("com.jib.test:lib", skaffoldInitOutput.getProject());
+    Assert.assertEquals("com.jib.test:complex-service", skaffoldInitOutput.getProject());
   }
 
   @Test
