@@ -1035,7 +1035,6 @@ public class MavenProjectPropertiesTest {
     Assert.assertEquals("crepecake", mavenProjectProperties.getNativeImageExecutableName());
   }
 
-
   private BuildContext setUpBuildContext(String appRoot, ContainerizingMode containerizingMode)
       throws InvalidImageReferenceException, IOException, CacheDirectoryCreationException {
     JavaContainerBuilder javaContainerBuilder =
