@@ -1,0 +1,54 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>com.google.cloud.tools</groupId>
+  <artifactId>native-image</artifactId>
+  <version>0.0.1-SNAPSHOT</version>
+
+  <!--
+    Example of using Jib's native_image containerizing mode to package
+    the executable produced using Graal's `native-image` capability.
+
+    $ JAVA_HOME=...graal... mvn package native-image:native-image jib:dockerBuild -Dimage=native-hello
+  -->
+  <properties>
+    <maven.compiler.source>1.8</maven.compiler.source>
+    <maven.compiler.target>1.8</maven.compiler.target>
+  </properties>
+
+  <dependencies>
+    <dependency>
+      <groupId>com.google.guava</groupId>
+      <artifactId>guava</artifactId>
+      <version>27.1-jre</version>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.graalvm.nativeimage</groupId>
+        <artifactId>native-image-maven-plugin</artifactId>
+        <version>19.3.0</version>
+        <configuration>
+          <imageName>demo</imageName>
+          <mainClass>example.HelloWorld</mainClass>
+          <buildArgs>--no-fallback</buildArgs>
+        </configuration>
+      </plugin>
+
+      <plugin>
+        <groupId>com.google.cloud.tools</groupId>
+        <artifactId>jib-maven-plugin</artifactId>
+        <version>2.0.1-SNAPSHOT</version>
+        <configuration>
+          <from>
+            <image>gcr.io/distroless/static</image>
+          </from>
+          <containerizingMode>native_image</containerizingMode>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+</project>
