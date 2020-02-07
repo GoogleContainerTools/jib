@@ -28,12 +28,24 @@
   <build>
     <plugins>
       <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-jar-plugin</artifactId>
+        <configuration>
+          <archive>
+            <manifest>
+              <mainClass>example.HelloWorld</mainClass>
+              <addClasspath>true</addClasspath>
+            </manifest>
+          </archive>
+        </configuration>
+      </plugin>
+      <plugin>
         <groupId>org.graalvm.nativeimage</groupId>
         <artifactId>native-image-maven-plugin</artifactId>
         <version>19.3.0</version>
         <configuration>
-          <imageName>demo</imageName>
-          <mainClass>example.HelloWorld</mainClass>
+          <!-- <imageName>demo</imageName> -->
+          <!-- <mainClass>example.HelloWorld</mainClass> -->
           <buildArgs>--no-fallback</buildArgs>
         </configuration>
       </plugin>

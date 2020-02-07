@@ -216,6 +216,18 @@ public class MavenProjectPropertiesTest {
     return node;
   }
 
+  private static void addXpp3DomPath(Xpp3Dom parent, String[] path, String value) {
+    for (String name : path) {
+      Xpp3Dom child = parent.getChild(name);
+      if (child == null) {
+        child = new Xpp3Dom(name);
+        parent.addChild(child);
+      }
+      parent = child;
+    }
+    parent.setValue(value);
+  }
+
   private static Xpp3Dom addXpp3DomChild(Xpp3Dom parent, String name, String value) {
     Xpp3Dom node = new Xpp3Dom(name);
     node.setValue(value);
@@ -1024,15 +1036,60 @@ public class MavenProjectPropertiesTest {
   }
 
   @Test
-  public void testGetNativeImageExecutableName_artifact() {
+  public void testGetNativeImageExecutableName_mainClass() {
     Mockito.when(mockMavenProject.getPlugin("org.graalvm.nativeimage:native-image-maven-plugin"))
         .thenReturn(mockNativeImagePlugin);
     Xpp3Dom nativeImagePluginConfiguration = new Xpp3Dom("configuration");
+    addXpp3DomChild(nativeImagePluginConfiguration, "mainClass", "mainClass");
     Mockito.when(mockNativeImagePlugin.getConfiguration())
         .thenReturn(nativeImagePluginConfiguration);
-    Mockito.when(mockMavenProject.getArtifactId()).thenReturn("crepecake");
 
-    Assert.assertEquals("crepecake", mavenProjectProperties.getNativeImageExecutableName());
+    Assert.assertEquals("mainClass", mavenProjectProperties.getNativeImageExecutableName());
+  }
+
+  @Test
+  public void testGetNativeImageExecutableName_otherPlugins() {
+    Mockito.when(mockMavenProject.getPlugin("org.graalvm.nativeimage:native-image-maven-plugin"))
+        .thenReturn(mockNativeImagePlugin);
+    // in reverse order of priority as we accumulate successive plugin configurations
+    String[][] configurations = {
+      {
+        "org.apache.maven.plugins:maven-jar-plugin",
+        "jarClass" /* mainClass */,
+        /* the path */
+        "archive",
+        "manifest",
+        "mainClass"
+      },
+      {
+        "org.apache.maven.plugins:maven-assembly-plugin",
+        "assemblyClass" /* mainClass */,
+        /* the path */
+        "archive",
+        "manifest",
+        "mainClass"
+      },
+      {
+        "org.apache.maven.plugins:maven-shade-plugin",
+        "shadeClass" /* mainClass */,
+        /* the path */
+        "transformers",
+        "transformer",
+        "mainClass"
+      },
+    };
+    for (String[] configuration : configurations) {
+      Plugin plugin = Mockito.mock(Plugin.class);
+      Mockito.when(mockMavenProject.getPlugin(configuration[0])).thenReturn(plugin);
+      Xpp3Dom pluginConfiguration = new Xpp3Dom("configuration");
+      addXpp3DomPath(
+          pluginConfiguration,
+          Arrays.copyOfRange(configuration, 2, configuration.length),
+          configuration[1]);
+      Mockito.when(plugin.getConfiguration()).thenReturn(pluginConfiguration);
+
+      Assert.assertEquals(configuration[1], mavenProjectProperties.getNativeImageExecutableName());
+    }
   }
 
   private BuildContext setUpBuildContext(String appRoot, ContainerizingMode containerizingMode)

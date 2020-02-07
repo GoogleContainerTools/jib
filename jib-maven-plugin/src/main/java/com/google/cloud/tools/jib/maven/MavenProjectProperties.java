@@ -311,23 +311,40 @@ public class MavenProjectProperties implements ProjectProperties {
 
   @Override
   public String getNativeImageExecutableName() {
-    Plugin nativeImagePlugin =
-        project.getPlugin("org.graalvm.nativeimage:native-image-maven-plugin");
-    if (nativeImagePlugin == null) {
-      throw new IllegalStateException("native-image-maven-plugin configuration not found");
-    }
-
-    String executableName = project.getArtifactId(); // default binary name
-    if (nativeImagePlugin.getConfiguration() != null) {
-      Xpp3Dom imageBody = ((Xpp3Dom) nativeImagePlugin.getConfiguration()).getChild("imageName");
-      if (imageBody != null) {
-        executableName = imageBody.getValue();
+    // If <imageName> is not specified, then native-image uses the mainClass name as the executable.
+    // If <mainClass> is not specified, then native-image-maven-plugin looks at the configurations
+    // for a set of other well-known plugins.
+    // https://github.com/oracle/graal/blob/master/substratevm/src/native-image-maven-plugin/src/main/java/com/oracle/substratevm/NativeImageMojo.java#L349
+    String[][] locations = {
+      {"org.graalvm.nativeimage:native-image-maven-plugin", "imageName"},
+      {"org.graalvm.nativeimage:native-image-maven-plugin", "mainClass"},
+      {"org.apache.maven.plugins:maven-shade-plugin", "transformers", "transformer", "mainClass"},
+      {"org.apache.maven.plugins:maven-assembly-plugin", "archive", "manifest", "mainClass"},
+      {"org.apache.maven.plugins:maven-jar-plugin", "archive", "manifest", "mainClass"},
+    };
+    for (String[] path : locations) {
+      String value = resolvePluginConfigurationValue(path);
+      if (!Strings.isNullOrEmpty(value)) {
+        return value;
       }
     }
-    if (Strings.isNullOrEmpty(executableName)) {
-      throw new IllegalStateException("cannot determine native-image executable name");
+    throw new IllegalStateException("cannot determine native-image executable name");
+  }
+
+  @Nullable
+  private String resolvePluginConfigurationValue(String[] path) {
+    Plugin plugin = project.getPlugin(path[0]);
+    if (plugin == null || plugin.getConfiguration() == null) {
+      return null;
     }
-    return executableName;
+    Xpp3Dom dom = (Xpp3Dom) plugin.getConfiguration();
+    for (int i = 1; dom != null && i < path.length; i++) {
+      dom = dom.getChild(path[i]);
+    }
+    if (dom == null) {
+      return null;
+    }
+    return dom.getValue();
   }
 
   @VisibleForTesting
