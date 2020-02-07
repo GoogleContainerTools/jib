@@ -246,6 +246,10 @@ public class MavenProjectProperties implements ProjectProperties {
 
         case NATIVE_IMAGE:
           Path executable = findNativeImageExecutable();
+          log(
+              LogEvent.info(
+                  String.format(
+                      "[experimental:%s]: containerizing %s\n", containerizingMode, executable)));
           return javaContainerBuilder.forNativeImage(executable);
 
         default:

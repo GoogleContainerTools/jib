@@ -392,6 +392,10 @@ public class PluginConfigurationProcessor {
     if (mode == ContainerizingMode.NATIVE_IMAGE) {
       AbsoluteUnixPath containerExecutable =
           appRoot.resolve(projectProperties.getNativeImageExecutableName());
+      projectProperties.log(
+          LogEvent.info(
+              String.format(
+                  "[experimental:%s]: entrypoint set to %s\n", mode, containerExecutable)));
       return Collections.singletonList(containerExecutable.toString());
     }
 
