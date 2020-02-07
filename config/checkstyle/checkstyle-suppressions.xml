@@ -1,0 +1,38 @@
+<?xml version="1.0"?>
+<!DOCTYPE suppressions PUBLIC
+  "-//Puppy Crawl//DTD Suppressions 1.1//EN"
+  "http://www.puppycrawl.com/dtds/suppressions_1_1.dtd">
+<suppressions>
+  <!-- clash with google java format -->
+  <suppress files=".*\.java" checks="SingleLineJavadoc"/>
+  <suppress files=".*\.java" checks="Indentation"/>
+  <suppress files=".*\.java" checks="RightCurly"/>
+  <suppress files=".*\.java" checks="LineLength"/>
+
+  <!-- temporary suppressions as we work through them -->
+  <suppress files=".*\.java" checks="VariableDeclarationUsageDistance"/>
+  <suppress files=".*\.java" checks="MissingJavadocMethod"/>
+  <suppress files=".*\.java" checks="SummaryJavadoc"/>
+  <suppress files=".*\.java" checks="JavadocParagraph"/>
+  <suppress files=".*\.java" checks="MemberName"/>
+  <suppress files=".*\.java" checks="OverloadMethodsDeclarationOrder"/>
+  <suppress files=".*\.java" checks="AbbreviationAsWordInName"/>
+  <suppress files=".*\.java" checks="EmptyBlock"/>
+  <suppress files=".*\.java" checks="WhitespaceAround"/>
+  <suppress files=".*\.java" checks="EmptyLineSeparator"/>
+  <suppress files=".*\.java" checks="EmptyCatchBlock"/>
+  <suppress files=".*\.java" checks="MultipleVariableDeclarations"/>
+  <suppress files=".*\.java" checks="AtclauseOrder"/>
+  <suppress files=".*\.java" checks="ArrayTypeStyle"/>
+  <suppress files=".*\.java" checks="MissingSwitchDefault"/>
+  <suppress files=".*\.java" checks="NonEmptyAtclauseDescription"/>
+  <suppress files=".*\.java" checks="MethodName"/>
+
+  <!-- leniency for json templates -->
+  <suppress files=".*/jib-core/.*Template\.java" checks="MemberName"/>
+
+  <!-- leniency for test files -->
+  <suppress files=".*/integration-test/.*\.java" checks="MissingJavadocMethod"/>
+  <suppress files=".*/integration-test/.*\.java" checks="VariableDeclarationUsageDistance"/>
+
+</suppressions>
