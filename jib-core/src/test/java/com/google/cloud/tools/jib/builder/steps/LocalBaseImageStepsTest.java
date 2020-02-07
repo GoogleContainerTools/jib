@@ -24,7 +24,7 @@ import com.google.cloud.tools.jib.configuration.BuildContext;
 import com.google.cloud.tools.jib.docker.DockerClient.DockerImageDetails;
 import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.filesystem.TempDirectoryProvider;
-import com.google.common.collect.ImmutableList;
+import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import com.google.common.io.Resources;
 import com.google.common.util.concurrent.MoreExecutors;
 import java.io.IOException;
@@ -133,13 +133,14 @@ public class LocalBaseImageStepsTest {
   @Test
   public void testGetCachedDockerImage()
       throws IOException, DigestException, CacheCorruptedException, URISyntaxException {
+    String dockerInspectJson =
+        "{\"Size\": 0,"
+            + "\"Id\": \"sha256:066872f17ae819f846a6d5abcfc3165abe13fb0a157640fa8cb7af81077670c0\","
+            + "\"RootFS\": { \"Layers\": ["
+            + "  \"sha256:5e701122d3347fae0758cd5b7f0692c686fcd07b0e7fd9c4a125fbdbbedc04dd\","
+            + "  \"sha256:f1ac3015bcbf0ada4750d728626eb10f0f585199e2b667dcd79e49f0e926178e\" ] } }";
     DockerImageDetails dockerImageDetails =
-        new DockerImageDetails(
-            0,
-            "sha256:066872f17ae819f846a6d5abcfc3165abe13fb0a157640fa8cb7af81077670c0",
-            ImmutableList.of(
-                "sha256:5e701122d3347fae0758cd5b7f0692c686fcd07b0e7fd9c4a125fbdbbedc04dd",
-                "sha256:f1ac3015bcbf0ada4750d728626eb10f0f585199e2b667dcd79e49f0e926178e"));
+        JsonTemplateMapper.readJson(dockerInspectJson, DockerImageDetails.class);
     Path cachePath = temporaryFolder.newFolder("cache").toPath();
     Files.createDirectories(cachePath.resolve("local/config"));
     Cache cache = Cache.withDirectory(cachePath);

@@ -16,6 +16,8 @@
 
 package com.google.cloud.tools.jib.docker;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.cloud.tools.jib.api.DescriptorDigest;
 import com.google.cloud.tools.jib.api.ImageReference;
 import com.google.cloud.tools.jib.http.NotifyingOutputStream;
@@ -51,20 +53,23 @@ public class DockerClient {
   /**
    * Contains the size, image ID, and diff IDs of an image inspected with {@code docker inspect}.
    */
+  @JsonIgnoreProperties(ignoreUnknown = true)
   public static class DockerImageDetails implements JsonTemplate {
-    private long size;
-    private String imageId = "";
-    private List<String> diffIds = Collections.emptyList();
 
-    // Required for JSON
-    public DockerImageDetails() {}
-
-    @VisibleForTesting
-    public DockerImageDetails(long size, String imageId, List<String> diffIds) {
-      this.size = size;
-      this.imageId = imageId;
-      this.diffIds = diffIds;
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    private static class RootFsTemplate implements JsonTemplate {
+      @JsonProperty("Layers")
+      private final List<String> layers = Collections.emptyList();
     }
+
+    @JsonProperty("Size")
+    private long size;
+
+    @JsonProperty("Id")
+    private String imageId = "";
+
+    @JsonProperty("RootFS")
+    private final RootFsTemplate rootFs = new RootFsTemplate();
 
     public long getSize() {
       return size;
@@ -75,8 +80,8 @@ public class DockerClient {
     }
 
     public List<DescriptorDigest> getDiffIds() throws DigestException {
-      List<DescriptorDigest> processedDiffIds = new ArrayList<>(diffIds.size());
-      for (String diffId : diffIds) {
+      List<DescriptorDigest> processedDiffIds = new ArrayList<>(rootFs.layers.size());
+      for (String diffId : rootFs.layers) {
         processedDiffIds.add(DescriptorDigest.fromDigest(diffId.trim()));
       }
       return processedDiffIds;
@@ -134,18 +139,6 @@ public class DockerClient {
 
       return processBuilder;
     };
-  }
-
-  /**
-   * Parses the results of {@code docker inspect} into an {@link DockerImageDetails}.
-   *
-   * @param inspectOutput the output of the {@code docker inspect} command containing the size,
-   *     image ID, and diff IDs
-   * @return the {@link DockerImageDetails}
-   */
-  @VisibleForTesting
-  static DockerImageDetails parseInspectResults(String inspectOutput) throws IOException {
-    return JsonTemplateMapper.readJson(inspectOutput, DockerImageDetails.class);
   }
 
   private static String getStderrOutput(Process process) {
@@ -265,21 +258,12 @@ public class DockerClient {
   public DockerImageDetails inspect(ImageReference imageReference)
       throws IOException, InterruptedException {
     Process inspectProcess =
-        docker(
-            "inspect",
-            "-f",
-            "{\"size\":{{.Size}},\"imageId\":\"{{.Id}}\",\"diffIds\":{{json .RootFS.Layers}}}",
-            "--type",
-            "image",
-            imageReference.toString());
+        docker("inspect", "-f", "{{json .}}", "--type", "image", imageReference.toString());
     if (inspectProcess.waitFor() != 0) {
       throw new IOException(
           "'docker inspect' command failed with error: " + getStderrOutput(inspectProcess));
     }
-    return parseInspectResults(
-        CharStreams.toString(
-                new InputStreamReader(inspectProcess.getInputStream(), StandardCharsets.UTF_8))
-            .trim());
+    return JsonTemplateMapper.readJson(inspectProcess.getInputStream(), DockerImageDetails.class);
   }
 
   /** Runs a {@code docker} command. */
