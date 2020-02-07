@@ -16,14 +16,15 @@
 
 package com.google.cloud.tools.jib.registry.credentials;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.type.MapType;
 import com.google.api.client.util.Base64;
 import com.google.cloud.tools.jib.api.Credential;
 import com.google.cloud.tools.jib.api.LogEvent;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import com.google.cloud.tools.jib.registry.RegistryAliasGroup;
 import com.google.cloud.tools.jib.registry.credentials.json.DockerConfigTemplate;
+import com.google.cloud.tools.jib.registry.credentials.json.DockerConfigTemplate.AuthTemplate;
 import com.google.common.annotations.VisibleForTesting;
 import java.io.IOException;
 import java.io.InputStream;
@@ -87,14 +88,12 @@ public class DockerConfigCredentialRetriever {
     }
 
     if (legacyConfigFormat) {
-      ObjectMapper objectMapper = new ObjectMapper();
-      MapType mapType =
-          objectMapper
-              .getTypeFactory()
-              .constructMapType(Map.class, String.class, DockerConfigTemplate.AuthTemplate.class);
       try (InputStream fileIn = Files.newInputStream(dockerConfigFile)) {
-        DockerConfig dockerConfig =
-            new DockerConfig(new DockerConfigTemplate(objectMapper.readValue(fileIn, mapType)));
+        // legacy config format is the value of the "auths":{ <map> } block of the new config (i.e.,
+        // the <map> of string -> DockerConfigTemplate.AuthTemplate).
+        Map<String, AuthTemplate> auths =
+            new ObjectMapper().readValue(fileIn, new TypeReference<Map<String, AuthTemplate>>() {});
+        DockerConfig dockerConfig = new DockerConfig(new DockerConfigTemplate(auths));
         return retrieve(dockerConfig, logger);
       }
     }
