@@ -553,6 +553,7 @@ or
 gradle --debug -Djava.util.logging.config.file=path/to/log.properties -Djib.serialize=true -Djib.console=plain ...
 ```
 If you don't need DEBUG-level logs, omit `-X` (Maven) or `--debug` (Gradle).
+If you don't need DEBUG-level logs, omit `-X` (Maven) or `--debug` (Gradle).
 
 ### How do I view debug logs for Jib?
 
