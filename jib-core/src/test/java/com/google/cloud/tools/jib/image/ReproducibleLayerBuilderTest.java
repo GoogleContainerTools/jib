@@ -246,17 +246,17 @@ public class ReproducibleLayerBuilderTest {
       Assert.assertEquals(Instant.ofEpochSecond(1), root.getModTime().toInstant());
 
       // parentAAA (custom permissions, custom timestamp)
-      TarArchiveEntry rootParentAAA = in.getNextTarEntry();
-      Assert.assertEquals(040111, rootParentAAA.getMode());
-      Assert.assertEquals(Instant.ofEpochSecond(10), rootParentAAA.getModTime().toInstant());
+      TarArchiveEntry rootParentAaa = in.getNextTarEntry();
+      Assert.assertEquals(040111, rootParentAaa.getMode());
+      Assert.assertEquals(Instant.ofEpochSecond(10), rootParentAaa.getModTime().toInstant());
 
       // skip over fileA
       in.getNextTarEntry();
 
       // parentBBB (default permissions - ignored custom permissions, since fileB added first)
-      TarArchiveEntry rootParentBBB = in.getNextTarEntry();
+      TarArchiveEntry rootParentBbb = in.getNextTarEntry();
       // TODO (#1650): we want 040444 here.
-      Assert.assertEquals(040755, rootParentBBB.getMode());
+      Assert.assertEquals(040755, rootParentBbb.getMode());
       // TODO (#1650): we want Instant.ofEpochSecond(40) here.
       Assert.assertEquals(Instant.ofEpochSecond(1), root.getModTime().toInstant());
 
@@ -264,8 +264,8 @@ public class ReproducibleLayerBuilderTest {
       in.getNextTarEntry();
 
       // parentCCC (default permissions - no entry provided)
-      TarArchiveEntry rootParentCCC = in.getNextTarEntry();
-      Assert.assertEquals(040755, rootParentCCC.getMode());
+      TarArchiveEntry rootParentCcc = in.getNextTarEntry();
+      Assert.assertEquals(040755, rootParentCcc.getMode());
       Assert.assertEquals(Instant.ofEpochSecond(1), root.getModTime().toInstant());
 
       // we don't care about fileC

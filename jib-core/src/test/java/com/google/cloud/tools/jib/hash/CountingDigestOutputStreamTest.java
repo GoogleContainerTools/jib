@@ -34,7 +34,7 @@ import org.junit.Test;
 /** Tests for {@link CountingDigestOutputStream}. */
 public class CountingDigestOutputStreamTest {
 
-  private final Map<String, String> KNOWN_SHA256_HASHES =
+  private static final ImmutableMap<String, String> KNOWN_SHA256_HASHES =
       ImmutableMap.of(
           "crepecake",
           "52a9e4d4ba4333ce593707f98564fee1e6d898db0d3602408c0b2a6a424d357c",
