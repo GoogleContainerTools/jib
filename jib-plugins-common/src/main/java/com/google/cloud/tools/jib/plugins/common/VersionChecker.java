@@ -37,7 +37,7 @@ import java.util.regex.Pattern;
  *       akin to {@code [1.0,)}
  * </ol>
  *
- * To support custom version representations, the actual version object type ({@code <V>}) is
+ * <p>To support custom version representations, the actual version object type ({@code <V>}) is
  * pluggable. It must implement {@link Comparable}. The versions in the range must have at most 3
  * components (e.g., {@code major.minor.micro}).
  *
@@ -60,25 +60,25 @@ public class VersionChecker<V extends Comparable<? super V>> {
 
   /** Return {@code true} if {@code a} is less than {@code b}. */
   @VisibleForTesting
-  static <T extends Comparable<? super T>> boolean LT(T a, T b) {
+  static <T extends Comparable<? super T>> boolean lt(T a, T b) {
     return a.compareTo(b) < 0;
   }
 
   /** Return {@code true} if {@code a} is less than or equal to {@code b}. */
   @VisibleForTesting
-  static <T extends Comparable<? super T>> boolean LE(T a, T b) {
+  static <T extends Comparable<? super T>> boolean le(T a, T b) {
     return a.compareTo(b) <= 0;
   }
 
   /** Return {@code true} if {@code a} is greater than {@code b}. */
   @VisibleForTesting
-  static <T extends Comparable<? super T>> boolean GT(T a, T b) {
+  static <T extends Comparable<? super T>> boolean gt(T a, T b) {
     return a.compareTo(b) > 0;
   }
 
   /** Return {@code true} if {@code a} is greater than or equal to {@code b}. */
   @VisibleForTesting
-  static <T extends Comparable<? super T>> boolean GE(T a, T b) {
+  static <T extends Comparable<? super T>> boolean ge(T a, T b) {
     return a.compareTo(b) >= 0;
   }
 
@@ -104,7 +104,7 @@ public class VersionChecker<V extends Comparable<? super V>> {
 
     // Treat a single version "1.4" as a left bound, equivalent to "[1.4,)"
     if (acceptableVersionRange.matches(VERSION_REGEX)) {
-      return GE(pluginVersion, parseVersion(acceptableVersionRange));
+      return ge(pluginVersion, parseVersion(acceptableVersionRange));
     }
 
     // Otherwise ensure it is a version range with bounds
@@ -115,9 +115,9 @@ public class VersionChecker<V extends Comparable<? super V>> {
     Preconditions.checkArgument(
         leftBound != null || rightBound != null, "left and right bounds cannot both be empty");
     BiPredicate<V, V> leftComparator =
-        acceptableVersionRange.startsWith("[") ? VersionChecker::GE : VersionChecker::GT;
+        acceptableVersionRange.startsWith("[") ? VersionChecker::ge : VersionChecker::gt;
     BiPredicate<V, V> rightComparator =
-        acceptableVersionRange.endsWith("]") ? VersionChecker::LE : VersionChecker::LT;
+        acceptableVersionRange.endsWith("]") ? VersionChecker::le : VersionChecker::lt;
 
     if (leftBound != null && !leftComparator.test(pluginVersion, parseVersion(leftBound))) {
       return false;

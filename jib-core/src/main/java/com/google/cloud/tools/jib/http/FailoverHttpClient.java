@@ -69,7 +69,7 @@ import org.apache.http.impl.client.HttpClientBuilder;
  *       </ol>
  * </ul>
  *
- * This failover behavior is similar to how the Docker client works:
+ * <p>This failover behavior is similar to how the Docker client works:
  * https://docs.docker.com/registry/insecure/#deploy-a-plain-http-registry
  */
 public class FailoverHttpClient {
