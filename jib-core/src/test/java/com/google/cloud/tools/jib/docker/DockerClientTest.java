@@ -334,6 +334,7 @@ public class DockerClientTest {
               Mockito.when(mockProcessBuilder.start()).thenReturn(mockProcess);
             }
           } catch (IOException ignored) {
+            // ignored
           }
           return mockProcessBuilder;
         });

@@ -172,7 +172,7 @@ class PullBaseImageStep implements Callable<ImageAndRegistryClient> {
   /**
    * Pulls the base image.
    *
-   * @param registryAuthorization authentication credentials to possibly use
+   * @param registryClient to communicate with remote registry
    * @param progressEventDispatcher the {@link ProgressEventDispatcher} for emitting {@link
    *     ProgressEvent}s
    * @return the pulled image
@@ -253,9 +253,10 @@ class PullBaseImageStep implements Callable<ImageAndRegistryClient> {
           return JsonToImageTranslator.toImage(
               buildableManifestTemplate, containerConfigurationTemplate);
         }
+      default:
+        throw new IllegalStateException(
+            "Unknown manifest schema version: " + manifestTemplate.getSchemaVersion());
     }
-
-    throw new IllegalStateException("Unknown manifest schema version");
   }
 
   /**

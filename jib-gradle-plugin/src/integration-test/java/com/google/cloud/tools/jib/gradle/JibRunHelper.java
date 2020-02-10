@@ -55,6 +55,7 @@ public class JibRunHelper {
           }
         }
       } catch (IOException ignored) {
+        // ignored
       }
     }
     return null;

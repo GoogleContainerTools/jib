@@ -16,8 +16,6 @@
   <suppress files=".*\.java" checks="JavadocParagraph"/>
   <suppress files=".*\.java" checks="MemberName"/>
   <suppress files=".*\.java" checks="OverloadMethodsDeclarationOrder"/>
-  <suppress files=".*\.java" checks="EmptyCatchBlock"/>
-  <suppress files=".*\.java" checks="MissingSwitchDefault"/>
   <suppress files=".*\.java" checks="MethodName"/>
 
   <!-- leniency for json templates -->
