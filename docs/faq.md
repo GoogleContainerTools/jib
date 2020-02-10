@@ -29,15 +29,18 @@ If a question you have is not answered below, please [submit an issue](/../../is
 [I would like to run my application with a javaagent.](#i-would-like-to-run-my-application-with-a-javaagent)\
 [How can I tag my image with a timestamp?](#how-can-i-tag-my-image-with-a-timestamp)
 
-**Common Problems**\
+**Build Problems**\
 [How can I diagnose problems pulling or pushing from remote registries?](#how-can-i-diagnose-problems-pulling-or-pushing-from-remote-registries)\
 [What should I do when the registry responds with Forbidden or DENIED?](#what-should-i-do-when-the-registry-responds-with-forbidden-or-denied)\
 [What should I do when the registry responds with UNAUTHORIZED?](#what-should-i-do-when-the-registry-responds-with-unauthorized)\
 [How do I configure a proxy?](#how-do-i-configure-a-proxy)\
 [How can I examine network traffic?](#how-can-i-examine-network-traffic)\
-[How do I view debug logs for Jib?](#how-do-i-view-debug-logs-for-jib)\
+[How do I view debug logs for Jib?](#how-do-i-view-debug-logs-for-jib)
+
+**Launch Problems**\
 [I am seeing `ImagePullBackoff` on my pods.](#i-am-seeing-imagepullbackoff-on-my-pods-in-minikube)\
-[I am seeing `Method Not Found` or `Class Not Found` errors when building.](#i-am-seeing-method-not-found-or-class-not-found-errors-when-building)
+[I am seeing `Method Not Found` or `Class Not Found` errors when building.](#i-am-seeing-method-not-found-or-class-not-found-errors-when-building)\
+[Why won't my container start?](#why-wont-my-container-start)
 
 ---
 
@@ -464,7 +467,7 @@ Some plugins, such as the [Docker Prepare Gradle Plugin](https://github.com/gcla
 To inspect the image that is produced from the build using Docker, you can use commands such as `docker inspect your/image:tag` to view the image configuration, or you can also download the image using `docker save` to manually inspect the container image. Other tools, such as [dive](https://github.com/wagoodman/dive), provide nicer UI to inspect the image.
 
 
-## Common Problems
+## Build Problems
 
 ### <a name="registry-errors"></a>How can I diagnose problems pulling or pushing from remote registries?
 
@@ -526,6 +529,41 @@ If you encounter issues interacting with a registry other than `UNAUTHORIZED`, c
 
 Jib currently requires configuring your build tool to use the appropriate [Java networking properties](https://docs.oracle.com/javase/8/docs/api/java/net/doc-files/net-properties.html) (`https.proxyHost`, `https.proxyPort`, `https.proxyUser`, `https.proxyPassword`).
 
+
+### How can I examine network traffic?
+
+It can be useful to examine network traffic to diagnose connectivity issues. Jib uses the Google HTTP client library to interact with registries which logs HTTP requests using the JVM-provided `java.util.logging` facilities.  It is very helpful to serialize Jib's actions using the `jib.serialize` property.
+
+To see the HTTP traffic, create a `logging.properties` file with the following:
+```
+handlers = java.util.logging.ConsoleHandler
+java.util.logging.ConsoleHandler.level=ALL
+
+# CONFIG hides authentication data
+# ALL includes authentication data
+com.google.api.client.http.level=CONFIG
+```
+
+And then launch your build tool as follows:
+```sh
+mvn -Djava.util.logging.config.file=path/to/log.properties -Djib.serialize=true -Djib.console=plain ...
+```
+or
+```sh
+gradle -Djava.util.logging.config.file=path/to/log.properties -Djib.serialize=true -Djib.console=plain ...
+```
+
+You may wish to enable the debug logs too (`-X` for Maven, or `--debug` for Gradle).
+
+### How do I view debug logs for Jib?
+
+Maven: use `mvn -X -Djib.serialize=true` to enable more detailed logging and serialize Jib's actions.
+
+Gradle: use `gradle --debug -Djib.serialize=true` to enable more detailed logging and serialize Jib's actions.
+
+
+## Launch problems
+
 ### I am seeing `ImagePullBackoff` on my pods (in [minikube](https://github.com/kubernetes/minikube)).
 
 When you use your private image built with Jib in a [Kubernetes cluster](kubernetes.io), the cluster needs to be configured with credentials to pull the image. This involves 1) creating a [Secret](https://kubernetes.io/docs/concepts/configuration/secret/), and 2) using the Secret as [`imagePullSecrets`](https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/#add-imagepullsecrets-to-a-service-account).
@@ -576,31 +614,25 @@ plugins {
 }
 ```
 
-### How can I examine network traffic?
+### Why won't my container start?
 
-It can be useful to examine network traffic to diagnose connectivity issues. Jib uses the Google HTTP client library to interact with registries which logs HTTP requests using the JVM-provided `java.util.logging` facilities.  It is very helpful to serialize Jib's actions using the `jib.serialize` property.
+There are some common reasons why containers fail on launch.
 
-To see the HTTP traffic, create a `logging.properties` file with the following:
+#### My shell script won't run
+ 
+The default base image used by Jib, ([`distoless/java`](https://github.com/GoogleContainerTools/distroless/tree/master/java)), does not include a shell, and thus shell scripts won't launch.
+
+Solution: use a different base image with a shell.
+
+#### The container fails with `exec` errors 
+
+A Jib user reported an error launching their container:
 ```
-handlers = java.util.logging.ConsoleHandler
-java.util.logging.ConsoleHandler.level=ALL
-
-# CONFIG hides authentication data
-# ALL includes authentication data
-com.google.api.client.http.level=CONFIG
-```
-
-And then launch your build tool as follows:
-```sh
-mvn -Djava.util.logging.config.file=path/to/log.properties -Djib.serialize=true -Djib.console=plain ...
-```
-or
-```sh
-gradle -Djava.util.logging.config.file=path/to/log.properties -Djib.serialize=true -Djib.console=plain ...
+standard_init_linux.go:211 exec user process caused "no such file or directory"
 ```
 
-### How do I view debug logs for Jib?
+On examining the container structure with [Dive](https://github.com/wagoodman/dive), the user discovered that the contents of the `/lib` directory had disappeared.
 
-Maven: use `mvn -X -Djib.serialize=true` to enable more detailed logging and serialize Jib's actions.
+The user had used Jib's ability to install extra files into the image ([Maven](https://github.com/GoogleContainerTools/jib/tree/master/jib-maven-plugin#adding-arbitrary-files-to-the-image), [Gradle](https://github.com/GoogleContainerTools/jib/tree/master/jib-gradle-plugin#adding-arbitrary-files-to-the-image)) to install a library file by placing it in `src/main/jib/lib/libfoo.so`. This would normally cause the `libfoo.so` to be installed in the image as `/lib/libfoo.so`. But `/lib` and `/lib64` in the user's base image were symbolic links. Jib does not follow such symbolic links when creating the image. And at container initialization time, Docker treats these symlinks as a file, and thus the symbolic link was replaced with `/lib` as a new directory. As a result, none of the system shared libraries were resolved and dynamically-linked programs failed.
 
-Gradle: use `gradle --debug -Djib.serialize=true` to enable more detailed logging and serialize Jib's actions.
+Solution: The user installed the file in a different location.
