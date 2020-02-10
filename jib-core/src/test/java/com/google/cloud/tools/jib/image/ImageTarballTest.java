@@ -56,8 +56,10 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class ImageTarballTest {
 
-  private Path fileA, fileB;
-  private DescriptorDigest fakeDigestA, fakeDigestB;
+  private Path fileA;
+  private Path fileB;
+  private DescriptorDigest fakeDigestA;
+  private DescriptorDigest fakeDigestB;
 
   @Mock private Layer mockLayer1;
   @Mock private Layer mockLayer2;

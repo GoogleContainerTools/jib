@@ -17,13 +17,8 @@
   <suppress files=".*\.java" checks="MemberName"/>
   <suppress files=".*\.java" checks="OverloadMethodsDeclarationOrder"/>
   <suppress files=".*\.java" checks="AbbreviationAsWordInName"/>
-  <suppress files=".*\.java" checks="EmptyBlock"/>
   <suppress files=".*\.java" checks="WhitespaceAround"/>
-  <suppress files=".*\.java" checks="EmptyLineSeparator"/>
   <suppress files=".*\.java" checks="EmptyCatchBlock"/>
-  <suppress files=".*\.java" checks="MultipleVariableDeclarations"/>
-  <suppress files=".*\.java" checks="AtclauseOrder"/>
-  <suppress files=".*\.java" checks="ArrayTypeStyle"/>
   <suppress files=".*\.java" checks="MissingSwitchDefault"/>
   <suppress files=".*\.java" checks="NonEmptyAtclauseDescription"/>
   <suppress files=".*\.java" checks="MethodName"/>
