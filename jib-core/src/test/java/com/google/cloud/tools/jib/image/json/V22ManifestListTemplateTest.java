@@ -40,20 +40,20 @@ public class V22ManifestListTemplateTest {
     List<ManifestDescriptorTemplate> manifests = manifestListJson.getManifests();
     Assert.assertEquals(3, manifests.size());
 
-    List<String> validPlatformPPC = manifestListJson.getDigestsForPlatform("ppc64le", "linux");
-    Assert.assertEquals(1, validPlatformPPC.size());
+    List<String> validPlatformPpc = manifestListJson.getDigestsForPlatform("ppc64le", "linux");
+    Assert.assertEquals(1, validPlatformPpc.size());
     Assert.assertEquals(
         "sha256:e692418e4cbaf90ca69d05a66403747baa33ee08806650b51fab815ad7fc331f",
-        validPlatformPPC.get(0));
+        validPlatformPpc.get(0));
 
-    List<String> validPlatformAMD = manifestListJson.getDigestsForPlatform("amd64", "linux");
-    Assert.assertEquals(2, validPlatformAMD.size());
+    List<String> validPlatformAmd = manifestListJson.getDigestsForPlatform("amd64", "linux");
+    Assert.assertEquals(2, validPlatformAmd.size());
     Assert.assertEquals(
         "sha256:5b0bcabd1ed22e9fb1310cf6c2dec7cdef19f0ad69efa1f392e94a4333501270",
-        validPlatformAMD.get(0));
+        validPlatformAmd.get(0));
     Assert.assertEquals(
         "sha256:cccbcabd1ed22e9fb1310cf6c2dec7cdef19f0ad69efa1f392e94a4333501999",
-        validPlatformAMD.get(1));
+        validPlatformAmd.get(1));
 
     List<String> invalidArch = manifestListJson.getDigestsForPlatform("amd72", "linux");
     Assert.assertEquals(0, invalidArch.size());

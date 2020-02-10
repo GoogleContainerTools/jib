@@ -197,39 +197,39 @@ public class ReproducibleLayerBuilderTest {
     Path testRoot = temporaryFolder.getRoot().toPath();
 
     // the path doesn't really matter on source files, but these are structured
-    Path parent = Files.createDirectories(testRoot.resolve("aaa"));
+    Path parent = Files.createDirectories(testRoot.resolve("dirA"));
     Path fileA = Files.createFile(parent.resolve("fileA"));
-    Path ignoredParent = Files.createDirectories(testRoot.resolve("bbb-ignored"));
+    Path ignoredParent = Files.createDirectories(testRoot.resolve("dirB-ignored"));
     Path fileB = Files.createFile(ignoredParent.resolve("fileB"));
     Path fileC =
-        Files.createFile(Files.createDirectories(testRoot.resolve("ccc-absent")).resolve("fileC"));
+        Files.createFile(Files.createDirectories(testRoot.resolve("dirC-absent")).resolve("fileC"));
 
     Blob layer =
         new ReproducibleLayerBuilder(
                 ImmutableList.of(
                     new LayerEntry(
                         parent,
-                        AbsoluteUnixPath.get("/root/aaa"),
+                        AbsoluteUnixPath.get("/root/dirA"),
                         FilePermissions.fromOctalString("111"),
                         Instant.ofEpochSecond(10)),
                     new LayerEntry(
                         fileA,
-                        AbsoluteUnixPath.get("/root/aaa/fileA"),
+                        AbsoluteUnixPath.get("/root/dirA/fileA"),
                         FilePermissions.fromOctalString("222"),
                         Instant.ofEpochSecond(20)),
                     new LayerEntry(
                         fileB,
-                        AbsoluteUnixPath.get("/root/bbb-ignored/fileB"),
+                        AbsoluteUnixPath.get("/root/dirB-ignored/fileB"),
                         FilePermissions.fromOctalString("333"),
                         Instant.ofEpochSecond(30)),
                     new LayerEntry(
                         ignoredParent,
-                        AbsoluteUnixPath.get("/root/bbb-ignored"),
+                        AbsoluteUnixPath.get("/root/dirB-ignored"),
                         FilePermissions.fromOctalString("444"),
                         Instant.ofEpochSecond(40)),
                     new LayerEntry(
                         fileC,
-                        AbsoluteUnixPath.get("/root/ccc-absent/file3"),
+                        AbsoluteUnixPath.get("/root/dirC-absent/file3"),
                         FilePermissions.fromOctalString("555"),
                         Instant.ofEpochSecond(50))))
             .build();
@@ -246,17 +246,17 @@ public class ReproducibleLayerBuilderTest {
       Assert.assertEquals(Instant.ofEpochSecond(1), root.getModTime().toInstant());
 
       // parentAAA (custom permissions, custom timestamp)
-      TarArchiveEntry rootParentAAA = in.getNextTarEntry();
-      Assert.assertEquals(040111, rootParentAAA.getMode());
-      Assert.assertEquals(Instant.ofEpochSecond(10), rootParentAAA.getModTime().toInstant());
+      TarArchiveEntry rootParentA = in.getNextTarEntry();
+      Assert.assertEquals(040111, rootParentA.getMode());
+      Assert.assertEquals(Instant.ofEpochSecond(10), rootParentA.getModTime().toInstant());
 
       // skip over fileA
       in.getNextTarEntry();
 
       // parentBBB (default permissions - ignored custom permissions, since fileB added first)
-      TarArchiveEntry rootParentBBB = in.getNextTarEntry();
+      TarArchiveEntry rootParentB = in.getNextTarEntry();
       // TODO (#1650): we want 040444 here.
-      Assert.assertEquals(040755, rootParentBBB.getMode());
+      Assert.assertEquals(040755, rootParentB.getMode());
       // TODO (#1650): we want Instant.ofEpochSecond(40) here.
       Assert.assertEquals(Instant.ofEpochSecond(1), root.getModTime().toInstant());
 
@@ -264,8 +264,8 @@ public class ReproducibleLayerBuilderTest {
       in.getNextTarEntry();
 
       // parentCCC (default permissions - no entry provided)
-      TarArchiveEntry rootParentCCC = in.getNextTarEntry();
-      Assert.assertEquals(040755, rootParentCCC.getMode());
+      TarArchiveEntry rootParentC = in.getNextTarEntry();
+      Assert.assertEquals(040755, rootParentC.getMode());
       Assert.assertEquals(Instant.ofEpochSecond(1), root.getModTime().toInstant());
 
       // we don't care about fileC

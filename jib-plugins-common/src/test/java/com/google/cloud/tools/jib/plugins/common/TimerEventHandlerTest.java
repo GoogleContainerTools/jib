@@ -30,7 +30,7 @@ public class TimerEventHandlerTest {
 
   private final Deque<String> logMessageQueue = new ArrayDeque<>();
 
-  private final TimerEvent.Timer ROOT_TIMER = Optional::empty;
+  private static final TimerEvent.Timer ROOT_TIMER = Optional::empty;
 
   @Test
   public void testAccept() {
