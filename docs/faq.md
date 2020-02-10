@@ -546,7 +546,7 @@ com.google.api.client.http.level=CONFIG
 
 And then launch your build tool as follows:
 ```sh
-mvn -Djava.util.logging.config.file=path/to/log.properties -Djib.serialize=true -Djib.console=plain ...
+mvn -X -Djava.util.logging.config.file=path/to/log.properties -Djib.serialize=true -Djib.console=plain ...
 ```
 or
 ```sh
