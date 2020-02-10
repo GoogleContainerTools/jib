@@ -30,7 +30,8 @@ class PlainConsoleLogger implements ConsoleLogger {
   /**
    * Creates a {@link PlainConsoleLogger}.
    *
-   * @param messageConsumers map from each {@link Level} to a log message {@link Consumer<String>}
+   * @param messageConsumers map from each {@link Level} to a log message {@link Consumer} of type
+   *     {@code Consumer<String>}
    * @param singleThreadedExecutor a {@link SingleThreadedExecutor} to ensure that all messages are
    *     logged in a sequential, deterministic order
    */
