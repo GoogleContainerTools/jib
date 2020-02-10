@@ -546,14 +546,14 @@ com.google.api.client.http.level=CONFIG
 
 And then launch your build tool as follows:
 ```sh
-mvn -X -Djava.util.logging.config.file=path/to/log.properties -Djib.serialize=true -Djib.console=plain ...
+mvn -Djava.util.logging.config.file=path/to/log.properties -Djib.serialize=true -Djib.console=plain ...
 ```
 or
 ```sh
-gradle --debug -Djava.util.logging.config.file=path/to/log.properties -Djib.serialize=true -Djib.console=plain ...
+gradle -Djava.util.logging.config.file=path/to/log.properties -Djib.serialize=true -Djib.console=plain ...
 ```
-If you don't need DEBUG-level logs, omit `-X` (Maven) or `--debug` (Gradle).
-If you don't need DEBUG-level logs, omit `-X` (Maven) or `--debug` (Gradle).
+
+You may wish to enable the debug logs too (`-X` for Maven, or `--debug` for Gradle).
 
 ### How do I view debug logs for Jib?
 
