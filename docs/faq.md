@@ -550,7 +550,7 @@ mvn -Djava.util.logging.config.file=path/to/log.properties -Djib.serialize=true 
 ```
 or
 ```sh
-gradle -Djava.util.logging.config.file=path/to/log.properties -Djib.serialize=true -Djib.console=plain ...
+gradle --debug -Djava.util.logging.config.file=path/to/log.properties -Djib.serialize=true -Djib.console=plain ...
 ```
 
 ### How do I view debug logs for Jib?
