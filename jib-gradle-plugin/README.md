@@ -332,6 +332,8 @@ Prefix | Example | Type
 
 You can add arbitrary, non-classpath files to the image by placing them in a `src/main/jib` directory. This will copy all files within the `jib` folder to the image's root directory, maintaining the same structure (e.g. if you have a text file at `src/main/jib/dir/hello.txt`, then your image will contain `/dir/hello.txt` after being built with Jib).
 
+Note that Jib does not follow symbolic links in the container image.  If a symbolic link is present, _it will be removed_ prior to placing the files and directories.
+
 You can configure different directories by using the `jib.extraDirectories.paths` parameter in your `build.gradle`:
 ```groovy
 jib {
@@ -353,8 +355,6 @@ jib {
   }
 }
 ```
-
-Note that Jib does not follow symbolic links.  If a symbolic link is present, it will be removed prior to placing the files and directories.
 
 ### Authentication Methods
 
