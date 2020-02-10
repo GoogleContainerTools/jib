@@ -170,6 +170,7 @@ public class LocalRegistry extends ExternalResource {
           return;
         }
       } catch (IOException ex) {
+        // ignored
       }
       Thread.sleep(250);
     }

@@ -137,6 +137,7 @@ public class ConfigurationPropertyValidatorTest {
           null, mockProjectProperties, helpfulSuggestions);
       Assert.fail();
     } catch (InvalidImageReferenceException ignored) {
+      // pass
     }
   }
 

@@ -47,6 +47,7 @@ class HttpGetVerifier {
           }
         }
       } catch (IOException ignored) {
+        // ignored
       }
     }
     return null;

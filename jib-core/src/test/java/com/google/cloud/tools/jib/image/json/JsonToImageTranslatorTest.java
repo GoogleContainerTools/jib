@@ -109,6 +109,7 @@ public class JsonToImageTranslatorTest {
         JsonToImageTranslator.portMapToSet(badInput);
         Assert.fail();
       } catch (BadContainerConfigurationFormatException ignored) {
+        // ignored
       }
     }
   }
@@ -134,6 +135,7 @@ public class JsonToImageTranslatorTest {
         JsonToImageTranslator.volumeMapToSet(badInput);
         Assert.fail();
       } catch (BadContainerConfigurationFormatException ignored) {
+        // ignored
       }
     }
   }
