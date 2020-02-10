@@ -30,6 +30,8 @@ dependencies {
 
   testImplementation 'org.apache.maven.shared:maven-verifier:1.6'
   testImplementation 'org.apache.maven:maven-compat:3.5.4'
+  testImplementation 'org.slf4j:slf4j-api:1.7.30'
+  testImplementation 'org.slf4j:slf4j-simple:1.7.30'
 
   testImplementation project(path:':jib-plugins-common', configuration:'tests')
   integrationTestImplementation project(path:':jib-core', configuration:'integrationTests')
