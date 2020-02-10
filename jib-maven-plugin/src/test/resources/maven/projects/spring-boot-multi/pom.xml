@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+                             http://maven.apache.org/maven-v4_0_0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <!-- Defines artifact information for this parent POM. -->
+  <groupId>com.jib.test</groupId>
+  <artifactId>spring-boot-multi</artifactId>
+  <packaging>pom</packaging>
+  <version>1.0.0.TEST-SNAPSHOT</version>
+  <name>multimodule</name>
+
+  <properties>
+    <maven.compiler.source>1.8</maven.compiler.source>
+    <maven.compiler.target>1.8</maven.compiler.target>
+  </properties>
+
+  <!-- The modules that are part of this project. -->
+  <modules>
+    <module>service-1</module>
+    <module>service-2</module>
+  </modules>
+
+  <build>
+    <pluginManagement>
+      <plugins>
+        <plugin>
+          <groupId>com.google.cloud.tools</groupId>
+          <artifactId>jib-maven-plugin</artifactId>
+          <version>@@PluginVersion@@</version>
+        </plugin>
+      </plugins>
+    </pluginManagement>
+  </build>
+</project>

@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.maven;
 
+import com.google.cloud.tools.jib.filesystem.DirectoryWalker;
 import java.io.Closeable;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -23,8 +24,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Properties;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import org.apache.maven.it.util.ResourceExtractor;
 import org.junit.rules.TemporaryFolder;
 
@@ -76,14 +75,14 @@ public class TestProject extends TemporaryFolder implements Closeable {
     properties.load(Files.newInputStream(gradleProperties));
     String pluginVersion = properties.getProperty("version");
 
-    try (Stream<Path> files = Files.list(projectRoot)) {
-      for (Path pomXml : files.filter(TestProject::isPomXml).collect(Collectors.toList())) {
-        Files.write(
-            pomXml,
-            new String(Files.readAllBytes(pomXml), StandardCharsets.UTF_8)
-                .replace("@@PluginVersion@@", pluginVersion)
-                .getBytes(StandardCharsets.UTF_8));
-      }
-    }
+    new DirectoryWalker(projectRoot)
+        .filter(TestProject::isPomXml)
+        .walk(
+            pomXml ->
+                Files.write(
+                    pomXml,
+                    new String(Files.readAllBytes(pomXml), StandardCharsets.UTF_8)
+                        .replace("@@PluginVersion@@", pluginVersion)
+                        .getBytes(StandardCharsets.UTF_8)));
   }
 }
