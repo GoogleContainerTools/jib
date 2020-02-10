@@ -146,19 +146,21 @@ public class FilesTaskV2 extends DefaultTask {
 
     // Add sources + resources
     JavaPluginConvention javaConvention =
-        project.getConvention().getPlugin(JavaPluginConvention.class);
-    SourceSet mainSourceSet =
-        javaConvention.getSourceSets().findByName(SourceSet.MAIN_SOURCE_SET_NAME);
-    if (mainSourceSet != null) {
-      mainSourceSet
-          .getAllSource()
-          .getSourceDirectories()
-          .forEach(
-              sourceDirectory -> {
-                if (sourceDirectory.exists()) {
-                  skaffoldFilesOutput.addInput(sourceDirectory.toPath());
-                }
-              });
+        project.getConvention().findPlugin(JavaPluginConvention.class);
+    if (javaConvention != null) {
+      SourceSet mainSourceSet =
+          javaConvention.getSourceSets().findByName(SourceSet.MAIN_SOURCE_SET_NAME);
+      if (mainSourceSet != null) {
+        mainSourceSet
+            .getAllSource()
+            .getSourceDirectories()
+            .forEach(
+                sourceDirectory -> {
+                  if (sourceDirectory.exists()) {
+                    skaffoldFilesOutput.addInput(sourceDirectory.toPath());
+                  }
+                });
+      }
     }
   }
 
@@ -177,18 +179,20 @@ public class FilesTaskV2 extends DefaultTask {
       Project currentProject = projects.pop();
 
       // Search through all dependencies
-      for (Configuration configuration :
+      Configuration runtimeClasspath =
           currentProject
               .getConfigurations()
-              .getByName(JavaPlugin.RUNTIME_CLASSPATH_CONFIGURATION_NAME)
-              .getHierarchy()) {
-        for (Dependency dependency : configuration.getDependencies()) {
-          if (dependency instanceof ProjectDependency) {
-            // If this is a project dependency, save it
-            ProjectDependency projectDependency = (ProjectDependency) dependency;
-            if (!projectDependencies.contains(projectDependency)) {
-              projects.push(projectDependency.getDependencyProject());
-              projectDependencies.add(projectDependency);
+              .findByName(JavaPlugin.RUNTIME_CLASSPATH_CONFIGURATION_NAME);
+      if (runtimeClasspath != null) {
+        for (Configuration configuration : runtimeClasspath.getHierarchy()) {
+          for (Dependency dependency : configuration.getDependencies()) {
+            if (dependency instanceof ProjectDependency) {
+              // If this is a project dependency, save it
+              ProjectDependency projectDependency = (ProjectDependency) dependency;
+              if (!projectDependencies.contains(projectDependency)) {
+                projects.push(projectDependency.getDependencyProject());
+                projectDependencies.add(projectDependency);
+              }
             }
           }
         }
