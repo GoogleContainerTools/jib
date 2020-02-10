@@ -57,7 +57,7 @@ public class NotifyingOutputStream extends OutputStream {
   }
 
   @Override
-  public void write(byte byteArray[], int offset, int length) throws IOException {
+  public void write(byte[] byteArray, int offset, int length) throws IOException {
     underlyingOutputStream.write(byteArray, offset, length);
     countAndCallListener(length);
   }

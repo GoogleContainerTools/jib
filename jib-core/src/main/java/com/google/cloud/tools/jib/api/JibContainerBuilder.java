@@ -322,6 +322,7 @@ public class JibContainerBuilder {
     containerConfigurationBuilder.addVolume(volume);
     return this;
   }
+
   /**
    * Sets the ports to expose from the container. Ports exposed will allow ingress traffic. This
    * replaces any previously-set exposed ports.

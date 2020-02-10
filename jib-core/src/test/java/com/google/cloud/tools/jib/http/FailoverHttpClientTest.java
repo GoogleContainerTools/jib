@@ -98,7 +98,9 @@ public class FailoverHttpClientTest {
 
   @Test
   public void testHttpTimeout_doNotSetByDefault() throws IOException {
-    try (Response ignored = newHttpClient(false, false).get(fakeUrl.toURL(), fakeRequest(null))) {}
+    try (Response ignored = newHttpClient(false, false).get(fakeUrl.toURL(), fakeRequest(null))) {
+      // intentionally empty
+    }
 
     Mockito.verify(mockHttpRequest, Mockito.never()).setConnectTimeout(Mockito.anyInt());
     Mockito.verify(mockHttpRequest, Mockito.never()).setReadTimeout(Mockito.anyInt());
@@ -107,7 +109,9 @@ public class FailoverHttpClientTest {
   @Test
   public void testHttpTimeout() throws IOException {
     FailoverHttpClient httpClient = newHttpClient(false, false);
-    try (Response ignored = httpClient.get(fakeUrl.toURL(), fakeRequest(5982))) {}
+    try (Response ignored = httpClient.get(fakeUrl.toURL(), fakeRequest(5982))) {
+      // intentionally empty
+    }
 
     Mockito.verify(mockHttpRequest).setConnectTimeout(5982);
     Mockito.verify(mockHttpRequest).setReadTimeout(5982);
@@ -273,7 +277,9 @@ public class FailoverHttpClientTest {
         .thenReturn(mockHttpResponse); // respond when connected through 80
 
     try (Response response =
-        insecureHttpClient.get(new URL("https://insecure"), fakeRequest(null))) {}
+        insecureHttpClient.get(new URL("https://insecure"), fakeRequest(null))) {
+      // intentionally empty
+    }
 
     verifyCapturedUrls("https://insecure", "http://insecure");
 
@@ -289,7 +295,9 @@ public class FailoverHttpClientTest {
     FailoverHttpClient insecureHttpClient = newHttpClient(true, true); // sendCredentialsOverHttp
 
     try (Response response =
-        insecureHttpClient.get(new URL("http://plain.http"), fakeRequest(null))) {}
+        insecureHttpClient.get(new URL("http://plain.http"), fakeRequest(null))) {
+      // intentionally empty
+    }
 
     Assert.assertEquals(1, urlCaptor.getAllValues().size());
 
@@ -303,7 +311,9 @@ public class FailoverHttpClientTest {
     FailoverHttpClient insecureHttpClient = newHttpClient(true, false);
 
     Request request = fakeRequest(null);
-    try (Response response = insecureHttpClient.get(new URL("http://plain.http"), request)) {}
+    try (Response response = insecureHttpClient.get(new URL("http://plain.http"), request)) {
+      // intentionally empty
+    }
 
     Assert.assertEquals(1, urlCaptor.getAllValues().size());
     Assert.assertEquals(1, httpHeadersCaptor.getAllValues().size());
@@ -333,7 +343,9 @@ public class FailoverHttpClientTest {
         .thenThrow(new SSLException(""))
         .thenReturn(mockHttpResponse);
     try (Response response1 = httpClient.get(new URL("https://url"), fakeRequest(null));
-        Response response2 = httpClient.post(new URL("https://url"), fakeRequest(null))) {}
+        Response response2 = httpClient.post(new URL("https://url"), fakeRequest(null))) {
+      // intentionally empty
+    }
 
     Mockito.verify(mockHttpRequest, Mockito.times(1)).execute();
     Mockito.verify(mockInsecureHttpRequest, Mockito.times(2)).execute();
@@ -351,7 +363,9 @@ public class FailoverHttpClientTest {
         .thenReturn(mockHttpResponse);
 
     try (Response response1 = httpClient.get(new URL("https://url"), fakeRequest(null));
-        Response response2 = httpClient.post(new URL("https://url"), fakeRequest(null))) {}
+        Response response2 = httpClient.post(new URL("https://url"), fakeRequest(null))) {
+      // intentionally empty
+    }
 
     Mockito.verify(mockHttpRequest, Mockito.times(3)).execute();
     verifyCapturedUrls("https://url", "http://url", "http://url");
@@ -368,7 +382,9 @@ public class FailoverHttpClientTest {
     Mockito.when(mockInsecureHttpRequest.execute()).thenThrow(new SSLException(""));
 
     try (Response response1 = httpClient.get(new URL("https://url:123"), fakeRequest(null));
-        Response response2 = httpClient.post(new URL("https://url:123"), fakeRequest(null))) {}
+        Response response2 = httpClient.post(new URL("https://url:123"), fakeRequest(null))) {
+      // intentionally empty
+    }
 
     Mockito.verify(mockHttpRequest, Mockito.times(3)).execute();
     Mockito.verify(mockInsecureHttpRequest, Mockito.times(1)).execute();
@@ -388,7 +404,9 @@ public class FailoverHttpClientTest {
         .thenReturn(mockHttpResponse);
 
     try (Response response1 = httpClient.get(new URL("https://url:1"), fakeRequest(null));
-        Response response2 = httpClient.post(new URL("https://url:2"), fakeRequest(null))) {}
+        Response response2 = httpClient.post(new URL("https://url:2"), fakeRequest(null))) {
+      // intentionally empty
+    }
 
     Mockito.verify(mockHttpRequest, Mockito.times(2)).execute();
     Mockito.verify(mockInsecureHttpRequest, Mockito.times(2)).execute();
@@ -441,7 +459,9 @@ public class FailoverHttpClientTest {
 
   private void verifyCall(String httpMethod, CallFunction callFunction) throws IOException {
     FailoverHttpClient httpClient = newHttpClient(false, false);
-    try (Response ignored = callFunction.call(httpClient, fakeUrl.toURL(), fakeRequest(null))) {}
+    try (Response ignored = callFunction.call(httpClient, fakeUrl.toURL(), fakeRequest(null))) {
+      // intentionally empty
+    }
 
     Assert.assertEquals(
         "fake.accept,another.fake.accept", httpHeadersCaptor.getValue().getAccept());

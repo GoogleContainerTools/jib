@@ -195,6 +195,7 @@ public class BuildContext implements Closeable {
       this.alwaysCacheBaseImage = alwaysCacheBaseImage;
       return this;
     }
+
     /**
      * Sets the layers to build.
      *
@@ -429,6 +430,7 @@ public class BuildContext implements Closeable {
   public Cache getBaseImageLayersCache() {
     return baseImageLayersCache;
   }
+
   /**
    * Gets the {@link Cache} for application layers.
    *
