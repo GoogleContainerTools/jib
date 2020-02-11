@@ -1,0 +1,4 @@
+{
+    "some registry":{"auth":"c29tZTpvdGhlcjphdXRo"},
+    "https://example.com/v2/":{"auth":"dXNlcjpwYXNz"}
+}

@@ -19,12 +19,17 @@ package com.google.cloud.tools.jib.plugins.common;
 import com.google.cloud.tools.jib.api.Credential;
 import com.google.cloud.tools.jib.api.CredentialRetriever;
 import com.google.cloud.tools.jib.frontend.CredentialRetrieverFactory;
+import com.google.common.collect.ImmutableMap;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Properties;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
@@ -46,14 +51,26 @@ public class DefaultCredentialRetrieversTest {
   @Mock private CredentialRetriever mockKnownCredentialRetriever;
   @Mock private CredentialRetriever mockInferredCredentialRetriever;
   @Mock private CredentialRetriever mockWellKnownCredentialHelpersCredentialRetriever;
-  @Mock private CredentialRetriever mockDockerConfigCredentialRetriever;
+  @Mock private CredentialRetriever mockSystemHomeDockerConfigCredentialRetriever;
+  @Mock private CredentialRetriever mockSystemHomeKubernetesDockerConfigCredentialRetriever;
+  @Mock private CredentialRetriever mockSystemHomeLegacyDockerConfigCredentialRetriever;
+  @Mock private CredentialRetriever mockEnvHomeDockerConfigCredentialRetriever;
+  @Mock private CredentialRetriever mockEnvHomeKubernetesDockerConfigCredentialRetriever;
+  @Mock private CredentialRetriever mockEnvHomeLegacyDockerConfigCredentialRetriever;
   @Mock private CredentialRetriever mockApplicationDefaultCredentialRetriever;
+
+  private Properties properties;
+  private Map<String, String> environment;
 
   private final Credential knownCredential = Credential.from("username", "password");
   private final Credential inferredCredential = Credential.from("username2", "password2");
 
   @Before
   public void setUp() {
+    properties = new Properties();
+    properties.setProperty("user.home", Paths.get("/system/home").toString());
+    environment = ImmutableMap.of("HOME", Paths.get("/env/home").toString());
+
     Mockito.when(mockCredentialRetrieverFactory.dockerCredentialHelper(Mockito.anyString()))
         .thenReturn(mockDockerCredentialHelperCredentialRetriever);
     Mockito.when(mockCredentialRetrieverFactory.known(knownCredential, "credentialSource"))
@@ -63,28 +80,55 @@ public class DefaultCredentialRetrieversTest {
         .thenReturn(mockInferredCredentialRetriever);
     Mockito.when(mockCredentialRetrieverFactory.wellKnownCredentialHelpers())
         .thenReturn(mockWellKnownCredentialHelpersCredentialRetriever);
-    Mockito.when(mockCredentialRetrieverFactory.dockerConfig())
-        .thenReturn(mockDockerConfigCredentialRetriever);
+    Mockito.when(
+            mockCredentialRetrieverFactory.dockerConfig(
+                Paths.get("/system/home/.docker/config.json")))
+        .thenReturn(mockSystemHomeDockerConfigCredentialRetriever);
+    Mockito.when(
+            mockCredentialRetrieverFactory.dockerConfig(
+                Paths.get("/system/home/.docker/.dockerconfigjson")))
+        .thenReturn(mockSystemHomeKubernetesDockerConfigCredentialRetriever);
+    Mockito.when(
+            mockCredentialRetrieverFactory.legacyDockerConfig(
+                Paths.get("/system/home/.docker/.dockercfg")))
+        .thenReturn(mockSystemHomeLegacyDockerConfigCredentialRetriever);
+    Mockito.when(
+            mockCredentialRetrieverFactory.dockerConfig(Paths.get("/env/home/.docker/config.json")))
+        .thenReturn(mockEnvHomeDockerConfigCredentialRetriever);
+    Mockito.when(
+            mockCredentialRetrieverFactory.dockerConfig(
+                Paths.get("/env/home/.docker/.dockerconfigjson")))
+        .thenReturn(mockEnvHomeKubernetesDockerConfigCredentialRetriever);
+    Mockito.when(
+            mockCredentialRetrieverFactory.legacyDockerConfig(
+                Paths.get("/env/home/.docker/.dockercfg")))
+        .thenReturn(mockEnvHomeLegacyDockerConfigCredentialRetriever);
     Mockito.when(mockCredentialRetrieverFactory.googleApplicationDefaultCredentials())
         .thenReturn(mockApplicationDefaultCredentialRetriever);
   }
 
   @Test
-  public void testInitAsList() throws FileNotFoundException {
+  public void testAsList() throws FileNotFoundException {
     List<CredentialRetriever> credentialRetrievers =
-        DefaultCredentialRetrievers.init(mockCredentialRetrieverFactory).asList();
+        new DefaultCredentialRetrievers(mockCredentialRetrieverFactory, properties, environment)
+            .asList();
     Assert.assertEquals(
         Arrays.asList(
-            mockDockerConfigCredentialRetriever,
+            mockSystemHomeDockerConfigCredentialRetriever,
+            mockSystemHomeKubernetesDockerConfigCredentialRetriever,
+            mockSystemHomeLegacyDockerConfigCredentialRetriever,
+            mockEnvHomeDockerConfigCredentialRetriever,
+            mockEnvHomeKubernetesDockerConfigCredentialRetriever,
+            mockEnvHomeLegacyDockerConfigCredentialRetriever,
             mockWellKnownCredentialHelpersCredentialRetriever,
             mockApplicationDefaultCredentialRetriever),
         credentialRetrievers);
   }
 
   @Test
-  public void testInitAsList_all() throws FileNotFoundException {
+  public void testAsList_all() throws FileNotFoundException {
     List<CredentialRetriever> credentialRetrievers =
-        DefaultCredentialRetrievers.init(mockCredentialRetrieverFactory)
+        new DefaultCredentialRetrievers(mockCredentialRetrieverFactory, properties, environment)
             .setKnownCredential(knownCredential, "credentialSource")
             .setInferredCredential(inferredCredential, "inferredCredentialSource")
             .setCredentialHelper("credentialHelperSuffix")
@@ -94,7 +138,12 @@ public class DefaultCredentialRetrieversTest {
             mockKnownCredentialRetriever,
             mockDockerCredentialHelperCredentialRetriever,
             mockInferredCredentialRetriever,
-            mockDockerConfigCredentialRetriever,
+            mockSystemHomeDockerConfigCredentialRetriever,
+            mockSystemHomeKubernetesDockerConfigCredentialRetriever,
+            mockSystemHomeLegacyDockerConfigCredentialRetriever,
+            mockEnvHomeDockerConfigCredentialRetriever,
+            mockEnvHomeKubernetesDockerConfigCredentialRetriever,
+            mockEnvHomeLegacyDockerConfigCredentialRetriever,
             mockWellKnownCredentialHelpersCredentialRetriever,
             mockApplicationDefaultCredentialRetriever),
         credentialRetrievers);
@@ -107,17 +156,22 @@ public class DefaultCredentialRetrieversTest {
   }
 
   @Test
-  public void testInitAsList_credentialHelperPath() throws IOException {
+  public void testAsList_credentialHelperPath() throws IOException {
     Path fakeCredentialHelperPath = temporaryFolder.newFile("fake-credHelper").toPath();
     DefaultCredentialRetrievers defaultCredentialRetrievers =
-        DefaultCredentialRetrievers.init(mockCredentialRetrieverFactory)
+        new DefaultCredentialRetrievers(mockCredentialRetrieverFactory, properties, environment)
             .setCredentialHelper(fakeCredentialHelperPath.toString());
 
     List<CredentialRetriever> credentialRetrievers = defaultCredentialRetrievers.asList();
     Assert.assertEquals(
         Arrays.asList(
             mockDockerCredentialHelperCredentialRetriever,
-            mockDockerConfigCredentialRetriever,
+            mockSystemHomeDockerConfigCredentialRetriever,
+            mockSystemHomeKubernetesDockerConfigCredentialRetriever,
+            mockSystemHomeLegacyDockerConfigCredentialRetriever,
+            mockEnvHomeDockerConfigCredentialRetriever,
+            mockEnvHomeKubernetesDockerConfigCredentialRetriever,
+            mockEnvHomeLegacyDockerConfigCredentialRetriever,
             mockWellKnownCredentialHelpersCredentialRetriever,
             mockApplicationDefaultCredentialRetriever),
         credentialRetrievers);
@@ -133,5 +187,34 @@ public class DefaultCredentialRetrieversTest {
           "Specified credential helper was not found: " + fakeCredentialHelperPath,
           ex.getMessage());
     }
+  }
+
+  @Test
+  public void testDockerConfigRetrievers_undefinedHome() throws FileNotFoundException {
+    List<CredentialRetriever> credentialRetrievers =
+        new DefaultCredentialRetrievers(
+                mockCredentialRetrieverFactory, new Properties(), new HashMap<>())
+            .asList();
+    Assert.assertEquals(
+        Arrays.asList(
+            mockWellKnownCredentialHelpersCredentialRetriever,
+            mockApplicationDefaultCredentialRetriever),
+        credentialRetrievers);
+  }
+
+  @Test
+  public void testDockerConfigRetrievers_noDuplicateRetrievers() throws FileNotFoundException {
+    properties.setProperty("user.home", Paths.get("/env/home").toString());
+    List<CredentialRetriever> credentialRetrievers =
+        new DefaultCredentialRetrievers(mockCredentialRetrieverFactory, properties, environment)
+            .asList();
+    Assert.assertEquals(
+        Arrays.asList(
+            mockEnvHomeDockerConfigCredentialRetriever,
+            mockEnvHomeKubernetesDockerConfigCredentialRetriever,
+            mockEnvHomeLegacyDockerConfigCredentialRetriever,
+            mockWellKnownCredentialHelpersCredentialRetriever,
+            mockApplicationDefaultCredentialRetriever),
+        credentialRetrievers);
   }
 }
