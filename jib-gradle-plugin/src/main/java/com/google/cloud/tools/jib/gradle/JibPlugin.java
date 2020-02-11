@@ -41,7 +41,7 @@ import org.gradle.api.plugins.JavaPluginConvention;
 import org.gradle.api.tasks.SourceSet;
 import org.gradle.api.tasks.TaskContainer;
 import org.gradle.api.tasks.TaskProvider;
-import org.gradle.jvm.tasks.Jar;
+import org.gradle.api.tasks.bundling.Jar;
 import org.gradle.util.GradleVersion;
 
 public class JibPlugin implements Plugin<Project> {
@@ -193,9 +193,24 @@ public class JibPlugin implements Plugin<Project> {
             jibDependencies.add(jarTask);
 
             if (projectAfterEvaluation.getPlugins().hasPlugin("org.springframework.boot")) {
-              Jar jar = (Jar) jarTask.get();
-              jar.setEnabled(true);
-              jar.getArchiveClassifier().set("original");
+              Task bootJarTask = projectAfterEvaluation.getTasks().getAt("bootJar");
+
+              if (bootJarTask.getEnabled()) {
+                String bootJarPath = bootJarTask.getOutputs().getFiles().getAsPath();
+                String jarPath = jarTask.get().getOutputs().getFiles().getAsPath();
+                if (bootJarPath.equals(jarPath)) {
+                  if (!jarTask.get().getEnabled()) {
+                    ((Jar) jarTask.get()).getArchiveClassifier().set("original");
+                  } else {
+                    throw new GradleException(
+                        "Both 'bootJar' and 'jar' tasks are enabled, but they write their own jar "
+                            + "file into the same location at "
+                            + jarPath
+                            + ". Did you forget to set 'archiveClassifier' on either task?");
+                  }
+                }
+              }
+              jarTask.get().setEnabled(true);
             }
           }
 
