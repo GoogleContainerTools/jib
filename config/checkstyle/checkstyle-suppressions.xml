@@ -13,10 +13,8 @@
   <suppress files=".*\.java" checks="VariableDeclarationUsageDistance"/>
   <suppress files=".*\.java" checks="MissingJavadocMethod"/>
   <suppress files=".*\.java" checks="SummaryJavadoc"/>
-  <suppress files=".*\.java" checks="JavadocParagraph"/>
   <suppress files=".*\.java" checks="MemberName"/>
   <suppress files=".*\.java" checks="OverloadMethodsDeclarationOrder"/>
-  <suppress files=".*\.java" checks="MethodName"/>
 
   <!-- leniency for json templates -->
   <suppress files=".*/jib-core/.*Template\.java" checks="MemberName"/>
