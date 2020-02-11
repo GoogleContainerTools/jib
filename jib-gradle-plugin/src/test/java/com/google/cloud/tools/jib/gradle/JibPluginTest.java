@@ -271,6 +271,7 @@ public class JibPluginTest {
     TaskContainer tasks = project.getTasks();
     try {
       tasks.getByPath(":jar");
+      Assert.fail();
     } catch (GradleException ex) {
       Assert.assertThat(
           ex.getCause().getMessage(),
