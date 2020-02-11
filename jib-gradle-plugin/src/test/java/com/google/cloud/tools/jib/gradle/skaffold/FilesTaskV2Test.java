@@ -40,6 +40,10 @@ public class FilesTaskV2Test {
 
   @ClassRule public static final TestProject multiTestProject = new TestProject("multi-service");
 
+  @ClassRule
+  public static final TestProject platformProject =
+      new TestProject("platform").withGradleVersion("5.2");
+
   /**
    * Verifies that the files task succeeded and returns the list of paths it prints out.
    *
@@ -138,6 +142,25 @@ public class FilesTaskV2Test {
             complexServiceRoot.resolve(
                 "local-m2-repo/com/google/cloud/tools/tiny-test-lib/0.0.1-SNAPSHOT/tiny-test-lib-0.0.1-SNAPSHOT.jar")),
         result.getInputs());
+    Assert.assertEquals(result.getIgnore().size(), 0);
+  }
+
+  @Test
+  public void testFilesTask_platformProject() throws IOException {
+    Path projectRoot = platformProject.getProjectRoot();
+    Path platformRoot = projectRoot.resolve("platform");
+    Path serviceRoot = projectRoot.resolve("service");
+    SkaffoldFilesOutput result =
+        new SkaffoldFilesOutput(verifyTaskSuccess(platformProject, "service"));
+    assertPathListsAreEqual(
+        ImmutableList.of(
+            projectRoot.resolve("build.gradle"),
+            projectRoot.resolve("settings.gradle"),
+            serviceRoot.resolve("build.gradle"),
+            platformRoot.resolve("build.gradle")),
+        result.getBuild());
+    assertPathListsAreEqual(
+        ImmutableList.of(serviceRoot.resolve("src/main/java")), result.getInputs());
     Assert.assertEquals(result.getIgnore().size(), 0);
   }
 }
