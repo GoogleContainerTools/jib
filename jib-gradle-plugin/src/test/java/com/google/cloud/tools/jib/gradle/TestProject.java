@@ -55,6 +55,7 @@ public class TestProject extends TemporaryFolder implements Closeable {
   }
 
   private final String testProjectName;
+  private String gradleVersion = JibPlugin.GRADLE_MIN_VERSION.getVersion();
   private GradleRunner gradleRunner;
 
   private Path projectRoot;
@@ -78,9 +79,14 @@ public class TestProject extends TemporaryFolder implements Closeable {
 
     gradleRunner =
         GradleRunner.create()
-            .withGradleVersion(JibPlugin.GRADLE_MIN_VERSION.getVersion())
+            .withGradleVersion(gradleVersion)
             .withProjectDir(projectRoot.toFile())
             .withPluginClasspath();
+  }
+
+  public TestProject withGradleVersion(String version) {
+    gradleVersion = version;
+    return this;
   }
 
   public BuildResult build(String... gradleArguments) {
