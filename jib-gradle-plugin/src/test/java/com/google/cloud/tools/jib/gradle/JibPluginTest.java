@@ -276,8 +276,8 @@ public class JibPluginTest {
       Assert.assertThat(
           ex.getCause().getMessage(),
           CoreMatchers.startsWith(
-              "Both 'bootJar' and 'jar' tasks are enabled, but they write their own jar file into "
-                  + "the same location at "));
+              "Both 'bootJar' and 'jar' tasks are enabled, but they write their jar file into the "
+                  + "same location at "));
       Assert.assertThat(
           ex.getCause().getMessage(),
           CoreMatchers.endsWith(
