@@ -26,7 +26,7 @@ dependencies {
   integrationTestImplementation project(path:':jib-core', configuration:'integrationTests')
 
   // only for testing a concrete Spring Boot example in a test (not for test infrastructure)
-  testRuntime 'org.springframework.boot:spring-boot-gradle-plugin:2.1.6.RELEASE'
+  testImplementation 'org.springframework.boot:spring-boot-gradle-plugin:2.1.6.RELEASE'
 }
 
 /* RELEASE */
