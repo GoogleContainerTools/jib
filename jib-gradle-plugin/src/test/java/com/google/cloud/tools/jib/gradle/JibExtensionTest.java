@@ -17,13 +17,20 @@
 package com.google.cloud.tools.jib.gradle;
 
 import com.google.cloud.tools.jib.api.ImageFormat;
+import com.google.cloud.tools.jib.gradle.skaffold.SkaffoldParameters;
+import com.google.cloud.tools.jib.gradle.skaffold.SkaffoldSyncParameters;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+
+import java.io.File;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Properties;
+
+import org.gradle.api.Action;
 import org.gradle.api.Project;
 import org.gradle.testfixtures.ProjectBuilder;
 import org.junit.Assert;
@@ -238,6 +245,25 @@ public class JibExtensionTest {
     Assert.assertEquals(
         fakeProject.getProjectDir().toPath().resolve(Paths.get("path/to/tar")),
         testJibExtension.getOutputPaths().getTarPath());
+  }
+
+  @Test
+  public void testSkaffoldWatch() {
+      testJibExtension.skaffold(skaffold -> {
+          skaffold.sync(sync -> {
+              sync.setExcludes(fakeProject.files("sync1", "sync2"));
+          });
+          skaffold.watch(watch -> {
+              watch.setBuildIncludes(ImmutableList.of("watch1", "watch2"));
+              watch.setIncludes("watch3");
+              watch.setExcludes(ImmutableList.of(new File("watch4")));
+          });
+      });
+      Path root = fakeProject.getRootDir().toPath();
+      Assert.assertEquals(ImmutableSet.of(root.resolve("sync1").toAbsolutePath(), root.resolve("sync2").toAbsolutePath()), testJibExtension.getSkaffold().getSync().getExcludes());
+      Assert.assertEquals(ImmutableSet.of(root.resolve("watch1").toAbsolutePath(), root.resolve("watch2").toAbsolutePath()), testJibExtension.getSkaffold().getWatch().getBuildIncludes());
+      Assert.assertEquals(ImmutableSet.of(root.resolve("watch3").toAbsolutePath()), testJibExtension.getSkaffold().getWatch().getIncludes());
+      Assert.assertEquals(ImmutableSet.of(root.resolve("watch4").toAbsolutePath()), testJibExtension.getSkaffold().getWatch().getExcludes());
   }
 
   @Test
