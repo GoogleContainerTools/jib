@@ -37,7 +37,6 @@ import com.google.cloud.tools.jib.plugins.common.logging.ConsoleLoggerBuilder;
 import com.google.cloud.tools.jib.plugins.common.logging.ProgressDisplayGenerator;
 import com.google.cloud.tools.jib.plugins.common.logging.SingleThreadedExecutor;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Preconditions;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -49,7 +48,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import org.apache.maven.artifact.Artifact;
@@ -228,13 +226,15 @@ public class MavenProjectProperties implements ProjectProperties {
 
       switch (containerizingMode) {
         case EXPLODED:
-          // Add resources, and classes
-          Path classesOutputDirectory = Paths.get(project.getBuild().getOutputDirectory());
-          // Don't use Path.endsWith(), since Path works on path elements.
-          Predicate<Path> isClassFile = path -> path.getFileName().toString().endsWith(".class");
-          javaContainerBuilder
-              .addResources(classesOutputDirectory, isClassFile.negate())
-              .addClasses(classesOutputDirectory, isClassFile);
+          //          // Add resources, and classes
+          //          Path classesOutputDirectory =
+          // Paths.get(project.getBuild().getOutputDirectory());
+          //          // Don't use Path.endsWith(), since Path works on path elements.
+          //          Predicate<Path> isClassFile = path ->
+          // path.getFileName().toString().endsWith(".class");
+          //          javaContainerBuilder
+          //              .addResources(classesOutputDirectory, isClassFile.negate())
+          //              .addClasses(classesOutputDirectory, isClassFile);
           break;
 
         case PACKAGED:
@@ -246,25 +246,24 @@ public class MavenProjectProperties implements ProjectProperties {
           throw new IllegalStateException("unknown containerizing mode: " + containerizingMode);
       }
 
-      // Classify and add dependencies
-      Map<LayerType, List<Path>> classifiedDependencies =
-          classifyDependencies(
-              project.getArtifacts(),
-              session
-                  .getProjects()
-                  .stream()
-                  .map(MavenProject::getArtifact)
-                  .collect(Collectors.toSet()));
+      classifyDependencies(
+          project.getArtifacts(),
+          session
+              .getProjects()
+              .stream()
+              .map(MavenProject::getArtifact)
+              .collect(Collectors.toSet()));
 
       return javaContainerBuilder
-          .addDependencies(
-              Preconditions.checkNotNull(classifiedDependencies.get(LayerType.DEPENDENCIES)))
-          .addSnapshotDependencies(
-              Preconditions.checkNotNull(
-                  classifiedDependencies.get(LayerType.SNAPSHOT_DEPENDENCIES)))
-          .addProjectDependencies(
-              Preconditions.checkNotNull(
-                  classifiedDependencies.get(LayerType.PROJECT_DEPENDENCIES)))
+          //          .addDependencies(
+          //
+          // Preconditions.checkNotNull(classifiedDependencies.get(LayerType.DEPENDENCIES)))
+          //          .addSnapshotDependencies(
+          //              Preconditions.checkNotNull(
+          //                  classifiedDependencies.get(LayerType.SNAPSHOT_DEPENDENCIES)))
+          //          .addProjectDependencies(
+          //              Preconditions.checkNotNull(
+          //                  classifiedDependencies.get(LayerType.PROJECT_DEPENDENCIES)))
           .toContainerBuilder();
 
     } catch (IOException ex) {

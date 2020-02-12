@@ -541,10 +541,11 @@ public class JavaContainerBuilder {
               + "JavaContainerBuilder#setMainClass(String), or consider using MainClassFinder to "
               + "infer the main class.");
     }
-    if (classpathOrder.isEmpty()) {
-      throw new IllegalStateException(
-          "Failed to construct entrypoint because no files were added to the JavaContainerBuilder");
-    }
+    //    if (classpathOrder.isEmpty()) {
+    //      throw new IllegalStateException(
+    //          "Failed to construct entrypoint because no files were added to the
+    // JavaContainerBuilder");
+    //    }
 
     Map<LayerType, LayerConfiguration.Builder> layerBuilders = new EnumMap<>(LayerType.class);
 
