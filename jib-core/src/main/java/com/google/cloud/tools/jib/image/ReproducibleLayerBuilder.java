@@ -24,7 +24,6 @@ import com.google.cloud.tools.jib.tar.TarStreamBuilder;
 import com.google.common.base.Verify;
 import com.google.common.collect.ImmutableList;
 import java.io.File;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -68,14 +67,15 @@ public class ReproducibleLayerBuilder {
         return;
       }
 
-      // Adds all directories along extraction paths to explicitly set permissions for those
-      // directories.
-      Path namePath = Paths.get(tarArchiveEntry.getName());
-      if (namePath.getParent() != namePath.getRoot()) {
-        TarArchiveEntry dir = new TarArchiveEntry(DIRECTORY_FILE, namePath.getParent().toString());
-        dir.setModTime(LayerConfiguration.DEFAULT_MODIFICATION_TIME.toEpochMilli());
-        add(dir);
-      }
+      //      // Adds all directories along extraction paths to explicitly set permissions for those
+      //      // directories.
+      //      Path namePath = Paths.get(tarArchiveEntry.getName());
+      //      if (namePath.getParent() != namePath.getRoot()) {
+      //        TarArchiveEntry dir = new TarArchiveEntry(DIRECTORY_FILE,
+      // namePath.getParent().toString());
+      //        dir.setModTime(LayerConfiguration.DEFAULT_MODIFICATION_TIME.toEpochMilli());
+      //        add(dir);
+      //      }
 
       entries.add(tarArchiveEntry);
       names.add(tarArchiveEntry.getName());
@@ -112,8 +112,9 @@ public class ReproducibleLayerBuilder {
 
       // Sets the entry's permissions by masking out the permission bits from the entry's mode (the
       // lowest 9 bits) then using a bitwise OR to set them to the layerEntry's permissions.
-      entry.setMode((entry.getMode() & ~0777) | layerEntry.getPermissions().getPermissionBits());
-      entry.setModTime(layerEntry.getModificationTime().toEpochMilli());
+      //      entry.setMode((entry.getMode() & ~0777) |
+      // layerEntry.getPermissions().getPermissionBits());
+      //      entry.setModTime(layerEntry.getModificationTime().toEpochMilli());
 
       uniqueTarArchiveEntries.add(entry);
     }
@@ -128,10 +129,10 @@ public class ReproducibleLayerBuilder {
     for (TarArchiveEntry entry : sortedFilesystemEntries) {
       // Strips out all non-reproducible elements from tar archive entries.
       // Modification time is configured per entry
-      entry.setGroupId(0);
-      entry.setUserId(0);
-      entry.setUserName("");
-      entry.setGroupName("");
+      //      entry.setGroupId(0);
+      //      entry.setUserId(0);
+      //      entry.setUserName("");
+      //      entry.setGroupName("");
 
       Verify.verify(!names.contains(entry.getName()));
       names.add(entry.getName());
