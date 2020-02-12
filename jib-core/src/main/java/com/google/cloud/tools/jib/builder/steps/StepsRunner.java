@@ -35,6 +35,7 @@ import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.Callable;
@@ -300,6 +301,8 @@ public class StepsRunner {
     ProgressEventDispatcher.Factory childProgressDispatcherFactory =
         Verify.verifyNotNull(rootProgressDispatcher).newChildProducer();
 
+    results.applicationLayers = Collections.emptyList();
+    if (true) return;
     results.applicationLayers =
         scheduleCallables(
             BuildAndCacheApplicationLayerStep.makeList(
