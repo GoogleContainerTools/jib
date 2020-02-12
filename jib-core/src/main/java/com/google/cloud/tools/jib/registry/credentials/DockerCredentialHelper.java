@@ -17,6 +17,7 @@
 package com.google.cloud.tools.jib.registry.credentials;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.cloud.tools.jib.api.Credential;
 import com.google.cloud.tools.jib.json.JsonTemplate;
@@ -43,11 +44,19 @@ public class DockerCredentialHelper {
   private final Path credentialHelper;
 
   /** Template for a Docker credential helper output. */
+  @VisibleForTesting
   @JsonIgnoreProperties(ignoreUnknown = true)
-  private static class DockerCredentialsTemplate implements JsonTemplate {
+  static class DockerCredentialsTemplate implements JsonTemplate {
 
-    @Nullable private String Username;
-    @Nullable private String Secret;
+    @Nullable
+    @VisibleForTesting
+    @JsonProperty("Username")
+    String username;
+
+    @Nullable
+    @VisibleForTesting
+    @JsonProperty("Secret")
+    String secret;
   }
 
   /**
@@ -106,13 +115,13 @@ public class DockerCredentialHelper {
         try {
           DockerCredentialsTemplate dockerCredentials =
               JsonTemplateMapper.readJson(output, DockerCredentialsTemplate.class);
-          if (Strings.isNullOrEmpty(dockerCredentials.Username)
-              || Strings.isNullOrEmpty(dockerCredentials.Secret)) {
+          if (Strings.isNullOrEmpty(dockerCredentials.username)
+              || Strings.isNullOrEmpty(dockerCredentials.secret)) {
             throw new CredentialHelperUnhandledServerUrlException(
                 credentialHelper, serverUrl, output);
           }
 
-          return Credential.from(dockerCredentials.Username, dockerCredentials.Secret);
+          return Credential.from(dockerCredentials.username, dockerCredentials.secret);
 
         } catch (JsonProcessingException ex) {
           throw new CredentialHelperUnhandledServerUrlException(
