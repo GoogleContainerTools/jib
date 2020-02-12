@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.docker.json;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.google.cloud.tools.jib.json.JsonTemplate;
 import com.google.common.annotations.VisibleForTesting;
 import java.util.ArrayList;
@@ -45,6 +46,7 @@ import java.util.List;
  * @see <a href="https://github.com/moby/moby/blob/master/image/tarexport/load.go">Docker load
  *     source</a>
  */
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class DockerManifestEntryTemplate implements JsonTemplate {
 
   private String config = "config.json";
