@@ -208,7 +208,7 @@ public class JibPlugin implements Plugin<Project> {
           jibDependencies.add(mainSourceSet.getRuntimeClasspath());
 
           jibTaskProviders.forEach(
-              provider -> provider.configure(task -> task.setDependsOn(jibDependencies)));
+              provider -> provider.configure(task -> jibDependencies.forEach(task::dependsOn)));
         });
   }
 }
