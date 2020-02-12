@@ -109,6 +109,12 @@ public class FilesTaskV2 extends DefaultTask {
       }
     }
 
+    // Configure other files from config
+    SkaffoldWatchParameters watch = jibExtension.getSkaffold().getWatch();
+    watch.getBuildIncludes().forEach(skaffoldFilesOutput::addBuild);
+    watch.getIncludes().forEach(skaffoldFilesOutput::addInput);
+    watch.getExcludes().forEach(skaffoldFilesOutput::addIgnore);
+
     // Print files
     System.out.println();
     System.out.println("BEGIN JIB JSON");

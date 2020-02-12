@@ -25,6 +25,7 @@ import com.google.cloud.tools.jib.plugins.common.ContainerizingMode;
 import com.google.cloud.tools.jib.plugins.common.InvalidContainerizingModeException;
 import com.google.cloud.tools.jib.plugins.common.PluginConfigurationProcessor;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.ImmutableSet;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.ResolutionScope;
@@ -76,7 +77,8 @@ public class SyncMapMojo extends JibPluginConfiguration {
 
       try {
         String syncMapJson =
-            PluginConfigurationProcessor.getSkaffoldSyncMap(configuration, projectProperties);
+            PluginConfigurationProcessor.getSkaffoldSyncMap(
+                configuration, projectProperties, ImmutableSet.of());
 
         System.out.println();
         System.out.println("BEGIN JIB JSON: SYNCMAP/1");

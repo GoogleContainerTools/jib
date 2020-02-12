@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.gradle;
 
+import com.google.cloud.tools.jib.gradle.skaffold.SkaffoldParameters;
 import com.google.cloud.tools.jib.plugins.common.PropertyNames;
 import org.gradle.api.Action;
 import org.gradle.api.Project;
@@ -77,6 +78,7 @@ public class JibExtension {
   private final ExtraDirectoriesParameters extraDirectories;
   private final DockerClientParameters dockerClient;
   private final OutputPathsParameters outputPaths;
+  private final SkaffoldParameters skaffold;
   private final Property<Boolean> allowInsecureRegistries;
   private final Property<String> containerizingMode;
 
@@ -94,6 +96,7 @@ public class JibExtension {
     extraDirectories = objectFactory.newInstance(ExtraDirectoriesParameters.class, project);
     dockerClient = objectFactory.newInstance(DockerClientParameters.class);
     outputPaths = objectFactory.newInstance(OutputPathsParameters.class, project);
+    skaffold = objectFactory.newInstance(SkaffoldParameters.class, project);
 
     allowInsecureRegistries = objectFactory.property(Boolean.class);
     containerizingMode = objectFactory.property(String.class);
@@ -125,6 +128,10 @@ public class JibExtension {
 
   public void outputPaths(Action<? super OutputPathsParameters> action) {
     action.execute(outputPaths);
+  }
+
+  public void skaffold(Action<? super SkaffoldParameters> action) {
+    action.execute(skaffold);
   }
 
   public void setAllowInsecureRegistries(boolean allowInsecureRegistries) {
@@ -169,6 +176,12 @@ public class JibExtension {
   @Optional
   public OutputPathsParameters getOutputPaths() {
     return outputPaths;
+  }
+
+  @Nested
+  @Optional
+  public SkaffoldParameters getSkaffold() {
+    return skaffold;
   }
 
   @Input
