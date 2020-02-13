@@ -133,7 +133,7 @@ public class UpdateChecker {
       }
 
       // Check time of last update check
-      if (Files.exists(lastUpdateCheck) && Files.size(lastUpdateCheck) > 0) {
+      if (Files.exists(lastUpdateCheck)) {
         try {
           String fileContents =
               new String(Files.readAllBytes(lastUpdateCheck), StandardCharsets.UTF_8);
