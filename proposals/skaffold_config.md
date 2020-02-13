@@ -1,6 +1,6 @@
 # Proposal: Control over skaffold tasks/goals
 
-Relevant issues: https://github.com/GoogleContainerTools/skaffold/issues/3457, 
+Relevant issue: https://github.com/GoogleContainerTools/skaffold/issues/3457
 
 ## Motivation
 
@@ -23,13 +23,14 @@ The final jib output will not deviate from what skaffold expects, but just
 allows for tighter control of what is sent to skaffold from jib.
 
 #### Gradle (`build.gradle`)
-```
+```groovy
 jib {
   ...
   skaffold {
     watch {
-      include = project.files('my/custom/inputs')
-      exclude = ['some/file/i/dont/want/watched']
+      buildIncludes = 'script.gradle'
+      includes = project.files('my/custom/inputs')
+      excludes = ['some/file/i/dont/want/watched']
     }
     sync {
       exclude = 'a/file'
@@ -41,19 +42,19 @@ jib {
 #### Maven (`pom.xml`)
 ```xml
 <configuration>
-  <outputPaths>
-    <skaffold>/absolute/location.tar
-      <watch>
-        <includes>some/file,another/file</includes>
-        <excludes>
-          <exclude>not/me</exclude>
-          <exclude>also/not/me</exclude>
-        <excludes>
-      </watch>
-      <sync>
-        <excludes>some/file<excludes>
-    </skaffold>
-  </outputPaths>
+  <skaffold>/absolute/location.tar
+    <watch>
+      <buildIncludes>some/pomfile.xml</buildIncludes>
+      <includes>some/file,another/file</includes>
+      <excludes>
+        <exclude>not/me</exclude>
+        <exclude>also/not/me</exclude>
+      <excludes>
+    </watch>
+    <sync>
+      <excludes>some/file<excludes>
+    </sync>
+  </skaffold>
 </configuration>
 ```
 
