@@ -141,6 +141,25 @@ public class UpdateCheckerTest {
   }
 
   @Test
+  public void testPerformUpdateCheck_emptyConfigAndLastUpdateCheck() throws IOException {
+    Files.createFile(configDir.resolve("config.json"));
+    Files.createFile(configDir.resolve("lastUpdateCheck"));
+    Instant before = Instant.now();
+    Optional<String> message =
+        UpdateChecker.performUpdateCheck(
+            ignored -> {}, "1.0.2", testWebServer.getEndpoint(), configDir, "tool name");
+    Assert.assertTrue(message.isPresent());
+    Assert.assertEquals(
+        "A new version of Jib (2.0.0) is available (currently using 1.0.2). Update your build "
+            + "configuration to use the latest features and fixes!",
+        message.get());
+    String modifiedTime =
+        new String(
+            Files.readAllBytes(configDir.resolve("lastUpdateCheck")), StandardCharsets.UTF_8);
+    Assert.assertTrue(Instant.parse(modifiedTime).isAfter(before));
+  }
+
+  @Test
   public void testPerformUpdateCheck_lastUpdateCheckTooSoon() throws IOException {
     FileTime modifiedTime = FileTime.from(Instant.now().minusSeconds(12));
     setupConfigAndLastUpdateCheck();

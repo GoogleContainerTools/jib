@@ -102,7 +102,7 @@ public class UpdateChecker {
 
     try {
       // Check global config
-      if (Files.exists(configFile)) {
+      if (Files.exists(configFile) && Files.size(configFile) > 0) {
         // Abort if update checks are disabled
         try {
           ConfigJsonTemplate config =
@@ -113,11 +113,10 @@ public class UpdateChecker {
         } catch (IOException ex) {
           log.accept(
               LogEvent.warn(
-                  "Failed to read global Jib config: "
-                      + ex.getMessage()
-                      + "; you may need to fix or delete "
+                  "Failed to read global Jib config; you may need to fix or delete "
                       + configFile
-                      + "; "));
+                      + ": "
+                      + ex.getMessage()));
           return Optional.empty();
         }
       } else {
@@ -134,7 +133,7 @@ public class UpdateChecker {
       }
 
       // Check time of last update check
-      if (Files.exists(lastUpdateCheck)) {
+      if (Files.exists(lastUpdateCheck) && Files.size(lastUpdateCheck) > 0) {
         try {
           String fileContents =
               new String(Files.readAllBytes(lastUpdateCheck), StandardCharsets.UTF_8);
