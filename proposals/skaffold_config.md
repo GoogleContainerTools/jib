@@ -44,15 +44,22 @@ jib {
 <configuration>
   <skaffold>/absolute/location.tar
     <watch>
-      <buildIncludes>some/pomfile.xml</buildIncludes>
-      <includes>some/file,another/file</includes>
+      <buildIncludes>
+        <buildInclude>some/pomfile.xml</buildInclude>
+      </buildIncludes>
+      <includes>
+        <include>some/file</include>
+        <include,another/file</include>
+      </includes>
       <excludes>
         <exclude>not/me</exclude>
         <exclude>also/not/me</exclude>
       <excludes>
     </watch>
     <sync>
-      <excludes>some/file<excludes>
+      <excludes>
+        <exclude>some/file</exclude>
+      <excludes>
     </sync>
   </skaffold>
 </configuration>
