@@ -18,8 +18,15 @@ jib {
   to {
     image = System.getProperty("_TARGET_IMAGE")
   }
-  extraDirectories {
-    paths = file('src/main/custom-extra-dir')
+  skaffold {
+    watch {
+      buildIncludes = project.file("script.gradle")
+      includes = project.files("other/file.txt")
+      excludes = "src/main/jib/bar/"
+    }
+    sync {
+      excludes = ["build/classes/com/test2", "src/main/jib/foo"]
+    }
   }
 }
 

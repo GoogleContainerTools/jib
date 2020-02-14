@@ -33,6 +33,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import org.apache.maven.artifact.Artifact;
@@ -163,6 +164,14 @@ public class FilesMojoV2 extends SkaffoldBindingMojo {
         resolveExtraDirectories(project).forEach(skaffoldFilesOutput::addInput);
       }
 
+      // See above note on "extraFiles"
+      SkaffoldConfiguration.Watch watch = collectWatchParameters(project);
+      resolveFiles(watch.buildIncludes, project).forEach(skaffoldFilesOutput::addBuild);
+      resolveFiles(watch.includes, project).forEach(skaffoldFilesOutput::addInput);
+      // we don't do any special pre-processing for ignore (input and ignore can overlap with exact
+      // matches)
+      resolveFiles(watch.excludes, project).forEach(skaffoldFilesOutput::addIgnore);
+
       // Grab non-project SNAPSHOT dependencies for this project
       // TODO: this whole sections relies on internal maven API, it could break. We need to explore
       // TODO: better ways to resolve dependencies using the public maven API.
@@ -207,6 +216,8 @@ public class FilesMojoV2 extends SkaffoldBindingMojo {
     }
 
     try {
+      System.out.println(
+          Paths.get(".").toAbsolutePath() + " " + new File(".").toPath().toAbsolutePath());
       // Print JSON string
       System.out.println();
       System.out.println("BEGIN JIB JSON");
@@ -239,13 +250,10 @@ public class FilesMojoV2 extends SkaffoldBindingMojo {
       if (pluginConfiguration != null) {
         Xpp3Dom extraDirectoriesConfiguration = pluginConfiguration.getChild("extraDirectories");
         if (extraDirectoriesConfiguration != null) {
-          Xpp3Dom child = extraDirectoriesConfiguration.getChild("paths");
-          if (child != null) {
+          Xpp3Dom paths = extraDirectoriesConfiguration.getChild("paths");
+          if (paths != null) {
             // <extraDirectories><paths><path>...</path><path>...</path></paths></extraDirectories>
-            return Arrays.stream(child.getChildren())
-                .map(Xpp3Dom::getValue)
-                .map(Paths::get)
-                .collect(Collectors.toList());
+            return xpp3ToList(paths, Paths::get);
           }
         }
       }
@@ -255,5 +263,51 @@ public class FilesMojoV2 extends SkaffoldBindingMojo {
     Path projectBase = Preconditions.checkNotNull(project).getBasedir().getAbsoluteFile().toPath();
     Path srcMainJib = Paths.get("src", "main", "jib");
     return Collections.singletonList(projectBase.resolve(srcMainJib));
+  }
+
+  private SkaffoldConfiguration.Watch collectWatchParameters(MavenProject project) {
+    // Try getting extra directory from project pom
+    SkaffoldConfiguration.Watch watchConfig = new SkaffoldConfiguration.Watch();
+    Plugin jibMavenPlugin = project.getPlugin(MavenProjectProperties.PLUGIN_KEY);
+    if (jibMavenPlugin != null) {
+      Xpp3Dom pluginConfiguration = (Xpp3Dom) jibMavenPlugin.getConfiguration();
+      if (pluginConfiguration != null) {
+        Xpp3Dom skaffold = pluginConfiguration.getChild("skaffold");
+        if (skaffold != null) {
+          Xpp3Dom watch = skaffold.getChild("watch");
+          if (watch != null) {
+            Xpp3Dom buildIncludes = watch.getChild("buildIncludes");
+            if (buildIncludes != null) {
+              watchConfig.buildIncludes = xpp3ToList(buildIncludes, File::new);
+            }
+            Xpp3Dom includes = watch.getChild("includes");
+            if (includes != null) {
+              watchConfig.includes = xpp3ToList(includes, File::new);
+            }
+            Xpp3Dom excludes = watch.getChild("excludes");
+            if (excludes != null) {
+              watchConfig.excludes = xpp3ToList(excludes, File::new);
+            }
+          }
+        }
+      }
+    }
+    return watchConfig;
+  }
+
+  private List<Path> resolveFiles(List<File> files, MavenProject project) {
+    return files
+        .stream()
+        .map(File::toPath)
+        .map(path -> path.isAbsolute() ? path : project.getBasedir().toPath().resolve(path))
+        .collect(Collectors.toList());
+  }
+
+  private <T> List<T> xpp3ToList(Xpp3Dom node, Function<String, T> converter) {
+    Preconditions.checkNotNull(node);
+    return Arrays.stream(node.getChildren())
+        .map(Xpp3Dom::getValue)
+        .map(converter)
+        .collect(Collectors.toList());
   }
 }

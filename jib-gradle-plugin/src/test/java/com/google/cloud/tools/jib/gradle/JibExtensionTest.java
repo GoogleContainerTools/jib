@@ -243,7 +243,7 @@ public class JibExtensionTest {
   }
 
   @Test
-  public void testSkaffoldWatch() {
+  public void testSkaffold() {
     testJibExtension.skaffold(
         skaffold -> {
           skaffold.sync(

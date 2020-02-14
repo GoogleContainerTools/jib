@@ -46,7 +46,8 @@ public class FilesMojoV2Test {
       String module,
       List<String> extraCliOptions,
       List<String> buildFiles,
-      List<String> inputFiles)
+      List<String> inputFiles,
+      List<String> ignoreFiles)
       throws VerificationException, IOException {
 
     Verifier verifier = new Verifier(projectRoot.toString());
@@ -70,7 +71,7 @@ public class FilesMojoV2Test {
     SkaffoldFilesOutput output = new SkaffoldFilesOutput(log.get(begin + 1));
     Assert.assertEquals(buildFiles, output.getBuild());
     Assert.assertEquals(inputFiles, output.getInputs());
-    Assert.assertEquals(0, output.getIgnore().size());
+    Assert.assertEquals(ignoreFiles, output.getIgnore());
   }
 
   @Test
@@ -86,7 +87,8 @@ public class FilesMojoV2Test {
         Arrays.asList(
             projectRoot.resolve("src/main/java").toString(),
             projectRoot.resolve("src/main/resources").toString(),
-            projectRoot.resolve("src/main/jib-custom").toString()));
+            projectRoot.resolve("src/main/jib-custom").toString()),
+        Collections.emptyList());
   }
 
   @Test
@@ -104,7 +106,8 @@ public class FilesMojoV2Test {
             projectRoot.resolve("src/main/java").toString(),
             projectRoot.resolve("src/main/resources").toString(),
             projectRoot.resolve("src/main/jib-custom").toString(),
-            projectRoot.resolve("src/main/jib-custom-2").toString()));
+            projectRoot.resolve("src/main/jib-custom-2").toString()),
+        Collections.emptyList());
   }
 
   @Test
@@ -123,7 +126,8 @@ public class FilesMojoV2Test {
         Arrays.asList(
             simpleServiceRoot.resolve("src/main/java").toString(),
             simpleServiceRoot.resolve("src/main/resources").toString(),
-            simpleServiceRoot.resolve("src/main/jib").toString()));
+            simpleServiceRoot.resolve("src/main/jib").toString()),
+        Collections.emptyList());
   }
 
   @Test
@@ -154,7 +158,8 @@ public class FilesMojoV2Test {
             Paths.get(
                     System.getProperty("user.home"),
                     ".m2/repository/com/google/cloud/tools/tiny-test-lib/0.0.1-SNAPSHOT/tiny-test-lib-0.0.1-SNAPSHOT.jar")
-                .toString()));
+                .toString()),
+        Collections.emptyList());
   }
 
   @Test
@@ -171,6 +176,29 @@ public class FilesMojoV2Test {
             projectRoot.resolve("src/main/java").toString(),
             projectRoot.resolve("src/main/resources").toString(),
             Paths.get("/").toAbsolutePath().resolve("some/extra/dir").toString(),
-            Paths.get("/").toAbsolutePath().resolve("another/extra/dir").toString()));
+            Paths.get("/").toAbsolutePath().resolve("another/extra/dir").toString()),
+        Collections.emptyList());
+  }
+
+  @Test
+  public void testFilesMojo_skaffoldConfigProperties() throws VerificationException, IOException {
+    Path projectRoot = simpleTestProject.getProjectRoot();
+
+    verifyFiles(
+        projectRoot,
+        "pom-skaffold-config.xml",
+        null,
+        Collections.emptyList(),
+        Arrays.asList(
+            projectRoot.resolve("pom-skaffold-config.xml").toString(),
+            Paths.get("/abs/path/some.xml").toString()),
+        Arrays.asList(
+            projectRoot.resolve("src/main/java").toString(),
+            projectRoot.resolve("src/main/resources").toString(),
+            projectRoot.resolve("src/main/jib").toString(),
+            projectRoot.resolve("file/in/project").toString()),
+        Arrays.asList(
+            projectRoot.resolve("file/to/exclude").toString(),
+            projectRoot.resolve("file/to/also/exclude").toString()));
   }
 }
