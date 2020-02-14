@@ -191,7 +191,7 @@ public class FilesMojoV2Test {
         Collections.emptyList(),
         Arrays.asList(
             projectRoot.resolve("pom-skaffold-config.xml").toString(),
-            Paths.get("/abs/path/some.xml").toString()),
+            Paths.get("/abs/path/some.xml").toAbsolutePath().toString()),
         Arrays.asList(
             projectRoot.resolve("src/main/java").toString(),
             projectRoot.resolve("src/main/resources").toString(),
