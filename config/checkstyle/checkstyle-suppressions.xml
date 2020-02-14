@@ -18,10 +18,10 @@
   <suppress files=".*\.java" checks="SummaryJavadoc"/>
 
   <!-- leniency for json templates -->
-  <suppress files=".*/jib-core/.*Template\.java" checks="MemberName"/>
+  <suppress files=".*[\\/]jib-core[\\/].*Template\.java" checks="MemberName"/>
 
   <!-- leniency for test files -->
-  <suppress files=".*/integration-test/.*\.java" checks="MissingJavadocMethod"/>
-  <suppress files=".*/integration-test/.*\.java" checks="VariableDeclarationUsageDistance"/>
+  <suppress files=".*[\\/]integration-test[\\/].*\.java" checks="MissingJavadocMethod"/>
+  <suppress files=".*[\\/]integration-test[\\/].*\.java" checks="VariableDeclarationUsageDistance"/>
 
 </suppressions>

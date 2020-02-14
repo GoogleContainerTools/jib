@@ -117,8 +117,8 @@ public class RegistryAuthenticator {
   }
 
   /** Template for the authentication response JSON. */
-  @JsonIgnoreProperties(ignoreUnknown = true)
   @VisibleForTesting
+  @JsonIgnoreProperties(ignoreUnknown = true)
   static class AuthenticationResponseTemplate implements JsonTemplate {
 
     @Nullable private String token;
