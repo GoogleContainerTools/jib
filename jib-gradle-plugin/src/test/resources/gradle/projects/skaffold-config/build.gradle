@@ -25,7 +25,7 @@ jib {
       excludes = "src/main/jib/bar/"
     }
     sync {
-      excludes = ["build/classes/com/test2", "src/main/jib/foo"]
+      excludes = ["build/classes/java/main/com/test", "src/main/jib/foo"]
     }
   }
 }

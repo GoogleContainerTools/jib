@@ -14,7 +14,7 @@
  * the License.
  */
 
-package com.test;
+package com.test2;
 
 public class GoodbyeWorld {
   public static void goodbye() {

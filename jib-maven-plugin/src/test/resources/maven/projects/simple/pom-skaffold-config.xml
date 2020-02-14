@@ -39,6 +39,11 @@
                 <artifactId>jib-maven-plugin</artifactId>
                 <version>${jib-maven-plugin.version}</version>
                 <configuration>
+                    <extraDirectories>
+                        <paths>
+                            <path>src/main/jib-custom</path>
+                        </paths>
+                    </extraDirectories>
                     <skaffold>
                         <watch>
                             <buildIncludes>
@@ -52,6 +57,12 @@
                                 <excludes>file/to/also/exclude</excludes>
                             </excludes>
                         </watch>
+                        <sync>
+                            <excludes>
+                                <exclude>target/classes/com/test</exclude>
+                                <exclude>src/main/jib-custom/foo</exclude>
+                            </excludes>
+                        </sync>
                     </skaffold>
                 </configuration>
             </plugin>

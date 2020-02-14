@@ -33,9 +33,11 @@ import com.google.cloud.tools.jib.configuration.ImageConfiguration;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.io.Resources;
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Instant;
@@ -943,5 +945,24 @@ public class PluginConfigurationProcessorTest {
           InvalidCreationTimeException {
     return PluginConfigurationProcessor.processCommonConfiguration(
         rawConfiguration, ignored -> Optional.empty(), projectProperties, containerizer);
+  }
+
+  @Test
+  public void getAllFiles_expandsDirectories() throws IOException {
+    File rootFile = temporaryFolder.newFile("file");
+    File folder = temporaryFolder.newFolder("folder");
+    File folderFile = temporaryFolder.newFile("folder/file2");
+    Assert.assertEquals(
+        ImmutableSet.of(rootFile.toPath().toAbsolutePath(), folderFile.toPath().toAbsolutePath()),
+        PluginConfigurationProcessor.getAllFiles(
+            ImmutableSet.of(rootFile.toPath(), folder.toPath())));
+  }
+
+  @Test
+  public void getAllFiles_doesntBreakForNonExistentFiles() throws IOException {
+    Path testPath = Paths.get("/a/file/that/doesnt/exist");
+    Assert.assertFalse(Files.exists(testPath));
+    Assert.assertEquals(
+        ImmutableSet.of(), PluginConfigurationProcessor.getAllFiles(ImmutableSet.of(testPath)));
   }
 }

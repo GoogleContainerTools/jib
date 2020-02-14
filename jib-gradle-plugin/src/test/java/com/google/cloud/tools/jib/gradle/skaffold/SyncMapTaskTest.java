@@ -40,6 +40,7 @@ import org.junit.Test;
 public class SyncMapTaskTest {
 
   @ClassRule public static final TestProject simpleTestProject = new TestProject("simple");
+  @ClassRule public static final TestProject skaffoldProject = new TestProject("skaffold-config");
   @ClassRule public static final TestProject multiTestProject = new TestProject("multi-service");
   @ClassRule public static final TestProject warProject = new TestProject("war_servlet25");
 
@@ -150,7 +151,33 @@ public class SyncMapTaskTest {
   }
 
   @Test
-  public void testSyncMapMojo_failIfWar() throws IOException {
+  public void testSyncMapTask_withSkaffoldConfig() throws IOException {
+    Path projectRoot = skaffoldProject.getProjectRoot();
+    SkaffoldSyncMapTemplate parsed = generateTemplate(skaffoldProject, null, null);
+
+    List<FileTemplate> generated = parsed.getGenerated();
+    Assert.assertEquals(2, generated.size());
+    assertFilePaths(
+        projectRoot.resolve("build/resources/main/world"),
+        AbsoluteUnixPath.get("/app/resources/world"),
+        generated.get(0));
+    assertFilePaths(
+        projectRoot.resolve("build/classes/java/main/com/test2/GoodbyeWorld.class"),
+        AbsoluteUnixPath.get("/app/classes/com/test2/GoodbyeWorld.class"),
+        generated.get(1));
+    // classes/java/main/com/test is ignored
+
+    List<FileTemplate> direct = parsed.getDirect();
+    Assert.assertEquals(1, direct.size());
+    assertFilePaths(
+        projectRoot.resolve("src/main/jib/bar/cat"),
+        AbsoluteUnixPath.get("/bar/cat"),
+        direct.get(0));
+    // src/main/custom-extra-dir/foo is ignored
+  }
+
+  @Test
+  public void testSyncMapTask_failIfWar() throws IOException {
     Path projectRoot = warProject.getProjectRoot();
     try {
       generateTemplate(warProject, null, null);
@@ -166,7 +193,7 @@ public class SyncMapTaskTest {
   }
 
   @Test
-  public void testSyncMapMojo_failIfJarContainerizationMode() throws IOException {
+  public void testSyncMapTask_failIfJarContainerizationMode() throws IOException {
     Path projectRoot = simpleTestProject.getProjectRoot();
     try {
       generateTemplate(

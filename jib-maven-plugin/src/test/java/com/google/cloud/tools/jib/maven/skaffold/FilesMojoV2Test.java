@@ -195,7 +195,7 @@ public class FilesMojoV2Test {
         Arrays.asList(
             projectRoot.resolve("src/main/java").toString(),
             projectRoot.resolve("src/main/resources").toString(),
-            projectRoot.resolve("src/main/jib").toString(),
+            projectRoot.resolve("src/main/jib-custom").toString(),
             projectRoot.resolve("file/in/project").toString()),
         Arrays.asList(
             projectRoot.resolve("file/to/exclude").toString(),
