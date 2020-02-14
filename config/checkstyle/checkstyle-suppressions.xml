@@ -9,18 +9,19 @@
   <suppress files=".*\.java" checks="RightCurly"/>
   <suppress files=".*\.java" checks="LineLength"/>
 
+  <!-- class with jib repo style: although maybe these should be eventually fixed -->
+  <suppress files=".*\.java" checks="OverloadMethodsDeclarationOrder"/>
+
   <!-- temporary suppressions as we work through them -->
   <suppress files=".*\.java" checks="VariableDeclarationUsageDistance"/>
   <suppress files=".*\.java" checks="MissingJavadocMethod"/>
   <suppress files=".*\.java" checks="SummaryJavadoc"/>
-  <suppress files=".*\.java" checks="MemberName"/>
-  <suppress files=".*\.java" checks="OverloadMethodsDeclarationOrder"/>
 
   <!-- leniency for json templates -->
-  <suppress files=".*/jib-core/.*Template\.java" checks="MemberName"/>
+  <suppress files=".*[\\/]jib-core[\\/].*Template\.java" checks="MemberName"/>
 
   <!-- leniency for test files -->
-  <suppress files=".*/integration-test/.*\.java" checks="MissingJavadocMethod"/>
-  <suppress files=".*/integration-test/.*\.java" checks="VariableDeclarationUsageDistance"/>
+  <suppress files=".*[\\/]integration-test[\\/].*\.java" checks="MissingJavadocMethod"/>
+  <suppress files=".*[\\/]integration-test[\\/].*\.java" checks="VariableDeclarationUsageDistance"/>
 
 </suppressions>

@@ -22,6 +22,7 @@ import com.google.cloud.tools.jib.http.FailoverHttpClient;
 import com.google.cloud.tools.jib.http.Response;
 import com.google.cloud.tools.jib.http.ResponseException;
 import com.google.cloud.tools.jib.http.TestWebServer;
+import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -301,5 +302,41 @@ public class RegistryAuthenticatorTest {
               + "over HTTP",
           ex.getMessage());
     }
+  }
+
+  @Test
+  public void testAuthenticationResponseTemplate_readsToken() throws IOException {
+    String input = "{\"token\":\"test_value\"}";
+    RegistryAuthenticator.AuthenticationResponseTemplate template =
+        JsonTemplateMapper.readJson(
+            input, RegistryAuthenticator.AuthenticationResponseTemplate.class);
+    Assert.assertEquals("test_value", template.getToken());
+  }
+
+  @Test
+  public void testAuthenticationResponseTemplate_readsAccessToken() throws IOException {
+    String input = "{\"access_token\":\"test_value\"}";
+    RegistryAuthenticator.AuthenticationResponseTemplate template =
+        JsonTemplateMapper.readJson(
+            input, RegistryAuthenticator.AuthenticationResponseTemplate.class);
+    Assert.assertEquals("test_value", template.getToken());
+  }
+
+  @Test
+  public void testAuthenticationResponseTemplate_prefersToken() throws IOException {
+    String input = "{\"token\":\"test_value\",\"access_token\":\"wrong_value\"}";
+    RegistryAuthenticator.AuthenticationResponseTemplate template =
+        JsonTemplateMapper.readJson(
+            input, RegistryAuthenticator.AuthenticationResponseTemplate.class);
+    Assert.assertEquals("test_value", template.getToken());
+  }
+
+  @Test
+  public void testAuthenticationResponseTemplate_acceptsNull() throws IOException {
+    String input = "{}";
+    RegistryAuthenticator.AuthenticationResponseTemplate template =
+        JsonTemplateMapper.readJson(
+            input, RegistryAuthenticator.AuthenticationResponseTemplate.class);
+    Assert.assertNull(template.getToken());
   }
 }
