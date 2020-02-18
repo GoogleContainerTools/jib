@@ -45,8 +45,6 @@ public class SkaffoldWatchParameters {
    */
   @Internal
   public Set<Path> getBuildIncludes() {
-    // Gradle warns about @Input annotations on File objects, so we have to expose a getter for a
-    // String to make them go away.
     return buildIncludes;
   }
 
@@ -74,8 +72,6 @@ public class SkaffoldWatchParameters {
    */
   @Internal
   public Set<Path> getIncludes() {
-    // Gradle warns about @Input annotations on File objects, so we have to expose a getter for a
-    // String to make them go away.
     return includes;
   }
 
