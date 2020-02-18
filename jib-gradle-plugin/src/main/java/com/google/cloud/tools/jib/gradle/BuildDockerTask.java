@@ -72,6 +72,7 @@ public class BuildDockerTask extends DefaultTask implements JibTask {
     Preconditions.checkNotNull(jibExtension).getTo().setImage(targetImage);
   }
 
+  /** Task Action, builds an image to docker daemon. */
   @TaskAction
   public void buildDocker()
       throws IOException, BuildStepsExecutionException, CacheDirectoryCreationException,

@@ -214,6 +214,10 @@ public class CredentialRetrieverFactory {
         DockerConfigCredentialRetriever.create(imageReference.getRegistry(), dockerConfigFile));
   }
 
+  /**
+   * Creates a new {@link CredentialRetriever} that tries to retrieve credentials from a legacy
+   * Docker config file.
+   */
   public CredentialRetriever legacyDockerConfig(Path dockerConfigFile) {
     return dockerConfig(
         DockerConfigCredentialRetriever.createForLegacyFormat(

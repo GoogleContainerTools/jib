@@ -33,6 +33,7 @@ public class BlobHttpContent implements HttpContent {
     this(blob, contentType, ignored -> {});
   }
 
+  /** Create a new BlobHttpClient. */
   public BlobHttpContent(Blob blob, String contentType, Consumer<Long> writtenByteCountListener) {
     this.blob = blob;
     this.contentType = contentType;

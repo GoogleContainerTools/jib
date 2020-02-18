@@ -125,6 +125,7 @@ public class FailoverHttpClient {
   private final Deque<HttpTransport> transportsCreated = new ArrayDeque<>();
   private final Deque<Response> responsesCreated = new ArrayDeque<>();
 
+  /** Create a new FailoverHttpclient. */
   public FailoverHttpClient(
       boolean enableHttpAndInsecureFailover,
       boolean sendAuthorizationOverHttp,

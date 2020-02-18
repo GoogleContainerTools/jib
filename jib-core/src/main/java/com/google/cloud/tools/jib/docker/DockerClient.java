@@ -79,6 +79,7 @@ public class DockerClient {
       return DescriptorDigest.fromDigest(imageId);
     }
 
+    /** Return a list of diff ids of the layers in the image. */
     public List<DescriptorDigest> getDiffIds() throws DigestException {
       List<DescriptorDigest> processedDiffIds = new ArrayList<>(rootFs.layers.size());
       for (String diffId : rootFs.layers) {

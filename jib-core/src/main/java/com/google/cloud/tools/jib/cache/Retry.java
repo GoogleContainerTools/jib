@@ -69,6 +69,7 @@ public class Retry<E extends Exception> {
     this.action = action;
   }
 
+  /** Configure the maximum number of retries. Must be zero or more. */
   public Retry<E> maximumRetries(int maximumRetries) {
     Preconditions.checkArgument(maximumRetries > 0);
     this.maximumRetries = maximumRetries;

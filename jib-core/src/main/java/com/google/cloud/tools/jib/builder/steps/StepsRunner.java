@@ -119,6 +119,7 @@ public class StepsRunner {
     this.buildContext = buildContext;
   }
 
+  /** Add steps for loading an image to docker daemon. */
   public StepsRunner dockerLoadSteps(DockerClient dockerClient) {
     rootProgressDescription = "building image to Docker daemon";
 
@@ -131,6 +132,7 @@ public class StepsRunner {
     return this;
   }
 
+  /** Add steps for writing an image as a tar file archive. */
   public StepsRunner tarBuildSteps(Path outputPath) {
     rootProgressDescription = "building image to tar file";
 
@@ -143,6 +145,7 @@ public class StepsRunner {
     return this;
   }
 
+  /** Add steps for pushing an image to a remote registry. */
   public StepsRunner registryPushSteps() {
     rootProgressDescription = "building image to registry";
     boolean layersRequiredLocally = buildContext.getAlwaysCacheBaseImage();
@@ -161,6 +164,7 @@ public class StepsRunner {
     return this;
   }
 
+  /** Run all steps and return a BuildResult. */
   public BuildResult run() throws ExecutionException, InterruptedException {
     Preconditions.checkNotNull(rootProgressDescription);
 

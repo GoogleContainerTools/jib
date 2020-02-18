@@ -39,6 +39,7 @@ public class InitTask extends DefaultTask {
     return this;
   }
 
+  /** Task Action, lists modules and targets. */
   @TaskAction
   public void listModulesAndTargets() throws IOException {
     Project project = getProject();

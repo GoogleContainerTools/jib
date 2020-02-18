@@ -393,6 +393,7 @@ public class BuildContext implements Closeable {
     return targetImageConfiguration;
   }
 
+  /** Returns all image tags configured for this build. */
   public ImmutableSet<String> getAllTargetImageTags() {
     ImmutableSet.Builder<String> allTargetImageTags =
         ImmutableSet.builderWithExpectedSize(1 + additionalTargetImageTags.size());

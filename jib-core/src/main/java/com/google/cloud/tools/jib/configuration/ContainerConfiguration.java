@@ -101,6 +101,7 @@ public class ContainerConfiguration {
       return this;
     }
 
+    /** Adds an environment entry to the container configuration. */
     public void addEnvironment(String name, String value) {
       if (environmentMap == null) {
         environmentMap = new HashMap<>();
@@ -125,6 +126,7 @@ public class ContainerConfiguration {
       return this;
     }
 
+    /** Adds an exposed port entry to the container configuration. */
     public void addExposedPort(Port port) {
       if (exposedPorts == null) {
         exposedPorts = new HashSet<>();
@@ -148,6 +150,7 @@ public class ContainerConfiguration {
       return this;
     }
 
+    /** Adds a volume entry to the container configuration. */
     public void addVolume(AbsoluteUnixPath volume) {
       if (volumes == null) {
         volumes = new HashSet<>();
@@ -174,6 +177,7 @@ public class ContainerConfiguration {
       return this;
     }
 
+    /** Add a label to the container configuration. */
     public void addLabel(String key, String value) {
       if (labels == null) {
         labels = new HashMap<>();

@@ -205,6 +205,7 @@ public class ContainerConfigurationTemplate implements JsonTemplate {
     config.Cmd = cmd;
   }
 
+  /** Sets test on HealthCheck, creates an empty HealthCheck object if necessary. */
   public void setContainerHealthCheckTest(List<String> test) {
     if (config.Healthcheck == null) {
       config.Healthcheck = new HealthCheckObjectTemplate();
@@ -212,6 +213,7 @@ public class ContainerConfigurationTemplate implements JsonTemplate {
     Preconditions.checkNotNull(config.Healthcheck).Test = test;
   }
 
+  /** Sets interval on HealthCheck, creates an empty HealthCheck object if necessary. */
   public void setContainerHealthCheckInterval(@Nullable Long interval) {
     if (config.Healthcheck == null) {
       config.Healthcheck = new HealthCheckObjectTemplate();
@@ -219,6 +221,7 @@ public class ContainerConfigurationTemplate implements JsonTemplate {
     Preconditions.checkNotNull(config.Healthcheck).Interval = interval;
   }
 
+  /** Sets timeout on HealthCheck, creates an empty HealthCheck object if necessary. */
   public void setContainerHealthCheckTimeout(@Nullable Long timeout) {
     if (config.Healthcheck == null) {
       config.Healthcheck = new HealthCheckObjectTemplate();
@@ -226,6 +229,7 @@ public class ContainerConfigurationTemplate implements JsonTemplate {
     Preconditions.checkNotNull(config.Healthcheck).Timeout = timeout;
   }
 
+  /** Sets startPeriod on HealthCheck, creates an empty HealthCheck object if necessary. */
   public void setContainerHealthCheckStartPeriod(@Nullable Long startPeriod) {
     if (config.Healthcheck == null) {
       config.Healthcheck = new HealthCheckObjectTemplate();
@@ -233,6 +237,7 @@ public class ContainerConfigurationTemplate implements JsonTemplate {
     Preconditions.checkNotNull(config.Healthcheck).StartPeriod = startPeriod;
   }
 
+  /** Sets retries on HealthCheck, creates an empty HealthCheck object if necessary. */
   public void setContainerHealthCheckRetries(@Nullable Integer retries) {
     if (config.Healthcheck == null) {
       config.Healthcheck = new HealthCheckObjectTemplate();

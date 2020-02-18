@@ -33,6 +33,7 @@ import org.gradle.api.tasks.TaskAction;
  */
 public class CheckJibVersionTask extends DefaultTask {
 
+  /** Task Action, check if jib and skaffold versions are compatible. */
   @TaskAction
   public void checkVersion() {
     if (Strings.isNullOrEmpty(System.getProperty(JibPlugin.REQUIRED_VERSION_PROPERTY_NAME))) {

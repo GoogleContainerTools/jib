@@ -80,6 +80,7 @@ public class JibExtension {
   private final Property<Boolean> allowInsecureRegistries;
   private final Property<String> containerizingMode;
 
+  /** Should be called using {@link org.gradle.api.plugins.ExtensionContainer#create}. */
   public JibExtension(Project project) {
     ObjectFactory objectFactory = project.getObjects();
 

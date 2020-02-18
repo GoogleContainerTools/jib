@@ -23,7 +23,7 @@ import com.google.cloud.tools.jib.image.Layer;
 import com.google.common.base.Preconditions;
 import javax.annotation.Nullable;
 
-/** Default implementation of {@link CachedLayer}. */
+/** A reference to an image layer that is in the Cache. */
 public class CachedLayer implements Layer {
 
   /** Builds a {@link CachedLayer}. */
@@ -60,6 +60,7 @@ public class CachedLayer implements Layer {
       return layerBlob != null;
     }
 
+    /** Creates a CachedLayer instance. */
     public CachedLayer build() {
       return new CachedLayer(
           Preconditions.checkNotNull(layerDigest, "layerDigest required"),

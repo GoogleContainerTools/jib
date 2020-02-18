@@ -64,6 +64,7 @@ public class ImageMetadataOutput implements JsonTemplate {
     return JsonTemplateMapper.readJson(json, ImageMetadataOutput.class);
   }
 
+  /** Create reproducible image build metadata from {@link JibContainer} information. */
   public static ImageMetadataOutput fromJibContainer(JibContainer jibContainer) {
     String image = jibContainer.getTargetImage().toString();
     String imageId = jibContainer.getImageId().toString();

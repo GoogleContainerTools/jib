@@ -72,6 +72,7 @@ public class PluginConfigurationProcessor {
   private static final ImmutableList<String> CONST_LAYERS =
       ImmutableList.of(LayerType.DEPENDENCIES.getName());
 
+  /** Generate a runner for image builds to docker daemon. */
   public static JibBuildRunner createJibBuildRunnerForDockerDaemonImage(
       RawConfiguration rawConfiguration,
       InferredAuthProvider inferredAuthProvider,
@@ -107,6 +108,7 @@ public class PluginConfigurationProcessor {
         .writeImageJson(rawConfiguration.getImageJsonOutputPath());
   }
 
+  /** Generate a runner for image builds to tar file. */
   public static JibBuildRunner createJibBuildRunnerForTarImage(
       RawConfiguration rawConfiguration,
       InferredAuthProvider inferredAuthProvider,
@@ -141,6 +143,7 @@ public class PluginConfigurationProcessor {
         .writeImageJson(rawConfiguration.getImageJsonOutputPath());
   }
 
+  /** Generate a runner for image builds to registries. */
   public static JibBuildRunner createJibBuildRunnerForRegistryImage(
       RawConfiguration rawConfiguration,
       InferredAuthProvider inferredAuthProvider,
@@ -192,6 +195,7 @@ public class PluginConfigurationProcessor {
         .writeImageJson(rawConfiguration.getImageJsonOutputPath());
   }
 
+  /** Generate a skaffold syncmap JSON string for an image build configuration. */
   public static String getSkaffoldSyncMap(
       RawConfiguration rawConfiguration, ProjectProperties projectProperties)
       throws IOException, InvalidCreationTimeException, InvalidImageReferenceException,

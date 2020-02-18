@@ -93,6 +93,7 @@ public class V21ManifestTemplate implements ManifestTemplate {
     @Nullable private String v1Compatibility;
   }
 
+  /** Returns a list of descriptor digests for the layers in the image. */
   public List<DescriptorDigest> getLayerDigests() {
     List<DescriptorDigest> layerDigests = new ArrayList<>();
 

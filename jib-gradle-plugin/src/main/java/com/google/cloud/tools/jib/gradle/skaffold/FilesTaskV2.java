@@ -58,6 +58,7 @@ public class FilesTaskV2 extends DefaultTask {
     return this;
   }
 
+  /** Task Action, print files. */
   @TaskAction
   public void listFiles() throws IOException {
     Preconditions.checkNotNull(jibExtension);

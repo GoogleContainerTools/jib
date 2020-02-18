@@ -66,6 +66,7 @@ public class HistoryEntry implements JsonTemplate {
       return this;
     }
 
+    /** Create a new history entry. */
     public HistoryEntry build() {
       return new HistoryEntry(
           creationTimestamp == null ? null : creationTimestamp.toString(),

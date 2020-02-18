@@ -80,6 +80,7 @@ public class V22ManifestListTemplate implements ManifestTemplate {
     return Preconditions.checkNotNull(manifests);
   }
 
+  /** Returns a list of digests for a specific platform found in the manifest list. */
   public List<String> getDigestsForPlatform(String architecture, String os) {
     return getManifests()
         .stream()

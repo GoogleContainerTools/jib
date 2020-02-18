@@ -53,6 +53,7 @@ public class SkaffoldInitOutput {
 
   public SkaffoldInitOutput() {}
 
+  /** Testing visible OutputGenerator, you should NOT use this. */
   @VisibleForTesting
   public SkaffoldInitOutput(String json) throws IOException {
     SkaffoldInitOutput skaffoldInitOutput =
