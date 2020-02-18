@@ -92,7 +92,8 @@ public class ReproducibleLayerBuilderTest {
     Assert.assertEquals(TarArchiveEntry.DEFAULT_DIR_MODE, extractionPathEntry.getMode());
   }
 
-  private static void verifyNoMoreEntries(TarArchiveInputStream tarArchiveInputStream) throws IOException {
+  private static void verifyNoMoreEntries(TarArchiveInputStream tarArchiveInputStream)
+      throws IOException {
     Assert.assertNull(tarArchiveInputStream.getNextTarEntry());
   }
 
@@ -370,20 +371,19 @@ public class ReproducibleLayerBuilderTest {
     Path file = Files.createFile(testRoot.resolve("test.file"));
 
     Blob blob =
-            new ReproducibleLayerBuilder(
-                    ImmutableList.of(
-                            new LayerEntry(
-                                    testRoot,
-                                    AbsoluteUnixPath.fromPath(Paths.get("/")),
-                                    FilePermissions.DEFAULT_FOLDER_PERMISSIONS,
-                                    LayerConfiguration.DEFAULT_MODIFICATION_TIME),
-                            new LayerEntry(
-                                    file,
-                                    AbsoluteUnixPath.fromPath(Paths.get("/test.file")),
-                                    FilePermissions.DEFAULT_FILE_PERMISSIONS,
-                                    LayerConfiguration.DEFAULT_MODIFICATION_TIME)))
+        new ReproducibleLayerBuilder(
+                ImmutableList.of(
+                    new LayerEntry(
+                        testRoot,
+                        AbsoluteUnixPath.fromPath(Paths.get("/")),
+                        FilePermissions.DEFAULT_FOLDER_PERMISSIONS,
+                        LayerConfiguration.DEFAULT_MODIFICATION_TIME),
+                    new LayerEntry(
+                        file,
+                        AbsoluteUnixPath.fromPath(Paths.get("/test.file")),
+                        FilePermissions.DEFAULT_FILE_PERMISSIONS,
+                        LayerConfiguration.DEFAULT_MODIFICATION_TIME)))
             .build();
-
 
     Path tarFile = temporaryFolder.newFile().toPath();
     try (OutputStream out = new BufferedOutputStream(Files.newOutputStream(tarFile))) {
@@ -407,5 +407,4 @@ public class ReproducibleLayerBuilderTest {
     Files.setLastModifiedTime(newFile, FileTime.fromMillis(modificationTime));
     return newFile;
   }
-
 }
