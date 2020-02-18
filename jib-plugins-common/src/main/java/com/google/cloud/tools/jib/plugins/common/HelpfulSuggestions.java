@@ -22,7 +22,7 @@ import java.nio.file.Path;
 public class HelpfulSuggestions {
 
   /**
-   * Generate message for when "target image" isn't configured.
+   * Generates message for when "target image" isn't configured.
    *
    * @param messagePrefix the initial message text
    * @param parameter the parameter name (e.g. 'to.image' or {@literal <to><image>})

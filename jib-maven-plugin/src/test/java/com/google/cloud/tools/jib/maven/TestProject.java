@@ -46,7 +46,7 @@ public class TestProject extends TemporaryFolder implements Closeable {
     this.projectDir = projectDir;
   }
 
-  /** Get the project root resolved as a real path. */
+  /** Gets the project root resolved as a real path. */
   public Path getProjectRoot() throws IOException {
     return projectRoot.toRealPath();
   }

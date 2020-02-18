@@ -62,7 +62,7 @@ class RegistryErrorExceptionBuilder {
     }
   }
 
-  /** Create a new builder with information about the method that errored. */
+  /** Creates a new builder with information about the method that errored. */
   RegistryErrorExceptionBuilder(String method, @Nullable Throwable cause) {
     this.cause = cause;
 
@@ -71,7 +71,7 @@ class RegistryErrorExceptionBuilder {
     errorMessageBuilder.append(" but failed because: ");
   }
 
-  /** Create a new builder with information about the method that errored. */
+  /** Creates a new builder with information about the method that errored. */
   RegistryErrorExceptionBuilder(String method) {
     this(method, null);
   }

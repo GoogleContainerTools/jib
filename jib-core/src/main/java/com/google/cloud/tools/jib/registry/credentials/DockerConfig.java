@@ -116,7 +116,7 @@ class DockerConfig {
   }
 
   /**
-   * Gets alias matches for a registry.
+   * Gets registry matchers for a registry.
    *
    * <p>Matches are determined in the following order:
    *

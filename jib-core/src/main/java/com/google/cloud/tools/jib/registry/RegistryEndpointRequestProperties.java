@@ -26,7 +26,7 @@ class RegistryEndpointRequestProperties {
   @Nullable private final String sourceImageName;
 
   /**
-   * New properties with no sourceImageName.
+   * New properties.
    *
    * @param serverUrl the server URL for the registry (for example, {@code gcr.io})
    * @param imageName the image/repository name (also known as, namespace)

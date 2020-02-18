@@ -98,14 +98,26 @@ public interface BuildableManifestTemplate extends ManifestTemplate {
     }
   }
 
-  /** Returns the media type for this manifest, specific to the image format. */
+  /**
+   * Returns the media type for this manifest, specific to the image format.
+   *
+   * @return the media type for this manifest, specific to the image format
+   */
   String getManifestMediaType();
 
-  /** Returns the content descriptor of the container configuration. */
+  /**
+   * Returns the content descriptor of the container configuration.
+   *
+   * @return the content descriptor of the container configuration
+   */
   @Nullable
   ContentDescriptorTemplate getContainerConfiguration();
 
-  /** Returns an unmodifiable view of the layers. */
+  /**
+   * Returns an unmodifiable view of the layers.
+   *
+   * @return an unmodifiable view of the layers
+   */
   List<ContentDescriptorTemplate> getLayers();
 
   /**

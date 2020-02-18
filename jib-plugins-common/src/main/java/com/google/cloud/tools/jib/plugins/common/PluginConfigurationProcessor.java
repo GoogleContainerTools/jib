@@ -363,7 +363,7 @@ public class PluginConfigurationProcessor {
   }
 
   /**
-   * Compute the container entrypoint.
+   * Computes the container entrypoint.
    *
    * <p>Computation occurs in this order:
    *
