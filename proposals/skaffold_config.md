@@ -42,18 +42,18 @@ jib {
 #### Maven (`pom.xml`)
 ```xml
 <configuration>
-  <skaffold>/absolute/location.tar
+  <skaffold>
     <watch>
       <buildIncludes>
         <buildInclude>some/pomfile.xml</buildInclude>
       </buildIncludes>
       <includes>
         <include>some/file</include>
-        <include,another/file</include>
+        <include>another/file</include>
       </includes>
       <excludes>
         <exclude>not/me</exclude>
-        <exclude>also/not/me</exclude>
+        <exclude>/absolute/path/to/not/me</exclude>
       <excludes>
     </watch>
     <sync>
