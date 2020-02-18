@@ -34,20 +34,22 @@ import javax.annotation.Nullable;
  */
 interface RegistryEndpointProvider<T> {
 
-  /** @return the HTTP method to send the request with */
+  /** Returns the HTTP method to send the request with. */
   String getHttpMethod();
 
   /**
+   * Returns the registry endpoint URL.
+   *
    * @param apiRouteBase the registry's base URL (for example, {@code https://gcr.io/v2/})
    * @return the registry endpoint URL
    */
   URL getApiRoute(String apiRouteBase) throws MalformedURLException;
 
-  /** @return the {@link BlobHttpContent} to send as the request body */
+  /** Returns the {@link BlobHttpContent} to send as the request body. */
   @Nullable
   BlobHttpContent getContent();
 
-  /** @return a list of MIME types to pass as an HTTP {@code Accept} header */
+  /** Returns a list of MIME types to pass as an HTTP {@code Accept} header. */
   List<String> getAccept();
 
   /** Handles the response specific to the registry action. */
@@ -66,8 +68,8 @@ interface RegistryEndpointProvider<T> {
       throws ResponseException, RegistryErrorException;
 
   /**
-   * @return a description of the registry action performed, used in error messages to describe the
-   *     action that failed
+   * Returns description of the registry action performed, used in error messages to describe the
+   * action that failed.
    */
   String getActionDescription();
 }

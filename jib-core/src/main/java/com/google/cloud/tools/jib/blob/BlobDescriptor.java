@@ -53,7 +53,9 @@ public class BlobDescriptor {
   }
 
   /**
-   * Two {@link BlobDescriptor} objects are equal if their
+   * Checks if two {@link BlobDescriptor}s are equal.
+   *
+   * <p>Two blobs are equal if their:
    *
    * <ol>
    *   <li>{@code digest}s are not null and equal, and

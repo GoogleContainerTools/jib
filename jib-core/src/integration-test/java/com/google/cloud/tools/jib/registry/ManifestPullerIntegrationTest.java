@@ -33,7 +33,7 @@ import org.junit.Test;
 /** Integration tests for {@link ManifestPuller}. */
 public class ManifestPullerIntegrationTest {
 
-  /** A known manifest list sha for openjdk:11-jre-slim */
+  /** A known manifest list sha for openjdk:11-jre-slim. */
   public static final String KNOWN_MANIFEST_LIST_SHA =
       "sha256:8ab7b3078b01ba66b937b7fbe0b9eccf60449cc101c42e99aeefaba0e1781155";
 

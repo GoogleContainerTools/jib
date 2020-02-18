@@ -78,6 +78,8 @@ public class MainClassResolver {
   }
 
   /**
+   * Check if a string is a valid Java class name.
+   *
    * @param className the class name to check
    * @return {@code true} if {@code className} is a valid Java class name; {@code false} otherwise
    */

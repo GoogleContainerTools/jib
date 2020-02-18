@@ -271,7 +271,7 @@ public class ImageReference {
 
   /**
    * Returns {@code true} if the {@link ImageReference} uses the default tag ((@code latest} or
-   * empty); {@code false} if not
+   * empty); {@code false} if not.
    *
    * @return {@code true} if uses the default tag; {@code false} if not
    */

@@ -35,7 +35,7 @@ import org.codehaus.plexus.component.repository.exception.ComponentLookupExcepti
 import org.junit.Assert;
 import org.junit.rules.ExternalResource;
 
-/** A test helper to resolve artifacts from a local repository in test/resources */
+/** A test helper to resolve artifacts from a local repository in test/resources. */
 public class TestRepository extends ExternalResource {
 
   private static final String TEST_M2 = "maven/testM2";

@@ -30,6 +30,8 @@ import java.util.Objects;
 public class Authorization {
 
   /**
+   * Create an authentication from basic credentials.
+   *
    * @param username the username
    * @param secret the secret
    * @return an {@link Authorization} with a {@code Basic} credentials
@@ -41,6 +43,8 @@ public class Authorization {
   }
 
   /**
+   * Create an authentication from bearer token.
+   *
    * @param token the token
    * @return an {@link Authorization} with a {@code Bearer} token
    */

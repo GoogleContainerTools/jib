@@ -80,6 +80,8 @@ public class MavenProjectProperties implements ProjectProperties {
   private static final Duration LOGGING_THREAD_SHUTDOWN_TIMEOUT = Duration.ofSeconds(1);
 
   /**
+   * Static factory method for {@link MavenProjectProperties}.
+   *
    * @param project the {@link MavenProject} for the plugin.
    * @param session the {@link MavenSession} for the plugin.
    * @param log the Maven {@link Log} to log messages during Jib execution

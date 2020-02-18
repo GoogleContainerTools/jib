@@ -54,8 +54,8 @@ import javax.annotation.Nullable;
 public class DefaultCredentialRetrievers {
 
   /**
-   * @see <a
-   *     href="https://docs.docker.com/engine/reference/commandline/login/#privileged-user-requirement">https://docs.docker.com/engine/reference/commandline/login/#privileged-user-requirement</a>
+   * See <a
+   * href="https://docs.docker.com/engine/reference/commandline/login/#privileged-user-requirement">https://docs.docker.com/engine/reference/commandline/login/#privileged-user-requirement</a>.
    */
   private static final Path DOCKER_CONFIG_FILE = Paths.get(".docker", "config.json");
   // For Kubernetes: https://github.com/GoogleContainerTools/jib/issues/2260

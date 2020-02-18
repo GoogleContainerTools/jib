@@ -22,6 +22,8 @@ import java.nio.file.Path;
 public class HelpfulSuggestions {
 
   /**
+   * Generate message for when "target image" isn't configured.
+   *
    * @param messagePrefix the initial message text
    * @param parameter the parameter name (e.g. 'to.image' or {@literal <to><image>})
    * @param buildConfigFilename the name of the build config (build.gradle or pom.xml)
@@ -80,8 +82,10 @@ public class HelpfulSuggestions {
   }
 
   /**
+   * Helper for creating messages with suggestions.
+   *
    * @param messagePrefix the initial message text
-   * @param suggestion a suggested fix for the problem described by {@link #messagePrefix}
+   * @param suggestion a suggested fix for the problem described by param: messagePrefix
    * @return the message containing the suggestion
    */
   public static String suggest(String messagePrefix, String suggestion) {
@@ -195,6 +199,8 @@ public class HelpfulSuggestions {
   }
 
   /**
+   * Helper for suggestions with configured message prefix.
+   *
    * @param suggestion a suggested fix for the problem described by {@link #messagePrefix}
    * @return the message containing the suggestion
    */

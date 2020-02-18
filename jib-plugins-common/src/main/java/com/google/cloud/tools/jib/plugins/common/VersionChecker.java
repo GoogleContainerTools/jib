@@ -129,6 +129,8 @@ public class VersionChecker<V extends Comparable<? super V>> {
   }
 
   /**
+   * Parse and return a version object.
+   *
    * @return the parsed version
    * @throws IllegalArgumentException if an exception occurred
    */

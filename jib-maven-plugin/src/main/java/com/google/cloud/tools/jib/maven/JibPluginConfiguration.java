@@ -126,7 +126,7 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
     }
   }
 
-  /** Configuration for {@code from} parameter, */
+  /** Configuration for {@code from} parameter. */
   public static class FromConfiguration {
 
     @Nullable @Parameter private String image;

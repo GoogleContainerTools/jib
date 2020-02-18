@@ -72,7 +72,7 @@ public class JsonTemplateMapper {
   }
 
   /**
-   * Deserializes a JSON file via a JSON object template with a shared lock on the file
+   * Deserializes a JSON file via a JSON object template with a shared lock on the file.
    *
    * @param <T> child type of {@link JsonTemplate}
    * @param jsonFile a file containing a JSON string

@@ -71,7 +71,9 @@ public class DockerCredentialHelper {
   }
 
   /**
-   * Calls the credential helper CLI in the form:
+   * Calls the credential helper CLI.
+   *
+   * <p>Calls occur in the form:
    *
    * <pre>{@code
    * echo -n <server URL> | docker-credential-<credential helper suffix> get

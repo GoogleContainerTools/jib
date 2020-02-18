@@ -363,7 +363,9 @@ public class PluginConfigurationProcessor {
   }
 
   /**
-   * Compute the container entrypoint, in this order:
+   * Compute the container entrypoint.
+   *
+   * <p>Computation occurs in this order:
    *
    * <ol>
    *   <li>null (inheriting from the base image), if the user specified value is {@code INHERIT}
@@ -472,7 +474,7 @@ public class PluginConfigurationProcessor {
   }
 
   /**
-   * Parses the list of raw volumes directories to a set of {@link AbsoluteUnixPath}
+   * Parses the list of raw volumes directories to a set of {@link AbsoluteUnixPath}.
    *
    * @param rawConfiguration raw configuration data
    * @return the set of parsed volumes.

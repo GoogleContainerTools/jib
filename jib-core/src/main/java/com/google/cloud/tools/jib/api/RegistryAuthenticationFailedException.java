@@ -38,12 +38,12 @@ public class RegistryAuthenticationFailedException extends RegistryException {
     this.imageName = imageName;
   }
 
-  /** @return the server being authenticated */
+  /** The server being authenticated. */
   public String getServerUrl() {
     return serverUrl;
   }
 
-  /** @return the image being authenticated */
+  /** The image being authenticated. */
   public String getImageName() {
     return imageName;
   }

@@ -126,7 +126,7 @@ public class ContainerConfigurationTemplate implements JsonTemplate {
     /** User. */
     @Nullable private String User;
 
-    /** Volumes */
+    /** Volumes. */
     @Nullable private Map<String, Map<?, ?>> Volumes;
   }
 
