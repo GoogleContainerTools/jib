@@ -36,6 +36,11 @@ public class SkaffoldConfiguration {
     @Parameter List<File> excludes = Collections.emptyList();
   }
 
+  /**
+   * Watch is unused, but left here to define how to parse it. See {@link
+   * FilesMojoV2#collectWatchParameters}
+   */
   @Parameter Watch watch = new Watch();
+
   @Parameter Sync sync = new Sync();
 }

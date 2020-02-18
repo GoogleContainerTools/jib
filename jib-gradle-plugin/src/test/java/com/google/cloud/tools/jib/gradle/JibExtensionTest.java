@@ -246,10 +246,7 @@ public class JibExtensionTest {
   public void testSkaffold() {
     testJibExtension.skaffold(
         skaffold -> {
-          skaffold.sync(
-              sync -> {
-                sync.setExcludes(fakeProject.files("sync1", "sync2"));
-              });
+          skaffold.sync(sync -> sync.setExcludes(fakeProject.files("sync1", "sync2")));
           skaffold.watch(
               watch -> {
                 watch.setBuildIncludes(ImmutableList.of("watch1", "watch2"));
