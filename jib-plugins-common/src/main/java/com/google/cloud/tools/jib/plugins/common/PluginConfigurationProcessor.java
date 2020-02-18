@@ -37,7 +37,6 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Verify;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Sets;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -330,7 +329,7 @@ public class PluginConfigurationProcessor {
 
   /** Expand directories to files (excludes directory paths). */
   static Set<Path> getAllFiles(Set<Path> paths) throws IOException {
-    Set<Path> expanded = Sets.newHashSet();
+    Set<Path> expanded = new HashSet<>();
     for (Path path : paths) {
       if (Files.isRegularFile(path)) {
         expanded.add(path);

@@ -25,6 +25,7 @@ import javax.inject.Inject;
 import org.gradle.api.Project;
 import org.gradle.api.tasks.Internal;
 
+/** Skaffold specific JibExtension parameters for configuring files to watch. */
 public class SkaffoldWatchParameters {
 
   private final Project project;

@@ -216,8 +216,6 @@ public class FilesMojoV2 extends SkaffoldBindingMojo {
     }
 
     try {
-      System.out.println(
-          Paths.get(".").toAbsolutePath() + " " + new File(".").toPath().toAbsolutePath());
       // Print JSON string
       System.out.println();
       System.out.println("BEGIN JIB JSON");

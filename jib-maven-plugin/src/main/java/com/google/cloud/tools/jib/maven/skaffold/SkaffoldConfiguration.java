@@ -21,14 +21,17 @@ import java.util.Collections;
 import java.util.List;
 import org.apache.maven.plugins.annotations.Parameter;
 
+/** Skaffold specific Jib plugin configuration options. */
 public class SkaffoldConfiguration {
 
+  /** Skaffold specific Jib plugin configuration for files to watch. */
   public static class Watch {
     @Parameter List<File> buildIncludes = Collections.emptyList();
     @Parameter List<File> includes = Collections.emptyList();
     @Parameter List<File> excludes = Collections.emptyList();
   }
 
+  /** Skaffold specific Jib plugin configuration for files to sync. */
   public static class Sync {
     @Parameter List<File> excludes = Collections.emptyList();
   }

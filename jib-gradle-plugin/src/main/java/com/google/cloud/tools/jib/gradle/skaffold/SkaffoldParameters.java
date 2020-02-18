@@ -23,6 +23,7 @@ import org.gradle.api.Project;
 import org.gradle.api.model.ObjectFactory;
 import org.gradle.api.tasks.Nested;
 
+/** Skaffold specific JibExtension parameters. */
 public class SkaffoldParameters {
 
   private final SkaffoldWatchParameters watch;
