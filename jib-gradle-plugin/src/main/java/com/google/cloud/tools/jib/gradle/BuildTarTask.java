@@ -76,8 +76,10 @@ public class BuildTarTask extends DefaultTask implements JibTask {
   }
 
   /**
-   * @return a collection of all the files that jib includes in the image. Only used to calculate
-   *     UP-TO-DATE.
+   * Returns a collection of all the files that jib includes in the image. Only used to calculate
+   * UP-TO-DATE.
+   *
+   * @return a list of paths of input files
    */
   @InputFiles
   public FileCollection getInputFiles() {

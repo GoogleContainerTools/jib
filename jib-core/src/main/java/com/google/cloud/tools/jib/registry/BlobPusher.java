@@ -67,8 +67,8 @@ class BlobPusher {
     }
 
     /**
-     * @return a URL to continue pushing the BLOB to, or {@link Optional#empty()} if the BLOB
-     *     already exists on the registry
+     * Returns a URL to continue pushing the BLOB to, or {@link Optional#empty()} if the BLOB
+     * already exists on the registry.
      */
     @Override
     public Optional<URL> handleResponse(Response response) throws RegistryErrorException {
@@ -133,7 +133,7 @@ class BlobPusher {
       return Collections.emptyList();
     }
 
-    /** @return a URL to continue pushing the BLOB to */
+    /** Returns a URL to continue pushing the BLOB to. */
     @Override
     public URL handleResponse(Response response) throws RegistryException {
       // TODO: Handle 204 No Content
@@ -188,7 +188,7 @@ class BlobPusher {
       return null;
     }
 
-    /** @return {@code location} with query parameter 'digest' set to the BLOB's digest */
+    /** Returns {@code location} with query parameter 'digest' set to the BLOB's digest. */
     @Override
     public URL getApiRoute(String apiRouteBase) {
       return new GenericUrl(location).set("digest", blobDigest).toURL();
@@ -227,14 +227,16 @@ class BlobPusher {
   }
 
   /**
-   * @return a {@link RegistryEndpointProvider} for initializing the BLOB upload with an existence
-   *     check
+   * Returns a {@link RegistryEndpointProvider} for initializing the BLOB upload with an existence
+   * check.
    */
   RegistryEndpointProvider<Optional<URL>> initializer() {
     return new Initializer();
   }
 
   /**
+   * Returns a new Writer.
+   *
    * @param location the upload URL
    * @param writtenByteCountListener the listener for {@link Blob} push progress (written bytes)
    * @return a {@link RegistryEndpointProvider} for writing the BLOB to an upload location
@@ -244,6 +246,8 @@ class BlobPusher {
   }
 
   /**
+   * Returns a new Committer.
+   *
    * @param location the upload URL
    * @return a {@link RegistryEndpointProvider} for committing the written BLOB with its digest
    */
@@ -259,8 +263,8 @@ class BlobPusher {
   }
 
   /**
-   * @return the common action description for {@link Initializer}, {@link Writer}, and {@link
-   *     Committer}
+   * Returns the common action description for {@link Initializer}, {@link Writer}, and {@link
+   * Committer}.
    */
   private String getActionDescription() {
     return "push BLOB for "

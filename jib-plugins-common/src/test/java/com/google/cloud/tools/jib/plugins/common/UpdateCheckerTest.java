@@ -42,7 +42,7 @@ import org.junit.runner.RunWith;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
-/** Tests for {@link UpdateChecker} */
+/** Tests for {@link UpdateChecker}. */
 @RunWith(MockitoJUnitRunner.class)
 public class UpdateCheckerTest {
 

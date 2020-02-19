@@ -46,8 +46,8 @@ import javax.net.ssl.SSLException;
 class RegistryEndpointCaller<T> {
 
   /**
-   * @see <a
-   *     href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/308">https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/308</a>
+   * <a
+   * href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/308">https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/308</a>.
    */
   @VisibleForTesting static final int STATUS_CODE_PERMANENT_REDIRECT = 308;
 

@@ -133,7 +133,7 @@ public class RegistryAuthenticator {
     @JsonProperty("access_token")
     private String accessToken;
 
-    /** @return {@link #token} if not null, or {@link #accessToken} */
+    /** Returns {@link #token} if not null, or {@link #accessToken}. */
     @Nullable
     @VisibleForTesting
     String getToken() {

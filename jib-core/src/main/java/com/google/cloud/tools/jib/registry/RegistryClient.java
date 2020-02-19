@@ -431,6 +431,8 @@ public class RegistryClient {
   }
 
   /**
+   * Check if a blob is on the registry.
+   *
    * @param blobDigest the blob digest to check for
    * @return the BLOB's {@link BlobDescriptor} if the BLOB exists on the registry, or {@link
    *     Optional#empty()} if it doesn't

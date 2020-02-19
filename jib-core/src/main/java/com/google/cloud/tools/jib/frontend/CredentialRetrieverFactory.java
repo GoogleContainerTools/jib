@@ -223,7 +223,7 @@ public class CredentialRetrieverFactory {
   /**
    * Creates a new {@link CredentialRetriever} that tries to retrieve credentials from <a
    * href="https://cloud.google.com/docs/authentication/production">Google Application Default
-   * Credentials.</a>
+   * Credentials</a>.
    *
    * @return a new {@link CredentialRetriever}
    * @see <a
