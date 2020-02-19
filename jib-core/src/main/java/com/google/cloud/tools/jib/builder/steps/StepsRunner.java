@@ -180,7 +180,7 @@ public class StepsRunner {
   }
 
   /**
-   * Run all steps and return a BuildResult after a build is completed
+   * Run all steps and return a BuildResult after a build is completed.
    *
    * @return a {@link BuildResult} with build metadata
    * @throws ExecutionException if an error occured during asynchronous execution of steps
