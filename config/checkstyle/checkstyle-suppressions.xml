@@ -14,7 +14,6 @@
 
   <!-- temporary suppressions as we work through them -->
   <suppress files=".*\.java" checks="VariableDeclarationUsageDistance"/>
-  <suppress files=".*\.java" checks="SummaryJavadoc"/>
 
   <!-- leniency for json templates -->
   <suppress files=".*[\\/]jib-core[\\/].*Template\.java" checks="MemberName"/>
