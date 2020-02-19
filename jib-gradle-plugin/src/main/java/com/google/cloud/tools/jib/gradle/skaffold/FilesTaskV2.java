@@ -58,7 +58,11 @@ public class FilesTaskV2 extends DefaultTask {
     return this;
   }
 
-  /** Task Action, print files. */
+  /**
+   * Task Action, print files.
+   *
+   * @throws IOException if an error occurs generating the json string
+   */
   @TaskAction
   public void listFiles() throws IOException {
     Preconditions.checkNotNull(jibExtension);

@@ -23,7 +23,12 @@ import java.net.URL;
  */
 public class InsecureRegistryException extends RegistryException {
 
-  /** Creates a new exception with a human readable message. */
+  /**
+   * Creates a new exception with a human readable message.
+   *
+   * @param insecureUrl the insecure url that is attempted to be accessed
+   * @param cause the underlying cause that triggered this exception
+   */
   public InsecureRegistryException(URL insecureUrl, Throwable cause) {
     super(
         "Failed to verify the server at "

@@ -125,7 +125,13 @@ public class FailoverHttpClient {
   private final Deque<HttpTransport> transportsCreated = new ArrayDeque<>();
   private final Deque<Response> responsesCreated = new ArrayDeque<>();
 
-  /** Create a new FailoverHttpclient. */
+  /**
+   * Create a new FailoverHttpclient.
+   *
+   * @param enableHttpAndInsecureFailover to enable automatic failover to insecure connection types
+   * @param sendAuthorizationOverHttp allow sending auth over http connections
+   * @param logger to receive log events
+   */
   public FailoverHttpClient(
       boolean enableHttpAndInsecureFailover,
       boolean sendAuthorizationOverHttp,

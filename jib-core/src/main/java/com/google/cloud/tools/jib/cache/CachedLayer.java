@@ -60,7 +60,11 @@ public class CachedLayer implements Layer {
       return layerBlob != null;
     }
 
-    /** Creates a CachedLayer instance. */
+    /**
+     * Creates a CachedLayer instance.
+     *
+     * @return a new cached layer
+     */
     public CachedLayer build() {
       return new CachedLayer(
           Preconditions.checkNotNull(layerDigest, "layerDigest required"),

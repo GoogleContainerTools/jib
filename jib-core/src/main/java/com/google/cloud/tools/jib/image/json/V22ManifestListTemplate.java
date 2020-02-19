@@ -80,7 +80,14 @@ public class V22ManifestListTemplate implements ManifestTemplate {
     return Preconditions.checkNotNull(manifests);
   }
 
-  /** Returns a list of digests for a specific platform found in the manifest list. */
+  /**
+   * Returns a list of digests for a specific platform found in the manifest list. see
+   * <a>https://docs.docker.com/registry/spec/manifest-v2-2/#manifest-list</a>
+   *
+   * @param architecture the architecture of the target platform
+   * @param os the os of the target platform
+   * @return a list of matching digests
+   */
   public List<String> getDigestsForPlatform(String architecture, String os) {
     return getManifests()
         .stream()

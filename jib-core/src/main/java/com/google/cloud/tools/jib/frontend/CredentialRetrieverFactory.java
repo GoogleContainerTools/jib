@@ -217,6 +217,10 @@ public class CredentialRetrieverFactory {
   /**
    * Creates a new {@link CredentialRetriever} that tries to retrieve credentials from a legacy
    * Docker config file.
+   *
+   * @param dockerConfigFile the path to a legacy docker configuration file
+   * @return a new {@link CredentialRetriever}
+   * @see DockerConfigCredentialRetriever
    */
   public CredentialRetriever legacyDockerConfig(Path dockerConfigFile) {
     return dockerConfig(

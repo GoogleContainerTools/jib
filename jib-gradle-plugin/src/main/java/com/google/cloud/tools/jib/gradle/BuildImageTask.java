@@ -71,7 +71,14 @@ public class BuildImageTask extends DefaultTask implements JibTask {
     Preconditions.checkNotNull(jibExtension).getTo().setImage(targetImage);
   }
 
-  /** Task Action, builds an image to remote registry. */
+  /**
+   * Task Action, builds an image to remote registry.
+   *
+   * @throws IOException if an error occurs creating the jib runner
+   * @throws BuildStepsExecutionException if an error occurs while executing build steps
+   * @throws CacheDirectoryCreationException if a new cache directory could not be created
+   * @throws MainClassInferenceException if a main class could not be found
+   */
   @TaskAction
   public void buildImage()
       throws IOException, BuildStepsExecutionException, CacheDirectoryCreationException,
