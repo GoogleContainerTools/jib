@@ -270,6 +270,7 @@ public class PluginConfigurationProcessor {
    *
    * @param rawConfiguration the raw configuration from the plugin
    * @param projectProperties an plugin specific implementation of {@link ProjectProperties}
+   * @param excludes a set of paths to exclude, directories include in this list will be expanded
    * @return new json string representation of the Sync Map
    * @throws InvalidImageReferenceException if the image reference is invalid
    * @throws MainClassInferenceException if a main class could not be found
