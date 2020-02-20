@@ -25,6 +25,7 @@ For information about the project, see the [Jib project README](../README.md).
     * [Build an image tarball](#build-an-image-tarball)
   * [Bind to a lifecycle](#bind-to-a-lifecycle)
   * [Additional Build Artifacts](#additional-build-artifacts)
+* [Multi Module Projects](#multi-module-projects)
 * [Extended Usage](#extended-usage)
   * [System Properties](#system-properties)
   * [Example](#example)
@@ -213,6 +214,11 @@ mvn package
 ### Additional Build Artifacts
 
 As part of an image build, Jib also writes out the _image digest_ and the _image ID_. By default, these are written out to `target/jib-image.digest` and `target/jib-image.id` respectively, but the locations can be configured using the `<outputFiles><digest>` and `<outputFiles><imageId>` configuration properties. See [Extended Usage](#outputpaths-object) for more details.
+
+## Multi Module Projects
+
+Special handling of project dependencies is recommended when building complex
+multi module projects. See [Multi Module Example](https://github.com/GoogleContainerTools/jib/tree/master/examples/multi-module) for detailed information.
 
 ## Extended Usage
 
