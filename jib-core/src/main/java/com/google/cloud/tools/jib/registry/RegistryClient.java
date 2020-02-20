@@ -160,6 +160,16 @@ public class RegistryClient {
         eventHandlers, new RegistryEndpointRequestProperties(serverUrl, imageName), httpClient);
   }
 
+  /**
+   * Creates a new {@link Factory} for building a {@link RegistryClient}.
+   *
+   * @param eventHandlers the event handlers used for dispatching log events
+   * @param serverUrl the server URL for the registry (for example, {@code gcr.io})
+   * @param imageName the image/repository name (also known as, namespace)
+   * @param sourceImageName additional source image to request pull permission from the registry
+   * @param httpClient HTTP client
+   * @return the new {@link Factory}
+   */
   public static Factory factory(
       EventHandlers eventHandlers,
       String serverUrl,
@@ -288,6 +298,7 @@ public class RegistryClient {
     this.httpClient = httpClient;
   }
 
+  /** Configure basic authentication on this registry client. */
   public void configureBasicAuth() {
     Preconditions.checkNotNull(credential);
     Preconditions.checkState(!credential.isOAuth2RefreshToken());

@@ -44,6 +44,7 @@ public class SyncMapTask extends DefaultTask {
     return this;
   }
 
+  /** Task Action, lists files and container targets. */
   @TaskAction
   public void listFilesAndTargets() {
     Preconditions.checkNotNull(jibExtension);

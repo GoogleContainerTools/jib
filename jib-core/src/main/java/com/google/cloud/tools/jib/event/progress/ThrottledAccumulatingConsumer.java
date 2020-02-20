@@ -51,6 +51,13 @@ public class ThrottledAccumulatingConsumer implements Consumer<Long>, Closeable 
     this(callback, Duration.ofMillis(100), Instant::now);
   }
 
+  /**
+   * A new configured consumer.
+   *
+   * @param consumer {@link Consumer} callback to wrap
+   * @param delayBetweenCallbacks delay between each call to the underlying accept
+   * @param getNow supplies of the current time {@link Instant}
+   */
   public ThrottledAccumulatingConsumer(
       Consumer<Long> consumer, Duration delayBetweenCallbacks, Supplier<Instant> getNow) {
     this.consumer = consumer;

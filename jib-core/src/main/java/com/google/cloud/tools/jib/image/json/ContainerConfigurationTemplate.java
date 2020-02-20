@@ -205,6 +205,11 @@ public class ContainerConfigurationTemplate implements JsonTemplate {
     config.Cmd = cmd;
   }
 
+  /**
+   * Sets test on HealthCheck, creates an empty HealthCheck object if necessary.
+   *
+   * @param test the list of tests to set
+   */
   public void setContainerHealthCheckTest(List<String> test) {
     if (config.Healthcheck == null) {
       config.Healthcheck = new HealthCheckObjectTemplate();
@@ -212,6 +217,11 @@ public class ContainerConfigurationTemplate implements JsonTemplate {
     Preconditions.checkNotNull(config.Healthcheck).Test = test;
   }
 
+  /**
+   * Sets interval on HealthCheck, creates an empty HealthCheck object if necessary.
+   *
+   * @param interval the interval to set
+   */
   public void setContainerHealthCheckInterval(@Nullable Long interval) {
     if (config.Healthcheck == null) {
       config.Healthcheck = new HealthCheckObjectTemplate();
@@ -219,6 +229,11 @@ public class ContainerConfigurationTemplate implements JsonTemplate {
     Preconditions.checkNotNull(config.Healthcheck).Interval = interval;
   }
 
+  /**
+   * Sets timeout on HealthCheck, creates an empty HealthCheck object if necessary.
+   *
+   * @param timeout the timeout to configure
+   */
   public void setContainerHealthCheckTimeout(@Nullable Long timeout) {
     if (config.Healthcheck == null) {
       config.Healthcheck = new HealthCheckObjectTemplate();
@@ -226,6 +241,11 @@ public class ContainerConfigurationTemplate implements JsonTemplate {
     Preconditions.checkNotNull(config.Healthcheck).Timeout = timeout;
   }
 
+  /**
+   * Sets startPeriod on HealthCheck, creates an empty HealthCheck object if necessary.
+   *
+   * @param startPeriod the start period to configure
+   */
   public void setContainerHealthCheckStartPeriod(@Nullable Long startPeriod) {
     if (config.Healthcheck == null) {
       config.Healthcheck = new HealthCheckObjectTemplate();
@@ -233,6 +253,11 @@ public class ContainerConfigurationTemplate implements JsonTemplate {
     Preconditions.checkNotNull(config.Healthcheck).StartPeriod = startPeriod;
   }
 
+  /**
+   * Sets retries on HealthCheck, creates an empty HealthCheck object if necessary.
+   *
+   * @param retries the number of retries to configure
+   */
   public void setContainerHealthCheckRetries(@Nullable Integer retries) {
     if (config.Healthcheck == null) {
       config.Healthcheck = new HealthCheckObjectTemplate();

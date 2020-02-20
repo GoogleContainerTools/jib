@@ -101,6 +101,12 @@ public class ContainerConfiguration {
       return this;
     }
 
+    /**
+     * Adds an environment entry to the container configuration.
+     *
+     * @param name the environment variable key
+     * @param value the non-null value to associate with environment variable
+     */
     public void addEnvironment(String name, String value) {
       if (environmentMap == null) {
         environmentMap = new HashMap<>();
@@ -125,6 +131,11 @@ public class ContainerConfiguration {
       return this;
     }
 
+    /**
+     * Adds an exposed port entry to the container configuration.
+     *
+     * @param port the non-null port to add
+     */
     public void addExposedPort(Port port) {
       if (exposedPorts == null) {
         exposedPorts = new HashSet<>();
@@ -148,6 +159,11 @@ public class ContainerConfiguration {
       return this;
     }
 
+    /**
+     * Adds a volume entry to the container configuration.
+     *
+     * @param volume the absolute path to add as a volume entry
+     */
     public void addVolume(AbsoluteUnixPath volume) {
       if (volumes == null) {
         volumes = new HashSet<>();
@@ -174,6 +190,12 @@ public class ContainerConfiguration {
       return this;
     }
 
+    /**
+     * Add a label to the container configuration.
+     *
+     * @param key the label name to add
+     * @param value the value to be associated with the label
+     */
     public void addLabel(String key, String value) {
       if (labels == null) {
         labels = new HashMap<>();

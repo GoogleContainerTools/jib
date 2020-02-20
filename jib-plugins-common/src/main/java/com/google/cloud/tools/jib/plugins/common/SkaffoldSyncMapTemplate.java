@@ -98,6 +98,12 @@ public class SkaffoldSyncMapTemplate implements JsonTemplate {
     return new ObjectMapper().readValue(jsonString, SkaffoldSyncMapTemplate.class);
   }
 
+  /**
+   * Add a layer entry as a "generated" sync entry. Generated sync entries require rebuilds before
+   * files can be sync'd to a running container.
+   *
+   * @param layerEntry the layer entry to add to the generated configuration
+   */
   public void addGenerated(LayerEntry layerEntry) {
     generated.add(
         new FileTemplate(
@@ -105,6 +111,12 @@ public class SkaffoldSyncMapTemplate implements JsonTemplate {
             layerEntry.getExtractionPath().toString()));
   }
 
+  /**
+   * Add a layer entry as a "direct" sync entry. Direct entries can be sync'd to a running container
+   * without rebuilding any files.
+   *
+   * @param layerEntry the layer entry to add to the direct configuration
+   */
   public void addDirect(LayerEntry layerEntry) {
     direct.add(
         new FileTemplate(
@@ -112,6 +124,12 @@ public class SkaffoldSyncMapTemplate implements JsonTemplate {
             layerEntry.getExtractionPath().toString()));
   }
 
+  /**
+   * Return JSON representation of the SyncMap.
+   *
+   * @return the json string representation of this SyncMap
+   * @throws IOException if json serialization fails
+   */
   public String getJsonString() throws IOException {
     try (OutputStream outputStream = new ByteArrayOutputStream()) {
       new ObjectMapper().writeValue(outputStream, this);

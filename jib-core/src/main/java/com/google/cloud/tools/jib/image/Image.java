@@ -250,6 +250,11 @@ public class Image {
       return this;
     }
 
+    /**
+     * Create an {@link Image} instance.
+     *
+     * @return a new {@link Image} instance
+     */
     public Image build() {
       return new Image(
           imageFormat,

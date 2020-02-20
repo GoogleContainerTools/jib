@@ -64,6 +64,13 @@ public class ImageTarball {
     this.allTargetImageTags = allTargetImageTags;
   }
 
+  /**
+   * Writes image tar bar in configured {@link Image#getImageFormat()} of OCI or Docker to output
+   * stream.
+   *
+   * @param out the target output stream
+   * @throws IOException if an error occurs writing out the image to stream
+   */
   public void writeTo(OutputStream out) throws IOException {
     if (image.getImageFormat() == OciManifestTemplate.class) {
       ociWriteTo(out);

@@ -119,6 +119,12 @@ public class StepsRunner {
     this.buildContext = buildContext;
   }
 
+  /**
+   * Add steps for loading an image to docker daemon.
+   *
+   * @param dockerClient the docker client to load the image to
+   * @return this StepsRunner instance
+   */
   public StepsRunner dockerLoadSteps(DockerClient dockerClient) {
     rootProgressDescription = "building image to Docker daemon";
 
@@ -131,6 +137,12 @@ public class StepsRunner {
     return this;
   }
 
+  /**
+   * Add steps for writing an image as a tar file archive.
+   *
+   * @param outputPath the target file path to write the image to
+   * @return this StepsRunner instance
+   */
   public StepsRunner tarBuildSteps(Path outputPath) {
     rootProgressDescription = "building image to tar file";
 
@@ -143,6 +155,12 @@ public class StepsRunner {
     return this;
   }
 
+  /**
+   * Add steps for pushing an image to a remote registry. The registry is determined by the image
+   * name.
+   *
+   * @return this StepsRunner instance.
+   */
   public StepsRunner registryPushSteps() {
     rootProgressDescription = "building image to registry";
     boolean layersRequiredLocally = buildContext.getAlwaysCacheBaseImage();
@@ -161,6 +179,13 @@ public class StepsRunner {
     return this;
   }
 
+  /**
+   * Run all steps and return a BuildResult after a build is completed.
+   *
+   * @return a {@link BuildResult} with build metadata
+   * @throws ExecutionException if an error occured during asynchronous execution of steps
+   * @throws InterruptedException if the build was interrupted while waiting for results
+   */
   public BuildResult run() throws ExecutionException, InterruptedException {
     Preconditions.checkNotNull(rootProgressDescription);
 

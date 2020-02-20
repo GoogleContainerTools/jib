@@ -72,6 +72,30 @@ public class PluginConfigurationProcessor {
   private static final ImmutableList<String> CONST_LAYERS =
       ImmutableList.of(LayerType.DEPENDENCIES.getName());
 
+  /**
+   * Generate a runner for image builds to docker daemon.
+   *
+   * @param rawConfiguration the raw configuration from the plugin
+   * @param inferredAuthProvider the plugin specific auth provider
+   * @param projectProperties an plugin specific implementation of {@link ProjectProperties}
+   * @param helpfulSuggestions a plugin specific instance of {@link HelpfulSuggestions}
+   * @return new {@link JibBuildRunner} to execute a build
+   * @throws InvalidImageReferenceException if the image reference is invalid
+   * @throws MainClassInferenceException if a main class could not be found
+   * @throws InvalidAppRootException if the specific path for application root is invalid
+   * @throws IOException if an error occurs creating the container builder
+   * @throws InvalidWorkingDirectoryException if the working directory specified for the build is
+   *     invalid
+   * @throws InvalidContainerVolumeException if a specific container volume is invalid
+   * @throws IncompatibleBaseImageJavaVersionException if the base image java version cannot support
+   *     this build
+   * @throws NumberFormatException if a string to number conversion operation fails
+   * @throws InvalidContainerizingModeException if an invalid {@link ContainerizingMode} was
+   *     specified
+   * @throws InvalidFilesModificationTimeException if configured modification time could not be
+   *     parsed
+   * @throws InvalidCreationTimeException if configured creation time could not be parsed
+   */
   public static JibBuildRunner createJibBuildRunnerForDockerDaemonImage(
       RawConfiguration rawConfiguration,
       InferredAuthProvider inferredAuthProvider,
@@ -107,6 +131,30 @@ public class PluginConfigurationProcessor {
         .writeImageJson(rawConfiguration.getImageJsonOutputPath());
   }
 
+  /**
+   * Generate a runner for image builds to tar file.
+   *
+   * @param rawConfiguration the raw configuration from the plugin
+   * @param inferredAuthProvider the plugin specific auth provider
+   * @param projectProperties an plugin specific implementation of {@link ProjectProperties}
+   * @param helpfulSuggestions a plugin specific instance of {@link HelpfulSuggestions}
+   * @return new {@link JibBuildRunner} to execute a build
+   * @throws InvalidImageReferenceException if the image reference is invalid
+   * @throws MainClassInferenceException if a main class could not be found
+   * @throws InvalidAppRootException if the specific path for application root is invalid
+   * @throws IOException if an error occurs creating the container builder
+   * @throws InvalidWorkingDirectoryException if the working directory specified for the build is
+   *     invalid
+   * @throws InvalidContainerVolumeException if a specific container volume is invalid
+   * @throws IncompatibleBaseImageJavaVersionException if the base image java version cannot support
+   *     this build
+   * @throws NumberFormatException if a string to number conversion operation fails
+   * @throws InvalidContainerizingModeException if an invalid {@link ContainerizingMode} was
+   *     specified
+   * @throws InvalidFilesModificationTimeException if configured modification time could not be
+   *     parsed
+   * @throws InvalidCreationTimeException if configured creation time could not be parsed
+   */
   public static JibBuildRunner createJibBuildRunnerForTarImage(
       RawConfiguration rawConfiguration,
       InferredAuthProvider inferredAuthProvider,
@@ -141,6 +189,30 @@ public class PluginConfigurationProcessor {
         .writeImageJson(rawConfiguration.getImageJsonOutputPath());
   }
 
+  /**
+   * Generate a runner for image builds to registries.
+   *
+   * @param rawConfiguration the raw configuration from the plugin
+   * @param inferredAuthProvider the plugin specific auth provider
+   * @param projectProperties an plugin specific implementation of {@link ProjectProperties}
+   * @param helpfulSuggestions a plugin specific instance of {@link HelpfulSuggestions}
+   * @return new {@link JibBuildRunner} to execute a build
+   * @throws InvalidImageReferenceException if the image reference is invalid
+   * @throws MainClassInferenceException if a main class could not be found
+   * @throws InvalidAppRootException if the specific path for application root is invalid
+   * @throws IOException if an error occurs creating the container builder
+   * @throws InvalidWorkingDirectoryException if the working directory specified for the build is
+   *     invalid
+   * @throws InvalidContainerVolumeException if a specific container volume is invalid
+   * @throws IncompatibleBaseImageJavaVersionException if the base image java version cannot support
+   *     this build
+   * @throws NumberFormatException if a string to number conversion operation fails
+   * @throws InvalidContainerizingModeException if an invalid {@link ContainerizingMode} was
+   *     specified
+   * @throws InvalidFilesModificationTimeException if configured modification time could not be
+   *     parsed
+   * @throws InvalidCreationTimeException if configured creation time could not be parsed
+   */
   public static JibBuildRunner createJibBuildRunnerForRegistryImage(
       RawConfiguration rawConfiguration,
       InferredAuthProvider inferredAuthProvider,
@@ -192,6 +264,28 @@ public class PluginConfigurationProcessor {
         .writeImageJson(rawConfiguration.getImageJsonOutputPath());
   }
 
+  /**
+   * Generate a skaffold syncmap JSON string for an image build configuration.
+   *
+   * @param rawConfiguration the raw configuration from the plugin
+   * @param projectProperties an plugin specific implementation of {@link ProjectProperties}
+   * @return new json string representation of the Sync Map
+   * @throws InvalidImageReferenceException if the image reference is invalid
+   * @throws MainClassInferenceException if a main class could not be found
+   * @throws InvalidAppRootException if the specific path for application root is invalid
+   * @throws IOException if an error occurs creating the container builder
+   * @throws InvalidWorkingDirectoryException if the working directory specified for the build is
+   *     invalid
+   * @throws InvalidContainerVolumeException if a specific container volume is invalid
+   * @throws IncompatibleBaseImageJavaVersionException if the base image java version cannot support
+   *     this build
+   * @throws NumberFormatException if a string to number conversion operation fails
+   * @throws InvalidContainerizingModeException if an invalid {@link ContainerizingMode} was
+   *     specified
+   * @throws InvalidFilesModificationTimeException if configured modification time could not be
+   *     parsed
+   * @throws InvalidCreationTimeException if configured creation time could not be parsed
+   */
   public static String getSkaffoldSyncMap(
       RawConfiguration rawConfiguration, ProjectProperties projectProperties)
       throws IOException, InvalidCreationTimeException, InvalidImageReferenceException,

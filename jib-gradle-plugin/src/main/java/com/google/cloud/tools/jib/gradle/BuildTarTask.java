@@ -98,6 +98,14 @@ public class BuildTarTask extends DefaultTask implements JibTask {
     return Preconditions.checkNotNull(jibExtension).getOutputPaths().getTarPath().toString();
   }
 
+  /**
+   * Task Action, builds an image to tar file.
+   *
+   * @throws IOException if an error occurs creating the jib runner
+   * @throws BuildStepsExecutionException if an error occurs while executing build steps
+   * @throws CacheDirectoryCreationException if a new cache directory could not be created
+   * @throws MainClassInferenceException if a main class could not be found
+   */
   @TaskAction
   public void buildTar()
       throws BuildStepsExecutionException, IOException, CacheDirectoryCreationException,
