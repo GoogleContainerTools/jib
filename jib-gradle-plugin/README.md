@@ -40,7 +40,7 @@ For information about the project, see the [Jib project README](../README.md).
 
 ### Setup
 
-*Make sure you are using Gradle version 4.6 or later.*
+*Make sure you are using Gradle version 5.1 or later.*
 
 In your Gradle Java project, add the plugin to your `build.gradle`:
 
