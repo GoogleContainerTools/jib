@@ -34,7 +34,6 @@ For information about the project, see the [Jib project README](../README.md).
     * [Using Docker Credential Helpers](#using-docker-credential-helpers)
     * [Using Specific Credentials](#using-specific-credentials)
   * [WAR Projects](#war-projects)
-  * [Skaffold Integration](#skaffold-integration)
 * [Frequently Asked Questions (FAQ)](#frequently-asked-questions-faq)
 * [Community](#community)
 
@@ -452,29 +451,6 @@ jib {
   container.appRoot = '/usr/local/tomcat/webapps/ROOT'
 }
 ```
-
-### Skaffold Integration
-
-Jib is an included builder in [Skaffold](https://github.com/GoogleContainerTools/skaffold). Jib passes on build information to skaffold through special internal tasks so that skaffold understands when it should rebuild or synchronize files. For complex builds the defaults may not be sufficient, so the `jib` extension provides a `skaffold` configuration closure which exposes:
-
-Field | Type | Default | Description
---- | --- | --- | ---
-`watch` | [`watch`](#skaffold-watch-closure) | *None* | Addition configuration for file watching
-`sync` | [`sync`](#skaffold-sync-closure) | *None* | Additional configuration for file synchronization
-
-<a name="skaffold-watch-closure"></a>`watch` is a closure with the following properties:
-
-Field | Type | Default | Description
---- | --- | --- | ---
-`buildIncludes` | `List<String>` | *None* | Addition build files that skaffold should watch
-`includes` | `List<String>` | *None* | Additional project files or directories that skaffold should watch
-`excludes` | `List<String>` | *None* | Files and directories that skaffold should not watch
-
-<a name="skaffold-sync-closure"></a>`sync` is a closure with the following properties:
-
-Field | Type | Default | Description
---- | --- | --- | ---
-`excludes` | `List<String>` | *None* | Files and directories that skaffold should not sync
 
 ## Frequently Asked Questions (FAQ)
 
