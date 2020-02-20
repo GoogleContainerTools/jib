@@ -8,7 +8,7 @@ All notable changes to this project will be documented in this file.
 - New skaffold configuration options that modify how jib's build config is presetned to skaffold ([#2292](https://github.com/GoogleContainerTools/jib/pull/2292)):
     - `jib.skaffold.watch.buildIncludes`: a list of build files to watch
     - `jib.skaffold.watch.includes`: a list of project files to watch
-    - `jib.skaffold.watch.excludes`: a list of files to ignore from watching
+    - `jib.skaffold.watch.excludes`: a list of files to exclude from watching
     - `jib.skaffold.sync.excludes`: a list of files to exclude from sync'ing
 
 ### Changed
