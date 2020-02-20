@@ -34,6 +34,7 @@ For information about the project, see the [Jib project README](../README.md).
     * [Using Docker Credential Helpers](#using-docker-credential-helpers)
     * [Using Specific Credentials](#using-specific-credentials)
   * [WAR Projects](#war-projects)
+  * [Skaffold Integration](#skaffold-integration)
 * [Frequently Asked Questions (FAQ)](#frequently-asked-questions-faq)
 * [Community](#community)
 
@@ -555,6 +556,29 @@ To use a different Servlet engine base image, you can customize `<container><app
   </container>
 </configuration>
 ```
+
+### Skaffold Integration
+
+Jib is an included builder in [Skaffold](https://github.com/GoogleContainerTools/skaffold). Jib passes on build information to skaffold through special internal goals so that skaffold understands when it should rebuild or synchronize files. For complex builds, the defaults may not be sufficient, so the jib plugin provides a `skaffold` configuration object which exposes:
+
+Field | Type | Default | Description
+--- | --- | --- | ---
+`watch` | [`watch`](#skaffold-watch-object) | *None* | Addition configuration for file watching
+`sync` | [`sync`](#skaffold-sync-object) | *None* | Additional configuration for file synchronization
+
+<a name="skaffold-watch-object"></a>`watch` is an object with the following properties:
+
+Field | Type | Default | Description
+--- | --- | --- | ---
+`buildIncludes` | `List<String>` | *None* | Addition build files that skaffold should watch
+`includes` | `List<String>` | *None* | Additional project files or directories that skaffold should watch
+`excludes` | `List<String>` | *None* | Files and directories that skaffold should not watch
+
+<a name="skaffold-sync-object"></a>`sync` is an object with the following properties:
+
+Field | Type | Default | Description
+--- | --- | --- | ---
+`excludes` | `List<String>` | *None* | Files and directories that skaffold should not sync
 
 ## Frequently Asked Questions (FAQ)
 
