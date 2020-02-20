@@ -4,6 +4,7 @@ All notable changes to this project will be documented in this file.
 ## [unreleased]
 
 ### Added
+- Additionally reads credentials from `~/.docker/.dockerconfigjson` and legacy Docker config (`~/.docker/.dockercfg`). Also searches for `$HOME/.docker/*` (in addition to current `System.get("user.home")/.docker/*`). This may help retrieve credentials, for example, on Kubernetes. ([#2260](https://github.com/GoogleContainerTools/jib/issues/2260))
 
 ### Changed
 
@@ -11,6 +12,9 @@ All notable changes to this project will be documented in this file.
 
 - Fixed authentication failure with error `server did not return 'WWW-Authenticate: Bearer' header` in certain cases (for example, on OpenShift). ([#2258](https://github.com/GoogleContainerTools/jib/issues/2258))
 - Fixed an issue where using local Docker images (by `docker://...`) on Windows caused an error. ([#2270](https://github.com/GoogleContainerTools/jib/issues/2270))
+- Fixed build failures with Skaffold when the Gradle Java Platform plugin is applied. ([#2269](https://github.com/GoogleContainerTools/jib/issues/2269))
+- For Spring Boot projects using `containerizingMode = 'packaged'`, Jib now overrides `archiveClassifier` of the `jar` task only when safe and necessary. ([#2278](https://github.com/GoogleContainerTools/jib/issues/2278))
+- Fixed an issue where user-configured task dependencies for the Jib task is overwritten and thus ineffective. ([#2289](https://github.com/GoogleContainerTools/jib/pull/2289))
 
 ## 2.0.0
 
