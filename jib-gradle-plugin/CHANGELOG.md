@@ -11,6 +11,7 @@ All notable changes to this project will be documented in this file.
 
 - Fixed authentication failure with error `server did not return 'WWW-Authenticate: Bearer' header` in certain cases (for example, on OpenShift). ([#2258](https://github.com/GoogleContainerTools/jib/issues/2258))
 - Fixed an issue where using local Docker images (by `docker://...`) on Windows caused an error. ([#2270](https://github.com/GoogleContainerTools/jib/issues/2270))
+- Fixed build failures when using the Gradle Java Platform plugin. ([#2269](https://github.com/GoogleContainerTools/jib/issues/2269)
 - For Spring Boot projects using `containerizingMode = 'packaged'`, Jib now overrides `archiveClassifier` of the `jar` task only when safe and necessary. ([#2278])https://github.com/GoogleContainerTools/jib/issues/2278)
 - Fixed an issue where user-configured task dependencies for the Jib task is overwritten and thus ineffective. ([#2289](https://github.com/GoogleContainerTools/jib/pull/2289)
 
