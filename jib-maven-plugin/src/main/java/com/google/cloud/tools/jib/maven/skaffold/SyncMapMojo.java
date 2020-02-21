@@ -25,8 +25,12 @@ import com.google.cloud.tools.jib.plugins.common.ContainerizingMode;
 import com.google.cloud.tools.jib.plugins.common.InvalidContainerizingModeException;
 import com.google.cloud.tools.jib.plugins.common.PluginConfigurationProcessor;
 import com.google.common.annotations.VisibleForTesting;
+import java.io.File;
+import java.nio.file.Path;
+import java.util.stream.Collectors;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.Mojo;
+import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.plugins.annotations.ResolutionScope;
 
 @Mojo(
@@ -35,6 +39,8 @@ import org.apache.maven.plugins.annotations.ResolutionScope;
 public class SyncMapMojo extends JibPluginConfiguration {
 
   @VisibleForTesting static final String GOAL_NAME = "_skaffold-sync-map";
+
+  @Parameter SkaffoldConfiguration skaffold = new SkaffoldConfiguration();
 
   @Override
   public void execute() throws MojoExecutionException {
@@ -76,7 +82,16 @@ public class SyncMapMojo extends JibPluginConfiguration {
 
       try {
         String syncMapJson =
-            PluginConfigurationProcessor.getSkaffoldSyncMap(configuration, projectProperties);
+            PluginConfigurationProcessor.getSkaffoldSyncMap(
+                configuration,
+                projectProperties,
+                skaffold
+                    .sync
+                    .excludes
+                    .stream()
+                    .map(File::toPath)
+                    .map(Path::toAbsolutePath)
+                    .collect(Collectors.toSet()));
 
         System.out.println();
         System.out.println("BEGIN JIB JSON: SYNCMAP/1");

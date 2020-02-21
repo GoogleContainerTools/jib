@@ -61,9 +61,9 @@ public class SyncMapMojoTest {
     return Paths.get(verifier.getBasedir()).resolve(verifier.getLogFileName());
   }
 
-  private static String getSyncMapJson(Path projectRoot, String module)
+  private static String getSyncMapJson(Path projectRoot, String module, String pomXml)
       throws VerificationException, IOException {
-    Path logFile = runBuild(projectRoot, module, null);
+    Path logFile = runBuild(projectRoot, module, pomXml);
     List<String> outputLines = Files.readAllLines(logFile, StandardCharsets.UTF_8);
     Assert.assertEquals(3, outputLines.size()); // we expect ["\n", "<marker>", "<sync-json>"]
     Assert.assertEquals("BEGIN JIB JSON: SYNCMAP/1", outputLines.get(1));
@@ -78,7 +78,7 @@ public class SyncMapMojoTest {
   @Test
   public void testSyncMapMojo_simpleTestProjectOutput() throws IOException, VerificationException {
     Path projectRoot = simpleTestProject.getProjectRoot();
-    String json = getSyncMapJson(projectRoot, null);
+    String json = getSyncMapJson(projectRoot, null, null);
     SkaffoldSyncMapTemplate parsed = SkaffoldSyncMapTemplate.from(json);
 
     List<FileTemplate> generated = parsed.getGenerated();
@@ -108,7 +108,7 @@ public class SyncMapMojoTest {
   public void testSyncMapMojo_multiProjectOutput() throws IOException, VerificationException {
     Path projectRoot = multiTestProject.getProjectRoot();
     Path m2 = Paths.get(System.getProperty("user.home")).resolve(".m2").resolve("repository");
-    String json = getSyncMapJson(projectRoot, "complex-service");
+    String json = getSyncMapJson(projectRoot, "complex-service", null);
     SkaffoldSyncMapTemplate parsed = SkaffoldSyncMapTemplate.from(json);
 
     List<FileTemplate> generated = parsed.getGenerated();
@@ -129,6 +129,29 @@ public class SyncMapMojoTest {
             "com/google/cloud/tools/tiny-test-lib/0.0.1-SNAPSHOT/tiny-test-lib-0.0.1-SNAPSHOT.jar"),
         AbsoluteUnixPath.get("/app/libs/tiny-test-lib-0.0.1-SNAPSHOT.jar"),
         direct.get(0));
+  }
+
+  @Test
+  public void testSyncMapMojo_skaffoldConfig() throws IOException, VerificationException {
+    Path projectRoot = simpleTestProject.getProjectRoot();
+    String json = getSyncMapJson(projectRoot, null, "pom-skaffold-config.xml");
+    SkaffoldSyncMapTemplate parsed = SkaffoldSyncMapTemplate.from(json);
+
+    List<FileTemplate> generated = parsed.getGenerated();
+    Assert.assertEquals(1, generated.size());
+    assertFilePaths(
+        projectRoot.resolve("target/classes/world"),
+        AbsoluteUnixPath.get("/app/resources/world"),
+        generated.get(0));
+    // target/classes/com/test ignored
+
+    List<FileTemplate> direct = parsed.getDirect();
+    Assert.assertEquals(1, direct.size());
+    assertFilePaths(
+        projectRoot.resolve("src/main/jib-custom/bar/cat"),
+        AbsoluteUnixPath.get("/bar/cat"),
+        direct.get(0));
+    // src/main/jib-custom/foo is ignored
   }
 
   @Test

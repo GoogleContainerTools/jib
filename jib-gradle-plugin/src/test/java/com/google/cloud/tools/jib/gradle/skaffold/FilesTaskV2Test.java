@@ -38,6 +38,9 @@ public class FilesTaskV2Test {
 
   @ClassRule public static final TestProject simpleTestProject = new TestProject("simple");
 
+  @ClassRule
+  public static final TestProject skaffoldTestProject = new TestProject("skaffold-config");
+
   @ClassRule public static final TestProject multiTestProject = new TestProject("multi-service");
 
   @ClassRule
@@ -162,5 +165,24 @@ public class FilesTaskV2Test {
     assertPathListsAreEqual(
         ImmutableList.of(serviceRoot.resolve("src/main/java")), result.getInputs());
     Assert.assertEquals(result.getIgnore().size(), 0);
+  }
+
+  @Test
+  public void testFilesTast_withConfigModifiers() throws IOException {
+    Path projectRoot = skaffoldTestProject.getProjectRoot();
+    SkaffoldFilesOutput result =
+        new SkaffoldFilesOutput(verifyTaskSuccess(skaffoldTestProject, null));
+    assertPathListsAreEqual(
+        ImmutableList.of(projectRoot.resolve("build.gradle"), projectRoot.resolve("script.gradle")),
+        result.getBuild());
+    assertPathListsAreEqual(
+        ImmutableList.of(
+            projectRoot.resolve("src/main/resources"),
+            projectRoot.resolve("src/main/java"),
+            projectRoot.resolve("src/main/jib"),
+            projectRoot.resolve("other/file.txt")),
+        result.getInputs());
+    assertPathListsAreEqual(
+        ImmutableList.of(projectRoot.resolve("src/main/jib/bar")), result.getIgnore());
   }
 }

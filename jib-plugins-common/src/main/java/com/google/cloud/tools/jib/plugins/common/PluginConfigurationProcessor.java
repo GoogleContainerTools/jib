@@ -51,6 +51,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.BiFunction;
+import java.util.stream.Stream;
 import javax.annotation.Nullable;
 
 /**
@@ -269,6 +270,7 @@ public class PluginConfigurationProcessor {
    *
    * @param rawConfiguration the raw configuration from the plugin
    * @param projectProperties an plugin specific implementation of {@link ProjectProperties}
+   * @param excludes a set of paths to exclude, directories include in this list will be expanded
    * @return new json string representation of the Sync Map
    * @throws InvalidImageReferenceException if the image reference is invalid
    * @throws MainClassInferenceException if a main class could not be found
@@ -287,7 +289,7 @@ public class PluginConfigurationProcessor {
    * @throws InvalidCreationTimeException if configured creation time could not be parsed
    */
   public static String getSkaffoldSyncMap(
-      RawConfiguration rawConfiguration, ProjectProperties projectProperties)
+      RawConfiguration rawConfiguration, ProjectProperties projectProperties, Set<Path> excludes)
       throws IOException, InvalidCreationTimeException, InvalidImageReferenceException,
           IncompatibleBaseImageJavaVersionException, InvalidContainerVolumeException,
           MainClassInferenceException, InvalidAppRootException, InvalidWorkingDirectoryException,
@@ -298,6 +300,7 @@ public class PluginConfigurationProcessor {
     SkaffoldSyncMapTemplate syncMap = new SkaffoldSyncMapTemplate();
     // since jib has already expanded out directories after processing everything, we just
     // ignore directories and provide only files to watch
+    Set<Path> excludesExpanded = getAllFiles(excludes);
     for (LayerConfiguration layer : jibContainerBuilder.describeContainer().getLayers()) {
       if (CONST_LAYERS.contains(layer.getName())) {
         continue;
@@ -307,16 +310,37 @@ public class PluginConfigurationProcessor {
             .getLayerEntries()
             .stream()
             .filter(layerEntry -> Files.isRegularFile(layerEntry.getSourceFile()))
+            .filter(
+                layerEntry ->
+                    !excludesExpanded.contains(layerEntry.getSourceFile().toAbsolutePath()))
             .forEach(syncMap::addGenerated);
       } else { // this is a direct layer
         layer
             .getLayerEntries()
             .stream()
             .filter(layerEntry -> Files.isRegularFile(layerEntry.getSourceFile()))
+            .filter(
+                layerEntry ->
+                    !excludesExpanded.contains(layerEntry.getSourceFile().toAbsolutePath()))
             .forEach(syncMap::addDirect);
       }
     }
     return syncMap.getJsonString();
+  }
+
+  /** Expand directories to files (excludes directory paths). */
+  static Set<Path> getAllFiles(Set<Path> paths) throws IOException {
+    Set<Path> expanded = new HashSet<>();
+    for (Path path : paths) {
+      if (Files.isRegularFile(path)) {
+        expanded.add(path);
+      } else if (Files.isDirectory(path)) {
+        try (Stream<Path> dirWalk = Files.walk(path)) {
+          dirWalk.filter(Files::isRegularFile).forEach(expanded::add);
+        }
+      }
+    }
+    return expanded;
   }
 
   @VisibleForTesting
