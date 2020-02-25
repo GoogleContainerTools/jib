@@ -9,6 +9,10 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
+## 0.13.1
+
+### Fixed
+
 - Fixed authentication failure with error `server did not return 'WWW-Authenticate: Bearer' header` in certain cases (for example, on OpenShift). ([#2258](https://github.com/GoogleContainerTools/jib/issues/2258))
 - Fixed an issue where using local Docker images (by `docker://...`) on Windows caused an error. ([#2270](https://github.com/GoogleContainerTools/jib/issues/2270))
 
