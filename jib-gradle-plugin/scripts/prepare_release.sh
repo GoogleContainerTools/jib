@@ -1,5 +1,5 @@
 #!/bin/bash -
-# Usage: ./scripts/prepare_release.sh <release version> [<post-release version>]
+# Usage: ./jib-gradle-plugin/scripts/prepare_release.sh <release version> [<post-release version>]
 
 set -e
 

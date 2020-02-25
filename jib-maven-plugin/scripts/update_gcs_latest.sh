@@ -1,5 +1,5 @@
 #!/bin/bash -
-# Usage: ./scripts/update_gcs_latest.sh <release version>
+# Usage: ./jib-maven-plugin/scripts/update_gcs_latest.sh <release version>
 
 set -e
 
