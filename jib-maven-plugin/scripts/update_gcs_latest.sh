@@ -1,5 +1,5 @@
 #!/bin/bash -
-# Usage: ./scripts/update_gcs_latest.sh <release version>
+# Usage: ./jib-maven-plugin/scripts/update_gcs_latest.sh <release version>
 
 set -e
 
@@ -20,7 +20,7 @@ CheckVersion() {
     [[ $1 =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z]+)?$ ]] || Die "Version: $1 not in ###.###.###[-XXX] format."
 }
 
-[ $# -ne 1 ] && Die "Usage: ./scripts/update_gcs_latest.sh <release version>"
+[ $# -ne 1 ] && Die "Usage: ./jib-maven-plugin/scripts/update_gcs_latest.sh <release version>"
 
 CheckVersion $1
 
