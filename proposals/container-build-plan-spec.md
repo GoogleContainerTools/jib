@@ -1,16 +1,20 @@
 # Container Build Plan Specification
 
+Specification for building a container image.
+
+Although looking similar, the structure and semantics of similary named properties are different from the Docker/[OCI Image Configuration](https://github.com/opencontainers/image-spec/blob/master/config.md).
+
 ## Example
 
 ```
 {
   "baseImage": "gcr.io/distroless/java@sha256:b715126ebd36e5d5c2fd730f46a5b3c3b760e82dc18dffff7f5498d0151137c9",
-  "format": "Docker",
-  "creationTime": "2011-12-03T22:42:05Z",
   "architecture": "amd64",
   "os": "linux",
+  "format": "Docker",
+  "created": "2011-12-03T22:42:05Z",
 
-  "containerConfig": {
+  "config": {
     "env": {
       "KEY": "value",
       "PATH": "/usr/sbin:/usr/bin:/sbin:/bin",
@@ -91,13 +95,23 @@
 
    - `null` or omitted: `"Docker"` by default
 
-* `containerConfig`: [Container Configuration object](#container-configuration-object)
+* `created`: string
+
+   ISO 8601-like date-time format.
+
+   - `null` or omitted: the epoch (`"1970-01-01T00:00:00Z"`) by default
+
+* `config`: [Execution Parameters object](#execution-parameters-object)
+
+   Can be `null` or omitted.
 
 * `layers`: array of [Layer Configuration objects](#layer-configuration-object)
 
    Adds layers on top of those from the base image; it is not possible to remove layers from the base image.
 
-### Container Configuration Object
+A builder implementation must inherit the [`history` entries](https://github.com/opencontainers/image-spec/blob/master/config.md) of base image layers.
+
+### Execution Parameters Object
 
 * `env`: map of (string, string)
 
