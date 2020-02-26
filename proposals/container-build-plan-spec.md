@@ -146,7 +146,7 @@
 
 `entries` and `archive` cannot be defined together.
 
-* `entries`: array of Layer Entry objects
+* `entries`: array of [Layer Entry objects](#layer-entry-object)
 
    Collection of files as a layer.
 
