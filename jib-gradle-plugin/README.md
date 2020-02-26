@@ -455,7 +455,7 @@ jib {
 
 ### Skaffold Integration
 
-Jib is an included builder in [Skaffold](https://github.com/GoogleContainerTools/skaffold). Jib passes on build information to skaffold through special internal tasks so that skaffold understands when it should rebuild or synchronize files. For complex builds the defaults may not be sufficient, so the `jib` extension provides a `skaffold` configuration closure which exposes:
+Jib is an included builder in [Skaffold](https://github.com/GoogleContainerTools/skaffold). Jib passes build information to skaffold through special internal tasks so that skaffold understands when it should rebuild or synchronize files. For complex builds, the defaults may not be sufficient, so the `jib` extension provides a `skaffold` configuration closure which exposes:
 
 Field | Type | Default | Description
 --- | --- | --- | ---
