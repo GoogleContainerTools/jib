@@ -190,6 +190,7 @@ Field | Type | Default | Description
 `dockerClient` | [`dockerClient`](#dockerclient-closure) | See [`dockerClient`](#dockerclient-closure) | Configures Docker for building to/from the Docker daemon.
 `containerizingMode` | `String` | `exploded` | If set to `packaged`, puts the JAR artifact built by the Gradle Java plugin into the final image. If set to `exploded` (default), containerizes individual `.class` files and resources files.
 `allowInsecureRegistries` | `boolean` | `false` | If set to true, Jib ignores HTTPS certificate errors and may fall back to HTTP as a last resort. Leaving this parameter set to `false` is strongly recommended, since HTTP communication is unencrypted and visible to others on the network, and insecure HTTPS is no better than plain HTTP. [If accessing a registry with a self-signed certificate, adding the certificate to your Java runtime's trusted keys](https://github.com/GoogleContainerTools/jib/tree/master/docs/self_sign_cert.md) may be an alternative to enabling this option.
+`skaffold` | [`skaffold`](#skaffold-integration) | *None* | Configures the internal skaffold tasks. This configuration should only be used when integrating with [`skaffold`](#skaffold-integration) |
 
 <a name="from-closure"></a>`from` is a closure with the following properties:
 
