@@ -1,5 +1,5 @@
 ![stable](https://img.shields.io/badge/stability-stable-brightgreen.svg)
-[![Maven Central](https://img.shields.io/maven-central/v/com.google.cloud.tools/jib-maven-plugin?colorB=007ec6)](https://maven-badges.herokuapp.com/maven-central/com.google.cloud.tools/jib-maven-plugin)
+[![Maven Central](https://img.shields.io/maven-central/v/com.google.cloud.tools/jib-maven-plugin)](https://maven-badges.herokuapp.com/maven-central/com.google.cloud.tools/jib-maven-plugin)
 [![Gradle Plugin Portal](https://img.shields.io/maven-metadata/v/https/plugins.gradle.org/m2/com/google/cloud/tools/jib/com.google.cloud.tools.jib.gradle.plugin/maven-metadata.xml.svg?colorB=007ec6&label=gradle)](https://plugins.gradle.org/plugin/com.google.cloud.tools.jib)
 ![Build Status](https://storage.googleapis.com/cloud-tools-for-java-kokoro-build-badges/jib-ubuntu-master-orb.svg)
 ![Build Status](https://storage.googleapis.com/cloud-tools-for-java-kokoro-build-badges/jib-windows-master-orb.svg)
