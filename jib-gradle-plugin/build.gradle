@@ -35,7 +35,7 @@ release {
   tagTemplate = 'v$version-gradle'
   ignoredSnapshotDependencies = ["com.google.cloud.tools:jib-core", "com.google.cloud.tools:jib-plugins-common"]
   git {
-    requireBranch = /^v\d+.*-gradle$/  //regex
+    requireBranch = /^gradle_release_v\d+.*$/  //regex
   }
 }
 // Gradle Plugin Portal releases
