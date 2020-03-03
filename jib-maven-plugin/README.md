@@ -571,7 +571,7 @@ Field | Type | Default | Description
 
 Field | Type | Default | Description
 --- | --- | --- | ---
-`buildIncludes` | `List<String>` | *None* | Addition build files that skaffold should watch
+`buildIncludes` | `List<String>` | *None* | Additional build files that skaffold should watch
 `includes` | `List<String>` | *None* | Additional project files or directories that skaffold should watch
 `excludes` | `List<String>` | *None* | Files and directories that skaffold should not watch
 
