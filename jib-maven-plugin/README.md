@@ -564,7 +564,7 @@ Jib is an included builder in [Skaffold](https://github.com/GoogleContainerTools
 
 Field | Type | Default | Description
 --- | --- | --- | ---
-`watch` | [`watch`](#skaffold-watch-object) | *None* | Addition configuration for file watching
+`watch` | [`watch`](#skaffold-watch-object) | *None* | Additional configuration for file watching
 `sync` | [`sync`](#skaffold-sync-object) | *None* | Additional configuration for file synchronization
 
 <a name="skaffold-watch-object"></a>`watch` is an object with the following properties:
