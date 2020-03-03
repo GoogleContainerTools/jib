@@ -1,7 +1,7 @@
 #!/bin/bash
 
-set -e
-set -x
+set -o errexit
+set -o xtrace
 
 gcloud components install docker-credential-gcr
 
