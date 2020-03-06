@@ -39,6 +39,7 @@ Although looking similar, the structure and semantics of similary named properti
 
   "layers": [
     {
+      "type": "fileEntries"
       "entries": [
         {
           "src": "/home/jane/workspace/bin/Main.class",
@@ -50,20 +51,22 @@ Although looking similar, the structure and semantics of similary named properti
           "src": "/home/jane/libs/util-1.0.jar",
           "dest": "/app/jars/util.jar",
           "modificationTime": "2011-12-03T22:42:05Z",
+          "permissions": "644",
         }
       ]
     },
     {
-      "archive": {
-        "mediaType": "...",
-        "path": "/home/jane/misc/cacerts.tar",
-      }
+      "type": "layerArchive"
+      "mediaType": "...",
+      "path": "/home/jane/misc/cacerts.tar",
     },
     {
-      "files": [
+      "type": "fileEntries"
+      "entries": [
         {
           "src": "/home/workspace/scripts/run.sh",
           "dest": "/app/run.sh",
+          "modificationTime": "2011-12-03T22:42:05Z",
           "permissions": "777",
         },
       ]
@@ -158,19 +161,17 @@ A builder implementation must inherit the [`history` entries](https://github.com
 
 ### Layer Configuration Object
 
-`entries` and `archive` cannot be defined together.
+* `type`: string
+
+   - `fileEntries` (collection of files as a layer), `layerArchive` (an archive file as a laye, to be implemented), etc.
+
+#### `fileEntries` Sub-Type of Layer Configuration Object
 
 * `entries`: array of [Layer Entry objects](#layer-entry-object)
 
-   Collection of files as a layer.
-
-* `archive`
-
-   To be implemented. Allows specifying a (local or remote) archive file representing a layer.
-   
 ### Layer Entry Object
 
-* `src`: single local file
-* `dest`: path in the container
-* `permissions`: if `null` or omitted, `"644"` by default
+* `src`: single local file, required
+* `dest`: path in the container, required
+* `permissions`: POSIX permissions, required
 * `modificationTime`: if `null` or omitted, the epoch + 1 second by default
