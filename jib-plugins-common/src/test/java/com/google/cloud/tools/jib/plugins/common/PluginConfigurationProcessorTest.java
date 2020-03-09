@@ -30,6 +30,7 @@ import com.google.cloud.tools.jib.api.LogEvent;
 import com.google.cloud.tools.jib.api.RegistryImage;
 import com.google.cloud.tools.jib.configuration.BuildContext;
 import com.google.cloud.tools.jib.configuration.ImageConfiguration;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.io.Resources;
@@ -908,11 +909,27 @@ public class PluginConfigurationProcessorTest {
 
   @Test
   public void testGetCreationTime_isoDateTimeValue() throws InvalidCreationTimeException {
-    Instant time =
-        PluginConfigurationProcessor.getCreationTime(
-            "2011-12-03T10:15:30+09:00", projectProperties);
     Instant expected = DateTimeFormatter.ISO_DATE_TIME.parse("2011-12-03T01:15:30Z", Instant::from);
-    Assert.assertEquals(expected, time);
+    List<String> validTimeStamps =
+        ImmutableList.of(
+            "2011-12-03T10:15:30+09:00",
+            "2011-12-03T10:15:30+0900",
+            "2011-12-03T10:15:30+09",
+            "2011-12-03T01:15:30Z");
+    for (String timeString : validTimeStamps) {
+      Instant time = PluginConfigurationProcessor.getCreationTime(timeString, projectProperties);
+      Assert.assertEquals(expected, time);
+    }
+  }
+
+  @Test
+  public void testGetCreationTime_isoDateTimeValueRequiresTimeZone() {
+    try {
+      PluginConfigurationProcessor.getCreationTime("2011-12-03T01:15:30", projectProperties);
+      Assert.fail("creationTime should fail if timezone not specified");
+    } catch (InvalidCreationTimeException ex) {
+      // pass
+    }
   }
 
   @Test
