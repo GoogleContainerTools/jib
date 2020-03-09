@@ -913,12 +913,33 @@ public class PluginConfigurationProcessorTest {
     List<String> validTimeStamps =
         ImmutableList.of(
             "2011-12-03T10:15:30+09:00",
+            "2011-12-03T10:15:30+09:00[Asia/Tokyo]",
+            "2011-12-02T16:15:30-09:00",
             "2011-12-03T10:15:30+0900",
+            "2011-12-02T16:15:30-0900",
             "2011-12-03T10:15:30+09",
+            "2011-12-02T16:15:30-09",
             "2011-12-03T01:15:30Z");
     for (String timeString : validTimeStamps) {
       Instant time = PluginConfigurationProcessor.getCreationTime(timeString, projectProperties);
-      Assert.assertEquals(expected, time);
+      Assert.assertEquals("for " + timeString, expected, time);
+    }
+  }
+
+  @Test
+  public void testGetCreationTime_isoDateTimeValueTimeZoneRegionOnlyAllowedForMostStrict8601Mode() {
+    List<String> invalidTimeStamps =
+        ImmutableList.of(
+            "2011-12-03T01:15:30+0900[Asia/Tokyo]", "2011-12-03T01:15:30+09[Asia/Tokyo]");
+    for (String timeString : invalidTimeStamps) {
+      try {
+        PluginConfigurationProcessor.getCreationTime(timeString, projectProperties);
+        Assert.fail(
+            "creationTime should fail if region specified when zone not in HH:MM mode - "
+                + timeString);
+      } catch (InvalidCreationTimeException ex) {
+        // pass
+      }
     }
   }
 
