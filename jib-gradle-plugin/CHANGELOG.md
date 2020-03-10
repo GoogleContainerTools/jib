@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 ### Added
 
 ### Changed
+- `jib.container.creationTime` now accepts more timezone formats:`Z`,`+HHmm`. ([#2320](https://github.com/GoogleContainerTools/jib/issues/2260))
 
 ### Fixed
 
