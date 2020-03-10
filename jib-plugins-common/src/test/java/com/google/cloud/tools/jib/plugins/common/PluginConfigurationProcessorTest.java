@@ -43,6 +43,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.TemporalAccessor;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -934,6 +935,9 @@ public class PluginConfigurationProcessorTest {
     for (String timeString : invalidTimeStamps) {
       try {
         PluginConfigurationProcessor.getCreationTime(timeString, projectProperties);
+        // this is the expected behavior, not specifically designed like this for any reason, feel
+        // free to change this
+        // behavior and update the test
         Assert.fail(
             "creationTime should fail if region specified when zone not in HH:MM mode - "
                 + timeString);
@@ -945,9 +949,13 @@ public class PluginConfigurationProcessorTest {
 
   @Test
   public void testGetCreationTime_isoDateTimeValueRequiresTimeZone() {
+    TemporalAccessor x = DateTimeFormatter.ISO_DATE_TIME.parse("2011-12-03T01:15:30");
     try {
       PluginConfigurationProcessor.getCreationTime("2011-12-03T01:15:30", projectProperties);
-      Assert.fail("creationTime should fail if timezone not specified");
+      // this is the expected behavior, not specifically designed like this for any reason, feel
+      // free to change this
+      // behavior and update the test
+      Assert.fail("getCreationTime should fail if timezone not specified");
     } catch (InvalidCreationTimeException ex) {
       // pass
     }

@@ -733,25 +733,10 @@ public class PluginConfigurationProcessor {
         default:
           DateTimeFormatter formatter =
               new DateTimeFormatterBuilder()
-                  .parseCaseInsensitive()
-                  .append(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
-                  // iso 8601 strict
+                  .append(DateTimeFormatter.ISO_DATE_TIME) // parses isoStrict
+                  // add ability to parse with no ":" in tz
                   .optionalStart()
-                  .appendOffset("+HH:MM", "+00:00")
-                  .optionalStart()
-                  .appendLiteral('[')
-                  .parseCaseSensitive()
-                  .appendZoneRegionId()
-                  .appendLiteral(']')
-                  .optionalEnd()
-                  .optionalEnd()
-                  // with no ":" in tz
-                  .optionalStart()
-                  .appendOffset("+HHMM", "+0000")
-                  .optionalEnd()
-                  // 2 digit or Z (zero)
-                  .optionalStart()
-                  .appendOffset("+HH", "Z")
+                  .appendOffset("+HHmm", "+0000")
                   .optionalEnd()
                   .toFormatter();
           return formatter.parse(configuredCreationTime, Instant::from);
