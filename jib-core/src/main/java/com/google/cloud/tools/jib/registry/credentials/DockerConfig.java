@@ -86,8 +86,8 @@ class DockerConfig {
    * Determines a {@link DockerCredentialHelper} to use for {@code registry}.
    *
    * <p>If there exists a matching registry entry (or its aliases) in {@code credHelpers}, returns
-   * the corresponding credential helper is returned. Otherwise, returns the credential helper
-   * defined by {@code credStore}.
+   * the corresponding credential helper. Otherwise, returns the credential helper defined by {@code
+   * credStore}.
    *
    * <p>See {@link #getRegistryMatchersFor} for the alias lookup order.
    *

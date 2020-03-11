@@ -160,7 +160,7 @@ public class TestWebServer implements Closeable {
           return null;
         }
         out.write(response.getBytes(StandardCharsets.UTF_8));
-        socket.getOutputStream().flush();
+        out.flush();
       }
     }
   }
