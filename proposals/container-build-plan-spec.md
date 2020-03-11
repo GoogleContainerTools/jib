@@ -146,7 +146,7 @@ A builder implementation must inherit the [`history` entries](https://github.com
 
    - `null` or omitted: inherits from the base image.
    - Otherwise (including an empty list `[]` and `[""]`), sets the given entrypoint. (Note, if `cmd` is not given, also sets `cmd` to `null`.)
-   
+ 
    Note `[]` is different from the `Dockerfile` build behavior. `Dockerfile` build sets the entrypoint to `null` if given `ENTRYPOINT []`.
 
 * `cmd`: array of strings
