@@ -16,7 +16,6 @@ dependencies {
 
   // equivalent to "provided"
   compileOnly 'org.apache.maven.plugin-tools:maven-plugin-annotations:3.5'
-  testImplementation 'org.apache.maven.plugin-tools:maven-plugin-annotations:3.5'
 
   // maven-plugin-testing-harness pulls in conflicting implementations of DefaultPlexusContainer
   // (sisu (correct) vs default-plexus-container (wrong)) so ensure this is first in the test classpath
@@ -59,7 +58,10 @@ publishing {
 
 release {
   tagTemplate = 'v$version-maven'
-  ignoredSnapshotDependencies = ["com.google.cloud.tools:jib-core", "com.google.cloud.tools:jib-plugins-common"]
+  ignoredSnapshotDependencies = [
+    'com.google.cloud.tools:jib-core',
+    'com.google.cloud.tools:jib-plugins-common',
+  ]
   git {
     requireBranch = /^maven_release_v\d+.*$/  //regex
   }
@@ -69,8 +71,8 @@ release {
 /* ECLIPSE */
 eclipse.classpath.file.whenMerged { cp ->
   cp.entries.each {
-    if (it.path == "src/test/resources") {
-      it.excludes += "maven/projects/"
+    if (it.path == 'src/test/resources') {
+      it.excludes += 'maven/projects/'
     }
   }
 }

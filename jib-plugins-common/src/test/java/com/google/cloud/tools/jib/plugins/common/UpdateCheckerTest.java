@@ -31,6 +31,7 @@ import java.time.Instant;
 import java.util.Collections;
 import java.util.Optional;
 import java.util.concurrent.Future;
+import org.hamcrest.CoreMatchers;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -238,8 +239,9 @@ public class UpdateCheckerTest {
       Optional<String> message =
           UpdateChecker.performUpdateCheck(
               logEvent -> {
-                Assert.assertEquals(logEvent.getLevel(), Level.DEBUG);
-                Assert.assertTrue(logEvent.getMessage().contains("Update check failed; "));
+                Assert.assertEquals(Level.DEBUG, logEvent.getLevel());
+                Assert.assertThat(
+                    logEvent.getMessage(), CoreMatchers.containsString("Update check failed; "));
               },
               "1.0.2",
               badServer.getEndpoint(),
@@ -260,8 +262,7 @@ public class UpdateCheckerTest {
   @Test
   public void testFinishUpdateCheck_notDone() {
     @SuppressWarnings("unchecked")
-    Future<Optional<String>> updateCheckFuture =
-        (Future<Optional<String>>) Mockito.mock(Future.class);
+    Future<Optional<String>> updateCheckFuture = Mockito.mock(Future.class);
     Mockito.when(updateCheckFuture.isDone()).thenReturn(false);
 
     Optional<String> result = UpdateChecker.finishUpdateCheck(updateCheckFuture);

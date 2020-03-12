@@ -258,16 +258,13 @@ public class MavenProjectProperties implements ProjectProperties {
                   .map(MavenProject::getArtifact)
                   .collect(Collectors.toSet()));
 
-      return javaContainerBuilder
-          .addDependencies(
-              Preconditions.checkNotNull(classifiedDependencies.get(LayerType.DEPENDENCIES)))
-          .addSnapshotDependencies(
-              Preconditions.checkNotNull(
-                  classifiedDependencies.get(LayerType.SNAPSHOT_DEPENDENCIES)))
-          .addProjectDependencies(
-              Preconditions.checkNotNull(
-                  classifiedDependencies.get(LayerType.PROJECT_DEPENDENCIES)))
-          .toContainerBuilder();
+      javaContainerBuilder.addDependencies(
+          Preconditions.checkNotNull(classifiedDependencies.get(LayerType.DEPENDENCIES)));
+      javaContainerBuilder.addSnapshotDependencies(
+          Preconditions.checkNotNull(classifiedDependencies.get(LayerType.SNAPSHOT_DEPENDENCIES)));
+      javaContainerBuilder.addProjectDependencies(
+          Preconditions.checkNotNull(classifiedDependencies.get(LayerType.PROJECT_DEPENDENCIES)));
+      return javaContainerBuilder.toContainerBuilder();
 
     } catch (IOException ex) {
       throw new IOException(

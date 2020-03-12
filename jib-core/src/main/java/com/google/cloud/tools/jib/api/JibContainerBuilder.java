@@ -274,7 +274,7 @@ public class JibContainerBuilder {
   }
 
   /**
-   * Sets a variable in the container environment.
+   * Adds a variable in the container environment.
    *
    * @param name the environment variable name
    * @param value the environment variable value
