@@ -5,8 +5,7 @@ plugins {
 }
 
 dependencies {
-  implementation "com.google.guava:guava:${dependencyVersions.GUAVA}"
-
+  testImplementation "com.google.guava:guava:${dependencyVersions.GUAVA}"
   testImplementation "junit:junit:${dependencyVersions.JUNIT}"
   testImplementation "org.mockito:mockito-core:${dependencyVersions.MOCKITO_CORE}"
   testImplementation "org.slf4j:slf4j-api:${dependencyVersions.SLF4J_API}"
