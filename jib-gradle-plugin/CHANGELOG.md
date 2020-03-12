@@ -7,11 +7,14 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
+- `jib.container.creationTime` now accepts more timezone formats:`+HHmm`. This allows for easier configuration of creationTime by external systems. ([#2320](https://github.com/GoogleContainerTools/jib/issues/2320))
+
 ### Fixed
 
 ## 2.1.0
 
 ### Added
+
 - Additionally reads credentials from `~/.docker/.dockerconfigjson` and legacy Docker config (`~/.docker/.dockercfg`). Also searches for `$HOME/.docker/*` (in addition to current `System.get("user.home")/.docker/*`). This may help retrieve credentials, for example, on Kubernetes. ([#2260](https://github.com/GoogleContainerTools/jib/issues/2260))
 - New skaffold configuration options that modify how jib's build config is presented to skaffold ([#2292](https://github.com/GoogleContainerTools/jib/pull/2292)):
     - `jib.skaffold.watch.buildIncludes`: a list of build files to watch
