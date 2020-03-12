@@ -1,3 +1,4 @@
+include ":jib-build-plan"
 include ":jib-core"
 include ":jib-plugins-common"
 include ":jib-gradle-plugin"

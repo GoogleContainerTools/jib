@@ -1,7 +1,6 @@
 build
 target
 out
-bin
 *.iml
 *.ipr
 *.iws
@@ -10,4 +9,3 @@ bin
 /.settings
 /.classpath
 /.project
-.DS_Store
