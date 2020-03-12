@@ -43,3 +43,13 @@ publishing {
   }
 }
 /* RELEASE */
+
+/* ECLIPSE */
+eclipse.classpath.file.whenMerged {
+  entries.each {
+    if (it.path == 'src/test/java' || it.path == 'src/test/resources') {
+      it.entryAttributes['test'] = 'true'
+    }
+  }
+}
+/* ECLIPSE */

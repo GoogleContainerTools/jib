@@ -57,3 +57,14 @@ release {
   }
 }
 /* RELEASE */
+
+/* ECLIPSE */
+eclipse.classpath.file.whenMerged {
+  entries.each {
+    if (it.path == 'src/test/java' || it.path == 'src/test/resources'
+        || it.path == 'src/integration-test/java' || it.path == 'src/integration-test/resources') {
+      it.entryAttributes['test'] = 'true'
+    }
+  }
+}
+/* ECLIPSE */
