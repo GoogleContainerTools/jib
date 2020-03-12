@@ -16,6 +16,8 @@ dependencies {
 
   // equivalent to "provided"
   compileOnly 'org.apache.maven.plugin-tools:maven-plugin-annotations:3.5'
+  // needed to suppress "unknown enum constant" warnings
+  testImplementation 'org.apache.maven.plugin-tools:maven-plugin-annotations:3.5'
 
   // maven-plugin-testing-harness pulls in conflicting implementations of DefaultPlexusContainer
   // (sisu (correct) vs default-plexus-container (wrong)) so ensure this is first in the test classpath
