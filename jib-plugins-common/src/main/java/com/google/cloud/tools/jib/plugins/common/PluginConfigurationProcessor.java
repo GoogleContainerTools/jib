@@ -44,6 +44,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeFormatterBuilder;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -730,9 +731,16 @@ public class PluginConfigurationProcessor {
           return Instant.now();
 
         default:
-          return DateTimeFormatter.ISO_DATE_TIME.parse(configuredCreationTime, Instant::from);
+          DateTimeFormatter formatter =
+              new DateTimeFormatterBuilder()
+                  .append(DateTimeFormatter.ISO_DATE_TIME) // parses isoStrict
+                  // add ability to parse with no ":" in tz
+                  .optionalStart()
+                  .appendOffset("+HHmm", "+0000")
+                  .optionalEnd()
+                  .toFormatter();
+          return formatter.parse(configuredCreationTime, Instant::from);
       }
-
     } catch (DateTimeParseException ex) {
       throw new InvalidCreationTimeException(configuredCreationTime, configuredCreationTime, ex);
     }

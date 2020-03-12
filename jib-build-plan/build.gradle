@@ -44,11 +44,13 @@ publishing {
 /* RELEASE */
 
 /* ECLIPSE */
+// TODO: remove after upgrading to Gradle 5.6. (https://github.com/eclipse/buildship/issues/689)
+// Also remove the 'eclipse' plugin.
 eclipse.classpath.file.whenMerged {
-  entries.each {
-    if (it.path == 'src/test/java' || it.path == 'src/test/resources') {
-      it.entryAttributes['test'] = 'true'
-    }
+  entries.findAll {
+    it.path in ['src/test/java', 'src/test/resources']
+  }.each {
+    it.entryAttributes['test'] = 'true'
   }
 }
 /* ECLIPSE */

@@ -1,3 +1,7 @@
+plugins {
+  id 'eclipse'
+}
+
 dependencies {
   implementation project(':jib-core')
   // since jib core doesn't export dependencies to a compile scope
@@ -17,11 +21,13 @@ dependencies {
 sourceSets.test.resources.srcDirs project(':jib-core').sourceSets.test.resources
 
 /* ECLIPSE */
+// TODO: remove after upgrading to Gradle 5.6. (https://github.com/eclipse/buildship/issues/689)
+// Also remove the 'eclipse' plugin.
 eclipse.classpath.file.whenMerged {
-  entries.each {
-    if (it.path == 'src/test/java' || it.path == 'src/test/resources' || it.path == 'test-resources') {
-      it.entryAttributes['test'] = 'true'
-    }
+  entries.findAll {
+    it.path in ['src/test/java', 'src/test/resources', 'test-resources']
+  }.each {
+    it.entryAttributes['test'] = 'true'
   }
 }
 /* ECLIPSE */
