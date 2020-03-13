@@ -16,7 +16,6 @@
 
 package com.google.cloud.tools.jib.buildplan.internal;
 
-import com.google.cloud.tools.jib.buildplan.internal.UnixPathParser;
 import com.google.common.collect.ImmutableList;
 import org.junit.Assert;
 import org.junit.Test;
