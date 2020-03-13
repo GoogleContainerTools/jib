@@ -21,18 +21,22 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import javax.annotation.concurrent.Immutable;
 
 /** Configures how to build a layer in the container image. Instantiate with {@link #builder}. */
+@Immutable
 public class LayerConfiguration {
 
   /** Builds a {@link LayerConfiguration}. */
   public static class Builder {
 
-    private final ImmutableList.Builder<LayerEntry> layerEntries = ImmutableList.builder();
     private String name = "";
+    private List<LayerEntry> entries = new ArrayList<>();
 
     private Builder() {}
 
@@ -48,13 +52,24 @@ public class LayerConfiguration {
     }
 
     /**
+     * Sets entries for the layer.
+     *
+     * @param entries file entries in the layer
+     * @return this
+     */
+    public Builder setEntries(List<LayerEntry> entries) {
+      this.entries = new ArrayList<>(entries);
+      return this;
+    }
+
+    /**
      * Adds an entry to the layer.
      *
      * @param entry the layer entry to add
      * @return this
      */
     public Builder addEntry(LayerEntry entry) {
-      layerEntries.add(entry);
+      entries.add(entry);
       return this;
     }
 
@@ -231,7 +246,7 @@ public class LayerConfiguration {
      * @return the built {@link LayerConfiguration}
      */
     public LayerConfiguration build() {
-      return new LayerConfiguration(name, layerEntries.build());
+      return new LayerConfiguration(name, entries);
     }
   }
 
@@ -260,8 +275,8 @@ public class LayerConfiguration {
     return new Builder();
   }
 
-  private final ImmutableList<LayerEntry> layerEntries;
   private final String name;
+  private final List<LayerEntry> entries;
 
   /**
    * Use {@link #builder} to instantiate.
@@ -269,9 +284,9 @@ public class LayerConfiguration {
    * @param name an optional name for the layer
    * @param layerEntries the list of {@link LayerEntry}s
    */
-  private LayerConfiguration(String name, ImmutableList<LayerEntry> layerEntries) {
+  private LayerConfiguration(String name, List<LayerEntry> entries) {
     this.name = name;
-    this.layerEntries = layerEntries;
+    this.entries = entries;
   }
 
   /**
@@ -289,6 +304,10 @@ public class LayerConfiguration {
    * @return the list of layer entries
    */
   public ImmutableList<LayerEntry> getLayerEntries() {
-    return layerEntries;
+    return ImmutableList.copyOf(entries);
+  }
+
+  public Builder toBuilder() {
+    return builder().setName(name).setEntries(entries);
   }
 }

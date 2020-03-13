@@ -17,10 +17,10 @@
 package com.google.cloud.tools.jib.api;
 
 import com.google.cloud.tools.jib.filesystem.UnixPathParser;
-import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableList;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.StringJoiner;
 import javax.annotation.concurrent.Immutable;
 
@@ -41,8 +41,9 @@ public class AbsoluteUnixPath {
    * @return a new {@link AbsoluteUnixPath}
    */
   public static AbsoluteUnixPath get(String unixPath) {
-    Preconditions.checkArgument(
-        unixPath.startsWith("/"), "Path does not start with forward slash (/): " + unixPath);
+    if (!unixPath.startsWith("/")) {
+      throw new IllegalArgumentException("Path does not start with forward slash (/): " + unixPath);
+    }
 
     return new AbsoluteUnixPath(UnixPathParser.parse(unixPath));
   }
@@ -55,19 +56,18 @@ public class AbsoluteUnixPath {
    * @return a new {@link AbsoluteUnixPath}
    */
   public static AbsoluteUnixPath fromPath(Path path) {
-    Preconditions.checkArgument(
-        path.getRoot() != null, "Cannot create AbsoluteUnixPath from non-absolute Path: " + path);
-
-    ImmutableList.Builder<String> pathComponents =
-        ImmutableList.builderWithExpectedSize(path.getNameCount());
-    for (Path pathComponent : path) {
-      pathComponents.add(pathComponent.toString());
+    if (path.getRoot() == null) {
+      throw new IllegalArgumentException(
+          "Cannot create AbsoluteUnixPath from non-absolute Path: " + path);
     }
-    return new AbsoluteUnixPath(pathComponents.build());
+
+    List<String> pathComponents = new ArrayList<>(path.getNameCount());
+    path.forEach(component -> pathComponents.add(component.toString()));
+    return new AbsoluteUnixPath(pathComponents);
   }
 
   /** Path components after the file system root. This should always match {@link #unixPath}. */
-  private final ImmutableList<String> pathComponents;
+  private final List<String> pathComponents;
 
   /**
    * Unix-style path, in absolute form. Does not end with trailing slash, except for the file system
@@ -75,7 +75,7 @@ public class AbsoluteUnixPath {
    */
   private final String unixPath;
 
-  private AbsoluteUnixPath(ImmutableList<String> pathComponents) {
+  private AbsoluteUnixPath(List<String> pathComponents) {
     this.pathComponents = pathComponents;
 
     StringJoiner pathJoiner = new StringJoiner("/", "/", "");
@@ -92,12 +92,12 @@ public class AbsoluteUnixPath {
    * @return a new {@link AbsoluteUnixPath} representing the resolved path
    */
   public AbsoluteUnixPath resolve(RelativeUnixPath relativeUnixPath) {
-    ImmutableList.Builder<String> newPathComponents =
-        ImmutableList.builderWithExpectedSize(
-            pathComponents.size() + relativeUnixPath.getRelativePathComponents().size());
+    int newSize = pathComponents.size() + relativeUnixPath.getRelativePathComponents().size();
+    List<String> newPathComponents = new ArrayList<>(newSize);
+
     newPathComponents.addAll(pathComponents);
     newPathComponents.addAll(relativeUnixPath.getRelativePathComponents());
-    return new AbsoluteUnixPath(newPathComponents.build());
+    return new AbsoluteUnixPath(newPathComponents);
   }
 
   /**
@@ -108,8 +108,9 @@ public class AbsoluteUnixPath {
    * @return a new {@link AbsoluteUnixPath} representing the resolved path
    */
   public AbsoluteUnixPath resolve(Path relativePath) {
-    Preconditions.checkArgument(
-        relativePath.getRoot() == null, "Cannot resolve against absolute Path: " + relativePath);
+    if (relativePath.getRoot() != null) {
+      throw new IllegalArgumentException("Cannot resolve against absolute Path: " + relativePath);
+    }
 
     return AbsoluteUnixPath.fromPath(Paths.get(unixPath).resolve(relativePath));
   }

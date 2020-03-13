@@ -19,6 +19,7 @@ package com.google.cloud.tools.jib.api;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.Objects;
+import javax.annotation.concurrent.Immutable;
 
 /**
  * Represents an entry in the layer. A layer consists of many entries that can be converted into tar
@@ -26,6 +27,7 @@ import java.util.Objects;
  *
  * <p>This class is immutable and thread-safe.
  */
+@Immutable
 public class LayerEntry {
 
   private final Path sourceFile;
