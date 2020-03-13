@@ -132,6 +132,20 @@ public class ContainerBuildPlan {
       return this;
     }
 
+    /**
+     * Sets the container entrypoint. This is the beginning of the command that is run when the
+     * container starts. {@link #setCmd} sets additional tokens. {@code null} signals to use the
+     * entrypoint of the base image.
+     *
+     * <p>This is similar to <a
+     * href="https://docs.docker.com/engine/reference/builder/#exec-form-entrypoint-example">{@code
+     * ENTRYPOINT} in Dockerfiles</a> or {@code command} in the <a
+     * href="https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.11/#container-v1-core">Kubernetes
+     * Container spec</a>.
+     *
+     * @param entrypoint a list of the entrypoint command
+     * @return this
+     */
     public Builder setEntrypoint(@Nullable List<String> entrypoint) {
       if (entrypoint == null) {
         this.entrypoint = null;

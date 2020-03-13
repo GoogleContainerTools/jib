@@ -264,6 +264,7 @@ public class FileEntriesLayer extends LayerObject {
   public static final BiFunction<Path, AbsoluteUnixPath, Instant>
       DEFAULT_MODIFICATION_TIME_PROVIDER =
           (sourcePath, destinationPath) -> DEFAULT_MODIFICATION_TIME;
+
   /**
    * Gets a new {@link Builder} for {@link FileEntriesLayer}.
    *
@@ -283,7 +284,7 @@ public class FileEntriesLayer extends LayerObject {
    * @param entries the list of {@link FileEntry}s
    */
   private FileEntriesLayer(String name, List<FileEntry> entries) {
-    super(LayerObject.TYPE.FILE_ENTRIES);
+    super(LayerObject.Type.FILE_ENTRIES);
     this.name = name;
     this.entries = entries;
   }

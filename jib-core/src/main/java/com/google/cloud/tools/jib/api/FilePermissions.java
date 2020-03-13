@@ -58,7 +58,7 @@ public class FilePermissions {
     map.put(PosixFilePermission.OTHERS_WRITE, 02);
     map.put(PosixFilePermission.OTHERS_EXECUTE, 01);
     PERMISSION_MAP = Collections.unmodifiableMap(map);
-  };
+  }
 
   /**
    * Creates a new {@link FilePermissions} from an octal string representation (e.g. "123", "644",

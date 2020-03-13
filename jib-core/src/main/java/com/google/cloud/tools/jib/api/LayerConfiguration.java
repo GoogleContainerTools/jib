@@ -282,7 +282,7 @@ public class LayerConfiguration {
    * Use {@link #builder} to instantiate.
    *
    * @param name an optional name for the layer
-   * @param layerEntries the list of {@link LayerEntry}s
+   * @param entries the list of {@link LayerEntry}s
    */
   private LayerConfiguration(String name, List<LayerEntry> entries) {
     this.name = name;
@@ -299,9 +299,9 @@ public class LayerConfiguration {
   }
 
   /**
-   * Gets the list of layer entries.
+   * Gets the list of entries.
    *
-   * @return the list of layer entries
+   * @return the list of entries
    */
   public ImmutableList<LayerEntry> getLayerEntries() {
     return ImmutableList.copyOf(entries);
