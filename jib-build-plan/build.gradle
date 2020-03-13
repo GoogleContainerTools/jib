@@ -5,6 +5,8 @@ plugins {
 }
 
 dependencies {
+  compileOnly "com.google.code.findbugs:jsr305:${dependencyVersions.JSR305}"
+
   testImplementation "com.google.guava:guava:${dependencyVersions.GUAVA}"
   testImplementation "junit:junit:${dependencyVersions.JUNIT}"
   testImplementation "org.mockito:mockito-core:${dependencyVersions.MOCKITO_CORE}"

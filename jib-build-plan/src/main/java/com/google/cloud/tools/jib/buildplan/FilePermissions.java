@@ -16,10 +16,10 @@
 
 package com.google.cloud.tools.jib.buildplan;
 
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableMap;
 import java.nio.file.attribute.PosixFilePermission;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 import javax.annotation.concurrent.Immutable;
 
@@ -44,18 +44,21 @@ public class FilePermissions {
   private static final String OCTAL_PATTERN = "[0-7][0-7][0-7]";
 
   /** Maps from a {@link PosixFilePermission} to its corresponding file permission bit. */
-  private static final ImmutableMap<PosixFilePermission, Integer> PERMISSION_MAP =
-      ImmutableMap.<PosixFilePermission, Integer>builder()
-          .put(PosixFilePermission.OWNER_READ, 0400)
-          .put(PosixFilePermission.OWNER_WRITE, 0200)
-          .put(PosixFilePermission.OWNER_EXECUTE, 0100)
-          .put(PosixFilePermission.GROUP_READ, 040)
-          .put(PosixFilePermission.GROUP_WRITE, 020)
-          .put(PosixFilePermission.GROUP_EXECUTE, 010)
-          .put(PosixFilePermission.OTHERS_READ, 04)
-          .put(PosixFilePermission.OTHERS_WRITE, 02)
-          .put(PosixFilePermission.OTHERS_EXECUTE, 01)
-          .build();
+  private static final Map<PosixFilePermission, Integer> PERMISSION_MAP;
+
+  static {
+    Map<PosixFilePermission, Integer> map = new HashMap<>(9);
+    map.put(PosixFilePermission.OWNER_READ, 0400);
+    map.put(PosixFilePermission.OWNER_WRITE, 0200);
+    map.put(PosixFilePermission.OWNER_EXECUTE, 0100);
+    map.put(PosixFilePermission.GROUP_READ, 040);
+    map.put(PosixFilePermission.GROUP_WRITE, 020);
+    map.put(PosixFilePermission.GROUP_EXECUTE, 010);
+    map.put(PosixFilePermission.OTHERS_READ, 04);
+    map.put(PosixFilePermission.OTHERS_WRITE, 02);
+    map.put(PosixFilePermission.OTHERS_EXECUTE, 01);
+    PERMISSION_MAP = Collections.unmodifiableMap(map);
+  };
 
   /**
    * Creates a new {@link FilePermissions} from an octal string representation (e.g. "123", "644",
@@ -65,9 +68,10 @@ public class FilePermissions {
    * @return a new {@link FilePermissions} with the given permissions
    */
   public static FilePermissions fromOctalString(String octalPermissions) {
-    Preconditions.checkArgument(
-        octalPermissions.matches(OCTAL_PATTERN),
-        "octalPermissions must be a 3-digit octal number (000-777)");
+    if (!octalPermissions.matches(OCTAL_PATTERN)) {
+      throw new IllegalArgumentException(
+          "octalPermissions must be a 3-digit octal number (000-777)");
+    }
     return new FilePermissions(Integer.parseInt(octalPermissions, 8));
   }
 
@@ -81,14 +85,18 @@ public class FilePermissions {
       Set<PosixFilePermission> posixFilePermissions) {
     int permissionBits = 0;
     for (PosixFilePermission permission : posixFilePermissions) {
-      permissionBits |= Preconditions.checkNotNull(PERMISSION_MAP.get(permission));
+      Integer bit = PERMISSION_MAP.get(permission);
+      if (bit == null) {
+        throw new RuntimeException("BUG: PERMISSION_MAP is not initialized");
+      }
+      permissionBits |= bit;
     }
     return new FilePermissions(permissionBits);
   }
 
   private final int permissionBits;
 
-  @VisibleForTesting
+  // VisibleForTesting
   FilePermissions(int permissionBits) {
     this.permissionBits = permissionBits;
   }

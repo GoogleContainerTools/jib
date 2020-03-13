@@ -19,9 +19,9 @@ package com.google.cloud.tools.jib.buildplan;
 /** Indicates the format of the image. */
 public enum ImageFormat {
 
-  /** @see <a href="https://docs.docker.com/registry/spec/manifest-v2-2/">Docker V2.2</a> */
+  /** See <a href="https://docs.docker.com/registry/spec/manifest-v2-2/">Docker V2.2</a>. */
   Docker,
 
-  /** @see <a href="https://github.com/opencontainers/image-spec/blob/master/manifest.md">OCI</a> */
+  /** See <a href="https://github.com/opencontainers/image-spec/blob/master/manifest.md">OCI</a>. */
   OCI
 }

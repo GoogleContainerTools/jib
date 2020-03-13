@@ -17,8 +17,8 @@
 package com.google.cloud.tools.jib.buildplan;
 
 import com.google.cloud.tools.jib.buildplan.internal.UnixPathParser;
-import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableList;
+import java.util.ArrayList;
+import java.util.List;
 import javax.annotation.concurrent.Immutable;
 
 /**
@@ -37,16 +37,17 @@ public class RelativeUnixPath {
    * @return a new {@link RelativeUnixPath}
    */
   public static RelativeUnixPath get(String relativePath) {
-    Preconditions.checkArgument(
-        !relativePath.startsWith("/"), "Path starts with forward slash (/): " + relativePath);
+    if (relativePath.startsWith("/")) {
+      throw new IllegalArgumentException("Path starts with forward slash (/): " + relativePath);
+    }
 
     return new RelativeUnixPath(UnixPathParser.parse(relativePath));
   }
 
-  private final ImmutableList<String> pathComponents;
+  private final List<String> pathComponents;
 
   /** Instantiate with {@link #get}. */
-  private RelativeUnixPath(ImmutableList<String> pathComponents) {
+  private RelativeUnixPath(List<String> pathComponents) {
     this.pathComponents = pathComponents;
   }
 
@@ -55,7 +56,7 @@ public class RelativeUnixPath {
    *
    * @return the relative path this represents, in a list of components
    */
-  ImmutableList<String> getRelativePathComponents() {
-    return pathComponents;
+  List<String> getRelativePathComponents() {
+    return new ArrayList<>(pathComponents);
   }
 }

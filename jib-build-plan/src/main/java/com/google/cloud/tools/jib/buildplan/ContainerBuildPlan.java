@@ -26,10 +26,11 @@ import java.util.Set;
 import javax.annotation.Nullable;
 import javax.annotation.concurrent.Immutable;
 
+/** Describes a plan to build a container. */
 @Immutable
 public class ContainerBuildPlan {
 
-  /** Builds a {@link FileEntriesLayer}. */
+  /** Builder for {@link ContainerBuildPlan}. */
   public static class Builder {
 
     private String baseImage = "scratch";
@@ -50,6 +51,12 @@ public class ContainerBuildPlan {
 
     private List<LayerObject> layers = new ArrayList<>();
 
+    /**
+     * Container image reference to base the build.
+     *
+     * @param baseImage a
+     * @return this
+     */
     public Builder setBaseImage(String baseImage) {
       this.baseImage = baseImage;
       return this;
