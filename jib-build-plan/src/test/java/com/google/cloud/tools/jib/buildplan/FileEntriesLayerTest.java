@@ -44,7 +44,7 @@ public class FileEntriesLayerTest {
     Path testFile = Paths.get(Resources.getResource("core/fileA").toURI());
 
     FileEntriesLayer layer =
-        new FileEntriesLayer.Builder()
+        FileEntriesLayer.builder()
             .addEntryRecursive(testDirectory, AbsoluteUnixPath.get("/app/layer/"))
             .addEntryRecursive(testFile, AbsoluteUnixPath.get("/app/fileA"))
             .build();
@@ -53,8 +53,7 @@ public class FileEntriesLayerTest {
         ImmutableSet.of(
             defaultFileEntry(testDirectory, AbsoluteUnixPath.get("/app/layer/")),
             defaultFileEntry(testDirectory.resolve("a"), AbsoluteUnixPath.get("/app/layer/a/")),
-            defaultFileEntry(
-                testDirectory.resolve("a/b"), AbsoluteUnixPath.get("/app/layer/a/b/")),
+            defaultFileEntry(testDirectory.resolve("a/b"), AbsoluteUnixPath.get("/app/layer/a/b/")),
             defaultFileEntry(
                 testDirectory.resolve("a/b/bar"), AbsoluteUnixPath.get("/app/layer/a/b/bar/")),
             defaultFileEntry(testDirectory.resolve("c/"), AbsoluteUnixPath.get("/app/layer/c")),
@@ -63,8 +62,7 @@ public class FileEntriesLayerTest {
             defaultFileEntry(testDirectory.resolve("foo"), AbsoluteUnixPath.get("/app/layer/foo")),
             defaultFileEntry(testFile, AbsoluteUnixPath.get("/app/fileA")));
 
-    Assert.assertEquals(
-        expectedLayerEntries, ImmutableSet.copyOf(layer.getLayerEntries()));
+    Assert.assertEquals(expectedLayerEntries, ImmutableSet.copyOf(layer.getEntries()));
   }
 
   @Test
@@ -86,7 +84,7 @@ public class FileEntriesLayerTest {
             destination.toString().startsWith("/app/layer/a") ? timestamp1 : timestamp2;
 
     FileEntriesLayer layer =
-        new FileEntriesLayer.Builder()
+        FileEntriesLayer.builder()
             .addEntryRecursive(
                 testDirectory,
                 AbsoluteUnixPath.get("/app/layer/"),
@@ -135,7 +133,6 @@ public class FileEntriesLayerTest {
                 timestamp2),
             new FileEntry(testFile, AbsoluteUnixPath.get("/app/fileA"), permissions2, timestamp2));
 
-    Assert.assertEquals(
-        expectedLayerEntries, ImmutableSet.copyOf(layer.getLayerEntries()));
+    Assert.assertEquals(expectedLayerEntries, ImmutableSet.copyOf(layer.getEntries()));
   }
 }

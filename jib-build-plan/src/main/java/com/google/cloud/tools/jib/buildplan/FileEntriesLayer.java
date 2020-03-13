@@ -27,7 +27,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.annotation.concurrent.Immutable;
 
-/** Collection of file entries forming a layer. */
+/** Configures how to build a layer in the container image. Instantiate with {@link #builder}. */
 @Immutable
 public class FileEntriesLayer extends LayerObject {
 
@@ -36,6 +36,8 @@ public class FileEntriesLayer extends LayerObject {
 
     private String name = "";
     private List<FileEntry> entries = new ArrayList<>();
+
+    private Builder() {}
 
     /**
      * Sets a name for this layer. This name does not affect the contents of the layer.
@@ -49,7 +51,7 @@ public class FileEntriesLayer extends LayerObject {
     }
 
     /**
-     * Sets entries.for the layer.
+     * Sets entries for the layer.
      *
      * @param entries file entries in the layer
      * @return this
@@ -237,6 +239,11 @@ public class FileEntriesLayer extends LayerObject {
       return this;
     }
 
+    /**
+     * Returns the built {@link FileEntriesLayer}.
+     *
+     * @return the built {@link FileEntriesLayer}
+     */
     public FileEntriesLayer build() {
       return new FileEntriesLayer(name, entries);
     }
@@ -257,10 +264,24 @@ public class FileEntriesLayer extends LayerObject {
   public static final BiFunction<Path, AbsoluteUnixPath, Instant>
       DEFAULT_MODIFICATION_TIME_PROVIDER =
           (sourcePath, destinationPath) -> DEFAULT_MODIFICATION_TIME;
+  /**
+   * Gets a new {@link Builder} for {@link FileEntriesLayer}.
+   *
+   * @return a new {@link Builder}
+   */
+  public static Builder builder() {
+    return new Builder();
+  }
 
   private final String name;
   private final List<FileEntry> entries;
 
+  /**
+   * Use {@link #builder} to instantiate.
+   *
+   * @param name an optional name for the layer
+   * @param entries the list of {@link FileEntry}s
+   */
   private FileEntriesLayer(String name, List<FileEntry> entries) {
     super(LayerObject.TYPE.FILE_ENTRIES);
     this.name = name;
@@ -277,15 +298,15 @@ public class FileEntriesLayer extends LayerObject {
   }
 
   /**
-   * Gets the list of layer entries.
+   * Gets the list of entries.
    *
-   * @return the list of layer entries
+   * @return the list of entries
    */
-  public List<FileEntry> getLayerEntries() {
+  public List<FileEntry> getEntries() {
     return new ArrayList<>(entries);
   }
 
   public Builder toBuilder() {
-    return new Builder().setName(name).setEntries(entries);
+    return builder().setName(name).setEntries(entries);
   }
 }
