@@ -16,8 +16,8 @@
 
 package com.google.cloud.tools.jib.filesystem;
 
-import com.google.common.base.Splitter;
-import com.google.common.collect.ImmutableList;
+import java.util.ArrayList;
+import java.util.List;
 
 /** Parses Unix-style paths. */
 public class UnixPathParser {
@@ -28,16 +28,15 @@ public class UnixPathParser {
    * @param unixPath the Unix-style path
    * @return a list of path components
    */
-  public static ImmutableList<String> parse(String unixPath) {
-    ImmutableList.Builder<String> pathComponents = ImmutableList.builder();
-    for (String pathComponent : Splitter.on('/').split(unixPath)) {
-      if (pathComponent.isEmpty()) {
-        // Skips empty components.
-        continue;
+  public static List<String> parse(String unixPath) {
+    List<String> pathComponents = new ArrayList<>();
+    // -1 limit for Guava Splitter behavior: https://errorprone.info/bugpattern/StringSplitter
+    for (String component : unixPath.split("/", -1)) {
+      if (!component.isEmpty()) {
+        pathComponents.add(component);
       }
-      pathComponents.add(pathComponent);
     }
-    return pathComponents.build();
+    return pathComponents;
   }
 
   private UnixPathParser() {}

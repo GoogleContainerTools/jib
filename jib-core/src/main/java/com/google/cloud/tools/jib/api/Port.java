@@ -17,8 +17,10 @@
 package com.google.cloud.tools.jib.api;
 
 import java.util.Objects;
+import javax.annotation.concurrent.Immutable;
 
 /** Represents a port number with a protocol (TCP or UDP). */
+@Immutable
 public class Port {
 
   private static final String TCP_PROTOCOL = "tcp";
