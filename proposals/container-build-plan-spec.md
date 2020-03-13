@@ -9,8 +9,8 @@ Although looking similar, the structure and semantics of similary named properti
 ```
 {
   "baseImage": "gcr.io/distroless/java@sha256:b715126ebd36e5d5c2fd730f46a5b3c3b760e82dc18dffff7f5498d0151137c9",
-  "architecture": "amd64",
-  "os": "linux",
+  "architectureHint": "amd64",
+  "osHint": "linux",
   "format": "Docker",
   "created": "2011-12-03T22:42:05Z",
 
@@ -82,15 +82,19 @@ Although looking similar, the structure and semantics of similary named properti
 
    - `null` or omitted: no base image (from "scratch")
 
-* `architecture`: string
+* `architectureHint`: string
 
-   - `null` or omitted: inherits from the base image. If `baseImage` is not given or the `"scratch"` value, `"amd64"` by default.
-   - Otherwise (including an empty string `""`), sets the given value.
+   - If the base image reference is an "image list" (Docker manifest list or an OCI image index), must be set so that an image builder can select the image matching the given architecture.
+   - If the base image reference is not an "image list", this value is ignored and the architecture of the built image follows that of the base image.
 
-* `os`: string
+   The default is "amd64" when omitted.
 
-   - `null` or omitted: inherits from the base image. If `baseImage` is not given or the `"scratch"` value, `"linux"` by default.
-   - Otherwise (including an empty string `""`), sets the given value.
+* `osHint`: string
+
+   - If the base image reference is an "image list" (Docker manifest list or an OCI image index), must be set so that an image builder can select the image matching the given OS.
+   - If the base image reference is not an "image list", this value is ignored and the OS of the built image follows that of the base image.
+
+   The default is "linux" when omitted.
 
 * `format`: string
 
