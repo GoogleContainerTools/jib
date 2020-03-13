@@ -91,8 +91,8 @@ Although looking similar, the structure and semantics of similary named properti
 
 * `osHint`: string
 
-   - If the base image reference is an "image list" (Docker manifest list or an OCI image index), must be set so that an image builder can select the image matching the given architecture.
-   - If the base image reference is not an "image list", this value is ignored and the architecture of the built image follows that of the base image.
+   - If the base image reference is an "image list" (Docker manifest list or an OCI image index), must be set so that an image builder can select the image matching the given OS.
+   - If the base image reference is not an "image list", this value is ignored and the OS of the built image follows that of the base image.
 
    The default is "linux" when omitted.
 
