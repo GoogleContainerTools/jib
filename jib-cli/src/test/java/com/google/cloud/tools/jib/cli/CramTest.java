@@ -77,49 +77,54 @@ public class CramTest {
   @Test
   public void testShortForms_creationTime() {
     Cram fixture =
-        CommandLine.populateCommand(new Cram(), "-c", "1970-01-01T00:00:01Z", "scratch", "foo");
+        CommandLine.populateCommand(
+            new Cram(), "-d", "-c", "1970-01-01T00:00:01Z", "scratch", "foo");
     Assert.assertEquals(Instant.EPOCH.plus(Duration.ofSeconds(1)), fixture.creationTime);
   }
 
   @Test
   public void testShortForms_entrypoint() {
-    Cram fixture = CommandLine.populateCommand(new Cram(), "-e", "cmd,arg1", "scratch", "foo");
+    Cram fixture =
+        CommandLine.populateCommand(new Cram(), "-d", "-e", "cmd,arg1", "scratch", "foo");
     Assert.assertEquals(Arrays.asList("cmd", "arg1"), fixture.entrypoint);
   }
 
   @Test
   public void testShortForms_arguments() {
-    Cram fixture = CommandLine.populateCommand(new Cram(), "-a", "arg1,arg2", "scratch", "foo");
+    Cram fixture =
+        CommandLine.populateCommand(new Cram(), "-d", "-a", "arg1,arg2", "scratch", "foo");
     Assert.assertEquals(Arrays.asList("arg1", "arg2"), fixture.arguments);
   }
 
   @Test
   public void testShortForms_environment() {
-    Cram fixture = CommandLine.populateCommand(new Cram(), "-E", "VERBOSE=false", "scratch", "foo");
+    Cram fixture =
+        CommandLine.populateCommand(new Cram(), "-d", "-E", "VERBOSE=false", "scratch", "foo");
     Assert.assertEquals(Collections.singletonMap("VERBOSE", "false"), fixture.environment);
   }
 
   @Test
   public void testShortForms_labels() {
-    Cram fixture = CommandLine.populateCommand(new Cram(), "-l", "source=github", "scratch", "foo");
+    Cram fixture =
+        CommandLine.populateCommand(new Cram(), "-d", "-l", "source=github", "scratch", "foo");
     Assert.assertEquals(Collections.singletonMap("source", "github"), fixture.labels);
   }
 
   @Test
   public void testShortForms_credentialHelpers() {
-    Cram fixture = CommandLine.populateCommand(new Cram(), "-C", "gcr", "scratch", "foo");
+    Cram fixture = CommandLine.populateCommand(new Cram(), "-d", "-C", "gcr", "scratch", "foo");
     Assert.assertEquals(Collections.singletonList("gcr"), fixture.credentialHelpers);
   }
 
   @Test
   public void testShortForms_insecureRegistries() {
-    Cram fixture = CommandLine.populateCommand(new Cram(), "-k", "scratch", "foo");
+    Cram fixture = CommandLine.populateCommand(new Cram(), "-d", "-k", "scratch", "foo");
     Assert.assertTrue(fixture.insecure);
   }
 
   @Test
   public void testShortForms_verbose() {
-    Cram fixture = CommandLine.populateCommand(new Cram(), "-v", "scratch", "foo");
+    Cram fixture = CommandLine.populateCommand(new Cram(), "-d", "-v", "scratch", "foo");
     Assert.assertTrue(fixture.verbose);
   }
 
@@ -141,7 +146,7 @@ public class CramTest {
   public void testShortForms_ports() {
     Cram fixture =
         CommandLine.populateCommand(
-            new Cram(), "-p", "25-26/tcp", "-p", "30/udp", "scratch", "foo");
+            new Cram(), "-d", "-p", "25-26/tcp", "-p", "30/udp", "scratch", "foo");
     Assert.assertEquals(
         Sets.newHashSet(Port.tcp(25), Port.tcp(26), Port.udp(30)), new HashSet<>(fixture.ports));
   }
@@ -149,7 +154,7 @@ public class CramTest {
   @Test
   public void testShortForms_volume() {
     Cram fixture =
-        CommandLine.populateCommand(new Cram(), "-V", "/foo", "-V", "/bar", "scratch", "foo");
+        CommandLine.populateCommand(new Cram(), "-d", "-V", "/foo", "-V", "/bar", "scratch", "foo");
     Assert.assertEquals(
         Sets.newHashSet(AbsoluteUnixPath.get("/foo"), AbsoluteUnixPath.get("/bar")),
         new HashSet<>(fixture.volumes));
@@ -157,7 +162,7 @@ public class CramTest {
 
   @Test
   public void testShortForms_user() {
-    Cram fixture = CommandLine.populateCommand(new Cram(), "-u", "foo", "scratch", "foo");
+    Cram fixture = CommandLine.populateCommand(new Cram(), "-d", "-u", "foo", "scratch", "foo");
     Assert.assertEquals("foo", fixture.user);
   }
 
