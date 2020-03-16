@@ -35,11 +35,7 @@ dependencies {
   testImplementation 'org.slf4j:slf4j-api:1.7.30'
   testImplementation 'org.slf4j:slf4j-simple:1.7.30'
 
-  testImplementation project(path:':jib-build-plan')
-  testImplementation project(path:':jib-build-plan', configuration:'tests')
   testImplementation project(path:':jib-plugins-common', configuration:'tests')
-  integrationTestImplementation project(path:':jib-build-plan')
-  integrationTestImplementation project(path:':jib-build-plan', configuration:'tests')
   integrationTestImplementation project(path:':jib-core', configuration:'integrationTests')
 }
 
