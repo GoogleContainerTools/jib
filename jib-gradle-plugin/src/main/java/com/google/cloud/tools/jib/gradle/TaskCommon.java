@@ -18,8 +18,8 @@ package com.google.cloud.tools.jib.gradle;
 
 import com.google.api.client.http.HttpTransport;
 import com.google.cloud.tools.jib.ProjectInfo;
-import com.google.cloud.tools.jib.api.AbsoluteUnixPath;
-import com.google.cloud.tools.jib.api.FilePermissions;
+import com.google.cloud.tools.jib.api.buildplan.AbsoluteUnixPath;
+import com.google.cloud.tools.jib.api.buildplan.FilePermissions;
 import com.google.cloud.tools.jib.api.LogEvent;
 import com.google.cloud.tools.jib.plugins.common.ProjectProperties;
 import com.google.cloud.tools.jib.plugins.common.UpdateChecker;

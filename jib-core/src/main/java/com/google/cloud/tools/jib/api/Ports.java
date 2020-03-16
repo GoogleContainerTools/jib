@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.api;
 
+import com.google.cloud.tools.jib.api.buildplan.Port;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableSet;
 import java.util.List;

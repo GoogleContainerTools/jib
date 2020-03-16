@@ -16,8 +16,8 @@
 
 package com.google.cloud.tools.jib.image;
 
-import com.google.cloud.tools.jib.api.AbsoluteUnixPath;
-import com.google.cloud.tools.jib.api.Port;
+import com.google.cloud.tools.jib.api.buildplan.AbsoluteUnixPath;
+import com.google.cloud.tools.jib.api.buildplan.Port;
 import com.google.cloud.tools.jib.configuration.DockerHealthCheck;
 import com.google.cloud.tools.jib.image.json.HistoryEntry;
 import com.google.cloud.tools.jib.image.json.ManifestTemplate;
@@ -103,7 +103,7 @@ public class Image {
      */
     public Builder addEnvironment(@Nullable Map<String, String> environment) {
       if (environment != null) {
-        this.environmentBuilder.putAll(environment);
+        environmentBuilder.putAll(environment);
       }
       return this;
     }

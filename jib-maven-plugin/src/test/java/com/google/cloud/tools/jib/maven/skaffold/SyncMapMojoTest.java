@@ -16,7 +16,7 @@
 
 package com.google.cloud.tools.jib.maven.skaffold;
 
-import com.google.cloud.tools.jib.api.AbsoluteUnixPath;
+import com.google.cloud.tools.jib.api.buildplan.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.maven.TestProject;
 import com.google.cloud.tools.jib.plugins.common.SkaffoldSyncMapTemplate;
 import com.google.cloud.tools.jib.plugins.common.SkaffoldSyncMapTemplate.FileTemplate;

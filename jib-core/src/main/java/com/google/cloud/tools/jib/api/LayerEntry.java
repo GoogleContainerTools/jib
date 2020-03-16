@@ -16,6 +16,8 @@
 
 package com.google.cloud.tools.jib.api;
 
+import com.google.cloud.tools.jib.api.buildplan.AbsoluteUnixPath;
+import com.google.cloud.tools.jib.api.buildplan.FilePermissions;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.Objects;

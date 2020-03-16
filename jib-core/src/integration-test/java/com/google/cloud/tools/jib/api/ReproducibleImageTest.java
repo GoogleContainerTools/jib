@@ -16,6 +16,8 @@
 
 package com.google.cloud.tools.jib.api;
 
+import com.google.cloud.tools.jib.api.buildplan.AbsoluteUnixPath;
+import com.google.cloud.tools.jib.api.buildplan.FilePermissions;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
@@ -211,7 +213,7 @@ public class ReproducibleImageTest {
       List<String> sorted = new ArrayList<>(paths);
       // ReproducibleLayerBuilder sorts by TarArchiveEntry::getName()
       Collections.sort(sorted);
-      Assert.assertEquals("layer files are not consistently sorted", sorted, (List<String>) paths);
+      Assert.assertEquals("layer files are not consistently sorted", sorted, paths);
     }
   }
 
