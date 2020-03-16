@@ -213,7 +213,7 @@ public class ReproducibleImageTest {
       List<String> sorted = new ArrayList<>(paths);
       // ReproducibleLayerBuilder sorts by TarArchiveEntry::getName()
       Collections.sort(sorted);
-      Assert.assertEquals("layer files are not consistently sorted", sorted, paths);
+      Assert.assertEquals("layer files are not consistently sorted", sorted, (List<String>) paths);
     }
   }
 

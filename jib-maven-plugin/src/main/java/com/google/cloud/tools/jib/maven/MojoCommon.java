@@ -17,9 +17,9 @@
 package com.google.cloud.tools.jib.maven;
 
 import com.google.cloud.tools.jib.ProjectInfo;
+import com.google.cloud.tools.jib.api.LogEvent;
 import com.google.cloud.tools.jib.api.buildplan.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.api.buildplan.FilePermissions;
-import com.google.cloud.tools.jib.api.LogEvent;
 import com.google.cloud.tools.jib.maven.JibPluginConfiguration.PermissionConfiguration;
 import com.google.cloud.tools.jib.plugins.common.ProjectProperties;
 import com.google.cloud.tools.jib.plugins.common.PropertyNames;

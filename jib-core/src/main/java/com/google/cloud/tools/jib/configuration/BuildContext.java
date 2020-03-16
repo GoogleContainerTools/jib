@@ -16,9 +16,9 @@
 
 package com.google.cloud.tools.jib.configuration;
 
-import com.google.cloud.tools.jib.api.buildplan.ImageFormat;
 import com.google.cloud.tools.jib.api.LayerConfiguration;
 import com.google.cloud.tools.jib.api.LogEvent;
+import com.google.cloud.tools.jib.api.buildplan.ImageFormat;
 import com.google.cloud.tools.jib.cache.Cache;
 import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.global.JibSystemProperties;
@@ -86,7 +86,7 @@ public class BuildContext implements Closeable {
      * @return this
      */
     public Builder setBaseImageConfiguration(ImageConfiguration imageConfiguration) {
-      this.baseImageConfiguration = imageConfiguration;
+      baseImageConfiguration = imageConfiguration;
       return this;
     }
 
@@ -97,7 +97,7 @@ public class BuildContext implements Closeable {
      * @return this
      */
     public Builder setTargetImageConfiguration(ImageConfiguration imageConfiguration) {
-      this.targetImageConfiguration = imageConfiguration;
+      targetImageConfiguration = imageConfiguration;
       return this;
     }
 
