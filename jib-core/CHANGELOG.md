@@ -7,6 +7,8 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
+- API deprecation...
+
 ### Fixed
 
 ## 0.13.1
