@@ -50,6 +50,7 @@ subprojects {
     GOOGLE_HTTP_CLIENT_APACHE_V2: '1.34.0',
     GOOGLE_AUTH_LIBRARY_OAUTH2_HTTP: '0.18.0',
     GUAVA: '28.1-jre',
+    JSR305: '3.0.2', // transitively pulled in by GUAVA
 
     COMMONS_COMPRESS: '1.19',
     JACKSON_DATABIND: '2.9.10',
