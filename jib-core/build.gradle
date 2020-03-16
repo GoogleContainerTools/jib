@@ -44,7 +44,7 @@ publishing {
   publications {
     mavenJava(MavenPublication) {
       pom {
-        name = "Jib Core"
+        name = 'Jib Core'
         description = 'Build container images.'
       }
       from components.java
