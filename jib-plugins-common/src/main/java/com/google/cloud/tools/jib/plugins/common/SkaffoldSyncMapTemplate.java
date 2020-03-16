@@ -19,7 +19,7 @@ package com.google.cloud.tools.jib.plugins.common;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.cloud.tools.jib.api.LayerEntry;
+import com.google.cloud.tools.jib.api.buildplan.FileEntry;
 import com.google.cloud.tools.jib.json.JsonTemplate;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
@@ -104,7 +104,7 @@ public class SkaffoldSyncMapTemplate implements JsonTemplate {
    *
    * @param layerEntry the layer entry to add to the generated configuration
    */
-  public void addGenerated(LayerEntry layerEntry) {
+  public void addGenerated(FileEntry layerEntry) {
     generated.add(
         new FileTemplate(
             layerEntry.getSourceFile().toAbsolutePath().toString(),
@@ -117,7 +117,7 @@ public class SkaffoldSyncMapTemplate implements JsonTemplate {
    *
    * @param layerEntry the layer entry to add to the direct configuration
    */
-  public void addDirect(LayerEntry layerEntry) {
+  public void addDirect(FileEntry layerEntry) {
     direct.add(
         new FileTemplate(
             layerEntry.getSourceFile().toAbsolutePath().toString(),
