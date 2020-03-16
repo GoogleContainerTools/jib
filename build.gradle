@@ -331,6 +331,7 @@ subprojects {
   // to keep track of all source projects
   project.ext.sourceProjects = []
   // sourceProject(Project) accepts a project and adds it as a dependency in a special manner:
+  // 1. force evaluation of the project first
   // 1. add the project classes as "compileOnly" and make it available to tests in "testImplementation"
   // 2. add the project's depedencies as "implementation"
   // 3. remove any transitive reference of any sourceProject depenency that may have appeared
@@ -340,6 +341,9 @@ subprojects {
   // 2. Configuration is isolated to this single "sourceProject" call
   // 3. These configurations are compliant with IDEs
   project.ext.sourceProject = { Project dependencyProject ->
+    // make sure those projects are evaluated first so we know their dependencies
+    project.evaluationDependsOn dependencyProject.path
+    // add the sourceProjecect dependency
     def dependencyProjectClasses = dependencyProject.sourceSets.main.output
     dependencies {
       // add the dependencyProject classes as compileOnly, make it available to tests
@@ -350,10 +354,10 @@ subprojects {
       if (dependencyProject.configurations.hasProperty('api')) {
         implementation dependencyProject.configurations.api.dependencies
       }
-      // if we find any project dependencies that are brought in transitively, go remove them
-      project.sourceProjects.each { projectToRemove ->
-        project.configurations.implementation.dependencies.remove projectToRemove
-      }
+    }
+    // if we find any project dependencies that were brought in transitively, go remove them
+    project.configurations.implementation.dependencies.removeAll {
+      d -> d instanceof ProjectDependency && sourceProjects.contains(d.dependencyProject)
     }
     // keep track of all dependencyProjects for later removal
     sourceProjects += dependencyProject
