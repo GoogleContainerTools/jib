@@ -16,9 +16,11 @@
 
 package com.google.cloud.tools.jib.api;
 
+import com.google.cloud.tools.jib.api.buildplan.FileEntriesLayer;
 import com.google.cloud.tools.jib.configuration.ContainerConfiguration;
 import com.google.common.collect.ImmutableList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * A class containing the representation of the contents of a container. Currently only exposes
@@ -29,9 +31,9 @@ import java.util.List;
  */
 public class JibContainerDescription {
 
-  private final ImmutableList<LayerConfiguration> layers;
+  private final ImmutableList<FileEntriesLayer> layers;
 
-  JibContainerDescription(List<LayerConfiguration> layers) {
+  JibContainerDescription(List<FileEntriesLayer> layers) {
     this.layers = ImmutableList.copyOf(layers);
   }
 
@@ -40,7 +42,12 @@ public class JibContainerDescription {
    *
    * @return An {@link ImmutableList} of {@link LayerConfiguration}s
    */
-  public List<LayerConfiguration> getLayers() {
+  public List<FileEntriesLayer> getFileEntriesLayers() {
     return layers;
+  }
+
+  @Deprecated
+  public List<LayerConfiguration> getLayers() {
+    return layers.stream().map(LayerConfiguration::new).collect(Collectors.toList());
   }
 }

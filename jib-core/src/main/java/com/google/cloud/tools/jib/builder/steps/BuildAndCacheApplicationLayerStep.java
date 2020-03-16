@@ -16,8 +16,9 @@
 
 package com.google.cloud.tools.jib.builder.steps;
 
-import com.google.cloud.tools.jib.api.LayerConfiguration;
 import com.google.cloud.tools.jib.api.LogEvent;
+import com.google.cloud.tools.jib.api.buildplan.FileEntriesLayer;
+import com.google.cloud.tools.jib.api.buildplan.FileEntry;
 import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.builder.ProgressEventDispatcher;
 import com.google.cloud.tools.jib.builder.TimerEventDispatcher;
@@ -44,7 +45,7 @@ class BuildAndCacheApplicationLayerStep implements Callable<PreparedLayer> {
    */
   static ImmutableList<BuildAndCacheApplicationLayerStep> makeList(
       BuildContext buildContext, ProgressEventDispatcher.Factory progressEventDispatcherFactory) {
-    List<LayerConfiguration> layerConfigurations = buildContext.getLayerConfigurations();
+    List<FileEntriesLayer> layerConfigurations = buildContext.getLayerConfigurations();
 
     try (ProgressEventDispatcher progressEventDispatcher =
             progressEventDispatcherFactory.create(
@@ -55,7 +56,7 @@ class BuildAndCacheApplicationLayerStep implements Callable<PreparedLayer> {
       return layerConfigurations
           .stream()
           // Skips the layer if empty.
-          .filter(layerConfiguration -> !layerConfiguration.getLayerEntries().isEmpty())
+          .filter(layerConfiguration -> !layerConfiguration.getEntries().isEmpty())
           .map(
               layerConfiguration ->
                   new BuildAndCacheApplicationLayerStep(
@@ -71,13 +72,13 @@ class BuildAndCacheApplicationLayerStep implements Callable<PreparedLayer> {
   private final ProgressEventDispatcher.Factory progressEventDispatcherFactory;
 
   private final String layerName;
-  private final LayerConfiguration layerConfiguration;
+  private final FileEntriesLayer layerConfiguration;
 
   private BuildAndCacheApplicationLayerStep(
       BuildContext buildContext,
       ProgressEventDispatcher.Factory progressEventDispatcherFactory,
       String layerName,
-      LayerConfiguration layerConfiguration) {
+      FileEntriesLayer layerConfiguration) {
     this.buildContext = buildContext;
     this.progressEventDispatcherFactory = progressEventDispatcherFactory;
     this.layerName = layerName;
@@ -96,16 +97,15 @@ class BuildAndCacheApplicationLayerStep implements Callable<PreparedLayer> {
         TimerEventDispatcher ignored2 = new TimerEventDispatcher(eventHandlers, description)) {
       Cache cache = buildContext.getApplicationLayersCache();
 
+      ImmutableList<FileEntry> layerEntries = ImmutableList.copyOf(layerConfiguration.getEntries());
       // Don't build the layer if it exists already.
-      Optional<CachedLayer> optionalCachedLayer =
-          cache.retrieve(layerConfiguration.getLayerEntries());
+      Optional<CachedLayer> optionalCachedLayer = cache.retrieve(layerEntries);
       if (optionalCachedLayer.isPresent()) {
         return new PreparedLayer.Builder(optionalCachedLayer.get()).setName(layerName).build();
       }
 
-      Blob layerBlob = new ReproducibleLayerBuilder(layerConfiguration.getLayerEntries()).build();
-      CachedLayer cachedLayer =
-          cache.writeUncompressedLayer(layerBlob, layerConfiguration.getLayerEntries());
+      Blob layerBlob = new ReproducibleLayerBuilder(layerConfiguration.getEntries()).build();
+      CachedLayer cachedLayer = cache.writeUncompressedLayer(layerBlob, layerEntries);
 
       eventHandlers.dispatch(LogEvent.debug(description + " built " + cachedLayer.getDigest()));
 
