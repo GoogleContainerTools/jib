@@ -14,9 +14,9 @@
  * the License.
  */
 
-package com.google.cloud.tools.jib.buildplan;
+package com.google.cloud.tools.jib.api.buildplan;
 
-import com.google.cloud.tools.jib.buildplan.internal.UnixPathParser;
+import com.google.cloud.tools.jib.buildplan.UnixPathParser;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;

@@ -14,7 +14,7 @@
  * the License.
  */
 
-package com.google.cloud.tools.jib.buildplan.internal;
+package com.google.cloud.tools.jib.buildplan;
 
 import com.google.common.collect.ImmutableList;
 import org.junit.Assert;

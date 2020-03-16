@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Google LLC.
+ * Copyright 2020 Google LLC.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,14 +14,25 @@
  * the License.
  */
 
-package com.google.cloud.tools.jib.buildplan;
+package com.google.cloud.tools.jib.api.buildplan;
 
-/** Indicates the format of the image. */
-public enum ImageFormat {
+import javax.annotation.concurrent.Immutable;
 
-  /** See <a href="https://docs.docker.com/registry/spec/manifest-v2-2/">Docker V2.2</a>. */
-  Docker,
+/** Serves as a base class for the "layers" property in the build plan specification. */
+@Immutable
+public class LayerObject {
 
-  /** See <a href="https://github.com/opencontainers/image-spec/blob/master/manifest.md">OCI</a>. */
-  OCI
+  public static enum Type {
+    FILE_ENTRIES,
+  }
+
+  private final Type type;
+
+  public LayerObject(Type type) {
+    this.type = type;
+  }
+
+  public Type getType() {
+    return type;
+  }
 }

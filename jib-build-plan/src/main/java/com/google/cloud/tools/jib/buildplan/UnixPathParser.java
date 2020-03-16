@@ -14,7 +14,7 @@
  * the License.
  */
 
-package com.google.cloud.tools.jib.buildplan.internal;
+package com.google.cloud.tools.jib.buildplan;
 
 import java.util.ArrayList;
 import java.util.List;
