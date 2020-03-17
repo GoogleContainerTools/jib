@@ -37,7 +37,6 @@ import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.FileTime;
 import java.time.Instant;
-import java.util.Arrays;
 import java.util.Date;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
@@ -110,13 +109,14 @@ public class ReproducibleLayerBuilderTest {
 
     ReproducibleLayerBuilder layerBuilder =
         new ReproducibleLayerBuilder(
-            FileEntriesLayer.builder()
-                .addEntryRecursive(
-                    layerDirectory, AbsoluteUnixPath.get("/extract/here/apple/layer"))
-                .addEntry(blobA, AbsoluteUnixPath.get("/extract/here/apple/blobA"))
-                .addEntry(blobA, AbsoluteUnixPath.get("/extract/here/banana/blobA"))
-                .build()
-                .getEntries());
+            ImmutableList.copyOf(
+                FileEntriesLayer.builder()
+                    .addEntryRecursive(
+                        layerDirectory, AbsoluteUnixPath.get("/extract/here/apple/layer"))
+                    .addEntry(blobA, AbsoluteUnixPath.get("/extract/here/apple/blobA"))
+                    .addEntry(blobA, AbsoluteUnixPath.get("/extract/here/banana/blobA"))
+                    .build()
+                    .getEntries()));
 
     // Writes the layer tar to a temporary file.
     Blob unwrittenBlob = layerBuilder.build();
@@ -300,7 +300,7 @@ public class ReproducibleLayerBuilderTest {
 
     Blob blob =
         new ReproducibleLayerBuilder(
-                Arrays.asList(
+                ImmutableList.of(
                     new FileEntry(
                         file,
                         AbsoluteUnixPath.get("/fileA"),
@@ -329,7 +329,7 @@ public class ReproducibleLayerBuilderTest {
 
     Blob blob =
         new ReproducibleLayerBuilder(
-                Arrays.asList(
+                ImmutableList.of(
                     defaultLayerEntry(fileA, AbsoluteUnixPath.get("/somewhere/fileA")),
                     new FileEntry(
                         fileB,

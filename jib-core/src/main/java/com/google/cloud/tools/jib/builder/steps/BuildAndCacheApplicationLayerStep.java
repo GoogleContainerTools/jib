@@ -104,7 +104,7 @@ class BuildAndCacheApplicationLayerStep implements Callable<PreparedLayer> {
         return new PreparedLayer.Builder(optionalCachedLayer.get()).setName(layerName).build();
       }
 
-      Blob layerBlob = new ReproducibleLayerBuilder(layerConfiguration.getEntries()).build();
+      Blob layerBlob = new ReproducibleLayerBuilder(layerEntries).build();
       CachedLayer cachedLayer = cache.writeUncompressedLayer(layerBlob, layerEntries);
 
       eventHandlers.dispatch(LogEvent.debug(description + " built " + cachedLayer.getDigest()));

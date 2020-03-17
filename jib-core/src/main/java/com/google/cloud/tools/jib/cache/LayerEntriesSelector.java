@@ -21,6 +21,7 @@ import com.google.cloud.tools.jib.api.buildplan.FileEntry;
 import com.google.cloud.tools.jib.hash.Digests;
 import com.google.cloud.tools.jib.json.JsonTemplate;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.ImmutableList;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.time.Instant;
@@ -67,12 +68,12 @@ class LayerEntriesSelector {
     private final String permissions;
 
     @VisibleForTesting
-    LayerEntryTemplate(FileEntry entry) throws IOException {
-      sourceFile = entry.getSourceFile().toAbsolutePath().toString();
-      extractionPath = entry.getExtractionPath().toString();
-      sourceModificationTime = Files.getLastModifiedTime(entry.getSourceFile()).toInstant();
-      targetModificationTime = entry.getModificationTime();
-      permissions = entry.getPermissions().toOctalString();
+    LayerEntryTemplate(FileEntry layerEntry) throws IOException {
+      sourceFile = layerEntry.getSourceFile().toAbsolutePath().toString();
+      extractionPath = layerEntry.getExtractionPath().toString();
+      sourceModificationTime = Files.getLastModifiedTime(layerEntry.getSourceFile()).toInstant();
+      targetModificationTime = layerEntry.getModificationTime();
+      permissions = layerEntry.getPermissions().toOctalString();
     }
 
     @Override
@@ -149,7 +150,8 @@ class LayerEntriesSelector {
    * @return the selector
    * @throws IOException if an I/O exception occurs
    */
-  static DescriptorDigest generateSelector(List<FileEntry> layerEntries) throws IOException {
+  static DescriptorDigest generateSelector(ImmutableList<FileEntry> layerEntries)
+      throws IOException {
     return Digests.computeJsonDigest(toSortedJsonTemplates(layerEntries));
   }
 

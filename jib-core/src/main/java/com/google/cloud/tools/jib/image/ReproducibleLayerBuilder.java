@@ -22,6 +22,7 @@ import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.blob.Blobs;
 import com.google.cloud.tools.jib.tar.TarStreamBuilder;
 import com.google.common.base.Verify;
+import com.google.common.collect.ImmutableList;
 import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -87,10 +88,10 @@ public class ReproducibleLayerBuilder {
     }
   }
 
-  private final List<FileEntry> layerEntries;
+  private final ImmutableList<FileEntry> layerEntries;
 
-  public ReproducibleLayerBuilder(List<FileEntry> layerEntries) {
-    this.layerEntries = new ArrayList<>(layerEntries);
+  public ReproducibleLayerBuilder(ImmutableList<FileEntry> layerEntries) {
+    this.layerEntries = layerEntries;
   }
 
   /**

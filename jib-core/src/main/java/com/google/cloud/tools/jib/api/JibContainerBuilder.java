@@ -184,11 +184,11 @@ public class JibContainerBuilder {
   /**
    * Adds a layer (defined by a {@link FileEntriesLayer}).
    *
-   * @param layerConfiguration the {@link FileEntriesLayer}
+   * @param layer the {@link FileEntriesLayer}
    * @return this
    */
-  public JibContainerBuilder addFileEntriesLayer(FileEntriesLayer layerConfiguration) {
-    layerConfigurations.add(layerConfiguration);
+  public JibContainerBuilder addFileEntriesLayer(FileEntriesLayer layer) {
+    layerConfigurations.add(layer);
     return this;
   }
 
@@ -215,11 +215,11 @@ public class JibContainerBuilder {
    * Sets the layers (defined by a list of {@link FileEntriesLayer}s). This replaces any
    * previously-added layers.
    *
-   * @param layerConfigurations the list of {@link FileEntriesLayer}s
+   * @param layers the list of {@link FileEntriesLayer}s
    * @return this
    */
-  public JibContainerBuilder setFileEntriesLayers(List<FileEntriesLayer> layerConfigurations) {
-    this.layerConfigurations = new ArrayList<>(layerConfigurations);
+  public JibContainerBuilder setFileEntriesLayers(List<FileEntriesLayer> layers) {
+    this.layerConfigurations = new ArrayList<>(layers);
     return this;
   }
 
@@ -239,11 +239,11 @@ public class JibContainerBuilder {
   /**
    * Sets the layers. This replaces any previously-added layers.
    *
-   * @param layerConfigurations the {@link FileEntriesLayer}s
+   * @param layers the {@link FileEntriesLayer}s
    * @return this
    */
-  public JibContainerBuilder setFileEntriesLayers(FileEntriesLayer... layerConfigurations) {
-    return setFileEntriesLayers(Arrays.asList(layerConfigurations));
+  public JibContainerBuilder setFileEntriesLayers(FileEntriesLayer... layers) {
+    return setFileEntriesLayers(Arrays.asList(layers));
   }
 
   /**

@@ -39,9 +39,9 @@ public class JibContainerDescription {
   /**
    * Returns a list of "user configured" layers, does <em>not</em> include base layer information.
    *
-   * @return An {@link ImmutableList} of {@link FileEntriesLayer}s
+   * @return a {@link List} of {@link FileEntriesLayer}s
    */
-  public ImmutableList<FileEntriesLayer> getFileEntriesLayers() {
+  public List<FileEntriesLayer> getFileEntriesLayers() {
     return layers;
   }
 }
