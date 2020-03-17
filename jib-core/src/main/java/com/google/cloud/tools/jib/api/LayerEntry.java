@@ -122,7 +122,7 @@ public class LayerEntry {
       return false;
     }
     LayerEntry otherLayerEntry = (LayerEntry) other;
-    return getFileEntry().equals(otherLayerEntry.getFileEntry());
+    return toFileEntry().equals(otherLayerEntry.toFileEntry());
   }
 
   @Override
@@ -130,7 +130,7 @@ public class LayerEntry {
     return fileEntry.hashCode();
   }
 
-  FileEntry getFileEntry() {
+  FileEntry toFileEntry() {
     return fileEntry;
   }
 }

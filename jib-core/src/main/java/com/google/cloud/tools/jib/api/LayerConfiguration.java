@@ -64,7 +64,7 @@ public class LayerConfiguration {
      */
     public Builder setEntries(List<LayerEntry> entries) {
       builder.setEntries(
-          entries.stream().map(LayerEntry::getFileEntry).collect(Collectors.toList()));
+          entries.stream().map(LayerEntry::toFileEntry).collect(Collectors.toList()));
       return this;
     }
 
@@ -75,7 +75,7 @@ public class LayerConfiguration {
      * @return this
      */
     public Builder addEntry(LayerEntry entry) {
-      builder.addEntry(entry.getFileEntry());
+      builder.addEntry(entry.toFileEntry());
       return this;
     }
 
@@ -253,7 +253,7 @@ public class LayerConfiguration {
   public static final BiFunction<Path, AbsoluteUnixPath, Instant>
       DEFAULT_MODIFICATION_TIME_PROVIDER = FileEntriesLayer.DEFAULT_MODIFICATION_TIME_PROVIDER;
 
-  private final FileEntriesLayer layer;
+  private final FileEntriesLayer fileEntriesLayer;
 
   /**
    * Gets a new {@link Builder} for {@link LayerConfiguration}.
@@ -265,7 +265,7 @@ public class LayerConfiguration {
   }
 
   private LayerConfiguration(FileEntriesLayer layer) {
-    this.layer = layer;
+    this.fileEntriesLayer = layer;
   }
 
   /**
@@ -274,7 +274,7 @@ public class LayerConfiguration {
    * @return the name
    */
   public String getName() {
-    return layer.getName();
+    return fileEntriesLayer.getName();
   }
 
   /**
@@ -283,10 +283,11 @@ public class LayerConfiguration {
    * @return the list of entries
    */
   public ImmutableList<LayerEntry> getLayerEntries() {
-    return getEntries().stream().map(LayerEntry::new).collect(ImmutableList.toImmutableList());
+    List<FileEntry> entries = fileEntriesLayer.getEntries();
+    return entries.stream().map(LayerEntry::new).collect(ImmutableList.toImmutableList());
   }
 
-  public List<FileEntry> getEntries() {
-    return layer.getEntries();
+  public FileEntriesLayer toFileEntriesLayer() {
+    return fileEntriesLayer;
   }
 }
