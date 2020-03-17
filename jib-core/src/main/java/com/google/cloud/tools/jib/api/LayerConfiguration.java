@@ -264,8 +264,8 @@ public class LayerConfiguration {
     return new Builder();
   }
 
-  private LayerConfiguration(FileEntriesLayer layer) {
-    this.fileEntriesLayer = layer;
+  private LayerConfiguration(FileEntriesLayer fileEntriesLayer) {
+    this.fileEntriesLayer = fileEntriesLayer;
   }
 
   /**
@@ -287,7 +287,7 @@ public class LayerConfiguration {
     return entries.stream().map(LayerEntry::new).collect(ImmutableList.toImmutableList());
   }
 
-  public FileEntriesLayer toFileEntriesLayer() {
+  FileEntriesLayer toFileEntriesLayer() {
     return fileEntriesLayer;
   }
 }
