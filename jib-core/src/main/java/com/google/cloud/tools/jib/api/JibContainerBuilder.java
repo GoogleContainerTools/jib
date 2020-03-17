@@ -196,7 +196,7 @@ public class JibContainerBuilder {
    * Sets the layers (defined by a list of {@link LayerConfiguration}s). This replaces any
    * previously-added layers.
    *
-   * <p>Deprecated. Use {@link #setLayers(List<FileEntriesLayer>)}.
+   * <p>Deprecated. Use {@link #setFileEntriesLayers(List)}.
    *
    * @param layerConfigurations the list of {@link LayerConfiguration}s
    * @return this
