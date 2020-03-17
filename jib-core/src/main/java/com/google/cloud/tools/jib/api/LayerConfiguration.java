@@ -253,8 +253,6 @@ public class LayerConfiguration {
   public static final BiFunction<Path, AbsoluteUnixPath, Instant>
       DEFAULT_MODIFICATION_TIME_PROVIDER = FileEntriesLayer.DEFAULT_MODIFICATION_TIME_PROVIDER;
 
-  private final FileEntriesLayer fileEntriesLayer;
-
   /**
    * Gets a new {@link Builder} for {@link LayerConfiguration}.
    *
@@ -263,6 +261,8 @@ public class LayerConfiguration {
   public static Builder builder() {
     return new Builder();
   }
+
+  private final FileEntriesLayer fileEntriesLayer;
 
   private LayerConfiguration(FileEntriesLayer fileEntriesLayer) {
     this.fileEntriesLayer = fileEntriesLayer;
