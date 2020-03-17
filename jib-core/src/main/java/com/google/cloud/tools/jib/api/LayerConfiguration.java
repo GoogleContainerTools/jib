@@ -64,7 +64,7 @@ public class LayerConfiguration {
      */
     public Builder setEntries(List<LayerEntry> entries) {
       builder.setEntries(
-          entries.stream().map(LayerEntry::getFileEntry).collect(Collectors.toList()));
+          entries.stream().map(LayerEntry::toFileEntry).collect(Collectors.toList()));
       return this;
     }
 
@@ -75,7 +75,7 @@ public class LayerConfiguration {
      * @return this
      */
     public Builder addEntry(LayerEntry entry) {
-      builder.addEntry(entry.getFileEntry());
+      builder.addEntry(entry.toFileEntry());
       return this;
     }
 
@@ -264,8 +264,8 @@ public class LayerConfiguration {
     return new Builder();
   }
 
-  LayerConfiguration(FileEntriesLayer layer) {
-    fileEntriesLayer = layer;
+  private LayerConfiguration(FileEntriesLayer fileEntriesLayer) {
+    this.fileEntriesLayer = fileEntriesLayer;
   }
 
   /**
@@ -287,7 +287,7 @@ public class LayerConfiguration {
     return entries.stream().map(LayerEntry::new).collect(ImmutableList.toImmutableList());
   }
 
-  public FileEntriesLayer getFileEntriesLayer() {
+  FileEntriesLayer toFileEntriesLayer() {
     return fileEntriesLayer;
   }
 }

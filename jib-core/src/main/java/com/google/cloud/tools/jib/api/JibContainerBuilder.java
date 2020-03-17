@@ -177,7 +177,7 @@ public class JibContainerBuilder {
    */
   @Deprecated
   public JibContainerBuilder addLayer(LayerConfiguration layerConfiguration) {
-    layerConfigurations.add(layerConfiguration.getFileEntriesLayer());
+    layerConfigurations.add(layerConfiguration.toFileEntriesLayer());
     return this;
   }
 
@@ -206,7 +206,7 @@ public class JibContainerBuilder {
     this.layerConfigurations =
         layerConfigurations
             .stream()
-            .map(LayerConfiguration::getFileEntriesLayer)
+            .map(LayerConfiguration::toFileEntriesLayer)
             .collect(Collectors.toList());
     return this;
   }
