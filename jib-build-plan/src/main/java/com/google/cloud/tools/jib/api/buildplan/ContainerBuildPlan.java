@@ -71,7 +71,7 @@ public class ContainerBuildPlan {
      * value is ignored and the architecture of the built image follows that of the base image. The
      * default is {@code amd64}.
      *
-     * @param architectureHint image to use as a base
+     * @param architectureHint architecture value to select a base image in case of a manifest list
      * @return this
      */
     public Builder setArchitectureHint(String architectureHint) {
@@ -85,7 +85,7 @@ public class ContainerBuildPlan {
      * the base image reference is an image manifest, this value is ignored and the OS of the built
      * image follows that of the base image. The default is {@code linux}.
      *
-     * @param architecture image to use as a base
+     * @param osHint OS value to select a base image in case of a manifest list
      * @return this
      */
     public Builder setOsHint(String osHint) {
@@ -108,7 +108,7 @@ public class ContainerBuildPlan {
      * Sets the format to build the container image as. Use {@link ImageFormat#Docker} for Docker
      * V2.2 or {@link ImageFormat#OCI} for OCI.
      *
-     * @param imageFormat the {@link ImageFormat}
+     * @param format the {@link ImageFormat}
      * @return this
      */
     public Builder setFormat(ImageFormat format) {
@@ -183,7 +183,7 @@ public class ContainerBuildPlan {
      * href="https://docs.docker.com/engine/reference/builder/#label">{@code LABEL} in
      * Dockerfiles</a>.
      *
-     * @param labelMap a map of label keys to values
+     * @param labels a map of label keys to values
      * @return this
      */
     public Builder setLabels(Map<String, String> labels) {
@@ -228,7 +228,7 @@ public class ContainerBuildPlan {
     /**
      * Adds a port to expose from the container.
      *
-     * @param exposedPorts the port to expose
+     * @param exposedPort the port to expose
      * @return this
      * @see #setExposedPorts(Set)
      */
@@ -333,7 +333,11 @@ public class ContainerBuildPlan {
       return this;
     }
 
-    /** Returns the built {@link ContainerBuildPlan}. */
+    /**
+     * Returns the built {@link ContainerBuildPlan}.
+     *
+     * @return container build plan
+     */
     public ContainerBuildPlan build() {
       return new ContainerBuildPlan(
           baseImage,
@@ -466,7 +470,11 @@ public class ContainerBuildPlan {
     return layers;
   }
 
-  /** Creates a builder configured with the current values. */
+  /**
+   * Creates a builder configured with the current values.
+   *
+   * @return {@link Builder} configured with the current values.
+   */
   public Builder toBuilder() {
     return builder()
         .setBaseImage(baseImage)
