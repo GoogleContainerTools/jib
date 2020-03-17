@@ -14,7 +14,7 @@
  * the License.
  */
 
-package com.google.cloud.tools.jib.api;
+package com.google.cloud.tools.jib.api.buildplan;
 
 import java.util.Objects;
 import javax.annotation.concurrent.Immutable;

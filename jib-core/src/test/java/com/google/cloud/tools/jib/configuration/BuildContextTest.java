@@ -16,15 +16,15 @@
 
 package com.google.cloud.tools.jib.configuration;
 
-import com.google.cloud.tools.jib.api.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.api.Credential;
 import com.google.cloud.tools.jib.api.CredentialRetriever;
-import com.google.cloud.tools.jib.api.ImageFormat;
 import com.google.cloud.tools.jib.api.ImageReference;
 import com.google.cloud.tools.jib.api.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.api.LayerConfiguration;
 import com.google.cloud.tools.jib.api.LogEvent;
-import com.google.cloud.tools.jib.api.Port;
+import com.google.cloud.tools.jib.api.buildplan.AbsoluteUnixPath;
+import com.google.cloud.tools.jib.api.buildplan.ImageFormat;
+import com.google.cloud.tools.jib.api.buildplan.Port;
 import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
 import com.google.cloud.tools.jib.image.json.OciManifestTemplate;

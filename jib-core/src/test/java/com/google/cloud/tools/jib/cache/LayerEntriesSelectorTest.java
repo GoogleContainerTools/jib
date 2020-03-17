@@ -16,11 +16,11 @@
 
 package com.google.cloud.tools.jib.cache;
 
-import com.google.cloud.tools.jib.api.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.api.DescriptorDigest;
-import com.google.cloud.tools.jib.api.FilePermissions;
-import com.google.cloud.tools.jib.api.LayerConfiguration;
 import com.google.cloud.tools.jib.api.LayerEntry;
+import com.google.cloud.tools.jib.api.buildplan.AbsoluteUnixPath;
+import com.google.cloud.tools.jib.api.buildplan.FileEntriesLayer;
+import com.google.cloud.tools.jib.api.buildplan.FilePermissions;
 import com.google.cloud.tools.jib.cache.LayerEntriesSelector.LayerEntryTemplate;
 import com.google.cloud.tools.jib.hash.Digests;
 import com.google.common.collect.ImmutableList;
@@ -43,8 +43,8 @@ public class LayerEntriesSelectorTest {
     return new LayerEntry(
         source,
         destination,
-        LayerConfiguration.DEFAULT_FILE_PERMISSIONS_PROVIDER.apply(source, destination),
-        LayerConfiguration.DEFAULT_MODIFICATION_TIME);
+        FileEntriesLayer.DEFAULT_FILE_PERMISSIONS_PROVIDER.apply(source, destination),
+        FileEntriesLayer.DEFAULT_MODIFICATION_TIME);
   }
 
   @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
@@ -75,7 +75,7 @@ public class LayerEntriesSelectorTest {
             file3,
             AbsoluteUnixPath.get("/extraction/path"),
             FilePermissions.fromOctalString("755"),
-            LayerConfiguration.DEFAULT_MODIFICATION_TIME);
+            FileEntriesLayer.DEFAULT_MODIFICATION_TIME);
     LayerEntry testLayerEntry5 =
         defaultLayerEntry(file3, AbsoluteUnixPath.get("/extraction/patha"));
     LayerEntry testLayerEntry6 =
@@ -83,7 +83,7 @@ public class LayerEntriesSelectorTest {
             file3,
             AbsoluteUnixPath.get("/extraction/patha"),
             FilePermissions.fromOctalString("755"),
-            LayerConfiguration.DEFAULT_MODIFICATION_TIME);
+            FileEntriesLayer.DEFAULT_MODIFICATION_TIME);
 
     outOfOrderLayerEntries =
         ImmutableList.of(
@@ -175,13 +175,13 @@ public class LayerEntriesSelectorTest {
             layerFile,
             AbsoluteUnixPath.get("/extraction/path"),
             FilePermissions.fromOctalString("111"),
-            LayerConfiguration.DEFAULT_MODIFICATION_TIME);
+            FileEntriesLayer.DEFAULT_MODIFICATION_TIME);
     LayerEntry layerEntry222 =
         new LayerEntry(
             layerFile,
             AbsoluteUnixPath.get("/extraction/path"),
             FilePermissions.fromOctalString("222"),
-            LayerConfiguration.DEFAULT_MODIFICATION_TIME);
+            FileEntriesLayer.DEFAULT_MODIFICATION_TIME);
 
     // Verify that changing permissions generates a different selector
     Assert.assertNotEquals(

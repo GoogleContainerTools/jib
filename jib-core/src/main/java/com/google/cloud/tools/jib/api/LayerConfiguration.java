@@ -16,6 +16,9 @@
 
 package com.google.cloud.tools.jib.api;
 
+import com.google.cloud.tools.jib.api.buildplan.AbsoluteUnixPath;
+import com.google.cloud.tools.jib.api.buildplan.FileEntriesLayer;
+import com.google.cloud.tools.jib.api.buildplan.FilePermissions;
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -252,19 +255,15 @@ public class LayerConfiguration {
 
   /** Provider that returns default file permissions (644 for files, 755 for directories). */
   public static final BiFunction<Path, AbsoluteUnixPath, FilePermissions>
-      DEFAULT_FILE_PERMISSIONS_PROVIDER =
-          (sourcePath, destinationPath) ->
-              Files.isDirectory(sourcePath)
-                  ? FilePermissions.DEFAULT_FOLDER_PERMISSIONS
-                  : FilePermissions.DEFAULT_FILE_PERMISSIONS;
+      DEFAULT_FILE_PERMISSIONS_PROVIDER = FileEntriesLayer.DEFAULT_FILE_PERMISSIONS_PROVIDER;
 
   /** Default file modification time (EPOCH + 1 second). */
-  public static final Instant DEFAULT_MODIFICATION_TIME = Instant.ofEpochSecond(1);
+  public static final Instant DEFAULT_MODIFICATION_TIME =
+      FileEntriesLayer.DEFAULT_MODIFICATION_TIME;
 
   /** Provider that returns default file modification time (EPOCH + 1 second). */
   public static final BiFunction<Path, AbsoluteUnixPath, Instant>
-      DEFAULT_MODIFICATION_TIME_PROVIDER =
-          (sourcePath, destinationPath) -> DEFAULT_MODIFICATION_TIME;
+      DEFAULT_MODIFICATION_TIME_PROVIDER = FileEntriesLayer.DEFAULT_MODIFICATION_TIME_PROVIDER;
 
   /**
    * Gets a new {@link Builder} for {@link LayerConfiguration}.

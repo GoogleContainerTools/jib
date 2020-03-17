@@ -17,6 +17,7 @@
 package com.google.cloud.tools.jib.api;
 
 import com.google.cloud.tools.jib.Command;
+import com.google.cloud.tools.jib.api.buildplan.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.event.events.ProgressEvent;
 import com.google.cloud.tools.jib.event.progress.ProgressEventHandler;
 import com.google.cloud.tools.jib.registry.LocalRegistry;

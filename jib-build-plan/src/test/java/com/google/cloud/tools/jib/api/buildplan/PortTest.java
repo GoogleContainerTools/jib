@@ -14,7 +14,7 @@
  * the License.
  */
 
-package com.google.cloud.tools.jib.buildplan;
+package com.google.cloud.tools.jib.api.buildplan;
 
 import org.junit.Assert;
 import org.junit.Test;

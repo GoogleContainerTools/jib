@@ -36,7 +36,7 @@ publishing {
   publications {
     mavenJava(MavenPublication) {
       pom {
-        name = "Jib Container Build Plan API"
+        name = 'Jib Container Build Plan API'
         description = 'Jib Container Build Plan API'
       }
       from components.java

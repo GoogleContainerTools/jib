@@ -14,9 +14,9 @@
  * the License.
  */
 
-package com.google.cloud.tools.jib.buildplan;
+package com.google.cloud.tools.jib.api.buildplan;
 
-import com.google.cloud.tools.jib.buildplan.internal.UnixPathParser;
+import com.google.cloud.tools.jib.buildplan.UnixPathParser;
 import java.util.ArrayList;
 import java.util.List;
 import javax.annotation.concurrent.Immutable;

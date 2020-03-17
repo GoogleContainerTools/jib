@@ -17,6 +17,9 @@
 package com.google.cloud.tools.jib.api;
 
 import com.google.cloud.tools.jib.ProjectInfo;
+import com.google.cloud.tools.jib.api.buildplan.AbsoluteUnixPath;
+import com.google.cloud.tools.jib.api.buildplan.FileEntriesLayer;
+import com.google.cloud.tools.jib.api.buildplan.RelativeUnixPath;
 import com.google.cloud.tools.jib.filesystem.DirectoryWalker;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
@@ -202,7 +205,7 @@ public class JavaContainerBuilder {
   private RelativeUnixPath othersDestination = RelativeUnixPath.get("classpath");
   @Nullable private String mainClass;
   private BiFunction<Path, AbsoluteUnixPath, Instant> modificationTimeProvider =
-      LayerConfiguration.DEFAULT_MODIFICATION_TIME_PROVIDER;
+      FileEntriesLayer.DEFAULT_MODIFICATION_TIME_PROVIDER;
 
   private JavaContainerBuilder(JibContainerBuilder jibContainerBuilder) {
     this.jibContainerBuilder = jibContainerBuilder;

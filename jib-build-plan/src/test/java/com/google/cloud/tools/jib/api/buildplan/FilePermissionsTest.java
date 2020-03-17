@@ -14,7 +14,7 @@
  * the License.
  */
 
-package com.google.cloud.tools.jib.buildplan;
+package com.google.cloud.tools.jib.api.buildplan;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;

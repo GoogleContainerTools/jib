@@ -16,10 +16,10 @@
 
 package com.google.cloud.tools.jib.cache;
 
-import com.google.cloud.tools.jib.api.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.api.DescriptorDigest;
-import com.google.cloud.tools.jib.api.LayerConfiguration;
 import com.google.cloud.tools.jib.api.LayerEntry;
+import com.google.cloud.tools.jib.api.buildplan.AbsoluteUnixPath;
+import com.google.cloud.tools.jib.api.buildplan.FileEntriesLayer;
 import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.blob.Blobs;
 import com.google.common.collect.ImmutableList;
@@ -95,8 +95,8 @@ public class CacheTest {
     return new LayerEntry(
         source,
         destination,
-        LayerConfiguration.DEFAULT_FILE_PERMISSIONS_PROVIDER.apply(source, destination),
-        LayerConfiguration.DEFAULT_MODIFICATION_TIME);
+        FileEntriesLayer.DEFAULT_FILE_PERMISSIONS_PROVIDER.apply(source, destination),
+        FileEntriesLayer.DEFAULT_MODIFICATION_TIME);
   }
 
   @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();

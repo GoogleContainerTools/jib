@@ -16,7 +16,7 @@
 
 package com.google.cloud.tools.jib.gradle.skaffold;
 
-import com.google.cloud.tools.jib.api.AbsoluteUnixPath;
+import com.google.cloud.tools.jib.api.buildplan.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.gradle.JibPlugin;
 import com.google.cloud.tools.jib.gradle.TestProject;
 import com.google.cloud.tools.jib.plugins.common.SkaffoldSyncMapTemplate;

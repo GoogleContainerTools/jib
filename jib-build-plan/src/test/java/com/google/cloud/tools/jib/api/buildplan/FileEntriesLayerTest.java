@@ -14,7 +14,7 @@
  * the License.
  */
 
-package com.google.cloud.tools.jib.api;
+package com.google.cloud.tools.jib.api.buildplan;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.common.io.Resources;
@@ -27,15 +27,15 @@ import java.util.function.BiFunction;
 import org.junit.Assert;
 import org.junit.Test;
 
-/** Tests for {@link LayerConfiguration}. */
-public class LayerConfigurationTest {
+/** Tests for {@link FileEntriesLayer}. */
+public class FileEntriesLayerTest {
 
-  private static LayerEntry defaultLayerEntry(Path source, AbsoluteUnixPath destination) {
-    return new LayerEntry(
+  private static FileEntry defaultFileEntry(Path source, AbsoluteUnixPath destination) {
+    return new FileEntry(
         source,
         destination,
-        LayerConfiguration.DEFAULT_FILE_PERMISSIONS_PROVIDER.apply(source, destination),
-        LayerConfiguration.DEFAULT_MODIFICATION_TIME);
+        FileEntriesLayer.DEFAULT_FILE_PERMISSIONS_PROVIDER.apply(source, destination),
+        FileEntriesLayer.DEFAULT_MODIFICATION_TIME);
   }
 
   @Test
@@ -43,28 +43,26 @@ public class LayerConfigurationTest {
     Path testDirectory = Paths.get(Resources.getResource("core/layer").toURI()).toAbsolutePath();
     Path testFile = Paths.get(Resources.getResource("core/fileA").toURI());
 
-    LayerConfiguration layerConfiguration =
-        LayerConfiguration.builder()
+    FileEntriesLayer layer =
+        FileEntriesLayer.builder()
             .addEntryRecursive(testDirectory, AbsoluteUnixPath.get("/app/layer/"))
             .addEntryRecursive(testFile, AbsoluteUnixPath.get("/app/fileA"))
             .build();
 
-    ImmutableSet<LayerEntry> expectedLayerEntries =
+    ImmutableSet<FileEntry> expectedLayerEntries =
         ImmutableSet.of(
-            defaultLayerEntry(testDirectory, AbsoluteUnixPath.get("/app/layer/")),
-            defaultLayerEntry(testDirectory.resolve("a"), AbsoluteUnixPath.get("/app/layer/a/")),
-            defaultLayerEntry(
-                testDirectory.resolve("a/b"), AbsoluteUnixPath.get("/app/layer/a/b/")),
-            defaultLayerEntry(
+            defaultFileEntry(testDirectory, AbsoluteUnixPath.get("/app/layer/")),
+            defaultFileEntry(testDirectory.resolve("a"), AbsoluteUnixPath.get("/app/layer/a/")),
+            defaultFileEntry(testDirectory.resolve("a/b"), AbsoluteUnixPath.get("/app/layer/a/b/")),
+            defaultFileEntry(
                 testDirectory.resolve("a/b/bar"), AbsoluteUnixPath.get("/app/layer/a/b/bar/")),
-            defaultLayerEntry(testDirectory.resolve("c/"), AbsoluteUnixPath.get("/app/layer/c")),
-            defaultLayerEntry(
+            defaultFileEntry(testDirectory.resolve("c/"), AbsoluteUnixPath.get("/app/layer/c")),
+            defaultFileEntry(
                 testDirectory.resolve("c/cat/"), AbsoluteUnixPath.get("/app/layer/c/cat")),
-            defaultLayerEntry(testDirectory.resolve("foo"), AbsoluteUnixPath.get("/app/layer/foo")),
-            defaultLayerEntry(testFile, AbsoluteUnixPath.get("/app/fileA")));
+            defaultFileEntry(testDirectory.resolve("foo"), AbsoluteUnixPath.get("/app/layer/foo")),
+            defaultFileEntry(testFile, AbsoluteUnixPath.get("/app/fileA")));
 
-    Assert.assertEquals(
-        expectedLayerEntries, ImmutableSet.copyOf(layerConfiguration.getLayerEntries()));
+    Assert.assertEquals(expectedLayerEntries, ImmutableSet.copyOf(layer.getEntries()));
   }
 
   @Test
@@ -85,8 +83,8 @@ public class LayerConfigurationTest {
         (source, destination) ->
             destination.toString().startsWith("/app/layer/a") ? timestamp1 : timestamp2;
 
-    LayerConfiguration layerConfiguration =
-        LayerConfiguration.builder()
+    FileEntriesLayer layer =
+        FileEntriesLayer.builder()
             .addEntryRecursive(
                 testDirectory,
                 AbsoluteUnixPath.get("/app/layer/"),
@@ -99,43 +97,42 @@ public class LayerConfigurationTest {
                 timestampProvider)
             .build();
 
-    ImmutableSet<LayerEntry> expectedLayerEntries =
+    ImmutableSet<FileEntry> expectedLayerEntries =
         ImmutableSet.of(
-            new LayerEntry(
+            new FileEntry(
                 testDirectory, AbsoluteUnixPath.get("/app/layer/"), permissions2, timestamp2),
-            new LayerEntry(
+            new FileEntry(
                 testDirectory.resolve("a"),
                 AbsoluteUnixPath.get("/app/layer/a/"),
                 permissions1,
                 timestamp1),
-            new LayerEntry(
+            new FileEntry(
                 testDirectory.resolve("a/b"),
                 AbsoluteUnixPath.get("/app/layer/a/b/"),
                 permissions1,
                 timestamp1),
-            new LayerEntry(
+            new FileEntry(
                 testDirectory.resolve("a/b/bar"),
                 AbsoluteUnixPath.get("/app/layer/a/b/bar/"),
                 permissions1,
                 timestamp1),
-            new LayerEntry(
+            new FileEntry(
                 testDirectory.resolve("c/"),
                 AbsoluteUnixPath.get("/app/layer/c"),
                 permissions2,
                 timestamp2),
-            new LayerEntry(
+            new FileEntry(
                 testDirectory.resolve("c/cat/"),
                 AbsoluteUnixPath.get("/app/layer/c/cat"),
                 permissions2,
                 timestamp2),
-            new LayerEntry(
+            new FileEntry(
                 testDirectory.resolve("foo"),
                 AbsoluteUnixPath.get("/app/layer/foo"),
                 permissions2,
                 timestamp2),
-            new LayerEntry(testFile, AbsoluteUnixPath.get("/app/fileA"), permissions2, timestamp2));
+            new FileEntry(testFile, AbsoluteUnixPath.get("/app/fileA"), permissions2, timestamp2));
 
-    Assert.assertEquals(
-        expectedLayerEntries, ImmutableSet.copyOf(layerConfiguration.getLayerEntries()));
+    Assert.assertEquals(expectedLayerEntries, ImmutableSet.copyOf(layer.getEntries()));
   }
 }

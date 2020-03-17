@@ -16,6 +16,9 @@
 
 package com.google.cloud.tools.jib.api;
 
+import com.google.cloud.tools.jib.api.buildplan.AbsoluteUnixPath;
+import com.google.cloud.tools.jib.api.buildplan.ImageFormat;
+import com.google.cloud.tools.jib.api.buildplan.Port;
 import com.google.cloud.tools.jib.configuration.BuildContext;
 import com.google.cloud.tools.jib.configuration.ContainerConfiguration;
 import com.google.cloud.tools.jib.configuration.ImageConfiguration;
