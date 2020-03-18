@@ -17,7 +17,7 @@
 package com.google.cloud.tools.jib.cache;
 
 import com.google.cloud.tools.jib.api.DescriptorDigest;
-import com.google.cloud.tools.jib.api.LayerEntry;
+import com.google.cloud.tools.jib.api.buildplan.FileEntry;
 import com.google.cloud.tools.jib.hash.Digests;
 import com.google.cloud.tools.jib.json.JsonTemplate;
 import com.google.common.annotations.VisibleForTesting;
@@ -31,7 +31,7 @@ import java.util.List;
 import java.util.Objects;
 
 /**
- * Generates a selector based on {@link LayerEntry}s for a layer. Selectors are secondary references
+ * Generates a selector based on {@link FileEntry}s for a layer. Selectors are secondary references
  * for a cache entries.
  *
  * <p>The selector is the SHA256 hash of the list of layer entries serialized in the following form:
@@ -57,7 +57,7 @@ import java.util.Objects;
  */
 class LayerEntriesSelector {
 
-  /** Serialized form of a {@link LayerEntry}. */
+  /** Serialized form of a {@link FileEntry}. */
   @VisibleForTesting
   static class LayerEntryTemplate implements JsonTemplate, Comparable<LayerEntryTemplate> {
 
@@ -68,7 +68,7 @@ class LayerEntriesSelector {
     private final String permissions;
 
     @VisibleForTesting
-    LayerEntryTemplate(LayerEntry layerEntry) throws IOException {
+    LayerEntryTemplate(FileEntry layerEntry) throws IOException {
       sourceFile = layerEntry.getSourceFile().toAbsolutePath().toString();
       extractionPath = layerEntry.getExtractionPath().toString();
       sourceModificationTime = Files.getLastModifiedTime(layerEntry.getSourceFile()).toInstant();
@@ -124,18 +124,18 @@ class LayerEntriesSelector {
   }
 
   /**
-   * Converts a list of {@link LayerEntry}s into a list of {@link LayerEntryTemplate}. The list is
+   * Converts a list of {@link FileEntry}s into a list of {@link LayerEntryTemplate}. The list is
    * sorted by source file first, then extraction path (see {@link LayerEntryTemplate#compareTo}).
    *
-   * @param layerEntries the list of {@link LayerEntry} to convert
+   * @param layerEntries the list of {@link FileEntry} to convert
    * @return list of {@link LayerEntryTemplate} after sorting
    * @throws IOException if checking the file creation time of a layer entry fails
    */
   @VisibleForTesting
-  static List<LayerEntryTemplate> toSortedJsonTemplates(List<LayerEntry> layerEntries)
+  static List<LayerEntryTemplate> toSortedJsonTemplates(List<FileEntry> layerEntries)
       throws IOException {
     List<LayerEntryTemplate> jsonTemplates = new ArrayList<>();
-    for (LayerEntry entry : layerEntries) {
+    for (FileEntry entry : layerEntries) {
       jsonTemplates.add(new LayerEntryTemplate(entry));
     }
     Collections.sort(jsonTemplates);
@@ -143,14 +143,14 @@ class LayerEntriesSelector {
   }
 
   /**
-   * Generates a selector for the list of {@link LayerEntry}s. The selector is unique to each unique
+   * Generates a selector for the list of {@link FileEntry}s. The selector is unique to each unique
    * set of layer entries, regardless of order. TODO: Should we care about order?
    *
    * @param layerEntries the layer entries
    * @return the selector
    * @throws IOException if an I/O exception occurs
    */
-  static DescriptorDigest generateSelector(ImmutableList<LayerEntry> layerEntries)
+  static DescriptorDigest generateSelector(ImmutableList<FileEntry> layerEntries)
       throws IOException {
     return Digests.computeJsonDigest(toSortedJsonTemplates(layerEntries));
   }
