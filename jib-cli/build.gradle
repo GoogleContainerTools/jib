@@ -3,7 +3,7 @@ plugins {
 }
 
 ext {
-    cliMainClass = "com.google.cloud.tools.jib.cli.Cram"
+    cliMainClass = "com.google.cloud.tools.jib.cli.JibCli"
 }
 
 // use `run` to build and run the app
