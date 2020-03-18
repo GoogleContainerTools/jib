@@ -69,10 +69,16 @@ public class ReproducibleLayerBuilder {
         return;
       }
 
+      Path namePath = Paths.get(tarArchiveEntry.getName());
+
+      // Don't add entries for "/"
+      if (namePath.equals(Paths.get("/"))) {
+        return;
+      }
+
       // Adds all directories along extraction paths to explicitly set permissions for those
       // directories.
-      Path namePath = Paths.get(tarArchiveEntry.getName());
-      if (namePath.getParent() != namePath.getRoot()) {
+      if (namePath.getParent() != null) {
         TarArchiveEntry dir = new TarArchiveEntry(DIRECTORY_FILE, namePath.getParent().toString());
         dir.setModTime(FileEntriesLayer.DEFAULT_MODIFICATION_TIME.toEpochMilli());
         add(dir);

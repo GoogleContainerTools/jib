@@ -93,6 +93,11 @@ public class ReproducibleLayerBuilderTest {
     Assert.assertEquals(TarArchiveEntry.DEFAULT_DIR_MODE, extractionPathEntry.getMode());
   }
 
+  private static void verifyNoMoreEntries(TarArchiveInputStream tarArchiveInputStream)
+      throws IOException {
+    Assert.assertNull(tarArchiveInputStream.getNextTarEntry());
+  }
+
   private static LayerEntry defaultLayerEntry(Path source, AbsoluteUnixPath destination) {
     return new LayerEntry(
         source,
@@ -151,6 +156,7 @@ public class ReproducibleLayerBuilderTest {
           Paths.get(Resources.getResource("core/layer/foo").toURI()));
       verifyNextTarArchiveEntryIsDirectory(tarArchiveInputStream, "extract/here/banana/");
       verifyNextTarArchiveEntry(tarArchiveInputStream, "extract/here/banana/blobA", blobA);
+      verifyNoMoreEntries(tarArchiveInputStream);
     }
   }
 
@@ -357,6 +363,37 @@ public class ReproducibleLayerBuilderTest {
       Assert.assertEquals(0100123, in.getNextTarEntry().getMode());
       // folder (custom folder permissions)
       Assert.assertEquals(040456, in.getNextTarEntry().getMode());
+    }
+  }
+
+  @Test
+  public void testBuild_rootEntryNotAddedDoesntThrowNpe() throws IOException {
+    Path testRoot = temporaryFolder.getRoot().toPath();
+    Path file = Files.createFile(testRoot.resolve("test.file"));
+
+    Blob blob =
+        new ReproducibleLayerBuilder(
+                ImmutableList.of(
+                    new LayerEntry(
+                        testRoot,
+                        AbsoluteUnixPath.fromPath(Paths.get("/")),
+                        FilePermissions.DEFAULT_FOLDER_PERMISSIONS,
+                        LayerConfiguration.DEFAULT_MODIFICATION_TIME),
+                    new LayerEntry(
+                        file,
+                        AbsoluteUnixPath.fromPath(Paths.get("/test.file")),
+                        FilePermissions.DEFAULT_FILE_PERMISSIONS,
+                        LayerConfiguration.DEFAULT_MODIFICATION_TIME)))
+            .build();
+
+    Path tarFile = temporaryFolder.newFile().toPath();
+    try (OutputStream out = new BufferedOutputStream(Files.newOutputStream(tarFile))) {
+      blob.writeTo(out);
+    }
+
+    try (TarArchiveInputStream in = new TarArchiveInputStream(Files.newInputStream(tarFile))) {
+      verifyNextTarArchiveEntry(in, "test.file", file);
+      verifyNoMoreEntries(in);
     }
   }
 
