@@ -14,6 +14,7 @@ application {
 }
 
 dependencies {
+  implementation project(':jib-build-plan')
   implementation project(':jib-core')
   // since jib core doesn't export dependencies to a compile scope
   // (they are "runtime"), just grab them manually. This means we don't have

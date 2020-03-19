@@ -16,10 +16,10 @@
 
 package com.google.cloud.tools.jib.cli;
 
-import com.google.cloud.tools.jib.api.AbsoluteUnixPath;
-import com.google.cloud.tools.jib.api.FilePermissions;
-import com.google.cloud.tools.jib.api.LayerConfiguration;
-import com.google.cloud.tools.jib.api.LayerEntry;
+import com.google.cloud.tools.jib.api.buildplan.AbsoluteUnixPath;
+import com.google.cloud.tools.jib.api.buildplan.FileEntriesLayer;
+import com.google.cloud.tools.jib.api.buildplan.FileEntry;
+import com.google.cloud.tools.jib.api.buildplan.FilePermissions;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.nio.charset.StandardCharsets;
@@ -128,10 +128,10 @@ public class LayerDefinitionParserTest {
 
   @Test
   public void testConvert_sourceAndName() throws Exception {
-    LayerConfiguration result = fixture.convert("foo");
+    FileEntriesLayer result = fixture.convert("foo");
     Assert.assertEquals("", result.getName());
-    Assert.assertEquals(1, result.getLayerEntries().size());
-    LayerEntry layerEntry = result.getLayerEntries().get(0);
+    Assert.assertEquals(1, result.getEntries().size());
+    FileEntry layerEntry = result.getEntries().get(0);
     Assert.assertEquals(Paths.get("foo"), layerEntry.getSourceFile());
     Assert.assertEquals(AbsoluteUnixPath.get("/"), layerEntry.getExtractionPath());
     Assert.assertEquals(
@@ -141,10 +141,10 @@ public class LayerDefinitionParserTest {
 
   @Test
   public void testConvert_sourceDestination() throws Exception {
-    LayerConfiguration result = fixture.convert("foo,/dest");
+    FileEntriesLayer result = fixture.convert("foo,/dest");
     Assert.assertEquals("", result.getName());
-    Assert.assertEquals(1, result.getLayerEntries().size());
-    LayerEntry layerEntry = result.getLayerEntries().get(0);
+    Assert.assertEquals(1, result.getEntries().size());
+    FileEntry layerEntry = result.getEntries().get(0);
     Assert.assertEquals(Paths.get("foo"), layerEntry.getSourceFile());
     Assert.assertEquals(AbsoluteUnixPath.get("/dest"), layerEntry.getExtractionPath());
     Assert.assertEquals(
@@ -164,10 +164,10 @@ public class LayerDefinitionParserTest {
 
   @Test
   public void testConvert_sourceDestinationName() throws Exception {
-    LayerConfiguration result = fixture.convert("foo,/dest,name=name=name");
+    FileEntriesLayer result = fixture.convert("foo,/dest,name=name=name");
     Assert.assertEquals("name=name", result.getName());
-    Assert.assertEquals(1, result.getLayerEntries().size());
-    LayerEntry layerEntry = result.getLayerEntries().get(0);
+    Assert.assertEquals(1, result.getEntries().size());
+    FileEntry layerEntry = result.getEntries().get(0);
     Assert.assertEquals(Paths.get("foo"), layerEntry.getSourceFile());
     Assert.assertEquals(AbsoluteUnixPath.get("/dest"), layerEntry.getExtractionPath());
     Assert.assertEquals(
@@ -183,24 +183,24 @@ public class LayerDefinitionParserTest {
     File file = new File(subdir, "file.txt");
     Files.copy(new ByteArrayInputStream("foo".getBytes(StandardCharsets.UTF_8)), file.toPath());
 
-    LayerConfiguration result = fixture.convert(root.toString() + ",/dest,permissions=111:222");
-    Assert.assertEquals(3, result.getLayerEntries().size());
+    FileEntriesLayer result = fixture.convert(root.toString() + ",/dest,permissions=111:222");
+    Assert.assertEquals(3, result.getEntries().size());
 
-    LayerEntry layerEntry = result.getLayerEntries().get(0);
+    FileEntry layerEntry = result.getEntries().get(0);
     Assert.assertEquals(root.toPath(), layerEntry.getSourceFile());
     Assert.assertEquals(AbsoluteUnixPath.get("/dest"), layerEntry.getExtractionPath());
     Assert.assertEquals(
         Instant.EPOCH.plus(Duration.ofSeconds(1)), layerEntry.getModificationTime());
     Assert.assertEquals(FilePermissions.fromOctalString("222"), layerEntry.getPermissions());
 
-    layerEntry = result.getLayerEntries().get(1);
+    layerEntry = result.getEntries().get(1);
     Assert.assertEquals(subdir.toPath(), layerEntry.getSourceFile());
     Assert.assertEquals(AbsoluteUnixPath.get("/dest/sub"), layerEntry.getExtractionPath());
     Assert.assertEquals(
         Instant.EPOCH.plus(Duration.ofSeconds(1)), layerEntry.getModificationTime());
     Assert.assertEquals(FilePermissions.fromOctalString("222"), layerEntry.getPermissions());
 
-    layerEntry = result.getLayerEntries().get(2);
+    layerEntry = result.getEntries().get(2);
     Assert.assertEquals(file.toPath(), layerEntry.getSourceFile());
     Assert.assertEquals(AbsoluteUnixPath.get("/dest/sub/file.txt"), layerEntry.getExtractionPath());
     Assert.assertEquals(
@@ -216,20 +216,20 @@ public class LayerDefinitionParserTest {
     File file = new File(subdir, "file.txt");
     Files.copy(new ByteArrayInputStream("foo".getBytes(StandardCharsets.UTF_8)), file.toPath());
 
-    LayerConfiguration result = fixture.convert(root.toString() + ",/dest,timestamps=actual");
-    Assert.assertEquals(3, result.getLayerEntries().size());
+    FileEntriesLayer result = fixture.convert(root.toString() + ",/dest,timestamps=actual");
+    Assert.assertEquals(3, result.getEntries().size());
 
-    LayerEntry layerEntry = result.getLayerEntries().get(0);
+    FileEntry layerEntry = result.getEntries().get(0);
     Assert.assertEquals(root.toPath(), layerEntry.getSourceFile());
     Assert.assertEquals(AbsoluteUnixPath.get("/dest"), layerEntry.getExtractionPath());
     Assert.assertEquals(root.lastModified(), layerEntry.getModificationTime().toEpochMilli());
 
-    layerEntry = result.getLayerEntries().get(1);
+    layerEntry = result.getEntries().get(1);
     Assert.assertEquals(subdir.toPath(), layerEntry.getSourceFile());
     Assert.assertEquals(AbsoluteUnixPath.get("/dest/sub"), layerEntry.getExtractionPath());
     Assert.assertEquals(subdir.lastModified(), layerEntry.getModificationTime().toEpochMilli());
 
-    layerEntry = result.getLayerEntries().get(2);
+    layerEntry = result.getEntries().get(2);
     Assert.assertEquals(file.toPath(), layerEntry.getSourceFile());
     Assert.assertEquals(AbsoluteUnixPath.get("/dest/sub/file.txt"), layerEntry.getExtractionPath());
     Assert.assertEquals(file.lastModified(), layerEntry.getModificationTime().toEpochMilli());

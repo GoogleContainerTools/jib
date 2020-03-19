@@ -16,9 +16,9 @@
 
 package com.google.cloud.tools.jib.cli;
 
-import com.google.cloud.tools.jib.api.AbsoluteUnixPath;
-import com.google.cloud.tools.jib.api.FilePermissions;
-import com.google.cloud.tools.jib.api.LayerConfiguration;
+import com.google.cloud.tools.jib.api.buildplan.AbsoluteUnixPath;
+import com.google.cloud.tools.jib.api.buildplan.FileEntriesLayer;
+import com.google.cloud.tools.jib.api.buildplan.FilePermissions;
 import com.google.common.annotations.VisibleForTesting;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -39,26 +39,26 @@ import picocli.CommandLine;
  *         | (("ts" | "timestamps") "=" ("actual" | integer{since-epoch} | iso8601-date-time))
  * </pre>
  *
- * If the {@code containerPath} is unspecified, it is treated as equivalent to the container root
+ * <p>If the {@code containerPath} is unspecified, it is treated as equivalent to the container root
  * ({@code /}).
  */
-class LayerDefinitionParser implements CommandLine.ITypeConverter<LayerConfiguration> {
+class LayerDefinitionParser implements CommandLine.ITypeConverter<FileEntriesLayer> {
 
   @Override
-  public LayerConfiguration convert(String layerDefinition) throws Exception {
-    LayerConfiguration.Builder layerBuilder = LayerConfiguration.builder();
+  public FileEntriesLayer convert(String layerDefinition) throws Exception {
+    FileEntriesLayer.Builder layerBuilder = FileEntriesLayer.builder();
     for (String specification : layerDefinition.split(";", -1)) {
       parseSpecification(layerBuilder, specification);
     }
     return layerBuilder.build();
   }
 
-  private void parseSpecification(LayerConfiguration.Builder layerBuilder, String subspecification)
+  private void parseSpecification(FileEntriesLayer.Builder layerBuilder, String subspecification)
       throws IOException {
     BiFunction<Path, AbsoluteUnixPath, FilePermissions> permissionsProvider =
-        LayerConfiguration.DEFAULT_FILE_PERMISSIONS_PROVIDER;
+        FileEntriesLayer.DEFAULT_FILE_PERMISSIONS_PROVIDER;
     BiFunction<Path, AbsoluteUnixPath, Instant> timestampProvider =
-        LayerConfiguration.DEFAULT_MODIFICATION_TIME_PROVIDER;
+        FileEntriesLayer.DEFAULT_MODIFICATION_TIME_PROVIDER;
 
     String[] definition = subspecification.split(",", -1);
     String containerRoot = definition.length == 1 ? "/" : definition[1];
@@ -106,8 +106,6 @@ class LayerDefinitionParser implements CommandLine.ITypeConverter<LayerConfigura
       return new ActualTimestampProvider();
     }
 
-    // absolute time
-    Instant fixed;
     // treat as seconds since epoch
     if (directive.matches("\\d+")) {
       long secondsSinceEpoch = Long.parseLong(directive);

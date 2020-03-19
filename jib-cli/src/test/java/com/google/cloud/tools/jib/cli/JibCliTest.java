@@ -16,9 +16,9 @@
 
 package com.google.cloud.tools.jib.cli;
 
-import com.google.cloud.tools.jib.api.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.api.ImageReference;
-import com.google.cloud.tools.jib.api.Port;
+import com.google.cloud.tools.jib.api.buildplan.AbsoluteUnixPath;
+import com.google.cloud.tools.jib.api.buildplan.Port;
 import com.google.common.collect.Sets;
 import java.util.Collections;
 import org.junit.Assert;

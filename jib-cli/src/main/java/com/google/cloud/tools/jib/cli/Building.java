@@ -16,8 +16,8 @@
 
 package com.google.cloud.tools.jib.cli;
 
-import com.google.cloud.tools.jib.api.AbsoluteUnixPath;
-import com.google.cloud.tools.jib.api.Port;
+import com.google.cloud.tools.jib.api.buildplan.AbsoluteUnixPath;
+import com.google.cloud.tools.jib.api.buildplan.Port;
 import com.google.cloud.tools.jib.cli.JibCli.PathParser;
 import com.google.cloud.tools.jib.cli.JibCli.PortParser;
 import java.time.Instant;

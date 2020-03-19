@@ -16,7 +16,7 @@
 
 package com.google.cloud.tools.jib.cli;
 
-import com.google.cloud.tools.jib.api.AbsoluteUnixPath;
+import com.google.cloud.tools.jib.api.buildplan.AbsoluteUnixPath;
 import java.io.File;
 import java.io.IOException;
 import java.time.Instant;

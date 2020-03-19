@@ -16,16 +16,16 @@
 
 package com.google.cloud.tools.jib.cli;
 
-import com.google.cloud.tools.jib.api.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.api.Containerizer;
 import com.google.cloud.tools.jib.api.DockerDaemonImage;
 import com.google.cloud.tools.jib.api.ImageReference;
 import com.google.cloud.tools.jib.api.Jib;
 import com.google.cloud.tools.jib.api.JibContainer;
 import com.google.cloud.tools.jib.api.JibContainerBuilder;
-import com.google.cloud.tools.jib.api.LayerConfiguration;
 import com.google.cloud.tools.jib.api.LogEvent;
-import com.google.cloud.tools.jib.api.Port;
+import com.google.cloud.tools.jib.api.buildplan.AbsoluteUnixPath;
+import com.google.cloud.tools.jib.api.buildplan.FileEntriesLayer;
+import com.google.cloud.tools.jib.api.buildplan.Port;
 import com.google.cloud.tools.jib.cli.JibCli.ImageReferenceParser;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Joiner;
@@ -87,7 +87,7 @@ public class Build extends Building implements Callable<Integer> {
       converter = LayerDefinitionParser.class)
   @VisibleForTesting
   @Nullable
-  List<LayerConfiguration> layers;
+  List<FileEntriesLayer> layers;
 
   @Override
   public Integer call() throws Exception {
@@ -134,8 +134,8 @@ public class Build extends Building implements Callable<Integer> {
       builder.setUser(user);
     }
     if (layers != null) {
-      for (LayerConfiguration layer : layers) {
-        builder.addLayer(layer);
+      for (FileEntriesLayer layer : layers) {
+        builder.addFileEntriesLayer(layer);
       }
     }
     Containerizer containerizer =
