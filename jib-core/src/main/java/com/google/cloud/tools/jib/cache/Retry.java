@@ -53,8 +53,8 @@ public class Retry<E extends Exception> {
    * Create a retryable action.
    *
    * @param action the action to be run
-   * @return the instance
    * @param <E> the class of exceptions that may be thrown
+   * @return the instance
    */
   public static <E extends Exception> Retry<E> action(Action<E> action) {
     return new Retry<E>(action);
@@ -69,6 +69,12 @@ public class Retry<E extends Exception> {
     this.action = action;
   }
 
+  /**
+   * Configure the maximum number of retries.
+   *
+   * @param maximumRetries the number of retries, must be zero or more
+   * @return this Retry instance
+   */
   public Retry<E> maximumRetries(int maximumRetries) {
     Preconditions.checkArgument(maximumRetries > 0);
     this.maximumRetries = maximumRetries;

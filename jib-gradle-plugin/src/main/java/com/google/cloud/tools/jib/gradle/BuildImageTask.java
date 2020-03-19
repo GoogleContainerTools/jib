@@ -34,6 +34,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import java.io.IOException;
 import java.util.Optional;
+import java.util.concurrent.Future;
 import javax.annotation.Nullable;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.GradleException;
@@ -41,7 +42,7 @@ import org.gradle.api.tasks.Nested;
 import org.gradle.api.tasks.TaskAction;
 import org.gradle.api.tasks.options.Option;
 
-/** Builds a container image. */
+/** Builds a container image to registry. */
 public class BuildImageTask extends DefaultTask implements JibTask {
 
   private static final String HELPFUL_SUGGESTIONS_PREFIX = "Build image failed";
@@ -70,6 +71,14 @@ public class BuildImageTask extends DefaultTask implements JibTask {
     Preconditions.checkNotNull(jibExtension).getTo().setImage(targetImage);
   }
 
+  /**
+   * Task Action, builds an image to remote registry.
+   *
+   * @throws IOException if an error occurs creating the jib runner
+   * @throws BuildStepsExecutionException if an error occurs while executing build steps
+   * @throws CacheDirectoryCreationException if a new cache directory could not be created
+   * @throws MainClassInferenceException if a main class could not be found
+   */
   @TaskAction
   public void buildImage()
       throws IOException, BuildStepsExecutionException, CacheDirectoryCreationException,
@@ -81,6 +90,8 @@ public class BuildImageTask extends DefaultTask implements JibTask {
 
     GradleProjectProperties projectProperties =
         GradleProjectProperties.getForProject(getProject(), getLogger(), tempDirectoryProvider);
+    Future<Optional<String>> updateCheckFuture =
+        TaskCommon.newUpdateChecker(projectProperties, getLogger());
     try {
       if (Strings.isNullOrEmpty(jibExtension.getTo().getImage())) {
         throw new GradleException(
@@ -143,6 +154,7 @@ public class BuildImageTask extends DefaultTask implements JibTask {
 
     } finally {
       tempDirectoryProvider.close();
+      TaskCommon.finishUpdateChecker(projectProperties, updateCheckFuture);
       projectProperties.waitForLoggingThread();
     }
   }

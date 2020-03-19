@@ -16,6 +16,11 @@
 
 package com.google.cloud.tools.jib.api;
 
+import com.google.cloud.tools.jib.api.buildplan.AbsoluteUnixPath;
+import com.google.cloud.tools.jib.api.buildplan.FileEntriesLayer;
+import com.google.cloud.tools.jib.api.buildplan.FileEntry;
+import com.google.cloud.tools.jib.api.buildplan.ImageFormat;
+import com.google.cloud.tools.jib.api.buildplan.Port;
 import com.google.cloud.tools.jib.builder.TimerEventDispatcher;
 import com.google.cloud.tools.jib.builder.steps.BuildResult;
 import com.google.cloud.tools.jib.configuration.BuildContext;
@@ -35,6 +40,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import org.apache.http.conn.HttpHostConnectException;
 
@@ -67,7 +73,7 @@ public class JibContainerBuilder {
       ContainerConfiguration.builder();
   private final BuildContext.Builder buildContextBuilder;
 
-  private List<LayerConfiguration> layerConfigurations = new ArrayList<>();
+  private List<FileEntriesLayer> layerConfigurations = new ArrayList<>();
 
   /** Instantiate with {@link Jib#from}. */
   JibContainerBuilder(RegistryImage baseImage) {
@@ -117,8 +123,8 @@ public class JibContainerBuilder {
    *   <li>{@code directory/}
    * </ul>
    *
-   * and the destination to copy to is {@code /path/in/container}, then the new layer will have the
-   * following entries for the container file system:
+   * <p>and the destination to copy to is {@code /path/in/container}, then the new layer will have
+   * the following entries for the container file system:
    *
    * <ul>
    *   <li>{@code /path/in/container/fileA}
@@ -135,14 +141,14 @@ public class JibContainerBuilder {
    */
   public JibContainerBuilder addLayer(List<Path> files, AbsoluteUnixPath pathInContainer)
       throws IOException {
-    LayerConfiguration.Builder layerConfigurationBuilder = LayerConfiguration.builder();
+    FileEntriesLayer.Builder layerConfigurationBuilder = FileEntriesLayer.builder();
 
     for (Path file : files) {
       layerConfigurationBuilder.addEntryRecursive(
           file, pathInContainer.resolve(file.getFileName()));
     }
 
-    return addLayer(layerConfigurationBuilder.build());
+    return addFileEntriesLayer(layerConfigurationBuilder.build());
   }
 
   /**
@@ -164,11 +170,24 @@ public class JibContainerBuilder {
   /**
    * Adds a layer (defined by a {@link LayerConfiguration}).
    *
+   * <p>Deprecated. Use {@link #addFileEntriesLayer(FileEntriesLayer)}.
+   *
    * @param layerConfiguration the {@link LayerConfiguration}
    * @return this
    */
+  @Deprecated
   public JibContainerBuilder addLayer(LayerConfiguration layerConfiguration) {
-    layerConfigurations.add(layerConfiguration);
+    return addFileEntriesLayer(layerConfiguration.toFileEntriesLayer());
+  }
+
+  /**
+   * Adds a layer (defined by a {@link FileEntriesLayer}).
+   *
+   * @param layer the {@link FileEntriesLayer}
+   * @return this
+   */
+  public JibContainerBuilder addFileEntriesLayer(FileEntriesLayer layer) {
+    layerConfigurations.add(layer);
     return this;
   }
 
@@ -176,22 +195,53 @@ public class JibContainerBuilder {
    * Sets the layers (defined by a list of {@link LayerConfiguration}s). This replaces any
    * previously-added layers.
    *
+   * <p>Deprecated. Use {@link #setFileEntriesLayers(List)}.
+   *
    * @param layerConfigurations the list of {@link LayerConfiguration}s
    * @return this
    */
+  @Deprecated
   public JibContainerBuilder setLayers(List<LayerConfiguration> layerConfigurations) {
-    this.layerConfigurations = new ArrayList<>(layerConfigurations);
+    return setFileEntriesLayers(
+        layerConfigurations
+            .stream()
+            .map(LayerConfiguration::toFileEntriesLayer)
+            .collect(Collectors.toList()));
+  }
+
+  /**
+   * Sets the layers (defined by a list of {@link FileEntriesLayer}s). This replaces any
+   * previously-added layers.
+   *
+   * @param layers the list of {@link FileEntriesLayer}s
+   * @return this
+   */
+  public JibContainerBuilder setFileEntriesLayers(List<FileEntriesLayer> layers) {
+    layerConfigurations = new ArrayList<>(layers);
     return this;
   }
 
   /**
    * Sets the layers. This replaces any previously-added layers.
    *
+   * <p>Deprecated. Use {@link #setFileEntriesLayers(FileEntriesLayer...)}.
+   *
    * @param layerConfigurations the {@link LayerConfiguration}s
    * @return this
    */
+  @Deprecated
   public JibContainerBuilder setLayers(LayerConfiguration... layerConfigurations) {
     return setLayers(Arrays.asList(layerConfigurations));
+  }
+
+  /**
+   * Sets the layers. This replaces any previously-added layers.
+   *
+   * @param layers the {@link FileEntriesLayer}s
+   * @return this
+   */
+  public JibContainerBuilder setFileEntriesLayers(FileEntriesLayer... layers) {
+    return setFileEntriesLayers(Arrays.asList(layers));
   }
 
   /**
@@ -274,7 +324,7 @@ public class JibContainerBuilder {
   }
 
   /**
-   * Sets a variable in the container environment.
+   * Adds a variable in the container environment.
    *
    * @param name the environment variable name
    * @param value the environment variable value
@@ -322,6 +372,7 @@ public class JibContainerBuilder {
     containerConfigurationBuilder.addVolume(volume);
     return this;
   }
+
   /**
    * Sets the ports to expose from the container. Ports exposed will allow ingress traffic. This
    * replaces any previously-set exposed ports.
@@ -476,8 +527,8 @@ public class JibContainerBuilder {
                 buildContext.getEventHandlers(), containerizer.getDescription())) {
       logSources(buildContext.getEventHandlers());
 
-      BuildResult result = containerizer.run(buildContext);
-      return new JibContainer(result.getImageDigest(), result.getImageId());
+      BuildResult buildResult = containerizer.run(buildContext);
+      return JibContainer.from(buildContext, buildResult);
 
     } catch (ExecutionException ex) {
       // If an ExecutionException occurs, re-throw the cause to be more easily handled by the user
@@ -529,16 +580,15 @@ public class JibContainerBuilder {
     // Logs the different source files used.
     eventHandlers.dispatch(LogEvent.info("Containerizing application with the following files:"));
 
-    for (LayerConfiguration layerConfiguration : layerConfigurations) {
-      if (layerConfiguration.getLayerEntries().isEmpty()) {
+    for (FileEntriesLayer layer : layerConfigurations) {
+      if (layer.getEntries().isEmpty()) {
         continue;
       }
 
-      eventHandlers.dispatch(
-          LogEvent.info("\t" + capitalizeFirstLetter(layerConfiguration.getName()) + ":"));
+      eventHandlers.dispatch(LogEvent.info("\t" + capitalizeFirstLetter(layer.getName()) + ":"));
 
-      for (LayerEntry layerEntry : layerConfiguration.getLayerEntries()) {
-        eventHandlers.dispatch(LogEvent.info("\t\t" + layerEntry.getSourceFile()));
+      for (FileEntry entry : layer.getEntries()) {
+        eventHandlers.dispatch(LogEvent.info("\t\t" + entry.getSourceFile()));
       }
     }
   }

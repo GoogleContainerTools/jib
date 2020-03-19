@@ -275,7 +275,7 @@ public class SingleProjectIntegrationTest {
 
     String targetImage = "localhost:6000/simpleimage:gradle" + System.nanoTime();
     Assert.assertEquals(
-        "Hello, world. \n",
+        "Hello, world. \n1970-01-01T00:00:01Z\n",
         JibRunHelper.buildToDockerDaemonAndRun(
             simpleTestProject, targetImage, "build-java11.gradle"));
   }

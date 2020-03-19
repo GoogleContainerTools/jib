@@ -16,18 +16,17 @@
 
 package com.google.cloud.tools.jib.builder.steps;
 
-import com.google.cloud.tools.jib.api.Credential;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.builder.ProgressEventDispatcher;
 import com.google.cloud.tools.jib.builder.steps.LocalBaseImageSteps.LocalImage;
-import com.google.cloud.tools.jib.builder.steps.PullBaseImageStep.ImageAndAuthorization;
+import com.google.cloud.tools.jib.builder.steps.PullBaseImageStep.ImageAndRegistryClient;
 import com.google.cloud.tools.jib.configuration.BuildContext;
 import com.google.cloud.tools.jib.configuration.ImageConfiguration;
 import com.google.cloud.tools.jib.docker.DockerClient;
 import com.google.cloud.tools.jib.filesystem.TempDirectoryProvider;
 import com.google.cloud.tools.jib.global.JibSystemProperties;
-import com.google.cloud.tools.jib.http.Authorization;
 import com.google.cloud.tools.jib.image.Image;
+import com.google.cloud.tools.jib.registry.RegistryClient;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Verify;
 import com.google.common.collect.ImmutableList;
@@ -62,12 +61,11 @@ public class StepsRunner {
           new IllegalStateException("invalid usage; required step not configured"));
     }
 
-    private Future<ImageAndAuthorization> baseImageAndAuth = failedFuture();
+    private Future<ImageAndRegistryClient> baseImageAndRegistryClient = failedFuture();
     private Future<List<Future<PreparedLayer>>> baseImageLayers = failedFuture();
     @Nullable private List<Future<PreparedLayer>> applicationLayers;
     private Future<Image> builtImage = failedFuture();
-    private Future<Optional<Credential>> targetRegistryCredentials = failedFuture();
-    private Future<Optional<Authorization>> pushAuthorization = failedFuture();
+    private Future<RegistryClient> targetRegistryClient = failedFuture();
     private Future<List<Future<BlobDescriptor>>> baseImageLayerPushResults = failedFuture();
     private Future<List<Future<BlobDescriptor>>> applicationLayerPushResults = failedFuture();
     private Future<BlobDescriptor> containerConfigurationPushResult = failedFuture();
@@ -121,6 +119,12 @@ public class StepsRunner {
     this.buildContext = buildContext;
   }
 
+  /**
+   * Add steps for loading an image to docker daemon.
+   *
+   * @param dockerClient the docker client to load the image to
+   * @return this StepsRunner instance
+   */
   public StepsRunner dockerLoadSteps(DockerClient dockerClient) {
     rootProgressDescription = "building image to Docker daemon";
 
@@ -133,6 +137,12 @@ public class StepsRunner {
     return this;
   }
 
+  /**
+   * Add steps for writing an image as a tar file archive.
+   *
+   * @param outputPath the target file path to write the image to
+   * @return this StepsRunner instance
+   */
   public StepsRunner tarBuildSteps(Path outputPath) {
     rootProgressDescription = "building image to tar file";
 
@@ -145,12 +155,17 @@ public class StepsRunner {
     return this;
   }
 
+  /**
+   * Add steps for pushing an image to a remote registry. The registry is determined by the image
+   * name.
+   *
+   * @return this StepsRunner instance.
+   */
   public StepsRunner registryPushSteps() {
     rootProgressDescription = "building image to registry";
     boolean layersRequiredLocally = buildContext.getAlwaysCacheBaseImage();
 
-    stepsToRun.add(this::retrieveTargetRegistryCredentials);
-    stepsToRun.add(this::authenticatePush);
+    stepsToRun.add(this::authenticateBearerPush);
 
     addRetrievalSteps(layersRequiredLocally);
     stepsToRun.add(this::buildAndCacheApplicationLayers);
@@ -164,6 +179,13 @@ public class StepsRunner {
     return this;
   }
 
+  /**
+   * Run all steps and return a BuildResult after a build is completed.
+   *
+   * @return a {@link BuildResult} with build metadata
+   * @throws ExecutionException if an error occured during asynchronous execution of steps
+   * @throws InterruptedException if the build was interrupted while waiting for results
+   */
   public BuildResult run() throws ExecutionException, InterruptedException {
     Preconditions.checkNotNull(rootProgressDescription);
 
@@ -205,28 +227,13 @@ public class StepsRunner {
     }
   }
 
-  private void retrieveTargetRegistryCredentials() {
+  private void authenticateBearerPush() {
     ProgressEventDispatcher.Factory childProgressDispatcherFactory =
         Verify.verifyNotNull(rootProgressDispatcher).newChildProducer();
 
-    results.targetRegistryCredentials =
+    results.targetRegistryClient =
         executorService.submit(
-            RetrieveRegistryCredentialsStep.forTargetImage(
-                buildContext, childProgressDispatcherFactory));
-  }
-
-  private void authenticatePush() {
-    ProgressEventDispatcher.Factory childProgressDispatcherFactory =
-        Verify.verifyNotNull(rootProgressDispatcher).newChildProducer();
-
-    results.pushAuthorization =
-        executorService.submit(
-            () ->
-                new AuthenticatePushStep(
-                        buildContext,
-                        childProgressDispatcherFactory,
-                        results.targetRegistryCredentials.get().orElse(null))
-                    .call());
+            () -> new AuthenticatePushStep(buildContext, childProgressDispatcherFactory).call());
   }
 
   private void saveDocker() {
@@ -260,10 +267,10 @@ public class StepsRunner {
 
   private void assignLocalImageResult(Future<LocalImage> localImage) {
     results.baseImageLayers = executorService.submit(() -> localImage.get().layers);
-    results.baseImageAndAuth =
+    results.baseImageAndRegistryClient =
         executorService.submit(
             () ->
-                LocalBaseImageSteps.returnImageAndAuthorizationStep(
+                LocalBaseImageSteps.returnImageAndRegistryClientStep(
                         realizeFutures(results.baseImageLayers.get()),
                         localImage.get().configurationTemplate)
                     .call());
@@ -273,7 +280,7 @@ public class StepsRunner {
     ProgressEventDispatcher.Factory childProgressDispatcherFactory =
         Verify.verifyNotNull(rootProgressDispatcher).newChildProducer();
 
-    results.baseImageAndAuth =
+    results.baseImageAndRegistryClient =
         executorService.submit(new PullBaseImageStep(buildContext, childProgressDispatcherFactory));
   }
 
@@ -289,12 +296,14 @@ public class StepsRunner {
                         ? ObtainBaseImageLayerStep.makeListForForcedDownload(
                             buildContext,
                             childProgressDispatcherFactory,
-                            results.baseImageAndAuth.get())
+                            results.baseImageAndRegistryClient.get().image,
+                            results.baseImageAndRegistryClient.get().registryClient)
                         : ObtainBaseImageLayerStep.makeListForSelectiveDownload(
                             buildContext,
                             childProgressDispatcherFactory,
-                            results.baseImageAndAuth.get(),
-                            results.pushAuthorization.get().orElse(null))));
+                            results.baseImageAndRegistryClient.get().image,
+                            results.baseImageAndRegistryClient.get().registryClient,
+                            results.targetRegistryClient.get())));
   }
 
   private void pushBaseImageLayers() {
@@ -308,7 +317,7 @@ public class StepsRunner {
                     PushLayerStep.makeList(
                         buildContext,
                         childProgressDispatcherFactory,
-                        results.pushAuthorization.get().orElse(null),
+                        results.targetRegistryClient.get(),
                         results.baseImageLayers.get())));
   }
 
@@ -332,7 +341,7 @@ public class StepsRunner {
                 new BuildImageStep(
                         buildContext,
                         childProgressDispatcherFactory,
-                        results.baseImageAndAuth.get().getImage(),
+                        results.baseImageAndRegistryClient.get().image,
                         realizeFutures(results.baseImageLayers.get()),
                         realizeFutures(Verify.verifyNotNull(results.applicationLayers)))
                     .call());
@@ -348,7 +357,7 @@ public class StepsRunner {
                 new PushContainerConfigurationStep(
                         buildContext,
                         childProgressDispatcherFactory,
-                        results.pushAuthorization.get().orElse(null),
+                        results.targetRegistryClient.get(),
                         results.builtImage.get())
                     .call());
   }
@@ -364,7 +373,7 @@ public class StepsRunner {
                     PushLayerStep.makeList(
                         buildContext,
                         childProgressDispatcherFactory,
-                        results.pushAuthorization.get().orElse(null),
+                        results.targetRegistryClient.get(),
                         Verify.verifyNotNull(results.applicationLayers))));
   }
 
@@ -383,7 +392,7 @@ public class StepsRunner {
                       PushImageStep.makeList(
                           buildContext,
                           childProgressDispatcherFactory,
-                          results.pushAuthorization.get().orElse(null),
+                          results.targetRegistryClient.get(),
                           results.containerConfigurationPushResult.get(),
                           results.builtImage.get()));
               realizeFutures(manifestPushResults);

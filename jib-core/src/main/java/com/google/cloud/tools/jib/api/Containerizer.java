@@ -185,6 +185,7 @@ public class Containerizer {
     baseImageLayersCacheDirectory = cacheDirectory;
     return this;
   }
+
   /**
    * Sets the directory to use for caching application layers. This cache can be shared between
    * multiple images. If not set, a temporary directory will be used as the application layers

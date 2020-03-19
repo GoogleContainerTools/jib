@@ -48,7 +48,7 @@ public class BlobPusherTest {
   private static final String TEST_BLOB_CONTENT = "some BLOB content";
   private static final Blob TEST_BLOB = Blobs.from(TEST_BLOB_CONTENT);
 
-  @Mock private URL mockURL;
+  @Mock private URL mockUrl;
   @Mock private Response mockResponse;
 
   private DescriptorDigest fakeDescriptorDigest;
@@ -164,7 +164,7 @@ public class BlobPusherTest {
   @Test
   public void testWriter_getContent() throws IOException {
     LongAdder byteCount = new LongAdder();
-    BlobHttpContent body = testBlobPusher.writer(mockURL, byteCount::add).getContent();
+    BlobHttpContent body = testBlobPusher.writer(mockUrl, byteCount::add).getContent();
 
     Assert.assertNotNull(body);
     Assert.assertEquals("application/octet-stream", body.getType());
@@ -179,7 +179,7 @@ public class BlobPusherTest {
 
   @Test
   public void testWriter_GetAccept() {
-    Assert.assertEquals(0, testBlobPusher.writer(mockURL, ignored -> {}).getAccept().size());
+    Assert.assertEquals(0, testBlobPusher.writer(mockUrl, ignored -> {}).getAccept().size());
   }
 
   @Test
@@ -190,7 +190,7 @@ public class BlobPusherTest {
     Mockito.when(mockResponse.getRequestUrl()).thenReturn(requestUrl);
     Assert.assertEquals(
         new URL("https://somenewurl/location"),
-        testBlobPusher.writer(mockURL, ignored -> {}).handleResponse(mockResponse));
+        testBlobPusher.writer(mockUrl, ignored -> {}).handleResponse(mockResponse));
   }
 
   @Test
@@ -201,30 +201,30 @@ public class BlobPusherTest {
 
   @Test
   public void testWriter_getHttpMethod() {
-    Assert.assertEquals("PATCH", testBlobPusher.writer(mockURL, ignored -> {}).getHttpMethod());
+    Assert.assertEquals("PATCH", testBlobPusher.writer(mockUrl, ignored -> {}).getHttpMethod());
   }
 
   @Test
   public void testWriter_getActionDescription() {
     Assert.assertEquals(
         "push BLOB for someServerUrl/someImageName with digest " + fakeDescriptorDigest,
-        testBlobPusher.writer(mockURL, ignored -> {}).getActionDescription());
+        testBlobPusher.writer(mockUrl, ignored -> {}).getActionDescription());
   }
 
   @Test
   public void testCommitter_getContent() {
-    Assert.assertNull(testBlobPusher.committer(mockURL).getContent());
+    Assert.assertNull(testBlobPusher.committer(mockUrl).getContent());
   }
 
   @Test
   public void testCommitter_GetAccept() {
-    Assert.assertEquals(0, testBlobPusher.committer(mockURL).getAccept().size());
+    Assert.assertEquals(0, testBlobPusher.committer(mockUrl).getAccept().size());
   }
 
   @Test
   public void testCommitter_handleResponse() throws IOException, RegistryException {
     Assert.assertNull(
-        testBlobPusher.committer(mockURL).handleResponse(Mockito.mock(Response.class)));
+        testBlobPusher.committer(mockUrl).handleResponse(Mockito.mock(Response.class)));
   }
 
   @Test
@@ -236,13 +236,13 @@ public class BlobPusherTest {
 
   @Test
   public void testCommitter_getHttpMethod() {
-    Assert.assertEquals("PUT", testBlobPusher.committer(mockURL).getHttpMethod());
+    Assert.assertEquals("PUT", testBlobPusher.committer(mockUrl).getHttpMethod());
   }
 
   @Test
   public void testCommitter_getActionDescription() {
     Assert.assertEquals(
         "push BLOB for someServerUrl/someImageName with digest " + fakeDescriptorDigest,
-        testBlobPusher.committer(mockURL).getActionDescription());
+        testBlobPusher.committer(mockUrl).getActionDescription());
   }
 }

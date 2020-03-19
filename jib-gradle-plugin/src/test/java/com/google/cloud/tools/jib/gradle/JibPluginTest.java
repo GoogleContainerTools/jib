@@ -17,27 +17,24 @@
 package com.google.cloud.tools.jib.gradle;
 
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 import org.gradle.api.GradleException;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
 import org.gradle.api.UnknownTaskException;
-import org.gradle.api.internal.project.ProjectInternal;
 import org.gradle.api.tasks.TaskContainer;
 import org.gradle.api.tasks.TaskProvider;
 import org.gradle.jvm.tasks.Jar;
 import org.gradle.testfixtures.ProjectBuilder;
 import org.gradle.testkit.runner.GradleRunner;
 import org.gradle.testkit.runner.UnexpectedBuildFailure;
+import org.hamcrest.CoreMatchers;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Assume;
@@ -138,85 +135,24 @@ public class JibPluginTest {
 
   @SuppressWarnings("unchecked")
   @Test
-  public void testProjectDependencyAssembleTasksAreRun() {
-    // root project is our jib packaged service
-    Project rootProject = createProject("java");
-
-    // our service DOES depend on this, and jib should trigger an assemble from this project
-    Project subProject =
-        ProjectBuilder.builder()
-            .withParent(rootProject)
-            .withProjectDir(testProjectRoot.getRoot())
-            .withName("sub")
-            .build();
-    subProject.getPluginManager().apply("java");
-
-    // our service doesn't depend on this, and jib should NOT trigger an assemble from this project
-    Project unrelatedSubProject =
-        ProjectBuilder.builder()
-            .withParent(rootProject)
-            .withProjectDir(testProjectRoot.getRoot())
-            .withName("unrelated")
-            .build();
-    unrelatedSubProject.getPluginManager().apply("java");
-
-    // equivalent of "compile project(':sub')" on the root(jib) project
-    rootProject
-        .getConfigurations()
-        .getByName("compile")
-        .getDependencies()
-        .add(rootProject.getDependencies().project(ImmutableMap.of("path", subProject.getPath())));
-
-    // programmatic check
-    Assert.assertEquals(
-        Collections.singletonList(":sub"),
-        JibPlugin.getProjectDependencies(rootProject)
-            .stream()
-            .map(Project::getPath)
-            .collect(Collectors.toList()));
-
-    // check by applying the jib plugin and inspect the task dependencies
-    rootProject.getPluginManager().apply("com.google.cloud.tools.jib");
-
-    TaskContainer tasks = rootProject.getTasks();
-    // add a custom task that our jib tasks depend on to ensure we do not overwrite this dependsOn
-    TaskProvider<Task> dependencyTask = rootProject.getTasks().register("myCustomTask", task -> {});
-    KNOWN_JIB_TASKS.forEach(taskName -> tasks.getByPath(taskName).dependsOn(dependencyTask));
-
-    ((ProjectInternal) rootProject).evaluate();
-
-    KNOWN_JIB_TASKS.forEach(
-        taskName ->
-            Assert.assertEquals(
-                ImmutableSet.of(":sub:assemble", ":classes", ":myCustomTask"),
-                tasks
-                    .getByPath(taskName)
-                    .getDependsOn()
-                    .stream()
-                    .map(
-                        object ->
-                            object instanceof List ? object : Collections.singletonList(object))
-                    .map(List.class::cast)
-                    .flatMap(List::stream)
-                    .map(object -> ((TaskProvider<Task>) object).get().getPath())
-                    .collect(Collectors.toSet())));
-  }
-
-  @SuppressWarnings("unchecked")
-  @Test
   public void testWebAppProject() {
     Project project = createProject("java", "war", "com.google.cloud.tools.jib");
 
-    ((ProjectInternal) project).evaluate();
     TaskContainer tasks = project.getTasks();
     Task warTask = tasks.getByPath(":war");
     Assert.assertNotNull(warTask);
 
     for (String taskName : KNOWN_JIB_TASKS) {
-      List<TaskProvider<?>> taskProviders =
-          (List<TaskProvider<?>>) tasks.getByPath(taskName).getDependsOn().iterator().next();
-      Assert.assertEquals(1, taskProviders.size());
-      Assert.assertEquals(warTask, taskProviders.get(0).get());
+      Set<Task> taskDependencies =
+          tasks
+              .getByPath(taskName)
+              .getDependsOn()
+              .stream()
+              .filter(TaskProvider.class::isInstance)
+              .map(it -> ((TaskProvider<?>) it).get())
+              .collect(Collectors.toSet());
+
+      Assert.assertTrue(taskDependencies.contains(warTask));
     }
   }
 
@@ -225,7 +161,6 @@ public class JibPluginTest {
   public void testWebAppProject_bootWar() {
     Project project =
         createProject("java", "war", "org.springframework.boot", "com.google.cloud.tools.jib");
-    ((ProjectInternal) project).evaluate();
 
     TaskContainer tasks = project.getTasks();
     Task warTask = tasks.getByPath(":war");
@@ -234,11 +169,16 @@ public class JibPluginTest {
     Assert.assertNotNull(bootWarTask);
 
     for (String taskName : KNOWN_JIB_TASKS) {
-      List<TaskProvider<?>> taskProviders =
-          (List<TaskProvider<?>>) tasks.getByPath(taskName).getDependsOn().iterator().next();
-      Assert.assertEquals(
-          ImmutableSet.of(warTask, bootWarTask),
-          taskProviders.stream().map(TaskProvider::get).collect(Collectors.toSet()));
+      Set<Task> taskDependencies =
+          tasks
+              .getByPath(taskName)
+              .getDependsOn()
+              .stream()
+              .filter(TaskProvider.class::isInstance)
+              .map(it -> ((TaskProvider<?>) it).get())
+              .collect(Collectors.toSet());
+
+      Assert.assertTrue(taskDependencies.containsAll(Arrays.asList(warTask, bootWarTask)));
     }
   }
 
@@ -247,21 +187,26 @@ public class JibPluginTest {
   public void testWebAppProject_bootWarDisabled() {
     Project project =
         createProject("java", "war", "org.springframework.boot", "com.google.cloud.tools.jib");
-    ((ProjectInternal) project).evaluate();
-
     TaskContainer tasks = project.getTasks();
+    // should depend on bootWar even if disabled
+    tasks.named("bootWar").configure(task -> task.setEnabled(false));
+
     Task warTask = tasks.getByPath(":war");
     Task bootWarTask = tasks.getByPath(":bootWar");
     Assert.assertNotNull(warTask);
     Assert.assertNotNull(bootWarTask);
-    bootWarTask.setEnabled(false); // should depend on bootWar even if disabled
 
     for (String taskName : KNOWN_JIB_TASKS) {
-      List<TaskProvider<?>> taskProviders =
-          (List<TaskProvider<?>>) tasks.getByPath(taskName).getDependsOn().iterator().next();
-      Assert.assertEquals(
-          ImmutableSet.of(warTask, bootWarTask),
-          taskProviders.stream().map(TaskProvider::get).collect(Collectors.toSet()));
+      Set<Task> taskDependencies =
+          tasks
+              .getByPath(taskName)
+              .getDependsOn()
+              .stream()
+              .filter(TaskProvider.class::isInstance)
+              .map(it -> ((TaskProvider<?>) it).get())
+              .collect(Collectors.toSet());
+
+      Assert.assertTrue(taskDependencies.containsAll(Arrays.asList(warTask, bootWarTask)));
     }
   }
 
@@ -270,9 +215,9 @@ public class JibPluginTest {
     Project project =
         createProject("java", "org.springframework.boot", "com.google.cloud.tools.jib");
 
-    Jar jarTask = (Jar) project.getTasks().getByPath(":jar");
-    Assert.assertFalse(jarTask.getEnabled());
-    Assert.assertEquals("", jarTask.getArchiveClassifier().get());
+    Jar jar = (Jar) project.getTasks().getByPath(":jar");
+    Assert.assertFalse(jar.getEnabled());
+    Assert.assertEquals("", jar.getArchiveClassifier().get());
   }
 
   @Test
@@ -282,15 +227,129 @@ public class JibPluginTest {
     JibExtension jibExtension = (JibExtension) project.getExtensions().getByName("jib");
     jibExtension.setContainerizingMode("packaged");
 
+    Jar jar = (Jar) project.getTasks().getByPath(":jar");
+    Assert.assertTrue(jar.getEnabled());
+    Assert.assertEquals("original", jar.getArchiveClassifier().get());
+  }
+
+  @Test
+  public void testSpringBootJarProject_packagedMode_jarClassifierSet() {
+    Project project =
+        createProject("java", "org.springframework.boot", "com.google.cloud.tools.jib");
+    JibExtension jibExtension = (JibExtension) project.getExtensions().getByName("jib");
+    jibExtension.setContainerizingMode("packaged");
+    TaskProvider<Task> jarTask = project.getTasks().named("jar");
+    jarTask.configure(task -> ((Jar) task).getArchiveClassifier().set("jar-classifier"));
+
+    Jar jar = (Jar) project.getTasks().getByPath(":jar");
+    Assert.assertTrue(jar.getEnabled());
+    Assert.assertEquals("jar-classifier", jar.getArchiveClassifier().get());
+  }
+
+  @Test
+  public void testSpringBootJarProject_packagedMode_bootJarClassifierSet() {
+    Project project =
+        createProject("java", "org.springframework.boot", "com.google.cloud.tools.jib");
+    JibExtension jibExtension = (JibExtension) project.getExtensions().getByName("jib");
+    jibExtension.setContainerizingMode("packaged");
+    TaskProvider<Task> bootJarTask = project.getTasks().named("bootJar");
+    bootJarTask.configure(task -> ((Jar) task).getArchiveClassifier().set("boot-classifier"));
+
+    Jar jar = (Jar) project.getTasks().getByPath(":jar");
+    Assert.assertTrue(jar.getEnabled());
+    Assert.assertEquals("", jar.getArchiveClassifier().get());
+  }
+
+  @Test
+  public void testSpringBootJarProject_packagedMode_jarEnabled() {
+    Project project =
+        createProject("java", "org.springframework.boot", "com.google.cloud.tools.jib");
+    JibExtension jibExtension = (JibExtension) project.getExtensions().getByName("jib");
+    jibExtension.setContainerizingMode("packaged");
+    project.getTasks().named("jar").configure(task -> task.setEnabled(true));
+
+    TaskContainer tasks = project.getTasks();
+    try {
+      tasks.getByPath(":jar");
+      Assert.fail();
+    } catch (GradleException ex) {
+      Assert.assertThat(
+          ex.getCause().getMessage(),
+          CoreMatchers.startsWith(
+              "Both 'bootJar' and 'jar' tasks are enabled, but they write their jar file into the "
+                  + "same location at "));
+      Assert.assertThat(
+          ex.getCause().getMessage(),
+          CoreMatchers.endsWith(
+              "root.jar. Did you forget to set 'archiveClassifier' on either task?"));
+    }
+  }
+
+  @Test
+  public void testSpringBootJarProject_packagedMode_jarEnabledAndClassifierSet() {
+    Project project =
+        createProject("java", "org.springframework.boot", "com.google.cloud.tools.jib");
+    JibExtension jibExtension = (JibExtension) project.getExtensions().getByName("jib");
+    jibExtension.setContainerizingMode("packaged");
+    TaskProvider<Task> jarTask = project.getTasks().named("jar");
+    jarTask.configure(task -> task.setEnabled(true));
+    jarTask.configure(task -> ((Jar) task).getArchiveClassifier().set("jar-classifier"));
+
+    Jar jar = (Jar) project.getTasks().getByPath(":jar");
+    Assert.assertTrue(jar.getEnabled());
+    Assert.assertEquals("jar-classifier", jar.getArchiveClassifier().get());
+  }
+
+  @Test
+  public void testSpringBootJarProject_packagedMode_jarEnabledAndBootJarClassifierSet() {
+    Project project =
+        createProject("java", "org.springframework.boot", "com.google.cloud.tools.jib");
+    JibExtension jibExtension = (JibExtension) project.getExtensions().getByName("jib");
+    jibExtension.setContainerizingMode("packaged");
+    TaskProvider<Task> bootJarTask = project.getTasks().named("bootJar");
+    bootJarTask.configure(task -> ((Jar) task).getArchiveClassifier().set("boot-classifier"));
+
     Jar jarTask = (Jar) project.getTasks().getByPath(":jar");
     Assert.assertTrue(jarTask.getEnabled());
-    Assert.assertEquals("original", jarTask.getArchiveClassifier().get());
+    Assert.assertEquals("", jarTask.getArchiveClassifier().get());
+  }
+
+  @Test
+  public void testSpringBootJarProject_packagedMode_jarEnabledAndBootJarDisabled() {
+    Project project =
+        createProject("java", "org.springframework.boot", "com.google.cloud.tools.jib");
+    JibExtension jibExtension = (JibExtension) project.getExtensions().getByName("jib");
+    jibExtension.setContainerizingMode("packaged");
+    project.getTasks().named("jar").configure(task -> task.setEnabled(true));
+    project.getTasks().named("bootJar").configure(task -> task.setEnabled(false));
+
+    Jar jar = (Jar) project.getTasks().getByPath(":jar");
+    Assert.assertTrue(jar.getEnabled());
+    Assert.assertFalse(project.getTasks().getByPath(":bootJar").getEnabled());
+    Assert.assertEquals("", jar.getArchiveClassifier().get());
+  }
+
+  @Test
+  public void
+      testSpringBootJarProject_packagedMode_jarEnabledAndBootJarDisabledAndJarClassifierSet() {
+    Project project =
+        createProject("java", "org.springframework.boot", "com.google.cloud.tools.jib");
+    JibExtension jibExtension = (JibExtension) project.getExtensions().getByName("jib");
+    jibExtension.setContainerizingMode("packaged");
+    TaskProvider<Task> jarTask = project.getTasks().named("jar");
+    jarTask.configure(task -> task.setEnabled(true));
+    jarTask.configure(task -> ((Jar) task).getArchiveClassifier().set("jar-classifier"));
+    project.getTasks().named("bootJar").configure(task -> task.setEnabled(false));
+
+    Jar jar = (Jar) project.getTasks().getByPath(":jar");
+    Assert.assertTrue(jar.getEnabled());
+    Assert.assertFalse(project.getTasks().getByPath(":bootJar").getEnabled());
+    Assert.assertEquals("jar-classifier", jar.getArchiveClassifier().get());
   }
 
   @Test
   public void testNonWebAppProject() {
     Project project = createProject("java", "com.google.cloud.tools.jib");
-    ((ProjectInternal) project).evaluate();
 
     TaskContainer tasks = project.getTasks();
     try {
@@ -304,7 +363,6 @@ public class JibPluginTest {
   @Test
   public void testJibTaskGroupIsSet() {
     Project project = createProject("java", "com.google.cloud.tools.jib");
-    ((ProjectInternal) project).evaluate();
 
     TaskContainer tasks = project.getTasks();
     KNOWN_JIB_TASKS.forEach(

@@ -16,22 +16,26 @@
 
 package com.google.cloud.tools.jib.api;
 
+import com.google.cloud.tools.jib.api.buildplan.AbsoluteUnixPath;
+import com.google.cloud.tools.jib.api.buildplan.FileEntry;
+import com.google.cloud.tools.jib.api.buildplan.FilePermissions;
 import java.nio.file.Path;
 import java.time.Instant;
-import java.util.Objects;
+import javax.annotation.concurrent.Immutable;
 
 /**
  * Represents an entry in the layer. A layer consists of many entries that can be converted into tar
  * archive entries.
  *
  * <p>This class is immutable and thread-safe.
+ *
+ * <p>Deprecated. Use {@link FileEntry}.
  */
+@Deprecated
+@Immutable
 public class LayerEntry {
 
-  private final Path sourceFile;
-  private final AbsoluteUnixPath extractionPath;
-  private final FilePermissions permissions;
-  private final Instant modificationTime;
+  private final FileEntry fileEntry;
 
   /**
    * Instantiates with a source file and the path to place the source file in the container file
@@ -64,10 +68,11 @@ public class LayerEntry {
       AbsoluteUnixPath extractionPath,
       FilePermissions permissions,
       Instant modificationTime) {
-    this.sourceFile = sourceFile;
-    this.extractionPath = extractionPath;
-    this.permissions = permissions;
-    this.modificationTime = modificationTime;
+    this(new FileEntry(sourceFile, extractionPath, permissions, modificationTime));
+  }
+
+  LayerEntry(FileEntry entry) {
+    fileEntry = entry;
   }
 
   /**
@@ -76,7 +81,7 @@ public class LayerEntry {
    * @return the modification time
    */
   public Instant getModificationTime() {
-    return modificationTime;
+    return fileEntry.getModificationTime();
   }
 
   /**
@@ -87,7 +92,7 @@ public class LayerEntry {
    * @return the source file
    */
   public Path getSourceFile() {
-    return sourceFile;
+    return fileEntry.getSourceFile();
   }
 
   /**
@@ -96,7 +101,7 @@ public class LayerEntry {
    * @return the extraction path
    */
   public AbsoluteUnixPath getExtractionPath() {
-    return extractionPath;
+    return fileEntry.getExtractionPath();
   }
 
   /**
@@ -105,7 +110,7 @@ public class LayerEntry {
    * @return the file permissions on the container
    */
   public FilePermissions getPermissions() {
-    return permissions;
+    return fileEntry.getPermissions();
   }
 
   @Override
@@ -117,14 +122,15 @@ public class LayerEntry {
       return false;
     }
     LayerEntry otherLayerEntry = (LayerEntry) other;
-    return sourceFile.equals(otherLayerEntry.sourceFile)
-        && extractionPath.equals(otherLayerEntry.extractionPath)
-        && Objects.equals(permissions, otherLayerEntry.permissions)
-        && Objects.equals(modificationTime, otherLayerEntry.modificationTime);
+    return toFileEntry().equals(otherLayerEntry.toFileEntry());
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(sourceFile, extractionPath, permissions, modificationTime);
+    return fileEntry.hashCode();
+  }
+
+  FileEntry toFileEntry() {
+    return fileEntry;
   }
 }

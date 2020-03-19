@@ -16,23 +16,32 @@
 
 package com.google.cloud.tools.jib.api;
 
+import com.google.cloud.tools.jib.api.buildplan.AbsoluteUnixPath;
+import com.google.cloud.tools.jib.api.buildplan.FileEntriesLayer;
+import com.google.cloud.tools.jib.api.buildplan.FileEntry;
+import com.google.cloud.tools.jib.api.buildplan.FilePermissions;
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
+import java.util.List;
 import java.util.function.BiFunction;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
+import javax.annotation.concurrent.Immutable;
 
-/** Configures how to build a layer in the container image. Instantiate with {@link #builder}. */
+/**
+ * Configures how to build a layer in the container image. Instantiate with {@link #builder}.
+ *
+ * <p>Deprecated. Use {@link FileEntriesLayer}.
+ */
+@Deprecated
+@Immutable
 public class LayerConfiguration {
 
   /** Builds a {@link LayerConfiguration}. */
   public static class Builder {
 
-    private final ImmutableList.Builder<LayerEntry> layerEntries = ImmutableList.builder();
-    private String name = "";
+    private FileEntriesLayer.Builder builder = FileEntriesLayer.builder();
 
     private Builder() {}
 
@@ -43,7 +52,19 @@ public class LayerConfiguration {
      * @return this
      */
     public Builder setName(String name) {
-      this.name = name;
+      builder.setName(name);
+      return this;
+    }
+
+    /**
+     * Sets entries for the layer.
+     *
+     * @param entries file entries in the layer
+     * @return this
+     */
+    public Builder setEntries(List<LayerEntry> entries) {
+      builder.setEntries(
+          entries.stream().map(LayerEntry::toFileEntry).collect(Collectors.toList()));
       return this;
     }
 
@@ -54,7 +75,7 @@ public class LayerConfiguration {
      * @return this
      */
     public Builder addEntry(LayerEntry entry) {
-      layerEntries.add(entry);
+      builder.addEntry(entry.toFileEntry());
       return this;
     }
 
@@ -77,10 +98,8 @@ public class LayerConfiguration {
      * @return this
      */
     public Builder addEntry(Path sourceFile, AbsoluteUnixPath pathInContainer) {
-      return addEntry(
-          sourceFile,
-          pathInContainer,
-          DEFAULT_FILE_PERMISSIONS_PROVIDER.apply(sourceFile, pathInContainer));
+      builder.addEntry(sourceFile, pathInContainer);
+      return this;
     }
 
     /**
@@ -99,7 +118,8 @@ public class LayerConfiguration {
      */
     public Builder addEntry(
         Path sourceFile, AbsoluteUnixPath pathInContainer, FilePermissions permissions) {
-      return addEntry(sourceFile, pathInContainer, permissions, DEFAULT_MODIFICATION_TIME);
+      builder.addEntry(sourceFile, pathInContainer, permissions);
+      return this;
     }
 
     /**
@@ -116,11 +136,8 @@ public class LayerConfiguration {
      */
     public Builder addEntry(
         Path sourceFile, AbsoluteUnixPath pathInContainer, Instant modificationTime) {
-      return addEntry(
-          sourceFile,
-          pathInContainer,
-          DEFAULT_FILE_PERMISSIONS_PROVIDER.apply(sourceFile, pathInContainer),
-          modificationTime);
+      builder.addEntry(sourceFile, pathInContainer, modificationTime);
+      return this;
     }
 
     /**
@@ -143,7 +160,8 @@ public class LayerConfiguration {
         AbsoluteUnixPath pathInContainer,
         FilePermissions permissions,
         Instant modificationTime) {
-      return addEntry(new LayerEntry(sourceFile, pathInContainer, permissions, modificationTime));
+      builder.addEntry(new FileEntry(sourceFile, pathInContainer, permissions, modificationTime));
+      return this;
     }
 
     /**
@@ -163,7 +181,8 @@ public class LayerConfiguration {
      */
     public Builder addEntryRecursive(Path sourceFile, AbsoluteUnixPath pathInContainer)
         throws IOException {
-      return addEntryRecursive(sourceFile, pathInContainer, DEFAULT_FILE_PERMISSIONS_PROVIDER);
+      builder.addEntryRecursive(sourceFile, pathInContainer);
+      return this;
     }
 
     /**
@@ -183,8 +202,8 @@ public class LayerConfiguration {
         AbsoluteUnixPath pathInContainer,
         BiFunction<Path, AbsoluteUnixPath, FilePermissions> filePermissionProvider)
         throws IOException {
-      return addEntryRecursive(
-          sourceFile, pathInContainer, filePermissionProvider, DEFAULT_MODIFICATION_TIME_PROVIDER);
+      builder.addEntryRecursive(sourceFile, pathInContainer, filePermissionProvider);
+      return this;
     }
 
     /**
@@ -207,21 +226,8 @@ public class LayerConfiguration {
         BiFunction<Path, AbsoluteUnixPath, FilePermissions> filePermissionProvider,
         BiFunction<Path, AbsoluteUnixPath, Instant> modificationTimeProvider)
         throws IOException {
-      FilePermissions permissions = filePermissionProvider.apply(sourceFile, pathInContainer);
-      Instant modificationTime = modificationTimeProvider.apply(sourceFile, pathInContainer);
-      addEntry(sourceFile, pathInContainer, permissions, modificationTime);
-      if (!Files.isDirectory(sourceFile)) {
-        return this;
-      }
-      try (Stream<Path> files = Files.list(sourceFile)) {
-        for (Path file : files.collect(Collectors.toList())) {
-          addEntryRecursive(
-              file,
-              pathInContainer.resolve(file.getFileName()),
-              filePermissionProvider,
-              modificationTimeProvider);
-        }
-      }
+      builder.addEntryRecursive(
+          sourceFile, pathInContainer, filePermissionProvider, modificationTimeProvider);
       return this;
     }
 
@@ -231,25 +237,21 @@ public class LayerConfiguration {
      * @return the built {@link LayerConfiguration}
      */
     public LayerConfiguration build() {
-      return new LayerConfiguration(name, layerEntries.build());
+      return new LayerConfiguration(builder.build());
     }
   }
 
   /** Provider that returns default file permissions (644 for files, 755 for directories). */
   public static final BiFunction<Path, AbsoluteUnixPath, FilePermissions>
-      DEFAULT_FILE_PERMISSIONS_PROVIDER =
-          (sourcePath, destinationPath) ->
-              Files.isDirectory(sourcePath)
-                  ? FilePermissions.DEFAULT_FOLDER_PERMISSIONS
-                  : FilePermissions.DEFAULT_FILE_PERMISSIONS;
+      DEFAULT_FILE_PERMISSIONS_PROVIDER = FileEntriesLayer.DEFAULT_FILE_PERMISSIONS_PROVIDER;
 
   /** Default file modification time (EPOCH + 1 second). */
-  public static final Instant DEFAULT_MODIFICATION_TIME = Instant.ofEpochSecond(1);
+  public static final Instant DEFAULT_MODIFICATION_TIME =
+      FileEntriesLayer.DEFAULT_MODIFICATION_TIME;
 
   /** Provider that returns default file modification time (EPOCH + 1 second). */
   public static final BiFunction<Path, AbsoluteUnixPath, Instant>
-      DEFAULT_MODIFICATION_TIME_PROVIDER =
-          (sourcePath, destinationPath) -> DEFAULT_MODIFICATION_TIME;
+      DEFAULT_MODIFICATION_TIME_PROVIDER = FileEntriesLayer.DEFAULT_MODIFICATION_TIME_PROVIDER;
 
   /**
    * Gets a new {@link Builder} for {@link LayerConfiguration}.
@@ -260,18 +262,10 @@ public class LayerConfiguration {
     return new Builder();
   }
 
-  private final ImmutableList<LayerEntry> layerEntries;
-  private final String name;
+  private final FileEntriesLayer fileEntriesLayer;
 
-  /**
-   * Use {@link #builder} to instantiate.
-   *
-   * @param name an optional name for the layer
-   * @param layerEntries the list of {@link LayerEntry}s
-   */
-  private LayerConfiguration(String name, ImmutableList<LayerEntry> layerEntries) {
-    this.name = name;
-    this.layerEntries = layerEntries;
+  private LayerConfiguration(FileEntriesLayer fileEntriesLayer) {
+    this.fileEntriesLayer = fileEntriesLayer;
   }
 
   /**
@@ -280,15 +274,20 @@ public class LayerConfiguration {
    * @return the name
    */
   public String getName() {
-    return name;
+    return fileEntriesLayer.getName();
   }
 
   /**
-   * Gets the list of layer entries.
+   * Gets the list of entries.
    *
-   * @return the list of layer entries
+   * @return the list of entries
    */
   public ImmutableList<LayerEntry> getLayerEntries() {
-    return layerEntries;
+    List<FileEntry> entries = fileEntriesLayer.getEntries();
+    return entries.stream().map(LayerEntry::new).collect(ImmutableList.toImmutableList());
+  }
+
+  FileEntriesLayer toFileEntriesLayer() {
+    return fileEntriesLayer;
   }
 }

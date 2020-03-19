@@ -1,9 +1,12 @@
 plugins {
   id 'net.researchgate.release'
   id 'maven-publish'
+  id 'eclipse'
 }
 
 dependencies {
+  implementation project(':jib-build-plan')
+
   implementation "com.google.http-client:google-http-client:${dependencyVersions.GOOGLE_HTTP_CLIENT}"
   implementation "com.google.http-client:google-http-client-apache-v2:${dependencyVersions.GOOGLE_HTTP_CLIENT_APACHE_V2}"
   implementation "com.google.auth:google-auth-library-oauth2-http:${dependencyVersions.GOOGLE_AUTH_LIBRARY_OAUTH2_HTTP}"
@@ -41,7 +44,7 @@ publishing {
   publications {
     mavenJava(MavenPublication) {
       pom {
-        name = "Jib Core"
+        name = 'Jib Core'
         description = 'Build container images.'
       }
       from components.java
@@ -57,3 +60,15 @@ release {
   }
 }
 /* RELEASE */
+
+/* ECLIPSE */
+// TODO: remove after upgrading to Gradle 5.6. (https://github.com/eclipse/buildship/issues/689)
+// Also remove the 'eclipse' plugin.
+eclipse.classpath.file.whenMerged {
+  entries.findAll {
+    it.path in ['src/test/java', 'src/test/resources', 'src/integration-test/java', 'src/integration-test/resources']
+  }.each {
+    it.entryAttributes['test'] = 'true'
+  }
+}
+/* ECLIPSE */

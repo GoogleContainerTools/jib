@@ -41,6 +41,9 @@ public class InitMojoTest {
 
   @ClassRule public static final TestProject multiTestProject = new TestProject("multi");
 
+  @ClassRule
+  public static final TestProject springTestProject = new TestProject("spring-boot-multi");
+
   /**
    * Verifies that the files task succeeded and returns the list of JSON strings printed by the
    * task.
@@ -78,7 +81,7 @@ public class InitMojoTest {
 
     SkaffoldInitOutput skaffoldInitOutput = new SkaffoldInitOutput(outputs.get(0));
     Assert.assertEquals("testimage", skaffoldInitOutput.getImage());
-    Assert.assertNull(skaffoldInitOutput.getProject());
+    Assert.assertEquals("com.test:hello-world", skaffoldInitOutput.getProject());
   }
 
   @Test
@@ -88,14 +91,29 @@ public class InitMojoTest {
 
     SkaffoldInitOutput skaffoldInitOutput = new SkaffoldInitOutput(outputs.get(0));
     Assert.assertEquals("testimage", skaffoldInitOutput.getImage());
-    Assert.assertEquals("simple-service", skaffoldInitOutput.getProject());
+    Assert.assertEquals("com.jib.test:simple-service", skaffoldInitOutput.getProject());
 
     skaffoldInitOutput = new SkaffoldInitOutput(outputs.get(1));
     Assert.assertEquals("testimage", skaffoldInitOutput.getImage());
-    Assert.assertEquals("lib", skaffoldInitOutput.getProject());
+    Assert.assertEquals("com.jib.test:lib", skaffoldInitOutput.getProject());
 
     skaffoldInitOutput = new SkaffoldInitOutput(outputs.get(2));
     Assert.assertEquals("testimage", skaffoldInitOutput.getImage());
-    Assert.assertEquals("complex-service", skaffoldInitOutput.getProject());
+    Assert.assertEquals("com.jib.test:complex-service", skaffoldInitOutput.getProject());
+  }
+
+  @Test
+  public void testFilesMojo_multiModule_differentParent()
+      throws IOException, VerificationException {
+    List<String> outputs = getJsons(springTestProject);
+    Assert.assertEquals(2, outputs.size());
+
+    SkaffoldInitOutput skaffoldInitOutput = new SkaffoldInitOutput(outputs.get(0));
+    Assert.assertEquals("testimage", skaffoldInitOutput.getImage());
+    Assert.assertEquals("org.springframework.boot:service-1", skaffoldInitOutput.getProject());
+
+    skaffoldInitOutput = new SkaffoldInitOutput(outputs.get(1));
+    Assert.assertEquals("testimage", skaffoldInitOutput.getImage());
+    Assert.assertEquals("org.springframework.boot:service-2", skaffoldInitOutput.getProject());
   }
 }

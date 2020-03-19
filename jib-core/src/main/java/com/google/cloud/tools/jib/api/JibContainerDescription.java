@@ -13,8 +13,10 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package com.google.cloud.tools.jib.api;
 
+import com.google.cloud.tools.jib.api.buildplan.FileEntriesLayer;
 import com.google.cloud.tools.jib.configuration.ContainerConfiguration;
 import com.google.common.collect.ImmutableList;
 import java.util.List;
@@ -28,18 +30,18 @@ import java.util.List;
  */
 public class JibContainerDescription {
 
-  private final ImmutableList<LayerConfiguration> layers;
+  private final ImmutableList<FileEntriesLayer> layers;
 
-  JibContainerDescription(List<LayerConfiguration> layers) {
+  JibContainerDescription(List<FileEntriesLayer> layers) {
     this.layers = ImmutableList.copyOf(layers);
   }
 
   /**
    * Returns a list of "user configured" layers, does <em>not</em> include base layer information.
    *
-   * @return An {@link ImmutableList} of {@link LayerConfiguration}s
+   * @return a {@link List} of {@link FileEntriesLayer}s
    */
-  public List<LayerConfiguration> getLayers() {
+  public List<FileEntriesLayer> getFileEntriesLayers() {
     return layers;
   }
 }

@@ -17,6 +17,7 @@
 package com.google.cloud.tools.jib.registry;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.api.client.http.HttpMethods;
 import com.google.api.client.http.HttpStatusCodes;
 import com.google.cloud.tools.jib.api.Credential;
@@ -116,8 +117,9 @@ public class RegistryAuthenticator {
   }
 
   /** Template for the authentication response JSON. */
+  @VisibleForTesting
   @JsonIgnoreProperties(ignoreUnknown = true)
-  private static class AuthenticationResponseTemplate implements JsonTemplate {
+  static class AuthenticationResponseTemplate implements JsonTemplate {
 
     @Nullable private String token;
 
@@ -127,15 +129,18 @@ public class RegistryAuthenticator {
      * @see <a
      *     href="https://docs.docker.com/registry/spec/auth/token/#token-response-fields">https://docs.docker.com/registry/spec/auth/token/#token-response-fields</a>
      */
-    @Nullable private String access_token;
-
-    /** @return {@link #token} if not null, or {@link #access_token} */
     @Nullable
-    private String getToken() {
+    @JsonProperty("access_token")
+    private String accessToken;
+
+    /** Returns {@link #token} if not null, or {@link #accessToken}. */
+    @Nullable
+    @VisibleForTesting
+    String getToken() {
       if (token != null) {
         return token;
       }
-      return access_token;
+      return accessToken;
     }
   }
 
@@ -164,8 +169,8 @@ public class RegistryAuthenticator {
    * @param credential the credential used to authenticate
    * @return an {@code Authorization} authenticating the pull
    * @throws RegistryAuthenticationFailedException if authentication fails
-   * @throws RegistryCredentialsNotSentException if authentication is failed and credentials were
-   *     not sent over plain HTTP
+   * @throws RegistryCredentialsNotSentException if authentication failed and credentials were not
+   *     sent over plain HTTP
    */
   public Authorization authenticatePull(@Nullable Credential credential)
       throws RegistryAuthenticationFailedException, RegistryCredentialsNotSentException {
@@ -178,8 +183,8 @@ public class RegistryAuthenticator {
    * @param credential the credential used to authenticate
    * @return an {@code Authorization} authenticating the push
    * @throws RegistryAuthenticationFailedException if authentication fails
-   * @throws RegistryCredentialsNotSentException if authentication is failed and credentials were
-   *     not sent over plain HTTP
+   * @throws RegistryCredentialsNotSentException if authentication failed and credentials were not
+   *     sent over plain HTTP
    */
   public Authorization authenticatePush(@Nullable Credential credential)
       throws RegistryAuthenticationFailedException, RegistryCredentialsNotSentException {

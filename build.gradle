@@ -8,7 +8,7 @@ plugins {
   id 'io.freefair.maven-plugin' version '3.8.1' apply false
 
   // apply so we can correctly configure the test runner to be gradle at the project level
-  id "org.jetbrains.gradle.plugin.idea-ext" version "0.5"
+  id 'org.jetbrains.gradle.plugin.idea-ext' version '0.7'
 }
 
 // run tests in intellij using gradle test runner
@@ -50,6 +50,7 @@ subprojects {
     GOOGLE_HTTP_CLIENT_APACHE_V2: '1.34.0',
     GOOGLE_AUTH_LIBRARY_OAUTH2_HTTP: '0.18.0',
     GUAVA: '28.1-jre',
+    JSR305: '3.0.2', // transitively pulled in by GUAVA
 
     COMMONS_COMPRESS: '1.19',
     JACKSON_DATABIND: '2.9.10',
@@ -67,17 +68,17 @@ subprojects {
   // TODO: There might be a plugin that does this
   task ensureTransitiveDependencyOverrides {
     def rules = [
-        "google-http-client": dependencyVersions.GOOGLE_HTTP_CLIENT,
-        "google-http-client-apache-v2": dependencyVersions.GOOGLE_HTTP_CLIENT_APACHE_V2,
+        'google-http-client': dependencyVersions.GOOGLE_HTTP_CLIENT,
+        'google-http-client-apache-v2': dependencyVersions.GOOGLE_HTTP_CLIENT_APACHE_V2,
     ]
     doLast {
       configurations.runtimeClasspath.resolvedConfiguration.resolvedArtifacts.each { artifact ->
         def dependency = artifact.moduleVersion.id
         if (rules[dependency.name] && rules[dependency.name] != dependency.version) {
           throw new GradleException(
-              dependency.name + " version error in " + project
-              + ", expected:" + rules[dependency.name]
-              + ", found:" + dependency.version);
+              dependency.name + ' version error in ' + project
+              + ', expected:' + rules[dependency.name]
+              + ', found:' + dependency.version);
         }
       }
     }
@@ -92,14 +93,14 @@ subprojects {
     errorprone 'com.google.errorprone:error_prone_core:2.3.2'
     // Using github.com/google/error-prone-javac is required when running on
     // JDK 8. Remove when migrating to JDK 11.
-    if (System.getProperty("java.version").startsWith("1.8.")) {
-      errorproneJavac("com.google.errorprone:javac:9+181-r4173-1")
+    if (System.getProperty('java.version').startsWith('1.8.')) {
+      errorproneJavac('com.google.errorprone:javac:9+181-r4173-1')
     }
   }
 
   // Adds NullAway errorprone checks.
   tasks.withType(JavaCompile) {
-    if (!name.toLowerCase().contains("test")) {
+    if (!name.toLowerCase().contains('test')) {
       options.errorprone {
         check('NullAway', CheckSeverity.ERROR)
         option('NullAway:ExcludedFieldAnnotations', 'org.apache.maven.plugins.annotations.Component')
@@ -118,39 +119,27 @@ subprojects {
 
   /* CHECKSTYLE */
   checkstyle {
-    toolVersion = '8.18'
+    toolVersion = '8.29'
 
-    // use the google checks packaged with the jar
+    // use google checks from the jar
     def googleChecks = resources.text.fromArchiveEntry(configurations.checkstyle[0], 'google_checks.xml').asString()
 
-    // preserve these, the parser erases them
-    def xmlVersionNode = googleChecks.find(/<\?xml version.*>/)
-    def doctypeNode = googleChecks.find(/(?s)<!DOCTYPE[^>]*>/)
+    // set the location of the suppressions file referenced in google_checks.xml
+    configProperties['org.checkstyle.google.suppressionfilter.config'] = getConfigDirectory().file('checkstyle-suppressions.xml').get().toString()
 
-    def parser = new XmlParser()
-    parser.setFeature("http://apache.org/xml/features/disallow-doctype-decl", false)
-    parser.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false)
-    def rootModule = parser.parseText(googleChecks)
-
-    // force each module within the root checker to only work on "properties, xml", ignore "java"
-    def fileExtensionNode = parser.parseText('<property name="fileExtensions" value="properties, xml"/>')
-    rootModule.module*.append(fileExtensionNode)
-
-    // add in copyright header check on only java files
-    def copyrightNode = parser.parseText('''
-    <module name="RegexpHeader">
-        <property name="headerFile" value="${config_loc}/copyright-java.header"/>
-        <property name="fileExtensions" value="java"/>
-        <property name="id" value="header"/>
+    // add in copyright header check on only java files (replace the last </module> in file)
+    def copyrightChecks = '''
+        <module name="RegexpHeader">
+            <property name="headerFile" value="${config_loc}/copyright-java.header"/>
+            <property name="fileExtensions" value="java"/>
+            <property name="id" value="header"/>
+        </module>
     </module>
-    ''')
-    rootModule.append(copyrightNode)
-
-    def xmlOutput = new StringWriter()
-    new XmlNodePrinter(new PrintWriter(xmlOutput)).print(rootModule)
+    '''
+    googleChecks = googleChecks.substring(0, googleChecks.lastIndexOf('</module>')) + copyrightChecks
 
     // this is the actual checkstyle config
-    config = resources.text.fromString(xmlVersionNode + doctypeNode + xmlOutput.toString())
+    config = resources.text.fromString(googleChecks)
 
     maxErrors = 0
     maxWarnings = 0
@@ -343,15 +332,19 @@ subprojects {
   // to keep track of all source projects
   project.ext.sourceProjects = []
   // sourceProject(Project) accepts a project and adds it as a dependency in a special manner:
-  // 1. add the project classes as "compileOnly" and make it available to tests in "testImplementation"
-  // 2. add the project's depedencies as "implementation"
-  // 3. remove any transitive reference of any sourceProject depenency that may have appeared
-  // 4. add the project's classes to the final jar
+  // 1. force evaluation of the project first
+  // 2. add the project classes as "compileOnly" and make it available to tests in "testImplementation"
+  // 3. add the project's depedencies as "implementation"
+  // 4. remove any transitive reference of any sourceProject depenency that may have appeared
+  // 5. add the project's classes to the final jar
   // Other nice effects (vs shadowJar)
   // 1. Generated poms will be correct
   // 2. Configuration is isolated to this single "sourceProject" call
   // 3. These configurations are compliant with IDEs
   project.ext.sourceProject = { Project dependencyProject ->
+    // make sure those projects are evaluated first so we know their dependencies
+    project.evaluationDependsOn dependencyProject.path
+    // add the sourceProjecect dependency
     def dependencyProjectClasses = dependencyProject.sourceSets.main.output
     dependencies {
       // add the dependencyProject classes as compileOnly, make it available to tests
@@ -362,19 +355,19 @@ subprojects {
       if (dependencyProject.configurations.hasProperty('api')) {
         implementation dependencyProject.configurations.api.dependencies
       }
-      // if we find any project dependencies that are brought in transitively, go remove them
-      project.sourceProjects.each { projectToRemove ->
-        project.configurations.implementation.dependencies.remove projectToRemove
-      }
     }
-    // keep track of all dependencyProjects for later removal
+    // keep track of all dependencyProjects for removal
     sourceProjects += dependencyProject
+    // if we find any project dependencies that were brought in transitively, go remove them
+    project.configurations.implementation.dependencies.removeAll { d ->
+      return d instanceof ProjectDependency && sourceProjects.contains(d.dependencyProject)
+    }
     // adds dependencyProject's classes to jar (fat jar-esque)
     jar {
       from dependencyProjectClasses
     }
     // also configure the java-gradle-plugin if necessary
-    if (project.hasProperty("gradlePlugin")) {
+    if (project.hasProperty('gradlePlugin')) {
       project.tasks.pluginUnderTestMetadata.pluginClasspath.from dependencyProjectClasses
     }
   }
@@ -383,7 +376,7 @@ subprojects {
 
 
 /* LOCAL DEVELOPMENT HELPER TASKS */
-tasks.register("dev") {
+tasks.register('dev') {
   subprojects.each { subproject ->
     subproject.tasks.check.dependsOn subproject.tasks.googleJavaFormat
     dependsOn subproject.tasks.check
@@ -391,7 +384,7 @@ tasks.register("dev") {
   }
 }
 
-tasks.register("devFull") {
+tasks.register('devFull') {
   dependsOn tasks.dev
   subprojects.each { subproject ->
     dependsOn subproject.tasks.integrationTest

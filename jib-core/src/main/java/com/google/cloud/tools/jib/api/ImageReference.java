@@ -19,6 +19,7 @@ package com.google.cloud.tools.jib.api;
 import com.google.cloud.tools.jib.registry.RegistryAliasGroup;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.annotation.Nullable;
@@ -270,7 +271,7 @@ public class ImageReference {
 
   /**
    * Returns {@code true} if the {@link ImageReference} uses the default tag ((@code latest} or
-   * empty); {@code false} if not
+   * empty); {@code false} if not.
    *
    * @return {@code true} if uses the default tag; {@code false} if not
    */
@@ -346,5 +347,24 @@ public class ImageReference {
    */
   public String toStringWithTag() {
     return toString() + (usesDefaultTag() ? ":" + DEFAULT_TAG : "");
+  }
+
+  @Override
+  public boolean equals(Object other) {
+    if (this == other) {
+      return true;
+    }
+    if (!(other instanceof ImageReference)) {
+      return false;
+    }
+    ImageReference otherImageReference = (ImageReference) other;
+    return registry.equals(otherImageReference.registry)
+        && repository.equals(otherImageReference.repository)
+        && tag.equals(otherImageReference.tag);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(registry, repository, tag);
   }
 }

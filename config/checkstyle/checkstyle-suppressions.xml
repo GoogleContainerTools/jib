@@ -1,0 +1,32 @@
+<?xml version="1.0"?>
+<!DOCTYPE suppressions PUBLIC
+  "-//Puppy Crawl//DTD Suppressions 1.1//EN"
+  "http://www.puppycrawl.com/dtds/suppressions_1_1.dtd">
+<suppressions>
+  <!-- clash with google java format -->
+  <suppress files=".*\.java" checks="SingleLineJavadoc"/>
+  <suppress files=".*\.java" checks="Indentation"/>
+  <suppress files=".*\.java" checks="RightCurly"/>
+  <suppress files=".*\.java" checks="LineLength"/>
+
+  <!-- class with jib repo style: although maybe these should be eventually fixed -->
+  <suppress files=".*\.java" checks="OverloadMethodsDeclarationOrder"/>
+
+  <!-- temporary suppressions as we work through them -->
+  <suppress files=".*\.java" checks="VariableDeclarationUsageDistance"/>
+
+  <!-- leniency for json templates -->
+  <suppress files=".*[\\/]jib-core[\\/].*Template\.java" checks="MemberName"/>
+
+  <!-- leniency for gradle extension configuration objects -->
+  <suppress files=".*[\\/]jib-gradle-plugin[\\/].*Parameters\.java" checks="MissingJavadocMethod"/>
+
+  <!-- leniency for helpful suggestions -->
+  <suppress files=".*[\\/]HelpfulSuggestions\.java" checks="MissingJavadocMethod"/>
+
+  <!-- leniency for test files -->
+  <suppress files=".*[\\/]src[\\/]test[\\/].*\.java" checks="MissingJavadocMethod"/>
+  <suppress files=".*[\\/]src[\\/]integration-test[\\/].*\.java" checks="MissingJavadocMethod"/>
+  <suppress files=".*[\\/]src[\\/]integration-test[\\/].*\.java" checks="VariableDeclarationUsageDistance"/>
+
+</suppressions>

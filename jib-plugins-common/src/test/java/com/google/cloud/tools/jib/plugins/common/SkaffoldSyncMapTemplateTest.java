@@ -18,10 +18,10 @@ package com.google.cloud.tools.jib.plugins.common;
 
 import com.fasterxml.jackson.databind.exc.MismatchedInputException;
 import com.fasterxml.jackson.databind.exc.UnrecognizedPropertyException;
-import com.google.cloud.tools.jib.api.AbsoluteUnixPath;
-import com.google.cloud.tools.jib.api.FilePermissions;
-import com.google.cloud.tools.jib.api.LayerConfiguration;
-import com.google.cloud.tools.jib.api.LayerEntry;
+import com.google.cloud.tools.jib.api.buildplan.AbsoluteUnixPath;
+import com.google.cloud.tools.jib.api.buildplan.FileEntriesLayer;
+import com.google.cloud.tools.jib.api.buildplan.FileEntry;
+import com.google.cloud.tools.jib.api.buildplan.FilePermissions;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -110,23 +110,23 @@ public class SkaffoldSyncMapTemplateTest {
   public void testGetJsonString() throws IOException {
     SkaffoldSyncMapTemplate ssmt = new SkaffoldSyncMapTemplate();
     ssmt.addGenerated(
-        new LayerEntry(
+        new FileEntry(
             GEN_SRC,
             AbsoluteUnixPath.get("/genDest"),
             FilePermissions.DEFAULT_FILE_PERMISSIONS,
-            LayerConfiguration.DEFAULT_MODIFICATION_TIME));
+            FileEntriesLayer.DEFAULT_MODIFICATION_TIME));
     ssmt.addDirect(
-        new LayerEntry(
+        new FileEntry(
             DIR_SRC_1,
             AbsoluteUnixPath.get("/dirDest1"),
             FilePermissions.DEFAULT_FILE_PERMISSIONS,
-            LayerConfiguration.DEFAULT_MODIFICATION_TIME));
+            FileEntriesLayer.DEFAULT_MODIFICATION_TIME));
     ssmt.addDirect(
-        new LayerEntry(
+        new FileEntry(
             DIR_SRC_2,
             AbsoluteUnixPath.get("/dirDest2"),
             FilePermissions.DEFAULT_FILE_PERMISSIONS,
-            LayerConfiguration.DEFAULT_MODIFICATION_TIME));
+            FileEntriesLayer.DEFAULT_MODIFICATION_TIME));
     Assert.assertEquals(TEST_JSON, ssmt.getJsonString());
   }
 
@@ -134,17 +134,17 @@ public class SkaffoldSyncMapTemplateTest {
   public void testGetJsonString_emptyGenerated() throws IOException {
     SkaffoldSyncMapTemplate ssmt = new SkaffoldSyncMapTemplate();
     ssmt.addDirect(
-        new LayerEntry(
+        new FileEntry(
             DIR_SRC_1,
             AbsoluteUnixPath.get("/dirDest1"),
             FilePermissions.DEFAULT_FILE_PERMISSIONS,
-            LayerConfiguration.DEFAULT_MODIFICATION_TIME));
+            FileEntriesLayer.DEFAULT_MODIFICATION_TIME));
     ssmt.addDirect(
-        new LayerEntry(
+        new FileEntry(
             DIR_SRC_2,
             AbsoluteUnixPath.get("/dirDest2"),
             FilePermissions.DEFAULT_FILE_PERMISSIONS,
-            LayerConfiguration.DEFAULT_MODIFICATION_TIME));
+            FileEntriesLayer.DEFAULT_MODIFICATION_TIME));
     Assert.assertEquals(TEST_JSON_EMPTY_GENERATED, ssmt.getJsonString());
   }
 }

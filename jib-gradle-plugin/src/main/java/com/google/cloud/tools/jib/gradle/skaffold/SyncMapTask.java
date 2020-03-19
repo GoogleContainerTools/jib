@@ -44,6 +44,7 @@ public class SyncMapTask extends DefaultTask {
     return this;
   }
 
+  /** Task Action, lists files and container targets. */
   @TaskAction
   public void listFilesAndTargets() {
     Preconditions.checkNotNull(jibExtension);
@@ -77,7 +78,10 @@ public class SyncMapTask extends DefaultTask {
 
       try {
         String syncMapJson =
-            PluginConfigurationProcessor.getSkaffoldSyncMap(configuration, projectProperties);
+            PluginConfigurationProcessor.getSkaffoldSyncMap(
+                configuration,
+                projectProperties,
+                jibExtension.getSkaffold().getSync().getExcludes());
 
         System.out.println();
         System.out.println("BEGIN JIB JSON: SYNCMAP/1");

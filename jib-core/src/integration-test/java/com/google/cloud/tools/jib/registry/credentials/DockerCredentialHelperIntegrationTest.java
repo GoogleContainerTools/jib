@@ -35,7 +35,7 @@ public class DockerCredentialHelperIntegrationTest {
 
   /** Tests retrieval via {@code docker-credential-gcr} CLI. */
   @Test
-  public void testRetrieveGCR()
+  public void testRetrieveGcr()
       throws IOException, CredentialHelperUnhandledServerUrlException,
           CredentialHelperNotFoundException, URISyntaxException, InterruptedException {
     new Command(GCR_CREDENTIAL_HELPER, "store")

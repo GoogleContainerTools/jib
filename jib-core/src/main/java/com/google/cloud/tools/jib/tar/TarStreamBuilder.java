@@ -46,6 +46,7 @@ public class TarStreamBuilder {
         new TarArchiveOutputStream(out, StandardCharsets.UTF_8.name())) {
       // Enables PAX extended headers to support long file names.
       tarArchiveOutputStream.setLongFileMode(TarArchiveOutputStream.LONGFILE_POSIX);
+      tarArchiveOutputStream.setBigNumberMode(TarArchiveOutputStream.BIGNUMBER_POSIX);
       for (Map.Entry<TarArchiveEntry, Blob> entry : archiveMap.entrySet()) {
         tarArchiveOutputStream.putArchiveEntry(entry.getKey());
         entry.getValue().writeTo(tarArchiveOutputStream);

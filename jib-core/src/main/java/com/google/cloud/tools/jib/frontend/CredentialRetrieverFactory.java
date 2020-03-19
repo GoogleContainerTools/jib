@@ -189,13 +189,16 @@ public class CredentialRetrieverFactory {
 
   /**
    * Creates a new {@link CredentialRetriever} that tries to retrieve credentials from Docker config
-   * (located at {@code $USER_HOME/.docker/config.json}).
+   * (located at {@code System.getProperty("user.home")/.docker/config.json}).
    *
    * @return a new {@link CredentialRetriever}
    * @see DockerConfigCredentialRetriever
    */
   public CredentialRetriever dockerConfig() {
-    return dockerConfig(new DockerConfigCredentialRetriever(imageReference.getRegistry()));
+    return dockerConfig(
+        DockerConfigCredentialRetriever.create(
+            imageReference.getRegistry(),
+            Paths.get(System.getProperty("user.home"), ".docker", "config.json")));
   }
 
   /**
@@ -208,13 +211,27 @@ public class CredentialRetrieverFactory {
    */
   public CredentialRetriever dockerConfig(Path dockerConfigFile) {
     return dockerConfig(
-        new DockerConfigCredentialRetriever(imageReference.getRegistry(), dockerConfigFile));
+        DockerConfigCredentialRetriever.create(imageReference.getRegistry(), dockerConfigFile));
+  }
+
+  /**
+   * Creates a new {@link CredentialRetriever} that tries to retrieve credentials from a legacy
+   * Docker config file.
+   *
+   * @param dockerConfigFile the path to a legacy docker configuration file
+   * @return a new {@link CredentialRetriever}
+   * @see DockerConfigCredentialRetriever
+   */
+  public CredentialRetriever legacyDockerConfig(Path dockerConfigFile) {
+    return dockerConfig(
+        DockerConfigCredentialRetriever.createForLegacyFormat(
+            imageReference.getRegistry(), dockerConfigFile));
   }
 
   /**
    * Creates a new {@link CredentialRetriever} that tries to retrieve credentials from <a
    * href="https://cloud.google.com/docs/authentication/production">Google Application Default
-   * Credentials.</a>
+   * Credentials</a>.
    *
    * @return a new {@link CredentialRetriever}
    * @see <a

@@ -22,3 +22,4 @@ jib {
     paths = file('src/main/custom-extra-dir')
   }
 }
+

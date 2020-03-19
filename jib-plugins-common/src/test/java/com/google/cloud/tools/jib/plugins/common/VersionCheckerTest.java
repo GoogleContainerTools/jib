@@ -60,30 +60,30 @@ public class VersionCheckerTest {
 
   @Test
   public void testComparators_LT() {
-    Assert.assertTrue(VersionChecker.LT(0, 1));
-    Assert.assertFalse(VersionChecker.LT(1, 1));
-    Assert.assertFalse(VersionChecker.LT(2, 1));
+    Assert.assertTrue(VersionChecker.lt(0, 1));
+    Assert.assertFalse(VersionChecker.lt(1, 1));
+    Assert.assertFalse(VersionChecker.lt(2, 1));
   }
 
   @Test
   public void testComparators_LE() {
-    Assert.assertTrue(VersionChecker.LE(0, 1));
-    Assert.assertTrue(VersionChecker.LE(1, 1));
-    Assert.assertFalse(VersionChecker.LE(2, 1));
+    Assert.assertTrue(VersionChecker.le(0, 1));
+    Assert.assertTrue(VersionChecker.le(1, 1));
+    Assert.assertFalse(VersionChecker.le(2, 1));
   }
 
   @Test
   public void testComparators_GE() {
-    Assert.assertFalse(VersionChecker.GE(0, 1));
-    Assert.assertTrue(VersionChecker.GE(1, 1));
-    Assert.assertTrue(VersionChecker.GE(2, 1));
+    Assert.assertFalse(VersionChecker.ge(0, 1));
+    Assert.assertTrue(VersionChecker.ge(1, 1));
+    Assert.assertTrue(VersionChecker.ge(2, 1));
   }
 
   @Test
   public void testComparators_GT() {
-    Assert.assertFalse(VersionChecker.GT(0, 1));
-    Assert.assertFalse(VersionChecker.GT(1, 1));
-    Assert.assertTrue(VersionChecker.GT(2, 1));
+    Assert.assertFalse(VersionChecker.gt(0, 1));
+    Assert.assertFalse(VersionChecker.gt(1, 1));
+    Assert.assertTrue(VersionChecker.gt(2, 1));
   }
 
   @Test

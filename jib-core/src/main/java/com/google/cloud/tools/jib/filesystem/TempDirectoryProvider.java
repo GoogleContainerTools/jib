@@ -63,6 +63,7 @@ public class TempDirectoryProvider implements Closeable {
         try {
           MoreFiles.deleteRecursively(path, RecursiveDeleteOption.ALLOW_INSECURE);
         } catch (IOException ignored) {
+          // ignored
         }
       }
     }

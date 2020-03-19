@@ -1,0 +1,58 @@
+plugins {
+  id 'net.researchgate.release'
+  id 'maven-publish'
+  id 'eclipse'
+}
+
+dependencies {
+  compileOnly "com.google.code.findbugs:jsr305:${dependencyVersions.JSR305}"
+
+  testImplementation "com.google.guava:guava:${dependencyVersions.GUAVA}"
+  testImplementation "junit:junit:${dependencyVersions.JUNIT}"
+  testImplementation "org.mockito:mockito-core:${dependencyVersions.MOCKITO_CORE}"
+  testImplementation "org.slf4j:slf4j-api:${dependencyVersions.SLF4J_API}"
+  testImplementation "com.github.stefanbirkner:system-rules:${dependencyVersions.SYSTEM_RULES}"
+}
+
+jar {
+  manifest {
+    attributes 'Implementation-Version': version
+    attributes 'Automatic-Module-Name': 'com.google.cloud.tools.jib.buildplan'
+
+    // OSGi metadata
+    attributes 'Bundle-SymbolicName': 'com.google.cloud.tools.jib.buildplan'
+    attributes 'Bundle-Name': 'Jib Container Build Plan API'
+    attributes 'Bundle-Vendor': 'Google LLC'
+    attributes 'Bundle-DocURL': 'https://github.com/GoogleContainerTools/jib'
+    attributes 'Bundle-License': 'https://www.apache.org/licenses/LICENSE-2.0'
+    attributes 'Export-Package': 'com.google.cloud.tools.jib.plugins.buildplan'
+  }
+}
+
+configureMavenRelease()
+
+/* RELEASE */
+publishing {
+  publications {
+    mavenJava(MavenPublication) {
+      pom {
+        name = 'Jib Container Build Plan API'
+        description = 'Jib Container Build Plan API'
+      }
+      from components.java
+    }
+  }
+}
+/* RELEASE */
+
+/* ECLIPSE */
+// TODO: remove after upgrading to Gradle 5.6. (https://github.com/eclipse/buildship/issues/689)
+// Also remove the 'eclipse' plugin.
+eclipse.classpath.file.whenMerged {
+  entries.findAll {
+    it.path in ['src/test/java', 'src/test/resources']
+  }.each {
+    it.entryAttributes['test'] = 'true'
+  }
+}
+/* ECLIPSE */

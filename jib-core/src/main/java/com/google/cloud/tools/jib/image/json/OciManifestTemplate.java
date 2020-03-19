@@ -23,7 +23,7 @@ import java.util.List;
 import javax.annotation.Nullable;
 
 /**
- * JSON Template for OCI Manifest Schema
+ * JSON Template for OCI Manifest Schema.
  *
  * <p>Example manifest JSON:
  *

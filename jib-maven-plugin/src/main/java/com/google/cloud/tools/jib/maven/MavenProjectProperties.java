@@ -80,6 +80,8 @@ public class MavenProjectProperties implements ProjectProperties {
   private static final Duration LOGGING_THREAD_SHUTDOWN_TIMEOUT = Duration.ofSeconds(1);
 
   /**
+   * Static factory method for {@link MavenProjectProperties}.
+   *
    * @param project the {@link MavenProject} for the plugin.
    * @param session the {@link MavenSession} for the plugin.
    * @param log the Maven {@link Log} to log messages during Jib execution
@@ -256,16 +258,13 @@ public class MavenProjectProperties implements ProjectProperties {
                   .map(MavenProject::getArtifact)
                   .collect(Collectors.toSet()));
 
-      return javaContainerBuilder
-          .addDependencies(
-              Preconditions.checkNotNull(classifiedDependencies.get(LayerType.DEPENDENCIES)))
-          .addSnapshotDependencies(
-              Preconditions.checkNotNull(
-                  classifiedDependencies.get(LayerType.SNAPSHOT_DEPENDENCIES)))
-          .addProjectDependencies(
-              Preconditions.checkNotNull(
-                  classifiedDependencies.get(LayerType.PROJECT_DEPENDENCIES)))
-          .toContainerBuilder();
+      javaContainerBuilder.addDependencies(
+          Preconditions.checkNotNull(classifiedDependencies.get(LayerType.DEPENDENCIES)));
+      javaContainerBuilder.addSnapshotDependencies(
+          Preconditions.checkNotNull(classifiedDependencies.get(LayerType.SNAPSHOT_DEPENDENCIES)));
+      javaContainerBuilder.addProjectDependencies(
+          Preconditions.checkNotNull(classifiedDependencies.get(LayerType.PROJECT_DEPENDENCIES)));
+      return javaContainerBuilder.toContainerBuilder();
 
     } catch (IOException ex) {
       throw new IOException(
@@ -437,13 +436,15 @@ public class MavenProjectProperties implements ProjectProperties {
   }
 
   /**
-   * Gets the path of the JAR that the Maven JAR Plugin generates.
+   * Gets the path of the JAR that the Maven JAR Plugin generates. Will also make copies of jar
+   * files with non-conforming names like those produced by springboot -- myjar.jar.original ->
+   * myjar.original.jar.
    *
    * <p>https://maven.apache.org/plugins/maven-jar-plugin/jar-mojo.html
    * https://github.com/apache/maven-jar-plugin/blob/80f58a84aacff6e671f5a601d62a3a3800b507dc/src/main/java/org/apache/maven/plugins/jar/AbstractJarMojo.java#L177
    *
    * @return the path of the JAR
-   * @throws IOException
+   * @throws IOException if copying jars with non-conforming names fails
    */
   @VisibleForTesting
   Path getJarArtifact() throws IOException {

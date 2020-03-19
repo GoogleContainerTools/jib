@@ -25,6 +25,13 @@ public class RegistryAuthenticationFailedException extends RegistryException {
   private final String serverUrl;
   private final String imageName;
 
+  /**
+   * Creates a new exception with a human readable message.
+   *
+   * @param serverUrl the registry server url
+   * @param imageName the image name that requires authentication
+   * @param cause the underlying cause that triggered this exception
+   */
   public RegistryAuthenticationFailedException(
       String serverUrl, String imageName, Throwable cause) {
     super(MessageFormat.format(REASON, serverUrl, imageName, cause.getMessage()), cause);
@@ -32,18 +39,33 @@ public class RegistryAuthenticationFailedException extends RegistryException {
     this.imageName = imageName;
   }
 
+  /**
+   * Creates a new exception with a human readable message.
+   *
+   * @param serverUrl the registry server url
+   * @param imageName the image name that requires authentication
+   * @param reason the underlying reason that triggered this exception
+   */
   public RegistryAuthenticationFailedException(String serverUrl, String imageName, String reason) {
     super(MessageFormat.format(REASON, serverUrl, imageName, reason));
     this.serverUrl = serverUrl;
     this.imageName = imageName;
   }
 
-  /** @return the server being authenticated */
+  /**
+   * The server being authenticated.
+   *
+   * @return the server being authenticated
+   */
   public String getServerUrl() {
     return serverUrl;
   }
 
-  /** @return the image being authenticated */
+  /**
+   * The image being authenticated.
+   *
+   * @return the image being authenticated
+   */
   public String getImageName() {
     return imageName;
   }

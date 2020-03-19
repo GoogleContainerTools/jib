@@ -16,6 +16,9 @@
 
 package com.google.cloud.tools.jib.api;
 
+import com.google.cloud.tools.jib.api.buildplan.AbsoluteUnixPath;
+import com.google.cloud.tools.jib.api.buildplan.FileEntry;
+import com.google.cloud.tools.jib.api.buildplan.RelativeUnixPath;
 import com.google.cloud.tools.jib.configuration.BuildContext;
 import com.google.cloud.tools.jib.configuration.ContainerConfiguration;
 import com.google.common.collect.ImmutableList;
@@ -48,9 +51,9 @@ public class JavaContainerBuilderTest {
         .map(
             layerConfiguration ->
                 layerConfiguration
-                    .getLayerEntries()
+                    .getEntries()
                     .stream()
-                    .map(LayerEntry::getExtractionPath)
+                    .map(FileEntry::getExtractionPath)
                     .collect(Collectors.toList()))
         .orElse(ImmutableList.of());
   }

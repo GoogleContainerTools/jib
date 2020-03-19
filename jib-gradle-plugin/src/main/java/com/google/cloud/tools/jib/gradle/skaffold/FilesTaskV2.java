@@ -58,6 +58,11 @@ public class FilesTaskV2 extends DefaultTask {
     return this;
   }
 
+  /**
+   * Task Action, print files.
+   *
+   * @throws IOException if an error occurs generating the json string
+   */
   @TaskAction
   public void listFiles() throws IOException {
     Preconditions.checkNotNull(jibExtension);
@@ -104,6 +109,14 @@ public class FilesTaskV2 extends DefaultTask {
       }
     }
 
+    // Configure other files from config
+    SkaffoldWatchParameters watch = jibExtension.getSkaffold().getWatch();
+    watch.getBuildIncludes().forEach(skaffoldFilesOutput::addBuild);
+    watch.getIncludes().forEach(skaffoldFilesOutput::addInput);
+    // we don't do any special pre-processing for ignore (input and ignore can overlap with exact
+    // matches)
+    watch.getExcludes().forEach(skaffoldFilesOutput::addIgnore);
+
     // Print files
     System.out.println();
     System.out.println("BEGIN JIB JSON");
@@ -146,19 +159,21 @@ public class FilesTaskV2 extends DefaultTask {
 
     // Add sources + resources
     JavaPluginConvention javaConvention =
-        project.getConvention().getPlugin(JavaPluginConvention.class);
-    SourceSet mainSourceSet =
-        javaConvention.getSourceSets().findByName(SourceSet.MAIN_SOURCE_SET_NAME);
-    if (mainSourceSet != null) {
-      mainSourceSet
-          .getAllSource()
-          .getSourceDirectories()
-          .forEach(
-              sourceDirectory -> {
-                if (sourceDirectory.exists()) {
-                  skaffoldFilesOutput.addInput(sourceDirectory.toPath());
-                }
-              });
+        project.getConvention().findPlugin(JavaPluginConvention.class);
+    if (javaConvention != null) {
+      SourceSet mainSourceSet =
+          javaConvention.getSourceSets().findByName(SourceSet.MAIN_SOURCE_SET_NAME);
+      if (mainSourceSet != null) {
+        mainSourceSet
+            .getAllSource()
+            .getSourceDirectories()
+            .forEach(
+                sourceDirectory -> {
+                  if (sourceDirectory.exists()) {
+                    skaffoldFilesOutput.addInput(sourceDirectory.toPath());
+                  }
+                });
+      }
     }
   }
 
@@ -177,18 +192,20 @@ public class FilesTaskV2 extends DefaultTask {
       Project currentProject = projects.pop();
 
       // Search through all dependencies
-      for (Configuration configuration :
+      Configuration runtimeClasspath =
           currentProject
               .getConfigurations()
-              .getByName(JavaPlugin.RUNTIME_CLASSPATH_CONFIGURATION_NAME)
-              .getHierarchy()) {
-        for (Dependency dependency : configuration.getDependencies()) {
-          if (dependency instanceof ProjectDependency) {
-            // If this is a project dependency, save it
-            ProjectDependency projectDependency = (ProjectDependency) dependency;
-            if (!projectDependencies.contains(projectDependency)) {
-              projects.push(projectDependency.getDependencyProject());
-              projectDependencies.add(projectDependency);
+              .findByName(JavaPlugin.RUNTIME_CLASSPATH_CONFIGURATION_NAME);
+      if (runtimeClasspath != null) {
+        for (Configuration configuration : runtimeClasspath.getHierarchy()) {
+          for (Dependency dependency : configuration.getDependencies()) {
+            if (dependency instanceof ProjectDependency) {
+              // If this is a project dependency, save it
+              ProjectDependency projectDependency = (ProjectDependency) dependency;
+              if (!projectDependencies.contains(projectDependency)) {
+                projects.push(projectDependency.getDependencyProject());
+                projectDependencies.add(projectDependency);
+              }
             }
           }
         }

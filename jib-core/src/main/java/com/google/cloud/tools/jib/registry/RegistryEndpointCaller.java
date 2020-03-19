@@ -46,8 +46,8 @@ import javax.net.ssl.SSLException;
 class RegistryEndpointCaller<T> {
 
   /**
-   * @see <a
-   *     href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/308">https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/308</a>
+   * <a
+   * href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/308">https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/308</a>.
    */
   @VisibleForTesting static final int STATUS_CODE_PERMANENT_REDIRECT = 308;
 
@@ -172,7 +172,8 @@ class RegistryEndpointCaller<T> {
 
     } catch (IOException ex) {
       logError("I/O error for image [" + serverUrl + "/" + imageName + "]:");
-      logError("    " + ex.getMessage());
+      logError("    " + ex.getClass().getName());
+      logError("    " + (ex.getMessage() == null ? "(null exception message)" : ex.getMessage()));
       logErrorIfBrokenPipe(ex);
 
       if (ex instanceof SSLException) {

@@ -18,7 +18,6 @@ package com.google.cloud.tools.jib.registry;
 
 import com.google.cloud.tools.jib.api.RegistryException;
 import com.google.cloud.tools.jib.event.EventHandlers;
-import com.google.cloud.tools.jib.http.Authorization;
 import com.google.cloud.tools.jib.http.FailoverHttpClient;
 import com.google.cloud.tools.jib.image.json.ManifestTemplate;
 import com.google.cloud.tools.jib.image.json.V21ManifestTemplate;
@@ -34,7 +33,7 @@ import org.junit.Test;
 /** Integration tests for {@link ManifestPuller}. */
 public class ManifestPullerIntegrationTest {
 
-  /** A known manifest list sha for openjdk:11-jre-slim */
+  /** A known manifest list sha for openjdk:11-jre-slim. */
   public static final String KNOWN_MANIFEST_LIST_SHA =
       "sha256:8ab7b3078b01ba66b937b7fbe0b9eccf60449cc101c42e99aeefaba0e1781155";
 
@@ -73,12 +72,11 @@ public class ManifestPullerIntegrationTest {
 
   @Test
   public void testPull_v22ManifestList() throws IOException, RegistryException {
-    RegistryClient.Factory factory =
+    RegistryClient registryClient =
         RegistryClient.factory(
-            EventHandlers.NONE, "registry-1.docker.io", "library/openjdk", httpClient);
-    Authorization authorization =
-        factory.newRegistryClient().getRegistryAuthenticator().get().authenticatePull(null);
-    RegistryClient registryClient = factory.setAuthorization(authorization).newRegistryClient();
+                EventHandlers.NONE, "registry-1.docker.io", "library/openjdk", httpClient)
+            .newRegistryClient();
+    registryClient.doPullBearerAuth();
 
     // Ensure 11-jre-slim is a manifest list
     V22ManifestListTemplate manifestListTemplate =

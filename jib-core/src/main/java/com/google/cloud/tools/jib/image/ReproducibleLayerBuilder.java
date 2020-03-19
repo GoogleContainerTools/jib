@@ -16,8 +16,8 @@
 
 package com.google.cloud.tools.jib.image;
 
-import com.google.cloud.tools.jib.api.LayerConfiguration;
-import com.google.cloud.tools.jib.api.LayerEntry;
+import com.google.cloud.tools.jib.api.buildplan.FileEntriesLayer;
+import com.google.cloud.tools.jib.api.buildplan.FileEntry;
 import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.blob.Blobs;
 import com.google.cloud.tools.jib.tar.TarStreamBuilder;
@@ -59,7 +59,7 @@ public class ReproducibleLayerBuilder {
     /**
      * Adds a {@link TarArchiveEntry} if its extraction path does not exist yet. Also adds all of
      * the parent directories on the extraction path, if the parent does not exist. Parent will have
-     * modification time set to {@link LayerConfiguration#DEFAULT_MODIFICATION_TIME}.
+     * modification time set to {@link FileEntriesLayer#DEFAULT_MODIFICATION_TIME}.
      *
      * @param tarArchiveEntry the {@link TarArchiveEntry}
      */
@@ -73,7 +73,7 @@ public class ReproducibleLayerBuilder {
       Path namePath = Paths.get(tarArchiveEntry.getName());
       if (namePath.getParent() != namePath.getRoot()) {
         TarArchiveEntry dir = new TarArchiveEntry(DIRECTORY_FILE, namePath.getParent().toString());
-        dir.setModTime(LayerConfiguration.DEFAULT_MODIFICATION_TIME.toEpochMilli());
+        dir.setModTime(FileEntriesLayer.DEFAULT_MODIFICATION_TIME.toEpochMilli());
         add(dir);
       }
 
@@ -88,9 +88,9 @@ public class ReproducibleLayerBuilder {
     }
   }
 
-  private final ImmutableList<LayerEntry> layerEntries;
+  private final ImmutableList<FileEntry> layerEntries;
 
-  public ReproducibleLayerBuilder(ImmutableList<LayerEntry> layerEntries) {
+  public ReproducibleLayerBuilder(ImmutableList<FileEntry> layerEntries) {
     this.layerEntries = layerEntries;
   }
 
@@ -103,7 +103,7 @@ public class ReproducibleLayerBuilder {
     UniqueTarArchiveEntries uniqueTarArchiveEntries = new UniqueTarArchiveEntries();
 
     // Adds all the layer entries as tar entries.
-    for (LayerEntry layerEntry : layerEntries) {
+    for (FileEntry layerEntry : layerEntries) {
       // Adds the entries to uniqueTarArchiveEntries, which makes sure all entries are unique and
       // adds parent directories for each extraction path.
       TarArchiveEntry entry =

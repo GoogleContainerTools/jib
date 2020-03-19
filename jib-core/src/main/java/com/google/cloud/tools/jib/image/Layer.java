@@ -52,6 +52,8 @@ import com.google.cloud.tools.jib.blob.BlobDescriptor;
 public interface Layer {
 
   /**
+   * Returns this layer's contents.
+   *
    * @return the layer's content BLOB
    * @throws LayerPropertyNotFoundException if not available
    */
@@ -59,12 +61,16 @@ public interface Layer {
 
   // TODO: Remove this
   /**
+   * Returns this layer's content descriptor.
+   *
    * @return the layer's content {@link BlobDescriptor}
    * @throws LayerPropertyNotFoundException if not available
    */
   BlobDescriptor getBlobDescriptor() throws LayerPropertyNotFoundException;
 
   /**
+   * Returns this layer's diff ID.
+   *
    * @return the layer's diff ID
    * @throws LayerPropertyNotFoundException if not available
    */

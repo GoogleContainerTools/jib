@@ -196,7 +196,9 @@ class CacheStorageWriter {
   }
 
   /**
-   * Writes an uncompressed {@link Blob} out to the cache directory in the form:
+   * Writes an uncompressed {@link Blob} out to the cache directory.
+   *
+   * <p>Cache is written out in the form:
    *
    * <ul>
    *   <li>The {@code uncompressedLayerBlob} is written to the layer directory under the layers

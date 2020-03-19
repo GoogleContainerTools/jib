@@ -60,7 +60,7 @@ public class LocalRegistry extends ExternalResource {
     stop();
   }
 
-  /** Starts the registry */
+  /** Starts the registry. */
   public void start() throws IOException, InterruptedException {
     // Runs the Docker registry.
     ArrayList<String> dockerTokens =
@@ -170,6 +170,7 @@ public class LocalRegistry extends ExternalResource {
           return;
         }
       } catch (IOException ex) {
+        // ignored
       }
       Thread.sleep(250);
     }

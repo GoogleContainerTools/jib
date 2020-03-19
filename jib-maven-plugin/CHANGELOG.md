@@ -7,6 +7,36 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
+- `<container><creationTime>` now accepts more timezone formats:`+HHmm`. This allows for easier configuration of creationTime by external systems. ([#2320](https://github.com/GoogleContainerTools/jib/issues/2320))
+
+### Fixed
+
+## 2.1.0
+
+### Added
+
+- Additionally reads credentials from `~/.docker/.dockerconfigjson` and legacy Docker config (`~/.docker/.dockercfg`). Also searches for `$HOME/.docker/*` (in addition to current `System.get("user.home")/.docker/*`). This may help retrieve credentials, for example, on Kubernetes. ([#2260](https://github.com/GoogleContainerTools/jib/issues/2260))
+- New skaffold configuration options that modify how jib's build config is presented to skaffold ([#2292](https://github.com/GoogleContainerTools/jib/pull/2292)):
+    - `<watch><buildIncludes>`: a list of build files to watch
+    - `<watch><includes>`: a list of project files to watch
+    - `<watch><excludes>`: a list of files to exclude from watching
+    - `<sync><excludes>`: a list of files to exclude from sync'ing
+
+### Fixed
+
+- Fixed a `skaffold init` issue with projects containing submodules specifying different parent poms. ([#2262](https://github.com/GoogleContainerTools/jib/issues/2262))
+- Fixed authentication failure with error `server did not return 'WWW-Authenticate: Bearer' header` in certain cases (for example, on OpenShift). ([#2258](https://github.com/GoogleContainerTools/jib/issues/2258))
+- Fixed an issue where using local Docker images (by `docker://...`) on Windows caused an error. ([#2270](https://github.com/GoogleContainerTools/jib/issues/2270))
+
+## 2.0.0
+
+### Added
+
+- Added json output file for image metadata after a build is complete. Writes to `target/jib-image.json` by default, configurable with `<outputPaths><imageJson>`. ([#2227](https://github.com/GoogleContainerTools/jib/pull/2227))
+- Added automatic update checks. Jib will now display a message if there is a new version of Jib available. See the [privacy page](../docs/privacy.md) for more details. ([#2193](https://github.com/GoogleContainerTools/jib/issues/2193))
+
+### Changed
+
 - Removed deprecated `<extraDirectory>` configuration in favor of `<extraDirectories>`. ([#1691](https://github.com/GoogleContainerTools/jib/issues/1691))
 - Removed deprecated `<container><useCurrentTimestamp>` configuration in favor of `<container><creationTime>` with `USE_CURRENT_TIMESTAMP`. ([#1897](https://github.com/GoogleContainerTools/jib/issues/1897))
 - HTTP redirection URLs are no longer sanitized in order to work around an issue with certain registries that do not conform to HTTP standards. This resolves an issue with using Red Hat OpenShift and Quay registries. ([#2106](https://github.com/GoogleContainerTools/jib/issues/2106), [#1986](https://github.com/GoogleContainerTools/jib/issues/1986#issuecomment-547610104))
@@ -25,6 +55,7 @@ All notable changes to this project will be documented in this file.
 - Now `<containerizingMode>packaged` correctly identifies the packaged JAR generated at a non-default location when configured with the Maven Jar Plugin's `<classifier>` and `<outputDirectory>`. ([#2170](https://github.com/GoogleContainerTools/jib/issues/2170))
 - `jib:buildTar` with `<container><format>OCI` now builds a correctly formatted OCI archive. ([#2124](https://github.com/GoogleContainerTools/jib/issues/2124))
 - Fixed an issue where configuring the `<warName>` property of the Maven WAR plugin fails the build. ([#2206](https://github.com/GoogleContainerTools/jib/issues/2206))
+- Now automatically refreshes Docker registry authentication tokens when expired, fixing the issue that long-running builds may fail with "401 unauthorized." ([#691](https://github.com/GoogleContainerTools/jib/issues/691))
 
 ## 1.8.0
 

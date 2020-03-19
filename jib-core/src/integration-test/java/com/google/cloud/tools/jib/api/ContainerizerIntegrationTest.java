@@ -17,6 +17,8 @@
 package com.google.cloud.tools.jib.api;
 
 import com.google.cloud.tools.jib.Command;
+import com.google.cloud.tools.jib.api.buildplan.AbsoluteUnixPath;
+import com.google.cloud.tools.jib.api.buildplan.FileEntriesLayer;
 import com.google.cloud.tools.jib.event.events.ProgressEvent;
 import com.google.cloud.tools.jib.event.progress.ProgressEventHandler;
 import com.google.cloud.tools.jib.registry.LocalRegistry;
@@ -76,7 +78,7 @@ public class ContainerizerIntegrationTest {
       "sha256:f488c213f278bc5f9ffe3ddf30c5dbb2303a15a74146b738d12453088e662880";
   private static final double DOUBLE_ERROR_MARGIN = 1e-10;
 
-  public static ImmutableList<LayerConfiguration> fakeLayerConfigurations;
+  public static ImmutableList<FileEntriesLayer> fakeLayerConfigurations;
 
   @BeforeClass
   public static void setUp() throws URISyntaxException, IOException {
@@ -91,11 +93,11 @@ public class ContainerizerIntegrationTest {
    * Lists the files in the {@code resourcePath} resources directory and builds a {@link
    * LayerConfiguration} from those files.
    */
-  private static LayerConfiguration makeLayerConfiguration(
+  private static FileEntriesLayer makeLayerConfiguration(
       String resourcePath, String pathInContainer) throws URISyntaxException, IOException {
     try (Stream<Path> fileStream =
         Files.list(Paths.get(Resources.getResource(resourcePath).toURI()))) {
-      LayerConfiguration.Builder layerConfigurationBuilder = LayerConfiguration.builder();
+      FileEntriesLayer.Builder layerConfigurationBuilder = FileEntriesLayer.builder();
       fileStream.forEach(
           sourceFile ->
               layerConfigurationBuilder.addEntry(
@@ -329,7 +331,7 @@ public class ContainerizerIntegrationTest {
             .setEnvironment(ImmutableMap.of("env1", "envvalue1", "env2", "envvalue2"))
             .setExposedPorts(Ports.parse(Arrays.asList("1000", "2000-2002/tcp", "3000/udp")))
             .setLabels(ImmutableMap.of("key1", "value1", "key2", "value2"))
-            .setLayers(fakeLayerConfigurations);
+            .setFileEntriesLayers(fakeLayerConfigurations);
 
     Path cacheDirectory = temporaryFolder.newFolder().toPath();
     containerizer

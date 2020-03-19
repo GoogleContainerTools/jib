@@ -7,6 +7,38 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
+- `jib.container.creationTime` now accepts more timezone formats:`+HHmm`. This allows for easier configuration of creationTime by external systems. ([#2320](https://github.com/GoogleContainerTools/jib/issues/2320))
+
+### Fixed
+
+## 2.1.0
+
+### Added
+
+- Additionally reads credentials from `~/.docker/.dockerconfigjson` and legacy Docker config (`~/.docker/.dockercfg`). Also searches for `$HOME/.docker/*` (in addition to current `System.get("user.home")/.docker/*`). This may help retrieve credentials, for example, on Kubernetes. ([#2260](https://github.com/GoogleContainerTools/jib/issues/2260))
+- New skaffold configuration options that modify how jib's build config is presented to skaffold ([#2292](https://github.com/GoogleContainerTools/jib/pull/2292)):
+    - `jib.skaffold.watch.buildIncludes`: a list of build files to watch
+    - `jib.skaffold.watch.includes`: a list of project files to watch
+    - `jib.skaffold.watch.excludes`: a list of files to exclude from watching
+    - `jib.skaffold.sync.excludes`: a list of files to exclude from sync'ing
+
+### Fixed
+
+- Fixed authentication failure with error `server did not return 'WWW-Authenticate: Bearer' header` in certain cases (for example, on OpenShift). ([#2258](https://github.com/GoogleContainerTools/jib/issues/2258))
+- Fixed an issue where using local Docker images (by `docker://...`) on Windows caused an error. ([#2270](https://github.com/GoogleContainerTools/jib/issues/2270))
+- Fixed build failures with Skaffold when the Gradle Java Platform plugin is applied. ([#2269](https://github.com/GoogleContainerTools/jib/issues/2269))
+- For Spring Boot projects using `containerizingMode = 'packaged'`, Jib now overrides `archiveClassifier` of the `jar` task only when safe and necessary. ([#2278](https://github.com/GoogleContainerTools/jib/issues/2278))
+- Fixed an issue where user-configured task dependencies for the Jib task is overwritten and thus ineffective. ([#2289](https://github.com/GoogleContainerTools/jib/pull/2289))
+
+## 2.0.0
+
+### Added
+
+- Added json output file for image metadata after a build is complete. Writes to `build/jib-image.json` by default, configurable with `jib.outputPaths.imageJson`. ([#2227](https://github.com/GoogleContainerTools/jib/pull/2227))
+- Added automatic update checks. Jib will now display a message if there is a new version of Jib available. See the [privacy page](../docs/privacy.md) for more details. ([#2193](https://github.com/GoogleContainerTools/jib/issues/2193))
+
+### Changed
+
 - Removed `jibDockerBuild.dockerClient` in favor of `jib.dockerClient`. ([#1983](https://github.com/GoogleContainerTools/jib/issues/1983))
 - Removed deprecated `jib.extraDirectory` configuration in favor of `jib.extraDirectories`. ([#1691](https://github.com/GoogleContainerTools/jib/issues/1691))
 - Removed deprecated `jib.container.useCurrentTimestamp` configuration in favor of `jib.container.creationTime` with `USE_CURRENT_TIMESTAMP`. ([#1897](https://github.com/GoogleContainerTools/jib/issues/1897))
@@ -20,8 +52,10 @@ All notable changes to this project will be documented in this file.
     - Initial builds will be slower until the cache is repopulated, unless you manually move the cache from the old location to the new location
 
 ### Fixed
+
 - `jibBuildTar` with `jib.container.format='OCI'` now builds a correctly formatted OCI archive. ([#2124](https://github.com/GoogleContainerTools/jib/issues/2124))
 - Now `jib.containerizingMode='packaged'` works as intended with Spring Boot projects that generate a fat JAR. ([#2178](https://github.com/GoogleContainerTools/jib/pull/2178))
+- Now automatically refreshes Docker registry authentication tokens when expired, fixing the issue that long-running builds may fail with "401 unauthorized." ([#691](https://github.com/GoogleContainerTools/jib/issues/691))
 
 ## 1.8.0
 

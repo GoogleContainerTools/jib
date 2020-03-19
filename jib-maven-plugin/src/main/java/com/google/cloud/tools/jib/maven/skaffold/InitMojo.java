@@ -39,16 +39,14 @@ public class InitMojo extends JibPluginConfiguration {
   public void execute() throws MojoExecutionException {
     checkJibVersion();
     MavenProject project = getProject();
-    // Ignore parent projects
-    if (project.getModules().size() > 0) {
+    // Ignore pom projects
+    if ("pom".equals(project.getPackaging())) {
       return;
     }
 
     SkaffoldInitOutput skaffoldInitOutput = new SkaffoldInitOutput();
     skaffoldInitOutput.setImage(getTargetImage());
-    if (project.getParent() != null && project.getParent().getFile() != null) {
-      skaffoldInitOutput.setProject(project.getArtifactId());
-    }
+    skaffoldInitOutput.setProject(project.getGroupId() + ":" + project.getArtifactId());
     System.out.println();
     System.out.println("BEGIN JIB JSON");
     try {

@@ -16,8 +16,8 @@
 
 package com.google.cloud.tools.jib.image;
 
-import com.google.cloud.tools.jib.api.AbsoluteUnixPath;
-import com.google.cloud.tools.jib.api.Port;
+import com.google.cloud.tools.jib.api.buildplan.AbsoluteUnixPath;
+import com.google.cloud.tools.jib.api.buildplan.Port;
 import com.google.cloud.tools.jib.configuration.DockerHealthCheck;
 import com.google.cloud.tools.jib.image.json.HistoryEntry;
 import com.google.cloud.tools.jib.image.json.ManifestTemplate;
@@ -103,7 +103,7 @@ public class Image {
      */
     public Builder addEnvironment(@Nullable Map<String, String> environment) {
       if (environment != null) {
-        this.environmentBuilder.putAll(environment);
+        environmentBuilder.putAll(environment);
       }
       return this;
     }
@@ -250,6 +250,11 @@ public class Image {
       return this;
     }
 
+    /**
+     * Create an {@link Image} instance.
+     *
+     * @return a new {@link Image} instance
+     */
     public Image build() {
       return new Image(
           imageFormat,
@@ -289,7 +294,7 @@ public class Image {
   /** The layers of the image, in the order in which they are applied. */
   private final ImmutableList<Layer> layers;
 
-  /** The commands used to build each layer of the image */
+  /** The commands used to build each layer of the image. */
   private final ImmutableList<HistoryEntry> history;
 
   /** Environment variable definitions for running the image, in the format {@code NAME=VALUE}. */
@@ -310,13 +315,13 @@ public class Image {
   /** Directories to mount as volumes. */
   @Nullable private final ImmutableSet<AbsoluteUnixPath> volumes;
 
-  /** Labels on the container configuration */
+  /** Labels on the container configuration. */
   @Nullable private final ImmutableMap<String, String> labels;
 
-  /** Working directory on the container configuration */
+  /** Working directory on the container configuration. */
   @Nullable private final String workingDirectory;
 
-  /** User on the container configuration */
+  /** User on the container configuration. */
   @Nullable private final String user;
 
   private Image(

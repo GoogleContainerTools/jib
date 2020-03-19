@@ -126,7 +126,7 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
     }
   }
 
-  /** Configuration for {@code from} parameter, */
+  /** Configuration for {@code from} parameter. */
   public static class FromConfiguration {
 
     @Nullable @Parameter private String image;
@@ -215,6 +215,8 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
     @Nullable @Parameter private File digest;
 
     @Nullable @Parameter private File imageId;
+
+    @Nullable @Parameter private File imageJson;
   }
 
   @Nullable
@@ -623,6 +625,14 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
             ? Paths.get(getProject().getBuild().getDirectory()).resolve("jib-image.id")
             : outputPaths.imageId.toPath();
     return getRelativeToProjectRoot(configuredPath, PropertyNames.OUTPUT_PATHS_IMAGE_ID);
+  }
+
+  Path getImageJsonOutputPath() {
+    Path configuredPath =
+        outputPaths.imageJson == null
+            ? Paths.get(getProject().getBuild().getDirectory()).resolve("jib-image.json")
+            : outputPaths.imageJson.toPath();
+    return getRelativeToProjectRoot(configuredPath, PropertyNames.OUTPUT_PATHS_IMAGE_JSON);
   }
 
   private Path getRelativeToProjectRoot(Path configuration, String propertyName) {

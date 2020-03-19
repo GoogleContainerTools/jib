@@ -1,14 +1,7 @@
 #!/bin/bash
 
-set -e
-set -x
-
-# On Mac, the default "credsStore" is set to "desktop". However, "desktop" is a
-# protected credential store, so "docker login" fails to modify it.
-# https://github.com/GoogleContainerTools/jib/issues/2189
-if [ "${KOKORO_JOB_CLUSTER}" = "MACOS_EXTERNAL" ]; then
-  cat <<< '{"credsStore":"gcr"}' > "${HOME}/.docker/config.json"
-fi
+set -o errexit
+set -o xtrace
 
 gcloud components install docker-credential-gcr
 

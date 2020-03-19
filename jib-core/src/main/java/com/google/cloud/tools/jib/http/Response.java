@@ -33,12 +33,18 @@ public class Response implements Closeable {
     this.httpResponse = httpResponse;
   }
 
-  /** @return the HTTP status code of the response */
+  /**
+   * Returns the HTTP status code of the response.
+   *
+   * @return the HTTP status code of the response
+   */
   public int getStatusCode() {
     return httpResponse.getStatusCode();
   }
 
   /**
+   * Returns a list of the header string values for the given header name.
+   *
    * @param headerName the header name
    * @return a list of headers in the response
    */
@@ -47,6 +53,8 @@ public class Response implements Closeable {
   }
 
   /**
+   * Returns the content length from the header.
+   *
    * @return the first {@code Content-Length} header, or {@code -1} if not found
    * @throws NumberFormatException if parsing the content length header fails
    */
@@ -65,6 +73,8 @@ public class Response implements Closeable {
   }
 
   /**
+   * Returns the content of the HTTP response.
+   *
    * @return the HTTP response body as an {@link InputStream}.
    * @throws IOException if getting the HTTP response content fails.
    */
@@ -72,7 +82,11 @@ public class Response implements Closeable {
     return httpResponse.getContent();
   }
 
-  /** @return the original request URL */
+  /**
+   * Returns the original request URL.
+   *
+   * @return the original request URL
+   */
   public GenericUrl getRequestUrl() {
     return httpResponse.getRequest().getUrl();
   }

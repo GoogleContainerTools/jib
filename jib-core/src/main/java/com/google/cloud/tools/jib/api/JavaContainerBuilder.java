@@ -17,6 +17,9 @@
 package com.google.cloud.tools.jib.api;
 
 import com.google.cloud.tools.jib.ProjectInfo;
+import com.google.cloud.tools.jib.api.buildplan.AbsoluteUnixPath;
+import com.google.cloud.tools.jib.api.buildplan.FileEntriesLayer;
+import com.google.cloud.tools.jib.api.buildplan.RelativeUnixPath;
 import com.google.cloud.tools.jib.filesystem.DirectoryWalker;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
@@ -202,7 +205,7 @@ public class JavaContainerBuilder {
   private RelativeUnixPath othersDestination = RelativeUnixPath.get("classpath");
   @Nullable private String mainClass;
   private BiFunction<Path, AbsoluteUnixPath, Instant> modificationTimeProvider =
-      LayerConfiguration.DEFAULT_MODIFICATION_TIME_PROVIDER;
+      FileEntriesLayer.DEFAULT_MODIFICATION_TIME_PROVIDER;
 
   private JavaContainerBuilder(JibContainerBuilder jibContainerBuilder) {
     this.jibContainerBuilder = jibContainerBuilder;
@@ -546,7 +549,7 @@ public class JavaContainerBuilder {
           "Failed to construct entrypoint because no files were added to the JavaContainerBuilder");
     }
 
-    Map<LayerType, LayerConfiguration.Builder> layerBuilders = new EnumMap<>(LayerType.class);
+    Map<LayerType, FileEntriesLayer.Builder> layerBuilders = new EnumMap<>(LayerType.class);
 
     // Add classes to layer configuration
     for (PathPredicatePair directory : addedClasses) {
@@ -623,9 +626,9 @@ public class JavaContainerBuilder {
     }
 
     // Add layer configurations to container builder
-    List<LayerConfiguration> layers = new ArrayList<>();
+    List<FileEntriesLayer> layers = new ArrayList<>();
     layerBuilders.forEach((type, builder) -> layers.add(builder.setName(type.getName()).build()));
-    jibContainerBuilder.setLayers(layers);
+    jibContainerBuilder.setFileEntriesLayers(layers);
 
     if (mainClass != null) {
       // Construct entrypoint. Ensure classpath elements are in the same order as the files were
@@ -677,28 +680,28 @@ public class JavaContainerBuilder {
   }
 
   private void addFileToLayer(
-      Map<LayerType, LayerConfiguration.Builder> layerBuilders,
+      Map<LayerType, FileEntriesLayer.Builder> layerBuilders,
       LayerType layerType,
       Path sourceFile,
       AbsoluteUnixPath pathInContainer) {
     if (!layerBuilders.containsKey(layerType)) {
-      layerBuilders.put(layerType, LayerConfiguration.builder());
+      layerBuilders.put(layerType, FileEntriesLayer.builder());
     }
     Instant modificationTime = modificationTimeProvider.apply(sourceFile, pathInContainer);
     layerBuilders.get(layerType).addEntry(sourceFile, pathInContainer, modificationTime);
   }
 
   private void addDirectoryContentsToLayer(
-      Map<LayerType, LayerConfiguration.Builder> layerBuilders,
+      Map<LayerType, FileEntriesLayer.Builder> layerBuilders,
       LayerType layerType,
       Path sourceRoot,
       Predicate<Path> pathFilter,
       AbsoluteUnixPath basePathInContainer)
       throws IOException {
     if (!layerBuilders.containsKey(layerType)) {
-      layerBuilders.put(layerType, LayerConfiguration.builder());
+      layerBuilders.put(layerType, FileEntriesLayer.builder());
     }
-    LayerConfiguration.Builder builder = layerBuilders.get(layerType);
+    FileEntriesLayer.Builder builder = layerBuilders.get(layerType);
 
     new DirectoryWalker(sourceRoot)
         .filterRoot()

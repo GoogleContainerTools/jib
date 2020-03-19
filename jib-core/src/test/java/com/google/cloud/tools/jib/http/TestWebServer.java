@@ -47,11 +47,15 @@ public class TestWebServer implements Closeable {
   private final boolean https;
   private final int numThreads;
   private final List<String> responses;
+  private final boolean forgetServedResponses;
 
   private final ServerSocket serverSocket;
   private final ExecutorService executorService;
   private final Semaphore serverStarted = new Semaphore(1);
   private final StringBuilder inputRead = new StringBuilder();
+
+  private int totalResponsesServed = 0;
+  private int globalResponseIndex = 0;
 
   public TestWebServer(boolean https)
       throws IOException, InterruptedException, GeneralSecurityException, URISyntaxException {
@@ -65,9 +69,16 @@ public class TestWebServer implements Closeable {
 
   public TestWebServer(boolean https, List<String> responses, int numThreads)
       throws IOException, InterruptedException, GeneralSecurityException, URISyntaxException {
+    this(https, responses, numThreads, false);
+  }
+
+  public TestWebServer(
+      boolean https, List<String> responses, int numThreads, boolean forgetServedResponses)
+      throws IOException, InterruptedException, GeneralSecurityException, URISyntaxException {
     this.https = https;
     this.responses = responses;
     this.numThreads = numThreads;
+    this.forgetServedResponses = forgetServedResponses;
     serverSocket = https ? createHttpsServerSocket() : new ServerSocket(0);
     executorService = Executors.newFixedThreadPool(numThreads + 1);
     ignoreReturn(executorService.submit(this::listen));
@@ -122,29 +133,44 @@ public class TestWebServer implements Closeable {
       OutputStream out = socket.getOutputStream();
 
       int firstByte = in.read();
-      if (firstByte != 'G' && firstByte != 'P') { // GET, POST, ...
-        out.write("HTTP/1.1 400 Bad Request\n\n".getBytes(StandardCharsets.UTF_8));
+      int secondByte = in.read();
+      if (!(firstByte == 'G' && secondByte == 'E')
+          && !(firstByte == 'P' && secondByte == 'O')
+          && !(firstByte == 'H' && secondByte == 'E')) { // GET, POST, HEAD, ...
+        out.write(
+            "HTTP/1.1 400 Bad Request\nContent-Length: 0\n\n".getBytes(StandardCharsets.UTF_8));
         return null;
       }
 
       BufferedReader reader = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8));
-      for (String response : responses) {
+      for (int i = 0; true; i++) {
         for (String line = reader.readLine();
             line != null && !line.isEmpty(); // An empty line marks the end of an HTTP request.
             line = reader.readLine()) {
           synchronized (inputRead) {
             if (firstByte != -1) {
-              inputRead.append((char) firstByte);
+              inputRead.append((char) firstByte).append((char) secondByte);
               firstByte = -1;
             }
             inputRead.append(line).append('\n');
           }
         }
+        String response = getNextResponse(i);
+        if (response == null) {
+          return null;
+        }
         out.write(response.getBytes(StandardCharsets.UTF_8));
-        socket.getOutputStream().flush();
+        out.flush();
       }
     }
-    return null;
+  }
+
+  private synchronized String getNextResponse(int index) {
+    if (index >= responses.size() || globalResponseIndex >= responses.size()) {
+      return null;
+    }
+    totalResponsesServed++;
+    return forgetServedResponses ? responses.get(globalResponseIndex++) : responses.get(index);
   }
 
   // For use to ignore (i.e., accept and do nothing) a return value from ExecutionService.submit().
@@ -161,5 +187,9 @@ public class TestWebServer implements Closeable {
     synchronized (inputRead) {
       return inputRead.toString();
     }
+  }
+
+  public synchronized int getTotalResponsesServed() {
+    return totalResponsesServed;
   }
 }

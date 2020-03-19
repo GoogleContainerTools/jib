@@ -69,7 +69,7 @@ import org.apache.http.impl.client.HttpClientBuilder;
  *       </ol>
  * </ul>
  *
- * This failover behavior is similar to how the Docker client works:
+ * <p>This failover behavior is similar to how the Docker client works:
  * https://docs.docker.com/registry/insecure/#deploy-a-plain-http-registry
  */
 public class FailoverHttpClient {
@@ -125,6 +125,13 @@ public class FailoverHttpClient {
   private final Deque<HttpTransport> transportsCreated = new ArrayDeque<>();
   private final Deque<Response> responsesCreated = new ArrayDeque<>();
 
+  /**
+   * Create a new FailoverHttpclient.
+   *
+   * @param enableHttpAndInsecureFailover to enable automatic failover to insecure connection types
+   * @param sendAuthorizationOverHttp allow sending auth over http connections
+   * @param logger to receive log events
+   */
   public FailoverHttpClient(
       boolean enableHttpAndInsecureFailover,
       boolean sendAuthorizationOverHttp,

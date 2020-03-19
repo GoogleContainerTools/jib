@@ -35,6 +35,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.Future;
 import javax.annotation.Nullable;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.GradleException;
@@ -75,8 +76,10 @@ public class BuildTarTask extends DefaultTask implements JibTask {
   }
 
   /**
-   * @return a collection of all the files that jib includes in the image. Only used to calculate
-   *     UP-TO-DATE.
+   * Returns a collection of all the files that jib includes in the image. Only used to calculate
+   * UP-TO-DATE.
+   *
+   * @return a list of paths of input files
    */
   @InputFiles
   public FileCollection getInputFiles() {
@@ -95,6 +98,14 @@ public class BuildTarTask extends DefaultTask implements JibTask {
     return Preconditions.checkNotNull(jibExtension).getOutputPaths().getTarPath().toString();
   }
 
+  /**
+   * Task Action, builds an image to tar file.
+   *
+   * @throws IOException if an error occurs creating the jib runner
+   * @throws BuildStepsExecutionException if an error occurs while executing build steps
+   * @throws CacheDirectoryCreationException if a new cache directory could not be created
+   * @throws MainClassInferenceException if a main class could not be found
+   */
   @TaskAction
   public void buildTar()
       throws BuildStepsExecutionException, IOException, CacheDirectoryCreationException,
@@ -106,6 +117,8 @@ public class BuildTarTask extends DefaultTask implements JibTask {
 
     GradleProjectProperties projectProperties =
         GradleProjectProperties.getForProject(getProject(), getLogger(), tempDirectoryProvider);
+    Future<Optional<String>> updateCheckFuture =
+        TaskCommon.newUpdateChecker(projectProperties, getLogger());
     try {
       PluginConfigurationProcessor.createJibBuildRunnerForTarImage(
               new GradleRawConfiguration(jibExtension),
@@ -159,6 +172,7 @@ public class BuildTarTask extends DefaultTask implements JibTask {
 
     } finally {
       tempDirectoryProvider.close();
+      TaskCommon.finishUpdateChecker(projectProperties, updateCheckFuture);
       projectProperties.waitForLoggingThread();
     }
   }

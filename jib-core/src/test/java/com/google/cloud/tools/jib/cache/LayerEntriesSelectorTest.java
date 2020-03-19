@@ -16,11 +16,11 @@
 
 package com.google.cloud.tools.jib.cache;
 
-import com.google.cloud.tools.jib.api.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.api.DescriptorDigest;
-import com.google.cloud.tools.jib.api.FilePermissions;
-import com.google.cloud.tools.jib.api.LayerConfiguration;
-import com.google.cloud.tools.jib.api.LayerEntry;
+import com.google.cloud.tools.jib.api.buildplan.AbsoluteUnixPath;
+import com.google.cloud.tools.jib.api.buildplan.FileEntriesLayer;
+import com.google.cloud.tools.jib.api.buildplan.FileEntry;
+import com.google.cloud.tools.jib.api.buildplan.FilePermissions;
 import com.google.cloud.tools.jib.cache.LayerEntriesSelector.LayerEntryTemplate;
 import com.google.cloud.tools.jib.hash.Digests;
 import com.google.common.collect.ImmutableList;
@@ -39,22 +39,22 @@ import org.junit.rules.TemporaryFolder;
 /** Tests for {@link LayerEntriesSelector}. */
 public class LayerEntriesSelectorTest {
 
-  private static LayerEntry defaultLayerEntry(Path source, AbsoluteUnixPath destination) {
-    return new LayerEntry(
+  private static FileEntry defaultLayerEntry(Path source, AbsoluteUnixPath destination) {
+    return new FileEntry(
         source,
         destination,
-        LayerConfiguration.DEFAULT_FILE_PERMISSIONS_PROVIDER.apply(source, destination),
-        LayerConfiguration.DEFAULT_MODIFICATION_TIME);
+        FileEntriesLayer.DEFAULT_FILE_PERMISSIONS_PROVIDER.apply(source, destination),
+        FileEntriesLayer.DEFAULT_MODIFICATION_TIME);
   }
 
   @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
-  private ImmutableList<LayerEntry> outOfOrderLayerEntries;
-  private ImmutableList<LayerEntry> inOrderLayerEntries;
+  private ImmutableList<FileEntry> outOfOrderLayerEntries;
+  private ImmutableList<FileEntry> inOrderLayerEntries;
 
   private static ImmutableList<LayerEntryTemplate> toLayerEntryTemplates(
-      ImmutableList<LayerEntry> layerEntries) throws IOException {
+      ImmutableList<FileEntry> layerEntries) throws IOException {
     ImmutableList.Builder<LayerEntryTemplate> builder = ImmutableList.builder();
-    for (LayerEntry layerEntry : layerEntries) {
+    for (FileEntry layerEntry : layerEntries) {
       builder.add(new LayerEntryTemplate(layerEntry));
     }
     return builder.build();
@@ -67,23 +67,22 @@ public class LayerEntriesSelectorTest {
     Path file2 = Files.createFile(folder.resolve("files").resolve("two"));
     Path file3 = Files.createFile(folder.resolve("gile"));
 
-    LayerEntry testLayerEntry1 = defaultLayerEntry(file1, AbsoluteUnixPath.get("/extraction/path"));
-    LayerEntry testLayerEntry2 = defaultLayerEntry(file2, AbsoluteUnixPath.get("/extraction/path"));
-    LayerEntry testLayerEntry3 = defaultLayerEntry(file3, AbsoluteUnixPath.get("/extraction/path"));
-    LayerEntry testLayerEntry4 =
-        new LayerEntry(
+    FileEntry testLayerEntry1 = defaultLayerEntry(file1, AbsoluteUnixPath.get("/extraction/path"));
+    FileEntry testLayerEntry2 = defaultLayerEntry(file2, AbsoluteUnixPath.get("/extraction/path"));
+    FileEntry testLayerEntry3 = defaultLayerEntry(file3, AbsoluteUnixPath.get("/extraction/path"));
+    FileEntry testLayerEntry4 =
+        new FileEntry(
             file3,
             AbsoluteUnixPath.get("/extraction/path"),
             FilePermissions.fromOctalString("755"),
-            LayerConfiguration.DEFAULT_MODIFICATION_TIME);
-    LayerEntry testLayerEntry5 =
-        defaultLayerEntry(file3, AbsoluteUnixPath.get("/extraction/patha"));
-    LayerEntry testLayerEntry6 =
-        new LayerEntry(
+            FileEntriesLayer.DEFAULT_MODIFICATION_TIME);
+    FileEntry testLayerEntry5 = defaultLayerEntry(file3, AbsoluteUnixPath.get("/extraction/patha"));
+    FileEntry testLayerEntry6 =
+        new FileEntry(
             file3,
             AbsoluteUnixPath.get("/extraction/patha"),
             FilePermissions.fromOctalString("755"),
-            LayerConfiguration.DEFAULT_MODIFICATION_TIME);
+            FileEntriesLayer.DEFAULT_MODIFICATION_TIME);
 
     outOfOrderLayerEntries =
         ImmutableList.of(
@@ -136,7 +135,7 @@ public class LayerEntriesSelectorTest {
   public void testGenerateSelector_sourceModificationTimeChanged() throws IOException {
     Path layerFile = temporaryFolder.newFile().toPath();
     Files.setLastModifiedTime(layerFile, FileTime.from(Instant.EPOCH));
-    LayerEntry layerEntry = defaultLayerEntry(layerFile, AbsoluteUnixPath.get("/extraction/path"));
+    FileEntry layerEntry = defaultLayerEntry(layerFile, AbsoluteUnixPath.get("/extraction/path"));
     DescriptorDigest expectedSelector =
         LayerEntriesSelector.generateSelector(ImmutableList.of(layerEntry));
 
@@ -157,8 +156,8 @@ public class LayerEntriesSelectorTest {
     AbsoluteUnixPath pathInContainer = AbsoluteUnixPath.get("/bar");
     FilePermissions permissions = FilePermissions.fromOctalString("111");
 
-    LayerEntry layerEntry1 = new LayerEntry(layerFile, pathInContainer, permissions, Instant.now());
-    LayerEntry layerEntry2 = new LayerEntry(layerFile, pathInContainer, permissions, Instant.EPOCH);
+    FileEntry layerEntry1 = new FileEntry(layerFile, pathInContainer, permissions, Instant.now());
+    FileEntry layerEntry2 = new FileEntry(layerFile, pathInContainer, permissions, Instant.EPOCH);
 
     // Verify that different target modification times generate different selectors
     Assert.assertNotEquals(
@@ -170,18 +169,18 @@ public class LayerEntriesSelectorTest {
   public void testGenerateSelector_permissionsModified() throws IOException {
     Path layerFile = temporaryFolder.newFolder("testFolder").toPath().resolve("file");
     Files.write(layerFile, "hello".getBytes(StandardCharsets.UTF_8));
-    LayerEntry layerEntry111 =
-        new LayerEntry(
+    FileEntry layerEntry111 =
+        new FileEntry(
             layerFile,
             AbsoluteUnixPath.get("/extraction/path"),
             FilePermissions.fromOctalString("111"),
-            LayerConfiguration.DEFAULT_MODIFICATION_TIME);
-    LayerEntry layerEntry222 =
-        new LayerEntry(
+            FileEntriesLayer.DEFAULT_MODIFICATION_TIME);
+    FileEntry layerEntry222 =
+        new FileEntry(
             layerFile,
             AbsoluteUnixPath.get("/extraction/path"),
             FilePermissions.fromOctalString("222"),
-            LayerConfiguration.DEFAULT_MODIFICATION_TIME);
+            FileEntriesLayer.DEFAULT_MODIFICATION_TIME);
 
     // Verify that changing permissions generates a different selector
     Assert.assertNotEquals(

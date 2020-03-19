@@ -16,6 +16,10 @@
 
 package com.google.cloud.tools.jib.api;
 
+import com.google.cloud.tools.jib.api.buildplan.AbsoluteUnixPath;
+import com.google.cloud.tools.jib.api.buildplan.FileEntriesLayer;
+import com.google.cloud.tools.jib.api.buildplan.ImageFormat;
+import com.google.cloud.tools.jib.api.buildplan.Port;
 import com.google.cloud.tools.jib.configuration.BuildContext;
 import com.google.cloud.tools.jib.configuration.ContainerConfiguration;
 import com.google.cloud.tools.jib.configuration.ImageConfiguration;
@@ -45,8 +49,8 @@ import org.mockito.junit.MockitoJUnitRunner;
 public class JibContainerBuilderTest {
 
   @Spy private BuildContext.Builder spyBuildContextBuilder;
-  @Mock private LayerConfiguration mockLayerConfiguration1;
-  @Mock private LayerConfiguration mockLayerConfiguration2;
+  @Mock private FileEntriesLayer mockLayerConfiguration1;
+  @Mock private FileEntriesLayer mockLayerConfiguration2;
   @Mock private CredentialRetriever mockCredentialRetriever;
   @Mock private Consumer<JibEvent> mockJibEventConsumer;
   @Mock private JibEvent mockJibEvent;
@@ -139,7 +143,7 @@ public class JibContainerBuilderTest {
             .build();
     JibContainerBuilder jibContainerBuilder =
         new JibContainerBuilder(baseImageConfiguration, spyBuildContextBuilder)
-            .setLayers(Arrays.asList(mockLayerConfiguration1, mockLayerConfiguration2));
+            .setFileEntriesLayers(Arrays.asList(mockLayerConfiguration1, mockLayerConfiguration2));
     BuildContext buildContext = jibContainerBuilder.toBuildContext(containerizer);
 
     Assert.assertEquals(

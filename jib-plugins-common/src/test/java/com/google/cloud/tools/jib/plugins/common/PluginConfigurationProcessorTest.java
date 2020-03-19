@@ -16,26 +16,29 @@
 
 package com.google.cloud.tools.jib.plugins.common;
 
-import com.google.cloud.tools.jib.api.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.api.CacheDirectoryCreationException;
 import com.google.cloud.tools.jib.api.Containerizer;
-import com.google.cloud.tools.jib.api.FilePermissions;
 import com.google.cloud.tools.jib.api.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.api.JavaContainerBuilder;
 import com.google.cloud.tools.jib.api.Jib;
 import com.google.cloud.tools.jib.api.JibContainerBuilder;
 import com.google.cloud.tools.jib.api.JibContainerBuilderTestHelper;
-import com.google.cloud.tools.jib.api.LayerEntry;
 import com.google.cloud.tools.jib.api.LogEvent;
 import com.google.cloud.tools.jib.api.RegistryImage;
+import com.google.cloud.tools.jib.api.buildplan.AbsoluteUnixPath;
+import com.google.cloud.tools.jib.api.buildplan.FileEntry;
+import com.google.cloud.tools.jib.api.buildplan.FilePermissions;
 import com.google.cloud.tools.jib.configuration.BuildContext;
 import com.google.cloud.tools.jib.configuration.ImageConfiguration;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.io.Resources;
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Instant;
@@ -71,19 +74,19 @@ public class PluginConfigurationProcessorTest {
   }
 
   private static <T> void assertLayerEntriesUnordered(
-      List<T> expectedPaths, List<LayerEntry> entries, Function<LayerEntry, T> fieldSelector) {
+      List<T> expectedPaths, List<FileEntry> entries, Function<FileEntry, T> fieldSelector) {
     List<T> expected = expectedPaths.stream().sorted().collect(Collectors.toList());
     List<T> actual = entries.stream().map(fieldSelector).sorted().collect(Collectors.toList());
     Assert.assertEquals(expected, actual);
   }
 
   private static void assertSourcePathsUnordered(
-      List<Path> expectedPaths, List<LayerEntry> entries) {
-    assertLayerEntriesUnordered(expectedPaths, entries, LayerEntry::getSourceFile);
+      List<Path> expectedPaths, List<FileEntry> entries) {
+    assertLayerEntriesUnordered(expectedPaths, entries, FileEntry::getSourceFile);
   }
 
   private static void assertExtractionPathsUnordered(
-      List<String> expectedPaths, List<LayerEntry> entries) {
+      List<String> expectedPaths, List<FileEntry> entries) {
     assertLayerEntriesUnordered(
         expectedPaths, entries, layerEntry -> layerEntry.getExtractionPath().toString());
   }
@@ -167,14 +170,14 @@ public class PluginConfigurationProcessorTest {
             ImmutableMap.of(AbsoluteUnixPath.get("/foo"), FilePermissions.fromOctalString("123")));
 
     BuildContext buildContext = getBuildContext(processCommonConfiguration());
-    List<LayerEntry> extraFiles =
+    List<FileEntry> extraFiles =
         buildContext
             .getLayerConfigurations()
             .stream()
             .filter(layer -> layer.getName().equals("extra files"))
             .collect(Collectors.toList())
             .get(0)
-            .getLayerEntries();
+            .getEntries();
 
     assertSourcePathsUnordered(
         Arrays.asList(
@@ -188,7 +191,7 @@ public class PluginConfigurationProcessorTest {
     assertExtractionPathsUnordered(
         Arrays.asList("/a", "/a/b", "/a/b/bar", "/c", "/c/cat", "/foo"), extraFiles);
 
-    Optional<LayerEntry> fooEntry =
+    Optional<FileEntry> fooEntry =
         extraFiles
             .stream()
             .filter(
@@ -906,11 +909,52 @@ public class PluginConfigurationProcessorTest {
 
   @Test
   public void testGetCreationTime_isoDateTimeValue() throws InvalidCreationTimeException {
-    Instant time =
-        PluginConfigurationProcessor.getCreationTime(
-            "2011-12-03T10:15:30+09:00", projectProperties);
     Instant expected = DateTimeFormatter.ISO_DATE_TIME.parse("2011-12-03T01:15:30Z", Instant::from);
-    Assert.assertEquals(expected, time);
+    List<String> validTimeStamps =
+        ImmutableList.of(
+            "2011-12-03T10:15:30+09:00",
+            "2011-12-03T10:15:30+09:00[Asia/Tokyo]",
+            "2011-12-02T16:15:30-09:00",
+            "2011-12-03T10:15:30+0900",
+            "2011-12-02T16:15:30-0900",
+            "2011-12-03T10:15:30+09",
+            "2011-12-02T16:15:30-09",
+            "2011-12-03T01:15:30Z");
+    for (String timeString : validTimeStamps) {
+      Instant time = PluginConfigurationProcessor.getCreationTime(timeString, projectProperties);
+      Assert.assertEquals("for " + timeString, expected, time);
+    }
+  }
+
+  @Test
+  public void testGetCreationTime_isoDateTimeValueTimeZoneRegionOnlyAllowedForMostStrict8601Mode() {
+    List<String> invalidTimeStamps =
+        ImmutableList.of(
+            "2011-12-03T01:15:30+0900[Asia/Tokyo]", "2011-12-03T01:15:30+09[Asia/Tokyo]");
+    for (String timeString : invalidTimeStamps) {
+      try {
+        PluginConfigurationProcessor.getCreationTime(timeString, projectProperties);
+        // this is the expected behavior, not specifically designed like this for any reason, feel
+        // free to change this behavior and update the test
+        Assert.fail(
+            "creationTime should fail if region specified when zone not in HH:MM mode - "
+                + timeString);
+      } catch (InvalidCreationTimeException ex) {
+        // pass
+      }
+    }
+  }
+
+  @Test
+  public void testGetCreationTime_isoDateTimeValueRequiresTimeZone() {
+    try {
+      PluginConfigurationProcessor.getCreationTime("2011-12-03T01:15:30", projectProperties);
+      // this is the expected behavior, not specifically designed like this for any reason, feel
+      // free to change this behavior and update the test
+      Assert.fail("getCreationTime should fail if timezone not specified");
+    } catch (InvalidCreationTimeException ex) {
+      // pass
+    }
   }
 
   @Test
@@ -943,5 +987,24 @@ public class PluginConfigurationProcessorTest {
           InvalidCreationTimeException {
     return PluginConfigurationProcessor.processCommonConfiguration(
         rawConfiguration, ignored -> Optional.empty(), projectProperties, containerizer);
+  }
+
+  @Test
+  public void getAllFiles_expandsDirectories() throws IOException {
+    File rootFile = temporaryFolder.newFile("file");
+    File folder = temporaryFolder.newFolder("folder");
+    File folderFile = temporaryFolder.newFile("folder/file2");
+    Assert.assertEquals(
+        ImmutableSet.of(rootFile.toPath().toAbsolutePath(), folderFile.toPath().toAbsolutePath()),
+        PluginConfigurationProcessor.getAllFiles(
+            ImmutableSet.of(rootFile.toPath(), folder.toPath())));
+  }
+
+  @Test
+  public void getAllFiles_doesntBreakForNonExistentFiles() throws IOException {
+    Path testPath = Paths.get("/a/file/that/doesnt/exist");
+    Assert.assertFalse(Files.exists(testPath));
+    Assert.assertEquals(
+        ImmutableSet.of(), PluginConfigurationProcessor.getAllFiles(ImmutableSet.of(testPath)));
   }
 }

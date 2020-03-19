@@ -16,7 +16,6 @@
 
 package com.google.cloud.tools.jib.plugins.common;
 
-import com.google.cloud.tools.jib.api.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.api.Containerizer;
 import com.google.cloud.tools.jib.api.Credential;
 import com.google.cloud.tools.jib.api.DockerDaemonImage;
@@ -26,11 +25,12 @@ import com.google.cloud.tools.jib.api.JavaContainerBuilder;
 import com.google.cloud.tools.jib.api.JavaContainerBuilder.LayerType;
 import com.google.cloud.tools.jib.api.Jib;
 import com.google.cloud.tools.jib.api.JibContainerBuilder;
-import com.google.cloud.tools.jib.api.LayerConfiguration;
 import com.google.cloud.tools.jib.api.LogEvent;
 import com.google.cloud.tools.jib.api.Ports;
 import com.google.cloud.tools.jib.api.RegistryImage;
 import com.google.cloud.tools.jib.api.TarImage;
+import com.google.cloud.tools.jib.api.buildplan.AbsoluteUnixPath;
+import com.google.cloud.tools.jib.api.buildplan.FileEntriesLayer;
 import com.google.cloud.tools.jib.frontend.CredentialRetrieverFactory;
 import com.google.cloud.tools.jib.global.JibSystemProperties;
 import com.google.common.annotations.VisibleForTesting;
@@ -44,6 +44,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeFormatterBuilder;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -51,6 +52,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.BiFunction;
+import java.util.stream.Stream;
 import javax.annotation.Nullable;
 
 /**
@@ -72,6 +74,30 @@ public class PluginConfigurationProcessor {
   private static final ImmutableList<String> CONST_LAYERS =
       ImmutableList.of(LayerType.DEPENDENCIES.getName());
 
+  /**
+   * Generate a runner for image builds to docker daemon.
+   *
+   * @param rawConfiguration the raw configuration from the plugin
+   * @param inferredAuthProvider the plugin specific auth provider
+   * @param projectProperties an plugin specific implementation of {@link ProjectProperties}
+   * @param helpfulSuggestions a plugin specific instance of {@link HelpfulSuggestions}
+   * @return new {@link JibBuildRunner} to execute a build
+   * @throws InvalidImageReferenceException if the image reference is invalid
+   * @throws MainClassInferenceException if a main class could not be found
+   * @throws InvalidAppRootException if the specific path for application root is invalid
+   * @throws IOException if an error occurs creating the container builder
+   * @throws InvalidWorkingDirectoryException if the working directory specified for the build is
+   *     invalid
+   * @throws InvalidContainerVolumeException if a specific container volume is invalid
+   * @throws IncompatibleBaseImageJavaVersionException if the base image java version cannot support
+   *     this build
+   * @throws NumberFormatException if a string to number conversion operation fails
+   * @throws InvalidContainerizingModeException if an invalid {@link ContainerizingMode} was
+   *     specified
+   * @throws InvalidFilesModificationTimeException if configured modification time could not be
+   *     parsed
+   * @throws InvalidCreationTimeException if configured creation time could not be parsed
+   */
   public static JibBuildRunner createJibBuildRunnerForDockerDaemonImage(
       RawConfiguration rawConfiguration,
       InferredAuthProvider inferredAuthProvider,
@@ -103,9 +129,34 @@ public class PluginConfigurationProcessor {
             targetImageReference,
             rawConfiguration.getToTags())
         .writeImageDigest(rawConfiguration.getDigestOutputPath())
-        .writeImageId(rawConfiguration.getImageIdOutputPath());
+        .writeImageId(rawConfiguration.getImageIdOutputPath())
+        .writeImageJson(rawConfiguration.getImageJsonOutputPath());
   }
 
+  /**
+   * Generate a runner for image builds to tar file.
+   *
+   * @param rawConfiguration the raw configuration from the plugin
+   * @param inferredAuthProvider the plugin specific auth provider
+   * @param projectProperties an plugin specific implementation of {@link ProjectProperties}
+   * @param helpfulSuggestions a plugin specific instance of {@link HelpfulSuggestions}
+   * @return new {@link JibBuildRunner} to execute a build
+   * @throws InvalidImageReferenceException if the image reference is invalid
+   * @throws MainClassInferenceException if a main class could not be found
+   * @throws InvalidAppRootException if the specific path for application root is invalid
+   * @throws IOException if an error occurs creating the container builder
+   * @throws InvalidWorkingDirectoryException if the working directory specified for the build is
+   *     invalid
+   * @throws InvalidContainerVolumeException if a specific container volume is invalid
+   * @throws IncompatibleBaseImageJavaVersionException if the base image java version cannot support
+   *     this build
+   * @throws NumberFormatException if a string to number conversion operation fails
+   * @throws InvalidContainerizingModeException if an invalid {@link ContainerizingMode} was
+   *     specified
+   * @throws InvalidFilesModificationTimeException if configured modification time could not be
+   *     parsed
+   * @throws InvalidCreationTimeException if configured creation time could not be parsed
+   */
   public static JibBuildRunner createJibBuildRunnerForTarImage(
       RawConfiguration rawConfiguration,
       InferredAuthProvider inferredAuthProvider,
@@ -136,9 +187,34 @@ public class PluginConfigurationProcessor {
             helpfulSuggestions,
             rawConfiguration.getTarOutputPath())
         .writeImageDigest(rawConfiguration.getDigestOutputPath())
-        .writeImageId(rawConfiguration.getImageIdOutputPath());
+        .writeImageId(rawConfiguration.getImageIdOutputPath())
+        .writeImageJson(rawConfiguration.getImageJsonOutputPath());
   }
 
+  /**
+   * Generate a runner for image builds to registries.
+   *
+   * @param rawConfiguration the raw configuration from the plugin
+   * @param inferredAuthProvider the plugin specific auth provider
+   * @param projectProperties an plugin specific implementation of {@link ProjectProperties}
+   * @param helpfulSuggestions a plugin specific instance of {@link HelpfulSuggestions}
+   * @return new {@link JibBuildRunner} to execute a build
+   * @throws InvalidImageReferenceException if the image reference is invalid
+   * @throws MainClassInferenceException if a main class could not be found
+   * @throws InvalidAppRootException if the specific path for application root is invalid
+   * @throws IOException if an error occurs creating the container builder
+   * @throws InvalidWorkingDirectoryException if the working directory specified for the build is
+   *     invalid
+   * @throws InvalidContainerVolumeException if a specific container volume is invalid
+   * @throws IncompatibleBaseImageJavaVersionException if the base image java version cannot support
+   *     this build
+   * @throws NumberFormatException if a string to number conversion operation fails
+   * @throws InvalidContainerizingModeException if an invalid {@link ContainerizingMode} was
+   *     specified
+   * @throws InvalidFilesModificationTimeException if configured modification time could not be
+   *     parsed
+   * @throws InvalidCreationTimeException if configured creation time could not be parsed
+   */
   public static JibBuildRunner createJibBuildRunnerForRegistryImage(
       RawConfiguration rawConfiguration,
       InferredAuthProvider inferredAuthProvider,
@@ -166,10 +242,8 @@ public class PluginConfigurationProcessor {
         rawConfiguration.getToCredHelper().orElse(null));
 
     boolean alwaysCacheBaseImage =
-        Boolean.valueOf(
-            rawConfiguration
-                .getProperty(PropertyNames.ALWAYS_CACHE_BASE_IMAGE)
-                .orElse(Boolean.FALSE.toString()));
+        Boolean.parseBoolean(
+            rawConfiguration.getProperty(PropertyNames.ALWAYS_CACHE_BASE_IMAGE).orElse("false"));
     Containerizer containerizer =
         Containerizer.to(targetImage).setAlwaysCacheBaseImage(alwaysCacheBaseImage);
 
@@ -188,11 +262,35 @@ public class PluginConfigurationProcessor {
             targetImageReference,
             rawConfiguration.getToTags())
         .writeImageDigest(rawConfiguration.getDigestOutputPath())
-        .writeImageId(rawConfiguration.getImageIdOutputPath());
+        .writeImageId(rawConfiguration.getImageIdOutputPath())
+        .writeImageJson(rawConfiguration.getImageJsonOutputPath());
   }
 
+  /**
+   * Generate a skaffold syncmap JSON string for an image build configuration.
+   *
+   * @param rawConfiguration the raw configuration from the plugin
+   * @param projectProperties an plugin specific implementation of {@link ProjectProperties}
+   * @param excludes a set of paths to exclude, directories include in this list will be expanded
+   * @return new json string representation of the Sync Map
+   * @throws InvalidImageReferenceException if the image reference is invalid
+   * @throws MainClassInferenceException if a main class could not be found
+   * @throws InvalidAppRootException if the specific path for application root is invalid
+   * @throws IOException if an error occurs creating the container builder
+   * @throws InvalidWorkingDirectoryException if the working directory specified for the build is
+   *     invalid
+   * @throws InvalidContainerVolumeException if a specific container volume is invalid
+   * @throws IncompatibleBaseImageJavaVersionException if the base image java version cannot support
+   *     this build
+   * @throws NumberFormatException if a string to number conversion operation fails
+   * @throws InvalidContainerizingModeException if an invalid {@link ContainerizingMode} was
+   *     specified
+   * @throws InvalidFilesModificationTimeException if configured modification time could not be
+   *     parsed
+   * @throws InvalidCreationTimeException if configured creation time could not be parsed
+   */
   public static String getSkaffoldSyncMap(
-      RawConfiguration rawConfiguration, ProjectProperties projectProperties)
+      RawConfiguration rawConfiguration, ProjectProperties projectProperties, Set<Path> excludes)
       throws IOException, InvalidCreationTimeException, InvalidImageReferenceException,
           IncompatibleBaseImageJavaVersionException, InvalidContainerVolumeException,
           MainClassInferenceException, InvalidAppRootException, InvalidWorkingDirectoryException,
@@ -203,25 +301,47 @@ public class PluginConfigurationProcessor {
     SkaffoldSyncMapTemplate syncMap = new SkaffoldSyncMapTemplate();
     // since jib has already expanded out directories after processing everything, we just
     // ignore directories and provide only files to watch
-    for (LayerConfiguration layer : jibContainerBuilder.describeContainer().getLayers()) {
+    Set<Path> excludesExpanded = getAllFiles(excludes);
+    for (FileEntriesLayer layer : jibContainerBuilder.describeContainer().getFileEntriesLayers()) {
       if (CONST_LAYERS.contains(layer.getName())) {
         continue;
       }
       if (GENERATED_LAYERS.contains(layer.getName())) {
         layer
-            .getLayerEntries()
+            .getEntries()
             .stream()
             .filter(layerEntry -> Files.isRegularFile(layerEntry.getSourceFile()))
+            .filter(
+                layerEntry ->
+                    !excludesExpanded.contains(layerEntry.getSourceFile().toAbsolutePath()))
             .forEach(syncMap::addGenerated);
       } else { // this is a direct layer
         layer
-            .getLayerEntries()
+            .getEntries()
             .stream()
             .filter(layerEntry -> Files.isRegularFile(layerEntry.getSourceFile()))
+            .filter(
+                layerEntry ->
+                    !excludesExpanded.contains(layerEntry.getSourceFile().toAbsolutePath()))
             .forEach(syncMap::addDirect);
       }
     }
     return syncMap.getJsonString();
+  }
+
+  /** Expand directories to files (excludes directory paths). */
+  static Set<Path> getAllFiles(Set<Path> paths) throws IOException {
+    Set<Path> expanded = new HashSet<>();
+    for (Path path : paths) {
+      if (Files.isRegularFile(path)) {
+        expanded.add(path);
+      } else if (Files.isDirectory(path)) {
+        try (Stream<Path> dirWalk = Files.walk(path)) {
+          dirWalk.filter(Files::isRegularFile).forEach(expanded::add);
+        }
+      }
+    }
+    return expanded;
   }
 
   @VisibleForTesting
@@ -263,7 +383,7 @@ public class PluginConfigurationProcessor {
     // Adds all the extra files.
     for (Path directory : rawConfiguration.getExtraDirectories()) {
       if (Files.exists(directory)) {
-        jibContainerBuilder.addLayer(
+        jibContainerBuilder.addFileEntriesLayer(
             JavaContainerBuilderHelper.extraDirectoryLayerConfiguration(
                 directory,
                 rawConfiguration.getExtraDirectoryPermissions(),
@@ -362,7 +482,9 @@ public class PluginConfigurationProcessor {
   }
 
   /**
-   * Compute the container entrypoint, in this order:
+   * Computes the container entrypoint.
+   *
+   * <p>Computation occurs in this order:
    *
    * <ol>
    *   <li>null (inheriting from the base image), if the user specified value is {@code INHERIT}
@@ -471,7 +593,7 @@ public class PluginConfigurationProcessor {
   }
 
   /**
-   * Parses the list of raw volumes directories to a set of {@link AbsoluteUnixPath}
+   * Parses the list of raw volumes directories to a set of {@link AbsoluteUnixPath}.
    *
    * @param rawConfiguration raw configuration data
    * @return the set of parsed volumes.
@@ -609,9 +731,16 @@ public class PluginConfigurationProcessor {
           return Instant.now();
 
         default:
-          return DateTimeFormatter.ISO_DATE_TIME.parse(configuredCreationTime, Instant::from);
+          DateTimeFormatter formatter =
+              new DateTimeFormatterBuilder()
+                  .append(DateTimeFormatter.ISO_DATE_TIME) // parses isoStrict
+                  // add ability to parse with no ":" in tz
+                  .optionalStart()
+                  .appendOffset("+HHmm", "+0000")
+                  .optionalEnd()
+                  .toFormatter();
+          return formatter.parse(configuredCreationTime, Instant::from);
       }
-
     } catch (DateTimeParseException ex) {
       throw new InvalidCreationTimeException(configuredCreationTime, configuredCreationTime, ex);
     }

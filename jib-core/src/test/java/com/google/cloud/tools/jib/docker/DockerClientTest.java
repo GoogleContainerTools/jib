@@ -20,6 +20,7 @@ import com.google.cloud.tools.jib.api.DescriptorDigest;
 import com.google.cloud.tools.jib.api.ImageReference;
 import com.google.cloud.tools.jib.docker.DockerClient.DockerImageDetails;
 import com.google.cloud.tools.jib.image.ImageTarball;
+import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.ByteStreams;
 import java.io.ByteArrayInputStream;
@@ -257,14 +258,15 @@ public class DockerClientTest {
   }
 
   @Test
-  public void testParseInspectResults() throws DigestException, IOException {
-    String output =
-        "{\"size\":488118507,"
-            + "\"imageId\":\"sha256:e8d00769c8a805a0656dbfd49d4f91cbc2e36d0199f10343d1beba36ecdcb3fd\","
-            + "\"diffIds\":[\"sha256:55e6b89812f369277290d098c1e44c9e85a5ab0286c649f37e66e11074f8ebd1\","
-            + "\"sha256:26b1991f37bd5b798e1523f65d7f6aa6961b75515f465cf44123fa0ad3b8961b\","
-            + "\"sha256:8bacec4e34468110538ebf108ca8ec0d880a37018a55be91b9670b8e900c593a\"]}\n";
-    DockerImageDetails results = DockerClient.parseInspectResults(output);
+  public void testDockerImageDetails() throws DigestException, IOException {
+    String json =
+        "{\"Size\":488118507,"
+            + "\"Id\":\"sha256:e8d00769c8a805a0656dbfd49d4f91cbc2e36d0199f10343d1beba36ecdcb3fd\","
+            + "\"RootFS\": { \"Layers\" : ["
+            + "  \"sha256:55e6b89812f369277290d098c1e44c9e85a5ab0286c649f37e66e11074f8ebd1\","
+            + "  \"sha256:26b1991f37bd5b798e1523f65d7f6aa6961b75515f465cf44123fa0ad3b8961b\","
+            + "  \"sha256:8bacec4e34468110538ebf108ca8ec0d880a37018a55be91b9670b8e900c593a\"]}}\n";
+    DockerImageDetails results = JsonTemplateMapper.readJson(json, DockerImageDetails.class);
     Assert.assertEquals(488118507, results.getSize());
     Assert.assertEquals(
         DescriptorDigest.fromHash(
@@ -279,6 +281,39 @@ public class DockerClientTest {
             DescriptorDigest.fromHash(
                 "8bacec4e34468110538ebf108ca8ec0d880a37018a55be91b9670b8e900c593a")),
         results.getDiffIds());
+  }
+
+  @Test
+  public void testDockerImageDetails_unknownProperties() throws IOException, DigestException {
+    String json =
+        "{\"Unknown\": [ ], \"Structure\": [ { \"Test\": 0 } ], \"Size\": 1234,"
+            + "\"Id\": \"sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\","
+            + "\"RootFS\": { \"Someting\": \"unrelated\", \"Layers\": ["
+            + "  \"sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc\" ] } }";
+    DockerImageDetails results = JsonTemplateMapper.readJson(json, DockerImageDetails.class);
+    Assert.assertEquals(1234, results.getSize());
+    Assert.assertEquals(
+        DescriptorDigest.fromHash(
+            "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"),
+        results.getImageId());
+    Assert.assertEquals(
+        Arrays.asList(
+            DescriptorDigest.fromHash(
+                "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc")),
+        results.getDiffIds());
+  }
+
+  @Test
+  public void testDockerImageDetails_emptyJson() throws IOException, DigestException {
+    DockerImageDetails details = JsonTemplateMapper.readJson("{}", DockerImageDetails.class);
+    Assert.assertEquals(0, details.getSize());
+    Assert.assertEquals(Collections.emptyList(), details.getDiffIds());
+    try {
+      details.getImageId();
+      Assert.fail();
+    } catch (DigestException ex) {
+      Assert.assertEquals("Invalid digest: ", ex.getMessage());
+    }
   }
 
   private DockerClient makeDockerSaveClient() {
@@ -299,6 +334,7 @@ public class DockerClientTest {
               Mockito.when(mockProcessBuilder.start()).thenReturn(mockProcess);
             }
           } catch (IOException ignored) {
+            // ignored
           }
           return mockProcessBuilder;
         });

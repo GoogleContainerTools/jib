@@ -8,14 +8,16 @@ plugins {
 // only maven specific dependencies should be versioned, everything else should be defined by constrains in
 // parent build.gradle
 dependencies {
-  sourceProject project(':jib-plugins-common')
+  sourceProject project(':jib-build-plan')
   sourceProject project(':jib-core')
+  sourceProject project(':jib-plugins-common')
 
   implementation 'org.apache.maven:maven-plugin-api:3.5.2'
   implementation 'org.apache.maven:maven-core:3.5.2'
 
-  // equivalent to "provided"
+  // compileOnly + testImplementation equivalent to "provided"
   compileOnly 'org.apache.maven.plugin-tools:maven-plugin-annotations:3.5'
+  // needed to suppress "unknown enum constant" warnings
   testImplementation 'org.apache.maven.plugin-tools:maven-plugin-annotations:3.5'
 
   // maven-plugin-testing-harness pulls in conflicting implementations of DefaultPlexusContainer
@@ -30,6 +32,8 @@ dependencies {
 
   testImplementation 'org.apache.maven.shared:maven-verifier:1.6'
   testImplementation 'org.apache.maven:maven-compat:3.5.4'
+  testImplementation 'org.slf4j:slf4j-api:1.7.30'
+  testImplementation 'org.slf4j:slf4j-simple:1.7.30'
 
   testImplementation project(path:':jib-plugins-common', configuration:'tests')
   integrationTestImplementation project(path:':jib-core', configuration:'integrationTests')
@@ -57,7 +61,10 @@ publishing {
 
 release {
   tagTemplate = 'v$version-maven'
-  ignoredSnapshotDependencies = ["com.google.cloud.tools:jib-core", "com.google.cloud.tools:jib-plugins-common"]
+  ignoredSnapshotDependencies = [
+    'com.google.cloud.tools:jib-core',
+    'com.google.cloud.tools:jib-plugins-common',
+  ]
   git {
     requireBranch = /^maven_release_v\d+.*$/  //regex
   }
@@ -65,10 +72,15 @@ release {
 /* RELEASE */
 
 /* ECLIPSE */
-eclipse.classpath.file.whenMerged { cp ->
-  cp.entries.each {
-    if (it.path == "src/test/resources") {
-      it.excludes += "maven/projects/"
+eclipse.classpath.file.whenMerged {
+  entries.each {
+    if (it.path == 'src/test/resources') {
+      it.excludes += 'maven/projects/'
+    }
+    // TODO: remove after upgrading to Gradle 5.6. (https://github.com/eclipse/buildship/issues/689)
+    if (it.path in ['src/test/java', 'src/test/resources',
+        'src/integration-test/java', 'src/integration-test/resources']) {
+      it.entryAttributes['test'] = 'true'
     }
   }
 }

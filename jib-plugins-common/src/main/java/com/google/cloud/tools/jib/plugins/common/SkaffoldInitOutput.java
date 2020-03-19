@@ -53,6 +53,12 @@ public class SkaffoldInitOutput {
 
   public SkaffoldInitOutput() {}
 
+  /**
+   * Testing visible OutputGenerator, you should NOT use this.
+   *
+   * @param json the json string to convert
+   * @throws IOException if error occurs during json deserialization
+   */
   @VisibleForTesting
   public SkaffoldInitOutput(String json) throws IOException {
     SkaffoldInitOutput skaffoldInitOutput =

@@ -16,18 +16,22 @@
 
 package com.google.cloud.tools.jib.registry.credentials;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.api.client.util.Base64;
 import com.google.cloud.tools.jib.api.Credential;
 import com.google.cloud.tools.jib.api.LogEvent;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import com.google.cloud.tools.jib.registry.RegistryAliasGroup;
 import com.google.cloud.tools.jib.registry.credentials.json.DockerConfigTemplate;
+import com.google.cloud.tools.jib.registry.credentials.json.DockerConfigTemplate.AuthTemplate;
 import com.google.common.annotations.VisibleForTesting;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.util.Map;
 import java.util.Optional;
 import java.util.function.Consumer;
 
@@ -47,23 +51,24 @@ import java.util.function.Consumer;
  */
 public class DockerConfigCredentialRetriever {
 
-  /**
-   * @see <a
-   *     href="https://docs.docker.com/engine/reference/commandline/login/#privileged-user-requirement">https://docs.docker.com/engine/reference/commandline/login/#privileged-user-requirement</a>
-   */
-  private static final Path DOCKER_CONFIG_FILE =
-      Paths.get(System.getProperty("user.home"), ".docker", "config.json");
-
   private final String registry;
   private final Path dockerConfigFile;
+  private final boolean legacyConfigFormat;
 
-  public DockerConfigCredentialRetriever(String registry) {
-    this(registry, DOCKER_CONFIG_FILE);
+  public static DockerConfigCredentialRetriever create(String registry, Path dockerConfigFile) {
+    return new DockerConfigCredentialRetriever(registry, dockerConfigFile, false);
   }
 
-  public DockerConfigCredentialRetriever(String registry, Path dockerConfigFile) {
+  public static DockerConfigCredentialRetriever createForLegacyFormat(
+      String registry, Path dockerConfigFile) {
+    return new DockerConfigCredentialRetriever(registry, dockerConfigFile, true);
+  }
+
+  private DockerConfigCredentialRetriever(
+      String registry, Path dockerConfigFile, boolean legacyConfigFormat) {
     this.registry = registry;
     this.dockerConfigFile = dockerConfigFile;
+    this.legacyConfigFormat = legacyConfigFormat;
   }
 
   public Path getDockerConfigFile() {
@@ -81,6 +86,18 @@ public class DockerConfigCredentialRetriever {
     if (!Files.exists(dockerConfigFile)) {
       return Optional.empty();
     }
+
+    if (legacyConfigFormat) {
+      try (InputStream fileIn = Files.newInputStream(dockerConfigFile)) {
+        // legacy config format is the value of the "auths":{ <map> } block of the new config (i.e.,
+        // the <map> of string -> DockerConfigTemplate.AuthTemplate).
+        Map<String, AuthTemplate> auths =
+            new ObjectMapper().readValue(fileIn, new TypeReference<Map<String, AuthTemplate>>() {});
+        DockerConfig dockerConfig = new DockerConfig(new DockerConfigTemplate(auths));
+        return retrieve(dockerConfig, logger);
+      }
+    }
+
     DockerConfig dockerConfig =
         new DockerConfig(
             JsonTemplateMapper.readJsonFromFile(dockerConfigFile, DockerConfigTemplate.class));

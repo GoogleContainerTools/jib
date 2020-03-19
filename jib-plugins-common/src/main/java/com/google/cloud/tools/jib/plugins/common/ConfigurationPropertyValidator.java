@@ -35,7 +35,7 @@ import javax.annotation.Nullable;
 /** Validator for plugin configuration parameters and system properties. */
 public class ConfigurationPropertyValidator {
 
-  /** Matches key-value pairs in the form of "key=value" */
+  /** Matches key-value pairs in the form of "key=value". */
   private static final Pattern KEY_VALUE_PATTERN = Pattern.compile("(?<name>[^=]+)=(?<value>.*)");
 
   /**
@@ -93,7 +93,7 @@ public class ConfigurationPropertyValidator {
 
   /**
    * Returns an {@link ImageReference} parsed from the configured target image, or one of the form
-   * {@code project-name:project-version} if target image is not configured
+   * {@code project-name:project-version} if target image is not configured.
    *
    * @param targetImage the configured target image reference
    * @param projectProperties the {@link ProjectProperties} providing the project name, version, and
