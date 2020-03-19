@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.cache;
 
+import com.google.cloud.tools.jib.api.CacheDirectoryCreationException;
 import com.google.cloud.tools.jib.api.DescriptorDigest;
 import com.google.cloud.tools.jib.api.ImageReference;
 import com.google.cloud.tools.jib.api.buildplan.FileEntry;
@@ -46,8 +47,12 @@ public class Cache {
    * @return a new {@link Cache}
    * @throws IOException if an I/O exception occurs
    */
-  public static Cache withDirectory(Path cacheDirectory) throws IOException {
-    Files.createDirectories(cacheDirectory);
+  public static Cache withDirectory(Path cacheDirectory) throws CacheDirectoryCreationException {
+    try {
+      Files.createDirectories(cacheDirectory);
+    } catch (IOException ex) {
+      throw new CacheDirectoryCreationException(ex);
+    }
     return new Cache(new CacheStorageFiles(cacheDirectory));
   }
 

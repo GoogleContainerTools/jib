@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.builder.steps;
 
+import com.google.cloud.tools.jib.api.CacheDirectoryCreationException;
 import com.google.cloud.tools.jib.api.buildplan.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.api.buildplan.FileEntriesLayer;
 import com.google.cloud.tools.jib.api.buildplan.FileEntry;
@@ -95,7 +96,7 @@ public class BuildAndCacheApplicationLayerStepTest {
   private FileEntriesLayer emptyLayerConfiguration;
 
   @Before
-  public void setUp() throws IOException, URISyntaxException {
+  public void setUp() throws IOException, URISyntaxException, CacheDirectoryCreationException {
     fakeDependenciesLayerConfiguration =
         makeLayerConfiguration(
             "core/application/dependencies", EXTRACTION_PATH_ROOT.resolve("libs"));

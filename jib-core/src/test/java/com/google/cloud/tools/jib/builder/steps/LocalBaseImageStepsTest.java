@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.builder.steps;
 
+import com.google.cloud.tools.jib.api.CacheDirectoryCreationException;
 import com.google.cloud.tools.jib.builder.ProgressEventDispatcher;
 import com.google.cloud.tools.jib.builder.steps.LocalBaseImageSteps.LocalImage;
 import com.google.cloud.tools.jib.cache.Cache;
@@ -64,7 +65,7 @@ public class LocalBaseImageStepsTest {
   }
 
   @Before
-  public void setup() throws IOException {
+  public void setup() throws IOException, CacheDirectoryCreationException {
     Mockito.when(buildContext.getExecutorService())
         .thenReturn(MoreExecutors.newDirectExecutorService());
     Mockito.when(buildContext.getBaseImageLayersCache())
@@ -132,7 +133,8 @@ public class LocalBaseImageStepsTest {
 
   @Test
   public void testGetCachedDockerImage()
-      throws IOException, DigestException, CacheCorruptedException, URISyntaxException {
+      throws IOException, DigestException, CacheDirectoryCreationException, CacheCorruptedException,
+          URISyntaxException {
     String dockerInspectJson =
         "{\"Size\": 0,"
             + "\"Id\": \"sha256:066872f17ae819f846a6d5abcfc3165abe13fb0a157640fa8cb7af81077670c0\","

@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.configuration;
 
+import com.google.cloud.tools.jib.api.CacheDirectoryCreationException;
 import com.google.cloud.tools.jib.api.Credential;
 import com.google.cloud.tools.jib.api.CredentialRetriever;
 import com.google.cloud.tools.jib.api.ImageReference;
@@ -158,7 +159,7 @@ public class BuildContextTest {
   }
 
   @Test
-  public void testBuilder_default() throws IOException {
+  public void testBuilder_default() throws CacheDirectoryCreationException {
     // These are required and don't have defaults.
     String expectedBaseImageServerUrl = "someserver";
     String expectedBaseImageName = "baseimage";
@@ -199,7 +200,7 @@ public class BuildContextTest {
   }
 
   @Test
-  public void testBuilder_missingValues() throws IOException {
+  public void testBuilder_missingValues() throws CacheDirectoryCreationException {
     // Target image is missing
     try {
       BuildContext.builder()
@@ -242,7 +243,8 @@ public class BuildContextTest {
   }
 
   @Test
-  public void testBuilder_digestWarning() throws IOException, InvalidImageReferenceException {
+  public void testBuilder_digestWarning()
+      throws CacheDirectoryCreationException, InvalidImageReferenceException {
     EventHandlers mockEventHandlers = Mockito.mock(EventHandlers.class);
     BuildContext.Builder builder =
         BuildContext.builder()
@@ -272,7 +274,8 @@ public class BuildContextTest {
   }
 
   @Test
-  public void testClose_shutDownInternalExecutorService() throws IOException {
+  public void testClose_shutDownInternalExecutorService()
+      throws IOException, CacheDirectoryCreationException {
     BuildContext buildContext =
         BuildContext.builder()
             .setBaseImageConfiguration(
@@ -288,7 +291,8 @@ public class BuildContextTest {
   }
 
   @Test
-  public void testClose_doNotShutDownProvidedExecutorService() throws IOException {
+  public void testClose_doNotShutDownProvidedExecutorService()
+      throws IOException, CacheDirectoryCreationException {
     ExecutorService executorService = MoreExecutors.newDirectExecutorService();
     BuildContext buildContext =
         BuildContext.builder()
