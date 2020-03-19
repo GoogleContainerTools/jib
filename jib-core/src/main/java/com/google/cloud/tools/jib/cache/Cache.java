@@ -18,7 +18,7 @@ package com.google.cloud.tools.jib.cache;
 
 import com.google.cloud.tools.jib.api.DescriptorDigest;
 import com.google.cloud.tools.jib.api.ImageReference;
-import com.google.cloud.tools.jib.api.LayerEntry;
+import com.google.cloud.tools.jib.api.buildplan.FileEntry;
 import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
 import com.google.cloud.tools.jib.image.json.ContainerConfigurationTemplate;
@@ -55,8 +55,8 @@ public class Cache {
   private final CacheStorageReader cacheStorageReader;
 
   private Cache(CacheStorageFiles cacheStorageFiles) {
-    this.cacheStorageWriter = new CacheStorageWriter(cacheStorageFiles);
-    this.cacheStorageReader = new CacheStorageReader(cacheStorageFiles);
+    cacheStorageWriter = new CacheStorageWriter(cacheStorageFiles);
+    cacheStorageReader = new CacheStorageReader(cacheStorageFiles);
   }
 
   /**
@@ -111,7 +111,7 @@ public class Cache {
    * @throws IOException if an I/O exception occurs
    */
   public CachedLayer writeUncompressedLayer(
-      Blob uncompressedLayerBlob, ImmutableList<LayerEntry> layerEntries) throws IOException {
+      Blob uncompressedLayerBlob, ImmutableList<FileEntry> layerEntries) throws IOException {
     return cacheStorageWriter.writeUncompressed(
         uncompressedLayerBlob, LayerEntriesSelector.generateSelector(layerEntries));
   }
@@ -170,7 +170,7 @@ public class Cache {
    * @throws IOException if an I/O exception occurs
    * @throws CacheCorruptedException if the cache is corrupted
    */
-  public Optional<CachedLayer> retrieve(ImmutableList<LayerEntry> layerEntries)
+  public Optional<CachedLayer> retrieve(ImmutableList<FileEntry> layerEntries)
       throws IOException, CacheCorruptedException {
     Optional<DescriptorDigest> optionalSelectedLayerDigest =
         cacheStorageReader.select(LayerEntriesSelector.generateSelector(layerEntries));

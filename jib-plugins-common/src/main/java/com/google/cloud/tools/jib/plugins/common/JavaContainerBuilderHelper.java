@@ -19,8 +19,8 @@ package com.google.cloud.tools.jib.plugins.common;
 import com.google.cloud.tools.jib.api.JavaContainerBuilder;
 import com.google.cloud.tools.jib.api.JavaContainerBuilder.LayerType;
 import com.google.cloud.tools.jib.api.JibContainerBuilder;
-import com.google.cloud.tools.jib.api.LayerConfiguration;
 import com.google.cloud.tools.jib.api.buildplan.AbsoluteUnixPath;
+import com.google.cloud.tools.jib.api.buildplan.FileEntriesLayer;
 import com.google.cloud.tools.jib.api.buildplan.FilePermissions;
 import com.google.cloud.tools.jib.api.buildplan.RelativeUnixPath;
 import com.google.cloud.tools.jib.filesystem.DirectoryWalker;
@@ -39,22 +39,22 @@ import java.util.function.Predicate;
 public class JavaContainerBuilderHelper {
 
   /**
-   * Validates and returns a {@link LayerConfiguration} for adding the extra directory to the
+   * Validates and returns a {@link FileEntriesLayer} for adding the extra directory to the
    * container.
    *
    * @param extraDirectory the source extra directory path
    * @param extraDirectoryPermissions map from path on container to file permissions
    * @param modificationTimeProvider file modification time provider
-   * @return a {@link LayerConfiguration} for adding the extra directory to the container
+   * @return a {@link FileEntriesLayer} for adding the extra directory to the container
    * @throws IOException if walking the extra directory fails
    */
-  public static LayerConfiguration extraDirectoryLayerConfiguration(
+  public static FileEntriesLayer extraDirectoryLayerConfiguration(
       Path extraDirectory,
       Map<String, FilePermissions> extraDirectoryPermissions,
       BiFunction<Path, AbsoluteUnixPath, Instant> modificationTimeProvider)
       throws IOException {
-    LayerConfiguration.Builder builder =
-        LayerConfiguration.builder().setName(LayerType.EXTRA_FILES.getName());
+    FileEntriesLayer.Builder builder =
+        FileEntriesLayer.builder().setName(LayerType.EXTRA_FILES.getName());
     new DirectoryWalker(extraDirectory)
         .filterRoot()
         .walk(

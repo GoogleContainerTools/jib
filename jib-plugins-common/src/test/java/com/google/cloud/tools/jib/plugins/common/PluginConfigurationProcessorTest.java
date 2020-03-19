@@ -23,10 +23,10 @@ import com.google.cloud.tools.jib.api.JavaContainerBuilder;
 import com.google.cloud.tools.jib.api.Jib;
 import com.google.cloud.tools.jib.api.JibContainerBuilder;
 import com.google.cloud.tools.jib.api.JibContainerBuilderTestHelper;
-import com.google.cloud.tools.jib.api.LayerEntry;
 import com.google.cloud.tools.jib.api.LogEvent;
 import com.google.cloud.tools.jib.api.RegistryImage;
 import com.google.cloud.tools.jib.api.buildplan.AbsoluteUnixPath;
+import com.google.cloud.tools.jib.api.buildplan.FileEntry;
 import com.google.cloud.tools.jib.api.buildplan.FilePermissions;
 import com.google.cloud.tools.jib.configuration.BuildContext;
 import com.google.cloud.tools.jib.configuration.ImageConfiguration;
@@ -74,19 +74,19 @@ public class PluginConfigurationProcessorTest {
   }
 
   private static <T> void assertLayerEntriesUnordered(
-      List<T> expectedPaths, List<LayerEntry> entries, Function<LayerEntry, T> fieldSelector) {
+      List<T> expectedPaths, List<FileEntry> entries, Function<FileEntry, T> fieldSelector) {
     List<T> expected = expectedPaths.stream().sorted().collect(Collectors.toList());
     List<T> actual = entries.stream().map(fieldSelector).sorted().collect(Collectors.toList());
     Assert.assertEquals(expected, actual);
   }
 
   private static void assertSourcePathsUnordered(
-      List<Path> expectedPaths, List<LayerEntry> entries) {
-    assertLayerEntriesUnordered(expectedPaths, entries, LayerEntry::getSourceFile);
+      List<Path> expectedPaths, List<FileEntry> entries) {
+    assertLayerEntriesUnordered(expectedPaths, entries, FileEntry::getSourceFile);
   }
 
   private static void assertExtractionPathsUnordered(
-      List<String> expectedPaths, List<LayerEntry> entries) {
+      List<String> expectedPaths, List<FileEntry> entries) {
     assertLayerEntriesUnordered(
         expectedPaths, entries, layerEntry -> layerEntry.getExtractionPath().toString());
   }
@@ -169,14 +169,14 @@ public class PluginConfigurationProcessorTest {
         .thenReturn(ImmutableMap.of("/foo", FilePermissions.fromOctalString("123")));
 
     BuildContext buildContext = getBuildContext(processCommonConfiguration());
-    List<LayerEntry> extraFiles =
+    List<FileEntry> extraFiles =
         buildContext
             .getLayerConfigurations()
             .stream()
             .filter(layer -> layer.getName().equals("extra files"))
             .collect(Collectors.toList())
             .get(0)
-            .getLayerEntries();
+            .getEntries();
 
     assertSourcePathsUnordered(
         Arrays.asList(
@@ -190,7 +190,7 @@ public class PluginConfigurationProcessorTest {
     assertExtractionPathsUnordered(
         Arrays.asList("/a", "/a/b", "/a/b/bar", "/c", "/c/cat", "/foo"), extraFiles);
 
-    Optional<LayerEntry> fooEntry =
+    Optional<FileEntry> fooEntry =
         extraFiles
             .stream()
             .filter(

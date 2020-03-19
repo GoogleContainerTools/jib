@@ -23,10 +23,10 @@ import com.google.cloud.tools.jib.api.JavaContainerBuilder;
 import com.google.cloud.tools.jib.api.JavaContainerBuilder.LayerType;
 import com.google.cloud.tools.jib.api.JibContainerBuilder;
 import com.google.cloud.tools.jib.api.JibContainerBuilderTestHelper;
-import com.google.cloud.tools.jib.api.LayerConfiguration;
-import com.google.cloud.tools.jib.api.LayerEntry;
 import com.google.cloud.tools.jib.api.RegistryImage;
 import com.google.cloud.tools.jib.api.buildplan.AbsoluteUnixPath;
+import com.google.cloud.tools.jib.api.buildplan.FileEntriesLayer;
+import com.google.cloud.tools.jib.api.buildplan.FileEntry;
 import com.google.cloud.tools.jib.api.buildplan.FilePermissions;
 import com.google.cloud.tools.jib.configuration.BuildContext;
 import com.google.cloud.tools.jib.filesystem.FileOperations;
@@ -55,24 +55,24 @@ import org.junit.rules.TemporaryFolder;
 public class JavaContainerBuilderHelperTest {
 
   private static <T> void assertLayerEntriesUnordered(
-      List<T> expectedPaths, List<LayerEntry> entries, Function<LayerEntry, T> fieldSelector) {
+      List<T> expectedPaths, List<FileEntry> entries, Function<FileEntry, T> fieldSelector) {
     List<T> expected = expectedPaths.stream().sorted().collect(Collectors.toList());
     List<T> actual = entries.stream().map(fieldSelector).sorted().collect(Collectors.toList());
     Assert.assertEquals(expected, actual);
   }
 
   private static void assertSourcePathsUnordered(
-      List<Path> expectedPaths, List<LayerEntry> entries) {
-    assertLayerEntriesUnordered(expectedPaths, entries, LayerEntry::getSourceFile);
+      List<Path> expectedPaths, List<FileEntry> entries) {
+    assertLayerEntriesUnordered(expectedPaths, entries, FileEntry::getSourceFile);
   }
 
   private static void assertExtractionPathsUnordered(
-      List<String> expectedPaths, List<LayerEntry> entries) {
+      List<String> expectedPaths, List<FileEntry> entries) {
     assertLayerEntriesUnordered(
         expectedPaths, entries, layerEntry -> layerEntry.getExtractionPath().toString());
   }
 
-  private static List<LayerConfiguration> getLayerConfigurationsByName(
+  private static List<FileEntriesLayer> getLayerConfigurationsByName(
       BuildContext buildContext, String name) {
     return buildContext
         .getLayerConfigurations()
@@ -86,7 +86,7 @@ public class JavaContainerBuilderHelperTest {
   @Test
   public void testExtraDirectoryLayerConfiguration() throws URISyntaxException, IOException {
     Path extraFilesDirectory = Paths.get(Resources.getResource("core/layer").toURI());
-    LayerConfiguration layerConfiguration =
+    FileEntriesLayer layerConfiguration =
         JavaContainerBuilderHelper.extraDirectoryLayerConfiguration(
             extraFilesDirectory, Collections.emptyMap(), (ignored1, ignored2) -> Instant.EPOCH);
     assertSourcePathsUnordered(
@@ -97,7 +97,7 @@ public class JavaContainerBuilderHelperTest {
             extraFilesDirectory.resolve("c"),
             extraFilesDirectory.resolve("c/cat"),
             extraFilesDirectory.resolve("foo")),
-        layerConfiguration.getLayerEntries());
+        layerConfiguration.getEntries());
   }
 
   @Test
@@ -112,12 +112,12 @@ public class JavaContainerBuilderHelperTest {
             FilePermissions.fromOctalString("456"),
             "**/bar",
             FilePermissions.fromOctalString("765"));
-    LayerConfiguration layerConfiguration =
+    FileEntriesLayer fileEntriesLayer =
         JavaContainerBuilderHelper.extraDirectoryLayerConfiguration(
             extraFilesDirectory, permissionsMap, (ignored1, ignored2) -> Instant.EPOCH);
     assertExtractionPathsUnordered(
         Arrays.asList("/a", "/a/b", "/a/b/bar", "/c", "/c/cat", "/foo"),
-        layerConfiguration.getLayerEntries());
+        fileEntriesLayer.getEntries());
 
     Map<AbsoluteUnixPath, FilePermissions> expectedPermissions =
         ImmutableMap.<AbsoluteUnixPath, FilePermissions>builder()
@@ -128,7 +128,7 @@ public class JavaContainerBuilderHelperTest {
             .put(AbsoluteUnixPath.get("/c/cat"), FilePermissions.DEFAULT_FILE_PERMISSIONS)
             .put(AbsoluteUnixPath.get("/foo"), FilePermissions.DEFAULT_FILE_PERMISSIONS)
             .build();
-    for (LayerEntry entry : layerConfiguration.getLayerEntries()) {
+    for (FileEntry entry : fileEntriesLayer.getEntries()) {
       Assert.assertEquals(
           expectedPermissions.get(entry.getExtractionPath()), entry.getPermissions());
     }
@@ -144,12 +144,12 @@ public class JavaContainerBuilderHelperTest {
             FilePermissions.fromOctalString("123"),
             "/a/b/bar",
             FilePermissions.fromOctalString("765"));
-    LayerConfiguration layerConfiguration =
+    FileEntriesLayer fileEntriesLayer =
         JavaContainerBuilderHelper.extraDirectoryLayerConfiguration(
             extraFilesDirectory, permissionsMap, (ignored1, ignored2) -> Instant.EPOCH);
     assertExtractionPathsUnordered(
         Arrays.asList("/a", "/a/b", "/a/b/bar", "/c", "/c/cat", "/foo"),
-        layerConfiguration.getLayerEntries());
+        fileEntriesLayer.getEntries());
 
     Map<AbsoluteUnixPath, FilePermissions> expectedPermissions =
         ImmutableMap.<AbsoluteUnixPath, FilePermissions>builder()
@@ -160,7 +160,7 @@ public class JavaContainerBuilderHelperTest {
             .put(AbsoluteUnixPath.get("/c/cat"), FilePermissions.DEFAULT_FILE_PERMISSIONS)
             .put(AbsoluteUnixPath.get("/foo"), FilePermissions.DEFAULT_FILE_PERMISSIONS)
             .build();
-    for (LayerEntry entry : layerConfiguration.getLayerEntries()) {
+    for (FileEntry entry : fileEntriesLayer.getEntries()) {
       Assert.assertEquals(
           expectedPermissions.get(entry.getExtractionPath()), entry.getPermissions());
     }
@@ -189,22 +189,22 @@ public class JavaContainerBuilderHelperTest {
             Containerizer.to(RegistryImage.named("target"))
                 .setExecutorService(MoreExecutors.newDirectExecutorService()));
 
-    List<LayerConfiguration> resourcesLayerConfigurations =
+    List<FileEntriesLayer> resourcesLayerConfigurations =
         getLayerConfigurationsByName(buildContext, LayerType.RESOURCES.getName());
-    List<LayerConfiguration> classesLayerConfigurations =
+    List<FileEntriesLayer> classesLayerConfigurations =
         getLayerConfigurationsByName(buildContext, LayerType.CLASSES.getName());
-    List<LayerConfiguration> dependenciesLayerConfigurations =
+    List<FileEntriesLayer> dependenciesLayerConfigurations =
         getLayerConfigurationsByName(buildContext, LayerType.DEPENDENCIES.getName());
-    List<LayerConfiguration> snapshotsLayerConfigurations =
+    List<FileEntriesLayer> snapshotsLayerConfigurations =
         getLayerConfigurationsByName(buildContext, LayerType.SNAPSHOT_DEPENDENCIES.getName());
 
     assertSourcePathsUnordered(
         Collections.singletonList(temporaryExplodedWar.resolve("WEB-INF/lib/dependency-1.0.0.jar")),
-        dependenciesLayerConfigurations.get(0).getLayerEntries());
+        dependenciesLayerConfigurations.get(0).getEntries());
     assertSourcePathsUnordered(
         Collections.singletonList(
             temporaryExplodedWar.resolve("WEB-INF/lib/dependencyX-1.0.0-SNAPSHOT.jar")),
-        snapshotsLayerConfigurations.get(0).getLayerEntries());
+        snapshotsLayerConfigurations.get(0).getEntries());
     assertSourcePathsUnordered(
         Arrays.asList(
             temporaryExplodedWar.resolve("META-INF"),
@@ -217,21 +217,21 @@ public class JavaContainerBuilderHelperTest {
             temporaryExplodedWar.resolve("WEB-INF/classes/package/test.properties"),
             temporaryExplodedWar.resolve("WEB-INF/lib"),
             temporaryExplodedWar.resolve("WEB-INF/web.xml")),
-        resourcesLayerConfigurations.get(0).getLayerEntries());
+        resourcesLayerConfigurations.get(0).getEntries());
     assertSourcePathsUnordered(
         Arrays.asList(
             temporaryExplodedWar.resolve("WEB-INF/classes/HelloWorld.class"),
             temporaryExplodedWar.resolve("WEB-INF/classes/empty_dir"),
             temporaryExplodedWar.resolve("WEB-INF/classes/package"),
             temporaryExplodedWar.resolve("WEB-INF/classes/package/Other.class")),
-        classesLayerConfigurations.get(0).getLayerEntries());
+        classesLayerConfigurations.get(0).getEntries());
 
     assertExtractionPathsUnordered(
         Collections.singletonList("/my/app/WEB-INF/lib/dependency-1.0.0.jar"),
-        dependenciesLayerConfigurations.get(0).getLayerEntries());
+        dependenciesLayerConfigurations.get(0).getEntries());
     assertExtractionPathsUnordered(
         Collections.singletonList("/my/app/WEB-INF/lib/dependencyX-1.0.0-SNAPSHOT.jar"),
-        snapshotsLayerConfigurations.get(0).getLayerEntries());
+        snapshotsLayerConfigurations.get(0).getEntries());
     assertExtractionPathsUnordered(
         Arrays.asList(
             "/my/app/META-INF",
@@ -244,13 +244,13 @@ public class JavaContainerBuilderHelperTest {
             "/my/app/WEB-INF/classes/package/test.properties",
             "/my/app/WEB-INF/lib",
             "/my/app/WEB-INF/web.xml"),
-        resourcesLayerConfigurations.get(0).getLayerEntries());
+        resourcesLayerConfigurations.get(0).getEntries());
     assertExtractionPathsUnordered(
         Arrays.asList(
             "/my/app/WEB-INF/classes/HelloWorld.class",
             "/my/app/WEB-INF/classes/empty_dir",
             "/my/app/WEB-INF/classes/package",
             "/my/app/WEB-INF/classes/package/Other.class"),
-        classesLayerConfigurations.get(0).getLayerEntries());
+        classesLayerConfigurations.get(0).getEntries());
   }
 }

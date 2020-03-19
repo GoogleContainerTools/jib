@@ -16,10 +16,9 @@
 
 package com.google.cloud.tools.jib.image;
 
-import com.google.cloud.tools.jib.api.LayerConfiguration;
-import com.google.cloud.tools.jib.api.LayerEntry;
 import com.google.cloud.tools.jib.api.buildplan.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.api.buildplan.FileEntriesLayer;
+import com.google.cloud.tools.jib.api.buildplan.FileEntry;
 import com.google.cloud.tools.jib.api.buildplan.FilePermissions;
 import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.blob.Blobs;
@@ -93,8 +92,8 @@ public class ReproducibleLayerBuilderTest {
     Assert.assertEquals(TarArchiveEntry.DEFAULT_DIR_MODE, extractionPathEntry.getMode());
   }
 
-  private static LayerEntry defaultLayerEntry(Path source, AbsoluteUnixPath destination) {
-    return new LayerEntry(
+  private static FileEntry defaultLayerEntry(Path source, AbsoluteUnixPath destination) {
+    return new FileEntry(
         source,
         destination,
         FileEntriesLayer.DEFAULT_FILE_PERMISSIONS_PROVIDER.apply(source, destination),
@@ -110,13 +109,14 @@ public class ReproducibleLayerBuilderTest {
 
     ReproducibleLayerBuilder layerBuilder =
         new ReproducibleLayerBuilder(
-            LayerConfiguration.builder()
-                .addEntryRecursive(
-                    layerDirectory, AbsoluteUnixPath.get("/extract/here/apple/layer"))
-                .addEntry(blobA, AbsoluteUnixPath.get("/extract/here/apple/blobA"))
-                .addEntry(blobA, AbsoluteUnixPath.get("/extract/here/banana/blobA"))
-                .build()
-                .getLayerEntries());
+            ImmutableList.copyOf(
+                FileEntriesLayer.builder()
+                    .addEntryRecursive(
+                        layerDirectory, AbsoluteUnixPath.get("/extract/here/apple/layer"))
+                    .addEntry(blobA, AbsoluteUnixPath.get("/extract/here/apple/blobA"))
+                    .addEntry(blobA, AbsoluteUnixPath.get("/extract/here/banana/blobA"))
+                    .build()
+                    .getEntries()));
 
     // Writes the layer tar to a temporary file.
     Blob unwrittenBlob = layerBuilder.build();
@@ -208,27 +208,27 @@ public class ReproducibleLayerBuilderTest {
     Blob layer =
         new ReproducibleLayerBuilder(
                 ImmutableList.of(
-                    new LayerEntry(
+                    new FileEntry(
                         parent,
                         AbsoluteUnixPath.get("/root/dirA"),
                         FilePermissions.fromOctalString("111"),
                         Instant.ofEpochSecond(10)),
-                    new LayerEntry(
+                    new FileEntry(
                         fileA,
                         AbsoluteUnixPath.get("/root/dirA/fileA"),
                         FilePermissions.fromOctalString("222"),
                         Instant.ofEpochSecond(20)),
-                    new LayerEntry(
+                    new FileEntry(
                         fileB,
                         AbsoluteUnixPath.get("/root/dirB-ignored/fileB"),
                         FilePermissions.fromOctalString("333"),
                         Instant.ofEpochSecond(30)),
-                    new LayerEntry(
+                    new FileEntry(
                         ignoredParent,
                         AbsoluteUnixPath.get("/root/dirB-ignored"),
                         FilePermissions.fromOctalString("444"),
                         Instant.ofEpochSecond(40)),
-                    new LayerEntry(
+                    new FileEntry(
                         fileC,
                         AbsoluteUnixPath.get("/root/dirC-absent/file3"),
                         FilePermissions.fromOctalString("555"),
@@ -301,7 +301,7 @@ public class ReproducibleLayerBuilderTest {
     Blob blob =
         new ReproducibleLayerBuilder(
                 ImmutableList.of(
-                    new LayerEntry(
+                    new FileEntry(
                         file,
                         AbsoluteUnixPath.get("/fileA"),
                         FilePermissions.DEFAULT_FILE_PERMISSIONS,
@@ -331,12 +331,12 @@ public class ReproducibleLayerBuilderTest {
         new ReproducibleLayerBuilder(
                 ImmutableList.of(
                     defaultLayerEntry(fileA, AbsoluteUnixPath.get("/somewhere/fileA")),
-                    new LayerEntry(
+                    new FileEntry(
                         fileB,
                         AbsoluteUnixPath.get("/somewhere/fileB"),
                         FilePermissions.fromOctalString("123"),
                         FileEntriesLayer.DEFAULT_MODIFICATION_TIME),
-                    new LayerEntry(
+                    new FileEntry(
                         folder,
                         AbsoluteUnixPath.get("/somewhere/folder"),
                         FilePermissions.fromOctalString("456"),
