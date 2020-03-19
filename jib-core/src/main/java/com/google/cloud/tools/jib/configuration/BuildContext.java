@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.configuration;
 
+import com.google.cloud.tools.jib.api.CacheDirectoryCreationException;
 import com.google.cloud.tools.jib.api.LogEvent;
 import com.google.cloud.tools.jib.api.buildplan.FileEntriesLayer;
 import com.google.cloud.tools.jib.api.buildplan.ImageFormat;
@@ -245,9 +246,9 @@ public class BuildContext implements Closeable {
      * Builds a new {@link BuildContext} using the parameters passed into the builder.
      *
      * @return the corresponding build context
-     * @throws IOException if an I/O exception occurs
+     * @throws CacheDirectoryCreationException if I/O exception occurs when creating cache directory
      */
-    public BuildContext build() throws IOException {
+    public BuildContext build() throws CacheDirectoryCreationException {
       // Validates the parameters.
       List<String> missingFields = new ArrayList<>();
       if (baseImageConfiguration == null) {
