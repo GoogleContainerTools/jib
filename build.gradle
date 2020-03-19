@@ -377,7 +377,7 @@ subprojects {
 /* LOCAL DEVELOPMENT HELPER TASKS */
 tasks.register('dev') {
   subprojects.each { subproject ->
-    subproject.tasks.check.dependsOn subproject.tasks.googleJavaFormat
+    subproject.tasks.classes.dependsOn subproject.tasks.googleJavaFormat
     dependsOn subproject.tasks.check
     dependsOn subproject.tasks.javadoc
   }
