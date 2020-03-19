@@ -32,7 +32,7 @@ import javax.annotation.concurrent.Immutable;
 /**
  * Configures how to build a layer in the container image. Instantiate with {@link #builder}.
  *
- * <p>Deprecated. Use {@link FileEntriesLayer}.
+ * @deprecated Use {@link FileEntriesLayer}.
  */
 @Deprecated
 @Immutable

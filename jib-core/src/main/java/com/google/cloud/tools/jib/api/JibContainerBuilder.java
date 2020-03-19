@@ -170,8 +170,7 @@ public class JibContainerBuilder {
   /**
    * Adds a layer (defined by a {@link LayerConfiguration}).
    *
-   * <p>Deprecated. Use {@link #addFileEntriesLayer(FileEntriesLayer)}.
-   *
+   * @deprecated Use {@link #addFileEntriesLayer(FileEntriesLayer)}.
    * @param layerConfiguration the {@link LayerConfiguration}
    * @return this
    */
@@ -195,8 +194,7 @@ public class JibContainerBuilder {
    * Sets the layers (defined by a list of {@link LayerConfiguration}s). This replaces any
    * previously-added layers.
    *
-   * <p>Deprecated. Use {@link #setFileEntriesLayers(List)}.
-   *
+   * @deprecated Use {@link #setFileEntriesLayers(List)}.
    * @param layerConfigurations the list of {@link LayerConfiguration}s
    * @return this
    */
@@ -224,8 +222,7 @@ public class JibContainerBuilder {
   /**
    * Sets the layers. This replaces any previously-added layers.
    *
-   * <p>Deprecated. Use {@link #setFileEntriesLayers(FileEntriesLayer...)}.
-   *
+   * @deprecated Use {@link #setFileEntriesLayers(FileEntriesLayer...)}.
    * @param layerConfigurations the {@link LayerConfiguration}s
    * @return this
    */
