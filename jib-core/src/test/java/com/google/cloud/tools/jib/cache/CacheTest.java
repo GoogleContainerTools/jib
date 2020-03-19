@@ -16,8 +16,6 @@
 
 package com.google.cloud.tools.jib.cache;
 
-import static org.junit.Assert.assertThat;
-
 import com.google.cloud.tools.jib.api.CacheDirectoryCreationException;
 import com.google.cloud.tools.jib.api.DescriptorDigest;
 import com.google.cloud.tools.jib.api.buildplan.AbsoluteUnixPath;
@@ -153,7 +151,7 @@ public class CacheTest {
       Assert.fail();
 
     } catch (CacheDirectoryCreationException ex) {
-      assertThat(ex.getCause(), CoreMatchers.instanceOf(FileAlreadyExistsException.class));
+      Assert.assertThat(ex.getCause(), CoreMatchers.instanceOf(FileAlreadyExistsException.class));
     }
   }
 

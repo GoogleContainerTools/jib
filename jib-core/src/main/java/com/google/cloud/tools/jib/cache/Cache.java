@@ -45,7 +45,8 @@ public class Cache {
    *
    * @param cacheDirectory the directory for the cache. Creates the directory if it does not exist.
    * @return a new {@link Cache}
-   * @throws IOException if an I/O exception occurs
+   * @throws CacheDirectoryCreationException if an I/O exception occurs when creating cache
+   *     directory
    */
   public static Cache withDirectory(Path cacheDirectory) throws CacheDirectoryCreationException {
     try {
