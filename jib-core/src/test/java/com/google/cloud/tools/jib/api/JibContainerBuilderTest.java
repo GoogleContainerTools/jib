@@ -29,7 +29,6 @@ import com.google.cloud.tools.jib.registry.credentials.CredentialRetrievalExcept
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.MoreExecutors;
-import java.io.IOException;
 import java.nio.file.Paths;
 import java.time.Instant;
 import java.util.Arrays;
@@ -57,7 +56,7 @@ public class JibContainerBuilderTest {
 
   @Test
   public void testToBuildContext_containerConfigurationSet()
-      throws InvalidImageReferenceException, CacheDirectoryCreationException, IOException {
+      throws InvalidImageReferenceException, CacheDirectoryCreationException {
     ImageConfiguration imageConfiguration =
         ImageConfiguration.builder(ImageReference.parse("base/image")).build();
     JibContainerBuilder jibContainerBuilder =
@@ -90,7 +89,7 @@ public class JibContainerBuilderTest {
 
   @Test
   public void testToBuildContext_containerConfigurationAdd()
-      throws InvalidImageReferenceException, CacheDirectoryCreationException, IOException {
+      throws InvalidImageReferenceException, CacheDirectoryCreationException {
     ImageConfiguration imageConfiguration =
         ImageConfiguration.builder(ImageReference.parse("base/image")).build();
     JibContainerBuilder jibContainerBuilder =
@@ -123,7 +122,7 @@ public class JibContainerBuilderTest {
 
   @Test
   public void testToBuildContext()
-      throws InvalidImageReferenceException, CredentialRetrievalException, IOException,
+      throws InvalidImageReferenceException, CredentialRetrievalException,
           CacheDirectoryCreationException {
     ExecutorService executorService = MoreExecutors.newDirectExecutorService();
     RegistryImage targetImage =

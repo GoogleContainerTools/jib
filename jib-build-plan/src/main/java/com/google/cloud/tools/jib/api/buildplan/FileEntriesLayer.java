@@ -274,7 +274,6 @@ public class FileEntriesLayer extends LayerObject {
     return new Builder();
   }
 
-  private final String name;
   private final List<FileEntry> entries;
 
   /**
@@ -284,18 +283,8 @@ public class FileEntriesLayer extends LayerObject {
    * @param entries the list of {@link FileEntry}s
    */
   private FileEntriesLayer(String name, List<FileEntry> entries) {
-    super(LayerObject.Type.FILE_ENTRIES);
-    this.name = name;
+    super(LayerObject.Type.FILE_ENTRIES, name);
     this.entries = entries;
-  }
-
-  /**
-   * Gets the name.
-   *
-   * @return the name
-   */
-  public String getName() {
-    return name;
   }
 
   /**
@@ -308,6 +297,6 @@ public class FileEntriesLayer extends LayerObject {
   }
 
   public Builder toBuilder() {
-    return builder().setName(name).setEntries(entries);
+    return builder().setName(getName()).setEntries(entries);
   }
 }
