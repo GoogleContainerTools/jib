@@ -68,7 +68,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 public class PluginConfigurationProcessorTest {
 
   private static BuildContext getBuildContext(JibContainerBuilder jibContainerBuilder)
-      throws InvalidImageReferenceException, IOException, CacheDirectoryCreationException {
+      throws InvalidImageReferenceException, CacheDirectoryCreationException {
     return JibContainerBuilderTestHelper.toBuildContext(
         jibContainerBuilder, Containerizer.to(RegistryImage.named("ignored")));
   }
