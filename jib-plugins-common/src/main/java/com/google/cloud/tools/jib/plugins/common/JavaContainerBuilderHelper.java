@@ -25,8 +25,11 @@ import com.google.cloud.tools.jib.api.buildplan.FilePermissions;
 import com.google.cloud.tools.jib.api.buildplan.RelativeUnixPath;
 import com.google.cloud.tools.jib.filesystem.DirectoryWalker;
 import java.io.IOException;
+import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.PathMatcher;
+import java.nio.file.Paths;
 import java.time.Instant;
 import java.util.Map;
 import java.util.function.BiFunction;
@@ -36,7 +39,8 @@ import java.util.function.Predicate;
 public class JavaContainerBuilderHelper {
 
   /**
-   * Returns a {@link LayerConfiguration} for adding the extra directory to the container.
+   * Validates and returns a {@link LayerConfiguration} for adding the extra directory to the
+   * container.
    *
    * @param extraDirectory the source extra directory path
    * @param extraDirectoryPermissions map from path on container to file permissions
@@ -46,7 +50,7 @@ public class JavaContainerBuilderHelper {
    */
   public static LayerConfiguration extraDirectoryLayerConfiguration(
       Path extraDirectory,
-      Map<AbsoluteUnixPath, FilePermissions> extraDirectoryPermissions,
+      Map<String, FilePermissions> extraDirectoryPermissions,
       BiFunction<Path, AbsoluteUnixPath, Instant> modificationTimeProvider)
       throws IOException {
     LayerConfiguration.Builder builder =
@@ -58,10 +62,26 @@ public class JavaContainerBuilderHelper {
               AbsoluteUnixPath pathOnContainer =
                   AbsoluteUnixPath.get("/").resolve(extraDirectory.relativize(localPath));
               Instant modificationTime = modificationTimeProvider.apply(localPath, pathOnContainer);
-              FilePermissions permissions = extraDirectoryPermissions.get(pathOnContainer);
+              FilePermissions permissions =
+                  extraDirectoryPermissions.get(pathOnContainer.toString());
               if (permissions == null) {
+                // Check for matching globs
+                Path containerPath = Paths.get(pathOnContainer.toString());
+                for (Map.Entry<String, FilePermissions> entry :
+                    extraDirectoryPermissions.entrySet()) {
+                  PathMatcher pathMatcher =
+                      FileSystems.getDefault().getPathMatcher("glob:" + entry.getKey());
+                  if (pathMatcher.matches(containerPath)) {
+                    builder.addEntry(
+                        localPath, pathOnContainer, entry.getValue(), modificationTime);
+                    return;
+                  }
+                }
+
+                // Add with default permissions
                 builder.addEntry(localPath, pathOnContainer, modificationTime);
               } else {
+                // Add with explicit permissions
                 builder.addEntry(localPath, pathOnContainer, permissions, modificationTime);
               }
             });

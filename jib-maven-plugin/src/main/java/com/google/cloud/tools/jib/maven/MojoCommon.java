@@ -18,7 +18,6 @@ package com.google.cloud.tools.jib.maven;
 
 import com.google.cloud.tools.jib.ProjectInfo;
 import com.google.cloud.tools.jib.api.LogEvent;
-import com.google.cloud.tools.jib.api.buildplan.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.api.buildplan.FilePermissions;
 import com.google.cloud.tools.jib.maven.JibPluginConfiguration.PermissionConfiguration;
 import com.google.cloud.tools.jib.plugins.common.ProjectProperties;
@@ -100,24 +99,22 @@ public class MojoCommon {
   }
 
   /**
-   * Validates and converts a list of {@link PermissionConfiguration} to an equivalent {@code
-   * AbsoluteUnixPath->FilePermission} map.
+   * Converts a list of {@link PermissionConfiguration} to an equivalent {@code
+   * String->FilePermission} map.
    *
    * @param permissionList the list to convert
    * @return the resulting map
    */
-  @VisibleForTesting
-  static Map<AbsoluteUnixPath, FilePermissions> convertPermissionsList(
+  static Map<String, FilePermissions> convertPermissionsList(
       List<PermissionConfiguration> permissionList) {
-    Map<AbsoluteUnixPath, FilePermissions> permissionsMap = new HashMap<>();
+    Map<String, FilePermissions> permissionsMap = new HashMap<>();
     for (PermissionConfiguration permission : permissionList) {
       if (!permission.getFile().isPresent() || !permission.getMode().isPresent()) {
         throw new IllegalArgumentException(
             "Incomplete <permission> configuration; requires <file> and <mode> fields to be set");
       }
-      AbsoluteUnixPath key = AbsoluteUnixPath.get(permission.getFile().get());
-      FilePermissions value = FilePermissions.fromOctalString(permission.getMode().get());
-      permissionsMap.put(key, value);
+      permissionsMap.put(
+          permission.getFile().get(), FilePermissions.fromOctalString(permission.getMode().get()));
     }
     return permissionsMap;
   }

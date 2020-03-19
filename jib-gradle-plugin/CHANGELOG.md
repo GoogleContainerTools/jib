@@ -5,6 +5,8 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- Glob pattern support for `jib.extraDirectories.permissions`. ([#1200](https://github.com/GoogleContainerTools/jib/issues/1200))
+
 ### Changed
 
 - `jib.container.creationTime` now accepts more timezone formats:`+HHmm`. This allows for easier configuration of creationTime by external systems. ([#2320](https://github.com/GoogleContainerTools/jib/issues/2320))
