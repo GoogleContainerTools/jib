@@ -328,7 +328,7 @@ public class ContainerBuildPlan {
       return this;
     }
 
-    public Builder setLayers(List<LayerObject> layer) {
+    public Builder setLayers(List<? extends LayerObject> layer) {
       layers = new ArrayList<>(layer);
       return this;
     }
@@ -466,7 +466,7 @@ public class ContainerBuildPlan {
     return cmd;
   }
 
-  public List<LayerObject> getLayers() {
+  public List<? extends LayerObject> getLayers() {
     return layers;
   }
 
