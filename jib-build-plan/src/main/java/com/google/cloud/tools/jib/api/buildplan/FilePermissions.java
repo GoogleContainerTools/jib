@@ -20,6 +20,7 @@ import java.nio.file.attribute.PosixFilePermission;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import javax.annotation.concurrent.Immutable;
 
@@ -85,11 +86,7 @@ public class FilePermissions {
       Set<PosixFilePermission> posixFilePermissions) {
     int permissionBits = 0;
     for (PosixFilePermission permission : posixFilePermissions) {
-      Integer bit = PERMISSION_MAP.get(permission);
-      if (bit == null) {
-        throw new RuntimeException("BUG: PERMISSION_MAP is not initialized");
-      }
-      permissionBits |= bit;
+      permissionBits |= Objects.requireNonNull(PERMISSION_MAP.get(permission));
     }
     return new FilePermissions(permissionBits);
   }

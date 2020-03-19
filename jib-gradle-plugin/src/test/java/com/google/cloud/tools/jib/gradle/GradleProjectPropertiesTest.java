@@ -335,8 +335,7 @@ public class GradleProjectPropertiesTest {
 
   @Test
   public void testCreateContainerBuilder_correctFiles()
-      throws URISyntaxException, IOException, InvalidImageReferenceException,
-          CacheDirectoryCreationException {
+      throws URISyntaxException, InvalidImageReferenceException, CacheDirectoryCreationException {
     BuildContext buildContext = setupBuildContext("/app");
     ContainerBuilderLayers layers = new ContainerBuilderLayers(buildContext);
 
@@ -385,7 +384,7 @@ public class GradleProjectPropertiesTest {
 
   @Test
   public void testCreateContainerBuilder_nonDefaultAppRoot()
-      throws IOException, InvalidImageReferenceException, CacheDirectoryCreationException {
+      throws InvalidImageReferenceException, CacheDirectoryCreationException {
     BuildContext buildContext = setupBuildContext("/my/app");
     ContainerBuilderLayers layers = new ContainerBuilderLayers(buildContext);
 
@@ -414,7 +413,7 @@ public class GradleProjectPropertiesTest {
 
   @Test
   public void testCreateContainerBuilder_defaultAppRoot()
-      throws IOException, InvalidImageReferenceException, CacheDirectoryCreationException {
+      throws InvalidImageReferenceException, CacheDirectoryCreationException {
     BuildContext buildContext = setupBuildContext(JavaContainerBuilder.DEFAULT_APP_ROOT);
     ContainerBuilderLayers layers = new ContainerBuilderLayers(buildContext);
     assertExtractionPathsUnordered(
@@ -598,7 +597,7 @@ public class GradleProjectPropertiesTest {
   }
 
   private BuildContext setupBuildContext(String appRoot)
-      throws InvalidImageReferenceException, IOException, CacheDirectoryCreationException {
+      throws InvalidImageReferenceException, CacheDirectoryCreationException {
     JavaContainerBuilder javaContainerBuilder =
         JavaContainerBuilder.from(RegistryImage.named("base"))
             .setAppRoot(AbsoluteUnixPath.get(appRoot))

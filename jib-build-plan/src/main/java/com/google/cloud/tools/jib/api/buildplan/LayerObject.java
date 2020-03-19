@@ -16,23 +16,14 @@
 
 package com.google.cloud.tools.jib.api.buildplan;
 
-import javax.annotation.concurrent.Immutable;
-
 /** Serves as a base class for the "layers" property in the build plan specification. */
-@Immutable
-public class LayerObject {
+public interface LayerObject {
 
   public static enum Type {
     FILE_ENTRIES,
   }
 
-  private final Type type;
+  public Type getType();
 
-  public LayerObject(Type type) {
-    this.type = type;
-  }
-
-  public Type getType() {
-    return type;
-  }
+  public String getName();
 }

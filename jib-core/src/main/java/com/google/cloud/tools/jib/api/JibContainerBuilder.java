@@ -552,11 +552,9 @@ public class JibContainerBuilder {
    * @param containerizer the {@link Containerizer}
    * @return the {@link BuildContext}
    * @throws CacheDirectoryCreationException if a cache directory could not be created
-   * @throws IOException if an I/O exception occurs
    */
   @VisibleForTesting
-  BuildContext toBuildContext(Containerizer containerizer)
-      throws CacheDirectoryCreationException, IOException {
+  BuildContext toBuildContext(Containerizer containerizer) throws CacheDirectoryCreationException {
     return buildContextBuilder
         .setTargetImageConfiguration(containerizer.getImageConfiguration())
         .setAdditionalTargetImageTags(containerizer.getAdditionalTags())
