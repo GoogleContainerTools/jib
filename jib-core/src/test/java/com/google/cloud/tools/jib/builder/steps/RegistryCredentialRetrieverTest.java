@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.builder.steps;
 
+import com.google.cloud.tools.jib.api.CacheDirectoryCreationException;
 import com.google.cloud.tools.jib.api.Credential;
 import com.google.cloud.tools.jib.api.CredentialRetriever;
 import com.google.cloud.tools.jib.api.ImageReference;
@@ -25,7 +26,6 @@ import com.google.cloud.tools.jib.configuration.ImageConfiguration;
 import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.registry.credentials.CredentialRetrievalException;
 import com.google.common.util.concurrent.MoreExecutors;
-import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Collections;
@@ -45,7 +45,8 @@ public class RegistryCredentialRetrieverTest {
   @Mock private EventHandlers mockEventHandlers;
 
   @Test
-  public void testCall_retrieved() throws CredentialRetrievalException, IOException {
+  public void testCall_retrieved()
+      throws CredentialRetrievalException, CacheDirectoryCreationException {
     BuildContext buildContext =
         makeFakeBuildContext(
             Arrays.asList(
@@ -64,7 +65,7 @@ public class RegistryCredentialRetrieverTest {
   }
 
   @Test
-  public void testCall_none() throws CredentialRetrievalException, IOException {
+  public void testCall_none() throws CredentialRetrievalException, CacheDirectoryCreationException {
     BuildContext buildContext =
         makeFakeBuildContext(
             Arrays.asList(Optional::empty, Optional::empty), Collections.emptyList());
@@ -82,7 +83,7 @@ public class RegistryCredentialRetrieverTest {
   }
 
   @Test
-  public void testCall_exception() throws IOException {
+  public void testCall_exception() throws CacheDirectoryCreationException {
     CredentialRetrievalException credentialRetrievalException =
         Mockito.mock(CredentialRetrievalException.class);
     BuildContext buildContext =
@@ -104,7 +105,7 @@ public class RegistryCredentialRetrieverTest {
   private BuildContext makeFakeBuildContext(
       List<CredentialRetriever> baseCredentialRetrievers,
       List<CredentialRetriever> targetCredentialRetrievers)
-      throws IOException {
+      throws CacheDirectoryCreationException {
     ImageReference baseImage = ImageReference.of("baseregistry", "baserepo", null);
     ImageReference targetImage = ImageReference.of("targetregistry", "targetrepo", null);
     return BuildContext.builder()

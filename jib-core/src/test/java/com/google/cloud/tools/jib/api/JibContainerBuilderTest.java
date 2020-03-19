@@ -17,6 +17,7 @@
 package com.google.cloud.tools.jib.api;
 
 import com.google.cloud.tools.jib.api.buildplan.AbsoluteUnixPath;
+import com.google.cloud.tools.jib.api.buildplan.FileEntriesLayer;
 import com.google.cloud.tools.jib.api.buildplan.ImageFormat;
 import com.google.cloud.tools.jib.api.buildplan.Port;
 import com.google.cloud.tools.jib.configuration.BuildContext;
@@ -28,7 +29,6 @@ import com.google.cloud.tools.jib.registry.credentials.CredentialRetrievalExcept
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.MoreExecutors;
-import java.io.IOException;
 import java.nio.file.Paths;
 import java.time.Instant;
 import java.util.Arrays;
@@ -48,15 +48,15 @@ import org.mockito.junit.MockitoJUnitRunner;
 public class JibContainerBuilderTest {
 
   @Spy private BuildContext.Builder spyBuildContextBuilder;
-  @Mock private LayerConfiguration mockLayerConfiguration1;
-  @Mock private LayerConfiguration mockLayerConfiguration2;
+  @Mock private FileEntriesLayer mockLayerConfiguration1;
+  @Mock private FileEntriesLayer mockLayerConfiguration2;
   @Mock private CredentialRetriever mockCredentialRetriever;
   @Mock private Consumer<JibEvent> mockJibEventConsumer;
   @Mock private JibEvent mockJibEvent;
 
   @Test
   public void testToBuildContext_containerConfigurationSet()
-      throws InvalidImageReferenceException, CacheDirectoryCreationException, IOException {
+      throws InvalidImageReferenceException, CacheDirectoryCreationException {
     ImageConfiguration imageConfiguration =
         ImageConfiguration.builder(ImageReference.parse("base/image")).build();
     JibContainerBuilder jibContainerBuilder =
@@ -89,7 +89,7 @@ public class JibContainerBuilderTest {
 
   @Test
   public void testToBuildContext_containerConfigurationAdd()
-      throws InvalidImageReferenceException, CacheDirectoryCreationException, IOException {
+      throws InvalidImageReferenceException, CacheDirectoryCreationException {
     ImageConfiguration imageConfiguration =
         ImageConfiguration.builder(ImageReference.parse("base/image")).build();
     JibContainerBuilder jibContainerBuilder =
@@ -122,7 +122,7 @@ public class JibContainerBuilderTest {
 
   @Test
   public void testToBuildContext()
-      throws InvalidImageReferenceException, CredentialRetrievalException, IOException,
+      throws InvalidImageReferenceException, CredentialRetrievalException,
           CacheDirectoryCreationException {
     ExecutorService executorService = MoreExecutors.newDirectExecutorService();
     RegistryImage targetImage =
@@ -142,7 +142,7 @@ public class JibContainerBuilderTest {
             .build();
     JibContainerBuilder jibContainerBuilder =
         new JibContainerBuilder(baseImageConfiguration, spyBuildContextBuilder)
-            .setLayers(Arrays.asList(mockLayerConfiguration1, mockLayerConfiguration2));
+            .setFileEntriesLayers(Arrays.asList(mockLayerConfiguration1, mockLayerConfiguration2));
     BuildContext buildContext = jibContainerBuilder.toBuildContext(containerizer);
 
     Assert.assertEquals(

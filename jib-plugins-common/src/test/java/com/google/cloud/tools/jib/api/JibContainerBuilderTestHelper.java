@@ -17,14 +17,13 @@
 package com.google.cloud.tools.jib.api;
 
 import com.google.cloud.tools.jib.configuration.BuildContext;
-import java.io.IOException;
 
 /** Test helper to expose package-private members of {@link JibContainerBuilder}. */
 public class JibContainerBuilderTestHelper {
 
   public static BuildContext toBuildContext(
       JibContainerBuilder jibContainerBuilder, Containerizer containerizer)
-      throws IOException, CacheDirectoryCreationException {
+      throws CacheDirectoryCreationException {
     return jibContainerBuilder.toBuildContext(containerizer);
   }
 

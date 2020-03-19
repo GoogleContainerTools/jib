@@ -25,12 +25,12 @@ import com.google.cloud.tools.jib.api.JavaContainerBuilder;
 import com.google.cloud.tools.jib.api.JavaContainerBuilder.LayerType;
 import com.google.cloud.tools.jib.api.Jib;
 import com.google.cloud.tools.jib.api.JibContainerBuilder;
-import com.google.cloud.tools.jib.api.LayerConfiguration;
 import com.google.cloud.tools.jib.api.LogEvent;
 import com.google.cloud.tools.jib.api.Ports;
 import com.google.cloud.tools.jib.api.RegistryImage;
 import com.google.cloud.tools.jib.api.TarImage;
 import com.google.cloud.tools.jib.api.buildplan.AbsoluteUnixPath;
+import com.google.cloud.tools.jib.api.buildplan.FileEntriesLayer;
 import com.google.cloud.tools.jib.frontend.CredentialRetrieverFactory;
 import com.google.cloud.tools.jib.global.JibSystemProperties;
 import com.google.common.annotations.VisibleForTesting;
@@ -302,13 +302,13 @@ public class PluginConfigurationProcessor {
     // since jib has already expanded out directories after processing everything, we just
     // ignore directories and provide only files to watch
     Set<Path> excludesExpanded = getAllFiles(excludes);
-    for (LayerConfiguration layer : jibContainerBuilder.describeContainer().getLayers()) {
+    for (FileEntriesLayer layer : jibContainerBuilder.describeContainer().getFileEntriesLayers()) {
       if (CONST_LAYERS.contains(layer.getName())) {
         continue;
       }
       if (GENERATED_LAYERS.contains(layer.getName())) {
         layer
-            .getLayerEntries()
+            .getEntries()
             .stream()
             .filter(layerEntry -> Files.isRegularFile(layerEntry.getSourceFile()))
             .filter(
@@ -317,7 +317,7 @@ public class PluginConfigurationProcessor {
             .forEach(syncMap::addGenerated);
       } else { // this is a direct layer
         layer
-            .getLayerEntries()
+            .getEntries()
             .stream()
             .filter(layerEntry -> Files.isRegularFile(layerEntry.getSourceFile()))
             .filter(
@@ -383,7 +383,7 @@ public class PluginConfigurationProcessor {
     // Adds all the extra files.
     for (Path directory : rawConfiguration.getExtraDirectories()) {
       if (Files.exists(directory)) {
-        jibContainerBuilder.addLayer(
+        jibContainerBuilder.addFileEntriesLayer(
             JavaContainerBuilderHelper.extraDirectoryLayerConfiguration(
                 directory,
                 rawConfiguration.getExtraDirectoryPermissions(),

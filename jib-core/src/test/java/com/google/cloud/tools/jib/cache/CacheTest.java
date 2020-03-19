@@ -16,10 +16,11 @@
 
 package com.google.cloud.tools.jib.cache;
 
+import com.google.cloud.tools.jib.api.CacheDirectoryCreationException;
 import com.google.cloud.tools.jib.api.DescriptorDigest;
-import com.google.cloud.tools.jib.api.LayerEntry;
 import com.google.cloud.tools.jib.api.buildplan.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.api.buildplan.FileEntriesLayer;
+import com.google.cloud.tools.jib.api.buildplan.FileEntry;
 import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.blob.Blobs;
 import com.google.common.collect.ImmutableList;
@@ -33,6 +34,7 @@ import java.nio.file.attribute.FileTime;
 import java.time.Instant;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
+import org.hamcrest.CoreMatchers;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
@@ -91,8 +93,8 @@ public class CacheTest {
     return blob.writeTo(ByteStreams.nullOutputStream()).getSize();
   }
 
-  private static LayerEntry defaultLayerEntry(Path source, AbsoluteUnixPath destination) {
-    return new LayerEntry(
+  private static FileEntry defaultLayerEntry(Path source, AbsoluteUnixPath destination) {
+    return new FileEntry(
         source,
         destination,
         FileEntriesLayer.DEFAULT_FILE_PERMISSIONS_PROVIDER.apply(source, destination),
@@ -105,13 +107,13 @@ public class CacheTest {
   private DescriptorDigest layerDigest1;
   private DescriptorDigest layerDiffId1;
   private long layerSize1;
-  private ImmutableList<LayerEntry> layerEntries1;
+  private ImmutableList<FileEntry> layerEntries1;
 
   private Blob layerBlob2;
   private DescriptorDigest layerDigest2;
   private DescriptorDigest layerDiffId2;
   private long layerSize2;
-  private ImmutableList<LayerEntry> layerEntries2;
+  private ImmutableList<FileEntry> layerEntries2;
 
   @Before
   public void setUp() throws IOException {
@@ -148,14 +150,14 @@ public class CacheTest {
       Cache.withDirectory(file);
       Assert.fail();
 
-    } catch (FileAlreadyExistsException ex) {
-      // pass
+    } catch (CacheDirectoryCreationException ex) {
+      Assert.assertThat(ex.getCause(), CoreMatchers.instanceOf(FileAlreadyExistsException.class));
     }
   }
 
   @Test
   public void testWriteCompressed_retrieveByLayerDigest()
-      throws IOException, CacheCorruptedException {
+      throws IOException, CacheDirectoryCreationException, CacheCorruptedException {
     Cache cache = Cache.withDirectory(temporaryFolder.newFolder().toPath());
 
     verifyIsLayer1(cache.writeCompressedLayer(compress(layerBlob1)));
@@ -165,7 +167,7 @@ public class CacheTest {
 
   @Test
   public void testWriteUncompressedWithLayerEntries_retrieveByLayerDigest()
-      throws IOException, CacheCorruptedException {
+      throws IOException, CacheDirectoryCreationException, CacheCorruptedException {
     Cache cache = Cache.withDirectory(temporaryFolder.newFolder().toPath());
 
     verifyIsLayer1(cache.writeUncompressedLayer(layerBlob1, layerEntries1));
@@ -175,7 +177,7 @@ public class CacheTest {
 
   @Test
   public void testWriteUncompressedWithLayerEntries_retrieveByLayerEntries()
-      throws IOException, CacheCorruptedException {
+      throws IOException, CacheDirectoryCreationException, CacheCorruptedException {
     Cache cache = Cache.withDirectory(temporaryFolder.newFolder().toPath());
 
     verifyIsLayer1(cache.writeUncompressedLayer(layerBlob1, layerEntries1));
@@ -189,7 +191,8 @@ public class CacheTest {
   }
 
   @Test
-  public void testRetrieveWithTwoEntriesInCache() throws IOException, CacheCorruptedException {
+  public void testRetrieveWithTwoEntriesInCache()
+      throws IOException, CacheDirectoryCreationException, CacheCorruptedException {
     Cache cache = Cache.withDirectory(temporaryFolder.newFolder().toPath());
 
     verifyIsLayer1(cache.writeUncompressedLayer(layerBlob1, layerEntries1));

@@ -23,10 +23,10 @@ import com.google.cloud.tools.jib.api.JavaContainerBuilder;
 import com.google.cloud.tools.jib.api.JavaContainerBuilder.LayerType;
 import com.google.cloud.tools.jib.api.JibContainerBuilder;
 import com.google.cloud.tools.jib.api.JibContainerBuilderTestHelper;
-import com.google.cloud.tools.jib.api.LayerConfiguration;
-import com.google.cloud.tools.jib.api.LayerEntry;
 import com.google.cloud.tools.jib.api.RegistryImage;
 import com.google.cloud.tools.jib.api.buildplan.AbsoluteUnixPath;
+import com.google.cloud.tools.jib.api.buildplan.FileEntriesLayer;
+import com.google.cloud.tools.jib.api.buildplan.FileEntry;
 import com.google.cloud.tools.jib.api.buildplan.FilePermissions;
 import com.google.cloud.tools.jib.configuration.BuildContext;
 import com.google.cloud.tools.jib.filesystem.DirectoryWalker;
@@ -124,10 +124,10 @@ public class GradleProjectPropertiesTest {
   /** Helper for reading back layers in a {@link BuildContext}. */
   private static class ContainerBuilderLayers {
 
-    private final List<LayerConfiguration> resourcesLayerEntries;
-    private final List<LayerConfiguration> classesLayerEntries;
-    private final List<LayerConfiguration> dependenciesLayerEntries;
-    private final List<LayerConfiguration> snapshotsLayerEntries;
+    private final List<FileEntriesLayer> resourcesLayerEntries;
+    private final List<FileEntriesLayer> classesLayerEntries;
+    private final List<FileEntriesLayer> dependenciesLayerEntries;
+    private final List<FileEntriesLayer> snapshotsLayerEntries;
 
     private ContainerBuilderLayers(BuildContext buildContext) {
       resourcesLayerEntries =
@@ -140,7 +140,7 @@ public class GradleProjectPropertiesTest {
     }
   }
 
-  private static List<LayerConfiguration> getLayerConfigurationsByName(
+  private static List<FileEntriesLayer> getLayerConfigurationsByName(
       BuildContext buildContext, String name) {
     return buildContext
         .getLayerConfigurations()
@@ -150,26 +150,26 @@ public class GradleProjectPropertiesTest {
   }
 
   private static <T> void assertLayerEntriesUnordered(
-      List<T> expectedPaths, List<LayerEntry> entries, Function<LayerEntry, T> fieldSelector) {
+      List<T> expectedPaths, List<FileEntry> entries, Function<FileEntry, T> fieldSelector) {
     List<T> expected = expectedPaths.stream().sorted().collect(Collectors.toList());
     List<T> actual = entries.stream().map(fieldSelector).sorted().collect(Collectors.toList());
     Assert.assertEquals(expected, actual);
   }
 
   private static void assertSourcePathsUnordered(
-      List<Path> expectedPaths, List<LayerEntry> entries) {
-    assertLayerEntriesUnordered(expectedPaths, entries, LayerEntry::getSourceFile);
+      List<Path> expectedPaths, List<FileEntry> entries) {
+    assertLayerEntriesUnordered(expectedPaths, entries, FileEntry::getSourceFile);
   }
 
   private static void assertExtractionPathsUnordered(
-      List<String> expectedPaths, List<LayerEntry> entries) {
+      List<String> expectedPaths, List<FileEntry> entries) {
     assertLayerEntriesUnordered(
         expectedPaths, entries, layerEntry -> layerEntry.getExtractionPath().toString());
   }
 
-  private static void assertModificationTime(Instant instant, List<LayerConfiguration> layers) {
-    for (LayerConfiguration layer : layers) {
-      for (LayerEntry entry : layer.getLayerEntries()) {
+  private static void assertModificationTime(Instant instant, List<FileEntriesLayer> layers) {
+    for (FileEntriesLayer layer : layers) {
+      for (FileEntry entry : layer.getEntries()) {
         String message = "wrong time: " + entry.getSourceFile() + "-->" + entry.getExtractionPath();
         Assert.assertEquals(message, instant, entry.getModificationTime());
       }
@@ -335,8 +335,7 @@ public class GradleProjectPropertiesTest {
 
   @Test
   public void testCreateContainerBuilder_correctFiles()
-      throws URISyntaxException, IOException, InvalidImageReferenceException,
-          CacheDirectoryCreationException {
+      throws URISyntaxException, InvalidImageReferenceException, CacheDirectoryCreationException {
     BuildContext buildContext = setupBuildContext("/app");
     ContainerBuilderLayers layers = new ContainerBuilderLayers(buildContext);
 
@@ -344,7 +343,7 @@ public class GradleProjectPropertiesTest {
     assertSourcePathsUnordered(
         ImmutableList.of(
             applicationDirectory.resolve("dependencies/dependencyX-1.0.0-SNAPSHOT.jar")),
-        layers.snapshotsLayerEntries.get(0).getLayerEntries());
+        layers.snapshotsLayerEntries.get(0).getEntries());
     assertSourcePathsUnordered(
         ImmutableList.of(
             applicationDirectory.resolve("dependencies/dependency-1.0.0.jar"),
@@ -353,18 +352,18 @@ public class GradleProjectPropertiesTest {
             applicationDirectory.resolve("dependencies/libraryA.jar"),
             applicationDirectory.resolve("dependencies/libraryB.jar"),
             applicationDirectory.resolve("dependencies/library.jarC.jar")),
-        layers.dependenciesLayerEntries.get(0).getLayerEntries());
+        layers.dependenciesLayerEntries.get(0).getEntries());
     assertSourcePathsUnordered(
         ImmutableList.of(
             applicationDirectory.resolve("resources/resourceA"),
             applicationDirectory.resolve("resources/resourceB"),
             applicationDirectory.resolve("resources/world")),
-        layers.resourcesLayerEntries.get(0).getLayerEntries());
+        layers.resourcesLayerEntries.get(0).getEntries());
     assertSourcePathsUnordered(
         ImmutableList.of(
             applicationDirectory.resolve("classes/HelloWorld.class"),
             applicationDirectory.resolve("classes/some.class")),
-        layers.classesLayerEntries.get(0).getLayerEntries());
+        layers.classesLayerEntries.get(0).getEntries());
 
     assertModificationTime(SAMPLE_FILE_MODIFICATION_TIME, layers.snapshotsLayerEntries);
     assertModificationTime(SAMPLE_FILE_MODIFICATION_TIME, layers.dependenciesLayerEntries);
@@ -385,7 +384,7 @@ public class GradleProjectPropertiesTest {
 
   @Test
   public void testCreateContainerBuilder_nonDefaultAppRoot()
-      throws IOException, InvalidImageReferenceException, CacheDirectoryCreationException {
+      throws InvalidImageReferenceException, CacheDirectoryCreationException {
     BuildContext buildContext = setupBuildContext("/my/app");
     ContainerBuilderLayers layers = new ContainerBuilderLayers(buildContext);
 
@@ -397,24 +396,24 @@ public class GradleProjectPropertiesTest {
             "/my/app/libs/libraryA.jar",
             "/my/app/libs/libraryB.jar",
             "/my/app/libs/library.jarC.jar"),
-        layers.dependenciesLayerEntries.get(0).getLayerEntries());
+        layers.dependenciesLayerEntries.get(0).getEntries());
     assertExtractionPathsUnordered(
         Collections.singletonList("/my/app/libs/dependencyX-1.0.0-SNAPSHOT.jar"),
-        layers.snapshotsLayerEntries.get(0).getLayerEntries());
+        layers.snapshotsLayerEntries.get(0).getEntries());
     assertExtractionPathsUnordered(
         Arrays.asList(
             "/my/app/resources/resourceA",
             "/my/app/resources/resourceB",
             "/my/app/resources/world"),
-        layers.resourcesLayerEntries.get(0).getLayerEntries());
+        layers.resourcesLayerEntries.get(0).getEntries());
     assertExtractionPathsUnordered(
         Arrays.asList("/my/app/classes/HelloWorld.class", "/my/app/classes/some.class"),
-        layers.classesLayerEntries.get(0).getLayerEntries());
+        layers.classesLayerEntries.get(0).getEntries());
   }
 
   @Test
   public void testCreateContainerBuilder_defaultAppRoot()
-      throws IOException, InvalidImageReferenceException, CacheDirectoryCreationException {
+      throws InvalidImageReferenceException, CacheDirectoryCreationException {
     BuildContext buildContext = setupBuildContext(JavaContainerBuilder.DEFAULT_APP_ROOT);
     ContainerBuilderLayers layers = new ContainerBuilderLayers(buildContext);
     assertExtractionPathsUnordered(
@@ -425,17 +424,17 @@ public class GradleProjectPropertiesTest {
             "/app/libs/libraryA.jar",
             "/app/libs/libraryB.jar",
             "/app/libs/library.jarC.jar"),
-        layers.dependenciesLayerEntries.get(0).getLayerEntries());
+        layers.dependenciesLayerEntries.get(0).getEntries());
     assertExtractionPathsUnordered(
         Collections.singletonList("/app/libs/dependencyX-1.0.0-SNAPSHOT.jar"),
-        layers.snapshotsLayerEntries.get(0).getLayerEntries());
+        layers.snapshotsLayerEntries.get(0).getEntries());
     assertExtractionPathsUnordered(
         Arrays.asList(
             "/app/resources/resourceA", "/app/resources/resourceB", "/app/resources/world"),
-        layers.resourcesLayerEntries.get(0).getLayerEntries());
+        layers.resourcesLayerEntries.get(0).getEntries());
     assertExtractionPathsUnordered(
         Arrays.asList("/app/classes/HelloWorld.class", "/app/classes/some.class"),
-        layers.classesLayerEntries.get(0).getLayerEntries());
+        layers.classesLayerEntries.get(0).getEntries());
   }
 
   @Test
@@ -449,10 +448,10 @@ public class GradleProjectPropertiesTest {
     ContainerBuilderLayers layers = new ContainerBuilderLayers(buildContext);
     assertSourcePathsUnordered(
         ImmutableList.of(unzipTarget.resolve("WEB-INF/lib/dependency-1.0.0.jar")),
-        layers.dependenciesLayerEntries.get(0).getLayerEntries());
+        layers.dependenciesLayerEntries.get(0).getEntries());
     assertSourcePathsUnordered(
         ImmutableList.of(unzipTarget.resolve("WEB-INF/lib/dependencyX-1.0.0-SNAPSHOT.jar")),
-        layers.snapshotsLayerEntries.get(0).getLayerEntries());
+        layers.snapshotsLayerEntries.get(0).getEntries());
     assertSourcePathsUnordered(
         ImmutableList.of(
             unzipTarget.resolve("META-INF"),
@@ -465,21 +464,21 @@ public class GradleProjectPropertiesTest {
             unzipTarget.resolve("WEB-INF/classes/package/test.properties"),
             unzipTarget.resolve("WEB-INF/lib"),
             unzipTarget.resolve("WEB-INF/web.xml")),
-        layers.resourcesLayerEntries.get(0).getLayerEntries());
+        layers.resourcesLayerEntries.get(0).getEntries());
     assertSourcePathsUnordered(
         ImmutableList.of(
             unzipTarget.resolve("WEB-INF/classes/HelloWorld.class"),
             unzipTarget.resolve("WEB-INF/classes/empty_dir"),
             unzipTarget.resolve("WEB-INF/classes/package"),
             unzipTarget.resolve("WEB-INF/classes/package/Other.class")),
-        layers.classesLayerEntries.get(0).getLayerEntries());
+        layers.classesLayerEntries.get(0).getEntries());
 
     assertExtractionPathsUnordered(
         Collections.singletonList("/my/app/WEB-INF/lib/dependency-1.0.0.jar"),
-        layers.dependenciesLayerEntries.get(0).getLayerEntries());
+        layers.dependenciesLayerEntries.get(0).getEntries());
     assertExtractionPathsUnordered(
         Collections.singletonList("/my/app/WEB-INF/lib/dependencyX-1.0.0-SNAPSHOT.jar"),
-        layers.snapshotsLayerEntries.get(0).getLayerEntries());
+        layers.snapshotsLayerEntries.get(0).getEntries());
     assertExtractionPathsUnordered(
         Arrays.asList(
             "/my/app/META-INF",
@@ -492,14 +491,14 @@ public class GradleProjectPropertiesTest {
             "/my/app/WEB-INF/classes/package/test.properties",
             "/my/app/WEB-INF/lib",
             "/my/app/WEB-INF/web.xml"),
-        layers.resourcesLayerEntries.get(0).getLayerEntries());
+        layers.resourcesLayerEntries.get(0).getEntries());
     assertExtractionPathsUnordered(
         Arrays.asList(
             "/my/app/WEB-INF/classes/HelloWorld.class",
             "/my/app/WEB-INF/classes/empty_dir",
             "/my/app/WEB-INF/classes/package",
             "/my/app/WEB-INF/classes/package/Other.class"),
-        layers.classesLayerEntries.get(0).getLayerEntries());
+        layers.classesLayerEntries.get(0).getEntries());
   }
 
   @Test
@@ -512,10 +511,10 @@ public class GradleProjectPropertiesTest {
     ContainerBuilderLayers layers = new ContainerBuilderLayers(buildContext);
     assertSourcePathsUnordered(
         ImmutableList.of(unzipTarget.resolve("WEB-INF/lib/dependency-1.0.0.jar")),
-        layers.dependenciesLayerEntries.get(0).getLayerEntries());
+        layers.dependenciesLayerEntries.get(0).getEntries());
     assertSourcePathsUnordered(
         ImmutableList.of(unzipTarget.resolve("WEB-INF/lib/dependencyX-1.0.0-SNAPSHOT.jar")),
-        layers.snapshotsLayerEntries.get(0).getLayerEntries());
+        layers.snapshotsLayerEntries.get(0).getEntries());
     assertSourcePathsUnordered(
         ImmutableList.of(
             unzipTarget.resolve("META-INF"),
@@ -528,14 +527,14 @@ public class GradleProjectPropertiesTest {
             unzipTarget.resolve("WEB-INF/classes/package/test.properties"),
             unzipTarget.resolve("WEB-INF/lib"),
             unzipTarget.resolve("WEB-INF/web.xml")),
-        layers.resourcesLayerEntries.get(0).getLayerEntries());
+        layers.resourcesLayerEntries.get(0).getEntries());
     assertSourcePathsUnordered(
         Arrays.asList(
             unzipTarget.resolve("WEB-INF/classes/HelloWorld.class"),
             unzipTarget.resolve("WEB-INF/classes/empty_dir"),
             unzipTarget.resolve("WEB-INF/classes/package"),
             unzipTarget.resolve("WEB-INF/classes/package/Other.class")),
-        layers.classesLayerEntries.get(0).getLayerEntries());
+        layers.classesLayerEntries.get(0).getEntries());
   }
 
   @Test
@@ -598,7 +597,7 @@ public class GradleProjectPropertiesTest {
   }
 
   private BuildContext setupBuildContext(String appRoot)
-      throws InvalidImageReferenceException, IOException, CacheDirectoryCreationException {
+      throws InvalidImageReferenceException, CacheDirectoryCreationException {
     JavaContainerBuilder javaContainerBuilder =
         JavaContainerBuilder.from(RegistryImage.named("base"))
             .setAppRoot(AbsoluteUnixPath.get(appRoot))

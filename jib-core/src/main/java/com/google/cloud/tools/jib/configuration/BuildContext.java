@@ -16,8 +16,9 @@
 
 package com.google.cloud.tools.jib.configuration;
 
-import com.google.cloud.tools.jib.api.LayerConfiguration;
+import com.google.cloud.tools.jib.api.CacheDirectoryCreationException;
 import com.google.cloud.tools.jib.api.LogEvent;
+import com.google.cloud.tools.jib.api.buildplan.FileEntriesLayer;
 import com.google.cloud.tools.jib.api.buildplan.ImageFormat;
 import com.google.cloud.tools.jib.cache.Cache;
 import com.google.cloud.tools.jib.event.EventHandlers;
@@ -46,7 +47,7 @@ import javax.annotation.Nullable;
  * Build context for the builder process. Includes static build configuration options as well as
  * various services for execution (such as event dispatching, thread execution service, and HTTP
  * client). Informational instances (particularly configuration options such as {@link
- * ContainerConfiguration}, {@link ImageConfiguration}, and {@link LayerConfiguration}) held in are
+ * ContainerConfiguration}, {@link ImageConfiguration}, and {@link FileEntriesLayer}) held in are
  * immutable.
  */
 public class BuildContext implements Closeable {
@@ -70,7 +71,7 @@ public class BuildContext implements Closeable {
     @Nullable private Path baseImageLayersCacheDirectory;
     private boolean allowInsecureRegistries = false;
     private boolean offline = false;
-    private ImmutableList<LayerConfiguration> layerConfigurations = ImmutableList.of();
+    private ImmutableList<FileEntriesLayer> layerConfigurations = ImmutableList.of();
     private Class<? extends BuildableManifestTemplate> targetFormat = DEFAULT_TARGET_FORMAT;
     private String toolName = DEFAULT_TOOL_NAME;
     private EventHandlers eventHandlers = EventHandlers.NONE;
@@ -202,7 +203,7 @@ public class BuildContext implements Closeable {
      * @param layerConfigurations the configurations for the layers
      * @return this
      */
-    public Builder setLayerConfigurations(List<LayerConfiguration> layerConfigurations) {
+    public Builder setLayerConfigurations(List<FileEntriesLayer> layerConfigurations) {
       this.layerConfigurations = ImmutableList.copyOf(layerConfigurations);
       return this;
     }
@@ -245,9 +246,9 @@ public class BuildContext implements Closeable {
      * Builds a new {@link BuildContext} using the parameters passed into the builder.
      *
      * @return the corresponding build context
-     * @throws IOException if an I/O exception occurs
+     * @throws CacheDirectoryCreationException if I/O exception occurs when creating cache directory
      */
-    public BuildContext build() throws IOException {
+    public BuildContext build() throws CacheDirectoryCreationException {
       // Validates the parameters.
       List<String> missingFields = new ArrayList<>();
       if (baseImageConfiguration == null) {
@@ -343,7 +344,7 @@ public class BuildContext implements Closeable {
   private final Cache applicationLayersCache;
   private Class<? extends BuildableManifestTemplate> targetFormat;
   private final boolean offline;
-  private final ImmutableList<LayerConfiguration> layerConfigurations;
+  private final ImmutableList<FileEntriesLayer> layerConfigurations;
   private final String toolName;
   private final EventHandlers eventHandlers;
   private final FailoverHttpClient httpClient;
@@ -361,7 +362,7 @@ public class BuildContext implements Closeable {
       Cache applicationLayersCache,
       Class<? extends BuildableManifestTemplate> targetFormat,
       boolean offline,
-      ImmutableList<LayerConfiguration> layerConfigurations,
+      ImmutableList<FileEntriesLayer> layerConfigurations,
       String toolName,
       EventHandlers eventHandlers,
       FailoverHttpClient httpClient,
@@ -468,7 +469,7 @@ public class BuildContext implements Closeable {
    *
    * @return the list of layer configurations
    */
-  public ImmutableList<LayerConfiguration> getLayerConfigurations() {
+  public ImmutableList<FileEntriesLayer> getLayerConfigurations() {
     return layerConfigurations;
   }
 

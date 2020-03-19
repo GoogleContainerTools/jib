@@ -23,10 +23,10 @@ import com.google.cloud.tools.jib.api.JavaContainerBuilder;
 import com.google.cloud.tools.jib.api.JavaContainerBuilder.LayerType;
 import com.google.cloud.tools.jib.api.JibContainerBuilder;
 import com.google.cloud.tools.jib.api.JibContainerBuilderTestHelper;
-import com.google.cloud.tools.jib.api.LayerConfiguration;
-import com.google.cloud.tools.jib.api.LayerEntry;
 import com.google.cloud.tools.jib.api.RegistryImage;
 import com.google.cloud.tools.jib.api.buildplan.AbsoluteUnixPath;
+import com.google.cloud.tools.jib.api.buildplan.FileEntriesLayer;
+import com.google.cloud.tools.jib.api.buildplan.FileEntry;
 import com.google.cloud.tools.jib.configuration.BuildContext;
 import com.google.cloud.tools.jib.filesystem.DirectoryWalker;
 import com.google.cloud.tools.jib.filesystem.TempDirectoryProvider;
@@ -85,11 +85,11 @@ public class MavenProjectPropertiesTest {
   /** Helper for reading back layers in a {@link BuildContext}. */
   private static class ContainerBuilderLayers {
 
-    private final List<LayerConfiguration> resourcesLayers;
-    private final List<LayerConfiguration> classesLayers;
-    private final List<LayerConfiguration> dependenciesLayers;
-    private final List<LayerConfiguration> snapshotsLayers;
-    private final List<LayerConfiguration> extraFilesLayers;
+    private final List<FileEntriesLayer> resourcesLayers;
+    private final List<FileEntriesLayer> classesLayers;
+    private final List<FileEntriesLayer> dependenciesLayers;
+    private final List<FileEntriesLayer> snapshotsLayers;
+    private final List<FileEntriesLayer> extraFilesLayers;
 
     private ContainerBuilderLayers(BuildContext buildContext) {
       resourcesLayers = getLayerConfigurationsByName(buildContext, LayerType.RESOURCES.getName());
@@ -103,7 +103,7 @@ public class MavenProjectPropertiesTest {
     }
   }
 
-  private static List<LayerConfiguration> getLayerConfigurationsByName(
+  private static List<FileEntriesLayer> getLayerConfigurationsByName(
       BuildContext buildContext, String name) {
     return buildContext
         .getLayerConfigurations()
@@ -113,26 +113,26 @@ public class MavenProjectPropertiesTest {
   }
 
   private static <T> void assertLayerEntriesUnordered(
-      List<T> expectedPaths, List<LayerEntry> entries, Function<LayerEntry, T> fieldSelector) {
+      List<T> expectedPaths, List<FileEntry> entries, Function<FileEntry, T> fieldSelector) {
     List<T> expected = expectedPaths.stream().sorted().collect(Collectors.toList());
     List<T> actual = entries.stream().map(fieldSelector).sorted().collect(Collectors.toList());
     Assert.assertEquals(expected, actual);
   }
 
   private static void assertSourcePathsUnordered(
-      List<Path> expectedPaths, List<LayerEntry> entries) {
-    assertLayerEntriesUnordered(expectedPaths, entries, LayerEntry::getSourceFile);
+      List<Path> expectedPaths, List<FileEntry> entries) {
+    assertLayerEntriesUnordered(expectedPaths, entries, FileEntry::getSourceFile);
   }
 
   private static void assertExtractionPathsUnordered(
-      List<String> expectedPaths, List<LayerEntry> entries) {
+      List<String> expectedPaths, List<FileEntry> entries) {
     assertLayerEntriesUnordered(
         expectedPaths, entries, layerEntry -> layerEntry.getExtractionPath().toString());
   }
 
-  private static void assertModificationTime(Instant instant, List<LayerConfiguration> layers) {
-    for (LayerConfiguration layer : layers) {
-      for (LayerEntry entry : layer.getLayerEntries()) {
+  private static void assertModificationTime(Instant instant, List<FileEntriesLayer> layers) {
+    for (FileEntriesLayer layer : layers) {
+      for (FileEntry entry : layer.getEntries()) {
         String message = "wrong time: " + entry.getSourceFile() + "-->" + entry.getExtractionPath();
         Assert.assertEquals(message, instant, entry.getModificationTime());
       }
@@ -149,10 +149,10 @@ public class MavenProjectPropertiesTest {
             "/my/app/libs/libraryA.jar",
             "/my/app/libs/libraryB.jar",
             "/my/app/libs/library.jarC.jar"),
-        layers.dependenciesLayers.get(0).getLayerEntries());
+        layers.dependenciesLayers.get(0).getEntries());
     assertExtractionPathsUnordered(
         Collections.singletonList("/my/app/libs/dependencyX-1.0.0-SNAPSHOT.jar"),
-        layers.snapshotsLayers.get(0).getLayerEntries());
+        layers.snapshotsLayers.get(0).getEntries());
     assertExtractionPathsUnordered(
         Arrays.asList(
             "/my/app/resources/directory",
@@ -161,7 +161,7 @@ public class MavenProjectPropertiesTest {
             "/my/app/resources/resourceA",
             "/my/app/resources/resourceB",
             "/my/app/resources/world"),
-        layers.resourcesLayers.get(0).getLayerEntries());
+        layers.resourcesLayers.get(0).getEntries());
     assertExtractionPathsUnordered(
         Arrays.asList(
             "/my/app/classes/HelloWorld.class",
@@ -169,7 +169,7 @@ public class MavenProjectPropertiesTest {
             "/my/app/classes/package",
             "/my/app/classes/package/some.class",
             "/my/app/classes/some.class"),
-        layers.classesLayers.get(0).getLayerEntries());
+        layers.classesLayers.get(0).getEntries());
   }
 
   private static Path getResource(String path) throws URISyntaxException {
@@ -441,11 +441,11 @@ public class MavenProjectPropertiesTest {
             dependenciesPath.resolve("libraryA.jar"),
             dependenciesPath.resolve("libraryB.jar"),
             dependenciesPath.resolve("library.jarC.jar")),
-        layers.dependenciesLayers.get(0).getLayerEntries());
+        layers.dependenciesLayers.get(0).getEntries());
     assertSourcePathsUnordered(
         ImmutableList.of(
             testRepository.artifactPathOnDisk("com.test", "dependencyX", "1.0.0-SNAPSHOT")),
-        layers.snapshotsLayers.get(0).getLayerEntries());
+        layers.snapshotsLayers.get(0).getEntries());
     assertSourcePathsUnordered(
         ImmutableList.of(
             applicationDirectory.resolve("output/directory"),
@@ -454,7 +454,7 @@ public class MavenProjectPropertiesTest {
             applicationDirectory.resolve("output/resourceA"),
             applicationDirectory.resolve("output/resourceB"),
             applicationDirectory.resolve("output/world")),
-        layers.resourcesLayers.get(0).getLayerEntries());
+        layers.resourcesLayers.get(0).getEntries());
     assertSourcePathsUnordered(
         ImmutableList.of(
             applicationDirectory.resolve("output/HelloWorld.class"),
@@ -462,7 +462,7 @@ public class MavenProjectPropertiesTest {
             applicationDirectory.resolve("output/package"),
             applicationDirectory.resolve("output/package/some.class"),
             applicationDirectory.resolve("output/some.class")),
-        layers.classesLayers.get(0).getLayerEntries());
+        layers.classesLayers.get(0).getEntries());
 
     assertModificationTime(SAMPLE_FILE_MODIFICATION_TIME, layers.dependenciesLayers);
     assertModificationTime(SAMPLE_FILE_MODIFICATION_TIME, layers.snapshotsLayers);
@@ -503,13 +503,12 @@ public class MavenProjectPropertiesTest {
             dependenciesPath.resolve("libraryA.jar"),
             dependenciesPath.resolve("libraryB.jar"),
             dependenciesPath.resolve("library.jarC.jar")),
-        layers.dependenciesLayers.get(0).getLayerEntries());
+        layers.dependenciesLayers.get(0).getEntries());
     assertSourcePathsUnordered(
         Arrays.asList(
             testRepository.artifactPathOnDisk("com.test", "dependencyX", "1.0.0-SNAPSHOT")),
-        layers.snapshotsLayers.get(0).getLayerEntries());
-    assertSourcePathsUnordered(
-        Arrays.asList(jar), layers.extraFilesLayers.get(0).getLayerEntries());
+        layers.snapshotsLayers.get(0).getEntries());
+    assertSourcePathsUnordered(Arrays.asList(jar), layers.extraFilesLayers.get(0).getEntries());
 
     assertExtractionPathsUnordered(
         Arrays.asList(
@@ -519,13 +518,13 @@ public class MavenProjectPropertiesTest {
             "/app-root/libs/library.jarC.jar",
             "/app-root/libs/libraryA.jar",
             "/app-root/libs/libraryB.jar"),
-        layers.dependenciesLayers.get(0).getLayerEntries());
+        layers.dependenciesLayers.get(0).getEntries());
     assertExtractionPathsUnordered(
         Arrays.asList("/app-root/libs/dependencyX-1.0.0-SNAPSHOT.jar"),
-        layers.snapshotsLayers.get(0).getLayerEntries());
+        layers.snapshotsLayers.get(0).getEntries());
     assertExtractionPathsUnordered(
         Arrays.asList("/app-root/classpath/final-name.jar"),
-        layers.extraFilesLayers.get(0).getLayerEntries());
+        layers.extraFilesLayers.get(0).getEntries());
   }
 
   @Test
@@ -538,10 +537,10 @@ public class MavenProjectPropertiesTest {
     ContainerBuilderLayers layers = new ContainerBuilderLayers(buildContext);
     assertSourcePathsUnordered(
         ImmutableList.of(unzipTarget.resolve("WEB-INF/lib/dependency-1.0.0.jar")),
-        layers.dependenciesLayers.get(0).getLayerEntries());
+        layers.dependenciesLayers.get(0).getEntries());
     assertSourcePathsUnordered(
         ImmutableList.of(unzipTarget.resolve("WEB-INF/lib/dependencyX-1.0.0-SNAPSHOT.jar")),
-        layers.snapshotsLayers.get(0).getLayerEntries());
+        layers.snapshotsLayers.get(0).getEntries());
     assertSourcePathsUnordered(
         ImmutableList.of(
             unzipTarget.resolve("META-INF"),
@@ -554,21 +553,21 @@ public class MavenProjectPropertiesTest {
             unzipTarget.resolve("WEB-INF/classes/package/test.properties"),
             unzipTarget.resolve("WEB-INF/lib"),
             unzipTarget.resolve("WEB-INF/web.xml")),
-        layers.resourcesLayers.get(0).getLayerEntries());
+        layers.resourcesLayers.get(0).getEntries());
     assertSourcePathsUnordered(
         ImmutableList.of(
             unzipTarget.resolve("WEB-INF/classes/HelloWorld.class"),
             unzipTarget.resolve("WEB-INF/classes/empty_dir"),
             unzipTarget.resolve("WEB-INF/classes/package"),
             unzipTarget.resolve("WEB-INF/classes/package/Other.class")),
-        layers.classesLayers.get(0).getLayerEntries());
+        layers.classesLayers.get(0).getEntries());
 
     assertExtractionPathsUnordered(
         Collections.singletonList("/my/app/WEB-INF/lib/dependency-1.0.0.jar"),
-        layers.dependenciesLayers.get(0).getLayerEntries());
+        layers.dependenciesLayers.get(0).getEntries());
     assertExtractionPathsUnordered(
         Collections.singletonList("/my/app/WEB-INF/lib/dependencyX-1.0.0-SNAPSHOT.jar"),
-        layers.snapshotsLayers.get(0).getLayerEntries());
+        layers.snapshotsLayers.get(0).getEntries());
     assertExtractionPathsUnordered(
         Arrays.asList(
             "/my/app/META-INF",
@@ -581,14 +580,14 @@ public class MavenProjectPropertiesTest {
             "/my/app/WEB-INF/classes/package/test.properties",
             "/my/app/WEB-INF/lib",
             "/my/app/WEB-INF/web.xml"),
-        layers.resourcesLayers.get(0).getLayerEntries());
+        layers.resourcesLayers.get(0).getEntries());
     assertExtractionPathsUnordered(
         Arrays.asList(
             "/my/app/WEB-INF/classes/HelloWorld.class",
             "/my/app/WEB-INF/classes/empty_dir",
             "/my/app/WEB-INF/classes/package",
             "/my/app/WEB-INF/classes/package/Other.class"),
-        layers.classesLayers.get(0).getLayerEntries());
+        layers.classesLayers.get(0).getEntries());
   }
 
   @Test

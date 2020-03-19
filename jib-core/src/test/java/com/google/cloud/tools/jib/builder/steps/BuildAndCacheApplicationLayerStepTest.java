@@ -16,9 +16,10 @@
 
 package com.google.cloud.tools.jib.builder.steps;
 
-import com.google.cloud.tools.jib.api.LayerConfiguration;
-import com.google.cloud.tools.jib.api.LayerEntry;
+import com.google.cloud.tools.jib.api.CacheDirectoryCreationException;
 import com.google.cloud.tools.jib.api.buildplan.AbsoluteUnixPath;
+import com.google.cloud.tools.jib.api.buildplan.FileEntriesLayer;
+import com.google.cloud.tools.jib.api.buildplan.FileEntry;
 import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.blob.Blobs;
 import com.google.cloud.tools.jib.builder.ProgressEventDispatcher;
@@ -62,13 +63,13 @@ public class BuildAndCacheApplicationLayerStepTest {
 
   /**
    * Lists the files in the {@code resourcePath} resources directory and creates a {@link
-   * LayerConfiguration} with entries from those files.
+   * FileEntriesLayer} with entries from those files.
    */
-  private static LayerConfiguration makeLayerConfiguration(
+  private static FileEntriesLayer makeLayerConfiguration(
       String resourcePath, AbsoluteUnixPath extractionPath) throws URISyntaxException, IOException {
     try (Stream<Path> fileStream =
         Files.list(Paths.get(Resources.getResource(resourcePath).toURI()))) {
-      LayerConfiguration.Builder layerConfigurationBuilder = LayerConfiguration.builder();
+      FileEntriesLayer.Builder layerConfigurationBuilder = FileEntriesLayer.builder();
       fileStream.forEach(
           sourceFile ->
               layerConfigurationBuilder.addEntry(
@@ -87,15 +88,15 @@ public class BuildAndCacheApplicationLayerStepTest {
 
   private Cache cache;
 
-  private LayerConfiguration fakeDependenciesLayerConfiguration;
-  private LayerConfiguration fakeSnapshotDependenciesLayerConfiguration;
-  private LayerConfiguration fakeResourcesLayerConfiguration;
-  private LayerConfiguration fakeClassesLayerConfiguration;
-  private LayerConfiguration fakeExtraFilesLayerConfiguration;
-  private LayerConfiguration emptyLayerConfiguration;
+  private FileEntriesLayer fakeDependenciesLayerConfiguration;
+  private FileEntriesLayer fakeSnapshotDependenciesLayerConfiguration;
+  private FileEntriesLayer fakeResourcesLayerConfiguration;
+  private FileEntriesLayer fakeClassesLayerConfiguration;
+  private FileEntriesLayer fakeExtraFilesLayerConfiguration;
+  private FileEntriesLayer emptyLayerConfiguration;
 
   @Before
-  public void setUp() throws IOException, URISyntaxException {
+  public void setUp() throws IOException, URISyntaxException, CacheDirectoryCreationException {
     fakeDependenciesLayerConfiguration =
         makeLayerConfiguration(
             "core/application/dependencies", EXTRACTION_PATH_ROOT.resolve("libs"));
@@ -108,7 +109,7 @@ public class BuildAndCacheApplicationLayerStepTest {
     fakeClassesLayerConfiguration =
         makeLayerConfiguration("core/application/classes", EXTRACTION_PATH_ROOT.resolve("classes"));
     fakeExtraFilesLayerConfiguration =
-        LayerConfiguration.builder()
+        FileEntriesLayer.builder()
             .addEntry(
                 Paths.get(Resources.getResource("core/fileA").toURI()),
                 EXTRA_FILES_LAYER_EXTRACTION_PATH.resolve("fileA"))
@@ -116,7 +117,7 @@ public class BuildAndCacheApplicationLayerStepTest {
                 Paths.get(Resources.getResource("core/fileB").toURI()),
                 EXTRA_FILES_LAYER_EXTRACTION_PATH.resolve("fileB"))
             .build();
-    emptyLayerConfiguration = LayerConfiguration.builder().build();
+    emptyLayerConfiguration = FileEntriesLayer.builder().build();
 
     cache = Cache.withDirectory(temporaryFolder.newFolder().toPath());
 
@@ -144,7 +145,7 @@ public class BuildAndCacheApplicationLayerStepTest {
   @Test
   public void testRun()
       throws LayerPropertyNotFoundException, IOException, CacheCorruptedException {
-    ImmutableList<LayerConfiguration> fakeLayerConfigurations =
+    ImmutableList<FileEntriesLayer> fakeLayerConfigurations =
         ImmutableList.of(
             fakeDependenciesLayerConfiguration,
             fakeSnapshotDependenciesLayerConfiguration,
@@ -157,16 +158,16 @@ public class BuildAndCacheApplicationLayerStepTest {
     List<Layer> applicationLayers = buildFakeLayersToCache();
     Assert.assertEquals(5, applicationLayers.size());
 
-    ImmutableList<LayerEntry> dependenciesLayerEntries =
-        fakeLayerConfigurations.get(0).getLayerEntries();
-    ImmutableList<LayerEntry> snapshotDependenciesLayerEntries =
-        fakeLayerConfigurations.get(1).getLayerEntries();
-    ImmutableList<LayerEntry> resourcesLayerEntries =
-        fakeLayerConfigurations.get(2).getLayerEntries();
-    ImmutableList<LayerEntry> classesLayerEntries =
-        fakeLayerConfigurations.get(3).getLayerEntries();
-    ImmutableList<LayerEntry> extraFilesLayerEntries =
-        fakeLayerConfigurations.get(4).getLayerEntries();
+    ImmutableList<FileEntry> dependenciesLayerEntries =
+        ImmutableList.copyOf(fakeLayerConfigurations.get(0).getEntries());
+    ImmutableList<FileEntry> snapshotDependenciesLayerEntries =
+        ImmutableList.copyOf(fakeLayerConfigurations.get(1).getEntries());
+    ImmutableList<FileEntry> resourcesLayerEntries =
+        ImmutableList.copyOf(fakeLayerConfigurations.get(2).getEntries());
+    ImmutableList<FileEntry> classesLayerEntries =
+        ImmutableList.copyOf(fakeLayerConfigurations.get(3).getEntries());
+    ImmutableList<FileEntry> extraFilesLayerEntries =
+        ImmutableList.copyOf(fakeLayerConfigurations.get(4).getEntries());
 
     CachedLayer dependenciesCachedLayer =
         cache.retrieve(dependenciesLayerEntries).orElseThrow(AssertionError::new);
@@ -204,7 +205,7 @@ public class BuildAndCacheApplicationLayerStepTest {
 
   @Test
   public void testRun_emptyLayersIgnored() throws IOException, CacheCorruptedException {
-    ImmutableList<LayerConfiguration> fakeLayerConfigurations =
+    ImmutableList<FileEntriesLayer> fakeLayerConfigurations =
         ImmutableList.of(
             fakeDependenciesLayerConfiguration,
             emptyLayerConfiguration,
@@ -217,12 +218,12 @@ public class BuildAndCacheApplicationLayerStepTest {
     List<Layer> applicationLayers = buildFakeLayersToCache();
     Assert.assertEquals(3, applicationLayers.size());
 
-    ImmutableList<LayerEntry> dependenciesLayerEntries =
-        fakeLayerConfigurations.get(0).getLayerEntries();
-    ImmutableList<LayerEntry> resourcesLayerEntries =
-        fakeLayerConfigurations.get(2).getLayerEntries();
-    ImmutableList<LayerEntry> classesLayerEntries =
-        fakeLayerConfigurations.get(3).getLayerEntries();
+    ImmutableList<FileEntry> dependenciesLayerEntries =
+        ImmutableList.copyOf(fakeLayerConfigurations.get(0).getEntries());
+    ImmutableList<FileEntry> resourcesLayerEntries =
+        ImmutableList.copyOf(fakeLayerConfigurations.get(2).getEntries());
+    ImmutableList<FileEntry> classesLayerEntries =
+        ImmutableList.copyOf(fakeLayerConfigurations.get(3).getEntries());
 
     CachedLayer dependenciesCachedLayer =
         cache.retrieve(dependenciesLayerEntries).orElseThrow(AssertionError::new);

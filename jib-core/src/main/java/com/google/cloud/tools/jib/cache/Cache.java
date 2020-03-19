@@ -16,9 +16,10 @@
 
 package com.google.cloud.tools.jib.cache;
 
+import com.google.cloud.tools.jib.api.CacheDirectoryCreationException;
 import com.google.cloud.tools.jib.api.DescriptorDigest;
 import com.google.cloud.tools.jib.api.ImageReference;
-import com.google.cloud.tools.jib.api.LayerEntry;
+import com.google.cloud.tools.jib.api.buildplan.FileEntry;
 import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
 import com.google.cloud.tools.jib.image.json.ContainerConfigurationTemplate;
@@ -44,10 +45,15 @@ public class Cache {
    *
    * @param cacheDirectory the directory for the cache. Creates the directory if it does not exist.
    * @return a new {@link Cache}
-   * @throws IOException if an I/O exception occurs
+   * @throws CacheDirectoryCreationException if an I/O exception occurs when creating cache
+   *     directory
    */
-  public static Cache withDirectory(Path cacheDirectory) throws IOException {
-    Files.createDirectories(cacheDirectory);
+  public static Cache withDirectory(Path cacheDirectory) throws CacheDirectoryCreationException {
+    try {
+      Files.createDirectories(cacheDirectory);
+    } catch (IOException ex) {
+      throw new CacheDirectoryCreationException(ex);
+    }
     return new Cache(new CacheStorageFiles(cacheDirectory));
   }
 
@@ -55,8 +61,8 @@ public class Cache {
   private final CacheStorageReader cacheStorageReader;
 
   private Cache(CacheStorageFiles cacheStorageFiles) {
-    this.cacheStorageWriter = new CacheStorageWriter(cacheStorageFiles);
-    this.cacheStorageReader = new CacheStorageReader(cacheStorageFiles);
+    cacheStorageWriter = new CacheStorageWriter(cacheStorageFiles);
+    cacheStorageReader = new CacheStorageReader(cacheStorageFiles);
   }
 
   /**
@@ -111,7 +117,7 @@ public class Cache {
    * @throws IOException if an I/O exception occurs
    */
   public CachedLayer writeUncompressedLayer(
-      Blob uncompressedLayerBlob, ImmutableList<LayerEntry> layerEntries) throws IOException {
+      Blob uncompressedLayerBlob, ImmutableList<FileEntry> layerEntries) throws IOException {
     return cacheStorageWriter.writeUncompressed(
         uncompressedLayerBlob, LayerEntriesSelector.generateSelector(layerEntries));
   }
@@ -170,7 +176,7 @@ public class Cache {
    * @throws IOException if an I/O exception occurs
    * @throws CacheCorruptedException if the cache is corrupted
    */
-  public Optional<CachedLayer> retrieve(ImmutableList<LayerEntry> layerEntries)
+  public Optional<CachedLayer> retrieve(ImmutableList<FileEntry> layerEntries)
       throws IOException, CacheCorruptedException {
     Optional<DescriptorDigest> optionalSelectedLayerDigest =
         cacheStorageReader.select(LayerEntriesSelector.generateSelector(layerEntries));

@@ -29,7 +29,7 @@ import javax.annotation.concurrent.Immutable;
 
 /** Configures how to build a layer in the container image. Instantiate with {@link #builder}. */
 @Immutable
-public class FileEntriesLayer extends LayerObject {
+public class FileEntriesLayer implements LayerObject {
 
   /** Builds a {@link FileEntriesLayer}. */
   public static class Builder {
@@ -284,9 +284,13 @@ public class FileEntriesLayer extends LayerObject {
    * @param entries the list of {@link FileEntry}s
    */
   private FileEntriesLayer(String name, List<FileEntry> entries) {
-    super(LayerObject.Type.FILE_ENTRIES);
     this.name = name;
     this.entries = entries;
+  }
+
+  @Override
+  public Type getType() {
+    return Type.FILE_ENTRIES;
   }
 
   /**
@@ -294,6 +298,7 @@ public class FileEntriesLayer extends LayerObject {
    *
    * @return the name
    */
+  @Override
   public String getName() {
     return name;
   }

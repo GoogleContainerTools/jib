@@ -29,7 +29,7 @@ import javax.annotation.concurrent.Immutable;
  *
  * <p>This class is immutable and thread-safe.
  *
- * <p>Deprecated. Use {@link FileEntry}.
+ * @deprecated Use {@link FileEntry}.
  */
 @Deprecated
 @Immutable
