@@ -32,9 +32,11 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.AtomicMoveNotSupportedException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.format.DateTimeParseException;
@@ -46,6 +48,8 @@ import java.util.function.Consumer;
 
 /** Checks if Jib is up-to-date. */
 public class UpdateChecker {
+
+  private static final String CONFIG_FILENAME = "config.json";
 
   /** JSON template for the configuration file used to enable/disable update checks. */
   @VisibleForTesting
@@ -97,7 +101,7 @@ public class UpdateChecker {
       return Optional.empty();
     }
 
-    Path configFile = configDir.resolve("config.json");
+    Path configFile = configDir.resolve(CONFIG_FILENAME);
     Path lastUpdateCheck = configDir.resolve("lastUpdateCheck");
 
     try {
@@ -123,12 +127,33 @@ public class UpdateChecker {
         // Generate config file if it doesn't exist
         ConfigJsonTemplate config = new ConfigJsonTemplate();
         Files.createDirectories(configDir);
-        try (OutputStream outputStream = Files.newOutputStream(configFile)) {
+        Path tempConfigFile = configDir.resolve(CONFIG_FILENAME + ".tmp");
+        try (OutputStream outputStream = Files.newOutputStream(tempConfigFile)) {
           JsonTemplateMapper.writeTo(config, outputStream);
+          // Attempts an atomic move first, and falls back to non-atomic if the file system does not
+          // support atomic moves.
+          try {
+            Files.move(
+                tempConfigFile,
+                configFile,
+                StandardCopyOption.ATOMIC_MOVE,
+                StandardCopyOption.REPLACE_EXISTING);
+          } catch (AtomicMoveNotSupportedException ignored) {
+            Files.move(tempConfigFile, configFile, StandardCopyOption.REPLACE_EXISTING);
+          }
         } catch (IOException ex) {
           // If attempt to generate new config file failed, delete so we can try again next time
           log.accept(LogEvent.debug("Failed to generate global Jib config; " + ex.getMessage()));
-          Files.deleteIfExists(configFile);
+          try {
+            Files.deleteIfExists(tempConfigFile);
+          } catch (IOException cleanupEx) {
+            log.accept(
+                LogEvent.debug(
+                    "Failed to cleanup "
+                        + tempConfigFile.toString()
+                        + " -- "
+                        + cleanupEx.getMessage()));
+          }
         }
       }
 
