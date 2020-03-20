@@ -373,6 +373,13 @@ public class ContainerConfiguration {
   @VisibleForTesting
   public int hashCode() {
     return Objects.hash(
-        creationTime, entrypoint, programArguments, environmentMap, exposedPorts, labels, user);
+        creationTime,
+        entrypoint,
+        programArguments,
+        environmentMap,
+        exposedPorts,
+        labels,
+        user,
+        workingDirectory);
   }
 }
