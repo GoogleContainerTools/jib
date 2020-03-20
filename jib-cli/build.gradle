@@ -17,7 +17,6 @@ application {
 dependencies {
   implementation project(':jib-build-plan')
   implementation project(':jib-core')
-  implementation project(':jib-core').configurations.implementation.dependencies
   implementation "com.google.guava:guava:${dependencyVersions.GUAVA}"
   implementation "info.picocli:picocli:${dependencyVersions.PICOCLI}"
 
