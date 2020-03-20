@@ -142,6 +142,10 @@ public class JavaContainerBuilderHelperTest {
         ImmutableMap.of(
             "/a**",
             FilePermissions.fromOctalString("123"),
+            // Should be ignored, since first match takes priority
+            "/a/b**",
+            FilePermissions.fromOctalString("000"),
+            // Should override first match since explicit path is used instead of glob
             "/a/b/bar",
             FilePermissions.fromOctalString("765"));
     FileEntriesLayer fileEntriesLayer =

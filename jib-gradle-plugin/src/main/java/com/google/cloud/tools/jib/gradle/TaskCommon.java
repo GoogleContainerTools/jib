@@ -23,7 +23,7 @@ import com.google.cloud.tools.jib.api.buildplan.FilePermissions;
 import com.google.cloud.tools.jib.plugins.common.ProjectProperties;
 import com.google.cloud.tools.jib.plugins.common.UpdateChecker;
 import com.google.common.util.concurrent.Futures;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ExecutorService;
@@ -120,7 +120,8 @@ class TaskCommon {
    * @return the converted map
    */
   static Map<String, FilePermissions> convertPermissionsMap(Map<String, String> stringMap) {
-    Map<String, FilePermissions> permissionsMap = new HashMap<>();
+    // Order is important, so use a LinkedHashMap
+    Map<String, FilePermissions> permissionsMap = new LinkedHashMap<>();
     for (Map.Entry<String, String> entry : stringMap.entrySet()) {
       permissionsMap.put(entry.getKey(), FilePermissions.fromOctalString(entry.getValue()));
     }

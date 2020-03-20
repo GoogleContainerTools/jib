@@ -29,7 +29,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.Futures;
 import java.nio.file.Path;
 import java.util.Collections;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -107,7 +107,8 @@ public class MojoCommon {
    */
   static Map<String, FilePermissions> convertPermissionsList(
       List<PermissionConfiguration> permissionList) {
-    Map<String, FilePermissions> permissionsMap = new HashMap<>();
+    // Order is important, so use a LinkedHashMap
+    Map<String, FilePermissions> permissionsMap = new LinkedHashMap<>();
     for (PermissionConfiguration permission : permissionList) {
       if (!permission.getFile().isPresent() || !permission.getMode().isPresent()) {
         throw new IllegalArgumentException(
