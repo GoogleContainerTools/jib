@@ -37,13 +37,13 @@ abstract class Building {
   protected static class PushMode {
     @Option(
         names = {"-d", "--docker"},
-        description = "load result to local Docker daemon",
+        description = "Load result to local Docker daemon",
         required = true)
     boolean toDocker = false;
 
     @Option(
         names = {"-r", "--registry"},
-        description = "push to registry",
+        description = "Push to registry",
         required = true)
     boolean toRegistry = false;
   }
@@ -55,7 +55,7 @@ abstract class Building {
   @Option(
       names = {"-c", "--creation-time"},
       paramLabel = "time",
-      description = "set the image creation time (default: 1970-01-01T00:00:00Z)")
+      description = "Set the image creation time (default: 1970-01-01T00:00:00Z)")
   @Nullable
   protected Instant creationTime;
 
@@ -63,7 +63,7 @@ abstract class Building {
       names = {"-p", "--port"},
       split = ",",
       paramLabel = "port",
-      description = "expose port/type (ex: 25 or 25/tcp)",
+      description = "Expose port/type (ex: 25 or 25/tcp)",
       converter = PortParser.class)
   @Nullable
   protected List<Port> ports;
@@ -72,7 +72,7 @@ abstract class Building {
       names = {"-V", "--volume"},
       split = ",",
       paramLabel = "path",
-      description = "configure specified paths as volumes",
+      description = "Configure specified paths as volumes",
       converter = PathParser.class)
   @Nullable
   protected List<AbsoluteUnixPath> volumes;
@@ -80,7 +80,7 @@ abstract class Building {
   @Option(
       names = {"-u", "--user"},
       paramLabel = "user",
-      description = "set user for execution (uid or existing user id)")
+      description = "Set user for execution (uid or existing user id)")
   @Nullable
   protected String user;
 
@@ -89,7 +89,7 @@ abstract class Building {
       paramLabel = "arg",
       split = ",",
       hideParamSyntax = true,
-      description = "set the container entrypoint")
+      description = "Set the container entrypoint")
   @Nullable
   protected List<String> entrypoint;
 
@@ -98,7 +98,7 @@ abstract class Building {
       split = ",",
       paramLabel = "arg",
       hideParamSyntax = true,
-      description = "set the container entrypoint's default arguments")
+      description = "Set the container entrypoint's default arguments")
   @Nullable
   protected List<String> arguments;
 
@@ -106,7 +106,7 @@ abstract class Building {
       names = {"-E", "--environment"},
       split = ",",
       paramLabel = "key=value",
-      description = "add environment pairs")
+      description = "Add environment pairs")
   @Nullable
   protected Map<String, String> environment;
 
@@ -114,7 +114,7 @@ abstract class Building {
       names = {"-l", "--label"},
       split = ",",
       paramLabel = "key=value",
-      description = "add image labels")
+      description = "Add image labels")
   @Nullable
   protected Map<String, String> labels;
 

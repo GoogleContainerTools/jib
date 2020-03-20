@@ -43,7 +43,7 @@ import picocli.CommandLine.Spec;
 @Command(
     name = "jib",
     synopsisSubcommandLabel = "COMMAND", // pretend that `jib` cannot be run standalone
-    description = "A tool for creating container images.",
+    description = "A tool for creating container images",
     subcommands = {Build.class})
 public class JibCli implements Runnable {
 
@@ -98,20 +98,20 @@ public class JibCli implements Runnable {
 
   @Option(
       names = {"-v", "--verbose"},
-      description = "be verbose")
+      description = "Be verbose")
   boolean verbose = false;
 
   @Option(
       names = {"-C", "--credential-helper"},
       paramLabel = "helper",
       description =
-          "add a credential helper, either a path to the helper, "
+          "Add a credential helper, either a path to the helper, "
               + "or a suffix for an executable named `docker-credential-<suffix>`")
   List<String> credentialHelpers = new ArrayList<>();
 
   @Option(
       names = {"-k", "--insecure"},
-      description = "allow connecting to insecure registries")
+      description = "Allow connecting to insecure registries")
   boolean insecure = false;
 
   /** Create a {@link RegistryImage} with credential retrievers. */

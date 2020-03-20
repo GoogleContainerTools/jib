@@ -40,13 +40,13 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Parameters;
 
 /** A Jib CLI subcommand for building a container image from a set of files on disk. */
-@Command(name = "build", description = "Create a container image from static files.")
+@Command(name = "build", description = "Create a container image from static files")
 public class Build extends Building implements Callable<Integer> {
 
   @Parameters(
       index = "0",
       paramLabel = "base-image",
-      description = "the base image (ex: busybox, nginx, gcr.io/distroless/java)",
+      description = "The base image (ex: busybox, nginx, gcr.io/distroless/java)",
       converter = ImageReferenceParser.class)
   @VisibleForTesting
   @SuppressWarnings("NullAway.Init") // initialized by picocli
@@ -56,7 +56,7 @@ public class Build extends Building implements Callable<Integer> {
       index = "1",
       paramLabel = "destination-image",
       description =
-          "the destination image (ex: localhost:5000/image:1.0, " + "gcr.io/project/image:latest)",
+          "The destination image (ex: localhost:5000/image:1.0, gcr.io/project/image:latest)",
       converter = ImageReferenceParser.class)
   @VisibleForTesting
   @SuppressWarnings("NullAway.Init") // initialized by picocli
@@ -66,7 +66,7 @@ public class Build extends Building implements Callable<Integer> {
       index = "2..*",
       paramLabel = "layer-spec",
       description =
-          "create a layer from local file-system. A layer-spec "
+          "Create a layer from local file-system. A layer-spec "
               + "is a set of mappings of the form:\n"
               + "    local/path[,/container/path[,directive1,...]]\n"
               + "Container path defaults to '/' if omitted.\n"
