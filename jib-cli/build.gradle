@@ -1,36 +1,40 @@
 plugins {
-  id "application"
+  id 'application'
+  id 'eclipse'
 }
 
 ext {
-    cliMainClass = "com.google.cloud.tools.jib.cli.JibCli"
+  cliMainClass = 'com.google.cloud.tools.jib.cli.JibCli'
 }
 
 // use `run` to build and run the app
 // use `installDist` or `distZip` to create an installable application
 application {
-  applicationName = "jib"
+  applicationName = 'jib'
   mainClassName = cliMainClass
 }
 
 dependencies {
   implementation project(':jib-build-plan')
   implementation project(':jib-core')
-  // since jib core doesn't export dependencies to a compile scope
-  // (they are "runtime"), just grab them manually. This means we don't have
-  // to synchronize dependencies between the two projects -- we don't
-  // want to use the sourceProject helper because it does things we don't want
-  // for an unpublished library.
   implementation project(':jib-core').configurations.implementation.dependencies
   implementation "com.google.guava:guava:${dependencyVersions.GUAVA}"
   implementation "info.picocli:picocli:${dependencyVersions.PICOCLI}"
-
 
   testImplementation "junit:junit:${dependencyVersions.JUNIT}"
   testImplementation "org.mockito:mockito-core:${dependencyVersions.MOCKITO_CORE}"
   testImplementation "org.slf4j:slf4j-api:${dependencyVersions.SLF4J_API}"
   testImplementation "com.github.stefanbirkner:system-rules:${dependencyVersions.SYSTEM_RULES}"
-  testImplementation project(path:':jib-core', configuration:'tests')
 }
 
-sourceSets.test.resources.srcDirs project(':jib-core').sourceSets.test.resources
+/* ECLIPSE */
+// TODO: remove after upgrading to Gradle 5.6. (https://github.com/eclipse/buildship/issues/689)
+// Also remove the 'eclipse' plugin.
+eclipse.classpath.file.whenMerged {
+  entries.findAll {
+    it.path in ['src/test/java', 'src/test/resources', 'test-resources']
+  }.each {
+    it.entryAttributes['test'] = 'true'
+  }
+}
+/* ECLIPSE */
