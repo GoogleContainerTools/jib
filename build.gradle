@@ -55,6 +55,7 @@ subprojects {
     COMMONS_COMPRESS: '1.19',
     JACKSON_DATABIND: '2.9.10',
     ASM: '7.2',
+    PICOCLI: '4.2.0',
 
     //test
     JUNIT: '4.12',
