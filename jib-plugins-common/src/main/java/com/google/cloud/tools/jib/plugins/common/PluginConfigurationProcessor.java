@@ -816,6 +816,7 @@ public class PluginConfigurationProcessor {
     containerizer
         .setOfflineMode(projectProperties.isOffline())
         .setToolName(projectProperties.getToolName())
+        .setToolVersion(projectProperties.getToolVersion())
         .setAllowInsecureRegistries(rawConfiguration.getAllowInsecureRegistries())
         .setBaseImageLayersCache(
             getCheckedCacheDirectory(

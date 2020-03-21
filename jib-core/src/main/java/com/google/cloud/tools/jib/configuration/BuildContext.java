@@ -74,6 +74,7 @@ public class BuildContext implements Closeable {
     private ImmutableList<FileEntriesLayer> layerConfigurations = ImmutableList.of();
     private Class<? extends BuildableManifestTemplate> targetFormat = DEFAULT_TARGET_FORMAT;
     private String toolName = DEFAULT_TOOL_NAME;
+    @Nullable private String toolVersion;
     private EventHandlers eventHandlers = EventHandlers.NONE;
     @Nullable private ExecutorService executorService;
     private boolean alwaysCacheBaseImage = false;
@@ -220,6 +221,17 @@ public class BuildContext implements Closeable {
     }
 
     /**
+     * Sets the version of the tool that is executing the build.
+     *
+     * @param toolVersion the tool version
+     * @return this
+     */
+    public Builder setToolVersion(@Nullable String toolVersion) {
+      this.toolVersion = toolVersion;
+      return this;
+    }
+
+    /**
      * Sets the {@link EventHandlers} to dispatch events with.
      *
      * @param eventHandlers the {@link EventHandlers}
@@ -287,6 +299,7 @@ public class BuildContext implements Closeable {
               offline,
               layerConfigurations,
               toolName,
+              toolVersion,
               eventHandlers,
               // TODO: try setting global User-Agent: here
               new FailoverHttpClient(
@@ -346,6 +359,7 @@ public class BuildContext implements Closeable {
   private final boolean offline;
   private final ImmutableList<FileEntriesLayer> layerConfigurations;
   private final String toolName;
+  @Nullable private final String toolVersion;
   private final EventHandlers eventHandlers;
   private final FailoverHttpClient httpClient;
   private final ExecutorService executorService;
@@ -364,6 +378,7 @@ public class BuildContext implements Closeable {
       boolean offline,
       ImmutableList<FileEntriesLayer> layerConfigurations,
       String toolName,
+      @Nullable String toolVersion,
       EventHandlers eventHandlers,
       FailoverHttpClient httpClient,
       ExecutorService executorService,
@@ -379,6 +394,7 @@ public class BuildContext implements Closeable {
     this.offline = offline;
     this.layerConfigurations = layerConfigurations;
     this.toolName = toolName;
+    this.toolVersion = toolVersion;
     this.eventHandlers = eventHandlers;
     this.httpClient = httpClient;
     this.executorService = executorService;
@@ -418,6 +434,11 @@ public class BuildContext implements Closeable {
 
   public String getToolName() {
     return toolName;
+  }
+
+  @Nullable
+  public String getToolVersion() {
+    return toolVersion;
   }
 
   public EventHandlers getEventHandlers() {
@@ -500,7 +521,7 @@ public class BuildContext implements Closeable {
               targetImageConfiguration.getImageRepository(),
               baseImageConfiguration.getImageRepository(),
               httpClient)
-          .setUserAgentSuffix(getToolName());
+          .setUserAgentSuffix(getToolVersion() + " " + getToolName());
     }
     return newRegistryClientFactory(targetImageConfiguration);
   }
@@ -511,7 +532,7 @@ public class BuildContext implements Closeable {
             imageConfiguration.getImageRegistry(),
             imageConfiguration.getImageRepository(),
             httpClient)
-        .setUserAgentSuffix(getToolName());
+        .setUserAgentSuffix(getToolVersion() + " " + getToolName());
   }
 
   @Override

@@ -57,6 +57,7 @@ import org.apache.maven.execution.MavenSession;
 import org.apache.maven.model.Build;
 import org.apache.maven.model.Plugin;
 import org.apache.maven.model.PluginExecution;
+import org.apache.maven.plugin.descriptor.PluginDescriptor;
 import org.apache.maven.plugin.logging.Log;
 import org.apache.maven.project.MavenProject;
 import org.apache.maven.shared.utils.Os;
@@ -82,6 +83,7 @@ public class MavenProjectProperties implements ProjectProperties {
   /**
    * Static factory method for {@link MavenProjectProperties}.
    *
+   * @param jibPluginDescriptor the jib-maven-plugin plugin descriptor
    * @param project the {@link MavenProject} for the plugin.
    * @param session the {@link MavenSession} for the plugin.
    * @param log the Maven {@link Log} to log messages during Jib execution
@@ -89,11 +91,14 @@ public class MavenProjectProperties implements ProjectProperties {
    * @return a MavenProjectProperties from the given project and logger.
    */
   public static MavenProjectProperties getForProject(
+      @Nullable PluginDescriptor jibPluginDescriptor,
       MavenProject project,
       MavenSession session,
       Log log,
       TempDirectoryProvider tempDirectoryProvider) {
-    return new MavenProjectProperties(project, session, log, tempDirectoryProvider);
+    Preconditions.checkNotNull(jibPluginDescriptor);
+    return new MavenProjectProperties(
+        jibPluginDescriptor, project, session, log, tempDirectoryProvider);
   }
 
   /**
@@ -181,6 +186,7 @@ public class MavenProjectProperties implements ProjectProperties {
     return Optional.ofNullable(node.getValue());
   }
 
+  private final PluginDescriptor jibPluginDescriptor;
   private final MavenProject project;
   private final MavenSession session;
   private final SingleThreadedExecutor singleThreadedExecutor = new SingleThreadedExecutor();
@@ -189,10 +195,12 @@ public class MavenProjectProperties implements ProjectProperties {
 
   @VisibleForTesting
   MavenProjectProperties(
+      PluginDescriptor jibPluginDescriptor,
       MavenProject project,
       MavenSession session,
       Log log,
       TempDirectoryProvider tempDirectoryProvider) {
+    this.jibPluginDescriptor = jibPluginDescriptor;
     this.project = project;
     this.session = session;
     this.tempDirectoryProvider = tempDirectoryProvider;
@@ -334,6 +342,11 @@ public class MavenProjectProperties implements ProjectProperties {
   @Override
   public String getToolName() {
     return TOOL_NAME;
+  }
+
+  @Override
+  public String getToolVersion() {
+    return jibPluginDescriptor.getVersion();
   }
 
   @Override

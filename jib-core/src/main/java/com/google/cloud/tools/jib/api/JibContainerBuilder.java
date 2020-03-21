@@ -565,6 +565,7 @@ public class JibContainerBuilder {
         .setAllowInsecureRegistries(containerizer.getAllowInsecureRegistries())
         .setOffline(containerizer.isOfflineMode())
         .setToolName(containerizer.getToolName())
+        .setToolVersion(containerizer.getToolVersion())
         .setExecutorService(containerizer.getExecutorService().orElse(null))
         .setEventHandlers(containerizer.buildEventHandlers())
         .setAlwaysCacheBaseImage(containerizer.getAlwaysCacheBaseImage())

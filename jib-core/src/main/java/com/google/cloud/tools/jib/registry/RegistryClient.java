@@ -19,7 +19,6 @@ package com.google.cloud.tools.jib.registry;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.google.api.client.http.HttpStatusCodes;
 import com.google.api.client.util.Base64;
-import com.google.cloud.tools.jib.ProjectInfo;
 import com.google.cloud.tools.jib.api.Credential;
 import com.google.cloud.tools.jib.api.DescriptorDigest;
 import com.google.cloud.tools.jib.api.LogEvent;
@@ -90,7 +89,7 @@ public class RegistryClient {
     }
 
     /**
-     * Sets a suffix to append to {@code User-Agent} headers.
+     * Sets a suffix to append to {@code User-Agent} headers. See {@link #makeUserAgent()}.
      *
      * @param userAgentSuffix the suffix to append
      * @return this
@@ -127,7 +126,7 @@ public class RegistryClient {
         return "";
       }
 
-      StringBuilder userAgentBuilder = new StringBuilder("jib ").append(ProjectInfo.VERSION);
+      StringBuilder userAgentBuilder = new StringBuilder("jib");
       if (userAgentSuffix != null) {
         userAgentBuilder.append(" ").append(userAgentSuffix);
       }

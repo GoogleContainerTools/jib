@@ -88,7 +88,7 @@ public class BuildImageMojo extends JibPluginConfiguration {
     TempDirectoryProvider tempDirectoryProvider = new TempDirectoryProvider();
     MavenProjectProperties projectProperties =
         MavenProjectProperties.getForProject(
-            getProject(), getSession(), getLog(), tempDirectoryProvider);
+            descriptor, getProject(), getSession(), getLog(), tempDirectoryProvider);
     Future<Optional<String>> updateCheckFuture =
         MojoCommon.newUpdateChecker(projectProperties, getLog());
     try {
