@@ -31,7 +31,7 @@ import java.nio.file.Path;
 import java.nio.file.PathMatcher;
 import java.nio.file.Paths;
 import java.time.Instant;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.function.BiFunction;
 import java.util.function.Predicate;
@@ -56,9 +56,10 @@ public class JavaContainerBuilderHelper {
       throws IOException {
     FileEntriesLayer.Builder builder =
         FileEntriesLayer.builder().setName(LayerType.EXTRA_FILES.getName());
-    Map<PathMatcher, FilePermissions> pathMatchers = new HashMap<>();
-    for (Map.Entry<String, FilePermissions> glob : extraDirectoryPermissions.entrySet()) {
-      pathMatchers.put(FileSystems.getDefault().getPathMatcher("glob:" + glob), glob.getValue());
+    Map<PathMatcher, FilePermissions> pathMatchers = new LinkedHashMap<>();
+    for (Map.Entry<String, FilePermissions> entry : extraDirectoryPermissions.entrySet()) {
+      pathMatchers.put(
+          FileSystems.getDefault().getPathMatcher("glob:" + entry.getKey()), entry.getValue());
     }
 
     new DirectoryWalker(extraDirectory)
