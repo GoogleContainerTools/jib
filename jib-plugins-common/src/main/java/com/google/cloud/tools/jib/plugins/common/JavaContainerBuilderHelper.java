@@ -24,7 +24,6 @@ import com.google.cloud.tools.jib.api.buildplan.FileEntriesLayer;
 import com.google.cloud.tools.jib.api.buildplan.FilePermissions;
 import com.google.cloud.tools.jib.api.buildplan.RelativeUnixPath;
 import com.google.cloud.tools.jib.filesystem.DirectoryWalker;
-import com.google.common.base.Preconditions;
 import java.io.IOException;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
@@ -57,9 +56,9 @@ public class JavaContainerBuilderHelper {
       throws IOException {
     FileEntriesLayer.Builder builder =
         FileEntriesLayer.builder().setName(LayerType.EXTRA_FILES.getName());
-    Map<String, PathMatcher> pathMatchers = new HashMap<>();
-    for (String glob : extraDirectoryPermissions.keySet()) {
-      pathMatchers.put(glob, FileSystems.getDefault().getPathMatcher("glob:" + glob));
+    Map<PathMatcher, FilePermissions> pathMatchers = new HashMap<>();
+    for (Map.Entry<String, FilePermissions> glob : extraDirectoryPermissions.entrySet()) {
+      pathMatchers.put(FileSystems.getDefault().getPathMatcher("glob:" + glob), glob.getValue());
     }
 
     new DirectoryWalker(extraDirectory)
@@ -74,11 +73,8 @@ public class JavaContainerBuilderHelper {
               if (permissions == null) {
                 // Check for matching globs
                 Path containerPath = Paths.get(pathOnContainer.toString());
-                for (Map.Entry<String, FilePermissions> entry :
-                    extraDirectoryPermissions.entrySet()) {
-                  PathMatcher pathMatcher =
-                      Preconditions.checkNotNull(pathMatchers.get(entry.getKey()));
-                  if (pathMatcher.matches(containerPath)) {
+                for (Map.Entry<PathMatcher, FilePermissions> entry : pathMatchers.entrySet()) {
+                  if (entry.getKey().matches(containerPath)) {
                     builder.addEntry(
                         localPath, pathOnContainer, entry.getValue(), modificationTime);
                     return;
