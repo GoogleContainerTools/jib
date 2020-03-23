@@ -312,6 +312,11 @@ public class FileEntriesLayer implements LayerObject {
     return new ArrayList<>(entries);
   }
 
+  /**
+   * Creates a builder configured with the current values.
+   *
+   * @return {@link Builder} configured with the current values
+   */
   public Builder toBuilder() {
     return builder().setName(name).setEntries(entries);
   }

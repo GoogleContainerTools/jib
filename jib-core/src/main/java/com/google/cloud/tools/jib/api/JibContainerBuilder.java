@@ -471,6 +471,8 @@ public class JibContainerBuilder {
    * <ul>
    *   <li>{@code user}
    *   <li>{@code uid}
+   *   <li>{@code :group}
+   *   <li>{@code :gid}
    *   <li>{@code user:group}
    *   <li>{@code uid:gid}
    *   <li>{@code uid:group}

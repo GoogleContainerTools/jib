@@ -16,7 +16,13 @@
 
 package com.google.cloud.tools.jib.api.buildplan;
 
-/** Serves as a base class for the "layers" property in the build plan specification. */
+/**
+ * Serves as a base class for the "layers" property in the build plan specification.
+ *
+ * <ul>
+ *   <li>{@link Type#FILE_ENTRIES} indicates {@link FileEntriesLayer}.
+ * </ul>
+ */
 public interface LayerObject {
 
   public static enum Type {
