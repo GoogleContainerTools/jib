@@ -17,7 +17,10 @@
 package com.google.cloud.tools.jib.api;
 
 import com.google.cloud.tools.jib.api.buildplan.AbsoluteUnixPath;
+import com.google.cloud.tools.jib.api.buildplan.ContainerBuildPlan;
 import com.google.cloud.tools.jib.api.buildplan.FileEntriesLayer;
+import com.google.cloud.tools.jib.api.buildplan.FileEntry;
+import com.google.cloud.tools.jib.api.buildplan.FilePermissions;
 import com.google.cloud.tools.jib.api.buildplan.ImageFormat;
 import com.google.cloud.tools.jib.api.buildplan.Port;
 import com.google.cloud.tools.jib.configuration.BuildContext;
@@ -29,12 +32,14 @@ import com.google.cloud.tools.jib.registry.credentials.CredentialRetrievalExcept
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.MoreExecutors;
+import java.io.IOException;
 import java.nio.file.Paths;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.concurrent.ExecutorService;
 import java.util.function.Consumer;
+import org.hamcrest.CoreMatchers;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -205,5 +210,147 @@ public class JibContainerBuilderTest {
         ImmutableSet.of("latest", "tag1", "tag2"), buildContext.getAllTargetImageTags());
     Assert.assertEquals("toolName", buildContext.getToolName());
     Assert.assertFalse(buildContext.getAlwaysCacheBaseImage());
+  }
+
+  @Test
+  public void testToContainerBuildPlan_default() throws InvalidImageReferenceException {
+    ImageConfiguration imageConfiguration =
+        ImageConfiguration.builder(ImageReference.parse("base/image")).build();
+    JibContainerBuilder containerBuilder =
+        new JibContainerBuilder(imageConfiguration, spyBuildContextBuilder);
+
+    ContainerBuildPlan buildPlan = containerBuilder.toContainerBuildPlan();
+    Assert.assertEquals("base/image", buildPlan.getBaseImage());
+    Assert.assertEquals("amd64", buildPlan.getArchitectureHint());
+    Assert.assertEquals("linux", buildPlan.getOsHint());
+    Assert.assertEquals(Instant.EPOCH, buildPlan.getCreationTime());
+    Assert.assertEquals(ImageFormat.Docker, buildPlan.getFormat());
+    Assert.assertEquals(Collections.emptyMap(), buildPlan.getEnvironment());
+    Assert.assertEquals(Collections.emptyMap(), buildPlan.getLabels());
+    Assert.assertEquals(Collections.emptySet(), buildPlan.getVolumes());
+    Assert.assertEquals(Collections.emptySet(), buildPlan.getExposedPorts());
+    Assert.assertNull(buildPlan.getUser());
+    Assert.assertNull(buildPlan.getWorkingDirectory());
+    Assert.assertNull(buildPlan.getEntrypoint());
+    Assert.assertNull(buildPlan.getCmd());
+    Assert.assertEquals(Collections.emptyList(), buildPlan.getLayers());
+  }
+
+  @Test
+  public void testToContainerBuildPlan() throws InvalidImageReferenceException, IOException {
+    ImageConfiguration imageConfiguration =
+        ImageConfiguration.builder(ImageReference.parse("base/image")).build();
+    JibContainerBuilder containerBuilder =
+        new JibContainerBuilder(imageConfiguration, spyBuildContextBuilder)
+            .setCreationTime(Instant.ofEpochMilli(1000))
+            .setFormat(ImageFormat.OCI)
+            .setEnvironment(ImmutableMap.of("env", "var"))
+            .setLabels(ImmutableMap.of("com.example.label", "value"))
+            .setVolumes(AbsoluteUnixPath.get("/mnt/vol"), AbsoluteUnixPath.get("/media/data"))
+            .setExposedPorts(ImmutableSet.of(Port.tcp(1234), Port.udp(5678)))
+            .setUser("user")
+            .setWorkingDirectory(AbsoluteUnixPath.get("/working/directory"))
+            .setEntrypoint(Arrays.asList("entry", "point"))
+            .setProgramArguments(Arrays.asList("program", "arguments"))
+            .addLayer(Arrays.asList(Paths.get("/non/existing/foo")), "/into/this");
+
+    ContainerBuildPlan buildPlan = containerBuilder.toContainerBuildPlan();
+    Assert.assertEquals("base/image", buildPlan.getBaseImage());
+    Assert.assertEquals("amd64", buildPlan.getArchitectureHint());
+    Assert.assertEquals("linux", buildPlan.getOsHint());
+    Assert.assertEquals(Instant.ofEpochMilli(1000), buildPlan.getCreationTime());
+    Assert.assertEquals(ImageFormat.OCI, buildPlan.getFormat());
+    Assert.assertEquals(ImmutableMap.of("env", "var"), buildPlan.getEnvironment());
+    Assert.assertEquals(ImmutableMap.of("com.example.label", "value"), buildPlan.getLabels());
+    Assert.assertEquals(
+        ImmutableSet.of(AbsoluteUnixPath.get("/mnt/vol"), AbsoluteUnixPath.get("/media/data")),
+        buildPlan.getVolumes());
+    Assert.assertEquals(
+        ImmutableSet.of(Port.tcp(1234), Port.udp(5678)), buildPlan.getExposedPorts());
+    Assert.assertEquals("user", buildPlan.getUser());
+    Assert.assertEquals(
+        AbsoluteUnixPath.get("/working/directory"), buildPlan.getWorkingDirectory());
+    Assert.assertEquals(Arrays.asList("entry", "point"), buildPlan.getEntrypoint());
+    Assert.assertEquals(Arrays.asList("program", "arguments"), buildPlan.getCmd());
+
+    Assert.assertEquals(1, buildPlan.getLayers().size());
+    Assert.assertThat(
+        buildPlan.getLayers().get(0), CoreMatchers.instanceOf(FileEntriesLayer.class));
+    Assert.assertEquals(
+        Arrays.asList(
+            new FileEntry(
+                Paths.get("/non/existing/foo"),
+                AbsoluteUnixPath.get("/into/this/foo"),
+                FilePermissions.fromOctalString("644"),
+                Instant.ofEpochSecond(1))),
+        ((FileEntriesLayer) buildPlan.getLayers().get(0)).getEntries());
+  }
+
+  @Test
+  public void setApplyContainerBuildPlan()
+      throws InvalidImageReferenceException, CacheDirectoryCreationException {
+    FileEntriesLayer layer =
+        FileEntriesLayer.builder()
+            .addEntry(Paths.get("/src/file/foo"), AbsoluteUnixPath.get("/path/in/container"))
+            .build();
+    ContainerBuildPlan buildPlan =
+        ContainerBuildPlan.builder()
+            .setBaseImage("some/base")
+            .setArchitectureHint("arch")
+            .setOsHint("os")
+            .setFormat(ImageFormat.OCI)
+            .setCreationTime(Instant.ofEpochMilli(30))
+            .setEnvironment(ImmutableMap.of("env", "var"))
+            .setVolumes(
+                ImmutableSet.of(AbsoluteUnixPath.get("/mnt/foo"), AbsoluteUnixPath.get("/bar")))
+            .setLabels(ImmutableMap.of("com.example.label", "cool"))
+            .setExposedPorts(ImmutableSet.of(Port.tcp(443)))
+            .setLayers(Arrays.asList(layer))
+            .setUser(":")
+            .setWorkingDirectory(AbsoluteUnixPath.get("/workspace"))
+            .setEntrypoint(Arrays.asList("foo", "entrypoint"))
+            .setCmd(Arrays.asList("bar", "cmd"))
+            .build();
+
+    ImageConfiguration imageConfiguration =
+        ImageConfiguration.builder(ImageReference.parse("initial/base")).build();
+    JibContainerBuilder containerBuilder =
+        new JibContainerBuilder(imageConfiguration, spyBuildContextBuilder)
+            .applyContainerBuildPlan(buildPlan);
+
+    BuildContext buildContext =
+        containerBuilder.toBuildContext(Containerizer.to(RegistryImage.named("target/image")));
+    Assert.assertEquals(
+        "some/base", buildContext.getBaseImageConfiguration().getImage().toString());
+    Assert.assertEquals(V22ManifestTemplate.class, buildContext.getTargetFormat());
+    Assert.assertEquals(1, buildContext.getLayerConfigurations().size());
+    Assert.assertEquals(1, buildContext.getLayerConfigurations().get(0).getEntries().size());
+    Assert.assertEquals(
+        Arrays.asList(
+            new FileEntry(
+                Paths.get("/src/file/foo"),
+                AbsoluteUnixPath.get("/path/in/container"),
+                FilePermissions.fromOctalString("644"),
+                Instant.ofEpochSecond(1))),
+        buildContext.getLayerConfigurations().get(0).getEntries());
+
+    ContainerConfiguration containerConfiguration = buildContext.getContainerConfiguration();
+    Assert.assertEquals(Instant.ofEpochMilli(30), containerConfiguration.getCreationTime());
+    Assert.assertEquals(ImmutableMap.of("env", "var"), containerConfiguration.getEnvironmentMap());
+    Assert.assertEquals(
+        ImmutableMap.of("com.example.label", "cool"), containerConfiguration.getLabels());
+    Assert.assertEquals(
+        ImmutableSet.of(AbsoluteUnixPath.get("/mnt/foo"), AbsoluteUnixPath.get("/bar")),
+        containerConfiguration.getVolumes());
+    Assert.assertEquals(ImmutableSet.of(Port.tcp(443)), containerConfiguration.getExposedPorts());
+    Assert.assertEquals(":", containerConfiguration.getUser());
+    Assert.assertEquals(
+        AbsoluteUnixPath.get("/workspace"), containerConfiguration.getWorkingDirectory());
+    Assert.assertEquals(Arrays.asList("foo", "entrypoint"), containerConfiguration.getEntrypoint());
+    Assert.assertEquals(Arrays.asList("bar", "cmd"), containerConfiguration.getProgramArguments());
+
+    ContainerBuildPlan convertedPlan = containerBuilder.toContainerBuildPlan();
+    Assert.assertEquals("arch", convertedPlan.getArchitectureHint());
+    Assert.assertEquals("os", convertedPlan.getOsHint());
   }
 }
