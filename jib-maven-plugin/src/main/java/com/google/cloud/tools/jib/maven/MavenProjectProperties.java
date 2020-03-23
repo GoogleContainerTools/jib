@@ -91,7 +91,7 @@ public class MavenProjectProperties implements ProjectProperties {
    * @return a MavenProjectProperties from the given project and logger.
    */
   public static MavenProjectProperties getForProject(
-      @Nullable PluginDescriptor jibPluginDescriptor,
+      PluginDescriptor jibPluginDescriptor,
       MavenProject project,
       MavenSession session,
       Log log,

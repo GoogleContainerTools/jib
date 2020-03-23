@@ -32,6 +32,7 @@ import com.google.cloud.tools.jib.plugins.common.InvalidWorkingDirectoryExceptio
 import com.google.cloud.tools.jib.plugins.common.MainClassInferenceException;
 import com.google.cloud.tools.jib.plugins.common.PluginConfigurationProcessor;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import java.io.IOException;
 import java.util.Arrays;
@@ -88,7 +89,11 @@ public class BuildImageMojo extends JibPluginConfiguration {
     TempDirectoryProvider tempDirectoryProvider = new TempDirectoryProvider();
     MavenProjectProperties projectProperties =
         MavenProjectProperties.getForProject(
-            descriptor, getProject(), getSession(), getLog(), tempDirectoryProvider);
+            Preconditions.checkNotNull(descriptor),
+            getProject(),
+            getSession(),
+            getLog(),
+            tempDirectoryProvider);
     Future<Optional<String>> updateCheckFuture =
         MojoCommon.newUpdateChecker(projectProperties, getLog());
     try {
