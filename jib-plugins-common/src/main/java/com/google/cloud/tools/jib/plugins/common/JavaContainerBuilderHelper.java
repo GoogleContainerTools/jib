@@ -40,8 +40,7 @@ import java.util.function.Predicate;
 public class JavaContainerBuilderHelper {
 
   /**
-   * Validates and returns a {@link FileEntriesLayer} for adding the extra directory to the
-   * container.
+   * Returns a {@link FileEntriesLayer} for adding the extra directory to the container.
    *
    * @param extraDirectory the source extra directory path
    * @param extraDirectoryPermissions map from path on container to file permissions
