@@ -128,7 +128,7 @@ public class TestWebServer implements Closeable {
   }
 
   private Void serveResponses(Socket socket) throws IOException {
-    try (Socket toClose = socket) {
+    try (Socket ignored = socket) {
       InputStream in = socket.getInputStream();
       OutputStream out = socket.getOutputStream();
 
@@ -175,6 +175,7 @@ public class TestWebServer implements Closeable {
 
   // For use to ignore (i.e., accept and do nothing) a return value from ExecutionService.submit().
   // Without "consuming" the return value this way, Error Prone will complain to use it.
+  @SuppressWarnings("unused")
   private void ignoreReturn(Future<Void> future) {
     // do nothing; to make Error Prone happy
   }
