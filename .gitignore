@@ -1,13 +1,15 @@
-build
-target
+build/
+target/
 out
-bin
+bin/
 *.iml
 *.ipr
 *.iws
 .idea
-.gradle
-/.settings
-/.classpath
-/.project
+.gradle/
+# https://github.com/takari/maven-wrapper#usage-without-binary-jar
+**/.mvn/wrapper/maven-wrapper.jar
+.settings/
+.classpath
+.project
 .DS_Store
