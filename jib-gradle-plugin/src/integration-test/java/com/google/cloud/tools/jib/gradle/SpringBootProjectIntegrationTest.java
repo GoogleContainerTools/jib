@@ -43,7 +43,7 @@ public class SpringBootProjectIntegrationTest {
 
   @Test
   public void testBuild_packagedMode() throws IOException, InterruptedException, DigestException {
-    buildAndRunWebApp(springBootProject, "springboot:gradle", "build.gradle");
+    buildAndRunWebApp("springboot:gradle", "build.gradle");
 
     String output =
         new Command(
@@ -59,7 +59,7 @@ public class SpringBootProjectIntegrationTest {
     Assert.assertEquals("Hello world", JibRunHelper.getContent(new URL("http://localhost:8080")));
   }
 
-  private void buildAndRunWebApp(TestProject project, String label, String gradleBuildFile)
+  private void buildAndRunWebApp(String label, String gradleBuildFile)
       throws IOException, InterruptedException, DigestException {
     String nameBase = IntegrationTestingConfiguration.getTestRepositoryLocation() + '/';
     String targetImage = nameBase + label + System.nanoTime();

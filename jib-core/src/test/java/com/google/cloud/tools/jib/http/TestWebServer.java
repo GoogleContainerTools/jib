@@ -36,7 +36,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 import java.util.concurrent.Semaphore;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
@@ -72,6 +71,7 @@ public class TestWebServer implements Closeable {
     this(https, responses, numThreads, false);
   }
 
+  @SuppressWarnings("FutureReturnValueIgnored")
   public TestWebServer(
       boolean https, List<String> responses, int numThreads, boolean forgetServedResponses)
       throws IOException, InterruptedException, GeneralSecurityException, URISyntaxException {
@@ -81,7 +81,7 @@ public class TestWebServer implements Closeable {
     this.forgetServedResponses = forgetServedResponses;
     serverSocket = https ? createHttpsServerSocket() : new ServerSocket(0);
     executorService = Executors.newFixedThreadPool(numThreads + 1);
-    ignoreReturn(executorService.submit(this::listen));
+    executorService.submit(this::listen);
     serverStarted.acquire();
   }
 
@@ -118,17 +118,18 @@ public class TestWebServer implements Closeable {
     return sslContext.getServerSocketFactory().createServerSocket(0);
   }
 
+  @SuppressWarnings("FutureReturnValueIgnored")
   private Void listen() throws IOException {
     serverStarted.release();
     for (int i = 0; i < numThreads; i++) {
       Socket socket = serverSocket.accept();
-      ignoreReturn(executorService.submit(() -> serveResponses(socket)));
+      executorService.submit(() -> serveResponses(socket));
     }
     return null;
   }
 
   private Void serveResponses(Socket socket) throws IOException {
-    try (Socket toClose = socket) {
+    try (Socket ignored = socket) {
       InputStream in = socket.getInputStream();
       OutputStream out = socket.getOutputStream();
 
@@ -171,12 +172,6 @@ public class TestWebServer implements Closeable {
     }
     totalResponsesServed++;
     return forgetServedResponses ? responses.get(globalResponseIndex++) : responses.get(index);
-  }
-
-  // For use to ignore (i.e., accept and do nothing) a return value from ExecutionService.submit().
-  // Without "consuming" the return value this way, Error Prone will complain to use it.
-  private void ignoreReturn(Future<Void> future) {
-    // do nothing; to make Error Prone happy
   }
 
   /**
