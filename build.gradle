@@ -57,6 +57,8 @@ subprojects {
     ASM: '7.3.1',
     PICOCLI: '4.2.0',
 
+    MAVEN_API: '3.5.2',
+
     //test
     JUNIT: '4.12',
     MOCKITO_CORE: '3.2.4',
