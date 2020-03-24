@@ -27,9 +27,11 @@ import com.google.cloud.tools.jib.api.RegistryImage;
 import com.google.cloud.tools.jib.api.buildplan.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.api.buildplan.FileEntriesLayer;
 import com.google.cloud.tools.jib.api.buildplan.FileEntry;
+import com.google.cloud.tools.jib.api.buildplan.FilePermissions;
 import com.google.cloud.tools.jib.configuration.BuildContext;
 import com.google.cloud.tools.jib.filesystem.FileOperations;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.io.Resources;
 import com.google.common.util.concurrent.MoreExecutors;
 import java.io.IOException;
@@ -41,6 +43,7 @@ import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import org.junit.Assert;
@@ -95,6 +98,76 @@ public class JavaContainerBuilderHelperTest {
             extraFilesDirectory.resolve("c/cat"),
             extraFilesDirectory.resolve("foo")),
         layerConfiguration.getEntries());
+  }
+
+  @Test
+  public void testExtraDirectoryLayerConfiguration_globPermissions()
+      throws URISyntaxException, IOException {
+    Path extraFilesDirectory = Paths.get(Resources.getResource("core/layer").toURI());
+    Map<String, FilePermissions> permissionsMap =
+        ImmutableMap.of(
+            "/a",
+            FilePermissions.fromOctalString("123"),
+            "/a/*",
+            FilePermissions.fromOctalString("456"),
+            "**/bar",
+            FilePermissions.fromOctalString("765"));
+    FileEntriesLayer fileEntriesLayer =
+        JavaContainerBuilderHelper.extraDirectoryLayerConfiguration(
+            extraFilesDirectory, permissionsMap, (ignored1, ignored2) -> Instant.EPOCH);
+    assertExtractionPathsUnordered(
+        Arrays.asList("/a", "/a/b", "/a/b/bar", "/c", "/c/cat", "/foo"),
+        fileEntriesLayer.getEntries());
+
+    Map<AbsoluteUnixPath, FilePermissions> expectedPermissions =
+        ImmutableMap.<AbsoluteUnixPath, FilePermissions>builder()
+            .put(AbsoluteUnixPath.get("/a"), FilePermissions.fromOctalString("123"))
+            .put(AbsoluteUnixPath.get("/a/b"), FilePermissions.fromOctalString("456"))
+            .put(AbsoluteUnixPath.get("/a/b/bar"), FilePermissions.fromOctalString("765"))
+            .put(AbsoluteUnixPath.get("/c"), FilePermissions.DEFAULT_FOLDER_PERMISSIONS)
+            .put(AbsoluteUnixPath.get("/c/cat"), FilePermissions.DEFAULT_FILE_PERMISSIONS)
+            .put(AbsoluteUnixPath.get("/foo"), FilePermissions.DEFAULT_FILE_PERMISSIONS)
+            .build();
+    for (FileEntry entry : fileEntriesLayer.getEntries()) {
+      Assert.assertEquals(
+          expectedPermissions.get(entry.getExtractionPath()), entry.getPermissions());
+    }
+  }
+
+  @Test
+  public void testExtraDirectoryLayerConfiguration_overlappingPermissions()
+      throws URISyntaxException, IOException {
+    Path extraFilesDirectory = Paths.get(Resources.getResource("core/layer").toURI());
+    Map<String, FilePermissions> permissionsMap =
+        ImmutableMap.of(
+            "/a**",
+            FilePermissions.fromOctalString("123"),
+            // Should be ignored, since first match takes priority
+            "/a/b**",
+            FilePermissions.fromOctalString("000"),
+            // Should override first match since explicit path is used instead of glob
+            "/a/b/bar",
+            FilePermissions.fromOctalString("765"));
+    FileEntriesLayer fileEntriesLayer =
+        JavaContainerBuilderHelper.extraDirectoryLayerConfiguration(
+            extraFilesDirectory, permissionsMap, (ignored1, ignored2) -> Instant.EPOCH);
+    assertExtractionPathsUnordered(
+        Arrays.asList("/a", "/a/b", "/a/b/bar", "/c", "/c/cat", "/foo"),
+        fileEntriesLayer.getEntries());
+
+    Map<AbsoluteUnixPath, FilePermissions> expectedPermissions =
+        ImmutableMap.<AbsoluteUnixPath, FilePermissions>builder()
+            .put(AbsoluteUnixPath.get("/a"), FilePermissions.fromOctalString("123"))
+            .put(AbsoluteUnixPath.get("/a/b"), FilePermissions.fromOctalString("123"))
+            .put(AbsoluteUnixPath.get("/a/b/bar"), FilePermissions.fromOctalString("765"))
+            .put(AbsoluteUnixPath.get("/c"), FilePermissions.DEFAULT_FOLDER_PERMISSIONS)
+            .put(AbsoluteUnixPath.get("/c/cat"), FilePermissions.DEFAULT_FILE_PERMISSIONS)
+            .put(AbsoluteUnixPath.get("/foo"), FilePermissions.DEFAULT_FILE_PERMISSIONS)
+            .build();
+    for (FileEntry entry : fileEntriesLayer.getEntries()) {
+      Assert.assertEquals(
+          expectedPermissions.get(entry.getExtractionPath()), entry.getPermissions());
+    }
   }
 
   @Test

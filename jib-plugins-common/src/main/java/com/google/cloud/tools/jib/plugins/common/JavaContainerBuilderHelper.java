@@ -25,9 +25,13 @@ import com.google.cloud.tools.jib.api.buildplan.FilePermissions;
 import com.google.cloud.tools.jib.api.buildplan.RelativeUnixPath;
 import com.google.cloud.tools.jib.filesystem.DirectoryWalker;
 import java.io.IOException;
+import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.PathMatcher;
+import java.nio.file.Paths;
 import java.time.Instant;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.function.BiFunction;
 import java.util.function.Predicate;
@@ -46,11 +50,17 @@ public class JavaContainerBuilderHelper {
    */
   public static FileEntriesLayer extraDirectoryLayerConfiguration(
       Path extraDirectory,
-      Map<AbsoluteUnixPath, FilePermissions> extraDirectoryPermissions,
+      Map<String, FilePermissions> extraDirectoryPermissions,
       BiFunction<Path, AbsoluteUnixPath, Instant> modificationTimeProvider)
       throws IOException {
     FileEntriesLayer.Builder builder =
         FileEntriesLayer.builder().setName(LayerType.EXTRA_FILES.getName());
+    Map<PathMatcher, FilePermissions> pathMatchers = new LinkedHashMap<>();
+    for (Map.Entry<String, FilePermissions> entry : extraDirectoryPermissions.entrySet()) {
+      pathMatchers.put(
+          FileSystems.getDefault().getPathMatcher("glob:" + entry.getKey()), entry.getValue());
+    }
+
     new DirectoryWalker(extraDirectory)
         .filterRoot()
         .walk(
@@ -58,10 +68,23 @@ public class JavaContainerBuilderHelper {
               AbsoluteUnixPath pathOnContainer =
                   AbsoluteUnixPath.get("/").resolve(extraDirectory.relativize(localPath));
               Instant modificationTime = modificationTimeProvider.apply(localPath, pathOnContainer);
-              FilePermissions permissions = extraDirectoryPermissions.get(pathOnContainer);
+              FilePermissions permissions =
+                  extraDirectoryPermissions.get(pathOnContainer.toString());
               if (permissions == null) {
+                // Check for matching globs
+                Path containerPath = Paths.get(pathOnContainer.toString());
+                for (Map.Entry<PathMatcher, FilePermissions> entry : pathMatchers.entrySet()) {
+                  if (entry.getKey().matches(containerPath)) {
+                    builder.addEntry(
+                        localPath, pathOnContainer, entry.getValue(), modificationTime);
+                    return;
+                  }
+                }
+
+                // Add with default permissions
                 builder.addEntry(localPath, pathOnContainer, modificationTime);
               } else {
+                // Add with explicit permissions
                 builder.addEntry(localPath, pathOnContainer, permissions, modificationTime);
               }
             });

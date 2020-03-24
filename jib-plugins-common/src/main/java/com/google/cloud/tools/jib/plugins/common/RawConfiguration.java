@@ -16,7 +16,6 @@
 
 package com.google.cloud.tools.jib.plugins.common;
 
-import com.google.cloud.tools.jib.api.buildplan.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.api.buildplan.FilePermissions;
 import com.google.cloud.tools.jib.api.buildplan.ImageFormat;
 import java.nio.file.Path;
@@ -81,7 +80,7 @@ public interface RawConfiguration {
 
   List<Path> getExtraDirectories();
 
-  Map<AbsoluteUnixPath, FilePermissions> getExtraDirectoryPermissions();
+  Map<String, FilePermissions> getExtraDirectoryPermissions();
 
   Optional<Path> getDockerExecutable();
 

@@ -286,9 +286,9 @@ public class GradleProjectPropertiesTest {
   public void testConvertPermissionsMap() {
     Assert.assertEquals(
         ImmutableMap.of(
-            AbsoluteUnixPath.get("/test/folder/file1"),
+            "/test/folder/file1",
             FilePermissions.fromOctalString("123"),
-            AbsoluteUnixPath.get("/test/file2"),
+            "/test/file2",
             FilePermissions.fromOctalString("456")),
         TaskCommon.convertPermissionsMap(
             ImmutableMap.of("/test/folder/file1", "123", "/test/file2", "456")));

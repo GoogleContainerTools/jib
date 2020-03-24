@@ -19,12 +19,11 @@ package com.google.cloud.tools.jib.gradle;
 import com.google.api.client.http.HttpTransport;
 import com.google.cloud.tools.jib.ProjectInfo;
 import com.google.cloud.tools.jib.api.LogEvent;
-import com.google.cloud.tools.jib.api.buildplan.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.api.buildplan.FilePermissions;
 import com.google.cloud.tools.jib.plugins.common.ProjectProperties;
 import com.google.cloud.tools.jib.plugins.common.UpdateChecker;
 import com.google.common.util.concurrent.Futures;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ExecutorService;
@@ -114,19 +113,17 @@ class TaskCommon {
   }
 
   /**
-   * Validates and converts a {@code String->String} file-path-to-file-permissions map to an
-   * equivalent {@code AbsoluteUnixPath->FilePermission} map.
+   * Converts a {@code String->String} file-path-to-file-permissions map to an equivalent {@code
+   * String->FilePermission} map.
    *
    * @param stringMap the map to convert (example entry: {@code "/path/on/container" -> "755"})
    * @return the converted map
    */
-  static Map<AbsoluteUnixPath, FilePermissions> convertPermissionsMap(
-      Map<String, String> stringMap) {
-    Map<AbsoluteUnixPath, FilePermissions> permissionsMap = new HashMap<>();
+  static Map<String, FilePermissions> convertPermissionsMap(Map<String, String> stringMap) {
+    // Order is important, so use a LinkedHashMap
+    Map<String, FilePermissions> permissionsMap = new LinkedHashMap<>();
     for (Map.Entry<String, String> entry : stringMap.entrySet()) {
-      AbsoluteUnixPath key = AbsoluteUnixPath.get(entry.getKey());
-      FilePermissions value = FilePermissions.fromOctalString(entry.getValue());
-      permissionsMap.put(key, value);
+      permissionsMap.put(entry.getKey(), FilePermissions.fromOctalString(entry.getValue()));
     }
     return permissionsMap;
   }

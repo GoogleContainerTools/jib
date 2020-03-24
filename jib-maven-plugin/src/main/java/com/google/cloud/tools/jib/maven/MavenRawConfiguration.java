@@ -16,7 +16,6 @@
 
 package com.google.cloud.tools.jib.maven;
 
-import com.google.cloud.tools.jib.api.buildplan.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.api.buildplan.FilePermissions;
 import com.google.cloud.tools.jib.api.buildplan.ImageFormat;
 import com.google.cloud.tools.jib.plugins.common.AuthProperty;
@@ -167,7 +166,7 @@ public class MavenRawConfiguration implements RawConfiguration {
   }
 
   @Override
-  public Map<AbsoluteUnixPath, FilePermissions> getExtraDirectoryPermissions() {
+  public Map<String, FilePermissions> getExtraDirectoryPermissions() {
     return MojoCommon.convertPermissionsList(jibPluginConfiguration.getExtraDirectoryPermissions());
   }
 

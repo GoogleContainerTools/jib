@@ -166,8 +166,7 @@ public class PluginConfigurationProcessorTest {
     Path extraDirectory = Paths.get(Resources.getResource("core/layer").toURI());
     Mockito.when(rawConfiguration.getExtraDirectories()).thenReturn(Arrays.asList(extraDirectory));
     Mockito.when(rawConfiguration.getExtraDirectoryPermissions())
-        .thenReturn(
-            ImmutableMap.of(AbsoluteUnixPath.get("/foo"), FilePermissions.fromOctalString("123")));
+        .thenReturn(ImmutableMap.of("/foo", FilePermissions.fromOctalString("123")));
 
     BuildContext buildContext = getBuildContext(processCommonConfiguration());
     List<FileEntry> extraFiles =
