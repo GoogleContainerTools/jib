@@ -17,15 +17,15 @@ dependencies {
 jar {
   manifest {
     attributes 'Implementation-Version': version
-    attributes 'Automatic-Module-Name': 'com.google.cloud.tools.jib.buildplan'
+    attributes 'Automatic-Module-Name': 'com.google.cloud.tools.jib.api.buildplan'
 
     // OSGi metadata
-    attributes 'Bundle-SymbolicName': 'com.google.cloud.tools.jib.buildplan'
+    attributes 'Bundle-SymbolicName': 'com.google.cloud.tools.jib.api.buildplan'
     attributes 'Bundle-Name': 'Jib Container Build Plan API'
     attributes 'Bundle-Vendor': 'Google LLC'
     attributes 'Bundle-DocURL': 'https://github.com/GoogleContainerTools/jib'
     attributes 'Bundle-License': 'https://www.apache.org/licenses/LICENSE-2.0'
-    attributes 'Export-Package': 'com.google.cloud.tools.jib.plugins.buildplan'
+    attributes 'Export-Package': 'com.google.cloud.tools.jib.plugins.api.buildplan'
   }
 }
 
