@@ -40,7 +40,6 @@ import com.google.cloud.tools.jib.json.JsonTemplate;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
-import com.google.common.base.Strings;
 import com.google.common.base.Verify;
 import com.google.common.collect.ImmutableSetMultimap;
 import com.google.common.collect.Multimap;
@@ -65,7 +64,7 @@ public class RegistryClient {
     private final RegistryEndpointRequestProperties registryEndpointRequestProperties;
     private final FailoverHttpClient httpClient;
 
-    @Nullable private String userAgentSuffix;
+    private String userAgent = "";
     @Nullable private Credential credential;
 
     private Factory(
@@ -89,13 +88,13 @@ public class RegistryClient {
     }
 
     /**
-     * Sets a suffix to append to {@code User-Agent} headers. See {@link #makeUserAgent()}.
+     * Sets a the value of {@code User-Agent} in headers for registry requests.
      *
-     * @param userAgentSuffix the suffix to append
+     * @param userAgent non-null user agent string, can be empty
      * @return this
      */
-    public Factory setUserAgentSuffix(@Nullable String userAgentSuffix) {
-      this.userAgentSuffix = userAgentSuffix;
+    public Factory setUserAgent(String userAgent) {
+      this.userAgent = userAgent;
       return this;
     }
 
@@ -106,36 +105,7 @@ public class RegistryClient {
      */
     public RegistryClient newRegistryClient() {
       return new RegistryClient(
-          eventHandlers,
-          credential,
-          registryEndpointRequestProperties,
-          makeUserAgent(),
-          httpClient);
-    }
-
-    /**
-     * The {@code User-Agent} is in the form of {@code jib <version> <type>}. For example: {@code
-     * jib 0.9.0 jib-maven-plugin}.
-     *
-     * @return the {@code User-Agent} header to send. The {@code User-Agent} can be disabled by
-     *     setting the system property variable {@code _JIB_DISABLE_USER_AGENT} to any non-empty
-     *     string.
-     */
-    private String makeUserAgent() {
-      if (!JibSystemProperties.isUserAgentEnabled()) {
-        return "";
-      }
-
-      StringBuilder userAgentBuilder = new StringBuilder("jib");
-      if (userAgentSuffix != null) {
-        userAgentBuilder.append(" ").append(userAgentSuffix);
-      }
-      if (!Strings.isNullOrEmpty(System.getProperty(JibSystemProperties.UPSTREAM_CLIENT))) {
-        userAgentBuilder
-            .append(" ")
-            .append(System.getProperty(JibSystemProperties.UPSTREAM_CLIENT));
-      }
-      return userAgentBuilder.toString();
+          eventHandlers, credential, registryEndpointRequestProperties, userAgent, httpClient);
     }
   }
 

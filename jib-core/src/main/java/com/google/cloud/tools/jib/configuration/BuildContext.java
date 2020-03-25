@@ -30,6 +30,7 @@ import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
 import com.google.cloud.tools.jib.registry.RegistryClient;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import java.io.Closeable;
@@ -521,7 +522,7 @@ public class BuildContext implements Closeable {
               targetImageConfiguration.getImageRepository(),
               baseImageConfiguration.getImageRepository(),
               httpClient)
-          .setUserAgentSuffix(getToolVersion() + " " + getToolName());
+          .setUserAgent(makeUserAgent());
     }
     return newRegistryClientFactory(targetImageConfiguration);
   }
@@ -532,7 +533,7 @@ public class BuildContext implements Closeable {
             imageConfiguration.getImageRegistry(),
             imageConfiguration.getImageRepository(),
             httpClient)
-        .setUserAgentSuffix(getToolVersion() + " " + getToolName());
+        .setUserAgent(makeUserAgent());
   }
 
   @Override
@@ -541,5 +542,28 @@ public class BuildContext implements Closeable {
       executorService.shutdown();
     }
     httpClient.shutDown();
+  }
+
+  /**
+   * The {@code User-Agent} is in the form of {@code jib <version> <type>}. For example: {@code jib
+   * 0.9.0 jib-maven-plugin}.
+   *
+   * @return the {@code User-Agent} header to send. The {@code User-Agent} can be disabled by
+   *     setting the system property variable {@code _JIB_DISABLE_USER_AGENT} to any non-empty
+   *     string.
+   */
+  @VisibleForTesting
+  String makeUserAgent() {
+    if (!JibSystemProperties.isUserAgentEnabled()) {
+      return "";
+    }
+
+    StringBuilder userAgentBuilder = new StringBuilder("jib");
+    userAgentBuilder.append(" ").append(toolVersion);
+    userAgentBuilder.append(" ").append(toolName);
+    if (!Strings.isNullOrEmpty(System.getProperty(JibSystemProperties.UPSTREAM_CLIENT))) {
+      userAgentBuilder.append(" ").append(System.getProperty(JibSystemProperties.UPSTREAM_CLIENT));
+    }
+    return userAgentBuilder.toString();
   }
 }
