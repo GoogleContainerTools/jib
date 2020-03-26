@@ -546,14 +546,16 @@ com.google.api.client.http.level=CONFIG
 
 And then launch your build tool as follows:
 ```sh
-mvn -Djava.util.logging.config.file=path/to/log.properties -Djib.serialize=true -Djib.console=plain ...
+mvn --batch-mode -Djava.util.logging.config.file=path/to/logging.properties -Djib.serialize=true -Djib.console=plain ...
 ```
 or
 ```sh
-gradle -Djava.util.logging.config.file=path/to/log.properties -Djib.serialize=true -Djib.console=plain ...
+gradle --no-daemon --console=plain -Djava.util.logging.config.file=path/to/logging.properties -Djib.serialize=true -Djib.console=plain ...
 ```
 
-You may wish to enable the debug logs too (`-X` for Maven, or `--debug` for Gradle).
+**Note**: Jib Gradle plugins prior to version 2.2.0 have an issue generating HTTP logs ([#2356](https://github.com/GoogleContainerTools/jib/issues/2356)).
+
+You may wish to enable the debug logs too (`-X` for Maven, or `--debug --stacktrace` for Gradle).
 
 ### How do I view debug logs for Jib?
 

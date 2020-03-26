@@ -31,6 +31,7 @@ import com.google.cloud.tools.jib.plugins.common.InvalidWorkingDirectoryExceptio
 import com.google.cloud.tools.jib.plugins.common.MainClassInferenceException;
 import com.google.cloud.tools.jib.plugins.common.PluginConfigurationProcessor;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Preconditions;
 import java.io.IOException;
 import java.util.Optional;
 import java.util.concurrent.Future;
@@ -66,7 +67,11 @@ public class BuildTarMojo extends JibPluginConfiguration {
     TempDirectoryProvider tempDirectoryProvider = new TempDirectoryProvider();
     MavenProjectProperties projectProperties =
         MavenProjectProperties.getForProject(
-            getProject(), getSession(), getLog(), tempDirectoryProvider);
+            Preconditions.checkNotNull(descriptor),
+            getProject(),
+            getSession(),
+            getLog(),
+            tempDirectoryProvider);
     Future<Optional<String>> updateCheckFuture =
         MojoCommon.newUpdateChecker(projectProperties, getLog());
     try {

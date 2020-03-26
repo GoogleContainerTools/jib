@@ -17,7 +17,6 @@
 package com.google.cloud.tools.jib.plugins.common;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.google.cloud.tools.jib.ProjectInfo;
 import com.google.cloud.tools.jib.api.LogEvent;
 import com.google.cloud.tools.jib.filesystem.XdgDirectories;
 import com.google.cloud.tools.jib.http.FailoverHttpClient;
@@ -27,7 +26,6 @@ import com.google.cloud.tools.jib.json.JsonTemplate;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
-import com.google.common.base.Verify;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.URL;
@@ -75,18 +73,17 @@ public class UpdateChecker {
    * @param log {@link Consumer} used to log messages
    * @param versionUrl the location to check for the latest version
    * @param toolName the tool name
+   * @param toolVersion the tool version
    * @return a new {@link UpdateChecker}
    */
   public static Future<Optional<String>> checkForUpdate(
-      ExecutorService executorService, Consumer<LogEvent> log, String versionUrl, String toolName) {
+      ExecutorService executorService,
+      Consumer<LogEvent> log,
+      String versionUrl,
+      String toolName,
+      String toolVersion) {
     return executorService.submit(
-        () ->
-            performUpdateCheck(
-                log,
-                Verify.verifyNotNull(ProjectInfo.VERSION),
-                versionUrl,
-                getConfigDir(),
-                toolName));
+        () -> performUpdateCheck(log, toolVersion, versionUrl, getConfigDir(), toolName));
   }
 
   @VisibleForTesting

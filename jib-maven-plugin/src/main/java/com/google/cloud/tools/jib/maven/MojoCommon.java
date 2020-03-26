@@ -58,7 +58,11 @@ public class MojoCommon {
     ExecutorService executorService = Executors.newSingleThreadExecutor();
     try {
       return UpdateChecker.checkForUpdate(
-          executorService, projectProperties::log, VERSION_URL, projectProperties.getToolName());
+          executorService,
+          projectProperties::log,
+          VERSION_URL,
+          projectProperties.getToolName(),
+          projectProperties.getToolVersion());
     } finally {
       executorService.shutdown();
     }
