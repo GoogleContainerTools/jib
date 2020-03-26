@@ -545,8 +545,8 @@ public class BuildContext implements Closeable {
   }
 
   /**
-   * The {@code User-Agent} is in the form of {@code jib <version> <type>}. For example: {@code jib
-   * 0.9.0 jib-maven-plugin}.
+   * The {@code User-Agent} is in the form of {@code jib <toolVersion> <toolName>}. For example:
+   * {@code jib 0.9.0 jib-maven-plugin}.
    *
    * @return the {@code User-Agent} header to send. The {@code User-Agent} can be disabled by
    *     setting the system property variable {@code _JIB_DISABLE_USER_AGENT} to any non-empty
