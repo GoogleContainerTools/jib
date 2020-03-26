@@ -108,8 +108,8 @@ class TaskCommon {
           }
         });
 
-    // Disable only when not using custom logger.
-    // https://github.com/GoogleContainerTools/jib/issues/2356
+    // Disable Google HTTP Client network logging only when 'java.util.logging.config.file' system
+    // property is undefined: https://github.com/GoogleContainerTools/jib/issues/2356
     if (System.getProperty("java.util.logging.config.file") == null) {
       // Disables Google HTTP client logging.
       java.util.logging.Logger.getLogger(HttpTransport.class.getName()).setLevel(Level.OFF);
