@@ -47,6 +47,8 @@ public class Containerizer {
   public static final Path DEFAULT_BASE_CACHE_DIRECTORY = XdgDirectories.getCacheHome();
 
   private static final String DEFAULT_TOOL_NAME = "jib-core";
+  private static final String DEFAULT_TOOL_VERSION =
+      Containerizer.class.getPackage().getImplementationVersion();
 
   private static final String DESCRIPTION_FOR_DOCKER_REGISTRY = "Building and pushing image";
   private static final String DESCRIPTION_FOR_DOCKER_DAEMON = "Building image to Docker daemon";
@@ -128,6 +130,7 @@ public class Containerizer {
   private boolean allowInsecureRegistries = false;
   private boolean offline = false;
   private String toolName = DEFAULT_TOOL_NAME;
+  @Nullable private String toolVersion = DEFAULT_TOOL_VERSION;
   private boolean alwaysCacheBaseImage = false;
 
   /** Instantiate with {@link #to}. */
@@ -270,6 +273,19 @@ public class Containerizer {
   }
 
   /**
+   * Sets the version of the tool that is using Jib Core. The tool version is sent as part of the
+   * {@code User-Agent} in registry requests and set as the {@code created_by} in the container
+   * layer history. Defaults to the current version of jib-core.
+   *
+   * @param toolVersion the name of the tool using this library
+   * @return this
+   */
+  public Containerizer setToolVersion(@Nullable String toolVersion) {
+    this.toolVersion = toolVersion;
+    return this;
+  }
+
+  /**
    * Controls the optimization which skips downloading base image layers that exist in a target
    * registry. If the user does not set this property, then read as false.
    *
@@ -323,6 +339,11 @@ public class Containerizer {
 
   String getToolName() {
     return toolName;
+  }
+
+  @Nullable
+  String getToolVersion() {
+    return toolVersion;
   }
 
   boolean getAlwaysCacheBaseImage() {

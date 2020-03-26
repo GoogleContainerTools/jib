@@ -111,8 +111,8 @@ public class PluginConfigurationProcessorTest {
     Mockito.when(rawConfiguration.getExtraDirectories())
         .thenReturn(Arrays.asList(Paths.get("nonexistent/path")));
     Mockito.when(rawConfiguration.getContainerizingMode()).thenReturn("exploded");
-
     Mockito.when(projectProperties.getToolName()).thenReturn("tool");
+    Mockito.when(projectProperties.getToolVersion()).thenReturn("tool-version");
     Mockito.when(projectProperties.getMainClassFromJar()).thenReturn("java.lang.Object");
     Mockito.when(projectProperties.getDefaultCacheDirectory()).thenReturn(Paths.get("cache"));
     Mockito.when(
@@ -124,6 +124,7 @@ public class PluginConfigurationProcessorTest {
     Mockito.when(inferredAuthProvider.inferAuth(Mockito.any())).thenReturn(Optional.empty());
 
     Mockito.when(containerizer.setToolName(Mockito.anyString())).thenReturn(containerizer);
+    Mockito.when(containerizer.setToolVersion(Mockito.anyString())).thenReturn(containerizer);
     Mockito.when(containerizer.setAllowInsecureRegistries(Mockito.anyBoolean()))
         .thenReturn(containerizer);
     Mockito.when(containerizer.setBaseImageLayersCache(Mockito.any(Path.class)))

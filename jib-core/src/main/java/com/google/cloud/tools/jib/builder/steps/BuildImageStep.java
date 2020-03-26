@@ -16,7 +16,6 @@
 
 package com.google.cloud.tools.jib.builder.steps;
 
-import com.google.cloud.tools.jib.ProjectInfo;
 import com.google.cloud.tools.jib.api.LogEvent;
 import com.google.cloud.tools.jib.builder.ProgressEventDispatcher;
 import com.google.cloud.tools.jib.builder.TimerEventDispatcher;
@@ -107,7 +106,7 @@ class BuildImageStep implements Callable<Image> {
                 HistoryEntry.builder()
                     .setCreationTimestamp(layerCreationTime)
                     .setAuthor("Jib")
-                    .setCreatedBy(buildContext.getToolName() + ":" + ProjectInfo.VERSION)
+                    .setCreatedBy(buildContext.getToolName() + ":" + buildContext.getToolVersion())
                     .setComment(applicationLayer.getName())
                     .build());
       }

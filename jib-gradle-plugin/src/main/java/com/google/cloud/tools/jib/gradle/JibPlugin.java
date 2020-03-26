@@ -18,7 +18,6 @@ package com.google.cloud.tools.jib.gradle;
 
 import static org.gradle.api.tasks.SourceSet.MAIN_SOURCE_SET_NAME;
 
-import com.google.cloud.tools.jib.ProjectInfo;
 import com.google.cloud.tools.jib.gradle.skaffold.CheckJibVersionTask;
 import com.google.cloud.tools.jib.gradle.skaffold.FilesTaskV2;
 import com.google.cloud.tools.jib.gradle.skaffold.InitTask;
@@ -102,7 +101,7 @@ public class JibPlugin implements Plugin<Project> {
     if (requiredVersion == null) {
       return;
     }
-    String actualVersion = ProjectInfo.VERSION;
+    String actualVersion = GradleProjectProperties.TOOL_VERSION;
     if (actualVersion == null) {
       throw new GradleException("Could not determine Jib plugin version");
     }

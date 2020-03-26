@@ -16,8 +16,6 @@
 
 package com.google.cloud.tools.jib;
 
-import javax.annotation.Nullable;
-
 /** Constants relating to the Jib project. */
 public class ProjectInfo {
 
@@ -26,10 +24,6 @@ public class ProjectInfo {
 
   /** Link to file an issue against the GitHub repository. */
   public static final String GITHUB_NEW_ISSUE_URL = GITHUB_URL + "/issues/new";
-
-  /** The project version. May be {@code null} if the version cannot be determined. */
-  @Nullable
-  public static final String VERSION = ProjectInfo.class.getPackage().getImplementationVersion();
 
   private ProjectInfo() {}
 }

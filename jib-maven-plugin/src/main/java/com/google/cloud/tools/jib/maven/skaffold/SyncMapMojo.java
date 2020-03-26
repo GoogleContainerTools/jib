@@ -25,6 +25,7 @@ import com.google.cloud.tools.jib.plugins.common.ContainerizingMode;
 import com.google.cloud.tools.jib.plugins.common.InvalidContainerizingModeException;
 import com.google.cloud.tools.jib.plugins.common.PluginConfigurationProcessor;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Preconditions;
 import java.io.File;
 import java.nio.file.Path;
 import java.util.stream.Collectors;
@@ -76,7 +77,11 @@ public class SyncMapMojo extends JibPluginConfiguration {
     try (TempDirectoryProvider tempDirectoryProvider = new TempDirectoryProvider()) {
       MavenProjectProperties projectProperties =
           MavenProjectProperties.getForProject(
-              getProject(), getSession(), getLog(), tempDirectoryProvider);
+              Preconditions.checkNotNull(descriptor),
+              getProject(),
+              getSession(),
+              getLog(),
+              tempDirectoryProvider);
 
       MavenRawConfiguration configuration = new MavenRawConfiguration(this);
 

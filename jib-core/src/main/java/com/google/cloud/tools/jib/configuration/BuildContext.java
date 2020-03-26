@@ -30,6 +30,7 @@ import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
 import com.google.cloud.tools.jib.registry.RegistryClient;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import java.io.Closeable;
@@ -74,6 +75,7 @@ public class BuildContext implements Closeable {
     private ImmutableList<FileEntriesLayer> layerConfigurations = ImmutableList.of();
     private Class<? extends BuildableManifestTemplate> targetFormat = DEFAULT_TARGET_FORMAT;
     private String toolName = DEFAULT_TOOL_NAME;
+    @Nullable private String toolVersion;
     private EventHandlers eventHandlers = EventHandlers.NONE;
     @Nullable private ExecutorService executorService;
     private boolean alwaysCacheBaseImage = false;
@@ -220,6 +222,17 @@ public class BuildContext implements Closeable {
     }
 
     /**
+     * Sets the version of the tool that is executing the build.
+     *
+     * @param toolVersion the tool version
+     * @return this
+     */
+    public Builder setToolVersion(@Nullable String toolVersion) {
+      this.toolVersion = toolVersion;
+      return this;
+    }
+
+    /**
      * Sets the {@link EventHandlers} to dispatch events with.
      *
      * @param eventHandlers the {@link EventHandlers}
@@ -287,6 +300,7 @@ public class BuildContext implements Closeable {
               offline,
               layerConfigurations,
               toolName,
+              toolVersion,
               eventHandlers,
               // TODO: try setting global User-Agent: here
               new FailoverHttpClient(
@@ -346,6 +360,7 @@ public class BuildContext implements Closeable {
   private final boolean offline;
   private final ImmutableList<FileEntriesLayer> layerConfigurations;
   private final String toolName;
+  @Nullable private final String toolVersion;
   private final EventHandlers eventHandlers;
   private final FailoverHttpClient httpClient;
   private final ExecutorService executorService;
@@ -364,6 +379,7 @@ public class BuildContext implements Closeable {
       boolean offline,
       ImmutableList<FileEntriesLayer> layerConfigurations,
       String toolName,
+      @Nullable String toolVersion,
       EventHandlers eventHandlers,
       FailoverHttpClient httpClient,
       ExecutorService executorService,
@@ -379,6 +395,7 @@ public class BuildContext implements Closeable {
     this.offline = offline;
     this.layerConfigurations = layerConfigurations;
     this.toolName = toolName;
+    this.toolVersion = toolVersion;
     this.eventHandlers = eventHandlers;
     this.httpClient = httpClient;
     this.executorService = executorService;
@@ -418,6 +435,11 @@ public class BuildContext implements Closeable {
 
   public String getToolName() {
     return toolName;
+  }
+
+  @Nullable
+  public String getToolVersion() {
+    return toolVersion;
   }
 
   public EventHandlers getEventHandlers() {
@@ -500,7 +522,7 @@ public class BuildContext implements Closeable {
               targetImageConfiguration.getImageRepository(),
               baseImageConfiguration.getImageRepository(),
               httpClient)
-          .setUserAgentSuffix(getToolName());
+          .setUserAgent(makeUserAgent());
     }
     return newRegistryClientFactory(targetImageConfiguration);
   }
@@ -511,7 +533,7 @@ public class BuildContext implements Closeable {
             imageConfiguration.getImageRegistry(),
             imageConfiguration.getImageRepository(),
             httpClient)
-        .setUserAgentSuffix(getToolName());
+        .setUserAgent(makeUserAgent());
   }
 
   @Override
@@ -520,5 +542,28 @@ public class BuildContext implements Closeable {
       executorService.shutdown();
     }
     httpClient.shutDown();
+  }
+
+  /**
+   * The {@code User-Agent} is in the form of {@code jib <toolVersion> <toolName>}. For example:
+   * {@code jib 0.9.0 jib-maven-plugin}.
+   *
+   * @return the {@code User-Agent} header to send. The {@code User-Agent} can be disabled by
+   *     setting the system property variable {@code _JIB_DISABLE_USER_AGENT} to any non-empty
+   *     string.
+   */
+  @VisibleForTesting
+  String makeUserAgent() {
+    if (!JibSystemProperties.isUserAgentEnabled()) {
+      return "";
+    }
+
+    StringBuilder userAgentBuilder = new StringBuilder("jib");
+    userAgentBuilder.append(" ").append(toolVersion);
+    userAgentBuilder.append(" ").append(toolName);
+    if (!Strings.isNullOrEmpty(System.getProperty(JibSystemProperties.UPSTREAM_CLIENT))) {
+      userAgentBuilder.append(" ").append(System.getProperty(JibSystemProperties.UPSTREAM_CLIENT));
+    }
+    return userAgentBuilder.toString();
   }
 }

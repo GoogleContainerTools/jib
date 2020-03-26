@@ -60,6 +60,7 @@ import org.apache.maven.execution.MavenSession;
 import org.apache.maven.model.Build;
 import org.apache.maven.model.Plugin;
 import org.apache.maven.model.PluginExecution;
+import org.apache.maven.plugin.descriptor.PluginDescriptor;
 import org.apache.maven.plugin.logging.Log;
 import org.apache.maven.project.MavenProject;
 import org.codehaus.plexus.archiver.zip.ZipEntry;
@@ -229,6 +230,7 @@ public class MavenProjectPropertiesTest {
   private final Xpp3Dom pluginConfiguration = new Xpp3Dom("configuration");
 
   @Mock private Build mockBuild;
+  @Mock private PluginDescriptor mockJibPluginDescriptor;
   @Mock private MavenProject mockMavenProject;
   @Mock private MavenSession mockMavenSession;
   @Mock private MavenExecutionRequest mockMavenRequest;
@@ -249,7 +251,11 @@ public class MavenProjectPropertiesTest {
     Mockito.when(mockMavenSession.getRequest()).thenReturn(mockMavenRequest);
     mavenProjectProperties =
         new MavenProjectProperties(
-            mockMavenProject, mockMavenSession, mockLog, mockTempDirectoryProvider);
+            mockJibPluginDescriptor,
+            mockMavenProject,
+            mockMavenSession,
+            mockLog,
+            mockTempDirectoryProvider);
 
     Path outputPath = getResource("maven/application/output");
     Path dependenciesPath = getResource("maven/application/dependencies");
@@ -669,7 +675,11 @@ public class MavenProjectPropertiesTest {
 
     Map<LayerType, List<Path>> classifyDependencies =
         new MavenProjectProperties(
-                mockMavenProject, mockMavenSession, mockLog, mockTempDirectoryProvider)
+                mockJibPluginDescriptor,
+                mockMavenProject,
+                mockMavenSession,
+                mockLog,
+                mockTempDirectoryProvider)
             .classifyDependencies(artifacts, projectArtifacts);
 
     Assert.assertEquals(
@@ -1006,7 +1016,11 @@ public class MavenProjectPropertiesTest {
             .setModificationTimeProvider((ignored1, ignored2) -> SAMPLE_FILE_MODIFICATION_TIME);
     JibContainerBuilder jibContainerBuilder =
         new MavenProjectProperties(
-                mockMavenProject, mockMavenSession, mockLog, mockTempDirectoryProvider)
+                mockJibPluginDescriptor,
+                mockMavenProject,
+                mockMavenSession,
+                mockLog,
+                mockTempDirectoryProvider)
             .createJibContainerBuilder(javaContainerBuilder, containerizingMode);
     return JibContainerBuilderTestHelper.toBuildContext(
         jibContainerBuilder, Containerizer.to(RegistryImage.named("to")));

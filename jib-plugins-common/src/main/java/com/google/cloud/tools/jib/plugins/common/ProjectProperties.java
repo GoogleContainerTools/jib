@@ -46,6 +46,8 @@ public interface ProjectProperties {
 
   String getToolName();
 
+  String getToolVersion();
+
   String getPluginName();
 
   /**
