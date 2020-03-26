@@ -64,7 +64,7 @@ public class RegistryClient {
     private final RegistryEndpointRequestProperties registryEndpointRequestProperties;
     private final FailoverHttpClient httpClient;
 
-    @Nullable private String userAgent;
+    private String userAgent = "";
     @Nullable private Credential credential;
 
     private Factory(
@@ -90,10 +90,10 @@ public class RegistryClient {
     /**
      * Sets the value of {@code User-Agent} in headers for registry requests.
      *
-     * @param userAgent user agent string
+     * @param userAgent non-null user agent string, can be empty
      * @return this
      */
-    public Factory setUserAgent(@Nullable String userAgent) {
+    public Factory setUserAgent(String userAgent) {
       this.userAgent = userAgent;
       return this;
     }
