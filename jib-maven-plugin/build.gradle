@@ -11,6 +11,7 @@ dependencies {
   sourceProject project(':jib-build-plan')
   sourceProject project(':jib-core')
   sourceProject project(':jib-plugins-common')
+  sourceProject project(':jib-maven-plugin-extension-api')
 
   implementation "org.apache.maven:maven-plugin-api:${dependencyVersions.MAVEN_API}"
   implementation "org.apache.maven:maven-core:${dependencyVersions.MAVEN_API}"
@@ -62,8 +63,10 @@ publishing {
 release {
   tagTemplate = 'v$version-maven'
   ignoredSnapshotDependencies = [
+    'com.google.cloud.tools:jib-build-plan',
     'com.google.cloud.tools:jib-core',
     'com.google.cloud.tools:jib-plugins-common',
+    'com.google.cloud.tools:jib-maven-plugin-extension-api',
   ]
   git {
     requireBranch = /^maven_release_v\d+.*$/  //regex
