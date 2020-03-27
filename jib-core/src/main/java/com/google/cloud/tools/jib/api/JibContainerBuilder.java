@@ -644,6 +644,7 @@ public class JibContainerBuilder {
     layerConfigurations = (List<FileEntriesLayer>) buildPlan.getLayers();
 
     buildContextBuilder
+        .setTargetFormat(buildPlan.getFormat())
         .setBaseImageConfiguration(baseImageConfiguration)
         .setLayerConfigurations(layerConfigurations);
     return this;

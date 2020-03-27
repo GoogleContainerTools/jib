@@ -322,7 +322,7 @@ public class JibContainerBuilderTest {
         containerBuilder.toBuildContext(Containerizer.to(RegistryImage.named("target/image")));
     Assert.assertEquals(
         "some/base", buildContext.getBaseImageConfiguration().getImage().toString());
-    Assert.assertEquals(V22ManifestTemplate.class, buildContext.getTargetFormat());
+    Assert.assertEquals(OciManifestTemplate.class, buildContext.getTargetFormat());
     Assert.assertEquals(1, buildContext.getLayerConfigurations().size());
     Assert.assertEquals(1, buildContext.getLayerConfigurations().get(0).getEntries().size());
     Assert.assertEquals(
