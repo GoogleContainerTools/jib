@@ -21,6 +21,7 @@ import com.google.cloud.tools.jib.api.buildplan.ContainerBuildPlan;
 import com.google.cloud.tools.jib.api.buildplan.FileEntriesLayer;
 import com.google.cloud.tools.jib.api.buildplan.FileEntry;
 import com.google.cloud.tools.jib.api.buildplan.ImageFormat;
+import com.google.cloud.tools.jib.api.buildplan.LayerObject;
 import com.google.cloud.tools.jib.api.buildplan.Port;
 import com.google.cloud.tools.jib.builder.TimerEventDispatcher;
 import com.google.cloud.tools.jib.builder.steps.BuildResult;
@@ -42,6 +43,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import org.apache.http.conn.HttpHostConnectException;
@@ -640,10 +642,13 @@ public class JibContainerBuilder {
     baseImageConfiguration.getTarPath().ifPresent(builder::setTarPath);
     baseImageConfiguration = builder.build();
 
-    // For now, only FileEntriesLayer is supported in jib-core.
-    List<?> layers = buildPlan.getLayers();
-    layers.forEach(layer -> Verify.verify(layer instanceof FileEntriesLayer));
-    layerConfigurations = (List<FileEntriesLayer>) layers;
+    Function<LayerObject, FileEntriesLayer> castToFileEntriesLayer =
+        layer -> {
+          Verify.verify(layer instanceof FileEntriesLayer);
+          return (FileEntriesLayer) layer;
+        };
+    layerConfigurations =
+        buildPlan.getLayers().stream().map(castToFileEntriesLayer).collect(Collectors.toList());
 
     buildContextBuilder
         .setTargetFormat(buildPlan.getFormat())
