@@ -54,7 +54,6 @@ public class RegistryClientTest {
 
   @Mock private EventHandlers eventHandlers;
 
-  private RegistryClient.Factory testRegistryClientFactory;
   private DescriptorDigest digest;
 
   private TestWebServer registry;
@@ -62,8 +61,6 @@ public class RegistryClientTest {
 
   @Before
   public void setUp() throws DigestException {
-    testRegistryClientFactory =
-        RegistryClient.factory(EventHandlers.NONE, "some.server.url", "some image name", null);
     digest =
         DescriptorDigest.fromHash(
             "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");

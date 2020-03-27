@@ -23,39 +23,39 @@ import org.junit.Test;
 /** Tests for {@link Retry}. */
 public class RetryTest {
   private int actionCount = 0;
-  private final Retry.Action<Exception> successfulAction =
-      () -> {
-        ++actionCount;
-        return true;
-      };
-  private final Retry.Action<Exception> unsuccessfulAction =
-      () -> {
-        ++actionCount;
-        return false;
-      };
-  private final Retry.Action<Exception> exceptionAction =
-      () -> {
-        ++actionCount;
-        throw new Exception("whee");
-      };
+
+  private boolean successfulAction() {
+    ++actionCount;
+    return true;
+  }
+
+  private boolean unsuccessfulAction() {
+    ++actionCount;
+    return false;
+  }
+
+  private boolean exceptionAction() throws Exception {
+    ++actionCount;
+    throw new Exception("whee");
+  }
 
   @Test
-  public void testSuccessfulAction() throws Exception {
-    boolean result = Retry.action(successfulAction).run();
+  public void testSuccessfulAction() {
+    boolean result = Retry.action(this::successfulAction).run();
     Assert.assertTrue(result);
     Assert.assertEquals(1, actionCount);
   }
 
   @Test
-  public void testMaximumRetries_default() throws Exception {
-    boolean result = Retry.action(unsuccessfulAction).run();
+  public void testMaximumRetries_default() {
+    boolean result = Retry.action(this::unsuccessfulAction).run();
     Assert.assertFalse(result);
     Assert.assertEquals(5, actionCount);
   }
 
   @Test
-  public void testMaximumRetries_specified() throws Exception {
-    boolean result = Retry.action(unsuccessfulAction).maximumRetries(2).run();
+  public void testMaximumRetries_specified() {
+    boolean result = Retry.action(this::unsuccessfulAction).maximumRetries(2).run();
     Assert.assertFalse(result);
     Assert.assertEquals(2, actionCount);
   }
@@ -64,7 +64,7 @@ public class RetryTest {
   public void testRetryableException() {
     // all exceptions are retryable by default, so should retry 5 times
     try {
-      Retry.action(exceptionAction).run();
+      Retry.action(this::exceptionAction).run();
       Assert.fail("should have thrown exception");
     } catch (Exception ex) {
       Assert.assertEquals("whee", ex.getMessage());
@@ -76,7 +76,7 @@ public class RetryTest {
   public void testNonRetryableException() {
     // the exception is not ok and so should only try 1 time
     try {
-      Retry.action(exceptionAction).retryOnException(ex -> false).run();
+      Retry.action(this::exceptionAction).retryOnException(ex -> false).run();
       Assert.fail("should have thrown exception");
     } catch (Exception ex) {
       Assert.assertEquals("whee", ex.getMessage());
@@ -85,12 +85,12 @@ public class RetryTest {
   }
 
   @Test
-  public void testInterruptSleep() throws Exception {
+  public void testInterruptSleep() {
     // interrupt the current thread so as to cause the retry's sleep() to throw
     // an InterruptedException
     Thread.currentThread().interrupt();
     try {
-      boolean result = Retry.action(unsuccessfulAction).sleep(10, TimeUnit.SECONDS).run();
+      boolean result = Retry.action(this::unsuccessfulAction).sleep(10, TimeUnit.SECONDS).run();
       Assert.assertFalse(result);
       Assert.assertEquals(1, actionCount);
     } finally {
@@ -102,7 +102,7 @@ public class RetryTest {
   @Test
   public void testInvalid_maximumRetries() {
     try {
-      Retry.action(successfulAction).maximumRetries(0);
+      Retry.action(this::successfulAction).maximumRetries(0);
       Assert.fail();
     } catch (IllegalArgumentException ex) {
       /* maximumRetries() ensures the retry value is at least 1. */
@@ -112,7 +112,7 @@ public class RetryTest {
   @Test
   public void testInvalid_sleep() {
     try {
-      Retry.action(successfulAction).sleep(-1, TimeUnit.DAYS);
+      Retry.action(this::successfulAction).sleep(-1, TimeUnit.DAYS);
       Assert.fail();
     } catch (IllegalArgumentException ex) {
       /* sleep() ensures the sleep value is non-negative. */
