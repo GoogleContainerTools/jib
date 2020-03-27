@@ -604,7 +604,6 @@ public class JibContainerBuilder {
    * @throws InvalidImageReferenceException if the base image value in {@code buildPlan} is an
    *     invalid reference
    */
-  @SuppressWarnings("unchecked")
   public JibContainerBuilder applyContainerBuildPlan(ContainerBuildPlan buildPlan)
       throws InvalidImageReferenceException {
     containerBuildPlanBuilder
