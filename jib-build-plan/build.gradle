@@ -25,7 +25,7 @@ jar {
     attributes 'Bundle-Vendor': 'Google LLC'
     attributes 'Bundle-DocURL': 'https://github.com/GoogleContainerTools/jib'
     attributes 'Bundle-License': 'https://www.apache.org/licenses/LICENSE-2.0'
-    attributes 'Export-Package': 'com.google.cloud.tools.jib.plugins.api.buildplan'
+    attributes 'Export-Package': 'com.google.cloud.tools.jib.api.buildplan'
   }
 }
 
