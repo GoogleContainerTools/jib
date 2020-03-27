@@ -1,7 +1,6 @@
 plugins {
   id 'net.researchgate.release'
   id 'maven-publish'
-  id 'eclipse'
 }
 
 dependencies {
@@ -39,15 +38,3 @@ publishing {
   }
 }
 /* RELEASE */
-
-/* ECLIPSE */
-// TODO: remove after upgrading to Gradle 5.6. (https://github.com/eclipse/buildship/issues/689)
-// Also remove the 'eclipse' plugin.
-eclipse.classpath.file.whenMerged {
-  entries.findAll {
-    it.path in ['src/test/java', 'src/test/resources']
-  }.each {
-    it.entryAttributes['test'] = 'true'
-  }
-}
-/* ECLIPSE */
