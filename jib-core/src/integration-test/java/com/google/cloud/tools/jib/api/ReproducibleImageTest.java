@@ -74,7 +74,9 @@ public class ReproducibleImageTest {
 
     imageTar = new File(imageLocation.getRoot(), "image.tar");
     Containerizer containerizer =
-        Containerizer.to(TarImage.at(imageTar.toPath()).named("jib-core/reproducible"));
+        Containerizer.to(TarImage.at(imageTar.toPath()).named("jib-core/reproducible"))
+            .setToolName("test-tool")
+            .setToolVersion("test-version");
 
     Jib.fromScratch()
         .setEntrypoint("echo", "Hello World")
@@ -125,7 +127,7 @@ public class ReproducibleImageTest {
     String exectedConfig =
         "{\"created\":\"1970-01-01T00:00:00Z\",\"architecture\":\"amd64\",\"os\":\"linux\","
             + "\"config\":{\"Env\":[],\"Entrypoint\":[\"echo\",\"Hello World\"],\"ExposedPorts\":{},\"Labels\":{},\"Volumes\":{}},"
-            + "\"history\":[{\"created\":\"1970-01-01T00:00:00Z\",\"author\":\"Jib\",\"created_by\":\"jib-core:null\",\"comment\":\"\"},{\"created\":\"1970-01-01T00:00:00Z\",\"author\":\"Jib\",\"created_by\":\"jib-core:null\",\"comment\":\"\"},{\"created\":\"1970-01-01T00:00:00Z\",\"author\":\"Jib\",\"created_by\":\"jib-core:null\",\"comment\":\"\"}],"
+            + "\"history\":[{\"created\":\"1970-01-01T00:00:00Z\",\"author\":\"Jib\",\"created_by\":\"test-tool:test-version\",\"comment\":\"\"},{\"created\":\"1970-01-01T00:00:00Z\",\"author\":\"Jib\",\"created_by\":\"test-tool:test-version\",\"comment\":\"\"},{\"created\":\"1970-01-01T00:00:00Z\",\"author\":\"Jib\",\"created_by\":\"test-tool:test-version\",\"comment\":\"\"}],"
             + "\"rootfs\":{\"type\":\"layers\",\"diff_ids\":[\"sha256:18e4f44e6d1835bd968339b166057bd17ab7d4cbb56dc7262a5cafea7cf8d405\",\"sha256:13369c34f073f2b9c1fa6431e23d925f1a8eac65b1726c8cc8fcc2596c69b414\",\"sha256:4f92c507112d7880ca0f504ef8272b7fdee107263270125036a260a741565923\"]}}";
     String generatedConfig = extractFromTarFileAsString(imageTar, "config.json");
     Assert.assertEquals(exectedConfig, generatedConfig);
