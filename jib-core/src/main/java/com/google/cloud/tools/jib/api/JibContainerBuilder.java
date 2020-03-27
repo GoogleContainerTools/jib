@@ -30,6 +30,7 @@ import com.google.cloud.tools.jib.configuration.ImageConfiguration;
 import com.google.cloud.tools.jib.docker.DockerClient;
 import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Verify;
 import java.io.IOException;
 import java.net.UnknownHostException;
 import java.nio.file.Path;
@@ -641,7 +642,9 @@ public class JibContainerBuilder {
     baseImageConfiguration = builder.build();
 
     // For now, only FileEntriesLayer is supported in jib-core.
-    layerConfigurations = (List<FileEntriesLayer>) buildPlan.getLayers();
+    List<?> layers = buildPlan.getLayers();
+    layers.forEach(layer -> Verify.verify(layer instanceof FileEntriesLayer));
+    layerConfigurations = (List<FileEntriesLayer>) layers;
 
     buildContextBuilder
         .setTargetFormat(buildPlan.getFormat())

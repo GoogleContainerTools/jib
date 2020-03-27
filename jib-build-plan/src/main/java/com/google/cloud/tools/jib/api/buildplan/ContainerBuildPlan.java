@@ -439,7 +439,7 @@ public class ContainerBuildPlan {
   }
 
   public Map<String, String> getLabels() {
-    return labels;
+    return new HashMap<>(labels);
   }
 
   public Set<Port> getExposedPorts() {
@@ -458,16 +458,16 @@ public class ContainerBuildPlan {
 
   @Nullable
   public List<String> getEntrypoint() {
-    return entrypoint;
+    return entrypoint == null ? null : new ArrayList<>(entrypoint);
   }
 
   @Nullable
   public List<String> getCmd() {
-    return cmd;
+    return cmd == null ? null : new ArrayList<>(cmd);
   }
 
   public List<? extends LayerObject> getLayers() {
-    return layers;
+    return new ArrayList<>(layers);
   }
 
   /**
