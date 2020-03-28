@@ -70,7 +70,7 @@ class RegistryEndpointCaller<T> {
   }
 
   private final EventHandlers eventHandlers;
-  private final String userAgent;
+  @Nullable private final String userAgent;
   private final RegistryEndpointProvider<T> registryEndpointProvider;
   @Nullable private final Authorization authorization;
   private final RegistryEndpointRequestProperties registryEndpointRequestProperties;
@@ -89,7 +89,7 @@ class RegistryEndpointCaller<T> {
   @VisibleForTesting
   RegistryEndpointCaller(
       EventHandlers eventHandlers,
-      String userAgent,
+      @Nullable String userAgent,
       RegistryEndpointProvider<T> registryEndpointProvider,
       @Nullable Authorization authorization,
       RegistryEndpointRequestProperties registryEndpointRequestProperties,
