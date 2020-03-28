@@ -158,6 +158,7 @@ public class ContainerConfigurationTemplate implements JsonTemplate {
   private static class RootFilesystemObjectTemplate implements JsonTemplate {
 
     /** The type must always be {@code "layers"}. */
+    @SuppressWarnings("unused")
     private final String type = "layers";
 
     /**

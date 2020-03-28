@@ -42,7 +42,7 @@ public class MainClassFinder {
   public static class Result {
 
     /** The type of result. */
-    public enum Type {
+    public enum Category {
 
       // Found a single main class.
       MAIN_CLASS_FOUND,
@@ -55,32 +55,33 @@ public class MainClassFinder {
     }
 
     private static Result success(String foundMainClass) {
-      return new Result(Type.MAIN_CLASS_FOUND, Collections.singletonList(foundMainClass));
+      return new Result(Category.MAIN_CLASS_FOUND, Collections.singletonList(foundMainClass));
     }
 
     private static Result mainClassNotFound() {
-      return new Result(Type.MAIN_CLASS_NOT_FOUND, Collections.emptyList());
+      return new Result(Category.MAIN_CLASS_NOT_FOUND, Collections.emptyList());
     }
 
     private static Result multipleMainClasses(List<String> foundMainClasses) {
-      return new Result(Type.MULTIPLE_MAIN_CLASSES, foundMainClasses);
+      return new Result(Category.MULTIPLE_MAIN_CLASSES, foundMainClasses);
     }
 
-    private final Type type;
+    private final Category category;
     private final List<String> foundMainClasses;
 
-    private Result(Type type, List<String> foundMainClasses) {
+    private Result(Category category, List<String> foundMainClasses) {
       this.foundMainClasses = foundMainClasses;
-      this.type = type;
+      this.category = category;
     }
 
     /**
-     * Gets the found main class. Only call if {@link #getType} is {@link Type#MAIN_CLASS_FOUND}.
+     * Gets the found main class. Only call if {@link #getCategory} is {@link
+     * Category#MAIN_CLASS_FOUND}.
      *
      * @return the found main class
      */
     public String getFoundMainClass() {
-      Preconditions.checkState(Type.MAIN_CLASS_FOUND == type);
+      Preconditions.checkState(Category.MAIN_CLASS_FOUND == category);
       Preconditions.checkState(foundMainClasses.size() == 1);
       return foundMainClasses.get(0);
     }
@@ -90,8 +91,8 @@ public class MainClassFinder {
      *
      * @return the type of the result
      */
-    public Type getType() {
-      return type;
+    public Category getCategory() {
+      return category;
     }
 
     /**

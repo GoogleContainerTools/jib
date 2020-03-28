@@ -43,7 +43,10 @@ public interface BuildableManifestTemplate extends ManifestTemplate {
   @VisibleForTesting
   class ContentDescriptorTemplate implements JsonTemplate {
 
-    @Nullable private String mediaType;
+    @SuppressWarnings("unused")
+    @Nullable
+    private String mediaType;
+
     @Nullable private DescriptorDigest digest;
     private long size;
     @Nullable private List<String> urls;

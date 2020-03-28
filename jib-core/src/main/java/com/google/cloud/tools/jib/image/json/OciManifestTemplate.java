@@ -67,6 +67,8 @@ public class OciManifestTemplate implements BuildableManifestTemplate {
   private static final String LAYER_MEDIA_TYPE = "application/vnd.oci.image.layer.v1.tar+gzip";
 
   private final int schemaVersion = 2;
+
+  @SuppressWarnings("unused")
   private final String mediaType = MANIFEST_MEDIA_TYPE;
 
   /** The container configuration reference. */
