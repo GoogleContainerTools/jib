@@ -10,7 +10,7 @@ jar {
 
     // OSGi metadata
     attributes 'Bundle-SymbolicName': 'com.google.cloud.tools.jib.plugins.extension'
-    attributes 'Bundle-Name': 'Common Library for Jib Plugin Extension APIs'
+    attributes 'Bundle-Name': 'Common Base for Jib Plugin Extension APIs'
     attributes 'Bundle-Vendor': 'Google LLC'
     attributes 'Bundle-DocURL': 'https://github.com/GoogleContainerTools/jib'
     attributes 'Bundle-License': 'https://www.apache.org/licenses/LICENSE-2.0'
@@ -25,8 +25,8 @@ publishing {
   publications {
     mavenJava(MavenPublication) {
       pom {
-        name = 'Common Library for Jib Plugin Extension APIs'
-        description = 'Internal library to share common code between Jib Plugin Extension APIs.'
+        name = 'Common Base for Jib Plugin Extension APIs'
+        description = 'Internal common base for Jib Plugin Extension APIs.'
       }
       from components.java
     }
