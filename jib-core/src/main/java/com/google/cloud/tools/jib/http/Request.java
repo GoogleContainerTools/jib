@@ -71,7 +71,7 @@ public class Request {
      * @param userAgent the user agent
      * @return this
      */
-    public Builder setUserAgent(String userAgent) {
+    public Builder setUserAgent(@Nullable String userAgent) {
       headers.setUserAgent(userAgent);
       return this;
     }

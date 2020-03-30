@@ -64,7 +64,7 @@ public class RegistryClient {
     private final RegistryEndpointRequestProperties registryEndpointRequestProperties;
     private final FailoverHttpClient httpClient;
 
-    private String userAgent = "";
+    @Nullable private String userAgent;
     @Nullable private Credential credential;
 
     private Factory(
@@ -90,10 +90,10 @@ public class RegistryClient {
     /**
      * Sets the value of {@code User-Agent} in headers for registry requests.
      *
-     * @param userAgent non-null user agent string, can be empty
+     * @param userAgent user agent string
      * @return this
      */
-    public Factory setUserAgent(String userAgent) {
+    public Factory setUserAgent(@Nullable String userAgent) {
       this.userAgent = userAgent;
       return this;
     }
@@ -235,7 +235,7 @@ public class RegistryClient {
   private final EventHandlers eventHandlers;
   @Nullable private final Credential credential;
   private final RegistryEndpointRequestProperties registryEndpointRequestProperties;
-  private final String userAgent;
+  @Nullable private final String userAgent;
   private final FailoverHttpClient httpClient;
 
   // mutable
@@ -251,14 +251,14 @@ public class RegistryClient {
    * @param credential credential for registry/repository; will not be used unless {@link
    *     #configureBasicAuth} or {@link #doBearerAuth} is called
    * @param registryEndpointRequestProperties properties of registry endpoint requests
-   * @param userAgent {@code User-Agent} header to send with the request
+   * @param userAgent {@code User-Agent} header to send with the request, can be {@code null}
    * @param httpClient HTTP client
    */
   private RegistryClient(
       EventHandlers eventHandlers,
       @Nullable Credential credential,
       RegistryEndpointRequestProperties registryEndpointRequestProperties,
-      String userAgent,
+      @Nullable String userAgent,
       FailoverHttpClient httpClient) {
     this.eventHandlers = eventHandlers;
     this.credential = credential;
@@ -545,6 +545,7 @@ public class RegistryClient {
     return authorization != null && "bearer".equalsIgnoreCase(authorization.getScheme());
   }
 
+  @Nullable
   @VisibleForTesting
   String getUserAgent() {
     return userAgent;

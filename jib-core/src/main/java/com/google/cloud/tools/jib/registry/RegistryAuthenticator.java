@@ -70,7 +70,7 @@ public class RegistryAuthenticator {
   static Optional<RegistryAuthenticator> fromAuthenticationMethod(
       String authenticationMethod,
       RegistryEndpointRequestProperties registryEndpointRequestProperties,
-      String userAgent,
+      @Nullable String userAgent,
       FailoverHttpClient httpClient)
       throws RegistryAuthenticationFailedException {
     // If the authentication method starts with 'basic ' (case insensitive), no registry
@@ -147,14 +147,14 @@ public class RegistryAuthenticator {
   private final RegistryEndpointRequestProperties registryEndpointRequestProperties;
   private final String realm;
   private final String service;
-  private final String userAgent;
+  @Nullable private final String userAgent;
   private final FailoverHttpClient httpClient;
 
   private RegistryAuthenticator(
       String realm,
       String service,
       RegistryEndpointRequestProperties registryEndpointRequestProperties,
-      String userAgent,
+      @Nullable String userAgent,
       FailoverHttpClient httpClient) {
     this.realm = realm;
     this.service = service;
