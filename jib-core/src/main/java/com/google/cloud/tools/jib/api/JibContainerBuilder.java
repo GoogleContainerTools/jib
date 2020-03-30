@@ -21,6 +21,7 @@ import com.google.cloud.tools.jib.api.buildplan.ContainerBuildPlan;
 import com.google.cloud.tools.jib.api.buildplan.FileEntriesLayer;
 import com.google.cloud.tools.jib.api.buildplan.FileEntry;
 import com.google.cloud.tools.jib.api.buildplan.ImageFormat;
+import com.google.cloud.tools.jib.api.buildplan.LayerObject;
 import com.google.cloud.tools.jib.api.buildplan.Port;
 import com.google.cloud.tools.jib.builder.TimerEventDispatcher;
 import com.google.cloud.tools.jib.builder.steps.BuildResult;
@@ -30,6 +31,7 @@ import com.google.cloud.tools.jib.configuration.ImageConfiguration;
 import com.google.cloud.tools.jib.docker.DockerClient;
 import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Verify;
 import java.io.IOException;
 import java.net.UnknownHostException;
 import java.nio.file.Path;
@@ -41,6 +43,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import org.apache.http.conn.HttpHostConnectException;
@@ -603,7 +606,6 @@ public class JibContainerBuilder {
    * @throws InvalidImageReferenceException if the base image value in {@code buildPlan} is an
    *     invalid reference
    */
-  @SuppressWarnings("unchecked")
   public JibContainerBuilder applyContainerBuildPlan(ContainerBuildPlan buildPlan)
       throws InvalidImageReferenceException {
     containerBuildPlanBuilder
@@ -641,7 +643,15 @@ public class JibContainerBuilder {
     baseImageConfiguration = builder.build();
 
     // For now, only FileEntriesLayer is supported in jib-core.
-    layerConfigurations = (List<FileEntriesLayer>) buildPlan.getLayers();
+    Function<LayerObject, FileEntriesLayer> castToFileEntriesLayer =
+        layer -> {
+          Verify.verify(
+              layer instanceof FileEntriesLayer,
+              "layer types other than FileEntriesLayer not yet supported in build plan layers");
+          return (FileEntriesLayer) layer;
+        };
+    layerConfigurations =
+        buildPlan.getLayers().stream().map(castToFileEntriesLayer).collect(Collectors.toList());
 
     buildContextBuilder
         .setTargetFormat(buildPlan.getFormat())

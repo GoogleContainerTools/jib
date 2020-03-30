@@ -31,6 +31,7 @@ import com.google.cloud.tools.jib.api.RegistryImage;
 import com.google.cloud.tools.jib.api.TarImage;
 import com.google.cloud.tools.jib.api.buildplan.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.api.buildplan.FileEntriesLayer;
+import com.google.cloud.tools.jib.api.buildplan.LayerObject;
 import com.google.cloud.tools.jib.frontend.CredentialRetrieverFactory;
 import com.google.cloud.tools.jib.global.JibSystemProperties;
 import com.google.common.annotations.VisibleForTesting;
@@ -302,7 +303,11 @@ public class PluginConfigurationProcessor {
     // since jib has already expanded out directories after processing everything, we just
     // ignore directories and provide only files to watch
     Set<Path> excludesExpanded = getAllFiles(excludes);
-    for (FileEntriesLayer layer : jibContainerBuilder.describeContainer().getFileEntriesLayers()) {
+    for (LayerObject layerObject : jibContainerBuilder.toContainerBuildPlan().getLayers()) {
+      Verify.verify(
+          layerObject instanceof FileEntriesLayer,
+          "layer types other than FileEntriesLayer not yet supported in build plan layers");
+      FileEntriesLayer layer = (FileEntriesLayer) layerObject;
       if (CONST_LAYERS.contains(layer.getName())) {
         continue;
       }
