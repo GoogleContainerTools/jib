@@ -64,7 +64,7 @@ public class RegistryClient {
     private final RegistryEndpointRequestProperties registryEndpointRequestProperties;
     private final FailoverHttpClient httpClient;
 
-    @Nullable private String userAgent = "";
+    @Nullable private String userAgent;
     @Nullable private Credential credential;
 
     private Factory(
