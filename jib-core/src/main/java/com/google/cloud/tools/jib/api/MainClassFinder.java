@@ -30,7 +30,6 @@ import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
-import org.objectweb.asm.Type;
 
 /**
  * Finds main classes in a list of class files. Main classes are classes that define the {@code
@@ -42,7 +41,7 @@ public class MainClassFinder {
   public static class Result {
 
     /** The type of result. */
-    public enum Category {
+    public enum Type {
 
       // Found a single main class.
       MAIN_CLASS_FOUND,
@@ -55,33 +54,32 @@ public class MainClassFinder {
     }
 
     private static Result success(String foundMainClass) {
-      return new Result(Category.MAIN_CLASS_FOUND, Collections.singletonList(foundMainClass));
+      return new Result(Type.MAIN_CLASS_FOUND, Collections.singletonList(foundMainClass));
     }
 
     private static Result mainClassNotFound() {
-      return new Result(Category.MAIN_CLASS_NOT_FOUND, Collections.emptyList());
+      return new Result(Type.MAIN_CLASS_NOT_FOUND, Collections.emptyList());
     }
 
     private static Result multipleMainClasses(List<String> foundMainClasses) {
-      return new Result(Category.MULTIPLE_MAIN_CLASSES, foundMainClasses);
+      return new Result(Type.MULTIPLE_MAIN_CLASSES, foundMainClasses);
     }
 
-    private final Category category;
+    private final Type type;
     private final List<String> foundMainClasses;
 
-    private Result(Category category, List<String> foundMainClasses) {
+    private Result(Type type, List<String> foundMainClasses) {
       this.foundMainClasses = foundMainClasses;
-      this.category = category;
+      this.type = type;
     }
 
     /**
-     * Gets the found main class. Only call if {@link #getCategory} is {@link
-     * Category#MAIN_CLASS_FOUND}.
+     * Gets the found main class. Only call if {@link #getType} is {@link Type#MAIN_CLASS_FOUND}.
      *
      * @return the found main class
      */
     public String getFoundMainClass() {
-      Preconditions.checkState(Category.MAIN_CLASS_FOUND == category);
+      Preconditions.checkState(Type.MAIN_CLASS_FOUND == type);
       Preconditions.checkState(foundMainClasses.size() == 1);
       return foundMainClasses.get(0);
     }
@@ -91,8 +89,8 @@ public class MainClassFinder {
      *
      * @return the type of the result
      */
-    public Category getCategory() {
-      return category;
+    public Type getType() {
+      return type;
     }
 
     /**
@@ -110,7 +108,8 @@ public class MainClassFinder {
 
     /** The return/argument types for main. */
     private static final String MAIN_DESCRIPTOR =
-        Type.getMethodDescriptor(Type.VOID_TYPE, Type.getType(String[].class));
+        org.objectweb.asm.Type.getMethodDescriptor(
+            org.objectweb.asm.Type.VOID_TYPE, org.objectweb.asm.Type.getType(String[].class));
 
     /** Accessors that main may or may not have. */
     private static final int OPTIONAL_ACCESS =

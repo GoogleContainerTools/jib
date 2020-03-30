@@ -114,7 +114,7 @@ public class MainClassResolver {
     MainClassFinder.Result mainClassFinderResult =
         MainClassFinder.find(projectProperties.getClassFiles(), projectProperties::log);
 
-    switch (mainClassFinderResult.getCategory()) {
+    switch (mainClassFinderResult.getType()) {
       case MAIN_CLASS_FOUND:
         return mainClassFinderResult.getFoundMainClass();
 
