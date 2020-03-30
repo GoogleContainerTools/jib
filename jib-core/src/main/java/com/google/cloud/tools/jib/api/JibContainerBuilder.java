@@ -642,9 +642,12 @@ public class JibContainerBuilder {
     baseImageConfiguration.getTarPath().ifPresent(builder::setTarPath);
     baseImageConfiguration = builder.build();
 
+    // For now, only FileEntriesLayer is supported in jib-core.
     Function<LayerObject, FileEntriesLayer> castToFileEntriesLayer =
         layer -> {
-          Verify.verify(layer instanceof FileEntriesLayer);
+          Verify.verify(
+              layer instanceof FileEntriesLayer,
+              "layer types other than FileEntriesLayer not yet supported in build plan layers");
           return (FileEntriesLayer) layer;
         };
     layerConfigurations =

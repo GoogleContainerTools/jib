@@ -304,7 +304,9 @@ public class PluginConfigurationProcessor {
     // ignore directories and provide only files to watch
     Set<Path> excludesExpanded = getAllFiles(excludes);
     for (LayerObject layerObject : jibContainerBuilder.toContainerBuildPlan().getLayers()) {
-      Verify.verify(layerObject instanceof FileEntriesLayer);
+      Verify.verify(
+          layerObject instanceof FileEntriesLayer,
+          "layer types other than FileEntriesLayer not yet supported in build plan layers");
       FileEntriesLayer layer = (FileEntriesLayer) layerObject;
       if (CONST_LAYERS.contains(layer.getName())) {
         continue;
