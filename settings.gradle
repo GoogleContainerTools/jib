@@ -1,4 +1,5 @@
 include ":jib-build-plan"
+include ":jib-plugins-extension-common"
 include ":jib-maven-plugin-extension-api"
 include ":jib-core"
 include ":jib-plugins-common"

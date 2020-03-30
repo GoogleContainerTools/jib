@@ -1,0 +1,35 @@
+plugins {
+  id 'net.researchgate.release'
+  id 'maven-publish'
+}
+
+jar {
+  manifest {
+    attributes 'Implementation-Version': version
+    attributes 'Automatic-Module-Name': 'com.google.cloud.tools.jib.plugins.extension'
+
+    // OSGi metadata
+    attributes 'Bundle-SymbolicName': 'com.google.cloud.tools.jib.plugins.extension'
+    attributes 'Bundle-Name': 'Common Library for Jib Plugin Extension APIs'
+    attributes 'Bundle-Vendor': 'Google LLC'
+    attributes 'Bundle-DocURL': 'https://github.com/GoogleContainerTools/jib'
+    attributes 'Bundle-License': 'https://www.apache.org/licenses/LICENSE-2.0'
+    attributes 'Export-Package': 'com.google.cloud.tools.jib.plugins.extension'
+  }
+}
+
+configureMavenRelease()
+
+/* RELEASE */
+publishing {
+  publications {
+    mavenJava(MavenPublication) {
+      pom {
+        name = 'Common Library for Jib Plugin Extension APIs'
+        description = 'Internal library to share common code between Jib Plugin Extension APIs.'
+      }
+      from components.java
+    }
+  }
+}
+/* RELEASE */
