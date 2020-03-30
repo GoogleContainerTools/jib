@@ -88,10 +88,10 @@ subprojects {
   compileJava.dependsOn ensureTransitiveDependencyOverrides
   /* PROJECT DEPENDENCY VERSIONS */
 
-  /* NULLAWAY */
+  /* ERROR PRONE */
   dependencies {
     // NullAway errorprone plugin
-    annotationProcessor 'com.uber.nullaway:nullaway:0.6.4'
+    annotationProcessor 'com.uber.nullaway:nullaway:0.7.9'
     errorprone 'com.google.errorprone:error_prone_core:2.3.4'
     // Using github.com/google/error-prone-javac is required when running on
     // JDK 8. Remove when migrating to JDK 11.
@@ -110,7 +110,7 @@ subprojects {
       }
     }
   }
-  /* NULLAWAY */
+  /* ERROR PRONE */
 
   /* GOOGLE JAVA FORMAT */
   googleJavaFormat {
