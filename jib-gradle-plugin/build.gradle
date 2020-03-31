@@ -14,9 +14,11 @@ repositories {
 }
 
 dependencies {
-  sourceProject project(':jib-build-plan')
   sourceProject project(':jib-core')
   sourceProject project(':jib-plugins-common')
+
+  sourceProject project(':jib-build-plan')
+  sourceProject project(':jib-plugins-extension-common')
 
   testImplementation "junit:junit:${dependencyVersions.JUNIT}"
   testImplementation "org.mockito:mockito-core:${dependencyVersions.MOCKITO_CORE}"
