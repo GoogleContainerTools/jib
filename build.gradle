@@ -92,10 +92,10 @@ subprojects {
   compileJava.dependsOn ensureTransitiveDependencyOverrides
   /* PROJECT DEPENDENCY VERSIONS */
 
-  /* NULLAWAY */
+  /* ERROR PRONE */
   dependencies {
     // NullAway errorprone plugin
-    annotationProcessor 'com.uber.nullaway:nullaway:0.6.4'
+    annotationProcessor 'com.uber.nullaway:nullaway:0.7.9'
     errorprone 'com.google.errorprone:error_prone_core:2.3.4'
     // Using github.com/google/error-prone-javac is required when running on
     // JDK 8. Remove when migrating to JDK 11.
@@ -114,7 +114,7 @@ subprojects {
       }
     }
   }
-  /* NULLAWAY */
+  /* ERROR PRONE */
 
   /* GOOGLE JAVA FORMAT */
   googleJavaFormat {
@@ -163,21 +163,6 @@ subprojects {
       exceptionFormat = 'full'
     }
   }
-  // jar to export tests classes for import in other project by doing:
-  // testCompile project(path:':project-name', configuration:'tests')
-  task testJar(type: Jar) {
-    from sourceSets.test.output.classesDirs
-    classifier = 'tests'
-  }
-  // to import resources do: sourceSets.test.resources.srcDirs project(':project-name').sourceSets.test.resources
-
-  configurations {
-    tests
-  }
-
-  artifacts {
-    tests testJar
-  }
   /* TEST CONFIG */
 
   /* INTEGRATION TESTS */
@@ -185,21 +170,15 @@ subprojects {
     integrationTest {
       java.srcDir file('src/integration-test/java')
       resources.srcDir file('src/integration-test/resources')
+      compileClasspath += sourceSets.main.output + sourceSets.test.output
+      runtimeClasspath += compileClasspath + configurations.testRuntimeClasspath
+
     }
   }
 
   configurations {
     integrationTestImplementation.extendsFrom testImplementation
-    integrationTestRuntime.extendsFrom testRuntime
-  }
-
-  dependencies {
-    integrationTestImplementation sourceSets.main.output
-    integrationTestImplementation sourceSets.test.output
-    integrationTestImplementation configurations.compile
-    integrationTestImplementation configurations.testImplementation
-    integrationTestImplementation configurations.runtime
-    integrationTestImplementation configurations.testRuntime
+    integrationTestRuntimeOnly.extendsFrom testRuntimeOnly
   }
 
   // Integration tests must be run explicitly
@@ -209,19 +188,11 @@ subprojects {
     systemProperty '_JIB_DISABLE_USER_AGENT', true
   }
 
-  integrationTest.dependsOn test
-
-  task integrationTestJar(type: Jar) {
-    from sourceSets.integrationTest.output.classesDirs
-    classifier = 'integration-tests'
-  }
-
-  configurations {
-    integrationTests
-  }
-
-  artifacts {
-    integrationTests integrationTestJar
+  integrationTest {
+    testLogging {
+      showStandardStreams = true
+      exceptionFormat = 'full'
+    }
   }
   /* INTEGRATION TESTS */
 
@@ -375,6 +346,17 @@ subprojects {
     // also configure the java-gradle-plugin if necessary
     if (project.hasProperty('gradlePlugin')) {
       project.tasks.pluginUnderTestMetadata.pluginClasspath.from dependencyProjectClasses
+    }
+  }
+
+  // ensure no dependencies in the implementation group are project dependencies
+  project.ext.ensureNoProjectDependencies = {
+    project.afterEvaluate {
+      project.configurations.implementation.dependencies.each { dependency ->
+        if (dependency instanceof ProjectDependency) {
+          throw new GradleException("disallowed project dependency:" + dependency + ", in project:" + project);
+        }
+      }
     }
   }
   /* INCLUDED PROJECT DEPENDENCY HELPER */

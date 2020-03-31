@@ -49,7 +49,9 @@ import java.util.List;
  */
 public class OciIndexTemplate implements JsonTemplate {
 
+  @SuppressWarnings("unused")
   private final int schemaVersion = 2;
+
   private final List<BuildableManifestTemplate.ContentDescriptorTemplate> manifests =
       new ArrayList<>();
 

@@ -10,6 +10,7 @@ plugins {
 dependencies {
   sourceProject project(':jib-core')
   sourceProject project(':jib-plugins-common')
+  ensureNoProjectDependencies()
 
   sourceProject project(':jib-build-plan')
   sourceProject project(':jib-plugins-extension-common')
@@ -38,8 +39,7 @@ dependencies {
   testImplementation 'org.slf4j:slf4j-api:1.7.30'
   testImplementation 'org.slf4j:slf4j-simple:1.7.30'
 
-  testImplementation project(path:':jib-plugins-common', configuration:'tests')
-  integrationTestImplementation project(path:':jib-core', configuration:'integrationTests')
+  testImplementation project(':jib-testing-common')
 }
 
 /* TESTING */

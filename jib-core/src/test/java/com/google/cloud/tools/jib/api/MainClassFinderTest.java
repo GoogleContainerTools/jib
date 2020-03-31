@@ -53,7 +53,8 @@ public class MainClassFinderTest {
         Paths.get(Resources.getResource("core/class-finder-tests/subdirectories").toURI());
     MainClassFinder.Result mainClassFinderResult =
         MainClassFinder.find(new DirectoryWalker(rootDirectory).walk(), logEventConsumer);
-    Assert.assertSame(Type.MAIN_CLASS_FOUND, mainClassFinderResult.getType());
+    Assert.assertSame(
+        MainClassFinder.Result.Type.MAIN_CLASS_FOUND, mainClassFinderResult.getType());
     Assert.assertThat(
         mainClassFinderResult.getFoundMainClass(),
         CoreMatchers.containsString("multi.layered.HelloWorld"));
@@ -99,7 +100,8 @@ public class MainClassFinderTest {
         Paths.get(Resources.getResource("core/class-finder-tests/imported-methods").toURI());
     MainClassFinder.Result mainClassFinderResult =
         MainClassFinder.find(new DirectoryWalker(rootDirectory).walk(), logEventConsumer);
-    Assert.assertSame(Type.MAIN_CLASS_FOUND, mainClassFinderResult.getType());
+    Assert.assertSame(
+        MainClassFinder.Result.Type.MAIN_CLASS_FOUND, mainClassFinderResult.getType());
     Assert.assertThat(
         mainClassFinderResult.getFoundMainClass(), CoreMatchers.containsString("main.MainClass"));
   }
@@ -110,7 +112,8 @@ public class MainClassFinderTest {
         Paths.get(Resources.getResource("core/class-finder-tests/external-classes").toURI());
     MainClassFinder.Result mainClassFinderResult =
         MainClassFinder.find(new DirectoryWalker(rootDirectory).walk(), logEventConsumer);
-    Assert.assertSame(Type.MAIN_CLASS_FOUND, mainClassFinderResult.getType());
+    Assert.assertSame(
+        MainClassFinder.Result.Type.MAIN_CLASS_FOUND, mainClassFinderResult.getType());
     Assert.assertThat(
         mainClassFinderResult.getFoundMainClass(), CoreMatchers.containsString("main.MainClass"));
   }
@@ -133,7 +136,8 @@ public class MainClassFinderTest {
         Paths.get(Resources.getResource("core/class-finder-tests/varargs").toURI());
     MainClassFinder.Result mainClassFinderResult =
         MainClassFinder.find(new DirectoryWalker(rootDirectory).walk(), logEventConsumer);
-    Assert.assertSame(Type.MAIN_CLASS_FOUND, mainClassFinderResult.getType());
+    Assert.assertSame(
+        MainClassFinder.Result.Type.MAIN_CLASS_FOUND, mainClassFinderResult.getType());
     Assert.assertThat(
         mainClassFinderResult.getFoundMainClass(), CoreMatchers.containsString("HelloWorld"));
   }

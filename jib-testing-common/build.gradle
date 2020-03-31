@@ -1,0 +1,16 @@
+plugins {
+  id 'java'
+}
+
+// disable javadoc on this project, it's only for testing
+tasks.javadoc.enabled = false
+
+dependencies {
+  // if you want to use classes that have dependencies in the main source
+  // sets of other projects, mark them compile only
+  compileOnly project(':jib-plugins-common')
+  compileOnly project(':jib-core')
+
+  implementation "com.google.guava:guava:${dependencyVersions.GUAVA}"
+  implementation "junit:junit:${dependencyVersions.JUNIT}"
+}

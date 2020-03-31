@@ -30,7 +30,6 @@ import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
-import org.objectweb.asm.Type;
 
 /**
  * Finds main classes in a list of class files. Main classes are classes that define the {@code
@@ -109,7 +108,8 @@ public class MainClassFinder {
 
     /** The return/argument types for main. */
     private static final String MAIN_DESCRIPTOR =
-        Type.getMethodDescriptor(Type.VOID_TYPE, Type.getType(String[].class));
+        org.objectweb.asm.Type.getMethodDescriptor(
+            org.objectweb.asm.Type.VOID_TYPE, org.objectweb.asm.Type.getType(String[].class));
 
     /** Accessors that main may or may not have. */
     private static final int OPTIONAL_ACCESS =

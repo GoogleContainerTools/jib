@@ -69,6 +69,8 @@ public class V22ManifestTemplate implements BuildableManifestTemplate {
       "application/vnd.docker.image.rootfs.diff.tar.gzip";
 
   private final int schemaVersion = 2;
+
+  @SuppressWarnings("unused")
   private final String mediaType = MANIFEST_MEDIA_TYPE;
 
   /** The container configuration reference. */

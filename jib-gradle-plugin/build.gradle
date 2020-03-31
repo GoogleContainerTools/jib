@@ -16,6 +16,7 @@ repositories {
 dependencies {
   sourceProject project(':jib-core')
   sourceProject project(':jib-plugins-common')
+  ensureNoProjectDependencies()
 
   sourceProject project(':jib-build-plan')
   sourceProject project(':jib-plugins-extension-common')
@@ -25,8 +26,7 @@ dependencies {
   testImplementation "org.slf4j:slf4j-api:${dependencyVersions.SLF4J_API}"
   testImplementation "com.github.stefanbirkner:system-rules:${dependencyVersions.SYSTEM_RULES}"
 
-  testImplementation project(path:':jib-plugins-common', configuration:'tests')
-  integrationTestImplementation project(path:':jib-core', configuration:'integrationTests')
+  testImplementation project(':jib-testing-common')
 
   // only for testing a concrete Spring Boot example in a test (not for test infrastructure)
   testImplementation 'org.springframework.boot:spring-boot-gradle-plugin:2.1.6.RELEASE'
