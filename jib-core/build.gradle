@@ -16,6 +16,8 @@ dependencies {
   implementation "com.fasterxml.jackson.core:jackson-databind:${dependencyVersions.JACKSON_DATABIND}"
   implementation "org.ow2.asm:asm:${dependencyVersions.ASM}"
 
+  testImplementation project(':jib-testing-common')
+
   testImplementation "junit:junit:${dependencyVersions.JUNIT}"
   testImplementation "org.mockito:mockito-core:${dependencyVersions.MOCKITO_CORE}"
   testImplementation "org.slf4j:slf4j-api:${dependencyVersions.SLF4J_API}"

@@ -43,7 +43,7 @@ public class LocalRegistry extends ExternalResource {
     this(port, null, null);
   }
 
-  public LocalRegistry(int port, String username, String password) {
+  public LocalRegistry(int port, @Nullable String username, @Nullable String password) {
     this.port = port;
     this.username = username;
     this.password = password;
