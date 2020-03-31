@@ -13,7 +13,7 @@ dependencies {
 
   sourceProject project(':jib-build-plan')
   sourceProject project(':jib-plugins-extension-common')
-  implementation project(':jib-maven-plugin-extension-api')
+  sourceProject project(':jib-maven-plugin-extension-api')
 
   implementation "org.apache.maven:maven-plugin-api:${dependencyVersions.MAVEN_API}"
   implementation "org.apache.maven:maven-core:${dependencyVersions.MAVEN_API}"
