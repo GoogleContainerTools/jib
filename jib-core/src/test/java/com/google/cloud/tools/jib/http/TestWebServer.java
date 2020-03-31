@@ -37,7 +37,6 @@ import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Semaphore;
-import javax.annotation.Nullable;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
 
@@ -167,7 +166,6 @@ public class TestWebServer implements Closeable {
     }
   }
 
-  @Nullable
   private synchronized String getNextResponse(int index) {
     if (index >= responses.size() || globalResponseIndex >= responses.size()) {
       return null;

@@ -163,6 +163,21 @@ subprojects {
       exceptionFormat = 'full'
     }
   }
+  // jar to export tests classes for import in other project by doing:
+  // testCompile project(path:':project-name', configuration:'tests')
+  task testJar(type: Jar) {
+    from sourceSets.test.output.classesDirs
+    classifier = 'tests'
+  }
+  // to import resources do: sourceSets.test.resources.srcDirs project(':project-name').sourceSets.test.resources
+
+  configurations {
+    tests
+  }
+
+  artifacts {
+    tests testJar
+  }
   /* TEST CONFIG */
 
   /* INTEGRATION TESTS */
@@ -170,15 +185,21 @@ subprojects {
     integrationTest {
       java.srcDir file('src/integration-test/java')
       resources.srcDir file('src/integration-test/resources')
-      compileClasspath += sourceSets.main.output + sourceSets.test.output
-      runtimeClasspath += compileClasspath + configurations.testRuntimeClasspath
-
     }
   }
 
   configurations {
     integrationTestImplementation.extendsFrom testImplementation
-    integrationTestRuntimeOnly.extendsFrom testRuntimeOnly
+    integrationTestRuntime.extendsFrom testRuntime
+  }
+
+  dependencies {
+    integrationTestImplementation sourceSets.main.output
+    integrationTestImplementation sourceSets.test.output
+    integrationTestImplementation configurations.compile
+    integrationTestImplementation configurations.testImplementation
+    integrationTestImplementation configurations.runtime
+    integrationTestImplementation configurations.testRuntime
   }
 
   // Integration tests must be run explicitly
@@ -188,11 +209,19 @@ subprojects {
     systemProperty '_JIB_DISABLE_USER_AGENT', true
   }
 
-  integrationTest {
-    testLogging {
-      showStandardStreams = true
-      exceptionFormat = 'full'
-    }
+  integrationTest.dependsOn test
+
+  task integrationTestJar(type: Jar) {
+    from sourceSets.integrationTest.output.classesDirs
+    classifier = 'integration-tests'
+  }
+
+  configurations {
+    integrationTests
+  }
+
+  artifacts {
+    integrationTests integrationTestJar
   }
   /* INTEGRATION TESTS */
 
