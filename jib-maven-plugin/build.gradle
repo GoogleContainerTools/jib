@@ -11,6 +11,7 @@ dependencies {
   sourceProject project(':jib-build-plan')
   sourceProject project(':jib-core')
   sourceProject project(':jib-plugins-common')
+  ensureNoProjectDependencies()
 
   implementation "org.apache.maven:maven-plugin-api:${dependencyVersions.MAVEN_API}"
   implementation "org.apache.maven:maven-core:${dependencyVersions.MAVEN_API}"

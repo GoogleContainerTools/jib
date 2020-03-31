@@ -373,6 +373,17 @@ subprojects {
       project.tasks.pluginUnderTestMetadata.pluginClasspath.from dependencyProjectClasses
     }
   }
+
+  // ensure no dependencies in the implementation group are project dependencies
+  project.ext.ensureNoProjectDependencies = {
+    project.afterEvaluate {
+      project.configurations.implementation.dependencies.each { dependency ->
+        if (dependency instanceof ProjectDependency) {
+          throw new GradleException("disallowed project dependency:" + dependency + ", in project:" + project);
+        }
+      }
+    }
+  }
   /* INCLUDED PROJECT DEPENDENCY HELPER */
 }
 
