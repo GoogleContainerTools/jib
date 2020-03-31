@@ -25,7 +25,6 @@
   <suppress files=".*[\\/]HelpfulSuggestions\.java" checks="MissingJavadocMethod"/>
 
   <!-- leniency for test files -->
-  <suppress files=".*[\\/]jib-testing-common[\\/].*\.java" checks ="MissingJavadocMethod"/>
   <suppress files=".*[\\/]src[\\/]test[\\/].*\.java" checks="MissingJavadocMethod"/>
   <suppress files=".*[\\/]src[\\/]integration-test[\\/].*\.java" checks="MissingJavadocMethod"/>
   <suppress files=".*[\\/]src[\\/]integration-test[\\/].*\.java" checks="VariableDeclarationUsageDistance"/>

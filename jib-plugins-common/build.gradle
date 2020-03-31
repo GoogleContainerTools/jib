@@ -15,7 +15,7 @@ dependencies {
   testImplementation "org.mockito:mockito-core:${dependencyVersions.MOCKITO_CORE}"
   testImplementation "org.slf4j:slf4j-api:${dependencyVersions.SLF4J_API}"
   testImplementation "com.github.stefanbirkner:system-rules:${dependencyVersions.SYSTEM_RULES}"
-  testImplementation project(':jib-testing-common')
+  testImplementation project(path:':jib-core', configuration:'tests')
 }
 
 sourceSets.test.resources.srcDirs project(':jib-core').sourceSets.test.resources
