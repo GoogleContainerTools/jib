@@ -8,13 +8,12 @@ plugins {
 // only maven specific dependencies should be versioned, everything else should be defined by constrains in
 // parent build.gradle
 dependencies {
-  sourceProject project(':jib-core')
-  sourceProject project(':jib-plugins-common')
-  ensureNoProjectDependencies()
-
   sourceProject project(':jib-build-plan')
   sourceProject project(':jib-plugins-extension-common')
   sourceProject project(':jib-maven-plugin-extension-api')
+  sourceProject project(':jib-core')
+  sourceProject project(':jib-plugins-common')
+  ensureNoProjectDependencies()
 
   implementation "org.apache.maven:maven-plugin-api:${dependencyVersions.MAVEN_API}"
   implementation "org.apache.maven:maven-core:${dependencyVersions.MAVEN_API}"
