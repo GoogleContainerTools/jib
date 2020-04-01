@@ -3,7 +3,7 @@ plugins {
   id 'net.researchgate.release'
   id 'com.gradle.plugin-publish'
   // for local build/test
-  id 'maven'
+  id 'maven-publish'
   // for eclipse import modifications
   id 'eclipse'
 }
@@ -48,17 +48,20 @@ release {
 pluginBundle {
   website = 'https://github.com/GoogleContainerTools/jib/'
   vcsUrl = 'https://github.com/GoogleContainerTools/jib/'
+  tags = ['google', 'java', 'containers', 'docker', 'kubernetes', 'microservices']
+}
 
+gradlePlugin {
   plugins {
     jibPlugin {
       id = 'com.google.cloud.tools.jib'
       displayName = 'Jib'
       description = 'Containerize your Java application'
-      tags = ['google', 'java', 'containers', 'docker', 'kubernetes', 'microservices']
+      implementationClass = 'com.google.cloud.tools.jib.gradle.JibPlugin'
     }
   }
 }
-tasks.publishPlugins.dependsOn integrationTest
+//tasks.publishPlugins.dependsOn integrationTest
 /* RELEASE */
 
 /* ECLIPSE */
@@ -75,3 +78,11 @@ eclipse.classpath.file.whenMerged {
   }
 }
 /* ECLIPSE */
+
+/* LOCAL DEV */
+publishing {
+  repositories {
+    mavenLocal()
+  }
+}
+/* LOCAL DEV */
