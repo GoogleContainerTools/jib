@@ -238,6 +238,11 @@ public class ImageReferenceTest {
     Assert.assertNotEquals(image1.hashCode(), image2.hashCode());
   }
 
+  @Test
+  public void testToString_scratch() {
+    Assert.assertEquals("scratch", ImageReference.scratch().toString());
+  }
+
   private void verifyParse(String registry, String repository, String tagSeparator, String tag)
       throws InvalidImageReferenceException {
     // Gets the expected parsed components.

@@ -316,6 +316,10 @@ public class ImageReference {
    */
   @Override
   public String toString() {
+    if (registry.isEmpty() && repository.equals("scratch") && tag.isEmpty()) {
+      return "scratch";
+    }
+
     StringBuilder referenceString = new StringBuilder();
 
     if (!DOCKER_HUB_REGISTRY.equals(registry)) {

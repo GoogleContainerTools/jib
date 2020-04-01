@@ -674,13 +674,7 @@ public class MavenProjectPropertiesTest {
             newArtifact("com.test", "projectC", "3.0"));
 
     Map<LayerType, List<Path>> classifyDependencies =
-        new MavenProjectProperties(
-                mockJibPluginDescriptor,
-                mockMavenProject,
-                mockMavenSession,
-                mockLog,
-                mockTempDirectoryProvider)
-            .classifyDependencies(artifacts, projectArtifacts);
+        mavenProjectProperties.classifyDependencies(artifacts, projectArtifacts);
 
     Assert.assertEquals(
         classifyDependencies.get(LayerType.DEPENDENCIES),
@@ -1015,13 +1009,7 @@ public class MavenProjectPropertiesTest {
             .setAppRoot(AbsoluteUnixPath.get(appRoot))
             .setModificationTimeProvider((ignored1, ignored2) -> SAMPLE_FILE_MODIFICATION_TIME);
     JibContainerBuilder jibContainerBuilder =
-        new MavenProjectProperties(
-                mockJibPluginDescriptor,
-                mockMavenProject,
-                mockMavenSession,
-                mockLog,
-                mockTempDirectoryProvider)
-            .createJibContainerBuilder(javaContainerBuilder, containerizingMode);
+        mavenProjectProperties.createJibContainerBuilder(javaContainerBuilder, containerizingMode);
     return JibContainerBuilderTestHelper.toBuildContext(
         jibContainerBuilder, Containerizer.to(RegistryImage.named("to")));
   }
