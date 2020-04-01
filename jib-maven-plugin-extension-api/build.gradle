@@ -1,0 +1,41 @@
+plugins {
+  id 'net.researchgate.release'
+  id 'maven-publish'
+}
+
+dependencies {
+  api project(':jib-build-plan')
+  api project(':jib-plugins-extension-common')
+  api "org.apache.maven:maven-core:${dependencyVersions.MAVEN_API}"
+}
+
+jar {
+  manifest {
+    attributes 'Implementation-Version': version
+    attributes 'Automatic-Module-Name': 'com.google.cloud.tools.jib.maven.extension'
+
+    // OSGi metadata
+    attributes 'Bundle-SymbolicName': 'com.google.cloud.tools.jib.maven.extension'
+    attributes 'Bundle-Name': 'Extension API for Jib Maven Plugin'
+    attributes 'Bundle-Vendor': 'Google LLC'
+    attributes 'Bundle-DocURL': 'https://github.com/GoogleContainerTools/jib'
+    attributes 'Bundle-License': 'https://www.apache.org/licenses/LICENSE-2.0'
+    attributes 'Export-Package': 'com.google.cloud.tools.jib.maven.extension'
+  }
+}
+
+configureMavenRelease()
+
+/* RELEASE */
+publishing {
+  publications {
+    mavenJava(MavenPublication) {
+      pom {
+        name = 'Extension API for Jib Maven Plugin'
+        description = 'Provides API to extend Jib Maven Plugin containerization.'
+      }
+      from components.java
+    }
+  }
+}
+/* RELEASE */

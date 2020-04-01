@@ -21,6 +21,10 @@ idea.project.settings {
 
 import net.ltgt.gradle.errorprone.CheckSeverity
 
+project('jib-maven-plugin-extension-api') {
+  apply plugin: 'java-library'
+}
+
 subprojects {
   group 'com.google.cloud.tools'
 

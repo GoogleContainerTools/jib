@@ -15,6 +15,7 @@ repositories {
 
 dependencies {
   sourceProject project(':jib-build-plan')
+  sourceProject project(':jib-plugins-extension-common')
   sourceProject project(':jib-core')
   sourceProject project(':jib-plugins-common')
   ensureNoProjectDependencies()
