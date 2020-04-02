@@ -36,6 +36,7 @@ import com.google.cloud.tools.jib.plugins.common.logging.ConsoleLogger;
 import com.google.cloud.tools.jib.plugins.common.logging.ConsoleLoggerBuilder;
 import com.google.cloud.tools.jib.plugins.common.logging.ProgressDisplayGenerator;
 import com.google.cloud.tools.jib.plugins.common.logging.SingleThreadedExecutor;
+import com.google.cloud.tools.jib.plugins.extension.JibPluginExtensionException;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import java.io.IOException;
@@ -520,5 +521,11 @@ public class MavenProjectProperties implements ProjectProperties {
       }
     }
     return false;
+  }
+
+  @Override
+  public JibContainerBuilder runPluginExtensions(JibContainerBuilder jibContainerBuilder)
+      throws JibPluginExtensionException {
+    return jibContainerBuilder;
   }
 }
