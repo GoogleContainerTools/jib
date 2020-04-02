@@ -42,7 +42,7 @@ public class DockerManifestEntryTemplateTest {
     String expectedJson = new String(Files.readAllBytes(jsonFile), StandardCharsets.UTF_8);
 
     DockerManifestEntryTemplate template = new DockerManifestEntryTemplate();
-    template.addRepoTag(ImageReference.of("testregistry", "testrepo", "testtag").toStringWithTag());
+    template.addRepoTag(ImageReference.of("testregistry", "testrepo", "testtag").toStringWithIdentifier());
     template.addLayerFile("layer1.tar.gz");
     template.addLayerFile("layer2.tar.gz");
     template.addLayerFile("layer3.tar.gz");

@@ -147,20 +147,20 @@ public class ImageReferenceTest {
   }
 
   @Test
-  public void testToStringWithTag() {
+  public void testToStringWithIdentifier() {
     Assert.assertEquals(
-        "someimage:latest", ImageReference.of(null, "someimage", null).toStringWithTag());
+        "someimage:latest", ImageReference.of(null, "someimage", null).toStringWithIdentifier());
     Assert.assertEquals(
-        "someimage:latest", ImageReference.of("", "someimage", "").toStringWithTag());
+        "someimage:latest", ImageReference.of("", "someimage", "").toStringWithIdentifier());
     Assert.assertEquals(
         "someotherimage:latest",
-        ImageReference.of(null, "library/someotherimage", null).toStringWithTag());
+        ImageReference.of(null, "library/someotherimage", null).toStringWithIdentifier());
     Assert.assertEquals(
         "someregistry/someotherimage:latest",
-        ImageReference.of("someregistry", "someotherimage", null).toStringWithTag());
+        ImageReference.of("someregistry", "someotherimage", null).toStringWithIdentifier());
     Assert.assertEquals(
         "anotherregistry/anotherimage:sometag",
-        ImageReference.of("anotherregistry", "anotherimage", "sometag").toStringWithTag());
+        ImageReference.of("anotherregistry", "anotherimage", "sometag").toStringWithIdentifier());
     Assert.assertEquals(
         "anotherregistry/anotherimage@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
         ImageReference.of(
@@ -168,7 +168,7 @@ public class ImageReferenceTest {
                 "anotherimage",
                 null,
                 "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
-            .toStringWithTag());
+            .toStringWithIdentifier());
   }
 
   @Test
