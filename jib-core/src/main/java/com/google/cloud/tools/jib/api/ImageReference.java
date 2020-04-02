@@ -316,7 +316,7 @@ public class ImageReference {
    */
   @Override
   public String toString() {
-    if (registry.isEmpty() && repository.equals("scratch") && tag.isEmpty()) {
+    if (isScratch()) {
       return "scratch";
     }
 

@@ -189,6 +189,11 @@ public class ImageReferenceTest {
   }
 
   @Test
+  public void testToString_scratch() {
+    Assert.assertEquals("scratch", ImageReference.scratch().toString());
+  }
+
+  @Test
   public void testGetRegistry() {
     Assert.assertEquals(
         "registry-1.docker.io", ImageReference.of(null, "someimage", null).getRegistry());
@@ -236,11 +241,6 @@ public class ImageReferenceTest {
 
     Assert.assertNotEquals(image1, image2);
     Assert.assertNotEquals(image1.hashCode(), image2.hashCode());
-  }
-
-  @Test
-  public void testToString_scratch() {
-    Assert.assertEquals("scratch", ImageReference.scratch().toString());
   }
 
   private void verifyParse(String registry, String repository, String tagSeparator, String tag)
