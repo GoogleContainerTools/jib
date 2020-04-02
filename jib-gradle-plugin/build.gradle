@@ -2,7 +2,7 @@ plugins {
   id 'java-gradle-plugin'
   id 'net.researchgate.release'
   id 'com.gradle.plugin-publish'
-  // for local build/test
+  // for local SNAPSHOT build/test
   id 'maven-publish'
   // for eclipse import modifications
   id 'eclipse'
@@ -61,7 +61,7 @@ gradlePlugin {
     }
   }
 }
-//tasks.publishPlugins.dependsOn integrationTest
+tasks.publishPlugins.dependsOn integrationTest
 /* RELEASE */
 
 /* ECLIPSE */
@@ -79,10 +79,10 @@ eclipse.classpath.file.whenMerged {
 }
 /* ECLIPSE */
 
-/* LOCAL DEV */
+/* LOCAL SNAPSHOT DEV */
 publishing {
   repositories {
     mavenLocal()
   }
 }
-/* LOCAL DEV */
+/* LOCAL SNAPSHOT DEV */
