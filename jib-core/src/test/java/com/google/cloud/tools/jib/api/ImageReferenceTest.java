@@ -52,10 +52,9 @@ public class ImageReferenceTest {
     for (String goodRegistry : goodRegistries) {
       for (String goodRepository : goodRepositories) {
         for (String goodTag : goodTags) {
-          verifyParse(goodRegistry, goodRepository, ":", goodTag);
-        }
-        for (String goodDigest : goodDigests) {
-          verifyParse(goodRegistry, goodRepository, "@", goodDigest);
+          for (String goodDigest : goodDigests) {
+            verifyParse(goodRegistry, goodRepository, goodTag, goodDigest);
+          }
         }
       }
     }
@@ -162,6 +161,14 @@ public class ImageReferenceTest {
     Assert.assertEquals(
         "anotherregistry/anotherimage:sometag",
         ImageReference.of("anotherregistry", "anotherimage", "sometag").toStringWithTag());
+    Assert.assertEquals(
+        "anotherregistry/anotherimage@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        ImageReference.of(
+                "anotherregistry",
+                "anotherimage",
+                null,
+                "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
+            .toStringWithTag());
   }
 
   @Test
@@ -238,7 +245,7 @@ public class ImageReferenceTest {
     Assert.assertNotEquals(image1.hashCode(), image2.hashCode());
   }
 
-  private void verifyParse(String registry, String repository, String tagSeparator, String tag)
+  private void verifyParse(String registry, String repository, String tag, String digest)
       throws InvalidImageReferenceException {
     // Gets the expected parsed components.
     String expectedRegistry = registry;
@@ -261,7 +268,10 @@ public class ImageReferenceTest {
     }
     imageReferenceBuilder.append(repository);
     if (!Strings.isNullOrEmpty(tag)) {
-      imageReferenceBuilder.append(tagSeparator).append(tag);
+      imageReferenceBuilder.append(':').append(tag);
+    }
+    if (!Strings.isNullOrEmpty(digest)) {
+      imageReferenceBuilder.append('@').append(digest);
     }
 
     ImageReference imageReference = ImageReference.parse(imageReferenceBuilder.toString());
@@ -269,5 +279,6 @@ public class ImageReferenceTest {
     Assert.assertEquals(expectedRegistry, imageReference.getRegistry());
     Assert.assertEquals(expectedRepository, imageReference.getRepository());
     Assert.assertEquals(expectedTag, imageReference.getTag());
+    Assert.assertEquals(digest, imageReference.getDigest().orElse(null));
   }
 }
