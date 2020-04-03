@@ -189,6 +189,11 @@ public class ImageReferenceTest {
   }
 
   @Test
+  public void testToString_scratch() {
+    Assert.assertEquals("scratch", ImageReference.scratch().toString());
+  }
+
+  @Test
   public void testGetRegistry() {
     Assert.assertEquals(
         "registry-1.docker.io", ImageReference.of(null, "someimage", null).getRegistry());
