@@ -48,4 +48,5 @@ jib {
     imageId = file("different-jib-image.id")
   }
   allowInsecureRegistries = true
+  allowTagsOnExistingImages = false
 }

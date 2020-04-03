@@ -100,6 +100,7 @@
             <imageId>different-jib-image.id</imageId>
           </outputPaths>
           <allowInsecureRegistries>true</allowInsecureRegistries>
+          <allowTagsOnExistingImages>true</allowTagsOnExistingImages>
         </configuration>
       </plugin>
     </plugins>

@@ -49,6 +49,7 @@ public class PropertyNames {
   public static final String BASE_IMAGE_CACHE = "jib.baseImageCache";
   public static final String APPLICATION_CACHE = "jib.applicationCache";
   public static final String ALLOW_INSECURE_REGISTRIES = "jib.allowInsecureRegistries";
+  public static final String ALLOW_TAGS_ON_EXISTING_IMAGES = "jib.allowTagsOnExistingImages";
   public static final String EXTRA_DIRECTORIES_PATHS = "jib.extraDirectories.paths";
   public static final String EXTRA_DIRECTORIES_PERMISSIONS = "jib.extraDirectories.permissions";
   public static final String DOCKER_CLIENT_EXECUTABLE = "jib.dockerClient.executable";

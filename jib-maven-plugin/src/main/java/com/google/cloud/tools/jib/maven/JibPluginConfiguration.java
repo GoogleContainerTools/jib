@@ -247,6 +247,9 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
   @Parameter(property = PropertyNames.ALLOW_INSECURE_REGISTRIES)
   private boolean allowInsecureRegistries;
 
+  @Parameter(property = PropertyNames.ALLOW_TAGS_ON_EXISTING_IMAGES)
+  private boolean allowTagsOnExistingImages;
+
   @Parameter(property = PropertyNames.CONTAINERIZING_MODE)
   private String containerizingMode = "exploded";
 
@@ -643,6 +646,10 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
 
   boolean getAllowInsecureRegistries() {
     return allowInsecureRegistries;
+  }
+
+  boolean getAllowTagsOnExistingImages() {
+    return allowTagsOnExistingImages;
   }
 
   public String getContainerizingMode() {

@@ -53,6 +53,7 @@ public class GradleRawConfigurationTest {
     Mockito.when(jibExtension.getDockerClient()).thenReturn(dockerClientParameters);
     Mockito.when(jibExtension.getOutputPaths()).thenReturn(outputPathsParameters);
     Mockito.when(jibExtension.getAllowInsecureRegistries()).thenReturn(true);
+    Mockito.when(jibExtension.getAllowTagsOnExistingImages()).thenReturn(false);
 
     Mockito.when(baseImageParameters.getCredHelper()).thenReturn("gcr");
     Mockito.when(baseImageParameters.getImage()).thenReturn("openjdk:15");
@@ -93,6 +94,7 @@ public class GradleRawConfigurationTest {
     Assert.assertEquals("from.auth.password", fromAuth.getPasswordDescriptor());
 
     Assert.assertTrue(rawConfiguration.getAllowInsecureRegistries());
+    Assert.assertFalse(rawConfiguration.getAllowTagsOnExistingImages());
     Assert.assertEquals("/app/root", rawConfiguration.getAppRoot());
     Assert.assertEquals(Arrays.asList("java", "Main"), rawConfiguration.getEntrypoint().get());
     Assert.assertEquals(

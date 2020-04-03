@@ -128,6 +128,7 @@ public class Containerizer {
   private Path baseImageLayersCacheDirectory = DEFAULT_BASE_CACHE_DIRECTORY;
   @Nullable private Path applicationLayersCacheDirectory;
   private boolean allowInsecureRegistries = false;
+  private boolean allowTagsOnExistingImages = true;
   private boolean offline = false;
   private String toolName = DEFAULT_TOOL_NAME;
   @Nullable private String toolVersion = DEFAULT_TOOL_VERSION;
@@ -244,6 +245,17 @@ public class Containerizer {
   }
 
   /**
+   * Sets whether or not to allow adding tags to an existing image on the target registry.
+   *
+   * @param allowTagsOnExistingImages if {@code true}, tags will be added to existing images
+   * @return this
+   */
+  public Containerizer setAllowTagsOnExistingImages(boolean allowTagsOnExistingImages) {
+    this.allowTagsOnExistingImages = allowTagsOnExistingImages;
+    return this;
+  }
+
+  /**
    * Sets whether or not to run the build in offline mode. In offline mode, the base image is
    * retrieved from the cache instead of pulled from a registry, and the build will fail if the base
    * image is not in the cache or if the target is an image registry.
@@ -331,6 +343,10 @@ public class Containerizer {
 
   boolean getAllowInsecureRegistries() {
     return allowInsecureRegistries;
+  }
+
+  boolean getAllowTagsOnExistingImages() {
+    return allowTagsOnExistingImages;
   }
 
   boolean isOfflineMode() {

@@ -69,6 +69,7 @@
             <paths><path>src/main/jib-custom</path></paths>
           </extraDirectories>
           <allowInsecureRegistries>true</allowInsecureRegistries>
+          <allowTagsOnExistingImages>true</allowTagsOnExistingImages>
         </configuration>
       </plugin>
     </plugins>

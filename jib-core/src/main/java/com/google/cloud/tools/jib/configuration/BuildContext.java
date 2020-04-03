@@ -71,6 +71,7 @@ public class BuildContext implements Closeable {
     @Nullable private Path applicationLayersCacheDirectory;
     @Nullable private Path baseImageLayersCacheDirectory;
     private boolean allowInsecureRegistries = false;
+    private boolean allowTagsOnExistingImages = true;
     private boolean offline = false;
     private ImmutableList<FileEntriesLayer> layerConfigurations = ImmutableList.of();
     private Class<? extends BuildableManifestTemplate> targetFormat = DEFAULT_TARGET_FORMAT;
@@ -171,6 +172,17 @@ public class BuildContext implements Closeable {
      */
     public Builder setAllowInsecureRegistries(boolean allowInsecureRegistries) {
       this.allowInsecureRegistries = allowInsecureRegistries;
+      return this;
+    }
+
+    /**
+     * Sets whether or not to allow adding tags to an existing image on the target registry.
+     *
+     * @param allowTagsOnExistingImages if {@code true}, tags will be added to existing images
+     * @return this
+     */
+    public Builder setAllowTagsOnExistingImages(boolean allowTagsOnExistingImages) {
+      this.allowTagsOnExistingImages = allowTagsOnExistingImages;
       return this;
     }
 
@@ -309,7 +321,8 @@ public class BuildContext implements Closeable {
                   eventHandlers::dispatch),
               executorService == null ? Executors.newCachedThreadPool() : executorService,
               executorService == null, // shutDownExecutorService
-              alwaysCacheBaseImage);
+              alwaysCacheBaseImage,
+              allowTagsOnExistingImages);
 
         case 1:
           throw new IllegalStateException(missingFields.get(0) + " is required but not set");
@@ -366,6 +379,7 @@ public class BuildContext implements Closeable {
   private final ExecutorService executorService;
   private final boolean shutDownExecutorService;
   private final boolean alwaysCacheBaseImage;
+  private final boolean allowTagsOnExistingImages;
 
   /** Instantiate with {@link #builder}. */
   private BuildContext(
@@ -384,7 +398,8 @@ public class BuildContext implements Closeable {
       FailoverHttpClient httpClient,
       ExecutorService executorService,
       boolean shutDownExecutorService,
-      boolean alwaysCacheBaseImage) {
+      boolean alwaysCacheBaseImage,
+      boolean allowTagsOnExistingImages) {
     this.baseImageConfiguration = baseImageConfiguration;
     this.targetImageConfiguration = targetImageConfiguration;
     this.additionalTargetImageTags = additionalTargetImageTags;
@@ -401,6 +416,7 @@ public class BuildContext implements Closeable {
     this.executorService = executorService;
     this.shutDownExecutorService = shutDownExecutorService;
     this.alwaysCacheBaseImage = alwaysCacheBaseImage;
+    this.allowTagsOnExistingImages = allowTagsOnExistingImages;
   }
 
   public ImageConfiguration getBaseImageConfiguration() {
@@ -484,6 +500,15 @@ public class BuildContext implements Closeable {
    */
   public boolean getAlwaysCacheBaseImage() {
     return alwaysCacheBaseImage;
+  }
+
+  /**
+   * Gets whether or not to allow adding tags to an existing image on the target registry.
+   *
+   * @return {@code true} if the user wants to tags to an existing image.
+   */
+  public boolean getAllowTagsOnExistingImages() {
+    return allowTagsOnExistingImages;
   }
 
   /**

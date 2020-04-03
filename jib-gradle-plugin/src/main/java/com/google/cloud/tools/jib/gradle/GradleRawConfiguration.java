@@ -136,6 +136,11 @@ public class GradleRawConfiguration implements RawConfiguration {
   }
 
   @Override
+  public boolean getAllowTagsOnExistingImages() {
+    return jibExtension.getAllowTagsOnExistingImages();
+  }
+
+  @Override
   public ImageFormat getImageFormat() {
     return jibExtension.getContainer().getFormat();
   }
