@@ -677,7 +677,6 @@ public class JibContainerBuilder {
         .setContainerConfiguration(containerConfigurationBuilder.build())
         .setLayerConfigurations(layerConfigurations)
         .setAllowInsecureRegistries(containerizer.getAllowInsecureRegistries())
-        .setAllowTagsOnExistingImages(containerizer.getAllowTagsOnExistingImages())
         .setOffline(containerizer.isOfflineMode())
         .setToolName(containerizer.getToolName())
         .setToolVersion(containerizer.getToolVersion())

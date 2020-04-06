@@ -411,22 +411,6 @@ public class RegistryClient {
   }
 
   /**
-   * Check if an image is on the registry.
-   *
-   * @param imageDigest the tag to check on
-   * @return the {@link ManifestAndDigest}
-   * @throws IOException if communicating with the endpoint fails
-   */
-  public Optional<ManifestAndDigest<?>> checkManifest(DescriptorDigest imageDigest)
-      throws IOException {
-    try {
-      return Optional.ofNullable(pullManifest(imageDigest.toString()));
-    } catch (RegistryException e) {
-      return Optional.empty();
-    }
-  }
-
-  /**
    * Check if a blob is on the registry.
    *
    * @param blobDigest the blob digest to check for

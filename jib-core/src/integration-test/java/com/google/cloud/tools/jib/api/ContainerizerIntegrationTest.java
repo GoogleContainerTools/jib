@@ -155,8 +155,7 @@ public class ContainerizerIntegrationTest {
         buildRegistryImage(
             ImageReference.of("gcr.io", "distroless/java", DISTROLESS_DIGEST),
             ImageReference.of("localhost:5000", "testimage", "testtag"),
-            Collections.emptyList(),
-            true);
+            Collections.emptyList());
 
     progressChecker.checkCompletion();
 
@@ -167,8 +166,7 @@ public class ContainerizerIntegrationTest {
         buildRegistryImage(
             ImageReference.of("gcr.io", "distroless/java", DISTROLESS_DIGEST),
             ImageReference.of("localhost:5000", "testimage", "testtag"),
-            Collections.emptyList(),
-            true);
+            Collections.emptyList());
 
     logger.info("Secondary build time: " + ((System.nanoTime() - lastTime) / 1_000_000));
 
@@ -196,8 +194,7 @@ public class ContainerizerIntegrationTest {
     buildRegistryImage(
         ImageReference.of("gcr.io", "distroless/java", DISTROLESS_DIGEST),
         ImageReference.of("localhost:5000", "testimage", "testtag"),
-        Arrays.asList("testtag2", "testtag3"),
-        true);
+        Arrays.asList("testtag2", "testtag3"));
 
     String imageReference = "localhost:5000/testimage:testtag";
     localRegistry.pull(imageReference);
@@ -221,54 +218,13 @@ public class ContainerizerIntegrationTest {
   }
 
   @Test
-  public void testSteps_forBuildToDockerRegistry_addTagToSameImage()
-      throws IOException, InterruptedException, ExecutionException, RegistryException,
-          CacheDirectoryCreationException {
-    JibContainer image1 =
-        buildRegistryImage(
-            ImageReference.of("gcr.io", "distroless/java", DISTROLESS_DIGEST),
-            ImageReference.of("localhost:5000", "testimage", "testtag"),
-            Collections.emptyList(),
-            false);
-
-    buildRegistryImage(
-        ImageReference.of("gcr.io", "distroless/java", DISTROLESS_DIGEST),
-        ImageReference.of("localhost:5000", "testimage", "new_testtag"),
-        Collections.emptyList(),
-        false);
-
-    String imageReference = "localhost:5000/testimage:testtag";
-    localRegistry.pull(imageReference);
-    assertDockerInspect(imageReference);
-    assertLayerSize(7, imageReference);
-    Assert.assertEquals(
-        "Hello, world. An argument.\n", new Command("docker", "run", "--rm", imageReference).run());
-
-    String imageReferenceByDigest = "localhost:5000/testimage@" + image1.getDigest();
-    localRegistry.pull(imageReferenceByDigest);
-    assertDockerInspect(imageReferenceByDigest);
-    Assert.assertEquals(
-        "Hello, world. An argument.\n",
-        new Command("docker", "run", "--rm", imageReferenceByDigest).run());
-
-    String image2Reference = "localhost:5000/testimage:new_testtag";
-    try {
-      localRegistry.pull(image2Reference);
-      Assert.fail(); // Fail if the image with tag is found.
-    } catch (RuntimeException ignore) {
-      // Registry throws exception that manifest is unknown.
-    }
-  }
-
-  @Test
   public void tesBuildToDockerRegistry_dockerHubBaseImage()
       throws InvalidImageReferenceException, IOException, InterruptedException, ExecutionException,
           RegistryException, CacheDirectoryCreationException {
     buildRegistryImage(
         ImageReference.parse("openjdk:8-jre-alpine"),
         ImageReference.of("localhost:5000", "testimage", "testtag"),
-        Collections.emptyList(),
-        true);
+        Collections.emptyList());
 
     String imageReference = "localhost:5000/testimage:testtag";
     new Command("docker", "pull", imageReference).run();
@@ -283,8 +239,7 @@ public class ContainerizerIntegrationTest {
     buildDockerDaemonImage(
         ImageReference.of("gcr.io", "distroless/java", DISTROLESS_DIGEST),
         ImageReference.of(null, "testdocker", null),
-        Collections.emptyList(),
-        true);
+        Collections.emptyList());
 
     progressChecker.checkCompletion();
 
@@ -302,8 +257,7 @@ public class ContainerizerIntegrationTest {
     buildDockerDaemonImage(
         ImageReference.of("gcr.io", "distroless/java", DISTROLESS_DIGEST),
         ImageReference.of(null, imageReference, null),
-        Arrays.asList("testtag2", "testtag3"),
-        true);
+        Arrays.asList("testtag2", "testtag3"));
 
     assertDockerInspect(imageReference);
     Assert.assertEquals(
@@ -327,8 +281,7 @@ public class ContainerizerIntegrationTest {
         ImageReference.of("gcr.io", "distroless/java", DISTROLESS_DIGEST),
         ImageReference.of(null, "testtar", null),
         outputPath,
-        Collections.emptyList(),
-        true);
+        Collections.emptyList());
 
     progressChecker.checkCompletion();
 
@@ -339,53 +292,34 @@ public class ContainerizerIntegrationTest {
   }
 
   private JibContainer buildRegistryImage(
-      ImageReference baseImage,
-      ImageReference targetImage,
-      List<String> additionalTags,
-      boolean allowTagsOnExistingImages)
+      ImageReference baseImage, ImageReference targetImage, List<String> additionalTags)
       throws IOException, InterruptedException, RegistryException, CacheDirectoryCreationException,
           ExecutionException {
     return buildImage(
-        baseImage,
-        Containerizer.to(RegistryImage.named(targetImage)),
-        additionalTags,
-        allowTagsOnExistingImages);
+        baseImage, Containerizer.to(RegistryImage.named(targetImage)), additionalTags);
   }
 
   private JibContainer buildDockerDaemonImage(
-      ImageReference baseImage,
-      ImageReference targetImage,
-      List<String> additionalTags,
-      boolean allowTagsOnExistingImages)
+      ImageReference baseImage, ImageReference targetImage, List<String> additionalTags)
       throws IOException, InterruptedException, RegistryException, CacheDirectoryCreationException,
           ExecutionException {
     return buildImage(
-        baseImage,
-        Containerizer.to(DockerDaemonImage.named(targetImage)),
-        additionalTags,
-        allowTagsOnExistingImages);
+        baseImage, Containerizer.to(DockerDaemonImage.named(targetImage)), additionalTags);
   }
 
   private JibContainer buildTarImage(
       ImageReference baseImage,
       ImageReference targetImage,
       Path outputPath,
-      List<String> additionalTags,
-      boolean allowTagsOnExistingImages)
+      List<String> additionalTags)
       throws IOException, InterruptedException, RegistryException, CacheDirectoryCreationException,
           ExecutionException {
     return buildImage(
-        baseImage,
-        Containerizer.to(TarImage.at(outputPath).named(targetImage)),
-        additionalTags,
-        allowTagsOnExistingImages);
+        baseImage, Containerizer.to(TarImage.at(outputPath).named(targetImage)), additionalTags);
   }
 
   private JibContainer buildImage(
-      ImageReference baseImage,
-      Containerizer containerizer,
-      List<String> additionalTags,
-      boolean allowTagsOnExistingImages)
+      ImageReference baseImage, Containerizer containerizer, List<String> additionalTags)
       throws IOException, InterruptedException, RegistryException, CacheDirectoryCreationException,
           ExecutionException {
     JibContainerBuilder containerBuilder =
@@ -404,7 +338,6 @@ public class ContainerizerIntegrationTest {
         .setBaseImageLayersCache(cacheDirectory)
         .setApplicationLayersCache(cacheDirectory)
         .setAllowInsecureRegistries(true)
-        .setAllowTagsOnExistingImages(allowTagsOnExistingImages)
         .setToolName("jib-integration-test")
         .addEventHandler(ProgressEvent.class, progressChecker.progressEventHandler);
     additionalTags.forEach(containerizer::withAdditionalTag);

@@ -64,7 +64,6 @@ class PushImageStep implements Callable<BuildResult> {
                   buildContext.getTargetFormat(), containerConfigurationDigestAndSize);
 
       DescriptorDigest manifestDigest = Digests.computeJsonDigest(manifestTemplate);
-      boolean allowTagsOnExistingImages = buildContext.getAllowTagsOnExistingImages();
 
       return tags.stream()
           .map(
@@ -76,8 +75,7 @@ class PushImageStep implements Callable<BuildResult> {
                       manifestTemplate,
                       tag,
                       manifestDigest,
-                      containerConfigurationDigestAndSize.getDigest(),
-                      allowTagsOnExistingImages))
+                      containerConfigurationDigestAndSize.getDigest()))
           .collect(ImmutableList.toImmutableList());
     }
   }
@@ -90,7 +88,6 @@ class PushImageStep implements Callable<BuildResult> {
   private final String tag;
   private final DescriptorDigest imageDigest;
   private final DescriptorDigest imageId;
-  private final boolean allowTagsOnExistingImages;
 
   PushImageStep(
       BuildContext buildContext,
@@ -99,8 +96,7 @@ class PushImageStep implements Callable<BuildResult> {
       BuildableManifestTemplate manifestTemplate,
       String tag,
       DescriptorDigest imageDigest,
-      DescriptorDigest imageId,
-      boolean allowTagsOnExistingImages) {
+      DescriptorDigest imageId) {
     this.buildContext = buildContext;
     this.progressEventDispatcherFactory = progressEventDispatcherFactory;
     this.registryClient = registryClient;
@@ -108,7 +104,6 @@ class PushImageStep implements Callable<BuildResult> {
     this.tag = tag;
     this.imageDigest = imageDigest;
     this.imageId = imageId;
-    this.allowTagsOnExistingImages = allowTagsOnExistingImages;
   }
 
   @Override
@@ -119,19 +114,8 @@ class PushImageStep implements Callable<BuildResult> {
             progressEventDispatcherFactory.create("pushing manifest for " + tag, 1)) {
       eventHandlers.dispatch(LogEvent.info("Pushing manifest for " + tag + "..."));
 
-      BuildResult buildResult = new BuildResult(imageDigest, imageId);
-
-      // Do not push existing images if user does not allow it.
-      if (!allowTagsOnExistingImages && registryClient.checkManifest(imageDigest).isPresent()) {
-        eventHandlers.dispatch(
-            LogEvent.info(
-                "Skipping push; Digest already exists on target registry : " + imageDigest));
-
-        return buildResult;
-      }
-
       registryClient.pushManifest(manifestTemplate, tag);
-      return buildResult;
+      return new BuildResult(imageDigest, imageId);
     }
   }
 }

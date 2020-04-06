@@ -70,7 +70,6 @@ public class JibExtension {
 
   // Defines default configuration values.
   private static final boolean DEFAULT_ALLOW_INSECURE_REGISTIRIES = false;
-  private static final boolean DEFAULT_ALLOW_TAGS_ON_EXISTING_IMAGES = true;
   private static final String DEFAULT_CONTAINERIZING_MODE = "exploded";
 
   private final BaseImageParameters from;
@@ -81,7 +80,6 @@ public class JibExtension {
   private final OutputPathsParameters outputPaths;
   private final SkaffoldParameters skaffold;
   private final Property<Boolean> allowInsecureRegistries;
-  private final Property<Boolean> allowTagsOnExistingImages;
   private final Property<String> containerizingMode;
 
   /**
@@ -101,12 +99,10 @@ public class JibExtension {
     skaffold = objectFactory.newInstance(SkaffoldParameters.class, project);
 
     allowInsecureRegistries = objectFactory.property(Boolean.class);
-    allowTagsOnExistingImages = objectFactory.property(Boolean.class);
     containerizingMode = objectFactory.property(String.class);
 
     // Sets defaults.
     allowInsecureRegistries.set(DEFAULT_ALLOW_INSECURE_REGISTIRIES);
-    allowTagsOnExistingImages.set(DEFAULT_ALLOW_TAGS_ON_EXISTING_IMAGES);
     containerizingMode.set(DEFAULT_CONTAINERIZING_MODE);
   }
 
@@ -140,10 +136,6 @@ public class JibExtension {
 
   public void setAllowInsecureRegistries(boolean allowInsecureRegistries) {
     this.allowInsecureRegistries.set(allowInsecureRegistries);
-  }
-
-  public void setAllowTagsOnExistingImages(boolean allowTagsOnExistingImages) {
-    this.allowTagsOnExistingImages.set(allowTagsOnExistingImages);
   }
 
   public void setContainerizingMode(String containerizingMode) {
@@ -198,14 +190,6 @@ public class JibExtension {
       return Boolean.getBoolean(PropertyNames.ALLOW_INSECURE_REGISTRIES);
     }
     return allowInsecureRegistries.get();
-  }
-
-  @Input
-  boolean getAllowTagsOnExistingImages() {
-    if (System.getProperty(PropertyNames.ALLOW_TAGS_ON_EXISTING_IMAGES) != null) {
-      return Boolean.getBoolean(PropertyNames.ALLOW_TAGS_ON_EXISTING_IMAGES);
-    }
-    return allowTagsOnExistingImages.get();
   }
 
   @Input

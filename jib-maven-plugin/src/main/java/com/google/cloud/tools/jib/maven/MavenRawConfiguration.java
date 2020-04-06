@@ -141,11 +141,6 @@ public class MavenRawConfiguration implements RawConfiguration {
   }
 
   @Override
-  public boolean getAllowTagsOnExistingImages() {
-    return jibPluginConfiguration.getAllowTagsOnExistingImages();
-  }
-
-  @Override
   public ImageFormat getImageFormat() {
     return ImageFormat.valueOf(jibPluginConfiguration.getFormat());
   }

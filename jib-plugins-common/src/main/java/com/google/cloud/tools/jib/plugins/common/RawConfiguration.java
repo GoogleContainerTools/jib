@@ -70,8 +70,6 @@ public interface RawConfiguration {
 
   boolean getAllowInsecureRegistries();
 
-  boolean getAllowTagsOnExistingImages();
-
   ImageFormat getImageFormat();
 
   Optional<String> getProperty(String propertyName);

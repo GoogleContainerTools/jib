@@ -820,7 +820,6 @@ public class PluginConfigurationProcessor {
         .setToolName(projectProperties.getToolName())
         .setToolVersion(projectProperties.getToolVersion())
         .setAllowInsecureRegistries(rawConfiguration.getAllowInsecureRegistries())
-        .setAllowTagsOnExistingImages(rawConfiguration.getAllowTagsOnExistingImages())
         .setBaseImageLayersCache(
             getCheckedCacheDirectory(
                 PropertyNames.BASE_IMAGE_CACHE,

@@ -61,7 +61,6 @@ public class MavenRawConfigurationTest {
     Mockito.when(jibPluginConfiguration.getBaseImageAuth()).thenReturn(auth);
 
     Mockito.when(jibPluginConfiguration.getAllowInsecureRegistries()).thenReturn(true);
-    Mockito.when(jibPluginConfiguration.getAllowTagsOnExistingImages()).thenReturn(false);
     Mockito.when(jibPluginConfiguration.getAppRoot()).thenReturn("/app/root");
     Mockito.when(jibPluginConfiguration.getArgs()).thenReturn(Arrays.asList("--log", "info"));
     Mockito.when(jibPluginConfiguration.getBaseImage()).thenReturn("openjdk:15");
@@ -98,7 +97,6 @@ public class MavenRawConfigurationTest {
     Assert.assertEquals("<from><auth><password>", fromAuth.getPasswordDescriptor());
 
     Assert.assertTrue(rawConfiguration.getAllowInsecureRegistries());
-    Assert.assertFalse(rawConfiguration.getAllowTagsOnExistingImages());
     Assert.assertEquals(Arrays.asList("java", "Main"), rawConfiguration.getEntrypoint().get());
     Assert.assertEquals(
         new HashMap<>(ImmutableMap.of("currency", "dollar")), rawConfiguration.getEnvironment());
