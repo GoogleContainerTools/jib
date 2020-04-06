@@ -267,7 +267,7 @@ public class BuildContext implements Closeable {
       switch (missingFields.size()) {
         case 0: // No errors
           Preconditions.checkNotNull(baseImageConfiguration);
-          if (!baseImageConfiguration.getImage().isTagDigest()
+          if (!baseImageConfiguration.getImage().getDigest().isPresent()
               && !baseImageConfiguration.getImage().isScratch()) {
             eventHandlers.dispatch(
                 LogEvent.warn(

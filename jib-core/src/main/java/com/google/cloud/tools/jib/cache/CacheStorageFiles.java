@@ -153,7 +153,8 @@ class CacheStorageFiles {
    */
   Path getImageDirectory(ImageReference imageReference) {
     // Replace ':' and '@' with '!' to avoid directory-naming restrictions
-    String replacedReference = imageReference.toStringWithIdentifier().replace(':', '!').replace('@', '!');
+    String replacedReference =
+        imageReference.toStringWithQualifier().replace(':', '!').replace('@', '!');
 
     // Split image reference on '/' to build directory structure
     Iterable<String> directories = Splitter.on('/').split(replacedReference);

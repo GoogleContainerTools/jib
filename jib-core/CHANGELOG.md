@@ -6,15 +6,15 @@ All notable changes to this project will be documented in this file.
 ### Added
 
 - Multiple additions to `ImageReference` to separate `tag` and `digest`. ([#1481](https://github.com/GoogleContainerTools/jib/issues/1481))
-    - `of(registry, repository, tag, digest)` to create an image from a tag and digest
-    - `isValidDigest(digest)` to check if a string is a valid digest
-    - `getDigest()` to get the digest
-    - `parse()` now supports image reference strings containing both a tag and a digest
+    - `of(registry, repository, tag, digest)` to create an image from a tag and digest.
+    - `isValidDigest(digest)` to check if a string is a valid digest.
+    - `getDigest()` to get the digest.
+    - `parse()` now supports image reference strings containing both a tag and a digest.
 
 ### Changed
 
-- `ImageReference#isTagDigest` is deprecated; use `#getDigest` with `Optional#isPresent()`.
-- `ImageReference#toStringWithTag` is deprecated in favor of `#toStringWithIdentifier`.
+- `ImageReference#toStringWithTag` has been renamed to `toStringWithQualifier`.
+- `ImageReference#isTagDigest` has been removed; use `#getDigest` with `Optional#isPresent()` to check if an `ImageReference` uses a digest.
 
 ### Fixed
 

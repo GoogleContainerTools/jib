@@ -147,20 +147,20 @@ public class ImageReferenceTest {
   }
 
   @Test
-  public void testToStringWithIdentifier() {
+  public void testToStringWithQualifier() {
     Assert.assertEquals(
-        "someimage:latest", ImageReference.of(null, "someimage", null).toStringWithIdentifier());
+        "someimage:latest", ImageReference.of(null, "someimage", null).toStringWithQualifier());
     Assert.assertEquals(
-        "someimage:latest", ImageReference.of("", "someimage", "").toStringWithIdentifier());
+        "someimage:latest", ImageReference.of("", "someimage", "").toStringWithQualifier());
     Assert.assertEquals(
         "someotherimage:latest",
-        ImageReference.of(null, "library/someotherimage", null).toStringWithIdentifier());
+        ImageReference.of(null, "library/someotherimage", null).toStringWithQualifier());
     Assert.assertEquals(
         "someregistry/someotherimage:latest",
-        ImageReference.of("someregistry", "someotherimage", null).toStringWithIdentifier());
+        ImageReference.of("someregistry", "someotherimage", null).toStringWithQualifier());
     Assert.assertEquals(
         "anotherregistry/anotherimage:sometag",
-        ImageReference.of("anotherregistry", "anotherimage", "sometag").toStringWithIdentifier());
+        ImageReference.of("anotherregistry", "anotherimage", "sometag").toStringWithQualifier());
     Assert.assertEquals(
         "anotherregistry/anotherimage@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
         ImageReference.of(
@@ -168,23 +168,7 @@ public class ImageReferenceTest {
                 "anotherimage",
                 null,
                 "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
-            .toStringWithIdentifier());
-  }
-
-  @Test
-  public void testIsTagDigest() throws InvalidImageReferenceException {
-    Assert.assertFalse(ImageReference.of(null, "someimage", null).isTagDigest());
-    Assert.assertFalse(ImageReference.of(null, "someimage", "latest").isTagDigest());
-    Assert.assertTrue(
-        ImageReference.of(
-                null,
-                "someimage",
-                "sha256:b430543bea1d8326e767058bdab3a2482ea45f59d7af5c5c61334cd29ede88a1")
-            .isTagDigest());
-    Assert.assertTrue(
-        ImageReference.parse(
-                "someimage@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
-            .isTagDigest());
+            .toStringWithQualifier());
   }
 
   @Test

@@ -316,18 +316,6 @@ public class ImageReference {
   }
 
   /**
-   * Returns {@code true} if the {@link ImageReference} uses a SHA-256 digest as its tag; {@code
-   * false} if not.
-   *
-   * @deprecated Use {@link #getDigest()} with {@link Optional#isPresent()}.
-   * @return {@code true} if tag is a SHA-256 digest; {@code false} if not
-   */
-  @Deprecated
-  public boolean isTagDigest() {
-    return !Strings.isNullOrEmpty(digest);
-  }
-
-  /**
    * Returns {@code true} if the {@link ImageReference} is a scratch image; {@code false} if not.
    *
    * @return {@code true} if the {@link ImageReference} is a scratch image; {@code false} if not
@@ -383,23 +371,12 @@ public class ImageReference {
   }
 
   /**
-   * Stringifies the {@link ImageReference}, without hiding the tag.
-   *
-   * @deprecated Use {@link #toStringWithIdentifier()}.
-   * @return the image reference in Docker-readable format, without hiding the tag
-   */
-  @Deprecated
-  public String toStringWithTag() {
-    return toStringWithIdentifier();
-  }
-
-  /**
    * Stringifies the {@link ImageReference}, including the default tag if no tag or digest is set.
    *
    * @return the image reference in Docker-readable format, including the default tag if no tag or
    *     digest is set.
    */
-  public String toStringWithIdentifier() {
+  public String toStringWithQualifier() {
     // Insert tag before digest
     if (!Strings.isNullOrEmpty(digest)) {
       return toString();
