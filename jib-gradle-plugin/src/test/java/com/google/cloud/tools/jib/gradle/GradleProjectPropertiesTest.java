@@ -603,8 +603,8 @@ public class GradleProjectPropertiesTest {
             .setAppRoot(AbsoluteUnixPath.get(appRoot))
             .setModificationTimeProvider((ignored1, ignored2) -> SAMPLE_FILE_MODIFICATION_TIME);
     JibContainerBuilder jibContainerBuilder =
-        new GradleProjectProperties(mockProject, mockLogger, mockTempDirectoryProvider)
-            .createJibContainerBuilder(javaContainerBuilder, ContainerizingMode.EXPLODED);
+        gradleProjectProperties.createJibContainerBuilder(
+            javaContainerBuilder, ContainerizingMode.EXPLODED);
     return JibContainerBuilderTestHelper.toBuildContext(
         jibContainerBuilder, Containerizer.to(RegistryImage.named("to")));
   }

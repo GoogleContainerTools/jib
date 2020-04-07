@@ -23,7 +23,6 @@ import com.google.cloud.tools.jib.api.RegistryException;
 import com.google.cloud.tools.jib.api.RegistryUnauthorizedException;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.event.EventHandlers;
-import com.google.cloud.tools.jib.global.JibSystemProperties;
 import com.google.cloud.tools.jib.http.TestWebServer;
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -39,9 +38,7 @@ import org.hamcrest.CoreMatchers;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.contrib.java.lang.system.RestoreSystemProperties;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentMatcher;
 import org.mockito.ArgumentMatchers;
@@ -55,11 +52,8 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class RegistryClientTest {
 
-  @Rule public final RestoreSystemProperties systemPropertyRestorer = new RestoreSystemProperties();
-
   @Mock private EventHandlers eventHandlers;
 
-  private RegistryClient.Factory testRegistryClientFactory;
   private DescriptorDigest digest;
 
   private TestWebServer registry;
@@ -67,8 +61,6 @@ public class RegistryClientTest {
 
   @Before
   public void setUp() throws DigestException {
-    testRegistryClientFactory =
-        RegistryClient.factory(EventHandlers.NONE, "some.server.url", "some image name", null);
     digest =
         DescriptorDigest.fromHash(
             "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
@@ -82,38 +74,6 @@ public class RegistryClientTest {
     if (authServer != null) {
       authServer.close();
     }
-  }
-
-  @Test
-  public void testGetUserAgent_null() {
-    Assert.assertTrue(
-        testRegistryClientFactory.newRegistryClient().getUserAgent().startsWith("jib"));
-
-    Assert.assertTrue(
-        testRegistryClientFactory
-            .setUserAgentSuffix(null)
-            .newRegistryClient()
-            .getUserAgent()
-            .startsWith("jib"));
-  }
-
-  @Test
-  public void testGetUserAgent() {
-    RegistryClient registryClient =
-        testRegistryClientFactory.setUserAgentSuffix("some user agent suffix").newRegistryClient();
-
-    Assert.assertTrue(registryClient.getUserAgent().startsWith("jib "));
-    Assert.assertTrue(registryClient.getUserAgent().endsWith(" some user agent suffix"));
-  }
-
-  @Test
-  public void testGetUserAgentWithUpstreamClient() {
-    System.setProperty(JibSystemProperties.UPSTREAM_CLIENT, "skaffold/0.34.0");
-
-    RegistryClient registryClient =
-        testRegistryClientFactory.setUserAgentSuffix("foo").newRegistryClient();
-    Assert.assertTrue(registryClient.getUserAgent().startsWith("jib "));
-    Assert.assertTrue(registryClient.getUserAgent().endsWith(" skaffold/0.34.0"));
   }
 
   @Test

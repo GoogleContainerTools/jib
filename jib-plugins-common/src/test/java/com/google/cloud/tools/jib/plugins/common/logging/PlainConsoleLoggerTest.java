@@ -24,7 +24,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.Consumer;
-import java.util.function.Function;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -37,12 +36,6 @@ public class PlainConsoleLoggerTest {
 
   private final List<Level> levels = new ArrayList<>();
   private final List<String> messages = new ArrayList<>();
-  private final Function<Level, Consumer<String>> messageConsumerFactory =
-      level ->
-          message -> {
-            levels.add(level);
-            messages.add(message);
-          };
 
   private PlainConsoleLogger testPlainConsoleLogger;
 
@@ -50,7 +43,7 @@ public class PlainConsoleLoggerTest {
   public void testLog() {
     ImmutableMap.Builder<Level, Consumer<String>> messageConsumers = ImmutableMap.builder();
     for (Level level : Level.values()) {
-      messageConsumers.put(level, messageConsumerFactory.apply(level));
+      messageConsumers.put(level, createMessageConsumer(level));
     }
 
     testPlainConsoleLogger =
@@ -77,8 +70,7 @@ public class PlainConsoleLoggerTest {
   public void testLog_ignoreIfNoMessageConsumer() {
     testPlainConsoleLogger =
         new PlainConsoleLogger(
-            ImmutableMap.of(Level.WARN, messageConsumerFactory.apply(Level.WARN)),
-            singleThreadedExecutor);
+            ImmutableMap.of(Level.WARN, createMessageConsumer(Level.WARN)), singleThreadedExecutor);
 
     testPlainConsoleLogger.log(Level.LIFECYCLE, "lifecycle");
     testPlainConsoleLogger.log(Level.PROGRESS, "progress");
@@ -91,5 +83,12 @@ public class PlainConsoleLoggerTest {
 
     Assert.assertEquals(Collections.singletonList(Level.WARN), levels);
     Assert.assertEquals(Collections.singletonList("warn"), messages);
+  }
+
+  private Consumer<String> createMessageConsumer(Level level) {
+    return message -> {
+      levels.add(level);
+      messages.add(message);
+    };
   }
 }

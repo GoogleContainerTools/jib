@@ -58,6 +58,7 @@ import org.junit.Test;
 import org.junit.contrib.java.lang.system.RestoreSystemProperties;
 import org.junit.rules.TemporaryFolder;
 import org.junit.runner.RunWith;
+import org.mockito.Answers;
 import org.mockito.ArgumentMatcher;
 import org.mockito.Mock;
 import org.mockito.Mockito;
@@ -94,10 +95,12 @@ public class PluginConfigurationProcessorTest {
   @Rule public final RestoreSystemProperties systemPropertyRestorer = new RestoreSystemProperties();
   @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
+  @Mock(answer = Answers.RETURNS_SELF)
+  private Containerizer containerizer;
+
   @Mock private RawConfiguration rawConfiguration;
   @Mock private ProjectProperties projectProperties;
   @Mock private InferredAuthProvider inferredAuthProvider;
-  @Mock private Containerizer containerizer;
   @Mock private AuthProperty authProperty;
   @Mock private Consumer<LogEvent> logger;
 
@@ -111,8 +114,8 @@ public class PluginConfigurationProcessorTest {
     Mockito.when(rawConfiguration.getExtraDirectories())
         .thenReturn(Arrays.asList(Paths.get("nonexistent/path")));
     Mockito.when(rawConfiguration.getContainerizingMode()).thenReturn("exploded");
-
     Mockito.when(projectProperties.getToolName()).thenReturn("tool");
+    Mockito.when(projectProperties.getToolVersion()).thenReturn("tool-version");
     Mockito.when(projectProperties.getMainClassFromJar()).thenReturn("java.lang.Object");
     Mockito.when(projectProperties.getDefaultCacheDirectory()).thenReturn(Paths.get("cache"));
     Mockito.when(
@@ -122,15 +125,6 @@ public class PluginConfigurationProcessorTest {
     Mockito.when(projectProperties.isOffline()).thenReturn(false);
 
     Mockito.when(inferredAuthProvider.inferAuth(Mockito.any())).thenReturn(Optional.empty());
-
-    Mockito.when(containerizer.setToolName(Mockito.anyString())).thenReturn(containerizer);
-    Mockito.when(containerizer.setAllowInsecureRegistries(Mockito.anyBoolean()))
-        .thenReturn(containerizer);
-    Mockito.when(containerizer.setBaseImageLayersCache(Mockito.any(Path.class)))
-        .thenReturn(containerizer);
-    Mockito.when(containerizer.setApplicationLayersCache(Mockito.any(Path.class)))
-        .thenReturn(containerizer);
-    Mockito.when(containerizer.setOfflineMode(Mockito.anyBoolean())).thenReturn(containerizer);
   }
 
   @Test

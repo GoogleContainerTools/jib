@@ -16,7 +16,6 @@
 
 package com.google.cloud.tools.jib.registry;
 
-import com.google.api.client.http.HttpHeaders;
 import com.google.api.client.http.HttpStatusCodes;
 import com.google.cloud.tools.jib.api.InsecureRegistryException;
 import com.google.cloud.tools.jib.api.LogEvent;
@@ -104,8 +103,7 @@ public class RegistryEndpointCallerTest {
     }
   }
 
-  private static ResponseException mockResponseException(
-      int statusCode, @Nullable HttpHeaders headers) {
+  private static ResponseException mockResponseException(int statusCode) {
     ResponseException mock = Mockito.mock(ResponseException.class);
     Mockito.when(mock.getStatusCode()).thenReturn(statusCode);
     return mock;
@@ -172,7 +170,7 @@ public class RegistryEndpointCallerTest {
   @Test
   public void testCall_credentialsNotSentOverHttp() throws IOException, RegistryException {
     ResponseException unauthorizedException =
-        mockResponseException(HttpStatusCodes.STATUS_CODE_UNAUTHORIZED, null);
+        mockResponseException(HttpStatusCodes.STATUS_CODE_UNAUTHORIZED);
     Mockito.when(unauthorizedException.requestAuthorizationCleared()).thenReturn(true);
     setUpRegistryResponse(unauthorizedException);
 
@@ -190,7 +188,7 @@ public class RegistryEndpointCallerTest {
   @Test
   public void testCall_credentialsForcedOverHttp() throws IOException, RegistryException {
     ResponseException unauthorizedException =
-        mockResponseException(HttpStatusCodes.STATUS_CODE_UNAUTHORIZED, null);
+        mockResponseException(HttpStatusCodes.STATUS_CODE_UNAUTHORIZED);
     setUpRegistryResponse(unauthorizedException);
     System.setProperty(JibSystemProperties.SEND_CREDENTIALS_OVER_HTTP, "true");
 
@@ -228,7 +226,7 @@ public class RegistryEndpointCallerTest {
   @Test
   public void testCall_unknown() throws IOException, RegistryException {
     ResponseException responseException =
-        mockResponseException(HttpStatusCodes.STATUS_CODE_SERVER_ERROR, null);
+        mockResponseException(HttpStatusCodes.STATUS_CODE_SERVER_ERROR);
     setUpRegistryResponse(responseException);
 
     try {
@@ -443,7 +441,7 @@ public class RegistryEndpointCallerTest {
    */
   private void verifyThrowsRegistryUnauthorizedException(int httpStatusCode)
       throws IOException, RegistryException {
-    ResponseException responseException = mockResponseException(httpStatusCode, null);
+    ResponseException responseException = mockResponseException(httpStatusCode);
     setUpRegistryResponse(responseException);
 
     try {
@@ -462,7 +460,7 @@ public class RegistryEndpointCallerTest {
    */
   private void verifyThrowsRegistryErrorException(int httpStatusCode)
       throws IOException, RegistryException {
-    ResponseException errorResponse = mockResponseException(httpStatusCode, null);
+    ResponseException errorResponse = mockResponseException(httpStatusCode);
     Mockito.when(errorResponse.getContent())
         .thenReturn("{\"errors\":[{\"code\":\"code\",\"message\":\"message\"}]}");
     setUpRegistryResponse(errorResponse);

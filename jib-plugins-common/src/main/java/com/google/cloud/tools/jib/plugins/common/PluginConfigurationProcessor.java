@@ -31,6 +31,8 @@ import com.google.cloud.tools.jib.api.RegistryImage;
 import com.google.cloud.tools.jib.api.TarImage;
 import com.google.cloud.tools.jib.api.buildplan.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.api.buildplan.FileEntriesLayer;
+import com.google.cloud.tools.jib.api.buildplan.ImageFormat;
+import com.google.cloud.tools.jib.api.buildplan.LayerObject;
 import com.google.cloud.tools.jib.frontend.CredentialRetrieverFactory;
 import com.google.cloud.tools.jib.global.JibSystemProperties;
 import com.google.common.annotations.VisibleForTesting;
@@ -119,7 +121,8 @@ public class PluginConfigurationProcessor {
     Containerizer containerizer = Containerizer.to(targetImage);
     JibContainerBuilder jibContainerBuilder =
         processCommonConfiguration(
-            rawConfiguration, inferredAuthProvider, projectProperties, containerizer);
+                rawConfiguration, inferredAuthProvider, projectProperties, containerizer)
+            .setFormat(ImageFormat.Docker);
 
     return JibBuildRunner.forBuildToDockerDaemon(
             jibContainerBuilder,
@@ -176,9 +179,6 @@ public class PluginConfigurationProcessor {
     JibContainerBuilder jibContainerBuilder =
         processCommonConfiguration(
             rawConfiguration, inferredAuthProvider, projectProperties, containerizer);
-
-    // Note Docker build doesn't set the configured format.
-    jibContainerBuilder.setFormat(rawConfiguration.getImageFormat());
 
     return JibBuildRunner.forBuildTar(
             jibContainerBuilder,
@@ -251,9 +251,6 @@ public class PluginConfigurationProcessor {
         processCommonConfiguration(
             rawConfiguration, inferredAuthProvider, projectProperties, containerizer);
 
-    // Note Docker build doesn't set the configured format.
-    jibContainerBuilder.setFormat(rawConfiguration.getImageFormat());
-
     return JibBuildRunner.forBuildImage(
             jibContainerBuilder,
             containerizer,
@@ -302,7 +299,11 @@ public class PluginConfigurationProcessor {
     // since jib has already expanded out directories after processing everything, we just
     // ignore directories and provide only files to watch
     Set<Path> excludesExpanded = getAllFiles(excludes);
-    for (FileEntriesLayer layer : jibContainerBuilder.describeContainer().getFileEntriesLayers()) {
+    for (LayerObject layerObject : jibContainerBuilder.toContainerBuildPlan().getLayers()) {
+      Verify.verify(
+          layerObject instanceof FileEntriesLayer,
+          "layer types other than FileEntriesLayer not yet supported in build plan layers");
+      FileEntriesLayer layer = (FileEntriesLayer) layerObject;
       if (CONST_LAYERS.contains(layer.getName())) {
         continue;
       }
@@ -368,6 +369,7 @@ public class PluginConfigurationProcessor {
             .createJibContainerBuilder(
                 javaContainerBuilder,
                 getContainerizingModeChecked(rawConfiguration, projectProperties))
+            .setFormat(rawConfiguration.getImageFormat())
             .setEntrypoint(computeEntrypoint(rawConfiguration, projectProperties))
             .setProgramArguments(rawConfiguration.getProgramArguments().orElse(null))
             .setEnvironment(rawConfiguration.getEnvironment())
@@ -816,6 +818,7 @@ public class PluginConfigurationProcessor {
     containerizer
         .setOfflineMode(projectProperties.isOffline())
         .setToolName(projectProperties.getToolName())
+        .setToolVersion(projectProperties.getToolVersion())
         .setAllowInsecureRegistries(rawConfiguration.getAllowInsecureRegistries())
         .setBaseImageLayersCache(
             getCheckedCacheDirectory(

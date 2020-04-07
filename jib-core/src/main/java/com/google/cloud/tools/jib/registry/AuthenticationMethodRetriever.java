@@ -35,12 +35,12 @@ class AuthenticationMethodRetriever
     implements RegistryEndpointProvider<Optional<RegistryAuthenticator>> {
 
   private final RegistryEndpointRequestProperties registryEndpointRequestProperties;
-  private final String userAgent;
+  @Nullable private final String userAgent;
   private final FailoverHttpClient httpClient;
 
   AuthenticationMethodRetriever(
       RegistryEndpointRequestProperties registryEndpointRequestProperties,
-      String userAgent,
+      @Nullable String userAgent,
       FailoverHttpClient httpClient) {
     this.registryEndpointRequestProperties = registryEndpointRequestProperties;
     this.userAgent = userAgent;

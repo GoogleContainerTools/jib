@@ -24,7 +24,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.Consumer;
-import java.util.function.Function;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -37,12 +36,6 @@ public class AnsiLoggerWithFooterTest {
 
   private final List<String> messages = new ArrayList<>();
   private final List<Level> levels = new ArrayList<>();
-  private final Function<Level, Consumer<String>> messageConsumerFactory =
-      level ->
-          message -> {
-            levels.add(level);
-            messages.add(message);
-          };
 
   @Test
   public void testTruncateToMaxWidth() {
@@ -93,7 +86,7 @@ public class AnsiLoggerWithFooterTest {
   public void testLog_ignoreIfNoMessageConsumer() {
     AnsiLoggerWithFooter testAnsiLoggerWithFooter =
         new AnsiLoggerWithFooter(
-            ImmutableMap.of(Level.LIFECYCLE, messageConsumerFactory.apply(Level.LIFECYCLE)),
+            ImmutableMap.of(Level.LIFECYCLE, createMessageConsumer(Level.LIFECYCLE)),
             singleThreadedExecutor,
             false);
 
@@ -285,10 +278,17 @@ public class AnsiLoggerWithFooterTest {
   private AnsiLoggerWithFooter createTestLogger(boolean enableTwoCursorUpJump) {
     ImmutableMap.Builder<Level, Consumer<String>> messageConsumers = ImmutableMap.builder();
     for (Level level : Level.values()) {
-      messageConsumers.put(level, messageConsumerFactory.apply(level));
+      messageConsumers.put(level, createMessageConsumer(level));
     }
 
     return new AnsiLoggerWithFooter(
         messageConsumers.build(), singleThreadedExecutor, enableTwoCursorUpJump);
+  }
+
+  private Consumer<String> createMessageConsumer(Level level) {
+    return message -> {
+      levels.add(level);
+      messages.add(message);
+    };
   }
 }

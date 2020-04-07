@@ -111,7 +111,10 @@ public class V22ManifestListTemplate implements ManifestTemplate {
 
     @Nullable private String mediaType;
     @Nullable private String digest;
+
+    @SuppressWarnings("unused")
     private long size;
+
     @Nullable private Platform platform;
 
     @Nullable

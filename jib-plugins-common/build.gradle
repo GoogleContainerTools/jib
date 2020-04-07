@@ -11,6 +11,8 @@ dependencies {
   // for an unpublished library.
   implementation project(':jib-core').configurations.implementation.dependencies
 
+  implementation project(':jib-plugins-extension-common')
+
   testImplementation "junit:junit:${dependencyVersions.JUNIT}"
   testImplementation "org.mockito:mockito-core:${dependencyVersions.MOCKITO_CORE}"
   testImplementation "org.slf4j:slf4j-api:${dependencyVersions.SLF4J_API}"

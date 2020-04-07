@@ -210,28 +210,34 @@ public class LayerDefinitionParserTest {
 
   @Test
   public void testConvert_sourceDestinationTimestamps() throws Exception {
-    File root = temporaryFolder.getRoot();
-    File subdir = new File(root, "sub");
-    Assert.assertTrue(subdir.mkdir());
-    File file = new File(subdir, "file.txt");
-    Files.copy(new ByteArrayInputStream("foo".getBytes(StandardCharsets.UTF_8)), file.toPath());
+    Path root = temporaryFolder.getRoot().toPath();
+    Path subdir = root.resolve("sub");
+    Files.createDirectory(subdir);
+    Path file = subdir.resolve("file.txt");
+    Files.copy(new ByteArrayInputStream("foo".getBytes(StandardCharsets.UTF_8)), file);
 
     FileEntriesLayer result = fixture.convert(root.toString() + ",/dest,timestamps=actual");
     Assert.assertEquals(3, result.getEntries().size());
 
     FileEntry layerEntry = result.getEntries().get(0);
-    Assert.assertEquals(root.toPath(), layerEntry.getSourceFile());
+    Assert.assertEquals(root, layerEntry.getSourceFile());
     Assert.assertEquals(AbsoluteUnixPath.get("/dest"), layerEntry.getExtractionPath());
-    Assert.assertEquals(root.lastModified(), layerEntry.getModificationTime().toEpochMilli());
+    Assert.assertEquals(
+        Files.getLastModifiedTime(root).toMillis(),
+        layerEntry.getModificationTime().toEpochMilli());
 
     layerEntry = result.getEntries().get(1);
-    Assert.assertEquals(subdir.toPath(), layerEntry.getSourceFile());
+    Assert.assertEquals(subdir, layerEntry.getSourceFile());
     Assert.assertEquals(AbsoluteUnixPath.get("/dest/sub"), layerEntry.getExtractionPath());
-    Assert.assertEquals(subdir.lastModified(), layerEntry.getModificationTime().toEpochMilli());
+    Assert.assertEquals(
+        Files.getLastModifiedTime(subdir).toMillis(),
+        layerEntry.getModificationTime().toEpochMilli());
 
     layerEntry = result.getEntries().get(2);
-    Assert.assertEquals(file.toPath(), layerEntry.getSourceFile());
+    Assert.assertEquals(file, layerEntry.getSourceFile());
     Assert.assertEquals(AbsoluteUnixPath.get("/dest/sub/file.txt"), layerEntry.getExtractionPath());
-    Assert.assertEquals(file.lastModified(), layerEntry.getModificationTime().toEpochMilli());
+    Assert.assertEquals(
+        Files.getLastModifiedTime(file).toMillis(),
+        layerEntry.getModificationTime().toEpochMilli());
   }
 }

@@ -27,6 +27,7 @@ import com.google.cloud.tools.jib.api.buildplan.FileEntriesLayer;
 import com.google.cloud.tools.jib.api.buildplan.ImageFormat;
 import com.google.cloud.tools.jib.api.buildplan.Port;
 import com.google.cloud.tools.jib.event.EventHandlers;
+import com.google.cloud.tools.jib.global.JibSystemProperties;
 import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
 import com.google.cloud.tools.jib.image.json.OciManifestTemplate;
 import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
@@ -45,11 +46,15 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import org.junit.Assert;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.contrib.java.lang.system.RestoreSystemProperties;
 import org.mockito.Mockito;
 
 /** Tests for {@link BuildContext}. */
 public class BuildContextTest {
+
+  @Rule public final RestoreSystemProperties systemPropertyRestorer = new RestoreSystemProperties();
 
   @Test
   public void testBuilder() throws Exception {
@@ -273,18 +278,21 @@ public class BuildContextTest {
                 "Base image 'image:tag' does not use a specific image digest - build may not be reproducible"));
   }
 
+  private BuildContext.Builder createBasicTestBuilder() {
+    return BuildContext.builder()
+        .setBaseImageConfiguration(
+            ImageConfiguration.builder(Mockito.mock(ImageReference.class)).build())
+        .setTargetImageConfiguration(
+            ImageConfiguration.builder(Mockito.mock(ImageReference.class)).build())
+        .setBaseImageLayersCacheDirectory(Paths.get("ignored"))
+        .setApplicationLayersCacheDirectory(Paths.get("ignored"));
+  }
+
   @Test
   public void testClose_shutDownInternalExecutorService()
       throws IOException, CacheDirectoryCreationException {
-    BuildContext buildContext =
-        BuildContext.builder()
-            .setBaseImageConfiguration(
-                ImageConfiguration.builder(Mockito.mock(ImageReference.class)).build())
-            .setTargetImageConfiguration(
-                ImageConfiguration.builder(Mockito.mock(ImageReference.class)).build())
-            .setBaseImageLayersCacheDirectory(Paths.get("ignored"))
-            .setApplicationLayersCacheDirectory(Paths.get("ignored"))
-            .build();
+
+    BuildContext buildContext = createBasicTestBuilder().build();
     buildContext.close();
 
     Assert.assertTrue(buildContext.getExecutorService().isShutdown());
@@ -295,18 +303,40 @@ public class BuildContextTest {
       throws IOException, CacheDirectoryCreationException {
     ExecutorService executorService = MoreExecutors.newDirectExecutorService();
     BuildContext buildContext =
-        BuildContext.builder()
-            .setBaseImageConfiguration(
-                ImageConfiguration.builder(Mockito.mock(ImageReference.class)).build())
-            .setTargetImageConfiguration(
-                ImageConfiguration.builder(Mockito.mock(ImageReference.class)).build())
-            .setBaseImageLayersCacheDirectory(Paths.get("ignored"))
-            .setApplicationLayersCacheDirectory(Paths.get("ignored"))
-            .setExecutorService(executorService)
-            .build();
+        createBasicTestBuilder().setExecutorService(executorService).build();
     buildContext.close();
 
     Assert.assertSame(executorService, buildContext.getExecutorService());
     Assert.assertFalse(buildContext.getExecutorService().isShutdown());
+  }
+
+  @Test
+  public void testGetUserAgent_unset() throws CacheDirectoryCreationException {
+    BuildContext buildContext = createBasicTestBuilder().build();
+
+    String generatedUserAgent = buildContext.makeUserAgent();
+
+    Assert.assertEquals("jib null jib", generatedUserAgent);
+  }
+
+  @Test
+  public void testGetUserAgent_withValues() throws CacheDirectoryCreationException {
+    BuildContext buildContext =
+        createBasicTestBuilder().setToolName("test-name").setToolVersion("test-version").build();
+
+    String generatedUserAgent = buildContext.makeUserAgent();
+
+    Assert.assertEquals("jib test-version test-name", generatedUserAgent);
+  }
+
+  @Test
+  public void testGetUserAgentWithUpstreamClient() throws CacheDirectoryCreationException {
+    System.setProperty(JibSystemProperties.UPSTREAM_CLIENT, "skaffold/0.34.0");
+    BuildContext buildContext =
+        createBasicTestBuilder().setToolName("test-name").setToolVersion("test-version").build();
+
+    String generatedUserAgent = buildContext.makeUserAgent();
+
+    Assert.assertEquals("jib test-version test-name skaffold/0.34.0", generatedUserAgent);
   }
 }

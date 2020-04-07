@@ -69,6 +69,10 @@ public class GradleProjectProperties implements ProjectProperties {
   /** Used to generate the User-Agent header and history metadata. */
   private static final String TOOL_NAME = "jib-gradle-plugin";
 
+  /** Used to generate the User-Agent header and history metadata and verify versions. */
+  static final String TOOL_VERSION =
+      GradleProjectProperties.class.getPackage().getImplementationVersion();
+
   /** Used for logging during main class inference. */
   private static final String PLUGIN_NAME = "jib";
 
@@ -296,6 +300,11 @@ public class GradleProjectProperties implements ProjectProperties {
   @Override
   public String getToolName() {
     return TOOL_NAME;
+  }
+
+  @Override
+  public String getToolVersion() {
+    return TOOL_VERSION;
   }
 
   @Override

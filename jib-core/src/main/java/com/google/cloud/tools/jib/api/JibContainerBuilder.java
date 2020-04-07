@@ -17,9 +17,11 @@
 package com.google.cloud.tools.jib.api;
 
 import com.google.cloud.tools.jib.api.buildplan.AbsoluteUnixPath;
+import com.google.cloud.tools.jib.api.buildplan.ContainerBuildPlan;
 import com.google.cloud.tools.jib.api.buildplan.FileEntriesLayer;
 import com.google.cloud.tools.jib.api.buildplan.FileEntry;
 import com.google.cloud.tools.jib.api.buildplan.ImageFormat;
+import com.google.cloud.tools.jib.api.buildplan.LayerObject;
 import com.google.cloud.tools.jib.api.buildplan.Port;
 import com.google.cloud.tools.jib.builder.TimerEventDispatcher;
 import com.google.cloud.tools.jib.builder.steps.BuildResult;
@@ -29,6 +31,7 @@ import com.google.cloud.tools.jib.configuration.ImageConfiguration;
 import com.google.cloud.tools.jib.docker.DockerClient;
 import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Verify;
 import java.io.IOException;
 import java.net.UnknownHostException;
 import java.nio.file.Path;
@@ -40,6 +43,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import org.apache.http.conn.HttpHostConnectException;
@@ -69,10 +73,17 @@ public class JibContainerBuilder {
     return Character.toUpperCase(string.charAt(0)) + string.substring(1);
   }
 
+  private final ContainerBuildPlan.Builder containerBuildPlanBuilder =
+      ContainerBuildPlan.builder().setArchitectureHint("amd64").setOsHint("linux");
+  // TODO(chanseok): remove and use containerBuildPlanBuilder instead. Note that
+  // ContainerConfiguation implements equals() and hashCode(), so need to verify
+  // if they are required.
   private final ContainerConfiguration.Builder containerConfigurationBuilder =
       ContainerConfiguration.builder();
   private final BuildContext.Builder buildContextBuilder;
 
+  private ImageConfiguration baseImageConfiguration;
+  // TODO(chanseok): remove and use containerBuildPlanBuilder instead.
   private List<FileEntriesLayer> layerConfigurations = new ArrayList<>();
 
   /** Instantiate with {@link Jib#from}. */
@@ -108,6 +119,8 @@ public class JibContainerBuilder {
   JibContainerBuilder(
       ImageConfiguration imageConfiguration, BuildContext.Builder buildContextBuilder) {
     this.buildContextBuilder = buildContextBuilder.setBaseImageConfiguration(imageConfiguration);
+    baseImageConfiguration = imageConfiguration;
+    containerBuildPlanBuilder.setBaseImage(imageConfiguration.getImage().toString());
   }
 
   /**
@@ -170,7 +183,7 @@ public class JibContainerBuilder {
   /**
    * Adds a layer (defined by a {@link LayerConfiguration}).
    *
-   * @deprecated Use {@link #addFileEntriesLayer(FileEntriesLayer)}.
+   * @deprecated use {@link #addFileEntriesLayer(FileEntriesLayer)}.
    * @param layerConfiguration the {@link LayerConfiguration}
    * @return this
    */
@@ -186,6 +199,7 @@ public class JibContainerBuilder {
    * @return this
    */
   public JibContainerBuilder addFileEntriesLayer(FileEntriesLayer layer) {
+    containerBuildPlanBuilder.addLayer(layer);
     layerConfigurations.add(layer);
     return this;
   }
@@ -194,7 +208,7 @@ public class JibContainerBuilder {
    * Sets the layers (defined by a list of {@link LayerConfiguration}s). This replaces any
    * previously-added layers.
    *
-   * @deprecated Use {@link #setFileEntriesLayers(List)}.
+   * @deprecated use {@link #setFileEntriesLayers(List)}.
    * @param layerConfigurations the list of {@link LayerConfiguration}s
    * @return this
    */
@@ -215,6 +229,7 @@ public class JibContainerBuilder {
    * @return this
    */
   public JibContainerBuilder setFileEntriesLayers(List<FileEntriesLayer> layers) {
+    containerBuildPlanBuilder.setLayers(layers);
     layerConfigurations = new ArrayList<>(layers);
     return this;
   }
@@ -222,7 +237,7 @@ public class JibContainerBuilder {
   /**
    * Sets the layers. This replaces any previously-added layers.
    *
-   * @deprecated Use {@link #setFileEntriesLayers(FileEntriesLayer...)}.
+   * @deprecated use {@link #setFileEntriesLayers(FileEntriesLayer...)}.
    * @param layerConfigurations the {@link LayerConfiguration}s
    * @return this
    */
@@ -255,6 +270,7 @@ public class JibContainerBuilder {
    * @return this
    */
   public JibContainerBuilder setEntrypoint(@Nullable List<String> entrypoint) {
+    containerBuildPlanBuilder.setEntrypoint(entrypoint);
     containerConfigurationBuilder.setEntrypoint(entrypoint);
     return this;
   }
@@ -287,6 +303,7 @@ public class JibContainerBuilder {
    * @return this
    */
   public JibContainerBuilder setProgramArguments(@Nullable List<String> programArguments) {
+    containerBuildPlanBuilder.setCmd(programArguments);
     containerConfigurationBuilder.setProgramArguments(programArguments);
     return this;
   }
@@ -316,6 +333,7 @@ public class JibContainerBuilder {
    * @return this
    */
   public JibContainerBuilder setEnvironment(Map<String, String> environmentMap) {
+    containerBuildPlanBuilder.setEnvironment(environmentMap);
     containerConfigurationBuilder.setEnvironment(environmentMap);
     return this;
   }
@@ -329,6 +347,7 @@ public class JibContainerBuilder {
    * @see #setEnvironment
    */
   public JibContainerBuilder addEnvironmentVariable(String name, String value) {
+    containerBuildPlanBuilder.addEnvironmentVariable(name, value);
     containerConfigurationBuilder.addEnvironment(name, value);
     return this;
   }
@@ -343,6 +362,7 @@ public class JibContainerBuilder {
    * @return this
    */
   public JibContainerBuilder setVolumes(Set<AbsoluteUnixPath> volumes) {
+    containerBuildPlanBuilder.setVolumes(volumes);
     containerConfigurationBuilder.setVolumes(volumes);
     return this;
   }
@@ -366,6 +386,7 @@ public class JibContainerBuilder {
    * @see #setVolumes(Set)
    */
   public JibContainerBuilder addVolume(AbsoluteUnixPath volume) {
+    containerBuildPlanBuilder.addVolume(volume);
     containerConfigurationBuilder.addVolume(volume);
     return this;
   }
@@ -386,6 +407,7 @@ public class JibContainerBuilder {
    * @return this
    */
   public JibContainerBuilder setExposedPorts(Set<Port> ports) {
+    containerBuildPlanBuilder.setExposedPorts(ports);
     containerConfigurationBuilder.setExposedPorts(ports);
     return this;
   }
@@ -409,6 +431,7 @@ public class JibContainerBuilder {
    * @see #setExposedPorts(Set)
    */
   public JibContainerBuilder addExposedPort(Port port) {
+    containerBuildPlanBuilder.addExposedPort(port);
     containerConfigurationBuilder.addExposedPort(port);
     return this;
   }
@@ -423,6 +446,7 @@ public class JibContainerBuilder {
    * @return this
    */
   public JibContainerBuilder setLabels(Map<String, String> labelMap) {
+    containerBuildPlanBuilder.setLabels(labelMap);
     containerConfigurationBuilder.setLabels(labelMap);
     return this;
   }
@@ -435,6 +459,7 @@ public class JibContainerBuilder {
    * @return this
    */
   public JibContainerBuilder addLabel(String key, String value) {
+    containerBuildPlanBuilder.addLabel(key, value);
     containerConfigurationBuilder.addLabel(key, value);
     return this;
   }
@@ -447,6 +472,7 @@ public class JibContainerBuilder {
    * @return this
    */
   public JibContainerBuilder setFormat(ImageFormat imageFormat) {
+    containerBuildPlanBuilder.setFormat(imageFormat);
     buildContextBuilder.setTargetFormat(imageFormat);
     return this;
   }
@@ -458,6 +484,7 @@ public class JibContainerBuilder {
    * @return this
    */
   public JibContainerBuilder setCreationTime(Instant creationTime) {
+    containerBuildPlanBuilder.setCreationTime(creationTime);
     containerConfigurationBuilder.setCreationTime(creationTime);
     return this;
   }
@@ -483,6 +510,7 @@ public class JibContainerBuilder {
    * @return this
    */
   public JibContainerBuilder setUser(@Nullable String user) {
+    containerBuildPlanBuilder.setUser(user);
     containerConfigurationBuilder.setUser(user);
     return this;
   }
@@ -494,6 +522,7 @@ public class JibContainerBuilder {
    * @return this
    */
   public JibContainerBuilder setWorkingDirectory(@Nullable AbsoluteUnixPath workingDirectory) {
+    containerBuildPlanBuilder.setWorkingDirectory(workingDirectory);
     containerConfigurationBuilder.setWorkingDirectory(workingDirectory);
     return this;
   }
@@ -542,10 +571,93 @@ public class JibContainerBuilder {
    * Describes the container contents and configuration without actually physically building a
    * container.
    *
+   * @deprecated use {@link #toContainerBuildPlan}.
    * @return a description of the container being built
    */
+  @Deprecated
   public JibContainerDescription describeContainer() {
     return new JibContainerDescription(layerConfigurations);
+  }
+
+  /**
+   * Internal method. API end users should not use it.
+   *
+   * <p>Converts to {@link ContainerBuildPlan}. Note that not all values that this class holds can
+   * be described by a build plan, such as {@link CredentialRetriever}s for {@link RegistryImage},
+   * {@link DockerClient} for {@link DockerDaemonImage}, and output path for {@link TarImage}.
+   *
+   * @return {@link ContainerBuildPlan}
+   */
+  public ContainerBuildPlan toContainerBuildPlan() {
+    return containerBuildPlanBuilder.build();
+  }
+
+  /**
+   * Internal method. API end users should not use it.
+   *
+   * <p>Reconfigures {@link JibContainerBuilder} from the given {@code buildPlan}. Every value
+   * configurable using "setters" in this class is overwritten by the value in {@code buildPlan};
+   * only retained are some base image properties inherent in {@link JibContainerBuilder} but absent
+   * in {@link ContainerBuildPlan}, such as {@link CredentialRetriever}s for {@link RegistryImage},
+   * {@link DockerClient} for {@link DockerDaemonImage}, and output path for {@link TarImage}.
+   *
+   * @param buildPlan build plan to apply
+   * @return {@link JibContainerBuilder} reconfigured from {@code buildPlan}
+   * @throws InvalidImageReferenceException if the base image value in {@code buildPlan} is an
+   *     invalid reference
+   */
+  public JibContainerBuilder applyContainerBuildPlan(ContainerBuildPlan buildPlan)
+      throws InvalidImageReferenceException {
+    containerBuildPlanBuilder
+        .setBaseImage(buildPlan.getBaseImage())
+        .setArchitectureHint(buildPlan.getArchitectureHint())
+        .setOsHint(buildPlan.getOsHint())
+        .setCreationTime(buildPlan.getCreationTime())
+        .setFormat(buildPlan.getFormat())
+        .setEnvironment(buildPlan.getEnvironment())
+        .setLabels(buildPlan.getLabels())
+        .setVolumes(buildPlan.getVolumes())
+        .setExposedPorts(buildPlan.getExposedPorts())
+        .setUser(buildPlan.getUser())
+        .setWorkingDirectory(buildPlan.getWorkingDirectory())
+        .setEntrypoint(buildPlan.getEntrypoint())
+        .setCmd(buildPlan.getCmd())
+        .setLayers(buildPlan.getLayers());
+
+    containerConfigurationBuilder
+        .setCreationTime(buildPlan.getCreationTime())
+        .setEnvironment(buildPlan.getEnvironment())
+        .setLabels(buildPlan.getLabels())
+        .setVolumes(buildPlan.getVolumes())
+        .setExposedPorts(buildPlan.getExposedPorts())
+        .setUser(buildPlan.getUser())
+        .setWorkingDirectory(buildPlan.getWorkingDirectory())
+        .setEntrypoint(buildPlan.getEntrypoint())
+        .setProgramArguments(buildPlan.getCmd());
+
+    ImageConfiguration.Builder builder =
+        ImageConfiguration.builder(ImageReference.parse(buildPlan.getBaseImage()))
+            .setCredentialRetrievers(baseImageConfiguration.getCredentialRetrievers());
+    baseImageConfiguration.getDockerClient().ifPresent(builder::setDockerClient);
+    baseImageConfiguration.getTarPath().ifPresent(builder::setTarPath);
+    baseImageConfiguration = builder.build();
+
+    // For now, only FileEntriesLayer is supported in jib-core.
+    Function<LayerObject, FileEntriesLayer> castToFileEntriesLayer =
+        layer -> {
+          Verify.verify(
+              layer instanceof FileEntriesLayer,
+              "layer types other than FileEntriesLayer not yet supported in build plan layers");
+          return (FileEntriesLayer) layer;
+        };
+    layerConfigurations =
+        buildPlan.getLayers().stream().map(castToFileEntriesLayer).collect(Collectors.toList());
+
+    buildContextBuilder
+        .setTargetFormat(buildPlan.getFormat())
+        .setBaseImageConfiguration(baseImageConfiguration)
+        .setLayerConfigurations(layerConfigurations);
+    return this;
   }
 
   /**
@@ -567,6 +679,7 @@ public class JibContainerBuilder {
         .setAllowInsecureRegistries(containerizer.getAllowInsecureRegistries())
         .setOffline(containerizer.isOfflineMode())
         .setToolName(containerizer.getToolName())
+        .setToolVersion(containerizer.getToolVersion())
         .setExecutorService(containerizer.getExecutorService().orElse(null))
         .setEventHandlers(containerizer.buildEventHandlers())
         .setAlwaysCacheBaseImage(containerizer.getAlwaysCacheBaseImage())

@@ -9,11 +9,14 @@ plugins {
 // parent build.gradle
 dependencies {
   sourceProject project(':jib-build-plan')
+  sourceProject project(':jib-plugins-extension-common')
+  sourceProject project(':jib-maven-plugin-extension-api')
   sourceProject project(':jib-core')
   sourceProject project(':jib-plugins-common')
+  ensureNoProjectDependencies()
 
-  implementation 'org.apache.maven:maven-plugin-api:3.5.2'
-  implementation 'org.apache.maven:maven-core:3.5.2'
+  implementation "org.apache.maven:maven-plugin-api:${dependencyVersions.MAVEN_API}"
+  implementation "org.apache.maven:maven-core:${dependencyVersions.MAVEN_API}"
 
   // compileOnly + testImplementation equivalent to "provided"
   compileOnly 'org.apache.maven.plugin-tools:maven-plugin-annotations:3.5'
@@ -31,7 +34,7 @@ dependencies {
   testImplementation "com.github.stefanbirkner:system-rules:${dependencyVersions.SYSTEM_RULES}"
 
   testImplementation 'org.apache.maven.shared:maven-verifier:1.6'
-  testImplementation 'org.apache.maven:maven-compat:3.5.4'
+  testImplementation "org.apache.maven:maven-compat:${dependencyVersions.MAVEN_API}"
   testImplementation 'org.slf4j:slf4j-api:1.7.30'
   testImplementation 'org.slf4j:slf4j-simple:1.7.30'
 

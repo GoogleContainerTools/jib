@@ -342,6 +342,10 @@ public class ImageReference {
    */
   @Override
   public String toString() {
+    if (isScratch()) {
+      return "scratch";
+    }
+
     StringBuilder referenceString = new StringBuilder();
 
     if (!DOCKER_HUB_REGISTRY.equals(registry)) {

@@ -122,10 +122,9 @@ class LayerDefinitionParser implements CommandLine.ITypeConverter<FileEntriesLay
       return new ActualPermissionsProvider();
     }
 
-    FilePermissions filesPermission = FilePermissions.DEFAULT_FILE_PERMISSIONS;
-    FilePermissions directoriesPermission = FilePermissions.DEFAULT_FOLDER_PERMISSIONS;
     String[] spec = directive.split(":", -1);
-    filesPermission = FilePermissions.fromOctalString(spec[0]);
+    FilePermissions filesPermission = FilePermissions.fromOctalString(spec[0]);
+    FilePermissions directoriesPermission = FilePermissions.DEFAULT_FOLDER_PERMISSIONS;
     if (spec.length > 1) {
       directoriesPermission = FilePermissions.fromOctalString(spec[1]);
     }

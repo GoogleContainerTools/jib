@@ -19,7 +19,6 @@ package com.google.cloud.tools.jib.registry;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.google.api.client.http.HttpStatusCodes;
 import com.google.api.client.util.Base64;
-import com.google.cloud.tools.jib.ProjectInfo;
 import com.google.cloud.tools.jib.api.Credential;
 import com.google.cloud.tools.jib.api.DescriptorDigest;
 import com.google.cloud.tools.jib.api.LogEvent;
@@ -41,7 +40,6 @@ import com.google.cloud.tools.jib.json.JsonTemplate;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
-import com.google.common.base.Strings;
 import com.google.common.base.Verify;
 import com.google.common.collect.ImmutableSetMultimap;
 import com.google.common.collect.Multimap;
@@ -66,7 +64,7 @@ public class RegistryClient {
     private final RegistryEndpointRequestProperties registryEndpointRequestProperties;
     private final FailoverHttpClient httpClient;
 
-    @Nullable private String userAgentSuffix;
+    @Nullable private String userAgent;
     @Nullable private Credential credential;
 
     private Factory(
@@ -90,13 +88,13 @@ public class RegistryClient {
     }
 
     /**
-     * Sets a suffix to append to {@code User-Agent} headers.
+     * Sets the value of {@code User-Agent} in headers for registry requests.
      *
-     * @param userAgentSuffix the suffix to append
+     * @param userAgent user agent string
      * @return this
      */
-    public Factory setUserAgentSuffix(@Nullable String userAgentSuffix) {
-      this.userAgentSuffix = userAgentSuffix;
+    public Factory setUserAgent(@Nullable String userAgent) {
+      this.userAgent = userAgent;
       return this;
     }
 
@@ -107,36 +105,7 @@ public class RegistryClient {
      */
     public RegistryClient newRegistryClient() {
       return new RegistryClient(
-          eventHandlers,
-          credential,
-          registryEndpointRequestProperties,
-          makeUserAgent(),
-          httpClient);
-    }
-
-    /**
-     * The {@code User-Agent} is in the form of {@code jib <version> <type>}. For example: {@code
-     * jib 0.9.0 jib-maven-plugin}.
-     *
-     * @return the {@code User-Agent} header to send. The {@code User-Agent} can be disabled by
-     *     setting the system property variable {@code _JIB_DISABLE_USER_AGENT} to any non-empty
-     *     string.
-     */
-    private String makeUserAgent() {
-      if (!JibSystemProperties.isUserAgentEnabled()) {
-        return "";
-      }
-
-      StringBuilder userAgentBuilder = new StringBuilder("jib ").append(ProjectInfo.VERSION);
-      if (userAgentSuffix != null) {
-        userAgentBuilder.append(" ").append(userAgentSuffix);
-      }
-      if (!Strings.isNullOrEmpty(System.getProperty(JibSystemProperties.UPSTREAM_CLIENT))) {
-        userAgentBuilder
-            .append(" ")
-            .append(System.getProperty(JibSystemProperties.UPSTREAM_CLIENT));
-      }
-      return userAgentBuilder.toString();
+          eventHandlers, credential, registryEndpointRequestProperties, userAgent, httpClient);
     }
   }
 
@@ -266,7 +235,7 @@ public class RegistryClient {
   private final EventHandlers eventHandlers;
   @Nullable private final Credential credential;
   private final RegistryEndpointRequestProperties registryEndpointRequestProperties;
-  private final String userAgent;
+  @Nullable private final String userAgent;
   private final FailoverHttpClient httpClient;
 
   // mutable
@@ -282,14 +251,14 @@ public class RegistryClient {
    * @param credential credential for registry/repository; will not be used unless {@link
    *     #configureBasicAuth} or {@link #doBearerAuth} is called
    * @param registryEndpointRequestProperties properties of registry endpoint requests
-   * @param userAgent {@code User-Agent} header to send with the request
+   * @param userAgent {@code User-Agent} header to send with the request, can be {@code null}
    * @param httpClient HTTP client
    */
   private RegistryClient(
       EventHandlers eventHandlers,
       @Nullable Credential credential,
       RegistryEndpointRequestProperties registryEndpointRequestProperties,
-      String userAgent,
+      @Nullable String userAgent,
       FailoverHttpClient httpClient) {
     this.eventHandlers = eventHandlers;
     this.credential = credential;
@@ -576,6 +545,7 @@ public class RegistryClient {
     return authorization != null && "bearer".equalsIgnoreCase(authorization.getScheme());
   }
 
+  @Nullable
   @VisibleForTesting
   String getUserAgent() {
     return userAgent;
