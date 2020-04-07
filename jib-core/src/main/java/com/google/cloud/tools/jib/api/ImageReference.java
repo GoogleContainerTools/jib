@@ -335,13 +335,30 @@ public class ImageReference {
   }
 
   /**
-   * Stringifies the {@link ImageReference}. When the tag is a digest, it is prepended with the at
-   * {@code @} symbol instead of a colon {@code :}.
+   * Stringifies the {@link ImageReference}.
    *
    * @return the image reference in Docker-readable format (inverse of {@link #parse})
    */
   @Override
   public String toString() {
+    return toString(true);
+  }
+
+  /**
+   * Stringifies the {@link ImageReference}. If the digest is set, the result will include the
+   * digest and no tag. Otherwise, the result will include the tag, or {@code latest} if no tag is
+   * set.
+   *
+   * @return the image reference in Docker-readable format including a qualifier.
+   */
+  public String toStringWithQualifier() {
+    if (Strings.isNullOrEmpty(digest)) {
+      return toString(false) + (usesDefaultTag() ? ":" + DEFAULT_TAG : "");
+    }
+    return toString(false);
+  }
+
+  private String toString(boolean includeTagIfDigestPresent) {
     if (isScratch()) {
       return "scratch";
     }
@@ -361,9 +378,11 @@ public class ImageReference {
       referenceString.append(repository);
     }
 
-    // Use tag if not the default tag.
-    if (!DEFAULT_TAG.equals(tag)) {
-      referenceString.append(':').append(tag);
+    if (Strings.isNullOrEmpty(digest) || includeTagIfDigestPresent) {
+      // Use tag if not the default tag.
+      if (!DEFAULT_TAG.equals(tag)) {
+        referenceString.append(':').append(tag);
+      }
     }
 
     if (!Strings.isNullOrEmpty(digest)) {
@@ -371,20 +390,6 @@ public class ImageReference {
     }
 
     return referenceString.toString();
-  }
-
-  /**
-   * Stringifies the {@link ImageReference}, including the default tag if no tag or digest is set.
-   *
-   * @return the image reference in Docker-readable format, including the default tag if no tag or
-   *     digest is set.
-   */
-  public String toStringWithQualifier() {
-    // Insert tag before digest
-    if (!Strings.isNullOrEmpty(digest)) {
-      return toString();
-    }
-    return toString() + (usesDefaultTag() ? ":" + DEFAULT_TAG : "");
   }
 
   @Override

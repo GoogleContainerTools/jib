@@ -169,6 +169,14 @@ public class ImageReferenceTest {
                 null,
                 "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
             .toStringWithQualifier());
+    Assert.assertEquals(
+        "anotherregistry/anotherimage@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        ImageReference.of(
+                "anotherregistry",
+                "anotherimage",
+                "sometag",
+                "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
+            .toStringWithQualifier());
   }
 
   @Test
