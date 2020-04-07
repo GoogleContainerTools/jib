@@ -151,16 +151,16 @@ public class ImageReference {
    *
    * @param registry the image registry, or {@code null} to use the default registry (Docker Hub)
    * @param repository the image repository
-   * @param tag the image tag, or {@code null} to use the default tag ({@code latest}). If {@code
-   *     tag} is a valid digest string, it will be treated as a digest instead of a tag.
+   * @param qualifier the image tag or digest, or {@code null} to use the default tag ({@code
+   *     latest}).
    * @return an {@link ImageReference} built from the given registry, repository, and tag
    */
   public static ImageReference of(
-      @Nullable String registry, String repository, @Nullable String tag) {
-    if (!Strings.isNullOrEmpty(tag) && isValidDigest(tag)) {
-      return of(registry, repository, null, tag);
+      @Nullable String registry, String repository, @Nullable String qualifier) {
+    if (!Strings.isNullOrEmpty(qualifier) && isValidDigest(qualifier)) {
+      return of(registry, repository, null, qualifier);
     }
-    return of(registry, repository, tag, null);
+    return of(registry, repository, qualifier, null);
   }
 
   /**
@@ -363,7 +363,6 @@ public class ImageReference {
 
     // Use tag if not the default tag.
     if (!DEFAULT_TAG.equals(tag)) {
-      // Append with "@tag" instead of ":tag" if tag is a digest
       referenceString.append(':').append(tag);
     }
 

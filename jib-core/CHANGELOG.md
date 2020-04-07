@@ -14,6 +14,7 @@ All notable changes to this project will be documented in this file.
 ### Changed
 
 - `ImageReference#toStringWithTag` has been renamed to `toStringWithQualifier`.
+- `ImageReference#isValidTag` no longer returns `true` for digests.
 - `ImageReference#isTagDigest` has been removed; use `#getDigest` with `Optional#isPresent()` to check if an `ImageReference` uses a digest.
 
 ### Fixed
