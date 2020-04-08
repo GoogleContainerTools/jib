@@ -109,26 +109,23 @@ If developing with Eclipse and M2Eclipse (the Maven tooling for Eclipse), just l
 To use a local build of the `jib-gradle-plugin`:
 
   1. Build and install `jib-gradle-plugin` into your local `~/.m2/repository`
-     with `./gradlew jib-gradle-plugin:install`;
-  1. Modify your test project's `build.gradle` to look like the following:
+     with `./gradlew jib-gradle-plugin:publish`
+  1. Add a `pluginManagement` block to your test project's `settings.gradle` to enable reading plugins from the local maven repository. It must be the first block in the file before any `include` directives.
         ```groovy
-        buildscript {
-            repositories {
-                mavenLocal() // resolve in ~/.m2/repository
-                mavenCentral()
-            }
-            dependencies {
-                classpath 'com.google.cloud.tools:jib-gradle-plugin:2.1.1-SNAPSHOT'
-            }
+        pluginManagement {
+          repositories {
+            mavenLocal()
+            gradlePluginPortal()
+          }
         }
-
+        ```
+  1. Modify your test project's `build.gradle` to use the snapshot version
+        ```groovy
         plugins {
-            // id 'com.google.cloud.tools.jib' version '2.1.0'
+          // id 'com.google.cloud.tools.jib' version '2.1.0'
+          id 'com.google.cloud.tools.jib' version '2.1.1-SNAPSHOT'
         }
 
-        // Applies the java plugin after Jib to make sure it works in this order.
-        apply plugin: 'com.google.cloud.tools.jib' // must explicitly apply local
-        apply plugin: 'java'
         ```
 
 ### Attaching a debugger
@@ -140,4 +137,3 @@ Attach a debugger to a Gradle instance by running Gradle as follows:
   --no-daemon \
   -Dorg.gradle.jvmargs='-agentlib:jdwp:transport=dt_socket,server=y,address=5005,suspend=y'
 ```
-

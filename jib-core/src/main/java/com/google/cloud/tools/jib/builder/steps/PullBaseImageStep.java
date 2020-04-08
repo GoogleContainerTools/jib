@@ -103,7 +103,7 @@ class PullBaseImageStep implements Callable<ImageAndRegistryClient> {
       throw new IOException(
           "Cannot run Jib in offline mode; " + imageReference + " not found in local Jib cache");
 
-    } else if (imageReference.isTagDigest()) {
+    } else if (imageReference.getDigest().isPresent()) {
       Optional<Image> image = getCachedBaseImage();
       if (image.isPresent()) {
         RegistryClient noAuthRegistryClient =

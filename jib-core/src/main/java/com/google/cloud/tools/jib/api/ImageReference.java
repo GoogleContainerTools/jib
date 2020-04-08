@@ -20,6 +20,7 @@ import com.google.cloud.tools.jib.registry.RegistryAliasGroup;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.annotation.Nullable;
@@ -72,7 +73,7 @@ public class ImageReference {
    */
   private static final String REFERENCE_REGEX =
       String.format(
-          "^(?:(%s)/)?(%s)(?:(?::(%s))|(?:@(%s)))?$",
+          "^(?:(%s)/)?(%s)(?::(%s))?(?:@(%s))?$",
           REGISTRY_REGEX, REPOSITORY_REGEX, TAG_REGEX, DescriptorDigest.DIGEST_REGEX);
 
   private static final Pattern REFERENCE_PATTERN = Pattern.compile(REFERENCE_REGEX);
@@ -137,18 +138,11 @@ public class ImageReference {
       repository = LIBRARY_REPOSITORY_PREFIX + repository;
     }
 
-    if (!Strings.isNullOrEmpty(tag)) {
-      if (!Strings.isNullOrEmpty(digest)) {
-        // Cannot have matched both tag and digest.
-        throw new InvalidImageReferenceException(reference);
-      }
-    } else if (!Strings.isNullOrEmpty(digest)) {
-      tag = digest;
-    } else {
+    if (Strings.isNullOrEmpty(tag)) {
       tag = DEFAULT_TAG;
     }
 
-    return new ImageReference(registry, repository, tag);
+    return new ImageReference(registry, repository, tag, digest);
   }
 
   /**
@@ -157,14 +151,34 @@ public class ImageReference {
    *
    * @param registry the image registry, or {@code null} to use the default registry (Docker Hub)
    * @param repository the image repository
-   * @param tag the image tag, or {@code null} to use the default tag ({@code latest})
+   * @param qualifier the image tag or digest, or {@code null} to use the default tag ({@code
+   *     latest}).
    * @return an {@link ImageReference} built from the given registry, repository, and tag
    */
   public static ImageReference of(
-      @Nullable String registry, String repository, @Nullable String tag) {
+      @Nullable String registry, String repository, @Nullable String qualifier) {
+    if (!Strings.isNullOrEmpty(qualifier) && isValidDigest(qualifier)) {
+      return of(registry, repository, null, qualifier);
+    }
+    return of(registry, repository, qualifier, null);
+  }
+
+  /**
+   * Constructs an {@link ImageReference} from the image reference components, consisting of an
+   * optional registry, a repository, an optional tag, and an optional digest.
+   *
+   * @param registry the image registry, or {@code null} to use the default registry (Docker Hub)
+   * @param repository the image repository
+   * @param tag the image tag, or {@code null} to use the default tag ({@code latest})
+   * @param digest the image digest
+   * @return an {@link ImageReference} built from the given registry, repository, and tag
+   */
+  public static ImageReference of(
+      @Nullable String registry, String repository, @Nullable String tag, @Nullable String digest) {
     Preconditions.checkArgument(Strings.isNullOrEmpty(registry) || isValidRegistry(registry));
     Preconditions.checkArgument(isValidRepository(repository));
     Preconditions.checkArgument(Strings.isNullOrEmpty(tag) || isValidTag(tag));
+    Preconditions.checkArgument(Strings.isNullOrEmpty(digest) || isValidDigest(digest));
 
     if (Strings.isNullOrEmpty(registry)) {
       registry = DOCKER_HUB_REGISTRY;
@@ -172,7 +186,7 @@ public class ImageReference {
     if (Strings.isNullOrEmpty(tag)) {
       tag = DEFAULT_TAG;
     }
-    return new ImageReference(registry, repository, tag);
+    return new ImageReference(registry, repository, tag, digest);
   }
 
   /**
@@ -183,7 +197,7 @@ public class ImageReference {
    *     to "scratch"
    */
   public static ImageReference scratch() {
-    return new ImageReference("", "scratch", "");
+    return new ImageReference("", "scratch", "", null);
   }
 
   /**
@@ -216,7 +230,18 @@ public class ImageReference {
    * @return {@code true} if is a valid tag; {@code false} otherwise
    */
   public static boolean isValidTag(String tag) {
-    return tag.matches(TAG_REGEX) || tag.matches(DescriptorDigest.DIGEST_REGEX);
+    return tag.matches(TAG_REGEX);
+  }
+
+  /**
+   * Returns {@code true} if {@code digest} is a valid digest string. For example, a valid digest
+   * could be {@code sha256:868fd30a0e47b8d8ac485df174795b5e2fe8a6c8f056cc707b232d65b8a1ab68}.
+   *
+   * @param digest the digest to check
+   * @return {@code true} if is a valid digest; {@code false} otherwise
+   */
+  public static boolean isValidDigest(String digest) {
+    return digest.matches(DescriptorDigest.DIGEST_REGEX);
   }
 
   /**
@@ -234,12 +259,14 @@ public class ImageReference {
   private final String registry;
   private final String repository;
   private final String tag;
+  @Nullable private final String digest;
 
   /** Construct with {@link #parse}. */
-  private ImageReference(String registry, String repository, String tag) {
+  private ImageReference(String registry, String repository, String tag, @Nullable String digest) {
     this.registry = RegistryAliasGroup.getHost(registry);
     this.repository = repository;
     this.tag = tag;
+    this.digest = digest;
   }
 
   /**
@@ -270,6 +297,15 @@ public class ImageReference {
   }
 
   /**
+   * Gets the digest portion of the {@link ImageReference}.
+   *
+   * @return the optional digest
+   */
+  public Optional<String> getDigest() {
+    return Optional.ofNullable(digest);
+  }
+
+  /**
    * Returns {@code true} if the {@link ImageReference} uses the default tag ((@code latest} or
    * empty); {@code false} if not.
    *
@@ -277,16 +313,6 @@ public class ImageReference {
    */
   public boolean usesDefaultTag() {
     return isDefaultTag(tag);
-  }
-
-  /**
-   * Returns {@code true} if the {@link ImageReference} uses a SHA-256 digest as its tag; {@code
-   * false} if not.
-   *
-   * @return {@code true} if tag is a SHA-256 digest; {@code false} if not
-   */
-  public boolean isTagDigest() {
-    return tag.matches(DescriptorDigest.DIGEST_REGEX);
   }
 
   /**
@@ -309,13 +335,34 @@ public class ImageReference {
   }
 
   /**
-   * Stringifies the {@link ImageReference}. When the tag is a digest, it is prepended with the at
-   * {@code @} symbol instead of a colon {@code :}.
+   * Stringifies the {@link ImageReference}.
    *
    * @return the image reference in Docker-readable format (inverse of {@link #parse})
    */
   @Override
   public String toString() {
+    return toString(true);
+  }
+
+  /**
+   * Stringifies the {@link ImageReference}. If the digest is set, the result will include the
+   * digest and no tag. Otherwise, the result will include the tag, or {@code latest} if no tag is
+   * set.
+   *
+   * @return the image reference in Docker-readable format including a qualifier.
+   */
+  public String toStringWithQualifier() {
+    if (Strings.isNullOrEmpty(digest)) {
+      return toString(false) + (usesDefaultTag() ? ":" + DEFAULT_TAG : "");
+    }
+    return toString(false);
+  }
+
+  private String toString(boolean includeTagIfDigestPresent) {
+    if (isScratch()) {
+      return "scratch";
+    }
+
     StringBuilder referenceString = new StringBuilder();
 
     if (!DOCKER_HUB_REGISTRY.equals(registry)) {
@@ -331,22 +378,18 @@ public class ImageReference {
       referenceString.append(repository);
     }
 
-    // Use tag if not the default tag.
-    if (!DEFAULT_TAG.equals(tag)) {
-      // Append with "@tag" instead of ":tag" if tag is a digest
-      referenceString.append(isTagDigest() ? '@' : ':').append(tag);
+    if (Strings.isNullOrEmpty(digest) || includeTagIfDigestPresent) {
+      // Use tag if not the default tag.
+      if (!DEFAULT_TAG.equals(tag)) {
+        referenceString.append(':').append(tag);
+      }
+    }
+
+    if (!Strings.isNullOrEmpty(digest)) {
+      referenceString.append('@').append(digest);
     }
 
     return referenceString.toString();
-  }
-
-  /**
-   * Stringifies the {@link ImageReference}, without hiding the tag.
-   *
-   * @return the image reference in Docker-readable format, without hiding the tag
-   */
-  public String toStringWithTag() {
-    return toString() + (usesDefaultTag() ? ":" + DEFAULT_TAG : "");
   }
 
   @Override
@@ -360,11 +403,12 @@ public class ImageReference {
     ImageReference otherImageReference = (ImageReference) other;
     return registry.equals(otherImageReference.registry)
         && repository.equals(otherImageReference.repository)
-        && tag.equals(otherImageReference.tag);
+        && tag.equals(otherImageReference.tag)
+        && Objects.equals(digest, otherImageReference.digest);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(registry, repository, tag);
+    return Objects.hash(registry, repository, tag, digest);
   }
 }

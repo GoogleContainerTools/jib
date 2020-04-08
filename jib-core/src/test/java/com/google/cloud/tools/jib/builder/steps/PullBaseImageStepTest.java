@@ -85,7 +85,7 @@ public class PullBaseImageStepTest {
     ImageReference imageReference =
         ImageReference.parse(
             "awesome@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
-    Assert.assertTrue(imageReference.isTagDigest());
+    Assert.assertTrue(imageReference.getDigest().isPresent());
     Mockito.when(imageConfiguration.getImage()).thenReturn(imageReference);
     Mockito.when(cache.retrieveMetadata(imageReference)).thenReturn(Optional.of(manifestAndConfig));
 
