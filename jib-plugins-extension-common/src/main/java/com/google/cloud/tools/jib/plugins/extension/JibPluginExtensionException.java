@@ -16,10 +16,8 @@
 
 package com.google.cloud.tools.jib.plugins.extension;
 
-import java.util.concurrent.ExecutionException;
-
 /** Exception while running Jib plugin extensions. */
-public class JibPluginExtensionException extends ExecutionException {
+public class JibPluginExtensionException extends Exception {
 
   private final Class<? extends JibPluginExtension> extensionClass;
 
