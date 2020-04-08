@@ -52,10 +52,9 @@ public class ImageReferenceTest {
     for (String goodRegistry : goodRegistries) {
       for (String goodRepository : goodRepositories) {
         for (String goodTag : goodTags) {
-          verifyParse(goodRegistry, goodRepository, ":", goodTag);
-        }
-        for (String goodDigest : goodDigests) {
-          verifyParse(goodRegistry, goodRepository, "@", goodDigest);
+          for (String goodDigest : goodDigests) {
+            verifyParse(goodRegistry, goodRepository, goodTag, goodDigest);
+          }
         }
       }
     }
@@ -148,36 +147,36 @@ public class ImageReferenceTest {
   }
 
   @Test
-  public void testToStringWithTag() {
+  public void testToStringWithQualifier() {
     Assert.assertEquals(
-        "someimage:latest", ImageReference.of(null, "someimage", null).toStringWithTag());
+        "someimage:latest", ImageReference.of(null, "someimage", null).toStringWithQualifier());
     Assert.assertEquals(
-        "someimage:latest", ImageReference.of("", "someimage", "").toStringWithTag());
+        "someimage:latest", ImageReference.of("", "someimage", "").toStringWithQualifier());
     Assert.assertEquals(
         "someotherimage:latest",
-        ImageReference.of(null, "library/someotherimage", null).toStringWithTag());
+        ImageReference.of(null, "library/someotherimage", null).toStringWithQualifier());
     Assert.assertEquals(
         "someregistry/someotherimage:latest",
-        ImageReference.of("someregistry", "someotherimage", null).toStringWithTag());
+        ImageReference.of("someregistry", "someotherimage", null).toStringWithQualifier());
     Assert.assertEquals(
         "anotherregistry/anotherimage:sometag",
-        ImageReference.of("anotherregistry", "anotherimage", "sometag").toStringWithTag());
-  }
-
-  @Test
-  public void testIsTagDigest() throws InvalidImageReferenceException {
-    Assert.assertFalse(ImageReference.of(null, "someimage", null).isTagDigest());
-    Assert.assertFalse(ImageReference.of(null, "someimage", "latest").isTagDigest());
-    Assert.assertTrue(
+        ImageReference.of("anotherregistry", "anotherimage", "sometag").toStringWithQualifier());
+    Assert.assertEquals(
+        "anotherregistry/anotherimage@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
         ImageReference.of(
+                "anotherregistry",
+                "anotherimage",
                 null,
-                "someimage",
-                "sha256:b430543bea1d8326e767058bdab3a2482ea45f59d7af5c5c61334cd29ede88a1")
-            .isTagDigest());
-    Assert.assertTrue(
-        ImageReference.parse(
-                "someimage@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
-            .isTagDigest());
+                "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
+            .toStringWithQualifier());
+    Assert.assertEquals(
+        "anotherregistry/anotherimage@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        ImageReference.of(
+                "anotherregistry",
+                "anotherimage",
+                "sometag",
+                "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
+            .toStringWithQualifier());
   }
 
   @Test
@@ -186,6 +185,11 @@ public class ImageReferenceTest {
     Assert.assertTrue(ImageReference.scratch().isScratch());
     Assert.assertFalse(ImageReference.of("", "scratch", "").isScratch());
     Assert.assertFalse(ImageReference.of(null, "scratch", null).isScratch());
+  }
+
+  @Test
+  public void testToString_scratch() {
+    Assert.assertEquals("scratch", ImageReference.scratch().toString());
   }
 
   @Test
@@ -238,7 +242,7 @@ public class ImageReferenceTest {
     Assert.assertNotEquals(image1.hashCode(), image2.hashCode());
   }
 
-  private void verifyParse(String registry, String repository, String tagSeparator, String tag)
+  private void verifyParse(String registry, String repository, String tag, String digest)
       throws InvalidImageReferenceException {
     // Gets the expected parsed components.
     String expectedRegistry = registry;
@@ -261,7 +265,10 @@ public class ImageReferenceTest {
     }
     imageReferenceBuilder.append(repository);
     if (!Strings.isNullOrEmpty(tag)) {
-      imageReferenceBuilder.append(tagSeparator).append(tag);
+      imageReferenceBuilder.append(':').append(tag);
+    }
+    if (!Strings.isNullOrEmpty(digest)) {
+      imageReferenceBuilder.append('@').append(digest);
     }
 
     ImageReference imageReference = ImageReference.parse(imageReferenceBuilder.toString());
@@ -269,5 +276,6 @@ public class ImageReferenceTest {
     Assert.assertEquals(expectedRegistry, imageReference.getRegistry());
     Assert.assertEquals(expectedRepository, imageReference.getRepository());
     Assert.assertEquals(expectedTag, imageReference.getTag());
+    Assert.assertEquals(digest, imageReference.getDigest().orElse(null));
   }
 }
