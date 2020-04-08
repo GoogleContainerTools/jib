@@ -37,7 +37,6 @@ public class ConfigurationPropertyValidatorTest {
 
   @Mock private Consumer<LogEvent> mockLogger;
   @Mock private AuthProperty mockAuth;
-  @Mock private ImageReference mockImageReference;
   @Mock private RawConfiguration mockConfiguration;
 
   @Test
@@ -113,7 +112,7 @@ public class ConfigurationPropertyValidatorTest {
         ConfigurationPropertyValidator.getGeneratedTargetDockerTag(
             "a/b:c", mockProjectProperties, helpfulSuggestions);
     Assert.assertEquals("a/b", result.getRepository());
-    Assert.assertEquals("c", result.getTag());
+    Assert.assertEquals("c", result.getTag().orElse(null));
     Mockito.verify(mockLogger, Mockito.never()).accept(LogEvent.lifecycle(Mockito.any()));
 
     // Target not configured
@@ -121,7 +120,7 @@ public class ConfigurationPropertyValidatorTest {
         ConfigurationPropertyValidator.getGeneratedTargetDockerTag(
             null, mockProjectProperties, helpfulSuggestions);
     Assert.assertEquals("project-name", result.getRepository());
-    Assert.assertEquals("project-version", result.getTag());
+    Assert.assertEquals("project-version", result.getTag().orElse(null));
     Mockito.verify(mockProjectProperties)
         .log(
             LogEvent.lifecycle(

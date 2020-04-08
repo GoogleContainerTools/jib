@@ -126,13 +126,13 @@ public class BuildContextTest {
     Assert.assertEquals(
         expectedBaseImageName, buildContext.getBaseImageConfiguration().getImageRepository());
     Assert.assertEquals(
-        expectedBaseImageTag, buildContext.getBaseImageConfiguration().getImageTag());
+        expectedBaseImageTag, buildContext.getBaseImageConfiguration().getImageQualifier());
     Assert.assertEquals(
         expectedTargetServerUrl, buildContext.getTargetImageConfiguration().getImageRegistry());
     Assert.assertEquals(
         expectedTargetImageName, buildContext.getTargetImageConfiguration().getImageRepository());
     Assert.assertEquals(
-        expectedTargetTag, buildContext.getTargetImageConfiguration().getImageTag());
+        expectedTargetTag, buildContext.getTargetImageConfiguration().getImageQualifier());
     Assert.assertEquals(expectedTargetImageTags, buildContext.getAllTargetImageTags());
     Assert.assertEquals(
         Credential.from("username", "password"),

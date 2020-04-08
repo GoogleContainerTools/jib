@@ -201,7 +201,8 @@ public class SingleProjectIntegrationTest {
 
     String digest =
         readDigestFile(simpleTestProject.getProjectRoot().resolve("build/jib-image.digest"));
-    String imageReferenceWithDigest = ImageReference.parse(targetImage).withTag(digest).toString();
+    String imageReferenceWithDigest =
+        ImageReference.parse(targetImage).withQualifier(digest).toString();
     Assert.assertEquals(output, JibRunHelper.pullAndRunBuiltImage(imageReferenceWithDigest));
 
     String id = readDigestFile(simpleTestProject.getProjectRoot().resolve("build/jib-image.id"));
@@ -335,7 +336,8 @@ public class SingleProjectIntegrationTest {
     String digest =
         readDigestFile(
             simpleTestProject.getProjectRoot().resolve("build/different-jib-image.digest"));
-    String imageReferenceWithDigest = ImageReference.parse(targetImage).withTag(digest).toString();
+    String imageReferenceWithDigest =
+        ImageReference.parse(targetImage).withQualifier(digest).toString();
     localRegistry2.pull(imageReferenceWithDigest);
     Assert.assertEquals(
         output, new Command("docker", "run", "--rm", imageReferenceWithDigest).run());

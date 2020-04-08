@@ -137,7 +137,7 @@ public class BuildImageMojoIntegrationTest {
       // Test pulling/running using image digest
       String digest = readDigestFile(projectRoot.resolve("target/jib-image.digest"));
       String imageReferenceWithDigest =
-          ImageReference.parse(imageReference).withTag(digest).toString();
+          ImageReference.parse(imageReference).withQualifier(digest).toString();
       Assert.assertEquals(output, pullAndRunBuiltImage(imageReferenceWithDigest));
 
       // Test running using image id
@@ -198,14 +198,15 @@ public class BuildImageMojoIntegrationTest {
     verifier.verifyErrorFreeLog();
 
     String additionalImageReference =
-        ImageReference.parse(imageReference).withTag(additionalTag).toString();
+        ImageReference.parse(imageReference).withQualifier(additionalTag).toString();
 
     String output = pullAndRunBuiltImage(imageReference);
     String additionalOutput = pullAndRunBuiltImage(additionalImageReference);
     Assert.assertEquals(output, additionalOutput);
 
     String digest = readDigestFile(projectRoot.resolve("target/jib-image.digest"));
-    String digestImageReference = ImageReference.parse(imageReference).withTag(digest).toString();
+    String digestImageReference =
+        ImageReference.parse(imageReference).withQualifier(digest).toString();
     String digestOutput = pullAndRunBuiltImage(digestImageReference);
     Assert.assertEquals(output, digestOutput);
 

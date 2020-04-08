@@ -138,8 +138,14 @@ public class ImageReference {
       repository = LIBRARY_REPOSITORY_PREFIX + repository;
     }
 
-    if (Strings.isNullOrEmpty(tag)) {
+    if (Strings.isNullOrEmpty(tag) && Strings.isNullOrEmpty(digest)) {
       tag = DEFAULT_TAG;
+    }
+    if (Strings.isNullOrEmpty(tag)) {
+      tag = null;
+    }
+    if (Strings.isNullOrEmpty(digest)) {
+      digest = null;
     }
 
     return new ImageReference(registry, repository, tag, digest);
@@ -165,7 +171,8 @@ public class ImageReference {
 
   /**
    * Constructs an {@link ImageReference} from the image reference components, consisting of an
-   * optional registry, a repository, an optional tag, and an optional digest.
+   * optional registry, a repository, an optional tag, and an optional digest. If neither the tag
+   * nor digest are specified, {@code tag} will take on the default value of {@code latest}.
    *
    * @param registry the image registry, or {@code null} to use the default registry (Docker Hub)
    * @param repository the image repository
@@ -183,7 +190,7 @@ public class ImageReference {
     if (Strings.isNullOrEmpty(registry)) {
       registry = DOCKER_HUB_REGISTRY;
     }
-    if (Strings.isNullOrEmpty(tag)) {
+    if (Strings.isNullOrEmpty(tag) && Strings.isNullOrEmpty(digest)) {
       tag = DEFAULT_TAG;
     }
     return new ImageReference(registry, repository, tag, digest);
@@ -197,7 +204,7 @@ public class ImageReference {
    *     to "scratch"
    */
   public static ImageReference scratch() {
-    return new ImageReference("", "scratch", "", null);
+    return new ImageReference("", "scratch", null, null);
   }
 
   /**
@@ -245,24 +252,29 @@ public class ImageReference {
   }
 
   /**
-   * Returns {@code true} if {@code tag} is the default tag ((@code latest} or empty); {@code false}
-   * if not.
+   * Returns {@code true} if {@code tag} is the default tag ((@code latest}); {@code false} if not.
    *
    * @param tag the tag to check
    * @return {@code true} if {@code tag} is the default tag ((@code latest} or empty); {@code false}
    *     if not
    */
-  public static boolean isDefaultTag(String tag) {
-    return tag.isEmpty() || DEFAULT_TAG.equals(tag);
+  public static boolean isDefaultTag(@Nullable String tag) {
+    return DEFAULT_TAG.equals(tag);
   }
 
   private final String registry;
   private final String repository;
-  private final String tag;
+  @Nullable private final String tag;
   @Nullable private final String digest;
 
   /** Construct with {@link #parse}. */
-  private ImageReference(String registry, String repository, String tag, @Nullable String digest) {
+  private ImageReference(
+      String registry, String repository, @Nullable String tag, @Nullable String digest) {
+    Preconditions.checkArgument(
+        "scratch".equals(repository)
+            || !Strings.isNullOrEmpty(tag)
+            || !Strings.isNullOrEmpty(digest),
+        "Either tag or digest needs to be set.");
     this.registry = RegistryAliasGroup.getHost(registry);
     this.repository = repository;
     this.tag = tag;
@@ -290,10 +302,10 @@ public class ImageReference {
   /**
    * Gets the tag portion of the {@link ImageReference}.
    *
-   * @return the tag
+   * @return the optional tag
    */
-  public String getTag() {
-    return tag;
+  public Optional<String> getTag() {
+    return Optional.ofNullable(tag);
   }
 
   /**
@@ -306,8 +318,20 @@ public class ImageReference {
   }
 
   /**
-   * Returns {@code true} if the {@link ImageReference} uses the default tag ((@code latest} or
-   * empty); {@code false} if not.
+   * Gets the digest portion of the {@link ImageReference} if set, else returns the tag.
+   *
+   * @return the digest if set, else the tag
+   */
+  public String getQualifier() {
+    if (!Strings.isNullOrEmpty(digest)) {
+      return digest;
+    }
+    return Preconditions.checkNotNull(tag);
+  }
+
+  /**
+   * Returns {@code true} if the {@link ImageReference} uses the default tag ((@code latest}; {@code
+   * false} if not.
    *
    * @return {@code true} if uses the default tag; {@code false} if not
    */
@@ -321,17 +345,24 @@ public class ImageReference {
    * @return {@code true} if the {@link ImageReference} is a scratch image; {@code false} if not
    */
   public boolean isScratch() {
-    return "".equals(registry) && "scratch".equals(repository) && "".equals(tag);
+    return "".equals(registry)
+        && "scratch".equals(repository)
+        && Strings.isNullOrEmpty(tag)
+        && Strings.isNullOrEmpty(digest);
   }
 
   /**
-   * Gets an {@link ImageReference} with the same registry and repository, but a different tag.
+   * Gets an {@link ImageReference} with the same registry and repository, but a different tag or
+   * digest.
    *
-   * @param newTag the new tag
-   * @return an {@link ImageReference} with the same registry/repository and the new tag
+   * @param newQualifier the new tag or digest
+   * @return an {@link ImageReference} with the same registry/repository and the new tag or digest
    */
-  public ImageReference withTag(String newTag) {
-    return ImageReference.of(registry, repository, newTag);
+  public ImageReference withQualifier(String newQualifier) {
+    if (isValidDigest(newQualifier)) {
+      return ImageReference.of(registry, repository, tag, newQualifier);
+    }
+    return ImageReference.of(registry, repository, newQualifier, digest);
   }
 
   /**
@@ -380,7 +411,7 @@ public class ImageReference {
 
     if (Strings.isNullOrEmpty(digest) || includeTagIfDigestPresent) {
       // Use tag if not the default tag.
-      if (!DEFAULT_TAG.equals(tag)) {
+      if (!Strings.isNullOrEmpty(tag) && !isDefaultTag(tag)) {
         referenceString.append(':').append(tag);
       }
     }
@@ -403,7 +434,7 @@ public class ImageReference {
     ImageReference otherImageReference = (ImageReference) other;
     return registry.equals(otherImageReference.registry)
         && repository.equals(otherImageReference.repository)
-        && tag.equals(otherImageReference.tag)
+        && Objects.equals(tag, otherImageReference.tag)
         && Objects.equals(digest, otherImageReference.digest);
   }
 

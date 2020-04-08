@@ -123,7 +123,7 @@ public class JibRunHelper {
     Assert.assertThat(buildResult.getOutput(), CoreMatchers.containsString(imageReference));
 
     String additionalImageReference =
-        ImageReference.parse(imageReference).withTag(additionalTag).toString();
+        ImageReference.parse(imageReference).withQualifier(additionalTag).toString();
     Assert.assertThat(
         buildResult.getOutput(), CoreMatchers.containsString(additionalImageReference));
 
