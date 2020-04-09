@@ -35,6 +35,7 @@ import com.google.cloud.tools.jib.api.buildplan.ImageFormat;
 import com.google.cloud.tools.jib.api.buildplan.LayerObject;
 import com.google.cloud.tools.jib.frontend.CredentialRetrieverFactory;
 import com.google.cloud.tools.jib.global.JibSystemProperties;
+import com.google.cloud.tools.jib.plugins.extension.JibPluginExtensionException;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Verify;
@@ -99,6 +100,7 @@ public class PluginConfigurationProcessor {
    * @throws InvalidFilesModificationTimeException if configured modification time could not be
    *     parsed
    * @throws InvalidCreationTimeException if configured creation time could not be parsed
+   * @throws JibPluginExtensionException if an error occurred while running plugin extensions
    */
   public static JibBuildRunner createJibBuildRunnerForDockerDaemonImage(
       RawConfiguration rawConfiguration,
@@ -109,7 +111,7 @@ public class PluginConfigurationProcessor {
           IOException, InvalidWorkingDirectoryException, InvalidContainerVolumeException,
           IncompatibleBaseImageJavaVersionException, NumberFormatException,
           InvalidContainerizingModeException, InvalidFilesModificationTimeException,
-          InvalidCreationTimeException {
+          InvalidCreationTimeException, JibPluginExtensionException {
     ImageReference targetImageReference =
         getGeneratedTargetDockerTag(rawConfiguration, projectProperties, helpfulSuggestions);
     DockerDaemonImage targetImage = DockerDaemonImage.named(targetImageReference);
@@ -121,11 +123,12 @@ public class PluginConfigurationProcessor {
     Containerizer containerizer = Containerizer.to(targetImage);
     JibContainerBuilder jibContainerBuilder =
         processCommonConfiguration(
-                rawConfiguration, inferredAuthProvider, projectProperties, containerizer)
-            .setFormat(ImageFormat.Docker);
+            rawConfiguration, inferredAuthProvider, projectProperties, containerizer);
+    JibContainerBuilder updatedContainerBuilder =
+        projectProperties.runPluginExtensions(jibContainerBuilder).setFormat(ImageFormat.Docker);
 
     return JibBuildRunner.forBuildToDockerDaemon(
-            jibContainerBuilder,
+            updatedContainerBuilder,
             containerizer,
             projectProperties::log,
             helpfulSuggestions,
@@ -159,6 +162,7 @@ public class PluginConfigurationProcessor {
    * @throws InvalidFilesModificationTimeException if configured modification time could not be
    *     parsed
    * @throws InvalidCreationTimeException if configured creation time could not be parsed
+   * @throws JibPluginExtensionException if an error occurred while running plugin extensions
    */
   public static JibBuildRunner createJibBuildRunnerForTarImage(
       RawConfiguration rawConfiguration,
@@ -169,7 +173,7 @@ public class PluginConfigurationProcessor {
           IOException, InvalidWorkingDirectoryException, InvalidContainerVolumeException,
           IncompatibleBaseImageJavaVersionException, NumberFormatException,
           InvalidContainerizingModeException, InvalidFilesModificationTimeException,
-          InvalidCreationTimeException {
+          InvalidCreationTimeException, JibPluginExtensionException {
     ImageReference targetImageReference =
         getGeneratedTargetDockerTag(rawConfiguration, projectProperties, helpfulSuggestions);
     TarImage targetImage =
@@ -179,9 +183,11 @@ public class PluginConfigurationProcessor {
     JibContainerBuilder jibContainerBuilder =
         processCommonConfiguration(
             rawConfiguration, inferredAuthProvider, projectProperties, containerizer);
+    JibContainerBuilder updatedContainerBuilder =
+        projectProperties.runPluginExtensions(jibContainerBuilder);
 
     return JibBuildRunner.forBuildTar(
-            jibContainerBuilder,
+            updatedContainerBuilder,
             containerizer,
             projectProperties::log,
             helpfulSuggestions,
@@ -214,6 +220,7 @@ public class PluginConfigurationProcessor {
    * @throws InvalidFilesModificationTimeException if configured modification time could not be
    *     parsed
    * @throws InvalidCreationTimeException if configured creation time could not be parsed
+   * @throws JibPluginExtensionException if an error occurred while running plugin extensions
    */
   public static JibBuildRunner createJibBuildRunnerForRegistryImage(
       RawConfiguration rawConfiguration,
@@ -224,7 +231,7 @@ public class PluginConfigurationProcessor {
           IOException, InvalidWorkingDirectoryException, InvalidContainerVolumeException,
           IncompatibleBaseImageJavaVersionException, NumberFormatException,
           InvalidContainerizingModeException, InvalidFilesModificationTimeException,
-          InvalidCreationTimeException {
+          InvalidCreationTimeException, JibPluginExtensionException {
     Preconditions.checkArgument(rawConfiguration.getToImage().isPresent());
 
     ImageReference targetImageReference = ImageReference.parse(rawConfiguration.getToImage().get());
@@ -250,9 +257,11 @@ public class PluginConfigurationProcessor {
     JibContainerBuilder jibContainerBuilder =
         processCommonConfiguration(
             rawConfiguration, inferredAuthProvider, projectProperties, containerizer);
+    JibContainerBuilder updatedContainerBuilder =
+        projectProperties.runPluginExtensions(jibContainerBuilder);
 
     return JibBuildRunner.forBuildImage(
-            jibContainerBuilder,
+            updatedContainerBuilder,
             containerizer,
             projectProperties::log,
             helpfulSuggestions,

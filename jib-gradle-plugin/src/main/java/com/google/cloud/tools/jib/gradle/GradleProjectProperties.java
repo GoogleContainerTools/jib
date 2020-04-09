@@ -387,4 +387,9 @@ public class GradleProjectProperties implements ProjectProperties {
   public boolean isOffline() {
     return project.getGradle().getStartParameter().isOffline();
   }
+
+  @Override
+  public JibContainerBuilder runPluginExtensions(JibContainerBuilder jibContainerBuilder) {
+    return jibContainerBuilder;
+  }
 }
