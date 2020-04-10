@@ -67,7 +67,7 @@ public class ImageReferenceTest {
 
     Assert.assertEquals("registry-1.docker.io", imageReference.getRegistry());
     Assert.assertEquals("library/busybox", imageReference.getRepository());
-    Assert.assertEquals("latest", imageReference.getTag());
+    Assert.assertEquals("latest", imageReference.getTag().orElse(null));
   }
 
   @Test
@@ -77,7 +77,7 @@ public class ImageReferenceTest {
 
     Assert.assertEquals("registry-1.docker.io", imageReference.getRegistry());
     Assert.assertEquals("someuser/someimage", imageReference.getRepository());
-    Assert.assertEquals("latest", imageReference.getTag());
+    Assert.assertEquals("latest", imageReference.getTag().orElse(null));
   }
 
   @Test
@@ -106,15 +106,18 @@ public class ImageReferenceTest {
         expectedRepository,
         ImageReference.of(expectedRegistry, expectedRepository, expectedTag).getRepository());
     Assert.assertEquals(
-        expectedTag, ImageReference.of(expectedRegistry, expectedRepository, expectedTag).getTag());
+        expectedTag,
+        ImageReference.of(expectedRegistry, expectedRepository, expectedTag).getTag().orElse(null));
     Assert.assertEquals(
         "registry-1.docker.io",
         ImageReference.of(null, expectedRepository, expectedTag).getRegistry());
     Assert.assertEquals(
         "registry-1.docker.io", ImageReference.of(null, expectedRepository, null).getRegistry());
     Assert.assertEquals(
-        "latest", ImageReference.of(expectedRegistry, expectedRepository, null).getTag());
-    Assert.assertEquals("latest", ImageReference.of(null, expectedRepository, null).getTag());
+        "latest",
+        ImageReference.of(expectedRegistry, expectedRepository, null).getTag().orElse(null));
+    Assert.assertEquals(
+        "latest", ImageReference.of(null, expectedRepository, null).getTag().orElse(null));
     Assert.assertEquals(
         expectedRepository, ImageReference.of(null, expectedRepository, null).getRepository());
   }
@@ -254,8 +257,16 @@ public class ImageReferenceTest {
       expectedRepository = "library/" + expectedRepository;
     }
     String expectedTag = tag;
-    if (Strings.isNullOrEmpty(expectedTag)) {
+    if (Strings.isNullOrEmpty(expectedTag) && Strings.isNullOrEmpty(digest)) {
       expectedTag = "latest";
+    }
+    if (Strings.isNullOrEmpty(expectedTag)) {
+      expectedTag = null;
+    }
+
+    String expectedDigest = digest;
+    if (Strings.isNullOrEmpty(digest)) {
+      expectedDigest = null;
     }
 
     // Builds the image reference to parse.
@@ -275,7 +286,7 @@ public class ImageReferenceTest {
 
     Assert.assertEquals(expectedRegistry, imageReference.getRegistry());
     Assert.assertEquals(expectedRepository, imageReference.getRepository());
-    Assert.assertEquals(expectedTag, imageReference.getTag());
-    Assert.assertEquals(digest, imageReference.getDigest().orElse(null));
+    Assert.assertEquals(expectedTag, imageReference.getTag().orElse(null));
+    Assert.assertEquals(expectedDigest, imageReference.getDigest().orElse(null));
   }
 }

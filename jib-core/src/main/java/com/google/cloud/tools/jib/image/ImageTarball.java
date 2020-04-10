@@ -140,7 +140,7 @@ public class ImageTarball {
 
     // Adds the manifest to tarball.
     for (String tag : allTargetImageTags) {
-      manifestTemplate.addRepoTag(imageReference.withTag(tag).toStringWithQualifier());
+      manifestTemplate.addRepoTag(imageReference.withQualifier(tag).toStringWithQualifier());
     }
     tarStreamBuilder.addByteEntry(
         JsonTemplateMapper.toByteArray(Collections.singletonList(manifestTemplate)),

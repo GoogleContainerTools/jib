@@ -89,7 +89,7 @@ public class JibIntegrationTest {
     Assert.assertEquals(
         "Hello World\n",
         pullAndRunBuiltImage(
-            targetImageReference.withTag(jibContainer.getDigest().toString()).toString()));
+            targetImageReference.withQualifier(jibContainer.getDigest().toString()).toString()));
   }
 
   @Test
@@ -113,7 +113,7 @@ public class JibIntegrationTest {
     Assert.assertEquals(
         "Hello World\n",
         pullAndRunBuiltImage(
-            targetImageReference.withTag(jibContainer.getDigest().toString()).toString()));
+            targetImageReference.withQualifier(jibContainer.getDigest().toString()).toString()));
   }
 
   @Test
@@ -155,7 +155,7 @@ public class JibIntegrationTest {
     Assert.assertEquals(
         "Hello World\n",
         pullAndRunBuiltImage(
-            targetImageReference.withTag(jibContainer.getDigest().toString()).toString()));
+            targetImageReference.withQualifier(jibContainer.getDigest().toString()).toString()));
   }
 
   @Test
@@ -181,7 +181,7 @@ public class JibIntegrationTest {
     Assert.assertEquals(
         "Hello World\n",
         pullAndRunBuiltImage(
-            targetImageReference.withTag(jibContainer.getDigest().toString()).toString()));
+            targetImageReference.withQualifier(jibContainer.getDigest().toString()).toString()));
   }
 
   @Test
@@ -213,7 +213,7 @@ public class JibIntegrationTest {
     Assert.assertEquals(
         "Hello World\n",
         pullAndRunBuiltImage(
-            targetImageReference.withTag(jibContainer.getDigest().toString()).toString()));
+            targetImageReference.withQualifier(jibContainer.getDigest().toString()).toString()));
   }
 
   @Test
@@ -239,7 +239,7 @@ public class JibIntegrationTest {
     Assert.assertEquals(
         "Hello World\n",
         pullAndRunBuiltImage(
-            targetImageReference.withTag(jibContainer.getDigest().toString()).toString()));
+            targetImageReference.withQualifier(jibContainer.getDigest().toString()).toString()));
   }
 
   @Test

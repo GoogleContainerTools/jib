@@ -136,8 +136,8 @@ public class ImageConfiguration {
     return image.getRepository();
   }
 
-  public String getImageTag() {
-    return image.getTag();
+  public String getImageQualifier() {
+    return image.getQualifier();
   }
 
   public ImmutableList<CredentialRetriever> getCredentialRetrievers() {
