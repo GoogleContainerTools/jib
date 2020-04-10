@@ -372,7 +372,7 @@ public class ImageReference {
    */
   @Override
   public String toString() {
-    return toString(true);
+    return toString(false);
   }
 
   /**
@@ -383,13 +383,18 @@ public class ImageReference {
    * @return the image reference in Docker-readable format including a qualifier.
    */
   public String toStringWithQualifier() {
-    if (Strings.isNullOrEmpty(digest)) {
-      return toString(false) + (usesDefaultTag() ? ":" + DEFAULT_TAG : "");
-    }
-    return toString(false);
+    return toString(true);
   }
 
-  private String toString(boolean includeTagIfDigestPresent) {
+  /**
+   * Stringifies the {@link ImageReference}.
+   *
+   * @param singleQualifier when {@code true}, the result will include exactly one qualifier (i.e.
+   *     the digest, or the tag if the digest is missing). When {@code false}, the result will
+   *     include all specified qualifiers (omitting tag if the default {@code latest} is used).
+   * @return the image reference in a Docker-readable format.
+   */
+  private String toString(boolean singleQualifier) {
     if (isScratch()) {
       return "scratch";
     }
@@ -409,13 +414,19 @@ public class ImageReference {
       referenceString.append(repository);
     }
 
-    if (Strings.isNullOrEmpty(digest) || includeTagIfDigestPresent) {
-      // Use tag if not the default tag.
-      if (!Strings.isNullOrEmpty(tag) && !isDefaultTag(tag)) {
+    if (singleQualifier) {
+      // Include the digest if set, else include the tag
+      if (!Strings.isNullOrEmpty(digest)) {
+        referenceString.append('@').append(digest);
+      } else if (!Strings.isNullOrEmpty(tag)) {
         referenceString.append(':').append(tag);
       }
+      return referenceString.toString();
     }
 
+    if (!Strings.isNullOrEmpty(tag) && !usesDefaultTag()) {
+      referenceString.append(':').append(tag);
+    }
     if (!Strings.isNullOrEmpty(digest)) {
       referenceString.append('@').append(digest);
     }
