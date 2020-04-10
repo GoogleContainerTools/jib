@@ -415,20 +415,18 @@ public class ImageReference {
     }
 
     if (singleQualifier) {
-      // Include the digest if set, else include the tag
       if (!Strings.isNullOrEmpty(digest)) {
         referenceString.append('@').append(digest);
-      } else if (!Strings.isNullOrEmpty(tag)) {
+      } else {
         referenceString.append(':').append(tag);
       }
-      return referenceString.toString();
-    }
-
-    if (!Strings.isNullOrEmpty(tag) && !usesDefaultTag()) {
-      referenceString.append(':').append(tag);
-    }
-    if (!Strings.isNullOrEmpty(digest)) {
-      referenceString.append('@').append(digest);
+    } else {
+      if (!Strings.isNullOrEmpty(tag) && !usesDefaultTag()) {
+        referenceString.append(':').append(tag);
+      }
+      if (!Strings.isNullOrEmpty(digest)) {
+        referenceString.append('@').append(digest);
+      }
     }
 
     return referenceString.toString();
