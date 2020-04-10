@@ -19,6 +19,7 @@ All notable changes to this project will be documented in this file.
 - `ImageReference#isValidTag` no longer returns `true` for digests.
 - `ImageReference#isTagDigest` has been removed; use `#getDigest` with `Optional#isPresent()` to check if an `ImageReference` uses a digest.
 - `ImageReference#withTag` has been removed; use `withQualifier()` instead.
+- `ImageReference#isDefaultTag` and `usesDefaultTag` no longer return `true` for `null` or empty tags.
 
 ### Fixed
 
