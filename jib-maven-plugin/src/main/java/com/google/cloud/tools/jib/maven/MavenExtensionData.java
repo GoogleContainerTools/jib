@@ -21,7 +21,7 @@ import org.apache.maven.execution.MavenSession;
 import org.apache.maven.project.MavenProject;
 
 /** Maven-specific data and properties to supply to plugin extensions. */
-public class MavenExtensionData implements MavenData {
+class MavenExtensionData implements MavenData {
 
   private final MavenProject project;
   private final MavenSession session;
