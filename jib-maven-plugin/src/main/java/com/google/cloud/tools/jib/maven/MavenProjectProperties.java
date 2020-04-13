@@ -542,7 +542,7 @@ public class MavenProjectProperties implements ProjectProperties {
       Iterator<JibMavenPluginExtension> services, JibContainerBuilder jibContainerBuilder)
       throws JibPluginExtensionException {
     if (!services.hasNext()) {
-      log(LogEvent.debug("No Jib plugin extension discovered"));
+      log(LogEvent.debug("No Jib plugin extensions discovered"));
       return jibContainerBuilder;
     }
 

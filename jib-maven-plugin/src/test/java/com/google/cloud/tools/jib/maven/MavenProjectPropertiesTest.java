@@ -1017,7 +1017,7 @@ public class MavenProjectPropertiesTest {
     Assert.assertSame(extendedBuilder, originalBuilder);
 
     mavenProjectProperties.waitForLoggingThread();
-    Mockito.verify(mockLog).debug("No Jib plugin extension discovered");
+    Mockito.verify(mockLog).debug("No Jib plugin extensions discovered");
   }
 
   @Test
