@@ -16,18 +16,55 @@
 
 package com.google.cloud.tools.jib.registry.credentials;
 
+import com.google.cloud.tools.jib.api.Credential;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
+import com.google.common.io.ByteStreams;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Paths;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Properties;
+import java.util.function.Function;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.Mock;
+import org.mockito.Mockito;
+import org.mockito.junit.MockitoJUnitRunner;
 
+@RunWith(MockitoJUnitRunner.class)
 public class DockerCredentialHelperTest {
+
+  private static final String CREDENTIAL_JSON =
+      "{\"Username\":\"myusername\",\"Secret\":\"mysecret\"}";
+
+  private final Properties systemProperties = new Properties();
+
+  @Mock private Process process;
+  @Mock private Function<List<String>, ProcessBuilder> processBuilderFactory;
+  @Mock private ProcessBuilder processBuilder;
+  @Mock private ProcessBuilder errorProcessBuilder;
+
+  @Before
+  public void setUp() throws IOException {
+    systemProperties.put("os.name", "unknown");
+
+    Mockito.when(process.getInputStream())
+        .thenReturn(new ByteArrayInputStream(CREDENTIAL_JSON.getBytes(StandardCharsets.UTF_8)));
+    Mockito.when(process.getOutputStream()).thenReturn(ByteStreams.nullOutputStream());
+    Mockito.when(processBuilder.start()).thenReturn(process);
+    Mockito.when(errorProcessBuilder.start())
+        .thenThrow(new IOException("No such file or directory"));
+  }
 
   @Test
   public void testDockerCredentialsTemplate_read() throws IOException {
-    String input = "{\"Username\":\"myusername\",\"Secret\":\"mysecret\"}";
     DockerCredentialHelper.DockerCredentialsTemplate template =
-        JsonTemplateMapper.readJson(input, DockerCredentialHelper.DockerCredentialsTemplate.class);
+        JsonTemplateMapper.readJson(
+            CREDENTIAL_JSON, DockerCredentialHelper.DockerCredentialsTemplate.class);
     Assert.assertEquals("myusername", template.username);
     Assert.assertEquals("mysecret", template.secret);
   }
@@ -39,5 +76,79 @@ public class DockerCredentialHelperTest {
         JsonTemplateMapper.readJson(input, DockerCredentialHelper.DockerCredentialsTemplate.class);
     Assert.assertNull(template.username);
     Assert.assertNull(template.secret);
+  }
+
+  @Test
+  public void testRetrieve()
+      throws CredentialHelperUnhandledServerUrlException, CredentialHelperNotFoundException,
+          IOException {
+    Mockito.when(processBuilderFactory.apply(Arrays.asList("/foo/bar", "get")))
+        .thenReturn(processBuilder);
+
+    DockerCredentialHelper credentialHelper =
+        new DockerCredentialHelper(
+            "serverUrl", Paths.get("/foo/bar"), systemProperties, processBuilderFactory);
+    Credential credential = credentialHelper.retrieve();
+    Assert.assertEquals("myusername", credential.getUsername());
+    Assert.assertEquals("mysecret", credential.getPassword());
+
+    Mockito.verify(processBuilderFactory).apply(Arrays.asList("/foo/bar", "get"));
+  }
+
+  @Test
+  public void testRetrieve_cmdSuffixAddedOnWindows()
+      throws CredentialHelperUnhandledServerUrlException, CredentialHelperNotFoundException,
+          IOException {
+    systemProperties.setProperty("os.name", "WINdows");
+    Mockito.when(processBuilderFactory.apply(Arrays.asList("/foo/bar.cmd", "get")))
+        .thenReturn(processBuilder);
+
+    DockerCredentialHelper credentialHelper =
+        new DockerCredentialHelper(
+            "serverUrl", Paths.get("/foo/bar"), systemProperties, processBuilderFactory);
+    Credential credential = credentialHelper.retrieve();
+    Assert.assertEquals("myusername", credential.getUsername());
+    Assert.assertEquals("mysecret", credential.getPassword());
+
+    Mockito.verify(processBuilderFactory).apply(Arrays.asList("/foo/bar.cmd", "get"));
+  }
+
+  @Test
+  public void testRetrieve_cmdSuffixGivenOnWindows()
+      throws CredentialHelperUnhandledServerUrlException, CredentialHelperNotFoundException,
+          IOException {
+    systemProperties.setProperty("os.name", "WINdows");
+    Mockito.when(processBuilderFactory.apply(Arrays.asList("/foo/bar.cmd", "get")))
+        .thenReturn(processBuilder);
+
+    DockerCredentialHelper credentialHelper =
+        new DockerCredentialHelper(
+            "serverUrl", Paths.get("/foo/bar.cmd"), systemProperties, processBuilderFactory);
+    Credential credential = credentialHelper.retrieve();
+    Assert.assertEquals("myusername", credential.getUsername());
+    Assert.assertEquals("mysecret", credential.getPassword());
+
+    Mockito.verify(processBuilderFactory).apply(Arrays.asList("/foo/bar.cmd", "get"));
+  }
+
+  @Test
+  public void testRetrieve_cmdSuffixNotFoundOnWindows()
+      throws CredentialHelperUnhandledServerUrlException, CredentialHelperNotFoundException,
+          IOException {
+    systemProperties.setProperty("os.name", "WINdows");
+    Mockito.when(processBuilderFactory.apply(Arrays.asList("/foo/bar.cmd", "get")))
+        .thenReturn(errorProcessBuilder);
+    Mockito.when(processBuilderFactory.apply(Arrays.asList("/foo/bar", "get")))
+        .thenReturn(processBuilder);
+
+    DockerCredentialHelper credentialHelper =
+        new DockerCredentialHelper(
+            "serverUrl", Paths.get("/foo/bar"), systemProperties, processBuilderFactory);
+    Credential credential = credentialHelper.retrieve();
+    Assert.assertEquals("myusername", credential.getUsername());
+    Assert.assertEquals("mysecret", credential.getPassword());
+
+    Mockito.verify(processBuilderFactory).apply(Arrays.asList("/foo/bar.cmd", "get"));
+    Mockito.verify(processBuilderFactory).apply(Arrays.asList("/foo/bar", "get"));
   }
 }
