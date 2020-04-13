@@ -27,6 +27,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
 import javax.annotation.Nullable;
@@ -151,8 +152,11 @@ public class DefaultCredentialRetrievers {
       // If credential helper contains file separator, treat as path; otherwise treat as suffix
       if (credentialHelper.contains(FileSystems.getDefault().getSeparator())) {
         if (!Files.exists(Paths.get(credentialHelper))) {
-          throw new FileNotFoundException(
-              "Specified credential helper was not found: " + credentialHelper);
+          String osName = systemProperties.getProperty("os.name").toLowerCase(Locale.ENGLISH);
+          if (!osName.contains("windows") || !Files.exists(Paths.get(credentialHelper + ".cmd"))) {
+            throw new FileNotFoundException(
+                "Specified credential helper was not found: " + credentialHelper);
+          }
         }
         credentialRetrievers.add(
             credentialRetrieverFactory.dockerCredentialHelper(credentialHelper));

@@ -30,6 +30,10 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Locale;
+import java.util.Properties;
 import javax.annotation.Nullable;
 
 /**
@@ -42,6 +46,7 @@ public class DockerCredentialHelper {
 
   private final String serverUrl;
   private final Path credentialHelper;
+  private final Properties systemProperties;
 
   /** Template for a Docker credential helper output. */
   @VisibleForTesting
@@ -66,8 +71,15 @@ public class DockerCredentialHelper {
    * @param credentialHelper the path to the credential helper executable
    */
   public DockerCredentialHelper(String serverUrl, Path credentialHelper) {
+    this(serverUrl, credentialHelper, System.getProperties());
+  }
+
+  @VisibleForTesting
+  public DockerCredentialHelper(
+      String serverUrl, Path credentialHelper, Properties systemProperties) {
     this.serverUrl = serverUrl;
     this.credentialHelper = credentialHelper;
+    this.systemProperties = systemProperties;
   }
 
   /**
@@ -88,10 +100,25 @@ public class DockerCredentialHelper {
   public Credential retrieve()
       throws IOException, CredentialHelperUnhandledServerUrlException,
           CredentialHelperNotFoundException {
-    try {
-      String[] credentialHelperCommand = {credentialHelper.toString(), "get"};
+    boolean isWindows =
+        systemProperties.getProperty("os.name").toLowerCase(Locale.ENGLISH).contains("windows");
+    if (!isWindows || credentialHelper.toString().toLowerCase(Locale.ENGLISH).endsWith(".cmd")) {
+      return retrieve(Arrays.asList(credentialHelper.toString(), "get"));
+    }
 
+    try {
+      return retrieve(Arrays.asList(credentialHelper.toString() + ".cmd", "get"));
+    } catch (CredentialHelperNotFoundException ex) {
+      return retrieve(Arrays.asList(credentialHelper.toString(), "get"));
+    }
+  }
+
+  private Credential retrieve(List<String> credentialHelperCommand)
+      throws IOException, CredentialHelperUnhandledServerUrlException,
+          CredentialHelperNotFoundException {
+    try {
       Process process = new ProcessBuilder(credentialHelperCommand).start();
+
       try (OutputStream processStdin = process.getOutputStream()) {
         processStdin.write(serverUrl.getBytes(StandardCharsets.UTF_8));
       }
