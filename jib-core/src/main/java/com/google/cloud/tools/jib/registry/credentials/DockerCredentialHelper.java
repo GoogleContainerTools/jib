@@ -75,8 +75,7 @@ public class DockerCredentialHelper {
   }
 
   @VisibleForTesting
-  public DockerCredentialHelper(
-      String serverUrl, Path credentialHelper, Properties systemProperties) {
+  DockerCredentialHelper(String serverUrl, Path credentialHelper, Properties systemProperties) {
     this.serverUrl = serverUrl;
     this.credentialHelper = credentialHelper;
     this.systemProperties = systemProperties;
