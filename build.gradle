@@ -21,6 +21,9 @@ idea.project.settings {
 
 import net.ltgt.gradle.errorprone.CheckSeverity
 
+project('jib-gradle-plugin-extension-api') {
+  apply plugin: 'java-library'
+}
 project('jib-maven-plugin-extension-api') {
   apply plugin: 'java-library'
 }

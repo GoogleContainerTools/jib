@@ -1,0 +1,42 @@
+plugins {
+  // Is this the only option? Can't we do something simiar to Maven Extension API?
+  id 'java-gradle-plugin'
+  id 'net.researchgate.release'
+  id 'maven-publish'
+}
+
+dependencies {
+  api project(':jib-build-plan')
+  api project(':jib-plugins-extension-common')
+}
+
+jar {
+  manifest {
+    attributes 'Implementation-Version': version
+    attributes 'Automatic-Module-Name': 'com.google.cloud.tools.jib.gradle.extension'
+
+    // OSGi metadata
+    attributes 'Bundle-SymbolicName': 'com.google.cloud.tools.jib.gradle.extension'
+    attributes 'Bundle-Name': 'Extension API for Jib Gradle Plugin'
+    attributes 'Bundle-Vendor': 'Google LLC'
+    attributes 'Bundle-DocURL': 'https://github.com/GoogleContainerTools/jib'
+    attributes 'Bundle-License': 'https://www.apache.org/licenses/LICENSE-2.0'
+    attributes 'Export-Package': 'com.google.cloud.tools.jib.gradle.extension'
+  }
+}
+
+configureMavenRelease()
+
+/* RELEASE */
+publishing {
+  publications {
+    mavenJava(MavenPublication) {
+      pom {
+        name = 'Extension API for Jib Gradle Plugin'
+        description = 'Provides API to extend Jib Gradle Plugin containerization.'
+      }
+      from components.java
+    }
+  }
+}
+/* RELEASE */
