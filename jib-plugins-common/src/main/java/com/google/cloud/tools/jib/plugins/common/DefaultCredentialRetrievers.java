@@ -184,7 +184,7 @@ public class DefaultCredentialRetrievers {
     }
 
     String homeEnvVar = environment.get("HOME");
-    if (homeEnvVar != null && !homeEnvVar.equals(homeProperty)) {
+    if (homeEnvVar != null) {
       Path homeEnvDockerPath = Paths.get(homeEnvVar).resolve(DOCKER_DIRECTORY);
       if (!checkedDockerDirs.contains(homeEnvDockerPath)) {
         addDockerFiles(credentialRetrievers, homeEnvDockerPath);
