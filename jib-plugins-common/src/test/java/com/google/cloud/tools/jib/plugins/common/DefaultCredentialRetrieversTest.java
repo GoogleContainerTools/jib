@@ -296,6 +296,9 @@ public class DefaultCredentialRetrieversTest {
     Assert.assertEquals(
         Arrays.asList(
             mockDockerCredentialHelperCredentialRetriever,
+            mockDockerConfigEnvDockerConfigCredentialRetriever,
+            mockDockerConfigEnvKubernetesDockerConfigCredentialRetriever,
+            mockDockerConfigEnvLegacyDockerConfigCredentialRetriever,
             mockSystemHomeDockerConfigCredentialRetriever,
             mockSystemHomeKubernetesDockerConfigCredentialRetriever,
             mockSystemHomeLegacyDockerConfigCredentialRetriever,
