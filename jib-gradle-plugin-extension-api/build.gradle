@@ -1,6 +1,4 @@
 plugins {
-  // Is this the only option? Can't we do something simiar to Maven Extension API?
-  id 'java-gradle-plugin'
   id 'net.researchgate.release'
   id 'maven-publish'
 }
@@ -8,6 +6,7 @@ plugins {
 dependencies {
   api project(':jib-build-plan')
   api project(':jib-plugins-extension-common')
+  api gradleApi()
 }
 
 jar {
