@@ -42,7 +42,8 @@ import javax.annotation.Nullable;
  *   <li>{@link CredentialRetrieverFactory#dockerCredentialHelper} for a known credential helper, if
  *       set
  *   <li>{@link CredentialRetrieverFactory#known} for known inferred credential, if set
- *   <li>{@link CredentialRetrieverFactory#dockerConfig} for {@code
+ *   <li>{@link CredentialRetrieverFactory#dockerConfig} for {@code $DOCKER_CONFIG/config.json},
+ *       {@code $DOCKER_CONFIG/.dockerconfigjson}, {@code $DOCKER_CONFIG/.dockercfg},
  *       System.get("user.home")/.docker/config.json}, {@code
  *       System.get("user.home")/.docker/.dockerconfigjson}, {@code
  *       System.get("user.home")/.docker/.dockercfg}, {@code $HOME/.docker/config.json}, {@code
@@ -58,11 +59,11 @@ public class DefaultCredentialRetrievers {
    * See <a
    * href="https://docs.docker.com/engine/reference/commandline/login/#privileged-user-requirement">https://docs.docker.com/engine/reference/commandline/login/#privileged-user-requirement</a>.
    */
-  private static final Path DOCKER_CONFIG_FILE = Paths.get(".docker", "config.json");
+  private static final Path DOCKER_CONFIG_FILE = Paths.get("config.json");
   // For Kubernetes: https://github.com/GoogleContainerTools/jib/issues/2260
-  private static final Path KUBERNETES_DOCKER_CONFIG_FILE =
-      Paths.get(".docker", ".dockerconfigjson");
-  private static final Path LEGACY_DOCKER_CONFIG_FILE = Paths.get(".docker", ".dockercfg");
+  private static final Path KUBERNETES_DOCKER_CONFIG_FILE = Paths.get(".dockerconfigjson");
+  private static final Path LEGACY_DOCKER_CONFIG_FILE = Paths.get(".dockercfg");
+  private static final Path DOCKER_DIRECTORY = Paths.get(".docker");
 
   /**
    * Creates a new {@link DefaultCredentialRetrievers} with a given {@link
@@ -72,8 +73,7 @@ public class DefaultCredentialRetrievers {
    *     CredentialRetriever}s
    * @return a new {@link DefaultCredentialRetrievers}
    */
-  public static DefaultCredentialRetrievers init(
-      CredentialRetrieverFactory credentialRetrieverFactory) {
+  static DefaultCredentialRetrievers init(CredentialRetrieverFactory credentialRetrieverFactory) {
     return new DefaultCredentialRetrievers(
         credentialRetrieverFactory, System.getProperties(), System.getenv());
   }
@@ -170,29 +170,43 @@ public class DefaultCredentialRetrievers {
       credentialRetrievers.add(inferredCredentialRetriever);
     }
 
-    String homeProperty = systemProperties.getProperty("user.home");
-    String homeEnvVar = environment.get("HOME");
-    if (homeProperty != null) {
-      Path home = Paths.get(homeProperty);
-      credentialRetrievers.add(
-          credentialRetrieverFactory.dockerConfig(home.resolve(DOCKER_CONFIG_FILE)));
-      credentialRetrievers.add(
-          credentialRetrieverFactory.dockerConfig(home.resolve(KUBERNETES_DOCKER_CONFIG_FILE)));
-      credentialRetrievers.add(
-          credentialRetrieverFactory.legacyDockerConfig(home.resolve(LEGACY_DOCKER_CONFIG_FILE)));
+    List<Path> checkedDockerDirs = new ArrayList<>();
+    String dockerConfigEnv = environment.get("DOCKER_CONFIG");
+    if (dockerConfigEnv != null) {
+      Path dockerConfigEnvPath = Paths.get(dockerConfigEnv);
+      addDockerFiles(credentialRetrievers, Paths.get(dockerConfigEnv));
+      checkedDockerDirs.add(dockerConfigEnvPath);
     }
-    if (homeEnvVar != null && !homeEnvVar.equals(homeProperty)) {
-      Path home = Paths.get(homeEnvVar);
-      credentialRetrievers.add(
-          credentialRetrieverFactory.dockerConfig(home.resolve(DOCKER_CONFIG_FILE)));
-      credentialRetrievers.add(
-          credentialRetrieverFactory.dockerConfig(home.resolve(KUBERNETES_DOCKER_CONFIG_FILE)));
-      credentialRetrievers.add(
-          credentialRetrieverFactory.legacyDockerConfig(home.resolve(LEGACY_DOCKER_CONFIG_FILE)));
+
+    String homeProperty = systemProperties.getProperty("user.home");
+    if (homeProperty != null) {
+      Path homePropertyPath = Paths.get(homeProperty).resolve(DOCKER_DIRECTORY);
+      if (!checkedDockerDirs.contains(homePropertyPath)) {
+        addDockerFiles(credentialRetrievers, homePropertyPath);
+        checkedDockerDirs.add(homePropertyPath);
+      }
+    }
+
+    String homeEnvVar = environment.get("HOME");
+    if (homeEnvVar != null) {
+      Path homeEnvDockerPath = Paths.get(homeEnvVar).resolve(DOCKER_DIRECTORY);
+      if (!checkedDockerDirs.contains(homeEnvDockerPath)) {
+        addDockerFiles(credentialRetrievers, homeEnvDockerPath);
+      }
     }
 
     credentialRetrievers.add(credentialRetrieverFactory.wellKnownCredentialHelpers());
     credentialRetrievers.add(credentialRetrieverFactory.googleApplicationDefaultCredentials());
     return credentialRetrievers;
+  }
+
+  private void addDockerFiles(List<CredentialRetriever> credentialRetrievers, Path configDir) {
+    credentialRetrievers.add(
+        credentialRetrieverFactory.dockerConfig(configDir.resolve(DOCKER_CONFIG_FILE)));
+    credentialRetrievers.add(
+        credentialRetrieverFactory.dockerConfig(configDir.resolve(KUBERNETES_DOCKER_CONFIG_FILE)));
+    credentialRetrievers.add(
+        credentialRetrieverFactory.legacyDockerConfig(
+            configDir.resolve(LEGACY_DOCKER_CONFIG_FILE)));
   }
 }
