@@ -16,3 +16,18 @@ The idea is to give the user the ability to control this functionality by means 
 There might be use-cases where the current behaviour is preferable, eg, where the tags follow semantic 
 versioning, or where the tags are not automatically generated. Hence, adding a switch seems to be 
 a better solution rather than changing the current behaviour.
+
+## Proposed changes
+A new system property is to be added to control this new behaviour:
+`-Djib.skipExistingImages`
+
+A new step is created with the below signature:
+`class CheckImageStep implements Callable<BuildResult>`, where its `call()` function performs a 
+call to the `RegistryClient`. This step is executed in the `StepsRunner.pushImages()` method, 
+before the `PushImageStep.makeList()` part, only if the `skipExistingImages` flag is set to true. 
+Depending on the `BuildResult` of this new step, the `PushImageStep` futures are then created (or not).
+
+The registry call used in `CheckImageStep` can be implemented in various ways. It is being 
+proposed that a new `checkManifest` function is added in `RegistryClient`. This should execute 
+a `ManifestChecker`, also a new class. The `ManifestChecker`'s `handleHttpResponseException` class
+handles the `HTTP/404` scenario, in cases where the image being checked is not found. 
