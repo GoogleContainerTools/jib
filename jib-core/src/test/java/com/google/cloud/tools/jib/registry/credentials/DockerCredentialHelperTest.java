@@ -136,8 +136,8 @@ public class DockerCredentialHelperTest {
       throws CredentialHelperUnhandledServerUrlException, CredentialHelperNotFoundException,
           IOException {
     systemProperties.setProperty("os.name", "WINdows");
-    List<String> errorCommand = Arrays.asList("/foo/bar.cmd", "get");
-    List<String> command = Arrays.asList("/foo/bar", "get");
+    List<String> errorCommand = Arrays.asList(Paths.get("/foo/bar.cmd").toString(), "get");
+    List<String> command = Arrays.asList(Paths.get("/foo/bar").toString(), "get");
     Mockito.when(processBuilderFactory.apply(errorCommand)).thenReturn(errorProcessBuilder);
     Mockito.when(processBuilderFactory.apply(command)).thenReturn(processBuilder);
 
