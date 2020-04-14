@@ -30,6 +30,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import org.hamcrest.CoreMatchers;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
@@ -217,5 +218,43 @@ public class DefaultCredentialRetrieversTest {
             mockWellKnownCredentialHelpersCredentialRetriever,
             mockApplicationDefaultCredentialRetriever),
         credentialRetrievers);
+  }
+
+  @Test
+  public void testCredentialHelper() throws IOException {
+    Path credHelper = temporaryFolder.newFile("foo.cmd").toPath();
+    Path pathWithoutCmd = credHelper.getParent().resolve("foo");
+    Assert.assertEquals(pathWithoutCmd.getParent().resolve("foo.cmd"), credHelper);
+
+    DefaultCredentialRetrievers credentialRetrievers =
+        new DefaultCredentialRetrievers(mockCredentialRetrieverFactory, properties, environment)
+            .setCredentialHelper(pathWithoutCmd.toString());
+    try {
+      credentialRetrievers.asList();
+      Assert.fail("shouldn't check .cmd suffix on non-Windows");
+    } catch (FileNotFoundException ex) {
+      Assert.assertThat(
+          ex.getMessage(), CoreMatchers.startsWith("Specified credential helper was not found:"));
+      Assert.assertThat(ex.getMessage(), CoreMatchers.endsWith("foo"));
+    }
+
+    properties.setProperty("os.name", "winDOWs");
+    List<CredentialRetriever> retrieverList =
+        new DefaultCredentialRetrievers(mockCredentialRetrieverFactory, properties, environment)
+            .setCredentialHelper(pathWithoutCmd.toString())
+            .asList();
+
+    Assert.assertEquals(
+        Arrays.asList(
+            mockDockerCredentialHelperCredentialRetriever,
+            mockSystemHomeDockerConfigCredentialRetriever,
+            mockSystemHomeKubernetesDockerConfigCredentialRetriever,
+            mockSystemHomeLegacyDockerConfigCredentialRetriever,
+            mockEnvHomeDockerConfigCredentialRetriever,
+            mockEnvHomeKubernetesDockerConfigCredentialRetriever,
+            mockEnvHomeLegacyDockerConfigCredentialRetriever,
+            mockWellKnownCredentialHelpersCredentialRetriever,
+            mockApplicationDefaultCredentialRetriever),
+        retrieverList);
   }
 }

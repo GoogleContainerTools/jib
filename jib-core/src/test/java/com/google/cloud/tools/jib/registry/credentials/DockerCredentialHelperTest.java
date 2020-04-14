@@ -41,12 +41,12 @@ public class DockerCredentialHelperTest {
   private static final String CREDENTIAL_JSON =
       "{\"Username\":\"myusername\",\"Secret\":\"mysecret\"}";
 
-  private final Properties systemProperties = new Properties();
-
   @Mock private Process process;
   @Mock private Function<List<String>, ProcessBuilder> processBuilderFactory;
   @Mock private ProcessBuilder processBuilder;
   @Mock private ProcessBuilder errorProcessBuilder;
+
+  private final Properties systemProperties = new Properties();
 
   @Before
   public void setUp() throws IOException {
