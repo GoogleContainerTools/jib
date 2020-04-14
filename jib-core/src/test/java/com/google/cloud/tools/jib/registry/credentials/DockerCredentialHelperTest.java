@@ -82,8 +82,8 @@ public class DockerCredentialHelperTest {
   public void testRetrieve()
       throws CredentialHelperUnhandledServerUrlException, CredentialHelperNotFoundException,
           IOException {
-    Mockito.when(processBuilderFactory.apply(Arrays.asList("/foo/bar", "get")))
-        .thenReturn(processBuilder);
+    List<String> command = Arrays.asList(Paths.get("/foo/bar").toString(), "get");
+    Mockito.when(processBuilderFactory.apply(command)).thenReturn(processBuilder);
 
     DockerCredentialHelper credentialHelper =
         new DockerCredentialHelper(
@@ -92,7 +92,7 @@ public class DockerCredentialHelperTest {
     Assert.assertEquals("myusername", credential.getUsername());
     Assert.assertEquals("mysecret", credential.getPassword());
 
-    Mockito.verify(processBuilderFactory).apply(Arrays.asList("/foo/bar", "get"));
+    Mockito.verify(processBuilderFactory).apply(command);
   }
 
   @Test
@@ -100,8 +100,8 @@ public class DockerCredentialHelperTest {
       throws CredentialHelperUnhandledServerUrlException, CredentialHelperNotFoundException,
           IOException {
     systemProperties.setProperty("os.name", "WINdows");
-    Mockito.when(processBuilderFactory.apply(Arrays.asList("/foo/bar.cmd", "get")))
-        .thenReturn(processBuilder);
+    List<String> command = Arrays.asList(Paths.get("/foo/bar.cmd").toString(), "get");
+    Mockito.when(processBuilderFactory.apply(command)).thenReturn(processBuilder);
 
     DockerCredentialHelper credentialHelper =
         new DockerCredentialHelper(
@@ -110,7 +110,7 @@ public class DockerCredentialHelperTest {
     Assert.assertEquals("myusername", credential.getUsername());
     Assert.assertEquals("mysecret", credential.getPassword());
 
-    Mockito.verify(processBuilderFactory).apply(Arrays.asList("/foo/bar.cmd", "get"));
+    Mockito.verify(processBuilderFactory).apply(command);
   }
 
   @Test
@@ -118,8 +118,8 @@ public class DockerCredentialHelperTest {
       throws CredentialHelperUnhandledServerUrlException, CredentialHelperNotFoundException,
           IOException {
     systemProperties.setProperty("os.name", "WINdows");
-    Mockito.when(processBuilderFactory.apply(Arrays.asList("/foo/bar.CmD", "get")))
-        .thenReturn(processBuilder);
+    List<String> command = Arrays.asList(Paths.get("/foo/bar.CmD").toString(), "get");
+    Mockito.when(processBuilderFactory.apply(command)).thenReturn(processBuilder);
 
     DockerCredentialHelper credentialHelper =
         new DockerCredentialHelper(
@@ -128,7 +128,7 @@ public class DockerCredentialHelperTest {
     Assert.assertEquals("myusername", credential.getUsername());
     Assert.assertEquals("mysecret", credential.getPassword());
 
-    Mockito.verify(processBuilderFactory).apply(Arrays.asList("/foo/bar.CmD", "get"));
+    Mockito.verify(processBuilderFactory).apply(command);
   }
 
   @Test
@@ -136,10 +136,10 @@ public class DockerCredentialHelperTest {
       throws CredentialHelperUnhandledServerUrlException, CredentialHelperNotFoundException,
           IOException {
     systemProperties.setProperty("os.name", "WINdows");
-    Mockito.when(processBuilderFactory.apply(Arrays.asList("/foo/bar.cmd", "get")))
-        .thenReturn(errorProcessBuilder);
-    Mockito.when(processBuilderFactory.apply(Arrays.asList("/foo/bar", "get")))
-        .thenReturn(processBuilder);
+    List<String> errorCommand = Arrays.asList("/foo/bar.cmd", "get");
+    List<String> command = Arrays.asList("/foo/bar", "get");
+    Mockito.when(processBuilderFactory.apply(errorCommand)).thenReturn(errorProcessBuilder);
+    Mockito.when(processBuilderFactory.apply(command)).thenReturn(processBuilder);
 
     DockerCredentialHelper credentialHelper =
         new DockerCredentialHelper(
@@ -148,7 +148,7 @@ public class DockerCredentialHelperTest {
     Assert.assertEquals("myusername", credential.getUsername());
     Assert.assertEquals("mysecret", credential.getPassword());
 
-    Mockito.verify(processBuilderFactory).apply(Arrays.asList("/foo/bar.cmd", "get"));
-    Mockito.verify(processBuilderFactory).apply(Arrays.asList("/foo/bar", "get"));
+    Mockito.verify(processBuilderFactory).apply(errorCommand);
+    Mockito.verify(processBuilderFactory).apply(command);
   }
 }
