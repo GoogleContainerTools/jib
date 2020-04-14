@@ -247,5 +247,23 @@ public class DefaultCredentialRetrieversTest {
             mockWellKnownCredentialHelpersCredentialRetriever,
             mockApplicationDefaultCredentialRetriever),
         credentialRetrievers);
+
+    environment =
+        ImmutableMap.of(
+            "HOME",
+            Paths.get("/env/home").toString(),
+            "DOCKER_CONFIG",
+            Paths.get("/env/home/.docker").toString());
+    credentialRetrievers =
+        new DefaultCredentialRetrievers(mockCredentialRetrieverFactory, properties, environment)
+            .asList();
+    Assert.assertEquals(
+        Arrays.asList(
+            mockEnvHomeDockerConfigCredentialRetriever,
+            mockEnvHomeKubernetesDockerConfigCredentialRetriever,
+            mockEnvHomeLegacyDockerConfigCredentialRetriever,
+            mockWellKnownCredentialHelpersCredentialRetriever,
+            mockApplicationDefaultCredentialRetriever),
+        credentialRetrievers);
   }
 }

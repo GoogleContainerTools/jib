@@ -166,19 +166,29 @@ public class DefaultCredentialRetrievers {
       credentialRetrievers.add(inferredCredentialRetriever);
     }
 
+    List<Path> checkedDockerDirs = new ArrayList<>();
     String dockerConfigEnv = environment.get("DOCKER_CONFIG");
     if (dockerConfigEnv != null) {
+      Path dockerConfigEnvPath = Paths.get(dockerConfigEnv);
       addDockerFiles(credentialRetrievers, Paths.get(dockerConfigEnv));
+      checkedDockerDirs.add(dockerConfigEnvPath);
     }
 
     String homeProperty = systemProperties.getProperty("user.home");
     if (homeProperty != null) {
-      addDockerFiles(credentialRetrievers, Paths.get(homeProperty).resolve(DOCKER_DIRECTORY));
+      Path homePropertyPath = Paths.get(homeProperty).resolve(DOCKER_DIRECTORY);
+      if (!checkedDockerDirs.contains(homePropertyPath)) {
+        addDockerFiles(credentialRetrievers, homePropertyPath);
+        checkedDockerDirs.add(homePropertyPath);
+      }
     }
 
     String homeEnvVar = environment.get("HOME");
     if (homeEnvVar != null && !homeEnvVar.equals(homeProperty)) {
-      addDockerFiles(credentialRetrievers, Paths.get(homeEnvVar).resolve(DOCKER_DIRECTORY));
+      Path homeEnvDockerPath = Paths.get(homeEnvVar).resolve(DOCKER_DIRECTORY);
+      if (!checkedDockerDirs.contains(homeEnvDockerPath)) {
+        addDockerFiles(credentialRetrievers, homeEnvDockerPath);
+      }
     }
 
     credentialRetrievers.add(credentialRetrieverFactory.wellKnownCredentialHelpers());
