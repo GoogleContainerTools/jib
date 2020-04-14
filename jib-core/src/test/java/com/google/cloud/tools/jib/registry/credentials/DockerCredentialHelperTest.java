@@ -114,21 +114,21 @@ public class DockerCredentialHelperTest {
   }
 
   @Test
-  public void testRetrieve_cmdSuffixGivenOnWindows()
+  public void testRetrieve_cmdSuffixAlreadyGivenOnWindows()
       throws CredentialHelperUnhandledServerUrlException, CredentialHelperNotFoundException,
           IOException {
     systemProperties.setProperty("os.name", "WINdows");
-    Mockito.when(processBuilderFactory.apply(Arrays.asList("/foo/bar.cmd", "get")))
+    Mockito.when(processBuilderFactory.apply(Arrays.asList("/foo/bar.CmD", "get")))
         .thenReturn(processBuilder);
 
     DockerCredentialHelper credentialHelper =
         new DockerCredentialHelper(
-            "serverUrl", Paths.get("/foo/bar.cmd"), systemProperties, processBuilderFactory);
+            "serverUrl", Paths.get("/foo/bar.CmD"), systemProperties, processBuilderFactory);
     Credential credential = credentialHelper.retrieve();
     Assert.assertEquals("myusername", credential.getUsername());
     Assert.assertEquals("mysecret", credential.getPassword());
 
-    Mockito.verify(processBuilderFactory).apply(Arrays.asList("/foo/bar.cmd", "get"));
+    Mockito.verify(processBuilderFactory).apply(Arrays.asList("/foo/bar.CmD", "get"));
   }
 
   @Test
