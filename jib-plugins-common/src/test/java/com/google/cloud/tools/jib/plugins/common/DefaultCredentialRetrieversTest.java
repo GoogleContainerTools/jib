@@ -68,6 +68,7 @@ public class DefaultCredentialRetrieversTest {
   @Before
   public void setUp() {
     properties = new Properties();
+    properties.setProperty("os.name", "unknown");
     properties.setProperty("user.home", Paths.get("/system/home").toString());
     environment = ImmutableMap.of("HOME", Paths.get("/env/home").toString());
 
