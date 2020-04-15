@@ -75,7 +75,8 @@ class TaskCommon {
                             + updateMessage
                             + "\n"
                             + ProjectInfo.GITHUB_URL
-                            + "/blob/master/jib-gradle-plugin/CHANGELOG.md\u001B[0m\n")));
+                            + "/blob/master/jib-gradle-plugin/CHANGELOG.md\u001B[0m\n"
+                            + "Please see https://github.com/GoogleContainerTools/jib/blob/master/docs/privacy.md for info on disabling this update check.\n")));
   }
 
   @Nullable
