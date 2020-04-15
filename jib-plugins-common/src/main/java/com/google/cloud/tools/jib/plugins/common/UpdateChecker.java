@@ -191,9 +191,7 @@ public class UpdateChecker {
                 + version.latest
                 + ") is available (currently using "
                 + currentVersion
-                + "). Update your build configuration to use the latest features and fixes!"
-                + System.lineSeparator()
-                + "Please see https://github.com/GoogleContainerTools/jib/blob/master/docs/privacy.md for info on disabling this update check.");
+                + "). Update your build configuration to use the latest features and fixes!");
 
       } finally {
         httpClient.shutDown();

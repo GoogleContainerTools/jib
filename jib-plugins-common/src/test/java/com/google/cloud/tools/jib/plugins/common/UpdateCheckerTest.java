@@ -81,9 +81,7 @@ public class UpdateCheckerTest {
     Assert.assertTrue(message.isPresent());
     Assert.assertEquals(
         "A new version of Jib (2.0.0) is available (currently using 1.0.2). Update your build "
-            + "configuration to use the latest features and fixes!"
-            + System.lineSeparator()
-            + "Please see https://github.com/GoogleContainerTools/jib/blob/master/docs/privacy.md for info on disabling this update check.",
+            + "configuration to use the latest features and fixes!",
         message.get());
     String modifiedTime =
         new String(
@@ -107,9 +105,7 @@ public class UpdateCheckerTest {
     Assert.assertTrue(message.isPresent());
     Assert.assertEquals(
         "A new version of Jib (2.0.0) is available (currently using 1.0.2). Update your build "
-            + "configuration to use the latest features and fixes!"
-            + System.lineSeparator()
-            + "Please see https://github.com/GoogleContainerTools/jib/blob/master/docs/privacy.md for info on disabling this update check.",
+            + "configuration to use the latest features and fixes!",
         message.get());
   }
 
@@ -137,9 +133,7 @@ public class UpdateCheckerTest {
     Assert.assertTrue(message.isPresent());
     Assert.assertEquals(
         "A new version of Jib (2.0.0) is available (currently using 1.0.2). Update your build "
-            + "configuration to use the latest features and fixes!"
-            + System.lineSeparator()
-            + "Please see https://github.com/GoogleContainerTools/jib/blob/master/docs/privacy.md for info on disabling this update check.",
+            + "configuration to use the latest features and fixes!",
         message.get());
     String modifiedTime =
         new String(
@@ -158,9 +152,7 @@ public class UpdateCheckerTest {
     Assert.assertTrue(message.isPresent());
     Assert.assertEquals(
         "A new version of Jib (2.0.0) is available (currently using 1.0.2). Update your build "
-            + "configuration to use the latest features and fixes!"
-            + System.lineSeparator()
-            + "Please see https://github.com/GoogleContainerTools/jib/blob/master/docs/privacy.md for info on disabling this update check.",
+            + "configuration to use the latest features and fixes!",
         message.get());
     String modifiedTime =
         new String(
@@ -232,9 +224,7 @@ public class UpdateCheckerTest {
     Assert.assertTrue(message.isPresent());
     Assert.assertEquals(
         "A new version of Jib (2.0.0) is available (currently using 1.0.2). Update your build "
-            + "configuration to use the latest features and fixes!"
-            + System.lineSeparator()
-            + "Please see https://github.com/GoogleContainerTools/jib/blob/master/docs/privacy.md for info on disabling this update check.",
+            + "configuration to use the latest features and fixes!",
         message.get());
   }
 
