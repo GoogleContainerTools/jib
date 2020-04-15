@@ -109,7 +109,7 @@ If developing with Eclipse and M2Eclipse (the Maven tooling for Eclipse), just l
 To use a local build of the `jib-gradle-plugin`:
 
   1. Build and install `jib-gradle-plugin` into your local `~/.m2/repository`
-     with `./gradlew jib-gradle-plugin:publish`
+     with `./gradlew jib-gradle-plugin:install`
   1. Add a `pluginManagement` block to your test project's `settings.gradle` to enable reading plugins from the local maven repository. It must be the first block in the file before any `include` directives.
         ```groovy
         pluginManagement {

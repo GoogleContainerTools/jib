@@ -85,4 +85,8 @@ publishing {
     mavenLocal()
   }
 }
+
+task install {
+  dependsOn publishToMavenLocal
+}
 /* LOCAL SNAPSHOT DEV */
