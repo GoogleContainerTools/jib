@@ -27,7 +27,8 @@ If a question you have is not answered below, please [submit an issue](/../../is
 [What would a Dockerfile for a Jib-built image look like?](#what-would-a-dockerfile-for-a-jib-built-image-look-like)\
 [How can I inspect the image Jib built?](#how-can-i-inspect-the-image-jib-built)\
 [I would like to run my application with a javaagent.](#i-would-like-to-run-my-application-with-a-javaagent)\
-[How can I tag my image with a timestamp?](#how-can-i-tag-my-image-with-a-timestamp)
+[How can I tag my image with a timestamp?](#how-can-i-tag-my-image-with-a-timestamp)\
+[How do I specify an image from a manifest list?](#how-do-i-specify-an-image-from-a-manifest-list)
 
 **Build Problems**\
 [How can I diagnose problems pulling or pushing from remote registries?](#how-can-i-diagnose-problems-pulling-or-pushing-from-remote-registries)\
@@ -466,6 +467,38 @@ Some plugins, such as the [Docker Prepare Gradle Plugin](https://github.com/gcla
 
 To inspect the image that is produced from the build using Docker, you can use commands such as `docker inspect your/image:tag` to view the image configuration, or you can also download the image using `docker save` to manually inspect the container image. Other tools, such as [dive](https://github.com/wagoodman/dive), provide nicer UI to inspect the image.
 
+### How do I specify an image from a manifest list?
+
+By design, Jib will pick always select an image for the platform:`amd64/linux` if the target image reference is a [manifest list](https://docs.docker.com/registry/spec/manifest-v2-2/#manifest-list). If you need to specify a different image from a manifest list you must specify the image digest for the platform you are targeting. 
+
+To determine the digest of an image in a manifest list, you can view the manifest list with:
+```
+$ docker manifest inspect openjdk:8
+```
+
+You can then inspect the output for the specific image you want (in this example an image for the platform:`arm64/linux`)
+```
+{         
+   ...
+   // This whole BLOB itself is a manifest list.
+   "mediaType": "application/vnd.docker.distribution.manifest.list.v2+json",
+   "manifests": [
+      {
+         // This entry in the list points to the manifest for the ARM64/Linux manifest.
+         "mediaType": "application/vnd.docker.distribution.manifest.v2+json",
+         ...
+         "digest": "sha256:1fbd49e3fc5e53154fa93cad15f211112d899a6b0c5dc1e8661d6eb6c18b30a6",
+         "platform": {
+            "architecture": "arm64",
+            "os": "linux",
+            "variant": "v8"
+         }
+      }
+   ]
+}
+```
+
+You then use the digest for the target platform you desire in your `jib.to.image` in the form `"opendjdk:8@sha256:1fbd49e3fc5e53154fa93cad15f211112d899a6b0c5dc1e8661d6eb6c18b30a6"`
 
 ## Build Problems
 
