@@ -12,6 +12,8 @@ All notable changes to this project will be documented in this file.
     - `parse()` now supports image reference strings containing both a tag and a digest.
     - `getQualifier()` to return the digest, or the tag if no digest is set.
     - `withQualifier()` to change the image's tag or digest (old behavior of `withTag()`)
+- New public API package hierarchy `com.google.cloud.tools.jib.api.buildplan` for [Container Build Plan Specification](https://github.com/GoogleContainerTools/jib/blob/2b2fe82ad0552ba3ce1de308a0fda24aab684365/proposals/container-build-plan-spec.md) and API.
+- `ContainerBuildPlan`, `FileEntriesLayer`, `FileEntry`, and `LayerObject` in `com.google.cloud.tools.jib.api.buildplan` as part of the Container Build Plan API. ([#2338](https://github.com/GoogleContainerTools/jib/pull/2338), [#2328](https://github.com/GoogleContainerTools/jib/pull/2328))
 
 ### Changed
 
@@ -20,6 +22,8 @@ All notable changes to this project will be documented in this file.
 - `ImageReference#isTagDigest` has been removed; use `#getDigest` with `Optional#isPresent()` to check if an `ImageReference` uses a digest.
 - `ImageReference#withTag` has been removed; use `withQualifier()` instead.
 - `ImageReference#isDefaultTag` and `usesDefaultTag` no longer return `true` for `null` or empty tags.
+- The following classes in `com.google.cloud.tools.jib.api` has been moved to `com.google.cloud.tools.jib.api.buildplan`: `AbsoluteUnixPath`, `RelativeUnixPath`, `Port`, `FilePermissions`, and `ImageFormat`. ([#2328](https://github.com/GoogleContainerTools/jib/pull/2328))
+- `LayerConfiguration` and `LayerEntry` are deprecated. Use `FileEntriesLayer` and `FileEntry` in `com.google.cloud.tools.jib.api.buildplan`. ([#2334](https://github.com/GoogleContainerTools/jib/pull/2334))
 
 ### Fixed
 
