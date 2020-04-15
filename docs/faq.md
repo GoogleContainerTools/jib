@@ -477,7 +477,7 @@ $ docker manifest inspect openjdk:8
 ```
 
 You can then inspect the output for the specific image you want (in this example an image for the platform:`arm64/linux`)
-```
+```java
 {         
    ...
    // This whole BLOB itself is a manifest list.
