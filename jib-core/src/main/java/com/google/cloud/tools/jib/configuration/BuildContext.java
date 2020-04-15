@@ -280,7 +280,7 @@ public class BuildContext implements Closeable {
       switch (missingFields.size()) {
         case 0: // No errors
           Preconditions.checkNotNull(baseImageConfiguration);
-          if (!baseImageConfiguration.getImage().isTagDigest()
+          if (!baseImageConfiguration.getImage().getDigest().isPresent()
               && !baseImageConfiguration.getImage().isScratch()) {
             eventHandlers.dispatch(
                 LogEvent.warn(
@@ -419,7 +419,7 @@ public class BuildContext implements Closeable {
   public ImmutableSet<String> getAllTargetImageTags() {
     ImmutableSet.Builder<String> allTargetImageTags =
         ImmutableSet.builderWithExpectedSize(1 + additionalTargetImageTags.size());
-    allTargetImageTags.add(targetImageConfiguration.getImageTag());
+    allTargetImageTags.add(targetImageConfiguration.getImageQualifier());
     allTargetImageTags.addAll(additionalTargetImageTags);
     return allTargetImageTags.build();
   }

@@ -6,6 +6,8 @@ All notable changes to this project will be documented in this file.
 ### Added
 
 - Glob pattern support for `<extraDirectories><permissions>`. ([#1200](https://github.com/GoogleContainerTools/jib/issues/1200))
+- Support for image references with both a tag and a digest. ([#1481](https://github.com/GoogleContainerTools/jib/issues/1481))
+- The `DOCKER_CONFIG` environment variable specifying the directory containing docker configs is now checked during credential retrieval. ([#1618](https://github.com/GoogleContainerTools/jib/issues/1618))
 
 ### Changed
 

@@ -112,7 +112,7 @@ public class ImageTarball {
         "{\"imageLayoutVersion\": \"1.0.0\"}".getBytes(StandardCharsets.UTF_8), "oci-layout");
     OciIndexTemplate index = new OciIndexTemplate();
     // TODO: figure out how to tag with allTargetImageTags
-    index.addManifest(manifestDescriptor, imageReference.toStringWithTag());
+    index.addManifest(manifestDescriptor, imageReference.toStringWithQualifier());
     tarStreamBuilder.addByteEntry(JsonTemplateMapper.toByteArray(index), "index.json");
 
     tarStreamBuilder.writeAsTarArchiveTo(out);
@@ -140,7 +140,7 @@ public class ImageTarball {
 
     // Adds the manifest to tarball.
     for (String tag : allTargetImageTags) {
-      manifestTemplate.addRepoTag(imageReference.withTag(tag).toStringWithTag());
+      manifestTemplate.addRepoTag(imageReference.withQualifier(tag).toStringWithQualifier());
     }
     tarStreamBuilder.addByteEntry(
         JsonTemplateMapper.toByteArray(Collections.singletonList(manifestTemplate)),

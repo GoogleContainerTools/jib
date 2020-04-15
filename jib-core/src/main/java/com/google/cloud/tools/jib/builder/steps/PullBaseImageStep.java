@@ -103,7 +103,7 @@ class PullBaseImageStep implements Callable<ImageAndRegistryClient> {
       throw new IOException(
           "Cannot run Jib in offline mode; " + imageReference + " not found in local Jib cache");
 
-    } else if (imageReference.isTagDigest()) {
+    } else if (imageReference.getDigest().isPresent()) {
       Optional<Image> image = getCachedBaseImage();
       if (image.isPresent()) {
         RegistryClient noAuthRegistryClient =
@@ -191,7 +191,7 @@ class PullBaseImageStep implements Callable<ImageAndRegistryClient> {
     EventHandlers eventHandlers = buildContext.getEventHandlers();
 
     ManifestAndDigest<?> manifestAndDigest =
-        registryClient.pullManifest(buildContext.getBaseImageConfiguration().getImageTag());
+        registryClient.pullManifest(buildContext.getBaseImageConfiguration().getImageQualifier());
     ManifestTemplate manifestTemplate = manifestAndDigest.getManifest();
 
     // special handling if we happen upon a manifest list, redirect to a manifest and continue

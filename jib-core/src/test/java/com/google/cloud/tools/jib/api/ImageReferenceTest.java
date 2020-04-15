@@ -52,10 +52,9 @@ public class ImageReferenceTest {
     for (String goodRegistry : goodRegistries) {
       for (String goodRepository : goodRepositories) {
         for (String goodTag : goodTags) {
-          verifyParse(goodRegistry, goodRepository, ":", goodTag);
-        }
-        for (String goodDigest : goodDigests) {
-          verifyParse(goodRegistry, goodRepository, "@", goodDigest);
+          for (String goodDigest : goodDigests) {
+            verifyParse(goodRegistry, goodRepository, goodTag, goodDigest);
+          }
         }
       }
     }
@@ -68,7 +67,7 @@ public class ImageReferenceTest {
 
     Assert.assertEquals("registry-1.docker.io", imageReference.getRegistry());
     Assert.assertEquals("library/busybox", imageReference.getRepository());
-    Assert.assertEquals("latest", imageReference.getTag());
+    Assert.assertEquals("latest", imageReference.getTag().orElse(null));
   }
 
   @Test
@@ -78,7 +77,7 @@ public class ImageReferenceTest {
 
     Assert.assertEquals("registry-1.docker.io", imageReference.getRegistry());
     Assert.assertEquals("someuser/someimage", imageReference.getRepository());
-    Assert.assertEquals("latest", imageReference.getTag());
+    Assert.assertEquals("latest", imageReference.getTag().orElse(null));
   }
 
   @Test
@@ -107,15 +106,18 @@ public class ImageReferenceTest {
         expectedRepository,
         ImageReference.of(expectedRegistry, expectedRepository, expectedTag).getRepository());
     Assert.assertEquals(
-        expectedTag, ImageReference.of(expectedRegistry, expectedRepository, expectedTag).getTag());
+        expectedTag,
+        ImageReference.of(expectedRegistry, expectedRepository, expectedTag).getTag().orElse(null));
     Assert.assertEquals(
         "registry-1.docker.io",
         ImageReference.of(null, expectedRepository, expectedTag).getRegistry());
     Assert.assertEquals(
         "registry-1.docker.io", ImageReference.of(null, expectedRepository, null).getRegistry());
     Assert.assertEquals(
-        "latest", ImageReference.of(expectedRegistry, expectedRepository, null).getTag());
-    Assert.assertEquals("latest", ImageReference.of(null, expectedRepository, null).getTag());
+        "latest",
+        ImageReference.of(expectedRegistry, expectedRepository, null).getTag().orElse(null));
+    Assert.assertEquals(
+        "latest", ImageReference.of(null, expectedRepository, null).getTag().orElse(null));
     Assert.assertEquals(
         expectedRepository, ImageReference.of(null, expectedRepository, null).getRepository());
   }
@@ -148,36 +150,36 @@ public class ImageReferenceTest {
   }
 
   @Test
-  public void testToStringWithTag() {
+  public void testToStringWithQualifier() {
     Assert.assertEquals(
-        "someimage:latest", ImageReference.of(null, "someimage", null).toStringWithTag());
+        "someimage:latest", ImageReference.of(null, "someimage", null).toStringWithQualifier());
     Assert.assertEquals(
-        "someimage:latest", ImageReference.of("", "someimage", "").toStringWithTag());
+        "someimage:latest", ImageReference.of("", "someimage", "").toStringWithQualifier());
     Assert.assertEquals(
         "someotherimage:latest",
-        ImageReference.of(null, "library/someotherimage", null).toStringWithTag());
+        ImageReference.of(null, "library/someotherimage", null).toStringWithQualifier());
     Assert.assertEquals(
         "someregistry/someotherimage:latest",
-        ImageReference.of("someregistry", "someotherimage", null).toStringWithTag());
+        ImageReference.of("someregistry", "someotherimage", null).toStringWithQualifier());
     Assert.assertEquals(
         "anotherregistry/anotherimage:sometag",
-        ImageReference.of("anotherregistry", "anotherimage", "sometag").toStringWithTag());
-  }
-
-  @Test
-  public void testIsTagDigest() throws InvalidImageReferenceException {
-    Assert.assertFalse(ImageReference.of(null, "someimage", null).isTagDigest());
-    Assert.assertFalse(ImageReference.of(null, "someimage", "latest").isTagDigest());
-    Assert.assertTrue(
+        ImageReference.of("anotherregistry", "anotherimage", "sometag").toStringWithQualifier());
+    Assert.assertEquals(
+        "anotherregistry/anotherimage@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
         ImageReference.of(
+                "anotherregistry",
+                "anotherimage",
                 null,
-                "someimage",
-                "sha256:b430543bea1d8326e767058bdab3a2482ea45f59d7af5c5c61334cd29ede88a1")
-            .isTagDigest());
-    Assert.assertTrue(
-        ImageReference.parse(
-                "someimage@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
-            .isTagDigest());
+                "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
+            .toStringWithQualifier());
+    Assert.assertEquals(
+        "anotherregistry/anotherimage@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        ImageReference.of(
+                "anotherregistry",
+                "anotherimage",
+                "sometag",
+                "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
+            .toStringWithQualifier());
   }
 
   @Test
@@ -243,7 +245,7 @@ public class ImageReferenceTest {
     Assert.assertNotEquals(image1.hashCode(), image2.hashCode());
   }
 
-  private void verifyParse(String registry, String repository, String tagSeparator, String tag)
+  private void verifyParse(String registry, String repository, String tag, String digest)
       throws InvalidImageReferenceException {
     // Gets the expected parsed components.
     String expectedRegistry = registry;
@@ -255,8 +257,16 @@ public class ImageReferenceTest {
       expectedRepository = "library/" + expectedRepository;
     }
     String expectedTag = tag;
-    if (Strings.isNullOrEmpty(expectedTag)) {
+    if (Strings.isNullOrEmpty(expectedTag) && Strings.isNullOrEmpty(digest)) {
       expectedTag = "latest";
+    }
+    if (Strings.isNullOrEmpty(expectedTag)) {
+      expectedTag = null;
+    }
+
+    String expectedDigest = digest;
+    if (Strings.isNullOrEmpty(digest)) {
+      expectedDigest = null;
     }
 
     // Builds the image reference to parse.
@@ -266,13 +276,17 @@ public class ImageReferenceTest {
     }
     imageReferenceBuilder.append(repository);
     if (!Strings.isNullOrEmpty(tag)) {
-      imageReferenceBuilder.append(tagSeparator).append(tag);
+      imageReferenceBuilder.append(':').append(tag);
+    }
+    if (!Strings.isNullOrEmpty(digest)) {
+      imageReferenceBuilder.append('@').append(digest);
     }
 
     ImageReference imageReference = ImageReference.parse(imageReferenceBuilder.toString());
 
     Assert.assertEquals(expectedRegistry, imageReference.getRegistry());
     Assert.assertEquals(expectedRepository, imageReference.getRepository());
-    Assert.assertEquals(expectedTag, imageReference.getTag());
+    Assert.assertEquals(expectedTag, imageReference.getTag().orElse(null));
+    Assert.assertEquals(expectedDigest, imageReference.getDigest().orElse(null));
   }
 }

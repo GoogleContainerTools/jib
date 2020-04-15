@@ -30,6 +30,7 @@ import com.google.cloud.tools.jib.plugins.common.InvalidFilesModificationTimeExc
 import com.google.cloud.tools.jib.plugins.common.InvalidWorkingDirectoryException;
 import com.google.cloud.tools.jib.plugins.common.MainClassInferenceException;
 import com.google.cloud.tools.jib.plugins.common.PluginConfigurationProcessor;
+import com.google.cloud.tools.jib.plugins.extension.JibPluginExtensionException;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import java.io.IOException;
@@ -141,6 +142,11 @@ public class BuildImageTask extends DefaultTask implements JibTask {
               + "\"USE_CURRENT_TIMESTAMP\"): "
               + ex.getInvalidCreationTime(),
           ex);
+
+    } catch (JibPluginExtensionException ex) {
+      String extensionName = ex.getExtensionClass().getName();
+      throw new GradleException(
+          "error running extension '" + extensionName + "': " + ex.getMessage(), ex);
 
     } catch (IncompatibleBaseImageJavaVersionException ex) {
       throw new GradleException(
