@@ -108,7 +108,8 @@ public class DockerCredentialHelper {
           CredentialHelperNotFoundException {
     boolean isWindows =
         systemProperties.getProperty("os.name").toLowerCase(Locale.ENGLISH).contains("windows");
-    if (!isWindows || credentialHelper.toString().toLowerCase(Locale.ENGLISH).endsWith(".cmd")) {
+    String lowerCaseHelper = credentialHelper.toString().toLowerCase(Locale.ENGLISH);
+    if (!isWindows || lowerCaseHelper.endsWith(".cmd") || lowerCaseHelper.endsWith(".exe")) {
       return retrieve(Arrays.asList(credentialHelper.toString(), "get"));
     }
 
