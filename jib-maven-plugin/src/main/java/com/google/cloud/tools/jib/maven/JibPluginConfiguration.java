@@ -222,13 +222,13 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
 
   public static class ExtensionParameters implements ExtensionConfiguration {
 
-    @Nullable @Parameter private String implementation;
+    @Parameter private String implementation = "undefined";
 
     @Parameter private Map<String, String> properties = Collections.emptyMap();
 
     @Override
-    public Optional<String> getExtensionClass() {
-      return Optional.ofNullable(implementation);
+    public String getExtensionClass() {
+      return implementation;
     }
 
     @Override

@@ -32,7 +32,7 @@ public interface RawConfiguration {
 
   static interface ExtensionConfiguration {
 
-    Optional<String> getExtensionClass();
+    String getExtensionClass();
 
     Map<String, String> getProperties();
   }
