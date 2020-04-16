@@ -590,6 +590,28 @@ gradle --no-daemon --console=plain -Djava.util.logging.config.file=path/to/loggi
 
 You may wish to enable the debug logs too (`-X` for Maven, or `--debug --stacktrace` for Gradle).
 
+When configured correctly, you should see logs like this:
+```
+Mar 31, 2020 9:55:52 AM com.google.api.client.http.HttpResponse <init>
+CONFIG: -------------- RESPONSE --------------
+HTTP/1.1 202 Accepted
+Content-Length: 0
+Docker-Distribution-Api-Version: registry/2.0
+Docker-Upload-Uuid: 6292f0d7-93cb-4a8e-8336-78a1bf7febd2
+Location: https://registry-1.docker.io/v2/...
+Range: 0-657292
+Date: Tue, 31 Mar 2020 13:55:52 GMT
+Strict-Transport-Security: max-age=31536000
+
+Mar 31, 2020 9:55:52 AM com.google.api.client.http.HttpRequest execute
+CONFIG: -------------- REQUEST  --------------
+PUT https://registry-1.docker.io/v2/...
+Accept:
+Accept-Encoding: gzip
+Authorization: <Not Logged>
+User-Agent: jib 2.1.1-SNAPSHOT jib-maven-plugin Google-HTTP-Java-Client/1.34.0 (gzip)
+```
+  
 ### How do I view debug logs for Jib?
 
 Maven: use `mvn -X -Djib.serialize=true` to enable more detailed logging and serialize Jib's actions.
