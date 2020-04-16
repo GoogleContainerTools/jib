@@ -21,6 +21,7 @@ import com.google.cloud.tools.jib.api.Containerizer;
 import com.google.cloud.tools.jib.api.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.api.JavaContainerBuilder;
 import com.google.cloud.tools.jib.api.JavaContainerBuilder.LayerType;
+import com.google.cloud.tools.jib.api.Jib;
 import com.google.cloud.tools.jib.api.JibContainerBuilder;
 import com.google.cloud.tools.jib.api.JibContainerBuilderTestHelper;
 import com.google.cloud.tools.jib.api.RegistryImage;
@@ -31,13 +32,17 @@ import com.google.cloud.tools.jib.api.buildplan.FilePermissions;
 import com.google.cloud.tools.jib.configuration.BuildContext;
 import com.google.cloud.tools.jib.filesystem.DirectoryWalker;
 import com.google.cloud.tools.jib.filesystem.TempDirectoryProvider;
+import com.google.cloud.tools.jib.gradle.extension.JibGradlePluginExtension;
 import com.google.cloud.tools.jib.plugins.common.ContainerizingMode;
+import com.google.cloud.tools.jib.plugins.extension.ExtensionLogger.LogLevel;
+import com.google.cloud.tools.jib.plugins.extension.JibPluginExtensionException;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.Resources;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URISyntaxException;
@@ -594,6 +599,79 @@ public class GradleProjectPropertiesTest {
         .thenReturn("war.war");
 
     Assert.assertEquals("war.war", gradleProjectProperties.getWarFilePath());
+  }
+
+  @Test
+  public void testRunPluginExtensions_noExtensionsFound()
+      throws JibPluginExtensionException, InvalidImageReferenceException {
+    JibContainerBuilder originalBuilder = Jib.from(RegistryImage.named("from/nothing"));
+    JibContainerBuilder extendedBuilder =
+        gradleProjectProperties.runPluginExtensions(Collections.emptyIterator(), originalBuilder);
+    Assert.assertSame(extendedBuilder, originalBuilder);
+
+    gradleProjectProperties.waitForLoggingThread();
+    Mockito.verify(mockLogger).debug("No Jib plugin extensions discovered");
+  }
+
+  @Test
+  public void testRunPluginExtensions()
+      throws JibPluginExtensionException, InvalidImageReferenceException {
+    JibGradlePluginExtension extension =
+        (buildPlan, gradleData, logger) -> {
+          logger.log(LogLevel.ERROR, "awesome error from my extension");
+          return buildPlan.toBuilder().setUser("user from extension").build();
+        };
+
+    JibContainerBuilder extendedBuilder =
+        gradleProjectProperties.runPluginExtensions(
+            Arrays.asList(extension).iterator(), Jib.from(RegistryImage.named("from/nothing")));
+    Assert.assertEquals("user from extension", extendedBuilder.toContainerBuildPlan().getUser());
+
+    gradleProjectProperties.waitForLoggingThread();
+    Mockito.verify(mockLogger).error("awesome error from my extension");
+    Mockito.verify(mockLogger)
+        .lifecycle(
+            Mockito.startsWith(
+                "Running extension: com.google.cloud.tools.jib.gradle.GradleProjectProperties"));
+  }
+
+  @Test
+  public void testRunPluginExtensions_exceptionFromExtension()
+      throws InvalidImageReferenceException {
+    FileNotFoundException fakeException = new FileNotFoundException();
+    JibGradlePluginExtension extension =
+        (buildPlan, gradleData, logger) -> {
+          throw new JibPluginExtensionException(
+              JibGradlePluginExtension.class, "exception from extension", fakeException);
+        };
+
+    JibContainerBuilder originalBuilder = Jib.from(RegistryImage.named("scratch"));
+    try {
+      gradleProjectProperties.runPluginExtensions(
+          Arrays.asList(extension).iterator(), originalBuilder);
+      Assert.fail();
+    } catch (JibPluginExtensionException ex) {
+      Assert.assertEquals("exception from extension", ex.getMessage());
+      Assert.assertSame(fakeException, ex.getCause());
+    }
+  }
+
+  @Test
+  public void testRunPluginExtensions_invalidBaseImageFromExtension()
+      throws InvalidImageReferenceException {
+    JibGradlePluginExtension extension =
+        (buildPlan, gradleData, logger) -> buildPlan.toBuilder().setBaseImage(" in*val+id").build();
+
+    JibContainerBuilder originalBuilder = Jib.from(RegistryImage.named("from/nothing"));
+    try {
+      gradleProjectProperties.runPluginExtensions(
+          Arrays.asList(extension).iterator(), originalBuilder);
+      Assert.fail();
+    } catch (JibPluginExtensionException ex) {
+      Assert.assertEquals("invalid base image reference:  in*val+id", ex.getMessage());
+      Assert.assertThat(
+          ex.getCause(), CoreMatchers.instanceOf(InvalidImageReferenceException.class));
+    }
   }
 
   private BuildContext setupBuildContext(String appRoot)
