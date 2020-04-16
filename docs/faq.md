@@ -28,7 +28,7 @@ If a question you have is not answered below, please [submit an issue](/../../is
 [How can I inspect the image Jib built?](#how-can-i-inspect-the-image-jib-built)\
 [I would like to run my application with a javaagent.](#i-would-like-to-run-my-application-with-a-javaagent)\
 [How can I tag my image with a timestamp?](#how-can-i-tag-my-image-with-a-timestamp)\
-[How do I specify an image from a manifest list?](#how-do-i-specify-an-image-from-a-manifest-list)
+[How do I specify a platform in the manifest list (or OCI index) of a base image?](#how-do-i-specify-a-platform-in-the-manifest-list-or-oci-index-of-a-base-image)
 
 **Build Problems**\
 [How can I diagnose problems pulling or pushing from remote registries?](#how-can-i-diagnose-problems-pulling-or-pushing-from-remote-registries)\
@@ -467,7 +467,7 @@ Some plugins, such as the [Docker Prepare Gradle Plugin](https://github.com/gcla
 
 To inspect the image that is produced from the build using Docker, you can use commands such as `docker inspect your/image:tag` to view the image configuration, or you can also download the image using `docker save` to manually inspect the container image. Other tools, such as [dive](https://github.com/wagoodman/dive), provide nicer UI to inspect the image.
 
-### How do I specify an image from a manifest list?
+### How do I specify a platform in the manifest list (or OCI index) of a base image?
 
 By design, if the target image reference is a [manifest list](https://docs.docker.com/registry/spec/manifest-v2-2/#manifest-list), Jib will always select an image for the platform `amd64/linux`. If you need to specify a different image from a manifest list you must specify the digest for the platform you are targeting.
 
