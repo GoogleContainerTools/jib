@@ -273,7 +273,7 @@ class PullBaseImageStep implements Callable<ImageAndRegistryClient> {
           buildContext.getBaseImageConfiguration().getImage()
               + " is a manifest list, but the list does not contain an image manifest for amd64/linux."
               + " If your intention was to use a non-amd64/linux base image,"
-              + " see  https://github.com/GoogleContainerTools/jib/blob/master/docs/faq.md#how-do-i-specify-a-platform-in-the-manifest-list-or-oci-index-of-a-base-image"
+              + " see https://github.com/GoogleContainerTools/jib/blob/master/docs/faq.md#how-do-i-specify-a-platform-in-the-manifest-list-or-oci-index-of-a-base-image"
               + " to learn how to specify a manifest instead of a manifest list, until Jib fixes"
               + " https://github.com/GoogleContainerTools/jib/issues/1567 to allow specifying architecture and OS.";
       buildContext.getEventHandlers().dispatch(LogEvent.error(errorMessage));
