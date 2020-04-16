@@ -469,14 +469,14 @@ To inspect the image that is produced from the build using Docker, you can use c
 
 ### How do I specify an image from a manifest list?
 
-By design, Jib will pick always select an image for the platform:`amd64/linux` if the target image reference is a [manifest list](https://docs.docker.com/registry/spec/manifest-v2-2/#manifest-list). If you need to specify a different image from a manifest list you must specify the image digest for the platform you are targeting. 
+By design, if the target image reference is a [manifest list](https://docs.docker.com/registry/spec/manifest-v2-2/#manifest-list), Jib will always select an image for the platform `amd64/linux` . If you need to specify a different image from a manifest list you must specify the digest for the platform you are targeting. 
 
-To determine the digest of an image in a manifest list, you can view the manifest list with:
+To view a manifest, [enable experimental docker cli](https://docs.docker.com/engine/reference/commandline/cli/#experimental-features) features and then run the [manifest inspect](https://docs.docker.com/engine/reference/commandline/manifest_inspect/) command.
 ```
 $ docker manifest inspect openjdk:8
 ```
 
-You can then inspect the output for the specific image you want (in this example an image for the platform:`arm64/linux`)
+You can then inspect the output for the specific image you want (in this example an image for the platform `arm64/linux`)
 ```java
 {         
    ...
@@ -498,7 +498,7 @@ You can then inspect the output for the specific image you want (in this example
 }
 ```
 
-You then use the digest for the target platform you desire in your `jib.to.image` in the form `"opendjdk:8@sha256:1fbd49e3fc5e53154fa93cad15f211112d899a6b0c5dc1e8661d6eb6c18b30a6"`
+You then use the digest for the target platform you desire in your `jib.to.image` in the form `"opendjdk@sha256:1fbd49e3fc5e53154fa93cad15f211112d899a6b0c5dc1e8661d6eb6c18b30a6"` or if you wish to preserve the tag for documentation purposes, you can also use the form `"opendjdk:8@sha256:1fbd49e3fc5e53154fa93cad15f211112d899a6b0c5dc1e8661d6eb6c18b30a6"`.
 
 ## Build Problems
 
