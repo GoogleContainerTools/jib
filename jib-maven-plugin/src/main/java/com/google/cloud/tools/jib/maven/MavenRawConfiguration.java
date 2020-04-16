@@ -204,4 +204,11 @@ public class MavenRawConfiguration implements RawConfiguration {
   public Path getImageJsonOutputPath() {
     return jibPluginConfiguration.getImageJsonOutputPath();
   }
+
+  @SuppressWarnings("unchecked")
+  @Override
+  public List<ExtensionConfiguration> getPluginExtensions() {
+    return (List<ExtensionConfiguration>)
+        (List<? extends ExtensionConfiguration>) jibPluginConfiguration.getPluginExtensions();
+  }
 }
