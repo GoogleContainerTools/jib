@@ -469,7 +469,7 @@ To inspect the image that is produced from the build using Docker, you can use c
 
 ### How do I specify an image from a manifest list?
 
-By design, if the target image reference is a [manifest list](https://docs.docker.com/registry/spec/manifest-v2-2/#manifest-list), Jib will always select an image for the platform `amd64/linux` . If you need to specify a different image from a manifest list you must specify the digest for the platform you are targeting. 
+By design, if the target image reference is a [manifest list](https://docs.docker.com/registry/spec/manifest-v2-2/#manifest-list), Jib will always select an image for the platform `amd64/linux`. If you need to specify a different image from a manifest list you must specify the digest for the platform you are targeting.
 
 To view a manifest, [enable experimental docker CLI](https://docs.docker.com/engine/reference/commandline/cli/#experimental-features) features and then run the [manifest inspect](https://docs.docker.com/engine/reference/commandline/manifest_inspect/) command.
 ```
