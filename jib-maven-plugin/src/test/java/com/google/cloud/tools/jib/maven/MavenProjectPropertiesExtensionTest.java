@@ -165,9 +165,8 @@ public class MavenProjectPropertiesExtensionTest {
       Assert.fail();
     } catch (JibPluginExtensionException ex) {
       Assert.assertEquals(
-          "the following extension is configured to load but not discovered on Jib runtime "
-              + "classpath: com.google.cloud.tools.jib.maven.MavenProjectPropertiesExtensionTest"
-              + "$FooExtension",
+          "extension configured but not discovered on Jib runtime classpath: com.google.cloud."
+              + "tools.jib.maven.MavenProjectPropertiesExtensionTest$FooExtension",
           ex.getMessage());
     }
   }

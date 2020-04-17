@@ -562,7 +562,7 @@ public class MavenProjectProperties implements ProjectProperties {
         if (extension == null) {
           throw new JibPluginExtensionException(
               JibMavenPluginExtension.class,
-              "the following extension is configured to load but not discovered on Jib runtime classpath: "
+              "extension configured but not discovered on Jib runtime classpath: "
                   + extensionClass);
         }
 
