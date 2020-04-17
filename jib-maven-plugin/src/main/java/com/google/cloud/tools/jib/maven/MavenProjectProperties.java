@@ -546,10 +546,6 @@ public class MavenProjectProperties implements ProjectProperties {
       List<ExtensionConfiguration> extensionConfigs,
       JibContainerBuilder jibContainerBuilder)
       throws JibPluginExtensionException {
-    if (services.isEmpty()) {
-      log(LogEvent.debug("No Jib plugin extensions discovered on Jib runtime classpath"));
-      return jibContainerBuilder;
-    }
     if (extensionConfigs.isEmpty()) {
       log(LogEvent.debug("No Jib plugin extensions configured to load"));
       return jibContainerBuilder;

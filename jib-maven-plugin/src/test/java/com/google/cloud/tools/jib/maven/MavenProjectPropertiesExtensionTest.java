@@ -53,11 +53,11 @@ import org.mockito.junit.MockitoJUnitRunner;
 public class MavenProjectPropertiesExtensionTest {
 
   // Interface defined only to give a type name.
-  private static class FakeJibMavenPluginExtension implements JibMavenPluginExtension {
+  private static class FooExtension implements JibMavenPluginExtension {
 
     private final JibMavenPluginExtension extension;
 
-    private FakeJibMavenPluginExtension(JibMavenPluginExtension extension) {
+    private FooExtension(JibMavenPluginExtension extension) {
       this.extension = extension;
     }
 
@@ -72,15 +72,25 @@ public class MavenProjectPropertiesExtensionTest {
     }
   }
 
-  private static class FakeExtensionConfiguration implements ExtensionConfiguration {
+  private static class BarExtension extends FooExtension {
 
-    private String extensionClass = FakeJibMavenPluginExtension.class.getName();
+    private BarExtension(JibMavenPluginExtension extension) {
+      super(extension);
+    }
+  }
+
+  private static class FooExtensionConfig implements ExtensionConfiguration {
+
+    private String extensionClass = FooExtension.class.getName();
     private Map<String, String> properties = Collections.emptyMap();
 
-    private FakeExtensionConfiguration() {}
+    private FooExtensionConfig() {}
 
-    private FakeExtensionConfiguration(String extensionClass, Map<String, String> properties) {
+    private FooExtensionConfig(String extensionClass) {
       this.extensionClass = extensionClass;
+    }
+
+    private FooExtensionConfig(Map<String, String> properties) {
       this.properties = properties;
     }
 
@@ -92,6 +102,13 @@ public class MavenProjectPropertiesExtensionTest {
     @Override
     public String getExtensionClass() {
       return extensionClass;
+    }
+  }
+
+  private static class BarExtensionConfig extends FooExtensionConfig {
+
+    private BarExtensionConfig() {
+      super(BarExtension.class.getName());
     }
   }
 
@@ -124,19 +141,6 @@ public class MavenProjectPropertiesExtensionTest {
   }
 
   @Test
-  public void testRunPluginExtensions_noExtensionsFound()
-      throws JibPluginExtensionException, InvalidImageReferenceException {
-    JibContainerBuilder originalBuilder = Jib.from(RegistryImage.named("from/nothing"));
-    JibContainerBuilder extendedBuilder =
-        mavenProjectProperties.runPluginExtensions(
-            Collections.emptyList(), Collections.emptyList(), originalBuilder);
-    Assert.assertSame(extendedBuilder, originalBuilder);
-
-    mavenProjectProperties.waitForLoggingThread();
-    Mockito.verify(mockLog).debug("No Jib plugin extensions discovered on Jib runtime classpath");
-  }
-
-  @Test
   public void testRunPluginExtensions_noExtensionsConfigured()
       throws JibPluginExtensionException, InvalidImageReferenceException {
     JibMavenPluginExtension extension = (buildPlan, properties, mavenData, logger) -> buildPlan;
@@ -152,10 +156,27 @@ public class MavenProjectPropertiesExtensionTest {
   }
 
   @Test
+  public void testRunPluginExtensions_configuredExtensionNotFound()
+      throws InvalidImageReferenceException {
+    JibContainerBuilder originalBuilder = Jib.from(RegistryImage.named("from/nothing"));
+    try {
+      mavenProjectProperties.runPluginExtensions(
+          Collections.emptyList(), Arrays.asList(new FooExtensionConfig()), originalBuilder);
+      Assert.fail();
+    } catch (JibPluginExtensionException ex) {
+      Assert.assertEquals(
+          "the following extension is configured to load but not discovered on Jib runtime "
+              + "classpath: com.google.cloud.tools.jib.maven.MavenProjectPropertiesExtensionTest"
+              + "$FooExtension",
+          ex.getMessage());
+    }
+  }
+
+  @Test
   public void testRunPluginExtensions()
       throws JibPluginExtensionException, InvalidImageReferenceException {
     JibMavenPluginExtension extension =
-        new FakeJibMavenPluginExtension(
+        new FooExtension(
             (buildPlan, properties, mavenData, logger) -> {
               logger.log(LogLevel.ERROR, "awesome error from my extension");
               return buildPlan.toBuilder().setUser("user from extension").build();
@@ -164,7 +185,7 @@ public class MavenProjectPropertiesExtensionTest {
     JibContainerBuilder extendedBuilder =
         mavenProjectProperties.runPluginExtensions(
             Arrays.asList(extension),
-            Arrays.asList(new FakeExtensionConfiguration()),
+            Arrays.asList(new FooExtensionConfig()),
             Jib.from(RegistryImage.named("from/nothing")));
     Assert.assertEquals("user from extension", extendedBuilder.toContainerBuildPlan().getUser());
 
@@ -181,7 +202,7 @@ public class MavenProjectPropertiesExtensionTest {
       throws InvalidImageReferenceException {
     FileNotFoundException fakeException = new FileNotFoundException();
     JibMavenPluginExtension extension =
-        new FakeJibMavenPluginExtension(
+        new FooExtension(
             (buildPlan, properties, mavenData, logger) -> {
               throw new JibPluginExtensionException(
                   JibMavenPluginExtension.class, "exception from extension", fakeException);
@@ -190,9 +211,7 @@ public class MavenProjectPropertiesExtensionTest {
     JibContainerBuilder originalBuilder = Jib.from(RegistryImage.named("scratch"));
     try {
       mavenProjectProperties.runPluginExtensions(
-          Arrays.asList(extension),
-          Arrays.asList(new FakeExtensionConfiguration()),
-          originalBuilder);
+          Arrays.asList(extension), Arrays.asList(new FooExtensionConfig()), originalBuilder);
       Assert.fail();
     } catch (JibPluginExtensionException ex) {
       Assert.assertEquals("exception from extension", ex.getMessage());
@@ -204,21 +223,41 @@ public class MavenProjectPropertiesExtensionTest {
   public void testRunPluginExtensions_invalidBaseImageFromExtension()
       throws InvalidImageReferenceException {
     JibMavenPluginExtension extension =
-        new FakeJibMavenPluginExtension(
+        new FooExtension(
             (buildPlan, properties, mavenData, logger) ->
                 buildPlan.toBuilder().setBaseImage(" in*val+id").build());
 
     JibContainerBuilder originalBuilder = Jib.from(RegistryImage.named("from/nothing"));
     try {
       mavenProjectProperties.runPluginExtensions(
-          Arrays.asList(extension),
-          Arrays.asList(new FakeExtensionConfiguration()),
-          originalBuilder);
+          Arrays.asList(extension), Arrays.asList(new FooExtensionConfig()), originalBuilder);
       Assert.fail();
     } catch (JibPluginExtensionException ex) {
       Assert.assertEquals("invalid base image reference:  in*val+id", ex.getMessage());
       Assert.assertThat(
           ex.getCause(), CoreMatchers.instanceOf(InvalidImageReferenceException.class));
     }
+  }
+
+  @Test
+  public void testRunPluginExtensions_extensionOrder()
+      throws JibPluginExtensionException, InvalidImageReferenceException {
+    JibMavenPluginExtension fakeExtension =
+        new FooExtension(
+            (buildPlan, properties, mavenData, logger) ->
+                buildPlan.toBuilder().setBaseImage("fake").build());
+    JibMavenPluginExtension anotherFakeExtension =
+        new BarExtension(
+            (buildPlan, properties, mavenData, logger) ->
+                buildPlan.toBuilder().setBaseImage("another/fake").build());
+
+    JibContainerBuilder extendedBuilder =
+        mavenProjectProperties.runPluginExtensions(
+            Arrays.asList(fakeExtension, anotherFakeExtension),
+            Arrays.asList(new FooExtensionConfig(), new BarExtensionConfig()),
+            Jib.from(RegistryImage.named("scratch")));
+    Assert.assertEquals("another/fake", extendedBuilder.toContainerBuildPlan().getBaseImage());
+
+    // TODO: the other direction.
   }
 }
