@@ -27,6 +27,7 @@ import com.google.cloud.tools.jib.plugins.common.RawConfiguration.ExtensionConfi
 import com.google.cloud.tools.jib.plugins.extension.ExtensionLogger;
 import com.google.cloud.tools.jib.plugins.extension.ExtensionLogger.LogLevel;
 import com.google.cloud.tools.jib.plugins.extension.JibPluginExtensionException;
+import com.google.common.collect.ImmutableMap;
 import java.io.FileNotFoundException;
 import java.util.Arrays;
 import java.util.Collections;
@@ -253,5 +254,20 @@ public class MavenProjectPropertiesExtensionTest {
             Arrays.asList(new BarExtensionConfig(), new FooExtensionConfig()),
             containerBuilder);
     Assert.assertEquals("foo", extendedBuilder2.toContainerBuildPlan().getBaseImage());
+  }
+
+  @Test
+  public void testRunPluginExtensions_customProperties() throws JibPluginExtensionException {
+    FooExtension extension =
+        new FooExtension(
+            (buildPlan, properties, mavenData, logger) ->
+                buildPlan.toBuilder().setUser(properties.get("user")).build());
+
+    JibContainerBuilder extendedBuilder =
+        mavenProjectProperties.runPluginExtensions(
+            Arrays.asList(extension),
+            Arrays.asList(new FooExtensionConfig(ImmutableMap.of("user", "65432"))),
+            containerBuilder);
+    Assert.assertEquals("65432", extendedBuilder.toContainerBuildPlan().getUser());
   }
 }
