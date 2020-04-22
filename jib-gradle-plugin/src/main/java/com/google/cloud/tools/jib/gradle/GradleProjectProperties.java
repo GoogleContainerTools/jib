@@ -54,6 +54,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.ServiceLoader;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import org.apache.tools.ant.taskdefs.condition.Os;
@@ -103,7 +104,9 @@ public class GradleProjectProperties implements ProjectProperties {
    */
   public static GradleProjectProperties getForProject(
       Project project, Logger logger, TempDirectoryProvider tempDirectoryProvider) {
-    return new GradleProjectProperties(project, logger, tempDirectoryProvider);
+    Supplier<List<JibGradlePluginExtension>> extensionLoader =
+        () -> Lists.newArrayList(ServiceLoader.load(JibGradlePluginExtension.class).iterator());
+    return new GradleProjectProperties(project, logger, tempDirectoryProvider, extensionLoader);
   }
 
   String getWarFilePath() {
@@ -138,12 +141,17 @@ public class GradleProjectProperties implements ProjectProperties {
   private final SingleThreadedExecutor singleThreadedExecutor = new SingleThreadedExecutor();
   private final ConsoleLogger consoleLogger;
   private final TempDirectoryProvider tempDirectoryProvider;
+  private final Supplier<List<JibGradlePluginExtension>> extensionLoader;
 
   @VisibleForTesting
   GradleProjectProperties(
-      Project project, Logger logger, TempDirectoryProvider tempDirectoryProvider) {
+      Project project,
+      Logger logger,
+      TempDirectoryProvider tempDirectoryProvider,
+      Supplier<List<JibGradlePluginExtension>> extensionLoader) {
     this.project = project;
     this.tempDirectoryProvider = tempDirectoryProvider;
+    this.extensionLoader = extensionLoader;
     ConsoleLoggerBuilder consoleLoggerBuilder =
         (isProgressFooterEnabled(project)
                 ? ConsoleLoggerBuilder.rich(singleThreadedExecutor, false)
@@ -401,29 +409,19 @@ public class GradleProjectProperties implements ProjectProperties {
   public JibContainerBuilder runPluginExtensions(
       List<ExtensionConfiguration> extensionConfigs, JibContainerBuilder jibContainerBuilder)
       throws JibPluginExtensionException {
-    List<JibGradlePluginExtension> services =
-        Lists.newArrayList(ServiceLoader.load(JibGradlePluginExtension.class).iterator());
-    return runPluginExtensions(services, extensionConfigs, jibContainerBuilder);
-  }
-
-  @VisibleForTesting
-  JibContainerBuilder runPluginExtensions(
-      List<JibGradlePluginExtension> services,
-      List<ExtensionConfiguration> extensionConfigs,
-      JibContainerBuilder jibContainerBuilder)
-      throws JibPluginExtensionException {
     if (extensionConfigs.isEmpty()) {
       log(LogEvent.debug("No Jib plugin extensions configured to load"));
       return jibContainerBuilder;
     }
 
+    List<JibGradlePluginExtension> loadedExtensions = extensionLoader.get();
     JibGradlePluginExtension extension = null;
     ContainerBuildPlan buildPlan = jibContainerBuilder.toContainerBuildPlan();
     GradleExtensionLogger extensionLogger = new GradleExtensionLogger(this::log);
     try {
       for (ExtensionConfiguration config : extensionConfigs) {
         String extensionClass = config.getExtensionClass();
-        extension = findConfiguredExtension(services, extensionClass);
+        extension = findConfiguredExtension(loadedExtensions, extensionClass);
         if (extension == null) {
           throw new JibPluginExtensionException(
               JibGradlePluginExtension.class,

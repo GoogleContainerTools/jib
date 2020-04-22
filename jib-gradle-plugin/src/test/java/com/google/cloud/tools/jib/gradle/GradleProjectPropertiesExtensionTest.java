@@ -33,6 +33,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Supplier;
 import org.gradle.api.Project;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.configuration.ConsoleOutput;
@@ -115,6 +116,8 @@ public class GradleProjectPropertiesExtensionTest {
   @Mock(answer = Answers.RETURNS_DEEP_STUBS)
   private Project mockProject;
 
+  private List<JibGradlePluginExtension> loadedExtensions = Collections.emptyList();
+  private final Supplier<List<JibGradlePluginExtension>> extensionLoader = () -> loadedExtensions;
   private final JibContainerBuilder containerBuilder = Jib.fromScratch();
 
   private GradleProjectProperties gradleProjectProperties;
@@ -130,16 +133,17 @@ public class GradleProjectPropertiesExtensionTest {
         .thenReturn(ConsoleOutput.Plain);
 
     gradleProjectProperties =
-        new GradleProjectProperties(mockProject, mockLogger, mockTempDirectoryProvider);
+        new GradleProjectProperties(
+            mockProject, mockLogger, mockTempDirectoryProvider, extensionLoader);
   }
 
   @Test
   public void testRunPluginExtensions_noExtensionsConfigured() throws JibPluginExtensionException {
     JibGradlePluginExtension extension = (buildPlan, properties, gradleData, logger) -> buildPlan;
+    loadedExtensions = Arrays.asList(extension);
 
     JibContainerBuilder extendedBuilder =
-        gradleProjectProperties.runPluginExtensions(
-            Arrays.asList(extension), Collections.emptyList(), containerBuilder);
+        gradleProjectProperties.runPluginExtensions(Collections.emptyList(), containerBuilder);
     Assert.assertSame(extendedBuilder, containerBuilder);
 
     gradleProjectProperties.waitForLoggingThread();
@@ -150,7 +154,7 @@ public class GradleProjectPropertiesExtensionTest {
   public void testRunPluginExtensions_configuredExtensionNotFound() {
     try {
       gradleProjectProperties.runPluginExtensions(
-          Collections.emptyList(), Arrays.asList(new FooExtensionConfig()), containerBuilder);
+          Arrays.asList(new FooExtensionConfig()), containerBuilder);
       Assert.fail();
     } catch (JibPluginExtensionException ex) {
       Assert.assertEquals(
@@ -168,10 +172,11 @@ public class GradleProjectPropertiesExtensionTest {
               logger.log(LogLevel.ERROR, "awesome error from my extension");
               return buildPlan.toBuilder().setUser("user from extension").build();
             });
+    loadedExtensions = Arrays.asList(extension);
 
     JibContainerBuilder extendedBuilder =
         gradleProjectProperties.runPluginExtensions(
-            Arrays.asList(extension), Arrays.asList(new FooExtensionConfig()), containerBuilder);
+            Arrays.asList(new FooExtensionConfig()), containerBuilder);
     Assert.assertEquals("user from extension", extendedBuilder.toContainerBuildPlan().getUser());
 
     gradleProjectProperties.waitForLoggingThread();
@@ -191,10 +196,11 @@ public class GradleProjectPropertiesExtensionTest {
               throw new JibPluginExtensionException(
                   JibGradlePluginExtension.class, "exception from extension", fakeException);
             });
+    loadedExtensions = Arrays.asList(extension);
 
     try {
       gradleProjectProperties.runPluginExtensions(
-          Arrays.asList(extension), Arrays.asList(new FooExtensionConfig()), containerBuilder);
+          Arrays.asList(new FooExtensionConfig()), containerBuilder);
       Assert.fail();
     } catch (JibPluginExtensionException ex) {
       Assert.assertEquals("exception from extension", ex.getMessage());
@@ -208,10 +214,11 @@ public class GradleProjectPropertiesExtensionTest {
         new FooExtension(
             (buildPlan, properties, gradleData, logger) ->
                 buildPlan.toBuilder().setBaseImage(" in*val+id").build());
+    loadedExtensions = Arrays.asList(extension);
 
     try {
       gradleProjectProperties.runPluginExtensions(
-          Arrays.asList(extension), Arrays.asList(new FooExtensionConfig()), containerBuilder);
+          Arrays.asList(new FooExtensionConfig()), containerBuilder);
       Assert.fail();
     } catch (JibPluginExtensionException ex) {
       Assert.assertEquals("invalid base image reference:  in*val+id", ex.getMessage());
@@ -230,20 +237,16 @@ public class GradleProjectPropertiesExtensionTest {
         new BarExtension(
             (buildPlan, properties, gradleData, logger) ->
                 buildPlan.toBuilder().setBaseImage("bar").build());
-    List<JibGradlePluginExtension> extensions = Arrays.asList(fooExtension, barExtension);
+    loadedExtensions = Arrays.asList(fooExtension, barExtension);
 
     JibContainerBuilder extendedBuilder1 =
         gradleProjectProperties.runPluginExtensions(
-            extensions,
-            Arrays.asList(new FooExtensionConfig(), new BarExtensionConfig()),
-            containerBuilder);
+            Arrays.asList(new FooExtensionConfig(), new BarExtensionConfig()), containerBuilder);
     Assert.assertEquals("bar", extendedBuilder1.toContainerBuildPlan().getBaseImage());
 
     JibContainerBuilder extendedBuilder2 =
         gradleProjectProperties.runPluginExtensions(
-            extensions,
-            Arrays.asList(new BarExtensionConfig(), new FooExtensionConfig()),
-            containerBuilder);
+            Arrays.asList(new BarExtensionConfig(), new FooExtensionConfig()), containerBuilder);
     Assert.assertEquals("foo", extendedBuilder2.toContainerBuildPlan().getBaseImage());
   }
 
@@ -253,10 +256,10 @@ public class GradleProjectPropertiesExtensionTest {
         new FooExtension(
             (buildPlan, properties, gradleData, logger) ->
                 buildPlan.toBuilder().setUser(properties.get("user")).build());
+    loadedExtensions = Arrays.asList(extension);
 
     JibContainerBuilder extendedBuilder =
         gradleProjectProperties.runPluginExtensions(
-            Arrays.asList(extension),
             Arrays.asList(new FooExtensionConfig(ImmutableMap.of("user", "65432"))),
             containerBuilder);
     Assert.assertEquals("65432", extendedBuilder.toContainerBuildPlan().getUser());
