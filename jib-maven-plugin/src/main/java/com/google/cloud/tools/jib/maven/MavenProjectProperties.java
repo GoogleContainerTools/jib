@@ -554,7 +554,7 @@ public class MavenProjectProperties implements ProjectProperties {
     JibMavenPluginExtension extension = null;
     ContainerBuildPlan buildPlan = jibContainerBuilder.toContainerBuildPlan();
     MavenExtensionData mavenData = new MavenExtensionData(project, session);
-    MavenExtensionLogger logger = new MavenExtensionLogger(this::log);
+    MavenExtensionLogger extensionLogger = new MavenExtensionLogger(this::log);
     try {
       for (ExtensionConfiguration config : extensionConfigs) {
         String extensionClass = config.getExtensionClass();
@@ -569,7 +569,7 @@ public class MavenProjectProperties implements ProjectProperties {
         log(LogEvent.lifecycle("Running extension: " + extensionClass));
         buildPlan =
             extension.extendContainerBuildPlan(
-                buildPlan, config.getProperties(), mavenData, logger);
+                buildPlan, config.getProperties(), mavenData, extensionLogger);
         ImageReference.parse(buildPlan.getBaseImage()); // to validate image reference
       }
       return jibContainerBuilder.applyContainerBuildPlan(buildPlan);
