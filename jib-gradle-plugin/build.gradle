@@ -2,11 +2,28 @@ plugins {
   id 'java-gradle-plugin'
   id 'net.researchgate.release'
   id 'com.gradle.plugin-publish'
-  // for local SNAPSHOT build/test
-  id 'maven-publish'
   // for eclipse import modifications
   id 'eclipse'
 }
+
+/* LOCAL SNAPSHOT DEV */
+// to install for local testing - do not load this plugin when publishing to plugin portal
+// 'maven-publish' and 'com.gradle.plugin-publish' do not interact well with each other
+// https://discuss.gradle.org/t/debug-an-issue-in-publish-plugin-gradle-plugin-not-being-prepended-to-groupid/32720
+if (version.contains("SNAPSHOT")) {
+  apply plugin: 'maven-publish'
+
+  publishing {
+    repositories {
+      mavenLocal()
+    }
+  }
+
+  task install {
+    dependsOn publishToMavenLocal
+  }
+}
+/* LOCAL SNAPSHOT DEV */
 
 repositories {
   // because gradle plugin dependencies are pulling from jcenter
@@ -82,15 +99,3 @@ eclipse.classpath.file.whenMerged {
   }
 }
 /* ECLIPSE */
-
-/* LOCAL SNAPSHOT DEV */
-publishing {
-  repositories {
-    mavenLocal()
-  }
-}
-
-task install {
-  dependsOn publishToMavenLocal
-}
-/* LOCAL SNAPSHOT DEV */
