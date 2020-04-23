@@ -27,6 +27,8 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
+- Fixes the problem not inheriting `USER` container configuration from a base image. ([#2426](https://github.com/GoogleContainerTools/jib/pull/2426))
+
 ## 0.13.1
 
 ### Fixed
