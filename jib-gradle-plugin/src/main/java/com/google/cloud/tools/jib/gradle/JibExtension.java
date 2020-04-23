@@ -140,6 +140,11 @@ public class JibExtension {
     action.execute(skaffold);
   }
 
+  /**
+   * Adds a new extension configuration to the extensions list.
+   *
+   * @param action closure representing an extension configuration
+   */
   public void extensions(Action<? super ExtensionsParameters> action) {
     ExtensionsParameters extension = project.getObjects().newInstance(ExtensionsParameters.class);
     action.execute(extension);
