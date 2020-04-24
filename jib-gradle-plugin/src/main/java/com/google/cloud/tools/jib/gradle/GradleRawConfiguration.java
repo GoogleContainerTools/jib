@@ -21,7 +21,6 @@ import com.google.cloud.tools.jib.api.buildplan.ImageFormat;
 import com.google.cloud.tools.jib.plugins.common.AuthProperty;
 import com.google.cloud.tools.jib.plugins.common.RawConfiguration;
 import java.nio.file.Path;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -201,8 +200,10 @@ public class GradleRawConfiguration implements RawConfiguration {
     return jibExtension.getOutputPaths().getImageJsonPath();
   }
 
+  @SuppressWarnings("unchecked")
   @Override
   public List<ExtensionConfiguration> getPluginExtensions() {
-    return Collections.emptyList();
+    return (List<ExtensionConfiguration>)
+        (List<? extends ExtensionConfiguration>) jibExtension.getJibExtensions().get();
   }
 }

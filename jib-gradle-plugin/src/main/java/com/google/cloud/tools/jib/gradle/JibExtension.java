@@ -21,6 +21,7 @@ import com.google.cloud.tools.jib.plugins.common.PropertyNames;
 import org.gradle.api.Action;
 import org.gradle.api.Project;
 import org.gradle.api.model.ObjectFactory;
+import org.gradle.api.provider.ListProperty;
 import org.gradle.api.provider.Property;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.Nested;
@@ -63,6 +64,10 @@ import org.gradle.api.tasks.Optional;
  *   }
  *   allowInsecureRegistries = false
  *   containerizingMode = 'exploded'
+ *   jibExtensions {
+ *     implementation = 'com.example.ThirdPartyJibGradleExtension'
+ *     properties = [customKey: 'value]
+ *   }
  * }
  * }</pre>
  */
@@ -71,6 +76,8 @@ public class JibExtension {
   // Defines default configuration values.
   private static final boolean DEFAULT_ALLOW_INSECURE_REGISTIRIES = false;
   private static final String DEFAULT_CONTAINERIZING_MODE = "exploded";
+
+  private final Project project;
 
   private final BaseImageParameters from;
   private final TargetImageParameters to;
@@ -81,6 +88,7 @@ public class JibExtension {
   private final SkaffoldParameters skaffold;
   private final Property<Boolean> allowInsecureRegistries;
   private final Property<String> containerizingMode;
+  private final ListProperty<ExtensionsParameters> jibExtensions;
 
   /**
    * Should be called using {@link org.gradle.api.plugins.ExtensionContainer#create}.
@@ -88,6 +96,7 @@ public class JibExtension {
    * @param project the injected gradle project
    */
   public JibExtension(Project project) {
+    this.project = project;
     ObjectFactory objectFactory = project.getObjects();
 
     from = objectFactory.newInstance(BaseImageParameters.class);
@@ -98,6 +107,7 @@ public class JibExtension {
     outputPaths = objectFactory.newInstance(OutputPathsParameters.class, project);
     skaffold = objectFactory.newInstance(SkaffoldParameters.class, project);
 
+    jibExtensions = objectFactory.listProperty(ExtensionsParameters.class).empty();
     allowInsecureRegistries = objectFactory.property(Boolean.class);
     containerizingMode = objectFactory.property(String.class);
 
@@ -132,6 +142,17 @@ public class JibExtension {
 
   public void skaffold(Action<? super SkaffoldParameters> action) {
     action.execute(skaffold);
+  }
+
+  /**
+   * Adds a new extension configuration to the extensions list.
+   *
+   * @param action closure representing an extension configuration
+   */
+  public void jibExtensions(Action<? super ExtensionsParameters> action) {
+    ExtensionsParameters extension = project.getObjects().newInstance(ExtensionsParameters.class);
+    action.execute(extension);
+    jibExtensions.add(extension);
   }
 
   public void setAllowInsecureRegistries(boolean allowInsecureRegistries) {
@@ -197,5 +218,11 @@ public class JibExtension {
   public String getContainerizingMode() {
     String property = System.getProperty(PropertyNames.CONTAINERIZING_MODE);
     return property != null ? property : containerizingMode.get();
+  }
+
+  @Nested
+  @Optional
+  public ListProperty<ExtensionsParameters> getJibExtensions() {
+    return jibExtensions;
   }
 }
