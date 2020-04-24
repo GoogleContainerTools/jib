@@ -582,6 +582,7 @@ public class MavenProjectProperties implements ProjectProperties {
     }
   }
 
+  @Nullable
   private JibMavenPluginExtension findConfiguredExtension(
       List<JibMavenPluginExtension> extensions, String extensionClass) {
     Predicate<JibMavenPluginExtension> matchesClassName =
