@@ -447,6 +447,7 @@ public class GradleProjectProperties implements ProjectProperties {
     }
   }
 
+  @Nullable
   private JibGradlePluginExtension findConfiguredExtension(
       List<JibGradlePluginExtension> extensions, String extensionClass) {
     Predicate<JibGradlePluginExtension> matchesClassName =
