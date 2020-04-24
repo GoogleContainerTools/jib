@@ -43,6 +43,7 @@ import com.google.cloud.tools.jib.plugins.common.logging.ConsoleLoggerBuilder;
 import com.google.cloud.tools.jib.plugins.common.logging.ProgressDisplayGenerator;
 import com.google.cloud.tools.jib.plugins.common.logging.SingleThreadedExecutor;
 import com.google.cloud.tools.jib.plugins.extension.JibPluginExtensionException;
+import com.google.cloud.tools.jib.plugins.extension.NullExtension;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Verify;
@@ -557,7 +558,7 @@ public class MavenProjectProperties implements ProjectProperties {
         extension = findConfiguredExtension(loadedExtensions, extensionClass);
         if (extension == null) {
           throw new JibPluginExtensionException(
-              JibMavenPluginExtension.class,
+              NullExtension.class,
               "extension configured but not discovered on Jib runtime classpath: "
                   + extensionClass);
         }
