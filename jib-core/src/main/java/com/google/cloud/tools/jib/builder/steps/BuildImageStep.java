@@ -83,6 +83,7 @@ class BuildImageStep implements Callable<Image> {
           .setHealthCheck(baseImage.getHealthCheck())
           .addExposedPorts(baseImage.getExposedPorts())
           .addVolumes(baseImage.getVolumes())
+          .setUser(baseImage.getUser())
           .setWorkingDirectory(baseImage.getWorkingDirectory());
 
       // Add history elements for non-empty layers that don't have one yet
@@ -114,12 +115,14 @@ class BuildImageStep implements Callable<Image> {
         imageBuilder
             .addEnvironment(containerConfiguration.getEnvironmentMap())
             .setCreated(containerConfiguration.getCreationTime())
-            .setUser(containerConfiguration.getUser())
             .setEntrypoint(computeEntrypoint(baseImage, containerConfiguration))
             .setProgramArguments(computeProgramArguments(baseImage, containerConfiguration))
             .addExposedPorts(containerConfiguration.getExposedPorts())
             .addVolumes(containerConfiguration.getVolumes())
             .addLabels(containerConfiguration.getLabels());
+        if (containerConfiguration.getUser() != null) {
+          imageBuilder.setUser(containerConfiguration.getUser());
+        }
         if (containerConfiguration.getWorkingDirectory() != null) {
           imageBuilder.setWorkingDirectory(containerConfiguration.getWorkingDirectory().toString());
         }
