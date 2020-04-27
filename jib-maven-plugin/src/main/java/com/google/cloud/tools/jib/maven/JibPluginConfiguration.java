@@ -19,6 +19,7 @@ package com.google.cloud.tools.jib.maven;
 import com.google.cloud.tools.jib.plugins.common.AuthProperty;
 import com.google.cloud.tools.jib.plugins.common.ConfigurationPropertyValidator;
 import com.google.cloud.tools.jib.plugins.common.PropertyNames;
+import com.google.cloud.tools.jib.plugins.common.RawConfiguration.ExtensionConfiguration;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
@@ -219,6 +220,23 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
     @Nullable @Parameter private File imageJson;
   }
 
+  public static class ExtensionParameters implements ExtensionConfiguration {
+
+    @Parameter private String implementation = "undefined";
+
+    @Parameter private Map<String, String> properties = Collections.emptyMap();
+
+    @Override
+    public String getExtensionClass() {
+      return implementation;
+    }
+
+    @Override
+    public Map<String, String> getProperties() {
+      return properties;
+    }
+  }
+
   @Nullable
   @Parameter(defaultValue = "${session}", readonly = true)
   private MavenSession session;
@@ -252,6 +270,8 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
 
   @Parameter(property = PropertyNames.SKIP)
   private boolean skip;
+
+  @Parameter private List<ExtensionParameters> extensions = Collections.emptyList();
 
   @Component protected SettingsDecrypter settingsDecrypter;
 
@@ -652,6 +672,10 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
 
   boolean isSkipped() {
     return skip;
+  }
+
+  List<ExtensionParameters> getPluginExtensions() {
+    return extensions;
   }
 
   /**

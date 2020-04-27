@@ -30,6 +30,13 @@ import java.util.Set;
  */
 public interface RawConfiguration {
 
+  static interface ExtensionConfiguration {
+
+    String getExtensionClass();
+
+    Map<String, String> getProperties();
+  }
+
   Optional<String> getFromImage();
 
   Optional<String> getToImage();
@@ -95,4 +102,6 @@ public interface RawConfiguration {
   Path getImageIdOutputPath();
 
   Path getImageJsonOutputPath();
+
+  List<? extends ExtensionConfiguration> getPluginExtensions();
 }

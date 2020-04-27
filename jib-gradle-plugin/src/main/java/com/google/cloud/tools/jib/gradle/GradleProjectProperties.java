@@ -33,6 +33,7 @@ import com.google.cloud.tools.jib.plugins.common.ContainerizingMode;
 import com.google.cloud.tools.jib.plugins.common.JavaContainerBuilderHelper;
 import com.google.cloud.tools.jib.plugins.common.ProjectProperties;
 import com.google.cloud.tools.jib.plugins.common.PropertyNames;
+import com.google.cloud.tools.jib.plugins.common.RawConfiguration.ExtensionConfiguration;
 import com.google.cloud.tools.jib.plugins.common.TimerEventHandler;
 import com.google.cloud.tools.jib.plugins.common.ZipUtil;
 import com.google.cloud.tools.jib.plugins.common.logging.ConsoleLogger;
@@ -396,7 +397,9 @@ public class GradleProjectProperties implements ProjectProperties {
   }
 
   @Override
-  public JibContainerBuilder runPluginExtensions(JibContainerBuilder jibContainerBuilder)
+  public JibContainerBuilder runPluginExtensions(
+      List<? extends ExtensionConfiguration> extensionConfigs,
+      JibContainerBuilder jibContainerBuilder)
       throws JibPluginExtensionException {
     return runPluginExtensions(
         ServiceLoader.load(JibGradlePluginExtension.class).iterator(), jibContainerBuilder);
