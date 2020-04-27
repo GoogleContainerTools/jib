@@ -398,7 +398,8 @@ public class GradleProjectProperties implements ProjectProperties {
 
   @Override
   public JibContainerBuilder runPluginExtensions(
-      List<ExtensionConfiguration> extensionConfigs, JibContainerBuilder jibContainerBuilder)
+      List<? extends ExtensionConfiguration> extensionConfigs,
+      JibContainerBuilder jibContainerBuilder)
       throws JibPluginExtensionException {
     return runPluginExtensions(
         ServiceLoader.load(JibGradlePluginExtension.class).iterator(), jibContainerBuilder);

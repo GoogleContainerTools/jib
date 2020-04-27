@@ -202,7 +202,7 @@ public class GradleRawConfiguration implements RawConfiguration {
   }
 
   @Override
-  public List<ExtensionConfiguration> getPluginExtensions() {
+  public List<? extends ExtensionConfiguration> getPluginExtensions() {
     return Collections.emptyList();
   }
 }
