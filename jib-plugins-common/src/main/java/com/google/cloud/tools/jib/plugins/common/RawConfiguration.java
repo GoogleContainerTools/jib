@@ -103,5 +103,5 @@ public interface RawConfiguration {
 
   Path getImageJsonOutputPath();
 
-  List<ExtensionConfiguration> getPluginExtensions();
+  List<? extends ExtensionConfiguration> getPluginExtensions();
 }

@@ -399,7 +399,8 @@ public class GradleProjectProperties implements ProjectProperties {
 
   @Override
   public JibContainerBuilder runPluginExtensions(
-      List<ExtensionConfiguration> extensionConfigs, JibContainerBuilder jibContainerBuilder)
+      List<? extends ExtensionConfiguration> extensionConfigs,
+      JibContainerBuilder jibContainerBuilder)
       throws JibPluginExtensionException {
     List<JibGradlePluginExtension> services =
         Lists.newArrayList(ServiceLoader.load(JibGradlePluginExtension.class).iterator());
@@ -409,7 +410,7 @@ public class GradleProjectProperties implements ProjectProperties {
   @VisibleForTesting
   JibContainerBuilder runPluginExtensions(
       List<JibGradlePluginExtension> services,
-      List<ExtensionConfiguration> extensionConfigs,
+      List<? extends ExtensionConfiguration> extensionConfigs,
       JibContainerBuilder jibContainerBuilder)
       throws JibPluginExtensionException {
     if (extensionConfigs.isEmpty()) {

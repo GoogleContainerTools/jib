@@ -533,7 +533,8 @@ public class MavenProjectProperties implements ProjectProperties {
 
   @Override
   public JibContainerBuilder runPluginExtensions(
-      List<ExtensionConfiguration> extensionConfigs, JibContainerBuilder jibContainerBuilder)
+      List<? extends ExtensionConfiguration> extensionConfigs,
+      JibContainerBuilder jibContainerBuilder)
       throws JibPluginExtensionException {
     List<JibMavenPluginExtension> services =
         Lists.newArrayList(ServiceLoader.load(JibMavenPluginExtension.class).iterator());
@@ -543,7 +544,7 @@ public class MavenProjectProperties implements ProjectProperties {
   @VisibleForTesting
   JibContainerBuilder runPluginExtensions(
       List<JibMavenPluginExtension> services,
-      List<ExtensionConfiguration> extensionConfigs,
+      List<? extends ExtensionConfiguration> extensionConfigs,
       JibContainerBuilder jibContainerBuilder)
       throws JibPluginExtensionException {
     if (extensionConfigs.isEmpty()) {

@@ -200,10 +200,8 @@ public class GradleRawConfiguration implements RawConfiguration {
     return jibExtension.getOutputPaths().getImageJsonPath();
   }
 
-  @SuppressWarnings("unchecked")
   @Override
-  public List<ExtensionConfiguration> getPluginExtensions() {
-    return (List<ExtensionConfiguration>)
-        (List<? extends ExtensionConfiguration>) jibExtension.getJibExtensions().get();
+  public List<? extends ExtensionConfiguration> getPluginExtensions() {
+    return jibExtension.getJibExtensions().get();
   }
 }
