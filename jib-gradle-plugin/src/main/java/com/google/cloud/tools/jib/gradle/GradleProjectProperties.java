@@ -408,7 +408,8 @@ public class GradleProjectProperties implements ProjectProperties {
 
   @Override
   public JibContainerBuilder runPluginExtensions(
-      List<ExtensionConfiguration> extensionConfigs, JibContainerBuilder jibContainerBuilder)
+      List<? extends ExtensionConfiguration> extensionConfigs,
+      JibContainerBuilder jibContainerBuilder)
       throws JibPluginExtensionException {
     if (extensionConfigs.isEmpty()) {
       log(LogEvent.debug("No Jib plugin extensions configured to load"));
@@ -446,6 +447,7 @@ public class GradleProjectProperties implements ProjectProperties {
     }
   }
 
+  @Nullable
   private JibGradlePluginExtension findConfiguredExtension(
       List<JibGradlePluginExtension> extensions, String extensionClass) {
     Predicate<JibGradlePluginExtension> matchesClassName =

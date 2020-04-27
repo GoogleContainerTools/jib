@@ -540,7 +540,8 @@ public class MavenProjectProperties implements ProjectProperties {
 
   @Override
   public JibContainerBuilder runPluginExtensions(
-      List<ExtensionConfiguration> extensionConfigs, JibContainerBuilder jibContainerBuilder)
+      List<? extends ExtensionConfiguration> extensionConfigs,
+      JibContainerBuilder jibContainerBuilder)
       throws JibPluginExtensionException {
     if (extensionConfigs.isEmpty()) {
       log(LogEvent.debug("No Jib plugin extensions configured to load"));
@@ -579,6 +580,7 @@ public class MavenProjectProperties implements ProjectProperties {
     }
   }
 
+  @Nullable
   private JibMavenPluginExtension findConfiguredExtension(
       List<JibMavenPluginExtension> extensions, String extensionClass) {
     Predicate<JibMavenPluginExtension> matchesClassName =
