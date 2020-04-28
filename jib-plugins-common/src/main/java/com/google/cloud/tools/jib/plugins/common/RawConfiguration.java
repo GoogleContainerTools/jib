@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.plugins.common;
 
+import com.google.cloud.tools.jib.api.buildplan.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.api.buildplan.FilePermissions;
 import com.google.cloud.tools.jib.api.buildplan.ImageFormat;
 import java.nio.file.Path;
@@ -78,7 +79,7 @@ public interface RawConfiguration {
 
   String getCreationTime();
 
-  List<Path> getExtraDirectories();
+  Map<Path, AbsoluteUnixPath> getExtraDirectories();
 
   Map<String, FilePermissions> getExtraDirectoryPermissions();
 

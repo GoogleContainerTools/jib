@@ -88,7 +88,10 @@ public class JavaContainerBuilderHelperTest {
     Path extraFilesDirectory = Paths.get(Resources.getResource("core/layer").toURI());
     FileEntriesLayer layerConfiguration =
         JavaContainerBuilderHelper.extraDirectoryLayerConfiguration(
-            extraFilesDirectory, Collections.emptyMap(), (ignored1, ignored2) -> Instant.EPOCH);
+            extraFilesDirectory,
+            AbsoluteUnixPath.get("/"),
+            Collections.emptyMap(),
+            (ignored1, ignored2) -> Instant.EPOCH);
     assertSourcePathsUnordered(
         Arrays.asList(
             extraFilesDirectory.resolve("a"),
@@ -114,7 +117,10 @@ public class JavaContainerBuilderHelperTest {
             FilePermissions.fromOctalString("765"));
     FileEntriesLayer fileEntriesLayer =
         JavaContainerBuilderHelper.extraDirectoryLayerConfiguration(
-            extraFilesDirectory, permissionsMap, (ignored1, ignored2) -> Instant.EPOCH);
+            extraFilesDirectory,
+            AbsoluteUnixPath.get("/"),
+            permissionsMap,
+            (ignored1, ignored2) -> Instant.EPOCH);
     assertExtractionPathsUnordered(
         Arrays.asList("/a", "/a/b", "/a/b/bar", "/c", "/c/cat", "/foo"),
         fileEntriesLayer.getEntries());
@@ -150,7 +156,10 @@ public class JavaContainerBuilderHelperTest {
             FilePermissions.fromOctalString("765"));
     FileEntriesLayer fileEntriesLayer =
         JavaContainerBuilderHelper.extraDirectoryLayerConfiguration(
-            extraFilesDirectory, permissionsMap, (ignored1, ignored2) -> Instant.EPOCH);
+            extraFilesDirectory,
+            AbsoluteUnixPath.get("/"),
+            permissionsMap,
+            (ignored1, ignored2) -> Instant.EPOCH);
     assertExtractionPathsUnordered(
         Arrays.asList("/a", "/a/b", "/a/b/bar", "/c", "/c/cat", "/foo"),
         fileEntriesLayer.getEntries());

@@ -52,6 +52,7 @@ import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.BiFunction;
@@ -392,11 +393,15 @@ public class PluginConfigurationProcessor {
         getCreationTime(rawConfiguration.getCreationTime(), projectProperties));
 
     // Adds all the extra files.
-    for (Path directory : rawConfiguration.getExtraDirectories()) {
-      if (Files.exists(directory)) {
+    for (Map.Entry<Path, AbsoluteUnixPath> entry :
+        rawConfiguration.getExtraDirectories().entrySet()) {
+      Path sourceDirectory = entry.getKey();
+      AbsoluteUnixPath targetDirectory = entry.getValue();
+      if (Files.exists(sourceDirectory)) {
         jibContainerBuilder.addFileEntriesLayer(
             JavaContainerBuilderHelper.extraDirectoryLayerConfiguration(
-                directory,
+                sourceDirectory,
+                targetDirectory,
                 rawConfiguration.getExtraDirectoryPermissions(),
                 modificationTimeProvider));
       }
