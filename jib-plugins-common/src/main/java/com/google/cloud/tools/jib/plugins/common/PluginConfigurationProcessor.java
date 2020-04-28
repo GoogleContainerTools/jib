@@ -126,7 +126,9 @@ public class PluginConfigurationProcessor {
         processCommonConfiguration(
             rawConfiguration, inferredAuthProvider, projectProperties, containerizer);
     JibContainerBuilder updatedContainerBuilder =
-        projectProperties.runPluginExtensions(jibContainerBuilder).setFormat(ImageFormat.Docker);
+        projectProperties
+            .runPluginExtensions(rawConfiguration.getPluginExtensions(), jibContainerBuilder)
+            .setFormat(ImageFormat.Docker);
 
     return JibBuildRunner.forBuildToDockerDaemon(
             updatedContainerBuilder,
@@ -185,7 +187,8 @@ public class PluginConfigurationProcessor {
         processCommonConfiguration(
             rawConfiguration, inferredAuthProvider, projectProperties, containerizer);
     JibContainerBuilder updatedContainerBuilder =
-        projectProperties.runPluginExtensions(jibContainerBuilder);
+        projectProperties.runPluginExtensions(
+            rawConfiguration.getPluginExtensions(), jibContainerBuilder);
 
     return JibBuildRunner.forBuildTar(
             updatedContainerBuilder,
@@ -259,7 +262,8 @@ public class PluginConfigurationProcessor {
         processCommonConfiguration(
             rawConfiguration, inferredAuthProvider, projectProperties, containerizer);
     JibContainerBuilder updatedContainerBuilder =
-        projectProperties.runPluginExtensions(jibContainerBuilder);
+        projectProperties.runPluginExtensions(
+            rawConfiguration.getPluginExtensions(), jibContainerBuilder);
 
     return JibBuildRunner.forBuildImage(
             updatedContainerBuilder,
