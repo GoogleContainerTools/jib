@@ -149,7 +149,7 @@ public class JibExtension {
    *
    * @param action closure representing an extension configuration
    */
-  public void jibExtensions(Action<? super ExtensionParameters> action) {
+  public void pluginExtensions(Action<? super ExtensionParameters> action) {
     ExtensionParameters extension = project.getObjects().newInstance(ExtensionParameters.class);
     action.execute(extension);
     pluginExtensions.add(extension);
