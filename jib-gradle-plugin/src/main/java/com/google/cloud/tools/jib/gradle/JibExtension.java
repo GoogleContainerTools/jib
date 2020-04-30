@@ -64,7 +64,7 @@ import org.gradle.api.tasks.Optional;
  *   }
  *   allowInsecureRegistries = false
  *   containerizingMode = 'exploded'
- *   jibExtensions {
+ *   pluginExtensions {
  *     implementation = 'com.example.ThirdPartyJibGradleExtension'
  *     properties = [customKey: 'value]
  *   }
@@ -88,7 +88,7 @@ public class JibExtension {
   private final SkaffoldParameters skaffold;
   private final Property<Boolean> allowInsecureRegistries;
   private final Property<String> containerizingMode;
-  private final ListProperty<ExtensionsParameters> jibExtensions;
+  private final ListProperty<ExtensionParameters> pluginExtensions;
 
   /**
    * Should be called using {@link org.gradle.api.plugins.ExtensionContainer#create}.
@@ -107,7 +107,7 @@ public class JibExtension {
     outputPaths = objectFactory.newInstance(OutputPathsParameters.class, project);
     skaffold = objectFactory.newInstance(SkaffoldParameters.class, project);
 
-    jibExtensions = objectFactory.listProperty(ExtensionsParameters.class).empty();
+    pluginExtensions = objectFactory.listProperty(ExtensionParameters.class).empty();
     allowInsecureRegistries = objectFactory.property(Boolean.class);
     containerizingMode = objectFactory.property(String.class);
 
@@ -145,14 +145,14 @@ public class JibExtension {
   }
 
   /**
-   * Adds a new extension configuration to the extensions list.
+   * Adds a new plugin extension configuration to the extensions list.
    *
    * @param action closure representing an extension configuration
    */
-  public void jibExtensions(Action<? super ExtensionsParameters> action) {
-    ExtensionsParameters extension = project.getObjects().newInstance(ExtensionsParameters.class);
+  public void jibExtensions(Action<? super ExtensionParameters> action) {
+    ExtensionParameters extension = project.getObjects().newInstance(ExtensionParameters.class);
     action.execute(extension);
-    jibExtensions.add(extension);
+    pluginExtensions.add(extension);
   }
 
   public void setAllowInsecureRegistries(boolean allowInsecureRegistries) {
@@ -222,7 +222,7 @@ public class JibExtension {
 
   @Nested
   @Optional
-  public ListProperty<ExtensionsParameters> getJibExtensions() {
-    return jibExtensions;
+  public ListProperty<ExtensionParameters> getPluginExtensions() {
+    return pluginExtensions;
   }
 }

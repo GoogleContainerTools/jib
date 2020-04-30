@@ -202,6 +202,6 @@ public class GradleRawConfiguration implements RawConfiguration {
 
   @Override
   public List<? extends ExtensionConfiguration> getPluginExtensions() {
-    return jibExtension.getJibExtensions().get();
+    return jibExtension.getPluginExtensions().get();
   }
 }

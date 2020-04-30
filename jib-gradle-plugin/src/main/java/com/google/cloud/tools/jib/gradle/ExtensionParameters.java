@@ -22,8 +22,8 @@ import java.util.Map;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.Internal;
 
-/** Object in {@link JibExtension} that configures plugin extensions. */
-public class ExtensionsParameters implements ExtensionConfiguration {
+/** Configuration of a plugin extension. */
+public class ExtensionParameters implements ExtensionConfiguration {
 
   private String implementation = "<extension implementation not configured>";
   private Map<String, String> properties = Collections.emptyMap();
