@@ -111,8 +111,6 @@ public class PluginConfigurationProcessorTest {
     Mockito.when(rawConfiguration.getAppRoot()).thenReturn("/app");
     Mockito.when(rawConfiguration.getFilesModificationTime()).thenReturn("EPOCH_PLUS_SECOND");
     Mockito.when(rawConfiguration.getCreationTime()).thenReturn("EPOCH");
-    Mockito.when(rawConfiguration.getExtraDirectories())
-        .thenReturn(Arrays.asList(Paths.get("nonexistent/path")));
     Mockito.when(rawConfiguration.getContainerizingMode()).thenReturn("exploded");
     Mockito.when(projectProperties.getToolName()).thenReturn("tool");
     Mockito.when(projectProperties.getToolVersion()).thenReturn("tool-version");
@@ -158,9 +156,10 @@ public class PluginConfigurationProcessorTest {
           InvalidContainerizingModeException, InvalidFilesModificationTimeException,
           InvalidCreationTimeException {
     Path extraDirectory = Paths.get(Resources.getResource("core/layer").toURI());
-    Mockito.when(rawConfiguration.getExtraDirectories()).thenReturn(Arrays.asList(extraDirectory));
+    Mockito.when(rawConfiguration.getExtraDirectories())
+        .thenReturn(ImmutableMap.of(extraDirectory, AbsoluteUnixPath.get("/target/dir")));
     Mockito.when(rawConfiguration.getExtraDirectoryPermissions())
-        .thenReturn(ImmutableMap.of("/foo", FilePermissions.fromOctalString("123")));
+        .thenReturn(ImmutableMap.of("/target/dir/foo", FilePermissions.fromOctalString("123")));
 
     BuildContext buildContext = getBuildContext(processCommonConfiguration());
     List<FileEntry> extraFiles =
@@ -182,13 +181,21 @@ public class PluginConfigurationProcessorTest {
             extraDirectory.resolve("foo")),
         extraFiles);
     assertExtractionPathsUnordered(
-        Arrays.asList("/a", "/a/b", "/a/b/bar", "/c", "/c/cat", "/foo"), extraFiles);
+        Arrays.asList(
+            "/target/dir/a",
+            "/target/dir/a/b",
+            "/target/dir/a/b/bar",
+            "/target/dir/c",
+            "/target/dir/c/cat",
+            "/target/dir/foo"),
+        extraFiles);
 
     Optional<FileEntry> fooEntry =
         extraFiles
             .stream()
             .filter(
-                layerEntry -> layerEntry.getExtractionPath().equals(AbsoluteUnixPath.get("/foo")))
+                layerEntry ->
+                    layerEntry.getExtractionPath().equals(AbsoluteUnixPath.get("/target/dir/foo")))
             .findFirst();
     Assert.assertTrue(fooEntry.isPresent());
     Assert.assertEquals("123", fooEntry.get().getPermissions().toOctalString());
