@@ -31,13 +31,12 @@ repositories {
 }
 
 dependencies {
+  sourceProject project(':jib-build-plan')
+  sourceProject project(':jib-plugins-extension-common')
   sourceProject project(':jib-gradle-plugin-extension-api')
   sourceProject project(':jib-core')
   sourceProject project(':jib-plugins-common')
   ensureNoProjectDependencies()
-
-  implementation "com.google.cloud.tools:jib-build-plan:${dependencyVersions.BUILD_PLAN}"
-  implementation "com.google.cloud.tools:jib-plugins-extension-common:${dependencyVersions.EXTENSION_COMMON}"
 
   testImplementation "junit:junit:${dependencyVersions.JUNIT}"
   testImplementation "org.mockito:mockito-core:${dependencyVersions.MOCKITO_CORE}"
