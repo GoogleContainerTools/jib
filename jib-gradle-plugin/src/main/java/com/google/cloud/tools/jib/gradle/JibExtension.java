@@ -89,6 +89,7 @@ public class JibExtension {
   private final Property<Boolean> allowInsecureRegistries;
   private final Property<String> containerizingMode;
   private final ListProperty<ExtensionParameters> pluginExtensions;
+  private final ExtensionParametersSpec pluginExtensionSpec;
 
   /**
    * Should be called using {@link org.gradle.api.plugins.ExtensionContainer#create}.
@@ -108,6 +109,8 @@ public class JibExtension {
     skaffold = objectFactory.newInstance(SkaffoldParameters.class, project);
 
     pluginExtensions = objectFactory.listProperty(ExtensionParameters.class).empty();
+    pluginExtensionSpec =
+        objectFactory.newInstance(ExtensionParametersSpec.class, project, pluginExtensions);
     allowInsecureRegistries = objectFactory.property(Boolean.class);
     containerizingMode = objectFactory.property(String.class);
 
@@ -149,10 +152,11 @@ public class JibExtension {
    *
    * @param action closure representing an extension configuration
    */
-  public void pluginExtensions(Action<? super ExtensionParameters> action) {
-    ExtensionParameters extension = project.getObjects().newInstance(ExtensionParameters.class);
-    action.execute(extension);
-    pluginExtensions.add(extension);
+  public void pluginExtensions(Action<? super ExtensionParametersSpec> action) {
+    action.execute(pluginExtensionSpec);
+    // ExtensionParameters extension = project.getObjects().newInstance(ExtensionParameters.class);
+    // action.execute(extension);
+    // pluginExtensions.add(extension);
   }
 
   public void setAllowInsecureRegistries(boolean allowInsecureRegistries) {
