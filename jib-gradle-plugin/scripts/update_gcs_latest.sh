@@ -1,7 +1,7 @@
 #!/bin/bash -
 # Usage: ./jib-gradle-plugin/scripts/update_gcs_latest.sh <release version>
 
-set -e
+set -o errexit
 
 EchoRed() {
 	echo "$(tput setaf 1; tput bold)$1$(tput sgr0)"

@@ -6,4 +6,4 @@ set -o errexit
 set -o xtrace
 
 cd github/jib
-./gradlew :jib-maven-plugin:prepareRelease
+./gradlew :jib-build-plan:prepareRelease
