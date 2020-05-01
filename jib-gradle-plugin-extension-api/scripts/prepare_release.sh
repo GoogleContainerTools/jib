@@ -1,5 +1,5 @@
 #!/bin/bash -
-# Usage: ./jib-core/scripts/prepare_release.sh <release version>
+# Usage: ./jib-gradle-plugin-extension-api/scripts/prepare_release.sh <release version>
 
 set -o errexit
 
@@ -16,7 +16,7 @@ Die() {
 }
 
 DieUsage() {
-  Die "Usage: ./jib-core/scripts/prepare_release.sh <release version> [<post-release-version>]"
+  Die "Usage: ./jib-gradle-plugin-extension-api/scripts/prepare_release.sh <release version> [<post-release-version>]"
 }
 
 # Usage: CheckVersion <version>
@@ -40,18 +40,18 @@ if [[ $(git status -uno --porcelain) ]]; then
 fi
 
 # Runs integration tests.
-./gradlew :jib-core:integrationTest --info --stacktrace
+./gradlew :jib-gradle-plugin-extension-api:integrationTest --info --stacktrace
 
 # Checks out a new branch for this version release (eg. 1.5.7).
-BRANCH=core_release_v${VERSION}
+BRANCH=gradle_extension_release_v${VERSION}
 git checkout -b ${BRANCH}
 
 # Changes the version for release and creates the commits/tags.
-echo | ./gradlew :jib-core:release -Prelease.releaseVersion=${VERSION} ${POST_RELEASE_VERSION:+"-Prelease.newVersion=${POST_RELEASE_VERSION}"}
+echo | ./gradlew :jib-gradle-plugin-extension-api:release -Prelease.releaseVersion=${VERSION} ${POST_RELEASE_VERSION:+"-Prelease.newVersion=${POST_RELEASE_VERSION}"}
 
 # Pushes the release branch and tag to Github.
 git push origin ${BRANCH}
-git push origin v${VERSION}-core
+git push origin v${VERSION}-gradle-extension
 
 # File a PR on Github for the new branch. Have someone LGTM it, which gives you permission to continue.
 EchoGreen 'File a PR for the new release branch:'
