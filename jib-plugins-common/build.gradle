@@ -11,7 +11,7 @@ dependencies {
   // for an unpublished library.
   implementation project(':jib-core').configurations.implementation.dependencies
 
-  implementation project(':jib-plugins-extension-common')
+  implementation "com.google.cloud.tools:jib-plugins-extension-common:${dependencyVersions.EXTENSION_COMMON}"
 
   testImplementation "junit:junit:${dependencyVersions.JUNIT}"
   testImplementation "org.mockito:mockito-core:${dependencyVersions.MOCKITO_CORE}"
