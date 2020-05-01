@@ -21,7 +21,7 @@ import org.gradle.api.Action;
 import org.gradle.api.Project;
 import org.gradle.api.provider.ListProperty;
 
-/** Allows to add {@link ExtensionParameters} objects to the list of plugin extensions. */
+/** Allows to add {@link ExtensionParameters} objects to the list property of the same type. */
 public class ExtensionParametersSpec {
 
   private final Project project;
@@ -34,6 +34,11 @@ public class ExtensionParametersSpec {
     this.pluginExtensions = pluginExtensions;
   }
 
+  /**
+   * Adds a new plugin extension configuration to the extensions list.
+   *
+   * @param action closure representing an extension configuration
+   */
   public void pluginExtension(Action<? super ExtensionParameters> action) {
     ExtensionParameters extension = project.getObjects().newInstance(ExtensionParameters.class);
     action.execute(extension);
