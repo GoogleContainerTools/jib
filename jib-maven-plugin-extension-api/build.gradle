@@ -5,7 +5,7 @@ plugins {
 
 dependencies {
   api project(':jib-build-plan')
-  api project(':jib-plugins-extension-common')
+  api "com.google.cloud.tools:jib-plugins-extension-common:${dependencyVersions.EXTENSION_COMMON}"
   api "org.apache.maven:maven-core:${dependencyVersions.MAVEN_API}"
 }
 
