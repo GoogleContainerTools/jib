@@ -1,7 +1,7 @@
 #!/bin/bash -
 # Usage: ./jib-maven-plugin/scripts/prepare_release.sh <release version> [<post-release version>]
 
-set -e
+set -o errexit
 
 EchoRed() {
 	echo "$(tput setaf 1; tput bold)$1$(tput sgr0)"

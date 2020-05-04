@@ -102,6 +102,7 @@ public class BuildImageStepTest {
             .addEnvironment(ImmutableMap.of("BASE_ENV", "BASE_ENV_VALUE", "BASE_ENV_2", "DEFAULT"))
             .addLabel("base.label", "base.label.value")
             .addLabel("base.label.2", "default")
+            .setUser("base:user")
             .setWorkingDirectory("/base/working/directory")
             .setEntrypoint(ImmutableList.of("baseImageEntrypoint"))
             .setProgramArguments(ImmutableList.of("catalina.sh", "run"))
@@ -143,6 +144,7 @@ public class BuildImageStepTest {
                 baseImageLayers,
                 applicationLayers)
             .call();
+    Assert.assertEquals("root", image.getUser());
     Assert.assertEquals(
         testDescriptorDigest, image.getLayers().asList().get(0).getBlobDescriptor().getDigest());
   }
@@ -228,6 +230,22 @@ public class BuildImageStepTest {
             .call();
 
     Assert.assertEquals("/my/directory", image.getWorkingDirectory());
+  }
+
+  @Test
+  public void test_inheritedUser() {
+    Mockito.when(mockContainerConfiguration.getUser()).thenReturn(null);
+
+    Image image =
+        new BuildImageStep(
+                mockBuildContext,
+                mockProgressEventDispatcherFactory,
+                baseImage,
+                baseImageLayers,
+                applicationLayers)
+            .call();
+
+    Assert.assertEquals("base:user", image.getUser());
   }
 
   @Test
