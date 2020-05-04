@@ -20,6 +20,7 @@ import com.google.cloud.tools.jib.api.buildplan.ContainerBuildPlan;
 import com.google.cloud.tools.jib.plugins.extension.ExtensionLogger;
 import com.google.cloud.tools.jib.plugins.extension.JibPluginExtension;
 import com.google.cloud.tools.jib.plugins.extension.JibPluginExtensionException;
+import java.util.Map;
 
 /**
  * Jib Gradle plugin extension API.
@@ -34,12 +35,16 @@ public interface JibGradlePluginExtension extends JibPluginExtension {
    * Extends the build plan prepared by the Jib Gradle plugin.
    *
    * @param buildPlan original build plan prepared by the Jib Gradle plugin
+   * @param properties custom properties configured for the plugin extension
    * @param gradleData {@link GradleData} providing Gradle-specific data and properties
    * @param logger logger for writing log messages
    * @return updated build plan
    * @throws JibPluginExtensionException if an error occurs while running the plugin extension
    */
   ContainerBuildPlan extendContainerBuildPlan(
-      ContainerBuildPlan buildPlan, GradleData gradleData, ExtensionLogger logger)
+      ContainerBuildPlan buildPlan,
+      Map<String, String> properties,
+      GradleData gradleData,
+      ExtensionLogger logger)
       throws JibPluginExtensionException;
 }
