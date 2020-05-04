@@ -65,8 +65,10 @@ import org.gradle.api.tasks.Optional;
  *   allowInsecureRegistries = false
  *   containerizingMode = 'exploded'
  *   pluginExtensions {
- *     implementation = 'com.example.ThirdPartyJibGradleExtension'
- *     properties = [customKey: 'value]
+ *     pluginExtension {
+ *       implementation = 'com.example.ThirdPartyJibGradleExtension'
+ *       properties = [customKey: 'value]
+ *     }
  *   }
  * }
  * }</pre>
