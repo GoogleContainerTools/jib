@@ -32,4 +32,12 @@ publishing {
     }
   }
 }
+
+// Release plugin (git release commits and version updates)
+release {
+  tagTemplate = 'v$version-extension-common'
+  git {
+    requireBranch = /^extension_common_release_v\d+.*$/  //regex
+  }
+}
 /* RELEASE */

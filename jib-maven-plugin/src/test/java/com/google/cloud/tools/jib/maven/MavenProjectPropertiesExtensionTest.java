@@ -41,9 +41,7 @@ import org.apache.maven.project.MavenProject;
 import org.hamcrest.CoreMatchers;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
@@ -111,9 +109,6 @@ public class MavenProjectPropertiesExtensionTest {
       super(BarExtension.class.getName());
     }
   }
-
-  @Rule public final TestRepository testRepository = new TestRepository();
-  @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
   @Mock private PluginDescriptor mockJibPluginDescriptor;
   @Mock private MavenProject mockMavenProject;

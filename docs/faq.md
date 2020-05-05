@@ -70,7 +70,7 @@ By default, Jib uses [`distroless/java`](https://github.com/GoogleContainerTools
 If you would like to include a shell for debugging, set the base image to `gcr.io/distroless/java:debug` instead. The shell will be located at `/busybox/sh`. Note that `:debug` images are **not** recommended for production use.
 
 <details>
-<summary>Configuring a base image in Maven</summary>
+<summary>Configuring a base image in Maven (click to expand)</summary>
 <p>
 
 In [`jib-maven-plugin`](../jib-maven-plugin), you can use the `gcr.io/distroless/java:debug` base image by adding the following configuration:
@@ -86,7 +86,7 @@ In [`jib-maven-plugin`](../jib-maven-plugin), you can use the `gcr.io/distroless
 </details>
 
 <details>
-<summary>Configuring a base image in Gradle</summary>
+<summary>Configuring a base image in Gradle (click to expand)</summary>
 <p>
 
 In [`jib-gradle-plugin`](../jib-gradle-plugin), you can use the `gcr.io/distroless/java:debug` base image by adding the following configuration:
@@ -116,7 +116,7 @@ See [Extended Usage](../jib-gradle-plugin#extended-usage) for the `container.for
 For reproducibility purposes, Jib sets the creation time of the container images to the Unix epoch (00:00:00, January 1st, 1970 in UTC). If you would like to use a different timestamp, set the `jib.container.creationTime` / `<container><creationTime>` parameter to an ISO 8601 date-time. You may also use the value `USE_CURRENT_TIMESTAMP` to set the creation time to the actual build time, but this sacrifices reproducibility since the timestamp will change with every build.
 
 <details>
-<summary>Setting `creationTime` parameter</summary>
+<summary>Setting <code>creationTime</code> parameter (click to expand)</summary>
 <p>
 
 #### Maven
@@ -242,7 +242,7 @@ Normally, the plugin sets a default entrypoint for java applications, or lets yo
 
 The intention of Jib is to add individual class files, resources, and dependency JARs into the container instead of putting a JAR. This lets Jib choose an opinionated, optimal layout for the application on the container image, which also allows it to skip the extra JAR-packaging step.
 
-However, you can set `<containerizingMode>packaged` (Maven) or `jib.containerizingMode = 'packaged'` (Gradle) to containerize a JAR, but note that your application will always be run via `java -cp ... your.MainClass` (even if it is an executable JAR). Some disadvantages:
+However, you can set `<containerizingMode>packaged` (Maven) or `jib.containerizingMode = 'packaged'` (Gradle) to containerize a JAR, but note that your application will always be run via `java -cp ... your.MainClass` (even if it is an executable JAR). Some disadvantages of setting `containerizingMode='packaged'`:
 
 - You need to run the JAR-packaging step (`mvn package` in Maven or the `jar` task in Gradle).
 - Reduced granularity in building and caching: if any of your Java source files or resource files are updated, not only the JAR has to be rebuilt, but the entire layer containing the JAR in the image has to be recreated and pushed to the destination.
@@ -257,7 +257,7 @@ Running commands like `apt-get` slows down the container build process. We **do 
 However, if you need to run commands, you can build a custom image and configure Jib to use it as the base image.
 
 <details>
-<summary>Base image configuration examples</summary>
+<summary>Base image configuration examples (click to expand)</summary>
 <p>
 
 #### Maven
@@ -291,7 +291,7 @@ We currently support adding a custom directory with an **incubating** feature ca
 If the current extra directories design doesn't meet your needs (e.g. you need to set up the extra files directory with files generated during the build process), you can use additional goals/tasks to create the extra directory as part of your build.
 
 <details>
-<summary>File copying examples</summary>
+<summary>File copying examples (click to expand)</summary>
 <p>
 
 #### Maven

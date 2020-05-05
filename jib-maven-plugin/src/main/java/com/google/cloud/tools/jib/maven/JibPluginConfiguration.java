@@ -222,7 +222,7 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
 
   public static class ExtensionParameters implements ExtensionConfiguration {
 
-    @Parameter private String implementation = "undefined";
+    @Parameter private String implementation = "<extension implementation not configured>";
 
     @Parameter private Map<String, String> properties = Collections.emptyMap();
 
@@ -271,7 +271,7 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
   @Parameter(property = PropertyNames.SKIP)
   private boolean skip;
 
-  @Parameter private List<ExtensionParameters> extensions = Collections.emptyList();
+  @Parameter private List<ExtensionParameters> pluginExtensions = Collections.emptyList();
 
   @Component protected SettingsDecrypter settingsDecrypter;
 
@@ -675,7 +675,7 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
   }
 
   List<ExtensionParameters> getPluginExtensions() {
-    return extensions;
+    return pluginExtensions;
   }
 
   /**
