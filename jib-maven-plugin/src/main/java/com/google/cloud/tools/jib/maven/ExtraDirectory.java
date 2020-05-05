@@ -16,35 +16,36 @@
 
 package com.google.cloud.tools.jib.maven;
 
-import java.nio.file.Paths;
+import java.io.File;
+import java.nio.file.Path;
 import org.apache.maven.plugins.annotations.Parameter;
 
 /** A bean that configures the source and destination of an extra directory. */
 public class ExtraDirectory {
 
-  @Parameter private String from = "";
+  @Parameter private File from = new File("");
   @Parameter private String into = "/";
 
   // Need default constructor for Maven
   public ExtraDirectory() {}
 
-  public ExtraDirectory(String from, String into) {
+  public ExtraDirectory(File from, String into) {
     this.from = from;
     this.into = into;
   }
 
   // Allows <path>source</path> shorthand instead of forcing
   // <path><from>source</from><into>/</into></path>
-  public void set(String path) {
+  public void set(File path) {
     this.from = path;
     this.into = "/";
   }
 
-  public java.nio.file.Path getFrom() {
-    return Paths.get(from);
+  public Path getFrom() {
+    return from.toPath();
   }
 
-  public void setFrom(String from) {
+  public void setFrom(File from) {
     this.from = from;
   }
 

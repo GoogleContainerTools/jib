@@ -60,10 +60,6 @@ public class BuildDockerMojo extends JibPluginConfiguration {
       return;
     }
 
-    for (ExtraDirectory entry : getExtraDirectories()) {
-      System.out.println(entry.getFrom() + ",  " + entry.getInto());
-    }
-
     Path dockerExecutable = getDockerClientExecutable();
     boolean isDockerInstalled =
         dockerExecutable == null

@@ -102,7 +102,7 @@ public class MojoCommon {
     MavenProject project = Preconditions.checkNotNull(jibPluginConfiguration.getProject());
     return Collections.singletonList(
         new ExtraDirectory(
-            project.getBasedir().toPath().resolve("src").resolve("main").resolve("jib").toString(),
+            project.getBasedir().toPath().resolve("src").resolve("main").resolve("jib").toFile(),
             "/"));
   }
 
