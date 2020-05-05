@@ -70,7 +70,7 @@ By default, Jib uses [`distroless/java`](https://github.com/GoogleContainerTools
 If you would like to include a shell for debugging, set the base image to `gcr.io/distroless/java:debug` instead. The shell will be located at `/busybox/sh`. Note that `:debug` images are **not** recommended for production use.
 
 <details>
-<summary>Configuring a base image in Maven</summary>
+<summary>Configuring a base image in Maven (click to expand)</summary>
 <p>
 
 In [`jib-maven-plugin`](../jib-maven-plugin), you can use the `gcr.io/distroless/java:debug` base image by adding the following configuration:
@@ -86,7 +86,7 @@ In [`jib-maven-plugin`](../jib-maven-plugin), you can use the `gcr.io/distroless
 </details>
 
 <details>
-<summary>Configuring a base image in Gradle</summary>
+<summary>Configuring a base image in Gradle (click to expand)</summary>
 <p>
 
 In [`jib-gradle-plugin`](../jib-gradle-plugin), you can use the `gcr.io/distroless/java:debug` base image by adding the following configuration:
@@ -257,7 +257,7 @@ Running commands like `apt-get` slows down the container build process. We **do 
 However, if you need to run commands, you can build a custom image and configure Jib to use it as the base image.
 
 <details>
-<summary>Base image configuration examples</summary>
+<summary>Base image configuration examples (click to expand)</summary>
 <p>
 
 #### Maven
@@ -291,7 +291,7 @@ We currently support adding a custom directory with an **incubating** feature ca
 If the current extra directories design doesn't meet your needs (e.g. you need to set up the extra files directory with files generated during the build process), you can use additional goals/tasks to create the extra directory as part of your build.
 
 <details>
-<summary>File copying examples</summary>
+<summary>File copying examples (click to expand)</summary>
 <p>
 
 #### Maven
