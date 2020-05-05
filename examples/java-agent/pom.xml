@@ -78,7 +78,7 @@
             <image>gcr.io/REPLACE-WITH-YOUR-GCP-PROJECT/image-built-with-jib</image>
           </to>
           <extraDirectories>
-            <extraDirectories>${agent-extraction-root}</extraDirectories>
+            <paths>${agent-extraction-root}</paths>
           </extraDirectories>
           <container>
             <ports>4567</ports>
