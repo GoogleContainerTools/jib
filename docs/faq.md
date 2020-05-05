@@ -116,7 +116,7 @@ See [Extended Usage](../jib-gradle-plugin#extended-usage) for the `container.for
 For reproducibility purposes, Jib sets the creation time of the container images to the Unix epoch (00:00:00, January 1st, 1970 in UTC). If you would like to use a different timestamp, set the `jib.container.creationTime` / `<container><creationTime>` parameter to an ISO 8601 date-time. You may also use the value `USE_CURRENT_TIMESTAMP` to set the creation time to the actual build time, but this sacrifices reproducibility since the timestamp will change with every build.
 
 <details>
-<summary>Setting `creationTime` parameter</summary>
+<summary>Setting <code>creationTime</code> parameter (click to expand)</summary>
 <p>
 
 #### Maven
