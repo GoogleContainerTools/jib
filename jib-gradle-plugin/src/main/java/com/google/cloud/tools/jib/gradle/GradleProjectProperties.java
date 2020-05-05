@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.gradle;
 
+import com.google.api.client.util.Lists;
 import com.google.cloud.tools.jib.api.Containerizer;
 import com.google.cloud.tools.jib.api.ImageReference;
 import com.google.cloud.tools.jib.api.InvalidImageReferenceException;
@@ -50,9 +51,9 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Duration;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.ServiceLoader;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import org.apache.tools.ant.taskdefs.condition.Os;
@@ -401,16 +402,19 @@ public class GradleProjectProperties implements ProjectProperties {
       List<? extends ExtensionConfiguration> extensionConfigs,
       JibContainerBuilder jibContainerBuilder)
       throws JibPluginExtensionException {
-    return runPluginExtensions(
-        ServiceLoader.load(JibGradlePluginExtension.class).iterator(), jibContainerBuilder);
+    List<JibGradlePluginExtension> services =
+        Lists.newArrayList(ServiceLoader.load(JibGradlePluginExtension.class).iterator());
+    return runPluginExtensions(services, extensionConfigs, jibContainerBuilder);
   }
 
   @VisibleForTesting
   JibContainerBuilder runPluginExtensions(
-      Iterator<JibGradlePluginExtension> services, JibContainerBuilder jibContainerBuilder)
+      List<JibGradlePluginExtension> services,
+      List<? extends ExtensionConfiguration> extensionConfigs,
+      JibContainerBuilder jibContainerBuilder)
       throws JibPluginExtensionException {
-    if (!services.hasNext()) {
-      log(LogEvent.debug("No Jib plugin extensions discovered"));
+    if (extensionConfigs.isEmpty()) {
+      log(LogEvent.debug("No Jib plugin extensions configured to load"));
       return jibContainerBuilder;
     }
 
@@ -418,10 +422,20 @@ public class GradleProjectProperties implements ProjectProperties {
     ContainerBuildPlan buildPlan = jibContainerBuilder.toContainerBuildPlan();
     GradleExtensionLogger extensionLogger = new GradleExtensionLogger(this::log);
     try {
-      while (services.hasNext()) {
-        extension = services.next();
-        log(LogEvent.lifecycle("Running extension: " + extension.getClass().getName()));
-        buildPlan = extension.extendContainerBuildPlan(buildPlan, () -> project, extensionLogger);
+      for (ExtensionConfiguration config : extensionConfigs) {
+        String extensionClass = config.getExtensionClass();
+        extension = findConfiguredExtension(services, extensionClass);
+        if (extension == null) {
+          throw new JibPluginExtensionException(
+              JibGradlePluginExtension.class,
+              "extension configured but not discovered on Jib runtime classpath: "
+                  + extensionClass);
+        }
+
+        log(LogEvent.lifecycle("Running extension: " + extensionClass));
+        buildPlan =
+            extension.extendContainerBuildPlan(
+                buildPlan, config.getProperties(), () -> project, extensionLogger);
         ImageReference.parse(buildPlan.getBaseImage()); // to validate image reference
       }
       return jibContainerBuilder.applyContainerBuildPlan(buildPlan);
@@ -432,5 +446,13 @@ public class GradleProjectProperties implements ProjectProperties {
           "invalid base image reference: " + buildPlan.getBaseImage(),
           ex);
     }
+  }
+
+  @Nullable
+  private JibGradlePluginExtension findConfiguredExtension(
+      List<JibGradlePluginExtension> extensions, String extensionClass) {
+    Predicate<JibGradlePluginExtension> matchesClassName =
+        extension -> extension.getClass().getName().equals(extensionClass);
+    return extensions.stream().filter(matchesClassName).findFirst().orElse(null);
   }
 }
