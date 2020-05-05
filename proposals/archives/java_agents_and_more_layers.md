@@ -19,12 +19,12 @@ Currently, Jib only adds application files to the container image. These include
 For example, in [this Dockerfile example](https://github.com/saturnism/spring-petclinic-gcp/blob/master/docker/Dockerfile), the Cloud Debugger and Cloud Profiler agents are added to the container image. The agent archives are first downloaded, and then extracted to their own directory on the image. The archives contains the `.so` file to pass to the java invocation in the form of:
 
 ```shell
-java -agentpath:/extraDirectory/to/agent/files/someagent.so ...
+java -agentpath:/path/to/agent/files/someagent.so ...
 ```
 
 ### Give users ability to copy arbitrary files to the image ([#213](/../../issues/213))
 
-Users may wish to add other files for use in the image. Currently, the way to do this would be to place the files within the application resources. However, this conflates the classpath of the application, the file can only be reached under the `/app/resources` extraDirectory, and changes to the file would mean repushing all the resources. Therefore, users should have some way of adding files to a new custom layer.
+Users may wish to add other files for use in the image. Currently, the way to do this would be to place the files within the application resources. However, this conflates the classpath of the application, the file can only be reached under the `/app/resources` path, and changes to the file would mean repushing all the resources. Therefore, users should have some way of adding files to a new custom layer.
 
 ### Separate frequently changing from non-changing dependencies for more incrementality ([#403](/../../issues/403))
 
@@ -55,12 +55,12 @@ The configuration for adding additional files (including Java agents) would look
 ```xml
 <addFiles> 
   <addFile>
-    <from>extraDirectory/to/file</from>
-    <to>/extraDirectory/on/image</to>
+    <from>path/to/file</from>
+    <to>/path/on/image</to>
   </addFile>
   <addFile>
     <from>another/file</from>
-    <to>/another/extraDirectory/on/image</to>
+    <to>/another/path/on/image</to>
   </addFile>
 </addFiles>
 ```
@@ -68,8 +68,8 @@ The configuration for adding additional files (including Java agents) would look
 *Gradle*
 
 ```groovy
-addFile 'extraDirectory/to/file', '/extraDirectory/on/image'
-addFile 'another/file', '/another/extraDirectory/on/image'
+addFile 'path/to/file', '/path/on/image'
+addFile 'another/file', '/another/path/on/image'
 ```
 
 *The semantics of `from` and `to` will mostly be similar to [Dockerfile `COPY`](https://docs.docker.com/engine/reference/builder/#copy). However, glob matching won't be supported.* 
@@ -110,8 +110,8 @@ The alternative proposal is to add another top-level configuration object called
   <layer>
     <files>
       <file>
-        <from>extraDirectory/to/file</from>
-        <to>/extraDirectory/on/image</to>
+        <from>path/to/file</from>
+        <to>/path/on/image</to>
       </file>
     </files>
     <matchDependencies>org.springframework:*, org.hibernate:*...</matchDependencies>
@@ -125,7 +125,7 @@ The user can choose whatever subset of `layer` parameters to define.
 
 Parameter | Description
 --- | ---
-files | In the form `<src>:<dest>`, where the file `<src>` is added to the image at extraDirectory `<dest>`.
+files | In the form `<src>:<dest>`, where the file `<src>` is added to the image at path `<dest>`.
 matchDependencies | Matches dependencies with the given patterns and adds those dependency artifacts into this layer rather than the original dependencies layer.
 matchResources | Like `matchDependencies`, but for resource files.
 matchClasses | ... but for classes files.
@@ -136,7 +136,7 @@ And similarly for Gradle:
 
 ```groovy
 layer {
-  file 'extraDirectory/to/file', '/extraDirectory/on/image'
+  file 'path/to/file', '/path/on/image'
   matchDependencies = 'org.springframework:*, org.hibernate:*...'
   matchResources = 'static/, *.jpg'
   matchClasses = 'my.package.that.does.not.change.much.*'
@@ -185,8 +185,8 @@ The user defines files to copy, along with their destinations on the image. For 
 ```xml
 <copies>
   <copy>
-    <source>extraDirectory/to/file</source>
-    <pathOnImage>/extraDirectory/on/image</pathOnImage>
+    <source>path/to/file</source>
+    <pathOnImage>/path/on/image</pathOnImage>
   </copy>
 </copies>
 ```
@@ -205,8 +205,8 @@ The user can define their own custom layers, and define what files to copy into 
   <additionalLayer>
     <copies>
       <copy>
-        <source>extraDirectory/to/file</source>
-        <pathOnImage>/extraDirectory/on/image</pathOnImage>
+        <source>path/to/file</source>
+        <pathOnImage>/path/on/image</pathOnImage>
       </copy>
     </copies>
   </additionalLayer>
@@ -227,18 +227,18 @@ Like in *Option 1*, but the user can set a layer ID for each copy. Copies with t
 ```xml
 <copies>
   <copy>
-    <source>extraDirectory/to/file</source>
-    <pathOnImage>/extraDirectory/on/image</pathOnImage>
+    <source>path/to/file</source>
+    <pathOnImage>/path/on/image</pathOnImage>
     <layerId>somelayername</layerId>
   </copy>
   <copy>
-    <source>extraDirectory/to/another/file</source>
-    <pathOnImage>/another/extraDirectory/on/image</pathOnImage>
+    <source>path/to/another/file</source>
+    <pathOnImage>/another/path/on/image</pathOnImage>
     <layerId>somelayername</layerId> ← this goes in the same layer as the first
   </copy>
   <copy>
-    <source>extraDirectory/to/yet/another/file</source>
-    <pathOnImage>/extraDirectory/on/image</pathOnImage>
+    <source>path/to/yet/another/file</source>
+    <pathOnImage>/path/on/image</pathOnImage>
     <layerId>someotherlayername</layerId>
   </copy>
 </copies>
