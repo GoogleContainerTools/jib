@@ -83,7 +83,7 @@
             <format>Docker</format>
           </container>
           <extraDirectories>
-            <extraDirectories><extraDirectory>${project.basedir}/src/main/jib-custom</extraDirectory></extraDirectories>
+            <paths><path>${project.basedir}/src/main/jib-custom</path></paths>
             <permissions>
               <permission>
                 <file>/foo</file>

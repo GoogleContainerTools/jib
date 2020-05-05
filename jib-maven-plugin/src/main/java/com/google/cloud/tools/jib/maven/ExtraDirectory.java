@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Google LLC. All rights reserved.
+ * Copyright 2020 Google LLC.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,6 +18,7 @@ package com.google.cloud.tools.jib.maven;
 
 import java.io.File;
 import java.nio.file.Path;
+import java.util.Objects;
 import org.apache.maven.plugins.annotations.Parameter;
 
 /** A bean that configures the source and destination of an extra directory. */
@@ -51,5 +52,22 @@ public class ExtraDirectory {
 
   String getInto() {
     return into;
+  }
+
+  @Override
+  public boolean equals(Object other) {
+    if (this == other) {
+      return true;
+    }
+    if (!(other instanceof ExtraDirectory)) {
+      return false;
+    }
+    ExtraDirectory otherExtraDirectory = (ExtraDirectory) other;
+    return from.equals(otherExtraDirectory.from) && into.equals(otherExtraDirectory.into);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(from, into);
   }
 }

@@ -22,7 +22,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import java.io.File;
 import java.nio.file.Paths;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
 import org.apache.maven.execution.MavenSession;
@@ -137,7 +137,8 @@ public class JibPluginConfigurationTest {
 
     sessionProperties.put("jib.extraDirectories.paths", "custom-jib");
     Assert.assertEquals(
-        Arrays.asList(Paths.get("custom-jib")), testPluginConfiguration.getExtraDirectories());
+        Collections.singletonList(new ExtraDirectory(new File("custom-jib"), "/")),
+        testPluginConfiguration.getExtraDirectories());
     sessionProperties.put("jib.extraDirectories.permissions", "/test/file1=123,/another/file=456");
     List<PermissionConfiguration> permissions =
         testPluginConfiguration.getExtraDirectoryPermissions();
@@ -239,7 +240,8 @@ public class JibPluginConfigurationTest {
 
     project.getProperties().setProperty("jib.extraDirectories.paths", "custom-jib");
     Assert.assertEquals(
-        Arrays.asList(Paths.get("custom-jib")), testPluginConfiguration.getExtraDirectories());
+        Collections.singletonList(new ExtraDirectory(new File("custom-jib"), "/")),
+        testPluginConfiguration.getExtraDirectories());
     project
         .getProperties()
         .setProperty("jib.extraDirectories.permissions", "/test/file1=123,/another/file=456");

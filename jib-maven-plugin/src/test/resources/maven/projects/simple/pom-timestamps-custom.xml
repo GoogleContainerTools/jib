@@ -66,7 +66,7 @@
             <creationTime>2013-11-05T06:29:30Z</creationTime>
           </container>
           <extraDirectories>
-            <extraDirectories><extraDirectory>src/main/jib-custom</extraDirectory></extraDirectories>
+            <paths><path>src/main/jib-custom</path></paths>
           </extraDirectories>
           <allowInsecureRegistries>true</allowInsecureRegistries>
         </configuration>
