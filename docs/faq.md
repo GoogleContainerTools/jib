@@ -150,7 +150,7 @@ For more details see [reproducible-builds.org](https://reproducible-builds.org).
 
 ### Where is the application in the container filesystem?
 
-Jib packages your Java application into the following extraDirectories on the image:
+Jib packages your Java application into the following paths on the image:
 
 * `/app/libs/` contains all the dependency artifacts
 * `/app/resources/` contains all the resource files
@@ -306,9 +306,9 @@ In Maven, you can use the `maven-resources-plugin` to copy files to your extra d
     ...
     <configuration>
       <extraDirectories>
-        <extraDirectories>
-          <extraDirectory>${project.basedir}/target/extra-directory/</extraDirectory>
-        </extraDirectories>
+        <paths>
+          <path>${project.basedir}/target/extra-directory/</path>
+        </paths>
       </extraDirectories>
     </configuration>
   </plugin>
@@ -580,11 +580,11 @@ com.google.api.client.http.level=CONFIG
 
 And then launch your build tool as follows:
 ```sh
-mvn --batch-mode -Djava.util.logging.config.file=extraDirectory/to/logging.properties -Djib.serialize=true ...
+mvn --batch-mode -Djava.util.logging.config.file=path/to/logging.properties -Djib.serialize=true ...
 ```
 or
 ```sh
-gradle --no-daemon --console=plain -Djava.util.logging.config.file=extraDirectory/to/logging.properties -Djib.serialize=true ...
+gradle --no-daemon --console=plain -Djava.util.logging.config.file=path/to/logging.properties -Djib.serialize=true ...
 ```
 
 **Note**: Jib Gradle plugins prior to version 2.2.0 have an issue generating HTTP logs ([#2356](https://github.com/GoogleContainerTools/jib/issues/2356)).

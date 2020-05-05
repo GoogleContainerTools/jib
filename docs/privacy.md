@@ -4,7 +4,7 @@ Your use of this software is subject to the <a href=https://policies.google.com/
 ## Update check
 Many Jib users are unaware of new releases. To encourage users to stay up-to-date, Jib 2.0.0 and later will
 periodically check to see if there is a new version of Jib is available. This check fetches a simple text
-file hosted in Google Cloud Storage. As a side effect this request is logged, which includes the request extraDirectory,
+file hosted in Google Cloud Storage. As a side effect this request is logged, which includes the request path,
 source IP address, and the user-agent string. The user-agent is set by Jib and includes the Jib plugin type
 and version.
 

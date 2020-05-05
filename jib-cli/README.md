@@ -26,7 +26,7 @@ A tool for creating container images.
 
 ### Using nginx to serve a static website
 
-The following example creates an nginx-based container to serve static content that is found in `extraDirectory/to/website`.
+The following example creates an nginx-based container to serve static content that is found in `path/to/website`.
 The result is loaded to the local Docker daemon as `my-static-website`:
 
     $ ./build/install/jib/bin/jib build \
@@ -35,7 +35,7 @@ The result is loaded to the local Docker daemon as `my-static-website`:
       my-static-website \
       --port 80 \
       --entrypoint "nginx,-g,daemon off;" \
-      extraDirectory/to/website:/usr/share/nginx/html
+      path/to/website:/usr/share/nginx/html
     $ docker run -it --rm -p 8080:80 my-static-website
 
 ### Containerizing a Java application

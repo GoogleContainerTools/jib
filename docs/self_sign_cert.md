@@ -32,7 +32,7 @@ Create an init script with the following:
 println org.gradle.internal.jvm.Jvm.current().getJavaHome()
 ```
 
-And run `gradle -I /extraDirectory/to/script` to output the executing JRE location.
+And run `gradle -I /path/to/script` to output the executing JRE location.
 
 ```shell
 $ gradle -I /tmp/printjrelocation
@@ -86,7 +86,7 @@ Within _KeyStore Explorer_, select _File > Save As..._ and save the new truststo
 The following snippet shows how to configure Maven to use this new truststore file:
 
 ```shell
-$ ./mvnw -Djavax.net.ssl.trustStore=extraDirectory/to/truststore.jks \
+$ ./mvnw -Djavax.net.ssl.trustStore=path/to/truststore.jks \
   -Djavax.net.ssl.trustStorePassword=password \
   -Dimage=<host>:<port>/<image> jib:build
 ```
@@ -99,7 +99,7 @@ The following snippet shows how to configure Gradle to use this new truststore f
 
 ```shell
 $ ./gradlew jib \
-  -Djavax.net.ssl.trustStore=extraDirectory/to/truststore.jks \
+  -Djavax.net.ssl.trustStore=path/to/truststore.jks \
   -Djavax.net.ssl.trustStorePassword=password
 ```
 

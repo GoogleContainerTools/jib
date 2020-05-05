@@ -244,7 +244,7 @@ Property | Type | Default | Description
 --- | --- | --- | ---
 `image` | string | `gcr.io/distroless/java` | The image reference for the base image. The source type can be specified using a [special type prefix](#setting-the-base-image).
 `auth` | [`auth`](#auth-object) | *None* | Specify credentials directly (alternative to `credHelper`).
-`credHelper` | string | *None* | Specifies a credential helper that can authenticate pulling the base image. This parameter can either be configured as an absolute extraDirectory to the credential helper executable or as a credential helper suffix (following `docker-credential-`).
+`credHelper` | string | *None* | Specifies a credential helper that can authenticate pulling the base image. This parameter can either be configured as an absolute path to the credential helper executable or as a credential helper suffix (following `docker-credential-`).
 
 <a name="to-object"></a>`to` is an object with the following properties:
 
@@ -252,7 +252,7 @@ Property | Type | Default | Description
 --- | --- | --- | ---
 `image` | string | *Required* | The image reference for the target image. This can also be specified via the `-Dimage` command line option.
 `auth` | [`auth`](#auth-object) | *None* | Specify credentials directly (alternative to `credHelper`).
-`credHelper` | string | *None* | Specifies a credential helper that can authenticate pushing the target image. This parameter can either be configured as an absolute extraDirectory to the credential helper executable or as a credential helper suffix (following `docker-credential-`).
+`credHelper` | string | *None* | Specifies a credential helper that can authenticate pushing the target image. This parameter can either be configured as an absolute path to the credential helper executable or as a credential helper suffix (following `docker-credential-`).
 `tags` | list | *None* | Additional tags to push to.
 
 <a name="auth-object"></a>`auth` is an object with the following properties (see [Using Specific Credentials](#using-specific-credentials)):
@@ -271,7 +271,7 @@ Property | Type | Default | Description
 `creationTime` | string | `EPOCH` | Sets the container creation time. (Note that this property does not affect the file modification times, which are configured using `<filesModificationTime>`.) The value can be `EPOCH` to set the timestamps to Epoch (default behavior), `USE_CURRENT_TIMESTAMP` to forgo reproducibility and use the real creation time, or an ISO 8601 date-time parsable with [`DateTimeFormatter.ISO_DATE_TIME`](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/time/format/DateTimeFormatter.html#ISO_DATE_TIME) such as `2019-07-15T10:15:30+09:00` or `2011-12-03T22:42:05Z`.
 `entrypoint` | list | *None* | The command to start the container with (similar to Docker's [ENTRYPOINT](https://docs.docker.com/engine/reference/builder/#entrypoint) instruction). If set, then `jvmFlags` and `mainClass` are ignored. You may also set `<entrypoint>INHERIT</entrypoint>` (`<entrypoint><entry>INHERIT</entry></entrypoint>` in old Maven versions) to indicate that the `entrypoint` and `args` should be inherited from the base image.\*
 `environment` | map | *None* | Key-value pairs for setting environment variables on the container (similar to Docker's [ENV](https://docs.docker.com/engine/reference/builder/#env) instruction).
-`extraClasspath` | list | *None* | Additional extraDirectories in the container to prepend to the computed Java classpath.
+`extraClasspath` | list | *None* | Additional paths in the container to prepend to the computed Java classpath.
 `filesModificationTime` | string | `EPOCH_PLUS_SECOND` | Sets the modification time (last modified time) of files in the image put by Jib. (Note that this does not set the image creation time, which can be set using `<creationTime>`.) The value should either be `EPOCH_PLUS_SECOND` to set the timestamps to Epoch + 1 second (default behavior), or an ISO 8601 date-time parsable with [`DateTimeFormatter.ISO_DATE_TIME`](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/time/format/DateTimeFormatter.html#ISO_DATE_TIME) such as `2019-07-15T10:15:30+09:00` or `2011-12-03T22:42:05Z`.
 `format` | string | `Docker` | Use `OCI` to build an [OCI container image](https://www.opencontainers.org/).
 `jvmFlags` | list | *None* | Additional flags to pass into the JVM when running your application.
@@ -286,23 +286,23 @@ Property | Type | Default | Description
 
 Property | Type | Default | Description
 --- | --- | --- | ---
-`extraDirectories` | list | `[(project-dir)/src/main/jib]` | List of extra directories. Can be absolute or relative to the project root.
-`permissions` | list | *None* | Maps file extraDirectories on container to Unix permissions. (Effective only for files added from extra directories.) If not configured, permissions default to "755" for directories and "644" for files.
+`paths` | list | `[(project-dir)/src/main/jib]` | List of extra directories. Can be absolute or relative to the project root.
+`permissions` | list | *None* | Maps file paths on container to Unix permissions. (Effective only for files added from extra directories.) If not configured, permissions default to "755" for directories and "644" for files.
 
 <a name="outputpaths-object"></a>`outputPaths` is an object with the following properties:
 
 Property | Type | Default | Description
 --- | --- | --- | ---
-`tar` | string | `(project-dir)/target/jib-image.tar` | The extraDirectory of the tarball generated by `jib:buildTar`. Relative extraDirectories are resolved relative to the project root.
-`digest` | string | `(project-dir)/target/jib-image.digest` | The extraDirectory of the image digest written out during the build. Relative extraDirectories are resolved relative to the project root.
-`imageId` | string | `(project-dir)/target/jib-image.id` | The extraDirectory of the image ID written out during the build. Relative extraDirectories are resolved relative to the project root.
-`imageJson` | string | `(project-dir)/target/jib-image.json` | The extraDirectory of the image metadata json file written out during the build. Relative extraDirectories are resolved relative to the project root.
+`tar` | string | `(project-dir)/target/jib-image.tar` | The path of the tarball generated by `jib:buildTar`. Relative paths are resolved relative to the project root.
+`digest` | string | `(project-dir)/target/jib-image.digest` | The path of the image digest written out during the build. Relative paths are resolved relative to the project root.
+`imageId` | string | `(project-dir)/target/jib-image.id` | The path of the image ID written out during the build. Relative paths are resolved relative to the project root.
+`imageJson` | string | `(project-dir)/target/jib-image.json` | The path of the image metadata json file written out during the build. Relative paths are resolved relative to the project root.
 
 <a name="dockerclient-object"></a>`dockerClient` is an object used to configure Docker when building to/from the Docker daemon. It has the following properties:
 
 Property | Type | Default | Description
 --- | --- | --- | ---
-`executable` | string | `docker` | Sets the extraDirectory to the Docker executable that is called to load the image into the Docker daemon.
+`executable` | string | `docker` | Sets the path to the Docker executable that is called to load the image into the Docker daemon.
 `environment` | map | *None* | Sets environment variables used by the Docker executable.
 
 #### System Properties
@@ -315,7 +315,7 @@ mvn compile jib:build \
     -Djib.to.auth.password=$PASSWORD
 
 mvn compile jib:dockerBuild \
-    -Djib.dockerClient.executable=/extraDirectory/to/docker \
+    -Djib.dockerClient.executable=/path/to/docker \
     -Djib.container.environment=key1="value1",key2="value2" \
     -Djib.container.args=arg1,arg2,arg3
 ```
@@ -395,7 +395,7 @@ Prefix | Example | Type
 *None* | `gcr.io/distroless/java` | Pulls the base image from a registry.
 `registry://` | `registry://gcr.io/distroless/java` | Pulls the base image from a registry.
 `docker://` | `docker://busybox` | Retrieves the base image from the Docker daemon.
-`tar://` | `tar:///extraDirectory/to/file.tar` | Uses an image tarball stored at the specified extraDirectory as the base image. Also accepts relative extraDirectories (e.g. `tar://target/jib-image.tar`).
+`tar://` | `tar:///path/to/file.tar` | Uses an image tarball stored at the specified path as the base image. Also accepts relative paths (e.g. `tar://target/jib-image.tar`).
 
 ### Adding Arbitrary Files to the Image
 
@@ -410,10 +410,10 @@ You can configure different directories by using the `<extraDirectories>` parame
 <configuration>
   <!-- Copies files from 'src/main/custom-extra-dir' and '/home/user/jib-extras' instead of 'src/main/jib' -->
   <extraDirectories>
-    <extraDirectories>
-      <extraDirectory>src/main/custom-extra-dir</extraDirectory>
-      <extraDirectory>/home/user/jib-extras</extraDirectory>
-    </extraDirectories>
+    <paths>
+      <path>src/main/custom-extra-dir</path>
+      <path>/home/user/jib-extras</path>
+    </paths>
   </extraDirectories>
 </configuration>
 ```
@@ -423,14 +423,14 @@ Alternatively, the `<extraDirectories>` parameter can be used as an object to se
 ```xml
 <configuration>
   <extraDirectories>
-    <extraDirectories>src/main/custom-extra-dir</extraDirectories> <!-- Copies files from 'src/main/custom-extra-dir' -->
+    <paths>src/main/custom-extra-dir</paths> <!-- Copies files from 'src/main/custom-extra-dir' -->
     <permissions>
       <permission>
-        <file>/extraDirectory/on/container/to/fileA</file>
+        <file>/path/on/container/to/fileA</file>
         <mode>755</mode> <!-- Read/write/execute for owner, read/execute for group/other -->
       </permission>
       <permission>
-        <file>/extraDirectory/to/another/file</file>
+        <file>/path/to/another/file</file>
         <mode>644</mode> <!-- Read/write for owner, read-only for group/other -->
       </permission>
     </permissions>
