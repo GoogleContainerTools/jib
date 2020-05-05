@@ -165,8 +165,8 @@ public class MavenRawConfiguration implements RawConfiguration {
   @Override
   public Map<Path, AbsoluteUnixPath> getExtraDirectories() {
     Map<Path, AbsoluteUnixPath> directoryMap = new LinkedHashMap<>();
-    for (Path path : MojoCommon.getExtraDirectories(jibPluginConfiguration)) {
-      directoryMap.put(path, AbsoluteUnixPath.get("/"));
+    for (ExtraDirectory extraDirectory : MojoCommon.getExtraDirectories(jibPluginConfiguration)) {
+      directoryMap.put(extraDirectory.getFrom(), AbsoluteUnixPath.get(extraDirectory.getInto()));
     }
     return directoryMap;
   }

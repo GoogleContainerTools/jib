@@ -27,7 +27,6 @@ import com.google.cloud.tools.jib.plugins.common.VersionChecker;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.Futures;
-import java.nio.file.Path;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -94,15 +93,17 @@ public class MojoCommon {
    * @param jibPluginConfiguration the build configuration
    * @return the list of resolved extra directories
    */
-  static List<Path> getExtraDirectories(JibPluginConfiguration jibPluginConfiguration) {
-    List<Path> paths = jibPluginConfiguration.getExtraDirectories();
-    if (!paths.isEmpty()) {
-      return paths;
+  static List<ExtraDirectory> getExtraDirectories(JibPluginConfiguration jibPluginConfiguration) {
+    List<ExtraDirectory> extraDirectories = jibPluginConfiguration.getExtraDirectories();
+    if (!extraDirectories.isEmpty()) {
+      return extraDirectories;
     }
 
     MavenProject project = Preconditions.checkNotNull(jibPluginConfiguration.getProject());
     return Collections.singletonList(
-        project.getBasedir().toPath().resolve("src").resolve("main").resolve("jib"));
+        new ExtraDirectory(
+            project.getBasedir().toPath().resolve("src").resolve("main").resolve("jib").toString(),
+            "/"));
   }
 
   /**

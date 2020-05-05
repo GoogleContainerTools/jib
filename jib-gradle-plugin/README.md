@@ -198,7 +198,7 @@ Property | Type | Default | Description
 --- | --- | --- | ---
 `image` | `String` | `gcr.io/distroless/java` | The image reference for the base image. The source type can be specified using a [special type prefix](#setting-the-base-image).
 `auth` | [`auth`](#auth-closure) | *None* | Specify credentials directly (alternative to `credHelper`).
-`credHelper` | `String` | *None* | Specifies a credential helper that can authenticate pulling the base image. This parameter can either be configured as an absolute path to the credential helper executable or as a credential helper suffix (following `docker-credential-`).
+`credHelper` | `String` | *None* | Specifies a credential helper that can authenticate pulling the base image. This parameter can either be configured as an absolute extraDirectory to the credential helper executable or as a credential helper suffix (following `docker-credential-`).
 
 <a name="to-closure"></a>`to` is a closure with the following properties:
 
@@ -206,7 +206,7 @@ Property | Type | Default | Description
 --- | --- | --- | ---
 `image` | `String` | *Required* | The image reference for the target image. This can also be specified via the `--image` command line option.
 `auth` | [`auth`](#auth-closure) | *None* | Specify credentials directly (alternative to `credHelper`).
-`credHelper` | `String` | *None* | Specifies a credential helper that can authenticate pushing the target image. This parameter can either be configured as an absolute path to the credential helper executable or as a credential helper suffix (following `docker-credential-`).
+`credHelper` | `String` | *None* | Specifies a credential helper that can authenticate pushing the target image. This parameter can either be configured as an absolute extraDirectory to the credential helper executable or as a credential helper suffix (following `docker-credential-`).
 `tags` | `List<String>` | *None* | Additional tags to push to.
 
 <a name="auth-closure"></a>`auth` is a closure with the following properties (see [Using Specific Credentials](#using-specific-credentials)):
@@ -225,7 +225,7 @@ Property | Type | Default | Description
 `creationTime` | `String` | `EPOCH` | Sets the container creation time. (Note that this property does not affect the file modification times, which are configured using `jib.container.filesModificationTime`.) The value can be `EPOCH` to set the timestamps to Epoch (default behavior), `USE_CURRENT_TIMESTAMP` to forgo reproducibility and use the real creation time, or an ISO 8601 date-time parsable with [`DateTimeFormatter.ISO_DATE_TIME`](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/time/format/DateTimeFormatter.html#ISO_DATE_TIME) such as `2019-07-15T10:15:30+09:00` or `2011-12-03T22:42:05Z`.
 `entrypoint` | `List<String>` | *None* | The command to start the container with (similar to Docker's [ENTRYPOINT](https://docs.docker.com/engine/reference/builder/#entrypoint) instruction). If set, then `jvmFlags` and `mainClass` are ignored. You may also set `jib.container.entrypoint = 'INHERIT'` to indicate that the `entrypoint` and `args` should be inherited from the base image.\*
 `environment` | `Map<String, String>` | *None* | Key-value pairs for setting environment variables on the container (similar to Docker's [ENV](https://docs.docker.com/engine/reference/builder/#env) instruction).
-`extraClasspath` | `List<String>` | *None* | Additional paths in the container to prepend to the computed Java classpath.
+`extraClasspath` | `List<String>` | *None* | Additional extraDirectories in the container to prepend to the computed Java classpath.
 `filesModificationTime` | `String` | `EPOCH_PLUS_SECOND` | Sets the modification time (last modified time) of files in the image put by Jib. (Note that this does not set the image creation time, which can be set using `jib.container.creationTime`.) The value should either be `EPOCH_PLUS_SECOND` to set the timestamps to Epoch + 1 second (default behavior), or an ISO 8601 date-time parsable with [`DateTimeFormatter.ISO_DATE_TIME`](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/time/format/DateTimeFormatter.html#ISO_DATE_TIME) such as `2019-07-15T10:15:30+09:00` or `2011-12-03T22:42:05Z`.
 `format` | `String` | `Docker` | Use `OCI` to build an [OCI container image](https://www.opencontainers.org/).
 `jvmFlags` | `List<String>` | *None* | Additional flags to pass into the JVM when running your application.
@@ -240,22 +240,22 @@ Property | Type | Default | Description
 
 Property | Type | Default | Description
 --- | --- | --- | ---
-`paths` | `Object` | `(project-dir)/src/main/jib` | Extra directories acceptable by [`Project.files()`](https://docs.gradle.org/current/javadoc/org/gradle/api/Project.html#files-java.lang.Object...-), such as `String`, `File`, `Path`, `List<String\|File\|Path>`, etc. Can be absolute or relative to the project root.
-`permissions` | `Map<String, String>` | *None* | Maps file paths on container to Unix permissions. (Effective only for files added from extra directories.) If not configured, permissions default to "755" for directories and "644" for files.
+`extraDirectories` | `Object` | `(project-dir)/src/main/jib` | Extra directories acceptable by [`Project.files()`](https://docs.gradle.org/current/javadoc/org/gradle/api/Project.html#files-java.lang.Object...-), such as `String`, `File`, `Path`, `List<String\|File\|Path>`, etc. Can be absolute or relative to the project root.
+`permissions` | `Map<String, String>` | *None* | Maps file extraDirectories on container to Unix permissions. (Effective only for files added from extra directories.) If not configured, permissions default to "755" for directories and "644" for files.
 
 <a name="outputpaths-closure"></a>`outputPaths` is a closure with the following properties:
 
 Property | Type | Default | Description
 --- | --- | --- | ---
-`tar` | `File` | `(project-dir)/build/jib-image.tar` | The path of the tarball generated by `jibBuildTar`. Relative paths are resolved relative to the project root.
-`digest` | `File` | `(project-dir)/build/jib-image.digest` | The path of the image digest written out during the build. Relative paths are resolved relative to the project root.
-`imageId` | `File` | `(project-dir)/build/jib-image.id` | The path of the image ID written out during the build. Relative paths are resolved relative to the project root.
+`tar` | `File` | `(project-dir)/build/jib-image.tar` | The extraDirectory of the tarball generated by `jibBuildTar`. Relative extraDirectories are resolved relative to the project root.
+`digest` | `File` | `(project-dir)/build/jib-image.digest` | The extraDirectory of the image digest written out during the build. Relative extraDirectories are resolved relative to the project root.
+`imageId` | `File` | `(project-dir)/build/jib-image.id` | The extraDirectory of the image ID written out during the build. Relative extraDirectories are resolved relative to the project root.
 
 <a name="dockerclient-closure"></a>`dockerClient` is an object used to configure Docker when building to/from the Docker daemon. It has the following properties:
 
 Property | Type | Default | Description
 --- | --- | --- | ---
-`executable` | `File` | `docker` | Sets the path to the Docker executable that is called to load the image into the Docker daemon.
+`executable` | `File` | `docker` | Sets the extraDirectory to the Docker executable that is called to load the image into the Docker daemon.
 `environment` | `Map<String, String>` | *None* | Sets environment variables used by the Docker executable.
 
 #### System Properties
@@ -268,7 +268,7 @@ gradle jib \
     -Djib.to.auth.password=$PASSWORD
 
 gradle jibDockerBuild \
-    -Djib.dockerClient.executable=/path/to/docker \
+    -Djib.dockerClient.executable=/extraDirectory/to/docker \
     -Djib.container.environment=key1="value1",key2="value2" \
     -Djib.container.args=arg1,arg2,arg3
 ```
@@ -332,7 +332,7 @@ Prefix | Example | Type
 *None* | `gcr.io/distroless/java` | Pulls the base image from a registry.
 `registry://` | `registry://gcr.io/distroless/java` | Pulls the base image from a registry.
 `docker://` | `docker://busybox` | Retrieves the base image from the Docker daemon.
-`tar://` | `tar:///path/to/file.tar` | Uses an image tarball stored at the specified path as the base image. Also accepts relative paths (e.g. `tar://build/jib-image.tar`).
+`tar://` | `tar:///extraDirectory/to/file.tar` | Uses an image tarball stored at the specified extraDirectory as the base image. Also accepts relative extraDirectories (e.g. `tar://build/jib-image.tar`).
 
 ### Adding Arbitrary Files to the Image
 
@@ -342,11 +342,11 @@ You can add arbitrary, non-classpath files to the image by placing them in a `sr
 
 Note that Jib does not follow symbolic links in the container image.  If a symbolic link is present, _it will be removed_ prior to placing the files and directories.
 
-You can configure different directories by using the `jib.extraDirectories.paths` parameter in your `build.gradle`:
+You can configure different directories by using the `jib.extraDirectories.extraDirectories` parameter in your `build.gradle`:
 ```groovy
 jib {
   // Copies files from 'src/main/custom-extra-dir' and '/home/user/jib-extras' instead of 'src/main/jib'
-  extraDirectories.paths = ['src/main/custom-extra-dir', '/home/user/jib-extras']
+  extraDirectories.extraDirectories = ['src/main/custom-extra-dir', '/home/user/jib-extras']
 }
 ```
 
@@ -355,10 +355,10 @@ Alternatively, the `jib.extraDirectories` parameter can be used as a closure to 
 ```groovy
 jib {
   extraDirectories {
-    paths = 'src/main/custom-extra-dir'  // Copies files from 'src/main/custom-extra-dir'
+    extraDirectories = 'src/main/custom-extra-dir'  // Copies files from 'src/main/custom-extra-dir'
     permissions = [
-        '/path/on/container/to/fileA': '755',  // Read/write/execute for owner, read/execute for group/other
-        '/path/to/another/file': '644'  // Read/write for owner, read-only for group/other
+        '/extraDirectory/on/container/to/fileA': '755',  // Read/write/execute for owner, read/execute for group/other
+        '/extraDirectory/to/another/file': '644'  // Read/write for owner, read-only for group/other
     ]
   }
 }

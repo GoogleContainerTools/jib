@@ -22,14 +22,14 @@ The proposal is to allow users to configure their build with the following rules
 1. Extensions to the filename (like id, digest, tar) will not be automatically appended.
 1. Existing files at the specified locations will be overwritten if necessary.
 1. Running `clean` will not delete output files created outside of the project's build directory.
-1. The configuration will accept both absolute and relative paths. Relative paths are resolved in the build tool's default manner.
+1. The configuration will accept both absolute and relative extraDirectories. Relative extraDirectories are resolved in the build tool's default manner.
 
 #### Maven (`pom.xml`)
 ```xml
 <configuration>
   <outputPaths>
     <tar>/absolute/location.tar</tar>
-    <digest>relative/path/digest</digest>
+    <digest>relative/extraDirectory/digest</digest>
     <imageId>${project.build.directory}/id</imageId>
   </outputPaths>
 </configuration>
@@ -40,7 +40,7 @@ The proposal is to allow users to configure their build with the following rules
 jib {
   outputPaths {
     tar = "/absolute/location.tar"
-    digest = file("relative/path/digest")
+    digest = file("relative/extraDirectory/digest")
     imageId = file("$buildDir/id")
   }
 }

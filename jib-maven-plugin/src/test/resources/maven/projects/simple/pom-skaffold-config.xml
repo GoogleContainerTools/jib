@@ -40,14 +40,14 @@
                 <version>${jib-maven-plugin.version}</version>
                 <configuration>
                     <extraDirectories>
-                        <paths>
-                            <path>src/main/jib-custom</path>
-                        </paths>
+                        <extraDirectories>
+                            <extraDirectory>src/main/jib-custom</extraDirectory>
+                        </extraDirectories>
                     </extraDirectories>
                     <skaffold>
                         <watch>
                             <buildIncludes>
-                                <buildInclude>/abs/path/some.xml</buildInclude>
+                                <buildInclude>/abs/extraDirectory/some.xml</buildInclude>
                             </buildIncludes>
                             <includes>
                                 <includes>file/in/project</includes>

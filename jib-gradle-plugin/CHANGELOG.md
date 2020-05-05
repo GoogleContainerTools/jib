@@ -88,9 +88,9 @@ All notable changes to this project will be documented in this file.
 ### Added
 
 - `jib.outputPaths` object for configuration output file locations ([#1561](https://github.com/GoogleContainerTools/jib/issues/1561))
-  - `jib.outputPaths.tar` configures output path of `jibBuildTar` (`build/jib-image.tar` by default)
-  - `jib.outputPaths.digest` configures the output path of the image digest (`build/jib-image.digest` by default)
-  - `jib.outputPaths.imageId` configures output path of the image id  (`build/jib-image.id` by default)
+  - `jib.outputPaths.tar` configures output extraDirectory of `jibBuildTar` (`build/jib-image.tar` by default)
+  - `jib.outputPaths.digest` configures the output extraDirectory of the image digest (`build/jib-image.digest` by default)
+  - `jib.outputPaths.imageId` configures output extraDirectory of the image id  (`build/jib-image.id` by default)
 - Main class inference support for Java 13/14. ([#2015](https://github.com/GoogleContainerTools/jib/issues/2015))
 
 ### Changed
@@ -181,13 +181,13 @@ All notable changes to this project will be documented in this file.
 ### Added
 
 - Container configurations in the base image are now propagated when registry uses the old V2 image manifest, schema version 1 (such as Quay). ([#1641](https://github.com/GoogleContainerTools/jib/issues/1641))
-- Can now prepend paths in the container to the computed classpath with `jib.container.extraClasspath`. ([#1642](https://github.com/GoogleContainerTools/jib/pull/1642))
+- Can now prepend extraDirectories in the container to the computed classpath with `jib.container.extraClasspath`. ([#1642](https://github.com/GoogleContainerTools/jib/pull/1642))
 - Can now build in offline mode using `--offline`. ([#718](https://github.com/GoogleContainerTools/jib/issues/718))
-- Now supports multiple extra directories with `jib.extraDirectories.{paths|.permissions}`. ([#1020](https://github.com/GoogleContainerTools/jib/issues/1020))
+- Now supports multiple extra directories with `jib.extraDirectories.{extraDirectories|.permissions}`. ([#1020](https://github.com/GoogleContainerTools/jib/issues/1020))
 
 ### Changed
 
-- `jib.extraDirectory({.path|.permissions})` are deprecated in favor of the new `jib.extraDirectories.{paths|.permissions}` configurations. ([#1671](https://github.com/GoogleContainerTools/jib/pull/1671))
+- `jib.extraDirectory({.extraDirectory|.permissions})` are deprecated in favor of the new `jib.extraDirectories.{extraDirectories|.permissions}` configurations. ([#1671](https://github.com/GoogleContainerTools/jib/pull/1671))
 
 ### Fixed
 
@@ -293,15 +293,15 @@ All notable changes to this project will be documented in this file.
 ### Added
 
 - Properties for each configuration parameter, allowing any parameter to be set via commandline. ([#1083](https://github.com/GoogleContainerTools/jib/issues/1083))
-- `jib.to.credHelper` and `jib.from.credHelper` can be used to specify a credential helper suffix or a full path to a credential helper executable. ([#925](https://github.com/GoogleContainerTools/jib/issues/925))
+- `jib.to.credHelper` and `jib.from.credHelper` can be used to specify a credential helper suffix or a full extraDirectory to a credential helper executable. ([#925](https://github.com/GoogleContainerTools/jib/issues/925))
 - `container.user` configuration parameter to configure the user and group to run the container as. ([#1029](https://github.com/GoogleContainerTools/jib/issues/1029))
 - Preliminary support for building images for WAR projects. ([#431](https://github.com/GoogleContainerTools/jib/issues/431))
-- `jib.extraDirectory` closure with a `path` and `permissions` field. ([#794](https://github.com/GoogleContainerTools/jib/issues/794))
-  - `jib.extraDirectory.path` configures the extra layer directory (still also configurable via `jib.extraDirectory = file(...)`)
-  - `jib.extraDirectory.permissions` is a map from absolute path on container to the file's permission bits (represented as an octal string).
+- `jib.extraDirectory` closure with a `extraDirectory` and `permissions` field. ([#794](https://github.com/GoogleContainerTools/jib/issues/794))
+  - `jib.extraDirectory.extraDirectory` configures the extra layer directory (still also configurable via `jib.extraDirectory = file(...)`)
+  - `jib.extraDirectory.permissions` is a map from absolute extraDirectory on container to the file's permission bits (represented as an octal string).
 - Image digest is now written to `build/jib-image.digest`. ([#933](https://github.com/GoogleContainerTools/jib/issues/933))
 - Adds the layer type to the layer history as comments. ([#1198](https://github.com/GoogleContainerTools/jib/issues/1198))
-- `jibDockerBuild.dockerClient.executable` and `jibDockerBuild.dockerClient.environment` to set Docker client binary path (defaulting to `docker`) and additional environment variables to apply when running the binary. ([#1214](https://github.com/GoogleContainerTools/jib/pull/1214))
+- `jibDockerBuild.dockerClient.executable` and `jibDockerBuild.dockerClient.environment` to set Docker client binary extraDirectory (defaulting to `docker`) and additional environment variables to apply when running the binary. ([#1214](https://github.com/GoogleContainerTools/jib/pull/1214))
 
 ### Changed
 

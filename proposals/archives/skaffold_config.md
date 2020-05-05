@@ -53,7 +53,7 @@ jib {
       </includes>
       <excludes>
         <exclude>not/me</exclude>
-        <exclude>/absolute/path/to/not/me</exclude>
+        <exclude>/absolute/extraDirectory/to/not/me</exclude>
       <excludes>
     </watch>
     <sync>

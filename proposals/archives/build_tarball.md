@@ -28,7 +28,7 @@ command. To avoid duplicate code, a boolean parameter can be used in the steps r
 whether to build to a Docker daemon or build to a tarball.
 
 The following changes will be made to the code:
-1. Add a private output path configuration parameter to `BuildConfiguration`
+1. Add a private output extraDirectory configuration parameter to `BuildConfiguration`
 2. Rename `BuildTarballAndLoadDockerStep` to `LoadDockerStep`
 3. Add a new step `WriteTarFileStep` for writing a Blob to disk
 4. Add `BuildSteps#forBuildToTarball()`, which would contain the same steps as

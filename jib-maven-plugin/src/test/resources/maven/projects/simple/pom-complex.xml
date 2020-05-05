@@ -59,7 +59,7 @@
               <arg>An argument.</arg>
             </args>
             <mainClass>com.test.HelloWorld</mainClass>
-            <extraClasspath><path>/other</path></extraClasspath>
+            <extraClasspath><extraDirectory>/other</extraDirectory></extraClasspath>
             <jvmFlags>
               <jvmFlag>-Xms512m</jvmFlag>
               <jvmFlag>-Xdebug</jvmFlag>
@@ -83,7 +83,7 @@
             <format>Docker</format>
           </container>
           <extraDirectories>
-            <paths><path>${project.basedir}/src/main/jib-custom</path></paths>
+            <extraDirectories><extraDirectory>${project.basedir}/src/main/jib-custom</extraDirectory></extraDirectories>
             <permissions>
               <permission>
                 <file>/foo</file>

@@ -58,7 +58,7 @@ Although looking similar, the structure and semantics of similary named properti
     {
       "type": "layerArchive"
       "mediaType": "...",
-      "path": "/home/jane/misc/cacerts.tar",
+      "extraDirectory": "/home/jane/misc/cacerts.tar",
     },
     {
       "type": "fileEntries"
@@ -176,6 +176,6 @@ A builder implementation must inherit the [`history` entries](https://github.com
 ### Layer Entry Object
 
 * `src`: single local file, required
-* `dest`: path in the container, required
+* `dest`: extraDirectory in the container, required
 * `permissions`: POSIX permissions, required
 * `modificationTime`: if `null` or omitted, the epoch + 1 second by default
