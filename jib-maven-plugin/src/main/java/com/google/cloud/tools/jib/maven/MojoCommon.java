@@ -27,6 +27,7 @@ import com.google.cloud.tools.jib.plugins.common.VersionChecker;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.Futures;
+import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -98,6 +99,12 @@ public class MojoCommon {
     List<JibPluginConfiguration.ExtraDirectoryParameters> extraDirectories =
         jibPluginConfiguration.getExtraDirectories();
     if (!extraDirectories.isEmpty()) {
+      for (JibPluginConfiguration.ExtraDirectoryParameters directory : extraDirectories) {
+        if (directory.getFrom().equals(Paths.get(""))) {
+          throw new IllegalArgumentException(
+              "Incomplete <extraDirectories><paths> configuration; source directory must be set");
+        }
+      }
       return extraDirectories;
     }
 
