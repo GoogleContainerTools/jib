@@ -22,7 +22,6 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import java.io.File;
 import java.nio.file.Paths;
-import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
 import org.apache.maven.execution.MavenSession;
@@ -136,9 +135,10 @@ public class JibPluginConfigurationTest {
     Assert.assertEquals("packaged", testPluginConfiguration.getContainerizingMode());
 
     sessionProperties.put("jib.extraDirectories.paths", "custom-jib");
+    Assert.assertEquals(1, testPluginConfiguration.getExtraDirectories().size());
     Assert.assertEquals(
-        Collections.singletonList(new ExtraDirectory(new File("custom-jib"), "/")),
-        testPluginConfiguration.getExtraDirectories());
+        Paths.get("custom-jib"), testPluginConfiguration.getExtraDirectories().get(0).getFrom());
+    Assert.assertEquals("/", testPluginConfiguration.getExtraDirectories().get(0).getInto());
     sessionProperties.put("jib.extraDirectories.permissions", "/test/file1=123,/another/file=456");
     List<PermissionConfiguration> permissions =
         testPluginConfiguration.getExtraDirectoryPermissions();
@@ -239,9 +239,10 @@ public class JibPluginConfigurationTest {
     Assert.assertEquals("packaged", testPluginConfiguration.getContainerizingMode());
 
     project.getProperties().setProperty("jib.extraDirectories.paths", "custom-jib");
+    Assert.assertEquals(1, testPluginConfiguration.getExtraDirectories().size());
     Assert.assertEquals(
-        Collections.singletonList(new ExtraDirectory(new File("custom-jib"), "/")),
-        testPluginConfiguration.getExtraDirectories());
+        Paths.get("custom-jib"), testPluginConfiguration.getExtraDirectories().get(0).getFrom());
+    Assert.assertEquals("/", testPluginConfiguration.getExtraDirectories().get(0).getInto());
     project
         .getProperties()
         .setProperty("jib.extraDirectories.permissions", "/test/file1=123,/another/file=456");

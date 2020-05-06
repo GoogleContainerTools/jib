@@ -192,12 +192,47 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
   /** Configuration for the {@code extraDirectories} parameter. */
   public static class ExtraDirectoriesParameters {
 
-    @Parameter private List<ExtraDirectory> paths = Collections.emptyList();
+    @Parameter private List<ExtraDirectoryParameters> paths = Collections.emptyList();
 
     @Parameter private List<PermissionConfiguration> permissions = Collections.emptyList();
 
-    public List<ExtraDirectory> getPaths() {
+    public List<ExtraDirectoryParameters> getPaths() {
       return paths;
+    }
+  }
+
+  /** A bean that configures the source and destination of an extra directory. */
+  public static class ExtraDirectoryParameters {
+
+    @Parameter private File from = new File("");
+
+    @Parameter private String into = "/";
+
+    // Need default constructor for Maven
+    public ExtraDirectoryParameters() {}
+
+    ExtraDirectoryParameters(File from, String into) {
+      this.from = from;
+      this.into = into;
+    }
+
+    // Allows <path>source</path> shorthand instead of forcing
+    // <path><from>source</from><into>/</into></path>
+    public void set(File path) {
+      this.from = path;
+      this.into = "/";
+    }
+
+    public Path getFrom() {
+      return from.toPath();
+    }
+
+    public void setFrom(File from) {
+      this.from = from;
+    }
+
+    String getInto() {
+      return into;
     }
   }
 
@@ -579,14 +614,14 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
    *
    * @return the list of configured extra directory paths
    */
-  List<ExtraDirectory> getExtraDirectories() {
+  List<ExtraDirectoryParameters> getExtraDirectories() {
     // TODO: Should inform user about nonexistent directory if using custom directory.
     String property = getProperty(PropertyNames.EXTRA_DIRECTORIES_PATHS);
     if (property != null) {
       List<String> paths = ConfigurationPropertyValidator.parseListProperty(property);
       return paths
           .stream()
-          .map(from -> new ExtraDirectory(new File(from), "/"))
+          .map(from -> new ExtraDirectoryParameters(new File(from), "/"))
           .collect(Collectors.toList());
     }
     return extraDirectories.getPaths();

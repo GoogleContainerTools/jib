@@ -93,15 +93,17 @@ public class MojoCommon {
    * @param jibPluginConfiguration the build configuration
    * @return the list of resolved extra directories
    */
-  static List<ExtraDirectory> getExtraDirectories(JibPluginConfiguration jibPluginConfiguration) {
-    List<ExtraDirectory> extraDirectories = jibPluginConfiguration.getExtraDirectories();
+  static List<JibPluginConfiguration.ExtraDirectoryParameters> getExtraDirectories(
+      JibPluginConfiguration jibPluginConfiguration) {
+    List<JibPluginConfiguration.ExtraDirectoryParameters> extraDirectories =
+        jibPluginConfiguration.getExtraDirectories();
     if (!extraDirectories.isEmpty()) {
       return extraDirectories;
     }
 
     MavenProject project = Preconditions.checkNotNull(jibPluginConfiguration.getProject());
     return Collections.singletonList(
-        new ExtraDirectory(
+        new JibPluginConfiguration.ExtraDirectoryParameters(
             project.getBasedir().toPath().resolve("src").resolve("main").resolve("jib").toFile(),
             "/"));
   }
