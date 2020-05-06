@@ -16,6 +16,8 @@
 
 package com.google.cloud.tools.jib.maven;
 
+import static com.google.cloud.tools.jib.maven.JibPluginConfiguration.ExtraDirectoryParameters;
+
 import com.google.cloud.tools.jib.ProjectInfo;
 import com.google.cloud.tools.jib.api.LogEvent;
 import com.google.cloud.tools.jib.api.buildplan.FilePermissions;
@@ -94,12 +96,11 @@ public class MojoCommon {
    * @param jibPluginConfiguration the build configuration
    * @return the list of resolved extra directories
    */
-  static List<JibPluginConfiguration.ExtraDirectoryParameters> getExtraDirectories(
+  static List<ExtraDirectoryParameters> getExtraDirectories(
       JibPluginConfiguration jibPluginConfiguration) {
-    List<JibPluginConfiguration.ExtraDirectoryParameters> extraDirectories =
-        jibPluginConfiguration.getExtraDirectories();
+    List<ExtraDirectoryParameters> extraDirectories = jibPluginConfiguration.getExtraDirectories();
     if (!extraDirectories.isEmpty()) {
-      for (JibPluginConfiguration.ExtraDirectoryParameters directory : extraDirectories) {
+      for (ExtraDirectoryParameters directory : extraDirectories) {
         if (directory.getFrom().equals(Paths.get(""))) {
           throw new IllegalArgumentException(
               "Incomplete <extraDirectories><paths> configuration; source directory must be set");
@@ -110,7 +111,7 @@ public class MojoCommon {
 
     MavenProject project = Preconditions.checkNotNull(jibPluginConfiguration.getProject());
     return Collections.singletonList(
-        new JibPluginConfiguration.ExtraDirectoryParameters(
+        new ExtraDirectoryParameters(
             project.getBasedir().toPath().resolve("src").resolve("main").resolve("jib").toFile(),
             "/"));
   }
