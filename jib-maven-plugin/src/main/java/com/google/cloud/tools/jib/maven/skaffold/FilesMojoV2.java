@@ -27,6 +27,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -251,7 +252,17 @@ public class FilesMojoV2 extends SkaffoldBindingMojo {
           Xpp3Dom paths = extraDirectoriesConfiguration.getChild("paths");
           if (paths != null) {
             // <extraDirectories><paths><path>...</path><path>...</path></paths></extraDirectories>
-            return xpp3ToList(paths, Paths::get);
+            // paths can contain either strings or ExtraDirectory objects
+            List<Path> pathList = new ArrayList<>();
+            for (Xpp3Dom path : paths.getChildren()) {
+              Xpp3Dom from = path.getChild("from");
+              if (from != null) {
+                pathList.add(Paths.get(from.getValue()));
+              } else {
+                pathList.add(Paths.get(path.getValue()));
+              }
+            }
+            return Collections.unmodifiableList(pathList);
           }
         }
       }
