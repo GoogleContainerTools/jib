@@ -10,7 +10,7 @@ All notable changes to this project will be documented in this file.
 ### Fixed
 
 - Fixed the problem not inheriting `USER` container configuration from a base image. ([#2421](https://github.com/GoogleContainerTools/jib/pull/2421))
-- Fixed wrong capitalization of JSON properties in a loadable Docker manifest when build a tar image. ([#2430](https://github.com/GoogleContainerTools/jib/issues/2430)
+- Fixed wrong capitalization of JSON properties in a loadable Docker manifest when build a tar image. ([#2430](https://github.com/GoogleContainerTools/jib/issues/2430))
 
 ## 2.2.0
 
