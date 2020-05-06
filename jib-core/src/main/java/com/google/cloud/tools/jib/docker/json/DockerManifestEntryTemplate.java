@@ -16,13 +16,14 @@
 
 package com.google.cloud.tools.jib.docker.json;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.cloud.tools.jib.json.JsonTemplate;
 import com.google.common.annotations.VisibleForTesting;
 import java.util.ArrayList;
 import java.util.List;
 
 /**
- * JSON Template for a loadable Docker Manifest entry. The repoTags property requires a tag; i.e. if
+ * JSON Template for a loadable Docker Manifest entry. The RepoTags property requires a tag; i.e. if
  * a tag is missing, it explicitly should use "latest".
  *
  * <p>Note that this is a template for a single Manifest entry, while the entire Docker Manifest
@@ -47,8 +48,13 @@ import java.util.List;
  */
 public class DockerManifestEntryTemplate implements JsonTemplate {
 
+  @JsonProperty("Config")
   private String config = "config.json";
+
+  @JsonProperty("RepoTags")
   private final List<String> repoTags = new ArrayList<>();
+
+  @JsonProperty("Layers")
   private final List<String> layers = new ArrayList<>();
 
   public void setConfig(String config) {
