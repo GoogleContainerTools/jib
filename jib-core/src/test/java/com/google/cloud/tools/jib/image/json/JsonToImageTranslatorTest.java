@@ -86,6 +86,28 @@ public class JsonToImageTranslatorTest {
   }
 
   @Test
+  public void testToImage_canParseTimestampWithOffset()
+      throws IOException, LayerPropertyNotFoundException, URISyntaxException,
+          LayerCountMismatchException, BadContainerConfigurationFormatException {
+    Path containerConfigJson =
+        Paths.get(
+            getClass().getClassLoader().getResource("core/json/containerconfig.json").toURI());
+    ContainerConfigurationTemplate containerConfig =
+        JsonTemplateMapper.readJsonFromFile(
+            containerConfigJson, ContainerConfigurationTemplate.class);
+    containerConfig.setCreated("2020-04-21T13:22:10.836777828-07:00");
+
+    Path manifestJson =
+        Paths.get(getClass().getClassLoader().getResource("core/json/v22manifest.json").toURI());
+    V22ManifestTemplate manifest =
+        JsonTemplateMapper.readJsonFromFile(manifestJson, V22ManifestTemplate.class);
+
+    // Should not throw BadContainerConfigFormatException.
+    // https://github.com/GoogleContainerTools/jib/issues/2428
+    JsonToImageTranslator.toImage(manifest, containerConfig);
+  }
+
+  @Test
   public void testPortMapToList() throws BadContainerConfigurationFormatException {
     ImmutableSortedMap<String, Map<?, ?>> input =
         ImmutableSortedMap.of(
