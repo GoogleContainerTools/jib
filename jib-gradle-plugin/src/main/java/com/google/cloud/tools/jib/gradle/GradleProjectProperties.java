@@ -323,7 +323,7 @@ public class GradleProjectProperties implements ProjectProperties {
 
   @Nullable
   @Override
-  public String getMainClassFromJar() {
+  public String getMainClassFromJarPlugin() {
     Jar jarTask = (Jar) project.getTasks().findByName("jar");
     if (jarTask == null) {
       return null;
