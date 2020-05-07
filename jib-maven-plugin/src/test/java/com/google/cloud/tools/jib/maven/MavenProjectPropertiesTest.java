@@ -294,7 +294,7 @@ public class MavenProjectPropertiesTest {
     archive.addChild(manifest);
     manifest.addChild(newXpp3Dom("mainClass", "some.main.class"));
 
-    Assert.assertEquals("some.main.class", mavenProjectProperties.getMainClassFromJar());
+    Assert.assertEquals("some.main.class", mavenProjectProperties.getMainClassFromJarPlugin());
   }
 
   @Test
@@ -306,7 +306,7 @@ public class MavenProjectPropertiesTest {
     archive.addChild(new Xpp3Dom("manifest"));
     pluginConfiguration.addChild(archive);
 
-    Assert.assertNull(mavenProjectProperties.getMainClassFromJar());
+    Assert.assertNull(mavenProjectProperties.getMainClassFromJarPlugin());
   }
 
   @Test
@@ -316,7 +316,7 @@ public class MavenProjectPropertiesTest {
     Mockito.when(mockPlugin.getConfiguration()).thenReturn(pluginConfiguration);
     pluginConfiguration.addChild(new Xpp3Dom("archive"));
 
-    Assert.assertNull(mavenProjectProperties.getMainClassFromJar());
+    Assert.assertNull(mavenProjectProperties.getMainClassFromJarPlugin());
   }
 
   @Test
@@ -325,7 +325,7 @@ public class MavenProjectPropertiesTest {
         .thenReturn(mockPlugin);
     Mockito.when(mockPlugin.getConfiguration()).thenReturn(pluginConfiguration);
 
-    Assert.assertNull(mavenProjectProperties.getMainClassFromJar());
+    Assert.assertNull(mavenProjectProperties.getMainClassFromJarPlugin());
   }
 
   @Test
@@ -333,12 +333,12 @@ public class MavenProjectPropertiesTest {
     Mockito.when(mockMavenProject.getPlugin("org.apache.maven.plugins:maven-jar-plugin"))
         .thenReturn(mockPlugin);
 
-    Assert.assertNull(mavenProjectProperties.getMainClassFromJar());
+    Assert.assertNull(mavenProjectProperties.getMainClassFromJarPlugin());
   }
 
   @Test
   public void testGetMainClassFromJar_missingPlugin() {
-    Assert.assertNull(mavenProjectProperties.getMainClassFromJar());
+    Assert.assertNull(mavenProjectProperties.getMainClassFromJarPlugin());
   }
 
   @Test
