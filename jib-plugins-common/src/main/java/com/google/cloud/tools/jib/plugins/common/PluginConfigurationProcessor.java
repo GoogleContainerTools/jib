@@ -526,8 +526,6 @@ public class PluginConfigurationProcessor {
       RawConfiguration rawConfiguration, ProjectProperties projectProperties)
       throws MainClassInferenceException, InvalidAppRootException, IOException,
           InvalidContainerizingModeException {
-    AbsoluteUnixPath appRoot = getAppRootChecked(rawConfiguration, projectProperties);
-
     Optional<List<String>> rawEntrypoint = rawConfiguration.getEntrypoint();
     List<String> rawExtraClasspath = rawConfiguration.getExtraClasspath();
     if (rawEntrypoint.isPresent() && !rawEntrypoint.get().isEmpty()) {
@@ -556,6 +554,7 @@ public class PluginConfigurationProcessor {
     }
 
     List<String> classpath = new ArrayList<>(rawExtraClasspath);
+    AbsoluteUnixPath appRoot = getAppRootChecked(rawConfiguration, projectProperties);
     ContainerizingMode mode = getContainerizingModeChecked(rawConfiguration, projectProperties);
     switch (mode) {
       case EXPLODED:
