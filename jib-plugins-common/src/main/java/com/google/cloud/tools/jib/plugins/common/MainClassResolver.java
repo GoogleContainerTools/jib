@@ -68,18 +68,18 @@ public class MainClassResolver {
                 + projectProperties.getPluginName()
                 + "' to improve build speed."));
 
-    String mainClassFromJar = projectProperties.getMainClassFromJar();
-    if (mainClassFromJar != null && isValidJavaClass(mainClassFromJar)) {
-      return mainClassFromJar;
+    String mainClassFromJarPlugin = projectProperties.getMainClassFromJarPlugin();
+    if (mainClassFromJarPlugin != null && isValidJavaClass(mainClassFromJarPlugin)) {
+      return mainClassFromJarPlugin;
     }
 
-    if (mainClassFromJar != null) {
+    if (mainClassFromJarPlugin != null) {
       projectProperties.log(
           LogEvent.warn(
               "'mainClass' configured in "
                   + projectProperties.getJarPluginName()
                   + " is not a valid Java class: "
-                  + mainClassFromJar));
+                  + mainClassFromJarPlugin));
     }
     projectProperties.log(
         LogEvent.info(
@@ -87,11 +87,11 @@ public class MainClassResolver {
                 + projectProperties.getJarPluginName()
                 + "; looking into all class files to infer main class."));
 
-    MainClassFinder.Result result =
+    MainClassFinder.Result mainClassFinderResult =
         MainClassFinder.find(projectProperties.getClassFiles(), projectProperties::log);
-    switch (result.getType()) {
+    switch (mainClassFinderResult.getType()) {
       case MAIN_CLASS_FOUND:
-        return result.getFoundMainClass();
+        return mainClassFinderResult.getFoundMainClass();
 
       case MAIN_CLASS_NOT_FOUND:
         throw new MainClassInferenceException(
@@ -102,7 +102,7 @@ public class MainClassResolver {
         throw new MainClassInferenceException(
             HelpfulSuggestions.forMainClassNotFound(
                 "Multiple valid main classes were found: "
-                    + String.join(", ", result.getFoundMainClasses()),
+                    + String.join(", ", mainClassFinderResult.getFoundMainClasses()),
                 projectProperties.getPluginName()));
 
       default:

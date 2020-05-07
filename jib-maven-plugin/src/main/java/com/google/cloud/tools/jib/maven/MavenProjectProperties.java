@@ -365,7 +365,7 @@ public class MavenProjectProperties implements ProjectProperties {
 
   @Nullable
   @Override
-  public String getMainClassFromJar() {
+  public String getMainClassFromJarPlugin() {
     Plugin mavenJarPlugin = project.getPlugin("org.apache.maven.plugins:maven-jar-plugin");
     if (mavenJarPlugin != null) {
       return getChildValue(

@@ -70,9 +70,10 @@ public class MainClassResolverTest {
   }
 
   @Test
-  public void testResolveMainClass_validMainClassFromJar()
+  public void testResolveMainClass_validMainClassFromJarPlugin()
       throws MainClassInferenceException, IOException {
-    Mockito.when(mockProjectProperties.getMainClassFromJar()).thenReturn("main.class.from.jar");
+    Mockito.when(mockProjectProperties.getMainClassFromJarPlugin())
+        .thenReturn("main.class.from.jar");
     Assert.assertEquals(
         "main.class.from.jar", MainClassResolver.resolveMainClass(null, mockProjectProperties));
 
@@ -83,9 +84,9 @@ public class MainClassResolverTest {
   }
 
   @Test
-  public void testResolveMainClass_multipleInferredWithInvalidMainClassFromJar()
+  public void testResolveMainClass_multipleInferredWithInvalidMainClassFromJarPlugin()
       throws URISyntaxException, IOException {
-    Mockito.when(mockProjectProperties.getMainClassFromJar()).thenReturn("${start-class}");
+    Mockito.when(mockProjectProperties.getMainClassFromJarPlugin()).thenReturn("${start-class}");
     Mockito.when(mockProjectProperties.getClassFiles())
         .thenReturn(
             new DirectoryWalker(
@@ -118,7 +119,7 @@ public class MainClassResolverTest {
   }
 
   @Test
-  public void testResolveMainClass_multipleInferredWithoutMainClassFromJar()
+  public void testResolveMainClass_multipleInferredWithoutMainClassFromJarPlugin()
       throws URISyntaxException, IOException {
     Mockito.when(mockProjectProperties.getClassFiles())
         .thenReturn(
@@ -148,8 +149,9 @@ public class MainClassResolverTest {
   }
 
   @Test
-  public void testResolveMainClass_noneInferredWithInvalidMainClassFromJar() throws IOException {
-    Mockito.when(mockProjectProperties.getMainClassFromJar()).thenReturn("${start-class}");
+  public void testResolveMainClass_noneInferredWithInvalidMainClassFromJarPlugin()
+      throws IOException {
+    Mockito.when(mockProjectProperties.getMainClassFromJarPlugin()).thenReturn("${start-class}");
     Mockito.when(mockProjectProperties.getClassFiles())
         .thenReturn(ImmutableList.of(Paths.get("ignored")));
     try {

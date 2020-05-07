@@ -114,7 +114,7 @@ public class PluginConfigurationProcessorTest {
     Mockito.when(rawConfiguration.getContainerizingMode()).thenReturn("exploded");
     Mockito.when(projectProperties.getToolName()).thenReturn("tool");
     Mockito.when(projectProperties.getToolVersion()).thenReturn("tool-version");
-    Mockito.when(projectProperties.getMainClassFromJar()).thenReturn("java.lang.Object");
+    Mockito.when(projectProperties.getMainClassFromJarPlugin()).thenReturn("java.lang.Object");
     Mockito.when(projectProperties.getDefaultCacheDirectory()).thenReturn(Paths.get("cache"));
     Mockito.when(
             projectProperties.createJibContainerBuilder(
