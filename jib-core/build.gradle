@@ -37,9 +37,9 @@ jar {
   }
 }
 
+/* RELEASE */
 configureMavenRelease()
 
-/* RELEASE */
 publishing {
   publications {
     mavenJava(MavenPublication) {

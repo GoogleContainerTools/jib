@@ -19,6 +19,7 @@ package com.google.cloud.tools.jib.maven;
 import com.google.cloud.tools.jib.plugins.common.AuthProperty;
 import com.google.cloud.tools.jib.plugins.common.ConfigurationPropertyValidator;
 import com.google.cloud.tools.jib.plugins.common.PropertyNames;
+import com.google.cloud.tools.jib.plugins.common.RawConfiguration.ExtensionConfiguration;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
@@ -191,12 +192,47 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
   /** Configuration for the {@code extraDirectories} parameter. */
   public static class ExtraDirectoriesParameters {
 
-    @Parameter private List<File> paths = Collections.emptyList();
+    @Parameter private List<ExtraDirectoryParameters> paths = Collections.emptyList();
 
     @Parameter private List<PermissionConfiguration> permissions = Collections.emptyList();
 
-    public List<File> getPaths() {
+    public List<ExtraDirectoryParameters> getPaths() {
       return paths;
+    }
+  }
+
+  /** A bean that configures the source and destination of an extra directory. */
+  public static class ExtraDirectoryParameters {
+
+    @Parameter private File from = new File("");
+
+    @Parameter private String into = "/";
+
+    // Need default constructor for Maven
+    public ExtraDirectoryParameters() {}
+
+    ExtraDirectoryParameters(File from, String into) {
+      this.from = from;
+      this.into = into;
+    }
+
+    // Allows <path>source</path> shorthand instead of forcing
+    // <path><from>source</from><into>/</into></path>
+    public void set(File path) {
+      this.from = path;
+      this.into = "/";
+    }
+
+    public Path getFrom() {
+      return from.toPath();
+    }
+
+    public void setFrom(File from) {
+      this.from = from;
+    }
+
+    String getInto() {
+      return into;
     }
   }
 
@@ -217,6 +253,23 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
     @Nullable @Parameter private File imageId;
 
     @Nullable @Parameter private File imageJson;
+  }
+
+  public static class ExtensionParameters implements ExtensionConfiguration {
+
+    @Parameter private String implementation = "<extension implementation not configured>";
+
+    @Parameter private Map<String, String> properties = Collections.emptyMap();
+
+    @Override
+    public String getExtensionClass() {
+      return implementation;
+    }
+
+    @Override
+    public Map<String, String> getProperties() {
+      return properties;
+    }
   }
 
   @Nullable
@@ -252,6 +305,8 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
 
   @Parameter(property = PropertyNames.SKIP)
   private boolean skip;
+
+  @Parameter private List<ExtensionParameters> pluginExtensions = Collections.emptyList();
 
   @Component protected SettingsDecrypter settingsDecrypter;
 
@@ -559,14 +614,17 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
    *
    * @return the list of configured extra directory paths
    */
-  List<Path> getExtraDirectories() {
+  List<ExtraDirectoryParameters> getExtraDirectories() {
     // TODO: Should inform user about nonexistent directory if using custom directory.
     String property = getProperty(PropertyNames.EXTRA_DIRECTORIES_PATHS);
     if (property != null) {
       List<String> paths = ConfigurationPropertyValidator.parseListProperty(property);
-      return paths.stream().map(Paths::get).collect(Collectors.toList());
+      return paths
+          .stream()
+          .map(from -> new ExtraDirectoryParameters(new File(from), "/"))
+          .collect(Collectors.toList());
     }
-    return extraDirectories.getPaths().stream().map(File::toPath).collect(Collectors.toList());
+    return extraDirectories.getPaths();
   }
 
   /**
@@ -652,6 +710,10 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
 
   boolean isSkipped() {
     return skip;
+  }
+
+  List<ExtensionParameters> getPluginExtensions() {
+    return pluginExtensions;
   }
 
   /**

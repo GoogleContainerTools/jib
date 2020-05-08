@@ -20,6 +20,7 @@ import com.google.cloud.tools.jib.api.Containerizer;
 import com.google.cloud.tools.jib.api.JavaContainerBuilder;
 import com.google.cloud.tools.jib.api.JibContainerBuilder;
 import com.google.cloud.tools.jib.api.LogEvent;
+import com.google.cloud.tools.jib.plugins.common.RawConfiguration.ExtensionConfiguration;
 import com.google.cloud.tools.jib.plugins.extension.JibPluginExtensionException;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -75,7 +76,7 @@ public interface ProjectProperties {
    * @return the name of the main class configured in a jar plugin, or {@code null} if none is found
    */
   @Nullable
-  String getMainClassFromJar();
+  String getMainClassFromJarPlugin();
 
   boolean isWarProject();
 
@@ -87,6 +88,8 @@ public interface ProjectProperties {
 
   boolean isOffline();
 
-  JibContainerBuilder runPluginExtensions(JibContainerBuilder jibContainerBuilder)
+  JibContainerBuilder runPluginExtensions(
+      List<? extends ExtensionConfiguration> extensionConfigs,
+      JibContainerBuilder jibContainerBuilder)
       throws JibPluginExtensionException;
 }

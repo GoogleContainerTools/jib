@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- `<from>` and `<into>` fields to `<extraDirectories><paths><path>` for configuring the source and target of an extra directory. ([#1581](https://github.com/GoogleContainerTools/jib/issues/1581))
+
+### Changed
+
+### Fixed
+
+- Fixed the problem not inheriting `USER` container configuration from a base image. ([#2421](https://github.com/GoogleContainerTools/jib/pull/2421))
+- Fixed wrong capitalization of JSON properties in a loadable Docker manifest when building a tar image. ([#2430](https://github.com/GoogleContainerTools/jib/issues/2430))
+- Fixed an issue when using a base image whose image creation timestamp contains timezone offset. ([#2428](https://github.com/GoogleContainerTools/jib/issues/2428))
+- Fixed an issue inferring a wrong main class or using an invalid main class (for example, Spring Boot project containing multiple main classes). ([#2456](https://github.com/GoogleContainerTools/jib/issues/2456))
+
+## 2.2.0
+
+### Added
+
 - Glob pattern support for `<extraDirectories><permissions>`. ([#1200](https://github.com/GoogleContainerTools/jib/issues/1200))
 - Support for image references with both a tag and a digest. ([#1481](https://github.com/GoogleContainerTools/jib/issues/1481))
 - The `DOCKER_CONFIG` environment variable specifying the directory containing docker configs is now checked during credential retrieval. ([#1618](https://github.com/GoogleContainerTools/jib/issues/1618))
@@ -12,8 +27,6 @@ All notable changes to this project will be documented in this file.
 ### Changed
 
 - `<container><creationTime>` now accepts more timezone formats:`+HHmm`. This allows for easier configuration of creationTime by external systems. ([#2320](https://github.com/GoogleContainerTools/jib/issues/2320))
-
-### Fixed
 
 ## 2.1.0
 

@@ -21,8 +21,10 @@ idea.project.settings {
 
 import net.ltgt.gradle.errorprone.CheckSeverity
 
-project('jib-maven-plugin-extension-api') {
-  apply plugin: 'java-library'
+['jib-gradle-plugin-extension-api', 'jib-maven-plugin-extension-api'].each { projectName ->
+  project(projectName) {
+    apply plugin: 'java-library'
+  }
 }
 
 subprojects {
@@ -55,6 +57,10 @@ subprojects {
     GOOGLE_AUTH_LIBRARY_OAUTH2_HTTP: '0.18.0',
     GUAVA: '28.1-jre',
     JSR305: '3.0.2', // transitively pulled in by GUAVA
+
+    // for Build Plan and Jib Plugins Extension API
+    BUILD_PLAN: '0.1.0',
+    EXTENSION_COMMON: '0.1.0',
 
     COMMONS_COMPRESS: '1.19',
     JACKSON_DATABIND: '2.9.10',

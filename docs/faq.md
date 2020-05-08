@@ -27,7 +27,8 @@ If a question you have is not answered below, please [submit an issue](/../../is
 [What would a Dockerfile for a Jib-built image look like?](#what-would-a-dockerfile-for-a-jib-built-image-look-like)\
 [How can I inspect the image Jib built?](#how-can-i-inspect-the-image-jib-built)\
 [I would like to run my application with a javaagent.](#i-would-like-to-run-my-application-with-a-javaagent)\
-[How can I tag my image with a timestamp?](#how-can-i-tag-my-image-with-a-timestamp)
+[How can I tag my image with a timestamp?](#how-can-i-tag-my-image-with-a-timestamp)\
+[How do I specify a platform in the manifest list (or OCI index) of a base image?](#how-do-i-specify-a-platform-in-the-manifest-list-or-oci-index-of-a-base-image)
 
 **Build Problems**\
 [How can I diagnose problems pulling or pushing from remote registries?](#how-can-i-diagnose-problems-pulling-or-pushing-from-remote-registries)\
@@ -69,7 +70,7 @@ By default, Jib uses [`distroless/java`](https://github.com/GoogleContainerTools
 If you would like to include a shell for debugging, set the base image to `gcr.io/distroless/java:debug` instead. The shell will be located at `/busybox/sh`. Note that `:debug` images are **not** recommended for production use.
 
 <details>
-<summary>Configuring a base image in Maven</summary>
+<summary>Configuring a base image in Maven (click to expand)</summary>
 <p>
 
 In [`jib-maven-plugin`](../jib-maven-plugin), you can use the `gcr.io/distroless/java:debug` base image by adding the following configuration:
@@ -85,7 +86,7 @@ In [`jib-maven-plugin`](../jib-maven-plugin), you can use the `gcr.io/distroless
 </details>
 
 <details>
-<summary>Configuring a base image in Gradle</summary>
+<summary>Configuring a base image in Gradle (click to expand)</summary>
 <p>
 
 In [`jib-gradle-plugin`](../jib-gradle-plugin), you can use the `gcr.io/distroless/java:debug` base image by adding the following configuration:
@@ -115,7 +116,7 @@ See [Extended Usage](../jib-gradle-plugin#extended-usage) for the `container.for
 For reproducibility purposes, Jib sets the creation time of the container images to the Unix epoch (00:00:00, January 1st, 1970 in UTC). If you would like to use a different timestamp, set the `jib.container.creationTime` / `<container><creationTime>` parameter to an ISO 8601 date-time. You may also use the value `USE_CURRENT_TIMESTAMP` to set the creation time to the actual build time, but this sacrifices reproducibility since the timestamp will change with every build.
 
 <details>
-<summary>Setting `creationTime` parameter</summary>
+<summary>Setting <code>creationTime</code> parameter (click to expand)</summary>
 <p>
 
 #### Maven
@@ -241,7 +242,7 @@ Normally, the plugin sets a default entrypoint for java applications, or lets yo
 
 The intention of Jib is to add individual class files, resources, and dependency JARs into the container instead of putting a JAR. This lets Jib choose an opinionated, optimal layout for the application on the container image, which also allows it to skip the extra JAR-packaging step.
 
-However, you can set `<containerizingMode>packaged` (Maven) or `jib.containerizingMode = 'packaged'` (Gradle) to containerize a JAR, but note that your application will always be run via `java -cp ... your.MainClass` (even if it is an executable JAR). Some disadvantages:
+However, you can set `<containerizingMode>packaged` (Maven) or `jib.containerizingMode = 'packaged'` (Gradle) to containerize a JAR, but note that your application will always be run via `java -cp ... your.MainClass` (even if it is an executable JAR). Some disadvantages of setting `containerizingMode='packaged'`:
 
 - You need to run the JAR-packaging step (`mvn package` in Maven or the `jar` task in Gradle).
 - Reduced granularity in building and caching: if any of your Java source files or resource files are updated, not only the JAR has to be rebuilt, but the entire layer containing the JAR in the image has to be recreated and pushed to the destination.
@@ -256,7 +257,7 @@ Running commands like `apt-get` slows down the container build process. We **do 
 However, if you need to run commands, you can build a custom image and configure Jib to use it as the base image.
 
 <details>
-<summary>Base image configuration examples</summary>
+<summary>Base image configuration examples (click to expand)</summary>
 <p>
 
 #### Maven
@@ -290,7 +291,7 @@ We currently support adding a custom directory with an **incubating** feature ca
 If the current extra directories design doesn't meet your needs (e.g. you need to set up the extra files directory with files generated during the build process), you can use additional goals/tasks to create the extra directory as part of your build.
 
 <details>
-<summary>File copying examples</summary>
+<summary>File copying examples (click to expand)</summary>
 <p>
 
 #### Maven
@@ -466,6 +467,38 @@ Some plugins, such as the [Docker Prepare Gradle Plugin](https://github.com/gcla
 
 To inspect the image that is produced from the build using Docker, you can use commands such as `docker inspect your/image:tag` to view the image configuration, or you can also download the image using `docker save` to manually inspect the container image. Other tools, such as [dive](https://github.com/wagoodman/dive), provide nicer UI to inspect the image.
 
+### How do I specify a platform in the manifest list (or OCI index) of a base image?
+
+By design, if the target image reference is a [manifest list](https://docs.docker.com/registry/spec/manifest-v2-2/#manifest-list), Jib will always select an image for the platform `amd64/linux`. If you need to specify a different image from a manifest list you must specify the digest for the platform you are targeting.
+
+To view a manifest, [enable experimental docker CLI](https://docs.docker.com/engine/reference/commandline/cli/#experimental-features) features and then run the [manifest inspect](https://docs.docker.com/engine/reference/commandline/manifest_inspect/) command.
+```
+$ docker manifest inspect openjdk:8
+```
+
+You can then inspect the output for the specific image you want (in this example an image for the platform `arm64/linux`)
+```java
+{         
+   ...
+   // This whole BLOB itself is a manifest list.
+   "mediaType": "application/vnd.docker.distribution.manifest.list.v2+json",
+   "manifests": [
+      {
+         // This entry in the list points to the manifest for the ARM64/Linux manifest.
+         "mediaType": "application/vnd.docker.distribution.manifest.v2+json",
+         ...
+         "digest": "sha256:1fbd49e3fc5e53154fa93cad15f211112d899a6b0c5dc1e8661d6eb6c18b30a6",
+         "platform": {
+            "architecture": "arm64",
+            "os": "linux",
+            "variant": "v8"
+         }
+      }
+   ]
+}
+```
+
+You then use the digest for the target platform you desire in your `jib.to.image` in the form `"opendjdk@sha256:1fbd49e3fc5e53154fa93cad15f211112d899a6b0c5dc1e8661d6eb6c18b30a6"` or if you wish to preserve the tag for documentation purposes, you can also use the form `"opendjdk:8@sha256:1fbd49e3fc5e53154fa93cad15f211112d899a6b0c5dc1e8661d6eb6c18b30a6"`.
 
 ## Build Problems
 
@@ -493,6 +526,7 @@ If the registry returns `401 Unauthorized` or `"code":"UNAUTHORIZED"`, it is oft
 
 * You did not configure auth information in the default places where Jib searches.
    - `$HOME/.docker/config.json`, [one of the configuration files](https://docs.docker.com/engine/reference/commandline/cli/#configuration-files) for the `docker` command line tool. See [configuration files document](https://docs.docker.com/engine/reference/commandline/cli/#configuration-files), [credential store](https://docs.docker.com/engine/reference/commandline/login/#credentials-store) and [credential helper](https://docs.docker.com/engine/reference/commandline/login/#credential-helpers) sections, and [this](https://github.com/GoogleContainerTools/jib/issues/101) for how to configure auth. For example, you can do `docker login` to save auth in `config.json`, but it is often recommended to configure a credential helper (also configurable in `config.json`).
+   - (Starting from Jib 2.2.0) You can set the environment variable `$DOCKER_CONFIG` for the _directory_ containing Docker configuration files. `$DOCKER_CONFIG/config.json` takes precedence over `$HOME/.docker/config.json`.
    - Some common credential helpers on `$PATH` (for example, `docker-credential-osxkeychain`, `docker-credential-ecr-login`, etc.) for well-known registries.
    - Jib configurations
       - Configuring credential helpers: [`<from/to><credHelper>`](https://github.com/GoogleContainerTools/jib/tree/master/jib-maven-plugin#using-docker-credential-helpers) (Maven) / [`from/to.credHelper`](https://github.com/GoogleContainerTools/jib/tree/master/jib-gradle-plugin#using-docker-credential-helpers) (Gradle)
@@ -557,6 +591,28 @@ gradle --no-daemon --console=plain -Djava.util.logging.config.file=path/to/loggi
 
 You may wish to enable the debug logs too (`-X` for Maven, or `--debug --stacktrace` for Gradle).
 
+When configured correctly, you should see logs like this:
+```
+Mar 31, 2020 9:55:52 AM com.google.api.client.http.HttpResponse <init>
+CONFIG: -------------- RESPONSE --------------
+HTTP/1.1 202 Accepted
+Content-Length: 0
+Docker-Distribution-Api-Version: registry/2.0
+Docker-Upload-Uuid: 6292f0d7-93cb-4a8e-8336-78a1bf7febd2
+Location: https://registry-1.docker.io/v2/...
+Range: 0-657292
+Date: Tue, 31 Mar 2020 13:55:52 GMT
+Strict-Transport-Security: max-age=31536000
+
+Mar 31, 2020 9:55:52 AM com.google.api.client.http.HttpRequest execute
+CONFIG: -------------- REQUEST  --------------
+PUT https://registry-1.docker.io/v2/...
+Accept:
+Accept-Encoding: gzip
+Authorization: <Not Logged>
+User-Agent: jib 2.1.1-SNAPSHOT jib-maven-plugin Google-HTTP-Java-Client/1.34.0 (gzip)
+```
+  
 ### How do I view debug logs for Jib?
 
 Maven: use `mvn -X -Djib.serialize=true` to enable more detailed logging and serialize Jib's actions.

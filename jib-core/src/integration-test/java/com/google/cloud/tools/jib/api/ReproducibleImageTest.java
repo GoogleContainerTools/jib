@@ -114,8 +114,8 @@ public class ReproducibleImageTest {
   @Test
   public void testManifest() throws IOException {
     String exectedManifest =
-        "[{\"config\":\"config.json\",\"repoTags\":[\"jib-core/reproducible:latest\"],"
-            + "\"layers\":[\"c46572ef74f58d95e44dd36c1fbdfebd3752e8b56a794a13c11cfed35a1a6e1c.tar.gz\",\"6d2763b0f3940d324ea6b55386429e5b173899608abf7d1bff62e25dd2e4dcea.tar.gz\",\"530c1954a2b087d0b989895ea56435c9dc739a973f2d2b6cb9bb98e55bbea7ac.tar.gz\"]}]";
+        "[{\"Config\":\"config.json\",\"RepoTags\":[\"jib-core/reproducible:latest\"],"
+            + "\"Layers\":[\"c46572ef74f58d95e44dd36c1fbdfebd3752e8b56a794a13c11cfed35a1a6e1c.tar.gz\",\"6d2763b0f3940d324ea6b55386429e5b173899608abf7d1bff62e25dd2e4dcea.tar.gz\",\"530c1954a2b087d0b989895ea56435c9dc739a973f2d2b6cb9bb98e55bbea7ac.tar.gz\"]}]";
     String generatedManifest = extractFromTarFileAsString(imageTar, "manifest.json");
     Assert.assertEquals(exectedManifest, generatedManifest);
   }

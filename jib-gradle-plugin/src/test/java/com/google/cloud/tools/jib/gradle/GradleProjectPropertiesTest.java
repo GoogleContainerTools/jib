@@ -218,7 +218,7 @@ public class GradleProjectPropertiesTest {
     Mockito.when(mockJavaPluginConvention.getSourceSets()).thenReturn(mockSourceSetContainer);
     Mockito.when(mockProject.getTasks()).thenReturn(mockTaskContainer);
     Mockito.when(mockProject.getGradle().getStartParameter().getConsoleOutput())
-        .thenReturn(ConsoleOutput.Auto);
+        .thenReturn(ConsoleOutput.Plain);
 
     // mocking to complete ignore project dependency resolution
     Mockito.when(
@@ -267,13 +267,13 @@ public class GradleProjectPropertiesTest {
     Jar mockJar = Mockito.mock(Jar.class);
     Mockito.when(mockJar.getManifest()).thenReturn(manifest);
     Mockito.when(mockTaskContainer.findByName("jar")).thenReturn(mockJar);
-    Assert.assertEquals("some.main.class", gradleProjectProperties.getMainClassFromJar());
+    Assert.assertEquals("some.main.class", gradleProjectProperties.getMainClassFromJarPlugin());
   }
 
   @Test
   public void testGetMainClassFromJar_missing() {
     Mockito.when(mockTaskContainer.findByName("jar")).thenReturn(null);
-    Assert.assertNull(gradleProjectProperties.getMainClassFromJar());
+    Assert.assertNull(gradleProjectProperties.getMainClassFromJarPlugin());
   }
 
   @Test

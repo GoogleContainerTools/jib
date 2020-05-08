@@ -29,9 +29,9 @@ jar {
   }
 }
 
+/* RELEASE */
 configureMavenRelease()
 
-/* RELEASE */
 publishing {
   publications {
     mavenJava(MavenPublication) {
@@ -41,6 +41,14 @@ publishing {
       }
       from components.java
     }
+  }
+}
+
+// Release plugin (git release commits and version updates)
+release {
+  tagTemplate = 'v$version-build-plan'
+  git {
+    requireBranch = /^build_plan_release_v\d+.*$/  //regex
   }
 }
 /* RELEASE */
