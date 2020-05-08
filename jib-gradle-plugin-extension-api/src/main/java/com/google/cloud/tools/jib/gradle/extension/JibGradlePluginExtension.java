@@ -36,6 +36,8 @@ public interface JibGradlePluginExtension extends JibPluginExtension {
    *
    * @param buildPlan original build plan prepared by the Jib Gradle plugin
    * @param properties custom properties configured for the plugin extension
+   * @param configObject custom configuration object parsed from {@code
+   *     jib.pluginExtensions.pluginExtension.configuration}. Can be null.
    * @param gradleData {@link GradleData} providing Gradle-specific data and properties
    * @param logger logger for writing log messages
    * @return updated build plan
@@ -44,6 +46,7 @@ public interface JibGradlePluginExtension extends JibPluginExtension {
   ContainerBuildPlan extendContainerBuildPlan(
       ContainerBuildPlan buildPlan,
       Map<String, String> properties,
+      Object configObject,
       GradleData gradleData,
       ExtensionLogger logger)
       throws JibPluginExtensionException;
