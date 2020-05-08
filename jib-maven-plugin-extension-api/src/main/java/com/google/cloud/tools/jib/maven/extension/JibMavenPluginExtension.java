@@ -36,6 +36,8 @@ public interface JibMavenPluginExtension extends JibPluginExtension {
    *
    * @param buildPlan original build plan prepared by the Jib Maven plugin
    * @param properties custom properties configured for the plugin extension
+   * @param configObject custom configuration object parsed from {@code
+   *     <pluginExtensions><pluginExtension><configuration>}. Can be null.
    * @param mavenData {@link MavenData} providing Maven-specific data and properties
    * @param logger logger for writing log messages
    * @return updated build plan
@@ -44,6 +46,7 @@ public interface JibMavenPluginExtension extends JibPluginExtension {
   ContainerBuildPlan extendContainerBuildPlan(
       ContainerBuildPlan buildPlan,
       Map<String, String> properties,
+      Object configObject,
       MavenData mavenData,
       ExtensionLogger logger)
       throws JibPluginExtensionException;
