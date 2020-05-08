@@ -570,7 +570,11 @@ public class MavenProjectProperties implements ProjectProperties {
         log(LogEvent.lifecycle("Running extension: " + extensionClass));
         buildPlan =
             extension.extendContainerBuildPlan(
-                buildPlan, config.getProperties(), mavenData, extensionLogger);
+                buildPlan,
+                config.getProperties(),
+                config.getExtraConfiguration().orElse(null),
+                mavenData,
+                extensionLogger);
         ImageReference.parse(buildPlan.getBaseImage()); // to validate image reference
       }
       return jibContainerBuilder.applyContainerBuildPlan(buildPlan);

@@ -435,7 +435,11 @@ public class GradleProjectProperties implements ProjectProperties {
         log(LogEvent.lifecycle("Running extension: " + extensionClass));
         buildPlan =
             extension.extendContainerBuildPlan(
-                buildPlan, config.getProperties(), () -> project, extensionLogger);
+                buildPlan,
+                config.getProperties(),
+                config.getExtraConfiguration().orElse(null),
+                () -> project,
+                extensionLogger);
         ImageReference.parse(buildPlan.getBaseImage()); // to validate image reference
       }
       return jibContainerBuilder.applyContainerBuildPlan(buildPlan);
