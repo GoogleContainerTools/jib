@@ -33,6 +33,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import org.apache.maven.execution.MavenExecutionRequest;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.descriptor.PluginDescriptor;
@@ -63,10 +64,11 @@ public class MavenProjectPropertiesExtensionTest {
     public ContainerBuildPlan extendContainerBuildPlan(
         ContainerBuildPlan buildPlan,
         Map<String, String> properties,
+        Object config,
         MavenData mavenData,
         ExtensionLogger logger)
         throws JibPluginExtensionException {
-      return extension.extendContainerBuildPlan(buildPlan, properties, mavenData, logger);
+      return extension.extendContainerBuildPlan(buildPlan, properties, config, mavenData, logger);
     }
   }
 
@@ -100,6 +102,11 @@ public class MavenProjectPropertiesExtensionTest {
     @Override
     public String getExtensionClass() {
       return extensionClass;
+    }
+
+    @Override
+    public Optional<Object> getExtraConfiguration() {
+      return Optional.empty();
     }
   }
 
@@ -139,7 +146,8 @@ public class MavenProjectPropertiesExtensionTest {
 
   @Test
   public void testRunPluginExtensions_noExtensionsConfigured() throws JibPluginExtensionException {
-    JibMavenPluginExtension extension = (buildPlan, properties, mavenData, logger) -> buildPlan;
+    JibMavenPluginExtension extension =
+        (buildPlan, properties, config, mavenData, logger) -> buildPlan;
 
     JibContainerBuilder extendedBuilder =
         mavenProjectProperties.runPluginExtensions(
@@ -168,7 +176,7 @@ public class MavenProjectPropertiesExtensionTest {
   public void testRunPluginExtensions() throws JibPluginExtensionException {
     FooExtension extension =
         new FooExtension(
-            (buildPlan, properties, mavenData, logger) -> {
+            (buildPlan, properties, config, mavenData, logger) -> {
               logger.log(LogLevel.ERROR, "awesome error from my extension");
               return buildPlan.toBuilder().setUser("user from extension").build();
             });
@@ -191,7 +199,7 @@ public class MavenProjectPropertiesExtensionTest {
     FileNotFoundException fakeException = new FileNotFoundException();
     FooExtension extension =
         new FooExtension(
-            (buildPlan, properties, mavenData, logger) -> {
+            (buildPlan, properties, config, mavenData, logger) -> {
               throw new JibPluginExtensionException(
                   FooExtension.class, "exception from extension", fakeException);
             });
@@ -210,7 +218,7 @@ public class MavenProjectPropertiesExtensionTest {
   public void testRunPluginExtensions_invalidBaseImageFromExtension() {
     FooExtension extension =
         new FooExtension(
-            (buildPlan, properties, mavenData, logger) ->
+            (buildPlan, properties, config, mavenData, logger) ->
                 buildPlan.toBuilder().setBaseImage(" in*val+id").build());
 
     try {
@@ -228,11 +236,11 @@ public class MavenProjectPropertiesExtensionTest {
   public void testRunPluginExtensions_extensionOrder() throws JibPluginExtensionException {
     FooExtension fooExtension =
         new FooExtension(
-            (buildPlan, properties, mavenData, logger) ->
+            (buildPlan, properties, config, mavenData, logger) ->
                 buildPlan.toBuilder().setBaseImage("foo").build());
     BarExtension barExtension =
         new BarExtension(
-            (buildPlan, properties, mavenData, logger) ->
+            (buildPlan, properties, config, mavenData, logger) ->
                 buildPlan.toBuilder().setBaseImage("bar").build());
     List<JibMavenPluginExtension> extensions = Arrays.asList(fooExtension, barExtension);
 
@@ -255,7 +263,7 @@ public class MavenProjectPropertiesExtensionTest {
   public void testRunPluginExtensions_customProperties() throws JibPluginExtensionException {
     FooExtension extension =
         new FooExtension(
-            (buildPlan, properties, mavenData, logger) ->
+            (buildPlan, properties, config, mavenData, logger) ->
                 buildPlan.toBuilder().setUser(properties.get("user")).build());
 
     JibContainerBuilder extendedBuilder =
