@@ -29,6 +29,7 @@ public class MavenExtensionUtil {
    * beginning of an extension implementation, which throws an exception with detailed information
    * and instructions to help the extension user fix the configuration error in POM.
    *
+   * @param <T> expected type ({@code configClass}) for {@code config}
    * @param extensionClass plugin extension running the method
    * @param configClass expected extension-specific configuration class
    * @param config configuration object parsed from {@code <configuration>} whose expected type is
