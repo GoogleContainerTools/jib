@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.builder.steps;
 
+import com.google.cloud.tools.jib.api.DescriptorDigest;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.builder.ProgressEventDispatcher;
 import com.google.cloud.tools.jib.builder.steps.LocalBaseImageSteps.LocalImage;
@@ -25,7 +26,11 @@ import com.google.cloud.tools.jib.configuration.ImageConfiguration;
 import com.google.cloud.tools.jib.docker.DockerClient;
 import com.google.cloud.tools.jib.filesystem.TempDirectoryProvider;
 import com.google.cloud.tools.jib.global.JibSystemProperties;
+import com.google.cloud.tools.jib.hash.Digests;
 import com.google.cloud.tools.jib.image.Image;
+import com.google.cloud.tools.jib.image.ManifestDescriptor;
+import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
+import com.google.cloud.tools.jib.image.json.ImageToJsonTranslator;
 import com.google.cloud.tools.jib.registry.RegistryClient;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Verify;
@@ -387,6 +392,27 @@ public class StepsRunner {
               realizeFutures(results.baseImageLayerPushResults.get());
               realizeFutures(results.applicationLayerPushResults.get());
 
+              BuildableManifestTemplate manifestTemplate =
+                  new ImageToJsonTranslator(results.builtImage.get())
+                      .getManifestTemplate(
+                          buildContext.getTargetFormat(),
+                          results.containerConfigurationPushResult.get());
+
+              DescriptorDigest manifestDigest = Digests.computeJsonDigest(manifestTemplate);
+
+              Optional<ManifestDescriptor<BuildableManifestTemplate>> manifestDescriptor =
+                  new CheckImageStep(
+                          buildContext,
+                          results.targetRegistryClient.get(),
+                          manifestDigest)
+                      .call();
+
+              if (manifestDescriptor.isPresent()) {
+                return new BuildResult(
+                    manifestDescriptor.get().getImageDigest(),
+                    results.containerConfigurationPushResult.get().getDigest());
+              }
+
               List<Future<BuildResult>> manifestPushResults =
                   scheduleCallables(
                       PushImageStep.makeList(
@@ -394,7 +420,8 @@ public class StepsRunner {
                           childProgressDispatcherFactory,
                           results.targetRegistryClient.get(),
                           results.containerConfigurationPushResult.get(),
-                          results.builtImage.get()));
+                          manifestTemplate,
+                          manifestDigest));
               realizeFutures(manifestPushResults);
               // Manifest pushers return the same BuildResult.
               return manifestPushResults.get(0).get();

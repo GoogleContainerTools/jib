@@ -34,6 +34,7 @@ import com.google.cloud.tools.jib.global.JibSystemProperties;
 import com.google.cloud.tools.jib.http.Authorization;
 import com.google.cloud.tools.jib.http.FailoverHttpClient;
 import com.google.cloud.tools.jib.http.Response;
+import com.google.cloud.tools.jib.image.ManifestDescriptor;
 import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
 import com.google.cloud.tools.jib.image.json.ManifestTemplate;
 import com.google.cloud.tools.jib.json.JsonTemplate;
@@ -365,6 +366,32 @@ public class RegistryClient {
       return Verify.verifyNotNull(initialBearerAuthenticator.get()).authenticatePull(credential);
     }
     return Verify.verifyNotNull(initialBearerAuthenticator.get()).authenticatePush(credential);
+  }
+
+  /**
+   * Check if an image is on the registry.
+   *
+   * @param imageDigest the image digest to check for
+   * @return the image's {@link ManifestAndDigest} if the image exists on the registry, or {@link
+   *     Optional#empty()} if it doesn't
+   * @throws IOException if communicating with the endpoint fails
+   * @throws RegistryException if communicating with the endpoint fails
+   */
+  public <T extends BuildableManifestTemplate> Optional<ManifestDescriptor<T>> checkImage(
+          DescriptorDigest imageDigest,
+          /*DescriptorDigest imageId,*/
+          Class<T> manifestTemplateClass) throws IOException, RegistryException {
+    ManifestChecker<T> manifestChecker =
+            new ManifestChecker<>(
+                    registryEndpointRequestProperties, imageDigest, /*imageId,*/ manifestTemplateClass);
+
+    return callRegistryEndpoint(manifestChecker);
+  }
+
+  public Optional<ManifestDescriptor<BuildableManifestTemplate>> checkImage(
+          DescriptorDigest imageDigest/*,
+          DescriptorDigest imageId*/) throws IOException, RegistryException {
+    return checkImage(imageDigest, /*imageId,*/ BuildableManifestTemplate.class);
   }
 
   /**

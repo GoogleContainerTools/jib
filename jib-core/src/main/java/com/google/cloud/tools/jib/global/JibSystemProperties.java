@@ -36,6 +36,8 @@ public class JibSystemProperties {
 
   private static final String DISABLE_USER_AGENT = "_JIB_DISABLE_USER_AGENT";
 
+  private static final String SKIP_EXISTING_IMAGES = "jib.skipExistingImages";
+
   /**
    * Gets the HTTP connection/read timeouts for registry interactions in milliseconds. This is
    * defined by the {@code jib.httpTimeout} system property. The default value is 20000 if the
@@ -112,6 +114,16 @@ public class JibSystemProperties {
   public static void checkProxyPortProperty() throws NumberFormatException {
     checkNumericSystemProperty("http.proxyPort", Range.closed(0, 65535));
     checkNumericSystemProperty("https.proxyPort", Range.closed(0, 65535));
+  }
+
+  /**
+   * Gets whether or not to skip pushing tags to existing images. This is defined by the
+   * {@code jib.skipExistingImages} system property.
+   *
+   * @return {@code true} if Jib should skip pushing tags to existing images, {@code false} if not
+   */
+  public static boolean skipExistingImages() {
+    return Boolean.getBoolean(SKIP_EXISTING_IMAGES);
   }
 
   private static void checkNumericSystemProperty(String property, Range<Integer> validRange) {

@@ -218,7 +218,7 @@ public class ContainerizerIntegrationTest {
   }
 
   @Test
-  public void tesBuildToDockerRegistry_dockerHubBaseImage()
+  public void testBuildToDockerRegistry_dockerHubBaseImage()
       throws InvalidImageReferenceException, IOException, InterruptedException, ExecutionException,
           RegistryException, CacheDirectoryCreationException {
     buildRegistryImage(
