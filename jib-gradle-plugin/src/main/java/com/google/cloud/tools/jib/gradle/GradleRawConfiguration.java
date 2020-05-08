@@ -160,8 +160,8 @@ public class GradleRawConfiguration implements RawConfiguration {
   @Override
   public Map<Path, AbsoluteUnixPath> getExtraDirectories() {
     Map<Path, AbsoluteUnixPath> directoryMap = new LinkedHashMap<>();
-    for (Path path : jibExtension.getExtraDirectories().getPaths()) {
-      directoryMap.put(path, AbsoluteUnixPath.get("/"));
+    for (ExtraDirectoryParameters path : jibExtension.getExtraDirectories().getPaths()) {
+      directoryMap.put(path.getFrom(), AbsoluteUnixPath.get(path.getInto()));
     }
     return directoryMap;
   }
