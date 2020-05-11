@@ -21,6 +21,7 @@ import org.gradle.api.Action;
 import org.gradle.api.Project;
 import org.gradle.api.provider.ListProperty;
 
+/** Allows to add {@link ExtraDirectoryParameters} objects to the list property of the same type. */
 public class ExtraDirectoryParametersSpec {
 
   private final Project project;
@@ -33,6 +34,11 @@ public class ExtraDirectoryParametersSpec {
     this.paths = paths;
   }
 
+  /**
+   * Adds a new extra directory configuration to the list.
+   *
+   * @param action closure representing an extra directory configuration
+   */
   public void path(Action<? super ExtraDirectoryParameters> action) {
     ExtraDirectoryParameters extraDirectory =
         project.getObjects().newInstance(ExtraDirectoryParameters.class, project);

@@ -23,6 +23,7 @@ import org.gradle.api.Project;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.Internal;
 
+/** Configuration of an extra directory. */
 public class ExtraDirectoryParameters {
 
   private Project project;
@@ -55,7 +56,7 @@ public class ExtraDirectoryParameters {
   }
 
   public void setFrom(Object from) {
-    this.from = project.file(from).toPath();
+    this.from = project.file(from).getAbsoluteFile().toPath();
   }
 
   @Input
