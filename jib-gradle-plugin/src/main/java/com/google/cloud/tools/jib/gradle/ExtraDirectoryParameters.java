@@ -56,7 +56,7 @@ public class ExtraDirectoryParameters {
   }
 
   public void setFrom(Object from) {
-    this.from = project.file(from).getAbsoluteFile().toPath();
+    this.from = project.file(from).toPath();
   }
 
   @Input
