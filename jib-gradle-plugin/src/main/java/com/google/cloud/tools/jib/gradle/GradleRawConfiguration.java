@@ -22,6 +22,7 @@ import com.google.cloud.tools.jib.api.buildplan.ImageFormat;
 import com.google.cloud.tools.jib.plugins.common.AuthProperty;
 import com.google.cloud.tools.jib.plugins.common.RawConfiguration;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -161,6 +162,10 @@ public class GradleRawConfiguration implements RawConfiguration {
   public Map<Path, AbsoluteUnixPath> getExtraDirectories() {
     Map<Path, AbsoluteUnixPath> directoryMap = new LinkedHashMap<>();
     for (ExtraDirectoryParameters path : jibExtension.getExtraDirectories().getPaths()) {
+      if (path.getFrom().equals(Paths.get(""))) {
+        throw new IllegalArgumentException(
+            "Incomplete extraDirectories.paths configuration; source directory must be set");
+      }
       directoryMap.put(path.getFrom(), AbsoluteUnixPath.get(path.getInto()));
     }
     return directoryMap;
