@@ -43,6 +43,7 @@ import com.google.cloud.tools.jib.plugins.common.logging.ConsoleLoggerBuilder;
 import com.google.cloud.tools.jib.plugins.common.logging.ProgressDisplayGenerator;
 import com.google.cloud.tools.jib.plugins.common.logging.SingleThreadedExecutor;
 import com.google.cloud.tools.jib.plugins.extension.JibPluginExtensionException;
+import com.google.cloud.tools.jib.plugins.extension.NullExtension;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Verify;
@@ -59,6 +60,7 @@ import java.util.Optional;
 import java.util.ServiceLoader;
 import java.util.Set;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import org.apache.maven.artifact.Artifact;
@@ -106,8 +108,10 @@ public class MavenProjectProperties implements ProjectProperties {
       Log log,
       TempDirectoryProvider tempDirectoryProvider) {
     Preconditions.checkNotNull(jibPluginDescriptor);
+    Supplier<List<JibMavenPluginExtension>> extensionLoader =
+        () -> Lists.newArrayList(ServiceLoader.load(JibMavenPluginExtension.class).iterator());
     return new MavenProjectProperties(
-        jibPluginDescriptor, project, session, log, tempDirectoryProvider);
+        jibPluginDescriptor, project, session, log, tempDirectoryProvider, extensionLoader);
   }
 
   /**
@@ -201,6 +205,7 @@ public class MavenProjectProperties implements ProjectProperties {
   private final SingleThreadedExecutor singleThreadedExecutor = new SingleThreadedExecutor();
   private final ConsoleLogger consoleLogger;
   private final TempDirectoryProvider tempDirectoryProvider;
+  private final Supplier<List<JibMavenPluginExtension>> extensionLoader;
 
   @VisibleForTesting
   MavenProjectProperties(
@@ -208,11 +213,13 @@ public class MavenProjectProperties implements ProjectProperties {
       MavenProject project,
       MavenSession session,
       Log log,
-      TempDirectoryProvider tempDirectoryProvider) {
+      TempDirectoryProvider tempDirectoryProvider,
+      Supplier<List<JibMavenPluginExtension>> extensionLoader) {
     this.jibPluginDescriptor = jibPluginDescriptor;
     this.project = project;
     this.session = session;
     this.tempDirectoryProvider = tempDirectoryProvider;
+    this.extensionLoader = extensionLoader;
     ConsoleLoggerBuilder consoleLoggerBuilder =
         (isProgressFooterEnabled(session)
                 ? ConsoleLoggerBuilder.rich(singleThreadedExecutor, true)
@@ -536,22 +543,12 @@ public class MavenProjectProperties implements ProjectProperties {
       List<? extends ExtensionConfiguration> extensionConfigs,
       JibContainerBuilder jibContainerBuilder)
       throws JibPluginExtensionException {
-    List<JibMavenPluginExtension> services =
-        Lists.newArrayList(ServiceLoader.load(JibMavenPluginExtension.class).iterator());
-    return runPluginExtensions(services, extensionConfigs, jibContainerBuilder);
-  }
-
-  @VisibleForTesting
-  JibContainerBuilder runPluginExtensions(
-      List<JibMavenPluginExtension> services,
-      List<? extends ExtensionConfiguration> extensionConfigs,
-      JibContainerBuilder jibContainerBuilder)
-      throws JibPluginExtensionException {
     if (extensionConfigs.isEmpty()) {
       log(LogEvent.debug("No Jib plugin extensions configured to load"));
       return jibContainerBuilder;
     }
 
+    List<JibMavenPluginExtension> loadedExtensions = extensionLoader.get();
     JibMavenPluginExtension extension = null;
     ContainerBuildPlan buildPlan = jibContainerBuilder.toContainerBuildPlan();
     MavenExtensionData mavenData = new MavenExtensionData(project, session);
@@ -559,10 +556,10 @@ public class MavenProjectProperties implements ProjectProperties {
     try {
       for (ExtensionConfiguration config : extensionConfigs) {
         String extensionClass = config.getExtensionClass();
-        extension = findConfiguredExtension(services, extensionClass);
+        extension = findConfiguredExtension(loadedExtensions, extensionClass);
         if (extension == null) {
           throw new JibPluginExtensionException(
-              JibMavenPluginExtension.class,
+              NullExtension.class,
               "extension configured but not discovered on Jib runtime classpath: "
                   + extensionClass);
         }
