@@ -93,10 +93,11 @@ public class ExtraDirectoriesParameters {
   public void setPaths(Object paths) {
     List<Path> froms =
         project.files(paths).getFiles().stream().map(File::toPath).collect(Collectors.toList());
-    this.paths = project.getObjects().listProperty(ExtraDirectoryParameters.class).empty();
-    for (Path path : froms) {
-      this.paths.add(new ExtraDirectoryParameters(project, path, "/"));
-    }
+    this.paths.set(
+        froms
+            .stream()
+            .map(from -> new ExtraDirectoryParameters(project, from, "/"))
+            .collect(Collectors.toList()));
   }
 
   /**
