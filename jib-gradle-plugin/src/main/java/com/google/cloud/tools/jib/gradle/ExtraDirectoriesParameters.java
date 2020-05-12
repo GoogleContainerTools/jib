@@ -19,7 +19,6 @@ package com.google.cloud.tools.jib.gradle;
 import com.google.cloud.tools.jib.plugins.common.ConfigurationPropertyValidator;
 import com.google.cloud.tools.jib.plugins.common.PropertyNames;
 import java.io.File;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.List;
@@ -91,12 +90,12 @@ public class ExtraDirectoriesParameters {
    * @param paths paths to set.
    */
   public void setPaths(Object paths) {
-    List<Path> froms =
-        project.files(paths).getFiles().stream().map(File::toPath).collect(Collectors.toList());
     this.paths.set(
-        froms
+        project
+            .files(paths)
+            .getFiles()
             .stream()
-            .map(from -> new ExtraDirectoryParameters(project, from, "/"))
+            .map(file -> new ExtraDirectoryParameters(project, file.toPath(), "/"))
             .collect(Collectors.toList()));
   }
 

@@ -27,14 +27,12 @@ import org.gradle.api.tasks.Internal;
 public class ExtraDirectoryParameters {
 
   private Project project;
-  private Path from;
-  private String into;
+  private Path from = Paths.get("");
+  private String into = "/";
 
   @Inject
   public ExtraDirectoryParameters(Project project) {
     this.project = project;
-    from = Paths.get("");
-    into = "/";
   }
 
   public ExtraDirectoryParameters(Project project, Path from, String into) {
