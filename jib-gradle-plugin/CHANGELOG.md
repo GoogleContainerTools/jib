@@ -5,6 +5,8 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- `jib.extraDirectories.paths` closure to allow configuring the source and target of an extra directory. ([#1581](https://github.com/GoogleContainerTools/jib/issues/1581))
+
 ### Changed
 
 ### Fixed
