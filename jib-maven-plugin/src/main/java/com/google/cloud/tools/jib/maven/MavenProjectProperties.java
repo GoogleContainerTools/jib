@@ -586,8 +586,6 @@ public class MavenProjectProperties implements ProjectProperties {
     Optional<T> extraConfig = Optional.empty();
     if (extraConfigType.isPresent() && config.getExtraConfiguration().isPresent()) {
       try {
-        // TODO(chanseok): verify this works when config.getExtraConfiguration() is
-        // Optional.empty().
         extraConfig = config.getExtraConfiguration().map(object -> (T) object);
       } catch (ClassCastException ex) {
         throw ex; // TODO(chanseok): provide helpful and actionable message
