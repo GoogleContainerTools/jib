@@ -21,6 +21,7 @@ import com.google.cloud.tools.jib.plugins.extension.ExtensionLogger;
 import com.google.cloud.tools.jib.plugins.extension.JibPluginExtension;
 import com.google.cloud.tools.jib.plugins.extension.JibPluginExtensionException;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * Jib Maven plugin extension API.
@@ -29,15 +30,28 @@ import java.util.Map;
  * the plugin is configured to load the extension class, the Jib plugin extension framework calls
  * the interface method of the class.
  */
-public interface JibMavenPluginExtension extends JibPluginExtension {
+public interface JibMavenPluginExtension<T> extends JibPluginExtension {
+
+  /**
+   * The type of an custom configuration defined by this extension. The configuration object is
+   * mapped from {@code <pluginExtensions><pluginExtension><configuration>}. If the extension does
+   * not wish to define a custom configuration, this method may return {@code Optional#empty()}.
+   *
+   * @return type of an extension-specific custom configuration
+   */
+  default Optional<Class<T>> getExtraConfigType() {
+    return Optional.empty();
+  }
 
   /**
    * Extends the build plan prepared by the Jib Maven plugin.
    *
    * @param buildPlan original build plan prepared by the Jib Maven plugin
    * @param properties custom properties configured for the plugin extension
-   * @param configObject custom configuration object parsed from {@code
-   *     <pluginExtensions><pluginExtension><configuration>}. Can be null.
+   * @param extraConfig extension-specific custom configuration mapped from {@code
+   *     <pluginExtensions><pluginExtension><configuration>} of type <T>. {@link Optional#empty()}
+   *     when {@link #getExtraConfigType()} returns {@link Optional#empty()} or {@code
+   *     <configuration>} is not specified by the extension user.
    * @param mavenData {@link MavenData} providing Maven-specific data and properties
    * @param logger logger for writing log messages
    * @return updated build plan
@@ -46,7 +60,7 @@ public interface JibMavenPluginExtension extends JibPluginExtension {
   ContainerBuildPlan extendContainerBuildPlan(
       ContainerBuildPlan buildPlan,
       Map<String, String> properties,
-      Object configObject,
+      Optional<T> extraConfig,
       MavenData mavenData,
       ExtensionLogger logger)
       throws JibPluginExtensionException;

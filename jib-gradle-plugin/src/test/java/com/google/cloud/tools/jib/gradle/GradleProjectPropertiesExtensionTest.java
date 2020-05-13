@@ -51,11 +51,11 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class GradleProjectPropertiesExtensionTest {
 
-  private static class FooExtension implements JibGradlePluginExtension {
+  private static class FooExtension implements JibGradlePluginExtension<Void> {
 
-    private final JibGradlePluginExtension extension;
+    private final JibGradlePluginExtension<Void> extension;
 
-    private FooExtension(JibGradlePluginExtension extension) {
+    private FooExtension(JibGradlePluginExtension<Void> extension) {
       this.extension = extension;
     }
 
@@ -63,17 +63,18 @@ public class GradleProjectPropertiesExtensionTest {
     public ContainerBuildPlan extendContainerBuildPlan(
         ContainerBuildPlan buildPlan,
         Map<String, String> properties,
-        Object config,
+        Optional<Void> extraConfig,
         GradleData gradleData,
         ExtensionLogger logger)
         throws JibPluginExtensionException {
-      return extension.extendContainerBuildPlan(buildPlan, properties, config, gradleData, logger);
+      return extension.extendContainerBuildPlan(
+          buildPlan, properties, extraConfig, gradleData, logger);
     }
   }
 
   private static class BarExtension extends FooExtension {
 
-    private BarExtension(JibGradlePluginExtension extension) {
+    private BarExtension(JibGradlePluginExtension<Void> extension) {
       super(extension);
     }
   }
@@ -142,8 +143,8 @@ public class GradleProjectPropertiesExtensionTest {
 
   @Test
   public void testRunPluginExtensions_noExtensionsConfigured() throws JibPluginExtensionException {
-    JibGradlePluginExtension extension =
-        (buildPlan, properties, config, gradleData, logger) -> buildPlan;
+    JibGradlePluginExtension<?> extension =
+        (buildPlan, properties, extraConfig, gradleData, logger) -> buildPlan;
 
     JibContainerBuilder extendedBuilder =
         gradleProjectProperties.runPluginExtensions(
@@ -172,7 +173,7 @@ public class GradleProjectPropertiesExtensionTest {
   public void testRunPluginExtensions() throws JibPluginExtensionException {
     FooExtension extension =
         new FooExtension(
-            (buildPlan, properties, config, gradleData, logger) -> {
+            (buildPlan, properties, extraConfig, gradleData, logger) -> {
               logger.log(LogLevel.ERROR, "awesome error from my extension");
               return buildPlan.toBuilder().setUser("user from extension").build();
             });
@@ -195,7 +196,7 @@ public class GradleProjectPropertiesExtensionTest {
     FileNotFoundException fakeException = new FileNotFoundException();
     FooExtension extension =
         new FooExtension(
-            (buildPlan, properties, config, gradleData, logger) -> {
+            (buildPlan, properties, extraConfig, gradleData, logger) -> {
               throw new JibPluginExtensionException(
                   JibGradlePluginExtension.class, "exception from extension", fakeException);
             });
@@ -214,7 +215,7 @@ public class GradleProjectPropertiesExtensionTest {
   public void testRunPluginExtensions_invalidBaseImageFromExtension() {
     FooExtension extension =
         new FooExtension(
-            (buildPlan, properties, config, gradleData, logger) ->
+            (buildPlan, properties, extraConfig, gradleData, logger) ->
                 buildPlan.toBuilder().setBaseImage(" in*val+id").build());
 
     try {
@@ -232,13 +233,13 @@ public class GradleProjectPropertiesExtensionTest {
   public void testRunPluginExtensions_extensionOrder() throws JibPluginExtensionException {
     FooExtension fooExtension =
         new FooExtension(
-            (buildPlan, properties, config, gradleData, logger) ->
+            (buildPlan, properties, extraConfig, gradleData, logger) ->
                 buildPlan.toBuilder().setBaseImage("foo").build());
     BarExtension barExtension =
         new BarExtension(
-            (buildPlan, properties, config, gradleData, logger) ->
+            (buildPlan, properties, extraConfig, gradleData, logger) ->
                 buildPlan.toBuilder().setBaseImage("bar").build());
-    List<JibGradlePluginExtension> extensions = Arrays.asList(fooExtension, barExtension);
+    List<JibGradlePluginExtension<?>> extensions = Arrays.asList(fooExtension, barExtension);
 
     JibContainerBuilder extendedBuilder1 =
         gradleProjectProperties.runPluginExtensions(
@@ -259,7 +260,7 @@ public class GradleProjectPropertiesExtensionTest {
   public void testRunPluginExtensions_customProperties() throws JibPluginExtensionException {
     FooExtension extension =
         new FooExtension(
-            (buildPlan, properties, config, gradleData, logger) ->
+            (buildPlan, properties, extraConfig, gradleData, logger) ->
                 buildPlan.toBuilder().setUser(properties.get("user")).build());
 
     JibContainerBuilder extendedBuilder =

@@ -536,14 +536,14 @@ public class MavenProjectProperties implements ProjectProperties {
       List<? extends ExtensionConfiguration> extensionConfigs,
       JibContainerBuilder jibContainerBuilder)
       throws JibPluginExtensionException {
-    List<JibMavenPluginExtension> services =
+    List<JibMavenPluginExtension<?>> services =
         Lists.newArrayList(ServiceLoader.load(JibMavenPluginExtension.class).iterator());
     return runPluginExtensions(services, extensionConfigs, jibContainerBuilder);
   }
 
   @VisibleForTesting
   JibContainerBuilder runPluginExtensions(
-      List<JibMavenPluginExtension> services,
+      List<JibMavenPluginExtension<?>> loadedExtensions,
       List<? extends ExtensionConfiguration> extensionConfigs,
       JibContainerBuilder jibContainerBuilder)
       throws JibPluginExtensionException {
@@ -552,29 +552,15 @@ public class MavenProjectProperties implements ProjectProperties {
       return jibContainerBuilder;
     }
 
-    JibMavenPluginExtension extension = null;
+    JibMavenPluginExtension<?> extension = null;
     ContainerBuildPlan buildPlan = jibContainerBuilder.toContainerBuildPlan();
-    MavenExtensionData mavenData = new MavenExtensionData(project, session);
-    MavenExtensionLogger extensionLogger = new MavenExtensionLogger(this::log);
     try {
       for (ExtensionConfiguration config : extensionConfigs) {
-        String extensionClass = config.getExtensionClass();
-        extension = findConfiguredExtension(services, extensionClass);
-        if (extension == null) {
-          throw new JibPluginExtensionException(
-              JibMavenPluginExtension.class,
-              "extension configured but not discovered on Jib runtime classpath: "
-                  + extensionClass);
-        }
+        extension = findConfiguredExtension(loadedExtensions, config);
 
-        log(LogEvent.lifecycle("Running extension: " + extensionClass));
+        log(LogEvent.lifecycle("Running extension: " + config.getExtensionClass()));
         buildPlan =
-            extension.extendContainerBuildPlan(
-                buildPlan,
-                config.getProperties(),
-                config.getExtraConfiguration().orElse(null),
-                mavenData,
-                extensionLogger);
+            runPluginExtension(extension.getExtraConfigType(), extension, config, buildPlan);
         ImageReference.parse(buildPlan.getBaseImage()); // to validate image reference
       }
       return jibContainerBuilder.applyContainerBuildPlan(buildPlan);
@@ -587,11 +573,47 @@ public class MavenProjectProperties implements ProjectProperties {
     }
   }
 
+  @SuppressWarnings({"unchecked"})
+  private <T> ContainerBuildPlan runPluginExtension(
+      Optional<Class<T>> extraConfigType,
+      JibMavenPluginExtension<?> extension,
+      ExtensionConfiguration config,
+      ContainerBuildPlan buildPlan)
+      throws JibPluginExtensionException {
+    Optional<T> extraConfig = Optional.empty();
+    if (extraConfigType.isPresent() && config.getExtraConfiguration().isPresent()) {
+      try {
+        // TODO(chanseok): verify this works when config.getExtraConfiguration() is
+        // Optional.empty().
+        extraConfig = config.getExtraConfiguration().map(object -> (T) object);
+      } catch (ClassCastException ex) {
+        throw ex; // TODO(chanseok): provide helpful and actionable message
+      }
+    }
+
+    return ((JibMavenPluginExtension<T>) extension)
+        .extendContainerBuildPlan(
+            buildPlan,
+            config.getProperties(),
+            extraConfig,
+            new MavenExtensionData(project, session),
+            new MavenExtensionLogger(this::log));
+  }
+
   @Nullable
-  private JibMavenPluginExtension findConfiguredExtension(
-      List<JibMavenPluginExtension> extensions, String extensionClass) {
-    Predicate<JibMavenPluginExtension> matchesClassName =
-        extension -> extension.getClass().getName().equals(extensionClass);
-    return extensions.stream().filter(matchesClassName).findFirst().orElse(null);
+  private JibMavenPluginExtension<?> findConfiguredExtension(
+      List<JibMavenPluginExtension<?>> extensions, ExtensionConfiguration config)
+      throws JibPluginExtensionException {
+    Predicate<JibMavenPluginExtension<?>> matchesClassName =
+        extension -> extension.getClass().getName().equals(config.getExtensionClass());
+    Optional<JibMavenPluginExtension<?>> found =
+        extensions.stream().filter(matchesClassName).findFirst();
+    if (!found.isPresent()) {
+      throw new JibPluginExtensionException(
+          JibMavenPluginExtension.class,
+          "extension configured but not discovered on Jib runtime classpath: "
+              + config.getExtensionClass());
+    }
+    return found.get();
   }
 }
