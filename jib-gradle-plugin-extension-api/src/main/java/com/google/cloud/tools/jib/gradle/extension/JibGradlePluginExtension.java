@@ -41,7 +41,7 @@ public interface JibGradlePluginExtension<T> extends JibPluginExtension {
    */
   default Optional<Class<T>> getExtraConfigType() {
     return Optional.empty();
-  };
+  }
 
   /**
    * Extends the build plan prepared by the Jib Gradle plugin.

@@ -34,7 +34,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.function.Supplier;
 import org.apache.maven.execution.MavenExecutionRequest;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.descriptor.PluginDescriptor;
@@ -127,7 +126,6 @@ public class MavenProjectPropertiesExtensionTest {
   @Mock private TempDirectoryProvider mockTempDirectoryProvider;
 
   private List<JibMavenPluginExtension<?>> loadedExtensions = Collections.emptyList();
-  private final Supplier<List<JibMavenPluginExtension<?>>> extensionLoader = () -> loadedExtensions;
   private final JibContainerBuilder containerBuilder = Jib.fromScratch();
 
   private MavenProjectProperties mavenProjectProperties;
@@ -146,7 +144,7 @@ public class MavenProjectPropertiesExtensionTest {
             mockMavenSession,
             mockLog,
             mockTempDirectoryProvider,
-            extensionLoader);
+            () -> loadedExtensions);
   }
 
   @Test

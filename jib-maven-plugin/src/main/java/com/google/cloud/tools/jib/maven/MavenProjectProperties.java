@@ -16,7 +16,6 @@
 
 package com.google.cloud.tools.jib.maven;
 
-import com.google.api.client.util.Lists;
 import com.google.cloud.tools.jib.api.Containerizer;
 import com.google.cloud.tools.jib.api.ImageReference;
 import com.google.cloud.tools.jib.api.InvalidImageReferenceException;
@@ -109,7 +108,14 @@ public class MavenProjectProperties implements ProjectProperties {
       TempDirectoryProvider tempDirectoryProvider) {
     Preconditions.checkNotNull(jibPluginDescriptor);
     Supplier<List<JibMavenPluginExtension<?>>> extensionLoader =
-        () -> Lists.newArrayList(ServiceLoader.load(JibMavenPluginExtension.class).iterator());
+        () -> {
+          List<JibMavenPluginExtension<?>> extensions = new ArrayList<>();
+          for (JibMavenPluginExtension<?> extension :
+              ServiceLoader.load(JibMavenPluginExtension.class)) {
+            extensions.add(extension);
+          }
+          return extensions;
+        };
     return new MavenProjectProperties(
         jibPluginDescriptor, project, session, log, tempDirectoryProvider, extensionLoader);
   }
@@ -597,7 +603,6 @@ public class MavenProjectProperties implements ProjectProperties {
             new MavenExtensionLogger(this::log));
   }
 
-  @Nullable
   private JibMavenPluginExtension<?> findConfiguredExtension(
       List<JibMavenPluginExtension<?>> extensions, ExtensionConfiguration config)
       throws JibPluginExtensionException {

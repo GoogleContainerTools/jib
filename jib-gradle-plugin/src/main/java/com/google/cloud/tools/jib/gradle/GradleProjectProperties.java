@@ -16,7 +16,6 @@
 
 package com.google.cloud.tools.jib.gradle;
 
-import com.google.api.client.util.Lists;
 import com.google.cloud.tools.jib.api.Containerizer;
 import com.google.cloud.tools.jib.api.ImageReference;
 import com.google.cloud.tools.jib.api.InvalidImageReferenceException;
@@ -108,7 +107,14 @@ public class GradleProjectProperties implements ProjectProperties {
   public static GradleProjectProperties getForProject(
       Project project, Logger logger, TempDirectoryProvider tempDirectoryProvider) {
     Supplier<List<JibGradlePluginExtension<?>>> extensionLoader =
-        () -> Lists.newArrayList(ServiceLoader.load(JibGradlePluginExtension.class).iterator());
+        () -> {
+          List<JibGradlePluginExtension<?>> extensions = new ArrayList<>();
+          for (JibGradlePluginExtension<?> extension :
+              ServiceLoader.load(JibGradlePluginExtension.class)) {
+            extensions.add(extension);
+          }
+          return extensions;
+        };
     return new GradleProjectProperties(project, logger, tempDirectoryProvider, extensionLoader);
   }
 
@@ -467,7 +473,6 @@ public class GradleProjectProperties implements ProjectProperties {
             new GradleExtensionLogger(this::log));
   }
 
-  @Nullable
   private JibGradlePluginExtension<?> findConfiguredExtension(
       List<JibGradlePluginExtension<?>> extensions, ExtensionConfiguration config)
       throws JibPluginExtensionException {

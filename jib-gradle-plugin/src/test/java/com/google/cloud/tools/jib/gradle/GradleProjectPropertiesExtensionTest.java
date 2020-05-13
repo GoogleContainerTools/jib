@@ -34,7 +34,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.function.Supplier;
 import org.gradle.api.Project;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.configuration.ConsoleOutput;
@@ -125,8 +124,6 @@ public class GradleProjectPropertiesExtensionTest {
   private Project mockProject;
 
   private List<JibGradlePluginExtension<?>> loadedExtensions = Collections.emptyList();
-  private final Supplier<List<JibGradlePluginExtension<?>>> extensionLoader =
-      () -> loadedExtensions;
   private final JibContainerBuilder containerBuilder = Jib.fromScratch();
 
   private GradleProjectProperties gradleProjectProperties;
@@ -143,7 +140,7 @@ public class GradleProjectPropertiesExtensionTest {
 
     gradleProjectProperties =
         new GradleProjectProperties(
-            mockProject, mockLogger, mockTempDirectoryProvider, extensionLoader);
+            mockProject, mockLogger, mockTempDirectoryProvider, () -> loadedExtensions);
   }
 
   @Test
