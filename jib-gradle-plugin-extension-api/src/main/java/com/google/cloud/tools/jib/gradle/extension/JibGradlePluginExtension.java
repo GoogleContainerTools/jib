@@ -49,9 +49,9 @@ public interface JibGradlePluginExtension<T> extends JibPluginExtension {
    * @param buildPlan original build plan prepared by the Jib Gradle plugin
    * @param properties custom properties configured for the plugin extension
    * @param extraConfig extension-specific custom configuration mapped from {@code
-   *     jib.pluginExtensions.pluginExtension.configuration} of type <T>. {@link Optional#empty()}
-   *     when {@link #getExtraConfigType()} returns {@link Optional#empty()} or {@code
-   *     pluginExtension.configuration} is not specified by the extension user.
+   *     jib.pluginExtensions.pluginExtension.configuration} of type type &ltT&gt. {@link
+   *     Optional#empty()} when {@link #getExtraConfigType()} returns {@link Optional#empty()} or
+   *     {@code pluginExtension.configuration} is not specified by the extension user.
    * @param gradleData {@link GradleData} providing Gradle-specific data and properties
    * @param logger logger for writing log messages
    * @return updated build plan
