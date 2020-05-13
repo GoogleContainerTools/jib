@@ -49,7 +49,7 @@ public interface JibMavenPluginExtension<T> extends JibPluginExtension {
    * @param buildPlan original build plan prepared by the Jib Maven plugin
    * @param properties custom properties configured for the plugin extension
    * @param extraConfig extension-specific custom configuration mapped from {@code
-   *     <pluginExtensions><pluginExtension><configuration>} of type &ltT&gt. {@link
+   *     <pluginExtensions><pluginExtension><configuration>} of type &lt;T&gt;. {@link
    *     Optional#empty()} when {@link #getExtraConfigType()} returns {@link Optional#empty()} or
    *     {@code <configuration>} is not specified by the extension user.
    * @param mavenData {@link MavenData} providing Maven-specific data and properties
