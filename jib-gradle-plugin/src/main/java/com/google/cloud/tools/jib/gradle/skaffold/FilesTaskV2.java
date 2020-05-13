@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.gradle.skaffold;
 
+import com.google.cloud.tools.jib.gradle.ExtraDirectoryParameters;
 import com.google.cloud.tools.jib.gradle.JibExtension;
 import com.google.cloud.tools.jib.plugins.common.SkaffoldFilesOutput;
 import com.google.common.base.Preconditions;
@@ -28,6 +29,7 @@ import java.util.Deque;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.Project;
@@ -76,7 +78,13 @@ public class FilesTaskV2 extends DefaultTask {
     addProjectFiles(project);
 
     // Add extra layer
-    List<Path> extraDirectories = jibExtension.getExtraDirectories().getPaths();
+    List<Path> extraDirectories =
+        jibExtension
+            .getExtraDirectories()
+            .getPaths()
+            .stream()
+            .map(ExtraDirectoryParameters::getFrom)
+            .collect(Collectors.toList());
     extraDirectories.stream().filter(Files::exists).forEach(skaffoldFilesOutput::addInput);
 
     // Find project dependencies

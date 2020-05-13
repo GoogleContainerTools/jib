@@ -30,6 +30,7 @@ import com.google.cloud.tools.jib.api.buildplan.FileEntry;
 import com.google.cloud.tools.jib.configuration.BuildContext;
 import com.google.cloud.tools.jib.filesystem.DirectoryWalker;
 import com.google.cloud.tools.jib.filesystem.TempDirectoryProvider;
+import com.google.cloud.tools.jib.maven.extension.JibMavenPluginExtension;
 import com.google.cloud.tools.jib.plugins.common.ContainerizingMode;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
@@ -52,6 +53,7 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.StringJoiner;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.DefaultArtifact;
@@ -239,6 +241,7 @@ public class MavenProjectPropertiesTest {
   @Mock private PluginExecution mockPluginExecution;
   @Mock private Log mockLog;
   @Mock private TempDirectoryProvider mockTempDirectoryProvider;
+  @Mock private Supplier<List<JibMavenPluginExtension<?>>> mockExtensionLoader;
 
   private MavenProjectProperties mavenProjectProperties;
 
@@ -255,7 +258,8 @@ public class MavenProjectPropertiesTest {
             mockMavenProject,
             mockMavenSession,
             mockLog,
-            mockTempDirectoryProvider);
+            mockTempDirectoryProvider,
+            mockExtensionLoader);
 
     Path outputPath = getResource("maven/application/output");
     Path dependenciesPath = getResource("maven/application/dependencies");

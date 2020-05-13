@@ -92,21 +92,22 @@ public class UpdateCheckerTest {
   @Test
   public void testPerformUpdateCheck_newJsonField()
       throws IOException, InterruptedException, GeneralSecurityException, URISyntaxException {
-    testWebServer =
+    try (TestWebServer server =
         new TestWebServer(
             false,
             Collections.singletonList(
                 "HTTP/1.1 200 OK\nContent-Length:43\n\n{\"latest\":\"2.0.0\",\"unknownField\":\"unknown\"}"),
-            1);
-    setupConfigAndLastUpdateCheck();
-    Optional<String> message =
-        UpdateChecker.performUpdateCheck(
-            ignored -> {}, "1.0.2", testWebServer.getEndpoint(), configDir, "tool name");
-    Assert.assertTrue(message.isPresent());
-    Assert.assertEquals(
-        "A new version of Jib (2.0.0) is available (currently using 1.0.2). Update your build "
-            + "configuration to use the latest features and fixes!",
-        message.get());
+            1)) {
+      setupConfigAndLastUpdateCheck();
+      Optional<String> message =
+          UpdateChecker.performUpdateCheck(
+              ignored -> {}, "1.0.2", server.getEndpoint(), configDir, "tool name");
+      Assert.assertTrue(message.isPresent());
+      Assert.assertEquals(
+          "A new version of Jib (2.0.0) is available (currently using 1.0.2). Update your build "
+              + "configuration to use the latest features and fixes!",
+          message.get());
+    }
   }
 
   @Test
