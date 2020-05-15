@@ -53,13 +53,26 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class GradleProjectPropertiesExtensionTest {
 
+  // Interface to conveniently provide the main extension body using lambda.
+  @FunctionalInterface
+  private interface MainExtensionBody<T> {
+
+    ContainerBuildPlan extendContainerBuildPlan(
+        ContainerBuildPlan buildPlan,
+        Map<String, String> properties,
+        Optional<T> extraConfig,
+        GradleData gradleData,
+        ExtensionLogger logger)
+        throws JibPluginExtensionException;
+  }
+
   private static class BaseExtension<T> implements JibGradlePluginExtension<T> {
 
-    private final JibGradlePluginExtension<T> extension;
+    private final MainExtensionBody<T> extensionBody;
     private final Class<T> extraConfigType;
 
-    private BaseExtension(JibGradlePluginExtension<T> extension, Class<T> extraConfigType) {
-      this.extension = extension;
+    private BaseExtension(MainExtensionBody<T> extensionBody, Class<T> extraConfigType) {
+      this.extensionBody = extensionBody;
       this.extraConfigType = extraConfigType;
     }
 
@@ -76,22 +89,22 @@ public class GradleProjectPropertiesExtensionTest {
         GradleData gradleData,
         ExtensionLogger logger)
         throws JibPluginExtensionException {
-      return extension.extendContainerBuildPlan(
+      return extensionBody.extendContainerBuildPlan(
           buildPlan, properties, extraConfig, gradleData, logger);
     }
   }
 
   private static class FooExtension extends BaseExtension<ExtensionDefinedFooConfig> {
 
-    private FooExtension(JibGradlePluginExtension<ExtensionDefinedFooConfig> extension) {
-      super(extension, ExtensionDefinedFooConfig.class);
+    private FooExtension(MainExtensionBody<ExtensionDefinedFooConfig> extensionBody) {
+      super(extensionBody, ExtensionDefinedFooConfig.class);
     }
   }
 
   private static class BarExtension extends BaseExtension<ExtensionDefinedBarConfig> {
 
-    private BarExtension(JibGradlePluginExtension<ExtensionDefinedBarConfig> extension) {
-      super(extension, ExtensionDefinedBarConfig.class);
+    private BarExtension(MainExtensionBody<ExtensionDefinedBarConfig> extensionBody) {
+      super(extensionBody, ExtensionDefinedBarConfig.class);
     }
   }
 
@@ -220,8 +233,8 @@ public class GradleProjectPropertiesExtensionTest {
 
   @Test
   public void testRunPluginExtensions_noExtensionsConfigured() throws JibPluginExtensionException {
-    JibGradlePluginExtension<?> extension =
-        (buildPlan, properties, extraConfig, gradleData, logger) -> buildPlan;
+    FooExtension extension =
+        new FooExtension((buildPlan, properties, extraConfig, gradleData, logger) -> buildPlan);
     loadedExtensions = Arrays.asList(extension);
 
     JibContainerBuilder extendedBuilder =

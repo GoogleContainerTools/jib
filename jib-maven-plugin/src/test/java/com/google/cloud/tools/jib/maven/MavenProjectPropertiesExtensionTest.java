@@ -52,13 +52,26 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class MavenProjectPropertiesExtensionTest {
 
+  // Interface to conveniently provide the main extension body using lambda.
+  @FunctionalInterface
+  private interface MainExtensionBody<T> {
+
+    ContainerBuildPlan extendContainerBuildPlan(
+        ContainerBuildPlan buildPlan,
+        Map<String, String> properties,
+        Optional<T> extraConfig,
+        MavenData mavenData,
+        ExtensionLogger logger)
+        throws JibPluginExtensionException;
+  }
+
   private static class BaseExtension<T> implements JibMavenPluginExtension<T> {
 
-    private final JibMavenPluginExtension<T> extension;
+    private final MainExtensionBody<T> extensionBody;
     private final Class<T> extraConfigType;
 
-    private BaseExtension(JibMavenPluginExtension<T> extension, Class<T> extraConfigType) {
-      this.extension = extension;
+    private BaseExtension(MainExtensionBody<T> extensionBody, Class<T> extraConfigType) {
+      this.extensionBody = extensionBody;
       this.extraConfigType = extraConfigType;
     }
 
@@ -75,22 +88,22 @@ public class MavenProjectPropertiesExtensionTest {
         MavenData mavenData,
         ExtensionLogger logger)
         throws JibPluginExtensionException {
-      return extension.extendContainerBuildPlan(
+      return extensionBody.extendContainerBuildPlan(
           buildPlan, properties, extraConfig, mavenData, logger);
     }
   }
 
   private static class FooExtension extends BaseExtension<ExtensionDefinedFooConfig> {
 
-    private FooExtension(JibMavenPluginExtension<ExtensionDefinedFooConfig> extension) {
-      super(extension, ExtensionDefinedFooConfig.class);
+    private FooExtension(MainExtensionBody<ExtensionDefinedFooConfig> extensionBody) {
+      super(extensionBody, ExtensionDefinedFooConfig.class);
     }
   }
 
   private static class BarExtension extends BaseExtension<ExtensionDefinedBarConfig> {
 
-    private BarExtension(JibMavenPluginExtension<ExtensionDefinedBarConfig> extension) {
-      super(extension, ExtensionDefinedBarConfig.class);
+    private BarExtension(MainExtensionBody<ExtensionDefinedBarConfig> extensionBody) {
+      super(extensionBody, ExtensionDefinedBarConfig.class);
     }
   }
 
@@ -200,8 +213,8 @@ public class MavenProjectPropertiesExtensionTest {
 
   @Test
   public void testRunPluginExtensions_noExtensionsConfigured() throws JibPluginExtensionException {
-    JibMavenPluginExtension<?> extension =
-        (buildPlan, properties, extraConfig, mavenData, logger) -> buildPlan;
+    FooExtension extension =
+        new FooExtension((buildPlan, properties, extraConfig, mavenData, logger) -> buildPlan);
     loadedExtensions = Arrays.asList(extension);
 
     JibContainerBuilder extendedBuilder =

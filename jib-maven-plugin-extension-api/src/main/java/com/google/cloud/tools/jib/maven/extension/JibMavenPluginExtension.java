@@ -34,14 +34,15 @@ public interface JibMavenPluginExtension<T> extends JibPluginExtension {
 
   /**
    * The type of an custom configuration defined by this extension. The configuration object is
-   * mapped from {@code <pluginExtensions><pluginExtension><configuration>}. If the extension does
-   * not wish to define a custom configuration, this method may return {@code Optional#empty()}.
+   * mapped from {@code <pluginExtensions><pluginExtension><configuration>}. Often, it is sufficient
+   * to leverage {@code <pluginExtensions><pluginExtension><properties>} and the extension may not
+   * wish to define a custom configuration; in that case, use {@link Void} for &lt;T&gt; and have
+   * this method return {@code Optional#empty()}. (Don't return {@code Optional.of(Void.class)}.)
    *
-   * @return type of an extension-specific custom configuration
+   * @return type of an extension-specific custom configuration; {@code Optional.empty()} if no need
+   *     to define custom configuration
    */
-  default Optional<Class<T>> getExtraConfigType() {
-    return Optional.empty();
-  }
+  Optional<Class<T>> getExtraConfigType();
 
   /**
    * Extends the build plan prepared by the Jib Maven plugin.
