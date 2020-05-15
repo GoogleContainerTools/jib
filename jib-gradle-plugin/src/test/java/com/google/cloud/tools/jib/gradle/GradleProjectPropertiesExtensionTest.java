@@ -38,6 +38,7 @@ import org.gradle.api.Action;
 import org.gradle.api.Project;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.configuration.ConsoleOutput;
+import org.gradle.api.model.ObjectFactory;
 import org.hamcrest.CoreMatchers;
 import org.junit.Assert;
 import org.junit.Before;
@@ -187,6 +188,7 @@ public class GradleProjectPropertiesExtensionTest {
 
   @Mock private TempDirectoryProvider mockTempDirectoryProvider;
   @Mock private Logger mockLogger;
+  @Mock private ObjectFactory mockObjectFactory;
 
   @Mock(answer = Answers.RETURNS_DEEP_STUBS)
   private Project mockProject;
@@ -205,9 +207,10 @@ public class GradleProjectPropertiesExtensionTest {
 
     Mockito.when(mockProject.getGradle().getStartParameter().getConsoleOutput())
         .thenReturn(ConsoleOutput.Plain);
-    Mockito.when(mockProject.getObjects().newInstance(ExtensionDefinedFooConfig.class))
+    Mockito.when(mockProject.getObjects()).thenReturn(mockObjectFactory);
+    Mockito.when(mockObjectFactory.newInstance(ExtensionDefinedFooConfig.class))
         .thenReturn(new ExtensionDefinedFooConfig("uninitialized"));
-    Mockito.when(mockProject.getObjects().newInstance(ExtensionDefinedBarConfig.class))
+    Mockito.when(mockObjectFactory.newInstance(ExtensionDefinedBarConfig.class))
         .thenReturn(new ExtensionDefinedBarConfig("uninitialized"));
 
     gradleProjectProperties =
