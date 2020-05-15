@@ -576,6 +576,9 @@ public class MavenProjectProperties implements ProjectProperties {
     }
   }
 
+  // Unchecked casting: "getExtraConfiguration()" (Object<Object>) to Object<T> and "extension"
+  // (JibMavenPluginExtension<?>) to JibMavenPluginExtension<T> where T is the extension-defined
+  // config type (as requested by "JibMavenPluginExtension.getExtraConfigType()").
   @SuppressWarnings({"unchecked"})
   private <T> ContainerBuildPlan runPluginExtension(
       Optional<Class<T>> extraConfigType,
