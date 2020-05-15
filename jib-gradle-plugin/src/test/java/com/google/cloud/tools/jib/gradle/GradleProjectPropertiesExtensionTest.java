@@ -34,6 +34,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import org.gradle.api.Action;
 import org.gradle.api.Project;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.configuration.ConsoleOutput;
@@ -51,19 +52,26 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class GradleProjectPropertiesExtensionTest {
 
-  private static class FooExtension implements JibGradlePluginExtension<Void> {
+  private static class BaseExtension<T> implements JibGradlePluginExtension<T> {
 
-    private final JibGradlePluginExtension<Void> extension;
+    private final JibGradlePluginExtension<T> extension;
+    private final Class<T> extraConfigType;
 
-    private FooExtension(JibGradlePluginExtension<Void> extension) {
+    private BaseExtension(JibGradlePluginExtension<T> extension, Class<T> extraConfigType) {
       this.extension = extension;
+      this.extraConfigType = extraConfigType;
+    }
+
+    @Override
+    public Optional<Class<T>> getExtraConfigType() {
+      return Optional.of(extraConfigType);
     }
 
     @Override
     public ContainerBuildPlan extendContainerBuildPlan(
         ContainerBuildPlan buildPlan,
         Map<String, String> properties,
-        Optional<Void> extraConfig,
+        Optional<T> extraConfig,
         GradleData gradleData,
         ExtensionLogger logger)
         throws JibPluginExtensionException {
@@ -72,26 +80,31 @@ public class GradleProjectPropertiesExtensionTest {
     }
   }
 
-  private static class BarExtension extends FooExtension {
+  private static class FooExtension extends BaseExtension<ExtensionDefinedFooConfig> {
 
-    private BarExtension(JibGradlePluginExtension<Void> extension) {
-      super(extension);
+    private FooExtension(JibGradlePluginExtension<ExtensionDefinedFooConfig> extension) {
+      super(extension, ExtensionDefinedFooConfig.class);
     }
   }
 
-  private static class FooExtensionConfig implements ExtensionConfiguration {
+  private static class BarExtension extends BaseExtension<ExtensionDefinedBarConfig> {
 
-    private String extensionClass = FooExtension.class.getName();
-    private Map<String, String> properties = Collections.emptyMap();
-
-    private FooExtensionConfig() {}
-
-    private FooExtensionConfig(String extensionClass) {
-      this.extensionClass = extensionClass;
+    private BarExtension(JibGradlePluginExtension<ExtensionDefinedBarConfig> extension) {
+      super(extension, ExtensionDefinedBarConfig.class);
     }
+  }
 
-    private FooExtensionConfig(Map<String, String> properties) {
+  private static class BaseExtensionConfig<T> implements ExtensionConfiguration {
+
+    private final String extensionClass;
+    private final Map<String, String> properties;
+    private final Action<T> extraConfig;
+
+    private BaseExtensionConfig(
+        String extensionClass, Map<String, String> properties, Action<T> extraConfig) {
+      this.extensionClass = extensionClass;
       this.properties = properties;
+      this.extraConfig = extraConfig;
     }
 
     @Override
@@ -106,14 +119,69 @@ public class GradleProjectPropertiesExtensionTest {
 
     @Override
     public Optional<Object> getExtraConfiguration() {
-      return Optional.empty();
+      return Optional.ofNullable(extraConfig);
     }
   }
 
-  private static class BarExtensionConfig extends FooExtensionConfig {
+  private static class FooExtensionConfig extends BaseExtensionConfig<ExtensionDefinedFooConfig> {
+
+    private FooExtensionConfig() {
+      super(FooExtension.class.getName(), Collections.emptyMap(), null);
+    }
+
+    private FooExtensionConfig(Map<String, String> properties) {
+      super(FooExtension.class.getName(), properties, null);
+    }
+
+    private FooExtensionConfig(ExtensionDefinedFooConfig extraConfig) {
+      super(
+          FooExtension.class.getName(),
+          Collections.emptyMap(),
+          new Action<ExtensionDefinedFooConfig>() {
+            @Override
+            public void execute(ExtensionDefinedFooConfig instance) {
+              instance.potato = extraConfig.potato;
+            }
+          });
+    }
+  }
+
+  private static class BarExtensionConfig extends BaseExtensionConfig<ExtensionDefinedBarConfig> {
 
     private BarExtensionConfig() {
-      super(BarExtension.class.getName());
+      super(BarExtension.class.getName(), Collections.emptyMap(), null);
+    }
+
+    private BarExtensionConfig(ExtensionDefinedBarConfig extraConfig) {
+      super(
+          BarExtension.class.getName(),
+          Collections.emptyMap(),
+          new Action<ExtensionDefinedBarConfig>() {
+            @Override
+            public void execute(ExtensionDefinedBarConfig instance) {
+              instance.tomato = extraConfig.tomato;
+            }
+          });
+    }
+  }
+
+  // Not to be confused with Jib's plugin extension config. This class is for an extension-defined
+  // config specific to a third-party extension.
+  private static class ExtensionDefinedFooConfig {
+
+    private String potato;
+
+    private ExtensionDefinedFooConfig(String potato) {
+      this.potato = potato;
+    }
+  }
+
+  private static class ExtensionDefinedBarConfig {
+
+    private String tomato;
+
+    private ExtensionDefinedBarConfig(String tomato) {
+      this.tomato = tomato;
     }
   }
 
@@ -137,6 +205,10 @@ public class GradleProjectPropertiesExtensionTest {
 
     Mockito.when(mockProject.getGradle().getStartParameter().getConsoleOutput())
         .thenReturn(ConsoleOutput.Plain);
+    Mockito.when(mockProject.getObjects().newInstance(ExtensionDefinedFooConfig.class))
+        .thenReturn(new ExtensionDefinedFooConfig("uninitialized"));
+    Mockito.when(mockProject.getObjects().newInstance(ExtensionDefinedBarConfig.class))
+        .thenReturn(new ExtensionDefinedBarConfig("uninitialized"));
 
     gradleProjectProperties =
         new GradleProjectProperties(
@@ -270,5 +342,50 @@ public class GradleProjectPropertiesExtensionTest {
             Arrays.asList(new FooExtensionConfig(ImmutableMap.of("user", "65432"))),
             containerBuilder);
     Assert.assertEquals("65432", extendedBuilder.toContainerBuildPlan().getUser());
+  }
+
+  @Test
+  public void testRunPluginExtensions_extensionDefinedConfigurations_emptyConfig()
+      throws JibPluginExtensionException {
+    FooExtension fooExtension =
+        new FooExtension(
+            (buildPlan, properties, extraConfig, mavenData, logger) -> {
+              Assert.assertEquals(Optional.empty(), extraConfig);
+              return buildPlan;
+            });
+    BarExtension barExtension =
+        new BarExtension(
+            (buildPlan, properties, extraConfig, mavenData, logger) -> {
+              Assert.assertEquals(Optional.empty(), extraConfig);
+              return buildPlan;
+            });
+    loadedExtensions = Arrays.asList(fooExtension, barExtension);
+
+    gradleProjectProperties.runPluginExtensions(
+        Arrays.asList(new FooExtensionConfig(), new BarExtensionConfig()), containerBuilder);
+  }
+
+  @Test
+  public void testRunPluginExtensions_extensionDefinedConfigurations()
+      throws JibPluginExtensionException {
+    FooExtension fooExtension =
+        new FooExtension(
+            (buildPlan, properties, extraConfig, mavenData, logger) -> {
+              Assert.assertEquals("fried", extraConfig.get().potato);
+              return buildPlan;
+            });
+    BarExtension barExtension =
+        new BarExtension(
+            (buildPlan, properties, extraConfig, mavenData, logger) -> {
+              Assert.assertEquals("rotten", extraConfig.get().tomato);
+              return buildPlan;
+            });
+    loadedExtensions = Arrays.asList(fooExtension, barExtension);
+
+    gradleProjectProperties.runPluginExtensions(
+        Arrays.asList(
+            new FooExtensionConfig(new ExtensionDefinedFooConfig("fried")),
+            new BarExtensionConfig(new ExtensionDefinedBarConfig("rotten"))),
+        containerBuilder);
   }
 }
