@@ -141,7 +141,7 @@ public class GradleProjectPropertiesExtensionTest {
           new Action<ExtensionDefinedFooConfig>() {
             @Override
             public void execute(ExtensionDefinedFooConfig instance) {
-              instance.potato = extraConfig.potato;
+              instance.fooParam = extraConfig.fooParam;
             }
           });
     }
@@ -160,7 +160,7 @@ public class GradleProjectPropertiesExtensionTest {
           new Action<ExtensionDefinedBarConfig>() {
             @Override
             public void execute(ExtensionDefinedBarConfig instance) {
-              instance.tomato = extraConfig.tomato;
+              instance.barParam = extraConfig.barParam;
             }
           });
     }
@@ -170,19 +170,19 @@ public class GradleProjectPropertiesExtensionTest {
   // config specific to a third-party extension.
   private static class ExtensionDefinedFooConfig {
 
-    private String potato;
+    private String fooParam;
 
-    private ExtensionDefinedFooConfig(String potato) {
-      this.potato = potato;
+    private ExtensionDefinedFooConfig(String fooParam) {
+      this.fooParam = fooParam;
     }
   }
 
   private static class ExtensionDefinedBarConfig {
 
-    private String tomato;
+    private String barParam;
 
-    private ExtensionDefinedBarConfig(String tomato) {
-      this.tomato = tomato;
+    private ExtensionDefinedBarConfig(String barParam) {
+      this.barParam = barParam;
     }
   }
 
@@ -374,21 +374,21 @@ public class GradleProjectPropertiesExtensionTest {
     FooExtension fooExtension =
         new FooExtension(
             (buildPlan, properties, extraConfig, mavenData, logger) -> {
-              Assert.assertEquals("fried", extraConfig.get().potato);
+              Assert.assertEquals("fooParamValue", extraConfig.get().fooParam);
               return buildPlan;
             });
     BarExtension barExtension =
         new BarExtension(
             (buildPlan, properties, extraConfig, mavenData, logger) -> {
-              Assert.assertEquals("rotten", extraConfig.get().tomato);
+              Assert.assertEquals("barParamValue", extraConfig.get().barParam);
               return buildPlan;
             });
     loadedExtensions = Arrays.asList(fooExtension, barExtension);
 
     gradleProjectProperties.runPluginExtensions(
         Arrays.asList(
-            new FooExtensionConfig(new ExtensionDefinedFooConfig("fried")),
-            new BarExtensionConfig(new ExtensionDefinedBarConfig("rotten"))),
+            new FooExtensionConfig(new ExtensionDefinedFooConfig("fooParamValue")),
+            new BarExtensionConfig(new ExtensionDefinedBarConfig("barParamValue"))),
         containerBuilder);
   }
 }
