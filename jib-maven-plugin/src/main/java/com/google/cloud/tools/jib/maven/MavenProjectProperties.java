@@ -595,7 +595,7 @@ public class MavenProjectProperties implements ProjectProperties {
                 "extension "
                     + extension.getClass().getSimpleName()
                     + " does not expect extension-specific configruation; will ignore "
-                    + "<pluginExtension><configuration>"));
+                    + "<pluginExtension><configuration> specified in pom.xml"));
       } else if (!extraConfigType.get().isInstance(config.getExtraConfiguration().get())) {
         throw new JibPluginExtensionException(
             extension.getClass(),
@@ -610,6 +610,9 @@ public class MavenProjectProperties implements ProjectProperties {
                 + extraConfigType.get().getName()
                 + "\">");
       } else {
+        // config.getExtraConfiguration() is of type Optional, so this cast always succeeds
+        // at runtime even without the isInstance() check above. (Note generic <T> is erased at
+        // runtime.)
         extraConfig = (Optional<T>) config.getExtraConfiguration();
       }
     }

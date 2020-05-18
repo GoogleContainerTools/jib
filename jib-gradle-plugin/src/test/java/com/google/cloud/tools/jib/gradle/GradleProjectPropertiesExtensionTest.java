@@ -78,7 +78,7 @@ public class GradleProjectPropertiesExtensionTest {
 
     @Override
     public Optional<Class<T>> getExtraConfigType() {
-      return Optional.of(extraConfigType);
+      return Optional.ofNullable(extraConfigType);
     }
 
     @Override
@@ -403,5 +403,26 @@ public class GradleProjectPropertiesExtensionTest {
             new FooExtensionConfig(new ExtensionDefinedFooConfig("fooParamValue")),
             new BarExtensionConfig(new ExtensionDefinedBarConfig("barParamValue"))),
         containerBuilder);
+  }
+
+  @Test
+  public void testRunPluginExtensions_ignoreUnexpectedExtraConfig()
+      throws JibPluginExtensionException {
+    BaseExtension<Void> extension =
+        new BaseExtension<>(
+            (buildPlan, properties, extraConfig, mavenData, logger) -> buildPlan, null);
+    loadedExtensions = Arrays.asList(extension);
+
+    gradleProjectProperties.runPluginExtensions(
+        Arrays.asList(
+            new BaseExtensionConfig<>(
+                BaseExtension.class.getName(), Collections.emptyMap(), (ignored) -> {})),
+        containerBuilder);
+
+    gradleProjectProperties.waitForLoggingThread();
+    Mockito.verify(mockLogger)
+        .warn(
+            "extension BaseExtension does not expect extension-specific configruation; will ignore 'pluginExtension"
+                + ".configuration' specified in Gradle build script");
   }
 }

@@ -427,6 +427,6 @@ public class MavenProjectPropertiesExtensionTest {
     Mockito.verify(mockLog)
         .warn(
             "extension BaseExtension does not expect extension-specific configruation; will ignore <pluginExtension>"
-                + "<configuration>");
+                + "<configuration> specified in pom.xml");
   }
 }
