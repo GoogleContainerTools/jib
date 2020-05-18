@@ -475,13 +475,18 @@ public class GradleProjectProperties implements ProjectProperties {
       }
     }
 
-    return ((JibGradlePluginExtension<T>) extension)
-        .extendContainerBuildPlan(
-            buildPlan,
-            config.getProperties(),
-            Optional.ofNullable(extraConfig),
-            () -> project,
-            new PluginExtensionLogger(this::log));
+    try {
+      return ((JibGradlePluginExtension<T>) extension)
+          .extendContainerBuildPlan(
+              buildPlan,
+              config.getProperties(),
+              Optional.ofNullable(extraConfig),
+              () -> project,
+              new PluginExtensionLogger(this::log));
+    } catch (RuntimeException ex) {
+      throw new JibPluginExtensionException(
+          extension.getClass(), "extension crashed: " + ex.getMessage(), ex);
+    }
   }
 
   private JibGradlePluginExtension<?> findConfiguredExtension(

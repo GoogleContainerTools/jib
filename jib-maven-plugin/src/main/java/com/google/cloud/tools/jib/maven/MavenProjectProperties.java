@@ -616,13 +616,18 @@ public class MavenProjectProperties implements ProjectProperties {
       }
     }
 
-    return ((JibMavenPluginExtension<T>) extension)
-        .extendContainerBuildPlan(
-            buildPlan,
-            config.getProperties(),
-            extraConfig,
-            new MavenExtensionData(project, session),
-            new PluginExtensionLogger(this::log));
+    try {
+      return ((JibMavenPluginExtension<T>) extension)
+          .extendContainerBuildPlan(
+              buildPlan,
+              config.getProperties(),
+              extraConfig,
+              new MavenExtensionData(project, session),
+              new PluginExtensionLogger(this::log));
+    } catch (RuntimeException ex) {
+      throw new JibPluginExtensionException(
+          extension.getClass(), "extension crashed: " + ex.getMessage(), ex);
+    }
   }
 
   private JibMavenPluginExtension<?> findConfiguredExtension(
