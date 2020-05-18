@@ -32,6 +32,7 @@ import com.google.cloud.tools.jib.filesystem.TempDirectoryProvider;
 import com.google.cloud.tools.jib.gradle.extension.JibGradlePluginExtension;
 import com.google.cloud.tools.jib.plugins.common.ContainerizingMode;
 import com.google.cloud.tools.jib.plugins.common.JavaContainerBuilderHelper;
+import com.google.cloud.tools.jib.plugins.common.PluginExtensionLogger;
 import com.google.cloud.tools.jib.plugins.common.ProjectProperties;
 import com.google.cloud.tools.jib.plugins.common.PropertyNames;
 import com.google.cloud.tools.jib.plugins.common.RawConfiguration.ExtensionConfiguration;
@@ -419,7 +420,6 @@ public class GradleProjectProperties implements ProjectProperties {
     List<JibGradlePluginExtension> loadedExtensions = extensionLoader.get();
     JibGradlePluginExtension extension = null;
     ContainerBuildPlan buildPlan = jibContainerBuilder.toContainerBuildPlan();
-    GradleExtensionLogger extensionLogger = new GradleExtensionLogger(this::log);
     try {
       for (ExtensionConfiguration config : extensionConfigs) {
         String extensionClass = config.getExtensionClass();
@@ -434,7 +434,10 @@ public class GradleProjectProperties implements ProjectProperties {
         log(LogEvent.lifecycle("Running extension: " + extensionClass));
         buildPlan =
             extension.extendContainerBuildPlan(
-                buildPlan, config.getProperties(), () -> project, extensionLogger);
+                buildPlan,
+                config.getProperties(),
+                () -> project,
+                new PluginExtensionLogger(this::log));
         ImageReference.parse(buildPlan.getBaseImage()); // to validate image reference
       }
       return jibContainerBuilder.applyContainerBuildPlan(buildPlan);

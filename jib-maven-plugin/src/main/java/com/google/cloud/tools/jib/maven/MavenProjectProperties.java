@@ -33,6 +33,7 @@ import com.google.cloud.tools.jib.filesystem.TempDirectoryProvider;
 import com.google.cloud.tools.jib.maven.extension.JibMavenPluginExtension;
 import com.google.cloud.tools.jib.plugins.common.ContainerizingMode;
 import com.google.cloud.tools.jib.plugins.common.JavaContainerBuilderHelper;
+import com.google.cloud.tools.jib.plugins.common.PluginExtensionLogger;
 import com.google.cloud.tools.jib.plugins.common.ProjectProperties;
 import com.google.cloud.tools.jib.plugins.common.PropertyNames;
 import com.google.cloud.tools.jib.plugins.common.RawConfiguration.ExtensionConfiguration;
@@ -551,8 +552,6 @@ public class MavenProjectProperties implements ProjectProperties {
     List<JibMavenPluginExtension> loadedExtensions = extensionLoader.get();
     JibMavenPluginExtension extension = null;
     ContainerBuildPlan buildPlan = jibContainerBuilder.toContainerBuildPlan();
-    MavenExtensionData mavenData = new MavenExtensionData(project, session);
-    MavenExtensionLogger extensionLogger = new MavenExtensionLogger(this::log);
     try {
       for (ExtensionConfiguration config : extensionConfigs) {
         String extensionClass = config.getExtensionClass();
@@ -567,7 +566,10 @@ public class MavenProjectProperties implements ProjectProperties {
         log(LogEvent.lifecycle("Running extension: " + extensionClass));
         buildPlan =
             extension.extendContainerBuildPlan(
-                buildPlan, config.getProperties(), mavenData, extensionLogger);
+                buildPlan,
+                config.getProperties(),
+                new MavenExtensionData(project, session),
+                new PluginExtensionLogger(this::log));
         ImageReference.parse(buildPlan.getBaseImage()); // to validate image reference
       }
       return jibContainerBuilder.applyContainerBuildPlan(buildPlan);
