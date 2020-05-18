@@ -577,7 +577,7 @@ public class MavenProjectProperties implements ProjectProperties {
     }
   }
 
-  // Unchecked casting: "getExtraConfiguration()" (Object<Object>) to Object<T> and "extension"
+  // Unchecked casting: "getExtraConfiguration()" (Optional<Object>) to Object<T> and "extension"
   // (JibMavenPluginExtension<?>) to JibMavenPluginExtension<T> where T is the extension-defined
   // config type (as requested by "JibMavenPluginExtension.getExtraConfigType()").
   @SuppressWarnings({"unchecked"})
@@ -588,11 +588,29 @@ public class MavenProjectProperties implements ProjectProperties {
       ContainerBuildPlan buildPlan)
       throws JibPluginExtensionException {
     Optional<T> extraConfig = Optional.empty();
-    if (extraConfigType.isPresent() && config.getExtraConfiguration().isPresent()) {
-      try {
-        extraConfig = config.getExtraConfiguration().map(object -> (T) object);
-      } catch (ClassCastException ex) {
-        throw ex; // TODO(chanseok): provide helpful and actionable message
+    if (config.getExtraConfiguration().isPresent()) {
+      if (!extraConfigType.isPresent()) {
+        log(
+            LogEvent.warn(
+                "extension "
+                    + extension.getClass().getSimpleName()
+                    + " does not expect extension-specific configruation; will ignore "
+                    + "<pluginExtension><configuration>"));
+      } else if (!extraConfigType.get().isInstance(config.getExtraConfiguration().get())) {
+        throw new JibPluginExtensionException(
+            extension.getClass(),
+            "extension-specific <configuration> for "
+                + extension.getClass().getSimpleName()
+                + " is not of type "
+                + extraConfigType.get().getName()
+                + " but "
+                + config.getExtraConfiguration().get().getClass().getName()
+                + "; specify the correct type with <pluginExtension><configuration "
+                + "implementation=\""
+                + extraConfigType.get().getName()
+                + "\">");
+      } else {
+        extraConfig = (Optional<T>) config.getExtraConfiguration();
       }
     }
 

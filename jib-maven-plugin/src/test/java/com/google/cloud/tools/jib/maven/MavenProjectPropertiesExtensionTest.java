@@ -77,7 +77,7 @@ public class MavenProjectPropertiesExtensionTest {
 
     @Override
     public Optional<Class<T>> getExtraConfigType() {
-      return Optional.of(extraConfigType);
+      return Optional.ofNullable(extraConfigType);
     }
 
     @Override
@@ -383,5 +383,50 @@ public class MavenProjectPropertiesExtensionTest {
             new FooExtensionConfig(new ExtensionDefinedFooConfig("fooParamValue")),
             new BarExtensionConfig(new ExtensionDefinedBarConfig("barParamValue"))),
         containerBuilder);
+  }
+
+  @Test
+  public void testRunPluginExtensions_wrongExtraConfigType() {
+    FooExtension extension =
+        new FooExtension((buildPlan, properties, extraConfig, mavenData, logger) -> buildPlan);
+    loadedExtensions = Arrays.asList(extension);
+
+    try {
+      mavenProjectProperties.runPluginExtensions(
+          Arrays.asList(
+              new BaseExtensionConfig<>(
+                  FooExtension.class.getName(), Collections.emptyMap(), "string <configuration>")),
+          containerBuilder);
+      Assert.fail();
+    } catch (JibPluginExtensionException ex) {
+      Assert.assertEquals(FooExtension.class, ex.getExtensionClass());
+      Assert.assertEquals(
+          "extension-specific <configuration> for FooExtension is not of type com.google.cloud.tools.jib.maven."
+              + "MavenProjectPropertiesExtensionTest$ExtensionDefinedFooConfig but java.lang.String; specify the "
+              + "correct type with <pluginExtension><configuration implementation=\"com.google.cloud.tools.jib.maven."
+              + "MavenProjectPropertiesExtensionTest$ExtensionDefinedFooConfig\">",
+          ex.getMessage());
+    }
+  }
+
+  @Test
+  public void testRunPluginExtensions_ignoreUnexpectedExtraConfig()
+      throws JibPluginExtensionException {
+    BaseExtension<Void> extension =
+        new BaseExtension<>(
+            (buildPlan, properties, extraConfig, mavenData, logger) -> buildPlan, null);
+    loadedExtensions = Arrays.asList(extension);
+
+    mavenProjectProperties.runPluginExtensions(
+        Arrays.asList(
+            new BaseExtensionConfig<>(
+                BaseExtension.class.getName(), Collections.emptyMap(), "unwanted <configuration>")),
+        containerBuilder);
+
+    mavenProjectProperties.waitForLoggingThread();
+    Mockito.verify(mockLog)
+        .warn(
+            "extension BaseExtension does not expect extension-specific configruation; will ignore <pluginExtension>"
+                + "<configuration>");
   }
 }
