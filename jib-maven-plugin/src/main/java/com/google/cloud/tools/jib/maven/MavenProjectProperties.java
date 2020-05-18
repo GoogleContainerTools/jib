@@ -32,6 +32,7 @@ import com.google.cloud.tools.jib.filesystem.TempDirectoryProvider;
 import com.google.cloud.tools.jib.maven.extension.JibMavenPluginExtension;
 import com.google.cloud.tools.jib.plugins.common.ContainerizingMode;
 import com.google.cloud.tools.jib.plugins.common.JavaContainerBuilderHelper;
+import com.google.cloud.tools.jib.plugins.common.PluginExtensionLogger;
 import com.google.cloud.tools.jib.plugins.common.ProjectProperties;
 import com.google.cloud.tools.jib.plugins.common.PropertyNames;
 import com.google.cloud.tools.jib.plugins.common.RawConfiguration.ExtensionConfiguration;
@@ -601,7 +602,7 @@ public class MavenProjectProperties implements ProjectProperties {
             config.getProperties(),
             extraConfig,
             new MavenExtensionData(project, session),
-            new MavenExtensionLogger(this::log));
+            new PluginExtensionLogger(this::log));
   }
 
   private JibMavenPluginExtension<?> findConfiguredExtension(
