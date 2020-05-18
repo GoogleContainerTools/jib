@@ -467,8 +467,8 @@ public class GradleProjectProperties implements ProjectProperties {
                     + " does not expect extension-specific configruation; will ignore "
                     + "'pluginExtension.configuration' specified in Gradle build script"));
       } else {
-        // config.getExtraConfiguration().get() is of type Action, so this cast always succeeds
-        // at runtime. (Note generic <T> is erased at runtime.)
+        // config.getExtraConfiguration().get() is of type Action, so this cast always succeeds.
+        // (Note generic <T> is erased at runtime.)
         Action<T> action = (Action<T>) config.getExtraConfiguration().get();
         extraConfig = project.getObjects().newInstance(extraConfigType.get());
         action.execute(extraConfig);
