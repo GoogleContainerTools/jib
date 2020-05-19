@@ -5,8 +5,7 @@ plugins {
 }
 
 dependencies {
-  implementation project(':jib-build-plan')
-
+  implementation "com.google.cloud.tools:jib-build-plan:${dependencyVersions.BUILD_PLAN}"
   implementation "com.google.http-client:google-http-client:${dependencyVersions.GOOGLE_HTTP_CLIENT}"
   implementation "com.google.http-client:google-http-client-apache-v2:${dependencyVersions.GOOGLE_HTTP_CLIENT_APACHE_V2}"
   implementation "com.google.auth:google-auth-library-oauth2-http:${dependencyVersions.GOOGLE_AUTH_LIBRARY_OAUTH2_HTTP}"
