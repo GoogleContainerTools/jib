@@ -460,12 +460,11 @@ public class GradleProjectProperties implements ProjectProperties {
     T extraConfig = null;
     if (config.getExtraConfiguration().isPresent()) {
       if (!extraConfigType.isPresent()) {
-        log(
-            LogEvent.warn(
-                "extension "
-                    + extension.getClass().getSimpleName()
-                    + " does not expect extension-specific configruation; will ignore "
-                    + "'pluginExtension.configuration' specified in Gradle build script"));
+        throw new IllegalArgumentException(
+            "extension "
+                + extension.getClass().getSimpleName()
+                + " does not expect extension-specific configruation; remove the inapplicable "
+                + "'pluginExtension.configuration' from Gradle build script");
       } else {
         // config.getExtraConfiguration().get() is of type Action, so this cast always succeeds.
         // (Note generic <T> is erased at runtime.)

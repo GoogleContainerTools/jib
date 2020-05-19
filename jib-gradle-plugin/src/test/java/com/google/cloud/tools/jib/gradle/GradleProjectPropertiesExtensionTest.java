@@ -413,16 +413,17 @@ public class GradleProjectPropertiesExtensionTest {
             (buildPlan, properties, extraConfig, mavenData, logger) -> buildPlan, null);
     loadedExtensions = Arrays.asList(extension);
 
-    gradleProjectProperties.runPluginExtensions(
-        Arrays.asList(
-            new BaseExtensionConfig<>(
-                BaseExtension.class.getName(), Collections.emptyMap(), (ignored) -> {})),
-        containerBuilder);
-
-    gradleProjectProperties.waitForLoggingThread();
-    Mockito.verify(mockLogger)
-        .warn(
-            "extension BaseExtension does not expect extension-specific configruation; will ignore 'pluginExtension"
-                + ".configuration' specified in Gradle build script");
+    ExtensionConfiguration extensionConfig =
+        new BaseExtensionConfig<>(
+            BaseExtension.class.getName(), Collections.emptyMap(), (ignored) -> {});
+    try {
+      gradleProjectProperties.runPluginExtensions(Arrays.asList(extensionConfig), containerBuilder);
+      Assert.fail();
+    } catch (IllegalArgumentException ex) {
+      Assert.assertEquals(
+          "extension BaseExtension does not expect extension-specific configruation; remove the "
+              + "inapplicable 'pluginExtension.configuration' from Gradle build script",
+          ex.getMessage());
+    }
   }
 }
