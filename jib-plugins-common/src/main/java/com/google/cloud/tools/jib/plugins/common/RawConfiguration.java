@@ -36,6 +36,8 @@ public interface RawConfiguration {
     String getExtensionClass();
 
     Map<String, String> getProperties();
+
+    Optional<Object> getExtraConfiguration();
   }
 
   Optional<String> getFromImage();

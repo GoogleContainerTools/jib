@@ -61,10 +61,11 @@ public class HelloWorld {
         System.out.println(Files.getLastModifiedTime(Paths.get("/bar/cat")).toString());
       }
       // Prints the contents of the files in the second extra directory.
-      if (Files.exists(Paths.get("/baz"))) {
+      if (Files.exists(Paths.get("/custom/target/baz"))) {
         System.out.println(
-            new String(Files.readAllBytes(Paths.get("/baz")), StandardCharsets.UTF_8));
-        System.out.println(Files.getLastModifiedTime(Paths.get("/baz")).toString());
+            new String(
+                Files.readAllBytes(Paths.get("/custom/target/baz")), StandardCharsets.UTF_8));
+        System.out.println(Files.getLastModifiedTime(Paths.get("/custom/target/baz")).toString());
       }
 
       // Prints jvm flags

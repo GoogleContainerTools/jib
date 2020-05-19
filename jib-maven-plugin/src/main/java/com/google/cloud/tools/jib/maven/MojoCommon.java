@@ -16,6 +16,8 @@
 
 package com.google.cloud.tools.jib.maven;
 
+import static com.google.cloud.tools.jib.maven.JibPluginConfiguration.ExtraDirectoryParameters;
+
 import com.google.cloud.tools.jib.ProjectInfo;
 import com.google.cloud.tools.jib.api.LogEvent;
 import com.google.cloud.tools.jib.api.buildplan.FilePermissions;
@@ -27,7 +29,7 @@ import com.google.cloud.tools.jib.plugins.common.VersionChecker;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.Futures;
-import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -94,15 +96,24 @@ public class MojoCommon {
    * @param jibPluginConfiguration the build configuration
    * @return the list of resolved extra directories
    */
-  static List<Path> getExtraDirectories(JibPluginConfiguration jibPluginConfiguration) {
-    List<Path> paths = jibPluginConfiguration.getExtraDirectories();
-    if (!paths.isEmpty()) {
-      return paths;
+  static List<ExtraDirectoryParameters> getExtraDirectories(
+      JibPluginConfiguration jibPluginConfiguration) {
+    List<ExtraDirectoryParameters> extraDirectories = jibPluginConfiguration.getExtraDirectories();
+    if (!extraDirectories.isEmpty()) {
+      for (ExtraDirectoryParameters directory : extraDirectories) {
+        if (directory.getFrom().equals(Paths.get(""))) {
+          throw new IllegalArgumentException(
+              "Incomplete <extraDirectories><paths> configuration; source directory must be set");
+        }
+      }
+      return extraDirectories;
     }
 
     MavenProject project = Preconditions.checkNotNull(jibPluginConfiguration.getProject());
     return Collections.singletonList(
-        project.getBasedir().toPath().resolve("src").resolve("main").resolve("jib"));
+        new ExtraDirectoryParameters(
+            project.getBasedir().toPath().resolve("src").resolve("main").resolve("jib").toFile(),
+            "/"));
   }
 
   /**

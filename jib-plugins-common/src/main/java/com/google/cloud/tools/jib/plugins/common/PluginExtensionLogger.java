@@ -14,18 +14,18 @@
  * the License.
  */
 
-package com.google.cloud.tools.jib.gradle;
+package com.google.cloud.tools.jib.plugins.common;
 
 import com.google.cloud.tools.jib.api.LogEvent;
 import com.google.cloud.tools.jib.plugins.extension.ExtensionLogger;
 import java.util.function.Consumer;
 
-/** Logger for Gradle plugin extensions. */
-class GradleExtensionLogger implements ExtensionLogger {
+/** Logger provided to plugin extensions. */
+public class PluginExtensionLogger implements ExtensionLogger {
 
   private final Consumer<LogEvent> logger;
 
-  GradleExtensionLogger(Consumer<LogEvent> logger) {
+  public PluginExtensionLogger(Consumer<LogEvent> logger) {
     this.logger = logger;
   }
 

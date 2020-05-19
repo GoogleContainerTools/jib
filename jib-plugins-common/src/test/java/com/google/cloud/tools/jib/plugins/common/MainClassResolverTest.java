@@ -22,7 +22,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.io.Resources;
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import org.hamcrest.CoreMatchers;
 import org.junit.Assert;
@@ -37,56 +36,91 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class MainClassResolverTest {
 
-  private static final Path FAKE_CLASSES_PATH = Paths.get("a/b/c");
-
   @Mock private ProjectProperties mockProjectProperties;
 
   @Before
   public void setup() {
-    Mockito.when(mockProjectProperties.getPluginName()).thenReturn("plugin");
+    Mockito.when(mockProjectProperties.getPluginName()).thenReturn("jib-plugin");
     Mockito.when(mockProjectProperties.getJarPluginName()).thenReturn("jar-plugin");
   }
 
   @Test
-  public void testResolveMainClass() throws MainClassInferenceException, IOException {
-    Mockito.when(mockProjectProperties.getMainClassFromJar()).thenReturn("some.main.class");
+  public void testResolveMainClass_validMainClassConfigured()
+      throws MainClassInferenceException, IOException {
     Assert.assertEquals(
-        "some.main.class", MainClassResolver.resolveMainClass(null, mockProjectProperties));
-    Assert.assertEquals(
-        "configured", MainClassResolver.resolveMainClass("configured", mockProjectProperties));
+        "configured.main.class",
+        MainClassResolver.resolveMainClass("configured.main.class", mockProjectProperties));
+    Mockito.verify(mockProjectProperties, Mockito.never()).log(Mockito.any());
   }
 
   @Test
-  public void testResolveMainClass_notValid() throws MainClassInferenceException, IOException {
-    Mockito.when(mockProjectProperties.getMainClassFromJar()).thenReturn("${start-class}");
-    Mockito.when(mockProjectProperties.getClassFiles())
-        .thenReturn(ImmutableList.of(FAKE_CLASSES_PATH));
-    Assert.assertEquals(
-        "${start-class}", MainClassResolver.resolveMainClass(null, mockProjectProperties));
-    Mockito.verify(mockProjectProperties)
-        .log(LogEvent.warn("'mainClass' is not a valid Java class : ${start-class}"));
+  public void testResolveMainClass_invalidMainClassConfigured() throws IOException {
+    try {
+      MainClassResolver.resolveMainClass("In Val id", mockProjectProperties);
+      Assert.fail();
+
+    } catch (MainClassInferenceException ex) {
+      Assert.assertThat(
+          ex.getMessage(),
+          CoreMatchers.containsString(
+              "'mainClass' configured in jib-plugin is not a valid Java class: In Val id"));
+
+      Mockito.verify(mockProjectProperties, Mockito.never()).log(Mockito.any());
+    }
   }
 
   @Test
-  public void testResolveMainClass_multipleInferredWithBackup()
-      throws MainClassInferenceException, URISyntaxException, IOException {
-    Mockito.when(mockProjectProperties.getMainClassFromJar()).thenReturn("${start-class}");
+  public void testResolveMainClass_validMainClassFromJarPlugin()
+      throws MainClassInferenceException, IOException {
+    Mockito.when(mockProjectProperties.getMainClassFromJarPlugin())
+        .thenReturn("main.class.from.jar");
+    Assert.assertEquals(
+        "main.class.from.jar", MainClassResolver.resolveMainClass(null, mockProjectProperties));
+
+    String info =
+        "Searching for main class... Add a 'mainClass' configuration to 'jib-plugin' to "
+            + "improve build speed.";
+    Mockito.verify(mockProjectProperties).log(LogEvent.info(info));
+  }
+
+  @Test
+  public void testResolveMainClass_multipleInferredWithInvalidMainClassFromJarPlugin()
+      throws URISyntaxException, IOException {
+    Mockito.when(mockProjectProperties.getMainClassFromJarPlugin()).thenReturn("${start-class}");
     Mockito.when(mockProjectProperties.getClassFiles())
         .thenReturn(
             new DirectoryWalker(
                     Paths.get(Resources.getResource("core/class-finder-tests/multiple").toURI()))
                 .walk()
                 .asList());
-    Assert.assertEquals(
-        "${start-class}", MainClassResolver.resolveMainClass(null, mockProjectProperties));
-    Mockito.verify(mockProjectProperties)
-        .log(LogEvent.warn("'mainClass' is not a valid Java class : ${start-class}"));
+
+    try {
+      MainClassResolver.resolveMainClass(null, mockProjectProperties);
+      Assert.fail();
+
+    } catch (MainClassInferenceException ex) {
+      Assert.assertThat(
+          ex.getMessage(),
+          CoreMatchers.containsString(
+              "Multiple valid main classes were found: HelloWorld, multi.layered.HelloMoon"));
+
+      String info1 =
+          "Searching for main class... Add a 'mainClass' configuration to 'jib-plugin' to "
+              + "improve build speed.";
+      String info2 =
+          "Could not find a valid main class from jar-plugin; looking into all class files to "
+              + "infer main class.";
+      String warn =
+          "'mainClass' configured in jar-plugin is not a valid Java class: ${start-class}";
+      Mockito.verify(mockProjectProperties).log(LogEvent.info(info1));
+      Mockito.verify(mockProjectProperties).log(LogEvent.info(info2));
+      Mockito.verify(mockProjectProperties).log(LogEvent.warn(warn));
+    }
   }
 
   @Test
-  public void testResolveMainClass_multipleInferredWithoutBackup()
+  public void testResolveMainClass_multipleInferredWithoutMainClassFromJarPlugin()
       throws URISyntaxException, IOException {
-    Mockito.when(mockProjectProperties.getMainClassFromJar()).thenReturn(null);
     Mockito.when(mockProjectProperties.getClassFiles())
         .thenReturn(
             new DirectoryWalker(
@@ -102,23 +136,22 @@ public class MainClassResolverTest {
           ex.getMessage(),
           CoreMatchers.containsString(
               "Multiple valid main classes were found: HelloWorld, multi.layered.HelloMoon"));
+
+      String info1 =
+          "Searching for main class... Add a 'mainClass' configuration to 'jib-plugin' to "
+              + "improve build speed.";
+      String info2 =
+          "Could not find a valid main class from jar-plugin; looking into all class files to "
+              + "infer main class.";
+      Mockito.verify(mockProjectProperties).log(LogEvent.info(info1));
+      Mockito.verify(mockProjectProperties).log(LogEvent.info(info2));
     }
   }
 
   @Test
-  public void testResolveMainClass_noneInferredWithBackup()
-      throws MainClassInferenceException, IOException {
-    Mockito.when(mockProjectProperties.getMainClassFromJar()).thenReturn("${start-class}");
-    Mockito.when(mockProjectProperties.getClassFiles())
-        .thenReturn(ImmutableList.of(Paths.get("ignored")));
-    Assert.assertEquals(
-        "${start-class}", MainClassResolver.resolveMainClass(null, mockProjectProperties));
-    Mockito.verify(mockProjectProperties)
-        .log(LogEvent.warn("'mainClass' is not a valid Java class : ${start-class}"));
-  }
-
-  @Test
-  public void testResolveMainClass_noneInferredWithoutBackup() throws IOException {
+  public void testResolveMainClass_noneInferredWithInvalidMainClassFromJarPlugin()
+      throws IOException {
+    Mockito.when(mockProjectProperties.getMainClassFromJarPlugin()).thenReturn("${start-class}");
     Mockito.when(mockProjectProperties.getClassFiles())
         .thenReturn(ImmutableList.of(Paths.get("ignored")));
     try {
@@ -127,6 +160,40 @@ public class MainClassResolverTest {
 
     } catch (MainClassInferenceException ex) {
       Assert.assertThat(ex.getMessage(), CoreMatchers.containsString("Main class was not found"));
+
+      String info1 =
+          "Searching for main class... Add a 'mainClass' configuration to 'jib-plugin' to "
+              + "improve build speed.";
+      String info2 =
+          "Could not find a valid main class from jar-plugin; looking into all class files to "
+              + "infer main class.";
+      String warn =
+          "'mainClass' configured in jar-plugin is not a valid Java class: ${start-class}";
+      Mockito.verify(mockProjectProperties).log(LogEvent.info(info1));
+      Mockito.verify(mockProjectProperties).log(LogEvent.info(info2));
+      Mockito.verify(mockProjectProperties).log(LogEvent.warn(warn));
+    }
+  }
+
+  @Test
+  public void testResolveMainClass_noneInferredWithoutMainClassFromJar() throws IOException {
+    Mockito.when(mockProjectProperties.getClassFiles())
+        .thenReturn(ImmutableList.of(Paths.get("ignored")));
+    try {
+      MainClassResolver.resolveMainClass(null, mockProjectProperties);
+      Assert.fail();
+
+    } catch (MainClassInferenceException ex) {
+      Assert.assertThat(ex.getMessage(), CoreMatchers.containsString("Main class was not found"));
+
+      String info1 =
+          "Searching for main class... Add a 'mainClass' configuration to 'jib-plugin' to "
+              + "improve build speed.";
+      String info2 =
+          "Could not find a valid main class from jar-plugin; looking into all class files to "
+              + "infer main class.";
+      Mockito.verify(mockProjectProperties).log(LogEvent.info(info1));
+      Mockito.verify(mockProjectProperties).log(LogEvent.info(info2));
     }
   }
 

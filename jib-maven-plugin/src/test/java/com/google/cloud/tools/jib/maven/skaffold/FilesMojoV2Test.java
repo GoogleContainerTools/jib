@@ -170,7 +170,8 @@ public class FilesMojoV2Test {
         projectRoot,
         "pom.xml",
         null,
-        Arrays.asList("-Djib.extraDirectories.paths=/some/extra/dir,/another/extra/dir"),
+        Collections.singletonList(
+            "-Djib.extraDirectories.paths=/some/extra/dir,/another/extra/dir"),
         Collections.singletonList(projectRoot.resolve("pom.xml").toString()),
         Arrays.asList(
             projectRoot.resolve("src/main/java").toString(),

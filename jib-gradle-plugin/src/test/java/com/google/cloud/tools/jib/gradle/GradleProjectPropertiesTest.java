@@ -31,6 +31,7 @@ import com.google.cloud.tools.jib.api.buildplan.FilePermissions;
 import com.google.cloud.tools.jib.configuration.BuildContext;
 import com.google.cloud.tools.jib.filesystem.DirectoryWalker;
 import com.google.cloud.tools.jib.filesystem.TempDirectoryProvider;
+import com.google.cloud.tools.jib.gradle.extension.JibGradlePluginExtension;
 import com.google.cloud.tools.jib.plugins.common.ContainerizingMode;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -52,6 +53,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.StringJoiner;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
@@ -62,7 +64,6 @@ import org.gradle.api.file.ConfigurableFileCollection;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.internal.file.AbstractFileCollection;
 import org.gradle.api.internal.file.FileResolver;
-import org.gradle.api.java.archives.Manifest;
 import org.gradle.api.java.archives.internal.DefaultManifest;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.configuration.ConsoleOutput;
@@ -183,6 +184,7 @@ public class GradleProjectPropertiesTest {
   @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
   @Mock private TempDirectoryProvider mockTempDirectoryProvider;
+  @Mock private Supplier<List<JibGradlePluginExtension<?>>> mockExtensionLoader;
   @Mock private FileResolver mockFileResolver;
   @Mock private Convention mockConvention;
   @Mock private TaskContainer mockTaskContainer;
@@ -201,7 +203,6 @@ public class GradleProjectPropertiesTest {
   @Mock(answer = Answers.RETURNS_DEEP_STUBS)
   private TaskProvider<Task> mockBootWarTaskProvider;
 
-  private Manifest manifest;
   private GradleProjectProperties gradleProjectProperties;
 
   @Before
@@ -211,7 +212,6 @@ public class GradleProjectPropertiesTest {
     Mockito.when(mockLogger.isWarnEnabled()).thenReturn(true);
     Mockito.when(mockLogger.isErrorEnabled()).thenReturn(true);
 
-    manifest = new DefaultManifest(mockFileResolver);
     Mockito.when(mockProject.getConvention()).thenReturn(mockConvention);
     Mockito.when(mockConvention.getPlugin(JavaPluginConvention.class))
         .thenReturn(mockJavaPluginConvention);
@@ -258,22 +258,24 @@ public class GradleProjectPropertiesTest {
     Files.createDirectories(emptyDirectory);
 
     gradleProjectProperties =
-        new GradleProjectProperties(mockProject, mockLogger, mockTempDirectoryProvider);
+        new GradleProjectProperties(
+            mockProject, mockLogger, mockTempDirectoryProvider, mockExtensionLoader);
   }
 
   @Test
   public void testGetMainClassFromJar_success() {
+    DefaultManifest manifest = new DefaultManifest(mockFileResolver);
     manifest.attributes(ImmutableMap.of("Main-Class", "some.main.class"));
     Jar mockJar = Mockito.mock(Jar.class);
     Mockito.when(mockJar.getManifest()).thenReturn(manifest);
     Mockito.when(mockTaskContainer.findByName("jar")).thenReturn(mockJar);
-    Assert.assertEquals("some.main.class", gradleProjectProperties.getMainClassFromJar());
+    Assert.assertEquals("some.main.class", gradleProjectProperties.getMainClassFromJarPlugin());
   }
 
   @Test
   public void testGetMainClassFromJar_missing() {
     Mockito.when(mockTaskContainer.findByName("jar")).thenReturn(null);
-    Assert.assertNull(gradleProjectProperties.getMainClassFromJar());
+    Assert.assertNull(gradleProjectProperties.getMainClassFromJarPlugin());
   }
 
   @Test

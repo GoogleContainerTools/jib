@@ -37,6 +37,7 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.Future;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.GradleException;
@@ -85,7 +86,12 @@ public class BuildTarTask extends DefaultTask implements JibTask {
   @InputFiles
   public FileCollection getInputFiles() {
     List<Path> extraDirectories =
-        Preconditions.checkNotNull(jibExtension).getExtraDirectories().getPaths();
+        Preconditions.checkNotNull(jibExtension)
+            .getExtraDirectories()
+            .getPaths()
+            .stream()
+            .map(ExtraDirectoryParameters::getFrom)
+            .collect(Collectors.toList());
     return GradleProjectProperties.getInputFiles(getProject(), extraDirectories);
   }
 

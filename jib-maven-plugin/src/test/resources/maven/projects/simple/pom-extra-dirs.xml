@@ -46,7 +46,10 @@
           <extraDirectories>
             <paths>
               <path>${project.basedir}/src/main/jib-custom</path>
-              <path>${project.basedir}/src/main/jib-custom-2</path>
+              <path>
+                <from>${project.basedir}/src/main/jib-custom-2</from>
+                <into>/custom/target</into>
+              </path>
             </paths>
           </extraDirectories>
         </configuration>

@@ -16,8 +16,6 @@
 
 package com.google.cloud.tools.jib.gradle;
 
-import static org.gradle.api.tasks.SourceSet.MAIN_SOURCE_SET_NAME;
-
 import com.google.cloud.tools.jib.gradle.skaffold.CheckJibVersionTask;
 import com.google.cloud.tools.jib.gradle.skaffold.FilesTaskV2;
 import com.google.cloud.tools.jib.gradle.skaffold.InitTask;
@@ -165,9 +163,6 @@ public class JibPlugin implements Plugin<Project> {
             SyncMapTask.class,
             task -> task.setJibExtension(jibExtension));
 
-    Set<TaskProvider<?>> jibTaskProviders =
-        ImmutableSet.of(buildImageTask, buildDockerTask, buildTarTask, syncMapTask);
-
     // A check to catch older versions of Jib.  This can be removed once we are certain people
     // are using Jib 1.3.1 or later.
     tasks.register(SKAFFOLD_CHECK_REQUIRED_VERSION_TASK_NAME, CheckJibVersionTask.class);
@@ -218,9 +213,11 @@ public class JibPlugin implements Plugin<Project> {
                   .getConvention()
                   .getPlugin(JavaPluginConvention.class)
                   .getSourceSets()
-                  .getByName(MAIN_SOURCE_SET_NAME);
+                  .getByName(SourceSet.MAIN_SOURCE_SET_NAME);
           jibDependencies.add(mainSourceSet.getRuntimeClasspath());
 
+          Set<TaskProvider<?>> jibTaskProviders =
+              ImmutableSet.of(buildImageTask, buildDockerTask, buildTarTask, syncMapTask);
           jibTaskProviders.forEach(
               provider ->
                   provider.configure(task -> jibDependencies.forEach(dep -> task.dependsOn(dep))));

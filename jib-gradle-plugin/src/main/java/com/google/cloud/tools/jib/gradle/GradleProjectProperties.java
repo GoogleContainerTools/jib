@@ -16,7 +16,6 @@
 
 package com.google.cloud.tools.jib.gradle;
 
-import com.google.api.client.util.Lists;
 import com.google.cloud.tools.jib.api.Containerizer;
 import com.google.cloud.tools.jib.api.ImageReference;
 import com.google.cloud.tools.jib.api.InvalidImageReferenceException;
@@ -32,6 +31,7 @@ import com.google.cloud.tools.jib.filesystem.TempDirectoryProvider;
 import com.google.cloud.tools.jib.gradle.extension.JibGradlePluginExtension;
 import com.google.cloud.tools.jib.plugins.common.ContainerizingMode;
 import com.google.cloud.tools.jib.plugins.common.JavaContainerBuilderHelper;
+import com.google.cloud.tools.jib.plugins.common.PluginExtensionLogger;
 import com.google.cloud.tools.jib.plugins.common.ProjectProperties;
 import com.google.cloud.tools.jib.plugins.common.PropertyNames;
 import com.google.cloud.tools.jib.plugins.common.RawConfiguration.ExtensionConfiguration;
@@ -42,6 +42,7 @@ import com.google.cloud.tools.jib.plugins.common.logging.ConsoleLoggerBuilder;
 import com.google.cloud.tools.jib.plugins.common.logging.ProgressDisplayGenerator;
 import com.google.cloud.tools.jib.plugins.common.logging.SingleThreadedExecutor;
 import com.google.cloud.tools.jib.plugins.extension.JibPluginExtensionException;
+import com.google.cloud.tools.jib.plugins.extension.NullExtension;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Verify;
 import java.io.File;
@@ -52,11 +53,14 @@ import java.nio.file.Paths;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.ServiceLoader;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import org.apache.tools.ant.taskdefs.condition.Os;
+import org.gradle.api.Action;
 import org.gradle.api.GradleException;
 import org.gradle.api.JavaVersion;
 import org.gradle.api.Project;
@@ -103,7 +107,16 @@ public class GradleProjectProperties implements ProjectProperties {
    */
   public static GradleProjectProperties getForProject(
       Project project, Logger logger, TempDirectoryProvider tempDirectoryProvider) {
-    return new GradleProjectProperties(project, logger, tempDirectoryProvider);
+    Supplier<List<JibGradlePluginExtension<?>>> extensionLoader =
+        () -> {
+          List<JibGradlePluginExtension<?>> extensions = new ArrayList<>();
+          for (JibGradlePluginExtension<?> extension :
+              ServiceLoader.load(JibGradlePluginExtension.class)) {
+            extensions.add(extension);
+          }
+          return extensions;
+        };
+    return new GradleProjectProperties(project, logger, tempDirectoryProvider, extensionLoader);
   }
 
   String getWarFilePath() {
@@ -138,12 +151,17 @@ public class GradleProjectProperties implements ProjectProperties {
   private final SingleThreadedExecutor singleThreadedExecutor = new SingleThreadedExecutor();
   private final ConsoleLogger consoleLogger;
   private final TempDirectoryProvider tempDirectoryProvider;
+  private final Supplier<List<JibGradlePluginExtension<?>>> extensionLoader;
 
   @VisibleForTesting
   GradleProjectProperties(
-      Project project, Logger logger, TempDirectoryProvider tempDirectoryProvider) {
+      Project project,
+      Logger logger,
+      TempDirectoryProvider tempDirectoryProvider,
+      Supplier<List<JibGradlePluginExtension<?>>> extensionLoader) {
     this.project = project;
     this.tempDirectoryProvider = tempDirectoryProvider;
+    this.extensionLoader = extensionLoader;
     ConsoleLoggerBuilder consoleLoggerBuilder =
         (isProgressFooterEnabled(project)
                 ? ConsoleLoggerBuilder.rich(singleThreadedExecutor, false)
@@ -323,7 +341,7 @@ public class GradleProjectProperties implements ProjectProperties {
 
   @Nullable
   @Override
-  public String getMainClassFromJar() {
+  public String getMainClassFromJarPlugin() {
     Jar jarTask = (Jar) project.getTasks().findByName("jar");
     if (jarTask == null) {
       return null;
@@ -402,40 +420,21 @@ public class GradleProjectProperties implements ProjectProperties {
       List<? extends ExtensionConfiguration> extensionConfigs,
       JibContainerBuilder jibContainerBuilder)
       throws JibPluginExtensionException {
-    List<JibGradlePluginExtension> services =
-        Lists.newArrayList(ServiceLoader.load(JibGradlePluginExtension.class).iterator());
-    return runPluginExtensions(services, extensionConfigs, jibContainerBuilder);
-  }
-
-  @VisibleForTesting
-  JibContainerBuilder runPluginExtensions(
-      List<JibGradlePluginExtension> services,
-      List<? extends ExtensionConfiguration> extensionConfigs,
-      JibContainerBuilder jibContainerBuilder)
-      throws JibPluginExtensionException {
     if (extensionConfigs.isEmpty()) {
       log(LogEvent.debug("No Jib plugin extensions configured to load"));
       return jibContainerBuilder;
     }
 
-    JibGradlePluginExtension extension = null;
+    List<JibGradlePluginExtension<?>> loadedExtensions = extensionLoader.get();
+    JibGradlePluginExtension<?> extension = null;
     ContainerBuildPlan buildPlan = jibContainerBuilder.toContainerBuildPlan();
-    GradleExtensionLogger extensionLogger = new GradleExtensionLogger(this::log);
     try {
       for (ExtensionConfiguration config : extensionConfigs) {
-        String extensionClass = config.getExtensionClass();
-        extension = findConfiguredExtension(services, extensionClass);
-        if (extension == null) {
-          throw new JibPluginExtensionException(
-              JibGradlePluginExtension.class,
-              "extension configured but not discovered on Jib runtime classpath: "
-                  + extensionClass);
-        }
+        extension = findConfiguredExtension(loadedExtensions, config);
 
-        log(LogEvent.lifecycle("Running extension: " + extensionClass));
+        log(LogEvent.lifecycle("Running extension: " + config.getExtensionClass()));
         buildPlan =
-            extension.extendContainerBuildPlan(
-                buildPlan, config.getProperties(), () -> project, extensionLogger);
+            runPluginExtension(extension.getExtraConfigType(), extension, config, buildPlan);
         ImageReference.parse(buildPlan.getBaseImage()); // to validate image reference
       }
       return jibContainerBuilder.applyContainerBuildPlan(buildPlan);
@@ -448,11 +447,49 @@ public class GradleProjectProperties implements ProjectProperties {
     }
   }
 
-  @Nullable
-  private JibGradlePluginExtension findConfiguredExtension(
-      List<JibGradlePluginExtension> extensions, String extensionClass) {
-    Predicate<JibGradlePluginExtension> matchesClassName =
-        extension -> extension.getClass().getName().equals(extensionClass);
-    return extensions.stream().filter(matchesClassName).findFirst().orElse(null);
+  // Unchecked casting: "getExtraConfiguration().get()" (Object) to Action<T> and "extension"
+  // (JibGradlePluginExtension<?>) to JibGradlePluginExtension<T> where T is the extension-defined
+  // config type (as requested by "JibGradlePluginExtension.getExtraConfigType()").
+  @SuppressWarnings({"unchecked"})
+  private <T> ContainerBuildPlan runPluginExtension(
+      Optional<Class<T>> extraConfigType,
+      JibGradlePluginExtension<?> extension,
+      ExtensionConfiguration config,
+      ContainerBuildPlan buildPlan)
+      throws JibPluginExtensionException {
+    T extraConfig = null;
+    if (extraConfigType.isPresent() && config.getExtraConfiguration().isPresent()) {
+      try {
+        Action<T> action = (Action<T>) config.getExtraConfiguration().get();
+        extraConfig = project.getObjects().newInstance(extraConfigType.get());
+        action.execute(extraConfig);
+      } catch (ClassCastException ex) {
+        throw ex; // TODO(chanseok): provide helpful and actionable message
+      }
+    }
+
+    return ((JibGradlePluginExtension<T>) extension)
+        .extendContainerBuildPlan(
+            buildPlan,
+            config.getProperties(),
+            Optional.ofNullable(extraConfig),
+            () -> project,
+            new PluginExtensionLogger(this::log));
+  }
+
+  private JibGradlePluginExtension<?> findConfiguredExtension(
+      List<JibGradlePluginExtension<?>> extensions, ExtensionConfiguration config)
+      throws JibPluginExtensionException {
+    Predicate<JibGradlePluginExtension<?>> matchesClassName =
+        extension -> extension.getClass().getName().equals(config.getExtensionClass());
+    Optional<JibGradlePluginExtension<?>> found =
+        extensions.stream().filter(matchesClassName).findFirst();
+    if (!found.isPresent()) {
+      throw new JibPluginExtensionException(
+          NullExtension.class,
+          "extension configured but not discovered on Jib runtime classpath: "
+              + config.getExtensionClass());
+    }
+    return found.get();
   }
 }

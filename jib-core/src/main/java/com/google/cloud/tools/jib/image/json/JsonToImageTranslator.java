@@ -32,6 +32,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.List;
@@ -147,8 +148,16 @@ public class JsonToImageTranslator {
       try {
         imageBuilder.setCreated(Instant.parse(containerConfigurationTemplate.getCreated()));
       } catch (DateTimeParseException ex) {
-        throw new BadContainerConfigurationFormatException(
-            "Invalid image creation time: " + containerConfigurationTemplate.getCreated(), ex);
+        try {
+          // TODO: remove when using Java >= 12.
+          // See https://github.com/GoogleContainerTools/jib/issues/2428
+          imageBuilder.setCreated(
+              DateTimeFormatter.ISO_OFFSET_DATE_TIME.parse(
+                  containerConfigurationTemplate.getCreated(), Instant::from));
+        } catch (DateTimeParseException ignored) {
+          throw new BadContainerConfigurationFormatException(
+              "Invalid image creation time: " + containerConfigurationTemplate.getCreated(), ex);
+        }
       }
     }
 
