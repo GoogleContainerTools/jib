@@ -242,8 +242,6 @@ public class UpdateChecker {
    * @throws IOException if the move fails
    */
   private static void tryAtomicMove(Path source, Path destination) throws IOException {
-    // Attempts an atomic move first, and falls back to non-atomic if the file system does not
-    // support atomic moves.
     try {
       Files.move(
           source, destination, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
