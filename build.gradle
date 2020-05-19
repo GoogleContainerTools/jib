@@ -60,7 +60,9 @@ subprojects {
 
     // for Build Plan and Jib Plugins Extension API
     BUILD_PLAN: '0.1.0',
-    EXTENSION_COMMON: '0.1.0',
+    EXTENSION_COMMON: '0.2.0',
+    GRADLE_EXTENSION: '0.2.0',
+    MAVEN_EXTENSION: '0.2.0',
 
     COMMONS_COMPRESS: '1.19',
     JACKSON_DATABIND: '2.9.10',

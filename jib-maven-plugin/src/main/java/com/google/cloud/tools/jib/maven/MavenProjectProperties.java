@@ -590,12 +590,11 @@ public class MavenProjectProperties implements ProjectProperties {
     Optional<T> extraConfig = Optional.empty();
     if (config.getExtraConfiguration().isPresent()) {
       if (!extraConfigType.isPresent()) {
-        log(
-            LogEvent.warn(
-                "extension "
-                    + extension.getClass().getSimpleName()
-                    + " does not expect extension-specific configruation; will ignore "
-                    + "<pluginExtension><configuration> specified in pom.xml"));
+        throw new IllegalArgumentException(
+            "extension "
+                + extension.getClass().getSimpleName()
+                + " does not expect extension-specific configruation; remove the inapplicable "
+                + "<pluginExtension><configuration> from pom.xml");
       } else if (!extraConfigType.get().isInstance(config.getExtraConfiguration().get())) {
         throw new JibPluginExtensionException(
             extension.getClass(),

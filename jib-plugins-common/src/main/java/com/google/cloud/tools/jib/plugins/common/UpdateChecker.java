@@ -48,6 +48,7 @@ import java.util.function.Consumer;
 public class UpdateChecker {
 
   private static final String CONFIG_FILENAME = "config.json";
+  private static final String LAST_UPDATE_CHECK_FILENAME = "lastUpdateCheck";
 
   /** JSON template for the configuration file used to enable/disable update checks. */
   @VisibleForTesting
@@ -99,7 +100,7 @@ public class UpdateChecker {
     }
 
     Path configFile = configDir.resolve(CONFIG_FILENAME);
-    Path lastUpdateCheck = configDir.resolve("lastUpdateCheck");
+    Path lastUpdateCheck = configDir.resolve(LAST_UPDATE_CHECK_FILENAME);
 
     try {
       // Check global config
@@ -127,17 +128,7 @@ public class UpdateChecker {
         Path tempConfigFile = configDir.resolve(CONFIG_FILENAME + ".tmp");
         try (OutputStream outputStream = Files.newOutputStream(tempConfigFile)) {
           JsonTemplateMapper.writeTo(config, outputStream);
-          // Attempts an atomic move first, and falls back to non-atomic if the file system does not
-          // support atomic moves.
-          try {
-            Files.move(
-                tempConfigFile,
-                configFile,
-                StandardCopyOption.ATOMIC_MOVE,
-                StandardCopyOption.REPLACE_EXISTING);
-          } catch (AtomicMoveNotSupportedException ignored) {
-            Files.move(tempConfigFile, configFile, StandardCopyOption.REPLACE_EXISTING);
-          }
+          tryAtomicMove(tempConfigFile, configFile);
         } catch (IOException ex) {
           // If attempt to generate new config file failed, delete so we can try again next time
           log.accept(LogEvent.debug("Failed to generate global Jib config; " + ex.getMessage()));
@@ -182,7 +173,9 @@ public class UpdateChecker {
                     .build());
         VersionJsonTemplate version =
             JsonTemplateMapper.readJson(response.getBody(), VersionJsonTemplate.class);
-        Files.write(lastUpdateCheck, Instant.now().toString().getBytes(StandardCharsets.UTF_8));
+        Path lastUpdateCheckTemp = configDir.resolve(LAST_UPDATE_CHECK_FILENAME + ".tmp");
+        Files.write(lastUpdateCheckTemp, Instant.now().toString().getBytes(StandardCharsets.UTF_8));
+        tryAtomicMove(lastUpdateCheckTemp, lastUpdateCheck);
         if (currentVersion.equals(version.latest)) {
           return Optional.empty();
         }
@@ -238,6 +231,23 @@ public class UpdateChecker {
       return Paths.get(configDirProperty);
     }
     return XdgDirectories.getConfigHome();
+  }
+
+  /**
+   * Attempts an atomic move first, and falls back to non-atomic if the file system does not support
+   * atomic moves.
+   *
+   * @param source the source path
+   * @param destination the destination path
+   * @throws IOException if the move fails
+   */
+  private static void tryAtomicMove(Path source, Path destination) throws IOException {
+    try {
+      Files.move(
+          source, destination, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
+    } catch (AtomicMoveNotSupportedException ignored) {
+      Files.move(source, destination, StandardCopyOption.REPLACE_EXISTING);
+    }
   }
 
   private UpdateChecker() {}
