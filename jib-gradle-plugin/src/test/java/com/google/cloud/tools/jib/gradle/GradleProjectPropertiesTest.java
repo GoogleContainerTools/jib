@@ -184,7 +184,7 @@ public class GradleProjectPropertiesTest {
   @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
   @Mock private TempDirectoryProvider mockTempDirectoryProvider;
-  @Mock private Supplier<List<JibGradlePluginExtension>> mockExtensionLoader;
+  @Mock private Supplier<List<JibGradlePluginExtension<?>>> mockExtensionLoader;
   @Mock private FileResolver mockFileResolver;
   @Mock private Convention mockConvention;
   @Mock private TaskContainer mockTaskContainer;

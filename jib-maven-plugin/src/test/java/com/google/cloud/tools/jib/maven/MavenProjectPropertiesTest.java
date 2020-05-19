@@ -241,7 +241,7 @@ public class MavenProjectPropertiesTest {
   @Mock private PluginExecution mockPluginExecution;
   @Mock private Log mockLog;
   @Mock private TempDirectoryProvider mockTempDirectoryProvider;
-  @Mock private Supplier<List<JibMavenPluginExtension>> mockExtensionLoader;
+  @Mock private Supplier<List<JibMavenPluginExtension<?>>> mockExtensionLoader;
 
   private MavenProjectProperties mavenProjectProperties;
 

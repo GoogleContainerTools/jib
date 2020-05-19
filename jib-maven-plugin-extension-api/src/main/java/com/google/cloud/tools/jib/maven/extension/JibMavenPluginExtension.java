@@ -21,6 +21,7 @@ import com.google.cloud.tools.jib.plugins.extension.ExtensionLogger;
 import com.google.cloud.tools.jib.plugins.extension.JibPluginExtension;
 import com.google.cloud.tools.jib.plugins.extension.JibPluginExtensionException;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * Jib Maven plugin extension API.
@@ -29,13 +30,29 @@ import java.util.Map;
  * the plugin is configured to load the extension class, the Jib plugin extension framework calls
  * the interface method of the class.
  */
-public interface JibMavenPluginExtension extends JibPluginExtension {
+public interface JibMavenPluginExtension<T> extends JibPluginExtension {
+
+  /**
+   * The type of an custom configuration defined by this extension. The configuration object is
+   * mapped from {@code <pluginExtensions><pluginExtension><configuration>}. Often, it is sufficient
+   * to leverage {@code <pluginExtensions><pluginExtension><properties>} and the extension may not
+   * wish to define a custom configuration; in that case, use {@link Void} for &lt;T&gt; and have
+   * this method return {@code Optional#empty()}. (Don't return {@code Optional.of(Void.class)}.)
+   *
+   * @return type of an extension-specific custom configuration; {@code Optional.empty()} if no need
+   *     to define custom configuration
+   */
+  Optional<Class<T>> getExtraConfigType();
 
   /**
    * Extends the build plan prepared by the Jib Maven plugin.
    *
    * @param buildPlan original build plan prepared by the Jib Maven plugin
    * @param properties custom properties configured for the plugin extension
+   * @param extraConfig extension-specific custom configuration mapped from {@code
+   *     <pluginExtensions><pluginExtension><configuration>} of type &lt;T&gt;. {@link
+   *     Optional#empty()} when {@link #getExtraConfigType()} returns {@link Optional#empty()} or
+   *     {@code <configuration>} is not specified by the extension user.
    * @param mavenData {@link MavenData} providing Maven-specific data and properties
    * @param logger logger for writing log messages
    * @return updated build plan
@@ -44,6 +61,7 @@ public interface JibMavenPluginExtension extends JibPluginExtension {
   ContainerBuildPlan extendContainerBuildPlan(
       ContainerBuildPlan buildPlan,
       Map<String, String> properties,
+      Optional<T> extraConfig,
       MavenData mavenData,
       ExtensionLogger logger)
       throws JibPluginExtensionException;
