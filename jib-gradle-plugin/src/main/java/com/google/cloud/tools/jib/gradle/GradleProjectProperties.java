@@ -458,13 +458,19 @@ public class GradleProjectProperties implements ProjectProperties {
       ContainerBuildPlan buildPlan)
       throws JibPluginExtensionException {
     T extraConfig = null;
-    if (extraConfigType.isPresent() && config.getExtraConfiguration().isPresent()) {
-      try {
+    if (config.getExtraConfiguration().isPresent()) {
+      if (!extraConfigType.isPresent()) {
+        throw new IllegalArgumentException(
+            "extension "
+                + extension.getClass().getSimpleName()
+                + " does not expect extension-specific configruation; remove the inapplicable "
+                + "'pluginExtension.configuration' from Gradle build script");
+      } else {
+        // config.getExtraConfiguration().get() is of type Action, so this cast always succeeds.
+        // (Note generic <T> is erased at runtime.)
         Action<T> action = (Action<T>) config.getExtraConfiguration().get();
         extraConfig = project.getObjects().newInstance(extraConfigType.get());
         action.execute(extraConfig);
-      } catch (ClassCastException ex) {
-        throw ex; // TODO(chanseok): provide helpful and actionable message
       }
     }
 
