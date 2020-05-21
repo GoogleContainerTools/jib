@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+### Changed
+
+### Fixed
+
+## 0.14.0
+
+### Added
+
 - Multiple additions to `ImageReference` to separate `tag` and `digest`. ([#1481](https://github.com/GoogleContainerTools/jib/issues/1481))
     - `of(registry, repository, tag, digest)` to create an image from a tag and digest.
     - `isValidDigest(digest)` to check if a string is a valid digest.
