@@ -426,4 +426,23 @@ public class GradleProjectPropertiesExtensionTest {
           ex.getMessage());
     }
   }
+
+  @Test
+  public void testRunPluginExtensions_runtimeExceptionFromExtension() {
+    FooExtension extension =
+        new FooExtension(
+            (buildPlan, properties, extraConfig, mavenData, logger) -> {
+              throw new IndexOutOfBoundsException("buggy extension");
+            });
+    loadedExtensions = Arrays.asList(extension);
+
+    try {
+      gradleProjectProperties.runPluginExtensions(
+          Arrays.asList(new FooExtensionConfig()), containerBuilder);
+      Assert.fail();
+    } catch (JibPluginExtensionException ex) {
+      Assert.assertEquals(FooExtension.class, ex.getExtensionClass());
+      Assert.assertEquals("extension crashed: buggy extension", ex.getMessage());
+    }
+  }
 }
