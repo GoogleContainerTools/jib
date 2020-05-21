@@ -418,7 +418,7 @@ You can configure different directories by using the `<extraDirectories>` parame
   <!-- Copies files from 'src/main/custom-extra-dir' and '/home/user/jib-extras' instead of 'src/main/jib' -->
   <extraDirectories>
     <paths>
-       <!-- Copies from 'src/main/custom-extra-dir' into '/' on the container -->
+      <!-- Copies from 'src/main/custom-extra-dir' into '/' on the container. -->
       <path>src/main/custom-extra-dir</path>
       <!-- Copies from '/home/user/jib-extras' into '/extras' on the container -->
       <path>
