@@ -9,6 +9,8 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
+- Fixed authentication failure with Azure Container Registry when using an identity token defined in the `auths` section of Docker config (`~/.docker/config.json`). ([#2488](https://github.com/GoogleContainerTools/jib/pull/2488))
+
 ## 0.14.0
 
 ### Added
@@ -38,7 +40,6 @@ All notable changes to this project will be documented in this file.
 - Fixed the problem not inheriting `USER` container configuration from a base image. ([#2421](https://github.com/GoogleContainerTools/jib/pull/2421))
 - Fixed wrong capitalization of JSON properties in a loadable Docker manifest when building a tar image. ([#2430](https://github.com/GoogleContainerTools/jib/issues/2430))
 - Fixed an issue when using a base image whose image creation timestamp contains timezone offset. ([#2428](https://github.com/GoogleContainerTools/jib/issues/2428))
-- Fixed authentication failure with Azure Container Registry when using an identity token defined in the `auths` section of Docker config (`~/.docker/config.json`). ([#2488](https://github.com/GoogleContainerTools/jib/pull/2488))
 
 ## 0.13.1
 
