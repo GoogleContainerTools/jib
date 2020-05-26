@@ -76,23 +76,8 @@ public class FileEntry {
 
   /**
    * Instantiates with a source file and the path to place the source file in the container file
-   * system.
-   *
-   * <p>For example, {@code new FileEntry(Paths.get("HelloWorld.class"),
-   * AbsoluteUnixPath.get("/app/classes/HelloWorld.class"))} adds a file {@code HelloWorld.class} to
-   * the container file system at {@code /app/classes/HelloWorld.class}.
-   *
-   * <p>For example, {@code new FileEntry(Paths.get("com"),
-   * AbsoluteUnixPath.get("/app/classes/com"))} adds a directory to the container file system at
-   * {@code /app/classes/com}. This does <b>not</b> add the contents of {@code com/}.
-   *
-   * <p>Note that:
-   *
-   * <ul>
-   *   <li>Entry source files can be either files or directories.
-   *   <li>Adding a directory does not include the contents of the directory. Each file under a
-   *       directory must be added as a separate {@link FileEntry}.
-   * </ul>
+   * system. See {@link #FileEntry(Path, AbsoluteUnixPath, FilePermissions, Instant)} for more
+   * information.
    *
    * @param sourceFile the source file to add to the layer
    * @param extractionPath the path in the container file system corresponding to the {@code

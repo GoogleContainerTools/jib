@@ -69,7 +69,7 @@ public class FileEntriesLayerTest {
   }
 
   @Test
-  public void testAddEntryRecursive_permissionsAndTimestamps()
+  public void testAddEntryRecursive_otherFileEntryProperties()
       throws IOException, URISyntaxException {
     Path testDirectory = Paths.get(Resources.getResource("core/layer").toURI()).toAbsolutePath();
     Path testFile = Paths.get(Resources.getResource("core/fileA").toURI());
@@ -78,6 +78,8 @@ public class FileEntriesLayerTest {
     FilePermissions permissions2 = FilePermissions.fromOctalString("777");
     Instant timestamp1 = Instant.ofEpochSecond(123);
     Instant timestamp2 = Instant.ofEpochSecond(987);
+    String ownership1 = "root";
+    String ownership2 = "nobody:65432";
 
     BiFunction<Path, AbsoluteUnixPath, FilePermissions> permissionsProvider =
         (source, destination) ->
@@ -85,56 +87,81 @@ public class FileEntriesLayerTest {
     BiFunction<Path, AbsoluteUnixPath, Instant> timestampProvider =
         (source, destination) ->
             destination.toString().startsWith("/app/layer/a") ? timestamp1 : timestamp2;
+    BiFunction<Path, AbsoluteUnixPath, String> ownershipProvider =
+        (source, destination) ->
+            destination.toString().startsWith("/app/layer/a") ? ownership1 : ownership2;
 
     FileEntriesLayer layer =
         FileEntriesLayer.builder()
+            .addEntry(
+                new FileEntry(
+                    Paths.get("foo"), AbsoluteUnixPath.get("/foo"), permissions1, timestamp1))
             .addEntryRecursive(
                 testDirectory,
                 AbsoluteUnixPath.get("/app/layer/"),
                 permissionsProvider,
-                timestampProvider)
+                timestampProvider,
+                ownershipProvider)
             .addEntryRecursive(
                 testFile,
                 AbsoluteUnixPath.get("/app/fileA"),
                 permissionsProvider,
-                timestampProvider)
+                timestampProvider,
+                ownershipProvider)
             .build();
 
     ImmutableSet<FileEntry> expectedLayerEntries =
         ImmutableSet.of(
             new FileEntry(
-                testDirectory, AbsoluteUnixPath.get("/app/layer/"), permissions2, timestamp2),
+                Paths.get("foo"), AbsoluteUnixPath.get("/foo"), permissions1, timestamp1, "0:0"),
+            new FileEntry(
+                testDirectory,
+                AbsoluteUnixPath.get("/app/layer/"),
+                permissions2,
+                timestamp2,
+                ownership2),
             new FileEntry(
                 testDirectory.resolve("a"),
                 AbsoluteUnixPath.get("/app/layer/a/"),
                 permissions1,
-                timestamp1),
+                timestamp1,
+                ownership1),
             new FileEntry(
                 testDirectory.resolve("a/b"),
                 AbsoluteUnixPath.get("/app/layer/a/b/"),
                 permissions1,
-                timestamp1),
+                timestamp1,
+                ownership1),
             new FileEntry(
                 testDirectory.resolve("a/b/bar"),
                 AbsoluteUnixPath.get("/app/layer/a/b/bar/"),
                 permissions1,
-                timestamp1),
+                timestamp1,
+                ownership1),
             new FileEntry(
                 testDirectory.resolve("c/"),
                 AbsoluteUnixPath.get("/app/layer/c"),
                 permissions2,
-                timestamp2),
+                timestamp2,
+                ownership2),
             new FileEntry(
                 testDirectory.resolve("c/cat/"),
                 AbsoluteUnixPath.get("/app/layer/c/cat"),
                 permissions2,
-                timestamp2),
+                timestamp2,
+                ownership2),
             new FileEntry(
                 testDirectory.resolve("foo"),
                 AbsoluteUnixPath.get("/app/layer/foo"),
                 permissions2,
-                timestamp2),
-            new FileEntry(testFile, AbsoluteUnixPath.get("/app/fileA"), permissions2, timestamp2));
+                timestamp2,
+                ownership2),
+            new FileEntry(
+                testFile,
+                AbsoluteUnixPath.get("/app/fileA"),
+                permissions2,
+                timestamp2,
+                ownership2));
 
     Assert.assertEquals(expectedLayerEntries, ImmutableSet.copyOf(layer.getEntries()));
   }
