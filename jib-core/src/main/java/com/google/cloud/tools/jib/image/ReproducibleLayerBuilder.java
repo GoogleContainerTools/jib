@@ -115,6 +115,34 @@ public class ReproducibleLayerBuilder {
       entry.setMode((entry.getMode() & ~0777) | layerEntry.getPermissions().getPermissionBits());
       entry.setModTime(layerEntry.getModificationTime().toEpochMilli());
 
+      entry.setUserId(0);
+      entry.setGroupId(0);
+      entry.setUserName("");
+      entry.setGroupName("");
+      if (!layerEntry.getOwnership().isEmpty()) {
+        String user = layerEntry.getOwnership();
+        String group = "";
+        int colonIndex = user.indexOf(':');
+        if (colonIndex != -1) {
+          group = user.substring(colonIndex + 1);
+          user = user.substring(0, colonIndex);
+        }
+        if (!user.isEmpty()) {
+          try {
+            entry.setUserId(Long.parseLong(user));
+          } catch (NumberFormatException ignored) {
+            entry.setUserName(user);
+          }
+        }
+        if (!group.isEmpty()) {
+          try {
+            entry.setGroupId(Long.parseLong(group));
+          } catch (NumberFormatException ignored) {
+            entry.setGroupName(group);
+          }
+        }
+      }
+
       uniqueTarArchiveEntries.add(entry);
     }
 
@@ -126,13 +154,6 @@ public class ReproducibleLayerBuilder {
     // Adds all the files to a tar stream.
     TarStreamBuilder tarStreamBuilder = new TarStreamBuilder();
     for (TarArchiveEntry entry : sortedFilesystemEntries) {
-      // Strips out all non-reproducible elements from tar archive entries.
-      // Modification time is configured per entry
-      entry.setGroupId(0);
-      entry.setUserId(0);
-      entry.setUserName("");
-      entry.setGroupName("");
-
       Verify.verify(!names.contains(entry.getName()));
       names.add(entry.getName());
 

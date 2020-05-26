@@ -174,13 +174,13 @@ public class FileEntriesLayerTest {
                 new FileEntry(
                     Paths.get("foo"),
                     AbsoluteUnixPath.get("/foo"),
-                    new FilePermissions(000),
+                    FilePermissions.fromOctalString("000"),
                     Instant.EPOCH))
             .addEntry(
                 new FileEntry(
                     Paths.get("bar"),
                     AbsoluteUnixPath.get("/bar"),
-                    new FilePermissions(666),
+                    FilePermissions.fromOctalString("666"),
                     Instant.EPOCH,
                     "nobody:65432"))
             .build();
