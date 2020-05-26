@@ -170,8 +170,9 @@ public class FileEntriesLayer implements LayerObject {
      *     sourceFile}
      * @param permissions the file permissions on the container
      * @param modificationTime the file modification time
-     * @param ownership file ownership. For example, "0", "1234", "user", ":0", ":5678", ":group",
-     *     "0:0", "1234:5678", and "user:group".
+     * @param ownership file ownership. For example, "1234", "user", ":5678", ":group", "1234:5678",
+     *     and "user:group". Note that "" (empty string), ":" (single colon), "0:", ":0" are allowed
+     *     and representative of "0:0" or "root:root", but prefer an empty string for "0:0".
      * @return this
      * @see Builder#addEntry(Path, AbsoluteUnixPath)
      * @see FilePermissions#DEFAULT_FILE_PERMISSIONS
@@ -327,7 +328,7 @@ public class FileEntriesLayer implements LayerObject {
 
   /** Provider that returns default file ownership ("0:0"). */
   public static final BiFunction<Path, AbsoluteUnixPath, String> DEFAULT_OWNERSHIP_PROVIDER =
-      (sourcePath, destinationPath) -> "0:0";
+      (sourcePath, destinationPath) -> "";
 
   /**
    * Gets a new {@link Builder} for {@link FileEntriesLayer}.
