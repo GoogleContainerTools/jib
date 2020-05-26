@@ -326,7 +326,10 @@ public class FileEntriesLayer implements LayerObject {
       DEFAULT_MODIFICATION_TIME_PROVIDER =
           (sourcePath, destinationPath) -> DEFAULT_MODIFICATION_TIME;
 
-  /** Provider that returns default file ownership ("0:0"). */
+  /**
+   * Provider that returns default file ownership (an empty string "" effectively representing
+   * "0:0").
+   */
   public static final BiFunction<Path, AbsoluteUnixPath, String> DEFAULT_OWNERSHIP_PROVIDER =
       (sourcePath, destinationPath) -> "";
 
