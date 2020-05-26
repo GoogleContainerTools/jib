@@ -23,7 +23,10 @@ import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Instant;
+import java.util.Arrays;
+import java.util.List;
 import java.util.function.BiFunction;
+import java.util.stream.Collectors;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -134,5 +137,29 @@ public class FileEntriesLayerTest {
             new FileEntry(testFile, AbsoluteUnixPath.get("/app/fileA"), permissions2, timestamp2));
 
     Assert.assertEquals(expectedLayerEntries, ImmutableSet.copyOf(layer.getEntries()));
+  }
+
+  @Test
+  public void testAddEntryRecursive_owners() {
+    FileEntriesLayer layer =
+        FileEntriesLayer.builder()
+            .addEntry(
+                new FileEntry(
+                    Paths.get("foo"),
+                    AbsoluteUnixPath.get("/foo"),
+                    new FilePermissions(000),
+                    Instant.EPOCH))
+            .addEntry(
+                new FileEntry(
+                    Paths.get("bar"),
+                    AbsoluteUnixPath.get("/bar"),
+                    new FilePermissions(666),
+                    Instant.EPOCH,
+                    "nobody:65432"))
+            .build();
+
+    List<String> owners =
+        layer.getEntries().stream().map(FileEntry::getOwnership).collect(Collectors.toList());
+    Assert.assertEquals(Arrays.asList("0:0", "nobody:65432"), owners);
   }
 }

@@ -43,14 +43,16 @@ import java.util.Objects;
  *     "extractionPath": "/extraction/path/for/layer/entry/1"
  *     "sourceModificationTime": "2018-10-03T15:48:32.416152Z"
  *     "targetModificationTime": "1970-01-01T00:00:01Z",
- *     "permissions": "777"
+ *     "permissions": "777",
+ *     "ownership": "0:0"
  *   },
  *   {
  *     "sourceFile": "source/file/for/layer/entry/2",
  *     "extractionPath": "/extraction/path/for/layer/entry/2"
  *     "sourceModificationTime": "2018-10-03T15:48:32.416152Z"
  *     "targetModificationTime": "1970-01-01T00:00:01Z",
- *     "permissions": "777"
+ *     "permissions": "777",
+ *     "ownership": "alice:1234"
  *   }
  * ]
  * }</pre>
@@ -66,6 +68,7 @@ class LayerEntriesSelector {
     private final Instant sourceModificationTime;
     private final Instant targetModificationTime;
     private final String permissions;
+    private final String ownership;
 
     @VisibleForTesting
     LayerEntryTemplate(FileEntry layerEntry) throws IOException {
@@ -74,6 +77,7 @@ class LayerEntriesSelector {
       sourceModificationTime = Files.getLastModifiedTime(layerEntry.getSourceFile()).toInstant();
       targetModificationTime = layerEntry.getModificationTime();
       permissions = layerEntry.getPermissions().toOctalString();
+      ownership = layerEntry.getOwnership();
     }
 
     @Override
@@ -97,7 +101,11 @@ class LayerEntriesSelector {
       if (targetModificationTimeComparison != 0) {
         return targetModificationTimeComparison;
       }
-      return permissions.compareTo(otherLayerEntryTemplate.permissions);
+      int permissionsComparison = permissions.compareTo(otherLayerEntryTemplate.permissions);
+      if (permissionsComparison != 0) {
+        return permissionsComparison;
+      }
+      return ownership.compareTo(otherLayerEntryTemplate.ownership);
     }
 
     @Override
@@ -113,13 +121,19 @@ class LayerEntriesSelector {
           && extractionPath.equals(otherLayerEntryTemplate.extractionPath)
           && sourceModificationTime.equals(otherLayerEntryTemplate.sourceModificationTime)
           && targetModificationTime.equals(otherLayerEntryTemplate.targetModificationTime)
-          && permissions.equals(otherLayerEntryTemplate.permissions);
+          && permissions.equals(otherLayerEntryTemplate.permissions)
+          && ownership.equals(otherLayerEntryTemplate.ownership);
     }
 
     @Override
     public int hashCode() {
       return Objects.hash(
-          sourceFile, extractionPath, sourceModificationTime, targetModificationTime, permissions);
+          sourceFile,
+          extractionPath,
+          sourceModificationTime,
+          targetModificationTime,
+          permissions,
+          ownership);
     }
   }
 
