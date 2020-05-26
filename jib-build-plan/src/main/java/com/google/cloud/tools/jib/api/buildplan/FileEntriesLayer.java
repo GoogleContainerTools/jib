@@ -161,6 +161,33 @@ public class FileEntriesLayer implements LayerObject {
     }
 
     /**
+     * Adds an entry to the layer with the given permissions and file modification time. Only adds
+     * the single source file to the exact path in the container file system. See {@link
+     * Builder#addEntry(Path, AbsoluteUnixPath)} for more information.
+     *
+     * @param sourceFile the source file to add to the layer
+     * @param pathInContainer the path in the container file system corresponding to the {@code
+     *     sourceFile}
+     * @param permissions the file permissions on the container
+     * @param modificationTime the file modification time
+     * @param ownership file ownership. For example, "0", "1234", "user", ":0", ":5678", ":group",
+     *     "0:0", "1234:5678", and "user:group".
+     * @return this
+     * @see Builder#addEntry(Path, AbsoluteUnixPath)
+     * @see FilePermissions#DEFAULT_FILE_PERMISSIONS
+     * @see FilePermissions#DEFAULT_FOLDER_PERMISSIONS
+     */
+    public Builder addEntry(
+        Path sourceFile,
+        AbsoluteUnixPath pathInContainer,
+        FilePermissions permissions,
+        Instant modificationTime,
+        String ownership) {
+      return addEntry(
+          new FileEntry(sourceFile, pathInContainer, permissions, modificationTime, ownership));
+    }
+
+    /**
      * Adds an entry to the layer. If the source file is a directory, the directory and its contents
      * will be added recursively.
      *
@@ -221,9 +248,41 @@ public class FileEntriesLayer implements LayerObject {
         BiFunction<Path, AbsoluteUnixPath, FilePermissions> filePermissionProvider,
         BiFunction<Path, AbsoluteUnixPath, Instant> modificationTimeProvider)
         throws IOException {
+      return addEntryRecursive(
+          sourceFile,
+          pathInContainer,
+          filePermissionProvider,
+          modificationTimeProvider,
+          DEFAULT_OWNERSHIP_PROVIDER);
+    }
+
+    /**
+     * Adds an entry to the layer. If the source file is a directory, the directory and its contents
+     * will be added recursively.
+     *
+     * @param sourceFile the source file to add to the layer recursively
+     * @param pathInContainer the path in the container file system corresponding to the {@code
+     *     sourceFile}
+     * @param filePermissionProvider a provider that takes a source path and destination path on the
+     *     container and returns the file permissions that should be set for that path
+     * @param modificationTimeProvider a provider that takes a source path and destination path on
+     *     the container and returns the file modification time that should be set for that path
+     * @param ownershipProvider a provider that takes a source path and destination path on the
+     *     container and returns the ownership that should be set for that path
+     * @return this
+     * @throws IOException if an exception occurred when recursively listing the directory
+     */
+    public Builder addEntryRecursive(
+        Path sourceFile,
+        AbsoluteUnixPath pathInContainer,
+        BiFunction<Path, AbsoluteUnixPath, FilePermissions> filePermissionProvider,
+        BiFunction<Path, AbsoluteUnixPath, Instant> modificationTimeProvider,
+        BiFunction<Path, AbsoluteUnixPath, String> ownershipProvider)
+        throws IOException {
       FilePermissions permissions = filePermissionProvider.apply(sourceFile, pathInContainer);
       Instant modificationTime = modificationTimeProvider.apply(sourceFile, pathInContainer);
-      addEntry(sourceFile, pathInContainer, permissions, modificationTime);
+      String ownership = ownershipProvider.apply(sourceFile, pathInContainer);
+      addEntry(sourceFile, pathInContainer, permissions, modificationTime, ownership);
       if (!Files.isDirectory(sourceFile)) {
         return this;
       }
@@ -233,7 +292,8 @@ public class FileEntriesLayer implements LayerObject {
               file,
               pathInContainer.resolve(file.getFileName()),
               filePermissionProvider,
-              modificationTimeProvider);
+              modificationTimeProvider,
+              ownershipProvider);
         }
       }
       return this;
@@ -264,6 +324,10 @@ public class FileEntriesLayer implements LayerObject {
   public static final BiFunction<Path, AbsoluteUnixPath, Instant>
       DEFAULT_MODIFICATION_TIME_PROVIDER =
           (sourcePath, destinationPath) -> DEFAULT_MODIFICATION_TIME;
+
+  /** Provider that returns default file ownership ("0:0"). */
+  public static final BiFunction<Path, AbsoluteUnixPath, String> DEFAULT_OWNERSHIP_PROVIDER =
+      (sourcePath, destinationPath) -> "0:0";
 
   /**
    * Gets a new {@link Builder} for {@link FileEntriesLayer}.
