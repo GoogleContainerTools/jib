@@ -71,7 +71,7 @@ public class FileEntry {
     this.extractionPath = extractionPath;
     this.permissions = permissions;
     this.modificationTime = modificationTime;
-    ownership = "0:0";
+    ownership = "";
   }
 
   /**
@@ -84,8 +84,9 @@ public class FileEntry {
    *     sourceFile}
    * @param permissions the file permissions on the container
    * @param modificationTime the file modification time
-   * @param ownership file ownership. For example, "0", "1234", "user", ":0", ":5678", ":group",
-   *     "0:0", "1234:5678", and "user:group".
+   * @param ownership file ownership. For example, "1234", "user", ":5678", ":group", "1234:5678",
+   *     and "user:group". Note that "" (empty string), ":" (single colon), "0:", ":0" are allowed
+   *     and representative of "0:0" or "root:root", but prefer an empty string for "0:0".
    */
   public FileEntry(
       Path sourceFile,
