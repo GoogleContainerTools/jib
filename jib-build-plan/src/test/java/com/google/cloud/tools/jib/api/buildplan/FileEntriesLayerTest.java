@@ -110,7 +110,7 @@ public class FileEntriesLayerTest {
     ImmutableSet<FileEntry> expectedLayerEntries =
         ImmutableSet.of(
             new FileEntry(
-                Paths.get("foo"), AbsoluteUnixPath.get("/foo"), permissions1, timestamp1, "0:0"),
+                Paths.get("foo"), AbsoluteUnixPath.get("/foo"), permissions1, timestamp1, ""),
             new FileEntry(
                 testDirectory,
                 AbsoluteUnixPath.get("/app/layer/"),
