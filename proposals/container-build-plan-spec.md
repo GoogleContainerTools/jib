@@ -68,6 +68,7 @@ Although looking similar, the structure and semantics of similary named properti
           "dest": "/app/run.sh",
           "modificationTime": "2011-12-03T22:42:05Z",
           "permissions": "777",
+          "ownership": ""
         },
       ]
     },
@@ -139,7 +140,7 @@ A builder implementation must inherit the [`history` entries](https://github.com
 * `user`: string
 
    - `null` or omitted: inherits from the base image.
-   - Otherwise (including an empty string `""`, `":"`, `<user>:`, and `":<group>"`), sets the given user and group; it is not possible to only inherit either the user or the group.
+   - Otherwise (including an empty string `""`, `":"`, `"<user>:"`, and `":<group>"`), sets the given user and group; it is not possible to only inherit either the user or the group.
 
 * `workingDir`: string
 
@@ -179,3 +180,6 @@ A builder implementation must inherit the [`history` entries](https://github.com
 * `dest`: path in the container, required
 * `permissions`: POSIX permissions, required
 * `modificationTime`: if `null` or omitted, the epoch + 1 second by default
+* `ownership`:
+   - If `null`, omitted, or an empty string `""`, then effectively equivalent to `"0:0"` (`"root:root"`).
+   - Otherwise, in the form of `"<user>:<group>"` where `<user>` and `<group>` are optional. When `<user>` or `<group>` is omitted, it is equivalent to `0` (`root`).

@@ -5,6 +5,8 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- Added file ownership information in `FileEntry` and `FileEntriesLayer`. ([#2494](https://github.com/GoogleContainerTools/jib/pull/2494))
+
 ### Changed
 
 ### Fixed

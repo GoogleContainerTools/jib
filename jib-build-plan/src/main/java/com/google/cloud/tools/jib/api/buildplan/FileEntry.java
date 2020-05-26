@@ -34,6 +34,7 @@ public class FileEntry {
   private final AbsoluteUnixPath extractionPath;
   private final FilePermissions permissions;
   private final Instant modificationTime;
+  private final String ownership;
 
   /**
    * Instantiates with a source file and the path to place the source file in the container file
@@ -70,6 +71,34 @@ public class FileEntry {
     this.extractionPath = extractionPath;
     this.permissions = permissions;
     this.modificationTime = modificationTime;
+    ownership = "";
+  }
+
+  /**
+   * Instantiates with a source file and the path to place the source file in the container file
+   * system. See {@link #FileEntry(Path, AbsoluteUnixPath, FilePermissions, Instant)} for more
+   * information.
+   *
+   * @param sourceFile the source file to add to the layer
+   * @param extractionPath the path in the container file system corresponding to the {@code
+   *     sourceFile}
+   * @param permissions the file permissions on the container
+   * @param modificationTime the file modification time
+   * @param ownership file ownership. For example, "1234", "user", ":5678", ":group", "1234:5678",
+   *     and "user:group". Note that "" (empty string), ":" (single colon), "0:", ":0" are allowed
+   *     and representative of "0:0" or "root:root", but prefer an empty string for "0:0".
+   */
+  public FileEntry(
+      Path sourceFile,
+      AbsoluteUnixPath extractionPath,
+      FilePermissions permissions,
+      Instant modificationTime,
+      String ownership) {
+    this.sourceFile = sourceFile;
+    this.extractionPath = extractionPath;
+    this.permissions = permissions;
+    this.modificationTime = modificationTime;
+    this.ownership = ownership;
   }
 
   /**
@@ -110,6 +139,15 @@ public class FileEntry {
     return permissions;
   }
 
+  /**
+   * Gets the file ownership on the container.
+   *
+   * @return the file ownership on the container
+   */
+  public String getOwnership() {
+    return ownership;
+  }
+
   @Override
   public boolean equals(Object other) {
     if (this == other) {
@@ -121,12 +159,13 @@ public class FileEntry {
     FileEntry otherFileEntry = (FileEntry) other;
     return sourceFile.equals(otherFileEntry.sourceFile)
         && extractionPath.equals(otherFileEntry.extractionPath)
-        && Objects.equals(permissions, otherFileEntry.permissions)
-        && Objects.equals(modificationTime, otherFileEntry.modificationTime);
+        && permissions.equals(otherFileEntry.permissions)
+        && modificationTime.equals(otherFileEntry.modificationTime)
+        && ownership.equals(otherFileEntry.ownership);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(sourceFile, extractionPath, permissions, modificationTime);
+    return Objects.hash(sourceFile, extractionPath, permissions, modificationTime, ownership);
   }
 }
