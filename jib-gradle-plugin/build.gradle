@@ -6,6 +6,11 @@ plugins {
   id 'eclipse'
 }
 
+repositories {
+  mavenLocal()
+  mavenCentral()
+}
+
 /* LOCAL SNAPSHOT DEV */
 // to install for local testing - do not load this plugin when publishing to plugin portal
 // 'maven-publish' and 'com.gradle.plugin-publish' do not interact well with each other

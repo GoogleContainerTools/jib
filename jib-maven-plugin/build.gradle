@@ -5,6 +5,11 @@ plugins {
   id 'eclipse'
 }
 
+repositories {
+  mavenLocal()
+  mavenCentral()
+}
+
 // only maven specific dependencies should be versioned, everything else should be defined by constrains in
 // parent build.gradle
 dependencies {
