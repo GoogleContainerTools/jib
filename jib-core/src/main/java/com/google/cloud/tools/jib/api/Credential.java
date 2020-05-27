@@ -22,7 +22,7 @@ import java.util.Objects;
 public class Credential {
   // If the username is set to <token>, the secret would be a refresh token.
   // https://github.com/docker/cli/blob/master/docs/reference/commandline/login.md#credential-helper-protocol
-  private static final String OAUTH2_TOKEN_USER_NAME = "<token>";
+  public static final String OAUTH2_TOKEN_USER_NAME = "<token>";
 
   /**
    * Gets a {@link Credential} configured with a username and password.
@@ -67,7 +67,7 @@ public class Credential {
    * @return true if this credential is an OAuth 2.0 refresh token.
    */
   public boolean isOAuth2RefreshToken() {
-    return OAUTH2_TOKEN_USER_NAME.equals(this.username);
+    return OAUTH2_TOKEN_USER_NAME.equals(username);
   }
 
   @Override

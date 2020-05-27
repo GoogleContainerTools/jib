@@ -1,0 +1,8 @@
+{
+  "auths":{
+    "some registry":{
+      "auth":"MDAwMDAwMDAtMDAwMC0wMDAwLTAwMDAtMDAwMDAwMDAwMDAwOg==",
+      "identitytoken":"cool identity token"
+    }
+  }
+}
