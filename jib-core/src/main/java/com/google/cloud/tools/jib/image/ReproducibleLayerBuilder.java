@@ -88,6 +88,41 @@ public class ReproducibleLayerBuilder {
     }
   }
 
+  private static void setUserAndGroup(TarArchiveEntry entry, FileEntry layerEntry) {
+    entry.setUserId(0);
+    entry.setGroupId(0);
+    entry.setUserName("");
+    entry.setGroupName("");
+
+    if (!layerEntry.getOwnership().isEmpty()) {
+      // Parse "<user>:<group>" string.
+      String user = layerEntry.getOwnership();
+      String group = "";
+      int colonIndex = user.indexOf(':');
+      if (colonIndex != -1) {
+        group = user.substring(colonIndex + 1);
+        user = user.substring(0, colonIndex);
+      }
+
+      if (!user.isEmpty()) {
+        // Check if it's a number, and set either UID or user name.
+        try {
+          entry.setUserId(Long.parseLong(user));
+        } catch (NumberFormatException ignored) {
+          entry.setUserName(user);
+        }
+      }
+      if (!group.isEmpty()) {
+        // Check if it's a number, and set either GID or group name.
+        try {
+          entry.setGroupId(Long.parseLong(group));
+        } catch (NumberFormatException ignored) {
+          entry.setGroupName(group);
+        }
+      }
+    }
+  }
+
   private final ImmutableList<FileEntry> layerEntries;
 
   public ReproducibleLayerBuilder(ImmutableList<FileEntry> layerEntries) {
@@ -114,34 +149,7 @@ public class ReproducibleLayerBuilder {
       // lowest 9 bits) then using a bitwise OR to set them to the layerEntry's permissions.
       entry.setMode((entry.getMode() & ~0777) | layerEntry.getPermissions().getPermissionBits());
       entry.setModTime(layerEntry.getModificationTime().toEpochMilli());
-
-      entry.setUserId(0);
-      entry.setGroupId(0);
-      entry.setUserName("");
-      entry.setGroupName("");
-      if (!layerEntry.getOwnership().isEmpty()) {
-        String user = layerEntry.getOwnership();
-        String group = "";
-        int colonIndex = user.indexOf(':');
-        if (colonIndex != -1) {
-          group = user.substring(colonIndex + 1);
-          user = user.substring(0, colonIndex);
-        }
-        if (!user.isEmpty()) {
-          try {
-            entry.setUserId(Long.parseLong(user));
-          } catch (NumberFormatException ignored) {
-            entry.setUserName(user);
-          }
-        }
-        if (!group.isEmpty()) {
-          try {
-            entry.setGroupId(Long.parseLong(group));
-          } catch (NumberFormatException ignored) {
-            entry.setGroupName(group);
-          }
-        }
-      }
+      setUserAndGroup(entry, layerEntry);
 
       uniqueTarArchiveEntries.add(entry);
     }
