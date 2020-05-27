@@ -4,11 +4,6 @@ plugins {
   id 'eclipse'
 }
 
-repositories {
-  mavenLocal()
-  mavenCentral()
-}
-
 dependencies {
   implementation "com.google.cloud.tools:jib-build-plan:${dependencyVersions.BUILD_PLAN}"
   implementation "com.google.http-client:google-http-client:${dependencyVersions.GOOGLE_HTTP_CLIENT}"

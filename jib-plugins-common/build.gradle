@@ -2,11 +2,6 @@ plugins {
   id 'eclipse'
 }
 
-repositories {
-  mavenLocal()
-  mavenCentral()
-}
-
 dependencies {
   implementation project(':jib-core')
   // since jib core doesn't export dependencies to a compile scope

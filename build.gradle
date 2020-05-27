@@ -59,10 +59,10 @@ subprojects {
     JSR305: '3.0.2', // transitively pulled in by GUAVA
 
     // for Build Plan and Jib Plugins Extension API
-    BUILD_PLAN: '0.1.1-SNAPSHOT',
+    BUILD_PLAN: '0.2.0',
     EXTENSION_COMMON: '0.2.0',
-    GRADLE_EXTENSION: '0.2.1-SNAPSHOT',
-    MAVEN_EXTENSION: '0.2.1-SNAPSHOT',
+    GRADLE_EXTENSION: '0.3.0',
+    MAVEN_EXTENSION: '0.3.0',
 
     COMMONS_COMPRESS: '1.19',
     JACKSON_DATABIND: '2.9.10',
