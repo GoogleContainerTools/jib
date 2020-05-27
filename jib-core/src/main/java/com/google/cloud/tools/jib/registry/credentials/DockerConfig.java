@@ -76,10 +76,10 @@ class DockerConfig {
    *     none exists
    */
   @Nullable
-  String getAuthFor(String registry) {
+  AuthTemplate getAuthFor(String registry) {
     Map.Entry<String, AuthTemplate> authEntry =
         findFirstInMapByKey(dockerConfigTemplate.getAuths(), getRegistryMatchersFor(registry));
-    return authEntry != null ? authEntry.getValue().getAuth() : null;
+    return authEntry != null ? authEntry.getValue() : null;
   }
 
   /**

@@ -32,7 +32,8 @@ import javax.annotation.Nullable;
  * {
  *   "auths": {
  *     "registry": {
- *       "auth": "username:password string in base64"
+ *       "auth": "username:password string in base64",
+ *       "identityToken": "..."
  *     },
  *     "anotherregistry": {},
  *     ...
@@ -65,9 +66,19 @@ public class DockerConfigTemplate implements JsonTemplate {
 
     @Nullable private String auth;
 
+    // Both "identitytoken" and "identityToken" have been observed. For example,
+    // https://github.com/GoogleContainerTools/jib/issues/2488
+    // https://github.com/spotify/docker-client/issues/580
+    @Nullable private String identityToken;
+
     @Nullable
     public String getAuth() {
       return auth;
+    }
+
+    @Nullable
+    public String getIdentityToken() {
+      return identityToken;
     }
   }
 

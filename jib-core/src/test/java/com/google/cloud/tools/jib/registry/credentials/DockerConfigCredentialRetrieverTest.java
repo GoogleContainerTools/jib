@@ -180,4 +180,18 @@ public class DockerConfigCredentialRetrieverTest {
     Assert.assertEquals("token for", credentials.get().getUsername());
     Assert.assertEquals(" index.docker.io/v1/", credentials.get().getPassword());
   }
+
+  @Test
+  public void testRetrieve_azureIdentityToken() throws IOException, URISyntaxException {
+    Path dockerConfigFile =
+        Paths.get(Resources.getResource("core/json/dockerconfig_identity_token.json").toURI());
+
+    DockerConfigCredentialRetriever dockerConfigCredentialRetriever =
+        DockerConfigCredentialRetriever.create("some registry", dockerConfigFile);
+
+    Optional<Credential> credentials = dockerConfigCredentialRetriever.retrieve(mockLogger);
+    Assert.assertTrue(credentials.isPresent());
+    Assert.assertEquals("<token>", credentials.get().getUsername());
+    Assert.assertEquals("cool identity token", credentials.get().getPassword());
+  }
 }
