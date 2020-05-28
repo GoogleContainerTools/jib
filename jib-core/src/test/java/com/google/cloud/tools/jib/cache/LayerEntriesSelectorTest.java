@@ -187,4 +187,29 @@ public class LayerEntriesSelectorTest {
         LayerEntriesSelector.generateSelector(ImmutableList.of(layerEntry111)),
         LayerEntriesSelector.generateSelector(ImmutableList.of(layerEntry222)));
   }
+
+  @Test
+  public void testGenerateSelector_ownersModified() throws IOException {
+    Path layerFile = temporaryFolder.newFolder("testFolder").toPath().resolve("file");
+    Files.write(layerFile, "hello".getBytes(StandardCharsets.UTF_8));
+    FileEntry layerEntry111 =
+        new FileEntry(
+            layerFile,
+            AbsoluteUnixPath.get("/extraction/path"),
+            FilePermissions.fromOctalString("111"),
+            FileEntriesLayer.DEFAULT_MODIFICATION_TIME,
+            "0:0");
+    FileEntry layerEntry222 =
+        new FileEntry(
+            layerFile,
+            AbsoluteUnixPath.get("/extraction/path"),
+            FilePermissions.fromOctalString("222"),
+            FileEntriesLayer.DEFAULT_MODIFICATION_TIME,
+            "foouser");
+
+    // Verify that changing ownership generates a different selector
+    Assert.assertNotEquals(
+        LayerEntriesSelector.generateSelector(ImmutableList.of(layerEntry111)),
+        LayerEntriesSelector.generateSelector(ImmutableList.of(layerEntry222)));
+  }
 }

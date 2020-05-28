@@ -5,7 +5,11 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- Now sets configured file ownership when creating layer tars. ([#2499](https://github.com/GoogleContainerTools/jib/pull/2499))
+
 ### Changed
+
+- Previous locally cached application layers will be ignored because of changes to the caching selectors. ([#2499](https://github.com/GoogleContainerTools/jib/pull/2499))
 
 ### Fixed
 
