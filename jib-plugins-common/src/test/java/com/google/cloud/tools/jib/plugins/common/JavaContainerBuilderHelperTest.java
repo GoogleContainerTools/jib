@@ -34,7 +34,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.Resources;
 import com.google.common.util.concurrent.MoreExecutors;
-
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -222,7 +221,8 @@ public class JavaContainerBuilderHelperTest {
         getLayerConfigurationsByName(buildContext, LayerType.PROJECT_DEPENDENCIES.getName());
 
     assertSourcePathsUnordered(
-        Collections.singletonList(temporaryExplodedWar.resolve("WEB-INF/lib/dependencyA-1.0.0.jar")),
+        Collections.singletonList(
+            temporaryExplodedWar.resolve("WEB-INF/lib/dependencyA-1.0.0.jar")),
         projectDependenciesLayerConfigurations.get(0).getEntries());
     assertSourcePathsUnordered(
         Collections.singletonList(temporaryExplodedWar.resolve("WEB-INF/lib/dependency-1.0.0.jar")),
