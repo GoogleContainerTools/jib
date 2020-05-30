@@ -186,24 +186,6 @@ public class GradleProjectProperties implements ProjectProperties {
   public JibContainerBuilder createJibContainerBuilder(
       JavaContainerBuilder javaContainerBuilder, ContainerizingMode containerizingMode) {
     try {
-      if (isWarProject()) {
-        String warFilePath = getWarFilePath();
-        log(LogEvent.info("WAR project identified, creating WAR image from: " + warFilePath));
-        Path explodedWarPath = tempDirectoryProvider.newDirectory();
-        ZipUtil.unzip(Paths.get(warFilePath), explodedWarPath);
-        return JavaContainerBuilderHelper.fromExplodedWar(javaContainerBuilder, explodedWarPath);
-      }
-
-      JavaPluginConvention javaPluginConvention =
-          project.getConvention().getPlugin(JavaPluginConvention.class);
-      SourceSet mainSourceSet =
-          javaPluginConvention.getSourceSets().getByName(MAIN_SOURCE_SET_NAME);
-
-      FileCollection classesOutputDirectories =
-          mainSourceSet.getOutput().getClassesDirs().filter(File::exists);
-      Path resourcesOutputDirectory = mainSourceSet.getOutput().getResourcesDir().toPath();
-      FileCollection allFiles = mainSourceSet.getRuntimeClasspath().filter(File::exists);
-
       FileCollection projectDependencies =
           project.files(
               project
@@ -218,6 +200,27 @@ public class GradleProjectProperties implements ProjectProperties {
                               instanceof ProjectComponentIdentifier)
                   .map(ResolvedArtifact::getFile)
                   .collect(Collectors.toList()));
+
+      if (isWarProject()) {
+        String warFilePath = getWarFilePath();
+        log(LogEvent.info("WAR project identified, creating WAR image from: " + warFilePath));
+        Path explodedWarPath = tempDirectoryProvider.newDirectory();
+        ZipUtil.unzip(Paths.get(warFilePath), explodedWarPath);
+        return JavaContainerBuilderHelper.fromExplodedWar(
+            javaContainerBuilder,
+            explodedWarPath,
+            projectDependencies.getFiles().stream().map(File::getName).collect(Collectors.toSet()));
+      }
+
+      JavaPluginConvention javaPluginConvention =
+          project.getConvention().getPlugin(JavaPluginConvention.class);
+      SourceSet mainSourceSet =
+          javaPluginConvention.getSourceSets().getByName(MAIN_SOURCE_SET_NAME);
+
+      FileCollection classesOutputDirectories =
+          mainSourceSet.getOutput().getClassesDirs().filter(File::exists);
+      Path resourcesOutputDirectory = mainSourceSet.getOutput().getResourcesDir().toPath();
+      FileCollection allFiles = mainSourceSet.getRuntimeClasspath().filter(File::exists);
 
       FileCollection nonProjectDependencies =
           allFiles

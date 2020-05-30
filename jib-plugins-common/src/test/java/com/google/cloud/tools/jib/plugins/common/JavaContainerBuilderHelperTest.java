@@ -42,8 +42,10 @@ import java.nio.file.Paths;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import org.junit.Assert;
@@ -188,14 +190,15 @@ public class JavaContainerBuilderHelperTest {
         Paths.get(Resources.getResource("plugins-common/exploded-war").toURI());
     FileOperations.copy(ImmutableList.of(resourceExplodedWar), temporaryFolder.getRoot().toPath());
     Path temporaryExplodedWar = temporaryFolder.getRoot().toPath().resolve("exploded-war");
-
+    Set<String> projectArtifacts = new HashSet<>();
     Files.createDirectories(temporaryExplodedWar.resolve("WEB-INF/classes/empty_dir"));
 
     JavaContainerBuilder javaContainerBuilder =
         JavaContainerBuilder.from(RegistryImage.named("base"))
             .setAppRoot(AbsoluteUnixPath.get("/my/app"));
     JibContainerBuilder jibContainerBuilder =
-        JavaContainerBuilderHelper.fromExplodedWar(javaContainerBuilder, temporaryExplodedWar);
+        JavaContainerBuilderHelper.fromExplodedWar(
+            javaContainerBuilder, temporaryExplodedWar, projectArtifacts);
     BuildContext buildContext =
         JibContainerBuilderTestHelper.toBuildContext(
             jibContainerBuilder,

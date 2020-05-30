@@ -33,6 +33,7 @@ import java.nio.file.Paths;
 import java.time.Instant;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.function.Predicate;
 
@@ -98,11 +99,13 @@ public class JavaContainerBuilderHelper {
    *
    * @param javaContainerBuilder Java container builder to start with
    * @param explodedWar the exploded WAR directory
+   * @param projectArtifacts the project artifacts for project dependencies
    * @return {@link JibContainerBuilder} containing the layers for the exploded WAR
    * @throws IOException if adding layer contents fails
    */
   public static JibContainerBuilder fromExplodedWar(
-      JavaContainerBuilder javaContainerBuilder, Path explodedWar) throws IOException {
+      JavaContainerBuilder javaContainerBuilder, Path explodedWar, Set<String> projectArtifacts)
+      throws IOException {
     Path webInfLib = explodedWar.resolve("WEB-INF/lib");
     Path webInfClasses = explodedWar.resolve("WEB-INF/classes");
     Predicate<Path> isDependency = path -> path.startsWith(webInfLib);
@@ -123,10 +126,18 @@ public class JavaContainerBuilderHelper {
       javaContainerBuilder.addClasses(webInfClasses, isClassFile);
     }
     if (Files.exists(webInfLib)) {
+      javaContainerBuilder.addProjectDependencies(
+          new DirectoryWalker(webInfLib)
+              .filterRoot()
+              .filter(path -> projectArtifacts.contains(path.getFileName().toString()))
+              .walk());
       javaContainerBuilder.addDependencies(
           new DirectoryWalker(webInfLib)
               .filterRoot()
-              .filter(path -> !path.getFileName().toString().contains("SNAPSHOT"))
+              .filter(
+                  path ->
+                      !path.getFileName().toString().contains("SNAPSHOT")
+                          && !projectArtifacts.contains(path.getFileName().toString()))
               .walk());
       javaContainerBuilder.addSnapshotDependencies(
           new DirectoryWalker(webInfLib)
