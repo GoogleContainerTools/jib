@@ -34,6 +34,8 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.Resources;
 import com.google.common.util.concurrent.MoreExecutors;
+
+import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
@@ -190,8 +192,11 @@ public class JavaContainerBuilderHelperTest {
         Paths.get(Resources.getResource("plugins-common/exploded-war").toURI());
     FileOperations.copy(ImmutableList.of(resourceExplodedWar), temporaryFolder.getRoot().toPath());
     Path temporaryExplodedWar = temporaryFolder.getRoot().toPath().resolve("exploded-war");
-    Set<String> projectArtifacts = new HashSet<>();
     Files.createDirectories(temporaryExplodedWar.resolve("WEB-INF/classes/empty_dir"));
+    File f = new File(temporaryExplodedWar.resolve("WEB-INF/lib/dependencyA-1.0.0.jar").toString());
+    f.createNewFile();
+    Set<String> projectArtifacts = new HashSet<>();
+    projectArtifacts.add(f.getName());
 
     JavaContainerBuilder javaContainerBuilder =
         JavaContainerBuilder.from(RegistryImage.named("base"))
@@ -213,7 +218,12 @@ public class JavaContainerBuilderHelperTest {
         getLayerConfigurationsByName(buildContext, LayerType.DEPENDENCIES.getName());
     List<FileEntriesLayer> snapshotsLayerConfigurations =
         getLayerConfigurationsByName(buildContext, LayerType.SNAPSHOT_DEPENDENCIES.getName());
+    List<FileEntriesLayer> projectDependenciesLayerConfigurations =
+        getLayerConfigurationsByName(buildContext, LayerType.PROJECT_DEPENDENCIES.getName());
 
+    assertSourcePathsUnordered(
+        Collections.singletonList(temporaryExplodedWar.resolve("WEB-INF/lib/dependencyA-1.0.0.jar")),
+        projectDependenciesLayerConfigurations.get(0).getEntries());
     assertSourcePathsUnordered(
         Collections.singletonList(temporaryExplodedWar.resolve("WEB-INF/lib/dependency-1.0.0.jar")),
         dependenciesLayerConfigurations.get(0).getEntries());
