@@ -10,6 +10,14 @@ matrix:
       dist: trusty # oraclejdk8 absent in Xenial
     - name: OpenJDK 11
       jdk: openjdk11
+    - name: OpenJDK 12
+      jdk: openjdk12
+    - name: OpenJDK 13
+      jdk: openjdk13
+    - name: OpenJDK 14
+      jdk: openjdk14
+    - name: OpenJDK 15
+      jdk: openjdk15
 env:
   global:
   - TERM=dumb         # for gradle
