@@ -30,7 +30,7 @@ import com.google.cloud.tools.jib.cli.JibCli.ImageReferenceParser;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Joiner;
 import java.util.List;
-import java.util.Map.Entry;
+import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -106,13 +106,13 @@ public class Build extends Building implements Callable<Integer> {
       builder.setProgramArguments(arguments);
     }
     if (environment != null) {
-      for (Entry<String, String> pair : environment.entrySet()) {
+      for (Map.Entry<String, String> pair : environment.entrySet()) {
         verbose("ENV " + pair.getKey() + "=" + pair.getValue());
         builder.addEnvironmentVariable(pair.getKey(), pair.getValue());
       }
     }
     if (labels != null) {
-      for (Entry<String, String> pair : labels.entrySet()) {
+      for (Map.Entry<String, String> pair : labels.entrySet()) {
         verbose("LABEL " + pair.getKey() + "=" + pair.getValue());
         builder.addLabel(pair.getKey(), pair.getValue());
       }

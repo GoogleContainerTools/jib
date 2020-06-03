@@ -37,7 +37,6 @@ import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.FileTime;
 import java.time.Instant;
-import java.util.Date;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.hamcrest.CoreMatchers;
@@ -193,6 +192,7 @@ public class ReproducibleLayerBuilderTest {
     Assert.assertThat(layerContent, CoreMatchers.is(reproducedLayerContent));
   }
 
+  @SuppressWarnings("JdkObsolete") // use of Date from TarArchiveEntry
   @Test
   public void testBuild_parentDirBehavior() throws IOException {
     Path testRoot = temporaryFolder.getRoot().toPath();
@@ -273,6 +273,7 @@ public class ReproducibleLayerBuilderTest {
     }
   }
 
+  @SuppressWarnings("JdkObsolete") // use of Date from TarArchiveEntry
   @Test
   public void testBuild_timestampDefault() throws IOException {
     Path file = createFile(temporaryFolder.getRoot().toPath(), "fileA", "some content", 54321);
@@ -290,10 +291,11 @@ public class ReproducibleLayerBuilderTest {
     // Reads the file back.
     try (TarArchiveInputStream in = new TarArchiveInputStream(Files.newInputStream(tarFile))) {
       Assert.assertEquals(
-          Date.from(Instant.EPOCH.plusSeconds(1)), in.getNextEntry().getLastModifiedDate());
+          Instant.EPOCH.plusSeconds(1), in.getNextEntry().getLastModifiedDate().toInstant());
     }
   }
 
+  @SuppressWarnings("JdkObsolete") // use of Date from TarArchiveEntry
   @Test
   public void testBuild_timestampNonDefault() throws IOException {
     Path file = createFile(temporaryFolder.getRoot().toPath(), "fileA", "some content", 54321);
@@ -316,7 +318,7 @@ public class ReproducibleLayerBuilderTest {
     // Reads the file back.
     try (TarArchiveInputStream in = new TarArchiveInputStream(Files.newInputStream(tarFile))) {
       Assert.assertEquals(
-          Date.from(Instant.EPOCH.plusSeconds(123)), in.getNextEntry().getLastModifiedDate());
+          Instant.EPOCH.plusSeconds(123), in.getNextEntry().getLastModifiedDate().toInstant());
     }
   }
 
