@@ -221,9 +221,13 @@ public class GradleProjectPropertiesExtensionTest {
     Mockito.when(mockProject.getGradle().getStartParameter().getConsoleOutput())
         .thenReturn(ConsoleOutput.Plain);
     Mockito.when(mockProject.getObjects()).thenReturn(mockObjectFactory);
-    Mockito.when(mockObjectFactory.newInstance(ExtensionDefinedFooConfig.class))
+    Mockito.when(
+            mockObjectFactory.newInstance(
+                Mockito.eq(ExtensionDefinedFooConfig.class), Mockito.any()))
         .thenReturn(new ExtensionDefinedFooConfig("uninitialized"));
-    Mockito.when(mockObjectFactory.newInstance(ExtensionDefinedBarConfig.class))
+    Mockito.when(
+            mockObjectFactory.newInstance(
+                Mockito.eq(ExtensionDefinedBarConfig.class), Mockito.any()))
         .thenReturn(new ExtensionDefinedBarConfig("uninitialized"));
 
     gradleProjectProperties =
