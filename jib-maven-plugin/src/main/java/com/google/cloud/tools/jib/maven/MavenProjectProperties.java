@@ -63,6 +63,7 @@ import java.util.Set;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.execution.MavenSession;
@@ -253,6 +254,10 @@ public class MavenProjectProperties implements ProjectProperties {
       JavaContainerBuilder javaContainerBuilder, ContainerizingMode containerizingMode)
       throws IOException {
     try {
+
+      Stream<Artifact> mavenProjectArtifactStream =
+          session.getProjects().stream().map(MavenProject::getArtifact);
+
       if (isWarProject()) {
         Path war = getWarArtifact();
         Path explodedWarPath = tempDirectoryProvider.newDirectory();
@@ -260,10 +265,7 @@ public class MavenProjectProperties implements ProjectProperties {
         return JavaContainerBuilderHelper.fromExplodedWar(
             javaContainerBuilder,
             explodedWarPath,
-            session
-                .getProjects()
-                .stream()
-                .map(MavenProject::getArtifact)
+            mavenProjectArtifactStream
                 .map(Artifact::getFile)
                 .map(File::getName)
                 .collect(Collectors.toSet()));
@@ -292,12 +294,7 @@ public class MavenProjectProperties implements ProjectProperties {
       // Classify and add dependencies
       Map<LayerType, List<Path>> classifiedDependencies =
           classifyDependencies(
-              project.getArtifacts(),
-              session
-                  .getProjects()
-                  .stream()
-                  .map(MavenProject::getArtifact)
-                  .collect(Collectors.toSet()));
+              project.getArtifacts(), mavenProjectArtifactStream.collect(Collectors.toSet()));
 
       javaContainerBuilder.addDependencies(
           Preconditions.checkNotNull(classifiedDependencies.get(LayerType.DEPENDENCIES)));

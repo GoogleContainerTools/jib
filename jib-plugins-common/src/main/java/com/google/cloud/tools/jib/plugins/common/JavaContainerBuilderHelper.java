@@ -99,12 +99,14 @@ public class JavaContainerBuilderHelper {
    *
    * @param javaContainerBuilder Java container builder to start with
    * @param explodedWar the exploded WAR directory
-   * @param projectArtifacts the project artifacts for project dependencies
+   * @param projectArtifactFilename the file names of project artifacts for project dependencies
    * @return {@link JibContainerBuilder} containing the layers for the exploded WAR
    * @throws IOException if adding layer contents fails
    */
   public static JibContainerBuilder fromExplodedWar(
-      JavaContainerBuilder javaContainerBuilder, Path explodedWar, Set<String> projectArtifacts)
+      JavaContainerBuilder javaContainerBuilder,
+      Path explodedWar,
+      Set<String> projectArtifactFilename)
       throws IOException {
     Path webInfLib = explodedWar.resolve("WEB-INF/lib");
     Path webInfClasses = explodedWar.resolve("WEB-INF/classes");
@@ -113,6 +115,9 @@ public class JavaContainerBuilderHelper {
         // Don't use Path.endsWith(), since Path works on path elements.
         path -> path.startsWith(webInfClasses) && path.getFileName().toString().endsWith(".class");
     Predicate<Path> isResource = isDependency.or(isClassFile).negate();
+    Predicate<Path> isSnapshot = path -> path.getFileName().toString().contains("SNAPSHOT");
+    Predicate<Path> isProjectDependency =
+        path -> projectArtifactFilename.contains(path.getFileName().toString());
 
     javaContainerBuilder
         .setResourcesDestination(RelativeUnixPath.get(""))
@@ -126,24 +131,17 @@ public class JavaContainerBuilderHelper {
       javaContainerBuilder.addClasses(webInfClasses, isClassFile);
     }
     if (Files.exists(webInfLib)) {
-      javaContainerBuilder.addProjectDependencies(
-          new DirectoryWalker(webInfLib)
-              .filterRoot()
-              .filter(path -> projectArtifacts.contains(path.getFileName().toString()))
-              .walk());
+
       javaContainerBuilder.addDependencies(
           new DirectoryWalker(webInfLib)
               .filterRoot()
-              .filter(
-                  path ->
-                      !path.getFileName().toString().contains("SNAPSHOT")
-                          && !projectArtifacts.contains(path.getFileName().toString()))
+              .filter(isSnapshot.negate())
+              .filter(isProjectDependency.negate())
               .walk());
       javaContainerBuilder.addSnapshotDependencies(
-          new DirectoryWalker(webInfLib)
-              .filterRoot()
-              .filter(path -> path.getFileName().toString().contains("SNAPSHOT"))
-              .walk());
+          new DirectoryWalker(webInfLib).filterRoot().filter(isSnapshot).walk());
+      javaContainerBuilder.addProjectDependencies(
+          new DirectoryWalker(webInfLib).filterRoot().filter(isProjectDependency).walk());
     }
     return javaContainerBuilder.toContainerBuilder();
   }
