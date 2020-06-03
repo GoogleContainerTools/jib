@@ -469,7 +469,7 @@ public class GradleProjectProperties implements ProjectProperties {
         // config.getExtraConfiguration().get() is of type Action, so this cast always succeeds.
         // (Note generic <T> is erased at runtime.)
         Action<T> action = (Action<T>) config.getExtraConfiguration().get();
-        extraConfig = project.getObjects().newInstance(extraConfigType.get());
+        extraConfig = project.getObjects().newInstance(extraConfigType.get(), project);
         action.execute(extraConfig);
       }
     }
