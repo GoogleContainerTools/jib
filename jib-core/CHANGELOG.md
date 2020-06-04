@@ -9,6 +9,7 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
+- `Ports.parse(List<String> ports)` in api now returns `Set` instead of `ImmutableSet` ([#TBD](https://github.com/GoogleContainerTools/jib/pull/TBD))
 - Previous locally cached application layers will be ignored because of changes to the caching selectors. ([#2499](https://github.com/GoogleContainerTools/jib/pull/2499))
 
 ### Fixed
