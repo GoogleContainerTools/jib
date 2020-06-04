@@ -18,7 +18,7 @@ package com.google.cloud.tools.jib.api;
 
 import com.google.cloud.tools.jib.api.buildplan.Port;
 import com.google.common.base.Strings;
-import com.google.common.collect.ImmutableSet;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.regex.Matcher;
@@ -47,7 +47,7 @@ public class Ports {
    * @throws NumberFormatException if any of the ports are in an invalid format or out of range
    */
   public static Set<Port> parse(List<String> ports) throws NumberFormatException {
-    ImmutableSet.Builder<Port> result = new ImmutableSet.Builder<>();
+    Set<Port> result = new HashSet<>();
 
     for (String port : ports) {
       Matcher matcher = portPattern.matcher(port);
@@ -86,7 +86,7 @@ public class Ports {
       }
     }
 
-    return result.build();
+    return result;
   }
 
   private Ports() {}
