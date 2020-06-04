@@ -4,12 +4,12 @@ git:
 language: java
 matrix:
   include:
-    - name: Oracle JDK 8 on Trusty
-      # using `openjdk8` leads to javadoc errors
-      jdk: oraclejdk8
-      dist: trusty # oraclejdk8 absent in Xenial
-    - name: OpenJDK 11
-      jdk: openjdk11
+  - name: Oracle JDK 8 on Trusty
+    # using `openjdk8` leads to javadoc errors
+    jdk: oraclejdk8
+    dist: trusty # oraclejdk8 absent in Xenial
+  - name: OpenJDK 11
+    jdk: openjdk11
 env:
   global:
   - TERM=dumb         # for gradle
@@ -22,10 +22,10 @@ script:
 #   https://docs.travis-ci.com/user/languages/java/#projects-using-gradle
 #   https://github.com/blox/blox/pull/338#issuecomment-358556137
 before_cache:
-  - rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
-  - rm -fr $HOME/.gradle/caches/*/plugin-resolution/
-  - rm -fr $HOME/.gradle/caches/*/fileHashes/
-  - rm -fr $HOME/.gradle/caches/jars-3/
+- rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
+- rm -fr $HOME/.gradle/caches/*/plugin-resolution/
+- rm -fr $HOME/.gradle/caches/*/fileHashes/
+- rm -fr $HOME/.gradle/caches/jars-3/
 cache:
   directories:
   - $HOME/.m2
