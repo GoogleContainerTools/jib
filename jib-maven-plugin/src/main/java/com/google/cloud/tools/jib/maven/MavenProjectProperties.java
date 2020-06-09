@@ -47,6 +47,7 @@ import com.google.cloud.tools.jib.plugins.extension.NullExtension;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Verify;
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -256,7 +257,14 @@ public class MavenProjectProperties implements ProjectProperties {
         Path war = getWarArtifact();
         Path explodedWarPath = tempDirectoryProvider.newDirectory();
         ZipUtil.unzip(war, explodedWarPath);
-        return JavaContainerBuilderHelper.fromExplodedWar(javaContainerBuilder, explodedWarPath);
+        return JavaContainerBuilderHelper.fromExplodedWar(
+            javaContainerBuilder,
+            explodedWarPath,
+            getProjectDependencies()
+                .stream()
+                .map(Artifact::getFile)
+                .map(File::getName)
+                .collect(Collectors.toSet()));
       }
 
       switch (containerizingMode) {
@@ -281,13 +289,7 @@ public class MavenProjectProperties implements ProjectProperties {
 
       // Classify and add dependencies
       Map<LayerType, List<Path>> classifiedDependencies =
-          classifyDependencies(
-              project.getArtifacts(),
-              session
-                  .getProjects()
-                  .stream()
-                  .map(MavenProject::getArtifact)
-                  .collect(Collectors.toSet()));
+          classifyDependencies(project.getArtifacts(), getProjectDependencies());
 
       javaContainerBuilder.addDependencies(
           Preconditions.checkNotNull(classifiedDependencies.get(LayerType.DEPENDENCIES)));
@@ -308,6 +310,17 @@ public class MavenProjectProperties implements ProjectProperties {
               + " jib:build\"?)",
           ex);
     }
+  }
+
+  @VisibleForTesting
+  Set<Artifact> getProjectDependencies() {
+    return session
+        .getProjects()
+        .stream()
+        .map(MavenProject::getArtifact)
+        .filter(artifact -> !artifact.equals(project.getArtifact()))
+        .filter(artifact -> artifact.getFile() != null)
+        .collect(Collectors.toSet());
   }
 
   @VisibleForTesting
