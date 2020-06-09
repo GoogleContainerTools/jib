@@ -5,6 +5,8 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- Project dependencies in a multi-module WAR project are now stored in a separate "project dependencies" layer (as currently done for a non-WAR project). ([#2450](https://github.com/GoogleContainerTools/jib/issues/2450))
+
 ### Changed
 
 - Previous locally cached application layers (`<project root>/target/jib-cache`) will be ignored because of changes to the caching selectors. ([#2499](https://github.com/GoogleContainerTools/jib/pull/2499))
