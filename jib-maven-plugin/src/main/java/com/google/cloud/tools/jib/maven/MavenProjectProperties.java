@@ -63,7 +63,6 @@ import java.util.Set;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.execution.MavenSession;
@@ -254,10 +253,6 @@ public class MavenProjectProperties implements ProjectProperties {
       JavaContainerBuilder javaContainerBuilder, ContainerizingMode containerizingMode)
       throws IOException {
     try {
-
-      Stream<Artifact> mavenProjectArtifactStream =
-          session.getProjects().stream().map(MavenProject::getArtifact);
-
       if (isWarProject()) {
         Path war = getWarArtifact();
         Path explodedWarPath = tempDirectoryProvider.newDirectory();
@@ -265,7 +260,8 @@ public class MavenProjectProperties implements ProjectProperties {
         return JavaContainerBuilderHelper.fromExplodedWar(
             javaContainerBuilder,
             explodedWarPath,
-            mavenProjectArtifactStream
+            getProjectDependencies()
+                .stream()
                 .map(Artifact::getFile)
                 .map(File::getName)
                 .collect(Collectors.toSet()));
@@ -293,8 +289,7 @@ public class MavenProjectProperties implements ProjectProperties {
 
       // Classify and add dependencies
       Map<LayerType, List<Path>> classifiedDependencies =
-          classifyDependencies(
-              project.getArtifacts(), mavenProjectArtifactStream.collect(Collectors.toSet()));
+          classifyDependencies(project.getArtifacts(), getProjectDependencies());
 
       javaContainerBuilder.addDependencies(
           Preconditions.checkNotNull(classifiedDependencies.get(LayerType.DEPENDENCIES)));
@@ -315,6 +310,17 @@ public class MavenProjectProperties implements ProjectProperties {
               + " jib:build\"?)",
           ex);
     }
+  }
+
+  @VisibleForTesting
+  Set<Artifact> getProjectDependencies() {
+    return session
+        .getProjects()
+        .stream()
+        .map(MavenProject::getArtifact)
+        .filter(artifact -> !artifact.equals(project.getArtifact()))
+        .filter(artifact -> artifact.getFile() != null)
+        .collect(Collectors.toSet());
   }
 
   @VisibleForTesting

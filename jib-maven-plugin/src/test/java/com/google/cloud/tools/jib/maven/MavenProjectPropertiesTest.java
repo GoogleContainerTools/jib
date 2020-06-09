@@ -701,6 +701,28 @@ public class MavenProjectPropertiesTest {
   }
 
   @Test
+  public void testGetProjectDependencies() {
+    MavenProject rootPomProject = Mockito.mock(MavenProject.class);
+    MavenProject jibSubModule = Mockito.mock(MavenProject.class);
+    MavenProject sharedLibSubModule = Mockito.mock(MavenProject.class);
+    Mockito.when(mockMavenSession.getProjects())
+        .thenReturn(Arrays.asList(rootPomProject, sharedLibSubModule, jibSubModule));
+
+    Artifact nullFileArtifact = Mockito.mock(Artifact.class);
+    Artifact projectJar = newArtifact("com.test", "my-app", "1.0");
+    Artifact sharedLibJar = newArtifact("com.test", "shared-lib", "1.0");
+
+    Mockito.when(rootPomProject.getArtifact()).thenReturn(nullFileArtifact);
+    Mockito.when(jibSubModule.getArtifact()).thenReturn(projectJar);
+    Mockito.when(sharedLibSubModule.getArtifact()).thenReturn(sharedLibJar);
+
+    Mockito.when(mockMavenProject.getArtifact()).thenReturn(projectJar);
+
+    Assert.assertEquals(
+        ImmutableSet.of(sharedLibJar), mavenProjectProperties.getProjectDependencies());
+  }
+
+  @Test
   public void testGetChildValue_null() {
     Assert.assertFalse(MavenProjectProperties.getChildValue(null).isPresent());
     Assert.assertFalse(MavenProjectProperties.getChildValue(null, "foo", "bar").isPresent());

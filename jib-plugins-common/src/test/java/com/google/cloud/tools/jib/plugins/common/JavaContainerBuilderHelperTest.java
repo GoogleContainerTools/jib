@@ -32,6 +32,7 @@ import com.google.cloud.tools.jib.configuration.BuildContext;
 import com.google.cloud.tools.jib.filesystem.FileOperations;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.io.Resources;
 import com.google.common.util.concurrent.MoreExecutors;
 import java.io.IOException;
@@ -42,7 +43,6 @@ import java.nio.file.Paths;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -192,8 +192,7 @@ public class JavaContainerBuilderHelperTest {
     Path temporaryExplodedWar = temporaryFolder.getRoot().toPath().resolve("exploded-war");
     Files.createDirectories(temporaryExplodedWar.resolve("WEB-INF/classes/empty_dir"));
     Files.createFile(temporaryExplodedWar.resolve("WEB-INF/lib/project-dependency-1.0.0.jar"));
-    Set<String> projectArtifacts = new HashSet<>();
-    projectArtifacts.add("project-dependency-1.0.0.jar");
+    Set<String> projectArtifacts = ImmutableSet.of("project-dependency-1.0.0.jar");
 
     JavaContainerBuilder javaContainerBuilder =
         JavaContainerBuilder.from(RegistryImage.named("base"))
