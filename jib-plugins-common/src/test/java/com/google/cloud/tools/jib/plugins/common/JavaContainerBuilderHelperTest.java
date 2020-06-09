@@ -32,6 +32,7 @@ import com.google.cloud.tools.jib.configuration.BuildContext;
 import com.google.cloud.tools.jib.filesystem.FileOperations;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.io.Resources;
 import com.google.common.util.concurrent.MoreExecutors;
 import java.io.IOException;
@@ -44,6 +45,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import org.junit.Assert;
@@ -188,14 +190,16 @@ public class JavaContainerBuilderHelperTest {
         Paths.get(Resources.getResource("plugins-common/exploded-war").toURI());
     FileOperations.copy(ImmutableList.of(resourceExplodedWar), temporaryFolder.getRoot().toPath());
     Path temporaryExplodedWar = temporaryFolder.getRoot().toPath().resolve("exploded-war");
-
     Files.createDirectories(temporaryExplodedWar.resolve("WEB-INF/classes/empty_dir"));
+    Files.createFile(temporaryExplodedWar.resolve("WEB-INF/lib/project-dependency-1.0.0.jar"));
+    Set<String> projectArtifacts = ImmutableSet.of("project-dependency-1.0.0.jar");
 
     JavaContainerBuilder javaContainerBuilder =
         JavaContainerBuilder.from(RegistryImage.named("base"))
             .setAppRoot(AbsoluteUnixPath.get("/my/app"));
     JibContainerBuilder jibContainerBuilder =
-        JavaContainerBuilderHelper.fromExplodedWar(javaContainerBuilder, temporaryExplodedWar);
+        JavaContainerBuilderHelper.fromExplodedWar(
+            javaContainerBuilder, temporaryExplodedWar, projectArtifacts);
     BuildContext buildContext =
         JibContainerBuilderTestHelper.toBuildContext(
             jibContainerBuilder,
@@ -210,7 +214,13 @@ public class JavaContainerBuilderHelperTest {
         getLayerConfigurationsByName(buildContext, LayerType.DEPENDENCIES.getName());
     List<FileEntriesLayer> snapshotsLayerConfigurations =
         getLayerConfigurationsByName(buildContext, LayerType.SNAPSHOT_DEPENDENCIES.getName());
+    List<FileEntriesLayer> projectDependenciesLayerConfigurations =
+        getLayerConfigurationsByName(buildContext, LayerType.PROJECT_DEPENDENCIES.getName());
 
+    assertSourcePathsUnordered(
+        Collections.singletonList(
+            temporaryExplodedWar.resolve("WEB-INF/lib/project-dependency-1.0.0.jar")),
+        projectDependenciesLayerConfigurations.get(0).getEntries());
     assertSourcePathsUnordered(
         Collections.singletonList(temporaryExplodedWar.resolve("WEB-INF/lib/dependency-1.0.0.jar")),
         dependenciesLayerConfigurations.get(0).getEntries());
