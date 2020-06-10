@@ -1,14 +1,14 @@
 # Jib CLI Buildfile Specification
 
-Specification for a buildfile describing building a container image. This buildfile can be
+Specification for a YAML buildfile describing building a container image. This buildfile can be
 used by the jib-cli to generate a container. It is translated directly into a buildplan and
 passed to the builder.
 
 ```
 # "FROM" with option to use os/architecture for manifest lists
 baseImage: "gcr.io/distroless/java:8"
-osHint: linux
-architectureHint: amd64
+baseImageOs: linux
+baseImageArchitecture: amd64
 
 creationTime: 0 # millis since epoch or iso8601 creation time
 format: Docker # Docker or OCI
@@ -37,7 +37,7 @@ cmd:
   - "myjar.jar"
 
 # global file properties applied to all layers
-fileProperties:
+layerProperties:
   filePermissions: "644"
   directoryPermissions: "755"
   user: "0"
@@ -45,8 +45,8 @@ fileProperties:
   timestamp: "0"
 layers:
   - name: "scripts and classes"
-    # file properties only applied to layer this layer "scripts and classes"
-    fileProperties:
+    # file properties only applied to this layer "scripts and classes"
+    properties:
       filePermissions: "333"
       directoryPermissions: "777"
       user: "goose"
@@ -56,7 +56,7 @@ layers:
       - from: "target/scripts"
         to: "/app/scripts"
         # file properties only applied to this copy directive
-        fileProperties:
+        properties:
           filePermissions: "777"
         # another copy for the same layer, with includes and excludes
       - from: "target/classes"
@@ -71,34 +71,54 @@ layers:
     files:
       - from: "build/other"
         to: "/app"
+    # a tar layer 
+  - name: "some tar layer"
+    mediatype: "some/mediatype"
+    tar: "build/generated.tar"
 ```
 
 ## Layers
 
-`layers` are a list of layer directives, each directive consisting of 3 parts
-* `name`: the name of the layer (metadata)
-* `filesProperites`: on disk metadata for all files in the layer
-* `files`: a list of copy directies
+`layers` are a list of `layer` directives
 
-`files` are a list of copy directives that consist of 2 required and 3 optional parts
+`layer` directives can be `tar` or `file` layers
+
+a `tar` layer consists of 3 parts
+* `name`: the name/description of the layer (metadata)
+* `tar`: a tar file to include as a layer (un-expanded)
+* `mediatype`: the mediatype of tar
+
+a `file` layer consists of 3 parts
+* `name`: the name of the layer (metadata)
+* `properties`: on disk metadata for all files in the layer
+* `files`: a list of *copy directies* (see below)
+
+`files` are a list of *copy directives* that consist of 2 required and 3 optional parts
 * `to` *required*: an absolute path to copy the files to on the container
 * `from` *required*: a file, or directory on disk to copy from
 * `includes`: only includes the patterns matched in this parameter
 * `exludes`: excludes all files (higher prescendence than `includes`) matched in this parameter
-* `fileproperties`: on disk metadata for all files in this copy directive
+* `properties`: FilesProperties to represent on disk metadata for all files in this copy directive
 
 ### FileProperties
 
-File properties are available at 3 levels
-* Global: applies to all layers
-* Layer: applies to a single layer
-* Copy: applies to a single copy directive
+A list of properties that can be user specified for each file in a file layer
+* filePermissions: An octal representing permissions for files
+* directoryPermissions: An octal representing permissions for directories
+* user: The ownership user property
+* group: The ownership group property
+* timestamp: millis since epoch or iso8601 creation time
 
-Properties can be defined at any level and are applied in a cascading fashion.
+File properties are available at 3 levels
+* Global (`layerProperties`): applies to all layers
+* Layer (`properties`): applies to a single layer
+* Copy (`properties`): applies to a single copy directive
+
+Each property (`filePermissions`, `directoryPermissions`, etc) can be defined at any level and are resolved in the follow order
 - All properties in `Copy` are applied first
-- Any property not in `Copy` are applied from `Layer`
-- Any property not in `Copy` or `Layer` are applied from `Global`
-- Any property not defined anywhere use jib system defaults.
+- Any properties not in `Copy` are applied from `Layer`
+- Any properties not in `Copy` or `Layer` are applied from `Global`
+- Any properties not defined anywhere use jib system defaults.
 
 
 ## Extented features (not included in this build)
@@ -106,13 +126,3 @@ Properties can be defined at any level and are applied in a cascading fashion.
 ### Other time options
 * `actual`: use timestamp from file on disk
 * `now`: use time of build
-
-### Templating
-Allow passing of values into build to be replaced in buildfile
-```
-baseImage: ${baseImage}
-```
-```
-$ jib build -PbaseImage=gcr.io/distroless/java
-```
-
