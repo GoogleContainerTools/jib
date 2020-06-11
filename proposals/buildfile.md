@@ -66,27 +66,34 @@ layers:
           - "**/moose.class"
         includes:
           - "**/*.class"
+
     # another layer, only globally defined file permissions are applied here
   - name: "other"
     files:
       - from: "build/other"
         to: "/app"
-    # a tar layer 
+
+    # a archive layer using a tar, default mediaType
   - name: "some tar layer"
-    mediatype: "some/mediatype"
-    tar: "build/generated.tar"
+    archive: "build/generated.tar"
+
+    # a foreign layer using the optional mediatype for archive layers
+  - name: "some foreign layer"
+    mediaType: "application/vnd.docker.image.rootfs.foreign.diff.tar.gzip"
+    archive: "https://somewhere.com/layer"
+    # should we include size and digest here? I guess we can always ad tings
 ```
 
 ## Layers
 
 `layers` are a list of `layer` directives
 
-`layer` directives can be `tar` or `file` layers
+`layer` directives can be `archive` or `file` layers
 
-a `tar` layer consists of 3 parts
+a `archive` layer consists of 3 parts
 * `name`: the name/description of the layer (metadata)
-* `tar`: a tar file to include as a layer (un-expanded)
-* `mediatype`: the mediatype of tar
+* `archive`: a tar file to include as a layer
+* `mediatype`: the mediatype of archive
 
 a `file` layer consists of 3 parts
 * `name`: the name of the layer (metadata)
