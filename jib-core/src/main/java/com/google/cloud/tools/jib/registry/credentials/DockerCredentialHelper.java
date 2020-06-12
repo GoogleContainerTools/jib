@@ -118,6 +118,7 @@ public class DockerCredentialHelper {
       try {
         return retrieve(Arrays.asList(credentialHelper.toString() + suffix, "get"));
       } catch (CredentialHelperNotFoundException ignored) {
+        // ignored
       }
     }
     // On Windows, launching a process from Java without a file extension should normally fail, but
