@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+### Changed
+
+### Fixed
+
+## 0.15.0
+
+### Added
+
 - Now sets configured file ownership when creating layer tars. ([#2499](https://github.com/GoogleContainerTools/jib/pull/2499))
 
 ### Changed
