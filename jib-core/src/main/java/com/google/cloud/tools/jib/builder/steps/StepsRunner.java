@@ -402,9 +402,7 @@ public class StepsRunner {
 
               Optional<ManifestDescriptor<BuildableManifestTemplate>> manifestDescriptor =
                   new CheckImageStep(
-                          buildContext,
-                          results.targetRegistryClient.get(),
-                          manifestDigest)
+                          buildContext, results.targetRegistryClient.get(), manifestDigest)
                       .call();
 
               if (manifestDescriptor.isPresent()) {

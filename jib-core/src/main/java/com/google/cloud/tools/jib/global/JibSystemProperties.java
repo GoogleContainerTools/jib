@@ -117,8 +117,8 @@ public class JibSystemProperties {
   }
 
   /**
-   * Gets whether or not to skip pushing tags to existing images. This is defined by the
-   * {@code jib.skipExistingImages} system property.
+   * Gets whether or not to skip pushing tags to existing images. This is defined by the {@code
+   * jib.skipExistingImages} system property.
    *
    * @return {@code true} if Jib should skip pushing tags to existing images, {@code false} if not
    */

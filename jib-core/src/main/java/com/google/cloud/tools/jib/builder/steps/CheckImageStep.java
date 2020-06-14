@@ -25,14 +25,11 @@ import com.google.cloud.tools.jib.global.JibSystemProperties;
 import com.google.cloud.tools.jib.image.ManifestDescriptor;
 import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
 import com.google.cloud.tools.jib.registry.RegistryClient;
-
 import java.io.IOException;
 import java.util.Optional;
 import java.util.concurrent.Callable;
 
-/**
- * Checks the existence of a manifest.
- */
+/** Checks the existence of a manifest. */
 class CheckImageStep implements Callable<Optional<ManifestDescriptor<BuildableManifestTemplate>>> {
 
   BuildContext buildContext;
@@ -40,9 +37,7 @@ class CheckImageStep implements Callable<Optional<ManifestDescriptor<BuildableMa
   DescriptorDigest manifestDigest;
 
   CheckImageStep(
-      BuildContext buildContext,
-      RegistryClient registryClient,
-      DescriptorDigest manifestDigest) {
+      BuildContext buildContext, RegistryClient registryClient, DescriptorDigest manifestDigest) {
     this.buildContext = buildContext;
     this.registryClient = registryClient;
     this.manifestDigest = manifestDigest;
@@ -56,8 +51,7 @@ class CheckImageStep implements Callable<Optional<ManifestDescriptor<BuildableMa
 
     if (!JibSystemProperties.skipExistingImages()) {
       eventHandlers.dispatch(
-          LogEvent.info(
-              "Skipping manifest existence check; system property set to false"));
+          LogEvent.info("Skipping manifest existence check; system property set to false"));
 
       return Optional.empty();
     }
