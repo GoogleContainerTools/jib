@@ -19,6 +19,8 @@ package com.google.cloud.tools.jib.gradle;
 import com.google.cloud.tools.jib.plugins.common.RawConfiguration.ExtensionConfiguration;
 import java.util.Collections;
 import java.util.Map;
+import javax.annotation.Nullable;
+import org.gradle.api.Action;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.Internal;
 
@@ -27,6 +29,7 @@ public class ExtensionParameters implements ExtensionConfiguration {
 
   private String implementation = "<extension implementation not configured>";
   private Map<String, String> properties = Collections.emptyMap();
+  @Nullable private Action<?> action;
 
   @Input
   public String getImplementation() {
@@ -51,5 +54,15 @@ public class ExtensionParameters implements ExtensionConfiguration {
 
   public void setProperties(Map<String, String> properties) {
     this.properties = properties;
+  }
+
+  @Internal
+  @Override
+  public java.util.Optional<Object> getExtraConfiguration() {
+    return java.util.Optional.ofNullable(action);
+  }
+
+  public void configuration(Action<?> action) {
+    this.action = action;
   }
 }

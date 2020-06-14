@@ -49,8 +49,6 @@ public class JibExtensionTest {
         fakeProject
             .getExtensions()
             .create(JibPlugin.JIB_EXTENSION_NAME, JibExtension.class, fakeProject);
-
-    System.setProperties(new Properties());
   }
 
   @Test
@@ -142,9 +140,10 @@ public class JibExtensionTest {
 
   @Test
   public void testExtraDirectories_default() {
+    Assert.assertEquals(1, testJibExtension.getExtraDirectories().getPaths().size());
     Assert.assertEquals(
-        Arrays.asList(Paths.get(fakeProject.getProjectDir().getPath(), "src", "main", "jib")),
-        testJibExtension.getExtraDirectories().getPaths());
+        Paths.get(fakeProject.getProjectDir().getPath(), "src", "main", "jib"),
+        testJibExtension.getExtraDirectories().getPaths().get(0).getFrom());
     Assert.assertEquals(
         Collections.emptyMap(), testJibExtension.getExtraDirectories().getPermissions());
   }
@@ -157,38 +156,67 @@ public class JibExtensionTest {
           extraDirectories.setPermissions(ImmutableMap.of("file1", "123", "file2", "456"));
         });
 
+    Assert.assertEquals(1, testJibExtension.getExtraDirectories().getPaths().size());
     Assert.assertEquals(
-        Arrays.asList(Paths.get(fakeProject.getProjectDir().getPath(), "test", "path")),
-        testJibExtension.getExtraDirectories().getPaths());
+        Paths.get(fakeProject.getProjectDir().getPath(), "test", "path"),
+        testJibExtension.getExtraDirectories().getPaths().get(0).getFrom());
     Assert.assertEquals(
         ImmutableMap.of("file1", "123", "file2", "456"),
         testJibExtension.getExtraDirectories().getPermissions());
   }
 
   @Test
+  public void testExtraDirectories_withTarget() {
+    testJibExtension.extraDirectories(
+        extraDirectories ->
+            extraDirectories.paths(
+                paths -> {
+                  paths.path(
+                      path -> {
+                        path.setFrom("test/path");
+                        path.setInto("/");
+                      });
+                  paths.path(
+                      path -> {
+                        path.setFrom("another/path");
+                        path.setInto("/non/default/target");
+                      });
+                }));
+
+    Assert.assertEquals(2, testJibExtension.getExtraDirectories().getPaths().size());
+    Assert.assertEquals(
+        Paths.get(fakeProject.getProjectDir().getPath(), "test", "path"),
+        testJibExtension.getExtraDirectories().getPaths().get(0).getFrom());
+    Assert.assertEquals("/", testJibExtension.getExtraDirectories().getPaths().get(0).getInto());
+    Assert.assertEquals(
+        Paths.get(fakeProject.getProjectDir().getPath(), "another", "path"),
+        testJibExtension.getExtraDirectories().getPaths().get(1).getFrom());
+    Assert.assertEquals(
+        "/non/default/target", testJibExtension.getExtraDirectories().getPaths().get(1).getInto());
+  }
+
+  @Test
   public void testExtraDirectories_fileForPaths() {
     testJibExtension.extraDirectories(
-        extraDirectories -> {
-          extraDirectories.setPaths(Paths.get("test", "path").toFile());
-        });
+        extraDirectories -> extraDirectories.setPaths(Paths.get("test", "path").toFile()));
+    Assert.assertEquals(1, testJibExtension.getExtraDirectories().getPaths().size());
     Assert.assertEquals(
-        Arrays.asList(Paths.get(fakeProject.getProjectDir().getPath(), "test", "path")),
-        testJibExtension.getExtraDirectories().getPaths());
+        Paths.get(fakeProject.getProjectDir().getPath(), "test", "path"),
+        testJibExtension.getExtraDirectories().getPaths().get(0).getFrom());
   }
 
   @Test
   public void testExtraDirectories_stringListForPaths() {
     testJibExtension.extraDirectories(
-        extraDirectories -> {
-          extraDirectories.setPaths(Arrays.asList("test/path", "another/path"));
-          extraDirectories.setPermissions(ImmutableMap.of("file1", "123", "file2", "456"));
-        });
+        extraDirectories -> extraDirectories.setPaths(Arrays.asList("test/path", "another/path")));
 
-    String projectRoot = fakeProject.getProjectDir().getPath();
+    Assert.assertEquals(2, testJibExtension.getExtraDirectories().getPaths().size());
     Assert.assertEquals(
-        Arrays.asList(
-            Paths.get(projectRoot, "test", "path"), Paths.get(projectRoot, "another", "path")),
-        testJibExtension.getExtraDirectories().getPaths());
+        Paths.get(fakeProject.getProjectDir().getPath(), "test", "path"),
+        testJibExtension.getExtraDirectories().getPaths().get(0).getFrom());
+    Assert.assertEquals(
+        Paths.get(fakeProject.getProjectDir().getPath(), "another", "path"),
+        testJibExtension.getExtraDirectories().getPaths().get(1).getFrom());
   }
 
   @Test
@@ -200,11 +228,13 @@ public class JibExtensionTest {
                   Paths.get("test", "path").toFile(), Paths.get("another", "path").toFile()));
         });
 
-    String projectRoot = fakeProject.getProjectDir().getPath();
+    Assert.assertEquals(2, testJibExtension.getExtraDirectories().getPaths().size());
     Assert.assertEquals(
-        Arrays.asList(
-            Paths.get(projectRoot, "test", "path"), Paths.get(projectRoot, "another", "path")),
-        testJibExtension.getExtraDirectories().getPaths());
+        Paths.get(fakeProject.getProjectDir().getPath(), "test", "path"),
+        testJibExtension.getExtraDirectories().getPaths().get(0).getFrom());
+    Assert.assertEquals(
+        Paths.get(fakeProject.getProjectDir().getPath(), "another", "path"),
+        testJibExtension.getExtraDirectories().getPaths().get(1).getFrom());
   }
 
   @Test
@@ -273,6 +303,8 @@ public class JibExtensionTest {
 
   @Test
   public void testProperties() {
+    System.setProperties(new Properties());
+
     System.setProperty("jib.from.image", "fromImage");
     Assert.assertEquals("fromImage", testJibExtension.getFrom().getImage());
     System.setProperty("jib.from.credHelper", "credHelper");
@@ -325,9 +357,11 @@ public class JibExtensionTest {
     Assert.assertEquals("packaged", testJibExtension.getContainerizingMode());
 
     System.setProperty("jib.extraDirectories.paths", "/foo,/bar/baz");
+    Assert.assertEquals(2, testJibExtension.getExtraDirectories().getPaths().size());
     Assert.assertEquals(
-        Arrays.asList(Paths.get("/foo"), Paths.get("/bar/baz")),
-        testJibExtension.getExtraDirectories().getPaths());
+        Paths.get("/foo"), testJibExtension.getExtraDirectories().getPaths().get(0).getFrom());
+    Assert.assertEquals(
+        Paths.get("/bar/baz"), testJibExtension.getExtraDirectories().getPaths().get(1).getFrom());
     System.setProperty("jib.extraDirectories.permissions", "/foo/bar=707,/baz=456");
     Assert.assertEquals(
         ImmutableMap.of("/foo/bar", "707", "/baz", "456"),

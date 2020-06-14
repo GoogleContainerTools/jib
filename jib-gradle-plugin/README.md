@@ -48,7 +48,7 @@ In your Gradle Java project, add the plugin to your `build.gradle`:
 
 ```groovy
 plugins {
-  id 'com.google.cloud.tools.jib' version '2.2.0'
+  id 'com.google.cloud.tools.jib' version '2.4.0'
 }
 ```
 
@@ -240,8 +240,15 @@ Property | Type | Default | Description
 
 Property | Type | Default | Description
 --- | --- | --- | ---
-`paths` | `Object` | `(project-dir)/src/main/jib` | Extra directories acceptable by [`Project.files()`](https://docs.gradle.org/current/javadoc/org/gradle/api/Project.html#files-java.lang.Object...-), such as `String`, `File`, `Path`, `List<String\|File\|Path>`, etc. Can be absolute or relative to the project root.
+`paths` | [`paths`](#paths-closure) closure, or `Object` | `(project-dir)/src/main/jib` | May be configured as a closure configuring `path` elements, or as source directory values recognized by [`Project.files()`](https://docs.gradle.org/current/javadoc/org/gradle/api/Project.html#files-java.lang.Object...-), such as `String`, `File`, `Path`, `List<String\|File\|Path>`, etc.
 `permissions` | `Map<String, String>` | *None* | Maps file paths on container to Unix permissions. (Effective only for files added from extra directories.) If not configured, permissions default to "755" for directories and "644" for files.
+
+<a name="paths-closure"></a>`paths` can configure multiple `path` closures (see [Adding Arbitrary Files to the Image](#adding-arbitrary-files-to-the-image)). Each individual `path` has the following properties:
+
+Property | Type | Default | Description
+--- | --- | --- | ---
+`from` | `Object` | `(project-dir)/src/main/jib` | Accepts source directories that are recognized by [`Project.files()`](https://docs.gradle.org/current/javadoc/org/gradle/api/Project.html#files-java.lang.Object...-), such as `String`, `File`, `Path`, `List<String\|File\|Path>`, etc.
+`into` | `String` | `/` | The absolute unix path on the container to copy the extra directory contents into.
 
 <a name="outputpaths-closure"></a>`outputPaths` is a closure with the following properties:
 
@@ -280,7 +287,7 @@ Property | Type | Default | Description
 `jib.httpTimeout` | `int` | `20000` | HTTP connection/read timeout for registry interactions, in milliseconds. Use a value of `0` for an infinite timeout.
 `jib.useOnlyProjectCache` | `boolean` | `false` | If set to true, Jib does not share a cache between different Maven projects.
 `jib.baseImageCache` | `File` | *Platform-dependent*\*\*\* | Sets the directory to use for caching base image layers. This cache can (and should) be shared between multiple images.
-`jib.applicationCache` | `File` | `[project dir]/target/jib-cache` | Sets the directory to use for caching application layers. This cache can be shared between multiple images.
+`jib.applicationCache` | `File` | `[project dir]/build/jib-cache` | Sets the directory to use for caching application layers. This cache can be shared between multiple images.
 `jib.console` | `String` | *None* | If set to `plain`, Jib will print plaintext log messages rather than display a progress bar during the build.
 
 *\* If you configure `args` while `entrypoint` is set to `'INHERIT'`, the configured `args` value will take precedence over the CMD propagated from the base image.*
@@ -336,9 +343,7 @@ Prefix | Example | Type
 
 ### Adding Arbitrary Files to the Image
 
-*\* Note: this is an incubating feature and may change in the future.*
-
-You can add arbitrary, non-classpath files to the image by placing them in a `src/main/jib` directory. This will copy all files within the `jib` folder to the image's root directory, maintaining the same structure (e.g. if you have a text file at `src/main/jib/dir/hello.txt`, then your image will contain `/dir/hello.txt` after being built with Jib).
+You can add arbitrary, non-classpath files to the image without extra configuration by placing them in a `src/main/jib` directory. This will copy all files within the `jib` folder to the image's root directory, maintaining the same structure (e.g. if you have a text file at `src/main/jib/dir/hello.txt`, then your image will contain `/dir/hello.txt` after being built with Jib).
 
 Note that Jib does not follow symbolic links in the container image.  If a symbolic link is present, _it will be removed_ prior to placing the files and directories.
 
@@ -362,6 +367,24 @@ jib {
     ]
   }
 }
+```
+
+You may also specify the target of the copy using `paths` as a closure:
+
+```groovy
+  extraDirectories {
+    paths {
+      path {
+        // copies the contents of 'src/main/extra-dir' into '/' on the container
+        from = file('src/main/extra-dir')
+      }
+      path {
+        // copies the contents of 'src/main/another/dir' into '/extras' on the container
+        from = file('src/main/another/dir')
+        into = '/extras'
+      }
+    }
+  }
 ```
 
 ### Authentication Methods

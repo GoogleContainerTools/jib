@@ -219,8 +219,8 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
     // Allows <path>source</path> shorthand instead of forcing
     // <path><from>source</from><into>/</into></path>
     public void set(File path) {
-      this.from = path;
-      this.into = "/";
+      from = path;
+      into = "/";
     }
 
     public Path getFrom() {
@@ -261,6 +261,8 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
 
     @Parameter private Map<String, String> properties = Collections.emptyMap();
 
+    @Nullable @Parameter private Object configuration;
+
     @Override
     public String getExtensionClass() {
       return implementation;
@@ -269,6 +271,11 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
     @Override
     public Map<String, String> getProperties() {
       return properties;
+    }
+
+    @Override
+    public Optional<Object> getExtraConfiguration() {
+      return Optional.ofNullable(configuration);
     }
   }
 

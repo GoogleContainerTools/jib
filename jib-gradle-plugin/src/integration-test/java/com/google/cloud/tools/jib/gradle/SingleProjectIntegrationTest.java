@@ -308,7 +308,7 @@ public class SingleProjectIntegrationTest {
     String targetImage = "localhost:6000/simpleimage:gradle" + System.nanoTime();
     Assert.assertEquals(
         "Hello, world. \n1970-01-01T00:00:01Z\nrw-r--r--\nrw-r--r--\nfoo\ncat\n"
-            + "1970-01-01T00:00:01Z\n1970-01-01T00:00:01Z\nbaz\n1970-01-01T00:00:01Z\n",
+            + "1970-01-01T00:00:01Z\n1970-01-01T00:00:01Z\n",
         JibRunHelper.buildToDockerDaemonAndRun(
             simpleTestProject, targetImage, "build-extra-dirs.gradle"));
     assertLayerSize(9, targetImage); // one more than usual
@@ -320,9 +320,21 @@ public class SingleProjectIntegrationTest {
     String targetImage = "localhost:6000/simpleimage:gradle" + System.nanoTime();
     Assert.assertEquals(
         "Hello, world. \n1970-01-01T00:00:01Z\nrw-r--r--\nrw-r--r--\nfoo\ncat\n"
-            + "1970-01-01T00:00:01Z\n1970-01-01T00:00:01Z\nbaz\n1970-01-01T00:00:01Z\n",
+            + "1970-01-01T00:00:01Z\n1970-01-01T00:00:01Z\n",
         JibRunHelper.buildToDockerDaemonAndRun(
             simpleTestProject, targetImage, "build-extra-dirs2.gradle"));
+    assertLayerSize(9, targetImage); // one more than usual
+  }
+
+  @Test
+  public void testDockerDaemon_simple_multipleExtraDirectoriesWithClosure()
+      throws DigestException, IOException, InterruptedException {
+    String targetImage = "localhost:6000/simpleimage:gradle" + System.nanoTime();
+    Assert.assertEquals(
+        "Hello, world. \n1970-01-01T00:00:01Z\nrw-r--r--\nrw-r--r--\nfoo\ncat\n"
+            + "1970-01-01T00:00:01Z\n1970-01-01T00:00:01Z\nbaz\n1970-01-01T00:00:01Z\n",
+        JibRunHelper.buildToDockerDaemonAndRun(
+            simpleTestProject, targetImage, "build-extra-dirs3.gradle"));
     assertLayerSize(9, targetImage); // one more than usual
   }
 

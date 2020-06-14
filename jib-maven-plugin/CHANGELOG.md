@@ -5,9 +5,30 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
-- `<from>` and `<into>` fields to `<extraDirectories><paths><path>` for configuring the source and target of an extra directory. ([#1581](https://github.com/GoogleContainerTools/jib/issues/1581))
+### Changed
+
+### Fixed
+
+## 2.4.0
+
+### Added
+
+- Jib Extension Framework! The framework enables anyone to easily extend and tailor the Jib Maven plugin behavior to their liking. Check out the new [Jib Extensions](https://github.com/GoogleContainerTools/jib-extensions) GitHub repository to learn more. ([#2401](https://github.com/GoogleContainerTools/jib/issues/2401))
+- Project dependencies in a multi-module WAR project are now stored in a separate "project dependencies" layer (as currently done for a non-WAR project). ([#2450](https://github.com/GoogleContainerTools/jib/issues/2450))
 
 ### Changed
+
+- Previous locally cached application layers (`<project root>/target/jib-cache`) will be ignored because of changes to the caching selectors. ([#2499](https://github.com/GoogleContainerTools/jib/pull/2499))
+
+### Fixed
+
+- Fixed authentication failure with Azure Container Registry when using an identity token defined in the `auths` section of Docker config (`~/.docker/config.json`). ([#2488](https://github.com/GoogleContainerTools/jib/pull/2488))
+
+## 2.3.0
+
+### Added
+
+- `<from>` and `<into>` fields to `<extraDirectories><paths><path>` for configuring the source and target of an extra directory. ([#1581](https://github.com/GoogleContainerTools/jib/issues/1581))
 
 ### Fixed
 

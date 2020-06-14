@@ -44,11 +44,13 @@ public class DockerConfigTest {
     DockerConfig dockerConfig =
         new DockerConfig(JsonTemplateMapper.readJsonFromFile(jsonFile, DockerConfigTemplate.class));
 
-    Assert.assertEquals("some:auth", decodeBase64(dockerConfig.getAuthFor("some registry")));
     Assert.assertEquals(
-        "some:other:auth", decodeBase64(dockerConfig.getAuthFor("some other registry")));
-    Assert.assertEquals("token", decodeBase64(dockerConfig.getAuthFor("registry")));
-    Assert.assertEquals("token", decodeBase64(dockerConfig.getAuthFor("https://registry")));
+        "some:auth", decodeBase64(dockerConfig.getAuthFor("some registry").getAuth()));
+    Assert.assertEquals(
+        "some:other:auth", decodeBase64(dockerConfig.getAuthFor("some other registry").getAuth()));
+    Assert.assertEquals("token", decodeBase64(dockerConfig.getAuthFor("registry").getAuth()));
+    Assert.assertEquals(
+        "token", decodeBase64(dockerConfig.getAuthFor("https://registry").getAuth()));
     Assert.assertNull(dockerConfig.getAuthFor("just registry"));
 
     Assert.assertEquals(
@@ -70,13 +72,16 @@ public class DockerConfigTest {
     DockerConfig dockerConfig =
         new DockerConfig(JsonTemplateMapper.readJsonFromFile(json, DockerConfigTemplate.class));
 
-    Assert.assertEquals("my-registry: exact match", dockerConfig.getAuthFor("my-registry"));
-    Assert.assertEquals("cool-registry: with https", dockerConfig.getAuthFor("cool-registry"));
     Assert.assertEquals(
-        "awesome-registry: starting with name", dockerConfig.getAuthFor("awesome-registry"));
+        "my-registry: exact match", dockerConfig.getAuthFor("my-registry").getAuth());
+    Assert.assertEquals(
+        "cool-registry: with https", dockerConfig.getAuthFor("cool-registry").getAuth());
+    Assert.assertEquals(
+        "awesome-registry: starting with name",
+        dockerConfig.getAuthFor("awesome-registry").getAuth());
     Assert.assertEquals(
         "dull-registry: starting with name and with https",
-        dockerConfig.getAuthFor("dull-registry"));
+        dockerConfig.getAuthFor("dull-registry").getAuth());
   }
 
   @Test

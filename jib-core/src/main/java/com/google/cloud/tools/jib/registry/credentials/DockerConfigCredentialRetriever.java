@@ -17,11 +17,11 @@
 package com.google.cloud.tools.jib.registry.credentials;
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.api.client.util.Base64;
 import com.google.cloud.tools.jib.api.Credential;
 import com.google.cloud.tools.jib.api.LogEvent;
-import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import com.google.cloud.tools.jib.registry.RegistryAliasGroup;
 import com.google.cloud.tools.jib.registry.credentials.json.DockerConfigTemplate;
 import com.google.cloud.tools.jib.registry.credentials.json.DockerConfigTemplate.AuthTemplate;
@@ -87,21 +87,22 @@ public class DockerConfigCredentialRetriever {
       return Optional.empty();
     }
 
-    if (legacyConfigFormat) {
-      try (InputStream fileIn = Files.newInputStream(dockerConfigFile)) {
+    ObjectMapper objectMapper =
+        new ObjectMapper().configure(MapperFeature.ACCEPT_CASE_INSENSITIVE_PROPERTIES, true);
+    try (InputStream fileIn = Files.newInputStream(dockerConfigFile)) {
+      if (legacyConfigFormat) {
         // legacy config format is the value of the "auths":{ <map> } block of the new config (i.e.,
         // the <map> of string -> DockerConfigTemplate.AuthTemplate).
         Map<String, AuthTemplate> auths =
-            new ObjectMapper().readValue(fileIn, new TypeReference<Map<String, AuthTemplate>>() {});
+            objectMapper.readValue(fileIn, new TypeReference<Map<String, AuthTemplate>>() {});
         DockerConfig dockerConfig = new DockerConfig(new DockerConfigTemplate(auths));
         return retrieve(dockerConfig, logger);
       }
-    }
 
-    DockerConfig dockerConfig =
-        new DockerConfig(
-            JsonTemplateMapper.readJsonFromFile(dockerConfigFile, DockerConfigTemplate.class));
-    return retrieve(dockerConfig, logger);
+      DockerConfig dockerConfig =
+          new DockerConfig(objectMapper.readValue(fileIn, DockerConfigTemplate.class));
+      return retrieve(dockerConfig, logger);
+    }
   }
 
   /**
@@ -138,15 +139,25 @@ public class DockerConfigCredentialRetriever {
       }
 
       // Lastly, find defined auth.
-      String auth = dockerConfig.getAuthFor(registryAlias);
+      AuthTemplate auth = dockerConfig.getAuthFor(registryAlias);
       if (auth != null) {
         // 'auth' is a basic authentication token that should be parsed back into credentials
         String usernameColonPassword =
-            new String(Base64.decodeBase64(auth), StandardCharsets.UTF_8);
+            new String(Base64.decodeBase64(auth.getAuth()), StandardCharsets.UTF_8);
         String username = usernameColonPassword.substring(0, usernameColonPassword.indexOf(":"));
         String password = usernameColonPassword.substring(usernameColonPassword.indexOf(":") + 1);
         logger.accept(
             LogEvent.info("Docker config auths section defines credentials for " + registryAlias));
+        if (auth.getIdentityToken() != null
+            // These username and password checks may be unnecessary, but doing so to restrict the
+            // scope only to the Azure behavior to maintain maximum backward-compatibilty.
+            && username.equals("00000000-0000-0000-0000-000000000000")
+            && password.isEmpty()) {
+          logger.accept(
+              LogEvent.info("Using 'identityToken' in Docker config auth for " + registryAlias));
+          return Optional.of(
+              Credential.from(Credential.OAUTH2_TOKEN_USER_NAME, auth.getIdentityToken()));
+        }
         return Optional.of(Credential.from(username, password));
       }
     }

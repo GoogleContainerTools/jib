@@ -30,6 +30,7 @@ import com.google.cloud.tools.jib.api.buildplan.FileEntry;
 import com.google.cloud.tools.jib.configuration.BuildContext;
 import com.google.cloud.tools.jib.filesystem.DirectoryWalker;
 import com.google.cloud.tools.jib.filesystem.TempDirectoryProvider;
+import com.google.cloud.tools.jib.maven.extension.JibMavenPluginExtension;
 import com.google.cloud.tools.jib.plugins.common.ContainerizingMode;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
@@ -52,6 +53,7 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.StringJoiner;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.DefaultArtifact;
@@ -239,6 +241,7 @@ public class MavenProjectPropertiesTest {
   @Mock private PluginExecution mockPluginExecution;
   @Mock private Log mockLog;
   @Mock private TempDirectoryProvider mockTempDirectoryProvider;
+  @Mock private Supplier<List<JibMavenPluginExtension<?>>> mockExtensionLoader;
 
   private MavenProjectProperties mavenProjectProperties;
 
@@ -255,7 +258,8 @@ public class MavenProjectPropertiesTest {
             mockMavenProject,
             mockMavenSession,
             mockLog,
-            mockTempDirectoryProvider);
+            mockTempDirectoryProvider,
+            mockExtensionLoader);
 
     Path outputPath = getResource("maven/application/output");
     Path dependenciesPath = getResource("maven/application/dependencies");
@@ -694,6 +698,28 @@ public class MavenProjectPropertiesTest {
             newArtifact("com.test", "projectA", "1.0").getFile().toPath(),
             newArtifact("com.test", "projectB", "1.0-SNAPSHOT").getFile().toPath(),
             newArtifact("com.test", "projectC", "3.0").getFile().toPath()));
+  }
+
+  @Test
+  public void testGetProjectDependencies() {
+    MavenProject rootPomProject = Mockito.mock(MavenProject.class);
+    MavenProject jibSubModule = Mockito.mock(MavenProject.class);
+    MavenProject sharedLibSubModule = Mockito.mock(MavenProject.class);
+    Mockito.when(mockMavenSession.getProjects())
+        .thenReturn(Arrays.asList(rootPomProject, sharedLibSubModule, jibSubModule));
+
+    Artifact nullFileArtifact = Mockito.mock(Artifact.class);
+    Artifact projectJar = newArtifact("com.test", "my-app", "1.0");
+    Artifact sharedLibJar = newArtifact("com.test", "shared-lib", "1.0");
+
+    Mockito.when(rootPomProject.getArtifact()).thenReturn(nullFileArtifact);
+    Mockito.when(jibSubModule.getArtifact()).thenReturn(projectJar);
+    Mockito.when(sharedLibSubModule.getArtifact()).thenReturn(sharedLibJar);
+
+    Mockito.when(mockMavenProject.getArtifact()).thenReturn(projectJar);
+
+    Assert.assertEquals(
+        ImmutableSet.of(sharedLibJar), mavenProjectProperties.getProjectDependencies());
   }
 
   @Test

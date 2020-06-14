@@ -9,6 +9,29 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
+## 2.4.0
+
+### Added
+
+- Jib Extension Framework! The framework enables anyone to easily extend and tailor the Jib Gradle plugin behavior to their liking. Check out the new [Jib Extensions](https://github.com/GoogleContainerTools/jib-extensions) GitHub repository to learn more. ([#2401](https://github.com/GoogleContainerTools/jib/issues/2401))
+- Project dependencies in a multi-module WAR project are now stored in a separate "project dependencies" layer (as currently done for a non-WAR project). ([#2450](https://github.com/GoogleContainerTools/jib/issues/2450))
+
+### Changed
+
+- Previous locally cached application layers (`<project root>/target/jib-cache`) will be ignored because of changes to the caching selectors. ([#2499](https://github.com/GoogleContainerTools/jib/pull/2499))
+
+### Fixed
+
+- Fixed authentication failure with Azure Container Registry when using an identity token defined in the `auths` section of Docker config (`~/.docker/config.json`). ([#2488](https://github.com/GoogleContainerTools/jib/pull/2488))
+
+## 2.3.0
+
+### Added
+
+- `jib.extraDirectories.paths` closure to allow configuring the source and target of an extra directory. ([#1581](https://github.com/GoogleContainerTools/jib/issues/1581))
+
+### Fixed
+
 - Fixed the problem not inheriting `USER` container configuration from a base image. ([#2421](https://github.com/GoogleContainerTools/jib/pull/2421))
 - Fixed wrong capitalization of JSON properties in a loadable Docker manifest when building a tar image. ([#2430](https://github.com/GoogleContainerTools/jib/issues/2430))
 - Fixed an issue when using a base image whose image creation timestamp contains timezone offset. ([#2428](https://github.com/GoogleContainerTools/jib/issues/2428))

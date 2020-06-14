@@ -43,7 +43,7 @@ For information about the project, see the [Jib project README](../README.md).
 You can containerize your application easily with one command:
 
 ```shell
-mvn compile com.google.cloud.tools:jib-maven-plugin:2.2.0:build -Dimage=<MY IMAGE>
+mvn compile com.google.cloud.tools:jib-maven-plugin:2.4.0:build -Dimage=<MY IMAGE>
 ```
 
 This builds and pushes a container image for your application to a container registry. *If you encounter authentication issues, see [Authentication Methods](#authentication-methods).*
@@ -51,7 +51,7 @@ This builds and pushes a container image for your application to a container reg
 To build to a Docker daemon, use:
 
 ```shell
-mvn compile com.google.cloud.tools:jib-maven-plugin:2.2.0:dockerBuild
+mvn compile com.google.cloud.tools:jib-maven-plugin:2.4.0:dockerBuild
 ```
 
 If you would like to set up Jib as part of your Maven build, follow the guide below.
@@ -69,7 +69,7 @@ In your Maven Java project, add the plugin to your `pom.xml`:
       <plugin>
         <groupId>com.google.cloud.tools</groupId>
         <artifactId>jib-maven-plugin</artifactId>
-        <version>2.2.0</version>
+        <version>2.4.0</version>
         <configuration>
           <to>
             <image>myimage</image>
@@ -286,8 +286,15 @@ Property | Type | Default | Description
 
 Property | Type | Default | Description
 --- | --- | --- | ---
-`paths` | list | `[(project-dir)/src/main/jib]` | List of extra directories. Can be absolute or relative to the project root.
+`paths` | list | `[(project-dir)/src/main/jib]` | List of [`path`](#path-object) objects and/or extra directory paths. Can be absolute or relative to the project root.
 `permissions` | list | *None* | Maps file paths on container to Unix permissions. (Effective only for files added from extra directories.) If not configured, permissions default to "755" for directories and "644" for files.
+
+<a name="path-object"></a>`path` is an object with the following properties (see [Adding Arbitrary Files to the Image](#adding-arbitrary-files-to-the-image)):
+
+Property | Type | Default | Description
+--- | --- | --- | ---
+`from` | file | `[(project-dir)/src/main/jib]` | The source directory. Can be absolute or relative to the project root.
+`into` | string | `/` | The absolute unix path on the container to copy the extra directory contents into.
 
 <a name="outputpaths-object"></a>`outputPaths` is an object with the following properties:
 
@@ -411,8 +418,13 @@ You can configure different directories by using the `<extraDirectories>` parame
   <!-- Copies files from 'src/main/custom-extra-dir' and '/home/user/jib-extras' instead of 'src/main/jib' -->
   <extraDirectories>
     <paths>
+      <!-- Copies from 'src/main/custom-extra-dir' into '/' on the container. -->
       <path>src/main/custom-extra-dir</path>
-      <path>/home/user/jib-extras</path>
+      <!-- Copies from '/home/user/jib-extras' into '/extras' on the container -->
+      <path>
+        <from>/home/user/jib-extras</from>
+        <into>/extras</into>
+      </path>
     </paths>
   </extraDirectories>
 </configuration>

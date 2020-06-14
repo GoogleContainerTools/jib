@@ -100,7 +100,7 @@ public class ReproducibleLayerBuilderTest {
         FileEntriesLayer.DEFAULT_MODIFICATION_TIME);
   }
 
-  @Rule public TemporaryFolder temporaryFolder = new TemporaryFolder();
+  @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
   @Test
   public void testBuild() throws URISyntaxException, IOException {
@@ -360,9 +360,129 @@ public class ReproducibleLayerBuilderTest {
     }
   }
 
-  private Path createFile(Path root, String filename, String content, long modificationTime)
-      throws IOException {
+  @Test
+  public void testBuild_ownership() throws IOException {
+    Path testRoot = temporaryFolder.getRoot().toPath();
+    Path someFile = createFile(testRoot, "someFile", "content", 54321);
 
+    Blob blob =
+        new ReproducibleLayerBuilder(
+                ImmutableList.of(
+                    defaultLayerEntry(someFile, AbsoluteUnixPath.get("/file1")),
+                    new FileEntry(
+                        someFile,
+                        AbsoluteUnixPath.get("/file2"),
+                        FilePermissions.fromOctalString("123"),
+                        Instant.EPOCH,
+                        ""),
+                    new FileEntry(
+                        someFile,
+                        AbsoluteUnixPath.get("/file3"),
+                        FilePermissions.fromOctalString("123"),
+                        Instant.EPOCH,
+                        ":"),
+                    new FileEntry(
+                        someFile,
+                        AbsoluteUnixPath.get("/file4"),
+                        FilePermissions.fromOctalString("123"),
+                        Instant.EPOCH,
+                        "333:"),
+                    new FileEntry(
+                        someFile,
+                        AbsoluteUnixPath.get("/file5"),
+                        FilePermissions.fromOctalString("123"),
+                        Instant.EPOCH,
+                        ":555"),
+                    new FileEntry(
+                        someFile,
+                        AbsoluteUnixPath.get("/file6"),
+                        FilePermissions.fromOctalString("123"),
+                        Instant.EPOCH,
+                        "333:555"),
+                    new FileEntry(
+                        someFile,
+                        AbsoluteUnixPath.get("/file7"),
+                        FilePermissions.fromOctalString("123"),
+                        Instant.EPOCH,
+                        "user:"),
+                    new FileEntry(
+                        someFile,
+                        AbsoluteUnixPath.get("/file8"),
+                        FilePermissions.fromOctalString("123"),
+                        Instant.EPOCH,
+                        ":group"),
+                    new FileEntry(
+                        someFile,
+                        AbsoluteUnixPath.get("/file9"),
+                        FilePermissions.fromOctalString("123"),
+                        Instant.EPOCH,
+                        "user:group")))
+            .build();
+
+    Path tarFile = temporaryFolder.newFile().toPath();
+    try (OutputStream out = new BufferedOutputStream(Files.newOutputStream(tarFile))) {
+      blob.writeTo(out);
+    }
+
+    try (TarArchiveInputStream in = new TarArchiveInputStream(Files.newInputStream(tarFile))) {
+      TarArchiveEntry entry1 = in.getNextTarEntry();
+      Assert.assertEquals(0, entry1.getLongUserId());
+      Assert.assertEquals(0, entry1.getLongGroupId());
+      Assert.assertEquals("", entry1.getUserName());
+      Assert.assertEquals("", entry1.getGroupName());
+
+      TarArchiveEntry entry2 = in.getNextTarEntry();
+      Assert.assertEquals(0, entry2.getLongUserId());
+      Assert.assertEquals(0, entry2.getLongGroupId());
+      Assert.assertEquals("", entry2.getUserName());
+      Assert.assertEquals("", entry2.getGroupName());
+
+      TarArchiveEntry entry3 = in.getNextTarEntry();
+      Assert.assertEquals(0, entry3.getLongUserId());
+      Assert.assertEquals(0, entry3.getLongGroupId());
+      Assert.assertEquals("", entry3.getUserName());
+      Assert.assertEquals("", entry3.getGroupName());
+
+      TarArchiveEntry entry4 = in.getNextTarEntry();
+      Assert.assertEquals(333, entry4.getLongUserId());
+      Assert.assertEquals(0, entry4.getLongGroupId());
+      Assert.assertEquals("", entry4.getUserName());
+      Assert.assertEquals("", entry4.getGroupName());
+
+      TarArchiveEntry entry5 = in.getNextTarEntry();
+      Assert.assertEquals(0, entry5.getLongUserId());
+      Assert.assertEquals(555, entry5.getLongGroupId());
+      Assert.assertEquals("", entry5.getUserName());
+      Assert.assertEquals("", entry5.getGroupName());
+
+      TarArchiveEntry entry6 = in.getNextTarEntry();
+      Assert.assertEquals(333, entry6.getLongUserId());
+      Assert.assertEquals(555, entry6.getLongGroupId());
+      Assert.assertEquals("", entry6.getUserName());
+      Assert.assertEquals("", entry6.getGroupName());
+
+      TarArchiveEntry entry7 = in.getNextTarEntry();
+      Assert.assertEquals(0, entry7.getLongUserId());
+      Assert.assertEquals(0, entry7.getLongGroupId());
+      Assert.assertEquals("user", entry7.getUserName());
+      Assert.assertEquals("", entry7.getGroupName());
+
+      TarArchiveEntry entry8 = in.getNextTarEntry();
+      Assert.assertEquals(0, entry8.getLongUserId());
+      Assert.assertEquals(0, entry8.getLongGroupId());
+      Assert.assertEquals("", entry8.getUserName());
+      Assert.assertEquals("group", entry8.getGroupName());
+
+      TarArchiveEntry entry9 = in.getNextTarEntry();
+      Assert.assertEquals(0, entry9.getLongUserId());
+      Assert.assertEquals(0, entry9.getLongGroupId());
+      Assert.assertEquals("user", entry9.getUserName());
+      Assert.assertEquals("group", entry9.getGroupName());
+    }
+  }
+
+  private static Path createFile(Path root, String filename, String content, long modificationTime)
+      throws IOException {
     Path newFile =
         Files.write(
             root.resolve(filename),

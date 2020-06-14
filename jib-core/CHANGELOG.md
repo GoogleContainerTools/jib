@@ -5,6 +5,30 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+### Changed
+
+### Fixed
+
+## 0.15.0
+
+### Added
+
+- Now sets configured file ownership when creating layer tars. ([#2499](https://github.com/GoogleContainerTools/jib/pull/2499))
+
+### Changed
+
+- `Ports.parse(List<String> ports)` now returns a `Set`(as a `HashSet`) instead of `ImmutableSet` ([#2513](https://github.com/GoogleContainerTools/jib/pull/2513))
+- Previous locally cached application layers will be ignored because of changes to the caching selectors. ([#2499](https://github.com/GoogleContainerTools/jib/pull/2499))
+
+### Fixed
+
+- Fixed authentication failure with Azure Container Registry when using an identity token defined in the `auths` section of Docker config (`~/.docker/config.json`). ([#2488](https://github.com/GoogleContainerTools/jib/pull/2488))
+- Now adding the Jib Core dependency transitively exposes the Build Plan API. ([#2507](https://github.com/GoogleContainerTools/jib/issues/2507))
+
+## 0.14.0
+
+### Added
+
 - Multiple additions to `ImageReference` to separate `tag` and `digest`. ([#1481](https://github.com/GoogleContainerTools/jib/issues/1481))
     - `of(registry, repository, tag, digest)` to create an image from a tag and digest.
     - `isValidDigest(digest)` to check if a string is a valid digest.
