@@ -154,8 +154,8 @@ public class DefaultCredentialRetrievers {
         if (!Files.exists(Paths.get(credentialHelper))) {
           String osName = systemProperties.getProperty("os.name").toLowerCase(Locale.ENGLISH);
           if (!osName.contains("windows")
-              || !Files.exists(Paths.get(credentialHelper + ".cmd"))
-                  && !Files.exists(Paths.get(credentialHelper + ".exe"))) {
+              || (!Files.exists(Paths.get(credentialHelper + ".cmd"))
+                  && !Files.exists(Paths.get(credentialHelper + ".exe")))) {
             throw new FileNotFoundException(
                 "Specified credential helper was not found: " + credentialHelper);
           }
