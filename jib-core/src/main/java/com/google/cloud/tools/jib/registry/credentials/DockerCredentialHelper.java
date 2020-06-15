@@ -113,7 +113,7 @@ public class DockerCredentialHelper {
       return retrieve(Arrays.asList(credentialHelper.toString(), "get"));
     }
 
-    // We are on Windows.
+    // We are on Windows with undefined/unknown file extension.
     for (String suffix : Arrays.asList(".cmd", ".exe")) {
       try {
         return retrieve(Arrays.asList(credentialHelper.toString() + suffix, "get"));
@@ -121,7 +121,8 @@ public class DockerCredentialHelper {
         // ignored
       }
     }
-    // On Windows, launching a process from Java without a file extension should normally fail, but
+    // On Windows, launching a process from Java without a file extension should normally fail
+    // (https://github.com/GoogleContainerTools/jib/issues/2399#issuecomment-612972912), but
     // running Jib on Linux-like environment (e.g., Cygwin) might succeed?
     return retrieve(Arrays.asList(credentialHelper.toString(), "get"));
   }
