@@ -34,7 +34,6 @@ import com.google.cloud.tools.jib.global.JibSystemProperties;
 import com.google.cloud.tools.jib.http.Authorization;
 import com.google.cloud.tools.jib.http.FailoverHttpClient;
 import com.google.cloud.tools.jib.http.Response;
-import com.google.cloud.tools.jib.image.ManifestDescriptor;
 import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
 import com.google.cloud.tools.jib.image.json.ManifestTemplate;
 import com.google.cloud.tools.jib.json.JsonTemplate;
@@ -379,8 +378,8 @@ public class RegistryClient {
    * @throws IOException if communicating with the endpoint fails
    * @throws RegistryException if communicating with the endpoint fails
    */
-  public <T extends BuildableManifestTemplate> Optional<ManifestDescriptor<T>> checkImage(
-      DescriptorDigest imageDigest, Class<T> manifestTemplateClass)
+  public <T extends ManifestTemplate> Optional<ManifestAndDigest<T>> checkImage(
+      String imageDigest, Class<T> manifestTemplateClass)
       throws IOException, RegistryException {
     ManifestChecker<T> manifestChecker =
         new ManifestChecker<>(
@@ -389,9 +388,9 @@ public class RegistryClient {
     return callRegistryEndpoint(manifestChecker);
   }
 
-  public Optional<ManifestDescriptor<BuildableManifestTemplate>> checkImage(
-      DescriptorDigest imageDigest) throws IOException, RegistryException {
-    return checkImage(imageDigest, BuildableManifestTemplate.class);
+  public Optional<ManifestAndDigest<ManifestTemplate>> checkImage(
+      String imageDigest) throws IOException, RegistryException {
+    return checkImage(imageDigest, ManifestTemplate.class);
   }
 
   /**

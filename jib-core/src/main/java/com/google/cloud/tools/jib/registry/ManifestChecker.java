@@ -25,15 +25,10 @@ import com.google.cloud.tools.jib.hash.Digests;
 import com.google.cloud.tools.jib.http.BlobHttpContent;
 import com.google.cloud.tools.jib.http.Response;
 import com.google.cloud.tools.jib.http.ResponseException;
-import com.google.cloud.tools.jib.image.ManifestDescriptor;
-import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
-import com.google.cloud.tools.jib.image.json.ManifestTemplate;
-import com.google.cloud.tools.jib.image.json.OciManifestTemplate;
-import com.google.cloud.tools.jib.image.json.UnknownManifestFormatException;
-import com.google.cloud.tools.jib.image.json.V21ManifestTemplate;
-import com.google.cloud.tools.jib.image.json.V22ManifestListTemplate;
-import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
+import com.google.cloud.tools.jib.image.json.*;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
+
+import javax.annotation.Nullable;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -43,19 +38,18 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import javax.annotation.Nullable;
 
 /** Checks an image's manifest. */
-public class ManifestChecker<T extends BuildableManifestTemplate>
-    implements RegistryEndpointProvider<Optional<ManifestDescriptor<T>>> {
+public class ManifestChecker<T extends ManifestTemplate>
+    implements RegistryEndpointProvider<Optional<ManifestAndDigest<T>>> {
 
   private final RegistryEndpointRequestProperties registryEndpointRequestProperties;
-  private final DescriptorDigest imageDescriptor;
+  private final String imageDescriptor;
   private final Class<T> manifestTemplateClass;
 
   ManifestChecker(
       RegistryEndpointRequestProperties registryEndpointRequestProperties,
-      DescriptorDigest imageDescriptor,
+      String imageDescriptor,
       Class<T> manifestTemplateClass) {
     this.registryEndpointRequestProperties = registryEndpointRequestProperties;
     this.imageDescriptor = imageDescriptor;
@@ -92,16 +86,18 @@ public class ManifestChecker<T extends BuildableManifestTemplate>
         V21ManifestTemplate.MEDIA_TYPE);
   }
 
-  /** Parses the response body into a {@link ManifestAndDigest}. */
+  /**
+   * Parses the response body into a {@link ManifestAndDigest}.
+   */
   @Override
-  public Optional<ManifestDescriptor<T>> handleResponse(Response response)
+  public Optional<ManifestAndDigest<T>> handleResponse(Response response)
       throws IOException, UnknownManifestFormatException {
     ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
     DescriptorDigest digest =
         Digests.computeDigest(response.getBody(), byteArrayOutputStream).getDigest();
     String jsonString = byteArrayOutputStream.toString(StandardCharsets.UTF_8.name());
     T manifestTemplate = getManifestTemplateFromJson(jsonString);
-    return Optional.of(new ManifestDescriptor<>(manifestTemplate, digest));
+    return Optional.of(new ManifestAndDigest<>(manifestTemplate, digest));
   }
 
   @Override
@@ -110,7 +106,7 @@ public class ManifestChecker<T extends BuildableManifestTemplate>
         apiRouteBase
             + registryEndpointRequestProperties.getImageName()
             + "/manifests/"
-            + imageDescriptor.toString());
+            + imageDescriptor);
   }
 
   @Override
@@ -170,25 +166,23 @@ public class ManifestChecker<T extends BuildableManifestTemplate>
   }
 
   @Override
-  public Optional<ManifestDescriptor<T>> handleHttpResponseException(
-      ResponseException responseException) throws ResponseException, RegistryErrorException {
+  public Optional<ManifestAndDigest<T>> handleHttpResponseException(
+      ResponseException responseException) throws ResponseException {
     if (responseException.getStatusCode() != HttpStatusCodes.STATUS_CODE_NOT_FOUND) {
       throw responseException;
     }
 
     // Finds a MANIFEST_BLOB_UNKNOWN error response code.
     if (responseException.getContent() == null) {
-      // TODO: The Google HTTP client gives null content for HEAD requests. Make the content never
-      // be null, even for HEAD requests.
       return Optional.empty();
     }
 
     ErrorCodes errorCode = ErrorResponseUtil.getErrorCode(responseException);
-    if (errorCode == ErrorCodes.MANIFEST_BLOB_UNKNOWN) {
+    if (errorCode == ErrorCodes.MANIFEST_UNKNOWN) {
       return Optional.empty();
     }
 
-    // MANIFEST_BLOB_UNKNOWN was not found as a error response code.
+    // MANIFEST_UNKNOWN was not found as a error response code.
     throw responseException;
   }
 }

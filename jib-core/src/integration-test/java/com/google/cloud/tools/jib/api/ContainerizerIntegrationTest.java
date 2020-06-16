@@ -21,6 +21,7 @@ import com.google.cloud.tools.jib.api.buildplan.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.api.buildplan.FileEntriesLayer;
 import com.google.cloud.tools.jib.event.events.ProgressEvent;
 import com.google.cloud.tools.jib.event.progress.ProgressEventHandler;
+import com.google.cloud.tools.jib.global.JibSystemProperties;
 import com.google.cloud.tools.jib.registry.LocalRegistry;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
@@ -215,6 +216,55 @@ public class ContainerizerIntegrationTest {
     Assert.assertEquals(
         "Hello, world. An argument.\n",
         new Command("docker", "run", "--rm", imageReference3).run());
+  }
+
+  @Test
+  public void testSteps_forBuildToDockerRegistry_skipExistingDigest()
+      throws IOException, InterruptedException, ExecutionException, RegistryException,
+      CacheDirectoryCreationException {
+    System.setProperty(JibSystemProperties.SKIP_EXISTING_IMAGES, "true");
+
+    JibContainer image1 = buildRegistryImage(
+        ImageReference.of("gcr.io", "distroless/java", DISTROLESS_DIGEST),
+        ImageReference.of("localhost:5000", "testimagerepo", "testtag"),
+        Collections.singletonList("testtag2"));
+
+    // Test that the initial image with the original tag has been pushed.
+    String imageReference = "localhost:5000/testimagerepo:testtag";
+    localRegistry.pull(imageReference);
+    assertDockerInspect(imageReference);
+    Assert.assertEquals(
+        "Hello, world. An argument.\n", new Command("docker", "run", "--rm", imageReference).run());
+
+    // Test that any additional tags have also been pushed with the original image.
+    String imageReference2 = "localhost:5000/testimagerepo:testtag2";
+    localRegistry.pull(imageReference2);
+    assertDockerInspect(imageReference2);
+    Assert.assertEquals(
+        "Hello, world. An argument.\n", new Command("docker", "run", "--rm", imageReference2).run());
+
+    // Push the same image with a different tag, with SKIP_EXISTING_IMAGES enabled.
+    JibContainer image2 = buildRegistryImage(
+        ImageReference.of("gcr.io", "distroless/java", DISTROLESS_DIGEST),
+        ImageReference.of("localhost:5000", "testimagerepo", "new_testtag"),
+        Collections.emptyList());
+
+    // Test that the pull request throws an exception, indicating that the new tag was not pushed.
+    String imageReference3 = "localhost:5000/testimagerepo:new_testtag";
+    try {
+      localRegistry.pull(imageReference3);
+      Assert.fail("jib.skipExistingImages was enabled and digest was already pushed, " +
+          "hence testtag2 shouldn't have been pushed.");
+    } catch (RuntimeException ignore) {
+      // As expected, registry throws exception that manifest is unknown.
+    }
+
+    // Test that both images have the same properties.
+    Assert.assertEquals(image1.getDigest(), image2.getDigest());
+    Assert.assertEquals(image1.getImageId(), image2.getImageId());
+
+    // Cleanup. Disable option to not disrupt other tests.
+    System.setProperty(JibSystemProperties.SKIP_EXISTING_IMAGES, "false");
   }
 
   @Test

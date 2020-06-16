@@ -28,7 +28,6 @@ import com.google.cloud.tools.jib.filesystem.TempDirectoryProvider;
 import com.google.cloud.tools.jib.global.JibSystemProperties;
 import com.google.cloud.tools.jib.hash.Digests;
 import com.google.cloud.tools.jib.image.Image;
-import com.google.cloud.tools.jib.image.ManifestDescriptor;
 import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
 import com.google.cloud.tools.jib.image.json.ImageToJsonTranslator;
 import com.google.cloud.tools.jib.registry.RegistryClient;
@@ -400,17 +399,6 @@ public class StepsRunner {
 
               DescriptorDigest manifestDigest = Digests.computeJsonDigest(manifestTemplate);
 
-              Optional<ManifestDescriptor<BuildableManifestTemplate>> manifestDescriptor =
-                  new CheckImageStep(
-                          buildContext, results.targetRegistryClient.get(), manifestDigest)
-                      .call();
-
-              if (manifestDescriptor.isPresent()) {
-                return new BuildResult(
-                    manifestDescriptor.get().getImageDigest(),
-                    results.containerConfigurationPushResult.get().getDigest());
-              }
-
               List<Future<BuildResult>> manifestPushResults =
                   scheduleCallables(
                       PushImageStep.makeList(
@@ -422,7 +410,11 @@ public class StepsRunner {
                           manifestDigest));
               realizeFutures(manifestPushResults);
               // Manifest pushers return the same BuildResult.
-              return manifestPushResults.get(0).get();
+              return manifestPushResults.isEmpty() ?
+                  new BuildResult(
+                      manifestDigest,
+                      results.containerConfigurationPushResult.get().getDigest())
+                  : manifestPushResults.get(0).get();
             });
   }
 
