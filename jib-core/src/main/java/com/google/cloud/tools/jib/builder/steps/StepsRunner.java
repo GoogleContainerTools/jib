@@ -410,10 +410,9 @@ public class StepsRunner {
                           manifestDigest));
               realizeFutures(manifestPushResults);
               // Manifest pushers return the same BuildResult.
-              return manifestPushResults.isEmpty() ?
-                  new BuildResult(
-                      manifestDigest,
-                      results.containerConfigurationPushResult.get().getDigest())
+              return manifestPushResults.isEmpty()
+                  ? new BuildResult(
+                      manifestDigest, results.containerConfigurationPushResult.get().getDigest())
                   : manifestPushResults.get(0).get();
             });
   }

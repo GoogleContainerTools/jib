@@ -379,8 +379,7 @@ public class RegistryClient {
    * @throws RegistryException if communicating with the endpoint fails
    */
   public <T extends ManifestTemplate> Optional<ManifestAndDigest<T>> checkImage(
-      String imageDigest, Class<T> manifestTemplateClass)
-      throws IOException, RegistryException {
+      String imageDigest, Class<T> manifestTemplateClass) throws IOException, RegistryException {
     ManifestChecker<T> manifestChecker =
         new ManifestChecker<>(
             registryEndpointRequestProperties, imageDigest, manifestTemplateClass);
@@ -388,8 +387,8 @@ public class RegistryClient {
     return callRegistryEndpoint(manifestChecker);
   }
 
-  public Optional<ManifestAndDigest<ManifestTemplate>> checkImage(
-      String imageDigest) throws IOException, RegistryException {
+  public Optional<ManifestAndDigest<ManifestTemplate>> checkImage(String imageDigest)
+      throws IOException, RegistryException {
     return checkImage(imageDigest, ManifestTemplate.class);
   }
 

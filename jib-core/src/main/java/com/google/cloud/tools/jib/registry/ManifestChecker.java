@@ -25,10 +25,13 @@ import com.google.cloud.tools.jib.hash.Digests;
 import com.google.cloud.tools.jib.http.BlobHttpContent;
 import com.google.cloud.tools.jib.http.Response;
 import com.google.cloud.tools.jib.http.ResponseException;
-import com.google.cloud.tools.jib.image.json.*;
+import com.google.cloud.tools.jib.image.json.ManifestTemplate;
+import com.google.cloud.tools.jib.image.json.OciManifestTemplate;
+import com.google.cloud.tools.jib.image.json.UnknownManifestFormatException;
+import com.google.cloud.tools.jib.image.json.V21ManifestTemplate;
+import com.google.cloud.tools.jib.image.json.V22ManifestListTemplate;
+import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
-
-import javax.annotation.Nullable;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -38,6 +41,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import javax.annotation.Nullable;
 
 /** Checks an image's manifest. */
 public class ManifestChecker<T extends ManifestTemplate>
@@ -86,9 +90,7 @@ public class ManifestChecker<T extends ManifestTemplate>
         V21ManifestTemplate.MEDIA_TYPE);
   }
 
-  /**
-   * Parses the response body into a {@link ManifestAndDigest}.
-   */
+  /** Parses the response body into a {@link ManifestAndDigest}. */
   @Override
   public Optional<ManifestAndDigest<T>> handleResponse(Response response)
       throws IOException, UnknownManifestFormatException {

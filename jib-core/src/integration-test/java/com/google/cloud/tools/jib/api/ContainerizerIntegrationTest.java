@@ -221,13 +221,14 @@ public class ContainerizerIntegrationTest {
   @Test
   public void testSteps_forBuildToDockerRegistry_skipExistingDigest()
       throws IOException, InterruptedException, ExecutionException, RegistryException,
-      CacheDirectoryCreationException {
+          CacheDirectoryCreationException {
     System.setProperty(JibSystemProperties.SKIP_EXISTING_IMAGES, "true");
 
-    JibContainer image1 = buildRegistryImage(
-        ImageReference.of("gcr.io", "distroless/java", DISTROLESS_DIGEST),
-        ImageReference.of("localhost:5000", "testimagerepo", "testtag"),
-        Collections.singletonList("testtag2"));
+    JibContainer image1 =
+        buildRegistryImage(
+            ImageReference.of("gcr.io", "distroless/java", DISTROLESS_DIGEST),
+            ImageReference.of("localhost:5000", "testimagerepo", "testtag"),
+            Collections.singletonList("testtag2"));
 
     // Test that the initial image with the original tag has been pushed.
     String imageReference = "localhost:5000/testimagerepo:testtag";
@@ -241,20 +242,23 @@ public class ContainerizerIntegrationTest {
     localRegistry.pull(imageReference2);
     assertDockerInspect(imageReference2);
     Assert.assertEquals(
-        "Hello, world. An argument.\n", new Command("docker", "run", "--rm", imageReference2).run());
+        "Hello, world. An argument.\n",
+        new Command("docker", "run", "--rm", imageReference2).run());
 
     // Push the same image with a different tag, with SKIP_EXISTING_IMAGES enabled.
-    JibContainer image2 = buildRegistryImage(
-        ImageReference.of("gcr.io", "distroless/java", DISTROLESS_DIGEST),
-        ImageReference.of("localhost:5000", "testimagerepo", "new_testtag"),
-        Collections.emptyList());
+    JibContainer image2 =
+        buildRegistryImage(
+            ImageReference.of("gcr.io", "distroless/java", DISTROLESS_DIGEST),
+            ImageReference.of("localhost:5000", "testimagerepo", "new_testtag"),
+            Collections.emptyList());
 
     // Test that the pull request throws an exception, indicating that the new tag was not pushed.
     String imageReference3 = "localhost:5000/testimagerepo:new_testtag";
     try {
       localRegistry.pull(imageReference3);
-      Assert.fail("jib.skipExistingImages was enabled and digest was already pushed, " +
-          "hence testtag2 shouldn't have been pushed.");
+      Assert.fail(
+          "jib.skipExistingImages was enabled and digest was already pushed, "
+              + "hence testtag2 shouldn't have been pushed.");
     } catch (RuntimeException ignore) {
       // As expected, registry throws exception that manifest is unknown.
     }

@@ -36,8 +36,7 @@ public class JibSystemProperties {
 
   private static final String DISABLE_USER_AGENT = "_JIB_DISABLE_USER_AGENT";
 
-  @VisibleForTesting
-  public static final String SKIP_EXISTING_IMAGES = "jib.skipExistingImages";
+  @VisibleForTesting public static final String SKIP_EXISTING_IMAGES = "jib.skipExistingImages";
 
   /**
    * Gets the HTTP connection/read timeouts for registry interactions in milliseconds. This is

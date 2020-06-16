@@ -16,18 +16,19 @@
 
 package com.google.cloud.tools.jib.registry;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
 import com.google.cloud.tools.jib.api.RegistryException;
 import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.http.FailoverHttpClient;
 import com.google.cloud.tools.jib.image.json.ManifestTemplate;
+import java.io.IOException;
+import java.util.Optional;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
-
-import java.io.IOException;
-import java.util.Optional;
-
-import static org.junit.Assert.*;
 
 /** Integration tests for {@link ManifestChecker}. */
 public class ManifestCheckerIntegrationTest {
@@ -53,7 +54,7 @@ public class ManifestCheckerIntegrationTest {
   public void testExistingManifest() throws IOException, RegistryException {
     RegistryClient registryClient =
         RegistryClient.factory(
-            EventHandlers.NONE, "registry-1.docker.io", "library/openjdk", httpClient)
+                EventHandlers.NONE, "registry-1.docker.io", "library/openjdk", httpClient)
             .newRegistryClient();
     registryClient.doPullBearerAuth();
 
@@ -68,7 +69,7 @@ public class ManifestCheckerIntegrationTest {
   public void testNonexistingManifest() throws IOException, RegistryException {
     RegistryClient registryClient =
         RegistryClient.factory(
-            EventHandlers.NONE, "registry-1.docker.io", "library/openjdk", httpClient)
+                EventHandlers.NONE, "registry-1.docker.io", "library/openjdk", httpClient)
             .newRegistryClient();
     registryClient.doPullBearerAuth();
 

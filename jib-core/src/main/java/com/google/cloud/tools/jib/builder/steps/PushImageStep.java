@@ -46,14 +46,14 @@ class PushImageStep implements Callable<BuildResult> {
       RegistryClient registryClient,
       BlobDescriptor containerConfigurationDigestAndSize,
       BuildableManifestTemplate manifestTemplate,
-      DescriptorDigest imageDigest) throws IOException, RegistryException {
+      DescriptorDigest imageDigest)
+      throws IOException, RegistryException {
     Set<String> tags = buildContext.getAllTargetImageTags();
 
     EventHandlers eventHandlers = buildContext.getEventHandlers();
 
     try (TimerEventDispatcher ignored =
-            new TimerEventDispatcher(
-                eventHandlers, "Preparing manifest pushers");
+            new TimerEventDispatcher(eventHandlers, "Preparing manifest pushers");
         ProgressEventDispatcher progressEventDispatcher =
             progressEventDispatcherFactory.create("launching manifest pushers", tags.size())) {
 
