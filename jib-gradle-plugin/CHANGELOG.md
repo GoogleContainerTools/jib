@@ -5,9 +5,13 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- Also tries `.exe` file extension for credential helpers on Windows. ([#2527](https://github.com/GoogleContainerTools/jib/issues/2527))
+
 ### Changed
 
 ### Fixed
+
+- Fixed reporting a wrong credential helper name when the helper does not exist on Windows. ([#2527](https://github.com/GoogleContainerTools/jib/issues/2527))
 
 ## 2.4.0
 
@@ -44,6 +48,7 @@ All notable changes to this project will be documented in this file.
 - Glob pattern support for `jib.extraDirectories.permissions`. ([#1200](https://github.com/GoogleContainerTools/jib/issues/1200))
 - Support for image references with both a tag and a digest. ([#1481](https://github.com/GoogleContainerTools/jib/issues/1481))
 - The `DOCKER_CONFIG` environment variable specifying the directory containing docker configs is now checked during credential retrieval. ([#1618](https://github.com/GoogleContainerTools/jib/issues/1618))
+- Also tries `.cmd` file extension for credential helpers on Windows. ([#2399](https://github.com/GoogleContainerTools/jib/issues/2399))
 
 ### Changed
 

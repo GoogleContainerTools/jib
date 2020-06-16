@@ -113,16 +113,18 @@ public class DockerCredentialHelper {
       return retrieve(Arrays.asList(credentialHelper.toString(), "get"));
     }
 
-    try {
-      return retrieve(Arrays.asList(credentialHelper.toString() + ".cmd", "get"));
-
-    } catch (CredentialHelperNotFoundException ex) {
+    // We are on Windows with undefined/unknown file extension.
+    for (String suffix : Arrays.asList(".cmd", ".exe")) {
       try {
-        return retrieve(Arrays.asList(credentialHelper.toString(), "get"));
+        return retrieve(Arrays.asList(credentialHelper.toString() + suffix, "get"));
       } catch (CredentialHelperNotFoundException ignored) {
-        throw ex;
+        // ignored
       }
     }
+    // On Windows, launching a process from Java without a file extension should normally fail
+    // (https://github.com/GoogleContainerTools/jib/issues/2399#issuecomment-612972912), but
+    // running Jib on Linux-like environment (e.g., Cygwin) might succeed?
+    return retrieve(Arrays.asList(credentialHelper.toString(), "get"));
   }
 
   private Credential retrieve(List<String> credentialHelperCommand)
@@ -177,7 +179,8 @@ public class DockerCredentialHelper {
 
       // Checks if the failure is due to a nonexistent credential helper CLI.
       if (ex.getMessage().contains("No such file or directory")
-          || ex.getMessage().contains("cannot find the file")) {
+          || ex.getMessage().contains("cannot find the file")
+          || ex.getMessage().contains("error=2")) /* errno=2 (ENOENT) */ {
         throw new CredentialHelperNotFoundException(credentialHelper, ex);
       }
 
