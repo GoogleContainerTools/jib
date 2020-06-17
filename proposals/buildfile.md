@@ -4,11 +4,26 @@ Specification for a YAML buildfile describing building a container image. This b
 used by the jib-cli to generate a container. It is translated directly into a buildplan and
 passed to the builder.
 
-```
+```yaml
 # "FROM" with option to use os/architecture for manifest lists
-baseImage: "gcr.io/distroless/java:8"
-baseImageOs: linux
-baseImageArchitecture: amd64
+from: "gcr.io/distroless/java:8"
+
+# "FROM" with detail for manifest lists or multiple architectures
+from:
+  image: "gcr.io/distroless/java:8"
+  platforms:
+    - architecture: "arm"
+      os: "linux"
+      os.version: "a"
+      os.features:
+        - "b1"
+        - "b2"
+      variant: "c"
+      features:
+        - "d1"
+        - "d2"
+    - architecutre: amd64
+      os: darwin
 
 creationTime: 0 # millis since epoch or iso8601 creation time
 format: Docker # Docker or OCI
@@ -133,3 +148,35 @@ Each property (`filePermissions`, `directoryPermissions`, etc) can be defined at
 ### Other time options
 * `actual`: use timestamp from file on disk
 * `now`: use time of build
+
+### Configurable base image value inheritance
+Jib has some default behavior on inheritance of config parameters from the base image.
+Perhaps this needs to be configurable
+
+(this is just an exploration, open to some ideas here)
+
+For all values in config of the base image, allow inheritance.
+```
+baseImage:
+  from: "gcr.io/birds/goose"
+  inherit:
+    environment: true
+    labels: true
+    volumes: false
+    exposedPorts: false
+    user: true
+    workingDirectory: false
+    entrypoint: false
+    cmd: true
+```
+
+the behavior of the buildfile post-inheritance must be considered values that will be added to:
+- `environment`
+- `volumes`
+- `labels`
+- `exposedPorts`
+values that will error if modified: 
+- `user`
+- `workingDirectory`
+- `entrypoint`
+- `cmd`
