@@ -169,13 +169,18 @@ baseImage:
     entrypoint: false
     cmd: true
 ```
+If a value is marked inherit: true, then the value(s) defined in the base image are
+preserved and propogated into the config of the new container.
 
-the behavior of the buildfile post-inheritance must be considered values that will be added to:
+The behavior of the buildfile values post-inheritance must be considered
+
+These parameters will allow appending to the base image value:
 - `environment`
 - `volumes`
 - `labels`
 - `exposedPorts`
-values that will error if modified: 
+
+The paratmeters will be overwritten:
 - `user`
 - `workingDirectory`
 - `entrypoint`
