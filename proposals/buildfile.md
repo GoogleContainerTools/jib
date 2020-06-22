@@ -5,8 +5,8 @@ used by the jib-cli to generate a container. It is translated directly into a bu
 passed to the builder.
 
 ```yaml
-# "FROM" with option to use os/architecture for manifest lists
-from: "gcr.io/distroless/java:8"
+apiVersion: jib/v0alpha1
+kind: Config
 
 # "FROM" with detail for manifest lists or multiple architectures
 from:
@@ -24,6 +24,9 @@ from:
         - "d2"
     - architecutre: amd64
       os: darwin
+
+# potentially simple form of "FROM" (based on ability to define schema)
+from: "gcr.io/distroless/java:8"
 
 creationTime: 0 # millis since epoch or iso8601 creation time
 format: Docker # Docker or OCI
@@ -51,57 +54,58 @@ entrypoint:
 cmd:
   - "myjar.jar"
 
-# global file properties applied to all layers
-layerProperties:
-  filePermissions: "644"
-  directoryPermissions: "755"
-  user: "0"
-  group: "0"
-  timestamp: "0"
 layers:
-  - name: "scripts and classes"
-    # file properties only applied to this layer "scripts and classes"
-    properties:
-      filePermissions: "333"
-      directoryPermissions: "777"
-      user: "goose"
-      group: "3"
-      timestamp: "2020-06-03T19:31:50+00:00"
-    files:
-      - from: "target/scripts"
-        to: "/app/scripts"
-        # file properties only applied to this copy directive
-        properties:
-          filePermissions: "777"
-        # another copy for the same layer, with includes and excludes
-      - from: "target/classes"
-        to: "/app/classes"
-        excludes:
-          - "**/goose.class"
-          - "**/moose.class"
-        includes:
-          - "**/*.class"
+  properties:
+    # file properties applied to all layers
+    filePermissions: "644"
+    directoryPermissions: "755"
+    user: "0"
+    group: "0"
+    timestamp: "0"
+  entries:
+    - name: "scripts and classes"
+      # file properties only applied to this layer "scripts and classes"
+      properties:
+        filePermissions: "333"
+        directoryPermissions: "777"
+        user: "goose"
+        group: "3"
+        timestamp: "2020-06-03T19:31:50+00:00"
+      files:
+        - from: "target/scripts"
+          to: "/app/scripts"
+          # file properties only applied to this copy directive
+          properties:
+            filePermissions: "777"
+          # another copy for the same layer, with includes and excludes
+        - from: "target/classes"
+          to: "/app/classes"
+          excludes:
+            - "**/goose.class"
+            - "**/moose.class"
+          includes:
+            - "**/*.class"
 
-    # another layer, only globally defined file permissions are applied here
-  - name: "other"
-    files:
-      - from: "build/other"
-        to: "/app"
+      # another layer, only globally defined file permissions are applied here
+    - name: "other"
+      files:
+        - from: "build/other"
+          to: "/app"
 
-    # a archive layer using a tar, default mediaType
-  - name: "some tar layer"
-    archive: "build/generated.tar"
+      # a archive layer using a tar, default mediaType
+    - name: "some tar layer"
+      archive: "build/generated.tar"
 
-    # a foreign layer using the optional mediatype for archive layers
-  - name: "some foreign layer"
-    mediaType: "application/vnd.docker.image.rootfs.foreign.diff.tar.gzip"
-    archive: "https://somewhere.com/layer"
-    # should we include size and digest here? I guess we can always ad tings
+      # a foreign layer using the optional mediatype for archive layers
+    - name: "some foreign layer"
+      mediaType: "application/vnd.docker.image.rootfs.foreign.diff.tar.gzip"
+      archive: "https://somewhere.com/layer"
+      # should we include size and digest here? I guess we can always ad tings
 ```
 
 ## Layers
 
-`layers` are a list of `layer` directives
+`layers.entries` are a list of `layer` directives
 
 `layer` directives can be `archive` or `file` layers
 
@@ -132,9 +136,9 @@ A list of properties that can be user specified for each file in a file layer
 * timestamp: millis since epoch or iso8601 creation time
 
 File properties are available at 3 levels
-* Global (`layerProperties`): applies to all layers
-* Layer (`properties`): applies to a single layer
-* Copy (`properties`): applies to a single copy directive
+* Global (`layers.properties`): applies to all layers
+* Layer (`layers.<entry>.properties`): applies to a single layer
+* Copy (`layers.<entry>.<copy>.properties`): applies to a single copy directive
 
 Each property (`filePermissions`, `directoryPermissions`, etc) can be defined at any level and are resolved in the follow order
 - All properties in `Copy` are applied first
@@ -142,35 +146,9 @@ Each property (`filePermissions`, `directoryPermissions`, etc) can be defined at
 - Any properties not in `Copy` or `Layer` are applied from `Global`
 - Any properties not defined anywhere use jib system defaults.
 
-
-## Extented features (not included in this build)
-
-### Other time options
-* `actual`: use timestamp from file on disk
-* `now`: use time of build
-
-### Configurable base image value inheritance
-Jib has some default behavior on inheritance of config parameters from the base image.
-Perhaps this needs to be configurable
-
-(this is just an exploration, open to some ideas here)
-
-For all values in config of the base image, allow inheritance.
-```
-baseImage:
-  from: "gcr.io/birds/goose"
-  inherit:
-    environment: true
-    labels: true
-    volumes: false
-    exposedPorts: false
-    user: true
-    workingDirectory: false
-    entrypoint: false
-    cmd: true
-```
-If a value is marked inherit: true, then the value(s) defined in the base image are
-preserved and propogated into the config of the new container.
+### Base image value inheritance
+The value(s) defined in the base image are preserved and propogated into the
+config of the new container.
 
 The behavior of the buildfile values post-inheritance must be considered
 
@@ -185,3 +163,24 @@ The paratmeters will be overwritten:
 - `workingDirectory`
 - `entrypoint`
 - `cmd`
+
+If we start getting specific user requests to control this, we can explore
+inheritance control in the future.
+
+## Extented features (not included in this build)
+
+### Other time options
+* `actual`: use timestamp from file on disk
+* `current`: use time of build
+
+### Special platform specific layers
+Layer entries can contain platform specific filters that are only applied for builds matching that platform
+
+```yaml
+entries:
+  # arm things will only apply to builds for arm achitectures
+  - name: "arm things"
+    platform:
+      architecture: arm
+    ...
+```
