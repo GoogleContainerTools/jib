@@ -76,7 +76,7 @@ public class LocalRegistry extends ExternalResource {
                   "--rm",
                   "--entrypoint",
                   "htpasswd",
-                  "registry:2",
+                  "registry:2.7.0", // TODO: correctly fix this when using latest
                   "-Bbn",
                   username,
                   password)
