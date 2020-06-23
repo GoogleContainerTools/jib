@@ -69,7 +69,7 @@ public class LocalRegistry extends ExternalResource {
             Arrays.asList(
                 "docker", "run", "--rm", "-d", "-p", port + ":5000", "--name", containerName));
     if (username != null && password != null) {
-      // since registry:2 no longer contains htpasswd, generate the htpasswd file manually
+      // Equivalent of "$ htpasswd -nbB username password".
       // https://httpd.apache.org/docs/2.4/misc/password_encryptions.html
       // BCrypt generates hashes using $2a$ algorithm (instead of $2y$ from docs), but this seems
       // to work okay
