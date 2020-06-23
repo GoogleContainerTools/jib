@@ -30,6 +30,7 @@ import java.util.Arrays;
 import java.util.UUID;
 import javax.annotation.Nullable;
 import org.junit.rules.ExternalResource;
+import org.mindrot.jbcrypt.BCrypt;
 
 /** Runs a local registry. */
 public class LocalRegistry extends ExternalResource {
@@ -68,19 +69,11 @@ public class LocalRegistry extends ExternalResource {
             Arrays.asList(
                 "docker", "run", "--rm", "-d", "-p", port + ":5000", "--name", containerName));
     if (username != null && password != null) {
-      // Generate the htpasswd file to store credentials
-      String credentialString =
-          new Command(
-                  "docker",
-                  "run",
-                  "--rm",
-                  "--entrypoint",
-                  "htpasswd",
-                  "registry:2.7.0", // TODO: correctly fix this when using latest
-                  "-Bbn",
-                  username,
-                  password)
-              .run();
+      // since registry:2 no longer contains htpasswd, generate the htpasswd file manually
+      // https://httpd.apache.org/docs/2.4/misc/password_encryptions.html
+      // BCrypt generates hashes using $2a$ algorithm (instead of $2y$ from docs), but this seems
+      // to work okay
+      String credentialString = username + ":" + BCrypt.hashpw(password, BCrypt.gensalt());
       // Creates the temporary directory in /tmp since that is one of the default directories
       // mounted into Docker.
       // See: https://docs.docker.com/docker-for-mac/osxfs
