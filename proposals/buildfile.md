@@ -6,11 +6,12 @@ passed to the builder.
 
 ```yaml
 apiVersion: jib/v0alpha1
-kind: Config
+kind: Buildfile
 
 # "FROM" with detail for manifest lists or multiple architectures
 from:
   image: "gcr.io/distroless/java:8"
+  # optional: if missing, then defaults to `linux/amd64`
   platforms:
     - architecture: "arm"
       os: "linux"
@@ -22,7 +23,7 @@ from:
       features:
         - "d1"
         - "d2"
-    - architecutre: amd64
+    - architecture: amd64
       os: darwin
 
 # potentially simple form of "FROM" (based on ability to define schema)
@@ -72,14 +73,14 @@ layers:
         group: "3"
         timestamp: "2020-06-03T19:31:50+00:00"
       files:
-        - from: "target/scripts"
-          to: "/app/scripts"
+        - src: "target/scripts"
+          dest: "/app/scripts"
           # file properties only applied to this copy directive
           properties:
             filePermissions: "777"
           # another copy for the same layer, with includes and excludes
-        - from: "target/classes"
-          to: "/app/classes"
+        - src: "target/classes"
+          dest: "/app/classes"
           excludes:
             - "**/goose.class"
             - "**/moose.class"
@@ -89,8 +90,8 @@ layers:
       # another layer, only globally defined file permissions are applied here
     - name: "other"
       files:
-        - from: "build/other"
-          to: "/app"
+        - src: "build/other"
+          dest: "/app"
 
       # a archive layer using a tar, default mediaType
     - name: "some tar layer"
@@ -120,11 +121,20 @@ a `file` layer consists of 3 parts
 * `files`: a list of *copy directies* (see below)
 
 `files` are a list of *copy directives* that consist of 2 required and 3 optional parts
-* `to` *required*: an absolute path to copy the files to on the container
-* `from` *required*: a file, or directory on disk to copy from
+* `dest` *required*: an absolute path to copy the files to on the container
+* `src` *required*: a file, or directory on disk to copy from
 * `includes`: only includes the patterns matched in this parameter
 * `exludes`: excludes all files (higher prescendence than `includes`) matched in this parameter
 * `properties`: FilesProperties to represent on disk metadata for all files in this copy directive
+
+### File Copy Behavior
+
+`src`: filetype determined by type on local disk
+`dest`: 
+ - if `src` is directory, dest is always considered a directory
+ - if `src` is file
+   - if `dest` ends with `/` then it is considered a target directory, file will be copied into directory
+   - if `dest` doesn't end with `/` then is is the target file location, `src` file will be copied and renamed to `dest`
 
 ### FileProperties
 
@@ -147,18 +157,20 @@ Each property (`filePermissions`, `directoryPermissions`, etc) can be defined at
 - Any properties not defined anywhere use jib system defaults.
 
 ### Base image value inheritance
-The value(s) defined in the base image are preserved and propogated into the
+The value(s) defined in the base image are preserved and propagated into the
 config of the new container.
 
 The behavior of the buildfile values post-inheritance must be considered
 
 These parameters will allow appending to the base image value:
-- `environment`
 - `volumes`
-- `labels`
 - `exposedPorts`
 
-The paratmeters will be overwritten:
+These parameters will allow appending for new keys, and overwriting for existing keys:
+- `labels`
+- `environment`
+
+These parameters will be overwritten:
 - `user`
 - `workingDirectory`
 - `entrypoint`
@@ -167,7 +179,7 @@ The paratmeters will be overwritten:
 If we start getting specific user requests to control this, we can explore
 inheritance control in the future.
 
-## Extented features (not included in this build)
+## Extended features (not included in first pass)
 
 ### Other time options
 * `actual`: use timestamp from file on disk
@@ -184,3 +196,6 @@ entries:
       architecture: arm
     ...
 ```
+
+### Mark values for erasure
+If a user does not want to inherit specific values from the base image a mechanism for *erasing* them could be useful.
