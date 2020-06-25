@@ -5,7 +5,7 @@ used by the jib-cli to generate a container. It is translated directly into a bu
 passed to the builder.
 
 ```yaml
-apiVersion: jib/v0alpha1
+apiVersion: jib/v1alpha1
 kind: Buildfile
 
 # "FROM" with detail for manifest lists or multiple architectures
@@ -111,7 +111,7 @@ layers:
 `layer` directives can be `archive` or `file` layers
 
 a `archive` layer consists of 3 parts
-* `name`: the name/description of the layer (metadata)
+* `name`: the name/description of the layer (metadata), it will also be used to populate the history entry for the layer
 * `archive`: a tar file to include as a layer
 * `mediatype`: the mediatype of archive
 
