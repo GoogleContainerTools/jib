@@ -37,6 +37,8 @@ dependencies {
   testImplementation 'org.slf4j:slf4j-api:1.7.30'
   testImplementation 'org.slf4j:slf4j-simple:1.7.30'
 
+  integrationTestImplementation "org.mindrot:jbcrypt:${dependencyVersions.JBCRYPT}"
+
   testImplementation project(path:':jib-plugins-common', configuration:'tests')
   integrationTestImplementation project(path:':jib-core', configuration:'integrationTests')
 }
