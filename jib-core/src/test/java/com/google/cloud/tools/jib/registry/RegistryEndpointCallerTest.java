@@ -16,21 +16,6 @@
 
 package com.google.cloud.tools.jib.registry;
 
-import com.google.api.client.http.HttpStatusCodes;
-import com.google.cloud.tools.jib.api.InsecureRegistryException;
-import com.google.cloud.tools.jib.api.LogEvent;
-import com.google.cloud.tools.jib.api.RegistryException;
-import com.google.cloud.tools.jib.api.RegistryUnauthorizedException;
-import com.google.cloud.tools.jib.event.EventHandlers;
-import com.google.cloud.tools.jib.global.JibSystemProperties;
-import com.google.cloud.tools.jib.http.Authorization;
-import com.google.cloud.tools.jib.http.BlobHttpContent;
-import com.google.cloud.tools.jib.http.FailoverHttpClient;
-import com.google.cloud.tools.jib.http.Request;
-import com.google.cloud.tools.jib.http.RequestWrapper;
-import com.google.cloud.tools.jib.http.Response;
-import com.google.cloud.tools.jib.http.ResponseException;
-import com.google.common.io.CharStreams;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -55,6 +40,21 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
+import com.google.api.client.http.HttpStatusCodes;
+import com.google.cloud.tools.jib.api.InsecureRegistryException;
+import com.google.cloud.tools.jib.api.LogEvent;
+import com.google.cloud.tools.jib.api.RegistryException;
+import com.google.cloud.tools.jib.api.RegistryUnauthorizedException;
+import com.google.cloud.tools.jib.event.EventHandlers;
+import com.google.cloud.tools.jib.global.JibSystemProperties;
+import com.google.cloud.tools.jib.http.Authorization;
+import com.google.cloud.tools.jib.http.BlobHttpContent;
+import com.google.cloud.tools.jib.http.FailoverHttpClient;
+import com.google.cloud.tools.jib.http.Request;
+import com.google.cloud.tools.jib.http.RequestWrapper;
+import com.google.cloud.tools.jib.http.Response;
+import com.google.cloud.tools.jib.http.ResponseException;
+import com.google.common.io.CharStreams;
 
 /** Tests for {@link RegistryEndpointCaller}. */
 @RunWith(MockitoJUnitRunner.class)
@@ -434,6 +434,25 @@ public class RegistryEndpointCallerTest {
             + "https://github.com/GoogleContainerTools/jib/issues/new",
         registryException.getMessage());
   }
+  
+
+  @Test
+  public void testNewRegistryErrorException_nullJsonErrorOutput() {
+    ResponseException httpException = Mockito.mock(ResponseException.class);
+    // Registry returning null error output
+    Mockito.when(httpException.getContent()).thenReturn(null);
+    Mockito.when(httpException.getStatusCode()).thenReturn(404);
+
+    RegistryErrorException registryException =
+        endpointCaller.newRegistryErrorException(httpException);
+    Assert.assertSame(httpException, registryException.getCause());
+    Assert.assertEquals(
+        "Tried to actionDescription but failed because: registry returned error code 404; "
+            + "possible causes include invalid or wrong reference \n"
+            +" | If this is a bug, please file an issue at "
+            + "https://github.com/GoogleContainerTools/jib/issues/new",
+        registryException.getMessage());
+  }
 
   /**
    * Verifies that a response with {@code httpStatusCode} throws {@link
@@ -477,6 +496,7 @@ public class RegistryEndpointCallerTest {
     }
   }
 
+  
   private void setUpRegistryResponse(Exception exceptionToThrow)
       throws MalformedURLException, IOException {
     Mockito.when(

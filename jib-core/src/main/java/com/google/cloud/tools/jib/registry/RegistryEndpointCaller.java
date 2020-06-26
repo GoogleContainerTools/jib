@@ -1,21 +1,24 @@
 /*
  * Copyright 2018 Google LLC.
  *
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not
- * use this file except in compliance with the License. You may obtain a copy of
- * the License at
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License. You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
- * License for the specific language governing permissions and limitations under
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
 
 package com.google.cloud.tools.jib.registry;
 
+import java.io.IOException;
+import java.net.URL;
+import java.util.Locale;
+import javax.annotation.Nullable;
+import javax.net.ssl.SSLException;
 import com.google.api.client.http.HttpStatusCodes;
 import com.google.cloud.tools.jib.api.InsecureRegistryException;
 import com.google.cloud.tools.jib.api.LogEvent;
@@ -32,11 +35,6 @@ import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import com.google.cloud.tools.jib.registry.json.ErrorEntryTemplate;
 import com.google.cloud.tools.jib.registry.json.ErrorResponseTemplate;
 import com.google.common.annotations.VisibleForTesting;
-import java.io.IOException;
-import java.net.URL;
-import java.util.Locale;
-import javax.annotation.Nullable;
-import javax.net.ssl.SSLException;
 
 /**
  * Makes requests to a registry endpoint.
@@ -46,10 +44,11 @@ import javax.net.ssl.SSLException;
 class RegistryEndpointCaller<T> {
 
   /**
-   * <a
-   * href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/308">https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/308</a>.
+   * <a href=
+   * "https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/308">https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/308</a>.
    */
-  @VisibleForTesting static final int STATUS_CODE_PERMANENT_REDIRECT = 308;
+  @VisibleForTesting
+  static final int STATUS_CODE_PERMANENT_REDIRECT = 308;
 
   // https://github.com/GoogleContainerTools/jib/issues/1316
   @VisibleForTesting
@@ -70,9 +69,11 @@ class RegistryEndpointCaller<T> {
   }
 
   private final EventHandlers eventHandlers;
-  @Nullable private final String userAgent;
+  @Nullable
+  private final String userAgent;
   private final RegistryEndpointProvider<T> registryEndpointProvider;
-  @Nullable private final Authorization authorization;
+  @Nullable
+  private final Authorization authorization;
   private final RegistryEndpointRequestProperties registryEndpointRequestProperties;
   private final FailoverHttpClient httpClient;
 
@@ -87,11 +88,8 @@ class RegistryEndpointCaller<T> {
    * @param httpClient HTTP client
    */
   @VisibleForTesting
-  RegistryEndpointCaller(
-      EventHandlers eventHandlers,
-      @Nullable String userAgent,
-      RegistryEndpointProvider<T> registryEndpointProvider,
-      @Nullable Authorization authorization,
+  RegistryEndpointCaller(EventHandlers eventHandlers, @Nullable String userAgent,
+      RegistryEndpointProvider<T> registryEndpointProvider, @Nullable Authorization authorization,
       RegistryEndpointRequestProperties registryEndpointRequestProperties,
       FailoverHttpClient httpClient) {
     this.eventHandlers = eventHandlers;
@@ -127,13 +125,10 @@ class RegistryEndpointCaller<T> {
     String serverUrl = registryEndpointRequestProperties.getServerUrl();
     String imageName = registryEndpointRequestProperties.getImageName();
 
-    Request.Builder requestBuilder =
-        Request.builder()
-            .setUserAgent(userAgent)
-            .setHttpTimeout(JibSystemProperties.getHttpTimeout())
-            .setAccept(registryEndpointProvider.getAccept())
-            .setBody(registryEndpointProvider.getContent())
-            .setAuthorization(authorization);
+    Request.Builder requestBuilder = Request.builder().setUserAgent(userAgent)
+        .setHttpTimeout(JibSystemProperties.getHttpTimeout())
+        .setAccept(registryEndpointProvider.getAccept())
+        .setBody(registryEndpointProvider.getContent()).setAuthorization(authorization);
 
     try (Response response =
         httpClient.call(registryEndpointProvider.getHttpMethod(), url, requestBuilder.build())) {
@@ -148,8 +143,8 @@ class RegistryEndpointCaller<T> {
       } catch (ResponseException responseException) {
         if (responseException.getStatusCode() == HttpStatusCodes.STATUS_CODE_BAD_REQUEST
             || responseException.getStatusCode() == HttpStatusCodes.STATUS_CODE_NOT_FOUND
-            || responseException.getStatusCode()
-                == HttpStatusCodes.STATUS_CODE_METHOD_NOT_ALLOWED) {
+            || responseException
+                .getStatusCode() == HttpStatusCodes.STATUS_CODE_METHOD_NOT_ALLOWED) {
           // The name or reference was invalid.
           throw newRegistryErrorException(responseException);
 
@@ -185,25 +180,26 @@ class RegistryEndpointCaller<T> {
 
   @VisibleForTesting
   RegistryErrorException newRegistryErrorException(ResponseException responseException) {
-    RegistryErrorExceptionBuilder registryErrorExceptionBuilder =
-        new RegistryErrorExceptionBuilder(
-            registryEndpointProvider.getActionDescription(), responseException);
-
-    try {
-      ErrorResponseTemplate errorResponse =
-          JsonTemplateMapper.readJson(responseException.getContent(), ErrorResponseTemplate.class);
-      for (ErrorEntryTemplate errorEntry : errorResponse.getErrors()) {
-        registryErrorExceptionBuilder.addReason(errorEntry);
+    RegistryErrorExceptionBuilder registryErrorExceptionBuilder = new RegistryErrorExceptionBuilder(
+        registryEndpointProvider.getActionDescription(), responseException);
+    if (responseException.getContent() != null) {
+      try {
+        ErrorResponseTemplate errorResponse = JsonTemplateMapper
+            .readJson(responseException.getContent(), ErrorResponseTemplate.class);
+        for (ErrorEntryTemplate errorEntry : errorResponse.getErrors()) {
+          registryErrorExceptionBuilder.addReason(errorEntry);
+        }
+      } catch (IOException ex) {
+        registryErrorExceptionBuilder.addReason("registry returned error code "
+            + responseException.getStatusCode()
+            + "; possible causes include invalid or wrong reference. Actual error output follows:\n"
+            + responseException.getContent() + "\n");
       }
-    } catch (IOException ex) {
-      registryErrorExceptionBuilder.addReason(
-          "registry returned error code "
-              + responseException.getStatusCode()
-              + "; possible causes include invalid or wrong reference. Actual error output follows:\n"
-              + responseException.getContent()
-              + "\n");
+    } else {
+      registryErrorExceptionBuilder.addReason("registry returned error code "
+          + responseException.getStatusCode()
+          + "; possible causes include invalid or wrong reference \n");
     }
-
     return registryErrorExceptionBuilder.build();
   }
 
