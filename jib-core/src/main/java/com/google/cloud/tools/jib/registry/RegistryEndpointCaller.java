@@ -49,8 +49,7 @@ class RegistryEndpointCaller<T> {
    * <a href=
    * "https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/308">https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/308</a>.
    */
-  @VisibleForTesting
-  static final int STATUS_CODE_PERMANENT_REDIRECT = 308;
+  @VisibleForTesting static final int STATUS_CODE_PERMANENT_REDIRECT = 308;
 
   // https://github.com/GoogleContainerTools/jib/issues/1316
   @VisibleForTesting
@@ -71,11 +70,9 @@ class RegistryEndpointCaller<T> {
   }
 
   private final EventHandlers eventHandlers;
-  @Nullable
-  private final String userAgent;
+  @Nullable private final String userAgent;
   private final RegistryEndpointProvider<T> registryEndpointProvider;
-  @Nullable
-  private final Authorization authorization;
+  @Nullable private final Authorization authorization;
   private final RegistryEndpointRequestProperties registryEndpointRequestProperties;
   private final FailoverHttpClient httpClient;
 
@@ -90,8 +87,11 @@ class RegistryEndpointCaller<T> {
    * @param httpClient HTTP client
    */
   @VisibleForTesting
-  RegistryEndpointCaller(EventHandlers eventHandlers, @Nullable String userAgent,
-      RegistryEndpointProvider<T> registryEndpointProvider, @Nullable Authorization authorization,
+  RegistryEndpointCaller(
+      EventHandlers eventHandlers,
+      @Nullable String userAgent,
+      RegistryEndpointProvider<T> registryEndpointProvider,
+      @Nullable Authorization authorization,
       RegistryEndpointRequestProperties registryEndpointRequestProperties,
       FailoverHttpClient httpClient) {
     this.eventHandlers = eventHandlers;
@@ -127,10 +127,13 @@ class RegistryEndpointCaller<T> {
     String serverUrl = registryEndpointRequestProperties.getServerUrl();
     String imageName = registryEndpointRequestProperties.getImageName();
 
-    Request.Builder requestBuilder = Request.builder().setUserAgent(userAgent)
-        .setHttpTimeout(JibSystemProperties.getHttpTimeout())
-        .setAccept(registryEndpointProvider.getAccept())
-        .setBody(registryEndpointProvider.getContent()).setAuthorization(authorization);
+    Request.Builder requestBuilder =
+        Request.builder()
+            .setUserAgent(userAgent)
+            .setHttpTimeout(JibSystemProperties.getHttpTimeout())
+            .setAccept(registryEndpointProvider.getAccept())
+            .setBody(registryEndpointProvider.getContent())
+            .setAuthorization(authorization);
 
     try (Response response =
         httpClient.call(registryEndpointProvider.getHttpMethod(), url, requestBuilder.build())) {
@@ -145,8 +148,8 @@ class RegistryEndpointCaller<T> {
       } catch (ResponseException responseException) {
         if (responseException.getStatusCode() == HttpStatusCodes.STATUS_CODE_BAD_REQUEST
             || responseException.getStatusCode() == HttpStatusCodes.STATUS_CODE_NOT_FOUND
-            || responseException
-                .getStatusCode() == HttpStatusCodes.STATUS_CODE_METHOD_NOT_ALLOWED) {
+            || responseException.getStatusCode()
+                == HttpStatusCodes.STATUS_CODE_METHOD_NOT_ALLOWED) {
           // The name or reference was invalid.
           throw newRegistryErrorException(responseException);
 
@@ -166,7 +169,6 @@ class RegistryEndpointCaller<T> {
           throw responseException;
         }
       }
-      
 
     } catch (IOException ex) {
       logError("I/O error for image [" + serverUrl + "/" + imageName + "]:");
@@ -183,25 +185,30 @@ class RegistryEndpointCaller<T> {
 
   @VisibleForTesting
   RegistryErrorException newRegistryErrorException(ResponseException responseException) {
-    RegistryErrorExceptionBuilder registryErrorExceptionBuilder = new RegistryErrorExceptionBuilder(
-        registryEndpointProvider.getActionDescription(), responseException);
+    RegistryErrorExceptionBuilder registryErrorExceptionBuilder =
+        new RegistryErrorExceptionBuilder(
+            registryEndpointProvider.getActionDescription(), responseException);
     if (responseException.getContent() != null) {
       try {
-        ErrorResponseTemplate errorResponse = JsonTemplateMapper
-            .readJson(responseException.getContent(), ErrorResponseTemplate.class);
+        ErrorResponseTemplate errorResponse =
+            JsonTemplateMapper.readJson(
+                responseException.getContent(), ErrorResponseTemplate.class);
         for (ErrorEntryTemplate errorEntry : errorResponse.getErrors()) {
           registryErrorExceptionBuilder.addReason(errorEntry);
         }
       } catch (IOException ex) {
-        registryErrorExceptionBuilder.addReason("registry returned error code "
-            + responseException.getStatusCode()
-            + "; possible causes include invalid or wrong reference. Actual error output follows:\n"
-            + responseException.getContent() + "\n");
+        registryErrorExceptionBuilder.addReason(
+            "registry returned error code "
+                + responseException.getStatusCode()
+                + "; possible causes include invalid or wrong reference. Actual error output follows:\n"
+                + responseException.getContent()
+                + "\n");
       }
     } else {
-      registryErrorExceptionBuilder.addReason("registry returned error code "
-          + responseException.getStatusCode()
-          + "; possible causes include invalid or wrong reference \n");
+      registryErrorExceptionBuilder.addReason(
+          "registry returned error code "
+              + responseException.getStatusCode()
+              + "; possible causes include invalid or wrong reference \n");
     }
     return registryErrorExceptionBuilder.build();
   }

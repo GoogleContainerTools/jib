@@ -87,8 +87,8 @@ public class RegistryEndpointCallerTest {
     @Nullable
     @Override
     public String handleResponse(Response response) throws IOException {
-      return CharStreams
-          .toString(new InputStreamReader(response.getBody(), StandardCharsets.UTF_8));
+      return CharStreams.toString(
+          new InputStreamReader(response.getBody(), StandardCharsets.UTF_8));
     }
 
     @Override
@@ -109,23 +109,24 @@ public class RegistryEndpointCallerTest {
     return mock;
   }
 
-  @Rule
-  public final RestoreSystemProperties systemPropertyRestorer = new RestoreSystemProperties();
+  @Rule public final RestoreSystemProperties systemPropertyRestorer = new RestoreSystemProperties();
 
-  @Mock
-  private EventHandlers mockEventHandlers;
-  @Mock
-  private FailoverHttpClient mockHttpClient;
-  @Mock
-  private Response mockResponse;
+  @Mock private EventHandlers mockEventHandlers;
+  @Mock private FailoverHttpClient mockHttpClient;
+  @Mock private Response mockResponse;
 
   private RegistryEndpointCaller<String> endpointCaller;
 
   @Before
   public void setUp() throws IOException {
-    endpointCaller = new RegistryEndpointCaller<>(mockEventHandlers, "userAgent",
-        new TestRegistryEndpointProvider(), Authorization.fromBasicCredentials("user", "pass"),
-        new RegistryEndpointRequestProperties("serverUrl", "imageName"), mockHttpClient);
+    endpointCaller =
+        new RegistryEndpointCaller<>(
+            mockEventHandlers,
+            "userAgent",
+            new TestRegistryEndpointProvider(),
+            Authorization.fromBasicCredentials("user", "pass"),
+            new RegistryEndpointRequestProperties("serverUrl", "imageName"),
+            mockHttpClient);
 
     Mockito.when(mockResponse.getBody())
         .thenReturn(new ByteArrayInputStream("body".getBytes(StandardCharsets.UTF_8)));
@@ -248,8 +249,9 @@ public class RegistryEndpointCallerTest {
 
     } catch (IOException ex) {
       Assert.assertSame(ioException, ex);
-      Mockito.verify(mockEventHandlers).dispatch(
-          LogEvent.error("\u001B[31;1mI/O error for image [serverUrl/imageName]:\u001B[0m"));
+      Mockito.verify(mockEventHandlers)
+          .dispatch(
+              LogEvent.error("\u001B[31;1mI/O error for image [serverUrl/imageName]:\u001B[0m"));
       Mockito.verify(mockEventHandlers)
           .dispatch(LogEvent.error("\u001B[31;1m    java.io.IOException\u001B[0m"));
       Mockito.verify(mockEventHandlers)
@@ -269,17 +271,19 @@ public class RegistryEndpointCallerTest {
 
     } catch (IOException ex) {
       Assert.assertSame(ioException, ex);
-      Mockito.verify(mockEventHandlers).dispatch(
-          LogEvent.error("\u001B[31;1mI/O error for image [serverUrl/imageName]:\u001B[0m"));
+      Mockito.verify(mockEventHandlers)
+          .dispatch(
+              LogEvent.error("\u001B[31;1mI/O error for image [serverUrl/imageName]:\u001B[0m"));
       Mockito.verify(mockEventHandlers)
           .dispatch(LogEvent.error("\u001B[31;1m    java.io.IOException\u001B[0m"));
       Mockito.verify(mockEventHandlers)
           .dispatch(LogEvent.error("\u001B[31;1m    this is due to broken pipe\u001B[0m"));
       Mockito.verify(mockEventHandlers)
-          .dispatch(LogEvent.error(
-              "\u001B[31;1mbroken pipe: the server shut down the connection. Check the server "
-                  + "log if possible. This could also be a proxy issue. For example, a proxy "
-                  + "may prevent sending packets that are too large.\u001B[0m"));
+          .dispatch(
+              LogEvent.error(
+                  "\u001B[31;1mbroken pipe: the server shut down the connection. Check the server "
+                      + "log if possible. This could also be a proxy issue. For example, a proxy "
+                      + "may prevent sending packets that are too large.\u001B[0m"));
       Mockito.verifyNoMoreInteractions(mockEventHandlers);
     }
   }
@@ -293,8 +297,9 @@ public class RegistryEndpointCallerTest {
       Assert.fail();
 
     } catch (IOException ex) {
-      Mockito.verify(mockEventHandlers).dispatch(
-          LogEvent.error("\u001B[31;1mI/O error for image [serverUrl/imageName]:\u001B[0m"));
+      Mockito.verify(mockEventHandlers)
+          .dispatch(
+              LogEvent.error("\u001B[31;1mI/O error for image [serverUrl/imageName]:\u001B[0m"));
       Mockito.verify(mockEventHandlers)
           .dispatch(LogEvent.error("\u001B[31;1m    java.io.IOException\u001B[0m"));
       Mockito.verify(mockEventHandlers)
@@ -398,8 +403,9 @@ public class RegistryEndpointCallerTest {
   @Test
   public void testNewRegistryErrorException_jsonErrorOutput() {
     ResponseException httpException = Mockito.mock(ResponseException.class);
-    Mockito.when(httpException.getContent()).thenReturn(
-        "{\"errors\": [{\"code\": \"MANIFEST_UNKNOWN\", \"message\": \"manifest unknown\"}]}");
+    Mockito.when(httpException.getContent())
+        .thenReturn(
+            "{\"errors\": [{\"code\": \"MANIFEST_UNKNOWN\", \"message\": \"manifest unknown\"}]}");
 
     RegistryErrorException registryException =
         endpointCaller.newRegistryErrorException(httpException);
@@ -423,11 +429,11 @@ public class RegistryEndpointCallerTest {
     Assert.assertEquals(
         "Tried to actionDescription but failed because: registry returned error code 404; "
             + "possible causes include invalid or wrong reference. Actual error output follows:\n"
-            + ">>>>> (404) page not found <<<<<\n" + " | If this is a bug, please file an issue at "
+            + ">>>>> (404) page not found <<<<<\n"
+            + " | If this is a bug, please file an issue at "
             + "https://github.com/GoogleContainerTools/jib/issues/new",
         registryException.getMessage());
   }
-
 
   @Test
   public void testNewRegistryErrorException_nullJsonErrorOutput() {
@@ -448,8 +454,8 @@ public class RegistryEndpointCallerTest {
   }
 
   /**
-   * Verifies that a response with {@code httpStatusCode} throws
-   * {@link RegistryUnauthorizedException}.
+   * Verifies that a response with {@code httpStatusCode} throws {@link
+   * RegistryUnauthorizedException}.
    */
   private void verifyThrowsRegistryUnauthorizedException(int httpStatusCode)
       throws IOException, RegistryException {
@@ -467,8 +473,8 @@ public class RegistryEndpointCallerTest {
   }
 
   /**
-   * Verifies that a response with {@code httpStatusCode} throws
-   * {@link RegistryUnauthorizedException}.
+   * Verifies that a response with {@code httpStatusCode} throws {@link
+   * RegistryUnauthorizedException}.
    */
   private void verifyThrowsRegistryErrorException(int httpStatusCode)
       throws IOException, RegistryException {
@@ -482,17 +488,20 @@ public class RegistryEndpointCallerTest {
       Assert.fail("Call should have failed");
 
     } catch (RegistryErrorException ex) {
-      Assert.assertThat(ex.getMessage(), CoreMatchers.startsWith(
-          "Tried to actionDescription but failed because: unknown error code: code (message)"));
+      Assert.assertThat(
+          ex.getMessage(),
+          CoreMatchers.startsWith(
+              "Tried to actionDescription but failed because: unknown error code: code (message)"));
     }
   }
 
-
   private void setUpRegistryResponse(Exception exceptionToThrow)
       throws MalformedURLException, IOException {
-    Mockito
-        .when(mockHttpClient.call(Mockito.eq("httpMethod"),
-            Mockito.eq(new URL("https://serverUrl/v2/api")), Mockito.any()))
+    Mockito.when(
+            mockHttpClient.call(
+                Mockito.eq("httpMethod"),
+                Mockito.eq(new URL("https://serverUrl/v2/api")),
+                Mockito.any()))
         .thenThrow(exceptionToThrow);
   }
 }
