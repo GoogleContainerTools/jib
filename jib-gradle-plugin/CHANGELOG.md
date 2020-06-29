@@ -13,6 +13,7 @@ All notable changes to this project will be documented in this file.
 
 - Fixed reporting a wrong credential helper name when the helper does not exist on Windows. ([#2527](https://github.com/GoogleContainerTools/jib/issues/2527))
 - Fixed `NullPointerException` when the `"auths":` section in `~/.docker/config.json` has an entry with no `"auth":` field. ([#2535](https://github.com/GoogleContainerTools/jib/issues/2535))
+- Fixed `NullPointerException` to return a helpful message when a server does not provide any message in certain error cases (400 Bad Request, 404 Not Found, and 405 Method Not Allowed). ([#2532](https://github.com/GoogleContainerTools/jib/issues/2532))
 
 ## 2.4.0
 
