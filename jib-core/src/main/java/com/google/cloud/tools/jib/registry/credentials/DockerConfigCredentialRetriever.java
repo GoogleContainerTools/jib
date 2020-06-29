@@ -140,7 +140,7 @@ public class DockerConfigCredentialRetriever {
 
       // Lastly, find defined auth.
       AuthTemplate auth = dockerConfig.getAuthFor(registryAlias);
-      if (auth != null) {
+      if (auth != null && auth.getAuth() != null) {
         // 'auth' is a basic authentication token that should be parsed back into credentials
         String usernameColonPassword =
             new String(Base64.decodeBase64(auth.getAuth()), StandardCharsets.UTF_8);
