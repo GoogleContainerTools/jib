@@ -46,8 +46,7 @@ import javax.net.ssl.SSLException;
 class RegistryEndpointCaller<T> {
 
   /**
-   * <a href=
-   * "https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/308">https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/308</a>.
+   * <a href = "https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/308">https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/308</a>.
    */
   @VisibleForTesting static final int STATUS_CODE_PERMANENT_REDIRECT = 308;
 
@@ -208,7 +207,7 @@ class RegistryEndpointCaller<T> {
       registryErrorExceptionBuilder.addReason(
           "registry returned error code "
               + responseException.getStatusCode()
-              + "; possible causes include invalid or wrong reference \n");
+              + "; but did not return any details; possible causes include invalid or wrong reference, or proxy/firewall/VPN interfering \n");
     }
     return registryErrorExceptionBuilder.build();
   }
