@@ -1,7 +1,7 @@
 // define all versioned plugins here and apply in subprojects as necessary without version
 plugins {
   id 'com.github.sherter.google-java-format' version '0.9' apply false
-  id 'net.ltgt.apt' version '0.19' apply false
+  id 'net.ltgt.apt' version '0.21' apply false
   id 'net.ltgt.errorprone' version '0.6' apply false
   id 'net.researchgate.release' version '2.7.0' apply false
   id 'com.gradle.plugin-publish' version '0.11.0' apply false
