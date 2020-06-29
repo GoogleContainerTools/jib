@@ -208,7 +208,7 @@ class RegistryEndpointCaller<T> {
       registryErrorExceptionBuilder.addReason(
           "registry returned error code "
               + responseException.getStatusCode()
-              + "; but did not return any details; possible causes include invalid or wrong reference, or proxy/firewall/VPN interfering \n");
+              + " but did not return any details; possible causes include invalid or wrong reference, or proxy/firewall/VPN interfering \n");
     }
     return registryErrorExceptionBuilder.build();
   }

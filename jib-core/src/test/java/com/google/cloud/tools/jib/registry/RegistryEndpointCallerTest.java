@@ -446,7 +446,7 @@ public class RegistryEndpointCallerTest {
         endpointCaller.newRegistryErrorException(httpException);
     Assert.assertSame(httpException, registryException.getCause());
     Assert.assertEquals(
-        "Tried to actionDescription but failed because: registry returned error code 404; "
+        "Tried to actionDescription but failed because: registry returned error code 404 "
             + "but did not return any details; possible causes include invalid or wrong reference, or proxy/firewall/VPN interfering \n"
             + " | If this is a bug, please file an issue at "
             + "https://github.com/GoogleContainerTools/jib/issues/new",
