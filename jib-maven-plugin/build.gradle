@@ -24,7 +24,7 @@ dependencies {
 
   // maven-plugin-testing-harness pulls in conflicting implementations of DefaultPlexusContainer
   // (sisu (correct) vs default-plexus-container (wrong)) so ensure this is first in the test classpath
-  testImplementation 'org.eclipse.sisu:org.eclipse.sisu.plexus:0.3.3'
+  testImplementation 'org.eclipse.sisu:org.eclipse.sisu.plexus:0.3.4'
   testImplementation 'org.apache.maven.plugin-testing:maven-plugin-testing-harness:3.3.0'
 
   testImplementation "junit:junit:${dependencyVersions.JUNIT}"
