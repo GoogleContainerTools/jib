@@ -18,7 +18,7 @@ dependencies {
   implementation "org.apache.maven:maven-core:${dependencyVersions.MAVEN_API}"
 
   // compileOnly + testImplementation equivalent to "provided"
-  compileOnly 'org.apache.maven.plugin-tools:maven-plugin-annotations:3.5'
+  compileOnly 'org.apache.maven.plugin-tools:maven-plugin-annotations:3.6.0'
   // needed to suppress "unknown enum constant" warnings
   testImplementation 'org.apache.maven.plugin-tools:maven-plugin-annotations:3.5'
 
