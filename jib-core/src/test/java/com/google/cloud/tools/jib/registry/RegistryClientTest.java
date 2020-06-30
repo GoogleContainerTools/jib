@@ -24,6 +24,7 @@ import com.google.cloud.tools.jib.api.RegistryUnauthorizedException;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.http.TestWebServer;
+import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.security.DigestException;
@@ -215,7 +216,6 @@ public class RegistryClientTest {
   public void testPullManifest()
       throws IOException, InterruptedException, GeneralSecurityException, URISyntaxException,
           RegistryException {
-    String imageTag = "testIMage";
     String manifestResponse =
         "HTTP/1.1 200 OK\nContent-Length: 307\n\n{\n"
             + "    \"schemaVersion\": 2,\n"
@@ -229,9 +229,18 @@ public class RegistryClientTest {
 
     registry = new TestWebServer(false, Arrays.asList(manifestResponse), 1);
     RegistryClient registryClient = createRegistryClient(null);
+    ManifestAndDigest<?> manifestAndDigest = registryClient.pullManifest("image-tag");
 
-    ManifestAndDigest<?> manifestAndDigest = registryClient.pullManifest(imageTag);
-    Assert.assertEquals(66, manifestAndDigest.getManifest().toString().length());
+    // verify details of the returned manifest
+    V22ManifestTemplate manifest = (V22ManifestTemplate) manifestAndDigest.getManifest();
+    Assert.assertEquals(2, manifest.getSchemaVersion());
+    Assert.assertEquals(
+        "application/vnd.docker.distribution.manifest.v2+json", manifest.getManifestMediaType());
+    Assert.assertEquals(
+        "sha256:b5b2b2c507a0944348e0303114d8d93aaaa081732b86451d9bce1f432a537bc7",
+        manifest.getContainerConfiguration().getDigest().toString());
+    Assert.assertEquals(7023, manifest.getContainerConfiguration().getSize());
+    Assert.assertTrue(manifestAndDigest.getManifest() instanceof V22ManifestTemplate);
   }
 
   /**
