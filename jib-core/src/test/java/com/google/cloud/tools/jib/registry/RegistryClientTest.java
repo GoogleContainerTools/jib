@@ -245,7 +245,7 @@ public class RegistryClientTest {
     Assert.assertEquals(7023, manifest.getContainerConfiguration().getSize());
     Assert.assertThat(
         registry.getInputRead(),
-        CoreMatchers.containsString("GET /v2/foo/bar/manifests/image-tag HTTP/1.1"));
+        CoreMatchers.containsString("GET /v2/foo/bar/manifests/image-tag "));
   }
 
   /**
