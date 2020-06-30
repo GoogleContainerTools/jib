@@ -211,6 +211,29 @@ public class RegistryClientTest {
         registry.getInputRead(), CoreMatchers.containsString("Authorization: Basic dXNlcjpwYXNz"));
   }
 
+  @Test
+  public void testPullManifest()
+      throws IOException, InterruptedException, GeneralSecurityException, URISyntaxException,
+          RegistryException {
+    String imageTag = "testIMage";
+    String manifestResponse =
+        "HTTP/1.1 200 OK\nContent-Length: 307\n\n{\n"
+            + "    \"schemaVersion\": 2,\n"
+            + "    \"mediaType\": \"application/vnd.docker.distribution.manifest.v2+json\",\n"
+            + "    \"config\": {\n"
+            + "        \"mediaType\": \"application/vnd.docker.container.image.v1+json\",\n"
+            + "        \"size\": 7023,\n"
+            + "        \"digest\": \"sha256:b5b2b2c507a0944348e0303114d8d93aaaa081732b86451d9bce1f432a537bc7\"\n"
+            + "    }\n"
+            + "}";
+
+    registry = new TestWebServer(false, Arrays.asList(manifestResponse), 1);
+    RegistryClient registryClient = createRegistryClient(null);
+
+    ManifestAndDigest<?> manifestAndDigest = registryClient.pullManifest(imageTag);
+    Assert.assertEquals(66, manifestAndDigest.getManifest().toString().length());
+  }
+
   /**
    * Sets up an auth server and a registry. The auth server can return a bearer token up to {@code
    * maxAuthTokens} times. The registry will initially return "401 Unauthorized" for {@code
