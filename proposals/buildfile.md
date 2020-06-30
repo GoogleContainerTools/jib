@@ -136,6 +136,9 @@ a `file` layer consists of 3 parts
    - if `dest` ends with `/` then it is considered a target directory, file will be copied into directory
    - if `dest` doesn't end with `/` then is is the target file location, `src` file will be copied and renamed to `dest`
 
+#### Symlinks
+- 
+
 ### FileProperties
 
 A list of properties that can be user specified for each file in a file layer
@@ -184,6 +187,10 @@ inheritance control in the future.
 ### Other time options
 * `actual`: use timestamp from file on disk
 * `current`: use time of build
+
+### Multi platform builds
+
+If a buildfile `from` directive contains multiple `platforms`, jib will create a new manifest-list/image-index with entries for each specified platform. The cli will *not* append to an existing manifest list.
 
 ### Special platform specific layers
 Layer entries can contain platform specific filters that are only applied for builds matching that platform
