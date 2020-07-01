@@ -284,6 +284,9 @@ public class RegistryClientTest {
     Assert.assertEquals(
         "[sha256:e692418e4cbaf90ca69d05a66403747baa33ee08806650b51fab815ad7fc331f]",
         manifestList.getDigestsForPlatform("amd64", "linux").toString());
+    Assert.assertThat(
+        registry.getInputRead(),
+        CoreMatchers.containsString("GET /v2/foo/bar/manifests/image-tag "));
   }
 
   /**
