@@ -32,7 +32,7 @@ dependencies {
   testImplementation "org.slf4j:slf4j-api:${dependencyVersions.SLF4J_API}"
   testImplementation "com.github.stefanbirkner:system-rules:${dependencyVersions.SYSTEM_RULES}"
 
-  testImplementation 'org.apache.maven.shared:maven-verifier:1.6'
+  testImplementation 'org.apache.maven.shared:maven-verifier:1.7.2'
   testImplementation "org.apache.maven:maven-compat:${dependencyVersions.MAVEN_API}"
   testImplementation 'org.slf4j:slf4j-api:1.7.30'
   testImplementation 'org.slf4j:slf4j-simple:1.7.30'
