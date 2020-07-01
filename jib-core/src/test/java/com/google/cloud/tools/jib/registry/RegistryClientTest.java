@@ -24,6 +24,7 @@ import com.google.cloud.tools.jib.api.RegistryUnauthorizedException;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.http.TestWebServer;
+import com.google.cloud.tools.jib.image.json.V22ManifestListTemplate;
 import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -246,6 +247,43 @@ public class RegistryClientTest {
     Assert.assertThat(
         registry.getInputRead(),
         CoreMatchers.containsString("GET /v2/foo/bar/manifests/image-tag "));
+  }
+
+  @Test
+  public void testPullManifest_manifestList()
+      throws IOException, InterruptedException, GeneralSecurityException, URISyntaxException,
+          RegistryException {
+    String manifestResponse =
+        "HTTP/1.1 200 OK\nContent-Length: 403\n\n{\n"
+            + "  \"schemaVersion\": 2,\n"
+            + "  \"mediaType\": \"application/vnd.docker.distribution.manifest.list.v2+json\",\n"
+            + "  \"manifests\": [\n"
+            + "    {\n"
+            + "      \"mediaType\": \"application/vnd.docker.distribution.manifest.v2+json\",\n"
+            + "      \"size\": 7143,\n"
+            + "      \"digest\": \"sha256:e692418e4cbaf90ca69d05a66403747baa33ee08806650b51fab815ad7fc331f\",\n"
+            + "      \"platform\": {\n"
+            + "        \"architecture\": \"amd64\",\n"
+            + "        \"os\": \"linux\"\n"
+            + "      }\n"
+            + "    }\n"
+            + "  ]\n"
+            + "}";
+
+    registry = new TestWebServer(false, Arrays.asList(manifestResponse), 1);
+    RegistryClient registryClient = createRegistryClient(null);
+    ManifestAndDigest<?> manifestAndDigest = registryClient.pullManifest("image-tag");
+
+    Assert.assertEquals(
+        "sha256:a340fa38667f765f8cfd79d4bc684ec8a6f48cdd63abfe36e109f4125ee38488",
+        manifestAndDigest.getDigest().toString());
+    Assert.assertTrue(manifestAndDigest.getManifest() instanceof V22ManifestListTemplate);
+    V22ManifestListTemplate manifestList =
+        (V22ManifestListTemplate) manifestAndDigest.getManifest();
+    Assert.assertEquals(2, manifestList.getSchemaVersion());
+    Assert.assertEquals(
+        "[sha256:e692418e4cbaf90ca69d05a66403747baa33ee08806650b51fab815ad7fc331f]",
+        manifestList.getDigestsForPlatform("amd64", "linux").toString());
   }
 
   /**
