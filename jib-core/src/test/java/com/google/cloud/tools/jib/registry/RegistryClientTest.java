@@ -235,6 +235,7 @@ public class RegistryClientTest {
     Assert.assertEquals(
         "sha256:6b61466eabab6e5ffb68ae2bd9b85c789225540c2ac54ea1f71eb327588e8946",
         manifestAndDigest.getDigest().toString());
+
     Assert.assertTrue(manifestAndDigest.getManifest() instanceof V22ManifestTemplate);
     V22ManifestTemplate manifest = (V22ManifestTemplate) manifestAndDigest.getManifest();
     Assert.assertEquals(2, manifest.getSchemaVersion());
@@ -244,6 +245,7 @@ public class RegistryClientTest {
         "sha256:b5b2b2c507a0944348e0303114d8d93aaaa081732b86451d9bce1f432a537bc7",
         manifest.getContainerConfiguration().getDigest().toString());
     Assert.assertEquals(7023, manifest.getContainerConfiguration().getSize());
+
     Assert.assertThat(
         registry.getInputRead(),
         CoreMatchers.containsString("GET /v2/foo/bar/manifests/image-tag "));
