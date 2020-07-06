@@ -236,17 +236,10 @@ public class ContainerizerIntegrationTest {
     // Test that the initial image with the original tag has been pushed.
     String imageReference = "localhost:5000/testimagerepo:testtag";
     localRegistry.pull(imageReference);
-    assertDockerInspect(imageReference);
-    Assert.assertEquals(
-        "Hello, world. An argument.\n", new Command("docker", "run", "--rm", imageReference).run());
 
     // Test that any additional tags have also been pushed with the original image.
     String imageReference2 = "localhost:5000/testimagerepo:testtag2";
     localRegistry.pull(imageReference2);
-    assertDockerInspect(imageReference2);
-    Assert.assertEquals(
-        "Hello, world. An argument.\n",
-        new Command("docker", "run", "--rm", imageReference2).run());
 
     // Push the same image with a different tag, with SKIP_EXISTING_IMAGES enabled.
     JibContainer image2 =
@@ -261,10 +254,10 @@ public class ContainerizerIntegrationTest {
       Assert.fail(
           "jib.skipExistingImages was enabled and digest was already pushed, "
               + "hence testtag2 shouldn't have been pushed.");
-    } catch (RuntimeException e) {
+    } catch (RuntimeException ex) {
       // As expected, registry throws exception that manifest is unknown.
       Assert.assertThat(
-          e.getMessage(),
+          ex.getMessage(),
           CoreMatchers.containsString(
               "manifest for localhost:5000/testimagerepo:new_testtag not found"));
     }
