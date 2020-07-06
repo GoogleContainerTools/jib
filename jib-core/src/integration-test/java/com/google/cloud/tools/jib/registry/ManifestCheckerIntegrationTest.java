@@ -17,7 +17,6 @@
 package com.google.cloud.tools.jib.registry;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import com.google.cloud.tools.jib.api.RegistryException;
@@ -32,11 +31,11 @@ import org.junit.Test;
 public class ManifestCheckerIntegrationTest {
 
   /** A known manifest list sha for openjdk:11-jre-slim. */
-  public static final String KNOWN_MANIFEST =
+  private static final String KNOWN_MANIFEST =
       "sha256:8ab7b3078b01ba66b937b7fbe0b9eccf60449cc101c42e99aeefaba0e1781155";
 
   /** A fictitious sha to test unknown images. */
-  public static final String UNKNOWN_MANIFEST =
+  private static final String UNKNOWN_MANIFEST =
       "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
 
   private final FailoverHttpClient httpClient = new FailoverHttpClient(true, false, ignored -> {});
@@ -57,7 +56,7 @@ public class ManifestCheckerIntegrationTest {
   }
 
   @Test
-  public void testNonexistingManifest() throws IOException, RegistryException {
+  public void testNonExistingManifest() throws IOException, RegistryException {
     RegistryClient registryClient =
         RegistryClient.factory(
                 EventHandlers.NONE, "registry-1.docker.io", "library/openjdk", httpClient)
@@ -67,6 +66,6 @@ public class ManifestCheckerIntegrationTest {
     Optional<ManifestAndDigest<ManifestTemplate>> manifestDescriptor =
         registryClient.checkImage(UNKNOWN_MANIFEST);
 
-    assertFalse(manifestDescriptor.isPresent());
+    assertEquals(Optional.empty(), manifestDescriptor);
   }
 }

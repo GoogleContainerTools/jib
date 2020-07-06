@@ -54,7 +54,6 @@ class PushImageStep implements Callable<BuildResult> {
     Set<String> tags = buildContext.getAllTargetImageTags();
 
     EventHandlers eventHandlers = buildContext.getEventHandlers();
-
     try (TimerEventDispatcher ignored =
             new TimerEventDispatcher(eventHandlers, "Preparing manifest pushers");
         ProgressEventDispatcher progressEventDispatcher =
@@ -63,8 +62,7 @@ class PushImageStep implements Callable<BuildResult> {
       if (JibSystemProperties.skipExistingImages() && manifestAlreadyExists) {
         eventHandlers.dispatch(
             LogEvent.info("Skipping pushing manifest; manifest already exists."));
-
-        return ImmutableList.<PushImageStep>builder().build();
+        return ImmutableList.of();
       }
 
       // Gets the image manifest to push.

@@ -41,11 +41,11 @@ class CheckImageStep implements Callable<Optional<ManifestAndDigest<ManifestTemp
 
   private static final String DESCRIPTION = "Checking existence of manifest";
 
-  BuildContext buildContext;
-  ProgressEventDispatcher.Factory progressEventDispatcherFactory;
-  RegistryClient registryClient;
-  BlobDescriptor containerConfigurationDigestAndSize;
-  Image image;
+  private BuildContext buildContext;
+  private ProgressEventDispatcher.Factory progressEventDispatcherFactory;
+  private RegistryClient registryClient;
+  private BlobDescriptor containerConfigurationDigestAndSize;
+  private Image image;
 
   CheckImageStep(
       BuildContext buildContext,
@@ -63,16 +63,13 @@ class CheckImageStep implements Callable<Optional<ManifestAndDigest<ManifestTemp
   @Override
   public Optional<ManifestAndDigest<ManifestTemplate>> call()
       throws IOException, RegistryException {
-
     BuildableManifestTemplate manifestTemplate =
         new ImageToJsonTranslator(image)
             .getManifestTemplate(
                 buildContext.getTargetFormat(), containerConfigurationDigestAndSize);
-
     DescriptorDigest manifestDigest = Digests.computeJsonDigest(manifestTemplate);
 
     EventHandlers eventHandlers = buildContext.getEventHandlers();
-
     try (TimerEventDispatcher ignored = new TimerEventDispatcher(eventHandlers, DESCRIPTION);
         ProgressEventDispatcher ignored2 =
             progressEventDispatcherFactory.create(
@@ -83,7 +80,6 @@ class CheckImageStep implements Callable<Optional<ManifestAndDigest<ManifestTemp
       if (!JibSystemProperties.skipExistingImages()) {
         eventHandlers.dispatch(
             LogEvent.info("Skipping manifest existence check; system property set to false"));
-
         return Optional.empty();
       }
 

@@ -255,7 +255,6 @@ public class ContainerizerIntegrationTest {
           "jib.skipExistingImages was enabled and digest was already pushed, "
               + "hence testtag2 shouldn't have been pushed.");
     } catch (RuntimeException ex) {
-      // As expected, registry throws exception that manifest is unknown.
       Assert.assertThat(
           ex.getMessage(),
           CoreMatchers.containsString(

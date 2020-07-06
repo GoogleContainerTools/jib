@@ -179,7 +179,7 @@ public class StepsRunner {
     stepsToRun.add(this::pushBaseImageLayers);
     stepsToRun.add(this::pushApplicationLayers);
     stepsToRun.add(this::pushContainerConfiguration);
-    stepsToRun.add(this::checkImage);
+    stepsToRun.add(this::checkImageInTargetRegistry);
     stepsToRun.add(this::pushImages);
     return this;
   }
@@ -382,7 +382,7 @@ public class StepsRunner {
                         Verify.verifyNotNull(results.applicationLayers))));
   }
 
-  private void checkImage() {
+  private void checkImageInTargetRegistry() {
     ProgressEventDispatcher.Factory childProgressDispatcherFactory =
         Verify.verifyNotNull(rootProgressDispatcher).newChildProducer();
 
@@ -418,11 +418,11 @@ public class StepsRunner {
                           results.builtImage.get(),
                           results.manifestCheckResult.get().isPresent()));
               realizeFutures(manifestPushResults);
-              // Manifest pushers return the same BuildResult.
               return manifestPushResults.isEmpty()
                   ? new BuildResult(
                       results.manifestCheckResult.get().get().getDigest(),
                       results.containerConfigurationPushResult.get().getDigest())
+                  // Manifest pushers return the same BuildResult.
                   : manifestPushResults.get(0).get();
             });
   }
