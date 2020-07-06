@@ -41,11 +41,11 @@ class CheckImageStep implements Callable<Optional<ManifestAndDigest<ManifestTemp
 
   private static final String DESCRIPTION = "Checking existence of manifest";
 
-  private BuildContext buildContext;
-  private ProgressEventDispatcher.Factory progressEventDispatcherFactory;
-  private RegistryClient registryClient;
-  private BlobDescriptor containerConfigurationDigestAndSize;
-  private Image image;
+  private final BuildContext buildContext;
+  private final ProgressEventDispatcher.Factory progressEventDispatcherFactory;
+  private final RegistryClient registryClient;
+  private final BlobDescriptor containerConfigurationDigestAndSize;
+  private final Image image;
 
   CheckImageStep(
       BuildContext buildContext,

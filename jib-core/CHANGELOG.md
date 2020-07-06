@@ -5,6 +5,8 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- New system property `jib.skipExistingImages` (false by default) to skip pushing images (manifests) if the image already exists in the registry. ([#2360](https://github.com/GoogleContainerTools/jib/issues/2360)
+
 ### Changed
 
 ### Fixed
