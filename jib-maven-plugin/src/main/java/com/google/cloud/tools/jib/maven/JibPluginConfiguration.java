@@ -27,6 +27,7 @@ import java.io.File;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -127,6 +128,19 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
     }
   }
 
+  public static class PlatformsConfiguration {
+    @Parameter private String os;
+    @Parameter private String architecture;
+
+    public String getOs() {
+      return this.os;
+    }
+
+    public String getArchitecture() {
+      return this.architecture;
+    }
+  }
+
   /** Configuration for {@code from} parameter. */
   public static class FromConfiguration {
 
@@ -135,6 +149,16 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
     @Nullable @Parameter private String credHelper;
 
     @Parameter private FromAuthConfiguration auth = new FromAuthConfiguration();
+
+    @Parameter private List<PlatformsConfiguration> platforms;
+
+    public FromConfiguration() {
+      platforms = new ArrayList<>();
+      PlatformsConfiguration platform = new PlatformsConfiguration();
+      platform.architecture = "amd64";
+      platform.os = "linux";
+      platforms.add(platform);
+    }
   }
 
   /** Configuration for {@code to} parameter, where image is required. */
@@ -328,6 +352,16 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
   protected void checkJibVersion() throws MojoExecutionException {
     Preconditions.checkNotNull(descriptor);
     MojoCommon.checkJibVersion(descriptor);
+  }
+
+  /**
+   * Gets the specified platforms
+   *
+   * @return the specified platforms
+   */
+  @Nullable
+  List<PlatformsConfiguration> getPlatforms() {
+    return from.platforms;
   }
 
   /**
