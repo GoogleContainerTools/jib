@@ -183,7 +183,6 @@ public class JibPluginConfigurationTest {
 
   @Test
   public void testPomProperties() {
-
     project.getProperties().setProperty("jib.from.image", "fromImage");
     Assert.assertEquals("fromImage", testPluginConfiguration.getBaseImage());
     project.getProperties().setProperty("jib.from.credHelper", "credHelper");
