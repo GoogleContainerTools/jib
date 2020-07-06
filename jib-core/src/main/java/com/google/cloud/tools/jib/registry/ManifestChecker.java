@@ -39,11 +39,11 @@ class ManifestChecker<T extends ManifestTemplate>
       throw responseException;
     }
 
-    // Finds a MANIFEST_BLOB_UNKNOWN error response code.
     if (responseException.getContent() == null) {
       return Optional.empty();
     }
 
+    // Find a MANIFEST_UNKNOWN error response code.
     ErrorCodes errorCode = ErrorResponseUtil.getErrorCode(responseException);
     if (errorCode == ErrorCodes.MANIFEST_UNKNOWN) {
       return Optional.empty();
