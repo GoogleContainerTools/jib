@@ -16,7 +16,6 @@
 
 package com.google.cloud.tools.jib.builder.steps;
 
-import com.google.cloud.tools.jib.api.DescriptorDigest;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.builder.ProgressEventDispatcher;
 import com.google.cloud.tools.jib.builder.steps.LocalBaseImageSteps.LocalImage;
@@ -26,10 +25,9 @@ import com.google.cloud.tools.jib.configuration.ImageConfiguration;
 import com.google.cloud.tools.jib.docker.DockerClient;
 import com.google.cloud.tools.jib.filesystem.TempDirectoryProvider;
 import com.google.cloud.tools.jib.global.JibSystemProperties;
-import com.google.cloud.tools.jib.hash.Digests;
 import com.google.cloud.tools.jib.image.Image;
-import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
-import com.google.cloud.tools.jib.image.json.ImageToJsonTranslator;
+import com.google.cloud.tools.jib.image.json.ManifestTemplate;
+import com.google.cloud.tools.jib.registry.ManifestAndDigest;
 import com.google.cloud.tools.jib.registry.RegistryClient;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Verify;
@@ -74,6 +72,8 @@ public class StepsRunner {
     private Future<List<Future<BlobDescriptor>>> applicationLayerPushResults = failedFuture();
     private Future<BlobDescriptor> containerConfigurationPushResult = failedFuture();
     private Future<BuildResult> buildResult = failedFuture();
+    private Future<Optional<ManifestAndDigest<ManifestTemplate>>> manifestCheckResult =
+        failedFuture();
   }
 
   /**
@@ -179,6 +179,7 @@ public class StepsRunner {
     stepsToRun.add(this::pushBaseImageLayers);
     stepsToRun.add(this::pushApplicationLayers);
     stepsToRun.add(this::pushContainerConfiguration);
+    stepsToRun.add(this::checkImage);
     stepsToRun.add(this::pushImages);
     return this;
   }
@@ -381,6 +382,22 @@ public class StepsRunner {
                         Verify.verifyNotNull(results.applicationLayers))));
   }
 
+  private void checkImage() {
+    ProgressEventDispatcher.Factory childProgressDispatcherFactory =
+        Verify.verifyNotNull(rootProgressDispatcher).newChildProducer();
+
+    results.manifestCheckResult =
+        executorService.submit(
+            () ->
+                new CheckImageStep(
+                        buildContext,
+                        childProgressDispatcherFactory,
+                        results.targetRegistryClient.get(),
+                        results.containerConfigurationPushResult.get(),
+                        results.builtImage.get())
+                    .call());
+  }
+
   private void pushImages() {
     ProgressEventDispatcher.Factory childProgressDispatcherFactory =
         Verify.verifyNotNull(rootProgressDispatcher).newChildProducer();
@@ -391,14 +408,6 @@ public class StepsRunner {
               realizeFutures(results.baseImageLayerPushResults.get());
               realizeFutures(results.applicationLayerPushResults.get());
 
-              BuildableManifestTemplate manifestTemplate =
-                  new ImageToJsonTranslator(results.builtImage.get())
-                      .getManifestTemplate(
-                          buildContext.getTargetFormat(),
-                          results.containerConfigurationPushResult.get());
-
-              DescriptorDigest manifestDigest = Digests.computeJsonDigest(manifestTemplate);
-
               List<Future<BuildResult>> manifestPushResults =
                   scheduleCallables(
                       PushImageStep.makeList(
@@ -406,13 +415,14 @@ public class StepsRunner {
                           childProgressDispatcherFactory,
                           results.targetRegistryClient.get(),
                           results.containerConfigurationPushResult.get(),
-                          manifestTemplate,
-                          manifestDigest));
+                          results.builtImage.get(),
+                          results.manifestCheckResult.get().isPresent()));
               realizeFutures(manifestPushResults);
               // Manifest pushers return the same BuildResult.
               return manifestPushResults.isEmpty()
                   ? new BuildResult(
-                      manifestDigest, results.containerConfigurationPushResult.get().getDigest())
+                      results.manifestCheckResult.get().get().getDigest(),
+                      results.containerConfigurationPushResult.get().getDigest())
                   : manifestPushResults.get(0).get();
             });
   }

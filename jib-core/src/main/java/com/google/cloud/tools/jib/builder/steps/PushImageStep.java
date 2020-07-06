@@ -25,7 +25,10 @@ import com.google.cloud.tools.jib.builder.TimerEventDispatcher;
 import com.google.cloud.tools.jib.configuration.BuildContext;
 import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.global.JibSystemProperties;
+import com.google.cloud.tools.jib.hash.Digests;
+import com.google.cloud.tools.jib.image.Image;
 import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
+import com.google.cloud.tools.jib.image.json.ImageToJsonTranslator;
 import com.google.cloud.tools.jib.registry.RegistryClient;
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
@@ -45,9 +48,9 @@ class PushImageStep implements Callable<BuildResult> {
       ProgressEventDispatcher.Factory progressEventDispatcherFactory,
       RegistryClient registryClient,
       BlobDescriptor containerConfigurationDigestAndSize,
-      BuildableManifestTemplate manifestTemplate,
-      DescriptorDigest imageDigest)
-      throws IOException, RegistryException {
+      Image builtImage,
+      boolean manifestAlreadyExists)
+      throws IOException {
     Set<String> tags = buildContext.getAllTargetImageTags();
 
     EventHandlers eventHandlers = buildContext.getEventHandlers();
@@ -57,13 +60,20 @@ class PushImageStep implements Callable<BuildResult> {
         ProgressEventDispatcher progressEventDispatcher =
             progressEventDispatcherFactory.create("launching manifest pushers", tags.size())) {
 
-      if (JibSystemProperties.skipExistingImages()
-          && registryClient.checkImage(imageDigest.toString()).isPresent()) {
+      if (JibSystemProperties.skipExistingImages() && manifestAlreadyExists) {
         eventHandlers.dispatch(
             LogEvent.info("Skipping pushing manifest; manifest already exists."));
 
         return ImmutableList.<PushImageStep>builder().build();
       }
+
+      // Gets the image manifest to push.
+      BuildableManifestTemplate manifestTemplate =
+          new ImageToJsonTranslator(builtImage)
+              .getManifestTemplate(
+                  buildContext.getTargetFormat(), containerConfigurationDigestAndSize);
+
+      DescriptorDigest manifestDigest = Digests.computeJsonDigest(manifestTemplate);
 
       return tags.stream()
           .map(
@@ -74,7 +84,7 @@ class PushImageStep implements Callable<BuildResult> {
                       registryClient,
                       manifestTemplate,
                       tag,
-                      imageDigest,
+                      manifestDigest,
                       containerConfigurationDigestAndSize.getDigest()))
           .collect(ImmutableList.toImmutableList());
     }
