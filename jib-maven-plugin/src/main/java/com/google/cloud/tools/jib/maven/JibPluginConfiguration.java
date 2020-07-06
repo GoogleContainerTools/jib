@@ -361,6 +361,7 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
    */
   @Nullable
   List<PlatformsConfiguration> getPlatforms() {
+
     return from.platforms;
   }
 
