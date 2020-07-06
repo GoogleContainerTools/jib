@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Google LLC.
+ * Copyright 2020 Google LLC.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -26,8 +26,6 @@ import com.google.cloud.tools.jib.http.FailoverHttpClient;
 import com.google.cloud.tools.jib.image.json.ManifestTemplate;
 import java.io.IOException;
 import java.util.Optional;
-import org.junit.BeforeClass;
-import org.junit.ClassRule;
 import org.junit.Test;
 
 /** Integration tests for {@link ManifestChecker}. */
@@ -37,16 +35,9 @@ public class ManifestCheckerIntegrationTest {
   public static final String KNOWN_MANIFEST =
       "sha256:8ab7b3078b01ba66b937b7fbe0b9eccf60449cc101c42e99aeefaba0e1781155";
 
-  /** A known manifest list sha for openjdk:11-jre-slim. */
+  /** A fictitious sha to test unknown images. */
   public static final String UNKNOWN_MANIFEST =
       "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
-
-  @ClassRule public static final LocalRegistry localRegistry = new LocalRegistry(5000);
-
-  @BeforeClass
-  public static void setUp() throws IOException, InterruptedException {
-    localRegistry.pullAndPushToLocal("busybox", "busybox");
-  }
 
   private final FailoverHttpClient httpClient = new FailoverHttpClient(true, false, ignored -> {});
 

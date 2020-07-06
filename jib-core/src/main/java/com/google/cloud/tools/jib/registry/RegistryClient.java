@@ -370,26 +370,19 @@ public class RegistryClient {
   /**
    * Check if an image is on the registry.
    *
-   * @param <T> child type of ManifestTemplate
-   * @param manifestTemplateClass the specific version of manifest template to check
    * @param imageDigest the image digest to check for
    * @return the image's {@link ManifestAndDigest} if the image exists on the registry, or {@link
    *     Optional#empty()} if it doesn't
    * @throws IOException if communicating with the endpoint fails
    * @throws RegistryException if communicating with the endpoint fails
    */
-  public <T extends ManifestTemplate> Optional<ManifestAndDigest<T>> checkImage(
-      String imageDigest, Class<T> manifestTemplateClass) throws IOException, RegistryException {
-    ManifestChecker<T> manifestChecker =
-        new ManifestChecker<>(
-            registryEndpointRequestProperties, imageDigest, manifestTemplateClass);
-
-    return callRegistryEndpoint(manifestChecker);
-  }
-
   public Optional<ManifestAndDigest<ManifestTemplate>> checkImage(String imageDigest)
       throws IOException, RegistryException {
-    return checkImage(imageDigest, ManifestTemplate.class);
+    ManifestChecker<ManifestTemplate> manifestChecker =
+        new ManifestChecker<>(
+            registryEndpointRequestProperties, imageDigest, ManifestTemplate.class);
+
+    return callRegistryEndpoint(manifestChecker);
   }
 
   /**

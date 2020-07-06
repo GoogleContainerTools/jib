@@ -43,6 +43,7 @@ import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.contrib.java.lang.system.RestoreSystemProperties;
 import org.junit.rules.TemporaryFolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -50,6 +51,8 @@ import org.slf4j.LoggerFactory;
 // TODO: now it looks like we can move everything here into JibIntegrationTest.
 /** Integration tests for {@link Containerizer}. */
 public class ContainerizerIntegrationTest {
+
+  @Rule public final RestoreSystemProperties systemPropertyRestorer = new RestoreSystemProperties();
 
   /**
    * Helper class to hold a {@link ProgressEventHandler} and verify that it handles a full progress.
@@ -253,22 +256,22 @@ public class ContainerizerIntegrationTest {
             Collections.emptyList());
 
     // Test that the pull request throws an exception, indicating that the new tag was not pushed.
-    String imageReference3 = "localhost:5000/testimagerepo:new_testtag";
     try {
-      localRegistry.pull(imageReference3);
+      localRegistry.pull("localhost:5000/testimagerepo:new_testtag");
       Assert.fail(
           "jib.skipExistingImages was enabled and digest was already pushed, "
               + "hence testtag2 shouldn't have been pushed.");
-    } catch (RuntimeException ignore) {
+    } catch (RuntimeException e) {
       // As expected, registry throws exception that manifest is unknown.
+      Assert.assertThat(
+          e.getMessage(),
+          CoreMatchers.containsString(
+              "manifest for localhost:5000/testimagerepo:new_testtag not found"));
     }
 
     // Test that both images have the same properties.
     Assert.assertEquals(image1.getDigest(), image2.getDigest());
     Assert.assertEquals(image1.getImageId(), image2.getImageId());
-
-    // Cleanup. Disable option to not disrupt other tests.
-    System.setProperty(JibSystemProperties.SKIP_EXISTING_IMAGES, "false");
   }
 
   @Test
