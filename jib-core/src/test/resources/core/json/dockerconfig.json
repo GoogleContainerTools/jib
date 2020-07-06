@@ -4,7 +4,8 @@
     "some registry":{"auth":"c29tZTphdXRo","password":"ignored"},
     "https://registry":{"auth":"dG9rZW4="},
 
-    "example.com":{"auth":"should not match example"}
+    "example.com":{"auth":"should not match example"},
+    "no auth field":{}
   },
   "credsStore":"some credential store",
   "credHelpers":{

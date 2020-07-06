@@ -1,11 +1,11 @@
 // define all versioned plugins here and apply in subprojects as necessary without version
 plugins {
-  id 'com.github.sherter.google-java-format' version '0.8' apply false
-  id 'net.ltgt.apt' version '0.19' apply false
-  id 'net.ltgt.errorprone' version '0.6' apply false
-  id 'net.researchgate.release' version '2.7.0' apply false
-  id 'com.gradle.plugin-publish' version '0.11.0' apply false
-  id 'io.freefair.maven-plugin' version '3.8.1' apply false
+  id 'com.github.sherter.google-java-format' version '0.9' apply false
+  id 'net.ltgt.apt' version '0.21' apply false
+  id 'net.ltgt.errorprone' version '1.2.1' apply false
+  id 'net.researchgate.release' version '2.8.1' apply false
+  id 'com.gradle.plugin-publish' version '0.12.0' apply false
+  id 'io.freefair.maven-plugin' version '5.1.0' apply false
 
   // apply so we can correctly configure the test runner to be gradle at the project level
   id 'org.jetbrains.gradle.plugin.idea-ext' version '0.7'
@@ -76,6 +76,7 @@ subprojects {
     MOCKITO_CORE: '3.2.4',
     SLF4J_API: '1.7.25',
     SYSTEM_RULES: '1.19.0',
+    JBCRYPT: '0.4',
   ]
 
   // Use this to ensure we correctly override transitive dependencies
@@ -103,7 +104,7 @@ subprojects {
   /* ERROR PRONE */
   dependencies {
     // NullAway errorprone plugin
-    annotationProcessor 'com.uber.nullaway:nullaway:0.7.9'
+    annotationProcessor 'com.uber.nullaway:nullaway:0.7.10'
     errorprone 'com.google.errorprone:error_prone_core:2.3.4'
     // Using github.com/google/error-prone-javac is required when running on
     // JDK 8. Remove when migrating to JDK 11.

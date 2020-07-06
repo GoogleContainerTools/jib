@@ -18,13 +18,13 @@ dependencies {
   implementation "org.apache.maven:maven-core:${dependencyVersions.MAVEN_API}"
 
   // compileOnly + testImplementation equivalent to "provided"
-  compileOnly 'org.apache.maven.plugin-tools:maven-plugin-annotations:3.5'
+  compileOnly 'org.apache.maven.plugin-tools:maven-plugin-annotations:3.6.0'
   // needed to suppress "unknown enum constant" warnings
   testImplementation 'org.apache.maven.plugin-tools:maven-plugin-annotations:3.5'
 
   // maven-plugin-testing-harness pulls in conflicting implementations of DefaultPlexusContainer
   // (sisu (correct) vs default-plexus-container (wrong)) so ensure this is first in the test classpath
-  testImplementation 'org.eclipse.sisu:org.eclipse.sisu.plexus:0.3.3'
+  testImplementation 'org.eclipse.sisu:org.eclipse.sisu.plexus:0.3.4'
   testImplementation 'org.apache.maven.plugin-testing:maven-plugin-testing-harness:3.3.0'
 
   testImplementation "junit:junit:${dependencyVersions.JUNIT}"
@@ -32,10 +32,12 @@ dependencies {
   testImplementation "org.slf4j:slf4j-api:${dependencyVersions.SLF4J_API}"
   testImplementation "com.github.stefanbirkner:system-rules:${dependencyVersions.SYSTEM_RULES}"
 
-  testImplementation 'org.apache.maven.shared:maven-verifier:1.6'
+  testImplementation 'org.apache.maven.shared:maven-verifier:1.7.2'
   testImplementation "org.apache.maven:maven-compat:${dependencyVersions.MAVEN_API}"
   testImplementation 'org.slf4j:slf4j-api:1.7.30'
   testImplementation 'org.slf4j:slf4j-simple:1.7.30'
+
+  integrationTestImplementation "org.mindrot:jbcrypt:${dependencyVersions.JBCRYPT}"
 
   testImplementation project(path:':jib-plugins-common', configuration:'tests')
   integrationTestImplementation project(path:':jib-core', configuration:'integrationTests')

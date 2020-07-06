@@ -154,9 +154,11 @@ public class DockerCredentialHelperTest {
       throws CredentialHelperUnhandledServerUrlException, CredentialHelperNotFoundException,
           IOException {
     systemProperties.setProperty("os.name", "WINdows");
-    List<String> errorCommand = Arrays.asList(Paths.get("/foo/bar.cmd").toString(), "get");
+    List<String> errorCmdCommand = Arrays.asList(Paths.get("/foo/bar.cmd").toString(), "get");
+    List<String> errorExeCommand = Arrays.asList(Paths.get("/foo/bar.exe").toString(), "get");
     List<String> command = Arrays.asList(Paths.get("/foo/bar").toString(), "get");
-    Mockito.when(processBuilderFactory.apply(errorCommand)).thenReturn(errorProcessBuilder);
+    Mockito.when(processBuilderFactory.apply(errorCmdCommand)).thenReturn(errorProcessBuilder);
+    Mockito.when(processBuilderFactory.apply(errorExeCommand)).thenReturn(errorProcessBuilder);
     Mockito.when(processBuilderFactory.apply(command)).thenReturn(processBuilder);
 
     DockerCredentialHelper credentialHelper =
@@ -166,7 +168,28 @@ public class DockerCredentialHelperTest {
     Assert.assertEquals("myusername", credential.getUsername());
     Assert.assertEquals("mysecret", credential.getPassword());
 
-    Mockito.verify(processBuilderFactory).apply(errorCommand);
+    Mockito.verify(processBuilderFactory).apply(errorCmdCommand);
+    Mockito.verify(processBuilderFactory).apply(errorExeCommand);
     Mockito.verify(processBuilderFactory).apply(command);
+  }
+
+  @Test
+  public void testRetrieve_fileNotFoundExceptionMessage()
+      throws CredentialHelperUnhandledServerUrlException, IOException {
+    Mockito.when(processBuilderFactory.apply(Mockito.any())).thenReturn(processBuilder);
+    Mockito.when(processBuilder.start())
+        .thenThrow(
+            new IOException(
+                "CreateProcess error=2, Das System kann die angegebene Datei nicht finden"));
+
+    DockerCredentialHelper credentialHelper =
+        new DockerCredentialHelper(
+            "serverUrl", Paths.get("/ignored"), systemProperties, processBuilderFactory);
+    try {
+      credentialHelper.retrieve();
+      Assert.fail();
+    } catch (CredentialHelperNotFoundException ex) {
+      Assert.assertNotNull(ex.getMessage());
+    }
   }
 }
