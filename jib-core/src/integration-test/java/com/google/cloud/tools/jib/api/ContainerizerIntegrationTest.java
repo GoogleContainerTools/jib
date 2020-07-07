@@ -229,7 +229,7 @@ public class ContainerizerIntegrationTest {
 
     JibContainer image1 =
         buildRegistryImage(
-            ImageReference.of("gcr.io", "distroless/java", DISTROLESS_DIGEST),
+            ImageReference.scratch(),
             ImageReference.of("localhost:5000", "testimagerepo", "testtag"),
             Collections.singletonList("testtag2"));
 
@@ -244,7 +244,7 @@ public class ContainerizerIntegrationTest {
     // Push the same image with a different tag, with SKIP_EXISTING_IMAGES enabled.
     JibContainer image2 =
         buildRegistryImage(
-            ImageReference.of("gcr.io", "distroless/java", DISTROLESS_DIGEST),
+            ImageReference.scratch(),
             ImageReference.of("localhost:5000", "testimagerepo", "new_testtag"),
             Collections.emptyList());
 
@@ -253,7 +253,7 @@ public class ContainerizerIntegrationTest {
       localRegistry.pull("localhost:5000/testimagerepo:new_testtag");
       Assert.fail(
           "jib.skipExistingImages was enabled and digest was already pushed, "
-              + "hence testtag2 shouldn't have been pushed.");
+              + "hence new_testtag shouldn't have been pushed.");
     } catch (RuntimeException ex) {
       Assert.assertThat(
           ex.getMessage(),
