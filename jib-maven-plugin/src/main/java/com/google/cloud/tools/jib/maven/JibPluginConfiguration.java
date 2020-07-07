@@ -133,11 +133,11 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
     @Parameter private String os = "linux";
     @Parameter private String architecture = "amd64";
 
-    public String getOs() {
+    String getOs() {
       return this.os;
     }
 
-    public String getArchitecture() {
+    String getArchitecture() {
       return this.architecture;
     }
   }
