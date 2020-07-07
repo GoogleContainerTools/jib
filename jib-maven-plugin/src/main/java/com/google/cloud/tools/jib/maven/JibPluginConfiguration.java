@@ -153,7 +153,7 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
 
     @Parameter private List<PlatformsConfiguration> platforms;
 
-    /** Configuration for {@code platforms} parameter. */
+    /** Configuration for {@code platform} parameter. Defaults to amd64/linux. * */
     public FromConfiguration() {
       platforms = new ArrayList<>();
       PlatformsConfiguration platform = new PlatformsConfiguration();
@@ -359,7 +359,6 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
    *
    * @return the specified platforms
    */
-  @Nullable
   List<PlatformsConfiguration> getPlatforms() {
     return from.platforms;
   }
