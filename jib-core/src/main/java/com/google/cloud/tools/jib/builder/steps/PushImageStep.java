@@ -24,6 +24,7 @@ import com.google.cloud.tools.jib.builder.ProgressEventDispatcher;
 import com.google.cloud.tools.jib.builder.TimerEventDispatcher;
 import com.google.cloud.tools.jib.configuration.BuildContext;
 import com.google.cloud.tools.jib.event.EventHandlers;
+import com.google.cloud.tools.jib.global.JibSystemProperties;
 import com.google.cloud.tools.jib.hash.Digests;
 import com.google.cloud.tools.jib.image.Image;
 import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
@@ -47,15 +48,22 @@ class PushImageStep implements Callable<BuildResult> {
       ProgressEventDispatcher.Factory progressEventDispatcherFactory,
       RegistryClient registryClient,
       BlobDescriptor containerConfigurationDigestAndSize,
-      Image builtImage)
+      Image builtImage,
+      boolean manifestAlreadyExists)
       throws IOException {
     Set<String> tags = buildContext.getAllTargetImageTags();
 
+    EventHandlers eventHandlers = buildContext.getEventHandlers();
     try (TimerEventDispatcher ignored =
-            new TimerEventDispatcher(
-                buildContext.getEventHandlers(), "Preparing manifest pushers");
+            new TimerEventDispatcher(eventHandlers, "Preparing manifest pushers");
         ProgressEventDispatcher progressEventDispatcher =
             progressEventDispatcherFactory.create("launching manifest pushers", tags.size())) {
+
+      if (JibSystemProperties.skipExistingImages() && manifestAlreadyExists) {
+        eventHandlers.dispatch(
+            LogEvent.info("Skipping pushing manifest; manifest already exists."));
+        return ImmutableList.of();
+      }
 
       // Gets the image manifest to push.
       BuildableManifestTemplate manifestTemplate =

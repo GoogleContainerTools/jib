@@ -368,10 +368,27 @@ public class RegistryClient {
   }
 
   /**
+   * Check if an image is on the registry.
+   *
+   * @param imageQualifier the tag or digest to check for
+   * @return the {@link ManifestAndDigest} of the image if the image exists on the registry, or
+   *     {@link Optional#empty()} otherwise
+   * @throws IOException if communicating with the endpoint fails
+   * @throws RegistryException if communicating with the endpoint fails
+   */
+  public Optional<ManifestAndDigest<ManifestTemplate>> checkImage(String imageQualifier)
+      throws IOException, RegistryException {
+    ManifestChecker<ManifestTemplate> manifestChecker =
+        new ManifestChecker<>(
+            registryEndpointRequestProperties, imageQualifier, ManifestTemplate.class);
+    return callRegistryEndpoint(manifestChecker);
+  }
+
+  /**
    * Pulls the image manifest and digest for a specific tag.
    *
    * @param <T> child type of ManifestTemplate
-   * @param imageTag the tag to pull on
+   * @param imageQualifier the tag or digest to pull on
    * @param manifestTemplateClass the specific version of manifest template to pull, or {@link
    *     ManifestTemplate} to pull predefined subclasses; see: {@link
    *     ManifestPuller#handleResponse(Response)}
@@ -380,14 +397,16 @@ public class RegistryClient {
    * @throws RegistryException if communicating with the endpoint fails
    */
   public <T extends ManifestTemplate> ManifestAndDigest<T> pullManifest(
-      String imageTag, Class<T> manifestTemplateClass) throws IOException, RegistryException {
+      String imageQualifier, Class<T> manifestTemplateClass) throws IOException, RegistryException {
     ManifestPuller<T> manifestPuller =
-        new ManifestPuller<>(registryEndpointRequestProperties, imageTag, manifestTemplateClass);
+        new ManifestPuller<>(
+            registryEndpointRequestProperties, imageQualifier, manifestTemplateClass);
     return callRegistryEndpoint(manifestPuller);
   }
 
-  public ManifestAndDigest<?> pullManifest(String imageTag) throws IOException, RegistryException {
-    return pullManifest(imageTag, ManifestTemplate.class);
+  public ManifestAndDigest<?> pullManifest(String imageQualifier)
+      throws IOException, RegistryException {
+    return pullManifest(imageQualifier, ManifestTemplate.class);
   }
 
   /**
