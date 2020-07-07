@@ -128,7 +128,7 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
     }
   }
 
-  /** Configuration for {@code platform} parameter. */
+  /** Configuration for {@code platform} parameter. Defaults to amd64/linux. * */
   public static class PlatformsConfiguration {
     @Parameter private String os = "linux";
     @Parameter private String architecture = "amd64";
@@ -153,7 +153,7 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
 
     @Parameter private List<PlatformsConfiguration> platforms;
 
-    /** Configuration for {@code platform} parameter. Defaults to amd64/linux. * */
+    /** Constructor for defaults . * */
     public FromConfiguration() {
       platforms = new ArrayList<>();
       PlatformsConfiguration platform = new PlatformsConfiguration();
