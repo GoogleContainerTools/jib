@@ -128,14 +128,10 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
     }
   }
 
+  /** Configuration for {@code platform} parameter. */
   public static class PlatformsConfiguration {
-    @Parameter private String os;
-    @Parameter private String architecture;
-
-    public PlatformsConfiguration(String os, String architecture) {
-      this.os = os;
-      this.architecture = architecture;
-    }
+    @Parameter private String os = "linux";
+    @Parameter private String architecture = "amd64";
 
     public String getOs() {
       return this.os;
@@ -157,9 +153,10 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
 
     @Parameter private List<PlatformsConfiguration> platforms;
 
+    /** Configuration for {@code platforms} parameter. */
     public FromConfiguration() {
       platforms = new ArrayList<>();
-      PlatformsConfiguration platform = new PlatformsConfiguration("linux", "amd64");
+      PlatformsConfiguration platform = new PlatformsConfiguration();
       platforms.add(platform);
     }
   }
