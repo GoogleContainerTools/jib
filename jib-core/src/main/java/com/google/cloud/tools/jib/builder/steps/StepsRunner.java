@@ -26,6 +26,8 @@ import com.google.cloud.tools.jib.docker.DockerClient;
 import com.google.cloud.tools.jib.filesystem.TempDirectoryProvider;
 import com.google.cloud.tools.jib.global.JibSystemProperties;
 import com.google.cloud.tools.jib.image.Image;
+import com.google.cloud.tools.jib.image.json.ManifestTemplate;
+import com.google.cloud.tools.jib.registry.ManifestAndDigest;
 import com.google.cloud.tools.jib.registry.RegistryClient;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Verify;
@@ -70,6 +72,8 @@ public class StepsRunner {
     private Future<List<Future<BlobDescriptor>>> applicationLayerPushResults = failedFuture();
     private Future<BlobDescriptor> containerConfigurationPushResult = failedFuture();
     private Future<BuildResult> buildResult = failedFuture();
+    private Future<Optional<ManifestAndDigest<ManifestTemplate>>> manifestCheckResult =
+        failedFuture();
   }
 
   /**
@@ -175,6 +179,7 @@ public class StepsRunner {
     stepsToRun.add(this::pushBaseImageLayers);
     stepsToRun.add(this::pushApplicationLayers);
     stepsToRun.add(this::pushContainerConfiguration);
+    stepsToRun.add(this::checkImageInTargetRegistry);
     stepsToRun.add(this::pushImages);
     return this;
   }
@@ -377,6 +382,22 @@ public class StepsRunner {
                         Verify.verifyNotNull(results.applicationLayers))));
   }
 
+  private void checkImageInTargetRegistry() {
+    ProgressEventDispatcher.Factory childProgressDispatcherFactory =
+        Verify.verifyNotNull(rootProgressDispatcher).newChildProducer();
+
+    results.manifestCheckResult =
+        executorService.submit(
+            () ->
+                new CheckImageStep(
+                        buildContext,
+                        childProgressDispatcherFactory,
+                        results.targetRegistryClient.get(),
+                        results.containerConfigurationPushResult.get(),
+                        results.builtImage.get())
+                    .call());
+  }
+
   private void pushImages() {
     ProgressEventDispatcher.Factory childProgressDispatcherFactory =
         Verify.verifyNotNull(rootProgressDispatcher).newChildProducer();
@@ -394,10 +415,15 @@ public class StepsRunner {
                           childProgressDispatcherFactory,
                           results.targetRegistryClient.get(),
                           results.containerConfigurationPushResult.get(),
-                          results.builtImage.get()));
+                          results.builtImage.get(),
+                          results.manifestCheckResult.get().isPresent()));
               realizeFutures(manifestPushResults);
-              // Manifest pushers return the same BuildResult.
-              return manifestPushResults.get(0).get();
+              return manifestPushResults.isEmpty()
+                  ? new BuildResult(
+                      results.manifestCheckResult.get().get().getDigest(),
+                      results.containerConfigurationPushResult.get().getDigest())
+                  // Manifest pushers return the same BuildResult.
+                  : manifestPushResults.get(0).get();
             });
   }
 

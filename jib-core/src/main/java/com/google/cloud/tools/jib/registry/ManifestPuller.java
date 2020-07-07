@@ -16,155 +16,21 @@
 
 package com.google.cloud.tools.jib.registry;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.google.api.client.http.HttpMethods;
-import com.google.cloud.tools.jib.api.DescriptorDigest;
-import com.google.cloud.tools.jib.hash.Digests;
-import com.google.cloud.tools.jib.http.BlobHttpContent;
-import com.google.cloud.tools.jib.http.Response;
-import com.google.cloud.tools.jib.http.ResponseException;
 import com.google.cloud.tools.jib.image.json.ManifestTemplate;
-import com.google.cloud.tools.jib.image.json.OciManifestTemplate;
-import com.google.cloud.tools.jib.image.json.UnknownManifestFormatException;
-import com.google.cloud.tools.jib.image.json.V21ManifestTemplate;
-import com.google.cloud.tools.jib.image.json.V22ManifestListTemplate;
-import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
-import com.google.cloud.tools.jib.json.JsonTemplateMapper;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import javax.annotation.Nullable;
 
 /** Pulls an image's manifest. */
 class ManifestPuller<T extends ManifestTemplate>
-    implements RegistryEndpointProvider<ManifestAndDigest<T>> {
-
-  private final RegistryEndpointRequestProperties registryEndpointRequestProperties;
-  private final String imageTag;
-  private final Class<T> manifestTemplateClass;
+    extends AbstractManifestPuller<T, ManifestAndDigest<T>> {
 
   ManifestPuller(
       RegistryEndpointRequestProperties registryEndpointRequestProperties,
       String imageTag,
       Class<T> manifestTemplateClass) {
-    this.registryEndpointRequestProperties = registryEndpointRequestProperties;
-    this.imageTag = imageTag;
-    this.manifestTemplateClass = manifestTemplateClass;
-  }
-
-  @Nullable
-  @Override
-  public BlobHttpContent getContent() {
-    return null;
+    super(registryEndpointRequestProperties, imageTag, manifestTemplateClass);
   }
 
   @Override
-  public List<String> getAccept() {
-    if (manifestTemplateClass.equals(V21ManifestTemplate.class)) {
-      return Collections.singletonList(V21ManifestTemplate.MEDIA_TYPE);
-    }
-    if (manifestTemplateClass.equals(V22ManifestTemplate.class)) {
-      return Collections.singletonList(V22ManifestTemplate.MANIFEST_MEDIA_TYPE);
-    }
-    if (manifestTemplateClass.equals(OciManifestTemplate.class)) {
-      return Collections.singletonList(OciManifestTemplate.MANIFEST_MEDIA_TYPE);
-    }
-    if (manifestTemplateClass.equals(V22ManifestListTemplate.class)) {
-      return Collections.singletonList(V22ManifestListTemplate.MANIFEST_MEDIA_TYPE);
-    }
-
-    // V22ManifestListTemplate is not included by default, we don't explicitly accept
-    // it, we only handle it if referenced by sha256 (see getManifestTemplateFromJson) in which
-    // case registries ignore the "accept" directive and just return a manifest list anyway.
-    return Arrays.asList(
-        OciManifestTemplate.MANIFEST_MEDIA_TYPE,
-        V22ManifestTemplate.MANIFEST_MEDIA_TYPE,
-        V21ManifestTemplate.MEDIA_TYPE);
-  }
-
-  /** Parses the response body into a {@link ManifestAndDigest}. */
-  @Override
-  public ManifestAndDigest<T> handleResponse(Response response)
-      throws IOException, UnknownManifestFormatException {
-    ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-    DescriptorDigest digest =
-        Digests.computeDigest(response.getBody(), byteArrayOutputStream).getDigest();
-    String jsonString = byteArrayOutputStream.toString(StandardCharsets.UTF_8.name());
-    T manifestTemplate = getManifestTemplateFromJson(jsonString);
-    return new ManifestAndDigest<>(manifestTemplate, digest);
-  }
-
-  @Override
-  public URL getApiRoute(String apiRouteBase) throws MalformedURLException {
-    return new URL(
-        apiRouteBase + registryEndpointRequestProperties.getImageName() + "/manifests/" + imageTag);
-  }
-
-  @Override
-  public String getHttpMethod() {
-    return HttpMethods.GET;
-  }
-
-  @Override
-  public String getActionDescription() {
-    return "pull image manifest for "
-        + registryEndpointRequestProperties.getServerUrl()
-        + "/"
-        + registryEndpointRequestProperties.getImageName()
-        + ":"
-        + imageTag;
-  }
-
-  /**
-   * Instantiates a {@link ManifestTemplate} from a JSON string. This checks the {@code
-   * schemaVersion} field of the JSON to determine which manifest version to use.
-   */
-  private T getManifestTemplateFromJson(String jsonString)
-      throws IOException, UnknownManifestFormatException {
-    ObjectNode node = new ObjectMapper().readValue(jsonString, ObjectNode.class);
-    if (!node.has("schemaVersion")) {
-      throw new UnknownManifestFormatException("Cannot find field 'schemaVersion' in manifest");
-    }
-
-    int schemaVersion = node.get("schemaVersion").asInt(-1);
-    if (schemaVersion == -1) {
-      throw new UnknownManifestFormatException("`schemaVersion` field is not an integer");
-    }
-
-    if (schemaVersion == 1) {
-      return manifestTemplateClass.cast(
-          JsonTemplateMapper.readJson(jsonString, V21ManifestTemplate.class));
-    }
-    if (schemaVersion == 2) {
-      // 'schemaVersion' of 2 can be either Docker V2.2 or OCI.
-      String mediaType = node.get("mediaType").asText();
-      if (V22ManifestTemplate.MANIFEST_MEDIA_TYPE.equals(mediaType)) {
-        return manifestTemplateClass.cast(
-            JsonTemplateMapper.readJson(jsonString, V22ManifestTemplate.class));
-      }
-      if (OciManifestTemplate.MANIFEST_MEDIA_TYPE.equals(mediaType)) {
-        return manifestTemplateClass.cast(
-            JsonTemplateMapper.readJson(jsonString, OciManifestTemplate.class));
-      }
-      if (V22ManifestListTemplate.MANIFEST_MEDIA_TYPE.equals(mediaType)) {
-        return manifestTemplateClass.cast(
-            JsonTemplateMapper.readJson(jsonString, V22ManifestListTemplate.class));
-      }
-      throw new UnknownManifestFormatException("Unknown mediaType: " + mediaType);
-    }
-    throw new UnknownManifestFormatException(
-        "Unknown schemaVersion: " + schemaVersion + " - only 1 and 2 are supported");
-  }
-
-  @Override
-  public ManifestAndDigest<T> handleHttpResponseException(ResponseException responseException)
-      throws ResponseException, RegistryErrorException {
-    throw responseException;
+  ManifestAndDigest<T> computeReturn(ManifestAndDigest<T> manifestAndDigest) {
+    return manifestAndDigest;
   }
 }
