@@ -27,7 +27,6 @@ import java.io.File;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -128,15 +127,17 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
     }
   }
 
-  /** Configuration for {@code platform} parameter. Defaults to amd64/linux. * */
+  /** Configuration for {@code platform} parameter. * */
   public static class PlatformsConfiguration {
-    @Parameter private String os = "linux";
-    @Parameter private String architecture = "amd64";
+    @Nullable @Parameter private String os;
+    @Nullable @Parameter private String architecture;
 
+    @Nullable
     String getOs() {
       return this.os;
     }
 
+    @Nullable
     String getArchitecture() {
       return this.architecture;
     }
@@ -155,9 +156,10 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
 
     /** Constructor for defaults . * */
     public FromConfiguration() {
-      platforms = new ArrayList<>();
       PlatformsConfiguration platform = new PlatformsConfiguration();
-      platforms.add(platform);
+      platform.os = "linux";
+      platform.architecture = "amd64";
+      platforms = Collections.singletonList(platform);
     }
   }
 
