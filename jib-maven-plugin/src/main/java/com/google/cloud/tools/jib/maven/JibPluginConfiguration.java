@@ -127,7 +127,7 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
     }
   }
 
-  /** Configuration for {@code platform} parameter. * */
+  /** Configuration for {@code platform} parameter. */
   public static class PlatformsConfiguration {
     @Nullable @Parameter private String os;
     @Nullable @Parameter private String architecture;
@@ -154,7 +154,7 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
 
     @Parameter private List<PlatformsConfiguration> platforms;
 
-    /** Constructor for defaults . * */
+    /** Constructor for defaults. */
     public FromConfiguration() {
       PlatformsConfiguration platform = new PlatformsConfiguration();
       platform.os = "linux";
