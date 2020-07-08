@@ -21,16 +21,17 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeFormatterBuilder;
 import java.time.format.DateTimeParseException;
 
-/** Helper class to convert various strings to Instants. */
-public class Instants {
+/** Helper class to convert various strings in a buildfile to Instants. */
+class Instants {
   /**
-   * Parses a string into Instant, string must be time in millis or iso8601 datetime.
+   * Parses a time string into Instant. The string must be time in milliseconds since unix epoch or
+   * an iso8601 datetime.
    *
-   * @param time in millis or is8601 format
-   * @param fieldName name of field being parse (for error messaging)
+   * @param time in milliseconds since epoch or iso8601 format
+   * @param fieldName name of field being parsed (for error messaging)
    * @return Instant value of parsed time
    */
-  public static Instant fromMillisOrIso8601(String time, String fieldName) {
+  static Instant fromMillisOrIso8601(String time, String fieldName) {
     try {
       return Instant.ofEpochMilli(Long.parseLong(time));
     } catch (NumberFormatException nfe) {

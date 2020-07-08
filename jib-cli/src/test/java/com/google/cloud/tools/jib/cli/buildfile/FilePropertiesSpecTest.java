@@ -17,33 +17,26 @@
 package com.google.cloud.tools.jib.cli.buildfile;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.exc.UnrecognizedPropertyException;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.google.cloud.tools.jib.api.buildplan.FilePermissions;
 import java.time.Instant;
+import org.hamcrest.CoreMatchers;
+import org.hamcrest.MatcherAssert;
 import org.junit.Assert;
-import org.junit.BeforeClass;
 import org.junit.Test;
 
 /** Tests for {@link FilePropertiesSpec}. */
 public class FilePropertiesSpecTest {
 
-  private static ObjectMapper filePropertiesSpecMapper;
-
-  @BeforeClass
-  public static void createObjectMapper() {
-    filePropertiesSpecMapper =
-        new ObjectMapper(new YAMLFactory())
-            .configure(DeserializationFeature.FAIL_ON_IGNORED_PROPERTIES, true);
-  }
+  private static ObjectMapper filePropertiesSpecMapper = new ObjectMapper(new YAMLFactory());
 
   @Test
   public void testFilePropertiesSpec_full() throws JsonProcessingException {
     String data =
-        ""
-            + "filePermissions: 644\n"
+        "filePermissions: 644\n"
             + "directoryPermissions: 755\n"
             + "user: goose\n"
             + "group: birds\n"
@@ -103,6 +96,19 @@ public class FilePropertiesSpecTest {
       Assert.assertEquals(
           "timestamp must be a number of milliseconds since epoch or an ISO 8601 formatted date",
           ex.getCause().getMessage());
+    }
+  }
+
+  @Test
+  public void testFilePropertiesSpect_failOnUnknown() throws JsonProcessingException {
+    String data = "badkey: badvalue";
+
+    try {
+      filePropertiesSpecMapper.readValue(data, FilePropertiesSpec.class);
+      Assert.fail();
+    } catch (UnrecognizedPropertyException upe) {
+      MatcherAssert.assertThat(
+          upe.getMessage(), CoreMatchers.containsString("Unrecognized field \"badkey\""));
     }
   }
 }

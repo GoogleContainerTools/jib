@@ -37,11 +37,11 @@ import javax.annotation.Nullable;
  * }</pre>
  */
 public class FilePropertiesSpec {
-  @Nullable private FilePermissions filePermissions;
-  @Nullable private FilePermissions directoryPermissions;
-  @Nullable private String user;
-  @Nullable private String group;
-  @Nullable private Instant timestamp;
+  @Nullable private final FilePermissions filePermissions;
+  @Nullable private final FilePermissions directoryPermissions;
+  @Nullable private final String user;
+  @Nullable private final String group;
+  @Nullable private final Instant timestamp;
 
   /**
    * Constructor for use by jackson to populate this object.
