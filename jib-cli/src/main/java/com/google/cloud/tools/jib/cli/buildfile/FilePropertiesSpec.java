@@ -43,7 +43,15 @@ public class FilePropertiesSpec {
   @Nullable private String group;
   @Nullable private Instant timestamp;
 
-  /** Constructor for use by jackson to populate this object. */
+  /**
+   * Constructor for use by jackson to populate this object.
+   *
+   * @param filePermissions octal string for file permissions
+   * @param directoryPermissions octal string for directory permissions
+   * @param user name or number for ownership user
+   * @param group name or number for ownership group
+   * @param timestamp in milliseconds since epoch or ISO 6801 datetime
+   */
   @JsonCreator
   public FilePropertiesSpec(
       @JsonProperty("filePermissions") String filePermissions,
