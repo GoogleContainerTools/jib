@@ -20,6 +20,7 @@ import com.google.cloud.tools.jib.plugins.common.AuthProperty;
 import com.google.cloud.tools.jib.plugins.common.ConfigurationPropertyValidator;
 import com.google.cloud.tools.jib.plugins.common.PropertyNames;
 import com.google.cloud.tools.jib.plugins.common.RawConfiguration.ExtensionConfiguration;
+import com.google.cloud.tools.jib.plugins.common.RawConfiguration.PlatformsConfiguration;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
@@ -128,18 +129,18 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
   }
 
   /** Configuration for {@code platform} parameter. */
-  public static class PlatformsConfiguration {
+  public static class PlatformsParameters implements PlatformsConfiguration {
     @Nullable @Parameter private String os;
     @Nullable @Parameter private String architecture;
 
-    @Nullable
-    String getOs() {
-      return this.os;
+    @Override
+    public Optional<String> getOs() {
+      return Optional.ofNullable(this.os);
     }
 
-    @Nullable
-    String getArchitecture() {
-      return this.architecture;
+    @Override
+    public Optional<String> getArchitecture() {
+      return Optional.ofNullable(this.architecture);
     }
   }
 
@@ -152,11 +153,11 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
 
     @Parameter private FromAuthConfiguration auth = new FromAuthConfiguration();
 
-    @Parameter private List<PlatformsConfiguration> platforms;
+    @Parameter private List<PlatformsParameters> platforms;
 
     /** Constructor for defaults. */
     public FromConfiguration() {
-      PlatformsConfiguration platform = new PlatformsConfiguration();
+      PlatformsParameters platform = new PlatformsParameters();
       platform.os = "linux";
       platform.architecture = "amd64";
       platforms = Collections.singletonList(platform);
@@ -361,7 +362,7 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
    *
    * @return the specified platforms
    */
-  List<PlatformsConfiguration> getPlatforms() {
+  List<PlatformsParameters> getPlatforms() {
     return from.platforms;
   }
 

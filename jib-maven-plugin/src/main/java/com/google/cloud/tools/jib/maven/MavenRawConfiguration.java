@@ -217,4 +217,9 @@ public class MavenRawConfiguration implements RawConfiguration {
   public List<? extends ExtensionConfiguration> getPluginExtensions() {
     return jibPluginConfiguration.getPluginExtensions();
   }
+
+  @Override
+  public List<? extends PlatformsConfiguration> getPlatforms() {
+    return jibPluginConfiguration.getPlatforms();
+  }
 }

@@ -40,6 +40,13 @@ public interface RawConfiguration {
     Optional<Object> getExtraConfiguration();
   }
 
+  static interface PlatformsConfiguration {
+
+    Optional<String> getOs();
+
+    Optional<String> getArchitecture();
+  }
+
   Optional<String> getFromImage();
 
   Optional<String> getToImage();
@@ -107,4 +114,6 @@ public interface RawConfiguration {
   Path getImageJsonOutputPath();
 
   List<? extends ExtensionConfiguration> getPluginExtensions();
+
+  List<? extends PlatformsConfiguration> getPlatforms();
 }
