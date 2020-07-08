@@ -16,6 +16,8 @@ application {
 
 dependencies {
   implementation project(':jib-core')
+  implementation "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:${dependencyVersions.JACKSON_DATAFORMAT_YAML}"
+  implementation "com.fasterxml.jackson.core:jackson-databind:${dependencyVersions.JACKSON_DATABIND}"
   implementation "com.google.guava:guava:${dependencyVersions.GUAVA}"
   implementation "info.picocli:picocli:${dependencyVersions.PICOCLI}"
 
