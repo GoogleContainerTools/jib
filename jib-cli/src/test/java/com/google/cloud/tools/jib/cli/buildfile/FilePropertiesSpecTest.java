@@ -31,7 +31,7 @@ import org.junit.Test;
 /** Tests for {@link FilePropertiesSpec}. */
 public class FilePropertiesSpecTest {
 
-  private static ObjectMapper filePropertiesSpecMapper = new ObjectMapper(new YAMLFactory());
+  private static final ObjectMapper filePropertiesSpecMapper = new ObjectMapper(new YAMLFactory());
 
   @Test
   public void testFilePropertiesSpec_full() throws JsonProcessingException {
