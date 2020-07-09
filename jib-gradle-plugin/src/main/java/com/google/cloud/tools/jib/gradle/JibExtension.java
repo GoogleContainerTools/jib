@@ -37,6 +37,12 @@ import org.gradle.api.tasks.Optional;
  *   from {
  *     image = 'gcr.io/my-gcp-project/my-base-image'
  *     credHelper = 'gcr'
+ *     platforms {
+ *       platform {
+ *         os = 'value1'
+ *         architecture = 'value2'
+ *       }
+ *     }
  *   }
  *   to {
  *     image = 'gcr.io/gcp-project/my-app:built-with-jib'

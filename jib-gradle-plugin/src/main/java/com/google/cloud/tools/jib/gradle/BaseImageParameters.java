@@ -21,6 +21,7 @@ import javax.annotation.Nullable;
 import javax.inject.Inject;
 import org.gradle.api.Action;
 import org.gradle.api.model.ObjectFactory;
+import org.gradle.api.provider.ListProperty;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.Nested;
 import org.gradle.api.tasks.Optional;
@@ -29,13 +30,31 @@ import org.gradle.api.tasks.Optional;
 public class BaseImageParameters {
 
   private final AuthParameters auth;
-
-  @Nullable private String image;
   @Nullable private String credHelper;
+  @Nullable private String image;
+  private final PlatformsParametersSpec platformsParametersSpec;
+  private ListProperty<PlatformsParameters> platforms;
 
   @Inject
   public BaseImageParameters(ObjectFactory objectFactory) {
     auth = objectFactory.newInstance(AuthParameters.class, "from.auth");
+    platforms = objectFactory.listProperty(PlatformsParameters.class).empty();
+    platformsParametersSpec =
+        objectFactory.newInstance(PlatformsParametersSpec.class, objectFactory, platforms);
+
+    PlatformsParameters platform = new PlatformsParameters();
+    platform.os = "linux";
+    platform.architecture = "amd64";
+    platforms.add(platform);
+  }
+
+  @Input
+  ListProperty<PlatformsParameters> getPlatforms() {
+    return platforms;
+  }
+
+  public void platforms(Action<? super PlatformsParametersSpec> action) {
+    action.execute(platformsParametersSpec);
   }
 
   @Input
