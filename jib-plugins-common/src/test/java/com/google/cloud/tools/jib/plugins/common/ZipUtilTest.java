@@ -23,6 +23,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import org.hamcrest.CoreMatchers;
+import org.hamcrest.MatcherAssert;
 import org.junit.Assert;
 import org.junit.Assume;
 import org.junit.Rule;
@@ -86,7 +87,7 @@ public class ZipUtilTest {
       ZipUtil.unzip(archive, tempFolder.getRoot().toPath());
       Assert.fail("Should block Zip-Slip");
     } catch (IOException ex) {
-      Assert.assertThat(
+      MatcherAssert.assertThat(
           ex.getMessage(),
           CoreMatchers.startsWith("Blocked unzipping files outside destination: "));
     }

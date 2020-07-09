@@ -72,7 +72,7 @@ subprojects {
     MAVEN_API: '3.5.2',
 
     //test
-    JUNIT: '4.12',
+    JUNIT: '4.13',
     MOCKITO_CORE: '3.2.4',
     SLF4J_API: '1.7.25',
     SYSTEM_RULES: '1.19.0',

@@ -26,6 +26,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Collections;
 import org.hamcrest.CoreMatchers;
+import org.hamcrest.MatcherAssert;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -109,7 +110,7 @@ public class AuthenticationMethodRetrieverTest {
           "Authentication method retriever should fail if 'WWW-Authenticate' header is not found");
 
     } catch (RegistryErrorException ex) {
-      Assert.assertThat(
+      MatcherAssert.assertThat(
           ex.getMessage(), CoreMatchers.containsString("'WWW-Authenticate' header not found"));
     }
   }
@@ -129,7 +130,7 @@ public class AuthenticationMethodRetrieverTest {
           "Authentication method retriever should fail if 'WWW-Authenticate' header failed to parse");
 
     } catch (RegistryErrorException ex) {
-      Assert.assertThat(
+      MatcherAssert.assertThat(
           ex.getMessage(),
           CoreMatchers.containsString(
               "Failed get authentication method from 'WWW-Authenticate' header"));

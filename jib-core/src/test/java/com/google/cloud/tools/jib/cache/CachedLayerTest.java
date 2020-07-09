@@ -20,6 +20,7 @@ import com.google.cloud.tools.jib.api.DescriptorDigest;
 import com.google.cloud.tools.jib.blob.Blobs;
 import java.io.IOException;
 import org.hamcrest.CoreMatchers;
+import org.hamcrest.MatcherAssert;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -40,7 +41,7 @@ public class CachedLayerTest {
       Assert.fail("missing required");
 
     } catch (NullPointerException ex) {
-      Assert.assertThat(ex.getMessage(), CoreMatchers.containsString("layerDigest"));
+      MatcherAssert.assertThat(ex.getMessage(), CoreMatchers.containsString("layerDigest"));
     }
 
     try {
@@ -48,7 +49,7 @@ public class CachedLayerTest {
       Assert.fail("missing required");
 
     } catch (NullPointerException ex) {
-      Assert.assertThat(ex.getMessage(), CoreMatchers.containsString("layerDiffId"));
+      MatcherAssert.assertThat(ex.getMessage(), CoreMatchers.containsString("layerDiffId"));
     }
 
     try {
@@ -56,7 +57,7 @@ public class CachedLayerTest {
       Assert.fail("missing required");
 
     } catch (NullPointerException ex) {
-      Assert.assertThat(ex.getMessage(), CoreMatchers.containsString("layerBlob"));
+      MatcherAssert.assertThat(ex.getMessage(), CoreMatchers.containsString("layerBlob"));
     }
   }
 

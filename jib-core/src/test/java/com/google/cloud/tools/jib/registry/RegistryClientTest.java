@@ -37,6 +37,7 @@ import java.util.List;
 import java.util.Optional;
 import javax.annotation.Nullable;
 import org.hamcrest.CoreMatchers;
+import org.hamcrest.MatcherAssert;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -209,7 +210,7 @@ public class RegistryClientTest {
 
     Optional<BlobDescriptor> digestAndSize = registryClient.checkBlob(digest);
     Assert.assertEquals(56789, digestAndSize.get().getSize());
-    Assert.assertThat(
+    MatcherAssert.assertThat(
         registry.getInputRead(), CoreMatchers.containsString("Authorization: Basic dXNlcjpwYXNz"));
   }
 
@@ -246,7 +247,7 @@ public class RegistryClientTest {
         manifest.getContainerConfiguration().getDigest().toString());
     Assert.assertEquals(7023, manifest.getContainerConfiguration().getSize());
 
-    Assert.assertThat(
+    MatcherAssert.assertThat(
         registry.getInputRead(),
         CoreMatchers.containsString("GET /v2/foo/bar/manifests/image-tag "));
   }
@@ -288,7 +289,7 @@ public class RegistryClientTest {
         Arrays.asList("sha256:e692418e4cbaf90ca69d05a66403747baa33ee08806650b51fab815ad7fc331f"),
         manifestList.getDigestsForPlatform("amd64", "linux"));
 
-    Assert.assertThat(
+    MatcherAssert.assertThat(
         registry.getInputRead(),
         CoreMatchers.containsString("GET /v2/foo/bar/manifests/image-tag "));
   }

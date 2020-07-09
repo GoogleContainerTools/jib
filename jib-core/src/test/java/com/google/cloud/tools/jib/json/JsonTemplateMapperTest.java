@@ -30,6 +30,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import org.hamcrest.CoreMatchers;
+import org.hamcrest.MatcherAssert;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -95,18 +96,19 @@ public class JsonTemplateMapperTest {
     // Deserializes into a metadata JSON object.
     TestJson testJson = JsonTemplateMapper.readJsonFromFileWithLock(jsonFile, TestJson.class);
 
-    Assert.assertThat(testJson.number, CoreMatchers.is(54));
-    Assert.assertThat(testJson.text, CoreMatchers.is("crepecake"));
-    Assert.assertThat(
+    MatcherAssert.assertThat(testJson.number, CoreMatchers.is(54));
+    MatcherAssert.assertThat(testJson.text, CoreMatchers.is("crepecake"));
+    MatcherAssert.assertThat(
         testJson.digest,
         CoreMatchers.is(
             DescriptorDigest.fromDigest(
                 "sha256:8c662931926fa990b41da3c9f42663a537ccd498130030f9149173a0493832ad")));
-    Assert.assertThat(testJson.innerObject, CoreMatchers.instanceOf(TestJson.InnerObject.class));
-    Assert.assertThat(testJson.innerObject.number, CoreMatchers.is(23));
-    Assert.assertThat(
+    MatcherAssert.assertThat(
+        testJson.innerObject, CoreMatchers.instanceOf(TestJson.InnerObject.class));
+    MatcherAssert.assertThat(testJson.innerObject.number, CoreMatchers.is(23));
+    MatcherAssert.assertThat(
         testJson.innerObject.texts, CoreMatchers.is(Arrays.asList("first text", "second text")));
-    Assert.assertThat(
+    MatcherAssert.assertThat(
         testJson.innerObject.digests,
         CoreMatchers.is(
             Arrays.asList(

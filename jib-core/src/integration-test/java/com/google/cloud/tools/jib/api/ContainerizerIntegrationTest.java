@@ -38,6 +38,7 @@ import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Stream;
 import org.hamcrest.CoreMatchers;
+import org.hamcrest.MatcherAssert;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
@@ -113,7 +114,7 @@ public class ContainerizerIntegrationTest {
   private static void assertDockerInspect(String imageReference)
       throws IOException, InterruptedException {
     String dockerContainerConfig = new Command("docker", "inspect", imageReference).run();
-    Assert.assertThat(
+    MatcherAssert.assertThat(
         dockerContainerConfig,
         CoreMatchers.containsString(
             "            \"ExposedPorts\": {\n"
@@ -122,7 +123,7 @@ public class ContainerizerIntegrationTest {
                 + "                \"2001/tcp\": {},\n"
                 + "                \"2002/tcp\": {},\n"
                 + "                \"3000/udp\": {}"));
-    Assert.assertThat(
+    MatcherAssert.assertThat(
         dockerContainerConfig,
         CoreMatchers.containsString(
             "            \"Labels\": {\n"
@@ -131,11 +132,11 @@ public class ContainerizerIntegrationTest {
                 + "            }"));
     String dockerConfigEnv =
         new Command("docker", "inspect", "-f", "{{.Config.Env}}", imageReference).run();
-    Assert.assertThat(dockerConfigEnv, CoreMatchers.containsString("env1=envvalue1"));
-    Assert.assertThat(dockerConfigEnv, CoreMatchers.containsString("env2=envvalue2"));
+    MatcherAssert.assertThat(dockerConfigEnv, CoreMatchers.containsString("env1=envvalue1"));
+    MatcherAssert.assertThat(dockerConfigEnv, CoreMatchers.containsString("env2=envvalue2"));
     String history = new Command("docker", "history", imageReference).run();
-    Assert.assertThat(history, CoreMatchers.containsString("jib-integration-test"));
-    Assert.assertThat(history, CoreMatchers.containsString("bazel build ..."));
+    MatcherAssert.assertThat(history, CoreMatchers.containsString("jib-integration-test"));
+    MatcherAssert.assertThat(history, CoreMatchers.containsString("bazel build ..."));
   }
 
   private static void assertLayerSize(int expected, String imageReference)
@@ -255,7 +256,7 @@ public class ContainerizerIntegrationTest {
           "jib.skipExistingImages was enabled and digest was already pushed, "
               + "hence new_testtag shouldn't have been pushed.");
     } catch (RuntimeException ex) {
-      Assert.assertThat(
+      MatcherAssert.assertThat(
           ex.getMessage(),
           CoreMatchers.containsString(
               "manifest for localhost:5000/testimagerepo:new_testtag not found"));
