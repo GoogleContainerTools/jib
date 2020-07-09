@@ -43,12 +43,12 @@ public class BaseImageParameters {
         objectFactory.newInstance(PlatformParametersSpec.class, objectFactory, platforms);
 
     PlatformParameters platform = new PlatformParameters();
-    platform.os = "linux";
-    platform.architecture = "amd64";
+    platform.setOs("linux");
+    platform.setArchitecture("amd64");
     platforms.add(platform);
   }
 
-  @Input
+  @Nested
   @Optional
   public ListProperty<PlatformParameters> getPlatforms() {
     return platforms;

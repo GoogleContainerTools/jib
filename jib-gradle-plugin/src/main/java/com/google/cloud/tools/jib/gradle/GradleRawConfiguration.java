@@ -28,9 +28,28 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /** Gradle-specific adapter for providing raw configuration parameter values. */
 public class GradleRawConfiguration implements RawConfiguration {
+
+  private static class GradlePlatformConfiguration implements PlatformConfiguration {
+    private final PlatformParameters platform;
+
+    private GradlePlatformConfiguration(PlatformParameters platform) {
+      this.platform = platform;
+    }
+
+    @Override
+    public Optional<String> getOs() {
+      return Optional.ofNullable(platform.getOs());
+    }
+
+    @Override
+    public Optional<String> getArchitecture() {
+      return Optional.ofNullable(platform.getArchitecture());
+    }
+  }
 
   private final JibExtension jibExtension;
 
@@ -218,6 +237,7 @@ public class GradleRawConfiguration implements RawConfiguration {
 
   @Override
   public List<? extends PlatformConfiguration> getPlatforms() {
-    return jibExtension.getFrom().getPlatforms().get();
+    List<PlatformParameters> platforms = jibExtension.getFrom().getPlatforms().get();
+    return platforms.stream().map(GradlePlatformConfiguration::new).collect(Collectors.toList());
   }
 }
