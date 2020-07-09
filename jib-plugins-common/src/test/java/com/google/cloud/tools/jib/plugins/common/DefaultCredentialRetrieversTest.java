@@ -31,6 +31,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import org.hamcrest.CoreMatchers;
+import org.hamcrest.MatcherAssert;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
@@ -282,9 +283,9 @@ public class DefaultCredentialRetrieversTest {
       credentialRetrievers.asList();
       Assert.fail("shouldn't check .cmd suffix on non-Windows");
     } catch (FileNotFoundException ex) {
-      Assert.assertThat(
+      MatcherAssert.assertThat(
           ex.getMessage(), CoreMatchers.startsWith("Specified credential helper was not found:"));
-      Assert.assertThat(ex.getMessage(), CoreMatchers.endsWith("foo"));
+      MatcherAssert.assertThat(ex.getMessage(), CoreMatchers.endsWith("foo"));
     }
 
     properties.setProperty("os.name", "winDOWs");
@@ -323,9 +324,9 @@ public class DefaultCredentialRetrieversTest {
       credentialRetrievers.asList();
       Assert.fail("shouldn't check .exe suffix on non-Windows");
     } catch (FileNotFoundException ex) {
-      Assert.assertThat(
+      MatcherAssert.assertThat(
           ex.getMessage(), CoreMatchers.startsWith("Specified credential helper was not found:"));
-      Assert.assertThat(ex.getMessage(), CoreMatchers.endsWith("foo"));
+      MatcherAssert.assertThat(ex.getMessage(), CoreMatchers.endsWith("foo"));
     }
 
     properties.setProperty("os.name", "winDOWs");

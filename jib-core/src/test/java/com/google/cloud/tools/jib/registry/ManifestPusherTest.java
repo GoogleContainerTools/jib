@@ -39,6 +39,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import org.apache.http.HttpStatus;
 import org.hamcrest.CoreMatchers;
+import org.hamcrest.MatcherAssert;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -168,7 +169,7 @@ public class ManifestPusherTest {
       Assert.fail();
 
     } catch (RegistryErrorException ex) {
-      Assert.assertThat(
+      MatcherAssert.assertThat(
           ex.getMessage(),
           CoreMatchers.containsString(
               "Registry may not support pushing OCI Manifest or "
@@ -191,7 +192,7 @@ public class ManifestPusherTest {
       Assert.fail();
 
     } catch (RegistryErrorException ex) {
-      Assert.assertThat(
+      MatcherAssert.assertThat(
           ex.getMessage(),
           CoreMatchers.containsString(
               "Registry may not support pushing OCI Manifest or "
@@ -214,7 +215,7 @@ public class ManifestPusherTest {
       Assert.fail();
 
     } catch (RegistryErrorException ex) {
-      Assert.assertThat(
+      MatcherAssert.assertThat(
           ex.getMessage(),
           CoreMatchers.containsString(
               "Registry may not support pushing OCI Manifest or "
