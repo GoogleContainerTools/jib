@@ -39,8 +39,8 @@ import org.gradle.api.tasks.Optional;
  *     credHelper = 'gcr'
  *     platforms {
  *       platform {
- *         os = 'value1'
- *         architecture = 'value2'
+ *         os = 'linux'
+ *         architecture = 'amd64'
  *       }
  *     }
  *   }

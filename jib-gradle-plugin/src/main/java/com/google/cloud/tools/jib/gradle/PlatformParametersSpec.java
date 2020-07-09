@@ -21,15 +21,15 @@ import org.gradle.api.Action;
 import org.gradle.api.model.ObjectFactory;
 import org.gradle.api.provider.ListProperty;
 
-/** Allows to add {@link PlatformsParameters} objects to the list property of the same type. */
-public class PlatformsParametersSpec {
+/** Allows to add {@link PlatformParameters} objects to the list property of the same type. */
+public class PlatformParametersSpec {
 
   private final ObjectFactory objectFactory;
-  private final ListProperty<PlatformsParameters> platforms;
+  private final ListProperty<PlatformParameters> platforms;
 
   @Inject
-  public PlatformsParametersSpec(
-      ObjectFactory objectFactory, ListProperty<PlatformsParameters> platforms) {
+  public PlatformParametersSpec(
+      ObjectFactory objectFactory, ListProperty<PlatformParameters> platforms) {
     this.platforms = platforms;
     this.objectFactory = objectFactory;
   }
@@ -39,8 +39,8 @@ public class PlatformsParametersSpec {
    *
    * @param action closure representing a platform configuration
    */
-  public void platform(Action<? super PlatformsParameters> action) {
-    PlatformsParameters platform = objectFactory.newInstance(PlatformsParameters.class);
+  public void platform(Action<? super PlatformParameters> action) {
+    PlatformParameters platform = objectFactory.newInstance(PlatformParameters.class);
     action.execute(platform);
     platforms.add(platform);
   }

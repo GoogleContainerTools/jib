@@ -20,7 +20,7 @@ import com.google.cloud.tools.jib.plugins.common.AuthProperty;
 import com.google.cloud.tools.jib.plugins.common.ConfigurationPropertyValidator;
 import com.google.cloud.tools.jib.plugins.common.PropertyNames;
 import com.google.cloud.tools.jib.plugins.common.RawConfiguration.ExtensionConfiguration;
-import com.google.cloud.tools.jib.plugins.common.RawConfiguration.PlatformsConfiguration;
+import com.google.cloud.tools.jib.plugins.common.RawConfiguration.PlatformConfiguration;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
@@ -129,7 +129,7 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
   }
 
   /** Configuration for {@code platform} parameter. */
-  public static class PlatformsParameters implements PlatformsConfiguration {
+  public static class PlatformsParameters implements PlatformConfiguration {
     @Nullable @Parameter private String os;
     @Nullable @Parameter private String architecture;
 

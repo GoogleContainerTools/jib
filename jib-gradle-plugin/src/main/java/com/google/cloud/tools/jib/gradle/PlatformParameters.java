@@ -16,21 +16,22 @@
 
 package com.google.cloud.tools.jib.gradle;
 
-import com.google.cloud.tools.jib.plugins.common.RawConfiguration.PlatformsConfiguration;
+import com.google.cloud.tools.jib.plugins.common.RawConfiguration.PlatformConfiguration;
+import java.util.Optional;
 import javax.annotation.Nullable;
 
 /** Configuration of a platform. */
-public class PlatformsParameters implements PlatformsConfiguration {
+public class PlatformParameters implements PlatformConfiguration {
   @Nullable String os;
   @Nullable String architecture;
 
   @Override
-  public java.util.Optional<String> getOs() {
-    return java.util.Optional.ofNullable(this.os);
+  public Optional<String> getOs() {
+    return Optional.ofNullable(this.os);
   }
 
   @Override
-  public java.util.Optional<String> getArchitecture() {
-    return java.util.Optional.ofNullable(this.architecture);
+  public Optional<String> getArchitecture() {
+    return Optional.ofNullable(this.architecture);
   }
 }

@@ -40,7 +40,7 @@ public interface RawConfiguration {
     Optional<Object> getExtraConfiguration();
   }
 
-  static interface PlatformsConfiguration {
+  static interface PlatformConfiguration {
 
     Optional<String> getOs();
 
@@ -115,5 +115,5 @@ public interface RawConfiguration {
 
   List<? extends ExtensionConfiguration> getPluginExtensions();
 
-  List<? extends PlatformsConfiguration> getPlatforms();
+  List<? extends PlatformConfiguration> getPlatforms();
 }

@@ -32,27 +32,27 @@ public class BaseImageParameters {
   private final AuthParameters auth;
   @Nullable private String credHelper;
   @Nullable private String image;
-  private final PlatformsParametersSpec platformsParametersSpec;
-  private ListProperty<PlatformsParameters> platforms;
+  private final PlatformParametersSpec platformsParametersSpec;
+  private final ListProperty<PlatformParameters> platforms;
 
   @Inject
   public BaseImageParameters(ObjectFactory objectFactory) {
     auth = objectFactory.newInstance(AuthParameters.class, "from.auth");
-    platforms = objectFactory.listProperty(PlatformsParameters.class).empty();
+    platforms = objectFactory.listProperty(PlatformParameters.class).empty();
     platformsParametersSpec =
-        objectFactory.newInstance(PlatformsParametersSpec.class, objectFactory, platforms);
+        objectFactory.newInstance(PlatformParametersSpec.class, objectFactory, platforms);
 
-    PlatformsParameters platform = new PlatformsParameters();
+    PlatformParameters platform = new PlatformParameters();
     platform.os = "linux";
     platform.architecture = "amd64";
     platforms.add(platform);
   }
 
-  ListProperty<PlatformsParameters> getPlatforms() {
+  public ListProperty<PlatformParameters> getPlatforms() {
     return platforms;
   }
 
-  public void platforms(Action<? super PlatformsParametersSpec> action) {
+  public void platforms(Action<? super PlatformParametersSpec> action) {
     action.execute(platformsParametersSpec);
   }
 

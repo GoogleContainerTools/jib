@@ -219,7 +219,7 @@ public class MavenRawConfiguration implements RawConfiguration {
   }
 
   @Override
-  public List<? extends PlatformsConfiguration> getPlatforms() {
+  public List<? extends PlatformConfiguration> getPlatforms() {
     return jibPluginConfiguration.getPlatforms();
   }
 }
