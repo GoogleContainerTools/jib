@@ -40,6 +40,7 @@ import java.util.Collections;
 import java.util.concurrent.ExecutorService;
 import java.util.function.Consumer;
 import org.hamcrest.CoreMatchers;
+import org.hamcrest.MatcherAssert;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -274,7 +275,7 @@ public class JibContainerBuilderTest {
     Assert.assertEquals(Arrays.asList("program", "arguments"), buildPlan.getCmd());
 
     Assert.assertEquals(1, buildPlan.getLayers().size());
-    Assert.assertThat(
+    MatcherAssert.assertThat(
         buildPlan.getLayers().get(0), CoreMatchers.instanceOf(FileEntriesLayer.class));
     Assert.assertEquals(
         Arrays.asList(

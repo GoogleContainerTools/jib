@@ -20,6 +20,7 @@ import com.google.common.base.Strings;
 import java.util.Arrays;
 import java.util.List;
 import org.hamcrest.CoreMatchers;
+import org.hamcrest.MatcherAssert;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -88,7 +89,7 @@ public class ImageReferenceTest {
         Assert.fail(badImageReference + " should not be a valid image reference");
 
       } catch (InvalidImageReferenceException ex) {
-        Assert.assertThat(ex.getMessage(), CoreMatchers.containsString(badImageReference));
+        MatcherAssert.assertThat(ex.getMessage(), CoreMatchers.containsString(badImageReference));
       }
     }
   }

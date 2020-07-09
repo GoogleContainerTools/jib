@@ -40,21 +40,21 @@ public class RetryTest {
   }
 
   @Test
-  public void testSuccessfulAction() {
+  public void testSuccessfulAction() throws Exception {
     boolean result = Retry.action(this::successfulAction).run();
     Assert.assertTrue(result);
     Assert.assertEquals(1, actionCount);
   }
 
   @Test
-  public void testMaximumRetries_default() {
+  public void testMaximumRetries_default() throws Exception {
     boolean result = Retry.action(this::unsuccessfulAction).run();
     Assert.assertFalse(result);
     Assert.assertEquals(5, actionCount);
   }
 
   @Test
-  public void testMaximumRetries_specified() {
+  public void testMaximumRetries_specified() throws Exception {
     boolean result = Retry.action(this::unsuccessfulAction).maximumRetries(2).run();
     Assert.assertFalse(result);
     Assert.assertEquals(2, actionCount);
@@ -85,7 +85,7 @@ public class RetryTest {
   }
 
   @Test
-  public void testInterruptSleep() {
+  public void testInterruptSleep() throws Exception {
     // interrupt the current thread so as to cause the retry's sleep() to throw
     // an InterruptedException
     Thread.currentThread().interrupt();

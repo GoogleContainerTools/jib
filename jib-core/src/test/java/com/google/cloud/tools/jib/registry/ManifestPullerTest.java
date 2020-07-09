@@ -39,6 +39,7 @@ import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Collections;
 import org.hamcrest.CoreMatchers;
+import org.hamcrest.MatcherAssert;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -77,7 +78,7 @@ public class ManifestPullerTest {
                 fakeRegistryEndpointRequestProperties, "test-image-tag", V21ManifestTemplate.class)
             .handleResponse(mockResponse);
 
-    Assert.assertThat(
+    MatcherAssert.assertThat(
         manifestAndDigest.getManifest(), CoreMatchers.instanceOf(V21ManifestTemplate.class));
     Assert.assertEquals(expectedDigest, manifestAndDigest.getDigest());
   }
@@ -97,7 +98,7 @@ public class ManifestPullerTest {
                 fakeRegistryEndpointRequestProperties, "test-image-tag", V22ManifestTemplate.class)
             .handleResponse(mockResponse);
 
-    Assert.assertThat(
+    MatcherAssert.assertThat(
         manifestAndDigest.getManifest(), CoreMatchers.instanceOf(V22ManifestTemplate.class));
     Assert.assertEquals(expectedDigest, manifestAndDigest.getDigest());
   }
@@ -136,7 +137,8 @@ public class ManifestPullerTest {
             .handleResponse(mockResponse);
     ManifestTemplate manifestTemplate = manifestAndDigest.getManifest();
 
-    Assert.assertThat(manifestTemplate, CoreMatchers.instanceOf(V22ManifestListTemplate.class));
+    MatcherAssert.assertThat(
+        manifestTemplate, CoreMatchers.instanceOf(V22ManifestListTemplate.class));
     Assert.assertTrue(((V22ManifestListTemplate) manifestTemplate).getManifests().size() > 0);
     Assert.assertEquals(expectedDigest, manifestAndDigest.getDigest());
   }
@@ -160,7 +162,8 @@ public class ManifestPullerTest {
             .handleResponse(mockResponse);
     V22ManifestListTemplate manifestTemplate = manifestAndDigest.getManifest();
 
-    Assert.assertThat(manifestTemplate, CoreMatchers.instanceOf(V22ManifestListTemplate.class));
+    MatcherAssert.assertThat(
+        manifestTemplate, CoreMatchers.instanceOf(V22ManifestListTemplate.class));
     Assert.assertTrue(manifestTemplate.getManifests().size() > 0);
     Assert.assertEquals(expectedDigest, manifestAndDigest.getDigest());
   }

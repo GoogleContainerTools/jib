@@ -31,6 +31,7 @@ import java.time.Instant;
 import java.time.format.DateTimeParseException;
 import java.util.function.BiFunction;
 import org.hamcrest.CoreMatchers;
+import org.hamcrest.MatcherAssert;
 import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
@@ -45,7 +46,7 @@ public class LayerDefinitionParserTest {
 
   @Test
   public void testParseTimestampsDirective_actual() {
-    Assert.assertThat(
+    MatcherAssert.assertThat(
         LayerDefinitionParser.parseTimestampsDirective("actual"),
         CoreMatchers.instanceOf(ActualTimestampProvider.class));
   }
@@ -54,7 +55,7 @@ public class LayerDefinitionParserTest {
   public void testParseTimestampsDirective_secondsSinceEpoch() {
     BiFunction<Path, AbsoluteUnixPath, Instant> provider =
         LayerDefinitionParser.parseTimestampsDirective("1");
-    Assert.assertThat(provider, CoreMatchers.instanceOf(FixedTimestampProvider.class));
+    MatcherAssert.assertThat(provider, CoreMatchers.instanceOf(FixedTimestampProvider.class));
     Assert.assertEquals(Instant.ofEpochSecond(1), ((FixedTimestampProvider) provider).fixed);
   }
 
@@ -62,7 +63,7 @@ public class LayerDefinitionParserTest {
   public void testParseTimestampsDirective_is8601Date() {
     BiFunction<Path, AbsoluteUnixPath, Instant> provider =
         LayerDefinitionParser.parseTimestampsDirective("1970-01-01T00:00:01.000Z");
-    Assert.assertThat(provider, CoreMatchers.instanceOf(FixedTimestampProvider.class));
+    MatcherAssert.assertThat(provider, CoreMatchers.instanceOf(FixedTimestampProvider.class));
     Assert.assertEquals(Instant.ofEpochSecond(1), ((FixedTimestampProvider) provider).fixed);
   }
 
@@ -72,13 +73,13 @@ public class LayerDefinitionParserTest {
       LayerDefinitionParser.parseTimestampsDirective("invalid");
       Assert.fail();
     } catch (RuntimeException ex) {
-      Assert.assertThat(ex, CoreMatchers.instanceOf(DateTimeParseException.class));
+      MatcherAssert.assertThat(ex, CoreMatchers.instanceOf(DateTimeParseException.class));
     }
   }
 
   @Test
   public void testParsePermissionsDirective_actual() {
-    Assert.assertThat(
+    MatcherAssert.assertThat(
         LayerDefinitionParser.parsePermissionsDirective("actual"),
         CoreMatchers.instanceOf(ActualPermissionsProvider.class));
   }
@@ -87,7 +88,7 @@ public class LayerDefinitionParserTest {
   public void testParsePermissionsDirective_fileOnly() {
     BiFunction<Path, AbsoluteUnixPath, FilePermissions> provider =
         LayerDefinitionParser.parsePermissionsDirective("555");
-    Assert.assertThat(provider, CoreMatchers.instanceOf(FixedPermissionsProvider.class));
+    MatcherAssert.assertThat(provider, CoreMatchers.instanceOf(FixedPermissionsProvider.class));
     Assert.assertEquals(
         0555, ((FixedPermissionsProvider) provider).filePermissions.getPermissionBits());
     Assert.assertSame(
@@ -99,7 +100,7 @@ public class LayerDefinitionParserTest {
   public void testParsePermissionsDirective_fileOAndDirectory() {
     BiFunction<Path, AbsoluteUnixPath, FilePermissions> provider =
         LayerDefinitionParser.parsePermissionsDirective("555:666");
-    Assert.assertThat(provider, CoreMatchers.instanceOf(FixedPermissionsProvider.class));
+    MatcherAssert.assertThat(provider, CoreMatchers.instanceOf(FixedPermissionsProvider.class));
     Assert.assertEquals(
         0555, ((FixedPermissionsProvider) provider).filePermissions.getPermissionBits());
     Assert.assertEquals(
@@ -112,7 +113,7 @@ public class LayerDefinitionParserTest {
       LayerDefinitionParser.parsePermissionsDirective("811:922");
       Assert.fail();
     } catch (RuntimeException ex) {
-      Assert.assertThat(ex, CoreMatchers.instanceOf(IllegalArgumentException.class));
+      MatcherAssert.assertThat(ex, CoreMatchers.instanceOf(IllegalArgumentException.class));
     }
   }
 
@@ -122,7 +123,7 @@ public class LayerDefinitionParserTest {
       LayerDefinitionParser.parsePermissionsDirective("invalid");
       Assert.fail();
     } catch (RuntimeException ex) {
-      Assert.assertThat(ex, CoreMatchers.instanceOf(IllegalArgumentException.class));
+      MatcherAssert.assertThat(ex, CoreMatchers.instanceOf(IllegalArgumentException.class));
     }
   }
 

@@ -35,6 +35,7 @@ import org.gradle.testfixtures.ProjectBuilder;
 import org.gradle.testkit.runner.GradleRunner;
 import org.gradle.testkit.runner.UnexpectedBuildFailure;
 import org.hamcrest.CoreMatchers;
+import org.hamcrest.MatcherAssert;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Assume;
@@ -273,12 +274,12 @@ public class JibPluginTest {
       tasks.getByPath(":jar");
       Assert.fail();
     } catch (GradleException ex) {
-      Assert.assertThat(
+      MatcherAssert.assertThat(
           ex.getCause().getMessage(),
           CoreMatchers.startsWith(
               "Both 'bootJar' and 'jar' tasks are enabled, but they write their jar file into the "
                   + "same location at "));
-      Assert.assertThat(
+      MatcherAssert.assertThat(
           ex.getCause().getMessage(),
           CoreMatchers.endsWith(
               "root.jar. Did you forget to set 'archiveClassifier' on either task?"));

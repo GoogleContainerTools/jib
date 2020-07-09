@@ -32,6 +32,7 @@ import java.util.Collections;
 import java.util.Optional;
 import java.util.concurrent.Future;
 import org.hamcrest.CoreMatchers;
+import org.hamcrest.MatcherAssert;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -241,7 +242,7 @@ public class UpdateCheckerTest {
           UpdateChecker.performUpdateCheck(
               logEvent -> {
                 Assert.assertEquals(Level.DEBUG, logEvent.getLevel());
-                Assert.assertThat(
+                MatcherAssert.assertThat(
                     logEvent.getMessage(), CoreMatchers.containsString("Update check failed; "));
               },
               "1.0.2",

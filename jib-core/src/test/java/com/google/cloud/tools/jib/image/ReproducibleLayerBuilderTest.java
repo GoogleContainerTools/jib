@@ -41,6 +41,7 @@ import java.util.Date;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.hamcrest.CoreMatchers;
+import org.hamcrest.MatcherAssert;
 import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
@@ -190,7 +191,7 @@ public class ReproducibleLayerBuilderTest {
     byte[] layerContent = Blobs.writeToByteArray(layer);
     byte[] reproducedLayerContent = Blobs.writeToByteArray(reproduced);
 
-    Assert.assertThat(layerContent, CoreMatchers.is(reproducedLayerContent));
+    MatcherAssert.assertThat(layerContent, CoreMatchers.is(reproducedLayerContent));
   }
 
   @Test

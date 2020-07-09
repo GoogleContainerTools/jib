@@ -27,6 +27,7 @@ import java.io.IOException;
 import java.security.DigestException;
 import java.util.concurrent.atomic.LongAdder;
 import org.hamcrest.CoreMatchers;
+import org.hamcrest.MatcherAssert;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
@@ -94,7 +95,7 @@ public class BlobPullerIntegrationTest {
       if (!(ex.getCause() instanceof RegistryErrorException)) {
         throw ex;
       }
-      Assert.assertThat(
+      MatcherAssert.assertThat(
           ex.getMessage(),
           CoreMatchers.containsString(
               "pull BLOB for localhost:5000/busybox with digest " + nonexistentDigest));

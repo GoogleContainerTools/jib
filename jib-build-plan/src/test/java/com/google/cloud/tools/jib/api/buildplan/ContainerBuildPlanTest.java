@@ -23,6 +23,7 @@ import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collections;
 import org.hamcrest.CoreMatchers;
+import org.hamcrest.MatcherAssert;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -70,7 +71,8 @@ public class ContainerBuildPlanTest {
     Assert.assertEquals(Arrays.asList("bar", "cmd"), plan.getCmd());
 
     Assert.assertEquals(1, plan.getLayers().size());
-    Assert.assertThat(plan.getLayers().get(0), CoreMatchers.instanceOf(FileEntriesLayer.class));
+    MatcherAssert.assertThat(
+        plan.getLayers().get(0), CoreMatchers.instanceOf(FileEntriesLayer.class));
     Assert.assertEquals(
         Arrays.asList(
             new FileEntry(
@@ -102,7 +104,8 @@ public class ContainerBuildPlanTest {
     Assert.assertEquals(Arrays.asList("bar", "cmd"), plan.getCmd());
 
     Assert.assertEquals(1, plan.getLayers().size());
-    Assert.assertThat(plan.getLayers().get(0), CoreMatchers.instanceOf(FileEntriesLayer.class));
+    MatcherAssert.assertThat(
+        plan.getLayers().get(0), CoreMatchers.instanceOf(FileEntriesLayer.class));
     Assert.assertEquals(
         Arrays.asList(
             new FileEntry(

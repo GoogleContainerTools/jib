@@ -23,6 +23,7 @@ import java.util.Arrays;
 import org.apache.maven.it.VerificationException;
 import org.apache.maven.it.Verifier;
 import org.hamcrest.CoreMatchers;
+import org.hamcrest.MatcherAssert;
 import org.junit.Assert;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -101,7 +102,7 @@ public class BuildTarMojoIntegrationTest {
       verifier.executeGoals(Arrays.asList("package", "jib:buildTar"));
       Assert.fail();
     } catch (VerificationException ex) {
-      Assert.assertThat(
+      MatcherAssert.assertThat(
           ex.getMessage(), CoreMatchers.containsString("but is required to be [,1.0]"));
     }
   }
