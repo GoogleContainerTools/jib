@@ -42,9 +42,9 @@ public interface RawConfiguration {
 
   static interface PlatformConfiguration {
 
-    Optional<String> getOs();
+    Optional<String> getOsName();
 
-    Optional<String> getArchitecture();
+    Optional<String> getArchitectureName();
   }
 
   Optional<String> getFromImage();

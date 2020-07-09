@@ -69,9 +69,9 @@ public class JibPluginConfigurationTest {
 
   @Test
   public void testDefaults() {
-    Assert.assertEquals("linux", testPluginConfiguration.getPlatforms().get(0).getOs().get());
+    Assert.assertEquals("linux", testPluginConfiguration.getPlatforms().get(0).getOsName().get());
     Assert.assertEquals(
-        "amd64", testPluginConfiguration.getPlatforms().get(0).getArchitecture().get());
+        "amd64", testPluginConfiguration.getPlatforms().get(0).getArchitectureName().get());
     Assert.assertEquals("", testPluginConfiguration.getAppRoot());
     Assert.assertNull(testPluginConfiguration.getWorkingDirectory());
     Assert.assertTrue(testPluginConfiguration.getExtraClasspath().isEmpty());

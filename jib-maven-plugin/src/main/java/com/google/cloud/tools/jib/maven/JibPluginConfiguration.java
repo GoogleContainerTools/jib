@@ -134,13 +134,13 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
     @Nullable @Parameter private String architecture;
 
     @Override
-    public Optional<String> getOs() {
-      return Optional.ofNullable(this.os);
+    public Optional<String> getOsName() {
+      return Optional.ofNullable(os);
     }
 
     @Override
-    public Optional<String> getArchitecture() {
-      return Optional.ofNullable(this.architecture);
+    public Optional<String> getArchitectureName() {
+      return Optional.ofNullable(architecture);
     }
   }
 
