@@ -399,22 +399,17 @@ subprojects {
     }
   }
   /* INCLUDED PROJECT DEPENDENCY HELPER */
-}
 
-
-/* LOCAL DEVELOPMENT HELPER TASKS */
-tasks.register('dev') {
-  subprojects.each { subproject ->
-    subproject.tasks.classes.dependsOn subproject.tasks.googleJavaFormat
-    dependsOn subproject.tasks.check
-    dependsOn subproject.tasks.javadoc
+  /* LOCAL DEVELOPMENT HELPER TASKS */
+  tasks.register('dev') {
+    classes.dependsOn tasks.googleJavaFormat
+    dependsOn check
+    dependsOn javadoc
   }
-}
 
-tasks.register('devFull') {
-  dependsOn tasks.dev
-  subprojects.each { subproject ->
-    dependsOn subproject.tasks.integrationTest
+  tasks.register('devFull') {
+    dependsOn dev
+    dependsOn integrationTest
   }
+  /* LOCAL DEVELOPMENT HELPER TASKS */
 }
-/* LOCAL DEVELOPMENT HELPER TASKS */
