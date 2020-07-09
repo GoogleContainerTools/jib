@@ -49,6 +49,7 @@ public class BaseImageParameters {
   }
 
   @Input
+  @Optional
   public ListProperty<PlatformParameters> getPlatforms() {
     return platforms;
   }

@@ -28,15 +28,21 @@ public class PlatformParameters implements PlatformConfiguration {
 
   @Input
   @Override
-  @Nullable
   public Optional<String> getOs() {
     return Optional.ofNullable(this.os);
   }
 
+  public void setOs(String os) {
+    this.os = os;
+  }
+
   @Input
   @Override
-  @Nullable
   public Optional<String> getArchitecture() {
     return Optional.ofNullable(this.architecture);
+  }
+
+  public void setArchitecture(String architecture) {
+    this.architecture = architecture;
   }
 }
