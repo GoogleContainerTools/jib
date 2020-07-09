@@ -65,7 +65,8 @@ subprojects {
     MAVEN_EXTENSION: '0.3.0',
 
     COMMONS_COMPRESS: '1.19',
-    JACKSON_DATABIND: '2.9.10',
+    JACKSON_DATABIND: '2.11.0',
+    JACKSON_DATAFORMAT_YAML: '2.11.0',
     ASM: '7.3.1',
     PICOCLI: '4.2.0',
 
