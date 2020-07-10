@@ -30,16 +30,16 @@ import org.gradle.api.tasks.Optional;
 public class BaseImageParameters {
 
   private final AuthParameters auth;
-  @Nullable private String credHelper;
   @Nullable private String image;
-  private final PlatformParametersSpec platformsParametersSpec;
+  @Nullable private String credHelper;
+  private final PlatformParametersSpec platformParametersSpec;
   private final ListProperty<PlatformParameters> platforms;
 
   @Inject
   public BaseImageParameters(ObjectFactory objectFactory) {
     auth = objectFactory.newInstance(AuthParameters.class, "from.auth");
     platforms = objectFactory.listProperty(PlatformParameters.class).empty();
-    platformsParametersSpec =
+    platformParametersSpec =
         objectFactory.newInstance(PlatformParametersSpec.class, objectFactory, platforms);
 
     PlatformParameters platform = new PlatformParameters();
@@ -55,7 +55,7 @@ public class BaseImageParameters {
   }
 
   public void platforms(Action<? super PlatformParametersSpec> action) {
-    action.execute(platformsParametersSpec);
+    action.execute(platformParametersSpec);
   }
 
   @Input

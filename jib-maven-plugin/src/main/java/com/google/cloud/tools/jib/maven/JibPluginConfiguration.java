@@ -129,7 +129,7 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
   }
 
   /** Configuration for {@code platform} parameter. */
-  public static class PlatformsParameters implements PlatformConfiguration {
+  public static class PlatformParameters implements PlatformConfiguration {
     @Nullable @Parameter private String os;
     @Nullable @Parameter private String architecture;
 
@@ -153,11 +153,11 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
 
     @Parameter private FromAuthConfiguration auth = new FromAuthConfiguration();
 
-    @Parameter private List<PlatformsParameters> platforms;
+    @Parameter private List<PlatformParameters> platforms;
 
     /** Constructor for defaults. */
     public FromConfiguration() {
-      PlatformsParameters platform = new PlatformsParameters();
+      PlatformParameters platform = new PlatformParameters();
       platform.os = "linux";
       platform.architecture = "amd64";
       platforms = Collections.singletonList(platform);
@@ -362,7 +362,7 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
    *
    * @return the specified platforms
    */
-  List<PlatformsParameters> getPlatforms() {
+  List<PlatformParameters> getPlatforms() {
     return from.platforms;
   }
 
