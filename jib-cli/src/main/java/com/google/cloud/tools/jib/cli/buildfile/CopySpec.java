@@ -54,16 +54,16 @@ public class CopySpec {
    *
    * @param src a file/directory on the local filesystem to copy *from*
    * @param dest an absolute unix style path to copy *to* on the container
-   * @param excludes glob of files to exclude (has precedence over includes)
-   * @param includes glob of files to include
+   * @param includes glob to filter files to include from "src"
+   * @param excludes glob to filter out files included by "src" and "includes" (applied last)
    * @param properties a {@link FilePropertiesSpec} that applies to all files in this copy
    */
   @JsonCreator
   public CopySpec(
       @JsonProperty(value = "src", required = true) String src,
       @JsonProperty(value = "dest", required = true) String dest,
-      @JsonProperty("excludes") List<String> excludes,
       @JsonProperty("includes") List<String> includes,
+      @JsonProperty("excludes") List<String> excludes,
       @JsonProperty("properties") FilePropertiesSpec properties) {
     this.src = Paths.get(src);
     this.dest = AbsoluteUnixPath.get(dest);
