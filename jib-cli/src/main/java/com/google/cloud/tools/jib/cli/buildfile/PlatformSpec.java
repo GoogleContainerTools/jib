@@ -23,7 +23,7 @@ import java.util.Optional;
 import javax.annotation.Nullable;
 
 /**
- * A yaml block for specifying platforms
+ * A yaml block for specifying platforms.
  *
  * <p>Example use of this yaml snippet.
  *
