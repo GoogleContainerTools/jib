@@ -40,13 +40,14 @@ public interface LayerSpec {
      * {@link ArchiveLayerSpec}, else a {@link FileLayerSpec}.
      */
     @Override
-    public LayerSpec deserialize(JsonParser jp, DeserializationContext txt) throws IOException {
-      JsonNode n = (JsonNode) jp.getCodec().readTree(jp);
-      if (n.has("archive")) {
-        return jp.getCodec().treeToValue(n, ArchiveLayerSpec.class);
+    public LayerSpec deserialize(JsonParser jsonParser, DeserializationContext context)
+        throws IOException {
+      JsonNode node = jsonParser.getCodec().readTree(jsonParser);
+      if (node.has("archive")) {
+        return jsonParser.getCodec().treeToValue(node, ArchiveLayerSpec.class);
       }
-      if (n.has("files")) {
-        return jp.getCodec().treeToValue(n, FileLayerSpec.class);
+      if (node.has("files")) {
+        return jsonParser.getCodec().treeToValue(node, FileLayerSpec.class);
       }
       throw new IOException("Could not parse entry into ArchiveLayer or FileLayer");
     }

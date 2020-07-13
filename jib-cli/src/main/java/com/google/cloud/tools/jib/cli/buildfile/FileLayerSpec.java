@@ -25,7 +25,7 @@ import java.util.Optional;
 import javax.annotation.Nullable;
 
 /**
- * A yaml block for specifying files layers
+ * A yaml block for specifying files layers.
  *
  * <p>Example use of this yaml snippet.
  *

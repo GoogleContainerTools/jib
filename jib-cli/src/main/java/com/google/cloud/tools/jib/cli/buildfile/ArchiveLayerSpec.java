@@ -26,7 +26,7 @@ import java.util.Optional;
 import javax.annotation.Nullable;
 
 /**
- * A yaml block for specifying archive layers
+ * A yaml block for specifying archive layers.
  *
  * <p>Example use of this yaml snippet.
  *
