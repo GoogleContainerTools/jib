@@ -36,6 +36,7 @@ public class ContainerBuildPlan {
     private String baseImage = "scratch";
     private String architectureHint = "amd64";
     private String osHint = "linux";
+    private List<Platform> platforms = new ArrayList<>();
     private Instant creationTime = Instant.EPOCH;
     private ImageFormat format = ImageFormat.Docker;
 
@@ -90,6 +91,38 @@ public class ContainerBuildPlan {
      */
     public Builder setOsHint(String osHint) {
       this.osHint = osHint;
+      return this;
+    }
+
+    /**
+     * Desired platform i.e os and architecture pair. If the base image reference is a Docker
+     * manifest list or an OCI image index, must be set so that an image builder can select the
+     * image matching the given platform. If the base image reference is an image manifest, this
+     * value is ignored and the platform of the built image follows that of the base image. The
+     * default is {@code linux amd64 }.
+     *
+     * @param os OS value to select a base image in case of a manifest list
+     * @param architecture architecture value to select a base image in case of a manifest list
+     * @return this
+     */
+    public Builder addPlatform(String os, String architecture) {
+      this.platforms.add(new Platform(os, architecture));
+      return this;
+    }
+
+    /**
+     * Desired platform i.e os and architecture pair. If the base image reference is a Docker
+     * manifest list or an OCI image index, must be set so that an image builder can select the
+     * image matching the given platform. If the base image reference is an image manifest, this
+     * value is ignored and the platform of the built image follows that of the base image. The
+     * default is {@code linux amd64 }.
+     *
+     * @param platforms containers a list of platform objects to be used to select base images in
+     *     case of a manifest list
+     * @return this
+     */
+    public Builder setPlatforms(List<Platform> platforms) {
+      platforms = new ArrayList<>(platforms);
       return this;
     }
 
@@ -343,6 +376,7 @@ public class ContainerBuildPlan {
           baseImage,
           architectureHint,
           osHint,
+          platforms,
           creationTime,
           format,
           environment,
@@ -364,6 +398,7 @@ public class ContainerBuildPlan {
   private final String baseImage;
   private final String architectureHint;
   private final String osHint;
+  private final List<Platform> platforms;
   private final Instant creationTime;
   private final ImageFormat format;
 
@@ -383,6 +418,7 @@ public class ContainerBuildPlan {
       String baseImage,
       String architectureHint,
       String osHint,
+      List<Platform> platforms,
       Instant creationTime,
       ImageFormat format,
       Map<String, String> environment,
@@ -397,6 +433,7 @@ public class ContainerBuildPlan {
     this.baseImage = baseImage;
     this.architectureHint = architectureHint;
     this.osHint = osHint;
+    this.platforms = platforms;
     this.creationTime = creationTime;
     this.format = format;
     this.environment = environment;
@@ -420,6 +457,10 @@ public class ContainerBuildPlan {
 
   public String getOsHint() {
     return osHint;
+  }
+
+  public List<Platform> getPlatforms() {
+    return platforms;
   }
 
   public ImageFormat getFormat() {
@@ -479,6 +520,7 @@ public class ContainerBuildPlan {
     return builder()
         .setBaseImage(baseImage)
         .setArchitectureHint(architectureHint)
+        .setPlatforms(platforms)
         .setOsHint(osHint)
         .setCreationTime(creationTime)
         .setFormat(format)
