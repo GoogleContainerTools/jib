@@ -95,14 +95,14 @@ public class ContainerBuildPlan {
     }
 
     /**
-     * Desired platform i.e os and architecture pair. If the base image reference is a Docker
-     * manifest list or an OCI image index, must be set so that an image builder can select the
-     * image matching the given platform. If the base image reference is an image manifest, this
+     * Adds a desired platform i.e image os and architecture pair. If the base image reference is a
+     * Docker manifest list or an OCI image index, must be set so that an image builder can select
+     * the image matching the given platform. If the base image reference is an image manifest, this
      * value is ignored and the platform of the built image follows that of the base image. The
      * default is {@code linux amd64 }.
      *
-     * @param os OS value to select a base image in case of a manifest list
-     * @param architecture architecture value to select a base image in case of a manifest list
+     * @param os value to select a base image in case of a manifest list
+     * @param architecture value to select a base image in case of a manifest list
      * @return this
      */
     public Builder addPlatform(String os, String architecture) {
@@ -111,18 +111,18 @@ public class ContainerBuildPlan {
     }
 
     /**
-     * Desired platform i.e os and architecture pair. If the base image reference is a Docker
-     * manifest list or an OCI image index, must be set so that an image builder can select the
-     * image matching the given platform. If the base image reference is an image manifest, this
-     * value is ignored and the platform of the built image follows that of the base image. The
+     * Sets a desired platform list i.e os and architecture pairs. If the base image reference is a
+     * Docker manifest list or an OCI image index, must be set so that an image builder can select
+     * the images matching the given platforms. If the base image reference is an image manifest,
+     * this value is ignored and the platform of the built image follows that of the base image. The
      * default is {@code linux amd64 }.
      *
-     * @param platforms containers a list of platform objects to be used to select base images in
-     *     case of a manifest list
+     * @param platforms a list of platform objects to be used to select base images in case of a
+     *     manifest list
      * @return this
      */
     public Builder setPlatforms(List<Platform> platforms) {
-      platforms = new ArrayList<>(platforms);
+      this.platforms = new ArrayList<>(platforms);
       return this;
     }
 
@@ -459,8 +459,18 @@ public class ContainerBuildPlan {
     return osHint;
   }
 
+  /**
+   * Creates and adds the user specified platform to the platforms list if user opts to use
+   * setOsHint and setArchitectureHint methods.Else the method just returns the platforms list set
+   * by the user using addPlatform or setPlatforms methods.
+   *
+   * @return platforms a list of desired platforms.
+   */
   public List<Platform> getPlatforms() {
-    return platforms;
+    if (platforms.isEmpty()) {
+      platforms.add(new Platform(osHint, architectureHint));
+    }
+    return new ArrayList<>(platforms);
   }
 
   public ImageFormat getFormat() {
@@ -520,8 +530,8 @@ public class ContainerBuildPlan {
     return builder()
         .setBaseImage(baseImage)
         .setArchitectureHint(architectureHint)
-        .setPlatforms(platforms)
         .setOsHint(osHint)
+        .setPlatforms(platforms)
         .setCreationTime(creationTime)
         .setFormat(format)
         .setEnvironment(environment)
