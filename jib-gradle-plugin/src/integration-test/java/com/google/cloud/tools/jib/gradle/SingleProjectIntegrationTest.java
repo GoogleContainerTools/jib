@@ -312,7 +312,7 @@ public class SingleProjectIntegrationTest {
             + "1970-01-01T00:00:01Z\n1970-01-01T00:00:01Z\n",
         JibRunHelper.buildToDockerDaemonAndRun(
             simpleTestProject, targetImage, "build-extra-dirs.gradle"));
-    assertLayerSize(9, targetImage); // one more than usual
+    assertLayerSize(10, targetImage); // one more than usual
   }
 
   @Test
@@ -324,7 +324,7 @@ public class SingleProjectIntegrationTest {
             + "1970-01-01T00:00:01Z\n1970-01-01T00:00:01Z\n",
         JibRunHelper.buildToDockerDaemonAndRun(
             simpleTestProject, targetImage, "build-extra-dirs2.gradle"));
-    assertLayerSize(9, targetImage); // one more than usual
+    assertLayerSize(10, targetImage); // one more than usual
   }
 
   @Test
@@ -336,7 +336,7 @@ public class SingleProjectIntegrationTest {
             + "1970-01-01T00:00:01Z\n1970-01-01T00:00:01Z\nbaz\n1970-01-01T00:00:01Z\n",
         JibRunHelper.buildToDockerDaemonAndRun(
             simpleTestProject, targetImage, "build-extra-dirs3.gradle"));
-    assertLayerSize(9, targetImage); // one more than usual
+    assertLayerSize(10, targetImage); // one more than usual
   }
 
   @Test
