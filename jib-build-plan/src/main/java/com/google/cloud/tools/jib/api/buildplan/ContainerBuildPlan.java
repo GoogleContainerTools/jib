@@ -418,9 +418,8 @@ public class ContainerBuildPlan {
   }
 
   /**
-   * Creates and adds the user specified platform to the platforms list if user opts to use
-   * setOsHint and setArchitectureHint methods.Else the method just returns the platforms list set
-   * by the user using addPlatform or setPlatforms methods.
+   * Creates and returns a default platform if the user doesn't specify a platform. Returns a list
+   * of platforms to be used in the build plan.
    *
    * @return platforms a list of desired platforms.
    */
