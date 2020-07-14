@@ -216,7 +216,7 @@ public class SingleProjectIntegrationTest {
     assertEntrypoint(
         "[java -cp /d1:/d2:/app/resources:/app/classes:/app/libs/* com.test.HelloWorld]",
         targetImage);
-    assertLayerSize(8, targetImage);
+    assertLayerSize(9, targetImage);
   }
 
   @Test
