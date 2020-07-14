@@ -62,4 +62,18 @@ public class LayerSpecTest {
           CoreMatchers.endsWith("Could not parse entry into ArchiveLayer or FileLayer"));
     }
   }
+
+  @Test
+  public void deserialize_nameMissing() {
+    String data = "archive: out/archive.tgz\n";
+
+    try {
+      LayerSpecMapper.readValue(data, LayerSpec.class);
+      Assert.fail();
+    } catch (JsonProcessingException jpe) {
+      MatcherAssert.assertThat(
+          jpe.getMessage(),
+          CoreMatchers.endsWith("Could not parse layer entry, missing required property 'name'"));
+    }
+  }
 }

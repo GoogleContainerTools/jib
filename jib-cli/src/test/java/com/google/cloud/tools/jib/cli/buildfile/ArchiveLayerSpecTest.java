@@ -54,10 +54,8 @@ public class ArchiveLayerSpecTest {
     }
   }
 
-  /**
-   * With {@link LayerSpec.Deserializer#deserialize} this test seems pointless, but it still helps
-   * define the behavior of this class.
-   */
+  // With {@link LayerSpec.Deserializer#deserialize} this test seems pointless, but it still helps
+  // define the behavior of this class.
   @Test
   public void testArchiveLayerSpec_archiveRequired() {
     String data = "name: layer name";

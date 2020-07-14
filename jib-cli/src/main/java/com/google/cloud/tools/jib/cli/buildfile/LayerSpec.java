@@ -36,13 +36,17 @@ public interface LayerSpec {
     }
 
     /**
-     * Deserialize based on the presence of "archive", if present, consider the layer to be of type
-     * {@link ArchiveLayerSpec}, else a {@link FileLayerSpec}.
+     * Deserializes to {@link ArchiveLayerSpec} if yaml contains "archive" field, to {@link
+     * FileLayerSpec} if yaml contains "files" field or throws {@link IOException} if neither is
+     * found or no "name" was specified for the layer entry.
      */
     @Override
     public LayerSpec deserialize(JsonParser jsonParser, DeserializationContext context)
         throws IOException {
       JsonNode node = jsonParser.getCodec().readTree(jsonParser);
+      if (!node.has("name")) {
+        throw new IOException("Could not parse layer entry, missing required property 'name'");
+      }
       if (node.has("archive")) {
         return jsonParser.getCodec().treeToValue(node, ArchiveLayerSpec.class);
       }

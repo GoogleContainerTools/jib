@@ -48,7 +48,7 @@ public class FileLayerSpec implements LayerSpec {
    * Constructor for use by jackson to populate this object.
    *
    * @param name a unique name for this layer
-   * @param files a path to an archive file
+   * @param files a list of {@link CopySpec} describing files to add to the layer
    * @param properties a {@link FilePropertiesSpec} that applies to all files in this layer
    */
   @JsonCreator
