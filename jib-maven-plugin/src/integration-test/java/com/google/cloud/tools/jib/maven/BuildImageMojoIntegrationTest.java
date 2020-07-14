@@ -410,7 +410,7 @@ public class BuildImageMojoIntegrationTest {
 
     assertCreationTimeEpoch(targetImage);
     assertWorkingDirectory("/home", targetImage);
-    assertLayerSize(8, targetImage);
+    assertLayerSize(9, targetImage);
   }
 
   @Test
@@ -527,7 +527,7 @@ public class BuildImageMojoIntegrationTest {
         "Hello, world. An argument.\n1970-01-01T00:00:01Z\nrw-r--r--\nrw-r--r--\nfoo\ncat\n"
             + "1970-01-01T00:00:01Z\n1970-01-01T00:00:01Z\nbaz\n1970-01-01T00:00:01Z\n",
         buildAndRun(simpleTestProject.getProjectRoot(), targetImage, "pom-extra-dirs.xml", false));
-    assertLayerSize(9, targetImage); // one more than usual
+    assertLayerSize(10, targetImage); // one more than usual
   }
 
   @Test
