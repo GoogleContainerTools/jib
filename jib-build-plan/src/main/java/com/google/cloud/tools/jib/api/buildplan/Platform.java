@@ -16,11 +16,13 @@
 
 package com.google.cloud.tools.jib.api.buildplan;
 
-import javax.annotation.Nonnull;
+import javax.annotation.concurrent.Immutable;
 
+/** Configuration of a platform. */
+@Immutable
 public class Platform {
-  @Nonnull private String os;
-  @Nonnull private String architecture;
+  private final String os;
+  private final String architecture;
 
   public Platform(String os, String architecture) {
     this.os = os;

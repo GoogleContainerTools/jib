@@ -34,8 +34,6 @@ public class ContainerBuildPlan {
   public static class Builder {
 
     private String baseImage = "scratch";
-    private String architectureHint = "amd64";
-    private String osHint = "linux";
     private List<Platform> platforms = new ArrayList<>();
     private Instant creationTime = Instant.EPOCH;
     private ImageFormat format = ImageFormat.Docker;
@@ -66,38 +64,9 @@ public class ContainerBuildPlan {
     }
 
     /**
-     * Desired image architecture. If the base image reference is a Docker manifest list or an OCI
-     * image index, must be set so that an image builder can select the image matching the given
-     * architecture. If the base image reference is not a manifest list or an OCI image index, this
-     * value is ignored and the architecture of the built image follows that of the base image. The
-     * default is {@code amd64}.
-     *
-     * @param architectureHint architecture value to select a base image in case of a manifest list
-     * @return this
-     */
-    public Builder setArchitectureHint(String architectureHint) {
-      this.architectureHint = architectureHint;
-      return this;
-    }
-
-    /**
-     * Desired image OS. If the base image reference is a Docker manifest list or an OCI image
-     * index, must be set so that an image builder can select the image matching the given OS. If
-     * the base image reference is an image manifest, this value is ignored and the OS of the built
-     * image follows that of the base image. The default is {@code linux}.
-     *
-     * @param osHint OS value to select a base image in case of a manifest list
-     * @return this
-     */
-    public Builder setOsHint(String osHint) {
-      this.osHint = osHint;
-      return this;
-    }
-
-    /**
-     * Adds a desired platform i.e image os and architecture pair. If the base image reference is a
-     * Docker manifest list or an OCI image index, must be set so that an image builder can select
-     * the image matching the given platform. If the base image reference is an image manifest, this
+     * Adds a desired platform (OS and architecture pair). If the base image reference is a Docker
+     * manifest list or an OCI image index, must be set so that an image builder can select the
+     * image matching the given platform. If the base image reference is an image manifest, this
      * value is ignored and the platform of the built image follows that of the base image. The
      * default is {@code linux amd64 }.
      *
@@ -106,22 +75,27 @@ public class ContainerBuildPlan {
      * @return this
      */
     public Builder addPlatform(String os, String architecture) {
-      this.platforms.add(new Platform(os, architecture));
+      platforms.add(new Platform(os, architecture));
       return this;
     }
 
     /**
-     * Sets a desired platform list i.e os and architecture pairs. If the base image reference is a
-     * Docker manifest list or an OCI image index, must be set so that an image builder can select
-     * the images matching the given platforms. If the base image reference is an image manifest,
-     * this value is ignored and the platform of the built image follows that of the base image. The
-     * default is {@code linux amd64 }.
+     * Sets a desired platform list ,a list containing (OS and architecture pairs). If the base
+     * image reference is a Docker manifest list or an OCI image index, must be set so that an image
+     * builder can select the images matching the given platforms. If the base image reference is an
+     * image manifest, this value is ignored and the platform of the built image follows that of the
+     * base image. The default is {@code linux amd64 }.
      *
-     * @param platforms a list of platform objects to be used to select base images in case of a
+     * @param platforms is a list of platform objects to be used to select base images in case of a
      *     manifest list
      * @return this
+     * @throws IllegalArgumentException if a user passes in an empty platform list
      */
-    public Builder setPlatforms(List<Platform> platforms) {
+    public Builder setPlatforms(List<Platform> platforms) throws IllegalArgumentException {
+      if (platforms.isEmpty()) {
+        throw new IllegalArgumentException(
+            "platforms list cannot be empty.Please pass in a non-empty platforms list.");
+      }
       this.platforms = new ArrayList<>(platforms);
       return this;
     }
@@ -374,8 +348,6 @@ public class ContainerBuildPlan {
     public ContainerBuildPlan build() {
       return new ContainerBuildPlan(
           baseImage,
-          architectureHint,
-          osHint,
           platforms,
           creationTime,
           format,
@@ -396,8 +368,6 @@ public class ContainerBuildPlan {
   }
 
   private final String baseImage;
-  private final String architectureHint;
-  private final String osHint;
   private final List<Platform> platforms;
   private final Instant creationTime;
   private final ImageFormat format;
@@ -416,8 +386,6 @@ public class ContainerBuildPlan {
 
   private ContainerBuildPlan(
       String baseImage,
-      String architectureHint,
-      String osHint,
       List<Platform> platforms,
       Instant creationTime,
       ImageFormat format,
@@ -431,8 +399,6 @@ public class ContainerBuildPlan {
       @Nullable List<String> cmd,
       List<LayerObject> layers) {
     this.baseImage = baseImage;
-    this.architectureHint = architectureHint;
-    this.osHint = osHint;
     this.platforms = platforms;
     this.creationTime = creationTime;
     this.format = format;
@@ -451,14 +417,6 @@ public class ContainerBuildPlan {
     return baseImage;
   }
 
-  public String getArchitectureHint() {
-    return architectureHint;
-  }
-
-  public String getOsHint() {
-    return osHint;
-  }
-
   /**
    * Creates and adds the user specified platform to the platforms list if user opts to use
    * setOsHint and setArchitectureHint methods.Else the method just returns the platforms list set
@@ -468,7 +426,7 @@ public class ContainerBuildPlan {
    */
   public List<Platform> getPlatforms() {
     if (platforms.isEmpty()) {
-      platforms.add(new Platform(osHint, architectureHint));
+      platforms.add(new Platform("linux", "amd64"));
     }
     return new ArrayList<>(platforms);
   }
@@ -529,8 +487,6 @@ public class ContainerBuildPlan {
   public Builder toBuilder() {
     return builder()
         .setBaseImage(baseImage)
-        .setArchitectureHint(architectureHint)
-        .setOsHint(osHint)
         .setPlatforms(platforms)
         .setCreationTime(creationTime)
         .setFormat(format)
