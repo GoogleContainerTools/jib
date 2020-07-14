@@ -75,6 +75,9 @@ public class ContainerBuildPlan {
      * @return this
      */
     public Builder addPlatform(String os, String architecture) {
+      if (platforms.isEmpty()) {
+        platforms.add(new Platform("linux", "amd64"));
+      }
       platforms.add(new Platform(os, architecture));
       return this;
     }
@@ -418,10 +421,10 @@ public class ContainerBuildPlan {
   }
 
   /**
-   * Creates and returns a default platform if the user doesn't specify a platform. Returns a list
-   * of platforms to be used in the build plan.
+   * Creates and returns a default platform if the user hasn't added or set any platforms ,else
+   * returns a list of user specified platforms .
    *
-   * @return platforms a list of desired platforms.
+   * @return platforms a list of user specified platforms.
    */
   public List<Platform> getPlatforms() {
     if (platforms.isEmpty()) {
