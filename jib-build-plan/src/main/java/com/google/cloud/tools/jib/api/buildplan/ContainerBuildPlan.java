@@ -18,6 +18,7 @@ package com.google.cloud.tools.jib.api.buildplan;
 
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
@@ -40,7 +41,8 @@ public class ContainerBuildPlan {
 
     // note that a LinkedHashSet instead of HashSet has been used so as to preserve the platform
     // order
-    private Set<Platform> platforms = new LinkedHashSet<>();
+    private Set<Platform> platforms =
+        new LinkedHashSet<>(Collections.singleton(new Platform("linux", "amd64")));
 
     // image execution parameters
     private Map<String, String> environment = new HashMap<>();
@@ -82,9 +84,6 @@ public class ContainerBuildPlan {
      * @return this
      */
     public Builder addPlatform(String os, String architecture) {
-      if (platforms.isEmpty()) {
-        platforms.add(new Platform("linux", "amd64"));
-      }
       platforms.add(new Platform(os, architecture));
       return this;
     }
@@ -433,9 +432,6 @@ public class ContainerBuildPlan {
    * @return platforms a list of user specified platforms.
    */
   public Set<Platform> getPlatforms() {
-    if (platforms.isEmpty()) {
-      platforms.add(new Platform("linux", "amd64"));
-    }
     return new LinkedHashSet<>(platforms);
   }
 
