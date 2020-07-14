@@ -20,6 +20,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -34,9 +35,12 @@ public class ContainerBuildPlan {
   public static class Builder {
 
     private String baseImage = "scratch";
-    private List<Platform> platforms = new ArrayList<>();
     private Instant creationTime = Instant.EPOCH;
     private ImageFormat format = ImageFormat.Docker;
+
+    // note that a LinkedHashSet instead of HashSet has been used so as to preserve the platform
+    // order
+    private Set<Platform> platforms = new LinkedHashSet<>();
 
     // image execution parameters
     private Map<String, String> environment = new HashMap<>();
@@ -70,6 +74,9 @@ public class ContainerBuildPlan {
      * value is ignored and the platform of the built image follows that of the base image. The
      * default is {@code linux amd64 }.
      *
+     * <p>Note that the build plan starts with amd64/linux as the default platform. If you want to
+     * reset the default platform instead of adding a new one, use setPlatforms()"
+     *
      * @param os value to select a base image in case of a manifest list
      * @param architecture value to select a base image in case of a manifest list
      * @return this
@@ -94,12 +101,11 @@ public class ContainerBuildPlan {
      * @return this
      * @throws IllegalArgumentException if a user passes in an empty platform list
      */
-    public Builder setPlatforms(List<Platform> platforms) throws IllegalArgumentException {
+    public Builder setPlatforms(Set<Platform> platforms) throws IllegalArgumentException {
       if (platforms.isEmpty()) {
-        throw new IllegalArgumentException(
-            "platforms list cannot be empty.Please pass in a non-empty platforms list.");
+        throw new IllegalArgumentException("platforms list cannot be empty.");
       }
-      this.platforms = new ArrayList<>(platforms);
+      this.platforms = new LinkedHashSet<>(platforms);
       return this;
     }
 
@@ -371,7 +377,7 @@ public class ContainerBuildPlan {
   }
 
   private final String baseImage;
-  private final List<Platform> platforms;
+  private final Set<Platform> platforms;
   private final Instant creationTime;
   private final ImageFormat format;
 
@@ -389,7 +395,7 @@ public class ContainerBuildPlan {
 
   private ContainerBuildPlan(
       String baseImage,
-      List<Platform> platforms,
+      Set<Platform> platforms,
       Instant creationTime,
       ImageFormat format,
       Map<String, String> environment,
@@ -426,11 +432,11 @@ public class ContainerBuildPlan {
    *
    * @return platforms a list of user specified platforms.
    */
-  public List<Platform> getPlatforms() {
+  public Set<Platform> getPlatforms() {
     if (platforms.isEmpty()) {
       platforms.add(new Platform("linux", "amd64"));
     }
-    return new ArrayList<>(platforms);
+    return new LinkedHashSet<>(platforms);
   }
 
   public ImageFormat getFormat() {

@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.api.buildplan;
 
+import java.util.Objects;
 import javax.annotation.concurrent.Immutable;
 
 /** Configuration of a platform. */
@@ -35,5 +36,22 @@ public class Platform {
 
   public String getArchitecture() {
     return architecture;
+  }
+
+  @Override
+  public boolean equals(Object other) {
+    if (this == other) {
+      return true;
+    }
+    if (!(other instanceof Platform)) {
+      return false;
+    }
+    Platform otherPlatform = (Platform) other;
+    return os.equals(otherPlatform.getOs()) && architecture.equals(otherPlatform.getArchitecture());
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(os, architecture);
   }
 }
