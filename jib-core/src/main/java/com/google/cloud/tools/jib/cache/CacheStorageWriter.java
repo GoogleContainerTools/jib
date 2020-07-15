@@ -88,13 +88,7 @@ class CacheStorageWriter {
                     // previously-cached layer.
                     return true;
                   }
-                  try{
-                    Files.move(source, destination);
-                  } catch (FileSystemException e){
-                    String message = "Unable to copy file from %s to %s. This operation may not be supported by the" +
-                            "file system.";
-                    throw new FileSystemException(message);
-                  }
+                  Files.move(source, destination);
                   return Files.exists(destination);
                 })
             .maximumRetries(5)
@@ -104,7 +98,8 @@ class CacheStorageWriter {
     if (!success) {
       String message =
           String.format(
-              "unable to move: %s to %s; such failures are often caused by interference from antivirus",
+              "unable to move: %s to %s; such failures are often caused by interference from antivirus or if the" +
+                      "operation is not supported by the file system",
               source, destination);
       throw new IOException(message);
     }
