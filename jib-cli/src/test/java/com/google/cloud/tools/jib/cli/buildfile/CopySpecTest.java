@@ -18,7 +18,6 @@ package com.google.cloud.tools.jib.cli.buildfile;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.google.cloud.tools.jib.api.buildplan.AbsoluteUnixPath;
 import com.google.common.collect.ImmutableList;
 import java.nio.file.Paths;
@@ -31,7 +30,7 @@ import org.junit.Test;
 /** Tests for {@link CopySpec}. */
 public class CopySpecTest {
 
-  private static final ObjectMapper copySpecMapper = new ObjectMapper(new YAMLFactory());
+  private static final ObjectMapper mapper = TestObjectMapper.newObjectMapper();
 
   @Test
   public void testCopySpec_full() throws JsonProcessingException {
@@ -45,7 +44,7 @@ public class CopySpecTest {
             + "properties:\n" // only trivial test of file properties
             + "  timestamp: 1\n";
 
-    CopySpec parsed = copySpecMapper.readValue(data, CopySpec.class);
+    CopySpec parsed = mapper.readValue(data, CopySpec.class);
     Assert.assertEquals(Paths.get("target/classes"), parsed.getSrc());
     Assert.assertEquals(AbsoluteUnixPath.get("/app/classes"), parsed.getDest());
     Assert.assertEquals(ImmutableList.of("**/*.in"), parsed.getIncludes().get());
@@ -58,7 +57,7 @@ public class CopySpecTest {
     String data = "dest: /app/classes\n";
 
     try {
-      copySpecMapper.readValue(data, CopySpec.class);
+      mapper.readValue(data, CopySpec.class);
       Assert.fail();
     } catch (JsonProcessingException jpe) {
       MatcherAssert.assertThat(
@@ -71,7 +70,7 @@ public class CopySpecTest {
     String data = "src: target/classes\n";
 
     try {
-      copySpecMapper.readValue(data, CopySpec.class);
+      mapper.readValue(data, CopySpec.class);
       Assert.fail();
     } catch (JsonProcessingException jpe) {
       MatcherAssert.assertThat(

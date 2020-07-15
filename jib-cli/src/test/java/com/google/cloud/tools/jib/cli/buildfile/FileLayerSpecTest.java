@@ -18,7 +18,6 @@ package com.google.cloud.tools.jib.cli.buildfile;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.google.cloud.tools.jib.api.buildplan.AbsoluteUnixPath;
 import java.nio.file.Paths;
 import java.time.Instant;
@@ -30,7 +29,7 @@ import org.junit.Test;
 /** Tests for {@link FileLayerSpec}. */
 public class FileLayerSpecTest {
 
-  private static final ObjectMapper fileLayerSpecMapper = new ObjectMapper(new YAMLFactory());
+  private static final ObjectMapper mapper = TestObjectMapper.newObjectMapper();
 
   @Test
   public void testFileLayerSpec_full() throws JsonProcessingException {
@@ -42,7 +41,7 @@ public class FileLayerSpecTest {
             + "properties:\n" // trivial file properties spec
             + "  timestamp: 1\n";
 
-    FileLayerSpec parsed = fileLayerSpecMapper.readValue(data, FileLayerSpec.class);
+    FileLayerSpec parsed = mapper.readValue(data, FileLayerSpec.class);
     Assert.assertEquals("layer name", parsed.getName());
     Assert.assertEquals(Paths.get("source"), parsed.getFiles().get(0).getSrc());
     Assert.assertEquals(AbsoluteUnixPath.get("/dest"), parsed.getFiles().get(0).getDest());
@@ -54,7 +53,7 @@ public class FileLayerSpecTest {
     String data = "files:\n" + "  - src: source\n" + "    dest: /dest\n";
 
     try {
-      fileLayerSpecMapper.readValue(data, FileLayerSpec.class);
+      mapper.readValue(data, FileLayerSpec.class);
       Assert.fail();
     } catch (JsonProcessingException jpe) {
       MatcherAssert.assertThat(
@@ -67,7 +66,7 @@ public class FileLayerSpecTest {
     String data = "name: layer name";
 
     try {
-      fileLayerSpecMapper.readValue(data, FileLayerSpec.class);
+      mapper.readValue(data, FileLayerSpec.class);
       Assert.fail();
     } catch (JsonProcessingException jpe) {
       MatcherAssert.assertThat(

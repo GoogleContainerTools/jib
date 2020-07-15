@@ -18,7 +18,6 @@ package com.google.cloud.tools.jib.cli.buildfile;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import java.nio.file.Paths;
 import org.hamcrest.CoreMatchers;
 import org.hamcrest.MatcherAssert;
@@ -28,14 +27,14 @@ import org.junit.Test;
 /** Tests for {@link ArchiveLayerSpec}. */
 public class ArchiveLayerSpecTest {
 
-  private static final ObjectMapper archiveLayerSpecMapper = new ObjectMapper(new YAMLFactory());
+  private static final ObjectMapper mapper = TestObjectMapper.newObjectMapper();
 
   @Test
   public void testArchiveLayerSpec_full() throws JsonProcessingException {
     String data =
         "name: layer name\n" + "archive: out/archive.tgz\n" + "mediaType: test.media.type";
 
-    ArchiveLayerSpec parsed = archiveLayerSpecMapper.readValue(data, ArchiveLayerSpec.class);
+    ArchiveLayerSpec parsed = mapper.readValue(data, ArchiveLayerSpec.class);
     Assert.assertEquals("layer name", parsed.getName());
     Assert.assertEquals(Paths.get("out/archive.tgz"), parsed.getArchive());
     Assert.assertEquals("test.media.type", parsed.getMediaType().get());
@@ -46,7 +45,7 @@ public class ArchiveLayerSpecTest {
     String data = "archive: out/archive";
 
     try {
-      archiveLayerSpecMapper.readValue(data, ArchiveLayerSpec.class);
+      mapper.readValue(data, ArchiveLayerSpec.class);
       Assert.fail();
     } catch (JsonProcessingException jpe) {
       MatcherAssert.assertThat(
@@ -61,7 +60,7 @@ public class ArchiveLayerSpecTest {
     String data = "name: layer name";
 
     try {
-      archiveLayerSpecMapper.readValue(data, ArchiveLayerSpec.class);
+      mapper.readValue(data, ArchiveLayerSpec.class);
       Assert.fail();
     } catch (JsonProcessingException jpe) {
       MatcherAssert.assertThat(

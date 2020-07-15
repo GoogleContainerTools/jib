@@ -18,7 +18,6 @@ package com.google.cloud.tools.jib.cli.buildfile;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import org.hamcrest.CoreMatchers;
 import org.hamcrest.MatcherAssert;
 import org.junit.Assert;
@@ -27,7 +26,7 @@ import org.junit.Test;
 /** Tests for {@link LayerSpec}. */
 public class LayerSpecTest {
 
-  private static final ObjectMapper LayerSpecMapper = new ObjectMapper(new YAMLFactory());
+  private static final ObjectMapper mapper = TestObjectMapper.newObjectMapper();
 
   @Test
   public void deserialize_toFileLayer() throws JsonProcessingException {
@@ -37,7 +36,7 @@ public class LayerSpecTest {
             + "  - src: source\n"
             + "    dest: /dest\n";
 
-    LayerSpec layerSpec = LayerSpecMapper.readValue(data, LayerSpec.class);
+    LayerSpec layerSpec = mapper.readValue(data, LayerSpec.class);
     MatcherAssert.assertThat(layerSpec, CoreMatchers.instanceOf(FileLayerSpec.class));
   }
 
@@ -45,7 +44,7 @@ public class LayerSpecTest {
   public void deserialize_toArchiveLayer() throws JsonProcessingException {
     String data = "name: layer name\n" + "archive: out/archive.tgz\n";
 
-    LayerSpec layerSpec = LayerSpecMapper.readValue(data, LayerSpec.class);
+    LayerSpec layerSpec = mapper.readValue(data, LayerSpec.class);
     MatcherAssert.assertThat(layerSpec, CoreMatchers.instanceOf(ArchiveLayerSpec.class));
   }
 
@@ -54,7 +53,7 @@ public class LayerSpecTest {
     String data = "name: layer name\n";
 
     try {
-      LayerSpecMapper.readValue(data, LayerSpec.class);
+      mapper.readValue(data, LayerSpec.class);
       Assert.fail();
     } catch (JsonProcessingException jpe) {
       MatcherAssert.assertThat(
@@ -68,7 +67,7 @@ public class LayerSpecTest {
     String data = "archive: out/archive.tgz\n";
 
     try {
-      LayerSpecMapper.readValue(data, LayerSpec.class);
+      mapper.readValue(data, LayerSpec.class);
       Assert.fail();
     } catch (JsonProcessingException jpe) {
       MatcherAssert.assertThat(

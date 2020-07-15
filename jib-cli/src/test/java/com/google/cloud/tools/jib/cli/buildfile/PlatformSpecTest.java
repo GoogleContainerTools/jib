@@ -18,7 +18,6 @@ package com.google.cloud.tools.jib.cli.buildfile;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.google.common.collect.ImmutableList;
 import org.junit.Assert;
 import org.junit.Test;
@@ -26,7 +25,7 @@ import org.junit.Test;
 /** Tests for {@link PlatformSpec}. */
 public class PlatformSpecTest {
 
-  private static final ObjectMapper platformSpecMapper = new ObjectMapper(new YAMLFactory());
+  private static final ObjectMapper mapper = TestObjectMapper.newObjectMapper();
 
   @Test
   public void testPlatformSpec_full() throws JsonProcessingException {
@@ -41,7 +40,7 @@ public class PlatformSpecTest {
             + "  - sse4\n"
             + "  - aes\n";
 
-    PlatformSpec parsed = platformSpecMapper.readValue(data, PlatformSpec.class);
+    PlatformSpec parsed = mapper.readValue(data, PlatformSpec.class);
     Assert.assertEquals("amd64", parsed.getArchitecture().get());
     Assert.assertEquals("linux", parsed.getOs().get());
     Assert.assertEquals("1.0.0", parsed.getOsVersion().get());
