@@ -115,6 +115,28 @@ public class ContainerBuildPlanTest {
         ((FileEntriesLayer) plan.getLayers().get(0)).getEntries());
   }
 
+  @Test
+  public void testAddPlatform_DuplicatePlatforms() {
+    ContainerBuildPlan plan =
+        ContainerBuildPlan.builder()
+            .addPlatform("testOS", "testArchitecture")
+            .addPlatform("testOS", "testArchitecture")
+            .build();
+    Assert.assertEquals(
+        ImmutableSet.of(new Platform("linux", "amd64"), new Platform("testOS", "testArchitecture")),
+        plan.getPlatforms());
+  }
+
+  @Test
+  public void testSetPlatforms_EmptyPlatformsSet() {
+    try {
+      ContainerBuildPlan.builder().setPlatforms(Collections.emptySet()).build();
+      Assert.fail();
+    } catch (IllegalArgumentException e) {
+      Assert.assertEquals("platforms list cannot be empty.", e.getMessage());
+    }
+  }
+
   private ContainerBuildPlan createSamplePlan() {
     FileEntriesLayer layer =
         FileEntriesLayer.builder()
