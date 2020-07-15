@@ -88,7 +88,13 @@ class CacheStorageWriter {
                     // previously-cached layer.
                     return true;
                   }
-                  Files.move(source, destination);
+                  try{
+                    Files.move(source, destination);
+                  } catch (FileSystemException e){
+                    String message = "Unable to copy file from %s to %s. This operation may not be supported by the" +
+                            "file system.";
+                    throw new FileSystemException(message);
+                  }
                   return Files.exists(destination);
                 })
             .maximumRetries(5)
