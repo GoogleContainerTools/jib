@@ -222,8 +222,7 @@ public class JibContainerBuilderTest {
 
     ContainerBuildPlan buildPlan = containerBuilder.toContainerBuildPlan();
     Assert.assertEquals("base/image", buildPlan.getBaseImage());
-    Assert.assertEquals("amd64", buildPlan.getArchitectureHint());
-    Assert.assertEquals("linux", buildPlan.getOsHint());
+    ;
     Assert.assertEquals(Instant.EPOCH, buildPlan.getCreationTime());
     Assert.assertEquals(ImageFormat.Docker, buildPlan.getFormat());
     Assert.assertEquals(Collections.emptyMap(), buildPlan.getEnvironment());
@@ -257,8 +256,6 @@ public class JibContainerBuilderTest {
 
     ContainerBuildPlan buildPlan = containerBuilder.toContainerBuildPlan();
     Assert.assertEquals("base/image", buildPlan.getBaseImage());
-    Assert.assertEquals("amd64", buildPlan.getArchitectureHint());
-    Assert.assertEquals("linux", buildPlan.getOsHint());
     Assert.assertEquals(Instant.ofEpochMilli(1000), buildPlan.getCreationTime());
     Assert.assertEquals(ImageFormat.OCI, buildPlan.getFormat());
     Assert.assertEquals(ImmutableMap.of("env", "var"), buildPlan.getEnvironment());
@@ -297,8 +294,6 @@ public class JibContainerBuilderTest {
     ContainerBuildPlan buildPlan =
         ContainerBuildPlan.builder()
             .setBaseImage("some/base")
-            .setArchitectureHint("arch")
-            .setOsHint("os")
             .setFormat(ImageFormat.OCI)
             .setCreationTime(Instant.ofEpochMilli(30))
             .setEnvironment(ImmutableMap.of("env", "var"))
@@ -349,9 +344,5 @@ public class JibContainerBuilderTest {
         AbsoluteUnixPath.get("/workspace"), containerConfiguration.getWorkingDirectory());
     Assert.assertEquals(Arrays.asList("foo", "entrypoint"), containerConfiguration.getEntrypoint());
     Assert.assertEquals(Arrays.asList("bar", "cmd"), containerConfiguration.getProgramArguments());
-
-    ContainerBuildPlan convertedPlan = containerBuilder.toContainerBuildPlan();
-    Assert.assertEquals("arch", convertedPlan.getArchitectureHint());
-    Assert.assertEquals("os", convertedPlan.getOsHint());
   }
 }
