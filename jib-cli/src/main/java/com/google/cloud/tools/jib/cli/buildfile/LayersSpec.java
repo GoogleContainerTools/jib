@@ -42,7 +42,7 @@ public class LayersSpec {
    * Constructor for use by jackson to populate this object.
    *
    * @param entries a list of {@link LayerSpec} defining the layers in this container
-   * @param properties a {@link FilePropertiesSpec} that applies to all files in this container
+   * @param properties a {@link FilePropertiesSpec} that applies to all layers in this buildfile
    */
   @JsonCreator
   public LayersSpec(
