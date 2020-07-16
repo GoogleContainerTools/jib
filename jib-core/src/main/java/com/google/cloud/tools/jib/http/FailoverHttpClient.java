@@ -29,17 +29,21 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import java.io.IOException;
 import java.net.ConnectException;
+import java.net.ProxySelector;
 import java.net.URL;
 import java.security.GeneralSecurityException;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import javax.net.ssl.SSLException;
 import org.apache.http.conn.ssl.NoopHostnameVerifier;
+import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.apache.http.impl.client.HttpClientBuilder;
+import org.apache.http.impl.conn.SystemDefaultRoutePlanner;
 
 /**
  * Thread-safe HTTP client that can automatically failover from secure HTTPS to insecure HTTPS or
@@ -97,7 +101,17 @@ public class FailoverHttpClient {
     //
     // A new ApacheHttpTransport needs to be created for each connection because otherwise HTTP
     // connection persistence causes the connection to throw NoHttpResponseException.
-    return new ApacheHttpTransport();
+    HttpClientBuilder httpClientBuilder =
+        HttpClientBuilder.create()
+            .useSystemProperties()
+            .setSSLSocketFactory(SSLConnectionSocketFactory.getSystemSocketFactory())
+            .setMaxConnTotal(200)
+            .setMaxConnPerRoute(20)
+            .setConnectionTimeToLive(-1, TimeUnit.MILLISECONDS)
+            .setRoutePlanner(new SystemDefaultRoutePlanner(ProxySelector.getDefault()))
+            .disableRedirectHandling()
+            .disableAutomaticRetries();
+    return new ApacheHttpTransport(httpClientBuilder.build());
   }
 
   private static HttpTransport getInsecureHttpTransport() {
