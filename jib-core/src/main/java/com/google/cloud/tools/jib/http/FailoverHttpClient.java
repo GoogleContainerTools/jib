@@ -42,6 +42,7 @@ import java.util.function.Supplier;
 import javax.net.ssl.SSLException;
 import org.apache.http.conn.ssl.NoopHostnameVerifier;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
+import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.conn.SystemDefaultRoutePlanner;
 
@@ -101,16 +102,8 @@ public class FailoverHttpClient {
     //
     // A new ApacheHttpTransport needs to be created for each connection because otherwise HTTP
     // connection persistence causes the connection to throw NoHttpResponseException.
-    HttpClientBuilder httpClientBuilder =
-        HttpClientBuilder.create()
-            .useSystemProperties()
-            .setSSLSocketFactory(SSLConnectionSocketFactory.getSystemSocketFactory())
-            .setMaxConnTotal(200)
-            .setMaxConnPerRoute(20)
-            .setConnectionTimeToLive(-1, TimeUnit.MILLISECONDS)
-            .setRoutePlanner(new SystemDefaultRoutePlanner(ProxySelector.getDefault()))
-            .disableRedirectHandling()
-            .disableAutomaticRetries();
+    HttpClientBuilder httpClientBuilder = ApacheHttpTransport.newDefaultHttpClientBuilder()
+            .setSSLSocketFactory(SSLConnectionSocketFactory.getSystemSocketFactory());
     return new ApacheHttpTransport(httpClientBuilder.build());
   }
 
