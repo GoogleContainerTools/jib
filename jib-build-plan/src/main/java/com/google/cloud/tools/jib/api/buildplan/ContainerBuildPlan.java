@@ -70,39 +70,40 @@ public class ContainerBuildPlan {
     }
 
     /**
-     * Adds a desired platform (OS and architecture pair). If the base image reference is a Docker
-     * manifest list or an OCI image index, must be set so that an image builder can select the
-     * image matching the given platform. If the base image reference is an image manifest, this
-     * value is ignored and the platform of the built image follows that of the base image. The
-     * default is {@code linux amd64 }.
+     * Adds a desired image platform (OS and architecture pair). If the base image reference is a
+     * Docker manifest list or an OCI image index, an image builder may select the base image
+     * matching the given platform. If the base image reference is an image manifest, an image
+     * builder may ignore the given platform and use the platform of the base image or may decide to
+     * raise on error.
      *
-     * <p>Note that the build plan starts with amd64/linux as the default platform. If you want to
-     * reset the default platform instead of adding a new one, use setPlatforms()"
+     * <p>Note that a new build plan starts with "amd64/linux" as the default platform. If you want
+     * to reset the default platform instead of adding a new one, use {@link #setPlatforms(Set)}.
      *
-     * @param os value to select a base image in case of a manifest list
-     * @param architecture value to select a base image in case of a manifest list
+     * @param architecture architecture (for example, {@code amd64}) to select a base image in case
+     *     of a manifest list
+     * @param os OS (for example, {@code linux}) to select a base image in case of a manifest list
      * @return this
      */
-    public Builder addPlatform(String os, String architecture) {
-      platforms.add(new Platform(os, architecture));
+    public Builder addPlatform(String architecture, String os) {
+      platforms.add(new Platform(architecture, os));
       return this;
     }
 
     /**
-     * Sets a desired platform list ,a list containing (OS and architecture pairs). If the base
-     * image reference is a Docker manifest list or an OCI image index, must be set so that an image
-     * builder can select the images matching the given platforms. If the base image reference is an
-     * image manifest, this value is ignored and the platform of the built image follows that of the
-     * base image. The default is {@code linux amd64 }.
+     * Sets a desired platform (properties including as OS and architecture) list. If the base image
+     * reference is a Docker manifest list or an OCI image index, an image builder may select the
+     * base images matching the given platforms. If the base image reference is an image manifest,
+     * an image builder may ignore the given platforms and use the platform of the base image or may
+     * decide to raise on error.
      *
-     * @param platforms is a list of platform objects to be used to select base images in case of a
-     *     manifest list
+     * <p>Note that a new build plan starts with "amd64/linux" as the default platform.
+     *
+     * @param platforms list of platforms to select base images in case of a manifest list
      * @return this
-     * @throws IllegalArgumentException if a user passes in an empty platform list
      */
-    public Builder setPlatforms(Set<Platform> platforms) throws IllegalArgumentException {
+    public Builder setPlatforms(Set<Platform> platforms) {
       if (platforms.isEmpty()) {
-        throw new IllegalArgumentException("platforms set cannot be empty.");
+        throw new IllegalArgumentException("platforms set cannot be empty");
       }
       this.platforms = new LinkedHashSet<>(platforms);
       return this;
