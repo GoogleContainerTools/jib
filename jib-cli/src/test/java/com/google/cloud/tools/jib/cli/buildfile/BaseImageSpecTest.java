@@ -18,6 +18,7 @@ package com.google.cloud.tools.jib.cli.buildfile;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import org.hamcrest.CoreMatchers;
 import org.hamcrest.MatcherAssert;
 import org.junit.Assert;
@@ -26,7 +27,7 @@ import org.junit.Test;
 /** Tests for {@link BaseImageSpec}. */
 public class BaseImageSpecTest {
 
-  private static final ObjectMapper mapper = TestObjectMapper.newObjectMapper();
+  private static final ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
 
   @Test
   public void testBaseImageSpec_full() throws JsonProcessingException {
