@@ -18,6 +18,7 @@ package com.google.cloud.tools.jib.cli.buildfile;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import java.nio.file.Paths;
 import java.time.Instant;
 import org.hamcrest.CoreMatchers;
@@ -28,7 +29,7 @@ import org.junit.Test;
 /** Tests for {@link LayersSpec}. */
 public class LayersSpecTest {
 
-  private static final ObjectMapper mapper = TestObjectMapper.newObjectMapper();
+  private static final ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
 
   @Test
   public void testLayersSpec_full() throws JsonProcessingException {

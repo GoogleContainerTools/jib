@@ -41,8 +41,8 @@ public class LayersSpec {
   /**
    * Constructor for use by jackson to populate this object.
    *
-   * @param entries octal string for directory permissions
-   * @param properties octal string for file permissions
+   * @param entries a list of {@link LayerSpec} defining the layers in this container
+   * @param properties a {@link FilePropertiesSpec} that applies to all files in this container
    */
   @JsonCreator
   public LayersSpec(
