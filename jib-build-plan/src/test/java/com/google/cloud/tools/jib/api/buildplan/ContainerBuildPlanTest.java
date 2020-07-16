@@ -133,7 +133,7 @@ public class ContainerBuildPlanTest {
       ContainerBuildPlan.builder().setPlatforms(Collections.emptySet()).build();
       Assert.fail();
     } catch (IllegalArgumentException e) {
-      Assert.assertEquals("platforms list cannot be empty.", e.getMessage());
+      Assert.assertEquals("platforms set cannot be empty.", e.getMessage());
     }
   }
 
