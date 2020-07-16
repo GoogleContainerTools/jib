@@ -9,6 +9,8 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
+- Upgraded jib-build-plan to 0.3.0. ([# ]( ))
+
 ### Fixed
 
 - Fixed `NullPointerException` when the `"auths":` section in `~/.docker/config.json` has an entry with no `"auth":` field. ([#2535](https://github.com/GoogleContainerTools/jib/issues/2535))
