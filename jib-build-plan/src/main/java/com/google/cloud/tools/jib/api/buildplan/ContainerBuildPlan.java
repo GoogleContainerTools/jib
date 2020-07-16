@@ -102,7 +102,7 @@ public class ContainerBuildPlan {
      */
     public Builder setPlatforms(Set<Platform> platforms) throws IllegalArgumentException {
       if (platforms.isEmpty()) {
-        throw new IllegalArgumentException("platforms list cannot be empty.");
+        throw new IllegalArgumentException("platforms set cannot be empty.");
       }
       this.platforms = new LinkedHashSet<>(platforms);
       return this;
