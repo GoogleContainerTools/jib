@@ -116,7 +116,7 @@ public class ContainerBuildPlanTest {
   }
 
   @Test
-  public void testAddPlatform_DuplicatePlatforms() {
+  public void testAddPlatform_duplicatePlatforms() {
     ContainerBuildPlan plan =
         ContainerBuildPlan.builder()
             .addPlatform("testOS", "testArchitecture")
@@ -128,12 +128,12 @@ public class ContainerBuildPlanTest {
   }
 
   @Test
-  public void testSetPlatforms_EmptyPlatformsSet() {
+  public void testSetPlatforms_emptyPlatformsSet() {
     try {
-      ContainerBuildPlan.builder().setPlatforms(Collections.emptySet()).build();
+      ContainerBuildPlan.builder().setPlatforms(Collections.emptySet());
       Assert.fail();
     } catch (IllegalArgumentException ex) {
-      Assert.assertEquals("platforms set cannot be empty.", ex.getMessage());
+      Assert.assertEquals("platforms set cannot be empty", ex.getMessage());
     }
   }
 

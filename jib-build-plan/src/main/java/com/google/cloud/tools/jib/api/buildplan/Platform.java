@@ -19,23 +19,23 @@ package com.google.cloud.tools.jib.api.buildplan;
 import java.util.Objects;
 import javax.annotation.concurrent.Immutable;
 
-/** Configuration of a platform. */
+/** Represents an image platform (for example, "amd64/linux"). */
 @Immutable
 public class Platform {
-  private final String os;
   private final String architecture;
+  private final String os;
 
-  public Platform(String os, String architecture) {
-    this.os = os;
+  public Platform(String architecture, String os) {
     this.architecture = architecture;
-  }
-
-  public String getOs() {
-    return os;
+    this.os = os;
   }
 
   public String getArchitecture() {
     return architecture;
+  }
+
+  public String getOs() {
+    return os;
   }
 
   @Override
@@ -47,11 +47,11 @@ public class Platform {
       return false;
     }
     Platform otherPlatform = (Platform) other;
-    return os.equals(otherPlatform.getOs()) && architecture.equals(otherPlatform.getArchitecture());
+    return architecture.equals(otherPlatform.getArchitecture()) && os.equals(otherPlatform.getOs());
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(os, architecture);
+    return Objects.hash(architecture, os);
   }
 }
