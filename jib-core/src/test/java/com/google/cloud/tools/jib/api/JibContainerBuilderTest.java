@@ -222,7 +222,6 @@ public class JibContainerBuilderTest {
 
     ContainerBuildPlan buildPlan = containerBuilder.toContainerBuildPlan();
     Assert.assertEquals("base/image", buildPlan.getBaseImage());
-    ;
     Assert.assertEquals(Instant.EPOCH, buildPlan.getCreationTime());
     Assert.assertEquals(ImageFormat.Docker, buildPlan.getFormat());
     Assert.assertEquals(Collections.emptyMap(), buildPlan.getEnvironment());
