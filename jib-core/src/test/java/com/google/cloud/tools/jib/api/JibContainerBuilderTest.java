@@ -223,6 +223,8 @@ public class JibContainerBuilderTest {
 
     ContainerBuildPlan buildPlan = containerBuilder.toContainerBuildPlan();
     Assert.assertEquals("base/image", buildPlan.getBaseImage());
+    Assert.assertEquals(
+        ImmutableSet.of(new Platform("testArchitecture", "testOS")), buildPlan.getPlatforms());
     Assert.assertEquals(Instant.EPOCH, buildPlan.getCreationTime());
     Assert.assertEquals(ImageFormat.Docker, buildPlan.getFormat());
     Assert.assertEquals(Collections.emptyMap(), buildPlan.getEnvironment());
@@ -256,7 +258,7 @@ public class JibContainerBuilderTest {
 
     ContainerBuildPlan buildPlan = containerBuilder.toContainerBuildPlan();
     Assert.assertEquals("base/image", buildPlan.getBaseImage());
-    Assert.assertEquals(ImmutableSet.of(new Platform("linux", "amd64")), buildPlan.getPlatforms());
+    Assert.assertEquals(ImmutableSet.of(new Platform("amd64", "linux")), buildPlan.getPlatforms());
     Assert.assertEquals(Instant.ofEpochMilli(1000), buildPlan.getCreationTime());
     Assert.assertEquals(ImageFormat.OCI, buildPlan.getFormat());
     Assert.assertEquals(ImmutableMap.of("env", "var"), buildPlan.getEnvironment());
@@ -295,7 +297,7 @@ public class JibContainerBuilderTest {
     ContainerBuildPlan buildPlan =
         ContainerBuildPlan.builder()
             .setBaseImage("some/base")
-            .setPlatforms(ImmutableSet.of(new Platform("testOS", "testArchitecture")))
+            .setPlatforms(ImmutableSet.of(new Platform("testArchitecture", "testOS")))
             .setFormat(ImageFormat.OCI)
             .setCreationTime(Instant.ofEpochMilli(30))
             .setEnvironment(ImmutableMap.of("env", "var"))
@@ -349,6 +351,6 @@ public class JibContainerBuilderTest {
 
     ContainerBuildPlan convertedPlan = containerBuilder.toContainerBuildPlan();
     Assert.assertEquals(
-        ImmutableSet.of(new Platform("testOS", "testArchitecture")), convertedPlan.getPlatforms());
+        ImmutableSet.of(new Platform("testArchitecture", "testOS")), convertedPlan.getPlatforms());
   }
 }
