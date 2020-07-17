@@ -242,7 +242,6 @@ public class JibContainerBuilderTest {
         ImageConfiguration.builder(ImageReference.parse("base/image")).build();
     JibContainerBuilder containerBuilder =
         new JibContainerBuilder(imageConfiguration, spyBuildContextBuilder)
-            .setPlatforms(ImmutableSet.of(new Platform("testOS", "testArchitecture")))
             .setCreationTime(Instant.ofEpochMilli(1000))
             .setFormat(ImageFormat.OCI)
             .setEnvironment(ImmutableMap.of("env", "var"))
@@ -257,8 +256,7 @@ public class JibContainerBuilderTest {
 
     ContainerBuildPlan buildPlan = containerBuilder.toContainerBuildPlan();
     Assert.assertEquals("base/image", buildPlan.getBaseImage());
-    Assert.assertEquals(
-        ImmutableSet.of(new Platform("testOS", "testArchitecture")), buildPlan.getPlatforms());
+    Assert.assertEquals(ImmutableSet.of(new Platform("linux", "amd64")), buildPlan.getPlatforms());
     Assert.assertEquals(Instant.ofEpochMilli(1000), buildPlan.getCreationTime());
     Assert.assertEquals(ImageFormat.OCI, buildPlan.getFormat());
     Assert.assertEquals(ImmutableMap.of("env", "var"), buildPlan.getEnvironment());
@@ -348,6 +346,7 @@ public class JibContainerBuilderTest {
         AbsoluteUnixPath.get("/workspace"), containerConfiguration.getWorkingDirectory());
     Assert.assertEquals(Arrays.asList("foo", "entrypoint"), containerConfiguration.getEntrypoint());
     Assert.assertEquals(Arrays.asList("bar", "cmd"), containerConfiguration.getProgramArguments());
+
     ContainerBuildPlan convertedPlan = containerBuilder.toContainerBuildPlan();
     Assert.assertEquals(
         ImmutableSet.of(new Platform("testOS", "testArchitecture")), convertedPlan.getPlatforms());
