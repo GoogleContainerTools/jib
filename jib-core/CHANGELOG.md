@@ -8,7 +8,6 @@ All notable changes to this project will be documented in this file.
 - New system property `jib.skipExistingImages` (false by default) to skip pushing images (manifests) if the image already exists in the registry. ([#2360](https://github.com/GoogleContainerTools/jib/issues/2360)
 
 ### Changed
-- Changed the default platform in jib-build-plan from `linux/amd64` to `amd64/linux`. ([#2597](https://github.com/GoogleContainerTools/jib/pull/2597)
 
 ### Fixed
 
