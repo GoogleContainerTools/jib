@@ -98,8 +98,13 @@ class CacheStorageWriter {
     if (!success) {
       String message =
           String.format(
+<<<<<<< HEAD
               "unable to move: %s to %s; such failures are often caused by interference from antivirus or if the "
                   + "operation is not supported by the file system (for example, special non-local file system)",
+=======
+              "unable to move: %s to %s; such failures are often caused by interference from antivirus or if the " +
+                      "operation is not supported by the file system (for example, special non-local file system)",
+>>>>>>> 54a1d0ae3b24d0ed2dcfeb6a4295e3c980d07ed5
               source, destination);
       throw new IOException(message);
     }
