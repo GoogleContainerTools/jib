@@ -35,7 +35,7 @@ public class ContainerBuildPlanTest {
     ContainerBuildPlan plan = ContainerBuildPlan.builder().build();
 
     Assert.assertEquals("scratch", plan.getBaseImage());
-    Assert.assertEquals(ImmutableSet.of(new Platform("linux", "amd64")), plan.getPlatforms());
+    Assert.assertEquals(ImmutableSet.of(new Platform("amd64", "linux")), plan.getPlatforms());
     Assert.assertEquals(ImageFormat.Docker, plan.getFormat());
     Assert.assertEquals(Instant.EPOCH, plan.getCreationTime());
     Assert.assertEquals(Collections.emptyMap(), plan.getEnvironment());
@@ -123,7 +123,7 @@ public class ContainerBuildPlanTest {
             .addPlatform("testOS", "testArchitecture")
             .build();
     Assert.assertEquals(
-        ImmutableSet.of(new Platform("linux", "amd64"), new Platform("testOS", "testArchitecture")),
+        ImmutableSet.of(new Platform("amd64", "linux"), new Platform("testOS", "testArchitecture")),
         plan.getPlatforms());
   }
 
