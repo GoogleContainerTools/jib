@@ -83,7 +83,7 @@ public class BuildFileSpec {
    * @param apiVersion the api version of this buildfile
    * @param kind the kind (always BuildFile)
    * @param from a {@link BaseImageSpec} for base image
-   * @param creationTime in milliseconds since epoch or ISO 6801 datetime
+   * @param creationTime in milliseconds since epoch or ISO 8601 datetime
    * @param format of the container, valid values in {@link ImageFormat}
    * @param environment to write into container
    * @param labels to write into container metadata

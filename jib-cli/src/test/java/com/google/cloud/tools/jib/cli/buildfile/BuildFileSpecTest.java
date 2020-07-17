@@ -77,6 +77,7 @@ public class BuildFileSpecTest {
     Assert.assertEquals(
         ImmutableSet.of(AbsoluteUnixPath.get("/my/volume")), parsed.getVolumes().get());
     Assert.assertEquals(Ports.parse(ImmutableList.of("8080")), parsed.getExposedPorts().get());
+    Assert.assertEquals("username", parsed.getUser().get());
     Assert.assertEquals(AbsoluteUnixPath.get("/workspace"), parsed.getWorkingDirectory().get());
     Assert.assertEquals(ImmutableList.of("java", "-jar"), parsed.getEntrypoint().get());
     Assert.assertEquals(ImmutableList.of("myjar.jar"), parsed.getCmd().get());

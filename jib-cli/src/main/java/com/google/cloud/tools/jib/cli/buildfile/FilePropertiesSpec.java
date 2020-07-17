@@ -50,7 +50,7 @@ public class FilePropertiesSpec {
    * @param directoryPermissions octal string for directory permissions
    * @param user name or number for ownership user
    * @param group name or number for ownership group
-   * @param timestamp in milliseconds since epoch or ISO 6801 datetime
+   * @param timestamp in milliseconds since epoch or ISO 8601 datetime
    */
   @JsonCreator
   public FilePropertiesSpec(
