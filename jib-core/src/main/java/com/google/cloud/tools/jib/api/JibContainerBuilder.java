@@ -22,7 +22,6 @@ import com.google.cloud.tools.jib.api.buildplan.FileEntriesLayer;
 import com.google.cloud.tools.jib.api.buildplan.FileEntry;
 import com.google.cloud.tools.jib.api.buildplan.ImageFormat;
 import com.google.cloud.tools.jib.api.buildplan.LayerObject;
-import com.google.cloud.tools.jib.api.buildplan.Platform;
 import com.google.cloud.tools.jib.api.buildplan.Port;
 import com.google.cloud.tools.jib.builder.TimerEventDispatcher;
 import com.google.cloud.tools.jib.builder.steps.BuildResult;
@@ -486,29 +485,6 @@ public class JibContainerBuilder {
   public JibContainerBuilder setCreationTime(Instant creationTime) {
     containerBuildPlanBuilder.setCreationTime(creationTime);
     containerConfigurationBuilder.setCreationTime(creationTime);
-    return this;
-  }
-
-  /**
-   * Adds a platform to the platforms configurations for the container.
-   *
-   * @param os the os value
-   * @param architecture the architecture value
-   * @return this
-   */
-  public JibContainerBuilder addPlatform(String os, String architecture) {
-    containerBuildPlanBuilder.addPlatform(os, architecture);
-    return this;
-  }
-
-  /**
-   * Sets the platforms configurations for the container.
-   *
-   * @param platforms the list of platform objects
-   * @return this
-   */
-  public JibContainerBuilder setPlatforms(Set<Platform> platforms) {
-    containerBuildPlanBuilder.setPlatforms(platforms);
     return this;
   }
 
