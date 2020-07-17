@@ -634,7 +634,6 @@ public class JibContainerBuilder {
     containerBuildPlanBuilder
         .setBaseImage(buildPlan.getBaseImage())
         .setPlatforms(buildPlan.getPlatforms())
-        .setPlatforms(buildPlan.getPlatforms())
         .setCreationTime(buildPlan.getCreationTime())
         .setFormat(buildPlan.getFormat())
         .setEnvironment(buildPlan.getEnvironment())
