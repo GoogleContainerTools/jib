@@ -10,9 +10,11 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
-- Removed `get/setOsHint()` and `get/setArchitectureHint()` in faver of `get/setPlatforms()` and `addPlatform()`. ([#2584](https://github.com/GoogleContainerTools/jib/pull/2584))
+- Removed `get/setOsHint()` and `get/setArchitectureHint()` in favor of `get/setPlatforms()` and `addPlatform()`. ([#2584](https://github.com/GoogleContainerTools/jib/pull/2584))
 
 ### Fixed
+
+- Fixed the critical bug that the default `Platform` in `ContainerBuildPlan` has OS and architecture values switched with each other. ([#2597](https://github.com/GoogleContainerTools/jib/pull/2597)
 
 ## 0.2.0
 

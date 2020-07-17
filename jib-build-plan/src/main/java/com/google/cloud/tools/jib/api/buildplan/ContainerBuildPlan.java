@@ -42,7 +42,7 @@ public class ContainerBuildPlan {
     // note that a LinkedHashSet instead of HashSet has been used so as to preserve the platform
     // order
     private Set<Platform> platforms =
-        new LinkedHashSet<>(Collections.singleton(new Platform("linux", "amd64")));
+        new LinkedHashSet<>(Collections.singleton(new Platform("amd64", "linux")));
 
     // image execution parameters
     private Map<String, String> environment = new HashMap<>();
