@@ -31,7 +31,6 @@ subprojects {
   group 'com.google.cloud.tools'
 
   repositories {
-  	mavenLocal()
     mavenCentral()
   }
 
