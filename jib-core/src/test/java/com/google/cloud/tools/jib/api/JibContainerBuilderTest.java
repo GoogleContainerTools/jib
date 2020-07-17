@@ -347,7 +347,6 @@ public class JibContainerBuilderTest {
         AbsoluteUnixPath.get("/workspace"), containerConfiguration.getWorkingDirectory());
     Assert.assertEquals(Arrays.asList("foo", "entrypoint"), containerConfiguration.getEntrypoint());
     Assert.assertEquals(Arrays.asList("bar", "cmd"), containerConfiguration.getProgramArguments());
-
     ContainerBuildPlan convertedPlan = containerBuilder.toContainerBuildPlan();
     Assert.assertEquals(
         ImmutableSet.of(new Platform("testArchitecture", "testOS")), convertedPlan.getPlatforms());
