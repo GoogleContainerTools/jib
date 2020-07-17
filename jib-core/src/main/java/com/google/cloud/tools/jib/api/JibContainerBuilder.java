@@ -73,8 +73,7 @@ public class JibContainerBuilder {
     return Character.toUpperCase(string.charAt(0)) + string.substring(1);
   }
 
-  private final ContainerBuildPlan.Builder containerBuildPlanBuilder =
-      ContainerBuildPlan.builder().setArchitectureHint("amd64").setOsHint("linux");
+  private final ContainerBuildPlan.Builder containerBuildPlanBuilder = ContainerBuildPlan.builder();
   // TODO(chanseok): remove and use containerBuildPlanBuilder instead. Note that
   // ContainerConfiguation implements equals() and hashCode(), so need to verify
   // if they are required.
@@ -610,8 +609,7 @@ public class JibContainerBuilder {
       throws InvalidImageReferenceException {
     containerBuildPlanBuilder
         .setBaseImage(buildPlan.getBaseImage())
-        .setArchitectureHint(buildPlan.getArchitectureHint())
-        .setOsHint(buildPlan.getOsHint())
+        .setPlatforms(buildPlan.getPlatforms())
         .setCreationTime(buildPlan.getCreationTime())
         .setFormat(buildPlan.getFormat())
         .setEnvironment(buildPlan.getEnvironment())
