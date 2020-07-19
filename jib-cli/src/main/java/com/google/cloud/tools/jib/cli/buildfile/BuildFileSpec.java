@@ -81,8 +81,8 @@ public class BuildFileSpec {
    * Constructor for use by jackson to populate this object.
    *
    * @param apiVersion the api version of this buildfile
-   * @param kind the kind (always BuildFile)
-   * @param from a {@link BaseImageSpec} for base image
+   * @param kind the type of configuration file (always BuildFile)
+   * @param from a {@link BaseImageSpec} for specifying the base image
    * @param creationTime in milliseconds since epoch or ISO 8601 datetime
    * @param format of the container, valid values in {@link ImageFormat}
    * @param environment to write into container
