@@ -17,6 +17,7 @@
 package com.google.cloud.tools.jib.configuration;
 
 import com.google.cloud.tools.jib.api.buildplan.AbsoluteUnixPath;
+import com.google.cloud.tools.jib.api.buildplan.Platform;
 import com.google.cloud.tools.jib.api.buildplan.Port;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
@@ -25,8 +26,10 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import java.time.Instant;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -42,6 +45,10 @@ public class ContainerConfiguration {
   /** Builder for instantiating a {@link ContainerConfiguration}. */
   public static class Builder {
 
+    // note that a LinkedHashSet instead of HashSet has been used so as to preserve the platform
+    // order
+    private Set<Platform> platforms =
+        new LinkedHashSet<>(Collections.singleton(new Platform("amd64", "linux")));
     private Instant creationTime = DEFAULT_CREATION_TIME;
     @Nullable private ImmutableList<String> entrypoint;
     @Nullable private ImmutableList<String> programArguments;
@@ -51,6 +58,45 @@ public class ContainerConfiguration {
     @Nullable private Map<String, String> labels;
     @Nullable private String user;
     @Nullable private AbsoluteUnixPath workingDirectory;
+
+    /**
+     * Sets a desired platform (properties including OS and architecture) list. If the base image
+     * reference is a Docker manifest list or an OCI image index, an image builder may select the
+     * base images matching the given platforms. If the base image reference is an image manifest,
+     * an image builder may ignore the given platforms and use the platform of the base image or may
+     * decide to raise on error.
+     *
+     * <p>Note that a new container configuration starts with "amd64/linux" as the default platform.
+     *
+     * @param platforms list of platforms to select base images in case of a manifest list
+     * @return this
+     */
+    public Builder setPlatforms(Set<Platform> platforms) {
+      Preconditions.checkArgument(!platforms.isEmpty(), "platforms set cannot be empty");
+      this.platforms = new LinkedHashSet<>(platforms);
+      return this;
+    }
+
+    /**
+     * Adds a desired image platform (OS and architecture pair). If the base image reference is a
+     * Docker manifest list or an OCI image index, an image builder may select the base image
+     * matching the given platform. If the base image reference is an image manifest, an image
+     * builder may ignore the given platform and use the platform of the base image or may decide to
+     * raise on error.
+     *
+     * <p>Note that a new container configuration starts with "amd64/linux" as the default platform.
+     * If you want to reset the default platform instead of adding a new one, use {@link
+     * #setPlatforms(Set)}.
+     *
+     * @param architecture architecture (for example, {@code amd64}) to select a base image in case
+     *     of a manifest list
+     * @param os OS (for example, {@code linux}) to select a base image in case of a manifest list
+     * @return this
+     */
+    public Builder addPlatform(String architecture, String os) {
+      platforms.add(new Platform(architecture, os));
+      return this;
+    }
 
     /**
      * Sets the image creation time.
@@ -251,6 +297,7 @@ public class ContainerConfiguration {
      */
     public ContainerConfiguration build() {
       return new ContainerConfiguration(
+          ImmutableSet.copyOf(platforms),
           creationTime,
           entrypoint,
           programArguments,
@@ -274,6 +321,7 @@ public class ContainerConfiguration {
     return new Builder();
   }
 
+  private final ImmutableSet<Platform> platforms;
   private final Instant creationTime;
   @Nullable private final ImmutableList<String> entrypoint;
   @Nullable private final ImmutableList<String> programArguments;
@@ -285,6 +333,7 @@ public class ContainerConfiguration {
   @Nullable private final AbsoluteUnixPath workingDirectory;
 
   private ContainerConfiguration(
+      ImmutableSet<Platform> platforms,
       Instant creationTime,
       @Nullable ImmutableList<String> entrypoint,
       @Nullable ImmutableList<String> programArguments,
@@ -294,6 +343,7 @@ public class ContainerConfiguration {
       @Nullable ImmutableMap<String, String> labels,
       @Nullable String user,
       @Nullable AbsoluteUnixPath workingDirectory) {
+    this.platforms = platforms;
     this.creationTime = creationTime;
     this.entrypoint = entrypoint;
     this.programArguments = programArguments;
@@ -303,6 +353,10 @@ public class ContainerConfiguration {
     this.labels = labels;
     this.user = user;
     this.workingDirectory = workingDirectory;
+  }
+
+  public ImmutableSet<Platform> getPlatforms() {
+    return platforms;
   }
 
   public Instant getCreationTime() {
@@ -359,7 +413,8 @@ public class ContainerConfiguration {
       return false;
     }
     ContainerConfiguration otherContainerConfiguration = (ContainerConfiguration) other;
-    return creationTime.equals(otherContainerConfiguration.creationTime)
+    return platforms.equals(otherContainerConfiguration.platforms)
+        && creationTime.equals(otherContainerConfiguration.creationTime)
         && Objects.equals(entrypoint, otherContainerConfiguration.entrypoint)
         && Objects.equals(programArguments, otherContainerConfiguration.programArguments)
         && Objects.equals(environmentMap, otherContainerConfiguration.environmentMap)
@@ -373,6 +428,7 @@ public class ContainerConfiguration {
   @VisibleForTesting
   public int hashCode() {
     return Objects.hash(
+        platforms,
         creationTime,
         entrypoint,
         programArguments,
