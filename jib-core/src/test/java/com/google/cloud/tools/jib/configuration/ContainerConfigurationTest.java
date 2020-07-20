@@ -37,12 +37,11 @@ public class ContainerConfigurationTest {
 
   @Test
   public void testBuilder_nullValues() {
-    // Platforms list must not be empty
     try {
       ContainerConfiguration.builder().setPlatforms(Collections.emptySet()).build();
       Assert.fail("The IllegalArgumentException should be thrown.");
     } catch (IllegalArgumentException ex) {
-      Assert.assertEquals("platforms set cannot be empty.", ex.getMessage());
+      Assert.assertEquals("platforms set cannot be empty", ex.getMessage());
     }
 
     // Java arguments element should not be null.
@@ -143,7 +142,7 @@ public class ContainerConfigurationTest {
   }
 
   @Test
-  public void testAddPlatform_DuplicatePlatforms() {
+  public void testAddPlatform_duplicatePlatforms() {
     ContainerConfiguration configuration =
         ContainerConfiguration.builder()
             .addPlatform("testArchitecture", "testOS")
