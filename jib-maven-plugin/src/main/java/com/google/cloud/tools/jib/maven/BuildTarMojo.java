@@ -27,6 +27,7 @@ import com.google.cloud.tools.jib.plugins.common.InvalidContainerVolumeException
 import com.google.cloud.tools.jib.plugins.common.InvalidContainerizingModeException;
 import com.google.cloud.tools.jib.plugins.common.InvalidCreationTimeException;
 import com.google.cloud.tools.jib.plugins.common.InvalidFilesModificationTimeException;
+import com.google.cloud.tools.jib.plugins.common.InvalidPlatformConfigurationException;
 import com.google.cloud.tools.jib.plugins.common.InvalidWorkingDirectoryException;
 import com.google.cloud.tools.jib.plugins.common.MainClassInferenceException;
 import com.google.cloud.tools.jib.plugins.common.PluginConfigurationProcessor;
@@ -98,7 +99,10 @@ public class BuildTarMojo extends JibPluginConfiguration {
           "<container><workingDirectory> is not an absolute Unix-style path: "
               + ex.getInvalidPathValue(),
           ex);
-
+    } catch (InvalidPlatformConfigurationException ex) {
+      throw new MojoExecutionException(
+          "container.platforms contains a null architecture or os name: " + ex.getInvalidPlatform(),
+          ex);
     } catch (InvalidContainerVolumeException ex) {
       throw new MojoExecutionException(
           "<container><volumes> is not an absolute Unix-style path: " + ex.getInvalidVolume(), ex);

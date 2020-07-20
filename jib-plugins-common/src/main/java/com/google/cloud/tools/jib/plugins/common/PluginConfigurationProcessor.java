@@ -33,8 +33,10 @@ import com.google.cloud.tools.jib.api.buildplan.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.api.buildplan.FileEntriesLayer;
 import com.google.cloud.tools.jib.api.buildplan.ImageFormat;
 import com.google.cloud.tools.jib.api.buildplan.LayerObject;
+import com.google.cloud.tools.jib.api.buildplan.Platform;
 import com.google.cloud.tools.jib.frontend.CredentialRetrieverFactory;
 import com.google.cloud.tools.jib.global.JibSystemProperties;
+import com.google.cloud.tools.jib.plugins.common.RawConfiguration.PlatformConfiguration;
 import com.google.cloud.tools.jib.plugins.extension.JibPluginExtensionException;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
@@ -51,6 +53,7 @@ import java.time.format.DateTimeFormatterBuilder;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -92,6 +95,8 @@ public class PluginConfigurationProcessor {
    * @throws IOException if an error occurs creating the container builder
    * @throws InvalidWorkingDirectoryException if the working directory specified for the build is
    *     invalid
+   * @throws InvalidPlatformConfigurationException if there exists a plaformConfiguration with a
+   *     null architectureName or osName
    * @throws InvalidContainerVolumeException if a specific container volume is invalid
    * @throws IncompatibleBaseImageJavaVersionException if the base image java version cannot support
    *     this build
@@ -109,10 +114,11 @@ public class PluginConfigurationProcessor {
       ProjectProperties projectProperties,
       HelpfulSuggestions helpfulSuggestions)
       throws InvalidImageReferenceException, MainClassInferenceException, InvalidAppRootException,
-          IOException, InvalidWorkingDirectoryException, InvalidContainerVolumeException,
-          IncompatibleBaseImageJavaVersionException, NumberFormatException,
-          InvalidContainerizingModeException, InvalidFilesModificationTimeException,
-          InvalidCreationTimeException, JibPluginExtensionException {
+          IOException, InvalidWorkingDirectoryException, InvalidPlatformConfigurationException,
+          InvalidContainerVolumeException, IncompatibleBaseImageJavaVersionException,
+          NumberFormatException, InvalidContainerizingModeException,
+          InvalidFilesModificationTimeException, InvalidCreationTimeException,
+          JibPluginExtensionException {
     ImageReference targetImageReference =
         getGeneratedTargetDockerTag(rawConfiguration, projectProperties, helpfulSuggestions);
     DockerDaemonImage targetImage = DockerDaemonImage.named(targetImageReference);
@@ -156,6 +162,8 @@ public class PluginConfigurationProcessor {
    * @throws IOException if an error occurs creating the container builder
    * @throws InvalidWorkingDirectoryException if the working directory specified for the build is
    *     invalid
+   * @throws InvalidPlatformConfigurationException if there exists a plaformConfiguration with a
+   *     null architectureName or osName
    * @throws InvalidContainerVolumeException if a specific container volume is invalid
    * @throws IncompatibleBaseImageJavaVersionException if the base image java version cannot support
    *     this build
@@ -173,10 +181,11 @@ public class PluginConfigurationProcessor {
       ProjectProperties projectProperties,
       HelpfulSuggestions helpfulSuggestions)
       throws InvalidImageReferenceException, MainClassInferenceException, InvalidAppRootException,
-          IOException, InvalidWorkingDirectoryException, InvalidContainerVolumeException,
-          IncompatibleBaseImageJavaVersionException, NumberFormatException,
-          InvalidContainerizingModeException, InvalidFilesModificationTimeException,
-          InvalidCreationTimeException, JibPluginExtensionException {
+          IOException, InvalidWorkingDirectoryException, InvalidPlatformConfigurationException,
+          InvalidContainerVolumeException, IncompatibleBaseImageJavaVersionException,
+          NumberFormatException, InvalidContainerizingModeException,
+          InvalidFilesModificationTimeException, InvalidCreationTimeException,
+          JibPluginExtensionException {
     ImageReference targetImageReference =
         getGeneratedTargetDockerTag(rawConfiguration, projectProperties, helpfulSuggestions);
     TarImage targetImage =
@@ -215,6 +224,8 @@ public class PluginConfigurationProcessor {
    * @throws IOException if an error occurs creating the container builder
    * @throws InvalidWorkingDirectoryException if the working directory specified for the build is
    *     invalid
+   * @throws InvalidPlatformConfigurationException if there exists a plaformConfiguration with a
+   *     null architectureName or osName
    * @throws InvalidContainerVolumeException if a specific container volume is invalid
    * @throws IncompatibleBaseImageJavaVersionException if the base image java version cannot support
    *     this build
@@ -232,10 +243,11 @@ public class PluginConfigurationProcessor {
       ProjectProperties projectProperties,
       HelpfulSuggestions helpfulSuggestions)
       throws InvalidImageReferenceException, MainClassInferenceException, InvalidAppRootException,
-          IOException, InvalidWorkingDirectoryException, InvalidContainerVolumeException,
-          IncompatibleBaseImageJavaVersionException, NumberFormatException,
-          InvalidContainerizingModeException, InvalidFilesModificationTimeException,
-          InvalidCreationTimeException, JibPluginExtensionException {
+          IOException, InvalidWorkingDirectoryException, InvalidPlatformConfigurationException,
+          InvalidContainerVolumeException, IncompatibleBaseImageJavaVersionException,
+          NumberFormatException, InvalidContainerizingModeException,
+          InvalidFilesModificationTimeException, InvalidCreationTimeException,
+          JibPluginExtensionException {
     Preconditions.checkArgument(rawConfiguration.getToImage().isPresent());
 
     ImageReference targetImageReference = ImageReference.parse(rawConfiguration.getToImage().get());
@@ -290,6 +302,8 @@ public class PluginConfigurationProcessor {
    * @throws IOException if an error occurs creating the container builder
    * @throws InvalidWorkingDirectoryException if the working directory specified for the build is
    *     invalid
+   * @throws InvalidPlatformConfigurationException if there exists a plaformConfiguration with a
+   *     null architectureName or osName
    * @throws InvalidContainerVolumeException if a specific container volume is invalid
    * @throws IncompatibleBaseImageJavaVersionException if the base image java version cannot support
    *     this build
@@ -303,9 +317,10 @@ public class PluginConfigurationProcessor {
   public static String getSkaffoldSyncMap(
       RawConfiguration rawConfiguration, ProjectProperties projectProperties, Set<Path> excludes)
       throws IOException, InvalidCreationTimeException, InvalidImageReferenceException,
-          IncompatibleBaseImageJavaVersionException, InvalidContainerVolumeException,
-          MainClassInferenceException, InvalidAppRootException, InvalidWorkingDirectoryException,
-          InvalidFilesModificationTimeException, InvalidContainerizingModeException {
+          IncompatibleBaseImageJavaVersionException, InvalidPlatformConfigurationException,
+          InvalidContainerVolumeException, MainClassInferenceException, InvalidAppRootException,
+          InvalidWorkingDirectoryException, InvalidFilesModificationTimeException,
+          InvalidContainerizingModeException {
     JibContainerBuilder jibContainerBuilder =
         processCommonConfiguration(
             rawConfiguration, ignored -> Optional.empty(), projectProperties);
@@ -367,8 +382,8 @@ public class PluginConfigurationProcessor {
       throws InvalidFilesModificationTimeException, InvalidAppRootException,
           IncompatibleBaseImageJavaVersionException, IOException, InvalidImageReferenceException,
           InvalidContainerizingModeException, MainClassInferenceException,
-          InvalidContainerVolumeException, InvalidWorkingDirectoryException,
-          InvalidCreationTimeException {
+          InvalidPlatformConfigurationException, InvalidContainerVolumeException,
+          InvalidWorkingDirectoryException, InvalidCreationTimeException {
 
     // Create and configure JibContainerBuilder
     BiFunction<Path, AbsoluteUnixPath, Instant> modificationTimeProvider =
@@ -384,6 +399,7 @@ public class PluginConfigurationProcessor {
                 javaContainerBuilder,
                 getContainerizingModeChecked(rawConfiguration, projectProperties))
             .setFormat(rawConfiguration.getImageFormat())
+            .setPlatforms(getPlatformsSet(rawConfiguration))
             .setEntrypoint(computeEntrypoint(rawConfiguration, projectProperties))
             .setProgramArguments(rawConfiguration.getProgramArguments().orElse(null))
             .setEnvironment(rawConfiguration.getEnvironment())
@@ -420,10 +436,10 @@ public class PluginConfigurationProcessor {
       ProjectProperties projectProperties,
       Containerizer containerizer)
       throws InvalidImageReferenceException, MainClassInferenceException, InvalidAppRootException,
-          IOException, InvalidWorkingDirectoryException, InvalidContainerVolumeException,
-          IncompatibleBaseImageJavaVersionException, NumberFormatException,
-          InvalidContainerizingModeException, InvalidFilesModificationTimeException,
-          InvalidCreationTimeException {
+          IOException, InvalidWorkingDirectoryException, InvalidPlatformConfigurationException,
+          InvalidContainerVolumeException, IncompatibleBaseImageJavaVersionException,
+          NumberFormatException, InvalidContainerizingModeException,
+          InvalidFilesModificationTimeException, InvalidCreationTimeException {
     JibSystemProperties.checkHttpTimeoutProperty();
     JibSystemProperties.checkProxyPortProperty();
 
@@ -609,6 +625,34 @@ public class PluginConfigurationProcessor {
           : "gcr.io/distroless/java:11";
     }
     throw new IncompatibleBaseImageJavaVersionException(11, javaVersion);
+  }
+
+  /**
+   * Parses the list of platforms to a set of {@link Platform}.
+   *
+   * @param rawConfiguration raw configuration data
+   * @return the set of parsed platforms.
+   * @throws InvalidPlatformConfigurationException if there exists a plaformConfiguration with a
+   *     null architectureName or osName
+   */
+  @VisibleForTesting
+  static Set<Platform> getPlatformsSet(RawConfiguration rawConfiguration)
+      throws InvalidPlatformConfigurationException {
+    Set<Platform> platforms = new LinkedHashSet<>();
+    for (PlatformConfiguration platformConfiguration : rawConfiguration.getPlatforms()) {
+      try {
+        Platform platform =
+            new Platform(
+                platformConfiguration.getArchitectureName().orElse(null),
+                platformConfiguration.getOsName().orElse(null));
+        platforms.add(platform);
+      } catch (IllegalArgumentException exception) {
+        throw new InvalidPlatformConfigurationException(
+            platformConfiguration.toString(), platformConfiguration.toString(), exception);
+      }
+    }
+
+    return platforms;
   }
 
   /**

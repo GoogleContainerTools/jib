@@ -30,6 +30,7 @@ import com.google.cloud.tools.jib.api.buildplan.FileEntry;
 import com.google.cloud.tools.jib.api.buildplan.FilePermissions;
 import com.google.cloud.tools.jib.configuration.BuildContext;
 import com.google.cloud.tools.jib.configuration.ImageConfiguration;
+import com.google.cloud.tools.jib.plugins.common.RawConfiguration.PlatformConfiguration;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -51,6 +52,7 @@ import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import javax.annotation.Nullable;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
@@ -104,11 +106,34 @@ public class PluginConfigurationProcessorTest {
   @Mock private AuthProperty authProperty;
   @Mock private Consumer<LogEvent> logger;
 
+  /** Configuration for {@code platform} parameter. */
+  public static class Platform implements PlatformConfiguration {
+    @Nullable private String os;
+    @Nullable private String architecture;
+
+    Platform(String architecture, String os) {
+      this.architecture = architecture;
+      this.os = os;
+    }
+
+    @Override
+    public Optional<String> getOsName() {
+      return Optional.ofNullable(os);
+    }
+
+    @Override
+    public Optional<String> getArchitectureName() {
+      return Optional.ofNullable(architecture);
+    }
+  }
+
   @Before
   public void setUp() throws IOException, InvalidImageReferenceException, InferredAuthException {
     Mockito.when(rawConfiguration.getFromAuth()).thenReturn(authProperty);
     Mockito.when(rawConfiguration.getEntrypoint()).thenReturn(Optional.empty());
     Mockito.when(rawConfiguration.getAppRoot()).thenReturn("/app");
+    Mockito.<List<? extends PlatformConfiguration>>when(rawConfiguration.getPlatforms())
+        .thenReturn(Arrays.asList(new Platform("amd64", "linux")));
     Mockito.when(rawConfiguration.getFilesModificationTime()).thenReturn("EPOCH_PLUS_SECOND");
     Mockito.when(rawConfiguration.getCreationTime()).thenReturn("EPOCH");
     Mockito.when(rawConfiguration.getContainerizingMode()).thenReturn("exploded");
@@ -129,9 +154,10 @@ public class PluginConfigurationProcessorTest {
   public void testPluginConfigurationProcessor_defaults()
       throws InvalidImageReferenceException, IOException, CacheDirectoryCreationException,
           MainClassInferenceException, InvalidAppRootException, InvalidWorkingDirectoryException,
-          InvalidContainerVolumeException, IncompatibleBaseImageJavaVersionException,
-          NumberFormatException, InvalidContainerizingModeException,
-          InvalidFilesModificationTimeException, InvalidCreationTimeException {
+          InvalidPlatformConfigurationException, InvalidContainerVolumeException,
+          IncompatibleBaseImageJavaVersionException, NumberFormatException,
+          InvalidContainerizingModeException, InvalidFilesModificationTimeException,
+          InvalidCreationTimeException {
     BuildContext buildContext = getBuildContext(processCommonConfiguration());
 
     Assert.assertNotNull(buildContext.getContainerConfiguration());
@@ -151,8 +177,8 @@ public class PluginConfigurationProcessorTest {
   public void testPluginConfigurationProcessor_extraDirectory()
       throws URISyntaxException, InvalidContainerVolumeException, MainClassInferenceException,
           InvalidAppRootException, IOException, IncompatibleBaseImageJavaVersionException,
-          InvalidWorkingDirectoryException, InvalidImageReferenceException,
-          CacheDirectoryCreationException, NumberFormatException,
+          InvalidWorkingDirectoryException, InvalidPlatformConfigurationException,
+          InvalidImageReferenceException, CacheDirectoryCreationException, NumberFormatException,
           InvalidContainerizingModeException, InvalidFilesModificationTimeException,
           InvalidCreationTimeException {
     Path extraDirectory = Paths.get(Resources.getResource("core/layer").toURI());
@@ -204,10 +230,10 @@ public class PluginConfigurationProcessorTest {
   @Test
   public void testPluginConfigurationProcessor_cacheDirectorySystemProperties()
       throws InvalidContainerVolumeException, MainClassInferenceException, InvalidAppRootException,
-          IOException, InvalidWorkingDirectoryException, InvalidImageReferenceException,
-          IncompatibleBaseImageJavaVersionException, NumberFormatException,
-          InvalidContainerizingModeException, InvalidFilesModificationTimeException,
-          InvalidCreationTimeException {
+          IOException, InvalidWorkingDirectoryException, InvalidPlatformConfigurationException,
+          InvalidImageReferenceException, IncompatibleBaseImageJavaVersionException,
+          NumberFormatException, InvalidContainerizingModeException,
+          InvalidFilesModificationTimeException, InvalidCreationTimeException {
     System.setProperty(PropertyNames.BASE_IMAGE_CACHE, "new/base/cache");
     System.setProperty(PropertyNames.APPLICATION_CACHE, "/new/application/cache");
 
@@ -221,9 +247,10 @@ public class PluginConfigurationProcessorTest {
   public void testEntrypoint()
       throws InvalidImageReferenceException, IOException, CacheDirectoryCreationException,
           MainClassInferenceException, InvalidAppRootException, InvalidWorkingDirectoryException,
-          InvalidContainerVolumeException, IncompatibleBaseImageJavaVersionException,
-          NumberFormatException, InvalidContainerizingModeException,
-          InvalidFilesModificationTimeException, InvalidCreationTimeException {
+          InvalidPlatformConfigurationException, InvalidContainerVolumeException,
+          IncompatibleBaseImageJavaVersionException, NumberFormatException,
+          InvalidContainerizingModeException, InvalidFilesModificationTimeException,
+          InvalidCreationTimeException {
     Mockito.when(rawConfiguration.getEntrypoint())
         .thenReturn(Optional.of(Arrays.asList("custom", "entrypoint")));
 
@@ -281,9 +308,10 @@ public class PluginConfigurationProcessorTest {
   public void testEntrypoint_defaultWarPackaging()
       throws IOException, InvalidImageReferenceException, CacheDirectoryCreationException,
           MainClassInferenceException, InvalidAppRootException, InvalidWorkingDirectoryException,
-          InvalidContainerVolumeException, IncompatibleBaseImageJavaVersionException,
-          NumberFormatException, InvalidContainerizingModeException,
-          InvalidFilesModificationTimeException, InvalidCreationTimeException {
+          InvalidPlatformConfigurationException, InvalidContainerVolumeException,
+          IncompatibleBaseImageJavaVersionException, NumberFormatException,
+          InvalidContainerizingModeException, InvalidFilesModificationTimeException,
+          InvalidCreationTimeException {
     Mockito.when(rawConfiguration.getEntrypoint()).thenReturn(Optional.empty());
     Mockito.when(projectProperties.isWarProject()).thenReturn(true);
 
@@ -298,9 +326,10 @@ public class PluginConfigurationProcessorTest {
   public void testEntrypoint_defaultNonWarPackaging()
       throws IOException, InvalidImageReferenceException, CacheDirectoryCreationException,
           MainClassInferenceException, InvalidAppRootException, InvalidWorkingDirectoryException,
-          InvalidContainerVolumeException, IncompatibleBaseImageJavaVersionException,
-          NumberFormatException, InvalidContainerizingModeException,
-          InvalidFilesModificationTimeException, InvalidCreationTimeException {
+          InvalidPlatformConfigurationException, InvalidContainerVolumeException,
+          IncompatibleBaseImageJavaVersionException, NumberFormatException,
+          InvalidContainerizingModeException, InvalidFilesModificationTimeException,
+          InvalidCreationTimeException {
     Mockito.when(rawConfiguration.getEntrypoint()).thenReturn(Optional.empty());
     Mockito.when(projectProperties.isWarProject()).thenReturn(false);
 
@@ -319,9 +348,10 @@ public class PluginConfigurationProcessorTest {
   public void testEntrypoint_extraClasspathNonWarPackaging()
       throws IOException, InvalidImageReferenceException, CacheDirectoryCreationException,
           MainClassInferenceException, InvalidAppRootException, InvalidWorkingDirectoryException,
-          InvalidContainerVolumeException, IncompatibleBaseImageJavaVersionException,
-          NumberFormatException, InvalidContainerizingModeException,
-          InvalidFilesModificationTimeException, InvalidCreationTimeException {
+          InvalidPlatformConfigurationException, InvalidContainerVolumeException,
+          IncompatibleBaseImageJavaVersionException, NumberFormatException,
+          InvalidContainerizingModeException, InvalidFilesModificationTimeException,
+          InvalidCreationTimeException {
     Mockito.when(rawConfiguration.getEntrypoint()).thenReturn(Optional.empty());
     Mockito.when(rawConfiguration.getExtraClasspath())
         .thenReturn(Collections.singletonList("/foo"));
@@ -343,9 +373,10 @@ public class PluginConfigurationProcessorTest {
   public void testUser()
       throws InvalidImageReferenceException, IOException, CacheDirectoryCreationException,
           MainClassInferenceException, InvalidAppRootException, InvalidWorkingDirectoryException,
-          InvalidContainerVolumeException, IncompatibleBaseImageJavaVersionException,
-          NumberFormatException, InvalidContainerizingModeException,
-          InvalidFilesModificationTimeException, InvalidCreationTimeException {
+          InvalidPlatformConfigurationException, InvalidContainerVolumeException,
+          IncompatibleBaseImageJavaVersionException, NumberFormatException,
+          InvalidContainerizingModeException, InvalidFilesModificationTimeException,
+          InvalidCreationTimeException {
     Mockito.when(rawConfiguration.getUser()).thenReturn(Optional.of("customUser"));
 
     BuildContext buildContext = getBuildContext(processCommonConfiguration());
@@ -358,9 +389,10 @@ public class PluginConfigurationProcessorTest {
   public void testUser_null()
       throws InvalidImageReferenceException, IOException, CacheDirectoryCreationException,
           MainClassInferenceException, InvalidAppRootException, InvalidWorkingDirectoryException,
-          InvalidContainerVolumeException, IncompatibleBaseImageJavaVersionException,
-          NumberFormatException, InvalidContainerizingModeException,
-          InvalidFilesModificationTimeException, InvalidCreationTimeException {
+          InvalidPlatformConfigurationException, InvalidContainerVolumeException,
+          IncompatibleBaseImageJavaVersionException, NumberFormatException,
+          InvalidContainerizingModeException, InvalidFilesModificationTimeException,
+          InvalidCreationTimeException {
     BuildContext buildContext = getBuildContext(processCommonConfiguration());
 
     Assert.assertNotNull(buildContext.getContainerConfiguration());
@@ -371,9 +403,10 @@ public class PluginConfigurationProcessorTest {
   public void testEntrypoint_warningOnJvmFlags()
       throws InvalidImageReferenceException, IOException, CacheDirectoryCreationException,
           MainClassInferenceException, InvalidAppRootException, InvalidWorkingDirectoryException,
-          InvalidContainerVolumeException, IncompatibleBaseImageJavaVersionException,
-          NumberFormatException, InvalidContainerizingModeException,
-          InvalidFilesModificationTimeException, InvalidCreationTimeException {
+          InvalidPlatformConfigurationException, InvalidContainerVolumeException,
+          IncompatibleBaseImageJavaVersionException, NumberFormatException,
+          InvalidContainerizingModeException, InvalidFilesModificationTimeException,
+          InvalidCreationTimeException {
     Mockito.when(rawConfiguration.getEntrypoint())
         .thenReturn(Optional.of(Arrays.asList("custom", "entrypoint")));
     Mockito.when(rawConfiguration.getJvmFlags()).thenReturn(Collections.singletonList("jvmFlag"));
@@ -394,9 +427,10 @@ public class PluginConfigurationProcessorTest {
   public void testEntrypoint_warningOnMainclass()
       throws InvalidImageReferenceException, IOException, CacheDirectoryCreationException,
           MainClassInferenceException, InvalidAppRootException, InvalidWorkingDirectoryException,
-          InvalidContainerVolumeException, IncompatibleBaseImageJavaVersionException,
-          NumberFormatException, InvalidContainerizingModeException,
-          InvalidFilesModificationTimeException, InvalidCreationTimeException {
+          InvalidPlatformConfigurationException, InvalidContainerVolumeException,
+          IncompatibleBaseImageJavaVersionException, NumberFormatException,
+          InvalidContainerizingModeException, InvalidFilesModificationTimeException,
+          InvalidCreationTimeException {
     Mockito.when(rawConfiguration.getEntrypoint())
         .thenReturn(Optional.of(Arrays.asList("custom", "entrypoint")));
     Mockito.when(rawConfiguration.getMainClass()).thenReturn(Optional.of("java.util.Object"));
@@ -416,10 +450,10 @@ public class PluginConfigurationProcessorTest {
   @Test
   public void testEntrypoint_warningOnMainclassForWar()
       throws IOException, InvalidCreationTimeException, InvalidImageReferenceException,
-          IncompatibleBaseImageJavaVersionException, InvalidContainerVolumeException,
-          MainClassInferenceException, InvalidAppRootException, InvalidWorkingDirectoryException,
-          InvalidFilesModificationTimeException, InvalidContainerizingModeException,
-          CacheDirectoryCreationException {
+          IncompatibleBaseImageJavaVersionException, InvalidPlatformConfigurationException,
+          InvalidContainerVolumeException, MainClassInferenceException, InvalidAppRootException,
+          InvalidWorkingDirectoryException, InvalidFilesModificationTimeException,
+          InvalidContainerizingModeException, CacheDirectoryCreationException {
     Mockito.when(rawConfiguration.getMainClass()).thenReturn(Optional.of("java.util.Object"));
     Mockito.when(projectProperties.isWarProject()).thenReturn(true);
 
@@ -435,9 +469,10 @@ public class PluginConfigurationProcessorTest {
   public void testEntrypointClasspath_nonDefaultAppRoot()
       throws InvalidImageReferenceException, IOException, CacheDirectoryCreationException,
           MainClassInferenceException, InvalidAppRootException, InvalidWorkingDirectoryException,
-          InvalidContainerVolumeException, IncompatibleBaseImageJavaVersionException,
-          NumberFormatException, InvalidContainerizingModeException,
-          InvalidFilesModificationTimeException, InvalidCreationTimeException {
+          InvalidPlatformConfigurationException, InvalidContainerVolumeException,
+          IncompatibleBaseImageJavaVersionException, NumberFormatException,
+          InvalidContainerizingModeException, InvalidFilesModificationTimeException,
+          InvalidCreationTimeException {
     Mockito.when(rawConfiguration.getAppRoot()).thenReturn("/my/app");
 
     BuildContext buildContext = getBuildContext(processCommonConfiguration());
@@ -455,9 +490,10 @@ public class PluginConfigurationProcessorTest {
   public void testWebAppEntrypoint_inheritedFromBaseImage()
       throws InvalidImageReferenceException, IOException, CacheDirectoryCreationException,
           MainClassInferenceException, InvalidAppRootException, InvalidWorkingDirectoryException,
-          InvalidContainerVolumeException, IncompatibleBaseImageJavaVersionException,
-          NumberFormatException, InvalidContainerizingModeException,
-          InvalidFilesModificationTimeException, InvalidCreationTimeException {
+          InvalidPlatformConfigurationException, InvalidContainerVolumeException,
+          IncompatibleBaseImageJavaVersionException, NumberFormatException,
+          InvalidContainerizingModeException, InvalidFilesModificationTimeException,
+          InvalidCreationTimeException {
     Mockito.when(projectProperties.isWarProject()).thenReturn(true);
 
     BuildContext buildContext = getBuildContext(processCommonConfiguration());
@@ -981,10 +1017,10 @@ public class PluginConfigurationProcessorTest {
 
   private JibContainerBuilder processCommonConfiguration()
       throws InvalidImageReferenceException, MainClassInferenceException, InvalidAppRootException,
-          IOException, InvalidWorkingDirectoryException, InvalidContainerVolumeException,
-          IncompatibleBaseImageJavaVersionException, NumberFormatException,
-          InvalidContainerizingModeException, InvalidFilesModificationTimeException,
-          InvalidCreationTimeException {
+          IOException, InvalidWorkingDirectoryException, InvalidPlatformConfigurationException,
+          InvalidContainerVolumeException, IncompatibleBaseImageJavaVersionException,
+          NumberFormatException, InvalidContainerizingModeException,
+          InvalidFilesModificationTimeException, InvalidCreationTimeException {
     return PluginConfigurationProcessor.processCommonConfiguration(
         rawConfiguration, ignored -> Optional.empty(), projectProperties, containerizer);
   }

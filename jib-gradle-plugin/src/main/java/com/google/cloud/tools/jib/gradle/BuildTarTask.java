@@ -27,6 +27,7 @@ import com.google.cloud.tools.jib.plugins.common.InvalidContainerVolumeException
 import com.google.cloud.tools.jib.plugins.common.InvalidContainerizingModeException;
 import com.google.cloud.tools.jib.plugins.common.InvalidCreationTimeException;
 import com.google.cloud.tools.jib.plugins.common.InvalidFilesModificationTimeException;
+import com.google.cloud.tools.jib.plugins.common.InvalidPlatformConfigurationException;
 import com.google.cloud.tools.jib.plugins.common.InvalidWorkingDirectoryException;
 import com.google.cloud.tools.jib.plugins.common.MainClassInferenceException;
 import com.google.cloud.tools.jib.plugins.common.PluginConfigurationProcessor;
@@ -146,6 +147,10 @@ public class BuildTarTask extends DefaultTask implements JibTask {
       throw new GradleException(
           "container.workingDirectory is not an absolute Unix-style path: "
               + ex.getInvalidPathValue(),
+          ex);
+    } catch (InvalidPlatformConfigurationException ex) {
+      throw new GradleException(
+          "container.platforms contains a null architecture or os name: " + ex.getInvalidPlatform(),
           ex);
 
     } catch (InvalidContainerVolumeException ex) {
