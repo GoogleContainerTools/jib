@@ -66,7 +66,7 @@ public class ContainerConfiguration {
      * an image builder may ignore the given platforms and use the platform of the base image or may
      * decide to raise on error.
      *
-     * <p>Note that a new build plan starts with "amd64/linux" as the default platform.
+     * <p>Note that a new container configuration starts with "amd64/linux" as the default platform.
      *
      * @param platforms list of platforms to select base images in case of a manifest list
      * @return this
@@ -84,8 +84,9 @@ public class ContainerConfiguration {
      * builder may ignore the given platform and use the platform of the base image or may decide to
      * raise on error.
      *
-     * <p>Note that a new build plan starts with "amd64/linux" as the default platform. If you want
-     * to reset the default platform instead of adding a new one, use {@link #setPlatforms(Set)}.
+     * <p>Note that a new container configuration starts with "amd64/linux" as the default platform.
+     * If you want to reset the default platform instead of adding a new one, use {@link
+     * #setPlatforms(Set)}.
      *
      * @param architecture architecture (for example, {@code amd64}) to select a base image in case
      *     of a manifest list
