@@ -17,9 +17,12 @@
 package com.google.cloud.tools.jib.configuration;
 
 import com.google.cloud.tools.jib.api.buildplan.AbsoluteUnixPath;
+import com.google.cloud.tools.jib.api.buildplan.Platform;
 import com.google.cloud.tools.jib.api.buildplan.Port;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Hashtable;
@@ -34,6 +37,14 @@ public class ContainerConfigurationTest {
 
   @Test
   public void testBuilder_nullValues() {
+    // Platforms list must not be empty
+    try {
+      ContainerConfiguration.builder().setPlatforms(Collections.emptySet()).build();
+      Assert.fail("The IllegalArgumentException should be thrown.");
+    } catch (IllegalArgumentException e) {
+      Assert.assertEquals("platforms set cannot be empty.", e.getMessage());
+    }
+
     // Java arguments element should not be null.
     try {
       ContainerConfiguration.builder().setProgramArguments(Arrays.asList("first", null));
@@ -129,5 +140,17 @@ public class ContainerConfigurationTest {
     ContainerConfiguration configuration =
         ContainerConfiguration.builder().setWorkingDirectory(AbsoluteUnixPath.get("/path")).build();
     Assert.assertEquals(AbsoluteUnixPath.get("/path"), configuration.getWorkingDirectory());
+  }
+
+  @Test
+  public void testAddPlatform_DuplicatePlatforms() {
+    ContainerConfiguration configuration =
+        ContainerConfiguration.builder()
+            .addPlatform("testArchitecture", "testOS")
+            .addPlatform("testArchitecture", "testOS")
+            .build();
+    Assert.assertEquals(
+        ImmutableSet.of(new Platform("amd64", "linux"), new Platform("testArchitecture", "testOS")),
+        configuration.getPlatforms());
   }
 }

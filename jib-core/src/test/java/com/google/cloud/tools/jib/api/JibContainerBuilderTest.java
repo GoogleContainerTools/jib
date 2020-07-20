@@ -68,6 +68,7 @@ public class JibContainerBuilderTest {
         ImageConfiguration.builder(ImageReference.parse("base/image")).build();
     JibContainerBuilder jibContainerBuilder =
         new JibContainerBuilder(imageConfiguration, spyBuildContextBuilder)
+            .setPlatforms(ImmutableSet.of(new Platform("testArchitecture", "testOS")))
             .setEntrypoint(Arrays.asList("entry", "point"))
             .setEnvironment(ImmutableMap.of("name", "value"))
             .setExposedPorts(ImmutableSet.of(Port.tcp(1234), Port.udp(5678)))
@@ -80,6 +81,9 @@ public class JibContainerBuilderTest {
     BuildContext buildContext =
         jibContainerBuilder.toBuildContext(Containerizer.to(RegistryImage.named("target/image")));
     ContainerConfiguration containerConfiguration = buildContext.getContainerConfiguration();
+    Assert.assertEquals(
+        ImmutableSet.of(new Platform("testArchitecture", "testOS")),
+        containerConfiguration.getPlatforms());
     Assert.assertEquals(Arrays.asList("entry", "point"), containerConfiguration.getEntrypoint());
     Assert.assertEquals(
         ImmutableMap.of("name", "value"), containerConfiguration.getEnvironmentMap());
@@ -101,6 +105,7 @@ public class JibContainerBuilderTest {
         ImageConfiguration.builder(ImageReference.parse("base/image")).build();
     JibContainerBuilder jibContainerBuilder =
         new JibContainerBuilder(imageConfiguration, spyBuildContextBuilder)
+            .addPlatform("testArchitecture", "testOS")
             .setEntrypoint("entry", "point")
             .setEnvironment(ImmutableMap.of("name", "value"))
             .addEnvironmentVariable("environment", "variable")
@@ -113,6 +118,9 @@ public class JibContainerBuilderTest {
     BuildContext buildContext =
         jibContainerBuilder.toBuildContext(Containerizer.to(RegistryImage.named("target/image")));
     ContainerConfiguration containerConfiguration = buildContext.getContainerConfiguration();
+    Assert.assertEquals(
+        ImmutableSet.of(new Platform("testArchitecture", "testOS"), new Platform("amd64", "linux")),
+        containerConfiguration.getPlatforms());
     Assert.assertEquals(Arrays.asList("entry", "point"), containerConfiguration.getEntrypoint());
     Assert.assertEquals(
         ImmutableMap.of("name", "value", "environment", "variable"),
@@ -243,6 +251,7 @@ public class JibContainerBuilderTest {
         ImageConfiguration.builder(ImageReference.parse("base/image")).build();
     JibContainerBuilder containerBuilder =
         new JibContainerBuilder(imageConfiguration, spyBuildContextBuilder)
+            .setPlatforms(ImmutableSet.of(new Platform("testArchitecture", "testOS")))
             .setCreationTime(Instant.ofEpochMilli(1000))
             .setFormat(ImageFormat.OCI)
             .setEnvironment(ImmutableMap.of("env", "var"))
@@ -257,7 +266,8 @@ public class JibContainerBuilderTest {
 
     ContainerBuildPlan buildPlan = containerBuilder.toContainerBuildPlan();
     Assert.assertEquals("base/image", buildPlan.getBaseImage());
-    Assert.assertEquals(ImmutableSet.of(new Platform("amd64", "linux")), buildPlan.getPlatforms());
+    Assert.assertEquals(
+        ImmutableSet.of(new Platform("testArchitecture", "testOS")), buildPlan.getPlatforms());
     Assert.assertEquals(Instant.ofEpochMilli(1000), buildPlan.getCreationTime());
     Assert.assertEquals(ImageFormat.OCI, buildPlan.getFormat());
     Assert.assertEquals(ImmutableMap.of("env", "var"), buildPlan.getEnvironment());
