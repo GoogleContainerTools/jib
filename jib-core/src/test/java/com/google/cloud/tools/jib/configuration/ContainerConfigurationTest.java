@@ -41,8 +41,8 @@ public class ContainerConfigurationTest {
     try {
       ContainerConfiguration.builder().setPlatforms(Collections.emptySet()).build();
       Assert.fail("The IllegalArgumentException should be thrown.");
-    } catch (IllegalArgumentException e) {
-      Assert.assertEquals("platforms set cannot be empty.", e.getMessage());
+    } catch (IllegalArgumentException ex) {
+      Assert.assertEquals("platforms set cannot be empty.", ex.getMessage());
     }
 
     // Java arguments element should not be null.
