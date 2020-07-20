@@ -72,9 +72,7 @@ public class ContainerConfiguration {
      * @return this
      */
     public Builder setPlatforms(Set<Platform> platforms) {
-      if (platforms.isEmpty()) {
-        throw new IllegalArgumentException("platforms set cannot be empty.");
-      }
+      Preconditions.checkArgument(!platforms.isEmpty(), "platforms set cannot be empty");
       this.platforms = new LinkedHashSet<>(platforms);
       return this;
     }
@@ -414,7 +412,7 @@ public class ContainerConfiguration {
       return false;
     }
     ContainerConfiguration otherContainerConfiguration = (ContainerConfiguration) other;
-    return Objects.equals(platforms, otherContainerConfiguration.platforms)
+    return platforms.equals(otherContainerConfiguration.platforms)
         && creationTime.equals(otherContainerConfiguration.creationTime)
         && Objects.equals(entrypoint, otherContainerConfiguration.entrypoint)
         && Objects.equals(programArguments, otherContainerConfiguration.programArguments)
