@@ -100,6 +100,8 @@ public class FailoverHttpClient {
     // connection persistence causes the connection to throw NoHttpResponseException.
     HttpClientBuilder httpClientBuilder =
         ApacheHttpTransport.newDefaultHttpClientBuilder()
+            // using "system socket factory" to enable sending client certificate
+            // https://github.com/GoogleContainerTools/jib/issues/2585
             .setSSLSocketFactory(SSLConnectionSocketFactory.getSystemSocketFactory());
     return new ApacheHttpTransport(httpClientBuilder.build());
   }
