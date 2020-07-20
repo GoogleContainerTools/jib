@@ -490,7 +490,7 @@ public class JibContainerBuilder {
   }
 
   /**
-   * Sets a desired platform (properties including as OS and architecture) list. If the base image
+   * Sets a desired platform (properties including OS and architecture) list. If the base image
    * reference is a Docker manifest list or an OCI image index, an image builder may select the base
    * images matching the given platforms. If the base image reference is an image manifest, an image
    * builder may ignore the given platforms and use the platform of the base image or may decide to
