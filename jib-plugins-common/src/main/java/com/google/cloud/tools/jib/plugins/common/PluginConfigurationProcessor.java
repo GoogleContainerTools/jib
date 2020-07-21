@@ -56,6 +56,7 @@ import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.BiFunction;
@@ -641,21 +642,16 @@ public class PluginConfigurationProcessor {
     Set<Platform> platforms = new LinkedHashSet<>();
     for (PlatformConfiguration platformConfiguration : rawConfiguration.getPlatforms()) {
       try {
-        Preconditions.checkNotNull(
-            platformConfiguration.getArchitectureName(), "platforms set cannot be empty");
-        Preconditions.checkNotNull(
-            platformConfiguration.getOsName(), "platforms set cannot be empty");
         Platform platform =
             new Platform(
-                platformConfiguration.getArchitectureName().orElse(null),
-                platformConfiguration.getOsName().orElse(null));
+                platformConfiguration.getArchitectureName().get(),
+                platformConfiguration.getOsName().get());
         platforms.add(platform);
-      } catch (IllegalArgumentException exception) {
+      } catch (NoSuchElementException exception) {
         throw new InvalidPlatformConfigurationException(
             platformConfiguration.toString(), platformConfiguration.toString(), exception);
       }
     }
-
     return platforms;
   }
 

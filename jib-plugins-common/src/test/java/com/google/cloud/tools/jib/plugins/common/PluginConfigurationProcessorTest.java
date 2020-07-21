@@ -874,20 +874,20 @@ public class PluginConfigurationProcessorTest {
       Assert.assertEquals(12, ex.getProjectMajorJavaVersion());
     }
   }
-  //
+
   @Test
-  public void testGetPlatformsSet() throws InvalidPlatformConfigurationException {
+  public void testGetValidPlatformsList() throws InvalidPlatformConfigurationException {
     Mockito.<List<? extends PlatformConfiguration>>when(rawConfiguration.getPlatforms())
-        .thenReturn(Arrays.asList(new PlatformParametersTest("amd64", "linux")));
+        .thenReturn(Arrays.asList(new PlatformParametersTest("testArchitecture", "testOs")));
 
     Assert.assertEquals(
-        ImmutableSet.of(new Platform("amd64", "linux")),
+        ImmutableSet.of(new Platform("testArchitecture", "testOs")),
         PluginConfigurationProcessor.getPlatformsSet(rawConfiguration));
   }
 
   @Test
-  public void testInvalidPlatformsSet() throws InvalidPlatformConfigurationException {
-    PlatformParametersTest platform = new PlatformParametersTest(null, "linux");
+  public void testInvalidPlatformsList() throws InvalidPlatformConfigurationException {
+    PlatformParametersTest platform = new PlatformParametersTest(null, "testOs");
     Mockito.<List<? extends PlatformConfiguration>>when(rawConfiguration.getPlatforms())
         .thenReturn(Arrays.asList(platform));
 
