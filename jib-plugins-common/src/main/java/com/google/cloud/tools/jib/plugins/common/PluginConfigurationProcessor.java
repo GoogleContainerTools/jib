@@ -641,6 +641,10 @@ public class PluginConfigurationProcessor {
     Set<Platform> platforms = new LinkedHashSet<>();
     for (PlatformConfiguration platformConfiguration : rawConfiguration.getPlatforms()) {
       try {
+        Preconditions.checkNotNull(
+            platformConfiguration.getArchitectureName(), "platforms set cannot be empty");
+        Preconditions.checkNotNull(
+            platformConfiguration.getOsName(), "platforms set cannot be empty");
         Platform platform =
             new Platform(
                 platformConfiguration.getArchitectureName().orElse(null),

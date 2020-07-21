@@ -28,6 +28,7 @@ import com.google.cloud.tools.jib.api.RegistryImage;
 import com.google.cloud.tools.jib.api.buildplan.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.api.buildplan.FileEntry;
 import com.google.cloud.tools.jib.api.buildplan.FilePermissions;
+import com.google.cloud.tools.jib.api.buildplan.Platform;
 import com.google.cloud.tools.jib.configuration.BuildContext;
 import com.google.cloud.tools.jib.configuration.ImageConfiguration;
 import com.google.cloud.tools.jib.plugins.common.RawConfiguration.PlatformConfiguration;
@@ -107,11 +108,11 @@ public class PluginConfigurationProcessorTest {
   @Mock private Consumer<LogEvent> logger;
 
   /** Configuration for {@code platform} parameter. */
-  public static class Platform implements PlatformConfiguration {
+  public static class PlatformParametersTest implements PlatformConfiguration {
     @Nullable private String os;
     @Nullable private String architecture;
 
-    Platform(String architecture, String os) {
+    PlatformParametersTest(String architecture, String os) {
       this.architecture = architecture;
       this.os = os;
     }
@@ -133,7 +134,7 @@ public class PluginConfigurationProcessorTest {
     Mockito.when(rawConfiguration.getEntrypoint()).thenReturn(Optional.empty());
     Mockito.when(rawConfiguration.getAppRoot()).thenReturn("/app");
     Mockito.<List<? extends PlatformConfiguration>>when(rawConfiguration.getPlatforms())
-        .thenReturn(Arrays.asList(new Platform("amd64", "linux")));
+        .thenReturn(Arrays.asList(new PlatformParametersTest("amd64", "linux")));
     Mockito.when(rawConfiguration.getFilesModificationTime()).thenReturn("EPOCH_PLUS_SECOND");
     Mockito.when(rawConfiguration.getCreationTime()).thenReturn("EPOCH");
     Mockito.when(rawConfiguration.getContainerizingMode()).thenReturn("exploded");
@@ -871,6 +872,31 @@ public class PluginConfigurationProcessorTest {
     } catch (IncompatibleBaseImageJavaVersionException ex) {
       Assert.assertEquals(11, ex.getBaseImageMajorJavaVersion());
       Assert.assertEquals(12, ex.getProjectMajorJavaVersion());
+    }
+  }
+  //
+  @Test
+  public void testGetPlatformsSet() throws InvalidPlatformConfigurationException {
+    Mockito.<List<? extends PlatformConfiguration>>when(rawConfiguration.getPlatforms())
+        .thenReturn(Arrays.asList(new PlatformParametersTest("amd64", "linux")));
+
+    Assert.assertEquals(
+        ImmutableSet.of(new Platform("amd64", "linux")),
+        PluginConfigurationProcessor.getPlatformsSet(rawConfiguration));
+  }
+
+  @Test
+  public void testInvalidPlatformsSet() throws InvalidPlatformConfigurationException {
+    PlatformParametersTest platform = new PlatformParametersTest(null, "linux");
+    Mockito.<List<? extends PlatformConfiguration>>when(rawConfiguration.getPlatforms())
+        .thenReturn(Arrays.asList(platform));
+
+    try {
+      PluginConfigurationProcessor.getPlatformsSet(rawConfiguration);
+      Assert.fail();
+    } catch (InvalidPlatformConfigurationException ex) {
+      Assert.assertEquals(platform.toString(), ex.getMessage());
+      Assert.assertEquals(platform.toString(), ex.getInvalidPlatform());
     }
   }
 
