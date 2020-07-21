@@ -123,7 +123,8 @@ public class BuildImageMojo extends JibPluginConfiguration {
           ex);
     } catch (InvalidPlatformConfigurationException ex) {
       throw new MojoExecutionException(
-          "container.platforms contains a null architecture or os name: " + ex.getInvalidPlatform(),
+          "<from><platforms> is missing required fields or has invalid values: "
+              + ex.getInvalidPlatform(),
           ex);
     } catch (InvalidContainerVolumeException ex) {
       throw new MojoExecutionException(

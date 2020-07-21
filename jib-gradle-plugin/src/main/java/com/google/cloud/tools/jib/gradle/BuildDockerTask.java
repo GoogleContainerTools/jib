@@ -130,7 +130,8 @@ public class BuildDockerTask extends DefaultTask implements JibTask {
 
     } catch (InvalidPlatformConfigurationException ex) {
       throw new GradleException(
-          "container.platforms contains a null architecture or os name: " + ex.getInvalidPlatform(),
+          "from.platforms is missing required fields or has invalid values: "
+              + ex.getInvalidPlatform(),
           ex);
 
     } catch (InvalidContainerVolumeException ex) {

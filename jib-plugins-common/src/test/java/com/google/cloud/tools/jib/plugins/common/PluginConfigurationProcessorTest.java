@@ -107,12 +107,11 @@ public class PluginConfigurationProcessorTest {
   @Mock private AuthProperty authProperty;
   @Mock private Consumer<LogEvent> logger;
 
-  /** Configuration for {@code platform} parameter. */
-  public static class PlatformParametersTest implements PlatformConfiguration {
-    @Nullable private String os;
-    @Nullable private String architecture;
+  private static class TestPlatformConfiguration implements PlatformConfiguration {
+    private final String os;
+    private final String architecture;
 
-    PlatformParametersTest(String architecture, String os) {
+    TestPlatformConfiguration(@Nullable String architecture, @Nullable String os) {
       this.architecture = architecture;
       this.os = os;
     }
@@ -134,7 +133,7 @@ public class PluginConfigurationProcessorTest {
     Mockito.when(rawConfiguration.getEntrypoint()).thenReturn(Optional.empty());
     Mockito.when(rawConfiguration.getAppRoot()).thenReturn("/app");
     Mockito.<List<? extends PlatformConfiguration>>when(rawConfiguration.getPlatforms())
-        .thenReturn(Arrays.asList(new PlatformParametersTest("amd64", "linux")));
+        .thenReturn(Arrays.asList(new TestPlatformConfiguration("amd64", "linux")));
     Mockito.when(rawConfiguration.getFilesModificationTime()).thenReturn("EPOCH_PLUS_SECOND");
     Mockito.when(rawConfiguration.getCreationTime()).thenReturn("EPOCH");
     Mockito.when(rawConfiguration.getContainerizingMode()).thenReturn("exploded");
@@ -876,9 +875,9 @@ public class PluginConfigurationProcessorTest {
   }
 
   @Test
-  public void testGetValidPlatformsList() throws InvalidPlatformConfigurationException {
+  public void testGetValidPlatformsSet() throws InvalidPlatformConfigurationException {
     Mockito.<List<? extends PlatformConfiguration>>when(rawConfiguration.getPlatforms())
-        .thenReturn(Arrays.asList(new PlatformParametersTest("testArchitecture", "testOs")));
+        .thenReturn(Arrays.asList(new TestPlatformConfiguration("testArchitecture", "testOs")));
 
     Assert.assertEquals(
         ImmutableSet.of(new Platform("testArchitecture", "testOs")),
@@ -886,8 +885,9 @@ public class PluginConfigurationProcessorTest {
   }
 
   @Test
-  public void testInvalidPlatformsList() throws InvalidPlatformConfigurationException {
-    PlatformParametersTest platform = new PlatformParametersTest(null, "testOs");
+  public void testGetPlatformsSet_architectureMissing()
+      throws InvalidPlatformConfigurationException {
+    TestPlatformConfiguration platform = new TestPlatformConfiguration(null, "testOs");
     Mockito.<List<? extends PlatformConfiguration>>when(rawConfiguration.getPlatforms())
         .thenReturn(Arrays.asList(platform));
 
@@ -895,8 +895,34 @@ public class PluginConfigurationProcessorTest {
       PluginConfigurationProcessor.getPlatformsSet(rawConfiguration);
       Assert.fail();
     } catch (InvalidPlatformConfigurationException ex) {
-      Assert.assertEquals(platform.toString(), ex.getMessage());
-      Assert.assertEquals(platform.toString(), ex.getInvalidPlatform());
+      String message =
+          "architecture="
+              + platform.getArchitectureName().orElse("<missing>")
+              + ", os="
+              + platform.getOsName().orElse("<missing>");
+      Assert.assertEquals(
+          "platform configuration is missing an architecture value", ex.getMessage());
+      Assert.assertEquals(message, ex.getInvalidPlatform());
+    }
+  }
+
+  @Test
+  public void testGetPlatformsSet_osMissing() throws InvalidPlatformConfigurationException {
+    TestPlatformConfiguration platform = new TestPlatformConfiguration("testArchitecture", null);
+    Mockito.<List<? extends PlatformConfiguration>>when(rawConfiguration.getPlatforms())
+        .thenReturn(Arrays.asList(platform));
+
+    try {
+      PluginConfigurationProcessor.getPlatformsSet(rawConfiguration);
+      Assert.fail();
+    } catch (InvalidPlatformConfigurationException ex) {
+      String message =
+          "architecture="
+              + platform.getArchitectureName().orElse("<missing>")
+              + ", os="
+              + platform.getOsName().orElse("<missing>");
+      Assert.assertEquals("platform configuration is missing an os value", ex.getMessage());
+      Assert.assertEquals(message, ex.getInvalidPlatform());
     }
   }
 

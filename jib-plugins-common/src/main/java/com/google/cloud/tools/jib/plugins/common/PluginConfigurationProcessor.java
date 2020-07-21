@@ -96,8 +96,8 @@ public class PluginConfigurationProcessor {
    * @throws IOException if an error occurs creating the container builder
    * @throws InvalidWorkingDirectoryException if the working directory specified for the build is
    *     invalid
-   * @throws InvalidPlatformConfigurationException if there exists a plaformConfiguration with a
-   *     null architectureName or osName
+   * @throws InvalidPlatformConfigurationException if there exists a platformConfiguration in the
+   *     specified platforms list that is missing required fields or has invalid values
    * @throws InvalidContainerVolumeException if a specific container volume is invalid
    * @throws IncompatibleBaseImageJavaVersionException if the base image java version cannot support
    *     this build
@@ -163,8 +163,8 @@ public class PluginConfigurationProcessor {
    * @throws IOException if an error occurs creating the container builder
    * @throws InvalidWorkingDirectoryException if the working directory specified for the build is
    *     invalid
-   * @throws InvalidPlatformConfigurationException if there exists a plaformConfiguration with a
-   *     null architectureName or osName
+   * @throws InvalidPlatformConfigurationException if there exists a platformConfiguration in the
+   *     specified platforms list that is missing required fields or has invalid values
    * @throws InvalidContainerVolumeException if a specific container volume is invalid
    * @throws IncompatibleBaseImageJavaVersionException if the base image java version cannot support
    *     this build
@@ -225,8 +225,8 @@ public class PluginConfigurationProcessor {
    * @throws IOException if an error occurs creating the container builder
    * @throws InvalidWorkingDirectoryException if the working directory specified for the build is
    *     invalid
-   * @throws InvalidPlatformConfigurationException if there exists a plaformConfiguration with a
-   *     null architectureName or osName
+   * @throws InvalidPlatformConfigurationException if there exists a platformConfiguration in the
+   *     specified platforms list that is missing required fields or has invalid values
    * @throws InvalidContainerVolumeException if a specific container volume is invalid
    * @throws IncompatibleBaseImageJavaVersionException if the base image java version cannot support
    *     this build
@@ -303,8 +303,8 @@ public class PluginConfigurationProcessor {
    * @throws IOException if an error occurs creating the container builder
    * @throws InvalidWorkingDirectoryException if the working directory specified for the build is
    *     invalid
-   * @throws InvalidPlatformConfigurationException if there exists a plaformConfiguration with a
-   *     null architectureName or osName
+   * @throws InvalidPlatformConfigurationException if there exists a platformConfiguration in the
+   *     specified platforms list that is missing required fields or has invalid values
    * @throws InvalidContainerVolumeException if a specific container volume is invalid
    * @throws IncompatibleBaseImageJavaVersionException if the base image java version cannot support
    *     this build
@@ -632,15 +632,34 @@ public class PluginConfigurationProcessor {
    * Parses the list of platforms to a set of {@link Platform}.
    *
    * @param rawConfiguration raw configuration data
-   * @return the set of parsed platforms.
-   * @throws InvalidPlatformConfigurationException if there exists a plaformConfiguration with a
-   *     null architectureName or osName
+   * @return the set of parsed platforms
+   * @throws InvalidPlatformConfigurationException if there exists a platformConfiguration in the
+   *     specified platforms list that is missing required fields or has invalid values
    */
   @VisibleForTesting
   static Set<Platform> getPlatformsSet(RawConfiguration rawConfiguration)
       throws InvalidPlatformConfigurationException {
     Set<Platform> platforms = new LinkedHashSet<>();
     for (PlatformConfiguration platformConfiguration : rawConfiguration.getPlatforms()) {
+
+      String platformToString =
+          "architecture="
+              + platformConfiguration.getArchitectureName().orElse("<missing>")
+              + ", os="
+              + platformConfiguration.getOsName().orElse("<missing>");
+
+      if (!platformConfiguration.getArchitectureName().isPresent()) {
+        throw new InvalidPlatformConfigurationException(
+            "platform configuration is missing an architecture value",
+            platformToString,
+            new IllegalArgumentException());
+      }
+      if (!platformConfiguration.getOsName().isPresent()) {
+        throw new InvalidPlatformConfigurationException(
+            "platform configuration is missing an os value",
+            platformToString,
+            new IllegalArgumentException());
+      }
       try {
         Platform platform =
             new Platform(
@@ -649,7 +668,7 @@ public class PluginConfigurationProcessor {
         platforms.add(platform);
       } catch (NoSuchElementException exception) {
         throw new InvalidPlatformConfigurationException(
-            platformConfiguration.toString(), platformConfiguration.toString(), exception);
+            "platform configuration contains invalid values", platformToString, exception);
       }
     }
     return platforms;

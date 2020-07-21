@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Google LLC.
+ * Copyright 2020 Google LLC.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,11 +18,11 @@ package com.google.cloud.tools.jib.plugins.common;
 
 /**
  * Indicates that the {@code container.platforms} config value has at least one invalid platform.
- * (The platform misses either an architecture value or os value or both).
+ * (For example, a platform misses a required field or has an invalid value.).
  */
 public class InvalidPlatformConfigurationException extends Exception {
 
-  private String platform;
+  private final String platform;
 
   InvalidPlatformConfigurationException(String message, String platform, Throwable cause) {
     super(message, cause);
