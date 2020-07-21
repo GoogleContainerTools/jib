@@ -24,6 +24,7 @@ import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import org.hamcrest.CoreMatchers;
+import org.hamcrest.MatcherAssert;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -77,7 +78,7 @@ public class DockerCredentialHelperIntegrationTest {
       Assert.fail("Retrieve should have failed for nonexistent server URL");
 
     } catch (CredentialHelperUnhandledServerUrlException ex) {
-      Assert.assertThat(
+      MatcherAssert.assertThat(
           ex.getMessage(),
           CoreMatchers.containsString(
               "The credential helper (docker-credential-gcr) has nothing for server URL: fake.server.url"));

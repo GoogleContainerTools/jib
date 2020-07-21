@@ -30,6 +30,7 @@ import java.util.regex.Pattern;
 import org.apache.maven.it.VerificationException;
 import org.apache.maven.it.Verifier;
 import org.hamcrest.CoreMatchers;
+import org.hamcrest.MatcherAssert;
 import org.junit.Assert;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -62,7 +63,7 @@ public class InitMojoTest {
     verifier.verifyErrorFreeLog();
     Path logFile = Paths.get(verifier.getBasedir()).resolve(verifier.getLogFileName());
     String output = String.join("\n", Files.readAllLines(logFile, StandardCharsets.UTF_8)).trim();
-    Assert.assertThat(output, CoreMatchers.startsWith("BEGIN JIB JSON"));
+    MatcherAssert.assertThat(output, CoreMatchers.startsWith("BEGIN JIB JSON"));
 
     Pattern pattern = Pattern.compile("BEGIN JIB JSON\r?\n(\\{.*})");
     Matcher matcher = pattern.matcher(output);

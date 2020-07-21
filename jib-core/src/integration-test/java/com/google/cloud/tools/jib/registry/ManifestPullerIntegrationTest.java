@@ -25,6 +25,7 @@ import com.google.cloud.tools.jib.image.json.V22ManifestListTemplate;
 import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
 import java.io.IOException;
 import org.hamcrest.CoreMatchers;
+import org.hamcrest.MatcherAssert;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
@@ -87,7 +88,7 @@ public class ManifestPullerIntegrationTest {
     // Generic call to 11-jre-slim should NOT pull a manifest list (delegate to registry default)
     ManifestTemplate manifestTemplate = registryClient.pullManifest("11-jre-slim").getManifest();
     Assert.assertEquals(2, manifestTemplate.getSchemaVersion());
-    Assert.assertThat(manifestTemplate, CoreMatchers.instanceOf(V22ManifestTemplate.class));
+    MatcherAssert.assertThat(manifestTemplate, CoreMatchers.instanceOf(V22ManifestTemplate.class));
 
     // Make sure we can't cast a v22ManifestTemplate to v22ManifestListTemplate in ManifestPuller
     try {
@@ -101,7 +102,8 @@ public class ManifestPullerIntegrationTest {
     ManifestTemplate sha256ManifestList =
         registryClient.pullManifest(KNOWN_MANIFEST_LIST_SHA).getManifest();
     Assert.assertEquals(2, sha256ManifestList.getSchemaVersion());
-    Assert.assertThat(sha256ManifestList, CoreMatchers.instanceOf(V22ManifestListTemplate.class));
+    MatcherAssert.assertThat(
+        sha256ManifestList, CoreMatchers.instanceOf(V22ManifestListTemplate.class));
     Assert.assertTrue(((V22ManifestListTemplate) sha256ManifestList).getManifests().size() > 0);
   }
 
@@ -115,7 +117,7 @@ public class ManifestPullerIntegrationTest {
       Assert.fail("Trying to pull nonexistent image should have errored");
 
     } catch (RegistryErrorException ex) {
-      Assert.assertThat(
+      MatcherAssert.assertThat(
           ex.getMessage(),
           CoreMatchers.containsString(
               "pull image manifest for localhost:5000/busybox:nonexistent-tag"));

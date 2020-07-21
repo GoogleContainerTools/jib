@@ -21,6 +21,7 @@ import com.google.cloud.tools.jib.api.buildplan.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.api.buildplan.FileEntriesLayer;
 import com.google.cloud.tools.jib.event.events.ProgressEvent;
 import com.google.cloud.tools.jib.event.progress.ProgressEventHandler;
+import com.google.cloud.tools.jib.global.JibSystemProperties;
 import com.google.cloud.tools.jib.registry.LocalRegistry;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
@@ -37,11 +38,13 @@ import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Stream;
 import org.hamcrest.CoreMatchers;
+import org.hamcrest.MatcherAssert;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.contrib.java.lang.system.RestoreSystemProperties;
 import org.junit.rules.TemporaryFolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -49,6 +52,8 @@ import org.slf4j.LoggerFactory;
 // TODO: now it looks like we can move everything here into JibIntegrationTest.
 /** Integration tests for {@link Containerizer}. */
 public class ContainerizerIntegrationTest {
+
+  @Rule public final RestoreSystemProperties systemPropertyRestorer = new RestoreSystemProperties();
 
   /**
    * Helper class to hold a {@link ProgressEventHandler} and verify that it handles a full progress.
@@ -109,7 +114,7 @@ public class ContainerizerIntegrationTest {
   private static void assertDockerInspect(String imageReference)
       throws IOException, InterruptedException {
     String dockerContainerConfig = new Command("docker", "inspect", imageReference).run();
-    Assert.assertThat(
+    MatcherAssert.assertThat(
         dockerContainerConfig,
         CoreMatchers.containsString(
             "            \"ExposedPorts\": {\n"
@@ -118,7 +123,7 @@ public class ContainerizerIntegrationTest {
                 + "                \"2001/tcp\": {},\n"
                 + "                \"2002/tcp\": {},\n"
                 + "                \"3000/udp\": {}"));
-    Assert.assertThat(
+    MatcherAssert.assertThat(
         dockerContainerConfig,
         CoreMatchers.containsString(
             "            \"Labels\": {\n"
@@ -127,11 +132,11 @@ public class ContainerizerIntegrationTest {
                 + "            }"));
     String dockerConfigEnv =
         new Command("docker", "inspect", "-f", "{{.Config.Env}}", imageReference).run();
-    Assert.assertThat(dockerConfigEnv, CoreMatchers.containsString("env1=envvalue1"));
-    Assert.assertThat(dockerConfigEnv, CoreMatchers.containsString("env2=envvalue2"));
+    MatcherAssert.assertThat(dockerConfigEnv, CoreMatchers.containsString("env1=envvalue1"));
+    MatcherAssert.assertThat(dockerConfigEnv, CoreMatchers.containsString("env2=envvalue2"));
     String history = new Command("docker", "history", imageReference).run();
-    Assert.assertThat(history, CoreMatchers.containsString("jib-integration-test"));
-    Assert.assertThat(history, CoreMatchers.containsString("bazel build ..."));
+    MatcherAssert.assertThat(history, CoreMatchers.containsString("jib-integration-test"));
+    MatcherAssert.assertThat(history, CoreMatchers.containsString("bazel build ..."));
   }
 
   private static void assertLayerSize(int expected, String imageReference)
@@ -218,7 +223,52 @@ public class ContainerizerIntegrationTest {
   }
 
   @Test
-  public void tesBuildToDockerRegistry_dockerHubBaseImage()
+  public void testSteps_forBuildToDockerRegistry_skipExistingDigest()
+      throws IOException, InterruptedException, ExecutionException, RegistryException,
+          CacheDirectoryCreationException {
+    System.setProperty(JibSystemProperties.SKIP_EXISTING_IMAGES, "true");
+
+    JibContainer image1 =
+        buildRegistryImage(
+            ImageReference.scratch(),
+            ImageReference.of("localhost:5000", "testimagerepo", "testtag"),
+            Collections.singletonList("testtag2"));
+
+    // Test that the initial image with the original tag has been pushed.
+    String imageReference = "localhost:5000/testimagerepo:testtag";
+    localRegistry.pull(imageReference);
+
+    // Test that any additional tags have also been pushed with the original image.
+    String imageReference2 = "localhost:5000/testimagerepo:testtag2";
+    localRegistry.pull(imageReference2);
+
+    // Push the same image with a different tag, with SKIP_EXISTING_IMAGES enabled.
+    JibContainer image2 =
+        buildRegistryImage(
+            ImageReference.scratch(),
+            ImageReference.of("localhost:5000", "testimagerepo", "new_testtag"),
+            Collections.emptyList());
+
+    // Test that the pull request throws an exception, indicating that the new tag was not pushed.
+    try {
+      localRegistry.pull("localhost:5000/testimagerepo:new_testtag");
+      Assert.fail(
+          "jib.skipExistingImages was enabled and digest was already pushed, "
+              + "hence new_testtag shouldn't have been pushed.");
+    } catch (RuntimeException ex) {
+      MatcherAssert.assertThat(
+          ex.getMessage(),
+          CoreMatchers.containsString(
+              "manifest for localhost:5000/testimagerepo:new_testtag not found"));
+    }
+
+    // Test that both images have the same properties.
+    Assert.assertEquals(image1.getDigest(), image2.getDigest());
+    Assert.assertEquals(image1.getImageId(), image2.getImageId());
+  }
+
+  @Test
+  public void testBuildToDockerRegistry_dockerHubBaseImage()
       throws InvalidImageReferenceException, IOException, InterruptedException, ExecutionException,
           RegistryException, CacheDirectoryCreationException {
     buildRegistryImage(

@@ -22,6 +22,7 @@ import com.google.cloud.tools.jib.api.buildplan.FileEntriesLayer;
 import com.google.cloud.tools.jib.api.buildplan.FileEntry;
 import com.google.cloud.tools.jib.api.buildplan.FilePermissions;
 import com.google.cloud.tools.jib.api.buildplan.ImageFormat;
+import com.google.cloud.tools.jib.api.buildplan.Platform;
 import com.google.cloud.tools.jib.api.buildplan.Port;
 import com.google.cloud.tools.jib.configuration.BuildContext;
 import com.google.cloud.tools.jib.configuration.ContainerConfiguration;
@@ -40,6 +41,7 @@ import java.util.Collections;
 import java.util.concurrent.ExecutorService;
 import java.util.function.Consumer;
 import org.hamcrest.CoreMatchers;
+import org.hamcrest.MatcherAssert;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -66,6 +68,7 @@ public class JibContainerBuilderTest {
         ImageConfiguration.builder(ImageReference.parse("base/image")).build();
     JibContainerBuilder jibContainerBuilder =
         new JibContainerBuilder(imageConfiguration, spyBuildContextBuilder)
+            .setPlatforms(ImmutableSet.of(new Platform("testArchitecture", "testOS")))
             .setEntrypoint(Arrays.asList("entry", "point"))
             .setEnvironment(ImmutableMap.of("name", "value"))
             .setExposedPorts(ImmutableSet.of(Port.tcp(1234), Port.udp(5678)))
@@ -78,6 +81,9 @@ public class JibContainerBuilderTest {
     BuildContext buildContext =
         jibContainerBuilder.toBuildContext(Containerizer.to(RegistryImage.named("target/image")));
     ContainerConfiguration containerConfiguration = buildContext.getContainerConfiguration();
+    Assert.assertEquals(
+        ImmutableSet.of(new Platform("testArchitecture", "testOS")),
+        containerConfiguration.getPlatforms());
     Assert.assertEquals(Arrays.asList("entry", "point"), containerConfiguration.getEntrypoint());
     Assert.assertEquals(
         ImmutableMap.of("name", "value"), containerConfiguration.getEnvironmentMap());
@@ -99,6 +105,7 @@ public class JibContainerBuilderTest {
         ImageConfiguration.builder(ImageReference.parse("base/image")).build();
     JibContainerBuilder jibContainerBuilder =
         new JibContainerBuilder(imageConfiguration, spyBuildContextBuilder)
+            .addPlatform("testArchitecture", "testOS")
             .setEntrypoint("entry", "point")
             .setEnvironment(ImmutableMap.of("name", "value"))
             .addEnvironmentVariable("environment", "variable")
@@ -111,6 +118,9 @@ public class JibContainerBuilderTest {
     BuildContext buildContext =
         jibContainerBuilder.toBuildContext(Containerizer.to(RegistryImage.named("target/image")));
     ContainerConfiguration containerConfiguration = buildContext.getContainerConfiguration();
+    Assert.assertEquals(
+        ImmutableSet.of(new Platform("testArchitecture", "testOS"), new Platform("amd64", "linux")),
+        containerConfiguration.getPlatforms());
     Assert.assertEquals(Arrays.asList("entry", "point"), containerConfiguration.getEntrypoint());
     Assert.assertEquals(
         ImmutableMap.of("name", "value", "environment", "variable"),
@@ -221,8 +231,7 @@ public class JibContainerBuilderTest {
 
     ContainerBuildPlan buildPlan = containerBuilder.toContainerBuildPlan();
     Assert.assertEquals("base/image", buildPlan.getBaseImage());
-    Assert.assertEquals("amd64", buildPlan.getArchitectureHint());
-    Assert.assertEquals("linux", buildPlan.getOsHint());
+    Assert.assertEquals(ImmutableSet.of(new Platform("amd64", "linux")), buildPlan.getPlatforms());
     Assert.assertEquals(Instant.EPOCH, buildPlan.getCreationTime());
     Assert.assertEquals(ImageFormat.Docker, buildPlan.getFormat());
     Assert.assertEquals(Collections.emptyMap(), buildPlan.getEnvironment());
@@ -242,6 +251,7 @@ public class JibContainerBuilderTest {
         ImageConfiguration.builder(ImageReference.parse("base/image")).build();
     JibContainerBuilder containerBuilder =
         new JibContainerBuilder(imageConfiguration, spyBuildContextBuilder)
+            .setPlatforms(ImmutableSet.of(new Platform("testArchitecture", "testOS")))
             .setCreationTime(Instant.ofEpochMilli(1000))
             .setFormat(ImageFormat.OCI)
             .setEnvironment(ImmutableMap.of("env", "var"))
@@ -256,8 +266,8 @@ public class JibContainerBuilderTest {
 
     ContainerBuildPlan buildPlan = containerBuilder.toContainerBuildPlan();
     Assert.assertEquals("base/image", buildPlan.getBaseImage());
-    Assert.assertEquals("amd64", buildPlan.getArchitectureHint());
-    Assert.assertEquals("linux", buildPlan.getOsHint());
+    Assert.assertEquals(
+        ImmutableSet.of(new Platform("testArchitecture", "testOS")), buildPlan.getPlatforms());
     Assert.assertEquals(Instant.ofEpochMilli(1000), buildPlan.getCreationTime());
     Assert.assertEquals(ImageFormat.OCI, buildPlan.getFormat());
     Assert.assertEquals(ImmutableMap.of("env", "var"), buildPlan.getEnvironment());
@@ -274,7 +284,7 @@ public class JibContainerBuilderTest {
     Assert.assertEquals(Arrays.asList("program", "arguments"), buildPlan.getCmd());
 
     Assert.assertEquals(1, buildPlan.getLayers().size());
-    Assert.assertThat(
+    MatcherAssert.assertThat(
         buildPlan.getLayers().get(0), CoreMatchers.instanceOf(FileEntriesLayer.class));
     Assert.assertEquals(
         Arrays.asList(
@@ -296,8 +306,7 @@ public class JibContainerBuilderTest {
     ContainerBuildPlan buildPlan =
         ContainerBuildPlan.builder()
             .setBaseImage("some/base")
-            .setArchitectureHint("arch")
-            .setOsHint("os")
+            .setPlatforms(ImmutableSet.of(new Platform("testArchitecture", "testOS")))
             .setFormat(ImageFormat.OCI)
             .setCreationTime(Instant.ofEpochMilli(30))
             .setEnvironment(ImmutableMap.of("env", "var"))
@@ -350,7 +359,7 @@ public class JibContainerBuilderTest {
     Assert.assertEquals(Arrays.asList("bar", "cmd"), containerConfiguration.getProgramArguments());
 
     ContainerBuildPlan convertedPlan = containerBuilder.toContainerBuildPlan();
-    Assert.assertEquals("arch", convertedPlan.getArchitectureHint());
-    Assert.assertEquals("os", convertedPlan.getOsHint());
+    Assert.assertEquals(
+        ImmutableSet.of(new Platform("testArchitecture", "testOS")), convertedPlan.getPlatforms());
   }
 }

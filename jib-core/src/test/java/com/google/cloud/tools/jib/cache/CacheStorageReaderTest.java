@@ -35,6 +35,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Optional;
 import org.hamcrest.CoreMatchers;
+import org.hamcrest.MatcherAssert;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
@@ -103,9 +104,9 @@ public class CacheStorageReaderTest {
       Assert.fail("Listing digests should have failed");
 
     } catch (CacheCorruptedException ex) {
-      Assert.assertThat(
+      MatcherAssert.assertThat(
           ex.getMessage(), CoreMatchers.startsWith("Found non-digest file in layers directory"));
-      Assert.assertThat(ex.getCause(), CoreMatchers.instanceOf(DigestException.class));
+      MatcherAssert.assertThat(ex.getCause(), CoreMatchers.instanceOf(DigestException.class));
     }
   }
 
@@ -195,7 +196,7 @@ public class CacheStorageReaderTest {
       Assert.fail("Should have thrown CacheCorruptedException");
 
     } catch (CacheCorruptedException ex) {
-      Assert.assertThat(
+      MatcherAssert.assertThat(
           ex.getMessage(),
           CoreMatchers.startsWith(
               "No or multiple layer files found for layer hash "
@@ -238,7 +239,7 @@ public class CacheStorageReaderTest {
       Assert.fail("Should have thrown CacheCorruptedException");
 
     } catch (CacheCorruptedException ex) {
-      Assert.assertThat(
+      MatcherAssert.assertThat(
           ex.getMessage(),
           CoreMatchers.startsWith(
               "No or multiple layer files found for layer hash "
@@ -294,7 +295,7 @@ public class CacheStorageReaderTest {
       Assert.fail("Should have thrown CacheCorruptedException");
 
     } catch (CacheCorruptedException ex) {
-      Assert.assertThat(
+      MatcherAssert.assertThat(
           ex.getMessage(),
           CoreMatchers.startsWith(
               "Expected valid layer digest as contents of selector file `"

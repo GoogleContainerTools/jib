@@ -45,6 +45,7 @@ import javax.net.ssl.SSLException;
 import javax.net.ssl.SSLPeerUnverifiedException;
 import org.apache.http.NoHttpResponseException;
 import org.hamcrest.CoreMatchers;
+import org.hamcrest.MatcherAssert;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
@@ -435,6 +436,24 @@ public class RegistryEndpointCallerTest {
         registryException.getMessage());
   }
 
+  @Test
+  public void testNewRegistryErrorException_noOutputFromRegistry() {
+    ResponseException httpException = Mockito.mock(ResponseException.class);
+    // Registry returning null error output
+    Mockito.when(httpException.getContent()).thenReturn(null);
+    Mockito.when(httpException.getStatusCode()).thenReturn(404);
+
+    RegistryErrorException registryException =
+        endpointCaller.newRegistryErrorException(httpException);
+    Assert.assertSame(httpException, registryException.getCause());
+    Assert.assertEquals(
+        "Tried to actionDescription but failed because: registry returned error code 404 "
+            + "but did not return any details; possible causes include invalid or wrong reference, or proxy/firewall/VPN interfering \n"
+            + " | If this is a bug, please file an issue at "
+            + "https://github.com/GoogleContainerTools/jib/issues/new",
+        registryException.getMessage());
+  }
+
   /**
    * Verifies that a response with {@code httpStatusCode} throws {@link
    * RegistryUnauthorizedException}.
@@ -470,7 +489,7 @@ public class RegistryEndpointCallerTest {
       Assert.fail("Call should have failed");
 
     } catch (RegistryErrorException ex) {
-      Assert.assertThat(
+      MatcherAssert.assertThat(
           ex.getMessage(),
           CoreMatchers.startsWith(
               "Tried to actionDescription but failed because: unknown error code: code (message)"));

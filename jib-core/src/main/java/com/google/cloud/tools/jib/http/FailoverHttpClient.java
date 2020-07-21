@@ -39,6 +39,7 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 import javax.net.ssl.SSLException;
 import org.apache.http.conn.ssl.NoopHostnameVerifier;
+import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.apache.http.impl.client.HttpClientBuilder;
 
 /**
@@ -97,7 +98,12 @@ public class FailoverHttpClient {
     //
     // A new ApacheHttpTransport needs to be created for each connection because otherwise HTTP
     // connection persistence causes the connection to throw NoHttpResponseException.
-    return new ApacheHttpTransport();
+    HttpClientBuilder httpClientBuilder =
+        ApacheHttpTransport.newDefaultHttpClientBuilder()
+            // using "system socket factory" to enable sending client certificate
+            // https://github.com/GoogleContainerTools/jib/issues/2585
+            .setSSLSocketFactory(SSLConnectionSocketFactory.getSystemSocketFactory());
+    return new ApacheHttpTransport(httpClientBuilder.build());
   }
 
   private static HttpTransport getInsecureHttpTransport() {

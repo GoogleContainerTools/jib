@@ -38,6 +38,7 @@ import javax.annotation.Nullable;
 import org.apache.maven.it.VerificationException;
 import org.apache.maven.it.Verifier;
 import org.hamcrest.CoreMatchers;
+import org.hamcrest.MatcherAssert;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Assume;
@@ -260,7 +261,7 @@ public class BuildImageMojoIntegrationTest {
   private static void assertDockerInspectParameters(String imageReference)
       throws IOException, InterruptedException {
     String dockerInspect = new Command("docker", "inspect", imageReference).run();
-    Assert.assertThat(
+    MatcherAssert.assertThat(
         dockerInspect,
         CoreMatchers.containsString(
             "            \"ExposedPorts\": {\n"
@@ -269,7 +270,7 @@ public class BuildImageMojoIntegrationTest {
                 + "                \"2001/udp\": {},\n"
                 + "                \"2002/udp\": {},\n"
                 + "                \"2003/udp\": {}"));
-    Assert.assertThat(
+    MatcherAssert.assertThat(
         dockerInspect,
         CoreMatchers.containsString(
             "            \"Labels\": {\n"
@@ -277,7 +278,7 @@ public class BuildImageMojoIntegrationTest {
                 + "                \"key2\": \"value2\"\n"
                 + "            }"));
     String history = new Command("docker", "history", imageReference).run();
-    Assert.assertThat(history, CoreMatchers.containsString("jib-maven-plugin"));
+    MatcherAssert.assertThat(history, CoreMatchers.containsString("jib-maven-plugin"));
   }
 
   private static float getBuildTimeFromVerifierLog(Verifier verifier) throws IOException {
@@ -377,7 +378,7 @@ public class BuildImageMojoIntegrationTest {
       Assert.fail();
 
     } catch (VerificationException ex) {
-      Assert.assertThat(
+      MatcherAssert.assertThat(
           ex.getMessage(),
           CoreMatchers.containsString(
               "Obtaining project build output files failed; make sure you have compiled your "
@@ -409,7 +410,7 @@ public class BuildImageMojoIntegrationTest {
 
     assertCreationTimeEpoch(targetImage);
     assertWorkingDirectory("/home", targetImage);
-    assertLayerSize(8, targetImage);
+    assertLayerSize(9, targetImage);
   }
 
   @Test
@@ -460,7 +461,7 @@ public class BuildImageMojoIntegrationTest {
       Assert.fail();
 
     } catch (VerificationException ex) {
-      Assert.assertThat(
+      MatcherAssert.assertThat(
           ex.getMessage(),
           CoreMatchers.containsString("Cannot build to a container registry in offline mode"));
     }
@@ -487,7 +488,7 @@ public class BuildImageMojoIntegrationTest {
           simpleTestProject.getProjectRoot(), "willnotbuild", "pom-java11-incompatible.xml", false);
       Assert.fail();
     } catch (VerificationException ex) {
-      Assert.assertThat(
+      MatcherAssert.assertThat(
           ex.getMessage(),
           CoreMatchers.containsString(
               "Your project is using Java 11 but the base image is for Java 8, perhaps you should "
@@ -526,7 +527,7 @@ public class BuildImageMojoIntegrationTest {
         "Hello, world. An argument.\n1970-01-01T00:00:01Z\nrw-r--r--\nrw-r--r--\nfoo\ncat\n"
             + "1970-01-01T00:00:01Z\n1970-01-01T00:00:01Z\nbaz\n1970-01-01T00:00:01Z\n",
         buildAndRun(simpleTestProject.getProjectRoot(), targetImage, "pom-extra-dirs.xml", false));
-    assertLayerSize(9, targetImage); // one more than usual
+    assertLayerSize(10, targetImage); // one more than usual
   }
 
   @Test
@@ -539,7 +540,7 @@ public class BuildImageMojoIntegrationTest {
       Assert.fail();
 
     } catch (VerificationException ex) {
-      Assert.assertThat(
+      MatcherAssert.assertThat(
           ex.getMessage(),
           CoreMatchers.containsString(
               "Missing target image parameter, perhaps you should add a <to><image> configuration "
@@ -662,7 +663,7 @@ public class BuildImageMojoIntegrationTest {
       verifier.executeGoals(Arrays.asList("package", "jib:build"));
       Assert.fail();
     } catch (VerificationException ex) {
-      Assert.assertThat(
+      MatcherAssert.assertThat(
           ex.getMessage(), CoreMatchers.containsString("but is required to be [,1.0]"));
     }
   }
@@ -695,7 +696,7 @@ public class BuildImageMojoIntegrationTest {
                 "-c",
                 "/app/classpath/spring-boot-0.1.0.original.jar")
             .run();
-    Assert.assertThat(
+    MatcherAssert.assertThat(
         sizeOutput, CoreMatchers.containsString(" /app/classpath/spring-boot-0.1.0.original.jar"));
     int fileSize = Integer.parseInt(sizeOutput.substring(0, sizeOutput.indexOf(' ')));
     Assert.assertTrue(fileSize < 3000); // should not be a large fat jar

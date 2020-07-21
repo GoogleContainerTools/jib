@@ -15,6 +15,7 @@ dependencies {
 }
 
 jib {
+  from.image = 'gcr.io/distroless/java@sha256:2315ed1472a09826c1f31ab93ff13ceaa3a4e7d5482f357d15a296b3db0d1c96'
   to {
     image = System.getProperty("_TARGET_IMAGE")
     credHelper = 'gcr'

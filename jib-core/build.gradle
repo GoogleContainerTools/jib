@@ -19,6 +19,8 @@ dependencies {
   testImplementation "org.mockito:mockito-core:${dependencyVersions.MOCKITO_CORE}"
   testImplementation "org.slf4j:slf4j-api:${dependencyVersions.SLF4J_API}"
   testImplementation "com.github.stefanbirkner:system-rules:${dependencyVersions.SYSTEM_RULES}"
+
+  integrationTestImplementation "org.mindrot:jbcrypt:${dependencyVersions.JBCRYPT}"
 }
 
 jar {

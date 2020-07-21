@@ -5,6 +5,25 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- Also tries `.exe` file extension for credential helpers on Windows. ([#2527](https://github.com/GoogleContainerTools/jib/issues/2527))
+- New system property `jib.skipExistingImages` (false by default) to skip pushing images (manifests) if the image already exists in the registry. ([#2360](https://github.com/GoogleContainerTools/jib/issues/2360)
+
+### Changed
+
+### Fixed
+
+- Fixed reporting a wrong credential helper name when the helper does not exist on Windows. ([#2527](https://github.com/GoogleContainerTools/jib/issues/2527))
+- Fixed `NullPointerException` when the `"auths":` section in `~/.docker/config.json` has an entry with no `"auth":` field. ([#2535](https://github.com/GoogleContainerTools/jib/issues/2535))
+- Fixed `NullPointerException` to return a helpful message when a server does not provide any message in certain error cases (400 Bad Request, 404 Not Found, and 405 Method Not Allowed). ([#2532](https://github.com/GoogleContainerTools/jib/issues/2532))
+- Now supports sending client certificate (for example, via the `javax.net.ssl.keyStore` and `javax.net.ssl.keyStorePassword` system properties) and thus enabling mutual TLS authentication. ([#2585](https://github.com/GoogleContainerTools/jib/issues/2585), [#2226](https://github.com/GoogleContainerTools/jib/issues/2226))
+
+## 2.4.0
+
+### Added
+
+- Jib Extension Framework! The framework enables anyone to easily extend and tailor the Jib Gradle plugin behavior to their liking. Check out the new [Jib Extensions](https://github.com/GoogleContainerTools/jib-extensions) GitHub repository to learn more. ([#2401](https://github.com/GoogleContainerTools/jib/issues/2401))
+- Project dependencies in a multi-module WAR project are now stored in a separate "project dependencies" layer (as currently done for a non-WAR project). ([#2450](https://github.com/GoogleContainerTools/jib/issues/2450))
+
 ### Changed
 
 - Previous locally cached application layers (`<project root>/target/jib-cache`) will be ignored because of changes to the caching selectors. ([#2499](https://github.com/GoogleContainerTools/jib/pull/2499))
@@ -33,6 +52,7 @@ All notable changes to this project will be documented in this file.
 - Glob pattern support for `jib.extraDirectories.permissions`. ([#1200](https://github.com/GoogleContainerTools/jib/issues/1200))
 - Support for image references with both a tag and a digest. ([#1481](https://github.com/GoogleContainerTools/jib/issues/1481))
 - The `DOCKER_CONFIG` environment variable specifying the directory containing docker configs is now checked during credential retrieval. ([#1618](https://github.com/GoogleContainerTools/jib/issues/1618))
+- Also tries `.cmd` file extension for credential helpers on Windows. ([#2399](https://github.com/GoogleContainerTools/jib/issues/2399))
 
 ### Changed
 

@@ -17,9 +17,12 @@
 package com.google.cloud.tools.jib.configuration;
 
 import com.google.cloud.tools.jib.api.buildplan.AbsoluteUnixPath;
+import com.google.cloud.tools.jib.api.buildplan.Platform;
 import com.google.cloud.tools.jib.api.buildplan.Port;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Hashtable;
@@ -37,7 +40,7 @@ public class ContainerConfigurationTest {
     // Java arguments element should not be null.
     try {
       ContainerConfiguration.builder().setProgramArguments(Arrays.asList("first", null));
-      Assert.fail("The IllegalArgumentException should be thrown.");
+      Assert.fail();
     } catch (IllegalArgumentException ex) {
       Assert.assertEquals("program arguments list contains null elements", ex.getMessage());
     }
@@ -45,7 +48,7 @@ public class ContainerConfigurationTest {
     // Entrypoint element should not be null.
     try {
       ContainerConfiguration.builder().setEntrypoint(Arrays.asList("first", null));
-      Assert.fail("The IllegalArgumentException should be thrown.");
+      Assert.fail();
     } catch (IllegalArgumentException ex) {
       Assert.assertEquals("entrypoint contains null elements", ex.getMessage());
     }
@@ -54,7 +57,7 @@ public class ContainerConfigurationTest {
     Set<Port> badPorts = new HashSet<>(Arrays.asList(Port.tcp(1000), null));
     try {
       ContainerConfiguration.builder().setExposedPorts(badPorts);
-      Assert.fail("The IllegalArgumentException should be thrown.");
+      Assert.fail();
     } catch (IllegalArgumentException ex) {
       Assert.assertEquals("ports list contains null elements", ex.getMessage());
     }
@@ -64,7 +67,7 @@ public class ContainerConfigurationTest {
         new HashSet<>(Arrays.asList(AbsoluteUnixPath.get("/"), null));
     try {
       ContainerConfiguration.builder().setVolumes(badVolumes);
-      Assert.fail("The IllegalArgumentException should be thrown.");
+      Assert.fail();
     } catch (IllegalArgumentException ex) {
       Assert.assertEquals("volumes list contains null elements", ex.getMessage());
     }
@@ -77,7 +80,7 @@ public class ContainerConfigurationTest {
     // Label keys should not be null.
     try {
       ContainerConfiguration.builder().setLabels(nullKeyMap);
-      Assert.fail("The IllegalArgumentException should be thrown.");
+      Assert.fail();
     } catch (IllegalArgumentException ex) {
       Assert.assertEquals("labels map contains null keys", ex.getMessage());
     }
@@ -85,7 +88,7 @@ public class ContainerConfigurationTest {
     // Labels values should not be null.
     try {
       ContainerConfiguration.builder().setLabels(nullValueMap);
-      Assert.fail("The IllegalArgumentException should be thrown.");
+      Assert.fail();
     } catch (IllegalArgumentException ex) {
       Assert.assertEquals("labels map contains null values", ex.getMessage());
     }
@@ -93,7 +96,7 @@ public class ContainerConfigurationTest {
     // Environment keys should not be null.
     try {
       ContainerConfiguration.builder().setEnvironment(nullKeyMap);
-      Assert.fail("The IllegalArgumentException should be thrown.");
+      Assert.fail();
     } catch (IllegalArgumentException ex) {
       Assert.assertEquals("environment map contains null keys", ex.getMessage());
     }
@@ -101,7 +104,7 @@ public class ContainerConfigurationTest {
     // Environment values should not be null.
     try {
       ContainerConfiguration.builder().setEnvironment(nullValueMap);
-      Assert.fail("The IllegalArgumentException should be thrown.");
+      Assert.fail();
     } catch (IllegalArgumentException ex) {
       Assert.assertEquals("environment map contains null values", ex.getMessage());
     }
@@ -129,5 +132,27 @@ public class ContainerConfigurationTest {
     ContainerConfiguration configuration =
         ContainerConfiguration.builder().setWorkingDirectory(AbsoluteUnixPath.get("/path")).build();
     Assert.assertEquals(AbsoluteUnixPath.get("/path"), configuration.getWorkingDirectory());
+  }
+
+  @Test
+  public void testSetPlatforms_emptySet() {
+    try {
+      ContainerConfiguration.builder().setPlatforms(Collections.emptySet()).build();
+      Assert.fail();
+    } catch (IllegalArgumentException ex) {
+      Assert.assertEquals("platforms set cannot be empty", ex.getMessage());
+    }
+  }
+
+  @Test
+  public void testAddPlatform_duplicatePlatforms() {
+    ContainerConfiguration configuration =
+        ContainerConfiguration.builder()
+            .addPlatform("testArchitecture", "testOS")
+            .addPlatform("testArchitecture", "testOS")
+            .build();
+    Assert.assertEquals(
+        ImmutableSet.of(new Platform("amd64", "linux"), new Platform("testArchitecture", "testOS")),
+        configuration.getPlatforms());
   }
 }
