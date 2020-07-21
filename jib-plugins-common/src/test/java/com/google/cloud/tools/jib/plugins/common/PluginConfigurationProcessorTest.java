@@ -108,10 +108,10 @@ public class PluginConfigurationProcessorTest {
   @Mock private Consumer<LogEvent> logger;
 
   private static class TestPlatformConfiguration implements PlatformConfiguration {
-    private final String os;
-    private final String architecture;
+    @Nullable private final String os;
+    @Nullable private final String architecture;
 
-    TestPlatformConfiguration(@Nullable String architecture, @Nullable String os) {
+    TestPlatformConfiguration(String architecture, String os) {
       this.architecture = architecture;
       this.os = os;
     }
@@ -132,7 +132,7 @@ public class PluginConfigurationProcessorTest {
     Mockito.when(rawConfiguration.getFromAuth()).thenReturn(authProperty);
     Mockito.when(rawConfiguration.getEntrypoint()).thenReturn(Optional.empty());
     Mockito.when(rawConfiguration.getAppRoot()).thenReturn("/app");
-    Mockito.<List<? extends PlatformConfiguration>>when(rawConfiguration.getPlatforms())
+    Mockito.<List<?>>when(rawConfiguration.getPlatforms())
         .thenReturn(Arrays.asList(new TestPlatformConfiguration("amd64", "linux")));
     Mockito.when(rawConfiguration.getFilesModificationTime()).thenReturn("EPOCH_PLUS_SECOND");
     Mockito.when(rawConfiguration.getCreationTime()).thenReturn("EPOCH");
@@ -154,7 +154,7 @@ public class PluginConfigurationProcessorTest {
   public void testPluginConfigurationProcessor_defaults()
       throws InvalidImageReferenceException, IOException, CacheDirectoryCreationException,
           MainClassInferenceException, InvalidAppRootException, InvalidWorkingDirectoryException,
-          InvalidPlatformConfigurationException, InvalidContainerVolumeException,
+          InvalidPlatformException, InvalidContainerVolumeException,
           IncompatibleBaseImageJavaVersionException, NumberFormatException,
           InvalidContainerizingModeException, InvalidFilesModificationTimeException,
           InvalidCreationTimeException {
@@ -177,7 +177,7 @@ public class PluginConfigurationProcessorTest {
   public void testPluginConfigurationProcessor_extraDirectory()
       throws URISyntaxException, InvalidContainerVolumeException, MainClassInferenceException,
           InvalidAppRootException, IOException, IncompatibleBaseImageJavaVersionException,
-          InvalidWorkingDirectoryException, InvalidPlatformConfigurationException,
+          InvalidWorkingDirectoryException, InvalidPlatformException,
           InvalidImageReferenceException, CacheDirectoryCreationException, NumberFormatException,
           InvalidContainerizingModeException, InvalidFilesModificationTimeException,
           InvalidCreationTimeException {
@@ -230,7 +230,7 @@ public class PluginConfigurationProcessorTest {
   @Test
   public void testPluginConfigurationProcessor_cacheDirectorySystemProperties()
       throws InvalidContainerVolumeException, MainClassInferenceException, InvalidAppRootException,
-          IOException, InvalidWorkingDirectoryException, InvalidPlatformConfigurationException,
+          IOException, InvalidWorkingDirectoryException, InvalidPlatformException,
           InvalidImageReferenceException, IncompatibleBaseImageJavaVersionException,
           NumberFormatException, InvalidContainerizingModeException,
           InvalidFilesModificationTimeException, InvalidCreationTimeException {
@@ -247,7 +247,7 @@ public class PluginConfigurationProcessorTest {
   public void testEntrypoint()
       throws InvalidImageReferenceException, IOException, CacheDirectoryCreationException,
           MainClassInferenceException, InvalidAppRootException, InvalidWorkingDirectoryException,
-          InvalidPlatformConfigurationException, InvalidContainerVolumeException,
+          InvalidPlatformException, InvalidContainerVolumeException,
           IncompatibleBaseImageJavaVersionException, NumberFormatException,
           InvalidContainerizingModeException, InvalidFilesModificationTimeException,
           InvalidCreationTimeException {
@@ -308,7 +308,7 @@ public class PluginConfigurationProcessorTest {
   public void testEntrypoint_defaultWarPackaging()
       throws IOException, InvalidImageReferenceException, CacheDirectoryCreationException,
           MainClassInferenceException, InvalidAppRootException, InvalidWorkingDirectoryException,
-          InvalidPlatformConfigurationException, InvalidContainerVolumeException,
+          InvalidPlatformException, InvalidContainerVolumeException,
           IncompatibleBaseImageJavaVersionException, NumberFormatException,
           InvalidContainerizingModeException, InvalidFilesModificationTimeException,
           InvalidCreationTimeException {
@@ -326,7 +326,7 @@ public class PluginConfigurationProcessorTest {
   public void testEntrypoint_defaultNonWarPackaging()
       throws IOException, InvalidImageReferenceException, CacheDirectoryCreationException,
           MainClassInferenceException, InvalidAppRootException, InvalidWorkingDirectoryException,
-          InvalidPlatformConfigurationException, InvalidContainerVolumeException,
+          InvalidPlatformException, InvalidContainerVolumeException,
           IncompatibleBaseImageJavaVersionException, NumberFormatException,
           InvalidContainerizingModeException, InvalidFilesModificationTimeException,
           InvalidCreationTimeException {
@@ -348,7 +348,7 @@ public class PluginConfigurationProcessorTest {
   public void testEntrypoint_extraClasspathNonWarPackaging()
       throws IOException, InvalidImageReferenceException, CacheDirectoryCreationException,
           MainClassInferenceException, InvalidAppRootException, InvalidWorkingDirectoryException,
-          InvalidPlatformConfigurationException, InvalidContainerVolumeException,
+          InvalidPlatformException, InvalidContainerVolumeException,
           IncompatibleBaseImageJavaVersionException, NumberFormatException,
           InvalidContainerizingModeException, InvalidFilesModificationTimeException,
           InvalidCreationTimeException {
@@ -373,7 +373,7 @@ public class PluginConfigurationProcessorTest {
   public void testUser()
       throws InvalidImageReferenceException, IOException, CacheDirectoryCreationException,
           MainClassInferenceException, InvalidAppRootException, InvalidWorkingDirectoryException,
-          InvalidPlatformConfigurationException, InvalidContainerVolumeException,
+          InvalidPlatformException, InvalidContainerVolumeException,
           IncompatibleBaseImageJavaVersionException, NumberFormatException,
           InvalidContainerizingModeException, InvalidFilesModificationTimeException,
           InvalidCreationTimeException {
@@ -389,7 +389,7 @@ public class PluginConfigurationProcessorTest {
   public void testUser_null()
       throws InvalidImageReferenceException, IOException, CacheDirectoryCreationException,
           MainClassInferenceException, InvalidAppRootException, InvalidWorkingDirectoryException,
-          InvalidPlatformConfigurationException, InvalidContainerVolumeException,
+          InvalidPlatformException, InvalidContainerVolumeException,
           IncompatibleBaseImageJavaVersionException, NumberFormatException,
           InvalidContainerizingModeException, InvalidFilesModificationTimeException,
           InvalidCreationTimeException {
@@ -403,7 +403,7 @@ public class PluginConfigurationProcessorTest {
   public void testEntrypoint_warningOnJvmFlags()
       throws InvalidImageReferenceException, IOException, CacheDirectoryCreationException,
           MainClassInferenceException, InvalidAppRootException, InvalidWorkingDirectoryException,
-          InvalidPlatformConfigurationException, InvalidContainerVolumeException,
+          InvalidPlatformException, InvalidContainerVolumeException,
           IncompatibleBaseImageJavaVersionException, NumberFormatException,
           InvalidContainerizingModeException, InvalidFilesModificationTimeException,
           InvalidCreationTimeException {
@@ -427,7 +427,7 @@ public class PluginConfigurationProcessorTest {
   public void testEntrypoint_warningOnMainclass()
       throws InvalidImageReferenceException, IOException, CacheDirectoryCreationException,
           MainClassInferenceException, InvalidAppRootException, InvalidWorkingDirectoryException,
-          InvalidPlatformConfigurationException, InvalidContainerVolumeException,
+          InvalidPlatformException, InvalidContainerVolumeException,
           IncompatibleBaseImageJavaVersionException, NumberFormatException,
           InvalidContainerizingModeException, InvalidFilesModificationTimeException,
           InvalidCreationTimeException {
@@ -450,7 +450,7 @@ public class PluginConfigurationProcessorTest {
   @Test
   public void testEntrypoint_warningOnMainclassForWar()
       throws IOException, InvalidCreationTimeException, InvalidImageReferenceException,
-          IncompatibleBaseImageJavaVersionException, InvalidPlatformConfigurationException,
+          IncompatibleBaseImageJavaVersionException, InvalidPlatformException,
           InvalidContainerVolumeException, MainClassInferenceException, InvalidAppRootException,
           InvalidWorkingDirectoryException, InvalidFilesModificationTimeException,
           InvalidContainerizingModeException, CacheDirectoryCreationException {
@@ -469,7 +469,7 @@ public class PluginConfigurationProcessorTest {
   public void testEntrypointClasspath_nonDefaultAppRoot()
       throws InvalidImageReferenceException, IOException, CacheDirectoryCreationException,
           MainClassInferenceException, InvalidAppRootException, InvalidWorkingDirectoryException,
-          InvalidPlatformConfigurationException, InvalidContainerVolumeException,
+          InvalidPlatformException, InvalidContainerVolumeException,
           IncompatibleBaseImageJavaVersionException, NumberFormatException,
           InvalidContainerizingModeException, InvalidFilesModificationTimeException,
           InvalidCreationTimeException {
@@ -490,7 +490,7 @@ public class PluginConfigurationProcessorTest {
   public void testWebAppEntrypoint_inheritedFromBaseImage()
       throws InvalidImageReferenceException, IOException, CacheDirectoryCreationException,
           MainClassInferenceException, InvalidAppRootException, InvalidWorkingDirectoryException,
-          InvalidPlatformConfigurationException, InvalidContainerVolumeException,
+          InvalidPlatformException, InvalidContainerVolumeException,
           IncompatibleBaseImageJavaVersionException, NumberFormatException,
           InvalidContainerizingModeException, InvalidFilesModificationTimeException,
           InvalidCreationTimeException {
@@ -875,8 +875,8 @@ public class PluginConfigurationProcessorTest {
   }
 
   @Test
-  public void testGetValidPlatformsSet() throws InvalidPlatformConfigurationException {
-    Mockito.<List<? extends PlatformConfiguration>>when(rawConfiguration.getPlatforms())
+  public void testGetPlatformsSet() throws InvalidPlatformException {
+    Mockito.<List<?>>when(rawConfiguration.getPlatforms())
         .thenReturn(Arrays.asList(new TestPlatformConfiguration("testArchitecture", "testOs")));
 
     Assert.assertEquals(
@@ -885,44 +885,31 @@ public class PluginConfigurationProcessorTest {
   }
 
   @Test
-  public void testGetPlatformsSet_architectureMissing()
-      throws InvalidPlatformConfigurationException {
+  public void testGetPlatformsSet_architectureMissing() throws InvalidPlatformException {
     TestPlatformConfiguration platform = new TestPlatformConfiguration(null, "testOs");
-    Mockito.<List<? extends PlatformConfiguration>>when(rawConfiguration.getPlatforms())
-        .thenReturn(Arrays.asList(platform));
+    Mockito.<List<?>>when(rawConfiguration.getPlatforms()).thenReturn(Arrays.asList(platform));
 
     try {
       PluginConfigurationProcessor.getPlatformsSet(rawConfiguration);
       Assert.fail();
-    } catch (InvalidPlatformConfigurationException ex) {
-      String message =
-          "architecture="
-              + platform.getArchitectureName().orElse("<missing>")
-              + ", os="
-              + platform.getOsName().orElse("<missing>");
+    } catch (InvalidPlatformException ex) {
       Assert.assertEquals(
           "platform configuration is missing an architecture value", ex.getMessage());
-      Assert.assertEquals(message, ex.getInvalidPlatform());
+      Assert.assertEquals("architecture=<missing>, os=testOs", ex.getInvalidPlatform());
     }
   }
 
   @Test
-  public void testGetPlatformsSet_osMissing() throws InvalidPlatformConfigurationException {
+  public void testGetPlatformsSet_osMissing() throws InvalidPlatformException {
     TestPlatformConfiguration platform = new TestPlatformConfiguration("testArchitecture", null);
-    Mockito.<List<? extends PlatformConfiguration>>when(rawConfiguration.getPlatforms())
-        .thenReturn(Arrays.asList(platform));
+    Mockito.<List<?>>when(rawConfiguration.getPlatforms()).thenReturn(Arrays.asList(platform));
 
     try {
       PluginConfigurationProcessor.getPlatformsSet(rawConfiguration);
       Assert.fail();
-    } catch (InvalidPlatformConfigurationException ex) {
-      String message =
-          "architecture="
-              + platform.getArchitectureName().orElse("<missing>")
-              + ", os="
-              + platform.getOsName().orElse("<missing>");
-      Assert.assertEquals("platform configuration is missing an os value", ex.getMessage());
-      Assert.assertEquals(message, ex.getInvalidPlatform());
+    } catch (InvalidPlatformException ex) {
+      Assert.assertEquals("platform configuration is missing an OS value", ex.getMessage());
+      Assert.assertEquals("architecture=testArchitecture, os=<missing>", ex.getInvalidPlatform());
     }
   }
 
@@ -1069,7 +1056,7 @@ public class PluginConfigurationProcessorTest {
 
   private JibContainerBuilder processCommonConfiguration()
       throws InvalidImageReferenceException, MainClassInferenceException, InvalidAppRootException,
-          IOException, InvalidWorkingDirectoryException, InvalidPlatformConfigurationException,
+          IOException, InvalidWorkingDirectoryException, InvalidPlatformException,
           InvalidContainerVolumeException, IncompatibleBaseImageJavaVersionException,
           NumberFormatException, InvalidContainerizingModeException,
           InvalidFilesModificationTimeException, InvalidCreationTimeException {

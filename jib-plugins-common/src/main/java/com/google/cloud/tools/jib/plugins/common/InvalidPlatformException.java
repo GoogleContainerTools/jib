@@ -20,12 +20,12 @@ package com.google.cloud.tools.jib.plugins.common;
  * Indicates that the {@code container.platforms} config value has at least one invalid platform.
  * (For example, a platform misses a required field or has an invalid value.).
  */
-public class InvalidPlatformConfigurationException extends Exception {
+public class InvalidPlatformException extends Exception {
 
   private final String platform;
 
-  InvalidPlatformConfigurationException(String message, String platform, Throwable cause) {
-    super(message, cause);
+  InvalidPlatformException(String message, String platform) {
+    super(message);
     this.platform = platform;
   }
 

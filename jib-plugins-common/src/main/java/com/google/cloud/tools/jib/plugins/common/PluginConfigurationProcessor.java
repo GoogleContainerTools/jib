@@ -56,7 +56,6 @@ import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.BiFunction;
@@ -96,8 +95,8 @@ public class PluginConfigurationProcessor {
    * @throws IOException if an error occurs creating the container builder
    * @throws InvalidWorkingDirectoryException if the working directory specified for the build is
    *     invalid
-   * @throws InvalidPlatformConfigurationException if there exists a {@link PlatformConfiguration}
-   *     in the specified platforms list that is missing required fields or has invalid values
+   * @throws InvalidPlatformException if there exists a {@link PlatformConfiguration} in the
+   *     specified platforms list that is missing required fields or has invalid values
    * @throws InvalidContainerVolumeException if a specific container volume is invalid
    * @throws IncompatibleBaseImageJavaVersionException if the base image java version cannot support
    *     this build
@@ -115,7 +114,7 @@ public class PluginConfigurationProcessor {
       ProjectProperties projectProperties,
       HelpfulSuggestions helpfulSuggestions)
       throws InvalidImageReferenceException, MainClassInferenceException, InvalidAppRootException,
-          IOException, InvalidWorkingDirectoryException, InvalidPlatformConfigurationException,
+          IOException, InvalidWorkingDirectoryException, InvalidPlatformException,
           InvalidContainerVolumeException, IncompatibleBaseImageJavaVersionException,
           NumberFormatException, InvalidContainerizingModeException,
           InvalidFilesModificationTimeException, InvalidCreationTimeException,
@@ -163,8 +162,8 @@ public class PluginConfigurationProcessor {
    * @throws IOException if an error occurs creating the container builder
    * @throws InvalidWorkingDirectoryException if the working directory specified for the build is
    *     invalid
-   * @throws InvalidPlatformConfigurationException if there exists a {@link PlatformConfiguration}
-   *     in the specified platforms list that is missing required fields or has invalid values
+   * @throws InvalidPlatformException if there exists a {@link PlatformConfiguration} in the
+   *     specified platforms list that is missing required fields or has invalid values
    * @throws InvalidContainerVolumeException if a specific container volume is invalid
    * @throws IncompatibleBaseImageJavaVersionException if the base image java version cannot support
    *     this build
@@ -182,7 +181,7 @@ public class PluginConfigurationProcessor {
       ProjectProperties projectProperties,
       HelpfulSuggestions helpfulSuggestions)
       throws InvalidImageReferenceException, MainClassInferenceException, InvalidAppRootException,
-          IOException, InvalidWorkingDirectoryException, InvalidPlatformConfigurationException,
+          IOException, InvalidWorkingDirectoryException, InvalidPlatformException,
           InvalidContainerVolumeException, IncompatibleBaseImageJavaVersionException,
           NumberFormatException, InvalidContainerizingModeException,
           InvalidFilesModificationTimeException, InvalidCreationTimeException,
@@ -225,8 +224,8 @@ public class PluginConfigurationProcessor {
    * @throws IOException if an error occurs creating the container builder
    * @throws InvalidWorkingDirectoryException if the working directory specified for the build is
    *     invalid
-   * @throws InvalidPlatformConfigurationException if there exists a {@link PlatformConfiguration}
-   *     in the specified platforms list that is missing required fields or has invalid values
+   * @throws InvalidPlatformException if there exists a {@link PlatformConfiguration} in the
+   *     specified platforms list that is missing required fields or has invalid values
    * @throws InvalidContainerVolumeException if a specific container volume is invalid
    * @throws IncompatibleBaseImageJavaVersionException if the base image java version cannot support
    *     this build
@@ -244,7 +243,7 @@ public class PluginConfigurationProcessor {
       ProjectProperties projectProperties,
       HelpfulSuggestions helpfulSuggestions)
       throws InvalidImageReferenceException, MainClassInferenceException, InvalidAppRootException,
-          IOException, InvalidWorkingDirectoryException, InvalidPlatformConfigurationException,
+          IOException, InvalidWorkingDirectoryException, InvalidPlatformException,
           InvalidContainerVolumeException, IncompatibleBaseImageJavaVersionException,
           NumberFormatException, InvalidContainerizingModeException,
           InvalidFilesModificationTimeException, InvalidCreationTimeException,
@@ -303,8 +302,8 @@ public class PluginConfigurationProcessor {
    * @throws IOException if an error occurs creating the container builder
    * @throws InvalidWorkingDirectoryException if the working directory specified for the build is
    *     invalid
-   * @throws InvalidPlatformConfigurationException if there exists a {@link PlatformConfiguration}
-   *     in the specified platforms list that is missing required fields or has invalid values
+   * @throws InvalidPlatformException if there exists a {@link PlatformConfiguration} in the
+   *     specified platforms list that is missing required fields or has invalid values
    * @throws InvalidContainerVolumeException if a specific container volume is invalid
    * @throws IncompatibleBaseImageJavaVersionException if the base image java version cannot support
    *     this build
@@ -318,7 +317,7 @@ public class PluginConfigurationProcessor {
   public static String getSkaffoldSyncMap(
       RawConfiguration rawConfiguration, ProjectProperties projectProperties, Set<Path> excludes)
       throws IOException, InvalidCreationTimeException, InvalidImageReferenceException,
-          IncompatibleBaseImageJavaVersionException, InvalidPlatformConfigurationException,
+          IncompatibleBaseImageJavaVersionException, InvalidPlatformException,
           InvalidContainerVolumeException, MainClassInferenceException, InvalidAppRootException,
           InvalidWorkingDirectoryException, InvalidFilesModificationTimeException,
           InvalidContainerizingModeException {
@@ -382,9 +381,9 @@ public class PluginConfigurationProcessor {
       ProjectProperties projectProperties)
       throws InvalidFilesModificationTimeException, InvalidAppRootException,
           IncompatibleBaseImageJavaVersionException, IOException, InvalidImageReferenceException,
-          InvalidContainerizingModeException, MainClassInferenceException,
-          InvalidPlatformConfigurationException, InvalidContainerVolumeException,
-          InvalidWorkingDirectoryException, InvalidCreationTimeException {
+          InvalidContainerizingModeException, MainClassInferenceException, InvalidPlatformException,
+          InvalidContainerVolumeException, InvalidWorkingDirectoryException,
+          InvalidCreationTimeException {
 
     // Create and configure JibContainerBuilder
     BiFunction<Path, AbsoluteUnixPath, Instant> modificationTimeProvider =
@@ -437,7 +436,7 @@ public class PluginConfigurationProcessor {
       ProjectProperties projectProperties,
       Containerizer containerizer)
       throws InvalidImageReferenceException, MainClassInferenceException, InvalidAppRootException,
-          IOException, InvalidWorkingDirectoryException, InvalidPlatformConfigurationException,
+          IOException, InvalidWorkingDirectoryException, InvalidPlatformException,
           InvalidContainerVolumeException, IncompatibleBaseImageJavaVersionException,
           NumberFormatException, InvalidContainerizingModeException,
           InvalidFilesModificationTimeException, InvalidCreationTimeException {
@@ -633,12 +632,12 @@ public class PluginConfigurationProcessor {
    *
    * @param rawConfiguration raw configuration data
    * @return the set of parsed platforms
-   * @throws InvalidPlatformConfigurationException if there exists a {@link PlatformConfiguration}
-   *     in the specified platforms list that is missing required fields or has invalid values
+   * @throws InvalidPlatformException if there exists a {@link PlatformConfiguration} in the
+   *     specified platforms list that is missing required fields or has invalid values
    */
   @VisibleForTesting
   static Set<Platform> getPlatformsSet(RawConfiguration rawConfiguration)
-      throws InvalidPlatformConfigurationException {
+      throws InvalidPlatformException {
     Set<Platform> platforms = new LinkedHashSet<>();
     for (PlatformConfiguration platformConfiguration : rawConfiguration.getPlatforms()) {
 
@@ -649,27 +648,18 @@ public class PluginConfigurationProcessor {
               + platformConfiguration.getOsName().orElse("<missing>");
 
       if (!platformConfiguration.getArchitectureName().isPresent()) {
-        throw new InvalidPlatformConfigurationException(
-            "platform configuration is missing an architecture value",
-            platformToString,
-            new IllegalArgumentException());
+        throw new InvalidPlatformException(
+            "platform configuration is missing an architecture value", platformToString);
       }
       if (!platformConfiguration.getOsName().isPresent()) {
-        throw new InvalidPlatformConfigurationException(
-            "platform configuration is missing an os value",
-            platformToString,
-            new IllegalArgumentException());
+        throw new InvalidPlatformException(
+            "platform configuration is missing an OS value", platformToString);
       }
-      try {
-        Platform platform =
-            new Platform(
-                platformConfiguration.getArchitectureName().get(),
-                platformConfiguration.getOsName().get());
-        platforms.add(platform);
-      } catch (NoSuchElementException exception) {
-        throw new InvalidPlatformConfigurationException(
-            "platform configuration contains invalid values", platformToString, exception);
-      }
+
+      platforms.add(
+          new Platform(
+              platformConfiguration.getArchitectureName().get(),
+              platformConfiguration.getOsName().get()));
     }
     return platforms;
   }
