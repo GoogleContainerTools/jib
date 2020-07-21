@@ -71,6 +71,8 @@ subprojects {
     PICOCLI: "info.picocli:picocli:4.2.0",
 
     MAVEN_API: "org.apache.maven:maven-plugin-api:3.5.2",
+    MAVEN_CORE: "org.apache.maven:maven-core:3.5.2",
+    MAVEN_COMPAT: "org.apache.maven:maven-compat:3.5.2",
 
     //test
     JUNIT: "junit:junit:4.13",
