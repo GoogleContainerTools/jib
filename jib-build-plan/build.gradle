@@ -10,7 +10,7 @@ dependencies {
   testImplementation dependencyStrings.GUAVA
   testImplementation dependencyStrings.JUNIT
   testImplementation dependencyStrings.MOCKITO_CORE
-  testImplementation dependencyStrings.SLF4J_API
+  testImplementation dependencyStrings.SLF4J_API_OLD
   testImplementation dependencyStrings.SYSTEM_RULES
 }
 

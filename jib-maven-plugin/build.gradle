@@ -18,24 +18,24 @@ dependencies {
   implementation dependencyStrings.MAVEN_CORE
 
   // compileOnly + testImplementation equivalent to "provided"
-  compileOnly 'org.apache.maven.plugin-tools:maven-plugin-annotations:3.6.0'
+  compileOnly dependencyStrings.MAVEN_ANNOTATIONS_LATEST
   // needed to suppress "unknown enum constant" warnings
-  testImplementation 'org.apache.maven.plugin-tools:maven-plugin-annotations:3.5'
+  testImplementation dependencyStrings.MAVEN_ANNOTATIONS_OLD
 
   // maven-plugin-testing-harness pulls in conflicting implementations of DefaultPlexusContainer
   // (sisu (correct) vs default-plexus-container (wrong)) so ensure this is first in the test classpath
-  testImplementation 'org.eclipse.sisu:org.eclipse.sisu.plexus:0.3.4'
-  testImplementation 'org.apache.maven.plugin-testing:maven-plugin-testing-harness:3.3.0'
+  testImplementation dependencyStrings.SISU_PLEXUS
+  testImplementation dependencyStrings.MAVEN_TESTING_HARNESS
 
   testImplementation dependencyStrings.JUNIT
   testImplementation dependencyStrings.MOCKITO_CORE
-  testImplementation dependencyStrings.SLF4J_API
+  testImplementation dependencyStrings.SLF4J_API_OLD
   testImplementation dependencyStrings.SYSTEM_RULES
 
-  testImplementation 'org.apache.maven.shared:maven-verifier:1.7.2'
+  testImplementation dependencyStrings.MAVEN_VERIFIER
   testImplementation dependencyStrings.MAVEN_COMPAT
-  testImplementation 'org.slf4j:slf4j-api:1.7.30'
-  testImplementation 'org.slf4j:slf4j-simple:1.7.30'
+  testImplementation dependencyStrings.SLF4J_API_LATEST
+  testImplementation dependencyStrings.SLF4J_SIMPLE
 
   integrationTestImplementation dependencyStrings.JBCRYPT
 
