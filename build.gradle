@@ -93,7 +93,7 @@ subprojects {
   // TODO: There might be a plugin that does this
   task ensureTransitiveDependencyOverrides {
     def dependenciesList = [dependencyStrings.GOOGLE_HTTP_CLIENT, dependencyStrings.GOOGLE_HTTP_CLIENT_APACHE_V2]
-    def rules = dependenciesList.collectEntries{[/*name: */ it.split(':')[1], /*version: */ it.split(':')[2]]}
+    def rules = dependenciesList.collectEntries{[/*name*/ it.split(':')[1], /*version*/ it.split(':')[2]]}
     doLast {
       configurations.runtimeClasspath.resolvedConfiguration.resolvedArtifacts.each { artifact ->
         def dependency = artifact.moduleVersion.id
