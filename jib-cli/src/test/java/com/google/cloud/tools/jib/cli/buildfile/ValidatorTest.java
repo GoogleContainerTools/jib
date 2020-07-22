@@ -17,27 +17,12 @@
 package com.google.cloud.tools.jib.cli.buildfile;
 
 import com.google.common.collect.ImmutableList;
+import java.util.Collection;
 import org.junit.Assert;
 import org.junit.Test;
 
 /** Tests for {@link Validator}. */
 public class ValidatorTest {
-
-  @Test
-  public void testCheckNotNull_pass() {
-    Validator.checkNotNull("value", "ignored");
-    // pass
-  }
-
-  @Test
-  public void testCheckNotNull_fail() {
-    try {
-      Validator.checkNotNull(null, "test");
-      Assert.fail();
-    } catch (NullPointerException npe) {
-      Assert.assertEquals("Property 'test' cannot be null", npe.getMessage());
-    }
-  }
 
   @Test
   public void testCheckNotEmpty_stringPass() {
@@ -46,7 +31,17 @@ public class ValidatorTest {
   }
 
   @Test
-  public void testCheckNotEmpty_stringFail() {
+  public void testCheckNotEmpty_stringFailNull() {
+    try {
+      Validator.checkNotEmpty((String) null, "test");
+      Assert.fail();
+    } catch (NullPointerException npe) {
+      Assert.assertEquals("Property 'test' cannot be null", npe.getMessage());
+    }
+  }
+
+  @Test
+  public void testCheckNotEmpty_stringFailEmpty() {
     try {
       Validator.checkNotEmpty("  ", "test");
       Assert.fail();
@@ -62,7 +57,17 @@ public class ValidatorTest {
   }
 
   @Test
-  public void testCheckNotEmpty_collectionFail() {
+  public void testCheckNotEmpty_collectionFailNull() {
+    try {
+      Validator.checkNotEmpty((Collection<?>) null, "test");
+      Assert.fail();
+    } catch (NullPointerException npe) {
+      Assert.assertEquals("Property 'test' cannot be null", npe.getMessage());
+    }
+  }
+
+  @Test
+  public void testCheckNotEmpty_collectionFailEmpty() {
     try {
       Validator.checkNotEmpty(ImmutableList.of(), "test");
       Assert.fail();
@@ -78,7 +83,17 @@ public class ValidatorTest {
   }
 
   @Test
-  public void testCheckEquals_fails() {
+  public void testCheckEquals_failsNull() {
+    try {
+      Validator.checkEquals(null, "test", "something");
+      Assert.fail();
+    } catch (NullPointerException npe) {
+      Assert.assertEquals("Property 'test' cannot be null", npe.getMessage());
+    }
+  }
+
+  @Test
+  public void testCheckEquals_failsNotEquals() {
     try {
       Validator.checkEquals("somethingElse", "test", "something");
       Assert.fail();

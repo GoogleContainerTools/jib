@@ -18,23 +18,13 @@ package com.google.cloud.tools.jib.cli.buildfile;
 
 import com.google.common.base.Preconditions;
 import java.util.Collection;
+import javax.annotation.Nullable;
 
 /**
  * Utility helper class to detect errors in parsed yaml values. This class is mostly concerned with
  * error message formatting, checking is delegated to guava.
  */
 public class Validator {
-
-  /**
-   * Checks if an object reference is not null.
-   *
-   * @param value the object in question
-   * @param propertyName the equivalent 'yaml' property name
-   * @throws NullPointerException if {@code value} is null
-   */
-  public static void checkNotNull(Object value, String propertyName) {
-    Preconditions.checkNotNull(value, "Property '" + propertyName + "' cannot be null");
-  }
 
   /**
    * Checks if string is null, empty or only whitespace.
@@ -44,8 +34,8 @@ public class Validator {
    * @throws NullPointerException if {@code value} is null
    * @throws IllegalArgumentException if {@code value} is empty or only whitespace
    */
-  public static void checkNotEmpty(String value, String propertyName) {
-    checkNotNull(value, propertyName);
+  public static void checkNotEmpty(@Nullable String value, String propertyName) {
+    Preconditions.checkNotNull(value, "Property '" + propertyName + "' cannot be null");
     Preconditions.checkArgument(
         !value.trim().isEmpty(), "Property '" + propertyName + "' cannot be empty");
   }
@@ -58,8 +48,8 @@ public class Validator {
    * @throws NullPointerException if {@code value} is null
    * @throws IllegalArgumentException if {@code value} is empty
    */
-  public static void checkNotEmpty(Collection<?> value, String propertyName) {
-    checkNotNull(value, propertyName);
+  public static void checkNotEmpty(@Nullable Collection<?> value, String propertyName) {
+    Preconditions.checkNotNull(value, "Property '" + propertyName + "' cannot be null");
     Preconditions.checkArgument(
         !value.isEmpty(), "Property '" + propertyName + "' cannot be an empty collection");
   }
@@ -73,10 +63,11 @@ public class Validator {
    * @throws NullPointerException if {@code value} is null
    * @throws IllegalArgumentException if {@code value} is not equal to {@code expectedValue}
    */
-  public static void checkEquals(String value, String propertyName, String expectedValue) {
-    checkNotNull(value, propertyName);
+  public static void checkEquals(
+      @Nullable String value, String propertyName, String expectedValue) {
+    Preconditions.checkNotNull(value, "Property '" + propertyName + "' cannot be null");
     Preconditions.checkArgument(
-        expectedValue.equals(value),
+        value.equals(expectedValue),
         "Property '" + propertyName + "' must be '" + expectedValue + "' but is '" + value + "'");
   }
 }
