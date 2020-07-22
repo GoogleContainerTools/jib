@@ -75,13 +75,11 @@ subprojects {
     MAVEN_COMPAT: 'org.apache.maven:maven-compat:3.5.2',
     MAVEN_ANNOTATIONS_LATEST: 'org.apache.maven.plugin-tools:maven-plugin-annotations:3.6.0',
     MAVEN_ANNOTATIONS_OLD: 'org.apache.maven.plugin-tools:maven-plugin-annotations:3.5',
-    MAVEN_TESTING_HARNESS: 'org.apache.maven.plugin-testing:maven-plugin-testing-harness:3.3.0',
-    MAVEN_VERIFIER: 'org.apache.maven.shared:maven-verifier:1.7.2',
-
-
 
     //test
     JUNIT: 'junit:junit:4.13',
+    MAVEN_TESTING_HARNESS: 'org.apache.maven.plugin-testing:maven-plugin-testing-harness:3.3.0',
+    MAVEN_VERIFIER: 'org.apache.maven.shared:maven-verifier:1.7.2',
     MOCKITO_CORE: 'org.mockito:mockito-core:3.2.4',
     SISU_PLEXUS: 'org.eclipse.sisu:org.eclipse.sisu.plexus:0.3.4',
     SLF4J_API_OLD: 'org.slf4j:slf4j-api:1.7.25',
@@ -95,7 +93,7 @@ subprojects {
   // TODO: There might be a plugin that does this
   task ensureTransitiveDependencyOverrides {
     def dependenciesList = [dependencyStrings.GOOGLE_HTTP_CLIENT, dependencyStrings.GOOGLE_HTTP_CLIENT_APACHE_V2]
-    def rules = dependenciesList.collectEntries{[/*name: */ it.split(':')[1], /*version: */ it.split(':')[-1]]}
+    def rules = dependenciesList.collectEntries{[/*name: */ it.split(':')[1], /*version: */ it.split(':')[2]]}
     doLast {
       configurations.runtimeClasspath.resolvedConfiguration.resolvedArtifacts.each { artifact ->
         def dependency = artifact.moduleVersion.id
