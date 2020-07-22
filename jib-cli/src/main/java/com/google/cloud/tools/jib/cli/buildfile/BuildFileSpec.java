@@ -111,6 +111,8 @@ public class BuildFileSpec {
       @JsonProperty("entrypoint") List<String> entrypoint,
       @JsonProperty("cmd") List<String> cmd,
       @JsonProperty("layers") LayersSpec layers) {
+    Validator.checkNotEmpty(apiVersion, "apiVersion");
+    Validator.checkEquals(kind, "kind", "BuildFile");
     this.apiVersion = apiVersion;
     Preconditions.checkArgument(
         "BuildFile".equals(kind), "Field 'kind' must be BuildFile but is " + kind);

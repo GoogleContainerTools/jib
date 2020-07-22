@@ -61,4 +61,37 @@ public class LayersSpecTest {
           jpe.getMessage(), CoreMatchers.startsWith("Missing required creator property 'entries'"));
     }
   }
+
+  @Test
+  public void testLayersSpec_entriesNotNull() {
+    String data =
+        "entries: null\n"
+            + "properties:\n" // trivial file properties spec
+            + "  timestamp: 1\n";
+
+    try {
+      mapper.readValue(data, LayersSpec.class);
+      Assert.fail();
+    } catch (JsonProcessingException jpe) {
+      MatcherAssert.assertThat(
+          jpe.getMessage(), CoreMatchers.containsString("Property 'entries' cannot be null"));
+    }
+  }
+
+  @Test
+  public void testLayersSpec_entriesNotEmpty() {
+    String data =
+        "entries: []\n"
+            + "properties:\n" // trivial file properties spec
+            + "  timestamp: 1\n";
+
+    try {
+      mapper.readValue(data, LayersSpec.class);
+      Assert.fail();
+    } catch (JsonProcessingException jpe) {
+      MatcherAssert.assertThat(
+          jpe.getMessage(),
+          CoreMatchers.containsString("Property 'entries' cannot be an empty collection"));
+    }
+  }
 }

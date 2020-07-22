@@ -31,7 +31,7 @@ import org.junit.Test;
 /** Tests for {@link CopySpec}. */
 public class CopySpecTest {
 
-  private static final ObjectMapper copySpecMapper = new ObjectMapper(new YAMLFactory());
+  private static final ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
 
   @Test
   public void testCopySpec_full() throws JsonProcessingException {
@@ -45,7 +45,7 @@ public class CopySpecTest {
             + "properties:\n" // only trivial test of file properties
             + "  timestamp: 1\n";
 
-    CopySpec parsed = copySpecMapper.readValue(data, CopySpec.class);
+    CopySpec parsed = mapper.readValue(data, CopySpec.class);
     Assert.assertEquals(Paths.get("target/classes"), parsed.getSrc());
     Assert.assertEquals(AbsoluteUnixPath.get("/app/classes"), parsed.getDest());
     Assert.assertEquals(ImmutableList.of("**/*.in"), parsed.getIncludes().get());
@@ -58,7 +58,7 @@ public class CopySpecTest {
     String data = "dest: /app/classes\n";
 
     try {
-      copySpecMapper.readValue(data, CopySpec.class);
+      mapper.readValue(data, CopySpec.class);
       Assert.fail();
     } catch (JsonProcessingException jpe) {
       MatcherAssert.assertThat(
@@ -71,11 +71,63 @@ public class CopySpecTest {
     String data = "src: target/classes\n";
 
     try {
-      copySpecMapper.readValue(data, CopySpec.class);
+      mapper.readValue(data, CopySpec.class);
       Assert.fail();
     } catch (JsonProcessingException jpe) {
       MatcherAssert.assertThat(
           jpe.getMessage(), CoreMatchers.startsWith("Missing required creator property 'dest'"));
+    }
+  }
+
+  @Test
+  public void testCopySpec_srcNotNull() {
+    String data = "src: null\n" + "dest: /app/classes\n";
+
+    try {
+      mapper.readValue(data, CopySpec.class);
+      Assert.fail();
+    } catch (JsonProcessingException jpe) {
+      MatcherAssert.assertThat(
+          jpe.getMessage(), CoreMatchers.containsString("Property 'src' cannot be null"));
+    }
+  }
+
+  @Test
+  public void testCopySpec_srcNotEmpty() {
+    String data = "src: ''\n" + "dest: /app/classes\n";
+
+    try {
+      mapper.readValue(data, CopySpec.class);
+      Assert.fail();
+    } catch (JsonProcessingException jpe) {
+      MatcherAssert.assertThat(
+          jpe.getMessage(), CoreMatchers.containsString("Property 'src' cannot be empty"));
+    }
+  }
+
+  @Test
+  public void testCopySpec_destNotNull() {
+    String data = "src: target/classes\n" + "dest: null\n";
+
+    try {
+      mapper.readValue(data, CopySpec.class);
+      Assert.fail();
+    } catch (JsonProcessingException jpe) {
+      MatcherAssert.assertThat(
+          jpe.getMessage(), CoreMatchers.containsString("Property 'dest' cannot be null"));
+    }
+  }
+
+  @Test
+  public void testCopySpec_destNotEmpty() {
+    String data = "src: target/classes\n" + "dest: ''\n";
+
+    try {
+      mapper.readValue(data, CopySpec.class);
+      Assert.fail();
+    } catch (JsonProcessingException jpe) {
+      MatcherAssert.assertThat(
+          jpe.getMessage(), CoreMatchers.containsString("Property 'dest' cannot be empty"));
     }
   }
 }
