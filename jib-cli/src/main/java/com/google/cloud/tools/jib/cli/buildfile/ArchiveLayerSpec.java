@@ -57,6 +57,8 @@ public class ArchiveLayerSpec implements LayerSpec {
       @JsonProperty(value = "name", required = true) String name,
       @JsonProperty(value = "archive", required = true) String archive,
       @JsonProperty("mediaType") String mediaType) {
+    Validator.checkNotEmpty(name, "name");
+    Validator.checkNotEmpty(archive, "archive");
     this.name = name;
     this.archive = Paths.get(archive);
     this.mediaType = mediaType;

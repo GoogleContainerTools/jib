@@ -65,6 +65,8 @@ public class CopySpec {
       @JsonProperty("includes") List<String> includes,
       @JsonProperty("excludes") List<String> excludes,
       @JsonProperty("properties") FilePropertiesSpec properties) {
+    Validator.checkNotEmpty(src, "src");
+    Validator.checkNotEmpty(dest, "dest");
     this.src = Paths.get(src);
     this.dest = AbsoluteUnixPath.get(dest);
     this.excludes = excludes;

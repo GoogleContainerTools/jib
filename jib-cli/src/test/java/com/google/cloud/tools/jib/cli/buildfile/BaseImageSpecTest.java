@@ -57,4 +57,36 @@ public class BaseImageSpecTest {
           jpe.getMessage(), CoreMatchers.startsWith("Missing required creator property 'image'"));
     }
   }
+
+  @Test
+  public void testBaseImageSpec_imageNotNull() {
+    String data =
+        "image: null\n"
+            + "platforms:\n" // trivial platform spec
+            + "  - architecture: amd64\n"
+            + "    os: linux\n";
+    try {
+      mapper.readValue(data, BaseImageSpec.class);
+      Assert.fail();
+    } catch (JsonProcessingException jpe) {
+      MatcherAssert.assertThat(
+          jpe.getMessage(), CoreMatchers.containsString("Property 'image' cannot be null"));
+    }
+  }
+
+  @Test
+  public void testBaseImageSpec_imageNotEmpty() {
+    String data =
+        "image: ''\n"
+            + "platforms:\n" // trivial platform spec
+            + "  - architecture: amd64\n"
+            + "    os: linux\n";
+    try {
+      mapper.readValue(data, BaseImageSpec.class);
+      Assert.fail();
+    } catch (JsonProcessingException jpe) {
+      MatcherAssert.assertThat(
+          jpe.getMessage(), CoreMatchers.containsString("Property 'image' cannot be empty"));
+    }
+  }
 }

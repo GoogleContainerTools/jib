@@ -31,7 +31,7 @@ import org.junit.Test;
 /** Tests for {@link FilePropertiesSpec}. */
 public class FilePropertiesSpecTest {
 
-  private static final ObjectMapper filePropertiesSpecMapper = new ObjectMapper(new YAMLFactory());
+  private static final ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
 
   @Test
   public void testFilePropertiesSpec_full() throws JsonProcessingException {
@@ -42,7 +42,7 @@ public class FilePropertiesSpecTest {
             + "group: birds\n"
             + "timestamp: 1\n";
 
-    FilePropertiesSpec parsed = filePropertiesSpecMapper.readValue(data, FilePropertiesSpec.class);
+    FilePropertiesSpec parsed = mapper.readValue(data, FilePropertiesSpec.class);
     Assert.assertEquals(FilePermissions.fromOctalString("644"), parsed.getFilePermissions().get());
     Assert.assertEquals(
         FilePermissions.fromOctalString("755"), parsed.getDirectoryPermissions().get());
@@ -56,7 +56,7 @@ public class FilePropertiesSpecTest {
     String data = "filePermissions: 888";
 
     try {
-      filePropertiesSpecMapper.readValue(data, FilePropertiesSpec.class);
+      mapper.readValue(data, FilePropertiesSpec.class);
       Assert.fail();
     } catch (JsonMappingException ex) {
       Assert.assertEquals(
@@ -69,7 +69,7 @@ public class FilePropertiesSpecTest {
     String data = "directoryPermissions: 888";
 
     try {
-      filePropertiesSpecMapper.readValue(data, FilePropertiesSpec.class);
+      mapper.readValue(data, FilePropertiesSpec.class);
       Assert.fail();
     } catch (JsonMappingException ex) {
       Assert.assertEquals(
@@ -81,7 +81,7 @@ public class FilePropertiesSpecTest {
   public void testFilePropertiesSpec_timestampSpecIso8601() throws JsonProcessingException {
     String data = "timestamp: 2020-06-08T14:54:36+00:00";
 
-    FilePropertiesSpec parsed = filePropertiesSpecMapper.readValue(data, FilePropertiesSpec.class);
+    FilePropertiesSpec parsed = mapper.readValue(data, FilePropertiesSpec.class);
     Assert.assertEquals(Instant.parse("2020-06-08T14:54:36Z"), parsed.getTimestamp().get());
   }
 
@@ -90,7 +90,7 @@ public class FilePropertiesSpecTest {
     String data = "timestamp: hi";
 
     try {
-      filePropertiesSpecMapper.readValue(data, FilePropertiesSpec.class);
+      mapper.readValue(data, FilePropertiesSpec.class);
       Assert.fail();
     } catch (JsonMappingException ex) {
       Assert.assertEquals(
@@ -104,7 +104,7 @@ public class FilePropertiesSpecTest {
     String data = "badkey: badvalue";
 
     try {
-      filePropertiesSpecMapper.readValue(data, FilePropertiesSpec.class);
+      mapper.readValue(data, FilePropertiesSpec.class);
       Assert.fail();
     } catch (UnrecognizedPropertyException upe) {
       MatcherAssert.assertThat(

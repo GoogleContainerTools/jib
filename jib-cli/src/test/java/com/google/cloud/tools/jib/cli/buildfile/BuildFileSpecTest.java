@@ -103,6 +103,32 @@ public class BuildFileSpecTest {
   }
 
   @Test
+  public void testBuildFileSpec_apiVersionNotNull() {
+    String data = "apiVersion: null\n" + "kind: BuildFile\n";
+
+    try {
+      mapper.readValue(data, BuildFileSpec.class);
+      Assert.fail();
+    } catch (JsonProcessingException jpe) {
+      MatcherAssert.assertThat(
+          jpe.getMessage(), CoreMatchers.containsString("Property 'apiVersion' cannot be null"));
+    }
+  }
+
+  @Test
+  public void testBuildFileSpec_apiVersionNotEmpty() {
+    String data = "apiVersion: ''\n" + "kind: BuildFile\n";
+
+    try {
+      mapper.readValue(data, BuildFileSpec.class);
+      Assert.fail();
+    } catch (JsonProcessingException jpe) {
+      MatcherAssert.assertThat(
+          jpe.getMessage(), CoreMatchers.containsString("Property 'apiVersion' cannot be empty"));
+    }
+  }
+
+  @Test
   public void testBuildFileSpec_kindRequired() {
     String data = "apiVersion: v1alpha1\n";
 
@@ -125,7 +151,20 @@ public class BuildFileSpecTest {
     } catch (JsonProcessingException jpe) {
       MatcherAssert.assertThat(
           jpe.getMessage(),
-          CoreMatchers.containsString("Field 'kind' must be BuildFile but is NotBuildFile"));
+          CoreMatchers.containsString("Property 'kind' must be 'BuildFile' but is 'NotBuildFile'"));
+    }
+  }
+
+  @Test
+  public void testBuildFileSpec_kindNotNull() {
+    String data = "apiVersion: v1alpha1\n" + "kind: null\n";
+
+    try {
+      mapper.readValue(data, BuildFileSpec.class);
+      Assert.fail();
+    } catch (JsonProcessingException jpe) {
+      MatcherAssert.assertThat(
+          jpe.getMessage(), CoreMatchers.containsString("Property 'kind' cannot be null"));
     }
   }
 }
