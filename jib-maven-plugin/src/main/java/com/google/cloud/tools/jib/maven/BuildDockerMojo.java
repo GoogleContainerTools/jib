@@ -109,7 +109,9 @@ public class BuildDockerMojo extends JibPluginConfiguration {
           ex);
     } catch (InvalidPlatformException ex) {
       throw new MojoExecutionException(
-          "<from><platforms> contains a platformConfiguration that is missing required fields or has invalid values: "
+          "<from><platforms> contains a platform configuration that is missing required values or has invalid values: "
+              + ex.getMessage()
+              + ": "
               + ex.getInvalidPlatform(),
           ex);
     } catch (InvalidContainerVolumeException ex) {

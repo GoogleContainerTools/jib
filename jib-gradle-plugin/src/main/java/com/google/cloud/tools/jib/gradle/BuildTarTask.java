@@ -150,7 +150,9 @@ public class BuildTarTask extends DefaultTask implements JibTask {
           ex);
     } catch (InvalidPlatformException ex) {
       throw new GradleException(
-          "from.platforms contains a platformConfiguration that is missing required fields or has invalid values: "
+          "from.platforms contains a platform configuration that is missing required values or has invalid values: "
+              + ex.getMessage()
+              + ": "
               + ex.getInvalidPlatform(),
           ex);
 

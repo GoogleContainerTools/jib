@@ -111,7 +111,7 @@ public class PluginConfigurationProcessorTest {
     @Nullable private final String os;
     @Nullable private final String architecture;
 
-    TestPlatformConfiguration(String architecture, String os) {
+    private TestPlatformConfiguration(@Nullable String architecture, @Nullable String os) {
       this.architecture = architecture;
       this.os = os;
     }
@@ -885,7 +885,7 @@ public class PluginConfigurationProcessorTest {
   }
 
   @Test
-  public void testGetPlatformsSet_architectureMissing() throws InvalidPlatformException {
+  public void testGetPlatformsSet_architectureMissing() {
     TestPlatformConfiguration platform = new TestPlatformConfiguration(null, "testOs");
     Mockito.<List<?>>when(rawConfiguration.getPlatforms()).thenReturn(Arrays.asList(platform));
 
@@ -900,7 +900,7 @@ public class PluginConfigurationProcessorTest {
   }
 
   @Test
-  public void testGetPlatformsSet_osMissing() throws InvalidPlatformException {
+  public void testGetPlatformsSet_osMissing() {
     TestPlatformConfiguration platform = new TestPlatformConfiguration("testArchitecture", null);
     Mockito.<List<?>>when(rawConfiguration.getPlatforms()).thenReturn(Arrays.asList(platform));
 
