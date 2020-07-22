@@ -16,15 +16,15 @@ application {
 
 dependencies {
   implementation project(':jib-core')
-  implementation "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:${dependencyVersions.JACKSON_DATAFORMAT_YAML}"
-  implementation "com.fasterxml.jackson.core:jackson-databind:${dependencyVersions.JACKSON_DATABIND}"
-  implementation "com.google.guava:guava:${dependencyVersions.GUAVA}"
-  implementation "info.picocli:picocli:${dependencyVersions.PICOCLI}"
+  implementation dependencyStrings.JACKSON_DATAFORMAT_YAML
+  implementation dependencyStrings.JACKSON_DATABIND
+  implementation dependencyStrings.GUAVA
+  implementation dependencyStrings.PICOCLI
 
-  testImplementation "junit:junit:${dependencyVersions.JUNIT}"
-  testImplementation "org.mockito:mockito-core:${dependencyVersions.MOCKITO_CORE}"
-  testImplementation "org.slf4j:slf4j-api:${dependencyVersions.SLF4J_API}"
-  testImplementation "com.github.stefanbirkner:system-rules:${dependencyVersions.SYSTEM_RULES}"
+  testImplementation dependencyStrings.JUNIT
+  testImplementation dependencyStrings.MOCKITO_CORE
+  testImplementation dependencyStrings.SLF4J_API_OLD
+  testImplementation dependencyStrings.SYSTEM_RULES
 }
 
 /* ECLIPSE */
