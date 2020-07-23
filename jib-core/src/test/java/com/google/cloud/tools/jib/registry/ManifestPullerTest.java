@@ -236,7 +236,8 @@ public class ManifestPullerTest {
         Arrays.asList(
             OciManifestTemplate.MANIFEST_MEDIA_TYPE,
             V22ManifestTemplate.MANIFEST_MEDIA_TYPE,
-            V21ManifestTemplate.MEDIA_TYPE),
+            V21ManifestTemplate.MEDIA_TYPE,
+            V22ManifestListTemplate.MANIFEST_MEDIA_TYPE),
         testManifestPuller.getAccept());
 
     Assert.assertEquals(
