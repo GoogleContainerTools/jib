@@ -65,7 +65,7 @@ subprojects {
     MAVEN_EXTENSION: 'com.google.cloud.tools:jib-maven-plugin-extension-api:0.3.0',
 
     COMMONS_COMPRESS: 'org.apache.commons:commons-compress:1.19',
-    JACKSON_DATABIND: 'com.fasterxml.jackson.core:jackson-databind:2.11.0',
+    JACKSON_DATABIND: 'com.fasterxml.jackson.core:jackson-databind:2.11.1',
     JACKSON_DATAFORMAT_YAML: 'com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.11.0',
     ASM: 'org.ow2.asm:asm:7.3.1',
     PICOCLI: 'info.picocli:picocli:4.2.0',
