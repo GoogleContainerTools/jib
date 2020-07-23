@@ -72,11 +72,10 @@ public class BuildFileSpecTest {
     Assert.assertEquals("gcr.io/example/jib", parsed.getFrom().get().getImage());
     Assert.assertEquals(Instant.ofEpochMilli(1), parsed.getCreationTime().get());
     Assert.assertEquals(ImageFormat.OCI, parsed.getFormat().get());
-    Assert.assertEquals(ImmutableMap.of("env_key", "env_value"), parsed.getEnvironment().get());
-    Assert.assertEquals(ImmutableMap.of("label_key", "label_value"), parsed.getLabels().get());
-    Assert.assertEquals(
-        ImmutableSet.of(AbsoluteUnixPath.get("/my/volume")), parsed.getVolumes().get());
-    Assert.assertEquals(Ports.parse(ImmutableList.of("8080")), parsed.getExposedPorts().get());
+    Assert.assertEquals(ImmutableMap.of("env_key", "env_value"), parsed.getEnvironment());
+    Assert.assertEquals(ImmutableMap.of("label_key", "label_value"), parsed.getLabels());
+    Assert.assertEquals(ImmutableSet.of(AbsoluteUnixPath.get("/my/volume")), parsed.getVolumes());
+    Assert.assertEquals(Ports.parse(ImmutableList.of("8080")), parsed.getExposedPorts());
     Assert.assertEquals("username", parsed.getUser().get());
     Assert.assertEquals(AbsoluteUnixPath.get("/workspace"), parsed.getWorkingDirectory().get());
     Assert.assertEquals(ImmutableList.of("java", "-jar"), parsed.getEntrypoint().get());
@@ -166,5 +165,19 @@ public class BuildFileSpecTest {
       MatcherAssert.assertThat(
           jpe.getMessage(), CoreMatchers.containsString("Property 'kind' cannot be null"));
     }
+  }
+
+  @Test
+  public void testBuildFileSpec_nullCollections() throws JsonProcessingException {
+    String data = "apiVersion: v1alpha1\n" + "kind: BuildFile\n";
+
+    BuildFileSpec parsed = mapper.readValue(data, BuildFileSpec.class);
+    Assert.assertEquals(ImmutableMap.of(), parsed.getEnvironment());
+    Assert.assertEquals(ImmutableMap.of(), parsed.getLabels());
+    Assert.assertEquals(ImmutableSet.of(), parsed.getVolumes());
+    Assert.assertEquals(ImmutableSet.of(), parsed.getExposedPorts());
+    // entrypoint and cmd CAN be not present
+    Assert.assertFalse(parsed.getEntrypoint().isPresent());
+    Assert.assertFalse(parsed.getCmd().isPresent());
   }
 }

@@ -23,6 +23,8 @@ import com.google.cloud.tools.jib.api.buildplan.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.api.buildplan.ImageFormat;
 import com.google.cloud.tools.jib.api.buildplan.Port;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
@@ -66,12 +68,14 @@ public class BuildFileSpec {
   @Nullable private BaseImageSpec from;
   @Nullable private Instant creationTime;
   @Nullable private ImageFormat format;
-  @Nullable private Map<String, String> environment;
-  @Nullable private Map<String, String> labels;
-  @Nullable private Set<AbsoluteUnixPath> volumes;
-  @Nullable private Set<Port> exposedPorts;
+  private Map<String, String> environment;
+  private Map<String, String> labels;
+  private Set<AbsoluteUnixPath> volumes;
+  private Set<Port> exposedPorts;
   @Nullable private String user;
   @Nullable private AbsoluteUnixPath workingDirectory;
+  // these two specific collection can be null as they can be set to empty to override
+  // the base image
   @Nullable private List<String> entrypoint;
   @Nullable private List<String> cmd;
 
@@ -124,14 +128,13 @@ public class BuildFileSpec {
     if (format != null) {
       this.format = ImageFormat.valueOf(format);
     }
-    this.environment = environment;
-    this.labels = labels;
-    if (volumes != null) {
-      this.volumes = volumes.stream().map(AbsoluteUnixPath::get).collect(Collectors.toSet());
-    }
-    if (exposedPorts != null) {
-      this.exposedPorts = Ports.parse(exposedPorts);
-    }
+    this.environment = (environment == null) ? ImmutableMap.of() : environment;
+    this.labels = (labels == null) ? ImmutableMap.of() : labels;
+    this.volumes =
+        (volumes == null)
+            ? ImmutableSet.of()
+            : volumes.stream().map(AbsoluteUnixPath::get).collect(Collectors.toSet());
+    this.exposedPorts = (exposedPorts == null) ? ImmutableSet.of() : Ports.parse(exposedPorts);
     this.user = user;
     if (workingDirectory != null) {
       this.workingDirectory = AbsoluteUnixPath.get(workingDirectory);
@@ -161,20 +164,20 @@ public class BuildFileSpec {
     return Optional.ofNullable(format);
   }
 
-  public Optional<Map<String, String>> getEnvironment() {
-    return Optional.ofNullable(environment);
+  public Map<String, String> getEnvironment() {
+    return environment;
   }
 
-  public Optional<Map<String, String>> getLabels() {
-    return Optional.ofNullable(labels);
+  public Map<String, String> getLabels() {
+    return labels;
   }
 
-  public Optional<Set<AbsoluteUnixPath>> getVolumes() {
-    return Optional.ofNullable(volumes);
+  public Set<AbsoluteUnixPath> getVolumes() {
+    return volumes;
   }
 
-  public Optional<Set<Port>> getExposedPorts() {
-    return Optional.ofNullable(exposedPorts);
+  public Set<Port> getExposedPorts() {
+    return exposedPorts;
   }
 
   public Optional<String> getUser() {
