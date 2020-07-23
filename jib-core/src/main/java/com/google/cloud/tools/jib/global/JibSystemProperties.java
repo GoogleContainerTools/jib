@@ -29,10 +29,8 @@ public class JibSystemProperties {
 
   @VisibleForTesting static final String CROSS_REPOSITORY_BLOB_MOUNTS = "jib.blobMounts";
 
-  @VisibleForTesting
   public static final String SEND_CREDENTIALS_OVER_HTTP = "sendCredentialsOverHttp";
-
-  private static final String SERIALIZE = "jib.serialize";
+  public static final String SERIALIZE = "jib.serialize";
 
   private static final String DISABLE_USER_AGENT = "_JIB_DISABLE_USER_AGENT";
 

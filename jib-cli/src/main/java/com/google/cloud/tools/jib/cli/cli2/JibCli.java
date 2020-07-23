@@ -16,6 +16,8 @@
 
 package com.google.cloud.tools.jib.cli.cli2;
 
+import static com.google.cloud.tools.jib.api.Jib.TAR_IMAGE_PREFIX;
+
 import com.google.cloud.tools.jib.api.Credential;
 import com.google.cloud.tools.jib.cli.cli2.logging.ConsoleOutput;
 import com.google.cloud.tools.jib.cli.cli2.logging.Verbosity;
@@ -36,8 +38,13 @@ import picocli.CommandLine.Option;
     mixinStandardHelpOptions = true,
     showAtFileInUsageHelp = true,
     synopsisSubcommandLabel = "COMMAND",
-    description = "A tool for creating container images")
+    description = "A tool for creating container images",
+    subcommands = {Build.class})
 public class JibCli {
+
+  @CommandLine.Spec
+  @SuppressWarnings("NullAway.Init") // initialized by picocli
+  private CommandLine.Model.CommandSpec spec;
 
   @Option(
       names = "--verbosity",
@@ -447,5 +454,14 @@ public class JibCli {
   public static void main(String[] args) {
     int exitCode = new CommandLine(new JibCli()).execute(args);
     System.exit(exitCode);
+  }
+
+  /** Validates parameters defined in this class that could not be done declaratively. */
+  public void validate() {
+    if (targetImage.startsWith(TAR_IMAGE_PREFIX) && name == null) {
+      throw new CommandLine.ParameterException(
+          spec.commandLine(),
+          "Missing option: --name must be specified when using --target=tar://....");
+    }
   }
 }
