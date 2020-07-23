@@ -468,7 +468,8 @@ public class PluginConfigurationProcessorTest {
     BuildContext buildContext = getBuildContext(processCommonConfiguration());
 
     Assert.assertEquals(
-        Arrays.asList("java", "-cp", "/my/app/resources:/my/app/classes:/my/app/libs/*"),
+        Arrays.asList(
+            "java", "-cp", "/my/app/resources:/my/app/classes:/my/app/libs/*", "java.lang.Object"),
         buildContext.getContainerConfiguration().getEntrypoint());
   }
 
