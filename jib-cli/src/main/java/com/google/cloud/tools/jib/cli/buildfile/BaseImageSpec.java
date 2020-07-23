@@ -34,8 +34,8 @@ import java.util.List;
  * }</pre>
  */
 public class BaseImageSpec {
-  private String image;
-  private List<PlatformSpec> platforms;
+  private final String image;
+  private final List<PlatformSpec> platforms;
 
   /**
    * Constructor for use by jackson to populate this object.

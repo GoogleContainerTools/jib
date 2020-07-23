@@ -41,12 +41,12 @@ import javax.annotation.Nullable;
  * }</pre>
  */
 public class PlatformSpec {
-  @Nullable private String architecture;
-  @Nullable private String os;
-  @Nullable private String osVersion;
-  private List<String> osFeatures;
-  @Nullable private String variant;
-  private List<String> features;
+  @Nullable private final String architecture;
+  @Nullable private final String os;
+  @Nullable private final String osVersion;
+  private final List<String> osFeatures;
+  @Nullable private final String variant;
+  private final List<String> features;
 
   /**
    * Constructor for use by jackson to populate this object.

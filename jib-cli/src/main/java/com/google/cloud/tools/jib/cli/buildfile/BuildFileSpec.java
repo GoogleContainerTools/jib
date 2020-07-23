@@ -63,23 +63,29 @@ import javax.annotation.Nullable;
  * }</pre>
  */
 public class BuildFileSpec {
-  private String apiVersion;
-  private String kind;
-  @Nullable private BaseImageSpec from;
-  @Nullable private Instant creationTime;
-  @Nullable private ImageFormat format;
-  private Map<String, String> environment;
-  private Map<String, String> labels;
-  private Set<AbsoluteUnixPath> volumes;
-  private Set<Port> exposedPorts;
-  @Nullable private String user;
-  @Nullable private AbsoluteUnixPath workingDirectory;
-  // these two specific collection can be null as they can be set to empty to override
-  // the base image
-  @Nullable private List<String> entrypoint;
-  @Nullable private List<String> cmd;
+  private final String apiVersion;
+  private final String kind;
+  @Nullable private final BaseImageSpec from;
+  @Nullable private final Instant creationTime;
+  @Nullable private final ImageFormat format;
+  private final Map<String, String> environment;
+  private final Map<String, String> labels;
+  private final Set<AbsoluteUnixPath> volumes;
+  private final Set<Port> exposedPorts;
+  @Nullable private final String user;
+  @Nullable private final AbsoluteUnixPath workingDirectory;
+  /**
+   * Entrypoint has special behavior as a nullable list. When null, it delegates to the existing base image
+   * entrypoint. If non null (including empty) it overwrites the base image entrypoint.
+   */
+  @Nullable private final List<String> entrypoint;
+  /**
+   * Cmd has special behavior as a nullable list. When null, it delegates to the existing base image
+   * cmd. If non null (including empty) it overwrites the base image cmd.
+   */
+  @Nullable private final List<String> cmd;
 
-  @Nullable private LayersSpec layers;
+  @Nullable private final LayersSpec layers;
 
   /**
    * Constructor for use by jackson to populate this object.
@@ -122,12 +128,8 @@ public class BuildFileSpec {
         "BuildFile".equals(kind), "Field 'kind' must be BuildFile but is " + kind);
     this.kind = kind;
     this.from = from;
-    if (creationTime != null) {
-      this.creationTime = Instants.fromMillisOrIso8601(creationTime, "creationTime");
-    }
-    if (format != null) {
-      this.format = ImageFormat.valueOf(format);
-    }
+    this.creationTime = (creationTime == null) ? null : Instants.fromMillisOrIso8601(creationTime, "creationTime");
+    this.format = (format == null) ? null : ImageFormat.valueOf(format);
     this.environment = (environment == null) ? ImmutableMap.of() : environment;
     this.labels = (labels == null) ? ImmutableMap.of() : labels;
     this.volumes =
@@ -136,9 +138,7 @@ public class BuildFileSpec {
             : volumes.stream().map(AbsoluteUnixPath::get).collect(Collectors.toSet());
     this.exposedPorts = (exposedPorts == null) ? ImmutableSet.of() : Ports.parse(exposedPorts);
     this.user = user;
-    if (workingDirectory != null) {
-      this.workingDirectory = AbsoluteUnixPath.get(workingDirectory);
-    }
+    this.workingDirectory = (workingDirectory == null) ? null : AbsoluteUnixPath.get(workingDirectory);
     this.entrypoint = entrypoint;
     this.cmd = cmd;
     this.layers = layers;
