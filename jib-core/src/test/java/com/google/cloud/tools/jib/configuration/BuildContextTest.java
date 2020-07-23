@@ -118,7 +118,6 @@ public class BuildContextTest {
             .setToolName(expectedCreatedBy);
     BuildContext buildContext = buildContextBuilder.build();
 
-    Assert.assertNotNull(buildContext.getContainerConfiguration());
     Assert.assertEquals(
         expectedCreationTime, buildContext.getContainerConfiguration().getCreationTime());
     Assert.assertEquals(
@@ -187,6 +186,7 @@ public class BuildContextTest {
         BuildContext.builder()
             .setBaseImageConfiguration(baseImageConfiguration)
             .setTargetImageConfiguration(targetImageConfiguration)
+            .setContainerConfiguration(ContainerConfiguration.builder().setUser("12345").build())
             .setBaseImageLayersCacheDirectory(Paths.get("ignored"))
             .setApplicationLayersCacheDirectory(Paths.get("ignored"));
     BuildContext buildContext = buildContextBuilder.build();
@@ -199,7 +199,7 @@ public class BuildContextTest {
     Assert.assertNotNull(buildContextBuilder.getBaseImageLayersCacheDirectory());
     Assert.assertEquals(
         Paths.get("ignored"), buildContextBuilder.getBaseImageLayersCacheDirectory());
-    Assert.assertNull(buildContext.getContainerConfiguration());
+    Assert.assertEquals("12345", buildContext.getContainerConfiguration().getUser());
     Assert.assertEquals(Collections.emptyList(), buildContext.getLayerConfigurations());
     Assert.assertEquals("jib", buildContext.getToolName());
   }

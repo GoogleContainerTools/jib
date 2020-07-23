@@ -39,9 +39,6 @@ import javax.annotation.Nullable;
 /** Immutable configuration options for the container. */
 public class ContainerConfiguration {
 
-  /** The default creation time of the container (constant to ensure reproducibility by default). */
-  public static final Instant DEFAULT_CREATION_TIME = Instant.EPOCH;
-
   /** Builder for instantiating a {@link ContainerConfiguration}. */
   public static class Builder {
 
@@ -49,7 +46,7 @@ public class ContainerConfiguration {
     // order
     private Set<Platform> platforms =
         new LinkedHashSet<>(Collections.singleton(new Platform("amd64", "linux")));
-    private Instant creationTime = DEFAULT_CREATION_TIME;
+    private Instant creationTime = Instant.EPOCH;
     @Nullable private ImmutableList<String> entrypoint;
     @Nullable private ImmutableList<String> programArguments;
     @Nullable private Map<String, String> environmentMap;
