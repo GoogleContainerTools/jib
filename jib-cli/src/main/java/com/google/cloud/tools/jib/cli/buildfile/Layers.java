@@ -47,8 +47,8 @@ class Layers {
    * @return a {@link List} of {@link LayerObject} to use as part of a buildplan
    * @throws IOException if traversing a directory fails
    */
-  static List<LayerObject> toLayers(Path buildRoot, LayersSpec layersSpec) throws IOException {
-    List<LayerObject> layers = new ArrayList<>();
+  static List<FileEntriesLayer> toLayers(Path buildRoot, LayersSpec layersSpec) throws IOException {
+    List<FileEntriesLayer> layers = new ArrayList<>();
 
     FilePropertiesStack filePropertiesStack = new FilePropertiesStack();
     // base properties
