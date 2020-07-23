@@ -22,6 +22,7 @@ import com.google.cloud.tools.jib.api.ImageReference;
 import com.google.cloud.tools.jib.api.LogEvent;
 import com.google.cloud.tools.jib.api.RegistryException;
 import com.google.cloud.tools.jib.api.RegistryUnauthorizedException;
+import com.google.cloud.tools.jib.api.buildplan.Platform;
 import com.google.cloud.tools.jib.blob.Blobs;
 import com.google.cloud.tools.jib.builder.ProgressEventDispatcher;
 import com.google.cloud.tools.jib.builder.TimerEventDispatcher;
@@ -46,9 +47,11 @@ import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import com.google.cloud.tools.jib.registry.ManifestAndDigest;
 import com.google.cloud.tools.jib.registry.RegistryClient;
 import com.google.cloud.tools.jib.registry.credentials.CredentialRetrievalException;
+import com.google.common.annotations.VisibleForTesting;
 import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.Callable;
 import javax.annotation.Nullable;
 
@@ -71,6 +74,8 @@ class PullBaseImageStep implements Callable<ImageAndRegistryClient> {
 
   private final BuildContext buildContext;
   private final ProgressEventDispatcher.Factory progressEventDispatcherFactory;
+  private String architecture = "amd64";
+  private String os = "linux";
 
   PullBaseImageStep(
       BuildContext buildContext, ProgressEventDispatcher.Factory progressEventDispatcherFactory) {
@@ -260,14 +265,22 @@ class PullBaseImageStep implements Callable<ImageAndRegistryClient> {
   }
 
   /**
-   * Looks through a manifest list for any amd64/linux manifest and downloads and returns the first
-   * manifest it finds.
+   * Looks through a manifest list for the user specified arch/os manifest and downloads and returns
+   * the first manifest it finds.
    */
-  private ManifestAndDigest<?> obtainPlatformSpecificImageManifest(
+  @VisibleForTesting
+  ManifestAndDigest<?> obtainPlatformSpecificImageManifest(
       RegistryClient registryClient, V22ManifestListTemplate manifestListTemplate)
       throws RegistryException, IOException {
 
-    List<String> digests = manifestListTemplate.getDigestsForPlatform("amd64", "linux");
+    if (buildContext.getContainerConfiguration() != null) {
+      Set<Platform> platforms = buildContext.getContainerConfiguration().getPlatforms();
+      Platform platform = platforms.stream().findFirst().get();
+      architecture = platform.getArchitecture();
+      os = platform.getOs();
+    }
+
+    List<String> digests = manifestListTemplate.getDigestsForPlatform(architecture, os);
     if (digests.size() == 0) {
       String errorMessage =
           buildContext.getBaseImageConfiguration().getImage()
