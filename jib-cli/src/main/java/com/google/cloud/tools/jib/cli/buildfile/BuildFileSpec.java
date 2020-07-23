@@ -75,8 +75,8 @@ public class BuildFileSpec {
   @Nullable private final String user;
   @Nullable private final AbsoluteUnixPath workingDirectory;
   /**
-   * Entrypoint has special behavior as a nullable list. When null, it delegates to the existing base image
-   * entrypoint. If non null (including empty) it overwrites the base image entrypoint.
+   * Entrypoint has special behavior as a nullable list. When null, it delegates to the existing
+   * base image entrypoint. If non null (including empty) it overwrites the base image entrypoint.
    */
   @Nullable private final List<String> entrypoint;
   /**
@@ -128,7 +128,8 @@ public class BuildFileSpec {
         "BuildFile".equals(kind), "Field 'kind' must be BuildFile but is " + kind);
     this.kind = kind;
     this.from = from;
-    this.creationTime = (creationTime == null) ? null : Instants.fromMillisOrIso8601(creationTime, "creationTime");
+    this.creationTime =
+        (creationTime == null) ? null : Instants.fromMillisOrIso8601(creationTime, "creationTime");
     this.format = (format == null) ? null : ImageFormat.valueOf(format);
     this.environment = (environment == null) ? ImmutableMap.of() : environment;
     this.labels = (labels == null) ? ImmutableMap.of() : labels;
@@ -138,7 +139,8 @@ public class BuildFileSpec {
             : volumes.stream().map(AbsoluteUnixPath::get).collect(Collectors.toSet());
     this.exposedPorts = (exposedPorts == null) ? ImmutableSet.of() : Ports.parse(exposedPorts);
     this.user = user;
-    this.workingDirectory = (workingDirectory == null) ? null : AbsoluteUnixPath.get(workingDirectory);
+    this.workingDirectory =
+        (workingDirectory == null) ? null : AbsoluteUnixPath.get(workingDirectory);
     this.entrypoint = entrypoint;
     this.cmd = cmd;
     this.layers = layers;
