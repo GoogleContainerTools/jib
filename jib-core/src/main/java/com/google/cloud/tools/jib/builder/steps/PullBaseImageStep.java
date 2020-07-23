@@ -204,7 +204,7 @@ class PullBaseImageStep implements Callable<ImageAndRegistryClient> {
     if (manifestTemplate instanceof V22ManifestListTemplate) {
       eventHandlers.dispatch(
           LogEvent.lifecycle(
-              "The base image reference is manifest list, searching for linux/amd64"));
+              "The base image reference is manifest list, searching for the user specified platform"));
       manifestAndDigest =
           obtainPlatformSpecificImageManifest(
               registryClient, (V22ManifestListTemplate) manifestTemplate);
@@ -273,12 +273,22 @@ class PullBaseImageStep implements Callable<ImageAndRegistryClient> {
       RegistryClient registryClient, V22ManifestListTemplate manifestListTemplate)
       throws RegistryException, IOException {
 
+    LogEvent.lifecycle("Found Manifest List ");
     if (buildContext.getContainerConfiguration() != null) {
       Set<Platform> platforms = buildContext.getContainerConfiguration().getPlatforms();
       Platform platform = platforms.stream().findFirst().get();
       architecture = platform.getArchitecture();
       os = platform.getOs();
     }
+
+    buildContext
+        .getEventHandlers()
+        .dispatch(
+            LogEvent.lifecycle(
+                "Searching the manifest list for the platfrom , architecture =  "
+                    + architecture
+                    + " , os = "
+                    + os));
 
     List<String> digests = manifestListTemplate.getDigestsForPlatform(architecture, os);
     if (digests.size() == 0) {
