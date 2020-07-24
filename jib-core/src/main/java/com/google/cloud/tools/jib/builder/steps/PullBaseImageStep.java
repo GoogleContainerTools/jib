@@ -271,32 +271,27 @@ class PullBaseImageStep implements Callable<ImageAndRegistryClient> {
       RegistryClient registryClient, V22ManifestListTemplate manifestListTemplate)
       throws RegistryException, IOException {
 
-    String architecture = "amd64";
-    String os = "linux";
-
-    if (buildContext.getContainerConfiguration() != null) {
-      Set<Platform> platforms = buildContext.getContainerConfiguration().getPlatforms();
-      Platform platform = platforms.iterator().next();
-      architecture = platform.getArchitecture();
-      os = platform.getOs();
-    }
+    Set<Platform> platforms = buildContext.getContainerConfiguration().getPlatforms();
+    Platform platform = platforms.iterator().next();
+    String architecture = platform.getArchitecture();
+    String os = platform.getOs();
 
     buildContext
         .getEventHandlers()
         .dispatch(
-            LogEvent.error(
+            LogEvent.lifecycle(
                 "Searching the manifest list for the platfrom, architecture =  "
                     + architecture
                     + ", os = "
                     + os));
 
-    List<String> digests = manifestListTemplate.getDigestsForPlatform(os, architecture);
+    List<String> digests = manifestListTemplate.getDigestsForPlatform(architecture, os);
     if (digests.size() == 0) {
       String errorMessage =
           buildContext.getBaseImageConfiguration().getImage()
-              + " is a manifest list, but the list does not contain an image manifest for "
+              + " is a manifest list, but the list does not contain an image manifest for the platform arch = "
               + architecture
-              + "/"
+              + ", os = "
               + os
               + ". If your intention was to specify a platform for your image,"
               + " see https://github.com/GoogleContainerTools/jib/blob/master/docs/faq.md#how-do-i-specify-a-platform-in-the-manifest-list-or-oci-index-of-a-base-image"
