@@ -40,8 +40,8 @@ public class BaseImageSpecTest {
 
     BaseImageSpec baseImageSpec = mapper.readValue(data, BaseImageSpec.class);
     Assert.assertEquals("gcr.io/example/jib", baseImageSpec.getImage());
-    Assert.assertEquals("amd64", baseImageSpec.getPlatforms().get(0).getArchitecture().get());
-    Assert.assertEquals("linux", baseImageSpec.getPlatforms().get(0).getOs().get());
+    Assert.assertEquals("amd64", baseImageSpec.getPlatforms().get(0).getArchitecture());
+    Assert.assertEquals("linux", baseImageSpec.getPlatforms().get(0).getOs());
   }
 
   @Test

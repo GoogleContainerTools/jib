@@ -41,8 +41,8 @@ import javax.annotation.Nullable;
  * }</pre>
  */
 public class PlatformSpec {
-  @Nullable private final String architecture;
-  @Nullable private final String os;
+  private final String architecture;
+  private final String os;
   @Nullable private final String osVersion;
   private final List<String> osFeatures;
   @Nullable private final String variant;
@@ -60,12 +60,14 @@ public class PlatformSpec {
    */
   @JsonCreator
   public PlatformSpec(
-      @JsonProperty("architecture") String architecture,
-      @JsonProperty("os") String os,
+      @JsonProperty(value = "architecture", required = true) String architecture,
+      @JsonProperty(value = "os", required = true) String os,
       @JsonProperty("os.version") String osVersion,
       @JsonProperty("os.features") List<String> osFeatures,
       @JsonProperty("variant") String variant,
       @JsonProperty("features") List<String> features) {
+    Validator.checkNotEmpty(architecture, "architecture");
+    Validator.checkNotEmpty(os, "os");
     this.architecture = architecture;
     this.os = os;
     this.osVersion = osVersion;
@@ -74,12 +76,12 @@ public class PlatformSpec {
     this.features = (features == null) ? ImmutableList.of() : features;
   }
 
-  public Optional<String> getArchitecture() {
-    return Optional.ofNullable(architecture);
+  public String getArchitecture() {
+    return architecture;
   }
 
-  public Optional<String> getOs() {
-    return Optional.ofNullable(os);
+  public String getOs() {
+    return os;
   }
 
   public Optional<String> getOsVersion() {
