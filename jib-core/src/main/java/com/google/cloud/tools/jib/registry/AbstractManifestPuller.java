@@ -79,13 +79,11 @@ abstract class AbstractManifestPuller<T extends ManifestTemplate, R>
       return Collections.singletonList(V22ManifestListTemplate.MANIFEST_MEDIA_TYPE);
     }
 
-    // V22ManifestListTemplate is not included by default, we don't explicitly accept
-    // it, we only handle it if referenced by sha256 (see getManifestTemplateFromJson) in which
-    // case registries ignore the "accept" directive and just return a manifest list anyway.
     return Arrays.asList(
         OciManifestTemplate.MANIFEST_MEDIA_TYPE,
         V22ManifestTemplate.MANIFEST_MEDIA_TYPE,
-        V21ManifestTemplate.MEDIA_TYPE);
+        V21ManifestTemplate.MEDIA_TYPE,
+        V22ManifestListTemplate.MANIFEST_MEDIA_TYPE);
   }
 
   /** Parses the response body into a {@link ManifestAndDigest}. */
