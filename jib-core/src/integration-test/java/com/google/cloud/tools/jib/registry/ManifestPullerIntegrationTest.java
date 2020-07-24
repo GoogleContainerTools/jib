@@ -88,7 +88,8 @@ public class ManifestPullerIntegrationTest {
     // Generic call to 11-jre-slim should NOT pull a manifest list (delegate to registry default)
     ManifestTemplate manifestTemplate = registryClient.pullManifest("11-jre-slim").getManifest();
     Assert.assertEquals(2, manifestTemplate.getSchemaVersion());
-    MatcherAssert.assertThat(manifestTemplate, CoreMatchers.instanceOf(V22ManifestTemplate.class));
+    MatcherAssert.assertThat(
+        manifestTemplate, CoreMatchers.instanceOf(V22ManifestListTemplate.class));
 
     // Make sure we can't cast a v22ManifestTemplate to v22ManifestListTemplate in ManifestPuller
     try {
