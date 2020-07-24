@@ -45,8 +45,17 @@ public class PlatformSpecTest {
     Assert.assertEquals("amd64", parsed.getArchitecture().get());
     Assert.assertEquals("linux", parsed.getOs().get());
     Assert.assertEquals("1.0.0", parsed.getOsVersion().get());
-    Assert.assertEquals(ImmutableList.of("headless"), parsed.getOsFeatures().get());
+    Assert.assertEquals(ImmutableList.of("headless"), parsed.getOsFeatures());
     Assert.assertEquals("amd64v10", parsed.getVariant().get());
-    Assert.assertEquals(ImmutableList.of("sse4", "aes"), parsed.getFeatures().get());
+    Assert.assertEquals(ImmutableList.of("sse4", "aes"), parsed.getFeatures());
+  }
+
+  @Test
+  public void testPlatformSpec_nullCollections() throws JsonProcessingException {
+    String data = "architecture: amd64\n" + "os: linux\n";
+
+    PlatformSpec parsed = mapper.readValue(data, PlatformSpec.class);
+    Assert.assertEquals(ImmutableList.of(), parsed.getOsFeatures());
+    Assert.assertEquals(ImmutableList.of(), parsed.getFeatures());
   }
 }

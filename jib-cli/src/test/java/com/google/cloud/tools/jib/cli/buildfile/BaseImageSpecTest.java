@@ -19,6 +19,7 @@ package com.google.cloud.tools.jib.cli.buildfile;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import com.google.common.collect.ImmutableList;
 import org.hamcrest.CoreMatchers;
 import org.hamcrest.MatcherAssert;
 import org.junit.Assert;
@@ -39,8 +40,8 @@ public class BaseImageSpecTest {
 
     BaseImageSpec baseImageSpec = mapper.readValue(data, BaseImageSpec.class);
     Assert.assertEquals("gcr.io/example/jib", baseImageSpec.getImage());
-    Assert.assertEquals("amd64", baseImageSpec.getPlatforms().get().get(0).getArchitecture().get());
-    Assert.assertEquals("linux", baseImageSpec.getPlatforms().get().get(0).getOs().get());
+    Assert.assertEquals("amd64", baseImageSpec.getPlatforms().get(0).getArchitecture().get());
+    Assert.assertEquals("linux", baseImageSpec.getPlatforms().get(0).getOs().get());
   }
 
   @Test
@@ -88,5 +89,13 @@ public class BaseImageSpecTest {
       MatcherAssert.assertThat(
           jpe.getMessage(), CoreMatchers.containsString("Property 'image' cannot be empty"));
     }
+  }
+
+  @Test
+  public void testBaseImageSpec_nullCollections() throws JsonProcessingException {
+    String data = "image: gcr.io/example/jib\n";
+
+    BaseImageSpec baseImageSpec = mapper.readValue(data, BaseImageSpec.class);
+    Assert.assertEquals(ImmutableList.of(), baseImageSpec.getPlatforms());
   }
 }

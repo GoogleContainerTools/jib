@@ -48,8 +48,8 @@ public class CopySpecTest {
     CopySpec parsed = mapper.readValue(data, CopySpec.class);
     Assert.assertEquals(Paths.get("target/classes"), parsed.getSrc());
     Assert.assertEquals(AbsoluteUnixPath.get("/app/classes"), parsed.getDest());
-    Assert.assertEquals(ImmutableList.of("**/*.in"), parsed.getIncludes().get());
-    Assert.assertEquals(ImmutableList.of("**/*.ex"), parsed.getExcludes().get());
+    Assert.assertEquals(ImmutableList.of("**/*.in"), parsed.getIncludes());
+    Assert.assertEquals(ImmutableList.of("**/*.ex"), parsed.getExcludes());
     Assert.assertEquals(Instant.ofEpochMilli(1), parsed.getProperties().get().getTimestamp().get());
   }
 
@@ -129,5 +129,14 @@ public class CopySpecTest {
       MatcherAssert.assertThat(
           jpe.getMessage(), CoreMatchers.containsString("Property 'dest' cannot be empty"));
     }
+  }
+
+  @Test
+  public void testCopySpec_nullCollections() throws JsonProcessingException {
+    String data = "src: target/classes\n" + "dest: /app/classes\n";
+
+    CopySpec parsed = mapper.readValue(data, CopySpec.class);
+    Assert.assertEquals(ImmutableList.of(), parsed.getIncludes());
+    Assert.assertEquals(ImmutableList.of(), parsed.getExcludes());
   }
 }

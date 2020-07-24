@@ -40,9 +40,9 @@ import javax.annotation.Nullable;
  */
 @JsonDeserialize(using = JsonDeserializer.None.class) // required since LayerSpec overrides this
 public class FileLayerSpec implements LayerSpec {
-  private String name;
-  private List<CopySpec> files;
-  @Nullable private FilePropertiesSpec properties;
+  private final String name;
+  private final List<CopySpec> files;
+  @Nullable private final FilePropertiesSpec properties;
 
   /**
    * Constructor for use by jackson to populate this object.

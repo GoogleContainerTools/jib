@@ -18,9 +18,8 @@ package com.google.cloud.tools.jib.cli.buildfile;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.common.collect.ImmutableList;
 import java.util.List;
-import java.util.Optional;
-import javax.annotation.Nullable;
 
 /**
  * A yaml block for specifying a base image with support for multi platform selections.
@@ -35,8 +34,8 @@ import javax.annotation.Nullable;
  * }</pre>
  */
 public class BaseImageSpec {
-  private String image;
-  @Nullable private List<PlatformSpec> platforms;
+  private final String image;
+  private final List<PlatformSpec> platforms;
 
   /**
    * Constructor for use by jackson to populate this object.
@@ -50,14 +49,14 @@ public class BaseImageSpec {
       @JsonProperty("platforms") List<PlatformSpec> platforms) {
     Validator.checkNotEmpty(image, "image");
     this.image = image;
-    this.platforms = platforms;
+    this.platforms = platforms == null ? ImmutableList.of() : platforms;
   }
 
   public String getImage() {
     return image;
   }
 
-  public Optional<List<PlatformSpec>> getPlatforms() {
-    return Optional.ofNullable(platforms);
+  public List<PlatformSpec> getPlatforms() {
+    return platforms;
   }
 }

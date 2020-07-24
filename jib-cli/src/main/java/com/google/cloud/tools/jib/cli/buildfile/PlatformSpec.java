@@ -18,6 +18,7 @@ package com.google.cloud.tools.jib.cli.buildfile;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.common.collect.ImmutableList;
 import java.util.List;
 import java.util.Optional;
 import javax.annotation.Nullable;
@@ -40,12 +41,12 @@ import javax.annotation.Nullable;
  * }</pre>
  */
 public class PlatformSpec {
-  @Nullable private String architecture;
-  @Nullable private String os;
-  @Nullable private String osVersion;
-  @Nullable private List<String> osFeatures;
-  @Nullable private String variant;
-  @Nullable private List<String> features;
+  @Nullable private final String architecture;
+  @Nullable private final String os;
+  @Nullable private final String osVersion;
+  private final List<String> osFeatures;
+  @Nullable private final String variant;
+  private final List<String> features;
 
   /**
    * Constructor for use by jackson to populate this object.
@@ -68,9 +69,9 @@ public class PlatformSpec {
     this.architecture = architecture;
     this.os = os;
     this.osVersion = osVersion;
-    this.osFeatures = osFeatures;
+    this.osFeatures = (osFeatures == null) ? ImmutableList.of() : osFeatures;
     this.variant = variant;
-    this.features = features;
+    this.features = (features == null) ? ImmutableList.of() : features;
   }
 
   public Optional<String> getArchitecture() {
@@ -85,15 +86,15 @@ public class PlatformSpec {
     return Optional.ofNullable(osVersion);
   }
 
-  public Optional<List<String>> getOsFeatures() {
-    return Optional.ofNullable(osFeatures);
+  public List<String> getOsFeatures() {
+    return osFeatures;
   }
 
   public Optional<String> getVariant() {
     return Optional.ofNullable(variant);
   }
 
-  public Optional<List<String>> getFeatures() {
-    return Optional.ofNullable(features);
+  public List<String> getFeatures() {
+    return features;
   }
 }
