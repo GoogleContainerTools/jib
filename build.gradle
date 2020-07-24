@@ -8,7 +8,7 @@ plugins {
   id 'io.freefair.maven-plugin' version '5.1.0' apply false
 
   // apply so we can correctly configure the test runner to be gradle at the project level
-  id 'org.jetbrains.gradle.plugin.idea-ext' version '0.8'
+  id 'org.jetbrains.gradle.plugin.idea-ext' version '0.8.1'
 }
 
 // run tests in intellij using gradle test runner
@@ -48,45 +48,52 @@ subprojects {
 
   /* PROJECT DEPENDENCY VERSIONS */
   // define all common versioned dependencies here
-  project.ext.dependencyVersions = [
+  project.ext.dependencyStrings = [
     // For Google libraries, check <http-client-bom.version>, <google.auth.version>, <guava.version>,
     // ... in https://github.com/googleapis/google-cloud-java/blob/master/google-cloud-clients/pom.xml
     // for best compatibility.
-    GOOGLE_HTTP_CLIENT: '1.34.0',
-    GOOGLE_HTTP_CLIENT_APACHE_V2: '1.34.0',
-    GOOGLE_AUTH_LIBRARY_OAUTH2_HTTP: '0.18.0',
-    GUAVA: '28.1-jre',
-    JSR305: '3.0.2', // transitively pulled in by GUAVA
+    GOOGLE_HTTP_CLIENT: 'com.google.http-client:google-http-client:1.34.0',
+    GOOGLE_HTTP_CLIENT_APACHE_V2: 'com.google.http-client:google-http-client-apache-v2:1.34.0',
+    GOOGLE_AUTH_LIBRARY_OAUTH2_HTTP: 'com.google.auth:google-auth-library-oauth2-http:0.18.0',
+    GUAVA: 'com.google.guava:guava:28.1-jre',
+    JSR305: 'com.google.code.findbugs:jsr305:3.0.2', // transitively pulled in by GUAVA
 
     // for Build Plan and Jib Plugins Extension API
-    BUILD_PLAN: '0.3.1',
-    EXTENSION_COMMON: '0.2.0',
-    GRADLE_EXTENSION: '0.3.0',
-    MAVEN_EXTENSION: '0.3.0',
+    BUILD_PLAN: 'com.google.cloud.tools:jib-build-plan:0.3.1',
+    EXTENSION_COMMON: 'com.google.cloud.tools:jib-plugins-extension-common:0.2.0',
+    GRADLE_EXTENSION: 'com.google.cloud.tools:jib-gradle-plugin-extension-api:0.3.0',
+    MAVEN_EXTENSION: 'com.google.cloud.tools:jib-maven-plugin-extension-api:0.3.0',
 
-    COMMONS_COMPRESS: '1.19',
-    JACKSON_DATABIND: '2.11.0',
-    JACKSON_DATAFORMAT_YAML: '2.11.0',
-    ASM: '7.3.1',
-    PICOCLI: '4.2.0',
+    COMMONS_COMPRESS: 'org.apache.commons:commons-compress:1.19',
+    JACKSON_DATABIND: 'com.fasterxml.jackson.core:jackson-databind:2.11.1',
+    JACKSON_DATAFORMAT_YAML: 'com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.11.1',
+    ASM: 'org.ow2.asm:asm:8.0.1',
+    PICOCLI: 'info.picocli:picocli:4.2.0',
 
-    MAVEN_API: '3.5.2',
+    MAVEN_API: 'org.apache.maven:maven-plugin-api:3.5.2',
+    MAVEN_CORE: 'org.apache.maven:maven-core:3.5.2',
+    MAVEN_COMPAT: 'org.apache.maven:maven-compat:3.5.2',
+    MAVEN_ANNOTATIONS_LATEST: 'org.apache.maven.plugin-tools:maven-plugin-annotations:3.6.0',
+    MAVEN_ANNOTATIONS_OLD: 'org.apache.maven.plugin-tools:maven-plugin-annotations:3.5',
 
     //test
-    JUNIT: '4.13',
-    MOCKITO_CORE: '3.2.4',
-    SLF4J_API: '1.7.25',
-    SYSTEM_RULES: '1.19.0',
-    JBCRYPT: '0.4',
+    JUNIT: 'junit:junit:4.13',
+    MAVEN_TESTING_HARNESS: 'org.apache.maven.plugin-testing:maven-plugin-testing-harness:3.3.0',
+    MAVEN_VERIFIER: 'org.apache.maven.shared:maven-verifier:1.7.2',
+    MOCKITO_CORE: 'org.mockito:mockito-core:3.4.4',
+    SISU_PLEXUS: 'org.eclipse.sisu:org.eclipse.sisu.plexus:0.3.4',
+    SLF4J_API_OLD: 'org.slf4j:slf4j-api:1.7.25',
+    SLF4J_API_LATEST: 'org.slf4j:slf4j-api:1.7.30',
+    SLF4J_SIMPLE: 'org.slf4j:slf4j-simple:1.7.30',
+    SYSTEM_RULES:  'com.github.stefanbirkner:system-rules:1.19.0',
+    JBCRYPT: 'org.mindrot:jbcrypt:0.4',
   ]
 
   // Use this to ensure we correctly override transitive dependencies
   // TODO: There might be a plugin that does this
   task ensureTransitiveDependencyOverrides {
-    def rules = [
-        'google-http-client': dependencyVersions.GOOGLE_HTTP_CLIENT,
-        'google-http-client-apache-v2': dependencyVersions.GOOGLE_HTTP_CLIENT_APACHE_V2,
-    ]
+    def dependenciesList = [dependencyStrings.GOOGLE_HTTP_CLIENT, dependencyStrings.GOOGLE_HTTP_CLIENT_APACHE_V2]
+    def rules = dependenciesList.collectEntries{[/*name*/ it.split(':')[1], /*version*/ it.split(':')[2]]}
     doLast {
       configurations.runtimeClasspath.resolvedConfiguration.resolvedArtifacts.each { artifact ->
         def dependency = artifact.moduleVersion.id

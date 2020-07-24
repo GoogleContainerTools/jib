@@ -19,6 +19,7 @@ package com.google.cloud.tools.jib.cli.buildfile;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.cloud.tools.jib.api.buildplan.AbsoluteUnixPath;
+import com.google.common.collect.ImmutableList;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
@@ -46,8 +47,8 @@ public class CopySpec {
   private final AbsoluteUnixPath dest;
 
   @Nullable private final FilePropertiesSpec properties;
-  @Nullable private final List<String> excludes;
-  @Nullable private final List<String> includes;
+  private final List<String> excludes;
+  private final List<String> includes;
 
   /**
    * Constructor for use by jackson to populate this object.
@@ -65,10 +66,12 @@ public class CopySpec {
       @JsonProperty("includes") List<String> includes,
       @JsonProperty("excludes") List<String> excludes,
       @JsonProperty("properties") FilePropertiesSpec properties) {
+    Validator.checkNotEmpty(src, "src");
+    Validator.checkNotEmpty(dest, "dest");
     this.src = Paths.get(src);
     this.dest = AbsoluteUnixPath.get(dest);
-    this.excludes = excludes;
-    this.includes = includes;
+    this.excludes = (excludes == null) ? ImmutableList.of() : excludes;
+    this.includes = (includes == null) ? ImmutableList.of() : includes;
     this.properties = properties;
   }
 
@@ -80,12 +83,12 @@ public class CopySpec {
     return dest;
   }
 
-  public Optional<List<String>> getExcludes() {
-    return Optional.ofNullable(excludes);
+  public List<String> getExcludes() {
+    return excludes;
   }
 
-  public Optional<List<String>> getIncludes() {
-    return Optional.ofNullable(includes);
+  public List<String> getIncludes() {
+    return includes;
   }
 
   public Optional<FilePropertiesSpec> getProperties() {

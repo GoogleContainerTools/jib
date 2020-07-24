@@ -160,7 +160,6 @@ public class PluginConfigurationProcessorTest {
           InvalidCreationTimeException {
     BuildContext buildContext = getBuildContext(processCommonConfiguration());
 
-    Assert.assertNotNull(buildContext.getContainerConfiguration());
     Assert.assertEquals(
         Arrays.asList("java", "-cp", "/app/resources:/app/classes:/app/libs/*", "java.lang.Object"),
         buildContext.getContainerConfiguration().getEntrypoint());
@@ -256,7 +255,6 @@ public class PluginConfigurationProcessorTest {
 
     BuildContext buildContext = getBuildContext(processCommonConfiguration());
 
-    Assert.assertNotNull(buildContext.getContainerConfiguration());
     Assert.assertEquals(
         Arrays.asList("custom", "entrypoint"),
         buildContext.getContainerConfiguration().getEntrypoint());
@@ -317,7 +315,6 @@ public class PluginConfigurationProcessorTest {
 
     BuildContext buildContext = getBuildContext(processCommonConfiguration());
 
-    Assert.assertNotNull(buildContext.getContainerConfiguration());
     Assert.assertNull(buildContext.getContainerConfiguration().getEntrypoint());
     Mockito.verifyNoInteractions(logger);
   }
@@ -335,7 +332,6 @@ public class PluginConfigurationProcessorTest {
 
     BuildContext buildContext = getBuildContext(processCommonConfiguration());
 
-    Assert.assertNotNull(buildContext.getContainerConfiguration());
     Assert.assertEquals(
         Arrays.asList("java", "-cp", "/app/resources:/app/classes:/app/libs/*", "java.lang.Object"),
         buildContext.getContainerConfiguration().getEntrypoint());
@@ -359,7 +355,6 @@ public class PluginConfigurationProcessorTest {
 
     BuildContext buildContext = getBuildContext(processCommonConfiguration());
 
-    Assert.assertNotNull(buildContext.getContainerConfiguration());
     Assert.assertEquals(
         Arrays.asList(
             "java", "-cp", "/foo:/app/resources:/app/classes:/app/libs/*", "java.lang.Object"),
@@ -381,7 +376,6 @@ public class PluginConfigurationProcessorTest {
 
     BuildContext buildContext = getBuildContext(processCommonConfiguration());
 
-    Assert.assertNotNull(buildContext.getContainerConfiguration());
     Assert.assertEquals("customUser", buildContext.getContainerConfiguration().getUser());
   }
 
@@ -395,7 +389,6 @@ public class PluginConfigurationProcessorTest {
           InvalidCreationTimeException {
     BuildContext buildContext = getBuildContext(processCommonConfiguration());
 
-    Assert.assertNotNull(buildContext.getContainerConfiguration());
     Assert.assertNull(buildContext.getContainerConfiguration().getUser());
   }
 
@@ -413,7 +406,6 @@ public class PluginConfigurationProcessorTest {
 
     BuildContext buildContext = getBuildContext(processCommonConfiguration());
 
-    Assert.assertNotNull(buildContext.getContainerConfiguration());
     Assert.assertEquals(
         Arrays.asList("custom", "entrypoint"),
         buildContext.getContainerConfiguration().getEntrypoint());
@@ -437,7 +429,6 @@ public class PluginConfigurationProcessorTest {
 
     BuildContext buildContext = getBuildContext(processCommonConfiguration());
 
-    Assert.assertNotNull(buildContext.getContainerConfiguration());
     Assert.assertEquals(
         Arrays.asList("custom", "entrypoint"),
         buildContext.getContainerConfiguration().getEntrypoint());
@@ -459,7 +450,6 @@ public class PluginConfigurationProcessorTest {
 
     BuildContext buildContext = getBuildContext(processCommonConfiguration());
 
-    Assert.assertNotNull(buildContext.getContainerConfiguration());
     Assert.assertNull(buildContext.getContainerConfiguration().getEntrypoint());
     Mockito.verify(projectProperties)
         .log(LogEvent.warn("mainClass, extraClasspath, and jvmFlags are ignored for WAR projects"));
@@ -477,13 +467,10 @@ public class PluginConfigurationProcessorTest {
 
     BuildContext buildContext = getBuildContext(processCommonConfiguration());
 
-    Assert.assertNotNull(buildContext.getContainerConfiguration());
-    Assert.assertNotNull(buildContext.getContainerConfiguration().getEntrypoint());
-    Assert.assertEquals("java", buildContext.getContainerConfiguration().getEntrypoint().get(0));
-    Assert.assertEquals("-cp", buildContext.getContainerConfiguration().getEntrypoint().get(1));
     Assert.assertEquals(
-        "/my/app/resources:/my/app/classes:/my/app/libs/*",
-        buildContext.getContainerConfiguration().getEntrypoint().get(2));
+        Arrays.asList(
+            "java", "-cp", "/my/app/resources:/my/app/classes:/my/app/libs/*", "java.lang.Object"),
+        buildContext.getContainerConfiguration().getEntrypoint());
   }
 
   @Test
@@ -498,7 +485,6 @@ public class PluginConfigurationProcessorTest {
 
     BuildContext buildContext = getBuildContext(processCommonConfiguration());
 
-    Assert.assertNotNull(buildContext.getContainerConfiguration());
     Assert.assertNull(buildContext.getContainerConfiguration().getEntrypoint());
   }
 

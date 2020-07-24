@@ -22,6 +22,7 @@ import com.google.cloud.tools.jib.api.CredentialRetriever;
 import com.google.cloud.tools.jib.api.ImageReference;
 import com.google.cloud.tools.jib.api.LogEvent;
 import com.google.cloud.tools.jib.configuration.BuildContext;
+import com.google.cloud.tools.jib.configuration.ContainerConfiguration;
 import com.google.cloud.tools.jib.configuration.ImageConfiguration;
 import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.registry.credentials.CredentialRetrievalException;
@@ -118,6 +119,7 @@ public class RegistryCredentialRetrieverTest {
             ImageConfiguration.builder(targetImage)
                 .setCredentialRetrievers(targetCredentialRetrievers)
                 .build())
+        .setContainerConfiguration(ContainerConfiguration.builder().build())
         .setBaseImageLayersCacheDirectory(Paths.get("ignored"))
         .setApplicationLayersCacheDirectory(Paths.get("ignored"))
         .setExecutorService(MoreExecutors.newDirectExecutorService())
