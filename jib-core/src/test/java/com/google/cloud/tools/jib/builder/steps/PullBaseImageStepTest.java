@@ -16,25 +16,35 @@
 
 package com.google.cloud.tools.jib.builder.steps;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.cloud.tools.jib.api.ImageReference;
 import com.google.cloud.tools.jib.api.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.api.RegistryException;
+import com.google.cloud.tools.jib.api.buildplan.Platform;
 import com.google.cloud.tools.jib.builder.ProgressEventDispatcher;
 import com.google.cloud.tools.jib.builder.steps.PullBaseImageStep.ImageAndRegistryClient;
 import com.google.cloud.tools.jib.cache.Cache;
 import com.google.cloud.tools.jib.cache.CacheCorruptedException;
 import com.google.cloud.tools.jib.configuration.BuildContext;
+import com.google.cloud.tools.jib.configuration.ContainerConfiguration;
 import com.google.cloud.tools.jib.configuration.ImageConfiguration;
 import com.google.cloud.tools.jib.event.EventHandlers;
+import com.google.cloud.tools.jib.hash.Digests;
 import com.google.cloud.tools.jib.image.LayerCountMismatchException;
 import com.google.cloud.tools.jib.image.LayerPropertyNotFoundException;
 import com.google.cloud.tools.jib.image.json.BadContainerConfigurationFormatException;
 import com.google.cloud.tools.jib.image.json.ContainerConfigurationTemplate;
 import com.google.cloud.tools.jib.image.json.ManifestAndConfig;
+import com.google.cloud.tools.jib.image.json.V22ManifestListTemplate;
 import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
+import com.google.cloud.tools.jib.json.JsonTemplateMapper;
+import com.google.cloud.tools.jib.registry.ManifestAndDigest;
 import com.google.cloud.tools.jib.registry.RegistryClient;
 import com.google.cloud.tools.jib.registry.credentials.CredentialRetrievalException;
+import com.google.common.collect.ImmutableSet;
 import java.io.IOException;
+import java.net.URISyntaxException;
+import java.security.GeneralSecurityException;
 import java.util.Optional;
 import org.junit.Assert;
 import org.junit.Before;
@@ -57,6 +67,8 @@ public class PullBaseImageStepTest {
   @Mock private BuildContext buildContext;
   @Mock private RegistryClient registryClient;
   @Mock private ImageConfiguration imageConfiguration;
+  @Mock private ImageReference imageReference;
+  @Mock private ContainerConfiguration containerConfiguration;
   @Mock private Cache cache;
 
   private PullBaseImageStep pullBaseImageStep;
@@ -66,9 +78,9 @@ public class PullBaseImageStepTest {
     containerConfig.setOs("fat system");
 
     Mockito.when(buildContext.getBaseImageConfiguration()).thenReturn(imageConfiguration);
+    Mockito.when(buildContext.getBaseImageConfiguration().getImage()).thenReturn(imageReference);
     Mockito.when(buildContext.getEventHandlers()).thenReturn(EventHandlers.NONE);
     Mockito.when(buildContext.getBaseImageLayersCache()).thenReturn(cache);
-
     RegistryClient.Factory registryClientFactory = Mockito.mock(RegistryClient.Factory.class);
     Mockito.when(buildContext.newBaseImageRegistryClientFactory())
         .thenReturn(registryClientFactory);
@@ -126,5 +138,147 @@ public class PullBaseImageStepTest {
     Assert.assertNull(result.registryClient);
 
     Mockito.verify(buildContext, Mockito.never()).newBaseImageRegistryClientFactory();
+  }
+
+  @Test
+  public void testObtainPlatformSpecificImageManifest()
+      throws IOException, InterruptedException, GeneralSecurityException, URISyntaxException,
+          RegistryException {
+    String manifestListTemplate =
+        " {\n"
+            + "   \"schemaVersion\": 2,\n"
+            + "   \"mediaType\": \"application/vnd.docker.distribution.manifest.list.v2+json\",\n"
+            + "   \"manifests\": [\n"
+            + "      {\n"
+            + "         \"mediaType\": \"application/vnd.docker.distribution.manifest.v2+json\",\n"
+            + "         \"size\": 424,\n"
+            + "         \"digest\": \"sha256:f67dcc5fc786f04f0743abfe0ee5dae9bd8caf8efa6c8144f7f2a43889dc513b\",\n"
+            + "         \"platform\": {\n"
+            + "            \"architecture\": \"arm\",\n"
+            + "            \"os\": \"linux\"\n"
+            + "         }\n"
+            + "      },\n"
+            + "      {\n"
+            + "         \"mediaType\": \"application/vnd.docker.distribution.manifest.v2+json\",\n"
+            + "         \"size\": 425,\n"
+            + "         \"digest\": \"sha256:5bb8e50aa2edd408bdf3ddf61efb7338ff34a07b762992c9432f1c02fc0e5e62\",\n"
+            + "         \"platform\": {\n"
+            + "            \"architecture\": \"testArchitecture\",\n"
+            + "            \"os\": \"testOS\"\n"
+            + "         }\n"
+            + "      }\n"
+            + "   ]\n"
+            + "}";
+
+    String manifestTemplate =
+        "{\n"
+            + "    \"schemaVersion\": 2,\n"
+            + "    \"mediaType\": \"application/vnd.docker.distribution.manifest.v2+json\",\n"
+            + "    \"config\": {\n"
+            + "        \"mediaType\": \"application/vnd.docker.container.image.v1+json\",\n"
+            + "        \"size\": 425,\n"
+            + "        \"digest\": \"sha256:5bb8e50aa2edd408bdf3ddf61efb7338ff34a07b762992c9432f1c02fc0e5e62\"\n"
+            + "    }\n"
+            + "}";
+    Mockito.when(buildContext.getContainerConfiguration()).thenReturn(containerConfiguration);
+    Mockito.when(containerConfiguration.getPlatforms())
+        .thenReturn(ImmutableSet.of(new Platform("testArchitecture", "testOS")));
+    V22ManifestListTemplate manifestList =
+        JsonTemplateMapper.readJson(manifestListTemplate, V22ManifestListTemplate.class);
+
+    V22ManifestTemplate manifest =
+        new ObjectMapper().readValue(manifestTemplate, V22ManifestTemplate.class);
+
+    ManifestAndDigest<?> manifestAndDigest =
+        new ManifestAndDigest(manifest, Digests.computeJsonDigest(manifest));
+
+    Mockito.doReturn(manifestAndDigest)
+        .when(registryClient)
+        .pullManifest("sha256:5bb8e50aa2edd408bdf3ddf61efb7338ff34a07b762992c9432f1c02fc0e5e62");
+
+    ManifestAndDigest<?> returnManifestAndDigest =
+        pullBaseImageStep.obtainPlatformSpecificImageManifest(registryClient, manifestList);
+
+    Assert.assertEquals(
+        Digests.computeJsonDigest(manifest).toString(),
+        returnManifestAndDigest.getDigest().toString());
+
+    Assert.assertTrue(returnManifestAndDigest.getManifest() instanceof V22ManifestTemplate);
+    V22ManifestTemplate returnedManifest = (V22ManifestTemplate) manifestAndDigest.getManifest();
+    Assert.assertEquals(2, returnedManifest.getSchemaVersion());
+    Assert.assertEquals(
+        "application/vnd.docker.distribution.manifest.v2+json",
+        returnedManifest.getManifestMediaType());
+    Assert.assertEquals(
+        "sha256:5bb8e50aa2edd408bdf3ddf61efb7338ff34a07b762992c9432f1c02fc0e5e62",
+        returnedManifest.getContainerConfiguration().getDigest().toString());
+    Assert.assertEquals(425, returnedManifest.getContainerConfiguration().getSize());
+  }
+
+  @Test
+  public void testObtainPlatformSpecificImageManifest_missingPlatform()
+      throws IOException, InterruptedException, GeneralSecurityException, URISyntaxException,
+          RegistryException {
+    String manifestListTemplate =
+        " {\n"
+            + "   \"schemaVersion\": 2,\n"
+            + "   \"mediaType\": \"application/vnd.docker.distribution.manifest.list.v2+json\",\n"
+            + "   \"manifests\": [\n"
+            + "      {\n"
+            + "         \"mediaType\": \"application/vnd.docker.distribution.manifest.v2+json\",\n"
+            + "         \"size\": 424,\n"
+            + "         \"digest\": \"sha256:f67dcc5fc786f04f0743abfe0ee5dae9bd8caf8efa6c8144f7f2a43889dc513b\",\n"
+            + "         \"platform\": {\n"
+            + "            \"architecture\": \"arm\",\n"
+            + "            \"os\": \"linux\"\n"
+            + "         }\n"
+            + "      },\n"
+            + "      {\n"
+            + "         \"mediaType\": \"application/vnd.docker.distribution.manifest.v2+json\",\n"
+            + "         \"size\": 425,\n"
+            + "         \"digest\": \"sha256:5bb8e50aa2edd408bdf3ddf61efb7338ff34a07b762992c9432f1c02fc0e5e62\",\n"
+            + "         \"platform\": {\n"
+            + "            \"architecture\": \"testArchitecture\",\n"
+            + "            \"os\": \"testOS\"\n"
+            + "         }\n"
+            + "      }\n"
+            + "   ]\n"
+            + "}";
+
+    String manifestTemplate =
+        "{\n"
+            + "    \"schemaVersion\": 2,\n"
+            + "    \"mediaType\": \"application/vnd.docker.distribution.manifest.v2+json\",\n"
+            + "    \"config\": {\n"
+            + "        \"mediaType\": \"application/vnd.docker.container.image.v1+json\",\n"
+            + "        \"size\": 425,\n"
+            + "        \"digest\": \"sha256:5bb8e50aa2edd408bdf3ddf61efb7338ff34a07b762992c9432f1c02fc0e5e62\"\n"
+            + "    }\n"
+            + "}";
+    Mockito.when(buildContext.getContainerConfiguration()).thenReturn(containerConfiguration);
+    Mockito.when(containerConfiguration.getPlatforms())
+        .thenReturn(ImmutableSet.of(new Platform("testArchitectureDummy", "testOSDummy")));
+    V22ManifestListTemplate manifestList =
+        JsonTemplateMapper.readJson(manifestListTemplate, V22ManifestListTemplate.class);
+
+    V22ManifestTemplate manifest =
+        new ObjectMapper().readValue(manifestTemplate, V22ManifestTemplate.class);
+
+    ManifestAndDigest<?> manifestAndDigest =
+        new ManifestAndDigest(manifest, Digests.computeJsonDigest(manifest));
+
+    Mockito.doReturn(manifestAndDigest)
+        .when(registryClient)
+        .pullManifest("sha256:5bb8e50aa2edd408bdf3ddf61efb7338ff34a07b762992c9432f1c02fc0e5e62");
+
+    try {
+      ManifestAndDigest<?> returnManifestAndDigest =
+          pullBaseImageStep.obtainPlatformSpecificImageManifest(registryClient, manifestList);
+      Assert.fail();
+    } catch (RegistryException ex) {
+      Assert.assertEquals(
+          "imageReference is a manifest list, but the list does not contain an image manifest for testArchitectureDummy/testOSDummy. If your intention was to specify a platform for your image, see https://github.com/GoogleContainerTools/jib/blob/master/docs/faq.md#how-do-i-specify-a-platform-in-the-manifest-list-or-oci-index-of-a-base-image to learn more about specifyng a platform using the platform tag",
+          ex.getMessage());
+    }
   }
 }

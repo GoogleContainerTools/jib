@@ -74,8 +74,6 @@ class PullBaseImageStep implements Callable<ImageAndRegistryClient> {
 
   private final BuildContext buildContext;
   private final ProgressEventDispatcher.Factory progressEventDispatcherFactory;
-  private String architecture = "amd64";
-  private String os = "linux";
 
   PullBaseImageStep(
       BuildContext buildContext, ProgressEventDispatcher.Factory progressEventDispatcherFactory) {
@@ -273,10 +271,12 @@ class PullBaseImageStep implements Callable<ImageAndRegistryClient> {
       RegistryClient registryClient, V22ManifestListTemplate manifestListTemplate)
       throws RegistryException, IOException {
 
-    LogEvent.lifecycle("Found Manifest List ");
+    String architecture = "amd64";
+    String os = "linux";
+
     if (buildContext.getContainerConfiguration() != null) {
       Set<Platform> platforms = buildContext.getContainerConfiguration().getPlatforms();
-      Platform platform = platforms.stream().findFirst().get();
+      Platform platform = platforms.iterator().next();
       architecture = platform.getArchitecture();
       os = platform.getOs();
     }
@@ -284,21 +284,24 @@ class PullBaseImageStep implements Callable<ImageAndRegistryClient> {
     buildContext
         .getEventHandlers()
         .dispatch(
-            LogEvent.lifecycle(
-                "Searching the manifest list for the platfrom , architecture =  "
+            LogEvent.error(
+                "Searching the manifest list for the platfrom, architecture =  "
                     + architecture
-                    + " , os = "
+                    + ", os = "
                     + os));
 
-    List<String> digests = manifestListTemplate.getDigestsForPlatform(architecture, os);
+    List<String> digests = manifestListTemplate.getDigestsForPlatform(os, architecture);
     if (digests.size() == 0) {
       String errorMessage =
           buildContext.getBaseImageConfiguration().getImage()
-              + " is a manifest list, but the list does not contain an image manifest for amd64/linux."
-              + " If your intention was to use a non-amd64/linux base image,"
+              + " is a manifest list, but the list does not contain an image manifest for "
+              + architecture
+              + "/"
+              + os
+              + ". If your intention was to specify a platform for your image,"
               + " see https://github.com/GoogleContainerTools/jib/blob/master/docs/faq.md#how-do-i-specify-a-platform-in-the-manifest-list-or-oci-index-of-a-base-image"
-              + " to learn how to specify a manifest instead of a manifest list, until Jib fixes"
-              + " https://github.com/GoogleContainerTools/jib/issues/1567 to allow specifying architecture and OS.";
+              + " to learn more about specifyng a platform using the platform tag";
+
       buildContext.getEventHandlers().dispatch(LogEvent.error(errorMessage));
       throw new RegistryException(errorMessage);
     }
