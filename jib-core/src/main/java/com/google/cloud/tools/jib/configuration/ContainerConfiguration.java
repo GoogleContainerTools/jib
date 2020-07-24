@@ -42,11 +42,16 @@ public class ContainerConfiguration {
   /** Builder for instantiating a {@link ContainerConfiguration}. */
   public static class Builder {
 
+    /**
+     * The default creation time of the container (constant to ensure reproducibility by default).
+     */
+    private static final Instant DEFAULT_CREATION_TIME = Instant.EPOCH;
+
     // note that a LinkedHashSet instead of HashSet has been used so as to preserve the platform
     // order
     private Set<Platform> platforms =
         new LinkedHashSet<>(Collections.singleton(new Platform("amd64", "linux")));
-    private Instant creationTime = Instant.EPOCH;
+    private Instant creationTime = DEFAULT_CREATION_TIME;
     @Nullable private ImmutableList<String> entrypoint;
     @Nullable private ImmutableList<String> programArguments;
     @Nullable private Map<String, String> environmentMap;
