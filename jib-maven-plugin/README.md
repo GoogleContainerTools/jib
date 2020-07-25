@@ -519,7 +519,7 @@ Property | Description
 
 e.g. `mvn compile jib:build -Djib.to.auth.username=user -Djib.to.auth.password=pass`
 
-**Note:** This method of authentication should be used only as a last resort, as it is insecure to make your password visible in plain text.
+**Note:** This method of authentication should be used only as a last resort, as it is insecure to make your password visible in plain text. Furthermore the username for the registry AWS ECR is always AWS and the password you need to get it using the command: `aws ecr get-login-password`. Passing aws keys and secret does not work.
 
 #### Using Maven Settings
 
