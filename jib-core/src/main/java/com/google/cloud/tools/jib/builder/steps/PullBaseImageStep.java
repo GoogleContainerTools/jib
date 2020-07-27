@@ -200,9 +200,6 @@ class PullBaseImageStep implements Callable<ImageAndRegistryClient> {
     // special handling if we happen upon a manifest list, redirect to a manifest and continue
     // handling it normally
     if (manifestTemplate instanceof V22ManifestListTemplate) {
-      eventHandlers.dispatch(
-          LogEvent.lifecycle(
-              "The base image reference is manifest list, searching for the user specified platform"));
       manifestAndDigest =
           obtainPlatformSpecificImageManifest(
               registryClient, (V22ManifestListTemplate) manifestTemplate);
@@ -278,8 +275,8 @@ class PullBaseImageStep implements Callable<ImageAndRegistryClient> {
 
     EventHandlers eventHandlers = buildContext.getEventHandlers();
     eventHandlers.dispatch(
-        LogEvent.info(
-            "Searching the manifest list for the platform, architecture="
+        LogEvent.lifecycle(
+            "The base image reference is manifest list, searching for architecture="
                 + architecture
                 + ", os="
                 + os));

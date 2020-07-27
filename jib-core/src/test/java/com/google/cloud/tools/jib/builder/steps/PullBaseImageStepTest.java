@@ -175,6 +175,6 @@ public class PullBaseImageStepTest {
     ManifestAndDigest<?> returnManifest =
         pullBaseImageStep.obtainPlatformSpecificImageManifest(registryClient, manifestList);
 
-    Assert.assertEquals(manifest, returnManifest);
+    Assert.assertSame(manifest, returnManifest);
   }
 }
