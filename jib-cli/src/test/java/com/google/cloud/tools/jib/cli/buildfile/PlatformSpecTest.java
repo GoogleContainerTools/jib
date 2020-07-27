@@ -20,6 +20,8 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.google.common.collect.ImmutableList;
+import org.hamcrest.CoreMatchers;
+import org.hamcrest.MatcherAssert;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -42,12 +44,91 @@ public class PlatformSpecTest {
             + "  - aes\n";
 
     PlatformSpec parsed = mapper.readValue(data, PlatformSpec.class);
-    Assert.assertEquals("amd64", parsed.getArchitecture().get());
-    Assert.assertEquals("linux", parsed.getOs().get());
+    Assert.assertEquals("amd64", parsed.getArchitecture());
+    Assert.assertEquals("linux", parsed.getOs());
     Assert.assertEquals("1.0.0", parsed.getOsVersion().get());
     Assert.assertEquals(ImmutableList.of("headless"), parsed.getOsFeatures());
     Assert.assertEquals("amd64v10", parsed.getVariant().get());
     Assert.assertEquals(ImmutableList.of("sse4", "aes"), parsed.getFeatures());
+  }
+
+  @Test
+  public void testPlatformSpec_osRequired() {
+    String data = "architecture: amd64\n";
+
+    try {
+      mapper.readValue(data, PlatformSpec.class);
+      Assert.fail();
+    } catch (JsonProcessingException jpe) {
+      MatcherAssert.assertThat(
+          jpe.getMessage(), CoreMatchers.startsWith("Missing required creator property 'os'"));
+    }
+  }
+
+  @Test
+  public void testPlatformSpec_osNotNull() {
+    String data = "architecture: amd64\n" + "os: null";
+
+    try {
+      mapper.readValue(data, PlatformSpec.class);
+      Assert.fail();
+    } catch (JsonProcessingException jpe) {
+      MatcherAssert.assertThat(
+          jpe.getMessage(), CoreMatchers.containsString("Property 'os' cannot be null"));
+    }
+  }
+
+  @Test
+  public void testPlatformSpec_osNotEmpty() {
+    String data = "architecture: amd64\n" + "os: ''";
+
+    try {
+      mapper.readValue(data, PlatformSpec.class);
+      Assert.fail();
+    } catch (JsonProcessingException jpe) {
+      MatcherAssert.assertThat(
+          jpe.getMessage(), CoreMatchers.containsString("Property 'os' cannot be empty"));
+    }
+  }
+
+  @Test
+  public void testPlatformSpec_architectureRequired() {
+    String data = "os: linux\n";
+
+    try {
+      mapper.readValue(data, PlatformSpec.class);
+      Assert.fail();
+    } catch (JsonProcessingException jpe) {
+      MatcherAssert.assertThat(
+          jpe.getMessage(),
+          CoreMatchers.startsWith("Missing required creator property 'architecture'"));
+    }
+  }
+
+  @Test
+  public void testPlatformSpec_architectureNotNull() {
+    String data = "architecture: null\n" + "os: linux";
+
+    try {
+      mapper.readValue(data, PlatformSpec.class);
+      Assert.fail();
+    } catch (JsonProcessingException jpe) {
+      MatcherAssert.assertThat(
+          jpe.getMessage(), CoreMatchers.containsString("Property 'architecture' cannot be null"));
+    }
+  }
+
+  @Test
+  public void testPlatformSpec_architectureNotEmpty() {
+    String data = "architecture: ''\n" + "os: linux";
+
+    try {
+      mapper.readValue(data, PlatformSpec.class);
+      Assert.fail();
+    } catch (JsonProcessingException jpe) {
+      MatcherAssert.assertThat(
+          jpe.getMessage(), CoreMatchers.containsString("Property 'architecture' cannot be empty"));
+    }
   }
 
   @Test
