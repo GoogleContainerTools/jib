@@ -16,7 +16,6 @@
 
 package com.google.cloud.tools.jib.builder.steps;
 
-import com.google.api.client.util.Preconditions;
 import com.google.cloud.tools.jib.api.Credential;
 import com.google.cloud.tools.jib.api.DescriptorDigest;
 import com.google.cloud.tools.jib.api.ImageReference;
@@ -270,9 +269,6 @@ class PullBaseImageStep implements Callable<ImageAndRegistryClient> {
       throws IOException, RegistryException {
 
     Set<Platform> platforms = buildContext.getContainerConfiguration().getPlatforms();
-    Preconditions.checkArgument(
-        platforms.size() == 1,
-        "multiple base image platforms is not yet supported; please specify only one platform");
     Platform platform = platforms.iterator().next();
     String architecture = platform.getArchitecture();
     String os = platform.getOs();
