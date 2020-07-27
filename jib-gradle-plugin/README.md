@@ -241,7 +241,7 @@ Property | Type | Default | Description
 Property | Type | Default | Description
 --- | --- | --- | ---
 `paths` | [`paths`](#paths-closure) closure, or `Object` | `(project-dir)/src/main/jib` | May be configured as a closure configuring `path` elements, or as source directory values recognized by [`Project.files()`](https://docs.gradle.org/current/javadoc/org/gradle/api/Project.html#files-java.lang.Object...-), such as `String`, `File`, `Path`, `List<String\|File\|Path>`, etc.
-`permissions` | `Map<String, String>` | *None* | Maps file paths (glob patterns) on container to Unix permissions. (Effective only for files added from extra directories.) If not configured, permissions default to "755" for directories and "644" for files. For example, `permissions = ['/scripts/**/*.sh': 755]`.
+`permissions` | `Map<String, String>` | *None* | Maps file paths (glob patterns) on container to Unix permissions. (Effective only for files added from extra directories.) If not configured, permissions default to "755" for directories and "644" for files. See [Adding Arbitrary Files to the Image](#adding-arbitrary-files-to-the-image) for an example.
 
 <a name="paths-closure"></a>`paths` can configure multiple `path` closures (see [Adding Arbitrary Files to the Image](#adding-arbitrary-files-to-the-image)). Each individual `path` has the following properties:
 
