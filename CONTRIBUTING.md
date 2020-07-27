@@ -55,7 +55,7 @@ following environment variables:
     the registry tested will be `gcr.io/<JIB_INTEGRATION_TESTING_PROJECT>`.
     - Make sure that you have `docker-credential-gcr` installed.
     - Configure authentication to Container Registry by following these [steps](https://cloud.google.com/container-registry/docs/advanced-authentication).
-    - Enable the google container registry api [here](https://pantheon.corp.google.com/apis/library/containerregistry.googleapis.com). This can also be done through the command line.
+    - Enable the Google Container Registry API [here](https://console.cloud.google.com/apis/library/containerregistry.googleapis.com).
   - If you're not using a GCP project then set `JIB_INTEGRATION_TESTING_LOCATION` to a specific registry for testing.        
 
 To run the integration tests locally, you can run `docker run -d -p 9990:5000 registry:2` and use `localhost:9990`.
