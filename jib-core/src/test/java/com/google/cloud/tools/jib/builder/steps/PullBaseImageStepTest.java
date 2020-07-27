@@ -41,8 +41,6 @@ import com.google.cloud.tools.jib.registry.RegistryClient;
 import com.google.cloud.tools.jib.registry.credentials.CredentialRetrievalException;
 import com.google.common.collect.ImmutableSet;
 import java.io.IOException;
-import java.net.URISyntaxException;
-import java.security.GeneralSecurityException;
 import java.util.Optional;
 import org.junit.Assert;
 import org.junit.Before;
@@ -137,9 +135,7 @@ public class PullBaseImageStepTest {
   }
 
   @Test
-  public void testObtainPlatformSpecificImageManifest()
-      throws IOException, InterruptedException, GeneralSecurityException, URISyntaxException,
-          RegistryException {
+  public void testObtainPlatformSpecificImageManifest() throws IOException, RegistryException {
     String manifestListJson =
         " {\n"
             + "   \"schemaVersion\": 2,\n"
