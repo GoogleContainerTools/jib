@@ -15,7 +15,7 @@ dependencies {
 
   testImplementation dependencyStrings.JUNIT
   testImplementation dependencyStrings.MOCKITO_CORE
-  testImplementation dependencyStrings.SLF4J_API_OLD
+  testImplementation dependencyStrings.SLF4J_API
   testImplementation dependencyStrings.SYSTEM_RULES
   testImplementation project(path:':jib-core', configuration:'tests')
 }
