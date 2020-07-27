@@ -37,6 +37,7 @@ import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.Callable;
@@ -63,7 +64,7 @@ public class StepsRunner {
           new IllegalStateException("invalid usage; required step not configured"));
     }
 
-    private Future<ImageAndRegistryClient> baseImageAndRegistryClient = failedFuture();
+    private Future<List<ImageAndRegistryClient>> baseImageAndRegistryClient = failedFuture();
     private Future<List<Future<PreparedLayer>>> baseImageLayers = failedFuture();
     @Nullable private List<Future<PreparedLayer>> applicationLayers;
     private Future<Image> builtImage = failedFuture();
@@ -275,10 +276,11 @@ public class StepsRunner {
     results.baseImageAndRegistryClient =
         executorService.submit(
             () ->
-                LocalBaseImageSteps.returnImageAndRegistryClientStep(
-                        realizeFutures(results.baseImageLayers.get()),
-                        localImage.get().configurationTemplate)
-                    .call());
+                Collections.singletonList(
+                    LocalBaseImageSteps.returnImageAndRegistryClientStep(
+                            realizeFutures(results.baseImageLayers.get()),
+                            localImage.get().configurationTemplate)
+                        .call()));
   }
 
   private void pullBaseImage() {
@@ -301,13 +303,13 @@ public class StepsRunner {
                         ? ObtainBaseImageLayerStep.makeListForForcedDownload(
                             buildContext,
                             childProgressDispatcherFactory,
-                            results.baseImageAndRegistryClient.get().image,
-                            results.baseImageAndRegistryClient.get().registryClient)
+                            results.baseImageAndRegistryClient.get().get(0).image,
+                            results.baseImageAndRegistryClient.get().get(0).registryClient)
                         : ObtainBaseImageLayerStep.makeListForSelectiveDownload(
                             buildContext,
                             childProgressDispatcherFactory,
-                            results.baseImageAndRegistryClient.get().image,
-                            results.baseImageAndRegistryClient.get().registryClient,
+                            results.baseImageAndRegistryClient.get().get(0).image,
+                            results.baseImageAndRegistryClient.get().get(0).registryClient,
                             results.targetRegistryClient.get())));
   }
 
@@ -346,7 +348,7 @@ public class StepsRunner {
                 new BuildImageStep(
                         buildContext,
                         childProgressDispatcherFactory,
-                        results.baseImageAndRegistryClient.get().image,
+                        results.baseImageAndRegistryClient.get().get(0).image,
                         realizeFutures(results.baseImageLayers.get()),
                         realizeFutures(Verify.verifyNotNull(results.applicationLayers)))
                     .call());
