@@ -63,7 +63,6 @@ public class PullBaseImageStepTest {
   @Mock private BuildContext buildContext;
   @Mock private RegistryClient registryClient;
   @Mock private ImageConfiguration imageConfiguration;
-  @Mock private ImageReference imageReference;
   @Mock private ContainerConfiguration containerConfiguration;
   @Mock private Cache cache;
 
