@@ -519,7 +519,7 @@ Property | Description
 
 e.g. `mvn compile jib:build -Djib.to.auth.username=user -Djib.to.auth.password=pass`
 
-**Note:** This method of authentication should be used only as a last resort, as it is insecure to make your password visible in plain text.
+**Note:** This method of authentication should be used only as a last resort, as it is insecure to make your password visible in plain text. Note that often cloud registries (for example, Google GCR, Amazon ECR, and Azure ACR) do not accept "user credentials" (such as Gmail account name and password) but require different forms of credentials. For example, you may use [`oauth2accesstoken` or `_json_key`](https://cloud.google.com/container-registry/docs/advanced-authentication) as the username for GCR, and [`AWS`](https://serverfault.com/questions/1004915/what-is-the-proper-way-to-log-in-to-ecr) for ECR. For ACR, you may use a [_service principle_](https://docs.microsoft.com/en-us/azure/container-registry/container-registry-auth-service-principal).
 
 #### Using Maven Settings
 
