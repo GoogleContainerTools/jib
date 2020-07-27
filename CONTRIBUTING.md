@@ -56,7 +56,7 @@ following environment variables:
     - Configure authentication to Container Registry by following these [steps](https://cloud.google.com/container-registry/docs/advanced-authentication).
     - Enable the Google Container Registry api [here](https://pantheon.corp.google.com/apis/library/containerregistry.googleapis.com).
   - If you're not using a GCP project then set `JIB_INTEGRATION_TESTING_LOCATION` to a specific registry for testing. (For example, you can run `docker run -d -p 9990:5000 registry:2` to set up a local registry and set the variable to `localhost:9990`.)
-  
+
 You will also need Docker installed with the daemon running. Note that the
 integration tests will create local registries on ports 5000 and 6000.
 
