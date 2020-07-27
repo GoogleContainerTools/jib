@@ -22,6 +22,7 @@ import com.google.cloud.tools.jib.api.ImageReference;
 import com.google.cloud.tools.jib.api.LogEvent;
 import com.google.cloud.tools.jib.api.RegistryException;
 import com.google.cloud.tools.jib.api.RegistryUnauthorizedException;
+import com.google.cloud.tools.jib.api.buildplan.Platform;
 import com.google.cloud.tools.jib.blob.Blobs;
 import com.google.cloud.tools.jib.builder.ProgressEventDispatcher;
 import com.google.cloud.tools.jib.builder.TimerEventDispatcher;
@@ -46,9 +47,11 @@ import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import com.google.cloud.tools.jib.registry.ManifestAndDigest;
 import com.google.cloud.tools.jib.registry.RegistryClient;
 import com.google.cloud.tools.jib.registry.credentials.CredentialRetrievalException;
+import com.google.common.annotations.VisibleForTesting;
 import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.Callable;
 import javax.annotation.Nullable;
 
@@ -197,9 +200,6 @@ class PullBaseImageStep implements Callable<ImageAndRegistryClient> {
     // special handling if we happen upon a manifest list, redirect to a manifest and continue
     // handling it normally
     if (manifestTemplate instanceof V22ManifestListTemplate) {
-      eventHandlers.dispatch(
-          LogEvent.lifecycle(
-              "The base image reference is manifest list, searching for linux/amd64"));
       manifestAndDigest =
           obtainPlatformSpecificImageManifest(
               registryClient, (V22ManifestListTemplate) manifestTemplate);
@@ -260,23 +260,40 @@ class PullBaseImageStep implements Callable<ImageAndRegistryClient> {
   }
 
   /**
-   * Looks through a manifest list for any amd64/linux manifest and downloads and returns the first
-   * manifest it finds.
+   * Looks through a manifest list for the user specified arch/os manifest and downloads and returns
+   * the first manifest it finds.
    */
-  private ManifestAndDigest<?> obtainPlatformSpecificImageManifest(
+  @VisibleForTesting
+  ManifestAndDigest<?> obtainPlatformSpecificImageManifest(
       RegistryClient registryClient, V22ManifestListTemplate manifestListTemplate)
-      throws RegistryException, IOException {
+      throws IOException, RegistryException {
 
-    List<String> digests = manifestListTemplate.getDigestsForPlatform("amd64", "linux");
+    Set<Platform> platforms = buildContext.getContainerConfiguration().getPlatforms();
+    Platform platform = platforms.iterator().next();
+    String architecture = platform.getArchitecture();
+    String os = platform.getOs();
+
+    EventHandlers eventHandlers = buildContext.getEventHandlers();
+    eventHandlers.dispatch(
+        LogEvent.lifecycle(
+            "The base image reference is manifest list, searching for architecture="
+                + architecture
+                + ", os="
+                + os));
+
+    List<String> digests = manifestListTemplate.getDigestsForPlatform(architecture, os);
     if (digests.size() == 0) {
       String errorMessage =
           buildContext.getBaseImageConfiguration().getImage()
-              + " is a manifest list, but the list does not contain an image manifest for amd64/linux."
-              + " If your intention was to use a non-amd64/linux base image,"
+              + " is a manifest list, but the list does not contain an image manifest for the platform architecture="
+              + architecture
+              + ", os="
+              + os
+              + ". If your intention was to specify a platform for your image,"
               + " see https://github.com/GoogleContainerTools/jib/blob/master/docs/faq.md#how-do-i-specify-a-platform-in-the-manifest-list-or-oci-index-of-a-base-image"
-              + " to learn how to specify a manifest instead of a manifest list, until Jib fixes"
-              + " https://github.com/GoogleContainerTools/jib/issues/1567 to allow specifying architecture and OS.";
-      buildContext.getEventHandlers().dispatch(LogEvent.error(errorMessage));
+              + " to learn more about specifying a platform";
+
+      eventHandlers.dispatch(LogEvent.error(errorMessage));
       throw new RegistryException(errorMessage);
     }
     return registryClient.pullManifest(digests.get(0));
