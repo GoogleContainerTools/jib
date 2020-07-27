@@ -294,7 +294,7 @@ class PullBaseImageStep implements Callable<ImageAndRegistryClient> {
               + os
               + ". If your intention was to specify a platform for your image,"
               + " see https://github.com/GoogleContainerTools/jib/blob/master/docs/faq.md#how-do-i-specify-a-platform-in-the-manifest-list-or-oci-index-of-a-base-image"
-              + " to learn more about specifyng a platform";
+              + " to learn more about specifying a platform";
 
       eventHandlers.dispatch(LogEvent.error(errorMessage));
       throw new RegistryException(errorMessage);
