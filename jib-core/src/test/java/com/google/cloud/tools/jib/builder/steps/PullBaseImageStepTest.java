@@ -16,7 +16,6 @@
 
 package com.google.cloud.tools.jib.builder.steps;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.cloud.tools.jib.api.ImageReference;
 import com.google.cloud.tools.jib.api.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.api.RegistryException;
@@ -29,7 +28,6 @@ import com.google.cloud.tools.jib.configuration.BuildContext;
 import com.google.cloud.tools.jib.configuration.ContainerConfiguration;
 import com.google.cloud.tools.jib.configuration.ImageConfiguration;
 import com.google.cloud.tools.jib.event.EventHandlers;
-import com.google.cloud.tools.jib.hash.Digests;
 import com.google.cloud.tools.jib.image.LayerCountMismatchException;
 import com.google.cloud.tools.jib.image.LayerPropertyNotFoundException;
 import com.google.cloud.tools.jib.image.json.BadContainerConfigurationFormatException;
@@ -77,7 +75,6 @@ public class PullBaseImageStepTest {
   public void setUp() {
     containerConfig.setOs("fat system");
     Mockito.when(buildContext.getBaseImageConfiguration()).thenReturn(imageConfiguration);
-    Mockito.when(buildContext.getBaseImageConfiguration().getImage()).thenReturn(imageReference);
     Mockito.when(buildContext.getEventHandlers()).thenReturn(EventHandlers.NONE);
     Mockito.when(buildContext.getBaseImageLayersCache()).thenReturn(cache);
     RegistryClient.Factory registryClientFactory = Mockito.mock(RegistryClient.Factory.class);
@@ -143,7 +140,7 @@ public class PullBaseImageStepTest {
   public void testObtainPlatformSpecificImageManifest()
       throws IOException, InterruptedException, GeneralSecurityException, URISyntaxException,
           RegistryException {
-    String testManifestListTemplate =
+    String manifestListJson =
         " {\n"
             + "   \"schemaVersion\": 2,\n"
             + "   \"mediaType\": \"application/vnd.docker.distribution.manifest.list.v2+json\",\n"
@@ -151,67 +148,38 @@ public class PullBaseImageStepTest {
             + "      {\n"
             + "         \"mediaType\": \"application/vnd.docker.distribution.manifest.v2+json\",\n"
             + "         \"size\": 424,\n"
-            + "         \"digest\": \"sha256:f67dcc5fc786f04f0743abfe0ee5dae9bd8caf8efa6c8144f7f2a43889dc513b\",\n"
+            + "         \"digest\": \"sha256:111111111111111111111111111111111111111111111111111111111111111\",\n"
             + "         \"platform\": {\n"
-            + "            \"architecture\": \"testArchitecture\",\n"
-            + "            \"os\": \"testOS\"\n"
+            + "            \"architecture\": \"arm64\",\n"
+            + "            \"os\": \"linux\"\n"
             + "         }\n"
             + "      },\n"
             + "      {\n"
             + "         \"mediaType\": \"application/vnd.docker.distribution.manifest.v2+json\",\n"
             + "         \"size\": 425,\n"
-            + "         \"digest\": \"sha256:5bb8e50aa2edd408bdf3ddf61efb7338ff34a07b762992c9432f1c02fc0e5e62\",\n"
+            + "         \"digest\": \"sha256:222222222222222222222222222222222222222222222222222222222222222222\",\n"
             + "         \"platform\": {\n"
-            + "            \"architecture\": \"Architecture\",\n"
-            + "            \"os\": \"OS\"\n"
+            + "            \"architecture\": \"targetArchitecture\",\n"
+            + "            \"os\": \"targetOS\"\n"
             + "         }\n"
             + "      }\n"
             + "   ]\n"
             + "}";
 
-    String testManifestTemplate =
-        "{\n"
-            + "    \"schemaVersion\": 2,\n"
-            + "    \"mediaType\": \"application/vnd.docker.distribution.manifest.v2+json\",\n"
-            + "    \"config\": {\n"
-            + "        \"mediaType\": \"application/vnd.docker.container.image.v1+json\",\n"
-            + "        \"size\": 424,\n"
-            + "        \"digest\": \"sha256:5bb8e50aa2edd408bdf3ddf61efb7338ff34a07b762992c9432f1c02fc0e5e62\"\n"
-            + "    }\n"
-            + "}";
     Mockito.when(buildContext.getContainerConfiguration()).thenReturn(containerConfiguration);
     Mockito.when(containerConfiguration.getPlatforms())
-        .thenReturn(ImmutableSet.of(new Platform("testArchitecture", "testOS")));
-    V22ManifestListTemplate testManifestList =
-        JsonTemplateMapper.readJson(testManifestListTemplate, V22ManifestListTemplate.class);
-
-    V22ManifestTemplate testManifest =
-        new ObjectMapper().readValue(testManifestTemplate, V22ManifestTemplate.class);
-
-    ManifestAndDigest<?> manifestAndDigest =
-        new ManifestAndDigest(testManifest, Digests.computeJsonDigest(testManifest));
-
+        .thenReturn(ImmutableSet.of(new Platform("targetArchitecture", "targetOS")));
+    V22ManifestListTemplate manifestList =
+        JsonTemplateMapper.readJson(manifestListJson, V22ManifestListTemplate.class);
+    ManifestAndDigest<?> manifest = Mockito.mock(ManifestAndDigest.class);
     Mockito.<ManifestAndDigest<?>>when(
             registryClient.pullManifest(
-                "sha256:f67dcc5fc786f04f0743abfe0ee5dae9bd8caf8efa6c8144f7f2a43889dc513b"))
-        .thenReturn(manifestAndDigest);
+                "sha256:222222222222222222222222222222222222222222222222222222222222222222"))
+        .thenReturn(manifest);
 
-    ManifestAndDigest<?> returnManifestAndDigest =
-        pullBaseImageStep.obtainPlatformSpecificImageManifest(registryClient, testManifestList);
+    ManifestAndDigest<?> returnManifest =
+        pullBaseImageStep.obtainPlatformSpecificImageManifest(registryClient, manifestList);
 
-    Assert.assertEquals(
-        Digests.computeJsonDigest(testManifest).toString(),
-        returnManifestAndDigest.getDigest().toString());
-
-    Assert.assertTrue(returnManifestAndDigest.getManifest() instanceof V22ManifestTemplate);
-    V22ManifestTemplate returnedManifest = (V22ManifestTemplate) manifestAndDigest.getManifest();
-    Assert.assertEquals(2, returnedManifest.getSchemaVersion());
-    Assert.assertEquals(
-        "application/vnd.docker.distribution.manifest.v2+json",
-        returnedManifest.getManifestMediaType());
-    Assert.assertEquals(
-        "sha256:5bb8e50aa2edd408bdf3ddf61efb7338ff34a07b762992c9432f1c02fc0e5e62",
-        returnedManifest.getContainerConfiguration().getDigest().toString());
-    Assert.assertEquals(424, returnedManifest.getContainerConfiguration().getSize());
+    Assert.assertEquals(manifest, returnManifest);
   }
 }

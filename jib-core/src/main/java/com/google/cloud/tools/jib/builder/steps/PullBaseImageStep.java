@@ -269,35 +269,34 @@ class PullBaseImageStep implements Callable<ImageAndRegistryClient> {
   @VisibleForTesting
   ManifestAndDigest<?> obtainPlatformSpecificImageManifest(
       RegistryClient registryClient, V22ManifestListTemplate manifestListTemplate)
-      throws RegistryException, IOException {
+      throws IOException, RegistryException {
 
     Set<Platform> platforms = buildContext.getContainerConfiguration().getPlatforms();
     Platform platform = platforms.iterator().next();
     String architecture = platform.getArchitecture();
     String os = platform.getOs();
 
-    buildContext
-        .getEventHandlers()
-        .dispatch(
-            LogEvent.lifecycle(
-                "Searching the manifest list for the platfrom, architecture =  "
-                    + architecture
-                    + ", os = "
-                    + os));
+    EventHandlers eventHandlers = buildContext.getEventHandlers();
+    eventHandlers.dispatch(
+        LogEvent.info(
+            "Searching the manifest list for the platform, architecture="
+                + architecture
+                + ", os="
+                + os));
 
     List<String> digests = manifestListTemplate.getDigestsForPlatform(architecture, os);
     if (digests.size() == 0) {
       String errorMessage =
           buildContext.getBaseImageConfiguration().getImage()
-              + " is a manifest list, but the list does not contain an image manifest for the platform arch = "
+              + " is a manifest list, but the list does not contain an image manifest for the platform architecture="
               + architecture
-              + ", os = "
+              + ", os="
               + os
               + ". If your intention was to specify a platform for your image,"
               + " see https://github.com/GoogleContainerTools/jib/blob/master/docs/faq.md#how-do-i-specify-a-platform-in-the-manifest-list-or-oci-index-of-a-base-image"
-              + " to learn more about specifyng a platform using the platform tag";
+              + " to learn more about specifyng a platform";
 
-      buildContext.getEventHandlers().dispatch(LogEvent.error(errorMessage));
+      eventHandlers.dispatch(LogEvent.error(errorMessage));
       throw new RegistryException(errorMessage);
     }
     return registryClient.pullManifest(digests.get(0));
