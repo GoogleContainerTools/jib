@@ -58,7 +58,7 @@ import java.util.Set;
 import java.util.concurrent.Callable;
 import javax.annotation.Nullable;
 
-/** Pulls the base image manifest. */
+/** Pulls the base image manifests for the specified platforms. */
 class PullBaseImageStep implements Callable<List<ImageAndRegistryClient>> {
 
   private static final String DESCRIPTION = "Pulling base image manifest";
@@ -174,12 +174,12 @@ class PullBaseImageStep implements Callable<List<ImageAndRegistryClient>> {
   }
 
   /**
-   * Pulls the base image.
+   * Pulls the base images specified in the platforms list.
    *
    * @param registryClient to communicate with remote registry
    * @param progressEventDispatcher the {@link ProgressEventDispatcher} for emitting {@link
    *     ProgressEvent}s
-   * @return the pulled image
+   * @return the list of pulled images
    * @throws IOException when an I/O exception occurs during the pulling
    * @throws RegistryException if communicating with the registry caused a known error
    * @throws LayerCountMismatchException if the manifest and configuration contain conflicting layer
@@ -193,88 +193,89 @@ class PullBaseImageStep implements Callable<List<ImageAndRegistryClient>> {
       throws IOException, RegistryException, LayerPropertyNotFoundException,
           LayerCountMismatchException, BadContainerConfigurationFormatException {
     EventHandlers eventHandlers = buildContext.getEventHandlers();
+    List<ManifestAndDigest<?>> manifestsAndDigests = new ArrayList<>();
+    List<ImageAndRegistryClient> imagesAndRegistryClient = new ArrayList<>();
 
     ManifestAndDigest<?> manifestAndDigest =
         registryClient.pullManifest(buildContext.getBaseImageConfiguration().getImageQualifier());
     ManifestTemplate manifestTemplate = manifestAndDigest.getManifest();
 
-    // special handling if we happen upon a manifest list, redirect to a manifest and continue
-    // handling it normally
-    List<ImageAndRegistryClient> ImageAndRegistryClients = new ArrayList<>();
-
+    // special handling if we happen upon a manifest list, extract manifests handle them normally
     if (manifestTemplate instanceof V22ManifestListTemplate) {
       Set<Platform> platforms = buildContext.getContainerConfiguration().getPlatforms();
       Iterator<Platform> platformsIterator = platforms.iterator();
       while (platformsIterator.hasNext()) {
-        manifestAndDigest =
+        manifestsAndDigests.add(
             obtainPlatformSpecificImageManifest(
                 registryClient,
                 (V22ManifestListTemplate) manifestTemplate,
-                platformsIterator.next());
+                platformsIterator.next()));
+      }
+    } else {
+      manifestsAndDigests.add(manifestAndDigest);
+    }
 
-        manifestTemplate = manifestAndDigest.getManifest();
+    for (ManifestAndDigest<?> manifestAndDigestInstance : manifestsAndDigests) {
+      manifestTemplate = manifestAndDigestInstance.getManifest();
+      switch (manifestTemplate.getSchemaVersion()) {
+        case 1:
+          V21ManifestTemplate v21ManifestTemplate = (V21ManifestTemplate) manifestTemplate;
+          buildContext
+              .getBaseImageLayersCache()
+              .writeMetadata(
+                  buildContext.getBaseImageConfiguration().getImage(), v21ManifestTemplate);
+          imagesAndRegistryClient.add(
+              new ImageAndRegistryClient(
+                  JsonToImageTranslator.toImage(v21ManifestTemplate), registryClient));
+          // fall through
+        case 2:
+          eventHandlers.dispatch(
+              LogEvent.lifecycle("Using base image with digest: " + manifestAndDigest.getDigest()));
+          BuildableManifestTemplate buildableManifestTemplate =
+              (BuildableManifestTemplate) manifestTemplate;
+          if (buildableManifestTemplate.getContainerConfiguration() == null
+              || buildableManifestTemplate.getContainerConfiguration().getDigest() == null) {
+            throw new UnknownManifestFormatException(
+                "Invalid container configuration in Docker V2.2/OCI manifest: \n"
+                    + JsonTemplateMapper.toUtf8String(buildableManifestTemplate));
+          }
 
-        switch (manifestTemplate.getSchemaVersion()) {
-          case 1:
-            V21ManifestTemplate v21ManifestTemplate = (V21ManifestTemplate) manifestTemplate;
+          DescriptorDigest containerConfigurationDigest =
+              buildableManifestTemplate.getContainerConfiguration().getDigest();
+
+          try (ThrottledProgressEventDispatcherWrapper progressEventDispatcherWrapper =
+              new ThrottledProgressEventDispatcherWrapper(
+                  progressEventDispatcher.newChildProducer(),
+                  "pull container configuration " + containerConfigurationDigest)) {
+            String containerConfigurationString =
+                Blobs.writeToString(
+                    registryClient.pullBlob(
+                        containerConfigurationDigest,
+                        progressEventDispatcherWrapper::setProgressTarget,
+                        progressEventDispatcherWrapper::dispatchProgress));
+
+            ContainerConfigurationTemplate containerConfigurationTemplate =
+                JsonTemplateMapper.readJson(
+                    containerConfigurationString, ContainerConfigurationTemplate.class);
             buildContext
                 .getBaseImageLayersCache()
                 .writeMetadata(
-                    buildContext.getBaseImageConfiguration().getImage(), v21ManifestTemplate);
-            ImageAndRegistryClients.add(
+                    buildContext.getBaseImageConfiguration().getImage(),
+                    buildableManifestTemplate,
+                    containerConfigurationTemplate);
+
+            imagesAndRegistryClient.add(
                 new ImageAndRegistryClient(
-                    JsonToImageTranslator.toImage(v21ManifestTemplate), registryClient));
-
-          case 2:
-            eventHandlers.dispatch(
-                LogEvent.lifecycle(
-                    "Using base image with digest: " + manifestAndDigest.getDigest()));
-            BuildableManifestTemplate buildableManifestTemplate =
-                (BuildableManifestTemplate) manifestTemplate;
-            if (buildableManifestTemplate.getContainerConfiguration() == null
-                || buildableManifestTemplate.getContainerConfiguration().getDigest() == null) {
-              throw new UnknownManifestFormatException(
-                  "Invalid container configuration in Docker V2.2/OCI manifest: \n"
-                      + JsonTemplateMapper.toUtf8String(buildableManifestTemplate));
-            }
-
-            DescriptorDigest containerConfigurationDigest =
-                buildableManifestTemplate.getContainerConfiguration().getDigest();
-
-            try (ThrottledProgressEventDispatcherWrapper progressEventDispatcherWrapper =
-                new ThrottledProgressEventDispatcherWrapper(
-                    progressEventDispatcher.newChildProducer(),
-                    "pull container configuration " + containerConfigurationDigest)) {
-              String containerConfigurationString =
-                  Blobs.writeToString(
-                      registryClient.pullBlob(
-                          containerConfigurationDigest,
-                          progressEventDispatcherWrapper::setProgressTarget,
-                          progressEventDispatcherWrapper::dispatchProgress));
-
-              ContainerConfigurationTemplate containerConfigurationTemplate =
-                  JsonTemplateMapper.readJson(
-                      containerConfigurationString, ContainerConfigurationTemplate.class);
-              buildContext
-                  .getBaseImageLayersCache()
-                  .writeMetadata(
-                      buildContext.getBaseImageConfiguration().getImage(),
-                      buildableManifestTemplate,
-                      containerConfigurationTemplate);
-
-              ImageAndRegistryClients.add(
-                  new ImageAndRegistryClient(
-                      JsonToImageTranslator.toImage(
-                          buildableManifestTemplate, containerConfigurationTemplate),
-                      registryClient));
-            }
-          default:
-            throw new IllegalStateException(
-                "Unknown manifest schema version: " + manifestTemplate.getSchemaVersion());
-        }
+                    JsonToImageTranslator.toImage(
+                        buildableManifestTemplate, containerConfigurationTemplate),
+                    registryClient));
+          }
+          // fall through
+        default:
+          LogEvent.info("Unknown manifest schema version: " + manifestTemplate.getSchemaVersion());
       }
     }
-    return ImageAndRegistryClients;
+    return imagesAndRegistryClient;
   }
 
   /**
@@ -294,7 +295,7 @@ class PullBaseImageStep implements Callable<List<ImageAndRegistryClient>> {
     EventHandlers eventHandlers = buildContext.getEventHandlers();
     eventHandlers.dispatch(
         LogEvent.lifecycle(
-            "The base image reference is manifest list, searching for architecture="
+            "The base image reference is a manifest list, searching for architecture="
                 + architecture
                 + ", os="
                 + os));
