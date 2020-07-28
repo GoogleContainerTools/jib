@@ -517,16 +517,23 @@ public class MavenProjectProperties implements ProjectProperties {
       }
     }
 
+    String finalName = project.getBuild().getFinalName();
     String suffix = ".jar";
-    if (jarRepackagedBySpringBoot()) {
+
+    Optional<Xpp3Dom> bootConfiguration = getSpringBootRepackageConfiguration();
+    if (bootConfiguration.isPresent()) {
       log(LogEvent.lifecycle("Spring Boot repackaging (fat JAR) detected; using the original JAR"));
-      if (outputDirectory.equals(buildDirectory)) { // Spring renames original only when needed
-        suffix += ".original";
+
+      // Spring renames original JAR only when replacing it, so check if the names are clashing.
+      if (outputDirectory.equals(buildDirectory)) {
+        Optional<String> bootFinalName = getChildValue(bootConfiguration.get(), "finalName");
+        if (!bootFinalName.isPresent() || bootFinalName.get().equals(finalName)) {
+          suffix = ".jar.original";
+        }
       }
     }
 
-    String noSuffixJarName =
-        project.getBuild().getFinalName() + (classifier == null ? "" : '-' + classifier);
+    String noSuffixJarName = finalName + (classifier == null ? "" : '-' + classifier);
     Path jarPath = outputDirectory.resolve(noSuffixJarName + suffix);
     log(LogEvent.debug("Using JAR: " + jarPath));
 
@@ -542,20 +549,25 @@ public class MavenProjectProperties implements ProjectProperties {
     return newJarPath;
   }
 
+  /**
+   * Returns Spring Boot {@code &lt;configuration&gt;} if the Spring Boot plugin is configured to
+   * run the {@code repackage} goal to create a Spring Boot artifact.
+   */
   @VisibleForTesting
-  boolean jarRepackagedBySpringBoot() {
+  Optional<Xpp3Dom> getSpringBootRepackageConfiguration() {
     Plugin springBootPlugin =
         project.getPlugin("org.springframework.boot:spring-boot-maven-plugin");
     if (springBootPlugin != null) {
       for (PluginExecution execution : springBootPlugin.getExecutions()) {
         if (execution.getGoals().contains("repackage")) {
-          Optional<String> skip = getChildValue((Xpp3Dom) execution.getConfiguration(), "skip");
-          boolean skipped = "true".equals(skip.orElse("false"));
-          return !skipped;
+          Xpp3Dom configuration = (Xpp3Dom) execution.getConfiguration();
+
+          boolean skip = Boolean.valueOf(getChildValue(configuration, "skip").orElse("false"));
+          return skip ? Optional.empty() : Optional.of(configuration);
         }
       }
     }
-    return false;
+    return Optional.empty();
   }
 
   @Override

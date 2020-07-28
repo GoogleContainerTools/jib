@@ -775,56 +775,65 @@ public class MavenProjectPropertiesTest {
   }
 
   @Test
-  public void testJarRepackagedBySpringBoot_pluginNotApplied() {
-    Assert.assertFalse(mavenProjectProperties.jarRepackagedBySpringBoot());
+  public void testGetSpringBootRepackageConfiguration_pluginNotApplied() {
+    Assert.assertEquals(
+        Optional.empty(), mavenProjectProperties.getSpringBootRepackageConfiguration());
   }
 
   @Test
-  public void testJarRepackagedBySpringBoot_noExecutions() {
+  public void testGetSpringBootRepackageConfiguration_noExecutions() {
     Mockito.when(mockMavenProject.getPlugin("org.springframework.boot:spring-boot-maven-plugin"))
         .thenReturn(mockPlugin);
     Mockito.when(mockPlugin.getExecutions()).thenReturn(Collections.emptyList());
-    Assert.assertFalse(mavenProjectProperties.jarRepackagedBySpringBoot());
+    Assert.assertEquals(
+        Optional.empty(), mavenProjectProperties.getSpringBootRepackageConfiguration());
   }
 
   @Test
-  public void testJarRepackagedBySpringBoot_noRepackageGoal() {
+  public void testGetSpringBootRepackageConfiguration_noRepackageGoal() {
     Mockito.when(mockMavenProject.getPlugin("org.springframework.boot:spring-boot-maven-plugin"))
         .thenReturn(mockPlugin);
     Mockito.when(mockPlugin.getExecutions()).thenReturn(Arrays.asList(mockPluginExecution));
     Mockito.when(mockPluginExecution.getGoals()).thenReturn(Arrays.asList("goal", "foo", "bar"));
-    Assert.assertFalse(mavenProjectProperties.jarRepackagedBySpringBoot());
+    Assert.assertEquals(
+        Optional.empty(), mavenProjectProperties.getSpringBootRepackageConfiguration());
   }
 
   @Test
-  public void testJarRepackagedBySpringBoot_repackageGoal() {
+  public void testGetSpringBootRepackageConfiguration_repackageGoal() {
     Mockito.when(mockMavenProject.getPlugin("org.springframework.boot:spring-boot-maven-plugin"))
         .thenReturn(mockPlugin);
     Mockito.when(mockPlugin.getExecutions()).thenReturn(Arrays.asList(mockPluginExecution));
     Mockito.when(mockPluginExecution.getGoals()).thenReturn(Arrays.asList("goal", "repackage"));
-    Assert.assertTrue(mavenProjectProperties.jarRepackagedBySpringBoot());
+    Mockito.when(mockPluginExecution.getConfiguration()).thenReturn(pluginConfiguration);
+    Assert.assertEquals(
+        Optional.of(pluginConfiguration),
+        mavenProjectProperties.getSpringBootRepackageConfiguration());
   }
 
   @Test
-  public void testJarRepackagedBySpringBoot_skipped() {
+  public void testGetSpringBootRepackageConfiguration_skipped() {
     Mockito.when(mockMavenProject.getPlugin("org.springframework.boot:spring-boot-maven-plugin"))
         .thenReturn(mockPlugin);
     Mockito.when(mockPlugin.getExecutions()).thenReturn(Arrays.asList(mockPluginExecution));
     Mockito.when(mockPluginExecution.getGoals()).thenReturn(Arrays.asList("repackage"));
     Mockito.when(mockPluginExecution.getConfiguration()).thenReturn(pluginConfiguration);
     addXpp3DomChild(pluginConfiguration, "skip", "true");
-    Assert.assertFalse(mavenProjectProperties.jarRepackagedBySpringBoot());
+    Assert.assertEquals(
+        Optional.empty(), mavenProjectProperties.getSpringBootRepackageConfiguration());
   }
 
   @Test
-  public void testJarRepackagedBySpringBoot_skipNotTrue() {
+  public void testGetSpringBootRepackageConfiguration_skipNotTrue() {
     Mockito.when(mockMavenProject.getPlugin("org.springframework.boot:spring-boot-maven-plugin"))
         .thenReturn(mockPlugin);
     Mockito.when(mockPlugin.getExecutions()).thenReturn(Arrays.asList(mockPluginExecution));
     Mockito.when(mockPluginExecution.getGoals()).thenReturn(Arrays.asList("repackage"));
     Mockito.when(mockPluginExecution.getConfiguration()).thenReturn(pluginConfiguration);
     addXpp3DomChild(pluginConfiguration, "skip", null);
-    Assert.assertTrue(mavenProjectProperties.jarRepackagedBySpringBoot());
+    Assert.assertEquals(
+        Optional.of(pluginConfiguration),
+        mavenProjectProperties.getSpringBootRepackageConfiguration());
   }
 
   @Test
@@ -1061,5 +1070,6 @@ public class MavenProjectPropertiesTest {
         .thenReturn(plugin);
     Mockito.when(plugin.getExecutions()).thenReturn(Arrays.asList(execution));
     Mockito.when(execution.getGoals()).thenReturn(Arrays.asList("repackage"));
+    Mockito.when(execution.getConfiguration()).thenReturn(pluginConfiguration);
   }
 }
