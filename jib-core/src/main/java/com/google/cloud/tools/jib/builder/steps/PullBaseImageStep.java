@@ -227,7 +227,7 @@ class PullBaseImageStep implements Callable<List<ImageAndRegistryClient>> {
           imagesAndRegistryClient.add(
               new ImageAndRegistryClient(
                   JsonToImageTranslator.toImage(v21ManifestTemplate), registryClient));
-          // fall through
+          break;
         case 2:
           eventHandlers.dispatch(
               LogEvent.lifecycle("Using base image with digest: " + manifestAndDigest.getDigest()));
@@ -270,7 +270,7 @@ class PullBaseImageStep implements Callable<List<ImageAndRegistryClient>> {
                         buildableManifestTemplate, containerConfigurationTemplate),
                     registryClient));
           }
-          // fall through
+          break;
         default:
           LogEvent.info("Unknown manifest schema version: " + manifestTemplate.getSchemaVersion());
       }
