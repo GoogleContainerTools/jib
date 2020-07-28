@@ -25,7 +25,7 @@ import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.blob.Blobs;
 import com.google.cloud.tools.jib.builder.ProgressEventDispatcher;
 import com.google.cloud.tools.jib.builder.TimerEventDispatcher;
-import com.google.cloud.tools.jib.builder.steps.PullBaseImageStep.ImageAndRegistryClient;
+import com.google.cloud.tools.jib.builder.steps.PullBaseImageStep.BaseImagesAndRegistryClient;
 import com.google.cloud.tools.jib.cache.Cache;
 import com.google.cloud.tools.jib.cache.CacheCorruptedException;
 import com.google.cloud.tools.jib.cache.CachedLayer;
@@ -52,6 +52,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.DigestException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.Callable;
@@ -142,7 +143,7 @@ public class LocalBaseImageSteps {
             buildContext, tarPath, progressEventDispatcherFactory, tempDirectoryProvider);
   }
 
-  static Callable<ImageAndRegistryClient> returnImageAndRegistryClientStep(
+  static Callable<BaseImagesAndRegistryClient> returnImageAndRegistryClientStep(
       List<PreparedLayer> layers, ContainerConfigurationTemplate configurationTemplate) {
     return () -> {
       // Collect compressed layers and add to manifest
@@ -156,8 +157,10 @@ public class LocalBaseImageSteps {
           Blobs.from(configurationTemplate).writeTo(ByteStreams.nullOutputStream());
       v22Manifest.setContainerConfiguration(
           configDescriptor.getSize(), configDescriptor.getDigest());
-      return new ImageAndRegistryClient(
-          JsonToImageTranslator.toImage(v22Manifest, configurationTemplate), null);
+      return new BaseImagesAndRegistryClient(
+          Collections.singletonList(
+              JsonToImageTranslator.toImage(v22Manifest, configurationTemplate)),
+          null);
     };
   }
 

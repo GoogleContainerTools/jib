@@ -26,7 +26,7 @@ import com.google.cloud.tools.jib.api.buildplan.Platform;
 import com.google.cloud.tools.jib.blob.Blobs;
 import com.google.cloud.tools.jib.builder.ProgressEventDispatcher;
 import com.google.cloud.tools.jib.builder.TimerEventDispatcher;
-import com.google.cloud.tools.jib.builder.steps.PullBaseImageStep.ImageAndRegistryClient;
+import com.google.cloud.tools.jib.builder.steps.PullBaseImageStep.BaseImagesAndRegistryClient;
 import com.google.cloud.tools.jib.cache.CacheCorruptedException;
 import com.google.cloud.tools.jib.configuration.BuildContext;
 import com.google.cloud.tools.jib.event.EventHandlers;
@@ -58,18 +58,18 @@ import java.util.concurrent.Callable;
 import javax.annotation.Nullable;
 
 /** Pulls the base image manifests for the specified platforms. */
-class PullBaseImageStep implements Callable<List<ImageAndRegistryClient>> {
+class PullBaseImageStep implements Callable<BaseImagesAndRegistryClient> {
 
   private static final String DESCRIPTION = "Pulling base image manifest";
 
   /** Structure for the result returned by this step. */
-  static class ImageAndRegistryClient {
+  static class BaseImagesAndRegistryClient {
 
-    final Image image;
+    final List<Image> baseImages;
     @Nullable final RegistryClient registryClient;
 
-    ImageAndRegistryClient(Image image, @Nullable RegistryClient registryClient) {
-      this.image = image;
+    BaseImagesAndRegistryClient(List<Image> baseImages, @Nullable RegistryClient registryClient) {
+      this.baseImages = baseImages;
       this.registryClient = registryClient;
     }
   }
@@ -84,7 +84,7 @@ class PullBaseImageStep implements Callable<List<ImageAndRegistryClient>> {
   }
 
   @Override
-  public List<ImageAndRegistryClient> call()
+  public BaseImagesAndRegistryClient call()
       throws IOException, RegistryException, LayerPropertyNotFoundException,
           LayerCountMismatchException, BadContainerConfigurationFormatException,
           CacheCorruptedException, CredentialRetrievalException {
@@ -93,8 +93,8 @@ class PullBaseImageStep implements Callable<List<ImageAndRegistryClient>> {
     ImageReference imageReference = buildContext.getBaseImageConfiguration().getImage();
     if (imageReference.isScratch()) {
       eventHandlers.dispatch(LogEvent.progress("Getting scratch base image..."));
-      return Collections.singletonList(
-          new ImageAndRegistryClient(Image.builder(buildContext.getTargetFormat()).build(), null));
+      return new BaseImagesAndRegistryClient(
+          Collections.singletonList(Image.builder(buildContext.getTargetFormat()).build()), null);
     }
 
     eventHandlers.dispatch(
@@ -103,7 +103,7 @@ class PullBaseImageStep implements Callable<List<ImageAndRegistryClient>> {
     if (buildContext.isOffline()) {
       Optional<Image> image = getCachedBaseImage();
       if (image.isPresent()) {
-        return Collections.singletonList(new ImageAndRegistryClient(image.get(), null));
+        return new BaseImagesAndRegistryClient(Collections.singletonList(image.get()), null);
       }
       throw new IOException(
           "Cannot run Jib in offline mode; " + imageReference + " not found in local Jib cache");
@@ -115,8 +115,8 @@ class PullBaseImageStep implements Callable<List<ImageAndRegistryClient>> {
             buildContext.newBaseImageRegistryClientFactory().newRegistryClient();
         // TODO: passing noAuthRegistryClient may be problematic. It may return 401 unauthorized if
         // layers have to be downloaded. https://github.com/GoogleContainerTools/jib/issues/2220
-        return Collections.singletonList(
-            new ImageAndRegistryClient(image.get(), noAuthRegistryClient));
+        return new BaseImagesAndRegistryClient(
+            Collections.singletonList(image.get()), noAuthRegistryClient);
       }
     }
 
@@ -178,7 +178,7 @@ class PullBaseImageStep implements Callable<List<ImageAndRegistryClient>> {
    * @param registryClient to communicate with remote registry
    * @param progressEventDispatcher the {@link ProgressEventDispatcher} for emitting {@link
    *     ProgressEvent}s
-   * @return the list of pulled images
+   * @return the list of pulled base images and a registry client
    * @throws IOException when an I/O exception occurs during the pulling
    * @throws RegistryException if communicating with the registry caused a known error
    * @throws LayerCountMismatchException if the manifest and configuration contain conflicting layer
@@ -187,13 +187,13 @@ class PullBaseImageStep implements Callable<List<ImageAndRegistryClient>> {
    * @throws BadContainerConfigurationFormatException if the container configuration is in a bad
    *     format
    */
-  private List<ImageAndRegistryClient> pullBaseImage(
+  private BaseImagesAndRegistryClient pullBaseImage(
       RegistryClient registryClient, ProgressEventDispatcher progressEventDispatcher)
       throws IOException, RegistryException, LayerPropertyNotFoundException,
           LayerCountMismatchException, BadContainerConfigurationFormatException {
     EventHandlers eventHandlers = buildContext.getEventHandlers();
-    List<ManifestAndDigest<?>> manifestsAndDigests = new ArrayList<>();
-    List<ImageAndRegistryClient> imagesAndRegistryClient = new ArrayList<>();
+    List<ManifestAndDigest<?>> manifestAndDigestList = new ArrayList<>();
+    List<Image> baseImages = new ArrayList<>();
 
     ManifestAndDigest<?> manifestAndDigest =
         registryClient.pullManifest(buildContext.getBaseImageConfiguration().getImageQualifier());
@@ -203,15 +203,15 @@ class PullBaseImageStep implements Callable<List<ImageAndRegistryClient>> {
     if (manifestTemplate instanceof V22ManifestListTemplate) {
       Set<Platform> platforms = buildContext.getContainerConfiguration().getPlatforms();
       for (Platform platform : platforms) {
-        manifestsAndDigests.add(
+        manifestAndDigestList.add(
             obtainPlatformSpecificImageManifest(
                 registryClient, (V22ManifestListTemplate) manifestTemplate, platform));
       }
     } else {
-      manifestsAndDigests.add(manifestAndDigest);
+      manifestAndDigestList.add(manifestAndDigest);
     }
 
-    for (ManifestAndDigest<?> manifestAndDigestInstance : manifestsAndDigests) {
+    for (ManifestAndDigest<?> manifestAndDigestInstance : manifestAndDigestList) {
       manifestTemplate = manifestAndDigestInstance.getManifest();
       switch (manifestTemplate.getSchemaVersion()) {
         case 1:
@@ -220,9 +220,7 @@ class PullBaseImageStep implements Callable<List<ImageAndRegistryClient>> {
               .getBaseImageLayersCache()
               .writeMetadata(
                   buildContext.getBaseImageConfiguration().getImage(), v21ManifestTemplate);
-          imagesAndRegistryClient.add(
-              new ImageAndRegistryClient(
-                  JsonToImageTranslator.toImage(v21ManifestTemplate), registryClient));
+          baseImages.add(JsonToImageTranslator.toImage(v21ManifestTemplate));
           break;
         case 2:
           eventHandlers.dispatch(
@@ -260,18 +258,17 @@ class PullBaseImageStep implements Callable<List<ImageAndRegistryClient>> {
                     buildableManifestTemplate,
                     containerConfigurationTemplate);
 
-            imagesAndRegistryClient.add(
-                new ImageAndRegistryClient(
-                    JsonToImageTranslator.toImage(
-                        buildableManifestTemplate, containerConfigurationTemplate),
-                    registryClient));
+            baseImages.add(
+                JsonToImageTranslator.toImage(
+                    buildableManifestTemplate, containerConfigurationTemplate));
           }
           break;
         default:
           LogEvent.info("Unknown manifest schema version: " + manifestTemplate.getSchemaVersion());
       }
     }
-    return imagesAndRegistryClient;
+
+    return new BaseImagesAndRegistryClient(baseImages, registryClient);
   }
 
   /**

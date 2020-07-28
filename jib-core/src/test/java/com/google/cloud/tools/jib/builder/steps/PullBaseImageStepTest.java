@@ -21,7 +21,7 @@ import com.google.cloud.tools.jib.api.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.api.RegistryException;
 import com.google.cloud.tools.jib.api.buildplan.Platform;
 import com.google.cloud.tools.jib.builder.ProgressEventDispatcher;
-import com.google.cloud.tools.jib.builder.steps.PullBaseImageStep.ImageAndRegistryClient;
+import com.google.cloud.tools.jib.builder.steps.PullBaseImageStep.BaseImagesAndRegistryClient;
 import com.google.cloud.tools.jib.cache.Cache;
 import com.google.cloud.tools.jib.cache.CacheCorruptedException;
 import com.google.cloud.tools.jib.configuration.BuildContext;
@@ -39,7 +39,6 @@ import com.google.cloud.tools.jib.registry.ManifestAndDigest;
 import com.google.cloud.tools.jib.registry.RegistryClient;
 import com.google.cloud.tools.jib.registry.credentials.CredentialRetrievalException;
 import java.io.IOException;
-import java.util.List;
 import java.util.Optional;
 import org.junit.Assert;
 import org.junit.Before;
@@ -92,9 +91,9 @@ public class PullBaseImageStepTest {
     Mockito.when(imageConfiguration.getImage()).thenReturn(imageReference);
     Mockito.when(cache.retrieveMetadata(imageReference)).thenReturn(Optional.of(manifestAndConfig));
 
-    List<ImageAndRegistryClient> result = pullBaseImageStep.call();
-    Assert.assertEquals("fat system", result.get(0).image.getOs());
-    Assert.assertEquals(registryClient, result.get(0).registryClient);
+    BaseImagesAndRegistryClient result = pullBaseImageStep.call();
+    Assert.assertEquals("fat system", result.baseImages.get(0).getOs());
+    Assert.assertEquals(registryClient, result.registryClient);
   }
 
   @Test
@@ -124,9 +123,9 @@ public class PullBaseImageStepTest {
     Mockito.when(buildContext.isOffline()).thenReturn(true);
     Mockito.when(cache.retrieveMetadata(imageReference)).thenReturn(Optional.of(manifestAndConfig));
 
-    List<ImageAndRegistryClient> result = pullBaseImageStep.call();
-    Assert.assertEquals("fat system", result.get(0).image.getOs());
-    Assert.assertNull(result.get(0).registryClient);
+    BaseImagesAndRegistryClient result = pullBaseImageStep.call();
+    Assert.assertEquals("fat system", result.baseImages.get(0).getOs());
+    Assert.assertNull(result.registryClient);
 
     Mockito.verify(buildContext, Mockito.never()).newBaseImageRegistryClientFactory();
   }

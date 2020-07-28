@@ -19,7 +19,7 @@ package com.google.cloud.tools.jib.builder.steps;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.builder.ProgressEventDispatcher;
 import com.google.cloud.tools.jib.builder.steps.LocalBaseImageSteps.LocalImage;
-import com.google.cloud.tools.jib.builder.steps.PullBaseImageStep.ImageAndRegistryClient;
+import com.google.cloud.tools.jib.builder.steps.PullBaseImageStep.BaseImagesAndRegistryClient;
 import com.google.cloud.tools.jib.configuration.BuildContext;
 import com.google.cloud.tools.jib.configuration.ImageConfiguration;
 import com.google.cloud.tools.jib.docker.DockerClient;
@@ -37,7 +37,6 @@ import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.Callable;
@@ -64,7 +63,7 @@ public class StepsRunner {
           new IllegalStateException("invalid usage; required step not configured"));
     }
 
-    private Future<List<ImageAndRegistryClient>> baseImageAndRegistryClient = failedFuture();
+    private Future<BaseImagesAndRegistryClient> baseImagesAndRegistryClient = failedFuture();
     private Future<List<Future<PreparedLayer>>> baseImageLayers = failedFuture();
     @Nullable private List<Future<PreparedLayer>> applicationLayers;
     private Future<Image> builtImage = failedFuture();
@@ -273,21 +272,20 @@ public class StepsRunner {
 
   private void assignLocalImageResult(Future<LocalImage> localImage) {
     results.baseImageLayers = executorService.submit(() -> localImage.get().layers);
-    results.baseImageAndRegistryClient =
+    results.baseImagesAndRegistryClient =
         executorService.submit(
             () ->
-                Collections.singletonList(
-                    LocalBaseImageSteps.returnImageAndRegistryClientStep(
-                            realizeFutures(results.baseImageLayers.get()),
-                            localImage.get().configurationTemplate)
-                        .call()));
+                LocalBaseImageSteps.returnImageAndRegistryClientStep(
+                        realizeFutures(results.baseImageLayers.get()),
+                        localImage.get().configurationTemplate)
+                    .call());
   }
 
   private void pullBaseImage() {
     ProgressEventDispatcher.Factory childProgressDispatcherFactory =
         Verify.verifyNotNull(rootProgressDispatcher).newChildProducer();
 
-    results.baseImageAndRegistryClient =
+    results.baseImagesAndRegistryClient =
         executorService.submit(new PullBaseImageStep(buildContext, childProgressDispatcherFactory));
   }
 
@@ -303,13 +301,13 @@ public class StepsRunner {
                         ? ObtainBaseImageLayerStep.makeListForForcedDownload(
                             buildContext,
                             childProgressDispatcherFactory,
-                            results.baseImageAndRegistryClient.get().get(0).image,
-                            results.baseImageAndRegistryClient.get().get(0).registryClient)
+                            results.baseImagesAndRegistryClient.get().baseImages.get(0),
+                            results.baseImagesAndRegistryClient.get().registryClient)
                         : ObtainBaseImageLayerStep.makeListForSelectiveDownload(
                             buildContext,
                             childProgressDispatcherFactory,
-                            results.baseImageAndRegistryClient.get().get(0).image,
-                            results.baseImageAndRegistryClient.get().get(0).registryClient,
+                            results.baseImagesAndRegistryClient.get().baseImages.get(0),
+                            results.baseImagesAndRegistryClient.get().registryClient,
                             results.targetRegistryClient.get())));
   }
 
@@ -348,7 +346,7 @@ public class StepsRunner {
                 new BuildImageStep(
                         buildContext,
                         childProgressDispatcherFactory,
-                        results.baseImageAndRegistryClient.get().get(0).image,
+                        results.baseImagesAndRegistryClient.get().baseImages.get(0),
                         realizeFutures(results.baseImageLayers.get()),
                         realizeFutures(Verify.verifyNotNull(results.applicationLayers)))
                     .call());
