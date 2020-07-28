@@ -51,7 +51,6 @@ import com.google.common.annotations.VisibleForTesting;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -203,13 +202,10 @@ class PullBaseImageStep implements Callable<List<ImageAndRegistryClient>> {
     // special handling if we happen upon a manifest list, extract manifests handle them normally
     if (manifestTemplate instanceof V22ManifestListTemplate) {
       Set<Platform> platforms = buildContext.getContainerConfiguration().getPlatforms();
-      Iterator<Platform> platformsIterator = platforms.iterator();
-      while (platformsIterator.hasNext()) {
+      for (Platform platform : platforms) {
         manifestsAndDigests.add(
             obtainPlatformSpecificImageManifest(
-                registryClient,
-                (V22ManifestListTemplate) manifestTemplate,
-                platformsIterator.next()));
+                registryClient, (V22ManifestListTemplate) manifestTemplate, platform));
       }
     } else {
       manifestsAndDigests.add(manifestAndDigest);
