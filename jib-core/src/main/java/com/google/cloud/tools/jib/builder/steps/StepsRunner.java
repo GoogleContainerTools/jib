@@ -63,7 +63,7 @@ public class StepsRunner {
           new IllegalStateException("invalid usage; required step not configured"));
     }
 
-    private Future<ImagesAndRegistryClient> imagesAndRegistryClient = failedFuture();
+    private Future<ImagesAndRegistryClient> baseImageAndRegistryClient = failedFuture();
     private Future<List<Future<PreparedLayer>>> baseImageLayers = failedFuture();
     @Nullable private List<Future<PreparedLayer>> applicationLayers;
     private Future<Image> builtImage = failedFuture();
@@ -272,7 +272,7 @@ public class StepsRunner {
 
   private void assignLocalImageResult(Future<LocalImage> localImage) {
     results.baseImageLayers = executorService.submit(() -> localImage.get().layers);
-    results.imagesAndRegistryClient =
+    results.baseImageAndRegistryClient =
         executorService.submit(
             () ->
                 LocalBaseImageSteps.returnImageAndRegistryClientStep(
@@ -285,7 +285,7 @@ public class StepsRunner {
     ProgressEventDispatcher.Factory childProgressDispatcherFactory =
         Verify.verifyNotNull(rootProgressDispatcher).newChildProducer();
 
-    results.imagesAndRegistryClient =
+    results.baseImageAndRegistryClient =
         executorService.submit(new PullBaseImageStep(buildContext, childProgressDispatcherFactory));
   }
 
@@ -301,13 +301,13 @@ public class StepsRunner {
                         ? ObtainBaseImageLayerStep.makeListForForcedDownload(
                             buildContext,
                             childProgressDispatcherFactory,
-                            results.imagesAndRegistryClient.get().images.get(0),
-                            results.imagesAndRegistryClient.get().registryClient)
+                            results.baseImageAndRegistryClient.get().images.get(0),
+                            results.baseImageAndRegistryClient.get().registryClient)
                         : ObtainBaseImageLayerStep.makeListForSelectiveDownload(
                             buildContext,
                             childProgressDispatcherFactory,
-                            results.imagesAndRegistryClient.get().images.get(0),
-                            results.imagesAndRegistryClient.get().registryClient,
+                            results.baseImageAndRegistryClient.get().images.get(0),
+                            results.baseImageAndRegistryClient.get().registryClient,
                             results.targetRegistryClient.get())));
   }
 
@@ -346,7 +346,7 @@ public class StepsRunner {
                 new BuildImageStep(
                         buildContext,
                         childProgressDispatcherFactory,
-                        results.imagesAndRegistryClient.get().images.get(0),
+                        results.baseImageAndRegistryClient.get().images.get(0),
                         realizeFutures(results.baseImageLayers.get()),
                         realizeFutures(Verify.verifyNotNull(results.applicationLayers)))
                     .call());
