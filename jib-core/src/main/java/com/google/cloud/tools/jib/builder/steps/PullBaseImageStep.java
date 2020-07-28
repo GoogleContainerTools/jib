@@ -128,7 +128,7 @@ class PullBaseImageStep implements Callable<ImagesAndRegistryClient> {
       RegistryClient noAuthRegistryClient =
           buildContext.newBaseImageRegistryClientFactory().newRegistryClient();
       try {
-        return pullBaseImage(noAuthRegistryClient, progressEventDispatcher);
+        return pullBaseImages(noAuthRegistryClient, progressEventDispatcher);
 
       } catch (RegistryUnauthorizedException ex) {
         eventHandlers.dispatch(
@@ -152,7 +152,7 @@ class PullBaseImageStep implements Callable<ImagesAndRegistryClient> {
 
           eventHandlers.dispatch(LogEvent.debug("Trying basic auth for " + imageReference + "..."));
           registryClient.configureBasicAuth();
-          return pullBaseImage(registryClient, progressEventDispatcher);
+          return pullBaseImages(registryClient, progressEventDispatcher);
 
         } catch (RegistryUnauthorizedException registryUnauthorizedException) {
           // The registry requires us to authenticate using the Docker Token Authentication.
@@ -160,7 +160,7 @@ class PullBaseImageStep implements Callable<ImagesAndRegistryClient> {
           eventHandlers.dispatch(
               LogEvent.debug("Trying bearer auth for " + imageReference + "..."));
           if (registryClient.doPullBearerAuth()) {
-            return pullBaseImage(registryClient, progressEventDispatcher);
+            return pullBaseImages(registryClient, progressEventDispatcher);
           }
           eventHandlers.dispatch(
               LogEvent.error(
@@ -187,7 +187,7 @@ class PullBaseImageStep implements Callable<ImagesAndRegistryClient> {
    * @throws BadContainerConfigurationFormatException if the container configuration is in a bad
    *     format
    */
-  private ImagesAndRegistryClient pullBaseImage(
+  private ImagesAndRegistryClient pullBaseImages(
       RegistryClient registryClient, ProgressEventDispatcher progressEventDispatcher)
       throws IOException, RegistryException, LayerPropertyNotFoundException,
           LayerCountMismatchException, BadContainerConfigurationFormatException {
@@ -215,8 +215,8 @@ class PullBaseImageStep implements Callable<ImagesAndRegistryClient> {
   }
 
   /**
-   * Looks through a manifest list for the user specified arch/os manifest and downloads and returns
-   * the first manifest it finds.
+   * Looks through a manifest list for the user specified platform manifest and downloads and
+   * returns the first manifest it finds.
    */
   @VisibleForTesting
   ManifestAndDigest<?> obtainPlatformSpecificImageManifest(
@@ -255,7 +255,7 @@ class PullBaseImageStep implements Callable<ImagesAndRegistryClient> {
   }
 
   /**
-   * Converts jsonManifest to an Image.
+   * Converts a jsonManifest to an Image.
    *
    * @param manifestAndDigest a manifest list and digest of a {@link Image}
    * @param registryClient to communicate with remote registry
@@ -286,6 +286,7 @@ class PullBaseImageStep implements Callable<ImagesAndRegistryClient> {
             .writeMetadata(
                 buildContext.getBaseImageConfiguration().getImage(), v21ManifestTemplate);
         return JsonToImageTranslator.toImage(v21ManifestTemplate);
+
       case 2:
         eventHandlers.dispatch(
             LogEvent.lifecycle("Using base image with digest: " + manifestAndDigest.getDigest()));
@@ -325,10 +326,11 @@ class PullBaseImageStep implements Callable<ImagesAndRegistryClient> {
           return JsonToImageTranslator.toImage(
               buildableManifestTemplate, containerConfigurationTemplate);
         }
+
       default:
-        LogEvent.info("Unknown manifest schema version: " + manifestTemplate.getSchemaVersion());
+        throw new IllegalStateException(
+            "Unknown manifest schema version: " + manifestTemplate.getSchemaVersion());
     }
-    return null;
   }
 
   /**
