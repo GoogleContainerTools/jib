@@ -284,7 +284,7 @@ jib.from.image = 'custom-base-image'
 
 ### Can I ADD a custom directory to the image?
 
-We currently support adding a custom directory with an **incubating** feature called _extra directories_. This feature may change in later versions. If your application needs to use custom files, place them into the `src/main/jib` folder. Files placed here will be added to the filesystem of the container. For example, `src/main/jib/foo/bar` would add `/foo/bar` into the container filesystem.
+Yes, using the _extra directories_ feature. See the [Maven](https://github.com/GoogleContainerTools/jib/tree/master/jib-maven-plugin#adding-arbitrary-files-to-the-image) and [Gradle](https://github.com/GoogleContainerTools/jib/tree/master/jib-gradle-plugin#adding-arbitrary-files-to-the-image) docs for examples.
 
 ### I need to add files generated during the build process to a custom directory on the image.
 
