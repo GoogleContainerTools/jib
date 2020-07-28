@@ -21,7 +21,7 @@ import com.google.cloud.tools.jib.api.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.api.RegistryException;
 import com.google.cloud.tools.jib.api.buildplan.Platform;
 import com.google.cloud.tools.jib.builder.ProgressEventDispatcher;
-import com.google.cloud.tools.jib.builder.steps.PullBaseImageStep.BaseImagesAndRegistryClient;
+import com.google.cloud.tools.jib.builder.steps.PullBaseImageStep.ImagesAndRegistryClient;
 import com.google.cloud.tools.jib.cache.Cache;
 import com.google.cloud.tools.jib.cache.CacheCorruptedException;
 import com.google.cloud.tools.jib.configuration.BuildContext;
@@ -91,8 +91,8 @@ public class PullBaseImageStepTest {
     Mockito.when(imageConfiguration.getImage()).thenReturn(imageReference);
     Mockito.when(cache.retrieveMetadata(imageReference)).thenReturn(Optional.of(manifestAndConfig));
 
-    BaseImagesAndRegistryClient result = pullBaseImageStep.call();
-    Assert.assertEquals("fat system", result.baseImages.get(0).getOs());
+    ImagesAndRegistryClient result = pullBaseImageStep.call();
+    Assert.assertEquals("fat system", result.images.get(0).getOs());
     Assert.assertEquals(registryClient, result.registryClient);
   }
 
@@ -123,8 +123,8 @@ public class PullBaseImageStepTest {
     Mockito.when(buildContext.isOffline()).thenReturn(true);
     Mockito.when(cache.retrieveMetadata(imageReference)).thenReturn(Optional.of(manifestAndConfig));
 
-    BaseImagesAndRegistryClient result = pullBaseImageStep.call();
-    Assert.assertEquals("fat system", result.baseImages.get(0).getOs());
+    ImagesAndRegistryClient result = pullBaseImageStep.call();
+    Assert.assertEquals("fat system", result.images.get(0).getOs());
     Assert.assertNull(result.registryClient);
 
     Mockito.verify(buildContext, Mockito.never()).newBaseImageRegistryClientFactory();
