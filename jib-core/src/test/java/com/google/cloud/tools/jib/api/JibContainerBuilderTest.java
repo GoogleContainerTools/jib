@@ -368,15 +368,15 @@ public class JibContainerBuilderTest {
   public void testContainerize_multiPlatformsList()
       throws InvalidImageReferenceException, CacheDirectoryCreationException, InterruptedException,
           RegistryException, IOException, ExecutionException {
+    ImageConfiguration imageConfiguration =
+        ImageConfiguration.builder(ImageReference.parse("base/image")).build();
+    JibContainerBuilder containerBuilder =
+        new JibContainerBuilder(imageConfiguration, spyBuildContextBuilder)
+            .setPlatforms(
+                ImmutableSet.of(new Platform("arch1", "os1"), new Platform("arch2", "os2")));
+    Containerizer containerizer = Containerizer.to(RegistryImage.named("target/image"));
     try {
-      ImageConfiguration imageConfiguration =
-          ImageConfiguration.builder(ImageReference.parse("base/image")).build();
-      new JibContainerBuilder(imageConfiguration, spyBuildContextBuilder)
-          .setPlatforms(
-              ImmutableSet.of(
-                  new Platform("testArchitecture", "testOS"),
-                  new Platform("testArchitecture1", "testOS2")))
-          .containerize(Containerizer.to(RegistryImage.named("target/image")));
+      containerBuilder.containerize(containerizer);
       Assert.fail();
     } catch (UnsupportedOperationException ex) {
       Assert.assertEquals("multi-platform image building is not yet supported", ex.getMessage());
