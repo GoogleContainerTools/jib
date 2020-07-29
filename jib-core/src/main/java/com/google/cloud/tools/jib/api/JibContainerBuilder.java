@@ -596,7 +596,7 @@ public class JibContainerBuilder {
 
       if (buildContext.getContainerConfiguration().getPlatforms().size() != 1) {
         throw new UnsupportedOperationException(
-            "multi-platform specification is not yet supported");
+            "multi-platform image building is not yet supported");
       }
       logSources(buildContext.getEventHandlers());
 
