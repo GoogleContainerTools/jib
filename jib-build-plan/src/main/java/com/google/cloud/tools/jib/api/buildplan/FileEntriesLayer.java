@@ -280,34 +280,6 @@ public class FileEntriesLayer implements LayerObject {
      *     container and returns the file permissions that should be set for that path
      * @param modificationTimeProvider a provider that takes a source path and destination path on
      *     the container and returns the file modification time that should be set for that path
-     * @return this
-     * @throws IOException if an exception occurred when recursively listing the directory
-     */
-    public Builder addEntryRecursive(
-        Path sourceFile,
-        AbsoluteUnixPath pathInContainer,
-        FilePermissionsProvider filePermissionProvider,
-        ModificationTimeProvider modificationTimeProvider)
-        throws IOException {
-      return addEntryRecursive(
-          sourceFile,
-          pathInContainer,
-          filePermissionProvider,
-          modificationTimeProvider,
-          DEFAULT_OWNERSHIP_PROVIDER);
-    }
-
-    /**
-     * Adds an entry to the layer. If the source file is a directory, the directory and its contents
-     * will be added recursively.
-     *
-     * @param sourceFile the source file to add to the layer recursively
-     * @param pathInContainer the path in the container file system corresponding to the {@code
-     *     sourceFile}
-     * @param filePermissionProvider a provider that takes a source path and destination path on the
-     *     container and returns the file permissions that should be set for that path
-     * @param modificationTimeProvider a provider that takes a source path and destination path on
-     *     the container and returns the file modification time that should be set for that path
      * @param ownershipProvider a provider that takes a source path and destination path on the
      *     container and returns the ownership that should be set for that path
      * @return this
@@ -432,6 +404,34 @@ public class FileEntriesLayer implements LayerObject {
         throws IOException {
       return addEntryRecursive(
           sourceFile, pathInContainer, filePermissionProvider, MODIFICATION_TIME_PROVIDER);
+    }
+
+    /**
+     * Adds an entry to the layer. If the source file is a directory, the directory and its contents
+     * will be added recursively.
+     *
+     * @param sourceFile the source file to add to the layer recursively
+     * @param pathInContainer the path in the container file system corresponding to the {@code
+     *     sourceFile}
+     * @param filePermissionProvider a provider that takes a source path and destination path on the
+     *     container and returns the file permissions that should be set for that path
+     * @param modificationTimeProvider a provider that takes a source path and destination path on
+     *     the container and returns the file modification time that should be set for that path
+     * @return this
+     * @throws IOException if an exception occurred when recursively listing the directory
+     */
+    public Builder addEntryRecursive(
+        Path sourceFile,
+        AbsoluteUnixPath pathInContainer,
+        FilePermissionsProvider filePermissionProvider,
+        ModificationTimeProvider modificationTimeProvider)
+        throws IOException {
+      return addEntryRecursive(
+          sourceFile,
+          pathInContainer,
+          filePermissionProvider,
+          modificationTimeProvider,
+          DEFAULT_OWNERSHIP_PROVIDER);
     }
 
     /**
