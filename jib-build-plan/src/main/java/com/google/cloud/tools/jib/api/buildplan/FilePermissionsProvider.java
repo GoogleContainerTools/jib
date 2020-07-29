@@ -26,7 +26,7 @@ public interface FilePermissionsProvider {
    * destination path on a container.
    *
    * @param sourcePath the source file.
-   * @param destinationPath the destination path in the container file system.
+   * @param destinationPath the destination path in the container file system corresponding to sourcePath.
    * @return the permissions to be set for the file.
    */
   public FilePermissions retrieveFilePermissions(Path sourcePath, AbsoluteUnixPath destinationPath);
