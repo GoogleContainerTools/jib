@@ -361,6 +361,7 @@ public class FileEntriesLayer implements LayerObject {
      *     sourceFile}
      * @return this
      */
+    // TODO: Rename this method once deprecated methods have been removed.
     public Builder newAddEntry(Path sourceFile, AbsoluteUnixPath pathInContainer) {
       return addEntry(
           sourceFile,
@@ -380,6 +381,7 @@ public class FileEntriesLayer implements LayerObject {
      * @return this
      * @see Builder#newAddEntry(Path, AbsoluteUnixPath)
      */
+    // TODO: Rename this method once deprecated methods have been removed.
     public Builder newAddEntry(
         Path sourceFile, AbsoluteUnixPath pathInContainer, Instant modificationTime) {
       return addEntry(
@@ -404,6 +406,7 @@ public class FileEntriesLayer implements LayerObject {
      * @return this
      * @throws IOException if an exception occurred when recursively listing the directory
      */
+    // TODO: Rename this method once deprecated methods have been removed.
     public Builder newAddEntryRecursive(Path sourceFile, AbsoluteUnixPath pathInContainer)
         throws IOException {
       return newAddEntryRecursive(sourceFile, pathInContainer, FILE_PERMISSIONS_PROVIDER);
@@ -421,6 +424,7 @@ public class FileEntriesLayer implements LayerObject {
      * @return this
      * @throws IOException if an exception occurred when recursively listing the directory
      */
+    // TODO: Rename this method once deprecated methods have been removed.
     public Builder newAddEntryRecursive(
         Path sourceFile,
         AbsoluteUnixPath pathInContainer,
