@@ -129,7 +129,7 @@ public class FileEntriesLayer implements LayerObject {
      * @param modificationTime the file modification time
      * @return this
      * @see Builder#addEntry(Path, AbsoluteUnixPath)
-     * @deprecated {@link #newAddEntry(Path, AbsoluteUnixPath, Instant)}
+     * @deprecated Use {@link #newAddEntry(Path, AbsoluteUnixPath, Instant)}
      */
     @Deprecated
     public Builder addEntry(
@@ -206,7 +206,7 @@ public class FileEntriesLayer implements LayerObject {
      *     sourceFile}
      * @return this
      * @throws IOException if an exception occurred when recursively listing the directory
-     * @deprecated {@link #newAddEntryRecursive(Path, AbsoluteUnixPath)}
+     * @deprecated Use {@link #newAddEntryRecursive(Path, AbsoluteUnixPath)}
      */
     @Deprecated
     public Builder addEntryRecursive(Path sourceFile, AbsoluteUnixPath pathInContainer)

@@ -19,7 +19,16 @@ package com.google.cloud.tools.jib.api.buildplan;
 import java.nio.file.Path;
 import java.time.Instant;
 
-/** Serves as a base class for the modification time provider property. */
+/** Serves as a base class for providing the file modification time. */
 public interface ModificationTimeProvider {
+
+  /**
+   * Returns the file modification time that should be set on a path, given the source path and
+   * destination path on a container.
+   *
+   * @param sourcePath the source file.
+   * @param destinationPath the destination path in the container filesystem.
+   * @return the modification time for the file.
+   */
   public Instant retrieveModificationTime(Path sourcePath, AbsoluteUnixPath destinationPath);
 }

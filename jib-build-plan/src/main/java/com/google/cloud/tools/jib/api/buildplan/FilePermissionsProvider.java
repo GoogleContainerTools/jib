@@ -18,7 +18,16 @@ package com.google.cloud.tools.jib.api.buildplan;
 
 import java.nio.file.Path;
 
-/** Serves as a base class for the permissions provider property. */
+/** Serves as a base class for providing file permissions on a container. */
 public interface FilePermissionsProvider {
+
+  /**
+   * Returns the file permissions that should be set for a path, given the source path and
+   * destination path on a container.
+   *
+   * @param sourcePath the source file.
+   * @param destinationPath the destination path in the container filesystem.
+   * @return the permissions to be set for the file.
+   */
   public FilePermissions retrieveFilePermissions(Path sourcePath, AbsoluteUnixPath destinationPath);
 }
