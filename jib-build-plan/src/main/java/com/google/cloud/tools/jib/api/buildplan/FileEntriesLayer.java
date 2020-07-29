@@ -89,6 +89,7 @@ public class FileEntriesLayer implements LayerObject {
      * @param pathInContainer the path in the container file system corresponding to the {@code
      *     sourceFile}
      * @return this
+     * @deprecated Use {@link #newAddEntry(Path, AbsoluteUnixPath)}
      */
     @Deprecated
     public Builder addEntry(Path sourceFile, AbsoluteUnixPath pathInContainer) {
@@ -153,6 +154,7 @@ public class FileEntriesLayer implements LayerObject {
      * @param modificationTime the file modification time
      * @return this
      * @see Builder#addEntry(Path, AbsoluteUnixPath)
+     * @deprecated {@link #newAddEntry(Path, AbsoluteUnixPath, Instant)}
      */
     @Deprecated
     public Builder addEntry(
@@ -250,6 +252,7 @@ public class FileEntriesLayer implements LayerObject {
      *     sourceFile}
      * @return this
      * @throws IOException if an exception occurred when recursively listing the directory
+     * @deprecated {@link #newAddEntryRecursive(Path, AbsoluteUnixPath)}
      */
     @Deprecated
     public Builder addEntryRecursive(Path sourceFile, AbsoluteUnixPath pathInContainer)
@@ -288,6 +291,8 @@ public class FileEntriesLayer implements LayerObject {
      *     container and returns the file permissions that should be set for that path
      * @return this
      * @throws IOException if an exception occurred when recursively listing the directory
+     * @deprecated Use {@link #newAddEntryRecursive(Path, AbsoluteUnixPath,
+     *     FilePermissionsProvider)}
      */
     @Deprecated
     public Builder addEntryRecursive(
@@ -333,6 +338,8 @@ public class FileEntriesLayer implements LayerObject {
      *     the container and returns the file modification time that should be set for that path
      * @return this
      * @throws IOException if an exception occurred when recursively listing the directory
+     * @deprecated Use {@link #addEntryRecursive(Path, AbsoluteUnixPath, FilePermissionsProvider,
+     *     ModificationTimeProvider)}
      */
     @Deprecated
     public Builder addEntryRecursive(
@@ -392,6 +399,7 @@ public class FileEntriesLayer implements LayerObject {
      *     container and returns the ownership that should be set for that path
      * @return this
      * @throws IOException if an exception occurred when recursively listing the directory
+     * @deprecated Use {@link #addEntryRecursive}
      */
     @Deprecated
     public Builder addEntryRecursive(
