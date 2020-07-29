@@ -20,5 +20,5 @@ import java.nio.file.Path;
 
 /** Serves as a base class for the permissions provider property. */
 public interface FilePermissionsProvider {
-  public FilePermissions retrieveFilePermission(Path sourcePath, AbsoluteUnixPath destinationPath);
+  public FilePermissions retrieveFilePermissions(Path sourcePath, AbsoluteUnixPath destinationPath);
 }
