@@ -45,8 +45,8 @@ public class FileEntriesLayerTest {
 
     FileEntriesLayer layer =
         FileEntriesLayer.builder()
-            .addEntryRecursive(testDirectory, AbsoluteUnixPath.get("/app/layer/"))
-            .addEntryRecursive(testFile, AbsoluteUnixPath.get("/app/fileA"))
+            .newAddEntryRecursive(testDirectory, AbsoluteUnixPath.get("/app/layer/"))
+            .newAddEntryRecursive(testFile, AbsoluteUnixPath.get("/app/fileA"))
             .build();
 
     ImmutableSet<FileEntry> expectedLayerEntries =
@@ -78,10 +78,10 @@ public class FileEntriesLayerTest {
     String ownership1 = "root";
     String ownership2 = "nobody:65432";
 
-    BiFunction<Path, AbsoluteUnixPath, FilePermissions> permissionsProvider =
+    FilePermissionsProvider permissionsProvider =
         (source, destination) ->
             destination.toString().startsWith("/app/layer/a") ? permissions1 : permissions2;
-    BiFunction<Path, AbsoluteUnixPath, Instant> timestampProvider =
+    ModificationTimeProvider timestampProvider =
         (source, destination) ->
             destination.toString().startsWith("/app/layer/a") ? timestamp1 : timestamp2;
     BiFunction<Path, AbsoluteUnixPath, String> ownershipProvider =
