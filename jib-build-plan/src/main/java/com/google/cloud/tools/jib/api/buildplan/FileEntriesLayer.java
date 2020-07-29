@@ -399,7 +399,8 @@ public class FileEntriesLayer implements LayerObject {
      *     container and returns the ownership that should be set for that path
      * @return this
      * @throws IOException if an exception occurred when recursively listing the directory
-     * @deprecated Use {@link #addEntryRecursive}
+     * @deprecated Use {@link #addEntryRecursive(Path, AbsoluteUnixPath, FilePermissionsProvider,
+     *     ModificationTimeProvider, BiFunction)}
      */
     @Deprecated
     public Builder addEntryRecursive(
