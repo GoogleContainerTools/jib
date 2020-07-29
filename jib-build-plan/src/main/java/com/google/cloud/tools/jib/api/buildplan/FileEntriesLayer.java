@@ -485,6 +485,7 @@ public class FileEntriesLayer implements LayerObject {
     }
   }
 
+  /** Provider that returns default file permissions (644 for files, 755 for directories). */
   public static final FilePermissionsProvider FILE_PERMISSIONS_PROVIDER =
       (sourcePath, destinationPath) ->
           Files.isDirectory(sourcePath)
@@ -492,6 +493,7 @@ public class FileEntriesLayer implements LayerObject {
               : FilePermissions.DEFAULT_FILE_PERMISSIONS;
 
   /** Provider that returns default file permissions (644 for files, 755 for directories). */
+  @Deprecated
   public static final BiFunction<Path, AbsoluteUnixPath, FilePermissions>
       DEFAULT_FILE_PERMISSIONS_PROVIDER =
           (sourcePath, destinationPath) ->
