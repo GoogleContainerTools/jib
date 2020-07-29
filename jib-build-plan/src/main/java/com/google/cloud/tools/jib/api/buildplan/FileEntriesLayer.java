@@ -505,10 +505,11 @@ public class FileEntriesLayer implements LayerObject {
   public static final Instant DEFAULT_MODIFICATION_TIME = Instant.ofEpochSecond(1);
 
   /** Provider that returns default file modification time (EPOCH + 1 second). */
+  @Deprecated
   public static final BiFunction<Path, AbsoluteUnixPath, Instant>
       DEFAULT_MODIFICATION_TIME_PROVIDER =
           (sourcePath, destinationPath) -> DEFAULT_MODIFICATION_TIME;
-
+  /** Provider that returns default file modification time (EPOCH + 1 second). */
   public static final ModificationTimeProvider MODIFICATION_TIME_PROVIDER =
       (sourcePath, destinationPath) -> DEFAULT_MODIFICATION_TIME;
 
