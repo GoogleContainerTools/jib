@@ -28,7 +28,7 @@ public interface ModificationTimeProvider {
    *
    * @param sourcePath the source file.
    * @param destinationPath the destination path in the container filesystem.
-   * @return the modification time for the file.
+   * @return the file modification time.
    */
   public Instant retrieveModificationTime(Path sourcePath, AbsoluteUnixPath destinationPath);
 }
