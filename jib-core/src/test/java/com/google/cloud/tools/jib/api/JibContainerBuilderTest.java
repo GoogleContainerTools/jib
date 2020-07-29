@@ -365,7 +365,7 @@ public class JibContainerBuilderTest {
   }
 
   @Test
-  public void testContainerize_multiPlatforms()
+  public void testContainerize_multiPlatformsList()
       throws InvalidImageReferenceException, CacheDirectoryCreationException, InterruptedException,
           RegistryException, IOException, ExecutionException {
     try {
