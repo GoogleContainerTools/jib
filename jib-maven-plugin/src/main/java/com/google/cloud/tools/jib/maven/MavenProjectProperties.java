@@ -497,7 +497,7 @@ public class MavenProjectProperties implements ProjectProperties {
    */
   @VisibleForTesting
   Path getJarArtifact() throws IOException {
-    String classifier = null;
+    Optional<String> classifier = Optional.empty();
     Path buildDirectory = Paths.get(project.getBuild().getDirectory());
     Path outputDirectory = buildDirectory;
 
@@ -507,7 +507,7 @@ public class MavenProjectProperties implements ProjectProperties {
       for (PluginExecution execution : jarPlugin.getExecutions()) {
         if ("default-jar".equals(execution.getId())) {
           Xpp3Dom configuration = (Xpp3Dom) execution.getConfiguration();
-          classifier = getChildValue(configuration, "classifier").orElse(null);
+          classifier = getChildValue(configuration, "classifier");
           Optional<String> directoryString = getChildValue(configuration, "outputDirectory");
 
           if (directoryString.isPresent()) {
@@ -524,16 +524,20 @@ public class MavenProjectProperties implements ProjectProperties {
     if (bootConfiguration.isPresent()) {
       log(LogEvent.lifecycle("Spring Boot repackaging (fat JAR) detected; using the original JAR"));
 
-      // Spring renames original JAR only when replacing it, so check if the names are clashing.
-      if (outputDirectory.equals(buildDirectory)) {
-        Optional<String> bootFinalName = getChildValue(bootConfiguration.get(), "finalName");
-        if (!bootFinalName.isPresent() || bootFinalName.get().equals(finalName)) {
-          suffix = ".jar.original";
-        }
+      // Spring renames original JAR only when replacing it, so check if the paths are clashing.
+      Optional<String> bootFinalName = getChildValue(bootConfiguration.get(), "finalName");
+      Optional<String> bootClassifier = getChildValue(bootConfiguration.get(), "classifier");
+
+      boolean sameDirectory = outputDirectory.equals(buildDirectory);
+      // If Boot <finalName> is undefined, it uses the default project <finalName>.
+      boolean sameFinalName = !bootFinalName.isPresent() || finalName.equals(bootFinalName.get());
+      boolean sameClassifier = classifier.equals(bootClassifier);
+      if (sameDirectory && sameFinalName && sameClassifier) {
+        suffix = ".jar.original";
       }
     }
 
-    String noSuffixJarName = finalName + (classifier == null ? "" : '-' + classifier);
+    String noSuffixJarName = finalName + (classifier.isPresent() ? '-' + classifier.get() : "");
     Path jarPath = outputDirectory.resolve(noSuffixJarName + suffix);
     log(LogEvent.debug("Using JAR: " + jarPath));
 

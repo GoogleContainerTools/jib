@@ -955,6 +955,58 @@ public class MavenProjectPropertiesTest {
   }
 
   @Test
+  public void testGetJarArtifact_originalJarIfSpringBoot_differentFinalNames() throws IOException {
+    Path buildDirectory = temporaryFolder.newFolder("target").toPath();
+    Files.createFile(buildDirectory.resolve("helloworld-1.jar"));
+    Mockito.when(mockMavenProject.getBasedir()).thenReturn(temporaryFolder.getRoot());
+    Mockito.when(mockBuild.getDirectory()).thenReturn(buildDirectory.toString());
+    Mockito.when(mockBuild.getFinalName()).thenReturn("helloworld-1");
+
+    Mockito.when(mockMavenProject.getPlugin("org.apache.maven.plugins:maven-jar-plugin"))
+        .thenReturn(mockPlugin);
+    Mockito.when(mockPlugin.getExecutions()).thenReturn(Arrays.asList(mockPluginExecution));
+    Mockito.when(mockPluginExecution.getId()).thenReturn("default-jar");
+    Mockito.when(mockPluginExecution.getConfiguration()).thenReturn(pluginConfiguration);
+    addXpp3DomChild(pluginConfiguration, "outputDirectory", "target");
+
+    Xpp3Dom bootPluginConfiguration = setUpSpringBootFatJar();
+    addXpp3DomChild(bootPluginConfiguration, "finalName", "boot-helloworld-1");
+
+    Assert.assertEquals(
+        buildDirectory.resolve("helloworld-1.jar"), mavenProjectProperties.getJarArtifact());
+
+    mavenProjectProperties.waitForLoggingThread();
+    Mockito.verify(mockLog)
+        .info("Spring Boot repackaging (fat JAR) detected; using the original JAR");
+  }
+
+  @Test
+  public void testGetJarArtifact_originalJarIfSpringBoot_differentClassifier() throws IOException {
+    Path buildDirectory = temporaryFolder.newFolder("target").toPath();
+    Files.createFile(buildDirectory.resolve("helloworld-1.jar"));
+    Mockito.when(mockMavenProject.getBasedir()).thenReturn(temporaryFolder.getRoot());
+    Mockito.when(mockBuild.getDirectory()).thenReturn(buildDirectory.toString());
+    Mockito.when(mockBuild.getFinalName()).thenReturn("helloworld-1");
+
+    Mockito.when(mockMavenProject.getPlugin("org.apache.maven.plugins:maven-jar-plugin"))
+        .thenReturn(mockPlugin);
+    Mockito.when(mockPlugin.getExecutions()).thenReturn(Arrays.asList(mockPluginExecution));
+    Mockito.when(mockPluginExecution.getId()).thenReturn("default-jar");
+    Mockito.when(mockPluginExecution.getConfiguration()).thenReturn(pluginConfiguration);
+    addXpp3DomChild(pluginConfiguration, "outputDirectory", "target");
+
+    Xpp3Dom bootPluginConfiguration = setUpSpringBootFatJar();
+    addXpp3DomChild(bootPluginConfiguration, "classifier", "boot-class");
+
+    Assert.assertEquals(
+        buildDirectory.resolve("helloworld-1.jar"), mavenProjectProperties.getJarArtifact());
+
+    mavenProjectProperties.waitForLoggingThread();
+    Mockito.verify(mockLog)
+        .info("Spring Boot repackaging (fat JAR) detected; using the original JAR");
+  }
+
+  @Test
   public void testGetJarArtifact_originalJarCopiedIfSpringBoot_sameDirectory() throws IOException {
     Path buildDirectory = temporaryFolder.newFolder("target").toPath();
     Files.createFile(buildDirectory.resolve("helloworld-1.jar.original"));
@@ -976,32 +1028,6 @@ public class MavenProjectPropertiesTest {
     Assert.assertEquals(
         tempDirectory.resolve("helloworld-1.original.jar"),
         mavenProjectProperties.getJarArtifact());
-
-    mavenProjectProperties.waitForLoggingThread();
-    Mockito.verify(mockLog)
-        .info("Spring Boot repackaging (fat JAR) detected; using the original JAR");
-  }
-
-  @Test
-  public void testGetJarArtifact_originalJarIfSpringBoot_differentFinalNames() throws IOException {
-    Path buildDirectory = temporaryFolder.newFolder("target").toPath();
-    Files.createFile(buildDirectory.resolve("helloworld-1.jar"));
-    Mockito.when(mockMavenProject.getBasedir()).thenReturn(temporaryFolder.getRoot());
-    Mockito.when(mockBuild.getDirectory()).thenReturn(buildDirectory.toString());
-    Mockito.when(mockBuild.getFinalName()).thenReturn("helloworld-1");
-
-    Mockito.when(mockMavenProject.getPlugin("org.apache.maven.plugins:maven-jar-plugin"))
-        .thenReturn(mockPlugin);
-    Mockito.when(mockPlugin.getExecutions()).thenReturn(Arrays.asList(mockPluginExecution));
-    Mockito.when(mockPluginExecution.getId()).thenReturn("default-jar");
-    Mockito.when(mockPluginExecution.getConfiguration()).thenReturn(pluginConfiguration);
-    addXpp3DomChild(pluginConfiguration, "outputDirectory", "target");
-
-    Xpp3Dom bootPluginConfiguration = setUpSpringBootFatJar();
-    addXpp3DomChild(bootPluginConfiguration, "finalName", "boot-helloworld-1");
-
-    Assert.assertEquals(
-        buildDirectory.resolve("helloworld-1.jar"), mavenProjectProperties.getJarArtifact());
 
     mavenProjectProperties.waitForLoggingThread();
     Mockito.verify(mockLog)
