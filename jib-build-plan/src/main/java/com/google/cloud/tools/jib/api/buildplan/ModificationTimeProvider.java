@@ -24,10 +24,10 @@ public interface ModificationTimeProvider {
 
   /**
    * Returns the file modification time that should be set on a path, given the source path and
-   * destination path on a container.
+   * destination path.
    *
    * @param sourcePath the source file.
-   * @param destinationPath the destination path in the container filesystem.
+   * @param destinationPath the destination path in the container file system.
    * @return the file modification time.
    */
   public Instant retrieveModificationTime(Path sourcePath, AbsoluteUnixPath destinationPath);
