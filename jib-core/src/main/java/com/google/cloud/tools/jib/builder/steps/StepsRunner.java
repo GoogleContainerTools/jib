@@ -19,7 +19,7 @@ package com.google.cloud.tools.jib.builder.steps;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.builder.ProgressEventDispatcher;
 import com.google.cloud.tools.jib.builder.steps.LocalBaseImageSteps.LocalImage;
-import com.google.cloud.tools.jib.builder.steps.PullBaseImageStep.ImageAndRegistryClient;
+import com.google.cloud.tools.jib.builder.steps.PullBaseImageStep.ImagesAndRegistryClient;
 import com.google.cloud.tools.jib.configuration.BuildContext;
 import com.google.cloud.tools.jib.configuration.ImageConfiguration;
 import com.google.cloud.tools.jib.docker.DockerClient;
@@ -63,7 +63,7 @@ public class StepsRunner {
           new IllegalStateException("invalid usage; required step not configured"));
     }
 
-    private Future<ImageAndRegistryClient> baseImageAndRegistryClient = failedFuture();
+    private Future<ImagesAndRegistryClient> baseImageAndRegistryClient = failedFuture();
     private Future<List<Future<PreparedLayer>>> baseImageLayers = failedFuture();
     @Nullable private List<Future<PreparedLayer>> applicationLayers;
     private Future<Image> builtImage = failedFuture();
@@ -301,12 +301,12 @@ public class StepsRunner {
                         ? ObtainBaseImageLayerStep.makeListForForcedDownload(
                             buildContext,
                             childProgressDispatcherFactory,
-                            results.baseImageAndRegistryClient.get().image,
+                            results.baseImageAndRegistryClient.get().images.get(0),
                             results.baseImageAndRegistryClient.get().registryClient)
                         : ObtainBaseImageLayerStep.makeListForSelectiveDownload(
                             buildContext,
                             childProgressDispatcherFactory,
-                            results.baseImageAndRegistryClient.get().image,
+                            results.baseImageAndRegistryClient.get().images.get(0),
                             results.baseImageAndRegistryClient.get().registryClient,
                             results.targetRegistryClient.get())));
   }
@@ -346,7 +346,7 @@ public class StepsRunner {
                 new BuildImageStep(
                         buildContext,
                         childProgressDispatcherFactory,
-                        results.baseImageAndRegistryClient.get().image,
+                        results.baseImageAndRegistryClient.get().images.get(0),
                         realizeFutures(results.baseImageLayers.get()),
                         realizeFutures(Verify.verifyNotNull(results.applicationLayers)))
                     .call());
