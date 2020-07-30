@@ -29,7 +29,7 @@ public interface OwnershipProvider {
      * @param sourcePath the source file.
      * @param destinationPath the destination path in the container file system corresponding to
      *     sourcePath.
-     * @return the permissions to be set for the file.
+     * @return the ownership to be set for the file.
      */
     public String getFileOwnership(Path sourcePath, AbsoluteUnixPath destinationPath);
 }
