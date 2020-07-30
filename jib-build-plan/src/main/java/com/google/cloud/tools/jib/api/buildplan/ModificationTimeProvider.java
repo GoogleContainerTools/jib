@@ -20,6 +20,7 @@ import java.nio.file.Path;
 import java.time.Instant;
 
 /** Serves as a base class for providing the file modification time. */
+@FunctionalInterface
 public interface ModificationTimeProvider {
 
   /**
@@ -31,5 +32,5 @@ public interface ModificationTimeProvider {
    *     sourcePath.
    * @return the file modification time.
    */
-  public Instant retrieveModificationTime(Path sourcePath, AbsoluteUnixPath destinationPath);
+  public Instant getModificationTime(Path sourcePath, AbsoluteUnixPath destinationPath);
 }
