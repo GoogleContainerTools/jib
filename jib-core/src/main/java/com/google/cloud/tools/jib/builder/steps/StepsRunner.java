@@ -37,7 +37,9 @@ import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
@@ -64,7 +66,7 @@ public class StepsRunner {
     }
 
     private Future<ImagesAndRegistryClient> baseImageAndRegistryClient = failedFuture();
-    private Future<List<Future<PreparedLayer>>> baseImageLayers = failedFuture();
+    private Future<Map<Image, List<Future<PreparedLayer>>>> baseImageLayers = failedFuture();
     @Nullable private List<Future<PreparedLayer>> applicationLayers;
     private Future<Image> builtImage = failedFuture();
     private Future<RegistryClient> targetRegistryClient = failedFuture();
@@ -271,14 +273,28 @@ public class StepsRunner {
   }
 
   private void assignLocalImageResult(Future<LocalImage> localImage) {
-    results.baseImageLayers = executorService.submit(() -> localImage.get().layers);
+
+    Future<List<Future<PreparedLayer>>> localBaseImageLayers =
+        executorService.submit(() -> localImage.get().layers);
+
     results.baseImageAndRegistryClient =
         executorService.submit(
-            () ->
-                LocalBaseImageSteps.returnImageAndRegistryClientStep(
-                        realizeFutures(results.baseImageLayers.get()),
-                        localImage.get().configurationTemplate)
-                    .call());
+            () -> {
+              return LocalBaseImageSteps.returnImageAndRegistryClientStep(
+                      realizeFutures(localBaseImageLayers.get()),
+                      localImage.get().configurationTemplate)
+                  .call();
+            });
+
+    results.baseImageLayers =
+        executorService.submit(
+            () -> {
+              Map<Image, List<Future<PreparedLayer>>> baseImageLayers = new HashMap<>();
+              baseImageLayers.put(
+                  results.baseImageAndRegistryClient.get().images.get(0),
+                  localBaseImageLayers.get());
+              return baseImageLayers;
+            });
   }
 
   private void pullBaseImage() {
@@ -292,23 +308,31 @@ public class StepsRunner {
   private void obtainBaseImageLayers(boolean layersRequiredLocally) {
     ProgressEventDispatcher.Factory childProgressDispatcherFactory =
         Verify.verifyNotNull(rootProgressDispatcher).newChildProducer();
-
     results.baseImageLayers =
         executorService.submit(
-            () ->
-                scheduleCallables(
-                    layersRequiredLocally
-                        ? ObtainBaseImageLayerStep.makeListForForcedDownload(
-                            buildContext,
-                            childProgressDispatcherFactory,
-                            results.baseImageAndRegistryClient.get().images.get(0),
-                            results.baseImageAndRegistryClient.get().registryClient)
-                        : ObtainBaseImageLayerStep.makeListForSelectiveDownload(
-                            buildContext,
-                            childProgressDispatcherFactory,
-                            results.baseImageAndRegistryClient.get().images.get(0),
-                            results.baseImageAndRegistryClient.get().registryClient,
-                            results.targetRegistryClient.get())));
+            () -> {
+              Map<Image, List<Future<PreparedLayer>>> baseImageLayers = new HashMap<>();
+              for (Image image : results.baseImageAndRegistryClient.get().images) {
+
+                List<Future<PreparedLayer>> layers =
+                    scheduleCallables(
+                        layersRequiredLocally
+                            ? ObtainBaseImageLayerStep.makeListForForcedDownload(
+                                buildContext,
+                                childProgressDispatcherFactory,
+                                image,
+                                results.baseImageAndRegistryClient.get().registryClient)
+                            : ObtainBaseImageLayerStep.makeListForSelectiveDownload(
+                                buildContext,
+                                childProgressDispatcherFactory,
+                                image,
+                                results.baseImageAndRegistryClient.get().registryClient,
+                                results.targetRegistryClient.get()));
+
+                baseImageLayers.put(image, layers);
+              }
+              return baseImageLayers;
+            });
   }
 
   private void pushBaseImageLayers() {
@@ -323,7 +347,11 @@ public class StepsRunner {
                         buildContext,
                         childProgressDispatcherFactory,
                         results.targetRegistryClient.get(),
-                        results.baseImageLayers.get())));
+                        Verify.verifyNotNull(
+                            results
+                                .baseImageLayers
+                                .get()
+                                .get(results.baseImageAndRegistryClient.get().images.get(0))))));
   }
 
   private void buildAndCacheApplicationLayers() {
@@ -347,7 +375,12 @@ public class StepsRunner {
                         buildContext,
                         childProgressDispatcherFactory,
                         results.baseImageAndRegistryClient.get().images.get(0),
-                        realizeFutures(results.baseImageLayers.get()),
+                        realizeFutures(
+                            Verify.verifyNotNull(
+                                results
+                                    .baseImageLayers
+                                    .get()
+                                    .get(results.baseImageAndRegistryClient.get().images.get(0)))),
                         realizeFutures(Verify.verifyNotNull(results.applicationLayers)))
                     .call());
   }
