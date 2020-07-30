@@ -22,15 +22,14 @@ import java.nio.file.Path;
 @FunctionalInterface
 public interface OwnershipProvider {
 
-    /**
-     * Returns the file ownership that should be set for a path, given the source path and
-     * destination path on a container.
-     *
-     * @param sourcePath the source file.
-     * @param destinationPath the destination path in the container file system corresponding to
-     *     sourcePath.
-     * @return the ownership to be set for the file.
-     */
-    public String getFileOwnership(Path sourcePath, AbsoluteUnixPath destinationPath);
+  /**
+   * Returns the file ownership that should be set for a path, given the source path and destination
+   * path on a container.
+   *
+   * @param sourcePath the source file.
+   * @param destinationPath the destination path in the container file system corresponding to
+   *     sourcePath.
+   * @return the ownership to be set for the file.
+   */
+  public String getFileOwnership(Path sourcePath, AbsoluteUnixPath destinationPath);
 }
-
