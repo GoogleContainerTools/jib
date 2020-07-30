@@ -121,8 +121,21 @@ public class BuildFileSpec {
       @JsonProperty("entrypoint") List<String> entrypoint,
       @JsonProperty("cmd") List<String> cmd,
       @JsonProperty("layers") LayersSpec layers) {
-    Validator.checkNotEmpty(apiVersion, "apiVersion");
+
+    Validator.checkNotNullAndNotEmpty(apiVersion, "apiVersion");
     Validator.checkEquals(kind, "kind", "BuildFile");
+
+    Validator.checkNullOrNotEmpty(creationTime, "creationTime");
+    Validator.checkNullOrNotEmpty(format, "format");
+    Validator.checkNonNullNonEmptyEntriesIfExists(environment, "environment");
+    Validator.checkNonNullNonEmptyEntriesIfExists(labels, "labels");
+    Validator.checkNonNullNonEmptyEntriesIfExists(volumes, "volumes");
+    Validator.checkNonNullNonEmptyEntriesIfExists(exposedPorts, "exposedPorts");
+    Validator.checkNullOrNotEmpty(user, "user");
+    Validator.checkNullOrNotEmpty(workingDirectory, "workingDirectory");
+    Validator.checkNonNullNonEmptyEntriesIfExists(entrypoint, "entrypoint");
+    Validator.checkNonNullNonEmptyEntriesIfExists(cmd, "cmd");
+
     this.apiVersion = apiVersion;
     Preconditions.checkArgument(
         "BuildFile".equals(kind), "Field 'kind' must be BuildFile but is " + kind);

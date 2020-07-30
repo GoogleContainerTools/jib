@@ -23,10 +23,14 @@ import com.fasterxml.jackson.databind.exc.UnrecognizedPropertyException;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.google.cloud.tools.jib.api.buildplan.FilePermissions;
 import java.time.Instant;
+import java.util.Arrays;
+import java.util.Collection;
 import org.hamcrest.CoreMatchers;
 import org.hamcrest.MatcherAssert;
 import org.junit.Assert;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 
 /** Tests for {@link FilePropertiesSpec}. */
 public class FilePropertiesSpecTest {
@@ -100,7 +104,7 @@ public class FilePropertiesSpecTest {
   }
 
   @Test
-  public void testFilePropertiesSpect_failOnUnknown() throws JsonProcessingException {
+  public void testFilePropertiesSpec_failOnUnknown() throws JsonProcessingException {
     String data = "badkey: badvalue";
 
     try {
@@ -109,6 +113,41 @@ public class FilePropertiesSpecTest {
     } catch (UnrecognizedPropertyException upe) {
       MatcherAssert.assertThat(
           upe.getMessage(), CoreMatchers.containsString("Unrecognized field \"badkey\""));
+    }
+  }
+
+  @RunWith(Parameterized.class)
+  public static class OptionalStringTests {
+
+    @Parameterized.Parameters(name = "{0}")
+    public static Collection<Object[]> data() {
+      return Arrays.asList(
+          new Object[][] {
+            {"filePermissions"}, {"directoryPermissions"}, {"user"}, {"group"}, {"timestamp"}
+          });
+    }
+
+    @Parameterized.Parameter public String fieldName;
+
+    @Test
+    public void testFilePropertiesSpec_noEmptyValues() {
+      String data = fieldName + ": ' '";
+
+      try {
+        mapper.readValue(data, FilePropertiesSpec.class);
+        Assert.fail();
+      } catch (JsonProcessingException ex) {
+        Assert.assertEquals(
+            "Property '" + fieldName + "' cannot be empty", ex.getCause().getMessage());
+      }
+    }
+
+    @Test
+    public void testFilePropertiesSpec_nullOkay() throws JsonProcessingException {
+      String data = fieldName + ": null";
+
+      mapper.readValue(data, FilePropertiesSpec.class);
+      // pass
     }
   }
 }

@@ -98,4 +98,18 @@ public class BaseImageSpecTest {
     BaseImageSpec baseImageSpec = mapper.readValue(data, BaseImageSpec.class);
     Assert.assertEquals(ImmutableList.of(), baseImageSpec.getPlatforms());
   }
+
+  @Test
+  public void testBaseImageSpec_platformsNoNullEntries() {
+    String data = "image: gcr.io/example/jib\n" + "platforms: [null]\n";
+
+    try {
+      mapper.readValue(data, BaseImageSpec.class);
+      Assert.fail();
+    } catch (JsonProcessingException jpe) {
+      MatcherAssert.assertThat(
+          jpe.getMessage(),
+          CoreMatchers.containsString("Property 'platforms' cannot contain null entries"));
+    }
+  }
 }

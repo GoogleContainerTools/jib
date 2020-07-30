@@ -47,7 +47,8 @@ public class BaseImageSpec {
   public BaseImageSpec(
       @JsonProperty(value = "image", required = true) String image,
       @JsonProperty("platforms") List<PlatformSpec> platforms) {
-    Validator.checkNotEmpty(image, "image");
+    Validator.checkNotNullAndNotEmpty(image, "image");
+    Validator.checkNonNullEntriesIfExists(platforms, "platforms");
     this.image = image;
     this.platforms = platforms == null ? ImmutableList.of() : platforms;
   }

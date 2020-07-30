@@ -56,8 +56,8 @@ public class FileLayerSpec implements LayerSpec {
       @JsonProperty(value = "name", required = true) String name,
       @JsonProperty(value = "files", required = true) List<CopySpec> files,
       @JsonProperty("properties") FilePropertiesSpec properties) {
-    Validator.checkNotEmpty(name, "name");
-    Validator.checkNotEmpty(files, "files");
+    Validator.checkNotNullAndNotEmpty(name, "name");
+    Validator.checkNotNullAndNotEmpty(files, "files");
     this.name = name;
     this.properties = properties;
     this.files = files;
