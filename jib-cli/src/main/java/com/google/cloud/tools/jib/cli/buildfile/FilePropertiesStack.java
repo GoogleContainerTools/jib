@@ -32,16 +32,12 @@ import javax.annotation.Nullable;
 class FilePropertiesStack {
 
   // TODO perhaps use a fixed size list here
-  private List<FilePropertiesSpec> stack = new ArrayList<>(3);
+  private final List<FilePropertiesSpec> stack = new ArrayList<>(3);
 
   @Nullable private FilePermissions filePermissions;
   @Nullable private FilePermissions directoryPermissions;
   @Nullable private Instant modificationTime;
   @Nullable private String ownership;
-
-  // intermediate values
-  @Nullable private String user;
-  @Nullable private String group;
 
   /**
    * Add a new layer to the file properties stack. When adding a new layer, it is given highest
@@ -67,28 +63,25 @@ class FilePropertiesStack {
     directoryPermissions = null;
     modificationTime = null;
     ownership = null;
-    user = null;
-    group = null;
+
+    String user = null;
+    String group = null;
 
     // the item with the lowest index has the lowest priority
     for (FilePropertiesSpec properties : stack) {
-      properties.getFilePermissions().ifPresent(permissions -> filePermissions = permissions);
-      properties
-          .getDirectoryPermissions()
-          .ifPresent(permissions -> directoryPermissions = permissions);
-      properties.getTimestamp().ifPresent(timestamp -> modificationTime = timestamp);
-      properties.getUser().ifPresent(user -> this.user = user);
-      properties.getGroup().ifPresent(group -> this.group = group);
+      filePermissions = properties.getFilePermissions().orElse(filePermissions);
+      directoryPermissions = properties.getDirectoryPermissions().orElse(directoryPermissions);
+      modificationTime = properties.getTimestamp().orElse(modificationTime);
+      user = properties.getUser().orElse(user);
+      group = properties.getGroup().orElse(group);
     }
     // ownership calculations
     if (group == null) {
       ownership = user;
+    } else if (user == null) {
+      ownership = ":" + group;
     } else {
-      if (user == null) {
-        ownership = ":" + group;
-      } else {
-        ownership = user + ":" + group;
-      }
+      ownership = user + ":" + group;
     }
   }
 
