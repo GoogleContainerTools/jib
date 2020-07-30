@@ -18,7 +18,7 @@ package com.google.cloud.tools.jib.api.buildplan;
 
 import java.nio.file.Path;
 
-/** Serves as a base class for providing file permissions on a container. */
+/** Serves as a base class for determining file permissions on a container. */
 @FunctionalInterface
 public interface FilePermissionsProvider {
 

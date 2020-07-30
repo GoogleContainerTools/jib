@@ -19,7 +19,7 @@ package com.google.cloud.tools.jib.api.buildplan;
 import java.nio.file.Path;
 import java.time.Instant;
 
-/** Serves as a base class for providing the file modification time. */
+/** Serves as a base class for determining the file modification time. */
 @FunctionalInterface
 public interface ModificationTimeProvider {
 
