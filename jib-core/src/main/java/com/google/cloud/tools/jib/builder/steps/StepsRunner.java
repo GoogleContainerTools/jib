@@ -304,7 +304,7 @@ public class StepsRunner {
     results.baseImagesAndLayers =
         executorService.submit(
             () -> {
-              Map<Image, List<Future<PreparedLayer>>> baseImageAndLayers = new HashMap<>();
+              Map<Image, List<Future<PreparedLayer>>> baseImagesAndLayers = new HashMap<>();
               for (Image image : results.baseImagesAndRegistryClient.get().images) {
                 List<Future<PreparedLayer>> layers =
                     scheduleCallables(
@@ -320,9 +320,9 @@ public class StepsRunner {
                                 image,
                                 results.baseImagesAndRegistryClient.get().registryClient,
                                 results.targetRegistryClient.get()));
-                baseImageAndLayers.put(image, layers);
+                baseImagesAndLayers.put(image, layers);
               }
-              return baseImageAndLayers;
+              return baseImagesAndLayers;
             });
   }
 
