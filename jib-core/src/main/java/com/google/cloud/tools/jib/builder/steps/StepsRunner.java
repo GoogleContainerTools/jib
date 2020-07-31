@@ -65,7 +65,7 @@ public class StepsRunner {
           new IllegalStateException("invalid usage; required step not configured"));
     }
 
-    private Future<ImagesAndRegistryClient> baseImageAndRegistryClient = failedFuture();
+    private Future<ImagesAndRegistryClient> baseImagesAndRegistryClient = failedFuture();
     private Future<Map<Image, List<Future<PreparedLayer>>>> baseImagesAndLayers = failedFuture();
     @Nullable private List<Future<PreparedLayer>> applicationLayers;
     private Future<List<Future<Image>>> builtImages = failedFuture();
@@ -273,7 +273,7 @@ public class StepsRunner {
   }
 
   private void assignLocalImageResult(Future<LocalImage> localImage) {
-    results.baseImageAndRegistryClient =
+    results.baseImagesAndRegistryClient =
         executorService.submit(
             () ->
                 LocalBaseImageSteps.returnImageAndRegistryClientStep(
@@ -286,7 +286,7 @@ public class StepsRunner {
             () -> {
               Map<Image, List<Future<PreparedLayer>>> baseImageLayers = new HashMap<>();
               baseImageLayers.put(
-                  results.baseImageAndRegistryClient.get().images.get(0), localImage.get().layers);
+                  results.baseImagesAndRegistryClient.get().images.get(0), localImage.get().layers);
               return baseImageLayers;
             });
   }
@@ -295,7 +295,7 @@ public class StepsRunner {
     ProgressEventDispatcher.Factory childProgressDispatcherFactory =
         Verify.verifyNotNull(rootProgressDispatcher).newChildProducer();
 
-    results.baseImageAndRegistryClient =
+    results.baseImagesAndRegistryClient =
         executorService.submit(new PullBaseImageStep(buildContext, childProgressDispatcherFactory));
   }
 
@@ -306,7 +306,7 @@ public class StepsRunner {
         executorService.submit(
             () -> {
               Map<Image, List<Future<PreparedLayer>>> baseImageLayers = new HashMap<>();
-              for (Image image : results.baseImageAndRegistryClient.get().images) {
+              for (Image image : results.baseImagesAndRegistryClient.get().images) {
 
                 List<Future<PreparedLayer>> layers =
                     scheduleCallables(
@@ -315,12 +315,12 @@ public class StepsRunner {
                                 buildContext,
                                 childProgressDispatcherFactory,
                                 image,
-                                results.baseImageAndRegistryClient.get().registryClient)
+                                results.baseImagesAndRegistryClient.get().registryClient)
                             : ObtainBaseImageLayerStep.makeListForSelectiveDownload(
                                 buildContext,
                                 childProgressDispatcherFactory,
                                 image,
-                                results.baseImageAndRegistryClient.get().registryClient,
+                                results.baseImagesAndRegistryClient.get().registryClient,
                                 results.targetRegistryClient.get()));
 
                 baseImageLayers.put(image, layers);
@@ -345,7 +345,7 @@ public class StepsRunner {
                             results
                                 .baseImagesAndLayers
                                 .get()
-                                .get(results.baseImageAndRegistryClient.get().images.get(0))))));
+                                .get(results.baseImagesAndRegistryClient.get().images.get(0))))));
   }
 
   private void buildAndCacheApplicationLayers() {
