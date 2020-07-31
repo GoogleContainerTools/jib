@@ -26,7 +26,7 @@ public interface FilePermissionsProvider {
    * Returns the file permissions that should be set for a path, given the source path and
    * destination path on a container.
    *
-   * @param sourcePath the source file
+   * @param sourcePath the source file.
    * @param destinationPath the destination path. The path in the container file system
    *     corresponding to sourcePath.
    * @return the permissions to be set for the file.
