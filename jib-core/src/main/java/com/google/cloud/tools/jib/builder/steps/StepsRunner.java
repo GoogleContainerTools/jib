@@ -37,6 +37,7 @@ import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -283,12 +284,10 @@ public class StepsRunner {
 
     results.baseImagesAndLayers =
         executorService.submit(
-            () -> {
-              Map<Image, List<Future<PreparedLayer>>> baseImageLayers = new HashMap<>();
-              baseImageLayers.put(
-                  results.baseImagesAndRegistryClient.get().images.get(0), localImage.get().layers);
-              return baseImageLayers;
-            });
+            () ->
+                Collections.singletonMap(
+                    results.baseImagesAndRegistryClient.get().images.get(0),
+                    localImage.get().layers));
   }
 
   private void pullBaseImage() {
@@ -305,7 +304,7 @@ public class StepsRunner {
     results.baseImagesAndLayers =
         executorService.submit(
             () -> {
-              Map<Image, List<Future<PreparedLayer>>> baseImageLayers = new HashMap<>();
+              Map<Image, List<Future<PreparedLayer>>> baseImagesLayers = new HashMap<>();
               for (Image image : results.baseImagesAndRegistryClient.get().images) {
 
                 List<Future<PreparedLayer>> layers =
@@ -323,9 +322,9 @@ public class StepsRunner {
                                 results.baseImagesAndRegistryClient.get().registryClient,
                                 results.targetRegistryClient.get()));
 
-                baseImageLayers.put(image, layers);
+                baseImagesLayers.put(image, layers);
               }
-              return baseImageLayers;
+              return baseImagesLayers;
             });
   }
 
