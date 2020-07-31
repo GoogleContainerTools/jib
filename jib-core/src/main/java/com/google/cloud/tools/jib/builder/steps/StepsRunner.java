@@ -37,6 +37,7 @@ import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -65,7 +66,7 @@ public class StepsRunner {
           new IllegalStateException("invalid usage; required step not configured"));
     }
 
-    private Future<ImagesAndRegistryClient> baseImageAndRegistryClient = failedFuture();
+    private Future<ImagesAndRegistryClient> baseImagesAndRegistryClient = failedFuture();
     private Future<Map<Image, List<Future<PreparedLayer>>>> baseImagesAndLayers = failedFuture();
     @Nullable private List<Future<PreparedLayer>> applicationLayers;
     private Future<Image> builtImage = failedFuture();
@@ -273,7 +274,7 @@ public class StepsRunner {
   }
 
   private void assignLocalImageResult(Future<LocalImage> localImage) {
-    results.baseImageAndRegistryClient =
+    results.baseImagesAndRegistryClient =
         executorService.submit(
             () ->
                 LocalBaseImageSteps.returnImageAndRegistryClientStep(
@@ -283,19 +284,17 @@ public class StepsRunner {
 
     results.baseImagesAndLayers =
         executorService.submit(
-            () -> {
-              Map<Image, List<Future<PreparedLayer>>> baseImageAndLayers = new HashMap<>();
-              baseImageAndLayers.put(
-                  results.baseImageAndRegistryClient.get().images.get(0), localImage.get().layers);
-              return baseImageAndLayers;
-            });
+            () ->
+                Collections.singletonMap(
+                    results.baseImagesAndRegistryClient.get().images.get(0),
+                    localImage.get().layers));
   }
 
   private void pullBaseImage() {
     ProgressEventDispatcher.Factory childProgressDispatcherFactory =
         Verify.verifyNotNull(rootProgressDispatcher).newChildProducer();
 
-    results.baseImageAndRegistryClient =
+    results.baseImagesAndRegistryClient =
         executorService.submit(new PullBaseImageStep(buildContext, childProgressDispatcherFactory));
   }
 
@@ -306,7 +305,7 @@ public class StepsRunner {
         executorService.submit(
             () -> {
               Map<Image, List<Future<PreparedLayer>>> baseImageAndLayers = new HashMap<>();
-              for (Image image : results.baseImageAndRegistryClient.get().images) {
+              for (Image image : results.baseImagesAndRegistryClient.get().images) {
                 List<Future<PreparedLayer>> layers =
                     scheduleCallables(
                         layersRequiredLocally
@@ -314,12 +313,12 @@ public class StepsRunner {
                                 buildContext,
                                 childProgressDispatcherFactory,
                                 image,
-                                results.baseImageAndRegistryClient.get().registryClient)
+                                results.baseImagesAndRegistryClient.get().registryClient)
                             : ObtainBaseImageLayerStep.makeListForSelectiveDownload(
                                 buildContext,
                                 childProgressDispatcherFactory,
                                 image,
-                                results.baseImageAndRegistryClient.get().registryClient,
+                                results.baseImagesAndRegistryClient.get().registryClient,
                                 results.targetRegistryClient.get()));
                 baseImageAndLayers.put(image, layers);
               }
@@ -343,7 +342,7 @@ public class StepsRunner {
                             results
                                 .baseImagesAndLayers
                                 .get()
-                                .get(results.baseImageAndRegistryClient.get().images.get(0))))));
+                                .get(results.baseImagesAndRegistryClient.get().images.get(0))))));
   }
 
   private void buildAndCacheApplicationLayers() {
@@ -366,13 +365,13 @@ public class StepsRunner {
                 new BuildImageStep(
                         buildContext,
                         childProgressDispatcherFactory,
-                        results.baseImageAndRegistryClient.get().images.get(0),
+                        results.baseImagesAndRegistryClient.get().images.get(0),
                         realizeFutures(
                             Verify.verifyNotNull(
                                 results
                                     .baseImagesAndLayers
                                     .get()
-                                    .get(results.baseImageAndRegistryClient.get().images.get(0)))),
+                                    .get(results.baseImagesAndRegistryClient.get().images.get(0)))),
                         realizeFutures(Verify.verifyNotNull(results.applicationLayers)))
                     .call());
   }
