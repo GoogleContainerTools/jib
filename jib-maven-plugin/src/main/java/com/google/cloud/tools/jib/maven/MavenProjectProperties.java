@@ -513,6 +513,7 @@ public class MavenProjectProperties implements ProjectProperties {
           if (directoryString.isPresent()) {
             outputDirectory = project.getBasedir().toPath().resolve(directoryString.get());
           }
+          break;
         }
       }
     }
