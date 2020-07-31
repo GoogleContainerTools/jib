@@ -66,7 +66,7 @@ public class StepsRunner {
     }
 
     private Future<ImagesAndRegistryClient> baseImageAndRegistryClient = failedFuture();
-    private Future<Map<Image, List<Future<PreparedLayer>>>> baseImageLayers = failedFuture();
+    private Future<Map<Image, List<Future<PreparedLayer>>>> baseImagesAndLayers = failedFuture();
     @Nullable private List<Future<PreparedLayer>> applicationLayers;
     private Future<Image> builtImage = failedFuture();
     private Future<RegistryClient> targetRegistryClient = failedFuture();
@@ -273,27 +273,21 @@ public class StepsRunner {
   }
 
   private void assignLocalImageResult(Future<LocalImage> localImage) {
-
-    Future<List<Future<PreparedLayer>>> localBaseImageLayers =
-        executorService.submit(() -> localImage.get().layers);
-
     results.baseImageAndRegistryClient =
         executorService.submit(
-            () -> {
-              return LocalBaseImageSteps.returnImageAndRegistryClientStep(
-                      realizeFutures(localBaseImageLayers.get()),
-                      localImage.get().configurationTemplate)
-                  .call();
-            });
+            () ->
+                LocalBaseImageSteps.returnImageAndRegistryClientStep(
+                        realizeFutures(localImage.get().layers),
+                        localImage.get().configurationTemplate)
+                    .call());
 
-    results.baseImageLayers =
+    results.baseImagesAndLayers =
         executorService.submit(
             () -> {
-              Map<Image, List<Future<PreparedLayer>>> baseImageLayers = new HashMap<>();
-              baseImageLayers.put(
-                  results.baseImageAndRegistryClient.get().images.get(0),
-                  localBaseImageLayers.get());
-              return baseImageLayers;
+              Map<Image, List<Future<PreparedLayer>>> baseImageAndLayers = new HashMap<>();
+              baseImageAndLayers.put(
+                  results.baseImageAndRegistryClient.get().images.get(0), localImage.get().layers);
+              return baseImageAndLayers;
             });
   }
 
@@ -308,12 +302,11 @@ public class StepsRunner {
   private void obtainBaseImageLayers(boolean layersRequiredLocally) {
     ProgressEventDispatcher.Factory childProgressDispatcherFactory =
         Verify.verifyNotNull(rootProgressDispatcher).newChildProducer();
-    results.baseImageLayers =
+    results.baseImagesAndLayers =
         executorService.submit(
             () -> {
-              Map<Image, List<Future<PreparedLayer>>> baseImageLayers = new HashMap<>();
+              Map<Image, List<Future<PreparedLayer>>> baseImageAndLayers = new HashMap<>();
               for (Image image : results.baseImageAndRegistryClient.get().images) {
-
                 List<Future<PreparedLayer>> layers =
                     scheduleCallables(
                         layersRequiredLocally
@@ -328,10 +321,9 @@ public class StepsRunner {
                                 image,
                                 results.baseImageAndRegistryClient.get().registryClient,
                                 results.targetRegistryClient.get()));
-
-                baseImageLayers.put(image, layers);
+                baseImageAndLayers.put(image, layers);
               }
-              return baseImageLayers;
+              return baseImageAndLayers;
             });
   }
 
@@ -349,7 +341,7 @@ public class StepsRunner {
                         results.targetRegistryClient.get(),
                         Verify.verifyNotNull(
                             results
-                                .baseImageLayers
+                                .baseImagesAndLayers
                                 .get()
                                 .get(results.baseImageAndRegistryClient.get().images.get(0))))));
   }
@@ -378,7 +370,7 @@ public class StepsRunner {
                         realizeFutures(
                             Verify.verifyNotNull(
                                 results
-                                    .baseImageLayers
+                                    .baseImagesAndLayers
                                     .get()
                                     .get(results.baseImageAndRegistryClient.get().images.get(0)))),
                         realizeFutures(Verify.verifyNotNull(results.applicationLayers)))
