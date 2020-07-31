@@ -18,7 +18,7 @@ package com.google.cloud.tools.jib.api.buildplan;
 
 import java.nio.file.Path;
 
-/** Serves as a base class for determining file ownership. */
+/** Interface for providing the file ownership on a container. */
 @FunctionalInterface
 public interface OwnershipProvider {
 
