@@ -32,5 +32,5 @@ public interface ModificationTimeProvider {
    *     corresponding to sourcePath.
    * @return the file modification time.
    */
-  public Instant getFileModificationTime(Path sourcePath, AbsoluteUnixPath destinationPath);
+  public Instant get(Path sourcePath, AbsoluteUnixPath destinationPath);
 }

@@ -280,9 +280,8 @@ public class FileEntriesLayer implements LayerObject {
         OwnershipProvider ownershipProvider)
         throws IOException {
       FilePermissions permissions = filePermissionProvider.get(sourceFile, pathInContainer);
-      Instant modificationTime =
-          modificationTimeProvider.getFileModificationTime(sourceFile, pathInContainer);
-      String ownership = ownershipProvider.getFileOwnership(sourceFile, pathInContainer);
+      Instant modificationTime = modificationTimeProvider.get(sourceFile, pathInContainer);
+      String ownership = ownershipProvider.get(sourceFile, pathInContainer);
       addEntry(sourceFile, pathInContainer, permissions, modificationTime, ownership);
       if (!Files.isDirectory(sourceFile)) {
         return this;
