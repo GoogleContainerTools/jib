@@ -24,7 +24,7 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
-- Fixed the critical bug that the default `Platform` in `ContainerBuildPlan` has OS and architecture values switched with each other. ([#2597](https://github.com/GoogleContainerTools/jib/pull/2597)
+- Fixed the critical bug that the default `Platform` in `ContainerBuildPlan` has OS and architecture values switched with each other. ([#2597](https://github.com/GoogleContainerTools/jib/pull/2597))
 
 ## 0.2.0
 
