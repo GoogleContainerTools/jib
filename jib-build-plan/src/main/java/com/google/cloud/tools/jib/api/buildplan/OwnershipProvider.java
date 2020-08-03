@@ -31,5 +31,5 @@ public interface OwnershipProvider {
    *     corresponding to sourcePath.
    * @return the ownership to be set for the file.
    */
-  public String getFileOwnership(Path sourcePath, AbsoluteUnixPath destinationPath);
+  public String get(Path sourcePath, AbsoluteUnixPath destinationPath);
 }

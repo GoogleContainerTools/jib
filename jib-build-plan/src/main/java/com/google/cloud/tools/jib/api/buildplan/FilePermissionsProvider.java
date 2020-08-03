@@ -31,5 +31,5 @@ public interface FilePermissionsProvider {
    *     corresponding to sourcePath.
    * @return the permissions to be set for the file.
    */
-  public FilePermissions getFilePermissions(Path sourcePath, AbsoluteUnixPath destinationPath);
+  public FilePermissions get(Path sourcePath, AbsoluteUnixPath destinationPath);
 }
