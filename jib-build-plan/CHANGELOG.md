@@ -11,6 +11,7 @@ All notable changes to this project will be documented in this file.
 ### Changed
 
 - Removed `get/setOsHint()` and `get/setArchitectureHint()` in favor of `get/setPlatforms()` and `addPlatform()`. ([#2584](https://github.com/GoogleContainerTools/jib/pull/2584))
+- Replaced `BiFunction` usage in `FileEntriesLayer` with `FilePermissionsProvider`, `ModificationTimeProvider` and `OwnershipProvider`. ([#2643](https://github.com/GoogleContainerTools/jib/pull/2643))
 
 ### Fixed
 
