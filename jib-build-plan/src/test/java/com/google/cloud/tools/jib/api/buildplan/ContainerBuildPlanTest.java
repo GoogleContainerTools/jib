@@ -140,7 +140,7 @@ public class ContainerBuildPlanTest {
   private ContainerBuildPlan createSamplePlan() {
     FileEntriesLayer layer =
         FileEntriesLayer.builder()
-            .newAddEntry(Paths.get("/src/file/foo"), AbsoluteUnixPath.get("/path/in/container"))
+            .addEntry(Paths.get("/src/file/foo"), AbsoluteUnixPath.get("/path/in/container"))
             .build();
 
     return ContainerBuildPlan.builder()

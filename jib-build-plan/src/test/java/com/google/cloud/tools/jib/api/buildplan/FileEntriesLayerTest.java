@@ -23,7 +23,6 @@ import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Instant;
-import java.util.function.BiFunction;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -34,7 +33,7 @@ public class FileEntriesLayerTest {
     return new FileEntry(
         source,
         destination,
-        FileEntriesLayer.FILE_PERMISSIONS_PROVIDER.retrieveFilePermissions(source, destination),
+        FileEntriesLayer.DEFAULT_FILE_PERMISSIONS_PROVIDER.getFilePermissions(source, destination),
         FileEntriesLayer.DEFAULT_MODIFICATION_TIME);
   }
 
@@ -45,8 +44,8 @@ public class FileEntriesLayerTest {
 
     FileEntriesLayer layer =
         FileEntriesLayer.builder()
-            .newAddEntryRecursive(testDirectory, AbsoluteUnixPath.get("/app/layer/"))
-            .newAddEntryRecursive(testFile, AbsoluteUnixPath.get("/app/fileA"))
+            .addEntryRecursive(testDirectory, AbsoluteUnixPath.get("/app/layer/"))
+            .addEntryRecursive(testFile, AbsoluteUnixPath.get("/app/fileA"))
             .build();
 
     ImmutableSet<FileEntry> expectedLayerEntries =
@@ -84,7 +83,7 @@ public class FileEntriesLayerTest {
     ModificationTimeProvider timestampProvider =
         (source, destination) ->
             destination.toString().startsWith("/app/layer/a") ? timestamp1 : timestamp2;
-    BiFunction<Path, AbsoluteUnixPath, String> ownershipProvider =
+    OwnershipProvider ownershipProvider =
         (source, destination) ->
             destination.toString().startsWith("/app/layer/a") ? ownership1 : ownership2;
 
