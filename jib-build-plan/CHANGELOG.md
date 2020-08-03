@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+### Changed
+
+- Replaced `BiFunction` usage in `FileEntriesLayer` with `FilePermissionsProvider`, `ModificationTimeProvider` and `OwnershipProvider`. ([#2638](https://github.com/GoogleContainerTools/jib/issues/2638))
+
+### Fixed
+
+## 0.3.1
+
+### Added
+
 - Added `Platform` class representing an image platform. ([#2584](https://github.com/GoogleContainerTools/jib/pull/2584))
 - Added `get/setPlatforms()` and `addPlatform()` to `ContainerBuildPlan` for setting and getting image platforms. ([#2584](https://github.com/GoogleContainerTools/jib/pull/2584))
 
@@ -14,7 +24,7 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
-- Fixed the critical bug that the default `Platform` in `ContainerBuildPlan` has OS and architecture values switched with each other. ([#2597](https://github.com/GoogleContainerTools/jib/pull/2597)
+- Fixed the critical bug that the default `Platform` in `ContainerBuildPlan` has OS and architecture values switched with each other. ([#2597](https://github.com/GoogleContainerTools/jib/pull/2597))
 
 ## 0.2.0
 
