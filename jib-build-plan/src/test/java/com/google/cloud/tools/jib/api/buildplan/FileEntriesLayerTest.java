@@ -33,7 +33,7 @@ public class FileEntriesLayerTest {
     return new FileEntry(
         source,
         destination,
-        FileEntriesLayer.DEFAULT_FILE_PERMISSIONS_PROVIDER.getFilePermissions(source, destination),
+        FileEntriesLayer.DEFAULT_FILE_PERMISSIONS_PROVIDER.get(source, destination),
         FileEntriesLayer.DEFAULT_MODIFICATION_TIME);
   }
 

@@ -93,7 +93,7 @@ public class FileEntriesLayer implements LayerObject {
       return addEntry(
           sourceFile,
           pathInContainer,
-          DEFAULT_FILE_PERMISSIONS_PROVIDER.getFilePermissions(sourceFile, pathInContainer));
+          DEFAULT_FILE_PERMISSIONS_PROVIDER.get(sourceFile, pathInContainer));
     }
 
     /**
@@ -132,7 +132,7 @@ public class FileEntriesLayer implements LayerObject {
       return addEntry(
           sourceFile,
           pathInContainer,
-          DEFAULT_FILE_PERMISSIONS_PROVIDER.getFilePermissions(sourceFile, pathInContainer),
+          DEFAULT_FILE_PERMISSIONS_PROVIDER.get(sourceFile, pathInContainer),
           modificationTime);
     }
 
@@ -279,8 +279,7 @@ public class FileEntriesLayer implements LayerObject {
         ModificationTimeProvider modificationTimeProvider,
         OwnershipProvider ownershipProvider)
         throws IOException {
-      FilePermissions permissions =
-          filePermissionProvider.getFilePermissions(sourceFile, pathInContainer);
+      FilePermissions permissions = filePermissionProvider.get(sourceFile, pathInContainer);
       Instant modificationTime =
           modificationTimeProvider.getFileModificationTime(sourceFile, pathInContainer);
       String ownership = ownershipProvider.getFileOwnership(sourceFile, pathInContainer);
