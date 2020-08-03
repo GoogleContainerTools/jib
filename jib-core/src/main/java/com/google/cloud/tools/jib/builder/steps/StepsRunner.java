@@ -69,7 +69,7 @@ public class StepsRunner {
     private Future<ImagesAndRegistryClient> baseImagesAndRegistryClient = failedFuture();
     private Future<Map<Image, List<Future<PreparedLayer>>>> baseImagesAndLayers = failedFuture();
     @Nullable private List<Future<PreparedLayer>> applicationLayers;
-    private Future<Image> builtImage = failedFuture();
+    private Future<List<Future<Image>>> builtImages = failedFuture();
     private Future<RegistryClient> targetRegistryClient = failedFuture();
     private Future<List<Future<BlobDescriptor>>> baseImageLayerPushResults = failedFuture();
     private Future<List<Future<BlobDescriptor>>> applicationLayerPushResults = failedFuture();
@@ -137,7 +137,7 @@ public class StepsRunner {
 
     addRetrievalSteps(true); // always pull layers for docker builds
     stepsToRun.add(this::buildAndCacheApplicationLayers);
-    stepsToRun.add(this::buildImage);
+    stepsToRun.add(this::buildImages);
 
     // load to Docker
     stepsToRun.add(() -> loadDocker(dockerClient));
@@ -155,7 +155,7 @@ public class StepsRunner {
 
     addRetrievalSteps(true); // always pull layers for tar builds
     stepsToRun.add(this::buildAndCacheApplicationLayers);
-    stepsToRun.add(this::buildImage);
+    stepsToRun.add(this::buildImages);
 
     // create a tar
     stepsToRun.add(() -> writeTarFile(outputPath));
@@ -176,7 +176,7 @@ public class StepsRunner {
 
     addRetrievalSteps(layersRequiredLocally);
     stepsToRun.add(this::buildAndCacheApplicationLayers);
-    stepsToRun.add(this::buildImage);
+    stepsToRun.add(this::buildImages);
 
     // push to registry
     stepsToRun.add(this::pushBaseImageLayers);
@@ -230,7 +230,7 @@ public class StepsRunner {
 
     } else {
       // Otherwise default to RegistryImage
-      stepsToRun.add(this::pullBaseImage);
+      stepsToRun.add(this::pullBaseImages);
       stepsToRun.add(() -> obtainBaseImageLayers(layersRequiredLocally));
     }
   }
@@ -290,7 +290,7 @@ public class StepsRunner {
                     localImage.get().layers));
   }
 
-  private void pullBaseImage() {
+  private void pullBaseImages() {
     ProgressEventDispatcher.Factory childProgressDispatcherFactory =
         Verify.verifyNotNull(rootProgressDispatcher).newChildProducer();
 
@@ -355,25 +355,29 @@ public class StepsRunner {
                 buildContext, childProgressDispatcherFactory));
   }
 
-  private void buildImage() {
+  private void buildImages() {
     ProgressEventDispatcher.Factory childProgressDispatcherFactory =
         Verify.verifyNotNull(rootProgressDispatcher).newChildProducer();
-
-    results.builtImage =
+    results.builtImages =
         executorService.submit(
-            () ->
-                new BuildImageStep(
-                        buildContext,
-                        childProgressDispatcherFactory,
-                        results.baseImagesAndRegistryClient.get().images.get(0),
-                        realizeFutures(
-                            Verify.verifyNotNull(
-                                results
-                                    .baseImagesAndLayers
-                                    .get()
-                                    .get(results.baseImagesAndRegistryClient.get().images.get(0)))),
-                        realizeFutures(Verify.verifyNotNull(results.applicationLayers)))
-                    .call());
+            () -> {
+              List<Future<Image>> builtImages = new ArrayList<>();
+              for (Map.Entry<Image, List<Future<PreparedLayer>>> entry :
+                  results.baseImagesAndLayers.get().entrySet()) {
+                Future<Image> builtImage =
+                    executorService.submit(
+                        () ->
+                            new BuildImageStep(
+                                    buildContext,
+                                    childProgressDispatcherFactory,
+                                    entry.getKey(),
+                                    realizeFutures(Verify.verifyNotNull(entry.getValue())),
+                                    realizeFutures(Verify.verifyNotNull(results.applicationLayers)))
+                                .call());
+                builtImages.add(builtImage);
+              }
+              return builtImages;
+            });
   }
 
   private void pushContainerConfiguration() {
@@ -387,7 +391,7 @@ public class StepsRunner {
                         buildContext,
                         childProgressDispatcherFactory,
                         results.targetRegistryClient.get(),
-                        results.builtImage.get())
+                        results.builtImages.get().get(0).get())
                     .call());
   }
 
@@ -418,7 +422,7 @@ public class StepsRunner {
                         childProgressDispatcherFactory,
                         results.targetRegistryClient.get(),
                         results.containerConfigurationPushResult.get(),
-                        results.builtImage.get())
+                        results.builtImages.get().get(0).get())
                     .call());
   }
 
@@ -439,7 +443,7 @@ public class StepsRunner {
                           childProgressDispatcherFactory,
                           results.targetRegistryClient.get(),
                           results.containerConfigurationPushResult.get(),
-                          results.builtImage.get(),
+                          results.builtImages.get().get(0).get(),
                           results.manifestCheckResult.get().isPresent()));
               realizeFutures(manifestPushResults);
               return manifestPushResults.isEmpty()
@@ -462,7 +466,7 @@ public class StepsRunner {
                         buildContext,
                         childProgressDispatcherFactory,
                         dockerClient,
-                        results.builtImage.get())
+                        results.builtImages.get().get(0).get())
                     .call());
   }
 
@@ -477,7 +481,7 @@ public class StepsRunner {
                         buildContext,
                         childProgressDispatcherFactory,
                         outputPath,
-                        results.builtImage.get())
+                        results.builtImages.get().get(0).get())
                     .call());
   }
 
