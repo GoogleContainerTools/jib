@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 ### Added
 
 ### Changed
+
 - Replaced `BiFunction` usage in `FileEntriesLayer` with `FilePermissionsProvider`, `ModificationTimeProvider` and `OwnershipProvider`. ([#2638](https://github.com/GoogleContainerTools/jib/issues/2638))
 
 ### Fixed
