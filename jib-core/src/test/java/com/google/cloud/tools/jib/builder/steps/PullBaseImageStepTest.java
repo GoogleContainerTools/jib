@@ -21,11 +21,10 @@ import com.google.cloud.tools.jib.api.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.api.RegistryException;
 import com.google.cloud.tools.jib.api.buildplan.Platform;
 import com.google.cloud.tools.jib.builder.ProgressEventDispatcher;
-import com.google.cloud.tools.jib.builder.steps.PullBaseImageStep.ImageAndRegistryClient;
+import com.google.cloud.tools.jib.builder.steps.PullBaseImageStep.ImagesAndRegistryClient;
 import com.google.cloud.tools.jib.cache.Cache;
 import com.google.cloud.tools.jib.cache.CacheCorruptedException;
 import com.google.cloud.tools.jib.configuration.BuildContext;
-import com.google.cloud.tools.jib.configuration.ContainerConfiguration;
 import com.google.cloud.tools.jib.configuration.ImageConfiguration;
 import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.image.LayerCountMismatchException;
@@ -39,7 +38,6 @@ import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import com.google.cloud.tools.jib.registry.ManifestAndDigest;
 import com.google.cloud.tools.jib.registry.RegistryClient;
 import com.google.cloud.tools.jib.registry.credentials.CredentialRetrievalException;
-import com.google.common.collect.ImmutableSet;
 import java.io.IOException;
 import java.util.Optional;
 import org.junit.Assert;
@@ -63,7 +61,6 @@ public class PullBaseImageStepTest {
   @Mock private BuildContext buildContext;
   @Mock private RegistryClient registryClient;
   @Mock private ImageConfiguration imageConfiguration;
-  @Mock private ContainerConfiguration containerConfiguration;
   @Mock private Cache cache;
 
   private PullBaseImageStep pullBaseImageStep;
@@ -94,8 +91,8 @@ public class PullBaseImageStepTest {
     Mockito.when(imageConfiguration.getImage()).thenReturn(imageReference);
     Mockito.when(cache.retrieveMetadata(imageReference)).thenReturn(Optional.of(manifestAndConfig));
 
-    ImageAndRegistryClient result = pullBaseImageStep.call();
-    Assert.assertEquals("fat system", result.image.getOs());
+    ImagesAndRegistryClient result = pullBaseImageStep.call();
+    Assert.assertEquals("fat system", result.images.get(0).getOs());
     Assert.assertEquals(registryClient, result.registryClient);
   }
 
@@ -126,8 +123,8 @@ public class PullBaseImageStepTest {
     Mockito.when(buildContext.isOffline()).thenReturn(true);
     Mockito.when(cache.retrieveMetadata(imageReference)).thenReturn(Optional.of(manifestAndConfig));
 
-    ImageAndRegistryClient result = pullBaseImageStep.call();
-    Assert.assertEquals("fat system", result.image.getOs());
+    ImagesAndRegistryClient result = pullBaseImageStep.call();
+    Assert.assertEquals("fat system", result.images.get(0).getOs());
     Assert.assertNull(result.registryClient);
 
     Mockito.verify(buildContext, Mockito.never()).newBaseImageRegistryClientFactory();
@@ -161,9 +158,6 @@ public class PullBaseImageStepTest {
             + "   ]\n"
             + "}";
 
-    Mockito.when(buildContext.getContainerConfiguration()).thenReturn(containerConfiguration);
-    Mockito.when(containerConfiguration.getPlatforms())
-        .thenReturn(ImmutableSet.of(new Platform("targetArchitecture", "targetOS")));
     V22ManifestListTemplate manifestList =
         JsonTemplateMapper.readJson(manifestListJson, V22ManifestListTemplate.class);
     ManifestAndDigest<?> manifest = Mockito.mock(ManifestAndDigest.class);
@@ -173,7 +167,8 @@ public class PullBaseImageStepTest {
         .thenReturn(manifest);
 
     ManifestAndDigest<?> returnManifest =
-        pullBaseImageStep.obtainPlatformSpecificImageManifest(registryClient, manifestList);
+        pullBaseImageStep.obtainPlatformSpecificImageManifest(
+            registryClient, manifestList, new Platform("targetArchitecture", "targetOS"));
 
     Assert.assertSame(manifest, returnManifest);
   }

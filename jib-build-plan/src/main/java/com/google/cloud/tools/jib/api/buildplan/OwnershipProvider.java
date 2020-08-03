@@ -18,18 +18,18 @@ package com.google.cloud.tools.jib.api.buildplan;
 
 import java.nio.file.Path;
 
-/** Interface for providing rules to determine file permissions on a container. */
+/** Interface for providing the file ownership on a container. */
 @FunctionalInterface
-public interface FilePermissionsProvider {
+public interface OwnershipProvider {
 
   /**
-   * Returns the file permissions that should be set for a path, given the source path and
-   * destination path on a container.
+   * Returns the file ownership that should be set for a path, given the source path and destination
+   * path on a container.
    *
    * @param sourcePath the source file.
    * @param destinationPath the destination path. The path in the container file system
    *     corresponding to sourcePath.
-   * @return the permissions to be set for the file.
+   * @return the ownership to be set for the file.
    */
-  public FilePermissions getFilePermissions(Path sourcePath, AbsoluteUnixPath destinationPath);
+  public String getFileOwnership(Path sourcePath, AbsoluteUnixPath destinationPath);
 }
