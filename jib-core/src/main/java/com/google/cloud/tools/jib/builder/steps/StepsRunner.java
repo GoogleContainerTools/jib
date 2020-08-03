@@ -137,7 +137,7 @@ public class StepsRunner {
 
     addRetrievalSteps(true); // always pull layers for docker builds
     stepsToRun.add(this::buildAndCacheApplicationLayers);
-    stepsToRun.add(this::buildImage);
+    stepsToRun.add(this::buildImages);
 
     // load to Docker
     stepsToRun.add(() -> loadDocker(dockerClient));
@@ -155,7 +155,7 @@ public class StepsRunner {
 
     addRetrievalSteps(true); // always pull layers for tar builds
     stepsToRun.add(this::buildAndCacheApplicationLayers);
-    stepsToRun.add(this::buildImage);
+    stepsToRun.add(this::buildImages);
 
     // create a tar
     stepsToRun.add(() -> writeTarFile(outputPath));
@@ -176,7 +176,7 @@ public class StepsRunner {
 
     addRetrievalSteps(layersRequiredLocally);
     stepsToRun.add(this::buildAndCacheApplicationLayers);
-    stepsToRun.add(this::buildImage);
+    stepsToRun.add(this::buildImages);
 
     // push to registry
     stepsToRun.add(this::pushBaseImageLayers);
@@ -230,7 +230,7 @@ public class StepsRunner {
 
     } else {
       // Otherwise default to RegistryImage
-      stepsToRun.add(this::pullBaseImage);
+      stepsToRun.add(this::pullBaseImages);
       stepsToRun.add(() -> obtainBaseImageLayers(layersRequiredLocally));
     }
   }
@@ -290,7 +290,7 @@ public class StepsRunner {
                     localImage.get().layers));
   }
 
-  private void pullBaseImage() {
+  private void pullBaseImages() {
     ProgressEventDispatcher.Factory childProgressDispatcherFactory =
         Verify.verifyNotNull(rootProgressDispatcher).newChildProducer();
 
@@ -355,24 +355,23 @@ public class StepsRunner {
                 buildContext, childProgressDispatcherFactory));
   }
 
-  private void buildImage() {
+  private void buildImages() {
     ProgressEventDispatcher.Factory childProgressDispatcherFactory =
         Verify.verifyNotNull(rootProgressDispatcher).newChildProducer();
     results.builtImages =
         executorService.submit(
             () -> {
               List<Future<Image>> builtImages = new ArrayList<>();
-              for (Image image : results.baseImagesAndLayers.get().keySet()) {
+              for (Map.Entry<Image, List<Future<PreparedLayer>>> entry :
+                  results.baseImagesAndLayers.get().entrySet()) {
                 Future<Image> builtImage =
                     executorService.submit(
                         () ->
                             new BuildImageStep(
                                     buildContext,
                                     childProgressDispatcherFactory,
-                                    image,
-                                    realizeFutures(
-                                        Verify.verifyNotNull(
-                                            results.baseImagesAndLayers.get().get(image))),
+                                    entry.getKey(),
+                                    realizeFutures(Verify.verifyNotNull(entry.getValue())),
                                     realizeFutures(Verify.verifyNotNull(results.applicationLayers)))
                                 .call());
                 builtImages.add(builtImage);
