@@ -18,6 +18,7 @@ package com.google.cloud.tools.jib.builder.steps;
 
 import com.google.cloud.tools.jib.api.ImageReference;
 import com.google.cloud.tools.jib.api.InvalidImageReferenceException;
+import com.google.cloud.tools.jib.api.LogEvent;
 import com.google.cloud.tools.jib.api.RegistryException;
 import com.google.cloud.tools.jib.api.buildplan.Platform;
 import com.google.cloud.tools.jib.builder.ProgressEventDispatcher;
@@ -65,6 +66,7 @@ public class PullBaseImageStepTest {
   @Mock private ImageConfiguration imageConfiguration;
   @Mock private ContainerConfiguration containerConfig;
   @Mock private Cache cache;
+  @Mock private EventHandlers eventHandlers;
 
   private PullBaseImageStep pullBaseImageStep;
 
@@ -73,7 +75,7 @@ public class PullBaseImageStepTest {
     containerConfigJson.setArchitecture("slim arch");
     containerConfigJson.setOs("fat system");
     Mockito.when(buildContext.getBaseImageConfiguration()).thenReturn(imageConfiguration);
-    Mockito.when(buildContext.getEventHandlers()).thenReturn(EventHandlers.NONE);
+    Mockito.when(buildContext.getEventHandlers()).thenReturn(eventHandlers);
     Mockito.when(buildContext.getBaseImageLayersCache()).thenReturn(cache);
     RegistryClient.Factory registryClientFactory = Mockito.mock(RegistryClient.Factory.class);
     Mockito.when(buildContext.newBaseImageRegistryClientFactory())
@@ -158,6 +160,9 @@ public class PullBaseImageStepTest {
               + "current implementation of limited platform support. As a workaround, re-run Jib "
               + "online once to re-cache the right image manifest.",
           ex.getMessage());
+      Mockito.verify(eventHandlers)
+          .dispatch(
+              LogEvent.debug("platform of the cached manifest does not match the requested one"));
     }
   }
 
@@ -169,21 +174,25 @@ public class PullBaseImageStepTest {
     ImageReference imageReference =
         ImageReference.parse(
             "awesome@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
-    Mockito.when(imageConfiguration.getImage()).thenReturn(imageReference);
+    Mockito.when(buildContext.getBaseImageConfiguration())
+        .thenReturn(ImageConfiguration.builder(imageReference).build());
     Mockito.when(cache.retrieveMetadata(imageReference)).thenReturn(Optional.of(manifestAndConfig));
     Mockito.when(containerConfig.getPlatforms())
         .thenReturn(ImmutableSet.of(new Platform("testArch", "testOS")));
 
+    Mockito.<ManifestAndDigest<?>>when(
+            registryClient.pullManifest(
+                "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"))
+        .thenThrow(new RegistryException("fake error only to verify calling registryClient"));
+
     try {
       pullBaseImageStep.call();
       Assert.fail();
-    } catch (IllegalStateException ex) {
-      Assert.assertEquals(
-          "The cached base image manifest does not match the configured platform due to the "
-              + "current implementation of limited platform support. As a workaround, delete the "
-              + "cached manifest. See https://github.com/GoogleContainerTools/jib/issues/2655 for "
-              + "details.",
-          ex.getMessage());
+    } catch (RegistryException ex) {
+      Assert.assertEquals("fake error only to verify calling registryClient", ex.getMessage());
+      Mockito.verify(eventHandlers)
+          .dispatch(
+              LogEvent.debug("platform of the cached manifest does not match the requested one"));
     }
   }
 
