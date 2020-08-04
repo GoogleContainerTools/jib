@@ -7,7 +7,18 @@ All notable changes to this project will be documented in this file.
 
 - Also tries `.exe` file extension for credential helpers on Windows. ([#2527](https://github.com/GoogleContainerTools/jib/issues/2527))
 - New system property `jib.skipExistingImages` (false by default) to skip pushing images (manifests) if the image already exists in the registry. ([#2360](https://github.com/GoogleContainerTools/jib/issues/2360)
-- _Incubating feature_: selecting a manifest by platform (architecture and OS) from a manifest list (image index in OCI terms) for a base image. Currently supports building only one image. ([#1567](https://github.com/GoogleContainerTools/jib/issues/1567))
+- _Incubating feature_: can now configure desired platform (architecture and OS) to select the matching manifest from a Docker manifest list or an OCI image index for a base image. Currently supports building only one image. ([#1567](https://github.com/GoogleContainerTools/jib/issues/1567))
+    ```xml
+      <from>
+        <image>... image reference to a manifest list ...</image>
+        <platforms>
+          <platform>
+            <architecture>arm64</architecture>
+            <os>linux</os>
+          </platform>
+        </platforms>
+      </from>
+    ```
 
 ### Changed
 
