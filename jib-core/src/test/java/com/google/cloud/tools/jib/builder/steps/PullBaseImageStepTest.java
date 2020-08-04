@@ -147,7 +147,7 @@ public class PullBaseImageStepTest {
     Mockito.when(cache.retrieveMetadata(imageReference)).thenReturn(Optional.of(manifestAndConfig));
     Mockito.when(buildContext.isOffline()).thenReturn(true);
     Mockito.when(containerConfig.getPlatforms())
-        .thenReturn(ImmutableSet.of(new Platform("foo arch", "bar OS")));
+        .thenReturn(ImmutableSet.of(new Platform("testArch", "testOS")));
 
     try {
       pullBaseImageStep.call();
@@ -172,7 +172,7 @@ public class PullBaseImageStepTest {
     Mockito.when(imageConfiguration.getImage()).thenReturn(imageReference);
     Mockito.when(cache.retrieveMetadata(imageReference)).thenReturn(Optional.of(manifestAndConfig));
     Mockito.when(containerConfig.getPlatforms())
-        .thenReturn(ImmutableSet.of(new Platform("foo arch", "bar OS")));
+        .thenReturn(ImmutableSet.of(new Platform("testArch", "testOS")));
 
     try {
       pullBaseImageStep.call();
