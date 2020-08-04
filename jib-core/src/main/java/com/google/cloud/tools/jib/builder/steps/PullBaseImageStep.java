@@ -48,8 +48,10 @@ import com.google.cloud.tools.jib.registry.ManifestAndDigest;
 import com.google.cloud.tools.jib.registry.RegistryClient;
 import com.google.cloud.tools.jib.registry.credentials.CredentialRetrievalException;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Preconditions;
+import com.google.common.base.Verify;
+import com.google.common.collect.ImmutableList;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -102,6 +104,7 @@ class PullBaseImageStep implements Callable<ImagesAndRegistryClient> {
     if (buildContext.isOffline()) {
       Optional<Image> image = getCachedBaseImage();
       if (image.isPresent()) {
+        verifyPlatformOfCachedManifest(image.get());
         return new ImagesAndRegistryClient(Collections.singletonList(image.get()), null);
       }
       throw new IOException(
@@ -110,6 +113,7 @@ class PullBaseImageStep implements Callable<ImagesAndRegistryClient> {
     } else if (imageReference.getDigest().isPresent()) {
       Optional<Image> image = getCachedBaseImage();
       if (image.isPresent()) {
+        verifyPlatformOfCachedManifest(image.get());
         RegistryClient noAuthRegistryClient =
             buildContext.newBaseImageRegistryClientFactory().newRegistryClient();
         // TODO: passing noAuthRegistryClient may be problematic. It may return 401 unauthorized if
@@ -174,6 +178,29 @@ class PullBaseImageStep implements Callable<ImagesAndRegistryClient> {
     }
   }
 
+  // TODO: remove when properly caching manifests with multiple platforms and manifest lists.
+  private void verifyPlatformOfCachedManifest(Image image) {
+    Preconditions.checkState(buildContext.getContainerConfiguration().getPlatforms().size() == 1);
+    Platform platform = buildContext.getContainerConfiguration().getPlatforms().iterator().next();
+    if (!image.getArchitecture().equals(platform.getArchitecture())
+        || !image.getOs().equals(platform.getOs())) {
+
+      String suggestion =
+          "The cached base image manifest does not match the configured platform due "
+              + "to the current implementation of limited platform support. As a workaround, ";
+      if (buildContext.isOffline()) {
+        throw new IllegalStateException(
+            suggestion + "re-run Jib online once to re-cache the right image manifest.");
+      } else {
+        Verify.verify(buildContext.getBaseImageConfiguration().getImage().getDigest().isPresent());
+        throw new IllegalStateException(
+            suggestion
+                + "delete the cached manifest. See "
+                + "https://github.com/GoogleContainerTools/jib/issues/2655 for details.");
+      }
+    }
+  }
+
   /**
    * Pulls the base images specified in the platforms list.
    *
@@ -199,7 +226,7 @@ class PullBaseImageStep implements Callable<ImagesAndRegistryClient> {
 
     // If a manifest list, search for the manifests matching the given platforms.
     if (manifestTemplate instanceof V22ManifestListTemplate) {
-      List<Image> images = new ArrayList<>();
+      ImmutableList.Builder<Image> images = ImmutableList.builder();
 
       for (Platform platform : buildContext.getContainerConfiguration().getPlatforms()) {
         manifestAndDigest =
@@ -207,7 +234,7 @@ class PullBaseImageStep implements Callable<ImagesAndRegistryClient> {
                 registryClient, (V22ManifestListTemplate) manifestTemplate, platform);
         images.add(jsonManifestToImage(manifestAndDigest, registryClient, progressEventDispatcher));
       }
-      return images;
+      return images.build();
     }
 
     return Collections.singletonList(
