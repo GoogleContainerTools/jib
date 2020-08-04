@@ -73,8 +73,8 @@ public class StepsRunner {
     private Future<RegistryClient> targetRegistryClient = failedFuture();
     private Future<List<List<Future<BlobDescriptor>>>> baseImageLayerPushResults = failedFuture();
     private Future<List<Future<BlobDescriptor>>> applicationLayerPushResults = failedFuture();
-    private Future<Map<Image, Future<BlobDescriptor>>> containerConfigurationPushResults =
-        failedFuture();
+    private Future<Map<Image, Future<BlobDescriptor>>>
+        builtImagesAndContainerConfigurationPushResults = failedFuture();
     private Future<BuildResult> buildResult = failedFuture();
     private Future<Optional<ManifestAndDigest<ManifestTemplate>>> manifestCheckResult =
         failedFuture();
@@ -389,7 +389,7 @@ public class StepsRunner {
     ProgressEventDispatcher.Factory childProgressDispatcherFactory =
         Verify.verifyNotNull(rootProgressDispatcher).newChildProducer();
 
-    results.containerConfigurationPushResults =
+    results.builtImagesAndContainerConfigurationPushResults =
         executorService.submit(
             () -> {
               Map<Image, Future<BlobDescriptor>> containerConfigurationPushResults =
@@ -439,7 +439,7 @@ public class StepsRunner {
                         results.targetRegistryClient.get(),
                         Verify.verifyNotNull(
                                 results
-                                    .containerConfigurationPushResults
+                                    .builtImagesAndContainerConfigurationPushResults
                                     .get()
                                     .get(results.builtImages.get().get(0).get()))
                             .get(),
@@ -465,7 +465,7 @@ public class StepsRunner {
                           results.targetRegistryClient.get(),
                           Verify.verifyNotNull(
                                   results
-                                      .containerConfigurationPushResults
+                                      .builtImagesAndContainerConfigurationPushResults
                                       .get()
                                       .get(results.builtImages.get().get(0).get()))
                               .get(),
@@ -477,7 +477,7 @@ public class StepsRunner {
                       results.manifestCheckResult.get().get().getDigest(),
                       Verify.verifyNotNull(
                               results
-                                  .containerConfigurationPushResults
+                                  .builtImagesAndContainerConfigurationPushResults
                                   .get()
                                   .get(results.builtImages.get().get(0).get()))
                           .get()
