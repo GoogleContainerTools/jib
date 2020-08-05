@@ -97,7 +97,7 @@ public class ReproducibleLayerBuilderTest {
     return new FileEntry(
         source,
         destination,
-        FileEntriesLayer.DEFAULT_FILE_PERMISSIONS_PROVIDER.apply(source, destination),
+        FileEntriesLayer.DEFAULT_FILE_PERMISSIONS_PROVIDER.get(source, destination),
         FileEntriesLayer.DEFAULT_MODIFICATION_TIME);
   }
 

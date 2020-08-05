@@ -26,7 +26,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
-/** Tests for {@link FixedTimestampsProvider}. */
+/** Tests for {@link FixedTimestampProvider}. */
 public class FixedTimestampsProviderTest {
   @Rule public final TemporaryFolder temporaryDirectory = new TemporaryFolder();
 
@@ -44,12 +44,12 @@ public class FixedTimestampsProviderTest {
   @Test
   public void testApply_file() {
     Assert.assertEquals(
-        Instant.ofEpochSecond(1), fixture.apply(file.toPath(), AbsoluteUnixPath.get("/")));
+        Instant.ofEpochSecond(1), fixture.get(file.toPath(), AbsoluteUnixPath.get("/")));
   }
 
   @Test
   public void testApply_directory() {
     Assert.assertEquals(
-        Instant.ofEpochSecond(1), fixture.apply(directory.toPath(), AbsoluteUnixPath.get("/")));
+        Instant.ofEpochSecond(1), fixture.get(directory.toPath(), AbsoluteUnixPath.get("/")));
   }
 }

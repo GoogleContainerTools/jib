@@ -33,6 +33,7 @@ import com.google.cloud.tools.jib.api.buildplan.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.api.buildplan.FileEntriesLayer;
 import com.google.cloud.tools.jib.api.buildplan.ImageFormat;
 import com.google.cloud.tools.jib.api.buildplan.LayerObject;
+import com.google.cloud.tools.jib.api.buildplan.ModificationTimeProvider;
 import com.google.cloud.tools.jib.api.buildplan.Platform;
 import com.google.cloud.tools.jib.frontend.CredentialRetrieverFactory;
 import com.google.cloud.tools.jib.global.JibSystemProperties;
@@ -58,7 +59,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.function.BiFunction;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
 
@@ -386,7 +386,7 @@ public class PluginConfigurationProcessor {
           InvalidCreationTimeException {
 
     // Create and configure JibContainerBuilder
-    BiFunction<Path, AbsoluteUnixPath, Instant> modificationTimeProvider =
+    ModificationTimeProvider modificationTimeProvider =
         createModificationTimeProvider(rawConfiguration.getFilesModificationTime());
     JavaContainerBuilder javaContainerBuilder =
         getJavaContainerBuilderWithBaseImage(
@@ -755,8 +755,8 @@ public class PluginConfigurationProcessor {
    * @throws InvalidFilesModificationTimeException if the config value is not in ISO 8601 format
    */
   @VisibleForTesting
-  static BiFunction<Path, AbsoluteUnixPath, Instant> createModificationTimeProvider(
-      String modificationTime) throws InvalidFilesModificationTimeException {
+  static ModificationTimeProvider createModificationTimeProvider(String modificationTime)
+      throws InvalidFilesModificationTimeException {
     try {
       switch (modificationTime) {
         case "EPOCH_PLUS_SECOND":

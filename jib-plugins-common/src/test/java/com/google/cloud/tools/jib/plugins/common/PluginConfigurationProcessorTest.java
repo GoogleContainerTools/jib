@@ -28,6 +28,7 @@ import com.google.cloud.tools.jib.api.RegistryImage;
 import com.google.cloud.tools.jib.api.buildplan.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.api.buildplan.FileEntry;
 import com.google.cloud.tools.jib.api.buildplan.FilePermissions;
+import com.google.cloud.tools.jib.api.buildplan.ModificationTimeProvider;
 import com.google.cloud.tools.jib.api.buildplan.Platform;
 import com.google.cloud.tools.jib.configuration.BuildContext;
 import com.google.cloud.tools.jib.configuration.ImageConfiguration;
@@ -49,7 +50,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -924,29 +924,27 @@ public class PluginConfigurationProcessorTest {
   @Test
   public void testCreateModificationTimeProvider_epochPlusSecond()
       throws InvalidFilesModificationTimeException {
-    BiFunction<Path, AbsoluteUnixPath, Instant> timeProvider =
+    ModificationTimeProvider timeProvider =
         PluginConfigurationProcessor.createModificationTimeProvider("EPOCH_PLUS_SECOND");
     Assert.assertEquals(
-        Instant.ofEpochSecond(1),
-        timeProvider.apply(Paths.get("foo"), AbsoluteUnixPath.get("/bar")));
+        Instant.ofEpochSecond(1), timeProvider.get(Paths.get("foo"), AbsoluteUnixPath.get("/bar")));
   }
 
   @Test
   public void testCreateModificationTimeProvider_isoDateTimeValue()
       throws InvalidFilesModificationTimeException {
-    BiFunction<Path, AbsoluteUnixPath, Instant> timeProvider =
+    ModificationTimeProvider timeProvider =
         PluginConfigurationProcessor.createModificationTimeProvider("2011-12-03T10:15:30+09:00");
     Instant expected = DateTimeFormatter.ISO_DATE_TIME.parse("2011-12-03T01:15:30Z", Instant::from);
-    Assert.assertEquals(
-        expected, timeProvider.apply(Paths.get("foo"), AbsoluteUnixPath.get("/bar")));
+    Assert.assertEquals(expected, timeProvider.get(Paths.get("foo"), AbsoluteUnixPath.get("/bar")));
   }
 
   @Test
   public void testCreateModificationTimeProvider_invalidValue() {
     try {
-      BiFunction<Path, AbsoluteUnixPath, Instant> timeProvider =
+      ModificationTimeProvider timeProvider =
           PluginConfigurationProcessor.createModificationTimeProvider("invalid format");
-      timeProvider.apply(Paths.get("foo"), AbsoluteUnixPath.get("/bar"));
+      timeProvider.get(Paths.get("foo"), AbsoluteUnixPath.get("/bar"));
       Assert.fail();
     } catch (InvalidFilesModificationTimeException ex) {
       Assert.assertEquals("invalid format", ex.getMessage());
