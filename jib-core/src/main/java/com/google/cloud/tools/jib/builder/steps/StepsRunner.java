@@ -393,17 +393,17 @@ public class StepsRunner {
         executorService.submit(
             () -> {
               Map<Future<Image>, Future<BlobDescriptor>> pushResults = new HashMap<>();
-              for (Future<Image> buildImage : results.builtImages.get()) {
-                Future<BlobDescriptor> containerConfigurationPushResult =
+              for (Future<Image> builtImage : results.builtImages.get()) {
+                Future<BlobDescriptor> configPushResult =
                     executorService.submit(
                         () ->
                             new PushContainerConfigurationStep(
                                     buildContext,
                                     childProgressDispatcherFactory,
                                     results.targetRegistryClient.get(),
-                                    buildImage.get())
+                                    builtImage.get())
                                 .call());
-                pushResults.put(buildImage, containerConfigurationPushResult);
+                pushResults.put(builtImage, configPushResult);
               }
               return pushResults;
             });
