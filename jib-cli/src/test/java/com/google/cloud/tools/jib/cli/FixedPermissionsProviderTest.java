@@ -47,7 +47,7 @@ public class FixedPermissionsProviderTest {
   public void testApply_file() {
     FixedPermissionsProvider provider =
         new FixedPermissionsProvider(filesPermission, directoriesPermission);
-    Assert.assertEquals(filesPermission, provider.apply(file.toPath(), AbsoluteUnixPath.get("/")));
+    Assert.assertEquals(filesPermission, provider.get(file.toPath(), AbsoluteUnixPath.get("/")));
   }
 
   @Test
@@ -55,6 +55,6 @@ public class FixedPermissionsProviderTest {
     FixedPermissionsProvider provider =
         new FixedPermissionsProvider(filesPermission, directoriesPermission);
     Assert.assertEquals(
-        directoriesPermission, provider.apply(directory.toPath(), AbsoluteUnixPath.get("/")));
+        directoriesPermission, provider.get(directory.toPath(), AbsoluteUnixPath.get("/")));
   }
 }

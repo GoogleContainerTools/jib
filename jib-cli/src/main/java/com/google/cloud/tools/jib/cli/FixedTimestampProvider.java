@@ -17,13 +17,13 @@
 package com.google.cloud.tools.jib.cli;
 
 import com.google.cloud.tools.jib.api.buildplan.AbsoluteUnixPath;
+import com.google.cloud.tools.jib.api.buildplan.ModificationTimeProvider;
 import com.google.common.annotations.VisibleForTesting;
 import java.nio.file.Path;
 import java.time.Instant;
-import java.util.function.BiFunction;
 
 /** A timetamp provider that returns a specific timestamp. */
-class FixedTimestampProvider implements BiFunction<Path, AbsoluteUnixPath, Instant> {
+class FixedTimestampProvider implements ModificationTimeProvider {
   @VisibleForTesting final Instant fixed;
 
   FixedTimestampProvider(Instant instant) {
@@ -31,7 +31,7 @@ class FixedTimestampProvider implements BiFunction<Path, AbsoluteUnixPath, Insta
   }
 
   @Override
-  public Instant apply(Path local, AbsoluteUnixPath inContainer) {
+  public Instant get(Path local, AbsoluteUnixPath inContainer) {
     return fixed;
   }
 }

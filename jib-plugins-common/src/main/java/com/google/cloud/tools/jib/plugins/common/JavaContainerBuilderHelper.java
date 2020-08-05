@@ -19,10 +19,7 @@ package com.google.cloud.tools.jib.plugins.common;
 import com.google.cloud.tools.jib.api.JavaContainerBuilder;
 import com.google.cloud.tools.jib.api.JavaContainerBuilder.LayerType;
 import com.google.cloud.tools.jib.api.JibContainerBuilder;
-import com.google.cloud.tools.jib.api.buildplan.AbsoluteUnixPath;
-import com.google.cloud.tools.jib.api.buildplan.FileEntriesLayer;
-import com.google.cloud.tools.jib.api.buildplan.FilePermissions;
-import com.google.cloud.tools.jib.api.buildplan.RelativeUnixPath;
+import com.google.cloud.tools.jib.api.buildplan.*;
 import com.google.cloud.tools.jib.filesystem.DirectoryWalker;
 import java.io.IOException;
 import java.nio.file.FileSystems;
@@ -54,7 +51,7 @@ public class JavaContainerBuilderHelper {
       Path sourceDirectory,
       AbsoluteUnixPath targetDirectory,
       Map<String, FilePermissions> extraDirectoryPermissions,
-      BiFunction<Path, AbsoluteUnixPath, Instant> modificationTimeProvider)
+      ModificationTimeProvider modificationTimeProvider)
       throws IOException {
     FileEntriesLayer.Builder builder =
         FileEntriesLayer.builder().setName(LayerType.EXTRA_FILES.getName());
@@ -70,7 +67,7 @@ public class JavaContainerBuilderHelper {
             localPath -> {
               AbsoluteUnixPath pathOnContainer =
                   targetDirectory.resolve(sourceDirectory.relativize(localPath));
-              Instant modificationTime = modificationTimeProvider.apply(localPath, pathOnContainer);
+              Instant modificationTime = modificationTimeProvider.get(localPath, pathOnContainer);
               FilePermissions permissions =
                   extraDirectoryPermissions.get(pathOnContainer.toString());
               if (permissions == null) {
