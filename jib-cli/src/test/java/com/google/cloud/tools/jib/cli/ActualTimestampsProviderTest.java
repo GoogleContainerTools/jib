@@ -25,8 +25,8 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
-/** Tests for {@link FixedTimestampProvider}. */
-public class ActualTimestampsProviderTest {
+/** Tests for {@link ActualTimestampProvider}. */
+public class ActualTimestampProviderTest {
   @Rule public final TemporaryFolder temporaryDirectory = new TemporaryFolder();
 
   private ActualTimestampProvider fixture;
