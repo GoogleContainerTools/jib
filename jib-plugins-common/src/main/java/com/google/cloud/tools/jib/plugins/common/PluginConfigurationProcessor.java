@@ -29,7 +29,12 @@ import com.google.cloud.tools.jib.api.LogEvent;
 import com.google.cloud.tools.jib.api.Ports;
 import com.google.cloud.tools.jib.api.RegistryImage;
 import com.google.cloud.tools.jib.api.TarImage;
-import com.google.cloud.tools.jib.api.buildplan.*;
+import com.google.cloud.tools.jib.api.buildplan.AbsoluteUnixPath;
+import com.google.cloud.tools.jib.api.buildplan.FileEntriesLayer;
+import com.google.cloud.tools.jib.api.buildplan.ImageFormat;
+import com.google.cloud.tools.jib.api.buildplan.LayerObject;
+import com.google.cloud.tools.jib.api.buildplan.ModificationTimeProvider;
+import com.google.cloud.tools.jib.api.buildplan.Platform;
 import com.google.cloud.tools.jib.frontend.CredentialRetrieverFactory;
 import com.google.cloud.tools.jib.global.JibSystemProperties;
 import com.google.cloud.tools.jib.plugins.common.RawConfiguration.PlatformConfiguration;
@@ -54,7 +59,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.function.BiFunction;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
 
@@ -751,8 +755,8 @@ public class PluginConfigurationProcessor {
    * @throws InvalidFilesModificationTimeException if the config value is not in ISO 8601 format
    */
   @VisibleForTesting
-  static ModificationTimeProvider createModificationTimeProvider(
-      String modificationTime) throws InvalidFilesModificationTimeException {
+  static ModificationTimeProvider createModificationTimeProvider(String modificationTime)
+      throws InvalidFilesModificationTimeException {
     try {
       switch (modificationTime) {
         case "EPOCH_PLUS_SECOND":
