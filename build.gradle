@@ -62,7 +62,7 @@ subprojects {
     BUILD_PLAN: 'com.google.cloud.tools:jib-build-plan:0.4.0',
     EXTENSION_COMMON: 'com.google.cloud.tools:jib-plugins-extension-common:0.2.0',
     GRADLE_EXTENSION: 'com.google.cloud.tools:jib-gradle-plugin-extension-api:0.4.0',
-    MAVEN_EXTENSION: 'com.google.cloud.tools:jib-maven-plugin-extension-api:0.3.0',
+    MAVEN_EXTENSION: 'com.google.cloud.tools:jib-maven-plugin-extension-api:0.4.0',
 
     COMMONS_COMPRESS: 'org.apache.commons:commons-compress:1.20',
     JACKSON_DATABIND: 'com.fasterxml.jackson.core:jackson-databind:2.11.1',
