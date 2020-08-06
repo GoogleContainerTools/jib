@@ -69,7 +69,8 @@ public class StepsRunner {
     private Future<ImagesAndRegistryClient> baseImagesAndRegistryClient = failedFuture();
     private Future<Map<Image, List<Future<PreparedLayer>>>> baseImagesAndLayers = failedFuture();
     @Nullable private List<Future<PreparedLayer>> applicationLayers;
-    private Future<List<Future<Image>>> builtImages = failedFuture();
+    private Future<Map<Future<Image>, List<Future<PreparedLayer>>>> builtImagesAndLayers =
+        failedFuture();
     private Future<RegistryClient> targetRegistryClient = failedFuture();
     private Future<List<List<Future<BlobDescriptor>>>> baseImageLayerPushResults = failedFuture();
     private Future<List<Future<BlobDescriptor>>> applicationLayerPushResults = failedFuture();
@@ -363,10 +364,11 @@ public class StepsRunner {
   private void buildImages() {
     ProgressEventDispatcher.Factory childProgressDispatcherFactory =
         Verify.verifyNotNull(rootProgressDispatcher).newChildProducer();
-    results.builtImages =
+    results.builtImagesAndLayers =
         executorService.submit(
             () -> {
-              List<Future<Image>> builtImages = new ArrayList<>();
+              Map<Future<Image>, List<Future<PreparedLayer>>> builtImagesAndLayers =
+                  new HashMap<>();
               for (Map.Entry<Image, List<Future<PreparedLayer>>> entry :
                   results.baseImagesAndLayers.get().entrySet()) {
                 Future<Image> builtImage =
@@ -379,9 +381,9 @@ public class StepsRunner {
                                     realizeFutures(Verify.verifyNotNull(entry.getValue())),
                                     realizeFutures(Verify.verifyNotNull(results.applicationLayers)))
                                 .call());
-                builtImages.add(builtImage);
+                builtImagesAndLayers.put(builtImage, entry.getValue());
               }
-              return builtImages;
+              return builtImagesAndLayers;
             });
   }
 
@@ -393,7 +395,7 @@ public class StepsRunner {
         executorService.submit(
             () -> {
               Map<Future<Image>, Future<BlobDescriptor>> pushResults = new HashMap<>();
-              for (Future<Image> builtImage : results.builtImages.get()) {
+              for (Future<Image> builtImage : results.builtImagesAndLayers.get().keySet()) {
                 Future<BlobDescriptor> configPushResult =
                     executorService.submit(
                         () ->
@@ -439,9 +441,18 @@ public class StepsRunner {
                                 results
                                     .builtImagesAndContainerConfigurationPushResults
                                     .get()
-                                    .get(results.builtImages.get().get(0)))
+                                    .values()
+                                    .iterator()
+                                    .next())
                             .get(),
-                        results.builtImages.get().get(0).get())
+                        Verify.verifyNotNull(
+                                results
+                                    .builtImagesAndContainerConfigurationPushResults
+                                    .get()
+                                    .keySet()
+                                    .iterator()
+                                    .next())
+                            .get())
                     .call());
   }
 
@@ -507,7 +518,13 @@ public class StepsRunner {
                                   buildContext,
                                   childProgressDispatcherFactory,
                                   dockerClient,
-                                  results.builtImages.get().get(0).get())
+                                  results
+                                      .builtImagesAndLayers
+                                      .get()
+                                      .keySet()
+                                      .iterator()
+                                      .next()
+                                      .get())
                               .call());
               buildResults.add(buildResult);
               return buildResults;
@@ -529,7 +546,13 @@ public class StepsRunner {
                                   buildContext,
                                   childProgressDispatcherFactory,
                                   outputPath,
-                                  results.builtImages.get().get(0).get())
+                                  results
+                                      .builtImagesAndLayers
+                                      .get()
+                                      .keySet()
+                                      .iterator()
+                                      .next()
+                                      .get())
                               .call());
               buildResults.add(buildResult);
               return buildResults;
