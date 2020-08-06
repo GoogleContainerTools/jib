@@ -538,6 +538,7 @@ If the registry returns `401 Unauthorized` or `"code":"UNAUTHORIZED"`, it is oft
 * Configured credentials have access to the base image repository but not to the target image repository (or vice versa).
 * Typos in username, password, image names, repository names, or registry names. (This is surprisingly common.)
 * Image names do not conform to the structure or policy that a registry requires. For example, [Docker Hub returns 401 Unauthorized](https://github.com/GoogleContainerTools/jib/issues/2650#issuecomment-667323777) when trying to use a multi-level repository name.
+* Incorrect port number in image references (`registry.hostname:<port>/...`).
 * You are using a private registry without HTTPS. See [How can I diagnose problems pulling or pushing from remote registries?](#how-can-i-diagnose-problems-pulling-or-pushing-from-remote-registries).
 
 Note, if Jib was able to retrieve credentials, you should see a log message like these:
