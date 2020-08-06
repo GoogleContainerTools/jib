@@ -127,7 +127,8 @@ public class BuildFileSpecTest {
       Assert.fail();
     } catch (JsonProcessingException jpe) {
       MatcherAssert.assertThat(
-          jpe.getMessage(), CoreMatchers.containsString("Property 'apiVersion' cannot be empty"));
+          jpe.getMessage(),
+          CoreMatchers.containsString("Property 'apiVersion' cannot be an empty string"));
     }
   }
 
@@ -218,7 +219,7 @@ public class BuildFileSpecTest {
         Assert.fail();
       } catch (JsonProcessingException ex) {
         Assert.assertEquals(
-            "Property '" + fieldName + "' cannot contain empty entries",
+            "Property '" + fieldName + "' cannot contain empty strings",
             ex.getCause().getMessage());
       }
     }
@@ -260,7 +261,7 @@ public class BuildFileSpecTest {
         Assert.fail();
       } catch (JsonProcessingException ex) {
         Assert.assertEquals(
-            "Property '" + fieldName + "' cannot be empty", ex.getCause().getMessage());
+            "Property '" + fieldName + "' cannot be an empty string", ex.getCause().getMessage());
       }
     }
 
@@ -320,7 +321,8 @@ public class BuildFileSpecTest {
         Assert.fail();
       } catch (JsonProcessingException ex) {
         Assert.assertEquals(
-            "Property '" + fieldName + "' cannot contain empty values", ex.getCause().getMessage());
+            "Property '" + fieldName + "' cannot contain empty string values",
+            ex.getCause().getMessage());
       }
     }
 
@@ -334,7 +336,8 @@ public class BuildFileSpecTest {
         Assert.fail();
       } catch (JsonProcessingException ex) {
         Assert.assertEquals(
-            "Property '" + fieldName + "' cannot contain empty keys", ex.getCause().getMessage());
+            "Property '" + fieldName + "' cannot contain empty string keys",
+            ex.getCause().getMessage());
       }
     }
 

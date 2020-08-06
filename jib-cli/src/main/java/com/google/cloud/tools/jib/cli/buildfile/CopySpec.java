@@ -68,8 +68,8 @@ public class CopySpec {
       @JsonProperty("properties") FilePropertiesSpec properties) {
     Validator.checkNotNullAndNotEmpty(src, "src");
     Validator.checkNotNullAndNotEmpty(dest, "dest");
-    Validator.checkNonNullNonEmptyEntriesIfExists(includes, "includes");
-    Validator.checkNonNullNonEmptyEntriesIfExists(excludes, "excludes");
+    Validator.checkNullOrNonNullNonEmptyEntries(includes, "includes");
+    Validator.checkNullOrNonNullNonEmptyEntries(excludes, "excludes");
     this.src = Paths.get(src);
     this.dest = AbsoluteUnixPath.get(dest);
     this.excludes = (excludes == null) ? ImmutableList.of() : excludes;

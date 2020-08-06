@@ -127,14 +127,14 @@ public class BuildFileSpec {
 
     Validator.checkNullOrNotEmpty(creationTime, "creationTime");
     Validator.checkNullOrNotEmpty(format, "format");
-    Validator.checkNonNullNonEmptyEntriesIfExists(environment, "environment");
-    Validator.checkNonNullNonEmptyEntriesIfExists(labels, "labels");
-    Validator.checkNonNullNonEmptyEntriesIfExists(volumes, "volumes");
-    Validator.checkNonNullNonEmptyEntriesIfExists(exposedPorts, "exposedPorts");
+    Validator.checkNullOrNonNullNonEmptyEntries(environment, "environment");
+    Validator.checkNullOrNonNullNonEmptyEntries(labels, "labels");
+    Validator.checkNullOrNonNullNonEmptyEntries(volumes, "volumes");
+    Validator.checkNullOrNonNullNonEmptyEntries(exposedPorts, "exposedPorts");
     Validator.checkNullOrNotEmpty(user, "user");
     Validator.checkNullOrNotEmpty(workingDirectory, "workingDirectory");
-    Validator.checkNonNullNonEmptyEntriesIfExists(entrypoint, "entrypoint");
-    Validator.checkNonNullNonEmptyEntriesIfExists(cmd, "cmd");
+    Validator.checkNullOrNonNullNonEmptyEntries(entrypoint, "entrypoint");
+    Validator.checkNullOrNonNullNonEmptyEntries(cmd, "cmd");
 
     this.apiVersion = apiVersion;
     Preconditions.checkArgument(

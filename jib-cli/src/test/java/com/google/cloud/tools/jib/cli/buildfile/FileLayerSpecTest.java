@@ -84,7 +84,8 @@ public class FileLayerSpecTest {
       Assert.fail();
     } catch (JsonProcessingException jpe) {
       MatcherAssert.assertThat(
-          jpe.getMessage(), CoreMatchers.containsString("Property 'name' cannot be empty"));
+          jpe.getMessage(),
+          CoreMatchers.containsString("Property 'name' cannot be an empty string"));
     }
   }
 

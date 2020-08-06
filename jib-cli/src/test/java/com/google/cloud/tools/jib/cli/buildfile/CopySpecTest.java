@@ -105,7 +105,8 @@ public class CopySpecTest {
       Assert.fail();
     } catch (JsonProcessingException jpe) {
       MatcherAssert.assertThat(
-          jpe.getMessage(), CoreMatchers.containsString("Property 'src' cannot be empty"));
+          jpe.getMessage(),
+          CoreMatchers.containsString("Property 'src' cannot be an empty string"));
     }
   }
 
@@ -131,7 +132,8 @@ public class CopySpecTest {
       Assert.fail();
     } catch (JsonProcessingException jpe) {
       MatcherAssert.assertThat(
-          jpe.getMessage(), CoreMatchers.containsString("Property 'dest' cannot be empty"));
+          jpe.getMessage(),
+          CoreMatchers.containsString("Property 'dest' cannot be an empty string"));
     }
   }
 
@@ -178,7 +180,7 @@ public class CopySpecTest {
         Assert.fail();
       } catch (JsonProcessingException ex) {
         Assert.assertEquals(
-            "Property '" + fieldName + "' cannot contain empty entries",
+            "Property '" + fieldName + "' cannot contain empty strings",
             ex.getCause().getMessage());
       }
     }

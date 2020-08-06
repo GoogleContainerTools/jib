@@ -138,7 +138,7 @@ public class FilePropertiesSpecTest {
         Assert.fail();
       } catch (JsonProcessingException ex) {
         Assert.assertEquals(
-            "Property '" + fieldName + "' cannot be empty", ex.getCause().getMessage());
+            "Property '" + fieldName + "' cannot be an empty string", ex.getCause().getMessage());
       }
     }
 

@@ -87,7 +87,8 @@ public class BaseImageSpecTest {
       Assert.fail();
     } catch (JsonProcessingException jpe) {
       MatcherAssert.assertThat(
-          jpe.getMessage(), CoreMatchers.containsString("Property 'image' cannot be empty"));
+          jpe.getMessage(),
+          CoreMatchers.containsString("Property 'image' cannot be an empty string"));
     }
   }
 

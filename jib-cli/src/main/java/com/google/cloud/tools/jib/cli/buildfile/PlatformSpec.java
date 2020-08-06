@@ -69,9 +69,9 @@ public class PlatformSpec {
     Validator.checkNotNullAndNotEmpty(architecture, "architecture");
     Validator.checkNotNullAndNotEmpty(os, "os");
     Validator.checkNullOrNotEmpty(osVersion, "os.version");
-    Validator.checkNonNullNonEmptyEntriesIfExists(osFeatures, "os.features");
+    Validator.checkNullOrNonNullNonEmptyEntries(osFeatures, "os.features");
     Validator.checkNullOrNotEmpty(variant, "variant");
-    Validator.checkNonNullNonEmptyEntriesIfExists(features, "features");
+    Validator.checkNullOrNonNullNonEmptyEntries(features, "features");
     this.architecture = architecture;
     this.os = os;
     this.osVersion = osVersion;

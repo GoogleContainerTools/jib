@@ -51,7 +51,7 @@ public class ValidatorTest {
       Validator.checkNotNullAndNotEmpty("  ", "test");
       Assert.fail();
     } catch (IllegalArgumentException iae) {
-      Assert.assertEquals("Property 'test' cannot be empty", iae.getMessage());
+      Assert.assertEquals("Property 'test' cannot be an empty string", iae.getMessage());
     }
   }
 
@@ -71,7 +71,7 @@ public class ValidatorTest {
       Validator.checkNullOrNotEmpty("   ", "test");
       Assert.fail();
     } catch (IllegalArgumentException iae) {
-      Assert.assertEquals("Property 'test' cannot be empty", iae.getMessage());
+      Assert.assertEquals("Property 'test' cannot be an empty string", iae.getMessage());
     }
   }
 
@@ -102,28 +102,28 @@ public class ValidatorTest {
   }
 
   @Test
-  public void testCheckNonNullNonEmptyEntriesIfExists_nullMapPass() {
-    Validator.checkNonNullNonEmptyEntriesIfExists((Map<String, String>) null, "test");
+  public void testCheckNullOrNonNullNonEmptyEntries_nullMapPass() {
+    Validator.checkNullOrNonNullNonEmptyEntries((Map<String, String>) null, "test");
     // pass
   }
 
   @Test
-  public void testCheckNonNullNonEmptyEntriesIfExists_emptyMapPass() {
-    Validator.checkNonNullNonEmptyEntriesIfExists(ImmutableMap.of(), "test");
+  public void testCheckNullOrNonNullNonEmptyEntries_emptyMapPass() {
+    Validator.checkNullOrNonNullNonEmptyEntries(ImmutableMap.of(), "test");
     // pass
   }
 
   @Test
-  public void testCheckNonNullNonEmptyEntriesIfExists_mapWithValuesPass() {
-    Validator.checkNonNullNonEmptyEntriesIfExists(
+  public void testCheckNullOrNonNullNonEmptyEntries_mapWithValuesPass() {
+    Validator.checkNullOrNonNullNonEmptyEntries(
         ImmutableMap.of("key1", "val1", "key2", "val2"), "test");
     // pass
   }
 
   @Test
-  public void testCheckNonNullNonEmptyEntriesIfExists_mapNullKeyFail() {
+  public void testCheckNullOrNonNullNonEmptyEntries_mapNullKeyFail() {
     try {
-      Validator.checkNonNullNonEmptyEntriesIfExists(Collections.singletonMap(null, "val1"), "test");
+      Validator.checkNullOrNonNullNonEmptyEntries(Collections.singletonMap(null, "val1"), "test");
       Assert.fail();
     } catch (NullPointerException npe) {
       Assert.assertEquals("Property 'test' cannot contain null keys", npe.getMessage());
@@ -131,19 +131,19 @@ public class ValidatorTest {
   }
 
   @Test
-  public void testCheckNonNullNonEmptyEntriesIfExists_mapEmptyKeyFail() {
+  public void testCheckNullOrNonNullNonEmptyEntries_mapEmptyKeyFail() {
     try {
-      Validator.checkNonNullNonEmptyEntriesIfExists(Collections.singletonMap(" ", "val1"), "test");
+      Validator.checkNullOrNonNullNonEmptyEntries(Collections.singletonMap(" ", "val1"), "test");
       Assert.fail();
     } catch (IllegalArgumentException iae) {
-      Assert.assertEquals("Property 'test' cannot contain empty keys", iae.getMessage());
+      Assert.assertEquals("Property 'test' cannot contain empty string keys", iae.getMessage());
     }
   }
 
   @Test
-  public void testCheckNonNullNonEmptyEntriesIfExists_mapNullValueFail() {
+  public void testCheckNullOrNonNullNonEmptyEntries_mapNullValueFail() {
     try {
-      Validator.checkNonNullNonEmptyEntriesIfExists(Collections.singletonMap("key1", null), "test");
+      Validator.checkNullOrNonNullNonEmptyEntries(Collections.singletonMap("key1", null), "test");
       Assert.fail();
     } catch (NullPointerException npe) {
       Assert.assertEquals("Property 'test' cannot contain null values", npe.getMessage());
@@ -151,37 +151,37 @@ public class ValidatorTest {
   }
 
   @Test
-  public void testCheckNonNullNonEmptyEntriesIfExists_mapEmptyValueFail() {
+  public void testCheckNullOrNonNullNonEmptyEntries_mapEmptyValueFail() {
     try {
-      Validator.checkNonNullNonEmptyEntriesIfExists(Collections.singletonMap("key1", " "), "test");
+      Validator.checkNullOrNonNullNonEmptyEntries(Collections.singletonMap("key1", " "), "test");
       Assert.fail();
     } catch (IllegalArgumentException iae) {
-      Assert.assertEquals("Property 'test' cannot contain empty values", iae.getMessage());
+      Assert.assertEquals("Property 'test' cannot contain empty string values", iae.getMessage());
     }
   }
 
   @Test
-  public void testCheckNonNullNonEmptyEntriesIfExists_nullPass() {
-    Validator.checkNonNullNonEmptyEntriesIfExists((List<String>) null, "test");
+  public void testCheckNullOrNonNullNonEmptyEntries_nullPass() {
+    Validator.checkNullOrNonNullNonEmptyEntries((List<String>) null, "test");
     // pass
   }
 
   @Test
-  public void testCheckNonNullNonEmptyEntriesIfExists_emptyPass() {
-    Validator.checkNonNullNonEmptyEntriesIfExists(ImmutableList.of(), "test");
+  public void testCheckNullOrNonNullNonEmptyEntries_emptyPass() {
+    Validator.checkNullOrNonNullNonEmptyEntries(ImmutableList.of(), "test");
     // pass
   }
 
   @Test
-  public void testCheckNonNullNonEmptyEntriesIfExists_valuesPass() {
-    Validator.checkNonNullNonEmptyEntriesIfExists(ImmutableList.of("first", "second"), "test");
+  public void testCheckNullNonNullNonEmptyEntries_valuesPass() {
+    Validator.checkNullOrNonNullNonEmptyEntries(ImmutableList.of("first", "second"), "test");
     // pass
   }
 
   @Test
-  public void testCheckNonNullNonEmptyEntriesIfExists_nullValueFail() {
+  public void testCheckNullNonNullNonEmptyEntries_nullValueFail() {
     try {
-      Validator.checkNonNullNonEmptyEntriesIfExists(Arrays.asList("first", null), "test");
+      Validator.checkNullOrNonNullNonEmptyEntries(Arrays.asList("first", null), "test");
       Assert.fail();
     } catch (NullPointerException npe) {
       Assert.assertEquals("Property 'test' cannot contain null entries", npe.getMessage());
@@ -189,37 +189,37 @@ public class ValidatorTest {
   }
 
   @Test
-  public void testCheckNonNullNonEmptyEntriesIfExists_emptyValueFail() {
+  public void testCheckNullOrNonNullNonEmptyEntries_emptyValueFail() {
     try {
-      Validator.checkNonNullNonEmptyEntriesIfExists(ImmutableList.of("first", "  "), "test");
+      Validator.checkNullOrNonNullNonEmptyEntries(ImmutableList.of("first", "  "), "test");
       Assert.fail();
     } catch (IllegalArgumentException iae) {
-      Assert.assertEquals("Property 'test' cannot contain empty entries", iae.getMessage());
+      Assert.assertEquals("Property 'test' cannot contain empty strings", iae.getMessage());
     }
   }
 
   @Test
-  public void testCheckNonNullEntriesIfExists_nullPass() {
-    Validator.checkNonNullEntriesIfExists(null, "test");
+  public void testCheckNullOrNonNullEntries_nullPass() {
+    Validator.checkNullOrNonNullEntries(null, "test");
     // pass
   }
 
   @Test
-  public void testCheckNonNullEntriesIfExists_emptyPass() {
-    Validator.checkNonNullEntriesIfExists(ImmutableList.of(), "test");
+  public void testCheckNullOrNonNullEntries_emptyPass() {
+    Validator.checkNullOrNonNullEntries(ImmutableList.of(), "test");
     // pass
   }
 
   @Test
-  public void testCheckNonNullEntriesIfExists_valuesPass() {
-    Validator.checkNonNullEntriesIfExists(ImmutableList.of(new Object(), new Object()), "test");
+  public void testCheckNullOrNonNullEntries_valuesPass() {
+    Validator.checkNullOrNonNullEntries(ImmutableList.of(new Object(), new Object()), "test");
     // pass
   }
 
   @Test
-  public void testCheckNonNullEntriesIfExists_nullFail() {
+  public void testCheckNullOrNonNullEntries_nullFail() {
     try {
-      Validator.checkNonNullEntriesIfExists(Arrays.asList(new Object(), null), "test");
+      Validator.checkNullOrNonNullEntries(Arrays.asList(new Object(), null), "test");
       Assert.fail();
     } catch (NullPointerException npe) {
       Assert.assertEquals("Property 'test' cannot contain null entries", npe.getMessage());

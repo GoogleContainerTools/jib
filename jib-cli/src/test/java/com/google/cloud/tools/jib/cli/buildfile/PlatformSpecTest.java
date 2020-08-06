@@ -91,7 +91,7 @@ public class PlatformSpecTest {
       Assert.fail();
     } catch (JsonProcessingException jpe) {
       MatcherAssert.assertThat(
-          jpe.getMessage(), CoreMatchers.containsString("Property 'os' cannot be empty"));
+          jpe.getMessage(), CoreMatchers.containsString("Property 'os' cannot be an empty string"));
     }
   }
 
@@ -131,7 +131,8 @@ public class PlatformSpecTest {
       Assert.fail();
     } catch (JsonProcessingException jpe) {
       MatcherAssert.assertThat(
-          jpe.getMessage(), CoreMatchers.containsString("Property 'architecture' cannot be empty"));
+          jpe.getMessage(),
+          CoreMatchers.containsString("Property 'architecture' cannot be an empty string"));
     }
   }
 
@@ -163,7 +164,7 @@ public class PlatformSpecTest {
         Assert.fail();
       } catch (JsonProcessingException ex) {
         Assert.assertEquals(
-            "Property '" + fieldName + "' cannot be empty", ex.getCause().getMessage());
+            "Property '" + fieldName + "' cannot be an empty string", ex.getCause().getMessage());
       }
     }
 
@@ -208,7 +209,7 @@ public class PlatformSpecTest {
         Assert.fail();
       } catch (JsonProcessingException ex) {
         Assert.assertEquals(
-            "Property '" + fieldName + "' cannot contain empty entries",
+            "Property '" + fieldName + "' cannot contain empty strings",
             ex.getCause().getMessage());
       }
     }

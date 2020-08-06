@@ -38,7 +38,7 @@ public class Validator {
   public static void checkNotNullAndNotEmpty(@Nullable String value, String propertyName) {
     Preconditions.checkNotNull(value, "Property '" + propertyName + "' cannot be null");
     Preconditions.checkArgument(
-        !value.trim().isEmpty(), "Property '" + propertyName + "' cannot be empty");
+        !value.trim().isEmpty(), "Property '" + propertyName + "' cannot be an empty string");
   }
 
   /**
@@ -54,7 +54,7 @@ public class Validator {
       return;
     }
     Preconditions.checkArgument(
-        !value.trim().isEmpty(), "Property '" + propertyName + "' cannot be empty");
+        !value.trim().isEmpty(), "Property '" + propertyName + "' cannot be an empty string");
   }
 
   /**
@@ -76,9 +76,10 @@ public class Validator {
    *
    * @param values the collection in question
    * @param propertyName the equivalent 'yaml' property name
-   * @throws IllegalArgumentException if {@code value} is empty or only whitespace
+   * @throws IllegalArgumentException if {@code values} contains empty entries
+   * @throws NullPointerException if {@code values} contains null entries
    */
-  public static void checkNonNullNonEmptyEntriesIfExists(
+  public static void checkNullOrNonNullNonEmptyEntries(
       @Nullable Collection<String> values, String propertyName) {
     if (values == null || values.isEmpty()) {
       // pass
@@ -88,7 +89,7 @@ public class Validator {
       Preconditions.checkNotNull(
           value, "Property '" + propertyName + "' cannot contain null entries");
       Preconditions.checkArgument(
-          !value.trim().isEmpty(), "Property '" + propertyName + "' cannot contain empty entries");
+          !value.trim().isEmpty(), "Property '" + propertyName + "' cannot contain empty strings");
     }
   }
 
@@ -97,23 +98,26 @@ public class Validator {
    *
    * @param values the collection in question
    * @param propertyName the equivalent 'yaml' property name
-   * @throws IllegalArgumentException if {@code value} is empty or only whitespace
+   * @throws IllegalArgumentException if {@code values} contains empty keys or values
+   * @throws NullPointerException if {@code values} contains null keys or values
    */
-  public static void checkNonNullNonEmptyEntriesIfExists(
+  public static void checkNullOrNonNullNonEmptyEntries(
       @Nullable Map<String, String> values, String propertyName) {
     if (values == null || values.isEmpty()) {
       // pass
       return;
     }
-    for (String key : values.keySet()) {
-      Preconditions.checkNotNull(key, "Property '" + propertyName + "' cannot contain null keys");
-      Preconditions.checkArgument(
-          !key.trim().isEmpty(), "Property '" + propertyName + "' cannot contain empty keys");
-      String value = values.get(key);
+    for (Map.Entry<String, String> entry : values.entrySet()) {
       Preconditions.checkNotNull(
-          value, "Property '" + propertyName + "' cannot contain null values");
+          entry.getKey(), "Property '" + propertyName + "' cannot contain null keys");
       Preconditions.checkArgument(
-          !value.trim().isEmpty(), "Property '" + propertyName + "' cannot contain empty values");
+          !entry.getKey().trim().isEmpty(),
+          "Property '" + propertyName + "' cannot contain empty string keys");
+      Preconditions.checkNotNull(
+          entry.getValue(), "Property '" + propertyName + "' cannot contain null values");
+      Preconditions.checkArgument(
+          !entry.getValue().trim().isEmpty(),
+          "Property '" + propertyName + "' cannot contain empty string values");
     }
   }
 
@@ -122,11 +126,11 @@ public class Validator {
    *
    * @param values the collection in question
    * @param propertyName the equivalent 'yaml' property name
-   * @throws IllegalArgumentException if {@code value} is empty or only whitespace
+   * @throws NullPointerException if {@code values} contains null entries
    */
-  public static void checkNonNullEntriesIfExists(
+  public static void checkNullOrNonNullEntries(
       @Nullable Collection<?> values, String propertyName) {
-    if (values == null || values.isEmpty()) {
+    if (values == null) {
       // pass
       return;
     }
