@@ -466,7 +466,6 @@ public class StepsRunner {
               realizeFutures(results.applicationLayerPushResults.get());
 
               List<Future<BuildResult>> buildResults = new ArrayList<>();
-
               for (Map.Entry<Future<Image>, Future<BlobDescriptor>> entry :
                   results.builtImagesAndContainerConfigurationPushResults.get().entrySet()) {
 
@@ -493,14 +492,10 @@ public class StepsRunner {
                               // Manifest pushers return the same BuildResult.
                               : manifestPushResults.get(0).get();
                         });
-
                 buildResults.add(buildResult);
               }
               return buildResults;
             });
-
-    //    results.buildResult = executorService.submit(() ->
-    // results.buildResults.get().get(0).get());
   }
 
   private void loadDocker(DockerClient dockerClient) {
