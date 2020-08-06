@@ -142,4 +142,16 @@ public class MainClassFinderTest {
     MatcherAssert.assertThat(
         mainClassFinderResult.getFoundMainClass(), CoreMatchers.containsString("HelloWorld"));
   }
+
+  @Test
+  public void testMainClass_synthetic() throws URISyntaxException, IOException {
+    Path rootDirectory =
+        Paths.get(Resources.getResource("core/class-finder-tests/synthetic").toURI());
+    MainClassFinder.Result mainClassFinderResult =
+        MainClassFinder.find(new DirectoryWalker(rootDirectory).walk(), logEventConsumer);
+    Assert.assertSame(
+        MainClassFinder.Result.Type.MAIN_CLASS_FOUND, mainClassFinderResult.getType());
+    MatcherAssert.assertThat(
+        mainClassFinderResult.getFoundMainClass(), CoreMatchers.containsString("HelloWorldKt"));
+  }
 }
