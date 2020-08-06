@@ -80,6 +80,24 @@ public class CopySpecTest {
   }
 
   @Test
+  public void testCopySpec_destEndsWithSlash() throws JsonProcessingException {
+    String data = "src: target/classes\n" + "dest: /app/classes/";
+
+    CopySpec parsed = mapper.readValue(data, CopySpec.class);
+    Assert.assertEquals(AbsoluteUnixPath.get("/app/classes"), parsed.getDest());
+    Assert.assertTrue(parsed.isDestEndsWithSlash());
+  }
+
+  @Test
+  public void testCopySpec_destDoesNotEndWithSlash() throws JsonProcessingException {
+    String data = "src: target/classes\n" + "dest: /app/classes";
+
+    CopySpec parsed = mapper.readValue(data, CopySpec.class);
+    Assert.assertEquals(AbsoluteUnixPath.get("/app/classes"), parsed.getDest());
+    Assert.assertFalse(parsed.isDestEndsWithSlash());
+  }
+
+  @Test
   public void testCopySpec_srcNotNull() {
     String data = "src: null\n" + "dest: /app/classes\n";
 
