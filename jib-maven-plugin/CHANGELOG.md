@@ -29,6 +29,7 @@ All notable changes to this project will be documented in this file.
 - Fixed `NullPointerException` to return a helpful message when a server does not provide any message in certain error cases (400 Bad Request, 404 Not Found, and 405 Method Not Allowed). ([#2532](https://github.com/GoogleContainerTools/jib/issues/2532))
 - Now supports sending client certificate (for example, via the `javax.net.ssl.keyStore` and `javax.net.ssl.keyStorePassword` system properties) and thus enabling mutual TLS authentication. ([#2585](https://github.com/GoogleContainerTools/jib/issues/2585), [#2226](https://github.com/GoogleContainerTools/jib/issues/2226))
 - Fixed build failure with `<containerizingMode>packaged` in Spring Boot projects where Jib assumed a wrong JAR path when `<finalName>` or `<classifier>` is configured in Spring Boot. ([#2565](https://github.com/GoogleContainerTools/jib/issues/2565))
+- Fixed an issue where Jib cannot infer Kotlin main class that takes no arguments. ([#2666](https://github.com/GoogleContainerTools/jib/pull/2666))
 
 ## 2.4.0
 
