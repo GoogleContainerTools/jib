@@ -75,7 +75,7 @@ public class StepsRunner {
     private Future<List<Future<BlobDescriptor>>> applicationLayerPushResults = failedFuture();
     private Future<Map<Future<Image>, Future<BlobDescriptor>>>
         builtImagesAndContainerConfigurationPushResults = failedFuture();
-    private Future<BuildResult> buildResult = failedFuture();
+    private Future<List<Future<BuildResult>>> buildResults = failedFuture();
     private Future<Optional<ManifestAndDigest<ManifestTemplate>>> manifestCheckResult =
         failedFuture();
   }
@@ -204,7 +204,7 @@ public class StepsRunner {
       rootProgressDispatcher = progressEventDispatcher;
 
       stepsToRun.forEach(Runnable::run);
-      return results.buildResult.get();
+      return results.buildResults.get().get(0).get();
 
     } catch (ExecutionException ex) {
       ExecutionException unrolled = ex;
@@ -449,70 +449,91 @@ public class StepsRunner {
     ProgressEventDispatcher.Factory childProgressDispatcherFactory =
         Verify.verifyNotNull(rootProgressDispatcher).newChildProducer();
 
-    results.buildResult =
+    results.buildResults =
         executorService.submit(
             () -> {
-              realizeFutures(results.baseImageLayerPushResults.get().get(0));
               realizeFutures(results.applicationLayerPushResults.get());
 
-              List<Future<BuildResult>> manifestPushResults =
-                  scheduleCallables(
-                      PushImageStep.makeList(
-                          buildContext,
-                          childProgressDispatcherFactory,
-                          results.targetRegistryClient.get(),
-                          Verify.verifyNotNull(
-                                  results
-                                      .builtImagesAndContainerConfigurationPushResults
-                                      .get()
-                                      .get(results.builtImages.get().get(0)))
-                              .get(),
-                          results.builtImages.get().get(0).get(),
-                          results.manifestCheckResult.get().isPresent()));
-              realizeFutures(manifestPushResults);
-              return manifestPushResults.isEmpty()
-                  ? new BuildResult(
-                      results.manifestCheckResult.get().get().getDigest(),
-                      Verify.verifyNotNull(
-                              results
-                                  .builtImagesAndContainerConfigurationPushResults
-                                  .get()
-                                  .get(results.builtImages.get().get(0)))
-                          .get()
-                          .getDigest())
-                  // Manifest pushers return the same BuildResult.
-                  : manifestPushResults.get(0).get();
+              List<Future<BuildResult>> buildResults = new ArrayList<>();
+
+              for (Map.Entry<Future<Image>, Future<BlobDescriptor>> entry :
+                  results.builtImagesAndContainerConfigurationPushResults.get().entrySet()) {
+
+                Future<BuildResult> buildResult =
+                    executorService.submit(
+                        () -> {
+                          realizeFutures(results.baseImageLayerPushResults.get().get(0));
+
+                          List<Future<BuildResult>> manifestPushResults =
+                              scheduleCallables(
+                                  PushImageStep.makeList(
+                                      buildContext,
+                                      childProgressDispatcherFactory,
+                                      results.targetRegistryClient.get(),
+                                      Verify.verifyNotNull(entry.getValue()).get(),
+                                      entry.getKey().get(),
+                                      results.manifestCheckResult.get().isPresent()));
+
+                          realizeFutures(manifestPushResults);
+                          return manifestPushResults.isEmpty()
+                              ? new BuildResult(
+                                  results.manifestCheckResult.get().get().getDigest(),
+                                  Verify.verifyNotNull(entry.getValue()).get().getDigest())
+                              // Manifest pushers return the same BuildResult.
+                              : manifestPushResults.get(0).get();
+                        });
+
+                buildResults.add(buildResult);
+              }
+              return buildResults;
             });
+
+    //    results.buildResult = executorService.submit(() ->
+    // results.buildResults.get().get(0).get());
   }
 
   private void loadDocker(DockerClient dockerClient) {
     ProgressEventDispatcher.Factory childProgressDispatcherFactory =
         Verify.verifyNotNull(rootProgressDispatcher).newChildProducer();
 
-    results.buildResult =
+    results.buildResults =
         executorService.submit(
-            () ->
-                new LoadDockerStep(
-                        buildContext,
-                        childProgressDispatcherFactory,
-                        dockerClient,
-                        results.builtImages.get().get(0).get())
-                    .call());
+            () -> {
+              List<Future<BuildResult>> buildResults = new ArrayList<>();
+              Future<BuildResult> buildResult =
+                  executorService.submit(
+                      () ->
+                          new LoadDockerStep(
+                                  buildContext,
+                                  childProgressDispatcherFactory,
+                                  dockerClient,
+                                  results.builtImages.get().get(0).get())
+                              .call());
+              buildResults.add(buildResult);
+              return buildResults;
+            });
   }
 
   private void writeTarFile(Path outputPath) {
     ProgressEventDispatcher.Factory childProgressDispatcherFactory =
         Verify.verifyNotNull(rootProgressDispatcher).newChildProducer();
 
-    results.buildResult =
+    results.buildResults =
         executorService.submit(
-            () ->
-                new WriteTarFileStep(
-                        buildContext,
-                        childProgressDispatcherFactory,
-                        outputPath,
-                        results.builtImages.get().get(0).get())
-                    .call());
+            () -> {
+              List<Future<BuildResult>> buildResults = new ArrayList<>();
+              Future<BuildResult> buildResult =
+                  executorService.submit(
+                      () ->
+                          new WriteTarFileStep(
+                                  buildContext,
+                                  childProgressDispatcherFactory,
+                                  outputPath,
+                                  results.builtImages.get().get(0).get())
+                              .call());
+              buildResults.add(buildResult);
+              return buildResults;
+            });
   }
 
   private <E> List<Future<E>> scheduleCallables(ImmutableList<? extends Callable<E>> callables) {
