@@ -81,7 +81,7 @@ public class Validator {
    */
   public static void checkNullOrNonNullNonEmptyEntries(
       @Nullable Collection<String> values, String propertyName) {
-    if (values == null || values.isEmpty()) {
+    if (values == null) {
       // pass
       return;
     }
@@ -103,7 +103,7 @@ public class Validator {
    */
   public static void checkNullOrNonNullNonEmptyEntries(
       @Nullable Map<String, String> values, String propertyName) {
-    if (values == null || values.isEmpty()) {
+    if (values == null) {
       // pass
       return;
     }
