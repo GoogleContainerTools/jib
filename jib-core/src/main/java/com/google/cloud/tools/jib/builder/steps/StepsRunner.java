@@ -69,14 +69,12 @@ public class StepsRunner {
     private Future<ImagesAndRegistryClient> baseImagesAndRegistryClient = failedFuture();
     private Future<Map<Image, List<Future<PreparedLayer>>>> baseImagesAndLayers = failedFuture();
     @Nullable private List<Future<PreparedLayer>> applicationLayers;
-    private Future<Map<Future<Image>, List<Future<PreparedLayer>>>> builtImagesAndLayers =
-        failedFuture();
+    private Future<List<Future<Image>>> builtImages = failedFuture();
     private Future<RegistryClient> targetRegistryClient = failedFuture();
+    private Future<List<List<Future<BlobDescriptor>>>> baseImageLayerPushResults = failedFuture();
     private Future<List<Future<BlobDescriptor>>> applicationLayerPushResults = failedFuture();
     private Future<Map<Future<Image>, Future<BlobDescriptor>>>
         builtImagesAndContainerConfigurationPushResults = failedFuture();
-    private Future<Map<Future<Image>, List<Future<BlobDescriptor>>>>
-        builtImagesAndLayerPushResults = failedFuture();
     private Future<List<Future<BuildResult>>> buildResults = failedFuture();
     private Future<Optional<ManifestAndDigest<ManifestTemplate>>> manifestCheckResult =
         failedFuture();
@@ -333,22 +331,20 @@ public class StepsRunner {
     ProgressEventDispatcher.Factory childProgressDispatcherFactory =
         Verify.verifyNotNull(rootProgressDispatcher).newChildProducer();
 
-    results.builtImagesAndLayerPushResults =
+    results.baseImageLayerPushResults =
         executorService.submit(
             () -> {
-              Map<Future<Image>, List<Future<BlobDescriptor>>> pushResults = new HashMap<>();
-
-              for (Map.Entry<Future<Image>, List<Future<PreparedLayer>>> entry :
-                  results.builtImagesAndLayers.get().entrySet()) {
-
+              List<List<Future<BlobDescriptor>>> pushResults = new ArrayList<>();
+              for (List<Future<PreparedLayer>> baseImageLayers :
+                  results.baseImagesAndLayers.get().values()) {
                 List<Future<BlobDescriptor>> baseImageLayerPushResult =
                     scheduleCallables(
                         PushLayerStep.makeList(
                             buildContext,
                             childProgressDispatcherFactory,
                             results.targetRegistryClient.get(),
-                            Verify.verifyNotNull(entry.getValue())));
-                pushResults.put(entry.getKey(), baseImageLayerPushResult);
+                            Verify.verifyNotNull(baseImageLayers)));
+                pushResults.add(baseImageLayerPushResult);
               }
               return pushResults;
             });
@@ -367,11 +363,10 @@ public class StepsRunner {
   private void buildImages() {
     ProgressEventDispatcher.Factory childProgressDispatcherFactory =
         Verify.verifyNotNull(rootProgressDispatcher).newChildProducer();
-    results.builtImagesAndLayers =
+    results.builtImages =
         executorService.submit(
             () -> {
-              Map<Future<Image>, List<Future<PreparedLayer>>> builtImagesAndLayers =
-                  new HashMap<>();
+              List<Future<Image>> builtImages = new ArrayList<>();
               for (Map.Entry<Image, List<Future<PreparedLayer>>> entry :
                   results.baseImagesAndLayers.get().entrySet()) {
                 Future<Image> builtImage =
@@ -384,9 +379,9 @@ public class StepsRunner {
                                     realizeFutures(Verify.verifyNotNull(entry.getValue())),
                                     realizeFutures(Verify.verifyNotNull(results.applicationLayers)))
                                 .call());
-                builtImagesAndLayers.put(builtImage, entry.getValue());
+                builtImages.add(builtImage);
               }
-              return builtImagesAndLayers;
+              return builtImages;
             });
   }
 
@@ -398,7 +393,7 @@ public class StepsRunner {
         executorService.submit(
             () -> {
               Map<Future<Image>, Future<BlobDescriptor>> pushResults = new HashMap<>();
-              for (Future<Image> builtImage : results.builtImagesAndLayers.get().keySet()) {
+              for (Future<Image> builtImage : results.builtImages.get()) {
                 Future<BlobDescriptor> configPushResult =
                     executorService.submit(
                         () ->
@@ -444,18 +439,9 @@ public class StepsRunner {
                                 results
                                     .builtImagesAndContainerConfigurationPushResults
                                     .get()
-                                    .values()
-                                    .iterator()
-                                    .next())
+                                    .get(results.builtImages.get().get(0)))
                             .get(),
-                        Verify.verifyNotNull(
-                                results
-                                    .builtImagesAndContainerConfigurationPushResults
-                                    .get()
-                                    .keySet()
-                                    .iterator()
-                                    .next())
-                            .get())
+                        results.builtImages.get().get(0).get())
                     .call());
   }
 
@@ -469,18 +455,14 @@ public class StepsRunner {
               realizeFutures(results.applicationLayerPushResults.get());
 
               List<Future<BuildResult>> buildResults = new ArrayList<>();
+
               for (Map.Entry<Future<Image>, Future<BlobDescriptor>> entry :
                   results.builtImagesAndContainerConfigurationPushResults.get().entrySet()) {
 
                 Future<BuildResult> buildResult =
                     executorService.submit(
                         () -> {
-                          realizeFutures(
-                              Verify.verifyNotNull(
-                                  results
-                                      .builtImagesAndLayerPushResults
-                                      .get()
-                                      .get(entry.getKey())));
+                          realizeFutures(results.baseImageLayerPushResults.get().get(0));
 
                           List<Future<BuildResult>> manifestPushResults =
                               scheduleCallables(
@@ -500,6 +482,7 @@ public class StepsRunner {
                               // Manifest pushers return the same BuildResult.
                               : manifestPushResults.get(0).get();
                         });
+
                 buildResults.add(buildResult);
               }
               return buildResults;
@@ -521,13 +504,7 @@ public class StepsRunner {
                                   buildContext,
                                   childProgressDispatcherFactory,
                                   dockerClient,
-                                  results
-                                      .builtImagesAndLayers
-                                      .get()
-                                      .keySet()
-                                      .iterator()
-                                      .next()
-                                      .get())
+                                  results.builtImages.get().get(0).get())
                               .call());
               buildResults.add(buildResult);
               return buildResults;
@@ -549,13 +526,7 @@ public class StepsRunner {
                                   buildContext,
                                   childProgressDispatcherFactory,
                                   outputPath,
-                                  results
-                                      .builtImagesAndLayers
-                                      .get()
-                                      .keySet()
-                                      .iterator()
-                                      .next()
-                                      .get())
+                                  results.builtImages.get().get(0).get())
                               .call());
               buildResults.add(buildResult);
               return buildResults;
