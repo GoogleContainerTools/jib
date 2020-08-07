@@ -71,7 +71,7 @@ public class StepsRunner {
     @Nullable private List<Future<PreparedLayer>> applicationLayers;
     private Future<Map<Future<Image>, Image>> builtImagesAndBaseImages = failedFuture();
     private Future<RegistryClient> targetRegistryClient = failedFuture();
-    public Future<Map<Image, List<Future<BlobDescriptor>>>> baseImagesAndLayerPushResults =
+    public Future<Map<Image, List<Future<BlobDescriptor>>>> baseImagesAndbaseImageLayerPushResults =
         failedFuture();
     private Future<List<Future<BlobDescriptor>>> applicationLayerPushResults = failedFuture();
     private Future<Map<Future<Image>, Future<BlobDescriptor>>>
@@ -332,7 +332,7 @@ public class StepsRunner {
     ProgressEventDispatcher.Factory childProgressDispatcherFactory =
         Verify.verifyNotNull(rootProgressDispatcher).newChildProducer();
 
-    results.baseImagesAndLayerPushResults =
+    results.baseImagesAndbaseImageLayerPushResults =
         executorService.submit(
             () -> {
               Map<Image, List<Future<BlobDescriptor>>> pushResults = new HashMap<>();
@@ -475,7 +475,10 @@ public class StepsRunner {
                         () -> {
                           realizeFutures(
                               Verify.verifyNotNull(
-                                  results.baseImagesAndLayerPushResults.get().get(baseImage)));
+                                  results
+                                      .baseImagesAndbaseImageLayerPushResults
+                                      .get()
+                                      .get(baseImage)));
 
                           List<Future<BuildResult>> manifestPushResults =
                               scheduleCallables(
