@@ -523,6 +523,7 @@ public class StepsRunner {
               Map.Entry<Future<Image>, Image> entry =
                   results.builtImagesAndBaseImages.get().entrySet().iterator().next();
               Future<Image> builtImage = entry.getKey();
+
               List<Future<BuildResult>> buildResults = new ArrayList<>();
               Future<BuildResult> buildResult =
                   executorService.submit(
@@ -548,6 +549,7 @@ public class StepsRunner {
               Map.Entry<Future<Image>, Image> entry =
                   results.builtImagesAndBaseImages.get().entrySet().iterator().next();
               Future<Image> builtImage = entry.getKey();
+
               List<Future<BuildResult>> buildResults = new ArrayList<>();
               Future<BuildResult> buildResult =
                   executorService.submit(
