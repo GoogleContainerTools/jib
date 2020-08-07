@@ -243,15 +243,16 @@ Field | Type | Default | Description
 Property | Type | Default | Description
 --- | --- | --- | ---
 `image` | string | `gcr.io/distroless/java` | The image reference for the base image. The source type can be specified using a [special type prefix](#setting-the-base-image).
-`auth` | [`auth`](#auth-object) | *None* | Specify credentials directly (alternative to `credHelper`).
+`auth` | [`auth`](#auth-object) | *None* | Specifies credentials directly (alternative to `credHelper`).
 `credHelper` | string | *None* | Specifies a credential helper that can authenticate pulling the base image. This parameter can either be configured as an absolute path to the credential helper executable or as a credential helper suffix (following `docker-credential-`).
+`platforms` | list | See [`platform`](#platform-object) | _Incubating feature_: Configures platforms of base images to select from a manifest list.
 
 <a name="to-object"></a>`to` is an object with the following properties:
 
 Property | Type | Default | Description
 --- | --- | --- | ---
 `image` | string | *Required* | The image reference for the target image. This can also be specified via the `-Dimage` command line option.
-`auth` | [`auth`](#auth-object) | *None* | Specify credentials directly (alternative to `credHelper`).
+`auth` | [`auth`](#auth-object) | *None* | Specifies credentials directly (alternative to `credHelper`).
 `credHelper` | string | *None* | Specifies a credential helper that can authenticate pushing the target image. This parameter can either be configured as an absolute path to the credential helper executable or as a credential helper suffix (following `docker-credential-`).
 `tags` | list | *None* | Additional tags to push to.
 
@@ -261,6 +262,15 @@ Property | Type
 --- | ---
 `username` | string
 `password` | string
+
+<a name="platform-object"></a>`platform` is an object with the following properties:
+
+Property | Type | Default | Description
+--- | --- | --- | ---
+`architecture` | string | `amd64` | The architecture of a base image to select from a manifest list.
+`os` | string | `linux` | The OS of a base image to select from a manifest list.
+
+See [How do I specify a platform in the manifest list (or OCI index) of a base image?](../docs/faq.md#how-do-i-specify-a-platform-in-the-manifest-list-or-oci-index-of-a-base-image) for examples.
 
 <a name="container-object"></a>`container` is an object with the following properties:
 

@@ -469,18 +469,46 @@ To inspect the image that is produced from the build using Docker, you can use c
 
 ### How do I specify a platform in the manifest list (or OCI index) of a base image?
 
-By design, if the target image reference is a [manifest list](https://docs.docker.com/registry/spec/manifest-v2-2/#manifest-list), Jib will always select an image for the platform `amd64/linux`. If you need to specify a different image from a manifest list you must specify the digest for the platform you are targeting.
+Jib 2.5.0 added an _incubating feature_ that provides limited support for selecting a base image with the desired platform from a manifest list. For example,
 
-To view a manifest, [enable experimental docker CLI](https://docs.docker.com/engine/reference/commandline/cli/#experimental-features) features and then run the [manifest inspect](https://docs.docker.com/engine/reference/commandline/manifest_inspect/) command.
+```xml
+  <from>
+    <image>... image reference to a manifest list ...</image>
+    <platforms>
+      <platform>
+        <architecture>arm64</architecture>
+        <os>linux</os>
+      </platform>
+    </platforms>
+  </from>
+```
+
+```gradle
+jib.from {
+  image = '... image reference to a manifest list ...'
+  platforms {
+    platform {
+      architecture = 'arm64'
+      os = 'linux'
+    }
+  }
+}
+```
+
+The default platform is "amd64/linux" if not specified, whose behavior is backward-compatible.
+
+As an incubating feature, there are certain limitations:
+- OCI image indices are not supported (as opposed to Docker manifest lists).
+- Supports specifying only one platform.
+- Only `architecture` and `os` are supported. If the base image manifest list contains multiple images with the given architecture and os, the first image will be selected.
+
+Make sure to specify a manifest _list_ in `<from><image>` (whether by a tag name or a digest (`@sha256:...`)). For troubleshooting, you may want to check what platforms a manifest list contains. To view a manifest, [enable experimental docker CLI](https://docs.docker.com/engine/reference/commandline/cli/#experimental-features) features and then run the [manifest inspect](https://docs.docker.com/engine/reference/commandline/manifest_inspect/) command.
+
 ```
 $ docker manifest inspect openjdk:8
-```
-
-You can then inspect the output for the specific image you want (in this example an image for the platform `arm64/linux`)
-```java
 {         
    ...
-   // This whole BLOB itself is a manifest list.
+   // This confirms that openjdk:8 points to a manifest list.
    "mediaType": "application/vnd.docker.distribution.manifest.list.v2+json",
    "manifests": [
       {
@@ -497,8 +525,6 @@ You can then inspect the output for the specific image you want (in this example
    ]
 }
 ```
-
-You then use the digest for the target platform you desire in your `jib.to.image` in the form `"opendjdk@sha256:1fbd49e3fc5e53154fa93cad15f211112d899a6b0c5dc1e8661d6eb6c18b30a6"` or if you wish to preserve the tag for documentation purposes, you can also use the form `"opendjdk:8@sha256:1fbd49e3fc5e53154fa93cad15f211112d899a6b0c5dc1e8661d6eb6c18b30a6"`.
 
 ## Build Problems
 
