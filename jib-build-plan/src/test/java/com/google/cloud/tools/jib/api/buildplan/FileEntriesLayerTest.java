@@ -23,7 +23,6 @@ import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Instant;
-import java.util.function.BiFunction;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -34,7 +33,7 @@ public class FileEntriesLayerTest {
     return new FileEntry(
         source,
         destination,
-        FileEntriesLayer.DEFAULT_FILE_PERMISSIONS_PROVIDER.apply(source, destination),
+        FileEntriesLayer.DEFAULT_FILE_PERMISSIONS_PROVIDER.get(source, destination),
         FileEntriesLayer.DEFAULT_MODIFICATION_TIME);
   }
 
@@ -78,13 +77,13 @@ public class FileEntriesLayerTest {
     String ownership1 = "root";
     String ownership2 = "nobody:65432";
 
-    BiFunction<Path, AbsoluteUnixPath, FilePermissions> permissionsProvider =
+    FilePermissionsProvider permissionsProvider =
         (source, destination) ->
             destination.toString().startsWith("/app/layer/a") ? permissions1 : permissions2;
-    BiFunction<Path, AbsoluteUnixPath, Instant> timestampProvider =
+    ModificationTimeProvider timestampProvider =
         (source, destination) ->
             destination.toString().startsWith("/app/layer/a") ? timestamp1 : timestamp2;
-    BiFunction<Path, AbsoluteUnixPath, String> ownershipProvider =
+    OwnershipProvider ownershipProvider =
         (source, destination) ->
             destination.toString().startsWith("/app/layer/a") ? ownership1 : ownership2;
 

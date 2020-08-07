@@ -18,12 +18,12 @@ package com.google.cloud.tools.jib.cli;
 
 import com.google.cloud.tools.jib.api.buildplan.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.api.buildplan.FilePermissions;
+import com.google.cloud.tools.jib.api.buildplan.FilePermissionsProvider;
 import com.google.common.annotations.VisibleForTesting;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.function.BiFunction;
 
-class FixedPermissionsProvider implements BiFunction<Path, AbsoluteUnixPath, FilePermissions> {
+class FixedPermissionsProvider implements FilePermissionsProvider {
   @VisibleForTesting final FilePermissions filePermissions;
   @VisibleForTesting final FilePermissions directoryPermissions;
 
@@ -33,7 +33,7 @@ class FixedPermissionsProvider implements BiFunction<Path, AbsoluteUnixPath, Fil
   }
 
   @Override
-  public FilePermissions apply(Path local, AbsoluteUnixPath inContainer) {
+  public FilePermissions get(Path local, AbsoluteUnixPath inContainer) {
     return Files.isDirectory(local) ? directoryPermissions : filePermissions;
   }
 }

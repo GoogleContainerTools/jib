@@ -20,12 +20,13 @@ import com.google.cloud.tools.jib.api.buildplan.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.api.buildplan.FileEntriesLayer;
 import com.google.cloud.tools.jib.api.buildplan.FileEntry;
 import com.google.cloud.tools.jib.api.buildplan.FilePermissions;
+import com.google.cloud.tools.jib.api.buildplan.FilePermissionsProvider;
+import com.google.cloud.tools.jib.api.buildplan.ModificationTimeProvider;
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.List;
-import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 import javax.annotation.concurrent.Immutable;
 
@@ -200,7 +201,7 @@ public class LayerConfiguration {
     public Builder addEntryRecursive(
         Path sourceFile,
         AbsoluteUnixPath pathInContainer,
-        BiFunction<Path, AbsoluteUnixPath, FilePermissions> filePermissionProvider)
+        FilePermissionsProvider filePermissionProvider)
         throws IOException {
       builder.addEntryRecursive(sourceFile, pathInContainer, filePermissionProvider);
       return this;
@@ -223,8 +224,8 @@ public class LayerConfiguration {
     public Builder addEntryRecursive(
         Path sourceFile,
         AbsoluteUnixPath pathInContainer,
-        BiFunction<Path, AbsoluteUnixPath, FilePermissions> filePermissionProvider,
-        BiFunction<Path, AbsoluteUnixPath, Instant> modificationTimeProvider)
+        FilePermissionsProvider filePermissionProvider,
+        ModificationTimeProvider modificationTimeProvider)
         throws IOException {
       builder.addEntryRecursive(
           sourceFile, pathInContainer, filePermissionProvider, modificationTimeProvider);
@@ -242,16 +243,16 @@ public class LayerConfiguration {
   }
 
   /** Provider that returns default file permissions (644 for files, 755 for directories). */
-  public static final BiFunction<Path, AbsoluteUnixPath, FilePermissions>
-      DEFAULT_FILE_PERMISSIONS_PROVIDER = FileEntriesLayer.DEFAULT_FILE_PERMISSIONS_PROVIDER;
+  public static final FilePermissionsProvider DEFAULT_FILE_PERMISSIONS_PROVIDER =
+      FileEntriesLayer.DEFAULT_FILE_PERMISSIONS_PROVIDER;
 
   /** Default file modification time (EPOCH + 1 second). */
   public static final Instant DEFAULT_MODIFICATION_TIME =
       FileEntriesLayer.DEFAULT_MODIFICATION_TIME;
 
   /** Provider that returns default file modification time (EPOCH + 1 second). */
-  public static final BiFunction<Path, AbsoluteUnixPath, Instant>
-      DEFAULT_MODIFICATION_TIME_PROVIDER = FileEntriesLayer.DEFAULT_MODIFICATION_TIME_PROVIDER;
+  public static final ModificationTimeProvider DEFAULT_MODIFICATION_TIME_PROVIDER =
+      FileEntriesLayer.DEFAULT_MODIFICATION_TIME_PROVIDER;
 
   /**
    * Gets a new {@link Builder} for {@link LayerConfiguration}.

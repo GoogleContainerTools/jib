@@ -5,13 +5,13 @@ plugins {
 }
 
 dependencies {
-  compileOnly "com.google.code.findbugs:jsr305:${dependencyVersions.JSR305}"
+  compileOnly dependencyStrings.JSR305
 
-  testImplementation "com.google.guava:guava:${dependencyVersions.GUAVA}"
-  testImplementation "junit:junit:${dependencyVersions.JUNIT}"
-  testImplementation "org.mockito:mockito-core:${dependencyVersions.MOCKITO_CORE}"
-  testImplementation "org.slf4j:slf4j-api:${dependencyVersions.SLF4J_API}"
-  testImplementation "com.github.stefanbirkner:system-rules:${dependencyVersions.SYSTEM_RULES}"
+  testImplementation dependencyStrings.GUAVA
+  testImplementation dependencyStrings.JUNIT
+  testImplementation dependencyStrings.MOCKITO_CORE
+  testImplementation dependencyStrings.SLF4J_API
+  testImplementation dependencyStrings.SYSTEM_RULES
 }
 
 jar {

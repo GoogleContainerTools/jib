@@ -22,10 +22,11 @@ import com.google.cloud.tools.jib.api.ImageReference;
 import com.google.cloud.tools.jib.api.LogEvent;
 import com.google.cloud.tools.jib.api.RegistryException;
 import com.google.cloud.tools.jib.api.RegistryUnauthorizedException;
+import com.google.cloud.tools.jib.api.buildplan.Platform;
 import com.google.cloud.tools.jib.blob.Blobs;
 import com.google.cloud.tools.jib.builder.ProgressEventDispatcher;
 import com.google.cloud.tools.jib.builder.TimerEventDispatcher;
-import com.google.cloud.tools.jib.builder.steps.PullBaseImageStep.ImageAndRegistryClient;
+import com.google.cloud.tools.jib.builder.steps.PullBaseImageStep.ImagesAndRegistryClient;
 import com.google.cloud.tools.jib.cache.CacheCorruptedException;
 import com.google.cloud.tools.jib.configuration.BuildContext;
 import com.google.cloud.tools.jib.event.EventHandlers;
@@ -46,25 +47,29 @@ import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import com.google.cloud.tools.jib.registry.ManifestAndDigest;
 import com.google.cloud.tools.jib.registry.RegistryClient;
 import com.google.cloud.tools.jib.registry.credentials.CredentialRetrievalException;
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableList;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.Callable;
 import javax.annotation.Nullable;
 
-/** Pulls the base image manifest. */
-class PullBaseImageStep implements Callable<ImageAndRegistryClient> {
+/** Pulls the base image manifests for the specified platforms. */
+class PullBaseImageStep implements Callable<ImagesAndRegistryClient> {
 
   private static final String DESCRIPTION = "Pulling base image manifest";
 
   /** Structure for the result returned by this step. */
-  static class ImageAndRegistryClient {
+  static class ImagesAndRegistryClient {
 
-    final Image image;
+    final List<Image> images;
     @Nullable final RegistryClient registryClient;
 
-    ImageAndRegistryClient(Image image, @Nullable RegistryClient registryClient) {
-      this.image = image;
+    ImagesAndRegistryClient(List<Image> images, @Nullable RegistryClient registryClient) {
+      this.images = images;
       this.registryClient = registryClient;
     }
   }
@@ -79,7 +84,7 @@ class PullBaseImageStep implements Callable<ImageAndRegistryClient> {
   }
 
   @Override
-  public ImageAndRegistryClient call()
+  public ImagesAndRegistryClient call()
       throws IOException, RegistryException, LayerPropertyNotFoundException,
           LayerCountMismatchException, BadContainerConfigurationFormatException,
           CacheCorruptedException, CredentialRetrievalException {
@@ -88,8 +93,8 @@ class PullBaseImageStep implements Callable<ImageAndRegistryClient> {
     ImageReference imageReference = buildContext.getBaseImageConfiguration().getImage();
     if (imageReference.isScratch()) {
       eventHandlers.dispatch(LogEvent.progress("Getting scratch base image..."));
-      return new ImageAndRegistryClient(
-          Image.builder(buildContext.getTargetFormat()).build(), null);
+      return new ImagesAndRegistryClient(
+          Collections.singletonList(Image.builder(buildContext.getTargetFormat()).build()), null);
     }
 
     eventHandlers.dispatch(
@@ -98,19 +103,26 @@ class PullBaseImageStep implements Callable<ImageAndRegistryClient> {
     if (buildContext.isOffline()) {
       Optional<Image> image = getCachedBaseImage();
       if (image.isPresent()) {
-        return new ImageAndRegistryClient(image.get(), null);
+        if (!checkImagePlatform(image.get())) {
+          throw new IllegalStateException(
+              "The cached base image manifest does not match the configured platform due to the "
+                  + "current implementation of limited platform support. As a workaround, re-run Jib "
+                  + "online once to re-cache the right image manifest.");
+        }
+        return new ImagesAndRegistryClient(Collections.singletonList(image.get()), null);
       }
       throw new IOException(
           "Cannot run Jib in offline mode; " + imageReference + " not found in local Jib cache");
 
     } else if (imageReference.getDigest().isPresent()) {
       Optional<Image> image = getCachedBaseImage();
-      if (image.isPresent()) {
+      if (image.isPresent() && checkImagePlatform(image.get())) {
         RegistryClient noAuthRegistryClient =
             buildContext.newBaseImageRegistryClientFactory().newRegistryClient();
         // TODO: passing noAuthRegistryClient may be problematic. It may return 401 unauthorized if
         // layers have to be downloaded. https://github.com/GoogleContainerTools/jib/issues/2220
-        return new ImageAndRegistryClient(image.get(), noAuthRegistryClient);
+        return new ImagesAndRegistryClient(
+            Collections.singletonList(image.get()), noAuthRegistryClient);
       }
     }
 
@@ -122,8 +134,8 @@ class PullBaseImageStep implements Callable<ImageAndRegistryClient> {
       RegistryClient noAuthRegistryClient =
           buildContext.newBaseImageRegistryClientFactory().newRegistryClient();
       try {
-        return new ImageAndRegistryClient(
-            pullBaseImage(noAuthRegistryClient, progressEventDispatcher), noAuthRegistryClient);
+        return new ImagesAndRegistryClient(
+            pullBaseImages(noAuthRegistryClient, progressEventDispatcher), noAuthRegistryClient);
 
       } catch (RegistryUnauthorizedException ex) {
         eventHandlers.dispatch(
@@ -147,8 +159,8 @@ class PullBaseImageStep implements Callable<ImageAndRegistryClient> {
 
           eventHandlers.dispatch(LogEvent.debug("Trying basic auth for " + imageReference + "..."));
           registryClient.configureBasicAuth();
-          return new ImageAndRegistryClient(
-              pullBaseImage(registryClient, progressEventDispatcher), registryClient);
+          return new ImagesAndRegistryClient(
+              pullBaseImages(registryClient, progressEventDispatcher), registryClient);
 
         } catch (RegistryUnauthorizedException registryUnauthorizedException) {
           // The registry requires us to authenticate using the Docker Token Authentication.
@@ -156,8 +168,8 @@ class PullBaseImageStep implements Callable<ImageAndRegistryClient> {
           eventHandlers.dispatch(
               LogEvent.debug("Trying bearer auth for " + imageReference + "..."));
           if (registryClient.doPullBearerAuth()) {
-            return new ImageAndRegistryClient(
-                pullBaseImage(registryClient, progressEventDispatcher), registryClient);
+            return new ImagesAndRegistryClient(
+                pullBaseImages(registryClient, progressEventDispatcher), registryClient);
           }
           eventHandlers.dispatch(
               LogEvent.error(
@@ -169,13 +181,27 @@ class PullBaseImageStep implements Callable<ImageAndRegistryClient> {
     }
   }
 
+  // TODO: remove when properly caching manifests with multiple platforms and manifest lists.
+  private boolean checkImagePlatform(Image image) {
+    Preconditions.checkState(buildContext.getContainerConfiguration().getPlatforms().size() == 1);
+    Platform platform = buildContext.getContainerConfiguration().getPlatforms().iterator().next();
+    boolean ok =
+        image.getArchitecture().equals(platform.getArchitecture())
+            && image.getOs().equals(platform.getOs());
+    if (!ok) {
+      String message = "platform of the cached manifest does not match the requested one";
+      buildContext.getEventHandlers().dispatch(LogEvent.debug(message));
+    }
+    return ok;
+  }
+
   /**
-   * Pulls the base image.
+   * Pulls the base images specified in the platforms list.
    *
    * @param registryClient to communicate with remote registry
    * @param progressEventDispatcher the {@link ProgressEventDispatcher} for emitting {@link
    *     ProgressEvent}s
-   * @return the pulled image
+   * @return the list of pulled base images and a registry client
    * @throws IOException when an I/O exception occurs during the pulling
    * @throws RegistryException if communicating with the registry caused a known error
    * @throws LayerCountMismatchException if the manifest and configuration contain conflicting layer
@@ -184,28 +210,91 @@ class PullBaseImageStep implements Callable<ImageAndRegistryClient> {
    * @throws BadContainerConfigurationFormatException if the container configuration is in a bad
    *     format
    */
-  private Image pullBaseImage(
+  private List<Image> pullBaseImages(
       RegistryClient registryClient, ProgressEventDispatcher progressEventDispatcher)
       throws IOException, RegistryException, LayerPropertyNotFoundException,
           LayerCountMismatchException, BadContainerConfigurationFormatException {
-    EventHandlers eventHandlers = buildContext.getEventHandlers();
-
     ManifestAndDigest<?> manifestAndDigest =
         registryClient.pullManifest(buildContext.getBaseImageConfiguration().getImageQualifier());
     ManifestTemplate manifestTemplate = manifestAndDigest.getManifest();
 
-    // special handling if we happen upon a manifest list, redirect to a manifest and continue
-    // handling it normally
+    // If a manifest list, search for the manifests matching the given platforms.
     if (manifestTemplate instanceof V22ManifestListTemplate) {
-      eventHandlers.dispatch(
-          LogEvent.lifecycle(
-              "The base image reference is manifest list, searching for linux/amd64"));
-      manifestAndDigest =
-          obtainPlatformSpecificImageManifest(
-              registryClient, (V22ManifestListTemplate) manifestTemplate);
-      manifestTemplate = manifestAndDigest.getManifest();
+      ImmutableList.Builder<Image> images = ImmutableList.builder();
+
+      for (Platform platform : buildContext.getContainerConfiguration().getPlatforms()) {
+        manifestAndDigest =
+            obtainPlatformSpecificImageManifest(
+                registryClient, (V22ManifestListTemplate) manifestTemplate, platform);
+        images.add(jsonManifestToImage(manifestAndDigest, registryClient, progressEventDispatcher));
+      }
+      return images.build();
     }
 
+    return Collections.singletonList(
+        jsonManifestToImage(manifestAndDigest, registryClient, progressEventDispatcher));
+  }
+
+  /**
+   * Looks through a manifest list for the manifest matching the {@code platform} and downloads and
+   * returns the first manifest it finds.
+   */
+  @VisibleForTesting
+  ManifestAndDigest<?> obtainPlatformSpecificImageManifest(
+      RegistryClient registryClient,
+      V22ManifestListTemplate manifestListTemplate,
+      Platform platform)
+      throws IOException, RegistryException {
+    EventHandlers eventHandlers = buildContext.getEventHandlers();
+    eventHandlers.dispatch(
+        LogEvent.lifecycle(
+            "The base image reference is a manifest list, searching for architecture="
+                + platform.getArchitecture()
+                + ", os="
+                + platform.getOs()));
+
+    List<String> digests =
+        manifestListTemplate.getDigestsForPlatform(platform.getArchitecture(), platform.getOs());
+    if (digests.size() == 0) {
+      String errorMessage =
+          buildContext.getBaseImageConfiguration().getImage()
+              + " is a manifest list, but the list does not contain an image manifest for the platform architecture="
+              + platform.getArchitecture()
+              + ", os="
+              + platform.getOs()
+              + ". If your intention was to specify a platform for your image,"
+              + " see https://github.com/GoogleContainerTools/jib/blob/master/docs/faq.md#how-do-i-specify-a-platform-in-the-manifest-list-or-oci-index-of-a-base-image"
+              + " to learn more about specifying a platform";
+
+      eventHandlers.dispatch(LogEvent.error(errorMessage));
+      throw new RegistryException(errorMessage);
+    }
+    return registryClient.pullManifest(digests.get(0));
+  }
+
+  /**
+   * Converts a JSON manifest to an {@link Image}.
+   *
+   * @param manifestAndDigest a manifest list and digest of a {@link Image}
+   * @param registryClient to communicate with remote registry
+   * @param progressEventDispatcher the {@link ProgressEventDispatcher} for emitting {@link
+   *     ProgressEvent}s
+   * @return {@link Image}
+   * @throws IOException when an I/O exception occurs during the pulling
+   * @throws LayerCountMismatchException if the manifest and configuration contain conflicting layer
+   *     information
+   * @throws LayerPropertyNotFoundException if adding image layers fails
+   * @throws BadContainerConfigurationFormatException if the container configuration is in a bad
+   *     format
+   */
+  private Image jsonManifestToImage(
+      ManifestAndDigest<?> manifestAndDigest,
+      RegistryClient registryClient,
+      ProgressEventDispatcher progressEventDispatcher)
+      throws IOException, LayerPropertyNotFoundException, BadContainerConfigurationFormatException,
+          UnknownManifestFormatException, LayerCountMismatchException {
+    EventHandlers eventHandlers = buildContext.getEventHandlers();
+    ManifestTemplate manifestTemplate = manifestAndDigest.getManifest();
     switch (manifestTemplate.getSchemaVersion()) {
       case 1:
         V21ManifestTemplate v21ManifestTemplate = (V21ManifestTemplate) manifestTemplate;
@@ -250,36 +339,15 @@ class PullBaseImageStep implements Callable<ImageAndRegistryClient> {
                   buildContext.getBaseImageConfiguration().getImage(),
                   buildableManifestTemplate,
                   containerConfigurationTemplate);
+
           return JsonToImageTranslator.toImage(
               buildableManifestTemplate, containerConfigurationTemplate);
         }
+
       default:
         throw new IllegalStateException(
             "Unknown manifest schema version: " + manifestTemplate.getSchemaVersion());
     }
-  }
-
-  /**
-   * Looks through a manifest list for any amd64/linux manifest and downloads and returns the first
-   * manifest it finds.
-   */
-  private ManifestAndDigest<?> obtainPlatformSpecificImageManifest(
-      RegistryClient registryClient, V22ManifestListTemplate manifestListTemplate)
-      throws RegistryException, IOException {
-
-    List<String> digests = manifestListTemplate.getDigestsForPlatform("amd64", "linux");
-    if (digests.size() == 0) {
-      String errorMessage =
-          buildContext.getBaseImageConfiguration().getImage()
-              + " is a manifest list, but the list does not contain an image manifest for amd64/linux."
-              + " If your intention was to use a non-amd64/linux base image,"
-              + " see https://github.com/GoogleContainerTools/jib/blob/master/docs/faq.md#how-do-i-specify-a-platform-in-the-manifest-list-or-oci-index-of-a-base-image"
-              + " to learn how to specify a manifest instead of a manifest list, until Jib fixes"
-              + " https://github.com/GoogleContainerTools/jib/issues/1567 to allow specifying architecture and OS.";
-      buildContext.getEventHandlers().dispatch(LogEvent.error(errorMessage));
-      throw new RegistryException(errorMessage);
-    }
-    return registryClient.pullManifest(digests.get(0));
   }
 
   /**

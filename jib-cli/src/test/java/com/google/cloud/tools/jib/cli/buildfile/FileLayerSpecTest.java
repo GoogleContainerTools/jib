@@ -30,7 +30,7 @@ import org.junit.Test;
 /** Tests for {@link FileLayerSpec}. */
 public class FileLayerSpecTest {
 
-  private static final ObjectMapper fileLayerSpecMapper = new ObjectMapper(new YAMLFactory());
+  private static final ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
 
   @Test
   public void testFileLayerSpec_full() throws JsonProcessingException {
@@ -42,7 +42,7 @@ public class FileLayerSpecTest {
             + "properties:\n" // trivial file properties spec
             + "  timestamp: 1\n";
 
-    FileLayerSpec parsed = fileLayerSpecMapper.readValue(data, FileLayerSpec.class);
+    FileLayerSpec parsed = mapper.readValue(data, FileLayerSpec.class);
     Assert.assertEquals("layer name", parsed.getName());
     Assert.assertEquals(Paths.get("source"), parsed.getFiles().get(0).getSrc());
     Assert.assertEquals(AbsoluteUnixPath.get("/dest"), parsed.getFiles().get(0).getDest());
@@ -54,7 +54,7 @@ public class FileLayerSpecTest {
     String data = "files:\n" + "  - src: source\n" + "    dest: /dest\n";
 
     try {
-      fileLayerSpecMapper.readValue(data, FileLayerSpec.class);
+      mapper.readValue(data, FileLayerSpec.class);
       Assert.fail();
     } catch (JsonProcessingException jpe) {
       MatcherAssert.assertThat(
@@ -63,15 +63,68 @@ public class FileLayerSpecTest {
   }
 
   @Test
+  public void testFileLayerSpec_nameNotNull() {
+    String data = "name: null\n" + "files:\n" + "  - src: source\n" + "    dest: /dest\n";
+
+    try {
+      mapper.readValue(data, FileLayerSpec.class);
+      Assert.fail();
+    } catch (JsonProcessingException jpe) {
+      MatcherAssert.assertThat(
+          jpe.getMessage(), CoreMatchers.containsString("Property 'name' cannot be null"));
+    }
+  }
+
+  @Test
+  public void testFileLayerSpec_nameNotEmpty() {
+    String data = "name: ''\n" + "files:\n" + "  - src: source\n" + "    dest: /dest\n";
+
+    try {
+      mapper.readValue(data, FileLayerSpec.class);
+      Assert.fail();
+    } catch (JsonProcessingException jpe) {
+      MatcherAssert.assertThat(
+          jpe.getMessage(), CoreMatchers.containsString("Property 'name' cannot be empty"));
+    }
+  }
+
+  @Test
   public void testFileLayerSpec_filesRequired() {
     String data = "name: layer name";
 
     try {
-      fileLayerSpecMapper.readValue(data, FileLayerSpec.class);
+      mapper.readValue(data, FileLayerSpec.class);
       Assert.fail();
     } catch (JsonProcessingException jpe) {
       MatcherAssert.assertThat(
           jpe.getMessage(), CoreMatchers.startsWith("Missing required creator property 'files'"));
+    }
+  }
+
+  @Test
+  public void testFileLayerSpec_filesNotNull() {
+    String data = "name: layer name\n" + "files: null";
+
+    try {
+      mapper.readValue(data, FileLayerSpec.class);
+      Assert.fail();
+    } catch (JsonProcessingException jpe) {
+      MatcherAssert.assertThat(
+          jpe.getMessage(), CoreMatchers.containsString("Property 'files' cannot be null"));
+    }
+  }
+
+  @Test
+  public void testFileLayerSpec_filesNotEmpty() {
+    String data = "name: layer name\n" + "files: []\n";
+
+    try {
+      mapper.readValue(data, FileLayerSpec.class);
+      Assert.fail();
+    } catch (JsonProcessingException jpe) {
+      MatcherAssert.assertThat(
+          jpe.getMessage(),
+          CoreMatchers.containsString("Property 'files' cannot be an empty collection"));
     }
   }
 }

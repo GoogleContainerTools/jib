@@ -40,10 +40,10 @@ import javax.annotation.Nullable;
 @JsonDeserialize(using = JsonDeserializer.None.class) // required since LayerSpec overrides this
 public class ArchiveLayerSpec implements LayerSpec {
 
-  private String name;
+  private final String name;
   // TODO: arhive should maybe be a uri to support file paths or urls
-  private Path archive;
-  @Nullable private String mediaType;
+  private final Path archive;
+  @Nullable private final String mediaType;
 
   /**
    * Constructor for use by jackson to populate this object.
@@ -57,6 +57,8 @@ public class ArchiveLayerSpec implements LayerSpec {
       @JsonProperty(value = "name", required = true) String name,
       @JsonProperty(value = "archive", required = true) String archive,
       @JsonProperty("mediaType") String mediaType) {
+    Validator.checkNotEmpty(name, "name");
+    Validator.checkNotEmpty(archive, "archive");
     this.name = name;
     this.archive = Paths.get(archive);
     this.mediaType = mediaType;

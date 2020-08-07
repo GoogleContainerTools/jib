@@ -20,13 +20,15 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.google.common.collect.ImmutableList;
+import org.hamcrest.CoreMatchers;
+import org.hamcrest.MatcherAssert;
 import org.junit.Assert;
 import org.junit.Test;
 
 /** Tests for {@link PlatformSpec}. */
 public class PlatformSpecTest {
 
-  private static final ObjectMapper platformSpecMapper = new ObjectMapper(new YAMLFactory());
+  private static final ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
 
   @Test
   public void testPlatformSpec_full() throws JsonProcessingException {
@@ -41,12 +43,100 @@ public class PlatformSpecTest {
             + "  - sse4\n"
             + "  - aes\n";
 
-    PlatformSpec parsed = platformSpecMapper.readValue(data, PlatformSpec.class);
-    Assert.assertEquals("amd64", parsed.getArchitecture().get());
-    Assert.assertEquals("linux", parsed.getOs().get());
+    PlatformSpec parsed = mapper.readValue(data, PlatformSpec.class);
+    Assert.assertEquals("amd64", parsed.getArchitecture());
+    Assert.assertEquals("linux", parsed.getOs());
     Assert.assertEquals("1.0.0", parsed.getOsVersion().get());
-    Assert.assertEquals(ImmutableList.of("headless"), parsed.getOsFeatures().get());
+    Assert.assertEquals(ImmutableList.of("headless"), parsed.getOsFeatures());
     Assert.assertEquals("amd64v10", parsed.getVariant().get());
-    Assert.assertEquals(ImmutableList.of("sse4", "aes"), parsed.getFeatures().get());
+    Assert.assertEquals(ImmutableList.of("sse4", "aes"), parsed.getFeatures());
+  }
+
+  @Test
+  public void testPlatformSpec_osRequired() {
+    String data = "architecture: amd64\n";
+
+    try {
+      mapper.readValue(data, PlatformSpec.class);
+      Assert.fail();
+    } catch (JsonProcessingException jpe) {
+      MatcherAssert.assertThat(
+          jpe.getMessage(), CoreMatchers.startsWith("Missing required creator property 'os'"));
+    }
+  }
+
+  @Test
+  public void testPlatformSpec_osNotNull() {
+    String data = "architecture: amd64\n" + "os: null";
+
+    try {
+      mapper.readValue(data, PlatformSpec.class);
+      Assert.fail();
+    } catch (JsonProcessingException jpe) {
+      MatcherAssert.assertThat(
+          jpe.getMessage(), CoreMatchers.containsString("Property 'os' cannot be null"));
+    }
+  }
+
+  @Test
+  public void testPlatformSpec_osNotEmpty() {
+    String data = "architecture: amd64\n" + "os: ''";
+
+    try {
+      mapper.readValue(data, PlatformSpec.class);
+      Assert.fail();
+    } catch (JsonProcessingException jpe) {
+      MatcherAssert.assertThat(
+          jpe.getMessage(), CoreMatchers.containsString("Property 'os' cannot be empty"));
+    }
+  }
+
+  @Test
+  public void testPlatformSpec_architectureRequired() {
+    String data = "os: linux\n";
+
+    try {
+      mapper.readValue(data, PlatformSpec.class);
+      Assert.fail();
+    } catch (JsonProcessingException jpe) {
+      MatcherAssert.assertThat(
+          jpe.getMessage(),
+          CoreMatchers.startsWith("Missing required creator property 'architecture'"));
+    }
+  }
+
+  @Test
+  public void testPlatformSpec_architectureNotNull() {
+    String data = "architecture: null\n" + "os: linux";
+
+    try {
+      mapper.readValue(data, PlatformSpec.class);
+      Assert.fail();
+    } catch (JsonProcessingException jpe) {
+      MatcherAssert.assertThat(
+          jpe.getMessage(), CoreMatchers.containsString("Property 'architecture' cannot be null"));
+    }
+  }
+
+  @Test
+  public void testPlatformSpec_architectureNotEmpty() {
+    String data = "architecture: ''\n" + "os: linux";
+
+    try {
+      mapper.readValue(data, PlatformSpec.class);
+      Assert.fail();
+    } catch (JsonProcessingException jpe) {
+      MatcherAssert.assertThat(
+          jpe.getMessage(), CoreMatchers.containsString("Property 'architecture' cannot be empty"));
+    }
+  }
+
+  @Test
+  public void testPlatformSpec_nullCollections() throws JsonProcessingException {
+    String data = "architecture: amd64\n" + "os: linux\n";
+
+    PlatformSpec parsed = mapper.readValue(data, PlatformSpec.class);
+    Assert.assertEquals(ImmutableList.of(), parsed.getOsFeatures());
+    Assert.assertEquals(ImmutableList.of(), parsed.getFeatures());
   }
 }

@@ -29,7 +29,7 @@ public class BuildTest {
       Assert.fail("should have errored with incomplete arguments");
     } catch (CommandLine.MissingParameterException ex) {
       Assert.assertEquals(
-          "Missing required parameters: base-image, destination-image", ex.getMessage());
+          "Missing required parameters: 'base-image', 'destination-image'", ex.getMessage());
     }
   }
 }

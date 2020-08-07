@@ -35,21 +35,21 @@ dependencies {
   sourceProject project(':jib-plugins-common')
   ensureNoProjectDependencies()
 
-  implementation "com.google.cloud.tools:jib-gradle-plugin-extension-api:${dependencyVersions.GRADLE_EXTENSION}"
+  implementation dependencyStrings.GRADLE_EXTENSION
 
-  testImplementation "junit:junit:${dependencyVersions.JUNIT}"
-  testImplementation "org.mockito:mockito-core:${dependencyVersions.MOCKITO_CORE}"
-  testImplementation "org.slf4j:slf4j-api:${dependencyVersions.SLF4J_API}"
-  testImplementation "com.github.stefanbirkner:system-rules:${dependencyVersions.SYSTEM_RULES}"
+  testImplementation dependencyStrings.JUNIT
+  testImplementation dependencyStrings.MOCKITO_CORE
+  testImplementation dependencyStrings.SLF4J_API
+  testImplementation dependencyStrings.SYSTEM_RULES
 
 
   testImplementation project(path:':jib-plugins-common', configuration:'tests')
   integrationTestImplementation project(path:':jib-core', configuration:'integrationTests')
 
-  integrationTestImplementation "org.mindrot:jbcrypt:${dependencyVersions.JBCRYPT}"
+  integrationTestImplementation dependencyStrings.JBCRYPT
 
   // only for testing a concrete Spring Boot example in a test (not for test infrastructure)
-  testImplementation 'org.springframework.boot:spring-boot-gradle-plugin:2.2.8.RELEASE'
+  testImplementation 'org.springframework.boot:spring-boot-gradle-plugin:2.2.9.RELEASE'
 }
 
 /* RELEASE */

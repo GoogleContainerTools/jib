@@ -39,11 +39,13 @@ import javax.annotation.Nullable;
 /** Immutable configuration options for the container. */
 public class ContainerConfiguration {
 
-  /** The default creation time of the container (constant to ensure reproducibility by default). */
-  public static final Instant DEFAULT_CREATION_TIME = Instant.EPOCH;
-
   /** Builder for instantiating a {@link ContainerConfiguration}. */
   public static class Builder {
+
+    /**
+     * The default creation time of the container (constant to ensure reproducibility by default).
+     */
+    private static final Instant DEFAULT_CREATION_TIME = Instant.EPOCH;
 
     // note that a LinkedHashSet instead of HashSet has been used so as to preserve the platform
     // order

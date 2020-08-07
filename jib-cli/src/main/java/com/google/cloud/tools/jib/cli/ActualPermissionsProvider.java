@@ -18,15 +18,15 @@ package com.google.cloud.tools.jib.cli;
 
 import com.google.cloud.tools.jib.api.buildplan.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.api.buildplan.FilePermissions;
+import com.google.cloud.tools.jib.api.buildplan.FilePermissionsProvider;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.function.BiFunction;
 
 /** A permission provider that uses the actual file permissions from the file-system. */
-class ActualPermissionsProvider implements BiFunction<Path, AbsoluteUnixPath, FilePermissions> {
+class ActualPermissionsProvider implements FilePermissionsProvider {
   @Override
-  public FilePermissions apply(Path local, AbsoluteUnixPath inContainer) {
+  public FilePermissions get(Path local, AbsoluteUnixPath inContainer) {
     try {
       return FilePermissions.fromPosixFilePermissions(Files.getPosixFilePermissions(local));
     } catch (IOException ex) {

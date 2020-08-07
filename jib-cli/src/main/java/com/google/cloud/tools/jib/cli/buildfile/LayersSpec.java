@@ -35,8 +35,8 @@ import javax.annotation.Nullable;
  * }</pre>
  */
 public class LayersSpec {
-  private List<LayerSpec> entries;
-  @Nullable private FilePropertiesSpec properties;
+  private final List<LayerSpec> entries;
+  @Nullable private final FilePropertiesSpec properties;
 
   /**
    * Constructor for use by jackson to populate this object.
@@ -48,8 +48,9 @@ public class LayersSpec {
   public LayersSpec(
       @JsonProperty(value = "entries", required = true) List<LayerSpec> entries,
       @JsonProperty("properties") FilePropertiesSpec properties) {
-    this.properties = properties;
+    Validator.checkNotEmpty(entries, "entries");
     this.entries = entries;
+    this.properties = properties;
   }
 
   public Optional<FilePropertiesSpec> getProperties() {

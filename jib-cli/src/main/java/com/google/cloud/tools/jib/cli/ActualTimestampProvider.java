@@ -17,16 +17,16 @@
 package com.google.cloud.tools.jib.cli;
 
 import com.google.cloud.tools.jib.api.buildplan.AbsoluteUnixPath;
+import com.google.cloud.tools.jib.api.buildplan.ModificationTimeProvider;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
-import java.util.function.BiFunction;
 
 /** A timetamp provider that uses the actual file last-modification time from the file-system. */
-class ActualTimestampProvider implements BiFunction<Path, AbsoluteUnixPath, Instant> {
+class ActualTimestampProvider implements ModificationTimeProvider {
   @Override
-  public Instant apply(Path local, AbsoluteUnixPath inContainer) {
+  public Instant get(Path local, AbsoluteUnixPath inContainer) {
     try {
       return Files.getLastModifiedTime(local).toInstant();
     } catch (IOException ex) {

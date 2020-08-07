@@ -19,23 +19,24 @@ package com.google.cloud.tools.jib.cli;
 import com.google.cloud.tools.jib.api.buildplan.AbsoluteUnixPath;
 import java.io.File;
 import java.io.IOException;
+import java.time.Instant;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
-/** Tests for {@link FixedTimestampsProvider}. */
-public class ActualTimestampsProviderTest {
+/** Tests for {@link FixedTimestampProvider}. */
+public class FixedTimestampProviderTest {
   @Rule public final TemporaryFolder temporaryDirectory = new TemporaryFolder();
 
-  private ActualTimestampProvider fixture;
+  private FixedTimestampProvider fixture;
   private File file;
   private File directory;
 
   @Before
   public void setUp() throws IOException {
-    fixture = new ActualTimestampProvider();
+    fixture = new FixedTimestampProvider(Instant.ofEpochSecond(1));
     file = temporaryDirectory.newFile("file");
     directory = temporaryDirectory.newFolder("directory");
   }
@@ -43,14 +44,12 @@ public class ActualTimestampsProviderTest {
   @Test
   public void testApply_file() {
     Assert.assertEquals(
-        file.lastModified() / 1000,
-        fixture.apply(file.toPath(), AbsoluteUnixPath.get("/")).getEpochSecond());
+        Instant.ofEpochSecond(1), fixture.get(file.toPath(), AbsoluteUnixPath.get("/")));
   }
 
   @Test
   public void testApply_directory() {
     Assert.assertEquals(
-        directory.lastModified() / 1000,
-        fixture.apply(directory.toPath(), AbsoluteUnixPath.get("/")).getEpochSecond());
+        Instant.ofEpochSecond(1), fixture.get(directory.toPath(), AbsoluteUnixPath.get("/")));
   }
 }

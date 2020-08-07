@@ -48,7 +48,7 @@ In your Gradle Java project, add the plugin to your `build.gradle`:
 
 ```groovy
 plugins {
-  id 'com.google.cloud.tools.jib' version '2.4.0'
+  id 'com.google.cloud.tools.jib' version '2.5.0'
 }
 ```
 
@@ -197,15 +197,16 @@ Field | Type | Default | Description
 Property | Type | Default | Description
 --- | --- | --- | ---
 `image` | `String` | `gcr.io/distroless/java` | The image reference for the base image. The source type can be specified using a [special type prefix](#setting-the-base-image).
-`auth` | [`auth`](#auth-closure) | *None* | Specify credentials directly (alternative to `credHelper`).
+`auth` | [`auth`](#auth-closure) | *None* | Specifies credentials directly (alternative to `credHelper`).
 `credHelper` | `String` | *None* | Specifies a credential helper that can authenticate pulling the base image. This parameter can either be configured as an absolute path to the credential helper executable or as a credential helper suffix (following `docker-credential-`).
+`platforms` | [`platforms`](#platforms-closure) | See [`platforms`](#platforms-closure) | _Incubating feature_: Configures platforms of base images to select from a manifest list.
 
 <a name="to-closure"></a>`to` is a closure with the following properties:
 
 Property | Type | Default | Description
 --- | --- | --- | ---
 `image` | `String` | *Required* | The image reference for the target image. This can also be specified via the `--image` command line option.
-`auth` | [`auth`](#auth-closure) | *None* | Specify credentials directly (alternative to `credHelper`).
+`auth` | [`auth`](#auth-closure) | *None* | Specifies credentials directly (alternative to `credHelper`).
 `credHelper` | `String` | *None* | Specifies a credential helper that can authenticate pushing the target image. This parameter can either be configured as an absolute path to the credential helper executable or as a credential helper suffix (following `docker-credential-`).
 `tags` | `List<String>` | *None* | Additional tags to push to.
 
@@ -215,6 +216,15 @@ Property | Type
 --- | ---
 `username` | `String`
 `password` | `String`
+
+<a name="platforms-closure"></a>`platforms` can configure multiple `platform` closures.  Each individual `platform` has the following properties:
+
+Property | Type | Default | Description
+--- | --- | --- | ---
+`architecture` | `String` | `amd64` | The architecture of a base image to select from a manifest list.
+`os` | `String` | `linux` | The OS of a base image to select from a manifest list.
+
+See [How do I specify a platform in the manifest list (or OCI index) of a base image?](../docs/faq.md#how-do-i-specify-a-platform-in-the-manifest-list-or-oci-index-of-a-base-image) for examples.
 
 <a name="container-closure"></a>`container` is a closure with the following properties:
 
@@ -241,7 +251,7 @@ Property | Type | Default | Description
 Property | Type | Default | Description
 --- | --- | --- | ---
 `paths` | [`paths`](#paths-closure) closure, or `Object` | `(project-dir)/src/main/jib` | May be configured as a closure configuring `path` elements, or as source directory values recognized by [`Project.files()`](https://docs.gradle.org/current/javadoc/org/gradle/api/Project.html#files-java.lang.Object...-), such as `String`, `File`, `Path`, `List<String\|File\|Path>`, etc.
-`permissions` | `Map<String, String>` | *None* | Maps file paths on container to Unix permissions. (Effective only for files added from extra directories.) If not configured, permissions default to "755" for directories and "644" for files.
+`permissions` | `Map<String, String>` | *None* | Maps file paths (glob patterns) on container to Unix permissions. (Effective only for files added from extra directories.) If not configured, permissions default to "755" for directories and "644" for files. See [Adding Arbitrary Files to the Image](#adding-arbitrary-files-to-the-image) for an example.
 
 <a name="paths-closure"></a>`paths` can configure multiple `path` closures (see [Adding Arbitrary Files to the Image](#adding-arbitrary-files-to-the-image)). Each individual `path` has the following properties:
 
@@ -343,7 +353,7 @@ Prefix | Example | Type
 
 ### Adding Arbitrary Files to the Image
 
-You can add arbitrary, non-classpath files to the image without extra configuration by placing them in a `src/main/jib` directory. This will copy all files within the `jib` folder to the image's root directory, maintaining the same structure (e.g. if you have a text file at `src/main/jib/dir/hello.txt`, then your image will contain `/dir/hello.txt` after being built with Jib).
+You can add arbitrary, non-classpath files to the image without extra configuration by placing them in a `src/main/jib` directory. This will copy all files within the `jib` folder to the target directory (`/` by default) in the image, maintaining the same structure (e.g. if you have a text file at `src/main/jib/dir/hello.txt`, then your image will contain `/dir/hello.txt` after being built with Jib).
 
 Note that Jib does not follow symbolic links in the container image.  If a symbolic link is present, _it will be removed_ prior to placing the files and directories.
 
@@ -363,7 +373,8 @@ jib {
     paths = 'src/main/custom-extra-dir'  // Copies files from 'src/main/custom-extra-dir'
     permissions = [
         '/path/on/container/to/fileA': '755',  // Read/write/execute for owner, read/execute for group/other
-        '/path/to/another/file': '644'  // Read/write for owner, read-only for group/other
+        '/path/to/another/file': '644',  // Read/write for owner, read-only for group/other
+        '/glob/pattern/**/*.sh': 755
     ]
   }
 }

@@ -22,7 +22,6 @@ import java.nio.file.Path;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.annotation.concurrent.Immutable;
@@ -94,7 +93,7 @@ public class FileEntriesLayer implements LayerObject {
       return addEntry(
           sourceFile,
           pathInContainer,
-          DEFAULT_FILE_PERMISSIONS_PROVIDER.apply(sourceFile, pathInContainer));
+          DEFAULT_FILE_PERMISSIONS_PROVIDER.get(sourceFile, pathInContainer));
     }
 
     /**
@@ -133,7 +132,7 @@ public class FileEntriesLayer implements LayerObject {
       return addEntry(
           sourceFile,
           pathInContainer,
-          DEFAULT_FILE_PERMISSIONS_PROVIDER.apply(sourceFile, pathInContainer),
+          DEFAULT_FILE_PERMISSIONS_PROVIDER.get(sourceFile, pathInContainer),
           modificationTime);
     }
 
@@ -223,7 +222,7 @@ public class FileEntriesLayer implements LayerObject {
     public Builder addEntryRecursive(
         Path sourceFile,
         AbsoluteUnixPath pathInContainer,
-        BiFunction<Path, AbsoluteUnixPath, FilePermissions> filePermissionProvider)
+        FilePermissionsProvider filePermissionProvider)
         throws IOException {
       return addEntryRecursive(
           sourceFile, pathInContainer, filePermissionProvider, DEFAULT_MODIFICATION_TIME_PROVIDER);
@@ -246,8 +245,8 @@ public class FileEntriesLayer implements LayerObject {
     public Builder addEntryRecursive(
         Path sourceFile,
         AbsoluteUnixPath pathInContainer,
-        BiFunction<Path, AbsoluteUnixPath, FilePermissions> filePermissionProvider,
-        BiFunction<Path, AbsoluteUnixPath, Instant> modificationTimeProvider)
+        FilePermissionsProvider filePermissionProvider,
+        ModificationTimeProvider modificationTimeProvider)
         throws IOException {
       return addEntryRecursive(
           sourceFile,
@@ -276,13 +275,13 @@ public class FileEntriesLayer implements LayerObject {
     public Builder addEntryRecursive(
         Path sourceFile,
         AbsoluteUnixPath pathInContainer,
-        BiFunction<Path, AbsoluteUnixPath, FilePermissions> filePermissionProvider,
-        BiFunction<Path, AbsoluteUnixPath, Instant> modificationTimeProvider,
-        BiFunction<Path, AbsoluteUnixPath, String> ownershipProvider)
+        FilePermissionsProvider filePermissionProvider,
+        ModificationTimeProvider modificationTimeProvider,
+        OwnershipProvider ownershipProvider)
         throws IOException {
-      FilePermissions permissions = filePermissionProvider.apply(sourceFile, pathInContainer);
-      Instant modificationTime = modificationTimeProvider.apply(sourceFile, pathInContainer);
-      String ownership = ownershipProvider.apply(sourceFile, pathInContainer);
+      FilePermissions permissions = filePermissionProvider.get(sourceFile, pathInContainer);
+      Instant modificationTime = modificationTimeProvider.get(sourceFile, pathInContainer);
+      String ownership = ownershipProvider.get(sourceFile, pathInContainer);
       addEntry(sourceFile, pathInContainer, permissions, modificationTime, ownership);
       if (!Files.isDirectory(sourceFile)) {
         return this;
@@ -311,26 +310,24 @@ public class FileEntriesLayer implements LayerObject {
   }
 
   /** Provider that returns default file permissions (644 for files, 755 for directories). */
-  public static final BiFunction<Path, AbsoluteUnixPath, FilePermissions>
-      DEFAULT_FILE_PERMISSIONS_PROVIDER =
-          (sourcePath, destinationPath) ->
-              Files.isDirectory(sourcePath)
-                  ? FilePermissions.DEFAULT_FOLDER_PERMISSIONS
-                  : FilePermissions.DEFAULT_FILE_PERMISSIONS;
+  public static final FilePermissionsProvider DEFAULT_FILE_PERMISSIONS_PROVIDER =
+      (sourcePath, destinationPath) ->
+          Files.isDirectory(sourcePath)
+              ? FilePermissions.DEFAULT_FOLDER_PERMISSIONS
+              : FilePermissions.DEFAULT_FILE_PERMISSIONS;
 
   /** Default file modification time (EPOCH + 1 second). */
   public static final Instant DEFAULT_MODIFICATION_TIME = Instant.ofEpochSecond(1);
 
   /** Provider that returns default file modification time (EPOCH + 1 second). */
-  public static final BiFunction<Path, AbsoluteUnixPath, Instant>
-      DEFAULT_MODIFICATION_TIME_PROVIDER =
-          (sourcePath, destinationPath) -> DEFAULT_MODIFICATION_TIME;
+  public static final ModificationTimeProvider DEFAULT_MODIFICATION_TIME_PROVIDER =
+      (sourcePath, destinationPath) -> DEFAULT_MODIFICATION_TIME;
 
   /**
    * Provider that returns default file ownership (an empty string "" effectively representing
    * "0:0").
    */
-  public static final BiFunction<Path, AbsoluteUnixPath, String> DEFAULT_OWNERSHIP_PROVIDER =
+  public static final OwnershipProvider DEFAULT_OWNERSHIP_PROVIDER =
       (sourcePath, destinationPath) -> "";
 
   /**

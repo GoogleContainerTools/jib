@@ -62,7 +62,6 @@ class BuildImageStep implements Callable<Image> {
             new TimerEventDispatcher(buildContext.getEventHandlers(), DESCRIPTION)) {
       // Constructs the image.
       Image.Builder imageBuilder = Image.builder(buildContext.getTargetFormat());
-      ContainerConfiguration containerConfiguration = buildContext.getContainerConfiguration();
 
       // Base image layers
       baseImageLayers.forEach(imageBuilder::addLayer);
@@ -86,11 +85,9 @@ class BuildImageStep implements Callable<Image> {
           .setUser(baseImage.getUser())
           .setWorkingDirectory(baseImage.getWorkingDirectory());
 
+      ContainerConfiguration containerConfiguration = buildContext.getContainerConfiguration();
       // Add history elements for non-empty layers that don't have one yet
-      Instant layerCreationTime =
-          containerConfiguration == null
-              ? ContainerConfiguration.DEFAULT_CREATION_TIME
-              : containerConfiguration.getCreationTime();
+      Instant layerCreationTime = containerConfiguration.getCreationTime();
       for (int count = 0; count < baseImageLayers.size() - nonEmptyLayerCount; count++) {
         imageBuilder.addHistory(
             HistoryEntry.builder()
@@ -111,21 +108,20 @@ class BuildImageStep implements Callable<Image> {
                     .setComment(applicationLayer.getName())
                     .build());
       }
-      if (containerConfiguration != null) {
-        imageBuilder
-            .addEnvironment(containerConfiguration.getEnvironmentMap())
-            .setCreated(containerConfiguration.getCreationTime())
-            .setEntrypoint(computeEntrypoint(baseImage, containerConfiguration))
-            .setProgramArguments(computeProgramArguments(baseImage, containerConfiguration))
-            .addExposedPorts(containerConfiguration.getExposedPorts())
-            .addVolumes(containerConfiguration.getVolumes())
-            .addLabels(containerConfiguration.getLabels());
-        if (containerConfiguration.getUser() != null) {
-          imageBuilder.setUser(containerConfiguration.getUser());
-        }
-        if (containerConfiguration.getWorkingDirectory() != null) {
-          imageBuilder.setWorkingDirectory(containerConfiguration.getWorkingDirectory().toString());
-        }
+
+      imageBuilder
+          .addEnvironment(containerConfiguration.getEnvironmentMap())
+          .setCreated(containerConfiguration.getCreationTime())
+          .setEntrypoint(computeEntrypoint(baseImage, containerConfiguration))
+          .setProgramArguments(computeProgramArguments(baseImage, containerConfiguration))
+          .addExposedPorts(containerConfiguration.getExposedPorts())
+          .addVolumes(containerConfiguration.getVolumes())
+          .addLabels(containerConfiguration.getLabels());
+      if (containerConfiguration.getUser() != null) {
+        imageBuilder.setUser(containerConfiguration.getUser());
+      }
+      if (containerConfiguration.getWorkingDirectory() != null) {
+        imageBuilder.setWorkingDirectory(containerConfiguration.getWorkingDirectory().toString());
       }
 
       // Gets the container configuration content descriptor.

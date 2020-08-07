@@ -19,13 +19,13 @@ package com.google.cloud.tools.jib.cli;
 import com.google.cloud.tools.jib.api.buildplan.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.api.buildplan.FileEntriesLayer;
 import com.google.cloud.tools.jib.api.buildplan.FilePermissions;
+import com.google.cloud.tools.jib.api.buildplan.FilePermissionsProvider;
+import com.google.cloud.tools.jib.api.buildplan.ModificationTimeProvider;
 import com.google.common.annotations.VisibleForTesting;
 import java.io.IOException;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
-import java.util.function.BiFunction;
 import picocli.CommandLine;
 
 /**
@@ -55,9 +55,9 @@ class LayerDefinitionParser implements CommandLine.ITypeConverter<FileEntriesLay
 
   private void parseSpecification(FileEntriesLayer.Builder layerBuilder, String subspecification)
       throws IOException {
-    BiFunction<Path, AbsoluteUnixPath, FilePermissions> permissionsProvider =
+    FilePermissionsProvider permissionsProvider =
         FileEntriesLayer.DEFAULT_FILE_PERMISSIONS_PROVIDER;
-    BiFunction<Path, AbsoluteUnixPath, Instant> timestampProvider =
+    ModificationTimeProvider timestampProvider =
         FileEntriesLayer.DEFAULT_MODIFICATION_TIME_PROVIDER;
 
     String[] definition = subspecification.split(",", -1);
@@ -101,7 +101,7 @@ class LayerDefinitionParser implements CommandLine.ITypeConverter<FileEntriesLay
   }
 
   @VisibleForTesting
-  static BiFunction<Path, AbsoluteUnixPath, Instant> parseTimestampsDirective(String directive) {
+  static ModificationTimeProvider parseTimestampsDirective(String directive) {
     if ("actual".equals(directive)) {
       return new ActualTimestampProvider();
     }
@@ -116,8 +116,7 @@ class LayerDefinitionParser implements CommandLine.ITypeConverter<FileEntriesLay
   }
 
   @VisibleForTesting
-  static BiFunction<Path, AbsoluteUnixPath, FilePermissions> parsePermissionsDirective(
-      String directive) {
+  static FilePermissionsProvider parsePermissionsDirective(String directive) {
     if ("actual".equals(directive)) {
       return new ActualPermissionsProvider();
     }

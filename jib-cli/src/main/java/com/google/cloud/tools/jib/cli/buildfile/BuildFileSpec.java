@@ -23,6 +23,8 @@ import com.google.cloud.tools.jib.api.buildplan.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.api.buildplan.ImageFormat;
 import com.google.cloud.tools.jib.api.buildplan.Port;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
@@ -61,21 +63,29 @@ import javax.annotation.Nullable;
  * }</pre>
  */
 public class BuildFileSpec {
-  private String apiVersion;
-  private String kind;
-  @Nullable private BaseImageSpec from;
-  @Nullable private Instant creationTime;
-  @Nullable private ImageFormat format;
-  @Nullable private Map<String, String> environment;
-  @Nullable private Map<String, String> labels;
-  @Nullable private Set<AbsoluteUnixPath> volumes;
-  @Nullable private Set<Port> exposedPorts;
-  @Nullable private String user;
-  @Nullable private AbsoluteUnixPath workingDirectory;
-  @Nullable private List<String> entrypoint;
-  @Nullable private List<String> cmd;
+  private final String apiVersion;
+  private final String kind;
+  @Nullable private final BaseImageSpec from;
+  @Nullable private final Instant creationTime;
+  @Nullable private final ImageFormat format;
+  private final Map<String, String> environment;
+  private final Map<String, String> labels;
+  private final Set<AbsoluteUnixPath> volumes;
+  private final Set<Port> exposedPorts;
+  @Nullable private final String user;
+  @Nullable private final AbsoluteUnixPath workingDirectory;
+  /**
+   * Entrypoint has special behavior as a nullable list. When null, it delegates to the existing
+   * base image entrypoint. If non null (including empty) it overwrites the base image entrypoint.
+   */
+  @Nullable private final List<String> entrypoint;
+  /**
+   * Cmd has special behavior as a nullable list. When null, it delegates to the existing base image
+   * cmd. If non null (including empty) it overwrites the base image cmd.
+   */
+  @Nullable private final List<String> cmd;
 
-  @Nullable private LayersSpec layers;
+  @Nullable private final LayersSpec layers;
 
   /**
    * Constructor for use by jackson to populate this object.
@@ -111,29 +121,26 @@ public class BuildFileSpec {
       @JsonProperty("entrypoint") List<String> entrypoint,
       @JsonProperty("cmd") List<String> cmd,
       @JsonProperty("layers") LayersSpec layers) {
+    Validator.checkNotEmpty(apiVersion, "apiVersion");
+    Validator.checkEquals(kind, "kind", "BuildFile");
     this.apiVersion = apiVersion;
     Preconditions.checkArgument(
         "BuildFile".equals(kind), "Field 'kind' must be BuildFile but is " + kind);
     this.kind = kind;
     this.from = from;
-    if (creationTime != null) {
-      this.creationTime = Instants.fromMillisOrIso8601(creationTime, "creationTime");
-    }
-    if (format != null) {
-      this.format = ImageFormat.valueOf(format);
-    }
-    this.environment = environment;
-    this.labels = labels;
-    if (volumes != null) {
-      this.volumes = volumes.stream().map(AbsoluteUnixPath::get).collect(Collectors.toSet());
-    }
-    if (exposedPorts != null) {
-      this.exposedPorts = Ports.parse(exposedPorts);
-    }
+    this.creationTime =
+        (creationTime == null) ? null : Instants.fromMillisOrIso8601(creationTime, "creationTime");
+    this.format = (format == null) ? null : ImageFormat.valueOf(format);
+    this.environment = (environment == null) ? ImmutableMap.of() : environment;
+    this.labels = (labels == null) ? ImmutableMap.of() : labels;
+    this.volumes =
+        (volumes == null)
+            ? ImmutableSet.of()
+            : volumes.stream().map(AbsoluteUnixPath::get).collect(Collectors.toSet());
+    this.exposedPorts = (exposedPorts == null) ? ImmutableSet.of() : Ports.parse(exposedPorts);
     this.user = user;
-    if (workingDirectory != null) {
-      this.workingDirectory = AbsoluteUnixPath.get(workingDirectory);
-    }
+    this.workingDirectory =
+        (workingDirectory == null) ? null : AbsoluteUnixPath.get(workingDirectory);
     this.entrypoint = entrypoint;
     this.cmd = cmd;
     this.layers = layers;
@@ -159,20 +166,20 @@ public class BuildFileSpec {
     return Optional.ofNullable(format);
   }
 
-  public Optional<Map<String, String>> getEnvironment() {
-    return Optional.ofNullable(environment);
+  public Map<String, String> getEnvironment() {
+    return environment;
   }
 
-  public Optional<Map<String, String>> getLabels() {
-    return Optional.ofNullable(labels);
+  public Map<String, String> getLabels() {
+    return labels;
   }
 
-  public Optional<Set<AbsoluteUnixPath>> getVolumes() {
-    return Optional.ofNullable(volumes);
+  public Set<AbsoluteUnixPath> getVolumes() {
+    return volumes;
   }
 
-  public Optional<Set<Port>> getExposedPorts() {
-    return Optional.ofNullable(exposedPorts);
+  public Set<Port> getExposedPorts() {
+    return exposedPorts;
   }
 
   public Optional<String> getUser() {

@@ -20,6 +20,8 @@ import com.google.cloud.tools.jib.api.buildplan.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.api.buildplan.FileEntriesLayer;
 import com.google.cloud.tools.jib.api.buildplan.FileEntry;
 import com.google.cloud.tools.jib.api.buildplan.FilePermissions;
+import com.google.cloud.tools.jib.api.buildplan.FilePermissionsProvider;
+import com.google.cloud.tools.jib.api.buildplan.ModificationTimeProvider;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.nio.charset.StandardCharsets;
@@ -29,7 +31,6 @@ import java.nio.file.Paths;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.format.DateTimeParseException;
-import java.util.function.BiFunction;
 import org.hamcrest.CoreMatchers;
 import org.hamcrest.MatcherAssert;
 import org.junit.Assert;
@@ -53,15 +54,14 @@ public class LayerDefinitionParserTest {
 
   @Test
   public void testParseTimestampsDirective_secondsSinceEpoch() {
-    BiFunction<Path, AbsoluteUnixPath, Instant> provider =
-        LayerDefinitionParser.parseTimestampsDirective("1");
+    ModificationTimeProvider provider = LayerDefinitionParser.parseTimestampsDirective("1");
     MatcherAssert.assertThat(provider, CoreMatchers.instanceOf(FixedTimestampProvider.class));
     Assert.assertEquals(Instant.ofEpochSecond(1), ((FixedTimestampProvider) provider).fixed);
   }
 
   @Test
   public void testParseTimestampsDirective_is8601Date() {
-    BiFunction<Path, AbsoluteUnixPath, Instant> provider =
+    ModificationTimeProvider provider =
         LayerDefinitionParser.parseTimestampsDirective("1970-01-01T00:00:01.000Z");
     MatcherAssert.assertThat(provider, CoreMatchers.instanceOf(FixedTimestampProvider.class));
     Assert.assertEquals(Instant.ofEpochSecond(1), ((FixedTimestampProvider) provider).fixed);
@@ -86,8 +86,7 @@ public class LayerDefinitionParserTest {
 
   @Test
   public void testParsePermissionsDirective_fileOnly() {
-    BiFunction<Path, AbsoluteUnixPath, FilePermissions> provider =
-        LayerDefinitionParser.parsePermissionsDirective("555");
+    FilePermissionsProvider provider = LayerDefinitionParser.parsePermissionsDirective("555");
     MatcherAssert.assertThat(provider, CoreMatchers.instanceOf(FixedPermissionsProvider.class));
     Assert.assertEquals(
         0555, ((FixedPermissionsProvider) provider).filePermissions.getPermissionBits());
@@ -98,8 +97,7 @@ public class LayerDefinitionParserTest {
 
   @Test
   public void testParsePermissionsDirective_fileOAndDirectory() {
-    BiFunction<Path, AbsoluteUnixPath, FilePermissions> provider =
-        LayerDefinitionParser.parsePermissionsDirective("555:666");
+    FilePermissionsProvider provider = LayerDefinitionParser.parsePermissionsDirective("555:666");
     MatcherAssert.assertThat(provider, CoreMatchers.instanceOf(FixedPermissionsProvider.class));
     Assert.assertEquals(
         0555, ((FixedPermissionsProvider) provider).filePermissions.getPermissionBits());
