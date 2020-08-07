@@ -49,7 +49,7 @@ local maven repository.
 
 ### Integration Tests
 **Note** that in order to run integration tests, you will need to set one of the
-following environment variables:                                                
+following environment variables:
 
   - If you are using a GCP project then set `JIB_INTEGRATION_TESTING_PROJECT` to the GCP project to use for testing;
     the registry tested will be `gcr.io/<JIB_INTEGRATION_TESTING_PROJECT>`.
