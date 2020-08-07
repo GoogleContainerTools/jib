@@ -536,7 +536,7 @@ If the registry returns `401 Unauthorized` or `"code":"UNAUTHORIZED"`, it is oft
 * Different auth configurations exist in multiple places, and Jib is not picking up the auth information you are working on.
 * You configured a credential helper, but the helper is not on `$PATH`. This is especially common when running Jib inside IDE where the IDE binary is launched directly from an OS menu and does not have access to your shell's environment.
 * Configured credentials have access to the base image repository but not to the target image repository (or vice versa).
-* Typos in username, password, image names, repository names, or registry names. (This is surprisingly common.)
+* Typos in username, password, image names, repository names, or registry names. This is a very common error.
 * Image names do not conform to the structure or policy that a registry requires. For example, [Docker Hub returns 401 Unauthorized](https://github.com/GoogleContainerTools/jib/issues/2650#issuecomment-667323777) when trying to use a multi-level repository name.
 * Incorrect port number in image references (`registry.hostname:<port>/...`).
 * You are using a private registry without HTTPS. See [How can I diagnose problems pulling or pushing from remote registries?](#how-can-i-diagnose-problems-pulling-or-pushing-from-remote-registries).
