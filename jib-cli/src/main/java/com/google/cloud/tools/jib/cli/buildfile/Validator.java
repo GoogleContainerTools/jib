@@ -18,6 +18,7 @@ package com.google.cloud.tools.jib.cli.buildfile;
 
 import com.google.common.base.Preconditions;
 import java.util.Collection;
+import java.util.Map;
 import javax.annotation.Nullable;
 
 /**
@@ -27,35 +28,120 @@ import javax.annotation.Nullable;
 public class Validator {
 
   /**
-   * Checks if string is null, empty or only whitespace.
+   * Checks if string is non null and non empty.
    *
    * @param value the string in question
    * @param propertyName the equivalent 'yaml' property name
    * @throws NullPointerException if {@code value} is null
    * @throws IllegalArgumentException if {@code value} is empty or only whitespace
    */
-  public static void checkNotEmpty(@Nullable String value, String propertyName) {
+  public static void checkNotNullAndNotEmpty(@Nullable String value, String propertyName) {
     Preconditions.checkNotNull(value, "Property '" + propertyName + "' cannot be null");
     Preconditions.checkArgument(
-        !value.trim().isEmpty(), "Property '" + propertyName + "' cannot be empty");
+        !value.trim().isEmpty(), "Property '" + propertyName + "' cannot be an empty string");
   }
 
   /**
-   * Checks if a collection is null or empty.
+   * Checks if string is null or non empty.
+   *
+   * @param value the string in question
+   * @param propertyName the equivalent 'yaml' property name
+   * @throws IllegalArgumentException if {@code value} is empty or only whitespace
+   */
+  public static void checkNullOrNotEmpty(@Nullable String value, String propertyName) {
+    if (value == null) {
+      // pass
+      return;
+    }
+    Preconditions.checkArgument(
+        !value.trim().isEmpty(), "Property '" + propertyName + "' cannot be an empty string");
+  }
+
+  /**
+   * Checks if a collection is not null and not empty.
    *
    * @param value the string in question
    * @param propertyName the equivalent 'yaml' property name
    * @throws NullPointerException if {@code value} is null
    * @throws IllegalArgumentException if {@code value} is empty
    */
-  public static void checkNotEmpty(@Nullable Collection<?> value, String propertyName) {
+  public static void checkNotNullAndNotEmpty(@Nullable Collection<?> value, String propertyName) {
     Preconditions.checkNotNull(value, "Property '" + propertyName + "' cannot be null");
     Preconditions.checkArgument(
         !value.isEmpty(), "Property '" + propertyName + "' cannot be an empty collection");
   }
 
   /**
-   * Checks if string is what is expected.
+   * Check if a collection is either null, empty or contains only non-null, non-empty values.
+   *
+   * @param values the collection in question
+   * @param propertyName the equivalent 'yaml' property name
+   * @throws IllegalArgumentException if {@code values} contains empty entries
+   * @throws NullPointerException if {@code values} contains null entries
+   */
+  public static void checkNullOrNonNullNonEmptyEntries(
+      @Nullable Collection<String> values, String propertyName) {
+    if (values == null) {
+      // pass
+      return;
+    }
+    for (String value : values) {
+      Preconditions.checkNotNull(
+          value, "Property '" + propertyName + "' cannot contain null entries");
+      Preconditions.checkArgument(
+          !value.trim().isEmpty(), "Property '" + propertyName + "' cannot contain empty strings");
+    }
+  }
+
+  /**
+   * Check if a map is either null, empty or contains only non-null, non-empty keys and values.
+   *
+   * @param values the collection in question
+   * @param propertyName the equivalent 'yaml' property name
+   * @throws IllegalArgumentException if {@code values} contains empty keys or values
+   * @throws NullPointerException if {@code values} contains null keys or values
+   */
+  public static void checkNullOrNonNullNonEmptyEntries(
+      @Nullable Map<String, String> values, String propertyName) {
+    if (values == null) {
+      // pass
+      return;
+    }
+    for (Map.Entry<String, String> entry : values.entrySet()) {
+      Preconditions.checkNotNull(
+          entry.getKey(), "Property '" + propertyName + "' cannot contain null keys");
+      Preconditions.checkArgument(
+          !entry.getKey().trim().isEmpty(),
+          "Property '" + propertyName + "' cannot contain empty string keys");
+      Preconditions.checkNotNull(
+          entry.getValue(), "Property '" + propertyName + "' cannot contain null values");
+      Preconditions.checkArgument(
+          !entry.getValue().trim().isEmpty(),
+          "Property '" + propertyName + "' cannot contain empty string values");
+    }
+  }
+
+  /**
+   * Check if a collection is either null, empty or contains only non-null values.
+   *
+   * @param values the collection in question
+   * @param propertyName the equivalent 'yaml' property name
+   * @throws NullPointerException if {@code values} contains null entries
+   */
+  public static void checkNullOrNonNullEntries(
+      @Nullable Collection<?> values, String propertyName) {
+    if (values == null) {
+      // pass
+      return;
+    }
+    for (Object value : values) {
+      Preconditions.checkNotNull(
+          value, "Property '" + propertyName + "' cannot contain null entries");
+    }
+  }
+
+  /**
+   * Checks if string is equal to the expected string.
    *
    * @param value the string in question
    * @param propertyName the equivalent 'yaml' property name

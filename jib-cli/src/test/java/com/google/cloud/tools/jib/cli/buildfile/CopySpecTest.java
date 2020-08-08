@@ -23,10 +23,14 @@ import com.google.cloud.tools.jib.api.buildplan.AbsoluteUnixPath;
 import com.google.common.collect.ImmutableList;
 import java.nio.file.Paths;
 import java.time.Instant;
+import java.util.Arrays;
+import java.util.Collection;
 import org.hamcrest.CoreMatchers;
 import org.hamcrest.MatcherAssert;
 import org.junit.Assert;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 
 /** Tests for {@link CopySpec}. */
 public class CopySpecTest {
@@ -119,7 +123,8 @@ public class CopySpecTest {
       Assert.fail();
     } catch (JsonProcessingException jpe) {
       MatcherAssert.assertThat(
-          jpe.getMessage(), CoreMatchers.containsString("Property 'src' cannot be empty"));
+          jpe.getMessage(),
+          CoreMatchers.containsString("Property 'src' cannot be an empty string"));
     }
   }
 
@@ -145,7 +150,8 @@ public class CopySpecTest {
       Assert.fail();
     } catch (JsonProcessingException jpe) {
       MatcherAssert.assertThat(
-          jpe.getMessage(), CoreMatchers.containsString("Property 'dest' cannot be empty"));
+          jpe.getMessage(),
+          CoreMatchers.containsString("Property 'dest' cannot be an empty string"));
     }
   }
 
@@ -156,5 +162,61 @@ public class CopySpecTest {
     CopySpec parsed = mapper.readValue(data, CopySpec.class);
     Assert.assertEquals(ImmutableList.of(), parsed.getIncludes());
     Assert.assertEquals(ImmutableList.of(), parsed.getExcludes());
+  }
+
+  @RunWith(Parameterized.class)
+  public static class OptionalStringCollectionTests {
+
+    @Parameterized.Parameters(name = "{0}")
+    public static Collection<Object[]> data() {
+      return Arrays.asList(new Object[][] {{"includes"}, {"excludes"}});
+    }
+
+    @Parameterized.Parameter public String fieldName;
+
+    @Test
+    public void testCopySpec_noNullEntries() {
+      String data =
+          "src: target/classes\n" + "dest: /app/classes\n" + fieldName + ": ['first', null]";
+
+      try {
+        mapper.readValue(data, CopySpec.class);
+        Assert.fail();
+      } catch (JsonProcessingException ex) {
+        Assert.assertEquals(
+            "Property '" + fieldName + "' cannot contain null entries", ex.getCause().getMessage());
+      }
+    }
+
+    @Test
+    public void testCopySpec_noEmptyEntries() {
+      String data =
+          "src: target/classes\n" + "dest: /app/classes\n" + fieldName + ": ['first', ' ']";
+
+      try {
+        mapper.readValue(data, CopySpec.class);
+        Assert.fail();
+      } catch (JsonProcessingException ex) {
+        Assert.assertEquals(
+            "Property '" + fieldName + "' cannot contain empty strings",
+            ex.getCause().getMessage());
+      }
+    }
+
+    @Test
+    public void testCopySpec_emptyOkay() throws JsonProcessingException {
+      String data = "src: target/classes\n" + "dest: /app/classes\n" + fieldName + ": []";
+
+      mapper.readValue(data, CopySpec.class);
+      // pass
+    }
+
+    @Test
+    public void testCopySpec_nullOkay() throws JsonProcessingException {
+      String data = "src: target/classes\n" + "dest: /app/classes\n" + fieldName + ": null";
+
+      mapper.readValue(data, CopySpec.class);
+      // pass
+    }
   }
 }

@@ -66,8 +66,12 @@ public class PlatformSpec {
       @JsonProperty("os.features") List<String> osFeatures,
       @JsonProperty("variant") String variant,
       @JsonProperty("features") List<String> features) {
-    Validator.checkNotEmpty(architecture, "architecture");
-    Validator.checkNotEmpty(os, "os");
+    Validator.checkNotNullAndNotEmpty(architecture, "architecture");
+    Validator.checkNotNullAndNotEmpty(os, "os");
+    Validator.checkNullOrNotEmpty(osVersion, "os.version");
+    Validator.checkNullOrNonNullNonEmptyEntries(osFeatures, "os.features");
+    Validator.checkNullOrNotEmpty(variant, "variant");
+    Validator.checkNullOrNonNullNonEmptyEntries(features, "features");
     this.architecture = architecture;
     this.os = os;
     this.osVersion = osVersion;

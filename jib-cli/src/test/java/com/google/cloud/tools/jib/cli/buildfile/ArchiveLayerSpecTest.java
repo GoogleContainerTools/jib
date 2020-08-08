@@ -76,7 +76,8 @@ public class ArchiveLayerSpecTest {
       Assert.fail();
     } catch (JsonProcessingException jpe) {
       MatcherAssert.assertThat(
-          jpe.getMessage(), CoreMatchers.containsString("Property 'name' cannot be empty"));
+          jpe.getMessage(),
+          CoreMatchers.containsString("Property 'name' cannot be an empty string"));
     }
   }
 
@@ -117,7 +118,22 @@ public class ArchiveLayerSpecTest {
       Assert.fail();
     } catch (JsonProcessingException jpe) {
       MatcherAssert.assertThat(
-          jpe.getMessage(), CoreMatchers.containsString("Property 'archive' cannot be empty"));
+          jpe.getMessage(),
+          CoreMatchers.containsString("Property 'archive' cannot be an empty string"));
+    }
+  }
+
+  @Test
+  public void testArchiveLayerSpec_mediaTypeNonEmpty() {
+    String data = "name: layer name\n" + "archive: out/archive.tgz\n" + "mediaType: ' '";
+
+    try {
+      mapper.readValue(data, ArchiveLayerSpec.class);
+      Assert.fail();
+    } catch (JsonProcessingException jpe) {
+      MatcherAssert.assertThat(
+          jpe.getMessage(),
+          CoreMatchers.containsString("Property 'mediaType' cannot be an empty string"));
     }
   }
 }

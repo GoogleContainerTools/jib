@@ -68,8 +68,10 @@ public class CopySpec {
       @JsonProperty("includes") List<String> includes,
       @JsonProperty("excludes") List<String> excludes,
       @JsonProperty("properties") FilePropertiesSpec properties) {
-    Validator.checkNotEmpty(src, "src");
-    Validator.checkNotEmpty(dest, "dest");
+    Validator.checkNotNullAndNotEmpty(src, "src");
+    Validator.checkNotNullAndNotEmpty(dest, "dest");
+    Validator.checkNullOrNonNullNonEmptyEntries(includes, "includes");
+    Validator.checkNullOrNonNullNonEmptyEntries(excludes, "excludes");
     this.src = Paths.get(src);
     this.dest = AbsoluteUnixPath.get(dest);
     this.destEndsWithSlash = dest.endsWith("/");
