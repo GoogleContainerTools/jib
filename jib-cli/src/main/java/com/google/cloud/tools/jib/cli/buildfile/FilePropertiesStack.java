@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.cli.buildfile;
 
+import com.google.cloud.tools.jib.api.buildplan.FileEntriesLayer;
 import com.google.cloud.tools.jib.api.buildplan.FilePermissions;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
@@ -34,10 +35,23 @@ class FilePropertiesStack {
   // TODO perhaps use a fixed size list here
   private final List<FilePropertiesSpec> stack = new ArrayList<>(3);
 
-  @Nullable private FilePermissions filePermissions;
-  @Nullable private FilePermissions directoryPermissions;
-  @Nullable private Instant modificationTime;
-  @Nullable private String ownership;
+  private FilePermissions filePermissions;
+  private FilePermissions directoryPermissions;
+  private Instant modificationTime;
+  private String ownership;
+
+  /** Create new FilePropertiesStack with defaults. */
+  public FilePropertiesStack() {
+    setDefaults();
+  }
+
+  private void setDefaults() {
+    filePermissions = FilePermissions.DEFAULT_FILE_PERMISSIONS;
+    directoryPermissions = FilePermissions.DEFAULT_FOLDER_PERMISSIONS;
+    modificationTime = FileEntriesLayer.DEFAULT_MODIFICATION_TIME;
+    // TODO: get default from FileEntriesLayer (requires buildplan release)
+    ownership = "";
+  }
 
   /**
    * Add a new layer to the file properties stack. When adding a new layer, it is given highest
@@ -59,10 +73,7 @@ class FilePropertiesStack {
 
   private void updateProperties() {
     // clear existing permissions before recalculating
-    filePermissions = null;
-    directoryPermissions = null;
-    modificationTime = null;
-    ownership = null;
+    setDefaults();
 
     String user = null;
     String group = null;
@@ -76,7 +87,9 @@ class FilePropertiesStack {
       group = properties.getGroup().orElse(group);
     }
     // ownership calculations
-    if (group == null) {
+    if (group == null && user == null) {
+      ownership = "";
+    } else if (group == null && /* Nullaway */ user != null) {
       ownership = user;
     } else if (user == null) {
       ownership = ":" + group;
