@@ -68,7 +68,7 @@ import org.apache.http.conn.HttpHostConnectException;
 public class JibContainerBuilder {
 
   private static String capitalizeFirstLetter(String string) {
-    if (string.length() == 0) {
+    if (string.isEmpty()) {
       return string;
     }
     return Character.toUpperCase(string.charAt(0)) + string.substring(1);
