@@ -781,6 +781,17 @@ public class MavenProjectPropertiesTest {
   }
 
   @Test
+  public void testGetSpringBootRepackageConfiguration_noConfigurationBlock() {
+    Mockito.when(mockMavenProject.getPlugin("org.springframework.boot:spring-boot-maven-plugin"))
+        .thenReturn(mockPlugin);
+    Mockito.when(mockPlugin.getExecutions()).thenReturn(Arrays.asList(mockPluginExecution));
+    Mockito.when(mockPluginExecution.getGoals()).thenReturn(Arrays.asList("repackage"));
+    Mockito.when(mockPluginExecution.getConfiguration()).thenReturn(null);
+    Assert.assertEquals(
+        Optional.empty(), mavenProjectProperties.getSpringBootRepackageConfiguration());
+  }
+
+  @Test
   public void testGetSpringBootRepackageConfiguration_noExecutions() {
     Mockito.when(mockMavenProject.getPlugin("org.springframework.boot:spring-boot-maven-plugin"))
         .thenReturn(mockPlugin);

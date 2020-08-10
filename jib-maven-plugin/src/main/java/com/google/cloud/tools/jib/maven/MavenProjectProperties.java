@@ -568,7 +568,7 @@ public class MavenProjectProperties implements ProjectProperties {
           Xpp3Dom configuration = (Xpp3Dom) execution.getConfiguration();
 
           boolean skip = Boolean.valueOf(getChildValue(configuration, "skip").orElse("false"));
-          return skip ? Optional.empty() : Optional.of(configuration);
+          return skip ? Optional.empty() : Optional.ofNullable(configuration);
         }
       }
     }
