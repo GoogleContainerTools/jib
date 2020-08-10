@@ -9,7 +9,7 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
-- Fixed `NullPointerException` when the Spring Boot Mavne plugin does not have a `<configuration>` block. ([#2687](https://github.com/GoogleContainerTools/jib/issues/2687))
+- Fixed `NullPointerException` when the Spring Boot Maven plugin does not have a `<configuration>` block. ([#2687](https://github.com/GoogleContainerTools/jib/issues/2687))
 
 ## 2.5.0
 
