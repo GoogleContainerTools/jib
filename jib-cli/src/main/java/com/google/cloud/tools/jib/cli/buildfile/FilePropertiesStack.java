@@ -23,7 +23,6 @@ import com.google.common.base.Preconditions;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
-import javax.annotation.Nullable;
 
 /**
  * A class that keeps track of permissions for various stacking file permissions settings in {@link
@@ -98,22 +97,18 @@ class FilePropertiesStack {
     }
   }
 
-  @Nullable
   public FilePermissions getFilePermissions() {
     return filePermissions;
   }
 
-  @Nullable
   public FilePermissions getDirectoryPermissions() {
     return directoryPermissions;
   }
 
-  @Nullable
   public Instant getModificationTime() {
     return modificationTime;
   }
 
-  @Nullable
   public String getOwnership() {
     return ownership;
   }
