@@ -71,7 +71,7 @@ public class StepsRunner {
     @Nullable private List<Future<PreparedLayer>> applicationLayers;
     private Future<Map<Future<Image>, Image>> builtImagesAndBaseImages = failedFuture();
     private Future<RegistryClient> targetRegistryClient = failedFuture();
-    public Future<Map<Image, List<Future<BlobDescriptor>>>> baseImagesAndbaseImageLayerPushResults =
+    public Future<Map<Image, List<Future<BlobDescriptor>>>> baseImagesAndLayerPushResults =
         failedFuture();
     private Future<List<Future<BlobDescriptor>>> applicationLayerPushResults = failedFuture();
     private Future<Map<Future<Image>, Future<BlobDescriptor>>>
@@ -332,12 +332,13 @@ public class StepsRunner {
     ProgressEventDispatcher.Factory childProgressDispatcherFactory =
         Verify.verifyNotNull(rootProgressDispatcher).newChildProducer();
 
-    results.baseImagesAndbaseImageLayerPushResults =
+    results.baseImagesAndLayerPushResults =
         executorService.submit(
             () -> {
               Map<Image, List<Future<BlobDescriptor>>> pushResults = new HashMap<>();
               for (Map.Entry<Image, List<Future<PreparedLayer>>> entry :
                   results.baseImagesAndLayers.get().entrySet()) {
+
                 Image baseImage = entry.getKey();
                 List<Future<PreparedLayer>> baseImageLayers = entry.getValue();
 
@@ -383,7 +384,7 @@ public class StepsRunner {
                                     realizeFutures(Verify.verifyNotNull(entry.getValue())),
                                     realizeFutures(Verify.verifyNotNull(results.applicationLayers)))
                                 .call());
-                builtImagesAndBaseImages.put(builtImage, entry.getKey());
+                builtImagesAndBaseImages.put(builtImage, entry.getKey() /* base Image */);
               }
               return builtImagesAndBaseImages;
             });
@@ -435,9 +436,9 @@ public class StepsRunner {
     results.manifestCheckResult =
         executorService.submit(
             () -> {
-              Map.Entry<Future<Image>, Image> entry =
-                  results.builtImagesAndBaseImages.get().entrySet().iterator().next();
-              Future<Image> builtImage = entry.getKey();
+              Verify.verify(results.builtImagesAndBaseImages.get().size() == 1);
+              Future<Image> builtImage =
+                  results.builtImagesAndBaseImages.get().keySet().iterator().next();
               return new CheckImageStep(
                       buildContext,
                       childProgressDispatcherFactory,
@@ -475,10 +476,7 @@ public class StepsRunner {
                         () -> {
                           realizeFutures(
                               Verify.verifyNotNull(
-                                  results
-                                      .baseImagesAndbaseImageLayerPushResults
-                                      .get()
-                                      .get(baseImage)));
+                                  results.baseImagesAndLayerPushResults.get().get(baseImage)));
 
                           List<Future<BuildResult>> manifestPushResults =
                               scheduleCallables(
@@ -523,12 +521,13 @@ public class StepsRunner {
     results.buildResults =
         executorService.submit(
             () -> {
-              Map.Entry<Future<Image>, Image> entry =
-                  results.builtImagesAndBaseImages.get().entrySet().iterator().next();
-              Future<Image> builtImage = entry.getKey();
+              Verify.verify(
+                  results.builtImagesAndBaseImages.get().size() == 1,
+                  "multi-platform image building not supported when pushing to Docker engine");
+              Future<Image> builtImage =
+                  results.builtImagesAndBaseImages.get().keySet().iterator().next();
 
-              List<Future<BuildResult>> buildResults = new ArrayList<>();
-              Future<BuildResult> buildResult =
+              return Collections.singletonList(
                   executorService.submit(
                       () ->
                           new LoadDockerStep(
@@ -536,9 +535,7 @@ public class StepsRunner {
                                   childProgressDispatcherFactory,
                                   dockerClient,
                                   builtImage.get())
-                              .call());
-              buildResults.add(buildResult);
-              return buildResults;
+                              .call()));
             });
   }
 
@@ -549,12 +546,13 @@ public class StepsRunner {
     results.buildResults =
         executorService.submit(
             () -> {
-              Map.Entry<Future<Image>, Image> entry =
-                  results.builtImagesAndBaseImages.get().entrySet().iterator().next();
-              Future<Image> builtImage = entry.getKey();
+              Verify.verify(
+                  results.builtImagesAndBaseImages.get().size() == 1,
+                  "multi-platform image building not supported when building a local tar image");
+              Future<Image> builtImage =
+                  results.builtImagesAndBaseImages.get().keySet().iterator().next();
 
-              List<Future<BuildResult>> buildResults = new ArrayList<>();
-              Future<BuildResult> buildResult =
+              return Collections.singletonList(
                   executorService.submit(
                       () ->
                           new WriteTarFileStep(
@@ -562,9 +560,7 @@ public class StepsRunner {
                                   childProgressDispatcherFactory,
                                   outputPath,
                                   builtImage.get())
-                              .call());
-              buildResults.add(buildResult);
-              return buildResults;
+                              .call()));
             });
   }
 
