@@ -18,6 +18,7 @@ package com.google.cloud.tools.jib.builder.steps;
 
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.builder.ProgressEventDispatcher;
+import com.google.cloud.tools.jib.builder.ProgressEventDispatcher.Factory;
 import com.google.cloud.tools.jib.builder.steps.LocalBaseImageSteps.LocalImage;
 import com.google.cloud.tools.jib.builder.steps.PullBaseImageStep.ImagesAndRegistryClient;
 import com.google.cloud.tools.jib.configuration.BuildContext;
@@ -438,16 +439,13 @@ public class StepsRunner {
               Verify.verify(results.builtImagesAndBaseImages.get().size() == 1);
               Future<Image> builtImage =
                   results.builtImagesAndBaseImages.get().keySet().iterator().next();
+              Future<BlobDescriptor> containerConfigPushResult =
+                  results.builtImagesAndContainerConfigurationPushResults.get().get(builtImage);
               return new CheckImageStep(
                       buildContext,
                       childProgressDispatcherFactory,
                       results.targetRegistryClient.get(),
-                      Verify.verifyNotNull(
-                              results
-                                  .builtImagesAndContainerConfigurationPushResults
-                                  .get()
-                                  .get(builtImage))
-                          .get(),
+                      Verify.verifyNotNull(containerConfigPushResult).get(),
                       builtImage.get())
                   .call();
             });
@@ -463,51 +461,43 @@ public class StepsRunner {
               realizeFutures(results.applicationLayerPushResults.get());
 
               List<Future<BuildResult>> buildResults = new ArrayList<>();
-
               for (Map.Entry<Future<Image>, Image> entry :
                   results.builtImagesAndBaseImages.get().entrySet()) {
-
-                Future<Image> builtImage = entry.getKey();
-                Image baseImage = entry.getValue();
-
-                Future<BuildResult> buildResult =
-                    executorService.submit(
-                        () -> {
-                          realizeFutures(
-                              Verify.verifyNotNull(
-                                  results.baseImagesAndLayerPushResults.get().get(baseImage)));
-
-                          BlobDescriptor containerConfigPushResult =
-                              Verify.verifyNotNull(
-                                      results
-                                          .builtImagesAndContainerConfigurationPushResults
-                                          .get()
-                                          .get(builtImage))
-                                  .get();
-
-                          List<Future<BuildResult>> manifestPushResults =
-                              scheduleCallables(
-                                  PushImageStep.makeList(
-                                      buildContext,
-                                      childProgressDispatcherFactory,
-                                      results.targetRegistryClient.get(),
-                                      containerConfigPushResult,
-                                      builtImage.get(),
-                                      results.manifestCheckResult.get().isPresent()));
-
-                          realizeFutures(manifestPushResults);
-                          return manifestPushResults.isEmpty()
-                              ? new BuildResult(
-                                  results.manifestCheckResult.get().get().getDigest(),
-                                  containerConfigPushResult.getDigest())
-                              // Manifest pushers return the same BuildResult.
-                              : manifestPushResults.get(0).get();
-                        });
-
-                buildResults.add(buildResult);
+                buildResults.add(
+                    pushImage(entry.getKey(), entry.getValue(), childProgressDispatcherFactory));
               }
               return buildResults;
             });
+  }
+
+  private Future<BuildResult> pushImage(
+      Future<Image> builtImage, Image baseImage, Factory progressDispatcherFactory) {
+    return executorService.submit(
+        () -> {
+          realizeFutures(
+              Verify.verifyNotNull(results.baseImagesAndLayerPushResults.get().get(baseImage)));
+
+          Future<BlobDescriptor> containerConfigPushResult =
+              results.builtImagesAndContainerConfigurationPushResults.get().get(builtImage);
+
+          List<Future<BuildResult>> manifestPushResults =
+              scheduleCallables(
+                  PushImageStep.makeList(
+                      buildContext,
+                      progressDispatcherFactory,
+                      results.targetRegistryClient.get(),
+                      Verify.verifyNotNull(containerConfigPushResult).get(),
+                      builtImage.get(),
+                      results.manifestCheckResult.get().isPresent()));
+
+          realizeFutures(manifestPushResults);
+          return manifestPushResults.isEmpty()
+              ? new BuildResult(
+                  results.manifestCheckResult.get().get().getDigest(),
+                  Verify.verifyNotNull(containerConfigPushResult).get().getDigest())
+              // Manifest pushers return the same BuildResult.
+              : manifestPushResults.get(0).get();
+        });
   }
 
   private void loadDocker(DockerClient dockerClient) {
