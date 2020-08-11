@@ -788,7 +788,8 @@ public class MavenProjectPropertiesTest {
     Mockito.when(mockPluginExecution.getGoals()).thenReturn(Arrays.asList("repackage"));
     Mockito.when(mockPluginExecution.getConfiguration()).thenReturn(null);
     Assert.assertEquals(
-        Optional.empty(), mavenProjectProperties.getSpringBootRepackageConfiguration());
+        Optional.of(new Xpp3Dom("configuration")),
+        mavenProjectProperties.getSpringBootRepackageConfiguration());
   }
 
   @Test
