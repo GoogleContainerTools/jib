@@ -566,9 +566,12 @@ public class MavenProjectProperties implements ProjectProperties {
       for (PluginExecution execution : springBootPlugin.getExecutions()) {
         if (execution.getGoals().contains("repackage")) {
           Xpp3Dom configuration = (Xpp3Dom) execution.getConfiguration();
+          if (configuration == null) {
+            return Optional.of(new Xpp3Dom("configuration"));
+          }
 
           boolean skip = Boolean.parseBoolean(getChildValue(configuration, "skip").orElse("false"));
-          return skip ? Optional.empty() : Optional.ofNullable(configuration);
+          return skip ? Optional.empty() : Optional.of(configuration);
         }
       }
     }
