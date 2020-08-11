@@ -86,15 +86,7 @@ class FilePropertiesStack {
       group = properties.getGroup().orElse(group);
     }
     // ownership calculations
-    if (group == null && user == null) {
-      ownership = "";
-    } else if (group == null && /* Nullaway */ user != null) {
-      ownership = user;
-    } else if (user == null) {
-      ownership = ":" + group;
-    } else {
-      ownership = user + ":" + group;
-    }
+    ownership = (user != null ? user : "") + (group != null ? ":" + group : "");
   }
 
   public FilePermissions getFilePermissions() {
