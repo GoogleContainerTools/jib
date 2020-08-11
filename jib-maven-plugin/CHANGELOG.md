@@ -5,8 +5,28 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+### Changed
+
+### Fixed
+
+## 2.5.2
+
+### Fixed
+
+- Fixed the regression introduced in 2.5.1 that caused Jib to containerize a Spring Boot fat JAR instead of a normal thin JAR when `<containerizingMode>packaged` is set and the Spring Boot Maven plugin does not have a `<configuration>` block. ([#2693](https://github.com/GoogleContainerTools/jib/pull/2693))
+
+## 2.5.1
+
+### Fixed
+
+- Fixed `NullPointerException` when `<containerizingMode>packaged` is set the Spring Boot Maven plugin does not have a `<configuration>` block. ([#2687](https://github.com/GoogleContainerTools/jib/issues/2687))
+
+## 2.5.0
+
+### Added
+
 - Also tries `.exe` file extension for credential helpers on Windows. ([#2527](https://github.com/GoogleContainerTools/jib/issues/2527))
-- New system property `jib.skipExistingImages` (false by default) to skip pushing images (manifests) if the image already exists in the registry. ([#2360](https://github.com/GoogleContainerTools/jib/issues/2360)
+- New system property `jib.skipExistingImages` (false by default) to skip pushing images (manifests) if the image already exists in the registry. ([#2360](https://github.com/GoogleContainerTools/jib/issues/2360))
 - _Incubating feature_: can now configure desired platform (architecture and OS) to select the matching manifest from a Docker manifest list for a base image. Currently supports building only one image. OCI image indices are not supported. ([#1567](https://github.com/GoogleContainerTools/jib/issues/1567))
     ```xml
       <from>
@@ -20,8 +40,6 @@ All notable changes to this project will be documented in this file.
       </from>
     ```
 
-### Changed
-
 ### Fixed
 
 - Fixed reporting a wrong credential helper name when the helper does not exist on Windows. ([#2527](https://github.com/GoogleContainerTools/jib/issues/2527))
@@ -29,6 +47,7 @@ All notable changes to this project will be documented in this file.
 - Fixed `NullPointerException` to return a helpful message when a server does not provide any message in certain error cases (400 Bad Request, 404 Not Found, and 405 Method Not Allowed). ([#2532](https://github.com/GoogleContainerTools/jib/issues/2532))
 - Now supports sending client certificate (for example, via the `javax.net.ssl.keyStore` and `javax.net.ssl.keyStorePassword` system properties) and thus enabling mutual TLS authentication. ([#2585](https://github.com/GoogleContainerTools/jib/issues/2585), [#2226](https://github.com/GoogleContainerTools/jib/issues/2226))
 - Fixed build failure with `<containerizingMode>packaged` in Spring Boot projects where Jib assumed a wrong JAR path when `<finalName>` or `<classifier>` is configured in Spring Boot. ([#2565](https://github.com/GoogleContainerTools/jib/issues/2565))
+- Fixed an issue where Jib cannot infer Kotlin main class that takes no arguments. ([#2666](https://github.com/GoogleContainerTools/jib/pull/2666))
 
 ## 2.4.0
 
@@ -525,7 +544,7 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
-- Using base images that lack entrypoints. ([#284](https://github.com/GoogleContainerTools/jib/pull/284)
+- Using base images that lack entrypoints. ([#284](https://github.com/GoogleContainerTools/jib/pull/284))
 
 ## 0.1.6
 

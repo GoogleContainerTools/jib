@@ -55,20 +55,20 @@ subprojects {
     GOOGLE_HTTP_CLIENT: 'com.google.http-client:google-http-client:1.34.0',
     GOOGLE_HTTP_CLIENT_APACHE_V2: 'com.google.http-client:google-http-client-apache-v2:1.34.0',
     GOOGLE_AUTH_LIBRARY_OAUTH2_HTTP: 'com.google.auth:google-auth-library-oauth2-http:0.18.0',
-    GUAVA: 'com.google.guava:guava:28.1-jre',
+    GUAVA: 'com.google.guava:guava:29.0-jre',
     JSR305: 'com.google.code.findbugs:jsr305:3.0.2', // transitively pulled in by GUAVA
 
     // for Build Plan and Jib Plugins Extension API
     BUILD_PLAN: 'com.google.cloud.tools:jib-build-plan:0.4.0',
     EXTENSION_COMMON: 'com.google.cloud.tools:jib-plugins-extension-common:0.2.0',
-    GRADLE_EXTENSION: 'com.google.cloud.tools:jib-gradle-plugin-extension-api:0.3.0',
-    MAVEN_EXTENSION: 'com.google.cloud.tools:jib-maven-plugin-extension-api:0.3.0',
+    GRADLE_EXTENSION: 'com.google.cloud.tools:jib-gradle-plugin-extension-api:0.4.0',
+    MAVEN_EXTENSION: 'com.google.cloud.tools:jib-maven-plugin-extension-api:0.4.0',
 
     COMMONS_COMPRESS: 'org.apache.commons:commons-compress:1.20',
-    JACKSON_DATABIND: 'com.fasterxml.jackson.core:jackson-databind:2.11.1',
-    JACKSON_DATAFORMAT_YAML: 'com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.11.1',
+    JACKSON_DATABIND: 'com.fasterxml.jackson.core:jackson-databind:2.11.2',
+    JACKSON_DATAFORMAT_YAML: 'com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.11.2',
     ASM: 'org.ow2.asm:asm:8.0.1',
-    PICOCLI: 'info.picocli:picocli:4.4.0',
+    PICOCLI: 'info.picocli:picocli:4.5.0',
 
     MAVEN_API: 'org.apache.maven:maven-plugin-api:3.6.3',
     MAVEN_CORE: 'org.apache.maven:maven-core:3.5.2',

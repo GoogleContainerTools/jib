@@ -43,7 +43,7 @@ For information about the project, see the [Jib project README](../README.md).
 You can containerize your application easily with one command:
 
 ```shell
-mvn compile com.google.cloud.tools:jib-maven-plugin:2.4.0:build -Dimage=<MY IMAGE>
+mvn compile com.google.cloud.tools:jib-maven-plugin:2.5.2:build -Dimage=<MY IMAGE>
 ```
 
 This builds and pushes a container image for your application to a container registry. *If you encounter authentication issues, see [Authentication Methods](#authentication-methods).*
@@ -51,7 +51,7 @@ This builds and pushes a container image for your application to a container reg
 To build to a Docker daemon, use:
 
 ```shell
-mvn compile com.google.cloud.tools:jib-maven-plugin:2.4.0:dockerBuild
+mvn compile com.google.cloud.tools:jib-maven-plugin:2.5.2:dockerBuild
 ```
 
 If you would like to set up Jib as part of your Maven build, follow the guide below.
@@ -69,7 +69,7 @@ In your Maven Java project, add the plugin to your `pom.xml`:
       <plugin>
         <groupId>com.google.cloud.tools</groupId>
         <artifactId>jib-maven-plugin</artifactId>
-        <version>2.4.0</version>
+        <version>2.5.2</version>
         <configuration>
           <to>
             <image>myimage</image>
@@ -243,15 +243,16 @@ Field | Type | Default | Description
 Property | Type | Default | Description
 --- | --- | --- | ---
 `image` | string | `gcr.io/distroless/java` | The image reference for the base image. The source type can be specified using a [special type prefix](#setting-the-base-image).
-`auth` | [`auth`](#auth-object) | *None* | Specify credentials directly (alternative to `credHelper`).
+`auth` | [`auth`](#auth-object) | *None* | Specifies credentials directly (alternative to `credHelper`).
 `credHelper` | string | *None* | Specifies a credential helper that can authenticate pulling the base image. This parameter can either be configured as an absolute path to the credential helper executable or as a credential helper suffix (following `docker-credential-`).
+`platforms` | list | See [`platform`](#platform-object) | _Incubating feature_: Configures platforms of base images to select from a manifest list.
 
 <a name="to-object"></a>`to` is an object with the following properties:
 
 Property | Type | Default | Description
 --- | --- | --- | ---
 `image` | string | *Required* | The image reference for the target image. This can also be specified via the `-Dimage` command line option.
-`auth` | [`auth`](#auth-object) | *None* | Specify credentials directly (alternative to `credHelper`).
+`auth` | [`auth`](#auth-object) | *None* | Specifies credentials directly (alternative to `credHelper`).
 `credHelper` | string | *None* | Specifies a credential helper that can authenticate pushing the target image. This parameter can either be configured as an absolute path to the credential helper executable or as a credential helper suffix (following `docker-credential-`).
 `tags` | list | *None* | Additional tags to push to.
 
@@ -261,6 +262,15 @@ Property | Type
 --- | ---
 `username` | string
 `password` | string
+
+<a name="platform-object"></a>`platform` is an object with the following properties:
+
+Property | Type | Default | Description
+--- | --- | --- | ---
+`architecture` | string | `amd64` | The architecture of a base image to select from a manifest list.
+`os` | string | `linux` | The OS of a base image to select from a manifest list.
+
+See [How do I specify a platform in the manifest list (or OCI index) of a base image?](../docs/faq.md#how-do-i-specify-a-platform-in-the-manifest-list-or-oci-index-of-a-base-image) for examples.
 
 <a name="container-object"></a>`container` is an object with the following properties:
 

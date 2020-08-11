@@ -59,6 +59,11 @@ public class FilePropertiesSpec {
       @JsonProperty("user") String user,
       @JsonProperty("group") String group,
       @JsonProperty("timestamp") String timestamp) {
+    Validator.checkNullOrNotEmpty(filePermissions, "filePermissions");
+    Validator.checkNullOrNotEmpty(directoryPermissions, "directoryPermissions");
+    Validator.checkNullOrNotEmpty(user, "user");
+    Validator.checkNullOrNotEmpty(group, "group");
+    Validator.checkNullOrNotEmpty(timestamp, "timestamp");
     this.filePermissions =
         filePermissions == null ? null : FilePermissions.fromOctalString(filePermissions);
     this.directoryPermissions =

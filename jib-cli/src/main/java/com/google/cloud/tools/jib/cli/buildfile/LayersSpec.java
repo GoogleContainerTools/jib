@@ -48,7 +48,7 @@ public class LayersSpec {
   public LayersSpec(
       @JsonProperty(value = "entries", required = true) List<LayerSpec> entries,
       @JsonProperty("properties") FilePropertiesSpec properties) {
-    Validator.checkNotEmpty(entries, "entries");
+    Validator.checkNotNullAndNotEmpty(entries, "entries");
     this.entries = entries;
     this.properties = properties;
   }

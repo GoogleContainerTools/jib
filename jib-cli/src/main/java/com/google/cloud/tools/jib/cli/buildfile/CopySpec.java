@@ -45,6 +45,8 @@ import javax.annotation.Nullable;
 public class CopySpec {
   private final Path src;
   private final AbsoluteUnixPath dest;
+  // extra metadata to determine if the target can be considered a file
+  private final boolean destEndsWithSlash;
 
   @Nullable private final FilePropertiesSpec properties;
   private final List<String> excludes;
@@ -66,10 +68,13 @@ public class CopySpec {
       @JsonProperty("includes") List<String> includes,
       @JsonProperty("excludes") List<String> excludes,
       @JsonProperty("properties") FilePropertiesSpec properties) {
-    Validator.checkNotEmpty(src, "src");
-    Validator.checkNotEmpty(dest, "dest");
+    Validator.checkNotNullAndNotEmpty(src, "src");
+    Validator.checkNotNullAndNotEmpty(dest, "dest");
+    Validator.checkNullOrNonNullNonEmptyEntries(includes, "includes");
+    Validator.checkNullOrNonNullNonEmptyEntries(excludes, "excludes");
     this.src = Paths.get(src);
     this.dest = AbsoluteUnixPath.get(dest);
+    this.destEndsWithSlash = dest.endsWith("/");
     this.excludes = (excludes == null) ? ImmutableList.of() : excludes;
     this.includes = (includes == null) ? ImmutableList.of() : includes;
     this.properties = properties;
@@ -81,6 +86,10 @@ public class CopySpec {
 
   public AbsoluteUnixPath getDest() {
     return dest;
+  }
+
+  public boolean isDestEndsWithSlash() {
+    return destEndsWithSlash;
   }
 
   public List<String> getExcludes() {

@@ -49,7 +49,7 @@ local maven repository.
 
 ### Integration Tests
 **Note** that in order to run integration tests, you will need to set one of the
-following environment variables:                                                
+following environment variables:
 
   - If you are using a GCP project then set `JIB_INTEGRATION_TESTING_PROJECT` to the GCP project to use for testing;
     the registry tested will be `gcr.io/<JIB_INTEGRATION_TESTING_PROJECT>`.
@@ -123,8 +123,8 @@ To use a local build of the `jib-gradle-plugin`:
   1. Modify your test project's `build.gradle` to use the snapshot version
         ```groovy
         plugins {
-          // id 'com.google.cloud.tools.jib' version '2.4.0'
-          id 'com.google.cloud.tools.jib' version '2.4.1-SNAPSHOT'
+          // id 'com.google.cloud.tools.jib' version '2.5.0'
+          id 'com.google.cloud.tools.jib' version '2.5.1-SNAPSHOT'
         }
 
         ```
