@@ -338,7 +338,6 @@ public class StepsRunner {
               Map<Image, List<Future<BlobDescriptor>>> pushResults = new HashMap<>();
               for (Map.Entry<Image, List<Future<PreparedLayer>>> entry :
                   results.baseImagesAndLayers.get().entrySet()) {
-
                 Image baseImage = entry.getKey();
                 List<Future<PreparedLayer>> baseImageLayers = entry.getValue();
 
@@ -478,18 +477,21 @@ public class StepsRunner {
                               Verify.verifyNotNull(
                                   results.baseImagesAndLayerPushResults.get().get(baseImage)));
 
+                          BlobDescriptor containerConfigPushResult =
+                              Verify.verifyNotNull(
+                                      results
+                                          .builtImagesAndContainerConfigurationPushResults
+                                          .get()
+                                          .get(builtImage))
+                                  .get();
+
                           List<Future<BuildResult>> manifestPushResults =
                               scheduleCallables(
                                   PushImageStep.makeList(
                                       buildContext,
                                       childProgressDispatcherFactory,
                                       results.targetRegistryClient.get(),
-                                      Verify.verifyNotNull(
-                                              results
-                                                  .builtImagesAndContainerConfigurationPushResults
-                                                  .get()
-                                                  .get(builtImage))
-                                          .get(),
+                                      containerConfigPushResult,
                                       builtImage.get(),
                                       results.manifestCheckResult.get().isPresent()));
 
@@ -497,13 +499,7 @@ public class StepsRunner {
                           return manifestPushResults.isEmpty()
                               ? new BuildResult(
                                   results.manifestCheckResult.get().get().getDigest(),
-                                  Verify.verifyNotNull(
-                                          results
-                                              .builtImagesAndContainerConfigurationPushResults
-                                              .get()
-                                              .get(builtImage))
-                                      .get()
-                                      .getDigest())
+                                  containerConfigPushResult.getDigest())
                               // Manifest pushers return the same BuildResult.
                               : manifestPushResults.get(0).get();
                         });
@@ -524,18 +520,13 @@ public class StepsRunner {
               Verify.verify(
                   results.builtImagesAndBaseImages.get().size() == 1,
                   "multi-platform image building not supported when pushing to Docker engine");
-              Future<Image> builtImage =
-                  results.builtImagesAndBaseImages.get().keySet().iterator().next();
-
-              return Collections.singletonList(
-                  executorService.submit(
-                      () ->
-                          new LoadDockerStep(
-                                  buildContext,
-                                  childProgressDispatcherFactory,
-                                  dockerClient,
-                                  builtImage.get())
-                              .call()));
+              Image builtImage =
+                  results.builtImagesAndBaseImages.get().keySet().iterator().next().get();
+              BuildResult buildResult =
+                  new LoadDockerStep(
+                          buildContext, childProgressDispatcherFactory, dockerClient, builtImage)
+                      .call();
+              return Collections.singletonList(Futures.immediateFuture(buildResult));
             });
   }
 
@@ -549,18 +540,14 @@ public class StepsRunner {
               Verify.verify(
                   results.builtImagesAndBaseImages.get().size() == 1,
                   "multi-platform image building not supported when building a local tar image");
-              Future<Image> builtImage =
-                  results.builtImagesAndBaseImages.get().keySet().iterator().next();
+              Image builtImage =
+                  results.builtImagesAndBaseImages.get().keySet().iterator().next().get();
 
-              return Collections.singletonList(
-                  executorService.submit(
-                      () ->
-                          new WriteTarFileStep(
-                                  buildContext,
-                                  childProgressDispatcherFactory,
-                                  outputPath,
-                                  builtImage.get())
-                              .call()));
+              BuildResult buildResult =
+                  new WriteTarFileStep(
+                          buildContext, childProgressDispatcherFactory, outputPath, builtImage)
+                      .call();
+              return Collections.singletonList(Futures.immediateFuture(buildResult));
             });
   }
 
