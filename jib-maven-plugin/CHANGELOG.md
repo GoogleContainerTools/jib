@@ -9,6 +9,10 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
+## 2.5.2
+
+### Fixed
+
 - Fixed the regression introduced in 2.5.1 that caused Jib to containerize a Spring Boot fat JAR instead of a normal thin JAR when `<containerizingMode>packaged` is set and the Spring Boot Maven plugin does not have a `<configuration>` block. ([#2693](https://github.com/GoogleContainerTools/jib/pull/2693))
 
 ## 2.5.1
