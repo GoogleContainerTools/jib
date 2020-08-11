@@ -380,7 +380,7 @@ public class StepsRunner {
                             new BuildImageStep(
                                     buildContext,
                                     childProgressDispatcherFactory,
-                                    entry.getKey(), // base image
+                                    entry.getKey(), // base Image
                                     realizeFutures(
                                         Verify.verifyNotNull(entry.getValue())), // layers
                                     realizeFutures(Verify.verifyNotNull(results.applicationLayers)))
