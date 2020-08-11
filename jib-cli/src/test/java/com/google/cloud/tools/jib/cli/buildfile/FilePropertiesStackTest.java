@@ -24,6 +24,17 @@ import org.junit.Test;
 public class FilePropertiesStackTest {
 
   @Test
+  public void testDefaults() {
+    FilePropertiesStack testStack = new FilePropertiesStack();
+
+    Assert.assertEquals(FilePermissions.fromOctalString("644"), testStack.getFilePermissions());
+    Assert.assertEquals(
+        FilePermissions.fromOctalString("755"), testStack.getDirectoryPermissions());
+    Assert.assertEquals("", testStack.getOwnership());
+    Assert.assertEquals(Instant.ofEpochSecond(1), testStack.getModificationTime());
+  }
+
+  @Test
   public void testPush_simple() {
     FilePropertiesStack testStack = new FilePropertiesStack();
 
@@ -74,10 +85,11 @@ public class FilePropertiesStackTest {
     testStack.push(new FilePropertiesSpec("111", "111", "1", "1", "1"));
     testStack.pop();
 
-    Assert.assertNull(testStack.getFilePermissions());
-    Assert.assertNull(testStack.getDirectoryPermissions());
-    Assert.assertNull(testStack.getModificationTime());
-    Assert.assertNull(testStack.getOwnership());
+    Assert.assertEquals(FilePermissions.fromOctalString("644"), testStack.getFilePermissions());
+    Assert.assertEquals(
+        FilePermissions.fromOctalString("755"), testStack.getDirectoryPermissions());
+    Assert.assertEquals("", testStack.getOwnership());
+    Assert.assertEquals(Instant.ofEpochSecond(1), testStack.getModificationTime());
   }
 
   @Test
@@ -137,6 +149,6 @@ public class FilePropertiesStackTest {
     FilePropertiesStack testStack = new FilePropertiesStack();
     testStack.push(new FilePropertiesSpec(null, null, null, null, null));
 
-    Assert.assertNull(testStack.getOwnership());
+    Assert.assertEquals("", testStack.getOwnership());
   }
 }

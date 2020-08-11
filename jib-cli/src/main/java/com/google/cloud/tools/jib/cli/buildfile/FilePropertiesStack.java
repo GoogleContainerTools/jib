@@ -16,13 +16,13 @@
 
 package com.google.cloud.tools.jib.cli.buildfile;
 
+import com.google.cloud.tools.jib.api.buildplan.FileEntriesLayer;
 import com.google.cloud.tools.jib.api.buildplan.FilePermissions;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
-import javax.annotation.Nullable;
 
 /**
  * A class that keeps track of permissions for various stacking file permissions settings in {@link
@@ -34,10 +34,23 @@ class FilePropertiesStack {
   // TODO perhaps use a fixed size list here
   private final List<FilePropertiesSpec> stack = new ArrayList<>(3);
 
-  @Nullable private FilePermissions filePermissions;
-  @Nullable private FilePermissions directoryPermissions;
-  @Nullable private Instant modificationTime;
-  @Nullable private String ownership;
+  private FilePermissions filePermissions;
+  private FilePermissions directoryPermissions;
+  private Instant modificationTime;
+  private String ownership;
+
+  /** Create new FilePropertiesStack with defaults. */
+  public FilePropertiesStack() {
+    setDefaults();
+  }
+
+  private void setDefaults() {
+    filePermissions = FilePermissions.DEFAULT_FILE_PERMISSIONS;
+    directoryPermissions = FilePermissions.DEFAULT_FOLDER_PERMISSIONS;
+    modificationTime = FileEntriesLayer.DEFAULT_MODIFICATION_TIME;
+    // TODO: get default from FileEntriesLayer (requires buildplan release)
+    ownership = "";
+  }
 
   /**
    * Add a new layer to the file properties stack. When adding a new layer, it is given highest
@@ -59,10 +72,7 @@ class FilePropertiesStack {
 
   private void updateProperties() {
     // clear existing permissions before recalculating
-    filePermissions = null;
-    directoryPermissions = null;
-    modificationTime = null;
-    ownership = null;
+    setDefaults();
 
     String user = null;
     String group = null;
@@ -76,31 +86,21 @@ class FilePropertiesStack {
       group = properties.getGroup().orElse(group);
     }
     // ownership calculations
-    if (group == null) {
-      ownership = user;
-    } else if (user == null) {
-      ownership = ":" + group;
-    } else {
-      ownership = user + ":" + group;
-    }
+    ownership = (user != null ? user : "") + (group != null ? ":" + group : "");
   }
 
-  @Nullable
   public FilePermissions getFilePermissions() {
     return filePermissions;
   }
 
-  @Nullable
   public FilePermissions getDirectoryPermissions() {
     return directoryPermissions;
   }
 
-  @Nullable
   public Instant getModificationTime() {
     return modificationTime;
   }
 
-  @Nullable
   public String getOwnership() {
     return ownership;
   }
