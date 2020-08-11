@@ -469,7 +469,7 @@ To inspect the image that is produced from the build using Docker, you can use c
 
 ### How do I specify a platform in the manifest list (or OCI index) of a base image?
 
-Jib 2.5.0 added an _incubating feature_ that provides limited support for selecting a base image with the desired platform from a manifest list. For example,
+Newer Jib verisons added an _incubating feature_ that provides limited support for selecting a base image with the desired platform from a manifest list. For example,
 
 ```xml
   <from>
