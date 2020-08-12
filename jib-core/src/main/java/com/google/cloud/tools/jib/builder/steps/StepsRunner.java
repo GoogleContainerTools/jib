@@ -28,6 +28,7 @@ import com.google.cloud.tools.jib.filesystem.TempDirectoryProvider;
 import com.google.cloud.tools.jib.global.JibSystemProperties;
 import com.google.cloud.tools.jib.image.Image;
 import com.google.cloud.tools.jib.image.json.ManifestTemplate;
+import com.google.cloud.tools.jib.image.json.V22ManifestListTemplate;
 import com.google.cloud.tools.jib.registry.ManifestAndDigest;
 import com.google.cloud.tools.jib.registry.RegistryClient;
 import com.google.common.base.Preconditions;
@@ -80,6 +81,7 @@ public class StepsRunner {
     private Future<List<Future<BuildResult>>> buildResults = failedFuture();
     private Future<Optional<ManifestAndDigest<ManifestTemplate>>> manifestCheckResult =
         failedFuture();
+    private Future<V22ManifestListTemplate> manifestList = failedFuture();
   }
 
   /**
@@ -187,6 +189,7 @@ public class StepsRunner {
     stepsToRun.add(this::pushContainerConfigurations);
     stepsToRun.add(this::checkImageInTargetRegistry);
     stepsToRun.add(this::pushImages);
+    stepsToRun.add(this::buildManifestList);
     return this;
   }
 
@@ -302,11 +305,15 @@ public class StepsRunner {
   }
 
   private void obtainBaseImageLayers(boolean layersRequiredLocally) {
-    ProgressEventDispatcher.Factory childProgressDispatcherFactory =
-        Verify.verifyNotNull(rootProgressDispatcher).newChildProducer();
+
     results.baseImagesAndLayers =
         executorService.submit(
             () -> {
+              ProgressEventDispatcher progressDispatcher =
+                  childProgressDispatcherFactory.create(
+                      "scheduling pushing base image layers",
+                      results.baseImagesAndLayers.get().size());
+
               Map<Image, List<Future<PreparedLayer>>> baseImagesAndLayers = new HashMap<>();
               for (Image image : results.baseImagesAndRegistryClient.get().images) {
                 List<Future<PreparedLayer>> layers =
@@ -314,12 +321,12 @@ public class StepsRunner {
                         layersRequiredLocally
                             ? ObtainBaseImageLayerStep.makeListForForcedDownload(
                                 buildContext,
-                                childProgressDispatcherFactory,
+                                progressDispatcher.newChildProducer(),
                                 image,
                                 results.baseImagesAndRegistryClient.get().registryClient)
                             : ObtainBaseImageLayerStep.makeListForSelectiveDownload(
                                 buildContext,
-                                childProgressDispatcherFactory,
+                                progressDispatcher.newChildProducer(),
                                 image,
                                 results.baseImagesAndRegistryClient.get().registryClient,
                                 results.targetRegistryClient.get()));
@@ -499,6 +506,32 @@ public class StepsRunner {
               // Manifest pushers return the same BuildResult.
               : manifestPushResults.get(0).get();
         });
+  }
+
+  private void buildManifestList() {
+    ProgressEventDispatcher.Factory childProgressDispatcherFactory =
+        Verify.verifyNotNull(rootProgressDispatcher).newChildProducer();
+
+    results.manifestList =
+        executorService.submit(
+            () -> {
+              //              if (results.builtImagesAndBaseImages.get().size() == 1) return
+              // results.buildResults;
+
+              List<Future<Image>> builtImages = new ArrayList<>();
+              builtImages.addAll(
+                  results.builtImagesAndContainerConfigurationPushResults.get().keySet());
+              List<Future<BlobDescriptor>> containerConfigPushResults = new ArrayList<>();
+              containerConfigPushResults.addAll(
+                  results.builtImagesAndContainerConfigurationPushResults.get().values());
+
+              return new BuildManifestListStep(
+                      buildContext,
+                      childProgressDispatcherFactory,
+                      realizeFutures(builtImages),
+                      realizeFutures(containerConfigPushResults))
+                  .call();
+            });
   }
 
   private void loadDocker(DockerClient dockerClient) {
