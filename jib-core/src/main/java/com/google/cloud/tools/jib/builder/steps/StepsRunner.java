@@ -510,32 +510,6 @@ public class StepsRunner {
         });
   }
 
-  private void buildManifestList() {
-    ProgressEventDispatcher.Factory childProgressDispatcherFactory =
-        Verify.verifyNotNull(rootProgressDispatcher).newChildProducer();
-
-    results.manifestList =
-        executorService.submit(
-            () -> {
-              //              if (results.builtImagesAndBaseImages.get().size() == 1) return
-              // results.buildResults;
-
-              List<Future<Image>> builtImages = new ArrayList<>();
-              builtImages.addAll(
-                  results.builtImagesAndContainerConfigurationPushResults.get().keySet());
-              List<Future<BlobDescriptor>> containerConfigPushResults = new ArrayList<>();
-              containerConfigPushResults.addAll(
-                  results.builtImagesAndContainerConfigurationPushResults.get().values());
-
-              return new BuildManifestListStep(
-                      buildContext,
-                      childProgressDispatcherFactory,
-                      realizeFutures(builtImages),
-                      realizeFutures(containerConfigPushResults))
-                  .call();
-            });
-  }
-
   private void loadDocker(DockerClient dockerClient) {
     ProgressEventDispatcher.Factory childProgressDispatcherFactory =
         Verify.verifyNotNull(rootProgressDispatcher).newChildProducer();
