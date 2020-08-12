@@ -28,7 +28,6 @@ import com.google.cloud.tools.jib.filesystem.TempDirectoryProvider;
 import com.google.cloud.tools.jib.global.JibSystemProperties;
 import com.google.cloud.tools.jib.image.Image;
 import com.google.cloud.tools.jib.image.json.ManifestTemplate;
-import com.google.cloud.tools.jib.image.json.V22ManifestListTemplate;
 import com.google.cloud.tools.jib.registry.ManifestAndDigest;
 import com.google.cloud.tools.jib.registry.RegistryClient;
 import com.google.common.base.Preconditions;
@@ -81,7 +80,6 @@ public class StepsRunner {
     private Future<List<Future<BuildResult>>> buildResults = failedFuture();
     private Future<Optional<ManifestAndDigest<ManifestTemplate>>> manifestCheckResult =
         failedFuture();
-    private Future<V22ManifestListTemplate> manifestList = failedFuture();
   }
 
   /**
@@ -189,7 +187,6 @@ public class StepsRunner {
     stepsToRun.add(this::pushContainerConfigurations);
     stepsToRun.add(this::checkImageInTargetRegistry);
     stepsToRun.add(this::pushImages);
-    stepsToRun.add(this::buildManifestList);
     return this;
   }
 
