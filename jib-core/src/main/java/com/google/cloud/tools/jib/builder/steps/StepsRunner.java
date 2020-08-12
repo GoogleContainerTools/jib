@@ -305,6 +305,8 @@ public class StepsRunner {
   }
 
   private void obtainBaseImageLayers(boolean layersRequiredLocally) {
+    ProgressEventDispatcher.Factory childProgressDispatcherFactory =
+        Verify.verifyNotNull(rootProgressDispatcher).newChildProducer();
 
     results.baseImagesAndLayers =
         executorService.submit(
