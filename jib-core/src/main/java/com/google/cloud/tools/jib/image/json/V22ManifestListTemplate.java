@@ -20,6 +20,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.google.cloud.tools.jib.json.JsonTemplate;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
@@ -76,6 +77,12 @@ public class V22ManifestListTemplate implements ManifestTemplate {
   @Nullable private List<ManifestDescriptorTemplate> manifests;
 
   @VisibleForTesting
+  public void addManifest(ManifestDescriptorTemplate manifest) {
+    if (manifests.equals(null)) manifests = new ArrayList<>();
+    manifests.add(manifest);
+  }
+
+  @VisibleForTesting
   public List<ManifestDescriptorTemplate> getManifests() {
     return Preconditions.checkNotNull(manifests);
   }
@@ -117,14 +124,31 @@ public class V22ManifestListTemplate implements ManifestTemplate {
 
     @Nullable private Platform platform;
 
+    public void setSize(long size) {
+      this.size = size;
+    }
+
+    public void setDigest(String digest) {
+      this.digest = digest;
+    }
+
     @Nullable
     private String getDigest() {
       return digest;
     }
 
+    public void setMediaType(String mediaType) {
+      this.mediaType = mediaType;
+    }
+
     @Nullable
     public String getMediaType() {
       return mediaType;
+    }
+
+    public void setPlatform(String architecture, String os) {
+      this.platform.architecture = architecture;
+      this.platform.os = os;
     }
 
     @VisibleForTesting

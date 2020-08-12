@@ -22,7 +22,6 @@ import com.google.cloud.tools.jib.api.buildplan.FileEntriesLayer;
 import com.google.cloud.tools.jib.api.buildplan.FileEntry;
 import com.google.cloud.tools.jib.api.buildplan.ImageFormat;
 import com.google.cloud.tools.jib.api.buildplan.LayerObject;
-import com.google.cloud.tools.jib.api.buildplan.Platform;
 import com.google.cloud.tools.jib.api.buildplan.Port;
 import com.google.cloud.tools.jib.builder.TimerEventDispatcher;
 import com.google.cloud.tools.jib.builder.steps.BuildResult;
@@ -594,10 +593,10 @@ public class JibContainerBuilder {
             new TimerEventDispatcher(
                 buildContext.getEventHandlers(), containerizer.getDescription())) {
 
-      if (buildContext.getContainerConfiguration().getPlatforms().size() != 1) {
-        throw new UnsupportedOperationException(
-            "multi-platform image building is not yet supported");
-      }
+      //      if (buildContext.getContainerConfiguration().getPlatforms().size() != 1) {
+      //        throw new UnsupportedOperationException(
+      //            "multi-platform image building is not yet supported");
+      //      }
       logSources(buildContext.getEventHandlers());
 
       BuildResult buildResult = containerizer.run(buildContext);
