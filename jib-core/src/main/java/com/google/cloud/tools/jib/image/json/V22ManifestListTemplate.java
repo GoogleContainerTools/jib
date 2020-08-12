@@ -78,7 +78,7 @@ public class V22ManifestListTemplate implements ManifestTemplate {
 
   @VisibleForTesting
   public void addManifest(ManifestDescriptorTemplate manifest) {
-    if (manifests.equals(null)) manifests = new ArrayList<>();
+    if (manifests == null) manifests = new ArrayList<>();
     manifests.add(manifest);
   }
 
@@ -146,10 +146,10 @@ public class V22ManifestListTemplate implements ManifestTemplate {
       return mediaType;
     }
 
-    public void setPlatform(String architecture, String os) {
-      this.platform.architecture = architecture;
-      this.platform.os = os;
-    }
+    //    public void setPlatform(String architecture, String os) {
+    //      this.platform.architecture = architecture;
+    //      this.platform.os = os;
+    //    }
 
     @VisibleForTesting
     @Nullable

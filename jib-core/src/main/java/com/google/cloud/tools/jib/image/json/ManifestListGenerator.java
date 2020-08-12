@@ -72,7 +72,7 @@ public class ManifestListGenerator {
       ManifestDescriptorTemplate manifest = new ManifestDescriptorTemplate();
       manifest.setSize(configDescriptor.getSize());
       manifest.setDigest(configDescriptor.getDigest().toString());
-      manifest.setPlatform(builtImage.next().getArchitecture(), builtImage.next().getOs());
+      //      manifest.setPlatform(builtImage.next().getArchitecture(), builtImage.next().getOs());
       manifestList.addManifest(manifest);
     }
     return manifestList;

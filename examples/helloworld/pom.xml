@@ -9,7 +9,7 @@
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <jib-maven-plugin.version>2.5.2</jib-maven-plugin.version>
+    <jib-maven-plugin.version>2.5.3-SNAPSHOT</jib-maven-plugin.version>
     <maven-compiler-plugin.version>3.8.0</maven-compiler-plugin.version>
   </properties>
 
@@ -39,8 +39,24 @@
         <artifactId>jib-maven-plugin</artifactId>
         <version>${jib-maven-plugin.version}</version>
         <configuration>
-          <to>
-            <image>gcr.io/REPLACE-WITH-YOUR-GCP-PROJECT/image-built-with-jib</image>
+        <from>
+        <image>ubuntu</image>
+        <platforms>
+        <platform>
+        <architecture>arm</architecture>
+        <os>linux</os>
+        </platform>
+           <platform>
+        <architecture>amd64</architecture>
+        <os>linux</os>
+        </platform>
+        
+        </platforms>
+        
+        
+				    </from>    
+		<to>
+            <image>gcr.io/google.com/louisfirstproject/image-built-with-jib</image>
           </to>
         </configuration>
         <executions>
