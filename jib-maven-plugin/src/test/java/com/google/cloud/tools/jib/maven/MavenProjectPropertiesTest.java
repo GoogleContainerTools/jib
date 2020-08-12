@@ -705,7 +705,7 @@ public class MavenProjectPropertiesTest {
     MavenProject rootPomProject = Mockito.mock(MavenProject.class);
     MavenProject jibSubModule = Mockito.mock(MavenProject.class);
     MavenProject sharedLibSubModule = Mockito.mock(MavenProject.class);
-    Mockito.when(mockMavenSession.getProjects())
+    Mockito.when(mockMavenSession.getAllProjects())
         .thenReturn(Arrays.asList(rootPomProject, sharedLibSubModule, jibSubModule));
 
     Artifact nullFileArtifact = Mockito.mock(Artifact.class);

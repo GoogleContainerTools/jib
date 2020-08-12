@@ -315,7 +315,7 @@ public class MavenProjectProperties implements ProjectProperties {
   @VisibleForTesting
   Set<Artifact> getProjectDependencies() {
     return session
-        .getProjects()
+        .getAllProjects()
         .stream()
         .map(MavenProject::getArtifact)
         .filter(artifact -> !artifact.equals(project.getArtifact()))
