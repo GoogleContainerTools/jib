@@ -136,7 +136,7 @@ abstract class AbstractManifestPuller<T extends ManifestTemplate, R>
 
     int schemaVersion = node.get("schemaVersion").asInt(-1);
     if (schemaVersion == -1) {
-      throw new UnknownManifestFormatException("`schemaVersion` field is not an integer");
+      throw new UnknownManifestFormatException("'schemaVersion' field is not an integer");
     }
 
     if (schemaVersion == 1) {

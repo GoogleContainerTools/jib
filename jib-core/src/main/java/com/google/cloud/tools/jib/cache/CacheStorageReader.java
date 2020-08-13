@@ -30,10 +30,13 @@ import com.google.cloud.tools.jib.image.json.V21ManifestTemplate;
 import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.DigestException;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -84,67 +87,73 @@ class CacheStorageReader {
    * @throws IOException if an I/O exception occurs
    * @throws CacheCorruptedException if the cache is corrupted
    */
-  Optional<ManifestAndConfig> retrieveMetadata(ImageReference imageReference)
+  List<ManifestAndConfig> retrieveMetadata(ImageReference imageReference)
       throws IOException, CacheCorruptedException {
     Path imageDirectory = cacheStorageFiles.getImageDirectory(imageReference);
-    Path manifestPath = imageDirectory.resolve("manifest.json");
-    if (!Files.exists(manifestPath)) {
-      return Optional.empty();
+    Path metadataPath = imageDirectory.resolve("manifests_configs.json");
+    if (!Files.exists(metadataPath)) {
+      return Collections.emptyList();
     }
 
-    try (LockFile ignored = LockFile.lock(imageDirectory.resolve("lock"))) {
-      // TODO: Consolidate with ManifestPuller
-      ObjectNode node =
-          new ObjectMapper().readValue(Files.newInputStream(manifestPath), ObjectNode.class);
-      if (!node.has("schemaVersion")) {
-        throw new CacheCorruptedException(
-            cacheStorageFiles.getCacheDirectory(), "Cannot find field 'schemaVersion' in manifest");
+    List<ManifestAndConfig> manifestsAndConfigs = new ArrayList<>();
+    try (LockFile ignored = LockFile.lock(imageDirectory.resolve("lock"));
+        InputStream jsonStream = Files.newInputStream(metadataPath)) {
+      for (MetadataEntryTemplate metadataEntry :
+          JsonTemplateMapper.readListOfJson(jsonStream, MetadataEntryTemplate.class)) {
+        manifestsAndConfigs.add(parseManifestAndConfig(metadataEntry));
       }
+    }
+    return manifestsAndConfigs;
+  }
 
-      int schemaVersion = node.get("schemaVersion").asInt(-1);
-      if (schemaVersion == -1) {
-        throw new CacheCorruptedException(
-            cacheStorageFiles.getCacheDirectory(),
-            "`schemaVersion` field is not an integer in manifest");
-      }
+  private ManifestAndConfig parseManifestAndConfig(MetadataEntryTemplate metadataEntry)
+      throws IOException, CacheCorruptedException {
+    // TODO: Consolidate with AbstractManifestPuller. However, doing so shouldn't destroy package
+    // hierarchy. (RegistryClient sits lower in the hierarchy and isolated.)
+    ObjectNode manifestNode =
+        new ObjectMapper().readValue(metadataEntry.getManfiest(), ObjectNode.class);
+    if (!manifestNode.has("schemaVersion")) {
+      throw new CacheCorruptedException(
+          cacheStorageFiles.getCacheDirectory(), "Cannot find field 'schemaVersion' in manifest");
+    }
 
-      if (schemaVersion == 1) {
-        return Optional.of(
-            new ManifestAndConfig(
-                JsonTemplateMapper.readJsonFromFile(manifestPath, V21ManifestTemplate.class),
-                null));
-      }
-      if (schemaVersion == 2) {
-        // 'schemaVersion' of 2 can be either Docker V2.2 or OCI.
-        String mediaType = node.get("mediaType").asText();
-
-        ManifestTemplate manifestTemplate;
-        if (V22ManifestTemplate.MANIFEST_MEDIA_TYPE.equals(mediaType)) {
-          manifestTemplate =
-              JsonTemplateMapper.readJsonFromFile(manifestPath, V22ManifestTemplate.class);
-        } else if (OciManifestTemplate.MANIFEST_MEDIA_TYPE.equals(mediaType)) {
-          manifestTemplate =
-              JsonTemplateMapper.readJsonFromFile(manifestPath, OciManifestTemplate.class);
-        } else {
-          throw new CacheCorruptedException(
-              cacheStorageFiles.getCacheDirectory(), "Unknown manifest mediaType: " + mediaType);
-        }
-
-        Path configPath = imageDirectory.resolve("config.json");
-        if (!Files.exists(configPath)) {
-          throw new CacheCorruptedException(
-              cacheStorageFiles.getCacheDirectory(),
-              "Manifest found, but missing container configuration");
-        }
-        ContainerConfigurationTemplate config =
-            JsonTemplateMapper.readJsonFromFile(configPath, ContainerConfigurationTemplate.class);
-
-        return Optional.of(new ManifestAndConfig(manifestTemplate, config));
-      }
+    int schemaVersion = manifestNode.get("schemaVersion").asInt(-1);
+    if (schemaVersion == -1) {
       throw new CacheCorruptedException(
           cacheStorageFiles.getCacheDirectory(),
-          "Unknown schemaVersion in manifest: " + schemaVersion + " - only 1 and 2 are supported");
+          "'schemaVersion' field is not an integer in manifest");
     }
+
+    if (schemaVersion == 1) {
+      return new ManifestAndConfig(
+          JsonTemplateMapper.readJson(metadataEntry.getManfiest(), V21ManifestTemplate.class),
+          null);
+    }
+    if (schemaVersion == 2) {
+      // 'schemaVersion' of 2 can be either Docker V2.2 or OCI.
+      String mediaType = manifestNode.get("mediaType").asText();
+
+      ManifestTemplate manifestTemplate;
+      if (V22ManifestTemplate.MANIFEST_MEDIA_TYPE.equals(mediaType)) {
+        manifestTemplate =
+            JsonTemplateMapper.readJson(metadataEntry.getManfiest(), V22ManifestTemplate.class);
+      } else if (OciManifestTemplate.MANIFEST_MEDIA_TYPE.equals(mediaType)) {
+        manifestTemplate =
+            JsonTemplateMapper.readJson(metadataEntry.getManfiest(), OciManifestTemplate.class);
+      } else {
+        throw new CacheCorruptedException(
+            cacheStorageFiles.getCacheDirectory(), "Unknown manifest mediaType: " + mediaType);
+      }
+
+      ContainerConfigurationTemplate config =
+          JsonTemplateMapper.readJson(
+              metadataEntry.getContainerConfig(), ContainerConfigurationTemplate.class);
+
+      return new ManifestAndConfig(manifestTemplate, config);
+    }
+    throw new CacheCorruptedException(
+        cacheStorageFiles.getCacheDirectory(),
+        "Unknown schemaVersion in manifest: " + schemaVersion + " - only 1 and 2 are supported");
   }
 
   /**

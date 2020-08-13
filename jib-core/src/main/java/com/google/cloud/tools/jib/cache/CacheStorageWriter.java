@@ -43,6 +43,7 @@ import java.nio.file.FileSystemException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
@@ -299,23 +300,26 @@ class CacheStorageWriter {
    * Saves the manifest and container configuration for a V2.2 or OCI image.
    *
    * @param imageReference the image reference to store the metadata for
-   * @param manifestTemplate the manifest
-   * @param containerConfiguration the container configuration
+   * @param manifestTemplates the manifest
+   * @param containerConfigurations the container configuration
    */
   void writeMetadata(
       ImageReference imageReference,
-      BuildableManifestTemplate manifestTemplate,
-      ContainerConfigurationTemplate containerConfiguration)
+      List<BuildableManifestTemplate> manifestTemplates,
+      List<ContainerConfigurationTemplate> containerConfigurations)
       throws IOException {
-    Preconditions.checkNotNull(manifestTemplate.getContainerConfiguration());
-    Preconditions.checkNotNull(manifestTemplate.getContainerConfiguration().getDigest());
+    Preconditions.checkArgument(manifestTemplates.size() == containerConfigurations.size());
+    for (BuildableManifestTemplate manifest : manifestTemplates) {
+      Preconditions.checkNotNull(manifest.getContainerConfiguration());
+      Preconditions.checkNotNull(manifest.getContainerConfiguration().getDigest());
+    }
 
     Path imageDirectory = cacheStorageFiles.getImageDirectory(imageReference);
     Files.createDirectories(imageDirectory);
 
     try (LockFile ignored1 = LockFile.lock(imageDirectory.resolve("lock"))) {
-      writeMetadata(manifestTemplate, imageDirectory.resolve("manifest.json"));
-      writeMetadata(containerConfiguration, imageDirectory.resolve("config.json"));
+      writeMetadata(manifestTemplates, imageDirectory.resolve("manifest.json"));
+      writeMetadata(containerConfigurations, imageDirectory.resolve("config.json"));
     }
   }
 

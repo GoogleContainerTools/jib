@@ -364,19 +364,20 @@ class PullBaseImageStep implements Callable<ImagesAndRegistryClient> {
       throws IOException, CacheCorruptedException, BadContainerConfigurationFormatException,
           LayerCountMismatchException {
     ImageReference baseImage = buildContext.getBaseImageConfiguration().getImage();
-    Optional<ManifestAndConfig> metadata =
+    List<ManifestAndConfig> metadata =
         buildContext.getBaseImageLayersCache().retrieveMetadata(baseImage);
-    if (!metadata.isPresent()) {
+    if (metadata.isEmpty()) {
       return Optional.empty();
     }
 
-    ManifestTemplate manifestTemplate = metadata.get().getManifest();
+    // TODO: search for images matching given platforms and return List<Image>.
+    ManifestTemplate manifestTemplate = metadata.get(0).getManifest();
     if (manifestTemplate instanceof V21ManifestTemplate) {
       return Optional.of(JsonToImageTranslator.toImage((V21ManifestTemplate) manifestTemplate));
     }
 
     ContainerConfigurationTemplate configurationTemplate =
-        metadata.get().getConfig().orElseThrow(IllegalStateException::new);
+        metadata.get(0).getConfig().orElseThrow(IllegalStateException::new);
     return Optional.of(
         JsonToImageTranslator.toImage(
             (BuildableManifestTemplate) manifestTemplate, configurationTemplate));
