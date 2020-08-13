@@ -404,7 +404,8 @@ public class StepsRunner {
               Map<Future<Image>, Image> builtImagesAndBaseImages = new HashMap<>();
               for (Map.Entry<Image, List<Future<PreparedLayer>>> entry :
                   results.baseImagesAndLayers.get().entrySet()) {
-                Factory progressDispatcherFactory = progressDispatcher.newChildProducer();
+                ProgressEventDispatcher.Factory progressDispatcherFactory =
+                    progressDispatcher.newChildProducer();
                 Future<Image> builtImage =
                     executorService.submit(
                         () ->
