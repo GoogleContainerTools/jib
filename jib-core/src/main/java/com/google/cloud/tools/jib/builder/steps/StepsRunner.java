@@ -511,12 +511,12 @@ public class StepsRunner {
     results.manifestList =
         executorService.submit(
             () -> {
-              //              if (results.builtImagesAndBaseImages.get().size() == 1) return
-              // results.buildResults;
+              //              if (results.builtImagesAndBaseImages.get().size() == 1) return null;
 
               List<Future<Image>> builtImages = new ArrayList<>();
               builtImages.addAll(
                   results.builtImagesAndContainerConfigurationPushResults.get().keySet());
+
               List<Future<BlobDescriptor>> containerConfigPushResults = new ArrayList<>();
               containerConfigPushResults.addAll(
                   results.builtImagesAndContainerConfigurationPushResults.get().values());
