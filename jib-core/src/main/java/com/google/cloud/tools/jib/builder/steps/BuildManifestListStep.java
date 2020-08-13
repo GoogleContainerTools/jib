@@ -17,41 +17,37 @@
 package com.google.cloud.tools.jib.builder.steps;
 
 import com.google.cloud.tools.jib.api.LogEvent;
-import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.builder.ProgressEventDispatcher;
 import com.google.cloud.tools.jib.builder.TimerEventDispatcher;
 import com.google.cloud.tools.jib.configuration.BuildContext;
 import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.image.Image;
 import com.google.cloud.tools.jib.image.json.ManifestListGenerator;
-import com.google.cloud.tools.jib.image.json.V22ManifestListTemplate;
+import com.google.cloud.tools.jib.image.json.ManifestTemplate;
 import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.Callable;
 
 /** Creates a manifest list */
-class BuildManifestListStep implements Callable<V22ManifestListTemplate> {
+class BuildManifestListStep implements Callable<ManifestTemplate> {
 
   private static final String DESCRIPTION = "Creating a manifest list";
 
   private final BuildContext buildContext;
   private final ProgressEventDispatcher.Factory progressEventDispatcherFactory;
   private final List<Image> builtImages;
-  private final List<BlobDescriptor> containerConfigPushResults;
 
   BuildManifestListStep(
       BuildContext buildContext,
       ProgressEventDispatcher.Factory progressEventDispatcherFactory,
-      List<Image> builtImages,
-      List<BlobDescriptor> containerConfigPushResults) {
+      List<Image> builtImages) {
     this.buildContext = buildContext;
     this.progressEventDispatcherFactory = progressEventDispatcherFactory;
     this.builtImages = builtImages;
-    this.containerConfigPushResults = containerConfigPushResults;
   }
 
   @Override
-  public V22ManifestListTemplate call() throws IOException {
+  public ManifestTemplate call() throws IOException {
 
     EventHandlers eventHandlers = buildContext.getEventHandlers();
     try (TimerEventDispatcher ignored = new TimerEventDispatcher(eventHandlers, DESCRIPTION);
@@ -60,8 +56,6 @@ class BuildManifestListStep implements Callable<V22ManifestListTemplate> {
 
       eventHandlers.dispatch(LogEvent.info("Creating manifest list for"));
     }
-    return new ManifestListGenerator(
-            this.buildContext, this.builtImages, this.containerConfigPushResults)
-        .getManifestListTemplate();
+    return new ManifestListGenerator(this.buildContext, this.builtImages).getManifestListTemplate();
   }
 }

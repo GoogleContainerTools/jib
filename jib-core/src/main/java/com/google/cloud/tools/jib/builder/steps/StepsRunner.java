@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.builder.steps;
 
+import com.google.cloud.tools.jib.api.LogEvent;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.builder.ProgressEventDispatcher;
 import com.google.cloud.tools.jib.builder.ProgressEventDispatcher.Factory;
@@ -28,7 +29,7 @@ import com.google.cloud.tools.jib.filesystem.TempDirectoryProvider;
 import com.google.cloud.tools.jib.global.JibSystemProperties;
 import com.google.cloud.tools.jib.image.Image;
 import com.google.cloud.tools.jib.image.json.ManifestTemplate;
-import com.google.cloud.tools.jib.image.json.V22ManifestListTemplate;
+import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import com.google.cloud.tools.jib.registry.ManifestAndDigest;
 import com.google.cloud.tools.jib.registry.RegistryClient;
 import com.google.common.base.Preconditions;
@@ -37,6 +38,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
+import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -72,6 +74,7 @@ public class StepsRunner {
     private Future<Map<Image, List<Future<PreparedLayer>>>> baseImagesAndLayers = failedFuture();
     @Nullable private List<Future<PreparedLayer>> applicationLayers;
     private Future<Map<Future<Image>, Image>> builtImagesAndBaseImages = failedFuture();
+    private Future<ManifestTemplate> manifestList = failedFuture();
     private Future<RegistryClient> targetRegistryClient = failedFuture();
     public Future<Map<Image, List<Future<BlobDescriptor>>>> baseImagesAndLayerPushResults =
         failedFuture();
@@ -81,7 +84,6 @@ public class StepsRunner {
     private Future<List<Future<BuildResult>>> buildResults = failedFuture();
     private Future<Optional<ManifestAndDigest<ManifestTemplate>>> manifestCheckResult =
         failedFuture();
-    private Future<V22ManifestListTemplate> manifestList = failedFuture();
   }
 
   /**
@@ -182,6 +184,7 @@ public class StepsRunner {
     addRetrievalSteps(layersRequiredLocally);
     stepsToRun.add(this::buildAndCacheApplicationLayers);
     stepsToRun.add(this::buildImages);
+    stepsToRun.add(this::buildManifestList);
 
     // push to registry
     stepsToRun.add(this::pushBaseImageLayers);
@@ -189,7 +192,7 @@ public class StepsRunner {
     stepsToRun.add(this::pushContainerConfigurations);
     stepsToRun.add(this::checkImageInTargetRegistry);
     stepsToRun.add(this::pushImages);
-    //    stepsToRun.add(this::buildManifestList);
+
     return this;
   }
 
@@ -209,6 +212,14 @@ public class StepsRunner {
       rootProgressDispatcher = progressEventDispatcher;
 
       stepsToRun.forEach(Runnable::run);
+      try {
+        buildContext
+            .getEventHandlers()
+            .dispatch(LogEvent.info(JsonTemplateMapper.toUtf8String(results.manifestList.get())));
+      } catch (IOException | InterruptedException e) { // TODO Auto-generated catch block
+        e.printStackTrace();
+      }
+      realizeFutures(results.buildResults.get());
       return results.buildResults.get().get(0).get();
 
     } catch (ExecutionException ex) {
@@ -426,6 +437,23 @@ public class StepsRunner {
             });
   }
 
+  private void buildManifestList() {
+    ProgressEventDispatcher.Factory childProgressDispatcherFactory =
+        Verify.verifyNotNull(rootProgressDispatcher).newChildProducer();
+
+    results.manifestList =
+        executorService.submit(
+            () -> {
+              List<Future<Image>> builtImages = new ArrayList<>();
+              builtImages.addAll(results.builtImagesAndBaseImages.get().keySet());
+              // TODO: If builtImages.size() == 1 return a manifestFile
+
+              return new BuildManifestListStep(
+                      buildContext, childProgressDispatcherFactory, realizeFutures(builtImages))
+                  .call();
+            });
+  }
+
   private void pushContainerConfigurations() {
     ProgressEventDispatcher.Factory childProgressDispatcherFactory =
         Verify.verifyNotNull(rootProgressDispatcher).newChildProducer();
@@ -484,16 +512,11 @@ public class StepsRunner {
     results.manifestCheckResult =
         executorService.submit(
             () -> {
-              Future<Image> builtImage =
-                  results.builtImagesAndBaseImages.get().keySet().iterator().next();
-              Future<BlobDescriptor> containerConfigPushResult =
-                  results.builtImagesAndContainerConfigurationPushResults.get().get(builtImage);
               return new CheckImageStep(
                       buildContext,
                       childProgressDispatcherFactory,
                       results.targetRegistryClient.get(),
-                      Verify.verifyNotNull(containerConfigPushResult).get(),
-                      builtImage.get())
+                      results.manifestList.get())
                   .call();
             });
   }
@@ -557,33 +580,6 @@ public class StepsRunner {
               : manifestPushResults.get(0).get();
         });
   }
-
-  //  private void buildManifestList() {
-  //    ProgressEventDispatcher.Factory childProgressDispatcherFactory =
-  //        Verify.verifyNotNull(rootProgressDispatcher).newChildProducer();
-  //
-  //    results.manifestList =
-  //        executorService.submit(
-  //            () -> {
-  //              //              if (results.builtImagesAndBaseImages.get().size() == 1) return
-  // null;
-  //
-  //              List<Future<Image>> builtImages = new ArrayList<>();
-  //              builtImages.addAll(
-  //                  results.builtImagesAndContainerConfigurationPushResults.get().keySet());
-  //
-  //              List<Future<BlobDescriptor>> containerConfigPushResults = new ArrayList<>();
-  //              containerConfigPushResults.addAll(
-  //                  results.builtImagesAndContainerConfigurationPushResults.get().values());
-  //
-  //              return new BuildManifestListStep(
-  //                      buildContext,
-  //                      childProgressDispatcherFactory,
-  //                      realizeFutures(builtImages),
-  //                      realizeFutures(containerConfigPushResults))
-  //                  .call();
-  //            });
-  //  }
 
   private void loadDocker(DockerClient dockerClient) {
     ProgressEventDispatcher.Factory childProgressDispatcherFactory =

@@ -21,9 +21,9 @@ import com.google.cloud.tools.jib.blob.Blobs;
 import com.google.cloud.tools.jib.configuration.BuildContext;
 import com.google.cloud.tools.jib.image.Image;
 import com.google.cloud.tools.jib.image.json.V22ManifestListTemplate.ManifestDescriptorTemplate;
+import com.google.cloud.tools.jib.json.JsonTemplate;
 import com.google.common.io.ByteStreams;
 import java.io.IOException;
-import java.util.Iterator;
 import java.util.List;
 
 /** Translates a list of {@link Image} into a manifest list. */
@@ -31,15 +31,10 @@ public class ManifestListGenerator {
 
   private final BuildContext buildContext;
   private final List<Image> builtImages;
-  private final List<BlobDescriptor> containerConfigPushResults;
 
-  public ManifestListGenerator(
-      BuildContext buildContext,
-      List<Image> builtImages,
-      List<BlobDescriptor> containerConfigPushResults) {
+  public ManifestListGenerator(BuildContext buildContext, List<Image> builtImages) {
     this.buildContext = buildContext;
     this.builtImages = builtImages;
-    this.containerConfigPushResults = containerConfigPushResults;
   }
 
   /**
@@ -53,26 +48,26 @@ public class ManifestListGenerator {
    * @return the image contents serialized as JSON.
    * @throws IOException
    */
-  public V22ManifestListTemplate getManifestListTemplate() throws IOException {
+  public ManifestTemplate getManifestListTemplate() throws IOException {
     V22ManifestListTemplate manifestList = new V22ManifestListTemplate();
 
-    Iterator<Image> builtImage = builtImages.iterator();
-    Iterator<BlobDescriptor> containerConfigPushResult = containerConfigPushResults.iterator();
-
-    while (builtImage.hasNext() && containerConfigPushResult.hasNext()) {
-      // Gets the image manifest.
-      BuildableManifestTemplate manifestTemplate =
-          new ImageToJsonTranslator(builtImage.next())
-              .getManifestTemplate(
-                  buildContext.getTargetFormat(), containerConfigPushResult.next());
-
+    for (Image builtImage : builtImages) {
+      JsonTemplate containerConfiguration =
+          new ImageToJsonTranslator(builtImage).getContainerConfiguration();
       BlobDescriptor configDescriptor =
+          Blobs.from(containerConfiguration).writeTo(ByteStreams.nullOutputStream());
+
+      BuildableManifestTemplate manifestTemplate =
+          new ImageToJsonTranslator(builtImage)
+              .getManifestTemplate(buildContext.getTargetFormat(), configDescriptor);
+      BlobDescriptor manifestDescriptor =
           Blobs.from(manifestTemplate).writeTo(ByteStreams.nullOutputStream());
 
       ManifestDescriptorTemplate manifest = new ManifestDescriptorTemplate();
-      manifest.setSize(configDescriptor.getSize());
-      manifest.setDigest(configDescriptor.getDigest().toString());
-      //      manifest.setPlatform(builtImage.next().getArchitecture(), builtImage.next().getOs());
+      manifest.setMediaType(manifestTemplate.getManifestMediaType());
+      manifest.setSize(manifestDescriptor.getSize());
+      manifest.setDigest(manifestDescriptor.getDigest().toString());
+      manifest.setPlatform(builtImage.getArchitecture(), builtImage.getOs());
       manifestList.addManifest(manifest);
     }
     return manifestList;

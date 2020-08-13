@@ -69,9 +69,16 @@ public class V22ManifestListTemplate implements ManifestTemplate {
       "application/vnd.docker.distribution.manifest.list.v2+json";
   private static final int SCHEMA_VERSION = 2;
 
+  private final int schemaVersion = SCHEMA_VERSION;
+  private final String mediaType = MANIFEST_MEDIA_TYPE;
+
   @Override
   public int getSchemaVersion() {
-    return SCHEMA_VERSION;
+    return schemaVersion;
+  }
+
+  public String getMediaType() {
+    return mediaType;
   }
 
   @Nullable private List<ManifestDescriptorTemplate> manifests;
@@ -146,10 +153,11 @@ public class V22ManifestListTemplate implements ManifestTemplate {
       return mediaType;
     }
 
-    //    public void setPlatform(String architecture, String os) {
-    //      this.platform.architecture = architecture;
-    //      this.platform.os = os;
-    //    }
+    public void setPlatform(String architecture, String os) {
+      this.platform = new Platform();
+      this.platform.architecture = architecture;
+      this.platform.os = os;
+    }
 
     @VisibleForTesting
     @Nullable
