@@ -320,17 +320,18 @@ public class StepsRunner {
 
               Map<Image, List<Future<PreparedLayer>>> baseImagesAndLayers = new HashMap<>();
               for (Image image : results.baseImagesAndRegistryClient.get().images) {
+                Factory progressDispatcherFactory = progressDispatcher.newChildProducer();
                 List<Future<PreparedLayer>> layers =
                     scheduleCallables(
                         layersRequiredLocally
                             ? ObtainBaseImageLayerStep.makeListForForcedDownload(
                                 buildContext,
-                                progressDispatcher.newChildProducer(),
+                                progressDispatcherFactory,
                                 image,
                                 results.baseImagesAndRegistryClient.get().registryClient)
                             : ObtainBaseImageLayerStep.makeListForSelectiveDownload(
                                 buildContext,
-                                progressDispatcher.newChildProducer(),
+                                progressDispatcherFactory,
                                 image,
                                 results.baseImagesAndRegistryClient.get().registryClient,
                                 results.targetRegistryClient.get()));
@@ -360,6 +361,7 @@ public class StepsRunner {
               Map<Image, List<Future<BlobDescriptor>>> pushResults = new HashMap<>();
               for (Map.Entry<Image, List<Future<PreparedLayer>>> entry :
                   results.baseImagesAndLayers.get().entrySet()) {
+                Factory progressDispatcherFactory = progressDispatcher.newChildProducer();
                 Image baseImage = entry.getKey();
                 List<Future<PreparedLayer>> baseImageLayers = entry.getValue();
 
@@ -367,7 +369,7 @@ public class StepsRunner {
                     scheduleCallables(
                         PushLayerStep.makeList(
                             buildContext,
-                            progressDispatcher.newChildProducer(),
+                            progressDispatcherFactory,
                             results.targetRegistryClient.get(),
                             Verify.verifyNotNull(baseImageLayers)));
                 pushResults.put(baseImage, baseImageLayerPushResult);
@@ -404,12 +406,13 @@ public class StepsRunner {
               Map<Future<Image>, Image> builtImagesAndBaseImages = new HashMap<>();
               for (Map.Entry<Image, List<Future<PreparedLayer>>> entry :
                   results.baseImagesAndLayers.get().entrySet()) {
+                Factory progressDispatcherFactory = progressDispatcher.newChildProducer();
                 Future<Image> builtImage =
                     executorService.submit(
                         () ->
                             new BuildImageStep(
                                     buildContext,
-                                    progressDispatcher.newChildProducer(),
+                                    progressDispatcherFactory,
                                     entry.getKey(), // base Image
                                     realizeFutures(
                                         Verify.verifyNotNull(entry.getValue())), // layers
@@ -440,12 +443,13 @@ public class StepsRunner {
 
               Map<Future<Image>, Future<BlobDescriptor>> pushResults = new HashMap<>();
               for (Future<Image> builtImage : results.builtImagesAndBaseImages.get().keySet()) {
+                Factory progressDispatcherFactory = progressDispatcher.newChildProducer();
                 Future<BlobDescriptor> configPushResult =
                     executorService.submit(
                         () ->
                             new PushContainerConfigurationStep(
                                     buildContext,
-                                    progressDispatcher.newChildProducer(),
+                                    progressDispatcherFactory,
                                     results.targetRegistryClient.get(),
                                     builtImage.get())
                                 .call());
@@ -514,9 +518,9 @@ public class StepsRunner {
               List<Future<BuildResult>> buildResults = new ArrayList<>();
               for (Map.Entry<Future<Image>, Image> entry :
                   results.builtImagesAndBaseImages.get().entrySet()) {
+                Factory progressDispatcherFactory = progressDispatcher.newChildProducer();
                 buildResults.add(
-                    pushImage(
-                        entry.getKey(), entry.getValue(), progressDispatcher.newChildProducer()));
+                    pushImage(entry.getKey(), entry.getValue(), progressDispatcherFactory));
               }
               return buildResults;
             });
