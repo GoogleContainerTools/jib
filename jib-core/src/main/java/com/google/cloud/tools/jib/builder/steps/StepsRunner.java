@@ -399,7 +399,7 @@ public class StepsRunner {
               // auto-close it wit the current implementation.)
               ProgressEventDispatcher progressDispatcher =
                   childProgressDispatcherFactory.create(
-                      "scheduling building images", results.baseImagesAndLayers.get().size());
+                      "scheduling building manifests", results.baseImagesAndLayers.get().size());
 
               Map<Future<Image>, Image> builtImagesAndBaseImages = new HashMap<>();
               for (Map.Entry<Image, List<Future<PreparedLayer>>> entry :
@@ -436,7 +436,7 @@ public class StepsRunner {
               ProgressEventDispatcher progressDispatcher =
                   childProgressDispatcherFactory.create(
                       "scheduling pushing container configurations",
-                      results.builtImagesAndBaseImages.get().keySet().size());
+                      results.builtImagesAndBaseImages.get().size());
 
               Map<Future<Image>, Future<BlobDescriptor>> pushResults = new HashMap<>();
               for (Future<Image> builtImage : results.builtImagesAndBaseImages.get().keySet()) {
@@ -506,8 +506,8 @@ public class StepsRunner {
               // auto-close it wit the current implementation.)
               ProgressEventDispatcher progressDispatcher =
                   childProgressDispatcherFactory.create(
-                      "scheduling pushing images",
-                      results.builtImagesAndBaseImages.get().keySet().size());
+                      "scheduling pushing manifests",
+                      results.builtImagesAndBaseImages.get().size());
 
               realizeFutures(results.applicationLayerPushResults.get());
 
