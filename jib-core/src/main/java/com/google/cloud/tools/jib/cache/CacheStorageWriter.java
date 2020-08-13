@@ -297,19 +297,19 @@ class CacheStorageWriter {
   }
 
   /**
-   * Saves the manifest and container configuration for a V2.2 or OCI image.
+   * aaa Saves the manifest and container configuration for a V2.2 or OCI image.
    *
    * @param imageReference the image reference to store the metadata for
-   * @param manifestTemplates the manifest
-   * @param containerConfigurations the container configuration
+   * @param manifests the manifests
+   * @param containerConfigurations the container configurations
    */
   void writeMetadata(
       ImageReference imageReference,
-      List<BuildableManifestTemplate> manifestTemplates,
+      List<BuildableManifestTemplate> manifests,
       List<ContainerConfigurationTemplate> containerConfigurations)
       throws IOException {
-    Preconditions.checkArgument(manifestTemplates.size() == containerConfigurations.size());
-    for (BuildableManifestTemplate manifest : manifestTemplates) {
+    Preconditions.checkArgument(manifests.size() == containerConfigurations.size());
+    for (BuildableManifestTemplate manifest : manifests) {
       Preconditions.checkNotNull(manifest.getContainerConfiguration());
       Preconditions.checkNotNull(manifest.getContainerConfiguration().getDigest());
     }
@@ -317,8 +317,11 @@ class CacheStorageWriter {
     Path imageDirectory = cacheStorageFiles.getImageDirectory(imageReference);
     Files.createDirectories(imageDirectory);
 
+    for (int i = 0; i < manifests.size(); i++) {
+      new MetadataEntryTemplate(JsonTemplateMapper.toUtf8String(manifestTemplate), null);
+    }
     try (LockFile ignored1 = LockFile.lock(imageDirectory.resolve("lock"))) {
-      writeMetadata(manifestTemplates, imageDirectory.resolve("manifest.json"));
+      writeMetadata(manifests, imageDirectory.resolve("manifest.json"));
       writeMetadata(containerConfigurations, imageDirectory.resolve("config.json"));
     }
   }
