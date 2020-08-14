@@ -37,7 +37,12 @@ public class ManifestListGenerator {
     this.builtImages = builtImages;
   }
 
-  /** Translates a list of {@link Image} into a manifestTemplate. */
+  /**
+   * Translates a list of {@link Image} into a manifestTemplate.
+   *
+   * @return ManifestTemplate a manifest list representation of {@link Image}.
+   * @throws IOException.
+   */
   public ManifestTemplate getManifestListTemplate() throws IOException {
     V22ManifestListTemplate manifestList = new V22ManifestListTemplate();
 
