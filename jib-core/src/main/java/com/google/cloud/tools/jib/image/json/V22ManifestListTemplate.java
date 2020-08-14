@@ -162,8 +162,8 @@ public class V22ManifestListTemplate implements ManifestTemplate {
     /**
      * Sets a platform.
      *
-     * @param architecture
-     * @param os
+     * @param architecture the manifest architecture
+     * @param os the manifest os
      */
     public void setPlatform(String architecture, String os) {
       this.platform = new Platform();
