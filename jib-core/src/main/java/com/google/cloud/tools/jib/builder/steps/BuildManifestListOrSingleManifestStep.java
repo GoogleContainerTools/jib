@@ -34,7 +34,7 @@ import java.util.concurrent.Callable;
 /** Builds a manifest list or a single manifest. */
 class BuildManifestListOrSingleManifestStep implements Callable<ManifestTemplate> {
 
-  private static final String DESCRIPTION = "Building a manifest list or a manifest";
+  private static final String DESCRIPTION = "Building a manifest list or a single manifest";
 
   private final BuildContext buildContext;
   private final ProgressEventDispatcher.Factory progressEventDispatcherFactory;
