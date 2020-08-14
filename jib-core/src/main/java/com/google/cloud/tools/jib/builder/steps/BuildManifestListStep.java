@@ -28,7 +28,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.Callable;
 
-/** Creates a manifest list */
+/** Creates a manifest list. */
 class BuildManifestListStep implements Callable<ManifestTemplate> {
 
   private static final String DESCRIPTION = "Creating a manifest list";

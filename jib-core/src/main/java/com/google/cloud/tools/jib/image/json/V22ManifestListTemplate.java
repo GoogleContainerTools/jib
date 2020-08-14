@@ -83,9 +83,11 @@ public class V22ManifestListTemplate implements ManifestTemplate {
 
   @Nullable private List<ManifestDescriptorTemplate> manifests;
 
-  @VisibleForTesting
+  /** Adds a manifest. */
   public void addManifest(ManifestDescriptorTemplate manifest) {
-    if (manifests == null) manifests = new ArrayList<>();
+    if (manifests == null) {
+      manifests = new ArrayList<>();
+    }
     manifests.add(manifest);
   }
 
@@ -153,6 +155,7 @@ public class V22ManifestListTemplate implements ManifestTemplate {
       return mediaType;
     }
 
+    /** Set the manifest platform. */
     public void setPlatform(String architecture, String os) {
       this.platform = new Platform();
       this.platform.architecture = architecture;
