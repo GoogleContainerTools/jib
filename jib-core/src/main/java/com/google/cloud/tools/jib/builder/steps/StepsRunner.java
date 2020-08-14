@@ -38,6 +38,7 @@ import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -98,7 +99,7 @@ public class StepsRunner {
     return new StepsRunner(MoreExecutors.listeningDecorator(executorService), buildContext);
   }
 
-  private static <E> List<E> realizeFutures(List<Future<E>> futures)
+  private static <E> List<E> realizeFutures(Collection<Future<E>> futures)
       throws InterruptedException, ExecutionException {
     List<E> values = new ArrayList<>();
     for (Future<E> future : futures) {
@@ -181,7 +182,7 @@ public class StepsRunner {
     addRetrievalSteps(layersRequiredLocally);
     stepsToRun.add(this::buildAndCacheApplicationLayers);
     stepsToRun.add(this::buildImages);
-    stepsToRun.add(this::buildManifestList);
+    stepsToRun.add(this::buildManifestListOrSingleManifest);
 
     // push to registry
     stepsToRun.add(this::pushBaseImageLayers);
@@ -426,19 +427,18 @@ public class StepsRunner {
             });
   }
 
-  private void buildManifestList() {
+  private void buildManifestListOrSingleManifest() {
     ProgressEventDispatcher.Factory childProgressDispatcherFactory =
         Verify.verifyNotNull(rootProgressDispatcher).newChildProducer();
 
     results.manifestListOrSingleManifest =
         executorService.submit(
-            () -> {
-              List<Future<Image>> builtImages = new ArrayList<>();
-              builtImages.addAll(results.builtImagesAndBaseImages.get().keySet());
-              return new BuildManifestListStep(
-                      buildContext, childProgressDispatcherFactory, realizeFutures(builtImages))
-                  .call();
-            });
+            () ->
+                new BuildManifestListOrSingleManifestStep(
+                        buildContext,
+                        childProgressDispatcherFactory,
+                        realizeFutures(results.builtImagesAndBaseImages.get().keySet()))
+                    .call());
   }
 
   private void pushContainerConfigurations() {

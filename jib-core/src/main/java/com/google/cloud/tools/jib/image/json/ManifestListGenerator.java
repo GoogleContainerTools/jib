@@ -17,53 +17,48 @@
 package com.google.cloud.tools.jib.image.json;
 
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
-import com.google.cloud.tools.jib.blob.Blobs;
-import com.google.cloud.tools.jib.configuration.BuildContext;
+import com.google.cloud.tools.jib.hash.Digests;
 import com.google.cloud.tools.jib.image.Image;
 import com.google.cloud.tools.jib.image.json.V22ManifestListTemplate.ManifestDescriptorTemplate;
-import com.google.cloud.tools.jib.json.JsonTemplate;
-import com.google.common.io.ByteStreams;
 import java.io.IOException;
 import java.util.List;
 
-/** Translates a list of {@link Image} into a manifest list. */
+/** Generates a manifest list for {@link Image}s. */
 public class ManifestListGenerator {
 
-  private final BuildContext buildContext;
-  private final List<Image> builtImages;
+  private final List<Image> images;
 
-  public ManifestListGenerator(BuildContext buildContext, List<Image> builtImages) {
-    this.buildContext = buildContext;
-    this.builtImages = builtImages;
+  public ManifestListGenerator(List<Image> images) {
+    this.images = images;
   }
 
   /**
-   * Translates a list of {@link Image} into a manifestTemplate.
+   * Generates a manifest list JSON for the given {@link Image}s.
    *
-   * @return ManifestTemplate a JSON representation of list of {@link Image}.
+   * @param <T> child type of {@link BuildableManifestTemplate}
+   * @param manifestTemplateClass the JSON template to translate the image to
+   * @return a manifest list JSON
    */
-  public ManifestTemplate getManifestListTemplate() {
-
+  public <T extends BuildableManifestTemplate> ManifestTemplate getManifestListTemplate(
+      Class<T> manifestTemplateClass) {
     try {
       V22ManifestListTemplate manifestList = new V22ManifestListTemplate();
 
-      for (Image builtImage : builtImages) {
-        JsonTemplate containerConfiguration =
-            new ImageToJsonTranslator(builtImage).getContainerConfiguration();
+      for (Image image : images) {
+        ImageToJsonTranslator imageTranslator = new ImageToJsonTranslator(image);
+
         BlobDescriptor configDescriptor =
-            Blobs.from(containerConfiguration).writeTo(ByteStreams.nullOutputStream());
+            Digests.computeDigest(imageTranslator.getContainerConfiguration());
 
         BuildableManifestTemplate manifestTemplate =
-            new ImageToJsonTranslator(builtImage)
-                .getManifestTemplate(buildContext.getTargetFormat(), configDescriptor);
-        BlobDescriptor manifestDescriptor =
-            Blobs.from(manifestTemplate).writeTo(ByteStreams.nullOutputStream());
+            imageTranslator.getManifestTemplate(manifestTemplateClass, configDescriptor);
+        BlobDescriptor manifestDescriptor = Digests.computeDigest(manifestTemplate);
 
         ManifestDescriptorTemplate manifest = new ManifestDescriptorTemplate();
         manifest.setMediaType(manifestTemplate.getManifestMediaType());
         manifest.setSize(manifestDescriptor.getSize());
         manifest.setDigest(manifestDescriptor.getDigest().toString());
-        manifest.setPlatform(builtImage.getArchitecture(), builtImage.getOs());
+        manifest.setPlatform(image.getArchitecture(), image.getOs());
         manifestList.addManifest(manifest);
       }
       return manifestList;

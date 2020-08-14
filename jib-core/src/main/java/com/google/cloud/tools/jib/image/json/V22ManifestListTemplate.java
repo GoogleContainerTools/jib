@@ -17,7 +17,6 @@
 package com.google.cloud.tools.jib.image.json;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.google.cloud.tools.jib.image.Image;
 import com.google.cloud.tools.jib.json.JsonTemplate;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
@@ -85,9 +84,9 @@ public class V22ManifestListTemplate implements ManifestTemplate {
   @Nullable private List<ManifestDescriptorTemplate> manifests;
 
   /**
-   * Adds a manifest to the manifestList.
+   * Adds a manifest.
    *
-   * @param manifest a JSON representation of an {@link Image}
+   * @param manifest a manifest descriptor
    */
   public void addManifest(ManifestDescriptorTemplate manifest) {
     if (manifests == null) {
@@ -163,8 +162,8 @@ public class V22ManifestListTemplate implements ManifestTemplate {
     /**
      * Sets a platform.
      *
-     * @param architecture the architecture of the {@link Image}
-     * @param os the OS of the {@link Image}
+     * @param architecture
+     * @param os
      */
     public void setPlatform(String architecture, String os) {
       this.platform = new Platform();
