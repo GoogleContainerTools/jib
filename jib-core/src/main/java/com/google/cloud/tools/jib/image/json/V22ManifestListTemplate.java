@@ -161,7 +161,7 @@ public class V22ManifestListTemplate implements ManifestTemplate {
     }
 
     /**
-     * Sets a platform
+     * Sets a platform.
      *
      * @param architecture the architecture of the {@link Image}
      * @param os the OS of the {@link Image}
