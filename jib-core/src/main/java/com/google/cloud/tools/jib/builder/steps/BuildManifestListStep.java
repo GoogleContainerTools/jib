@@ -52,9 +52,8 @@ class BuildManifestListStep implements Callable<ManifestTemplate> {
     EventHandlers eventHandlers = buildContext.getEventHandlers();
     try (TimerEventDispatcher ignored = new TimerEventDispatcher(eventHandlers, DESCRIPTION);
         ProgressEventDispatcher ignored2 =
-            progressEventDispatcherFactory.create("creating manifest list for", 1)) {
-
-      eventHandlers.dispatch(LogEvent.info("Creating manifest list for"));
+            progressEventDispatcherFactory.create("creating a manifest list", 1)) {
+      eventHandlers.dispatch(LogEvent.info("Creating a manifest list"));
     }
     return new ManifestListGenerator(this.buildContext, this.builtImages).getManifestListTemplate();
   }

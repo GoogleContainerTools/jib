@@ -37,17 +37,6 @@ public class ManifestListGenerator {
     this.builtImages = builtImages;
   }
 
-  /**
-   * Gets the manifest as a JSON template. The {@code containerConfigurationBlobDescriptor} must be
-   * the {@link BlobDescriptor} obtained by writing out the container configuration JSON returned
-   * from {@link #getContainerConfiguration()}.
-   *
-   * @param <T> child type of {@link BuildableManifestTemplate}.
-   * @param manifestTemplateClass the JSON template to translate the image to.
-   * @param containerConfigurationBlobDescriptor the container configuration descriptor.
-   * @return the image contents serialized as JSON.
-   * @throws IOException
-   */
   public ManifestTemplate getManifestListTemplate() throws IOException {
     V22ManifestListTemplate manifestList = new V22ManifestListTemplate();
 
