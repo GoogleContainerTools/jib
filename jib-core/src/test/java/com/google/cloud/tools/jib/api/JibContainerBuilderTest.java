@@ -38,6 +38,7 @@ import java.nio.file.Paths;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.function.Consumer;
 import org.hamcrest.CoreMatchers;
@@ -361,5 +362,24 @@ public class JibContainerBuilderTest {
     ContainerBuildPlan convertedPlan = containerBuilder.toContainerBuildPlan();
     Assert.assertEquals(
         ImmutableSet.of(new Platform("testArchitecture", "testOS")), convertedPlan.getPlatforms());
+  }
+
+  @Test
+  public void testContainerize_multiPlatformsList()
+      throws InvalidImageReferenceException, CacheDirectoryCreationException, InterruptedException,
+          RegistryException, IOException, ExecutionException {
+    ImageConfiguration imageConfiguration =
+        ImageConfiguration.builder(ImageReference.parse("base/image")).build();
+    JibContainerBuilder containerBuilder =
+        new JibContainerBuilder(imageConfiguration, spyBuildContextBuilder)
+            .setPlatforms(
+                ImmutableSet.of(new Platform("arch1", "os1"), new Platform("arch2", "os2")));
+    Containerizer containerizer = Containerizer.to(RegistryImage.named("target/image"));
+    try {
+      containerBuilder.containerize(containerizer);
+      Assert.fail();
+    } catch (UnsupportedOperationException ex) {
+      Assert.assertEquals("multi-platform image building is not yet supported", ex.getMessage());
+    }
   }
 }

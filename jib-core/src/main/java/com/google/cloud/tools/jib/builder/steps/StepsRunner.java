@@ -71,7 +71,7 @@ public class StepsRunner {
     private Future<Map<Image, List<Future<PreparedLayer>>>> baseImagesAndLayers = failedFuture();
     @Nullable private List<Future<PreparedLayer>> applicationLayers;
     private Future<Map<Future<Image>, Image>> builtImagesAndBaseImages = failedFuture();
-    private Future<ManifestTemplate> manifestList = failedFuture();
+    private Future<ManifestTemplate> manifestListOrSingleManifest = failedFuture();
     private Future<RegistryClient> targetRegistryClient = failedFuture();
     public Future<Map<Image, List<Future<BlobDescriptor>>>> baseImagesAndLayerPushResults =
         failedFuture();
@@ -430,7 +430,7 @@ public class StepsRunner {
     ProgressEventDispatcher.Factory childProgressDispatcherFactory =
         Verify.verifyNotNull(rootProgressDispatcher).newChildProducer();
 
-    results.manifestList =
+    results.manifestListOrSingleManifest =
         executorService.submit(
             () -> {
               List<Future<Image>> builtImages = new ArrayList<>();
