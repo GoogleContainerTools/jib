@@ -435,9 +435,6 @@ public class StepsRunner {
             () -> {
               List<Future<Image>> builtImages = new ArrayList<>();
               builtImages.addAll(results.builtImagesAndBaseImages.get().keySet());
-
-              // TODO: if builtImages.size == 1 return a manifest
-
               return new BuildManifestListStep(
                       buildContext, childProgressDispatcherFactory, realizeFutures(builtImages))
                   .call();

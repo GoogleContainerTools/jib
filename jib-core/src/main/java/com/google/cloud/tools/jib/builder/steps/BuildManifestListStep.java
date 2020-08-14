@@ -17,13 +17,18 @@
 package com.google.cloud.tools.jib.builder.steps;
 
 import com.google.cloud.tools.jib.api.LogEvent;
+import com.google.cloud.tools.jib.blob.BlobDescriptor;
+import com.google.cloud.tools.jib.blob.Blobs;
 import com.google.cloud.tools.jib.builder.ProgressEventDispatcher;
 import com.google.cloud.tools.jib.builder.TimerEventDispatcher;
 import com.google.cloud.tools.jib.configuration.BuildContext;
 import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.image.Image;
+import com.google.cloud.tools.jib.image.json.ImageToJsonTranslator;
 import com.google.cloud.tools.jib.image.json.ManifestListGenerator;
 import com.google.cloud.tools.jib.image.json.ManifestTemplate;
+import com.google.cloud.tools.jib.json.JsonTemplate;
+import com.google.common.io.ByteStreams;
 import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -55,6 +60,16 @@ class BuildManifestListStep implements Callable<ManifestTemplate> {
             progressEventDispatcherFactory.create("creating a manifest list", 1)) {
       eventHandlers.dispatch(LogEvent.info("Creating a manifest list"));
     }
+    if (builtImages.size() == 1) {
+      JsonTemplate containerConfiguration =
+          new ImageToJsonTranslator(builtImages.get(0)).getContainerConfiguration();
+      BlobDescriptor configDescriptor =
+          Blobs.from(containerConfiguration).writeTo(ByteStreams.nullOutputStream());
+
+      return new ImageToJsonTranslator(builtImages.get(0))
+          .getManifestTemplate(buildContext.getTargetFormat(), configDescriptor);
+    }
+
     return new ManifestListGenerator(this.buildContext, this.builtImages).getManifestListTemplate();
   }
 }

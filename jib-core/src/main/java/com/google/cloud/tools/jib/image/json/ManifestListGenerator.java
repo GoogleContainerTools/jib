@@ -40,31 +40,36 @@ public class ManifestListGenerator {
   /**
    * Translates a list of {@link Image} into a manifestTemplate.
    *
-   * @return ManifestTemplate a manifest list representation of {@link Image}.
-   * @throws IOException.
+   * @return ManifestTemplate a JSON representation of list of {@link Image}.
    */
-  public ManifestTemplate getManifestListTemplate() throws IOException {
-    V22ManifestListTemplate manifestList = new V22ManifestListTemplate();
+  public ManifestTemplate getManifestListTemplate() {
 
-    for (Image builtImage : builtImages) {
-      JsonTemplate containerConfiguration =
-          new ImageToJsonTranslator(builtImage).getContainerConfiguration();
-      BlobDescriptor configDescriptor =
-          Blobs.from(containerConfiguration).writeTo(ByteStreams.nullOutputStream());
+    try {
+      V22ManifestListTemplate manifestList = new V22ManifestListTemplate();
 
-      BuildableManifestTemplate manifestTemplate =
-          new ImageToJsonTranslator(builtImage)
-              .getManifestTemplate(buildContext.getTargetFormat(), configDescriptor);
-      BlobDescriptor manifestDescriptor =
-          Blobs.from(manifestTemplate).writeTo(ByteStreams.nullOutputStream());
+      for (Image builtImage : builtImages) {
+        JsonTemplate containerConfiguration =
+            new ImageToJsonTranslator(builtImage).getContainerConfiguration();
+        BlobDescriptor configDescriptor =
+            Blobs.from(containerConfiguration).writeTo(ByteStreams.nullOutputStream());
 
-      ManifestDescriptorTemplate manifest = new ManifestDescriptorTemplate();
-      manifest.setMediaType(manifestTemplate.getManifestMediaType());
-      manifest.setSize(manifestDescriptor.getSize());
-      manifest.setDigest(manifestDescriptor.getDigest().toString());
-      manifest.setPlatform(builtImage.getArchitecture(), builtImage.getOs());
-      manifestList.addManifest(manifest);
+        BuildableManifestTemplate manifestTemplate =
+            new ImageToJsonTranslator(builtImage)
+                .getManifestTemplate(buildContext.getTargetFormat(), configDescriptor);
+        BlobDescriptor manifestDescriptor =
+            Blobs.from(manifestTemplate).writeTo(ByteStreams.nullOutputStream());
+
+        ManifestDescriptorTemplate manifest = new ManifestDescriptorTemplate();
+        manifest.setMediaType(manifestTemplate.getManifestMediaType());
+        manifest.setSize(manifestDescriptor.getSize());
+        manifest.setDigest(manifestDescriptor.getDigest().toString());
+        manifest.setPlatform(builtImage.getArchitecture(), builtImage.getOs());
+        manifestList.addManifest(manifest);
+      }
+      return manifestList;
+
+    } catch (IOException ex) {
+      throw new IllegalArgumentException("manifest list cannot be instantiated", ex);
     }
-    return manifestList;
   }
 }
