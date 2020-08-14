@@ -16,7 +16,6 @@
 
 package com.google.cloud.tools.jib.builder.steps;
 
-import com.google.cloud.tools.jib.api.LogEvent;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.builder.ProgressEventDispatcher;
 import com.google.cloud.tools.jib.builder.ProgressEventDispatcher.Factory;
@@ -29,7 +28,6 @@ import com.google.cloud.tools.jib.filesystem.TempDirectoryProvider;
 import com.google.cloud.tools.jib.global.JibSystemProperties;
 import com.google.cloud.tools.jib.image.Image;
 import com.google.cloud.tools.jib.image.json.ManifestTemplate;
-import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import com.google.cloud.tools.jib.registry.ManifestAndDigest;
 import com.google.cloud.tools.jib.registry.RegistryClient;
 import com.google.common.base.Preconditions;
@@ -38,7 +36,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
-import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -192,7 +189,6 @@ public class StepsRunner {
     stepsToRun.add(this::pushContainerConfigurations);
     stepsToRun.add(this::checkImageInTargetRegistry);
     stepsToRun.add(this::pushImages);
-
     return this;
   }
 
@@ -212,13 +208,6 @@ public class StepsRunner {
       rootProgressDispatcher = progressEventDispatcher;
 
       stepsToRun.forEach(Runnable::run);
-      try {
-        buildContext
-            .getEventHandlers()
-            .dispatch(LogEvent.info(JsonTemplateMapper.toUtf8String(results.manifestList.get())));
-      } catch (IOException | InterruptedException e) { // TODO Auto-generated catch block
-        e.printStackTrace();
-      }
       realizeFutures(results.buildResults.get());
       return results.buildResults.get().get(0).get();
 

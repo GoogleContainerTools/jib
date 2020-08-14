@@ -594,10 +594,6 @@ public class JibContainerBuilder {
             new TimerEventDispatcher(
                 buildContext.getEventHandlers(), containerizer.getDescription())) {
 
-      //      if (buildContext.getContainerConfiguration().getPlatforms().size() != 1) {
-      //        throw new UnsupportedOperationException(
-      //            "multi-platform image building is not yet supported");
-      //      }
       logSources(buildContext.getEventHandlers());
 
       BuildResult buildResult = containerizer.run(buildContext);
