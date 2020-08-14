@@ -446,8 +446,6 @@ public class StepsRunner {
             () -> {
               List<Future<Image>> builtImages = new ArrayList<>();
               builtImages.addAll(results.builtImagesAndBaseImages.get().keySet());
-              // TODO: If builtImages.size() == 1 return a manifestFile
-
               return new BuildManifestListStep(
                       buildContext, childProgressDispatcherFactory, realizeFutures(builtImages))
                   .call();
@@ -512,11 +510,16 @@ public class StepsRunner {
     results.manifestCheckResult =
         executorService.submit(
             () -> {
+              Future<Image> builtImage =
+                  results.builtImagesAndBaseImages.get().keySet().iterator().next();
+              Future<BlobDescriptor> containerConfigPushResult =
+                  results.builtImagesAndContainerConfigurationPushResults.get().get(builtImage);
               return new CheckImageStep(
                       buildContext,
                       childProgressDispatcherFactory,
                       results.targetRegistryClient.get(),
-                      results.manifestList.get())
+                      Verify.verifyNotNull(containerConfigPushResult).get(),
+                      builtImage.get())
                   .call();
             });
   }

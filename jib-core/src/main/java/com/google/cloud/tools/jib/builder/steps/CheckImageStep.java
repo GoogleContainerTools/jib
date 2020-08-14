@@ -19,12 +19,16 @@ package com.google.cloud.tools.jib.builder.steps;
 import com.google.cloud.tools.jib.api.DescriptorDigest;
 import com.google.cloud.tools.jib.api.LogEvent;
 import com.google.cloud.tools.jib.api.RegistryException;
+import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.builder.ProgressEventDispatcher;
 import com.google.cloud.tools.jib.builder.TimerEventDispatcher;
 import com.google.cloud.tools.jib.configuration.BuildContext;
 import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.global.JibSystemProperties;
 import com.google.cloud.tools.jib.hash.Digests;
+import com.google.cloud.tools.jib.image.Image;
+import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
+import com.google.cloud.tools.jib.image.json.ImageToJsonTranslator;
 import com.google.cloud.tools.jib.image.json.ManifestTemplate;
 import com.google.cloud.tools.jib.registry.ManifestAndDigest;
 import com.google.cloud.tools.jib.registry.RegistryClient;
@@ -40,23 +44,29 @@ class CheckImageStep implements Callable<Optional<ManifestAndDigest<ManifestTemp
   private final BuildContext buildContext;
   private final ProgressEventDispatcher.Factory progressEventDispatcherFactory;
   private final RegistryClient registryClient;
-  private final ManifestTemplate manifestTemplate;
+  private final BlobDescriptor containerConfigurationDigestAndSize;
+  private final Image image;
 
   CheckImageStep(
       BuildContext buildContext,
       ProgressEventDispatcher.Factory progressEventDispatcherFactory,
       RegistryClient registryClient,
-      ManifestTemplate manifestTemplate) {
+      BlobDescriptor containerConfigurationDigestAndSize,
+      Image image) {
     this.buildContext = buildContext;
     this.progressEventDispatcherFactory = progressEventDispatcherFactory;
     this.registryClient = registryClient;
-    this.manifestTemplate = manifestTemplate;
+    this.containerConfigurationDigestAndSize = containerConfigurationDigestAndSize;
+    this.image = image;
   }
 
   @Override
   public Optional<ManifestAndDigest<ManifestTemplate>> call()
       throws IOException, RegistryException {
-
+    BuildableManifestTemplate manifestTemplate =
+        new ImageToJsonTranslator(image)
+            .getManifestTemplate(
+                buildContext.getTargetFormat(), containerConfigurationDigestAndSize);
     DescriptorDigest manifestDigest = Digests.computeJsonDigest(manifestTemplate);
 
     EventHandlers eventHandlers = buildContext.getEventHandlers();
