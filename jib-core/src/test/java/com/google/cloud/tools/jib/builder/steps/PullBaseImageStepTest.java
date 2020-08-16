@@ -33,7 +33,7 @@ import com.google.cloud.tools.jib.image.LayerCountMismatchException;
 import com.google.cloud.tools.jib.image.LayerPropertyNotFoundException;
 import com.google.cloud.tools.jib.image.json.BadContainerConfigurationFormatException;
 import com.google.cloud.tools.jib.image.json.ContainerConfigurationTemplate;
-import com.google.cloud.tools.jib.image.json.ManifestAndConfig;
+import com.google.cloud.tools.jib.image.json.ManifestAndConfigTemplate;
 import com.google.cloud.tools.jib.image.json.V22ManifestListTemplate;
 import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
@@ -57,8 +57,8 @@ public class PullBaseImageStepTest {
 
   private final ContainerConfigurationTemplate containerConfigJson =
       new ContainerConfigurationTemplate();
-  private final ManifestAndConfig manifestAndConfig =
-      new ManifestAndConfig(new V22ManifestTemplate(), containerConfigJson);
+  private final ManifestAndConfigTemplate manifestAndConfig =
+      new ManifestAndConfigTemplate(new V22ManifestTemplate(), containerConfigJson);
 
   @Mock private ProgressEventDispatcher.Factory progressDispatcherFactory;
   @Mock private BuildContext buildContext;

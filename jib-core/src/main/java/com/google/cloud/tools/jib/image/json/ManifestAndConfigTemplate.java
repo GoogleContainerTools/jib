@@ -16,16 +16,17 @@
 
 package com.google.cloud.tools.jib.image.json;
 
-import java.util.Optional;
+import com.google.cloud.tools.jib.json.JsonTemplate;
 import javax.annotation.Nullable;
 
 /** Stores a manifest and container config. */
-public class ManifestAndConfig {
+public class ManifestAndConfigTemplate implements JsonTemplate {
 
   private final ManifestTemplate manifest;
+  // TODO: remove Nullable when we remove the deprecated V2.1 manifest.
   @Nullable private final ContainerConfigurationTemplate config;
 
-  public ManifestAndConfig(
+  public ManifestAndConfigTemplate(
       ManifestTemplate manifest, @Nullable ContainerConfigurationTemplate config) {
     this.manifest = manifest;
     this.config = config;
@@ -45,7 +46,8 @@ public class ManifestAndConfig {
    *
    * @return the container configuration
    */
-  public Optional<ContainerConfigurationTemplate> getConfig() {
-    return Optional.ofNullable(config);
+  @Nullable
+  public ContainerConfigurationTemplate getConfig() {
+    return config;
   }
 }

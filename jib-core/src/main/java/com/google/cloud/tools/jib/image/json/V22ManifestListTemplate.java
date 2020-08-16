@@ -91,11 +91,9 @@ public class V22ManifestListTemplate implements ManifestTemplate {
   public List<String> getDigestsForPlatform(String architecture, String os) {
     return getManifests()
         .stream()
-        .filter(
-            manifest ->
-                manifest.platform != null
-                    && os.equals(manifest.platform.os)
-                    && architecture.equals(manifest.platform.architecture))
+        .filter(manifest -> manifest.platform != null)
+        .filter(manifest -> os.equals(manifest.platform.os))
+        .filter(manifest -> architecture.equals(manifest.platform.architecture))
         .map(ManifestDescriptorTemplate::getDigest)
         .collect(Collectors.toList());
   }

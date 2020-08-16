@@ -28,6 +28,9 @@ import com.google.cloud.tools.jib.hash.CountingDigestOutputStream;
 import com.google.cloud.tools.jib.hash.Digests;
 import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
 import com.google.cloud.tools.jib.image.json.ContainerConfigurationTemplate;
+import com.google.cloud.tools.jib.image.json.ImageMetadataTemplate;
+import com.google.cloud.tools.jib.image.json.ManifestAndConfigTemplate;
+import com.google.cloud.tools.jib.image.json.ManifestTemplate;
 import com.google.cloud.tools.jib.image.json.V21ManifestTemplate;
 import com.google.cloud.tools.jib.json.JsonTemplate;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
@@ -43,6 +46,8 @@ import java.nio.file.FileSystemException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.zip.GZIPInputStream;
@@ -305,6 +310,7 @@ class CacheStorageWriter {
    */
   void writeMetadata(
       ImageReference imageReference,
+      @Nullable ManifestTemplate manifestList,
       List<BuildableManifestTemplate> manifests,
       List<ContainerConfigurationTemplate> containerConfigurations)
       throws IOException {
@@ -317,12 +323,15 @@ class CacheStorageWriter {
     Path imageDirectory = cacheStorageFiles.getImageDirectory(imageReference);
     Files.createDirectories(imageDirectory);
 
+    List<ManifestAndConfigTemplate> manifestsAndConfigs = new ArrayList<>();
     for (int i = 0; i < manifests.size(); i++) {
-      new MetadataEntryTemplate(JsonTemplateMapper.toUtf8String(manifestTemplate), null);
+      manifestsAndConfigs.add(
+          new ManifestAndConfigTemplate(manifests.get(0), containerConfigurations.get(0)));
     }
-    try (LockFile ignored1 = LockFile.lock(imageDirectory.resolve("lock"))) {
-      writeMetadata(manifests, imageDirectory.resolve("manifest.json"));
-      writeMetadata(containerConfigurations, imageDirectory.resolve("config.json"));
+    try (LockFile ignored = LockFile.lock(imageDirectory.resolve("lock"))) {
+      writeMetadata(
+          new ImageMetadataTemplate(manifestList, manifestsAndConfigs),
+          imageDirectory.resolve("manifests_configs.json"));
     }
   }
 
@@ -330,15 +339,18 @@ class CacheStorageWriter {
    * Writes a V2.1 manifest for a given image reference.
    *
    * @param imageReference the image reference to store the metadata for
-   * @param manifestTemplate the manifest
+   * @param manifests the manifest
    */
-  void writeMetadata(ImageReference imageReference, V21ManifestTemplate manifestTemplate)
+  void writeMetadata(ImageReference imageReference, V21ManifestTemplate manifests)
       throws IOException {
     Path imageDirectory = cacheStorageFiles.getImageDirectory(imageReference);
     Files.createDirectories(imageDirectory);
 
+    ImageMetadataTemplate metadata =
+        new ImageMetadataTemplate(
+            null, Collections.singletonList(new ManifestAndConfigTemplate(manifests, null)));
     try (LockFile ignored = LockFile.lock(imageDirectory.resolve("lock"))) {
-      writeMetadata(manifestTemplate, imageDirectory.resolve("manifest.json"));
+      writeMetadata(metadata, imageDirectory.resolve("manifests_configs.json"));
     }
   }
 

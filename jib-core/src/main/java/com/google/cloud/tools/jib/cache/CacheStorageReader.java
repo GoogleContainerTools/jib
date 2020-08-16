@@ -23,19 +23,20 @@ import com.google.cloud.tools.jib.api.ImageReference;
 import com.google.cloud.tools.jib.blob.Blobs;
 import com.google.cloud.tools.jib.filesystem.LockFile;
 import com.google.cloud.tools.jib.image.json.ContainerConfigurationTemplate;
-import com.google.cloud.tools.jib.image.json.ManifestAndConfig;
+import com.google.cloud.tools.jib.image.json.ImageMetadataTemplate;
+import com.google.cloud.tools.jib.image.json.ManifestAndConfigTemplate;
 import com.google.cloud.tools.jib.image.json.ManifestTemplate;
+import com.google.cloud.tools.jib.image.json.OciIndexTemplate;
 import com.google.cloud.tools.jib.image.json.OciManifestTemplate;
 import com.google.cloud.tools.jib.image.json.V21ManifestTemplate;
+import com.google.cloud.tools.jib.image.json.V22ManifestListTemplate;
 import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.DigestException;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -80,80 +81,92 @@ class CacheStorageReader {
   }
 
   /**
-   * Retrieves the cached manifest and container configuration for an image reference.
+   * Retrieves the cached manifest and container configuration for an image reference. aaa
    *
    * @param imageReference the image reference
    * @return the manifest and container configuration for the image reference, if found
    * @throws IOException if an I/O exception occurs
    * @throws CacheCorruptedException if the cache is corrupted
    */
-  List<ManifestAndConfig> retrieveMetadata(ImageReference imageReference)
+  Optional<ImageMetadataTemplate> retrieveMetadata(ImageReference imageReference)
       throws IOException, CacheCorruptedException {
     Path imageDirectory = cacheStorageFiles.getImageDirectory(imageReference);
     Path metadataPath = imageDirectory.resolve("manifests_configs.json");
     if (!Files.exists(metadataPath)) {
-      return Collections.emptyList();
+      return Optional.empty();
     }
 
-    List<ManifestAndConfig> manifestsAndConfigs = new ArrayList<>();
-    try (LockFile ignored = LockFile.lock(imageDirectory.resolve("lock"));
-        InputStream jsonStream = Files.newInputStream(metadataPath)) {
-      for (MetadataEntryTemplate metadataEntry :
-          JsonTemplateMapper.readListOfJson(jsonStream, MetadataEntryTemplate.class)) {
-        manifestsAndConfigs.add(parseManifestAndConfig(metadataEntry));
-      }
+    ImageMetadataTemplate metadata;
+    try (LockFile ignored = LockFile.lock(imageDirectory.resolve("lock"))) {
+      metadata = JsonTemplateMapper.readJsonFromFile(metadataPath, ImageMetadataTemplate.class);
     }
-    return manifestsAndConfigs;
-  }
-
-  private ManifestAndConfig parseManifestAndConfig(MetadataEntryTemplate metadataEntry)
-      throws IOException, CacheCorruptedException {
-    // TODO: Consolidate with AbstractManifestPuller. However, doing so shouldn't destroy package
-    // hierarchy. (RegistryClient sits lower in the hierarchy and isolated.)
-    ObjectNode manifestNode =
-        new ObjectMapper().readValue(metadataEntry.getManfiest(), ObjectNode.class);
-    if (!manifestNode.has("schemaVersion")) {
+    if (metadata.getManifestsAndConfigs().isEmpty()) {
       throw new CacheCorruptedException(
-          cacheStorageFiles.getCacheDirectory(), "Cannot find field 'schemaVersion' in manifest");
+          cacheStorageFiles.getCacheDirectory(), "image metadata cache corrupted");
     }
 
-    int schemaVersion = manifestNode.get("schemaVersion").asInt(-1);
-    if (schemaVersion == -1) {
-      throw new CacheCorruptedException(
-          cacheStorageFiles.getCacheDirectory(),
-          "'schemaVersion' field is not an integer in manifest");
-    }
-
+    int schemaVersion = metadata.getManifestsAndConfigs().get(0).getManifest().getSchemaVersion();
     if (schemaVersion == 1) {
-      return new ManifestAndConfig(
-          JsonTemplateMapper.readJson(metadataEntry.getManfiest(), V21ManifestTemplate.class),
-          null);
-    }
-    if (schemaVersion == 2) {
-      // 'schemaVersion' of 2 can be either Docker V2.2 or OCI.
-      String mediaType = manifestNode.get("mediaType").asText();
-
-      ManifestTemplate manifestTemplate;
-      if (V22ManifestTemplate.MANIFEST_MEDIA_TYPE.equals(mediaType)) {
-        manifestTemplate =
-            JsonTemplateMapper.readJson(metadataEntry.getManfiest(), V22ManifestTemplate.class);
-      } else if (OciManifestTemplate.MANIFEST_MEDIA_TYPE.equals(mediaType)) {
-        manifestTemplate =
-            JsonTemplateMapper.readJson(metadataEntry.getManfiest(), OciManifestTemplate.class);
-      } else {
-        throw new CacheCorruptedException(
-            cacheStorageFiles.getCacheDirectory(), "Unknown manifest mediaType: " + mediaType);
-      }
-
-      ContainerConfigurationTemplate config =
-          JsonTemplateMapper.readJson(
-              metadataEntry.getContainerConfig(), ContainerConfigurationTemplate.class);
-
-      return new ManifestAndConfig(manifestTemplate, config);
+      return Optional.of(doSchema1Conversion(metadata));
+    } else if (schemaVersion == 2) {
+      return Optional.of(doSchema2Conversion(metadata));
     }
     throw new CacheCorruptedException(
         cacheStorageFiles.getCacheDirectory(),
         "Unknown schemaVersion in manifest: " + schemaVersion + " - only 1 and 2 are supported");
+  }
+
+  private ImageMetadataTemplate doSchema2Conversion(ImageMetadataTemplate metadata)
+      throws CacheCorruptedException {
+    ObjectMapper objectMapper = new ObjectMapper();
+    ManifestTemplate firstManifest = metadata.getManifestsAndConfigs().get(0).getManifest();
+    String mediaType =
+        objectMapper.convertValue(firstManifest, ObjectNode.class).get("mediaType").asText();
+
+    Class<? extends ManifestTemplate> manifestListClass;
+    Class<? extends ManifestTemplate> manifestClass;
+    // 'schemaVersion' of 2 can be either Docker V2.2 or OCI.
+    if (V22ManifestTemplate.MANIFEST_MEDIA_TYPE.equals(mediaType)) {
+      manifestListClass = V22ManifestListTemplate.class;
+      manifestClass = V22ManifestTemplate.class;
+    } else if (OciManifestTemplate.MANIFEST_MEDIA_TYPE.equals(mediaType)) {
+      manifestListClass = OciIndexTemplate.class;
+      manifestClass = OciManifestTemplate.class;
+    } else {
+      throw new CacheCorruptedException(
+          cacheStorageFiles.getCacheDirectory(), "Unknown manifest mediaType: " + mediaType);
+    }
+
+    List<ManifestAndConfigTemplate> manfiestsAndConfigs =
+        metadata
+            .getManifestsAndConfigs()
+            .stream()
+            .map(
+                manifestAndConfig ->
+                    new ManifestAndConfigTemplate(
+                        objectMapper.convertValue(manifestAndConfig.getManifest(), manifestClass),
+                        objectMapper.convertValue(
+                            manifestAndConfig.getConfig(), ContainerConfigurationTemplate.class)))
+            .collect(Collectors.toList());
+
+    return new ImageMetadataTemplate(
+        objectMapper.convertValue(metadata.getManifestList(), manifestListClass),
+        manfiestsAndConfigs);
+  }
+
+  private ImageMetadataTemplate doSchema1Conversion(ImageMetadataTemplate metadata)
+      throws CacheCorruptedException {
+    if (metadata.getManifestList() != null || metadata.getManifestsAndConfigs().size() != 1) {
+      throw new CacheCorruptedException(
+          cacheStorageFiles.getCacheDirectory(), "image metadata cache corrupted");
+    }
+
+    ManifestAndConfigTemplate untypedPair = metadata.getManifestsAndConfigs().get(0);
+    V21ManifestTemplate v21Manifest =
+        new ObjectMapper().convertValue(untypedPair.getManifest(), V21ManifestTemplate.class);
+    ManifestAndConfigTemplate typedPair =
+        new ManifestAndConfigTemplate(v21Manifest, untypedPair.getConfig());
+    return new ImageMetadataTemplate(null, Collections.singletonList(typedPair));
   }
 
   /**
@@ -197,8 +210,7 @@ class CacheStorageReader {
   /**
    * Retrieves the {@link CachedLayer} for the local base image layer with the given diff ID.
    *
-   * @param diffId the diff ID
-   * @return the {@link CachedLayer} referenced by the diff ID, if found
+   * @param diffId the diff ID @)return the {@link CachedLayer} referenced by the diff ID, if found
    * @throws CacheCorruptedException if the cache was found to be corrupted
    * @throws IOException if an I/O exception occurs
    */

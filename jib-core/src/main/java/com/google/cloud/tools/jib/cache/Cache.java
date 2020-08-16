@@ -23,7 +23,8 @@ import com.google.cloud.tools.jib.api.buildplan.FileEntry;
 import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
 import com.google.cloud.tools.jib.image.json.ContainerConfigurationTemplate;
-import com.google.cloud.tools.jib.image.json.ManifestAndConfig;
+import com.google.cloud.tools.jib.image.json.ImageMetadataTemplate;
+import com.google.cloud.tools.jib.image.json.ManifestTemplate;
 import com.google.cloud.tools.jib.image.json.V21ManifestTemplate;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
@@ -32,6 +33,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
+import javax.annotation.Nullable;
 import javax.annotation.concurrent.Immutable;
 
 /**
@@ -71,18 +73,19 @@ public class Cache {
    * aaaaaaaaa Saves a manifest and container configuration for a V2.2 or OCI image.
    *
    * @param imageReference the image reference to save the manifest and container configuration for
-   * @param manifestTemplates the V2.2 or OCI manifest
-   * @param containerConfigurationTemplates the container configuration
+   * @param manifests the V2.2 or OCI manifest
+   * @param containerConfigurations the container configuration
    * @throws IOException if an I/O exception occurs
    */
   public void writeMetadata(
       ImageReference imageReference,
-      List<BuildableManifestTemplate> manifestTemplates,
-      List<ContainerConfigurationTemplate> containerConfigurationTemplates)
+      @Nullable ManifestTemplate manifestList,
+      List<BuildableManifestTemplate> manifests,
+      List<ContainerConfigurationTemplate> containerConfigurations)
       throws IOException {
-    Preconditions.checkArgument(manifestTemplates.size() == containerConfigurationTemplates.size());
+    Preconditions.checkArgument(manifests.size() == containerConfigurations.size());
     cacheStorageWriter.writeMetadata(
-        imageReference, manifestTemplates, containerConfigurationTemplates);
+        imageReference, manifestList, manifests, containerConfigurations);
   }
 
   /**
@@ -166,7 +169,7 @@ public class Cache {
    * @throws IOException if an I/O exception occurs
    * @throws CacheCorruptedException if the cache is corrupted
    */
-  public List<ManifestAndConfig> retrieveMetadata(ImageReference imageReference)
+  public Optional<ImageMetadataTemplate> retrieveMetadata(ImageReference imageReference)
       throws IOException, CacheCorruptedException {
     return cacheStorageReader.retrieveMetadata(imageReference);
   }
