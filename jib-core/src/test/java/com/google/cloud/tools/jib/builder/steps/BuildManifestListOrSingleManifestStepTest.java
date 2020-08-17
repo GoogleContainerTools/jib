@@ -16,19 +16,16 @@
 
 package com.google.cloud.tools.jib.builder.steps;
 
-import com.google.cloud.tools.jib.api.DescriptorDigest;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.builder.ProgressEventDispatcher;
-import com.google.cloud.tools.jib.cache.CachedLayer;
 import com.google.cloud.tools.jib.configuration.BuildContext;
 import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.image.Image;
-import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
+import com.google.cloud.tools.jib.image.Layer;
 import com.google.cloud.tools.jib.image.json.ManifestTemplate;
 import com.google.cloud.tools.jib.image.json.V22ManifestListTemplate;
 import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
 import java.io.IOException;
-import java.security.DigestException;
 import java.util.Arrays;
 import org.junit.Assert;
 import org.junit.Before;
@@ -42,37 +39,30 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class BuildManifestListOrSingleManifestStepTest {
 
-  @Mock private ProgressEventDispatcher.Factory mockProgressEventDispatcherFactory;
-  @Mock private BuildContext mockBuildContext;
-  @Mock private CachedLayer mockCachedLayer;
+  @Mock private ProgressEventDispatcher.Factory progressDispatcherFactory;
+  @Mock private BuildContext buildContext;
+  @Mock private Layer layer;
 
   private Image image1;
   private Image image2;
-  private DescriptorDigest testDescriptorDigest;
-
-  private Class<? extends BuildableManifestTemplate> targetFormat() {
-    return V22ManifestTemplate.class;
-  }
 
   @Before
-  public void setUp() throws DigestException {
-
-    Mockito.when(mockBuildContext.getEventHandlers()).thenReturn(EventHandlers.NONE);
-    Mockito.doReturn(targetFormat()).when(mockBuildContext).getTargetFormat();
-    Mockito.when(mockCachedLayer.getBlobDescriptor())
-        .thenReturn(new BlobDescriptor(0, testDescriptorDigest));
+  public void setUp() {
+    Mockito.when(buildContext.getEventHandlers()).thenReturn(EventHandlers.NONE);
+    Mockito.doReturn(V22ManifestTemplate.class).when(buildContext).getTargetFormat();
+    Mockito.when(layer.getBlobDescriptor()).thenReturn(new BlobDescriptor(0, null));
 
     image1 =
         Image.builder(V22ManifestTemplate.class)
             .setArchitecture("amd64")
             .setOs("linux")
-            .addLayer(new PreparedLayer.Builder(mockCachedLayer).setName("resources").build())
+            .addLayer(new PreparedLayer.Builder(layer).setName("resources").build())
             .build();
     image2 =
         Image.builder(V22ManifestTemplate.class)
             .setArchitecture("arm64")
             .setOs("ubuntu")
-            .addLayer(new PreparedLayer.Builder(mockCachedLayer).setName("classes").build())
+            .addLayer(new PreparedLayer.Builder(layer).setName("classes").build())
             .build();
   }
 
@@ -97,7 +87,7 @@ public class BuildManifestListOrSingleManifestStepTest {
 
     ManifestTemplate manifestTemplate =
         new BuildManifestListOrSingleManifestStep(
-                mockBuildContext, mockProgressEventDispatcherFactory, Arrays.asList(image1))
+                buildContext, progressDispatcherFactory, Arrays.asList(image1))
             .call();
 
     Assert.assertTrue(manifestTemplate instanceof V22ManifestTemplate);
@@ -142,7 +132,7 @@ public class BuildManifestListOrSingleManifestStepTest {
 
     ManifestTemplate manifestTemplate =
         new BuildManifestListOrSingleManifestStep(
-                mockBuildContext, mockProgressEventDispatcherFactory, Arrays.asList(image1, image2))
+                buildContext, progressDispatcherFactory, Arrays.asList(image1, image2))
             .call();
 
     Assert.assertTrue(manifestTemplate instanceof V22ManifestListTemplate);
