@@ -148,13 +148,6 @@ public class JsonTemplateMapper {
     return objectMapper.readValue(jsonString, listType);
   }
 
-  public static <T extends JsonTemplate> List<T> readListOfJson(
-      InputStream jsonStream, Class<T> templateClass) throws IOException {
-    CollectionType listType =
-        objectMapper.getTypeFactory().constructCollectionType(List.class, templateClass);
-    return objectMapper.readValue(jsonStream, listType);
-  }
-
   public static String toUtf8String(JsonTemplate template) throws IOException {
     return toUtf8String((Object) template);
   }
