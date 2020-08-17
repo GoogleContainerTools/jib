@@ -67,7 +67,7 @@ public class BuildManifestListOrSingleManifestStepTest {
   }
 
   @Test
-  public void test_Manifest() throws IOException {
+  public void testCall_singleManifest() throws IOException {
     String manifestResponse =
         "{\n"
             + "   \"schemaVersion\":2,\n"
@@ -103,7 +103,7 @@ public class BuildManifestListOrSingleManifestStepTest {
   }
 
   @Test
-  public void test_ManifestList() throws IOException {
+  public void testCall_manifestList() throws IOException {
     String manifestListResponse =
         "{\n"
             + "   \"schemaVersion\":2,\n"
