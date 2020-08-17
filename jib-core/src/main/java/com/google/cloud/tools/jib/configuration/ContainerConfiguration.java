@@ -122,7 +122,8 @@ public class ContainerConfiguration {
         this.programArguments = null;
       } else {
         Preconditions.checkArgument(
-            !programArguments.stream().anyMatch(Objects::isNull), "program arguments list contains null elements");
+            !programArguments.stream().anyMatch(Objects::isNull),
+            "program arguments list contains null elements");
         this.programArguments = ImmutableList.copyOf(programArguments);
       }
       return this;
@@ -201,7 +202,8 @@ public class ContainerConfiguration {
       if (volumes == null) {
         this.volumes = null;
       } else {
-        Preconditions.checkArgument(!volumes.stream().anyMatch(Objects::isNull), "volumes list contains null elements");
+        Preconditions.checkArgument(
+            !volumes.stream().anyMatch(Objects::isNull), "volumes list contains null elements");
         this.volumes = new HashSet<>(volumes);
       }
       return this;
@@ -262,7 +264,7 @@ public class ContainerConfiguration {
         this.entrypoint = null;
       } else {
         Preconditions.checkArgument(
-                !entrypoint.stream().anyMatch(Objects::isNull), "entrypoint contains null elements");
+            !entrypoint.stream().anyMatch(Objects::isNull), "entrypoint contains null elements");
         this.entrypoint = ImmutableList.copyOf(entrypoint);
       }
       return this;
