@@ -209,7 +209,6 @@ public class StepsRunner {
       rootProgressDispatcher = progressEventDispatcher;
 
       stepsToRun.forEach(Runnable::run);
-      realizeFutures(results.buildResults.get());
       return results.buildResults.get().get(0).get();
 
     } catch (ExecutionException ex) {

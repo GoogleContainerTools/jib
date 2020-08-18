@@ -68,8 +68,8 @@ class BuildManifestListOrSingleManifestStep implements Callable<ManifestTemplate
       }
 
       eventHandlers.dispatch(LogEvent.info("Building a manifest list"));
-      return new ManifestListGenerator(this.builtImages)
-          .getManifestListTemplate(this.buildContext.getTargetFormat());
+      return new ManifestListGenerator(builtImages)
+          .getManifestListTemplate(buildContext.getTargetFormat());
     }
   }
 }

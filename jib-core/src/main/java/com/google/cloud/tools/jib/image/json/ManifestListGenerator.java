@@ -38,33 +38,30 @@ public class ManifestListGenerator {
    * @param <T> child type of {@link BuildableManifestTemplate}
    * @param manifestTemplateClass the JSON template to translate the image to
    * @return a manifest list JSON
+   * @throws IOException IOException
    */
   public <T extends BuildableManifestTemplate> ManifestTemplate getManifestListTemplate(
-      Class<T> manifestTemplateClass) {
-    try {
-      V22ManifestListTemplate manifestList = new V22ManifestListTemplate();
+      Class<T> manifestTemplateClass) throws IOException {
 
-      for (Image image : images) {
-        ImageToJsonTranslator imageTranslator = new ImageToJsonTranslator(image);
+    V22ManifestListTemplate manifestList = new V22ManifestListTemplate();
 
-        BlobDescriptor configDescriptor =
-            Digests.computeDigest(imageTranslator.getContainerConfiguration());
+    for (Image image : images) {
+      ImageToJsonTranslator imageTranslator = new ImageToJsonTranslator(image);
 
-        BuildableManifestTemplate manifestTemplate =
-            imageTranslator.getManifestTemplate(manifestTemplateClass, configDescriptor);
-        BlobDescriptor manifestDescriptor = Digests.computeDigest(manifestTemplate);
+      BlobDescriptor configDescriptor =
+          Digests.computeDigest(imageTranslator.getContainerConfiguration());
 
-        ManifestDescriptorTemplate manifest = new ManifestDescriptorTemplate();
-        manifest.setMediaType(manifestTemplate.getManifestMediaType());
-        manifest.setSize(manifestDescriptor.getSize());
-        manifest.setDigest(manifestDescriptor.getDigest().toString());
-        manifest.setPlatform(image.getArchitecture(), image.getOs());
-        manifestList.addManifest(manifest);
-      }
-      return manifestList;
+      BuildableManifestTemplate manifestTemplate =
+          imageTranslator.getManifestTemplate(manifestTemplateClass, configDescriptor);
+      BlobDescriptor manifestDescriptor = Digests.computeDigest(manifestTemplate);
 
-    } catch (IOException ex) {
-      throw new IllegalArgumentException("manifest list cannot be instantiated", ex);
+      ManifestDescriptorTemplate manifest = new ManifestDescriptorTemplate();
+      manifest.setMediaType(manifestTemplate.getManifestMediaType());
+      manifest.setSize(manifestDescriptor.getSize());
+      manifest.setDigest(manifestDescriptor.getDigest().toString());
+      manifest.setPlatform(image.getArchitecture(), image.getOs());
+      manifestList.addManifest(manifest);
     }
+    return manifestList;
   }
 }
