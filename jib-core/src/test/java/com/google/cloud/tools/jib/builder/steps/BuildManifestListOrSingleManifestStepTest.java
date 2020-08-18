@@ -73,19 +73,19 @@ public class BuildManifestListOrSingleManifestStepTest {
      *
      * <pre>{@code
      * {
-     * 		"schemaVersion":2,
-     * 		"mediaType":"application/vnd.docker.distribution.manifest.v2+json",
-     * 		"config":{
-     * 			"mediaType":"application/vnd.docker.container.image.v1+json",
-     * 			"digest":"sha256:1b2ff280940537177565443144a81319ad48528fd35d1cdc38cbde07f24f6912",
-     * 			"size":158
-     * 		},
-     * 		"layers":[
-     * 			{
-     * 				"mediaType":"application/vnd.docker.image.rootfs.diff.tar.gzip",
-     * 				"size":0
-     * 			}
-     * 		]
+     * "schemaVersion":2,
+     * "mediaType":"application/vnd.docker.distribution.manifest.v2+json",
+     * "config":{
+     * "mediaType":"application/vnd.docker.container.image.v1+json",
+     * "digest":"sha256:1b2ff280940537177565443144a81319ad48528fd35d1cdc38cbde07f24f6912",
+     * "size":158
+     * },
+     * "layers":[
+     * {
+     * "mediaType":"application/vnd.docker.image.rootfs.diff.tar.gzip",
+     * "size":0
+     * }
+     * ]
      * }
      * }</pre>
      */
@@ -114,28 +114,28 @@ public class BuildManifestListOrSingleManifestStepTest {
      *
      * <pre>{@code
      * {
-     * 		"schemaVersion":2,
-     * 		"mediaType":"application/vnd.docker.distribution.manifest.list.v2+json",
-     * 		"manifests":[
-     * 			{
-     * 				"mediaType":"application/vnd.docker.distribution.manifest.v2+json",
-     * 				"digest":"sha256:9467fc431ac5dd84dafdc13f75111fc467cd57aff4732edda8c9e0bbcabe0183",
-     * 				"size":338,
-     * 				"platform":{
-     * 					"architecture":"amd64",
-     * 					"os":"linux"
-     * 				}
-     * 			},
-     * 			{
-     * 				"mediaType":"application/vnd.docker.distribution.manifest.v2+json",
-     * 				"digest":"sha256:6c2ff8d62273a93207b5e636d4ecf0ba597de01d21767b11437b48d6e5ff0b53",
-     * 				"size":338,
-     * 				"platform":{
-     * 					"architecture":"arm64",
-     * 					"os":"ubuntu"
-     * 				}
-     * 			}
-     * 		]
+     * "schemaVersion":2,
+     * "mediaType":"application/vnd.docker.distribution.manifest.list.v2+json",
+     * "manifests":[
+     * {
+     * "mediaType":"application/vnd.docker.distribution.manifest.v2+json",
+     * "digest":"sha256:9467fc431ac5dd84dafdc13f75111fc467cd57aff4732edda8c9e0bbcabe0183",
+     * "size":338,
+     * "platform":{
+     * "architecture":"amd64",
+     * "os":"linux"
+     * }
+     * },
+     * {
+     * "mediaType":"application/vnd.docker.distribution.manifest.v2+json",
+     * "digest":"sha256:6c2ff8d62273a93207b5e636d4ecf0ba597de01d21767b11437b48d6e5ff0b53",
+     * "size":338,
+     * "platform":{
+     * "architecture":"arm64",
+     * "os":"ubuntu"
+     * }
+     * }
+     * ]
      * }
      * }</pre>
      */
