@@ -94,6 +94,7 @@ public class DockerConfigTemplate implements JsonTemplate {
     this.auths = ImmutableMap.copyOf(auths);
   }
 
+  @SuppressWarnings("unused")
   private DockerConfigTemplate() {
     auths = new HashMap<>();
   }

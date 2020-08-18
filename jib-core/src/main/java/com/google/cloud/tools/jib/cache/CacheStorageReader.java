@@ -16,8 +16,6 @@
 
 package com.google.cloud.tools.jib.cache;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.cloud.tools.jib.api.DescriptorDigest;
 import com.google.cloud.tools.jib.api.ImageReference;
 import com.google.cloud.tools.jib.blob.Blobs;
@@ -25,19 +23,14 @@ import com.google.cloud.tools.jib.filesystem.LockFile;
 import com.google.cloud.tools.jib.image.json.ContainerConfigurationTemplate;
 import com.google.cloud.tools.jib.image.json.ImageMetadataTemplate;
 import com.google.cloud.tools.jib.image.json.ManifestAndConfigTemplate;
-import com.google.cloud.tools.jib.image.json.ManifestTemplate;
-import com.google.cloud.tools.jib.image.json.OciIndexTemplate;
-import com.google.cloud.tools.jib.image.json.OciManifestTemplate;
-import com.google.cloud.tools.jib.image.json.V21ManifestTemplate;
-import com.google.cloud.tools.jib.image.json.V22ManifestListTemplate;
-import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Verify;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.DigestException;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -100,73 +93,40 @@ class CacheStorageReader {
     try (LockFile ignored = LockFile.lock(imageDirectory.resolve("lock"))) {
       metadata = JsonTemplateMapper.readJsonFromFile(metadataPath, ImageMetadataTemplate.class);
     }
-    if (metadata.getManifestsAndConfigs().isEmpty()) {
-      throw new CacheCorruptedException(
-          cacheStorageFiles.getCacheDirectory(), "image metadata cache corrupted");
-    }
-
-    int schemaVersion = metadata.getManifestsAndConfigs().get(0).getManifest().getSchemaVersion();
-    if (schemaVersion == 1) {
-      return Optional.of(doSchema1Conversion(metadata));
-    } else if (schemaVersion == 2) {
-      return Optional.of(doSchema2Conversion(metadata));
-    }
-    throw new CacheCorruptedException(
-        cacheStorageFiles.getCacheDirectory(),
-        "Unknown schemaVersion in manifest: " + schemaVersion + " - only 1 and 2 are supported");
+    verifyMetadata(metadata, imageDirectory);
+    return Optional.of(metadata);
   }
 
-  private ImageMetadataTemplate doSchema2Conversion(ImageMetadataTemplate metadata)
+  @VisibleForTesting
+  void verifyMetadata(ImageMetadataTemplate metadata, Path metadataCacheDirectory)
       throws CacheCorruptedException {
-    ObjectMapper objectMapper = new ObjectMapper();
-    ManifestTemplate firstManifest = metadata.getManifestsAndConfigs().get(0).getManifest();
-    String mediaType =
-        objectMapper.convertValue(firstManifest, ObjectNode.class).get("mediaType").asText();
+    if (metadata.getManifestsAndConfigs().isEmpty()) {
+      throw new CacheCorruptedException(metadataCacheDirectory, "manifest list empty");
+    }
 
-    Class<? extends ManifestTemplate> manifestListClass;
-    Class<? extends ManifestTemplate> manifestClass;
-    // 'schemaVersion' of 2 can be either Docker V2.2 or OCI.
-    if (V22ManifestTemplate.MANIFEST_MEDIA_TYPE.equals(mediaType)) {
-      manifestListClass = V22ManifestListTemplate.class;
-      manifestClass = V22ManifestTemplate.class;
-    } else if (OciManifestTemplate.MANIFEST_MEDIA_TYPE.equals(mediaType)) {
-      manifestListClass = OciIndexTemplate.class;
-      manifestClass = OciManifestTemplate.class;
+    List<ManifestAndConfigTemplate> manifestsAndConfigs = metadata.getManifestsAndConfigs();
+    if (manifestsAndConfigs.stream().anyMatch(entry -> entry.getManifest() == null)) {
+      throw new CacheCorruptedException(metadataCacheDirectory, "manifests missing");
+    }
+
+    int schemaVersion =
+        Verify.verifyNotNull(manifestsAndConfigs.get(0).getManifest()).getSchemaVersion();
+    if (schemaVersion == 1) {
+      if (metadata.getManifestList() != null
+          || manifestsAndConfigs.stream().anyMatch(entry -> entry.getConfig() != null)) {
+        throw new CacheCorruptedException(metadataCacheDirectory, "schema 1 manifests corrupted");
+      }
+    } else if (schemaVersion == 2) {
+      if (metadata.getManifestList() == null
+          || metadata.getManifestList().getSchemaVersion() != 2
+          || manifestsAndConfigs.stream().anyMatch(entry -> entry.getConfig() == null)) {
+        throw new CacheCorruptedException(metadataCacheDirectory, "schema 2 manifests corrupted");
+      }
     } else {
       throw new CacheCorruptedException(
-          cacheStorageFiles.getCacheDirectory(), "Unknown manifest mediaType: " + mediaType);
+          metadataCacheDirectory,
+          "Unknown schemaVersion in manifest: " + schemaVersion + " - only 1 and 2 are supported");
     }
-
-    List<ManifestAndConfigTemplate> manfiestsAndConfigs =
-        metadata
-            .getManifestsAndConfigs()
-            .stream()
-            .map(
-                manifestAndConfig ->
-                    new ManifestAndConfigTemplate(
-                        objectMapper.convertValue(manifestAndConfig.getManifest(), manifestClass),
-                        objectMapper.convertValue(
-                            manifestAndConfig.getConfig(), ContainerConfigurationTemplate.class)))
-            .collect(Collectors.toList());
-
-    return new ImageMetadataTemplate(
-        objectMapper.convertValue(metadata.getManifestList(), manifestListClass),
-        manfiestsAndConfigs);
-  }
-
-  private ImageMetadataTemplate doSchema1Conversion(ImageMetadataTemplate metadata)
-      throws CacheCorruptedException {
-    if (metadata.getManifestList() != null || metadata.getManifestsAndConfigs().size() != 1) {
-      throw new CacheCorruptedException(
-          cacheStorageFiles.getCacheDirectory(), "image metadata cache corrupted");
-    }
-
-    ManifestAndConfigTemplate untypedPair = metadata.getManifestsAndConfigs().get(0);
-    V21ManifestTemplate v21Manifest =
-        new ObjectMapper().convertValue(untypedPair.getManifest(), V21ManifestTemplate.class);
-    ManifestAndConfigTemplate typedPair =
-        new ManifestAndConfigTemplate(v21Manifest, untypedPair.getConfig());
-    return new ImageMetadataTemplate(null, Collections.singletonList(typedPair));
   }
 
   /**

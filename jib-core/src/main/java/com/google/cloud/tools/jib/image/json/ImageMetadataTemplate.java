@@ -16,6 +16,8 @@
 
 package com.google.cloud.tools.jib.image.json;
 
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.google.cloud.tools.jib.json.JsonTemplate;
 import java.util.ArrayList;
 import java.util.List;
@@ -24,7 +26,17 @@ import javax.annotation.Nullable;
 /** A bundle of an image manifest list, manifests, and container configurations. */
 public class ImageMetadataTemplate implements JsonTemplate {
 
-  @Nullable private ManifestTemplate manifestList;
+  @JsonTypeInfo(
+      use = JsonTypeInfo.Id.CLASS,
+      include = JsonTypeInfo.As.PROPERTY,
+      property = "@class")
+  @JsonSubTypes({
+    @JsonSubTypes.Type(value = OciIndexTemplate.class),
+    @JsonSubTypes.Type(value = V22ManifestListTemplate.class),
+  })
+  @Nullable
+  private ManifestTemplate manifestList;
+
   private List<ManifestAndConfigTemplate> manifestsAndConfigs = new ArrayList<>();
 
   @SuppressWarnings("unused")

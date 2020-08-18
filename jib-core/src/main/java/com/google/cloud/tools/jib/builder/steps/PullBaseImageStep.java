@@ -370,7 +370,7 @@ class PullBaseImageStep implements Callable<ImagesAndRegistryClient> {
 
     List<ManifestAndConfigTemplate> manifestsAndConfigs = metadata.get().getManifestsAndConfigs();
     Verify.verify(manifestsAndConfigs.size() == 1);
-    ManifestTemplate manifest = manifestsAndConfigs.get(0).getManifest();
+    ManifestTemplate manifest = Verify.verifyNotNull(manifestsAndConfigs.get(0).getManifest());
     if (manifest instanceof V21ManifestTemplate) {
       return Optional.of(JsonToImageTranslator.toImage((V21ManifestTemplate) manifest));
     }
