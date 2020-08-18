@@ -23,7 +23,7 @@ import com.google.cloud.tools.jib.api.buildplan.FileEntry;
 import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
 import com.google.cloud.tools.jib.image.json.ContainerConfigurationTemplate;
-import com.google.cloud.tools.jib.image.json.ManifestAndConfig;
+import com.google.cloud.tools.jib.image.json.ManifestAndConfigTemplate;
 import com.google.cloud.tools.jib.image.json.V21ManifestTemplate;
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
@@ -163,7 +163,7 @@ public class Cache {
    * @throws IOException if an I/O exception occurs
    * @throws CacheCorruptedException if the cache is corrupted
    */
-  public Optional<ManifestAndConfig> retrieveMetadata(ImageReference imageReference)
+  public Optional<ManifestAndConfigTemplate> retrieveMetadata(ImageReference imageReference)
       throws IOException, CacheCorruptedException {
     return cacheStorageReader.retrieveMetadata(imageReference);
   }

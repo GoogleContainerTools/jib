@@ -189,7 +189,7 @@ public class ManifestPullerTest {
       Assert.fail("A non-integer schemaVersion should throw an error");
 
     } catch (UnknownManifestFormatException ex) {
-      Assert.assertEquals("`schemaVersion` field is not an integer", ex.getMessage());
+      Assert.assertEquals("'schemaVersion' field is not an integer", ex.getMessage());
     }
   }
 
