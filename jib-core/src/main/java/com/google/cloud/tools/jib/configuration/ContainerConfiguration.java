@@ -174,7 +174,7 @@ public class ContainerConfiguration {
         this.exposedPorts = null;
       } else {
         Preconditions.checkArgument(
-            !exposedPorts.contains(null), "ports list contains null elements");
+            !exposedPorts.stream().anyMatch(Objects::isNull), "ports list contains null elements");
         this.exposedPorts = new HashSet<>(exposedPorts);
       }
       return this;
