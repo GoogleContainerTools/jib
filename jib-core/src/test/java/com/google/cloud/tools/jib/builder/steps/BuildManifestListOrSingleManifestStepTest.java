@@ -71,7 +71,7 @@ public class BuildManifestListOrSingleManifestStepTest {
 
     // Expected manifest JSON
     //  {
-    // "schemaVersion":2,
+    //  "schemaVersion":2,
     //  "mediaType":"application/vnd.docker.distribution.manifest.v2+json",
     //  "config":{
     //    "mediaType":"application/vnd.docker.container.image.v1+json",
@@ -108,7 +108,7 @@ public class BuildManifestListOrSingleManifestStepTest {
 
     // Expected Manifest List JSON
     //  {
-    // "schemaVersion":2,
+    //  "schemaVersion":2,
     //  "mediaType":"application/vnd.docker.distribution.manifest.list.v2+json",
     //  "manifests":[
     //    {

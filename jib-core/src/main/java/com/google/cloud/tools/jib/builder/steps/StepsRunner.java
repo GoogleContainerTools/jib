@@ -498,6 +498,7 @@ public class StepsRunner {
     results.manifestCheckResult =
         executorService.submit(
             () -> {
+              Verify.verify(results.builtImagesAndBaseImages.get().size() == 1);
               Future<Image> builtImage =
                   results.builtImagesAndBaseImages.get().keySet().iterator().next();
               Future<BlobDescriptor> containerConfigPushResult =

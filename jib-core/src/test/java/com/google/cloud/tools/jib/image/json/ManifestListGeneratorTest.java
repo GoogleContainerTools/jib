@@ -20,6 +20,7 @@ import com.google.cloud.tools.jib.image.Image;
 import java.io.IOException;
 import java.util.Arrays;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 
 /** Tests for {@link ManifestListGenerator}. */
@@ -29,25 +30,21 @@ public class ManifestListGeneratorTest {
   private Image image2;
   private ManifestListGenerator manifestListGenerator;
 
-  private void setUp(Class<? extends BuildableManifestTemplate> imageFormat) {
-    image1 = Image.builder(imageFormat).setArchitecture("amd64").setOs("linux").build();
-    image2 = Image.builder(imageFormat).setArchitecture("arm64").setOs("windows").build();
+  @Before
+  public void setUp() {
+    image1 =
+        Image.builder(V22ManifestTemplate.class).setArchitecture("amd64").setOs("linux").build();
+    image2 =
+        Image.builder(V22ManifestTemplate.class).setArchitecture("arm64").setOs("windows").build();
     manifestListGenerator = new ManifestListGenerator(Arrays.asList(image1, image2));
   }
 
   @Test
-  public void testGetManifest_v22() throws IOException {
-    setUp(V22ManifestTemplate.class);
-    testGetManifestListTemplate(V22ManifestTemplate.class);
-  }
-
-  /** Tests translation of image to {@link BuildableManifestTemplate}. */
-  private <T extends BuildableManifestTemplate> void testGetManifestListTemplate(
-      Class<T> manifestTemplateClass) throws IOException {
+  public void testGetManifestListTemplate() throws IOException {
 
     // Expected Manifest List JSON
     //  {
-    // "schemaVersion":2,
+    //  "schemaVersion":2,
     //  "mediaType":"application/vnd.docker.distribution.manifest.list.v2+json",
     //  "manifests":[
     //    {
@@ -68,11 +65,11 @@ public class ManifestListGeneratorTest {
     //        "os":"windows"
     //      }
     //    }
-    //  ]
+    //   ]
     // }
 
     ManifestTemplate manifestTemplate =
-        manifestListGenerator.getManifestListTemplate(manifestTemplateClass);
+        manifestListGenerator.getManifestListTemplate(V22ManifestTemplate.class);
     Assert.assertTrue(manifestTemplate instanceof V22ManifestListTemplate);
     V22ManifestListTemplate manifestList = (V22ManifestListTemplate) manifestTemplate;
     Assert.assertEquals(2, manifestList.getSchemaVersion());

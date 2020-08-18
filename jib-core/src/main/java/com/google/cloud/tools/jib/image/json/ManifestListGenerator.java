@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.image.json;
 
+import com.google.api.client.util.Preconditions;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.hash.Digests;
 import com.google.cloud.tools.jib.image.Image;
@@ -38,13 +39,15 @@ public class ManifestListGenerator {
    * @param <T> child type of {@link BuildableManifestTemplate}
    * @param manifestTemplateClass the JSON template to translate the image to
    * @return a manifest list JSON
-   * @throws IOException IOException
+   * @throws IOException if generating a manifest list fails due to an I/O error when computing
+   *     digests
    */
   public <T extends BuildableManifestTemplate> ManifestTemplate getManifestListTemplate(
       Class<T> manifestTemplateClass) throws IOException {
-
+    Preconditions.checkArgument(
+        manifestTemplateClass == V22ManifestTemplate.class,
+        "Build an OCI image index is not yet supported");
     V22ManifestListTemplate manifestList = new V22ManifestListTemplate();
-
     for (Image image : images) {
       ImageToJsonTranslator imageTranslator = new ImageToJsonTranslator(image);
 
