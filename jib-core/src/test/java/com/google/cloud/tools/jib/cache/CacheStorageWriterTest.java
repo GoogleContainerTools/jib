@@ -24,6 +24,8 @@ import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.blob.Blobs;
 import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
 import com.google.cloud.tools.jib.image.json.ContainerConfigurationTemplate;
+import com.google.cloud.tools.jib.image.json.ImageMetadataTemplate;
+import com.google.cloud.tools.jib.image.json.ManifestAndConfigTemplate;
 import com.google.cloud.tools.jib.image.json.V21ManifestTemplate;
 import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
@@ -35,6 +37,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.DigestException;
+import java.util.Arrays;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 import org.junit.Assert;
@@ -135,19 +138,27 @@ public class CacheStorageWriterTest {
       throws IOException, URISyntaxException, InvalidImageReferenceException {
     Path manifestJsonFile =
         Paths.get(getClass().getClassLoader().getResource("core/json/v21manifest.json").toURI());
-    V21ManifestTemplate manifestTemplate =
+    V21ManifestTemplate v21Manifest =
         JsonTemplateMapper.readJsonFromFile(manifestJsonFile, V21ManifestTemplate.class);
     ImageReference imageReference = ImageReference.parse("image.reference/project/thing:tag");
 
-    new CacheStorageWriter(cacheStorageFiles).writeMetadata(imageReference, manifestTemplate);
+    new CacheStorageWriter(cacheStorageFiles).writeMetadata(imageReference, v21Manifest);
 
-    Path savedManifestPath =
-        cacheRoot.resolve("images/image.reference/project/thing!tag/manifest.json");
-    Assert.assertTrue(Files.exists(savedManifestPath));
+    Path savedMetadataPath =
+        cacheRoot.resolve("images/image.reference/project/thing!tag/manifests_configs.json");
+    Assert.assertTrue(Files.exists(savedMetadataPath));
 
-    V21ManifestTemplate savedManifest =
-        JsonTemplateMapper.readJsonFromFile(savedManifestPath, V21ManifestTemplate.class);
-    Assert.assertEquals("amd64", savedManifest.getContainerConfiguration().get().getArchitecture());
+    ImageMetadataTemplate savedMetadata =
+        JsonTemplateMapper.readJsonFromFile(savedMetadataPath, ImageMetadataTemplate.class);
+    Assert.assertNull(savedMetadata.getManifestList());
+    Assert.assertEquals(1, savedMetadata.getManifestsAndConfigs().size());
+
+    ManifestAndConfigTemplate manifestAndConfig = savedMetadata.getManifestsAndConfigs().get(0);
+    Assert.assertNull(manifestAndConfig.getConfig());
+
+    V21ManifestTemplate savedManifest = (V21ManifestTemplate) manifestAndConfig.getManifest();
+    Assert.assertEquals(
+        "ppc64le", savedManifest.getContainerConfiguration().get().getArchitecture());
   }
 
   @Test
@@ -166,7 +177,11 @@ public class CacheStorageWriterTest {
     ImageReference imageReference = ImageReference.parse("image.reference/project/thing:tag");
 
     new CacheStorageWriter(cacheStorageFiles)
-        .writeMetadata(imageReference, manifestTemplate, containerConfigurationTemplate);
+        .writeMetadata(
+            imageReference,
+            null,
+            Arrays.asList(manifestTemplate),
+            Arrays.asList(containerConfigurationTemplate));
 
     Path savedManifestPath =
         cacheRoot.resolve("images/image.reference/project/thing!tag/manifest.json");

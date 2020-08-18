@@ -20,6 +20,7 @@ import com.google.cloud.tools.jib.api.DescriptorDigest;
 import com.google.cloud.tools.jib.api.ImageReference;
 import com.google.cloud.tools.jib.blob.Blobs;
 import com.google.cloud.tools.jib.image.json.ContainerConfigurationTemplate;
+import com.google.cloud.tools.jib.image.json.ImageMetadataTemplate;
 import com.google.cloud.tools.jib.image.json.V21ManifestTemplate;
 import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
 import com.google.common.io.Resources;
@@ -119,12 +120,14 @@ public class CacheStorageReaderTest {
     CacheStorageFiles cacheStorageFiles = new CacheStorageFiles(cacheDirectory);
     CacheStorageReader cacheStorageReader = new CacheStorageReader(cacheStorageFiles);
 
+    ImageMetadataTemplate metadata =
+        cacheStorageReader.retrieveMetadata(ImageReference.of("test", "image", "tag")).get();
+    Assert.assertNull(metadata.getManifestList());
+    Assert.assertEquals(1, metadata.getManifestsAndConfigs().size());
+    Assert.assertNull(metadata.getManifestsAndConfigs().get(0).getConfig());
+
     V21ManifestTemplate manifestTemplate =
-        (V21ManifestTemplate)
-            cacheStorageReader
-                .retrieveMetadata(ImageReference.of("test", "image", "tag"))
-                .get()
-                .getManifest();
+        (V21ManifestTemplate) metadata.getManifestsAndConfigs().get(0).getManifest();
     Assert.assertEquals(1, manifestTemplate.getSchemaVersion());
   }
 
@@ -137,12 +140,13 @@ public class CacheStorageReaderTest {
     CacheStorageFiles cacheStorageFiles = new CacheStorageFiles(cacheDirectory);
     CacheStorageReader cacheStorageReader = new CacheStorageReader(cacheStorageFiles);
 
+    ImageMetadataTemplate metadata =
+        cacheStorageReader.retrieveMetadata(ImageReference.of("test", "image", "tag")).get();
+    Assert.assertNull(metadata.getManifestList());
+    Assert.assertEquals(1, metadata.getManifestsAndConfigs().size());
+
     V22ManifestTemplate manifestTemplate =
-        (V22ManifestTemplate)
-            cacheStorageReader
-                .retrieveMetadata(ImageReference.of("test", "image", "tag"))
-                .get()
-                .getManifest();
+        (V22ManifestTemplate) metadata.getManifestsAndConfigs().get(0).getManifest();
     Assert.assertEquals(2, manifestTemplate.getSchemaVersion());
   }
 
@@ -155,12 +159,14 @@ public class CacheStorageReaderTest {
     CacheStorageFiles cacheStorageFiles = new CacheStorageFiles(cacheDirectory);
     CacheStorageReader cacheStorageReader = new CacheStorageReader(cacheStorageFiles);
 
+    ImageMetadataTemplate metadata =
+        cacheStorageReader.retrieveMetadata(ImageReference.of("test", "image", "tag")).get();
+    Assert.assertNull(metadata.getManifestList());
+    Assert.assertEquals(1, metadata.getManifestsAndConfigs().size());
+
     ContainerConfigurationTemplate configurationTemplate =
-        cacheStorageReader
-            .retrieveMetadata(ImageReference.of("test", "image", "tag"))
-            .get()
-            .getConfig()
-            .get();
+        metadata.getManifestsAndConfigs().get(0).getConfig();
+    Assert.assertNotNull(configurationTemplate);
     Assert.assertEquals("wasm", configurationTemplate.getArchitecture());
     Assert.assertEquals("js", configurationTemplate.getOs());
   }
