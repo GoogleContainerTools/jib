@@ -106,14 +106,9 @@ class Layers {
                         if (includes.isEmpty()) {
                           return true;
                         }
-                        // TODO: for directories that fail to match the "include" directive on, if a
-                        // file gets
-                        // TODO: included, ensure parents are populated correctly
                         // TODO: if <dest>/path/to/file.txt is included because of a pattern like
-                        // **/file.txt
-                        // TODO: ensure we create <dest>/path and <dest>/path/to with the correct
-                        // directory
-                        // TODO: properties here
+                        // TODO: **/file.txt, ensure we create <dest>/path and <dest>/path/to with
+                        // TODO: the correct directory properties here
                         // if there are includes directives, only include those specified
                         for (PathMatcher matcher : includes) {
                           if (matcher.matches(path)) {
