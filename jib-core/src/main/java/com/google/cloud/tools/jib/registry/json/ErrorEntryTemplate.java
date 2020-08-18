@@ -33,6 +33,7 @@ public class ErrorEntryTemplate implements JsonTemplate {
   }
 
   /** Necessary for Jackson to create from JSON. */
+  @SuppressWarnings("unused")
   private ErrorEntryTemplate() {}
 
   @Nullable
