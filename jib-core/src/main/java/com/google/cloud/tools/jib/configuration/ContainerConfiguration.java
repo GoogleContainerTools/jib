@@ -122,7 +122,7 @@ public class ContainerConfiguration {
         this.programArguments = null;
       } else {
         Preconditions.checkArgument(
-            !programArguments.stream().anyMatch(Objects::isNull),
+            programArguments.stream().allMatch(Objects::nonNull),
             "program arguments list contains null elements");
         this.programArguments = ImmutableList.copyOf(programArguments);
       }
@@ -174,7 +174,7 @@ public class ContainerConfiguration {
         this.exposedPorts = null;
       } else {
         Preconditions.checkArgument(
-            !exposedPorts.stream().anyMatch(Objects::isNull), "ports list contains null elements");
+            exposedPorts.stream().allMatch(Objects::nonNull), "ports list contains null elements");
         this.exposedPorts = new HashSet<>(exposedPorts);
       }
       return this;
@@ -203,7 +203,7 @@ public class ContainerConfiguration {
         this.volumes = null;
       } else {
         Preconditions.checkArgument(
-            !volumes.stream().anyMatch(Objects::isNull), "volumes list contains null elements");
+            volumes.stream().allMatch(Objects::nonNull), "volumes list contains null elements");
         this.volumes = new HashSet<>(volumes);
       }
       return this;
@@ -264,7 +264,7 @@ public class ContainerConfiguration {
         this.entrypoint = null;
       } else {
         Preconditions.checkArgument(
-            !entrypoint.stream().anyMatch(Objects::isNull), "entrypoint contains null elements");
+            entrypoint.stream().allMatch(Objects::nonNull), "entrypoint contains null elements");
         this.entrypoint = ImmutableList.copyOf(entrypoint);
       }
       return this;
