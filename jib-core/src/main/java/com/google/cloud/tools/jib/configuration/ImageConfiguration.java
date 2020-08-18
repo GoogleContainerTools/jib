@@ -47,7 +47,7 @@ public class ImageConfiguration {
      */
     public Builder setCredentialRetrievers(List<CredentialRetriever> credentialRetrievers) {
       Preconditions.checkArgument(
-          !credentialRetrievers.stream().anyMatch(Objects::isNull),
+          credentialRetrievers.stream().allMatch(Objects::nonNull),
           "credential retriever list contains null elements");
       this.credentialRetrievers = ImmutableList.copyOf(credentialRetrievers);
       return this;

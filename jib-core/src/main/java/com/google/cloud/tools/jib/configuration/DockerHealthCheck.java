@@ -99,7 +99,7 @@ public class DockerHealthCheck {
   public static DockerHealthCheck.Builder fromCommand(List<String> command) {
     Preconditions.checkArgument(command.size() > 0, "command must not be empty");
     Preconditions.checkArgument(
-        !command.stream().anyMatch(Objects::isNull), "command must not contain null elements");
+        command.stream().allMatch(Objects::nonNull), "command must not contain null elements");
     return new Builder(ImmutableList.copyOf(command));
   }
 
