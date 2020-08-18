@@ -8,6 +8,7 @@ All notable changes to this project will be documented in this file.
 ### Changed
 
 ### Fixed
+- Fixed `NullPointerException` during preconditions validation when checking for presence of `null` value in ImmutableCollection for Java 9+.([#2702](https://github.com/GoogleContainerTools/jib/issues/2702))
 
 ## 2.5.2
 
