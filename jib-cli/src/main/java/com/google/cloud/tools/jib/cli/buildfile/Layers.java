@@ -20,7 +20,7 @@ import com.google.cloud.tools.jib.api.buildplan.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.api.buildplan.FileEntriesLayer;
 import com.google.cloud.tools.jib.api.buildplan.FileEntry;
 import com.google.cloud.tools.jib.api.buildplan.LayerObject;
-import com.google.common.base.Predicate;
+import com.google.common.annotations.VisibleForTesting;
 import java.io.IOException;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
@@ -31,7 +31,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-/** Class to between different layer representations. */
+/** Class to convert between different layer representations. */
 class Layers {
 
   /**
@@ -73,17 +73,13 @@ class Layers {
           AbsoluteUnixPath dest = copySpec.getDest();
 
           if (Files.isRegularFile(src)) { // regular file
-            if (copySpec.getExcludes().size() > 0 || copySpec.getIncludes().size() > 0) {
+            if (!copySpec.getExcludes().isEmpty() || !copySpec.getIncludes().isEmpty()) {
               throw new UnsupportedOperationException(
                   "Cannot apply includes/excludes on single file copy directives.");
             }
-            AbsoluteUnixPath target = dest;
-            if (copySpec.isDestEndsWithSlash()) {
-              target = copySpec.getDest().resolve(src.getFileName());
-            }
             layerBuiler.addEntry(
                 src,
-                target,
+                copySpec.isDestEndsWithSlash() ? dest.resolve(src.getFileName()) : dest,
                 filePropertiesStack.getFilePermissions(),
                 filePropertiesStack.getModificationTime(),
                 filePropertiesStack.getOwnership());
@@ -92,65 +88,50 @@ class Layers {
                 copySpec
                     .getExcludes()
                     .stream()
-                    .map(
-                        pattern ->
-                            pattern.endsWith("/") || pattern.endsWith("\\")
-                                ? pattern + "**"
-                                : pattern)
-                    .map(exclude -> FileSystems.getDefault().getPathMatcher("glob:" + exclude))
+                    .map(Layers::toPathMatcher)
                     .collect(Collectors.toList());
             List<PathMatcher> includes =
                 copySpec
                     .getIncludes()
                     .stream()
-                    .map(
-                        pattern ->
-                            pattern.endsWith("/") || pattern.endsWith("\\")
-                                ? pattern + "**"
-                                : pattern)
-                    .map(include -> FileSystems.getDefault().getPathMatcher("glob:" + include))
+                    .map(Layers::toPathMatcher)
                     .collect(Collectors.toList());
             try (Stream<Path> dirWalk = Files.walk(src)) {
               dirWalk
+                  // filter out against excludes
+                  .filter(path -> excludes.stream().noneMatch(exclude -> exclude.matches(path)))
                   .filter(
-                      (Predicate<Path>)
-                          path -> {
-                            // filter out against excludes
-                            for (PathMatcher matcher : excludes) {
-                              if (matcher.matches(path)) {
-                                return false;
-                              }
-                            }
-                            // if there are no includes directives, include everything
-                            if (includes.isEmpty()) {
-                              return true;
-                            }
-                            // TODO: for directories that fail to match the "include" directive on
-                            // TODO: files, populate the directories somehow or just never apply
-                            // TODO: includes to directories
-                            // if there are includes directives, only include those specified
-                            for (PathMatcher matcher : includes) {
-                              if (matcher.matches(path)) {
-                                return true;
-                              }
-                            }
-                            return false;
-                          })
+                      path -> {
+                        // if there are no includes directives, include everything
+                        if (includes.isEmpty()) {
+                          return true;
+                        }
+                        // TODO: for directories that fail to match the "include" directive on, if a
+                        // file gets
+                        // TODO: included, ensure parents are populated correctly
+                        // TODO: if <dest>/path/to/file.txt is included because of a pattern like
+                        // **/file.txt
+                        // TODO: ensure we create <dest>/path and <dest>/path/to with the correct
+                        // directory
+                        // TODO: properties here
+                        // if there are includes directives, only include those specified
+                        for (PathMatcher matcher : includes) {
+                          if (matcher.matches(path)) {
+                            return true;
+                          }
+                        }
+                        return false;
+                      })
                   .map(
                       path -> {
                         Path relative = src.relativize(path);
-                        if (Files.isDirectory(path)) {
+                        if (Files.isDirectory(path) || Files.isRegularFile(path)) {
                           return new FileEntry(
                               path,
                               dest.resolve(relative),
-                              filePropertiesStack.getDirectoryPermissions(),
-                              filePropertiesStack.getModificationTime(),
-                              filePropertiesStack.getOwnership());
-                        } else if (Files.isRegularFile(path)) {
-                          return new FileEntry(
-                              path,
-                              dest.resolve(relative),
-                              filePropertiesStack.getFilePermissions(),
+                              Files.isDirectory(path)
+                                  ? filePropertiesStack.getDirectoryPermissions()
+                                  : filePropertiesStack.getFilePermissions(),
                               filePropertiesStack.getModificationTime(),
                               filePropertiesStack.getOwnership());
                         } else {
@@ -168,6 +149,7 @@ class Layers {
           copySpec.getProperties().ifPresent(ignored -> filePropertiesStack.pop());
         }
         fileLayer.getProperties().ifPresent(ignored -> filePropertiesStack.pop());
+        // TODO: add logging/handling for empty layers
         layers.add(layerBuiler.build());
       } else {
         throw new UnsupportedOperationException("Only FileLayers are supported at this time.");
@@ -175,5 +157,12 @@ class Layers {
     }
     layersSpec.getProperties().ifPresent(ignored -> filePropertiesStack.pop());
     return layers;
+  }
+
+  @VisibleForTesting
+  static PathMatcher toPathMatcher(String glob) {
+    return FileSystems.getDefault()
+        .getPathMatcher(
+            "glob:" + ((glob.endsWith("/") || glob.endsWith("\\")) ? glob + "**" : glob));
   }
 }
