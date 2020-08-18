@@ -22,11 +22,12 @@ import com.google.cloud.tools.jib.api.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.blob.Blobs;
-import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
 import com.google.cloud.tools.jib.image.json.ContainerConfigurationTemplate;
 import com.google.cloud.tools.jib.image.json.ImageMetadataTemplate;
 import com.google.cloud.tools.jib.image.json.ManifestAndConfigTemplate;
 import com.google.cloud.tools.jib.image.json.V21ManifestTemplate;
+import com.google.cloud.tools.jib.image.json.V22ManifestListTemplate;
+import com.google.cloud.tools.jib.image.json.V22ManifestListTemplate.ManifestDescriptorTemplate;
 import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import com.google.common.io.ByteStreams;
@@ -38,8 +39,11 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.DigestException;
 import java.util.Arrays;
+import java.util.List;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
+import org.hamcrest.CoreMatchers;
+import org.hamcrest.MatcherAssert;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
@@ -164,41 +168,63 @@ public class CacheStorageWriterTest {
   @Test
   public void testWriteMetadata_v22()
       throws IOException, URISyntaxException, InvalidImageReferenceException {
+    ClassLoader classLoader = getClass().getClassLoader();
     Path containerConfigurationJsonFile =
-        Paths.get(
-            getClass().getClassLoader().getResource("core/json/containerconfig.json").toURI());
+        Paths.get(classLoader.getResource("core/json/containerconfig.json").toURI());
+    Path manifestJsonFile =
+        Paths.get(classLoader.getResource("core/json/v22manifest.json").toURI());
+    Path manifestListJsonFile =
+        Paths.get(classLoader.getResource("core/json/v22manifest_list.json").toURI());
+
     ContainerConfigurationTemplate containerConfigurationTemplate =
         JsonTemplateMapper.readJsonFromFile(
             containerConfigurationJsonFile, ContainerConfigurationTemplate.class);
-    Path manifestJsonFile =
-        Paths.get(getClass().getClassLoader().getResource("core/json/v22manifest.json").toURI());
-    BuildableManifestTemplate manifestTemplate =
+    V22ManifestTemplate manifestTemplate =
         JsonTemplateMapper.readJsonFromFile(manifestJsonFile, V22ManifestTemplate.class);
+    V22ManifestListTemplate manifestListTemplate =
+        JsonTemplateMapper.readJsonFromFile(manifestListJsonFile, V22ManifestListTemplate.class);
+
     ImageReference imageReference = ImageReference.parse("image.reference/project/thing:tag");
 
     new CacheStorageWriter(cacheStorageFiles)
         .writeMetadata(
             imageReference,
-            null,
+            manifestListTemplate,
             Arrays.asList(manifestTemplate),
             Arrays.asList(containerConfigurationTemplate));
 
-    Path savedManifestPath =
-        cacheRoot.resolve("images/image.reference/project/thing!tag/manifest.json");
-    Path savedConfigPath =
-        cacheRoot.resolve("images/image.reference/project/thing!tag/config.json");
-    Assert.assertTrue(Files.exists(savedManifestPath));
-    Assert.assertTrue(Files.exists(savedConfigPath));
+    Path savedMetadataPath =
+        cacheRoot.resolve("images/image.reference/project/thing!tag/manifests_configs.json");
+    Assert.assertTrue(Files.exists(savedMetadataPath));
 
-    V22ManifestTemplate savedManifest =
-        JsonTemplateMapper.readJsonFromFile(savedManifestPath, V22ManifestTemplate.class);
+    ImageMetadataTemplate savedMetadata =
+        JsonTemplateMapper.readJsonFromFile(savedMetadataPath, ImageMetadataTemplate.class);
+
+    MatcherAssert.assertThat(
+        savedMetadata.getManifestList(), CoreMatchers.instanceOf(V22ManifestListTemplate.class));
+    List<ManifestDescriptorTemplate> manifestDescriptors =
+        ((V22ManifestListTemplate) savedMetadata.getManifestList()).getManifests();
+    Assert.assertEquals(3, manifestDescriptors.size());
+
+    Assert.assertEquals(
+        "sha256:e692418e4cbaf90ca69d05a66403747baa33ee08806650b51fab815ad7fc331f",
+        manifestDescriptors.get(0).getDigest());
+    Assert.assertEquals(
+        "sha256:5b0bcabd1ed22e9fb1310cf6c2dec7cdef19f0ad69efa1f392e94a4333501270",
+        manifestDescriptors.get(1).getDigest());
+    Assert.assertEquals(
+        "sha256:cccbcabd1ed22e9fb1310cf6c2dec7cdef19f0ad69efa1f392e94a4333501999",
+        manifestDescriptors.get(2).getDigest());
+
+    Assert.assertEquals(1, savedMetadata.getManifestsAndConfigs().size());
+    ManifestAndConfigTemplate manifestAndConfig = savedMetadata.getManifestsAndConfigs().get(0);
+
+    V22ManifestTemplate savedManifest = (V22ManifestTemplate) manifestAndConfig.getManifest();
     Assert.assertEquals(
         "8c662931926fa990b41da3c9f42663a537ccd498130030f9149173a0493832ad",
         savedManifest.getContainerConfiguration().getDigest().getHash());
 
-    ContainerConfigurationTemplate savedContainerConfig =
-        JsonTemplateMapper.readJsonFromFile(savedConfigPath, ContainerConfigurationTemplate.class);
-    Assert.assertEquals("wasm", savedContainerConfig.getArchitecture());
+    Assert.assertEquals("wasm", manifestAndConfig.getConfig().getArchitecture());
   }
 
   @Test
