@@ -106,8 +106,8 @@ class PullBaseImageStep implements Callable<ImagesAndRegistryClient> {
         if (!checkImagePlatform(image.get())) {
           throw new IllegalStateException(
               "The cached base image manifest does not match the configured platform due to the "
-                  + "current implementation of limited platform support. As a workaround, re-run Jib "
-                  + "online once to re-cache the right image manifest.");
+                  + "current implementation of limited platform support. As a workaround, re-run "
+                  + "Jib online once to re-cache the right image manifest.");
         }
         return new ImagesAndRegistryClient(Collections.singletonList(image.get()), null);
       }
