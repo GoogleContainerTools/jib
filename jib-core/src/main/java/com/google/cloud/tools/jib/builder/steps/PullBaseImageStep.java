@@ -237,7 +237,6 @@ class PullBaseImageStep implements Callable<ImagesAndRegistryClient> {
     // If a manifest list, search for the manifests matching the given platforms.
     if (manifestTemplate instanceof V22ManifestListTemplate) {
       manifestList = manifestTemplate;
-
       for (Platform platform : buildContext.getContainerConfiguration().getPlatforms()) {
         manifestAndDigest =
             obtainPlatformSpecificImageManifest(
@@ -248,7 +247,9 @@ class PullBaseImageStep implements Callable<ImagesAndRegistryClient> {
             pullContainerConfigJson(manifestAndDigest, registryClient, progressEventDispatcher));
       }
 
-    } else { // V22ManifestTemplate
+    } else {
+      // V22ManifestTemplate or OciManifestTemplate
+      // TODO: support OciIndexTemplate once AbstractManifestPuller starts to accept it.
       manifests = Collections.singletonList((BuildableManifestTemplate) manifestTemplate);
       containerConfigs =
           Collections.singletonList(
@@ -268,6 +269,7 @@ class PullBaseImageStep implements Callable<ImagesAndRegistryClient> {
    * Looks through a manifest list for the manifest matching the {@code platform} and downloads and
    * returns the first manifest it finds.
    */
+  // TODO: support OciIndexTemplate once AbstractManifestPuller starts to accept it.
   @VisibleForTesting
   ManifestAndDigest<?> obtainPlatformSpecificImageManifest(
       RegistryClient registryClient,
