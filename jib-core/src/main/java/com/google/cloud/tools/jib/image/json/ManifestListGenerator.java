@@ -47,6 +47,8 @@ public class ManifestListGenerator {
     Preconditions.checkArgument(
         manifestTemplateClass == V22ManifestTemplate.class,
         "Build an OCI image index is not yet supported");
+    Preconditions.checkState(!images.isEmpty(), "no images given");
+
     V22ManifestListTemplate manifestList = new V22ManifestListTemplate();
     for (Image image : images) {
       ImageToJsonTranslator imageTranslator = new ImageToJsonTranslator(image);

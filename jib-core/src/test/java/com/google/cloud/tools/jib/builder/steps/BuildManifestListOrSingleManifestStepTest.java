@@ -27,6 +27,7 @@ import com.google.cloud.tools.jib.image.json.V22ManifestListTemplate;
 import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Collections;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -146,5 +147,17 @@ public class BuildManifestListOrSingleManifestStepTest {
     Assert.assertEquals(
         Arrays.asList("sha256:439351c848845c46a3952f28416992b66003361d00943b6cdb04b6d5533f02bf"),
         manifestList.getDigestsForPlatform("arm64", "windows"));
+  }
+
+  @Test
+  public void testCall_emptyImagesList() throws IOException {
+    try {
+      new BuildManifestListOrSingleManifestStep(
+              buildContext, progressDispatcherFactory, Collections.emptyList())
+          .call();
+      Assert.fail();
+    } catch (IllegalStateException ex) {
+      Assert.assertEquals("no images given", ex.getMessage());
+    }
   }
 }

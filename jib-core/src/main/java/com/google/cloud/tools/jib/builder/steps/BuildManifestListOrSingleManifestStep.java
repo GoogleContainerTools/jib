@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.builder.steps;
 
+import com.google.api.client.util.Preconditions;
 import com.google.cloud.tools.jib.api.LogEvent;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.builder.ProgressEventDispatcher;
@@ -51,7 +52,7 @@ class BuildManifestListOrSingleManifestStep implements Callable<ManifestTemplate
 
   @Override
   public ManifestTemplate call() throws IOException {
-
+    Preconditions.checkState(!builtImages.isEmpty(), "no images given");
     EventHandlers eventHandlers = buildContext.getEventHandlers();
     try (TimerEventDispatcher ignored = new TimerEventDispatcher(eventHandlers, DESCRIPTION);
         ProgressEventDispatcher ignored2 =

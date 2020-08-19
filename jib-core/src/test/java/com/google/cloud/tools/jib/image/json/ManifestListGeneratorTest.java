@@ -19,6 +19,7 @@ package com.google.cloud.tools.jib.image.json;
 import com.google.cloud.tools.jib.image.Image;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Collections;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -79,5 +80,27 @@ public class ManifestListGeneratorTest {
     Assert.assertEquals(
         Arrays.asList("sha256:51038a7a91c0e8f747e05dd84c3b0393a7016ec312ce384fc945356778497ae3"),
         manifestList.getDigestsForPlatform("arm64", "windows"));
+  }
+
+  @Test
+  public void testGetManifestListTemplate_emptyImagesList() throws IOException {
+    try {
+      new ManifestListGenerator(Collections.emptyList())
+          .getManifestListTemplate(V22ManifestTemplate.class);
+      Assert.fail();
+    } catch (IllegalStateException ex) {
+      Assert.assertEquals("no images given", ex.getMessage());
+    }
+  }
+
+  @Test
+  public void testGetManifestListTemplate_unsupportedImageFormat() throws IOException {
+    try {
+      new ManifestListGenerator(Arrays.asList(image1, image2))
+          .getManifestListTemplate(OciManifestTemplate.class);
+      Assert.fail();
+    } catch (IllegalArgumentException ex) {
+      Assert.assertEquals("Build an OCI image index is not yet supported", ex.getMessage());
+    }
   }
 }
