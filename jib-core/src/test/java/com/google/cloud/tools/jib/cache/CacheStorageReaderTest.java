@@ -64,7 +64,7 @@ public class CacheStorageReaderTest {
 
     ManifestAndConfigTemplate manifestAndConfig =
         new ManifestAndConfigTemplate(
-            readJsonFromFile("core/json/v21manifest.json", V21ManifestTemplate.class), null);
+            loadJsonResource("core/json/v21manifest.json", V21ManifestTemplate.class), null);
     try (OutputStream out =
         Files.newOutputStream(imageDirectory.resolve("manifests_configs.json"))) {
       JsonTemplateMapper.writeTo(
@@ -79,8 +79,8 @@ public class CacheStorageReaderTest {
 
     ManifestAndConfigTemplate manifestAndConfig =
         new ManifestAndConfigTemplate(
-            readJsonFromFile("core/json/v22manifest.json", V22ManifestTemplate.class),
-            readJsonFromFile(
+            loadJsonResource("core/json/v22manifest.json", V22ManifestTemplate.class),
+            loadJsonResource(
                 "core/json/containerconfig.json", ContainerConfigurationTemplate.class));
     try (OutputStream out =
         Files.newOutputStream(imageDirectory.resolve("manifests_configs.json"))) {
@@ -95,13 +95,13 @@ public class CacheStorageReaderTest {
     Files.createDirectories(imageDirectory);
 
     ManifestTemplate v22ManifestList =
-        readJsonFromFile("core/json/v22manifest_list.json", V22ManifestListTemplate.class);
+        loadJsonResource("core/json/v22manifest_list.json", V22ManifestListTemplate.class);
     ManifestTemplate v22Manifest1 =
-        readJsonFromFile("core/json/v22manifest.json", V22ManifestTemplate.class);
+        loadJsonResource("core/json/v22manifest.json", V22ManifestTemplate.class);
     ManifestTemplate v22Manifest2 =
-        readJsonFromFile("core/json/translated_v22manifest.json", V22ManifestTemplate.class);
+        loadJsonResource("core/json/translated_v22manifest.json", V22ManifestTemplate.class);
     ContainerConfigurationTemplate containerConfig =
-        readJsonFromFile("core/json/containerconfig.json", ContainerConfigurationTemplate.class);
+        loadJsonResource("core/json/containerconfig.json", ContainerConfigurationTemplate.class);
     List<ManifestAndConfigTemplate> manifestsAndConfigs =
         Arrays.asList(
             new ManifestAndConfigTemplate(v22Manifest1, containerConfig),
@@ -120,8 +120,8 @@ public class CacheStorageReaderTest {
 
     ManifestAndConfigTemplate manifestAndConfig =
         new ManifestAndConfigTemplate(
-            readJsonFromFile("core/json/ocimanifest.json", OciManifestTemplate.class),
-            readJsonFromFile(
+            loadJsonResource("core/json/ocimanifest.json", OciManifestTemplate.class),
+            loadJsonResource(
                 "core/json/containerconfig.json", ContainerConfigurationTemplate.class));
     try (OutputStream out =
         Files.newOutputStream(imageDirectory.resolve("manifests_configs.json"))) {
@@ -136,11 +136,11 @@ public class CacheStorageReaderTest {
     Files.createDirectories(imageDirectory);
 
     ManifestTemplate ociImageIndex =
-        readJsonFromFile("core/json/ociindex.json", OciIndexTemplate.class);
+        loadJsonResource("core/json/ociindex.json", OciIndexTemplate.class);
     ManifestTemplate ociManifest =
-        readJsonFromFile("core/json/ocimanifest.json", OciManifestTemplate.class);
+        loadJsonResource("core/json/ocimanifest.json", OciManifestTemplate.class);
     ContainerConfigurationTemplate containerConfig =
-        readJsonFromFile("core/json/containerconfig.json", ContainerConfigurationTemplate.class);
+        loadJsonResource("core/json/containerconfig.json", ContainerConfigurationTemplate.class);
     List<ManifestAndConfigTemplate> manifestsAndConfigs =
         Arrays.asList(new ManifestAndConfigTemplate(ociManifest, containerConfig));
     try (OutputStream out =
@@ -150,7 +150,7 @@ public class CacheStorageReaderTest {
     }
   }
 
-  private static <T extends JsonTemplate> T readJsonFromFile(String path, Class<T> jsonClass)
+  private static <T extends JsonTemplate> T loadJsonResource(String path, Class<T> jsonClass)
       throws URISyntaxException, IOException {
     return JsonTemplateMapper.readJsonFromFile(
         Paths.get(Resources.getResource(path).toURI()), jsonClass);

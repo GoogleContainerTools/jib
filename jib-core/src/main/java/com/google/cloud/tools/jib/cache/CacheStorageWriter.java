@@ -134,7 +134,7 @@ class CacheStorageWriter {
    * @param destination the destination path
    * @throws IOException if an I/O exception occurs
    */
-  private static void writeMetadata(JsonTemplate jsonTemplate, Path destination)
+  private static void writeJsonTemplate(JsonTemplate jsonTemplate, Path destination)
       throws IOException {
     Path temporaryFile = Files.createTempFile(destination.getParent(), null, null);
     temporaryFile.toFile().deleteOnExit();
@@ -326,10 +326,10 @@ class CacheStorageWriter {
     List<ManifestAndConfigTemplate> manifestsAndConfigs = new ArrayList<>();
     for (int i = 0; i < manifests.size(); i++) {
       manifestsAndConfigs.add(
-          new ManifestAndConfigTemplate(manifests.get(0), containerConfigurations.get(0)));
+          new ManifestAndConfigTemplate(manifests.get(i), containerConfigurations.get(i)));
     }
     try (LockFile ignored = LockFile.lock(imageDirectory.resolve("lock"))) {
-      writeMetadata(
+      writeJsonTemplate(
           new ImageMetadataTemplate(manifestList, manifestsAndConfigs),
           imageDirectory.resolve("manifests_configs.json"));
     }
@@ -350,7 +350,7 @@ class CacheStorageWriter {
         new ImageMetadataTemplate(
             null, Collections.singletonList(new ManifestAndConfigTemplate(manifests, null)));
     try (LockFile ignored = LockFile.lock(imageDirectory.resolve("lock"))) {
-      writeMetadata(metadata, imageDirectory.resolve("manifests_configs.json"));
+      writeJsonTemplate(metadata, imageDirectory.resolve("manifests_configs.json"));
     }
   }
 
@@ -366,7 +366,7 @@ class CacheStorageWriter {
       throws IOException {
     Path configDirectory = cacheStorageFiles.getLocalDirectory().resolve("config");
     Files.createDirectories(configDirectory);
-    writeMetadata(containerConfiguration, configDirectory.resolve(imageId.getHash()));
+    writeJsonTemplate(containerConfiguration, configDirectory.resolve(imageId.getHash()));
   }
 
   /**
