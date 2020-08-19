@@ -49,7 +49,7 @@ public class ManifestCheckerIntegrationTest {
     registryClient.doPullBearerAuth();
 
     Optional<ManifestAndDigest<ManifestTemplate>> manifestDescriptor =
-        registryClient.checkImage(KNOWN_MANIFEST);
+        registryClient.checkManifest(KNOWN_MANIFEST);
 
     assertTrue(manifestDescriptor.isPresent());
     assertEquals(KNOWN_MANIFEST, manifestDescriptor.get().getDigest().toString());
@@ -64,7 +64,7 @@ public class ManifestCheckerIntegrationTest {
     registryClient.doPullBearerAuth();
 
     Optional<ManifestAndDigest<ManifestTemplate>> manifestDescriptor =
-        registryClient.checkImage(UNKNOWN_MANIFEST);
+        registryClient.checkManifest(UNKNOWN_MANIFEST);
 
     assertEquals(Optional.empty(), manifestDescriptor);
   }

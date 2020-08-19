@@ -71,7 +71,7 @@ class CheckManifestStep implements Callable<Optional<ManifestAndDigest<ManifestT
         return Optional.empty();
       }
 
-      return registryClient.checkImage(manifestDigest.toString());
+      return registryClient.checkManifest(manifestDigest.toString());
     }
   }
 }
