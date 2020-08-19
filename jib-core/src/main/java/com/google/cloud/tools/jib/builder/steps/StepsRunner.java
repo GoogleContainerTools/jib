@@ -188,7 +188,7 @@ public class StepsRunner {
     stepsToRun.add(this::pushBaseImageLayers);
     stepsToRun.add(this::pushApplicationLayers);
     stepsToRun.add(this::pushContainerConfigurations);
-    stepsToRun.add(this::checkImageInTargetRegistry);
+    stepsToRun.add(this::checkManifestInTargetRegistry);
     stepsToRun.add(this::pushImages);
     return this;
   }
@@ -491,7 +491,7 @@ public class StepsRunner {
                         Verify.verifyNotNull(results.applicationLayers))));
   }
 
-  private void checkImageInTargetRegistry() {
+  private void checkManifestInTargetRegistry() {
     ProgressEventDispatcher.Factory childProgressDispatcherFactory =
         Verify.verifyNotNull(rootProgressDispatcher).newChildProducer();
 
