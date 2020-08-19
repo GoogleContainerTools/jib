@@ -41,6 +41,39 @@ import java.util.stream.Stream;
 /** Reads from the default cache storage engine. */
 class CacheStorageReader {
 
+  @VisibleForTesting
+  static void verifyImageMetadata(ImageMetadataTemplate metadata, Path metadataCacheDirectory)
+      throws CacheCorruptedException {
+    if (metadata.getManifestsAndConfigs().isEmpty()) {
+      throw new CacheCorruptedException(metadataCacheDirectory, "Manifest cache empty");
+    }
+
+    List<ManifestAndConfigTemplate> manifestsAndConfigs = metadata.getManifestsAndConfigs();
+    if (metadata.getManifestList() == null && manifestsAndConfigs.size() != 1) {
+      throw new CacheCorruptedException(metadataCacheDirectory, "Manifest list missing");
+    }
+    if (manifestsAndConfigs.stream().anyMatch(entry -> entry.getManifest() == null)) {
+      throw new CacheCorruptedException(metadataCacheDirectory, "Manifest(s) missing");
+    }
+
+    int schemaVersion =
+        Verify.verifyNotNull(manifestsAndConfigs.get(0).getManifest()).getSchemaVersion();
+    if (schemaVersion == 1) {
+      if (metadata.getManifestList() != null
+          || manifestsAndConfigs.stream().anyMatch(entry -> entry.getConfig() != null)) {
+        throw new CacheCorruptedException(metadataCacheDirectory, "Schema 1 manifests corrupted");
+      }
+    } else if (schemaVersion == 2) {
+      if (manifestsAndConfigs.stream().anyMatch(entry -> entry.getConfig() == null)) {
+        throw new CacheCorruptedException(metadataCacheDirectory, "Schema 2 manifests corrupted");
+      }
+    } else {
+      throw new CacheCorruptedException(
+          metadataCacheDirectory,
+          "Unknown schemaVersion in manifest: " + schemaVersion + " - only 1 and 2 are supported");
+    }
+  }
+
   private final CacheStorageFiles cacheStorageFiles;
 
   CacheStorageReader(CacheStorageFiles cacheStorageFiles) {
@@ -93,41 +126,8 @@ class CacheStorageReader {
     try (LockFile ignored = LockFile.lock(imageDirectory.resolve("lock"))) {
       metadata = JsonTemplateMapper.readJsonFromFile(metadataPath, ImageMetadataTemplate.class);
     }
-    verifyMetadata(metadata, imageDirectory);
+    verifyImageMetadata(metadata, imageDirectory);
     return Optional.of(metadata);
-  }
-
-  @VisibleForTesting
-  void verifyMetadata(ImageMetadataTemplate metadata, Path metadataCacheDirectory)
-      throws CacheCorruptedException {
-    if (metadata.getManifestsAndConfigs().isEmpty()) {
-      throw new CacheCorruptedException(metadataCacheDirectory, "manifest cache empty");
-    }
-
-    List<ManifestAndConfigTemplate> manifestsAndConfigs = metadata.getManifestsAndConfigs();
-    if (metadata.getManifestList() == null && manifestsAndConfigs.size() != 1) {
-      throw new CacheCorruptedException(metadataCacheDirectory, "manifest list missing");
-    }
-    if (manifestsAndConfigs.stream().anyMatch(entry -> entry.getManifest() == null)) {
-      throw new CacheCorruptedException(metadataCacheDirectory, "manifest(s) missing");
-    }
-
-    int schemaVersion =
-        Verify.verifyNotNull(manifestsAndConfigs.get(0).getManifest()).getSchemaVersion();
-    if (schemaVersion == 1) {
-      if (metadata.getManifestList() != null
-          || manifestsAndConfigs.stream().anyMatch(entry -> entry.getConfig() != null)) {
-        throw new CacheCorruptedException(metadataCacheDirectory, "schema 1 manifests corrupted");
-      }
-    } else if (schemaVersion == 2) {
-      if (manifestsAndConfigs.stream().anyMatch(entry -> entry.getConfig() == null)) {
-        throw new CacheCorruptedException(metadataCacheDirectory, "schema 2 manifests corrupted");
-      }
-    } else {
-      throw new CacheCorruptedException(
-          metadataCacheDirectory,
-          "Unknown schemaVersion in manifest: " + schemaVersion + " - only 1 and 2 are supported");
-    }
   }
 
   /**

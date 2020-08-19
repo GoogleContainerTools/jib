@@ -42,6 +42,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.DigestException;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -487,5 +488,115 @@ public class CacheStorageReaderTest {
     Optional<DescriptorDigest> selectedLayerDigest = cacheStorageReader.select(selector);
     Assert.assertTrue(selectedLayerDigest.isPresent());
     Assert.assertEquals(layerDigest2, selectedLayerDigest.get());
+  }
+
+  @Test
+  public void testVerifyImageMetadata_manifestCacheEmpty() {
+    ImageMetadataTemplate metadata = new ImageMetadataTemplate(null, Collections.emptyList());
+    try {
+      CacheStorageReader.verifyImageMetadata(metadata, Paths.get("/cache/dir"));
+      Assert.fail();
+    } catch (CacheCorruptedException ex) {
+      MatcherAssert.assertThat(ex.getMessage(), CoreMatchers.startsWith("Manifest cache empty"));
+    }
+  }
+
+  @Test
+  public void testVerifyImageMetadata_manifestListMissing() {
+    ManifestAndConfigTemplate manifestAndConfig =
+        new ManifestAndConfigTemplate(
+            new V22ManifestListTemplate(), new ContainerConfigurationTemplate());
+    ImageMetadataTemplate metadata =
+        new ImageMetadataTemplate(null, Arrays.asList(manifestAndConfig, manifestAndConfig));
+    try {
+      CacheStorageReader.verifyImageMetadata(metadata, Paths.get("/cache/dir"));
+      Assert.fail();
+    } catch (CacheCorruptedException ex) {
+      MatcherAssert.assertThat(ex.getMessage(), CoreMatchers.startsWith("Manifest list missing"));
+    }
+  }
+
+  @Test
+  public void testVerifyImageMetadata_manifestsMissing() {
+    ManifestAndConfigTemplate manifestAndConfig =
+        new ManifestAndConfigTemplate(null, new ContainerConfigurationTemplate());
+    ImageMetadataTemplate metadata =
+        new ImageMetadataTemplate(null, Arrays.asList(manifestAndConfig));
+    try {
+      CacheStorageReader.verifyImageMetadata(metadata, Paths.get("/cache/dir"));
+      Assert.fail();
+    } catch (CacheCorruptedException ex) {
+      MatcherAssert.assertThat(ex.getMessage(), CoreMatchers.startsWith("Manifest(s) missing"));
+    }
+  }
+
+  @Test
+  public void testVerifyImageMetadata_schema1ManifestsCorrupted_manifestListExists() {
+    ManifestAndConfigTemplate manifestAndConfig =
+        new ManifestAndConfigTemplate(new V21ManifestTemplate(), null);
+    ImageMetadataTemplate metadata =
+        new ImageMetadataTemplate(new V22ManifestListTemplate(), Arrays.asList(manifestAndConfig));
+    try {
+      CacheStorageReader.verifyImageMetadata(metadata, Paths.get("/cache/dir"));
+      Assert.fail();
+    } catch (CacheCorruptedException ex) {
+      MatcherAssert.assertThat(
+          ex.getMessage(), CoreMatchers.startsWith("Schema 1 manifests corrupted"));
+    }
+  }
+
+  @Test
+  public void testVerifyImageMetadata_schema1ManifestsCorrupted_containerConfigExists() {
+    ManifestAndConfigTemplate manifestAndConfig =
+        new ManifestAndConfigTemplate(
+            new V21ManifestTemplate(), new ContainerConfigurationTemplate());
+    ImageMetadataTemplate metadata =
+        new ImageMetadataTemplate(null, Arrays.asList(manifestAndConfig));
+    try {
+      CacheStorageReader.verifyImageMetadata(metadata, Paths.get("/cache/dir"));
+      Assert.fail();
+    } catch (CacheCorruptedException ex) {
+      MatcherAssert.assertThat(
+          ex.getMessage(), CoreMatchers.startsWith("Schema 1 manifests corrupted"));
+    }
+  }
+
+  @Test
+  public void testVerifyImageMetadata_schema2ManifestsCorrupted() {
+    ManifestAndConfigTemplate manifestAndConfig =
+        new ManifestAndConfigTemplate(new V22ManifestTemplate(), null);
+    ImageMetadataTemplate metadata =
+        new ImageMetadataTemplate(null, Arrays.asList(manifestAndConfig));
+    try {
+      CacheStorageReader.verifyImageMetadata(metadata, Paths.get("/cache/dir"));
+      Assert.fail();
+    } catch (CacheCorruptedException ex) {
+      MatcherAssert.assertThat(
+          ex.getMessage(), CoreMatchers.startsWith("Schema 2 manifests corrupted"));
+    }
+  }
+
+  @Test
+  public void testVerifyImageMetadata_unsupportedSchema() {
+    ManifestAndConfigTemplate manifestAndConfig =
+        new ManifestAndConfigTemplate(
+            new ManifestTemplate() {
+              @Override
+              public int getSchemaVersion() {
+                return 987;
+              }
+            },
+            new ContainerConfigurationTemplate());
+    ImageMetadataTemplate metadata =
+        new ImageMetadataTemplate(null, Arrays.asList(manifestAndConfig));
+    try {
+      CacheStorageReader.verifyImageMetadata(metadata, Paths.get("/cache/dir"));
+      Assert.fail();
+    } catch (CacheCorruptedException ex) {
+      MatcherAssert.assertThat(
+          ex.getMessage(),
+          CoreMatchers.startsWith(
+              "Unknown schemaVersion in manifest: 987 - only 1 and 2 are supported"));
+    }
   }
 }
