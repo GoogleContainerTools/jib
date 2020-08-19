@@ -22,9 +22,12 @@ import com.google.cloud.tools.jib.api.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.blob.Blobs;
+import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate.ContentDescriptorTemplate;
 import com.google.cloud.tools.jib.image.json.ContainerConfigurationTemplate;
 import com.google.cloud.tools.jib.image.json.ImageMetadataTemplate;
 import com.google.cloud.tools.jib.image.json.ManifestAndConfigTemplate;
+import com.google.cloud.tools.jib.image.json.OciIndexTemplate;
+import com.google.cloud.tools.jib.image.json.OciManifestTemplate;
 import com.google.cloud.tools.jib.image.json.V21ManifestTemplate;
 import com.google.cloud.tools.jib.image.json.V22ManifestListTemplate;
 import com.google.cloud.tools.jib.image.json.V22ManifestListTemplate.ManifestDescriptorTemplate;
@@ -41,6 +44,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.DigestException;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.zip.GZIPInputStream;
@@ -202,8 +206,8 @@ public class CacheStorageWriterTest {
         savedMetadata.getManifestList(), CoreMatchers.instanceOf(V22ManifestListTemplate.class));
     List<ManifestDescriptorTemplate> savedManifestDescriptors =
         ((V22ManifestListTemplate) savedMetadata.getManifestList()).getManifests();
-    Assert.assertEquals(3, savedManifestDescriptors.size());
 
+    Assert.assertEquals(3, savedManifestDescriptors.size());
     Assert.assertEquals(
         "sha256:e692418e4cbaf90ca69d05a66403747baa33ee08806650b51fab815ad7fc331f",
         savedManifestDescriptors.get(0).getDigest());
@@ -255,19 +259,74 @@ public class CacheStorageWriterTest {
   }
 
   @Test
-  public void testWriteMetadata_oci() {}
+  public void testWriteMetadata_oci()
+      throws URISyntaxException, IOException, InvalidImageReferenceException {
+    ContainerConfigurationTemplate containerConfig =
+        loadJsonResource("core/json/containerconfig.json", ContainerConfigurationTemplate.class);
+    OciManifestTemplate manifest =
+        loadJsonResource("core/json/ocimanifest.json", OciManifestTemplate.class);
+    OciIndexTemplate ociIndex = loadJsonResource("core/json/ociindex.json", OciIndexTemplate.class);
+
+    ImageReference imageReference = ImageReference.parse("image.reference/project/thing:tag");
+
+    cacheStorageWriter.writeMetadata(
+        imageReference, ociIndex, Arrays.asList(manifest), Arrays.asList(containerConfig));
+
+    Path savedMetadataPath =
+        cacheRoot.resolve("images/image.reference/project/thing!tag/manifests_configs.json");
+    Assert.assertTrue(Files.exists(savedMetadataPath));
+
+    ImageMetadataTemplate savedMetadata =
+        JsonTemplateMapper.readJsonFromFile(savedMetadataPath, ImageMetadataTemplate.class);
+
+    MatcherAssert.assertThat(
+        savedMetadata.getManifestList(), CoreMatchers.instanceOf(OciIndexTemplate.class));
+    List<ContentDescriptorTemplate> savedManifestDescriptors =
+        ((OciIndexTemplate) savedMetadata.getManifestList()).getManifests();
+
+    Assert.assertEquals(1, savedManifestDescriptors.size());
+    Assert.assertEquals(
+        "8c662931926fa990b41da3c9f42663a537ccd498130030f9149173a0493832ad",
+        savedManifestDescriptors.get(0).getDigest().getHash());
+
+    Assert.assertEquals(1, savedMetadata.getManifestsAndConfigs().size());
+    ManifestAndConfigTemplate savedManifestAndConfig =
+        savedMetadata.getManifestsAndConfigs().get(0);
+
+    OciManifestTemplate savedManifest1 = (OciManifestTemplate) savedManifestAndConfig.getManifest();
+    Assert.assertEquals(2, savedManifest1.getSchemaVersion());
+
+    Assert.assertEquals(1, savedManifest1.getLayers().size());
+    Assert.assertEquals(
+        "4945ba5011739b0b98c4a41afe224e417f47c7c99b2ce76830999c9a0861b236",
+        savedManifest1.getLayers().get(0).getDigest().getHash());
+
+    Assert.assertEquals(
+        "8c662931926fa990b41da3c9f42663a537ccd498130030f9149173a0493832ad",
+        savedManifest1.getContainerConfiguration().getDigest().getHash());
+
+    Assert.assertEquals("wasm", savedManifestAndConfig.getConfig().getArchitecture());
+  }
 
   @Test
-  public void testWriteMetadata_invalidInput() {}
+  public void testWriteMetadata_invalidInput() throws IOException {
+    try {
+      cacheStorageWriter.writeMetadata(
+          ImageReference.scratch(),
+          null,
+          Arrays.asList(new V22ManifestTemplate()),
+          Collections.emptyList());
+      Assert.fail();
+    } catch (IllegalArgumentException ex) {
+      Assert.assertEquals(
+          "manifests and containerConfigurations should be of same size", ex.getMessage());
+    }
+  }
 
   @Test
   public void testWriteLocalConfig() throws IOException, URISyntaxException, DigestException {
-    Path containerConfigurationJsonFile =
-        Paths.get(
-            getClass().getClassLoader().getResource("core/json/containerconfig.json").toURI());
     ContainerConfigurationTemplate containerConfigurationTemplate =
-        JsonTemplateMapper.readJsonFromFile(
-            containerConfigurationJsonFile, ContainerConfigurationTemplate.class);
+        loadJsonResource("core/json/containerconfig.json", ContainerConfigurationTemplate.class);
 
     cacheStorageWriter.writeLocalConfig(
         DescriptorDigest.fromHash(

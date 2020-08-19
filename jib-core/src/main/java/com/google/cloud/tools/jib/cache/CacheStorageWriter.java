@@ -314,7 +314,9 @@ class CacheStorageWriter {
       List<BuildableManifestTemplate> manifests,
       List<ContainerConfigurationTemplate> containerConfigurations)
       throws IOException {
-    Preconditions.checkArgument(manifests.size() == containerConfigurations.size());
+    Preconditions.checkArgument(
+        manifests.size() == containerConfigurations.size(),
+        "manifests and containerConfigurations should be of same size");
     for (BuildableManifestTemplate manifest : manifests) {
       Preconditions.checkNotNull(manifest.getContainerConfiguration());
       Preconditions.checkNotNull(manifest.getContainerConfiguration().getDigest());

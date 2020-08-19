@@ -135,8 +135,7 @@ public class CacheStorageReaderTest {
     Path imageDirectory = cacheDirectory.resolve("images/test/image!tag");
     Files.createDirectories(imageDirectory);
 
-    ManifestTemplate ociImageIndex =
-        loadJsonResource("core/json/ociindex.json", OciIndexTemplate.class);
+    ManifestTemplate ociIndex = loadJsonResource("core/json/ociindex.json", OciIndexTemplate.class);
     ManifestTemplate ociManifest =
         loadJsonResource("core/json/ocimanifest.json", OciManifestTemplate.class);
     ContainerConfigurationTemplate containerConfig =
@@ -145,8 +144,7 @@ public class CacheStorageReaderTest {
         Arrays.asList(new ManifestAndConfigTemplate(ociManifest, containerConfig));
     try (OutputStream out =
         Files.newOutputStream(imageDirectory.resolve("manifests_configs.json"))) {
-      JsonTemplateMapper.writeTo(
-          new ImageMetadataTemplate(ociImageIndex, manifestsAndConfigs), out);
+      JsonTemplateMapper.writeTo(new ImageMetadataTemplate(ociIndex, manifestsAndConfigs), out);
     }
   }
 
