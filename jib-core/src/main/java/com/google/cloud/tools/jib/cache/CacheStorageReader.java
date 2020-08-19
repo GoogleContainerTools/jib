@@ -101,12 +101,15 @@ class CacheStorageReader {
   void verifyMetadata(ImageMetadataTemplate metadata, Path metadataCacheDirectory)
       throws CacheCorruptedException {
     if (metadata.getManifestsAndConfigs().isEmpty()) {
-      throw new CacheCorruptedException(metadataCacheDirectory, "manifest list empty");
+      throw new CacheCorruptedException(metadataCacheDirectory, "manifest cache empty");
     }
 
     List<ManifestAndConfigTemplate> manifestsAndConfigs = metadata.getManifestsAndConfigs();
+    if (metadata.getManifestList() == null && manifestsAndConfigs.size() != 1) {
+      throw new CacheCorruptedException(metadataCacheDirectory, "manifest list missing");
+    }
     if (manifestsAndConfigs.stream().anyMatch(entry -> entry.getManifest() == null)) {
-      throw new CacheCorruptedException(metadataCacheDirectory, "manifests missing");
+      throw new CacheCorruptedException(metadataCacheDirectory, "manifest(s) missing");
     }
 
     int schemaVersion =
@@ -117,9 +120,7 @@ class CacheStorageReader {
         throw new CacheCorruptedException(metadataCacheDirectory, "schema 1 manifests corrupted");
       }
     } else if (schemaVersion == 2) {
-      if (metadata.getManifestList() == null
-          || metadata.getManifestList().getSchemaVersion() != 2
-          || manifestsAndConfigs.stream().anyMatch(entry -> entry.getConfig() == null)) {
+      if (manifestsAndConfigs.stream().anyMatch(entry -> entry.getConfig() == null)) {
         throw new CacheCorruptedException(metadataCacheDirectory, "schema 2 manifests corrupted");
       }
     } else {

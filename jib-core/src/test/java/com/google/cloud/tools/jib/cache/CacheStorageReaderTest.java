@@ -21,8 +21,13 @@ import com.google.cloud.tools.jib.api.ImageReference;
 import com.google.cloud.tools.jib.blob.Blobs;
 import com.google.cloud.tools.jib.image.json.ContainerConfigurationTemplate;
 import com.google.cloud.tools.jib.image.json.ImageMetadataTemplate;
+import com.google.cloud.tools.jib.image.json.ManifestAndConfigTemplate;
+import com.google.cloud.tools.jib.image.json.ManifestTemplate;
 import com.google.cloud.tools.jib.image.json.V21ManifestTemplate;
+import com.google.cloud.tools.jib.image.json.V22ManifestListTemplate;
 import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
+import com.google.cloud.tools.jib.json.JsonTemplate;
+import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import com.google.common.io.Resources;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -33,7 +38,9 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.DigestException;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Optional;
 import org.hamcrest.CoreMatchers;
 import org.hamcrest.MatcherAssert;
@@ -50,21 +57,62 @@ public class CacheStorageReaderTest {
       throws IOException, URISyntaxException {
     Path imageDirectory = cacheDirectory.resolve("images/test/image!tag");
     Files.createDirectories(imageDirectory);
-    Files.copy(
-        Paths.get(Resources.getResource("core/json/v21manifest.json").toURI()),
-        imageDirectory.resolve("manifest.json"));
+
+    ManifestAndConfigTemplate manifestAndConfig =
+        new ManifestAndConfigTemplate(
+            readJsonFromFile("core/json/v21manifest.json", V21ManifestTemplate.class), null);
+    try (OutputStream out =
+        Files.newOutputStream(imageDirectory.resolve("manifests_configs.json"))) {
+      JsonTemplateMapper.writeTo(
+          new ImageMetadataTemplate(null, Collections.singletonList(manifestAndConfig)), out);
+    }
   }
 
   private static void setupCachedMetadataV22(Path cacheDirectory)
       throws IOException, URISyntaxException {
     Path imageDirectory = cacheDirectory.resolve("images/test/image!tag");
     Files.createDirectories(imageDirectory);
-    Files.copy(
-        Paths.get(Resources.getResource("core/json/v22manifest.json").toURI()),
-        imageDirectory.resolve("manifest.json"));
-    Files.copy(
-        Paths.get(Resources.getResource("core/json/containerconfig.json").toURI()),
-        imageDirectory.resolve("config.json"));
+
+    ManifestAndConfigTemplate manifestAndConfig =
+        new ManifestAndConfigTemplate(
+            readJsonFromFile("core/json/v22manifest.json", V22ManifestTemplate.class),
+            readJsonFromFile(
+                "core/json/containerconfig.json", ContainerConfigurationTemplate.class));
+    try (OutputStream out =
+        Files.newOutputStream(imageDirectory.resolve("manifests_configs.json"))) {
+      JsonTemplateMapper.writeTo(
+          new ImageMetadataTemplate(null, Collections.singletonList(manifestAndConfig)), out);
+    }
+  }
+
+  private static void setupCachedMetadataV22ManifestList(Path cacheDirectory)
+      throws IOException, URISyntaxException {
+    Path imageDirectory = cacheDirectory.resolve("images/test/image!tag");
+    Files.createDirectories(imageDirectory);
+
+    ManifestTemplate v22ManifestList =
+        readJsonFromFile("core/json/v22manifest_list.json", V22ManifestListTemplate.class);
+    ManifestTemplate v22Manifest1 =
+        readJsonFromFile("core/json/v22manifest.json", V22ManifestTemplate.class);
+    ManifestTemplate v22Manifest2 =
+        readJsonFromFile("core/json/translated_v22manifest.json", V22ManifestTemplate.class);
+    ContainerConfigurationTemplate containerConfig =
+        readJsonFromFile("core/json/containerconfig.json", ContainerConfigurationTemplate.class);
+    List<ManifestAndConfigTemplate> manifestsAndConfigs =
+        Arrays.asList(
+            new ManifestAndConfigTemplate(v22Manifest1, containerConfig),
+            new ManifestAndConfigTemplate(v22Manifest2, containerConfig));
+    try (OutputStream out =
+        Files.newOutputStream(imageDirectory.resolve("manifests_configs.json"))) {
+      JsonTemplateMapper.writeTo(
+          new ImageMetadataTemplate(v22ManifestList, manifestsAndConfigs), out);
+    }
+  }
+
+  private static <T extends JsonTemplate> T readJsonFromFile(String path, Class<T> jsonClass)
+      throws URISyntaxException, IOException {
+    return JsonTemplateMapper.readJsonFromFile(
+        Paths.get(Resources.getResource(path).toURI()), jsonClass);
   }
 
   @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
