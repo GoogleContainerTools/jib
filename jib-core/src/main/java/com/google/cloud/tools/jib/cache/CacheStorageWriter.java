@@ -302,10 +302,12 @@ class CacheStorageWriter {
   }
 
   /**
-   * aaa Saves the manifest and container configuration for a V2.2 or OCI image.
+   * Saves image metadata (a manifest list and a list of manifest/container configuration pairs) for
+   * an image reference.
    *
    * @param imageReference the image reference to store the metadata for
-   * @param manifests the manifests
+   * @param manifestList the V2.2 manifest list or OCI image index. Can be null.
+   * @param manifests the V2.2 or OCI manifests
    * @param containerConfigurations the container configurations
    */
   void writeMetadata(

@@ -107,10 +107,11 @@ class CacheStorageReader {
   }
 
   /**
-   * Retrieves the cached manifest and container configuration for an image reference. aaa
+   * Retrieves the cached image metadata (a manifest list and a list of manifest/container
+   * configuration pairs) for an image reference.
    *
    * @param imageReference the image reference
-   * @return the manifest and container configuration for the image reference, if found
+   * @return the image metadata for the image reference, if found
    * @throws IOException if an I/O exception occurs
    * @throws CacheCorruptedException if the cache is corrupted
    */
@@ -171,7 +172,8 @@ class CacheStorageReader {
   /**
    * Retrieves the {@link CachedLayer} for the local base image layer with the given diff ID.
    *
-   * @param diffId the diff ID @)return the {@link CachedLayer} referenced by the diff ID, if found
+   * @param diffId the diff ID
+   * @return the {@link CachedLayer} referenced by the diff ID, if found
    * @throws CacheCorruptedException if the cache was found to be corrupted
    * @throws IOException if an I/O exception occurs
    */

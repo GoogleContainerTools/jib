@@ -300,13 +300,13 @@ class PullBaseImageStep implements Callable<ImagesAndRegistryClient> {
   }
 
   /**
-   * Converts a JSON manifest to an {@link Image}. aaaa
+   * Pulls a container configuration JSON specified in the given manifest.
    *
-   * @param manifestAndDigest a manifest list and digest of a {@link Image}
+   * @param manifestAndDigest a manifest JSON and its digest
    * @param registryClient to communicate with remote registry
-   * @param progressEventDispatcher the {@link ProgressEventDispatcher} for emitting {@link
+   * @param progressDispatcher the {@link ProgressEventDispatcher} for emitting {@link
    *     ProgressEvent}s
-   * @return {@link Image}
+   * @return pulled {@link ContainerConfigurationTemplate}
    * @throws IOException when an I/O exception occurs during the pulling
    * @throws LayerCountMismatchException if the manifest and configuration contain conflicting layer
    *     information
@@ -317,13 +317,11 @@ class PullBaseImageStep implements Callable<ImagesAndRegistryClient> {
   private ContainerConfigurationTemplate pullContainerConfigJson(
       ManifestAndDigest<?> manifestAndDigest,
       RegistryClient registryClient,
-      ProgressEventDispatcher progressEventDispatcher)
+      ProgressEventDispatcher progressDispatcher)
       throws IOException, LayerPropertyNotFoundException, UnknownManifestFormatException {
     BuildableManifestTemplate manifest =
         (BuildableManifestTemplate) manifestAndDigest.getManifest();
-    Preconditions.checkArgument(
-        manifest.getSchemaVersion() == 2,
-        "Unknown manifest schema version: " + manifest.getSchemaVersion());
+    Preconditions.checkArgument(manifest.getSchemaVersion() == 2);
 
     EventHandlers eventHandlers = buildContext.getEventHandlers();
     eventHandlers.dispatch(
@@ -335,16 +333,16 @@ class PullBaseImageStep implements Callable<ImagesAndRegistryClient> {
               + JsonTemplateMapper.toUtf8String(manifest));
     }
 
-    try (ThrottledProgressEventDispatcherWrapper progressEventDispatcherWrapper =
+    try (ThrottledProgressEventDispatcherWrapper progressDispatcherWrapper =
         new ThrottledProgressEventDispatcherWrapper(
-            progressEventDispatcher.newChildProducer(),
+            progressDispatcher.newChildProducer(),
             "pull container configuration " + manifest.getContainerConfiguration().getDigest())) {
       String containerConfigString =
           Blobs.writeToString(
               registryClient.pullBlob(
                   manifest.getContainerConfiguration().getDigest(),
-                  progressEventDispatcherWrapper::setProgressTarget,
-                  progressEventDispatcherWrapper::dispatchProgress));
+                  progressDispatcherWrapper::setProgressTarget,
+                  progressDispatcherWrapper::dispatchProgress));
       return JsonTemplateMapper.readJson(
           containerConfigString, ContainerConfigurationTemplate.class);
     }

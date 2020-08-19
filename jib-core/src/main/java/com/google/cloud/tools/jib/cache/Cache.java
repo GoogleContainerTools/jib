@@ -70,11 +70,13 @@ public class Cache {
   }
 
   /**
-   * aaaaaaaaa Saves a manifest and container configuration for a V2.2 or OCI image.
+   * Saves image metadata (a manifest list and a list of manifest/container configuration pairs) for
+   * an image reference.
    *
-   * @param imageReference the image reference to save the manifest and container configuration for
-   * @param manifests the V2.2 or OCI manifest
-   * @param containerConfigurations the container configuration
+   * @param imageReference the image reference to save the metadata for
+   * @param manifestList the V2.2 manifest list or OCI image index. Can be null.
+   * @param manifests the V2.2 or OCI manifests
+   * @param containerConfigurations the container configurations
    * @throws IOException if an I/O exception occurs
    */
   public void writeMetadata(
@@ -91,7 +93,7 @@ public class Cache {
   /**
    * Saves a V2.1 image manifest.
    *
-   * @param imageReference the image reference to save the manifest and container configuration for
+   * @param imageReference the image reference to save the manifest for
    * @param manifestTemplate the V2.1 manifest
    * @throws IOException if an I/O exception occurs
    */
@@ -162,10 +164,11 @@ public class Cache {
   }
 
   /**
-   * Retrieves the cached manifest and container configuration for an image reference.
+   * Retrieves the cached image metadata (a manifest list and a list of manifest/container
+   * configuration pairs) for an image reference.
    *
    * @param imageReference the image reference
-   * @return aaaaaaaaaa
+   * @return the image metadata for the image reference, if found
    * @throws IOException if an I/O exception occurs
    * @throws CacheCorruptedException if the cache is corrupted
    */
