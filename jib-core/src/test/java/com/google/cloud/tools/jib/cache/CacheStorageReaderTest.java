@@ -117,11 +117,17 @@ public class CacheStorageReaderTest {
 
   @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
+  private Path cacheDirectory;
   private DescriptorDigest layerDigest1;
   private DescriptorDigest layerDigest2;
+  private CacheStorageFiles cacheStorageFiles;
+  private CacheStorageReader cacheStorageReader;
 
   @Before
-  public void setUp() throws DigestException {
+  public void setUp() throws DigestException, IOException {
+    cacheDirectory = temporaryFolder.newFolder().toPath();
+    cacheStorageFiles = new CacheStorageFiles(cacheDirectory);
+    cacheStorageReader = new CacheStorageReader(cacheStorageFiles);
     layerDigest1 =
         DescriptorDigest.fromHash(
             "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
@@ -132,11 +138,6 @@ public class CacheStorageReaderTest {
 
   @Test
   public void testListDigests() throws IOException, CacheCorruptedException {
-    CacheStorageFiles cacheStorageFiles =
-        new CacheStorageFiles(temporaryFolder.newFolder().toPath());
-
-    CacheStorageReader cacheStorageReader = new CacheStorageReader(cacheStorageFiles);
-
     // Creates test layer directories.
     Files.createDirectories(cacheStorageFiles.getLayersDirectory().resolve(layerDigest1.getHash()));
     Files.createDirectories(cacheStorageFiles.getLayersDirectory().resolve(layerDigest2.getHash()));
@@ -160,13 +161,9 @@ public class CacheStorageReaderTest {
   }
 
   @Test
-  public void testRetrieveManifest_v21()
+  public void testRetrieveMetadata_v21SingleManifest()
       throws IOException, URISyntaxException, CacheCorruptedException {
-    Path cacheDirectory = temporaryFolder.newFolder().toPath();
     setupCachedMetadataV21(cacheDirectory);
-
-    CacheStorageFiles cacheStorageFiles = new CacheStorageFiles(cacheDirectory);
-    CacheStorageReader cacheStorageReader = new CacheStorageReader(cacheStorageFiles);
 
     ImageMetadataTemplate metadata =
         cacheStorageReader.retrieveMetadata(ImageReference.of("test", "image", "tag")).get();
@@ -180,13 +177,9 @@ public class CacheStorageReaderTest {
   }
 
   @Test
-  public void testRetrieveManifest_v22()
+  public void testRetrieveMetadata_v22SingleManifest()
       throws IOException, URISyntaxException, CacheCorruptedException {
-    Path cacheDirectory = temporaryFolder.newFolder().toPath();
     setupCachedMetadataV22(cacheDirectory);
-
-    CacheStorageFiles cacheStorageFiles = new CacheStorageFiles(cacheDirectory);
-    CacheStorageReader cacheStorageReader = new CacheStorageReader(cacheStorageFiles);
 
     ImageMetadataTemplate metadata =
         cacheStorageReader.retrieveMetadata(ImageReference.of("test", "image", "tag")).get();
@@ -199,13 +192,18 @@ public class CacheStorageReaderTest {
   }
 
   @Test
-  public void testRetrieveContainerConfiguration()
-      throws IOException, URISyntaxException, CacheCorruptedException {
-    Path cacheDirectory = temporaryFolder.newFolder().toPath();
-    setupCachedMetadataV22(cacheDirectory);
+  public void testRetrieveMetadata_v22ManifestList() {}
 
-    CacheStorageFiles cacheStorageFiles = new CacheStorageFiles(cacheDirectory);
-    CacheStorageReader cacheStorageReader = new CacheStorageReader(cacheStorageFiles);
+  @Test
+  public void testRetrieveMetadata_ociSingleManifest() {}
+
+  @Test
+  public void testRetrieveMetadata_ociImageIndex() {}
+
+  @Test
+  public void testRetrieveMetadata_containerConfiguration()
+      throws IOException, URISyntaxException, CacheCorruptedException {
+    setupCachedMetadataV22(cacheDirectory);
 
     ImageMetadataTemplate metadata =
         cacheStorageReader.retrieveMetadata(ImageReference.of("test", "image", "tag")).get();
@@ -221,11 +219,6 @@ public class CacheStorageReaderTest {
 
   @Test
   public void testRetrieve() throws IOException, CacheCorruptedException {
-    CacheStorageFiles cacheStorageFiles =
-        new CacheStorageFiles(temporaryFolder.newFolder().toPath());
-
-    CacheStorageReader cacheStorageReader = new CacheStorageReader(cacheStorageFiles);
-
     // Creates the test layer directory.
     DescriptorDigest layerDigest = layerDigest1;
     DescriptorDigest layerDiffId = layerDigest2;
@@ -262,11 +255,6 @@ public class CacheStorageReaderTest {
 
   @Test
   public void testRetrieveTarLayer() throws IOException, CacheCorruptedException {
-    CacheStorageFiles cacheStorageFiles =
-        new CacheStorageFiles(temporaryFolder.newFolder().toPath());
-
-    CacheStorageReader cacheStorageReader = new CacheStorageReader(cacheStorageFiles);
-
     // Creates the test layer directory.
     Path localDirectory = cacheStorageFiles.getLocalDirectory();
     DescriptorDigest layerDigest = layerDigest1;
@@ -305,16 +293,12 @@ public class CacheStorageReaderTest {
 
   @Test
   public void testRetrieveLocalConfig() throws IOException, URISyntaxException, DigestException {
-    Path cacheDirectory = temporaryFolder.newFolder().toPath();
     Path configDirectory = cacheDirectory.resolve("local").resolve("config");
     Files.createDirectories(configDirectory);
     Files.copy(
         Paths.get(Resources.getResource("core/json/containerconfig.json").toURI()),
         configDirectory.resolve(
             "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"));
-
-    CacheStorageFiles cacheStorageFiles = new CacheStorageFiles(cacheDirectory);
-    CacheStorageReader cacheStorageReader = new CacheStorageReader(cacheStorageFiles);
 
     ContainerConfigurationTemplate configurationTemplate =
         cacheStorageReader
@@ -334,11 +318,6 @@ public class CacheStorageReaderTest {
 
   @Test
   public void testSelect_invalidLayerDigest() throws IOException {
-    CacheStorageFiles cacheStorageFiles =
-        new CacheStorageFiles(temporaryFolder.newFolder().toPath());
-
-    CacheStorageReader cacheStorageReader = new CacheStorageReader(cacheStorageFiles);
-
     DescriptorDigest selector = layerDigest1;
     Path selectorFile = cacheStorageFiles.getSelectorFile(selector);
     Files.createDirectories(selectorFile.getParent());
@@ -360,11 +339,6 @@ public class CacheStorageReaderTest {
 
   @Test
   public void testSelect() throws IOException, CacheCorruptedException {
-    CacheStorageFiles cacheStorageFiles =
-        new CacheStorageFiles(temporaryFolder.newFolder().toPath());
-
-    CacheStorageReader cacheStorageReader = new CacheStorageReader(cacheStorageFiles);
-
     DescriptorDigest selector = layerDigest1;
     Path selectorFile = cacheStorageFiles.getSelectorFile(selector);
     Files.createDirectories(selectorFile.getParent());
