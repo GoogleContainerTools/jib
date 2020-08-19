@@ -499,16 +499,11 @@ public class StepsRunner {
         executorService.submit(
             () -> {
               Verify.verify(results.builtImagesAndBaseImages.get().size() == 1);
-              Future<Image> builtImage =
-                  results.builtImagesAndBaseImages.get().keySet().iterator().next();
-              Future<BlobDescriptor> containerConfigPushResult =
-                  results.builtImagesAndContainerConfigurationPushResults.get().get(builtImage);
               return new CheckImageStep(
                       buildContext,
                       childProgressDispatcherFactory,
                       results.targetRegistryClient.get(),
-                      Verify.verifyNotNull(containerConfigPushResult).get(),
-                      builtImage.get())
+                      results.manifestListOrSingleManifest.get())
                   .call();
             });
   }
