@@ -343,16 +343,16 @@ class CacheStorageWriter {
    * Writes a V2.1 manifest for a given image reference.
    *
    * @param imageReference the image reference to store the metadata for
-   * @param manifests the manifest
+   * @param manifest the manifest
    */
-  void writeMetadata(ImageReference imageReference, V21ManifestTemplate manifests)
+  void writeMetadata(ImageReference imageReference, V21ManifestTemplate manifest)
       throws IOException {
     Path imageDirectory = cacheStorageFiles.getImageDirectory(imageReference);
     Files.createDirectories(imageDirectory);
 
     ImageMetadataTemplate metadata =
         new ImageMetadataTemplate(
-            null, Collections.singletonList(new ManifestAndConfigTemplate(manifests, null)));
+            null, Collections.singletonList(new ManifestAndConfigTemplate(manifest, null)));
     try (LockFile ignored = LockFile.lock(imageDirectory.resolve("lock"))) {
       writeJsonTemplate(metadata, imageDirectory.resolve("manifests_configs.json"));
     }
