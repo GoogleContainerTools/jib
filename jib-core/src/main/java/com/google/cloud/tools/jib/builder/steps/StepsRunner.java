@@ -497,15 +497,13 @@ public class StepsRunner {
 
     results.manifestCheckResult =
         executorService.submit(
-            () -> {
-              Verify.verify(results.builtImagesAndBaseImages.get().size() == 1);
-              return new CheckImageStep(
-                      buildContext,
-                      childProgressDispatcherFactory,
-                      results.targetRegistryClient.get(),
-                      results.manifestListOrSingleManifest.get())
-                  .call();
-            });
+            () ->
+                new CheckManifestStep(
+                        buildContext,
+                        childProgressDispatcherFactory,
+                        results.targetRegistryClient.get(),
+                        results.manifestListOrSingleManifest.get())
+                    .call());
   }
 
   private void pushImages() {
