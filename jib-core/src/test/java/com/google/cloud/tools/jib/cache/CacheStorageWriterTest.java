@@ -255,6 +255,12 @@ public class CacheStorageWriterTest {
   }
 
   @Test
+  public void testWriteMetadata_oci() {}
+
+  @Test
+  public void testWriteMetadata_invalidInput() {}
+
+  @Test
   public void testWriteLocalConfig() throws IOException, URISyntaxException, DigestException {
     Path containerConfigurationJsonFile =
         Paths.get(

@@ -599,4 +599,59 @@ public class CacheStorageReaderTest {
               "Unknown schemaVersion in manifest: 987 - only 1 and 2 are supported"));
     }
   }
+
+  @Test
+  public void testVerifyImageMetadata_validV21() throws CacheCorruptedException {
+    ManifestAndConfigTemplate manifestAndConfig =
+        new ManifestAndConfigTemplate(new V21ManifestTemplate(), null);
+    ImageMetadataTemplate metadata =
+        new ImageMetadataTemplate(null, Arrays.asList(manifestAndConfig));
+    CacheStorageReader.verifyImageMetadata(metadata, Paths.get("/cache/dir"));
+    // should pass without CacheCorruptedException
+  }
+
+  @Test
+  public void testVerifyImageMetadata_validV22() throws CacheCorruptedException {
+    ManifestAndConfigTemplate manifestAndConfig =
+        new ManifestAndConfigTemplate(
+            new V22ManifestTemplate(), new ContainerConfigurationTemplate());
+    ImageMetadataTemplate metadata =
+        new ImageMetadataTemplate(null, Arrays.asList(manifestAndConfig));
+    CacheStorageReader.verifyImageMetadata(metadata, Paths.get("/cache/dir"));
+    // should pass without CacheCorruptedException
+  }
+
+  @Test
+  public void testVerifyImageMetadata_validV22ManifestList() throws CacheCorruptedException {
+    ManifestAndConfigTemplate manifestAndConfig =
+        new ManifestAndConfigTemplate(
+            new V22ManifestTemplate(), new ContainerConfigurationTemplate());
+    ImageMetadataTemplate metadata =
+        new ImageMetadataTemplate(
+            new V22ManifestListTemplate(), Arrays.asList(manifestAndConfig, manifestAndConfig));
+    CacheStorageReader.verifyImageMetadata(metadata, Paths.get("/cache/dir"));
+    // should pass without CacheCorruptedException
+  }
+
+  @Test
+  public void testVerifyImageMetadata_validOci() throws CacheCorruptedException {
+    ManifestAndConfigTemplate manifestAndConfig =
+        new ManifestAndConfigTemplate(
+            new OciManifestTemplate(), new ContainerConfigurationTemplate());
+    ImageMetadataTemplate metadata =
+        new ImageMetadataTemplate(null, Arrays.asList(manifestAndConfig));
+    CacheStorageReader.verifyImageMetadata(metadata, Paths.get("/cache/dir"));
+    // should pass without CacheCorruptedException
+  }
+
+  @Test
+  public void testVerifyImageMetadata_validOciImageIndex() throws CacheCorruptedException {
+    ManifestAndConfigTemplate manifestAndConfig =
+        new ManifestAndConfigTemplate(new OciIndexTemplate(), new ContainerConfigurationTemplate());
+    ImageMetadataTemplate metadata =
+        new ImageMetadataTemplate(
+            new OciIndexTemplate(), Arrays.asList(manifestAndConfig, manifestAndConfig));
+    CacheStorageReader.verifyImageMetadata(metadata, Paths.get("/cache/dir"));
+    // should pass without CacheCorruptedException
+  }
 }
