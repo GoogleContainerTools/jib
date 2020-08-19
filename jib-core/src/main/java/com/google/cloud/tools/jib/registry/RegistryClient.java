@@ -368,11 +368,12 @@ public class RegistryClient {
   }
 
   /**
-   * Check if a manifest referred to by a tag or digest exists on the registry.
+   * Check if a manifest referred to by {@code imageQualifier} (tag or digest) exists on the
+   * registry.
    *
    * @param imageQualifier the tag or digest to check for
-   * @return the manifest and its digest referred to by the tag or digest if the manifest exists on
-   *     the registry, or {@link Optional#empty()} otherwise
+   * @return the {@link ManifestAndDigest} referred to by {@code imageQualifier} if the manifest
+   *     exists on the registry, or {@link Optional#empty()} otherwise
    * @throws IOException if communicating with the endpoint fails
    * @throws RegistryException if communicating with the endpoint fails
    */
