@@ -159,8 +159,8 @@ public class CacheStorageReaderTest {
         cacheStorageReader
             .retrieveMetadata(ImageReference.of("test", "image", "tag"))
             .get()
-            .getConfig()
-            .get();
+            .getConfig();
+    Assert.assertNotNull(configurationTemplate);
     Assert.assertEquals("wasm", configurationTemplate.getArchitecture());
     Assert.assertEquals("js", configurationTemplate.getOs());
   }

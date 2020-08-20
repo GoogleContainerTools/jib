@@ -38,7 +38,7 @@ import com.google.cloud.tools.jib.image.json.BadContainerConfigurationFormatExce
 import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
 import com.google.cloud.tools.jib.image.json.ContainerConfigurationTemplate;
 import com.google.cloud.tools.jib.image.json.JsonToImageTranslator;
-import com.google.cloud.tools.jib.image.json.ManifestAndConfig;
+import com.google.cloud.tools.jib.image.json.ManifestAndConfigTemplate;
 import com.google.cloud.tools.jib.image.json.ManifestTemplate;
 import com.google.cloud.tools.jib.image.json.UnknownManifestFormatException;
 import com.google.cloud.tools.jib.image.json.V21ManifestTemplate;
@@ -49,6 +49,7 @@ import com.google.cloud.tools.jib.registry.RegistryClient;
 import com.google.cloud.tools.jib.registry.credentials.CredentialRetrievalException;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Verify;
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
 import java.util.Collections;
@@ -364,7 +365,7 @@ class PullBaseImageStep implements Callable<ImagesAndRegistryClient> {
       throws IOException, CacheCorruptedException, BadContainerConfigurationFormatException,
           LayerCountMismatchException {
     ImageReference baseImage = buildContext.getBaseImageConfiguration().getImage();
-    Optional<ManifestAndConfig> metadata =
+    Optional<ManifestAndConfigTemplate> metadata =
         buildContext.getBaseImageLayersCache().retrieveMetadata(baseImage);
     if (!metadata.isPresent()) {
       return Optional.empty();
@@ -376,9 +377,10 @@ class PullBaseImageStep implements Callable<ImagesAndRegistryClient> {
     }
 
     ContainerConfigurationTemplate configurationTemplate =
-        metadata.get().getConfig().orElseThrow(IllegalStateException::new);
+        Verify.verifyNotNull(metadata.get().getConfig());
     return Optional.of(
         JsonToImageTranslator.toImage(
-            (BuildableManifestTemplate) manifestTemplate, configurationTemplate));
+            (BuildableManifestTemplate) Verify.verifyNotNull(manifestTemplate),
+            configurationTemplate));
   }
 }

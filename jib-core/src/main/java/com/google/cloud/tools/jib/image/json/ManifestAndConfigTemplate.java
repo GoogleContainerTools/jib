@@ -16,16 +16,32 @@
 
 package com.google.cloud.tools.jib.image.json;
 
-import java.util.Optional;
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import com.google.cloud.tools.jib.json.JsonTemplate;
 import javax.annotation.Nullable;
 
 /** Stores a manifest and container config. */
-public class ManifestAndConfig {
+public class ManifestAndConfigTemplate implements JsonTemplate {
 
-  private final ManifestTemplate manifest;
-  @Nullable private final ContainerConfigurationTemplate config;
+  @JsonTypeInfo(
+      use = JsonTypeInfo.Id.CLASS,
+      include = JsonTypeInfo.As.PROPERTY,
+      property = "@class")
+  @JsonSubTypes({
+    @JsonSubTypes.Type(value = OciManifestTemplate.class),
+    @JsonSubTypes.Type(value = V21ManifestTemplate.class),
+    @JsonSubTypes.Type(value = V22ManifestTemplate.class),
+  })
+  @Nullable
+  private ManifestTemplate manifest;
 
-  public ManifestAndConfig(
+  @Nullable private ContainerConfigurationTemplate config;
+
+  @SuppressWarnings("unused")
+  private ManifestAndConfigTemplate() {}
+
+  public ManifestAndConfigTemplate(
       ManifestTemplate manifest, @Nullable ContainerConfigurationTemplate config) {
     this.manifest = manifest;
     this.config = config;
@@ -36,6 +52,7 @@ public class ManifestAndConfig {
    *
    * @return the manifest
    */
+  @Nullable
   public ManifestTemplate getManifest() {
     return manifest;
   }
@@ -45,7 +62,8 @@ public class ManifestAndConfig {
    *
    * @return the container configuration
    */
-  public Optional<ContainerConfigurationTemplate> getConfig() {
-    return Optional.ofNullable(config);
+  @Nullable
+  public ContainerConfigurationTemplate getConfig() {
+    return config;
   }
 }

@@ -23,7 +23,7 @@ import com.google.cloud.tools.jib.api.ImageReference;
 import com.google.cloud.tools.jib.blob.Blobs;
 import com.google.cloud.tools.jib.filesystem.LockFile;
 import com.google.cloud.tools.jib.image.json.ContainerConfigurationTemplate;
-import com.google.cloud.tools.jib.image.json.ManifestAndConfig;
+import com.google.cloud.tools.jib.image.json.ManifestAndConfigTemplate;
 import com.google.cloud.tools.jib.image.json.ManifestTemplate;
 import com.google.cloud.tools.jib.image.json.OciManifestTemplate;
 import com.google.cloud.tools.jib.image.json.V21ManifestTemplate;
@@ -84,7 +84,7 @@ class CacheStorageReader {
    * @throws IOException if an I/O exception occurs
    * @throws CacheCorruptedException if the cache is corrupted
    */
-  Optional<ManifestAndConfig> retrieveMetadata(ImageReference imageReference)
+  Optional<ManifestAndConfigTemplate> retrieveMetadata(ImageReference imageReference)
       throws IOException, CacheCorruptedException {
     Path imageDirectory = cacheStorageFiles.getImageDirectory(imageReference);
     Path manifestPath = imageDirectory.resolve("manifest.json");
@@ -110,7 +110,7 @@ class CacheStorageReader {
 
       if (schemaVersion == 1) {
         return Optional.of(
-            new ManifestAndConfig(
+            new ManifestAndConfigTemplate(
                 JsonTemplateMapper.readJsonFromFile(manifestPath, V21ManifestTemplate.class),
                 null));
       }
@@ -139,7 +139,7 @@ class CacheStorageReader {
         ContainerConfigurationTemplate config =
             JsonTemplateMapper.readJsonFromFile(configPath, ContainerConfigurationTemplate.class);
 
-        return Optional.of(new ManifestAndConfig(manifestTemplate, config));
+        return Optional.of(new ManifestAndConfigTemplate(manifestTemplate, config));
       }
       throw new CacheCorruptedException(
           cacheStorageFiles.getCacheDirectory(),

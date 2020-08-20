@@ -17,7 +17,6 @@
 package com.google.cloud.tools.jib.image.json;
 
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
-import com.google.cloud.tools.jib.json.JsonTemplate;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
 import java.util.ArrayList;
@@ -47,13 +46,17 @@ import java.util.List;
  * @see <a href="https://github.com/opencontainers/image-spec/blob/master/image-index.md">OCI Image
  *     Index Specification</a>
  */
-public class OciIndexTemplate implements JsonTemplate {
+public class OciIndexTemplate implements ManifestTemplate {
 
-  @SuppressWarnings("unused")
   private final int schemaVersion = 2;
 
   private final List<BuildableManifestTemplate.ContentDescriptorTemplate> manifests =
       new ArrayList<>();
+
+  @Override
+  public int getSchemaVersion() {
+    return schemaVersion;
+  }
 
   /**
    * Adds a manifest reference with the given {@link BlobDescriptor}.
