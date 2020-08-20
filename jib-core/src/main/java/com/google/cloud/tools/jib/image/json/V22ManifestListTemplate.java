@@ -20,6 +20,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.google.cloud.tools.jib.json.JsonTemplate;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
@@ -68,12 +69,31 @@ public class V22ManifestListTemplate implements ManifestTemplate {
       "application/vnd.docker.distribution.manifest.list.v2+json";
   private static final int SCHEMA_VERSION = 2;
 
+  private final int schemaVersion = SCHEMA_VERSION;
+  private final String mediaType = MANIFEST_MEDIA_TYPE;
+
   @Override
   public int getSchemaVersion() {
-    return SCHEMA_VERSION;
+    return schemaVersion;
+  }
+
+  public String getMediaType() {
+    return mediaType;
   }
 
   @Nullable private List<ManifestDescriptorTemplate> manifests;
+
+  /**
+   * Adds a manifest.
+   *
+   * @param manifest a manifest descriptor
+   */
+  public void addManifest(ManifestDescriptorTemplate manifest) {
+    if (manifests == null) {
+      manifests = new ArrayList<>();
+    }
+    manifests.add(manifest);
+  }
 
   @VisibleForTesting
   public List<ManifestDescriptorTemplate> getManifests() {
@@ -117,14 +137,38 @@ public class V22ManifestListTemplate implements ManifestTemplate {
 
     @Nullable private Platform platform;
 
+    public void setSize(long size) {
+      this.size = size;
+    }
+
+    public void setDigest(String digest) {
+      this.digest = digest;
+    }
+
     @Nullable
     public String getDigest() {
       return digest;
     }
 
+    public void setMediaType(String mediaType) {
+      this.mediaType = mediaType;
+    }
+
     @Nullable
     public String getMediaType() {
       return mediaType;
+    }
+
+    /**
+     * Sets a platform.
+     *
+     * @param architecture the manifest architecture
+     * @param os the manifest os
+     */
+    public void setPlatform(String architecture, String os) {
+      this.platform = new Platform();
+      this.platform.architecture = architecture;
+      this.platform.os = os;
     }
 
     @VisibleForTesting

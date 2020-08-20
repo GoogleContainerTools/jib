@@ -38,6 +38,7 @@ import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -71,6 +72,7 @@ public class StepsRunner {
     private Future<Map<Image, List<Future<PreparedLayer>>>> baseImagesAndLayers = failedFuture();
     @Nullable private List<Future<PreparedLayer>> applicationLayers;
     private Future<Map<Future<Image>, Image>> builtImagesAndBaseImages = failedFuture();
+    private Future<ManifestTemplate> manifestListOrSingleManifest = failedFuture();
     private Future<RegistryClient> targetRegistryClient = failedFuture();
     public Future<Map<Image, List<Future<BlobDescriptor>>>> baseImagesAndLayerPushResults =
         failedFuture();
@@ -97,7 +99,7 @@ public class StepsRunner {
     return new StepsRunner(MoreExecutors.listeningDecorator(executorService), buildContext);
   }
 
-  private static <E> List<E> realizeFutures(List<Future<E>> futures)
+  private static <E> List<E> realizeFutures(Collection<Future<E>> futures)
       throws InterruptedException, ExecutionException {
     List<E> values = new ArrayList<>();
     for (Future<E> future : futures) {
@@ -180,12 +182,13 @@ public class StepsRunner {
     addRetrievalSteps(layersRequiredLocally);
     stepsToRun.add(this::buildAndCacheApplicationLayers);
     stepsToRun.add(this::buildImages);
+    stepsToRun.add(this::buildManifestListOrSingleManifest);
 
     // push to registry
     stepsToRun.add(this::pushBaseImageLayers);
     stepsToRun.add(this::pushApplicationLayers);
     stepsToRun.add(this::pushContainerConfigurations);
-    stepsToRun.add(this::checkImageInTargetRegistry);
+    stepsToRun.add(this::checkManifestInTargetRegistry);
     stepsToRun.add(this::pushImages);
     return this;
   }
@@ -423,6 +426,20 @@ public class StepsRunner {
             });
   }
 
+  private void buildManifestListOrSingleManifest() {
+    ProgressEventDispatcher.Factory childProgressDispatcherFactory =
+        Verify.verifyNotNull(rootProgressDispatcher).newChildProducer();
+
+    results.manifestListOrSingleManifest =
+        executorService.submit(
+            () ->
+                new BuildManifestListOrSingleManifestStep(
+                        buildContext,
+                        childProgressDispatcherFactory,
+                        realizeFutures(results.builtImagesAndBaseImages.get().keySet()))
+                    .call());
+  }
+
   private void pushContainerConfigurations() {
     ProgressEventDispatcher.Factory childProgressDispatcherFactory =
         Verify.verifyNotNull(rootProgressDispatcher).newChildProducer();
@@ -474,26 +491,19 @@ public class StepsRunner {
                         Verify.verifyNotNull(results.applicationLayers))));
   }
 
-  private void checkImageInTargetRegistry() {
+  private void checkManifestInTargetRegistry() {
     ProgressEventDispatcher.Factory childProgressDispatcherFactory =
         Verify.verifyNotNull(rootProgressDispatcher).newChildProducer();
 
     results.manifestCheckResult =
         executorService.submit(
-            () -> {
-              Verify.verify(results.builtImagesAndBaseImages.get().size() == 1);
-              Future<Image> builtImage =
-                  results.builtImagesAndBaseImages.get().keySet().iterator().next();
-              Future<BlobDescriptor> containerConfigPushResult =
-                  results.builtImagesAndContainerConfigurationPushResults.get().get(builtImage);
-              return new CheckImageStep(
-                      buildContext,
-                      childProgressDispatcherFactory,
-                      results.targetRegistryClient.get(),
-                      Verify.verifyNotNull(containerConfigPushResult).get(),
-                      builtImage.get())
-                  .call();
-            });
+            () ->
+                new CheckManifestStep(
+                        buildContext,
+                        childProgressDispatcherFactory,
+                        results.targetRegistryClient.get(),
+                        results.manifestListOrSingleManifest.get())
+                    .call());
   }
 
   private void pushImages() {
