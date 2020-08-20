@@ -171,6 +171,16 @@ public class FileEntry {
 
   @Override
   public String toString() {
-    return "{" + sourceFile + "," + extractionPath + "," + permissions + "," + modificationTime + "," + ownership + "}";
+    return "{"
+        + sourceFile
+        + ","
+        + extractionPath
+        + ","
+        + permissions
+        + ","
+        + modificationTime
+        + ","
+        + ownership
+        + "}";
   }
 }
