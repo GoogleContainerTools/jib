@@ -43,9 +43,9 @@ import org.junit.Test;
 /** Tests for {@link Layers}. */
 public class LayersTest {
 
-  public static final String LAYERS_TEST_RESOURCE_DIR = "buildfiles/layers/";
+  private static final String LAYERS_TEST_RESOURCE_DIR = "buildfiles/layers/";
 
-  public List<FileEntriesLayer> parseLayers(Path testDir, int expectedLayerCount)
+  public static List<FileEntriesLayer> parseLayers(Path testDir, int expectedLayerCount)
       throws IOException {
     Path layersSpecYaml = testDir.resolve("layers.yaml");
     List<LayerObject> layers =
@@ -64,7 +64,7 @@ public class LayersTest {
     return fileEntriesLayers;
   }
 
-  private Path getLayersTestRoot(String testName) throws URISyntaxException {
+  private static Path getLayersTestRoot(String testName) throws URISyntaxException {
     return Paths.get(Resources.getResource(LAYERS_TEST_RESOURCE_DIR + testName).toURI());
   }
 
