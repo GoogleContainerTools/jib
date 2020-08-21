@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.api.buildplan;
 
+import java.io.File;
 import java.nio.file.Paths;
 import java.time.Instant;
 import org.junit.Assert;
@@ -26,7 +27,7 @@ public class FileEntryTest {
   @Test
   public void testToString() {
     Assert.assertEquals(
-        "{a/path,/an/absolute/unix/path,333,1970-01-01T00:00:00Z,0:0}",
+        "{a" + File.separator + "path,/an/absolute/unix/path,333,1970-01-01T00:00:00Z,0:0}",
         new FileEntry(
                 Paths.get("a/path"),
                 AbsoluteUnixPath.get("/an/absolute/unix/path"),
