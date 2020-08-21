@@ -32,6 +32,7 @@ import com.google.cloud.tools.jib.image.json.ImageToJsonTranslator;
 import com.google.cloud.tools.jib.registry.RegistryClient;
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.Set;
 import java.util.concurrent.Callable;
 
@@ -51,11 +52,15 @@ class PushImageStep implements Callable<BuildResult> {
       Image builtImage,
       boolean manifestAlreadyExists)
       throws IOException {
+    boolean singlePlatform = buildContext.getContainerConfiguration().getPlatforms().size() == 1;
     Set<String> tags = buildContext.getAllTargetImageTags();
+    int numPushers = singlePlatform ? tags.size() : 1;
 
     EventHandlers eventHandlers = buildContext.getEventHandlers();
     try (TimerEventDispatcher ignored =
-        new TimerEventDispatcher(eventHandlers, "Preparing manifest pushers"); ) {
+            new TimerEventDispatcher(eventHandlers, "Preparing manifest pushers");
+        ProgressEventDispatcher progressDispatcher =
+            progressEventDispatcherFactory.create("launching manifest pushers", numPushers)) {
 
       if (JibSystemProperties.skipExistingImages() && manifestAlreadyExists) {
         eventHandlers.dispatch(
@@ -71,36 +76,21 @@ class PushImageStep implements Callable<BuildResult> {
 
       DescriptorDigest manifestDigest = Digests.computeJsonDigest(manifestTemplate);
 
-      if (buildContext.getContainerConfiguration().getPlatforms().size() == 1) {
-        ProgressEventDispatcher progressEventDispatcher =
-            progressEventDispatcherFactory.create(
-                "launching manifest pushers for a single manifest", tags.size());
-        return tags.stream()
-            .map(
-                tag ->
-                    new PushImageStep(
-                        buildContext,
-                        progressEventDispatcher.newChildProducer(),
-                        registryClient,
-                        manifestTemplate,
-                        tag,
-                        manifestDigest,
-                        containerConfigurationDigestAndSize.getDigest()))
-            .collect(ImmutableList.toImmutableList());
-      }
-
-      ProgressEventDispatcher progressEventDispatcher =
-          progressEventDispatcherFactory.create("launching manifest pusher for a manifest list", 1);
-      PushImageStep pushImage =
-          new PushImageStep(
-              buildContext,
-              progressEventDispatcher.newChildProducer(),
-              registryClient,
-              manifestTemplate,
-              manifestDigest.toString(),
-              manifestDigest,
-              containerConfigurationDigestAndSize.getDigest());
-      return ImmutableList.of(pushImage);
+      Set<String> imageQualifiers =
+          singlePlatform ? tags : Collections.singleton(manifestDigest.toString());
+      return imageQualifiers
+          .stream()
+          .map(
+              qualifier ->
+                  new PushImageStep(
+                      buildContext,
+                      progressDispatcher.newChildProducer(),
+                      registryClient,
+                      manifestTemplate,
+                      qualifier,
+                      manifestDigest,
+                      containerConfigurationDigestAndSize.getDigest()))
+          .collect(ImmutableList.toImmutableList());
     }
   }
 
