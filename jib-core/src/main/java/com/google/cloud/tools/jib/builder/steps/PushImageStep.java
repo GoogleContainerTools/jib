@@ -99,7 +99,7 @@ class PushImageStep implements Callable<BuildResult> {
 
   private final BuildableManifestTemplate manifestTemplate;
   private final RegistryClient registryClient;
-  private final String tag;
+  private final String imageQualifier;
   private final DescriptorDigest imageDigest;
   private final DescriptorDigest imageId;
 
@@ -108,14 +108,14 @@ class PushImageStep implements Callable<BuildResult> {
       ProgressEventDispatcher.Factory progressEventDispatcherFactory,
       RegistryClient registryClient,
       BuildableManifestTemplate manifestTemplate,
-      String tag,
+      String imageQualifier,
       DescriptorDigest imageDigest,
       DescriptorDigest imageId) {
     this.buildContext = buildContext;
     this.progressEventDispatcherFactory = progressEventDispatcherFactory;
     this.registryClient = registryClient;
     this.manifestTemplate = manifestTemplate;
-    this.tag = tag;
+    this.imageQualifier = imageQualifier;
     this.imageDigest = imageDigest;
     this.imageId = imageId;
   }
@@ -125,10 +125,10 @@ class PushImageStep implements Callable<BuildResult> {
     EventHandlers eventHandlers = buildContext.getEventHandlers();
     try (TimerEventDispatcher ignored = new TimerEventDispatcher(eventHandlers, DESCRIPTION);
         ProgressEventDispatcher ignored2 =
-            progressEventDispatcherFactory.create("pushing manifest for " + tag, 1)) {
-      eventHandlers.dispatch(LogEvent.info("Pushing manifest for " + tag + "..."));
+            progressEventDispatcherFactory.create("pushing manifest for " + imageQualifier, 1)) {
+      eventHandlers.dispatch(LogEvent.info("Pushing manifest for " + imageQualifier + "..."));
 
-      registryClient.pushManifest(manifestTemplate, tag);
+      registryClient.pushManifest(manifestTemplate, imageQualifier);
       return new BuildResult(imageDigest, imageId);
     }
   }
