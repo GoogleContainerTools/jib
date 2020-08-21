@@ -20,12 +20,14 @@ import com.google.cloud.tools.jib.api.DescriptorDigest;
 import com.google.cloud.tools.jib.api.ImageReference;
 import com.google.cloud.tools.jib.blob.Blobs;
 import com.google.cloud.tools.jib.filesystem.LockFile;
+import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
 import com.google.cloud.tools.jib.image.json.ContainerConfigurationTemplate;
 import com.google.cloud.tools.jib.image.json.ImageMetadataTemplate;
 import com.google.cloud.tools.jib.image.json.ManifestAndConfigTemplate;
+import com.google.cloud.tools.jib.image.json.ManifestTemplate;
+import com.google.cloud.tools.jib.image.json.V21ManifestTemplate;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Verify;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -44,33 +46,30 @@ class CacheStorageReader {
   @VisibleForTesting
   static void verifyImageMetadata(ImageMetadataTemplate metadata, Path metadataCacheDirectory)
       throws CacheCorruptedException {
-    if (metadata.getManifestsAndConfigs().isEmpty()) {
-      throw new CacheCorruptedException(metadataCacheDirectory, "Manifest cache empty");
-    }
-
     List<ManifestAndConfigTemplate> manifestsAndConfigs = metadata.getManifestsAndConfigs();
-    if (metadata.getManifestList() == null && manifestsAndConfigs.size() != 1) {
-      throw new CacheCorruptedException(metadataCacheDirectory, "Manifest list missing");
+    if (manifestsAndConfigs.isEmpty()) {
+      throw new CacheCorruptedException(metadataCacheDirectory, "Manifest cache empty");
     }
     if (manifestsAndConfigs.stream().anyMatch(entry -> entry.getManifest() == null)) {
       throw new CacheCorruptedException(metadataCacheDirectory, "Manifest(s) missing");
     }
+    if (metadata.getManifestList() == null && manifestsAndConfigs.size() != 1) {
+      throw new CacheCorruptedException(metadataCacheDirectory, "Manifest list missing");
+    }
 
-    int schemaVersion =
-        Verify.verifyNotNull(manifestsAndConfigs.get(0).getManifest()).getSchemaVersion();
-    if (schemaVersion == 1) {
+    ManifestTemplate firstManifest = manifestsAndConfigs.get(0).getManifest();
+    if (firstManifest instanceof V21ManifestTemplate) {
       if (metadata.getManifestList() != null
           || manifestsAndConfigs.stream().anyMatch(entry -> entry.getConfig() != null)) {
         throw new CacheCorruptedException(metadataCacheDirectory, "Schema 1 manifests corrupted");
       }
-    } else if (schemaVersion == 2) {
+    } else if (firstManifest instanceof BuildableManifestTemplate) {
       if (manifestsAndConfigs.stream().anyMatch(entry -> entry.getConfig() == null)) {
         throw new CacheCorruptedException(metadataCacheDirectory, "Schema 2 manifests corrupted");
       }
     } else {
       throw new CacheCorruptedException(
-          metadataCacheDirectory,
-          "Unknown schemaVersion in manifest: " + schemaVersion + " - only 1 and 2 are supported");
+          metadataCacheDirectory, "Unknown manifest type: " + firstManifest);
     }
   }
 

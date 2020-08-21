@@ -575,7 +575,7 @@ public class CacheStorageReaderTest {
   }
 
   @Test
-  public void testVerifyImageMetadata_unsupportedSchema() {
+  public void testVerifyImageMetadata_unknownManifestType() {
     ManifestAndConfigTemplate manifestAndConfig =
         new ManifestAndConfigTemplate(
             new ManifestTemplate() {
@@ -591,10 +591,7 @@ public class CacheStorageReaderTest {
       CacheStorageReader.verifyImageMetadata(metadata, Paths.get("/cache/dir"));
       Assert.fail();
     } catch (CacheCorruptedException ex) {
-      MatcherAssert.assertThat(
-          ex.getMessage(),
-          CoreMatchers.startsWith(
-              "Unknown schemaVersion in manifest: 987 - only 1 and 2 are supported"));
+      MatcherAssert.assertThat(ex.getMessage(), CoreMatchers.startsWith("Unknown manifest type:"));
     }
   }
 
@@ -645,7 +642,8 @@ public class CacheStorageReaderTest {
   @Test
   public void testVerifyImageMetadata_validOciImageIndex() throws CacheCorruptedException {
     ManifestAndConfigTemplate manifestAndConfig =
-        new ManifestAndConfigTemplate(new OciIndexTemplate(), new ContainerConfigurationTemplate());
+        new ManifestAndConfigTemplate(
+            new OciManifestTemplate(), new ContainerConfigurationTemplate());
     ImageMetadataTemplate metadata =
         new ImageMetadataTemplate(
             new OciIndexTemplate(), Arrays.asList(manifestAndConfig, manifestAndConfig));

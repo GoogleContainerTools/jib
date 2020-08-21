@@ -42,7 +42,10 @@ public class ManifestAndConfigTemplate implements JsonTemplate {
   private ManifestAndConfigTemplate() {}
 
   public ManifestAndConfigTemplate(
-      ManifestTemplate manifest, @Nullable ContainerConfigurationTemplate config) {
+      // TODO: switch to BuildableManifestTemplate after we stop supporting V21 manifest.
+      ManifestTemplate manifest,
+      // TODO: remove @Nullable after we stop supporting V21 manifest.
+      @Nullable ContainerConfigurationTemplate config) {
     this.manifest = manifest;
     this.config = config;
   }
