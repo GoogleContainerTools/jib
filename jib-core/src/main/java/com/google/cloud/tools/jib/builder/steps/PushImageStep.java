@@ -55,9 +55,7 @@ class PushImageStep implements Callable<BuildResult> {
 
     EventHandlers eventHandlers = buildContext.getEventHandlers();
     try (TimerEventDispatcher ignored =
-            new TimerEventDispatcher(eventHandlers, "Preparing manifest pushers");
-        ProgressEventDispatcher progressEventDispatcher =
-            progressEventDispatcherFactory.create("launching manifest pushers", tags.size())) {
+        new TimerEventDispatcher(eventHandlers, "Preparing manifest pushers"); ) {
 
       if (JibSystemProperties.skipExistingImages() && manifestAlreadyExists) {
         eventHandlers.dispatch(
@@ -73,18 +71,35 @@ class PushImageStep implements Callable<BuildResult> {
 
       DescriptorDigest manifestDigest = Digests.computeJsonDigest(manifestTemplate);
 
-      return tags.stream()
-          .map(
-              tag ->
-                  new PushImageStep(
-                      buildContext,
-                      progressEventDispatcher.newChildProducer(),
-                      registryClient,
-                      manifestTemplate,
-                      tag,
-                      manifestDigest,
-                      containerConfigurationDigestAndSize.getDigest()))
-          .collect(ImmutableList.toImmutableList());
+      if (buildContext.getContainerConfiguration().getPlatforms().size() == 1) {
+        ProgressEventDispatcher progressEventDispatcher =
+            progressEventDispatcherFactory.create("launching manifest pushers", tags.size());
+        return tags.stream()
+            .map(
+                tag ->
+                    new PushImageStep(
+                        buildContext,
+                        progressEventDispatcher.newChildProducer(),
+                        registryClient,
+                        manifestTemplate,
+                        tag,
+                        manifestDigest,
+                        containerConfigurationDigestAndSize.getDigest()))
+            .collect(ImmutableList.toImmutableList());
+      }
+
+      ProgressEventDispatcher progressEventDispatcher =
+          progressEventDispatcherFactory.create("launching manifest pushers", 1);
+      PushImageStep pushImage =
+          new PushImageStep(
+              buildContext,
+              progressEventDispatcher.newChildProducer(),
+              registryClient,
+              manifestTemplate,
+              manifestDigest.toString(),
+              manifestDigest,
+              containerConfigurationDigestAndSize.getDigest());
+      return ImmutableList.of(pushImage);
     }
   }
 
