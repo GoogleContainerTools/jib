@@ -132,4 +132,9 @@ public class FilePermissions {
   public int hashCode() {
     return permissionBits;
   }
+
+  @Override
+  public String toString() {
+    return toOctalString();
+  }
 }
