@@ -73,7 +73,8 @@ class PushImageStep implements Callable<BuildResult> {
 
       if (buildContext.getContainerConfiguration().getPlatforms().size() == 1) {
         ProgressEventDispatcher progressEventDispatcher =
-            progressEventDispatcherFactory.create("launching manifest pushers", tags.size());
+            progressEventDispatcherFactory.create(
+                "launching manifest pushers for a single manifest", tags.size());
         return tags.stream()
             .map(
                 tag ->
@@ -89,7 +90,7 @@ class PushImageStep implements Callable<BuildResult> {
       }
 
       ProgressEventDispatcher progressEventDispatcher =
-          progressEventDispatcherFactory.create("launching manifest pushers", 1);
+          progressEventDispatcherFactory.create("launching manifest pusher for a manifest list", 1);
       PushImageStep pushImage =
           new PushImageStep(
               buildContext,
