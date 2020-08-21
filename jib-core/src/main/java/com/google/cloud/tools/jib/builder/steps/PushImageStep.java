@@ -32,6 +32,7 @@ import com.google.cloud.tools.jib.image.json.ImageToJsonTranslator;
 import com.google.cloud.tools.jib.registry.RegistryClient;
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.Set;
 import java.util.concurrent.Callable;
 
@@ -51,13 +52,15 @@ class PushImageStep implements Callable<BuildResult> {
       Image builtImage,
       boolean manifestAlreadyExists)
       throws IOException {
+    boolean singlePlatform = buildContext.getContainerConfiguration().getPlatforms().size() == 1;
     Set<String> tags = buildContext.getAllTargetImageTags();
+    int numPushers = singlePlatform ? tags.size() : 1;
 
     EventHandlers eventHandlers = buildContext.getEventHandlers();
     try (TimerEventDispatcher ignored =
             new TimerEventDispatcher(eventHandlers, "Preparing manifest pushers");
-        ProgressEventDispatcher progressEventDispatcher =
-            progressEventDispatcherFactory.create("launching manifest pushers", tags.size())) {
+        ProgressEventDispatcher progressDispatcher =
+            progressEventDispatcherFactory.create("launching manifest pushers", numPushers)) {
 
       if (JibSystemProperties.skipExistingImages() && manifestAlreadyExists) {
         eventHandlers.dispatch(
@@ -73,15 +76,18 @@ class PushImageStep implements Callable<BuildResult> {
 
       DescriptorDigest manifestDigest = Digests.computeJsonDigest(manifestTemplate);
 
-      return tags.stream()
+      Set<String> imageQualifiers =
+          singlePlatform ? tags : Collections.singleton(manifestDigest.toString());
+      return imageQualifiers
+          .stream()
           .map(
-              tag ->
+              qualifier ->
                   new PushImageStep(
                       buildContext,
-                      progressEventDispatcher.newChildProducer(),
+                      progressDispatcher.newChildProducer(),
                       registryClient,
                       manifestTemplate,
-                      tag,
+                      qualifier,
                       manifestDigest,
                       containerConfigurationDigestAndSize.getDigest()))
           .collect(ImmutableList.toImmutableList());
@@ -93,7 +99,7 @@ class PushImageStep implements Callable<BuildResult> {
 
   private final BuildableManifestTemplate manifestTemplate;
   private final RegistryClient registryClient;
-  private final String tag;
+  private final String imageQualifier;
   private final DescriptorDigest imageDigest;
   private final DescriptorDigest imageId;
 
@@ -102,14 +108,14 @@ class PushImageStep implements Callable<BuildResult> {
       ProgressEventDispatcher.Factory progressEventDispatcherFactory,
       RegistryClient registryClient,
       BuildableManifestTemplate manifestTemplate,
-      String tag,
+      String imageQualifier,
       DescriptorDigest imageDigest,
       DescriptorDigest imageId) {
     this.buildContext = buildContext;
     this.progressEventDispatcherFactory = progressEventDispatcherFactory;
     this.registryClient = registryClient;
     this.manifestTemplate = manifestTemplate;
-    this.tag = tag;
+    this.imageQualifier = imageQualifier;
     this.imageDigest = imageDigest;
     this.imageId = imageId;
   }
@@ -119,10 +125,10 @@ class PushImageStep implements Callable<BuildResult> {
     EventHandlers eventHandlers = buildContext.getEventHandlers();
     try (TimerEventDispatcher ignored = new TimerEventDispatcher(eventHandlers, DESCRIPTION);
         ProgressEventDispatcher ignored2 =
-            progressEventDispatcherFactory.create("pushing manifest for " + tag, 1)) {
-      eventHandlers.dispatch(LogEvent.info("Pushing manifest for " + tag + "..."));
+            progressEventDispatcherFactory.create("pushing manifest for " + imageQualifier, 1)) {
+      eventHandlers.dispatch(LogEvent.info("Pushing manifest for " + imageQualifier + "..."));
 
-      registryClient.pushManifest(manifestTemplate, tag);
+      registryClient.pushManifest(manifestTemplate, imageQualifier);
       return new BuildResult(imageDigest, imageId);
     }
   }
