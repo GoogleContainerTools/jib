@@ -34,10 +34,8 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.DigestException;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -48,32 +46,6 @@ class CacheStorageReader {
 
   CacheStorageReader(CacheStorageFiles cacheStorageFiles) {
     this.cacheStorageFiles = cacheStorageFiles;
-  }
-
-  /**
-   * Lists all the layer digests stored.
-   *
-   * @return the list of layer digests
-   * @throws CacheCorruptedException if the cache was found to be corrupted
-   * @throws IOException if an I/O exception occurs
-   */
-  Set<DescriptorDigest> fetchDigests() throws IOException, CacheCorruptedException {
-    try (Stream<Path> layerDirectories = Files.list(cacheStorageFiles.getLayersDirectory())) {
-      List<Path> layerDirectoriesList = layerDirectories.collect(Collectors.toList());
-      Set<DescriptorDigest> layerDigests = new HashSet<>(layerDirectoriesList.size());
-      for (Path layerDirectory : layerDirectoriesList) {
-        try {
-          layerDigests.add(DescriptorDigest.fromHash(layerDirectory.getFileName().toString()));
-
-        } catch (DigestException ex) {
-          throw new CacheCorruptedException(
-              cacheStorageFiles.getCacheDirectory(),
-              "Found non-digest file in layers directory",
-              ex);
-        }
-      }
-      return layerDigests;
-    }
   }
 
   /**

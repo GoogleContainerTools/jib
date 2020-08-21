@@ -31,8 +31,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.DigestException;
-import java.util.Arrays;
-import java.util.HashSet;
 import java.util.Optional;
 import org.hamcrest.CoreMatchers;
 import org.hamcrest.MatcherAssert;
@@ -79,35 +77,6 @@ public class CacheStorageReaderTest {
     layerDigest2 =
         DescriptorDigest.fromHash(
             "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb");
-  }
-
-  @Test
-  public void testListDigests() throws IOException, CacheCorruptedException {
-    CacheStorageFiles cacheStorageFiles =
-        new CacheStorageFiles(temporaryFolder.newFolder().toPath());
-
-    CacheStorageReader cacheStorageReader = new CacheStorageReader(cacheStorageFiles);
-
-    // Creates test layer directories.
-    Files.createDirectories(cacheStorageFiles.getLayersDirectory().resolve(layerDigest1.getHash()));
-    Files.createDirectories(cacheStorageFiles.getLayersDirectory().resolve(layerDigest2.getHash()));
-
-    // Checks that layer directories created are all listed.
-    Assert.assertEquals(
-        new HashSet<>(Arrays.asList(layerDigest1, layerDigest2)),
-        cacheStorageReader.fetchDigests());
-
-    // Checks that non-digest directories means the cache is corrupted.
-    Files.createDirectory(cacheStorageFiles.getLayersDirectory().resolve("not a hash"));
-    try {
-      cacheStorageReader.fetchDigests();
-      Assert.fail("Listing digests should have failed");
-
-    } catch (CacheCorruptedException ex) {
-      MatcherAssert.assertThat(
-          ex.getMessage(), CoreMatchers.startsWith("Found non-digest file in layers directory"));
-      MatcherAssert.assertThat(ex.getCause(), CoreMatchers.instanceOf(DigestException.class));
-    }
   }
 
   @Test
