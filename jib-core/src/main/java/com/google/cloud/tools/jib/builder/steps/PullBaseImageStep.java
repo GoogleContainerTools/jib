@@ -43,6 +43,7 @@ import com.google.cloud.tools.jib.image.json.JsonToImageTranslator;
 import com.google.cloud.tools.jib.image.json.ManifestAndConfigTemplate;
 import com.google.cloud.tools.jib.image.json.ManifestTemplate;
 import com.google.cloud.tools.jib.image.json.UnknownManifestFormatException;
+import com.google.cloud.tools.jib.image.json.UnlistedPlatformInManifestListException;
 import com.google.cloud.tools.jib.image.json.V21ManifestTemplate;
 import com.google.cloud.tools.jib.image.json.V22ManifestListTemplate;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
@@ -254,9 +255,10 @@ class PullBaseImageStep implements Callable<ImagesAndRegistryClient> {
       eventHandlers.dispatch(
           LogEvent.info(String.format(message, platform.getArchitecture(), platform.getOs())));
 
-      ManifestAndDigest<?> imageManifestAndDigest =
-          obtainPlatformSpecificImageManifest(
-              registryClient, (V22ManifestListTemplate) manifestTemplate, platform);
+      String manifestDigest =
+          lookUpPlatformSpecificImageManifest((V22ManifestListTemplate) manifestTemplate, platform);
+      // TODO: pull multiple manifests (+ container configs) in parallel.
+      ManifestAndDigest<?> imageManifestAndDigest = registryClient.pullManifest(manifestDigest);
 
       BuildableManifestTemplate imageManifest =
           (BuildableManifestTemplate) imageManifestAndDigest.getManifest();
@@ -274,16 +276,14 @@ class PullBaseImageStep implements Callable<ImagesAndRegistryClient> {
   }
 
   /**
-   * Looks through a manifest list for the manifest matching the {@code platform} and downloads and
-   * returns the first manifest it finds.
+   * Looks through a manifest list for the manifest matching the {@code platform} and returns the
+   * digest of the first manifest it finds.
    */
   // TODO: support OciIndexTemplate once AbstractManifestPuller starts to accept it.
   @VisibleForTesting
-  ManifestAndDigest<?> obtainPlatformSpecificImageManifest(
-      RegistryClient registryClient,
-      V22ManifestListTemplate manifestListTemplate,
-      Platform platform)
-      throws IOException, RegistryException {
+  String lookUpPlatformSpecificImageManifest(
+      V22ManifestListTemplate manifestListTemplate, Platform platform)
+      throws UnlistedPlatformInManifestListException {
     EventHandlers eventHandlers = buildContext.getEventHandlers();
 
     List<String> digests =
@@ -297,11 +297,10 @@ class PullBaseImageStep implements Callable<ImagesAndRegistryClient> {
       eventHandlers.dispatch(
           LogEvent.error(
               String.format(errorMessage, platform.getArchitecture(), platform.getOs())));
-      throw new RegistryException(errorMessage);
+      throw new UnlistedPlatformInManifestListException(errorMessage);
     }
-    // TODO: pull multiple manifests (+ container configs) in parallel. (It will be simpler to pull
-    // a manifest+container config pair in sequence. That is, calling pullContainerConfigJson here.)
-    return registryClient.pullManifest(digests.get(0));
+    // TODO: perhaps we should return multiple digests matching the platform.
+    return digests.get(0);
   }
 
   /**

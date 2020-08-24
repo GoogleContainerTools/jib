@@ -35,6 +35,7 @@ import com.google.cloud.tools.jib.image.json.BadContainerConfigurationFormatExce
 import com.google.cloud.tools.jib.image.json.ContainerConfigurationTemplate;
 import com.google.cloud.tools.jib.image.json.ImageMetadataTemplate;
 import com.google.cloud.tools.jib.image.json.ManifestAndConfigTemplate;
+import com.google.cloud.tools.jib.image.json.UnlistedPlatformInManifestListException;
 import com.google.cloud.tools.jib.image.json.V22ManifestListTemplate;
 import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
@@ -202,7 +203,8 @@ public class PullBaseImageStepTest {
   }
 
   @Test
-  public void testObtainPlatformSpecificImageManifest() throws IOException, RegistryException {
+  public void testLookUpPlatformSpecificImageManifest()
+      throws IOException, UnlistedPlatformInManifestListException {
     String manifestListJson =
         " {\n"
             + "   \"schemaVersion\": 2,\n"
@@ -231,16 +233,13 @@ public class PullBaseImageStepTest {
 
     V22ManifestListTemplate manifestList =
         JsonTemplateMapper.readJson(manifestListJson, V22ManifestListTemplate.class);
-    ManifestAndDigest<?> manifest = Mockito.mock(ManifestAndDigest.class);
-    Mockito.<ManifestAndDigest<?>>when(
-            registryClient.pullManifest(
-                "sha256:222222222222222222222222222222222222222222222222222222222222222222"))
-        .thenReturn(manifest);
 
-    ManifestAndDigest<?> returnManifest =
-        pullBaseImageStep.obtainPlatformSpecificImageManifest(
-            registryClient, manifestList, new Platform("targetArchitecture", "targetOS"));
+    String manifestDigest =
+        pullBaseImageStep.lookUpPlatformSpecificImageManifest(
+            manifestList, new Platform("targetArchitecture", "targetOS"));
 
-    Assert.assertSame(manifest, returnManifest);
+    Assert.assertEquals(
+        "sha256:222222222222222222222222222222222222222222222222222222222222222222",
+        manifestDigest);
   }
 }
