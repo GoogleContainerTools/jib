@@ -15,6 +15,14 @@ env:
   - TERM=dumb         # for gradle
 
 install: true
+before_install:
+  - echo $JAVA_HOME
+  - which java
+  - sudo apt-get install -y openjdk-11-jdk
+  - export JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64/
+  - which java
+  - java -version
+  - $JAVA_HOME/bin/java -version
 script:
 - ./gradlew clean build --stacktrace
 
