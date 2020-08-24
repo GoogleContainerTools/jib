@@ -30,6 +30,7 @@ import java.util.List;
  * <pre>{@code
  * {
  *   "schemaVersion": 2,
+ *   "mediaType":"application/vnd.oci.image.index.v1+json",
  *   "manifests": [
  *     {
  *       "mediaType": "application/vnd.oci.image.manifest.v1+json",
