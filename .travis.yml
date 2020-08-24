@@ -9,7 +9,7 @@ matrix:
     jdk: oraclejdk8
     dist: trusty # oraclejdk8 absent in Xenial
   - name: OracleJDK 11
-    jdk: oraclejdk11
+    jdk: oraclejdk11-ea
 env:
   global:
   - TERM=dumb         # for gradle
