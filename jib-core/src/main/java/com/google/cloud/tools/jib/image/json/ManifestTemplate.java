@@ -24,4 +24,6 @@ import com.google.cloud.tools.jib.json.JsonTemplate;
 public interface ManifestTemplate extends JsonTemplate {
 
   int getSchemaVersion();
+
+  String getManifestMediaType();
 }
