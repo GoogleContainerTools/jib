@@ -82,6 +82,7 @@ public class StepsRunner {
     private Future<List<Future<BuildResult>>> buildResults = failedFuture();
     private Future<Optional<ManifestAndDigest<ManifestTemplate>>> manifestCheckResult =
         failedFuture();
+    public Future<List<Future<BuildResult>>> pushImageResults = failedFuture();
   }
 
   /**
@@ -190,6 +191,8 @@ public class StepsRunner {
     stepsToRun.add(this::pushContainerConfigurations);
     stepsToRun.add(this::checkManifestInTargetRegistry);
     stepsToRun.add(this::pushImages);
+    stepsToRun.add(this::pushManifestList);
+
     return this;
   }
 
@@ -510,7 +513,7 @@ public class StepsRunner {
     ProgressEventDispatcher.Factory childProgressDispatcherFactory =
         Verify.verifyNotNull(rootProgressDispatcher).newChildProducer();
 
-    results.buildResults =
+    results.pushImageResults =
         executorService.submit(
             () -> {
               // TODO: ideally, progressDispatcher should be closed at the right moment, after the
@@ -564,6 +567,28 @@ public class StepsRunner {
               // Manifest pushers return the same BuildResult.
               : manifestPushResults.get(0).get();
         });
+  }
+
+  private void pushManifestList() {
+    ProgressEventDispatcher.Factory childProgressDispatcherFactory =
+        Verify.verifyNotNull(rootProgressDispatcher).newChildProducer();
+
+    results.buildResults =
+        executorService.submit(
+            () -> {
+              realizeFutures(results.pushImageResults.get());
+              if (results.builtImagesAndBaseImages.get().size() == 1) {
+                return results.pushImageResults.get();
+              }
+
+              return scheduleCallables(
+                  PushImageStep.makeListPushManifestList(
+                      buildContext,
+                      childProgressDispatcherFactory,
+                      results.targetRegistryClient.get(),
+                      results.manifestListOrSingleManifest.get(),
+                      results.manifestCheckResult.get().isPresent()));
+            });
   }
 
   private void loadDocker(DockerClient dockerClient) {

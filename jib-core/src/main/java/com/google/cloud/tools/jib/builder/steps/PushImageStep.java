@@ -29,6 +29,7 @@ import com.google.cloud.tools.jib.hash.Digests;
 import com.google.cloud.tools.jib.image.Image;
 import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
 import com.google.cloud.tools.jib.image.json.ImageToJsonTranslator;
+import com.google.cloud.tools.jib.image.json.ManifestTemplate;
 import com.google.cloud.tools.jib.registry.RegistryClient;
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
@@ -90,6 +91,44 @@ class PushImageStep implements Callable<BuildResult> {
                       qualifier,
                       manifestDigest,
                       containerConfigurationDigestAndSize.getDigest()))
+          .collect(ImmutableList.toImmutableList());
+    }
+  }
+
+  static ImmutableList<PushImageStep> makeListPushManifestList(
+      BuildContext buildContext,
+      ProgressEventDispatcher.Factory progressEventDispatcherFactory,
+      RegistryClient registryClient,
+      ManifestTemplate manifestList,
+      boolean manifestAlreadyExists)
+      throws IOException {
+    Set<String> tags = buildContext.getAllTargetImageTags();
+
+    EventHandlers eventHandlers = buildContext.getEventHandlers();
+    try (TimerEventDispatcher ignored =
+            new TimerEventDispatcher(eventHandlers, "Preparing manifest pushers");
+        ProgressEventDispatcher progressEventDispatcher =
+            progressEventDispatcherFactory.create("launching manifest pushers", tags.size())) {
+
+      if (JibSystemProperties.skipExistingImages() && manifestAlreadyExists) {
+        eventHandlers.dispatch(
+            LogEvent.info("Skipping pushing manifest; manifest already exists."));
+        return ImmutableList.of();
+      }
+
+      DescriptorDigest manifestDigest = Digests.computeJsonDigest(manifestList);
+
+      return tags.stream()
+          .map(
+              tag ->
+                  new PushImageStep(
+                      buildContext,
+                      progressEventDispatcher.newChildProducer(),
+                      registryClient,
+                      (BuildableManifestTemplate) manifestList,
+                      tag,
+                      manifestDigest,
+                      manifestDigest))
           .collect(ImmutableList.toImmutableList());
     }
   }
