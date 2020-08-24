@@ -24,6 +24,8 @@ import javax.annotation.Nullable;
 /** Stores a manifest and container config. */
 public class ManifestAndConfigTemplate implements JsonTemplate {
 
+  @Nullable private String manifestDigest;
+
   @JsonTypeInfo(
       use = JsonTypeInfo.Id.CLASS,
       include = JsonTypeInfo.As.PROPERTY,
@@ -48,6 +50,16 @@ public class ManifestAndConfigTemplate implements JsonTemplate {
       @Nullable ContainerConfigurationTemplate config) {
     this.manifest = manifest;
     this.config = config;
+  }
+
+  /**
+   * Gets the digest of the manifest.
+   *
+   * @return the digest
+   */
+  @Nullable
+  public String getManifestDigest() {
+    return manifestDigest;
   }
 
   /**

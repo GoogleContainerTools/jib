@@ -219,49 +219,57 @@ class PullBaseImageStep implements Callable<ImagesAndRegistryClient> {
       throws IOException, RegistryException, LayerPropertyNotFoundException,
           LayerCountMismatchException, BadContainerConfigurationFormatException {
     Cache cache = buildContext.getBaseImageLayersCache();
+    EventHandlers eventHandlers = buildContext.getEventHandlers();
     ImageConfiguration baseImageConfig = buildContext.getBaseImageConfiguration();
 
     ManifestAndDigest<?> manifestAndDigest =
         registryClient.pullManifest(baseImageConfig.getImageQualifier());
-    ManifestTemplate manifestTemplate = manifestAndDigest.getManifest();
+    eventHandlers.dispatch(
+        LogEvent.lifecycle("Using base image with digest: " + manifestAndDigest.getDigest()));
 
+    ManifestTemplate manifestTemplate = manifestAndDigest.getManifest();
     if (manifestTemplate instanceof V21ManifestTemplate) {
       V21ManifestTemplate v21Manifest = (V21ManifestTemplate) manifestTemplate;
       cache.writeMetadata(baseImageConfig.getImage(), v21Manifest);
       return Collections.singletonList(JsonToImageTranslator.toImage(v21Manifest));
-    }
 
-    ManifestTemplate manifestList = null;
-    List<BuildableManifestTemplate> manifests = new ArrayList<>();
-    List<ContainerConfigurationTemplate> containerConfigs = new ArrayList<>();
-    // If a manifest list, search for the manifests matching the given platforms.
-    if (manifestTemplate instanceof V22ManifestListTemplate) {
-      manifestList = manifestTemplate;
-      for (Platform platform : buildContext.getContainerConfiguration().getPlatforms()) {
-        manifestAndDigest =
-            obtainPlatformSpecificImageManifest(
-                registryClient, (V22ManifestListTemplate) manifestList, platform);
-
-        manifests.add((BuildableManifestTemplate) manifestAndDigest.getManifest());
-        containerConfigs.add(
-            pullContainerConfigJson(manifestAndDigest, registryClient, progressEventDispatcher));
-      }
-
-    } else {
+    } else if (manifestTemplate instanceof BuildableManifestTemplate) {
       // V22ManifestTemplate or OciManifestTemplate
-      // TODO: support OciIndexTemplate once AbstractManifestPuller starts to accept it.
-      manifests = Collections.singletonList((BuildableManifestTemplate) manifestTemplate);
-      containerConfigs =
-          Collections.singletonList(
-              pullContainerConfigJson(manifestAndDigest, registryClient, progressEventDispatcher));
+      BuildableManifestTemplate imageManifest = (BuildableManifestTemplate) manifestTemplate;
+      ContainerConfigurationTemplate containerConfig =
+          pullContainerConfigJson(manifestAndDigest, registryClient, progressEventDispatcher);
+      cache.writeMetadata(baseImageConfig.getImage(), imageManifest, containerConfig);
+      return Collections.singletonList(
+          JsonToImageTranslator.toImage(imageManifest, containerConfig));
     }
 
-    cache.writeMetadata(baseImageConfig.getImage(), manifestList, manifests, containerConfigs);
+    // TODO: support OciIndexTemplate once AbstractManifestPuller starts to accept it.
+    Verify.verify(manifestTemplate instanceof V22ManifestListTemplate);
 
+    List<ManifestAndConfigTemplate> manifestsAndConfigs = new ArrayList<>();
     ImmutableList.Builder<Image> images = ImmutableList.builder();
-    for (int i = 0; i < manifests.size(); i++) {
-      images.add(JsonToImageTranslator.toImage(manifests.get(i), containerConfigs.get(i)));
+    // If a manifest list, search for the manifests matching the given platforms.
+    for (Platform platform : buildContext.getContainerConfiguration().getPlatforms()) {
+      String message = "Searching for architecture=%s, os=%s in the base image manifest list";
+      eventHandlers.dispatch(
+          LogEvent.info(String.format(message, platform.getArchitecture(), platform.getOs())));
+
+      ManifestAndDigest<?> imageManifestAndDigest =
+          obtainPlatformSpecificImageManifest(
+              registryClient, (V22ManifestListTemplate) manifestTemplate, platform);
+
+      BuildableManifestTemplate imageManifest =
+          (BuildableManifestTemplate) imageManifestAndDigest.getManifest();
+      ContainerConfigurationTemplate containerConfig =
+          pullContainerConfigJson(imageManifestAndDigest, registryClient, progressEventDispatcher);
+
+      manifestsAndConfigs.add(new ManifestAndConfigTemplate(imageManifest, containerConfig));
+      images.add(JsonToImageTranslator.toImage(imageManifest, containerConfig));
     }
+
+    cache.writeMetadata(
+        baseImageConfig.getImage(),
+        new ImageMetadataTemplate(manifestTemplate /* manifest list */, manifestsAndConfigs));
     return images.build();
   }
 
@@ -277,9 +285,6 @@ class PullBaseImageStep implements Callable<ImagesAndRegistryClient> {
       Platform platform)
       throws IOException, RegistryException {
     EventHandlers eventHandlers = buildContext.getEventHandlers();
-    String message = "Searching for architecture=%s, os=%s in the base image manifest list";
-    eventHandlers.dispatch(
-        LogEvent.info(String.format(message, platform.getArchitecture(), platform.getOs())));
 
     List<String> digests =
         manifestListTemplate.getDigestsForPlatform(platform.getArchitecture(), platform.getOs());
@@ -323,9 +328,6 @@ class PullBaseImageStep implements Callable<ImagesAndRegistryClient> {
         (BuildableManifestTemplate) manifestAndDigest.getManifest();
     Preconditions.checkArgument(manifest.getSchemaVersion() == 2);
 
-    EventHandlers eventHandlers = buildContext.getEventHandlers();
-    eventHandlers.dispatch(
-        LogEvent.lifecycle("Using base image with digest: " + manifestAndDigest.getDigest()));
     if (manifest.getContainerConfiguration() == null
         || manifest.getContainerConfiguration().getDigest() == null) {
       throw new UnknownManifestFormatException(

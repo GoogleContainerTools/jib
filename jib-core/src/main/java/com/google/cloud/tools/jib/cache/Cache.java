@@ -24,16 +24,15 @@ import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
 import com.google.cloud.tools.jib.image.json.ContainerConfigurationTemplate;
 import com.google.cloud.tools.jib.image.json.ImageMetadataTemplate;
-import com.google.cloud.tools.jib.image.json.ManifestTemplate;
+import com.google.cloud.tools.jib.image.json.ManifestAndConfigTemplate;
 import com.google.cloud.tools.jib.image.json.V21ManifestTemplate;
-import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import javax.annotation.Nullable;
 import javax.annotation.concurrent.Immutable;
 
 /**
@@ -74,24 +73,38 @@ public class Cache {
    * an image reference.
    *
    * @param imageReference the image reference to save the metadata for
-   * @param manifestList the V2.2 manifest list or OCI image index. Can be null.
-   * @param manifests the V2.2 or OCI manifests
-   * @param containerConfigurations the container configurations
+   * @param metadata the image metadata
+   * @throws IOException if an I/O exception occurs
+   */
+  public void writeMetadata(ImageReference imageReference, ImageMetadataTemplate metadata)
+      throws IOException {
+    cacheStorageWriter.writeMetadata(imageReference, metadata);
+  }
+
+  /**
+   * Saves a schema 2 manifest for an image reference. This is a simple wrapper around {@link
+   * #writeMetadata(ImageReference, ImageMetadataTemplate)} to save a single manifest without a
+   * manifest list.
+   *
+   * @param imageReference the image reference to save the manifest for
+   * @param manifest the V2.2 or OCI manifest
+   * @param containerConfiguration the container configuration
    * @throws IOException if an I/O exception occurs
    */
   public void writeMetadata(
       ImageReference imageReference,
-      @Nullable ManifestTemplate manifestList,
-      List<BuildableManifestTemplate> manifests,
-      List<ContainerConfigurationTemplate> containerConfigurations)
+      BuildableManifestTemplate manifest,
+      ContainerConfigurationTemplate containerConfiguration)
       throws IOException {
-    Preconditions.checkArgument(manifests.size() == containerConfigurations.size());
-    cacheStorageWriter.writeMetadata(
-        imageReference, manifestList, manifests, containerConfigurations);
+    List<ManifestAndConfigTemplate> singleton =
+        Collections.singletonList(new ManifestAndConfigTemplate(manifest, containerConfiguration));
+    cacheStorageWriter.writeMetadata(imageReference, new ImageMetadataTemplate(null, singleton));
   }
 
   /**
-   * Saves a V2.1 image manifest.
+   * Saves a V2.1 image manifest. This is a simple wrapper around {@link
+   * #writeMetadata(ImageReference, ImageMetadataTemplate)} to save a single manifest without a
+   * manifest list.
    *
    * @param imageReference the image reference to save the manifest for
    * @param manifestTemplate the V2.1 manifest
@@ -99,7 +112,9 @@ public class Cache {
    */
   public void writeMetadata(ImageReference imageReference, V21ManifestTemplate manifestTemplate)
       throws IOException {
-    cacheStorageWriter.writeMetadata(imageReference, manifestTemplate);
+    List<ManifestAndConfigTemplate> singleton =
+        Collections.singletonList(new ManifestAndConfigTemplate(manifestTemplate, null));
+    cacheStorageWriter.writeMetadata(imageReference, new ImageMetadataTemplate(null, singleton));
   }
 
   /**

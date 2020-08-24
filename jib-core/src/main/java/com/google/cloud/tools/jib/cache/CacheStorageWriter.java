@@ -46,10 +46,9 @@ import java.nio.file.FileSystemException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Predicate;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 import javax.annotation.Nullable;
@@ -69,6 +68,32 @@ class CacheStorageWriter {
       this.layerDigest = layerDigest;
       this.layerDiffId = layerDiffId;
       this.layerSize = layerSize;
+    }
+  }
+
+  private static void verifyImageMetadata(ImageMetadataTemplate metadata) {
+    Predicate<ManifestAndConfigTemplate> isManifestNull = pair -> pair.getManifest() == null;
+    Predicate<ManifestAndConfigTemplate> isConfigNull = pair -> pair.getConfig() == null;
+
+    List<ManifestAndConfigTemplate> manifestsAndConfigs = metadata.getManifestsAndConfigs();
+    Preconditions.checkArgument(!manifestsAndConfigs.isEmpty(), "no manifests given");
+    Preconditions.checkArgument(
+        manifestsAndConfigs.stream().noneMatch(isManifestNull), "null manifest(s)");
+    Preconditions.checkArgument(
+        metadata.getManifestList() != null || manifestsAndConfigs.size() == 1,
+        "manifest list missing while multiple manifests given");
+
+    ManifestTemplate firstManifest = manifestsAndConfigs.get(0).getManifest();
+    if (firstManifest instanceof V21ManifestTemplate) {
+      Preconditions.checkArgument(
+          metadata.getManifestList() == null, "manifest list given for schema 1");
+      Preconditions.checkArgument(
+          isConfigNull.test(manifestsAndConfigs.get(0)), "container config given for schema 1");
+    } else if (firstManifest instanceof BuildableManifestTemplate) {
+      Preconditions.checkArgument(
+          manifestsAndConfigs.stream().noneMatch(isConfigNull), "null config(s)");
+    } else {
+      throw new IllegalArgumentException("Unknown manifest type: " + firstManifest);
     }
   }
 
@@ -306,53 +331,14 @@ class CacheStorageWriter {
    * an image reference.
    *
    * @param imageReference the image reference to store the metadata for
-   * @param manifestList the V2.2 manifest list or OCI image index. Can be null.
-   * @param manifests the V2.2 or OCI manifests
-   * @param containerConfigurations the container configurations
+   * @param metadata the image metadata
    */
-  void writeMetadata(
-      ImageReference imageReference,
-      @Nullable ManifestTemplate manifestList,
-      List<BuildableManifestTemplate> manifests,
-      List<ContainerConfigurationTemplate> containerConfigurations)
+  void writeMetadata(ImageReference imageReference, ImageMetadataTemplate metadata)
       throws IOException {
-    Preconditions.checkArgument(
-        manifests.size() == containerConfigurations.size(),
-        "manifests and containerConfigurations should be of same size");
-    for (BuildableManifestTemplate manifest : manifests) {
-      Preconditions.checkNotNull(manifest.getContainerConfiguration());
-      Preconditions.checkNotNull(manifest.getContainerConfiguration().getDigest());
-    }
-
+    verifyImageMetadata(metadata);
     Path imageDirectory = cacheStorageFiles.getImageDirectory(imageReference);
     Files.createDirectories(imageDirectory);
 
-    List<ManifestAndConfigTemplate> manifestsAndConfigs = new ArrayList<>();
-    for (int i = 0; i < manifests.size(); i++) {
-      manifestsAndConfigs.add(
-          new ManifestAndConfigTemplate(manifests.get(i), containerConfigurations.get(i)));
-    }
-    try (LockFile ignored = LockFile.lock(imageDirectory.resolve("lock"))) {
-      writeJsonTemplate(
-          new ImageMetadataTemplate(manifestList, manifestsAndConfigs),
-          imageDirectory.resolve("manifests_configs.json"));
-    }
-  }
-
-  /**
-   * Writes a V2.1 manifest for a given image reference.
-   *
-   * @param imageReference the image reference to store the metadata for
-   * @param manifest the manifest
-   */
-  void writeMetadata(ImageReference imageReference, V21ManifestTemplate manifest)
-      throws IOException {
-    Path imageDirectory = cacheStorageFiles.getImageDirectory(imageReference);
-    Files.createDirectories(imageDirectory);
-
-    ImageMetadataTemplate metadata =
-        new ImageMetadataTemplate(
-            null, Collections.singletonList(new ManifestAndConfigTemplate(manifest, null)));
     try (LockFile ignored = LockFile.lock(imageDirectory.resolve("lock"))) {
       writeJsonTemplate(metadata, imageDirectory.resolve("manifests_configs.json"));
     }

@@ -53,6 +53,7 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.mockito.Mockito;
 
 /** Tests for {@link CacheStorageReader}. */
 public class CacheStorageReaderTest {
@@ -578,13 +579,7 @@ public class CacheStorageReaderTest {
   public void testVerifyImageMetadata_unknownManifestType() {
     ManifestAndConfigTemplate manifestAndConfig =
         new ManifestAndConfigTemplate(
-            new ManifestTemplate() {
-              @Override
-              public int getSchemaVersion() {
-                return 987;
-              }
-            },
-            new ContainerConfigurationTemplate());
+            Mockito.mock(ManifestTemplate.class), new ContainerConfigurationTemplate());
     ImageMetadataTemplate metadata =
         new ImageMetadataTemplate(null, Arrays.asList(manifestAndConfig));
     try {

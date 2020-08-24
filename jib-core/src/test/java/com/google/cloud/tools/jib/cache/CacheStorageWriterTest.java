@@ -44,7 +44,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.DigestException;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.zip.GZIPInputStream;
@@ -155,7 +154,9 @@ public class CacheStorageWriterTest {
         loadJsonResource("core/json/v21manifest.json", V21ManifestTemplate.class);
     ImageReference imageReference = ImageReference.parse("image.reference/project/thing:tag");
 
-    cacheStorageWriter.writeMetadata(imageReference, v21Manifest);
+    ManifestAndConfigTemplate manifestAndConfig = new ManifestAndConfigTemplate(v21Manifest, null);
+    cacheStorageWriter.writeMetadata(
+        imageReference, new ImageMetadataTemplate(null, Arrays.asList(manifestAndConfig)));
 
     Path savedMetadataPath =
         cacheRoot.resolve("images/image.reference/project/thing!tag/manifests_configs.json");
@@ -166,10 +167,11 @@ public class CacheStorageWriterTest {
     Assert.assertNull(savedMetadata.getManifestList());
     Assert.assertEquals(1, savedMetadata.getManifestsAndConfigs().size());
 
-    ManifestAndConfigTemplate manifestAndConfig = savedMetadata.getManifestsAndConfigs().get(0);
-    Assert.assertNull(manifestAndConfig.getConfig());
+    ManifestAndConfigTemplate savedManifestAndConfig =
+        savedMetadata.getManifestsAndConfigs().get(0);
+    Assert.assertNull(savedManifestAndConfig.getConfig());
 
-    V21ManifestTemplate savedManifest = (V21ManifestTemplate) manifestAndConfig.getManifest();
+    V21ManifestTemplate savedManifest = (V21ManifestTemplate) savedManifestAndConfig.getManifest();
     Assert.assertEquals(
         "ppc64le", savedManifest.getContainerConfiguration().get().getArchitecture());
   }
@@ -189,11 +191,12 @@ public class CacheStorageWriterTest {
 
     ImageReference imageReference = ImageReference.parse("image.reference/project/thing:tag");
 
+    List<ManifestAndConfigTemplate> manifestsAndConfigs =
+        Arrays.asList(
+            new ManifestAndConfigTemplate(manifest1, containerConfig),
+            new ManifestAndConfigTemplate(manifest2, containerConfig));
     cacheStorageWriter.writeMetadata(
-        imageReference,
-        manifestList,
-        Arrays.asList(manifest1, manifest2),
-        Arrays.asList(containerConfig, containerConfig));
+        imageReference, new ImageMetadataTemplate(manifestList, manifestsAndConfigs));
 
     Path savedMetadataPath =
         cacheRoot.resolve("images/image.reference/project/thing!tag/manifests_configs.json");
@@ -270,7 +273,9 @@ public class CacheStorageWriterTest {
     ImageReference imageReference = ImageReference.parse("image.reference/project/thing:tag");
 
     cacheStorageWriter.writeMetadata(
-        imageReference, ociIndex, Arrays.asList(manifest), Arrays.asList(containerConfig));
+        imageReference,
+        new ImageMetadataTemplate(
+            ociIndex, Arrays.asList(new ManifestAndConfigTemplate(manifest, containerConfig))));
 
     Path savedMetadataPath =
         cacheRoot.resolve("images/image.reference/project/thing!tag/manifests_configs.json");
@@ -306,21 +311,6 @@ public class CacheStorageWriterTest {
         savedManifest1.getContainerConfiguration().getDigest().getHash());
 
     Assert.assertEquals("wasm", savedManifestAndConfig.getConfig().getArchitecture());
-  }
-
-  @Test
-  public void testWriteMetadata_invalidInput() throws IOException {
-    try {
-      cacheStorageWriter.writeMetadata(
-          ImageReference.scratch(),
-          null,
-          Arrays.asList(new V22ManifestTemplate()),
-          Collections.emptyList());
-      Assert.fail();
-    } catch (IllegalArgumentException ex) {
-      Assert.assertEquals(
-          "manifests and containerConfigurations should be of same size", ex.getMessage());
-    }
   }
 
   @Test
