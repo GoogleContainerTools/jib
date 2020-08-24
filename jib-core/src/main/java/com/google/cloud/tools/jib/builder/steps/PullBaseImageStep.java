@@ -279,7 +279,7 @@ class PullBaseImageStep implements Callable<ImagesAndRegistryClient> {
     EventHandlers eventHandlers = buildContext.getEventHandlers();
     String message = "Searching for architecture=%s, os=%s in the base image manifest list";
     eventHandlers.dispatch(
-        LogEvent.lifecycle(String.format(message, platform.getArchitecture(), platform.getOs())));
+        LogEvent.info(String.format(message, platform.getArchitecture(), platform.getOs())));
 
     List<String> digests =
         manifestListTemplate.getDigestsForPlatform(platform.getArchitecture(), platform.getOs());
