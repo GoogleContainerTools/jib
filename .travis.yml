@@ -18,6 +18,7 @@ install: true
 before_install:
   - echo $JAVA_HOME
   - which java
+  - ls /usr/local/lib/jvm/
   - sudo apt-get install -y openjdk-11-jdk
   - export JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64/
   - which java
