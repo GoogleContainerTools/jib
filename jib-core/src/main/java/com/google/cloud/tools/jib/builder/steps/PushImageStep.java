@@ -38,8 +38,8 @@ import java.util.Set;
 import java.util.concurrent.Callable;
 
 /**
- * Pushes a manifest for a tag. Returns the manifest digest ("image digest") and the container
- * configuration digest ("image id") as {#link BuildResult}.
+ * Pushes a manifestTemplate for a tag. Returns the manifestTemplate digest ("image digest") and the
+ * container configuration digest ("image id") as {#link BuildResult}.
  */
 class PushImageStep implements Callable<BuildResult> {
 
@@ -106,18 +106,16 @@ class PushImageStep implements Callable<BuildResult> {
 
     EventHandlers eventHandlers = buildContext.getEventHandlers();
     try (TimerEventDispatcher ignored =
-            new TimerEventDispatcher(eventHandlers, "Preparing manifest pushers");
+            new TimerEventDispatcher(eventHandlers, "Preparing manifest list pushers");
         ProgressEventDispatcher progressEventDispatcher =
-            progressEventDispatcherFactory.create("launching manifest pushers", tags.size())) {
+            progressEventDispatcherFactory.create("launching manifest list pushers", tags.size())) {
 
       if (JibSystemProperties.skipExistingImages() && manifestAlreadyExists) {
         eventHandlers.dispatch(
-            LogEvent.info("Skipping pushing manifest; manifest already exists."));
+            LogEvent.info("Skipping pushing manifest list; manifest already exists."));
         return ImmutableList.of();
       }
-
       DescriptorDigest manifestDigest = Digests.computeJsonDigest(manifestList);
-
       return tags.stream()
           .map(
               tag ->
@@ -125,7 +123,7 @@ class PushImageStep implements Callable<BuildResult> {
                       buildContext,
                       progressEventDispatcher.newChildProducer(),
                       registryClient,
-                      (BuildableManifestTemplate) manifestList,
+                      manifestList,
                       tag,
                       manifestDigest,
                       manifestDigest))
@@ -136,7 +134,7 @@ class PushImageStep implements Callable<BuildResult> {
   private final BuildContext buildContext;
   private final ProgressEventDispatcher.Factory progressEventDispatcherFactory;
 
-  private final BuildableManifestTemplate manifestTemplate;
+  private final ManifestTemplate manifestTemplate;
   private final RegistryClient registryClient;
   private final String imageQualifier;
   private final DescriptorDigest imageDigest;
@@ -146,7 +144,7 @@ class PushImageStep implements Callable<BuildResult> {
       BuildContext buildContext,
       ProgressEventDispatcher.Factory progressEventDispatcherFactory,
       RegistryClient registryClient,
-      BuildableManifestTemplate manifestTemplate,
+      ManifestTemplate manifestTemplate,
       String imageQualifier,
       DescriptorDigest imageDigest,
       DescriptorDigest imageId) {

@@ -580,7 +580,6 @@ public class StepsRunner {
               if (results.builtImagesAndBaseImages.get().size() == 1) {
                 return results.pushImageResults.get();
               }
-
               return scheduleCallables(
                   PushImageStep.makeListPushManifestList(
                       buildContext,
