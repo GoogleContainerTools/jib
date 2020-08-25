@@ -4,26 +4,32 @@ git:
 language: java
 matrix:
   include:
-#  - name: Oracle JDK 8 on Trusty
-#    # using `openjdk8` leads to javadoc errors
-#    jdk: oraclejdk8
+  - name: Oracle JDK 8 on Trusty
+    # using `openjdk8` leads to javadoc errors
+    jdk: oraclejdk8
     dist: trusty # oraclejdk8 absent in Xenial
-#  - name: OracleJDK 11
-#    jdk: oraclejdk11-ea
+  - name: OracleJDK 11
+    before_install:
+      - echo $JAVA_HOME
+      - which java
+      - sudo apt-get install -y openjdk-11-jdk
+      - export JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64/
+      - which java
+      - java -version
+      - $JAVA_HOME/bin/java -version
 env:
   global:
   - TERM=dumb         # for gradle
 
 install: true
-before_install:
-  - echo $JAVA_HOME
-  - which java
-  - ls /usr/local/lib/jvm/
-  - sudo apt-get install -y openjdk-11-jdk
-  - export JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64/
-  - which java
-  - java -version
-  - $JAVA_HOME/bin/java -version
+#before_install:
+#  - echo $JAVA_HOME
+#  - which java
+#  - sudo apt-get install -y openjdk-11-jdk
+#  - export JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64/
+#  - which java
+#  - java -version
+#  - $JAVA_HOME/bin/java -version
 script:
 - ./gradlew clean build --stacktrace
 
