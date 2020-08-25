@@ -192,7 +192,6 @@ public class StepsRunner {
     stepsToRun.add(this::checkManifestInTargetRegistry);
     stepsToRun.add(this::pushImages);
     stepsToRun.add(this::pushManifestList);
-
     return this;
   }
 
