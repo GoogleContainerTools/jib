@@ -34,7 +34,6 @@ import com.google.cloud.tools.jib.global.JibSystemProperties;
 import com.google.cloud.tools.jib.http.Authorization;
 import com.google.cloud.tools.jib.http.FailoverHttpClient;
 import com.google.cloud.tools.jib.http.Response;
-import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
 import com.google.cloud.tools.jib.image.json.ManifestTemplate;
 import com.google.cloud.tools.jib.json.JsonTemplate;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
@@ -368,15 +367,16 @@ public class RegistryClient {
   }
 
   /**
-   * Check if an image is on the registry.
+   * Check if a manifest referred to by {@code imageQualifier} (tag or digest) exists on the
+   * registry.
    *
    * @param imageQualifier the tag or digest to check for
-   * @return the {@link ManifestAndDigest} of the image if the image exists on the registry, or
-   *     {@link Optional#empty()} otherwise
+   * @return the {@link ManifestAndDigest} referred to by {@code imageQualifier} if the manifest
+   *     exists on the registry, or {@link Optional#empty()} otherwise
    * @throws IOException if communicating with the endpoint fails
    * @throws RegistryException if communicating with the endpoint fails
    */
-  public Optional<ManifestAndDigest<ManifestTemplate>> checkImage(String imageQualifier)
+  public Optional<ManifestAndDigest<ManifestTemplate>> checkManifest(String imageQualifier)
       throws IOException, RegistryException {
     ManifestChecker<ManifestTemplate> manifestChecker =
         new ManifestChecker<>(
@@ -404,7 +404,7 @@ public class RegistryClient {
     return callRegistryEndpoint(manifestPuller);
   }
 
-  public ManifestAndDigest<?> pullManifest(String imageQualifier)
+  public ManifestAndDigest<ManifestTemplate> pullManifest(String imageQualifier)
       throws IOException, RegistryException {
     return pullManifest(imageQualifier, ManifestTemplate.class);
   }
@@ -418,7 +418,7 @@ public class RegistryClient {
    * @throws IOException if communicating with the endpoint fails
    * @throws RegistryException if communicating with the endpoint fails
    */
-  public DescriptorDigest pushManifest(BuildableManifestTemplate manifestTemplate, String imageTag)
+  public DescriptorDigest pushManifest(ManifestTemplate manifestTemplate, String imageTag)
       throws IOException, RegistryException {
     if (isBearerAuth(authorization.get()) && readOnlyBearerAuth) {
       throw new IllegalStateException("push may fail with pull-only bearer auth token");

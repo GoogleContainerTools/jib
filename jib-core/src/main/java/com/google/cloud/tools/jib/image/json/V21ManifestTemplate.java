@@ -64,6 +64,7 @@ public class V21ManifestTemplate implements ManifestTemplate {
   public static final String MEDIA_TYPE = "application/vnd.docker.distribution.manifest.v1+json";
 
   private final int schemaVersion = 1;
+  private final String mediaType = MEDIA_TYPE;
 
   /** The list of layer references. */
   private final List<LayerObjectTemplate> fsLayers = new ArrayList<>();
@@ -111,6 +112,11 @@ public class V21ManifestTemplate implements ManifestTemplate {
   @Override
   public int getSchemaVersion() {
     return schemaVersion;
+  }
+
+  @Override
+  public String getManifestMediaType() {
+    return mediaType;
   }
 
   public List<LayerObjectTemplate> getFsLayers() {

@@ -23,12 +23,15 @@ import com.google.cloud.tools.jib.api.buildplan.FileEntry;
 import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
 import com.google.cloud.tools.jib.image.json.ContainerConfigurationTemplate;
-import com.google.cloud.tools.jib.image.json.ManifestAndConfig;
+import com.google.cloud.tools.jib.image.json.ImageMetadataTemplate;
+import com.google.cloud.tools.jib.image.json.ManifestAndConfigTemplate;
 import com.google.cloud.tools.jib.image.json.V21ManifestTemplate;
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 import javax.annotation.concurrent.Immutable;
 
@@ -66,32 +69,52 @@ public class Cache {
   }
 
   /**
-   * Saves a manifest and container configuration for a V2.2 or OCI image.
+   * Saves image metadata (a manifest list and a list of manifest/container configuration pairs) for
+   * an image reference.
    *
-   * @param imageReference the image reference to save the manifest and container configuration for
-   * @param manifestTemplate the V2.2 or OCI manifest
-   * @param containerConfigurationTemplate the container configuration
+   * @param imageReference the image reference to save the metadata for
+   * @param metadata the image metadata
+   * @throws IOException if an I/O exception occurs
+   */
+  public void writeMetadata(ImageReference imageReference, ImageMetadataTemplate metadata)
+      throws IOException {
+    cacheStorageWriter.writeMetadata(imageReference, metadata);
+  }
+
+  /**
+   * Saves a schema 2 manifest for an image reference. This is a simple wrapper around {@link
+   * #writeMetadata(ImageReference, ImageMetadataTemplate)} to save a single manifest without a
+   * manifest list.
+   *
+   * @param imageReference the image reference to save the manifest for
+   * @param manifest the V2.2 or OCI manifest
+   * @param containerConfiguration the container configuration
    * @throws IOException if an I/O exception occurs
    */
   public void writeMetadata(
       ImageReference imageReference,
-      BuildableManifestTemplate manifestTemplate,
-      ContainerConfigurationTemplate containerConfigurationTemplate)
+      BuildableManifestTemplate manifest,
+      ContainerConfigurationTemplate containerConfiguration)
       throws IOException {
-    cacheStorageWriter.writeMetadata(
-        imageReference, manifestTemplate, containerConfigurationTemplate);
+    List<ManifestAndConfigTemplate> singleton =
+        Collections.singletonList(new ManifestAndConfigTemplate(manifest, containerConfiguration));
+    cacheStorageWriter.writeMetadata(imageReference, new ImageMetadataTemplate(null, singleton));
   }
 
   /**
-   * Saves a V2.1 image manifest.
+   * Saves a V2.1 image manifest. This is a simple wrapper around {@link
+   * #writeMetadata(ImageReference, ImageMetadataTemplate)} to save a single manifest without a
+   * manifest list.
    *
-   * @param imageReference the image reference to save the manifest and container configuration for
+   * @param imageReference the image reference to save the manifest for
    * @param manifestTemplate the V2.1 manifest
    * @throws IOException if an I/O exception occurs
    */
   public void writeMetadata(ImageReference imageReference, V21ManifestTemplate manifestTemplate)
       throws IOException {
-    cacheStorageWriter.writeMetadata(imageReference, manifestTemplate);
+    List<ManifestAndConfigTemplate> singleton =
+        Collections.singletonList(new ManifestAndConfigTemplate(manifestTemplate, null));
+    cacheStorageWriter.writeMetadata(imageReference, new ImageMetadataTemplate(null, singleton));
   }
 
   /**
@@ -156,14 +179,15 @@ public class Cache {
   }
 
   /**
-   * Retrieves the cached manifest and container configuration for an image reference.
+   * Retrieves the cached image metadata (a manifest list and a list of manifest/container
+   * configuration pairs) for an image reference.
    *
    * @param imageReference the image reference
-   * @return the manifest and container configuration for the image reference, if found
+   * @return the image metadata for the image reference, if found
    * @throws IOException if an I/O exception occurs
    * @throws CacheCorruptedException if the cache is corrupted
    */
-  public Optional<ManifestAndConfig> retrieveMetadata(ImageReference imageReference)
+  public Optional<ImageMetadataTemplate> retrieveMetadata(ImageReference imageReference)
       throws IOException, CacheCorruptedException {
     return cacheStorageReader.retrieveMetadata(imageReference);
   }

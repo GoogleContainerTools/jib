@@ -18,9 +18,9 @@ dependencies {
   implementation dependencyStrings.MAVEN_CORE
 
   // compileOnly + testImplementation equivalent to "provided"
-  compileOnly dependencyStrings.MAVEN_ANNOTATIONS_LATEST
+  compileOnly dependencyStrings.MAVEN_PLUGIN_ANNOTATIONS
   // needed to suppress "unknown enum constant" warnings
-  testImplementation dependencyStrings.MAVEN_ANNOTATIONS_OLD
+  testImplementation dependencyStrings.MAVEN_PLUGIN_ANNOTATIONS
 
   // maven-plugin-testing-harness pulls in conflicting implementations of DefaultPlexusContainer
   // (sisu (correct) vs default-plexus-container (wrong)) so ensure this is first in the test classpath

@@ -33,7 +33,8 @@ import com.google.cloud.tools.jib.image.LayerCountMismatchException;
 import com.google.cloud.tools.jib.image.LayerPropertyNotFoundException;
 import com.google.cloud.tools.jib.image.json.BadContainerConfigurationFormatException;
 import com.google.cloud.tools.jib.image.json.ContainerConfigurationTemplate;
-import com.google.cloud.tools.jib.image.json.ManifestAndConfig;
+import com.google.cloud.tools.jib.image.json.ImageMetadataTemplate;
+import com.google.cloud.tools.jib.image.json.ManifestAndConfigTemplate;
 import com.google.cloud.tools.jib.image.json.V22ManifestListTemplate;
 import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
@@ -42,6 +43,7 @@ import com.google.cloud.tools.jib.registry.RegistryClient;
 import com.google.cloud.tools.jib.registry.credentials.CredentialRetrievalException;
 import com.google.common.collect.ImmutableSet;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Optional;
 import org.junit.Assert;
 import org.junit.Before;
@@ -57,8 +59,11 @@ public class PullBaseImageStepTest {
 
   private final ContainerConfigurationTemplate containerConfigJson =
       new ContainerConfigurationTemplate();
-  private final ManifestAndConfig manifestAndConfig =
-      new ManifestAndConfig(new V22ManifestTemplate(), containerConfigJson);
+  private final ImageMetadataTemplate imageMetadata =
+      new ImageMetadataTemplate(
+          null,
+          Arrays.asList(
+              new ManifestAndConfigTemplate(new V22ManifestTemplate(), containerConfigJson)));
 
   @Mock private ProgressEventDispatcher.Factory progressDispatcherFactory;
   @Mock private BuildContext buildContext;
@@ -98,7 +103,7 @@ public class PullBaseImageStepTest {
             "awesome@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
     Assert.assertTrue(imageReference.getDigest().isPresent());
     Mockito.when(imageConfiguration.getImage()).thenReturn(imageReference);
-    Mockito.when(cache.retrieveMetadata(imageReference)).thenReturn(Optional.of(manifestAndConfig));
+    Mockito.when(cache.retrieveMetadata(imageReference)).thenReturn(Optional.of(imageMetadata));
 
     ImagesAndRegistryClient result = pullBaseImageStep.call();
     Assert.assertEquals("fat system", result.images.get(0).getOs());
@@ -130,7 +135,7 @@ public class PullBaseImageStepTest {
     ImageReference imageReference = ImageReference.parse("cat");
     Mockito.when(imageConfiguration.getImage()).thenReturn(imageReference);
     Mockito.when(buildContext.isOffline()).thenReturn(true);
-    Mockito.when(cache.retrieveMetadata(imageReference)).thenReturn(Optional.of(manifestAndConfig));
+    Mockito.when(cache.retrieveMetadata(imageReference)).thenReturn(Optional.of(imageMetadata));
 
     ImagesAndRegistryClient result = pullBaseImageStep.call();
     Assert.assertEquals("fat system", result.images.get(0).getOs());
@@ -146,7 +151,7 @@ public class PullBaseImageStepTest {
           CacheCorruptedException, CredentialRetrievalException, InvalidImageReferenceException {
     ImageReference imageReference = ImageReference.parse("cat");
     Mockito.when(imageConfiguration.getImage()).thenReturn(imageReference);
-    Mockito.when(cache.retrieveMetadata(imageReference)).thenReturn(Optional.of(manifestAndConfig));
+    Mockito.when(cache.retrieveMetadata(imageReference)).thenReturn(Optional.of(imageMetadata));
     Mockito.when(buildContext.isOffline()).thenReturn(true);
     Mockito.when(containerConfig.getPlatforms())
         .thenReturn(ImmutableSet.of(new Platform("testArch", "testOS")));
@@ -176,7 +181,7 @@ public class PullBaseImageStepTest {
             "awesome@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
     Mockito.when(buildContext.getBaseImageConfiguration())
         .thenReturn(ImageConfiguration.builder(imageReference).build());
-    Mockito.when(cache.retrieveMetadata(imageReference)).thenReturn(Optional.of(manifestAndConfig));
+    Mockito.when(cache.retrieveMetadata(imageReference)).thenReturn(Optional.of(imageMetadata));
     Mockito.when(containerConfig.getPlatforms())
         .thenReturn(ImmutableSet.of(new Platform("testArch", "testOS")));
 

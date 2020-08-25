@@ -17,7 +17,6 @@
 package com.google.cloud.tools.jib.image.json;
 
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
-import com.google.cloud.tools.jib.json.JsonTemplate;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
 import java.util.ArrayList;
@@ -31,6 +30,7 @@ import java.util.List;
  * <pre>{@code
  * {
  *   "schemaVersion": 2,
+ *   "mediaType": "application/vnd.oci.image.index.v1+json",
  *   "manifests": [
  *     {
  *       "mediaType": "application/vnd.oci.image.manifest.v1+json",
@@ -47,13 +47,26 @@ import java.util.List;
  * @see <a href="https://github.com/opencontainers/image-spec/blob/master/image-index.md">OCI Image
  *     Index Specification</a>
  */
-public class OciIndexTemplate implements JsonTemplate {
+public class OciIndexTemplate implements ManifestTemplate {
 
-  @SuppressWarnings("unused")
+  /** The OCI Index media type. */
+  public static final String MEDIA_TYPE = "application/vnd.oci.image.index.v1+json";
+
   private final int schemaVersion = 2;
+  private final String mediaType = MEDIA_TYPE;
 
   private final List<BuildableManifestTemplate.ContentDescriptorTemplate> manifests =
       new ArrayList<>();
+
+  @Override
+  public int getSchemaVersion() {
+    return schemaVersion;
+  }
+
+  @Override
+  public String getManifestMediaType() {
+    return mediaType;
+  }
 
   /**
    * Adds a manifest reference with the given {@link BlobDescriptor}.
