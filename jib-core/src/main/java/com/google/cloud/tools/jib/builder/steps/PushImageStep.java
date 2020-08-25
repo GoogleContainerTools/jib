@@ -30,6 +30,7 @@ import com.google.cloud.tools.jib.image.Image;
 import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
 import com.google.cloud.tools.jib.image.json.ImageToJsonTranslator;
 import com.google.cloud.tools.jib.image.json.ManifestTemplate;
+import com.google.cloud.tools.jib.image.json.V22ManifestListTemplate;
 import com.google.cloud.tools.jib.registry.RegistryClient;
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
@@ -116,18 +117,20 @@ class PushImageStep implements Callable<BuildResult> {
         return ImmutableList.of();
       }
       DescriptorDigest manifestDigest = Digests.computeJsonDigest(manifestList);
-      return tags.stream()
-          .map(
-              tag ->
-                  new PushImageStep(
-                      buildContext,
-                      progressEventDispatcher.newChildProducer(),
-                      registryClient,
-                      manifestList,
-                      tag,
-                      manifestDigest,
-                      manifestDigest))
-          .collect(ImmutableList.toImmutableList());
+      return manifestList instanceof V22ManifestListTemplate
+          ? tags.stream()
+              .map(
+                  tag ->
+                      new PushImageStep(
+                          buildContext,
+                          progressEventDispatcher.newChildProducer(),
+                          registryClient,
+                          manifestList,
+                          tag,
+                          manifestDigest,
+                          manifestDigest))
+              .collect(ImmutableList.toImmutableList())
+          : ImmutableList.of();
     }
   }
 
