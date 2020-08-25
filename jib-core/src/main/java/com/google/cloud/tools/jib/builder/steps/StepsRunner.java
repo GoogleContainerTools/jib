@@ -79,10 +79,10 @@ public class StepsRunner {
     private Future<List<Future<BlobDescriptor>>> applicationLayerPushResults = failedFuture();
     private Future<Map<Future<Image>, Future<BlobDescriptor>>>
         builtImagesAndContainerConfigurationPushResults = failedFuture();
-    private Future<List<Future<BuildResult>>> buildResults = failedFuture();
     private Future<Optional<ManifestAndDigest<ManifestTemplate>>> manifestCheckResult =
         failedFuture();
-    public Future<List<Future<BuildResult>>> pushImageResults = failedFuture();
+    public Future<List<Future<BuildResult>>> singleManifestPushResults = failedFuture();
+    private Future<BuildResult> buildResult = failedFuture();
   }
 
   /**
@@ -211,7 +211,7 @@ public class StepsRunner {
       rootProgressDispatcher = progressEventDispatcher;
 
       stepsToRun.forEach(Runnable::run);
-      return results.buildResults.get().get(0).get();
+      return results.buildResult.get();
 
     } catch (ExecutionException ex) {
       ExecutionException unrolled = ex;
@@ -512,7 +512,7 @@ public class StepsRunner {
     ProgressEventDispatcher.Factory childProgressDispatcherFactory =
         Verify.verifyNotNull(rootProgressDispatcher).newChildProducer();
 
-    results.pushImageResults =
+    results.singleManifestPushResults =
         executorService.submit(
             () -> {
               // TODO: ideally, progressDispatcher should be closed at the right moment, after the
@@ -572,20 +572,23 @@ public class StepsRunner {
     ProgressEventDispatcher.Factory childProgressDispatcherFactory =
         Verify.verifyNotNull(rootProgressDispatcher).newChildProducer();
 
-    results.buildResults =
+    results.buildResult =
         executorService.submit(
             () -> {
-              realizeFutures(results.pushImageResults.get());
-              if (results.builtImagesAndBaseImages.get().size() == 1) {
-                return results.pushImageResults.get();
-              }
-              return scheduleCallables(
-                  PushImageStep.makeListPushManifestList(
-                      buildContext,
-                      childProgressDispatcherFactory,
-                      results.targetRegistryClient.get(),
-                      results.manifestListOrSingleManifest.get(),
-                      results.manifestCheckResult.get().isPresent()));
+              realizeFutures(results.singleManifestPushResults.get());
+              List<Future<BuildResult>> manifestListPushResults =
+                  scheduleCallables(
+                      PushImageStep.makeListPushManifestList(
+                          buildContext,
+                          childProgressDispatcherFactory,
+                          results.targetRegistryClient.get(),
+                          results.manifestListOrSingleManifest.get(),
+                          results.manifestCheckResult.get().isPresent()));
+
+              realizeFutures(manifestListPushResults);
+              return manifestListPushResults.isEmpty()
+                  ? results.singleManifestPushResults.get().get(0).get()
+                  : manifestListPushResults.get(0).get();
             });
   }
 
@@ -593,7 +596,7 @@ public class StepsRunner {
     ProgressEventDispatcher.Factory childProgressDispatcherFactory =
         Verify.verifyNotNull(rootProgressDispatcher).newChildProducer();
 
-    results.buildResults =
+    results.buildResult =
         executorService.submit(
             () -> {
               Verify.verify(
@@ -605,7 +608,7 @@ public class StepsRunner {
                   new LoadDockerStep(
                           buildContext, childProgressDispatcherFactory, dockerClient, builtImage)
                       .call();
-              return Collections.singletonList(Futures.immediateFuture(buildResult));
+              return buildResult;
             });
   }
 
@@ -613,7 +616,7 @@ public class StepsRunner {
     ProgressEventDispatcher.Factory childProgressDispatcherFactory =
         Verify.verifyNotNull(rootProgressDispatcher).newChildProducer();
 
-    results.buildResults =
+    results.buildResult =
         executorService.submit(
             () -> {
               Verify.verify(
@@ -626,7 +629,7 @@ public class StepsRunner {
                   new WriteTarFileStep(
                           buildContext, childProgressDispatcherFactory, outputPath, builtImage)
                       .call();
-              return Collections.singletonList(Futures.immediateFuture(buildResult));
+              return buildResult;
             });
   }
 
