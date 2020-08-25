@@ -30,6 +30,7 @@ import java.util.List;
  * <pre>{@code
  * {
  *   "schemaVersion": 2,
+ *   "mediaType": "application/vnd.oci.image.index.v1+json",
  *   "manifests": [
  *     {
  *       "mediaType": "application/vnd.oci.image.manifest.v1+json",
@@ -48,7 +49,11 @@ import java.util.List;
  */
 public class OciIndexTemplate implements ManifestTemplate {
 
+  /** The OCI Index media type. */
+  public static final String MEDIA_TYPE = "application/vnd.oci.image.index.v1+json";
+
   private final int schemaVersion = 2;
+  private final String mediaType = MEDIA_TYPE;
 
   private final List<BuildableManifestTemplate.ContentDescriptorTemplate> manifests =
       new ArrayList<>();
@@ -56,6 +61,11 @@ public class OciIndexTemplate implements ManifestTemplate {
   @Override
   public int getSchemaVersion() {
     return schemaVersion;
+  }
+
+  @Override
+  public String getManifestMediaType() {
+    return mediaType;
   }
 
   /**

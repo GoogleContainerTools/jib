@@ -77,7 +77,8 @@ public class V22ManifestListTemplate implements ManifestTemplate {
     return schemaVersion;
   }
 
-  public String getMediaType() {
+  @Override
+  public String getManifestMediaType() {
     return mediaType;
   }
 

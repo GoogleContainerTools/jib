@@ -5,7 +5,7 @@ plugins {
   id 'net.ltgt.errorprone' version '1.2.1' apply false
   id 'net.researchgate.release' version '2.8.1' apply false
   id 'com.gradle.plugin-publish' version '0.12.0' apply false
-  id 'io.freefair.maven-plugin' version '5.1.0' apply false
+  id 'io.freefair.maven-plugin' version '5.1.1' apply false
 
   // apply so we can correctly configure the test runner to be gradle at the project level
   id 'org.jetbrains.gradle.plugin.idea-ext' version '0.8.1'
@@ -71,10 +71,9 @@ subprojects {
     PICOCLI: 'info.picocli:picocli:4.5.0',
 
     MAVEN_API: 'org.apache.maven:maven-plugin-api:3.6.3',
-    MAVEN_CORE: 'org.apache.maven:maven-core:3.5.2',
-    MAVEN_COMPAT: 'org.apache.maven:maven-compat:3.5.2',
-    MAVEN_ANNOTATIONS_LATEST: 'org.apache.maven.plugin-tools:maven-plugin-annotations:3.6.0',
-    MAVEN_ANNOTATIONS_OLD: 'org.apache.maven.plugin-tools:maven-plugin-annotations:3.5',
+    MAVEN_CORE: 'org.apache.maven:maven-core:3.6.3',
+    MAVEN_COMPAT: 'org.apache.maven:maven-compat:3.6.3',
+    MAVEN_PLUGIN_ANNOTATIONS: 'org.apache.maven.plugin-tools:maven-plugin-annotations:3.6.0',
 
     //test
     JUNIT: 'junit:junit:4.13',
@@ -111,7 +110,7 @@ subprojects {
   /* ERROR PRONE */
   dependencies {
     // NullAway errorprone plugin
-    annotationProcessor 'com.uber.nullaway:nullaway:0.7.10'
+    annotationProcessor 'com.uber.nullaway:nullaway:0.8.0'
     errorprone 'com.google.errorprone:error_prone_core:2.3.4'
     // Using github.com/google/error-prone-javac is required when running on
     // JDK 8. Remove when migrating to JDK 11.

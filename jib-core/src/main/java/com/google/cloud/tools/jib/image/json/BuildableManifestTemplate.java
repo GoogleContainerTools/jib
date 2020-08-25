@@ -107,6 +107,7 @@ public interface BuildableManifestTemplate extends ManifestTemplate {
    *
    * @return the media type for this manifest, specific to the image format
    */
+  @Override
   String getManifestMediaType();
 
   /**
