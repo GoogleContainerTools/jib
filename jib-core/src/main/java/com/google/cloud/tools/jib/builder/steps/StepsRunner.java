@@ -81,7 +81,7 @@ public class StepsRunner {
         builtImagesAndContainerConfigurationPushResults = failedFuture();
     private Future<Optional<ManifestAndDigest<ManifestTemplate>>> manifestCheckResult =
         failedFuture();
-    public Future<List<Future<BuildResult>>> singleManifestPushResults = failedFuture();
+    public Future<List<Future<BuildResult>>> imagePushResultshResults = failedFuture();
     private Future<BuildResult> buildResult = failedFuture();
   }
 
@@ -512,7 +512,7 @@ public class StepsRunner {
     ProgressEventDispatcher.Factory childProgressDispatcherFactory =
         Verify.verifyNotNull(rootProgressDispatcher).newChildProducer();
 
-    results.singleManifestPushResults =
+    results.imagePushResultshResults =
         executorService.submit(
             () -> {
               // TODO: ideally, progressDispatcher should be closed at the right moment, after the
@@ -575,10 +575,10 @@ public class StepsRunner {
     results.buildResult =
         executorService.submit(
             () -> {
-              realizeFutures(results.singleManifestPushResults.get());
+              realizeFutures(results.imagePushResultshResults.get());
               List<Future<BuildResult>> manifestListPushResults =
                   scheduleCallables(
-                      PushImageStep.makeListPushManifestList(
+                      PushImageStep.makeListForManifestList(
                           buildContext,
                           childProgressDispatcherFactory,
                           results.targetRegistryClient.get(),
@@ -587,7 +587,7 @@ public class StepsRunner {
 
               realizeFutures(manifestListPushResults);
               return manifestListPushResults.isEmpty()
-                  ? results.singleManifestPushResults.get().get(0).get()
+                  ? results.imagePushResultshResults.get().get(0).get()
                   : manifestListPushResults.get(0).get();
             });
   }
@@ -604,11 +604,9 @@ public class StepsRunner {
                   "multi-platform image building not supported when pushing to Docker engine");
               Image builtImage =
                   results.builtImagesAndBaseImages.get().keySet().iterator().next().get();
-              BuildResult buildResult =
-                  new LoadDockerStep(
-                          buildContext, childProgressDispatcherFactory, dockerClient, builtImage)
-                      .call();
-              return buildResult;
+              return new LoadDockerStep(
+                      buildContext, childProgressDispatcherFactory, dockerClient, builtImage)
+                  .call();
             });
   }
 
@@ -625,11 +623,9 @@ public class StepsRunner {
               Image builtImage =
                   results.builtImagesAndBaseImages.get().keySet().iterator().next().get();
 
-              BuildResult buildResult =
-                  new WriteTarFileStep(
-                          buildContext, childProgressDispatcherFactory, outputPath, builtImage)
-                      .call();
-              return buildResult;
+              return new WriteTarFileStep(
+                      buildContext, childProgressDispatcherFactory, outputPath, builtImage)
+                  .call();
             });
   }
 

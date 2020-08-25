@@ -30,7 +30,6 @@ import com.google.cloud.tools.jib.image.Image;
 import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
 import com.google.cloud.tools.jib.image.json.ImageToJsonTranslator;
 import com.google.cloud.tools.jib.image.json.ManifestTemplate;
-import com.google.cloud.tools.jib.image.json.V22ManifestListTemplate;
 import com.google.cloud.tools.jib.registry.RegistryClient;
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
@@ -96,13 +95,17 @@ class PushImageStep implements Callable<BuildResult> {
     }
   }
 
-  static ImmutableList<PushImageStep> makeListPushManifestList(
+  static ImmutableList<PushImageStep> makeListForManifestList(
       BuildContext buildContext,
       ProgressEventDispatcher.Factory progressEventDispatcherFactory,
       RegistryClient registryClient,
       ManifestTemplate manifestList,
-      boolean manifestAlreadyExists)
+      boolean manifestListAlreadyExists)
       throws IOException {
+    boolean singlePlatform = buildContext.getContainerConfiguration().getPlatforms().size() == 1;
+    if (singlePlatform) {
+      return ImmutableList.of(); // single image; no need to push a manifest list
+    }
     Set<String> tags = buildContext.getAllTargetImageTags();
 
     EventHandlers eventHandlers = buildContext.getEventHandlers();
@@ -111,26 +114,23 @@ class PushImageStep implements Callable<BuildResult> {
         ProgressEventDispatcher progressEventDispatcher =
             progressEventDispatcherFactory.create("launching manifest list pushers", tags.size())) {
 
-      if (JibSystemProperties.skipExistingImages() && manifestAlreadyExists) {
-        eventHandlers.dispatch(
-            LogEvent.info("Skipping pushing manifest list; manifest already exists."));
+      if (JibSystemProperties.skipExistingImages() && manifestListAlreadyExists) {
+        eventHandlers.dispatch(LogEvent.info("Skipping pushing manifest list; already exists."));
         return ImmutableList.of();
       }
-      DescriptorDigest manifestDigest = Digests.computeJsonDigest(manifestList);
-      return manifestList instanceof V22ManifestListTemplate
-          ? tags.stream()
-              .map(
-                  tag ->
-                      new PushImageStep(
-                          buildContext,
-                          progressEventDispatcher.newChildProducer(),
-                          registryClient,
-                          manifestList,
-                          tag,
-                          manifestDigest,
-                          manifestDigest))
-              .collect(ImmutableList.toImmutableList())
-          : ImmutableList.of();
+      DescriptorDigest manifestListDigest = Digests.computeJsonDigest(manifestList);
+      return tags.stream()
+          .map(
+              tag ->
+                  new PushImageStep(
+                      buildContext,
+                      progressEventDispatcher.newChildProducer(),
+                      registryClient,
+                      manifestList,
+                      tag,
+                      manifestListDigest,
+                      manifestListDigest))
+          .collect(ImmutableList.toImmutableList());
     }
   }
 
