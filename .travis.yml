@@ -27,6 +27,7 @@ before_install:
   - java -version
   - $JAVA_HOME/bin/java -version
 script:
+- ./gradlew -v
 - ./gradlew clean build --stacktrace
 
 # cobbled together from
