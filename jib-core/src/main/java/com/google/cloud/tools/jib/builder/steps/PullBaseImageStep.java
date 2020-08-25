@@ -106,28 +106,21 @@ class PullBaseImageStep implements Callable<ImagesAndRegistryClient> {
         LogEvent.progress("Getting manifest for base image " + imageReference + "..."));
 
     if (buildContext.isOffline()) {
-      Optional<Image> image = getCachedBaseImage();
-      if (image.isPresent()) {
-        if (!checkImagePlatform(image.get())) {
-          throw new IllegalStateException(
-              "The cached base image manifest does not match the configured platform due to the "
-                  + "current implementation of limited platform support. As a workaround, re-run Jib "
-                  + "online once to re-cache the right image manifest.");
-        }
-        return new ImagesAndRegistryClient(Collections.singletonList(image.get()), null);
+      List<Image> images = getCachedBaseImages();
+      if (!images.isEmpty()) {
+        return new ImagesAndRegistryClient(images, null);
       }
       throw new IOException(
           "Cannot run Jib in offline mode; " + imageReference + " not found in local Jib cache");
 
     } else if (imageReference.getDigest().isPresent()) {
-      Optional<Image> image = getCachedBaseImage();
-      if (image.isPresent() && checkImagePlatform(image.get())) {
+      List<Image> images = getCachedBaseImages();
+      if (!images.isEmpty()) {
         RegistryClient noAuthRegistryClient =
             buildContext.newBaseImageRegistryClientFactory().newRegistryClient();
         // TODO: passing noAuthRegistryClient may be problematic. It may return 401 unauthorized if
         // layers have to be downloaded. https://github.com/GoogleContainerTools/jib/issues/2220
-        return new ImagesAndRegistryClient(
-            Collections.singletonList(image.get()), noAuthRegistryClient);
+        return new ImagesAndRegistryClient(images, noAuthRegistryClient);
       }
     }
 
@@ -184,20 +177,6 @@ class PullBaseImageStep implements Callable<ImagesAndRegistryClient> {
         }
       }
     }
-  }
-
-  // TODO: remove when properly caching manifests with multiple platforms and manifest lists.
-  private boolean checkImagePlatform(Image image) {
-    Preconditions.checkState(buildContext.getContainerConfiguration().getPlatforms().size() == 1);
-    Platform platform = buildContext.getContainerConfiguration().getPlatforms().iterator().next();
-    boolean ok =
-        image.getArchitecture().equals(platform.getArchitecture())
-            && image.getOs().equals(platform.getOs());
-    if (!ok) {
-      String message = "platform of the cached manifest does not match the requested one";
-      buildContext.getEventHandlers().dispatch(LogEvent.debug(message));
-    }
-    return ok;
   }
 
   /**
@@ -265,7 +244,8 @@ class PullBaseImageStep implements Callable<ImagesAndRegistryClient> {
       ContainerConfigurationTemplate containerConfig =
           pullContainerConfigJson(imageManifestAndDigest, registryClient, progressEventDispatcher);
 
-      manifestsAndConfigs.add(new ManifestAndConfigTemplate(imageManifest, containerConfig));
+      manifestsAndConfigs.add(
+          new ManifestAndConfigTemplate(imageManifest, containerConfig, manifestDigest));
       images.add(JsonToImageTranslator.toImage(imageManifest, containerConfig));
     }
 
@@ -350,35 +330,65 @@ class PullBaseImageStep implements Callable<ImagesAndRegistryClient> {
   }
 
   /**
-   * Retrieves the cached base image.
+   * Retrieves the cached base images.
    *
-   * @return the cached image, if found
+   * @return the cached images, if found
    * @throws IOException when an I/O exception occurs
    * @throws CacheCorruptedException if the cache is corrupted
    * @throws LayerPropertyNotFoundException if adding image layers fails
    * @throws BadContainerConfigurationFormatException if the container configuration is in a bad
    *     format
+   * @throws UnlistedPlatformInManifestListException if a cached manifest list has no manifests
+   *     matching the configured platform
    */
-  private Optional<Image> getCachedBaseImage()
+  @VisibleForTesting
+  List<Image> getCachedBaseImages()
       throws IOException, CacheCorruptedException, BadContainerConfigurationFormatException,
-          LayerCountMismatchException {
+          LayerCountMismatchException, UnlistedPlatformInManifestListException {
     ImageReference baseImage = buildContext.getBaseImageConfiguration().getImage();
     Optional<ImageMetadataTemplate> metadata =
         buildContext.getBaseImageLayersCache().retrieveMetadata(baseImage);
     if (!metadata.isPresent()) {
-      return Optional.empty();
+      return Collections.emptyList();
     }
 
+    ManifestTemplate manifestList = metadata.get().getManifestList();
     List<ManifestAndConfigTemplate> manifestsAndConfigs = metadata.get().getManifestsAndConfigs();
-    Verify.verify(manifestsAndConfigs.size() == 1);
-    ManifestTemplate manifest = Verify.verifyNotNull(manifestsAndConfigs.get(0).getManifest());
-    if (manifest instanceof V21ManifestTemplate) {
-      return Optional.of(JsonToImageTranslator.toImage((V21ManifestTemplate) manifest));
+
+    if (manifestList == null) {
+      Verify.verify(manifestsAndConfigs.size() == 1);
+      ManifestTemplate manifest = manifestsAndConfigs.get(0).getManifest();
+      if (manifest instanceof V21ManifestTemplate) {
+        return Collections.singletonList(
+            JsonToImageTranslator.toImage((V21ManifestTemplate) manifest));
+      }
+      return Collections.singletonList(
+          JsonToImageTranslator.toImage(
+              (BuildableManifestTemplate) Verify.verifyNotNull(manifest),
+              Verify.verifyNotNull(manifestsAndConfigs.get(0).getConfig())));
     }
 
-    return Optional.of(
-        JsonToImageTranslator.toImage(
-            (BuildableManifestTemplate) manifest,
-            Verify.verifyNotNull(manifestsAndConfigs.get(0).getConfig())));
+    // Manifest list cached. Identify matching platforms and check if all of them are cached.
+    ImmutableList.Builder<Image> images = ImmutableList.builder();
+    for (Platform platform : buildContext.getContainerConfiguration().getPlatforms()) {
+      String manifestDigest =
+          lookUpPlatformSpecificImageManifest((V22ManifestListTemplate) manifestList, platform);
+
+      Optional<ManifestAndConfigTemplate> manifestAndConfigFound =
+          manifestsAndConfigs
+              .stream()
+              .filter(entry -> manifestDigest.equals(entry.getManifestDigest()))
+              .findFirst();
+      if (!manifestAndConfigFound.isPresent()) {
+        return Collections.emptyList();
+      }
+
+      ManifestTemplate manifest = Verify.verifyNotNull(manifestAndConfigFound.get().getManifest());
+      ContainerConfigurationTemplate containerConfig =
+          Verify.verifyNotNull(manifestAndConfigFound.get().getConfig());
+      images.add(
+          JsonToImageTranslator.toImage((BuildableManifestTemplate) manifest, containerConfig));
+    }
+    return images.build();
   }
 }

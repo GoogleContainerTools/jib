@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.builder.steps;
 
+import com.google.cloud.tools.jib.api.DescriptorDigest;
 import com.google.cloud.tools.jib.api.ImageReference;
 import com.google.cloud.tools.jib.api.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.api.LogEvent;
@@ -29,6 +30,7 @@ import com.google.cloud.tools.jib.configuration.BuildContext;
 import com.google.cloud.tools.jib.configuration.ContainerConfiguration;
 import com.google.cloud.tools.jib.configuration.ImageConfiguration;
 import com.google.cloud.tools.jib.event.EventHandlers;
+import com.google.cloud.tools.jib.image.Image;
 import com.google.cloud.tools.jib.image.LayerCountMismatchException;
 import com.google.cloud.tools.jib.image.LayerPropertyNotFoundException;
 import com.google.cloud.tools.jib.image.json.BadContainerConfigurationFormatException;
@@ -36,6 +38,7 @@ import com.google.cloud.tools.jib.image.json.ContainerConfigurationTemplate;
 import com.google.cloud.tools.jib.image.json.ImageMetadataTemplate;
 import com.google.cloud.tools.jib.image.json.ManifestAndConfigTemplate;
 import com.google.cloud.tools.jib.image.json.UnlistedPlatformInManifestListException;
+import com.google.cloud.tools.jib.image.json.V21ManifestTemplate;
 import com.google.cloud.tools.jib.image.json.V22ManifestListTemplate;
 import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
@@ -44,7 +47,9 @@ import com.google.cloud.tools.jib.registry.RegistryClient;
 import com.google.cloud.tools.jib.registry.credentials.CredentialRetrievalException;
 import com.google.common.collect.ImmutableSet;
 import java.io.IOException;
+import java.security.DigestException;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
 import org.junit.Assert;
 import org.junit.Before;
@@ -213,7 +218,7 @@ public class PullBaseImageStepTest {
             + "      {\n"
             + "         \"mediaType\": \"application/vnd.docker.distribution.manifest.v2+json\",\n"
             + "         \"size\": 424,\n"
-            + "         \"digest\": \"sha256:111111111111111111111111111111111111111111111111111111111111111\",\n"
+            + "         \"digest\": \"sha256:1111111111111111111111111111111111111111111111111111111111111111\",\n"
             + "         \"platform\": {\n"
             + "            \"architecture\": \"arm64\",\n"
             + "            \"os\": \"linux\"\n"
@@ -222,7 +227,7 @@ public class PullBaseImageStepTest {
             + "      {\n"
             + "         \"mediaType\": \"application/vnd.docker.distribution.manifest.v2+json\",\n"
             + "         \"size\": 425,\n"
-            + "         \"digest\": \"sha256:222222222222222222222222222222222222222222222222222222222222222222\",\n"
+            + "         \"digest\": \"sha256:2222222222222222222222222222222222222222222222222222222222222222\",\n"
             + "         \"platform\": {\n"
             + "            \"architecture\": \"targetArchitecture\",\n"
             + "            \"os\": \"targetOS\"\n"
@@ -239,7 +244,113 @@ public class PullBaseImageStepTest {
             manifestList, new Platform("targetArchitecture", "targetOS"));
 
     Assert.assertEquals(
-        "sha256:222222222222222222222222222222222222222222222222222222222222222222",
-        manifestDigest);
+        "sha256:2222222222222222222222222222222222222222222222222222222222222222", manifestDigest);
+  }
+
+  @Test
+  public void testGetCachedBaseImages_emptyCache()
+      throws InvalidImageReferenceException, IOException, CacheCorruptedException,
+          UnlistedPlatformInManifestListException, BadContainerConfigurationFormatException,
+          LayerCountMismatchException {
+    ImageReference imageReference = ImageReference.parse("cat");
+    Mockito.when(buildContext.getBaseImageConfiguration())
+        .thenReturn(ImageConfiguration.builder(imageReference).build());
+    Mockito.when(cache.retrieveMetadata(imageReference)).thenReturn(Optional.empty());
+
+    Assert.assertEquals(Arrays.asList(), pullBaseImageStep.getCachedBaseImages());
+  }
+
+  @Test
+  public void testGetCachedBaseImages_v21ManifestCached()
+      throws InvalidImageReferenceException, IOException, CacheCorruptedException,
+          UnlistedPlatformInManifestListException, BadContainerConfigurationFormatException,
+          LayerCountMismatchException, DigestException {
+    ImageReference imageReference = ImageReference.parse("cat");
+    Mockito.when(buildContext.getBaseImageConfiguration())
+        .thenReturn(ImageConfiguration.builder(imageReference).build());
+
+    DescriptorDigest layerDigest =
+        DescriptorDigest.fromHash(
+            "1111111111111111111111111111111111111111111111111111111111111111");
+    V21ManifestTemplate v21Manifest = Mockito.mock(V21ManifestTemplate.class);
+    Mockito.when(v21Manifest.getLayerDigests()).thenReturn(Arrays.asList(layerDigest));
+    ImageMetadataTemplate imageMetadata =
+        new ImageMetadataTemplate(
+            null, Arrays.asList(new ManifestAndConfigTemplate(v21Manifest, null)));
+
+    Mockito.when(cache.retrieveMetadata(imageReference)).thenReturn(Optional.of(imageMetadata));
+
+    List<Image> images = pullBaseImageStep.getCachedBaseImages();
+
+    Assert.assertEquals(1, images.size());
+    Assert.assertEquals(1, images.get(0).getLayers().size());
+    Assert.assertEquals(
+        "1111111111111111111111111111111111111111111111111111111111111111",
+        images.get(0).getLayers().get(0).getBlobDescriptor().getDigest().getHash());
+  }
+
+  @Test
+  public void testGetCachedBaseImages_v22ManifestCached()
+      throws InvalidImageReferenceException, IOException, CacheCorruptedException,
+          UnlistedPlatformInManifestListException, BadContainerConfigurationFormatException,
+          LayerCountMismatchException {
+    ImageReference imageReference = ImageReference.parse("cat");
+    Mockito.when(buildContext.getBaseImageConfiguration())
+        .thenReturn(ImageConfiguration.builder(imageReference).build());
+
+    ImageMetadataTemplate imageMetadata =
+        new ImageMetadataTemplate(
+            null,
+            Arrays.asList(
+                new ManifestAndConfigTemplate(new V22ManifestTemplate(), containerConfigJson)));
+    Mockito.when(cache.retrieveMetadata(imageReference)).thenReturn(Optional.of(imageMetadata));
+
+    List<Image> images = pullBaseImageStep.getCachedBaseImages();
+
+    Assert.assertEquals(1, images.size());
+    Assert.assertEquals("slim arch", images.get(0).getArchitecture());
+    Assert.assertEquals("fat system", images.get(0).getOs());
+  }
+
+  @Test
+  public void testGetCachedBaseImages_v22ManifestListCached()
+      throws InvalidImageReferenceException, IOException, CacheCorruptedException,
+          UnlistedPlatformInManifestListException, BadContainerConfigurationFormatException,
+          LayerCountMismatchException {
+    ImageReference imageReference = ImageReference.parse("cat");
+    Mockito.when(buildContext.getBaseImageConfiguration())
+        .thenReturn(ImageConfiguration.builder(imageReference).build());
+
+    ContainerConfigurationTemplate containerConfig1 = new ContainerConfigurationTemplate();
+    ContainerConfigurationTemplate containerConfig2 = new ContainerConfigurationTemplate();
+    containerConfig1.setContainerUser("user1");
+    containerConfig2.setContainerUser("user2");
+
+    String digest1 = "sha256:1111111111111111111111111111111111111111111111111111111111111111";
+    String digest2 = "sha256:2222222222222222222222222222222222222222222222222222222222222222";
+
+    V22ManifestListTemplate manifestList = Mockito.mock(V22ManifestListTemplate.class);
+    Mockito.when(manifestList.getDigestsForPlatform("arch1", "os1"))
+        .thenReturn(Arrays.asList(digest1));
+    Mockito.when(manifestList.getDigestsForPlatform("arch2", "os2"))
+        .thenReturn(Arrays.asList(digest2));
+
+    ImageMetadataTemplate imageMetadata =
+        new ImageMetadataTemplate(
+            manifestList,
+            Arrays.asList(
+                new ManifestAndConfigTemplate(new V22ManifestTemplate(), containerConfig1, digest1),
+                new ManifestAndConfigTemplate(
+                    new V22ManifestTemplate(), containerConfig2, digest2)));
+    Mockito.when(cache.retrieveMetadata(imageReference)).thenReturn(Optional.of(imageMetadata));
+
+    Mockito.when(containerConfig.getPlatforms())
+        .thenReturn(ImmutableSet.of(new Platform("arch1", "os1"), new Platform("arch2", "os2")));
+
+    List<Image> images = pullBaseImageStep.getCachedBaseImages();
+
+    Assert.assertEquals(2, images.size());
+    Assert.assertEquals("user1", images.get(0).getUser());
+    Assert.assertEquals("user2", images.get(1).getUser());
   }
 }
