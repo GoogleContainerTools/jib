@@ -102,10 +102,7 @@ class PushImageStep implements Callable<BuildResult> {
       ManifestTemplate manifestList,
       boolean manifestListAlreadyExists)
       throws IOException {
-    boolean singlePlatform = buildContext.getContainerConfiguration().getPlatforms().size() == 1;
-    if (singlePlatform) {
-      return ImmutableList.of(); // single image; no need to push a manifest list
-    }
+
     Set<String> tags = buildContext.getAllTargetImageTags();
 
     EventHandlers eventHandlers = buildContext.getEventHandlers();
@@ -113,6 +110,10 @@ class PushImageStep implements Callable<BuildResult> {
             new TimerEventDispatcher(eventHandlers, "Preparing manifest list pushers");
         ProgressEventDispatcher progressEventDispatcher =
             progressEventDispatcherFactory.create("launching manifest list pushers", tags.size())) {
+      boolean singlePlatform = buildContext.getContainerConfiguration().getPlatforms().size() == 1;
+      if (singlePlatform) {
+        return ImmutableList.of(); // single image; no need to push a manifest list
+      }
 
       if (JibSystemProperties.skipExistingImages() && manifestListAlreadyExists) {
         eventHandlers.dispatch(LogEvent.info("Skipping pushing manifest list; already exists."));
