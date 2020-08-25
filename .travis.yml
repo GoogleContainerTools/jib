@@ -18,7 +18,7 @@ matrix:
       - sudo apt-get install -y openjdk-11-jdk-headless
       - export JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64/
       - which java
-      - java -version
+#      - java -version
       - $JAVA_HOME/bin/java -version
 env:
   global:
