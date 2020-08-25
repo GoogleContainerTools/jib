@@ -147,7 +147,7 @@ public class V22ManifestListTemplate implements ManifestTemplate {
     }
 
     @Nullable
-    private String getDigest() {
+    public String getDigest() {
       return digest;
     }
 
