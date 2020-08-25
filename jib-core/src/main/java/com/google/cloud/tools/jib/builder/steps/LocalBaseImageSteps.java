@@ -35,6 +35,7 @@ import com.google.cloud.tools.jib.docker.DockerClient.DockerImageDetails;
 import com.google.cloud.tools.jib.docker.json.DockerManifestEntryTemplate;
 import com.google.cloud.tools.jib.event.progress.ThrottledAccumulatingConsumer;
 import com.google.cloud.tools.jib.filesystem.TempDirectoryProvider;
+import com.google.cloud.tools.jib.hash.Digests;
 import com.google.cloud.tools.jib.http.NotifyingOutputStream;
 import com.google.cloud.tools.jib.image.Image;
 import com.google.cloud.tools.jib.image.LayerCountMismatchException;
@@ -153,8 +154,7 @@ public class LocalBaseImageSteps {
         v22Manifest.addLayer(descriptor.getSize(), descriptor.getDigest());
       }
 
-      BlobDescriptor configDescriptor =
-          Blobs.from(configurationTemplate).writeTo(ByteStreams.nullOutputStream());
+      BlobDescriptor configDescriptor = Digests.computeDigest(configurationTemplate);
       v22Manifest.setContainerConfiguration(
           configDescriptor.getSize(), configDescriptor.getDigest());
       return new ImagesAndRegistryClient(
@@ -215,6 +215,7 @@ public class LocalBaseImageSteps {
       Path configPath = destination.resolve(loadManifest.getConfig());
       ContainerConfigurationTemplate configurationTemplate =
           JsonTemplateMapper.readJsonFromFile(configPath, ContainerConfigurationTemplate.class);
+      // Don't compute the digest of the loaded Java JSON instance.
       BlobDescriptor originalConfigDescriptor =
           Blobs.from(configPath).writeTo(ByteStreams.nullOutputStream());
 
