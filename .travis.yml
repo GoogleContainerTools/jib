@@ -9,10 +9,10 @@ matrix:
     jdk: oraclejdk8
     dist: trusty # oraclejdk8 absent in Xenial
   - name: OracleJDK 11
-    before_install:
+    install:
       - echo $JAVA_HOME
       - which java
-      - sudo apt-get install -y openjdk-11-jdk
+      - sudo apt-get install -y openjdk-11-jdk-headless
       - export JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64/
       - which java
       - java -version
