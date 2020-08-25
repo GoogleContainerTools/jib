@@ -8,8 +8,8 @@ matrix:
     # using `openjdk8` leads to javadoc errors
     jdk: oraclejdk8
     dist: trusty # oraclejdk8 absent in Xenial
-  - name: OracleJDK 11
-    before_script:
+  - name: OpenJDK 11
+    before_install:
       - echo $JAVA_HOME
       - which java
       - sudo rm -rf /usr/local/lib/jvm/
