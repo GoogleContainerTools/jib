@@ -93,8 +93,10 @@ class CacheStorageWriter {
     } else if (firstManifest instanceof BuildableManifestTemplate) {
       Preconditions.checkArgument(
           manifestsAndConfigs.stream().noneMatch(isConfigNull), "null container config(s)");
-      Preconditions.checkArgument(
-          manifestsAndConfigs.stream().noneMatch(isDigestNull), "null manifest digest(s)");
+      if (metadata.getManifestList() != null) {
+        Preconditions.checkArgument(
+            manifestsAndConfigs.stream().noneMatch(isDigestNull), "null manifest digest(s)");
+      }
     } else {
       throw new IllegalArgumentException("Unknown manifest type: " + firstManifest);
     }

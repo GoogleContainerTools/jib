@@ -558,7 +558,7 @@ public class CacheStorageReaderTest {
         new ManifestAndConfigTemplate(
             new V22ManifestTemplate(), new ContainerConfigurationTemplate(), null);
     ImageMetadataTemplate metadata =
-        new ImageMetadataTemplate(null, Arrays.asList(manifestAndConfig));
+        new ImageMetadataTemplate(new V22ManifestListTemplate(), Arrays.asList(manifestAndConfig));
     try {
       CacheStorageReader.verifyImageMetadata(metadata, Paths.get("/cache/dir"));
       Assert.fail();
@@ -597,7 +597,7 @@ public class CacheStorageReaderTest {
   public void testVerifyImageMetadata_validV22() throws CacheCorruptedException {
     ManifestAndConfigTemplate manifestAndConfig =
         new ManifestAndConfigTemplate(
-            new V22ManifestTemplate(), new ContainerConfigurationTemplate(), "sha256:digest");
+            new V22ManifestTemplate(), new ContainerConfigurationTemplate());
     ImageMetadataTemplate metadata =
         new ImageMetadataTemplate(null, Arrays.asList(manifestAndConfig));
     CacheStorageReader.verifyImageMetadata(metadata, Paths.get("/cache/dir"));
