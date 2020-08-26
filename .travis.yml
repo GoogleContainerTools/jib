@@ -18,18 +18,19 @@ install: true
 before_install:
   - echo $JAVA_HOME
   - which java
+  - cd ~
 #  - sudo rm -rf /usr/local/lib/jvm/
 #  - sudo add-apt-repository -y ppa:openjdk-r/ppa
 #  - sudo apt-get update
 #  - sudo apt-get upgrade
 #  - sudo apt install -y openjdk-11-jdk
+  - wget -qO - https://adoptopenjdk.jfrog.io/adoptopenjdk/api/gpg/key/public | sudo apt-key add -
+  - sudo add-apt-repository --yes https://adoptopenjdk.jfrog.io/adoptopenjdk/deb/
+  - apt-get update
+  - apt-get install adoptopenjdk-11-hotspot
 #  - export JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64/
-#  - export PATH=$JAVA_HOME/bin:$PATH
-  - curl -O https://download.java.net/java/GA/jdk11/9/GPL/openjdk-11.0.7_linux-x64_bin.tar.gz
-  - tar zxvf openjdk-11.0.7_linux-x64_bin.tar.gz
-  - sudo mv jdk-11* /usr/local/
-  - export JAVA_HOME=/usr/local/jdk-11.0.7
-  - export PATH=$PATH:$JAVA_HOME/bin
+  - export JAVA_HOME=/usr/libexec/java_home -v 11
+  - export PATH=$JAVA_HOME/bin:$PATH
   - which java
   - java -version
   - $JAVA_HOME/bin/java -version
