@@ -44,6 +44,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class PushImageStepTest {
 
+  @Rule public final RestoreSystemProperties systemPropertyRestorer = new RestoreSystemProperties();
   @Mock private ProgressEventDispatcher.Factory progressDispatcherFactory;
   @Mock private ProgressEventDispatcher progressDispatcher;
   @Mock private BuildContext buildContext;
@@ -55,42 +56,33 @@ public class PushImageStepTest {
 
   private V22ManifestListTemplate manifestList;
   private boolean manifestListAlreadyExists = false;
-  @Rule public final RestoreSystemProperties systemPropertyRestorer = new RestoreSystemProperties();
+  private ManifestDescriptorTemplate manifest;
 
   @Before
   public void setUp() {
-
     Mockito.when(buildContext.getAllTargetImageTags()).thenReturn(ImmutableSet.of("tag1", "tag2"));
     Mockito.when(buildContext.getEventHandlers()).thenReturn(eventHandlers);
     Mockito.when(buildContext.getContainerConfiguration()).thenReturn(containerConfig);
-
+    Mockito.when(containerConfig.getPlatforms())
+        .thenReturn(
+            ImmutableSet.of(new Platform("amd64", "linux"), new Platform("arm64", "windows")));
     Mockito.when(
             progressDispatcherFactory.create(
                 "launching manifest list pushers", buildContext.getAllTargetImageTags().size()))
         .thenReturn(progressDispatcher);
-
     Mockito.when(progressDispatcher.newChildProducer()).thenReturn(progressDispatcherFactory);
 
     manifestList = new V22ManifestListTemplate();
-    ManifestDescriptorTemplate manifest = new ManifestDescriptorTemplate();
+    manifest = new ManifestDescriptorTemplate();
     manifest.setMediaType("application/vnd.docker.distribution.manifest.v2+json");
     manifest.setSize(100);
     manifest.setDigest("sha256:1f25787aab4669d252bdae09a72b9c345d2a7b8c64c8dbfba4c82af4834dbccc");
     manifest.setPlatform("amd64", "linux");
     manifestList.addManifest(manifest);
-
-    System.setProperty(JibSystemProperties.SKIP_EXISTING_IMAGES, "jib.skipExistingImages");
   }
 
   @Test
   public void testMakeListForManifestList() throws IOException, RegistryException {
-
-    Mockito.when(containerConfig.getPlatforms())
-        .thenReturn(
-            ImmutableSet.of(
-                new Platform("slim arch", "fat system"),
-                new Platform("slim1 arch", "fat1 system")));
-
     ImmutableList<PushImageStep> pushImageStepList =
         PushImageStep.makeListForManifestList(
             buildContext,
@@ -98,11 +90,10 @@ public class PushImageStepTest {
             registryClient,
             manifestList,
             manifestListAlreadyExists);
+
     Assert.assertEquals(2, pushImageStepList.size());
-
-    for (PushImageStep step : pushImageStepList) {
-      BuildResult buildResult = step.call();
-
+    for (PushImageStep pushImageStep : pushImageStepList) {
+      BuildResult buildResult = pushImageStep.call();
       Assert.assertEquals(
           "sha256:b16ab9b5979f332e30c60afdfb6771bd5c17ed4f9718e6df1fc3781113385a99",
           buildResult.getImageDigest().toString());
@@ -114,9 +105,8 @@ public class PushImageStepTest {
 
   @Test
   public void testMakeListForManifestList_SinglePlatform() throws IOException, RegistryException {
-
     Mockito.when(containerConfig.getPlatforms())
-        .thenReturn(ImmutableSet.of(new Platform("slim arch", "fat system")));
+        .thenReturn(ImmutableSet.of(new Platform("amd64", "linux")));
 
     ImmutableList<PushImageStep> pushImageStepList =
         PushImageStep.makeListForManifestList(
@@ -132,14 +122,7 @@ public class PushImageStepTest {
   public void testMakeListForManifestList_ManifestListAlreadyExists()
       throws IOException, RegistryException {
     manifestListAlreadyExists = true;
-    System.setProperty(JibSystemProperties.SKIP_EXISTING_IMAGES, "");
-
-    Mockito.when(containerConfig.getPlatforms())
-        .thenReturn(
-            ImmutableSet.of(
-                new Platform("slim arch", "fat system"),
-                new Platform("slim1 arch", "fat1 system")));
-
+    System.setProperty(JibSystemProperties.SKIP_EXISTING_IMAGES, "true");
     ImmutableList<PushImageStep> pushImageStepList =
         PushImageStep.makeListForManifestList(
             buildContext,
