@@ -29,7 +29,7 @@ before_install:
   - sudo apt-get update
   - sudo apt-get install adoptopenjdk-11-hotspot
 #  - export JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64/
-  - export JAVA_HOME=/usr/libexec/java_home -v 11
+  - export JAVA_HOME=/usr/lib/jvm/adoptopenjdk-11-hotspot-amd64/
   - export PATH=$JAVA_HOME/bin:$PATH
   - which java
   - java -version
