@@ -104,7 +104,7 @@ public class PushImageStepTest {
   }
 
   @Test
-  public void testMakeListForManifestList_SinglePlatform() throws IOException, RegistryException {
+  public void testMakeListForManifestList_singlePlatform() throws IOException, RegistryException {
     Mockito.when(containerConfig.getPlatforms())
         .thenReturn(ImmutableSet.of(new Platform("amd64", "linux")));
 
@@ -119,7 +119,7 @@ public class PushImageStepTest {
   }
 
   @Test
-  public void testMakeListForManifestList_ManifestListAlreadyExists()
+  public void testMakeListForManifestList_manifestListAlreadyExists()
       throws IOException, RegistryException {
     manifestListAlreadyExists = true;
     System.setProperty(JibSystemProperties.SKIP_EXISTING_IMAGES, "true");
