@@ -1,32 +1,45 @@
 sudo: false
 git:
   depth: 3
-#language: java
-#matrix:
-#  include:
-#  - name: Oracle JDK 8 on Trusty
-#    # using `openjdk8` leads to javadoc errors
-#    jdk: oraclejdk8
-#    dist: trusty # oraclejdk8 absent in Xenial
-#  - name: OpenJDK 11
+language: java
+matrix:
+  include:
+  - name: Oracle JDK 8 on Trusty
+    # using `openjdk8` leads to javadoc errors
+    jdk: oraclejdk8
+    dist: trusty # oraclejdk8 absent in Xenial
+  - name: AdoptOpenJDK 11
+    before_install:
+      - echo $JAVA_HOME
+      - which java
+      - wget -qO - https://adoptopenjdk.jfrog.io/adoptopenjdk/api/gpg/key/public | sudo apt-key add -
+      - sudo add-apt-repository --yes https://adoptopenjdk.jfrog.io/adoptopenjdk/deb/
+      - sudo apt-get update
+      - sudo apt-get install adoptopenjdk-11-hotspot
+      - export JAVA_HOME=/usr/lib/jvm/adoptopenjdk-11-hotspot-amd64/
+      - export PATH=$JAVA_HOME/bin:$PATH
+      - which java
+      - java -version
+      - $JAVA_HOME/bin/java -version
+
 
 env:
   global:
   - TERM=dumb         # for gradle
 
 install: true
-before_install:
-  - echo $JAVA_HOME
-  - which java
-  - wget -qO - https://adoptopenjdk.jfrog.io/adoptopenjdk/api/gpg/key/public | sudo apt-key add -
-  - sudo add-apt-repository --yes https://adoptopenjdk.jfrog.io/adoptopenjdk/deb/
-  - sudo apt-get update
-  - sudo apt-get install adoptopenjdk-11-hotspot
-  - export JAVA_HOME=/usr/lib/jvm/adoptopenjdk-11-hotspot-amd64/
-  - export PATH=$JAVA_HOME/bin:$PATH
-  - which java
-  - java -version
-  - $JAVA_HOME/bin/java -version
+#before_install:
+#  - echo $JAVA_HOME
+#  - which java
+#  - wget -qO - https://adoptopenjdk.jfrog.io/adoptopenjdk/api/gpg/key/public | sudo apt-key add -
+#  - sudo add-apt-repository --yes https://adoptopenjdk.jfrog.io/adoptopenjdk/deb/
+#  - sudo apt-get update
+#  - sudo apt-get install adoptopenjdk-11-hotspot
+#  - export JAVA_HOME=/usr/lib/jvm/adoptopenjdk-11-hotspot-amd64/
+#  - export PATH=$JAVA_HOME/bin:$PATH
+#  - which java
+#  - java -version
+#  - $JAVA_HOME/bin/java -version
 script:
 - ./gradlew -v
 - ./gradlew clean build --stacktrace
