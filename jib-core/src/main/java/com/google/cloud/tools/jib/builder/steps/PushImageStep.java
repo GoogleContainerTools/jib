@@ -38,9 +38,11 @@ import java.util.Set;
 import java.util.concurrent.Callable;
 
 /**
- * Pushes a manifestTemplate for a tag. Returns the manifestTemplate digest ("image digest") and the
- * container configuration digest ("image id") as {#link BuildResult}.
+ * Pushes a manifest or a manifest list for a tag. If not a manifest list, returns the manifest
+ * digest ("image digest") and the container configuration digest ("image id") as {@link
+ * BuildResult}. If a manifest list, returns the manifest list digest only.
  */
+// TODO: figure out the right return value and type when pushing a manifest list.
 class PushImageStep implements Callable<BuildResult> {
 
   private static final String DESCRIPTION = "Pushing manifest";
@@ -130,6 +132,8 @@ class PushImageStep implements Callable<BuildResult> {
                       manifestList,
                       tag,
                       manifestListDigest,
+                      // TODO: a manifest list digest isn't an "image id". Figure out the right
+                      // return value and type.
                       manifestListDigest))
           .collect(ImmutableList.toImmutableList());
     }
@@ -137,7 +141,6 @@ class PushImageStep implements Callable<BuildResult> {
 
   private final BuildContext buildContext;
   private final ProgressEventDispatcher.Factory progressEventDispatcherFactory;
-
   private final ManifestTemplate manifestTemplate;
   private final RegistryClient registryClient;
   private final String imageQualifier;

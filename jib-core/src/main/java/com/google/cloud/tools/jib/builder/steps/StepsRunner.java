@@ -81,7 +81,7 @@ public class StepsRunner {
         builtImagesAndContainerConfigurationPushResults = failedFuture();
     private Future<Optional<ManifestAndDigest<ManifestTemplate>>> manifestCheckResult =
         failedFuture();
-    public Future<List<Future<BuildResult>>> imagePushResultshResults = failedFuture();
+    public Future<List<Future<BuildResult>>> imagePushResults = failedFuture();
     private Future<BuildResult> buildResult = failedFuture();
   }
 
@@ -512,7 +512,7 @@ public class StepsRunner {
     ProgressEventDispatcher.Factory childProgressDispatcherFactory =
         Verify.verifyNotNull(rootProgressDispatcher).newChildProducer();
 
-    results.imagePushResultshResults =
+    results.imagePushResults =
         executorService.submit(
             () -> {
               // TODO: ideally, progressDispatcher should be closed at the right moment, after the
@@ -575,7 +575,7 @@ public class StepsRunner {
     results.buildResult =
         executorService.submit(
             () -> {
-              realizeFutures(results.imagePushResultshResults.get());
+              realizeFutures(results.imagePushResults.get());
               List<Future<BuildResult>> manifestListPushResults =
                   scheduleCallables(
                       PushImageStep.makeListForManifestList(
@@ -587,7 +587,7 @@ public class StepsRunner {
 
               realizeFutures(manifestListPushResults);
               return manifestListPushResults.isEmpty()
-                  ? results.imagePushResultshResults.get().get(0).get()
+                  ? results.imagePushResults.get().get(0).get()
                   : manifestListPushResults.get(0).get();
             });
   }
