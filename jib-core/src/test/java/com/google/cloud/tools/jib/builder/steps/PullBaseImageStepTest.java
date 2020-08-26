@@ -19,7 +19,6 @@ package com.google.cloud.tools.jib.builder.steps;
 import com.google.cloud.tools.jib.api.DescriptorDigest;
 import com.google.cloud.tools.jib.api.ImageReference;
 import com.google.cloud.tools.jib.api.InvalidImageReferenceException;
-import com.google.cloud.tools.jib.api.LogEvent;
 import com.google.cloud.tools.jib.api.RegistryException;
 import com.google.cloud.tools.jib.api.buildplan.Platform;
 import com.google.cloud.tools.jib.builder.ProgressEventDispatcher;
@@ -42,7 +41,6 @@ import com.google.cloud.tools.jib.image.json.V21ManifestTemplate;
 import com.google.cloud.tools.jib.image.json.V22ManifestListTemplate;
 import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
-import com.google.cloud.tools.jib.registry.ManifestAndDigest;
 import com.google.cloud.tools.jib.registry.RegistryClient;
 import com.google.cloud.tools.jib.registry.credentials.CredentialRetrievalException;
 import com.google.common.collect.ImmutableSet;
@@ -63,14 +61,6 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class PullBaseImageStepTest {
 
-  private final ContainerConfigurationTemplate containerConfigJson =
-      new ContainerConfigurationTemplate();
-  private final ImageMetadataTemplate imageMetadata =
-      new ImageMetadataTemplate(
-          null,
-          Arrays.asList(
-              new ManifestAndConfigTemplate(new V22ManifestTemplate(), containerConfigJson)));
-
   @Mock private ProgressEventDispatcher.Factory progressDispatcherFactory;
   @Mock private BuildContext buildContext;
   @Mock private RegistryClient registryClient;
@@ -83,8 +73,6 @@ public class PullBaseImageStepTest {
 
   @Before
   public void setUp() {
-    containerConfigJson.setArchitecture("slim arch");
-    containerConfigJson.setOs("fat system");
     Mockito.when(buildContext.getBaseImageConfiguration()).thenReturn(imageConfiguration);
     Mockito.when(buildContext.getEventHandlers()).thenReturn(eventHandlers);
     Mockito.when(buildContext.getBaseImageLayersCache()).thenReturn(cache);
@@ -109,6 +97,15 @@ public class PullBaseImageStepTest {
             "awesome@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
     Assert.assertTrue(imageReference.getDigest().isPresent());
     Mockito.when(imageConfiguration.getImage()).thenReturn(imageReference);
+
+    ContainerConfigurationTemplate containerConfigJson = new ContainerConfigurationTemplate();
+    containerConfigJson.setArchitecture("slim arch");
+    containerConfigJson.setOs("fat system");
+    ManifestAndConfigTemplate manifestAndConfig =
+        new ManifestAndConfigTemplate(
+            new V22ManifestTemplate(), containerConfigJson, "sha256:digest");
+    ImageMetadataTemplate imageMetadata =
+        new ImageMetadataTemplate(null, Arrays.asList(manifestAndConfig));
     Mockito.when(cache.retrieveMetadata(imageReference)).thenReturn(Optional.of(imageMetadata));
 
     ImagesAndRegistryClient result = pullBaseImageStep.call();
@@ -141,6 +138,15 @@ public class PullBaseImageStepTest {
     ImageReference imageReference = ImageReference.parse("cat");
     Mockito.when(imageConfiguration.getImage()).thenReturn(imageReference);
     Mockito.when(buildContext.isOffline()).thenReturn(true);
+
+    ContainerConfigurationTemplate containerConfigJson = new ContainerConfigurationTemplate();
+    containerConfigJson.setArchitecture("slim arch");
+    containerConfigJson.setOs("fat system");
+    ManifestAndConfigTemplate manifestAndConfig =
+        new ManifestAndConfigTemplate(
+            new V22ManifestTemplate(), containerConfigJson, "sha256:digest");
+    ImageMetadataTemplate imageMetadata =
+        new ImageMetadataTemplate(null, Arrays.asList(manifestAndConfig));
     Mockito.when(cache.retrieveMetadata(imageReference)).thenReturn(Optional.of(imageMetadata));
 
     ImagesAndRegistryClient result = pullBaseImageStep.call();
@@ -148,63 +154,6 @@ public class PullBaseImageStepTest {
     Assert.assertNull(result.registryClient);
 
     Mockito.verify(buildContext, Mockito.never()).newBaseImageRegistryClientFactory();
-  }
-
-  @Test
-  public void testCall_mismatchedPlatformOfCachedManifest_offlineMode()
-      throws LayerPropertyNotFoundException, IOException, RegistryException,
-          LayerCountMismatchException, BadContainerConfigurationFormatException,
-          CacheCorruptedException, CredentialRetrievalException, InvalidImageReferenceException {
-    ImageReference imageReference = ImageReference.parse("cat");
-    Mockito.when(imageConfiguration.getImage()).thenReturn(imageReference);
-    Mockito.when(cache.retrieveMetadata(imageReference)).thenReturn(Optional.of(imageMetadata));
-    Mockito.when(buildContext.isOffline()).thenReturn(true);
-    Mockito.when(containerConfig.getPlatforms())
-        .thenReturn(ImmutableSet.of(new Platform("testArch", "testOS")));
-
-    try {
-      pullBaseImageStep.call();
-      Assert.fail();
-    } catch (IllegalStateException ex) {
-      Assert.assertEquals(
-          "The cached base image manifest does not match the configured platform due to the "
-              + "current implementation of limited platform support. As a workaround, re-run Jib "
-              + "online once to re-cache the right image manifest.",
-          ex.getMessage());
-      Mockito.verify(eventHandlers)
-          .dispatch(
-              LogEvent.debug("platform of the cached manifest does not match the requested one"));
-    }
-  }
-
-  @Test
-  public void testCall_mismatchedPlatformOfCachedManifest_baseImageDigest()
-      throws LayerPropertyNotFoundException, IOException, RegistryException,
-          LayerCountMismatchException, BadContainerConfigurationFormatException,
-          CacheCorruptedException, CredentialRetrievalException, InvalidImageReferenceException {
-    ImageReference imageReference =
-        ImageReference.parse(
-            "awesome@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
-    Mockito.when(buildContext.getBaseImageConfiguration())
-        .thenReturn(ImageConfiguration.builder(imageReference).build());
-    Mockito.when(cache.retrieveMetadata(imageReference)).thenReturn(Optional.of(imageMetadata));
-    Mockito.when(containerConfig.getPlatforms())
-        .thenReturn(ImmutableSet.of(new Platform("testArch", "testOS")));
-
-    Mockito.<ManifestAndDigest<?>>when(
-            registryClient.pullManifest(
-                "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"))
-        .thenThrow(new RegistryException("fake error only to verify calling registryClient"));
-
-    try {
-      pullBaseImageStep.call();
-      Assert.fail();
-    } catch (RegistryException ex) {
-      Assert.assertEquals("fake error only to verify calling registryClient", ex.getMessage());
-      Mockito.verify(eventHandlers)
-          .dispatch(
-              LogEvent.debug("platform of the cached manifest does not match the requested one"));
-    }
   }
 
   @Test
@@ -298,11 +247,14 @@ public class PullBaseImageStepTest {
     Mockito.when(buildContext.getBaseImageConfiguration())
         .thenReturn(ImageConfiguration.builder(imageReference).build());
 
+    ContainerConfigurationTemplate containerConfigJson = new ContainerConfigurationTemplate();
+    containerConfigJson.setArchitecture("slim arch");
+    containerConfigJson.setOs("fat system");
+    ManifestAndConfigTemplate manifestAndConfig =
+        new ManifestAndConfigTemplate(
+            new V22ManifestTemplate(), containerConfigJson, "sha256:digest");
     ImageMetadataTemplate imageMetadata =
-        new ImageMetadataTemplate(
-            null,
-            Arrays.asList(
-                new ManifestAndConfigTemplate(new V22ManifestTemplate(), containerConfigJson)));
+        new ImageMetadataTemplate(null, Arrays.asList(manifestAndConfig));
     Mockito.when(cache.retrieveMetadata(imageReference)).thenReturn(Optional.of(imageMetadata));
 
     List<Image> images = pullBaseImageStep.getCachedBaseImages();
@@ -321,27 +273,25 @@ public class PullBaseImageStepTest {
     Mockito.when(buildContext.getBaseImageConfiguration())
         .thenReturn(ImageConfiguration.builder(imageReference).build());
 
-    ContainerConfigurationTemplate containerConfig1 = new ContainerConfigurationTemplate();
-    ContainerConfigurationTemplate containerConfig2 = new ContainerConfigurationTemplate();
-    containerConfig1.setContainerUser("user1");
-    containerConfig2.setContainerUser("user2");
-
-    String digest1 = "sha256:1111111111111111111111111111111111111111111111111111111111111111";
-    String digest2 = "sha256:2222222222222222222222222222222222222222222222222222222222222222";
+    ContainerConfigurationTemplate containerConfigJson1 = new ContainerConfigurationTemplate();
+    ContainerConfigurationTemplate containerConfigJson2 = new ContainerConfigurationTemplate();
+    containerConfigJson1.setContainerUser("user1");
+    containerConfigJson2.setContainerUser("user2");
 
     V22ManifestListTemplate manifestList = Mockito.mock(V22ManifestListTemplate.class);
     Mockito.when(manifestList.getDigestsForPlatform("arch1", "os1"))
-        .thenReturn(Arrays.asList(digest1));
+        .thenReturn(Arrays.asList("sha256:digest1"));
     Mockito.when(manifestList.getDigestsForPlatform("arch2", "os2"))
-        .thenReturn(Arrays.asList(digest2));
+        .thenReturn(Arrays.asList("sha256:digest2"));
 
     ImageMetadataTemplate imageMetadata =
         new ImageMetadataTemplate(
             manifestList,
             Arrays.asList(
-                new ManifestAndConfigTemplate(new V22ManifestTemplate(), containerConfig1, digest1),
                 new ManifestAndConfigTemplate(
-                    new V22ManifestTemplate(), containerConfig2, digest2)));
+                    new V22ManifestTemplate(), containerConfigJson1, "sha256:digest1"),
+                new ManifestAndConfigTemplate(
+                    new V22ManifestTemplate(), containerConfigJson2, "sha256:digest2")));
     Mockito.when(cache.retrieveMetadata(imageReference)).thenReturn(Optional.of(imageMetadata));
 
     Mockito.when(containerConfig.getPlatforms())
@@ -352,5 +302,77 @@ public class PullBaseImageStepTest {
     Assert.assertEquals(2, images.size());
     Assert.assertEquals("user1", images.get(0).getUser());
     Assert.assertEquals("user2", images.get(1).getUser());
+  }
+
+  @Test
+  public void testGetCachedBaseImages_v22ManifestListCached_partialMatches()
+      throws InvalidImageReferenceException, IOException, CacheCorruptedException,
+          UnlistedPlatformInManifestListException, BadContainerConfigurationFormatException,
+          LayerCountMismatchException {
+    ImageReference imageReference = ImageReference.parse("cat");
+    Mockito.when(buildContext.getBaseImageConfiguration())
+        .thenReturn(ImageConfiguration.builder(imageReference).build());
+
+    V22ManifestListTemplate manifestList = Mockito.mock(V22ManifestListTemplate.class);
+    Mockito.when(manifestList.getDigestsForPlatform("arch1", "os1"))
+        .thenReturn(Arrays.asList("sha256:digest1"));
+    Mockito.when(manifestList.getDigestsForPlatform("arch2", "os2"))
+        .thenReturn(Arrays.asList("sha256:digest2"));
+
+    ImageMetadataTemplate imageMetadata =
+        new ImageMetadataTemplate(
+            manifestList,
+            Arrays.asList(
+                new ManifestAndConfigTemplate(
+                    new V22ManifestTemplate(),
+                    new ContainerConfigurationTemplate(),
+                    "sha256:digest1")));
+    Mockito.when(cache.retrieveMetadata(imageReference)).thenReturn(Optional.of(imageMetadata));
+
+    Mockito.when(containerConfig.getPlatforms())
+        .thenReturn(ImmutableSet.of(new Platform("arch1", "os1"), new Platform("arch2", "os2")));
+
+    Assert.assertEquals(Arrays.asList(), pullBaseImageStep.getCachedBaseImages());
+  }
+
+  @Test
+  public void testGetCachedBaseImages_v22ManifestListCached_onlyPlatforms()
+      throws InvalidImageReferenceException, IOException, CacheCorruptedException,
+          UnlistedPlatformInManifestListException, BadContainerConfigurationFormatException,
+          LayerCountMismatchException {
+    ImageReference imageReference = ImageReference.parse("cat");
+    Mockito.when(buildContext.getBaseImageConfiguration())
+        .thenReturn(ImageConfiguration.builder(imageReference).build());
+
+    V22ManifestListTemplate manifestList = Mockito.mock(V22ManifestListTemplate.class);
+    Mockito.when(manifestList.getDigestsForPlatform("target-arch", "target-os"))
+        .thenReturn(Arrays.asList("sha256:target-digest"));
+
+    ContainerConfigurationTemplate containerConfigJson = new ContainerConfigurationTemplate();
+    containerConfigJson.setContainerUser("target-user");
+
+    ManifestAndConfigTemplate targetManifestAndConfig =
+        new ManifestAndConfigTemplate(
+            new V22ManifestTemplate(), containerConfigJson, "sha256:target-digest");
+    ManifestAndConfigTemplate unrelatedManifestAndConfig =
+        new ManifestAndConfigTemplate(
+            new V22ManifestTemplate(),
+            new ContainerConfigurationTemplate(),
+            "sha256:unrelated-digest");
+
+    ImageMetadataTemplate imageMetadata =
+        new ImageMetadataTemplate(
+            manifestList,
+            Arrays.asList(
+                unrelatedManifestAndConfig, targetManifestAndConfig, unrelatedManifestAndConfig));
+    Mockito.when(cache.retrieveMetadata(imageReference)).thenReturn(Optional.of(imageMetadata));
+
+    Mockito.when(containerConfig.getPlatforms())
+        .thenReturn(ImmutableSet.of(new Platform("target-arch", "target-os")));
+
+    List<Image> images = pullBaseImageStep.getCachedBaseImages();
+
+    Assert.assertEquals(1, images.size());
+    Assert.assertEquals("target-user", images.get(0).getUser());
   }
 }

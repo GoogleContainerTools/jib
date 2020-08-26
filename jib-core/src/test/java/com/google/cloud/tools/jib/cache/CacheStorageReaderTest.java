@@ -81,7 +81,8 @@ public class CacheStorageReaderTest {
         new ManifestAndConfigTemplate(
             loadJsonResource("core/json/v22manifest.json", V22ManifestTemplate.class),
             loadJsonResource(
-                "core/json/containerconfig.json", ContainerConfigurationTemplate.class));
+                "core/json/containerconfig.json", ContainerConfigurationTemplate.class),
+            "sha256:digest");
     try (OutputStream out =
         Files.newOutputStream(imageDirectory.resolve("manifests_configs.json"))) {
       JsonTemplateMapper.writeTo(
@@ -104,8 +105,8 @@ public class CacheStorageReaderTest {
         loadJsonResource("core/json/containerconfig.json", ContainerConfigurationTemplate.class);
     List<ManifestAndConfigTemplate> manifestsAndConfigs =
         Arrays.asList(
-            new ManifestAndConfigTemplate(v22Manifest1, containerConfig),
-            new ManifestAndConfigTemplate(v22Manifest2, containerConfig));
+            new ManifestAndConfigTemplate(v22Manifest1, containerConfig, "sha256:digest"),
+            new ManifestAndConfigTemplate(v22Manifest2, containerConfig, "sha256:digest"));
     try (OutputStream out =
         Files.newOutputStream(imageDirectory.resolve("manifests_configs.json"))) {
       JsonTemplateMapper.writeTo(
@@ -122,7 +123,8 @@ public class CacheStorageReaderTest {
         new ManifestAndConfigTemplate(
             loadJsonResource("core/json/ocimanifest.json", OciManifestTemplate.class),
             loadJsonResource(
-                "core/json/containerconfig.json", ContainerConfigurationTemplate.class));
+                "core/json/containerconfig.json", ContainerConfigurationTemplate.class),
+            "sha256:digest");
     try (OutputStream out =
         Files.newOutputStream(imageDirectory.resolve("manifests_configs.json"))) {
       JsonTemplateMapper.writeTo(
@@ -141,7 +143,7 @@ public class CacheStorageReaderTest {
     ContainerConfigurationTemplate containerConfig =
         loadJsonResource("core/json/containerconfig.json", ContainerConfigurationTemplate.class);
     List<ManifestAndConfigTemplate> manifestsAndConfigs =
-        Arrays.asList(new ManifestAndConfigTemplate(ociManifest, containerConfig));
+        Arrays.asList(new ManifestAndConfigTemplate(ociManifest, containerConfig, "sha256:digest"));
     try (OutputStream out =
         Files.newOutputStream(imageDirectory.resolve("manifests_configs.json"))) {
       JsonTemplateMapper.writeTo(new ImageMetadataTemplate(ociIndex, manifestsAndConfigs), out);
@@ -536,9 +538,25 @@ public class CacheStorageReaderTest {
   }
 
   @Test
-  public void testVerifyImageMetadata_schema2ManifestsCorrupted() {
+  public void testVerifyImageMetadata_schema2ManifestsCorrupted_nullContainerConfig() {
     ManifestAndConfigTemplate manifestAndConfig =
-        new ManifestAndConfigTemplate(new V22ManifestTemplate(), null);
+        new ManifestAndConfigTemplate(new V22ManifestTemplate(), null, "sha256:digest");
+    ImageMetadataTemplate metadata =
+        new ImageMetadataTemplate(null, Arrays.asList(manifestAndConfig));
+    try {
+      CacheStorageReader.verifyImageMetadata(metadata, Paths.get("/cache/dir"));
+      Assert.fail();
+    } catch (CacheCorruptedException ex) {
+      MatcherAssert.assertThat(
+          ex.getMessage(), CoreMatchers.startsWith("Schema 2 manifests corrupted"));
+    }
+  }
+
+  @Test
+  public void testVerifyImageMetadata_schema2ManifestsCorrupted_nullManifestDigest() {
+    ManifestAndConfigTemplate manifestAndConfig =
+        new ManifestAndConfigTemplate(
+            new V22ManifestTemplate(), new ContainerConfigurationTemplate(), null);
     ImageMetadataTemplate metadata =
         new ImageMetadataTemplate(null, Arrays.asList(manifestAndConfig));
     try {
@@ -579,7 +597,7 @@ public class CacheStorageReaderTest {
   public void testVerifyImageMetadata_validV22() throws CacheCorruptedException {
     ManifestAndConfigTemplate manifestAndConfig =
         new ManifestAndConfigTemplate(
-            new V22ManifestTemplate(), new ContainerConfigurationTemplate());
+            new V22ManifestTemplate(), new ContainerConfigurationTemplate(), "sha256:digest");
     ImageMetadataTemplate metadata =
         new ImageMetadataTemplate(null, Arrays.asList(manifestAndConfig));
     CacheStorageReader.verifyImageMetadata(metadata, Paths.get("/cache/dir"));
@@ -590,7 +608,7 @@ public class CacheStorageReaderTest {
   public void testVerifyImageMetadata_validV22ManifestList() throws CacheCorruptedException {
     ManifestAndConfigTemplate manifestAndConfig =
         new ManifestAndConfigTemplate(
-            new V22ManifestTemplate(), new ContainerConfigurationTemplate());
+            new V22ManifestTemplate(), new ContainerConfigurationTemplate(), "sha256:digest");
     ImageMetadataTemplate metadata =
         new ImageMetadataTemplate(
             new V22ManifestListTemplate(), Arrays.asList(manifestAndConfig, manifestAndConfig));
@@ -602,7 +620,7 @@ public class CacheStorageReaderTest {
   public void testVerifyImageMetadata_validOci() throws CacheCorruptedException {
     ManifestAndConfigTemplate manifestAndConfig =
         new ManifestAndConfigTemplate(
-            new OciManifestTemplate(), new ContainerConfigurationTemplate());
+            new OciManifestTemplate(), new ContainerConfigurationTemplate(), "sha256:digest");
     ImageMetadataTemplate metadata =
         new ImageMetadataTemplate(null, Arrays.asList(manifestAndConfig));
     CacheStorageReader.verifyImageMetadata(metadata, Paths.get("/cache/dir"));
@@ -613,7 +631,7 @@ public class CacheStorageReaderTest {
   public void testVerifyImageMetadata_validOciImageIndex() throws CacheCorruptedException {
     ManifestAndConfigTemplate manifestAndConfig =
         new ManifestAndConfigTemplate(
-            new OciManifestTemplate(), new ContainerConfigurationTemplate());
+            new OciManifestTemplate(), new ContainerConfigurationTemplate(), "sha256:digest");
     ImageMetadataTemplate metadata =
         new ImageMetadataTemplate(
             new OciIndexTemplate(), Arrays.asList(manifestAndConfig, manifestAndConfig));

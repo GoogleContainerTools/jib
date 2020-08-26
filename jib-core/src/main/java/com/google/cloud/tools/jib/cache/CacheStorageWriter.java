@@ -74,6 +74,7 @@ class CacheStorageWriter {
   private static void verifyImageMetadata(ImageMetadataTemplate metadata) {
     Predicate<ManifestAndConfigTemplate> isManifestNull = pair -> pair.getManifest() == null;
     Predicate<ManifestAndConfigTemplate> isConfigNull = pair -> pair.getConfig() == null;
+    Predicate<ManifestAndConfigTemplate> isDigestNull = pair -> pair.getManifestDigest() == null;
 
     List<ManifestAndConfigTemplate> manifestsAndConfigs = metadata.getManifestsAndConfigs();
     Preconditions.checkArgument(!manifestsAndConfigs.isEmpty(), "no manifests given");
@@ -91,7 +92,9 @@ class CacheStorageWriter {
           isConfigNull.test(manifestsAndConfigs.get(0)), "container config given for schema 1");
     } else if (firstManifest instanceof BuildableManifestTemplate) {
       Preconditions.checkArgument(
-          manifestsAndConfigs.stream().noneMatch(isConfigNull), "null config(s)");
+          manifestsAndConfigs.stream().noneMatch(isConfigNull), "null container config(s)");
+      Preconditions.checkArgument(
+          manifestsAndConfigs.stream().noneMatch(isDigestNull), "null manifest digest(s)");
     } else {
       throw new IllegalArgumentException("Unknown manifest type: " + firstManifest);
     }
