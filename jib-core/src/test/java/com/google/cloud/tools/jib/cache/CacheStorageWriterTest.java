@@ -193,8 +193,8 @@ public class CacheStorageWriterTest {
 
     List<ManifestAndConfigTemplate> manifestsAndConfigs =
         Arrays.asList(
-            new ManifestAndConfigTemplate(manifest1, containerConfig),
-            new ManifestAndConfigTemplate(manifest2, containerConfig));
+            new ManifestAndConfigTemplate(manifest1, containerConfig, "sha256:digest"),
+            new ManifestAndConfigTemplate(manifest2, containerConfig, "sha256:digest"));
     cacheStorageWriter.writeMetadata(
         imageReference, new ImageMetadataTemplate(manifestList, manifestsAndConfigs));
 
@@ -275,7 +275,9 @@ public class CacheStorageWriterTest {
     cacheStorageWriter.writeMetadata(
         imageReference,
         new ImageMetadataTemplate(
-            ociIndex, Arrays.asList(new ManifestAndConfigTemplate(manifest, containerConfig))));
+            ociIndex,
+            Arrays.asList(
+                new ManifestAndConfigTemplate(manifest, containerConfig, "sha256:digest"))));
 
     Path savedMetadataPath =
         cacheRoot.resolve("images/image.reference/project/thing!tag/manifests_configs.json");
