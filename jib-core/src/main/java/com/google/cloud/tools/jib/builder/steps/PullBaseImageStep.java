@@ -330,7 +330,9 @@ class PullBaseImageStep implements Callable<ImagesAndRegistryClient> {
   }
 
   /**
-   * Retrieves the cached base images.
+   * Retrieves the cached base images. If a base image reference is not a manifest list, returns a
+   * single image (if cached). If a manifest list, returns all the images matching the configured
+   * platforms in the manifest list but only when all of the images are cached.
    *
    * @return the cached images, if found
    * @throws IOException when an I/O exception occurs
