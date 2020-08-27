@@ -720,7 +720,7 @@ public class BuildImageMojoIntegrationTest {
 
     verifier.setAutoclean(false);
     verifier.addCliOption("-X");
-    verifier.addCliOption("--file=" + "pom-multiplatform-build.xml");
+    verifier.addCliOption("--file=pom-multiplatform-build.xml");
     verifier.executeGoals(Arrays.asList("clean", "compile", "jib:build"));
     verifier.verifyErrorFreeLog();
   }
