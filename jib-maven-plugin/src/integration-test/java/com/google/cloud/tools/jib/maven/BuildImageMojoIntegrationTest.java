@@ -704,6 +704,27 @@ public class BuildImageMojoIntegrationTest {
     HttpGetVerifier.verifyBody("Hello world", new URL("http://localhost:8080"));
   }
 
+  @Test
+  public void testExecute_multiPlatformBuild()
+      throws IOException, InterruptedException, VerificationException, DigestException {
+    String targetImage = "localhost:6000/multiplatform:maven" + System.nanoTime();
+
+    Verifier verifier = new Verifier(simpleTestProject.getProjectRoot().toString());
+    verifier.setSystemProperty("_TARGET_IMAGE", targetImage);
+
+    // properties required to push to :6000 for plain pom.xml
+    verifier.setSystemProperty("jib.to.auth.username", "testuser2");
+    verifier.setSystemProperty("jib.to.auth.password", "testpassword2");
+    verifier.setSystemProperty("sendCredentialsOverHttp", "true");
+    verifier.setSystemProperty("jib.allowInsecureRegistries", "true");
+
+    verifier.setAutoclean(false);
+    verifier.addCliOption("-X");
+    verifier.addCliOption("--file=" + "pom-multiplatform-build.xml");
+    verifier.executeGoals(Arrays.asList("clean", "compile", "jib:build"));
+    verifier.verifyErrorFreeLog();
+  }
+
   private void buildAndRunWebApp(TestProject project, String label, String pomXml)
       throws VerificationException, IOException, InterruptedException {
     String targetImage = getTestImageReference(label);
