@@ -46,7 +46,7 @@ public class ManifestAndConfigTemplate implements JsonTemplate {
   /**
    * Creates an instance.
    *
-   * @param manifest the manifest
+   * @param manifest the image manifest
    * @param config the container configuration
    */
   public ManifestAndConfigTemplate(
@@ -60,7 +60,7 @@ public class ManifestAndConfigTemplate implements JsonTemplate {
   /**
    * Creates an instance.
    *
-   * @param manifest the manifest
+   * @param manifest the image manifest
    * @param config the container configuration
    * @param manifestDigest the digest of the manifest
    */
