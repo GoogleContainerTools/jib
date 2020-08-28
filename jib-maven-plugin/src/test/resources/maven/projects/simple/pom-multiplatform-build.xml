@@ -44,7 +44,7 @@
         <image>busybox</image>
 	  <platforms>
 	    <platform>
-	       <architecture>arm</architecture>
+	       <architecture>arm64</architecture>
 	       <os>linux</os>
 	    </platform>
 	    <platform>
@@ -55,6 +55,9 @@
           </from> 
           <to>
             <image>${_TARGET_IMAGE}</image>
+             <tags>
+              <tag>latest</tag>
+            </tags>
           </to>
           <container>
             <args>An argument.</args>

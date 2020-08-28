@@ -21,7 +21,15 @@ import com.google.cloud.tools.jib.IntegrationTestingConfiguration;
 import com.google.cloud.tools.jib.api.DescriptorDigest;
 import com.google.cloud.tools.jib.api.ImageReference;
 import com.google.cloud.tools.jib.api.InvalidImageReferenceException;
+import com.google.cloud.tools.jib.api.RegistryException;
+import com.google.cloud.tools.jib.event.EventHandlers;
+import com.google.cloud.tools.jib.http.FailoverHttpClient;
+import com.google.cloud.tools.jib.image.json.ManifestTemplate;
+import com.google.cloud.tools.jib.image.json.V22ManifestListTemplate;
+import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
 import com.google.cloud.tools.jib.registry.LocalRegistry;
+import com.google.cloud.tools.jib.registry.ManifestAndDigest;
+import com.google.cloud.tools.jib.registry.RegistryClient;
 import com.google.common.base.Splitter;
 import java.io.IOException;
 import java.net.URL;
@@ -58,6 +66,8 @@ public class BuildImageMojoIntegrationTest {
   @ClassRule
   public static final LocalRegistry localRegistry2 =
       new LocalRegistry(6000, "testuser2", "testpassword2");
+
+  @ClassRule public static final LocalRegistry localRegistry3 = new LocalRegistry(7000);
 
   @ClassRule public static final TestProject simpleTestProject = new TestProject("simple");
 
@@ -706,16 +716,17 @@ public class BuildImageMojoIntegrationTest {
 
   @Test
   public void testExecute_multiPlatformBuild()
-      throws IOException, InterruptedException, VerificationException, DigestException {
-    String targetImage = "localhost:6000/multiplatform:maven" + System.nanoTime();
+      throws IOException, InterruptedException, VerificationException, DigestException,
+          RegistryException {
+    String targetImage = "localhost:7000/multiplatform:maven" + System.nanoTime();
 
     Verifier verifier = new Verifier(simpleTestProject.getProjectRoot().toString());
     verifier.setSystemProperty("_TARGET_IMAGE", targetImage);
 
     // properties required to push to :6000 for plain pom.xml
-    verifier.setSystemProperty("jib.to.auth.username", "testuser2");
-    verifier.setSystemProperty("jib.to.auth.password", "testpassword2");
-    verifier.setSystemProperty("sendCredentialsOverHttp", "true");
+    //    verifier.setSystemProperty("jib.to.auth.username", "testuser2");
+    //    verifier.setSystemProperty("jib.to.auth.password", "testpassword2");
+    //    verifier.setSystemProperty("sendCredentialsOverHttp", "true");
     verifier.setSystemProperty("jib.allowInsecureRegistries", "true");
 
     verifier.setAutoclean(false);
@@ -723,6 +734,59 @@ public class BuildImageMojoIntegrationTest {
     verifier.addCliOption("--file=pom-multiplatform-build.xml");
     verifier.executeGoals(Arrays.asList("clean", "compile", "jib:build"));
     verifier.verifyErrorFreeLog();
+
+    RegistryClient registryClient =
+        RegistryClient.factory(
+                EventHandlers.NONE,
+                "localhost:7000",
+                "multiplatform",
+                new FailoverHttpClient(true, true, ignored -> {}))
+            .setCredential(null)
+            .newRegistryClient();
+
+    //    Asserting manifest list
+    ManifestAndDigest<ManifestTemplate> manifestListAndDigest =
+        registryClient.pullManifest("latest");
+    ManifestTemplate manifestListTemplate = manifestListAndDigest.getManifest();
+    Assert.assertTrue(manifestListTemplate instanceof V22ManifestListTemplate);
+    V22ManifestListTemplate manifestList = (V22ManifestListTemplate) manifestListTemplate;
+    Assert.assertEquals(2, manifestList.getSchemaVersion());
+    Assert.assertEquals(
+        Arrays.asList("sha256:f65db8673a6b25b98c0afc57a5cc88b7153befd119549717b00b48409b919f1c"),
+        manifestList.getDigestsForPlatform("arm64", "linux"));
+    Assert.assertEquals(
+        Arrays.asList("sha256:cb181b2ced78d7fbdb9f48f01ec3f56ba756163c14500a7ef5bacfe15d62c0d1"),
+        manifestList.getDigestsForPlatform("amd64", "linux"));
+
+    //    Asserting arm64/linux manifest
+    ManifestAndDigest<ManifestTemplate> manifestAndDigest =
+        registryClient.pullManifest(
+            "sha256:f65db8673a6b25b98c0afc57a5cc88b7153befd119549717b00b48409b919f1c");
+    Assert.assertEquals(
+        "sha256:f65db8673a6b25b98c0afc57a5cc88b7153befd119549717b00b48409b919f1c",
+        manifestAndDigest.getDigest().toString());
+    ManifestTemplate manifestTemplate = manifestAndDigest.getManifest();
+    Assert.assertTrue(manifestTemplate instanceof V22ManifestTemplate);
+    V22ManifestTemplate manifest = (V22ManifestTemplate) manifestTemplate;
+    Assert.assertEquals(2, manifest.getSchemaVersion());
+    Assert.assertEquals(
+        "sha256:5521228a3d94c0cc02d2d09d59ce148bb5694711804115007613489bea3b5d6a",
+        manifest.getContainerConfiguration().getDigest().toString());
+
+    //    Asserting arm64/linux manifest
+    manifestAndDigest =
+        registryClient.pullManifest(
+            "sha256:f65db8673a6b25b98c0afc57a5cc88b7153befd119549717b00b48409b919f1c");
+    Assert.assertEquals(
+        "sha256:f65db8673a6b25b98c0afc57a5cc88b7153befd119549717b00b48409b919f1c",
+        manifestAndDigest.getDigest().toString());
+    manifestTemplate = manifestAndDigest.getManifest();
+    Assert.assertTrue(manifestTemplate instanceof V22ManifestTemplate);
+    manifest = (V22ManifestTemplate) manifestTemplate;
+    Assert.assertEquals(2, manifest.getSchemaVersion());
+    Assert.assertEquals(
+        "sha256:5521228a3d94c0cc02d2d09d59ce148bb5694711804115007613489bea3b5d6a",
+        manifest.getContainerConfiguration().getDigest().toString());
   }
 
   private void buildAndRunWebApp(TestProject project, String label, String pomXml)
