@@ -52,7 +52,7 @@
 	       <os>linux</os>
 	    </platform>
 	   </platforms>
-          </from> 
+          </from>
           <to>
             <image>${_TARGET_IMAGE}</image>
              <tags>
