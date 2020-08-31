@@ -17,6 +17,7 @@
 package com.google.cloud.tools.jib.registry;
 
 import com.google.cloud.tools.jib.Command;
+import com.google.common.collect.Lists;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
@@ -65,18 +66,14 @@ public class LocalRegistry extends ExternalResource {
   public void start() throws IOException, InterruptedException {
     // Runs the Docker registry.
     ArrayList<String> dockerTokens =
-        new ArrayList<>(
-            Arrays.asList(
-                "docker", "run", "--rm", "-d", "-p", port + ":5000", "--name", containerName));
+        Lists.newArrayList(
+            "docker", "run", "--rm", "-d", "-p", port + ":5000", "--name", containerName);
     if (username != null && password != null) {
       // Equivalent of "$ htpasswd -nbB username password".
       // https://httpd.apache.org/docs/2.4/misc/password_encryptions.html
       // BCrypt generates hashes using $2a$ algorithm (instead of $2y$ from docs), but this seems
       // to work okay
       String credentialString = username + ":" + BCrypt.hashpw(password, BCrypt.gensalt());
-      // Creates the temporary directory in /tmp since that is one of the default directories
-      // mounted into Docker.
-      // See: https://docs.docker.com/docker-for-mac/osxfs
       Path tempFolder = Files.createTempDirectory(Paths.get("/tmp"), "");
       Files.write(
           tempFolder.resolve("htpasswd"), credentialString.getBytes(StandardCharsets.UTF_8));
