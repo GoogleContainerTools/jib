@@ -18,6 +18,7 @@ package com.google.cloud.tools.jib.maven;
 
 import com.google.cloud.tools.jib.Command;
 import com.google.cloud.tools.jib.IntegrationTestingConfiguration;
+import com.google.cloud.tools.jib.api.Credential;
 import com.google.cloud.tools.jib.api.DescriptorDigest;
 import com.google.cloud.tools.jib.api.ImageReference;
 import com.google.cloud.tools.jib.api.InvalidImageReferenceException;
@@ -60,14 +61,8 @@ import org.junit.rules.TemporaryFolder;
 public class BuildImageMojoIntegrationTest {
 
   @ClassRule
-  public static final LocalRegistry localRegistry1 =
+  public static final LocalRegistry localRegistry =
       new LocalRegistry(5000, "testuser", "testpassword");
-
-  @ClassRule
-  public static final LocalRegistry localRegistry2 =
-      new LocalRegistry(6000, "testuser2", "testpassword2");
-
-  @ClassRule public static final LocalRegistry localRegistry3 = new LocalRegistry(7000);
 
   @ClassRule public static final TestProject simpleTestProject = new TestProject("simple");
 
@@ -353,7 +348,7 @@ public class BuildImageMojoIntegrationTest {
   @Before
   public void setUp() throws IOException, InterruptedException {
     // Pull distroless to local registry so we can test 'from' credentials
-    localRegistry1.pullAndPushToLocal("gcr.io/distroless/java:latest", "distroless/java");
+    localRegistry.pullAndPushToLocal("gcr.io/distroless/java:latest", "distroless/java");
 
     // Make sure resource file has a consistent value at the beginning of each test
     // (testExecute_simple overwrites it)
@@ -562,11 +557,11 @@ public class BuildImageMojoIntegrationTest {
   @Test
   public void testExecute_complex()
       throws IOException, InterruptedException, VerificationException, DigestException {
-    String targetImage = "localhost:6000/compleximage:maven" + System.nanoTime();
+    String targetImage = "localhost:5000/compleximage:maven" + System.nanoTime();
     Instant before = Instant.now();
     String output =
         buildAndRunComplex(
-            targetImage, "testuser2", "testpassword2", localRegistry2, "pom-complex.xml");
+            targetImage, "testuser", "testpassword", localRegistry, "pom-complex.xml");
     Assert.assertEquals(
         "Hello, world. An argument.\n1970-01-01T00:00:01Z\nrwxr-xr-x\nrwxrwxrwx\nfoo\ncat\n"
             + "1970-01-01T00:00:01Z\n1970-01-01T00:00:01Z\n"
@@ -591,12 +586,12 @@ public class BuildImageMojoIntegrationTest {
   @Test
   public void testExecute_timestampCustom()
       throws IOException, InterruptedException, VerificationException {
-    String targetImage = "localhost:6000/simpleimage:maven" + System.nanoTime();
+    String targetImage = "localhost:5000/simpleimage:maven" + System.nanoTime();
     String pom = "pom-timestamps-custom.xml";
     Assert.assertEquals(
         "Hello, world. \n2019-06-17T16:30:00Z\nrw-r--r--\nrw-r--r--\n"
             + "foo\ncat\n2019-06-17T16:30:00Z\n2019-06-17T16:30:00Z\n",
-        buildAndRunComplex(targetImage, "testuser2", "testpassword2", localRegistry2, pom));
+        buildAndRunComplex(targetImage, "testuser", "testpassword", localRegistry, pom));
 
     String inspect =
         new Command("docker", "inspect", "-f", "{{.Created}}", targetImage).run().trim();
@@ -613,24 +608,20 @@ public class BuildImageMojoIntegrationTest {
             + "1970-01-01T00:00:01Z\n1970-01-01T00:00:01Z\n"
             + "-Xms512m\n-Xdebug\nenvvalue1\nenvvalue2\n",
         buildAndRunComplex(
-            targetImage, "testuser", "testpassword", localRegistry1, "pom-complex.xml"));
+            targetImage, "testuser", "testpassword", localRegistry, "pom-complex.xml"));
     assertWorkingDirectory("", targetImage);
   }
 
   @Test
   public void testExecute_complexProperties()
       throws InterruptedException, VerificationException, IOException {
-    String targetImage = "localhost:6000/compleximage:maven" + System.nanoTime();
+    String targetImage = "localhost:5000/compleximage:maven" + System.nanoTime();
     Assert.assertEquals(
         "Hello, world. An argument.\n1970-01-01T00:00:01Z\nrwxr-xr-x\nrwxrwxrwx\nfoo\ncat\n"
             + "1970-01-01T00:00:01Z\n1970-01-01T00:00:01Z\n"
             + "-Xms512m\n-Xdebug\nenvvalue1\nenvvalue2\n",
         buildAndRunComplex(
-            targetImage,
-            "testuser2",
-            "testpassword2",
-            localRegistry2,
-            "pom-complex-properties.xml"));
+            targetImage, "testuser", "testpassword", localRegistry, "pom-complex-properties.xml"));
     assertWorkingDirectory("", targetImage);
   }
 
@@ -646,13 +637,13 @@ public class BuildImageMojoIntegrationTest {
 
   @Test
   public void testExecute_jibRequireVersion_ok() throws VerificationException, IOException {
-    String targetImage = "localhost:6000/simpleimage:maven" + System.nanoTime();
+    String targetImage = "localhost:5000/simpleimage:maven" + System.nanoTime();
 
     Verifier verifier = new Verifier(simpleTestProject.getProjectRoot().toString());
     verifier.setSystemProperty("_TARGET_IMAGE", targetImage);
-    // properties required to push to :6000 for plain pom.xml
-    verifier.setSystemProperty("jib.to.auth.username", "testuser2");
-    verifier.setSystemProperty("jib.to.auth.password", "testpassword2");
+    // properties required to push to :5000 for plain pom.xml
+    verifier.setSystemProperty("jib.to.auth.username", "testuser");
+    verifier.setSystemProperty("jib.to.auth.password", "testpassword");
     verifier.setSystemProperty("sendCredentialsOverHttp", "true");
     verifier.setSystemProperty("jib.allowInsecureRegistries", "true");
     // this test plugin should match 1.0
@@ -663,11 +654,10 @@ public class BuildImageMojoIntegrationTest {
 
   @Test
   public void testExecute_jibRequireVersion_fail() throws IOException {
-    String targetImage = "localhost:6000/simpleimage:maven" + System.nanoTime();
     try {
       Verifier verifier = new Verifier(simpleTestProject.getProjectRoot().toString());
       // other properties aren't required as this should fail due to jib.requiredVersion
-      verifier.setSystemProperty("_TARGET_IMAGE", targetImage);
+      verifier.setSystemProperty("_TARGET_IMAGE", "ignored");
       // this plugin should be > 1.0 and so jib:build should fail
       verifier.setSystemProperty("jib.requiredVersion", "[,1.0]");
       verifier.executeGoals(Arrays.asList("package", "jib:build"));
@@ -716,17 +706,15 @@ public class BuildImageMojoIntegrationTest {
 
   @Test
   public void testExecute_multiPlatformBuild()
-      throws IOException, InterruptedException, VerificationException, DigestException,
-          RegistryException {
-    String targetImage = "localhost:7000/multiplatform:maven" + System.nanoTime();
+      throws IOException, VerificationException, RegistryException {
+    String targetImage = "localhost:5000/multiplatform:maven" + System.nanoTime();
 
     Verifier verifier = new Verifier(simpleTestProject.getProjectRoot().toString());
     verifier.setSystemProperty("_TARGET_IMAGE", targetImage);
 
-    // properties required to push to :6000 for plain pom.xml
-    //    verifier.setSystemProperty("jib.to.auth.username", "testuser2");
-    //    verifier.setSystemProperty("jib.to.auth.password", "testpassword2");
-    //    verifier.setSystemProperty("sendCredentialsOverHttp", "true");
+    verifier.setSystemProperty("jib.to.auth.username", "testuser");
+    verifier.setSystemProperty("jib.to.auth.password", "testpassword");
+    verifier.setSystemProperty("sendCredentialsOverHttp", "true");
     verifier.setSystemProperty("jib.allowInsecureRegistries", "true");
 
     verifier.setAutoclean(false);
@@ -735,14 +723,12 @@ public class BuildImageMojoIntegrationTest {
     verifier.executeGoals(Arrays.asList("clean", "compile", "jib:build"));
     verifier.verifyErrorFreeLog();
 
+    FailoverHttpClient httpClient = new FailoverHttpClient(true, true, ignored -> {});
     RegistryClient registryClient =
-        RegistryClient.factory(
-                EventHandlers.NONE,
-                "localhost:7000",
-                "multiplatform",
-                new FailoverHttpClient(true, true, ignored -> {}))
-            .setCredential(null)
+        RegistryClient.factory(EventHandlers.NONE, "localhost:5000", "multiplatform", httpClient)
+            .setCredential(Credential.from("testuser", "testpassword"))
             .newRegistryClient();
+    registryClient.configureBasicAuth();
 
     //    Asserting manifest list
     ManifestAndDigest<ManifestTemplate> manifestListAndDigest =
@@ -752,40 +738,40 @@ public class BuildImageMojoIntegrationTest {
     V22ManifestListTemplate manifestList = (V22ManifestListTemplate) manifestListTemplate;
     Assert.assertEquals(2, manifestList.getSchemaVersion());
     Assert.assertEquals(
-        Arrays.asList("sha256:f65db8673a6b25b98c0afc57a5cc88b7153befd119549717b00b48409b919f1c"),
+        Arrays.asList("sha256:fee2655e19e5138150606c99cfc16fcbf502d72b0f3b9ccf3a8f4509c47e46d9"),
         manifestList.getDigestsForPlatform("arm64", "linux"));
     Assert.assertEquals(
-        Arrays.asList("sha256:cb181b2ced78d7fbdb9f48f01ec3f56ba756163c14500a7ef5bacfe15d62c0d1"),
+        Arrays.asList("sha256:f3f4a91c68bcafea351280085d17e25fa598f5644c8b5e31e6133eddfc35e7ff"),
         manifestList.getDigestsForPlatform("amd64", "linux"));
 
     //    Asserting arm64/linux manifest
     ManifestAndDigest<ManifestTemplate> manifestAndDigest =
         registryClient.pullManifest(
-            "sha256:f65db8673a6b25b98c0afc57a5cc88b7153befd119549717b00b48409b919f1c");
+            "sha256:fee2655e19e5138150606c99cfc16fcbf502d72b0f3b9ccf3a8f4509c47e46d9");
     Assert.assertEquals(
-        "sha256:f65db8673a6b25b98c0afc57a5cc88b7153befd119549717b00b48409b919f1c",
+        "sha256:fee2655e19e5138150606c99cfc16fcbf502d72b0f3b9ccf3a8f4509c47e46d9",
         manifestAndDigest.getDigest().toString());
     ManifestTemplate manifestTemplate = manifestAndDigest.getManifest();
     Assert.assertTrue(manifestTemplate instanceof V22ManifestTemplate);
     V22ManifestTemplate manifest = (V22ManifestTemplate) manifestTemplate;
     Assert.assertEquals(2, manifest.getSchemaVersion());
     Assert.assertEquals(
-        "sha256:5521228a3d94c0cc02d2d09d59ce148bb5694711804115007613489bea3b5d6a",
+        "sha256:cecb4d0f179207a1c7f2ee33819d4fb70bbb9d98eebe78dfe1b439896925dc27",
         manifest.getContainerConfiguration().getDigest().toString());
 
-    //    Asserting arm64/linux manifest
+    //    Asserting amd64/linux manifest
     manifestAndDigest =
         registryClient.pullManifest(
-            "sha256:f65db8673a6b25b98c0afc57a5cc88b7153befd119549717b00b48409b919f1c");
+            "sha256:f3f4a91c68bcafea351280085d17e25fa598f5644c8b5e31e6133eddfc35e7ff");
     Assert.assertEquals(
-        "sha256:f65db8673a6b25b98c0afc57a5cc88b7153befd119549717b00b48409b919f1c",
+        "sha256:f3f4a91c68bcafea351280085d17e25fa598f5644c8b5e31e6133eddfc35e7ff",
         manifestAndDigest.getDigest().toString());
     manifestTemplate = manifestAndDigest.getManifest();
     Assert.assertTrue(manifestTemplate instanceof V22ManifestTemplate);
     manifest = (V22ManifestTemplate) manifestTemplate;
     Assert.assertEquals(2, manifest.getSchemaVersion());
     Assert.assertEquals(
-        "sha256:5521228a3d94c0cc02d2d09d59ce148bb5694711804115007613489bea3b5d6a",
+        "sha256:a287f6aab9f8771c35ee8c60388abf845ee3ed6ef98d785c295200523fe9e4b7",
         manifest.getContainerConfiguration().getDigest().toString());
   }
 
