@@ -77,8 +77,6 @@ public class BuildImageMojoIntegrationTest {
 
   @ClassRule public static final TestProject springBootProject = new TestProject("spring-boot");
 
-  @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
-
   private static String getTestImageReference(String label) {
     String nameBase = IntegrationTestingConfiguration.getTestRepositoryLocation() + '/';
     return nameBase + label + System.nanoTime();
@@ -342,6 +340,8 @@ public class BuildImageMojoIntegrationTest {
     String layers = command.run().trim();
     Assert.assertEquals(expected, Splitter.on(",").splitToList(layers).size());
   }
+
+  @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
   @Nullable private String detachedContainerName;
 
@@ -730,13 +730,11 @@ public class BuildImageMojoIntegrationTest {
             .newRegistryClient();
     registryClient.configureBasicAuth();
 
-    //    Asserting manifest list
-    ManifestAndDigest<ManifestTemplate> manifestListAndDigest =
-        registryClient.pullManifest("latest");
-    ManifestTemplate manifestListTemplate = manifestListAndDigest.getManifest();
-    Assert.assertTrue(manifestListTemplate instanceof V22ManifestListTemplate);
+    // manifest list by tag ":latest"
+    ManifestTemplate manifestListTemplate = registryClient.pullManifest("latest").getManifest();
+    MatcherAssert.assertThat(
+        manifestListTemplate, CoreMatchers.instanceOf(V22ManifestListTemplate.class));
     V22ManifestListTemplate manifestList = (V22ManifestListTemplate) manifestListTemplate;
-    Assert.assertEquals(2, manifestList.getSchemaVersion());
     Assert.assertEquals(
         Arrays.asList("sha256:fee2655e19e5138150606c99cfc16fcbf502d72b0f3b9ccf3a8f4509c47e46d9"),
         manifestList.getDigestsForPlatform("arm64", "linux"));
@@ -744,35 +742,45 @@ public class BuildImageMojoIntegrationTest {
         Arrays.asList("sha256:f3f4a91c68bcafea351280085d17e25fa598f5644c8b5e31e6133eddfc35e7ff"),
         manifestList.getDigestsForPlatform("amd64", "linux"));
 
-    //    Asserting arm64/linux manifest
-    ManifestAndDigest<ManifestTemplate> manifestAndDigest =
+    // manifest list by tag ":another"
+    ManifestTemplate manifestListTemplate2 = registryClient.pullManifest("another").getManifest();
+    MatcherAssert.assertThat(
+        manifestListTemplate2, CoreMatchers.instanceOf(V22ManifestListTemplate.class));
+    V22ManifestListTemplate manifestList2 = (V22ManifestListTemplate) manifestListTemplate2;
+    Assert.assertEquals(
+        Arrays.asList("sha256:fee2655e19e5138150606c99cfc16fcbf502d72b0f3b9ccf3a8f4509c47e46d9"),
+        manifestList2.getDigestsForPlatform("arm64", "linux"));
+    Assert.assertEquals(
+        Arrays.asList("sha256:f3f4a91c68bcafea351280085d17e25fa598f5644c8b5e31e6133eddfc35e7ff"),
+        manifestList2.getDigestsForPlatform("amd64", "linux"));
+
+    // arm64/linux manifest
+    ManifestAndDigest<ManifestTemplate> manifestAndDigest1 =
         registryClient.pullManifest(
             "sha256:fee2655e19e5138150606c99cfc16fcbf502d72b0f3b9ccf3a8f4509c47e46d9");
     Assert.assertEquals(
         "sha256:fee2655e19e5138150606c99cfc16fcbf502d72b0f3b9ccf3a8f4509c47e46d9",
-        manifestAndDigest.getDigest().toString());
-    ManifestTemplate manifestTemplate = manifestAndDigest.getManifest();
-    Assert.assertTrue(manifestTemplate instanceof V22ManifestTemplate);
-    V22ManifestTemplate manifest = (V22ManifestTemplate) manifestTemplate;
-    Assert.assertEquals(2, manifest.getSchemaVersion());
+        manifestAndDigest1.getDigest().toString());
+    ManifestTemplate manifestTemplate1 = manifestAndDigest1.getManifest();
+    MatcherAssert.assertThat(manifestTemplate1, CoreMatchers.instanceOf(V22ManifestTemplate.class));
+    V22ManifestTemplate manifest1 = (V22ManifestTemplate) manifestTemplate1;
     Assert.assertEquals(
         "sha256:cecb4d0f179207a1c7f2ee33819d4fb70bbb9d98eebe78dfe1b439896925dc27",
-        manifest.getContainerConfiguration().getDigest().toString());
+        manifest1.getContainerConfiguration().getDigest().toString());
 
-    //    Asserting amd64/linux manifest
-    manifestAndDigest =
+    // amd64/linux manifest
+    ManifestAndDigest<ManifestTemplate> manifestAndDigest2 =
         registryClient.pullManifest(
             "sha256:f3f4a91c68bcafea351280085d17e25fa598f5644c8b5e31e6133eddfc35e7ff");
     Assert.assertEquals(
         "sha256:f3f4a91c68bcafea351280085d17e25fa598f5644c8b5e31e6133eddfc35e7ff",
-        manifestAndDigest.getDigest().toString());
-    manifestTemplate = manifestAndDigest.getManifest();
-    Assert.assertTrue(manifestTemplate instanceof V22ManifestTemplate);
-    manifest = (V22ManifestTemplate) manifestTemplate;
-    Assert.assertEquals(2, manifest.getSchemaVersion());
+        manifestAndDigest2.getDigest().toString());
+    ManifestTemplate manifestTemplate2 = manifestAndDigest2.getManifest();
+    MatcherAssert.assertThat(manifestTemplate2, CoreMatchers.instanceOf(V22ManifestTemplate.class));
+    V22ManifestTemplate manifest2 = (V22ManifestTemplate) manifestTemplate2;
     Assert.assertEquals(
         "sha256:a287f6aab9f8771c35ee8c60388abf845ee3ed6ef98d785c295200523fe9e4b7",
-        manifest.getContainerConfiguration().getDigest().toString());
+        manifest2.getContainerConfiguration().getDigest().toString());
   }
 
   private void buildAndRunWebApp(TestProject project, String label, String pomXml)

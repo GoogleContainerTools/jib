@@ -57,6 +57,7 @@
             <image>${_TARGET_IMAGE}</image>
              <tags>
               <tag>latest</tag>
+              <tag>another</tag>
             </tags>
           </to>
         </configuration>
