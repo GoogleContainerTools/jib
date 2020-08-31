@@ -65,6 +65,10 @@ class CacheStorageReader {
       if (manifestsAndConfigs.stream().anyMatch(entry -> entry.getConfig() == null)) {
         throw new CacheCorruptedException(metadataCacheDirectory, "Schema 2 manifests corrupted");
       }
+      if (metadata.getManifestList() != null
+          && manifestsAndConfigs.stream().anyMatch(entry -> entry.getManifestDigest() == null)) {
+        throw new CacheCorruptedException(metadataCacheDirectory, "Schema 2 manifests corrupted");
+      }
     } else {
       throw new CacheCorruptedException(
           metadataCacheDirectory, "Unknown manifest type: " + firstManifest);

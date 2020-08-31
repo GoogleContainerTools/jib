@@ -43,6 +43,7 @@ import com.google.cloud.tools.jib.image.json.JsonToImageTranslator;
 import com.google.cloud.tools.jib.image.json.ManifestAndConfigTemplate;
 import com.google.cloud.tools.jib.image.json.ManifestTemplate;
 import com.google.cloud.tools.jib.image.json.UnknownManifestFormatException;
+import com.google.cloud.tools.jib.image.json.UnlistedPlatformInManifestListException;
 import com.google.cloud.tools.jib.image.json.V21ManifestTemplate;
 import com.google.cloud.tools.jib.image.json.V22ManifestListTemplate;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
@@ -105,28 +106,21 @@ class PullBaseImageStep implements Callable<ImagesAndRegistryClient> {
         LogEvent.progress("Getting manifest for base image " + imageReference + "..."));
 
     if (buildContext.isOffline()) {
-      Optional<Image> image = getCachedBaseImage();
-      if (image.isPresent()) {
-        if (!checkImagePlatform(image.get())) {
-          throw new IllegalStateException(
-              "The cached base image manifest does not match the configured platform due to the "
-                  + "current implementation of limited platform support. As a workaround, re-run "
-                  + "Jib online once to re-cache the right image manifest.");
-        }
-        return new ImagesAndRegistryClient(Collections.singletonList(image.get()), null);
+      List<Image> images = getCachedBaseImages();
+      if (!images.isEmpty()) {
+        return new ImagesAndRegistryClient(images, null);
       }
       throw new IOException(
           "Cannot run Jib in offline mode; " + imageReference + " not found in local Jib cache");
 
     } else if (imageReference.getDigest().isPresent()) {
-      Optional<Image> image = getCachedBaseImage();
-      if (image.isPresent() && checkImagePlatform(image.get())) {
+      List<Image> images = getCachedBaseImages();
+      if (!images.isEmpty()) {
         RegistryClient noAuthRegistryClient =
             buildContext.newBaseImageRegistryClientFactory().newRegistryClient();
         // TODO: passing noAuthRegistryClient may be problematic. It may return 401 unauthorized if
         // layers have to be downloaded. https://github.com/GoogleContainerTools/jib/issues/2220
-        return new ImagesAndRegistryClient(
-            Collections.singletonList(image.get()), noAuthRegistryClient);
+        return new ImagesAndRegistryClient(images, noAuthRegistryClient);
       }
     }
 
@@ -185,20 +179,6 @@ class PullBaseImageStep implements Callable<ImagesAndRegistryClient> {
     }
   }
 
-  // TODO: remove when properly caching manifests with multiple platforms and manifest lists.
-  private boolean checkImagePlatform(Image image) {
-    Preconditions.checkState(buildContext.getContainerConfiguration().getPlatforms().size() == 1);
-    Platform platform = buildContext.getContainerConfiguration().getPlatforms().iterator().next();
-    boolean ok =
-        image.getArchitecture().equals(platform.getArchitecture())
-            && image.getOs().equals(platform.getOs());
-    if (!ok) {
-      String message = "platform of the cached manifest does not match the requested one";
-      buildContext.getEventHandlers().dispatch(LogEvent.debug(message));
-    }
-    return ok;
-  }
-
   /**
    * Pulls the base images specified in the platforms list.
    *
@@ -254,16 +234,18 @@ class PullBaseImageStep implements Callable<ImagesAndRegistryClient> {
       eventHandlers.dispatch(
           LogEvent.info(String.format(message, platform.getArchitecture(), platform.getOs())));
 
-      ManifestAndDigest<?> imageManifestAndDigest =
-          obtainPlatformSpecificImageManifest(
-              registryClient, (V22ManifestListTemplate) manifestTemplate, platform);
+      String manifestDigest =
+          lookUpPlatformSpecificImageManifest((V22ManifestListTemplate) manifestTemplate, platform);
+      // TODO: pull multiple manifests (+ container configs) in parallel.
+      ManifestAndDigest<?> imageManifestAndDigest = registryClient.pullManifest(manifestDigest);
 
       BuildableManifestTemplate imageManifest =
           (BuildableManifestTemplate) imageManifestAndDigest.getManifest();
       ContainerConfigurationTemplate containerConfig =
           pullContainerConfigJson(imageManifestAndDigest, registryClient, progressEventDispatcher);
 
-      manifestsAndConfigs.add(new ManifestAndConfigTemplate(imageManifest, containerConfig));
+      manifestsAndConfigs.add(
+          new ManifestAndConfigTemplate(imageManifest, containerConfig, manifestDigest));
       images.add(JsonToImageTranslator.toImage(imageManifest, containerConfig));
     }
 
@@ -274,16 +256,14 @@ class PullBaseImageStep implements Callable<ImagesAndRegistryClient> {
   }
 
   /**
-   * Looks through a manifest list for the manifest matching the {@code platform} and downloads and
-   * returns the first manifest it finds.
+   * Looks through a manifest list for the manifest matching the {@code platform} and returns the
+   * digest of the first manifest it finds.
    */
   // TODO: support OciIndexTemplate once AbstractManifestPuller starts to accept it.
   @VisibleForTesting
-  ManifestAndDigest<?> obtainPlatformSpecificImageManifest(
-      RegistryClient registryClient,
-      V22ManifestListTemplate manifestListTemplate,
-      Platform platform)
-      throws IOException, RegistryException {
+  String lookUpPlatformSpecificImageManifest(
+      V22ManifestListTemplate manifestListTemplate, Platform platform)
+      throws UnlistedPlatformInManifestListException {
     EventHandlers eventHandlers = buildContext.getEventHandlers();
 
     List<String> digests =
@@ -297,11 +277,10 @@ class PullBaseImageStep implements Callable<ImagesAndRegistryClient> {
       eventHandlers.dispatch(
           LogEvent.error(
               String.format(errorMessage, platform.getArchitecture(), platform.getOs())));
-      throw new RegistryException(errorMessage);
+      throw new UnlistedPlatformInManifestListException(errorMessage);
     }
-    // TODO: pull multiple manifests (+ container configs) in parallel. (It will be simpler to pull
-    // a manifest+container config pair in sequence. That is, calling pullContainerConfigJson here.)
-    return registryClient.pullManifest(digests.get(0));
+    // TODO: perhaps we should return multiple digests matching the platform.
+    return digests.get(0);
   }
 
   /**
@@ -351,35 +330,67 @@ class PullBaseImageStep implements Callable<ImagesAndRegistryClient> {
   }
 
   /**
-   * Retrieves the cached base image.
+   * Retrieves the cached base images. If a base image reference is not a manifest list, returns a
+   * single image (if cached). If a manifest list, returns all the images matching the configured
+   * platforms in the manifest list but only when all of the images are cached.
    *
-   * @return the cached image, if found
+   * @return the cached images, if found
    * @throws IOException when an I/O exception occurs
    * @throws CacheCorruptedException if the cache is corrupted
    * @throws LayerPropertyNotFoundException if adding image layers fails
    * @throws BadContainerConfigurationFormatException if the container configuration is in a bad
    *     format
+   * @throws UnlistedPlatformInManifestListException if a cached manifest list has no manifests
+   *     matching the configured platform
    */
-  private Optional<Image> getCachedBaseImage()
+  @VisibleForTesting
+  List<Image> getCachedBaseImages()
       throws IOException, CacheCorruptedException, BadContainerConfigurationFormatException,
-          LayerCountMismatchException {
+          LayerCountMismatchException, UnlistedPlatformInManifestListException {
     ImageReference baseImage = buildContext.getBaseImageConfiguration().getImage();
     Optional<ImageMetadataTemplate> metadata =
         buildContext.getBaseImageLayersCache().retrieveMetadata(baseImage);
     if (!metadata.isPresent()) {
-      return Optional.empty();
+      return Collections.emptyList();
     }
 
+    ManifestTemplate manifestList = metadata.get().getManifestList();
     List<ManifestAndConfigTemplate> manifestsAndConfigs = metadata.get().getManifestsAndConfigs();
-    Verify.verify(manifestsAndConfigs.size() == 1);
-    ManifestTemplate manifest = Verify.verifyNotNull(manifestsAndConfigs.get(0).getManifest());
-    if (manifest instanceof V21ManifestTemplate) {
-      return Optional.of(JsonToImageTranslator.toImage((V21ManifestTemplate) manifest));
+
+    if (manifestList == null) {
+      Verify.verify(manifestsAndConfigs.size() == 1);
+      ManifestTemplate manifest = manifestsAndConfigs.get(0).getManifest();
+      if (manifest instanceof V21ManifestTemplate) {
+        return Collections.singletonList(
+            JsonToImageTranslator.toImage((V21ManifestTemplate) manifest));
+      }
+      return Collections.singletonList(
+          JsonToImageTranslator.toImage(
+              (BuildableManifestTemplate) Verify.verifyNotNull(manifest),
+              Verify.verifyNotNull(manifestsAndConfigs.get(0).getConfig())));
     }
 
-    return Optional.of(
-        JsonToImageTranslator.toImage(
-            (BuildableManifestTemplate) manifest,
-            Verify.verifyNotNull(manifestsAndConfigs.get(0).getConfig())));
+    // Manifest list cached. Identify matching platforms and check if all of them are cached.
+    ImmutableList.Builder<Image> images = ImmutableList.builder();
+    for (Platform platform : buildContext.getContainerConfiguration().getPlatforms()) {
+      String manifestDigest =
+          lookUpPlatformSpecificImageManifest((V22ManifestListTemplate) manifestList, platform);
+
+      Optional<ManifestAndConfigTemplate> manifestAndConfigFound =
+          manifestsAndConfigs
+              .stream()
+              .filter(entry -> manifestDigest.equals(entry.getManifestDigest()))
+              .findFirst();
+      if (!manifestAndConfigFound.isPresent()) {
+        return Collections.emptyList();
+      }
+
+      ManifestTemplate manifest = Verify.verifyNotNull(manifestAndConfigFound.get().getManifest());
+      ContainerConfigurationTemplate containerConfig =
+          Verify.verifyNotNull(manifestAndConfigFound.get().getConfig());
+      images.add(
+          JsonToImageTranslator.toImage((BuildableManifestTemplate) manifest, containerConfig));
+    }
+    return images.build();
   }
 }

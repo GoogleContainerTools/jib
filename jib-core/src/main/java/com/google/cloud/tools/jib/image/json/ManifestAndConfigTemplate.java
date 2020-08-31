@@ -43,13 +43,36 @@ public class ManifestAndConfigTemplate implements JsonTemplate {
   @SuppressWarnings("unused")
   private ManifestAndConfigTemplate() {}
 
+  /**
+   * Creates an instance.
+   *
+   * @param manifest the image manifest
+   * @param config the container configuration
+   */
   public ManifestAndConfigTemplate(
       // TODO: switch to BuildableManifestTemplate after we stop supporting V21 manifest.
       ManifestTemplate manifest,
       // TODO: remove @Nullable after we stop supporting V21 manifest.
       @Nullable ContainerConfigurationTemplate config) {
+    this(manifest, config, null);
+  }
+
+  /**
+   * Creates an instance.
+   *
+   * @param manifest the image manifest
+   * @param config the container configuration
+   * @param manifestDigest the digest of the manifest
+   */
+  public ManifestAndConfigTemplate(
+      // TODO: switch to BuildableManifestTemplate after we stop supporting V21 manifest.
+      ManifestTemplate manifest,
+      // TODO: remove @Nullable after we stop supporting V21 manifest.
+      @Nullable ContainerConfigurationTemplate config,
+      @Nullable String manifestDigest) {
     this.manifest = manifest;
     this.config = config;
+    this.manifestDigest = manifestDigest;
   }
 
   /**
