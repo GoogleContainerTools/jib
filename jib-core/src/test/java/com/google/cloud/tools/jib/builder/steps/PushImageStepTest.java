@@ -51,7 +51,7 @@ public class PushImageStepTest {
   @Mock private RegistryClient registryClient;
   @Mock private ContainerConfiguration containerConfig;
 
-  private V22ManifestListTemplate manifestList = new V22ManifestListTemplate();
+  private final V22ManifestListTemplate manifestList = new V22ManifestListTemplate();
 
   @Before
   public void setUp() {
