@@ -43,9 +43,10 @@ public class BuildFiles {
    */
   public static JibContainerBuilder toJibContainerBuilder(Path buildFilePath)
       throws InvalidImageReferenceException, IOException {
-    ObjectMapper om = new ObjectMapper(new YAMLFactory());
+    ObjectMapper yamlObjectMapper = new ObjectMapper(new YAMLFactory());
     BuildFileSpec buildFile =
-        om.readValue(Files.newBufferedReader(buildFilePath, Charsets.UTF_8), BuildFileSpec.class);
+        yamlObjectMapper.readValue(
+            Files.newBufferedReader(buildFilePath, Charsets.UTF_8), BuildFileSpec.class);
     Path projectRoot = buildFilePath.toAbsolutePath().getParent();
 
     JibContainerBuilder containerBuilder;
