@@ -42,7 +42,7 @@ import org.junit.rules.TemporaryFolder;
 
 public class BuildFilesTest {
 
-  @Rule public TemporaryFolder tmp = new TemporaryFolder();
+  @Rule public final TemporaryFolder tmp = new TemporaryFolder();
 
   @Test
   public void testToJibContainerBuilder_allProperties()
@@ -76,7 +76,6 @@ public class BuildFilesTest {
     Assert.assertEquals("scripts", resolvedLayer.getName());
     Assert.assertEquals(
         FileEntriesLayer.builder()
-            .setName("scripts")
             .addEntry(
                 projectRoot.resolve("project/script.sh"), AbsoluteUnixPath.get("/home/script.sh"))
             .build()

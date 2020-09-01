@@ -23,6 +23,7 @@ import com.google.cloud.tools.jib.api.Jib;
 import com.google.cloud.tools.jib.api.JibContainerBuilder;
 import com.google.cloud.tools.jib.api.buildplan.Platform;
 import com.google.common.base.Charsets;
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -44,15 +45,16 @@ public class BuildFiles {
   public static JibContainerBuilder toJibContainerBuilder(Path buildFilePath)
       throws InvalidImageReferenceException, IOException {
     ObjectMapper yamlObjectMapper = new ObjectMapper(new YAMLFactory());
-    BuildFileSpec buildFile =
-        yamlObjectMapper.readValue(
-            Files.newBufferedReader(buildFilePath, Charsets.UTF_8), BuildFileSpec.class);
+    BuildFileSpec buildFile;
+    try (BufferedReader reader = Files.newBufferedReader(buildFilePath, Charsets.UTF_8)) {
+      buildFile = yamlObjectMapper.readValue(reader, BuildFileSpec.class);
+    }
     Path projectRoot = buildFilePath.toAbsolutePath().getParent();
 
     JibContainerBuilder containerBuilder;
     if (buildFile.getFrom().isPresent()) {
       BaseImageSpec from = buildFile.getFrom().get();
-      containerBuilder = Jib.from(buildFile.getFrom().get().getImage());
+      containerBuilder = Jib.from(from.getImage());
       if (!from.getPlatforms().isEmpty()) {
         containerBuilder.setPlatforms(
             from.getPlatforms()
