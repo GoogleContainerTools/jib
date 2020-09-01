@@ -26,8 +26,8 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.UUID;
 import javax.annotation.Nullable;
 import org.junit.rules.ExternalResource;
@@ -65,7 +65,7 @@ public class LocalRegistry extends ExternalResource {
   /** Starts the registry. */
   public void start() throws IOException, InterruptedException {
     // Runs the Docker registry.
-    ArrayList<String> dockerTokens =
+    List<String> dockerTokens =
         Lists.newArrayList(
             "docker", "run", "--rm", "-d", "-p", port + ":5000", "--name", containerName);
     if (username != null && password != null) {
