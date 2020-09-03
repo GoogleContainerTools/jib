@@ -19,6 +19,7 @@ package com.google.cloud.tools.jib.gradle;
 import com.google.cloud.tools.jib.plugins.common.ConfigurationPropertyValidator;
 import com.google.cloud.tools.jib.plugins.common.PropertyNames;
 import com.google.common.collect.ImmutableSet;
+
 import java.util.Collections;
 import java.util.Set;
 import javax.annotation.Nullable;
@@ -27,6 +28,7 @@ import org.gradle.api.Action;
 import org.gradle.api.model.ObjectFactory;
 import org.gradle.api.provider.Property;
 import org.gradle.api.provider.Provider;
+import org.gradle.api.provider.SetProperty;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.Nested;
 import org.gradle.api.tasks.Optional;
@@ -37,13 +39,14 @@ public class TargetImageParameters {
   private final AuthParameters auth;
 
   private Property<String> image;
-  private Set<String> tags = Collections.emptySet();
+  private SetProperty<String> tags;
   @Nullable private String credHelper;
 
   @Inject
   public TargetImageParameters(ObjectFactory objectFactory) {
     auth = objectFactory.newInstance(AuthParameters.class, "to.auth");
     image = objectFactory.property(String.class);
+    tags = objectFactory.setProperty(String.class);
   }
 
   @Input
@@ -65,18 +68,21 @@ public class TargetImageParameters {
   }
 
   @Input
-  @Optional
   public Set<String> getTags() {
     if (System.getProperty(PropertyNames.TO_TAGS) != null) {
       return ImmutableSet.copyOf(
           ConfigurationPropertyValidator.parseListProperty(
               System.getProperty(PropertyNames.TO_TAGS)));
     }
-    return tags;
+    return tags.get();
   }
 
   public void setTags(Set<String> tags) {
-    this.tags = tags;
+    this.tags.set(tags);
+  }
+
+  public void setTags(Provider<Set<String>> tags) {
+    this.tags.set(tags);
   }
 
   @Input

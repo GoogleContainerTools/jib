@@ -1,7 +1,6 @@
 plugins {
   id 'java'
   id 'com.google.cloud.tools.jib' version '2.5.0'
-  id 'com.gorylenko.gradle-git-properties' version '2.2.3'
 }
 
 sourceCompatibility = 1.8
@@ -14,28 +13,3 @@ repositories {
 dependencies {
   compile 'com.google.guava:guava:23.6-jre'
 }
-
-gitProperties {
-  extProperty = 'gitProps' // git properties will be put in a map at project.ext.gitProps
-}
-// make sure the generateGitProperties task always executes (even when git.properties is not changed)
-generateGitProperties.outputs.upToDateWhen { false }
-
-// make sure generateGitProperties task to execute before accessing generated properties
-task printGitProperties(dependsOn: 'generateGitProperties') {
-  doLast {
-    println "git.commit.id.abbrev=" + project.ext.gitProps['git.commit.id.abbrev']
-  }
-}
-jib{
-  to{
-    image = "$project.ext.gitProps['git.commit.id.abbrev']"
-  }
-}
-
-task printJibImage {
-  Provider<String> exampleProvider = project.provider{"hello"}
-  println(exampleProvider)
-}
-
-//jib.to.image = project.ext.gitProps['git.commit.id.abbrev']
