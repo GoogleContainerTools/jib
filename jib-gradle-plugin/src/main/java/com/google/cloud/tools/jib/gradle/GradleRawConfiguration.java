@@ -55,7 +55,7 @@ public class GradleRawConfiguration implements RawConfiguration {
 
   @Override
   public Optional<String> getToImage() {
-    return Optional.ofNullable(jibExtension.getTo().getImage().getOrNull());
+    return Optional.ofNullable(jibExtension.getTo().getImage());
   }
 
   @Override
