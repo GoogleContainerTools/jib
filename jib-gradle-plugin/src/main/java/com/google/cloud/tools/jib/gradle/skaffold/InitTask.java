@@ -52,7 +52,8 @@ public class InitTask extends DefaultTask {
       return;
     }
     SkaffoldInitOutput skaffoldInitOutput = new SkaffoldInitOutput();
-    skaffoldInitOutput.setImage(Preconditions.checkNotNull(jibExtension).getTo().getImage());
+    skaffoldInitOutput.setImage(
+        Preconditions.checkNotNull(jibExtension).getTo().getImage().getOrNull());
     if (!project.equals(project.getRootProject())) {
       skaffoldInitOutput.setProject(project.getName());
     }

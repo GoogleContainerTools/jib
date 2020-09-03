@@ -95,7 +95,7 @@ public class BuildImageTask extends DefaultTask implements JibTask {
     Future<Optional<String>> updateCheckFuture =
         TaskCommon.newUpdateChecker(projectProperties, getLogger());
     try {
-      if (Strings.isNullOrEmpty(jibExtension.getTo().getImage())) {
+      if (Strings.isNullOrEmpty(jibExtension.getTo().getImage().getOrNull())) {
         throw new GradleException(
             HelpfulSuggestions.forToNotConfigured(
                 "Missing target image parameter",

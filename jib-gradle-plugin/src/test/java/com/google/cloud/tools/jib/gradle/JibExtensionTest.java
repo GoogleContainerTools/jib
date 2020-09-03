@@ -71,7 +71,7 @@ public class JibExtensionTest {
 
   @Test
   public void testTo() {
-    Assert.assertNull(testJibExtension.getTo().getImage());
+    Assert.assertNull(testJibExtension.getTo().getImage().getOrNull());
     Assert.assertNull(testJibExtension.getTo().getCredHelper());
 
     testJibExtension.to(
@@ -81,7 +81,7 @@ public class JibExtensionTest {
           to.auth(auth -> auth.setUsername("some username"));
           to.auth(auth -> auth.setPassword("some password"));
         });
-    Assert.assertEquals("some image", testJibExtension.getTo().getImage());
+    Assert.assertEquals("some image", testJibExtension.getTo().getImage().get());
     Assert.assertEquals("some cred helper", testJibExtension.getTo().getCredHelper());
     Assert.assertEquals("some username", testJibExtension.getTo().getAuth().getUsername());
     Assert.assertEquals("some password", testJibExtension.getTo().getAuth().getPassword());
@@ -311,7 +311,7 @@ public class JibExtensionTest {
     Assert.assertEquals("credHelper", testJibExtension.getFrom().getCredHelper());
 
     System.setProperty("jib.to.image", "toImage");
-    Assert.assertEquals("toImage", testJibExtension.getTo().getImage());
+    Assert.assertEquals("toImage", testJibExtension.getTo().getImage().get());
     System.setProperty("jib.to.tags", "tag1,tag2,tag3");
     Assert.assertEquals(
         ImmutableSet.of("tag1", "tag2", "tag3"), testJibExtension.getTo().getTags());

@@ -106,7 +106,7 @@ public class JibExtension {
     ObjectFactory objectFactory = project.getObjects();
 
     from = objectFactory.newInstance(BaseImageParameters.class);
-    to = objectFactory.newInstance(TargetImageParameters.class);
+    to = objectFactory.newInstance(TargetImageParameters.class, objectFactory, project);
     container = objectFactory.newInstance(ContainerParameters.class);
     extraDirectories = objectFactory.newInstance(ExtraDirectoriesParameters.class, project);
     dockerClient = objectFactory.newInstance(DockerClientParameters.class);
