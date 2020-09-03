@@ -13,3 +13,5 @@ repositories {
 dependencies {
   compile 'com.google.guava:guava:23.6-jre'
 }
+
+jib.to.image = 'gcr.io/REPLACE-WITH-YOUR-GCP-PROJECT/image-built-with-jib'
