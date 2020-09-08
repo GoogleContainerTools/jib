@@ -44,10 +44,11 @@ public class TargetImageParameters {
   public TargetImageParameters(ObjectFactory objectFactory) {
     auth = objectFactory.newInstance(AuthParameters.class, "to.auth");
     image = objectFactory.property(String.class);
-    tags = objectFactory.setProperty(String.class);
+    tags = objectFactory.setProperty(String.class).empty();
   }
 
   @Input
+  @Nullable
   public String getImage() {
     if (System.getProperty(PropertyNames.TO_IMAGE) != null) {
       return System.getProperty(PropertyNames.TO_IMAGE);
