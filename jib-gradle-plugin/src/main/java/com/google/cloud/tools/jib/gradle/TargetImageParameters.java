@@ -49,6 +49,7 @@ public class TargetImageParameters {
 
   @Input
   @Nullable
+  @Optional
   public String getImage() {
     if (System.getProperty(PropertyNames.TO_IMAGE) != null) {
       return System.getProperty(PropertyNames.TO_IMAGE);
@@ -61,12 +62,11 @@ public class TargetImageParameters {
   }
 
   public void setImage(Provider<String> image) {
-    if (image != null) {
-      this.image.set(image);
-    }
+    this.image.set(image);
   }
 
   @Input
+  @Optional
   public Set<String> getTags() {
     if (System.getProperty(PropertyNames.TO_TAGS) != null) {
       return ImmutableSet.copyOf(
