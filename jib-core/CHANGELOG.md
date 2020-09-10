@@ -11,6 +11,7 @@ All notable changes to this project will be documented in this file.
 ### Changed
 
 - Upgraded jib-build-plan to 0.4.0. ([#2660](https://github.com/GoogleContainerTools/jib/pull/2660))
+- Previous locally cached base image manifests will be ignored, as the caching mechanism changed to enable multi-platform image building. ([#2730](https://github.com/GoogleContainerTools/jib/pull/2730), [#2711](https://github.com/GoogleContainerTools/jib/pull/2711))
 
 ### Fixed
 
