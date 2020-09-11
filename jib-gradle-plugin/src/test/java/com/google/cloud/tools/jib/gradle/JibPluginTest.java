@@ -23,6 +23,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import org.gradle.api.GradleException;
 import org.gradle.api.Project;
@@ -57,10 +59,30 @@ public class JibPluginTest {
   }
 
   @Rule public final TemporaryFolder testProjectRoot = new TemporaryFolder();
+  @Rule public final TestProject testProject = new TestProject("lazy-evaluation");
 
   @After
   public void tearDown() {
     System.clearProperty(JibPlugin.REQUIRED_VERSION_PROPERTY_NAME);
+  }
+
+  @Test
+  public void testLazyEval() {
+    try {
+      testProject.build(JibPlugin.JIB_EXTENSION_NAME);
+      Assert.fail("expect this to fail");
+    } catch (UnexpectedBuildFailure ex) {
+      String output = ex.getBuildResult().getOutput().trim();
+      System.out.println(output);
+      Pattern pattern =
+          Pattern.compile("Containerizing application to \\u001B\\[36m(.+?)\\u001B\\[0m");
+      Matcher matcher = pattern.matcher(output);
+      String actualImage = "";
+      while (matcher.find()) {
+        actualImage += matcher.group(1);
+      }
+      Assert.assertEquals(actualImage, "updated-value");
+    }
   }
 
   @Test

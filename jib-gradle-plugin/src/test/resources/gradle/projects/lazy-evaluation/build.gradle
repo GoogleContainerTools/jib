@@ -1,0 +1,27 @@
+plugins {
+    id 'java'
+    id 'com.google.cloud.tools.jib'
+}
+
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    compile 'com.google.guava:guava:23.6-jre'
+}
+
+project.ext.value = "original-value"
+
+project.afterEvaluate {
+    project.ext.value = "updated-value"
+}
+
+jib {
+    to {
+        image = project.provider { project.ext.value }
+    }
+}
