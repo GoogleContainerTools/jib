@@ -67,25 +67,6 @@ public class JibPluginTest {
   }
 
   @Test
-  public void testLazyEval() {
-    try {
-      testProject.build(JibPlugin.JIB_EXTENSION_NAME);
-      Assert.fail("expect this to fail");
-    } catch (UnexpectedBuildFailure ex) {
-      String output = ex.getBuildResult().getOutput().trim();
-      System.out.println(output);
-      Pattern pattern =
-          Pattern.compile("Containerizing application to \\u001B\\[36m(.+?)\\u001B\\[0m");
-      Matcher matcher = pattern.matcher(output);
-      String actualImage = "";
-      while (matcher.find()) {
-        actualImage += matcher.group(1);
-      }
-      Assert.assertEquals(actualImage, "updated-value");
-    }
-  }
-
-  @Test
   public void testCheckGradleVersion_pass() throws IOException {
     Assume.assumeTrue(isJava8Runtime());
 
@@ -390,6 +371,39 @@ public class JibPluginTest {
     TaskContainer tasks = project.getTasks();
     KNOWN_JIB_TASKS.forEach(
         taskName -> Assert.assertEquals(taskName, "Jib", tasks.getByPath(taskName).getGroup()));
+  }
+
+  @Test
+  public void testLazyEvalForImageAndTags() {
+    try {
+      testProject.build(JibPlugin.JIB_EXTENSION_NAME);
+      Assert.fail("Expect this to fail");
+    } catch (UnexpectedBuildFailure ex) {
+      String output = ex.getBuildResult().getOutput().trim();
+
+      // Regex to parse through image and tag values from build output.
+      String cyanWordRegex = "\\u001B\\[36m(.+?)\\u001B\\[0m";
+      String cyanTagRegex = "\\u001B\\[36m(.+?):(.+?)\\u001B\\[0m";
+      Pattern pattern =
+          Pattern.compile(
+              "Containerizing application to "
+                  + cyanWordRegex
+                  + ", "
+                  + cyanTagRegex
+                  + ", "
+                  + cyanTagRegex);
+
+      Matcher matcher = pattern.matcher(output);
+      String actualImage = null;
+      ImmutableList<String> actualTags = null;
+      while (matcher.find()) {
+        actualImage = matcher.group(1);
+        actualTags = ImmutableList.of(matcher.group(3), matcher.group(5));
+      }
+
+      Assert.assertEquals(actualImage, "updated");
+      Assert.assertEquals(actualTags, ImmutableList.of("tag-updated", "tag"));
+    }
   }
 
   private Project createProject(String... plugins) {

@@ -14,14 +14,15 @@ dependencies {
     compile 'com.google.guava:guava:23.6-jre'
 }
 
-project.ext.value = "original-value"
+project.ext.value = "original"
 
 project.afterEvaluate {
-    project.ext.value = "updated-value"
+    project.ext.value = "updated"
 }
 
 jib {
     to {
         image = project.provider { project.ext.value }
+        tags = project.provider {["tag-" + project.ext.value, "tag"]}
     }
 }

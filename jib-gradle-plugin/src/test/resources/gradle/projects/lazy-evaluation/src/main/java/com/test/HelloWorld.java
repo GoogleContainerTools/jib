@@ -16,26 +16,21 @@
 
 package com.test;
 
-import dependency.Greeting;
+import com.google.common.io.CharStreams;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.Reader;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 
-/** Example class that uses a dependency and a resource file. */
 public class HelloWorld {
 
-    public static void main(String[] args) throws IOException, URISyntaxException {
-        // 'Greeting' comes from the dependency artfiact.
-        String greeting = Greeting.getGreeting();
-
-        // Gets the contents of the resource file 'world'.
-        ClassLoader classLoader = HelloWorld.class.getClassLoader();
-        Path worldFile = Paths.get(classLoader.getResource("world").toURI());
-        String world = new String(Files.readAllBytes(worldFile), StandardCharsets.UTF_8);
-
-        System.out.println(greeting + ", " + world + ". ");
+  public static void main(String[] args) throws URISyntaxException, IOException {
+    try (Reader reader =
+        new InputStreamReader(
+            HelloWorld.class.getResourceAsStream("/world"), StandardCharsets.UTF_8)) {
+      String world = CharStreams.toString(reader);
+      System.out.println("Hello " + world);
     }
+  }
 }
