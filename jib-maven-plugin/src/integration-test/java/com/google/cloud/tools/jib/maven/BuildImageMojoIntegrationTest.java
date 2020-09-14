@@ -52,12 +52,8 @@ import org.junit.rules.TemporaryFolder;
 public class BuildImageMojoIntegrationTest {
 
   @ClassRule
-  public static final LocalRegistry localRegistry1 =
+  public static final LocalRegistry localRegistry =
       new LocalRegistry(5000, "testuser", "testpassword");
-
-  @ClassRule
-  public static final LocalRegistry localRegistry2 =
-      new LocalRegistry(6000, "testuser2", "testpassword2");
 
   @ClassRule public static final TestProject simpleTestProject = new TestProject("simple");
 
@@ -71,8 +67,6 @@ public class BuildImageMojoIntegrationTest {
   @ClassRule public static final TestProject servlet25Project = new TestProject("war_servlet25");
 
   @ClassRule public static final TestProject springBootProject = new TestProject("spring-boot");
-
-  @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
   private static String getTestImageReference(String label) {
     String nameBase = IntegrationTestingConfiguration.getTestRepositoryLocation() + '/';
@@ -217,18 +211,13 @@ public class BuildImageMojoIntegrationTest {
     return output;
   }
 
-  private static String buildAndRunComplex(
-      String imageReference,
-      String username,
-      String password,
-      LocalRegistry targetRegistry,
-      String pomFile)
+  private static String buildAndRunComplex(String imageReference, String pomFile)
       throws VerificationException, IOException, InterruptedException {
     Verifier verifier = new Verifier(simpleTestProject.getProjectRoot().toString());
     verifier.setSystemProperty("jib.useOnlyProjectCache", "true");
     verifier.setSystemProperty("_TARGET_IMAGE", imageReference);
-    verifier.setSystemProperty("_TARGET_USERNAME", username);
-    verifier.setSystemProperty("_TARGET_PASSWORD", password);
+    verifier.setSystemProperty("_TARGET_USERNAME", "testuser");
+    verifier.setSystemProperty("_TARGET_PASSWORD", "testpassword");
     verifier.setSystemProperty("sendCredentialsOverHttp", "true");
     verifier.setAutoclean(false);
     verifier.addCliOption("-X");
@@ -237,7 +226,7 @@ public class BuildImageMojoIntegrationTest {
     verifier.verifyErrorFreeLog();
 
     // Verify output
-    targetRegistry.pull(imageReference);
+    localRegistry.pull(imageReference);
     assertDockerInspectParameters(imageReference);
     return new Command("docker", "run", "--rm", imageReference).run();
   }
@@ -338,12 +327,14 @@ public class BuildImageMojoIntegrationTest {
     Assert.assertEquals(expected, Splitter.on(",").splitToList(layers).size());
   }
 
+  @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
+
   @Nullable private String detachedContainerName;
 
   @Before
   public void setUp() throws IOException, InterruptedException {
     // Pull distroless to local registry so we can test 'from' credentials
-    localRegistry1.pullAndPushToLocal("gcr.io/distroless/java:latest", "distroless/java");
+    localRegistry.pullAndPushToLocal("gcr.io/distroless/java:latest", "distroless/java");
 
     // Make sure resource file has a consistent value at the beginning of each test
     // (testExecute_simple overwrites it)
@@ -552,11 +543,9 @@ public class BuildImageMojoIntegrationTest {
   @Test
   public void testExecute_complex()
       throws IOException, InterruptedException, VerificationException, DigestException {
-    String targetImage = "localhost:6000/compleximage:maven" + System.nanoTime();
+    String targetImage = "localhost:5000/compleximage:maven" + System.nanoTime();
     Instant before = Instant.now();
-    String output =
-        buildAndRunComplex(
-            targetImage, "testuser2", "testpassword2", localRegistry2, "pom-complex.xml");
+    String output = buildAndRunComplex(targetImage, "pom-complex.xml");
     Assert.assertEquals(
         "Hello, world. An argument.\n1970-01-01T00:00:01Z\nrwxr-xr-x\nrwxrwxrwx\nfoo\ncat\n"
             + "1970-01-01T00:00:01Z\n1970-01-01T00:00:01Z\n"
@@ -581,12 +570,12 @@ public class BuildImageMojoIntegrationTest {
   @Test
   public void testExecute_timestampCustom()
       throws IOException, InterruptedException, VerificationException {
-    String targetImage = "localhost:6000/simpleimage:maven" + System.nanoTime();
+    String targetImage = "localhost:5000/simpleimage:maven" + System.nanoTime();
     String pom = "pom-timestamps-custom.xml";
     Assert.assertEquals(
         "Hello, world. \n2019-06-17T16:30:00Z\nrw-r--r--\nrw-r--r--\n"
             + "foo\ncat\n2019-06-17T16:30:00Z\n2019-06-17T16:30:00Z\n",
-        buildAndRunComplex(targetImage, "testuser2", "testpassword2", localRegistry2, pom));
+        buildAndRunComplex(targetImage, pom));
 
     String inspect =
         new Command("docker", "inspect", "-f", "{{.Created}}", targetImage).run().trim();
@@ -602,25 +591,19 @@ public class BuildImageMojoIntegrationTest {
         "Hello, world. An argument.\n1970-01-01T00:00:01Z\nrwxr-xr-x\nrwxrwxrwx\nfoo\ncat\n"
             + "1970-01-01T00:00:01Z\n1970-01-01T00:00:01Z\n"
             + "-Xms512m\n-Xdebug\nenvvalue1\nenvvalue2\n",
-        buildAndRunComplex(
-            targetImage, "testuser", "testpassword", localRegistry1, "pom-complex.xml"));
+        buildAndRunComplex(targetImage, "pom-complex.xml"));
     assertWorkingDirectory("", targetImage);
   }
 
   @Test
   public void testExecute_complexProperties()
       throws InterruptedException, VerificationException, IOException {
-    String targetImage = "localhost:6000/compleximage:maven" + System.nanoTime();
+    String targetImage = "localhost:5000/compleximage:maven" + System.nanoTime();
     Assert.assertEquals(
         "Hello, world. An argument.\n1970-01-01T00:00:01Z\nrwxr-xr-x\nrwxrwxrwx\nfoo\ncat\n"
             + "1970-01-01T00:00:01Z\n1970-01-01T00:00:01Z\n"
             + "-Xms512m\n-Xdebug\nenvvalue1\nenvvalue2\n",
-        buildAndRunComplex(
-            targetImage,
-            "testuser2",
-            "testpassword2",
-            localRegistry2,
-            "pom-complex-properties.xml"));
+        buildAndRunComplex(targetImage, "pom-complex-properties.xml"));
     assertWorkingDirectory("", targetImage);
   }
 
@@ -636,13 +619,13 @@ public class BuildImageMojoIntegrationTest {
 
   @Test
   public void testExecute_jibRequireVersion_ok() throws VerificationException, IOException {
-    String targetImage = "localhost:6000/simpleimage:maven" + System.nanoTime();
+    String targetImage = "localhost:5000/simpleimage:maven" + System.nanoTime();
 
     Verifier verifier = new Verifier(simpleTestProject.getProjectRoot().toString());
     verifier.setSystemProperty("_TARGET_IMAGE", targetImage);
-    // properties required to push to :6000 for plain pom.xml
-    verifier.setSystemProperty("jib.to.auth.username", "testuser2");
-    verifier.setSystemProperty("jib.to.auth.password", "testpassword2");
+    // properties required to push to :5000 for plain pom.xml
+    verifier.setSystemProperty("jib.to.auth.username", "testuser");
+    verifier.setSystemProperty("jib.to.auth.password", "testpassword");
     verifier.setSystemProperty("sendCredentialsOverHttp", "true");
     verifier.setSystemProperty("jib.allowInsecureRegistries", "true");
     // this test plugin should match 1.0
@@ -653,11 +636,10 @@ public class BuildImageMojoIntegrationTest {
 
   @Test
   public void testExecute_jibRequireVersion_fail() throws IOException {
-    String targetImage = "localhost:6000/simpleimage:maven" + System.nanoTime();
     try {
       Verifier verifier = new Verifier(simpleTestProject.getProjectRoot().toString());
       // other properties aren't required as this should fail due to jib.requiredVersion
-      verifier.setSystemProperty("_TARGET_IMAGE", targetImage);
+      verifier.setSystemProperty("_TARGET_IMAGE", "ignored");
       // this plugin should be > 1.0 and so jib:build should fail
       verifier.setSystemProperty("jib.requiredVersion", "[,1.0]");
       verifier.executeGoals(Arrays.asList("package", "jib:build"));

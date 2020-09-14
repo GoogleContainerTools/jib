@@ -361,7 +361,7 @@ Property | Type | Default | Description
 In this configuration, the image:
 * Is built from a base of `openjdk:alpine` (pulled from Docker Hub)
 * Is pushed to `localhost:5000/my-image:built-with-jib`, `localhost:5000/my-image:tag2`, and `localhost:5000/my-image:latest`
-* Runs by calling `java -Xms512m -Xdebug -Xmy:flag=jib-rules -cp app/libs/*:app/resources:app/classes mypackage.MyApp some args`
+* Runs by calling `java -Dmy.property=example.value -Xms512m -Xdebug -cp app/libs/*:app/resources:app/classes mypackage.MyApp some args`
 * Exposes port 1000 for tcp (default), and ports 2000, 2001, 2002, and 2003 for udp
 * Has two labels (key1:value1 and key2:value2)
 * Is built as OCI format
@@ -381,9 +381,9 @@ In this configuration, the image:
   </to>
   <container>
     <jvmFlags>
+      <jvmFlag>-Dmy.property=example.value</jvmFlag>
       <jvmFlag>-Xms512m</jvmFlag>
       <jvmFlag>-Xdebug</jvmFlag>
-      <jvmFlag>-Xmy:flag=jib-rules</jvmFlag>
     </jvmFlags>
     <mainClass>mypackage.MyApp</mainClass>
     <args>
