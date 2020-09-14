@@ -17,15 +17,16 @@
 package com.google.cloud.tools.jib.gradle;
 
 import com.google.cloud.tools.jib.api.buildplan.ImageFormat;
-import com.google.cloud.tools.jib.plugins.common.PropertyNames;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.*;
-
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Properties;
 import org.gradle.api.Project;
 import org.gradle.testfixtures.ProjectBuilder;
 import org.junit.Assert;
@@ -89,17 +90,16 @@ public class JibExtensionTest {
     // When jib.to.tags is set to a Set<String> that contains a null value.
     HashSet<String> tags = new HashSet<String>();
     tags.add(null);
-    tags.add ("tags1");
+    tags.add("tags1");
     try {
-        testJibExtension.to(
-                to -> {
-                    to.setTags(tags);
-                });
-        testJibExtension.getTo().getTags();
-        Assert.fail("Expect this to fail");
-    }
-    catch (IllegalArgumentException ex){
-        Assert.assertEquals("jib.to.tags has empty tag", ex.getMessage());
+      testJibExtension.to(
+          to -> {
+            to.setTags(tags);
+          });
+      testJibExtension.getTo().getTags();
+      Assert.fail("Expect this to fail");
+    } catch (IllegalArgumentException ex) {
+      Assert.assertEquals("jib.to.tags has empty tag", ex.getMessage());
     }
   }
 

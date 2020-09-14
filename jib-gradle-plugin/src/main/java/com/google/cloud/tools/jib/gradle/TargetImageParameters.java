@@ -21,7 +21,6 @@ import com.google.cloud.tools.jib.plugins.common.PropertyNames;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableSet;
 import java.util.Collections;
-import java.util.List;
 import java.util.Set;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
@@ -63,8 +62,13 @@ public class TargetImageParameters {
   @Optional
   public Set<String> getTags() {
     String property = System.getProperty(PropertyNames.TO_TAGS);
-    Set<String> tags = property != null ? ImmutableSet.copyOf(ConfigurationPropertyValidator.parseListProperty(System.getProperty(PropertyNames.TO_TAGS))): this.tags;
-    if (tags.stream().anyMatch(Strings::isNullOrEmpty)){
+    Set<String> tags =
+        property != null
+            ? ImmutableSet.copyOf(
+                ConfigurationPropertyValidator.parseListProperty(
+                    System.getProperty(PropertyNames.TO_TAGS)))
+            : this.tags;
+    if (tags.stream().anyMatch(Strings::isNullOrEmpty)) {
       String source = property != null ? PropertyNames.TO_TAGS : "jib.to.tags";
       throw new IllegalArgumentException(source + " has empty tag");
     }
