@@ -376,33 +376,31 @@ public class JibPluginTest {
   @Test
   public void testLazyEvalForImageAndTags() {
     try {
-      testProject.build(JibPlugin.JIB_EXTENSION_NAME);
+      testProject.build(JibPlugin.BUILD_IMAGE_TASK_NAME);
       Assert.fail("Expect this to fail");
     } catch (UnexpectedBuildFailure ex) {
       String output = ex.getBuildResult().getOutput().trim();
 
       // Regex to parse through image and tag values from build output.
-      String cyanWordRegex = "\\u001B\\[36m(.+?)\\u001B\\[0m";
-      String cyanTagRegex = "\\u001B\\[36m(.+?):(.+?)\\u001B\\[0m";
+      String cyanImageRegex = "\\u001B\\[36mupdated-image\\u001B\\[0m";
+      String cyanTagRegexFirst = "\\u001B\\[36mupdated-image:updated-tag\\u001B\\[0m";
+      String cyanTagRegexSecond = "\\u001B\\[36mupdated-image:tag2\\u001B\\[0m";
       Pattern pattern =
           Pattern.compile(
               "Containerizing application to "
-                  + cyanWordRegex
+                  + cyanImageRegex
                   + ", "
-                  + cyanTagRegex
+                  + cyanTagRegexFirst
                   + ", "
-                  + cyanTagRegex);
+                  + cyanTagRegexSecond);
 
       Matcher matcher = pattern.matcher(output);
-      String actualImage = null;
-      ImmutableList<String> actualTags = null;
       while (matcher.find()) {
-        actualImage = matcher.group(1);
-        actualTags = ImmutableList.of(matcher.group(3), matcher.group(5));
+        String actualOutput = matcher.group(0).replace("\u001B[36m", "").replace("\u001B[0m", "");
+        Assert.assertEquals(
+            "Containerizing application to updated-image, updated-image:updated-tag, updated-image:tag2",
+            actualOutput);
       }
-
-      Assert.assertEquals(actualImage, "updated");
-      Assert.assertEquals(actualTags, ImmutableList.of("tag-updated", "tag"));
     }
   }
 

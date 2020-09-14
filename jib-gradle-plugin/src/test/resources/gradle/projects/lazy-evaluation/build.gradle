@@ -22,7 +22,7 @@ project.afterEvaluate {
 
 jib {
     to {
-        image = project.provider { project.ext.value }
-        tags = project.provider {["tag-" + project.ext.value, "tag"]}
+        image = project.provider {project.ext.value + "-image"}
+        tags = project.provider {[project.ext.value + "-tag", "tag2"]}
     }
 }
