@@ -86,7 +86,7 @@ public class JibExtensionTest {
     Assert.assertEquals("some username", testJibExtension.getTo().getAuth().getUsername());
     Assert.assertEquals("some password", testJibExtension.getTo().getAuth().getPassword());
 
-    // Testing tags that contains null value.
+    // When jib.to.tags is set to a Set<String> that contains a null value.
     HashSet<String> tags = new HashSet<String>();
     tags.add(null);
     tags.add ("tags1");
