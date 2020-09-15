@@ -39,7 +39,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 public class PlatformSpec {
   private final String architecture;
   private final String os;
-  // TODO: reintroduce platform details
+  // TODO: reintroduce platform details when ready
+  // TODO: revert https://github.com/GoogleContainerTools/jib/pull/2763
 
   /**
    * Constructor for use by jackson to populate this object.
