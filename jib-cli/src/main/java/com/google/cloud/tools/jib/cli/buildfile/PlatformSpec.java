@@ -36,11 +36,11 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  *   - aes
  * }</pre>
  */
+// TODO: reintroduce platform details when ready
+// TODO: revert https://github.com/GoogleContainerTools/jib/pull/2763
 public class PlatformSpec {
   private final String architecture;
   private final String os;
-  // TODO: reintroduce platform details when ready
-  // TODO: revert https://github.com/GoogleContainerTools/jib/pull/2763
 
   /**
    * Constructor for use by jackson to populate this object.
