@@ -384,7 +384,6 @@ public class JibPluginTest {
       Pattern pattern =
           Pattern.compile(
               "Containerizing application to updated-image, updated-image:updated-tag, updated-image:tag2");
-
       Matcher matcher = pattern.matcher(cleanOutput);
       Assert.assertTrue(matcher.find());
     }
