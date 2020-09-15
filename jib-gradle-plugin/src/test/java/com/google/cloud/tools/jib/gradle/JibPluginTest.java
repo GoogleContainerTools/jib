@@ -380,27 +380,13 @@ public class JibPluginTest {
       Assert.fail("Expect this to fail");
     } catch (UnexpectedBuildFailure ex) {
       String output = ex.getBuildResult().getOutput().trim();
-
-      // Regex to parse through image and tag values from build output.
-      String cyanImageRegex = "\\u001B\\[36mupdated-image\\u001B\\[0m";
-      String cyanTagRegexFirst = "\\u001B\\[36mupdated-image:updated-tag\\u001B\\[0m";
-      String cyanTagRegexSecond = "\\u001B\\[36mupdated-image:tag2\\u001B\\[0m";
+      String cleanOutput = output.replace("\u001B[36m", "").replace("\u001B[0m", "");
       Pattern pattern =
           Pattern.compile(
-              "Containerizing application to "
-                  + cyanImageRegex
-                  + ", "
-                  + cyanTagRegexFirst
-                  + ", "
-                  + cyanTagRegexSecond);
+              "Containerizing application to updated-image, updated-image:updated-tag, updated-image:tag2");
 
-      Matcher matcher = pattern.matcher(output);
-      while (matcher.find()) {
-        String actualOutput = matcher.group(0).replace("\u001B[36m", "").replace("\u001B[0m", "");
-        Assert.assertEquals(
-            "Containerizing application to updated-image, updated-image:updated-tag, updated-image:tag2",
-            actualOutput);
-      }
+      Matcher matcher = pattern.matcher(cleanOutput);
+      Assert.assertTrue(matcher.find());
     }
   }
 
