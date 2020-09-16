@@ -91,14 +91,7 @@ public class JibExtensionTest {
   @Test
   public void testToTag_containsNullTag() {
     Assert.assertEquals(Collections.emptySet(), testJibExtension.getTo().getTags());
-    HashSet<String> tagsContainingNull = new HashSet<String>();
-    tagsContainingNull.add(null);
-    tagsContainingNull.add("tag1");
-    testJibExtension.to(
-        to -> {
-          to.setTags(tagsContainingNull);
-        });
-    TargetImageParameters testToParameters = testJibExtension.getTo();
+    TargetImageParameters testToParameters = generateTargetImageParametersWithTags(null, "tag1");
     try {
       testToParameters.getTags();
       Assert.fail();
@@ -110,14 +103,7 @@ public class JibExtensionTest {
   @Test
   public void testToTag_containsEmptyTag() {
     Assert.assertEquals(Collections.emptySet(), testJibExtension.getTo().getTags());
-    HashSet<String> tags = new HashSet<String>();
-    tags.add("");
-    tags.add("tag1");
-    testJibExtension.to(
-        to -> {
-          to.setTags(tags);
-        });
-    TargetImageParameters testToParameters = testJibExtension.getTo();
+    TargetImageParameters testToParameters = generateTargetImageParametersWithTags("", "tag1");
     try {
       testToParameters.getTags();
       Assert.fail();
@@ -129,14 +115,7 @@ public class JibExtensionTest {
   @Test
   public void testToTag_tagContainsWhitespace() {
     Assert.assertEquals(Collections.emptySet(), testJibExtension.getTo().getTags());
-    HashSet<String> tags = new HashSet<String>();
-    tags.add("tag 1");
-    tags.add("tag2");
-    testJibExtension.to(
-        to -> {
-          to.setTags(tags);
-        });
-    TargetImageParameters testToParameters = testJibExtension.getTo();
+    TargetImageParameters testToParameters = generateTargetImageParametersWithTags("tag 1", "tag1");
     try {
       testToParameters.getTags();
       Assert.fail();
@@ -457,5 +436,17 @@ public class JibExtensionTest {
     Assert.assertEquals(
         fakeProject.getProjectDir().toPath().resolve(Paths.get("tar/path")),
         testJibExtension.getOutputPaths().getTarPath());
+  }
+
+  public TargetImageParameters generateTargetImageParametersWithTags(String... tags) {
+    HashSet<String> tagSet = new HashSet<String>();
+    for (String tag : tags) {
+      tagSet.add(tag);
+    }
+    testJibExtension.to(
+        to -> {
+          to.setTags(tagSet);
+        });
+    return testJibExtension.getTo();
   }
 }
