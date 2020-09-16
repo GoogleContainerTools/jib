@@ -89,10 +89,10 @@ public class JibExtensionTest {
   }
 
   @Test
-  public void testToTags_noTagsPropertySet(){
+  public void testToTags_noTagsPropertySet() {
     Assert.assertEquals(Collections.emptySet(), testJibExtension.getTo().getTags());
   }
-  
+
   @Test
   public void testToTags_containsNullTag() {
     TargetImageParameters testToParameters = generateTargetImageParametersWithTags(null, "tag1");
