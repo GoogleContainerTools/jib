@@ -62,17 +62,18 @@ public class TargetImageParameters {
   @Optional
   public Set<String> getTags() {
     String property = System.getProperty(PropertyNames.TO_TAGS);
-    Set<String> tags =
+    Set<String> tagsValue =
         property != null
-            ? ImmutableSet.copyOf(
-                ConfigurationPropertyValidator.parseListProperty(
-                    System.getProperty(PropertyNames.TO_TAGS)))
-            : this.tags;
-    if (tags.stream().anyMatch(Strings::isNullOrEmpty)) {
-      String source = property != null ? PropertyNames.TO_TAGS : "jib.to.tags";
+            ? ImmutableSet.copyOf(ConfigurationPropertyValidator.parseListProperty(property))
+            : tags;
+    String source = property != null ? PropertyNames.TO_TAGS : "jib.to.tags";
+    if (tagsValue.stream().anyMatch(Strings::isNullOrEmpty)) {
       throw new IllegalArgumentException(source + " has empty tag");
     }
-    return tags;
+    if (tagsValue.stream().anyMatch((String str) -> str.contains(" "))) {
+      throw new IllegalArgumentException(source + " has tag containing whitespace");
+    }
+    return tagsValue;
   }
 
   public void setTags(Set<String> tags) {

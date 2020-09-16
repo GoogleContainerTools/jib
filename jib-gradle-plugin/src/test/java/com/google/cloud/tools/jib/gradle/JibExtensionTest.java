@@ -86,20 +86,62 @@ public class JibExtensionTest {
     Assert.assertEquals("some cred helper", testJibExtension.getTo().getCredHelper());
     Assert.assertEquals("some username", testJibExtension.getTo().getAuth().getUsername());
     Assert.assertEquals("some password", testJibExtension.getTo().getAuth().getPassword());
+  }
 
-    // Testing scenario where jib.to.tags is set to a collection containing a null value.
-    HashSet<String> tags = new HashSet<String>();
-    tags.add(null);
-    tags.add("tags1");
+  @Test
+  public void testToTag_containsNullTag() {
+    Assert.assertEquals(Collections.emptySet(), testJibExtension.getTo().getTags());
+    HashSet<String> tagsContainingNull = new HashSet<String>();
+    tagsContainingNull.add(null);
+    tagsContainingNull.add("tag1");
+    testJibExtension.to(
+        to -> {
+          to.setTags(tagsContainingNull);
+        });
+    TargetImageParameters testToParameters = testJibExtension.getTo();
     try {
-      testJibExtension.to(
-          to -> {
-            to.setTags(tags);
-          });
-      testJibExtension.getTo().getTags();
-      Assert.fail("Expect this to fail");
+      testToParameters.getTags();
+      Assert.fail();
     } catch (IllegalArgumentException ex) {
       Assert.assertEquals("jib.to.tags has empty tag", ex.getMessage());
+    }
+  }
+
+  @Test
+  public void testToTag_containsEmptyTag() {
+    Assert.assertEquals(Collections.emptySet(), testJibExtension.getTo().getTags());
+    HashSet<String> tags = new HashSet<String>();
+    tags.add("");
+    tags.add("tag1");
+    testJibExtension.to(
+        to -> {
+          to.setTags(tags);
+        });
+    TargetImageParameters testToParameters = testJibExtension.getTo();
+    try {
+      testToParameters.getTags();
+      Assert.fail();
+    } catch (IllegalArgumentException ex) {
+      Assert.assertEquals("jib.to.tags has empty tag", ex.getMessage());
+    }
+  }
+
+  @Test
+  public void testToTag_tagContainsWhitespace() {
+    Assert.assertEquals(Collections.emptySet(), testJibExtension.getTo().getTags());
+    HashSet<String> tags = new HashSet<String>();
+    tags.add("tag 1");
+    tags.add("tag2");
+    testJibExtension.to(
+        to -> {
+          to.setTags(tags);
+        });
+    TargetImageParameters testToParameters = testJibExtension.getTo();
+    try {
+      testToParameters.getTags();
+      Assert.fail();
+    } catch (IllegalArgumentException ex) {
+      Assert.assertEquals("jib.to.tags has tag containing whitespace", ex.getMessage());
     }
   }
 
