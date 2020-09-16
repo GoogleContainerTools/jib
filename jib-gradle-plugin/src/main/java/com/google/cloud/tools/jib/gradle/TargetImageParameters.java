@@ -70,7 +70,7 @@ public class TargetImageParameters {
     if (tagsValue.stream().anyMatch(Strings::isNullOrEmpty)) {
       throw new IllegalArgumentException(source + " has empty tag");
     }
-    if (tagsValue.stream().anyMatch((String str) -> str.contains(" "))) {
+    if (tagsValue.stream().anyMatch(str -> str.contains(" "))) {
       throw new IllegalArgumentException(source + " has tag containing whitespace");
     }
     return tagsValue;
