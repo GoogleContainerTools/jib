@@ -23,8 +23,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import org.gradle.api.GradleException;
 import org.gradle.api.Project;
@@ -381,11 +379,10 @@ public class JibPluginTest {
     } catch (UnexpectedBuildFailure ex) {
       String output = ex.getBuildResult().getOutput().trim();
       String cleanOutput = output.replace("\u001B[36m", "").replace("\u001B[0m", "");
-      Pattern pattern =
-          Pattern.compile(
-              "Containerizing application to updated-image, updated-image:updated-tag, updated-image:tag2");
-      Matcher matcher = pattern.matcher(cleanOutput);
-      Assert.assertTrue(matcher.find());
+      MatcherAssert.assertThat(
+          cleanOutput,
+          CoreMatchers.containsString(
+              "Containerizing application to updated-image, updated-image:updated-tag, updated-image:tag2"));
     }
   }
 
