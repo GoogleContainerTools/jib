@@ -441,10 +441,7 @@ public class JibExtensionTest {
   }
 
   public TargetImageParameters generateTargetImageParametersWithTags(String... tags) {
-    HashSet<String> tagSet = new HashSet<String>();
-    for (String tag : tags) {
-      tagSet.add(tag);
-    }
+    HashSet<String> set = new HashSet<>(Arrays.asList(tags));
     testJibExtension.to(
         to -> {
           to.setTags(tagSet);
