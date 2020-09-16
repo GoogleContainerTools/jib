@@ -89,8 +89,12 @@ public class JibExtensionTest {
   }
 
   @Test
-  public void testToTags_containsNullTag() {
+  public void testToTags_noTagsPropertySet(){
     Assert.assertEquals(Collections.emptySet(), testJibExtension.getTo().getTags());
+  }
+  
+  @Test
+  public void testToTags_containsNullTag() {
     TargetImageParameters testToParameters = generateTargetImageParametersWithTags(null, "tag1");
     try {
       testToParameters.getTags();
@@ -102,7 +106,6 @@ public class JibExtensionTest {
 
   @Test
   public void testToTags_containsEmptyTag() {
-    Assert.assertEquals(Collections.emptySet(), testJibExtension.getTo().getTags());
     TargetImageParameters testToParameters = generateTargetImageParametersWithTags("", "tag1");
     try {
       testToParameters.getTags();
@@ -114,7 +117,6 @@ public class JibExtensionTest {
 
   @Test
   public void testToTags_tagContainsWhitespace() {
-    Assert.assertEquals(Collections.emptySet(), testJibExtension.getTo().getTags());
     TargetImageParameters testToParameters = generateTargetImageParametersWithTags("tag 1", "tag1");
     try {
       testToParameters.getTags();
