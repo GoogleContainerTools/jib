@@ -444,7 +444,7 @@ public class JibExtensionTest {
     HashSet<String> set = new HashSet<>(Arrays.asList(tags));
     testJibExtension.to(
         to -> {
-          to.setTags(tagSet);
+          to.setTags(set);
         });
     return testJibExtension.getTo();
   }
