@@ -58,7 +58,7 @@ public class FilesTaskV2Test {
   private static String verifyTaskSuccess(TestProject project, @Nullable String moduleName) {
     String taskName =
         ":" + (moduleName == null ? "" : moduleName + ":") + JibPlugin.SKAFFOLD_FILES_TASK_V2_NAME;
-    BuildResult buildResult = project.build(taskName, "-q");
+    BuildResult buildResult = project.build(taskName, "-q", "-D_TARGET_IMAGE=ignored");
     BuildTask jibTask = buildResult.task(taskName);
     Assert.assertNotNull(jibTask);
     Assert.assertEquals(TaskOutcome.SUCCESS, jibTask.getOutcome());
