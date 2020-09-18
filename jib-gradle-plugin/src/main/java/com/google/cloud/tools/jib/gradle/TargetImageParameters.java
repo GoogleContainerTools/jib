@@ -20,15 +20,16 @@ import com.google.cloud.tools.jib.plugins.common.ConfigurationPropertyValidator;
 import com.google.cloud.tools.jib.plugins.common.PropertyNames;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableSet;
-import java.util.Collections;
-import java.util.Set;
-import javax.annotation.Nullable;
-import javax.inject.Inject;
 import org.gradle.api.Action;
 import org.gradle.api.model.ObjectFactory;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.Nested;
 import org.gradle.api.tasks.Optional;
+
+import javax.annotation.Nullable;
+import javax.inject.Inject;
+import java.util.Collections;
+import java.util.Set;
 
 /** Object in {@link JibExtension} that configures the target image. */
 public class TargetImageParameters {
@@ -68,7 +69,7 @@ public class TargetImageParameters {
             : tags;
     String source = property != null ? PropertyNames.TO_TAGS : "jib.to.tags";
     if (tagsValue.stream().anyMatch(Strings::isNullOrEmpty)) {
-      throw new IllegalArgumentException(source + " has empty tag");
+      throw new IllegalArgumentException(source + " has null or empty tag");
     }
     return tagsValue;
   }

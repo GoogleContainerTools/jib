@@ -20,13 +20,6 @@ import com.google.cloud.tools.jib.api.buildplan.ImageFormat;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-import java.io.File;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Properties;
 import org.gradle.api.Project;
 import org.gradle.testfixtures.ProjectBuilder;
 import org.junit.Assert;
@@ -34,6 +27,14 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.contrib.java.lang.system.RestoreSystemProperties;
+
+import java.io.File;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Properties;
 
 /** Tests for {@link JibExtension}. */
 public class JibExtensionTest {
@@ -100,7 +101,7 @@ public class JibExtensionTest {
       testToParameters.getTags();
       Assert.fail();
     } catch (IllegalArgumentException ex) {
-      Assert.assertEquals("jib.to.tags has empty tag", ex.getMessage());
+      Assert.assertEquals("jib.to.tags has null or empty tag", ex.getMessage());
     }
   }
 
@@ -111,7 +112,7 @@ public class JibExtensionTest {
       testToParameters.getTags();
       Assert.fail();
     } catch (IllegalArgumentException ex) {
-      Assert.assertEquals("jib.to.tags has empty tag", ex.getMessage());
+      Assert.assertEquals("jib.to.tags has null or empty tag", ex.getMessage());
     }
   }
 
