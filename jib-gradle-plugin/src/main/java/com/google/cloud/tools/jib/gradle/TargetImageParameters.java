@@ -19,12 +19,14 @@ package com.google.cloud.tools.jib.gradle;
 import com.google.cloud.tools.jib.plugins.common.ConfigurationPropertyValidator;
 import com.google.cloud.tools.jib.plugins.common.PropertyNames;
 import com.google.common.collect.ImmutableSet;
-import java.util.Collections;
 import java.util.Set;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import org.gradle.api.Action;
 import org.gradle.api.model.ObjectFactory;
+import org.gradle.api.provider.Property;
+import org.gradle.api.provider.Provider;
+import org.gradle.api.provider.SetProperty;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.Nested;
 import org.gradle.api.tasks.Optional;
@@ -34,13 +36,15 @@ public class TargetImageParameters {
 
   private final AuthParameters auth;
 
-  @Nullable private String image;
-  private Set<String> tags = Collections.emptySet();
+  private Property<String> image;
+  private SetProperty<String> tags;
   @Nullable private String credHelper;
 
   @Inject
   public TargetImageParameters(ObjectFactory objectFactory) {
     auth = objectFactory.newInstance(AuthParameters.class, "to.auth");
+    image = objectFactory.property(String.class);
+    tags = objectFactory.setProperty(String.class).empty();
   }
 
   @Input
@@ -50,11 +54,15 @@ public class TargetImageParameters {
     if (System.getProperty(PropertyNames.TO_IMAGE) != null) {
       return System.getProperty(PropertyNames.TO_IMAGE);
     }
-    return image;
+    return image.getOrNull();
   }
 
   public void setImage(String image) {
-    this.image = image;
+    this.image.set(image);
+  }
+
+  public void setImage(Provider<String> image) {
+    this.image.set(image);
   }
 
   @Input
@@ -65,11 +73,15 @@ public class TargetImageParameters {
           ConfigurationPropertyValidator.parseListProperty(
               System.getProperty(PropertyNames.TO_TAGS)));
     }
-    return tags;
+    return tags.get();
   }
 
   public void setTags(Set<String> tags) {
-    this.tags = tags;
+    this.tags.set(tags);
+  }
+
+  public void setTags(Provider<Set<String>> tags) {
+    this.tags.set(tags);
   }
 
   @Input
