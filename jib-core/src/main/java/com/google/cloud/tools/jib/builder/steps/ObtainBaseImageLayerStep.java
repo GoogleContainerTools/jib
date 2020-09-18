@@ -33,8 +33,6 @@ import com.google.cloud.tools.jib.registry.RegistryClient;
 import com.google.common.base.Verify;
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.Callable;
 import javax.annotation.Nullable;
@@ -96,17 +94,18 @@ class ObtainBaseImageLayerStep implements Callable<PreparedLayer> {
             new TimerEventDispatcher(
                 buildContext.getEventHandlers(), "Preparing base image layer pullers")) {
 
-      List<ObtainBaseImageLayerStep> layerPullers = new ArrayList<>();
-      for (Layer layer : baseImage.getLayers()) {
-        layerPullers.add(
-            new ObtainBaseImageLayerStep(
-                buildContext,
-                progressEventDispatcher.newChildProducer(),
-                layer,
-                registryClient,
-                blobExistenceChecker));
-      }
-      return ImmutableList.copyOf(layerPullers);
+      return baseImage
+          .getLayers()
+          .stream()
+          .map(
+              layer ->
+                  new ObtainBaseImageLayerStep(
+                      buildContext,
+                      progressEventDispatcher.newChildProducer(),
+                      layer,
+                      registryClient,
+                      blobExistenceChecker))
+          .collect(ImmutableList.toImmutableList());
     }
   }
 

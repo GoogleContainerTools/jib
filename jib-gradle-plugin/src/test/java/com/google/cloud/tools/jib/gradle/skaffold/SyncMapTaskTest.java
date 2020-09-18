@@ -61,6 +61,7 @@ public class SyncMapTaskTest {
     List<String> buildParams = new ArrayList<>();
     buildParams.add(taskName);
     buildParams.add("-q");
+    buildParams.add("-D_TARGET_IMAGE=ignored");
     buildParams.add("--stacktrace");
     if (params != null) {
       buildParams.addAll(params);
