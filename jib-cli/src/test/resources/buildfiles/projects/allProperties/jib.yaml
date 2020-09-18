@@ -9,14 +9,6 @@ from:
   platforms:
     - architecture: "arm"
       os: "linux"
-      os.version: "a"
-      os.features:
-        - "b1"
-        - "b2"
-      variant: "c"
-      features:
-        - "d1"
-        - "d2"
     - architecture: "amd64"
       os: "darwin"
 
