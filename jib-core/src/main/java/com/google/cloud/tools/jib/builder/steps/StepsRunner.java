@@ -433,7 +433,7 @@ public class StepsRunner {
 
                 Future<Image> builtImage =
                     buildImage(baseImage, baseLayers, progressDispatcher.newChildProducer());
-                baseImagesAndBuiltImages.put(entry.getKey() /* base Image */, builtImage);
+                baseImagesAndBuiltImages.put(baseImage, builtImage);
               }
               return baseImagesAndBuiltImages;
             });
