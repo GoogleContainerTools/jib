@@ -136,7 +136,7 @@ public class StepsRunner {
    * Add steps for loading an image to docker daemon.
    *
    * @param dockerClient the docker client to load the image to
-   * @return this StepsRunner instance
+   * @return this
    */
   public StepsRunner dockerLoadSteps(DockerClient dockerClient) {
     rootProgressDescription = "building image to Docker daemon";
@@ -154,7 +154,7 @@ public class StepsRunner {
    * Add steps for writing an image as a tar file archive.
    *
    * @param outputPath the target file path to write the image to
-   * @return this StepsRunner instance
+   * @return this
    */
   public StepsRunner tarBuildSteps(Path outputPath) {
     rootProgressDescription = "building image to tar file";
@@ -169,13 +169,13 @@ public class StepsRunner {
   }
 
   /**
-   * Add steps for pushing an image to a remote registry. The registry is determined by the image
+   * Add steps for pushing images to a remote registry. The registry is determined by the image
    * name.
    *
-   * @return this StepsRunner instance.
+   * @return this
    */
   public StepsRunner registryPushSteps() {
-    rootProgressDescription = "building image to registry";
+    rootProgressDescription = "building images to registry";
     boolean layersRequiredLocally = buildContext.getAlwaysCacheBaseImage();
 
     stepsToRun.add(this::authenticateBearerPush);
