@@ -26,5 +26,5 @@ jib {
 
 def additionalTag = System.getProperty("_ADDITIONAL_TAG")
 if (additionalTag != null && !additionalTag.isEmpty()) {
-  jib.to.tags = [System.getProperty("_ADDITIONAL_TAG")] as Set
+  jib.to.tags = [System.getProperty("_ADDITIONAL_TAG")]
 }
