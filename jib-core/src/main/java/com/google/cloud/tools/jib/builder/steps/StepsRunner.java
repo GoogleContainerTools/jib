@@ -71,17 +71,17 @@ public class StepsRunner {
     private Future<ImagesAndRegistryClient> baseImagesAndRegistryClient = failedFuture();
     private Future<Map<Image, List<Future<PreparedLayer>>>> baseImagesAndLayers = failedFuture();
     @Nullable private List<Future<PreparedLayer>> applicationLayers;
-    private Future<Map<Future<Image>, Image>> builtImagesAndBaseImages = failedFuture();
+    private Future<Map<Image, Future<Image>>> baseImagesAndBuiltImages = failedFuture();
     private Future<ManifestTemplate> manifestListOrSingleManifest = failedFuture();
     private Future<RegistryClient> targetRegistryClient = failedFuture();
-    public Future<Map<Image, List<Future<BlobDescriptor>>>> baseImagesAndLayerPushResults =
+    private Future<Map<Image, List<Future<BlobDescriptor>>>> baseImagesAndLayerPushResults =
         failedFuture();
     private Future<List<Future<BlobDescriptor>>> applicationLayerPushResults = failedFuture();
     private Future<Map<Future<Image>, Future<BlobDescriptor>>>
         builtImagesAndContainerConfigurationPushResults = failedFuture();
     private Future<Optional<ManifestAndDigest<ManifestTemplate>>> manifestCheckResult =
         failedFuture();
-    public Future<List<Future<BuildResult>>> imagePushResults = failedFuture();
+    private Future<List<Future<BuildResult>>> imagePushResults = failedFuture();
     private Future<BuildResult> buildResult = failedFuture();
   }
 
@@ -249,7 +249,7 @@ public class StepsRunner {
 
     results.targetRegistryClient =
         executorService.submit(
-            () -> new AuthenticatePushStep(buildContext, childProgressDispatcherFactory).call());
+            new AuthenticatePushStep(buildContext, childProgressDispatcherFactory));
   }
 
   private void saveDocker() {
@@ -258,6 +258,7 @@ public class StepsRunner {
     Preconditions.checkArgument(dockerClient.isPresent());
     ProgressEventDispatcher.Factory childProgressDispatcherFactory =
         Verify.verifyNotNull(rootProgressDispatcher).newChildProducer();
+
     assignLocalImageResult(
         executorService.submit(
             LocalBaseImageSteps.retrieveDockerDaemonLayersStep(
@@ -272,6 +273,7 @@ public class StepsRunner {
     Preconditions.checkArgument(tarPath.isPresent());
     ProgressEventDispatcher.Factory childProgressDispatcherFactory =
         Verify.verifyNotNull(rootProgressDispatcher).newChildProducer();
+
     assignLocalImageResult(
         executorService.submit(
             LocalBaseImageSteps.retrieveTarLayersStep(
@@ -394,7 +396,8 @@ public class StepsRunner {
   private void buildImages() {
     ProgressEventDispatcher.Factory childProgressDispatcherFactory =
         Verify.verifyNotNull(rootProgressDispatcher).newChildProducer();
-    results.builtImagesAndBaseImages =
+
+    results.baseImagesAndBuiltImages =
         executorService.submit(
             () -> {
               // TODO: ideally, progressDispatcher should be closed at the right moment, after the
@@ -406,11 +409,12 @@ public class StepsRunner {
                   childProgressDispatcherFactory.create(
                       "scheduling building manifests", results.baseImagesAndLayers.get().size());
 
-              Map<Future<Image>, Image> builtImagesAndBaseImages = new HashMap<>();
+              Map<Image, Future<Image>> baseImagesAndBuiltImages = new HashMap<>();
               for (Map.Entry<Image, List<Future<PreparedLayer>>> entry :
                   results.baseImagesAndLayers.get().entrySet()) {
                 ProgressEventDispatcher.Factory progressDispatcherFactory =
                     progressDispatcher.newChildProducer();
+
                 Future<Image> builtImage =
                     executorService.submit(
                         () ->
@@ -422,9 +426,9 @@ public class StepsRunner {
                                         Verify.verifyNotNull(entry.getValue())), // layers
                                     realizeFutures(Verify.verifyNotNull(results.applicationLayers)))
                                 .call());
-                builtImagesAndBaseImages.put(builtImage, entry.getKey() /* base Image */);
+                baseImagesAndBuiltImages.put(entry.getKey() /* base Image */, builtImage);
               }
-              return builtImagesAndBaseImages;
+              return baseImagesAndBuiltImages;
             });
   }
 
@@ -438,7 +442,7 @@ public class StepsRunner {
                 new BuildManifestListOrSingleManifestStep(
                         buildContext,
                         childProgressDispatcherFactory,
-                        realizeFutures(results.builtImagesAndBaseImages.get().keySet()))
+                        realizeFutures(results.baseImagesAndBuiltImages.get().values()))
                     .call());
   }
 
@@ -457,10 +461,10 @@ public class StepsRunner {
               ProgressEventDispatcher progressDispatcher =
                   childProgressDispatcherFactory.create(
                       "scheduling pushing container configurations",
-                      results.builtImagesAndBaseImages.get().size());
+                      results.baseImagesAndBuiltImages.get().size());
 
               Map<Future<Image>, Future<BlobDescriptor>> pushResults = new HashMap<>();
-              for (Future<Image> builtImage : results.builtImagesAndBaseImages.get().keySet()) {
+              for (Future<Image> builtImage : results.baseImagesAndBuiltImages.get().values()) {
                 ProgressEventDispatcher.Factory progressDispatcherFactory =
                     progressDispatcher.newChildProducer();
                 Future<BlobDescriptor> configPushResult =
@@ -523,16 +527,16 @@ public class StepsRunner {
               ProgressEventDispatcher progressDispatcher =
                   childProgressDispatcherFactory.create(
                       "scheduling pushing manifests",
-                      results.builtImagesAndBaseImages.get().size());
+                      results.baseImagesAndBuiltImages.get().size());
 
               realizeFutures(results.applicationLayerPushResults.get());
 
               List<Future<BuildResult>> buildResults = new ArrayList<>();
-              for (Map.Entry<Future<Image>, Image> entry :
-                  results.builtImagesAndBaseImages.get().entrySet()) {
+              for (Map.Entry<Image, Future<Image>> entry :
+                  results.baseImagesAndBuiltImages.get().entrySet()) {
                 buildResults.add(
                     pushImage(
-                        entry.getKey(), entry.getValue(), progressDispatcher.newChildProducer()));
+                        entry.getValue(), entry.getKey(), progressDispatcher.newChildProducer()));
               }
               return buildResults;
             });
@@ -600,10 +604,10 @@ public class StepsRunner {
         executorService.submit(
             () -> {
               Verify.verify(
-                  results.builtImagesAndBaseImages.get().size() == 1,
+                  results.baseImagesAndBuiltImages.get().size() == 1,
                   "multi-platform image building not supported when pushing to Docker engine");
               Image builtImage =
-                  results.builtImagesAndBaseImages.get().keySet().iterator().next().get();
+                  results.baseImagesAndBuiltImages.get().values().iterator().next().get();
               return new LoadDockerStep(
                       buildContext, childProgressDispatcherFactory, dockerClient, builtImage)
                   .call();
@@ -618,10 +622,10 @@ public class StepsRunner {
         executorService.submit(
             () -> {
               Verify.verify(
-                  results.builtImagesAndBaseImages.get().size() == 1,
+                  results.baseImagesAndBuiltImages.get().size() == 1,
                   "multi-platform image building not supported when building a local tar image");
               Image builtImage =
-                  results.builtImagesAndBaseImages.get().keySet().iterator().next().get();
+                  results.baseImagesAndBuiltImages.get().values().iterator().next().get();
 
               return new WriteTarFileStep(
                       buildContext, childProgressDispatcherFactory, outputPath, builtImage)
