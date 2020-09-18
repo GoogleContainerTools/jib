@@ -350,31 +350,36 @@ public class StepsRunner {
       throws InterruptedException, ExecutionException {
     List<Future<PreparedLayer>> preparedLayers = new ArrayList<>();
 
-    for (Layer layer : baseImage.getLayers()) {
-      DescriptorDigest digest = layer.getBlobDescriptor().getDigest();
-      Future<PreparedLayer> preparedLayer = preparedLayersCache.get(digest);
+    try (ProgressEventDispatcher progressDispatcher =
+        progressDispatcherFactory.create(
+            "launching base image layer pullers", baseImage.getLayers().size())) {
+      for (Layer layer : baseImage.getLayers()) {
+        DescriptorDigest digest = layer.getBlobDescriptor().getDigest();
+        Future<PreparedLayer> preparedLayer = preparedLayersCache.get(digest);
 
-      // If we haven't obtained this layer yet, schedule a thread.
-      if (preparedLayer == null) {
-        preparedLayer =
-            executorService.submit(
-                layersRequiredLocally
-                    ? ObtainBaseImageLayerStep.forForcedDownload(
-                        buildContext,
-                        progressDispatcherFactory,
-                        layer,
-                        results.baseImagesAndRegistryClient.get().registryClient)
-                    : ObtainBaseImageLayerStep.forSelectiveDownload(
-                        buildContext,
-                        progressDispatcherFactory,
-                        layer,
-                        results.baseImagesAndRegistryClient.get().registryClient,
-                        results.targetRegistryClient.get()));
-        preparedLayersCache.put(digest, preparedLayer);
+        if (preparedLayer != null) {
+          progressDispatcher.dispatchProgress(1);
+        } else { // If we haven't obtained this layer yet, launcher a puller.
+          preparedLayer =
+              executorService.submit(
+                  layersRequiredLocally
+                      ? ObtainBaseImageLayerStep.forForcedDownload(
+                          buildContext,
+                          progressDispatcher.newChildProducer(),
+                          layer,
+                          results.baseImagesAndRegistryClient.get().registryClient)
+                      : ObtainBaseImageLayerStep.forSelectiveDownload(
+                          buildContext,
+                          progressDispatcher.newChildProducer(),
+                          layer,
+                          results.baseImagesAndRegistryClient.get().registryClient,
+                          results.targetRegistryClient.get()));
+          preparedLayersCache.put(digest, preparedLayer);
+        }
+        preparedLayers.add(preparedLayer);
       }
-      preparedLayers.add(preparedLayer);
+      return preparedLayers;
     }
-    return preparedLayers;
   }
 
   private void pushBaseImagesLayers() {
