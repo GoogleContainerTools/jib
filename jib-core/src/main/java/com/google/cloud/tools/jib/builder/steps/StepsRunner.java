@@ -68,21 +68,22 @@ public class StepsRunner {
           new IllegalStateException("invalid usage; required step not configured"));
     }
 
-    private Future<ImagesAndRegistryClient> baseImagesAndRegistryClient = failedFuture();
-    private Future<Map<Image, List<Future<PreparedLayer>>>> baseImagesAndLayers = failedFuture();
     @Nullable private List<Future<PreparedLayer>> applicationLayers;
-    private Future<Map<Image, Future<Image>>> baseImagesAndBuiltImages = failedFuture();
     private Future<ManifestTemplate> manifestListOrSingleManifest = failedFuture();
     private Future<RegistryClient> targetRegistryClient = failedFuture();
-    private Future<Map<Image, List<Future<BlobDescriptor>>>> baseImagesAndLayerPushResults =
-        failedFuture();
     private Future<List<Future<BlobDescriptor>>> applicationLayerPushResults = failedFuture();
-    private Future<Map<Image, Future<BlobDescriptor>>> baseImagesAndContainerConfigPushResults =
-        failedFuture();
     private Future<Optional<ManifestAndDigest<ManifestTemplate>>> manifestCheckResult =
         failedFuture();
     private Future<List<Future<BuildResult>>> imagePushResults = failedFuture();
     private Future<BuildResult> buildResult = failedFuture();
+
+    private Future<ImagesAndRegistryClient> baseImagesAndRegistryClient = failedFuture();
+    private Future<Map<Image, List<Future<PreparedLayer>>>> baseImagesAndLayers = failedFuture();
+    private Future<Map<Image, List<Future<BlobDescriptor>>>> baseImagesAndLayerPushResults =
+        failedFuture();
+    private Future<Map<Image, Future<BlobDescriptor>>> baseImagesAndContainerConfigPushResults =
+        failedFuture();
+    private Future<Map<Image, Future<Image>>> baseImagesAndBuiltImages = failedFuture();
   }
 
   /**
