@@ -77,8 +77,8 @@ public class StepsRunner {
     private Future<Map<Image, List<Future<BlobDescriptor>>>> baseImagesAndLayerPushResults =
         failedFuture();
     private Future<List<Future<BlobDescriptor>>> applicationLayerPushResults = failedFuture();
-    private Future<Map<Future<Image>, Future<BlobDescriptor>>>
-        builtImagesAndContainerConfigurationPushResults = failedFuture();
+    private Future<Map<Image, Future<BlobDescriptor>>> baseImagesAndContainerConfigPushResults =
+        failedFuture();
     private Future<Optional<ManifestAndDigest<ManifestTemplate>>> manifestCheckResult =
         failedFuture();
     private Future<List<Future<BuildResult>>> imagePushResults = failedFuture();
@@ -450,7 +450,7 @@ public class StepsRunner {
     ProgressEventDispatcher.Factory childProgressDispatcherFactory =
         Verify.verifyNotNull(rootProgressDispatcher).newChildProducer();
 
-    results.builtImagesAndContainerConfigurationPushResults =
+    results.baseImagesAndContainerConfigPushResults =
         executorService.submit(
             () -> {
               // TODO: ideally, progressDispatcher should be closed at the right moment, after the
@@ -463,10 +463,12 @@ public class StepsRunner {
                       "scheduling pushing container configurations",
                       results.baseImagesAndBuiltImages.get().size());
 
-              Map<Future<Image>, Future<BlobDescriptor>> pushResults = new HashMap<>();
-              for (Future<Image> builtImage : results.baseImagesAndBuiltImages.get().values()) {
+              Map<Image, Future<BlobDescriptor>> pushResults = new HashMap<>();
+              for (Map.Entry<Image, Future<Image>> entry :
+                  results.baseImagesAndBuiltImages.get().entrySet()) {
                 ProgressEventDispatcher.Factory progressDispatcherFactory =
                     progressDispatcher.newChildProducer();
+
                 Future<BlobDescriptor> configPushResult =
                     executorService.submit(
                         () ->
@@ -474,9 +476,9 @@ public class StepsRunner {
                                     buildContext,
                                     progressDispatcherFactory,
                                     results.targetRegistryClient.get(),
-                                    builtImage.get())
+                                    entry.getValue().get() /* built image */)
                                 .call());
-                pushResults.put(builtImage, configPushResult);
+                pushResults.put(entry.getKey() /* base image */, configPushResult);
               }
               return pushResults;
             });
@@ -550,7 +552,7 @@ public class StepsRunner {
               Verify.verifyNotNull(results.baseImagesAndLayerPushResults.get().get(baseImage)));
 
           Future<BlobDescriptor> containerConfigPushResult =
-              results.builtImagesAndContainerConfigurationPushResults.get().get(builtImage);
+              results.baseImagesAndContainerConfigPushResults.get().get(baseImage);
 
           List<Future<BuildResult>> manifestPushResults =
               scheduleCallables(
