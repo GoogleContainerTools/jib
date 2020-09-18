@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.builder.steps;
 
+import com.google.cloud.tools.jib.api.DescriptorDigest;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.builder.ProgressEventDispatcher;
 import com.google.cloud.tools.jib.builder.steps.LocalBaseImageSteps.LocalImage;
@@ -26,6 +27,7 @@ import com.google.cloud.tools.jib.docker.DockerClient;
 import com.google.cloud.tools.jib.filesystem.TempDirectoryProvider;
 import com.google.cloud.tools.jib.global.JibSystemProperties;
 import com.google.cloud.tools.jib.image.Image;
+import com.google.cloud.tools.jib.image.Layer;
 import com.google.cloud.tools.jib.image.json.ManifestTemplate;
 import com.google.cloud.tools.jib.registry.ManifestAndDigest;
 import com.google.cloud.tools.jib.registry.RegistryClient;
@@ -325,11 +327,15 @@ public class StepsRunner {
                       "scheduling obtaining base image layers",
                       results.baseImagesAndRegistryClient.get().images.size());
 
+              Map<DescriptorDigest, Future<PreparedLayer>> preparedLayersCache = new HashMap<>();
               Map<Image, List<Future<PreparedLayer>>> baseImagesAndLayers = new HashMap<>();
               for (Image baseImage : results.baseImagesAndRegistryClient.get().images) {
                 List<Future<PreparedLayer>> layers =
                     obtainBaseImageLayers(
-                        baseImage, layersRequiredLocally, progressDispatcher.newChildProducer());
+                        baseImage,
+                        layersRequiredLocally,
+                        preparedLayersCache,
+                        progressDispatcher.newChildProducer());
                 baseImagesAndLayers.put(baseImage, layers);
               }
               return baseImagesAndLayers;
@@ -339,21 +345,36 @@ public class StepsRunner {
   private List<Future<PreparedLayer>> obtainBaseImageLayers(
       Image baseImage,
       boolean layersRequiredLocally,
+      Map<DescriptorDigest, Future<PreparedLayer>> preparedLayersCache,
       ProgressEventDispatcher.Factory progressDispatcherFactory)
       throws InterruptedException, ExecutionException {
-    return scheduleCallables(
-        layersRequiredLocally
-            ? ObtainBaseImageLayerStep.makeListForForcedDownload(
-                buildContext,
-                progressDispatcherFactory,
-                baseImage,
-                results.baseImagesAndRegistryClient.get().registryClient)
-            : ObtainBaseImageLayerStep.makeListForSelectiveDownload(
-                buildContext,
-                progressDispatcherFactory,
-                baseImage,
-                results.baseImagesAndRegistryClient.get().registryClient,
-                results.targetRegistryClient.get()));
+    List<Future<PreparedLayer>> preparedLayers = new ArrayList<>();
+
+    for (Layer layer : baseImage.getLayers()) {
+      DescriptorDigest digest = layer.getBlobDescriptor().getDigest();
+      Future<PreparedLayer> preparedLayer = preparedLayersCache.get(digest);
+
+      // If we haven't obtained this layer yet, schedule a thread.
+      if (preparedLayer == null) {
+        preparedLayer =
+            executorService.submit(
+                layersRequiredLocally
+                    ? ObtainBaseImageLayerStep.forForcedDownload(
+                        buildContext,
+                        progressDispatcherFactory,
+                        layer,
+                        results.baseImagesAndRegistryClient.get().registryClient)
+                    : ObtainBaseImageLayerStep.forSelectiveDownload(
+                        buildContext,
+                        progressDispatcherFactory,
+                        layer,
+                        results.baseImagesAndRegistryClient.get().registryClient,
+                        results.targetRegistryClient.get()));
+        preparedLayersCache.put(digest, preparedLayer);
+      }
+      preparedLayers.add(preparedLayer);
+    }
+    return preparedLayers;
   }
 
   private void pushBaseImagesLayers() {
