@@ -388,7 +388,7 @@ public class StepsRunner {
             buildContext,
             progressDispatcherFactory,
             results.targetRegistryClient.get(),
-            Verify.verifyNotNull(baseLayers)));
+            baseLayers));
   }
 
   private void buildAndCacheApplicationLayers() {
