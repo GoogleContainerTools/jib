@@ -18,7 +18,6 @@ package com.google.cloud.tools.jib.gradle;
 
 import com.google.cloud.tools.jib.plugins.common.ConfigurationPropertyValidator;
 import com.google.cloud.tools.jib.plugins.common.PropertyNames;
-import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableSet;
 import java.util.List;
 import java.util.Set;
@@ -71,13 +70,18 @@ public class TargetImageParameters {
   @Optional
   public Set<String> getTags() {
     String property = System.getProperty(PropertyNames.TO_TAGS);
-    Set<String> tagsValue =
-        property != null
-            ? ImmutableSet.copyOf(ConfigurationPropertyValidator.parseListProperty(property))
-            : tags.get();
-    String source = property != null ? PropertyNames.TO_TAGS : "jib.to.tags";
-    if (tagsValue.stream().anyMatch(Strings::isNullOrEmpty)) {
-      throw new IllegalArgumentException(source + " has null or empty tag");
+    Set<String> tagsValue;
+    if (property != null) {
+      tagsValue = ImmutableSet.copyOf(ConfigurationPropertyValidator.parseListProperty(property));
+    } else {
+      try {
+        tagsValue = tags.get();
+      } catch (NullPointerException ex) {
+        throw new IllegalArgumentException("jib.to.tags contains null tag");
+      }
+    }
+    if (tagsValue.stream().anyMatch(str -> str.isEmpty())) {
+      throw new IllegalArgumentException("jib.to.tags contains empty tag");
     }
     return tagsValue;
   }

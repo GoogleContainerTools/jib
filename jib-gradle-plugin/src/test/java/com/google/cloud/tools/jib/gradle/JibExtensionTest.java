@@ -27,7 +27,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Properties;
-import java.util.Set;
 import org.gradle.api.Project;
 import org.gradle.testfixtures.ProjectBuilder;
 import org.junit.Assert;
@@ -101,7 +100,7 @@ public class JibExtensionTest {
       testToParameters.getTags();
       Assert.fail();
     } catch (IllegalArgumentException ex) {
-      Assert.assertEquals("jib.to.tags has null or empty tag", ex.getMessage());
+      Assert.assertEquals("jib.to.tags contains null tag", ex.getMessage());
     }
   }
 
@@ -112,7 +111,7 @@ public class JibExtensionTest {
       testToParameters.getTags();
       Assert.fail();
     } catch (IllegalArgumentException ex) {
-      Assert.assertEquals("jib.to.tags has null or empty tag", ex.getMessage());
+      Assert.assertEquals("jib.to.tags contains empty tag", ex.getMessage());
     }
   }
 
