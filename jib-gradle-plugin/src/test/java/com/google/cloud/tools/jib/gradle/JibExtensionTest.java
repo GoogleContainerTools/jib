@@ -27,6 +27,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Properties;
+import java.util.Set;
 import org.gradle.api.Project;
 import org.gradle.testfixtures.ProjectBuilder;
 import org.junit.Assert;

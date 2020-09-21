@@ -18,10 +18,6 @@ package com.google.cloud.tools.jib.cli.buildfile;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.google.common.collect.ImmutableList;
-import java.util.List;
-import java.util.Optional;
-import javax.annotation.Nullable;
 
 /**
  * A yaml block for specifying platforms.
@@ -40,44 +36,26 @@ import javax.annotation.Nullable;
  *   - aes
  * }</pre>
  */
+// TODO: reintroduce platform details when ready
+// TODO: revert https://github.com/GoogleContainerTools/jib/pull/2763
 public class PlatformSpec {
   private final String architecture;
   private final String os;
-  @Nullable private final String osVersion;
-  private final List<String> osFeatures;
-  @Nullable private final String variant;
-  private final List<String> features;
 
   /**
    * Constructor for use by jackson to populate this object.
    *
    * @param architecture the target cpu architecture
    * @param os the target operating system
-   * @param variant the cpu variant
-   * @param features a list of cpu features
-   * @param osVersion the operating system version
-   * @param osFeatures a list of operating system features
    */
   @JsonCreator
   public PlatformSpec(
       @JsonProperty(value = "architecture", required = true) String architecture,
-      @JsonProperty(value = "os", required = true) String os,
-      @JsonProperty("os.version") String osVersion,
-      @JsonProperty("os.features") List<String> osFeatures,
-      @JsonProperty("variant") String variant,
-      @JsonProperty("features") List<String> features) {
+      @JsonProperty(value = "os", required = true) String os) {
     Validator.checkNotNullAndNotEmpty(architecture, "architecture");
     Validator.checkNotNullAndNotEmpty(os, "os");
-    Validator.checkNullOrNotEmpty(osVersion, "os.version");
-    Validator.checkNullOrNonNullNonEmptyEntries(osFeatures, "os.features");
-    Validator.checkNullOrNotEmpty(variant, "variant");
-    Validator.checkNullOrNonNullNonEmptyEntries(features, "features");
     this.architecture = architecture;
     this.os = os;
-    this.osVersion = osVersion;
-    this.osFeatures = (osFeatures == null) ? ImmutableList.of() : osFeatures;
-    this.variant = variant;
-    this.features = (features == null) ? ImmutableList.of() : features;
   }
 
   public String getArchitecture() {
@@ -86,21 +64,5 @@ public class PlatformSpec {
 
   public String getOs() {
     return os;
-  }
-
-  public Optional<String> getOsVersion() {
-    return Optional.ofNullable(osVersion);
-  }
-
-  public List<String> getOsFeatures() {
-    return osFeatures;
-  }
-
-  public Optional<String> getVariant() {
-    return Optional.ofNullable(variant);
-  }
-
-  public List<String> getFeatures() {
-    return features;
   }
 }
