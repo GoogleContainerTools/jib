@@ -317,28 +317,24 @@ public class StepsRunner {
     results.baseImagesAndLayers =
         executorService.submit(
             () -> {
-              // TODO: ideally, progressDispatcher should be closed at the right moment, after the
-              // scheduled threads have completed. However, it can be tricky and cumbersome to track
-              // completion, so it may just be better to delay closing until everything ends. At
-              // least, we must ensure that it's not closed prematurely. (Garbage collection doesn't
-              // auto-close it wit the current implementation.)
-              ProgressEventDispatcher progressDispatcher =
+              try (ProgressEventDispatcher progressDispatcher =
                   childProgressDispatcherFactory.create(
-                      "scheduling obtaining base image layers",
-                      results.baseImagesAndRegistryClient.get().images.size());
+                      "scheduling obtaining base images layers",
+                      results.baseImagesAndRegistryClient.get().images.size())) {
 
-              Map<DescriptorDigest, Future<PreparedLayer>> preparedLayersCache = new HashMap<>();
-              Map<Image, List<Future<PreparedLayer>>> baseImagesAndLayers = new HashMap<>();
-              for (Image baseImage : results.baseImagesAndRegistryClient.get().images) {
-                List<Future<PreparedLayer>> layers =
-                    obtainBaseImageLayers(
-                        baseImage,
-                        layersRequiredLocally,
-                        preparedLayersCache,
-                        progressDispatcher.newChildProducer());
-                baseImagesAndLayers.put(baseImage, layers);
+                Map<DescriptorDigest, Future<PreparedLayer>> preparedLayersCache = new HashMap<>();
+                Map<Image, List<Future<PreparedLayer>>> baseImagesAndLayers = new HashMap<>();
+                for (Image baseImage : results.baseImagesAndRegistryClient.get().images) {
+                  List<Future<PreparedLayer>> layers =
+                      obtainBaseImageLayers(
+                          baseImage,
+                          layersRequiredLocally,
+                          preparedLayersCache,
+                          progressDispatcher.newChildProducer());
+                  baseImagesAndLayers.put(baseImage, layers);
+                }
+                return baseImagesAndLayers;
               }
-              return baseImagesAndLayers;
             });
   }
 
@@ -389,27 +385,23 @@ public class StepsRunner {
     results.baseImagesAndLayerPushResults =
         executorService.submit(
             () -> {
-              // TODO: ideally, progressDispatcher should be closed at the right moment, after the
-              // scheduled threads have completed. However, it can be tricky and cumbersome to track
-              // completion, so it may just be better to delay closing until everything ends. At
-              // least, we must ensure that it's not closed prematurely. (Garbage collection doesn't
-              // auto-close it wit the current implementation.)
-              ProgressEventDispatcher progressDispatcher =
+              try (ProgressEventDispatcher progressDispatcher =
                   childProgressDispatcherFactory.create(
-                      "scheduling pushing base image layers",
-                      results.baseImagesAndLayers.get().size());
+                      "scheduling pushing base images layers",
+                      results.baseImagesAndLayers.get().size())) {
 
-              Map<Image, List<Future<BlobDescriptor>>> layerPushResults = new HashMap<>();
-              for (Map.Entry<Image, List<Future<PreparedLayer>>> entry :
-                  results.baseImagesAndLayers.get().entrySet()) {
-                Image baseImage = entry.getKey();
-                List<Future<PreparedLayer>> baseLayers = entry.getValue();
+                Map<Image, List<Future<BlobDescriptor>>> layerPushResults = new HashMap<>();
+                for (Map.Entry<Image, List<Future<PreparedLayer>>> entry :
+                    results.baseImagesAndLayers.get().entrySet()) {
+                  Image baseImage = entry.getKey();
+                  List<Future<PreparedLayer>> baseLayers = entry.getValue();
 
-                List<Future<BlobDescriptor>> pushResults =
-                    pushBaseImageLayers(baseLayers, progressDispatcher.newChildProducer());
-                layerPushResults.put(baseImage, pushResults);
+                  List<Future<BlobDescriptor>> pushResults =
+                      pushBaseImageLayers(baseLayers, progressDispatcher.newChildProducer());
+                  layerPushResults.put(baseImage, pushResults);
+                }
+                return layerPushResults;
               }
-              return layerPushResults;
             });
   }
 
@@ -422,7 +414,7 @@ public class StepsRunner {
             buildContext,
             progressDispatcherFactory,
             results.targetRegistryClient.get(),
-            Verify.verifyNotNull(baseLayers)));
+            baseLayers));
   }
 
   private void buildAndCacheApplicationLayers() {
@@ -442,26 +434,22 @@ public class StepsRunner {
     results.baseImagesAndBuiltImages =
         executorService.submit(
             () -> {
-              // TODO: ideally, progressDispatcher should be closed at the right moment, after the
-              // scheduled threads have completed. However, it can be tricky and cumbersome to track
-              // completion, so it may just be better to delay closing until everything ends. At
-              // least, we must ensure that it's not closed prematurely. (Garbage collection doesn't
-              // auto-close it wit the current implementation.)
-              ProgressEventDispatcher progressDispatcher =
+              try (ProgressEventDispatcher progressDispatcher =
                   childProgressDispatcherFactory.create(
-                      "scheduling building manifests", results.baseImagesAndLayers.get().size());
+                      "scheduling building manifests", results.baseImagesAndLayers.get().size())) {
 
-              Map<Image, Future<Image>> baseImagesAndBuiltImages = new HashMap<>();
-              for (Map.Entry<Image, List<Future<PreparedLayer>>> entry :
-                  results.baseImagesAndLayers.get().entrySet()) {
-                Image baseImage = entry.getKey();
-                List<Future<PreparedLayer>> baseLayers = entry.getValue();
+                Map<Image, Future<Image>> baseImagesAndBuiltImages = new HashMap<>();
+                for (Map.Entry<Image, List<Future<PreparedLayer>>> entry :
+                    results.baseImagesAndLayers.get().entrySet()) {
+                  Image baseImage = entry.getKey();
+                  List<Future<PreparedLayer>> baseLayers = entry.getValue();
 
-                Future<Image> builtImage =
-                    buildImage(baseImage, baseLayers, progressDispatcher.newChildProducer());
-                baseImagesAndBuiltImages.put(baseImage, builtImage);
+                  Future<Image> builtImage =
+                      buildImage(baseImage, baseLayers, progressDispatcher.newChildProducer());
+                  baseImagesAndBuiltImages.put(baseImage, builtImage);
+                }
+                return baseImagesAndBuiltImages;
               }
-              return baseImagesAndBuiltImages;
             });
   }
 
@@ -501,27 +489,23 @@ public class StepsRunner {
     results.baseImagesAndContainerConfigPushResults =
         executorService.submit(
             () -> {
-              // TODO: ideally, progressDispatcher should be closed at the right moment, after the
-              // scheduled threads have completed. However, it can be tricky and cumbersome to track
-              // completion, so it may just be better to delay closing until everything ends. At
-              // least, we must ensure that it's not closed prematurely. (Garbage collection doesn't
-              // auto-close it wit the current implementation.)
-              ProgressEventDispatcher progressDispatcher =
+              try (ProgressEventDispatcher progressDispatcher =
                   childProgressDispatcherFactory.create(
                       "scheduling pushing container configurations",
-                      results.baseImagesAndBuiltImages.get().size());
+                      results.baseImagesAndBuiltImages.get().size())) {
 
-              Map<Image, Future<BlobDescriptor>> configPushResults = new HashMap<>();
-              for (Map.Entry<Image, Future<Image>> entry :
-                  results.baseImagesAndBuiltImages.get().entrySet()) {
-                Image baseImage = entry.getKey();
-                Future<Image> builtImage = entry.getValue();
+                Map<Image, Future<BlobDescriptor>> configPushResults = new HashMap<>();
+                for (Map.Entry<Image, Future<Image>> entry :
+                    results.baseImagesAndBuiltImages.get().entrySet()) {
+                  Image baseImage = entry.getKey();
+                  Future<Image> builtImage = entry.getValue();
 
-                Future<BlobDescriptor> pushResult =
-                    pushContainerConfiguration(builtImage, progressDispatcher.newChildProducer());
-                configPushResults.put(baseImage, pushResult);
+                  Future<BlobDescriptor> pushResult =
+                      pushContainerConfiguration(builtImage, progressDispatcher.newChildProducer());
+                  configPushResults.put(baseImage, pushResult);
+                }
+                return configPushResults;
               }
-              return configPushResults;
             });
   }
 
@@ -574,28 +558,24 @@ public class StepsRunner {
     results.imagePushResults =
         executorService.submit(
             () -> {
-              // TODO: ideally, progressDispatcher should be closed at the right moment, after the
-              // scheduled threads have completed. However, it can be tricky and cumbersome to track
-              // completion, so it may just be better to delay closing until everything ends. At
-              // least, we must ensure that it's not closed prematurely. (Garbage collection doesn't
-              // auto-close it wit the current implementation.)
-              ProgressEventDispatcher progressDispatcher =
+              try (ProgressEventDispatcher progressDispatcher =
                   childProgressDispatcherFactory.create(
                       "scheduling pushing manifests",
-                      results.baseImagesAndBuiltImages.get().size());
+                      results.baseImagesAndBuiltImages.get().size())) {
 
-              realizeFutures(results.applicationLayerPushResults.get());
+                realizeFutures(results.applicationLayerPushResults.get());
 
-              List<Future<BuildResult>> buildResults = new ArrayList<>();
-              for (Map.Entry<Image, Future<Image>> entry :
-                  results.baseImagesAndBuiltImages.get().entrySet()) {
-                Image baseImage = entry.getKey();
-                Future<Image> builtImage = entry.getValue();
+                List<Future<BuildResult>> buildResults = new ArrayList<>();
+                for (Map.Entry<Image, Future<Image>> entry :
+                    results.baseImagesAndBuiltImages.get().entrySet()) {
+                  Image baseImage = entry.getKey();
+                  Future<Image> builtImage = entry.getValue();
 
-                buildResults.add(
-                    pushImage(baseImage, builtImage, progressDispatcher.newChildProducer()));
+                  buildResults.add(
+                      pushImage(baseImage, builtImage, progressDispatcher.newChildProducer()));
+                }
+                return buildResults;
               }
-              return buildResults;
             });
   }
 
