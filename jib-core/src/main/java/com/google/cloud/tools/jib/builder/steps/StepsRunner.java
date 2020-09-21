@@ -18,7 +18,6 @@ package com.google.cloud.tools.jib.builder.steps;
 
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.builder.ProgressEventDispatcher;
-import com.google.cloud.tools.jib.builder.ProgressEventDispatcher.Factory;
 import com.google.cloud.tools.jib.builder.steps.LocalBaseImageSteps.LocalImage;
 import com.google.cloud.tools.jib.builder.steps.PullBaseImageStep.ImagesAndRegistryClient;
 import com.google.cloud.tools.jib.configuration.BuildContext;
@@ -187,7 +186,7 @@ public class StepsRunner {
     stepsToRun.add(this::buildManifestListOrSingleManifest);
 
     // push to registry
-    stepsToRun.add(this::pushBaseImageLayers);
+    stepsToRun.add(this::pushBaseImagesLayers);
     stepsToRun.add(this::pushApplicationLayers);
     stepsToRun.add(this::pushContainerConfigurations);
     stepsToRun.add(this::checkManifestInTargetRegistry);
@@ -240,7 +239,7 @@ public class StepsRunner {
     } else {
       // Otherwise default to RegistryImage
       stepsToRun.add(this::pullBaseImages);
-      stepsToRun.add(() -> obtainBaseImageLayers(layersRequiredLocally));
+      stepsToRun.add(() -> obtainBaseImagesLayers(layersRequiredLocally));
     }
   }
 
@@ -309,7 +308,7 @@ public class StepsRunner {
         executorService.submit(new PullBaseImageStep(buildContext, childProgressDispatcherFactory));
   }
 
-  private void obtainBaseImageLayers(boolean layersRequiredLocally) {
+  private void obtainBaseImagesLayers(boolean layersRequiredLocally) {
     ProgressEventDispatcher.Factory childProgressDispatcherFactory =
         Verify.verifyNotNull(rootProgressDispatcher).newChildProducer();
 
@@ -327,28 +326,37 @@ public class StepsRunner {
                       results.baseImagesAndRegistryClient.get().images.size());
 
               Map<Image, List<Future<PreparedLayer>>> baseImagesAndLayers = new HashMap<>();
-              for (Image image : results.baseImagesAndRegistryClient.get().images) {
+              for (Image baseImage : results.baseImagesAndRegistryClient.get().images) {
                 List<Future<PreparedLayer>> layers =
-                    scheduleCallables(
-                        layersRequiredLocally
-                            ? ObtainBaseImageLayerStep.makeListForForcedDownload(
-                                buildContext,
-                                progressDispatcher.newChildProducer(),
-                                image,
-                                results.baseImagesAndRegistryClient.get().registryClient)
-                            : ObtainBaseImageLayerStep.makeListForSelectiveDownload(
-                                buildContext,
-                                progressDispatcher.newChildProducer(),
-                                image,
-                                results.baseImagesAndRegistryClient.get().registryClient,
-                                results.targetRegistryClient.get()));
-                baseImagesAndLayers.put(image, layers);
+                    obtainBaseImageLayers(
+                        baseImage, layersRequiredLocally, progressDispatcher.newChildProducer());
+                baseImagesAndLayers.put(baseImage, layers);
               }
               return baseImagesAndLayers;
             });
   }
 
-  private void pushBaseImageLayers() {
+  private List<Future<PreparedLayer>> obtainBaseImageLayers(
+      Image baseImage,
+      boolean layersRequiredLocally,
+      ProgressEventDispatcher.Factory progressDispatcherFactory)
+      throws InterruptedException, ExecutionException {
+    return scheduleCallables(
+        layersRequiredLocally
+            ? ObtainBaseImageLayerStep.makeListForForcedDownload(
+                buildContext,
+                progressDispatcherFactory,
+                baseImage,
+                results.baseImagesAndRegistryClient.get().registryClient)
+            : ObtainBaseImageLayerStep.makeListForSelectiveDownload(
+                buildContext,
+                progressDispatcherFactory,
+                baseImage,
+                results.baseImagesAndRegistryClient.get().registryClient,
+                results.targetRegistryClient.get()));
+  }
+
+  private void pushBaseImagesLayers() {
     ProgressEventDispatcher.Factory childProgressDispatcherFactory =
         Verify.verifyNotNull(rootProgressDispatcher).newChildProducer();
 
@@ -365,23 +373,30 @@ public class StepsRunner {
                       "scheduling pushing base image layers",
                       results.baseImagesAndLayers.get().size());
 
-              Map<Image, List<Future<BlobDescriptor>>> pushResults = new HashMap<>();
+              Map<Image, List<Future<BlobDescriptor>>> layerPushResults = new HashMap<>();
               for (Map.Entry<Image, List<Future<PreparedLayer>>> entry :
                   results.baseImagesAndLayers.get().entrySet()) {
                 Image baseImage = entry.getKey();
-                List<Future<PreparedLayer>> baseImageLayers = entry.getValue();
+                List<Future<PreparedLayer>> baseLayers = entry.getValue();
 
-                List<Future<BlobDescriptor>> baseImageLayerPushResult =
-                    scheduleCallables(
-                        PushLayerStep.makeList(
-                            buildContext,
-                            progressDispatcher.newChildProducer(),
-                            results.targetRegistryClient.get(),
-                            Verify.verifyNotNull(baseImageLayers)));
-                pushResults.put(baseImage, baseImageLayerPushResult);
+                List<Future<BlobDescriptor>> pushResults =
+                    pushBaseImageLayers(baseLayers, progressDispatcher.newChildProducer());
+                layerPushResults.put(baseImage, pushResults);
               }
-              return pushResults;
+              return layerPushResults;
             });
+  }
+
+  private List<Future<BlobDescriptor>> pushBaseImageLayers(
+      List<Future<PreparedLayer>> baseLayers,
+      ProgressEventDispatcher.Factory progressDispatcherFactory)
+      throws InterruptedException, ExecutionException {
+    return scheduleCallables(
+        PushLayerStep.makeList(
+            buildContext,
+            progressDispatcherFactory,
+            results.targetRegistryClient.get(),
+            Verify.verifyNotNull(baseLayers)));
   }
 
   private void buildAndCacheApplicationLayers() {
@@ -413,24 +428,30 @@ public class StepsRunner {
               Map<Image, Future<Image>> baseImagesAndBuiltImages = new HashMap<>();
               for (Map.Entry<Image, List<Future<PreparedLayer>>> entry :
                   results.baseImagesAndLayers.get().entrySet()) {
-                ProgressEventDispatcher.Factory progressDispatcherFactory =
-                    progressDispatcher.newChildProducer();
+                Image baseImage = entry.getKey();
+                List<Future<PreparedLayer>> baseLayers = entry.getValue();
 
                 Future<Image> builtImage =
-                    executorService.submit(
-                        () ->
-                            new BuildImageStep(
-                                    buildContext,
-                                    progressDispatcherFactory,
-                                    entry.getKey(), // base Image
-                                    realizeFutures(
-                                        Verify.verifyNotNull(entry.getValue())), // layers
-                                    realizeFutures(Verify.verifyNotNull(results.applicationLayers)))
-                                .call());
-                baseImagesAndBuiltImages.put(entry.getKey() /* base Image */, builtImage);
+                    buildImage(baseImage, baseLayers, progressDispatcher.newChildProducer());
+                baseImagesAndBuiltImages.put(baseImage, builtImage);
               }
               return baseImagesAndBuiltImages;
             });
+  }
+
+  private Future<Image> buildImage(
+      Image baseImage,
+      List<Future<PreparedLayer>> baseLayers,
+      ProgressEventDispatcher.Factory progressDispatcherFactory) {
+    return executorService.submit(
+        () ->
+            new BuildImageStep(
+                    buildContext,
+                    progressDispatcherFactory,
+                    baseImage,
+                    realizeFutures(baseLayers),
+                    realizeFutures(Verify.verifyNotNull(results.applicationLayers)))
+                .call());
   }
 
   private void buildManifestListOrSingleManifest() {
@@ -464,25 +485,30 @@ public class StepsRunner {
                       "scheduling pushing container configurations",
                       results.baseImagesAndBuiltImages.get().size());
 
-              Map<Image, Future<BlobDescriptor>> pushResults = new HashMap<>();
+              Map<Image, Future<BlobDescriptor>> configPushResults = new HashMap<>();
               for (Map.Entry<Image, Future<Image>> entry :
                   results.baseImagesAndBuiltImages.get().entrySet()) {
-                ProgressEventDispatcher.Factory progressDispatcherFactory =
-                    progressDispatcher.newChildProducer();
+                Image baseImage = entry.getKey();
+                Future<Image> builtImage = entry.getValue();
 
-                Future<BlobDescriptor> configPushResult =
-                    executorService.submit(
-                        () ->
-                            new PushContainerConfigurationStep(
-                                    buildContext,
-                                    progressDispatcherFactory,
-                                    results.targetRegistryClient.get(),
-                                    entry.getValue().get() /* built image */)
-                                .call());
-                pushResults.put(entry.getKey() /* base image */, configPushResult);
+                Future<BlobDescriptor> pushResult =
+                    pushContainerConfiguration(builtImage, progressDispatcher.newChildProducer());
+                configPushResults.put(baseImage, pushResult);
               }
-              return pushResults;
+              return configPushResults;
             });
+  }
+
+  private Future<BlobDescriptor> pushContainerConfiguration(
+      Future<Image> builtImage, ProgressEventDispatcher.Factory progressDispatcherFactory) {
+    return executorService.submit(
+        () ->
+            new PushContainerConfigurationStep(
+                    buildContext,
+                    progressDispatcherFactory,
+                    results.targetRegistryClient.get(),
+                    builtImage.get())
+                .call());
   }
 
   private void pushApplicationLayers() {
@@ -537,16 +563,20 @@ public class StepsRunner {
               List<Future<BuildResult>> buildResults = new ArrayList<>();
               for (Map.Entry<Image, Future<Image>> entry :
                   results.baseImagesAndBuiltImages.get().entrySet()) {
+                Image baseImage = entry.getKey();
+                Future<Image> builtImage = entry.getValue();
+
                 buildResults.add(
-                    pushImage(
-                        entry.getValue(), entry.getKey(), progressDispatcher.newChildProducer()));
+                    pushImage(baseImage, builtImage, progressDispatcher.newChildProducer()));
               }
               return buildResults;
             });
   }
 
   private Future<BuildResult> pushImage(
-      Future<Image> builtImage, Image baseImage, Factory progressDispatcherFactory) {
+      Image baseImage,
+      Future<Image> builtImage,
+      ProgressEventDispatcher.Factory progressDispatcherFactory) {
     return executorService.submit(
         () -> {
           realizeFutures(
