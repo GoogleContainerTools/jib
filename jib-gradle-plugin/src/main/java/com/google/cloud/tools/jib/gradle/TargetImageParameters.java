@@ -19,6 +19,7 @@ package com.google.cloud.tools.jib.gradle;
 import com.google.cloud.tools.jib.plugins.common.ConfigurationPropertyValidator;
 import com.google.cloud.tools.jib.plugins.common.PropertyNames;
 import com.google.common.collect.ImmutableSet;
+import java.util.List;
 import java.util.Set;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
@@ -74,6 +75,10 @@ public class TargetImageParameters {
               System.getProperty(PropertyNames.TO_TAGS)));
     }
     return tags.get();
+  }
+
+  public void setTags(List<String> tags) {
+    this.tags.set(tags);
   }
 
   public void setTags(Set<String> tags) {
