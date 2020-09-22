@@ -97,7 +97,6 @@ class PullBaseImageStep implements Callable<ImagesAndRegistryClient> {
     // Skip this step if this is a scratch image
     ImageReference imageReference = buildContext.getBaseImageConfiguration().getImage();
     if (imageReference.isScratch()) {
-      Image.Builder imageBuilder = Image.builder(buildContext.getTargetFormat());
       String architecture = "";
       String os = "";
       for (Platform platform : buildContext.getContainerConfiguration().getPlatforms()) {
@@ -105,6 +104,7 @@ class PullBaseImageStep implements Callable<ImagesAndRegistryClient> {
         os += platform.getOs();
         break;
       }
+      Image.Builder imageBuilder = Image.builder(buildContext.getTargetFormat());
       if (!architecture.isEmpty() && !os.isEmpty()) {
         imageBuilder.setArchitecture(architecture).setOs(os);
       }

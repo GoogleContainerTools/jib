@@ -237,6 +237,8 @@ public class JibIntegrationTest {
     Assert.assertFalse(
         "docker inspect output contained layers: " + inspectOutput,
         inspectOutput.contains("\"Layers\": ["));
+
+    // Check that resulting image has specified architecture and os set.
     Assert.assertTrue(inspectOutput.contains("\"Architecture\": \"arm64\""));
     Assert.assertTrue(inspectOutput.contains("\"Os\": \"linux\""));
   }

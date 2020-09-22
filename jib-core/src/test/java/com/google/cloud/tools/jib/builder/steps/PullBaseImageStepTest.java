@@ -95,13 +95,11 @@ public class PullBaseImageStepTest {
     ImageReference imageReference = ImageReference.scratch();
     Mockito.when(imageConfiguration.getImage()).thenReturn(imageReference);
     Mockito.when(containerConfig.getPlatforms())
-        .thenReturn(
-            ImmutableSet.of(
-                new Platform("architecture1", "os1"), new Platform("architecture2", "os2")));
+        .thenReturn(ImmutableSet.of(new Platform("architecture", "os")));
     ImagesAndRegistryClient result = pullBaseImageStep.call();
 
-    Assert.assertEquals("architecture1", result.images.get(0).getArchitecture());
-    Assert.assertEquals("os1", result.images.get(0).getOs());
+    Assert.assertEquals("architecture", result.images.get(0).getArchitecture());
+    Assert.assertEquals("os", result.images.get(0).getOs());
   }
 
   @Test
