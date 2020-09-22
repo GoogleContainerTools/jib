@@ -97,9 +97,19 @@ class PullBaseImageStep implements Callable<ImagesAndRegistryClient> {
     // Skip this step if this is a scratch image
     ImageReference imageReference = buildContext.getBaseImageConfiguration().getImage();
     if (imageReference.isScratch()) {
+      Image.Builder imageBuilder = Image.builder(buildContext.getTargetFormat());
+      String architecture = "";
+      String os = "";
+      for (Platform platform : buildContext.getContainerConfiguration().getPlatforms()) {
+        architecture += platform.getArchitecture();
+        os += platform.getOs();
+        break;
+      }
+      if (!architecture.isEmpty() && !os.isEmpty()) {
+        imageBuilder.setArchitecture(architecture).setOs(os);
+      }
       eventHandlers.dispatch(LogEvent.progress("Getting scratch base image..."));
-      return new ImagesAndRegistryClient(
-          Collections.singletonList(Image.builder(buildContext.getTargetFormat()).build()), null);
+      return new ImagesAndRegistryClient(Collections.singletonList(imageBuilder.build()), null);
     }
 
     eventHandlers.dispatch(

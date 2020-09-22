@@ -88,6 +88,23 @@ public class PullBaseImageStepTest {
   }
 
   @Test
+  public void testCall_scratch()
+      throws LayerPropertyNotFoundException, IOException, RegistryException,
+          LayerCountMismatchException, BadContainerConfigurationFormatException,
+          CacheCorruptedException, CredentialRetrievalException {
+    ImageReference imageReference = ImageReference.scratch();
+    Mockito.when(imageConfiguration.getImage()).thenReturn(imageReference);
+    Mockito.when(containerConfig.getPlatforms())
+        .thenReturn(
+            ImmutableSet.of(
+                new Platform("architecture1", "os1"), new Platform("architecture2", "os2")));
+    ImagesAndRegistryClient result = pullBaseImageStep.call();
+
+    Assert.assertEquals("architecture1", result.images.get(0).getArchitecture());
+    Assert.assertEquals("os1", result.images.get(0).getOs());
+  }
+
+  @Test
   public void testCall_digestBaseImage()
       throws LayerPropertyNotFoundException, IOException, RegistryException,
           LayerCountMismatchException, BadContainerConfigurationFormatException,

@@ -17,8 +17,10 @@
 package com.google.cloud.tools.jib.api;
 
 import com.google.cloud.tools.jib.Command;
+import com.google.cloud.tools.jib.api.buildplan.Platform;
 import com.google.cloud.tools.jib.registry.LocalRegistry;
 import com.google.cloud.tools.jib.registry.ManifestPullerIntegrationTest;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.io.Resources;
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -225,7 +227,9 @@ public class JibIntegrationTest {
           CacheDirectoryCreationException {
     ImageReference targetImageReference =
         ImageReference.of("localhost:5000", "jib-core", "basic-scratch");
-    Jib.fromScratch().containerize(getLocalRegistryContainerizer(targetImageReference));
+    Jib.fromScratch()
+        .setPlatforms(ImmutableSet.of(new Platform("arm64", "linux")))
+        .containerize(getLocalRegistryContainerizer(targetImageReference));
 
     // Check that resulting image has no layers
     localRegistry.pull(targetImageReference.toString());
@@ -233,6 +237,8 @@ public class JibIntegrationTest {
     Assert.assertFalse(
         "docker inspect output contained layers: " + inspectOutput,
         inspectOutput.contains("\"Layers\": ["));
+    Assert.assertTrue(inspectOutput.contains("\"Architecture\": \"arm64\""));
+    Assert.assertTrue(inspectOutput.contains("\"Os\": \"linux\""));
   }
 
   @Test
