@@ -98,21 +98,26 @@ public class StepsRunnerTest {
     // Pretend that a thread pulling base images returned some (meaningless) result.
     stepsRunner.pullBaseImages(progressDispatcherFactory);
 
-    DigestOnlyLayer layer1 =
-        new DigestOnlyLayer(
-            DescriptorDigest.fromHash(
-                "1111111111111111111111111111111111111111111111111111111111111111"));
-    DigestOnlyLayer layer2 =
-        new DigestOnlyLayer(
-            DescriptorDigest.fromHash(
-                "2222222222222222222222222222222222222222222222222222222222222222"));
-    DigestOnlyLayer layer3 =
-        new DigestOnlyLayer(
-            DescriptorDigest.fromHash(
-                "3333333333333333333333333333333333333333333333333333333333333333"));
+    DescriptorDigest digest1 =
+        DescriptorDigest.fromHash(
+            "1111111111111111111111111111111111111111111111111111111111111111");
+    DescriptorDigest digest2 =
+        DescriptorDigest.fromHash(
+            "2222222222222222222222222222222222222222222222222222222222222222");
+    DescriptorDigest digest3 =
+        DescriptorDigest.fromHash(
+            "3333333333333333333333333333333333333333333333333333333333333333");
+    DigestOnlyLayer layer1 = new DigestOnlyLayer(digest1);
+    DigestOnlyLayer layer2 = new DigestOnlyLayer(digest2);
+    DigestOnlyLayer layer3 = new DigestOnlyLayer(digest3);
 
+    PreparedLayer preparedLayer1 = Mockito.mock(PreparedLayer.class);
+    PreparedLayer preparedLayer2 = Mockito.mock(PreparedLayer.class);
+    PreparedLayer preparedLayer3 = Mockito.mock(PreparedLayer.class);
     Mockito.when(executorService.submit(Mockito.any(ObtainBaseImageLayerStep.class)))
-        .thenReturn(Futures.immediateFuture(null));
+        .thenReturn(Futures.immediateFuture(preparedLayer1))
+        .thenReturn(Futures.immediateFuture(preparedLayer2))
+        .thenReturn(Futures.immediateFuture(preparedLayer3));
 
     Map<DescriptorDigest, Future<PreparedLayer>> preparedLayersCache = new HashMap<>();
 
@@ -122,15 +127,22 @@ public class StepsRunnerTest {
 
     stepsRunner.obtainBaseImageLayers(image, true, preparedLayersCache, progressDispatcherFactory);
     Assert.assertEquals(2, preparedLayersCache.size()); // two new layers cached
+    Assert.assertEquals(preparedLayer1, preparedLayersCache.get(digest1).get());
+    Assert.assertEquals(preparedLayer2, preparedLayersCache.get(digest2).get());
 
     // 2. Should not schedule threads for existing layers.
     stepsRunner.obtainBaseImageLayers(image, true, preparedLayersCache, progressDispatcherFactory);
     Assert.assertEquals(2, preparedLayersCache.size()); // no new layers cached (still 2)
+    Assert.assertEquals(preparedLayer1, preparedLayersCache.get(digest1).get());
+    Assert.assertEquals(preparedLayer2, preparedLayersCache.get(digest2).get());
 
     // 3. Another image with one duplicate layer.
     Mockito.when(image.getLayers()).thenReturn(ImmutableList.of(layer3, layer2));
     stepsRunner.obtainBaseImageLayers(image, true, preparedLayersCache, progressDispatcherFactory);
     Assert.assertEquals(3, preparedLayersCache.size()); // one new layer cached
+    Assert.assertEquals(preparedLayer1, preparedLayersCache.get(digest1).get());
+    Assert.assertEquals(preparedLayer2, preparedLayersCache.get(digest2).get());
+    Assert.assertEquals(preparedLayer3, preparedLayersCache.get(digest3).get());
 
     // Total three threads scheduled for the three unique layers.
     Mockito.verify(executorService, Mockito.times(3))
