@@ -119,13 +119,13 @@ public class StepsRunner {
   private final BuildContext buildContext;
   private final TempDirectoryProvider tempDirectoryProvider = new TempDirectoryProvider();
 
-  // We save steps to run by wrapping each step into a Runnable, only because of the unfortunate
-  // chicken-and-egg situation arising from using ProgressEventDispatcher. The current
-  // ProgressEventDispatcher model requires knowing in advance how many units of work (i.e., steps)
-  // we should perform. That is, to instantiate a root ProgressEventDispatcher instance, we should
-  // know ahead how many steps we will run. However, to instantiate a step, we need a root progress
-  // dispatcher. So, we wrap steps into Runnables and save them to run them later. Then we can count
-  // the number of Runnables and, create a root dispatcher, and run the saved Runnables.
+  // Instead of directly running each step, we first save them as a lambda. This is only because of
+  // the unfortunate chicken-and-egg situation when using ProgressEventDispatcher. The current
+  // ProgressEventDispatcher model requires allocating the total units of work (i.e., steps)
+  // up front. That is, to instantiate a root ProgressEventDispatcher, we should know ahead how many
+  // steps we will run. However, to run a step, we need a root progress dispatcher. So, we take each
+  // step as a lambda and save them to run later. Then we can count the number of lambdas, create a
+  // root dispatcher with the count, and run the saved lambdas using the dispatcher.
   private final List<Consumer<ProgressEventDispatcher.Factory>> stepsToRun = new ArrayList<>();
 
   @Nullable private String rootProgressDescription;
