@@ -100,6 +100,7 @@ public class PullBaseImageStepTest {
 
     Assert.assertEquals("architecture", result.images.get(0).getArchitecture());
     Assert.assertEquals("os", result.images.get(0).getOs());
+    Assert.assertNull(result.registryClient);
   }
 
   @Test
