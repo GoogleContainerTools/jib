@@ -23,12 +23,16 @@ import com.google.cloud.tools.jib.configuration.BuildContext;
 import com.google.cloud.tools.jib.image.DigestOnlyLayer;
 import com.google.cloud.tools.jib.image.Image;
 import com.google.common.collect.ImmutableList;
+import com.google.common.util.concurrent.ForwardingExecutorService;
+import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import java.security.DigestException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import org.junit.Assert;
 import org.junit.Before;
@@ -42,28 +46,56 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class StepsRunnerTest {
 
+  // ListeningExecutorService is annotated @DoNotMock, so define a concrete class.
+  private class MockListeningExecutorService extends ForwardingExecutorService
+      implements ListeningExecutorService {
+
+    @Override
+    public <T> ListenableFuture<T> submit(Callable<T> task) {
+      try {
+        return Futures.immediateFuture(executorService.submit(task).get());
+      } catch (InterruptedException | ExecutionException ex) {
+        throw new IllegalStateException(ex);
+      }
+    }
+
+    @Override
+    public ListenableFuture<?> submit(Runnable task) {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public <T> ListenableFuture<T> submit(Runnable task, T result) {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    protected ExecutorService delegate() {
+      throw new UnsupportedOperationException();
+    }
+  }
+
   @Mock private BuildContext buildContext;
   @Mock private ProgressEventDispatcher.Factory progressDispatcherFactory;
   @Mock private ProgressEventDispatcher progressDispatcher;
-  @Mock private ListeningExecutorService executorService;
+  @Mock private ExecutorService executorService;
 
   private StepsRunner stepsRunner;
 
   @Before
   public void setup() {
-    stepsRunner = new StepsRunner(executorService, buildContext);
+    stepsRunner = new StepsRunner(new MockListeningExecutorService(), buildContext);
+
     Mockito.when(progressDispatcherFactory.create(Mockito.anyString(), Mockito.anyLong()))
         .thenReturn(progressDispatcher);
   }
 
   @Test
-  @SuppressWarnings("unchecked") // by Mockito.mock() on generic types
   public void testObtainBaseImageLayers_skipObtainingDuplicateLayers()
       throws DigestException, InterruptedException, ExecutionException {
-    // Setup: pretend you have retrieved a registry client.
-    ListenableFuture<ImagesAndRegistryClient> future = Mockito.mock(ListenableFuture.class);
-    Mockito.when(future.get()).thenReturn(new ImagesAndRegistryClient(null, null));
-    Mockito.when(executorService.submit(Mockito.any(PullBaseImageStep.class))).thenReturn(future);
+    Mockito.when(executorService.submit(Mockito.any(PullBaseImageStep.class)))
+        .thenReturn(Futures.immediateFuture(new ImagesAndRegistryClient(null, null)));
+    // Pretend that a thread pulling base images returned some (meaningless) result.
     stepsRunner.pullBaseImages(progressDispatcherFactory);
 
     DigestOnlyLayer layer1 =
@@ -80,7 +112,7 @@ public class StepsRunnerTest {
                 "3333333333333333333333333333333333333333333333333333333333333333"));
 
     Mockito.when(executorService.submit(Mockito.any(ObtainBaseImageLayerStep.class)))
-        .thenReturn(Mockito.mock(ListenableFuture.class));
+        .thenReturn(Futures.immediateFuture(null));
 
     Map<DescriptorDigest, Future<PreparedLayer>> preparedLayersCache = new HashMap<>();
 
