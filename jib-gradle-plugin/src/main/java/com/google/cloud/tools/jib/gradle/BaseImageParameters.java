@@ -49,17 +49,18 @@ public class BaseImageParameters {
   @Nested
   @Optional
   public ListProperty<PlatformParameters> getPlatforms() {
-    if (platforms.get().isEmpty()) {
-      PlatformParameters amd64Linux = new PlatformParameters();
-      amd64Linux.setArchitecture("amd64");
-      amd64Linux.setOs("linux");
-
-      ListProperty<PlatformParameters> platforms =
-          objectFactory.listProperty(PlatformParameters.class);
-      platforms.add(amd64Linux);
+    if (!platforms.get().isEmpty()) {
       return platforms;
     }
-    return platforms;
+
+    PlatformParameters amd64Linux = new PlatformParameters();
+    amd64Linux.setArchitecture("amd64");
+    amd64Linux.setOs("linux");
+
+    ListProperty<PlatformParameters> defaultPlatforms =
+        objectFactory.listProperty(PlatformParameters.class);
+    defaultPlatforms.add(amd64Linux);
+    return defaultPlatforms;
   }
 
   public void platforms(Action<? super PlatformParametersSpec> action) {
