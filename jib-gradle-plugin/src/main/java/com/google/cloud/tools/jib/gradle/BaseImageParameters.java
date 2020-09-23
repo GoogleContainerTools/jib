@@ -35,22 +35,30 @@ public class BaseImageParameters {
   private final PlatformParametersSpec platformParametersSpec;
   private final ListProperty<PlatformParameters> platforms;
 
+  private final ObjectFactory objectFactory;
+
   @Inject
   public BaseImageParameters(ObjectFactory objectFactory) {
+    this.objectFactory = objectFactory;
     auth = objectFactory.newInstance(AuthParameters.class, "from.auth");
     platforms = objectFactory.listProperty(PlatformParameters.class).empty();
     platformParametersSpec =
         objectFactory.newInstance(PlatformParametersSpec.class, objectFactory, platforms);
-
-    PlatformParameters platform = new PlatformParameters();
-    platform.setOs("linux");
-    platform.setArchitecture("amd64");
-    platforms.add(platform);
   }
 
   @Nested
   @Optional
   public ListProperty<PlatformParameters> getPlatforms() {
+    if (platforms.get().isEmpty()) {
+      PlatformParameters amd64Linux = new PlatformParameters();
+      amd64Linux.setArchitecture("amd64");
+      amd64Linux.setOs("linux");
+
+      ListProperty<PlatformParameters> platforms =
+          objectFactory.listProperty(PlatformParameters.class);
+      platforms.add(amd64Linux);
+      return platforms;
+    }
     return platforms;
   }
 
