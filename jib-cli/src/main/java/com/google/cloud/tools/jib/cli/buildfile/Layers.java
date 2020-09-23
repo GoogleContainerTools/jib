@@ -19,7 +19,6 @@ package com.google.cloud.tools.jib.cli.buildfile;
 import com.google.cloud.tools.jib.api.buildplan.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.api.buildplan.FileEntriesLayer;
 import com.google.cloud.tools.jib.api.buildplan.FileEntry;
-import com.google.cloud.tools.jib.api.buildplan.LayerObject;
 import com.google.common.annotations.VisibleForTesting;
 import java.io.IOException;
 import java.nio.file.FileSystems;
@@ -44,11 +43,11 @@ class Layers {
    * @param buildRoot the directory to resolve relative paths, usually the directory where the build
    *     config file is located
    * @param layersSpec a layersSpec containing configuration for all layers
-   * @return a {@link List} of {@link LayerObject} to use as part of a buildplan
+   * @return a {@link List} of {@link FileEntriesLayer} to use as part of a jib container build
    * @throws IOException if traversing a directory fails
    */
-  static List<LayerObject> toLayers(Path buildRoot, LayersSpec layersSpec) throws IOException {
-    List<LayerObject> layers = new ArrayList<>();
+  static List<FileEntriesLayer> toLayers(Path buildRoot, LayersSpec layersSpec) throws IOException {
+    List<FileEntriesLayer> layers = new ArrayList<>();
 
     FilePropertiesStack filePropertiesStack = new FilePropertiesStack();
     // base properties

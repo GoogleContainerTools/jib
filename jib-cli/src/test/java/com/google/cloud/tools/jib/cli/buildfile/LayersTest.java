@@ -22,7 +22,6 @@ import com.google.cloud.tools.jib.api.buildplan.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.api.buildplan.FileEntriesLayer;
 import com.google.cloud.tools.jib.api.buildplan.FileEntry;
 import com.google.cloud.tools.jib.api.buildplan.FilePermissions;
-import com.google.cloud.tools.jib.api.buildplan.LayerObject;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.io.Resources;
@@ -32,11 +31,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
-import org.hamcrest.CoreMatchers;
-import org.hamcrest.MatcherAssert;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -48,7 +44,7 @@ public class LayersTest {
   public static List<FileEntriesLayer> parseLayers(Path testDir, int expectedLayerCount)
       throws IOException {
     Path layersSpecYaml = testDir.resolve("layers.yaml");
-    List<LayerObject> layers =
+    List<FileEntriesLayer> layers =
         Layers.toLayers(
             layersSpecYaml.getParent(),
             new ObjectMapper(new YAMLFactory())
@@ -56,12 +52,7 @@ public class LayersTest {
                     Files.newBufferedReader(layersSpecYaml, Charsets.UTF_8), LayersSpec.class));
 
     Assert.assertEquals(expectedLayerCount, layers.size());
-    List<FileEntriesLayer> fileEntriesLayers = new ArrayList<>(expectedLayerCount);
-    for (LayerObject layerObject : layers) {
-      MatcherAssert.assertThat(layerObject, CoreMatchers.instanceOf(FileEntriesLayer.class));
-      fileEntriesLayers.add((FileEntriesLayer) layerObject);
-    }
-    return fileEntriesLayers;
+    return layers;
   }
 
   private static Path getLayersTestRoot(String testName) throws URISyntaxException {
