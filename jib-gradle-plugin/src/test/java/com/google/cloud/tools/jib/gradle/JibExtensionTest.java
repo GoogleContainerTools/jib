@@ -94,11 +94,6 @@ public class JibExtensionTest {
   }
 
   @Test
-  public void testFromPlatforms() {
-    List<PlatformParameters> list = testJibExtension.getFrom().getPlatforms().get();
-  }
-
-  @Test
   public void testTo() {
     Assert.assertNull(testJibExtension.getTo().getImage());
     Assert.assertNull(testJibExtension.getTo().getCredHelper());
