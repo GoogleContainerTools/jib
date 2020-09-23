@@ -88,18 +88,36 @@ public class PullBaseImageStepTest {
   }
 
   @Test
-  public void testCall_scratch()
+  public void testCall_scratch_noPlatformSpecified()
+      throws LayerPropertyNotFoundException, IOException, RegistryException,
+          LayerCountMismatchException, BadContainerConfigurationFormatException,
+          CacheCorruptedException, CredentialRetrievalException {
+    ImageReference imageReference = ImageReference.scratch();
+    Mockito.when(imageConfiguration.getImage()).thenReturn(imageReference);
+    ImagesAndRegistryClient result = pullBaseImageStep.call();
+
+    Assert.assertEquals("slim arch", result.images.get(0).getArchitecture());
+    Assert.assertEquals("fat system", result.images.get(0).getOs());
+    Assert.assertNull(result.registryClient);
+  }
+
+  @Test
+  public void testCall_scratch_multiplePlatformsSpecified()
       throws LayerPropertyNotFoundException, IOException, RegistryException,
           LayerCountMismatchException, BadContainerConfigurationFormatException,
           CacheCorruptedException, CredentialRetrievalException {
     ImageReference imageReference = ImageReference.scratch();
     Mockito.when(imageConfiguration.getImage()).thenReturn(imageReference);
     Mockito.when(containerConfig.getPlatforms())
-        .thenReturn(ImmutableSet.of(new Platform("architecture", "os")));
+        .thenReturn(
+            ImmutableSet.of(
+                new Platform("architecture1", "os1"), new Platform("architecture2", "os2")));
     ImagesAndRegistryClient result = pullBaseImageStep.call();
 
-    Assert.assertEquals("architecture", result.images.get(0).getArchitecture());
-    Assert.assertEquals("os", result.images.get(0).getOs());
+    Assert.assertEquals("architecture1", result.images.get(0).getArchitecture());
+    Assert.assertEquals("os1", result.images.get(0).getOs());
+    Assert.assertEquals("architecture2", result.images.get(1).getArchitecture());
+    Assert.assertEquals("os2", result.images.get(1).getOs());
     Assert.assertNull(result.registryClient);
   }
 

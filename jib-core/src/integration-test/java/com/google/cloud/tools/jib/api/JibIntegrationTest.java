@@ -222,7 +222,7 @@ public class JibIntegrationTest {
   }
 
   @Test
-  public void testScratch()
+  public void testScratch_singlePlatform()
       throws IOException, InterruptedException, ExecutionException, RegistryException,
           CacheDirectoryCreationException {
     ImageReference targetImageReference =
@@ -241,6 +241,25 @@ public class JibIntegrationTest {
     // Check that resulting image has specified architecture and os set.
     Assert.assertTrue(inspectOutput.contains("\"Architecture\": \"arm64\""));
     Assert.assertTrue(inspectOutput.contains("\"Os\": \"linux\""));
+  }
+
+  @Test
+  public void testScratch_multiPlatform()
+      throws IOException, InterruptedException, ExecutionException, RegistryException,
+          CacheDirectoryCreationException {
+    // TODO: Modify this test to check for multiple platforms instead of throwing exception once
+    // multi-platform feature is enabled.
+    ImageReference targetImageReference =
+        ImageReference.of("localhost:5000", "jib-core", "basic-scratch");
+    try {
+      Jib.fromScratch()
+          .setPlatforms(
+              ImmutableSet.of(new Platform("arm64", "linux"), new Platform("amd64", "linux")))
+          .containerize(getLocalRegistryContainerizer(targetImageReference));
+      Assert.fail();
+    } catch (UnsupportedOperationException ex) {
+      Assert.assertEquals("multi-platform image building is not yet supported", ex.getMessage());
+    }
   }
 
   @Test
