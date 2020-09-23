@@ -46,7 +46,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class StepsRunnerTest {
 
-  // ListeningExecutorService is annotated @DoNotMock, so define a concrete class.
+  // ListeningExecutorService is annotated with @DoNotMock, so define a concrete class.
   private class MockListeningExecutorService extends ForwardingExecutorService
       implements ListeningExecutorService {
 
