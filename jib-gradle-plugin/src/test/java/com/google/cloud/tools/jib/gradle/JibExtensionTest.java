@@ -62,11 +62,6 @@ public class JibExtensionTest {
     Assert.assertEquals("amd64", defaultPlatforms.get(0).getArchitecture());
     Assert.assertEquals("linux", defaultPlatforms.get(0).getOs());
 
-    // Ensures calling getPlatforms() again doesn't increase the resulting list.
-    List<PlatformParameters> defaultPlatformsAgain =
-        testJibExtension.getFrom().getPlatforms().get();
-    Assert.assertEquals(1, defaultPlatformsAgain.size());
-
     testJibExtension.from(
         from -> {
           from.setImage("some image");
