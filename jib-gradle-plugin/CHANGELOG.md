@@ -14,6 +14,7 @@ All notable changes to this project will be documented in this file.
 ### Fixed
 
 - Fixed `NullPointerException` during input validation (in Java 9+) when configuring Jib parameters using certain immutable collections (such as `List.of()`). ([#2702](https://github.com/GoogleContainerTools/jib/issues/2702))
+- Fixed an issue that configuring `jib.from.platforms` was always additive to the default `amd64/linux` platform. ([#2783](https://github.com/GoogleContainerTools/jib/issues/2783))
 
 ## 2.5.0
 

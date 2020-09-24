@@ -47,8 +47,7 @@ public class ContainerConfiguration {
      */
     private static final Instant DEFAULT_CREATION_TIME = Instant.EPOCH;
 
-    // note that a LinkedHashSet instead of HashSet has been used so as to preserve the platform
-    // order
+    // LinkedHashSet to preserve the order
     private Set<Platform> platforms =
         new LinkedHashSet<>(Collections.singleton(new Platform("amd64", "linux")));
     private Instant creationTime = DEFAULT_CREATION_TIME;
