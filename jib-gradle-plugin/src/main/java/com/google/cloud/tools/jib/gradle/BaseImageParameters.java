@@ -35,11 +35,8 @@ public class BaseImageParameters {
   private final PlatformParametersSpec platformParametersSpec;
   private final ListProperty<PlatformParameters> platforms;
 
-  private final ObjectFactory objectFactory;
-
   @Inject
   public BaseImageParameters(ObjectFactory objectFactory) {
-    this.objectFactory = objectFactory;
     auth = objectFactory.newInstance(AuthParameters.class, "from.auth");
     platforms = objectFactory.listProperty(PlatformParameters.class);
     platformParametersSpec =
