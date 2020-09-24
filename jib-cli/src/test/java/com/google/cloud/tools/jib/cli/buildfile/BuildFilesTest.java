@@ -157,7 +157,8 @@ public class BuildFilesTest {
 
     JibContainerBuilder jibContainerBuilder =
         BuildFiles.toJibContainerBuilder(
-            Paths.get(resource.toURI()), ImmutableMap.of("replace\nthis", "creationTime: 1234"));
+            Paths.get(resource.toURI()),
+            ImmutableMap.of("replace" + System.lineSeparator() + "this", "creationTime: 1234"));
     ContainerBuildPlan resolved = jibContainerBuilder.toContainerBuildPlan();
     Assert.assertEquals(Instant.ofEpochMilli(1234), resolved.getCreationTime());
   }
