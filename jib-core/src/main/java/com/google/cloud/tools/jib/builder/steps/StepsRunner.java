@@ -327,6 +327,7 @@ public class StepsRunner {
             });
   }
 
+  // This method updates the given "preparedLayersCache" and should not be called concurrently.
   @VisibleForTesting
   List<Future<PreparedLayer>> obtainBaseImageLayers(
       Image baseImage,
