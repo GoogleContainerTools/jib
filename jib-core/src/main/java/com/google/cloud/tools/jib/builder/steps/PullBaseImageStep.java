@@ -99,11 +99,9 @@ class PullBaseImageStep implements Callable<ImagesAndRegistryClient> {
     ImageReference imageReference = buildContext.getBaseImageConfiguration().getImage();
     if (imageReference.isScratch()) {
       ImmutableSet<Platform> platforms = buildContext.getContainerConfiguration().getPlatforms();
+      Verify.verify(!platforms.isEmpty());
+
       eventHandlers.dispatch(LogEvent.progress("Getting scratch base image..."));
-      if (platforms.isEmpty()) {
-        return new ImagesAndRegistryClient(
-            Collections.singletonList(Image.builder(buildContext.getTargetFormat()).build()), null);
-      }
       ImmutableList.Builder<Image> images = ImmutableList.builder();
       for (Platform platform : platforms) {
         Image.Builder imageBuilder = Image.builder(buildContext.getTargetFormat());

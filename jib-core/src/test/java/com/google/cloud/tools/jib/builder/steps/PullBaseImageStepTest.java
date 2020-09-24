@@ -88,7 +88,7 @@ public class PullBaseImageStepTest {
   }
 
   @Test
-  public void testCall_scratch_noPlatformSpecified()
+  public void testCall_scratch_singlePlatform()
       throws LayerPropertyNotFoundException, IOException, RegistryException,
           LayerCountMismatchException, BadContainerConfigurationFormatException,
           CacheCorruptedException, CredentialRetrievalException {
@@ -96,24 +96,25 @@ public class PullBaseImageStepTest {
     Mockito.when(imageConfiguration.getImage()).thenReturn(imageReference);
     ImagesAndRegistryClient result = pullBaseImageStep.call();
 
+    Assert.assertEquals(1, result.images.size());
     Assert.assertEquals("slim arch", result.images.get(0).getArchitecture());
     Assert.assertEquals("fat system", result.images.get(0).getOs());
     Assert.assertNull(result.registryClient);
   }
 
   @Test
-  public void testCall_scratch_multiplePlatformsSpecified()
+  public void testCall_scratch_multiplePlatforms()
       throws LayerPropertyNotFoundException, IOException, RegistryException,
           LayerCountMismatchException, BadContainerConfigurationFormatException,
           CacheCorruptedException, CredentialRetrievalException {
-    ImageReference imageReference = ImageReference.scratch();
-    Mockito.when(imageConfiguration.getImage()).thenReturn(imageReference);
+    Mockito.when(imageConfiguration.getImage()).thenReturn(ImageReference.scratch());
     Mockito.when(containerConfig.getPlatforms())
         .thenReturn(
             ImmutableSet.of(
                 new Platform("architecture1", "os1"), new Platform("architecture2", "os2")));
     ImagesAndRegistryClient result = pullBaseImageStep.call();
 
+    Assert.assertEquals(2, result.images.size());
     Assert.assertEquals("architecture1", result.images.get(0).getArchitecture());
     Assert.assertEquals("os1", result.images.get(0).getOs());
     Assert.assertEquals("architecture2", result.images.get(1).getArchitecture());

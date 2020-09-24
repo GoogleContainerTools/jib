@@ -228,7 +228,7 @@ public class JibIntegrationTest {
     ImageReference targetImageReference =
         ImageReference.of("localhost:5000", "jib-core", "basic-scratch");
     Jib.fromScratch()
-        .setPlatforms(ImmutableSet.of(new Platform("arm64", "linux")))
+        .setPlatforms(ImmutableSet.of(new Platform("arm64", "windows")))
         .containerize(getLocalRegistryContainerizer(targetImageReference));
 
     // Check that resulting image has no layers
@@ -240,7 +240,7 @@ public class JibIntegrationTest {
 
     // Check that resulting image has specified architecture and os set.
     Assert.assertTrue(inspectOutput.contains("\"Architecture\": \"arm64\""));
-    Assert.assertTrue(inspectOutput.contains("\"Os\": \"linux\""));
+    Assert.assertTrue(inspectOutput.contains("\"Os\": \"windows\""));
   }
 
   @Test
@@ -254,7 +254,7 @@ public class JibIntegrationTest {
     try {
       Jib.fromScratch()
           .setPlatforms(
-              ImmutableSet.of(new Platform("arm64", "linux"), new Platform("amd64", "linux")))
+              ImmutableSet.of(new Platform("arm64", "windows"), new Platform("amd32", "windows")))
           .containerize(getLocalRegistryContainerizer(targetImageReference));
       Assert.fail();
     } catch (UnsupportedOperationException ex) {
