@@ -25,6 +25,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 import java.util.Properties;
 import org.gradle.api.Project;
 import org.gradle.testfixtures.ProjectBuilder;
@@ -56,17 +57,35 @@ public class JibExtensionTest {
     Assert.assertNull(testJibExtension.getFrom().getImage());
     Assert.assertNull(testJibExtension.getFrom().getCredHelper());
 
+    List<PlatformParameters> defaultPlatforms = testJibExtension.getFrom().getPlatforms().get();
+    Assert.assertEquals(1, defaultPlatforms.size());
+    Assert.assertEquals("amd64", defaultPlatforms.get(0).getArchitecture());
+    Assert.assertEquals("linux", defaultPlatforms.get(0).getOs());
+
     testJibExtension.from(
         from -> {
           from.setImage("some image");
           from.setCredHelper("some cred helper");
           from.auth(auth -> auth.setUsername("some username"));
           from.auth(auth -> auth.setPassword("some password"));
+          from.platforms(
+              platformSpec -> {
+                platformSpec.platform(
+                    platform -> {
+                      platform.setArchitecture("arm");
+                      platform.setOs("windows");
+                    });
+              });
         });
     Assert.assertEquals("some image", testJibExtension.getFrom().getImage());
     Assert.assertEquals("some cred helper", testJibExtension.getFrom().getCredHelper());
     Assert.assertEquals("some username", testJibExtension.getFrom().getAuth().getUsername());
     Assert.assertEquals("some password", testJibExtension.getFrom().getAuth().getPassword());
+
+    List<PlatformParameters> platforms = testJibExtension.getFrom().getPlatforms().get();
+    Assert.assertEquals(1, platforms.size());
+    Assert.assertEquals("arm", platforms.get(0).getArchitecture());
+    Assert.assertEquals("windows", platforms.get(0).getOs());
   }
 
   @Test
