@@ -15,14 +15,6 @@ from:
   platforms:
     - architecture: "arm"
       os: "linux"
-      os.version: "a"
-      os.features:
-        - "b1"
-        - "b2"
-      variant: "c"
-      features:
-        - "d1"
-        - "d2"
     - architecture: amd64
       os: darwin
 
@@ -136,9 +128,6 @@ a `file` layer consists of 3 parts
    - if `dest` ends with `/` then it is considered a target directory, file will be copied into directory
    - if `dest` doesn't end with `/` then is is the target file location, `src` file will be copied and renamed to `dest`
 
-#### Symlinks
-- 
-
 ### FileProperties
 
 A list of properties that can be user specified for each file in a file layer
@@ -188,11 +177,25 @@ inheritance control in the future.
 * `actual`: use timestamp from file on disk
 * `current`: use time of build
 
-### Multi platform builds
+### Platform
 
-If a buildfile `from` directive contains multiple `platforms`, jib will create a new manifest-list/image-index with entries for each specified platform. The cli will *not* append to an existing manifest list.
+#### Handle sub categories for platforms
+Users should be able to further specify details for selecting platforms such as `os.version`, `os.features`, `variant` and `features`
+```
+platforms:
+  - architecture: "arm"
+    os: "linux"
+    os.version: "a"
+    os.features:
+      - "b1"
+      - "b2"
+    variant: "c"
+    features:
+      - "d1"
+      - "d2"
+```
 
-### Special platform specific layers
+#### Special platform specific layers
 Layer entries can contain platform specific filters that are only applied for builds matching that platform
 
 ```yaml
@@ -204,5 +207,5 @@ entries:
     ...
 ```
 
-### Mark values for erasure
+#### Mark values for erasure
 If a user does not want to inherit specific values from the base image a mechanism for *erasing* them could be useful.
