@@ -38,14 +38,14 @@ public class BaseImageParameters {
   @Inject
   public BaseImageParameters(ObjectFactory objectFactory) {
     auth = objectFactory.newInstance(AuthParameters.class, "from.auth");
-    platforms = objectFactory.listProperty(PlatformParameters.class).empty();
+    platforms = objectFactory.listProperty(PlatformParameters.class);
     platformParametersSpec =
         objectFactory.newInstance(PlatformParametersSpec.class, objectFactory, platforms);
 
-    PlatformParameters platform = new PlatformParameters();
-    platform.setOs("linux");
-    platform.setArchitecture("amd64");
-    platforms.add(platform);
+    PlatformParameters amd64Linux = new PlatformParameters();
+    amd64Linux.setArchitecture("amd64");
+    amd64Linux.setOs("linux");
+    platforms.add(amd64Linux);
   }
 
   @Nested
@@ -55,6 +55,7 @@ public class BaseImageParameters {
   }
 
   public void platforms(Action<? super PlatformParametersSpec> action) {
+    platforms.empty();
     action.execute(platformParametersSpec);
   }
 

@@ -27,11 +27,9 @@ import com.google.cloud.tools.jib.cache.CacheCorruptedException;
 import com.google.cloud.tools.jib.cache.CachedLayer;
 import com.google.cloud.tools.jib.configuration.BuildContext;
 import com.google.cloud.tools.jib.event.EventHandlers;
-import com.google.cloud.tools.jib.image.Image;
 import com.google.cloud.tools.jib.image.Layer;
 import com.google.cloud.tools.jib.registry.RegistryClient;
 import com.google.common.base.Verify;
-import com.google.common.collect.ImmutableList;
 import java.io.IOException;
 import java.util.Optional;
 import java.util.concurrent.Callable;
@@ -48,20 +46,20 @@ class ObtainBaseImageLayerStep implements Callable<PreparedLayer> {
     StateInTarget check(DescriptorDigest digest) throws IOException, RegistryException;
   }
 
-  static ImmutableList<ObtainBaseImageLayerStep> makeListForForcedDownload(
+  static ObtainBaseImageLayerStep forForcedDownload(
       BuildContext buildContext,
       ProgressEventDispatcher.Factory progressEventDispatcherFactory,
-      Image baseImage,
+      Layer layer,
       @Nullable RegistryClient sourceRegistryClient) {
     BlobExistenceChecker noOpChecker = ignored -> StateInTarget.UNKNOWN;
-    return makeList(
-        buildContext, progressEventDispatcherFactory, baseImage, sourceRegistryClient, noOpChecker);
+    return new ObtainBaseImageLayerStep(
+        buildContext, progressEventDispatcherFactory, layer, sourceRegistryClient, noOpChecker);
   }
 
-  static ImmutableList<ObtainBaseImageLayerStep> makeListForSelectiveDownload(
+  static ObtainBaseImageLayerStep forSelectiveDownload(
       BuildContext buildContext,
       ProgressEventDispatcher.Factory progressEventDispatcherFactory,
-      Image baseImage,
+      Layer layer,
       @Nullable RegistryClient sourceRegistryClient,
       RegistryClient targetRegistryClient) {
     Verify.verify(!buildContext.isOffline());
@@ -73,40 +71,12 @@ class ObtainBaseImageLayerStep implements Callable<PreparedLayer> {
                 ? StateInTarget.EXISTING
                 : StateInTarget.MISSING;
 
-    return makeList(
+    return new ObtainBaseImageLayerStep(
         buildContext,
         progressEventDispatcherFactory,
-        baseImage,
+        layer,
         sourceRegistryClient,
         blobExistenceChecker);
-  }
-
-  private static ImmutableList<ObtainBaseImageLayerStep> makeList(
-      BuildContext buildContext,
-      ProgressEventDispatcher.Factory progressEventDispatcherFactory,
-      Image baseImage,
-      @Nullable RegistryClient registryClient,
-      BlobExistenceChecker blobExistenceChecker) {
-    try (ProgressEventDispatcher progressEventDispatcher =
-            progressEventDispatcherFactory.create(
-                "launching base image layer pullers", baseImage.getLayers().size());
-        TimerEventDispatcher ignored =
-            new TimerEventDispatcher(
-                buildContext.getEventHandlers(), "Preparing base image layer pullers")) {
-
-      return baseImage
-          .getLayers()
-          .stream()
-          .map(
-              layer ->
-                  new ObtainBaseImageLayerStep(
-                      buildContext,
-                      progressEventDispatcher.newChildProducer(),
-                      layer,
-                      registryClient,
-                      blobExistenceChecker))
-          .collect(ImmutableList.toImmutableList());
-    }
   }
 
   private final BuildContext buildContext;
