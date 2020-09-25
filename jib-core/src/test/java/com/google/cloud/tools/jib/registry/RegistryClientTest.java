@@ -215,6 +215,93 @@ public class RegistryClientTest {
   }
 
   @Test
+  public void testAuthPullByWwwAuthenticate_bearerAuth()
+      throws IOException, InterruptedException, GeneralSecurityException, URISyntaxException,
+          RegistryException {
+    String tokenResponse = "HTTP/1.1 200 OK\nContent-Length: 26\n\n{\"token\":\"awesome-token!\"}";
+    authServer = new TestWebServer(false, Arrays.asList(tokenResponse), 1);
+
+    String blobResponse = "HTTP/1.1 200 OK\nContent-Length: 5678\n\n";
+    registry = new TestWebServer(false, Arrays.asList(blobResponse), 1);
+
+    RegistryClient registryClient = createRegistryClient(Credential.from("user", "pass"));
+    registryClient.authPullByWwwAuthenticate("Bearer realm=\"" + authServer.getEndpoint() + "\"");
+
+    Optional<BlobDescriptor> digestAndSize = registryClient.checkBlob(digest);
+    Assert.assertEquals(5678, digestAndSize.get().getSize());
+
+    Mockito.verify(eventHandlers).dispatch(logContains("bearer auth succeeded"));
+  }
+
+  @Test
+  public void testAuthPullByWwwAuthenticate_basicAuth()
+      throws IOException, InterruptedException, GeneralSecurityException, URISyntaxException,
+          RegistryException {
+    String blobResponse = "HTTP/1.1 200 OK\nContent-Length: 5678\n\n";
+    registry = new TestWebServer(false, Arrays.asList(blobResponse), 1);
+
+    RegistryClient registryClient = createRegistryClient(Credential.from("user", "pass"));
+    registryClient.authPullByWwwAuthenticate("Basic foo");
+
+    Optional<BlobDescriptor> digestAndSize = registryClient.checkBlob(digest);
+    Assert.assertEquals(5678, digestAndSize.get().getSize());
+
+    MatcherAssert.assertThat(
+        registry.getInputRead(), CoreMatchers.containsString("Authorization: Basic dXNlcjpwYXNz"));
+  }
+
+  @Test
+  public void testAuthPullByWwwAuthenticate_basicAuthRequestedButNullCredential()
+      throws IOException, InterruptedException, GeneralSecurityException, URISyntaxException,
+          RegistryException {
+    String blobResponse = "HTTP/1.1 200 OK\nContent-Length: 5678\n\n";
+    registry = new TestWebServer(false, Arrays.asList(blobResponse), 1);
+
+    RegistryClient registryClient = createRegistryClient(null);
+    registryClient.authPullByWwwAuthenticate("Basic foo");
+
+    Optional<BlobDescriptor> digestAndSize = registryClient.checkBlob(digest);
+    Assert.assertEquals(5678, digestAndSize.get().getSize());
+
+    MatcherAssert.assertThat(
+        registry.getInputRead(), CoreMatchers.not(CoreMatchers.containsString("Authorization:")));
+  }
+
+  @Test
+  public void testAuthPullByWwwAuthenticate_basicAuthRequestedButOAuth2Credential()
+      throws IOException, InterruptedException, GeneralSecurityException, URISyntaxException,
+          RegistryException {
+    String blobResponse = "HTTP/1.1 200 OK\nContent-Length: 5678\n\n";
+    registry = new TestWebServer(false, Arrays.asList(blobResponse), 1);
+
+    Credential credential = Credential.from(Credential.OAUTH2_TOKEN_USER_NAME, "pass");
+    Assert.assertTrue(credential.isOAuth2RefreshToken());
+    RegistryClient registryClient = createRegistryClient(credential);
+    registryClient.authPullByWwwAuthenticate("Basic foo");
+
+    Optional<BlobDescriptor> digestAndSize = registryClient.checkBlob(digest);
+    Assert.assertEquals(5678, digestAndSize.get().getSize());
+
+    MatcherAssert.assertThat(
+        registry.getInputRead(), CoreMatchers.not(CoreMatchers.containsString("Authorization:")));
+  }
+
+  @Test
+  public void testAuthPullByWwwAuthenticate_invalidAuthMethod() {
+    RegistryClient registryClient =
+        RegistryClient.factory(eventHandlers, "server", "foo/bar", null).newRegistryClient();
+    try {
+      registryClient.authPullByWwwAuthenticate("invalid WWW-Authenticate");
+      Assert.fail();
+    } catch (RegistryException ex) {
+      Assert.assertEquals(
+          "Failed to authenticate with registry server/foo/bar because: 'Bearer' was not found in "
+              + "the 'WWW-Authenticate' header, tried to parse: invalid WWW-Authenticate",
+          ex.getMessage());
+    }
+  }
+
+  @Test
   public void testPullManifest()
       throws IOException, InterruptedException, GeneralSecurityException, URISyntaxException,
           RegistryException {

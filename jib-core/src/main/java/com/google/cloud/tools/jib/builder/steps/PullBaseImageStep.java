@@ -128,7 +128,10 @@ class PullBaseImageStep implements Callable<ImagesAndRegistryClient> {
             progressEventDispatcherFactory.create("pulling base image manifest", 2);
         TimerEventDispatcher ignored1 = new TimerEventDispatcher(eventHandlers, DESCRIPTION)) {
 
-      // First, try with no credentials.
+      // First, try with no credentials. This works with public GCR images (but not Docker Hub).
+      // TODO: investigate if we should just pass credentials up front. However, this involves
+      // some risk. https://github.com/GoogleContainerTools/jib/pull/2200#discussion_r359069026
+      // contains some related discussions.
       RegistryClient noAuthRegistryClient =
           buildContext.newBaseImageRegistryClientFactory().newRegistryClient();
       try {
@@ -140,40 +143,43 @@ class PullBaseImageStep implements Callable<ImagesAndRegistryClient> {
             LogEvent.lifecycle(
                 "The base image requires auth. Trying again for " + imageReference + "..."));
 
-        Credential registryCredential =
+        Credential credential =
             RegistryCredentialRetriever.getBaseImageCredential(buildContext).orElse(null);
-
         RegistryClient registryClient =
             buildContext
                 .newBaseImageRegistryClientFactory()
-                .setCredential(registryCredential)
+                .setCredential(credential)
                 .newRegistryClient();
 
-        try {
-          // TODO: refactor the code (https://github.com/GoogleContainerTools/jib/pull/2202)
-          if (registryCredential == null || registryCredential.isOAuth2RefreshToken()) {
-            throw ex;
-          }
-
-          eventHandlers.dispatch(LogEvent.debug("Trying basic auth for " + imageReference + "..."));
-          registryClient.configureBasicAuth();
+        String wwwAuthenticate = ex.getHttpResponseException().getHeaders().getAuthenticate();
+        if (wwwAuthenticate != null) {
+          eventHandlers.dispatch(
+              LogEvent.debug("WWW-Authenticate for " + imageReference + ": " + wwwAuthenticate));
+          registryClient.authPullByWwwAuthenticate(wwwAuthenticate);
           return new ImagesAndRegistryClient(
               pullBaseImages(registryClient, progressEventDispatcher), registryClient);
 
-        } catch (RegistryUnauthorizedException registryUnauthorizedException) {
-          // The registry requires us to authenticate using the Docker Token Authentication.
-          // See https://docs.docker.com/registry/spec/auth/token
-          eventHandlers.dispatch(
-              LogEvent.debug("Trying bearer auth for " + imageReference + "..."));
-          if (registryClient.doPullBearerAuth()) {
-            return new ImagesAndRegistryClient(
-                pullBaseImages(registryClient, progressEventDispatcher), registryClient);
+        } else {
+          // Not getting WWW-Authenticate is unexpected in practice, and we may just blame the
+          // server and fail. However, to keep some old behavior, try a few things as a last resort.
+          // TODO: consider removing this fallback branch.
+          if (credential != null && !credential.isOAuth2RefreshToken()) {
+            eventHandlers.dispatch(
+                LogEvent.debug("Trying basic auth as fallback for " + imageReference + "..."));
+            registryClient.configureBasicAuth();
+            try {
+              return new ImagesAndRegistryClient(
+                  pullBaseImages(registryClient, progressEventDispatcher), registryClient);
+            } catch (RegistryUnauthorizedException ignored) {
+              // Fall back to try bearer auth.
+            }
           }
+
           eventHandlers.dispatch(
-              LogEvent.error(
-                  "The registry asked for basic authentication, but the registry had refused basic "
-                      + "authentication previously"));
-          throw registryUnauthorizedException;
+              LogEvent.debug("Trying bearer auth as fallback for " + imageReference + "..."));
+          registryClient.doPullBearerAuth();
+          return new ImagesAndRegistryClient(
+              pullBaseImages(registryClient, progressEventDispatcher), registryClient);
         }
       }
     }
