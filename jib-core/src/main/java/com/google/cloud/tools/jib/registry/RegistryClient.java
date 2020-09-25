@@ -383,7 +383,6 @@ public class RegistryClient {
    *
    * @param wwwAuthenticate {@code WWW-Authenticate} HTTP header value from a server response
    *     specifying a required authentication method
-   * @return true if bearer authentication succeeded or basic authentication configured
    * @throws RegistryException if communicating with the endpoint fails
    * @throws RegistryAuthenticationFailedException if authentication fails
    * @throws RegistryCredentialsNotSentException if authentication failed and credentials were not
