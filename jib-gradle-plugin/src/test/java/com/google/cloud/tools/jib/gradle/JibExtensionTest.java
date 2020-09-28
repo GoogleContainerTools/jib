@@ -25,6 +25,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Properties;
 import org.gradle.api.Project;
@@ -104,6 +105,33 @@ public class JibExtensionTest {
     Assert.assertEquals("some cred helper", testJibExtension.getTo().getCredHelper());
     Assert.assertEquals("some username", testJibExtension.getTo().getAuth().getUsername());
     Assert.assertEquals("some password", testJibExtension.getTo().getAuth().getPassword());
+  }
+
+  @Test
+  public void testToTags_noTagsPropertySet() {
+    Assert.assertEquals(Collections.emptySet(), testJibExtension.getTo().getTags());
+  }
+
+  @Test
+  public void testToTags_containsNullTag() {
+    TargetImageParameters testToParameters = generateTargetImageParametersWithTags(null, "tag1");
+    try {
+      testToParameters.getTags();
+      Assert.fail();
+    } catch (IllegalArgumentException ex) {
+      Assert.assertEquals("jib.to.tags contains null tag", ex.getMessage());
+    }
+  }
+
+  @Test
+  public void testToTags_containsEmptyTag() {
+    TargetImageParameters testToParameters = generateTargetImageParametersWithTags("", "tag1");
+    try {
+      testToParameters.getTags();
+      Assert.fail();
+    } catch (IllegalArgumentException ex) {
+      Assert.assertEquals("jib.to.tags contains empty tag", ex.getMessage());
+    }
   }
 
   @Test
@@ -418,5 +446,14 @@ public class JibExtensionTest {
     Assert.assertEquals(
         fakeProject.getProjectDir().toPath().resolve(Paths.get("tar/path")),
         testJibExtension.getOutputPaths().getTarPath());
+  }
+
+  public TargetImageParameters generateTargetImageParametersWithTags(String... tags) {
+    HashSet<String> set = new HashSet<>(Arrays.asList(tags));
+    testJibExtension.to(
+        to -> {
+          to.setTags(set);
+        });
+    return testJibExtension.getTo();
   }
 }
