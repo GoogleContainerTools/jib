@@ -12,6 +12,7 @@ All notable changes to this project will be documented in this file.
 
 - Upgraded jib-build-plan to 0.4.0. ([#2660](https://github.com/GoogleContainerTools/jib/pull/2660))
 - Previous locally cached base image manifests will be ignored, as the caching mechanism changed to enable multi-platform image building. ([#2730](https://github.com/GoogleContainerTools/jib/pull/2730), [#2711](https://github.com/GoogleContainerTools/jib/pull/2711))
+- Upgraded the ASM library to 9.0 to resolve an issue when auto-inferring main class in Java 15+. ([#2776](https://github.com/GoogleContainerTools/jib/pull/2776))
 
 ### Fixed
 
