@@ -505,7 +505,7 @@ public class BuildImageMojoIntegrationTest {
     Assert.assertEquals(
         "", buildAndRun(emptyTestProject.getProjectRoot(), targetImage, "pom.xml", false));
     assertCreationTimeEpoch(targetImage);
-    assertWorkingDirectory("", targetImage);
+    assertWorkingDirectory("/", targetImage);
   }
 
   @Test
@@ -571,7 +571,7 @@ public class BuildImageMojoIntegrationTest {
     Assert.assertEquals(output, new Command("docker", "run", "--rm", id).run());
 
     assertCreationTimeIsAfter(before, targetImage);
-    assertWorkingDirectory("", targetImage);
+    assertWorkingDirectory("/", targetImage);
     assertEntrypoint(
         "[java -Xms512m -Xdebug -cp /other:/app/resources:/app/classes:/app/libs/* "
             + "com.test.HelloWorld]",
@@ -604,7 +604,7 @@ public class BuildImageMojoIntegrationTest {
             + "-Xms512m\n-Xdebug\nenvvalue1\nenvvalue2\n",
         buildAndRunComplex(
             targetImage, "testuser", "testpassword", localRegistry1, "pom-complex.xml"));
-    assertWorkingDirectory("", targetImage);
+    assertWorkingDirectory("/", targetImage);
   }
 
   @Test
@@ -621,7 +621,7 @@ public class BuildImageMojoIntegrationTest {
             "testpassword2",
             localRegistry2,
             "pom-complex-properties.xml"));
-    assertWorkingDirectory("", targetImage);
+    assertWorkingDirectory("/", targetImage);
   }
 
   @Test
