@@ -18,8 +18,13 @@ package com.google.cloud.tools.jib.api;
 
 import com.google.cloud.tools.jib.Command;
 import com.google.cloud.tools.jib.api.buildplan.Platform;
+import com.google.cloud.tools.jib.blob.Blobs;
+import com.google.cloud.tools.jib.event.EventHandlers;
+import com.google.cloud.tools.jib.http.FailoverHttpClient;
+import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
 import com.google.cloud.tools.jib.registry.LocalRegistry;
 import com.google.cloud.tools.jib.registry.ManifestPullerIntegrationTest;
+import com.google.cloud.tools.jib.registry.RegistryClient;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.io.Resources;
 import java.io.IOException;
@@ -222,25 +227,53 @@ public class JibIntegrationTest {
   }
 
   @Test
+  public void testScratch_defaultPlatform()
+      throws IOException, InterruptedException, ExecutionException, RegistryException,
+          CacheDirectoryCreationException {
+    ImageReference targetImageReference =
+        ImageReference.of("localhost:5000", "default-scratch", null);
+    Jib.fromScratch().containerize(getLocalRegistryContainerizer(targetImageReference));
+    RegistryClient registryClient =
+        getRegistryClient(targetImageReference, Credential.from("username", "password"));
+
+    V22ManifestTemplate manifestTemplate =
+        registryClient.pullManifest("latest", V22ManifestTemplate.class).getManifest();
+    String containerConfig =
+        Blobs.writeToString(
+            registryClient.pullBlob(
+                manifestTemplate.getContainerConfiguration().getDigest(),
+                ignored -> {},
+                ignored -> {}));
+
+    Assert.assertTrue(manifestTemplate.getLayers().isEmpty());
+    Assert.assertTrue(containerConfig.contains("\"architecture\":\"amd64\""));
+    Assert.assertTrue(containerConfig.contains("\"os\":\"linux\""));
+  }
+
+  @Test
   public void testScratch_singlePlatform()
       throws IOException, InterruptedException, ExecutionException, RegistryException,
           CacheDirectoryCreationException {
     ImageReference targetImageReference =
-        ImageReference.of("localhost:5000", "jib-core", "basic-scratch");
+        ImageReference.of("localhost:5000", "single-platform-scratch", null);
     Jib.fromScratch()
         .setPlatforms(ImmutableSet.of(new Platform("arm64", "windows")))
         .containerize(getLocalRegistryContainerizer(targetImageReference));
+    RegistryClient registryClient =
+        getRegistryClient(targetImageReference, Credential.from("username", "password"));
 
-    // Check that resulting image has no layers
-    localRegistry.pull(targetImageReference.toString());
-    String inspectOutput = new Command("docker", "inspect", targetImageReference.toString()).run();
-    Assert.assertFalse(
-        "docker inspect output contained layers: " + inspectOutput,
-        inspectOutput.contains("\"Layers\": ["));
+    V22ManifestTemplate manifestTemplate =
+        registryClient.pullManifest("latest", V22ManifestTemplate.class).getManifest();
+    String containerConfig =
+        Blobs.writeToString(
+            registryClient.pullBlob(
+                manifestTemplate.getContainerConfiguration().getDigest(),
+                ignored -> {},
+                ignored -> {}));
 
-    // Check that resulting image has specified architecture and os set.
-    Assert.assertTrue(inspectOutput.contains("\"Architecture\": \"arm64\""));
-    Assert.assertTrue(inspectOutput.contains("\"Os\": \"windows\""));
+    Assert.assertTrue(manifestTemplate.getLayers().isEmpty());
+    Assert.assertTrue(containerConfig.contains("\"architecture\":\"arm64\""));
+    Assert.assertTrue(containerConfig.contains("\"os\":\"windows\""));
   }
 
   @Test
@@ -250,7 +283,7 @@ public class JibIntegrationTest {
     // TODO: Modify this test to check for multiple platforms instead of throwing exception once
     // multi-platform feature is enabled.
     ImageReference targetImageReference =
-        ImageReference.of("localhost:5000", "jib-core", "basic-scratch");
+        ImageReference.of("localhost:5000", "multi-platform-scratch", null);
     try {
       Jib.fromScratch()
           .setPlatforms(
@@ -352,5 +385,19 @@ public class JibIntegrationTest {
 
     Jib.from(sourceImageReferenceAsManifestList).containerize(containerizer);
     // pass, no exceptions thrown
+  }
+
+  public RegistryClient getRegistryClient(ImageReference imageReference, Credential credential) {
+    FailoverHttpClient httpClient = new FailoverHttpClient(true, true, ignored -> {});
+    RegistryClient registryClient =
+        RegistryClient.factory(
+                EventHandlers.NONE,
+                imageReference.getRegistry(),
+                imageReference.getRepository(),
+                httpClient)
+            .setCredential(credential)
+            .newRegistryClient();
+    registryClient.configureBasicAuth();
+    return registryClient;
   }
 }
