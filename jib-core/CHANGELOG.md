@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- Allow setting platform when building image from scratch. ([#2765](https://github.com/GoogleContainerTools/jib/issues/2765))
 - New system property `jib.skipExistingImages` (false by default) to skip pushing images (manifests) if the image already exists in the registry. ([#2360](https://github.com/GoogleContainerTools/jib/issues/2360))
 - _Incubating feature_: can now configure desired platform (architecture and OS) to select the matching manifest from a Docker manifest list for a base image. Currently supports building only one image. OCI image indices are not supported. ([#1567](https://github.com/GoogleContainerTools/jib/issues/1567))
 
