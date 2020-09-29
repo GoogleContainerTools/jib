@@ -35,6 +35,9 @@ import java.net.URL;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Instant;
+import java.util.Map;
+import org.hamcrest.CoreMatchers;
+import org.hamcrest.MatcherAssert;
 import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
@@ -49,7 +52,7 @@ public class BuildFilesTest {
       throws URISyntaxException, IOException, InvalidImageReferenceException {
     URL resource = Resources.getResource("buildfiles/projects/allProperties/jib.yaml");
     JibContainerBuilder jibContainerBuilder =
-        BuildFiles.toJibContainerBuilder(Paths.get(resource.toURI()));
+        BuildFiles.toJibContainerBuilder(Paths.get(resource.toURI()), ImmutableMap.of());
     Path projectRoot = Paths.get(resource.toURI()).getParent();
 
     ContainerBuildPlan resolved = jibContainerBuilder.toContainerBuildPlan();
@@ -89,7 +92,7 @@ public class BuildFilesTest {
       throws URISyntaxException, IOException, InvalidImageReferenceException {
     URL resource = Resources.getResource("buildfiles/projects/allDefaults/jib.yaml");
     JibContainerBuilder jibContainerBuilder =
-        BuildFiles.toJibContainerBuilder(Paths.get(resource.toURI()));
+        BuildFiles.toJibContainerBuilder(Paths.get(resource.toURI()), ImmutableMap.of());
 
     ContainerBuildPlan resolved = jibContainerBuilder.toContainerBuildPlan();
     Assert.assertEquals("scratch", resolved.getBaseImage());
@@ -104,5 +107,59 @@ public class BuildFilesTest {
     Assert.assertNull(resolved.getWorkingDirectory());
     Assert.assertNull(resolved.getEntrypoint());
     Assert.assertTrue(resolved.getLayers().isEmpty());
+  }
+
+  @Test
+  public void testToBuildFileSpec_withTemplating()
+      throws URISyntaxException, InvalidImageReferenceException, IOException {
+    URL resource = Resources.getResource("buildfiles/projects/templating/valid.yaml");
+
+    JibContainerBuilder jibContainerBuilder =
+        BuildFiles.toJibContainerBuilder(
+            Paths.get(resource.toURI()),
+            ImmutableMap.of(
+                "unused", "ignored", // keys that are defined but not used do not throw an error
+                "key", "templateKey",
+                "value", "templateValue",
+                "repeated", "repeatedValue"));
+
+    ContainerBuildPlan resolved = jibContainerBuilder.toContainerBuildPlan();
+    Map<String, String> expectedLabels =
+        ImmutableMap.<String, String>builder()
+            .put("templateKey", "templateValue")
+            .put("label1", "repeatedValue")
+            .put("label2", "repeatedValue")
+            .put("label3", "${escaped}")
+            .put("label4", "free$")
+            .put("unmatched", "${")
+            .build();
+    Assert.assertEquals(expectedLabels, resolved.getLabels());
+  }
+
+  @Test
+  public void testToBuildFileSpec_failWithMissingTemplateVariable()
+      throws URISyntaxException, InvalidImageReferenceException, IOException {
+    URL resource = Resources.getResource("buildfiles/projects/templating/missingVar.yaml");
+
+    try {
+      BuildFiles.toJibContainerBuilder(Paths.get(resource.toURI()), ImmutableMap.of());
+      Assert.fail();
+    } catch (IllegalArgumentException iae) {
+      MatcherAssert.assertThat(
+          iae.getMessage(), CoreMatchers.startsWith("Cannot resolve variable 'missingVar'"));
+    }
+  }
+
+  @Test
+  public void testToBuildFileSpec_templateMultiLineBehavior()
+      throws URISyntaxException, InvalidImageReferenceException, IOException {
+    URL resource = Resources.getResource("buildfiles/projects/templating/multiLine.yaml");
+
+    JibContainerBuilder jibContainerBuilder =
+        BuildFiles.toJibContainerBuilder(
+            Paths.get(resource.toURI()),
+            ImmutableMap.of("replace" + System.lineSeparator() + "this", "creationTime: 1234"));
+    ContainerBuildPlan resolved = jibContainerBuilder.toContainerBuildPlan();
+    Assert.assertEquals(Instant.ofEpochMilli(1234), resolved.getCreationTime());
   }
 }
