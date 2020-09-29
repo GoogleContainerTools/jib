@@ -387,7 +387,8 @@ public class JibIntegrationTest {
     // pass, no exceptions thrown
   }
 
-  public RegistryClient getRegistryClient(ImageReference imageReference, Credential credential) {
+  private static RegistryClient getRegistryClient(
+      ImageReference imageReference, Credential credential) {
     FailoverHttpClient httpClient = new FailoverHttpClient(true, true, ignored -> {});
     RegistryClient registryClient =
         RegistryClient.factory(
