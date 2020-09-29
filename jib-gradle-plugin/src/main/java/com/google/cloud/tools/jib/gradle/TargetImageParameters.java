@@ -69,12 +69,21 @@ public class TargetImageParameters {
   @Input
   @Optional
   public Set<String> getTags() {
-    if (System.getProperty(PropertyNames.TO_TAGS) != null) {
-      return ImmutableSet.copyOf(
-          ConfigurationPropertyValidator.parseListProperty(
-              System.getProperty(PropertyNames.TO_TAGS)));
+    String property = System.getProperty(PropertyNames.TO_TAGS);
+    Set<String> tagsValue;
+    if (property != null) {
+      tagsValue = ImmutableSet.copyOf(ConfigurationPropertyValidator.parseListProperty(property));
+    } else {
+      try {
+        tagsValue = tags.get();
+      } catch (NullPointerException ex) {
+        throw new IllegalArgumentException("jib.to.tags contains null tag");
+      }
     }
-    return tags.get();
+    if (tagsValue.stream().anyMatch(str -> str.isEmpty())) {
+      throw new IllegalArgumentException("jib.to.tags contains empty tag");
+    }
+    return tagsValue;
   }
 
   public void setTags(List<String> tags) {

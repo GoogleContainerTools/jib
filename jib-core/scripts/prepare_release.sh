@@ -39,8 +39,8 @@ if [[ $(git status -uno --porcelain) ]]; then
   Die 'There are uncommitted changes.'
 fi
 
-# Runs integration tests.
-./gradlew :jib-core:integrationTest --info --stacktrace
+# Runs checks and integration tests.
+./gradlew :jib-core:check :jib-core:integrationTest --info --stacktrace
 
 # Checks out a new branch for this version release (eg. 1.5.7).
 BRANCH=core_release_v${VERSION}

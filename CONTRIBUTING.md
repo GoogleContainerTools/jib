@@ -60,6 +60,8 @@ following environment variables:
 You will also need Docker installed with the daemon running. Note that the
 integration tests will create local registries on ports 5000 and 6000.
 
+To run select integration tests, use `--tests=<testPattern>`, see [gradle docs](https://docs.gradle.org/current/javadoc/org/gradle/api/tasks/testing/TestFilter.html) for `testPattern` examples.
+
 # Development Tips
 
 ## Configuring Eclipse
