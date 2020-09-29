@@ -224,7 +224,17 @@ subprojects {
     systemProperty '_JIB_DISABLE_USER_AGENT', true
   }
 
-  integrationTest.dependsOn test
+  // shortcut to run select integration tests and ignore all other tests
+  if (project.hasProperty("onlyIT")) {
+    integrationTest {
+      filter {
+        includeTestsMatching project.getProperty("onlyIT")
+      }
+    }
+  } else {
+    integrationTest.dependsOn test
+  }
+
 
   task integrationTestJar(type: Jar) {
     from sourceSets.integrationTest.output.classesDirs
