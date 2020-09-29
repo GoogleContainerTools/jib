@@ -224,7 +224,6 @@ subprojects {
     systemProperty '_JIB_DISABLE_USER_AGENT', true
   }
 
-  integrationTest.dependsOn test
 
   task integrationTestJar(type: Jar) {
     from sourceSets.integrationTest.output.classesDirs
@@ -237,6 +236,13 @@ subprojects {
 
   artifacts {
     integrationTests integrationTestJar
+  }
+
+  integrationTest {
+    testLogging {
+      showStandardStreams = true
+      exceptionFormat = 'full'
+    }
   }
   /* INTEGRATION TESTS */
 
