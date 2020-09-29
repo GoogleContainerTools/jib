@@ -92,8 +92,7 @@ public class PullBaseImageStepTest {
       throws LayerPropertyNotFoundException, IOException, RegistryException,
           LayerCountMismatchException, BadContainerConfigurationFormatException,
           CacheCorruptedException, CredentialRetrievalException {
-    ImageReference imageReference = ImageReference.scratch();
-    Mockito.when(imageConfiguration.getImage()).thenReturn(imageReference);
+    Mockito.when(imageConfiguration.getImage()).thenReturn(ImageReference.scratch());
     ImagesAndRegistryClient result = pullBaseImageStep.call();
 
     Assert.assertEquals(1, result.images.size());
