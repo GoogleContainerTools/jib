@@ -3,24 +3,14 @@ All notable changes to this project will be documented in this file.
 
 ## [unreleased]
 
-### Added
-
-- Added lazy evaluation for `jib.to.image` and `jib.to.tags` using Gradle Property and Provider. ([#2727](https://github.com/GoogleContainerTools/jib/issues/2727))
-
-### Changed
-
-- Previous locally cached base image manifests will be ignored, as the caching mechanism changed to enable multi-platform image building. ([#2730](https://github.com/GoogleContainerTools/jib/pull/2730), [#2711](https://github.com/GoogleContainerTools/jib/pull/2711))
-
 ### Fixed
 
-- Fixed `NullPointerException` during input validation (in Java 9+) when configuring Jib parameters using certain immutable collections (such as `List.of()`). ([#2702](https://github.com/GoogleContainerTools/jib/issues/2702))
 - Fixed an issue that configuring `jib.from.platforms` was always additive to the default `amd64/linux` platform. ([#2783](https://github.com/GoogleContainerTools/jib/issues/2783))
 
 ## 2.5.0
 
 ### Added
 
->>>>>>> 212cc8a3 (Fix platform configuration in Gradle plugin (#2783))
 - Also tries `.exe` file extension for credential helpers on Windows. ([#2527](https://github.com/GoogleContainerTools/jib/issues/2527))
 - New system property `jib.skipExistingImages` (false by default) to skip pushing images (manifests) if the image already exists in the registry. ([#2360](https://github.com/GoogleContainerTools/jib/issues/2360)
 - _Incubating feature_: can now configure desired platform (architecture and OS) to select the matching manifest from a Docker manifest list. Currently supports building only one image. OCI image indices are not supported. ([#1567](https://github.com/GoogleContainerTools/jib/issues/1567))
