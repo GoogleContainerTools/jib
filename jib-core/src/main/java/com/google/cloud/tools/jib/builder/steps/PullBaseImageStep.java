@@ -233,6 +233,7 @@ class PullBaseImageStep implements Callable<ImagesAndRegistryClient> {
       BuildableManifestTemplate imageManifest = (BuildableManifestTemplate) manifestTemplate;
       ContainerConfigurationTemplate containerConfig =
           pullContainerConfigJson(manifestAndDigest, registryClient, progressEventDispatcher);
+      PlatformChecker.checkManifestPlatform(buildContext, containerConfig);
       cache.writeMetadata(baseImageConfig.getImage(), imageManifest, containerConfig);
       return Collections.singletonList(
           JsonToImageTranslator.toImage(imageManifest, containerConfig));
