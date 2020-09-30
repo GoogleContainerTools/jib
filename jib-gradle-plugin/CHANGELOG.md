@@ -15,10 +15,15 @@ All notable changes to this project will be documented in this file.
 ### Fixed
 
 - Fixed `NullPointerException` during input validation (in Java 9+) when configuring Jib parameters using certain immutable collections (such as `List.of()`). ([#2702](https://github.com/GoogleContainerTools/jib/issues/2702))
-- Fixed an issue that configuring `jib.from.platforms` was always additive to the default `amd64/linux` platform. ([#2783](https://github.com/GoogleContainerTools/jib/issues/2783))
 - Fixed authentication failure with Azure Container Registry when using ["tokens"](https://docs.microsoft.com/en-us/azure/container-registry/container-registry-repository-scoped-permissions). ([#2784](https://github.com/GoogleContainerTools/jib/issues/2784))
 - Improved authentication flow for base image registry. ([#2134](https://github.com/GoogleContainerTools/jib/issues/2134))
 - Throw `IllegalArgumentException` with an error message instead of throwing a `NullPointerException` when `jib.to.tags` is set to a collection containing a `null` value. ([#2760](https://github.com/GoogleContainerTools/jib/issues/2760))
+
+## 2.5.1
+
+### Fixed
+
+- Fixed an issue that configuring `jib.from.platforms` was always additive to the default `amd64/linux` platform. ([#2783](https://github.com/GoogleContainerTools/jib/issues/2783))
 
 ## 2.5.0
 
