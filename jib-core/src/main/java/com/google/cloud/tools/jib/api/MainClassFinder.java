@@ -118,7 +118,7 @@ public class MainClassFinder {
     private boolean visitedMainClass;
 
     private MainClassVisitor() {
-      super(Opcodes.ASM7);
+      super(Opcodes.ASM9);
     }
 
     @Override
