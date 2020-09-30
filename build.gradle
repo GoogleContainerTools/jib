@@ -76,6 +76,7 @@ subprojects {
     MAVEN_PLUGIN_ANNOTATIONS: 'org.apache.maven.plugin-tools:maven-plugin-annotations:3.6.0',
 
     //test
+    TRUTH: 'com.google.truth:truth:1.0.1',
     JUNIT: 'junit:junit:4.13',
     MAVEN_TESTING_HARNESS: 'org.apache.maven.plugin-testing:maven-plugin-testing-harness:3.3.0',
     MAVEN_VERIFIER: 'org.apache.maven.shared:maven-verifier:1.7.2',
