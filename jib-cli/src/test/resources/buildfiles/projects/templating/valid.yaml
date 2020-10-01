@@ -1,0 +1,10 @@
+apiVersion: jib/v1alpha1
+kind: BuildFile
+
+labels:
+  "${key}": "${value}"
+  "label1": "${repeated}"
+  "label2": "${repeated}"
+  "label3": "$${escaped}"
+  "label4": "free$"
+  "unmatched": "${"

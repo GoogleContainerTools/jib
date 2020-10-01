@@ -16,9 +16,9 @@
 
 package com.google.cloud.tools.jib.builder.steps;
 
+import com.google.cloud.tools.jib.api.DescriptorDigest;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.builder.ProgressEventDispatcher;
-import com.google.cloud.tools.jib.builder.ProgressEventDispatcher.Factory;
 import com.google.cloud.tools.jib.builder.steps.LocalBaseImageSteps.LocalImage;
 import com.google.cloud.tools.jib.builder.steps.PullBaseImageStep.ImagesAndRegistryClient;
 import com.google.cloud.tools.jib.configuration.BuildContext;
@@ -27,9 +27,11 @@ import com.google.cloud.tools.jib.docker.DockerClient;
 import com.google.cloud.tools.jib.filesystem.TempDirectoryProvider;
 import com.google.cloud.tools.jib.global.JibSystemProperties;
 import com.google.cloud.tools.jib.image.Image;
+import com.google.cloud.tools.jib.image.Layer;
 import com.google.cloud.tools.jib.image.json.ManifestTemplate;
 import com.google.cloud.tools.jib.registry.ManifestAndDigest;
 import com.google.cloud.tools.jib.registry.RegistryClient;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Verify;
 import com.google.common.collect.ImmutableList;
@@ -48,6 +50,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
@@ -68,21 +71,22 @@ public class StepsRunner {
           new IllegalStateException("invalid usage; required step not configured"));
     }
 
-    private Future<ImagesAndRegistryClient> baseImagesAndRegistryClient = failedFuture();
-    private Future<Map<Image, List<Future<PreparedLayer>>>> baseImagesAndLayers = failedFuture();
     @Nullable private List<Future<PreparedLayer>> applicationLayers;
-    private Future<Map<Future<Image>, Image>> builtImagesAndBaseImages = failedFuture();
     private Future<ManifestTemplate> manifestListOrSingleManifest = failedFuture();
     private Future<RegistryClient> targetRegistryClient = failedFuture();
-    public Future<Map<Image, List<Future<BlobDescriptor>>>> baseImagesAndLayerPushResults =
-        failedFuture();
     private Future<List<Future<BlobDescriptor>>> applicationLayerPushResults = failedFuture();
-    private Future<Map<Future<Image>, Future<BlobDescriptor>>>
-        builtImagesAndContainerConfigurationPushResults = failedFuture();
     private Future<Optional<ManifestAndDigest<ManifestTemplate>>> manifestCheckResult =
         failedFuture();
-    public Future<List<Future<BuildResult>>> imagePushResults = failedFuture();
+    private Future<List<Future<BuildResult>>> imagePushResults = failedFuture();
     private Future<BuildResult> buildResult = failedFuture();
+
+    private Future<ImagesAndRegistryClient> baseImagesAndRegistryClient = failedFuture();
+    private Future<Map<Image, List<Future<PreparedLayer>>>> baseImagesAndLayers = failedFuture();
+    private Future<Map<Image, List<Future<BlobDescriptor>>>> baseImagesAndLayerPushResults =
+        failedFuture();
+    private Future<Map<Image, Future<BlobDescriptor>>> baseImagesAndContainerConfigPushResults =
+        failedFuture();
+    private Future<Map<Image, Future<Image>>> baseImagesAndBuiltImages = failedFuture();
   }
 
   /**
@@ -115,19 +119,19 @@ public class StepsRunner {
   private final BuildContext buildContext;
   private final TempDirectoryProvider tempDirectoryProvider = new TempDirectoryProvider();
 
-  // We save steps to run by wrapping each step into a Runnable, only because of the unfortunate
-  // chicken-and-egg situation arising from using ProgressEventDispatcher. The current
-  // ProgressEventDispatcher model requires knowing in advance how many units of work (i.e., steps)
-  // we should perform. That is, to instantiate a root ProgressEventDispatcher instance, we should
-  // know ahead how many steps we will run. However, to instantiate a step, we need a root progress
-  // dispatcher. So, we wrap steps into Runnables and save them to run them later. Then we can count
-  // the number of Runnables and, create a root dispatcher, and run the saved Runnables.
-  private final List<Runnable> stepsToRun = new ArrayList<>();
+  // Instead of directly running each step, we first save them as a lambda. This is only because of
+  // the unfortunate chicken-and-egg situation when using ProgressEventDispatcher. The current
+  // ProgressEventDispatcher model requires allocating the total units of work (i.e., steps)
+  // up front. That is, to instantiate a root ProgressEventDispatcher, we should know ahead how many
+  // steps we will run. However, to run a step, we need a root progress dispatcher. So, we take each
+  // step as a lambda and save them to run later. Then we can count the number of lambdas, create a
+  // root dispatcher with the count, and run the saved lambdas using the dispatcher.
+  private final List<Consumer<ProgressEventDispatcher.Factory>> stepsToRun = new ArrayList<>();
 
   @Nullable private String rootProgressDescription;
-  @Nullable private ProgressEventDispatcher rootProgressDispatcher;
 
-  private StepsRunner(ListeningExecutorService executorService, BuildContext buildContext) {
+  @VisibleForTesting
+  StepsRunner(ListeningExecutorService executorService, BuildContext buildContext) {
     this.executorService = executorService;
     this.buildContext = buildContext;
   }
@@ -136,7 +140,7 @@ public class StepsRunner {
    * Add steps for loading an image to docker daemon.
    *
    * @param dockerClient the docker client to load the image to
-   * @return this StepsRunner instance
+   * @return this
    */
   public StepsRunner dockerLoadSteps(DockerClient dockerClient) {
     rootProgressDescription = "building image to Docker daemon";
@@ -146,7 +150,8 @@ public class StepsRunner {
     stepsToRun.add(this::buildImages);
 
     // load to Docker
-    stepsToRun.add(() -> loadDocker(dockerClient));
+    stepsToRun.add(
+        progressDispatcherFactory -> loadDocker(dockerClient, progressDispatcherFactory));
     return this;
   }
 
@@ -154,7 +159,7 @@ public class StepsRunner {
    * Add steps for writing an image as a tar file archive.
    *
    * @param outputPath the target file path to write the image to
-   * @return this StepsRunner instance
+   * @return this
    */
   public StepsRunner tarBuildSteps(Path outputPath) {
     rootProgressDescription = "building image to tar file";
@@ -164,18 +169,19 @@ public class StepsRunner {
     stepsToRun.add(this::buildImages);
 
     // create a tar
-    stepsToRun.add(() -> writeTarFile(outputPath));
+    stepsToRun.add(
+        progressDispatcherFactory -> writeTarFile(outputPath, progressDispatcherFactory));
     return this;
   }
 
   /**
-   * Add steps for pushing an image to a remote registry. The registry is determined by the image
+   * Add steps for pushing images to a remote registry. The registry is determined by the image
    * name.
    *
-   * @return this StepsRunner instance.
+   * @return this
    */
   public StepsRunner registryPushSteps() {
-    rootProgressDescription = "building image to registry";
+    rootProgressDescription = "building images to registry";
     boolean layersRequiredLocally = buildContext.getAlwaysCacheBaseImage();
 
     stepsToRun.add(this::authenticateBearerPush);
@@ -186,7 +192,7 @@ public class StepsRunner {
     stepsToRun.add(this::buildManifestListOrSingleManifest);
 
     // push to registry
-    stepsToRun.add(this::pushBaseImageLayers);
+    stepsToRun.add(this::pushBaseImagesLayers);
     stepsToRun.add(this::pushApplicationLayers);
     stepsToRun.add(this::pushContainerConfigurations);
     stepsToRun.add(this::checkManifestInTargetRegistry);
@@ -199,7 +205,7 @@ public class StepsRunner {
    * Run all steps and return a BuildResult after a build is completed.
    *
    * @return a {@link BuildResult} with build metadata
-   * @throws ExecutionException if an error occured during asynchronous execution of steps
+   * @throws ExecutionException if an error occurred during asynchronous execution of steps
    * @throws InterruptedException if the build was interrupted while waiting for results
    */
   public BuildResult run() throws ExecutionException, InterruptedException {
@@ -208,9 +214,7 @@ public class StepsRunner {
     try (ProgressEventDispatcher progressEventDispatcher =
         ProgressEventDispatcher.newRoot(
             buildContext.getEventHandlers(), rootProgressDescription, stepsToRun.size())) {
-      rootProgressDispatcher = progressEventDispatcher;
-
-      stepsToRun.forEach(Runnable::run);
+      stepsToRun.forEach(step -> step.accept(progressEventDispatcher.newChildProducer()));
       return results.buildResult.get();
 
     } catch (ExecutionException ex) {
@@ -239,46 +243,39 @@ public class StepsRunner {
     } else {
       // Otherwise default to RegistryImage
       stepsToRun.add(this::pullBaseImages);
-      stepsToRun.add(() -> obtainBaseImageLayers(layersRequiredLocally));
+      stepsToRun.add(
+          progressDispatcherFactory ->
+              obtainBaseImagesLayers(layersRequiredLocally, progressDispatcherFactory));
     }
   }
 
-  private void authenticateBearerPush() {
-    ProgressEventDispatcher.Factory childProgressDispatcherFactory =
-        Verify.verifyNotNull(rootProgressDispatcher).newChildProducer();
-
+  private void authenticateBearerPush(ProgressEventDispatcher.Factory progressDispatcherFactory) {
     results.targetRegistryClient =
-        executorService.submit(
-            () -> new AuthenticatePushStep(buildContext, childProgressDispatcherFactory).call());
+        executorService.submit(new AuthenticatePushStep(buildContext, progressDispatcherFactory));
   }
 
-  private void saveDocker() {
+  private void saveDocker(ProgressEventDispatcher.Factory progressDispatcherFactory) {
     Optional<DockerClient> dockerClient =
         buildContext.getBaseImageConfiguration().getDockerClient();
     Preconditions.checkArgument(dockerClient.isPresent());
-    ProgressEventDispatcher.Factory childProgressDispatcherFactory =
-        Verify.verifyNotNull(rootProgressDispatcher).newChildProducer();
+
     assignLocalImageResult(
         executorService.submit(
             LocalBaseImageSteps.retrieveDockerDaemonLayersStep(
                 buildContext,
-                childProgressDispatcherFactory,
+                progressDispatcherFactory,
                 dockerClient.get(),
                 tempDirectoryProvider)));
   }
 
-  private void extractTar() {
+  private void extractTar(ProgressEventDispatcher.Factory progressDispatcherFactory) {
     Optional<Path> tarPath = buildContext.getBaseImageConfiguration().getTarPath();
     Preconditions.checkArgument(tarPath.isPresent());
-    ProgressEventDispatcher.Factory childProgressDispatcherFactory =
-        Verify.verifyNotNull(rootProgressDispatcher).newChildProducer();
+
     assignLocalImageResult(
         executorService.submit(
             LocalBaseImageSteps.retrieveTarLayersStep(
-                buildContext,
-                childProgressDispatcherFactory,
-                tarPath.get(),
-                tempDirectoryProvider)));
+                buildContext, progressDispatcherFactory, tarPath.get(), tempDirectoryProvider)));
   }
 
   private void assignLocalImageResult(Future<LocalImage> localImage) {
@@ -298,255 +295,271 @@ public class StepsRunner {
                     localImage.get().layers));
   }
 
-  private void pullBaseImages() {
-    ProgressEventDispatcher.Factory childProgressDispatcherFactory =
-        Verify.verifyNotNull(rootProgressDispatcher).newChildProducer();
-
+  @VisibleForTesting
+  void pullBaseImages(ProgressEventDispatcher.Factory progressDispatcherFactory) {
     results.baseImagesAndRegistryClient =
-        executorService.submit(new PullBaseImageStep(buildContext, childProgressDispatcherFactory));
+        executorService.submit(new PullBaseImageStep(buildContext, progressDispatcherFactory));
   }
 
-  private void obtainBaseImageLayers(boolean layersRequiredLocally) {
-    ProgressEventDispatcher.Factory childProgressDispatcherFactory =
-        Verify.verifyNotNull(rootProgressDispatcher).newChildProducer();
-
+  private void obtainBaseImagesLayers(
+      boolean layersRequiredLocally, ProgressEventDispatcher.Factory progressDispatcherFactory) {
     results.baseImagesAndLayers =
         executorService.submit(
             () -> {
-              // TODO: ideally, progressDispatcher should be closed at the right moment, after the
-              // scheduled threads have completed. However, it can be tricky and cumbersome to track
-              // completion, so it may just be better to delay closing until everything ends. At
-              // least, we must ensure that it's not closed prematurely. (Garbage collection doesn't
-              // auto-close it wit the current implementation.)
-              ProgressEventDispatcher progressDispatcher =
-                  childProgressDispatcherFactory.create(
-                      "scheduling obtaining base image layers",
-                      results.baseImagesAndRegistryClient.get().images.size());
+              try (ProgressEventDispatcher progressDispatcher =
+                  progressDispatcherFactory.create(
+                      "scheduling obtaining base images layers",
+                      results.baseImagesAndRegistryClient.get().images.size())) {
 
-              Map<Image, List<Future<PreparedLayer>>> baseImagesAndLayers = new HashMap<>();
-              for (Image image : results.baseImagesAndRegistryClient.get().images) {
-                List<Future<PreparedLayer>> layers =
-                    scheduleCallables(
-                        layersRequiredLocally
-                            ? ObtainBaseImageLayerStep.makeListForForcedDownload(
-                                buildContext,
-                                progressDispatcher.newChildProducer(),
-                                image,
-                                results.baseImagesAndRegistryClient.get().registryClient)
-                            : ObtainBaseImageLayerStep.makeListForSelectiveDownload(
-                                buildContext,
-                                progressDispatcher.newChildProducer(),
-                                image,
-                                results.baseImagesAndRegistryClient.get().registryClient,
-                                results.targetRegistryClient.get()));
-                baseImagesAndLayers.put(image, layers);
+                Map<DescriptorDigest, Future<PreparedLayer>> preparedLayersCache = new HashMap<>();
+                Map<Image, List<Future<PreparedLayer>>> baseImagesAndLayers = new HashMap<>();
+                for (Image baseImage : results.baseImagesAndRegistryClient.get().images) {
+                  List<Future<PreparedLayer>> layers =
+                      obtainBaseImageLayers(
+                          baseImage,
+                          layersRequiredLocally,
+                          preparedLayersCache,
+                          progressDispatcher.newChildProducer());
+                  baseImagesAndLayers.put(baseImage, layers);
+                }
+                return baseImagesAndLayers;
               }
-              return baseImagesAndLayers;
             });
   }
 
-  private void pushBaseImageLayers() {
-    ProgressEventDispatcher.Factory childProgressDispatcherFactory =
-        Verify.verifyNotNull(rootProgressDispatcher).newChildProducer();
+  // This method updates the given "preparedLayersCache" and should not be called concurrently.
+  @VisibleForTesting
+  List<Future<PreparedLayer>> obtainBaseImageLayers(
+      Image baseImage,
+      boolean layersRequiredLocally,
+      Map<DescriptorDigest, Future<PreparedLayer>> preparedLayersCache,
+      ProgressEventDispatcher.Factory progressDispatcherFactory)
+      throws InterruptedException, ExecutionException {
+    List<Future<PreparedLayer>> preparedLayers = new ArrayList<>();
 
+    try (ProgressEventDispatcher progressDispatcher =
+        progressDispatcherFactory.create(
+            "launching base image layer pullers", baseImage.getLayers().size())) {
+      for (Layer layer : baseImage.getLayers()) {
+        DescriptorDigest digest = layer.getBlobDescriptor().getDigest();
+        Future<PreparedLayer> preparedLayer = preparedLayersCache.get(digest);
+
+        if (preparedLayer != null) {
+          progressDispatcher.dispatchProgress(1);
+        } else { // If we haven't obtained this layer yet, launcher a puller.
+          preparedLayer =
+              executorService.submit(
+                  layersRequiredLocally
+                      ? ObtainBaseImageLayerStep.forForcedDownload(
+                          buildContext,
+                          progressDispatcher.newChildProducer(),
+                          layer,
+                          results.baseImagesAndRegistryClient.get().registryClient)
+                      : ObtainBaseImageLayerStep.forSelectiveDownload(
+                          buildContext,
+                          progressDispatcher.newChildProducer(),
+                          layer,
+                          results.baseImagesAndRegistryClient.get().registryClient,
+                          results.targetRegistryClient.get()));
+          preparedLayersCache.put(digest, preparedLayer);
+        }
+        preparedLayers.add(preparedLayer);
+      }
+      return preparedLayers;
+    }
+  }
+
+  private void pushBaseImagesLayers(ProgressEventDispatcher.Factory progressDispatcherFactory) {
     results.baseImagesAndLayerPushResults =
         executorService.submit(
             () -> {
-              // TODO: ideally, progressDispatcher should be closed at the right moment, after the
-              // scheduled threads have completed. However, it can be tricky and cumbersome to track
-              // completion, so it may just be better to delay closing until everything ends. At
-              // least, we must ensure that it's not closed prematurely. (Garbage collection doesn't
-              // auto-close it wit the current implementation.)
-              ProgressEventDispatcher progressDispatcher =
-                  childProgressDispatcherFactory.create(
-                      "scheduling pushing base image layers",
-                      results.baseImagesAndLayers.get().size());
+              try (ProgressEventDispatcher progressDispatcher =
+                  progressDispatcherFactory.create(
+                      "scheduling pushing base images layers",
+                      results.baseImagesAndLayers.get().size())) {
 
-              Map<Image, List<Future<BlobDescriptor>>> pushResults = new HashMap<>();
-              for (Map.Entry<Image, List<Future<PreparedLayer>>> entry :
-                  results.baseImagesAndLayers.get().entrySet()) {
-                Image baseImage = entry.getKey();
-                List<Future<PreparedLayer>> baseImageLayers = entry.getValue();
+                Map<Image, List<Future<BlobDescriptor>>> layerPushResults = new HashMap<>();
+                for (Map.Entry<Image, List<Future<PreparedLayer>>> entry :
+                    results.baseImagesAndLayers.get().entrySet()) {
+                  Image baseImage = entry.getKey();
+                  List<Future<PreparedLayer>> baseLayers = entry.getValue();
 
-                List<Future<BlobDescriptor>> baseImageLayerPushResult =
-                    scheduleCallables(
-                        PushLayerStep.makeList(
-                            buildContext,
-                            progressDispatcher.newChildProducer(),
-                            results.targetRegistryClient.get(),
-                            Verify.verifyNotNull(baseImageLayers)));
-                pushResults.put(baseImage, baseImageLayerPushResult);
+                  List<Future<BlobDescriptor>> pushResults =
+                      pushBaseImageLayers(baseLayers, progressDispatcher.newChildProducer());
+                  layerPushResults.put(baseImage, pushResults);
+                }
+                return layerPushResults;
               }
-              return pushResults;
             });
   }
 
-  private void buildAndCacheApplicationLayers() {
-    ProgressEventDispatcher.Factory childProgressDispatcherFactory =
-        Verify.verifyNotNull(rootProgressDispatcher).newChildProducer();
+  private List<Future<BlobDescriptor>> pushBaseImageLayers(
+      List<Future<PreparedLayer>> baseLayers,
+      ProgressEventDispatcher.Factory progressDispatcherFactory)
+      throws InterruptedException, ExecutionException {
+    return scheduleCallables(
+        PushLayerStep.makeList(
+            buildContext,
+            progressDispatcherFactory,
+            results.targetRegistryClient.get(),
+            baseLayers));
+  }
 
+  private void buildAndCacheApplicationLayers(
+      ProgressEventDispatcher.Factory progressDispatcherFactory) {
     results.applicationLayers =
         scheduleCallables(
-            BuildAndCacheApplicationLayerStep.makeList(
-                buildContext, childProgressDispatcherFactory));
+            BuildAndCacheApplicationLayerStep.makeList(buildContext, progressDispatcherFactory));
   }
 
-  private void buildImages() {
-    ProgressEventDispatcher.Factory childProgressDispatcherFactory =
-        Verify.verifyNotNull(rootProgressDispatcher).newChildProducer();
-    results.builtImagesAndBaseImages =
+  private void buildImages(ProgressEventDispatcher.Factory progressDispatcherFactory) {
+    results.baseImagesAndBuiltImages =
         executorService.submit(
             () -> {
-              // TODO: ideally, progressDispatcher should be closed at the right moment, after the
-              // scheduled threads have completed. However, it can be tricky and cumbersome to track
-              // completion, so it may just be better to delay closing until everything ends. At
-              // least, we must ensure that it's not closed prematurely. (Garbage collection doesn't
-              // auto-close it wit the current implementation.)
-              ProgressEventDispatcher progressDispatcher =
-                  childProgressDispatcherFactory.create(
-                      "scheduling building manifests", results.baseImagesAndLayers.get().size());
+              try (ProgressEventDispatcher progressDispatcher =
+                  progressDispatcherFactory.create(
+                      "scheduling building manifests", results.baseImagesAndLayers.get().size())) {
 
-              Map<Future<Image>, Image> builtImagesAndBaseImages = new HashMap<>();
-              for (Map.Entry<Image, List<Future<PreparedLayer>>> entry :
-                  results.baseImagesAndLayers.get().entrySet()) {
-                ProgressEventDispatcher.Factory progressDispatcherFactory =
-                    progressDispatcher.newChildProducer();
-                Future<Image> builtImage =
-                    executorService.submit(
-                        () ->
-                            new BuildImageStep(
-                                    buildContext,
-                                    progressDispatcherFactory,
-                                    entry.getKey(), // base Image
-                                    realizeFutures(
-                                        Verify.verifyNotNull(entry.getValue())), // layers
-                                    realizeFutures(Verify.verifyNotNull(results.applicationLayers)))
-                                .call());
-                builtImagesAndBaseImages.put(builtImage, entry.getKey() /* base Image */);
+                Map<Image, Future<Image>> baseImagesAndBuiltImages = new HashMap<>();
+                for (Map.Entry<Image, List<Future<PreparedLayer>>> entry :
+                    results.baseImagesAndLayers.get().entrySet()) {
+                  Image baseImage = entry.getKey();
+                  List<Future<PreparedLayer>> baseLayers = entry.getValue();
+
+                  Future<Image> builtImage =
+                      buildImage(baseImage, baseLayers, progressDispatcher.newChildProducer());
+                  baseImagesAndBuiltImages.put(baseImage, builtImage);
+                }
+                return baseImagesAndBuiltImages;
               }
-              return builtImagesAndBaseImages;
             });
   }
 
-  private void buildManifestListOrSingleManifest() {
-    ProgressEventDispatcher.Factory childProgressDispatcherFactory =
-        Verify.verifyNotNull(rootProgressDispatcher).newChildProducer();
+  private Future<Image> buildImage(
+      Image baseImage,
+      List<Future<PreparedLayer>> baseLayers,
+      ProgressEventDispatcher.Factory progressDispatcherFactory) {
+    return executorService.submit(
+        () ->
+            new BuildImageStep(
+                    buildContext,
+                    progressDispatcherFactory,
+                    baseImage,
+                    realizeFutures(baseLayers),
+                    realizeFutures(Verify.verifyNotNull(results.applicationLayers)))
+                .call());
+  }
 
+  private void buildManifestListOrSingleManifest(
+      ProgressEventDispatcher.Factory progressDispatcherFactory) {
     results.manifestListOrSingleManifest =
         executorService.submit(
             () ->
                 new BuildManifestListOrSingleManifestStep(
                         buildContext,
-                        childProgressDispatcherFactory,
-                        realizeFutures(results.builtImagesAndBaseImages.get().keySet()))
+                        progressDispatcherFactory,
+                        realizeFutures(results.baseImagesAndBuiltImages.get().values()))
                     .call());
   }
 
-  private void pushContainerConfigurations() {
-    ProgressEventDispatcher.Factory childProgressDispatcherFactory =
-        Verify.verifyNotNull(rootProgressDispatcher).newChildProducer();
-
-    results.builtImagesAndContainerConfigurationPushResults =
+  private void pushContainerConfigurations(
+      ProgressEventDispatcher.Factory progressDispatcherFactory) {
+    results.baseImagesAndContainerConfigPushResults =
         executorService.submit(
             () -> {
-              // TODO: ideally, progressDispatcher should be closed at the right moment, after the
-              // scheduled threads have completed. However, it can be tricky and cumbersome to track
-              // completion, so it may just be better to delay closing until everything ends. At
-              // least, we must ensure that it's not closed prematurely. (Garbage collection doesn't
-              // auto-close it wit the current implementation.)
-              ProgressEventDispatcher progressDispatcher =
-                  childProgressDispatcherFactory.create(
+              try (ProgressEventDispatcher progressDispatcher =
+                  progressDispatcherFactory.create(
                       "scheduling pushing container configurations",
-                      results.builtImagesAndBaseImages.get().size());
+                      results.baseImagesAndBuiltImages.get().size())) {
 
-              Map<Future<Image>, Future<BlobDescriptor>> pushResults = new HashMap<>();
-              for (Future<Image> builtImage : results.builtImagesAndBaseImages.get().keySet()) {
-                ProgressEventDispatcher.Factory progressDispatcherFactory =
-                    progressDispatcher.newChildProducer();
-                Future<BlobDescriptor> configPushResult =
-                    executorService.submit(
-                        () ->
-                            new PushContainerConfigurationStep(
-                                    buildContext,
-                                    progressDispatcherFactory,
-                                    results.targetRegistryClient.get(),
-                                    builtImage.get())
-                                .call());
-                pushResults.put(builtImage, configPushResult);
+                Map<Image, Future<BlobDescriptor>> configPushResults = new HashMap<>();
+                for (Map.Entry<Image, Future<Image>> entry :
+                    results.baseImagesAndBuiltImages.get().entrySet()) {
+                  Image baseImage = entry.getKey();
+                  Future<Image> builtImage = entry.getValue();
+
+                  Future<BlobDescriptor> pushResult =
+                      pushContainerConfiguration(builtImage, progressDispatcher.newChildProducer());
+                  configPushResults.put(baseImage, pushResult);
+                }
+                return configPushResults;
               }
-              return pushResults;
             });
   }
 
-  private void pushApplicationLayers() {
-    ProgressEventDispatcher.Factory childProgressDispatcherFactory =
-        Verify.verifyNotNull(rootProgressDispatcher).newChildProducer();
+  private Future<BlobDescriptor> pushContainerConfiguration(
+      Future<Image> builtImage, ProgressEventDispatcher.Factory progressDispatcherFactory) {
+    return executorService.submit(
+        () ->
+            new PushContainerConfigurationStep(
+                    buildContext,
+                    progressDispatcherFactory,
+                    results.targetRegistryClient.get(),
+                    builtImage.get())
+                .call());
+  }
 
+  private void pushApplicationLayers(ProgressEventDispatcher.Factory progressDispatcherFactory) {
     results.applicationLayerPushResults =
         executorService.submit(
             () ->
                 scheduleCallables(
                     PushLayerStep.makeList(
                         buildContext,
-                        childProgressDispatcherFactory,
+                        progressDispatcherFactory,
                         results.targetRegistryClient.get(),
                         Verify.verifyNotNull(results.applicationLayers))));
   }
 
-  private void checkManifestInTargetRegistry() {
-    ProgressEventDispatcher.Factory childProgressDispatcherFactory =
-        Verify.verifyNotNull(rootProgressDispatcher).newChildProducer();
-
+  private void checkManifestInTargetRegistry(
+      ProgressEventDispatcher.Factory progressDispatcherFactory) {
     results.manifestCheckResult =
         executorService.submit(
             () ->
                 new CheckManifestStep(
                         buildContext,
-                        childProgressDispatcherFactory,
+                        progressDispatcherFactory,
                         results.targetRegistryClient.get(),
                         results.manifestListOrSingleManifest.get())
                     .call());
   }
 
-  private void pushImages() {
-    ProgressEventDispatcher.Factory childProgressDispatcherFactory =
-        Verify.verifyNotNull(rootProgressDispatcher).newChildProducer();
-
+  private void pushImages(ProgressEventDispatcher.Factory progressDispatcherFactory) {
     results.imagePushResults =
         executorService.submit(
             () -> {
-              // TODO: ideally, progressDispatcher should be closed at the right moment, after the
-              // scheduled threads have completed. However, it can be tricky and cumbersome to track
-              // completion, so it may just be better to delay closing until everything ends. At
-              // least, we must ensure that it's not closed prematurely. (Garbage collection doesn't
-              // auto-close it wit the current implementation.)
-              ProgressEventDispatcher progressDispatcher =
-                  childProgressDispatcherFactory.create(
+              try (ProgressEventDispatcher progressDispatcher =
+                  progressDispatcherFactory.create(
                       "scheduling pushing manifests",
-                      results.builtImagesAndBaseImages.get().size());
+                      results.baseImagesAndBuiltImages.get().size())) {
 
-              realizeFutures(results.applicationLayerPushResults.get());
+                realizeFutures(results.applicationLayerPushResults.get());
 
-              List<Future<BuildResult>> buildResults = new ArrayList<>();
-              for (Map.Entry<Future<Image>, Image> entry :
-                  results.builtImagesAndBaseImages.get().entrySet()) {
-                buildResults.add(
-                    pushImage(
-                        entry.getKey(), entry.getValue(), progressDispatcher.newChildProducer()));
+                List<Future<BuildResult>> buildResults = new ArrayList<>();
+                for (Map.Entry<Image, Future<Image>> entry :
+                    results.baseImagesAndBuiltImages.get().entrySet()) {
+                  Image baseImage = entry.getKey();
+                  Future<Image> builtImage = entry.getValue();
+
+                  buildResults.add(
+                      pushImage(baseImage, builtImage, progressDispatcher.newChildProducer()));
+                }
+                return buildResults;
               }
-              return buildResults;
             });
   }
 
   private Future<BuildResult> pushImage(
-      Future<Image> builtImage, Image baseImage, Factory progressDispatcherFactory) {
+      Image baseImage,
+      Future<Image> builtImage,
+      ProgressEventDispatcher.Factory progressDispatcherFactory) {
     return executorService.submit(
         () -> {
           realizeFutures(
               Verify.verifyNotNull(results.baseImagesAndLayerPushResults.get().get(baseImage)));
 
           Future<BlobDescriptor> containerConfigPushResult =
-              results.builtImagesAndContainerConfigurationPushResults.get().get(builtImage);
+              results.baseImagesAndContainerConfigPushResults.get().get(baseImage);
 
           List<Future<BuildResult>> manifestPushResults =
               scheduleCallables(
@@ -568,10 +581,7 @@ public class StepsRunner {
         });
   }
 
-  private void pushManifestList() {
-    ProgressEventDispatcher.Factory childProgressDispatcherFactory =
-        Verify.verifyNotNull(rootProgressDispatcher).newChildProducer();
-
+  private void pushManifestList(ProgressEventDispatcher.Factory progressDispatcherFactory) {
     results.buildResult =
         executorService.submit(
             () -> {
@@ -580,7 +590,7 @@ public class StepsRunner {
                   scheduleCallables(
                       PushImageStep.makeListForManifestList(
                           buildContext,
-                          childProgressDispatcherFactory,
+                          progressDispatcherFactory,
                           results.targetRegistryClient.get(),
                           results.manifestListOrSingleManifest.get(),
                           results.manifestCheckResult.get().isPresent()));
@@ -592,39 +602,35 @@ public class StepsRunner {
             });
   }
 
-  private void loadDocker(DockerClient dockerClient) {
-    ProgressEventDispatcher.Factory childProgressDispatcherFactory =
-        Verify.verifyNotNull(rootProgressDispatcher).newChildProducer();
-
+  private void loadDocker(
+      DockerClient dockerClient, ProgressEventDispatcher.Factory progressDispatcherFactory) {
     results.buildResult =
         executorService.submit(
             () -> {
               Verify.verify(
-                  results.builtImagesAndBaseImages.get().size() == 1,
+                  results.baseImagesAndBuiltImages.get().size() == 1,
                   "multi-platform image building not supported when pushing to Docker engine");
               Image builtImage =
-                  results.builtImagesAndBaseImages.get().keySet().iterator().next().get();
+                  results.baseImagesAndBuiltImages.get().values().iterator().next().get();
               return new LoadDockerStep(
-                      buildContext, childProgressDispatcherFactory, dockerClient, builtImage)
+                      buildContext, progressDispatcherFactory, dockerClient, builtImage)
                   .call();
             });
   }
 
-  private void writeTarFile(Path outputPath) {
-    ProgressEventDispatcher.Factory childProgressDispatcherFactory =
-        Verify.verifyNotNull(rootProgressDispatcher).newChildProducer();
-
+  private void writeTarFile(
+      Path outputPath, ProgressEventDispatcher.Factory progressDispatcherFactory) {
     results.buildResult =
         executorService.submit(
             () -> {
               Verify.verify(
-                  results.builtImagesAndBaseImages.get().size() == 1,
+                  results.baseImagesAndBuiltImages.get().size() == 1,
                   "multi-platform image building not supported when building a local tar image");
               Image builtImage =
-                  results.builtImagesAndBaseImages.get().keySet().iterator().next().get();
+                  results.baseImagesAndBuiltImages.get().values().iterator().next().get();
 
               return new WriteTarFileStep(
-                      buildContext, childProgressDispatcherFactory, outputPath, builtImage)
+                      buildContext, progressDispatcherFactory, outputPath, builtImage)
                   .call();
             });
   }

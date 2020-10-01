@@ -220,18 +220,13 @@ public class BuildImageMojoIntegrationTest {
     return output;
   }
 
-  private static String buildAndRunComplex(
-      String imageReference,
-      String username,
-      String password,
-      LocalRegistry targetRegistry,
-      String pomFile)
+  private static String buildAndRunComplex(String imageReference, String pomFile)
       throws VerificationException, IOException, InterruptedException {
     Verifier verifier = new Verifier(simpleTestProject.getProjectRoot().toString());
     verifier.setSystemProperty("jib.useOnlyProjectCache", "true");
     verifier.setSystemProperty("_TARGET_IMAGE", imageReference);
-    verifier.setSystemProperty("_TARGET_USERNAME", username);
-    verifier.setSystemProperty("_TARGET_PASSWORD", password);
+    verifier.setSystemProperty("_TARGET_USERNAME", "testuser");
+    verifier.setSystemProperty("_TARGET_PASSWORD", "testpassword");
     verifier.setSystemProperty("sendCredentialsOverHttp", "true");
     verifier.setAutoclean(false);
     verifier.addCliOption("-X");
@@ -240,7 +235,7 @@ public class BuildImageMojoIntegrationTest {
     verifier.verifyErrorFreeLog();
 
     // Verify output
-    targetRegistry.pull(imageReference);
+    localRegistry.pull(imageReference);
     assertDockerInspectParameters(imageReference);
     return new Command("docker", "run", "--rm", imageReference).run();
   }
@@ -510,7 +505,7 @@ public class BuildImageMojoIntegrationTest {
     Assert.assertEquals(
         "", buildAndRun(emptyTestProject.getProjectRoot(), targetImage, "pom.xml", false));
     assertCreationTimeEpoch(targetImage);
-    assertWorkingDirectory("", targetImage);
+    assertWorkingDirectory("/", targetImage);
   }
 
   @Test
@@ -559,9 +554,7 @@ public class BuildImageMojoIntegrationTest {
       throws IOException, InterruptedException, VerificationException, DigestException {
     String targetImage = "localhost:5000/compleximage:maven" + System.nanoTime();
     Instant before = Instant.now();
-    String output =
-        buildAndRunComplex(
-            targetImage, "testuser", "testpassword", localRegistry, "pom-complex.xml");
+    String output = buildAndRunComplex(targetImage, "pom-complex.xml");
     Assert.assertEquals(
         "Hello, world. An argument.\n1970-01-01T00:00:01Z\nrwxr-xr-x\nrwxrwxrwx\nfoo\ncat\n"
             + "1970-01-01T00:00:01Z\n1970-01-01T00:00:01Z\n"
@@ -576,7 +569,7 @@ public class BuildImageMojoIntegrationTest {
     Assert.assertEquals(output, new Command("docker", "run", "--rm", id).run());
 
     assertCreationTimeIsAfter(before, targetImage);
-    assertWorkingDirectory("", targetImage);
+    assertWorkingDirectory("/", targetImage);
     assertEntrypoint(
         "[java -Xms512m -Xdebug -cp /other:/app/resources:/app/classes:/app/libs/* "
             + "com.test.HelloWorld]",
@@ -591,7 +584,7 @@ public class BuildImageMojoIntegrationTest {
     Assert.assertEquals(
         "Hello, world. \n2019-06-17T16:30:00Z\nrw-r--r--\nrw-r--r--\n"
             + "foo\ncat\n2019-06-17T16:30:00Z\n2019-06-17T16:30:00Z\n",
-        buildAndRunComplex(targetImage, "testuser", "testpassword", localRegistry, pom));
+        buildAndRunComplex(targetImage, pom));
 
     String inspect =
         new Command("docker", "inspect", "-f", "{{.Created}}", targetImage).run().trim();
@@ -607,9 +600,8 @@ public class BuildImageMojoIntegrationTest {
         "Hello, world. An argument.\n1970-01-01T00:00:01Z\nrwxr-xr-x\nrwxrwxrwx\nfoo\ncat\n"
             + "1970-01-01T00:00:01Z\n1970-01-01T00:00:01Z\n"
             + "-Xms512m\n-Xdebug\nenvvalue1\nenvvalue2\n",
-        buildAndRunComplex(
-            targetImage, "testuser", "testpassword", localRegistry, "pom-complex.xml"));
-    assertWorkingDirectory("", targetImage);
+        buildAndRunComplex(targetImage, "pom-complex.xml"));
+    assertWorkingDirectory("/", targetImage);
   }
 
   @Test
@@ -620,9 +612,8 @@ public class BuildImageMojoIntegrationTest {
         "Hello, world. An argument.\n1970-01-01T00:00:01Z\nrwxr-xr-x\nrwxrwxrwx\nfoo\ncat\n"
             + "1970-01-01T00:00:01Z\n1970-01-01T00:00:01Z\n"
             + "-Xms512m\n-Xdebug\nenvvalue1\nenvvalue2\n",
-        buildAndRunComplex(
-            targetImage, "testuser", "testpassword", localRegistry, "pom-complex-properties.xml"));
-    assertWorkingDirectory("", targetImage);
+        buildAndRunComplex(targetImage, "pom-complex-properties.xml"));
+    assertWorkingDirectory("/", targetImage);
   }
 
   @Test

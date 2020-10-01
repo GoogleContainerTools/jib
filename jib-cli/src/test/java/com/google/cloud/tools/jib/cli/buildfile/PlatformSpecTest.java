@@ -19,15 +19,10 @@ package com.google.cloud.tools.jib.cli.buildfile;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
-import com.google.common.collect.ImmutableList;
-import java.util.Arrays;
-import java.util.Collection;
 import org.hamcrest.CoreMatchers;
 import org.hamcrest.MatcherAssert;
 import org.junit.Assert;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
 
 /** Tests for {@link PlatformSpec}. */
 public class PlatformSpecTest {
@@ -36,24 +31,11 @@ public class PlatformSpecTest {
 
   @Test
   public void testPlatformSpec_full() throws JsonProcessingException {
-    String data =
-        "architecture: amd64\n"
-            + "os: linux\n"
-            + "os.version: 1.0.0\n"
-            + "os.features:\n"
-            + "  - headless\n"
-            + "variant: amd64v10\n"
-            + "features:\n"
-            + "  - sse4\n"
-            + "  - aes\n";
+    String data = "architecture: amd64\n" + "os: linux\n";
 
     PlatformSpec parsed = mapper.readValue(data, PlatformSpec.class);
     Assert.assertEquals("amd64", parsed.getArchitecture());
     Assert.assertEquals("linux", parsed.getOs());
-    Assert.assertEquals("1.0.0", parsed.getOsVersion().get());
-    Assert.assertEquals(ImmutableList.of("headless"), parsed.getOsFeatures());
-    Assert.assertEquals("amd64v10", parsed.getVariant().get());
-    Assert.assertEquals(ImmutableList.of("sse4", "aes"), parsed.getFeatures());
   }
 
   @Test
@@ -133,101 +115,6 @@ public class PlatformSpecTest {
       MatcherAssert.assertThat(
           jpe.getMessage(),
           CoreMatchers.containsString("Property 'architecture' cannot be an empty string"));
-    }
-  }
-
-  @Test
-  public void testPlatformSpec_nullCollections() throws JsonProcessingException {
-    String data = "architecture: amd64\n" + "os: linux\n";
-
-    PlatformSpec parsed = mapper.readValue(data, PlatformSpec.class);
-    Assert.assertEquals(ImmutableList.of(), parsed.getOsFeatures());
-    Assert.assertEquals(ImmutableList.of(), parsed.getFeatures());
-  }
-
-  @RunWith(Parameterized.class)
-  public static class OptionalStringTests {
-
-    @Parameterized.Parameters(name = "{0}")
-    public static Collection<Object[]> data() {
-      return Arrays.asList(new Object[][] {{"os.version"}, {"variant"}});
-    }
-
-    @Parameterized.Parameter public String fieldName;
-
-    @Test
-    public void testPlatformSpec_noEmptyValues() {
-      String data = "architecture: ignored\n" + "os: ignored\n" + fieldName + ": ' '";
-
-      try {
-        mapper.readValue(data, PlatformSpec.class);
-        Assert.fail();
-      } catch (JsonProcessingException ex) {
-        Assert.assertEquals(
-            "Property '" + fieldName + "' cannot be an empty string", ex.getCause().getMessage());
-      }
-    }
-
-    @Test
-    public void testPlatformSpec_nullOkay() throws JsonProcessingException {
-      String data = "architecture: ignored\n" + "os: ignored\n" + fieldName + ": null";
-
-      mapper.readValue(data, PlatformSpec.class);
-      // pass
-    }
-  }
-
-  @RunWith(Parameterized.class)
-  public static class OptionalStringCollectionTests {
-
-    @Parameterized.Parameters(name = "{0}")
-    public static Collection<Object[]> data() {
-      return Arrays.asList(new Object[][] {{"os.features"}, {"features"}});
-    }
-
-    @Parameterized.Parameter public String fieldName;
-
-    @Test
-    public void testPlatformSpec_noNullEntries() {
-      String data = "architecture: ignored\n" + "os: ignored\n" + fieldName + ": ['first', null]";
-
-      try {
-        mapper.readValue(data, PlatformSpec.class);
-        Assert.fail();
-      } catch (JsonProcessingException ex) {
-        Assert.assertEquals(
-            "Property '" + fieldName + "' cannot contain null entries", ex.getCause().getMessage());
-      }
-    }
-
-    @Test
-    public void testPlatformSpec_noEmptyEntries() {
-      String data = "architecture: ignored\n" + "os: ignored\n" + fieldName + ": ['first', '  ']";
-
-      try {
-        mapper.readValue(data, PlatformSpec.class);
-        Assert.fail();
-      } catch (JsonProcessingException ex) {
-        Assert.assertEquals(
-            "Property '" + fieldName + "' cannot contain empty strings",
-            ex.getCause().getMessage());
-      }
-    }
-
-    @Test
-    public void testPlatformSpec_emptyOkay() throws JsonProcessingException {
-      String data = "architecture: ignored\n" + "os: ignored\n" + fieldName + ": []";
-
-      mapper.readValue(data, PlatformSpec.class);
-      // pass
-    }
-
-    @Test
-    public void testPlatformSpec_nullOkay() throws JsonProcessingException {
-      String data = "architecture: ignored\n" + "os: ignored\n" + fieldName + ": null";
-
-      mapper.readValue(data, PlatformSpec.class);
-      // pass
     }
   }
 }

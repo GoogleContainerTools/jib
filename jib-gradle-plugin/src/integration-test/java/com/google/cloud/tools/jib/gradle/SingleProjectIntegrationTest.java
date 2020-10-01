@@ -361,7 +361,7 @@ public class SingleProjectIntegrationTest {
     Assert.assertEquals(output, new Command("docker", "run", "--rm", id).run());
 
     JibRunHelper.assertSimpleCreationTimeIsAfter(beforeBuild, targetImage);
-    assertWorkingDirectory("", targetImage);
+    assertWorkingDirectory("/", targetImage);
   }
 
   @Test
@@ -370,7 +370,7 @@ public class SingleProjectIntegrationTest {
     Instant beforeBuild = Instant.now();
     buildAndRunComplex(targetImage, "testuser", "testpassword", localRegistry1);
     JibRunHelper.assertSimpleCreationTimeIsAfter(beforeBuild, targetImage);
-    assertWorkingDirectory("", targetImage);
+    assertWorkingDirectory("/", targetImage);
   }
 
   @Test

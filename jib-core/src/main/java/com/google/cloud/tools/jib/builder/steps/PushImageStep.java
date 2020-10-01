@@ -66,8 +66,7 @@ class PushImageStep implements Callable<BuildResult> {
             progressEventDispatcherFactory.create("launching manifest pushers", numPushers)) {
 
       if (JibSystemProperties.skipExistingImages() && manifestAlreadyExists) {
-        eventHandlers.dispatch(
-            LogEvent.info("Skipping pushing manifest; manifest already exists."));
+        eventHandlers.dispatch(LogEvent.info("Skipping pushing manifest; already exists."));
         return ImmutableList.of();
       }
 
@@ -104,7 +103,6 @@ class PushImageStep implements Callable<BuildResult> {
       ManifestTemplate manifestList,
       boolean manifestListAlreadyExists)
       throws IOException {
-
     Set<String> tags = buildContext.getAllTargetImageTags();
 
     EventHandlers eventHandlers = buildContext.getEventHandlers();
@@ -141,8 +139,8 @@ class PushImageStep implements Callable<BuildResult> {
 
   private final BuildContext buildContext;
   private final ProgressEventDispatcher.Factory progressEventDispatcherFactory;
-  private final ManifestTemplate manifestTemplate;
   private final RegistryClient registryClient;
+  private final ManifestTemplate manifestTemplate;
   private final String imageQualifier;
   private final DescriptorDigest imageDigest;
   private final DescriptorDigest imageId;

@@ -5,7 +5,7 @@ plugins {
   id 'net.ltgt.errorprone' version '1.2.1' apply false
   id 'net.researchgate.release' version '2.8.1' apply false
   id 'com.gradle.plugin-publish' version '0.12.0' apply false
-  id 'io.freefair.maven-plugin' version '5.1.1' apply false
+  id 'io.freefair.maven-plugin' version '5.2.1' apply false
 
   // apply so we can correctly configure the test runner to be gradle at the project level
   id 'org.jetbrains.gradle.plugin.idea-ext' version '0.9'
@@ -65,9 +65,10 @@ subprojects {
     MAVEN_EXTENSION: 'com.google.cloud.tools:jib-maven-plugin-extension-api:0.4.0',
 
     COMMONS_COMPRESS: 'org.apache.commons:commons-compress:1.20',
+    COMMONS_TEXT: 'org.apache.commons:commons-text:1.9',
     JACKSON_DATABIND: 'com.fasterxml.jackson.core:jackson-databind:2.11.2',
     JACKSON_DATAFORMAT_YAML: 'com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.11.2',
-    ASM: 'org.ow2.asm:asm:8.0.1',
+    ASM: 'org.ow2.asm:asm:9.0',
     PICOCLI: 'info.picocli:picocli:4.5.1',
 
     MAVEN_API: 'org.apache.maven:maven-plugin-api:3.6.3',
@@ -79,7 +80,7 @@ subprojects {
     JUNIT: 'junit:junit:4.13',
     MAVEN_TESTING_HARNESS: 'org.apache.maven.plugin-testing:maven-plugin-testing-harness:3.3.0',
     MAVEN_VERIFIER: 'org.apache.maven.shared:maven-verifier:1.7.2',
-    MOCKITO_CORE: 'org.mockito:mockito-core:3.5.7',
+    MOCKITO_CORE: 'org.mockito:mockito-core:3.5.13',
     SISU_PLEXUS: 'org.eclipse.sisu:org.eclipse.sisu.plexus:0.3.4',
     SLF4J_API: 'org.slf4j:slf4j-api:1.7.30',
     SLF4J_SIMPLE: 'org.slf4j:slf4j-simple:1.7.30',
@@ -224,7 +225,6 @@ subprojects {
     systemProperty '_JIB_DISABLE_USER_AGENT', true
   }
 
-  integrationTest.dependsOn test
 
   task integrationTestJar(type: Jar) {
     from sourceSets.integrationTest.output.classesDirs
@@ -237,6 +237,13 @@ subprojects {
 
   artifacts {
     integrationTests integrationTestJar
+  }
+
+  integrationTest {
+    testLogging {
+      showStandardStreams = true
+      exceptionFormat = 'full'
+    }
   }
   /* INTEGRATION TESTS */
 

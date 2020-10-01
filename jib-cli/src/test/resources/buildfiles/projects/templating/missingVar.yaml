@@ -1,0 +1,5 @@
+apiVersion: jib/v1alpha1
+kind: BuildFile
+
+labels:
+  "label1": "${missingVar}"

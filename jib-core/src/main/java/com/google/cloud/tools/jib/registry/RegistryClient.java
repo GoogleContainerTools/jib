@@ -325,15 +325,26 @@ public class RegistryClient {
       return false; // server returned "WWW-Authenticate: Basic ..."
     }
 
-    initialBearerAuthenticator.set(authenticator.get());
+    doBearerAuth(readOnlyBearerAuth, authenticator.get());
+    return true;
+  }
+
+  private void doBearerAuth(boolean readOnlyBearerAuth, RegistryAuthenticator authenticator)
+      throws RegistryException {
+    initialBearerAuthenticator.set(authenticator);
     if (readOnlyBearerAuth) {
-      authorization.set(authenticator.get().authenticatePull(credential));
+      authorization.set(authenticator.authenticatePull(credential));
     } else {
-      authorization.set(authenticator.get().authenticatePush(credential));
+      authorization.set(authenticator.authenticatePush(credential));
     }
     this.readOnlyBearerAuth = readOnlyBearerAuth;
-    eventHandlers.dispatch(LogEvent.debug("bearer auth succeeded for " + image));
-    return true;
+
+    eventHandlers.dispatch(
+        LogEvent.debug(
+            "bearer auth succeeded for "
+                + registryEndpointRequestProperties.getServerUrl()
+                + "/"
+                + registryEndpointRequestProperties.getImageName()));
   }
 
   private Authorization refreshBearerAuth(@Nullable String wwwAuthenticate)
@@ -364,6 +375,27 @@ public class RegistryClient {
       return Verify.verifyNotNull(initialBearerAuthenticator.get()).authenticatePull(credential);
     }
     return Verify.verifyNotNull(initialBearerAuthenticator.get()).authenticatePush(credential);
+  }
+
+  /**
+   * Configure basic authentication or attempts bearer authentication for pulling based on the
+   * specified authentication method in a server response.
+   *
+   * @param wwwAuthenticate {@code WWW-Authenticate} HTTP header value from a server response
+   *     specifying a required authentication method
+   * @throws RegistryException if communicating with the endpoint fails
+   * @throws RegistryAuthenticationFailedException if authentication fails
+   * @throws RegistryCredentialsNotSentException if authentication failed and credentials were not
+   */
+  public void authPullByWwwAuthenticate(String wwwAuthenticate) throws RegistryException {
+    Optional<RegistryAuthenticator> authenticator =
+        RegistryAuthenticator.fromAuthenticationMethod(
+            wwwAuthenticate, registryEndpointRequestProperties, getUserAgent(), httpClient);
+    if (authenticator.isPresent()) {
+      doBearerAuth(true, authenticator.get());
+    } else if (credential != null && !credential.isOAuth2RefreshToken()) {
+      configureBasicAuth();
+    }
   }
 
   /**
