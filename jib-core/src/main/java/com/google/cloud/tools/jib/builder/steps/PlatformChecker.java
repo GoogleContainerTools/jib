@@ -46,7 +46,8 @@ public class PlatformChecker {
 
     if (platforms.size() != 1) {
       eventHandlers.dispatch(
-          LogEvent.warn("platforms configured, but '" + baseImageName + "' is not a manifest list"));
+          LogEvent.warn(
+              "platforms configured, but '" + baseImageName + "' is not a manifest list"));
     } else {
       Platform platform = platforms.iterator().next();
       if (!platform.getArchitecture().equals(containerConfig.getArchitecture())
