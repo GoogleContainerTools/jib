@@ -1,10 +1,11 @@
 #!/bin/sh
 
 set -o errexit
-set -o xtrace
 
 readonly PUBLISH_KEY=$(cat "${KOKORO_KEYSTORE_DIR}/72743_gradle_publish_key")
 readonly PUBLISH_SECRET=$(cat "${KOKORO_KEYSTORE_DIR}/72743_gradle_publish_secret")
+
+set -o xtrace
 
 gcloud components install docker-credential-gcr
 
@@ -20,6 +21,11 @@ docker kill $(docker ps --all --quiet) || true
 export readonly JIB_INTEGRATION_TESTING_PROJECT=jib-integration-testing
 
 cd github/jib
+
+echo "gradle publish"
+
+# turn of command tracing when dealing with secrets
+set +o xtrace
 
 ./gradlew :jib-gradle-plugin:publishPlugins \
   -Pgradle.publish.key="${PUBLISH_KEY}" \
