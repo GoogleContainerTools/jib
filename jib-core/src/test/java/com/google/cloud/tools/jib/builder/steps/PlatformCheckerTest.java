@@ -27,6 +27,8 @@ import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.image.json.ContainerConfigurationTemplate;
 import com.google.cloud.tools.jib.registry.RegistryClient;
 import com.google.common.collect.ImmutableSet;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -94,5 +96,19 @@ public class PlatformCheckerTest {
 
     Mockito.verify(eventHandlers)
         .dispatch(LogEvent.warn("platforms configured, but 'scratch' is not a manifest list"));
+  }
+
+  @Test
+  public void testCheckManifestPlatform_tarBaseImage() {
+    Path tar = Paths.get("/foo/bar.tar");
+    Mockito.when(buildContext.getBaseImageConfiguration())
+        .thenReturn(ImageConfiguration.builder(ImageReference.scratch()).setTarPath(tar).build());
+    Mockito.when(containerConfig.getPlatforms())
+        .thenReturn(ImmutableSet.of(new Platform("amd64", "linux"), new Platform("arch", "os")));
+
+    PlatformChecker.checkManifestPlatform(buildContext, new ContainerConfigurationTemplate());
+
+    Mockito.verify(eventHandlers)
+        .dispatch(LogEvent.warn("platforms configured, but '/foo/bar.tar' is not a manifest list"));
   }
 }

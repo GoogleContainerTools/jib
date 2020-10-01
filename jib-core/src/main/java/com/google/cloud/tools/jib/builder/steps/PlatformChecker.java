@@ -16,7 +16,6 @@
 
 package com.google.cloud.tools.jib.builder.steps;
 
-import com.google.cloud.tools.jib.api.ImageReference;
 import com.google.cloud.tools.jib.api.LogEvent;
 import com.google.cloud.tools.jib.api.buildplan.Platform;
 import com.google.cloud.tools.jib.configuration.BuildContext;
@@ -37,13 +36,17 @@ public class PlatformChecker {
   static void checkManifestPlatform(
       BuildContext buildContext, ContainerConfigurationTemplate containerConfig) {
     EventHandlers eventHandlers = buildContext.getEventHandlers();
-    ImageReference baseImage = buildContext.getBaseImageConfiguration().getImage();
+    String baseImageName =
+        buildContext.getBaseImageConfiguration().getTarPath().isPresent()
+            ? buildContext.getBaseImageConfiguration().getTarPath().get().toString()
+            : buildContext.getBaseImageConfiguration().getImage().toString();
+
     Set<Platform> platforms = buildContext.getContainerConfiguration().getPlatforms();
     Verify.verify(!platforms.isEmpty());
 
     if (platforms.size() != 1) {
       eventHandlers.dispatch(
-          LogEvent.warn("platforms configured, but '" + baseImage + "' is not a manifest list"));
+          LogEvent.warn("platforms configured, but '" + baseImageName + "' is not a manifest list"));
     } else {
       Platform platform = platforms.iterator().next();
       if (!platform.getArchitecture().equals(containerConfig.getArchitecture())
@@ -63,7 +66,7 @@ public class PlatformChecker {
                       platform.getOs(),
                       containerConfig.getArchitecture(),
                       containerConfig.getOs(),
-                      baseImage)));
+                      baseImageName)));
         }
       }
     }

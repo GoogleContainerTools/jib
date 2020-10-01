@@ -111,6 +111,8 @@ public class LocalBaseImageSteps {
         Optional<LocalImage> cachedImage =
             getCachedDockerImage(buildContext.getBaseImageLayersCache(), dockerImageDetails);
         if (cachedImage.isPresent()) {
+          PlatformChecker.checkManifestPlatform(
+              buildContext, cachedImage.get().configurationTemplate);
           return cachedImage.get();
         }
 
