@@ -380,10 +380,14 @@ class PullBaseImageStep implements Callable<ImagesAndRegistryClient> {
         return Collections.singletonList(
             JsonToImageTranslator.toImage((V21ManifestTemplate) manifest));
       }
+
+      ContainerConfigurationTemplate containerConfig =
+          Verify.verifyNotNull(manifestsAndConfigs.get(0).getConfig());
+      PlatformChecker.checkManifestPlatform(buildContext, containerConfig);
+
       return Collections.singletonList(
           JsonToImageTranslator.toImage(
-              (BuildableManifestTemplate) Verify.verifyNotNull(manifest),
-              Verify.verifyNotNull(manifestsAndConfigs.get(0).getConfig())));
+              (BuildableManifestTemplate) Verify.verifyNotNull(manifest), containerConfig));
     }
 
     // Manifest list cached. Identify matching platforms and check if all of them are cached.
