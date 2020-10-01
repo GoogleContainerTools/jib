@@ -109,6 +109,8 @@ public class PlatformCheckerTest {
     PlatformChecker.checkManifestPlatform(buildContext, new ContainerConfigurationTemplate());
 
     Mockito.verify(eventHandlers)
-        .dispatch(LogEvent.warn("platforms configured, but '/foo/bar.tar' is not a manifest list"));
+        .dispatch(
+            LogEvent.warn(
+                "platforms configured, but '" + tar.toString() + "' is not a manifest list"));
   }
 }
