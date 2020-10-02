@@ -27,16 +27,16 @@ public class JarProcessor {
    *
    * <ul>
    *   <li>{@code REGULAR} a regular jar.
-   *   <li>{@code SPRING_BOOT} a springboot fat jar.
+   *   <li>{@code SPRING_BOOT} a spring boot fat jar.
    * </ul>
    */
   public enum JarType {
-    REGULAR,
-    SPRINGBOOT;
+    STANDARD,
+    SPRING_BOOT;
   }
 
   /**
-   * Determines whether the jar is a spring-boot or regular jar, given a path to the jar.
+   * Determines whether the jar is a spring boot or regular jar, given a path to the jar.
    *
    * @param jarPath path to the jar.
    * @return the jar type.
@@ -45,8 +45,8 @@ public class JarProcessor {
   public static JarType determineJarType(Path jarPath) throws IOException {
     JarFile jarFile = new JarFile(jarPath.toFile());
     if (jarFile.getEntry("BOOT-INF") != null) {
-      return JarType.SPRINGBOOT;
+      return JarType.SPRING_BOOT;
     }
-    return JarType.REGULAR;
+    return JarType.STANDARD;
   }
 }
