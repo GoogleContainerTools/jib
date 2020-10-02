@@ -39,7 +39,7 @@ public class JarProcessorTest {
   }
 
   @Test
-  public void testDetermineJarType_regular() throws IOException, URISyntaxException {
+  public void testDetermineJarType_standard() throws IOException, URISyntaxException {
     Path standardJar = Paths.get(Resources.getResource(STANDARD_RESOURCE_DIR).toURI());
     JarType jarType = JarProcessor.determineJarType(standardJar);
     assertThat(jarType).isEqualTo(JarType.STANDARD);

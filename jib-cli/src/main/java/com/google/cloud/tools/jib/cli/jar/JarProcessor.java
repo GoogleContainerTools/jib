@@ -26,7 +26,7 @@ public class JarProcessor {
    * Jar Type.
    *
    * <ul>
-   *   <li>{@code REGULAR} a regular jar.
+   *   <li>{@code STANDARD} a regular jar.
    *   <li>{@code SPRING_BOOT} a spring boot fat jar.
    * </ul>
    */
