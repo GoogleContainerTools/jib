@@ -27,7 +27,7 @@ public class JarProcessor {
    *
    * <ul>
    *   <li>{@code REGULAR} a regular jar.
-   *   <li>{@code SPRINGBOOT} a springboot fat jar. *
+   *   <li>{@code SPRING_BOOT} a springboot fat jar.
    * </ul>
    */
   public enum JarType {
