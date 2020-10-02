@@ -129,10 +129,12 @@ public class V22ManifestListTemplate implements ManifestTemplate {
       @Nullable private String architecture;
       @Nullable private String os;
 
+      @Nullable
       public String getArchitecture() {
         return architecture;
       }
 
+      @Nullable
       public String getOs() {
         return os;
       }
