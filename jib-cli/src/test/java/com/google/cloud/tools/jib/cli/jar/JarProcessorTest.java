@@ -28,21 +28,19 @@ import org.junit.Test;
 
 public class JarProcessorTest {
 
-  private static final String SPRINGBOOT_RESOURCE_DIR = "jar/springboot";
-  private static final String REGULAR_RESOURCE_DIR = "jar/regular";
+  private static final String SPRING_BOOT_RESOURCE_DIR = "jar/springboot/springBootJar.jar";
+  private static final String REGULAR_RESOURCE_DIR = "jar/regular/regularJar.jar";
 
   @Test
   public void testDetermineJarType_springBoot() throws IOException, URISyntaxException {
-    Path testDir = Paths.get(Resources.getResource(SPRINGBOOT_RESOURCE_DIR).toURI());
-    Path springBootJar = testDir.resolve("springbootJar.jar");
+    Path springBootJar = Paths.get(Resources.getResource(SPRING_BOOT_RESOURCE_DIR).toURI());
     JarType jarType = JarProcessor.determineJarType(springBootJar);
     assertThat(jarType).isEqualTo(JarType.SPRINGBOOT);
   }
 
   @Test
   public void testDetermineJarType_regular() throws IOException, URISyntaxException {
-    Path testDir = Paths.get(Resources.getResource(REGULAR_RESOURCE_DIR).toURI());
-    Path regularJar = testDir.resolve("regularJar.jar");
+    Path regularJar = Paths.get(Resources.getResource(REGULAR_RESOURCE_DIR).toURI());
     JarType jarType = JarProcessor.determineJarType(regularJar);
     assertThat(jarType).isEqualTo(JarType.REGULAR);
   }
