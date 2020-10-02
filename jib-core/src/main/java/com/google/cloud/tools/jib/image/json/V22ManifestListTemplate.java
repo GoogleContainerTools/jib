@@ -128,6 +128,14 @@ public class V22ManifestListTemplate implements ManifestTemplate {
     public static class Platform implements JsonTemplate {
       @Nullable private String architecture;
       @Nullable private String os;
+
+      public String getArchitecture() {
+        return architecture;
+      }
+
+      public String getOs() {
+        return os;
+      }
     }
 
     @Nullable private String mediaType;
@@ -167,14 +175,13 @@ public class V22ManifestListTemplate implements ManifestTemplate {
      * @param os the manifest os
      */
     public void setPlatform(String architecture, String os) {
-      this.platform = new Platform();
-      this.platform.architecture = architecture;
-      this.platform.os = os;
+      platform = new Platform();
+      platform.architecture = architecture;
+      platform.os = os;
     }
 
-    @VisibleForTesting
     @Nullable
-    Platform getPlatform() {
+    public Platform getPlatform() {
       return platform;
     }
   }
