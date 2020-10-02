@@ -43,7 +43,7 @@ public class JarProcessor {
    * @throws IOException if I/O error occurs when opening the file.
    */
   public static JarType determineJarType(Path jarPath) throws IOException {
-    JarFile jarFile = new JarFile(jarPath.toString());
+    JarFile jarFile = new JarFile(jarPath.toFile());
     if (jarFile.getEntry("BOOT-INF") != null) {
       return JarType.SPRINGBOOT;
     }
