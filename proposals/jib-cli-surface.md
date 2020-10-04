@@ -3,26 +3,7 @@
 Specification for a command structures exposed to users of the jib-cli
 
 ## Usage
-`jib command [OPTIONS]`
-
-## Options
-
-### Required
-```
--t  --target <image-ref>  a target image reference
-```
-
-### Optional
-```
--b  --build-file <file>                    location of the build file (default ./jib.yaml)
-    --credHelper <registry>=<credHelper>   credential helper to use for a registry (repeatable)
-    --docker-config <directory>            location of docker configuration
-    --help                                 print usage
--P <name>=<value>                          templating parameters replace `${name}` with `value` in the build file
-    --tag <tag1>[,<tag2>,...]              additional tags for target
-    --verbosity <level>                    set logging verbosity (error, warn, lifecycle (default), info, debug)
--v  --version                              print version information and exit 
-```
+`jib COMMAND [OPTIONS]`
 
 ## Commands
 
@@ -33,22 +14,39 @@ dockerBuild  build to docker daemon
 buildTar     build to a tar file
 ```
 
-### `build`
+## Options
 
-Will build to a registry and repository as defined in the `--target`
-
-### `dockerBuild`
-
-Will build to a docker daemon and should reflect the same daemon a docker cli will connect to. Can be configured by various `DOCKER_*` environment variables.
-
-### `buildTar`
-
-Will build to a tar file on the local file system.
-
-#### Required
+### Required
 ```
--o  --output-file <file>      output tar file
+-t  --target <image-ref>  a target image reference
 ```
+
+### Optional
+```
+-b, --build-file <file>                    location of the build file (default <context>/jib.yaml)
+-c, --context <dir>                        location of the build context (default .)
+    --credHelper <registry>=<credHelper>   credential helper to use for a registry (repeatable)
+    --docker-config <directory>            location of docker configuration
+    --help                                 print usage
+-p, --parameter <name>=<value>             templating parameters replace `${name}` with `value` in the build file (repeatable)
+    --tag <tag1>[,<tag2>,...]              additional tags for target
+    --verbosity <level>                    set logging verbosity (error, warn, lifecycle (default), info, debug)
+-v, --version                              print version information and exit 
+```
+
+### Command specific options
+
+#### `buildTar` Required
+
+```
+-o, --output-file <file>      output tar file
+```
+
+#### Environment Variables
+
+#### Docker daemon specification
+
+Information on communicating with the docker daemon is determined using the `DOCKER_*` environment variables.
 
 
 ## Alternative Styles
