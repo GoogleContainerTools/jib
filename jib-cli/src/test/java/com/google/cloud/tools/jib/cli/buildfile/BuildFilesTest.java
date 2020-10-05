@@ -31,7 +31,6 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.io.Resources;
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.net.URL;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Instant;
@@ -50,10 +49,11 @@ public class BuildFilesTest {
   @Test
   public void testToJibContainerBuilder_allProperties()
       throws URISyntaxException, IOException, InvalidImageReferenceException {
-    URL resource = Resources.getResource("buildfiles/projects/allProperties/jib.yaml");
+    Path buildfile =
+        Paths.get(Resources.getResource("buildfiles/projects/allProperties/jib.yaml").toURI());
+    Path projectRoot = buildfile.getParent();
     JibContainerBuilder jibContainerBuilder =
-        BuildFiles.toJibContainerBuilder(Paths.get(resource.toURI()), ImmutableMap.of());
-    Path projectRoot = Paths.get(resource.toURI()).getParent();
+        BuildFiles.toJibContainerBuilder(projectRoot, buildfile, ImmutableMap.of());
 
     ContainerBuildPlan resolved = jibContainerBuilder.toContainerBuildPlan();
     Assert.assertEquals("ubuntu", resolved.getBaseImage());
@@ -90,9 +90,10 @@ public class BuildFilesTest {
   @Test
   public void testToJibContainerBuilder_requiredProperties()
       throws URISyntaxException, IOException, InvalidImageReferenceException {
-    URL resource = Resources.getResource("buildfiles/projects/allDefaults/jib.yaml");
+    Path buildfile =
+        Paths.get(Resources.getResource("buildfiles/projects/allDefaults/jib.yaml").toURI());
     JibContainerBuilder jibContainerBuilder =
-        BuildFiles.toJibContainerBuilder(Paths.get(resource.toURI()), ImmutableMap.of());
+        BuildFiles.toJibContainerBuilder(buildfile.getParent(), buildfile, ImmutableMap.of());
 
     ContainerBuildPlan resolved = jibContainerBuilder.toContainerBuildPlan();
     Assert.assertEquals("scratch", resolved.getBaseImage());
@@ -112,11 +113,13 @@ public class BuildFilesTest {
   @Test
   public void testToBuildFileSpec_withTemplating()
       throws URISyntaxException, InvalidImageReferenceException, IOException {
-    URL resource = Resources.getResource("buildfiles/projects/templating/valid.yaml");
+    Path buildfile =
+        Paths.get(Resources.getResource("buildfiles/projects/templating/valid.yaml").toURI());
 
     JibContainerBuilder jibContainerBuilder =
         BuildFiles.toJibContainerBuilder(
-            Paths.get(resource.toURI()),
+            buildfile.getParent(),
+            buildfile,
             ImmutableMap.of(
                 "unused", "ignored", // keys that are defined but not used do not throw an error
                 "key", "templateKey",
@@ -139,10 +142,11 @@ public class BuildFilesTest {
   @Test
   public void testToBuildFileSpec_failWithMissingTemplateVariable()
       throws URISyntaxException, InvalidImageReferenceException, IOException {
-    URL resource = Resources.getResource("buildfiles/projects/templating/missingVar.yaml");
+    Path buildfile =
+        Paths.get(Resources.getResource("buildfiles/projects/templating/missingVar.yaml").toURI());
 
     try {
-      BuildFiles.toJibContainerBuilder(Paths.get(resource.toURI()), ImmutableMap.of());
+      BuildFiles.toJibContainerBuilder(buildfile.getParent(), buildfile, ImmutableMap.of());
       Assert.fail();
     } catch (IllegalArgumentException iae) {
       MatcherAssert.assertThat(
@@ -153,13 +157,36 @@ public class BuildFilesTest {
   @Test
   public void testToBuildFileSpec_templateMultiLineBehavior()
       throws URISyntaxException, InvalidImageReferenceException, IOException {
-    URL resource = Resources.getResource("buildfiles/projects/templating/multiLine.yaml");
+    Path buildfile =
+        Paths.get(Resources.getResource("buildfiles/projects/templating/multiLine.yaml").toURI());
 
     JibContainerBuilder jibContainerBuilder =
         BuildFiles.toJibContainerBuilder(
-            Paths.get(resource.toURI()),
+            buildfile.getParent(),
+            buildfile,
             ImmutableMap.of("replace" + System.lineSeparator() + "this", "creationTime: 1234"));
     ContainerBuildPlan resolved = jibContainerBuilder.toContainerBuildPlan();
     Assert.assertEquals(Instant.ofEpochMilli(1234), resolved.getCreationTime());
+  }
+
+  @Test
+  public void testToBuildFileSpec_alternativeRootContext()
+      throws URISyntaxException, InvalidImageReferenceException, IOException {
+    Path buildfile =
+        Paths.get(
+            Resources.getResource("buildfiles/projects/allProperties/altYamls/alt-jib.yaml")
+                .toURI());
+    Path projectRoot = buildfile.getParent().getParent();
+    JibContainerBuilder jibContainerBuilder =
+        BuildFiles.toJibContainerBuilder(projectRoot, buildfile, ImmutableMap.of());
+
+    ContainerBuildPlan resolved = jibContainerBuilder.toContainerBuildPlan();
+    Assert.assertEquals(
+        FileEntriesLayer.builder()
+            .addEntry(
+                projectRoot.resolve("project/script.sh"), AbsoluteUnixPath.get("/home/script.sh"))
+            .build()
+            .getEntries(),
+        ((FileEntriesLayer) resolved.getLayers().get(0)).getEntries());
   }
 }

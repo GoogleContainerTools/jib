@@ -51,6 +51,7 @@ public class BuildFiles {
    * Read a buildfile from disk and generate a JibContainerBuilder instance. All parsing of files
    * considers the directory the buildfile is located in as the working directory.
    *
+   * @param projectRoot the root context directory of this build
    * @param buildFilePath a file containing the build definition
    * @param templateParameters a map of templating variables to apply on the file before parsing
    * @return a {@link JibContainerBuilder} generated from the contents of {@code buildFilePath}
@@ -59,10 +60,9 @@ public class BuildFiles {
    * @throws InvalidImageReferenceException if the baseImage reference can not be parsed
    */
   public static JibContainerBuilder toJibContainerBuilder(
-      Path buildFilePath, Map<String, String> templateParameters)
+      Path projectRoot, Path buildFilePath, Map<String, String> templateParameters)
       throws InvalidImageReferenceException, IOException {
     BuildFileSpec buildFile = toBuildFileSpec(buildFilePath, templateParameters);
-    Path projectRoot = buildFilePath.toAbsolutePath().getParent();
 
     JibContainerBuilder containerBuilder;
     if (buildFile.getFrom().isPresent()) {
