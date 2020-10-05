@@ -16,10 +16,11 @@
 
 package com.google.cloud.tools.jib.cli.jar;
 
-import com.google.cloud.tools.jib.api.buildplan.*;
+import com.google.cloud.tools.jib.api.buildplan.AbsoluteUnixPath;
+import com.google.cloud.tools.jib.api.buildplan.ImageFormat;
+import com.google.cloud.tools.jib.api.buildplan.LayerObject;
+import com.google.cloud.tools.jib.api.buildplan.Port;
 
-import java.nio.file.Path;
-import java.time.Instant;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -84,13 +85,14 @@ public class JarInfoBuilder  {
         /**
          * Sets the directories that may hold externally mounted volumes. Note that these values are
          * added to the base image values.
+         *
          * @param volumes the directory paths on the container filesystem to set as volumes.
          * @return this
          */
-        public Builder setVolumes(Set<AbsoluteUnixPath> volumes) {
-            this.volumes = new HashSet<>(volumes);
-            return this;
-        }
+       public Builder setVolumes(Set<AbsoluteUnixPath> volumes){
+           this.volumes = new HashSet<>(volumes);
+           return this;
+       }
 
         /**
          * Sets the labels for the container. This replaces any previously-set labels. Note that these
@@ -103,8 +105,9 @@ public class JarInfoBuilder  {
          * @param labels a map of label keys to values
          * @return this
          */
-        public void setLabels(Map<String, String> labels){
+        public Builder setLabels(Map<String, String> labels){
             this.labels = new HashMap<>(labels);
+            return this;
         }
 
 
@@ -159,9 +162,9 @@ public class JarInfoBuilder  {
          * Sets the container entrypoint. This is the beginning of the command that is run when the
          * container starts. {@link #setProgramArguments(List)} sets additional tokens. {@code null} signals to use the
          * base image value.
-         *
+         *builder
          * <p>This is similar to <a
-         * href="https://docs.docker.com/engine/reference/builder/#exec-form-entrypoint-example">{@code
+         * href="https://docs.docker.com/engine/reference//#exec-form-entrypoint-example">{@code
          * ENTRYPOINT} in Dockerfiles</a> or {@code command} in the <a
          * href="https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.11/#container-v1-core">Kubernetes
          * Container spec</a>.
