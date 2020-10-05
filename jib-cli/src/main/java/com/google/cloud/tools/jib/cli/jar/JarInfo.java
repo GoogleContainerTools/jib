@@ -28,9 +28,9 @@ import java.util.Map;
 import java.util.Set;
 import javax.annotation.Nullable;
 
-public class JarInfoBuilder {
+public class JarInfo {
 
-  /** Builder for {@link JarInfoBuilder}. */
+  /** Builder for {@link JarInfo}. */
   public static class Builder {
 
     private String baseImage = "scratch";
@@ -212,12 +212,12 @@ public class JarInfoBuilder {
     }
 
     /**
-     * Returns the built {@link JarInfoBuilder}.
+     * Returns the built {@link JarInfo}.
      *
      * @return container build plan
      */
-    public JarInfoBuilder build() {
-      return new JarInfoBuilder(
+    public JarInfo build() {
+      return new JarInfo(
           baseImage,
           format,
           environment,
@@ -249,7 +249,7 @@ public class JarInfoBuilder {
 
   private final List<LayerObject> layers;
 
-  private JarInfoBuilder(
+  private JarInfo(
       String baseImage,
       ImageFormat format,
       Map<String, String> environment,

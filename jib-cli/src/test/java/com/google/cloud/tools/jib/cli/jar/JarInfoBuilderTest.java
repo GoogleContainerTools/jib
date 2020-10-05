@@ -36,7 +36,7 @@ public class JarInfoBuilderTest {
 
   @Test
   public void testDefaults() {
-    JarInfoBuilder jarInfo = JarInfoBuilder.builder().build();
+    JarInfo jarInfo = JarInfo.builder().build();
     assertThat(jarInfo.getBaseImage()).isEqualTo("scratch");
     assertThat(jarInfo.getFormat()).isEqualTo(ImageFormat.Docker);
     assertThat(jarInfo.getEnvironment()).isEmpty();
@@ -51,7 +51,7 @@ public class JarInfoBuilderTest {
 
   @Test
   public void testBuilder() {
-    JarInfoBuilder sampleJarInfo = createSampleJarInfo();
+    JarInfo sampleJarInfo = createSampleJarInfo();
 
     assertThat(sampleJarInfo.getBaseImage()).isEqualTo("base/image");
     assertThat(sampleJarInfo.getFormat()).isEqualTo(ImageFormat.OCI);
@@ -86,7 +86,7 @@ public class JarInfoBuilderTest {
                     Instant.ofEpochSecond(1))));
   }
 
-  private JarInfoBuilder createSampleJarInfo() {
+  private JarInfo createSampleJarInfo() {
     FileEntriesLayer layer1 =
         FileEntriesLayer.builder()
             .addEntry(Paths.get("/src/file/foo"), AbsoluteUnixPath.get("/path/in/container"))
@@ -96,7 +96,7 @@ public class JarInfoBuilderTest {
             .addEntry(Paths.get("/src/file/bar"), AbsoluteUnixPath.get("/path/in/container"))
             .build();
 
-    return JarInfoBuilder.builder()
+    return JarInfo.builder()
         .setBaseImage("base/image")
         .setFormat(ImageFormat.OCI)
         .setEnvironment(ImmutableMap.of("env", "var"))
