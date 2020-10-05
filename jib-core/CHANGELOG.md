@@ -13,6 +13,7 @@ All notable changes to this project will be documented in this file.
 
 - Upgraded jib-build-plan to 0.4.0. ([#2660](https://github.com/GoogleContainerTools/jib/pull/2660))
 - Previous locally cached base image manifests will be ignored, as the caching mechanism changed to enable multi-platform image building. ([#2730](https://github.com/GoogleContainerTools/jib/pull/2730), [#2711](https://github.com/GoogleContainerTools/jib/pull/2711))
+- Upgraded the ASM library to 9.0 to resolve an issue when auto-inferring main class in Java 15+. ([#2776](https://github.com/GoogleContainerTools/jib/pull/2776))
 
 ### Fixed
 
@@ -20,6 +21,8 @@ All notable changes to this project will be documented in this file.
 - Fixed `NullPointerException` to return a helpful message when a server does not provide any message in certain error cases (400 Bad Request, 404 Not Found, and 405 Method Not Allowed). ([#2532](https://github.com/GoogleContainerTools/jib/issues/2532))
 - Now supports sending client certificate (for example, via the `javax.net.ssl.keyStore` and `javax.net.ssl.keyStorePassword` system properties) and thus enabling mutual TLS authentication. ([#2585](https://github.com/GoogleContainerTools/jib/issues/2585), [#2226](https://github.com/GoogleContainerTools/jib/issues/2226))
 - Fixed `NullPointerException` during input validation (in Java 9+) when configuring Jib parameters using certain immutable collections (such as `List.of()`). ([#2702](https://github.com/GoogleContainerTools/jib/issues/2702))
+- Fixed authentication failure with Azure Container Registry when using ["tokens"](https://docs.microsoft.com/en-us/azure/container-registry/container-registry-repository-scoped-permissions). ([#2784](https://github.com/GoogleContainerTools/jib/issues/2784))
+- Improved authentication flow for base image registry. ([#2134](https://github.com/GoogleContainerTools/jib/issues/2134))
 
 ## 0.15.0
 

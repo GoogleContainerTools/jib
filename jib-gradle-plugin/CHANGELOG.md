@@ -10,12 +10,20 @@ All notable changes to this project will be documented in this file.
 ### Changed
 
 - Previous locally cached base image manifests will be ignored, as the caching mechanism changed to enable multi-platform image building. ([#2730](https://github.com/GoogleContainerTools/jib/pull/2730), [#2711](https://github.com/GoogleContainerTools/jib/pull/2711))
+- Upgraded the ASM library to 9.0 to resolve an issue when auto-inferring main class in Java 15+. ([#2776](https://github.com/GoogleContainerTools/jib/pull/2776))
 
 ### Fixed
 
 - Fixed `NullPointerException` during input validation (in Java 9+) when configuring Jib parameters using certain immutable collections (such as `List.of()`). ([#2702](https://github.com/GoogleContainerTools/jib/issues/2702))
-- Fixed an issue that configuring `jib.from.platforms` was always additive to the default `amd64/linux` platform. ([#2783](https://github.com/GoogleContainerTools/jib/issues/2783))
+- Fixed authentication failure with Azure Container Registry when using ["tokens"](https://docs.microsoft.com/en-us/azure/container-registry/container-registry-repository-scoped-permissions). ([#2784](https://github.com/GoogleContainerTools/jib/issues/2784))
+- Improved authentication flow for base image registry. ([#2134](https://github.com/GoogleContainerTools/jib/issues/2134))
 - Throw `IllegalArgumentException` with an error message instead of throwing a `NullPointerException` when `jib.to.tags` is set to a collection containing a `null` value. ([#2760](https://github.com/GoogleContainerTools/jib/issues/2760))
+
+## 2.5.1
+
+### Fixed
+
+- Fixed an issue that configuring `jib.from.platforms` was always additive to the default `amd64/linux` platform. ([#2783](https://github.com/GoogleContainerTools/jib/issues/2783))
 
 ## 2.5.0
 

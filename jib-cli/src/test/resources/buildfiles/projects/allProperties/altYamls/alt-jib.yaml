@@ -1,0 +1,50 @@
+# this buildfile doesn't necessarily work, just useful for testing parsing and translation
+apiVersion: jib/v1alpha1
+kind: BuildFile
+
+# "FROM" with detail for manifest lists or multiple architectures
+from:
+  image: "ubuntu"
+  # optional: if missing, then defaults to `linux/amd64`
+  platforms:
+    - architecture: "arm"
+      os: "linux"
+    - architecture: "amd64"
+      os: "darwin"
+
+# potentially simple form of "FROM" (based on ability to define schema)
+# from: "gcr.io/distroless/java:8"
+
+creationTime: 2000 # millis since epoch or iso8601 creation time
+format: OCI # Docker or OCI
+
+environment:
+  "KEY1": "v1"
+  "KEY2": "v2"
+labels:
+  "label1": "l1"
+  "label2": "l2"
+volumes:
+  - "/volume1"
+  - "/volume2"
+
+exposedPorts:
+  - "123/udp"
+  - "456"
+  - "789/tcp"
+
+user: "customUser"
+workingDirectory: "/home"
+entrypoint:
+  - "sh"
+  - "script.sh"
+cmd:
+  - "--param"
+  - "param"
+
+layers:
+  entries:
+    - name: "scripts"
+      files:
+        - src: "project/script.sh"
+          dest: "/home/script.sh"
