@@ -28,6 +28,7 @@ import java.util.Map;
 import java.util.Set;
 import javax.annotation.Nullable;
 
+/** Class for storing image parameters derived from {@link JarProcessor}. */
 public class JarInfo {
 
   /** Builder for {@link JarInfo}. */
