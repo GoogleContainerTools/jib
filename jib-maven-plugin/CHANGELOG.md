@@ -9,6 +9,18 @@ All notable changes to this project will be documented in this file.
 
 - Previous locally cached base image manifests will be ignored, as the caching mechanism changed to enable multi-platform image building. ([#2730](https://github.com/GoogleContainerTools/jib/pull/2730), [#2711](https://github.com/GoogleContainerTools/jib/pull/2711))
 - Upgraded the ASM library to 9.0 to resolve an issue when auto-inferring main class in Java 15+. ([#2776](https://github.com/GoogleContainerTools/jib/pull/2776))
+- _Incubating feature_: can now configure multiple platforms (such as architectures) to build multiple images as a bundle and push as a manifest list (also known as a fat manifest). As an incubating feature, there are certain limitations. For example, OCI image indices are not supported, and building a manifest list is supported only for registry pushing (the `jib:build` goal). ([#2523](https://github.com/GoogleContainerTools/jib/issues/2523))
+    ```xml
+      <from>
+        <image>... image reference to a manifest list ...</image>
+        <platforms>
+          <platform>
+            <architecture>arm64</architecture>
+            <os>linux</os>
+          </platform>
+        </platforms>
+      </from>
+   ```
 
 ### Fixed
 

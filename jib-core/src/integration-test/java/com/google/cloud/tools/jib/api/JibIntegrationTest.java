@@ -21,6 +21,8 @@ import com.google.cloud.tools.jib.api.buildplan.Platform;
 import com.google.cloud.tools.jib.blob.Blobs;
 import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.http.FailoverHttpClient;
+import com.google.cloud.tools.jib.image.json.V22ManifestListTemplate;
+import com.google.cloud.tools.jib.image.json.V22ManifestListTemplate.ManifestDescriptorTemplate;
 import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
 import com.google.cloud.tools.jib.registry.LocalRegistry;
 import com.google.cloud.tools.jib.registry.ManifestPullerIntegrationTest;
@@ -71,6 +73,20 @@ public class JibIntegrationTest {
             RegistryImage.named(targetImageReference)
                 .addCredentialRetriever(() -> Optional.of(Credential.from("username", "password"))))
         .setAllowInsecureRegistries(true);
+  }
+
+  private static RegistryClient getRegistryClient(
+      ImageReference imageReference, Credential credential) {
+    RegistryClient registryClient =
+        RegistryClient.factory(
+                EventHandlers.NONE,
+                imageReference.getRegistry(),
+                imageReference.getRepository(),
+                new FailoverHttpClient(true, true, ignored -> {}))
+            .setCredential(credential)
+            .newRegistryClient();
+    registryClient.configureBasicAuth();
+    return registryClient;
   }
 
   @Before
@@ -280,19 +296,27 @@ public class JibIntegrationTest {
   public void testScratch_multiPlatform()
       throws IOException, InterruptedException, ExecutionException, RegistryException,
           CacheDirectoryCreationException {
-    // TODO: Modify this test to check for multiple platforms instead of throwing exception once
-    // multi-platform feature is enabled.
     ImageReference targetImageReference =
         ImageReference.of("localhost:5000", "multi-platform-scratch", null);
-    try {
-      Jib.fromScratch()
-          .setPlatforms(
-              ImmutableSet.of(new Platform("arm64", "windows"), new Platform("amd32", "windows")))
-          .containerize(getLocalRegistryContainerizer(targetImageReference));
-      Assert.fail();
-    } catch (UnsupportedOperationException ex) {
-      Assert.assertEquals("multi-platform image building is not yet supported", ex.getMessage());
-    }
+    Jib.fromScratch()
+        .setPlatforms(
+            ImmutableSet.of(new Platform("arm64", "windows"), new Platform("amd32", "windows")))
+        .containerize(getLocalRegistryContainerizer(targetImageReference));
+    RegistryClient registryClient =
+        getRegistryClient(targetImageReference, Credential.from("username", "password"));
+
+    V22ManifestListTemplate manifestList =
+        (V22ManifestListTemplate) registryClient.pullManifest("latest").getManifest();
+    Assert.assertEquals(2, manifestList.getManifests().size());
+    ManifestDescriptorTemplate.Platform platform1 =
+        manifestList.getManifests().get(0).getPlatform();
+    ManifestDescriptorTemplate.Platform platform2 =
+        manifestList.getManifests().get(1).getPlatform();
+
+    Assert.assertEquals("arm64", platform1.getArchitecture());
+    Assert.assertEquals("windows", platform1.getOs());
+    Assert.assertEquals("amd32", platform2.getArchitecture());
+    Assert.assertEquals("windows", platform2.getOs());
   }
 
   @Test
@@ -385,20 +409,5 @@ public class JibIntegrationTest {
 
     Jib.from(sourceImageReferenceAsManifestList).containerize(containerizer);
     // pass, no exceptions thrown
-  }
-
-  private static RegistryClient getRegistryClient(
-      ImageReference imageReference, Credential credential) {
-    FailoverHttpClient httpClient = new FailoverHttpClient(true, true, ignored -> {});
-    RegistryClient registryClient =
-        RegistryClient.factory(
-                EventHandlers.NONE,
-                imageReference.getRegistry(),
-                imageReference.getRepository(),
-                httpClient)
-            .setCredential(credential)
-            .newRegistryClient();
-    registryClient.configureBasicAuth();
-    return registryClient;
   }
 }

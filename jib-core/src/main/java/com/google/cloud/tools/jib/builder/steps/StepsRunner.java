@@ -43,6 +43,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -312,7 +313,7 @@ public class StepsRunner {
                       results.baseImagesAndRegistryClient.get().images.size())) {
 
                 Map<DescriptorDigest, Future<PreparedLayer>> preparedLayersCache = new HashMap<>();
-                Map<Image, List<Future<PreparedLayer>>> baseImagesAndLayers = new HashMap<>();
+                Map<Image, List<Future<PreparedLayer>>> baseImagesAndLayers = new LinkedHashMap<>();
                 for (Image baseImage : results.baseImagesAndRegistryClient.get().images) {
                   List<Future<PreparedLayer>> layers =
                       obtainBaseImageLayers(
@@ -378,7 +379,7 @@ public class StepsRunner {
                       "scheduling pushing base images layers",
                       results.baseImagesAndLayers.get().size())) {
 
-                Map<Image, List<Future<BlobDescriptor>>> layerPushResults = new HashMap<>();
+                Map<Image, List<Future<BlobDescriptor>>> layerPushResults = new LinkedHashMap<>();
                 for (Map.Entry<Image, List<Future<PreparedLayer>>> entry :
                     results.baseImagesAndLayers.get().entrySet()) {
                   Image baseImage = entry.getKey();
@@ -420,7 +421,7 @@ public class StepsRunner {
                   progressDispatcherFactory.create(
                       "scheduling building manifests", results.baseImagesAndLayers.get().size())) {
 
-                Map<Image, Future<Image>> baseImagesAndBuiltImages = new HashMap<>();
+                Map<Image, Future<Image>> baseImagesAndBuiltImages = new LinkedHashMap<>();
                 for (Map.Entry<Image, List<Future<PreparedLayer>>> entry :
                     results.baseImagesAndLayers.get().entrySet()) {
                   Image baseImage = entry.getKey();
@@ -472,7 +473,7 @@ public class StepsRunner {
                       "scheduling pushing container configurations",
                       results.baseImagesAndBuiltImages.get().size())) {
 
-                Map<Image, Future<BlobDescriptor>> configPushResults = new HashMap<>();
+                Map<Image, Future<BlobDescriptor>> configPushResults = new LinkedHashMap<>();
                 for (Map.Entry<Image, Future<Image>> entry :
                     results.baseImagesAndBuiltImages.get().entrySet()) {
                   Image baseImage = entry.getKey();

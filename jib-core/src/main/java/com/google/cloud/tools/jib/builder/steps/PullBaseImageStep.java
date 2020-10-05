@@ -54,12 +54,12 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Verify;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSet;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.Callable;
 import javax.annotation.Nullable;
 
@@ -98,7 +98,7 @@ class PullBaseImageStep implements Callable<ImagesAndRegistryClient> {
     // Skip this step if this is a scratch image
     ImageReference imageReference = buildContext.getBaseImageConfiguration().getImage();
     if (imageReference.isScratch()) {
-      ImmutableSet<Platform> platforms = buildContext.getContainerConfiguration().getPlatforms();
+      Set<Platform> platforms = buildContext.getContainerConfiguration().getPlatforms();
       Verify.verify(!platforms.isEmpty());
 
       eventHandlers.dispatch(LogEvent.progress("Getting scratch base image..."));
