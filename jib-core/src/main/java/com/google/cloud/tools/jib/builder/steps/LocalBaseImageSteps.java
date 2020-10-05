@@ -111,6 +111,8 @@ public class LocalBaseImageSteps {
         Optional<LocalImage> cachedImage =
             getCachedDockerImage(buildContext.getBaseImageLayersCache(), dockerImageDetails);
         if (cachedImage.isPresent()) {
+          PlatformChecker.checkManifestPlatform(
+              buildContext, cachedImage.get().configurationTemplate);
           return cachedImage.get();
         }
 
@@ -125,11 +127,14 @@ public class LocalBaseImageSteps {
           dockerClient.save(imageReference, tarPath, throttledProgressReporter);
         }
 
-        return cacheDockerImageTar(
-            buildContext,
-            tarPath,
-            progressEventDispatcher.newChildProducer(),
-            tempDirectoryProvider);
+        LocalImage localImage =
+            cacheDockerImageTar(
+                buildContext,
+                tarPath,
+                progressEventDispatcher.newChildProducer(),
+                tempDirectoryProvider);
+        PlatformChecker.checkManifestPlatform(buildContext, localImage.configurationTemplate);
+        return localImage;
       }
     };
   }
@@ -139,9 +144,13 @@ public class LocalBaseImageSteps {
       ProgressEventDispatcher.Factory progressEventDispatcherFactory,
       Path tarPath,
       TempDirectoryProvider tempDirectoryProvider) {
-    return () ->
-        cacheDockerImageTar(
-            buildContext, tarPath, progressEventDispatcherFactory, tempDirectoryProvider);
+    return () -> {
+      LocalImage localImage =
+          cacheDockerImageTar(
+              buildContext, tarPath, progressEventDispatcherFactory, tempDirectoryProvider);
+      PlatformChecker.checkManifestPlatform(buildContext, localImage.configurationTemplate);
+      return localImage;
+    };
   }
 
   static Callable<ImagesAndRegistryClient> returnImageAndRegistryClientStep(
