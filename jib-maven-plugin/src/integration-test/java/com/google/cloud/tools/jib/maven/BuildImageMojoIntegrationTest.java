@@ -749,10 +749,10 @@ public class BuildImageMojoIntegrationTest {
     ManifestAndDigest<ManifestTemplate> manifestAndDigest1 =
         registryClient.pullManifest(
             "sha256:fee2655e19e5138150606c99cfc16fcbf502d72b0f3b9ccf3a8f4509c47e46d9");
+    ManifestTemplate manifestTemplate1 = manifestAndDigest1.getManifest();
     Assert.assertEquals(
         "sha256:fee2655e19e5138150606c99cfc16fcbf502d72b0f3b9ccf3a8f4509c47e46d9",
         manifestAndDigest1.getDigest().toString());
-    ManifestTemplate manifestTemplate1 = manifestAndDigest1.getManifest();
     MatcherAssert.assertThat(manifestTemplate1, CoreMatchers.instanceOf(V22ManifestTemplate.class));
     V22ManifestTemplate manifest1 = (V22ManifestTemplate) manifestTemplate1;
     Assert.assertEquals(
@@ -763,10 +763,10 @@ public class BuildImageMojoIntegrationTest {
     ManifestAndDigest<ManifestTemplate> manifestAndDigest2 =
         registryClient.pullManifest(
             "sha256:f3f4a91c68bcafea351280085d17e25fa598f5644c8b5e31e6133eddfc35e7ff");
+    ManifestTemplate manifestTemplate2 = manifestAndDigest2.getManifest();
     Assert.assertEquals(
         "sha256:f3f4a91c68bcafea351280085d17e25fa598f5644c8b5e31e6133eddfc35e7ff",
         manifestAndDigest2.getDigest().toString());
-    ManifestTemplate manifestTemplate2 = manifestAndDigest2.getManifest();
     MatcherAssert.assertThat(manifestTemplate2, CoreMatchers.instanceOf(V22ManifestTemplate.class));
     V22ManifestTemplate manifest2 = (V22ManifestTemplate) manifestTemplate2;
     Assert.assertEquals(
