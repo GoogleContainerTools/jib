@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+### Changed
+
+### Fixed
+
+## 2.6.0
+
+### Added
+
 - Added lazy evaluation for `jib.to.image` and `jib.to.tags` using Gradle Property and Provider. ([#2727](https://github.com/GoogleContainerTools/jib/issues/2727))
 - _Incubating feature_: can now configure multiple platforms (such as architectures) to build multiple images as a bundle and push as a manifest list (also known as a fat manifest). As an incubating feature, there are certain limitations. For example, OCI image indices are not supported, and building a manifest list is supported only for registry pushing (the `jib` task). ([#2523](https://github.com/GoogleContainerTools/jib/issues/2523))
    ```gradle
