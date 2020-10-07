@@ -469,12 +469,16 @@ To inspect the image that is produced from the build using Docker, you can use c
 
 ### How do I specify a platform in the manifest list (or OCI index) of a base image?
 
-Newer Jib verisons added an _incubating feature_ that provides limited support for selecting a base image with the desired platform from a manifest list. For example,
+Newer Jib verisons added an _incubating feature_ that provides support for selecting base images with the desired platforms from a manifest list. For example,
 
 ```xml
   <from>
     <image>... image reference to a manifest list ...</image>
     <platforms>
+      <platform>
+        <architecture>amd64</architecture>
+        <os>linux</os>
+      </platform>
       <platform>
         <architecture>arm64</architecture>
         <os>linux</os>
@@ -488,6 +492,10 @@ jib.from {
   image = '... image reference to a manifest list ...'
   platforms {
     platform {
+      architecture = 'amd64'
+      os = 'linux'
+    }
+    platform {
       architecture = 'arm64'
       os = 'linux'
     }
@@ -495,14 +503,17 @@ jib.from {
 }
 ```
 
-The default platform is "amd64/linux" if not specified, whose behavior is backward-compatible.
+The default when not specified is a single "amd64/linux" platform, whose behavior is backward-compatible.
+
+When multiple platforms are specified, Jib creates and pushes a manifest list (also known as a fat manifest) after building and pushing all the images for the specified platforms.
 
 As an incubating feature, there are certain limitations:
 - OCI image indices are not supported (as opposed to Docker manifest lists).
-- Supports specifying only one platform.
 - Only `architecture` and `os` are supported. If the base image manifest list contains multiple images with the given architecture and os, the first image will be selected.
+- Does not support using a local Docker daemon or tarball image for a base image.
+- Does not support pushing to a Docker daemon (`jib:dockerBuild` / `jibDockerBuild`) or building a local tarball (`jib:buildTar` / `jibBuildTar`).
 
-Make sure to specify a manifest _list_ in `<from><image>` (whether by a tag name or a digest (`@sha256:...`)). For troubleshooting, you may want to check what platforms a manifest list contains. To view a manifest, [enable experimental docker CLI](https://docs.docker.com/engine/reference/commandline/cli/#experimental-features) features and then run the [manifest inspect](https://docs.docker.com/engine/reference/commandline/manifest_inspect/) command.
+Make sure to specify a manifest _list_ in `<from><image>` (whether by a tag name or a digest (`@sha256:...`)). For troubleshooting, you may want to check what platforms the manifest list contains. To view a manifest list, [enable experimental docker CLI](https://docs.docker.com/engine/reference/commandline/cli/#experimental-features) features and then run the [manifest inspect](https://docs.docker.com/engine/reference/commandline/manifest_inspect/) command.
 
 ```
 $ docker manifest inspect openjdk:8
