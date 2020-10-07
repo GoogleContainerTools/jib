@@ -40,18 +40,18 @@
         <artifactId>jib-maven-plugin</artifactId>
         <version>${jib-maven-plugin.version}</version>
         <configuration>
-           <from>
-        <image>busybox@sha256:4f47c01fa91355af2865ac10fef5bf6ec9c7f42ad2321377c21e844427972977</image>
-	  <platforms>
-	    <platform>
-	       <architecture>arm64</architecture>
-	       <os>linux</os>
-	    </platform>
-	    <platform>
-	       <architecture>amd64</architecture>
-	       <os>linux</os>
-	    </platform>
-	   </platforms>
+          <from>
+            <image>busybox@sha256:4f47c01fa91355af2865ac10fef5bf6ec9c7f42ad2321377c21e844427972977</image>
+            <platforms>
+              <platform>
+                <architecture>arm64</architecture>
+                <os>linux</os>
+              </platform>
+              <platform>
+                <architecture>amd64</architecture>
+                <os>linux</os>
+              </platform>
+            </platforms>
           </from>
           <to>
             <image>${_TARGET_IMAGE}</image>

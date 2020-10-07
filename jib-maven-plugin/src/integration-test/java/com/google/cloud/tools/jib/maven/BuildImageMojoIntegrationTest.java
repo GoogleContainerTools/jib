@@ -23,13 +23,16 @@ import com.google.cloud.tools.jib.api.DescriptorDigest;
 import com.google.cloud.tools.jib.api.ImageReference;
 import com.google.cloud.tools.jib.api.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.api.RegistryException;
+import com.google.cloud.tools.jib.blob.Blob;
+import com.google.cloud.tools.jib.blob.Blobs;
 import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.http.FailoverHttpClient;
 import com.google.cloud.tools.jib.image.json.ManifestTemplate;
 import com.google.cloud.tools.jib.image.json.V22ManifestListTemplate;
+import com.google.cloud.tools.jib.image.json.V22ManifestListTemplate.ManifestDescriptorTemplate;
 import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
+import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import com.google.cloud.tools.jib.registry.LocalRegistry;
-import com.google.cloud.tools.jib.registry.ManifestAndDigest;
 import com.google.cloud.tools.jib.registry.RegistryClient;
 import com.google.common.base.Splitter;
 import java.io.IOException;
@@ -41,6 +44,7 @@ import java.nio.file.Paths;
 import java.security.DigestException;
 import java.time.Instant;
 import java.util.Arrays;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.annotation.Nullable;
@@ -709,7 +713,6 @@ public class BuildImageMojoIntegrationTest {
     verifier.setSystemProperty("jib.allowInsecureRegistries", "true");
 
     verifier.setAutoclean(false);
-    verifier.addCliOption("-X");
     verifier.addCliOption("--file=pom-multiplatform-build.xml");
     verifier.executeGoals(Arrays.asList("clean", "compile", "jib:build"));
     verifier.verifyErrorFreeLog();
@@ -722,56 +725,58 @@ public class BuildImageMojoIntegrationTest {
     registryClient.configureBasicAuth();
 
     // manifest list by tag ":latest"
-    ManifestTemplate manifestListTemplate = registryClient.pullManifest("latest").getManifest();
-    MatcherAssert.assertThat(
-        manifestListTemplate, CoreMatchers.instanceOf(V22ManifestListTemplate.class));
-    V22ManifestListTemplate manifestList = (V22ManifestListTemplate) manifestListTemplate;
-    Assert.assertEquals(
-        Arrays.asList("sha256:fee2655e19e5138150606c99cfc16fcbf502d72b0f3b9ccf3a8f4509c47e46d9"),
-        manifestList.getDigestsForPlatform("arm64", "linux"));
-    Assert.assertEquals(
-        Arrays.asList("sha256:f3f4a91c68bcafea351280085d17e25fa598f5644c8b5e31e6133eddfc35e7ff"),
-        manifestList.getDigestsForPlatform("amd64", "linux"));
+    ManifestTemplate manifestList = registryClient.pullManifest("latest").getManifest();
+    MatcherAssert.assertThat(manifestList, CoreMatchers.instanceOf(V22ManifestListTemplate.class));
+    V22ManifestListTemplate v22ManifestList = (V22ManifestListTemplate) manifestList;
+
+    Assert.assertEquals(2, v22ManifestList.getManifests().size());
+    ManifestDescriptorTemplate.Platform platform1 =
+        v22ManifestList.getManifests().get(0).getPlatform();
+    ManifestDescriptorTemplate.Platform platform2 =
+        v22ManifestList.getManifests().get(1).getPlatform();
+
+    Assert.assertEquals("arm64", platform1.getArchitecture());
+    Assert.assertEquals("linux", platform1.getOs());
+    Assert.assertEquals("amd64", platform2.getArchitecture());
+    Assert.assertEquals("linux", platform2.getOs());
 
     // manifest list by tag ":another"
-    ManifestTemplate manifestListTemplate2 = registryClient.pullManifest("another").getManifest();
+    ManifestTemplate anotherManifestList = registryClient.pullManifest("another").getManifest();
+    Assert.assertEquals(
+        JsonTemplateMapper.toUtf8String(manifestList),
+        JsonTemplateMapper.toUtf8String(anotherManifestList));
+
+    // Check arm64/linux container config.
+    List<String> arm64Digests = v22ManifestList.getDigestsForPlatform("arm64", "linux");
+    Assert.assertEquals(1, arm64Digests.size());
+    String arm64Digest = arm64Digests.get(0);
+
+    ManifestTemplate arm64Manifest = registryClient.pullManifest(arm64Digest).getManifest();
+    MatcherAssert.assertThat(arm64Manifest, CoreMatchers.instanceOf(V22ManifestTemplate.class));
+    V22ManifestTemplate arm64V22Manifest = (V22ManifestTemplate) arm64Manifest;
+    DescriptorDigest arm64ConfigDigest = arm64V22Manifest.getContainerConfiguration().getDigest();
+
+    Blob arm64ConfigBlob = registryClient.pullBlob(arm64ConfigDigest, ignored -> {}, ignored -> {});
+    String arm64Config = Blobs.writeToString(arm64ConfigBlob);
     MatcherAssert.assertThat(
-        manifestListTemplate2, CoreMatchers.instanceOf(V22ManifestListTemplate.class));
-    V22ManifestListTemplate manifestList2 = (V22ManifestListTemplate) manifestListTemplate2;
-    Assert.assertEquals(
-        Arrays.asList("sha256:fee2655e19e5138150606c99cfc16fcbf502d72b0f3b9ccf3a8f4509c47e46d9"),
-        manifestList2.getDigestsForPlatform("arm64", "linux"));
-    Assert.assertEquals(
-        Arrays.asList("sha256:f3f4a91c68bcafea351280085d17e25fa598f5644c8b5e31e6133eddfc35e7ff"),
-        manifestList2.getDigestsForPlatform("amd64", "linux"));
+        arm64Config, CoreMatchers.containsString("\"architecture\":\"arm64\""));
+    MatcherAssert.assertThat(arm64Config, CoreMatchers.containsString("\"os\":\"linux\""));
 
-    // arm64/linux manifest
-    ManifestAndDigest<ManifestTemplate> manifestAndDigest1 =
-        registryClient.pullManifest(
-            "sha256:fee2655e19e5138150606c99cfc16fcbf502d72b0f3b9ccf3a8f4509c47e46d9");
-    ManifestTemplate manifestTemplate1 = manifestAndDigest1.getManifest();
-    Assert.assertEquals(
-        "sha256:fee2655e19e5138150606c99cfc16fcbf502d72b0f3b9ccf3a8f4509c47e46d9",
-        manifestAndDigest1.getDigest().toString());
-    MatcherAssert.assertThat(manifestTemplate1, CoreMatchers.instanceOf(V22ManifestTemplate.class));
-    V22ManifestTemplate manifest1 = (V22ManifestTemplate) manifestTemplate1;
-    Assert.assertEquals(
-        "sha256:cecb4d0f179207a1c7f2ee33819d4fb70bbb9d98eebe78dfe1b439896925dc27",
-        manifest1.getContainerConfiguration().getDigest().toString());
+    // Check amd64/linux container config.
+    List<String> amd64Digests = v22ManifestList.getDigestsForPlatform("amd64", "linux");
+    Assert.assertEquals(1, amd64Digests.size());
+    String amd64Digest = amd64Digests.get(0);
 
-    // amd64/linux manifest
-    ManifestAndDigest<ManifestTemplate> manifestAndDigest2 =
-        registryClient.pullManifest(
-            "sha256:f3f4a91c68bcafea351280085d17e25fa598f5644c8b5e31e6133eddfc35e7ff");
-    ManifestTemplate manifestTemplate2 = manifestAndDigest2.getManifest();
-    Assert.assertEquals(
-        "sha256:f3f4a91c68bcafea351280085d17e25fa598f5644c8b5e31e6133eddfc35e7ff",
-        manifestAndDigest2.getDigest().toString());
-    MatcherAssert.assertThat(manifestTemplate2, CoreMatchers.instanceOf(V22ManifestTemplate.class));
-    V22ManifestTemplate manifest2 = (V22ManifestTemplate) manifestTemplate2;
-    Assert.assertEquals(
-        "sha256:a287f6aab9f8771c35ee8c60388abf845ee3ed6ef98d785c295200523fe9e4b7",
-        manifest2.getContainerConfiguration().getDigest().toString());
+    ManifestTemplate amd64Manifest = registryClient.pullManifest(amd64Digest).getManifest();
+    MatcherAssert.assertThat(amd64Manifest, CoreMatchers.instanceOf(V22ManifestTemplate.class));
+    V22ManifestTemplate amd64V22Manifest = (V22ManifestTemplate) amd64Manifest;
+    DescriptorDigest amd64ConfigDigest = amd64V22Manifest.getContainerConfiguration().getDigest();
+
+    Blob amd64ConfigBlob = registryClient.pullBlob(amd64ConfigDigest, ignored -> {}, ignored -> {});
+    String amd64Config = Blobs.writeToString(amd64ConfigBlob);
+    MatcherAssert.assertThat(
+        amd64Config, CoreMatchers.containsString("\"architecture\":\"amd64\""));
+    MatcherAssert.assertThat(amd64Config, CoreMatchers.containsString("\"os\":\"linux\""));
   }
 
   private void buildAndRunWebApp(TestProject project, String label, String pomXml)
