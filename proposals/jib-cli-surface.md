@@ -42,13 +42,16 @@ build        build a container
     --allow-insecure-registries            allow jib to communicate with registries over https
     --credHelper <registry>=<credHelper>   credential helper to use for a registry (repeatable)
     --send-credentials-over-http           allow jib to send credentials over http (used in conjunction with --allow-insecure-registries)
-    --to-auth <username> <password>        configure a username and password for authentication on the registry that an image is being built to
-    --from-auth <username> <pasword>       configure a username and password for authentication on the registry that a base image is being sourced from
+    --to-username <username>               configure a username for authenticating on the registry that an image is being built to
+    --to-password <password>               configure a password for authenticating on the registry and image is being built to (interactive if <password> is omitted)
+    --from-username <username>             configure a username for authentication on the registry that a base image is being sourced from
+    --from-password <password>             configure a password for authentication on the registry that a base image is being sourced from (interactive if <password> is omitted)
 ```
 
 #### Info Params
 ```
     --help                                 print usage and exit
+    --stacktrace                           print stacktrace on error (for debugging issues in the jib-cli)
     --verbosity <level>                    set logging verbosity (error, warn, lifecycle (default), info, debug)
 -v, --version                              print version information and exit 
 ```
