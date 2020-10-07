@@ -29,6 +29,8 @@ build        build a container
 
 #### Build Config
 ```
+    --application-cache <directory>        location of the application cache
+    --base-image-cache <directory>         location of the base image cache
 -b, --build-file <file>                    location of the build file (default <context>/jib.yaml)
 -c, --context <dir>                        location of the build context (default .)
     --docker-config <directory>            location of docker configuration
