@@ -40,13 +40,38 @@ build        build a container
 #### Auth/Security
 ```
     --allow-insecure-registries            allow jib to communicate with registries over https
-    --credHelper <registry>=<credHelper>   credential helper to use for a registry (repeatable)
     --send-credentials-over-http           allow jib to send credentials over http (used in conjunction with --allow-insecure-registries)
+```
+##### Credentials
+
+Credentials can be specified using credential helpers or username + password. The following options are available
+```
+    --credHelper <credHelper>              credential helper to use for a registry
+    --to-credHelper <credHelper>           credential helper to use for target image registry
+    --from-credHelper <credHelper>         credential helper to use for base image registry
+    --username <username>                  configure a username for authenticating against registries
+    --password <password>                  configure a passowrd for authenticating against registries (interactive if <password> is omitted)
     --to-username <username>               configure a username for authenticating on the registry that an image is being built to
     --to-password <password>               configure a password for authenticating on the registry and image is being built to (interactive if <password> is omitted)
     --from-username <username>             configure a username for authentication on the registry that a base image is being sourced from
     --from-password <password>             configure a password for authentication on the registry that a base image is being sourced from (interactive if <password> is omitted)
 ```
+Of these, only the following combinations of the above options are allowed
+###### Cred Helpers only
+1. `--credHelper`
+1. `--to-credHelper`
+1. `--from-credHelper`
+1. `--to-credHelper`, `from-credHelper`
+
+###### Username/Password only
+1. `--username`, `--password`
+1. `--to-username`, `--to-password`
+1. `--from-username`, `--from-password`
+1. `--to-username`, `--to-password`, `--from-username`, `--from-password`
+
+###### Mixed CredHelper and Username/Password
+1. `--to-credHelper`, `--from-username`, `--from-password`
+1. `--to-username`, ``--to-password`, `--from-credhelper`
 
 #### Info Params
 ```
@@ -58,7 +83,7 @@ build        build a container
 
 ### Flag Files
 
-Pico cli allows the use of flag files (https://picocli.info/#AtFiles). The jib cli will enable this feature.
+Pico cli allows the use of flag files (https://picocli.info/#AtFiles). The jib cli will enable this feature. This will allow allow build environment configuration to be defined in a configuration file.
 
 ## Environment Variables
 
