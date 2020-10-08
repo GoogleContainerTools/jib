@@ -17,8 +17,10 @@
 package com.google.cloud.tools.jib.cli.cli2;
 
 import static com.google.common.truth.Truth.assertThat;
+import static com.google.common.truth.Truth8.assertThat;
 import static org.junit.Assert.fail;
 
+import com.google.cloud.tools.jib.api.Credential;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import java.nio.file.Paths;
@@ -44,19 +46,23 @@ public class JibCliTest {
   public void testParse_defaults() {
     JibCli jibCli = CommandLine.populateCommand(new JibCli(), "-t", "test-image-ref");
 
-    assertThat(jibCli.targetImage).isEqualTo("test-image-ref");
-    assertThat(jibCli.usernamePassword).isNull();
-    assertThat(jibCli.credentialHelpers).isEmpty();
-    assertThat((Object) jibCli.buildFile).isNull();
-    assertThat((Object) jibCli.contextRoot).isEqualTo(Paths.get("."));
-    assertThat(jibCli.tags).isEmpty();
-    assertThat(jibCli.templateParameters).isEmpty();
-    assertThat((Object) jibCli.applicationCache).isNull();
-    assertThat((Object) jibCli.baseImageCache).isNull();
-    assertThat(jibCli.allowInsecureRegistries).isFalse();
-    assertThat(jibCli.sendCredentialsOverHttp).isFalse();
-    assertThat(jibCli.verbosity).isEqualTo("lifecycle");
-    assertThat(jibCli.stacktrace).isFalse();
+    assertThat(jibCli.getTargetImage()).isEqualTo("test-image-ref");
+    assertThat(jibCli.getUsernamePassword()).isEmpty();
+    assertThat(jibCli.getToUsernamePassword()).isEmpty();
+    assertThat(jibCli.getFromUsernamePassword()).isEmpty();
+    assertThat(jibCli.getCredentialHelpers()).isEmpty();
+    assertThat(jibCli.getBuildFile()).isEqualTo(Paths.get("./jib.yaml"));
+    assertThat(jibCli.getContextRoot()).isEqualTo(Paths.get("."));
+    assertThat(jibCli.getTags()).isEmpty();
+    assertThat(jibCli.getTemplateParameters()).isEmpty();
+    assertThat(jibCli.getApplicationCache()).isEmpty();
+    assertThat(jibCli.getBaseImageCache()).isEmpty();
+    assertThat(jibCli.isAllowInsecureRegistries()).isFalse();
+    assertThat(jibCli.isSendCredentialsOverHttp()).isFalse();
+    assertThat(jibCli.getVerbosity()).isEqualTo("lifecycle");
+    assertThat(jibCli.isStacktrace()).isFalse();
+    assertThat(jibCli.isHttpTrace()).isFalse();
+    assertThat(jibCli.isSerialize()).isFalse();
   }
 
   @Test
@@ -75,20 +81,25 @@ public class JibCliTest {
             "-p",
             "param2=value2");
 
-    assertThat(jibCli.targetImage).isEqualTo("test-image-ref");
-    assertThat(jibCli.usernamePassword).isNull();
-    assertThat(jibCli.credentialHelpers).isEmpty();
-    assertThat((Object) jibCli.buildFile).isEqualTo(Paths.get("test-build-file"));
-    assertThat((Object) jibCli.contextRoot).isEqualTo(Paths.get("test-context"));
-    assertThat(jibCli.tags).isEmpty();
-    assertThat(jibCli.templateParameters)
+    assertThat(jibCli.getTargetImage()).isEqualTo("test-image-ref");
+    assertThat(jibCli.getUsernamePassword()).isEmpty();
+    assertThat(jibCli.getToUsernamePassword()).isEmpty();
+    assertThat(jibCli.getFromUsernamePassword()).isEmpty();
+    assertThat(jibCli.getCredentialHelpers()).isEmpty();
+    assertThat(jibCli.getBuildFile()).isEqualTo(Paths.get("test-build-file"));
+    assertThat(jibCli.getContextRoot()).isEqualTo(Paths.get("test-context"));
+    assertThat(jibCli.getTags()).isEmpty();
+    assertThat(jibCli.getTemplateParameters())
         .isEqualTo(ImmutableMap.of("param1", "value1", "param2", "value2"));
-    assertThat((Object) jibCli.applicationCache).isNull();
-    assertThat((Object) jibCli.baseImageCache).isNull();
-    assertThat(jibCli.allowInsecureRegistries).isFalse();
-    assertThat(jibCli.sendCredentialsOverHttp).isFalse();
-    assertThat(jibCli.verbosity).isEqualTo("lifecycle");
-    assertThat(jibCli.stacktrace).isFalse();
+    assertThat(jibCli.getApplicationCache()).isEmpty();
+    assertThat(jibCli.getBaseImageCache()).isEmpty();
+    assertThat(jibCli.isAllowInsecureRegistries()).isFalse();
+    assertThat(jibCli.isSendCredentialsOverHttp()).isFalse();
+    assertThat(jibCli.getVerbosity()).isEqualTo("lifecycle");
+    assertThat(jibCli.isStacktrace()).isFalse();
+    assertThat(jibCli.isStacktrace()).isFalse();
+    assertThat(jibCli.isHttpTrace()).isFalse();
+    assertThat(jibCli.isSerialize()).isFalse();
   }
 
   @Test
@@ -120,22 +131,38 @@ public class JibCliTest {
             "test-base-image-cache",
             "--verbosity",
             "info",
-            "--stacktrace");
+            "--stacktrace",
+            "--http-trace",
+            "--serialize");
 
-    assertThat(jibCli.targetImage).isEqualTo("test-image-ref");
-    assertThat(jibCli.usernamePassword).isNull();
-    assertThat(jibCli.credentialHelpers).isEqualTo(ImmutableList.of("helper1", "helper2"));
-    assertThat((Object) jibCli.buildFile).isEqualTo(Paths.get("test-build-file"));
-    assertThat((Object) jibCli.contextRoot).isEqualTo(Paths.get("test-context"));
-    assertThat(jibCli.tags).isEqualTo(ImmutableList.of("tag1", "tag2", "tag3"));
-    assertThat(jibCli.templateParameters)
+    assertThat(jibCli.getTargetImage()).isEqualTo("test-image-ref");
+    assertThat(jibCli.getUsernamePassword()).isEmpty();
+    assertThat(jibCli.getToUsernamePassword()).isEmpty();
+    assertThat(jibCli.getFromUsernamePassword()).isEmpty();
+    assertThat(jibCli.getCredentialHelpers()).isEqualTo(ImmutableList.of("helper1", "helper2"));
+    assertThat(jibCli.getBuildFile()).isEqualTo(Paths.get("test-build-file"));
+    assertThat(jibCli.getContextRoot()).isEqualTo(Paths.get("test-context"));
+    assertThat(jibCli.getTags()).isEqualTo(ImmutableList.of("tag1", "tag2", "tag3"));
+    assertThat(jibCli.getTemplateParameters())
         .isEqualTo(ImmutableMap.of("param1", "value1", "param2", "value2"));
-    assertThat((Object) jibCli.applicationCache).isEqualTo(Paths.get("test-application-cache"));
-    assertThat((Object) jibCli.baseImageCache).isEqualTo(Paths.get("test-base-image-cache"));
-    assertThat(jibCli.allowInsecureRegistries).isTrue();
-    assertThat(jibCli.sendCredentialsOverHttp).isTrue();
-    assertThat(jibCli.verbosity).isEqualTo("info");
-    assertThat(jibCli.stacktrace).isTrue();
+    assertThat(jibCli.getApplicationCache()).hasValue(Paths.get("test-application-cache"));
+    assertThat(jibCli.getBaseImageCache()).hasValue(Paths.get("test-base-image-cache"));
+    assertThat(jibCli.isAllowInsecureRegistries()).isTrue();
+    assertThat(jibCli.isSendCredentialsOverHttp()).isTrue();
+    assertThat(jibCli.getVerbosity()).isEqualTo("info");
+    assertThat(jibCli.isStacktrace()).isTrue();
+    assertThat(jibCli.isHttpTrace()).isTrue();
+    assertThat(jibCli.isSerialize()).isTrue();
+  }
+
+  @Test
+  public void testParse_buildFileDefaultForContext() {
+    JibCli jibCli =
+        CommandLine.populateCommand(
+            new JibCli(), "--target", "test-image-ref", "--context", "test-context");
+
+    assertThat(jibCli.getBuildFile()).isEqualTo(Paths.get("test-context/jib.yaml"));
+    assertThat(jibCli.getContextRoot()).isEqualTo(Paths.get("test-context"));
   }
 
   @Test
@@ -150,9 +177,10 @@ public class JibCliTest {
             "--password",
             "test-password");
 
-    assertThat(jibCli.usernamePassword.single.username).isEqualTo("test-username");
-    assertThat(jibCli.usernamePassword.single.password).isEqualTo("test-password");
-    assertThat(jibCli.usernamePassword.multi).isNull();
+    assertThat(jibCli.getUsernamePassword())
+        .hasValue(Credential.from("test-username", "test-password"));
+    assertThat(jibCli.getToUsernamePassword()).isEmpty();
+    assertThat(jibCli.getFromUsernamePassword()).isEmpty();
   }
 
   @Test
@@ -167,10 +195,10 @@ public class JibCliTest {
             "--to-password",
             "test-password");
 
-    assertThat(jibCli.usernamePassword.multi.to.username).isEqualTo("test-username");
-    assertThat(jibCli.usernamePassword.multi.to.password).isEqualTo("test-password");
-    assertThat(jibCli.usernamePassword.multi.from).isNull();
-    assertThat(jibCli.usernamePassword.single).isNull();
+    assertThat(jibCli.getToUsernamePassword())
+        .hasValue(Credential.from("test-username", "test-password"));
+    assertThat(jibCli.getFromUsernamePassword()).isEmpty();
+    assertThat(jibCli.getUsernamePassword()).isEmpty();
   }
 
   @Test
@@ -185,10 +213,10 @@ public class JibCliTest {
             "--from-password",
             "test-password");
 
-    assertThat(jibCli.usernamePassword.multi.from.username).isEqualTo("test-username");
-    assertThat(jibCli.usernamePassword.multi.from.password).isEqualTo("test-password");
-    assertThat(jibCli.usernamePassword.multi.to).isNull();
-    assertThat(jibCli.usernamePassword.single).isNull();
+    assertThat(jibCli.getFromUsernamePassword())
+        .hasValue(Credential.from("test-username", "test-password"));
+    assertThat(jibCli.getToUsernamePassword()).isEmpty();
+    assertThat(jibCli.getUsernamePassword()).isEmpty();
   }
 
   @Test
@@ -207,11 +235,11 @@ public class JibCliTest {
             "--from-password",
             "test-password-2");
 
-    assertThat(jibCli.usernamePassword.multi.to.username).isEqualTo("test-username-1");
-    assertThat(jibCli.usernamePassword.multi.to.password).isEqualTo("test-password-1");
-    assertThat(jibCli.usernamePassword.multi.from.username).isEqualTo("test-username-2");
-    assertThat(jibCli.usernamePassword.multi.from.password).isEqualTo("test-password-2");
-    assertThat(jibCli.usernamePassword.single).isNull();
+    assertThat(jibCli.getToUsernamePassword())
+        .hasValue(Credential.from("test-username-1", "test-password-1"));
+    assertThat(jibCli.getFromUsernamePassword())
+        .hasValue(Credential.from("test-username-2", "test-password-2"));
+    assertThat(jibCli.getUsernamePassword()).isEmpty();
   }
 
   @RunWith(Parameterized.class)

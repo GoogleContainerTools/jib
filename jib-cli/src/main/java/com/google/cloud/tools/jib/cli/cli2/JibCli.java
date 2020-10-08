@@ -16,11 +16,14 @@
 
 package com.google.cloud.tools.jib.cli.cli2;
 
+import com.google.cloud.tools.jib.api.Credential;
+import com.google.common.base.Verify;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import picocli.CommandLine;
 import picocli.CommandLine.ArgGroup;
 import picocli.CommandLine.Option;
@@ -28,35 +31,31 @@ import picocli.CommandLine.Option;
 @CommandLine.Command(
     name = "jib",
     versionProvider = VersionInfo.class,
+    mixinStandardHelpOptions = true,
     showAtFileInUsageHelp = true,
     synopsisSubcommandLabel = "COMMAND",
     description = "A tool for creating container images")
 public class JibCli {
-  @Option(
-      names = {"-v", "--version"},
-      versionHelp = true,
-      description = "display version info")
-  @SuppressWarnings("NullAway.Init") // initialized by picocli
-  boolean versionInfoRequested;
-
-  @Option(
-      names = {"-h", "--help"},
-      usageHelp = true,
-      description = "display this help message")
-  @SuppressWarnings("NullAway.Init") // initialized by picocli
-  boolean usageHelpRequested;
-
   @Option(
       names = "--verbosity",
       paramLabel = "<level>",
       defaultValue = "lifecycle",
       description = "set logging verbosity (error, warn, lifecycle (default), info, debug)")
   @SuppressWarnings("NullAway.Init") // initialized by picocli
-  String verbosity;
+  private String verbosity;
 
-  @Option(names = "--stacktrace", description = "display stacktrace on failures")
+  // Hidden debug parameters
+  @Option(names = "--stacktrace", hidden = true)
   @SuppressWarnings("NullAway.Init") // initialized by picocli
-  boolean stacktrace;
+  private boolean stacktrace;
+
+  @Option(names = "--http-trace", hidden = true)
+  @SuppressWarnings("NullAway.Init") // initialized by picocli
+  private boolean httpTrace;
+
+  @Option(names = "--serialize", hidden = true)
+  @SuppressWarnings("NullAway.Init") // initialized by picocli
+  private boolean serialize;
 
   // Build Configuration
   @Option(
@@ -66,7 +65,7 @@ public class JibCli {
       description =
           "The destination image reference or jib style url,%nexamples:%n gcr.io/project/image,%n registry://image-ref,%n docker://image,%n tar://path")
   @SuppressWarnings("NullAway.Init") // initialized by picocli
-  String targetImage;
+  private String targetImage;
 
   @Option(
       names = {"-c", "--context"},
@@ -74,14 +73,24 @@ public class JibCli {
       paramLabel = "<project-root>",
       description = "The context root directory of the build (ex: path/to/my/build/things)")
   @SuppressWarnings("NullAway.Init") // initialized by picocli
-  Path contextRoot;
+  private Path contextRoot;
 
   @Option(
       names = {"-b", "--build-file"},
       paramLabel = "<build-file>",
       description = "The path to the build file (ex: path/to/other-jib.yaml)")
   @SuppressWarnings("NullAway.Init") // initialized by picocli
-  Path buildFile;
+  private Path buildFile;
+
+  // unfortunately we cannot verify for --target=tar://... this is required, we must do this after
+  // pico cli is done parsing
+  @Option(
+      names = "--name",
+      paramLabel = "<image-reference>",
+      description =
+          "The image reference to inject into the tar configuration (required when using --target tar://...)")
+  @SuppressWarnings("NullAway.Init") // initialized by picocli
+  private String name;
 
   @Option(
       names = {"-p", "--parameter"},
@@ -89,7 +98,7 @@ public class JibCli {
       description =
           "templating parameter to inject into build file, replace $${<name>} with <value> (repeatable)")
   @SuppressWarnings("NullAway.Init") // initialized by picocli
-  Map<String, String> templateParameters = new HashMap<String, String>();
+  private Map<String, String> templateParameters = new HashMap<String, String>();
 
   @Option(
       names = "--tags",
@@ -97,47 +106,47 @@ public class JibCli {
       split = ",",
       description = "Additional tags for target image")
   @SuppressWarnings("NullAway.Init") // initialized by picocli
-  List<String> tags = new ArrayList<String>();
+  private List<String> tags = new ArrayList<String>();
 
   @Option(
       names = "--base-image-cache",
       paramLabel = "<cache-directory>",
       description = "A path to a base image cache")
   @SuppressWarnings("NullAway.Init") // initialized by picocli
-  Path baseImageCache;
+  private Path baseImageCache;
 
   @Option(
       names = "--application-cache",
       paramLabel = "<cache-directory>",
       description = "A path to an application cache")
   @SuppressWarnings("NullAway.Init") // initialized by picocli
-  Path applicationCache;
+  private Path applicationCache;
 
   // Auth/Security
   @Option(
       names = "--allow-insecure-registries",
       description = "Allow jib to communicate with registries over https")
   @SuppressWarnings("NullAway.Init") // initialized by picocli
-  boolean allowInsecureRegistries;
+  private boolean allowInsecureRegistries;
 
   @Option(
       names = "--send-credentials-over-http",
       description = "Allow jib to communicate with registries over https")
   @SuppressWarnings("NullAway.Init") // initialized by picocli
-  boolean sendCredentialsOverHttp;
+  private boolean sendCredentialsOverHttp;
 
   @Option(
       names = {"--credential-helper"},
       paramLabel = "<credential-helper>",
       description =
           "Add a credential helper, either a path to the helper, or a suffix for an executable named `docker-credential-<suffix>` (repeatable)")
-  List<String> credentialHelpers = new ArrayList<>();
+  private List<String> credentialHelpers = new ArrayList<>();
 
   @ArgGroup(exclusive = true)
   @SuppressWarnings("NullAway.Init") // initialized by picocli
-  UsernamePassword usernamePassword;
+  private UsernamePassword usernamePassword;
 
-  static class UsernamePassword {
+  private static class UsernamePassword {
     @ArgGroup(exclusive = false)
     @SuppressWarnings("NullAway.Init") // initialized by picocli
     SingleUsernamePassword single;
@@ -147,7 +156,7 @@ public class JibCli {
     MultiUsernamePassword multi;
   }
 
-  static class MultiUsernamePassword {
+  private static class MultiUsernamePassword {
     @ArgGroup(exclusive = false)
     @SuppressWarnings("NullAway.Init") // initialized by picocli
     ToUsernamePassword to;
@@ -157,7 +166,7 @@ public class JibCli {
     FromUsernamePassword from;
   }
 
-  static class SingleUsernamePassword {
+  private static class SingleUsernamePassword {
     @Option(
         names = "--username",
         required = true,
@@ -175,7 +184,7 @@ public class JibCli {
     String password;
   }
 
-  static class ToUsernamePassword {
+  private static class ToUsernamePassword {
     @Option(
         names = "--to-username",
         required = true,
@@ -193,7 +202,7 @@ public class JibCli {
     String password;
   }
 
-  static class FromUsernamePassword {
+  private static class FromUsernamePassword {
     @Option(
         names = "--from-username",
         required = true,
@@ -209,6 +218,131 @@ public class JibCli {
         description = "password for communicating with base image registry")
     @SuppressWarnings("NullAway.Init") // initialized by picocli
     String password;
+  }
+
+  public String getVerbosity() {
+    Verify.verifyNotNull(verbosity);
+    return verbosity;
+  }
+
+  public boolean isStacktrace() {
+    return stacktrace;
+  }
+
+  public String getTargetImage() {
+    return targetImage;
+  }
+
+  public Path getContextRoot() {
+    Verify.verifyNotNull(contextRoot);
+    return contextRoot;
+  }
+
+  /**
+   * Returns a user configured Path to a buildfile and if none is configured returns jib.yaml in
+   * {@link #getContextRoot()}.
+   *
+   * @return a path to a bulidfile
+   */
+  public Path getBuildFile() {
+    if (buildFile == null) {
+      return getContextRoot().resolve("jib.yaml");
+    }
+    return buildFile;
+  }
+
+  public Map<String, String> getTemplateParameters() {
+    Verify.verifyNotNull(templateParameters);
+    return templateParameters;
+  }
+
+  public List<String> getTags() {
+    Verify.verifyNotNull(tags);
+    return tags;
+  }
+
+  public Optional<Path> getBaseImageCache() {
+    return Optional.ofNullable(baseImageCache);
+  }
+
+  public Optional<Path> getApplicationCache() {
+    return Optional.ofNullable(applicationCache);
+  }
+
+  public boolean isAllowInsecureRegistries() {
+    return allowInsecureRegistries;
+  }
+
+  public boolean isSendCredentialsOverHttp() {
+    return sendCredentialsOverHttp;
+  }
+
+  public List<String> getCredentialHelpers() {
+    return credentialHelpers;
+  }
+
+  public boolean isHttpTrace() {
+    return httpTrace;
+  }
+
+  public boolean isSerialize() {
+    return serialize;
+  }
+
+  public String getName() {
+    return name;
+  }
+
+  /**
+   * If configured, returns a {@link Credential} created from user configured username/password.
+   *
+   * @return a optional Credential
+   */
+  public Optional<Credential> getUsernamePassword() {
+    if (usernamePassword != null && usernamePassword.single != null) {
+      Verify.verifyNotNull(usernamePassword.single.username);
+      Verify.verifyNotNull(usernamePassword.single.password);
+      return Optional.of(
+          Credential.from(usernamePassword.single.username, usernamePassword.single.password));
+    }
+    return Optional.empty();
+  }
+
+  /**
+   * If configured, returns a {@link Credential} created from user configured "to"
+   * username/password.
+   *
+   * @return a optional Credential
+   */
+  public Optional<Credential> getToUsernamePassword() {
+    if (usernamePassword != null
+        && usernamePassword.multi != null
+        && usernamePassword.multi.to != null) {
+      Verify.verifyNotNull(usernamePassword.multi.to.username);
+      Verify.verifyNotNull(usernamePassword.multi.to.password);
+      return Optional.of(
+          Credential.from(usernamePassword.multi.to.username, usernamePassword.multi.to.password));
+    }
+    return Optional.empty();
+  }
+
+  /**
+   * If configured, returns a {@link Credential} created from user configured "from"
+   * username/password.
+   *
+   * @return a optional Credential
+   */
+  public Optional<Credential> getFromUsernamePassword() {
+    if (usernamePassword != null
+        && usernamePassword.multi != null
+        && usernamePassword.multi.from != null) {
+      Verify.verifyNotNull(usernamePassword.multi.from.username);
+      Verify.verifyNotNull(usernamePassword.multi.from.password);
+      return Optional.of(
+          Credential.from(
+              usernamePassword.multi.from.username, usernamePassword.multi.from.password));
+    }
+    return Optional.empty();
   }
 
   /**
