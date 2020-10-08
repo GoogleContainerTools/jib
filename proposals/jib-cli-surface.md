@@ -29,12 +29,12 @@ build        build a container
 
 #### Build Config
 ```
-    --application-cache <directory>        location of the application cache
-    --base-image-cache <directory>         location of the base image cache
+    --application-cache <directory>        location of the application cache (jib default is temp directory)
+    --base-image-cache <directory>         location of the base image cache (jib default is user cache)
 -b, --build-file <file>                    location of the build file (default <context>/jib.yaml)
 -c, --context <dir>                        location of the build context (default .)
     --docker-config <directory>            location of docker configuration
-    --name <image-ref>                     image name to bake into tar file (only available when using -t tar://...)
+    --name <image-ref>                     image name to bake into tar file, required when using "-t tar://..." 
 -p, --parameter <name>=<value>             templating parameters replace `${name}` with `value` in the build file (repeatable)
     --tag <tag1>[,<tag2>,...]              additional tags for target
 ```
@@ -66,10 +66,16 @@ combinations of `username` and `password` flags come with restrictions and can b
 
 #### Info Params
 ```
-    --help                                 print usage and exit
-    --stacktrace                           print stacktrace on error (for debugging issues in the jib-cli)
-    --verbosity <level>                    set logging verbosity (error, warn, lifecycle (default), info, debug)
--v, --version                              print version information and exit 
+    --help                  print usage and exit
+    --verbosity <level>     set logging verbosity (error, warn, lifecycle (default), info, debug)
+-v, --version               print version information and exit
+```
+
+#### Debugging Params (hidden in help)
+```
+    --stacktrace            print stacktrace on error (for debugging issues in the jib-cli)
+    --http-trace            enable http tracing at level=config, output=console
+    --serialize             run jib in serialized mode
 ```
 
 ### Flag Files
@@ -86,5 +92,3 @@ Information on communicating with the docker daemon is determined using the `DOC
 
 - Users have asked to warm up the cache, perhaps we can have a cache build?
 - In the future we should be able to build `jar`s from the command line
-- 
-
