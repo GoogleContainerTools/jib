@@ -90,5 +90,6 @@ Information on communicating with the docker daemon is determined using the `DOC
 
 ## Other considerations
 
-- Users have asked to warm up the cache, perhaps we can have a cache build?
+- Users have asked to warm up the cache, perhaps we can have a `cache` command option
 - In the future we should be able to build `jar`s from the command line
+- Default application cache directory is a temporary directory (will lead to slow rebuilds), we should do a better job of defining a default here.
