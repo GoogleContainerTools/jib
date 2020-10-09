@@ -87,7 +87,7 @@ public class JarProcessor {
     Predicate<Path> isClassFile = path -> path.getFileName().toString().endsWith(".class");
     Predicate<Path> isResourceFile = path -> !path.getFileName().toString().endsWith(".class");
 
-    // Determine class and resources files in the directory containing jar contents and create
+    // Determine class and resource files in the directory containing jar contents and create
     // FileEntriesLayer.Builder for each type of file (class or resource), while maintaining the
     // file's original project structure.
     JavaContainerBuilder.addDirectoryContentsToLayer(
