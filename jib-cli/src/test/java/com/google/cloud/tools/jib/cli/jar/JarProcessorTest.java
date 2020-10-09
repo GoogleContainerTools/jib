@@ -18,17 +18,24 @@ package com.google.cloud.tools.jib.cli.jar;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import com.google.cloud.tools.jib.api.buildplan.AbsoluteUnixPath;
+import com.google.cloud.tools.jib.api.buildplan.FileEntriesLayer;
+import com.google.cloud.tools.jib.api.buildplan.FileEntry;
 import com.google.cloud.tools.jib.cli.jar.JarProcessor.JarType;
+import com.google.common.collect.ImmutableList;
 import com.google.common.io.Resources;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.List;
+import java.util.stream.Collectors;
 import org.junit.Test;
 
 public class JarProcessorTest {
 
   private static final String SPRING_BOOT_RESOURCE_DIR = "jar/springboot/springboot_sample.jar";
+  private static final String STANDARD_RESOURCE_DIR_WITH_CP = "jar/standard/standardJarWithCp.jar";
   private static final String STANDARD_RESOURCE_DIR = "jar/standard/standardJar.jar";
 
   @Test
@@ -43,5 +50,53 @@ public class JarProcessorTest {
     Path standardJar = Paths.get(Resources.getResource(STANDARD_RESOURCE_DIR).toURI());
     JarType jarType = JarProcessor.determineJarType(standardJar);
     assertThat(jarType).isEqualTo(JarType.STANDARD);
+  }
+
+  @Test
+  public void testExplodeMode_standard() throws IOException, URISyntaxException {
+    Path standardJar = Paths.get(Resources.getResource(STANDARD_RESOURCE_DIR_WITH_CP).toURI());
+    List<FileEntriesLayer> layers = JarProcessor.explodeStandardJar(standardJar);
+    assertThat(layers.size()).isEqualTo(3);
+    FileEntriesLayer classesLayer = layers.get(0);
+    FileEntriesLayer resourcesLayer = layers.get(1);
+    FileEntriesLayer dependenciesLayer = layers.get(2);
+
+    // Validate the file entries in the classes, resources and dependency layers.
+    assertThat(classesLayer.getEntries().size()).isEqualTo(3);
+    assertThat(
+            classesLayer
+                .getEntries()
+                .stream()
+                .map(FileEntry::getExtractionPath)
+                .collect(Collectors.toList()))
+        .isEqualTo(
+            ImmutableList.of(
+                AbsoluteUnixPath.get("/app/classes/HelloWorld.class"),
+                AbsoluteUnixPath.get("/app/classes/sample1.class"),
+                AbsoluteUnixPath.get("/app/classes/sample2.class")));
+    assertThat(resourcesLayer.getEntries().size()).isEqualTo(3);
+    assertThat(
+            resourcesLayer
+                .getEntries()
+                .stream()
+                .map(FileEntry::getExtractionPath)
+                .collect(Collectors.toList()))
+        .isEqualTo(
+            ImmutableList.of(
+                AbsoluteUnixPath.get("/app/resources/resource2.html"),
+                AbsoluteUnixPath.get("/app/resources/resource1.txt"),
+                AbsoluteUnixPath.get("/app/resources/MANIFEST.MF")));
+    assertThat(dependenciesLayer.getEntries().size()).isEqualTo(3);
+    assertThat(
+            dependenciesLayer
+                .getEntries()
+                .stream()
+                .map(FileEntry::getExtractionPath)
+                .collect(Collectors.toList()))
+        .isEqualTo(
+            ImmutableList.of(
+                AbsoluteUnixPath.get("/app/dependencies/dependency1"),
+                AbsoluteUnixPath.get("/app/dependencies/dependency2"),
+                AbsoluteUnixPath.get("/app/dependencies/directory/dependency3")));
   }
 }

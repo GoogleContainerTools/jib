@@ -204,7 +204,7 @@ public class JavaContainerBuilder {
   private RelativeUnixPath dependenciesDestination = RelativeUnixPath.get("libs");
   private RelativeUnixPath othersDestination = RelativeUnixPath.get("classpath");
   @Nullable private String mainClass;
-  private ModificationTimeProvider modificationTimeProvider =
+  private static ModificationTimeProvider modificationTimeProvider =
       FileEntriesLayer.DEFAULT_MODIFICATION_TIME_PROVIDER;
 
   private JavaContainerBuilder(JibContainerBuilder jibContainerBuilder) {
@@ -679,7 +679,16 @@ public class JavaContainerBuilder {
     return this;
   }
 
-  private void addFileToLayer(
+  /**
+   * Adds a file to a {@link FileEntriesLayer.Builder}.
+   *
+   * @param layerBuilders map that keeps track of all layers, with the key being the layer type and
+   *     value being a {@link FileEntriesLayer.Builder}.
+   * @param layerType the layer type.
+   * @param sourceFile the source file path.
+   * @param pathInContainer path in container.
+   */
+  public static void addFileToLayer(
       Map<LayerType, FileEntriesLayer.Builder> layerBuilders,
       LayerType layerType,
       Path sourceFile,
