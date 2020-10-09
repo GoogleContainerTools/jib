@@ -701,12 +701,12 @@ public class JavaContainerBuilder {
   }
 
   /**
-   * Adds a file to a {@link FileEntriesLayer.Builder}.
+   * Adds the contents of a directory to a {@link FileEntriesLayer.Builder}.
    *
    * @param layerBuilders map that keeps track of all layers, with the key being the layer type and
    *     value being a {@link FileEntriesLayer.Builder}.
    * @param layerType the layer type.
-   * @param sourceRoot path to root directory, whose contents will be added to a layer.
+   * @param sourceRoot path to root directory.
    * @param pathFilter predicate to filter the files by.
    * @param basePathInContainer base path in container.
    * @throws IOException if I/O error occurs when opening the directory.
