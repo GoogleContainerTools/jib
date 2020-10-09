@@ -56,13 +56,14 @@ public class JarProcessorTest {
   public void testExplodeMode_standard() throws IOException, URISyntaxException {
     Path standardJar = Paths.get(Resources.getResource(STANDARD_RESOURCE_DIR_WITH_CP).toURI());
     List<FileEntriesLayer> layers = JarProcessor.explodeStandardJar(standardJar);
-    assertThat(layers.size()).isEqualTo(3);
     FileEntriesLayer classesLayer = layers.get(0);
     FileEntriesLayer resourcesLayer = layers.get(1);
     FileEntriesLayer dependenciesLayer = layers.get(2);
 
-    // Validate the file entries in the classes, resources and dependency layers.
-    assertThat(classesLayer.getEntries().size()).isEqualTo(3);
+    assertThat(layers.size()).isEqualTo(3);
+
+    // Validate classes layer.
+    assertThat(classesLayer.getEntries().size()).isEqualTo(10);
     assertThat(
             classesLayer
                 .getEntries()
@@ -71,10 +72,19 @@ public class JarProcessorTest {
                 .collect(Collectors.toList()))
         .isEqualTo(
             ImmutableList.of(
-                AbsoluteUnixPath.get("/app/classes/HelloWorld.class"),
-                AbsoluteUnixPath.get("/app/classes/sample1.class"),
-                AbsoluteUnixPath.get("/app/classes/sample2.class")));
-    assertThat(resourcesLayer.getEntries().size()).isEqualTo(3);
+                AbsoluteUnixPath.get("/app/explodedJar/META-INF"),
+                AbsoluteUnixPath.get("/app/explodedJar/class5.class"),
+                AbsoluteUnixPath.get("/app/explodedJar/directory1"),
+                AbsoluteUnixPath.get("/app/explodedJar/directory1/class1.class"),
+                AbsoluteUnixPath.get("/app/explodedJar/directory1/class2.class"),
+                AbsoluteUnixPath.get("/app/explodedJar/directory2"),
+                AbsoluteUnixPath.get("/app/explodedJar/directory2/class4.class"),
+                AbsoluteUnixPath.get("/app/explodedJar/directory2/directory3"),
+                AbsoluteUnixPath.get("/app/explodedJar/directory2/directory3/class3.class"),
+                AbsoluteUnixPath.get("/app/explodedJar/directory4")));
+
+    // Validate resources layer.
+    assertThat(resourcesLayer.getEntries().size()).isEqualTo(9);
     assertThat(
             resourcesLayer
                 .getEntries()
@@ -83,9 +93,17 @@ public class JarProcessorTest {
                 .collect(Collectors.toList()))
         .isEqualTo(
             ImmutableList.of(
-                AbsoluteUnixPath.get("/app/resources/resource2.html"),
-                AbsoluteUnixPath.get("/app/resources/resource1.txt"),
-                AbsoluteUnixPath.get("/app/resources/MANIFEST.MF")));
+                AbsoluteUnixPath.get("/app/explodedJar/META-INF/"),
+                AbsoluteUnixPath.get("/app/explodedJar/META-INF/MANIFEST.MF"),
+                AbsoluteUnixPath.get("/app/explodedJar/directory1"),
+                AbsoluteUnixPath.get("/app/explodedJar/directory1/resource1.txt"),
+                AbsoluteUnixPath.get("/app/explodedJar/directory2"),
+                AbsoluteUnixPath.get("/app/explodedJar/directory2/directory3"),
+                AbsoluteUnixPath.get("/app/explodedJar/directory2/directory3/resource2.sql"),
+                AbsoluteUnixPath.get("/app/explodedJar/directory4"),
+                AbsoluteUnixPath.get("/app/explodedJar/directory4/resource3.txt")));
+
+    // Validate dependencies layer.
     assertThat(dependenciesLayer.getEntries().size()).isEqualTo(3);
     assertThat(
             dependenciesLayer

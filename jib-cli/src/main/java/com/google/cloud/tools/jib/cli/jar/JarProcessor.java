@@ -23,20 +23,20 @@ import com.google.cloud.tools.jib.api.buildplan.FileEntriesLayer;
 import com.google.cloud.tools.jib.api.buildplan.RelativeUnixPath;
 import com.google.cloud.tools.jib.filesystem.TempDirectoryProvider;
 import com.google.cloud.tools.jib.plugins.common.ZipUtil;
+import com.google.common.base.Predicate;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableMap;
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.jar.JarFile;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /** Process jar file contents and create layers. */
 public class JarProcessor {
+
+  private static final AbsoluteUnixPath APP_ROOT = AbsoluteUnixPath.get("/app");
 
   /**
    * Jar Type.
@@ -67,8 +67,7 @@ public class JarProcessor {
   }
 
   /**
-   * Explode jar into three layers (classes, resources, dependencies) on container. This method doesn't maintain the source directory
-   * structure when adding file entries to the layers.
+   * Explode jar and create three layers for classes, resources and dependencies on container.
    *
    * @param jarPath path to jar file.
    * @return list of {@link FileEntriesLayer}.
@@ -79,21 +78,33 @@ public class JarProcessor {
     Path tempDirectoryPath = tempDirectoryProvider.newDirectory();
     ZipUtil.unzip(jarPath, tempDirectoryPath);
 
-    // Get class files and resource files.
-    List<Path> classFiles = new ArrayList<>();
-    List<Path> resourceFiles = new ArrayList<>();
-    try (Stream<Path> fileStream = Files.walk(tempDirectoryPath).filter(Files::isRegularFile)) {
-      List<Path> allFilePathsInJar = fileStream.collect(Collectors.toList());
-      for (Path path : allFilePathsInJar) {
-        if (path.toString().endsWith(".class")) {
-          classFiles.add(path);
-        } else {
-          resourceFiles.add(path);
-        }
-      }
-    }
+    List<FileEntriesLayer> layers = new ArrayList<>();
+    ImmutableMap<LayerType, FileEntriesLayer.Builder> layerMap =
+        ImmutableMap.of(
+            LayerType.CLASSES, FileEntriesLayer.builder(),
+            LayerType.RESOURCES, FileEntriesLayer.builder(),
+            LayerType.DEPENDENCIES, FileEntriesLayer.builder());
+    Predicate<Path> isClassFile = path -> path.getFileName().toString().endsWith(".class");
+    Predicate<Path> isResourceFile = path -> !path.getFileName().toString().endsWith(".class");
 
-    // Get dependencies from class-path.
+    // Determine class and resources files in the directory containing jar contents and create
+    // FileEntriesLayer.Builder for each type of file (class or resource), while maintaining the
+    // file's original project structure.
+    JavaContainerBuilder.addDirectoryContentsToLayer(
+        layerMap,
+        LayerType.CLASSES,
+        tempDirectoryPath,
+        isClassFile,
+        APP_ROOT.resolve(RelativeUnixPath.get("explodedJar")));
+    JavaContainerBuilder.addDirectoryContentsToLayer(
+        layerMap,
+        LayerType.RESOURCES,
+        tempDirectoryPath,
+        isResourceFile,
+        APP_ROOT.resolve(RelativeUnixPath.get("explodedJar")));
+
+    // Get dependencies from Class-Path in the jar's manifest and create a FileEntriesLayer.Builder
+    // with these dependency files as entries.
     List<Path> dependencyFiles = new ArrayList<>();
     JarFile jarFile = new JarFile(jarPath.toFile());
     String classPath = jarFile.getManifest().getMainAttributes().getValue("Class-Path");
@@ -105,36 +116,14 @@ public class JarProcessor {
     } else {
       throw new IllegalStateException("Class path is not specified.");
     }
-
-    // Create Layer for each type or file and add them to list of FileEntriesLayer.
-    List<FileEntriesLayer> layers = new ArrayList<>();
-    ImmutableMap<LayerType, FileEntriesLayer.Builder> layerMap =
-        ImmutableMap.of(
-            LayerType.CLASSES, FileEntriesLayer.builder(),
-            LayerType.RESOURCES, FileEntriesLayer.builder(),
-            LayerType.DEPENDENCIES, FileEntriesLayer.builder());
-    AbsoluteUnixPath appRoot = AbsoluteUnixPath.get("/app");
-    classFiles.forEach(
-        path ->
-            JavaContainerBuilder.addFileToLayer(
-                layerMap,
-                LayerType.CLASSES,
-                path,
-                appRoot.resolve(RelativeUnixPath.get("classes")).resolve(path.getFileName())));
-    resourceFiles.forEach(
-        path ->
-            JavaContainerBuilder.addFileToLayer(
-                layerMap,
-                LayerType.RESOURCES,
-                path,
-                appRoot.resolve(RelativeUnixPath.get("resources")).resolve(path.getFileName())));
     dependencyFiles.forEach(
         path ->
             JavaContainerBuilder.addFileToLayer(
                 layerMap,
                 LayerType.DEPENDENCIES,
                 path,
-                appRoot.resolve(RelativeUnixPath.get("dependencies")).resolve(path)));
+                APP_ROOT.resolve(RelativeUnixPath.get("dependencies")).resolve(path)));
+
     layerMap.forEach((type, builder) -> layers.add(builder.setName(type.getName()).build()));
 
     return layers;
