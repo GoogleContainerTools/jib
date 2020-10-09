@@ -104,19 +104,19 @@ public class JarProcessor {
         APP_ROOT.resolve(RelativeUnixPath.get("explodedJar")));
 
     // Get dependencies from Class-Path in the jar's manifest and create a FileEntriesLayer.Builder
-    // with these dependency files as entries.
-    List<Path> dependencyFiles = new ArrayList<>();
+    // with these dependencies as entries.
+    List<Path> dependencies = new ArrayList<>();
     JarFile jarFile = new JarFile(jarPath.toFile());
     String classPath = jarFile.getManifest().getMainAttributes().getValue("Class-Path");
     if (classPath != null) {
       for (String dependency : Splitter.on(" ").split(classPath)) {
         Path depPath = Paths.get(dependency);
-        dependencyFiles.add(depPath);
+        dependencies.add(depPath);
       }
     } else {
       throw new IllegalStateException("Class path is not specified.");
     }
-    dependencyFiles.forEach(
+    dependencies.forEach(
         path ->
             JavaContainerBuilder.addFileToLayer(
                 layerMap,
