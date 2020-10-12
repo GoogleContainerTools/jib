@@ -64,54 +64,60 @@ public class JarProcessorTest {
 
     // Validate classes layer.
     assertThat(classesLayer.getEntries().size()).isEqualTo(10);
+    assertThat(classesLayer.getName()).isEqualTo("Classes");
     assertThat(
             classesLayer
                 .getEntries()
                 .stream()
                 .map(FileEntry::getExtractionPath)
                 .collect(Collectors.toList()))
-        .isEqualTo(ImmutableList.of(
-            AbsoluteUnixPath.get("/app/explodedJar/META-INF"),
-            AbsoluteUnixPath.get("/app/explodedJar/class5.class"),
-            AbsoluteUnixPath.get("/app/explodedJar/directory1"),
-            AbsoluteUnixPath.get("/app/explodedJar/directory1/class1.class"),
-            AbsoluteUnixPath.get("/app/explodedJar/directory1/class2.class"),
-            AbsoluteUnixPath.get("/app/explodedJar/directory2"),
-            AbsoluteUnixPath.get("/app/explodedJar/directory2/class4.class"),
-            AbsoluteUnixPath.get("/app/explodedJar/directory2/directory3"),
-            AbsoluteUnixPath.get("/app/explodedJar/directory2/directory3/class3.class"),
-            AbsoluteUnixPath.get("/app/explodedJar/directory4")));
+        .isEqualTo(
+            ImmutableList.of(
+                AbsoluteUnixPath.get("/app/explodedJar/META-INF"),
+                AbsoluteUnixPath.get("/app/explodedJar/class5.class"),
+                AbsoluteUnixPath.get("/app/explodedJar/directory1"),
+                AbsoluteUnixPath.get("/app/explodedJar/directory1/class1.class"),
+                AbsoluteUnixPath.get("/app/explodedJar/directory1/class2.class"),
+                AbsoluteUnixPath.get("/app/explodedJar/directory2"),
+                AbsoluteUnixPath.get("/app/explodedJar/directory2/class4.class"),
+                AbsoluteUnixPath.get("/app/explodedJar/directory2/directory3"),
+                AbsoluteUnixPath.get("/app/explodedJar/directory2/directory3/class3.class"),
+                AbsoluteUnixPath.get("/app/explodedJar/directory4")));
 
     // Validate resources layer.
     assertThat(resourcesLayer.getEntries().size()).isEqualTo(9);
+    assertThat(resourcesLayer.getName()).isEqualTo("Resources");
     assertThat(
             resourcesLayer
                 .getEntries()
                 .stream()
                 .map(FileEntry::getExtractionPath)
                 .collect(Collectors.toList()))
-        .isEqualTo(ImmutableList.of(
-            AbsoluteUnixPath.get("/app/explodedJar/META-INF/"),
-            AbsoluteUnixPath.get("/app/explodedJar/META-INF/MANIFEST.MF"),
-            AbsoluteUnixPath.get("/app/explodedJar/directory1"),
-            AbsoluteUnixPath.get("/app/explodedJar/directory1/resource1.txt"),
-            AbsoluteUnixPath.get("/app/explodedJar/directory2"),
-            AbsoluteUnixPath.get("/app/explodedJar/directory2/directory3"),
-            AbsoluteUnixPath.get("/app/explodedJar/directory2/directory3/resource2.sql"),
-            AbsoluteUnixPath.get("/app/explodedJar/directory4"),
-            AbsoluteUnixPath.get("/app/explodedJar/directory4/resource3.txt")));
+        .isEqualTo(
+            ImmutableList.of(
+                AbsoluteUnixPath.get("/app/explodedJar/META-INF/"),
+                AbsoluteUnixPath.get("/app/explodedJar/META-INF/MANIFEST.MF"),
+                AbsoluteUnixPath.get("/app/explodedJar/directory1"),
+                AbsoluteUnixPath.get("/app/explodedJar/directory1/resource1.txt"),
+                AbsoluteUnixPath.get("/app/explodedJar/directory2"),
+                AbsoluteUnixPath.get("/app/explodedJar/directory2/directory3"),
+                AbsoluteUnixPath.get("/app/explodedJar/directory2/directory3/resource2.sql"),
+                AbsoluteUnixPath.get("/app/explodedJar/directory4"),
+                AbsoluteUnixPath.get("/app/explodedJar/directory4/resource3.txt")));
 
     // Validate dependencies layer.
     assertThat(dependenciesLayer.getEntries().size()).isEqualTo(3);
+    assertThat(dependenciesLayer.getName()).isEqualTo("Dependencies");
     assertThat(
             dependenciesLayer
                 .getEntries()
                 .stream()
                 .map(FileEntry::getExtractionPath)
                 .collect(Collectors.toList()))
-        .isEqualTo(ImmutableList.of(
-            AbsoluteUnixPath.get("/app/dependencies/dependency1"),
-            AbsoluteUnixPath.get("/app/dependencies/dependency2"),
-            AbsoluteUnixPath.get("/app/dependencies/directory/dependency3")));
+        .isEqualTo(
+            ImmutableList.of(
+                AbsoluteUnixPath.get("/app/dependencies/dependency1"),
+                AbsoluteUnixPath.get("/app/dependencies/dependency2"),
+                AbsoluteUnixPath.get("/app/dependencies/directory/dependency3")));
   }
 }

@@ -16,17 +16,16 @@
 
 package com.google.cloud.tools.jib.cli.jar;
 
-import com.google.cloud.tools.jib.api.JavaContainerBuilder;
-import com.google.cloud.tools.jib.api.JavaContainerBuilder.LayerType;
 import com.google.cloud.tools.jib.api.buildplan.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.api.buildplan.FileEntriesLayer;
 import com.google.cloud.tools.jib.api.buildplan.RelativeUnixPath;
+import com.google.cloud.tools.jib.filesystem.DirectoryWalker;
 import com.google.cloud.tools.jib.filesystem.TempDirectoryProvider;
 import com.google.cloud.tools.jib.plugins.common.ZipUtil;
 import com.google.common.base.Predicate;
 import com.google.common.base.Splitter;
-import com.google.common.collect.ImmutableMap;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -79,29 +78,26 @@ public class JarProcessor {
     ZipUtil.unzip(jarPath, tempDirectoryPath);
 
     List<FileEntriesLayer> layers = new ArrayList<>();
-    ImmutableMap<LayerType, FileEntriesLayer.Builder> layerMap =
-        ImmutableMap.of(
-            LayerType.CLASSES, FileEntriesLayer.builder(),
-            LayerType.RESOURCES, FileEntriesLayer.builder(),
-            LayerType.DEPENDENCIES, FileEntriesLayer.builder());
     Predicate<Path> isClassFile = path -> path.getFileName().toString().endsWith(".class");
     Predicate<Path> isResourceFile = path -> !path.getFileName().toString().endsWith(".class");
 
     // Determine class and resource files in the directory containing jar contents and create
     // FileEntriesLayer.Builder for each type of file (class or resource), while maintaining the
     // file's original project structure.
-    JavaContainerBuilder.addDirectoryContentsToLayer(
-        layerMap,
-        LayerType.CLASSES,
-        tempDirectoryPath,
-        isClassFile,
-        APP_ROOT.resolve(RelativeUnixPath.get("explodedJar")));
-    JavaContainerBuilder.addDirectoryContentsToLayer(
-        layerMap,
-        LayerType.RESOURCES,
-        tempDirectoryPath,
-        isResourceFile,
-        APP_ROOT.resolve(RelativeUnixPath.get("explodedJar")));
+    FileEntriesLayer.Builder classesLayerBuilder =
+        addDirectoryContentsToLayer(
+                FileEntriesLayer.builder(),
+                tempDirectoryPath,
+                isClassFile,
+                APP_ROOT.resolve(RelativeUnixPath.get("explodedJar")))
+            .setName("Classes");
+    FileEntriesLayer.Builder resourcesLayerBuilder =
+        addDirectoryContentsToLayer(
+                FileEntriesLayer.builder(),
+                tempDirectoryPath,
+                isResourceFile,
+                APP_ROOT.resolve(RelativeUnixPath.get("explodedJar")))
+            .setName("Resources");
 
     // Get dependencies from Class-Path in the jar's manifest and create a FileEntriesLayer.Builder
     // with these dependencies as entries.
@@ -116,16 +112,36 @@ public class JarProcessor {
     } else {
       throw new IllegalStateException("Class path is not specified.");
     }
+    FileEntriesLayer.Builder dependenciesLayerBuilder = FileEntriesLayer.builder();
     dependencies.forEach(
         path ->
-            JavaContainerBuilder.addFileToLayer(
-                layerMap,
-                LayerType.DEPENDENCIES,
-                path,
-                APP_ROOT.resolve(RelativeUnixPath.get("dependencies")).resolve(path)));
+            dependenciesLayerBuilder.addEntry(
+                path, APP_ROOT.resolve(RelativeUnixPath.get("dependencies")).resolve(path)));
+    dependenciesLayerBuilder.setName("Dependencies");
 
-    layerMap.forEach((type, builder) -> layers.add(builder.setName(type.getName()).build()));
+    layers.add(classesLayerBuilder.build());
+    layers.add(resourcesLayerBuilder.build());
+    layers.add(dependenciesLayerBuilder.build());
 
     return layers;
+  }
+
+  private static FileEntriesLayer.Builder addDirectoryContentsToLayer(
+      FileEntriesLayer.Builder builder,
+      Path sourceRoot,
+      Predicate<Path> pathFilter,
+      AbsoluteUnixPath basePathInContainer)
+      throws IOException {
+
+    new DirectoryWalker(sourceRoot)
+        .filterRoot()
+        .filter(path -> Files.isDirectory(path) || pathFilter.test(path))
+        .walk(
+            path -> {
+              AbsoluteUnixPath pathOnContainer =
+                  basePathInContainer.resolve(sourceRoot.relativize(path));
+              builder.addEntry(path, pathOnContainer);
+            });
+    return builder;
   }
 }
