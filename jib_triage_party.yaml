@@ -17,16 +17,20 @@ settings:
   min_similarity: 0.8
   repos:
     - https://github.com/GoogleContainerTools/jib
+    - https://github.com/GoogleContainerTools/jib-extensions
+    - https://github.com/GoogleCloudPlatform/app-maven-plugin
+    - https://github.com/GoogleCloudPlatform/app-gradle-plugin
 
 collections:
   - id: daily
     name: Daily Triage
     dedup: false
     description: >
-      Triage-oncall zeroes out this queue once a day. The priorities are:
-       * Keeping an open dialog with our users
-       * Initial prioritization (does not have to be perfect)
-       * SLO compliance
+      Monitor at least twice a day:
+        * Respond to unacknowledged, unresolved or unanswered user questions or issues.
+        * Add labels to issues when relevant (p0 or p1 bugs, feature requests, questions)
+        * Mark any duplicate issues.
+        * Review any open PRs.
     rules:
       # SLO violations
       - issue-needs-priority-slo
