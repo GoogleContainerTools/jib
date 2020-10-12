@@ -82,7 +82,7 @@ public class JarProcessor {
     Predicate<Path> isResourceFile = path -> !path.getFileName().toString().endsWith(".class");
 
     // Determine class and resource files in the directory containing jar contents and create
-    // FileEntriesLayer.Builder for each type of file (class or resource), while maintaining the
+    // FileEntriesLayer.Builder for each type of layer (class or resource), while maintaining the
     // file's original project structure.
     FileEntriesLayer.Builder classesLayerBuilder =
         addDirectoryContentsToLayer(
