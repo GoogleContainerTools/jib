@@ -29,6 +29,7 @@ build        build a container
 
 #### Build Config
 ```
+    --additional-tags <tag1>[,<tag2>,...]  additional tags for target
     --application-cache <directory>        location of the application cache (jib default is temp directory)
     --base-image-cache <directory>         location of the base image cache (jib default is user cache)
 -b, --build-file <file>                    location of the build file (default <context>/jib.yaml)
@@ -36,7 +37,6 @@ build        build a container
     --docker-config <directory>            location of docker configuration
     --name <image-ref>                     image name to bake into tar file, required when using "-t tar://..." 
 -p, --parameter <name>=<value>             templating parameters replace `${name}` with `value` in the build file (repeatable)
-    --tag <tag1>[,<tag2>,...]              additional tags for target
 ```
 
 #### Auth/Security
