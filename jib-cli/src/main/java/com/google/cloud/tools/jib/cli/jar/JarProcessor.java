@@ -82,22 +82,24 @@ public class JarProcessor {
     Predicate<Path> isResourceFile = path -> !path.getFileName().toString().endsWith(".class");
 
     // Determine class and resource files in the directory containing jar contents and create
-    // FileEntriesLayer.Builder for each type of layer (class or resource), while maintaining the
+    // FileEntriesLayer for each type of layer (class or resource), while maintaining the
     // file's original project structure.
-    FileEntriesLayer.Builder classesLayerBuilder =
+    FileEntriesLayer classesLayer =
         addDirectoryContentsToLayer(
                 FileEntriesLayer.builder(),
                 tempDirectoryPath,
                 isClassFile,
                 APP_ROOT.resolve(RelativeUnixPath.get("explodedJar")))
-            .setName("Classes");
-    FileEntriesLayer.Builder resourcesLayerBuilder =
+            .setName("Classes")
+            .build();
+    FileEntriesLayer resourcesLayer =
         addDirectoryContentsToLayer(
                 FileEntriesLayer.builder(),
                 tempDirectoryPath,
                 isResourceFile,
                 APP_ROOT.resolve(RelativeUnixPath.get("explodedJar")))
-            .setName("Resources");
+            .setName("Resources")
+            .build();
 
     // Get dependencies from Class-Path in the jar's manifest and create a FileEntriesLayer.Builder
     // with these dependencies as entries.
@@ -119,8 +121,8 @@ public class JarProcessor {
                 path, APP_ROOT.resolve(RelativeUnixPath.get("dependencies")).resolve(path)));
     dependenciesLayerBuilder.setName("Dependencies");
 
-    layers.add(classesLayerBuilder.build());
-    layers.add(resourcesLayerBuilder.build());
+    layers.add(classesLayer);
+    layers.add(resourcesLayer);
     layers.add(dependenciesLayerBuilder.build());
 
     return layers;
@@ -132,7 +134,6 @@ public class JarProcessor {
       Predicate<Path> pathFilter,
       AbsoluteUnixPath basePathInContainer)
       throws IOException {
-
     new DirectoryWalker(sourceRoot)
         .filterRoot()
         .filter(path -> Files.isDirectory(path) || pathFilter.test(path))
