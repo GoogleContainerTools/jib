@@ -18,7 +18,7 @@ package com.google.cloud.tools.jib.cli.cli2;
 
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth8.assertThat;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.assertThrows;
 
 import com.google.cloud.tools.jib.api.Credential;
 import com.google.common.collect.ImmutableList;
@@ -30,16 +30,16 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import picocli.CommandLine;
+import picocli.CommandLine.MissingParameterException;
+import picocli.CommandLine.MutuallyExclusiveArgsException;
 
 public class JibCliTest {
   @Test
   public void testParse_missingRequiredParams() {
-    try {
-      CommandLine.populateCommand(new JibCli(), "");
-      fail();
-    } catch (CommandLine.MissingParameterException mpe) {
-      assertThat(mpe.getMessage()).isEqualTo("Missing required option: '--target=<target-image>'");
-    }
+    MissingParameterException mpe =
+        assertThrows(
+            MissingParameterException.class, () -> CommandLine.populateCommand(new JibCli(), ""));
+    assertThat(mpe.getMessage()).isEqualTo("Missing required option: '--target=<target-image>'");
   }
 
   @Test
@@ -53,7 +53,7 @@ public class JibCliTest {
     assertThat(jibCli.getCredentialHelpers()).isEmpty();
     assertThat(jibCli.getBuildFile()).isEqualTo(Paths.get("./jib.yaml"));
     assertThat(jibCli.getContextRoot()).isEqualTo(Paths.get("."));
-    assertThat(jibCli.getTags()).isEmpty();
+    assertThat(jibCli.getAdditionalTags()).isEmpty();
     assertThat(jibCli.getTemplateParameters()).isEmpty();
     assertThat(jibCli.getApplicationCache()).isEmpty();
     assertThat(jibCli.getBaseImageCache()).isEmpty();
@@ -88,7 +88,7 @@ public class JibCliTest {
     assertThat(jibCli.getCredentialHelpers()).isEmpty();
     assertThat(jibCli.getBuildFile()).isEqualTo(Paths.get("test-build-file"));
     assertThat(jibCli.getContextRoot()).isEqualTo(Paths.get("test-context"));
-    assertThat(jibCli.getTags()).isEmpty();
+    assertThat(jibCli.getAdditionalTags()).isEmpty();
     assertThat(jibCli.getTemplateParameters())
         .isEqualTo(ImmutableMap.of("param1", "value1", "param2", "value2"));
     assertThat(jibCli.getApplicationCache()).isEmpty();
@@ -121,7 +121,7 @@ public class JibCliTest {
             "helper1",
             "--credential-helper",
             "helper2",
-            "--tags",
+            "--additional-tags",
             "tag1,tag2,tag3",
             "--allow-insecure-registries",
             "--send-credentials-over-http",
@@ -142,7 +142,7 @@ public class JibCliTest {
     assertThat(jibCli.getCredentialHelpers()).isEqualTo(ImmutableList.of("helper1", "helper2"));
     assertThat(jibCli.getBuildFile()).isEqualTo(Paths.get("test-build-file"));
     assertThat(jibCli.getContextRoot()).isEqualTo(Paths.get("test-context"));
-    assertThat(jibCli.getTags()).isEqualTo(ImmutableList.of("tag1", "tag2", "tag3"));
+    assertThat(jibCli.getAdditionalTags()).isEqualTo(ImmutableList.of("tag1", "tag2", "tag3"));
     assertThat(jibCli.getTemplateParameters())
         .isEqualTo(ImmutableMap.of("param1", "value1", "param2", "value2"));
     assertThat(jibCli.getApplicationCache()).hasValue(Paths.get("test-application-cache"));
@@ -262,26 +262,26 @@ public class JibCliTest {
 
     @Test
     public void testParse_usernameWithoutPassword() {
-      try {
-        CommandLine.populateCommand(
-            new JibCli(), "--target", "test-image-ref", usernameField, "test-username");
-        fail();
-      } catch (CommandLine.MissingParameterException mpe) {
-        assertThat(mpe.getMessage())
-            .isEqualTo("Error: Missing required argument(s): " + passwordField);
-      }
+      MissingParameterException mpe =
+          assertThrows(
+              MissingParameterException.class,
+              () ->
+                  CommandLine.populateCommand(
+                      new JibCli(), "--target", "test-image-ref", usernameField, "test-username"));
+      assertThat(mpe.getMessage())
+          .isEqualTo("Error: Missing required argument(s): " + passwordField);
     }
 
     @Test
     public void testParse_passwordWithoutUsername() {
-      try {
-        CommandLine.populateCommand(
-            new JibCli(), "--target", "test-image-ref", passwordField, "test-password");
-        fail();
-      } catch (CommandLine.MissingParameterException mpe) {
-        assertThat(mpe.getMessage())
-            .isEqualTo("Error: Missing required argument(s): " + usernameField + "=<username>");
-      }
+      MissingParameterException mpe =
+          assertThrows(
+              MissingParameterException.class,
+              () ->
+                  CommandLine.populateCommand(
+                      new JibCli(), "--target", "test-image-ref", passwordField, "test-password"));
+      assertThat(mpe.getMessage())
+          .isEqualTo("Error: Missing required argument(s): " + usernameField + "=<username>");
     }
   }
 
@@ -304,25 +304,25 @@ public class JibCliTest {
 
     @Test
     public void testParse_usernameWithoutPassword() {
-      try {
-        CommandLine.populateCommand(
-            new JibCli(),
-            "--target",
-            "test-image-ref",
-            "--username",
-            "test-username",
-            "--password",
-            "test-password",
-            usernameField,
-            "test-username",
-            passwordField,
-            "test-password");
-        fail();
-      } catch (CommandLine.MutuallyExclusiveArgsException mpe) {
-        assertThat(mpe.getMessage())
-            .isEqualTo(
-                "Error: [--username=<username> --password[=<password>]] and [[--to-username=<username> --to-password[=<password>]] [--from-username=<username> --from-password[=<password>]]] are mutually exclusive (specify only one)");
-      }
+      MutuallyExclusiveArgsException meae =
+          assertThrows(
+              MutuallyExclusiveArgsException.class,
+              () ->
+                  CommandLine.populateCommand(
+                      new JibCli(),
+                      "--target",
+                      "test-image-ref",
+                      "--username",
+                      "test-username",
+                      "--password",
+                      "test-password",
+                      usernameField,
+                      "test-username",
+                      passwordField,
+                      "test-password"));
+      assertThat(meae.getMessage())
+          .isEqualTo(
+              "Error: [--username=<username> --password[=<password>]] and [[--to-username=<username> --to-password[=<password>]] [--from-username=<username> --from-password[=<password>]]] are mutually exclusive (specify only one)");
     }
   }
 }

@@ -101,12 +101,12 @@ public class JibCli {
   private Map<String, String> templateParameters = new HashMap<String, String>();
 
   @Option(
-      names = "--tags",
+      names = "--additional-tags",
       paramLabel = "<tag>",
       split = ",",
       description = "Additional tags for target image")
   @SuppressWarnings("NullAway.Init") // initialized by picocli
-  private List<String> tags = new ArrayList<String>();
+  private List<String> additionalTags = new ArrayList<String>();
 
   @Option(
       names = "--base-image-cache",
@@ -125,13 +125,13 @@ public class JibCli {
   // Auth/Security
   @Option(
       names = "--allow-insecure-registries",
-      description = "Allow jib to communicate with registries over https")
+      description = "Allow jib to communicate with registries over http (insecure)")
   @SuppressWarnings("NullAway.Init") // initialized by picocli
   private boolean allowInsecureRegistries;
 
   @Option(
       names = "--send-credentials-over-http",
-      description = "Allow jib to communicate with registries over https")
+      description = "Allow jib to send credentials over http (very insecure)")
   @SuppressWarnings("NullAway.Init") // initialized by picocli
   private boolean sendCredentialsOverHttp;
 
@@ -256,9 +256,9 @@ public class JibCli {
     return templateParameters;
   }
 
-  public List<String> getTags() {
-    Verify.verifyNotNull(tags);
-    return tags;
+  public List<String> getAdditionalTags() {
+    Verify.verifyNotNull(additionalTags);
+    return additionalTags;
   }
 
   public Optional<Path> getBaseImageCache() {
@@ -296,7 +296,7 @@ public class JibCli {
   /**
    * If configured, returns a {@link Credential} created from user configured username/password.
    *
-   * @return a optional Credential
+   * @return an optional Credential
    */
   public Optional<Credential> getUsernamePassword() {
     if (usernamePassword != null && usernamePassword.single != null) {
