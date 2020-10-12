@@ -18,6 +18,7 @@ settings:
   repos:
     - https://github.com/GoogleContainerTools/jib
     - https://github.com/GoogleContainerTools/jib-extensions
+    - https://github.com/GoogleContainerTools/distroless
     - https://github.com/GoogleCloudPlatform/app-maven-plugin
     - https://github.com/GoogleCloudPlatform/app-gradle-plugin
 
