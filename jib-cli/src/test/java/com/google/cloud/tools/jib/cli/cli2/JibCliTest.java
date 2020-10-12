@@ -59,7 +59,7 @@ public class JibCliTest {
     assertThat(jibCli.getBaseImageCache()).isEmpty();
     assertThat(jibCli.isAllowInsecureRegistries()).isFalse();
     assertThat(jibCli.isSendCredentialsOverHttp()).isFalse();
-    assertThat(jibCli.getVerbosity()).isEqualTo("lifecycle");
+    assertThat(jibCli.getVerbosity()).isEqualTo(JibCli.Verbosity.lifecycle);
     assertThat(jibCli.isStacktrace()).isFalse();
     assertThat(jibCli.isHttpTrace()).isFalse();
     assertThat(jibCli.isSerialize()).isFalse();
@@ -70,16 +70,11 @@ public class JibCliTest {
     JibCli jibCli =
         CommandLine.populateCommand(
             new JibCli(),
-            "-t",
-            "test-image-ref",
-            "-c",
-            "test-context",
-            "-b",
-            "test-build-file",
-            "-p",
-            "param1=value1",
-            "-p",
-            "param2=value2");
+            "-t=test-image-ref",
+            "-c=test-context",
+            "-b=test-build-file",
+            "-p=param1=value1",
+            "-p=param2=value2");
 
     assertThat(jibCli.getTargetImage()).isEqualTo("test-image-ref");
     assertThat(jibCli.getUsernamePassword()).isEmpty();
@@ -95,7 +90,7 @@ public class JibCliTest {
     assertThat(jibCli.getBaseImageCache()).isEmpty();
     assertThat(jibCli.isAllowInsecureRegistries()).isFalse();
     assertThat(jibCli.isSendCredentialsOverHttp()).isFalse();
-    assertThat(jibCli.getVerbosity()).isEqualTo("lifecycle");
+    assertThat(jibCli.getVerbosity()).isEqualTo(JibCli.Verbosity.lifecycle);
     assertThat(jibCli.isStacktrace()).isFalse();
     assertThat(jibCli.isStacktrace()).isFalse();
     assertThat(jibCli.isHttpTrace()).isFalse();
@@ -107,30 +102,19 @@ public class JibCliTest {
     JibCli jibCli =
         CommandLine.populateCommand(
             new JibCli(),
-            "--target",
-            "test-image-ref",
-            "--context",
-            "test-context",
-            "--build-file",
-            "test-build-file",
-            "--parameter",
-            "param1=value1",
-            "--parameter",
-            "param2=value2",
-            "--credential-helper",
-            "helper1",
-            "--credential-helper",
-            "helper2",
-            "--additional-tags",
-            "tag1,tag2,tag3",
+            "--target=test-image-ref",
+            "--context=test-context",
+            "--build-file=test-build-file",
+            "--parameter=param1=value1",
+            "--parameter=param2=value2",
+            "--credential-helper=helper1",
+            "--credential-helper=helper2",
+            "--additional-tags=tag1,tag2,tag3",
             "--allow-insecure-registries",
             "--send-credentials-over-http",
-            "--application-cache",
-            "test-application-cache",
-            "--base-image-cache",
-            "test-base-image-cache",
-            "--verbosity",
-            "info",
+            "--application-cache=test-application-cache",
+            "--base-image-cache=test-base-image-cache",
+            "--verbosity=info",
             "--stacktrace",
             "--http-trace",
             "--serialize");
@@ -149,7 +133,7 @@ public class JibCliTest {
     assertThat(jibCli.getBaseImageCache()).hasValue(Paths.get("test-base-image-cache"));
     assertThat(jibCli.isAllowInsecureRegistries()).isTrue();
     assertThat(jibCli.isSendCredentialsOverHttp()).isTrue();
-    assertThat(jibCli.getVerbosity()).isEqualTo("info");
+    assertThat(jibCli.getVerbosity()).isEqualTo(JibCli.Verbosity.info);
     assertThat(jibCli.isStacktrace()).isTrue();
     assertThat(jibCli.isHttpTrace()).isTrue();
     assertThat(jibCli.isSerialize()).isTrue();

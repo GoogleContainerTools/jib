@@ -16,6 +16,8 @@
 
 package com.google.cloud.tools.jib.cli.cli2;
 
+import static com.google.cloud.tools.jib.api.Jib.TAR_IMAGE_PREFIX;
+
 import com.google.cloud.tools.jib.api.Credential;
 import com.google.common.base.Verify;
 import java.nio.file.Path;
@@ -26,7 +28,9 @@ import java.util.Map;
 import java.util.Optional;
 import picocli.CommandLine;
 import picocli.CommandLine.ArgGroup;
+import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Option;
+import picocli.CommandLine.Spec;
 
 @CommandLine.Command(
     name = "jib",
@@ -36,13 +40,36 @@ import picocli.CommandLine.Option;
     synopsisSubcommandLabel = "COMMAND",
     description = "A tool for creating container images")
 public class JibCli {
+
+  public enum Verbosity {
+    error(0),
+    warn(1),
+    lifecycle(2),
+    info(3),
+    debug(4);
+    private final int value;
+
+    Verbosity(int value) {
+      this.value = value;
+    }
+
+    public int value() {
+      return value;
+    }
+  }
+
+  @SuppressWarnings("NullAway.Init") // initialized by picocli
+  @Spec
+  CommandSpec spec;
+
   @Option(
       names = "--verbosity",
       paramLabel = "<level>",
       defaultValue = "lifecycle",
-      description = "set logging verbosity (error, warn, lifecycle (default), info, debug)")
+      description =
+          "set logging verbosity, candidates: ${COMPLETION-CANDIDATES}, default: ${DEFAULT-VALUE}")
   @SuppressWarnings("NullAway.Init") // initialized by picocli
-  private String verbosity;
+  private Verbosity verbosity;
 
   // Hidden debug parameters
   @Option(names = "--stacktrace", hidden = true)
@@ -220,7 +247,7 @@ public class JibCli {
     String password;
   }
 
-  public String getVerbosity() {
+  public Verbosity getVerbosity() {
     Verify.verifyNotNull(verbosity);
     return verbosity;
   }
@@ -353,5 +380,16 @@ public class JibCli {
   public static void main(String[] args) {
     int exitCode = new CommandLine(new JibCli()).execute(args);
     System.exit(exitCode);
+  }
+
+  /** Validater for parameters defined this this class that could not be done declaratively. */
+  public void validate() {
+    if (targetImage.startsWith(TAR_IMAGE_PREFIX)) {
+      if (name == null) {
+        throw new CommandLine.ParameterException(
+            spec.commandLine(),
+            "Missing option: --name must be specified when using --target=tar://....");
+      }
+    }
   }
 }
