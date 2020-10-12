@@ -22,6 +22,7 @@ import com.google.cloud.tools.jib.api.buildplan.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.api.buildplan.FileEntriesLayer;
 import com.google.cloud.tools.jib.api.buildplan.FileEntry;
 import com.google.cloud.tools.jib.cli.jar.JarProcessor.JarType;
+import com.google.common.collect.ImmutableList;
 import com.google.common.io.Resources;
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -69,7 +70,7 @@ public class JarProcessorTest {
                 .stream()
                 .map(FileEntry::getExtractionPath)
                 .collect(Collectors.toList()))
-        .containsExactly(
+        .isEqualTo(ImmutableList.of(
             AbsoluteUnixPath.get("/app/explodedJar/META-INF"),
             AbsoluteUnixPath.get("/app/explodedJar/class5.class"),
             AbsoluteUnixPath.get("/app/explodedJar/directory1"),
@@ -79,7 +80,7 @@ public class JarProcessorTest {
             AbsoluteUnixPath.get("/app/explodedJar/directory2/class4.class"),
             AbsoluteUnixPath.get("/app/explodedJar/directory2/directory3"),
             AbsoluteUnixPath.get("/app/explodedJar/directory2/directory3/class3.class"),
-            AbsoluteUnixPath.get("/app/explodedJar/directory4"));
+            AbsoluteUnixPath.get("/app/explodedJar/directory4")));
 
     // Validate resources layer.
     assertThat(resourcesLayer.getEntries().size()).isEqualTo(9);
@@ -89,7 +90,7 @@ public class JarProcessorTest {
                 .stream()
                 .map(FileEntry::getExtractionPath)
                 .collect(Collectors.toList()))
-        .containsExactly(
+        .isEqualTo(ImmutableList.of(
             AbsoluteUnixPath.get("/app/explodedJar/META-INF/"),
             AbsoluteUnixPath.get("/app/explodedJar/META-INF/MANIFEST.MF"),
             AbsoluteUnixPath.get("/app/explodedJar/directory1"),
@@ -98,7 +99,7 @@ public class JarProcessorTest {
             AbsoluteUnixPath.get("/app/explodedJar/directory2/directory3"),
             AbsoluteUnixPath.get("/app/explodedJar/directory2/directory3/resource2.sql"),
             AbsoluteUnixPath.get("/app/explodedJar/directory4"),
-            AbsoluteUnixPath.get("/app/explodedJar/directory4/resource3.txt"));
+            AbsoluteUnixPath.get("/app/explodedJar/directory4/resource3.txt")));
 
     // Validate dependencies layer.
     assertThat(dependenciesLayer.getEntries().size()).isEqualTo(3);
@@ -108,9 +109,9 @@ public class JarProcessorTest {
                 .stream()
                 .map(FileEntry::getExtractionPath)
                 .collect(Collectors.toList()))
-        .containsExactly(
+        .isEqualTo(ImmutableList.of(
             AbsoluteUnixPath.get("/app/dependencies/dependency1"),
             AbsoluteUnixPath.get("/app/dependencies/dependency2"),
-            AbsoluteUnixPath.get("/app/dependencies/directory/dependency3"));
+            AbsoluteUnixPath.get("/app/dependencies/directory/dependency3")));
   }
 }
