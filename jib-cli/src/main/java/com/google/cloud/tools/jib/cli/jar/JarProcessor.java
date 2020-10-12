@@ -29,6 +29,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.jar.JarFile;
 import java.util.stream.Stream;
@@ -140,7 +141,7 @@ public class JarProcessor {
           fileStream
               .filter(path -> !path.equals(sourceRoot))
               .filter(path -> Files.isDirectory(path) || pathFilter.test(path))
-              .sorted()
+              .sorted(Comparator.naturalOrder())
               .collect(ImmutableList.toImmutableList());
       for (Path path : directoryPaths) {
         AbsoluteUnixPath pathOnContainer = basePathInContainer.resolve(sourceRoot.relativize(path));
