@@ -85,19 +85,6 @@ public class JarProcessorTest {
                 AbsoluteUnixPath.get("/app/explodedJar/directory2/directory3"),
                 AbsoluteUnixPath.get("/app/explodedJar/directory2/directory3/class3.class"),
                 AbsoluteUnixPath.get("/app/explodedJar/directory4")));
-    //    assertExtractionPathsUnordered(
-    //        Arrays.asList(
-    //            "/app/explodedJar/directory4",
-    //            "/app/explodedJar/directory2",
-    //            "/app/explodedJar/directory2/directory3",
-    //            "/app/explodedJar/directory2/directory3/class3.class",
-    //            "/app/explodedJar/directory2/class4.class",
-    //            "/app/explodedJar/META-INF",
-    //            "/app/explodedJar/directory1",
-    //            "/app/explodedJar/directory1/class2.class",
-    //            "/app/explodedJar/directory1/class1.class",
-    //            "/app/explodedJar/class5.class"),
-    //        actualClassesPaths);
 
     // Validate resources layer.
     assertThat(resourcesLayer.getEntries().size()).isEqualTo(9);
@@ -120,18 +107,6 @@ public class JarProcessorTest {
                 AbsoluteUnixPath.get("/app/explodedJar/directory2/directory3/resource2.sql"),
                 AbsoluteUnixPath.get("/app/explodedJar/directory4"),
                 AbsoluteUnixPath.get("/app/explodedJar/directory4/resource3.txt")));
-    //    assertExtractionPathsUnordered(
-    //        Arrays.asList(
-    //            "/app/explodedJar/directory4",
-    //            "/app/explodedJar/directory4/resource3.txt",
-    //            "/app/explodedJar/directory2",
-    //            "/app/explodedJar/directory2/directory3",
-    //            "/app/explodedJar/directory2/directory3/resource2.sql",
-    //            "/app/explodedJar/META-INF",
-    //            "/app/explodedJar/META-INF/MANIFEST.MF",
-    //            "/app/explodedJar/directory1",
-    //            "/app/explodedJar/directory1/resource1.txt"),
-    //        actualResourcesPaths);
 
     // Validate dependencies layer.
     assertThat(dependenciesLayer.getEntries().size()).isEqualTo(3);
@@ -147,13 +122,5 @@ public class JarProcessorTest {
                 AbsoluteUnixPath.get("/app/dependencies/dependency1"),
                 AbsoluteUnixPath.get("/app/dependencies/dependency2"),
                 AbsoluteUnixPath.get("/app/dependencies/directory/dependency3")));
-  }
-
-  private static void assertExtractionPathsUnordered(
-      List<String> expectedPaths, List<AbsoluteUnixPath> actualPaths) {
-    List<String> expected = expectedPaths.stream().sorted().collect(Collectors.toList());
-    List<String> actual =
-        actualPaths.stream().map(path -> path.toString()).sorted().collect(Collectors.toList());
-    Assert.assertEquals(expected, actual);
   }
 }
