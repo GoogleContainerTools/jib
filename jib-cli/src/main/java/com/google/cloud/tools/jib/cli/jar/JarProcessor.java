@@ -19,11 +19,11 @@ package com.google.cloud.tools.jib.cli.jar;
 import com.google.cloud.tools.jib.api.buildplan.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.api.buildplan.FileEntriesLayer;
 import com.google.cloud.tools.jib.api.buildplan.RelativeUnixPath;
+import com.google.cloud.tools.jib.filesystem.DirectoryWalker;
 import com.google.cloud.tools.jib.filesystem.TempDirectoryProvider;
 import com.google.cloud.tools.jib.plugins.common.ZipUtil;
 import com.google.common.base.Predicate;
 import com.google.common.base.Splitter;
-import com.google.common.collect.ImmutableList;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -31,7 +31,6 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.jar.JarFile;
-import java.util.stream.Stream;
 
 /** Process jar file contents and create layers. */
 public class JarProcessor {
@@ -135,18 +134,15 @@ public class JarProcessor {
       Predicate<Path> pathFilter,
       AbsoluteUnixPath basePathInContainer)
       throws IOException {
-    try (Stream<Path> fileStream = Files.walk(sourceRoot)) {
-      ImmutableList<Path> directoryPaths =
-          fileStream
-              .filter(path -> !path.equals(sourceRoot))
-              .filter(path -> Files.isDirectory(path) || pathFilter.test(path))
-              .sorted()
-              .collect(ImmutableList.toImmutableList());
-      for (Path path : directoryPaths) {
-        AbsoluteUnixPath pathOnContainer = basePathInContainer.resolve(sourceRoot.relativize(path));
-        builder.addEntry(path, pathOnContainer);
-      }
-    }
+    new DirectoryWalker(sourceRoot)
+        .filterRoot()
+        .filter(path -> Files.isDirectory(path) || pathFilter.test(path))
+        .walk(
+            path -> {
+              AbsoluteUnixPath pathOnContainer =
+                  basePathInContainer.resolve(sourceRoot.relativize(path));
+              builder.addEntry(path, pathOnContainer);
+            });
     return builder;
   }
 }
