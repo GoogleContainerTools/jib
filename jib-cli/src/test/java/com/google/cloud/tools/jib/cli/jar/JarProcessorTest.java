@@ -28,7 +28,6 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.junit.Assert;
@@ -65,7 +64,7 @@ public class JarProcessorTest {
     assertThat(layers.size()).isEqualTo(3);
 
     // Validate classes layer.
-    //    assertThat(classesLayer.getEntries().size()).isEqualTo(10);
+    assertThat(classesLayer.getEntries().size()).isEqualTo(10);
     assertThat(classesLayer.getName()).isEqualTo("Classes");
     List<AbsoluteUnixPath> actualClassesPaths =
         classesLayer
@@ -73,19 +72,32 @@ public class JarProcessorTest {
             .stream()
             .map(FileEntry::getExtractionPath)
             .collect(Collectors.toList());
-    assertExtractionPathsUnordered(
-        Arrays.asList(
-            "/app/explodedJar/directory4",
-            "/app/explodedJar/directory2",
-            "/app/explodedJar/directory2/directory3",
-            "/app/explodedJar/directory2/directory3/class3.class",
-            "/app/explodedJar/directory2/class4.class",
-            "/app/explodedJar/META-INF",
-            "/app/explodedJar/directory1",
-            "/app/explodedJar/directory1/class2.class",
-            "/app/explodedJar/directory1/class1.class",
-            "/app/explodedJar/class5.class"),
-        actualClassesPaths);
+    assertThat(actualClassesPaths)
+        .isEqualTo(
+            ImmutableList.of(
+                AbsoluteUnixPath.get("/app/explodedJar/META-INF"),
+                AbsoluteUnixPath.get("/app/explodedJar/class5.class"),
+                AbsoluteUnixPath.get("/app/explodedJar/directory1"),
+                AbsoluteUnixPath.get("/app/explodedJar/directory1/class1.class"),
+                AbsoluteUnixPath.get("/app/explodedJar/directory1/class2.class"),
+                AbsoluteUnixPath.get("/app/explodedJar/directory2"),
+                AbsoluteUnixPath.get("/app/explodedJar/directory2/class4.class"),
+                AbsoluteUnixPath.get("/app/explodedJar/directory2/directory3"),
+                AbsoluteUnixPath.get("/app/explodedJar/directory2/directory3/class3.class"),
+                AbsoluteUnixPath.get("/app/explodedJar/directory4")));
+    //    assertExtractionPathsUnordered(
+    //        Arrays.asList(
+    //            "/app/explodedJar/directory4",
+    //            "/app/explodedJar/directory2",
+    //            "/app/explodedJar/directory2/directory3",
+    //            "/app/explodedJar/directory2/directory3/class3.class",
+    //            "/app/explodedJar/directory2/class4.class",
+    //            "/app/explodedJar/META-INF",
+    //            "/app/explodedJar/directory1",
+    //            "/app/explodedJar/directory1/class2.class",
+    //            "/app/explodedJar/directory1/class1.class",
+    //            "/app/explodedJar/class5.class"),
+    //        actualClassesPaths);
 
     // Validate resources layer.
     assertThat(resourcesLayer.getEntries().size()).isEqualTo(9);
@@ -96,18 +108,30 @@ public class JarProcessorTest {
             .stream()
             .map(FileEntry::getExtractionPath)
             .collect(Collectors.toList());
-    assertExtractionPathsUnordered(
-        Arrays.asList(
-            "/app/explodedJar/directory4",
-            "/app/explodedJar/directory4/resource3.txt",
-            "/app/explodedJar/directory2",
-            "/app/explodedJar/directory2/directory3",
-            "/app/explodedJar/directory2/directory3/resource2.sql",
-            "/app/explodedJar/META-INF",
-            "/app/explodedJar/META-INF/MANIFEST.MF",
-            "/app/explodedJar/directory1",
-            "/app/explodedJar/directory1/resource1.txt"),
-        actualResourcesPaths);
+    assertThat(actualResourcesPaths)
+        .isEqualTo(
+            ImmutableList.of(
+                AbsoluteUnixPath.get("/app/explodedJar/META-INF/"),
+                AbsoluteUnixPath.get("/app/explodedJar/META-INF/MANIFEST.MF"),
+                AbsoluteUnixPath.get("/app/explodedJar/directory1"),
+                AbsoluteUnixPath.get("/app/explodedJar/directory1/resource1.txt"),
+                AbsoluteUnixPath.get("/app/explodedJar/directory2"),
+                AbsoluteUnixPath.get("/app/explodedJar/directory2/directory3"),
+                AbsoluteUnixPath.get("/app/explodedJar/directory2/directory3/resource2.sql"),
+                AbsoluteUnixPath.get("/app/explodedJar/directory4"),
+                AbsoluteUnixPath.get("/app/explodedJar/directory4/resource3.txt")));
+    //    assertExtractionPathsUnordered(
+    //        Arrays.asList(
+    //            "/app/explodedJar/directory4",
+    //            "/app/explodedJar/directory4/resource3.txt",
+    //            "/app/explodedJar/directory2",
+    //            "/app/explodedJar/directory2/directory3",
+    //            "/app/explodedJar/directory2/directory3/resource2.sql",
+    //            "/app/explodedJar/META-INF",
+    //            "/app/explodedJar/META-INF/MANIFEST.MF",
+    //            "/app/explodedJar/directory1",
+    //            "/app/explodedJar/directory1/resource1.txt"),
+    //        actualResourcesPaths);
 
     // Validate dependencies layer.
     assertThat(dependenciesLayer.getEntries().size()).isEqualTo(3);
