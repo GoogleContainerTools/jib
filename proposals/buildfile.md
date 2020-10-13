@@ -1,8 +1,7 @@
 # Jib CLI Buildfile Specification
 
 Specification for a YAML buildfile describing building a container image. This buildfile can be
-used by the jib-cli to generate a container. It is translated directly into a buildplan and
-passed to the builder.
+used by the jib-cli to generate a container using jib-core.
 
 ```yaml
 apiVersion: jib/v1alpha1
