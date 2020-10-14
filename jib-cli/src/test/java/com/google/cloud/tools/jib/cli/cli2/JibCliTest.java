@@ -21,6 +21,7 @@ import static com.google.common.truth.Truth8.assertThat;
 import static org.junit.Assert.assertThrows;
 
 import com.google.cloud.tools.jib.api.Credential;
+import com.google.cloud.tools.jib.cli.cli2.logging.Verbosity;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import java.nio.file.Paths;
@@ -59,7 +60,7 @@ public class JibCliTest {
     assertThat(jibCli.getBaseImageCache()).isEmpty();
     assertThat(jibCli.isAllowInsecureRegistries()).isFalse();
     assertThat(jibCli.isSendCredentialsOverHttp()).isFalse();
-    assertThat(jibCli.getVerbosity()).isEqualTo(JibCli.Verbosity.lifecycle);
+    assertThat(jibCli.getVerbosity()).isEqualTo(Verbosity.lifecycle);
     assertThat(jibCli.isStacktrace()).isFalse();
     assertThat(jibCli.isHttpTrace()).isFalse();
     assertThat(jibCli.isSerialize()).isFalse();
@@ -90,7 +91,7 @@ public class JibCliTest {
     assertThat(jibCli.getBaseImageCache()).isEmpty();
     assertThat(jibCli.isAllowInsecureRegistries()).isFalse();
     assertThat(jibCli.isSendCredentialsOverHttp()).isFalse();
-    assertThat(jibCli.getVerbosity()).isEqualTo(JibCli.Verbosity.lifecycle);
+    assertThat(jibCli.getVerbosity()).isEqualTo(Verbosity.lifecycle);
     assertThat(jibCli.isStacktrace()).isFalse();
     assertThat(jibCli.isStacktrace()).isFalse();
     assertThat(jibCli.isHttpTrace()).isFalse();
@@ -133,7 +134,7 @@ public class JibCliTest {
     assertThat(jibCli.getBaseImageCache()).hasValue(Paths.get("test-base-image-cache"));
     assertThat(jibCli.isAllowInsecureRegistries()).isTrue();
     assertThat(jibCli.isSendCredentialsOverHttp()).isTrue();
-    assertThat(jibCli.getVerbosity()).isEqualTo(JibCli.Verbosity.info);
+    assertThat(jibCli.getVerbosity()).isEqualTo(Verbosity.info);
     assertThat(jibCli.isStacktrace()).isTrue();
     assertThat(jibCli.isHttpTrace()).isTrue();
     assertThat(jibCli.isSerialize()).isTrue();

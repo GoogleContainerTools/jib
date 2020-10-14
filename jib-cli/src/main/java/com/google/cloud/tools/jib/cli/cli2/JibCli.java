@@ -19,6 +19,8 @@ package com.google.cloud.tools.jib.cli.cli2;
 import static com.google.cloud.tools.jib.api.Jib.TAR_IMAGE_PREFIX;
 
 import com.google.cloud.tools.jib.api.Credential;
+import com.google.cloud.tools.jib.cli.cli2.logging.ConsoleOutput;
+import com.google.cloud.tools.jib.cli.cli2.logging.Verbosity;
 import com.google.common.base.Verify;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -41,23 +43,6 @@ import picocli.CommandLine.Spec;
     description = "A tool for creating container images")
 public class JibCli {
 
-  public enum Verbosity {
-    error(0),
-    warn(1),
-    lifecycle(2),
-    info(3),
-    debug(4);
-    private final int value;
-
-    Verbosity(int value) {
-      this.value = value;
-    }
-
-    public int value() {
-      return value;
-    }
-  }
-
   @SuppressWarnings("NullAway.Init") // initialized by picocli
   @Spec
   CommandSpec spec;
@@ -70,6 +55,15 @@ public class JibCli {
           "set logging verbosity, candidates: ${COMPLETION-CANDIDATES}, default: ${DEFAULT-VALUE}")
   @SuppressWarnings("NullAway.Init") // initialized by picocli
   private Verbosity verbosity;
+
+  @Option(
+      names = "--console",
+      paramLabel = "<type>",
+      defaultValue = "auto",
+      description =
+          "set console output type, candidates: ${COMPLETION-CANDIDATES}, default: ${DEFAULT-VALUE}")
+  @SuppressWarnings("NullAway.Init") // initialized by picocli
+  private ConsoleOutput consoleOutput;
 
   // Hidden debug parameters
   @Option(names = "--stacktrace", hidden = true)
@@ -250,6 +244,11 @@ public class JibCli {
   public Verbosity getVerbosity() {
     Verify.verifyNotNull(verbosity);
     return verbosity;
+  }
+
+  public ConsoleOutput getConsoleOutput() {
+    Verify.verifyNotNull(consoleOutput);
+    return consoleOutput;
   }
 
   public boolean isStacktrace() {
