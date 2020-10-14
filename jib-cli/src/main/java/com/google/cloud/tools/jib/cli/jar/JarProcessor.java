@@ -22,6 +22,7 @@ import com.google.cloud.tools.jib.api.buildplan.RelativeUnixPath;
 import com.google.cloud.tools.jib.filesystem.DirectoryWalker;
 import com.google.cloud.tools.jib.filesystem.TempDirectoryProvider;
 import com.google.cloud.tools.jib.plugins.common.ZipUtil;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Splitter;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -53,6 +54,29 @@ public class JarProcessor {
     SPRING_BOOT;
   }
 
+  /** Represents the different types of layers. */
+  @VisibleForTesting
+  public enum ExplodedModeLayerType {
+    DEPENDENCIES("dependencies"),
+    RESOURCES("resources"),
+    CLASSES("classes");
+
+    private final String name;
+
+    /**
+     * Initializes with a name for the layer.
+     *
+     * @param name name to set for the layer; does not affect the contents of the layer
+     */
+    ExplodedModeLayerType(String name) {
+      this.name = name;
+    }
+
+    public String getName() {
+      return name;
+    }
+  }
+
   /**
    * Determines whether the jar is a spring boot or regular jar, given a path to the jar.
    *
@@ -75,7 +99,7 @@ public class JarProcessor {
    * @param tempDirPath path to temporary jib local directory to use.
    * @return list of {@link FileEntriesLayer}.
    * @throws IOException if I/O error occurs when opening the jar file or if the directory for the
-   *     temporary directory path provided, doesn't exist.
+   *     temporary directory path provided doesn't exist.
    */
   public static List<FileEntriesLayer> explodeStandardJar(Path jarPath, @Nullable Path tempDirPath)
       throws IOException {
@@ -99,7 +123,7 @@ public class JarProcessor {
                   localExplodedJarRoot,
                   isClassFile,
                   APP_ROOT.resolve(RelativeUnixPath.get("explodedJar")))
-              .setName("classes")
+              .setName(ExplodedModeLayerType.CLASSES.getName())
               .build();
       FileEntriesLayer resourcesLayer =
           addDirectoryContentsToLayer(
@@ -107,7 +131,7 @@ public class JarProcessor {
                   localExplodedJarRoot,
                   isResourceFile,
                   APP_ROOT.resolve(RelativeUnixPath.get("explodedJar")))
-              .setName("resources")
+              .setName(ExplodedModeLayerType.RESOURCES.getName())
               .build();
 
       // Get dependencies from Class-Path in the jar's manifest and create a
@@ -128,7 +152,7 @@ public class JarProcessor {
             path ->
                 dependenciesLayerBuilder.addEntry(
                     path, APP_ROOT.resolve(RelativeUnixPath.get("dependencies")).resolve(path)));
-        dependenciesLayerBuilder.setName("dependencies");
+        dependenciesLayerBuilder.setName(ExplodedModeLayerType.DEPENDENCIES.getName());
         layers.add(dependenciesLayerBuilder.build());
       }
 
