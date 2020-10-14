@@ -35,7 +35,8 @@ import org.junit.Test;
 public class JarProcessorTest {
 
   private static final String SPRING_BOOT_RESOURCE_DIR = "jar/springboot/springboot_sample.jar";
-  private static final String STANDARD_RESOURCE_DIR_WITH_CP = "jar/standard/standardJarWithCp.jar";
+  private static final String STANDARD_JAR_WITH_CLASS_PATH_MANIFEST =
+      "jar/standard/standardJarWithClassPath.jar";
   private static final String STANDARD_RESOURCE_DIR = "jar/standard/standardJar.jar";
 
   @Test
@@ -54,18 +55,56 @@ public class JarProcessorTest {
 
   @Test
   public void testExplodeMode_standard() throws IOException, URISyntaxException {
-    Path standardJar = Paths.get(Resources.getResource(STANDARD_RESOURCE_DIR_WITH_CP).toURI());
-    List<FileEntriesLayer> layers = JarProcessor.explodeStandardJar(standardJar);
-    FileEntriesLayer classesLayer = layers.get(0);
-    FileEntriesLayer resourcesLayer = layers.get(1);
-    FileEntriesLayer dependenciesLayer = layers.get(2);
+    Path standardJar =
+        Paths.get(Resources.getResource(STANDARD_JAR_WITH_CLASS_PATH_MANIFEST).toURI());
+    List<FileEntriesLayer> layers = JarProcessor.explodeStandardJar(standardJar, null);
 
     assertThat(layers.size()).isEqualTo(3);
+
+    FileEntriesLayer dependenciesLayer = layers.get(0);
+    FileEntriesLayer resourcesLayer = layers.get(1);
+    FileEntriesLayer classesLayer = layers.get(2);
+
+    // Validate dependencies layer.
+    assertThat(dependenciesLayer.getName()).isEqualTo("Dependencies");
+    assertThat(
+            dependenciesLayer
+                .getEntries()
+                .stream()
+                .map(FileEntry::getExtractionPath)
+                .collect(Collectors.toList()))
+        .isEqualTo(
+            ImmutableList.of(
+                AbsoluteUnixPath.get("/app/dependencies/dependency1"),
+                AbsoluteUnixPath.get("/app/dependencies/dependency2"),
+                AbsoluteUnixPath.get("/app/dependencies/directory/dependency3")));
+
+    // Validate resources layer.
+    // TODO: Validate order of file paths once
+    // https://github.com/GoogleContainerTools/jib/issues/2821 is fixed.
+    assertThat(resourcesLayer.getName()).isEqualTo("Resources");
+    List<AbsoluteUnixPath> actualResourcesPaths =
+        resourcesLayer
+            .getEntries()
+            .stream()
+            .map(FileEntry::getExtractionPath)
+            .collect(Collectors.toList());
+    assertThat(actualResourcesPaths)
+        .containsExactly(
+            AbsoluteUnixPath.get("/app/explodedJar/META-INF/"),
+            AbsoluteUnixPath.get("/app/explodedJar/META-INF/MANIFEST.MF"),
+            AbsoluteUnixPath.get("/app/explodedJar/directory1"),
+            AbsoluteUnixPath.get("/app/explodedJar/directory1/resource1.txt"),
+            AbsoluteUnixPath.get("/app/explodedJar/directory2"),
+            AbsoluteUnixPath.get("/app/explodedJar/directory2/directory3"),
+            AbsoluteUnixPath.get("/app/explodedJar/directory2/directory3/resource2.sql"),
+            AbsoluteUnixPath.get("/app/explodedJar/directory4"),
+            AbsoluteUnixPath.get("/app/explodedJar/directory4/resource3.txt"),
+            AbsoluteUnixPath.get("/app/explodedJar/resource4.sql"));
 
     // Validate classes layer.
     // TODO: Validate order of file paths once
     // https://github.com/GoogleContainerTools/jib/issues/2821 is fixed.
-    assertThat(classesLayer.getEntries().size()).isEqualTo(10);
     assertThat(classesLayer.getName()).isEqualTo("Classes");
     List<AbsoluteUnixPath> actualClassesPaths =
         classesLayer
@@ -85,43 +124,5 @@ public class JarProcessorTest {
             AbsoluteUnixPath.get("/app/explodedJar/directory2/directory3"),
             AbsoluteUnixPath.get("/app/explodedJar/directory2/directory3/class3.class"),
             AbsoluteUnixPath.get("/app/explodedJar/directory4"));
-
-    // Validate resources layer.
-    // TODO: Validate order of file paths once
-    // https://github.com/GoogleContainerTools/jib/issues/2821 is fixed.
-    assertThat(resourcesLayer.getEntries().size()).isEqualTo(9);
-    assertThat(resourcesLayer.getName()).isEqualTo("Resources");
-    List<AbsoluteUnixPath> actualResourcesPaths =
-        resourcesLayer
-            .getEntries()
-            .stream()
-            .map(FileEntry::getExtractionPath)
-            .collect(Collectors.toList());
-    assertThat(actualResourcesPaths)
-        .containsExactly(
-            AbsoluteUnixPath.get("/app/explodedJar/META-INF/"),
-            AbsoluteUnixPath.get("/app/explodedJar/META-INF/MANIFEST.MF"),
-            AbsoluteUnixPath.get("/app/explodedJar/directory1"),
-            AbsoluteUnixPath.get("/app/explodedJar/directory1/resource1.txt"),
-            AbsoluteUnixPath.get("/app/explodedJar/directory2"),
-            AbsoluteUnixPath.get("/app/explodedJar/directory2/directory3"),
-            AbsoluteUnixPath.get("/app/explodedJar/directory2/directory3/resource2.sql"),
-            AbsoluteUnixPath.get("/app/explodedJar/directory4"),
-            AbsoluteUnixPath.get("/app/explodedJar/directory4/resource3.txt"));
-
-    // Validate dependencies layer.
-    assertThat(dependenciesLayer.getEntries().size()).isEqualTo(3);
-    assertThat(dependenciesLayer.getName()).isEqualTo("Dependencies");
-    assertThat(
-            dependenciesLayer
-                .getEntries()
-                .stream()
-                .map(FileEntry::getExtractionPath)
-                .collect(Collectors.toList()))
-        .isEqualTo(
-            ImmutableList.of(
-                AbsoluteUnixPath.get("/app/dependencies/dependency1"),
-                AbsoluteUnixPath.get("/app/dependencies/dependency2"),
-                AbsoluteUnixPath.get("/app/dependencies/directory/dependency3")));
   }
 }

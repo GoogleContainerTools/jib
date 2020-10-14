@@ -22,7 +22,6 @@ import com.google.cloud.tools.jib.api.buildplan.RelativeUnixPath;
 import com.google.cloud.tools.jib.filesystem.DirectoryWalker;
 import com.google.cloud.tools.jib.filesystem.TempDirectoryProvider;
 import com.google.cloud.tools.jib.plugins.common.ZipUtil;
-import com.google.common.base.Predicate;
 import com.google.common.base.Splitter;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -30,7 +29,11 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Predicate;
+import java.util.jar.Attributes;
 import java.util.jar.JarFile;
+import java.util.stream.Collectors;
+import javax.annotation.Nullable;
 
 /** Process jar file contents and create layers. */
 public class JarProcessor {
@@ -69,17 +72,26 @@ public class JarProcessor {
    * Explode jar and create three layers for classes, resources and dependencies on container.
    *
    * @param jarPath path to jar file.
+   * @param tempDirPath path to temporary jib local directory to use.
    * @return list of {@link FileEntriesLayer}.
-   * @throws IOException if I/O error occurs when opening the file.
+   * @throws IOException if I/O error occurs when opening the jar file or if the directory for the
+   *     temporary directory path provided, doesn't exist.
    */
-  public static List<FileEntriesLayer> explodeStandardJar(Path jarPath) throws IOException {
-    TempDirectoryProvider tempDirectoryProvider = new TempDirectoryProvider();
-    Path tempDirectoryPath = tempDirectoryProvider.newDirectory();
-    ZipUtil.unzip(jarPath, tempDirectoryPath);
+  public static List<FileEntriesLayer> explodeStandardJar(Path jarPath, @Nullable Path tempDirPath)
+      throws IOException {
+    Path localExplodedJarRoot;
+    if (tempDirPath == null) {
+      try (TempDirectoryProvider tempDirectoryProvider = new TempDirectoryProvider()) {
+        localExplodedJarRoot = tempDirectoryProvider.newDirectory();
+      }
+    } else {
+      localExplodedJarRoot = tempDirPath;
+    }
+    ZipUtil.unzip(jarPath, localExplodedJarRoot);
 
     List<FileEntriesLayer> layers = new ArrayList<>();
     Predicate<Path> isClassFile = path -> path.getFileName().toString().endsWith(".class");
-    Predicate<Path> isResourceFile = path -> !path.getFileName().toString().endsWith(".class");
+    Predicate<Path> isResourceFile = isClassFile.negate();
 
     // Determine class and resource files in the directory containing jar contents and create
     // FileEntriesLayer for each type of layer (class or resource), while maintaining the
@@ -87,7 +99,7 @@ public class JarProcessor {
     FileEntriesLayer classesLayer =
         addDirectoryContentsToLayer(
                 FileEntriesLayer.builder(),
-                tempDirectoryPath,
+                localExplodedJarRoot,
                 isClassFile,
                 APP_ROOT.resolve(RelativeUnixPath.get("explodedJar")))
             .setName("Classes")
@@ -95,7 +107,7 @@ public class JarProcessor {
     FileEntriesLayer resourcesLayer =
         addDirectoryContentsToLayer(
                 FileEntriesLayer.builder(),
-                tempDirectoryPath,
+                localExplodedJarRoot,
                 isResourceFile,
                 APP_ROOT.resolve(RelativeUnixPath.get("explodedJar")))
             .setName("Resources")
@@ -103,14 +115,17 @@ public class JarProcessor {
 
     // Get dependencies from Class-Path in the jar's manifest and create a FileEntriesLayer.Builder
     // with these dependencies as entries.
-    List<Path> dependencies = new ArrayList<>();
+    List<Path> dependencies;
     JarFile jarFile = new JarFile(jarPath.toFile());
-    String classPath = jarFile.getManifest().getMainAttributes().getValue("Class-Path");
+    String classPath =
+        jarFile.getManifest().getMainAttributes().getValue(Attributes.Name.CLASS_PATH);
     if (classPath != null) {
-      for (String dependency : Splitter.on(" ").split(classPath)) {
-        Path depPath = Paths.get(dependency);
-        dependencies.add(depPath);
-      }
+      dependencies =
+          Splitter.onPattern("\\s+")
+              .splitToList(classPath.trim())
+              .stream()
+              .map(Paths::get)
+              .collect(Collectors.toList());
     } else {
       throw new IllegalStateException("Class path is not specified.");
     }
@@ -121,9 +136,9 @@ public class JarProcessor {
                 path, APP_ROOT.resolve(RelativeUnixPath.get("dependencies")).resolve(path)));
     dependenciesLayerBuilder.setName("Dependencies");
 
-    layers.add(classesLayer);
-    layers.add(resourcesLayer);
     layers.add(dependenciesLayerBuilder.build());
+    layers.add(resourcesLayer);
+    layers.add(classesLayer);
 
     return layers;
   }
