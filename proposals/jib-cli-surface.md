@@ -67,7 +67,8 @@ combinations of `username` and `password` flags come with restrictions and can b
 #### Info Params
 ```
     --help                  print usage and exit
-    --verbosity <level>     set logging verbosity (error, warn, lifecycle (default), info, debug)
+    --console <type>        set the console type (auto (default), plain, rich)
+    --verbosity <level>     set logging verbosity (quiet, error, warn, lifecycle (default), info, debug)
 -v, --version               print version information and exit
 ```
 
