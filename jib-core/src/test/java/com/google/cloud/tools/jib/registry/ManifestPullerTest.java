@@ -271,6 +271,23 @@ public class ManifestPullerTest {
   }
 
   @Test
+  public void testHandleResponse_invalidOciManfiest() throws IOException {
+    Mockito.when(mockResponse.getBody())
+        .thenReturn(stringToInputStreamUtf8("{\"schemaVersion\": 2}"));
+
+    ManifestPuller<ManifestTemplate> manifestPuller =
+        new ManifestPuller<>(
+            fakeRegistryEndpointRequestProperties, "test-image-tag", ManifestTemplate.class);
+    try {
+      manifestPuller.handleResponse(mockResponse);
+      Assert.fail();
+    } catch (UnknownManifestFormatException ex) {
+      Assert.assertEquals(
+          "'schemaVersion' is 2, but neither 'manifests' nor 'config' exists", ex.getMessage());
+    }
+  }
+
+  @Test
   public void testGetApiRoute() throws MalformedURLException {
     Assert.assertEquals(
         new URL("http://someApiBase/someImageName/manifests/test-image-tag"),
