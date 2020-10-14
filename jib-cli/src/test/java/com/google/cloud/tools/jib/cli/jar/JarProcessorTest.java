@@ -23,7 +23,9 @@ import com.google.cloud.tools.jib.api.buildplan.FileEntriesLayer;
 import com.google.cloud.tools.jib.api.buildplan.FileEntry;
 import com.google.cloud.tools.jib.cli.jar.JarProcessor.JarType;
 import com.google.common.collect.ImmutableList;
+import com.google.common.io.Files;
 import com.google.common.io.Resources;
+import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
@@ -60,7 +62,9 @@ public class JarProcessorTest {
       throws IOException, URISyntaxException {
     Path standardJar =
         Paths.get(Resources.getResource(STANDARD_JAR_WITH_CLASS_PATH_MANIFEST).toURI());
-    List<FileEntriesLayer> layers = JarProcessor.explodeStandardJar(standardJar, null);
+    File tempDirectory = Files.createTempDir();
+    List<FileEntriesLayer> layers =
+        JarProcessor.explodeStandardJar(standardJar, tempDirectory.toPath());
 
     assertThat(layers.size()).isEqualTo(3);
 
@@ -134,7 +138,10 @@ public class JarProcessorTest {
       throws IOException, URISyntaxException {
     Path standardJar =
         Paths.get(Resources.getResource(STANDARD_JAR_WITHOUT_CLASS_PATH_MANIFEST).toURI());
-    List<FileEntriesLayer> layers = JarProcessor.explodeStandardJar(standardJar, null);
+    File tempDirectory = Files.createTempDir();
+
+    List<FileEntriesLayer> layers =
+        JarProcessor.explodeStandardJar(standardJar, tempDirectory.toPath());
 
     // Validate only two layers created.
     assertThat(layers.size()).isEqualTo(2);
