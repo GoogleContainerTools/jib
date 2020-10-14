@@ -34,23 +34,23 @@ import org.junit.Test;
 
 public class JarProcessorTest {
 
-  private static final String SPRING_BOOT_RESOURCE_DIR = "jar/springboot/springboot_sample.jar";
+  private static final String SPRING_BOOT_JAR = "jar/springboot/springboot_sample.jar";
   private static final String STANDARD_JAR_WITH_CLASS_PATH_MANIFEST =
       "jar/standard/standardJarWithClassPath.jar";
   private static final String STANDARD_JAR_WITHOUT_CLASS_PATH_MANIFEST =
       "jar/standard/standardJarWithoutClassPath.jar";
-  private static final String STANDARD_RESOURCE_DIR = "jar/standard/standardJar.jar";
+  private static final String STANDARD_JAR = "jar/standard/standardJar.jar";
 
   @Test
   public void testDetermineJarType_springBoot() throws IOException, URISyntaxException {
-    Path springBootJar = Paths.get(Resources.getResource(SPRING_BOOT_RESOURCE_DIR).toURI());
+    Path springBootJar = Paths.get(Resources.getResource(SPRING_BOOT_JAR).toURI());
     JarType jarType = JarProcessor.determineJarType(springBootJar);
     assertThat(jarType).isEqualTo(JarType.SPRING_BOOT);
   }
 
   @Test
   public void testDetermineJarType_standard() throws IOException, URISyntaxException {
-    Path standardJar = Paths.get(Resources.getResource(STANDARD_RESOURCE_DIR).toURI());
+    Path standardJar = Paths.get(Resources.getResource(STANDARD_JAR).toURI());
     JarType jarType = JarProcessor.determineJarType(standardJar);
     assertThat(jarType).isEqualTo(JarType.STANDARD);
   }
@@ -69,7 +69,7 @@ public class JarProcessorTest {
     FileEntriesLayer classesLayer = layers.get(2);
 
     // Validate dependencies layer.
-    assertThat(dependenciesLayer.getName()).isEqualTo("Dependencies");
+    assertThat(dependenciesLayer.getName()).isEqualTo("dependencies");
     assertThat(
             dependenciesLayer
                 .getEntries()
@@ -85,7 +85,7 @@ public class JarProcessorTest {
     // Validate resources layer.
     // TODO: Validate order of file paths once
     // https://github.com/GoogleContainerTools/jib/issues/2821 is fixed.
-    assertThat(resourcesLayer.getName()).isEqualTo("Resources");
+    assertThat(resourcesLayer.getName()).isEqualTo("resources");
     List<AbsoluteUnixPath> actualResourcesPaths =
         resourcesLayer
             .getEntries()
@@ -108,7 +108,7 @@ public class JarProcessorTest {
     // Validate classes layer.
     // TODO: Validate order of file paths once
     // https://github.com/GoogleContainerTools/jib/issues/2821 is fixed.
-    assertThat(classesLayer.getName()).isEqualTo("Classes");
+    assertThat(classesLayer.getName()).isEqualTo("classes");
     List<AbsoluteUnixPath> actualClassesPaths =
         classesLayer
             .getEntries()
@@ -135,26 +135,17 @@ public class JarProcessorTest {
     Path standardJar =
         Paths.get(Resources.getResource(STANDARD_JAR_WITHOUT_CLASS_PATH_MANIFEST).toURI());
     List<FileEntriesLayer> layers = JarProcessor.explodeStandardJar(standardJar, null);
-    assertThat(layers.size()).isEqualTo(3);
 
-    FileEntriesLayer dependenciesLayer = layers.get(0);
-    FileEntriesLayer resourcesLayer = layers.get(1);
-    FileEntriesLayer classesLayer = layers.get(2);
+    // Validate only two layers created.
+    assertThat(layers.size()).isEqualTo(2);
 
-    // Validate that dependencies layer is empty.
-    assertThat(dependenciesLayer.getName()).isEqualTo("Dependencies");
-    assertThat(
-            dependenciesLayer
-                .getEntries()
-                .stream()
-                .map(FileEntry::getExtractionPath)
-                .collect(Collectors.toList()))
-        .isEmpty();
+    FileEntriesLayer resourcesLayer = layers.get(0);
+    FileEntriesLayer classesLayer = layers.get(1);
 
     // Validate resources layer.
     // TODO: Validate order of file paths once
     // https://github.com/GoogleContainerTools/jib/issues/2821 is fixed.
-    assertThat(resourcesLayer.getName()).isEqualTo("Resources");
+    assertThat(resourcesLayer.getName()).isEqualTo("resources");
     List<AbsoluteUnixPath> actualResourcesPaths =
         resourcesLayer
             .getEntries()
@@ -177,7 +168,7 @@ public class JarProcessorTest {
     // Validate classes layer.
     // TODO: Validate order of file paths once
     // https://github.com/GoogleContainerTools/jib/issues/2821 is fixed.
-    assertThat(classesLayer.getName()).isEqualTo("Classes");
+    assertThat(classesLayer.getName()).isEqualTo("classes");
     List<AbsoluteUnixPath> actualClassesPaths =
         classesLayer
             .getEntries()

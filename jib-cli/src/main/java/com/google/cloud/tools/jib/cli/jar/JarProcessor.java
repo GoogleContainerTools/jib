@@ -79,68 +79,63 @@ public class JarProcessor {
    */
   public static List<FileEntriesLayer> explodeStandardJar(Path jarPath, @Nullable Path tempDirPath)
       throws IOException {
-    Path localExplodedJarRoot;
-    if (tempDirPath == null) {
-      try (TempDirectoryProvider tempDirectoryProvider = new TempDirectoryProvider()) {
+    Path localExplodedJarRoot = tempDirPath;
+    try (TempDirectoryProvider tempDirectoryProvider = new TempDirectoryProvider()) {
+      if (localExplodedJarRoot == null) {
         localExplodedJarRoot = tempDirectoryProvider.newDirectory();
       }
-    } else {
-      localExplodedJarRoot = tempDirPath;
+      ZipUtil.unzip(jarPath, localExplodedJarRoot);
+
+      List<FileEntriesLayer> layers = new ArrayList<>();
+      Predicate<Path> isClassFile = path -> path.getFileName().toString().endsWith(".class");
+      Predicate<Path> isResourceFile = isClassFile.negate();
+
+      // Determine class and resource files in the directory containing jar contents and create
+      // FileEntriesLayer for each type of layer (class or resource), while maintaining the
+      // file's original project structure.
+      FileEntriesLayer classesLayer =
+          addDirectoryContentsToLayer(
+                  FileEntriesLayer.builder(),
+                  localExplodedJarRoot,
+                  isClassFile,
+                  APP_ROOT.resolve(RelativeUnixPath.get("explodedJar")))
+              .setName("classes")
+              .build();
+      FileEntriesLayer resourcesLayer =
+          addDirectoryContentsToLayer(
+                  FileEntriesLayer.builder(),
+                  localExplodedJarRoot,
+                  isResourceFile,
+                  APP_ROOT.resolve(RelativeUnixPath.get("explodedJar")))
+              .setName("resources")
+              .build();
+
+      // Get dependencies from Class-Path in the jar's manifest and create a
+      // FileEntriesLayer.Builder with these dependencies as entries. If Class-Path in the jar's
+      // manifest is not present then skip adding a dependencies layer.
+      JarFile jarFile = new JarFile(jarPath.toFile());
+      String classPath =
+          jarFile.getManifest().getMainAttributes().getValue(Attributes.Name.CLASS_PATH);
+      if (classPath != null) {
+        List<Path> dependencies =
+            Splitter.onPattern("\\s+")
+                .splitToList(classPath.trim())
+                .stream()
+                .map(Paths::get)
+                .collect(Collectors.toList());
+        FileEntriesLayer.Builder dependenciesLayerBuilder = FileEntriesLayer.builder();
+        dependencies.forEach(
+            path ->
+                dependenciesLayerBuilder.addEntry(
+                    path, APP_ROOT.resolve(RelativeUnixPath.get("dependencies")).resolve(path)));
+        dependenciesLayerBuilder.setName("dependencies");
+        layers.add(dependenciesLayerBuilder.build());
+      }
+
+      layers.add(resourcesLayer);
+      layers.add(classesLayer);
+      return layers;
     }
-    ZipUtil.unzip(jarPath, localExplodedJarRoot);
-
-    List<FileEntriesLayer> layers = new ArrayList<>();
-    Predicate<Path> isClassFile = path -> path.getFileName().toString().endsWith(".class");
-    Predicate<Path> isResourceFile = isClassFile.negate();
-
-    // Determine class and resource files in the directory containing jar contents and create
-    // FileEntriesLayer for each type of layer (class or resource), while maintaining the
-    // file's original project structure.
-    FileEntriesLayer classesLayer =
-        addDirectoryContentsToLayer(
-                FileEntriesLayer.builder(),
-                localExplodedJarRoot,
-                isClassFile,
-                APP_ROOT.resolve(RelativeUnixPath.get("explodedJar")))
-            .setName("Classes")
-            .build();
-    FileEntriesLayer resourcesLayer =
-        addDirectoryContentsToLayer(
-                FileEntriesLayer.builder(),
-                localExplodedJarRoot,
-                isResourceFile,
-                APP_ROOT.resolve(RelativeUnixPath.get("explodedJar")))
-            .setName("Resources")
-            .build();
-
-    // Get dependencies from Class-Path in the jar's manifest and create a FileEntriesLayer.Builder
-    // with these dependencies as entries.
-    List<Path> dependencies;
-    JarFile jarFile = new JarFile(jarPath.toFile());
-    String classPath =
-        jarFile.getManifest().getMainAttributes().getValue(Attributes.Name.CLASS_PATH);
-    if (classPath != null) {
-      dependencies =
-          Splitter.onPattern("\\s+")
-              .splitToList(classPath.trim())
-              .stream()
-              .map(Paths::get)
-              .collect(Collectors.toList());
-    } else {
-      dependencies = new ArrayList<>();
-    }
-    FileEntriesLayer.Builder dependenciesLayerBuilder = FileEntriesLayer.builder();
-    dependencies.forEach(
-        path ->
-            dependenciesLayerBuilder.addEntry(
-                path, APP_ROOT.resolve(RelativeUnixPath.get("dependencies")).resolve(path)));
-    dependenciesLayerBuilder.setName("Dependencies");
-
-    layers.add(dependenciesLayerBuilder.build());
-    layers.add(resourcesLayer);
-    layers.add(classesLayer);
-
-    return layers;
   }
 
   private static FileEntriesLayer.Builder addDirectoryContentsToLayer(
