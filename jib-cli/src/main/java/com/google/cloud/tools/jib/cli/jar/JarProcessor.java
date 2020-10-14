@@ -127,7 +127,7 @@ public class JarProcessor {
               .map(Paths::get)
               .collect(Collectors.toList());
     } else {
-      throw new IllegalStateException("Class path is not specified.");
+      dependencies = new ArrayList<>();
     }
     FileEntriesLayer.Builder dependenciesLayerBuilder = FileEntriesLayer.builder();
     dependencies.forEach(
