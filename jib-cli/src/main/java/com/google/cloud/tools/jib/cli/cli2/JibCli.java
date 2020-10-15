@@ -43,10 +43,6 @@ import picocli.CommandLine.Spec;
     description = "A tool for creating container images")
 public class JibCli {
 
-  @SuppressWarnings("NullAway.Init") // initialized by picocli
-  @Spec
-  CommandSpec spec;
-
   @Option(
       names = "--verbosity",
       paramLabel = "<level>",
