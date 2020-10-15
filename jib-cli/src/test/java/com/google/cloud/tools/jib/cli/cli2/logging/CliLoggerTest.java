@@ -37,13 +37,13 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class CliLoggerTest {
 
-  @Rule public RestoreSystemProperties restoreSystemProperties = new RestoreSystemProperties();
-  @Rule public EnvironmentVariables environmentVariables = new EnvironmentVariables();
+  @Rule public final RestoreSystemProperties restoreSystemProperties = new RestoreSystemProperties();
+  @Rule public final EnvironmentVariables environmentVariables = new EnvironmentVariables();
 
-  @Mock PrintStream mockOut;
-  @Mock PrintStream mockErr;
+  @Mock private PrintStream mockOut;
+  @Mock private PrintStream mockErr;
 
-  @Mock CliLogger mockCliLogger;
+  @Mock private CliLogger mockCliLogger;
 
   private void sendMessages(CliLogger logger) {
     logger.debug("debug");
@@ -169,6 +169,7 @@ public class CliLoggerTest {
 
   @Test
   public void testNewLogger_plainConfig() {
+    InOrder inOrder = Mockito.inOrder(mockCliLogger);
     SingleThreadedExecutor singleThreadedExecutor = new SingleThreadedExecutor();
     ConsoleLogger logger = CliLogger.newLogger(mockCliLogger, false, singleThreadedExecutor);
 
@@ -181,12 +182,12 @@ public class CliLoggerTest {
 
     singleThreadedExecutor.shutDownAndAwaitTermination(Duration.ofSeconds(3));
 
-    Mockito.verify(mockCliLogger).debug("debug");
-    Mockito.verify(mockCliLogger).info("info");
-    Mockito.verify(mockCliLogger).lifecycle("lifecycle");
-    Mockito.verify(mockCliLogger).lifecycle("progress");
-    Mockito.verify(mockCliLogger).warn("warn");
-    Mockito.verify(mockCliLogger).error("error");
-    Mockito.verifyNoMoreInteractions(mockCliLogger);
+    inOrder.verify(mockCliLogger).debug("debug");
+    inOrder.verify(mockCliLogger).info("info");
+    inOrder.verify(mockCliLogger).lifecycle("lifecycle");
+    inOrder.verify(mockCliLogger).lifecycle("progress");
+    inOrder.verify(mockCliLogger).warn("warn");
+    inOrder.verify(mockCliLogger).error("error");
+    inOrder.verifyNoMoreInteractions();
   }
 }

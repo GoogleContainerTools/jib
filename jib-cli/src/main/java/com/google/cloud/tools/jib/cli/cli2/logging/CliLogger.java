@@ -39,6 +39,7 @@ public class CliLogger {
     return newLogger(cliLogger, isRichConsole, new SingleThreadedExecutor());
   }
 
+  @VisibleForTesting
   static ConsoleLogger newLogger(
       CliLogger cliLogger, boolean isRichConsole, SingleThreadedExecutor executor) {
     ConsoleLoggerBuilder builder =
@@ -81,31 +82,31 @@ public class CliLogger {
     this.err = err;
   }
 
-  void debug(String message) {
+  public void debug(String message) {
     if (verbosity.atLeast(Verbosity.debug)) {
       out.println(message);
     }
   }
 
-  void info(String message) {
+  public void info(String message) {
     if (verbosity.atLeast(Verbosity.info)) {
       out.println(message);
     }
   }
 
-  void lifecycle(String message) {
+  public void lifecycle(String message) {
     if (verbosity.atLeast(Verbosity.lifecycle)) {
       out.println(message);
     }
   }
 
-  void warn(String message) {
+  public void warn(String message) {
     if (verbosity.atLeast(Verbosity.warn)) {
       out.println(message);
     }
   }
 
-  void error(String message) {
+  public void error(String message) {
     if (verbosity.atLeast(Verbosity.error)) {
       err.println(message);
     }

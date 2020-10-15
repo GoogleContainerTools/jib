@@ -380,15 +380,4 @@ public class JibCli {
     int exitCode = new CommandLine(new JibCli()).execute(args);
     System.exit(exitCode);
   }
-
-  /** Validater for parameters defined this this class that could not be done declaratively. */
-  public void validate() {
-    if (targetImage.startsWith(TAR_IMAGE_PREFIX)) {
-      if (name == null) {
-        throw new CommandLine.ParameterException(
-            spec.commandLine(),
-            "Missing option: --name must be specified when using --target=tar://....");
-      }
-    }
-  }
 }
