@@ -37,7 +37,9 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class CliLoggerTest {
 
-  @Rule public final RestoreSystemProperties restoreSystemProperties = new RestoreSystemProperties();
+  @Rule
+  public final RestoreSystemProperties restoreSystemProperties = new RestoreSystemProperties();
+
   @Rule public final EnvironmentVariables environmentVariables = new EnvironmentVariables();
 
   @Mock private PrintStream mockOut;

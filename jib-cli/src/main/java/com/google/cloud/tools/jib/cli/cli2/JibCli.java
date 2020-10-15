@@ -16,8 +16,6 @@
 
 package com.google.cloud.tools.jib.cli.cli2;
 
-import static com.google.cloud.tools.jib.api.Jib.TAR_IMAGE_PREFIX;
-
 import com.google.cloud.tools.jib.api.Credential;
 import com.google.cloud.tools.jib.cli.cli2.logging.ConsoleOutput;
 import com.google.cloud.tools.jib.cli.cli2.logging.Verbosity;
@@ -30,9 +28,7 @@ import java.util.Map;
 import java.util.Optional;
 import picocli.CommandLine;
 import picocli.CommandLine.ArgGroup;
-import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Option;
-import picocli.CommandLine.Spec;
 
 @CommandLine.Command(
     name = "jib",

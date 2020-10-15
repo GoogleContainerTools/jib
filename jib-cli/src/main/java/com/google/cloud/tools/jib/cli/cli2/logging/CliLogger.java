@@ -82,31 +82,36 @@ public class CliLogger {
     this.err = err;
   }
 
-  public void debug(String message) {
+  @VisibleForTesting
+  void debug(String message) {
     if (verbosity.atLeast(Verbosity.debug)) {
       out.println(message);
     }
   }
 
-  public void info(String message) {
+  @VisibleForTesting
+  void info(String message) {
     if (verbosity.atLeast(Verbosity.info)) {
       out.println(message);
     }
   }
 
-  public void lifecycle(String message) {
+  @VisibleForTesting
+  void lifecycle(String message) {
     if (verbosity.atLeast(Verbosity.lifecycle)) {
       out.println(message);
     }
   }
 
-  public void warn(String message) {
+  @VisibleForTesting
+  void warn(String message) {
     if (verbosity.atLeast(Verbosity.warn)) {
       out.println(message);
     }
   }
 
-  public void error(String message) {
+  @VisibleForTesting
+  void error(String message) {
     if (verbosity.atLeast(Verbosity.error)) {
       err.println(message);
     }
