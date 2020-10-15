@@ -503,6 +503,7 @@ public class PluginConfigurationProcessor {
       }
       return JavaContainerBuilder.from(dockerDaemonImage);
     }
+
     RegistryImage baseImage = RegistryImage.named(baseImageReference);
     configureCredentialRetrievers(
         rawConfiguration,
