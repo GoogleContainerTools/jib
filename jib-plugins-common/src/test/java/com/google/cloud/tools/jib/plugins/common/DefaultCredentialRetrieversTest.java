@@ -156,7 +156,7 @@ public class DefaultCredentialRetrieversTest {
         new DefaultCredentialRetrievers(mockCredentialRetrieverFactory, properties, environment)
             .setKnownCredential(knownCredential, "credentialSource")
             .setInferredCredential(inferredCredential, "inferredCredentialSource")
-            .setCredentialHelper("credentialHelperSuffix")
+            .addCredentialHelper("credentialHelperSuffix")
             .asList();
     Assert.assertEquals(
         Arrays.asList(
@@ -188,7 +188,7 @@ public class DefaultCredentialRetrieversTest {
     Path fakeCredentialHelperPath = temporaryFolder.newFile("fake-credHelper").toPath();
     DefaultCredentialRetrievers defaultCredentialRetrievers =
         new DefaultCredentialRetrievers(mockCredentialRetrieverFactory, properties, environment)
-            .setCredentialHelper(fakeCredentialHelperPath.toString());
+            .addCredentialHelper(fakeCredentialHelperPath.toString());
 
     List<CredentialRetriever> credentialRetrievers = defaultCredentialRetrievers.asList();
     Assert.assertEquals(
@@ -278,7 +278,7 @@ public class DefaultCredentialRetrieversTest {
 
     DefaultCredentialRetrievers credentialRetrievers =
         new DefaultCredentialRetrievers(mockCredentialRetrieverFactory, properties, environment)
-            .setCredentialHelper(pathWithoutCmd.toString());
+            .addCredentialHelper(pathWithoutCmd.toString());
     try {
       credentialRetrievers.asList();
       Assert.fail("shouldn't check .cmd suffix on non-Windows");
@@ -291,7 +291,7 @@ public class DefaultCredentialRetrieversTest {
     properties.setProperty("os.name", "winDOWs");
     List<CredentialRetriever> retrieverList =
         new DefaultCredentialRetrievers(mockCredentialRetrieverFactory, properties, environment)
-            .setCredentialHelper(pathWithoutCmd.toString())
+            .addCredentialHelper(pathWithoutCmd.toString())
             .asList();
 
     Assert.assertEquals(
@@ -319,7 +319,7 @@ public class DefaultCredentialRetrieversTest {
 
     DefaultCredentialRetrievers credentialRetrievers =
         new DefaultCredentialRetrievers(mockCredentialRetrieverFactory, properties, environment)
-            .setCredentialHelper(pathWithoutExe.toString());
+            .addCredentialHelper(pathWithoutExe.toString());
     try {
       credentialRetrievers.asList();
       Assert.fail("shouldn't check .exe suffix on non-Windows");
@@ -332,7 +332,7 @@ public class DefaultCredentialRetrieversTest {
     properties.setProperty("os.name", "winDOWs");
     List<CredentialRetriever> retrieverList =
         new DefaultCredentialRetrievers(mockCredentialRetrieverFactory, properties, environment)
-            .setCredentialHelper(pathWithoutExe.toString())
+            .addCredentialHelper(pathWithoutExe.toString())
             .asList();
 
     Assert.assertEquals(
@@ -350,5 +350,19 @@ public class DefaultCredentialRetrieversTest {
             mockWellKnownCredentialHelpersCredentialRetriever,
             mockApplicationDefaultCredentialRetriever),
         retrieverList);
+  }
+
+  @Test
+  public void testCredentialHelper_addMultipleCredentialHelpers() throws IOException {
+    new DefaultCredentialRetrievers(mockCredentialRetrieverFactory, properties, environment)
+        .setKnownCredential(knownCredential, "credentialSource")
+        .setInferredCredential(inferredCredential, "inferredCredentialSource")
+        .addCredentialHelper("credentialHelperSuffix")
+        .addCredentialHelper("credentialHelperSuffix2")
+        .asList();
+    Mockito.verify(mockCredentialRetrieverFactory)
+        .dockerCredentialHelper("docker-credential-credentialHelperSuffix");
+    Mockito.verify(mockCredentialRetrieverFactory)
+        .dockerCredentialHelper("docker-credential-credentialHelperSuffix2");
   }
 }

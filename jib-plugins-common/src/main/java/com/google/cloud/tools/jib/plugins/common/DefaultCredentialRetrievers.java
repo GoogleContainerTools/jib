@@ -82,7 +82,7 @@ public class DefaultCredentialRetrievers {
 
   @Nullable private CredentialRetriever knownCredentialRetriever;
   @Nullable private CredentialRetriever inferredCredentialRetriever;
-  @Nullable private String credentialHelper;
+  private final List<String> credentialHelpers = new ArrayList<>();
   private final Properties systemProperties;
   private final Map<String, String> environment;
 
@@ -124,15 +124,15 @@ public class DefaultCredentialRetrievers {
   }
 
   /**
-   * Sets the known credential helper. May either be a path to a credential helper executable, or a
+   * Adds a known credential helper. May either be a path to a credential helper executable, or a
    * credential helper suffix (following {@code docker-credential-}).
    *
    * @param credentialHelper the path to a credential helper, or a credential helper suffix
    *     (following {@code docker-credential-}).
    * @return this
    */
-  public DefaultCredentialRetrievers setCredentialHelper(@Nullable String credentialHelper) {
-    this.credentialHelper = credentialHelper;
+  public DefaultCredentialRetrievers addCredentialHelper(String credentialHelper) {
+    credentialHelpers.add(credentialHelper);
     return this;
   }
 
@@ -148,7 +148,7 @@ public class DefaultCredentialRetrievers {
     if (knownCredentialRetriever != null) {
       credentialRetrievers.add(knownCredentialRetriever);
     }
-    if (credentialHelper != null) {
+    for (String credentialHelper : credentialHelpers) {
       // If credential helper contains file separator, treat as path; otherwise treat as suffix
       if (credentialHelper.contains(FileSystems.getDefault().getSeparator())) {
         if (!Files.exists(Paths.get(credentialHelper))) {

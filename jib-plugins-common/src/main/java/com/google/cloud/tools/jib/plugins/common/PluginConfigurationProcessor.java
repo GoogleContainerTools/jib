@@ -860,7 +860,9 @@ public class PluginConfigurationProcessor {
       }
     }
 
-    defaultCredentialRetrievers.setCredentialHelper(credHelper);
+    if (credHelper != null) {
+      defaultCredentialRetrievers.addCredentialHelper(credHelper);
+    }
     defaultCredentialRetrievers.asList().forEach(registryImage::addCredentialRetriever);
   }
 
