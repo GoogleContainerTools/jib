@@ -48,7 +48,9 @@ build        build a container
 
 Credentials can be specified using credential helpers or username + password. The following options are available
 ```
-    --credential-helper <credHelper>       credential helper to use for a registry, a path or name suffix (docker-credential-<suffix>) (repeatable)
+    --credential-helper <credHelper>       credential helper to use for registries, a path or name suffix (docker-credential-<suffix>)
+    --to-crendential-helper <credHelper>   credential helper to use only for the target registry
+    --from-credential-helper <credHelper>  credential helper to use only for the base image registry
 
     --username <username>                  configure a username for authenticating against registries
     --password <password>                  configure a password for authenticating against registries (interactive if <password> is omitted)
@@ -57,11 +59,23 @@ Credentials can be specified using credential helpers or username + password. Th
     --from-username <username>             configure a username for authentication on the registry that a base image is being sourced from
     --from-password <password>             configure a password for authentication on the registry that a base image is being sourced from (interactive if <password> is omitted)
 ```
-combinations of `username` and `password` flags come with restrictions and can be use only in the following ways:
+combinations of `credential-helper`, `username` and `password` flags come with restrictions and can be use only in the following ways:
+
+Only Credential Helper
+1. `--credential-helper`
+1. `--to-credential-helper`
+1. `--from-credential-helper`
+1. `--to-credential-helper`, `--from-credential-helper`
+
+Only Username and Password
 1. `--username`, `--password`
 1. `--to-username`, `--to-password`
 1. `--from-username`, `--from-password`
 1. `--to-username`, `--to-password`, `--from-username`, `--from-password`
+
+Mixed Mode
+1. `--to-credential-helper`, `--from-username`, `--from-password`
+1. `--from-credential-helper`, `--to-username`, `--to-password`
 
 
 #### Info Params
