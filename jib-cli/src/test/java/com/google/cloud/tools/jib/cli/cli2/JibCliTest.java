@@ -395,20 +395,15 @@ public class JibCliTest {
 
     @Test
     public void testParse_usernameWithoutPassword() {
-      try {
-        CommandLine.populateCommand(new JibCli(), ArrayUtils.addAll(requiredArgs, authArgs));
-      } catch (CommandLine.MaxValuesExceededException error) {
-        System.out.println("goose");
-      } catch (Exception ex) {
-        // do nothing
-      }
       MutuallyExclusiveArgsException meae =
           assertThrows(
               MutuallyExclusiveArgsException.class,
               () ->
                   CommandLine.populateCommand(
                       new JibCli(), ArrayUtils.addAll(requiredArgs, authArgs)));
-      assertThat(meae.getMessage()).startsWith("Error: ");
+      assertThat(meae)
+          .hasMessageThat()
+          .containsMatch("^Error: (--credential-helper|\\[--username)");
     }
   }
 }
