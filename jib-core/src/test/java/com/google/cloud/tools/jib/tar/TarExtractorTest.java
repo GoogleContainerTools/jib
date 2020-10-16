@@ -66,4 +66,15 @@ public class TarExtractorTest {
       Assert.assertEquals("world", contents);
     }
   }
+
+  @Test
+  public void testExtract_symlinks() throws URISyntaxException, IOException {
+    Path source = Paths.get(Resources.getResource("core/symlinks.tar").toURI());
+    Path destination = temporaryFolder.getRoot().toPath();
+    TarExtractor.extract(source, destination);
+
+    Assert.assertTrue(Files.isSymbolicLink(destination.resolve("symlink1")));
+    Assert.assertTrue(Files.isSymbolicLink(destination.resolve("symlink2")));
+    Assert.assertTrue(Files.exists(destination.resolve("regular")));
+  }
 }
