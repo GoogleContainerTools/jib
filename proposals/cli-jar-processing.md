@@ -7,7 +7,7 @@ Allow users to containerize arbitrary jar files without having to integrate Jib 
 
 # Proposal Changes
 
-##  Standard Jar 
+## Standard Jar 
 A standard jar can be containerized in two modes, exploded or packaged. 
 
 ### Exploded Mode
@@ -27,8 +27,8 @@ This will result in the following layers on the container:
 
 **Entrypoint** : `java -jar ${JAR_NAME}.jar`
 
-## Spring Boot Fat Jar
-A Spring Boot Fat Jar can be containerized in two modes, exploded or packaged. 
+## Spring-Boot Fat Jar
+A Spring-Boot Fat Jar can be containerized in two modes, exploded or packaged. 
 
 ### Exploded Mode
 Achieved by calling `jib jar ${JAR_NAME}.jar --to ${TARGET_REGISTRY}`
