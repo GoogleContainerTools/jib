@@ -9,6 +9,8 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
+- Fixed build failure when using a Docker daemon base image (`docker://...`) that has duplicate layers. ([#2829](https://github.com/GoogleContainerTools/jib/issues/2829))
+
 ## 2.6.0
 
 ### Added
