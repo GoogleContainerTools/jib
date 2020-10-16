@@ -52,7 +52,7 @@ public class JarProcessor {
   }
 
   /**
-   * Determines whether the jar is a spring boot or regular jar, given a path to the jar.
+   * Determines whether the jar is a spring boot or regular jar.
    *
    * @param jarPath path to the jar.
    * @return the jar type.
@@ -70,10 +70,10 @@ public class JarProcessor {
    * Explode jar and create three layers for classes, resources and dependencies on container.
    *
    * @param jarPath path to jar file.
-   * @param tempDirPath path to temporary jib local directory to use.
+   * @param tempDirPath path to temporary jib local directory.
    * @return list of {@link FileEntriesLayer}.
-   * @throws IOException if I/O error occurs when opening the jar file or if the directory for the
-   *     temporary directory path provided doesn't exist.
+   * @throws IOException if I/O error occurs when opening the jar file or if temporary directory
+   *     provided doesn't exist.
    */
   public static List<FileEntriesLayer> explodeStandardJar(Path jarPath, Path tempDirPath)
       throws IOException {
@@ -86,7 +86,7 @@ public class JarProcessor {
     Predicate<Path> isResourceFile = isClassFile.negate();
 
     // Determine class and resource files in the directory containing jar contents and create
-    // FileEntriesLayer for each type of layer (class or resource), while maintaining the
+    // FileEntriesLayer for each type of layer (classes or resources), while maintaining the
     // file's original project structure.
     FileEntriesLayer classesLayer =
         addDirectoryContentsToLayer(
@@ -105,9 +105,9 @@ public class JarProcessor {
             .setName("resources")
             .build();
 
-    // Get dependencies from Class-Path in the jar's manifest and create a
-    // FileEntriesLayer.Builder with these dependencies as entries. If Class-Path in the jar's
-    // manifest is not present then skip adding a dependencies layer.
+    // Get dependencies from Class-Path in the jar's manifest and add a layer with these
+    // dependencies as entries. If Class-Path in the jar's manifest is not present then skip adding
+    // a dependencies layer.
     JarFile jarFile = new JarFile(jarPath.toFile());
     String classPath =
         jarFile.getManifest().getMainAttributes().getValue(Attributes.Name.CLASS_PATH);
