@@ -17,6 +17,8 @@
 package com.google.cloud.tools.jib.cli.cli2;
 
 import com.google.cloud.tools.jib.api.Credential;
+import com.google.cloud.tools.jib.cli.cli2.logging.ConsoleOutput;
+import com.google.cloud.tools.jib.cli.cli2.logging.Verbosity;
 import com.google.common.base.Verify;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -36,13 +38,24 @@ import picocli.CommandLine.Option;
     synopsisSubcommandLabel = "COMMAND",
     description = "A tool for creating container images")
 public class JibCli {
+
   @Option(
       names = "--verbosity",
       paramLabel = "<level>",
       defaultValue = "lifecycle",
-      description = "set logging verbosity (error, warn, lifecycle (default), info, debug)")
+      description =
+          "set logging verbosity, candidates: ${COMPLETION-CANDIDATES}, default: ${DEFAULT-VALUE}")
   @SuppressWarnings("NullAway.Init") // initialized by picocli
-  private String verbosity;
+  private Verbosity verbosity;
+
+  @Option(
+      names = "--console",
+      paramLabel = "<type>",
+      defaultValue = "auto",
+      description =
+          "set console output type, candidates: ${COMPLETION-CANDIDATES}, default: ${DEFAULT-VALUE}")
+  @SuppressWarnings("NullAway.Init") // initialized by picocli
+  private ConsoleOutput consoleOutput;
 
   // Hidden debug parameters
   @Option(names = "--stacktrace", hidden = true)
@@ -135,42 +148,33 @@ public class JibCli {
   @SuppressWarnings("NullAway.Init") // initialized by picocli
   private boolean sendCredentialsOverHttp;
 
-  @Option(
-      names = {"--credential-helper"},
-      paramLabel = "<credential-helper>",
-      description =
-          "Add a credential helper, either a path to the helper, or a suffix for an executable named `docker-credential-<suffix>` (repeatable)")
-  private List<String> credentialHelpers = new ArrayList<>();
-
   @ArgGroup(exclusive = true)
-  @SuppressWarnings("NullAway.Init") // initialized by picocli
-  private UsernamePassword usernamePassword;
+  @SuppressWarnings("NullAway.Init")
+  private Credentials credentials;
 
-  private static class UsernamePassword {
-    @ArgGroup(exclusive = false)
+  private static class Credentials {
+    @Option(
+        names = {"--credential-helper"},
+        paramLabel = "<credential-helper>",
+        description =
+            "credential helper for communicating with both target and base image registries, either a path to the helper, or a suffix for an executable named `docker-credential-<suffix>`")
     @SuppressWarnings("NullAway.Init") // initialized by picocli
-    SingleUsernamePassword single;
-
-    @ArgGroup(exclusive = false)
-    @SuppressWarnings("NullAway.Init") // initialized by picocli
-    MultiUsernamePassword multi;
-  }
-
-  private static class MultiUsernamePassword {
-    @ArgGroup(exclusive = false)
-    @SuppressWarnings("NullAway.Init") // initialized by picocli
-    ToUsernamePassword to;
+    private String credentialHelper;
 
     @ArgGroup(exclusive = false)
     @SuppressWarnings("NullAway.Init") // initialized by picocli
-    FromUsernamePassword from;
+    private SingleUsernamePassword usernamePassword;
+
+    @ArgGroup(exclusive = false)
+    @SuppressWarnings("NullAway.Init")
+    private SeparateCredentials separate;
   }
 
   private static class SingleUsernamePassword {
     @Option(
         names = "--username",
         required = true,
-        description = "username for communicating with target/base image registry")
+        description = "username for communicating with both target and base image registries")
     @SuppressWarnings("NullAway.Init") // initialized by picocli
     String username;
 
@@ -179,9 +183,47 @@ public class JibCli {
         arity = "0..1",
         required = true,
         interactive = true,
-        description = "password for communicating with target/base image registry")
+        description = "password for communicating with both target and base image registries")
     @SuppressWarnings("NullAway.Init") // initialized by picocli
     String password;
+  }
+
+  private static class SeparateCredentials {
+    @ArgGroup
+    @SuppressWarnings("NullAway.Init") // initialized by picocli
+    private ToCredentials to;
+
+    @ArgGroup
+    @SuppressWarnings("NullAway.Init") // initialized by picocli
+    private FromCredentials from;
+  }
+
+  private static class ToCredentials {
+    @Option(
+        names = {"--to-credential-helper"},
+        paramLabel = "<credential-helper>",
+        description =
+            "credential helper for communicating with target registry, either a path to the helper, or a suffix for an executable named `docker-credential-<suffix>`")
+    @SuppressWarnings("NullAway.Init") // initialized by picocli
+    private String credentialHelper;
+
+    @ArgGroup(exclusive = false)
+    @SuppressWarnings("NullAway.Init") // initialized by picocli
+    private ToUsernamePassword usernamePassword;
+  }
+
+  private static class FromCredentials {
+    @Option(
+        names = {"--from-credential-helper"},
+        paramLabel = "<credential-helper>",
+        description =
+            "credential helper for communicating with base image registry, either a path to the helper, or a suffix for an executable named `docker-credential-<suffix>`")
+    @SuppressWarnings("NullAway.Init") // initialized by picocli
+    private String credentialHelper;
+
+    @ArgGroup(exclusive = false)
+    @SuppressWarnings("NullAway.Init") // initialized by picocli
+    private FromUsernamePassword usernamePassword;
   }
 
   private static class ToUsernamePassword {
@@ -220,9 +262,14 @@ public class JibCli {
     String password;
   }
 
-  public String getVerbosity() {
+  public Verbosity getVerbosity() {
     Verify.verifyNotNull(verbosity);
     return verbosity;
+  }
+
+  public ConsoleOutput getConsoleOutput() {
+    Verify.verifyNotNull(consoleOutput);
+    return consoleOutput;
   }
 
   public boolean isStacktrace() {
@@ -277,8 +324,49 @@ public class JibCli {
     return sendCredentialsOverHttp;
   }
 
-  public List<String> getCredentialHelpers() {
-    return credentialHelpers;
+  /**
+   * Returns the user configured credential helper for any registry during the build, this can be
+   * interpreted as a path or a string.
+   *
+   * @return a Optional string reference to the credential helper
+   */
+  public Optional<String> getCredentialHelper() {
+    if (credentials != null && credentials.credentialHelper != null) {
+      return Optional.of(credentials.credentialHelper);
+    }
+    return Optional.empty();
+  }
+
+  /**
+   * Returns the user configured credential helper for the target image registry, this can be
+   * interpreted as a path or a string.
+   *
+   * @return a Optional string reference to the credential helper
+   */
+  public Optional<String> getToCredentialHelper() {
+    if (credentials != null
+        && credentials.separate != null
+        && credentials.separate.to != null
+        && credentials.separate.to.credentialHelper != null) {
+      return Optional.of(credentials.separate.to.credentialHelper);
+    }
+    return Optional.empty();
+  }
+
+  /**
+   * Returns the user configured credential helper for the base image registry, this can be
+   * interpreted as a path or a string.
+   *
+   * @return a Optional string reference to the credential helper
+   */
+  public Optional<String> getFromCredentialHelper() {
+    if (credentials != null
+        && credentials.separate != null
+        && credentials.separate.from != null
+        && credentials.separate.from.credentialHelper != null) {
+      return Optional.of(credentials.separate.from.credentialHelper);
+    }
+    return Optional.empty();
   }
 
   public boolean isHttpTrace() {
@@ -299,11 +387,12 @@ public class JibCli {
    * @return an optional Credential
    */
   public Optional<Credential> getUsernamePassword() {
-    if (usernamePassword != null && usernamePassword.single != null) {
-      Verify.verifyNotNull(usernamePassword.single.username);
-      Verify.verifyNotNull(usernamePassword.single.password);
+    if (credentials != null && credentials.usernamePassword != null) {
+      Verify.verifyNotNull(credentials.usernamePassword.username);
+      Verify.verifyNotNull(credentials.usernamePassword.password);
       return Optional.of(
-          Credential.from(usernamePassword.single.username, usernamePassword.single.password));
+          Credential.from(
+              credentials.usernamePassword.username, credentials.usernamePassword.password));
     }
     return Optional.empty();
   }
@@ -315,13 +404,16 @@ public class JibCli {
    * @return a optional Credential
    */
   public Optional<Credential> getToUsernamePassword() {
-    if (usernamePassword != null
-        && usernamePassword.multi != null
-        && usernamePassword.multi.to != null) {
-      Verify.verifyNotNull(usernamePassword.multi.to.username);
-      Verify.verifyNotNull(usernamePassword.multi.to.password);
+    if (credentials != null
+        && credentials.separate != null
+        && credentials.separate.to != null
+        && credentials.separate.to.usernamePassword != null) {
+      Verify.verifyNotNull(credentials.separate.to.usernamePassword.username);
+      Verify.verifyNotNull(credentials.separate.to.usernamePassword.password);
       return Optional.of(
-          Credential.from(usernamePassword.multi.to.username, usernamePassword.multi.to.password));
+          Credential.from(
+              credentials.separate.to.usernamePassword.username,
+              credentials.separate.to.usernamePassword.password));
     }
     return Optional.empty();
   }
@@ -333,14 +425,16 @@ public class JibCli {
    * @return a optional Credential
    */
   public Optional<Credential> getFromUsernamePassword() {
-    if (usernamePassword != null
-        && usernamePassword.multi != null
-        && usernamePassword.multi.from != null) {
-      Verify.verifyNotNull(usernamePassword.multi.from.username);
-      Verify.verifyNotNull(usernamePassword.multi.from.password);
+    if (credentials != null
+        && credentials.separate != null
+        && credentials.separate.from != null
+        && credentials.separate.from.usernamePassword != null) {
+      Verify.verifyNotNull(credentials.separate.from.usernamePassword.username);
+      Verify.verifyNotNull(credentials.separate.from.usernamePassword.password);
       return Optional.of(
           Credential.from(
-              usernamePassword.multi.from.username, usernamePassword.multi.from.password));
+              credentials.separate.from.usernamePassword.username,
+              credentials.separate.from.usernamePassword.password));
     }
     return Optional.empty();
   }

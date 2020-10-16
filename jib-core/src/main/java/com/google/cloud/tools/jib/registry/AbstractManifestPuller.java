@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.registry;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.api.client.http.HttpMethods;
@@ -25,6 +26,7 @@ import com.google.cloud.tools.jib.http.BlobHttpContent;
 import com.google.cloud.tools.jib.http.Response;
 import com.google.cloud.tools.jib.http.ResponseException;
 import com.google.cloud.tools.jib.image.json.ManifestTemplate;
+import com.google.cloud.tools.jib.image.json.OciIndexTemplate;
 import com.google.cloud.tools.jib.image.json.OciManifestTemplate;
 import com.google.cloud.tools.jib.image.json.UnknownManifestFormatException;
 import com.google.cloud.tools.jib.image.json.V21ManifestTemplate;
@@ -145,14 +147,28 @@ abstract class AbstractManifestPuller<T extends ManifestTemplate, R>
     }
     if (schemaVersion == 2) {
       // 'schemaVersion' of 2 can be either Docker V2.2 or OCI.
-      String mediaType = node.get("mediaType").asText();
-      if (V22ManifestTemplate.MANIFEST_MEDIA_TYPE.equals(mediaType)) {
-        return manifestTemplateClass.cast(
-            JsonTemplateMapper.readJson(jsonString, V22ManifestTemplate.class));
+      JsonNode mediaTypeNode = node.get("mediaType");
+      if (mediaTypeNode == null) { // not Docker, hence OCI
+        if (node.get("manifests") != null) {
+          return manifestTemplateClass.cast(
+              JsonTemplateMapper.readJson(jsonString, OciIndexTemplate.class));
+        }
+        if (node.get("config") != null) {
+          return manifestTemplateClass.cast(
+              JsonTemplateMapper.readJson(jsonString, OciManifestTemplate.class));
+        }
+        throw new UnknownManifestFormatException(
+            "'schemaVersion' is 2, but neither 'manifests' nor 'config' exists");
       }
+
+      String mediaType = mediaTypeNode.asText();
       if (OciManifestTemplate.MANIFEST_MEDIA_TYPE.equals(mediaType)) {
         return manifestTemplateClass.cast(
             JsonTemplateMapper.readJson(jsonString, OciManifestTemplate.class));
+      }
+      if (V22ManifestTemplate.MANIFEST_MEDIA_TYPE.equals(mediaType)) {
+        return manifestTemplateClass.cast(
+            JsonTemplateMapper.readJson(jsonString, V22ManifestTemplate.class));
       }
       if (V22ManifestListTemplate.MANIFEST_MEDIA_TYPE.equals(mediaType)) {
         return manifestTemplateClass.cast(
