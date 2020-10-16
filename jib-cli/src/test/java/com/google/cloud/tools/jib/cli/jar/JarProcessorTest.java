@@ -74,8 +74,6 @@ public class JarProcessorTest {
     assertThat(layers.size()).isEqualTo(2);
 
     // Validate resources layer
-    // TODO: Validate order of file paths once
-    // https://github.com/GoogleContainerTools/jib/issues/2821 is fixed.
     List<AbsoluteUnixPath> actualResourcesPath =
         resourcesLayer
             .getEntries()
@@ -235,7 +233,7 @@ public class JarProcessorTest {
   }
 
   @Test
-  public void testExplodeMode_standard_withOnlyClasses_withoutClassPathInManifest()
+  public void testExplodeMode_standard_withoutClassPathInManifest_containsOnlyClasses()
       throws IOException, URISyntaxException {
     Path standardJar = Paths.get(Resources.getResource(STANDARD_JAR_WITH_ONLY_CLASSES).toURI());
     Path destDir = temporaryFolder.newFolder().toPath();
