@@ -23,25 +23,29 @@ import com.google.cloud.tools.jib.api.buildplan.FileEntriesLayer;
 import com.google.cloud.tools.jib.api.buildplan.FileEntry;
 import com.google.cloud.tools.jib.cli.jar.JarProcessor.JarType;
 import com.google.common.collect.ImmutableList;
-import com.google.common.io.Files;
 import com.google.common.io.Resources;
-import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.stream.Collectors;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
 public class JarProcessorTest {
 
   private static final String SPRING_BOOT_JAR = "jar/springboot/springboot_sample.jar";
+  private static final String STANDARD_JAR = "jar/standard/standardJar.jar";
   private static final String STANDARD_JAR_WITH_CLASS_PATH_MANIFEST =
       "jar/standard/standardJarWithClassPath.jar";
   private static final String STANDARD_JAR_WITHOUT_CLASS_PATH_MANIFEST =
       "jar/standard/standardJarWithoutClassPath.jar";
-  private static final String STANDARD_JAR = "jar/standard/standardJar.jar";
+  private static final String STANDARD_JAR_WITH_ONLY_CLASSES =
+      "jar/standard/standardJarWithOnlyClasses.jar";
+
+  @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
   @Test
   public void testDetermineJarType_springBoot() throws IOException, URISyntaxException {
@@ -62,9 +66,8 @@ public class JarProcessorTest {
       throws IOException, URISyntaxException {
     Path standardJar =
         Paths.get(Resources.getResource(STANDARD_JAR_WITH_CLASS_PATH_MANIFEST).toURI());
-    File tempDirectory = Files.createTempDir();
-    List<FileEntriesLayer> layers =
-        JarProcessor.explodeStandardJar(standardJar, tempDirectory.toPath());
+    Path destDir = temporaryFolder.newFolder().toPath();
+    List<FileEntriesLayer> layers = JarProcessor.explodeStandardJar(standardJar, destDir);
 
     assertThat(layers.size()).isEqualTo(3);
 
@@ -138,10 +141,8 @@ public class JarProcessorTest {
       throws IOException, URISyntaxException {
     Path standardJar =
         Paths.get(Resources.getResource(STANDARD_JAR_WITHOUT_CLASS_PATH_MANIFEST).toURI());
-    File tempDirectory = Files.createTempDir();
-
-    List<FileEntriesLayer> layers =
-        JarProcessor.explodeStandardJar(standardJar, tempDirectory.toPath());
+    Path destDir = temporaryFolder.newFolder().toPath();
+    List<FileEntriesLayer> layers = JarProcessor.explodeStandardJar(standardJar, destDir);
 
     // Validate only two layers created.
     assertThat(layers.size()).isEqualTo(2);
@@ -194,5 +195,44 @@ public class JarProcessorTest {
             AbsoluteUnixPath.get("/app/explodedJar/directory2/directory3"),
             AbsoluteUnixPath.get("/app/explodedJar/directory2/directory3/class3.class"),
             AbsoluteUnixPath.get("/app/explodedJar/directory4"));
+  }
+
+  @Test
+  public void testExplodeMode_standard_withOnlyClasses_withoutClassPathInManifest()
+      throws IOException, URISyntaxException {
+    Path standardJar = Paths.get(Resources.getResource(STANDARD_JAR_WITH_ONLY_CLASSES).toURI());
+    Path destDir = temporaryFolder.newFolder().toPath();
+    List<FileEntriesLayer> layers = JarProcessor.explodeStandardJar(standardJar, destDir);
+
+    // Validate that only two layers created.
+    assertThat(layers.size()).isEqualTo(2);
+
+    FileEntriesLayer resourcesLayer = layers.get(0);
+    FileEntriesLayer classesLayer = layers.get(1);
+
+    // Validate resources layer
+    List<AbsoluteUnixPath> actualResourcesPath =
+        resourcesLayer
+            .getEntries()
+            .stream()
+            .map(FileEntry::getExtractionPath)
+            .collect(Collectors.toList());
+    assertThat(actualResourcesPath)
+        .containsExactly(
+            AbsoluteUnixPath.get("/app/explodedJar/META-INF"),
+            AbsoluteUnixPath.get("/app/explodedJar/META-INF/MANIFEST.MF"));
+
+    // Validate classes  layer
+    List<AbsoluteUnixPath> actualClassesPath =
+        classesLayer
+            .getEntries()
+            .stream()
+            .map(FileEntry::getExtractionPath)
+            .collect(Collectors.toList());
+    assertThat(actualClassesPath)
+        .containsExactly(
+            AbsoluteUnixPath.get("/app/explodedJar/META-INF"),
+            AbsoluteUnixPath.get("/app/explodedJar/class1.class"),
+            AbsoluteUnixPath.get("/app/explodedJar/class2.class"));
   }
 }
