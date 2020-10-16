@@ -78,9 +78,7 @@ public class JarProcessor {
   public static List<FileEntriesLayer> explodeStandardJar(Path jarPath, Path tempDirPath)
       throws IOException {
     Path localExplodedJarRoot = tempDirPath;
-
     ZipUtil.unzip(jarPath, localExplodedJarRoot);
-
     List<FileEntriesLayer> layers = new ArrayList<>();
     Predicate<Path> isClassFile = path -> path.getFileName().toString().endsWith(".class");
     Predicate<Path> isResourceFile = isClassFile.negate();
