@@ -69,7 +69,7 @@ public class CredentialsTest {
 
   @RunWith(Parameterized.class)
   public static class GetFromCredentialRetrieversNone {
-    @Rule public MockitoRule mockitoJUnit = MockitoJUnit.rule();
+    @Rule final public MockitoRule mockitoJUnit = MockitoJUnit.rule();
     @Mock private DefaultCredentialRetrievers defaultCredentialRetrievers;
 
     @Parameterized.Parameters
@@ -96,7 +96,7 @@ public class CredentialsTest {
 
   @RunWith(Parameterized.class)
   public static class GetToCredentialRetrieversCredentialHelpers {
-    @Rule public MockitoRule mockitoJUnit = MockitoJUnit.rule();
+    @Rule final public MockitoRule mockitoJUnit = MockitoJUnit.rule();
     @Mock private DefaultCredentialRetrievers defaultCredentialRetrievers;
 
     @Parameterized.Parameters
@@ -129,7 +129,7 @@ public class CredentialsTest {
 
   @RunWith(Parameterized.class)
   public static class GetFromCredentialRetrieverCredentialHelper {
-    @Rule public MockitoRule mockitoJUnit = MockitoJUnit.rule();
+    @Rule final public MockitoRule mockitoJUnit = MockitoJUnit.rule();
     @Mock private DefaultCredentialRetrievers defaultCredentialRetrievers;
 
     @Parameterized.Parameters
@@ -162,7 +162,7 @@ public class CredentialsTest {
 
   @RunWith(Parameterized.class)
   public static class GetToCredentialRetrieverUsernamePassword {
-    @Rule public MockitoRule mockitoJUnit = MockitoJUnit.rule();
+    @Rule final public MockitoRule mockitoJUnit = MockitoJUnit.rule();
     @Mock private DefaultCredentialRetrievers defaultCredentialRetrievers;
 
     @Parameterized.Parameters
@@ -213,7 +213,7 @@ public class CredentialsTest {
 
   @RunWith(Parameterized.class)
   public static class GetFromCredentialRetrieverUsernamePassword {
-    @Rule public MockitoRule mockitoJUnit = MockitoJUnit.rule();
+    @Rule final public MockitoRule mockitoJUnit = MockitoJUnit.rule();
     @Mock private DefaultCredentialRetrievers defaultCredentialRetrievers;
 
     @Parameterized.Parameters
