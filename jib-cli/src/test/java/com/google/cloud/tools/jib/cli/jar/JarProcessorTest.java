@@ -44,6 +44,7 @@ public class JarProcessorTest {
       "jar/standard/standardJarWithoutClassPath.jar";
   private static final String STANDARD_JAR_WITH_ONLY_CLASSES =
       "jar/standard/standardJarWithOnlyClasses.jar";
+  private static final String STANDARD_JAR_EMPTY = "jar/standard/emptyStandardJar.jar";
 
   @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
@@ -59,6 +60,42 @@ public class JarProcessorTest {
     Path standardJar = Paths.get(Resources.getResource(STANDARD_JAR).toURI());
     JarType jarType = JarProcessor.determineJarType(standardJar);
     assertThat(jarType).isEqualTo(JarType.STANDARD);
+  }
+
+  @Test
+  public void testExplodeMode_standard_emptyJar() throws IOException, URISyntaxException {
+    Path standardJar = Paths.get(Resources.getResource(STANDARD_JAR_EMPTY).toURI());
+    Path destDir = temporaryFolder.newFolder().toPath();
+    List<FileEntriesLayer> layers = JarProcessor.explodeStandardJar(standardJar, destDir);
+
+    FileEntriesLayer resourcesLayer = layers.get(0);
+    FileEntriesLayer classesLayer = layers.get(1);
+
+    assertThat(layers.size()).isEqualTo(2);
+
+    // Validate resources layer
+    // TODO: Validate order of file paths once
+    // https://github.com/GoogleContainerTools/jib/issues/2821 is fixed.
+    List<AbsoluteUnixPath> actualResourcesPath =
+        resourcesLayer
+            .getEntries()
+            .stream()
+            .map(FileEntry::getExtractionPath)
+            .collect(Collectors.toList());
+    assertThat(actualResourcesPath)
+        .containsExactly(
+            AbsoluteUnixPath.get("/app/explodedJar/META-INF"),
+            AbsoluteUnixPath.get("/app/explodedJar/META-INF/MANIFEST.MF"));
+
+    // Validate classes layer
+    List<AbsoluteUnixPath> actualClassesPath =
+        classesLayer
+            .getEntries()
+            .stream()
+            .map(FileEntry::getExtractionPath)
+            .collect(Collectors.toList());
+    assertThat(actualClassesPath)
+        .containsExactly(AbsoluteUnixPath.get("/app/explodedJar/META-INF"));
   }
 
   @Test
@@ -144,7 +181,7 @@ public class JarProcessorTest {
     Path destDir = temporaryFolder.newFolder().toPath();
     List<FileEntriesLayer> layers = JarProcessor.explodeStandardJar(standardJar, destDir);
 
-    // Validate only two layers created.
+    // Validate that only two layers created.
     assertThat(layers.size()).isEqualTo(2);
 
     FileEntriesLayer resourcesLayer = layers.get(0);
@@ -211,6 +248,8 @@ public class JarProcessorTest {
     FileEntriesLayer classesLayer = layers.get(1);
 
     // Validate resources layer
+    // TODO: Validate order of file paths once
+    // https://github.com/GoogleContainerTools/jib/issues/2821 is fixed.
     List<AbsoluteUnixPath> actualResourcesPath =
         resourcesLayer
             .getEntries()
@@ -222,7 +261,9 @@ public class JarProcessorTest {
             AbsoluteUnixPath.get("/app/explodedJar/META-INF"),
             AbsoluteUnixPath.get("/app/explodedJar/META-INF/MANIFEST.MF"));
 
-    // Validate classes  layer
+    // Validate classes layer
+    // TODO: Validate order of file paths once
+    // https://github.com/GoogleContainerTools/jib/issues/2821 is fixed.
     List<AbsoluteUnixPath> actualClassesPath =
         classesLayer
             .getEntries()
