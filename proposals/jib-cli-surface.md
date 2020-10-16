@@ -48,9 +48,9 @@ build        build a container
 
 Credentials can be specified using credential helpers or username + password. The following options are available
 ```
-    --credential-helper <credHelper>       credential helper to use for a registry, a path or name suffix (docker-credential-<suffix>)
-    --to-crendential-helper <credHelper>   credential helper to use for the target registry
-    --from-credential-helper <credHelper>  credential helper to use for the base image registry
+    --credential-helper <credHelper>       credential helper to use for registries, a path or name suffix (docker-credential-<suffix>)
+    --to-crendential-helper <credHelper>   credential helper to use only for the target registry
+    --from-credential-helper <credHelper>  credential helper to use only for the base image registry
 
     --username <username>                  configure a username for authenticating against registries
     --password <password>                  configure a password for authenticating against registries (interactive if <password> is omitted)
