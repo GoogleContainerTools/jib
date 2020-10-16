@@ -26,7 +26,7 @@ import java.util.List;
  */
 public class Credentials {
   /**
-   * Get credentials for a target image registry.
+   * Gets credentials for a target image registry.
    *
    * @param buildOptions The command line build options
    * @param defaultCredentialRetrievers An initialized {@link DefaultCredentialRetrievers} to use
@@ -58,7 +58,7 @@ public class Credentials {
   }
 
   /**
-   * Get credentials for a base image registry.
+   * Gets credentials for a base image registry.
    *
    * @param buildOptions The command line build options
    * @param defaultCredentialRetrievers An initialized {@link DefaultCredentialRetrievers} to use

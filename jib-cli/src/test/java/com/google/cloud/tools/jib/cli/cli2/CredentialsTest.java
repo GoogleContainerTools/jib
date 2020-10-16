@@ -42,7 +42,7 @@ public class CredentialsTest {
 
   @RunWith(Parameterized.class)
   public static class GetToCredentialRetrieversNone {
-    @Rule public MockitoRule mockitoJUnit = MockitoJUnit.rule();
+    @Rule public final MockitoRule mockitoJUnit = MockitoJUnit.rule();
     @Mock private DefaultCredentialRetrievers defaultCredentialRetrievers;
 
     @Parameterized.Parameters
