@@ -16,7 +16,6 @@
 
 package com.google.cloud.tools.jib.tar;
 
-import com.google.common.base.Strings;
 import com.google.common.io.ByteStreams;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -64,9 +63,8 @@ public class TarExtractor {
             Files.createDirectories(entryPath.getParent());
           }
 
-          String linkName = entry.getLinkName();
-          if (!Strings.isNullOrEmpty(linkName)) {
-            Files.createSymbolicLink(entryPath, Paths.get(linkName));
+          if (entry.isSymbolicLink()) {
+            Files.createSymbolicLink(entryPath, Paths.get(entry.getLinkName()));
           } else {
             try (OutputStream out = new BufferedOutputStream(Files.newOutputStream(entryPath))) {
               ByteStreams.copy(tarArchiveInputStream, out);
