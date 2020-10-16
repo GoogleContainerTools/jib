@@ -9,6 +9,8 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
+- Fixed `NullPointerException` when pulling an OCI base image whose manifest does not have `mediaType` information. ([#2819]((https://github.com/GoogleContainerTools/jib/pull/2819))
+
 ## 0.16.0
 
 ### Added
