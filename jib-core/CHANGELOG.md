@@ -9,6 +9,8 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
+- Fixed failure when pulling an OCI base image whose manifest does not have `mediaType` information. ([#2824]((https://github.com/GoogleContainerTools/jib/pull/2824))
+
 ## 0.16.0
 
 ### Added
