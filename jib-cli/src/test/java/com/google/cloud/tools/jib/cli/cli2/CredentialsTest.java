@@ -16,8 +16,11 @@
 
 package com.google.cloud.tools.jib.cli.cli2;
 
+import static com.google.common.truth.Truth.assertThat;
+
 import com.google.cloud.tools.jib.api.Credential;
 import com.google.cloud.tools.jib.plugins.common.DefaultCredentialRetrievers;
+import java.io.FileNotFoundException;
 import junitparams.JUnitParamsRunner;
 import junitparams.Parameters;
 import org.apache.commons.lang3.ArrayUtils;
@@ -32,10 +35,6 @@ import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
 import picocli.CommandLine;
 
-import java.io.FileNotFoundException;
-
-import static com.google.common.truth.Truth.assertThat;
-
 @RunWith(JUnitParamsRunner.class)
 public class CredentialsTest {
 
@@ -44,9 +43,9 @@ public class CredentialsTest {
   @Mock private DefaultCredentialRetrievers defaultCredentialRetrievers;
 
   private Object paramsToNone() {
-    return new Object[]{
-        new String[]{"--from-credential-helper=ignored"},
-        new String[]{"--from-username=ignored", "--from-password=ignored"},
+    return new Object[] {
+      new String[] {"--from-credential-helper=ignored"},
+      new String[] {"--from-username=ignored", "--from-password=ignored"},
     };
   }
 
@@ -61,9 +60,9 @@ public class CredentialsTest {
   }
 
   private Object paramsFromNone() {
-    return new Object[]{
-        new String[]{"--to-credential-helper=ignored"},
-        new String[]{"--to-username=ignored", "--to-password=ignored"},
+    return new Object[] {
+      new String[] {"--to-credential-helper=ignored"},
+      new String[] {"--to-username=ignored", "--to-password=ignored"},
     };
   }
 
@@ -78,11 +77,13 @@ public class CredentialsTest {
   }
 
   private Object paramsToCredHelper() {
-    return new Object[]{
-        new String[]{"--credential-helper=abc"},
-        new String[]{"--to-credential-helper=abc"},
-        new String[]{"--to-credential-helper=abc", "--from-credential-helper=ignored"},
-        new String[]{"--to-credential-helper=abc", "--from-username=ignored", "--from-password=ignored"},
+    return new Object[] {
+      new String[] {"--credential-helper=abc"},
+      new String[] {"--to-credential-helper=abc"},
+      new String[] {"--to-credential-helper=abc", "--from-credential-helper=ignored"},
+      new String[] {
+        "--to-credential-helper=abc", "--from-username=ignored", "--from-password=ignored"
+      },
     };
   }
 
@@ -98,11 +99,13 @@ public class CredentialsTest {
   }
 
   private Object paramsFromCredHelper() {
-    return new Object[]{
-        new String[]{"--credential-helper=abc"},
-        new String[]{"--from-credential-helper=abc"},
-        new String[]{"--from-credential-helper=abc", "--to-credential-helper=ignored"},
-        new String[]{"--from-credential-helper=abc", "--to-username=ignored", "--to-password=ignored"},
+    return new Object[] {
+      new String[] {"--credential-helper=abc"},
+      new String[] {"--from-credential-helper=abc"},
+      new String[] {"--from-credential-helper=abc", "--to-credential-helper=ignored"},
+      new String[] {
+        "--from-credential-helper=abc", "--to-username=ignored", "--to-password=ignored"
+      },
     };
   }
 
@@ -117,60 +120,70 @@ public class CredentialsTest {
     Mockito.verifyNoMoreInteractions(defaultCredentialRetrievers);
   }
 
+  public Object paramsToUsernamePassword() {
+    return new Object[][] {
+      {"--username/--password", new String[] {"--username=abc", "--password=xyz"}},
+      {"--to-username/--to-password", new String[] {"--to-username=abc", "--to-password=xyz"}},
+      {
+        "--to-username/--to-password",
+        new String[] {
+          "--to-username=abc",
+          "--to-password=xyz",
+          "--from-username=ignored",
+          "--from-password=ignored"
+        }
+      },
+      {
+        "--to-username/--to-password",
+        new String[] {"--to-username=abc", "--to-password=xyz", "--from-credential-helper=ignored"}
+      }
+    };
+  }
 
-    public Object paramsToUsernamePassword() {
-      return
-          new Object[][]{
-              {"--username/--password", new String[]{"--username=abc", "--password=xyz"}},
-              {"--to-username/--to-password", new String[]{"--to-username=abc", "--to-password=xyz"}},
-              {"--to-username/--to-password", new String[]{
-                      "--to-username=abc",
-                      "--to-password=xyz",
-                      "--from-username=ignored",
-                      "--from-password=ignored"
-                  }},
-              {"--to-username/--to-password", new String[]{"--to-username=abc", "--to-password=xyz", "--from-credential-helper=ignored"}}
-      };
-    }
-
-    @Test
-    @Parameters(method = "paramsToUsernamePassword")
-    public void testGetToUsernamePassword(String expectedSource, String[] args) throws FileNotFoundException {
-      JibCli buildOptions =
-          CommandLine.populateCommand(new JibCli(), ArrayUtils.addAll(DEFAULT_ARGS, args));
-      Credentials.getToCredentialRetrievers(buildOptions, defaultCredentialRetrievers);
-      ArgumentCaptor<Credential> captor = ArgumentCaptor.forClass(Credential.class);
-      Mockito.verify(defaultCredentialRetrievers)
-          .setKnownCredential(captor.capture(), ArgumentMatchers.eq(expectedSource));
-      assertThat(captor.getValue()).isEqualTo(Credential.from("abc", "xyz"));
-      Mockito.verify(defaultCredentialRetrievers).asList();
-      Mockito.verifyNoMoreInteractions(defaultCredentialRetrievers);
-    }
+  @Test
+  @Parameters(method = "paramsToUsernamePassword")
+  public void testGetToUsernamePassword(String expectedSource, String[] args)
+      throws FileNotFoundException {
+    JibCli buildOptions =
+        CommandLine.populateCommand(new JibCli(), ArrayUtils.addAll(DEFAULT_ARGS, args));
+    Credentials.getToCredentialRetrievers(buildOptions, defaultCredentialRetrievers);
+    ArgumentCaptor<Credential> captor = ArgumentCaptor.forClass(Credential.class);
+    Mockito.verify(defaultCredentialRetrievers)
+        .setKnownCredential(captor.capture(), ArgumentMatchers.eq(expectedSource));
+    assertThat(captor.getValue()).isEqualTo(Credential.from("abc", "xyz"));
+    Mockito.verify(defaultCredentialRetrievers).asList();
+    Mockito.verifyNoMoreInteractions(defaultCredentialRetrievers);
+  }
 
   public Object paramsFromUsernamePassword() {
-    return new Object[][]{
-        {"--username/--password", new String[]{"--username=abc", "--password=xyz"}},
-        {"--from-username/--from-password",
-            new String[]{"--from-username=abc", "--from-password=xyz"}},
-
-        {"--from-username/--from-password",
-            new String[]{
-                "--from-username=abc",
-                "--from-password=xyz",
-                "--to-username=ignored",
-                "--to-password=ignored"
-            }},
-
-        {"--from-username/--from-password",
-            new String[]{
-                "--from-username=abc", "--from-password=xyz", "--to-credential-helper=ignored"
-            }},
+    return new Object[][] {
+      {"--username/--password", new String[] {"--username=abc", "--password=xyz"}},
+      {
+        "--from-username/--from-password",
+        new String[] {"--from-username=abc", "--from-password=xyz"}
+      },
+      {
+        "--from-username/--from-password",
+        new String[] {
+          "--from-username=abc",
+          "--from-password=xyz",
+          "--to-username=ignored",
+          "--to-password=ignored"
+        }
+      },
+      {
+        "--from-username/--from-password",
+        new String[] {
+          "--from-username=abc", "--from-password=xyz", "--to-credential-helper=ignored"
+        }
+      },
     };
   }
 
   @Test
   @Parameters(method = "paramsFromUsernamePassword")
-  public void testGetFromUsernamePassword(String expectedSource, String[] args) throws FileNotFoundException {
+  public void testGetFromUsernamePassword(String expectedSource, String[] args)
+      throws FileNotFoundException {
     JibCli buildOptions =
         CommandLine.populateCommand(new JibCli(), ArrayUtils.addAll(DEFAULT_ARGS, args));
     Credentials.getFromCredentialRetrievers(buildOptions, defaultCredentialRetrievers);
