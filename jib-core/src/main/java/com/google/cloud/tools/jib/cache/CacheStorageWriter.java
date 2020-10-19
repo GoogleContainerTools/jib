@@ -120,8 +120,8 @@ class CacheStorageWriter {
                 () -> {
                   if (Files.exists(destination)) {
                     // If the file already exists, we skip renaming and use the existing file.
-                    // This happens if a new layer happens to have the same content as a
-                    // previously-cached layer.
+                    // This happens, e.g., if a new layer happens to have the same content as a
+                    // previously-cached layer or the same layer is being cached concurrently.
                     return true;
                   }
                   Files.move(source, destination);
