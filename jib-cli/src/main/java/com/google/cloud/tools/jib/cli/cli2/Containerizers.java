@@ -63,7 +63,7 @@ public class Containerizers {
     return containerizer;
   }
 
-  static Containerizer create(JibCli buildOptions, ConsoleLogger logger)
+  private static Containerizer create(JibCli buildOptions, ConsoleLogger logger)
       throws InvalidImageReferenceException, FileNotFoundException {
     String imageSpec = buildOptions.getTargetImage();
     if (imageSpec.startsWith(DOCKER_DAEMON_IMAGE_PREFIX)) {
@@ -106,9 +106,7 @@ public class Containerizers {
     buildOptions.getBaseImageCache().ifPresent(containerizer::setBaseImageLayersCache);
     buildOptions.getApplicationCache().ifPresent(containerizer::setApplicationLayersCache);
 
-    for (String tag : buildOptions.getAdditionalTags()) {
-      containerizer.withAdditionalTag(tag);
-    }
+    buildOptions.getAdditionalTags().forEach(containerizer::withAdditionalTag);
   }
 
   static void applyHandlers(Containerizer containerizer, ConsoleLogger consoleLogger) {
