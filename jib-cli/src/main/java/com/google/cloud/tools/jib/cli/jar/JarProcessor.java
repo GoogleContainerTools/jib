@@ -80,24 +80,6 @@ public class JarProcessor {
     Path localExplodedJarRoot = tempDirPath;
     ZipUtil.unzip(jarPath, localExplodedJarRoot);
     List<FileEntriesLayer> layers = new ArrayList<>();
-    Predicate<Path> isClassFile = path -> path.getFileName().toString().endsWith(".class");
-    Predicate<Path> isResourceFile = isClassFile.negate();
-
-    // Determine class and resource files in the directory containing jar contents and create
-    // FileEntriesLayer for each type of layer (classes or resources), while maintaining the
-    // file's original project structure.
-    FileEntriesLayer classesLayer =
-        addDirectoryContentsToLayer(
-            "classes",
-            localExplodedJarRoot,
-            isClassFile,
-            APP_ROOT.resolve(RelativeUnixPath.get("explodedJar")));
-    FileEntriesLayer resourcesLayer =
-        addDirectoryContentsToLayer(
-            "resources",
-            localExplodedJarRoot,
-            isResourceFile,
-            APP_ROOT.resolve(RelativeUnixPath.get("explodedJar")));
 
     // Get dependencies from Class-Path in the jar's manifest and add a layer with these
     // dependencies as entries. If Class-Path in the jar's manifest is not present then skip adding
@@ -120,6 +102,25 @@ public class JarProcessor {
                   path, APP_ROOT.resolve(RelativeUnixPath.get("dependencies")).resolve(path)));
       layers.add(dependenciesLayerBuilder.build());
     }
+
+    Predicate<Path> isClassFile = path -> path.getFileName().toString().endsWith(".class");
+    Predicate<Path> isResourceFile = isClassFile.negate();
+
+    // Determine class and resource files in the directory containing jar contents and create
+    // FileEntriesLayer for each type of layer (classes or resources), while maintaining the
+    // file's original project structure.
+    FileEntriesLayer classesLayer =
+        addDirectoryContentsToLayer(
+            "classes",
+            localExplodedJarRoot,
+            isClassFile,
+            APP_ROOT.resolve(RelativeUnixPath.get("explodedJar")));
+    FileEntriesLayer resourcesLayer =
+        addDirectoryContentsToLayer(
+            "resources",
+            localExplodedJarRoot,
+            isResourceFile,
+            APP_ROOT.resolve(RelativeUnixPath.get("explodedJar")));
 
     layers.add(resourcesLayer);
     layers.add(classesLayer);
