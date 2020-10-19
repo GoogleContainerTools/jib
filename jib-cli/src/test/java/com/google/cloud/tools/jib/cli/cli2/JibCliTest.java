@@ -25,16 +25,16 @@ import com.google.cloud.tools.jib.cli.cli2.logging.Verbosity;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import java.nio.file.Paths;
-import java.util.Arrays;
-import java.util.Collection;
+import junitparams.JUnitParamsRunner;
+import junitparams.Parameters;
 import org.apache.commons.lang3.ArrayUtils;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
 import picocli.CommandLine;
 import picocli.CommandLine.MissingParameterException;
 import picocli.CommandLine.MutuallyExclusiveArgsException;
 
+@RunWith(JUnitParamsRunner.class)
 public class JibCliTest {
   @Test
   public void testParse_missingRequiredParams() {
@@ -329,83 +329,66 @@ public class JibCliTest {
         .hasValue(Credential.from("test-username", "test-password"));
   }
 
-  @RunWith(Parameterized.class)
-  public static class UsernamePasswordBothRequired {
-    @Parameterized.Parameters(name = "{0},{1}")
-    public static Collection<Object[]> data() {
-      return Arrays.asList(
-          new Object[][] {
-            {"--username", "--password"},
-            {"--to-username", "--to-password"},
-            {"--from-username", "--from-password"}
-          });
-    }
-
-    @Parameterized.Parameter(0)
-    public String usernameField;
-
-    @Parameterized.Parameter(1)
-    public String passwordField;
-
-    @Test
-    public void testParse_usernameWithoutPassword() {
-      MissingParameterException mpe =
-          assertThrows(
-              MissingParameterException.class,
-              () ->
-                  CommandLine.populateCommand(
-                      new JibCli(), "--target", "test-image-ref", usernameField, "test-username"));
-      assertThat(mpe.getMessage())
-          .isEqualTo("Error: Missing required argument(s): " + passwordField);
-    }
-
-    @Test
-    public void testParse_passwordWithoutUsername() {
-      MissingParameterException mpe =
-          assertThrows(
-              MissingParameterException.class,
-              () ->
-                  CommandLine.populateCommand(
-                      new JibCli(), "--target", "test-image-ref", passwordField, "test-password"));
-      assertThat(mpe.getMessage())
-          .isEqualTo("Error: Missing required argument(s): " + usernameField + "=<username>");
-    }
+  private Object usernamePasswordPairs() {
+    return new Object[][] {
+      {"--username", "--password"},
+      {"--to-username", "--to-password"},
+      {"--from-username", "--from-password"}
+    };
   }
 
-  @RunWith(Parameterized.class)
-  public static class IncompatibleCredentialCombos {
-    @Parameterized.Parameters
-    public static Collection<String[][]> data() {
-      return Arrays.asList(
-          new String[][][] {
-            {{"--credential-helper=x", "--to-credential-helper=x"}},
-            {{"--credential-helper=x", "--from-credential-helper=x"}},
-            {{"--credential-helper=x", "--username=x", "--password=x"}},
-            {{"--credential-helper=x", "--from-username=x", "--from-password=x"}},
-            {{"--credential-helper=x", "--to-username=x", "--to-password=x"}},
-            {{"--username=x", "--password=x", "--from-username=x", "--from-password=x"}},
-            {{"--username=x", "--password=x", "--to-username=x", "--to-password=x"}},
-            {{"--username=x", "--password=x", "--to-credential-helper=x"}},
-            {{"--username=x", "--password=x", "--from-credential-helper=x"}},
-            {{"--from-credential-helper=x", "--from-username=x", "--from-password=x"}},
-            {{"--to-credential-helper=x", "--to-password=x", "--to-username=x"}},
-          });
-    }
+  @Test
+  @Parameters(method = "usernamePasswordPairs")
+  public void testParse_usernameWithoutPassword(String usernameField, String passwordField) {
+    MissingParameterException mpe =
+        assertThrows(
+            MissingParameterException.class,
+            () ->
+                CommandLine.populateCommand(
+                    new JibCli(), "--target", "test-image-ref", usernameField, "test-username"));
+    assertThat(mpe.getMessage()).isEqualTo("Error: Missing required argument(s): " + passwordField);
+  }
 
-    @Parameterized.Parameter public String[] authArgs;
-    private final String[] requiredArgs = new String[] {"--target=ignored"};
+  @Test
+  @Parameters(method = "usernamePasswordPairs")
+  public void testParse_passwordWithoutUsername(String usernameField, String passwordField) {
+    MissingParameterException mpe =
+        assertThrows(
+            MissingParameterException.class,
+            () ->
+                CommandLine.populateCommand(
+                    new JibCli(), "--target", "test-image-ref", passwordField, "test-password"));
+    assertThat(mpe.getMessage())
+        .isEqualTo("Error: Missing required argument(s): " + usernameField + "=<username>");
+  }
 
-    @Test
-    public void testParse_usernameWithoutPassword() {
-      MutuallyExclusiveArgsException meae =
-          assertThrows(
-              MutuallyExclusiveArgsException.class,
-              () ->
-                  CommandLine.populateCommand(
-                      new JibCli(), ArrayUtils.addAll(requiredArgs, authArgs)));
-      assertThat(meae)
-          .hasMessageThat()
-          .containsMatch("^Error: (--(from-|to-)?credential-helper|\\[--username)");
-    }
+  public Object incompatibleCredentialOptions() {
+    return new Object[] {
+      new String[] {"--credential-helper=x", "--to-credential-helper=x"},
+      new String[] {"--credential-helper=x", "--from-credential-helper=x"},
+      new String[] {"--credential-helper=x", "--username=x", "--password=x"},
+      new String[] {"--credential-helper=x", "--from-username=x", "--from-password=x"},
+      new String[] {"--credential-helper=x", "--to-username=x", "--to-password=x"},
+      new String[] {"--username=x", "--password=x", "--from-username=x", "--from-password=x"},
+      new String[] {"--username=x", "--password=x", "--to-username=x", "--to-password=x"},
+      new String[] {"--username=x", "--password=x", "--to-credential-helper=x"},
+      new String[] {"--username=x", "--password=x", "--from-credential-helper=x"},
+      new String[] {"--from-credential-helper=x", "--from-username=x", "--from-password=x"},
+      new String[] {"--to-credential-helper=x", "--to-password=x", "--to-username=x"},
+    };
+  }
+
+  @Test
+  @Parameters(method = "incompatibleCredentialOptions")
+  public void testParse_incompatibleCredentialOptions(String[] authArgs) {
+    MutuallyExclusiveArgsException meae =
+        assertThrows(
+            MutuallyExclusiveArgsException.class,
+            () ->
+                CommandLine.populateCommand(
+                    new JibCli(), ArrayUtils.add(authArgs, "--target=ignored")));
+    assertThat(meae)
+        .hasMessageThat()
+        .containsMatch("^Error: (--(from-|to-)?credential-helper|\\[--username)");
   }
 }
