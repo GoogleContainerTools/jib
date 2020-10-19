@@ -52,7 +52,7 @@ public class JarProcessor {
   }
 
   /**
-   * Determines whether the jar is a spring boot or regular jar.
+   * Determines whether the jar is a spring boot or standard jar.
    *
    * @param jarPath path to the jar
    * @return the jar type
@@ -82,7 +82,7 @@ public class JarProcessor {
     List<FileEntriesLayer> layers = new ArrayList<>();
 
     // Get dependencies from Class-Path in the jar's manifest and add a layer with these
-    // dependencies as entries. If Class-Path in the jar's manifest is not present then skip adding
+    // dependencies as entries. If Class-Path is not present in the jar's manifest then skip adding
     // a dependencies layer.
     JarFile jarFile = new JarFile(jarPath.toFile());
     String classPath =
