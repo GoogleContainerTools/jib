@@ -19,6 +19,7 @@ package com.google.cloud.tools.jib.cli.buildfile;
 import com.google.cloud.tools.jib.api.buildplan.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.api.buildplan.FileEntriesLayer;
 import com.google.cloud.tools.jib.api.buildplan.FileEntry;
+import com.google.cloud.tools.jib.api.buildplan.FilePermissions;
 import com.google.common.annotations.VisibleForTesting;
 import java.io.IOException;
 import java.nio.file.FileSystems;
@@ -26,7 +27,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.PathMatcher;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -71,6 +75,10 @@ class Layers {
           Path src = rawSrc.isAbsolute() ? rawSrc : buildRoot.resolve(rawSrc);
           AbsoluteUnixPath dest = copySpec.getDest();
 
+          if (!Files.isDirectory(src) && !Files.isRegularFile(src)) {
+            throw new UnsupportedOperationException(
+                "Cannot create FileLayers from non-file, non-directory: " + src.toString());
+          }
           if (Files.isRegularFile(src)) { // regular file
             if (!copySpec.getExcludes().isEmpty() || !copySpec.getIncludes().isEmpty()) {
               throw new UnsupportedOperationException(
@@ -96,49 +104,72 @@ class Layers {
                     .map(Layers::toPathMatcher)
                     .collect(Collectors.toList());
             try (Stream<Path> dirWalk = Files.walk(src)) {
-              dirWalk
-                  // filter out against excludes
-                  .filter(path -> excludes.stream().noneMatch(exclude -> exclude.matches(path)))
-                  .filter(
-                      path -> {
-                        // if there are no includes directives, include everything
-                        if (includes.isEmpty()) {
-                          return true;
-                        }
-                        // TODO: if <dest>/path/to/file.txt is included because of a pattern like
-                        // TODO: **/file.txt, ensure we create <dest>/path and <dest>/path/to with
-                        // TODO: the correct directory properties here
-                        // if there are includes directives, only include those specified
-                        for (PathMatcher matcher : includes) {
-                          if (matcher.matches(path)) {
-                            return true;
-                          }
-                        }
-                        return false;
-                      })
-                  .map(
-                      path -> {
-                        Path relative = src.relativize(path);
-                        if (Files.isDirectory(path) || Files.isRegularFile(path)) {
-                          return new FileEntry(
-                              path,
-                              dest.resolve(relative),
-                              Files.isDirectory(path)
-                                  ? filePropertiesStack.getDirectoryPermissions()
-                                  : filePropertiesStack.getFilePermissions(),
-                              filePropertiesStack.getModificationTime(),
-                              filePropertiesStack.getOwnership());
-                        } else {
-                          throw new UnsupportedOperationException(
-                              "Cannot create FileLayers from non-file, non-directory: "
-                                  + path.toString());
-                        }
-                      })
-                  .forEach(layerBuiler::addEntry);
+              List<Path> filtered =
+                  dirWalk
+                      // filter out against excludes
+                      .filter(path -> excludes.stream().noneMatch(exclude -> exclude.matches(path)))
+                      .filter(
+                          path -> {
+                            // if there are no includes directives, include everything
+                            if (includes.isEmpty()) {
+                              return true;
+                            }
+                            // if there are includes directives, only include those specified
+                            for (PathMatcher matcher : includes) {
+                              if (matcher.matches(path)) {
+                                return true;
+                              }
+                            }
+                            return false;
+                          })
+                      .collect(Collectors.toList());
+
+              BiFunction<Path, FilePermissions, FileEntry> newEntry =
+                  (file, permission) ->
+                      new FileEntry(
+                          file,
+                          dest.resolve(src.relativize(file)),
+                          permission,
+                          filePropertiesStack.getModificationTime(),
+                          filePropertiesStack.getOwnership());
+
+              Set<Path> addedDirectories = new HashSet<>();
+              for (Path path : filtered) {
+                if (!Files.isDirectory(path) && !Files.isRegularFile(path)) {
+                  throw new UnsupportedOperationException(
+                      "Cannot create FileLayers from non-file, non-directory: " + src.toString());
+                }
+
+                if (Files.isDirectory(path)) {
+                  addedDirectories.add(path);
+                  layerBuiler.addEntry(
+                      newEntry.apply(path, filePropertiesStack.getDirectoryPermissions()));
+                } else if (Files.isRegularFile(path)) {
+                  if (!path.startsWith(src)) {
+                    // if we end up in a situation where the file added is somehow outside of the
+                    // tree then we do not know how to properly handle it at the moment. It could
+                    // be from a link scenario that we do not understand.
+                    throw new IllegalStateException(
+                        src.toString() + " is not a parent of " + path.toString());
+                  }
+                  Path parent = path.getParent();
+                  while (true) {
+                    if (addedDirectories.contains(parent)) {
+                      break;
+                    }
+                    layerBuiler.addEntry(
+                        newEntry.apply(parent, filePropertiesStack.getDirectoryPermissions()));
+                    addedDirectories.add(parent);
+                    if (parent.equals(src)) {
+                      break;
+                    }
+                    parent = parent.getParent();
+                  }
+                  layerBuiler.addEntry(
+                      newEntry.apply(path, filePropertiesStack.getFilePermissions()));
+                }
+              }
             }
-          } else { // other
-            throw new UnsupportedOperationException(
-                "Cannot create FileLayers from non-file, non-directory: " + src.toString());
           }
           copySpec.getProperties().ifPresent(ignored -> filePropertiesStack.pop());
         }

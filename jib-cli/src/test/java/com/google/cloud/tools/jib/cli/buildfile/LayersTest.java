@@ -96,19 +96,35 @@ public class LayersTest {
   @Test
   public void testToLayers_includeExcludes() throws IOException, URISyntaxException {
     Path testRoot = getLayersTestRoot("includesExcludesTest");
-    List<FileEntriesLayer> layers = parseLayers(testRoot, 5);
+    List<FileEntriesLayer> layers = parseLayers(testRoot, 6);
 
     checkLayer(
         layers.get(0),
         "includes and excludes",
         ImmutableSet.of(
-            newEntry(testRoot, "project/include.me", "/target/ie/include.me", "644", 0, "0:0")));
+            newEntry(testRoot, "project", "/target/ie", "755", 0, "0:0"),
+            newEntry(testRoot, "project/includedDir/", "/target/ie/includedDir/", "755", 0, "0:0"),
+            newEntry(
+                testRoot,
+                "project/includedDir/include.me",
+                "/target/ie/includedDir/include.me",
+                "644",
+                0,
+                "0:0")));
 
     checkLayer(
         layers.get(1),
         "includes only",
         ImmutableSet.of(
-            newEntry(testRoot, "project/include.me", "/target/io/include.me", "644", 0, "0:0")));
+            newEntry(testRoot, "project", "/target/io", "755", 0, "0:0"),
+            newEntry(testRoot, "project/includedDir/", "/target/io/includedDir/", "755", 0, "0:0"),
+            newEntry(
+                testRoot,
+                "project/includedDir/include.me",
+                "/target/io/includedDir/include.me",
+                "644",
+                0,
+                "0:0")));
 
     checkLayer(
         layers.get(2),
@@ -116,7 +132,14 @@ public class LayersTest {
         ImmutableSet.of(
             newEntry(testRoot, "project", "/target/eo", "755", 0, "0:0"),
             newEntry(testRoot, "project/excludedDir", "/target/eo/excludedDir", "755", 0, "0:0"),
-            newEntry(testRoot, "project/include.me", "/target/eo/include.me", "644", 0, "0:0"),
+            newEntry(testRoot, "project/includedDir", "/target/eo/includedDir", "755", 0, "0:0"),
+            newEntry(
+                testRoot,
+                "project/includedDir/include.me",
+                "/target/eo/includedDir/include.me",
+                "644",
+                0,
+                "0:0"),
             newEntry(testRoot, "project/wild.card", "/target/eo/wild.card", "644", 0, "0:0")));
 
     checkLayer(
@@ -125,14 +148,38 @@ public class LayersTest {
         ImmutableSet.of(
             newEntry(testRoot, "project", "/target/eo", "755", 0, "0:0"),
             newEntry(testRoot, "project/excludedDir", "/target/eo/excludedDir", "755", 0, "0:0"),
-            newEntry(testRoot, "project/include.me", "/target/eo/include.me", "644", 0, "0:0"),
+            newEntry(testRoot, "project/includedDir", "/target/eo/includedDir", "755", 0, "0:0"),
+            newEntry(
+                testRoot,
+                "project/includedDir/include.me",
+                "/target/eo/includedDir/include.me",
+                "644",
+                0,
+                "0:0"),
             newEntry(testRoot, "project/wild.card", "/target/eo/wild.card", "644", 0, "0:0")));
 
     checkLayer(
         layers.get(4),
+        "exclude dir and contents",
+        ImmutableSet.of(
+            newEntry(testRoot, "project", "/target/edac", "755", 0, "0:0"),
+            newEntry(
+                testRoot, "project/includedDir/", "/target/edac/includedDir/", "755", 0, "0:0"),
+            newEntry(
+                testRoot,
+                "project/includedDir/include.me",
+                "/target/edac/includedDir/include.me",
+                "644",
+                0,
+                "0:0"),
+            newEntry(testRoot, "project/wild.card", "/target/edac/wild.card", "644", 0, "0:0")));
+
+    checkLayer(
+        layers.get(5),
         "excludes only wrong",
         ImmutableSet.of(
             newEntry(testRoot, "project", "/target/eo", "755", 0, "0:0"),
+            newEntry(testRoot, "project/excludedDir", "/target/eo/excludedDir", "755", 0, "0:0"),
             newEntry(
                 testRoot,
                 "project/excludedDir/exclude.me",
@@ -140,7 +187,14 @@ public class LayersTest {
                 "644",
                 0,
                 "0:0"),
-            newEntry(testRoot, "project/include.me", "/target/eo/include.me", "644", 0, "0:0"),
+            newEntry(testRoot, "project/includedDir", "/target/eo/includedDir", "755", 0, "0:0"),
+            newEntry(
+                testRoot,
+                "project/includedDir/include.me",
+                "/target/eo/includedDir/include.me",
+                "644",
+                0,
+                "0:0"),
             newEntry(testRoot, "project/wild.card", "/target/eo/wild.card", "644", 0, "0:0")));
   }
 
@@ -250,5 +304,28 @@ public class LayersTest {
     } catch (UnsupportedOperationException uoe) {
       Assert.assertEquals("Only FileLayers are supported at this time.", uoe.getMessage());
     }
+  }
+
+  @Test
+  public void testToLayers_writeToRoot() throws IOException, URISyntaxException {
+    // this test defines the current behavior of writing to root, perhaps we should ignore
+    // root at this level or we should ignore it at the builder level
+    Path testRoot = getLayersTestRoot("writeToRoot");
+    List<FileEntriesLayer> layers = parseLayers(testRoot, 2);
+
+    checkLayer(
+        layers.get(0),
+        "root writer",
+        ImmutableSet.of(
+            newEntry(testRoot, "dir", "/", "755", 1000, ""),
+            newEntry(testRoot, "dir/file.txt", "/file.txt", "644", 1000, "")));
+
+    checkLayer(
+        layers.get(1),
+        "root parent fill",
+        ImmutableSet.of(
+            newEntry(testRoot, ".", "/", "755", 1000, ""),
+            newEntry(testRoot, "./dir", "/dir", "755", 1000, ""),
+            newEntry(testRoot, "./dir/file.txt", "/dir/file.txt", "644", 1000, "")));
   }
 }
