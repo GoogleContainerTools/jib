@@ -54,9 +54,9 @@ public class JarProcessor {
   /**
    * Determines whether the jar is a spring boot or regular jar.
    *
-   * @param jarPath path to the jar.
-   * @return the jar type.
-   * @throws IOException if I/O error occurs when opening the file.
+   * @param jarPath path to the jar
+   * @return the jar type
+   * @throws IOException if I/O error occurs when opening the file
    */
   public static JarType determineJarType(Path jarPath) throws IOException {
     JarFile jarFile = new JarFile(jarPath.toFile());
@@ -67,13 +67,13 @@ public class JarProcessor {
   }
 
   /**
-   * Explode jar and create three layers for classes, resources and dependencies on container.
+   * Explodes jar and create three layers for classes, resources and dependencies on container.
    *
-   * @param jarPath path to jar file.
-   * @param tempDirPath path to temporary jib local directory.
-   * @return list of {@link FileEntriesLayer}.
+   * @param jarPath path to jar file
+   * @param tempDirPath path to temporary jib local directory
+   * @return list of {@link FileEntriesLayer}
    * @throws IOException if I/O error occurs when opening the jar file or if temporary directory
-   *     provided doesn't exist.
+   *     provided doesn't exist
    */
   public static List<FileEntriesLayer> explodeStandardJar(Path jarPath, Path tempDirPath)
       throws IOException {
@@ -88,20 +88,16 @@ public class JarProcessor {
     // file's original project structure.
     FileEntriesLayer classesLayer =
         addDirectoryContentsToLayer(
-                FileEntriesLayer.builder(),
-                localExplodedJarRoot,
-                isClassFile,
-                APP_ROOT.resolve(RelativeUnixPath.get("explodedJar")))
-            .setName("classes")
-            .build();
+            "classes",
+            localExplodedJarRoot,
+            isClassFile,
+            APP_ROOT.resolve(RelativeUnixPath.get("explodedJar")));
     FileEntriesLayer resourcesLayer =
         addDirectoryContentsToLayer(
-                FileEntriesLayer.builder(),
-                localExplodedJarRoot,
-                isResourceFile,
-                APP_ROOT.resolve(RelativeUnixPath.get("explodedJar")))
-            .setName("resources")
-            .build();
+            "resources",
+            localExplodedJarRoot,
+            isResourceFile,
+            APP_ROOT.resolve(RelativeUnixPath.get("explodedJar")));
 
     // Get dependencies from Class-Path in the jar's manifest and add a layer with these
     // dependencies as entries. If Class-Path in the jar's manifest is not present then skip adding
@@ -130,12 +126,13 @@ public class JarProcessor {
     return layers;
   }
 
-  private static FileEntriesLayer.Builder addDirectoryContentsToLayer(
-      FileEntriesLayer.Builder builder,
+  private static FileEntriesLayer addDirectoryContentsToLayer(
+      String layerName,
       Path sourceRoot,
       Predicate<Path> pathFilter,
       AbsoluteUnixPath basePathInContainer)
       throws IOException {
+    FileEntriesLayer.Builder builder = FileEntriesLayer.builder().setName(layerName);
     new DirectoryWalker(sourceRoot)
         .filterRoot()
         .filter(path -> Files.isDirectory(path) || pathFilter.test(path))
@@ -145,6 +142,6 @@ public class JarProcessor {
                   basePathInContainer.resolve(sourceRoot.relativize(path));
               builder.addEntry(path, pathOnContainer);
             });
-    return builder;
+    return builder.build();
   }
 }

@@ -67,7 +67,6 @@ public class JarProcessorTest {
     Path destDir = temporaryFolder.newFolder().toPath();
     List<FileEntriesLayer> layers = JarProcessor.explodeStandardJar(standardJar, destDir);
 
-    // Validate that only two layers are created.
     assertThat(layers.size()).isEqualTo(2);
 
     FileEntriesLayer resourcesLayer = layers.get(0);
@@ -179,7 +178,6 @@ public class JarProcessorTest {
     Path destDir = temporaryFolder.newFolder().toPath();
     List<FileEntriesLayer> layers = JarProcessor.explodeStandardJar(standardJar, destDir);
 
-    // Validate that only two layers are created.
     assertThat(layers.size()).isEqualTo(2);
 
     FileEntriesLayer resourcesLayer = layers.get(0);
@@ -239,7 +237,6 @@ public class JarProcessorTest {
     Path destDir = temporaryFolder.newFolder().toPath();
     List<FileEntriesLayer> layers = JarProcessor.explodeStandardJar(standardJar, destDir);
 
-    // Validate that only two layers are created.
     assertThat(layers.size()).isEqualTo(2);
 
     FileEntriesLayer resourcesLayer = layers.get(0);

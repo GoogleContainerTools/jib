@@ -17,6 +17,7 @@ application {
 dependencies {
   implementation project(':jib-core')
   implementation project(':jib-plugins-common')
+
   implementation dependencyStrings.COMMONS_TEXT
   implementation dependencyStrings.JACKSON_DATAFORMAT_YAML
   implementation dependencyStrings.JACKSON_DATABIND
