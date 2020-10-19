@@ -52,10 +52,10 @@ import org.mockito.junit.MockitoRule;
 public class BuildFilesTest {
 
   @Rule public final TemporaryFolder tmp = new TemporaryFolder();
-  @Rule public MockitoRule rule = MockitoJUnit.rule();
+  @Rule public final MockitoRule rule = MockitoJUnit.rule();
 
-  @Mock ConsoleLogger consoleLogger;
-  @Mock JibCli jibCli;
+  @Mock private ConsoleLogger consoleLogger;
+  @Mock private JibCli jibCli;
 
   @Before
   public void setUp() {
