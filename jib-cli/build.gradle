@@ -25,6 +25,7 @@ dependencies {
   implementation dependencyStrings.PICOCLI
 
   testImplementation dependencyStrings.JUNIT
+  testImplementation dependencyStrings.JUNIT_PARAMS
   testImplementation dependencyStrings.TRUTH
   testImplementation dependencyStrings.TRUTH8
   testImplementation dependencyStrings.MOCKITO_CORE

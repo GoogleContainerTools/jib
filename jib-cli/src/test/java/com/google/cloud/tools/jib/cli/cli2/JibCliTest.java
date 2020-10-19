@@ -387,6 +387,8 @@ public class JibCliTest {
             {{"--username=x", "--password=x", "--to-username=x", "--to-password=x"}},
             {{"--username=x", "--password=x", "--to-credential-helper=x"}},
             {{"--username=x", "--password=x", "--from-credential-helper=x"}},
+            {{"--from-credential-helper=x", "--from-username=x", "--from-password=x"}},
+            {{"--to-credential-helper=x", "--to-password=x", "--to-username=x"}},
           });
     }
 
@@ -403,7 +405,7 @@ public class JibCliTest {
                       new JibCli(), ArrayUtils.addAll(requiredArgs, authArgs)));
       assertThat(meae)
           .hasMessageThat()
-          .containsMatch("^Error: (--credential-helper|\\[--username)");
+          .containsMatch("^Error: (--(from-|to-)?credential-helper|\\[--username)");
     }
   }
 }
