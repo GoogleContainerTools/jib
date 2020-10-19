@@ -73,7 +73,7 @@ public class DefaultCredentialRetrievers {
    *     CredentialRetriever}s
    * @return a new {@link DefaultCredentialRetrievers}
    */
-  static DefaultCredentialRetrievers init(CredentialRetrieverFactory credentialRetrieverFactory) {
+  public static DefaultCredentialRetrievers init(CredentialRetrieverFactory credentialRetrieverFactory) {
     return new DefaultCredentialRetrievers(
         credentialRetrieverFactory, System.getProperties(), System.getenv());
   }
