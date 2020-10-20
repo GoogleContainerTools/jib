@@ -89,7 +89,7 @@ public class Containerizers {
     return Containerizer.to(registryImage);
   }
 
-  static void applyConfiguration(Containerizer containerizer, JibCli buildOptions) {
+  private static void applyConfiguration(Containerizer containerizer, JibCli buildOptions) {
     containerizer.setToolName(VersionInfo.TOOL_NAME);
     containerizer.setToolVersion(VersionInfo.getVersionSimple());
 
@@ -109,7 +109,7 @@ public class Containerizers {
     buildOptions.getAdditionalTags().forEach(containerizer::withAdditionalTag);
   }
 
-  static void applyHandlers(Containerizer containerizer, ConsoleLogger consoleLogger) {
+  private static void applyHandlers(Containerizer containerizer, ConsoleLogger consoleLogger) {
     containerizer
         .addEventHandler(
             LogEvent.class,
