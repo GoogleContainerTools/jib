@@ -38,7 +38,6 @@ entries:
       - src: "project"
         dest: "/target/edac"
         excludes:
-          # equivalent to "**/excludedDir/**"
           - "**/excludedDir/**"
           - "**/excludedDir"
   - name: "excludes only wrong"
