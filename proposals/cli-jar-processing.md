@@ -3,7 +3,7 @@
 Relevant Issue: [#2796](https://github.com/GoogleContainerTools/jib/issues/2796)
 
 # Motivation 
-Allow users to containerize arbitrary jar files without having to integrate Jib into java build tools (maven and gradle).
+Allow users to containerize arbitrary jar files without having to integrate Jib into java build tools (maven and gradle) or use a `.yaml` jib cli buildfile.
 
 # Proposal Changes
 
@@ -21,8 +21,8 @@ The default mode for containerizing a jar. It will explode a jar into the follow
 
 ### Packaged Mode
 Achieved by calling `jib jar ${JAR_NAME}.jar --to ${TARGET_REGISTRY} --mode packaged`.
-This will result in the following layers on the container:
-- Dependencies:  Contains the dependencies derived from `Class-Path` in jar manifest. Note that this layer will not be created if `Class-Path` is not present in the manifest.
+It will result in the following layers on the container:
+- Dependencies Layer: Contains the dependencies derived from `Class-Path` in jar manifest. Note that this layer will not be created if `Class-Path` is not present in the manifest.
 - Jar Layer: Contains the original jar.
 
 **Entrypoint** : `java -jar ${JAR_NAME}.jar`
@@ -32,17 +32,17 @@ A Spring-Boot Fat Jar can be containerized in two modes, exploded or packaged.
 
 ### Exploded Mode
 Achieved by calling `jib jar ${JAR_NAME}.jar --to ${TARGET_REGISTRY}`
-The default mode for containerizing a jar. It will explode a jar into the following layers:  
-- Dependencies Layer: Contains dependencies derived from the `BOOT-INF/libs` directory in the jar.
-- Resources Layer: Contains resources parsed from the jar. Note that it will also include `MANIFEST.MF`.
-- Classes Layer: Contains classes parsed from the jar.
+The default mode for containerizing a jar. It will explode a jar according to what is specified in the `layers.idx` file of the jar, if present, or according to following format:
+- Dependencies Layer: Contains dependencies whose versions do not contain `SNAPSHOT`.
+- Spring-Boot-Loader Layer: Contains jar loader classes.
+- Snapshot-Dependencies Layer: Contains dependencies whose versions contain `SNAPSHOT`.
+- Resources Layer: Contains resources parsed from `BOOT-INF/classes/` in the jar and `META-INF/`.
+- Classes Layer: Contains classes parsed from `BOOT-INF/classes/` in the jar.
 
 **Entrypoint** : `java -cp . org.springframework.boot.loader.JarLauncher`
 
 ### Packaged Mode
 Achieved by calling `jib jar ${JAR_NAME}.jar --to ${TARGET_REGISTRY} --mode packaged`
-This will result in the following layers on the container: 
-- Dependencies Layer: Contains dependencies derived from the `BOOT-INF/libs` directory in the jar.
-- Jar Layer: Contains the original jar.
+It will containerize the jar as is. However, **note** that we highly recommend against using packaged mode for containerizing spring-boot fat jars. 
 
 **Entrypoint**: `java -jar ${JAR_NAME}.jar`
