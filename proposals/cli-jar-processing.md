@@ -33,9 +33,9 @@ A Spring-Boot Fat Jar can be containerized in two modes, exploded or packaged.
 ### Exploded Mode
 Achieved by calling `jib jar ${JAR_NAME}.jar --to ${TARGET_REGISTRY}`
 The default mode for containerizing a jar. It will explode a jar according to what is specified in the `layers.idx` file of the jar, if present, or according to following format:
-- Dependencies Layer: Contains dependencies whose versions do not contain `SNAPSHOT`.
+- Dependencies Layer: For a dependency whose version does not contain `SNAPSHOT`.
 - Spring-Boot-Loader Layer: Contains jar loader classes.
-- Snapshot-Dependencies Layer: Contains dependencies whose versions contain `SNAPSHOT`.
+- Snapshot-Dependencies Layer: For a dependency whose version contains `SNAPSHOT`.
 - Resources Layer: Contains resources parsed from `BOOT-INF/classes/` in the jar and `META-INF/`.
 - Classes Layer: Contains classes parsed from `BOOT-INF/classes/` in the jar.
 
