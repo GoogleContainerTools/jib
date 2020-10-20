@@ -25,6 +25,8 @@ import com.google.cloud.tools.jib.api.buildplan.ImageFormat;
 import com.google.cloud.tools.jib.api.buildplan.LayerObject;
 import com.google.cloud.tools.jib.api.buildplan.Platform;
 import com.google.cloud.tools.jib.api.buildplan.Port;
+import com.google.cloud.tools.jib.cli.cli2.JibCli;
+import com.google.cloud.tools.jib.plugins.common.logging.ConsoleLogger;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -38,13 +40,27 @@ import java.util.Map;
 import org.hamcrest.CoreMatchers;
 import org.hamcrest.MatcherAssert;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.mockito.Mock;
+import org.mockito.Mockito;
+import org.mockito.junit.MockitoJUnit;
+import org.mockito.junit.MockitoRule;
 
 public class BuildFilesTest {
 
   @Rule public final TemporaryFolder tmp = new TemporaryFolder();
+  @Rule public final MockitoRule rule = MockitoJUnit.rule();
+
+  @Mock private ConsoleLogger consoleLogger;
+  @Mock private JibCli jibCli;
+
+  @Before
+  public void setUp() {
+    Mockito.when(jibCli.getTemplateParameters()).thenReturn(ImmutableMap.of());
+  }
 
   @Test
   public void testToJibContainerBuilder_allProperties()
@@ -53,7 +69,7 @@ public class BuildFilesTest {
         Paths.get(Resources.getResource("buildfiles/projects/allProperties/jib.yaml").toURI());
     Path projectRoot = buildfile.getParent();
     JibContainerBuilder jibContainerBuilder =
-        BuildFiles.toJibContainerBuilder(projectRoot, buildfile, ImmutableMap.of());
+        BuildFiles.toJibContainerBuilder(projectRoot, buildfile, jibCli, consoleLogger);
 
     ContainerBuildPlan resolved = jibContainerBuilder.toContainerBuildPlan();
     Assert.assertEquals("ubuntu", resolved.getBaseImage());
@@ -93,7 +109,7 @@ public class BuildFilesTest {
     Path buildfile =
         Paths.get(Resources.getResource("buildfiles/projects/allDefaults/jib.yaml").toURI());
     JibContainerBuilder jibContainerBuilder =
-        BuildFiles.toJibContainerBuilder(buildfile.getParent(), buildfile, ImmutableMap.of());
+        BuildFiles.toJibContainerBuilder(buildfile.getParent(), buildfile, jibCli, consoleLogger);
 
     ContainerBuildPlan resolved = jibContainerBuilder.toContainerBuildPlan();
     Assert.assertEquals("scratch", resolved.getBaseImage());
@@ -116,15 +132,15 @@ public class BuildFilesTest {
     Path buildfile =
         Paths.get(Resources.getResource("buildfiles/projects/templating/valid.yaml").toURI());
 
-    JibContainerBuilder jibContainerBuilder =
-        BuildFiles.toJibContainerBuilder(
-            buildfile.getParent(),
-            buildfile,
+    Mockito.when(jibCli.getTemplateParameters())
+        .thenReturn(
             ImmutableMap.of(
                 "unused", "ignored", // keys that are defined but not used do not throw an error
                 "key", "templateKey",
                 "value", "templateValue",
                 "repeated", "repeatedValue"));
+    JibContainerBuilder jibContainerBuilder =
+        BuildFiles.toJibContainerBuilder(buildfile.getParent(), buildfile, jibCli, consoleLogger);
 
     ContainerBuildPlan resolved = jibContainerBuilder.toContainerBuildPlan();
     Map<String, String> expectedLabels =
@@ -146,7 +162,7 @@ public class BuildFilesTest {
         Paths.get(Resources.getResource("buildfiles/projects/templating/missingVar.yaml").toURI());
 
     try {
-      BuildFiles.toJibContainerBuilder(buildfile.getParent(), buildfile, ImmutableMap.of());
+      BuildFiles.toJibContainerBuilder(buildfile.getParent(), buildfile, jibCli, consoleLogger);
       Assert.fail();
     } catch (IllegalArgumentException iae) {
       MatcherAssert.assertThat(
@@ -160,11 +176,11 @@ public class BuildFilesTest {
     Path buildfile =
         Paths.get(Resources.getResource("buildfiles/projects/templating/multiLine.yaml").toURI());
 
-    JibContainerBuilder jibContainerBuilder =
-        BuildFiles.toJibContainerBuilder(
-            buildfile.getParent(),
-            buildfile,
+    Mockito.when(jibCli.getTemplateParameters())
+        .thenReturn(
             ImmutableMap.of("replace" + System.lineSeparator() + "this", "creationTime: 1234"));
+    JibContainerBuilder jibContainerBuilder =
+        BuildFiles.toJibContainerBuilder(buildfile.getParent(), buildfile, jibCli, consoleLogger);
     ContainerBuildPlan resolved = jibContainerBuilder.toContainerBuildPlan();
     Assert.assertEquals(Instant.ofEpochMilli(1234), resolved.getCreationTime());
   }
@@ -178,7 +194,7 @@ public class BuildFilesTest {
                 .toURI());
     Path projectRoot = buildfile.getParent().getParent();
     JibContainerBuilder jibContainerBuilder =
-        BuildFiles.toJibContainerBuilder(projectRoot, buildfile, ImmutableMap.of());
+        BuildFiles.toJibContainerBuilder(projectRoot, buildfile, jibCli, consoleLogger);
 
     ContainerBuildPlan resolved = jibContainerBuilder.toContainerBuildPlan();
     Assert.assertEquals(
