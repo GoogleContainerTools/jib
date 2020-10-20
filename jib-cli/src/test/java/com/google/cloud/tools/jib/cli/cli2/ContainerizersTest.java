@@ -48,7 +48,7 @@ public class ContainerizersTest {
   @Rule
   public final RestoreSystemProperties restoreSystemProperties = new RestoreSystemProperties();
 
-  @Mock ConsoleLogger consoleLogger;
+  @Mock private ConsoleLogger consoleLogger;
 
   @Test
   public void testApplyConfiguration_defaults()
