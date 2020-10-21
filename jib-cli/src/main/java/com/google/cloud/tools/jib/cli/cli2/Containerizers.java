@@ -27,7 +27,6 @@ import com.google.cloud.tools.jib.api.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.api.LogEvent;
 import com.google.cloud.tools.jib.api.RegistryImage;
 import com.google.cloud.tools.jib.api.TarImage;
-import com.google.cloud.tools.jib.cli.cli2.logging.CliLogger;
 import com.google.cloud.tools.jib.event.events.ProgressEvent;
 import com.google.cloud.tools.jib.event.progress.ProgressEventHandler;
 import com.google.cloud.tools.jib.frontend.CredentialRetrieverFactory;
@@ -46,14 +45,13 @@ public class Containerizers {
    * Create a Containerizer from a jibcli command line specification.
    *
    * @param buildOptions JibCli options
+   * @param logger a logger to inject into the build
    * @return a populated Containerizer
    * @throws InvalidImageReferenceException if the image reference could not be parsed
    * @throws FileNotFoundException if a credential helper file is not found
    */
-  public static Containerizer from(JibCli buildOptions)
+  public static Containerizer from(JibCli buildOptions, ConsoleLogger logger)
       throws InvalidImageReferenceException, FileNotFoundException {
-    ConsoleLogger logger =
-        CliLogger.newLogger(buildOptions.getVerbosity(), buildOptions.getConsoleOutput());
 
     Containerizer containerizer = create(buildOptions, logger);
 

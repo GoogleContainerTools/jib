@@ -19,6 +19,8 @@ package com.google.cloud.tools.jib.cli.cli2;
 import com.google.cloud.tools.jib.api.Containerizer;
 import com.google.cloud.tools.jib.api.JibContainerBuilder;
 import com.google.cloud.tools.jib.cli.buildfile.BuildFiles;
+import com.google.cloud.tools.jib.cli.cli2.logging.CliLogger;
+import com.google.cloud.tools.jib.plugins.common.logging.ConsoleLogger;
 import java.util.concurrent.Callable;
 import picocli.CommandLine;
 
@@ -36,12 +38,12 @@ public class Build implements Callable<Integer> {
     globalOptions.validate();
 
     try {
-      Containerizer containerizer = Containerizers.from(globalOptions);
+      ConsoleLogger logger =
+          CliLogger.newLogger(globalOptions.getVerbosity(), globalOptions.getConsoleOutput());
+      Containerizer containerizer = Containerizers.from(globalOptions, logger);
       JibContainerBuilder containerBuilder =
           BuildFiles.toJibContainerBuilder(
-              globalOptions.getContextRoot(),
-              globalOptions.getBuildFile(),
-              globalOptions.getTemplateParameters());
+              globalOptions.getContextRoot(), globalOptions.getBuildFile(), globalOptions, logger);
 
       containerBuilder.containerize(containerizer);
     } catch (Exception ex) {
