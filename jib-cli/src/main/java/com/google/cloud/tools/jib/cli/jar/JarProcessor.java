@@ -82,9 +82,8 @@ public class JarProcessor {
     List<FileEntriesLayer> layers = new ArrayList<>();
 
     // Get dependencies from Class-Path in the jar's manifest and add a layer each for non-snapshot
-    // and
-    // snapshot dependencies. If Class-Path is not present in the jar's manifest then skip adding a
-    // dependencies layer.
+    // and snapshot dependencies. If Class-Path is not present in the jar's manifest then skip
+    // adding a dependencies layer.
     JarFile jarFile = new JarFile(jarPath.toFile());
     String classPath =
         jarFile.getManifest().getMainAttributes().getValue(Attributes.Name.CLASS_PATH);
