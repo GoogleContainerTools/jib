@@ -33,11 +33,19 @@ entries:
         excludes:
           # equivalent to "**/excludedDir/**"
           - "**/excludedDir/"
+  - name: "exclude dir and contents"
+    files:
+      - src: "project"
+        dest: "/target/edac"
+        excludes:
+          - "**/excludedDir/**"
+          - "**/excludedDir"
   - name: "excludes only wrong"
     files:
       - src: "project"
         dest: "/target/eo"
         # this is not a safe excludes of directories
         # only excludes the directory, but doesn't match any of the file contents
+        # and in the end, it will be included anyway because its children are included
         excludes:
           - "**/excludedDir"
