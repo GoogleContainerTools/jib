@@ -90,16 +90,15 @@ public class JarProcessor {
     if (classPath != null) {
       Predicate<String> isSnapshotDependency = name -> name.contains("SNAPSHOT");
       Predicate<String> isNotSnapshotDependency = isSnapshotDependency.negate();
+      List<String> allDependencies = Splitter.onPattern("\\s+").splitToList(classPath.trim());
       List<Path> nonSnapshotDependencies =
-          Splitter.onPattern("\\s+")
-              .splitToList(classPath.trim())
+          allDependencies
               .stream()
               .filter(isNotSnapshotDependency)
               .map(Paths::get)
               .collect(Collectors.toList());
       List<Path> snapshotDependencies =
-          Splitter.onPattern("\\s+")
-              .splitToList(classPath.trim())
+          allDependencies
               .stream()
               .filter(isSnapshotDependency)
               .map(Paths::get)
