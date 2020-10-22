@@ -111,7 +111,7 @@ public class JarProcessorTest {
     FileEntriesLayer classesLayer = layers.get(3);
 
     // Validate dependencies layer.
-    assertThat(nonSnapshotDependenciesLayer.getName()).isEqualTo("nonSnapshotDependencies");
+    assertThat(nonSnapshotDependenciesLayer.getName()).isEqualTo("dependencies");
     assertThat(
             nonSnapshotDependenciesLayer
                 .getEntries()
@@ -123,7 +123,7 @@ public class JarProcessorTest {
                 AbsoluteUnixPath.get("/app/dependencies/dependency1"),
                 AbsoluteUnixPath.get("/app/dependencies/dependency2"),
                 AbsoluteUnixPath.get("/app/dependencies/directory/dependency4")));
-    assertThat(snapshotDependenciesLayer.getName()).isEqualTo("snapshotDependencies");
+    assertThat(snapshotDependenciesLayer.getName()).isEqualTo("snapshot dependencies");
     assertThat(
             snapshotDependenciesLayer
                 .getEntries()

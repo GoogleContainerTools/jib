@@ -91,24 +91,19 @@ public class JarProcessor {
     }
 
     if (classPath != null) {
-      Predicate<String> isSnapshotDependency = name -> name.contains("SNAPSHOT");
-      Predicate<String> isNotSnapshotDependency = isSnapshotDependency.negate();
+      Predicate<String> isSnapshot = name -> name.contains("SNAPSHOT");
       List<String> allDependencies = Splitter.onPattern("\\s+").splitToList(classPath.trim());
       List<Path> nonSnapshotDependencies =
           allDependencies
               .stream()
-              .filter(isNotSnapshotDependency)
+              .filter(isSnapshot.negate())
               .map(Paths::get)
               .collect(Collectors.toList());
       List<Path> snapshotDependencies =
-          allDependencies
-              .stream()
-              .filter(isSnapshotDependency)
-              .map(Paths::get)
-              .collect(Collectors.toList());
+          allDependencies.stream().filter(isSnapshot).map(Paths::get).collect(Collectors.toList());
       if (!nonSnapshotDependencies.isEmpty()) {
         FileEntriesLayer.Builder nonSnapshotDependenciesLayerBuilder =
-            FileEntriesLayer.builder().setName("nonSnapshotDependencies");
+            FileEntriesLayer.builder().setName("dependencies");
         nonSnapshotDependencies.forEach(
             path ->
                 nonSnapshotDependenciesLayerBuilder.addEntry(
@@ -117,7 +112,7 @@ public class JarProcessor {
       }
       if (!snapshotDependencies.isEmpty()) {
         FileEntriesLayer.Builder snapshotDependenciesLayerBuilder =
-            FileEntriesLayer.builder().setName("snapshotDependencies");
+            FileEntriesLayer.builder().setName("snapshot dependencies");
         snapshotDependencies.forEach(
             path ->
                 snapshotDependenciesLayerBuilder.addEntry(
