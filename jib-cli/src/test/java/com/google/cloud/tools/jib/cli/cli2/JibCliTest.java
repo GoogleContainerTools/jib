@@ -391,4 +391,24 @@ public class JibCliTest {
         .hasMessageThat()
         .containsMatch("^Error: (--(from-|to-)?credential-helper|\\[--username)");
   }
+
+  @Test
+  public void testValidate_nameMissingFail() {
+    JibCli jibCli = CommandLine.populateCommand(new JibCli(), "--target=tar://sometar.tar");
+
+    CommandLine.ParameterException pex =
+        assertThrows(CommandLine.ParameterException.class, jibCli::validate);
+    assertThat(pex.getMessage())
+        .isEqualTo("Missing option: --name must be specified when using --target=tar://....");
+  }
+
+  @Test
+  public void testValidate_pass() {
+    JibCli jibCli =
+        CommandLine.populateCommand(
+            new JibCli(), "--target=tar://sometar.tar", "--name=test.io/test/test");
+
+    jibCli.validate();
+    // pass
+  }
 }

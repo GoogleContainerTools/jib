@@ -42,10 +42,10 @@ public class CliLogger {
   @VisibleForTesting
   static ConsoleLogger newLogger(
       CliLogger cliLogger, boolean isRichConsole, SingleThreadedExecutor executor) {
+    // rich logger will use an explicit progress event handler
     ConsoleLoggerBuilder builder =
         isRichConsole
-            ? ConsoleLoggerBuilder.rich(
-                executor, true) // rich logger will use an explicit progress handler
+            ? ConsoleLoggerBuilder.rich(executor, true)
             : ConsoleLoggerBuilder.plain(executor).progress(cliLogger::lifecycle);
     builder.error(cliLogger::error);
     builder.warn(cliLogger::warn);
