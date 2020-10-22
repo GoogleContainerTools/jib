@@ -59,11 +59,12 @@ public class JarProcessor {
    * @throws IOException if I/O error occurs when opening the file
    */
   public static JarType determineJarType(Path jarPath) throws IOException {
-    JarFile jarFile = new JarFile(jarPath.toFile());
-    if (jarFile.getEntry("BOOT-INF") != null) {
-      return JarType.SPRING_BOOT;
+    try (JarFile jarFile = new JarFile(jarPath.toFile())) {
+      if (jarFile.getEntry("BOOT-INF") != null) {
+        return JarType.SPRING_BOOT;
+      }
+      return JarType.STANDARD;
     }
-    return JarType.STANDARD;
   }
 
   /**
@@ -84,9 +85,10 @@ public class JarProcessor {
     // Get dependencies from Class-Path in the jar's manifest and add a layer with these
     // dependencies as entries. If Class-Path is not present in the jar's manifest then skip adding
     // a dependencies layer.
-    JarFile jarFile = new JarFile(jarPath.toFile());
-    String classPath =
-        jarFile.getManifest().getMainAttributes().getValue(Attributes.Name.CLASS_PATH);
+    String classPath = null;
+    try (JarFile jarFile = new JarFile(jarPath.toFile())) {
+      classPath = jarFile.getManifest().getMainAttributes().getValue(Attributes.Name.CLASS_PATH);
+    }
     if (classPath != null) {
       List<Path> dependencies =
           Splitter.onPattern("\\s+")
