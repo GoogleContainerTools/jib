@@ -25,6 +25,7 @@ import com.google.cloud.tools.jib.api.ContainerizerTestProxy;
 import com.google.cloud.tools.jib.api.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.configuration.ImageConfiguration;
 import com.google.cloud.tools.jib.global.JibSystemProperties;
+import com.google.cloud.tools.jib.plugins.common.logging.ConsoleLogger;
 import com.google.common.collect.ImmutableSet;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -34,14 +35,20 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.contrib.java.lang.system.RestoreSystemProperties;
 import org.junit.rules.TemporaryFolder;
+import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnit;
+import org.mockito.junit.MockitoRule;
 import picocli.CommandLine;
 
 public class ContainerizersTest {
 
   @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
+  @Rule public final MockitoRule mockitoRule = MockitoJUnit.rule();
   // Containerizers will add system properties based on cli properties
   @Rule
   public final RestoreSystemProperties restoreSystemProperties = new RestoreSystemProperties();
+
+  @Mock private ConsoleLogger consoleLogger;
 
   @Test
   public void testApplyConfiguration_defaults()
@@ -49,7 +56,7 @@ public class ContainerizersTest {
     JibCli buildOptions = CommandLine.populateCommand(new JibCli(), "-t", "test-image-ref");
 
     ContainerizerTestProxy containerizer =
-        new ContainerizerTestProxy(Containerizers.from(buildOptions));
+        new ContainerizerTestProxy(Containerizers.from(buildOptions, consoleLogger));
 
     assertThat(Boolean.getBoolean(JibSystemProperties.SEND_CREDENTIALS_OVER_HTTP)).isFalse();
     assertThat(Boolean.getBoolean(JibSystemProperties.SERIALIZE)).isFalse();
@@ -80,7 +87,7 @@ public class ContainerizersTest {
             "--serialize");
 
     ContainerizerTestProxy containerizer =
-        new ContainerizerTestProxy(Containerizers.from(buildOptions));
+        new ContainerizerTestProxy(Containerizers.from(buildOptions, consoleLogger));
 
     assertThat(Boolean.getBoolean(JibSystemProperties.SEND_CREDENTIALS_OVER_HTTP)).isTrue();
     assertThat(Boolean.getBoolean(JibSystemProperties.SERIALIZE)).isTrue();
@@ -97,7 +104,7 @@ public class ContainerizersTest {
     JibCli buildOptions =
         CommandLine.populateCommand(new JibCli(), "-t", "docker://gcr.io/test/test-image-ref");
     ContainerizerTestProxy containerizer =
-        new ContainerizerTestProxy(Containerizers.from(buildOptions));
+        new ContainerizerTestProxy(Containerizers.from(buildOptions, consoleLogger));
 
     assertThat(containerizer.getDescription()).isEqualTo("Building image to Docker daemon");
     ImageConfiguration config = containerizer.getImageConfiguration();
@@ -119,7 +126,7 @@ public class ContainerizersTest {
             "--name",
             "gcr.io/test/test-image-ref");
     ContainerizerTestProxy containerizer =
-        new ContainerizerTestProxy(Containerizers.from(buildOptions));
+        new ContainerizerTestProxy(Containerizers.from(buildOptions, consoleLogger));
 
     assertThat(containerizer.getDescription()).isEqualTo("Building image tarball");
     ImageConfiguration config = containerizer.getImageConfiguration();
@@ -135,7 +142,7 @@ public class ContainerizersTest {
     JibCli buildOptions =
         CommandLine.populateCommand(new JibCli(), "-t", "registry://gcr.io/test/test-image-ref");
     ContainerizerTestProxy containerizer =
-        new ContainerizerTestProxy(Containerizers.from(buildOptions));
+        new ContainerizerTestProxy(Containerizers.from(buildOptions, consoleLogger));
 
     // description from Containerizer.java
     assertThat(containerizer.getDescription()).isEqualTo("Building and pushing image");
