@@ -82,27 +82,43 @@ public class JarProcessor {
     ZipUtil.unzip(jarPath, localExplodedJarRoot);
     List<FileEntriesLayer> layers = new ArrayList<>();
 
-    // Get dependencies from Class-Path in the jar's manifest and add a layer with these
-    // dependencies as entries. If Class-Path is not present in the jar's manifest then skip adding
-    // a dependencies layer.
+    // Get dependencies from Class-Path in the jar's manifest and add a layer each for non-snapshot
+    // and snapshot dependencies. If Class-Path is not present in the jar's manifest then skip
+    // adding a dependencies layer.
     String classPath = null;
     try (JarFile jarFile = new JarFile(jarPath.toFile())) {
       classPath = jarFile.getManifest().getMainAttributes().getValue(Attributes.Name.CLASS_PATH);
     }
+
     if (classPath != null) {
-      List<Path> dependencies =
-          Splitter.onPattern("\\s+")
-              .splitToList(classPath.trim())
+      Predicate<String> isSnapshot = name -> name.contains("SNAPSHOT");
+      List<String> allDependencies = Splitter.onPattern("\\s+").splitToList(classPath.trim());
+      List<Path> nonSnapshotDependencies =
+          allDependencies
               .stream()
+              .filter(isSnapshot.negate())
               .map(Paths::get)
               .collect(Collectors.toList());
-      FileEntriesLayer.Builder dependenciesLayerBuilder =
-          FileEntriesLayer.builder().setName("dependencies");
-      dependencies.forEach(
-          path ->
-              dependenciesLayerBuilder.addEntry(
-                  path, APP_ROOT.resolve(RelativeUnixPath.get("dependencies")).resolve(path)));
-      layers.add(dependenciesLayerBuilder.build());
+      List<Path> snapshotDependencies =
+          allDependencies.stream().filter(isSnapshot).map(Paths::get).collect(Collectors.toList());
+      if (!nonSnapshotDependencies.isEmpty()) {
+        FileEntriesLayer.Builder nonSnapshotDependenciesLayerBuilder =
+            FileEntriesLayer.builder().setName("dependencies");
+        nonSnapshotDependencies.forEach(
+            path ->
+                nonSnapshotDependenciesLayerBuilder.addEntry(
+                    path, APP_ROOT.resolve(RelativeUnixPath.get("dependencies")).resolve(path)));
+        layers.add(nonSnapshotDependenciesLayerBuilder.build());
+      }
+      if (!snapshotDependencies.isEmpty()) {
+        FileEntriesLayer.Builder snapshotDependenciesLayerBuilder =
+            FileEntriesLayer.builder().setName("snapshot dependencies");
+        snapshotDependencies.forEach(
+            path ->
+                snapshotDependenciesLayerBuilder.addEntry(
+                    path, APP_ROOT.resolve(RelativeUnixPath.get("dependencies")).resolve(path)));
+        layers.add(snapshotDependenciesLayerBuilder.build());
+      }
     }
 
     Predicate<Path> isClassFile = path -> path.getFileName().toString().endsWith(".class");
