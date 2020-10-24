@@ -22,6 +22,7 @@ import com.google.cloud.tools.jib.api.buildplan.RelativeUnixPath;
 import com.google.cloud.tools.jib.filesystem.DirectoryWalker;
 import com.google.cloud.tools.jib.plugins.common.ZipUtil;
 import com.google.common.base.Splitter;
+import com.google.common.collect.ImmutableList;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -37,6 +38,10 @@ import java.util.stream.Collectors;
 public class JarProcessor {
 
   private static final AbsoluteUnixPath APP_ROOT = AbsoluteUnixPath.get("/app");
+  private static final String CLASSES = "classes";
+  private static final String RESOURCES = "resources";
+  private static final String DEPENDENCIES = "dependencies";
+  private static final String SNAPSHOT_DEPENDENCIES = "snapshot dependencies";
 
   /**
    * Jar Type.
@@ -89,7 +94,6 @@ public class JarProcessor {
     try (JarFile jarFile = new JarFile(jarPath.toFile())) {
       classPath = jarFile.getManifest().getMainAttributes().getValue(Attributes.Name.CLASS_PATH);
     }
-
     if (classPath != null) {
       Predicate<String> isSnapshot = name -> name.contains("SNAPSHOT");
       List<String> allDependencies = Splitter.onPattern("\\s+").splitToList(classPath.trim());
@@ -103,7 +107,7 @@ public class JarProcessor {
           allDependencies.stream().filter(isSnapshot).map(Paths::get).collect(Collectors.toList());
       if (!nonSnapshotDependencies.isEmpty()) {
         FileEntriesLayer.Builder nonSnapshotDependenciesLayerBuilder =
-            FileEntriesLayer.builder().setName("dependencies");
+            FileEntriesLayer.builder().setName(DEPENDENCIES);
         nonSnapshotDependencies.forEach(
             path ->
                 nonSnapshotDependenciesLayerBuilder.addEntry(
@@ -112,7 +116,7 @@ public class JarProcessor {
       }
       if (!snapshotDependencies.isEmpty()) {
         FileEntriesLayer.Builder snapshotDependenciesLayerBuilder =
-            FileEntriesLayer.builder().setName("snapshot dependencies");
+            FileEntriesLayer.builder().setName(SNAPSHOT_DEPENDENCIES);
         snapshotDependencies.forEach(
             path ->
                 snapshotDependenciesLayerBuilder.addEntry(
@@ -129,13 +133,13 @@ public class JarProcessor {
     // file's original project structure.
     FileEntriesLayer classesLayer =
         addDirectoryContentsToLayer(
-            "classes",
+            CLASSES,
             localExplodedJarRoot,
             isClassFile,
             APP_ROOT.resolve(RelativeUnixPath.get("explodedJar")));
     FileEntriesLayer resourcesLayer =
         addDirectoryContentsToLayer(
-            "resources",
+            RESOURCES,
             localExplodedJarRoot,
             isResourceFile,
             APP_ROOT.resolve(RelativeUnixPath.get("explodedJar")));
@@ -143,6 +147,42 @@ public class JarProcessor {
     layers.add(resourcesLayer);
     layers.add(classesLayer);
     return layers;
+  }
+
+  /**
+   * Compute the entrypoint for a standard jar in exploded mode.
+   *
+   * @param jarPath path to jar file
+   * @param tempDirPath path to temporary jib local directory
+   * @param layers list of {@link FileEntriesLayer}
+   * @return list of {@link String} representing entrypoint
+   * @throws IOException if I/O error occurs when opening the jar file or if temporary directory
+   *     provided doesn't exist
+   * @throws IllegalArgumentException if main class is not found in the jar manifest
+   */
+  public static ImmutableList<String> computeEntrypoint_explodedStandard(
+      Path jarPath, Path tempDirPath, List<FileEntriesLayer> layers)
+      throws IOException, IllegalStateException {
+    Path localExplodedJarRoot = tempDirPath;
+    ZipUtil.unzip(jarPath, localExplodedJarRoot);
+
+    String mainClass = null;
+    try (JarFile jarFile = new JarFile(jarPath.toFile())) {
+      mainClass = jarFile.getManifest().getMainAttributes().getValue(Attributes.Name.MAIN_CLASS);
+    }
+    if (mainClass == null) {
+      throw new IllegalArgumentException("Main-Class not found in jar's manifest.");
+    }
+    List<String> classpath = new ArrayList<>();
+    for (FileEntriesLayer layer : layers) {
+      if (layer.getName().equals(DEPENDENCIES) || layer.getName().equals(SNAPSHOT_DEPENDENCIES)) {
+        classpath.add(APP_ROOT.resolve("dependencies").toString());
+        break;
+      }
+    }
+    classpath.add(APP_ROOT.resolve("explodedJar").toString());
+    String classPathString = String.join(":", classpath);
+    return ImmutableList.of("java", "-cp", classPathString, mainClass);
   }
 
   private static FileEntriesLayer addDirectoryContentsToLayer(

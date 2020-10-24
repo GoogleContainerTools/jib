@@ -17,6 +17,7 @@
 package com.google.cloud.tools.jib.cli.jar;
 
 import static com.google.common.truth.Truth.assertThat;
+import static org.junit.Assert.assertThrows;
 
 import com.google.cloud.tools.jib.api.buildplan.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.api.buildplan.FileEntriesLayer;
@@ -280,5 +281,47 @@ public class JarProcessorTest {
             AbsoluteUnixPath.get("/app/explodedJar/META-INF"),
             AbsoluteUnixPath.get("/app/explodedJar/class1.class"),
             AbsoluteUnixPath.get("/app/explodedJar/class2.class"));
+  }
+
+  @Test
+  public void testExplodeMode_standard_computeEntrypoint_allLayersPresent()
+      throws IOException, URISyntaxException {
+    Path standardJar =
+        Paths.get(Resources.getResource(STANDARD_JAR_WITH_CLASS_PATH_MANIFEST).toURI());
+    Path destDir = temporaryFolder.newFolder().toPath();
+    List<FileEntriesLayer> layers = JarProcessor.explodeStandardJar(standardJar, destDir);
+    ImmutableList<String> actualEntrypoint =
+        JarProcessor.computeEntrypoint_explodedStandard(standardJar, destDir, layers);
+
+    assertThat(actualEntrypoint)
+        .isEqualTo(
+            ImmutableList.of("java", "-cp", "/app/dependencies:/app/explodedJar", "HelloWorld"));
+  }
+
+  @Test
+  public void testExplodedMode_standard_computeEntrypoint_noDependenciesLayers()
+      throws IOException, URISyntaxException {
+    Path standardJar =
+        Paths.get(Resources.getResource(STANDARD_JAR_WITHOUT_CLASS_PATH_MANIFEST).toURI());
+    Path destDir = temporaryFolder.newFolder().toPath();
+    List<FileEntriesLayer> layers = JarProcessor.explodeStandardJar(standardJar, destDir);
+    ImmutableList<String> actualEntrypoint =
+        JarProcessor.computeEntrypoint_explodedStandard(standardJar, destDir, layers);
+
+    assertThat(actualEntrypoint)
+        .isEqualTo(ImmutableList.of("java", "-cp", "/app/explodedJar", "HelloWorld"));
+  }
+
+  @Test
+  public void testExplodedMode_standard_computeEntrypoint_noMainClass()
+      throws IOException, URISyntaxException {
+    Path standardJar = Paths.get(Resources.getResource(STANDARD_JAR_EMPTY).toURI());
+    Path destDir = temporaryFolder.newFolder().toPath();
+    List<FileEntriesLayer> layers = JarProcessor.explodeStandardJar(standardJar, destDir);
+    IllegalArgumentException ex =
+        assertThrows(
+            IllegalArgumentException.class,
+            () -> JarProcessor.computeEntrypoint_explodedStandard(standardJar, destDir, layers));
+    assertThat(ex).hasMessageThat().isEqualTo("Main-Class not found in jar's manifest.");
   }
 }
