@@ -288,7 +288,7 @@ public class JarProcessorTest {
       throws IOException, URISyntaxException {
     Path standardJar =
         Paths.get(Resources.getResource(STANDARD_JAR_WITH_CLASS_PATH_MANIFEST).toURI());
-    Path destDir = temporaryFolder.newFolder().toPath();
+    Path destDir = temporaryFolder.getRoot().toPath();
     List<FileEntriesLayer> layers = JarProcessor.explodeStandardJar(standardJar, destDir);
     ImmutableList<String> actualEntrypoint =
         JarProcessor.computeEntrypointForExplodedStandard(standardJar, destDir, layers);
