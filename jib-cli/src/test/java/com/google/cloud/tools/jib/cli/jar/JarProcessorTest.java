@@ -291,11 +291,11 @@ public class JarProcessorTest {
     Path destDir = temporaryFolder.newFolder().toPath();
     List<FileEntriesLayer> layers = JarProcessor.explodeStandardJar(standardJar, destDir);
     ImmutableList<String> actualEntrypoint =
-        JarProcessor.computeEntrypoint_explodedStandard(standardJar, destDir, layers);
+        JarProcessor.computeEntrypointForExplodedStandard(standardJar, destDir, layers);
 
     assertThat(actualEntrypoint)
         .isEqualTo(
-            ImmutableList.of("java", "-cp", "/app/dependencies:/app/explodedJar", "HelloWorld"));
+            ImmutableList.of("java", "-cp", "/app/explodedJar:/app/dependencies/*", "HelloWorld"));
   }
 
   @Test
@@ -303,25 +303,29 @@ public class JarProcessorTest {
       throws IOException, URISyntaxException {
     Path standardJar =
         Paths.get(Resources.getResource(STANDARD_JAR_WITHOUT_CLASS_PATH_MANIFEST).toURI());
-    Path destDir = temporaryFolder.newFolder().toPath();
+    Path destDir = temporaryFolder.getRoot().toPath();
     List<FileEntriesLayer> layers = JarProcessor.explodeStandardJar(standardJar, destDir);
     ImmutableList<String> actualEntrypoint =
-        JarProcessor.computeEntrypoint_explodedStandard(standardJar, destDir, layers);
+        JarProcessor.computeEntrypointForExplodedStandard(standardJar, destDir, layers);
 
     assertThat(actualEntrypoint)
-        .isEqualTo(ImmutableList.of("java", "-cp", "/app/explodedJar", "HelloWorld"));
+        .isEqualTo(
+            ImmutableList.of("java", "-cp", "/app/explodedJar:/app/dependencies/*", "HelloWorld"));
   }
 
   @Test
   public void testExplodedMode_standard_computeEntrypoint_noMainClass()
       throws IOException, URISyntaxException {
     Path standardJar = Paths.get(Resources.getResource(STANDARD_JAR_EMPTY).toURI());
-    Path destDir = temporaryFolder.newFolder().toPath();
+    Path destDir = temporaryFolder.getRoot().toPath();
     List<FileEntriesLayer> layers = JarProcessor.explodeStandardJar(standardJar, destDir);
     IllegalArgumentException ex =
         assertThrows(
             IllegalArgumentException.class,
-            () -> JarProcessor.computeEntrypoint_explodedStandard(standardJar, destDir, layers));
-    assertThat(ex).hasMessageThat().isEqualTo("Main-Class not found in jar's manifest.");
+            () -> JarProcessor.computeEntrypointForExplodedStandard(standardJar, destDir, layers));
+    assertThat(ex)
+        .hasMessageThat()
+        .isEqualTo(
+            "`Main-Class:` attribute to define an application main class not defined in the input Jar's manifest (`META-INF/MANIFEST.MF` in the JAR).");
   }
 }

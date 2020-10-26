@@ -81,7 +81,7 @@ public class JarProcessor {
    * @throws IOException if I/O error occurs when opening the jar file or if temporary directory
    *     provided doesn't exist
    */
-  public static List<FileEntriesLayer> explodeStandardJar(Path jarPath, Path tempDirPath)
+  protected static List<FileEntriesLayer> explodeStandardJar(Path jarPath, Path tempDirPath)
       throws IOException {
     Path localExplodedJarRoot = tempDirPath;
     ZipUtil.unzip(jarPath, localExplodedJarRoot);
@@ -150,7 +150,7 @@ public class JarProcessor {
   }
 
   /**
-   * Compute the entrypoint for a standard jar in exploded mode.
+   * Computes the entrypoint for a standard jar in exploded mode.
    *
    * @param jarPath path to jar file
    * @param tempDirPath path to temporary jib local directory
@@ -158,11 +158,9 @@ public class JarProcessor {
    * @return list of {@link String} representing entrypoint
    * @throws IOException if I/O error occurs when opening the jar file or if temporary directory
    *     provided doesn't exist
-   * @throws IllegalArgumentException if main class is not found in the jar manifest
    */
-  public static ImmutableList<String> computeEntrypoint_explodedStandard(
-      Path jarPath, Path tempDirPath, List<FileEntriesLayer> layers)
-      throws IOException, IllegalStateException {
+  protected static ImmutableList<String> computeEntrypointForExplodedStandard(
+      Path jarPath, Path tempDirPath, List<FileEntriesLayer> layers) throws IOException {
     Path localExplodedJarRoot = tempDirPath;
     ZipUtil.unzip(jarPath, localExplodedJarRoot);
 
@@ -171,18 +169,11 @@ public class JarProcessor {
       mainClass = jarFile.getManifest().getMainAttributes().getValue(Attributes.Name.MAIN_CLASS);
     }
     if (mainClass == null) {
-      throw new IllegalArgumentException("Main-Class not found in jar's manifest.");
+      throw new IllegalArgumentException(
+          "`Main-Class:` attribute to define an application main class not defined in the input Jar's manifest (`META-INF/MANIFEST.MF` in the JAR).");
     }
-    List<String> classpath = new ArrayList<>();
-    for (FileEntriesLayer layer : layers) {
-      if (layer.getName().equals(DEPENDENCIES) || layer.getName().equals(SNAPSHOT_DEPENDENCIES)) {
-        classpath.add(APP_ROOT.resolve("dependencies").toString());
-        break;
-      }
-    }
-    classpath.add(APP_ROOT.resolve("explodedJar").toString());
-    String classPathString = String.join(":", classpath);
-    return ImmutableList.of("java", "-cp", classPathString, mainClass);
+    String classpath = APP_ROOT + "/explodedJar:" + APP_ROOT + "/dependencies/*";
+    return ImmutableList.of("java", "-cp", classpath, mainClass);
   }
 
   private static FileEntriesLayer addDirectoryContentsToLayer(
