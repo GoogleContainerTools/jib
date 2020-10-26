@@ -146,6 +146,8 @@ public class PluginConfigurationProcessorTest {
                 Mockito.any(JavaContainerBuilder.class), Mockito.any(ContainerizingMode.class)))
         .thenReturn(Jib.from("base"));
     Mockito.when(projectProperties.isOffline()).thenReturn(false);
+    Mockito.when(projectProperties.getDependencies())
+        .thenReturn(Arrays.asList(Paths.get("/repo/foo-1.jar"), Paths.get("/home/libs/bar-2.jar")));
 
     Mockito.when(inferredAuthProvider.inferAuth(Mockito.any())).thenReturn(Optional.empty());
   }
@@ -161,7 +163,11 @@ public class PluginConfigurationProcessorTest {
     BuildContext buildContext = getBuildContext(processCommonConfiguration());
 
     Assert.assertEquals(
-        Arrays.asList("java", "-cp", "/app/resources:/app/classes:/app/libs/*", "java.lang.Object"),
+        Arrays.asList(
+            "java",
+            "-cp",
+            "/app/resources:/app/classes:/app/libs/foo-1.jar:/app/libs/bar-2.jar",
+            "java.lang.Object"),
         buildContext.getContainerConfiguration().getEntrypoint());
 
     Mockito.verify(containerizer)
@@ -288,17 +294,35 @@ public class PluginConfigurationProcessorTest {
       throws MainClassInferenceException, InvalidAppRootException, IOException,
           InvalidContainerizingModeException {
     Assert.assertEquals(
-        Arrays.asList("java", "-cp", "/app/resources:/app/classes:/app/libs/*", "java.lang.Object"),
+        Arrays.asList(
+            "java",
+            "-cp",
+            "/app/resources:/app/classes:/app/libs/foo-1.jar:/app/libs/bar-2.jar",
+            "java.lang.Object"),
         PluginConfigurationProcessor.computeEntrypoint(rawConfiguration, projectProperties));
   }
 
   @Test
-  public void testComputeEntrypoint_exploded()
+  public void testComputeEntrypoint_packaged()
       throws MainClassInferenceException, InvalidAppRootException, IOException,
           InvalidContainerizingModeException {
     Mockito.when(rawConfiguration.getContainerizingMode()).thenReturn("packaged");
     Assert.assertEquals(
-        Arrays.asList("java", "-cp", "/app/classpath/*:/app/libs/*", "java.lang.Object"),
+        Arrays.asList(
+            "java",
+            "-cp",
+            "/app/classpath/*:/app/libs/foo-1.jar:/app/libs/bar-2.jar",
+            "java.lang.Object"),
+        PluginConfigurationProcessor.computeEntrypoint(rawConfiguration, projectProperties));
+  }
+
+  @Test
+  public void testComputeEntrypoint_useWildcardForLibraryClasspath()
+      throws MainClassInferenceException, InvalidAppRootException, IOException,
+          InvalidContainerizingModeException {
+    System.setProperty("jib.useWildcardForDependencyClasspath", "true");
+    Assert.assertEquals(
+        Arrays.asList("java", "-cp", "/app/resources:/app/classes:/app/libs/*", "java.lang.Object"),
         PluginConfigurationProcessor.computeEntrypoint(rawConfiguration, projectProperties));
   }
 
@@ -333,7 +357,11 @@ public class PluginConfigurationProcessorTest {
     BuildContext buildContext = getBuildContext(processCommonConfiguration());
 
     Assert.assertEquals(
-        Arrays.asList("java", "-cp", "/app/resources:/app/classes:/app/libs/*", "java.lang.Object"),
+        Arrays.asList(
+            "java",
+            "-cp",
+            "/app/resources:/app/classes:/app/libs/foo-1.jar:/app/libs/bar-2.jar",
+            "java.lang.Object"),
         buildContext.getContainerConfiguration().getEntrypoint());
 
     ArgumentMatcher<LogEvent> isLogWarn = logEvent -> logEvent.getLevel() == LogEvent.Level.WARN;
@@ -357,7 +385,10 @@ public class PluginConfigurationProcessorTest {
 
     Assert.assertEquals(
         Arrays.asList(
-            "java", "-cp", "/foo:/app/resources:/app/classes:/app/libs/*", "java.lang.Object"),
+            "java",
+            "-cp",
+            "/foo:/app/resources:/app/classes:/app/libs/foo-1.jar:/app/libs/bar-2.jar",
+            "java.lang.Object"),
         buildContext.getContainerConfiguration().getEntrypoint());
 
     ArgumentMatcher<LogEvent> isLogWarn = logEvent -> logEvent.getLevel() == LogEvent.Level.WARN;
@@ -469,7 +500,10 @@ public class PluginConfigurationProcessorTest {
 
     Assert.assertEquals(
         Arrays.asList(
-            "java", "-cp", "/my/app/resources:/my/app/classes:/my/app/libs/*", "java.lang.Object"),
+            "java",
+            "-cp",
+            "/my/app/resources:/my/app/classes:/my/app/libs/foo-1.jar:/my/app/libs/bar-2.jar",
+            "java.lang.Object"),
         buildContext.getContainerConfiguration().getEntrypoint());
   }
 

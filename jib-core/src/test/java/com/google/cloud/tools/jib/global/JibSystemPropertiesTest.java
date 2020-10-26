@@ -166,4 +166,16 @@ public class JibSystemPropertiesTest {
     System.clearProperty(JibSystemProperties.SKIP_EXISTING_IMAGES);
     Assert.assertFalse(JibSystemProperties.skipExistingImages());
   }
+
+  @Test
+  public void testUseWildcardForDependencyClasspath_undefined() {
+    System.clearProperty(JibSystemProperties.USE_WILDCARD_FOR_DEPENDENCY_CLASSPATH);
+    Assert.assertFalse(JibSystemProperties.useWildcardForDependencyClasspath());
+  }
+
+  @Test
+  public void testUseWildcardForDependencyClasspath() {
+    System.setProperty(JibSystemProperties.USE_WILDCARD_FOR_DEPENDENCY_CLASSPATH, "true");
+    Assert.assertTrue(JibSystemProperties.useWildcardForDependencyClasspath());
+  }
 }

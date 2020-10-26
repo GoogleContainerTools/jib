@@ -48,7 +48,7 @@ import java.nio.file.Paths;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.StringJoiner;
@@ -100,10 +100,12 @@ public class GradleProjectPropertiesTest {
   /** Implementation of {@link FileCollection} that just holds a set of {@link File}s. */
   private static class TestFileCollection extends AbstractFileCollection {
 
-    private final Set<File> files;
+    private final Set<File> files = new LinkedHashSet<>();
 
     private TestFileCollection(Set<Path> files) {
-      this.files = files.stream().map(Path::toFile).collect(Collectors.toSet());
+      for (Path file : files) {
+        this.files.add(file.toFile());
+      }
     }
 
     @Override
@@ -237,7 +239,7 @@ public class GradleProjectPropertiesTest {
     FileCollection classesFileCollection = new TestFileCollection(classesFiles);
     Path resourcesOutputDir = getResource("gradle/application/resources");
 
-    Set<Path> allFiles = new HashSet<>(classesFiles);
+    Set<Path> allFiles = new LinkedHashSet<>(classesFiles);
     allFiles.add(resourcesOutputDir);
     allFiles.add(getResource("gradle/application/dependencies/library.jarC.jar"));
     allFiles.add(getResource("gradle/application/dependencies/libraryB.jar"));
@@ -596,6 +598,20 @@ public class GradleProjectPropertiesTest {
         .thenReturn("war.war");
 
     Assert.assertEquals("war.war", gradleProjectProperties.getWarFilePath());
+  }
+
+  @Test
+  public void testGetDependencies() throws URISyntaxException {
+    Assert.assertEquals(
+        Arrays.asList(
+            getResource("gradle/application/dependencies/library.jarC.jar"),
+            getResource("gradle/application/dependencies/libraryB.jar"),
+            getResource("gradle/application/dependencies/libraryA.jar"),
+            getResource("gradle/application/dependencies/dependency-1.0.0.jar"),
+            getResource("gradle/application/dependencies/more/dependency-1.0.0.jar"),
+            getResource("gradle/application/dependencies/another/one/dependency-1.0.0.jar"),
+            getResource("gradle/application/dependencies/dependencyX-1.0.0-SNAPSHOT.jar")),
+        gradleProjectProperties.getDependencies());
   }
 
   private BuildContext setupBuildContext(String appRoot)

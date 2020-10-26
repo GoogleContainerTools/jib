@@ -24,6 +24,7 @@ import com.google.common.collect.Range;
 public class JibSystemProperties {
 
   public static final String UPSTREAM_CLIENT = "_JIB_UPSTREAM_CLIENT";
+  private static final String DISABLE_USER_AGENT = "_JIB_DISABLE_USER_AGENT";
 
   @VisibleForTesting public static final String HTTP_TIMEOUT = "jib.httpTimeout";
 
@@ -32,9 +33,11 @@ public class JibSystemProperties {
   public static final String SEND_CREDENTIALS_OVER_HTTP = "sendCredentialsOverHttp";
   public static final String SERIALIZE = "jib.serialize";
 
-  private static final String DISABLE_USER_AGENT = "_JIB_DISABLE_USER_AGENT";
-
   @VisibleForTesting public static final String SKIP_EXISTING_IMAGES = "jib.skipExistingImages";
+
+  @VisibleForTesting
+  static final String USE_WILDCARD_FOR_DEPENDENCY_CLASSPATH =
+      "jib.useWildcardForDependencyClasspath";
 
   /**
    * Gets the HTTP connection/read timeouts for registry interactions in milliseconds. This is
@@ -122,6 +125,17 @@ public class JibSystemProperties {
    */
   public static boolean skipExistingImages() {
     return Boolean.getBoolean(SKIP_EXISTING_IMAGES);
+  }
+
+  /**
+   * Gets whether or not to use a wildcard or enumerate dependency JARs in the entrypoint runtime
+   * classpath.
+   *
+   * @return {@code true} if Jib should use a wildcard for dependency JARs; {@code false} to
+   *     enumerate all the JARs
+   */
+  public static boolean useWildcardForDependencyClasspath() {
+    return Boolean.getBoolean(USE_WILDCARD_FOR_DEPENDENCY_CLASSPATH);
   }
 
   private static void checkNumericSystemProperty(String property, Range<Integer> validRange) {

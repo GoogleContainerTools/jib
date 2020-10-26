@@ -66,6 +66,8 @@ public interface ProjectProperties {
 
   List<Path> getClassFiles() throws IOException;
 
+  List<Path> getDependencies();
+
   Path getDefaultCacheDirectory();
 
   String getJarPluginName();

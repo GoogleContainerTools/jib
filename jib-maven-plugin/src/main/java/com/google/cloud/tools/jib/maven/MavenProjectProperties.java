@@ -351,6 +351,15 @@ public class MavenProjectProperties implements ProjectProperties {
   }
 
   @Override
+  public List<Path> getDependencies() {
+    return project
+        .getArtifacts()
+        .stream()
+        .map(artifact -> artifact.getFile().toPath())
+        .collect(Collectors.toList());
+  }
+
+  @Override
   public void waitForLoggingThread() {
     singleThreadedExecutor.shutDownAndAwaitTermination(LOGGING_THREAD_SHUTDOWN_TIMEOUT);
   }
