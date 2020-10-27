@@ -154,22 +154,19 @@ public class JarProcessor {
    *
    * @param jarPath path to jar file
    * @return list of {@link String} representing entrypoint
-   * @throws IOException if I/O error occurs when opening the jar file or if temporary directory
-   *     provided doesn't exist
+   * @throws IOException if I/O error occurs when opening the jar file
    */
    static ImmutableList<String> computeEntrypointForExplodedStandard(
       Path jarPath) throws IOException {
-
-    String mainClass = null;
-    try (JarFile jarFile = new JarFile(jarPath.toFile())) {
-      mainClass = jarFile.getManifest().getMainAttributes().getValue(Attributes.Name.MAIN_CLASS);
+     try (JarFile jarFile = new JarFile(jarPath.toFile())) {
+      String mainClass = jarFile.getManifest().getMainAttributes().getValue(Attributes.Name.MAIN_CLASS);
+       if (mainClass == null) {
+         throw new IllegalArgumentException(
+                 "`Main-Class:` attribute for an application main class not defined in the input Jar's manifest (`META-INF/MANIFEST.MF` in the Jar).");
+       }
+       String classpath = APP_ROOT + "/explodedJar:" + APP_ROOT + "/dependencies/*";
+       return ImmutableList.of("java", "-cp", classpath, mainClass);
     }
-    if (mainClass == null) {
-      throw new IllegalArgumentException(
-          "`Main-Class:` attribute to define an application main class not defined in the input Jar's manifest (`META-INF/MANIFEST.MF` in the JAR).");
-    }
-    String classpath = APP_ROOT + "/explodedJar:" + APP_ROOT + "/dependencies/*";
-    return ImmutableList.of("java", "-cp", classpath, mainClass);
   }
 
   private static FileEntriesLayer addDirectoryContentsToLayer(
