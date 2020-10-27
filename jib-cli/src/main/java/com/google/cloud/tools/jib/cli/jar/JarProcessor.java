@@ -160,7 +160,7 @@ public class JarProcessor {
    *     provided doesn't exist
    */
   protected static ImmutableList<String> computeEntrypointForExplodedStandard(
-      Path jarPath, Path tempDirPath, List<FileEntriesLayer> layers) throws IOException {
+      Path jarPath, Path tempDirPath) throws IOException {
     Path localExplodedJarRoot = tempDirPath;
     ZipUtil.unzip(jarPath, localExplodedJarRoot);
 

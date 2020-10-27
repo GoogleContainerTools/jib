@@ -289,9 +289,8 @@ public class JarProcessorTest {
     Path standardJar =
         Paths.get(Resources.getResource(STANDARD_JAR_WITH_CLASS_PATH_MANIFEST).toURI());
     Path destDir = temporaryFolder.getRoot().toPath();
-    List<FileEntriesLayer> layers = JarProcessor.explodeStandardJar(standardJar, destDir);
     ImmutableList<String> actualEntrypoint =
-        JarProcessor.computeEntrypointForExplodedStandard(standardJar, destDir, layers);
+        JarProcessor.computeEntrypointForExplodedStandard(standardJar, destDir);
 
     assertThat(actualEntrypoint)
         .isEqualTo(
@@ -306,7 +305,7 @@ public class JarProcessorTest {
     Path destDir = temporaryFolder.getRoot().toPath();
     List<FileEntriesLayer> layers = JarProcessor.explodeStandardJar(standardJar, destDir);
     ImmutableList<String> actualEntrypoint =
-        JarProcessor.computeEntrypointForExplodedStandard(standardJar, destDir, layers);
+        JarProcessor.computeEntrypointForExplodedStandard(standardJar, destDir);
 
     assertThat(actualEntrypoint)
         .isEqualTo(
@@ -322,7 +321,7 @@ public class JarProcessorTest {
     IllegalArgumentException ex =
         assertThrows(
             IllegalArgumentException.class,
-            () -> JarProcessor.computeEntrypointForExplodedStandard(standardJar, destDir, layers));
+            () -> JarProcessor.computeEntrypointForExplodedStandard(standardJar, destDir));
     assertThat(ex)
         .hasMessageThat()
         .isEqualTo(
