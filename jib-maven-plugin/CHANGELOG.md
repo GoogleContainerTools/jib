@@ -9,7 +9,7 @@ All notable changes to this project will be documented in this file.
 
 - Preserves the order of loading dependencies as configured in a project by enumerating dependency JARs instead of using a wildcard (`/app/libs/*`) in the Java runtime classpath for an image entrypoint. ([#1871](https://github.com/GoogleContainerTools/jib/issues/1871), [#1907](https://github.com/GoogleContainerTools/jib/issues/1907), [#2228](https://github.com/GoogleContainerTools/jib/issues/2228), [#2733](https://github.com/GoogleContainerTools/jib/issues/2733))
     - The feature is also useful for AppCDS. ([#2471](https://github.com/GoogleContainerTools/jib/issues/2471))
-    - If expanding the wildcard causes an issue, set the system property `-Djib.useWildcardForDependencyClasspath=false`. However, the temporary property may eventually be removed in future releases.
+    - If expanding the wildcard causes an issue, set the system property `-Djib.noClasspathOrderPreserving=true`. However, the temporary property may eventually be removed in future releases.
 
 ### Fixed
 
