@@ -81,7 +81,7 @@ public class JarProcessor {
    * @throws IOException if I/O error occurs when opening the jar file or if temporary directory
    *     provided doesn't exist
    */
-  protected static List<FileEntriesLayer> explodeStandardJar(Path jarPath, Path tempDirPath)
+  static List<FileEntriesLayer> explodeStandardJar(Path jarPath, Path tempDirPath)
       throws IOException {
     Path localExplodedJarRoot = tempDirPath;
     ZipUtil.unzip(jarPath, localExplodedJarRoot);
@@ -153,16 +153,12 @@ public class JarProcessor {
    * Computes the entrypoint for a standard jar in exploded mode.
    *
    * @param jarPath path to jar file
-   * @param tempDirPath path to temporary jib local directory
-   * @param layers list of {@link FileEntriesLayer}
    * @return list of {@link String} representing entrypoint
    * @throws IOException if I/O error occurs when opening the jar file or if temporary directory
    *     provided doesn't exist
    */
-  protected static ImmutableList<String> computeEntrypointForExplodedStandard(
-      Path jarPath, Path tempDirPath) throws IOException {
-    Path localExplodedJarRoot = tempDirPath;
-    ZipUtil.unzip(jarPath, localExplodedJarRoot);
+   static ImmutableList<String> computeEntrypointForExplodedStandard(
+      Path jarPath) throws IOException {
 
     String mainClass = null;
     try (JarFile jarFile = new JarFile(jarPath.toFile())) {
