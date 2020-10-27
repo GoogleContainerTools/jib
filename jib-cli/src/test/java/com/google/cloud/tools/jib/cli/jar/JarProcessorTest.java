@@ -17,6 +17,7 @@
 package com.google.cloud.tools.jib.cli.jar;
 
 import static com.google.common.truth.Truth.assertThat;
+import static org.junit.Assert.assertThrows;
 
 import com.google.cloud.tools.jib.api.buildplan.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.api.buildplan.FileEntriesLayer;
@@ -280,5 +281,45 @@ public class JarProcessorTest {
             AbsoluteUnixPath.get("/app/explodedJar/META-INF"),
             AbsoluteUnixPath.get("/app/explodedJar/class1.class"),
             AbsoluteUnixPath.get("/app/explodedJar/class2.class"));
+  }
+
+  @Test
+  public void testExplodeMode_standard_computeEntrypoint_allLayersPresent()
+      throws IOException, URISyntaxException {
+    Path standardJar =
+        Paths.get(Resources.getResource(STANDARD_JAR_WITH_CLASS_PATH_MANIFEST).toURI());
+    ImmutableList<String> actualEntrypoint =
+        JarProcessor.computeEntrypointForExplodedStandard(standardJar);
+
+    assertThat(actualEntrypoint)
+        .isEqualTo(
+            ImmutableList.of("java", "-cp", "/app/explodedJar:/app/dependencies/*", "HelloWorld"));
+  }
+
+  @Test
+  public void testExplodedMode_standard_computeEntrypoint_noDependenciesLayers()
+      throws IOException, URISyntaxException {
+    Path standardJar =
+        Paths.get(Resources.getResource(STANDARD_JAR_WITHOUT_CLASS_PATH_MANIFEST).toURI());
+    ImmutableList<String> actualEntrypoint =
+        JarProcessor.computeEntrypointForExplodedStandard(standardJar);
+
+    assertThat(actualEntrypoint)
+        .isEqualTo(
+            ImmutableList.of("java", "-cp", "/app/explodedJar:/app/dependencies/*", "HelloWorld"));
+  }
+
+  @Test
+  public void testExplodedMode_standard_computeEntrypoint_noMainClass() throws URISyntaxException {
+    Path standardJar = Paths.get(Resources.getResource(STANDARD_JAR_EMPTY).toURI());
+    IllegalArgumentException ex =
+        assertThrows(
+            IllegalArgumentException.class,
+            () -> JarProcessor.computeEntrypointForExplodedStandard(standardJar));
+
+    assertThat(ex)
+        .hasMessageThat()
+        .isEqualTo(
+            "`Main-Class:` attribute for an application main class not defined in the input Jar's manifest (`META-INF/MANIFEST.MF` in the Jar).");
   }
 }
