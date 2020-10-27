@@ -288,7 +288,6 @@ public class JarProcessorTest {
       throws IOException, URISyntaxException {
     Path standardJar =
         Paths.get(Resources.getResource(STANDARD_JAR_WITH_CLASS_PATH_MANIFEST).toURI());
-    Path destDir = temporaryFolder.getRoot().toPath();
     ImmutableList<String> actualEntrypoint =
         JarProcessor.computeEntrypointForExplodedStandard(standardJar);
 
@@ -302,8 +301,6 @@ public class JarProcessorTest {
       throws IOException, URISyntaxException {
     Path standardJar =
         Paths.get(Resources.getResource(STANDARD_JAR_WITHOUT_CLASS_PATH_MANIFEST).toURI());
-    Path destDir = temporaryFolder.getRoot().toPath();
-    List<FileEntriesLayer> layers = JarProcessor.explodeStandardJar(standardJar, destDir);
     ImmutableList<String> actualEntrypoint =
         JarProcessor.computeEntrypointForExplodedStandard(standardJar);
 
@@ -313,18 +310,16 @@ public class JarProcessorTest {
   }
 
   @Test
-  public void testExplodedMode_standard_computeEntrypoint_noMainClass()
-      throws IOException, URISyntaxException {
+  public void testExplodedMode_standard_computeEntrypoint_noMainClass() throws URISyntaxException {
     Path standardJar = Paths.get(Resources.getResource(STANDARD_JAR_EMPTY).toURI());
-    Path destDir = temporaryFolder.getRoot().toPath();
-    List<FileEntriesLayer> layers = JarProcessor.explodeStandardJar(standardJar, destDir);
     IllegalArgumentException ex =
         assertThrows(
             IllegalArgumentException.class,
             () -> JarProcessor.computeEntrypointForExplodedStandard(standardJar));
+
     assertThat(ex)
         .hasMessageThat()
         .isEqualTo(
-            "`Main-Class:` attribute to define an application main class not defined in the input Jar's manifest (`META-INF/MANIFEST.MF` in the JAR).");
+            "`Main-Class:` attribute for an application main class not defined in the input Jar's manifest (`META-INF/MANIFEST.MF` in the Jar).");
   }
 }
