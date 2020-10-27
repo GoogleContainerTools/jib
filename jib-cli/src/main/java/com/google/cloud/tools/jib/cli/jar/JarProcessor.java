@@ -89,7 +89,7 @@ public class JarProcessor {
 
     // Get dependencies from Class-Path in the jar's manifest and add a layer each for non-snapshot
     // and snapshot dependencies. If Class-Path is not present in the jar's manifest then skip
-    // adding a dependencies layer.
+    // adding the dependencies layers.
     String classPath = null;
     try (JarFile jarFile = new JarFile(jarPath.toFile())) {
       classPath = jarFile.getManifest().getMainAttributes().getValue(Attributes.Name.CLASS_PATH);
@@ -125,12 +125,11 @@ public class JarProcessor {
       }
     }
 
-    Predicate<Path> isClassFile = path -> path.getFileName().toString().endsWith(".class");
-    Predicate<Path> isResourceFile = isClassFile.negate();
-
     // Determine class and resource files in the directory containing jar contents and create
     // FileEntriesLayer for each type of layer (classes or resources), while maintaining the
     // file's original project structure.
+    Predicate<Path> isClassFile = path -> path.getFileName().toString().endsWith(".class");
+    Predicate<Path> isResourceFile = isClassFile.negate();
     FileEntriesLayer classesLayer =
         addDirectoryContentsToLayer(
             CLASSES,
