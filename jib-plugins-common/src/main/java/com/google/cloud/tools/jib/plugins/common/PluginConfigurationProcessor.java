@@ -587,7 +587,7 @@ public class PluginConfigurationProcessor {
     }
 
     // TODO: remove the switch after no user reports an issue for a sufficient amount of time.
-    if (JibSystemProperties.useWildcardForDependencyClasspath()) {
+    if (Boolean.getBoolean(PropertyNames.NO_CLASSPATH_ORDER_PRESERVING)) {
       classpath.add(appRoot.resolve("libs/*").toString());
     } else {
       List<String> dependencies =

@@ -45,9 +45,6 @@ public class PropertyNames {
   public static final String CONTAINER_FILES_MODIFICATION_TIME =
       "jib.container.filesModificationTime";
   public static final String CONTAINER_CREATION_TIME = "jib.container.creationTime";
-  public static final String USE_ONLY_PROJECT_CACHE = "jib.useOnlyProjectCache";
-  public static final String BASE_IMAGE_CACHE = "jib.baseImageCache";
-  public static final String APPLICATION_CACHE = "jib.applicationCache";
   public static final String ALLOW_INSECURE_REGISTRIES = "jib.allowInsecureRegistries";
   public static final String EXTRA_DIRECTORIES_PATHS = "jib.extraDirectories.paths";
   public static final String EXTRA_DIRECTORIES_PERMISSIONS = "jib.extraDirectories.permissions";
@@ -59,11 +56,16 @@ public class PropertyNames {
   public static final String OUTPUT_PATHS_TAR = "jib.outputPaths.tar";
   public static final String CONTAINERIZING_MODE = "jib.containerizingMode";
   public static final String SKIP = "jib.skip";
-  public static final String CONSOLE = "jib.console";
+
   public static final String CONTAINERIZE = "jib.containerize";
+  public static final String CONSOLE = "jib.console";
+  public static final String USE_ONLY_PROJECT_CACHE = "jib.useOnlyProjectCache";
+  public static final String BASE_IMAGE_CACHE = "jib.baseImageCache";
+  public static final String APPLICATION_CACHE = "jib.applicationCache";
   public static final String ALWAYS_CACHE_BASE_IMAGE = "jib.alwaysCacheBaseImage";
   public static final String DISABLE_UPDATE_CHECKS = "jib.disableUpdateChecks";
   public static final String CONFIG_DIRECTORY = "jib.configDirectory";
+  public static final String NO_CLASSPATH_ORDER_PRESERVING = "jib.noClasspathOrderPreserving";
 
   private PropertyNames() {}
 }

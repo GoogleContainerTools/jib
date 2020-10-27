@@ -35,10 +35,6 @@ public class JibSystemProperties {
 
   @VisibleForTesting public static final String SKIP_EXISTING_IMAGES = "jib.skipExistingImages";
 
-  @VisibleForTesting
-  static final String USE_WILDCARD_FOR_DEPENDENCY_CLASSPATH =
-      "jib.useWildcardForDependencyClasspath";
-
   /**
    * Gets the HTTP connection/read timeouts for registry interactions in milliseconds. This is
    * defined by the {@code jib.httpTimeout} system property. The default value is 20000 if the
@@ -125,17 +121,6 @@ public class JibSystemProperties {
    */
   public static boolean skipExistingImages() {
     return Boolean.getBoolean(SKIP_EXISTING_IMAGES);
-  }
-
-  /**
-   * Gets whether or not to use a wildcard or enumerate dependency JARs in the entrypoint runtime
-   * classpath.
-   *
-   * @return {@code true} if Jib should use a wildcard for dependency JARs; {@code false} to
-   *     enumerate all the JARs
-   */
-  public static boolean useWildcardForDependencyClasspath() {
-    return Boolean.getBoolean(USE_WILDCARD_FOR_DEPENDENCY_CLASSPATH);
   }
 
   private static void checkNumericSystemProperty(String property, Range<Integer> validRange) {

@@ -317,10 +317,10 @@ public class PluginConfigurationProcessorTest {
   }
 
   @Test
-  public void testComputeEntrypoint_useWildcardForLibraryClasspath()
+  public void testComputeEntrypoint_noClasspathOrderPreserving()
       throws MainClassInferenceException, InvalidAppRootException, IOException,
           InvalidContainerizingModeException {
-    System.setProperty("jib.useWildcardForDependencyClasspath", "true");
+    System.setProperty("jib.noClasspathOrderPreserving", "true");
     Assert.assertEquals(
         Arrays.asList("java", "-cp", "/app/resources:/app/classes:/app/libs/*", "java.lang.Object"),
         PluginConfigurationProcessor.computeEntrypoint(rawConfiguration, projectProperties));
