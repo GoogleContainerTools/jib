@@ -18,6 +18,7 @@ package com.google.cloud.tools.jib.cli.jar;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import com.google.cloud.tools.jib.api.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.api.JibContainerBuilder;
 import com.google.cloud.tools.jib.api.buildplan.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.api.buildplan.ContainerBuildPlan;
@@ -44,14 +45,15 @@ public class JarToJibContainerBuilderConverterTest {
   @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
   @Test
-  public void testToJibContainerBuilder_basicInfo() throws IOException, URISyntaxException {
+  public void testToJibContainerBuilder_basicInfo()
+      throws IOException, URISyntaxException, InvalidImageReferenceException {
     Path standardJar = Paths.get(Resources.getResource(SIMPLE_STANDARD_JAR).toURI());
     Path destDir = temporaryFolder.newFolder().toPath();
     JibContainerBuilder containerBuilder =
         JarToJibContainerBuilderConverter.toJibContainerBuilder(standardJar, destDir);
     ContainerBuildPlan buildPlan = containerBuilder.toContainerBuildPlan();
 
-    assertThat(buildPlan.getBaseImage()).isEqualTo("scratch");
+    assertThat(buildPlan.getBaseImage()).isEqualTo("gcr.io/distroless/java");
     assertThat(buildPlan.getPlatforms()).isEqualTo(ImmutableSet.of(new Platform("amd64", "linux")));
     assertThat(buildPlan.getCreationTime()).isEqualTo(Instant.EPOCH);
     assertThat(buildPlan.getFormat()).isEqualTo(ImageFormat.Docker);

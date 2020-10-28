@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.cli.jar;
 
+import com.google.cloud.tools.jib.api.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.api.Jib;
 import com.google.cloud.tools.jib.api.JibContainerBuilder;
 import com.google.cloud.tools.jib.api.buildplan.FileEntriesLayer;
@@ -35,10 +36,14 @@ public class JarToJibContainerBuilderConverter {
    * @return JibContainerBuilder
    * @throws IOException if I/O error occurs when opening the jar file or if temporary directory
    *     provided doesn't exist
+   * @throws InvalidImageReferenceException if the base image used is invalid
    */
   public static JibContainerBuilder toJibContainerBuilder(Path jarPath, Path tempDirPath)
-      throws IOException {
-    JibContainerBuilder containerBuilder = Jib.fromScratch();
+      throws IOException, InvalidImageReferenceException {
+
+    // Use distroless as the base image.
+    JibContainerBuilder containerBuilder = Jib.from("gcr.io/distroless/java");
+
     List<FileEntriesLayer> layers = JarProcessor.explodeStandardJar(jarPath, tempDirPath);
     List<String> entrypoint = JarProcessor.computeEntrypointForExplodedStandard(jarPath);
     containerBuilder.setEntrypoint(entrypoint).setFileEntriesLayers(layers);
