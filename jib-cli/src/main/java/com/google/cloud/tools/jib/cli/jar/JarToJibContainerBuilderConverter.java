@@ -23,11 +23,11 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
 
-/** Class to convert jar to build container representations. */
+/** Class to build a container representation from the contents of a jar file. */
 public class JarToJibContainerBuilderConverter {
 
   /**
-   * Generates a {@link JibContainerBuilder} from contents of a jar.
+   * Generates a {@link JibContainerBuilder} from contents of a jar file.
    *
    * @param jarPath path to the jar file
    * @param tempDirPath path to a temporary directory which will be used store the exploded jar's
