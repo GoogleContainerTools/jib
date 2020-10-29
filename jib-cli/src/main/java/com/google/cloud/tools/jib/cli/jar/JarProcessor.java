@@ -75,7 +75,8 @@ public class JarProcessor {
   }
 
   /**
-   * Creates layers for dependencies, snapshot dependencies, resources and classes on container for a standard jar.
+   * Creates layers for dependencies, snapshot dependencies, resources and classes on container for
+   * a standard jar.
    *
    * @param jarPath path to jar file
    * @param tempDirPath path to temporary jib local directory
