@@ -25,7 +25,7 @@ import java.nio.file.Path;
 import java.util.List;
 
 /** Class to build a container representation from the contents of a jar file. */
-public class JarToJibContainerBuilderConverter {
+public class JarFiles {
 
   /**
    * Generates a {@link JibContainerBuilder} from contents of a jar file.

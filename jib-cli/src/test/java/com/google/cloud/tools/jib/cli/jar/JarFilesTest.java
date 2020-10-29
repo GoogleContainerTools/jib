@@ -37,7 +37,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
-public class JarToJibContainerBuilderConverterTest {
+public class JarFilesTest {
   private static final String SIMPLE_STANDARD_JAR = "jar/standard/basicStandardJar.jar";
 
   @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
@@ -47,8 +47,7 @@ public class JarToJibContainerBuilderConverterTest {
       throws IOException, URISyntaxException, InvalidImageReferenceException {
     Path standardJar = Paths.get(Resources.getResource(SIMPLE_STANDARD_JAR).toURI());
     Path destDir = temporaryFolder.getRoot().toPath();
-    JibContainerBuilder containerBuilder =
-        JarToJibContainerBuilderConverter.toJibContainerBuilder(standardJar, destDir);
+    JibContainerBuilder containerBuilder = JarFiles.toJibContainerBuilder(standardJar, destDir);
     ContainerBuildPlan buildPlan = containerBuilder.toContainerBuildPlan();
 
     assertThat(buildPlan.getBaseImage()).isEqualTo("gcr.io/distroless/java");
