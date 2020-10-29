@@ -17,6 +17,7 @@
 package com.google.cloud.tools.jib.cli.jar;
 
 import static com.google.common.truth.Truth.assertThat;
+import static org.junit.Assert.assertThrows;
 
 import com.google.cloud.tools.jib.api.buildplan.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.api.buildplan.FileEntriesLayer;
@@ -106,16 +107,17 @@ public class JarProcessorTest {
     List<FileEntriesLayer> layers =
         JarProcessor.createExplodedModeLayersForStandardJar(standardJar, destDir);
 
-    assertThat(layers.size()).isEqualTo(3);
+    assertThat(layers.size()).isEqualTo(4);
 
-    FileEntriesLayer dependenciesLayer = layers.get(0);
-    FileEntriesLayer resourcesLayer = layers.get(1);
-    FileEntriesLayer classesLayer = layers.get(2);
+    FileEntriesLayer nonSnapshotDependenciesLayer = layers.get(0);
+    FileEntriesLayer snapshotDependenciesLayer = layers.get(1);
+    FileEntriesLayer resourcesLayer = layers.get(2);
+    FileEntriesLayer classesLayer = layers.get(3);
 
     // Validate dependencies layer.
-    assertThat(dependenciesLayer.getName()).isEqualTo("dependencies");
+    assertThat(nonSnapshotDependenciesLayer.getName()).isEqualTo("dependencies");
     assertThat(
-            dependenciesLayer
+            nonSnapshotDependenciesLayer
                 .getEntries()
                 .stream()
                 .map(FileEntry::getExtractionPath)
@@ -124,7 +126,16 @@ public class JarProcessorTest {
             ImmutableList.of(
                 AbsoluteUnixPath.get("/app/dependencies/dependency1"),
                 AbsoluteUnixPath.get("/app/dependencies/dependency2"),
-                AbsoluteUnixPath.get("/app/dependencies/directory/dependency3")));
+                AbsoluteUnixPath.get("/app/dependencies/directory/dependency4")));
+    assertThat(snapshotDependenciesLayer.getName()).isEqualTo("snapshot dependencies");
+    assertThat(
+            snapshotDependenciesLayer
+                .getEntries()
+                .stream()
+                .map(FileEntry::getExtractionPath)
+                .collect(Collectors.toList()))
+        .isEqualTo(
+            ImmutableList.of(AbsoluteUnixPath.get("/app/dependencies/dependency3-SNAPSHOT-1.jar")));
 
     // Validate resources layer.
     // TODO: Validate order of file paths once
@@ -276,5 +287,45 @@ public class JarProcessorTest {
             AbsoluteUnixPath.get("/app/explodedJar/META-INF"),
             AbsoluteUnixPath.get("/app/explodedJar/class1.class"),
             AbsoluteUnixPath.get("/app/explodedJar/class2.class"));
+  }
+
+  @Test
+  public void testExplodeMode_standard_computeEntrypoint_allLayersPresent()
+      throws IOException, URISyntaxException {
+    Path standardJar =
+        Paths.get(Resources.getResource(STANDARD_JAR_WITH_CLASS_PATH_MANIFEST).toURI());
+    ImmutableList<String> actualEntrypoint =
+        JarProcessor.computeEntrypointForExplodedStandard(standardJar);
+
+    assertThat(actualEntrypoint)
+        .isEqualTo(
+            ImmutableList.of("java", "-cp", "/app/explodedJar:/app/dependencies/*", "HelloWorld"));
+  }
+
+  @Test
+  public void testExplodedMode_standard_computeEntrypoint_noDependenciesLayers()
+      throws IOException, URISyntaxException {
+    Path standardJar =
+        Paths.get(Resources.getResource(STANDARD_JAR_WITHOUT_CLASS_PATH_MANIFEST).toURI());
+    ImmutableList<String> actualEntrypoint =
+        JarProcessor.computeEntrypointForExplodedStandard(standardJar);
+
+    assertThat(actualEntrypoint)
+        .isEqualTo(
+            ImmutableList.of("java", "-cp", "/app/explodedJar:/app/dependencies/*", "HelloWorld"));
+  }
+
+  @Test
+  public void testExplodedMode_standard_computeEntrypoint_noMainClass() throws URISyntaxException {
+    Path standardJar = Paths.get(Resources.getResource(STANDARD_JAR_EMPTY).toURI());
+    IllegalArgumentException ex =
+        assertThrows(
+            IllegalArgumentException.class,
+            () -> JarProcessor.computeEntrypointForExplodedStandard(standardJar));
+
+    assertThat(ex)
+        .hasMessageThat()
+        .isEqualTo(
+            "`Main-Class:` attribute for an application main class not defined in the input Jar's manifest (`META-INF/MANIFEST.MF` in the Jar).");
   }
 }

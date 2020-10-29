@@ -23,6 +23,7 @@ import com.google.cloud.tools.jib.filesystem.DirectoryWalker;
 import com.google.cloud.tools.jib.plugins.common.ZipUtil;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Splitter;
+import com.google.common.collect.ImmutableList;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -38,6 +39,10 @@ import java.util.stream.Collectors;
 public class JarProcessor {
 
   private static final AbsoluteUnixPath APP_ROOT = AbsoluteUnixPath.get("/app");
+  private static final String CLASSES = "classes";
+  private static final String RESOURCES = "resources";
+  private static final String DEPENDENCIES = "dependencies";
+  private static final String SNAPSHOT_DEPENDENCIES = "snapshot dependencies";
 
   /**
    * Jar Type.
@@ -84,44 +89,58 @@ public class JarProcessor {
     ZipUtil.unzip(jarPath, localExplodedJarRoot);
     List<FileEntriesLayer> layers = new ArrayList<>();
 
-    // Get dependencies from Class-Path in the jar's manifest and add a layer with these
-    // dependencies as entries. If Class-Path is not present in the jar's manifest then skip adding
-    // a dependencies layer.
+    // Get dependencies from Class-Path in the jar's manifest and add a layer each for non-snapshot
+    // and snapshot dependencies. If Class-Path is not present in the jar's manifest then skip
+    // adding the dependencies layers.
     String classPath = null;
     try (JarFile jarFile = new JarFile(jarPath.toFile())) {
       classPath = jarFile.getManifest().getMainAttributes().getValue(Attributes.Name.CLASS_PATH);
     }
     if (classPath != null) {
-      List<Path> dependencies =
-          Splitter.onPattern("\\s+")
-              .splitToList(classPath.trim())
+      Predicate<String> isSnapshot = name -> name.contains("SNAPSHOT");
+      List<String> allDependencies = Splitter.onPattern("\\s+").splitToList(classPath.trim());
+      List<Path> nonSnapshotDependencies =
+          allDependencies
               .stream()
+              .filter(isSnapshot.negate())
               .map(Paths::get)
               .collect(Collectors.toList());
-      FileEntriesLayer.Builder dependenciesLayerBuilder =
-          FileEntriesLayer.builder().setName("dependencies");
-      dependencies.forEach(
-          path ->
-              dependenciesLayerBuilder.addEntry(
-                  path, APP_ROOT.resolve(RelativeUnixPath.get("dependencies")).resolve(path)));
-      layers.add(dependenciesLayerBuilder.build());
+      List<Path> snapshotDependencies =
+          allDependencies.stream().filter(isSnapshot).map(Paths::get).collect(Collectors.toList());
+      if (!nonSnapshotDependencies.isEmpty()) {
+        FileEntriesLayer.Builder nonSnapshotDependenciesLayerBuilder =
+            FileEntriesLayer.builder().setName(DEPENDENCIES);
+        nonSnapshotDependencies.forEach(
+            path ->
+                nonSnapshotDependenciesLayerBuilder.addEntry(
+                    path, APP_ROOT.resolve(RelativeUnixPath.get("dependencies")).resolve(path)));
+        layers.add(nonSnapshotDependenciesLayerBuilder.build());
+      }
+      if (!snapshotDependencies.isEmpty()) {
+        FileEntriesLayer.Builder snapshotDependenciesLayerBuilder =
+            FileEntriesLayer.builder().setName(SNAPSHOT_DEPENDENCIES);
+        snapshotDependencies.forEach(
+            path ->
+                snapshotDependenciesLayerBuilder.addEntry(
+                    path, APP_ROOT.resolve(RelativeUnixPath.get("dependencies")).resolve(path)));
+        layers.add(snapshotDependenciesLayerBuilder.build());
+      }
     }
-
-    Predicate<Path> isClassFile = path -> path.getFileName().toString().endsWith(".class");
-    Predicate<Path> isResourceFile = isClassFile.negate();
 
     // Determine class and resource files in the directory containing jar contents and create
     // FileEntriesLayer for each type of layer (classes or resources), while maintaining the
     // file's original project structure.
+    Predicate<Path> isClassFile = path -> path.getFileName().toString().endsWith(".class");
+    Predicate<Path> isResourceFile = isClassFile.negate();
     FileEntriesLayer classesLayer =
         addDirectoryContentsToLayer(
-            "classes",
+            CLASSES,
             localExplodedJarRoot,
             isClassFile,
             APP_ROOT.resolve(RelativeUnixPath.get("explodedJar")));
     FileEntriesLayer resourcesLayer =
         addDirectoryContentsToLayer(
-            "resources",
+            RESOURCES,
             localExplodedJarRoot,
             isResourceFile,
             APP_ROOT.resolve(RelativeUnixPath.get("explodedJar")));
@@ -129,6 +148,27 @@ public class JarProcessor {
     layers.add(resourcesLayer);
     layers.add(classesLayer);
     return layers;
+  }
+
+  /**
+   * Computes the entrypoint for a standard jar in exploded mode.
+   *
+   * @param jarPath path to jar file
+   * @return list of {@link String} representing entrypoint
+   * @throws IOException if I/O error occurs when opening the jar file
+   */
+  static ImmutableList<String> computeEntrypointForExplodedStandard(Path jarPath)
+      throws IOException {
+    try (JarFile jarFile = new JarFile(jarPath.toFile())) {
+      String mainClass =
+          jarFile.getManifest().getMainAttributes().getValue(Attributes.Name.MAIN_CLASS);
+      if (mainClass == null) {
+        throw new IllegalArgumentException(
+            "`Main-Class:` attribute for an application main class not defined in the input Jar's manifest (`META-INF/MANIFEST.MF` in the Jar).");
+      }
+      String classpath = APP_ROOT + "/explodedJar:" + APP_ROOT + "/dependencies/*";
+      return ImmutableList.of("java", "-cp", classpath, mainClass);
+    }
   }
 
   private static FileEntriesLayer addDirectoryContentsToLayer(
