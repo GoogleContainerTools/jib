@@ -62,10 +62,12 @@ public class JarProcessorTest {
   }
 
   @Test
-  public void testExplodeMode_standard_emptyJar() throws IOException, URISyntaxException {
+  public void testCreateExplodedModeLayersForStandardJar_emptyJar()
+      throws IOException, URISyntaxException {
     Path standardJar = Paths.get(Resources.getResource(STANDARD_JAR_EMPTY).toURI());
     Path destDir = temporaryFolder.newFolder().toPath();
-    List<FileEntriesLayer> layers = JarProcessor.explodeStandardJar(standardJar, destDir);
+    List<FileEntriesLayer> layers =
+        JarProcessor.createExplodedModeLayersForStandardJar(standardJar, destDir);
 
     assertThat(layers.size()).isEqualTo(2);
 
@@ -96,12 +98,13 @@ public class JarProcessorTest {
   }
 
   @Test
-  public void testExplodeMode_standard_withClassPathInManifest()
+  public void testCreateExplodedModeLayersForStandardJar_withClassPathInManifest()
       throws IOException, URISyntaxException {
     Path standardJar =
         Paths.get(Resources.getResource(STANDARD_JAR_WITH_CLASS_PATH_MANIFEST).toURI());
     Path destDir = temporaryFolder.newFolder().toPath();
-    List<FileEntriesLayer> layers = JarProcessor.explodeStandardJar(standardJar, destDir);
+    List<FileEntriesLayer> layers =
+        JarProcessor.createExplodedModeLayersForStandardJar(standardJar, destDir);
 
     assertThat(layers.size()).isEqualTo(3);
 
@@ -171,12 +174,13 @@ public class JarProcessorTest {
   }
 
   @Test
-  public void testExplodeMode_standard_withoutClassPathInManifest()
+  public void testCreateExplodedModeLayersForStandardJar_withoutClassPathInManifest()
       throws IOException, URISyntaxException {
     Path standardJar =
         Paths.get(Resources.getResource(STANDARD_JAR_WITHOUT_CLASS_PATH_MANIFEST).toURI());
     Path destDir = temporaryFolder.newFolder().toPath();
-    List<FileEntriesLayer> layers = JarProcessor.explodeStandardJar(standardJar, destDir);
+    List<FileEntriesLayer> layers =
+        JarProcessor.createExplodedModeLayersForStandardJar(standardJar, destDir);
 
     assertThat(layers.size()).isEqualTo(2);
 
@@ -231,11 +235,13 @@ public class JarProcessorTest {
   }
 
   @Test
-  public void testExplodeMode_standard_withoutClassPathInManifest_containsOnlyClasses()
-      throws IOException, URISyntaxException {
+  public void
+      testCreateExplodedModeLayersForStandardJar_withoutClassPathInManifest_containsOnlyClasses()
+          throws IOException, URISyntaxException {
     Path standardJar = Paths.get(Resources.getResource(STANDARD_JAR_WITH_ONLY_CLASSES).toURI());
     Path destDir = temporaryFolder.newFolder().toPath();
-    List<FileEntriesLayer> layers = JarProcessor.explodeStandardJar(standardJar, destDir);
+    List<FileEntriesLayer> layers =
+        JarProcessor.createExplodedModeLayersForStandardJar(standardJar, destDir);
 
     assertThat(layers.size()).isEqualTo(2);
 

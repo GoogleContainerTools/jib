@@ -21,6 +21,7 @@ import com.google.cloud.tools.jib.api.buildplan.FileEntriesLayer;
 import com.google.cloud.tools.jib.api.buildplan.RelativeUnixPath;
 import com.google.cloud.tools.jib.filesystem.DirectoryWalker;
 import com.google.cloud.tools.jib.plugins.common.ZipUtil;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Splitter;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -58,7 +59,8 @@ public class JarProcessor {
    * @return the jar type
    * @throws IOException if I/O error occurs when opening the file
    */
-  public static JarType determineJarType(Path jarPath) throws IOException {
+  @VisibleForTesting
+  static JarType determineJarType(Path jarPath) throws IOException {
     try (JarFile jarFile = new JarFile(jarPath.toFile())) {
       if (jarFile.getEntry("BOOT-INF") != null) {
         return JarType.SPRING_BOOT;
@@ -68,7 +70,7 @@ public class JarProcessor {
   }
 
   /**
-   * Explodes jar and create three layers for classes, resources and dependencies on container.
+   * Creates three layers for classes, resources, and dependencies on container for a standard jar.
    *
    * @param jarPath path to jar file
    * @param tempDirPath path to temporary jib local directory
@@ -76,8 +78,8 @@ public class JarProcessor {
    * @throws IOException if I/O error occurs when opening the jar file or if temporary directory
    *     provided doesn't exist
    */
-  public static List<FileEntriesLayer> explodeStandardJar(Path jarPath, Path tempDirPath)
-      throws IOException {
+  static List<FileEntriesLayer> createExplodedModeLayersForStandardJar(
+      Path jarPath, Path tempDirPath) throws IOException {
     Path localExplodedJarRoot = tempDirPath;
     ZipUtil.unzip(jarPath, localExplodedJarRoot);
     List<FileEntriesLayer> layers = new ArrayList<>();
