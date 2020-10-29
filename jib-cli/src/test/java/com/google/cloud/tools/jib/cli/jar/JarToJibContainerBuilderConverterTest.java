@@ -23,7 +23,6 @@ import com.google.cloud.tools.jib.api.JibContainerBuilder;
 import com.google.cloud.tools.jib.api.buildplan.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.api.buildplan.ContainerBuildPlan;
 import com.google.cloud.tools.jib.api.buildplan.FileEntriesLayer;
-import com.google.cloud.tools.jib.api.buildplan.FileEntry;
 import com.google.cloud.tools.jib.api.buildplan.ImageFormat;
 import com.google.cloud.tools.jib.api.buildplan.Platform;
 import com.google.common.collect.ImmutableList;
@@ -34,7 +33,6 @@ import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Instant;
-import java.util.stream.Collectors;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -48,7 +46,7 @@ public class JarToJibContainerBuilderConverterTest {
   public void testToJibContainerBuilder_basicInfo()
       throws IOException, URISyntaxException, InvalidImageReferenceException {
     Path standardJar = Paths.get(Resources.getResource(SIMPLE_STANDARD_JAR).toURI());
-    Path destDir = temporaryFolder.newFolder().toPath();
+    Path destDir = temporaryFolder.getRoot().toPath();
     JibContainerBuilder containerBuilder =
         JarToJibContainerBuilderConverter.toJibContainerBuilder(standardJar, destDir);
     ContainerBuildPlan buildPlan = containerBuilder.toContainerBuildPlan();
@@ -66,13 +64,13 @@ public class JarToJibContainerBuilderConverterTest {
     assertThat(buildPlan.getEntrypoint())
         .isEqualTo(
             ImmutableList.of("java", "-cp", "/app/explodedJar:/app/dependencies/*", "HelloWorld"));
-    assertThat(
-            ((FileEntriesLayer) buildPlan.getLayers().get(0))
-                .getEntries()
-                .stream()
-                .map(FileEntry::getExtractionPath)
-                .collect(Collectors.toList()))
-        .isEqualTo(ImmutableList.of(AbsoluteUnixPath.get("/app/dependencies/dependency1")));
+    assertThat(((FileEntriesLayer) buildPlan.getLayers().get(0)).getEntries())
+        .isEqualTo(
+            FileEntriesLayer.builder()
+                .addEntry(
+                    Paths.get("dependency1"), AbsoluteUnixPath.get("/app/dependencies/dependency1"))
+                .build()
+                .getEntries());
     assertThat(((FileEntriesLayer) buildPlan.getLayers().get(1)).getEntries())
         .containsExactlyElementsIn(
             FileEntriesLayer.builder()

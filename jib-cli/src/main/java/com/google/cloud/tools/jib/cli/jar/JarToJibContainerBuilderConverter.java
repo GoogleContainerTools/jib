@@ -36,7 +36,7 @@ public class JarToJibContainerBuilderConverter {
    * @return JibContainerBuilder
    * @throws IOException if I/O error occurs when opening the jar file or if temporary directory
    *     provided doesn't exist
-   * @throws InvalidImageReferenceException if the base image used is invalid
+   * @throws InvalidImageReferenceException if the base image reference is invalid
    */
   public static JibContainerBuilder toJibContainerBuilder(Path jarPath, Path tempDirPath)
       throws IOException, InvalidImageReferenceException {
