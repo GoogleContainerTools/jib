@@ -48,7 +48,7 @@ public class CliLogger {
         isRichConsole(consoleOutput) && verbosity.atLeast(Verbosity.lifecycle);
     ConsoleLoggerBuilder builder =
         enableRichProgress
-            ? ConsoleLoggerBuilder.rich(executor, true)
+            ? ConsoleLoggerBuilder.rich(executor, false)
             : ConsoleLoggerBuilder.plain(executor);
     if (verbosity.atLeast(Verbosity.error)) {
       builder.error(stderr::println);
