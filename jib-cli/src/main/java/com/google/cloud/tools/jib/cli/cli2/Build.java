@@ -45,8 +45,12 @@ public class Build implements Callable<Integer> {
           CliLogger.newLogger(globalOptions.getVerbosity(), globalOptions.getConsoleOutput());
 
       Path buildFile = globalOptions.getBuildFile();
-      if (Files.isDirectory(buildFile) || !Files.isReadable(buildFile)) {
+      if (!Files.isReadable(buildFile)) {
         logger.log(Level.ERROR, "Cannot open Build File YAML: " + buildFile);
+        return 1;
+      }
+      if (!Files.isRegularFile(buildFile)) {
+        logger.log(Level.ERROR, "Build File YAML path is a not a file: " + buildFile);
         return 1;
       }
 
