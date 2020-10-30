@@ -23,6 +23,7 @@ import com.google.cloud.tools.jib.cli.buildfile.BuildFiles;
 import com.google.cloud.tools.jib.cli.cli2.logging.CliLogger;
 import com.google.cloud.tools.jib.plugins.common.logging.ConsoleLogger;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.concurrent.Callable;
 import picocli.CommandLine;
 
@@ -43,8 +44,9 @@ public class Build implements Callable<Integer> {
       ConsoleLogger logger =
           CliLogger.newLogger(globalOptions.getVerbosity(), globalOptions.getConsoleOutput());
 
-      if (!Files.exists(globalOptions.getBuildFile())) {
-        logger.log(Level.ERROR, "Build File YAML does not exist: " + globalOptions.getBuildFile());
+      Path buildFile = globalOptions.getBuildFile();
+      if (Files.isDirectory(buildFile) || !Files.isReadable(buildFile)) {
+        logger.log(Level.ERROR, "Cannot open Build File YAML: " + buildFile);
         return 1;
       }
 
@@ -52,7 +54,7 @@ public class Build implements Callable<Integer> {
 
       JibContainerBuilder containerBuilder =
           BuildFiles.toJibContainerBuilder(
-              globalOptions.getContextRoot(), globalOptions.getBuildFile(), globalOptions, logger);
+              globalOptions.getContextRoot(), buildFile, globalOptions, logger);
 
       containerBuilder.containerize(containerizer);
     } catch (Exception ex) {
