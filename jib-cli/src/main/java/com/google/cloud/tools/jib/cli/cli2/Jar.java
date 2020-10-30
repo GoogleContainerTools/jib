@@ -20,7 +20,11 @@ import com.google.cloud.tools.jib.api.Containerizer;
 import com.google.cloud.tools.jib.api.JibContainerBuilder;
 import com.google.cloud.tools.jib.cli.buildfile.BuildFiles;
 import com.google.cloud.tools.jib.cli.cli2.logging.CliLogger;
+import com.google.cloud.tools.jib.cli.jar.JarFiles;
 import com.google.cloud.tools.jib.plugins.common.logging.ConsoleLogger;
+
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.concurrent.Callable;
 import picocli.CommandLine;
 
@@ -33,17 +37,35 @@ public class Jar implements Callable<Integer> {
     @SuppressWarnings("NullAway.Init") // initialized by picocli
     protected JibCli globalOptions;
 
+    @CommandLine.Option(
+            names = {"--jar"},
+            paramLabel = "<jar-file>",
+            description = "The path to the jar file (ex: path/to/my-jar.jar)")
+    @SuppressWarnings("NullAway.Init") // initialized by picocli
+    private Path jarFile;
+
+    /**
+     * Returns a user configured Path to a buildfile and if none is configured returns sample.jar in
+     * {@link #globalOptions#getContextRoot()}.
+     *
+     * @return a path to a jar file
+     */
+    public Path getJarFile() {
+        if (jarFile == null) {
+            return globalOptions.getContextRoot().resolve("sample.jar");
+        }
+        return jarFile;
+    }
+
     @Override
     public Integer call() {
         globalOptions.validate();
-
         try {
             ConsoleLogger logger =
                     CliLogger.newLogger(globalOptions.getVerbosity(), globalOptions.getConsoleOutput());
             Containerizer containerizer = Containerizers.from(globalOptions, logger);
             JibContainerBuilder containerBuilder =
-                    JarFiles.toJibContainerBuilder(
-                            globalOptions.getContextRoot(), globalOptions.getBuildFile(), globalOptions, logger);
+                    JarFiles.toJibContainerBuilder(getJarFile(), Paths.get("build-artifacts/"));
 
             containerBuilder.containerize(containerizer);
         } catch (Exception ex) {
