@@ -1,0 +1,18 @@
+apiVersion: jib/v1alpha1
+kind: BuildFile
+
+from:
+  image: "ubuntu"
+
+workingDirectory: "/home"
+entrypoint:
+  - "sh"
+  - "hello.sh"
+
+layers:
+  entries:
+    - name: "scripts"
+      files:
+        - src: "hello.sh"
+          dest: "/home/hello.sh"
+
