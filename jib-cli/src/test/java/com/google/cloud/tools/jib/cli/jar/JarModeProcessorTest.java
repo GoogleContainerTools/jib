@@ -22,7 +22,7 @@ import static org.junit.Assert.assertThrows;
 import com.google.cloud.tools.jib.api.buildplan.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.api.buildplan.FileEntriesLayer;
 import com.google.cloud.tools.jib.api.buildplan.FileEntry;
-import com.google.cloud.tools.jib.cli.jar.JarProcessor.JarType;
+import com.google.cloud.tools.jib.cli.jar.JarModeProcessor.JarType;
 import com.google.common.collect.ImmutableList;
 import com.google.common.io.Resources;
 import java.io.IOException;
@@ -35,7 +35,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
-public class JarProcessorTest {
+public class JarModeProcessorTest {
 
   private static final String SPRING_BOOT_JAR = "jar/springboot/springboot_sample.jar";
   private static final String STANDARD_JAR_WITH_CLASS_PATH_MANIFEST =
@@ -51,14 +51,14 @@ public class JarProcessorTest {
   @Test
   public void testDetermineJarType_springBoot() throws IOException, URISyntaxException {
     Path springBootJar = Paths.get(Resources.getResource(SPRING_BOOT_JAR).toURI());
-    JarType jarType = JarProcessor.determineJarType(springBootJar);
+    JarType jarType = JarModeProcessor.determineJarType(springBootJar);
     assertThat(jarType).isEqualTo(JarType.SPRING_BOOT);
   }
 
   @Test
   public void testDetermineJarType_standard() throws IOException, URISyntaxException {
     Path standardJar = Paths.get(Resources.getResource(STANDARD_JAR_EMPTY).toURI());
-    JarType jarType = JarProcessor.determineJarType(standardJar);
+    JarType jarType = JarModeProcessor.determineJarType(standardJar);
     assertThat(jarType).isEqualTo(JarType.STANDARD);
   }
 
@@ -68,7 +68,7 @@ public class JarProcessorTest {
     Path standardJar = Paths.get(Resources.getResource(STANDARD_JAR_EMPTY).toURI());
     Path destDir = temporaryFolder.newFolder().toPath();
     List<FileEntriesLayer> layers =
-        JarProcessor.createExplodedModeLayersForStandardJar(standardJar, destDir);
+        JarModeProcessor.createExplodedModeLayersForStandardJar(standardJar, destDir);
 
     assertThat(layers.size()).isEqualTo(2);
 
@@ -105,7 +105,7 @@ public class JarProcessorTest {
         Paths.get(Resources.getResource(STANDARD_JAR_WITH_CLASS_PATH_MANIFEST).toURI());
     Path destDir = temporaryFolder.newFolder().toPath();
     List<FileEntriesLayer> layers =
-        JarProcessor.createExplodedModeLayersForStandardJar(standardJar, destDir);
+        JarModeProcessor.createExplodedModeLayersForStandardJar(standardJar, destDir);
 
     assertThat(layers.size()).isEqualTo(4);
 
@@ -191,7 +191,7 @@ public class JarProcessorTest {
         Paths.get(Resources.getResource(STANDARD_JAR_WITHOUT_CLASS_PATH_MANIFEST).toURI());
     Path destDir = temporaryFolder.newFolder().toPath();
     List<FileEntriesLayer> layers =
-        JarProcessor.createExplodedModeLayersForStandardJar(standardJar, destDir);
+        JarModeProcessor.createExplodedModeLayersForStandardJar(standardJar, destDir);
 
     assertThat(layers.size()).isEqualTo(2);
 
@@ -252,7 +252,7 @@ public class JarProcessorTest {
     Path standardJar = Paths.get(Resources.getResource(STANDARD_JAR_WITH_ONLY_CLASSES).toURI());
     Path destDir = temporaryFolder.newFolder().toPath();
     List<FileEntriesLayer> layers =
-        JarProcessor.createExplodedModeLayersForStandardJar(standardJar, destDir);
+        JarModeProcessor.createExplodedModeLayersForStandardJar(standardJar, destDir);
 
     assertThat(layers.size()).isEqualTo(2);
 
@@ -295,7 +295,7 @@ public class JarProcessorTest {
     Path standardJar =
         Paths.get(Resources.getResource(STANDARD_JAR_WITH_CLASS_PATH_MANIFEST).toURI());
     ImmutableList<String> actualEntrypoint =
-        JarProcessor.computeEntrypointForExplodedStandard(standardJar);
+        JarModeProcessor.computeEntrypointForExplodedStandard(standardJar);
 
     assertThat(actualEntrypoint)
         .isEqualTo(
@@ -308,7 +308,7 @@ public class JarProcessorTest {
     Path standardJar =
         Paths.get(Resources.getResource(STANDARD_JAR_WITHOUT_CLASS_PATH_MANIFEST).toURI());
     ImmutableList<String> actualEntrypoint =
-        JarProcessor.computeEntrypointForExplodedStandard(standardJar);
+        JarModeProcessor.computeEntrypointForExplodedStandard(standardJar);
 
     assertThat(actualEntrypoint)
         .isEqualTo(
@@ -321,7 +321,7 @@ public class JarProcessorTest {
     IllegalArgumentException ex =
         assertThrows(
             IllegalArgumentException.class,
-            () -> JarProcessor.computeEntrypointForExplodedStandard(standardJar));
+            () -> JarModeProcessor.computeEntrypointForExplodedStandard(standardJar));
 
     assertThat(ex)
         .hasMessageThat()
