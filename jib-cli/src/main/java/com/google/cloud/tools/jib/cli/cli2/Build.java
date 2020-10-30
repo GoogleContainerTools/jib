@@ -41,6 +41,7 @@ public class Build implements Callable<Integer> {
       ConsoleLogger logger =
           CliLogger.newLogger(globalOptions.getVerbosity(), globalOptions.getConsoleOutput());
       Containerizer containerizer = Containerizers.from(globalOptions, logger);
+
       JibContainerBuilder containerBuilder =
           BuildFiles.toJibContainerBuilder(
               globalOptions.getContextRoot(), globalOptions.getBuildFile(), globalOptions, logger);

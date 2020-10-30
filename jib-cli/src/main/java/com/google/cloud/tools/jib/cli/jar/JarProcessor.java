@@ -165,7 +165,8 @@ public class JarProcessor {
           jarFile.getManifest().getMainAttributes().getValue(Attributes.Name.MAIN_CLASS);
       if (mainClass == null) {
         throw new IllegalArgumentException(
-            "`Main-Class:` attribute for an application main class not defined in the input Jar's manifest (`META-INF/MANIFEST.MF` in the Jar).");
+            "`Main-Class:` attribute for an application main class not defined in the input Jar's "
+                + "manifest (`META-INF/MANIFEST.MF` in the Jar).");
       }
       String classpath = APP_ROOT + "/explodedJar:" + APP_ROOT + "/dependencies/*";
       return ImmutableList.of("java", "-cp", classpath, mainClass);

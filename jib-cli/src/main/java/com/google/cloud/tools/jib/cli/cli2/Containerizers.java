@@ -52,7 +52,6 @@ public class Containerizers {
    */
   public static Containerizer from(JibCli buildOptions, ConsoleLogger logger)
       throws InvalidImageReferenceException, FileNotFoundException {
-
     Containerizer containerizer = create(buildOptions, logger);
 
     applyHandlers(containerizer, logger);
