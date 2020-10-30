@@ -18,9 +18,11 @@ package com.google.cloud.tools.jib.cli.cli2;
 
 import com.google.cloud.tools.jib.api.Containerizer;
 import com.google.cloud.tools.jib.api.JibContainerBuilder;
+import com.google.cloud.tools.jib.api.LogEvent.Level;
 import com.google.cloud.tools.jib.cli.buildfile.BuildFiles;
 import com.google.cloud.tools.jib.cli.cli2.logging.CliLogger;
 import com.google.cloud.tools.jib.plugins.common.logging.ConsoleLogger;
+import java.nio.file.Files;
 import java.util.concurrent.Callable;
 import picocli.CommandLine;
 
@@ -40,6 +42,12 @@ public class Build implements Callable<Integer> {
     try {
       ConsoleLogger logger =
           CliLogger.newLogger(globalOptions.getVerbosity(), globalOptions.getConsoleOutput());
+
+      if (!Files.exists(globalOptions.getBuildFile())) {
+        logger.log(Level.ERROR, "Build File YAML does not exist: " + globalOptions.getBuildFile());
+        return 1;
+      }
+
       Containerizer containerizer = Containerizers.from(globalOptions, logger);
 
       JibContainerBuilder containerBuilder =
@@ -51,7 +59,7 @@ public class Build implements Callable<Integer> {
       if (globalOptions.isStacktrace()) {
         ex.printStackTrace();
       }
-      System.err.println(ex.getMessage());
+      System.err.println(ex.getClass().getName() + ": " + ex.getMessage());
       return 1;
     }
     return 0;

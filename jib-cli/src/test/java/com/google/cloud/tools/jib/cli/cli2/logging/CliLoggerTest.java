@@ -71,7 +71,7 @@ public class CliLoggerTest {
   public void testLog_error_plainConsole() {
     createLoggerAndSendMessages(Verbosity.error, ConsoleOutput.plain);
 
-    Mockito.verify(mockErr).println("error");
+    Mockito.verify(mockErr).println("[ERROR] error");
     Mockito.verifyNoMoreInteractions(mockErr);
     Mockito.verifyNoInteractions(mockOut);
   }
@@ -80,9 +80,9 @@ public class CliLoggerTest {
   public void testLog_warn_plainConsole() {
     createLoggerAndSendMessages(Verbosity.warn, ConsoleOutput.plain);
 
-    Mockito.verify(mockErr).println("error");
+    Mockito.verify(mockErr).println("[ERROR] error");
     Mockito.verifyNoMoreInteractions(mockErr);
-    Mockito.verify(mockOut).println("warn");
+    Mockito.verify(mockOut).println("[WARN] warn");
     Mockito.verifyNoMoreInteractions(mockOut);
   }
 
@@ -90,9 +90,9 @@ public class CliLoggerTest {
   public void testLog_lifecycle_plainConsole() {
     createLoggerAndSendMessages(Verbosity.lifecycle, ConsoleOutput.plain);
 
-    Mockito.verify(mockErr).println("error");
+    Mockito.verify(mockErr).println("[ERROR] error");
     Mockito.verifyNoMoreInteractions(mockErr);
-    Mockito.verify(mockOut).println("warn");
+    Mockito.verify(mockOut).println("[WARN] warn");
     Mockito.verify(mockOut).println("lifecycle");
     Mockito.verify(mockOut).println("progress");
     Mockito.verifyNoMoreInteractions(mockOut);
@@ -102,9 +102,9 @@ public class CliLoggerTest {
   public void testLog_info_plainConsole() {
     createLoggerAndSendMessages(Verbosity.info, ConsoleOutput.plain);
 
-    Mockito.verify(mockErr).println("error");
+    Mockito.verify(mockErr).println("[ERROR] error");
     Mockito.verifyNoMoreInteractions(mockErr);
-    Mockito.verify(mockOut).println("warn");
+    Mockito.verify(mockOut).println("[WARN] warn");
     Mockito.verify(mockOut).println("lifecycle");
     Mockito.verify(mockOut).println("progress");
     Mockito.verify(mockOut).println("info");
@@ -115,9 +115,9 @@ public class CliLoggerTest {
   public void testLog_debug_plainConsole() {
     createLoggerAndSendMessages(Verbosity.debug, ConsoleOutput.plain);
 
-    Mockito.verify(mockErr).println("error");
+    Mockito.verify(mockErr).println("[ERROR] error");
     Mockito.verifyNoMoreInteractions(mockErr);
-    Mockito.verify(mockOut).println("warn");
+    Mockito.verify(mockOut).println("[WARN] warn");
     Mockito.verify(mockOut).println("lifecycle");
     Mockito.verify(mockOut).println("progress");
     Mockito.verify(mockOut).println("info");
@@ -137,7 +137,7 @@ public class CliLoggerTest {
   public void testLog_error_richConsole() {
     createLoggerAndSendMessages(Verbosity.error, ConsoleOutput.rich);
 
-    Mockito.verify(mockErr).println("error");
+    Mockito.verify(mockErr).println("[ERROR] error");
     Mockito.verifyNoMoreInteractions(mockErr);
     Mockito.verifyNoInteractions(mockOut);
   }
@@ -146,9 +146,9 @@ public class CliLoggerTest {
   public void testLog_warn_richConsole() {
     createLoggerAndSendMessages(Verbosity.warn, ConsoleOutput.rich);
 
-    Mockito.verify(mockErr).println("error");
+    Mockito.verify(mockErr).println("[ERROR] error");
     Mockito.verifyNoMoreInteractions(mockErr);
-    Mockito.verify(mockOut).println("warn");
+    Mockito.verify(mockOut).println("[WARN] warn");
     Mockito.verifyNoMoreInteractions(mockOut);
   }
 
@@ -156,9 +156,9 @@ public class CliLoggerTest {
   public void testLog_lifecycle_richConsole() {
     createLoggerAndSendMessages(Verbosity.lifecycle, ConsoleOutput.rich);
 
-    Mockito.verify(mockErr).println("error");
+    Mockito.verify(mockErr).println("[ERROR] error");
     Mockito.verifyNoMoreInteractions(mockErr);
-    Mockito.verify(mockOut).println("warn");
+    Mockito.verify(mockOut).println("[WARN] warn");
     Mockito.verify(mockOut).println("lifecycle");
     Mockito.verifyNoMoreInteractions(mockOut);
   }
@@ -167,9 +167,9 @@ public class CliLoggerTest {
   public void testLog_info_richConsole() {
     createLoggerAndSendMessages(Verbosity.info, ConsoleOutput.rich);
 
-    Mockito.verify(mockErr).println("error");
+    Mockito.verify(mockErr).println("[ERROR] error");
     Mockito.verifyNoMoreInteractions(mockErr);
-    Mockito.verify(mockOut).println("warn");
+    Mockito.verify(mockOut).println("[WARN] warn");
     Mockito.verify(mockOut).println("lifecycle");
     Mockito.verify(mockOut).println("info");
     Mockito.verifyNoMoreInteractions(mockOut);
@@ -179,9 +179,9 @@ public class CliLoggerTest {
   public void testLog_debug_richConsole() {
     createLoggerAndSendMessages(Verbosity.debug, ConsoleOutput.rich);
 
-    Mockito.verify(mockErr).println("error");
+    Mockito.verify(mockErr).println("[ERROR] error");
     Mockito.verifyNoMoreInteractions(mockErr);
-    Mockito.verify(mockOut).println("warn");
+    Mockito.verify(mockOut).println("[WARN] warn");
     Mockito.verify(mockOut).println("lifecycle");
     Mockito.verify(mockOut).println("info");
     Mockito.verify(mockOut).println("debug");

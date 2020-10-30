@@ -118,7 +118,7 @@ public class JibCli {
       description =
           "templating parameter to inject into build file, replace $${<name>} with <value> (repeatable)")
   @SuppressWarnings("NullAway.Init") // initialized by picocli
-  private Map<String, String> templateParameters = new HashMap<String, String>();
+  private Map<String, String> templateParameters = new HashMap<>();
 
   @Option(
       names = "--additional-tags",
@@ -126,7 +126,7 @@ public class JibCli {
       split = ",",
       description = "Additional tags for target image")
   @SuppressWarnings("NullAway.Init") // initialized by picocli
-  private List<String> additionalTags = new ArrayList<String>();
+  private List<String> additionalTags = new ArrayList<>();
 
   @Option(
       names = "--base-image-cache",
