@@ -46,7 +46,10 @@ public class Build implements Callable<Integer> {
 
       Path buildFile = globalOptions.getBuildFile();
       if (!Files.isReadable(buildFile)) {
-        logger.log(Level.ERROR, "Cannot open Build File YAML: " + buildFile);
+        logger.log(
+            Level.ERROR,
+            "The Build File YAML either does not exist or cannot be opened for reading: "
+                + buildFile);
         return 1;
       }
       if (!Files.isRegularFile(buildFile)) {
