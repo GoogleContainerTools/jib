@@ -18,9 +18,12 @@ package com.google.cloud.tools.jib.cli.cli2;
 
 import com.google.cloud.tools.jib.api.Containerizer;
 import com.google.cloud.tools.jib.api.JibContainerBuilder;
+import com.google.cloud.tools.jib.api.LogEvent.Level;
 import com.google.cloud.tools.jib.cli.buildfile.BuildFiles;
 import com.google.cloud.tools.jib.cli.cli2.logging.CliLogger;
 import com.google.cloud.tools.jib.plugins.common.logging.ConsoleLogger;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.concurrent.Callable;
 import picocli.CommandLine;
 
@@ -40,18 +43,32 @@ public class Build implements Callable<Integer> {
     try {
       ConsoleLogger logger =
           CliLogger.newLogger(globalOptions.getVerbosity(), globalOptions.getConsoleOutput());
+
+      Path buildFile = globalOptions.getBuildFile();
+      if (!Files.isReadable(buildFile)) {
+        logger.log(
+            Level.ERROR,
+            "The Build File YAML either does not exist or cannot be opened for reading: "
+                + buildFile);
+        return 1;
+      }
+      if (!Files.isRegularFile(buildFile)) {
+        logger.log(Level.ERROR, "Build File YAML path is a not a file: " + buildFile);
+        return 1;
+      }
+
       Containerizer containerizer = Containerizers.from(globalOptions, logger);
 
       JibContainerBuilder containerBuilder =
           BuildFiles.toJibContainerBuilder(
-              globalOptions.getContextRoot(), globalOptions.getBuildFile(), globalOptions, logger);
+              globalOptions.getContextRoot(), buildFile, globalOptions, logger);
 
       containerBuilder.containerize(containerizer);
     } catch (Exception ex) {
       if (globalOptions.isStacktrace()) {
         ex.printStackTrace();
       }
-      System.err.println(ex.getMessage());
+      System.err.println(ex.getClass().getName() + ": " + ex.getMessage());
       return 1;
     }
     return 0;

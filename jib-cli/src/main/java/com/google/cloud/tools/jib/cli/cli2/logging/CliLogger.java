@@ -51,10 +51,10 @@ public class CliLogger {
             ? ConsoleLoggerBuilder.rich(executor, false)
             : ConsoleLoggerBuilder.plain(executor);
     if (verbosity.atLeast(Verbosity.error)) {
-      builder.error(stderr::println);
+      builder.error(message -> stderr.println("[ERROR] " + message));
     }
     if (verbosity.atLeast(Verbosity.warn)) {
-      builder.warn(stdout::println);
+      builder.warn(message -> stdout.println("[WARN] " + message));
     }
     if (verbosity.atLeast(Verbosity.lifecycle)) {
       builder.lifecycle(stdout::println);
