@@ -163,11 +163,7 @@ public class PluginConfigurationProcessorTest {
     BuildContext buildContext = getBuildContext(processCommonConfiguration());
 
     Assert.assertEquals(
-        Arrays.asList(
-            "java",
-            "-cp",
-            "/app/resources:/app/classes:/app/libs/foo-1.jar:/app/libs/bar-2.jar",
-            "java.lang.Object"),
+        Arrays.asList("java", "-cp", "/app/resources:/app/classes:/app/libs/*", "java.lang.Object"),
         buildContext.getContainerConfiguration().getEntrypoint());
 
     Mockito.verify(containerizer)
@@ -294,11 +290,7 @@ public class PluginConfigurationProcessorTest {
       throws MainClassInferenceException, InvalidAppRootException, IOException,
           InvalidContainerizingModeException {
     Assert.assertEquals(
-        Arrays.asList(
-            "java",
-            "-cp",
-            "/app/resources:/app/classes:/app/libs/foo-1.jar:/app/libs/bar-2.jar",
-            "java.lang.Object"),
+        Arrays.asList("java", "-cp", "/app/resources:/app/classes:/app/libs/*", "java.lang.Object"),
         PluginConfigurationProcessor.computeEntrypoint(rawConfiguration, projectProperties));
   }
 
@@ -308,21 +300,21 @@ public class PluginConfigurationProcessorTest {
           InvalidContainerizingModeException {
     Mockito.when(rawConfiguration.getContainerizingMode()).thenReturn("packaged");
     Assert.assertEquals(
-        Arrays.asList(
-            "java",
-            "-cp",
-            "/app/classpath/*:/app/libs/foo-1.jar:/app/libs/bar-2.jar",
-            "java.lang.Object"),
+        Arrays.asList("java", "-cp", "/app/classpath/*:/app/libs/*", "java.lang.Object"),
         PluginConfigurationProcessor.computeEntrypoint(rawConfiguration, projectProperties));
   }
 
   @Test
-  public void testComputeEntrypoint_noClasspathOrderPreserving()
+  public void testComputeEntrypoint_expandClasspathDependencies()
       throws MainClassInferenceException, InvalidAppRootException, IOException,
           InvalidContainerizingModeException {
-    System.setProperty("jib.noClasspathOrderPreserving", "true");
+    Mockito.when(rawConfiguration.getExpandClasspathDependencies()).thenReturn(true);
     Assert.assertEquals(
-        Arrays.asList("java", "-cp", "/app/resources:/app/classes:/app/libs/*", "java.lang.Object"),
+        Arrays.asList(
+            "java",
+            "-cp",
+            "/app/resources:/app/classes:/app/libs/foo-1.jar:/app/libs/bar-2.jar",
+            "java.lang.Object"),
         PluginConfigurationProcessor.computeEntrypoint(rawConfiguration, projectProperties));
   }
 
@@ -357,11 +349,7 @@ public class PluginConfigurationProcessorTest {
     BuildContext buildContext = getBuildContext(processCommonConfiguration());
 
     Assert.assertEquals(
-        Arrays.asList(
-            "java",
-            "-cp",
-            "/app/resources:/app/classes:/app/libs/foo-1.jar:/app/libs/bar-2.jar",
-            "java.lang.Object"),
+        Arrays.asList("java", "-cp", "/app/resources:/app/classes:/app/libs/*", "java.lang.Object"),
         buildContext.getContainerConfiguration().getEntrypoint());
 
     ArgumentMatcher<LogEvent> isLogWarn = logEvent -> logEvent.getLevel() == LogEvent.Level.WARN;
@@ -385,10 +373,7 @@ public class PluginConfigurationProcessorTest {
 
     Assert.assertEquals(
         Arrays.asList(
-            "java",
-            "-cp",
-            "/foo:/app/resources:/app/classes:/app/libs/foo-1.jar:/app/libs/bar-2.jar",
-            "java.lang.Object"),
+            "java", "-cp", "/foo:/app/resources:/app/classes:/app/libs/*", "java.lang.Object"),
         buildContext.getContainerConfiguration().getEntrypoint());
 
     ArgumentMatcher<LogEvent> isLogWarn = logEvent -> logEvent.getLevel() == LogEvent.Level.WARN;
@@ -500,10 +485,7 @@ public class PluginConfigurationProcessorTest {
 
     Assert.assertEquals(
         Arrays.asList(
-            "java",
-            "-cp",
-            "/my/app/resources:/my/app/classes:/my/app/libs/foo-1.jar:/my/app/libs/bar-2.jar",
-            "java.lang.Object"),
+            "java", "-cp", "/my/app/resources:/my/app/classes:/my/app/libs/*", "java.lang.Object"),
         buildContext.getContainerConfiguration().getEntrypoint());
   }
 

@@ -94,6 +94,11 @@ public class MavenRawConfiguration implements RawConfiguration {
   }
 
   @Override
+  public boolean getExpandClasspathDependencies() {
+    return jibPluginConfiguration.getExpandClasspathDependencies();
+  }
+
+  @Override
   public Optional<String> getMainClass() {
     return Optional.ofNullable(jibPluginConfiguration.getMainClass());
   }

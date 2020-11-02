@@ -32,6 +32,8 @@ public class PropertyNames {
   public static final String CONTAINER_APP_ROOT = "jib.container.appRoot";
   public static final String CONTAINER_ARGS = "jib.container.args";
   public static final String CONTAINER_EXTRA_CLASSPATH = "jib.container.extraClasspath";
+  public static final String EXPAND_CLASSPATH_DEPENDENCIES =
+      "jib.container.expandClasspathDependencies";
   public static final String CONTAINER_ENTRYPOINT = "jib.container.entrypoint";
   public static final String CONTAINER_ENVIRONMENT = "jib.container.environment";
   public static final String CONTAINER_FORMAT = "jib.container.format";
@@ -65,7 +67,6 @@ public class PropertyNames {
   public static final String ALWAYS_CACHE_BASE_IMAGE = "jib.alwaysCacheBaseImage";
   public static final String DISABLE_UPDATE_CHECKS = "jib.disableUpdateChecks";
   public static final String CONFIG_DIRECTORY = "jib.configDirectory";
-  public static final String NO_CLASSPATH_ORDER_PRESERVING = "jib.noClasspathOrderPreserving";
 
   private PropertyNames() {}
 }

@@ -37,6 +37,7 @@ public class ContainerParameters {
   private Map<String, String> environment = Collections.emptyMap();
   @Nullable private List<String> entrypoint;
   private List<String> extraClasspath = Collections.emptyList();
+  private boolean expandClasspathDependencies;
   @Nullable private String mainClass;
   @Nullable private List<String> args;
   private ImageFormat format = ImageFormat.Docker;
@@ -103,12 +104,24 @@ public class ContainerParameters {
       return ConfigurationPropertyValidator.parseListProperty(
           System.getProperty(PropertyNames.CONTAINER_EXTRA_CLASSPATH));
     }
-
     return extraClasspath;
   }
 
   public void setExtraClasspath(List<String> classpath) {
-    this.extraClasspath = classpath;
+    extraClasspath = classpath;
+  }
+
+  @Input
+  @Optional
+  public boolean getExpandClasspathDependencies() {
+    if (System.getProperty(PropertyNames.EXPAND_CLASSPATH_DEPENDENCIES) != null) {
+      return Boolean.valueOf(System.getProperty(PropertyNames.EXPAND_CLASSPATH_DEPENDENCIES));
+    }
+    return expandClasspathDependencies;
+  }
+
+  public void setExpandClasspathDependencies(boolean expand) {
+    expandClasspathDependencies = expand;
   }
 
   @Input

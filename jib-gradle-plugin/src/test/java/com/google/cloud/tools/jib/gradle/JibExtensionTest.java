@@ -140,6 +140,7 @@ public class JibExtensionTest {
     Assert.assertEquals(Collections.emptyMap(), testJibExtension.getContainer().getEnvironment());
     Assert.assertEquals(
         Collections.emptyList(), testJibExtension.getContainer().getExtraClasspath());
+    Assert.assertFalse(testJibExtension.getContainer().getExpandClasspathDependencies());
     Assert.assertNull(testJibExtension.getContainer().getMainClass());
     Assert.assertNull(testJibExtension.getContainer().getArgs());
     Assert.assertSame(ImageFormat.Docker, testJibExtension.getContainer().getFormat());
@@ -156,6 +157,7 @@ public class JibExtensionTest {
           container.setEnvironment(ImmutableMap.of("var1", "value1", "var2", "value2"));
           container.setEntrypoint(Arrays.asList("foo", "bar", "baz"));
           container.setExtraClasspath(Arrays.asList("/d1", "/d2", "/d3"));
+          container.setExpandClasspathDependencies(true);
           container.setMainClass("mainClass");
           container.setArgs(Arrays.asList("arg1", "arg2", "arg3"));
           container.setPorts(Arrays.asList("1000", "2000-2010", "3000"));
@@ -170,6 +172,7 @@ public class JibExtensionTest {
     Assert.assertEquals(
         ImmutableMap.of("var1", "value1", "var2", "value2"), container.getEnvironment());
     Assert.assertEquals(ImmutableList.of("/d1", "/d2", "/d3"), container.getExtraClasspath());
+    Assert.assertTrue(testJibExtension.getContainer().getExpandClasspathDependencies());
     Assert.assertEquals("mainClass", testJibExtension.getContainer().getMainClass());
     Assert.assertEquals(Arrays.asList("arg1", "arg2", "arg3"), container.getArgs());
     Assert.assertEquals(Arrays.asList("1000", "2000-2010", "3000"), container.getPorts());
@@ -381,6 +384,8 @@ public class JibExtensionTest {
     System.setProperty("jib.container.extraClasspath", "/d1,/d2,/d3");
     Assert.assertEquals(
         ImmutableList.of("/d1", "/d2", "/d3"), testJibExtension.getContainer().getExtraClasspath());
+    System.setProperty("jib.container.expandClasspathDependencies", "true");
+    Assert.assertTrue(testJibExtension.getContainer().getExpandClasspathDependencies());
     System.setProperty("jib.container.format", "OCI");
     Assert.assertSame(ImageFormat.OCI, testJibExtension.getContainer().getFormat());
     System.setProperty("jib.container.jvmFlags", "flag1,flag2,flag3");

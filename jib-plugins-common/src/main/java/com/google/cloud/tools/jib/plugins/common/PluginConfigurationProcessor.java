@@ -586,10 +586,7 @@ public class PluginConfigurationProcessor {
         throw new IllegalStateException("unknown containerizing mode: " + mode);
     }
 
-    // TODO: remove the switch after no user reports an issue for a sufficient amount of time.
-    if (Boolean.getBoolean(PropertyNames.NO_CLASSPATH_ORDER_PRESERVING)) {
-      classpath.add(appRoot.resolve("libs/*").toString());
-    } else {
+    if (rawConfiguration.getExpandClasspathDependencies()) {
       List<String> dependencies =
           projectProperties
               .getDependencies()
@@ -597,6 +594,8 @@ public class PluginConfigurationProcessor {
               .map(path -> appRoot.resolve("libs").resolve(path.getFileName()).toString())
               .collect(Collectors.toList());
       classpath.addAll(dependencies);
+    } else {
+      classpath.add(appRoot.resolve("libs/*").toString());
     }
 
     String classpathString = String.join(":", classpath);
