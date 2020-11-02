@@ -22,36 +22,54 @@ import com.google.cloud.tools.jib.plugins.common.logging.SingleThreadedExecutor;
 import com.google.common.annotations.VisibleForTesting;
 import java.io.PrintStream;
 
-/** A simple cli logger that logs to the command line based on the configured log level. */
+/** A simple CLI logger that logs to the command line based on the configured log level. */
 public class CliLogger {
 
   /**
-   * Create a new logger for the cli.
+   * Create a new logger for the CLI.
    *
    * @param verbosity the configure verbosity
    * @param consoleOutput the configured consoleOutput format
    * @return a new ConsoleLogger instance
    */
   public static ConsoleLogger newLogger(Verbosity verbosity, ConsoleOutput consoleOutput) {
-    CliLogger cliLogger = new CliLogger(verbosity, System.out, System.err);
-    boolean isRichConsole = isRichConsole(consoleOutput);
-
-    return newLogger(cliLogger, isRichConsole, new SingleThreadedExecutor());
+    return newLogger(
+        verbosity, consoleOutput, System.out, System.err, new SingleThreadedExecutor());
   }
 
   @VisibleForTesting
   static ConsoleLogger newLogger(
-      CliLogger cliLogger, boolean isRichConsole, SingleThreadedExecutor executor) {
-    // rich logger will use an explicit progress event handler
+      Verbosity verbosity,
+      ConsoleOutput consoleOutput,
+      PrintStream stdout,
+      PrintStream stderr,
+      SingleThreadedExecutor executor) {
+    boolean enableRichProgress =
+        isRichConsole(consoleOutput) && verbosity.atLeast(Verbosity.lifecycle);
     ConsoleLoggerBuilder builder =
-        isRichConsole
-            ? ConsoleLoggerBuilder.rich(executor, true)
-            : ConsoleLoggerBuilder.plain(executor).progress(cliLogger::lifecycle);
-    builder.error(cliLogger::error);
-    builder.warn(cliLogger::warn);
-    builder.lifecycle(cliLogger::lifecycle);
-    builder.info(cliLogger::info);
-    builder.debug(cliLogger::debug);
+        enableRichProgress
+            ? ConsoleLoggerBuilder.rich(executor, false)
+            : ConsoleLoggerBuilder.plain(executor);
+    if (verbosity.atLeast(Verbosity.error)) {
+      builder.error(stderr::println);
+    }
+    if (verbosity.atLeast(Verbosity.warn)) {
+      builder.warn(stdout::println);
+    }
+    if (verbosity.atLeast(Verbosity.lifecycle)) {
+      builder.lifecycle(stdout::println);
+      // Rich progress reporting will be through ProgressEvent (note this is not LogEvent of
+      // Level.PROGRESS), so we ignore PROGRESS LogEvent.
+      if (!enableRichProgress) {
+        builder.progress(stdout::println);
+      }
+    }
+    if (verbosity.atLeast(Verbosity.info)) {
+      builder.info(stdout::println);
+    }
+    if (verbosity.atLeast(Verbosity.debug)) {
+      builder.debug(stdout::println);
+    }
 
     return builder.build();
   }
@@ -68,52 +86,6 @@ public class CliLogger {
       case rich:
       default:
         return true;
-    }
-  }
-
-  private final Verbosity verbosity;
-  private final PrintStream out;
-  private final PrintStream err;
-
-  @VisibleForTesting
-  CliLogger(Verbosity verbosity, PrintStream out, PrintStream err) {
-    this.verbosity = verbosity;
-    this.out = out;
-    this.err = err;
-  }
-
-  @VisibleForTesting
-  void debug(String message) {
-    if (verbosity.atLeast(Verbosity.debug)) {
-      out.println(message);
-    }
-  }
-
-  @VisibleForTesting
-  void info(String message) {
-    if (verbosity.atLeast(Verbosity.info)) {
-      out.println(message);
-    }
-  }
-
-  @VisibleForTesting
-  void lifecycle(String message) {
-    if (verbosity.atLeast(Verbosity.lifecycle)) {
-      out.println(message);
-    }
-  }
-
-  @VisibleForTesting
-  void warn(String message) {
-    if (verbosity.atLeast(Verbosity.warn)) {
-      out.println(message);
-    }
-  }
-
-  @VisibleForTesting
-  void error(String message) {
-    if (verbosity.atLeast(Verbosity.error)) {
-      err.println(message);
     }
   }
 }

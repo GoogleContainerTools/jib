@@ -18,7 +18,7 @@ package com.google.cloud.tools.jib.cli.cli2.logging;
 
 import static com.google.common.truth.Truth.assertThat;
 
-import com.google.cloud.tools.jib.api.LogEvent;
+import com.google.cloud.tools.jib.api.LogEvent.Level;
 import com.google.cloud.tools.jib.plugins.common.logging.ConsoleLogger;
 import com.google.cloud.tools.jib.plugins.common.logging.SingleThreadedExecutor;
 import java.io.PrintStream;
@@ -28,7 +28,6 @@ import org.junit.Test;
 import org.junit.contrib.java.lang.system.EnvironmentVariables;
 import org.junit.contrib.java.lang.system.RestoreSystemProperties;
 import org.junit.runner.RunWith;
-import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
@@ -45,37 +44,42 @@ public class CliLoggerTest {
   @Mock private PrintStream mockOut;
   @Mock private PrintStream mockErr;
 
-  @Mock private CliLogger mockCliLogger;
+  private void createLoggerAndSendMessages(Verbosity verbosity, ConsoleOutput consoleOutput) {
+    SingleThreadedExecutor executor = new SingleThreadedExecutor();
+    ConsoleLogger logger =
+        CliLogger.newLogger(verbosity, consoleOutput, mockOut, mockErr, executor);
 
-  private void sendMessages(CliLogger logger) {
-    logger.debug("debug");
-    logger.info("info");
-    logger.lifecycle("lifecycle");
-    logger.warn("warn");
-    logger.error("error");
+    logger.log(Level.DEBUG, "debug");
+    logger.log(Level.INFO, "info");
+    logger.log(Level.LIFECYCLE, "lifecycle");
+    logger.log(Level.PROGRESS, "progress");
+    logger.log(Level.WARN, "warn");
+    logger.log(Level.ERROR, "error");
+
+    executor.shutDownAndAwaitTermination(Duration.ofSeconds(3));
   }
 
   @Test
-  public void testLog_quiet() {
-    CliLogger logger = new CliLogger(Verbosity.quiet, mockOut, mockErr);
-    sendMessages(logger);
+  public void testLog_quiet_plainConsole() {
+    createLoggerAndSendMessages(Verbosity.quiet, ConsoleOutput.plain);
+
     Mockito.verifyNoInteractions(mockOut);
     Mockito.verifyNoInteractions(mockErr);
   }
 
   @Test
-  public void testLog_error() {
-    CliLogger logger = new CliLogger(Verbosity.error, mockOut, mockErr);
-    sendMessages(logger);
+  public void testLog_error_plainConsole() {
+    createLoggerAndSendMessages(Verbosity.error, ConsoleOutput.plain);
+
     Mockito.verify(mockErr).println("error");
     Mockito.verifyNoMoreInteractions(mockErr);
     Mockito.verifyNoInteractions(mockOut);
   }
 
   @Test
-  public void testLog_warn() {
-    CliLogger logger = new CliLogger(Verbosity.warn, mockOut, mockErr);
-    sendMessages(logger);
+  public void testLog_warn_plainConsole() {
+    createLoggerAndSendMessages(Verbosity.warn, ConsoleOutput.plain);
+
     Mockito.verify(mockErr).println("error");
     Mockito.verifyNoMoreInteractions(mockErr);
     Mockito.verify(mockOut).println("warn");
@@ -83,9 +87,75 @@ public class CliLoggerTest {
   }
 
   @Test
-  public void testLog_lifecycle() {
-    CliLogger logger = new CliLogger(Verbosity.lifecycle, mockOut, mockErr);
-    sendMessages(logger);
+  public void testLog_lifecycle_plainConsole() {
+    createLoggerAndSendMessages(Verbosity.lifecycle, ConsoleOutput.plain);
+
+    Mockito.verify(mockErr).println("error");
+    Mockito.verifyNoMoreInteractions(mockErr);
+    Mockito.verify(mockOut).println("warn");
+    Mockito.verify(mockOut).println("lifecycle");
+    Mockito.verify(mockOut).println("progress");
+    Mockito.verifyNoMoreInteractions(mockOut);
+  }
+
+  @Test
+  public void testLog_info_plainConsole() {
+    createLoggerAndSendMessages(Verbosity.info, ConsoleOutput.plain);
+
+    Mockito.verify(mockErr).println("error");
+    Mockito.verifyNoMoreInteractions(mockErr);
+    Mockito.verify(mockOut).println("warn");
+    Mockito.verify(mockOut).println("lifecycle");
+    Mockito.verify(mockOut).println("progress");
+    Mockito.verify(mockOut).println("info");
+    Mockito.verifyNoMoreInteractions(mockOut);
+  }
+
+  @Test
+  public void testLog_debug_plainConsole() {
+    createLoggerAndSendMessages(Verbosity.debug, ConsoleOutput.plain);
+
+    Mockito.verify(mockErr).println("error");
+    Mockito.verifyNoMoreInteractions(mockErr);
+    Mockito.verify(mockOut).println("warn");
+    Mockito.verify(mockOut).println("lifecycle");
+    Mockito.verify(mockOut).println("progress");
+    Mockito.verify(mockOut).println("info");
+    Mockito.verify(mockOut).println("debug");
+    Mockito.verifyNoMoreInteractions(mockOut);
+  }
+
+  @Test
+  public void testLog_quiet_richConsole() {
+    createLoggerAndSendMessages(Verbosity.quiet, ConsoleOutput.rich);
+
+    Mockito.verifyNoInteractions(mockOut);
+    Mockito.verifyNoInteractions(mockErr);
+  }
+
+  @Test
+  public void testLog_error_richConsole() {
+    createLoggerAndSendMessages(Verbosity.error, ConsoleOutput.rich);
+
+    Mockito.verify(mockErr).println("error");
+    Mockito.verifyNoMoreInteractions(mockErr);
+    Mockito.verifyNoInteractions(mockOut);
+  }
+
+  @Test
+  public void testLog_warn_richConsole() {
+    createLoggerAndSendMessages(Verbosity.warn, ConsoleOutput.rich);
+
+    Mockito.verify(mockErr).println("error");
+    Mockito.verifyNoMoreInteractions(mockErr);
+    Mockito.verify(mockOut).println("warn");
+    Mockito.verifyNoMoreInteractions(mockOut);
+  }
+
+  @Test
+  public void testLog_lifecycle_richConsole() {
+    createLoggerAndSendMessages(Verbosity.lifecycle, ConsoleOutput.rich);
+
     Mockito.verify(mockErr).println("error");
     Mockito.verifyNoMoreInteractions(mockErr);
     Mockito.verify(mockOut).println("warn");
@@ -94,9 +164,9 @@ public class CliLoggerTest {
   }
 
   @Test
-  public void testLog_info() {
-    CliLogger logger = new CliLogger(Verbosity.info, mockOut, mockErr);
-    sendMessages(logger);
+  public void testLog_info_richConsole() {
+    createLoggerAndSendMessages(Verbosity.info, ConsoleOutput.rich);
+
     Mockito.verify(mockErr).println("error");
     Mockito.verifyNoMoreInteractions(mockErr);
     Mockito.verify(mockOut).println("warn");
@@ -106,9 +176,9 @@ public class CliLoggerTest {
   }
 
   @Test
-  public void testLog_debug() {
-    CliLogger logger = new CliLogger(Verbosity.debug, mockOut, mockErr);
-    sendMessages(logger);
+  public void testLog_debug_richConsole() {
+    createLoggerAndSendMessages(Verbosity.debug, ConsoleOutput.rich);
+
     Mockito.verify(mockErr).println("error");
     Mockito.verifyNoMoreInteractions(mockErr);
     Mockito.verify(mockOut).println("warn");
@@ -144,52 +214,5 @@ public class CliLoggerTest {
   public void testIsRightConsole_autoDumbTermFalse() {
     environmentVariables.set("TERM", "dumb");
     assertThat(CliLogger.isRichConsole(ConsoleOutput.auto)).isFalse();
-  }
-
-  @Test
-  public void testNewLogger_richConfig() {
-    InOrder inOrder = Mockito.inOrder(mockCliLogger);
-    SingleThreadedExecutor singleThreadedExecutor = new SingleThreadedExecutor();
-    ConsoleLogger logger = CliLogger.newLogger(mockCliLogger, true, singleThreadedExecutor);
-
-    logger.log(LogEvent.Level.DEBUG, "debug");
-    logger.log(LogEvent.Level.INFO, "info");
-    logger.log(LogEvent.Level.LIFECYCLE, "lifecycle");
-    logger.log(LogEvent.Level.PROGRESS, "progress");
-    logger.log(LogEvent.Level.WARN, "warn");
-    logger.log(LogEvent.Level.ERROR, "error");
-
-    singleThreadedExecutor.shutDownAndAwaitTermination(Duration.ofSeconds(3));
-
-    inOrder.verify(mockCliLogger).debug("debug");
-    inOrder.verify(mockCliLogger).info("info");
-    inOrder.verify(mockCliLogger).lifecycle("lifecycle");
-    inOrder.verify(mockCliLogger).warn("warn");
-    inOrder.verify(mockCliLogger).error("error");
-    inOrder.verifyNoMoreInteractions(); // progress is not configured
-  }
-
-  @Test
-  public void testNewLogger_plainConfig() {
-    InOrder inOrder = Mockito.inOrder(mockCliLogger);
-    SingleThreadedExecutor singleThreadedExecutor = new SingleThreadedExecutor();
-    ConsoleLogger logger = CliLogger.newLogger(mockCliLogger, false, singleThreadedExecutor);
-
-    logger.log(LogEvent.Level.DEBUG, "debug");
-    logger.log(LogEvent.Level.INFO, "info");
-    logger.log(LogEvent.Level.LIFECYCLE, "lifecycle");
-    logger.log(LogEvent.Level.PROGRESS, "progress");
-    logger.log(LogEvent.Level.WARN, "warn");
-    logger.log(LogEvent.Level.ERROR, "error");
-
-    singleThreadedExecutor.shutDownAndAwaitTermination(Duration.ofSeconds(3));
-
-    inOrder.verify(mockCliLogger).debug("debug");
-    inOrder.verify(mockCliLogger).info("info");
-    inOrder.verify(mockCliLogger).lifecycle("lifecycle");
-    inOrder.verify(mockCliLogger).lifecycle("progress");
-    inOrder.verify(mockCliLogger).warn("warn");
-    inOrder.verify(mockCliLogger).error("error");
-    inOrder.verifyNoMoreInteractions();
   }
 }
