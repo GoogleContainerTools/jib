@@ -18,63 +18,71 @@ package com.google.cloud.tools.jib.cli.cli2;
 
 import com.google.cloud.tools.jib.api.Containerizer;
 import com.google.cloud.tools.jib.api.JibContainerBuilder;
-import com.google.cloud.tools.jib.cli.buildfile.BuildFiles;
+import com.google.cloud.tools.jib.api.LogEvent;
 import com.google.cloud.tools.jib.cli.cli2.logging.CliLogger;
 import com.google.cloud.tools.jib.cli.jar.JarFiles;
 import com.google.cloud.tools.jib.plugins.common.logging.ConsoleLogger;
-
+import com.google.common.io.MoreFiles;
+import com.google.common.io.RecursiveDeleteOption;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.concurrent.Callable;
 import picocli.CommandLine;
 
-@CommandLine.Command(
-        name = "jar",
-        showAtFileInUsageHelp = true,
-        description = "Build a container from jar")
+@CommandLine.Command(name = "jar", showAtFileInUsageHelp = true, description = "Containerize a jar")
 public class Jar implements Callable<Integer> {
-    @CommandLine.ParentCommand
-    @SuppressWarnings("NullAway.Init") // initialized by picocli
-    protected JibCli globalOptions;
+  @CommandLine.ParentCommand
+  @SuppressWarnings("NullAway.Init") // initialized by picocli
+  protected JibCli globalOptions;
 
-    @CommandLine.Option(
-            names = {"--jar"},
-            paramLabel = "<jar-file>",
-            description = "The path to the jar file (ex: path/to/my-jar.jar)")
-    @SuppressWarnings("NullAway.Init") // initialized by picocli
-    private Path jarFile;
+  @CommandLine.Option(
+      names = {"--jar"},
+      paramLabel = "<jar-file>",
+      description = "The path to the jar file (ex: path/to/my-jar.jar)")
+  @SuppressWarnings("NullAway.Init") // initialized by picocli
+  private Path jarFile;
 
-    /**
-     * Returns a user configured Path to a buildfile and if none is configured returns sample.jar in
-     * {@link #globalOptions#getContextRoot()}.
-     *
-     * @return a path to a jar file
-     */
-    public Path getJarFile() {
-        if (jarFile == null) {
-            return globalOptions.getContextRoot().resolve("sample.jar");
-        }
-        return jarFile;
+  /**
+   * Returns a user configured Path to a jar file.
+   *
+   * @return a path to a jar file
+   */
+  public Path getJarFile() {
+    return jarFile;
+  }
+
+  @Override
+  public Integer call() {
+    globalOptions.validate();
+    Path jarFile = getJarFile();
+    try {
+      ConsoleLogger logger =
+          CliLogger.newLogger(globalOptions.getVerbosity(), globalOptions.getConsoleOutput());
+      if (!Files.exists(jarFile)) {
+        logger.log(LogEvent.Level.ERROR, "The file path provided does not exist: " + jarFile);
+        return 1;
+      }
+      if (Files.isDirectory(jarFile)) {
+        logger.log(
+            LogEvent.Level.ERROR,
+            "The file path provided is for a directory. Please provide a path to a jar file: "
+                + jarFile);
+        return 1;
+      }
+      Containerizer containerizer = Containerizers.from(globalOptions, logger);
+      JibContainerBuilder containerBuilder =
+          JarFiles.toJibContainerBuilder(getJarFile(), Paths.get("build-artifacts"));
+      containerBuilder.containerize(containerizer);
+      MoreFiles.deleteDirectoryContents(
+          Paths.get("build-artifacts"), RecursiveDeleteOption.ALLOW_INSECURE);
+    } catch (Exception ex) {
+      if (globalOptions.isStacktrace()) {
+        ex.printStackTrace();
+      }
+      System.err.println(ex.getMessage());
+      return 1;
     }
-
-    @Override
-    public Integer call() {
-        globalOptions.validate();
-        try {
-            ConsoleLogger logger =
-                    CliLogger.newLogger(globalOptions.getVerbosity(), globalOptions.getConsoleOutput());
-            Containerizer containerizer = Containerizers.from(globalOptions, logger);
-            JibContainerBuilder containerBuilder =
-                    JarFiles.toJibContainerBuilder(getJarFile(), Paths.get("build-artifacts/"));
-
-            containerBuilder.containerize(containerizer);
-        } catch (Exception ex) {
-            if (globalOptions.isStacktrace()) {
-                ex.printStackTrace();
-            }
-            System.err.println(ex.getMessage());
-            return 1;
-        }
-        return 0;
-    }
+    return 0;
+  }
 }
