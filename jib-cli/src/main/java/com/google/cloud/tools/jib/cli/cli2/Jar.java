@@ -38,12 +38,10 @@ public class Jar implements Callable<Integer> {
   @SuppressWarnings("NullAway.Init") // initialized by picocli
   private Path jarFile;
 
-  private final TempDirectoryProvider tempDirectoryProvider = new TempDirectoryProvider();
-
   @Override
   public Integer call() {
     globalOptions.validate();
-    try {
+    try (TempDirectoryProvider tempDirectoryProvider = new TempDirectoryProvider()) {
       ConsoleLogger logger =
           CliLogger.newLogger(globalOptions.getVerbosity(), globalOptions.getConsoleOutput());
 
@@ -71,8 +69,6 @@ public class Jar implements Callable<Integer> {
       }
       System.err.println(ex.getClass().getName() + ": " + ex.getMessage());
       return 1;
-    } finally {
-      tempDirectoryProvider.close();
     }
     return 0;
   }
