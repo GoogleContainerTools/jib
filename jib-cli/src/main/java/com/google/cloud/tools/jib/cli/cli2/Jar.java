@@ -36,10 +36,7 @@ public class Jar implements Callable<Integer> {
   @SuppressWarnings("NullAway.Init") // initialized by picocli
   protected JibCli globalOptions;
 
-  @CommandLine.Option(
-      names = {"--jar"},
-      paramLabel = "<jar-file>",
-      description = "The path to the jar file (ex: path/to/my-jar.jar)")
+  @CommandLine.Parameters(description = "The path to the jar file (ex: path/to/my-jar.jar)")
   @SuppressWarnings("NullAway.Init") // initialized by picocli
   private Path jarFile;
 
