@@ -370,4 +370,33 @@ public class BuildImageStepTest {
     // Should be exactly 9 total
     Assert.assertEquals(9, image.getHistory().size());
   }
+
+  @Test
+  public void testTruncateLongClasspath_shortClasspath() {
+    ImmutableList<String> entrypoint =
+        ImmutableList.of(
+            "java", "-Dmy-property=value", "-cp", "/app/classes:/app/libs/*", "com.example.Main");
+
+    Assert.assertEquals(
+        "[java, -Dmy-property=value, -cp, /app/classes:/app/libs/*, com.example.Main]",
+        BuildImageStep.truncateLongClasspath(entrypoint));
+  }
+
+  @Test
+  public void testTruncateLongClasspath_longClasspath() {
+    String classpath =
+        "/app/resources:/app/classes:/app/libs/spring-boot-starter-web-2.0.3.RELEASE.jar:/app/libs/"
+            + "shared-library-0.1.0.jar:/app/libs/spring-boot-starter-json-2.0.3.RELEASE.jar:/app/"
+            + "libs/spring-boot-starter-2.0.3.RELEASE.jar:/app/libs/spring-boot-starter-tomcat-2.0."
+            + "3.RELEASE.jar";
+    ImmutableList<String> entrypoint =
+        ImmutableList.of("java", "-Dmy-property=value", "-cp", classpath, "com.example.Main");
+
+    Assert.assertEquals(
+        "[java, -Dmy-property=value, -cp, /app/resources:/app/classes:/app/libs/spring-boot-starter"
+            + "-web-2.0.3.RELEASE.jar:/app/libs/shared-library-0.1.0.jar:/app/libs/spring-boot-"
+            + "starter-json-2.0.3.RELEASE.jar:/app/libs/spring-boot-starter-2.<... classpath "
+            + "truncated ...>, com.example.Main]",
+        BuildImageStep.truncateLongClasspath(entrypoint));
+  }
 }

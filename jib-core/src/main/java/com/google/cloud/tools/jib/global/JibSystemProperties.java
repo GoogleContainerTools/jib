@@ -24,6 +24,7 @@ import com.google.common.collect.Range;
 public class JibSystemProperties {
 
   public static final String UPSTREAM_CLIENT = "_JIB_UPSTREAM_CLIENT";
+  private static final String DISABLE_USER_AGENT = "_JIB_DISABLE_USER_AGENT";
 
   @VisibleForTesting public static final String HTTP_TIMEOUT = "jib.httpTimeout";
 
@@ -31,8 +32,6 @@ public class JibSystemProperties {
 
   public static final String SEND_CREDENTIALS_OVER_HTTP = "sendCredentialsOverHttp";
   public static final String SERIALIZE = "jib.serialize";
-
-  private static final String DISABLE_USER_AGENT = "_JIB_DISABLE_USER_AGENT";
 
   @VisibleForTesting public static final String SKIP_EXISTING_IMAGES = "jib.skipExistingImages";
 

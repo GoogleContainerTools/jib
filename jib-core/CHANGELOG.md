@@ -9,7 +9,7 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
-- Fixed `NullPointerException` when pulling an OCI base image whose manifest does not have `mediaType` information. ([#2819](https://github.com/GoogleContainerTools/jib/pull/2819))
+- Fixed `NullPointerException` when pulling an OCI base image whose manifest does not have `mediaType` information. ([#2819](https://github.com/GoogleContainerTools/jib/issues/2819))
 - Fixed build failure when using a Docker daemon base image (`docker://...`) that has duplicate layers. ([#2829](https://github.com/GoogleContainerTools/jib/issues/2829))
 
 ## 0.16.0
