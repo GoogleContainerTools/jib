@@ -77,7 +77,7 @@ public class Jar implements Callable<Integer> {
       if (globalOptions.isStacktrace()) {
         ex.printStackTrace();
       }
-      System.err.println(ex.getMessage());
+      System.err.println(ex.getClass().getName() + ": " + ex.getMessage());
       return 1;
     }
     return 0;
