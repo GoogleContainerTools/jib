@@ -1101,6 +1101,20 @@ public class MavenProjectPropertiesTest {
         Paths.get("/foo/bar/helloworld-1.war"), mavenProjectProperties.getWarArtifact());
   }
 
+  @Test
+  public void testGetDependencies() throws URISyntaxException {
+    Assert.assertEquals(
+        Arrays.asList(
+            getResource("maven/application/dependencies/library.jarC.jar"),
+            getResource("maven/application/dependencies/libraryB.jar"),
+            getResource("maven/application/dependencies/libraryA.jar"),
+            getResource("maven/application/dependencies/more/dependency-1.0.0.jar"),
+            getResource("maven/application/dependencies/another/one/dependency-1.0.0.jar"),
+            testRepository.artifactPathOnDisk("com.test", "dependency", "1.0.0"),
+            testRepository.artifactPathOnDisk("com.test", "dependencyX", "1.0.0-SNAPSHOT")),
+        mavenProjectProperties.getDependencies());
+  }
+
   private BuildContext setUpBuildContext(String appRoot, ContainerizingMode containerizingMode)
       throws InvalidImageReferenceException, IOException, CacheDirectoryCreationException {
     JavaContainerBuilder javaContainerBuilder =

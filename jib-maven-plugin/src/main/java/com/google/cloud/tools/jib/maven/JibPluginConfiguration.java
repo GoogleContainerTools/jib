@@ -193,6 +193,8 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
 
     @Parameter private List<String> extraClasspath = Collections.emptyList();
 
+    private boolean expandClasspathDependencies;
+
     @Nullable @Parameter private String mainClass;
 
     @Nullable @Parameter private List<String> args;
@@ -503,6 +505,19 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
       return ConfigurationPropertyValidator.parseListProperty(property);
     }
     return container.extraClasspath;
+  }
+
+  /**
+   * Returns whether to expand classpath dependencies.
+   *
+   * @return {@code true} to expand classpath dependencies. {@code false} otherwise.
+   */
+  public boolean getExpandClasspathDependencies() {
+    String property = getProperty(PropertyNames.EXPAND_CLASSPATH_DEPENDENCIES);
+    if (property != null) {
+      return Boolean.valueOf(property);
+    }
+    return container.expandClasspathDependencies;
   }
 
   /**

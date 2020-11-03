@@ -59,11 +59,15 @@ public interface RawConfiguration {
 
   Optional<String> getToCredHelper();
 
+  List<? extends PlatformConfiguration> getPlatforms();
+
   Set<String> getToTags();
 
   Optional<List<String>> getEntrypoint();
 
   List<String> getExtraClasspath();
+
+  boolean getExpandClasspathDependencies();
 
   Optional<List<String>> getProgramArguments();
 
@@ -114,6 +118,4 @@ public interface RawConfiguration {
   Path getImageJsonOutputPath();
 
   List<? extends ExtensionConfiguration> getPluginExtensions();
-
-  List<? extends PlatformConfiguration> getPlatforms();
 }

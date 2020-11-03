@@ -146,6 +146,8 @@ public class PluginConfigurationProcessorTest {
                 Mockito.any(JavaContainerBuilder.class), Mockito.any(ContainerizingMode.class)))
         .thenReturn(Jib.from("base"));
     Mockito.when(projectProperties.isOffline()).thenReturn(false);
+    Mockito.when(projectProperties.getDependencies())
+        .thenReturn(Arrays.asList(Paths.get("/repo/foo-1.jar"), Paths.get("/home/libs/bar-2.jar")));
 
     Mockito.when(inferredAuthProvider.inferAuth(Mockito.any())).thenReturn(Optional.empty());
   }
@@ -293,12 +295,26 @@ public class PluginConfigurationProcessorTest {
   }
 
   @Test
-  public void testComputeEntrypoint_exploded()
+  public void testComputeEntrypoint_packaged()
       throws MainClassInferenceException, InvalidAppRootException, IOException,
           InvalidContainerizingModeException {
     Mockito.when(rawConfiguration.getContainerizingMode()).thenReturn("packaged");
     Assert.assertEquals(
         Arrays.asList("java", "-cp", "/app/classpath/*:/app/libs/*", "java.lang.Object"),
+        PluginConfigurationProcessor.computeEntrypoint(rawConfiguration, projectProperties));
+  }
+
+  @Test
+  public void testComputeEntrypoint_expandClasspathDependencies()
+      throws MainClassInferenceException, InvalidAppRootException, IOException,
+          InvalidContainerizingModeException {
+    Mockito.when(rawConfiguration.getExpandClasspathDependencies()).thenReturn(true);
+    Assert.assertEquals(
+        Arrays.asList(
+            "java",
+            "-cp",
+            "/app/resources:/app/classes:/app/libs/foo-1.jar:/app/libs/bar-2.jar",
+            "java.lang.Object"),
         PluginConfigurationProcessor.computeEntrypoint(rawConfiguration, projectProperties));
   }
 

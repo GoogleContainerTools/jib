@@ -53,6 +53,7 @@ import java.nio.file.Paths;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.ServiceLoader;
 import java.util.function.Predicate;
@@ -212,11 +213,7 @@ public class GradleProjectProperties implements ProjectProperties {
             projectDependencies.getFiles().stream().map(File::getName).collect(Collectors.toSet()));
       }
 
-      JavaPluginConvention javaPluginConvention =
-          project.getConvention().getPlugin(JavaPluginConvention.class);
-      SourceSet mainSourceSet =
-          javaPluginConvention.getSourceSets().getByName(MAIN_SOURCE_SET_NAME);
-
+      SourceSet mainSourceSet = getMainSourceSet();
       FileCollection classesOutputDirectories =
           mainSourceSet.getOutput().getClassesDirs().filter(File::exists);
       Path resourcesOutputDirectory = mainSourceSet.getOutput().getResourcesDir().toPath();
@@ -287,16 +284,29 @@ public class GradleProjectProperties implements ProjectProperties {
   @Override
   public List<Path> getClassFiles() throws IOException {
     // TODO: Consolidate with createJibContainerBuilder
-    JavaPluginConvention javaPluginConvention =
-        project.getConvention().getPlugin(JavaPluginConvention.class);
-    SourceSet mainSourceSet = javaPluginConvention.getSourceSets().getByName(MAIN_SOURCE_SET_NAME);
     FileCollection classesOutputDirectories =
-        mainSourceSet.getOutput().getClassesDirs().filter(File::exists);
+        getMainSourceSet().getOutput().getClassesDirs().filter(File::exists);
     List<Path> classFiles = new ArrayList<>();
     for (File classesOutputDirectory : classesOutputDirectories) {
       classFiles.addAll(new DirectoryWalker(classesOutputDirectory.toPath()).walk().asList());
     }
     return classFiles;
+  }
+
+  @Override
+  public List<Path> getDependencies() {
+    List<Path> dependencies = new ArrayList<>();
+    FileCollection runtimeClasspath = getMainSourceSet().getRuntimeClasspath();
+    // To be on the safe side with the order, calling "forEach" first (no filtering operations).
+    runtimeClasspath.forEach(
+        file -> {
+          if (file.exists()
+              && file.isFile()
+              && file.getName().toLowerCase(Locale.US).endsWith(".jar")) {
+            dependencies.add(file.toPath());
+          }
+        });
+    return dependencies;
   }
 
   @Override
@@ -505,5 +515,11 @@ public class GradleProjectProperties implements ProjectProperties {
               + config.getExtensionClass());
     }
     return found.get();
+  }
+
+  private SourceSet getMainSourceSet() {
+    JavaPluginConvention javaPluginConvention =
+        project.getConvention().getPlugin(JavaPluginConvention.class);
+    return javaPluginConvention.getSourceSets().getByName(MAIN_SOURCE_SET_NAME);
   }
 }

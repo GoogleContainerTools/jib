@@ -59,6 +59,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
 
@@ -577,14 +578,24 @@ public class PluginConfigurationProcessor {
       case EXPLODED:
         classpath.add(appRoot.resolve("resources").toString());
         classpath.add(appRoot.resolve("classes").toString());
-        classpath.add(appRoot.resolve("libs/*").toString());
         break;
       case PACKAGED:
         classpath.add(appRoot.resolve("classpath/*").toString());
-        classpath.add(appRoot.resolve("libs/*").toString());
         break;
       default:
         throw new IllegalStateException("unknown containerizing mode: " + mode);
+    }
+
+    if (rawConfiguration.getExpandClasspathDependencies()) {
+      List<String> dependencies =
+          projectProperties
+              .getDependencies()
+              .stream()
+              .map(path -> appRoot.resolve("libs").resolve(path.getFileName()).toString())
+              .collect(Collectors.toList());
+      classpath.addAll(dependencies);
+    } else {
+      classpath.add(appRoot.resolve("libs/*").toString());
     }
 
     String classpathString = String.join(":", classpath);
