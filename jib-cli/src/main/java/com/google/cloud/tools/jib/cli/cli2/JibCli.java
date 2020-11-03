@@ -39,7 +39,7 @@ import picocli.CommandLine.Option;
     showAtFileInUsageHelp = true,
     synopsisSubcommandLabel = "COMMAND",
     description = "A tool for creating container images",
-    subcommands = {Build.class})
+    subcommands = {Build.class, Jar.class})
 public class JibCli {
 
   @CommandLine.Spec
