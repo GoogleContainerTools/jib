@@ -21,12 +21,10 @@ import com.google.cloud.tools.jib.api.JibContainerBuilder;
 import com.google.cloud.tools.jib.api.LogEvent;
 import com.google.cloud.tools.jib.cli.cli2.logging.CliLogger;
 import com.google.cloud.tools.jib.cli.jar.JarFiles;
+import com.google.cloud.tools.jib.filesystem.TempDirectoryProvider;
 import com.google.cloud.tools.jib.plugins.common.logging.ConsoleLogger;
-import com.google.common.io.MoreFiles;
-import com.google.common.io.RecursiveDeleteOption;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.concurrent.Callable;
 import picocli.CommandLine;
 
@@ -40,22 +38,15 @@ public class Jar implements Callable<Integer> {
   @SuppressWarnings("NullAway.Init") // initialized by picocli
   private Path jarFile;
 
-  /**
-   * Returns a user configured Path to a jar file.
-   *
-   * @return a path to a jar file
-   */
-  public Path getJarFile() {
-    return jarFile;
-  }
+  private final TempDirectoryProvider tempDirectoryProvider = new TempDirectoryProvider();
 
   @Override
   public Integer call() {
     globalOptions.validate();
-    Path jarFile = getJarFile();
     try {
       ConsoleLogger logger =
           CliLogger.newLogger(globalOptions.getVerbosity(), globalOptions.getConsoleOutput());
+
       if (!Files.exists(jarFile)) {
         logger.log(LogEvent.Level.ERROR, "The file path provided does not exist: " + jarFile);
         return 1;
@@ -67,18 +58,21 @@ public class Jar implements Callable<Integer> {
                 + jarFile);
         return 1;
       }
+
       Containerizer containerizer = Containerizers.from(globalOptions, logger);
+
       JibContainerBuilder containerBuilder =
-          JarFiles.toJibContainerBuilder(getJarFile(), Paths.get("build-artifacts"));
+          JarFiles.toJibContainerBuilder(jarFile, tempDirectoryProvider.newDirectory());
+
       containerBuilder.containerize(containerizer);
-      MoreFiles.deleteDirectoryContents(
-          Paths.get("build-artifacts"), RecursiveDeleteOption.ALLOW_INSECURE);
     } catch (Exception ex) {
       if (globalOptions.isStacktrace()) {
         ex.printStackTrace();
       }
       System.err.println(ex.getClass().getName() + ": " + ex.getMessage());
       return 1;
+    } finally {
+      tempDirectoryProvider.close();
     }
     return 0;
   }
