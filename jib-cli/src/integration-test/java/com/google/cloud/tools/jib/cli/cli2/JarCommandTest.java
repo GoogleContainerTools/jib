@@ -56,7 +56,7 @@ public class JarCommandTest {
   }
 
   @Test
-  public void testJar_invalidFileInputs() {
+  public void testErrorLogging_fileDoesNotExist() {
     Integer executeResultForFile =
         new CommandLine(new JibCli())
             .execute("--target", "docker://jib-cli-image", "jar", "unknown.jar");
@@ -67,7 +67,7 @@ public class JarCommandTest {
   }
 
   @Test
-  public void testJar_directoryFound() throws URISyntaxException {
+  public void testErrorLogging_directoryGiven() throws URISyntaxException {
     Path jarFile = Paths.get(Resources.getResource("emptyDir").toURI());
     Integer actual =
         new CommandLine(new JibCli())
@@ -81,12 +81,13 @@ public class JarCommandTest {
   }
 
   @Test
-  public void testJar_dockerDaemon() throws IOException, InterruptedException, URISyntaxException {
+  public void testJar_toDocker() throws IOException, InterruptedException, URISyntaxException {
     Path jarFile = Paths.get(Resources.getResource("simpleJar.jar").toURI());
     Integer actual =
         new CommandLine(new JibCli())
             .execute("--target", "docker://jib-cli-image", "jar", jarFile.toString());
     String output = new Command("docker", "run", "--rm", "jib-cli-image").run();
+
     assertThat(actual).isEqualTo(SUCCESS_CODE);
     assertThat(output).isEqualTo("Hello World");
   }
