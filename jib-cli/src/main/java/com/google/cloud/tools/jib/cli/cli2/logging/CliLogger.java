@@ -30,11 +30,12 @@ public class CliLogger {
    *
    * @param verbosity the configure verbosity
    * @param consoleOutput the configured consoleOutput format
+   * @param executor single thread executor.
    * @return a new ConsoleLogger instance
    */
-  public static ConsoleLogger newLogger(Verbosity verbosity, ConsoleOutput consoleOutput) {
-    return newLogger(
-        verbosity, consoleOutput, System.out, System.err, new SingleThreadedExecutor());
+  public static ConsoleLogger newLogger(
+      Verbosity verbosity, ConsoleOutput consoleOutput, SingleThreadedExecutor executor) {
+    return newLogger(verbosity, consoleOutput, System.out, System.err, executor);
   }
 
   @VisibleForTesting

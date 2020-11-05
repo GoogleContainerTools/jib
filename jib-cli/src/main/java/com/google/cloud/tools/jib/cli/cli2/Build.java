@@ -22,6 +22,7 @@ import com.google.cloud.tools.jib.api.LogEvent.Level;
 import com.google.cloud.tools.jib.cli.buildfile.BuildFiles;
 import com.google.cloud.tools.jib.cli.cli2.logging.CliLogger;
 import com.google.cloud.tools.jib.plugins.common.logging.ConsoleLogger;
+import com.google.cloud.tools.jib.plugins.common.logging.SingleThreadedExecutor;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.concurrent.Callable;
@@ -32,6 +33,9 @@ import picocli.CommandLine;
     showAtFileInUsageHelp = true,
     description = "Build a container")
 public class Build implements Callable<Integer> {
+
+  private final SingleThreadedExecutor singleThreadedExecutor = new SingleThreadedExecutor();
+
   @CommandLine.ParentCommand
   @SuppressWarnings("NullAway.Init") // initialized by picocli
   protected JibCli globalOptions;
@@ -42,7 +46,10 @@ public class Build implements Callable<Integer> {
 
     try {
       ConsoleLogger logger =
-          CliLogger.newLogger(globalOptions.getVerbosity(), globalOptions.getConsoleOutput());
+          CliLogger.newLogger(
+              globalOptions.getVerbosity(),
+              globalOptions.getConsoleOutput(),
+              singleThreadedExecutor);
 
       Path buildFile = globalOptions.getBuildFile();
       if (!Files.isReadable(buildFile)) {
