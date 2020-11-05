@@ -33,9 +33,6 @@ import picocli.CommandLine;
 
 public class JarCommandTest {
 
-  private static final Integer SUCCESS_CODE = 0;
-  private static final Integer FAILURE_CODE = 1;
-
   private final PrintStream originalOut = System.out;
   private final PrintStream originalErr = System.err;
   private final ByteArrayOutputStream out = new ByteArrayOutputStream();
@@ -57,11 +54,11 @@ public class JarCommandTest {
 
   @Test
   public void testErrorLogging_fileDoesNotExist() {
-    Integer actual =
+    Integer exitCode =
         new CommandLine(new JibCli())
             .execute("--target", "docker://jib-cli-image", "jar", "unknown.jar");
 
-    assertThat(actual).isEqualTo(FAILURE_CODE);
+    assertThat(exitCode).isEqualTo(1);
     assertThat(err.toString())
         .contains("[ERROR] The file path provided does not exist: unknown.jar");
   }
@@ -69,11 +66,11 @@ public class JarCommandTest {
   @Test
   public void testErrorLogging_directoryGiven() throws URISyntaxException {
     Path jarFile = Paths.get(Resources.getResource("emptyDir").toURI());
-    Integer actual =
+    Integer exitCode =
         new CommandLine(new JibCli())
             .execute("--target", "docker://jib-cli-image", "jar", jarFile.toString());
 
-    assertThat(actual).isEqualTo(FAILURE_CODE);
+    assertThat(exitCode).isEqualTo(1);
     assertThat(err.toString())
         .contains(
             "[ERROR] The file path provided is for a directory. Please provide a path to a jar file: "
@@ -88,7 +85,7 @@ public class JarCommandTest {
             .execute("--target", "docker://jib-cli-image", "jar", jarFile.toString());
     String output = new Command("docker", "run", "--rm", "jib-cli-image").run();
 
-    assertThat(actual).isEqualTo(SUCCESS_CODE);
+    assertThat(actual).isEqualTo(0);
     assertThat(output).isEqualTo("Hello World");
   }
 }
