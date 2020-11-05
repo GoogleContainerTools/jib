@@ -30,7 +30,8 @@ public class CliLogger {
    *
    * @param verbosity the configure verbosity
    * @param consoleOutput the configured consoleOutput format
-   * @param executor single thread executor.
+   * @param executor a {@link SingleThreadedExecutor} to ensure that all messages are logged in a
+   *     sequential, deterministic order
    * @return a new ConsoleLogger instance
    */
   public static ConsoleLogger newLogger(

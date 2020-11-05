@@ -28,11 +28,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.concurrent.Callable;
-import javax.annotation.concurrent.NotThreadSafe;
 import picocli.CommandLine;
 
 @CommandLine.Command(name = "jar", showAtFileInUsageHelp = true, description = "Containerize a jar")
-@NotThreadSafe
 public class Jar implements Callable<Integer> {
 
   private final SingleThreadedExecutor singleThreadedExecutor = new SingleThreadedExecutor();
