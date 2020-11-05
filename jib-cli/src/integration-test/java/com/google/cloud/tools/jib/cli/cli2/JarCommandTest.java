@@ -57,11 +57,11 @@ public class JarCommandTest {
 
   @Test
   public void testErrorLogging_fileDoesNotExist() {
-    Integer executeResultForFile =
+    Integer actual =
         new CommandLine(new JibCli())
             .execute("--target", "docker://jib-cli-image", "jar", "unknown.jar");
 
-    assertThat(executeResultForFile).isEqualTo(FAILURE_CODE);
+    assertThat(actual).isEqualTo(FAILURE_CODE);
     assertThat(err.toString())
         .contains("[ERROR] The file path provided does not exist: unknown.jar");
   }
