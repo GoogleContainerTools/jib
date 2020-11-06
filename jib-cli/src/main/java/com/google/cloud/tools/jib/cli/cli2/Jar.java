@@ -23,13 +23,18 @@ import com.google.cloud.tools.jib.cli.cli2.logging.CliLogger;
 import com.google.cloud.tools.jib.cli.jar.JarFiles;
 import com.google.cloud.tools.jib.filesystem.TempDirectoryProvider;
 import com.google.cloud.tools.jib.plugins.common.logging.ConsoleLogger;
+import com.google.cloud.tools.jib.plugins.common.logging.SingleThreadedExecutor;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.concurrent.Callable;
 import picocli.CommandLine;
+import picocli.CommandLine.Model.CommandSpec;
 
 @CommandLine.Command(name = "jar", showAtFileInUsageHelp = true, description = "Containerize a jar")
 public class Jar implements Callable<Integer> {
+
+  @CommandLine.Spec private CommandSpec spec = CommandSpec.create();
+
   @CommandLine.ParentCommand
   @SuppressWarnings("NullAway.Init") // initialized by picocli
   protected JibCli globalOptions;
@@ -41,9 +46,16 @@ public class Jar implements Callable<Integer> {
   @Override
   public Integer call() {
     globalOptions.validate();
+    SingleThreadedExecutor executor = new SingleThreadedExecutor();
     try (TempDirectoryProvider tempDirectoryProvider = new TempDirectoryProvider()) {
+
       ConsoleLogger logger =
-          CliLogger.newLogger(globalOptions.getVerbosity(), globalOptions.getConsoleOutput());
+          CliLogger.newLogger(
+              globalOptions.getVerbosity(),
+              globalOptions.getConsoleOutput(),
+              spec.commandLine().getOut(),
+              spec.commandLine().getErr(),
+              executor);
 
       if (!Files.exists(jarFile)) {
         logger.log(LogEvent.Level.ERROR, "The file path provided does not exist: " + jarFile);

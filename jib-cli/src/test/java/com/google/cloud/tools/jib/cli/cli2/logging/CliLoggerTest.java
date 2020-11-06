@@ -21,7 +21,7 @@ import static com.google.common.truth.Truth.assertThat;
 import com.google.cloud.tools.jib.api.LogEvent.Level;
 import com.google.cloud.tools.jib.plugins.common.logging.ConsoleLogger;
 import com.google.cloud.tools.jib.plugins.common.logging.SingleThreadedExecutor;
-import java.io.PrintStream;
+import java.io.PrintWriter;
 import java.time.Duration;
 import org.junit.Rule;
 import org.junit.Test;
@@ -41,8 +41,8 @@ public class CliLoggerTest {
 
   @Rule public final EnvironmentVariables environmentVariables = new EnvironmentVariables();
 
-  @Mock private PrintStream mockOut;
-  @Mock private PrintStream mockErr;
+  @Mock private PrintWriter mockOut;
+  @Mock private PrintWriter mockErr;
 
   private void createLoggerAndSendMessages(Verbosity verbosity, ConsoleOutput consoleOutput) {
     SingleThreadedExecutor executor = new SingleThreadedExecutor();
