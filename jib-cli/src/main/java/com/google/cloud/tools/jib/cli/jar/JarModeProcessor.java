@@ -36,7 +36,7 @@ import java.util.jar.JarFile;
 import java.util.stream.Collectors;
 
 /** Process jar file contents and create layers. */
-public class JarProcessor {
+public class JarModeProcessor {
 
   private static final AbsoluteUnixPath APP_ROOT = AbsoluteUnixPath.get("/app");
   private static final String CLASSES = "classes";
