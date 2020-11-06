@@ -35,7 +35,7 @@ import picocli.CommandLine.Model.CommandSpec;
     description = "Build a container")
 public class Build implements Callable<Integer> {
 
-  @CommandLine.Spec protected CommandSpec spec = CommandSpec.create();
+  @CommandLine.Spec private CommandSpec spec = CommandSpec.create();
 
   @CommandLine.ParentCommand
   @SuppressWarnings("NullAway.Init") // initialized by picocli

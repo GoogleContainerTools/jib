@@ -32,7 +32,8 @@ import picocli.CommandLine.Model.CommandSpec;
 
 @CommandLine.Command(name = "jar", showAtFileInUsageHelp = true, description = "Containerize a jar")
 public class Jar implements Callable<Integer> {
-  @CommandLine.Spec CommandSpec spec = CommandSpec.create();
+
+  @CommandLine.Spec private CommandSpec spec = CommandSpec.create();
 
   @CommandLine.ParentCommand
   @SuppressWarnings("NullAway.Init") // initialized by picocli
