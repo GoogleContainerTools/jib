@@ -31,7 +31,7 @@ public class CliLogger {
    *
    * @param verbosity the configure verbosity
    * @param consoleOutput the configured consoleOutput format
-   * @param commandLine the Command line
+   * @param commandLine the command line
    * @return a new ConsoleLogger instance
    */
   public static ConsoleLogger newLogger(
