@@ -27,9 +27,12 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.concurrent.Callable;
 import picocli.CommandLine;
+import picocli.CommandLine.Model.CommandSpec;
 
 @CommandLine.Command(name = "jar", showAtFileInUsageHelp = true, description = "Containerize a jar")
 public class Jar implements Callable<Integer> {
+  @CommandLine.Spec CommandSpec spec = CommandSpec.create();
+
   @CommandLine.ParentCommand
   @SuppressWarnings("NullAway.Init") // initialized by picocli
   protected JibCli globalOptions;
@@ -43,7 +46,8 @@ public class Jar implements Callable<Integer> {
     globalOptions.validate();
     try (TempDirectoryProvider tempDirectoryProvider = new TempDirectoryProvider()) {
       ConsoleLogger logger =
-          CliLogger.newLogger(globalOptions.getVerbosity(), globalOptions.getConsoleOutput());
+          CliLogger.newLogger(
+              globalOptions.getVerbosity(), globalOptions.getConsoleOutput(), spec.commandLine());
 
       if (!Files.exists(jarFile)) {
         logger.log(LogEvent.Level.ERROR, "The file path provided does not exist: " + jarFile);

@@ -20,7 +20,8 @@ import com.google.cloud.tools.jib.plugins.common.logging.ConsoleLogger;
 import com.google.cloud.tools.jib.plugins.common.logging.ConsoleLoggerBuilder;
 import com.google.cloud.tools.jib.plugins.common.logging.SingleThreadedExecutor;
 import com.google.common.annotations.VisibleForTesting;
-import java.io.PrintStream;
+import java.io.PrintWriter;
+import picocli.CommandLine;
 
 /** A simple CLI logger that logs to the command line based on the configured log level. */
 public class CliLogger {
@@ -30,19 +31,25 @@ public class CliLogger {
    *
    * @param verbosity the configure verbosity
    * @param consoleOutput the configured consoleOutput format
+   * @param commandLine the Command line
    * @return a new ConsoleLogger instance
    */
-  public static ConsoleLogger newLogger(Verbosity verbosity, ConsoleOutput consoleOutput) {
+  public static ConsoleLogger newLogger(
+      Verbosity verbosity, ConsoleOutput consoleOutput, CommandLine commandLine) {
     return newLogger(
-        verbosity, consoleOutput, System.out, System.err, new SingleThreadedExecutor());
+        verbosity,
+        consoleOutput,
+        commandLine.getOut(),
+        commandLine.getErr(),
+        new SingleThreadedExecutor());
   }
 
   @VisibleForTesting
   static ConsoleLogger newLogger(
       Verbosity verbosity,
       ConsoleOutput consoleOutput,
-      PrintStream stdout,
-      PrintStream stderr,
+      PrintWriter stdout,
+      PrintWriter stderr,
       SingleThreadedExecutor executor) {
     boolean enableRichProgress =
         isRichConsole(consoleOutput) && verbosity.atLeast(Verbosity.lifecycle);

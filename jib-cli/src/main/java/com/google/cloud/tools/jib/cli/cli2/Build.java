@@ -26,12 +26,16 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.concurrent.Callable;
 import picocli.CommandLine;
+import picocli.CommandLine.Model.CommandSpec;
 
 @CommandLine.Command(
     name = "build",
     showAtFileInUsageHelp = true,
     description = "Build a container")
 public class Build implements Callable<Integer> {
+
+  @CommandLine.Spec protected CommandSpec spec = CommandSpec.create();
+
   @CommandLine.ParentCommand
   @SuppressWarnings("NullAway.Init") // initialized by picocli
   protected JibCli globalOptions;
@@ -42,7 +46,8 @@ public class Build implements Callable<Integer> {
 
     try {
       ConsoleLogger logger =
-          CliLogger.newLogger(globalOptions.getVerbosity(), globalOptions.getConsoleOutput());
+          CliLogger.newLogger(
+              globalOptions.getVerbosity(), globalOptions.getConsoleOutput(), spec.commandLine());
 
       Path buildFile = globalOptions.getBuildFile();
       if (!Files.isReadable(buildFile)) {
