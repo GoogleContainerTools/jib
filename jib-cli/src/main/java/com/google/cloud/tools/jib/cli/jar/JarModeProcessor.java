@@ -151,6 +151,10 @@ public class JarModeProcessor {
     return layers;
   }
 
+  static List<FileEntriesLayer> packagedModeForJar(Path jarPath, Path tempDirPath) throws IOException {
+    
+  }
+
   /**
    * Computes the entrypoint for a standard jar in exploded mode.
    *
