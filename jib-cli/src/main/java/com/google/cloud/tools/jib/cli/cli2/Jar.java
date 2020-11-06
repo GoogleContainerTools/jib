@@ -42,11 +42,10 @@ public class Jar implements Callable<Integer> {
   @SuppressWarnings("NullAway.Init") // initialized by picocli
   private Path jarFile;
 
-  private final SingleThreadedExecutor executor = new SingleThreadedExecutor();
-
   @Override
   public Integer call() {
     globalOptions.validate();
+    SingleThreadedExecutor executor = new SingleThreadedExecutor();
     try (TempDirectoryProvider tempDirectoryProvider = new TempDirectoryProvider()) {
 
       ConsoleLogger logger =

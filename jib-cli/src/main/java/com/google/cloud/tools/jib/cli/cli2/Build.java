@@ -41,12 +41,10 @@ public class Build implements Callable<Integer> {
   @SuppressWarnings("NullAway.Init") // initialized by picocli
   protected JibCli globalOptions;
 
-  private final SingleThreadedExecutor executor = new SingleThreadedExecutor();
-
   @Override
   public Integer call() {
     globalOptions.validate();
-
+    SingleThreadedExecutor executor = new SingleThreadedExecutor();
     try {
       ConsoleLogger logger =
           CliLogger.newLogger(
