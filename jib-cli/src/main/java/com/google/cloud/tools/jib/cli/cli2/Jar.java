@@ -23,6 +23,7 @@ import com.google.cloud.tools.jib.cli.cli2.logging.CliLogger;
 import com.google.cloud.tools.jib.cli.jar.JarFiles;
 import com.google.cloud.tools.jib.filesystem.TempDirectoryProvider;
 import com.google.cloud.tools.jib.plugins.common.logging.ConsoleLogger;
+import com.google.cloud.tools.jib.plugins.common.logging.SingleThreadedExecutor;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.concurrent.Callable;
@@ -41,13 +42,20 @@ public class Jar implements Callable<Integer> {
   @SuppressWarnings("NullAway.Init") // initialized by picocli
   private Path jarFile;
 
+  private final SingleThreadedExecutor executor = new SingleThreadedExecutor();
+
   @Override
   public Integer call() {
     globalOptions.validate();
     try (TempDirectoryProvider tempDirectoryProvider = new TempDirectoryProvider()) {
+
       ConsoleLogger logger =
           CliLogger.newLogger(
-              globalOptions.getVerbosity(), globalOptions.getConsoleOutput(), spec.commandLine());
+              globalOptions.getVerbosity(),
+              globalOptions.getConsoleOutput(),
+              spec.commandLine().getOut(),
+              spec.commandLine().getErr(),
+              executor);
 
       if (!Files.exists(jarFile)) {
         logger.log(LogEvent.Level.ERROR, "The file path provided does not exist: " + jarFile);
