@@ -39,6 +39,7 @@ import java.util.stream.Collectors;
 public class JarModeProcessor {
 
   private static final AbsoluteUnixPath APP_ROOT = AbsoluteUnixPath.get("/app");
+  private static final String JAR = "jar";
   private static final String CLASSES = "classes";
   private static final String RESOURCES = "resources";
   private static final String DEPENDENCIES = "dependencies";
@@ -86,14 +87,134 @@ public class JarModeProcessor {
    */
   static List<FileEntriesLayer> createExplodedModeLayersForStandardJar(
       Path jarPath, Path tempDirPath) throws IOException {
+    List<FileEntriesLayer> layers = new ArrayList<>();
+
+    // Add dependencies layers.
+    layers.addAll(getDependenciesLayers(jarPath));
+
     Path localExplodedJarRoot = tempDirPath;
     ZipUtil.unzip(jarPath, localExplodedJarRoot);
+
+    // Determine class and resource files in the directory containing jar contents and create
+    // FileEntriesLayer for each type of layer (classes or resources), while maintaining the
+    // file's original project structure.
+    Predicate<Path> isClassFile = path -> path.getFileName().toString().endsWith(".class");
+    Predicate<Path> isResourceFile = isClassFile.negate();
+    FileEntriesLayer classesLayer =
+        addDirectoryContentsToLayer(
+            CLASSES,
+            localExplodedJarRoot,
+            isClassFile,
+            APP_ROOT.resolve(RelativeUnixPath.get("explodedJar")));
+    FileEntriesLayer resourcesLayer =
+        addDirectoryContentsToLayer(
+            RESOURCES,
+            localExplodedJarRoot,
+            isResourceFile,
+            APP_ROOT.resolve(RelativeUnixPath.get("explodedJar")));
+
+    layers.add(resourcesLayer);
+    layers.add(classesLayer);
+    return layers;
+  }
+
+  /**
+   * Creates layers for dependencies, snapshot dependencies and jar on container for a standard jar.
+   *
+   * @param jarPath path to jar file
+   * @return list of {@link FileEntriesLayer}
+   * @throws IOException if I/O error occurs when opening the jar file
+   */
+  static List<FileEntriesLayer> createPackagedModeLayersForStandardJar(Path jarPath)
+      throws IOException {
     List<FileEntriesLayer> layers = new ArrayList<>();
+
+    // Add dependencies layers.
+    layers.addAll(getDependenciesLayers(jarPath));
+
+    // Add layer for jar.
+    FileEntriesLayer jarLayer =
+        FileEntriesLayer.builder()
+            .setName(JAR)
+            .addEntry(
+                jarPath,
+                APP_ROOT.resolve(RelativeUnixPath.get("jar")).resolve(jarPath.getFileName()))
+            .build();
+
+    layers.add(jarLayer);
+    return layers;
+  }
+
+  /**
+   * Computes the entrypoint for a standard jar in exploded mode.
+   *
+   * @param jarPath path to jar file
+   * @return list of {@link String} representing entrypoint
+   * @throws IOException if I/O error occurs when opening the jar file
+   */
+  static ImmutableList<String> computeEntrypointForExplodedStandard(Path jarPath)
+      throws IOException {
+    try (JarFile jarFile = new JarFile(jarPath.toFile())) {
+      String mainClass =
+          jarFile.getManifest().getMainAttributes().getValue(Attributes.Name.MAIN_CLASS);
+      if (mainClass == null) {
+        throw new IllegalArgumentException(
+            "`Main-Class:` attribute for an application main class not defined in the input Jar's "
+                + "manifest (`META-INF/MANIFEST.MF` in the Jar).");
+      }
+      String classpath = APP_ROOT + "/explodedJar:" + APP_ROOT + "/dependencies/*";
+      return ImmutableList.of("java", "-cp", classpath, mainClass);
+    }
+  }
+
+  /**
+   * Computes the entrypoint for a standard jar in packaged mode.
+   *
+   * @param jarPath path to jar file
+   * @return list of {@link String} representing entrypoint
+   * @throws IOException if I/O error occurs when opening the jar file
+   */
+  static ImmutableList<String> computeEntrypointForPackagedStandard(Path jarPath)
+      throws IOException {
+    try (JarFile jarFile = new JarFile(jarPath.toFile())) {
+      String mainClass =
+          jarFile.getManifest().getMainAttributes().getValue(Attributes.Name.MAIN_CLASS);
+      if (mainClass == null) {
+        throw new IllegalArgumentException(
+            "`Main-Class:` attribute for an application main class not defined in the input Jar's "
+                + "manifest (`META-INF/MANIFEST.MF` in the Jar).");
+      }
+      return ImmutableList.of(
+          "java", "-jar", APP_ROOT + "/jar/" + jarPath.getFileName().toString());
+    }
+  }
+
+  private static FileEntriesLayer addDirectoryContentsToLayer(
+      String layerName,
+      Path sourceRoot,
+      Predicate<Path> pathFilter,
+      AbsoluteUnixPath basePathInContainer)
+      throws IOException {
+    FileEntriesLayer.Builder builder = FileEntriesLayer.builder().setName(layerName);
+    new DirectoryWalker(sourceRoot)
+        .filterRoot()
+        .filter(path -> Files.isDirectory(path) || pathFilter.test(path))
+        .walk(
+            path -> {
+              AbsoluteUnixPath pathOnContainer =
+                  basePathInContainer.resolve(sourceRoot.relativize(path));
+              builder.addEntry(path, pathOnContainer);
+            });
+    return builder.build();
+  }
+
+  private static List<FileEntriesLayer> getDependenciesLayers(Path jarPath) throws IOException {
+    List<FileEntriesLayer> layers = new ArrayList<>();
+    String classPath = null;
 
     // Get dependencies from Class-Path in the jar's manifest and add a layer each for non-snapshot
     // and snapshot dependencies. If Class-Path is not present in the jar's manifest then skip
     // adding the dependencies layers.
-    String classPath = null;
     try (JarFile jarFile = new JarFile(jarPath.toFile())) {
       classPath = jarFile.getManifest().getMainAttributes().getValue(Attributes.Name.CLASS_PATH);
     }
@@ -127,72 +248,6 @@ public class JarModeProcessor {
         layers.add(snapshotDependenciesLayerBuilder.build());
       }
     }
-
-    // Determine class and resource files in the directory containing jar contents and create
-    // FileEntriesLayer for each type of layer (classes or resources), while maintaining the
-    // file's original project structure.
-    Predicate<Path> isClassFile = path -> path.getFileName().toString().endsWith(".class");
-    Predicate<Path> isResourceFile = isClassFile.negate();
-    FileEntriesLayer classesLayer =
-        addDirectoryContentsToLayer(
-            CLASSES,
-            localExplodedJarRoot,
-            isClassFile,
-            APP_ROOT.resolve(RelativeUnixPath.get("explodedJar")));
-    FileEntriesLayer resourcesLayer =
-        addDirectoryContentsToLayer(
-            RESOURCES,
-            localExplodedJarRoot,
-            isResourceFile,
-            APP_ROOT.resolve(RelativeUnixPath.get("explodedJar")));
-
-    layers.add(resourcesLayer);
-    layers.add(classesLayer);
     return layers;
-  }
-
-  static List<FileEntriesLayer> packagedModeForJar(Path jarPath, Path tempDirPath) throws IOException {
-    
-  }
-
-  /**
-   * Computes the entrypoint for a standard jar in exploded mode.
-   *
-   * @param jarPath path to jar file
-   * @return list of {@link String} representing entrypoint
-   * @throws IOException if I/O error occurs when opening the jar file
-   */
-  static ImmutableList<String> computeEntrypointForExplodedStandard(Path jarPath)
-      throws IOException {
-    try (JarFile jarFile = new JarFile(jarPath.toFile())) {
-      String mainClass =
-          jarFile.getManifest().getMainAttributes().getValue(Attributes.Name.MAIN_CLASS);
-      if (mainClass == null) {
-        throw new IllegalArgumentException(
-            "`Main-Class:` attribute for an application main class not defined in the input Jar's "
-                + "manifest (`META-INF/MANIFEST.MF` in the Jar).");
-      }
-      String classpath = APP_ROOT + "/explodedJar:" + APP_ROOT + "/dependencies/*";
-      return ImmutableList.of("java", "-cp", classpath, mainClass);
-    }
-  }
-
-  private static FileEntriesLayer addDirectoryContentsToLayer(
-      String layerName,
-      Path sourceRoot,
-      Predicate<Path> pathFilter,
-      AbsoluteUnixPath basePathInContainer)
-      throws IOException {
-    FileEntriesLayer.Builder builder = FileEntriesLayer.builder().setName(layerName);
-    new DirectoryWalker(sourceRoot)
-        .filterRoot()
-        .filter(path -> Files.isDirectory(path) || pathFilter.test(path))
-        .walk(
-            path -> {
-              AbsoluteUnixPath pathOnContainer =
-                  basePathInContainer.resolve(sourceRoot.relativize(path));
-              builder.addEntry(path, pathOnContainer);
-            });
-    return builder.build();
   }
 }

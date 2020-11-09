@@ -43,6 +43,14 @@ public class Jar implements Callable<Integer> {
   @SuppressWarnings("NullAway.Init") // initialized by picocli
   private Path jarFile;
 
+  @CommandLine.Option(
+      names = "--mode",
+      defaultValue = "exploded",
+      paramLabel = "<mode>",
+      description = "The processing mode")
+  @SuppressWarnings("NullAway.Init") // initialized by picocli
+  private String mode;
+
   @Override
   public Integer call() {
     globalOptions.validate();
@@ -68,7 +76,7 @@ public class Jar implements Callable<Integer> {
       Containerizer containerizer = Containerizers.from(globalOptions, logger);
 
       JibContainerBuilder containerBuilder =
-          JarFiles.toJibContainerBuilder(jarFile, tempDirectoryProvider.newDirectory());
+          JarFiles.toJibContainerBuilder(jarFile, tempDirectoryProvider.newDirectory(), mode);
 
       containerBuilder.containerize(containerizer);
     } catch (Exception ex) {

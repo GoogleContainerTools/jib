@@ -78,11 +78,40 @@ public class JarCommandTest {
   }
 
   @Test
-  public void testJar_toDocker() throws IOException, InterruptedException, URISyntaxException {
+  public void testJar_explodedMode_toDocker()
+      throws IOException, InterruptedException, URISyntaxException {
     Path jarFile = Paths.get(Resources.getResource("simpleJar.jar").toURI());
     Integer actual =
         new CommandLine(new JibCli())
             .execute("--target", "docker://jib-cli-image", "jar", jarFile.toString());
+    String output = new Command("docker", "run", "--rm", "jib-cli-image").run();
+
+    assertThat(actual).isEqualTo(0);
+    assertThat(output).isEqualTo("Hello World");
+  }
+
+  @Test
+  public void testJar_packagedMode_toDocker()
+      throws IOException, InterruptedException, URISyntaxException {
+    Path jarFile = Paths.get(Resources.getResource("simpleJar.jar").toURI());
+    Integer actual =
+        new CommandLine(new JibCli())
+            .execute(
+                "--target", "docker://jib-cli-image", "jar", jarFile.toString(), "--mode=packaged");
+    String output = new Command("docker", "run", "--rm", "jib-cli-image").run();
+
+    assertThat(actual).isEqualTo(0);
+    assertThat(output).isEqualTo("Hello World");
+  }
+
+  @Test
+  public void testJar_unknownMode_toDocker()
+      throws IOException, InterruptedException, URISyntaxException {
+    Path jarFile = Paths.get(Resources.getResource("simpleJar.jar").toURI());
+    Integer actual =
+        new CommandLine(new JibCli())
+            .execute(
+                "--target", "docker://jib-cli-image", "jar", jarFile.toString(), "--mode=unknown");
     String output = new Command("docker", "run", "--rm", "jib-cli-image").run();
 
     assertThat(actual).isEqualTo(0);
