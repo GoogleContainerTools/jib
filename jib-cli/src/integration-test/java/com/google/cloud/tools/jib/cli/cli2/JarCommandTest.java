@@ -50,7 +50,7 @@ public class JarCommandTest {
     StringWriter stringWriter = new StringWriter();
     jibCli.setErr(new PrintWriter(stringWriter));
 
-    Path jarFile = Paths.get(Resources.getResource("emptyDir").toURI());
+    Path jarFile = Paths.get("/");
     Integer exitCode =
         jibCli.execute("--target", "docker://jib-cli-image", "jar", jarFile.toString());
 
