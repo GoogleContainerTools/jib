@@ -29,11 +29,12 @@ import java.nio.file.Path;
 import java.time.Duration;
 import java.util.concurrent.Callable;
 import picocli.CommandLine;
+import picocli.CommandLine.Model.CommandSpec;
 
 @CommandLine.Command(name = "jar", showAtFileInUsageHelp = true, description = "Containerize a jar")
 public class Jar implements Callable<Integer> {
 
-  private final SingleThreadedExecutor singleThreadedExecutor = new SingleThreadedExecutor();
+  @CommandLine.Spec private CommandSpec spec = CommandSpec.create();
 
   @CommandLine.ParentCommand
   @SuppressWarnings("NullAway.Init") // initialized by picocli
@@ -54,12 +55,16 @@ public class Jar implements Callable<Integer> {
   @Override
   public Integer call() {
     globalOptions.validate();
+    SingleThreadedExecutor executor = new SingleThreadedExecutor();
     try (TempDirectoryProvider tempDirectoryProvider = new TempDirectoryProvider()) {
+
       ConsoleLogger logger =
           CliLogger.newLogger(
               globalOptions.getVerbosity(),
               globalOptions.getConsoleOutput(),
-              singleThreadedExecutor);
+              spec.commandLine().getOut(),
+              spec.commandLine().getErr(),
+              executor);
 
       if (!Files.exists(jarFile)) {
         logger.log(LogEvent.Level.ERROR, "The file path provided does not exist: " + jarFile);
@@ -86,7 +91,7 @@ public class Jar implements Callable<Integer> {
       System.err.println(ex.getClass().getName() + ": " + ex.getMessage());
       return 1;
     } finally {
-      singleThreadedExecutor.shutDownAndAwaitTermination(Duration.ofSeconds(3));
+      executor.shutDownAndAwaitTermination(Duration.ofSeconds(3));
     }
     return 0;
   }

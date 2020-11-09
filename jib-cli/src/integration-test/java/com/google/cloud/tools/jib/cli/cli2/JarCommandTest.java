@@ -20,61 +20,46 @@ import static com.google.common.truth.Truth.assertThat;
 
 import com.google.cloud.tools.jib.Command;
 import com.google.common.io.Resources;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.PrintStream;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import org.junit.After;
-import org.junit.Before;
 import org.junit.Test;
 import picocli.CommandLine;
 
 public class JarCommandTest {
 
-  private final PrintStream originalOut = System.out;
-  private final PrintStream originalErr = System.err;
-  private final ByteArrayOutputStream out = new ByteArrayOutputStream();
-  private final ByteArrayOutputStream err = new ByteArrayOutputStream();
-
-  @Before
-  public void setUp() {
-    out.reset();
-    err.reset();
-    System.setOut(new PrintStream(out));
-    System.setErr(new PrintStream(err));
-  }
-
-  @After
-  public void tearDown() {
-    System.setOut(originalOut);
-    System.setErr(originalErr);
-  }
-
   @Test
   public void testErrorLogging_fileDoesNotExist() {
-    Integer exitCode =
-        new CommandLine(new JibCli())
-            .execute("--target", "docker://jib-cli-image", "jar", "unknown.jar");
+    CommandLine jibCli = new CommandLine(new JibCli());
+    StringWriter sw = new StringWriter();
+    jibCli.setErr(new PrintWriter(sw));
+
+    Integer exitCode = jibCli.execute("--target", "docker://jib-cli-image", "jar", "unknown.jar");
 
     assertThat(exitCode).isEqualTo(1);
-    assertThat(err.toString())
-        .contains("[ERROR] The file path provided does not exist: unknown.jar");
+    assertThat(sw.toString())
+        .isEqualTo("[ERROR] The file path provided does not exist: unknown.jar\n");
   }
 
   @Test
   public void testErrorLogging_directoryGiven() throws URISyntaxException {
+    CommandLine jibCli = new CommandLine(new JibCli());
+    StringWriter sw = new StringWriter();
+    jibCli.setErr(new PrintWriter(sw));
+
     Path jarFile = Paths.get(Resources.getResource("emptyDir").toURI());
     Integer exitCode =
-        new CommandLine(new JibCli())
-            .execute("--target", "docker://jib-cli-image", "jar", jarFile.toString());
+        jibCli.execute("--target", "docker://jib-cli-image", "jar", jarFile.toString());
 
     assertThat(exitCode).isEqualTo(1);
-    assertThat(err.toString())
-        .contains(
+    assertThat(sw.toString())
+        .isEqualTo(
             "[ERROR] The file path provided is for a directory. Please provide a path to a jar file: "
-                + jarFile.toString());
+                + jarFile.toString()
+                + "\n");
   }
 
   @Test
