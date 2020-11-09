@@ -108,7 +108,7 @@ public class JarFilesTest {
   }
 
   @Test
-  public void testToJibContainerBuilder_basicInfo_unknownMode()
+  public void testToJibContainerBuilder_unknownMode_basicInfo()
       throws IOException, URISyntaxException, InvalidImageReferenceException {
     Path standardJar = Paths.get(Resources.getResource(SIMPLE_STANDARD_JAR).toURI());
     Path destDir = temporaryFolder.getRoot().toPath();

@@ -119,7 +119,8 @@ public class JarModeProcessor {
   }
 
   /**
-   * Creates layers for dependencies, snapshot dependencies and jar on container for a standard jar.
+   * Creates layers for dependencies, snapshot dependencies and the jar itself on container for a
+   * standard jar.
    *
    * @param jarPath path to jar file
    * @return list of {@link FileEntriesLayer}
