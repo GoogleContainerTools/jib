@@ -25,6 +25,7 @@ import com.google.cloud.tools.jib.plugins.common.logging.ConsoleLogger;
 import com.google.cloud.tools.jib.plugins.common.logging.SingleThreadedExecutor;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Duration;
 import java.util.concurrent.Callable;
 import picocli.CommandLine;
 import picocli.CommandLine.Model.CommandSpec;
@@ -80,6 +81,8 @@ public class Build implements Callable<Integer> {
       }
       System.err.println(ex.getClass().getName() + ": " + ex.getMessage());
       return 1;
+    } finally {
+      executor.shutDownAndAwaitTermination(Duration.ofSeconds(3));
     }
     return 0;
   }
