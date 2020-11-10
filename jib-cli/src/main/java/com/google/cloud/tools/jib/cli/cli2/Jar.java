@@ -73,7 +73,7 @@ public class Jar implements Callable<Integer> {
       if (Files.isDirectory(jarFile)) {
         logger.log(
             LogEvent.Level.ERROR,
-            "The file path provided is for a directory. Please provide a path to a jar file: "
+            "The file path provided is for a directory. Please provide a path to a JAR: "
                 + jarFile);
         return 1;
       }

@@ -57,7 +57,7 @@ public class JarCommandTest {
     assertThat(exitCode).isEqualTo(1);
     assertThat(stringWriter.toString())
         .isEqualTo(
-            "[ERROR] The file path provided is for a directory. Please provide a path to a jar file: "
+            "[ERROR] The file path provided is for a directory. Please provide a path to a JAR: "
                 + jarFile.toString()
                 + "\n");
   }
