@@ -326,7 +326,7 @@ public class JarModeProcessorTest {
     assertThat(ex)
         .hasMessageThat()
         .isEqualTo(
-            "`Main-Class:` attribute for an application main class not defined in the input Jar's manifest (`META-INF/MANIFEST.MF` in the Jar).");
+            "`Main-Class:` attribute for an application main class not defined in the input JAR's manifest (`META-INF/MANIFEST.MF` in the JAR).");
   }
 
   @Test
@@ -434,7 +434,7 @@ public class JarModeProcessorTest {
     assertThat(ex)
         .hasMessageThat()
         .isEqualTo(
-            "`Main-Class:` attribute for an application main class not defined in the input Jar's manifest (`META-INF/MANIFEST.MF` in the Jar).");
+            "`Main-Class:` attribute for an application main class not defined in the input JAR's manifest (`META-INF/MANIFEST.MF` in the JAR).");
   }
 
   @Test

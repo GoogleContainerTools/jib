@@ -87,10 +87,8 @@ public class JarModeProcessor {
    */
   static List<FileEntriesLayer> createExplodedModeLayersForStandardJar(
       Path jarPath, Path tempDirPath) throws IOException {
-    List<FileEntriesLayer> layers = new ArrayList<>();
-
     // Add dependencies layers.
-    layers.addAll(getDependenciesLayers(jarPath));
+    List<FileEntriesLayer> layers = getDependenciesLayers(jarPath);
 
     Path localExplodedJarRoot = tempDirPath;
     ZipUtil.unzip(jarPath, localExplodedJarRoot);
@@ -128,10 +126,8 @@ public class JarModeProcessor {
    */
   static List<FileEntriesLayer> createPackagedModeLayersForStandardJar(Path jarPath)
       throws IOException {
-    List<FileEntriesLayer> layers = new ArrayList<>();
-
     // Add dependencies layers.
-    layers.addAll(getDependenciesLayers(jarPath));
+    List<FileEntriesLayer> layers = getDependenciesLayers(jarPath);
 
     // Add layer for jar.
     FileEntriesLayer jarLayer =
@@ -160,8 +156,8 @@ public class JarModeProcessor {
           jarFile.getManifest().getMainAttributes().getValue(Attributes.Name.MAIN_CLASS);
       if (mainClass == null) {
         throw new IllegalArgumentException(
-            "`Main-Class:` attribute for an application main class not defined in the input Jar's "
-                + "manifest (`META-INF/MANIFEST.MF` in the Jar).");
+            "`Main-Class:` attribute for an application main class not defined in the input JAR's "
+                + "manifest (`META-INF/MANIFEST.MF` in the JAR).");
       }
       String classpath = APP_ROOT + "/explodedJar:" + APP_ROOT + "/dependencies/*";
       return ImmutableList.of("java", "-cp", classpath, mainClass);
@@ -182,8 +178,8 @@ public class JarModeProcessor {
           jarFile.getManifest().getMainAttributes().getValue(Attributes.Name.MAIN_CLASS);
       if (mainClass == null) {
         throw new IllegalArgumentException(
-            "`Main-Class:` attribute for an application main class not defined in the input Jar's "
-                + "manifest (`META-INF/MANIFEST.MF` in the Jar).");
+            "`Main-Class:` attribute for an application main class not defined in the input JAR's "
+                + "manifest (`META-INF/MANIFEST.MF` in the JAR).");
       }
       return ImmutableList.of(
           "java", "-jar", APP_ROOT + "/jar/" + jarPath.getFileName().toString());
@@ -230,13 +226,15 @@ public class JarModeProcessor {
               .collect(Collectors.toList());
       List<Path> snapshotDependencies =
           allDependencies.stream().filter(isSnapshot).map(Paths::get).collect(Collectors.toList());
+      Path jarParent = jarPath.getParent();
       if (!nonSnapshotDependencies.isEmpty()) {
         FileEntriesLayer.Builder nonSnapshotDependenciesLayerBuilder =
             FileEntriesLayer.builder().setName(DEPENDENCIES);
         nonSnapshotDependencies.forEach(
             path ->
                 nonSnapshotDependenciesLayerBuilder.addEntry(
-                    path, APP_ROOT.resolve(RelativeUnixPath.get("dependencies")).resolve(path)));
+                    jarParent.resolve(path),
+                    APP_ROOT.resolve(RelativeUnixPath.get("dependencies")).resolve(path)));
         layers.add(nonSnapshotDependenciesLayerBuilder.build());
       }
       if (!snapshotDependencies.isEmpty()) {
@@ -245,7 +243,8 @@ public class JarModeProcessor {
         snapshotDependencies.forEach(
             path ->
                 snapshotDependenciesLayerBuilder.addEntry(
-                    path, APP_ROOT.resolve(RelativeUnixPath.get("dependencies")).resolve(path)));
+                    jarParent.resolve(path),
+                    APP_ROOT.resolve(RelativeUnixPath.get("dependencies")).resolve(path)));
         layers.add(snapshotDependenciesLayerBuilder.build());
       }
     }

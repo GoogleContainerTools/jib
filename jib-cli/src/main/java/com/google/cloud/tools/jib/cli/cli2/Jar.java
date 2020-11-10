@@ -48,7 +48,7 @@ public class Jar implements Callable<Integer> {
       names = "--mode",
       defaultValue = "exploded",
       paramLabel = "<mode>",
-      description = "The processing mode")
+      description = "The jar processing mode, candidates: packaged, default: exploded")
   @SuppressWarnings("NullAway.Init") // initialized by picocli
   private String mode;
 
