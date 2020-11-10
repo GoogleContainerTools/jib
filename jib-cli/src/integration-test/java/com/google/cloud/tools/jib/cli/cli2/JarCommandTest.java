@@ -37,7 +37,7 @@ public class JarCommandTest {
     StringWriter stringWriter = new StringWriter();
     jibCli.setErr(new PrintWriter(stringWriter));
 
-    Integer exitCode = jibCli.execute("--target", "docker://jib-cli-image", "jar", "unknown.jar");
+    Integer exitCode = jibCli.execute("jar", "--target", "docker://jib-cli-image", "unknown.jar");
 
     assertThat(exitCode).isEqualTo(1);
     assertThat(stringWriter.toString())
@@ -52,7 +52,7 @@ public class JarCommandTest {
 
     Path jarFile = Paths.get("/");
     Integer exitCode =
-        jibCli.execute("--target", "docker://jib-cli-image", "jar", jarFile.toString());
+        jibCli.execute("jar", "--target", "docker://jib-cli-image", jarFile.toString());
 
     assertThat(exitCode).isEqualTo(1);
     assertThat(stringWriter.toString())
@@ -67,7 +67,7 @@ public class JarCommandTest {
     Path jarFile = Paths.get(Resources.getResource("simpleJar.jar").toURI());
     Integer exitCode =
         new CommandLine(new JibCli())
-            .execute("--target", "docker://jib-cli-image", "jar", jarFile.toString());
+            .execute("jar", "--target", "docker://jib-cli-image", jarFile.toString());
     String output = new Command("docker", "run", "--rm", "jib-cli-image").run();
 
     assertThat(exitCode).isEqualTo(0);

@@ -83,7 +83,8 @@ public class JibCli {
       required = true,
       paramLabel = "<target-image>",
       description =
-          "The destination image reference or jib style url,%nexamples:%n gcr.io/project/image,%n registry://image-ref,%n docker://image,%n tar://path")
+          "The destination image reference or jib style url,%nexamples:%n gcr.io/project/image,%n registry://image-ref,%n docker://image,%n tar://path",
+      scope = CommandLine.ScopeType.INHERIT)
   @SuppressWarnings("NullAway.Init") // initialized by picocli
   private String targetImage;
 
