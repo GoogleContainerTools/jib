@@ -128,7 +128,8 @@ public class JibCli {
       names = "--additional-tags",
       paramLabel = "<tag>",
       split = ",",
-      description = "Additional tags for target image")
+      description = "Additional tags for target image",
+      scope = CommandLine.ScopeType.INHERIT)
   @SuppressWarnings("NullAway.Init") // initialized by picocli
   private List<String> additionalTags = new ArrayList<>();
 
