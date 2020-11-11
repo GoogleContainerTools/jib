@@ -51,7 +51,8 @@ public class JibCli {
       paramLabel = "<level>",
       defaultValue = "lifecycle",
       description =
-          "set logging verbosity, candidates: ${COMPLETION-CANDIDATES}, default: ${DEFAULT-VALUE}")
+          "set logging verbosity, candidates: ${COMPLETION-CANDIDATES}, default: ${DEFAULT-VALUE}",
+      scope = CommandLine.ScopeType.INHERIT)
   @SuppressWarnings("NullAway.Init") // initialized by picocli
   private Verbosity verbosity;
 
@@ -60,20 +61,21 @@ public class JibCli {
       paramLabel = "<type>",
       defaultValue = "auto",
       description =
-          "set console output type, candidates: ${COMPLETION-CANDIDATES}, default: ${DEFAULT-VALUE}")
+          "set console output type, candidates: ${COMPLETION-CANDIDATES}, default: ${DEFAULT-VALUE}",
+      scope = CommandLine.ScopeType.INHERIT)
   @SuppressWarnings("NullAway.Init") // initialized by picocli
   private ConsoleOutput consoleOutput;
 
   // Hidden debug parameters
-  @Option(names = "--stacktrace", hidden = true)
+  @Option(names = "--stacktrace", hidden = true, scope = CommandLine.ScopeType.INHERIT)
   @SuppressWarnings("NullAway.Init") // initialized by picocli
   private boolean stacktrace;
 
-  @Option(names = "--http-trace", hidden = true)
+  @Option(names = "--http-trace", hidden = true, scope = CommandLine.ScopeType.INHERIT)
   @SuppressWarnings("NullAway.Init") // initialized by picocli
   private boolean httpTrace;
 
-  @Option(names = "--serialize", hidden = true)
+  @Option(names = "--serialize", hidden = true, scope = CommandLine.ScopeType.INHERIT)
   @SuppressWarnings("NullAway.Init") // initialized by picocli
   private boolean serialize;
 
@@ -109,7 +111,8 @@ public class JibCli {
       names = "--name",
       paramLabel = "<image-reference>",
       description =
-          "The image reference to inject into the tar configuration (required when using --target tar://...)")
+          "The image reference to inject into the tar configuration (required when using --target tar://...)",
+      scope = CommandLine.ScopeType.INHERIT)
   @SuppressWarnings("NullAway.Init") // initialized by picocli
   private String name;
 
@@ -132,27 +135,31 @@ public class JibCli {
   @Option(
       names = "--base-image-cache",
       paramLabel = "<cache-directory>",
-      description = "A path to a base image cache")
+      description = "A path to a base image cache",
+      scope = CommandLine.ScopeType.INHERIT)
   @SuppressWarnings("NullAway.Init") // initialized by picocli
   private Path baseImageCache;
 
   @Option(
       names = "--application-cache",
       paramLabel = "<cache-directory>",
-      description = "A path to an application cache")
+      description = "A path to an application cache",
+      scope = CommandLine.ScopeType.INHERIT)
   @SuppressWarnings("NullAway.Init") // initialized by picocli
   private Path applicationCache;
 
   // Auth/Security
   @Option(
       names = "--allow-insecure-registries",
-      description = "Allow jib to communicate with registries over http (insecure)")
+      description = "Allow jib to communicate with registries over http (insecure)",
+      scope = CommandLine.ScopeType.INHERIT)
   @SuppressWarnings("NullAway.Init") // initialized by picocli
   private boolean allowInsecureRegistries;
 
   @Option(
       names = "--send-credentials-over-http",
-      description = "Allow jib to send credentials over http (very insecure)")
+      description = "Allow jib to send credentials over http (very insecure)",
+      scope = CommandLine.ScopeType.INHERIT)
   @SuppressWarnings("NullAway.Init") // initialized by picocli
   private boolean sendCredentialsOverHttp;
 
@@ -165,7 +172,8 @@ public class JibCli {
         names = {"--credential-helper"},
         paramLabel = "<credential-helper>",
         description =
-            "credential helper for communicating with both target and base image registries, either a path to the helper, or a suffix for an executable named `docker-credential-<suffix>`")
+            "credential helper for communicating with both target and base image registries, either a path to the helper, or a suffix for an executable named `docker-credential-<suffix>`",
+        scope = CommandLine.ScopeType.INHERIT)
     @SuppressWarnings("NullAway.Init") // initialized by picocli
     private String credentialHelper;
 
@@ -182,7 +190,8 @@ public class JibCli {
     @Option(
         names = "--username",
         required = true,
-        description = "username for communicating with both target and base image registries")
+        description = "username for communicating with both target and base image registries",
+        scope = CommandLine.ScopeType.INHERIT)
     @SuppressWarnings("NullAway.Init") // initialized by picocli
     String username;
 
@@ -191,7 +200,8 @@ public class JibCli {
         arity = "0..1",
         required = true,
         interactive = true,
-        description = "password for communicating with both target and base image registries")
+        description = "password for communicating with both target and base image registries",
+        scope = CommandLine.ScopeType.INHERIT)
     @SuppressWarnings("NullAway.Init") // initialized by picocli
     String password;
   }
@@ -211,7 +221,8 @@ public class JibCli {
         names = {"--to-credential-helper"},
         paramLabel = "<credential-helper>",
         description =
-            "credential helper for communicating with target registry, either a path to the helper, or a suffix for an executable named `docker-credential-<suffix>`")
+            "credential helper for communicating with target registry, either a path to the helper, or a suffix for an executable named `docker-credential-<suffix>`",
+        scope = CommandLine.ScopeType.INHERIT)
     @SuppressWarnings("NullAway.Init") // initialized by picocli
     private String credentialHelper;
 
@@ -225,7 +236,8 @@ public class JibCli {
         names = {"--from-credential-helper"},
         paramLabel = "<credential-helper>",
         description =
-            "credential helper for communicating with base image registry, either a path to the helper, or a suffix for an executable named `docker-credential-<suffix>`")
+            "credential helper for communicating with base image registry, either a path to the helper, or a suffix for an executable named `docker-credential-<suffix>`",
+        scope = CommandLine.ScopeType.INHERIT)
     @SuppressWarnings("NullAway.Init") // initialized by picocli
     private String credentialHelper;
 
@@ -238,7 +250,8 @@ public class JibCli {
     @Option(
         names = "--to-username",
         required = true,
-        description = "username for communicating with target image registry")
+        description = "username for communicating with target image registry",
+        scope = CommandLine.ScopeType.INHERIT)
     @SuppressWarnings("NullAway.Init") // initialized by picocli
     String username;
 
@@ -247,7 +260,8 @@ public class JibCli {
         arity = "0..1",
         interactive = true,
         required = true,
-        description = "password for communicating with target image registry")
+        description = "password for communicating with target image registry",
+        scope = CommandLine.ScopeType.INHERIT)
     @SuppressWarnings("NullAway.Init") // initialized by picocli
     String password;
   }
@@ -256,7 +270,8 @@ public class JibCli {
     @Option(
         names = "--from-username",
         required = true,
-        description = "username for communicating with base image registry")
+        description = "username for communicating with base image registry",
+        scope = CommandLine.ScopeType.INHERIT)
     @SuppressWarnings("NullAway.Init") // initialized by picocli
     String username;
 
@@ -265,7 +280,8 @@ public class JibCli {
         arity = "0..1",
         required = true,
         interactive = true,
-        description = "password for communicating with base image registry")
+        description = "password for communicating with base image registry",
+        scope = CommandLine.ScopeType.INHERIT)
     @SuppressWarnings("NullAway.Init") // initialized by picocli
     String password;
   }
