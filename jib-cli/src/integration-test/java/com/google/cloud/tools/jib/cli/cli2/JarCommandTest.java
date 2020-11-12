@@ -90,7 +90,7 @@ public class JarCommandTest {
   }
 
   @Test
-  public void testJar_unknownMode_toDocker() throws URISyntaxException {
+  public void testJar_unknownMode() throws URISyntaxException {
     CommandLine jibCli = new CommandLine(new JibCli());
     StringWriter stringWriter = new StringWriter();
     jibCli.setErr(new PrintWriter(stringWriter));

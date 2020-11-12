@@ -17,6 +17,6 @@
 package com.google.cloud.tools.jib.cli.jar;
 
 public enum ProcessingMode {
-  packaged,
-  exploded
+  exploded,
+  packaged
 }

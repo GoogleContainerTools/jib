@@ -68,7 +68,7 @@ public class JarModeProcessorTest {
     Path standardJar = Paths.get(Resources.getResource(STANDARD_JAR_EMPTY).toURI());
     Path destDir = temporaryFolder.newFolder().toPath();
     List<FileEntriesLayer> layers =
-        JarModeProcessor.createExplodedModeLayersForStandardJar(standardJar, destDir);
+        JarModeProcessor.createLayersForExplodedStandard(standardJar, destDir);
 
     assertThat(layers.size()).isEqualTo(2);
 
@@ -105,19 +105,19 @@ public class JarModeProcessorTest {
         Paths.get(Resources.getResource(STANDARD_JAR_WITH_CLASS_PATH_MANIFEST).toURI());
     Path destDir = temporaryFolder.newFolder().toPath();
     List<FileEntriesLayer> layers =
-        JarModeProcessor.createExplodedModeLayersForStandardJar(standardJar, destDir);
+        JarModeProcessor.createLayersForExplodedStandard(standardJar, destDir);
 
     assertThat(layers.size()).isEqualTo(4);
 
-    FileEntriesLayer nonSnapshotDependenciesLayer = layers.get(0);
-    FileEntriesLayer snapshotDependenciesLayer = layers.get(1);
+    FileEntriesLayer nonSnapshotLayer = layers.get(0);
+    FileEntriesLayer snapshotLayer = layers.get(1);
     FileEntriesLayer resourcesLayer = layers.get(2);
     FileEntriesLayer classesLayer = layers.get(3);
 
     // Validate dependencies layer.
-    assertThat(nonSnapshotDependenciesLayer.getName()).isEqualTo("dependencies");
+    assertThat(nonSnapshotLayer.getName()).isEqualTo("dependencies");
     assertThat(
-            nonSnapshotDependenciesLayer
+            nonSnapshotLayer
                 .getEntries()
                 .stream()
                 .map(FileEntry::getExtractionPath)
@@ -127,9 +127,9 @@ public class JarModeProcessorTest {
                 AbsoluteUnixPath.get("/app/dependencies/dependency1"),
                 AbsoluteUnixPath.get("/app/dependencies/dependency2"),
                 AbsoluteUnixPath.get("/app/dependencies/directory/dependency4")));
-    assertThat(snapshotDependenciesLayer.getName()).isEqualTo("snapshot dependencies");
+    assertThat(snapshotLayer.getName()).isEqualTo("snapshot dependencies");
     assertThat(
-            snapshotDependenciesLayer
+            snapshotLayer
                 .getEntries()
                 .stream()
                 .map(FileEntry::getExtractionPath)
@@ -191,7 +191,7 @@ public class JarModeProcessorTest {
         Paths.get(Resources.getResource(STANDARD_JAR_WITHOUT_CLASS_PATH_MANIFEST).toURI());
     Path destDir = temporaryFolder.newFolder().toPath();
     List<FileEntriesLayer> layers =
-        JarModeProcessor.createExplodedModeLayersForStandardJar(standardJar, destDir);
+        JarModeProcessor.createLayersForExplodedStandard(standardJar, destDir);
 
     assertThat(layers.size()).isEqualTo(2);
 
@@ -252,7 +252,7 @@ public class JarModeProcessorTest {
     Path standardJar = Paths.get(Resources.getResource(STANDARD_JAR_WITH_ONLY_CLASSES).toURI());
     Path destDir = temporaryFolder.newFolder().toPath();
     List<FileEntriesLayer> layers =
-        JarModeProcessor.createExplodedModeLayersForStandardJar(standardJar, destDir);
+        JarModeProcessor.createLayersForExplodedStandard(standardJar, destDir);
 
     assertThat(layers.size()).isEqualTo(2);
 
@@ -333,8 +333,7 @@ public class JarModeProcessorTest {
   public void testCreatePackagedModeLayersForStandardJar_emptyJar()
       throws IOException, URISyntaxException {
     Path standardJar = Paths.get(Resources.getResource(STANDARD_JAR_EMPTY).toURI());
-    List<FileEntriesLayer> layers =
-        JarModeProcessor.createPackagedModeLayersForStandardJar(standardJar);
+    List<FileEntriesLayer> layers = JarModeProcessor.createLayersForPackagedStandard(standardJar);
 
     assertThat(layers.size()).isEqualTo(1);
 
@@ -355,8 +354,7 @@ public class JarModeProcessorTest {
       throws IOException, URISyntaxException {
     Path standardJar =
         Paths.get(Resources.getResource(STANDARD_JAR_WITHOUT_CLASS_PATH_MANIFEST).toURI());
-    List<FileEntriesLayer> layers =
-        JarModeProcessor.createPackagedModeLayersForStandardJar(standardJar);
+    List<FileEntriesLayer> layers = JarModeProcessor.createLayersForPackagedStandard(standardJar);
 
     assertThat(layers.size()).isEqualTo(1);
 
@@ -378,19 +376,18 @@ public class JarModeProcessorTest {
       throws IOException, URISyntaxException {
     Path standardJar =
         Paths.get(Resources.getResource(STANDARD_JAR_WITH_CLASS_PATH_MANIFEST).toURI());
-    List<FileEntriesLayer> layers =
-        JarModeProcessor.createPackagedModeLayersForStandardJar(standardJar);
+    List<FileEntriesLayer> layers = JarModeProcessor.createLayersForPackagedStandard(standardJar);
 
     assertThat(layers.size()).isEqualTo(3);
 
-    FileEntriesLayer nonSnapshotDependenciesLayer = layers.get(0);
-    FileEntriesLayer snapshotDependenciesLayer = layers.get(1);
+    FileEntriesLayer nonSnapshotLayer = layers.get(0);
+    FileEntriesLayer snapshotLayer = layers.get(1);
     FileEntriesLayer jarLayer = layers.get(2);
 
     // Validate dependencies layers.
-    assertThat(nonSnapshotDependenciesLayer.getName()).isEqualTo("dependencies");
+    assertThat(nonSnapshotLayer.getName()).isEqualTo("dependencies");
     assertThat(
-            nonSnapshotDependenciesLayer
+            nonSnapshotLayer
                 .getEntries()
                 .stream()
                 .map(FileEntry::getExtractionPath)
@@ -400,9 +397,9 @@ public class JarModeProcessorTest {
                 AbsoluteUnixPath.get("/app/dependency1"),
                 AbsoluteUnixPath.get("/app/dependency2"),
                 AbsoluteUnixPath.get("/app/directory/dependency4")));
-    assertThat(snapshotDependenciesLayer.getName()).isEqualTo("snapshot dependencies");
+    assertThat(snapshotLayer.getName()).isEqualTo("snapshot dependencies");
     assertThat(
-            snapshotDependenciesLayer
+            snapshotLayer
                 .getEntries()
                 .stream()
                 .map(FileEntry::getExtractionPath)

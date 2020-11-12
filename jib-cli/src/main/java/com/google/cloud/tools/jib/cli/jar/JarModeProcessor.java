@@ -85,8 +85,8 @@ public class JarModeProcessor {
    * @throws IOException if I/O error occurs when opening the jar file or if temporary directory
    *     provided doesn't exist
    */
-  static List<FileEntriesLayer> createExplodedModeLayersForStandardJar(
-      Path jarPath, Path tempDirPath) throws IOException {
+  static List<FileEntriesLayer> createLayersForExplodedStandard(Path jarPath, Path tempDirPath)
+      throws IOException {
     // Add dependencies layers.
     List<FileEntriesLayer> layers =
         getDependenciesLayers(jarPath, APP_ROOT.resolve(RelativeUnixPath.get("dependencies")));
@@ -125,8 +125,7 @@ public class JarModeProcessor {
    * @return list of {@link FileEntriesLayer}
    * @throws IOException if I/O error occurs when opening the jar file
    */
-  static List<FileEntriesLayer> createPackagedModeLayersForStandardJar(Path jarPath)
-      throws IOException {
+  static List<FileEntriesLayer> createLayersForPackagedStandard(Path jarPath) throws IOException {
     // Add dependencies layers.
     List<FileEntriesLayer> layers = getDependenciesLayers(jarPath, APP_ROOT);
 
@@ -213,38 +212,44 @@ public class JarModeProcessor {
     // adding the dependencies layers.
     try (JarFile jarFile = new JarFile(jarPath.toFile())) {
       classPath = jarFile.getManifest().getMainAttributes().getValue(Attributes.Name.CLASS_PATH);
-    }
-    if (classPath != null) {
-      Predicate<String> isSnapshot = name -> name.contains("SNAPSHOT");
-      List<String> allDependencies = Splitter.onPattern("\\s+").splitToList(classPath.trim());
-      List<Path> nonSnapshotDependencies =
-          allDependencies
-              .stream()
-              .filter(isSnapshot.negate())
-              .map(Paths::get)
-              .collect(Collectors.toList());
-      List<Path> snapshotDependencies =
-          allDependencies.stream().filter(isSnapshot).map(Paths::get).collect(Collectors.toList());
-      Path jarParent = jarPath.getParent() == null ? Paths.get("") : jarPath.getParent();
-      if (!nonSnapshotDependencies.isEmpty()) {
-        FileEntriesLayer.Builder nonSnapshotDependenciesLayerBuilder =
-            FileEntriesLayer.builder().setName(DEPENDENCIES);
-        nonSnapshotDependencies.forEach(
-            path ->
-                nonSnapshotDependenciesLayerBuilder.addEntry(
-                    jarParent.resolve(path), pathOnContainer.resolve(path)));
-        layers.add(nonSnapshotDependenciesLayerBuilder.build());
+      if (classPath == null) {
+        return new ArrayList<>();
+      } else {
+        Predicate<String> isSnapshot = name -> name.contains("SNAPSHOT");
+        List<String> allDependencies = Splitter.onPattern("\\s+").splitToList(classPath.trim());
+        List<Path> nonSnapshotDependencies =
+            allDependencies
+                .stream()
+                .filter(isSnapshot.negate())
+                .map(Paths::get)
+                .collect(Collectors.toList());
+        List<Path> snapshotDependencies =
+            allDependencies
+                .stream()
+                .filter(isSnapshot)
+                .map(Paths::get)
+                .collect(Collectors.toList());
+        Path jarParent = jarPath.getParent() == null ? Paths.get("") : jarPath.getParent();
+        if (!nonSnapshotDependencies.isEmpty()) {
+          FileEntriesLayer.Builder nonSnapshotDependenciesLayerBuilder =
+              FileEntriesLayer.builder().setName(DEPENDENCIES);
+          nonSnapshotDependencies.forEach(
+              path ->
+                  nonSnapshotDependenciesLayerBuilder.addEntry(
+                      jarParent.resolve(path), pathOnContainer.resolve(path)));
+          layers.add(nonSnapshotDependenciesLayerBuilder.build());
+        }
+        if (!snapshotDependencies.isEmpty()) {
+          FileEntriesLayer.Builder snapshotDependenciesLayerBuilder =
+              FileEntriesLayer.builder().setName(SNAPSHOT_DEPENDENCIES);
+          snapshotDependencies.forEach(
+              path ->
+                  snapshotDependenciesLayerBuilder.addEntry(
+                      jarParent.resolve(path), pathOnContainer.resolve(path)));
+          layers.add(snapshotDependenciesLayerBuilder.build());
+        }
       }
-      if (!snapshotDependencies.isEmpty()) {
-        FileEntriesLayer.Builder snapshotDependenciesLayerBuilder =
-            FileEntriesLayer.builder().setName(SNAPSHOT_DEPENDENCIES);
-        snapshotDependencies.forEach(
-            path ->
-                snapshotDependenciesLayerBuilder.addEntry(
-                    jarParent.resolve(path), pathOnContainer.resolve(path)));
-        layers.add(snapshotDependenciesLayerBuilder.build());
-      }
+      return layers;
     }
-    return layers;
   }
 }

@@ -49,10 +49,10 @@ public class JarFiles {
     List<FileEntriesLayer> layers;
     List<String> entrypoint;
     if (mode.equals(ProcessingMode.packaged)) {
-      layers = JarModeProcessor.createPackagedModeLayersForStandardJar(jarPath);
+      layers = JarModeProcessor.createLayersForPackagedStandard(jarPath);
       entrypoint = JarModeProcessor.computeEntrypointForPackagedStandard(jarPath);
     } else {
-      layers = JarModeProcessor.createExplodedModeLayersForStandardJar(jarPath, tempDirPath);
+      layers = JarModeProcessor.createLayersForExplodedStandard(jarPath, tempDirPath);
       entrypoint = JarModeProcessor.computeEntrypointForExplodedStandard(jarPath);
     }
     containerBuilder.setEntrypoint(entrypoint).setFileEntriesLayers(layers);
