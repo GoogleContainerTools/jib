@@ -386,13 +386,12 @@ public class JarModeProcessorTest {
 
     // Validate jar layer.
     assertThat(jarLayer.getName()).isEqualTo("jar");
+    assertThat(jarLayer.getEntries().size()).isEqualTo(1);
     assertThat(
             jarLayer
                 .getEntries()
-                .stream()
-                .map(FileEntry::getExtractionPath)
-                .collect(Collectors.toList())
-                .get(0))
+                .get(0)
+                    .getExtractionPath())
         .isEqualTo(AbsoluteUnixPath.get("/app/standardJarWithClassPath.jar"));
   }
 
