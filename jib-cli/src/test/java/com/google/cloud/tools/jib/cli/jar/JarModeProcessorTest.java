@@ -347,7 +347,7 @@ public class JarModeProcessorTest {
                 .map(FileEntry::getExtractionPath)
                 .collect(Collectors.toList())
                 .get(0))
-        .isEqualTo(AbsoluteUnixPath.get("/app/jar/emptyStandardJar.jar"));
+        .isEqualTo(AbsoluteUnixPath.get("/app/emptyStandardJar.jar"));
   }
 
   @Test
@@ -370,7 +370,7 @@ public class JarModeProcessorTest {
                 .map(FileEntry::getExtractionPath)
                 .collect(Collectors.toList())
                 .get(0))
-        .isEqualTo(AbsoluteUnixPath.get("/app/jar/standardJarWithoutClassPath.jar"));
+        .isEqualTo(AbsoluteUnixPath.get("/app/standardJarWithoutClassPath.jar"));
   }
 
   @Test
@@ -397,9 +397,9 @@ public class JarModeProcessorTest {
                 .collect(Collectors.toList()))
         .isEqualTo(
             ImmutableList.of(
-                AbsoluteUnixPath.get("/app/dependencies/dependency1"),
-                AbsoluteUnixPath.get("/app/dependencies/dependency2"),
-                AbsoluteUnixPath.get("/app/dependencies/directory/dependency4")));
+                AbsoluteUnixPath.get("/app/dependency1"),
+                AbsoluteUnixPath.get("/app/dependency2"),
+                AbsoluteUnixPath.get("/app/directory/dependency4")));
     assertThat(snapshotDependenciesLayer.getName()).isEqualTo("snapshot dependencies");
     assertThat(
             snapshotDependenciesLayer
@@ -407,8 +407,7 @@ public class JarModeProcessorTest {
                 .stream()
                 .map(FileEntry::getExtractionPath)
                 .collect(Collectors.toList()))
-        .isEqualTo(
-            ImmutableList.of(AbsoluteUnixPath.get("/app/dependencies/dependency3-SNAPSHOT-1.jar")));
+        .isEqualTo(ImmutableList.of(AbsoluteUnixPath.get("/app/dependency3-SNAPSHOT-1.jar")));
 
     // Validate jar layer.
     assertThat(jarLayer.getName()).isEqualTo("jar");
@@ -419,7 +418,7 @@ public class JarModeProcessorTest {
                 .map(FileEntry::getExtractionPath)
                 .collect(Collectors.toList())
                 .get(0))
-        .isEqualTo(AbsoluteUnixPath.get("/app/jar/standardJarWithClassPath.jar"));
+        .isEqualTo(AbsoluteUnixPath.get("/app/standardJarWithClassPath.jar"));
   }
 
   @Test
@@ -446,6 +445,6 @@ public class JarModeProcessorTest {
         JarModeProcessor.computeEntrypointForPackagedStandard(standardJar);
 
     assertThat(actualEntrypoint)
-        .isEqualTo(ImmutableList.of("java", "-jar", "/app/jar/standardJarWithClassPath.jar"));
+        .isEqualTo(ImmutableList.of("java", "-jar", "/app/standardJarWithClassPath.jar"));
   }
 }

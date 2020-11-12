@@ -88,7 +88,8 @@ public class JarModeProcessor {
   static List<FileEntriesLayer> createExplodedModeLayersForStandardJar(
       Path jarPath, Path tempDirPath) throws IOException {
     // Add dependencies layers.
-    List<FileEntriesLayer> layers = getDependenciesLayers(jarPath);
+    List<FileEntriesLayer> layers =
+        getDependenciesLayers(jarPath, APP_ROOT.resolve(RelativeUnixPath.get("dependencies")));
 
     Path localExplodedJarRoot = tempDirPath;
     ZipUtil.unzip(jarPath, localExplodedJarRoot);
@@ -127,15 +128,13 @@ public class JarModeProcessor {
   static List<FileEntriesLayer> createPackagedModeLayersForStandardJar(Path jarPath)
       throws IOException {
     // Add dependencies layers.
-    List<FileEntriesLayer> layers = getDependenciesLayers(jarPath);
+    List<FileEntriesLayer> layers = getDependenciesLayers(jarPath, APP_ROOT);
 
     // Add layer for jar.
     FileEntriesLayer jarLayer =
         FileEntriesLayer.builder()
             .setName(JAR)
-            .addEntry(
-                jarPath,
-                APP_ROOT.resolve(RelativeUnixPath.get("jar")).resolve(jarPath.getFileName()))
+            .addEntry(jarPath, APP_ROOT.resolve(jarPath.getFileName()))
             .build();
 
     layers.add(jarLayer);
@@ -181,8 +180,7 @@ public class JarModeProcessor {
             "`Main-Class:` attribute for an application main class not defined in the input JAR's "
                 + "manifest (`META-INF/MANIFEST.MF` in the JAR).");
       }
-      return ImmutableList.of(
-          "java", "-jar", APP_ROOT + "/jar/" + jarPath.getFileName().toString());
+      return ImmutableList.of("java", "-jar", APP_ROOT + "/" + jarPath.getFileName().toString());
     }
   }
 
@@ -205,7 +203,8 @@ public class JarModeProcessor {
     return builder.build();
   }
 
-  private static List<FileEntriesLayer> getDependenciesLayers(Path jarPath) throws IOException {
+  private static List<FileEntriesLayer> getDependenciesLayers(
+      Path jarPath, AbsoluteUnixPath pathOnContainer) throws IOException {
     List<FileEntriesLayer> layers = new ArrayList<>();
     String classPath = null;
 
@@ -226,15 +225,14 @@ public class JarModeProcessor {
               .collect(Collectors.toList());
       List<Path> snapshotDependencies =
           allDependencies.stream().filter(isSnapshot).map(Paths::get).collect(Collectors.toList());
-      Path jarParent = jarPath.getParent();
+      Path jarParent = jarPath.getParent() == null ? Paths.get("") : jarPath.getParent();
       if (!nonSnapshotDependencies.isEmpty()) {
         FileEntriesLayer.Builder nonSnapshotDependenciesLayerBuilder =
             FileEntriesLayer.builder().setName(DEPENDENCIES);
         nonSnapshotDependencies.forEach(
             path ->
                 nonSnapshotDependenciesLayerBuilder.addEntry(
-                    jarParent.resolve(path),
-                    APP_ROOT.resolve(RelativeUnixPath.get("dependencies")).resolve(path)));
+                    jarParent.resolve(path), pathOnContainer.resolve(path)));
         layers.add(nonSnapshotDependenciesLayerBuilder.build());
       }
       if (!snapshotDependencies.isEmpty()) {
@@ -243,8 +241,7 @@ public class JarModeProcessor {
         snapshotDependencies.forEach(
             path ->
                 snapshotDependenciesLayerBuilder.addEntry(
-                    jarParent.resolve(path),
-                    APP_ROOT.resolve(RelativeUnixPath.get("dependencies")).resolve(path)));
+                    jarParent.resolve(path), pathOnContainer.resolve(path)));
         layers.add(snapshotDependenciesLayerBuilder.build());
       }
     }

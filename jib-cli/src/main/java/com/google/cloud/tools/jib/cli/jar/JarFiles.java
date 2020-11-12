@@ -40,7 +40,7 @@ public class JarFiles {
    * @throws InvalidImageReferenceException if the base image reference is invalid
    */
   public static JibContainerBuilder toJibContainerBuilder(
-      Path jarPath, Path tempDirPath, String mode)
+      Path jarPath, Path tempDirPath, ProcessingMode mode)
       throws IOException, InvalidImageReferenceException {
 
     // Use distroless as the base image.
@@ -48,7 +48,7 @@ public class JarFiles {
 
     List<FileEntriesLayer> layers;
     List<String> entrypoint;
-    if (mode.equals("packaged")) {
+    if (mode.equals(ProcessingMode.packaged)) {
       layers = JarModeProcessor.createPackagedModeLayersForStandardJar(jarPath);
       entrypoint = JarModeProcessor.computeEntrypointForPackagedStandard(jarPath);
     } else {

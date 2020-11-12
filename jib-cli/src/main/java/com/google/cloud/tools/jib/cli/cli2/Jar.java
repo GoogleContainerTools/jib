@@ -21,6 +21,7 @@ import com.google.cloud.tools.jib.api.JibContainerBuilder;
 import com.google.cloud.tools.jib.api.LogEvent;
 import com.google.cloud.tools.jib.cli.cli2.logging.CliLogger;
 import com.google.cloud.tools.jib.cli.jar.JarFiles;
+import com.google.cloud.tools.jib.cli.jar.ProcessingMode;
 import com.google.cloud.tools.jib.filesystem.TempDirectoryProvider;
 import com.google.cloud.tools.jib.plugins.common.logging.ConsoleLogger;
 import com.google.cloud.tools.jib.plugins.common.logging.SingleThreadedExecutor;
@@ -48,9 +49,10 @@ public class Jar implements Callable<Integer> {
       names = "--mode",
       defaultValue = "exploded",
       paramLabel = "<mode>",
-      description = "The jar processing mode, candidates: packaged, default: exploded")
+      description =
+          "The jar processing mode, candidates: ${COMPLETION-CANDIDATES}, default: ${DEFAULT-VALUE}")
   @SuppressWarnings("NullAway.Init") // initialized by picocli
-  private String mode;
+  private ProcessingMode mode;
 
   @Override
   public Integer call() {
