@@ -350,28 +350,6 @@ public class JarModeProcessorTest {
   }
 
   @Test
-  public void testCreatePackagedModeLayersForStandardJar_withoutClassPathInManifest()
-      throws IOException, URISyntaxException {
-    Path standardJar =
-        Paths.get(Resources.getResource(STANDARD_JAR_WITHOUT_CLASS_PATH_MANIFEST).toURI());
-    List<FileEntriesLayer> layers = JarModeProcessor.createLayersForPackagedStandard(standardJar);
-
-    assertThat(layers.size()).isEqualTo(1);
-
-    FileEntriesLayer jarLayer = layers.get(0);
-
-    assertThat(jarLayer.getName()).isEqualTo("jar");
-    assertThat(
-            jarLayer
-                .getEntries()
-                .stream()
-                .map(FileEntry::getExtractionPath)
-                .collect(Collectors.toList())
-                .get(0))
-        .isEqualTo(AbsoluteUnixPath.get("/app/standardJarWithoutClassPath.jar"));
-  }
-
-  @Test
   public void testCreatePackagedModeLayersForStandardJar_withClassPathInManifest()
       throws IOException, URISyntaxException {
     Path standardJar =
