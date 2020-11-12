@@ -95,14 +95,12 @@ public class JarCommandTest {
     StringWriter stringWriter = new StringWriter();
     jibCli.setErr(new PrintWriter(stringWriter));
 
-    Path jarFile = Paths.get(Resources.getResource("jarTest/jarWithCp.jar").toURI());
     Integer exitCode =
-        jibCli.execute(
-            "--target", "docker://jib-cli-image", "jar", jarFile.toString(), "--mode=unknown");
+        jibCli.execute("--target", "docker://jib-cli-image", "jar", "hello.jar", "--mode=unknown");
 
     assertThat(exitCode).isEqualTo(2);
     assertThat(stringWriter.toString())
         .contains(
-            "Invalid value for option '--mode': expected one of [packaged, exploded] (case-sensitive) but was 'unknown'");
+            "Invalid value for option '--mode': expected one of [exploded, packaged] (case-sensitive) but was 'unknown'");
   }
 }
