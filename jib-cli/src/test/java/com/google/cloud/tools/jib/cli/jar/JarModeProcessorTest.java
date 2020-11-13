@@ -126,7 +126,7 @@ public class JarModeProcessorTest {
             ImmutableList.of(
                 AbsoluteUnixPath.get("/app/dependencies/dependency1"),
                 AbsoluteUnixPath.get("/app/dependencies/dependency2"),
-                AbsoluteUnixPath.get("/app/dependencies/directory/dependency4")));
+                AbsoluteUnixPath.get("/app/dependencies/dependency4")));
     assertThat(snapshotDependenciesLayer.getName()).isEqualTo("snapshot dependencies");
     assertThat(
             snapshotDependenciesLayer

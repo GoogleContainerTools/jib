@@ -64,13 +64,13 @@ public class JarCommandTest {
 
   @Test
   public void testJar_toDocker() throws IOException, InterruptedException, URISyntaxException {
-    Path jarFile = Paths.get(Resources.getResource("simpleJar.jar").toURI());
+    Path jarFile = Paths.get(Resources.getResource("jarTest/jarWithCp.jar").toURI());
     Integer exitCode =
         new CommandLine(new JibCli())
             .execute("--target", "docker://jib-cli-image", "jar", jarFile.toString());
     String output = new Command("docker", "run", "--rm", "jib-cli-image").run();
 
     assertThat(exitCode).isEqualTo(0);
-    assertThat(output).isEqualTo("Hello World");
+    assertThat(output).isEqualTo("Hello world");
   }
 }

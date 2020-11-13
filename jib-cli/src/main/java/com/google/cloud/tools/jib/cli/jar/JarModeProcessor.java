@@ -108,13 +108,17 @@ public class JarModeProcessor {
               .collect(Collectors.toList());
       List<Path> snapshotDependencies =
           allDependencies.stream().filter(isSnapshot).map(Paths::get).collect(Collectors.toList());
+      Path jarParent = jarPath.getParent() == null ? Paths.get("") : jarPath.getParent();
       if (!nonSnapshotDependencies.isEmpty()) {
         FileEntriesLayer.Builder nonSnapshotDependenciesLayerBuilder =
             FileEntriesLayer.builder().setName(DEPENDENCIES);
         nonSnapshotDependencies.forEach(
             path ->
                 nonSnapshotDependenciesLayerBuilder.addEntry(
-                    path, APP_ROOT.resolve(RelativeUnixPath.get("dependencies")).resolve(path)));
+                    jarParent.resolve(path),
+                    APP_ROOT
+                        .resolve(RelativeUnixPath.get("dependencies"))
+                        .resolve(path.getFileName())));
         layers.add(nonSnapshotDependenciesLayerBuilder.build());
       }
       if (!snapshotDependencies.isEmpty()) {
@@ -123,7 +127,10 @@ public class JarModeProcessor {
         snapshotDependencies.forEach(
             path ->
                 snapshotDependenciesLayerBuilder.addEntry(
-                    path, APP_ROOT.resolve(RelativeUnixPath.get("dependencies")).resolve(path)));
+                    jarParent.resolve(path),
+                    APP_ROOT
+                        .resolve(RelativeUnixPath.get("dependencies"))
+                        .resolve(path.getFileName())));
         layers.add(snapshotDependenciesLayerBuilder.build());
       }
     }
