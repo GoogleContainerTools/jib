@@ -71,6 +71,6 @@ public class JarCommandTest {
     String output = new Command("docker", "run", "--rm", "jib-cli-image").run();
 
     assertThat(exitCode).isEqualTo(0);
-    assertThat(output).isEqualTo("Hello world");
+    assertThat(output).isEqualTo("Hello World");
   }
 }
