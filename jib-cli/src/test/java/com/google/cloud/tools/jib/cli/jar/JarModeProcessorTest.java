@@ -138,8 +138,6 @@ public class JarModeProcessorTest {
             ImmutableList.of(AbsoluteUnixPath.get("/app/dependencies/dependency3-SNAPSHOT-1.jar")));
 
     // Validate resources layer.
-    // TODO: Validate order of file paths once
-    // https://github.com/GoogleContainerTools/jib/issues/2821 is fixed.
     assertThat(resourcesLayer.getName()).isEqualTo("resources");
     List<AbsoluteUnixPath> actualResourcesPaths =
         resourcesLayer
@@ -161,8 +159,6 @@ public class JarModeProcessorTest {
             AbsoluteUnixPath.get("/app/explodedJar/resource4.sql"));
 
     // Validate classes layer.
-    // TODO: Validate order of file paths once
-    // https://github.com/GoogleContainerTools/jib/issues/2821 is fixed.
     assertThat(classesLayer.getName()).isEqualTo("classes");
     List<AbsoluteUnixPath> actualClassesPaths =
         classesLayer
@@ -199,8 +195,6 @@ public class JarModeProcessorTest {
     FileEntriesLayer classesLayer = layers.get(1);
 
     // Validate resources layer.
-    // TODO: Validate order of file paths once
-    // https://github.com/GoogleContainerTools/jib/issues/2821 is fixed.
     assertThat(resourcesLayer.getName()).isEqualTo("resources");
     List<AbsoluteUnixPath> actualResourcesPaths =
         resourcesLayer
@@ -222,8 +216,6 @@ public class JarModeProcessorTest {
             AbsoluteUnixPath.get("/app/explodedJar/resource4.sql"));
 
     // Validate classes layer.
-    // TODO: Validate order of file paths once
-    // https://github.com/GoogleContainerTools/jib/issues/2821 is fixed.
     assertThat(classesLayer.getName()).isEqualTo("classes");
     List<AbsoluteUnixPath> actualClassesPaths =
         classesLayer
@@ -260,8 +252,6 @@ public class JarModeProcessorTest {
     FileEntriesLayer classesLayer = layers.get(1);
 
     // Validate resources layer.
-    // TODO: Validate order of file paths once
-    // https://github.com/GoogleContainerTools/jib/issues/2821 is fixed.
     List<AbsoluteUnixPath> actualResourcesPath =
         resourcesLayer
             .getEntries()
@@ -274,8 +264,6 @@ public class JarModeProcessorTest {
             AbsoluteUnixPath.get("/app/explodedJar/META-INF/MANIFEST.MF"));
 
     // Validate classes layer.
-    // TODO: Validate order of file paths once
-    // https://github.com/GoogleContainerTools/jib/issues/2821 is fixed.
     List<AbsoluteUnixPath> actualClassesPath =
         classesLayer
             .getEntries()
