@@ -49,7 +49,6 @@ public class JarFilesTest {
     Path destDir = temporaryFolder.getRoot().toPath();
     JibContainerBuilder containerBuilder = JarFiles.toJibContainerBuilder(standardJar, destDir);
     ContainerBuildPlan buildPlan = containerBuilder.toContainerBuildPlan();
-
     assertThat(buildPlan.getBaseImage()).isEqualTo("gcr.io/distroless/java");
     assertThat(buildPlan.getPlatforms()).isEqualTo(ImmutableSet.of(new Platform("amd64", "linux")));
     assertThat(buildPlan.getCreationTime()).isEqualTo(Instant.EPOCH);
@@ -67,7 +66,7 @@ public class JarFilesTest {
         .isEqualTo(
             FileEntriesLayer.builder()
                 .addEntry(
-                    standardJar.getParent().resolve(Paths.get("dependency1")),
+                    standardJar.getParent().resolve("dependency1"),
                     AbsoluteUnixPath.get("/app/dependencies/dependency1"))
                 .build()
                 .getEntries());

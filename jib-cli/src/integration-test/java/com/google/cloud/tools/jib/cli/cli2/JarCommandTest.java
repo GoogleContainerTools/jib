@@ -19,7 +19,6 @@ package com.google.cloud.tools.jib.cli.cli2;
 import static com.google.common.truth.Truth.assertThat;
 
 import com.google.cloud.tools.jib.Command;
-import com.google.common.base.Splitter;
 import com.google.common.io.Resources;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -27,7 +26,6 @@ import java.io.StringWriter;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.List;
 import java.util.jar.Attributes;
 import java.util.jar.JarFile;
 import org.junit.Test;
@@ -76,14 +74,27 @@ public class JarCommandTest {
     String classPath = null;
     try (JarFile jarFile = new JarFile(jarPath.toFile())) {
       classPath = jarFile.getManifest().getMainAttributes().getValue(Attributes.Name.CLASS_PATH);
+
+      assertThat(classPath).contains("dependency1.jar directory/dependency2.jar");
+      assertThat(exitCode).isEqualTo(0);
+      assertThat(output).isEqualTo("Hello World");
     }
+  }
 
-    // Validate classpath before checking output
-    assertThat(classPath).isNotNull();
-    List<String> dependencies = Splitter.onPattern("\\s+").splitToList(classPath.trim());
-    assertThat(dependencies).containsExactly("dependency1.jar", "directory/dependency2.jar");
+  @Test
+  public void testNoDepJar_toDocker() throws IOException, InterruptedException, URISyntaxException {
+    Path jarPath = Paths.get(Resources.getResource("noDependencyJar.jar").toURI());
+    Integer exitCode =
+        new CommandLine(new JibCli())
+            .execute("--target", "docker://cli-empty-jar", "jar", jarPath.toString());
+    String output = new Command("docker", "run", "--rm", "cli-empty-jar").run();
+    String classPath = null;
+    try (JarFile jarFile = new JarFile(jarPath.toFile())) {
+      classPath = jarFile.getManifest().getMainAttributes().getValue(Attributes.Name.CLASS_PATH);
 
-    assertThat(exitCode).isEqualTo(0);
-    assertThat(output).isEqualTo("Hello World");
+      assertThat(classPath).isNull();
+      assertThat(exitCode).isEqualTo(0);
+      assertThat(output).isEqualTo("Hello World");
+    }
   }
 }

@@ -18,12 +18,12 @@ package com.google.cloud.tools.jib.cli.jar;
 
 import com.google.cloud.tools.jib.api.buildplan.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.api.buildplan.FileEntriesLayer;
-import com.google.cloud.tools.jib.api.buildplan.RelativeUnixPath;
 import com.google.cloud.tools.jib.filesystem.DirectoryWalker;
 import com.google.cloud.tools.jib.plugins.common.ZipUtil;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -85,7 +85,7 @@ public class JarModeProcessor {
    *     provided doesn't exist
    */
   static List<FileEntriesLayer> createExplodedModeLayersForStandardJar(
-      Path jarPath, Path tempDirPath) throws IOException {
+      Path jarPath, Path tempDirPath) throws IOException, IllegalArgumentException {
     Path localExplodedJarRoot = tempDirPath;
     ZipUtil.unzip(jarPath, localExplodedJarRoot);
     List<FileEntriesLayer> layers = new ArrayList<>();
@@ -114,11 +114,11 @@ public class JarModeProcessor {
             FileEntriesLayer.builder().setName(DEPENDENCIES);
         nonSnapshotDependencies.forEach(
             path ->
-                nonSnapshotDependenciesLayerBuilder.addEntry(
-                    jarParent.resolve(path),
-                    APP_ROOT
-                        .resolve(RelativeUnixPath.get("dependencies"))
-                        .resolve(path.getFileName())));
+                addDependency(
+                    nonSnapshotDependenciesLayerBuilder,
+                    path,
+                    jarParent,
+                    APP_ROOT.resolve("dependencies").resolve(path.getFileName())));
         layers.add(nonSnapshotDependenciesLayerBuilder.build());
       }
       if (!snapshotDependencies.isEmpty()) {
@@ -126,11 +126,11 @@ public class JarModeProcessor {
             FileEntriesLayer.builder().setName(SNAPSHOT_DEPENDENCIES);
         snapshotDependencies.forEach(
             path ->
-                snapshotDependenciesLayerBuilder.addEntry(
-                    jarParent.resolve(path),
-                    APP_ROOT
-                        .resolve(RelativeUnixPath.get("dependencies"))
-                        .resolve(path.getFileName())));
+                addDependency(
+                    snapshotDependenciesLayerBuilder,
+                    path,
+                    jarParent,
+                    APP_ROOT.resolve("dependencies").resolve(path.getFileName())));
         layers.add(snapshotDependenciesLayerBuilder.build());
       }
     }
@@ -142,16 +142,10 @@ public class JarModeProcessor {
     Predicate<Path> isResourceFile = isClassFile.negate();
     FileEntriesLayer classesLayer =
         addDirectoryContentsToLayer(
-            CLASSES,
-            localExplodedJarRoot,
-            isClassFile,
-            APP_ROOT.resolve(RelativeUnixPath.get("explodedJar")));
+            CLASSES, localExplodedJarRoot, isClassFile, APP_ROOT.resolve("explodedJar"));
     FileEntriesLayer resourcesLayer =
         addDirectoryContentsToLayer(
-            RESOURCES,
-            localExplodedJarRoot,
-            isResourceFile,
-            APP_ROOT.resolve(RelativeUnixPath.get("explodedJar")));
+            RESOURCES, localExplodedJarRoot, isResourceFile, APP_ROOT.resolve("explodedJar"));
 
     layers.add(resourcesLayer);
     layers.add(classesLayer);
@@ -178,6 +172,21 @@ public class JarModeProcessor {
       String classpath = APP_ROOT + "/explodedJar:" + APP_ROOT + "/dependencies/*";
       return ImmutableList.of("java", "-cp", classpath, mainClass);
     }
+  }
+
+  private static void addDependency(
+      FileEntriesLayer.Builder layerbuilder,
+      Path depPath,
+      Path jarParent,
+      AbsoluteUnixPath pathOnContainer) {
+    File depFile = new File(jarParent.resolve(depPath).toString());
+    if (!depFile.exists()) {
+      throw new IllegalArgumentException(
+          String.format(
+              "Dependency: %s needs to be in the same parent directory as the JAR.",
+              depPath.toString()));
+    }
+    layerbuilder.addEntry(jarParent.resolve(depPath), pathOnContainer);
   }
 
   private static FileEntriesLayer addDirectoryContentsToLayer(

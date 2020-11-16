@@ -45,6 +45,7 @@ public class JarModeProcessorTest {
   private static final String STANDARD_JAR_WITH_ONLY_CLASSES =
       "jar/standard/standardJarWithOnlyClasses.jar";
   private static final String STANDARD_JAR_EMPTY = "jar/standard/emptyStandardJar.jar";
+  private static final String STANDARD_SINGLE_DEPENDENCY_JAR = "jar/standard/singleDepJar.jar";
 
   @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
@@ -275,6 +276,21 @@ public class JarModeProcessorTest {
             AbsoluteUnixPath.get("/app/explodedJar/META-INF"),
             AbsoluteUnixPath.get("/app/explodedJar/class1.class"),
             AbsoluteUnixPath.get("/app/explodedJar/class2.class"));
+  }
+
+  @Test
+  public void testCreateExplodedModeLayersForStandardJar_dependencyNotUnderJarParent()
+      throws URISyntaxException {
+    Path standardJar = Paths.get(Resources.getResource(STANDARD_SINGLE_DEPENDENCY_JAR).toURI());
+    Path destDir = temporaryFolder.getRoot().toPath();
+    IllegalArgumentException exception =
+        assertThrows(
+            IllegalArgumentException.class,
+            () -> JarModeProcessor.createExplodedModeLayersForStandardJar(standardJar, destDir));
+    assertThat(exception)
+        .hasMessageThat()
+        .isEqualTo(
+            "Dependency: dependency.jar needs to be in the same parent directory as the JAR.");
   }
 
   @Test
