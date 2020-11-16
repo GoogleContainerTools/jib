@@ -290,7 +290,8 @@ public class JarModeProcessorTest {
     assertThat(exception)
         .hasMessageThat()
         .isEqualTo(
-            "Dependency: dependency.jar needs to be in the same parent directory as the JAR.");
+            "Dependency required by the JAR (as specified in `Class-Path` in the JAR manifest) doesn't exist: "
+                + standardJar.getParent().resolve("dependency.jar"));
   }
 
   @Test

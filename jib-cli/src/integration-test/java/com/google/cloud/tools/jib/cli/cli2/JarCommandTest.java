@@ -71,11 +71,11 @@ public class JarCommandTest {
         new CommandLine(new JibCli())
             .execute("--target", "docker://jib-cli-image", "jar", jarPath.toString());
     String output = new Command("docker", "run", "--rm", "jib-cli-image").run();
-    String classPath = null;
     try (JarFile jarFile = new JarFile(jarPath.toFile())) {
-      classPath = jarFile.getManifest().getMainAttributes().getValue(Attributes.Name.CLASS_PATH);
+      String classPath =
+          jarFile.getManifest().getMainAttributes().getValue(Attributes.Name.CLASS_PATH);
 
-      assertThat(classPath).contains("dependency1.jar directory/dependency2.jar");
+      assertThat(classPath).isEqualTo("dependency1.jar directory/dependency2.jar");
       assertThat(exitCode).isEqualTo(0);
       assertThat(output).isEqualTo("Hello World");
     }
@@ -89,9 +89,9 @@ public class JarCommandTest {
         new CommandLine(new JibCli())
             .execute("--target", "docker://cli-no-dep-jar", "jar", jarPath.toString());
     String output = new Command("docker", "run", "--rm", "cli-no-dep-jar").run();
-    String classPath = null;
     try (JarFile jarFile = new JarFile(jarPath.toFile())) {
-      classPath = jarFile.getManifest().getMainAttributes().getValue(Attributes.Name.CLASS_PATH);
+      String classPath =
+          jarFile.getManifest().getMainAttributes().getValue(Attributes.Name.CLASS_PATH);
 
       assertThat(classPath).isNull();
       assertThat(exitCode).isEqualTo(0);

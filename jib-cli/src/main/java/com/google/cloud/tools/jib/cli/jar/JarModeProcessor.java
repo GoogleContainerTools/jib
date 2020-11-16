@@ -23,7 +23,6 @@ import com.google.cloud.tools.jib.plugins.common.ZipUtil;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -116,8 +115,7 @@ public class JarModeProcessor {
             path ->
                 addDependency(
                     nonSnapshotDependenciesLayerBuilder,
-                    path,
-                    jarParent,
+                    jarParent.resolve(path),
                     APP_ROOT.resolve("dependencies").resolve(path.getFileName())));
         layers.add(nonSnapshotDependenciesLayerBuilder.build());
       }
@@ -128,8 +126,7 @@ public class JarModeProcessor {
             path ->
                 addDependency(
                     snapshotDependenciesLayerBuilder,
-                    path,
-                    jarParent,
+                    jarParent.resolve(path),
                     APP_ROOT.resolve("dependencies").resolve(path.getFileName())));
         layers.add(snapshotDependenciesLayerBuilder.build());
       }
@@ -175,18 +172,14 @@ public class JarModeProcessor {
   }
 
   private static void addDependency(
-      FileEntriesLayer.Builder layerbuilder,
-      Path depPath,
-      Path jarParent,
-      AbsoluteUnixPath pathOnContainer) {
-    File depFile = new File(jarParent.resolve(depPath).toString());
-    if (!depFile.exists()) {
+      FileEntriesLayer.Builder layerbuilder, Path fullDepPath, AbsoluteUnixPath pathOnContainer) {
+    if (!Files.exists(fullDepPath)) {
       throw new IllegalArgumentException(
           String.format(
-              "Dependency: %s needs to be in the same parent directory as the JAR.",
-              depPath.toString()));
+              "Dependency required by the JAR (as specified in `Class-Path` in the JAR manifest) doesn't exist: %s",
+              fullDepPath));
     }
-    layerbuilder.addEntry(jarParent.resolve(depPath), pathOnContainer);
+    layerbuilder.addEntry(fullDepPath, pathOnContainer);
   }
 
   private static FileEntriesLayer addDirectoryContentsToLayer(
