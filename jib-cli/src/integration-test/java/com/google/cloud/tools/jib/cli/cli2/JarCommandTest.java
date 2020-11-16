@@ -82,12 +82,13 @@ public class JarCommandTest {
   }
 
   @Test
-  public void testNoDepJar_toDocker() throws IOException, InterruptedException, URISyntaxException {
+  public void testNoDependencyJar_toDocker()
+      throws IOException, InterruptedException, URISyntaxException {
     Path jarPath = Paths.get(Resources.getResource("noDependencyJar.jar").toURI());
     Integer exitCode =
         new CommandLine(new JibCli())
-            .execute("--target", "docker://cli-empty-jar", "jar", jarPath.toString());
-    String output = new Command("docker", "run", "--rm", "cli-empty-jar").run();
+            .execute("--target", "docker://cli-no-dep-jar", "jar", jarPath.toString());
+    String output = new Command("docker", "run", "--rm", "cli-no-dep-jar").run();
     String classPath = null;
     try (JarFile jarFile = new JarFile(jarPath.toFile())) {
       classPath = jarFile.getManifest().getMainAttributes().getValue(Attributes.Name.CLASS_PATH);
