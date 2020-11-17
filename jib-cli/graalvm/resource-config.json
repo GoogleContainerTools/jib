@@ -1,0 +1,14 @@
+{
+  "resources":[
+    {"pattern":"\\QMETA-INF/services/jdk.vm.ci.hotspot.HotSpotJVMCIBackendFactory\\E"}, 
+    {"pattern":"\\QMETA-INF/services/jdk.vm.ci.services.JVMCIServiceLocator\\E"}, 
+    {"pattern":"\\Qcommons-logging.properties\\E"}, 
+    {"pattern":"\\Qgoogle-http-client.properties\\E"}, 
+    {"pattern":"\\Qjavax/crypto/Cipher.class\\E"}, 
+    {"pattern":"\\Qmozilla/public-suffix-list.txt\\E"}, 
+    {"pattern":"\\Qorg/apache/http/client/version.properties\\E"}, 
+    {"pattern":"\\Qsun/net/idn/uidna.spp\\E"}, 
+    {"pattern":"\\Qsun/text/resources/unorm.icu\\E"}
+  ],
+  "bundles":[]
+}

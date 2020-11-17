@@ -6,10 +6,14 @@ set -o errexit
 
 cd jib-cli/build/install/jib
 
-MAIN_CLASS=com.google.cloud.tools.jib.cli.cli2.JibCli bin/jib-native
+java -version
+
+MAIN_CLASS=com.google.cloud.tools.jib.cli.cli2.JibCli
 CLASSPATH=$( find lib/ -name '*.jar' -printf ':%p' | cut -c2- )
+echo
 echo "* CLASSPATH: ${CLASSPATH}"
 echo "* Main class: ${MAIN_CLASS}"
+echo
 
 ###############################################################################
 # Auto-gen Picocli reflection configuration JSON
@@ -34,6 +38,15 @@ java -cp "${CLASSPATH}:${PICOCLI_JAR}:${PICOCLI_CODEGEN_JAR}" \
 echo "* Generating a native image..."
 native-image --static --no-fallback --no-server \
   -H:ReflectionConfigurationFiles=picocli-reflect.json \
+  -H:ConfigurationFileDirectories=../../../../jib-cli/graalvm/ \
+  -H:+ReportExceptionStackTraces \
   -H:+ReportUnsupportedElementsAtRuntime \
+  --enable-https --enable-http \
   -cp "${CLASSPATH}" \
   "${MAIN_CLASS}" bin/jib-native
+
+#  -H:ReflectionConfigurationFiles=picocli-reflect.json,../../../../native-image-config/reflect-config.json \
+#  -H:ResourceConfigurationFiles=../../../../native-image-config/resource-config.json \
+#  -H:ReflectionConfigurationFiles=picocli-reflect.json,../../../graalvm/reflection.json \
+#  -H:EnableURLProtocols=https,http \
+#  -H:+AllowIncompleteClasspath \
