@@ -45,6 +45,7 @@ public class JarModeProcessorTest {
   private static final String STANDARD_JAR_WITH_ONLY_CLASSES =
       "jar/standard/standardJarWithOnlyClasses.jar";
   private static final String STANDARD_JAR_EMPTY = "jar/standard/emptyStandardJar.jar";
+  private static final String STANDARD_SINGLE_DEPENDENCY_JAR = "jar/standard/singleDepJar.jar";
 
   @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
@@ -126,7 +127,7 @@ public class JarModeProcessorTest {
             ImmutableList.of(
                 AbsoluteUnixPath.get("/app/dependencies/dependency1"),
                 AbsoluteUnixPath.get("/app/dependencies/dependency2"),
-                AbsoluteUnixPath.get("/app/dependencies/directory/dependency4")));
+                AbsoluteUnixPath.get("/app/dependencies/dependency4")));
     assertThat(snapshotDependenciesLayer.getName()).isEqualTo("snapshot dependencies");
     assertThat(
             snapshotDependenciesLayer
@@ -275,6 +276,22 @@ public class JarModeProcessorTest {
             AbsoluteUnixPath.get("/app/explodedJar/META-INF"),
             AbsoluteUnixPath.get("/app/explodedJar/class1.class"),
             AbsoluteUnixPath.get("/app/explodedJar/class2.class"));
+  }
+
+  @Test
+  public void testCreateExplodedModeLayersForStandardJar_dependencyDoesNotExist()
+      throws URISyntaxException {
+    Path standardJar = Paths.get(Resources.getResource(STANDARD_SINGLE_DEPENDENCY_JAR).toURI());
+    Path destDir = temporaryFolder.getRoot().toPath();
+    IllegalArgumentException exception =
+        assertThrows(
+            IllegalArgumentException.class,
+            () -> JarModeProcessor.createExplodedModeLayersForStandardJar(standardJar, destDir));
+    assertThat(exception)
+        .hasMessageThat()
+        .isEqualTo(
+            "Dependency required by the JAR (as specified in `Class-Path` in the JAR manifest) doesn't exist: "
+                + standardJar.getParent().resolve("dependency.jar"));
   }
 
   @Test
