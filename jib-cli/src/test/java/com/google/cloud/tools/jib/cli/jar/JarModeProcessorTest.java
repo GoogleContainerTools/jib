@@ -279,7 +279,7 @@ public class JarModeProcessorTest {
   }
 
   @Test
-  public void testCreateExplodedModeLayersForStandardJar_dependencyNotUnderJarParent()
+  public void testCreateExplodedModeLayersForStandardJar_dependencyDoesNotExist()
       throws URISyntaxException {
     Path standardJar = Paths.get(Resources.getResource(STANDARD_SINGLE_DEPENDENCY_JAR).toURI());
     Path destDir = temporaryFolder.getRoot().toPath();
