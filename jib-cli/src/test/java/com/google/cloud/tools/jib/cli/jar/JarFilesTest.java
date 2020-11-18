@@ -64,6 +64,7 @@ public class JarFilesTest {
     assertThat(buildPlan.getEntrypoint())
         .isEqualTo(
             ImmutableList.of("java", "-cp", "/app/explodedJar:/app/dependencies/*", "HelloWorld"));
+    assertThat(buildPlan.getLayers().size()).isEqualTo(3);
     assertThat(((FileEntriesLayer) buildPlan.getLayers().get(0)).getEntries())
         .isEqualTo(
             FileEntriesLayer.builder()
@@ -129,6 +130,7 @@ public class JarFilesTest {
     assertThat(buildPlan.getWorkingDirectory()).isNull();
     assertThat(buildPlan.getEntrypoint())
         .isEqualTo(ImmutableList.of("java", "-jar", "/app/basicStandardJar.jar"));
+    assertThat(buildPlan.getLayers().size()).isEqualTo(2);
     assertThat(((FileEntriesLayer) buildPlan.getLayers().get(0)).getEntries())
         .isEqualTo(
             FileEntriesLayer.builder()
