@@ -64,7 +64,7 @@ public class JarModeProcessorTest {
   }
 
   @Test
-  public void testCreateExplodedModeLayersForStandardJar_emptyJar()
+  public void testCreateLayersForExplodedStandard_emptyJar()
       throws IOException, URISyntaxException {
     Path standardJar = Paths.get(Resources.getResource(STANDARD_JAR_EMPTY).toURI());
     Path destDir = temporaryFolder.newFolder().toPath();
@@ -100,7 +100,7 @@ public class JarModeProcessorTest {
   }
 
   @Test
-  public void testCreateExplodedModeLayersForStandardJar_withClassPathInManifest()
+  public void testCreateLayersForExplodedStandard_withClassPathInManifest()
       throws IOException, URISyntaxException {
     Path standardJar =
         Paths.get(Resources.getResource(STANDARD_JAR_WITH_CLASS_PATH_MANIFEST).toURI());
@@ -182,7 +182,7 @@ public class JarModeProcessorTest {
   }
 
   @Test
-  public void testCreateExplodedModeLayersForStandardJar_withoutClassPathInManifest()
+  public void testCreateLayersForExplodedStandard_withoutClassPathInManifest()
       throws IOException, URISyntaxException {
     Path standardJar =
         Paths.get(Resources.getResource(STANDARD_JAR_WITHOUT_CLASS_PATH_MANIFEST).toURI());
@@ -239,9 +239,8 @@ public class JarModeProcessorTest {
   }
 
   @Test
-  public void
-      testCreateExplodedModeLayersForStandardJar_withoutClassPathInManifest_containsOnlyClasses()
-          throws IOException, URISyntaxException {
+  public void testCreateLayersForExplodedStandard_withoutClassPathInManifest_containsOnlyClasses()
+      throws IOException, URISyntaxException {
     Path standardJar = Paths.get(Resources.getResource(STANDARD_JAR_WITH_ONLY_CLASSES).toURI());
     Path destDir = temporaryFolder.newFolder().toPath();
     List<FileEntriesLayer> layers =
@@ -295,22 +294,7 @@ public class JarModeProcessorTest {
   }
 
   @Test
-  public void testCreateLayersForPackagedStandard_dependencyDoesNotExist()
-      throws URISyntaxException {
-    Path standardJar = Paths.get(Resources.getResource(STANDARD_SINGLE_DEPENDENCY_JAR).toURI());
-    IllegalArgumentException exception =
-        assertThrows(
-            IllegalArgumentException.class,
-            () -> JarModeProcessor.createLayersForPackagedStandard(standardJar));
-    assertThat(exception)
-        .hasMessageThat()
-        .isEqualTo(
-            "Dependency required by the JAR (as specified in `Class-Path` in the JAR manifest) doesn't exist: "
-                + standardJar.getParent().resolve("dependency.jar"));
-  }
-
-  @Test
-  public void testExplodeMode_standard_computeEntrypoint_allLayersPresent()
+  public void testComputeEntrypointForExplodedStandard_allLayersPresent()
       throws IOException, URISyntaxException {
     Path standardJar =
         Paths.get(Resources.getResource(STANDARD_JAR_WITH_CLASS_PATH_MANIFEST).toURI());
@@ -323,7 +307,7 @@ public class JarModeProcessorTest {
   }
 
   @Test
-  public void testExplodedMode_standard_computeEntrypoint_noDependenciesLayers()
+  public void testComputeEntrypointForExplodedStandard_noDependenciesLayers()
       throws IOException, URISyntaxException {
     Path standardJar =
         Paths.get(Resources.getResource(STANDARD_JAR_WITHOUT_CLASS_PATH_MANIFEST).toURI());
@@ -336,7 +320,7 @@ public class JarModeProcessorTest {
   }
 
   @Test
-  public void testExplodedMode_standard_computeEntrypoint_noMainClass() throws URISyntaxException {
+  public void testComputeEntrypointForExplodedStandard_noMainClass() throws URISyntaxException {
     Path standardJar = Paths.get(Resources.getResource(STANDARD_JAR_EMPTY).toURI());
     IllegalArgumentException ex =
         assertThrows(
@@ -350,7 +334,7 @@ public class JarModeProcessorTest {
   }
 
   @Test
-  public void testCreatePackagedModeLayersForStandardJar_emptyJar()
+  public void testCreateLayersForPackagedStandard_emptyJar()
       throws IOException, URISyntaxException {
     Path standardJar = Paths.get(Resources.getResource(STANDARD_JAR_EMPTY).toURI());
     List<FileEntriesLayer> layers = JarModeProcessor.createLayersForPackagedStandard(standardJar);
@@ -370,7 +354,7 @@ public class JarModeProcessorTest {
   }
 
   @Test
-  public void testCreatePackagedModeLayersForStandardJar_withClassPathInManifest()
+  public void testCreateLayersForPackagedStandard_withClassPathInManifest()
       throws IOException, URISyntaxException {
     Path standardJar =
         Paths.get(Resources.getResource(STANDARD_JAR_WITH_CLASS_PATH_MANIFEST).toURI());
@@ -412,8 +396,22 @@ public class JarModeProcessorTest {
   }
 
   @Test
-  public void testPackagedMode_standardJar_computeEntrypoint_noMainClass()
+  public void testCreateLayersForPackagedStandard_dependencyDoesNotExist()
       throws URISyntaxException {
+    Path standardJar = Paths.get(Resources.getResource(STANDARD_SINGLE_DEPENDENCY_JAR).toURI());
+    IllegalArgumentException exception =
+        assertThrows(
+            IllegalArgumentException.class,
+            () -> JarModeProcessor.createLayersForPackagedStandard(standardJar));
+    assertThat(exception)
+        .hasMessageThat()
+        .isEqualTo(
+            "Dependency required by the JAR (as specified in `Class-Path` in the JAR manifest) doesn't exist: "
+                + standardJar.getParent().resolve("dependency.jar"));
+  }
+
+  @Test
+  public void testComputeEntrypointForPackagedStandard_noMainClass() throws URISyntaxException {
     Path standardJar = Paths.get(Resources.getResource(STANDARD_JAR_EMPTY).toURI());
     IllegalArgumentException ex =
         assertThrows(
@@ -427,7 +425,7 @@ public class JarModeProcessorTest {
   }
 
   @Test
-  public void testPackagedMode_standardJar_computeEntrypoint_withMainClass()
+  public void testComputeEntrypointForPackagedStandard_withMainClass()
       throws IOException, URISyntaxException {
     Path standardJar =
         Paths.get(Resources.getResource(STANDARD_JAR_WITH_CLASS_PATH_MANIFEST).toURI());
