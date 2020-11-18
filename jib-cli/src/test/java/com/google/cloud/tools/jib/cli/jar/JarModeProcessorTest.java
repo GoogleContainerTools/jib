@@ -343,13 +343,8 @@ public class JarModeProcessorTest {
 
     FileEntriesLayer jarLayer = layers.get(0);
     assertThat(jarLayer.getName()).isEqualTo("jar");
-    assertThat(
-            jarLayer
-                .getEntries()
-                .stream()
-                .map(FileEntry::getExtractionPath)
-                .collect(Collectors.toList())
-                .get(0))
+    assertThat(jarLayer.getEntries().size()).isEqualTo(1);
+    assertThat(jarLayer.getEntries().get(0).getExtractionPath())
         .isEqualTo(AbsoluteUnixPath.get("/app/emptyStandardJar.jar"));
   }
 
