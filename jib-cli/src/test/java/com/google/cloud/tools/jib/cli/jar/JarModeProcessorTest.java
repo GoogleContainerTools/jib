@@ -279,7 +279,7 @@ public class JarModeProcessorTest {
   }
 
   @Test
-  public void testCreateExplodedModeLayersForStandardJar_dependencyDoesNotExist()
+  public void testCreateLayersForExplodedStandard_dependencyDoesNotExist()
       throws URISyntaxException {
     Path standardJar = Paths.get(Resources.getResource(STANDARD_SINGLE_DEPENDENCY_JAR).toURI());
     Path destDir = temporaryFolder.getRoot().toPath();
@@ -287,6 +287,21 @@ public class JarModeProcessorTest {
         assertThrows(
             IllegalArgumentException.class,
             () -> JarModeProcessor.createLayersForExplodedStandard(standardJar, destDir));
+    assertThat(exception)
+        .hasMessageThat()
+        .isEqualTo(
+            "Dependency required by the JAR (as specified in `Class-Path` in the JAR manifest) doesn't exist: "
+                + standardJar.getParent().resolve("dependency.jar"));
+  }
+
+  @Test
+  public void testCreateLayersForPackagedStandard_dependencyDoesNotExist()
+      throws URISyntaxException {
+    Path standardJar = Paths.get(Resources.getResource(STANDARD_SINGLE_DEPENDENCY_JAR).toURI());
+    IllegalArgumentException exception =
+        assertThrows(
+            IllegalArgumentException.class,
+            () -> JarModeProcessor.createLayersForPackagedStandard(standardJar));
     assertThat(exception)
         .hasMessageThat()
         .isEqualTo(

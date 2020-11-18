@@ -78,7 +78,7 @@ public class JarCommandTest {
 
       assertThat(classPath).isEqualTo("dependency1.jar directory/dependency2.jar");
       assertThat(exitCode).isEqualTo(0);
-      assertThat(output).isEqualTo("HelloWorld");
+      assertThat(output).isEqualTo("Hello World");
     }
   }
 
@@ -111,11 +111,11 @@ public class JarCommandTest {
     String output = new Command("docker", "run", "--rm", "jib-cli-image").run();
 
     assertThat(exitCode).isEqualTo(0);
-    assertThat(output).isEqualTo("HelloWorld");
+    assertThat(output).isEqualTo("Hello World");
   }
 
   @Test
-  public void testJar_unknownMode() throws URISyntaxException {
+  public void testJar_unknownMode() {
     CommandLine jibCli = new CommandLine(new JibCli());
     StringWriter stringWriter = new StringWriter();
     jibCli.setErr(new PrintWriter(stringWriter));

@@ -22,7 +22,9 @@ import com.google.cloud.tools.jib.filesystem.DirectoryWalker;
 import com.google.cloud.tools.jib.plugins.common.ZipUtil;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Splitter;
+import com.google.common.base.Verify;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -94,43 +96,39 @@ public class JarModeProcessor {
     // Get dependencies from Class-Path in the jar's manifest and add a layer each for non-snapshot
     // and snapshot dependencies. If Class-Path is not present in the jar's manifest then skip
     // adding the dependencies layers.
-    String classPath = null;
     try (JarFile jarFile = new JarFile(jarPath.toFile())) {
-      classPath = jarFile.getManifest().getMainAttributes().getValue(Attributes.Name.CLASS_PATH);
-    }
-    if (classPath != null) {
-      Predicate<String> isSnapshot = name -> name.contains("SNAPSHOT");
-      List<String> allDependencies = Splitter.onPattern("\\s+").splitToList(classPath.trim());
-      List<Path> nonSnapshotDependencies =
-          allDependencies
-              .stream()
-              .filter(isSnapshot.negate())
-              .map(Paths::get)
-              .collect(Collectors.toList());
-      List<Path> snapshotDependencies =
-          allDependencies.stream().filter(isSnapshot).map(Paths::get).collect(Collectors.toList());
-      Path jarParent = jarPath.getParent() == null ? Paths.get("") : jarPath.getParent();
-      if (!nonSnapshotDependencies.isEmpty()) {
-        FileEntriesLayer.Builder nonSnapshotDependenciesLayerBuilder =
-            FileEntriesLayer.builder().setName(DEPENDENCIES);
-        nonSnapshotDependencies.forEach(
-            path ->
-                addDependency(
-                    nonSnapshotDependenciesLayerBuilder,
-                    jarParent.resolve(path),
-                    APP_ROOT.resolve("dependencies").resolve(path.getFileName())));
-        layers.add(nonSnapshotDependenciesLayerBuilder.build());
-      }
-      if (!snapshotDependencies.isEmpty()) {
-        FileEntriesLayer.Builder snapshotDependenciesLayerBuilder =
-            FileEntriesLayer.builder().setName(SNAPSHOT_DEPENDENCIES);
-        snapshotDependencies.forEach(
-            path ->
-                addDependency(
-                    snapshotDependenciesLayerBuilder,
-                    jarParent.resolve(path),
-                    APP_ROOT.resolve("dependencies").resolve(path.getFileName())));
-        layers.add(snapshotDependenciesLayerBuilder.build());
+      String classPath =
+          jarFile.getManifest().getMainAttributes().getValue(Attributes.Name.CLASS_PATH);
+      if (classPath != null) {
+        Path jarParent = jarPath.getParent() == null ? Paths.get("") : jarPath.getParent();
+        ImmutableMap<String, List<Path>> dependenciesMap =
+            getSnapshotAndNonSnapshotDependencies(classPath);
+        List<Path> nonSnapshotDependencies =
+            Verify.verifyNotNull(dependenciesMap.get(DEPENDENCIES));
+        if (!nonSnapshotDependencies.isEmpty()) {
+          FileEntriesLayer.Builder nonSnapshotDependenciesLayerBuilder =
+              FileEntriesLayer.builder().setName(DEPENDENCIES);
+          nonSnapshotDependencies.forEach(
+              path ->
+                  addDependency(
+                      nonSnapshotDependenciesLayerBuilder,
+                      jarParent.resolve(path),
+                      APP_ROOT.resolve("dependencies").resolve(path.getFileName())));
+          layers.add(nonSnapshotDependenciesLayerBuilder.build());
+        }
+        List<Path> snapshotDependencies =
+            Verify.verifyNotNull(dependenciesMap.get(SNAPSHOT_DEPENDENCIES));
+        if (!snapshotDependencies.isEmpty()) {
+          FileEntriesLayer.Builder snapshotDependenciesLayerBuilder =
+              FileEntriesLayer.builder().setName(SNAPSHOT_DEPENDENCIES);
+          snapshotDependencies.forEach(
+              path ->
+                  addDependency(
+                      snapshotDependenciesLayerBuilder,
+                      jarParent.resolve(path),
+                      APP_ROOT.resolve("dependencies").resolve(path.getFileName())));
+          layers.add(snapshotDependenciesLayerBuilder.build());
+        }
       }
     }
 
@@ -166,45 +164,42 @@ public class JarModeProcessor {
     // Get dependencies from Class-Path in the jar's manifest and add a layer each for non-snapshot
     // and snapshot dependencies. If Class-Path is not present in the jar's manifest then skip
     // adding the dependencies layers.
-    String classPath = null;
     try (JarFile jarFile = new JarFile(jarPath.toFile())) {
-      classPath = jarFile.getManifest().getMainAttributes().getValue(Attributes.Name.CLASS_PATH);
-    }
-    if (classPath != null) {
-      Predicate<String> isSnapshot = name -> name.contains("SNAPSHOT");
-      List<String> allDependencies = Splitter.onPattern("\\s+").splitToList(classPath.trim());
-      List<Path> nonSnapshotDependencies =
-          allDependencies
-              .stream()
-              .filter(isSnapshot.negate())
-              .map(Paths::get)
-              .collect(Collectors.toList());
-      List<Path> snapshotDependencies =
-          allDependencies.stream().filter(isSnapshot).map(Paths::get).collect(Collectors.toList());
-      Path jarParent = jarPath.getParent() == null ? Paths.get("") : jarPath.getParent();
-      if (!nonSnapshotDependencies.isEmpty()) {
-        FileEntriesLayer.Builder nonSnapshotDependenciesLayerBuilder =
-            FileEntriesLayer.builder().setName(DEPENDENCIES);
-        nonSnapshotDependencies.forEach(
-            path ->
-                addDependency(
-                    nonSnapshotDependenciesLayerBuilder,
-                    jarParent.resolve(path),
-                    APP_ROOT.resolve(path)));
-        layers.add(nonSnapshotDependenciesLayerBuilder.build());
-      }
-      if (!snapshotDependencies.isEmpty()) {
-        FileEntriesLayer.Builder snapshotDependenciesLayerBuilder =
-            FileEntriesLayer.builder().setName(SNAPSHOT_DEPENDENCIES);
-        snapshotDependencies.forEach(
-            path ->
-                addDependency(
-                    snapshotDependenciesLayerBuilder,
-                    jarParent.resolve(path),
-                    APP_ROOT.resolve(path)));
-        layers.add(snapshotDependenciesLayerBuilder.build());
+      String classPath =
+          jarFile.getManifest().getMainAttributes().getValue(Attributes.Name.CLASS_PATH);
+      if (classPath != null) {
+        Path jarParent = jarPath.getParent() == null ? Paths.get("") : jarPath.getParent();
+        ImmutableMap<String, List<Path>> dependenciesMap =
+            getSnapshotAndNonSnapshotDependencies(classPath);
+        List<Path> nonSnapshotDependencies =
+            Verify.verifyNotNull(dependenciesMap.get(DEPENDENCIES));
+        if (!nonSnapshotDependencies.isEmpty()) {
+          FileEntriesLayer.Builder nonSnapshotDependenciesLayerBuilder =
+              FileEntriesLayer.builder().setName(DEPENDENCIES);
+          nonSnapshotDependencies.forEach(
+              path ->
+                  addDependency(
+                      nonSnapshotDependenciesLayerBuilder,
+                      jarParent.resolve(path),
+                      APP_ROOT.resolve(path)));
+          layers.add(nonSnapshotDependenciesLayerBuilder.build());
+        }
+        List<Path> snapshotDependencies =
+            Verify.verifyNotNull(dependenciesMap.get(SNAPSHOT_DEPENDENCIES));
+        if (!snapshotDependencies.isEmpty()) {
+          FileEntriesLayer.Builder snapshotDependenciesLayerBuilder =
+              FileEntriesLayer.builder().setName(SNAPSHOT_DEPENDENCIES);
+          snapshotDependencies.forEach(
+              path ->
+                  addDependency(
+                      snapshotDependenciesLayerBuilder,
+                      jarParent.resolve(path),
+                      APP_ROOT.resolve(path)));
+          layers.add(snapshotDependenciesLayerBuilder.build());
+        }
       }
     }
+
     // Add layer for jar.
     FileEntriesLayer jarLayer =
         FileEntriesLayer.builder()
@@ -257,6 +252,22 @@ public class JarModeProcessor {
       }
       return ImmutableList.of("java", "-jar", APP_ROOT + "/" + jarPath.getFileName().toString());
     }
+  }
+
+  private static ImmutableMap<String, List<Path>> getSnapshotAndNonSnapshotDependencies(
+      String classpath) {
+    Predicate<String> isSnapshot = name -> name.contains("SNAPSHOT");
+    List<String> allDependencies = Splitter.onPattern("\\s+").splitToList(classpath.trim());
+    List<Path> nonSnapshotDependencies =
+        allDependencies
+            .stream()
+            .filter(isSnapshot.negate())
+            .map(Paths::get)
+            .collect(Collectors.toList());
+    List<Path> snapshotDependencies =
+        allDependencies.stream().filter(isSnapshot).map(Paths::get).collect(Collectors.toList());
+    return ImmutableMap.of(
+        SNAPSHOT_DEPENDENCIES, snapshotDependencies, DEPENDENCIES, nonSnapshotDependencies);
   }
 
   private static void addDependency(
