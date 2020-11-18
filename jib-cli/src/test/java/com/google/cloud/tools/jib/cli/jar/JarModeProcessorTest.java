@@ -294,32 +294,6 @@ public class JarModeProcessorTest {
   }
 
   @Test
-  public void testComputeEntrypointForExplodedStandard_allLayersPresent()
-      throws IOException, URISyntaxException {
-    Path standardJar =
-        Paths.get(Resources.getResource(STANDARD_JAR_WITH_CLASS_PATH_MANIFEST).toURI());
-    ImmutableList<String> actualEntrypoint =
-        JarModeProcessor.computeEntrypointForExplodedStandard(standardJar);
-
-    assertThat(actualEntrypoint)
-        .isEqualTo(
-            ImmutableList.of("java", "-cp", "/app/explodedJar:/app/dependencies/*", "HelloWorld"));
-  }
-
-  @Test
-  public void testComputeEntrypointForExplodedStandard_noDependenciesLayers()
-      throws IOException, URISyntaxException {
-    Path standardJar =
-        Paths.get(Resources.getResource(STANDARD_JAR_WITHOUT_CLASS_PATH_MANIFEST).toURI());
-    ImmutableList<String> actualEntrypoint =
-        JarModeProcessor.computeEntrypointForExplodedStandard(standardJar);
-
-    assertThat(actualEntrypoint)
-        .isEqualTo(
-            ImmutableList.of("java", "-cp", "/app/explodedJar:/app/dependencies/*", "HelloWorld"));
-  }
-
-  @Test
   public void testComputeEntrypointForExplodedStandard_noMainClass() throws URISyntaxException {
     Path standardJar = Paths.get(Resources.getResource(STANDARD_JAR_EMPTY).toURI());
     IllegalArgumentException ex =
@@ -331,6 +305,19 @@ public class JarModeProcessorTest {
         .hasMessageThat()
         .isEqualTo(
             "`Main-Class:` attribute for an application main class not defined in the input JAR's manifest (`META-INF/MANIFEST.MF` in the JAR).");
+  }
+
+  @Test
+  public void testComputeEntrypointForExplodedStandard_withMainClass()
+      throws IOException, URISyntaxException {
+    Path standardJar =
+        Paths.get(Resources.getResource(STANDARD_JAR_WITH_CLASS_PATH_MANIFEST).toURI());
+    ImmutableList<String> actualEntrypoint =
+        JarModeProcessor.computeEntrypointForExplodedStandard(standardJar);
+
+    assertThat(actualEntrypoint)
+        .isEqualTo(
+            ImmutableList.of("java", "-cp", "/app/explodedJar:/app/dependencies/*", "HelloWorld"));
   }
 
   @Test
