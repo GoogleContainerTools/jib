@@ -4,7 +4,7 @@ plugins {
 }
 
 ext {
-  cliMainClass = 'com.google.cloud.tools.jib.cli.JibCli'
+  cliMainClass = 'com.google.cloud.tools.jib.cli.cli2.JibCli'
 }
 
 // use `run` to build and run the app

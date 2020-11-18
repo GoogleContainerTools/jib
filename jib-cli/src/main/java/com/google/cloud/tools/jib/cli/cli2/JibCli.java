@@ -16,8 +16,6 @@
 
 package com.google.cloud.tools.jib.cli.cli2;
 
-import static com.google.cloud.tools.jib.api.Jib.TAR_IMAGE_PREFIX;
-
 import com.google.cloud.tools.jib.api.Credential;
 import com.google.cloud.tools.jib.cli.cli2.logging.ConsoleOutput;
 import com.google.cloud.tools.jib.cli.cli2.logging.Verbosity;
@@ -28,6 +26,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+
 import picocli.CommandLine;
 import picocli.CommandLine.ArgGroup;
 import picocli.CommandLine.Option;
@@ -79,17 +78,6 @@ public class JibCli {
   @SuppressWarnings("NullAway.Init") // initialized by picocli
   private boolean serialize;
 
-  // Build Configuration
-  @Option(
-      names = {"-t", "--target"},
-      required = true,
-      paramLabel = "<target-image>",
-      description =
-          "The destination image reference or jib style url,%nexamples:%n gcr.io/project/image,%n registry://image-ref,%n docker://image,%n tar://path",
-      scope = CommandLine.ScopeType.INHERIT)
-  @SuppressWarnings("NullAway.Init") // initialized by picocli
-  private String targetImage;
-
   @Option(
       names = {"-c", "--context"},
       defaultValue = ".",
@@ -105,16 +93,16 @@ public class JibCli {
   @SuppressWarnings("NullAway.Init") // initialized by picocli
   private Path buildFile;
 
-  // unfortunately we cannot verify for --target=tar://... this is required, we must do this after
-  // pico cli is done parsing
-  @Option(
-      names = "--name",
-      paramLabel = "<image-reference>",
-      description =
-          "The image reference to inject into the tar configuration (required when using --target tar://...)",
-      scope = CommandLine.ScopeType.INHERIT)
-  @SuppressWarnings("NullAway.Init") // initialized by picocli
-  private String name;
+//  // unfortunately we cannot verify for --target=tar://... this is required, we must do this after
+//  // pico cli is done parsing
+//  @Option(
+//      names = "--name",
+//      paramLabel = "<image-reference>",
+//      description =
+//          "The image reference to inject into the tar configuration (required when using --target tar://...)",
+//      scope = CommandLine.ScopeType.INHERIT)
+//  @SuppressWarnings("NullAway.Init") // initialized by picocli
+//  private String name;
 
   @Option(
       names = {"-p", "--parameter"},
@@ -124,168 +112,168 @@ public class JibCli {
   @SuppressWarnings("NullAway.Init") // initialized by picocli
   private Map<String, String> templateParameters = new HashMap<>();
 
-  @Option(
-      names = "--additional-tags",
-      paramLabel = "<tag>",
-      split = ",",
-      description = "Additional tags for target image",
-      scope = CommandLine.ScopeType.INHERIT)
-  @SuppressWarnings("NullAway.Init") // initialized by picocli
-  private List<String> additionalTags = new ArrayList<>();
+//  @Option(
+//      names = "--additional-tags",
+//      paramLabel = "<tag>",
+//      split = ",",
+//      description = "Additional tags for target image",
+//      scope = CommandLine.ScopeType.INHERIT)
+//  @SuppressWarnings("NullAway.Init") // initialized by picocli
+//  private List<String> additionalTags = new ArrayList<>();
 
-  @Option(
-      names = "--base-image-cache",
-      paramLabel = "<cache-directory>",
-      description = "A path to a base image cache",
-      scope = CommandLine.ScopeType.INHERIT)
-  @SuppressWarnings("NullAway.Init") // initialized by picocli
-  private Path baseImageCache;
+//  @Option(
+//      names = "--base-image-cache",
+//      paramLabel = "<cache-directory>",
+//      description = "A path to a base image cache",
+//      scope = CommandLine.ScopeType.INHERIT)
+//  @SuppressWarnings("NullAway.Init") // initialized by picocli
+//  private Path baseImageCache;
 
-  @Option(
-      names = "--application-cache",
-      paramLabel = "<cache-directory>",
-      description = "A path to an application cache",
-      scope = CommandLine.ScopeType.INHERIT)
-  @SuppressWarnings("NullAway.Init") // initialized by picocli
-  private Path applicationCache;
+//  @Option(
+//      names = "--application-cache",
+//      paramLabel = "<cache-directory>",
+//      description = "A path to an application cache",
+//      scope = CommandLine.ScopeType.INHERIT)
+//  @SuppressWarnings("NullAway.Init") // initialized by picocli
+//  private Path applicationCache;
 
-  // Auth/Security
-  @Option(
-      names = "--allow-insecure-registries",
-      description = "Allow jib to communicate with registries over http (insecure)",
-      scope = CommandLine.ScopeType.INHERIT)
-  @SuppressWarnings("NullAway.Init") // initialized by picocli
-  private boolean allowInsecureRegistries;
-
-  @Option(
-      names = "--send-credentials-over-http",
-      description = "Allow jib to send credentials over http (very insecure)",
-      scope = CommandLine.ScopeType.INHERIT)
-  @SuppressWarnings("NullAway.Init") // initialized by picocli
-  private boolean sendCredentialsOverHttp;
-
-  @ArgGroup(exclusive = true)
-  @SuppressWarnings("NullAway.Init")
-  private Credentials credentials;
-
-  private static class Credentials {
-    @Option(
-        names = {"--credential-helper"},
-        paramLabel = "<credential-helper>",
-        description =
-            "credential helper for communicating with both target and base image registries, either a path to the helper, or a suffix for an executable named `docker-credential-<suffix>`",
-        scope = CommandLine.ScopeType.INHERIT)
-    @SuppressWarnings("NullAway.Init") // initialized by picocli
-    private String credentialHelper;
-
-    @ArgGroup(exclusive = false)
-    @SuppressWarnings("NullAway.Init") // initialized by picocli
-    private SingleUsernamePassword usernamePassword;
-
-    @ArgGroup(exclusive = false)
-    @SuppressWarnings("NullAway.Init")
-    private SeparateCredentials separate;
-  }
-
-  private static class SingleUsernamePassword {
-    @Option(
-        names = "--username",
-        required = true,
-        description = "username for communicating with both target and base image registries",
-        scope = CommandLine.ScopeType.INHERIT)
-    @SuppressWarnings("NullAway.Init") // initialized by picocli
-    String username;
-
-    @Option(
-        names = "--password",
-        arity = "0..1",
-        required = true,
-        interactive = true,
-        description = "password for communicating with both target and base image registries",
-        scope = CommandLine.ScopeType.INHERIT)
-    @SuppressWarnings("NullAway.Init") // initialized by picocli
-    String password;
-  }
-
-  private static class SeparateCredentials {
-    @ArgGroup
-    @SuppressWarnings("NullAway.Init") // initialized by picocli
-    private ToCredentials to;
-
-    @ArgGroup
-    @SuppressWarnings("NullAway.Init") // initialized by picocli
-    private FromCredentials from;
-  }
-
-  private static class ToCredentials {
-    @Option(
-        names = {"--to-credential-helper"},
-        paramLabel = "<credential-helper>",
-        description =
-            "credential helper for communicating with target registry, either a path to the helper, or a suffix for an executable named `docker-credential-<suffix>`",
-        scope = CommandLine.ScopeType.INHERIT)
-    @SuppressWarnings("NullAway.Init") // initialized by picocli
-    private String credentialHelper;
-
-    @ArgGroup(exclusive = false)
-    @SuppressWarnings("NullAway.Init") // initialized by picocli
-    private ToUsernamePassword usernamePassword;
-  }
-
-  private static class FromCredentials {
-    @Option(
-        names = {"--from-credential-helper"},
-        paramLabel = "<credential-helper>",
-        description =
-            "credential helper for communicating with base image registry, either a path to the helper, or a suffix for an executable named `docker-credential-<suffix>`",
-        scope = CommandLine.ScopeType.INHERIT)
-    @SuppressWarnings("NullAway.Init") // initialized by picocli
-    private String credentialHelper;
-
-    @ArgGroup(exclusive = false)
-    @SuppressWarnings("NullAway.Init") // initialized by picocli
-    private FromUsernamePassword usernamePassword;
-  }
-
-  private static class ToUsernamePassword {
-    @Option(
-        names = "--to-username",
-        required = true,
-        description = "username for communicating with target image registry",
-        scope = CommandLine.ScopeType.INHERIT)
-    @SuppressWarnings("NullAway.Init") // initialized by picocli
-    String username;
-
-    @Option(
-        names = "--to-password",
-        arity = "0..1",
-        interactive = true,
-        required = true,
-        description = "password for communicating with target image registry",
-        scope = CommandLine.ScopeType.INHERIT)
-    @SuppressWarnings("NullAway.Init") // initialized by picocli
-    String password;
-  }
-
-  private static class FromUsernamePassword {
-    @Option(
-        names = "--from-username",
-        required = true,
-        description = "username for communicating with base image registry",
-        scope = CommandLine.ScopeType.INHERIT)
-    @SuppressWarnings("NullAway.Init") // initialized by picocli
-    String username;
-
-    @Option(
-        names = "--from-password",
-        arity = "0..1",
-        required = true,
-        interactive = true,
-        description = "password for communicating with base image registry",
-        scope = CommandLine.ScopeType.INHERIT)
-    @SuppressWarnings("NullAway.Init") // initialized by picocli
-    String password;
-  }
+//  // Auth/Security
+//  @Option(
+//      names = "--allow-insecure-registries",
+//      description = "Allow jib to communicate with registries over http (insecure)",
+//      scope = CommandLine.ScopeType.INHERIT)
+//  @SuppressWarnings("NullAway.Init") // initialized by picocli
+//  private boolean allowInsecureRegistries;
+//
+//  @Option(
+//      names = "--send-credentials-over-http",
+//      description = "Allow jib to send credentials over http (very insecure)",
+//      scope = CommandLine.ScopeType.INHERIT)
+//  @SuppressWarnings("NullAway.Init") // initialized by picocli
+//  private boolean sendCredentialsOverHttp;
+//
+//  @ArgGroup(exclusive = true)
+//  @SuppressWarnings("NullAway.Init")
+//  private Credentials credentials;
+//
+//  private static class Credentials {
+//    @Option(
+//        names = {"--credential-helper"},
+//        paramLabel = "<credential-helper>",
+//        description =
+//            "credential helper for communicating with both target and base image registries, either a path to the helper, or a suffix for an executable named `docker-credential-<suffix>`",
+//        scope = CommandLine.ScopeType.INHERIT)
+//    @SuppressWarnings("NullAway.Init") // initialized by picocli
+//    private String credentialHelper;
+//
+//    @ArgGroup(exclusive = false)
+//    @SuppressWarnings("NullAway.Init") // initialized by picocli
+//    private SingleUsernamePassword usernamePassword;
+//
+//    @ArgGroup(exclusive = false)
+//    @SuppressWarnings("NullAway.Init")
+//    private SeparateCredentials separate;
+//  }
+//
+//  private static class SingleUsernamePassword {
+//    @Option(
+//        names = "--username",
+//        required = true,
+//        description = "username for communicating with both target and base image registries",
+//        scope = CommandLine.ScopeType.INHERIT)
+//    @SuppressWarnings("NullAway.Init") // initialized by picocli
+//    String username;
+//
+//    @Option(
+//        names = "--password",
+//        arity = "0..1",
+//        required = true,
+//        interactive = true,
+//        description = "password for communicating with both target and base image registries",
+//        scope = CommandLine.ScopeType.INHERIT)
+//    @SuppressWarnings("NullAway.Init") // initialized by picocli
+//    String password;
+//  }
+//
+//  private static class SeparateCredentials {
+//    @ArgGroup
+//    @SuppressWarnings("NullAway.Init") // initialized by picocli
+//    private ToCredentials to;
+//
+//    @ArgGroup
+//    @SuppressWarnings("NullAway.Init") // initialized by picocli
+//    private FromCredentials from;
+//  }
+//
+//  private static class ToCredentials {
+//    @Option(
+//        names = {"--to-credential-helper"},
+//        paramLabel = "<credential-helper>",
+//        description =
+//            "credential helper for communicating with target registry, either a path to the helper, or a suffix for an executable named `docker-credential-<suffix>`",
+//        scope = CommandLine.ScopeType.INHERIT)
+//    @SuppressWarnings("NullAway.Init") // initialized by picocli
+//    private String credentialHelper;
+//
+//    @ArgGroup(exclusive = false)
+//    @SuppressWarnings("NullAway.Init") // initialized by picocli
+//    private ToUsernamePassword usernamePassword;
+//  }
+//
+//  private static class FromCredentials {
+//    @Option(
+//        names = {"--from-credential-helper"},
+//        paramLabel = "<credential-helper>",
+//        description =
+//            "credential helper for communicating with base image registry, either a path to the helper, or a suffix for an executable named `docker-credential-<suffix>`",
+//        scope = CommandLine.ScopeType.INHERIT)
+//    @SuppressWarnings("NullAway.Init") // initialized by picocli
+//    private String credentialHelper;
+//
+//    @ArgGroup(exclusive = false)
+//    @SuppressWarnings("NullAway.Init") // initialized by picocli
+//    private FromUsernamePassword usernamePassword;
+//  }
+//
+//  private static class ToUsernamePassword {
+//    @Option(
+//        names = "--to-username",
+//        required = true,
+//        description = "username for communicating with target image registry",
+//        scope = CommandLine.ScopeType.INHERIT)
+//    @SuppressWarnings("NullAway.Init") // initialized by picocli
+//    String username;
+//
+//    @Option(
+//        names = "--to-password",
+//        arity = "0..1",
+//        interactive = true,
+//        required = true,
+//        description = "password for communicating with target image registry",
+//        scope = CommandLine.ScopeType.INHERIT)
+//    @SuppressWarnings("NullAway.Init") // initialized by picocli
+//    String password;
+//  }
+//
+//  private static class FromUsernamePassword {
+//    @Option(
+//        names = "--from-username",
+//        required = true,
+//        description = "username for communicating with base image registry",
+//        scope = CommandLine.ScopeType.INHERIT)
+//    @SuppressWarnings("NullAway.Init") // initialized by picocli
+//    String username;
+//
+//    @Option(
+//        names = "--from-password",
+//        arity = "0..1",
+//        required = true,
+//        interactive = true,
+//        description = "password for communicating with base image registry",
+//        scope = CommandLine.ScopeType.INHERIT)
+//    @SuppressWarnings("NullAway.Init") // initialized by picocli
+//    String password;
+//  }
 
   public Verbosity getVerbosity() {
     Verify.verifyNotNull(verbosity);
@@ -301,9 +289,9 @@ public class JibCli {
     return stacktrace;
   }
 
-  public String getTargetImage() {
-    return targetImage;
-  }
+//  public String getTargetImage() {
+//    return targetImage;
+//  }
 
   public Path getContextRoot() {
     Verify.verifyNotNull(contextRoot);
@@ -328,142 +316,148 @@ public class JibCli {
     return templateParameters;
   }
 
-  public List<String> getAdditionalTags() {
-    Verify.verifyNotNull(additionalTags);
-    return additionalTags;
-  }
+//  public List<String> getAdditionalTags() {
+//    Verify.verifyNotNull(additionalTags);
+//    return additionalTags;
+//  }
 
-  public Optional<Path> getBaseImageCache() {
-    return Optional.ofNullable(baseImageCache);
-  }
+//  public Optional<Path> getBaseImageCache() {
+//    return Optional.ofNullable(baseImageCache);
+//  }
+//
+//  public Optional<Path> getApplicationCache() {
+//    return Optional.ofNullable(applicationCache);
+//  }
 
-  public Optional<Path> getApplicationCache() {
-    return Optional.ofNullable(applicationCache);
-  }
+//  public boolean isAllowInsecureRegistries() {
+//    return allowInsecureRegistries;
+//  }
+//
+//  public boolean isSendCredentialsOverHttp() {
+//    return sendCredentialsOverHttp;
+//  }
 
-  public boolean isAllowInsecureRegistries() {
-    return allowInsecureRegistries;
-  }
-
-  public boolean isSendCredentialsOverHttp() {
-    return sendCredentialsOverHttp;
-  }
-
-  /**
-   * Returns the user configured credential helper for any registry during the build, this can be
-   * interpreted as a path or a string.
-   *
-   * @return a Optional string reference to the credential helper
-   */
-  public Optional<String> getCredentialHelper() {
-    if (credentials != null && credentials.credentialHelper != null) {
-      return Optional.of(credentials.credentialHelper);
-    }
-    return Optional.empty();
-  }
-
-  /**
-   * Returns the user configured credential helper for the target image registry, this can be
-   * interpreted as a path or a string.
-   *
-   * @return a Optional string reference to the credential helper
-   */
-  public Optional<String> getToCredentialHelper() {
-    if (credentials != null
-        && credentials.separate != null
-        && credentials.separate.to != null
-        && credentials.separate.to.credentialHelper != null) {
-      return Optional.of(credentials.separate.to.credentialHelper);
-    }
-    return Optional.empty();
-  }
-
-  /**
-   * Returns the user configured credential helper for the base image registry, this can be
-   * interpreted as a path or a string.
-   *
-   * @return a Optional string reference to the credential helper
-   */
-  public Optional<String> getFromCredentialHelper() {
-    if (credentials != null
-        && credentials.separate != null
-        && credentials.separate.from != null
-        && credentials.separate.from.credentialHelper != null) {
-      return Optional.of(credentials.separate.from.credentialHelper);
-    }
-    return Optional.empty();
-  }
-
-  public boolean isHttpTrace() {
-    return httpTrace;
-  }
+//  /**
+//   * Returns the user configured credential helper for any registry during the build, this can be
+//   * interpreted as a path or a string.
+//   *
+//   * @return a Optional string reference to the credential helper
+//   */
+//  public Optional<String> getCredentialHelper() {
+//    if (credentials != null && credentials.credentialHelper != null) {
+//      return Optional.of(credentials.credentialHelper);
+//    }
+//    return Optional.empty();
+//  }
+//
+//  /**
+//   * Returns the user configured credential helper for the target image registry, this can be
+//   * interpreted as a path or a string.
+//   *
+//   * @return a Optional string reference to the credential helper
+//   */
+//  public Optional<String> getToCredentialHelper() {
+//    if (credentials != null
+//        && credentials.separate != null
+//        && credentials.separate.to != null
+//        && credentials.separate.to.credentialHelper != null) {
+//      return Optional.of(credentials.separate.to.credentialHelper);
+//    }
+//    return Optional.empty();
+//  }
+//
+//  /**
+//   * Returns the user configured credential helper for the base image registry, this can be
+//   * interpreted as a path or a string.
+//   *
+//   * @return a Optional string reference to the credential helper
+//   */
+//  public Optional<String> getFromCredentialHelper() {
+//    if (credentials != null
+//        && credentials.separate != null
+//        && credentials.separate.from != null
+//        && credentials.separate.from.credentialHelper != null) {
+//      return Optional.of(credentials.separate.from.credentialHelper);
+//    }
+//    return Optional.empty();
+//  }
+//
+//  public boolean isHttpTrace() {
+//    return httpTrace;
+//  }
+//
+//  public boolean isSerialize() {
+//    return serialize;
+//  }
+//
+////  public String getName() {
+////    return name;
+////  }
+//
+//  /**
+//   * If configured, returns a {@link Credential} created from user configured username/password.
+//   *
+//   * @return an optional Credential
+//   */
+//  public Optional<Credential> getUsernamePassword() {
+//    if (credentials != null && credentials.usernamePassword != null) {
+//      Verify.verifyNotNull(credentials.usernamePassword.username);
+//      Verify.verifyNotNull(credentials.usernamePassword.password);
+//      return Optional.of(
+//          Credential.from(
+//              credentials.usernamePassword.username, credentials.usernamePassword.password));
+//    }
+//    return Optional.empty();
+//  }
+//
+//  /**
+//   * If configured, returns a {@link Credential} created from user configured "to"
+//   * username/password.
+//   *
+//   * @return a optional Credential
+//   */
+//  public Optional<Credential> getToUsernamePassword() {
+//    if (credentials != null
+//        && credentials.separate != null
+//        && credentials.separate.to != null
+//        && credentials.separate.to.usernamePassword != null) {
+//      Verify.verifyNotNull(credentials.separate.to.usernamePassword.username);
+//      Verify.verifyNotNull(credentials.separate.to.usernamePassword.password);
+//      return Optional.of(
+//          Credential.from(
+//              credentials.separate.to.usernamePassword.username,
+//              credentials.separate.to.usernamePassword.password));
+//    }
+//    return Optional.empty();
+//  }
+//
+//  /**
+//   * If configured, returns a {@link Credential} created from user configured "from"
+//   * username/password.
+//   *
+//   * @return a optional Credential
+//   */
+//  public Optional<Credential> getFromUsernamePassword() {
+//    if (credentials != null
+//        && credentials.separate != null
+//        && credentials.separate.from != null
+//        && credentials.separate.from.usernamePassword != null) {
+//      Verify.verifyNotNull(credentials.separate.from.usernamePassword.username);
+//      Verify.verifyNotNull(credentials.separate.from.usernamePassword.password);
+//      return Optional.of(
+//          Credential.from(
+//              credentials.separate.from.usernamePassword.username,
+//              credentials.separate.from.usernamePassword.password));
+//    }
+//    return Optional.empty();
+//  }
+public boolean isHttpTrace() {
+  return httpTrace;
+}
 
   public boolean isSerialize() {
     return serialize;
   }
-
-  public String getName() {
-    return name;
-  }
-
-  /**
-   * If configured, returns a {@link Credential} created from user configured username/password.
-   *
-   * @return an optional Credential
-   */
-  public Optional<Credential> getUsernamePassword() {
-    if (credentials != null && credentials.usernamePassword != null) {
-      Verify.verifyNotNull(credentials.usernamePassword.username);
-      Verify.verifyNotNull(credentials.usernamePassword.password);
-      return Optional.of(
-          Credential.from(
-              credentials.usernamePassword.username, credentials.usernamePassword.password));
-    }
-    return Optional.empty();
-  }
-
-  /**
-   * If configured, returns a {@link Credential} created from user configured "to"
-   * username/password.
-   *
-   * @return a optional Credential
-   */
-  public Optional<Credential> getToUsernamePassword() {
-    if (credentials != null
-        && credentials.separate != null
-        && credentials.separate.to != null
-        && credentials.separate.to.usernamePassword != null) {
-      Verify.verifyNotNull(credentials.separate.to.usernamePassword.username);
-      Verify.verifyNotNull(credentials.separate.to.usernamePassword.password);
-      return Optional.of(
-          Credential.from(
-              credentials.separate.to.usernamePassword.username,
-              credentials.separate.to.usernamePassword.password));
-    }
-    return Optional.empty();
-  }
-
-  /**
-   * If configured, returns a {@link Credential} created from user configured "from"
-   * username/password.
-   *
-   * @return a optional Credential
-   */
-  public Optional<Credential> getFromUsernamePassword() {
-    if (credentials != null
-        && credentials.separate != null
-        && credentials.separate.from != null
-        && credentials.separate.from.usernamePassword != null) {
-      Verify.verifyNotNull(credentials.separate.from.usernamePassword.username);
-      Verify.verifyNotNull(credentials.separate.from.usernamePassword.password);
-      return Optional.of(
-          Credential.from(
-              credentials.separate.from.usernamePassword.username,
-              credentials.separate.from.usernamePassword.password));
-    }
-    return Optional.empty();
-  }
-
   /**
    * The magic starts here.
    *
@@ -472,14 +466,5 @@ public class JibCli {
   public static void main(String[] args) {
     int exitCode = new CommandLine(new JibCli()).execute(args);
     System.exit(exitCode);
-  }
-
-  /** Validates parameters defined in this class that could not be done declaratively. */
-  public void validate() {
-    if (targetImage.startsWith(TAR_IMAGE_PREFIX) && name == null) {
-      throw new CommandLine.ParameterException(
-          spec.commandLine(),
-          "Missing option: --name must be specified when using --target=tar://....");
-    }
   }
 }
