@@ -88,9 +88,6 @@ public class JarModeProcessor {
    */
   static List<FileEntriesLayer> createLayersForExplodedStandard(Path jarPath, Path tempDirPath)
       throws IOException {
-    // Add dependencies layers.
-    Path localExplodedJarRoot = tempDirPath;
-    ZipUtil.unzip(jarPath, localExplodedJarRoot);
     List<FileEntriesLayer> layers = new ArrayList<>();
 
     // Get dependencies from Class-Path in the jar's manifest and add a layer each for non-snapshot
@@ -135,6 +132,8 @@ public class JarModeProcessor {
     // Determine class and resource files in the directory containing jar contents and create
     // FileEntriesLayer for each type of layer (classes or resources), while maintaining the
     // file's original project structure.
+    Path localExplodedJarRoot = tempDirPath;
+    ZipUtil.unzip(jarPath, localExplodedJarRoot);
     Predicate<Path> isClassFile = path -> path.getFileName().toString().endsWith(".class");
     Predicate<Path> isResourceFile = isClassFile.negate();
     FileEntriesLayer classesLayer =
@@ -158,7 +157,6 @@ public class JarModeProcessor {
    * @throws IOException if I/O error occurs when opening the jar file
    */
   static List<FileEntriesLayer> createLayersForPackagedStandard(Path jarPath) throws IOException {
-    // Add dependencies layers.
     List<FileEntriesLayer> layers = new ArrayList<>();
 
     // Get dependencies from Class-Path in the jar's manifest and add a layer each for non-snapshot
@@ -206,8 +204,8 @@ public class JarModeProcessor {
             .setName(JAR)
             .addEntry(jarPath, APP_ROOT.resolve(jarPath.getFileName()))
             .build();
-
     layers.add(jarLayer);
+
     return layers;
   }
 
