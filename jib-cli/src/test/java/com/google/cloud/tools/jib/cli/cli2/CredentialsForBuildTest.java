@@ -36,7 +36,7 @@ import org.mockito.junit.MockitoRule;
 import picocli.CommandLine;
 
 @RunWith(JUnitParamsRunner.class)
-public class CredentialsTest {
+public class CredentialsForBuildTest {
 
   private static final String[] DEFAULT_ARGS = {"--target=ignored"};
   @Rule public final MockitoRule mockitoJUnit = MockitoJUnit.rule();
@@ -55,7 +55,6 @@ public class CredentialsTest {
     JibCli buildOptions =
         CommandLine.populateCommand(new JibCli(), ArrayUtils.addAll(DEFAULT_ARGS, args));
     CommonCliOptions commonCliOptions = new CommonCliOptions();
-
     Credentials.getToCredentialRetrievers(
         buildOptions, commonCliOptions, defaultCredentialRetrievers);
     Mockito.verify(defaultCredentialRetrievers).asList();

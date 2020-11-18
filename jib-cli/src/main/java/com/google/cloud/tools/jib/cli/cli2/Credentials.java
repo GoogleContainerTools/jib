@@ -34,7 +34,9 @@ public class Credentials {
    * @throws FileNotFoundException when a credential helper file cannot be found
    */
   public static List<CredentialRetriever> getToCredentialRetrievers(
-      JibCli buildOptions, CommonCliOptions commonCliOptions, DefaultCredentialRetrievers defaultCredentialRetrievers)
+      JibCli buildOptions,
+      CommonCliOptions commonCliOptions,
+      DefaultCredentialRetrievers defaultCredentialRetrievers)
       throws FileNotFoundException {
     // these are all mutually exclusive as enforced by the CLI
     commonCliOptions
@@ -49,7 +51,9 @@ public class Credentials {
             credential ->
                 defaultCredentialRetrievers.setKnownCredential(
                     credential, "--to-username/--to-password"));
-    commonCliOptions.getCredentialHelper().ifPresent(defaultCredentialRetrievers::setCredentialHelper);
+    commonCliOptions
+        .getCredentialHelper()
+        .ifPresent(defaultCredentialRetrievers::setCredentialHelper);
     commonCliOptions
         .getToCredentialHelper()
         .ifPresent(defaultCredentialRetrievers::setCredentialHelper);
@@ -66,11 +70,14 @@ public class Credentials {
    * @throws FileNotFoundException when a credential helper file cannot be found
    */
   public static List<CredentialRetriever> getFromCredentialRetrievers(
-      JibCli buildOptions, CommonCliOptions commonCliOptions, DefaultCredentialRetrievers defaultCredentialRetrievers)
+      JibCli buildOptions,
+      CommonCliOptions commonCliOptions,
+      DefaultCredentialRetrievers defaultCredentialRetrievers)
       throws FileNotFoundException {
     // these are all mutually exclusive as enforced by the CLI
 
-        commonCliOptions.getUsernamePassword()
+    commonCliOptions
+        .getUsernamePassword()
         .ifPresent(
             credential ->
                 defaultCredentialRetrievers.setKnownCredential(
@@ -81,7 +88,9 @@ public class Credentials {
             credential ->
                 defaultCredentialRetrievers.setKnownCredential(
                     credential, "--from-username/--from-password"));
-    commonCliOptions.getCredentialHelper().ifPresent(defaultCredentialRetrievers::setCredentialHelper);
+    commonCliOptions
+        .getCredentialHelper()
+        .ifPresent(defaultCredentialRetrievers::setCredentialHelper);
     commonCliOptions
         .getFromCredentialHelper()
         .ifPresent(defaultCredentialRetrievers::setCredentialHelper);

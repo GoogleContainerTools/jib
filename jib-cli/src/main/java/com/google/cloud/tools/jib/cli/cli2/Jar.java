@@ -16,6 +16,8 @@
 
 package com.google.cloud.tools.jib.cli.cli2;
 
+import static com.google.cloud.tools.jib.api.Jib.TAR_IMAGE_PREFIX;
+
 import com.google.cloud.tools.jib.api.Containerizer;
 import com.google.cloud.tools.jib.api.JibContainerBuilder;
 import com.google.cloud.tools.jib.api.LogEvent;
@@ -31,13 +33,10 @@ import java.util.concurrent.Callable;
 import picocli.CommandLine;
 import picocli.CommandLine.Model.CommandSpec;
 
-import static com.google.cloud.tools.jib.api.Jib.TAR_IMAGE_PREFIX;
-
 @CommandLine.Command(name = "jar", showAtFileInUsageHelp = true, description = "Containerize a jar")
 public class Jar implements Callable<Integer> {
 
-  @CommandLine.Spec
-  private CommandSpec spec = CommandSpec.create();
+  @CommandLine.Spec private CommandSpec spec = CommandSpec.create();
 
   @CommandLine.ParentCommand
   @SuppressWarnings("NullAway.Init") // initialized by picocli
@@ -45,7 +44,7 @@ public class Jar implements Callable<Integer> {
 
   @CommandLine.Mixin
   @SuppressWarnings("NullAway.Init") // initialized by picocli
-          CommonCliOptions commonCliOptions;
+  CommonCliOptions commonCliOptions;
 
   @CommandLine.Parameters(description = "The path to the jar file (ex: path/to/my-jar.jar)")
   @SuppressWarnings("NullAway.Init") // initialized by picocli
@@ -58,12 +57,12 @@ public class Jar implements Callable<Integer> {
     try (TempDirectoryProvider tempDirectoryProvider = new TempDirectoryProvider()) {
 
       ConsoleLogger logger =
-              CliLogger.newLogger(
-                      globalOptions.getVerbosity(),
-                      globalOptions.getConsoleOutput(),
-                      spec.commandLine().getOut(),
-                      spec.commandLine().getErr(),
-                      executor);
+          CliLogger.newLogger(
+              globalOptions.getVerbosity(),
+              globalOptions.getConsoleOutput(),
+              spec.commandLine().getOut(),
+              spec.commandLine().getErr(),
+              executor);
 
       if (!Files.exists(jarFile)) {
         logger.log(LogEvent.Level.ERROR, "The file path provided does not exist: " + jarFile);
@@ -71,16 +70,16 @@ public class Jar implements Callable<Integer> {
       }
       if (Files.isDirectory(jarFile)) {
         logger.log(
-                LogEvent.Level.ERROR,
-                "The file path provided is for a directory. Please provide a path to a jar file: "
-                        + jarFile);
+            LogEvent.Level.ERROR,
+            "The file path provided is for a directory. Please provide a path to a jar file: "
+                + jarFile);
         return 1;
       }
 
       Containerizer containerizer = Containerizers.from(globalOptions, commonCliOptions, logger);
 
       JibContainerBuilder containerBuilder =
-              JarFiles.toJibContainerBuilder(jarFile, tempDirectoryProvider.newDirectory());
+          JarFiles.toJibContainerBuilder(jarFile, tempDirectoryProvider.newDirectory());
 
       containerBuilder.containerize(containerizer);
     } catch (Exception ex) {
@@ -95,14 +94,13 @@ public class Jar implements Callable<Integer> {
     return 0;
   }
 
-  /**
-   * Validates parameters defined in this class that could not be done declaratively.
-   */
+  /** Validates parameters defined in this class that could not be done declaratively. */
   public void validate() {
-    if (commonCliOptions.getTargetImage().startsWith(TAR_IMAGE_PREFIX) && commonCliOptions.getName() == null) {
+    if (commonCliOptions.getTargetImage().startsWith(TAR_IMAGE_PREFIX)
+        && commonCliOptions.getName() == null) {
       throw new CommandLine.ParameterException(
-              spec.commandLine(),
-              "Missing option: --name must be specified when using --target=tar://....");
+          spec.commandLine(),
+          "Missing option: --name must be specified when using --target=tar://....");
     }
   }
 }

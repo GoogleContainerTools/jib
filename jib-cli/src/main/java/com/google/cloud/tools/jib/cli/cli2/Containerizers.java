@@ -50,7 +50,8 @@ public class Containerizers {
    * @throws InvalidImageReferenceException if the image reference could not be parsed
    * @throws FileNotFoundException if a credential helper file is not found
    */
-  public static Containerizer from(JibCli buildOptions, CommonCliOptions commonCliOptions, ConsoleLogger logger)
+  public static Containerizer from(
+      JibCli buildOptions, CommonCliOptions commonCliOptions, ConsoleLogger logger)
       throws InvalidImageReferenceException, FileNotFoundException {
     Containerizer containerizer = create(buildOptions, commonCliOptions, logger);
 
@@ -60,7 +61,8 @@ public class Containerizers {
     return containerizer;
   }
 
-  private static Containerizer create(JibCli buildOptions, CommonCliOptions commonCliOptions, ConsoleLogger logger)
+  private static Containerizer create(
+      JibCli buildOptions, CommonCliOptions commonCliOptions, ConsoleLogger logger)
       throws InvalidImageReferenceException, FileNotFoundException {
     String imageSpec = commonCliOptions.getTargetImage();
     if (imageSpec.startsWith(DOCKER_DAEMON_IMAGE_PREFIX)) {
@@ -81,12 +83,14 @@ public class Containerizers {
             CredentialRetrieverFactory.forImage(
                 imageReference,
                 logEvent -> logger.log(logEvent.getLevel(), logEvent.getMessage())));
-    Credentials.getToCredentialRetrievers(buildOptions, commonCliOptions, defaultCredentialRetrievers)
+    Credentials.getToCredentialRetrievers(
+            buildOptions, commonCliOptions, defaultCredentialRetrievers)
         .forEach(registryImage::addCredentialRetriever);
     return Containerizer.to(registryImage);
   }
 
-  private static void applyConfiguration(Containerizer containerizer, JibCli buildOptions, CommonCliOptions commonCliOptions) {
+  private static void applyConfiguration(
+      Containerizer containerizer, JibCli buildOptions, CommonCliOptions commonCliOptions) {
     containerizer.setToolName(VersionInfo.TOOL_NAME);
     containerizer.setToolVersion(VersionInfo.getVersionSimple());
 

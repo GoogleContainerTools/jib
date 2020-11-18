@@ -78,13 +78,18 @@ public class BuildFiles {
    * @throws InvalidImageReferenceException if the baseImage reference can not be parsed
    */
   public static JibContainerBuilder toJibContainerBuilder(
-      Path projectRoot, Path buildFilePath, JibCli cliOptions, CommonCliOptions commonCliOptions, ConsoleLogger logger)
+      Path projectRoot,
+      Path buildFilePath,
+      JibCli cliOptions,
+      CommonCliOptions commonCliOptions,
+      ConsoleLogger logger)
       throws InvalidImageReferenceException, IOException {
     BuildFileSpec buildFile = toBuildFileSpec(buildFilePath, cliOptions.getTemplateParameters());
 
     JibContainerBuilder containerBuilder =
         buildFile.getFrom().isPresent()
-            ? createJibContainerBuilder(buildFile.getFrom().get(), cliOptions, commonCliOptions, logger)
+            ? createJibContainerBuilder(
+                buildFile.getFrom().get(), cliOptions, commonCliOptions, logger)
             : Jib.fromScratch();
 
     buildFile.getCreationTime().ifPresent(containerBuilder::setCreationTime);
@@ -108,7 +113,10 @@ public class BuildFiles {
   // TODO: add testing, need to do via intergration tests as there's no good way to extract out that
   //   the base image was populated as the user intended currently.
   static JibContainerBuilder createJibContainerBuilder(
-          BaseImageSpec from, JibCli cliOptions, CommonCliOptions commonCliOptions, ConsoleLogger logger)
+      BaseImageSpec from,
+      JibCli cliOptions,
+      CommonCliOptions commonCliOptions,
+      ConsoleLogger logger)
       throws InvalidImageReferenceException, FileNotFoundException {
     String baseImageReference = from.getImage();
     if (baseImageReference.startsWith(DOCKER_DAEMON_IMAGE_PREFIX)) {
@@ -127,7 +135,8 @@ public class BuildFiles {
             CredentialRetrieverFactory.forImage(
                 imageReference,
                 logEvent -> logger.log(logEvent.getLevel(), logEvent.getMessage())));
-    Credentials.getFromCredentialRetrievers(cliOptions, commonCliOptions,  defaultCredentialRetrievers)
+    Credentials.getFromCredentialRetrievers(
+            cliOptions, commonCliOptions, defaultCredentialRetrievers)
         .forEach(registryImage::addCredentialRetriever);
     JibContainerBuilder containerBuilder = Jib.from(registryImage);
     if (!from.getPlatforms().isEmpty()) {

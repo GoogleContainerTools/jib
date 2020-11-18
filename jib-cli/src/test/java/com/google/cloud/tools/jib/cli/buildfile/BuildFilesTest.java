@@ -25,6 +25,8 @@ import com.google.cloud.tools.jib.api.buildplan.ImageFormat;
 import com.google.cloud.tools.jib.api.buildplan.LayerObject;
 import com.google.cloud.tools.jib.api.buildplan.Platform;
 import com.google.cloud.tools.jib.api.buildplan.Port;
+import com.google.cloud.tools.jib.cli.cli2.Build;
+import com.google.cloud.tools.jib.cli.cli2.CommonCliOptions;
 import com.google.cloud.tools.jib.cli.cli2.JibCli;
 import com.google.cloud.tools.jib.plugins.common.logging.ConsoleLogger;
 import com.google.common.collect.ImmutableList;
@@ -56,6 +58,7 @@ public class BuildFilesTest {
 
   @Mock private ConsoleLogger consoleLogger;
   @Mock private JibCli jibCli;
+  @Mock private CommonCliOptions commonCliOptions;
 
   @Before
   public void setUp() {
@@ -69,7 +72,7 @@ public class BuildFilesTest {
         Paths.get(Resources.getResource("buildfiles/projects/allProperties/jib.yaml").toURI());
     Path projectRoot = buildfile.getParent();
     JibContainerBuilder jibContainerBuilder =
-        BuildFiles.toJibContainerBuilder(projectRoot, buildfile, jibCli, consoleLogger);
+        BuildFiles.toJibContainerBuilder(projectRoot, buildfile, jibCli, commonCliOptions, consoleLogger);
 
     ContainerBuildPlan resolved = jibContainerBuilder.toContainerBuildPlan();
     Assert.assertEquals("ubuntu", resolved.getBaseImage());
@@ -109,7 +112,7 @@ public class BuildFilesTest {
     Path buildfile =
         Paths.get(Resources.getResource("buildfiles/projects/allDefaults/jib.yaml").toURI());
     JibContainerBuilder jibContainerBuilder =
-        BuildFiles.toJibContainerBuilder(buildfile.getParent(), buildfile, jibCli, consoleLogger);
+        BuildFiles.toJibContainerBuilder(buildfile.getParent(), buildfile, jibCli, commonCliOptions, consoleLogger);
 
     ContainerBuildPlan resolved = jibContainerBuilder.toContainerBuildPlan();
     Assert.assertEquals("scratch", resolved.getBaseImage());

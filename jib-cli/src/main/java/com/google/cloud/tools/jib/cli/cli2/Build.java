@@ -16,6 +16,8 @@
 
 package com.google.cloud.tools.jib.cli.cli2;
 
+import static com.google.cloud.tools.jib.api.Jib.TAR_IMAGE_PREFIX;
+
 import com.google.cloud.tools.jib.api.Containerizer;
 import com.google.cloud.tools.jib.api.JibContainerBuilder;
 import com.google.cloud.tools.jib.api.LogEvent.Level;
@@ -30,20 +32,17 @@ import java.util.concurrent.Callable;
 import picocli.CommandLine;
 import picocli.CommandLine.Model.CommandSpec;
 
-import static com.google.cloud.tools.jib.api.Jib.TAR_IMAGE_PREFIX;
-
 @CommandLine.Command(
     name = "build",
     showAtFileInUsageHelp = true,
     description = "Build a container")
 public class Build implements Callable<Integer> {
 
-  @CommandLine.Spec
-  private CommandSpec spec = CommandSpec.create();
+  @CommandLine.Spec private CommandSpec spec = CommandSpec.create();
 
   @CommandLine.Mixin
   @SuppressWarnings("NullAway.Init") // initialized by picocli
-          CommonCliOptions commonCliOptions;
+  CommonCliOptions commonCliOptions;
 
   @CommandLine.ParentCommand
   @SuppressWarnings("NullAway.Init") // initialized by picocli
@@ -55,19 +54,19 @@ public class Build implements Callable<Integer> {
     SingleThreadedExecutor executor = new SingleThreadedExecutor();
     try {
       ConsoleLogger logger =
-              CliLogger.newLogger(
-                      globalOptions.getVerbosity(),
-                      globalOptions.getConsoleOutput(),
-                      spec.commandLine().getOut(),
-                      spec.commandLine().getErr(),
-                      executor);
+          CliLogger.newLogger(
+              globalOptions.getVerbosity(),
+              globalOptions.getConsoleOutput(),
+              spec.commandLine().getOut(),
+              spec.commandLine().getErr(),
+              executor);
 
       Path buildFile = globalOptions.getBuildFile();
       if (!Files.isReadable(buildFile)) {
         logger.log(
-                Level.ERROR,
-                "The Build File YAML either does not exist or cannot be opened for reading: "
-                        + buildFile);
+            Level.ERROR,
+            "The Build File YAML either does not exist or cannot be opened for reading: "
+                + buildFile);
         return 1;
       }
       if (!Files.isRegularFile(buildFile)) {
@@ -78,8 +77,8 @@ public class Build implements Callable<Integer> {
       Containerizer containerizer = Containerizers.from(globalOptions, commonCliOptions, logger);
 
       JibContainerBuilder containerBuilder =
-              BuildFiles.toJibContainerBuilder(
-                      globalOptions.getContextRoot(), buildFile, globalOptions, commonCliOptions, logger);
+          BuildFiles.toJibContainerBuilder(
+              globalOptions.getContextRoot(), buildFile, globalOptions, commonCliOptions, logger);
 
       containerBuilder.containerize(containerizer);
     } catch (Exception ex) {
@@ -94,14 +93,13 @@ public class Build implements Callable<Integer> {
     return 0;
   }
 
-  /**
-   * Validates parameters defined in this class that could not be done declaratively.
-   */
+  /** Validates parameters defined in this class that could not be done declaratively. */
   public void validate() {
-    if (commonCliOptions.getTargetImage().startsWith(TAR_IMAGE_PREFIX) && commonCliOptions.getName() == null) {
+    if (commonCliOptions.getTargetImage().startsWith(TAR_IMAGE_PREFIX)
+        && commonCliOptions.getName() == null) {
       throw new CommandLine.ParameterException(
-              spec.commandLine(),
-              "Missing option: --name must be specified when using --target=tar://....");
+          spec.commandLine(),
+          "Missing option: --name must be specified when using --target=tar://....");
     }
   }
 }
