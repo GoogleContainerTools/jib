@@ -26,6 +26,8 @@ import java.io.StringWriter;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.jar.Attributes;
+import java.util.jar.JarFile;
 import org.junit.Test;
 import picocli.CommandLine;
 
@@ -65,14 +67,37 @@ public class JarCommandTest {
   @Test
   public void testJar_explodedMode_toDocker()
       throws IOException, InterruptedException, URISyntaxException {
-    Path jarFile = Paths.get(Resources.getResource("jarTest/jarWithCp.jar").toURI());
+    Path jarPath = Paths.get(Resources.getResource("jarTest/jarWithCp.jar").toURI());
     Integer exitCode =
         new CommandLine(new JibCli())
-            .execute("--target", "docker://jib-cli-image", "jar", jarFile.toString());
+            .execute("--target", "docker://jib-cli-image", "jar", jarPath.toString());
     String output = new Command("docker", "run", "--rm", "jib-cli-image").run();
+    try (JarFile jarFile = new JarFile(jarPath.toFile())) {
+      String classPath =
+          jarFile.getManifest().getMainAttributes().getValue(Attributes.Name.CLASS_PATH);
 
-    assertThat(exitCode).isEqualTo(0);
-    assertThat(output).isEqualTo("HelloWorld");
+      assertThat(classPath).isEqualTo("dependency1.jar directory/dependency2.jar");
+      assertThat(exitCode).isEqualTo(0);
+      assertThat(output).isEqualTo("HelloWorld");
+    }
+  }
+
+  @Test
+  public void testNoDependencyJar_explodedMode_toDocker()
+      throws IOException, InterruptedException, URISyntaxException {
+    Path jarPath = Paths.get(Resources.getResource("noDependencyJar.jar").toURI());
+    Integer exitCode =
+        new CommandLine(new JibCli())
+            .execute("--target", "docker://cli-no-dep-jar", "jar", jarPath.toString());
+    String output = new Command("docker", "run", "--rm", "cli-no-dep-jar").run();
+    try (JarFile jarFile = new JarFile(jarPath.toFile())) {
+      String classPath =
+          jarFile.getManifest().getMainAttributes().getValue(Attributes.Name.CLASS_PATH);
+
+      assertThat(classPath).isNull();
+      assertThat(exitCode).isEqualTo(0);
+      assertThat(output).isEqualTo("Hello World");
+    }
   }
 
   @Test

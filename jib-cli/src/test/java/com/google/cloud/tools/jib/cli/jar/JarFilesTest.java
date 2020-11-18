@@ -68,7 +68,7 @@ public class JarFilesTest {
         .isEqualTo(
             FileEntriesLayer.builder()
                 .addEntry(
-                    standardJar.getParent().resolve(Paths.get("dependency1")),
+                    standardJar.getParent().resolve("dependency1"),
                     AbsoluteUnixPath.get("/app/dependencies/dependency1"))
                 .build()
                 .getEntries());

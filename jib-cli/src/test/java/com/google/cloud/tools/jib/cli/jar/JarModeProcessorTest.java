@@ -45,6 +45,7 @@ public class JarModeProcessorTest {
   private static final String STANDARD_JAR_WITH_ONLY_CLASSES =
       "jar/standard/standardJarWithOnlyClasses.jar";
   private static final String STANDARD_JAR_EMPTY = "jar/standard/emptyStandardJar.jar";
+  private static final String STANDARD_SINGLE_DEPENDENCY_JAR = "jar/standard/singleDepJar.jar";
 
   @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
@@ -126,7 +127,7 @@ public class JarModeProcessorTest {
             ImmutableList.of(
                 AbsoluteUnixPath.get("/app/dependencies/dependency1"),
                 AbsoluteUnixPath.get("/app/dependencies/dependency2"),
-                AbsoluteUnixPath.get("/app/dependencies/directory/dependency4")));
+                AbsoluteUnixPath.get("/app/dependencies/dependency4")));
     assertThat(snapshotLayer.getName()).isEqualTo("snapshot dependencies");
     assertThat(
             snapshotLayer
@@ -278,6 +279,22 @@ public class JarModeProcessorTest {
   }
 
   @Test
+  public void testCreateExplodedModeLayersForStandardJar_dependencyDoesNotExist()
+      throws URISyntaxException {
+    Path standardJar = Paths.get(Resources.getResource(STANDARD_SINGLE_DEPENDENCY_JAR).toURI());
+    Path destDir = temporaryFolder.getRoot().toPath();
+    IllegalArgumentException exception =
+        assertThrows(
+            IllegalArgumentException.class,
+            () -> JarModeProcessor.createLayersForExplodedStandard(standardJar, destDir));
+    assertThat(exception)
+        .hasMessageThat()
+        .isEqualTo(
+            "Dependency required by the JAR (as specified in `Class-Path` in the JAR manifest) doesn't exist: "
+                + standardJar.getParent().resolve("dependency.jar"));
+  }
+
+  @Test
   public void testExplodeMode_standard_computeEntrypoint_allLayersPresent()
       throws IOException, URISyntaxException {
     Path standardJar =
@@ -375,11 +392,7 @@ public class JarModeProcessorTest {
     // Validate jar layer.
     assertThat(jarLayer.getName()).isEqualTo("jar");
     assertThat(jarLayer.getEntries().size()).isEqualTo(1);
-    assertThat(
-            jarLayer
-                .getEntries()
-                .get(0)
-                    .getExtractionPath())
+    assertThat(jarLayer.getEntries().get(0).getExtractionPath())
         .isEqualTo(AbsoluteUnixPath.get("/app/standardJarWithClassPath.jar"));
   }
 
