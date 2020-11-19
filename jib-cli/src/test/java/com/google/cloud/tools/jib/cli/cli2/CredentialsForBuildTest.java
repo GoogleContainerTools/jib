@@ -52,11 +52,16 @@ public class CredentialsForBuildTest {
   @Test
   @Parameters(method = "paramsToNone")
   public void testGetToCredentialRetriever_none(String[] args) throws FileNotFoundException {
-    JibCli buildOptions =
-        CommandLine.populateCommand(new JibCli(), ArrayUtils.addAll(DEFAULT_ARGS, args));
-    CommonCliOptions commonCliOptions = new CommonCliOptions();
+    Build buildCommand =
+        new CommandLine(new JibCli())
+            .getSubcommands()
+            .get("build")
+            .parseArgs(ArrayUtils.addAll(DEFAULT_ARGS, args))
+            .asCommandLineList()
+            .get(0)
+            .getCommand();
     Credentials.getToCredentialRetrievers(
-        buildOptions, commonCliOptions, defaultCredentialRetrievers);
+        buildCommand.commonCliOptions, defaultCredentialRetrievers);
     Mockito.verify(defaultCredentialRetrievers).asList();
     Mockito.verifyNoMoreInteractions(defaultCredentialRetrievers);
   }
@@ -71,12 +76,17 @@ public class CredentialsForBuildTest {
   @Test
   @Parameters(method = "paramsFromNone")
   public void testGetFromCredentialRetriever_none(String[] args) throws FileNotFoundException {
-    JibCli buildOptions =
-        CommandLine.populateCommand(new JibCli(), ArrayUtils.addAll(DEFAULT_ARGS, args));
-    CommonCliOptions commonCliOptions = new CommonCliOptions();
+    Build buildCommand =
+        new CommandLine(new JibCli())
+            .getSubcommands()
+            .get("build")
+            .parseArgs(ArrayUtils.addAll(DEFAULT_ARGS, args))
+            .asCommandLineList()
+            .get(0)
+            .getCommand();
 
     Credentials.getFromCredentialRetrievers(
-        buildOptions, commonCliOptions, defaultCredentialRetrievers);
+        buildCommand.commonCliOptions, defaultCredentialRetrievers);
     Mockito.verify(defaultCredentialRetrievers).asList();
     Mockito.verifyNoMoreInteractions(defaultCredentialRetrievers);
   }
@@ -95,12 +105,16 @@ public class CredentialsForBuildTest {
   @Test
   @Parameters(method = "paramsToCredHelper")
   public void testGetToCredentialRetriever_credHelper(String[] args) throws FileNotFoundException {
-    JibCli buildOptions =
-        CommandLine.populateCommand(new JibCli(), ArrayUtils.addAll(DEFAULT_ARGS, args));
-    CommonCliOptions commonCliOptions = new CommonCliOptions();
-
+    Build buildCommand =
+        new CommandLine(new JibCli())
+            .getSubcommands()
+            .get("build")
+            .parseArgs(ArrayUtils.addAll(DEFAULT_ARGS, args))
+            .asCommandLineList()
+            .get(0)
+            .getCommand();
     Credentials.getToCredentialRetrievers(
-        buildOptions, commonCliOptions, defaultCredentialRetrievers);
+        buildCommand.commonCliOptions, defaultCredentialRetrievers);
     Mockito.verify(defaultCredentialRetrievers).setCredentialHelper("abc");
     Mockito.verify(defaultCredentialRetrievers).asList();
     Mockito.verifyNoMoreInteractions(defaultCredentialRetrievers);
@@ -120,12 +134,17 @@ public class CredentialsForBuildTest {
   @Test
   @Parameters(method = "paramsFromCredHelper")
   public void testGetFromCredentialHelper(String[] args) throws FileNotFoundException {
-    JibCli buildOptions =
-        CommandLine.populateCommand(new JibCli(), ArrayUtils.addAll(DEFAULT_ARGS, args));
-    CommonCliOptions commonCliOptions = new CommonCliOptions();
+    Build buildCommand =
+        new CommandLine(new JibCli())
+            .getSubcommands()
+            .get("build")
+            .parseArgs(ArrayUtils.addAll(DEFAULT_ARGS, args))
+            .asCommandLineList()
+            .get(0)
+            .getCommand();
 
     Credentials.getFromCredentialRetrievers(
-        buildOptions, commonCliOptions, defaultCredentialRetrievers);
+        buildCommand.commonCliOptions, defaultCredentialRetrievers);
     Mockito.verify(defaultCredentialRetrievers).setCredentialHelper("abc");
     Mockito.verify(defaultCredentialRetrievers).asList();
     Mockito.verifyNoMoreInteractions(defaultCredentialRetrievers);
@@ -155,12 +174,17 @@ public class CredentialsForBuildTest {
   @Parameters(method = "paramsToUsernamePassword")
   public void testGetToUsernamePassword(String expectedSource, String[] args)
       throws FileNotFoundException {
-    JibCli buildOptions =
-        CommandLine.populateCommand(new JibCli(), ArrayUtils.addAll(DEFAULT_ARGS, args));
-    CommonCliOptions commonCliOptions = new CommonCliOptions();
+    Build buildCommand =
+        new CommandLine(new JibCli())
+            .getSubcommands()
+            .get("build")
+            .parseArgs(ArrayUtils.addAll(DEFAULT_ARGS, args))
+            .asCommandLineList()
+            .get(0)
+            .getCommand();
 
     Credentials.getToCredentialRetrievers(
-        buildOptions, commonCliOptions, defaultCredentialRetrievers);
+        buildCommand.commonCliOptions, defaultCredentialRetrievers);
     ArgumentCaptor<Credential> captor = ArgumentCaptor.forClass(Credential.class);
     Mockito.verify(defaultCredentialRetrievers)
         .setKnownCredential(captor.capture(), ArgumentMatchers.eq(expectedSource));
@@ -198,12 +222,17 @@ public class CredentialsForBuildTest {
   @Parameters(method = "paramsFromUsernamePassword")
   public void testGetFromUsernamePassword(String expectedSource, String[] args)
       throws FileNotFoundException {
-    JibCli buildOptions =
-        CommandLine.populateCommand(new JibCli(), ArrayUtils.addAll(DEFAULT_ARGS, args));
-    CommonCliOptions commonCliOptions = new CommonCliOptions();
+    Build buildCommand =
+        new CommandLine(new JibCli())
+            .getSubcommands()
+            .get("build")
+            .parseArgs(ArrayUtils.addAll(DEFAULT_ARGS, args))
+            .asCommandLineList()
+            .get(0)
+            .getCommand();
 
     Credentials.getFromCredentialRetrievers(
-        buildOptions, commonCliOptions, defaultCredentialRetrievers);
+        buildCommand.commonCliOptions, defaultCredentialRetrievers);
     ArgumentCaptor<Credential> captor = ArgumentCaptor.forClass(Credential.class);
     Mockito.verify(defaultCredentialRetrievers)
         .setKnownCredential(captor.capture(), ArgumentMatchers.eq(expectedSource));

@@ -30,9 +30,9 @@ import com.google.cloud.tools.jib.api.JibContainerBuilder;
 import com.google.cloud.tools.jib.api.RegistryImage;
 import com.google.cloud.tools.jib.api.TarImage;
 import com.google.cloud.tools.jib.api.buildplan.Platform;
+import com.google.cloud.tools.jib.cli.cli2.Build;
 import com.google.cloud.tools.jib.cli.cli2.CommonCliOptions;
 import com.google.cloud.tools.jib.cli.cli2.Credentials;
-import com.google.cloud.tools.jib.cli.cli2.JibCli;
 import com.google.cloud.tools.jib.frontend.CredentialRetrieverFactory;
 import com.google.cloud.tools.jib.plugins.common.DefaultCredentialRetrievers;
 import com.google.cloud.tools.jib.plugins.common.logging.ConsoleLogger;
@@ -70,7 +70,8 @@ public class BuildFiles {
    *
    * @param projectRoot the root context directory of this build
    * @param buildFilePath a file containing the build definition
-   * @param cliOptions the build configuration from the command line
+   * @param buildCommandOptions the build configuration from the command line
+   * @param commonCliOptions common cli options
    * @param logger a logger to inject into various objects that do logging
    * @return a {@link JibContainerBuilder} generated from the contents of {@code buildFilePath}
    * @throws IOException if an I/O error occurs opening the file, or an error occurs while
@@ -80,16 +81,17 @@ public class BuildFiles {
   public static JibContainerBuilder toJibContainerBuilder(
       Path projectRoot,
       Path buildFilePath,
-      JibCli cliOptions,
+      Build buildCommandOptions,
       CommonCliOptions commonCliOptions,
       ConsoleLogger logger)
       throws InvalidImageReferenceException, IOException {
-    BuildFileSpec buildFile = toBuildFileSpec(buildFilePath, cliOptions.getTemplateParameters());
+    BuildFileSpec buildFile =
+        toBuildFileSpec(buildFilePath, buildCommandOptions.getTemplateParameters());
 
     JibContainerBuilder containerBuilder =
         buildFile.getFrom().isPresent()
             ? createJibContainerBuilder(
-                buildFile.getFrom().get(), cliOptions, commonCliOptions, logger)
+                buildFile.getFrom().get(), buildCommandOptions, commonCliOptions, logger)
             : Jib.fromScratch();
 
     buildFile.getCreationTime().ifPresent(containerBuilder::setCreationTime);
@@ -114,7 +116,7 @@ public class BuildFiles {
   //   the base image was populated as the user intended currently.
   static JibContainerBuilder createJibContainerBuilder(
       BaseImageSpec from,
-      JibCli cliOptions,
+      Build buildCommandOptions,
       CommonCliOptions commonCliOptions,
       ConsoleLogger logger)
       throws InvalidImageReferenceException, FileNotFoundException {
@@ -135,8 +137,7 @@ public class BuildFiles {
             CredentialRetrieverFactory.forImage(
                 imageReference,
                 logEvent -> logger.log(logEvent.getLevel(), logEvent.getMessage())));
-    Credentials.getFromCredentialRetrievers(
-            cliOptions, commonCliOptions, defaultCredentialRetrievers)
+    Credentials.getFromCredentialRetrievers(commonCliOptions, defaultCredentialRetrievers)
         .forEach(registryImage::addCredentialRetriever);
     JibContainerBuilder containerBuilder = Jib.from(registryImage);
     if (!from.getPlatforms().isEmpty()) {

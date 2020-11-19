@@ -1,6 +1,24 @@
+/*
+ * Copyright 2020 Google LLC.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
 package com.google.cloud.tools.jib.cli.cli2;
 
 import com.google.cloud.tools.jib.api.Credential;
+import com.google.cloud.tools.jib.cli.cli2.logging.ConsoleOutput;
+import com.google.cloud.tools.jib.cli.cli2.logging.Verbosity;
 import com.google.common.base.Verify;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -177,6 +195,61 @@ public class CommonCliOptions {
         description = "password for communicating with base image registry")
     @SuppressWarnings("NullAway.Init") // initialized by picocli
     String password;
+  }
+
+  @CommandLine.Option(
+      names = "--verbosity",
+      paramLabel = "<level>",
+      defaultValue = "lifecycle",
+      description =
+          "set logging verbosity, candidates: ${COMPLETION-CANDIDATES}, default: ${DEFAULT-VALUE}",
+      scope = CommandLine.ScopeType.INHERIT)
+  @SuppressWarnings("NullAway.Init") // initialized by picocli
+  private Verbosity verbosity;
+
+  @CommandLine.Option(
+      names = "--console",
+      paramLabel = "<type>",
+      defaultValue = "auto",
+      description =
+          "set console output type, candidates: ${COMPLETION-CANDIDATES}, default: ${DEFAULT-VALUE}",
+      scope = CommandLine.ScopeType.INHERIT)
+  @SuppressWarnings("NullAway.Init") // initialized by picocli
+  private ConsoleOutput consoleOutput;
+
+  // Hidden debug parameters
+  @CommandLine.Option(names = "--stacktrace", hidden = true, scope = CommandLine.ScopeType.INHERIT)
+  @SuppressWarnings("NullAway.Init") // initialized by picocli
+  private boolean stacktrace;
+
+  @CommandLine.Option(names = "--http-trace", hidden = true, scope = CommandLine.ScopeType.INHERIT)
+  @SuppressWarnings("NullAway.Init") // initialized by picocli
+  private boolean httpTrace;
+
+  @CommandLine.Option(names = "--serialize", hidden = true, scope = CommandLine.ScopeType.INHERIT)
+  @SuppressWarnings("NullAway.Init") // initialized by picocli
+  private boolean serialize;
+
+  public Verbosity getVerbosity() {
+    Verify.verifyNotNull(verbosity);
+    return verbosity;
+  }
+
+  public ConsoleOutput getConsoleOutput() {
+    Verify.verifyNotNull(consoleOutput);
+    return consoleOutput;
+  }
+
+  public boolean isStacktrace() {
+    return stacktrace;
+  }
+
+  public boolean isHttpTrace() {
+    return httpTrace;
+  }
+
+  public boolean isSerialize() {
+    return serialize;
   }
 
   public String getTargetImage() {

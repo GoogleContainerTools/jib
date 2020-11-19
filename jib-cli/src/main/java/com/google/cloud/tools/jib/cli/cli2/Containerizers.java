@@ -44,25 +44,23 @@ public class Containerizers {
   /**
    * Create a Containerizer from a jibcli command line specification.
    *
-   * @param buildOptions JibCli options
+   * @param commonCliOptions common cli options
    * @param logger a logger to inject into the build
    * @return a populated Containerizer
    * @throws InvalidImageReferenceException if the image reference could not be parsed
    * @throws FileNotFoundException if a credential helper file is not found
    */
-  public static Containerizer from(
-      JibCli buildOptions, CommonCliOptions commonCliOptions, ConsoleLogger logger)
+  public static Containerizer from(CommonCliOptions commonCliOptions, ConsoleLogger logger)
       throws InvalidImageReferenceException, FileNotFoundException {
-    Containerizer containerizer = create(buildOptions, commonCliOptions, logger);
+    Containerizer containerizer = create(commonCliOptions, logger);
 
     applyHandlers(containerizer, logger);
-    applyConfiguration(containerizer, buildOptions, commonCliOptions);
+    applyConfiguration(containerizer, commonCliOptions);
 
     return containerizer;
   }
 
-  private static Containerizer create(
-      JibCli buildOptions, CommonCliOptions commonCliOptions, ConsoleLogger logger)
+  private static Containerizer create(CommonCliOptions commonCliOptions, ConsoleLogger logger)
       throws InvalidImageReferenceException, FileNotFoundException {
     String imageSpec = commonCliOptions.getTargetImage();
     if (imageSpec.startsWith(DOCKER_DAEMON_IMAGE_PREFIX)) {
@@ -83,14 +81,13 @@ public class Containerizers {
             CredentialRetrieverFactory.forImage(
                 imageReference,
                 logEvent -> logger.log(logEvent.getLevel(), logEvent.getMessage())));
-    Credentials.getToCredentialRetrievers(
-            buildOptions, commonCliOptions, defaultCredentialRetrievers)
+    Credentials.getToCredentialRetrievers(commonCliOptions, defaultCredentialRetrievers)
         .forEach(registryImage::addCredentialRetriever);
     return Containerizer.to(registryImage);
   }
 
   private static void applyConfiguration(
-      Containerizer containerizer, JibCli buildOptions, CommonCliOptions commonCliOptions) {
+      Containerizer containerizer, CommonCliOptions commonCliOptions) {
     containerizer.setToolName(VersionInfo.TOOL_NAME);
     containerizer.setToolVersion(VersionInfo.getVersionSimple());
 
@@ -99,7 +96,7 @@ public class Containerizers {
     if (commonCliOptions.isSendCredentialsOverHttp()) {
       System.setProperty(JibSystemProperties.SEND_CREDENTIALS_OVER_HTTP, Boolean.TRUE.toString());
     }
-    if (buildOptions.isSerialize()) {
+    if (commonCliOptions.isSerialize()) {
       System.setProperty(JibSystemProperties.SERIALIZE, Boolean.TRUE.toString());
     }
 

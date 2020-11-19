@@ -36,9 +36,9 @@ import org.mockito.junit.MockitoRule;
 import picocli.CommandLine;
 
 @RunWith(JUnitParamsRunner.class)
-public class CredentialsTest {
+public class CredentialsForJarTest {
 
-  private static final String[] DEFAULT_ARGS = {"--target=ignored"};
+  private static final String[] DEFAULT_ARGS = {"--target=ignored", "ignore-jar"};
   @Rule public final MockitoRule mockitoJUnit = MockitoJUnit.rule();
   @Mock private DefaultCredentialRetrievers defaultCredentialRetrievers;
 
@@ -52,12 +52,15 @@ public class CredentialsTest {
   @Test
   @Parameters(method = "paramsToNone")
   public void testGetToCredentialRetriever_none(String[] args) throws FileNotFoundException {
-    JibCli buildOptions =
-        CommandLine.populateCommand(new JibCli(), ArrayUtils.addAll(DEFAULT_ARGS, args));
-    CommonCliOptions commonCliOptions = new CommonCliOptions();
-
-    Credentials.getToCredentialRetrievers(
-        buildOptions, commonCliOptions, defaultCredentialRetrievers);
+    Jar jarCommand =
+        new CommandLine(new JibCli())
+            .getSubcommands()
+            .get("jar")
+            .parseArgs(ArrayUtils.addAll(DEFAULT_ARGS, args))
+            .asCommandLineList()
+            .get(0)
+            .getCommand();
+    Credentials.getToCredentialRetrievers(jarCommand.commonCliOptions, defaultCredentialRetrievers);
     Mockito.verify(defaultCredentialRetrievers).asList();
     Mockito.verifyNoMoreInteractions(defaultCredentialRetrievers);
   }
@@ -72,12 +75,17 @@ public class CredentialsTest {
   @Test
   @Parameters(method = "paramsFromNone")
   public void testGetFromCredentialRetriever_none(String[] args) throws FileNotFoundException {
-    JibCli buildOptions =
-        CommandLine.populateCommand(new JibCli(), ArrayUtils.addAll(DEFAULT_ARGS, args));
-    CommonCliOptions commonCliOptions = new CommonCliOptions();
+    Jar jarCommand =
+        new CommandLine(new JibCli())
+            .getSubcommands()
+            .get("jar")
+            .parseArgs(ArrayUtils.addAll(DEFAULT_ARGS, args))
+            .asCommandLineList()
+            .get(0)
+            .getCommand();
 
     Credentials.getFromCredentialRetrievers(
-        buildOptions, commonCliOptions, defaultCredentialRetrievers);
+        jarCommand.commonCliOptions, defaultCredentialRetrievers);
     Mockito.verify(defaultCredentialRetrievers).asList();
     Mockito.verifyNoMoreInteractions(defaultCredentialRetrievers);
   }
@@ -96,12 +104,15 @@ public class CredentialsTest {
   @Test
   @Parameters(method = "paramsToCredHelper")
   public void testGetToCredentialRetriever_credHelper(String[] args) throws FileNotFoundException {
-    JibCli buildOptions =
-        CommandLine.populateCommand(new JibCli(), ArrayUtils.addAll(DEFAULT_ARGS, args));
-    CommonCliOptions commonCliOptions = new CommonCliOptions();
-
-    Credentials.getToCredentialRetrievers(
-        buildOptions, commonCliOptions, defaultCredentialRetrievers);
+    Jar jarCommand =
+        new CommandLine(new JibCli())
+            .getSubcommands()
+            .get("jar")
+            .parseArgs(ArrayUtils.addAll(DEFAULT_ARGS, args))
+            .asCommandLineList()
+            .get(0)
+            .getCommand();
+    Credentials.getToCredentialRetrievers(jarCommand.commonCliOptions, defaultCredentialRetrievers);
     Mockito.verify(defaultCredentialRetrievers).setCredentialHelper("abc");
     Mockito.verify(defaultCredentialRetrievers).asList();
     Mockito.verifyNoMoreInteractions(defaultCredentialRetrievers);
@@ -121,12 +132,17 @@ public class CredentialsTest {
   @Test
   @Parameters(method = "paramsFromCredHelper")
   public void testGetFromCredentialHelper(String[] args) throws FileNotFoundException {
-    JibCli buildOptions =
-        CommandLine.populateCommand(new JibCli(), ArrayUtils.addAll(DEFAULT_ARGS, args));
-    CommonCliOptions commonCliOptions = new CommonCliOptions();
+    Jar jarCommand =
+        new CommandLine(new JibCli())
+            .getSubcommands()
+            .get("jar")
+            .parseArgs(ArrayUtils.addAll(DEFAULT_ARGS, args))
+            .asCommandLineList()
+            .get(0)
+            .getCommand();
 
     Credentials.getFromCredentialRetrievers(
-        buildOptions, commonCliOptions, defaultCredentialRetrievers);
+        jarCommand.commonCliOptions, defaultCredentialRetrievers);
     Mockito.verify(defaultCredentialRetrievers).setCredentialHelper("abc");
     Mockito.verify(defaultCredentialRetrievers).asList();
     Mockito.verifyNoMoreInteractions(defaultCredentialRetrievers);
@@ -156,12 +172,16 @@ public class CredentialsTest {
   @Parameters(method = "paramsToUsernamePassword")
   public void testGetToUsernamePassword(String expectedSource, String[] args)
       throws FileNotFoundException {
-    JibCli buildOptions =
-        CommandLine.populateCommand(new JibCli(), ArrayUtils.addAll(DEFAULT_ARGS, args));
-    CommonCliOptions commonCliOptions = new CommonCliOptions();
+    Jar jarCommand =
+        new CommandLine(new JibCli())
+            .getSubcommands()
+            .get("jar")
+            .parseArgs(ArrayUtils.addAll(DEFAULT_ARGS, args))
+            .asCommandLineList()
+            .get(0)
+            .getCommand();
 
-    Credentials.getToCredentialRetrievers(
-        buildOptions, commonCliOptions, defaultCredentialRetrievers);
+    Credentials.getToCredentialRetrievers(jarCommand.commonCliOptions, defaultCredentialRetrievers);
     ArgumentCaptor<Credential> captor = ArgumentCaptor.forClass(Credential.class);
     Mockito.verify(defaultCredentialRetrievers)
         .setKnownCredential(captor.capture(), ArgumentMatchers.eq(expectedSource));
@@ -199,12 +219,17 @@ public class CredentialsTest {
   @Parameters(method = "paramsFromUsernamePassword")
   public void testGetFromUsernamePassword(String expectedSource, String[] args)
       throws FileNotFoundException {
-    JibCli buildOptions =
-        CommandLine.populateCommand(new JibCli(), ArrayUtils.addAll(DEFAULT_ARGS, args));
-    CommonCliOptions commonCliOptions = new CommonCliOptions();
+    Jar jarCommand =
+        new CommandLine(new JibCli())
+            .getSubcommands()
+            .get("jar")
+            .parseArgs(ArrayUtils.addAll(DEFAULT_ARGS, args))
+            .asCommandLineList()
+            .get(0)
+            .getCommand();
 
     Credentials.getFromCredentialRetrievers(
-        buildOptions, commonCliOptions, defaultCredentialRetrievers);
+        jarCommand.commonCliOptions, defaultCredentialRetrievers);
     ArgumentCaptor<Credential> captor = ArgumentCaptor.forClass(Credential.class);
     Mockito.verify(defaultCredentialRetrievers)
         .setKnownCredential(captor.capture(), ArgumentMatchers.eq(expectedSource));

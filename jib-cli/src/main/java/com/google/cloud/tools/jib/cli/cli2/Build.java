@@ -25,9 +25,12 @@ import com.google.cloud.tools.jib.cli.buildfile.BuildFiles;
 import com.google.cloud.tools.jib.cli.cli2.logging.CliLogger;
 import com.google.cloud.tools.jib.plugins.common.logging.ConsoleLogger;
 import com.google.cloud.tools.jib.plugins.common.logging.SingleThreadedExecutor;
+import com.google.common.base.Verify;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.Callable;
 import picocli.CommandLine;
 import picocli.CommandLine.Model.CommandSpec;
@@ -48,6 +51,52 @@ public class Build implements Callable<Integer> {
   @SuppressWarnings("NullAway.Init") // initialized by picocli
   protected JibCli globalOptions;
 
+  @CommandLine.Option(
+      names = {"-c", "--context"},
+      defaultValue = ".",
+      paramLabel = "<project-root>",
+      description = "The context root directory of the build (ex: path/to/my/build/things)")
+  @SuppressWarnings("NullAway.Init") // initialized by picocli
+  private Path contextRoot;
+
+  @CommandLine.Option(
+      names = {"-b", "--build-file"},
+      paramLabel = "<build-file>",
+      description = "The path to the build file (ex: path/to/other-jib.yaml)")
+  @SuppressWarnings("NullAway.Init") // initialized by picocli
+  private Path buildFile;
+
+  @CommandLine.Option(
+      names = {"-p", "--parameter"},
+      paramLabel = "<name>=<value>",
+      description =
+          "templating parameter to inject into build file, replace $${<name>} with <value> (repeatable)")
+  @SuppressWarnings("NullAway.Init") // initialized by picocli
+  private Map<String, String> templateParameters = new HashMap<>();
+
+  public Path getContextRoot() {
+    Verify.verifyNotNull(contextRoot);
+    return contextRoot;
+  }
+
+  /**
+   * Returns a user configured Path to a buildfile and if none is configured returns jib.yaml in
+   * {@link #getContextRoot()}.
+   *
+   * @return a path to a bulidfile
+   */
+  public Path getBuildFile() {
+    if (buildFile == null) {
+      return getContextRoot().resolve("jib.yaml");
+    }
+    return buildFile;
+  }
+
+  public Map<String, String> getTemplateParameters() {
+    Verify.verifyNotNull(templateParameters);
+    return templateParameters;
+  }
+
   @Override
   public Integer call() {
     validate();
@@ -55,13 +104,12 @@ public class Build implements Callable<Integer> {
     try {
       ConsoleLogger logger =
           CliLogger.newLogger(
-              globalOptions.getVerbosity(),
-              globalOptions.getConsoleOutput(),
+              commonCliOptions.getVerbosity(),
+              commonCliOptions.getConsoleOutput(),
               spec.commandLine().getOut(),
               spec.commandLine().getErr(),
               executor);
 
-      Path buildFile = globalOptions.getBuildFile();
       if (!Files.isReadable(buildFile)) {
         logger.log(
             Level.ERROR,
@@ -74,15 +122,14 @@ public class Build implements Callable<Integer> {
         return 1;
       }
 
-      Containerizer containerizer = Containerizers.from(globalOptions, commonCliOptions, logger);
+      Containerizer containerizer = Containerizers.from(commonCliOptions, logger);
 
       JibContainerBuilder containerBuilder =
-          BuildFiles.toJibContainerBuilder(
-              globalOptions.getContextRoot(), buildFile, globalOptions, commonCliOptions, logger);
+          BuildFiles.toJibContainerBuilder(contextRoot, buildFile, this, commonCliOptions, logger);
 
       containerBuilder.containerize(containerizer);
     } catch (Exception ex) {
-      if (globalOptions.isStacktrace()) {
+      if (commonCliOptions.isStacktrace()) {
         ex.printStackTrace();
       }
       System.err.println(ex.getClass().getName() + ": " + ex.getMessage());

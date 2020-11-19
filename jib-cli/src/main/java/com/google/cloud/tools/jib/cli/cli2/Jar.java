@@ -58,8 +58,8 @@ public class Jar implements Callable<Integer> {
 
       ConsoleLogger logger =
           CliLogger.newLogger(
-              globalOptions.getVerbosity(),
-              globalOptions.getConsoleOutput(),
+              commonCliOptions.getVerbosity(),
+              commonCliOptions.getConsoleOutput(),
               spec.commandLine().getOut(),
               spec.commandLine().getErr(),
               executor);
@@ -76,14 +76,14 @@ public class Jar implements Callable<Integer> {
         return 1;
       }
 
-      Containerizer containerizer = Containerizers.from(globalOptions, commonCliOptions, logger);
+      Containerizer containerizer = Containerizers.from(commonCliOptions, logger);
 
       JibContainerBuilder containerBuilder =
           JarFiles.toJibContainerBuilder(jarFile, tempDirectoryProvider.newDirectory());
 
       containerBuilder.containerize(containerizer);
     } catch (Exception ex) {
-      if (globalOptions.isStacktrace()) {
+      if (commonCliOptions.isStacktrace()) {
         ex.printStackTrace();
       }
       System.err.println(ex.getClass().getName() + ": " + ex.getMessage());
