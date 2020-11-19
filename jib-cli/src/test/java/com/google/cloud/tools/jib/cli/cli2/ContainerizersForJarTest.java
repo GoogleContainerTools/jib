@@ -43,6 +43,8 @@ import picocli.CommandLine;
 
 public class ContainerizersForJarTest {
 
+  private static String REQUIRED_JAR = "require-jar";
+
   @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
   @Rule public final MockitoRule mockitoRule = MockitoJUnit.rule();
   // Containerizers will add system properties based on cli properties
@@ -58,7 +60,7 @@ public class ContainerizersForJarTest {
         new CommandLine(new JibCli())
             .getSubcommands()
             .get("jar")
-            .parseArgs("-t", "test-image-ref", "ignore-jar")
+            .parseArgs("-t", "test-image-ref", REQUIRED_JAR)
             .asCommandLineList()
             .get(0)
             .getCommand();
@@ -95,7 +97,7 @@ public class ContainerizersForJarTest {
                 "--application-cache=./app-cache",
                 "--additional-tags=tag1,tag2",
                 "--serialize",
-                "ignore-jar")
+                REQUIRED_JAR)
             .asCommandLineList()
             .get(0)
             .getCommand();
@@ -120,7 +122,7 @@ public class ContainerizersForJarTest {
         new CommandLine(new JibCli())
             .getSubcommands()
             .get("jar")
-            .parseArgs("-t", "docker://gcr.io/test/test-image-ref", "ignore-jar")
+            .parseArgs("-t", "docker://gcr.io/test/test-image-ref", REQUIRED_JAR)
             .asCommandLineList()
             .get(0)
             .getCommand();
@@ -148,7 +150,7 @@ public class ContainerizersForJarTest {
                 "tar://" + tarPath.toAbsolutePath(),
                 "--name",
                 "gcr.io/test/test-image-ref",
-                "ignore-jar")
+                REQUIRED_JAR)
             .asCommandLineList()
             .get(0)
             .getCommand();
@@ -171,7 +173,7 @@ public class ContainerizersForJarTest {
         new CommandLine(new JibCli())
             .getSubcommands()
             .get("jar")
-            .parseArgs("-t", "registry://gcr.io/test/test-image-ref", "ignore-jar")
+            .parseArgs("-t", "registry://gcr.io/test/test-image-ref", REQUIRED_JAR)
             .asCommandLineList()
             .get(0)
             .getCommand();
