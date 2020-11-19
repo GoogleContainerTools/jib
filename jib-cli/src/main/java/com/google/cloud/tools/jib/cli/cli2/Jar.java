@@ -21,6 +21,7 @@ import com.google.cloud.tools.jib.api.JibContainerBuilder;
 import com.google.cloud.tools.jib.api.LogEvent;
 import com.google.cloud.tools.jib.cli.cli2.logging.CliLogger;
 import com.google.cloud.tools.jib.cli.jar.JarFiles;
+import com.google.cloud.tools.jib.cli.jar.ProcessingMode;
 import com.google.cloud.tools.jib.filesystem.TempDirectoryProvider;
 import com.google.cloud.tools.jib.plugins.common.logging.ConsoleLogger;
 import com.google.cloud.tools.jib.plugins.common.logging.SingleThreadedExecutor;
@@ -44,6 +45,15 @@ public class Jar implements Callable<Integer> {
   @SuppressWarnings("NullAway.Init") // initialized by picocli
   private Path jarFile;
 
+  @CommandLine.Option(
+      names = "--mode",
+      defaultValue = "exploded",
+      paramLabel = "<mode>",
+      description =
+          "The jar processing mode, candidates: ${COMPLETION-CANDIDATES}, default: ${DEFAULT-VALUE}")
+  @SuppressWarnings("NullAway.Init") // initialized by picocli
+  private ProcessingMode mode;
+
   @Override
   public Integer call() {
     globalOptions.validate();
@@ -65,7 +75,7 @@ public class Jar implements Callable<Integer> {
       if (Files.isDirectory(jarFile)) {
         logger.log(
             LogEvent.Level.ERROR,
-            "The file path provided is for a directory. Please provide a path to a jar file: "
+            "The file path provided is for a directory. Please provide a path to a JAR: "
                 + jarFile);
         return 1;
       }
@@ -73,7 +83,7 @@ public class Jar implements Callable<Integer> {
       Containerizer containerizer = Containerizers.from(globalOptions, logger);
 
       JibContainerBuilder containerBuilder =
-          JarFiles.toJibContainerBuilder(jarFile, tempDirectoryProvider.newDirectory());
+          JarFiles.toJibContainerBuilder(jarFile, tempDirectoryProvider.newDirectory(), mode);
 
       containerBuilder.containerize(containerizer);
     } catch (Exception ex) {

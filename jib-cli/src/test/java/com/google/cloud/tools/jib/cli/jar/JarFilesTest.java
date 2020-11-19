@@ -43,11 +43,12 @@ public class JarFilesTest {
   @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
   @Test
-  public void testToJibContainerBuilder_basicInfo()
+  public void testToJibContainerBuilder_explodedStandard_basicInfo()
       throws IOException, URISyntaxException, InvalidImageReferenceException {
     Path standardJar = Paths.get(Resources.getResource(SIMPLE_STANDARD_JAR).toURI());
     Path destDir = temporaryFolder.getRoot().toPath();
-    JibContainerBuilder containerBuilder = JarFiles.toJibContainerBuilder(standardJar, destDir);
+    JibContainerBuilder containerBuilder =
+        JarFiles.toJibContainerBuilder(standardJar, destDir, ProcessingMode.exploded);
     ContainerBuildPlan buildPlan = containerBuilder.toContainerBuildPlan();
 
     assertThat(buildPlan.getBaseImage()).isEqualTo("gcr.io/distroless/java");
@@ -63,6 +64,7 @@ public class JarFilesTest {
     assertThat(buildPlan.getEntrypoint())
         .isEqualTo(
             ImmutableList.of("java", "-cp", "/app/explodedJar:/app/dependencies/*", "HelloWorld"));
+    assertThat(buildPlan.getLayers().size()).isEqualTo(3);
     assertThat(((FileEntriesLayer) buildPlan.getLayers().get(0)).getEntries())
         .isEqualTo(
             FileEntriesLayer.builder()
@@ -103,6 +105,44 @@ public class JarFilesTest {
                 .addEntry(
                     destDir.resolve("META-INF/"),
                     AbsoluteUnixPath.get("/app/explodedJar/META-INF/"))
+                .build()
+                .getEntries());
+  }
+
+  @Test
+  public void testToJibContainerBuilder_packagedStandard_basicInfo()
+      throws IOException, URISyntaxException, InvalidImageReferenceException {
+    Path standardJar = Paths.get(Resources.getResource(SIMPLE_STANDARD_JAR).toURI());
+    Path destDir = temporaryFolder.getRoot().toPath();
+    JibContainerBuilder containerBuilder =
+        JarFiles.toJibContainerBuilder(standardJar, destDir, ProcessingMode.packaged);
+    ContainerBuildPlan buildPlan = containerBuilder.toContainerBuildPlan();
+
+    assertThat(buildPlan.getBaseImage()).isEqualTo("gcr.io/distroless/java");
+    assertThat(buildPlan.getPlatforms()).isEqualTo(ImmutableSet.of(new Platform("amd64", "linux")));
+    assertThat(buildPlan.getCreationTime()).isEqualTo(Instant.EPOCH);
+    assertThat(buildPlan.getFormat()).isEqualTo(ImageFormat.Docker);
+    assertThat(buildPlan.getEnvironment()).isEmpty();
+    assertThat(buildPlan.getLabels()).isEmpty();
+    assertThat(buildPlan.getVolumes()).isEmpty();
+    assertThat(buildPlan.getExposedPorts()).isEmpty();
+    assertThat(buildPlan.getUser()).isNull();
+    assertThat(buildPlan.getWorkingDirectory()).isNull();
+    assertThat(buildPlan.getEntrypoint())
+        .isEqualTo(ImmutableList.of("java", "-jar", "/app/basicStandardJar.jar"));
+    assertThat(buildPlan.getLayers().size()).isEqualTo(2);
+    assertThat(((FileEntriesLayer) buildPlan.getLayers().get(0)).getEntries())
+        .isEqualTo(
+            FileEntriesLayer.builder()
+                .addEntry(
+                    standardJar.getParent().resolve("dependency1"),
+                    AbsoluteUnixPath.get("/app/dependency1"))
+                .build()
+                .getEntries());
+    assertThat(((FileEntriesLayer) buildPlan.getLayers().get(1)).getEntries())
+        .containsExactlyElementsIn(
+            FileEntriesLayer.builder()
+                .addEntry(standardJar, AbsoluteUnixPath.get("/app/basicStandardJar.jar"))
                 .build()
                 .getEntries());
   }

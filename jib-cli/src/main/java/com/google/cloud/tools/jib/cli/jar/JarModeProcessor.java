@@ -38,6 +38,7 @@ import java.util.stream.Collectors;
 public class JarModeProcessor {
 
   private static final AbsoluteUnixPath APP_ROOT = AbsoluteUnixPath.get("/app");
+  private static final String JAR = "jar";
   private static final String CLASSES = "classes";
   private static final String RESOURCES = "resources";
   private static final String DEPENDENCIES = "dependencies";
@@ -83,58 +84,16 @@ public class JarModeProcessor {
    * @throws IOException if I/O error occurs when opening the jar file or if temporary directory
    *     provided doesn't exist
    */
-  static List<FileEntriesLayer> createExplodedModeLayersForStandardJar(
-      Path jarPath, Path tempDirPath) throws IOException, IllegalArgumentException {
-    Path localExplodedJarRoot = tempDirPath;
-    ZipUtil.unzip(jarPath, localExplodedJarRoot);
-    List<FileEntriesLayer> layers = new ArrayList<>();
-
-    // Get dependencies from Class-Path in the jar's manifest and add a layer each for non-snapshot
-    // and snapshot dependencies. If Class-Path is not present in the jar's manifest then skip
-    // adding the dependencies layers.
-    String classPath = null;
-    try (JarFile jarFile = new JarFile(jarPath.toFile())) {
-      classPath = jarFile.getManifest().getMainAttributes().getValue(Attributes.Name.CLASS_PATH);
-    }
-    if (classPath != null) {
-      Predicate<String> isSnapshot = name -> name.contains("SNAPSHOT");
-      List<String> allDependencies = Splitter.onPattern("\\s+").splitToList(classPath.trim());
-      List<Path> nonSnapshotDependencies =
-          allDependencies
-              .stream()
-              .filter(isSnapshot.negate())
-              .map(Paths::get)
-              .collect(Collectors.toList());
-      List<Path> snapshotDependencies =
-          allDependencies.stream().filter(isSnapshot).map(Paths::get).collect(Collectors.toList());
-      Path jarParent = jarPath.getParent() == null ? Paths.get("") : jarPath.getParent();
-      if (!nonSnapshotDependencies.isEmpty()) {
-        FileEntriesLayer.Builder nonSnapshotDependenciesLayerBuilder =
-            FileEntriesLayer.builder().setName(DEPENDENCIES);
-        nonSnapshotDependencies.forEach(
-            path ->
-                addDependency(
-                    nonSnapshotDependenciesLayerBuilder,
-                    jarParent.resolve(path),
-                    APP_ROOT.resolve("dependencies").resolve(path.getFileName())));
-        layers.add(nonSnapshotDependenciesLayerBuilder.build());
-      }
-      if (!snapshotDependencies.isEmpty()) {
-        FileEntriesLayer.Builder snapshotDependenciesLayerBuilder =
-            FileEntriesLayer.builder().setName(SNAPSHOT_DEPENDENCIES);
-        snapshotDependencies.forEach(
-            path ->
-                addDependency(
-                    snapshotDependenciesLayerBuilder,
-                    jarParent.resolve(path),
-                    APP_ROOT.resolve("dependencies").resolve(path.getFileName())));
-        layers.add(snapshotDependenciesLayerBuilder.build());
-      }
-    }
+  static List<FileEntriesLayer> createLayersForExplodedStandard(Path jarPath, Path tempDirPath)
+      throws IOException {
+    // Add dependencies layers.
+    List<FileEntriesLayer> layers = getDependenciesLayers(jarPath, ProcessingMode.exploded);
 
     // Determine class and resource files in the directory containing jar contents and create
     // FileEntriesLayer for each type of layer (classes or resources), while maintaining the
     // file's original project structure.
+    Path localExplodedJarRoot = tempDirPath;
+    ZipUtil.unzip(jarPath, localExplodedJarRoot);
     Predicate<Path> isClassFile = path -> path.getFileName().toString().endsWith(".class");
     Predicate<Path> isResourceFile = isClassFile.negate();
     FileEntriesLayer classesLayer =
@@ -146,6 +105,29 @@ public class JarModeProcessor {
 
     layers.add(resourcesLayer);
     layers.add(classesLayer);
+    return layers;
+  }
+
+  /**
+   * Creates layers for dependencies, snapshot dependencies and the jar itself on container for a
+   * standard jar.
+   *
+   * @param jarPath path to jar file
+   * @return list of {@link FileEntriesLayer}
+   * @throws IOException if I/O error occurs when opening the jar file
+   */
+  static List<FileEntriesLayer> createLayersForPackagedStandard(Path jarPath) throws IOException {
+    // Add dependencies layers.
+    List<FileEntriesLayer> layers = getDependenciesLayers(jarPath, ProcessingMode.packaged);
+
+    // Add layer for jar.
+    FileEntriesLayer jarLayer =
+        FileEntriesLayer.builder()
+            .setName(JAR)
+            .addEntry(jarPath, APP_ROOT.resolve(jarPath.getFileName()))
+            .build();
+    layers.add(jarLayer);
+
     return layers;
   }
 
@@ -163,11 +145,91 @@ public class JarModeProcessor {
           jarFile.getManifest().getMainAttributes().getValue(Attributes.Name.MAIN_CLASS);
       if (mainClass == null) {
         throw new IllegalArgumentException(
-            "`Main-Class:` attribute for an application main class not defined in the input Jar's "
-                + "manifest (`META-INF/MANIFEST.MF` in the Jar).");
+            "`Main-Class:` attribute for an application main class not defined in the input JAR's "
+                + "manifest (`META-INF/MANIFEST.MF` in the JAR).");
       }
       String classpath = APP_ROOT + "/explodedJar:" + APP_ROOT + "/dependencies/*";
       return ImmutableList.of("java", "-cp", classpath, mainClass);
+    }
+  }
+
+  /**
+   * Computes the entrypoint for a standard jar in packaged mode.
+   *
+   * @param jarPath path to jar file
+   * @return list of {@link String} representing entrypoint
+   * @throws IOException if I/O error occurs when opening the jar file
+   */
+  static ImmutableList<String> computeEntrypointForPackagedStandard(Path jarPath)
+      throws IOException {
+    try (JarFile jarFile = new JarFile(jarPath.toFile())) {
+      String mainClass =
+          jarFile.getManifest().getMainAttributes().getValue(Attributes.Name.MAIN_CLASS);
+      if (mainClass == null) {
+        throw new IllegalArgumentException(
+            "`Main-Class:` attribute for an application main class not defined in the input JAR's "
+                + "manifest (`META-INF/MANIFEST.MF` in the JAR).");
+      }
+      return ImmutableList.of("java", "-jar", APP_ROOT + "/" + jarPath.getFileName().toString());
+    }
+  }
+
+  private static List<FileEntriesLayer> getDependenciesLayers(Path jarPath, ProcessingMode mode)
+      throws IOException {
+
+    // Get dependencies from Class-Path in the jar's manifest and add a layer each for non-snapshot
+    // and snapshot dependencies. If Class-Path is not present in the jar's manifest then skip
+    // adding the dependencies layers.
+    try (JarFile jarFile = new JarFile(jarPath.toFile())) {
+      String classPath =
+          jarFile.getManifest().getMainAttributes().getValue(Attributes.Name.CLASS_PATH);
+      if (classPath == null) {
+        return new ArrayList<>();
+      } else {
+        List<FileEntriesLayer> layers = new ArrayList<>();
+        Path jarParent = jarPath.getParent() == null ? Paths.get("") : jarPath.getParent();
+        Predicate<String> isSnapshot = name -> name.contains("SNAPSHOT");
+        List<String> allDependencies = Splitter.onPattern("\\s+").splitToList(classPath.trim());
+        List<Path> nonSnapshots =
+            allDependencies
+                .stream()
+                .filter(isSnapshot.negate())
+                .map(Paths::get)
+                .collect(Collectors.toList());
+        List<Path> snapshots =
+            allDependencies
+                .stream()
+                .filter(isSnapshot)
+                .map(Paths::get)
+                .collect(Collectors.toList());
+        if (!nonSnapshots.isEmpty()) {
+          FileEntriesLayer.Builder nonSnapshotLayer =
+              FileEntriesLayer.builder().setName(DEPENDENCIES);
+          nonSnapshots.forEach(
+              path ->
+                  addDependency(
+                      nonSnapshotLayer,
+                      jarParent.resolve(path),
+                      mode.equals(ProcessingMode.packaged)
+                          ? APP_ROOT.resolve(path)
+                          : APP_ROOT.resolve("dependencies").resolve(path.getFileName())));
+          layers.add(nonSnapshotLayer.build());
+        }
+        if (!snapshots.isEmpty()) {
+          FileEntriesLayer.Builder snapshotLayer =
+              FileEntriesLayer.builder().setName(SNAPSHOT_DEPENDENCIES);
+          snapshots.forEach(
+              path ->
+                  addDependency(
+                      snapshotLayer,
+                      jarParent.resolve(path),
+                      mode.equals(ProcessingMode.packaged)
+                          ? APP_ROOT.resolve(path)
+                          : APP_ROOT.resolve("dependencies").resolve(path.getFileName())));
+          layers.add(snapshotLayer.build());
+        }
+        return layers;
+      }
     }
   }
 

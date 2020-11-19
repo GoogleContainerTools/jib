@@ -59,18 +59,19 @@ public class JarCommandTest {
     assertThat(exitCode).isEqualTo(1);
     assertThat(stringWriter.toString())
         .isEqualTo(
-            "[ERROR] The file path provided is for a directory. Please provide a path to a jar file: "
+            "[ERROR] The file path provided is for a directory. Please provide a path to a JAR: "
                 + jarFile.toString()
                 + "\n");
   }
 
   @Test
-  public void testJar_toDocker() throws IOException, InterruptedException, URISyntaxException {
+  public void testJar_explodedMode_toDocker()
+      throws IOException, InterruptedException, URISyntaxException {
     Path jarPath = Paths.get(Resources.getResource("jarTest/jarWithCp.jar").toURI());
     Integer exitCode =
         new CommandLine(new JibCli())
-            .execute("--target", "docker://jib-cli-image", "jar", jarPath.toString());
-    String output = new Command("docker", "run", "--rm", "jib-cli-image").run();
+            .execute("--target", "docker://exploded-jar", "jar", jarPath.toString());
+    String output = new Command("docker", "run", "--rm", "exploded-jar").run();
     try (JarFile jarFile = new JarFile(jarPath.toFile())) {
       String classPath =
           jarFile.getManifest().getMainAttributes().getValue(Attributes.Name.CLASS_PATH);
@@ -82,13 +83,13 @@ public class JarCommandTest {
   }
 
   @Test
-  public void testNoDependencyJar_toDocker()
+  public void testNoDependencyJar_explodedMode_toDocker()
       throws IOException, InterruptedException, URISyntaxException {
     Path jarPath = Paths.get(Resources.getResource("noDependencyJar.jar").toURI());
     Integer exitCode =
         new CommandLine(new JibCli())
-            .execute("--target", "docker://cli-no-dep-jar", "jar", jarPath.toString());
-    String output = new Command("docker", "run", "--rm", "cli-no-dep-jar").run();
+            .execute("--target", "docker://exploded-no-dep-jar", "jar", jarPath.toString());
+    String output = new Command("docker", "run", "--rm", "exploded-no-dep-jar").run();
     try (JarFile jarFile = new JarFile(jarPath.toFile())) {
       String classPath =
           jarFile.getManifest().getMainAttributes().getValue(Attributes.Name.CLASS_PATH);
@@ -97,5 +98,63 @@ public class JarCommandTest {
       assertThat(exitCode).isEqualTo(0);
       assertThat(output).isEqualTo("Hello World");
     }
+  }
+
+  @Test
+  public void testJar_packagedMode_toDocker()
+      throws IOException, InterruptedException, URISyntaxException {
+    Path jarPath = Paths.get(Resources.getResource("jarTest/jarWithCp.jar").toURI());
+    Integer exitCode =
+        new CommandLine(new JibCli())
+            .execute(
+                "--target", "docker://packaged-jar", "jar", jarPath.toString(), "--mode=packaged");
+    String output = new Command("docker", "run", "--rm", "packaged-jar").run();
+    try (JarFile jarFile = new JarFile(jarPath.toFile())) {
+      String classPath =
+          jarFile.getManifest().getMainAttributes().getValue(Attributes.Name.CLASS_PATH);
+
+      assertThat(classPath).isEqualTo("dependency1.jar directory/dependency2.jar");
+      assertThat(exitCode).isEqualTo(0);
+      assertThat(output).isEqualTo("Hello World");
+    }
+  }
+
+  @Test
+  public void testNoDependencyJar_packagedMode_toDocker()
+      throws IOException, InterruptedException, URISyntaxException {
+    Path jarPath = Paths.get(Resources.getResource("noDependencyJar.jar").toURI());
+    Integer exitCode =
+        new CommandLine(new JibCli())
+            .execute(
+                "--target",
+                "docker://packaged-no-dep-jar",
+                "jar",
+                jarPath.toString(),
+                "--mode=packaged");
+    String output = new Command("docker", "run", "--rm", "packaged-no-dep-jar").run();
+    try (JarFile jarFile = new JarFile(jarPath.toFile())) {
+      String classPath =
+          jarFile.getManifest().getMainAttributes().getValue(Attributes.Name.CLASS_PATH);
+
+      assertThat(classPath).isNull();
+      assertThat(exitCode).isEqualTo(0);
+      assertThat(output).isEqualTo("Hello World");
+    }
+  }
+
+  @Test
+  public void testJar_unknownMode() {
+    CommandLine jibCli = new CommandLine(new JibCli());
+    StringWriter stringWriter = new StringWriter();
+    jibCli.setErr(new PrintWriter(stringWriter));
+
+    Integer exitCode =
+        jibCli.execute(
+            "--target", "docker://jib-cli-image", "jar", "ignored.jar", "--mode=unknown");
+
+    assertThat(exitCode).isEqualTo(2);
+    assertThat(stringWriter.toString())
+        .contains(
+            "Invalid value for option '--mode': expected one of [exploded, packaged] (case-sensitive) but was 'unknown'");
   }
 }

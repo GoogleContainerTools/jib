@@ -33,20 +33,28 @@ public class JarFiles {
    * @param jarPath path to the jar file
    * @param tempDirPath path to a temporary directory which will be used store the exploded jar's
    *     contents
+   * @param mode mode for processing jar
    * @return JibContainerBuilder
    * @throws IOException if I/O error occurs when opening the jar file or if temporary directory
    *     provided doesn't exist
    * @throws InvalidImageReferenceException if the base image reference is invalid
    */
-  public static JibContainerBuilder toJibContainerBuilder(Path jarPath, Path tempDirPath)
+  public static JibContainerBuilder toJibContainerBuilder(
+      Path jarPath, Path tempDirPath, ProcessingMode mode)
       throws IOException, InvalidImageReferenceException {
 
     // Use distroless as the base image.
     JibContainerBuilder containerBuilder = Jib.from("gcr.io/distroless/java");
 
-    List<FileEntriesLayer> layers =
-        JarModeProcessor.createExplodedModeLayersForStandardJar(jarPath, tempDirPath);
-    List<String> entrypoint = JarModeProcessor.computeEntrypointForExplodedStandard(jarPath);
+    List<FileEntriesLayer> layers;
+    List<String> entrypoint;
+    if (mode.equals(ProcessingMode.packaged)) {
+      layers = JarModeProcessor.createLayersForPackagedStandard(jarPath);
+      entrypoint = JarModeProcessor.computeEntrypointForPackagedStandard(jarPath);
+    } else {
+      layers = JarModeProcessor.createLayersForExplodedStandard(jarPath, tempDirPath);
+      entrypoint = JarModeProcessor.computeEntrypointForExplodedStandard(jarPath);
+    }
     containerBuilder.setEntrypoint(entrypoint).setFileEntriesLayers(layers);
     return containerBuilder;
   }
