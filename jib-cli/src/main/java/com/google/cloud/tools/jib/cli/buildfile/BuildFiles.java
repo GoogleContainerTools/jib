@@ -91,7 +91,7 @@ public class BuildFiles {
     JibContainerBuilder containerBuilder =
         buildFile.getFrom().isPresent()
             ? createJibContainerBuilder(
-                buildFile.getFrom().get(), buildCommandOptions, commonCliOptions, logger)
+                buildFile.getFrom().get(), commonCliOptions, logger)
             : Jib.fromScratch();
 
     buildFile.getCreationTime().ifPresent(containerBuilder::setCreationTime);
@@ -116,7 +116,6 @@ public class BuildFiles {
   //   the base image was populated as the user intended currently.
   static JibContainerBuilder createJibContainerBuilder(
       BaseImageSpec from,
-      Build buildCommandOptions,
       CommonCliOptions commonCliOptions,
       ConsoleLogger logger)
       throws InvalidImageReferenceException, FileNotFoundException {
