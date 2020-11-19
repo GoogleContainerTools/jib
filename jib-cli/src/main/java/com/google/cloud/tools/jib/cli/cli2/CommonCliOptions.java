@@ -305,10 +305,6 @@ public class CommonCliOptions {
     return Optional.empty();
   }
 
-  //  public String getName() {
-  //    return name;
-  //  }
-
   /**
    * If configured, returns a {@link Credential} created from user configured username/password.
    *
