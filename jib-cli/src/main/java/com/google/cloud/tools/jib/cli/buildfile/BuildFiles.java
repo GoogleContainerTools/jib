@@ -90,8 +90,7 @@ public class BuildFiles {
 
     JibContainerBuilder containerBuilder =
         buildFile.getFrom().isPresent()
-            ? createJibContainerBuilder(
-                buildFile.getFrom().get(), commonCliOptions, logger)
+            ? createJibContainerBuilder(buildFile.getFrom().get(), commonCliOptions, logger)
             : Jib.fromScratch();
 
     buildFile.getCreationTime().ifPresent(containerBuilder::setCreationTime);
@@ -115,9 +114,7 @@ public class BuildFiles {
   // TODO: add testing, need to do via intergration tests as there's no good way to extract out that
   //   the base image was populated as the user intended currently.
   static JibContainerBuilder createJibContainerBuilder(
-      BaseImageSpec from,
-      CommonCliOptions commonCliOptions,
-      ConsoleLogger logger)
+      BaseImageSpec from, CommonCliOptions commonCliOptions, ConsoleLogger logger)
       throws InvalidImageReferenceException, FileNotFoundException {
     String baseImageReference = from.getImage();
     if (baseImageReference.startsWith(DOCKER_DAEMON_IMAGE_PREFIX)) {

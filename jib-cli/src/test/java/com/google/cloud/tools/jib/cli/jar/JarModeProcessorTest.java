@@ -64,12 +64,12 @@ public class JarModeProcessorTest {
   }
 
   @Test
-  public void testCreateExplodedModeLayersForStandardJar_emptyJar()
+  public void testCreateLayersForExplodedStandard_emptyJar()
       throws IOException, URISyntaxException {
     Path standardJar = Paths.get(Resources.getResource(STANDARD_JAR_EMPTY).toURI());
     Path destDir = temporaryFolder.newFolder().toPath();
     List<FileEntriesLayer> layers =
-        JarModeProcessor.createExplodedModeLayersForStandardJar(standardJar, destDir);
+        JarModeProcessor.createLayersForExplodedStandard(standardJar, destDir);
 
     assertThat(layers.size()).isEqualTo(2);
 
@@ -100,25 +100,25 @@ public class JarModeProcessorTest {
   }
 
   @Test
-  public void testCreateExplodedModeLayersForStandardJar_withClassPathInManifest()
+  public void testCreateLayersForExplodedStandard_withClassPathInManifest()
       throws IOException, URISyntaxException {
     Path standardJar =
         Paths.get(Resources.getResource(STANDARD_JAR_WITH_CLASS_PATH_MANIFEST).toURI());
     Path destDir = temporaryFolder.newFolder().toPath();
     List<FileEntriesLayer> layers =
-        JarModeProcessor.createExplodedModeLayersForStandardJar(standardJar, destDir);
+        JarModeProcessor.createLayersForExplodedStandard(standardJar, destDir);
 
     assertThat(layers.size()).isEqualTo(4);
 
-    FileEntriesLayer nonSnapshotDependenciesLayer = layers.get(0);
-    FileEntriesLayer snapshotDependenciesLayer = layers.get(1);
+    FileEntriesLayer nonSnapshotLayer = layers.get(0);
+    FileEntriesLayer snapshotLayer = layers.get(1);
     FileEntriesLayer resourcesLayer = layers.get(2);
     FileEntriesLayer classesLayer = layers.get(3);
 
     // Validate dependencies layer.
-    assertThat(nonSnapshotDependenciesLayer.getName()).isEqualTo("dependencies");
+    assertThat(nonSnapshotLayer.getName()).isEqualTo("dependencies");
     assertThat(
-            nonSnapshotDependenciesLayer
+            nonSnapshotLayer
                 .getEntries()
                 .stream()
                 .map(FileEntry::getExtractionPath)
@@ -128,9 +128,9 @@ public class JarModeProcessorTest {
                 AbsoluteUnixPath.get("/app/dependencies/dependency1"),
                 AbsoluteUnixPath.get("/app/dependencies/dependency2"),
                 AbsoluteUnixPath.get("/app/dependencies/dependency4")));
-    assertThat(snapshotDependenciesLayer.getName()).isEqualTo("snapshot dependencies");
+    assertThat(snapshotLayer.getName()).isEqualTo("snapshot dependencies");
     assertThat(
-            snapshotDependenciesLayer
+            snapshotLayer
                 .getEntries()
                 .stream()
                 .map(FileEntry::getExtractionPath)
@@ -182,13 +182,13 @@ public class JarModeProcessorTest {
   }
 
   @Test
-  public void testCreateExplodedModeLayersForStandardJar_withoutClassPathInManifest()
+  public void testCreateLayersForExplodedStandard_withoutClassPathInManifest()
       throws IOException, URISyntaxException {
     Path standardJar =
         Paths.get(Resources.getResource(STANDARD_JAR_WITHOUT_CLASS_PATH_MANIFEST).toURI());
     Path destDir = temporaryFolder.newFolder().toPath();
     List<FileEntriesLayer> layers =
-        JarModeProcessor.createExplodedModeLayersForStandardJar(standardJar, destDir);
+        JarModeProcessor.createLayersForExplodedStandard(standardJar, destDir);
 
     assertThat(layers.size()).isEqualTo(2);
 
@@ -239,13 +239,12 @@ public class JarModeProcessorTest {
   }
 
   @Test
-  public void
-      testCreateExplodedModeLayersForStandardJar_withoutClassPathInManifest_containsOnlyClasses()
-          throws IOException, URISyntaxException {
+  public void testCreateLayersForExplodedStandard_withoutClassPathInManifest_containsOnlyClasses()
+      throws IOException, URISyntaxException {
     Path standardJar = Paths.get(Resources.getResource(STANDARD_JAR_WITH_ONLY_CLASSES).toURI());
     Path destDir = temporaryFolder.newFolder().toPath();
     List<FileEntriesLayer> layers =
-        JarModeProcessor.createExplodedModeLayersForStandardJar(standardJar, destDir);
+        JarModeProcessor.createLayersForExplodedStandard(standardJar, destDir);
 
     assertThat(layers.size()).isEqualTo(2);
 
@@ -279,14 +278,14 @@ public class JarModeProcessorTest {
   }
 
   @Test
-  public void testCreateExplodedModeLayersForStandardJar_dependencyDoesNotExist()
+  public void testCreateLayersForExplodedStandard_dependencyDoesNotExist()
       throws URISyntaxException {
     Path standardJar = Paths.get(Resources.getResource(STANDARD_SINGLE_DEPENDENCY_JAR).toURI());
     Path destDir = temporaryFolder.getRoot().toPath();
     IllegalArgumentException exception =
         assertThrows(
             IllegalArgumentException.class,
-            () -> JarModeProcessor.createExplodedModeLayersForStandardJar(standardJar, destDir));
+            () -> JarModeProcessor.createLayersForExplodedStandard(standardJar, destDir));
     assertThat(exception)
         .hasMessageThat()
         .isEqualTo(
@@ -295,7 +294,21 @@ public class JarModeProcessorTest {
   }
 
   @Test
-  public void testExplodeMode_standard_computeEntrypoint_allLayersPresent()
+  public void testComputeEntrypointForExplodedStandard_noMainClass() throws URISyntaxException {
+    Path standardJar = Paths.get(Resources.getResource(STANDARD_JAR_EMPTY).toURI());
+    IllegalArgumentException ex =
+        assertThrows(
+            IllegalArgumentException.class,
+            () -> JarModeProcessor.computeEntrypointForExplodedStandard(standardJar));
+
+    assertThat(ex)
+        .hasMessageThat()
+        .isEqualTo(
+            "`Main-Class:` attribute for an application main class not defined in the input JAR's manifest (`META-INF/MANIFEST.MF` in the JAR).");
+  }
+
+  @Test
+  public void testComputeEntrypointForExplodedStandard_withMainClass()
       throws IOException, URISyntaxException {
     Path standardJar =
         Paths.get(Resources.getResource(STANDARD_JAR_WITH_CLASS_PATH_MANIFEST).toURI());
@@ -308,29 +321,100 @@ public class JarModeProcessorTest {
   }
 
   @Test
-  public void testExplodedMode_standard_computeEntrypoint_noDependenciesLayers()
+  public void testCreateLayersForPackagedStandard_emptyJar()
       throws IOException, URISyntaxException {
-    Path standardJar =
-        Paths.get(Resources.getResource(STANDARD_JAR_WITHOUT_CLASS_PATH_MANIFEST).toURI());
-    ImmutableList<String> actualEntrypoint =
-        JarModeProcessor.computeEntrypointForExplodedStandard(standardJar);
+    Path standardJar = Paths.get(Resources.getResource(STANDARD_JAR_EMPTY).toURI());
+    List<FileEntriesLayer> layers = JarModeProcessor.createLayersForPackagedStandard(standardJar);
 
-    assertThat(actualEntrypoint)
-        .isEqualTo(
-            ImmutableList.of("java", "-cp", "/app/explodedJar:/app/dependencies/*", "HelloWorld"));
+    assertThat(layers.size()).isEqualTo(1);
+
+    FileEntriesLayer jarLayer = layers.get(0);
+    assertThat(jarLayer.getName()).isEqualTo("jar");
+    assertThat(jarLayer.getEntries().size()).isEqualTo(1);
+    assertThat(jarLayer.getEntries().get(0).getExtractionPath())
+        .isEqualTo(AbsoluteUnixPath.get("/app/emptyStandardJar.jar"));
   }
 
   @Test
-  public void testExplodedMode_standard_computeEntrypoint_noMainClass() throws URISyntaxException {
+  public void testCreateLayersForPackagedStandard_withClassPathInManifest()
+      throws IOException, URISyntaxException {
+    Path standardJar =
+        Paths.get(Resources.getResource(STANDARD_JAR_WITH_CLASS_PATH_MANIFEST).toURI());
+    List<FileEntriesLayer> layers = JarModeProcessor.createLayersForPackagedStandard(standardJar);
+
+    assertThat(layers.size()).isEqualTo(3);
+
+    FileEntriesLayer nonSnapshotLayer = layers.get(0);
+    FileEntriesLayer snapshotLayer = layers.get(1);
+    FileEntriesLayer jarLayer = layers.get(2);
+
+    // Validate dependencies layers.
+    assertThat(nonSnapshotLayer.getName()).isEqualTo("dependencies");
+    assertThat(
+            nonSnapshotLayer
+                .getEntries()
+                .stream()
+                .map(FileEntry::getExtractionPath)
+                .collect(Collectors.toList()))
+        .isEqualTo(
+            ImmutableList.of(
+                AbsoluteUnixPath.get("/app/dependency1"),
+                AbsoluteUnixPath.get("/app/dependency2"),
+                AbsoluteUnixPath.get("/app/directory/dependency4")));
+    assertThat(snapshotLayer.getName()).isEqualTo("snapshot dependencies");
+    assertThat(
+            snapshotLayer
+                .getEntries()
+                .stream()
+                .map(FileEntry::getExtractionPath)
+                .collect(Collectors.toList()))
+        .isEqualTo(ImmutableList.of(AbsoluteUnixPath.get("/app/dependency3-SNAPSHOT-1.jar")));
+
+    // Validate jar layer.
+    assertThat(jarLayer.getName()).isEqualTo("jar");
+    assertThat(jarLayer.getEntries().size()).isEqualTo(1);
+    assertThat(jarLayer.getEntries().get(0).getExtractionPath())
+        .isEqualTo(AbsoluteUnixPath.get("/app/standardJarWithClassPath.jar"));
+  }
+
+  @Test
+  public void testCreateLayersForPackagedStandard_dependencyDoesNotExist()
+      throws URISyntaxException {
+    Path standardJar = Paths.get(Resources.getResource(STANDARD_SINGLE_DEPENDENCY_JAR).toURI());
+    IllegalArgumentException exception =
+        assertThrows(
+            IllegalArgumentException.class,
+            () -> JarModeProcessor.createLayersForPackagedStandard(standardJar));
+    assertThat(exception)
+        .hasMessageThat()
+        .isEqualTo(
+            "Dependency required by the JAR (as specified in `Class-Path` in the JAR manifest) doesn't exist: "
+                + standardJar.getParent().resolve("dependency.jar"));
+  }
+
+  @Test
+  public void testComputeEntrypointForPackagedStandard_noMainClass() throws URISyntaxException {
     Path standardJar = Paths.get(Resources.getResource(STANDARD_JAR_EMPTY).toURI());
     IllegalArgumentException ex =
         assertThrows(
             IllegalArgumentException.class,
-            () -> JarModeProcessor.computeEntrypointForExplodedStandard(standardJar));
+            () -> JarModeProcessor.computeEntrypointForPackagedStandard(standardJar));
 
     assertThat(ex)
         .hasMessageThat()
         .isEqualTo(
-            "`Main-Class:` attribute for an application main class not defined in the input Jar's manifest (`META-INF/MANIFEST.MF` in the Jar).");
+            "`Main-Class:` attribute for an application main class not defined in the input JAR's manifest (`META-INF/MANIFEST.MF` in the JAR).");
+  }
+
+  @Test
+  public void testComputeEntrypointForPackagedStandard_withMainClass()
+      throws IOException, URISyntaxException {
+    Path standardJar =
+        Paths.get(Resources.getResource(STANDARD_JAR_WITH_CLASS_PATH_MANIFEST).toURI());
+    ImmutableList<String> actualEntrypoint =
+        JarModeProcessor.computeEntrypointForPackagedStandard(standardJar);
+
+    assertThat(actualEntrypoint)
+        .isEqualTo(ImmutableList.of("java", "-jar", "/app/standardJarWithClassPath.jar"));
   }
 }
