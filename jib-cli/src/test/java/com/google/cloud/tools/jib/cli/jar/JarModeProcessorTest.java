@@ -46,7 +46,7 @@ public class JarModeProcessorTest {
       "jar/standard/standardJarWithOnlyClasses.jar";
   private static final String STANDARD_JAR_EMPTY = "jar/standard/emptyStandardJar.jar";
   private static final String STANDARD_SINGLE_DEPENDENCY_JAR = "jar/standard/singleDepJar.jar";
-
+  private static final String SPRING_BOOT_FAT_LAYERED = "jar/springboot/springboot_layered.jar";
   @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
   @Test
@@ -416,5 +416,12 @@ public class JarModeProcessorTest {
 
     assertThat(actualEntrypoint)
         .isEqualTo(ImmutableList.of("java", "-jar", "/app/standardJarWithClassPath.jar"));
+  }
+
+  @Test
+  public void testCreateLayersForExplodedSpringBootFat() throws IOException, URISyntaxException {
+    Path springbootJar = Paths.get(Resources.getResource(SPRING_BOOT_FAT_LAYERED).toURI());
+    Path destDir = temporaryFolder.newFolder().toPath();
+    JarModeProcessor.createLayersForExplodedSpringBootFat(springbootJar, destDir);
   }
 }

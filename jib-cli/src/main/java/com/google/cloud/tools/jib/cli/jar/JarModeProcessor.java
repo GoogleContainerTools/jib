@@ -131,6 +131,19 @@ public class JarModeProcessor {
     return layers;
   }
 
+  static List<FileEntriesLayer> createLayersForExplodedSpringBootFat(Path jarPath, Path tempDirPath)
+      throws IOException {
+
+    try (JarFile jarFile = new JarFile(jarPath.toFile())) {
+      if (jarFile.getEntry("BOOT-INF/layers.idx") != null) {
+        
+        // Read layers.idx file
+        // Get files under each layer and if the file obj is a directory then call the addDirectooryContents method.
+      }
+    }
+    return new ArrayList<>();
+  }
+
   /**
    * Computes the entrypoint for a standard jar in exploded mode.
    *
