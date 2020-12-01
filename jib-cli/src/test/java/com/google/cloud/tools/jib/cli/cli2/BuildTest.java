@@ -45,14 +45,7 @@ public class BuildTest {
 
   @Test
   public void testParse_defaults() {
-    Build buildCommand =
-        new CommandLine(new JibCli())
-            .getSubcommands()
-            .get("build")
-            .parseArgs("-t", "test-image-ref")
-            .asCommandLineList()
-            .get(0)
-            .getCommand();
+    Build buildCommand = CommandLine.populateCommand(new Build(), "-t", "test-image-ref");
     CommonCliOptions commonCliOptions = buildCommand.commonCliOptions;
     assertThat(commonCliOptions.getTargetImage()).isEqualTo("test-image-ref");
     assertThat(commonCliOptions.getUsernamePassword()).isEmpty();
@@ -78,18 +71,13 @@ public class BuildTest {
   @Test
   public void testParse_shortFormParams() {
     Build buildCommand =
-        new CommandLine(new JibCli())
-            .getSubcommands()
-            .get("build")
-            .parseArgs(
-                "-t=test-image-ref",
-                "-c=test-context",
-                "-b=test-build-file",
-                "-p=param1=value1",
-                "-p=param2=value2")
-            .asCommandLineList()
-            .get(0)
-            .getCommand();
+        CommandLine.populateCommand(
+            new Build(),
+            "-t=test-image-ref",
+            "-c=test-context",
+            "-b=test-build-file",
+            "-p=param1=value1",
+            "-p=param2=value2");
     CommonCliOptions commonCliOptions = buildCommand.commonCliOptions;
     assertThat(commonCliOptions.getTargetImage()).isEqualTo("test-image-ref");
     assertThat(commonCliOptions.getUsernamePassword()).isEmpty();
@@ -119,27 +107,22 @@ public class BuildTest {
     // this test does not check credential helpers, scroll down for specialized credential helper
     // tests
     Build buildCommand =
-        new CommandLine(new JibCli())
-            .getSubcommands()
-            .get("build")
-            .parseArgs(
-                "--target=test-image-ref",
-                "--context=test-context",
-                "--build-file=test-build-file",
-                "--parameter=param1=value1",
-                "--parameter=param2=value2",
-                "--additional-tags=tag1,tag2,tag3",
-                "--allow-insecure-registries",
-                "--send-credentials-over-http",
-                "--application-cache=test-application-cache",
-                "--base-image-cache=test-base-image-cache",
-                "--verbosity=info",
-                "--stacktrace",
-                "--http-trace",
-                "--serialize")
-            .asCommandLineList()
-            .get(0)
-            .getCommand();
+        CommandLine.populateCommand(
+            new Build(),
+            "--target=test-image-ref",
+            "--context=test-context",
+            "--build-file=test-build-file",
+            "--parameter=param1=value1",
+            "--parameter=param2=value2",
+            "--additional-tags=tag1,tag2,tag3",
+            "--allow-insecure-registries",
+            "--send-credentials-over-http",
+            "--application-cache=test-application-cache",
+            "--base-image-cache=test-base-image-cache",
+            "--verbosity=info",
+            "--stacktrace",
+            "--http-trace",
+            "--serialize");
     CommonCliOptions commonCliOptions = buildCommand.commonCliOptions;
     assertThat(commonCliOptions.getTargetImage()).isEqualTo("test-image-ref");
     assertThat(commonCliOptions.getUsernamePassword()).isEmpty();
@@ -168,14 +151,8 @@ public class BuildTest {
   @Test
   public void testParse_buildFileDefaultForContext() {
     Build buildCommand =
-        new CommandLine(new JibCli())
-            .getSubcommands()
-            .get("build")
-            .parseArgs("--target", "test-image-ref", "--context", "test-context")
-            .asCommandLineList()
-            .get(0)
-            .getCommand();
-
+        CommandLine.populateCommand(
+            new Build(), "--target", "test-image-ref", "--context", "test-context");
     assertThat(buildCommand.getBuildFile()).isEqualTo(Paths.get("test-context/jib.yaml"));
     assertThat(buildCommand.getContextRoot()).isEqualTo(Paths.get("test-context"));
   }
@@ -183,13 +160,8 @@ public class BuildTest {
   @Test
   public void testParse_credentialHelper() {
     Build buildCommand =
-        new CommandLine(new JibCli())
-            .getSubcommands()
-            .get("build")
-            .parseArgs("--target=test-image-ref", "--credential-helper=test-cred-helper")
-            .asCommandLineList()
-            .get(0)
-            .getCommand();
+        CommandLine.populateCommand(
+            new Build(), "--target=test-image-ref", "--credential-helper=test-cred-helper");
     CommonCliOptions commonCliOptions = buildCommand.commonCliOptions;
     assertThat(commonCliOptions.getCredentialHelper()).hasValue("test-cred-helper");
     assertThat(commonCliOptions.getToCredentialHelper()).isEmpty();
@@ -202,13 +174,8 @@ public class BuildTest {
   @Test
   public void testParse_toCredentialHelper() {
     Build buildCommand =
-        new CommandLine(new JibCli())
-            .getSubcommands()
-            .get("build")
-            .parseArgs("--target=test-image-ref", "--to-credential-helper=test-cred-helper")
-            .asCommandLineList()
-            .get(0)
-            .getCommand();
+        CommandLine.populateCommand(
+            new Build(), "--target=test-image-ref", "--to-credential-helper=test-cred-helper");
     CommonCliOptions commonCliOptions = buildCommand.commonCliOptions;
 
     assertThat(commonCliOptions.getCredentialHelper()).isEmpty();
@@ -222,13 +189,8 @@ public class BuildTest {
   @Test
   public void testParse_fromCredentialHelper() {
     Build buildCommand =
-        new CommandLine(new JibCli())
-            .getSubcommands()
-            .get("build")
-            .parseArgs("--target=test-image-ref", "--from-credential-helper=test-cred-helper")
-            .asCommandLineList()
-            .get(0)
-            .getCommand();
+        CommandLine.populateCommand(
+            new Build(), "--target=test-image-ref", "--from-credential-helper=test-cred-helper");
     CommonCliOptions commonCliOptions = buildCommand.commonCliOptions;
 
     assertThat(commonCliOptions.getCredentialHelper()).isEmpty();
@@ -242,14 +204,11 @@ public class BuildTest {
   @Test
   public void testParse_usernamePassword() {
     Build buildCommand =
-        new CommandLine(new JibCli())
-            .getSubcommands()
-            .get("build")
-            .parseArgs(
-                "--target=test-image-ref", "--username=test-username", "--password=test-password")
-            .asCommandLineList()
-            .get(0)
-            .getCommand();
+        CommandLine.populateCommand(
+            new Build(),
+            "--target=test-image-ref",
+            "--username=test-username",
+            "--password=test-password");
     CommonCliOptions commonCliOptions = buildCommand.commonCliOptions;
 
     assertThat(commonCliOptions.getCredentialHelper()).isEmpty();
@@ -264,16 +223,11 @@ public class BuildTest {
   @Test
   public void testParse_toUsernamePassword() {
     Build buildCommand =
-        new CommandLine(new JibCli())
-            .getSubcommands()
-            .get("build")
-            .parseArgs(
-                "--target=test-image-ref",
-                "--to-username=test-username",
-                "--to-password=test-password")
-            .asCommandLineList()
-            .get(0)
-            .getCommand();
+        CommandLine.populateCommand(
+            new Build(),
+            "--target=test-image-ref",
+            "--to-username=test-username",
+            "--to-password=test-password");
     CommonCliOptions commonCliOptions = buildCommand.commonCliOptions;
     assertThat(commonCliOptions.getCredentialHelper()).isEmpty();
     assertThat(commonCliOptions.getToCredentialHelper()).isEmpty();
@@ -287,16 +241,11 @@ public class BuildTest {
   @Test
   public void testParse_fromUsernamePassword() {
     Build buildCommand =
-        new CommandLine(new JibCli())
-            .getSubcommands()
-            .get("build")
-            .parseArgs(
-                "--target=test-image-ref",
-                "--from-username=test-username",
-                "--from-password=test-password")
-            .asCommandLineList()
-            .get(0)
-            .getCommand();
+        CommandLine.populateCommand(
+            new Build(),
+            "--target=test-image-ref",
+            "--from-username=test-username",
+            "--from-password=test-password");
     CommonCliOptions commonCliOptions = buildCommand.commonCliOptions;
 
     assertThat(commonCliOptions.getCredentialHelper()).isEmpty();
@@ -311,18 +260,13 @@ public class BuildTest {
   @Test
   public void testParse_toAndFromUsernamePassword() {
     Build buildCommand =
-        new CommandLine(new JibCli())
-            .getSubcommands()
-            .get("build")
-            .parseArgs(
-                "--target=test-image-ref",
-                "--to-username=test-username-1",
-                "--to-password=test-password-1",
-                "--from-username=test-username-2",
-                "--from-password=test-password-2")
-            .asCommandLineList()
-            .get(0)
-            .getCommand();
+        CommandLine.populateCommand(
+            new Build(),
+            "--target=test-image-ref",
+            "--to-username=test-username-1",
+            "--to-password=test-password-1",
+            "--from-username=test-username-2",
+            "--from-password=test-password-2");
     CommonCliOptions commonCliOptions = buildCommand.commonCliOptions;
 
     assertThat(commonCliOptions.getCredentialHelper()).isEmpty();
@@ -338,16 +282,11 @@ public class BuildTest {
   @Test
   public void testParse_toAndFromCredentialHelper() {
     Build buildCommand =
-        new CommandLine(new JibCli())
-            .getSubcommands()
-            .get("build")
-            .parseArgs(
-                "--target=test-image-ref",
-                "--to-credential-helper=to-test-helper",
-                "--from-credential-helper=from-test-helper")
-            .asCommandLineList()
-            .get(0)
-            .getCommand();
+        CommandLine.populateCommand(
+            new Build(),
+            "--target=test-image-ref",
+            "--to-credential-helper=to-test-helper",
+            "--from-credential-helper=from-test-helper");
     CommonCliOptions commonCliOptions = buildCommand.commonCliOptions;
 
     assertThat(commonCliOptions.getCredentialHelper()).isEmpty();
@@ -361,17 +300,12 @@ public class BuildTest {
   @Test
   public void testParse_toUsernamePasswordAndFromCredentialHelper() {
     Build buildCommand =
-        new CommandLine(new JibCli())
-            .getSubcommands()
-            .get("build")
-            .parseArgs(
-                "--target=test-image-ref",
-                "--to-username=test-username",
-                "--to-password=test-password",
-                "--from-credential-helper=test-cred-helper")
-            .asCommandLineList()
-            .get(0)
-            .getCommand();
+        CommandLine.populateCommand(
+            new Build(),
+            "--target=test-image-ref",
+            "--to-username=test-username",
+            "--to-password=test-password",
+            "--from-credential-helper=test-cred-helper");
     CommonCliOptions commonCliOptions = buildCommand.commonCliOptions;
 
     assertThat(commonCliOptions.getCredentialHelper()).isEmpty();
@@ -386,17 +320,12 @@ public class BuildTest {
   @Test
   public void testParse_toCredentialHelperAndFromUsernamePassword() {
     Build buildCommand =
-        new CommandLine(new JibCli())
-            .getSubcommands()
-            .get("build")
-            .parseArgs(
-                "--target=test-image-ref",
-                "--to-credential-helper=test-cred-helper",
-                "--from-username=test-username",
-                "--from-password=test-password")
-            .asCommandLineList()
-            .get(0)
-            .getCommand();
+        CommandLine.populateCommand(
+            new Build(),
+            "--target=test-image-ref",
+            "--to-credential-helper=test-cred-helper",
+            "--from-username=test-username",
+            "--from-password=test-password");
     CommonCliOptions commonCliOptions = buildCommand.commonCliOptions;
 
     assertThat(commonCliOptions.getCredentialHelper()).isEmpty();
@@ -423,10 +352,8 @@ public class BuildTest {
         assertThrows(
             MissingParameterException.class,
             () ->
-                new CommandLine(new JibCli())
-                    .getSubcommands()
-                    .get("build")
-                    .parseArgs("--target", "test-image-ref", usernameField, "test-username"));
+                CommandLine.populateCommand(
+                    new Build(), "--target", "test-image-ref", usernameField, "test-username"));
     assertThat(mpe.getMessage()).isEqualTo("Error: Missing required argument(s): " + passwordField);
   }
 
@@ -437,10 +364,8 @@ public class BuildTest {
         assertThrows(
             MissingParameterException.class,
             () ->
-                new CommandLine(new JibCli())
-                    .getSubcommands()
-                    .get("build")
-                    .parseArgs("--target", "test-image-ref", passwordField, "test-password"));
+                CommandLine.populateCommand(
+                    new Build(), "--target", "test-image-ref", passwordField, "test-password"));
     assertThat(mpe.getMessage())
         .isEqualTo("Error: Missing required argument(s): " + usernameField + "=<username>");
   }
@@ -468,10 +393,8 @@ public class BuildTest {
         assertThrows(
             CommandLine.MutuallyExclusiveArgsException.class,
             () ->
-                new CommandLine(new JibCli())
-                    .getSubcommands()
-                    .get("build")
-                    .parseArgs(ArrayUtils.add(authArgs, "--target=ignored")));
+                CommandLine.populateCommand(
+                    new Build(), ArrayUtils.add(authArgs, "--target=ignored")));
     assertThat(meae)
         .hasMessageThat()
         .containsMatch("^Error: (--(from-|to-)?credential-helper|\\[--username)");
@@ -479,15 +402,7 @@ public class BuildTest {
 
   @Test
   public void testValidate_nameMissingFail() {
-    Build buildCommand =
-        new CommandLine(new JibCli())
-            .getSubcommands()
-            .get("build")
-            .parseArgs("--target=tar://sometar.tar")
-            .asCommandLineList()
-            .get(0)
-            .getCommand();
-
+    Build buildCommand = CommandLine.populateCommand(new Build(), "--target=tar://sometar.tar");
     CommandLine.ParameterException pex =
         assertThrows(CommandLine.ParameterException.class, buildCommand::validate);
     assertThat(pex.getMessage())
@@ -497,14 +412,8 @@ public class BuildTest {
   @Test
   public void testValidate_pass() {
     Build buildCommand =
-        new CommandLine(new JibCli())
-            .getSubcommands()
-            .get("build")
-            .parseArgs("--target=tar://sometar.tar", "--name=test.io/test/test")
-            .asCommandLineList()
-            .get(0)
-            .getCommand();
-
+        CommandLine.populateCommand(
+            new Build(), "--target=tar://sometar.tar", "--name=test.io/test/test");
     buildCommand.validate();
     // pass
   }

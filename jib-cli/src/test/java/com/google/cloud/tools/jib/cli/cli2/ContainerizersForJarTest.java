@@ -56,15 +56,7 @@ public class ContainerizersForJarTest {
   @Test
   public void testApplyConfiguration_defaults()
       throws InvalidImageReferenceException, FileNotFoundException {
-    Jar jarCommand =
-        new CommandLine(new JibCli())
-            .getSubcommands()
-            .get("jar")
-            .parseArgs("-t", "test-image-ref", REQUIRED_JAR)
-            .asCommandLineList()
-            .get(0)
-            .getCommand();
-
+    Jar jarCommand = CommandLine.populateCommand(new Jar(), "-t", "test-image-ref", REQUIRED_JAR);
     ContainerizerTestProxy containerizer =
         new ContainerizerTestProxy(Containerizers.from(jarCommand.commonCliOptions, consoleLogger));
 
@@ -86,22 +78,16 @@ public class ContainerizersForJarTest {
       throws InvalidImageReferenceException, CacheDirectoryCreationException,
           FileNotFoundException {
     Jar jarCommand =
-        new CommandLine(new JibCli())
-            .getSubcommands()
-            .get("jar")
-            .parseArgs(
-                "-t=test-image-ref",
-                "--send-credentials-over-http",
-                "--allow-insecure-registries",
-                "--base-image-cache=./bi-cache",
-                "--application-cache=./app-cache",
-                "--additional-tags=tag1,tag2",
-                "--serialize",
-                REQUIRED_JAR)
-            .asCommandLineList()
-            .get(0)
-            .getCommand();
-
+        CommandLine.populateCommand(
+            new Jar(),
+            "-t=test-image-ref",
+            "--send-credentials-over-http",
+            "--allow-insecure-registries",
+            "--base-image-cache=./bi-cache",
+            "--application-cache=./app-cache",
+            "--additional-tags=tag1,tag2",
+            "--serialize",
+            REQUIRED_JAR);
     ContainerizerTestProxy containerizer =
         new ContainerizerTestProxy(Containerizers.from(jarCommand.commonCliOptions, consoleLogger));
 
@@ -119,13 +105,8 @@ public class ContainerizersForJarTest {
   public void testFrom_dockerDaemonImage()
       throws InvalidImageReferenceException, FileNotFoundException {
     Jar jarCommand =
-        new CommandLine(new JibCli())
-            .getSubcommands()
-            .get("jar")
-            .parseArgs("-t", "docker://gcr.io/test/test-image-ref", REQUIRED_JAR)
-            .asCommandLineList()
-            .get(0)
-            .getCommand();
+        CommandLine.populateCommand(
+            new Jar(), "-t", "docker://gcr.io/test/test-image-ref", REQUIRED_JAR);
     ContainerizerTestProxy containerizer =
         new ContainerizerTestProxy(Containerizers.from(jarCommand.commonCliOptions, consoleLogger));
 
@@ -142,19 +123,11 @@ public class ContainerizersForJarTest {
   public void testFrom_tarImage() throws InvalidImageReferenceException, IOException {
     Path tarPath = temporaryFolder.getRoot().toPath().resolve("test-tar.tar");
     Jar jarCommand =
-        new CommandLine(new JibCli())
-            .getSubcommands()
-            .get("jar")
-            .parseArgs(
-                "-t",
-                "tar://" + tarPath.toAbsolutePath(),
-                "--name",
-                "gcr.io/test/test-image-ref",
-                REQUIRED_JAR)
-            .asCommandLineList()
-            .get(0)
-            .getCommand();
-
+        CommandLine.populateCommand(
+            new Jar(),
+            "-t=tar://" + tarPath.toAbsolutePath(),
+            "--name=gcr.io/test/test-image-ref",
+            REQUIRED_JAR);
     ContainerizerTestProxy containerizer =
         new ContainerizerTestProxy(Containerizers.from(jarCommand.commonCliOptions, consoleLogger));
 
@@ -170,14 +143,8 @@ public class ContainerizersForJarTest {
   @Test
   public void testFrom_registryImage() throws InvalidImageReferenceException, IOException {
     Jar jarCommand =
-        new CommandLine(new JibCli())
-            .getSubcommands()
-            .get("jar")
-            .parseArgs("-t", "registry://gcr.io/test/test-image-ref", REQUIRED_JAR)
-            .asCommandLineList()
-            .get(0)
-            .getCommand();
-
+        CommandLine.populateCommand(
+            new Jar(), "-t", "registry://gcr.io/test/test-image-ref", REQUIRED_JAR);
     ContainerizerTestProxy containerizer =
         new ContainerizerTestProxy(Containerizers.from(jarCommand.commonCliOptions, consoleLogger));
 

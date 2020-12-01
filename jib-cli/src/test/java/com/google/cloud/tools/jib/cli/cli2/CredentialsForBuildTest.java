@@ -53,13 +53,7 @@ public class CredentialsForBuildTest {
   @Parameters(method = "paramsToNone")
   public void testGetToCredentialRetriever_none(String[] args) throws FileNotFoundException {
     Build buildCommand =
-        new CommandLine(new JibCli())
-            .getSubcommands()
-            .get("build")
-            .parseArgs(ArrayUtils.addAll(DEFAULT_ARGS, args))
-            .asCommandLineList()
-            .get(0)
-            .getCommand();
+        CommandLine.populateCommand(new Build(), ArrayUtils.addAll(DEFAULT_ARGS, args));
     Credentials.getToCredentialRetrievers(
         buildCommand.commonCliOptions, defaultCredentialRetrievers);
     Mockito.verify(defaultCredentialRetrievers).asList();
@@ -77,14 +71,7 @@ public class CredentialsForBuildTest {
   @Parameters(method = "paramsFromNone")
   public void testGetFromCredentialRetriever_none(String[] args) throws FileNotFoundException {
     Build buildCommand =
-        new CommandLine(new JibCli())
-            .getSubcommands()
-            .get("build")
-            .parseArgs(ArrayUtils.addAll(DEFAULT_ARGS, args))
-            .asCommandLineList()
-            .get(0)
-            .getCommand();
-
+        CommandLine.populateCommand(new Build(), ArrayUtils.addAll(DEFAULT_ARGS, args));
     Credentials.getFromCredentialRetrievers(
         buildCommand.commonCliOptions, defaultCredentialRetrievers);
     Mockito.verify(defaultCredentialRetrievers).asList();
@@ -106,13 +93,7 @@ public class CredentialsForBuildTest {
   @Parameters(method = "paramsToCredHelper")
   public void testGetToCredentialRetriever_credHelper(String[] args) throws FileNotFoundException {
     Build buildCommand =
-        new CommandLine(new JibCli())
-            .getSubcommands()
-            .get("build")
-            .parseArgs(ArrayUtils.addAll(DEFAULT_ARGS, args))
-            .asCommandLineList()
-            .get(0)
-            .getCommand();
+        CommandLine.populateCommand(new Build(), ArrayUtils.addAll(DEFAULT_ARGS, args));
     Credentials.getToCredentialRetrievers(
         buildCommand.commonCliOptions, defaultCredentialRetrievers);
     Mockito.verify(defaultCredentialRetrievers).setCredentialHelper("abc");
@@ -135,14 +116,7 @@ public class CredentialsForBuildTest {
   @Parameters(method = "paramsFromCredHelper")
   public void testGetFromCredentialHelper(String[] args) throws FileNotFoundException {
     Build buildCommand =
-        new CommandLine(new JibCli())
-            .getSubcommands()
-            .get("build")
-            .parseArgs(ArrayUtils.addAll(DEFAULT_ARGS, args))
-            .asCommandLineList()
-            .get(0)
-            .getCommand();
-
+        CommandLine.populateCommand(new Build(), ArrayUtils.addAll(DEFAULT_ARGS, args));
     Credentials.getFromCredentialRetrievers(
         buildCommand.commonCliOptions, defaultCredentialRetrievers);
     Mockito.verify(defaultCredentialRetrievers).setCredentialHelper("abc");
@@ -175,14 +149,7 @@ public class CredentialsForBuildTest {
   public void testGetToUsernamePassword(String expectedSource, String[] args)
       throws FileNotFoundException {
     Build buildCommand =
-        new CommandLine(new JibCli())
-            .getSubcommands()
-            .get("build")
-            .parseArgs(ArrayUtils.addAll(DEFAULT_ARGS, args))
-            .asCommandLineList()
-            .get(0)
-            .getCommand();
-
+        CommandLine.populateCommand(new Build(), ArrayUtils.addAll(DEFAULT_ARGS, args));
     Credentials.getToCredentialRetrievers(
         buildCommand.commonCliOptions, defaultCredentialRetrievers);
     ArgumentCaptor<Credential> captor = ArgumentCaptor.forClass(Credential.class);
@@ -223,14 +190,7 @@ public class CredentialsForBuildTest {
   public void testGetFromUsernamePassword(String expectedSource, String[] args)
       throws FileNotFoundException {
     Build buildCommand =
-        new CommandLine(new JibCli())
-            .getSubcommands()
-            .get("build")
-            .parseArgs(ArrayUtils.addAll(DEFAULT_ARGS, args))
-            .asCommandLineList()
-            .get(0)
-            .getCommand();
-
+        CommandLine.populateCommand(new Build(), ArrayUtils.addAll(DEFAULT_ARGS, args));
     Credentials.getFromCredentialRetrievers(
         buildCommand.commonCliOptions, defaultCredentialRetrievers);
     ArgumentCaptor<Credential> captor = ArgumentCaptor.forClass(Credential.class);
