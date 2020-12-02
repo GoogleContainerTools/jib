@@ -52,7 +52,6 @@ public class ManifestPullerIntegrationTest {
     RegistryClient registryClient =
         RegistryClient.factory(EventHandlers.NONE, "localhost:5000", "busybox", httpClient)
             .newRegistryClient();
-    registryClient.doPullBearerAuth();
 
     V21ManifestTemplate manifestTemplate =
         registryClient.pullManifest("latest", V21ManifestTemplate.class).getManifest();
