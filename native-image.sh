@@ -37,11 +37,12 @@ java -cp "${CLASSPATH}:${PICOCLI_JAR}:${PICOCLI_CODEGEN_JAR}" \
 #
 echo "* Generating a native image..."
 native-image --static --no-fallback --no-server \
+  --native-image-info --verbose \
+  --enable-https --enable-http \
   -H:ReflectionConfigurationFiles=picocli-reflect.json \
-  -H:ConfigurationFileDirectories=../../../../jib-cli/graalvm/ \
+  -H:ConfigurationFileDirectories=../../../../jib-cli/graalvm11/ \
   -H:+ReportExceptionStackTraces \
   -H:+ReportUnsupportedElementsAtRuntime \
-  --enable-https --enable-http \
   -cp "${CLASSPATH}" \
   "${MAIN_CLASS}" bin/jib-native
 
