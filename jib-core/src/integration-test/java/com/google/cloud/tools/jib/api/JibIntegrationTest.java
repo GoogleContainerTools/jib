@@ -299,7 +299,7 @@ public class JibIntegrationTest {
     // Should fail since Jib can't build to registry offline
     try {
       jibContainerBuilder.containerize(
-          Containerizer.to(RegistryImage.named("localhost:5000/ignored")).setOfflineMode(true));
+          Containerizer.to(RegistryImage.named("ignored")).setOfflineMode(true));
       Assert.fail();
     } catch (IllegalStateException ex) {
       Assert.assertEquals("Cannot build to a container registry in offline mode", ex.getMessage());
@@ -308,7 +308,7 @@ public class JibIntegrationTest {
     // Should fail since Jib hasn't cached the base image yet
     try {
       jibContainerBuilder.containerize(
-          Containerizer.to(DockerDaemonImage.named("localhost:5000/ignored"))
+          Containerizer.to(DockerDaemonImage.named("ignored"))
               .setBaseImageLayersCache(cacheDirectory)
               .setOfflineMode(true));
       Assert.fail();
@@ -320,7 +320,7 @@ public class JibIntegrationTest {
 
     // Run online to cache the base image
     jibContainerBuilder.containerize(
-        Containerizer.to(RegistryImage.named("localhost:5000/ignored"))
+        Containerizer.to(DockerDaemonImage.named("ignored"))
             .setBaseImageLayersCache(cacheDirectory)
             .setAllowInsecureRegistries(true));
 
