@@ -41,8 +41,7 @@ public class JarTest {
     MissingParameterException mpe =
         assertThrows(
             MissingParameterException.class,
-            () ->
-                new CommandLine(new JibCli()).getSubcommands().get("jar").parseArgs(REQUIRED_JAR));
+            () -> CommandLine.populateCommand(new Jar(), REQUIRED_JAR));
     assertThat(mpe.getMessage()).isEqualTo("Missing required option: '--target=<target-image>'");
   }
 
@@ -51,24 +50,13 @@ public class JarTest {
     MissingParameterException mpe =
         assertThrows(
             MissingParameterException.class,
-            () ->
-                new CommandLine(new JibCli())
-                    .getSubcommands()
-                    .get("jar")
-                    .parseArgs("--target=test-image-ref"));
+            () -> CommandLine.populateCommand(new Jar(), "--target=test-image-ref"));
     assertThat(mpe.getMessage()).isEqualTo("Missing required parameter: '<jarFile>'");
   }
 
   @Test
   public void testParse_defaults() {
-    Jar jarCommand =
-        new CommandLine(new JibCli())
-            .getSubcommands()
-            .get("jar")
-            .parseArgs("-t", "test-image-ref", REQUIRED_JAR)
-            .asCommandLineList()
-            .get(0)
-            .getCommand();
+    Jar jarCommand = CommandLine.populateCommand(new Jar(), "-t", "test-image-ref", REQUIRED_JAR);
     CommonCliOptions commonCliOptions = jarCommand.commonCliOptions;
     assertThat(commonCliOptions.getTargetImage()).isEqualTo("test-image-ref");
     assertThat(commonCliOptions.getUsernamePassword()).isEmpty();
@@ -90,14 +78,7 @@ public class JarTest {
 
   @Test
   public void testParse_shortFormParams() {
-    Jar jarCommand =
-        new CommandLine(new JibCli())
-            .getSubcommands()
-            .get("jar")
-            .parseArgs("-t=test-image-ref", REQUIRED_JAR)
-            .asCommandLineList()
-            .get(0)
-            .getCommand();
+    Jar jarCommand = CommandLine.populateCommand(new Jar(), "-t=test-image-ref", REQUIRED_JAR);
     CommonCliOptions commonCliOptions = jarCommand.commonCliOptions;
     assertThat(commonCliOptions.getTargetImage()).isEqualTo("test-image-ref");
     assertThat(commonCliOptions.getUsernamePassword()).isEmpty();
@@ -123,24 +104,19 @@ public class JarTest {
     // this test does not check credential helpers, scroll down for specialized credential helper
     // tests
     Jar jarCommand =
-        new CommandLine(new JibCli())
-            .getSubcommands()
-            .get("jar")
-            .parseArgs(
-                "--target=test-image-ref",
-                "--additional-tags=tag1,tag2,tag3",
-                "--allow-insecure-registries",
-                "--send-credentials-over-http",
-                "--application-cache=test-application-cache",
-                "--base-image-cache=test-base-image-cache",
-                "--verbosity=info",
-                "--stacktrace",
-                "--http-trace",
-                "--serialize",
-                REQUIRED_JAR)
-            .asCommandLineList()
-            .get(0)
-            .getCommand();
+        CommandLine.populateCommand(
+            new Jar(),
+            "--target=test-image-ref",
+            "--additional-tags=tag1,tag2,tag3",
+            "--allow-insecure-registries",
+            "--send-credentials-over-http",
+            "--application-cache=test-application-cache",
+            "--base-image-cache=test-base-image-cache",
+            "--verbosity=info",
+            "--stacktrace",
+            "--http-trace",
+            "--serialize",
+            REQUIRED_JAR);
     CommonCliOptions commonCliOptions = jarCommand.commonCliOptions;
     assertThat(commonCliOptions.getTargetImage()).isEqualTo("test-image-ref");
     assertThat(commonCliOptions.getUsernamePassword()).isEmpty();
@@ -165,14 +141,11 @@ public class JarTest {
   @Test
   public void testParse_credentialHelper() {
     Jar jarCommand =
-        new CommandLine(new JibCli())
-            .getSubcommands()
-            .get("jar")
-            .parseArgs(
-                "--target=test-image-ref", "--credential-helper=test-cred-helper", REQUIRED_JAR)
-            .asCommandLineList()
-            .get(0)
-            .getCommand();
+        CommandLine.populateCommand(
+            new Jar(),
+            "--target=test-image-ref",
+            "--credential-helper=test-cred-helper",
+            REQUIRED_JAR);
     CommonCliOptions commonCliOptions = jarCommand.commonCliOptions;
     assertThat(commonCliOptions.getCredentialHelper()).hasValue("test-cred-helper");
     assertThat(commonCliOptions.getToCredentialHelper()).isEmpty();
@@ -185,14 +158,11 @@ public class JarTest {
   @Test
   public void testParse_toCredentialHelper() {
     Jar jarCommand =
-        new CommandLine(new JibCli())
-            .getSubcommands()
-            .get("jar")
-            .parseArgs(
-                "--target=test-image-ref", "--to-credential-helper=test-cred-helper", REQUIRED_JAR)
-            .asCommandLineList()
-            .get(0)
-            .getCommand();
+        CommandLine.populateCommand(
+            new Jar(),
+            "--target=test-image-ref",
+            "--to-credential-helper=test-cred-helper",
+            REQUIRED_JAR);
     CommonCliOptions commonCliOptions = jarCommand.commonCliOptions;
 
     assertThat(commonCliOptions.getCredentialHelper()).isEmpty();
@@ -206,16 +176,11 @@ public class JarTest {
   @Test
   public void testParse_fromCredentialHelper() {
     Jar jarCommand =
-        new CommandLine(new JibCli())
-            .getSubcommands()
-            .get("jar")
-            .parseArgs(
-                "--target=test-image-ref",
-                "--from-credential-helper=test-cred-helper",
-                REQUIRED_JAR)
-            .asCommandLineList()
-            .get(0)
-            .getCommand();
+        CommandLine.populateCommand(
+            new Jar(),
+            "--target=test-image-ref",
+            "--from-credential-helper=test-cred-helper",
+            REQUIRED_JAR);
     CommonCliOptions commonCliOptions = jarCommand.commonCliOptions;
 
     assertThat(commonCliOptions.getCredentialHelper()).isEmpty();
@@ -229,17 +194,12 @@ public class JarTest {
   @Test
   public void testParse_usernamePassword() {
     Jar jarCommand =
-        new CommandLine(new JibCli())
-            .getSubcommands()
-            .get("jar")
-            .parseArgs(
-                "--target=test-image-ref",
-                "--username=test-username",
-                "--password=test-password",
-                REQUIRED_JAR)
-            .asCommandLineList()
-            .get(0)
-            .getCommand();
+        CommandLine.populateCommand(
+            new Jar(),
+            "--target=test-image-ref",
+            "--username=test-username",
+            "--password=test-password",
+            REQUIRED_JAR);
     CommonCliOptions commonCliOptions = jarCommand.commonCliOptions;
 
     assertThat(commonCliOptions.getCredentialHelper()).isEmpty();
@@ -254,17 +214,12 @@ public class JarTest {
   @Test
   public void testParse_toUsernamePassword() {
     Jar jarCommand =
-        new CommandLine(new JibCli())
-            .getSubcommands()
-            .get("jar")
-            .parseArgs(
-                "--target=test-image-ref",
-                "--to-username=test-username",
-                "--to-password=test-password",
-                REQUIRED_JAR)
-            .asCommandLineList()
-            .get(0)
-            .getCommand();
+        CommandLine.populateCommand(
+            new Jar(),
+            "--target=test-image-ref",
+            "--to-username=test-username",
+            "--to-password=test-password",
+            REQUIRED_JAR);
     CommonCliOptions commonCliOptions = jarCommand.commonCliOptions;
     assertThat(commonCliOptions.getCredentialHelper()).isEmpty();
     assertThat(commonCliOptions.getToCredentialHelper()).isEmpty();
@@ -278,17 +233,12 @@ public class JarTest {
   @Test
   public void testParse_fromUsernamePassword() {
     Jar jarCommand =
-        new CommandLine(new JibCli())
-            .getSubcommands()
-            .get("jar")
-            .parseArgs(
-                "--target=test-image-ref",
-                "--from-username=test-username",
-                "--from-password=test-password",
-                REQUIRED_JAR)
-            .asCommandLineList()
-            .get(0)
-            .getCommand();
+        CommandLine.populateCommand(
+            new Jar(),
+            "--target=test-image-ref",
+            "--from-username=test-username",
+            "--from-password=test-password",
+            REQUIRED_JAR);
     CommonCliOptions commonCliOptions = jarCommand.commonCliOptions;
 
     assertThat(commonCliOptions.getCredentialHelper()).isEmpty();
@@ -303,19 +253,14 @@ public class JarTest {
   @Test
   public void testParse_toAndFromUsernamePassword() {
     Jar jarCommand =
-        new CommandLine(new JibCli())
-            .getSubcommands()
-            .get("jar")
-            .parseArgs(
-                "--target=test-image-ref",
-                "--to-username=test-username-1",
-                "--to-password=test-password-1",
-                "--from-username=test-username-2",
-                "--from-password=test-password-2",
-                REQUIRED_JAR)
-            .asCommandLineList()
-            .get(0)
-            .getCommand();
+        CommandLine.populateCommand(
+            new Jar(),
+            "--target=test-image-ref",
+            "--to-username=test-username-1",
+            "--to-password=test-password-1",
+            "--from-username=test-username-2",
+            "--from-password=test-password-2",
+            REQUIRED_JAR);
     CommonCliOptions commonCliOptions = jarCommand.commonCliOptions;
 
     assertThat(commonCliOptions.getCredentialHelper()).isEmpty();
@@ -331,17 +276,12 @@ public class JarTest {
   @Test
   public void testParse_toAndFromCredentialHelper() {
     Jar jarCommand =
-        new CommandLine(new JibCli())
-            .getSubcommands()
-            .get("jar")
-            .parseArgs(
-                "--target=test-image-ref",
-                "--to-credential-helper=to-test-helper",
-                "--from-credential-helper=from-test-helper",
-                REQUIRED_JAR)
-            .asCommandLineList()
-            .get(0)
-            .getCommand();
+        CommandLine.populateCommand(
+            new Jar(),
+            "--target=test-image-ref",
+            "--to-credential-helper=to-test-helper",
+            "--from-credential-helper=from-test-helper",
+            REQUIRED_JAR);
     CommonCliOptions commonCliOptions = jarCommand.commonCliOptions;
 
     assertThat(commonCliOptions.getCredentialHelper()).isEmpty();
@@ -355,18 +295,13 @@ public class JarTest {
   @Test
   public void testParse_toUsernamePasswordAndFromCredentialHelper() {
     Jar jarCommand =
-        new CommandLine(new JibCli())
-            .getSubcommands()
-            .get("jar")
-            .parseArgs(
-                "--target=test-image-ref",
-                "--to-username=test-username",
-                "--to-password=test-password",
-                "--from-credential-helper=test-cred-helper",
-                REQUIRED_JAR)
-            .asCommandLineList()
-            .get(0)
-            .getCommand();
+        CommandLine.populateCommand(
+            new Jar(),
+            "--target=test-image-ref",
+            "--to-username=test-username",
+            "--to-password=test-password",
+            "--from-credential-helper=test-cred-helper",
+            REQUIRED_JAR);
     CommonCliOptions commonCliOptions = jarCommand.commonCliOptions;
 
     assertThat(commonCliOptions.getCredentialHelper()).isEmpty();
@@ -381,18 +316,13 @@ public class JarTest {
   @Test
   public void testParse_toCredentialHelperAndFromUsernamePassword() {
     Jar jarCommand =
-        new CommandLine(new JibCli())
-            .getSubcommands()
-            .get("jar")
-            .parseArgs(
-                "--target=test-image-ref",
-                "--to-credential-helper=test-cred-helper",
-                "--from-username=test-username",
-                "--from-password=test-password",
-                REQUIRED_JAR)
-            .asCommandLineList()
-            .get(0)
-            .getCommand();
+        CommandLine.populateCommand(
+            new Jar(),
+            "--target=test-image-ref",
+            "--to-credential-helper=test-cred-helper",
+            "--from-username=test-username",
+            "--from-password=test-password",
+            REQUIRED_JAR);
     CommonCliOptions commonCliOptions = jarCommand.commonCliOptions;
 
     assertThat(commonCliOptions.getCredentialHelper()).isEmpty();
@@ -419,15 +349,12 @@ public class JarTest {
         assertThrows(
             MissingParameterException.class,
             () ->
-                new CommandLine(new JibCli())
-                    .getSubcommands()
-                    .get("jar")
-                    .parseArgs(
-                        "--target",
-                        "test-image-ref",
-                        usernameField,
-                        "test-username",
-                        REQUIRED_JAR));
+                CommandLine.populateCommand(
+                    new Jar(),
+                    "--target=test-image-ref",
+                    usernameField,
+                    "test-username",
+                    REQUIRED_JAR));
     assertThat(mpe.getMessage()).isEqualTo("Error: Missing required argument(s): " + passwordField);
   }
 
@@ -438,15 +365,12 @@ public class JarTest {
         assertThrows(
             MissingParameterException.class,
             () ->
-                new CommandLine(new JibCli())
-                    .getSubcommands()
-                    .get("jar")
-                    .parseArgs(
-                        "--target",
-                        "test-image-ref",
-                        passwordField,
-                        "test-password",
-                        REQUIRED_JAR));
+                CommandLine.populateCommand(
+                    new Jar(),
+                    "--target=test-image-ref",
+                    passwordField,
+                    "test-password",
+                    REQUIRED_JAR));
     assertThat(mpe.getMessage())
         .isEqualTo("Error: Missing required argument(s): " + usernameField + "=<username>");
   }
@@ -474,10 +398,8 @@ public class JarTest {
         assertThrows(
             CommandLine.MutuallyExclusiveArgsException.class,
             () ->
-                new CommandLine(new JibCli())
-                    .getSubcommands()
-                    .get("jar")
-                    .parseArgs(ArrayUtils.addAll(authArgs, "--target=ignored", REQUIRED_JAR)));
+                CommandLine.populateCommand(
+                    new Jar(), ArrayUtils.addAll(authArgs, "--target=ignored", REQUIRED_JAR)));
     assertThat(meae)
         .hasMessageThat()
         .containsMatch("^Error: (--(from-|to-)?credential-helper|\\[--username)");
@@ -486,14 +408,7 @@ public class JarTest {
   @Test
   public void testValidate_nameMissingFail() {
     Jar jarCommand =
-        new CommandLine(new JibCli())
-            .getSubcommands()
-            .get("jar")
-            .parseArgs("--target=tar://sometar.tar", REQUIRED_JAR)
-            .asCommandLineList()
-            .get(0)
-            .getCommand();
-
+        CommandLine.populateCommand(new Jar(), "--target=tar://sometar.tar", REQUIRED_JAR);
     CommandLine.ParameterException pex =
         assertThrows(CommandLine.ParameterException.class, jarCommand.commonCliOptions::validate);
     assertThat(pex.getMessage())
@@ -503,14 +418,8 @@ public class JarTest {
   @Test
   public void testValidate_pass() {
     Jar jarCommand =
-        new CommandLine(new JibCli())
-            .getSubcommands()
-            .get("jar")
-            .parseArgs("--target=tar://sometar.tar", "--name=test.io/test/test", REQUIRED_JAR)
-            .asCommandLineList()
-            .get(0)
-            .getCommand();
-
+        CommandLine.populateCommand(
+            new Jar(), "--target=tar://sometar.tar", "--name=test.io/test/test", REQUIRED_JAR);
     jarCommand.commonCliOptions.validate();
     // pass
   }

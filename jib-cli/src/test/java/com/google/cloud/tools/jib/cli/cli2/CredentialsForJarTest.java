@@ -52,14 +52,7 @@ public class CredentialsForJarTest {
   @Test
   @Parameters(method = "paramsToNone")
   public void testGetToCredentialRetriever_none(String[] args) throws FileNotFoundException {
-    Jar jarCommand =
-        new CommandLine(new JibCli())
-            .getSubcommands()
-            .get("jar")
-            .parseArgs(ArrayUtils.addAll(DEFAULT_ARGS, args))
-            .asCommandLineList()
-            .get(0)
-            .getCommand();
+    Jar jarCommand = CommandLine.populateCommand(new Jar(), ArrayUtils.addAll(DEFAULT_ARGS, args));
     Credentials.getToCredentialRetrievers(jarCommand.commonCliOptions, defaultCredentialRetrievers);
     Mockito.verify(defaultCredentialRetrievers).asList();
     Mockito.verifyNoMoreInteractions(defaultCredentialRetrievers);
@@ -75,15 +68,7 @@ public class CredentialsForJarTest {
   @Test
   @Parameters(method = "paramsFromNone")
   public void testGetFromCredentialRetriever_none(String[] args) throws FileNotFoundException {
-    Jar jarCommand =
-        new CommandLine(new JibCli())
-            .getSubcommands()
-            .get("jar")
-            .parseArgs(ArrayUtils.addAll(DEFAULT_ARGS, args))
-            .asCommandLineList()
-            .get(0)
-            .getCommand();
-
+    Jar jarCommand = CommandLine.populateCommand(new Jar(), ArrayUtils.addAll(DEFAULT_ARGS, args));
     Credentials.getFromCredentialRetrievers(
         jarCommand.commonCliOptions, defaultCredentialRetrievers);
     Mockito.verify(defaultCredentialRetrievers).asList();
@@ -104,14 +89,7 @@ public class CredentialsForJarTest {
   @Test
   @Parameters(method = "paramsToCredHelper")
   public void testGetToCredentialRetriever_credHelper(String[] args) throws FileNotFoundException {
-    Jar jarCommand =
-        new CommandLine(new JibCli())
-            .getSubcommands()
-            .get("jar")
-            .parseArgs(ArrayUtils.addAll(DEFAULT_ARGS, args))
-            .asCommandLineList()
-            .get(0)
-            .getCommand();
+    Jar jarCommand = CommandLine.populateCommand(new Jar(), ArrayUtils.addAll(DEFAULT_ARGS, args));
     Credentials.getToCredentialRetrievers(jarCommand.commonCliOptions, defaultCredentialRetrievers);
     Mockito.verify(defaultCredentialRetrievers).setCredentialHelper("abc");
     Mockito.verify(defaultCredentialRetrievers).asList();
@@ -132,15 +110,7 @@ public class CredentialsForJarTest {
   @Test
   @Parameters(method = "paramsFromCredHelper")
   public void testGetFromCredentialHelper(String[] args) throws FileNotFoundException {
-    Jar jarCommand =
-        new CommandLine(new JibCli())
-            .getSubcommands()
-            .get("jar")
-            .parseArgs(ArrayUtils.addAll(DEFAULT_ARGS, args))
-            .asCommandLineList()
-            .get(0)
-            .getCommand();
-
+    Jar jarCommand = CommandLine.populateCommand(new Jar(), ArrayUtils.addAll(DEFAULT_ARGS, args));
     Credentials.getFromCredentialRetrievers(
         jarCommand.commonCliOptions, defaultCredentialRetrievers);
     Mockito.verify(defaultCredentialRetrievers).setCredentialHelper("abc");
@@ -172,15 +142,7 @@ public class CredentialsForJarTest {
   @Parameters(method = "paramsToUsernamePassword")
   public void testGetToUsernamePassword(String expectedSource, String[] args)
       throws FileNotFoundException {
-    Jar jarCommand =
-        new CommandLine(new JibCli())
-            .getSubcommands()
-            .get("jar")
-            .parseArgs(ArrayUtils.addAll(DEFAULT_ARGS, args))
-            .asCommandLineList()
-            .get(0)
-            .getCommand();
-
+    Jar jarCommand = CommandLine.populateCommand(new Jar(), ArrayUtils.addAll(DEFAULT_ARGS, args));
     Credentials.getToCredentialRetrievers(jarCommand.commonCliOptions, defaultCredentialRetrievers);
     ArgumentCaptor<Credential> captor = ArgumentCaptor.forClass(Credential.class);
     Mockito.verify(defaultCredentialRetrievers)
@@ -219,15 +181,7 @@ public class CredentialsForJarTest {
   @Parameters(method = "paramsFromUsernamePassword")
   public void testGetFromUsernamePassword(String expectedSource, String[] args)
       throws FileNotFoundException {
-    Jar jarCommand =
-        new CommandLine(new JibCli())
-            .getSubcommands()
-            .get("jar")
-            .parseArgs(ArrayUtils.addAll(DEFAULT_ARGS, args))
-            .asCommandLineList()
-            .get(0)
-            .getCommand();
-
+    Jar jarCommand = CommandLine.populateCommand(new Jar(), ArrayUtils.addAll(DEFAULT_ARGS, args));
     Credentials.getFromCredentialRetrievers(
         jarCommand.commonCliOptions, defaultCredentialRetrievers);
     ArgumentCaptor<Credential> captor = ArgumentCaptor.forClass(Credential.class);
