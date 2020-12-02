@@ -24,26 +24,17 @@ import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
 import java.io.IOException;
 import java.security.DigestException;
 import org.junit.Assert;
-import org.junit.BeforeClass;
-import org.junit.ClassRule;
 import org.junit.Test;
 
 /** Integration tests for {@link BlobChecker}. */
 public class BlobCheckerIntegrationTest {
-
-  @ClassRule public static LocalRegistry localRegistry = new LocalRegistry(5000);
-
-  @BeforeClass
-  public static void setUp() throws IOException, InterruptedException {
-    localRegistry.pullAndPushToLocal("busybox", "busybox");
-  }
 
   private final FailoverHttpClient httpClient = new FailoverHttpClient(true, false, ignored -> {});
 
   @Test
   public void testCheck_exists() throws IOException, RegistryException {
     RegistryClient registryClient =
-        RegistryClient.factory(EventHandlers.NONE, "localhost:5000", "busybox", httpClient)
+        RegistryClient.factory(EventHandlers.NONE, "gcr.io", "distroless/base", httpClient)
             .newRegistryClient();
     V22ManifestTemplate manifestTemplate =
         registryClient.pullManifest("latest", V22ManifestTemplate.class).getManifest();
@@ -55,7 +46,7 @@ public class BlobCheckerIntegrationTest {
   @Test
   public void testCheck_doesNotExist() throws IOException, RegistryException, DigestException {
     RegistryClient registryClient =
-        RegistryClient.factory(EventHandlers.NONE, "localhost:5000", "busybox", httpClient)
+        RegistryClient.factory(EventHandlers.NONE, "gcr.io", "distroless/base", httpClient)
             .newRegistryClient();
     DescriptorDigest fakeBlobDigest =
         DescriptorDigest.fromHash(

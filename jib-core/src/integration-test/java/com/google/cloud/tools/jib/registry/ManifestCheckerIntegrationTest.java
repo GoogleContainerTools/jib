@@ -32,7 +32,7 @@ public class ManifestCheckerIntegrationTest {
 
   /** A known manifest list sha for openjdk:11-jre-slim. */
   private static final String KNOWN_MANIFEST =
-      "sha256:8ab7b3078b01ba66b937b7fbe0b9eccf60449cc101c42e99aeefaba0e1781155";
+      "sha256:44cbdb9c24e123882d7894ba78fb6f572d2496889885a47eb4b32241a8c07a00";
 
   /** A fictitious sha to test unknown images. */
   private static final String UNKNOWN_MANIFEST =
@@ -43,10 +43,8 @@ public class ManifestCheckerIntegrationTest {
   @Test
   public void testExistingManifest() throws IOException, RegistryException {
     RegistryClient registryClient =
-        RegistryClient.factory(
-                EventHandlers.NONE, "registry-1.docker.io", "library/openjdk", httpClient)
+        RegistryClient.factory(EventHandlers.NONE, "gcr.io", "distroless/base", httpClient)
             .newRegistryClient();
-    registryClient.doPullBearerAuth();
 
     Optional<ManifestAndDigest<ManifestTemplate>> manifestDescriptor =
         registryClient.checkManifest(KNOWN_MANIFEST);
@@ -58,10 +56,8 @@ public class ManifestCheckerIntegrationTest {
   @Test
   public void testNonExistingManifest() throws IOException, RegistryException {
     RegistryClient registryClient =
-        RegistryClient.factory(
-                EventHandlers.NONE, "registry-1.docker.io", "library/openjdk", httpClient)
+        RegistryClient.factory(EventHandlers.NONE, "gcr.io", "distroless/base", httpClient)
             .newRegistryClient();
-    registryClient.doPullBearerAuth();
 
     Optional<ManifestAndDigest<ManifestTemplate>> manifestDescriptor =
         registryClient.checkManifest(UNKNOWN_MANIFEST);

@@ -30,19 +30,13 @@ import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
 import java.io.IOException;
 import java.security.DigestException;
 import org.junit.Assert;
-import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
 
 /** Integration tests for {@link ManifestPusher}. */
 public class ManifestPusherIntegrationTest {
 
-  @ClassRule public static LocalRegistry localRegistry = new LocalRegistry(5000);
-
-  @BeforeClass
-  public static void setUp() throws IOException, InterruptedException {
-    localRegistry.pullAndPushToLocal("busybox", "busybox");
-  }
+  @ClassRule public static final LocalRegistry localRegistry = new LocalRegistry(5000);
 
   private final FailoverHttpClient httpClient = new FailoverHttpClient(true, false, ignored -> {});
 
@@ -54,10 +48,10 @@ public class ManifestPusherIntegrationTest {
     ManifestTemplate manifestTemplate = registryClient.pullManifest("latest").getManifest();
 
     registryClient =
-        RegistryClient.factory(EventHandlers.NONE, "localhost:5000", "busybox", httpClient)
+        RegistryClient.factory(EventHandlers.NONE, "localhost:5000", "ignored", httpClient)
             .newRegistryClient();
     try {
-      registryClient.pushManifest((V22ManifestTemplate) manifestTemplate, "latest");
+      registryClient.pushManifest(manifestTemplate, "latest");
       Assert.fail("Pushing manifest without its BLOBs should fail");
 
     } catch (RegistryErrorException ex) {

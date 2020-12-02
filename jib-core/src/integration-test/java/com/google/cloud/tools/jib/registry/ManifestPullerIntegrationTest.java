@@ -34,15 +34,15 @@ import org.junit.Test;
 /** Integration tests for {@link ManifestPuller}. */
 public class ManifestPullerIntegrationTest {
 
-  /** A known manifest list sha for openjdk:11-jre-slim. */
+  /** A known manifest list sha for gcr.io/distroless/base. */
   public static final String KNOWN_MANIFEST_LIST_SHA =
-      "sha256:8ab7b3078b01ba66b937b7fbe0b9eccf60449cc101c42e99aeefaba0e1781155";
+      "sha256:44cbdb9c24e123882d7894ba78fb6f572d2496889885a47eb4b32241a8c07a00";
 
   @ClassRule public static LocalRegistry localRegistry = new LocalRegistry(5000);
 
   @BeforeClass
   public static void setUp() throws IOException, InterruptedException {
-    localRegistry.pullAndPushToLocal("busybox", "busybox");
+    localRegistry.pullAndPushToLocal("mirror.gcr.io/library/busybox", "busybox");
   }
 
   private final FailoverHttpClient httpClient = new FailoverHttpClient(true, false, ignored -> {});
@@ -52,6 +52,8 @@ public class ManifestPullerIntegrationTest {
     RegistryClient registryClient =
         RegistryClient.factory(EventHandlers.NONE, "localhost:5000", "busybox", httpClient)
             .newRegistryClient();
+    registryClient.doPullBearerAuth();
+
     V21ManifestTemplate manifestTemplate =
         registryClient.pullManifest("latest", V21ManifestTemplate.class).getManifest();
 
@@ -74,38 +76,32 @@ public class ManifestPullerIntegrationTest {
   @Test
   public void testPull_v22ManifestList() throws IOException, RegistryException {
     RegistryClient registryClient =
-        RegistryClient.factory(
-                EventHandlers.NONE, "registry-1.docker.io", "library/openjdk", httpClient)
+        RegistryClient.factory(EventHandlers.NONE, "gcr.io", "distroless/base", httpClient)
             .newRegistryClient();
-    registryClient.doPullBearerAuth();
 
-    // Ensure 11-jre-slim is a manifest list
-    V22ManifestListTemplate manifestListTemplate =
-        registryClient.pullManifest("11-jre-slim", V22ManifestListTemplate.class).getManifest();
-    Assert.assertEquals(2, manifestListTemplate.getSchemaVersion());
-    Assert.assertTrue(manifestListTemplate.getManifests().size() > 0);
+    // Ensure ":latest" is a manifest list
+    V22ManifestListTemplate manifestList1 =
+        registryClient.pullManifest("latest", V22ManifestListTemplate.class).getManifest();
+    Assert.assertEquals(2, manifestList1.getSchemaVersion());
+    Assert.assertTrue(manifestList1.getManifests().size() > 0);
 
-    // Generic call to 11-jre-slim pulls a manifest list
-    ManifestTemplate manifestTemplate = registryClient.pullManifest("11-jre-slim").getManifest();
-    Assert.assertEquals(2, manifestTemplate.getSchemaVersion());
-    MatcherAssert.assertThat(
-        manifestTemplate, CoreMatchers.instanceOf(V22ManifestListTemplate.class));
-
-    // Make sure we can't cast a v22ManifestTemplate to v22ManifestListTemplate in ManifestPuller
-    try {
-      registryClient.pullManifest(KNOWN_MANIFEST_LIST_SHA, V22ManifestTemplate.class);
-      Assert.fail();
-    } catch (ClassCastException ex) {
-      // pass
-    }
+    // Generic call to ":latest" pulls a manifest list
+    ManifestTemplate manifestList2 = registryClient.pullManifest("latest").getManifest();
+    Assert.assertEquals(2, manifestList2.getSchemaVersion());
+    MatcherAssert.assertThat(manifestList2, CoreMatchers.instanceOf(V22ManifestListTemplate.class));
+    Assert.assertTrue(((V22ManifestListTemplate) manifestList2).getManifests().size() > 0);
 
     // Referencing a manifest list by sha256, should return a manifest list
-    ManifestTemplate sha256ManifestList =
+    ManifestTemplate manifestList3 =
         registryClient.pullManifest(KNOWN_MANIFEST_LIST_SHA).getManifest();
-    Assert.assertEquals(2, sha256ManifestList.getSchemaVersion());
-    MatcherAssert.assertThat(
-        sha256ManifestList, CoreMatchers.instanceOf(V22ManifestListTemplate.class));
-    Assert.assertTrue(((V22ManifestListTemplate) sha256ManifestList).getManifests().size() > 0);
+    Assert.assertEquals(2, manifestList3.getSchemaVersion());
+    MatcherAssert.assertThat(manifestList3, CoreMatchers.instanceOf(V22ManifestListTemplate.class));
+    Assert.assertTrue(((V22ManifestListTemplate) manifestList3).getManifests().size() > 0);
+
+    // Call to ":latest" targeting a manifest pulls a manifest.
+    V22ManifestTemplate manifest =
+        registryClient.pullManifest("latest", V22ManifestTemplate.class).getManifest();
+    Assert.assertEquals(2, manifest.getSchemaVersion());
   }
 
   @Test
