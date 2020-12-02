@@ -22,17 +22,24 @@ import com.google.cloud.tools.jib.filesystem.DirectoryWalker;
 import com.google.cloud.tools.jib.plugins.common.ZipUtil;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Splitter;
+import com.google.common.base.Verify;
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Predicate;
 import java.util.jar.Attributes;
 import java.util.jar.JarFile;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import java.util.zip.ZipEntry;
 
 /** Process jar file contents and create layers. */
 public class JarModeProcessor {
@@ -98,10 +105,16 @@ public class JarModeProcessor {
     Predicate<Path> isResourceFile = isClassFile.negate();
     FileEntriesLayer classesLayer =
         addDirectoryContentsToLayer(
-            CLASSES, localExplodedJarRoot, isClassFile, APP_ROOT.resolve("explodedJar"));
+            localExplodedJarRoot,
+            isClassFile,
+            APP_ROOT.resolve("explodedJar"),
+            FileEntriesLayer.builder().setName(CLASSES));
     FileEntriesLayer resourcesLayer =
         addDirectoryContentsToLayer(
-            RESOURCES, localExplodedJarRoot, isResourceFile, APP_ROOT.resolve("explodedJar"));
+            localExplodedJarRoot,
+            isResourceFile,
+            APP_ROOT.resolve("explodedJar"),
+            FileEntriesLayer.builder().setName(RESOURCES));
 
     layers.add(resourcesLayer);
     layers.add(classesLayer);
@@ -134,13 +147,65 @@ public class JarModeProcessor {
   static List<FileEntriesLayer> createLayersForExplodedSpringBootFat(Path jarPath, Path tempDirPath)
       throws IOException {
 
+    ZipEntry layerIndex = null;
     try (JarFile jarFile = new JarFile(jarPath.toFile())) {
-      if (jarFile.getEntry("BOOT-INF/layers.idx") != null) {
-        
-        // Read layers.idx file
-        // Get files under each layer and if the file obj is a directory then call the addDirectooryContents method.
+      layerIndex = jarFile.getEntry("BOOT-INF/layers.idx");
+    }
+    Path localExplodedJarRoot = tempDirPath;
+    ZipUtil.unzip(jarPath, localExplodedJarRoot);
+    if (layerIndex != null) {
+      Path layerIndexPath = localExplodedJarRoot.resolve(Paths.get("BOOT-INF/layers.idx"));
+      try (Stream stream = Files.lines(layerIndexPath)) {
+        Pattern layerNamePattern = Pattern.compile("-\\s(.*):");
+        Pattern fileNamePattern = Pattern.compile("\\s\\s-(.*)");
+        List<String> contents = null;
+        List<String> layerNames = new ArrayList<>();
+        Map<String, List<String>> layers = new LinkedHashMap<>();
+        List<String> lines = (List<String>) stream.collect(Collectors.toList());
+        for (String line : lines) {
+          String cleanedUpLine = line.replace("\"", "");
+          Matcher layerMatcher = layerNamePattern.matcher(cleanedUpLine);
+          Matcher fileNameMatcher = fileNamePattern.matcher(cleanedUpLine);
+          if (layerMatcher.matches()) {
+            contents = new ArrayList<>();
+            String layerName = layerMatcher.group(1);
+            layerNames.add(layerName);
+            layers.put(layerName, contents);
+          } else if (fileNameMatcher.matches()) {
+            Verify.verifyNotNull(contents).add(fileNameMatcher.group(1).replace(" ", ""));
+          } else {
+            throw new IllegalStateException(
+                "Unable to parse layers.idx file. Please check the format of layers.idx");
+          }
+        }
+        ArrayList<FileEntriesLayer> allLayers = new ArrayList<>();
+        for (String layerKey : layerNames) {
+          FileEntriesLayer.Builder layer = FileEntriesLayer.builder().setName(layerKey);
+          for (String value : layers.getOrDefault(layerKey, new ArrayList<>())) {
+            if (value.endsWith("/")) {
+              Predicate<Path> directoryPredicate =
+                  path -> path.getParent().startsWith(localExplodedJarRoot.resolve(value));
+              addDirectoryContentsToLayer(
+                  localExplodedJarRoot, directoryPredicate, APP_ROOT.resolve(layerKey), layer);
+            } else {
+              Predicate<Path> filePredicate =
+                  path -> path.equals(localExplodedJarRoot.resolve(Paths.get(value)));
+              addDirectoryContentsToLayer(
+                  localExplodedJarRoot, filePredicate, APP_ROOT.resolve(layerKey), layer);
+            }
+          }
+          allLayers.add(layer.build());
+        }
+        return allLayers;
       }
     }
+
+    // Dependencies -- BOOT-INF/lib and doesn't contain `SNAPSHOT`
+    // Snapshot Dependencies -- BOOT-INF/lib and filename contains `SNAPSHOT`
+    // Spring Boot Loader -- loader class
+    // Resource Layer -- BOOT-INF/classes and META-INF and not .class file
+    // Classes Layer -- BOOT-INF/classes and META-INF and .class file
+
     return new ArrayList<>();
   }
 
@@ -258,12 +323,11 @@ public class JarModeProcessor {
   }
 
   private static FileEntriesLayer addDirectoryContentsToLayer(
-      String layerName,
       Path sourceRoot,
       Predicate<Path> pathFilter,
-      AbsoluteUnixPath basePathInContainer)
+      AbsoluteUnixPath basePathInContainer,
+      FileEntriesLayer.Builder builder)
       throws IOException {
-    FileEntriesLayer.Builder builder = FileEntriesLayer.builder().setName(layerName);
     new DirectoryWalker(sourceRoot)
         .filterRoot()
         .filter(path -> Files.isDirectory(path) || pathFilter.test(path))
