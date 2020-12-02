@@ -16,8 +16,6 @@
 
 package com.google.cloud.tools.jib.cli.cli2;
 
-import static com.google.cloud.tools.jib.api.Jib.TAR_IMAGE_PREFIX;
-
 import com.google.cloud.tools.jib.api.Containerizer;
 import com.google.cloud.tools.jib.api.JibContainerBuilder;
 import com.google.cloud.tools.jib.api.LogEvent.Level;
@@ -25,6 +23,7 @@ import com.google.cloud.tools.jib.cli.buildfile.BuildFiles;
 import com.google.cloud.tools.jib.cli.cli2.logging.CliLogger;
 import com.google.cloud.tools.jib.plugins.common.logging.ConsoleLogger;
 import com.google.cloud.tools.jib.plugins.common.logging.SingleThreadedExecutor;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Verify;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -45,11 +44,8 @@ public class Build implements Callable<Integer> {
 
   @CommandLine.Mixin
   @SuppressWarnings("NullAway.Init") // initialized by picocli
+  @VisibleForTesting
   CommonCliOptions commonCliOptions;
-
-  @CommandLine.ParentCommand
-  @SuppressWarnings("NullAway.Init") // initialized by picocli
-  protected JibCli globalOptions;
 
   @CommandLine.Option(
       names = {"-c", "--context"},
@@ -99,7 +95,7 @@ public class Build implements Callable<Integer> {
 
   @Override
   public Integer call() {
-    validate();
+    commonCliOptions.validate();
     SingleThreadedExecutor executor = new SingleThreadedExecutor();
     try {
       ConsoleLogger logger =
@@ -138,15 +134,5 @@ public class Build implements Callable<Integer> {
       executor.shutDownAndAwaitTermination(Duration.ofSeconds(3));
     }
     return 0;
-  }
-
-  /** Validates parameters defined in this class that could not be done declaratively. */
-  public void validate() {
-    if (commonCliOptions.getTargetImage().startsWith(TAR_IMAGE_PREFIX)
-        && commonCliOptions.getName() == null) {
-      throw new CommandLine.ParameterException(
-          spec.commandLine(),
-          "Missing option: --name must be specified when using --target=tar://....");
-    }
   }
 }

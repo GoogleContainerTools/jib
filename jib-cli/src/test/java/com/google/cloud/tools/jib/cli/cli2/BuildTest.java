@@ -489,7 +489,7 @@ public class BuildTest {
             .getCommand();
 
     CommandLine.ParameterException pex =
-        assertThrows(CommandLine.ParameterException.class, buildCommand::validate);
+        assertThrows(CommandLine.ParameterException.class, buildCommand.commonCliOptions::validate);
     assertThat(pex.getMessage())
         .isEqualTo("Missing option: --name must be specified when using --target=tar://....");
   }
@@ -505,7 +505,7 @@ public class BuildTest {
             .get(0)
             .getCommand();
 
-    buildCommand.validate();
+    buildCommand.commonCliOptions.validate();
     // pass
   }
 }

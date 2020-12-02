@@ -16,8 +16,6 @@
 
 package com.google.cloud.tools.jib.cli.cli2;
 
-import static com.google.cloud.tools.jib.api.Jib.TAR_IMAGE_PREFIX;
-
 import com.google.cloud.tools.jib.api.Containerizer;
 import com.google.cloud.tools.jib.api.JibContainerBuilder;
 import com.google.cloud.tools.jib.api.LogEvent;
@@ -27,6 +25,7 @@ import com.google.cloud.tools.jib.cli.jar.ProcessingMode;
 import com.google.cloud.tools.jib.filesystem.TempDirectoryProvider;
 import com.google.cloud.tools.jib.plugins.common.logging.ConsoleLogger;
 import com.google.cloud.tools.jib.plugins.common.logging.SingleThreadedExecutor;
+import com.google.common.annotations.VisibleForTesting;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
@@ -39,11 +38,8 @@ public class Jar implements Callable<Integer> {
 
   @CommandLine.Spec private CommandSpec spec = CommandSpec.create();
 
-  @CommandLine.ParentCommand
-  @SuppressWarnings("NullAway.Init") // initialized by picocli
-  protected JibCli globalOptions;
-
   @CommandLine.Mixin
+  @VisibleForTesting
   @SuppressWarnings("NullAway.Init") // initialized by picocli
   CommonCliOptions commonCliOptions;
 
@@ -62,7 +58,7 @@ public class Jar implements Callable<Integer> {
 
   @Override
   public Integer call() {
-    validate();
+    commonCliOptions.validate();
     SingleThreadedExecutor executor = new SingleThreadedExecutor();
     try (TempDirectoryProvider tempDirectoryProvider = new TempDirectoryProvider()) {
 
@@ -102,15 +98,5 @@ public class Jar implements Callable<Integer> {
       executor.shutDownAndAwaitTermination(Duration.ofSeconds(3));
     }
     return 0;
-  }
-
-  /** Validates parameters defined in this class that could not be done declaratively. */
-  public void validate() {
-    if (commonCliOptions.getTargetImage().startsWith(TAR_IMAGE_PREFIX)
-        && commonCliOptions.getName() == null) {
-      throw new CommandLine.ParameterException(
-          spec.commandLine(),
-          "Missing option: --name must be specified when using --target=tar://....");
-    }
   }
 }

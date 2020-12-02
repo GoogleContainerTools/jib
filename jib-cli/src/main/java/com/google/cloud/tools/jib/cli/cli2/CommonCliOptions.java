@@ -16,6 +16,8 @@
 
 package com.google.cloud.tools.jib.cli.cli2;
 
+import static com.google.cloud.tools.jib.api.Jib.TAR_IMAGE_PREFIX;
+
 import com.google.cloud.tools.jib.api.Credential;
 import com.google.cloud.tools.jib.cli.cli2.logging.ConsoleOutput;
 import com.google.cloud.tools.jib.cli.cli2.logging.Verbosity;
@@ -27,6 +29,9 @@ import java.util.Optional;
 import picocli.CommandLine;
 
 public class CommonCliOptions {
+
+  @CommandLine.Spec
+  private CommandLine.Model.CommandSpec spec = CommandLine.Model.CommandSpec.create();
 
   // Build Configuration
   @CommandLine.Option(
@@ -382,5 +387,14 @@ public class CommonCliOptions {
   public List<String> getAdditionalTags() {
     Verify.verifyNotNull(additionalTags);
     return additionalTags;
+  }
+
+  /** Validates parameters defined in this class that could not be done declaratively. */
+  public void validate() {
+    if (targetImage.startsWith(TAR_IMAGE_PREFIX) && name == null) {
+      throw new CommandLine.ParameterException(
+          spec.commandLine(),
+          "Missing option: --name must be specified when using --target=tar://....");
+    }
   }
 }

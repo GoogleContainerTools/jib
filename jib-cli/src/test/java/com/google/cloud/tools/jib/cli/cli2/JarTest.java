@@ -495,7 +495,7 @@ public class JarTest {
             .getCommand();
 
     CommandLine.ParameterException pex =
-        assertThrows(CommandLine.ParameterException.class, jarCommand::validate);
+        assertThrows(CommandLine.ParameterException.class, jarCommand.commonCliOptions::validate);
     assertThat(pex.getMessage())
         .isEqualTo("Missing option: --name must be specified when using --target=tar://....");
   }
@@ -511,7 +511,7 @@ public class JarTest {
             .get(0)
             .getCommand();
 
-    jarCommand.validate();
+    jarCommand.commonCliOptions.validate();
     // pass
   }
 }
