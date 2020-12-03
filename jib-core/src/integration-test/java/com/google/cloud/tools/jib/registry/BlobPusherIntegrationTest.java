@@ -31,14 +31,12 @@ import org.junit.Test;
 /** Integration tests for {@link BlobPusher}. */
 public class BlobPusherIntegrationTest {
 
-  @ClassRule public static LocalRegistry localRegistry = new LocalRegistry(5000);
+  @ClassRule public static final LocalRegistry localRegistry = new LocalRegistry(5000);
 
   private final FailoverHttpClient httpClient = new FailoverHttpClient(true, false, ignored -> {});
 
   @Test
-  public void testPush()
-      throws DigestException, IOException, RegistryException, InterruptedException {
-    localRegistry.pullAndPushToLocal("busybox", "busybox");
+  public void testPush() throws DigestException, IOException, RegistryException {
     Blob testBlob = Blobs.from("crepecake");
     // Known digest for 'crepecake'
     DescriptorDigest testBlobDigest =
