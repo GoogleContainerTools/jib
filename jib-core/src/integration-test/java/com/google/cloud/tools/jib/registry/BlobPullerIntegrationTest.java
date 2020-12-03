@@ -21,7 +21,7 @@ import com.google.cloud.tools.jib.api.RegistryException;
 import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.http.FailoverHttpClient;
-import com.google.cloud.tools.jib.image.json.V21ManifestTemplate;
+import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
 import com.google.common.io.ByteStreams;
 import java.io.IOException;
 import java.security.DigestException;
@@ -29,37 +29,24 @@ import java.util.concurrent.atomic.LongAdder;
 import org.hamcrest.CoreMatchers;
 import org.hamcrest.MatcherAssert;
 import org.junit.Assert;
-import org.junit.BeforeClass;
-import org.junit.ClassRule;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
 
 /** Integration tests for {@link BlobPuller}. */
 public class BlobPullerIntegrationTest {
-
-  @ClassRule public static LocalRegistry localRegistry = new LocalRegistry(5000);
-
-  @BeforeClass
-  public static void setUp() throws IOException, InterruptedException {
-    localRegistry.pullAndPushToLocal("busybox", "busybox");
-  }
-
-  @Rule public TemporaryFolder temporaryFolder = new TemporaryFolder();
 
   private final FailoverHttpClient httpClient = new FailoverHttpClient(true, false, ignored -> {});
 
   @Test
   public void testPull() throws IOException, RegistryException {
     RegistryClient registryClient =
-        RegistryClient.factory(EventHandlers.NONE, "localhost:5000", "busybox", httpClient)
+        RegistryClient.factory(EventHandlers.NONE, "gcr.io", "distroless/base", httpClient)
             .newRegistryClient();
-    V21ManifestTemplate manifestTemplate =
-        registryClient.pullManifest("latest", V21ManifestTemplate.class).getManifest();
+    V22ManifestTemplate manifestTemplate =
+        registryClient.pullManifest("latest", V22ManifestTemplate.class).getManifest();
 
-    DescriptorDigest realDigest = manifestTemplate.getLayerDigests().get(0);
+    DescriptorDigest realDigest = manifestTemplate.getLayers().get(0).getDigest();
 
-    // Pulls a layer BLOB of the busybox image.
+    // Pulls a layer BLOB of the distroless/base image.
     LongAdder totalByteCount = new LongAdder();
     LongAdder expectedSize = new LongAdder();
     Blob pulledBlob =
@@ -82,7 +69,7 @@ public class BlobPullerIntegrationTest {
             "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
 
     RegistryClient registryClient =
-        RegistryClient.factory(EventHandlers.NONE, "localhost:5000", "busybox", httpClient)
+        RegistryClient.factory(EventHandlers.NONE, "gcr.io", "distroless/base", httpClient)
             .newRegistryClient();
 
     try {
@@ -98,7 +85,7 @@ public class BlobPullerIntegrationTest {
       MatcherAssert.assertThat(
           ex.getMessage(),
           CoreMatchers.containsString(
-              "pull BLOB for localhost:5000/busybox with digest " + nonexistentDigest));
+              "pull BLOB for gcr.io/distroless/base with digest " + nonexistentDigest));
     }
   }
 }

@@ -52,7 +52,7 @@ import org.gradle.api.tasks.Optional;
  *     jvmFlags = ['-Xms512m', '-Xdebug']
  *     mainClass = 'com.mycompany.myproject.Main'
  *     args = ['arg1', 'arg2']
- *     exposedPorts = ['1000', '2000-2010', '3000']
+ *     ports = ['1000', '2000-2010', '3000']
  *     format = OCI
  *     appRoot = '/app'
  *   }
