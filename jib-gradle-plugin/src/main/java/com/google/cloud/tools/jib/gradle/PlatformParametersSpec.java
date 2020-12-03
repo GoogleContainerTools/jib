@@ -30,8 +30,8 @@ public class PlatformParametersSpec {
   @Inject
   public PlatformParametersSpec(
       ObjectFactory objectFactory, ListProperty<PlatformParameters> platforms) {
-    this.platforms = platforms;
     this.objectFactory = objectFactory;
+    this.platforms = platforms;
   }
 
   /**
