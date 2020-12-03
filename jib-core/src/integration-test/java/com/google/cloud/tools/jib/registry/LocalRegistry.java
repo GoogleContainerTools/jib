@@ -91,7 +91,7 @@ public class LocalRegistry extends ExternalResource {
               "-e",
               "REGISTRY_AUTH_HTPASSWD_PATH=/auth/htpasswd"));
     }
-    dockerTokens.add("registry:2");
+    dockerTokens.add("mirror.gcr.io/library/registry:2");
     new Command(dockerTokens).run();
     waitUntilReady();
   }
@@ -108,7 +108,7 @@ public class LocalRegistry extends ExternalResource {
   }
 
   /**
-   * Pulls an image.
+   * Pulls an image to a Docker daemon (not to this local registry).
    *
    * @param from the image reference to pull
    * @throws IOException if the pull command fails
