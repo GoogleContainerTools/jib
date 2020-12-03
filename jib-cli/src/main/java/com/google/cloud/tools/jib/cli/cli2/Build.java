@@ -89,7 +89,7 @@ public class Build implements Callable<Integer> {
   }
 
   public Map<String, String> getTemplateParameters() {
-    return Verify.verifyNotNull(templateParameters);
+    return templateParameters;
   }
 
   @Override
