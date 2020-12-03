@@ -95,47 +95,48 @@ class PullBaseImageStep implements Callable<ImagesAndRegistryClient> {
           LayerCountMismatchException, BadContainerConfigurationFormatException,
           CacheCorruptedException, CredentialRetrievalException {
     EventHandlers eventHandlers = buildContext.getEventHandlers();
-    // Skip this step if this is a scratch image
-    ImageReference imageReference = buildContext.getBaseImageConfiguration().getImage();
-    if (imageReference.isScratch()) {
-      Set<Platform> platforms = buildContext.getContainerConfiguration().getPlatforms();
-      Verify.verify(!platforms.isEmpty());
-
-      eventHandlers.dispatch(LogEvent.progress("Getting scratch base image..."));
-      ImmutableList.Builder<Image> images = ImmutableList.builder();
-      for (Platform platform : platforms) {
-        Image.Builder imageBuilder = Image.builder(buildContext.getTargetFormat());
-        imageBuilder.setArchitecture(platform.getArchitecture()).setOs(platform.getOs());
-        images.add(imageBuilder.build());
-      }
-      return new ImagesAndRegistryClient(images.build(), null);
-    }
-
-    eventHandlers.dispatch(
-        LogEvent.progress("Getting manifest for base image " + imageReference + "..."));
-
-    if (buildContext.isOffline()) {
-      List<Image> images = getCachedBaseImages();
-      if (!images.isEmpty()) {
-        return new ImagesAndRegistryClient(images, null);
-      }
-      throw new IOException(
-          "Cannot run Jib in offline mode; " + imageReference + " not found in local Jib cache");
-
-    } else if (imageReference.getDigest().isPresent()) {
-      List<Image> images = getCachedBaseImages();
-      if (!images.isEmpty()) {
-        RegistryClient noAuthRegistryClient =
-            buildContext.newBaseImageRegistryClientFactory().newRegistryClient();
-        // TODO: passing noAuthRegistryClient may be problematic. It may return 401 unauthorized if
-        // layers have to be downloaded. https://github.com/GoogleContainerTools/jib/issues/2220
-        return new ImagesAndRegistryClient(images, noAuthRegistryClient);
-      }
-    }
-
     try (ProgressEventDispatcher progressEventDispatcher =
             progressEventDispatcherFactory.create("pulling base image manifest", 2);
         TimerEventDispatcher ignored1 = new TimerEventDispatcher(eventHandlers, DESCRIPTION)) {
+
+      // Skip this step if this is a scratch image
+      ImageReference imageReference = buildContext.getBaseImageConfiguration().getImage();
+      if (imageReference.isScratch()) {
+        Set<Platform> platforms = buildContext.getContainerConfiguration().getPlatforms();
+        Verify.verify(!platforms.isEmpty());
+
+        eventHandlers.dispatch(LogEvent.progress("Getting scratch base image..."));
+        ImmutableList.Builder<Image> images = ImmutableList.builder();
+        for (Platform platform : platforms) {
+          Image.Builder imageBuilder = Image.builder(buildContext.getTargetFormat());
+          imageBuilder.setArchitecture(platform.getArchitecture()).setOs(platform.getOs());
+          images.add(imageBuilder.build());
+        }
+        return new ImagesAndRegistryClient(images.build(), null);
+      }
+
+      eventHandlers.dispatch(
+          LogEvent.progress("Getting manifest for base image " + imageReference + "..."));
+
+      if (buildContext.isOffline()) {
+        List<Image> images = getCachedBaseImages();
+        if (!images.isEmpty()) {
+          return new ImagesAndRegistryClient(images, null);
+        }
+        throw new IOException(
+            "Cannot run Jib in offline mode; " + imageReference + " not found in local Jib cache");
+
+      } else if (imageReference.getDigest().isPresent()) {
+        List<Image> images = getCachedBaseImages();
+        if (!images.isEmpty()) {
+          RegistryClient noAuthRegistryClient =
+              buildContext.newBaseImageRegistryClientFactory().newRegistryClient();
+          // TODO: passing noAuthRegistryClient may be problematic. It may return 401 unauthorized
+          // if
+          // layers have to be downloaded. https://github.com/GoogleContainerTools/jib/issues/2220
+          return new ImagesAndRegistryClient(images, noAuthRegistryClient);
+        }
+      }
 
       // First, try with no credentials. This works with public GCR images (but not Docker Hub).
       // TODO: investigate if we should just pass credentials up front. However, this involves
