@@ -28,7 +28,7 @@ import com.google.common.base.Verify;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
-import java.util.HashMap;
+import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import picocli.CommandLine;
@@ -40,7 +40,9 @@ import picocli.CommandLine.Model.CommandSpec;
     description = "Build a container")
 public class Build implements Callable<Integer> {
 
-  @CommandLine.Spec private CommandSpec spec = CommandSpec.create();
+  @CommandLine.Spec
+  @SuppressWarnings("NullAway.Init") // initialized by picocli
+  private CommandSpec spec;
 
   @CommandLine.Mixin
   @SuppressWarnings("NullAway.Init") // initialized by picocli
@@ -67,12 +69,10 @@ public class Build implements Callable<Integer> {
       paramLabel = "<name>=<value>",
       description =
           "templating parameter to inject into build file, replace $${<name>} with <value> (repeatable)")
-  @SuppressWarnings("NullAway.Init") // initialized by picocli
-  private Map<String, String> templateParameters = new HashMap<>();
+  private Map<String, String> templateParameters = Collections.emptyMap();
 
   public Path getContextRoot() {
-    Verify.verifyNotNull(contextRoot);
-    return contextRoot;
+    return Verify.verifyNotNull(contextRoot);
   }
 
   /**
@@ -89,8 +89,7 @@ public class Build implements Callable<Integer> {
   }
 
   public Map<String, String> getTemplateParameters() {
-    Verify.verifyNotNull(templateParameters);
-    return templateParameters;
+    return Verify.verifyNotNull(templateParameters);
   }
 
   @Override
