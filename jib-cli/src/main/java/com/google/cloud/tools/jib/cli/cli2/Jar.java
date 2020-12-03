@@ -25,6 +25,7 @@ import com.google.cloud.tools.jib.cli.jar.ProcessingMode;
 import com.google.cloud.tools.jib.filesystem.TempDirectoryProvider;
 import com.google.cloud.tools.jib.plugins.common.logging.ConsoleLogger;
 import com.google.cloud.tools.jib.plugins.common.logging.SingleThreadedExecutor;
+import com.google.common.annotations.VisibleForTesting;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
@@ -37,9 +38,10 @@ public class Jar implements Callable<Integer> {
 
   @CommandLine.Spec private CommandSpec spec = CommandSpec.create();
 
-  @CommandLine.ParentCommand
+  @CommandLine.Mixin
+  @VisibleForTesting
   @SuppressWarnings("NullAway.Init") // initialized by picocli
-  protected JibCli globalOptions;
+  CommonCliOptions commonCliOptions;
 
   @CommandLine.Parameters(description = "The path to the jar file (ex: path/to/my-jar.jar)")
   @SuppressWarnings("NullAway.Init") // initialized by picocli
@@ -56,14 +58,14 @@ public class Jar implements Callable<Integer> {
 
   @Override
   public Integer call() {
-    globalOptions.validate();
+    commonCliOptions.validate();
     SingleThreadedExecutor executor = new SingleThreadedExecutor();
     try (TempDirectoryProvider tempDirectoryProvider = new TempDirectoryProvider()) {
 
       ConsoleLogger logger =
           CliLogger.newLogger(
-              globalOptions.getVerbosity(),
-              globalOptions.getConsoleOutput(),
+              commonCliOptions.getVerbosity(),
+              commonCliOptions.getConsoleOutput(),
               spec.commandLine().getOut(),
               spec.commandLine().getErr(),
               executor);
@@ -80,14 +82,14 @@ public class Jar implements Callable<Integer> {
         return 1;
       }
 
-      Containerizer containerizer = Containerizers.from(globalOptions, logger);
+      Containerizer containerizer = Containerizers.from(commonCliOptions, logger);
 
       JibContainerBuilder containerBuilder =
           JarFiles.toJibContainerBuilder(jarFile, tempDirectoryProvider.newDirectory(), mode);
 
       containerBuilder.containerize(containerizer);
     } catch (Exception ex) {
-      if (globalOptions.isStacktrace()) {
+      if (commonCliOptions.isStacktrace()) {
         ex.printStackTrace();
       }
       System.err.println(ex.getClass().getName() + ": " + ex.getMessage());

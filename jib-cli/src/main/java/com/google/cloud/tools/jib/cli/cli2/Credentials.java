@@ -28,29 +28,31 @@ public class Credentials {
   /**
    * Gets credentials for a target image registry.
    *
-   * @param buildOptions The command line build options
+   * @param commonCliOptions common cli options
    * @param defaultCredentialRetrievers An initialized {@link DefaultCredentialRetrievers} to use
    * @return a list of credentials for a target image registry
    * @throws FileNotFoundException when a credential helper file cannot be found
    */
   public static List<CredentialRetriever> getToCredentialRetrievers(
-      JibCli buildOptions, DefaultCredentialRetrievers defaultCredentialRetrievers)
+      CommonCliOptions commonCliOptions, DefaultCredentialRetrievers defaultCredentialRetrievers)
       throws FileNotFoundException {
     // these are all mutually exclusive as enforced by the CLI
-    buildOptions
+    commonCliOptions
         .getUsernamePassword()
         .ifPresent(
             credential ->
                 defaultCredentialRetrievers.setKnownCredential(
                     credential, "--username/--password"));
-    buildOptions
+    commonCliOptions
         .getToUsernamePassword()
         .ifPresent(
             credential ->
                 defaultCredentialRetrievers.setKnownCredential(
                     credential, "--to-username/--to-password"));
-    buildOptions.getCredentialHelper().ifPresent(defaultCredentialRetrievers::setCredentialHelper);
-    buildOptions
+    commonCliOptions
+        .getCredentialHelper()
+        .ifPresent(defaultCredentialRetrievers::setCredentialHelper);
+    commonCliOptions
         .getToCredentialHelper()
         .ifPresent(defaultCredentialRetrievers::setCredentialHelper);
 
@@ -60,29 +62,32 @@ public class Credentials {
   /**
    * Gets credentials for a base image registry.
    *
-   * @param buildOptions The command line build options
+   * @param commonCliOptions common cli options
    * @param defaultCredentialRetrievers An initialized {@link DefaultCredentialRetrievers} to use
    * @return a list of credentials for a base image registry
    * @throws FileNotFoundException when a credential helper file cannot be found
    */
   public static List<CredentialRetriever> getFromCredentialRetrievers(
-      JibCli buildOptions, DefaultCredentialRetrievers defaultCredentialRetrievers)
+      CommonCliOptions commonCliOptions, DefaultCredentialRetrievers defaultCredentialRetrievers)
       throws FileNotFoundException {
     // these are all mutually exclusive as enforced by the CLI
-    buildOptions
+
+    commonCliOptions
         .getUsernamePassword()
         .ifPresent(
             credential ->
                 defaultCredentialRetrievers.setKnownCredential(
                     credential, "--username/--password"));
-    buildOptions
+    commonCliOptions
         .getFromUsernamePassword()
         .ifPresent(
             credential ->
                 defaultCredentialRetrievers.setKnownCredential(
                     credential, "--from-username/--from-password"));
-    buildOptions.getCredentialHelper().ifPresent(defaultCredentialRetrievers::setCredentialHelper);
-    buildOptions
+    commonCliOptions
+        .getCredentialHelper()
+        .ifPresent(defaultCredentialRetrievers::setCredentialHelper);
+    commonCliOptions
         .getFromCredentialHelper()
         .ifPresent(defaultCredentialRetrievers::setCredentialHelper);
 

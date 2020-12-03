@@ -40,7 +40,7 @@ import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
 import picocli.CommandLine;
 
-public class ContainerizersTest {
+public class ContainerizersForBuildTest {
 
   @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
   @Rule public final MockitoRule mockitoRule = MockitoJUnit.rule();
@@ -53,10 +53,10 @@ public class ContainerizersTest {
   @Test
   public void testApplyConfiguration_defaults()
       throws InvalidImageReferenceException, FileNotFoundException {
-    JibCli buildOptions = CommandLine.populateCommand(new JibCli(), "-t", "test-image-ref");
-
+    Build buildCommand = CommandLine.populateCommand(new Build(), "-t", "test-image-ref");
     ContainerizerTestProxy containerizer =
-        new ContainerizerTestProxy(Containerizers.from(buildOptions, consoleLogger));
+        new ContainerizerTestProxy(
+            Containerizers.from(buildCommand.commonCliOptions, consoleLogger));
 
     assertThat(Boolean.getBoolean(JibSystemProperties.SEND_CREDENTIALS_OVER_HTTP)).isFalse();
     assertThat(Boolean.getBoolean(JibSystemProperties.SERIALIZE)).isFalse();
@@ -75,9 +75,9 @@ public class ContainerizersTest {
   public void testApplyConfiguration_withValues()
       throws InvalidImageReferenceException, CacheDirectoryCreationException,
           FileNotFoundException {
-    JibCli buildOptions =
+    Build buildCommand =
         CommandLine.populateCommand(
-            new JibCli(),
+            new Build(),
             "-t=test-image-ref",
             "--send-credentials-over-http",
             "--allow-insecure-registries",
@@ -85,9 +85,9 @@ public class ContainerizersTest {
             "--application-cache=./app-cache",
             "--additional-tags=tag1,tag2",
             "--serialize");
-
     ContainerizerTestProxy containerizer =
-        new ContainerizerTestProxy(Containerizers.from(buildOptions, consoleLogger));
+        new ContainerizerTestProxy(
+            Containerizers.from(buildCommand.commonCliOptions, consoleLogger));
 
     assertThat(Boolean.getBoolean(JibSystemProperties.SEND_CREDENTIALS_OVER_HTTP)).isTrue();
     assertThat(Boolean.getBoolean(JibSystemProperties.SERIALIZE)).isTrue();
@@ -101,10 +101,11 @@ public class ContainerizersTest {
   @Test
   public void testFrom_dockerDaemonImage()
       throws InvalidImageReferenceException, FileNotFoundException {
-    JibCli buildOptions =
-        CommandLine.populateCommand(new JibCli(), "-t", "docker://gcr.io/test/test-image-ref");
+    Build buildCommand =
+        CommandLine.populateCommand(new Build(), "-t", "docker://gcr.io/test/test-image-ref");
     ContainerizerTestProxy containerizer =
-        new ContainerizerTestProxy(Containerizers.from(buildOptions, consoleLogger));
+        new ContainerizerTestProxy(
+            Containerizers.from(buildCommand.commonCliOptions, consoleLogger));
 
     assertThat(containerizer.getDescription()).isEqualTo("Building image to Docker daemon");
     ImageConfiguration config = containerizer.getImageConfiguration();
@@ -118,15 +119,14 @@ public class ContainerizersTest {
   @Test
   public void testFrom_tarImage() throws InvalidImageReferenceException, IOException {
     Path tarPath = temporaryFolder.getRoot().toPath().resolve("test-tar.tar");
-    JibCli buildOptions =
+    Build buildCommand =
         CommandLine.populateCommand(
-            new JibCli(),
-            "-t",
-            "tar://" + tarPath.toAbsolutePath(),
-            "--name",
-            "gcr.io/test/test-image-ref");
+            new Build(),
+            "-t=tar://" + tarPath.toAbsolutePath(),
+            "--name=gcr.io/test/test-image-ref");
     ContainerizerTestProxy containerizer =
-        new ContainerizerTestProxy(Containerizers.from(buildOptions, consoleLogger));
+        new ContainerizerTestProxy(
+            Containerizers.from(buildCommand.commonCliOptions, consoleLogger));
 
     assertThat(containerizer.getDescription()).isEqualTo("Building image tarball");
     ImageConfiguration config = containerizer.getImageConfiguration();
@@ -139,10 +139,11 @@ public class ContainerizersTest {
 
   @Test
   public void testFrom_registryImage() throws InvalidImageReferenceException, IOException {
-    JibCli buildOptions =
-        CommandLine.populateCommand(new JibCli(), "-t", "registry://gcr.io/test/test-image-ref");
+    Build buildCommand =
+        CommandLine.populateCommand(new Build(), "-t", "registry://gcr.io/test/test-image-ref");
     ContainerizerTestProxy containerizer =
-        new ContainerizerTestProxy(Containerizers.from(buildOptions, consoleLogger));
+        new ContainerizerTestProxy(
+            Containerizers.from(buildCommand.commonCliOptions, consoleLogger));
 
     // description from Containerizer.java
     assertThat(containerizer.getDescription()).isEqualTo("Building and pushing image");

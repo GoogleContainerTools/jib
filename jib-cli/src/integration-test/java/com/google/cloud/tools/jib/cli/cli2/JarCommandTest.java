@@ -39,7 +39,7 @@ public class JarCommandTest {
     StringWriter stringWriter = new StringWriter();
     jibCli.setErr(new PrintWriter(stringWriter));
 
-    Integer exitCode = jibCli.execute("--target", "docker://jib-cli-image", "jar", "unknown.jar");
+    Integer exitCode = jibCli.execute("jar", "--target", "docker://jib-cli-image", "unknown.jar");
 
     assertThat(exitCode).isEqualTo(1);
     assertThat(stringWriter.toString())
@@ -54,7 +54,7 @@ public class JarCommandTest {
 
     Path jarFile = Paths.get("/");
     Integer exitCode =
-        jibCli.execute("--target", "docker://jib-cli-image", "jar", jarFile.toString());
+        jibCli.execute("jar", "--target", "docker://jib-cli-image", jarFile.toString());
 
     assertThat(exitCode).isEqualTo(1);
     assertThat(stringWriter.toString())
@@ -70,7 +70,7 @@ public class JarCommandTest {
     Path jarPath = Paths.get(Resources.getResource("jarTest/jarWithCp.jar").toURI());
     Integer exitCode =
         new CommandLine(new JibCli())
-            .execute("--target", "docker://exploded-jar", "jar", jarPath.toString());
+            .execute("jar", "--target", "docker://exploded-jar", jarPath.toString());
     String output = new Command("docker", "run", "--rm", "exploded-jar").run();
     try (JarFile jarFile = new JarFile(jarPath.toFile())) {
       String classPath =
@@ -88,7 +88,7 @@ public class JarCommandTest {
     Path jarPath = Paths.get(Resources.getResource("noDependencyJar.jar").toURI());
     Integer exitCode =
         new CommandLine(new JibCli())
-            .execute("--target", "docker://exploded-no-dep-jar", "jar", jarPath.toString());
+            .execute("jar", "--target", "docker://exploded-no-dep-jar", jarPath.toString());
     String output = new Command("docker", "run", "--rm", "exploded-no-dep-jar").run();
     try (JarFile jarFile = new JarFile(jarPath.toFile())) {
       String classPath =
@@ -107,7 +107,7 @@ public class JarCommandTest {
     Integer exitCode =
         new CommandLine(new JibCli())
             .execute(
-                "--target", "docker://packaged-jar", "jar", jarPath.toString(), "--mode=packaged");
+                "jar", "--target", "docker://packaged-jar", jarPath.toString(), "--mode=packaged");
     String output = new Command("docker", "run", "--rm", "packaged-jar").run();
     try (JarFile jarFile = new JarFile(jarPath.toFile())) {
       String classPath =
@@ -126,9 +126,9 @@ public class JarCommandTest {
     Integer exitCode =
         new CommandLine(new JibCli())
             .execute(
+                "jar",
                 "--target",
                 "docker://packaged-no-dep-jar",
-                "jar",
                 jarPath.toString(),
                 "--mode=packaged");
     String output = new Command("docker", "run", "--rm", "packaged-no-dep-jar").run();
@@ -150,7 +150,7 @@ public class JarCommandTest {
 
     Integer exitCode =
         jibCli.execute(
-            "--target", "docker://jib-cli-image", "jar", "ignored.jar", "--mode=unknown");
+            "jar", "--target", "docker://jib-cli-image", "ignored.jar", "--mode=unknown");
 
     assertThat(exitCode).isEqualTo(2);
     assertThat(stringWriter.toString())
