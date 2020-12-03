@@ -79,28 +79,30 @@ public class ManifestPullerIntegrationTest {
             .newRegistryClient();
 
     // Ensure ":latest" is a manifest list
-    V22ManifestListTemplate manifestList1 =
+    V22ManifestListTemplate manifestListTargeted =
         registryClient.pullManifest("latest", V22ManifestListTemplate.class).getManifest();
-    Assert.assertEquals(2, manifestList1.getSchemaVersion());
-    Assert.assertTrue(manifestList1.getManifests().size() > 0);
+    Assert.assertEquals(2, manifestListTargeted.getSchemaVersion());
+    Assert.assertTrue(manifestListTargeted.getManifests().size() > 0);
 
     // Generic call to ":latest" pulls a manifest list
-    ManifestTemplate manifestList2 = registryClient.pullManifest("latest").getManifest();
-    Assert.assertEquals(2, manifestList2.getSchemaVersion());
-    MatcherAssert.assertThat(manifestList2, CoreMatchers.instanceOf(V22ManifestListTemplate.class));
-    Assert.assertTrue(((V22ManifestListTemplate) manifestList2).getManifests().size() > 0);
+    ManifestTemplate manifestListGeneric = registryClient.pullManifest("latest").getManifest();
+    Assert.assertEquals(2, manifestListGeneric.getSchemaVersion());
+    MatcherAssert.assertThat(
+        manifestListGeneric, CoreMatchers.instanceOf(V22ManifestListTemplate.class));
+    Assert.assertTrue(((V22ManifestListTemplate) manifestListGeneric).getManifests().size() > 0);
 
     // Referencing a manifest list by sha256, should return a manifest list
-    ManifestTemplate manifestList3 =
+    ManifestTemplate manifestListSha256 =
         registryClient.pullManifest(KNOWN_MANIFEST_LIST_SHA).getManifest();
-    Assert.assertEquals(2, manifestList3.getSchemaVersion());
-    MatcherAssert.assertThat(manifestList3, CoreMatchers.instanceOf(V22ManifestListTemplate.class));
-    Assert.assertTrue(((V22ManifestListTemplate) manifestList3).getManifests().size() > 0);
+    Assert.assertEquals(2, manifestListSha256.getSchemaVersion());
+    MatcherAssert.assertThat(
+        manifestListSha256, CoreMatchers.instanceOf(V22ManifestListTemplate.class));
+    Assert.assertTrue(((V22ManifestListTemplate) manifestListSha256).getManifests().size() > 0);
 
     // Call to ":latest" targeting a manifest pulls a manifest.
-    V22ManifestTemplate manifest =
+    V22ManifestTemplate manifestTargeted =
         registryClient.pullManifest("latest", V22ManifestTemplate.class).getManifest();
-    Assert.assertEquals(2, manifest.getSchemaVersion());
+    Assert.assertEquals(2, manifestTargeted.getSchemaVersion());
   }
 
   @Test
