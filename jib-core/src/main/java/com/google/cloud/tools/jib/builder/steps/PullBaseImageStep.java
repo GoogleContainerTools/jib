@@ -132,8 +132,8 @@ class PullBaseImageStep implements Callable<ImagesAndRegistryClient> {
           RegistryClient noAuthRegistryClient =
               buildContext.newBaseImageRegistryClientFactory().newRegistryClient();
           // TODO: passing noAuthRegistryClient may be problematic. It may return 401 unauthorized
-          // if
-          // layers have to be downloaded. https://github.com/GoogleContainerTools/jib/issues/2220
+          // if layers have to be downloaded.
+          // https://github.com/GoogleContainerTools/jib/issues/2220
           return new ImagesAndRegistryClient(images, noAuthRegistryClient);
         }
       }
