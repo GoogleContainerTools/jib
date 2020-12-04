@@ -165,7 +165,7 @@ public class JarModeProcessor {
 
       ArrayList<FileEntriesLayer> layers = new ArrayList<>();
 
-      // Non snapshot layer
+      // Non-snapshot layer
       Predicate<Path> isInBootInfLib =
           path -> path.getParent().startsWith(localExplodedJarRoot.resolve("BOOT-INF/lib"));
       Predicate<Path> isSnapshot = path -> path.getFileName().toString().contains("SNAPSHOT");
@@ -389,8 +389,7 @@ public class JarModeProcessor {
       //   - META-INF/
       // The predicate for the dependencies layer will be true if `path` is equal to
       // `BOOT-INF/lib/dependency1.jar` and the predicate for the `spring-boot-loader` layer will be
-      // true if
-      // `path` is in either 'BOOT-INF/classes/` or `META-INF/`.
+      // true if `path` is in either 'BOOT-INF/classes/` or `META-INF/`.
       for (String layerName : layerNames) {
         FileEntriesLayer.Builder layer = FileEntriesLayer.builder().setName(layerName);
         List<Predicate<Path>> allPredicates = new ArrayList<>();
