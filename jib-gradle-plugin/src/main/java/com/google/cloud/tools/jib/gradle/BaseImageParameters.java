@@ -22,6 +22,8 @@ import javax.inject.Inject;
 import org.gradle.api.Action;
 import org.gradle.api.model.ObjectFactory;
 import org.gradle.api.provider.ListProperty;
+import org.gradle.api.provider.Property;
+import org.gradle.api.provider.Provider;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.Nested;
 import org.gradle.api.tasks.Optional;
@@ -30,7 +32,7 @@ import org.gradle.api.tasks.Optional;
 public class BaseImageParameters {
 
   private final AuthParameters auth;
-  @Nullable private String image;
+  private Property<String> image;
   @Nullable private String credHelper;
   private final PlatformParametersSpec platformParametersSpec;
   private final ListProperty<PlatformParameters> platforms;
@@ -39,8 +41,8 @@ public class BaseImageParameters {
   public BaseImageParameters(ObjectFactory objectFactory) {
     auth = objectFactory.newInstance(AuthParameters.class, "from.auth");
     platforms = objectFactory.listProperty(PlatformParameters.class);
-    platformParametersSpec =
-        objectFactory.newInstance(PlatformParametersSpec.class, objectFactory, platforms);
+    image = objectFactory.property(String.class);
+    platformParametersSpec = objectFactory.newInstance(PlatformParametersSpec.class, platforms);
 
     PlatformParameters amd64Linux = new PlatformParameters();
     amd64Linux.setArchitecture("amd64");
@@ -66,11 +68,15 @@ public class BaseImageParameters {
     if (System.getProperty(PropertyNames.FROM_IMAGE) != null) {
       return System.getProperty(PropertyNames.FROM_IMAGE);
     }
-    return image;
+    return image.getOrNull();
   }
 
   public void setImage(String image) {
-    this.image = image;
+    this.image.set(image);
+  }
+
+  public void setImage(Provider<String> image) {
+    this.image.set(image);
   }
 
   @Input
