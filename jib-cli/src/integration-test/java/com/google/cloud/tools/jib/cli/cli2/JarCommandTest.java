@@ -35,9 +35,8 @@ public class JarCommandTest {
 
   @Test
   public void testErrorLogging_fileDoesNotExist() {
-    CommandLine jibCli = new CommandLine(new JibCli());
     StringWriter stringWriter = new StringWriter();
-    jibCli.setErr(new PrintWriter(stringWriter));
+    CommandLine jibCli = new CommandLine(new JibCli()).setErr(new PrintWriter(stringWriter));
 
     Integer exitCode = jibCli.execute("jar", "--target", "docker://jib-cli-image", "unknown.jar");
 
@@ -47,10 +46,9 @@ public class JarCommandTest {
   }
 
   @Test
-  public void testErrorLogging_directoryGiven() throws URISyntaxException {
-    CommandLine jibCli = new CommandLine(new JibCli());
+  public void testErrorLogging_directoryGiven() {
     StringWriter stringWriter = new StringWriter();
-    jibCli.setErr(new PrintWriter(stringWriter));
+    CommandLine jibCli = new CommandLine(new JibCli()).setErr(new PrintWriter(stringWriter));
 
     Path jarFile = Paths.get("/");
     Integer exitCode =
@@ -144,9 +142,8 @@ public class JarCommandTest {
 
   @Test
   public void testJar_unknownMode() {
-    CommandLine jibCli = new CommandLine(new JibCli());
     StringWriter stringWriter = new StringWriter();
-    jibCli.setErr(new PrintWriter(stringWriter));
+    CommandLine jibCli = new CommandLine(new JibCli()).setErr(new PrintWriter(stringWriter));
 
     Integer exitCode =
         jibCli.execute(

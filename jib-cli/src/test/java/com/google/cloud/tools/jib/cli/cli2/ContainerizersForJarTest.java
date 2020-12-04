@@ -43,8 +43,6 @@ import picocli.CommandLine;
 
 public class ContainerizersForJarTest {
 
-  private static String REQUIRED_JAR = "require-jar";
-
   @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
   @Rule public final MockitoRule mockitoRule = MockitoJUnit.rule();
   // Containerizers will add system properties based on cli properties
@@ -56,7 +54,7 @@ public class ContainerizersForJarTest {
   @Test
   public void testApplyConfiguration_defaults()
       throws InvalidImageReferenceException, FileNotFoundException {
-    Jar jarCommand = CommandLine.populateCommand(new Jar(), "-t", "test-image-ref", REQUIRED_JAR);
+    Jar jarCommand = CommandLine.populateCommand(new Jar(), "-t", "test-image-ref", "my-app.jar");
     ContainerizerTestProxy containerizer =
         new ContainerizerTestProxy(Containerizers.from(jarCommand.commonCliOptions, consoleLogger));
 
@@ -87,7 +85,7 @@ public class ContainerizersForJarTest {
             "--application-cache=./app-cache",
             "--additional-tags=tag1,tag2",
             "--serialize",
-            REQUIRED_JAR);
+            "my-app.jar");
     ContainerizerTestProxy containerizer =
         new ContainerizerTestProxy(Containerizers.from(jarCommand.commonCliOptions, consoleLogger));
 
@@ -106,7 +104,7 @@ public class ContainerizersForJarTest {
       throws InvalidImageReferenceException, FileNotFoundException {
     Jar jarCommand =
         CommandLine.populateCommand(
-            new Jar(), "-t", "docker://gcr.io/test/test-image-ref", REQUIRED_JAR);
+            new Jar(), "-t", "docker://gcr.io/test/test-image-ref", "my-app.jar");
     ContainerizerTestProxy containerizer =
         new ContainerizerTestProxy(Containerizers.from(jarCommand.commonCliOptions, consoleLogger));
 
@@ -127,7 +125,7 @@ public class ContainerizersForJarTest {
             new Jar(),
             "-t=tar://" + tarPath.toAbsolutePath(),
             "--name=gcr.io/test/test-image-ref",
-            REQUIRED_JAR);
+            "my-app.jar");
     ContainerizerTestProxy containerizer =
         new ContainerizerTestProxy(Containerizers.from(jarCommand.commonCliOptions, consoleLogger));
 
@@ -144,7 +142,7 @@ public class ContainerizersForJarTest {
   public void testFrom_registryImage() throws InvalidImageReferenceException, IOException {
     Jar jarCommand =
         CommandLine.populateCommand(
-            new Jar(), "-t", "registry://gcr.io/test/test-image-ref", REQUIRED_JAR);
+            new Jar(), "-t", "registry://gcr.io/test/test-image-ref", "my-app.jar");
     ContainerizerTestProxy containerizer =
         new ContainerizerTestProxy(Containerizers.from(jarCommand.commonCliOptions, consoleLogger));
 
