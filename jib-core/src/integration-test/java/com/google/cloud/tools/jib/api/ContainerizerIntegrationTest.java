@@ -149,7 +149,7 @@ public class ContainerizerIntegrationTest {
 
   @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
-  private final ProgressChecker progressChecker = new ProgressChecker();
+  private ProgressChecker progressChecker = new ProgressChecker();
 
   @Test
   public void testSteps_forBuildToDockerRegistry()
@@ -158,12 +158,7 @@ public class ContainerizerIntegrationTest {
     System.setProperty("jib.alwaysCacheBaseImage", "true");
     String imageReference = "localhost:5000/testimage:testtag";
     Path cacheDirectory = temporaryFolder.newFolder().toPath();
-    Containerizer containerizer1 =
-        Containerizer.to(RegistryImage.named(imageReference))
-            .setBaseImageLayersCache(cacheDirectory)
-            .setApplicationLayersCache(cacheDirectory);
-    // TODO: investigate why we can't reuse Containerizer.
-    Containerizer containerizer2 =
+    Containerizer containerizer =
         Containerizer.to(RegistryImage.named(imageReference))
             .setBaseImageLayersCache(cacheDirectory)
             .setApplicationLayersCache(cacheDirectory);
@@ -172,10 +167,11 @@ public class ContainerizerIntegrationTest {
     JibContainer image1 =
         buildImage(
             ImageReference.of("gcr.io", "distroless/java", DISTROLESS_DIGEST),
-            containerizer1,
+            containerizer,
             Collections.emptyList());
 
     progressChecker.checkCompletion();
+    progressChecker = new ProgressChecker(); // to reset
 
     logger.info("Initial build time: " + ((System.nanoTime() - lastTime) / 1_000_000));
 
@@ -183,7 +179,7 @@ public class ContainerizerIntegrationTest {
     JibContainer image2 =
         buildImage(
             ImageReference.of("gcr.io", "distroless/java", DISTROLESS_DIGEST),
-            containerizer2,
+            containerizer,
             Collections.emptyList());
 
     logger.info("Secondary build time: " + ((System.nanoTime() - lastTime) / 1_000_000));
