@@ -47,6 +47,10 @@ public class JarModeProcessorTest {
   private static final String STANDARD_JAR_EMPTY = "jar/standard/emptyStandardJar.jar";
   private static final String STANDARD_SINGLE_DEPENDENCY_JAR = "jar/standard/singleDepJar.jar";
   private static final String SPRING_BOOT_LAYERED = "jar/springboot/springboot_layered.jar";
+  private static final String SPRING_BOOT_LAYERED_WITH_EMPTY_LAYER =
+      "jar/springboot/springboot_layered_singleEmptyLayer.jar";
+  private static final String SPRING_BOOT_LAYERED_WITH_ALL_EMPTY_LAYERS_LISTED =
+      "jar/springboot/springboot_layered_allEmptyLayersListed.jar";
   private static final String SPRING_BOOT_NOT_LAYERED = "jar/springboot/springboot_notLayered.jar";
 
   @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
@@ -518,6 +522,99 @@ public class JarModeProcessorTest {
             AbsoluteUnixPath.get("/app/org/springframework/boot"),
             AbsoluteUnixPath.get("/app/org/springframework/boot/loader"),
             AbsoluteUnixPath.get("/app/org/springframework/boot/loader/data"));
+  }
+
+  @Test
+  public void testCreateLayersForExplodedLayeredSpringBoot_singleEmptyLayerListed()
+      throws IOException, URISyntaxException {
+    // Springboot JAR with "snapshot-dependencies" layer listed as empty in BOOT-INF/layers.idx
+    Path springbootJar =
+        Paths.get(Resources.getResource(SPRING_BOOT_LAYERED_WITH_EMPTY_LAYER).toURI());
+    Path destDir = temporaryFolder.newFolder().toPath();
+    List<FileEntriesLayer> layers =
+        JarModeProcessor.createLayersForExplodedSpringBootFat(springbootJar, destDir);
+
+    assertThat(layers.size()).isEqualTo(3);
+
+    FileEntriesLayer nonSnapshotLayer = layers.get(0);
+    FileEntriesLayer loaderLayer = layers.get(1);
+    FileEntriesLayer applicationLayer = layers.get(2);
+
+    // Validate dependencies layers.
+    assertThat(nonSnapshotLayer.getName()).isEqualTo("dependencies");
+    assertThat(
+            nonSnapshotLayer
+                .getEntries()
+                .stream()
+                .map(FileEntry::getExtractionPath)
+                .collect(Collectors.toList()))
+        .containsExactly(
+            AbsoluteUnixPath.get("/app/BOOT-INF"),
+            AbsoluteUnixPath.get("/app/BOOT-INF/classes"),
+            AbsoluteUnixPath.get("/app/BOOT-INF/classes/classDirectory"),
+            AbsoluteUnixPath.get("/app/BOOT-INF/lib"),
+            AbsoluteUnixPath.get("/app/BOOT-INF/lib/dependency1.jar"),
+            AbsoluteUnixPath.get("/app/BOOT-INF/lib/dependency2.jar"),
+            AbsoluteUnixPath.get("/app/META-INF"),
+            AbsoluteUnixPath.get("/app/org"),
+            AbsoluteUnixPath.get("/app/org/springframework"),
+            AbsoluteUnixPath.get("/app/org/springframework/boot"),
+            AbsoluteUnixPath.get("/app/org/springframework/boot/loader"),
+            AbsoluteUnixPath.get("/app/org/springframework/boot/loader/data"));
+    assertThat(loaderLayer.getName()).isEqualTo("spring-boot-loader");
+    assertThat(
+            loaderLayer
+                .getEntries()
+                .stream()
+                .map(FileEntry::getExtractionPath)
+                .collect(Collectors.toList()))
+        .containsExactly(
+            AbsoluteUnixPath.get("/app/BOOT-INF"),
+            AbsoluteUnixPath.get("/app/BOOT-INF/classes"),
+            AbsoluteUnixPath.get("/app/BOOT-INF/classes/classDirectory"),
+            AbsoluteUnixPath.get("/app/BOOT-INF/lib"),
+            AbsoluteUnixPath.get("/app/META-INF"),
+            AbsoluteUnixPath.get("/app/org"),
+            AbsoluteUnixPath.get("/app/org/springframework"),
+            AbsoluteUnixPath.get("/app/org/springframework/boot"),
+            AbsoluteUnixPath.get("/app/org/springframework/boot/loader"),
+            AbsoluteUnixPath.get("/app/org/springframework/boot/loader/data"),
+            AbsoluteUnixPath.get("/app/org/springframework/boot/loader/data/data1.class"),
+            AbsoluteUnixPath.get("/app/org/springframework/boot/loader/launcher1.class"));
+
+    assertThat(applicationLayer.getName()).isEqualTo("application");
+    assertThat(
+            applicationLayer
+                .getEntries()
+                .stream()
+                .map(FileEntry::getExtractionPath)
+                .collect(Collectors.toList()))
+        .containsExactly(
+            AbsoluteUnixPath.get("/app/BOOT-INF"),
+            AbsoluteUnixPath.get("/app/BOOT-INF/classes"),
+            AbsoluteUnixPath.get("/app/BOOT-INF/classes/class1.class"),
+            AbsoluteUnixPath.get("/app/BOOT-INF/classes/classDirectory/class2.class"),
+            AbsoluteUnixPath.get("/app/BOOT-INF/classes/classDirectory"),
+            AbsoluteUnixPath.get("/app/BOOT-INF/lib"),
+            AbsoluteUnixPath.get("/app/META-INF"),
+            AbsoluteUnixPath.get("/app/META-INF/MANIFEST.MF"),
+            AbsoluteUnixPath.get("/app/org"),
+            AbsoluteUnixPath.get("/app/org/springframework"),
+            AbsoluteUnixPath.get("/app/org/springframework/boot"),
+            AbsoluteUnixPath.get("/app/org/springframework/boot/loader"),
+            AbsoluteUnixPath.get("/app/org/springframework/boot/loader/data"));
+  }
+
+  @Test
+  public void testCreateLayersForExplodedLayeredSpringBoot_allEmptyLayersListed()
+      throws IOException, URISyntaxException {
+    Path springbootJar =
+        Paths.get(Resources.getResource(SPRING_BOOT_LAYERED_WITH_ALL_EMPTY_LAYERS_LISTED).toURI());
+    Path destDir = temporaryFolder.newFolder().toPath();
+    List<FileEntriesLayer> layers =
+        JarModeProcessor.createLayersForExplodedSpringBootFat(springbootJar, destDir);
+
+    assertThat(layers.size()).isEqualTo(0);
   }
 
   @Test
