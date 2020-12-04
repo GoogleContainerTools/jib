@@ -50,7 +50,7 @@ public class JarModeProcessorTest {
   private static final String SPRING_BOOT_LAYERED_WITH_EMPTY_LAYER =
       "jar/springboot/springboot_layered_singleEmptyLayer.jar";
   private static final String SPRING_BOOT_LAYERED_WITH_ALL_EMPTY_LAYERS_LISTED =
-      "jar/springboot/springboot_layered_allEmptyLayersListed.jar";
+          "jar/springboot/springboot_layered_allEmptyLayers.jar";
   private static final String SPRING_BOOT_NOT_LAYERED = "jar/springboot/springboot_notLayered.jar";
 
   @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
