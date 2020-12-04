@@ -7,6 +7,12 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
+### Fixed
+
+## 2.7.0
+
+### Changed
+
 - Added an option `<container><expandClasspathDependencies>` to preserve the order of loading dependencies as configured in a project. The option enumerates dependency JARs instead of using a wildcard (`/app/libs/*`) in the Java runtime classpath for an image entrypoint. ([#1871](https://github.com/GoogleContainerTools/jib/issues/1871), [#1907](https://github.com/GoogleContainerTools/jib/issues/1907), [#2228](https://github.com/GoogleContainerTools/jib/issues/2228), [#2733](https://github.com/GoogleContainerTools/jib/issues/2733))
     - The option is also useful for AppCDS. ([#2471](https://github.com/GoogleContainerTools/jib/issues/2471))
     - Turning on the option may result in a very long classpath string, and the OS may not support passing such a long string to JVM.
