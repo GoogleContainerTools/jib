@@ -289,6 +289,37 @@ public class JarFilesTest {
                 .getEntries());
   }
 
+  @Test
+  public void testToJibContainerBuilder_packagedSpringboot_basicInfo()
+      throws IOException, URISyntaxException, InvalidImageReferenceException {
+    Path springbootJar = Paths.get(Resources.getResource(SIMPLE_SPRING_BOOT_NON_LAYERED).toURI());
+    Path destDir = temporaryFolder.getRoot().toPath();
+    JibContainerBuilder containerBuilder =
+        JarFiles.toJibContainerBuilder(springbootJar, destDir, ProcessingMode.packaged);
+    ContainerBuildPlan buildPlan = containerBuilder.toContainerBuildPlan();
+
+    assertThat(buildPlan.getBaseImage()).isEqualTo("gcr.io/distroless/java");
+    assertThat(buildPlan.getPlatforms()).isEqualTo(ImmutableSet.of(new Platform("amd64", "linux")));
+    assertThat(buildPlan.getCreationTime()).isEqualTo(Instant.EPOCH);
+    assertThat(buildPlan.getFormat()).isEqualTo(ImageFormat.Docker);
+    assertThat(buildPlan.getEnvironment()).isEmpty();
+    assertThat(buildPlan.getLabels()).isEmpty();
+    assertThat(buildPlan.getVolumes()).isEmpty();
+    assertThat(buildPlan.getExposedPorts()).isEmpty();
+    assertThat(buildPlan.getUser()).isNull();
+    assertThat(buildPlan.getWorkingDirectory()).isNull();
+    assertThat(buildPlan.getEntrypoint())
+        .isEqualTo(ImmutableList.of("java", "-jar", "/app/springboot_simple_notLayered.jar"));
+    assertThat(buildPlan.getLayers().size()).isEqualTo(1);
+    assertThat(((FileEntriesLayer) buildPlan.getLayers().get(0)).getEntries())
+        .containsExactlyElementsIn(
+            FileEntriesLayer.builder()
+                .addEntry(
+                    springbootJar, AbsoluteUnixPath.get("/app/springboot_simple_notLayered.jar"))
+                .build()
+                .getEntries());
+  }
+
   private void assertThatExpectedEntriesPresentInNonSnapshotLayer_SpringBoot(
       List<FileEntry> actualEntries, Path destDir) {
     assertThat(actualEntries)

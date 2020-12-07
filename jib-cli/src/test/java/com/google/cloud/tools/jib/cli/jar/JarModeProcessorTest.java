@@ -737,4 +737,19 @@ public class JarModeProcessorTest {
             AbsoluteUnixPath.get("/app/org/springframework/boot/loader"),
             AbsoluteUnixPath.get("/app/org/springframework/boot/loader/data"));
   }
+
+  @Test
+  public void testCreateLayersForPackagedSpringboot() throws IOException, URISyntaxException {
+    Path springbootJar = Paths.get(Resources.getResource(SPRING_BOOT_JAR).toURI());
+    List<FileEntriesLayer> layers =
+        JarModeProcessor.createLayerForPackagedSpringboot(springbootJar);
+
+    assertThat(layers.size()).isEqualTo(1);
+
+    FileEntriesLayer jarLayer = layers.get(0);
+    assertThat(jarLayer.getName()).isEqualTo("jar");
+    assertThat(jarLayer.getEntries().size()).isEqualTo(1);
+    assertThat(jarLayer.getEntries().get(0).getExtractionPath())
+        .isEqualTo(AbsoluteUnixPath.get("/app/springboot_sample.jar"));
+  }
 }

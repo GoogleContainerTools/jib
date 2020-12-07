@@ -29,6 +29,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -214,6 +215,22 @@ public class JarModeProcessor {
   }
 
   /**
+   * Creates layer for jar itself on container for a springboot jar.
+   *
+   * @param jarPath path to jar file
+   * @return list of {@link FileEntriesLayer}
+   * @throws IOException if I/O error occurs when opening the jar file
+   */
+  static List<FileEntriesLayer> createLayerForPackagedSpringboot(Path jarPath) throws IOException {
+    FileEntriesLayer jarLayer =
+        FileEntriesLayer.builder()
+            .setName(JAR)
+            .addEntry(jarPath, APP_ROOT.resolve(jarPath.getFileName()))
+            .build();
+    return Collections.singletonList(jarLayer);
+  }
+
+  /**
    * Computes the entrypoint for a standard jar in exploded mode.
    *
    * @param jarPath path to jar file
@@ -264,6 +281,16 @@ public class JarModeProcessor {
   static ImmutableList<String> computeEntrypointForExplodedSpringBoot() {
     return ImmutableList.of(
         "java", "-cp", APP_ROOT.toString(), "org.springframework.boot.loader.JarLauncher");
+  }
+
+  /**
+   * Computes the entrypoint for a springboot jar in packaged mode.
+   *
+   * @param jarPath path to jar file
+   * @return list of {@link String} representing entrypoint
+   */
+  static ImmutableList<String> computeEntrypointForPackagedSpringboot(Path jarPath) {
+    return ImmutableList.of("java", "-jar", APP_ROOT + "/" + jarPath.getFileName().toString());
   }
 
   private static List<FileEntriesLayer> getDependenciesLayers(Path jarPath, ProcessingMode mode)

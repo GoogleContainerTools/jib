@@ -176,6 +176,20 @@ public class JarCommandTest {
   }
 
   @Test
+  public void testSpringbootJar_packagedMode_toDocker()
+      throws IOException, InterruptedException, URISyntaxException {
+    Path jarPath =
+        Paths.get(Resources.getResource("jarTest/springboot/springboot_nonLayered.jar").toURI());
+    Integer exitCode =
+        new CommandLine(new JibCli())
+            .execute("jar", "--target", "docker://packaged-springboot-jar", jarPath.toString());
+    String output = new Command("docker", "run", "--rm", "packaged-springboot-jar").run();
+
+    assertThat(exitCode).isEqualTo(0);
+    assertThat(output).isEqualTo("Hello World");
+  }
+
+  @Test
   public void testJar_unknownMode() {
     CommandLine jibCli = new CommandLine(new JibCli());
     StringWriter stringWriter = new StringWriter();
