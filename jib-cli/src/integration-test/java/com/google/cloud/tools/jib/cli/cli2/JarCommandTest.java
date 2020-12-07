@@ -65,9 +65,9 @@ public class JarCommandTest {
   }
 
   @Test
-  public void testJar_explodedMode_toDocker()
+  public void testStandardJar_explodedMode_toDocker()
       throws IOException, InterruptedException, URISyntaxException {
-    Path jarPath = Paths.get(Resources.getResource("jarTest/jarWithCp.jar").toURI());
+    Path jarPath = Paths.get(Resources.getResource("jarTest/standard/jarWithCp.jar").toURI());
     Integer exitCode =
         new CommandLine(new JibCli())
             .execute("jar", "--target", "docker://exploded-jar", jarPath.toString());
@@ -83,9 +83,9 @@ public class JarCommandTest {
   }
 
   @Test
-  public void testNoDependencyJar_explodedMode_toDocker()
+  public void testNoDependencyStandardJar_explodedMode_toDocker()
       throws IOException, InterruptedException, URISyntaxException {
-    Path jarPath = Paths.get(Resources.getResource("noDependencyJar.jar").toURI());
+    Path jarPath = Paths.get(Resources.getResource("jarTest/standard/noDependencyJar.jar").toURI());
     Integer exitCode =
         new CommandLine(new JibCli())
             .execute("jar", "--target", "docker://exploded-no-dep-jar", jarPath.toString());
@@ -101,9 +101,9 @@ public class JarCommandTest {
   }
 
   @Test
-  public void testJar_packagedMode_toDocker()
+  public void testStandardJar_packagedMode_toDocker()
       throws IOException, InterruptedException, URISyntaxException {
-    Path jarPath = Paths.get(Resources.getResource("jarTest/jarWithCp.jar").toURI());
+    Path jarPath = Paths.get(Resources.getResource("jarTest/standard/jarWithCp.jar").toURI());
     Integer exitCode =
         new CommandLine(new JibCli())
             .execute(
@@ -120,9 +120,9 @@ public class JarCommandTest {
   }
 
   @Test
-  public void testNoDependencyJar_packagedMode_toDocker()
+  public void testNoDependencyStandardJar_packagedMode_toDocker()
       throws IOException, InterruptedException, URISyntaxException {
-    Path jarPath = Paths.get(Resources.getResource("noDependencyJar.jar").toURI());
+    Path jarPath = Paths.get(Resources.getResource("jarTest/standard/noDependencyJar.jar").toURI());
     Integer exitCode =
         new CommandLine(new JibCli())
             .execute(
@@ -137,6 +137,39 @@ public class JarCommandTest {
           jarFile.getManifest().getMainAttributes().getValue(Attributes.Name.CLASS_PATH);
 
       assertThat(classPath).isNull();
+      assertThat(exitCode).isEqualTo(0);
+      assertThat(output).isEqualTo("Hello World");
+    }
+  }
+
+  @Test
+  public void testSpringbootLayeredJar_explodedMode_toDocker()
+      throws IOException, InterruptedException, URISyntaxException {
+    Path jarPath =
+        Paths.get(Resources.getResource("jarTest/springboot/springboot_layered.jar").toURI());
+    Integer exitCode =
+        new CommandLine(new JibCli())
+            .execute(
+                "jar", "--target", "docker://exploded-springboot-layered-jar", jarPath.toString());
+    String output = new Command("docker", "run", "--rm", "exploded-springboot-layered-jar").run();
+    try (JarFile jarFile = new JarFile(jarPath.toFile())) {
+      assertThat(jarFile.getEntry("BOOT-INF/layers.idx")).isNotNull();
+      assertThat(exitCode).isEqualTo(0);
+      assertThat(output).isEqualTo("Hello World");
+    }
+  }
+
+  @Test
+  public void testSpringbootNonLayeredJar_explodedMode_toDocker()
+      throws IOException, InterruptedException, URISyntaxException {
+    Path jarPath =
+        Paths.get(Resources.getResource("jarTest/springboot/springboot_nonLayered.jar").toURI());
+    Integer exitCode =
+        new CommandLine(new JibCli())
+            .execute("jar", "--target", "docker://exploded-springboot-jar", jarPath.toString());
+    String output = new Command("docker", "run", "--rm", "exploded-springboot-jar").run();
+    try (JarFile jarFile = new JarFile(jarPath.toFile())) {
+      assertThat(jarFile.getEntry("BOOT-INF/layers.idx")).isNull();
       assertThat(exitCode).isEqualTo(0);
       assertThat(output).isEqualTo("Hello World");
     }
