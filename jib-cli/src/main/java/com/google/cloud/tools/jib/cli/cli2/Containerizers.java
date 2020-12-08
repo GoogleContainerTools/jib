@@ -102,7 +102,7 @@ public class Containerizers {
 
     containerizer.setAllowInsecureRegistries(commonCliOptions.isAllowInsecureRegistries());
     commonCliOptions.getBaseImageCache().ifPresent(containerizer::setBaseImageLayersCache);
-    commonCliOptions.getApplicationCache().ifPresent(containerizer::setApplicationLayersCache);
+    commonCliOptions.getProjectCache().ifPresent(containerizer::setApplicationLayersCache);
 
     commonCliOptions.getAdditionalTags().forEach(containerizer::withAdditionalTag);
   }

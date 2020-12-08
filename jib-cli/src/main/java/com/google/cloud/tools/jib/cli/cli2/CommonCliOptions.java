@@ -70,11 +70,11 @@ public class CommonCliOptions {
   private Path baseImageCache;
 
   @CommandLine.Option(
-      names = "--application-cache",
+      names = "--project-cache",
       paramLabel = "<cache-directory>",
-      description = "A path to an application cache")
+      description = "A path to the project cache")
   @SuppressWarnings("NullAway.Init") // initialized by picocli
-  private Path applicationCache;
+  private Path projectCache;
 
   // Auth/Security
   @CommandLine.Option(
@@ -374,8 +374,8 @@ public class CommonCliOptions {
     return Optional.ofNullable(baseImageCache);
   }
 
-  public Optional<Path> getApplicationCache() {
-    return Optional.ofNullable(applicationCache);
+  public Optional<Path> getProjectCache() {
+    return Optional.ofNullable(projectCache);
   }
 
   public List<String> getAdditionalTags() {

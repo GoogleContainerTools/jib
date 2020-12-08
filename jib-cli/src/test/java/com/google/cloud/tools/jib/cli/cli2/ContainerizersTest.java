@@ -82,7 +82,7 @@ public class ContainerizersTest {
             "--send-credentials-over-http",
             "--allow-insecure-registries",
             "--base-image-cache=./bi-cache",
-            "--application-cache=./app-cache",
+            "--project-cache=./app-cache",
             "--additional-tags=tag1,tag2",
             "--serialize");
     ContainerizerTestProxy containerizer =
