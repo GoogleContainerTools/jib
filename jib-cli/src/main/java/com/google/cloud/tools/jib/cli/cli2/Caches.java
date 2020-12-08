@@ -52,10 +52,14 @@ public class Caches {
   @VisibleForTesting
   static String hashPath(Path path) {
     try {
-      return new String(
+      byte[] hashedBytes =
           MessageDigest.getInstance("SHA-256")
-              .digest(path.toAbsolutePath().normalize().toString().getBytes(Charsets.UTF_8)),
-          Charsets.UTF_8);
+              .digest(path.toAbsolutePath().normalize().toString().getBytes(Charsets.UTF_8));
+      StringBuilder stringBuilder = new StringBuilder(2 * hashedBytes.length);
+      for (byte b : hashedBytes) {
+        stringBuilder.append(String.format("%02x", b));
+      }
+      return stringBuilder.toString();
     } catch (NoSuchAlgorithmException ex) {
       throw new RuntimeException(
           "SHA-256 algorithm implementation not found - might be a broken JVM");
