@@ -13,6 +13,7 @@ dependencies {
   implementation dependencyStrings.COMMONS_COMPRESS
   implementation dependencyStrings.GUAVA
   implementation dependencyStrings.JACKSON_DATABIND
+  implementation dependencyStrings.JACKSON_DATAFORMAT_JSR310
   implementation dependencyStrings.ASM
 
   testImplementation dependencyStrings.JUNIT
