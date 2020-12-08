@@ -105,10 +105,10 @@ public class JarModeProcessor {
     Predicate<Path> isResourceFile = isClassFile.negate();
     FileEntriesLayer classesLayer =
         addDirectoryContentsToLayer(
-            localExplodedJarRoot, isClassFile, APP_ROOT.resolve("explodedJar"), CLASSES);
+            CLASSES, localExplodedJarRoot, isClassFile, APP_ROOT.resolve("explodedJar"));
     FileEntriesLayer resourcesLayer =
         addDirectoryContentsToLayer(
-            localExplodedJarRoot, isResourceFile, APP_ROOT.resolve("explodedJar"), RESOURCES);
+            RESOURCES, localExplodedJarRoot, isResourceFile, APP_ROOT.resolve("explodedJar"));
 
     layers.add(resourcesLayer);
     layers.add(classesLayer);
@@ -167,20 +167,20 @@ public class JarModeProcessor {
       Predicate<Path> nonSnapshotPredicate = isInBootInfLib.and(isSnapshot.negate());
       FileEntriesLayer nonSnapshotLayer =
           addDirectoryContentsToLayer(
-              localExplodedJarRoot, nonSnapshotPredicate, APP_ROOT, DEPENDENCIES);
+              DEPENDENCIES, localExplodedJarRoot, nonSnapshotPredicate, APP_ROOT);
 
       // Snapshot layer
       Predicate<Path> snapshotPredicate = isInBootInfLib.and(isSnapshot);
       FileEntriesLayer snapshotLayer =
           addDirectoryContentsToLayer(
-              localExplodedJarRoot, snapshotPredicate, APP_ROOT, SNAPSHOT_DEPENDENCIES);
+              SNAPSHOT_DEPENDENCIES, localExplodedJarRoot, snapshotPredicate, APP_ROOT);
 
       // Spring-boot-loader layer.
       Predicate<Path> isLoader =
           path -> path.getParent().startsWith(localExplodedJarRoot.resolve("org"));
       FileEntriesLayer loaderLayer =
           addDirectoryContentsToLayer(
-              localExplodedJarRoot, isLoader, APP_ROOT, "spring-boot-loader");
+              "spring-boot-loader", localExplodedJarRoot, isLoader, APP_ROOT);
 
       // Classes layer.
       Predicate<Path> isClass = path -> path.getFileName().toString().endsWith(".class");
@@ -193,7 +193,7 @@ public class JarModeProcessor {
       Predicate<Path> finalPredicateClasses = isInBootInfClasses.and(isClass);
       FileEntriesLayer classesLayer =
           addDirectoryContentsToLayer(
-              localExplodedJarRoot, finalPredicateClasses, APP_ROOT, CLASSES);
+              CLASSES, localExplodedJarRoot, finalPredicateClasses, APP_ROOT);
 
       // Resources layer.
       Predicate<Path> isInMetaInf =
@@ -202,7 +202,7 @@ public class JarModeProcessor {
           isInBootInfClasses.or(isInMetaInf).and(isClass.negate());
       FileEntriesLayer resourcesLayer =
           addDirectoryContentsToLayer(
-              localExplodedJarRoot, finalPredicateResources, APP_ROOT, RESOURCES);
+              RESOURCES, localExplodedJarRoot, finalPredicateResources, APP_ROOT);
 
       layers.add(nonSnapshotLayer);
       layers.add(loaderLayer);
@@ -360,14 +360,14 @@ public class JarModeProcessor {
         }
       }
 
-      // If the layers.idx file looks like this:
+      // If the layers.idx file looks like this, for example:
       // - dependencies:
       //   - BOOT-INF/lib/dependency1.jar
       // - application:
       //   - BOOT-INF/classes
       //   - META-INF/
-      // The predicate for the dependencies layer will be true if `path` is equal to
-      // `BOOT-INF/lib/dependency1.jar` and the predicate for the `spring-boot-loader` layer will be
+      // The predicate for the "dependencies" layer will be true if `path` is equal to
+      // `BOOT-INF/lib/dependency1.jar` and the predicate for the "spring-boot-loader" layer will be
       // true if `path` is in either 'BOOT-INF/classes/` or `META-INF/`.
       List<FileEntriesLayer> layers = new ArrayList<>();
       for (String layerName : layerNames) {
@@ -377,7 +377,7 @@ public class JarModeProcessor {
         if (finalPredicate.isPresent()) {
           FileEntriesLayer layer =
               addDirectoryContentsToLayer(
-                  localExplodedJarRoot, finalPredicate.get(), APP_ROOT, layerName);
+                  layerName, localExplodedJarRoot, finalPredicate.get(), APP_ROOT);
           layers.add(layer);
         }
       }
@@ -397,10 +397,10 @@ public class JarModeProcessor {
   }
 
   private static FileEntriesLayer addDirectoryContentsToLayer(
+      String layerName,
       Path sourceRoot,
       Predicate<Path> pathFilter,
-      AbsoluteUnixPath basePathInContainer,
-      String layerName)
+      AbsoluteUnixPath basePathInContainer)
       throws IOException {
     FileEntriesLayer.Builder builder = FileEntriesLayer.builder().setName(layerName);
     new DirectoryWalker(sourceRoot)
