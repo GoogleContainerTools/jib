@@ -18,6 +18,7 @@ package com.google.cloud.tools.jib.json;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.type.CollectionType;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -53,7 +54,8 @@ import java.util.List;
  */
 public class JsonTemplateMapper {
 
-  private static final ObjectMapper objectMapper = new ObjectMapper();
+  private static final ObjectMapper objectMapper =
+      new ObjectMapper().registerModule(new JavaTimeModule());
 
   /**
    * Deserializes a JSON file via a JSON object template.
