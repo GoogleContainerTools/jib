@@ -67,20 +67,21 @@ public class CacheDirectoriesTest {
   }
 
   @Test
-  public void testHashPath_sameFileDifferentPaths() throws IOException {
+  public void testGetProjectCacheDirectoryFromProject_sameFileDifferentPaths() throws IOException {
     temporaryFolder.newFolder("ignored");
-    Path path1 = temporaryFolder.getRoot().toPath().resolve("ignored").resolve("..");
-    Path path2 = temporaryFolder.getRoot().toPath();
+    Path path = temporaryFolder.getRoot().toPath();
+    Path indirectPath = temporaryFolder.getRoot().toPath().resolve("ignored").resolve("..");
 
-    assertThat(path1).isNotEqualTo(path2); // the general equality should not hold true
-    assertThat(Files.isSameFile(path1, path2)).isTrue(); // path equality holds
-    assertThat(CacheDirectories.getProjectCacheDirectoryFromProject(path1))
+    assertThat(path).isNotEqualTo(indirectPath); // the general equality should not hold true
+    assertThat(Files.isSameFile(path, indirectPath)).isTrue(); // path equality holds
+    assertThat(CacheDirectories.getProjectCacheDirectoryFromProject(path))
         .isEqualTo(
-            CacheDirectories.getProjectCacheDirectoryFromProject(path2)); // our hash should hold
+            CacheDirectories.getProjectCacheDirectoryFromProject(
+                indirectPath)); // our hash should hold
   }
 
   @Test
-  public void testHashPath_different() {
+  public void testGetProjectCacheDirectoryFromProject_different() {
     assertThat(CacheDirectories.getProjectCacheDirectoryFromProject(Paths.get("1")))
         .isNotEqualTo(CacheDirectories.getProjectCacheDirectoryFromProject(Paths.get("2")));
   }
