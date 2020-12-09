@@ -46,7 +46,9 @@ public class CacheDirectoriesTest {
             XdgDirectories.getCacheHome()
                 .resolve("cli")
                 .resolve("projects")
-                .resolve(CacheDirectories.hashPath(Paths.get("some-context"))));
+                .resolve(
+                    CacheDirectories.getProjectCacheDirectoryFromProject(
+                        Paths.get("some-context"))));
   }
 
   @Test
@@ -72,13 +74,14 @@ public class CacheDirectoriesTest {
 
     assertThat(path1).isNotEqualTo(path2); // the general equality should not hold true
     assertThat(Files.isSameFile(path1, path2)).isTrue(); // path equality holds
-    assertThat(CacheDirectories.hashPath(path1))
-        .isEqualTo(CacheDirectories.hashPath(path2)); // our hash should hold
+    assertThat(CacheDirectories.getProjectCacheDirectoryFromProject(path1))
+        .isEqualTo(
+            CacheDirectories.getProjectCacheDirectoryFromProject(path2)); // our hash should hold
   }
 
   @Test
   public void testHashPath_different() {
-    assertThat(CacheDirectories.hashPath(Paths.get("1")))
-        .isNotEqualTo(CacheDirectories.hashPath(Paths.get("2")));
+    assertThat(CacheDirectories.getProjectCacheDirectoryFromProject(Paths.get("1")))
+        .isNotEqualTo(CacheDirectories.getProjectCacheDirectoryFromProject(Paths.get("2")));
   }
 }

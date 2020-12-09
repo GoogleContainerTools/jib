@@ -19,6 +19,7 @@ package com.google.cloud.tools.jib.cli.cli2;
 import com.google.cloud.tools.jib.filesystem.XdgDirectories;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Charsets;
+import java.io.IOException;
 import java.nio.file.Path;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -35,31 +36,39 @@ public class CacheDirectories {
    * Create a caches helper for cli cache locations.
    *
    * @param commonCliOptions cli options
-   * @param contextRoot the context root, if a single file, use the parent directory
+   * @param contextRoot the context root, if a single file, use the parent directory, this context
+   *     root must exist
    * @return an instance of Caches with cli specific cache locations
    */
   public static CacheDirectories from(CommonCliOptions commonCliOptions, Path contextRoot) {
-    Path defaultProjectCache =
-        XdgDirectories.getCacheHome()
-            .resolve("cli")
-            .resolve("projects")
-            .resolve(hashPath(contextRoot));
     return new CacheDirectories(
         commonCliOptions.getBaseImageCache().orElse(null),
-        commonCliOptions.getProjectCache().orElse(defaultProjectCache));
+        commonCliOptions
+            .getProjectCache()
+            .orElse(
+                XdgDirectories.getCacheHome()
+                    .resolve("cli")
+                    .resolve("projects")
+                    .resolve(getProjectCacheDirectoryFromProject(contextRoot))));
   }
 
   @VisibleForTesting
-  static String hashPath(Path path) {
+  static String getProjectCacheDirectoryFromProject(Path path) {
     try {
       byte[] hashedBytes =
           MessageDigest.getInstance("SHA-256")
-              .digest(path.toAbsolutePath().normalize().toString().getBytes(Charsets.UTF_8));
+              .digest(path.toFile().getCanonicalPath().getBytes(Charsets.UTF_8));
       StringBuilder stringBuilder = new StringBuilder(2 * hashedBytes.length);
       for (byte b : hashedBytes) {
         stringBuilder.append(String.format("%02x", b));
       }
       return stringBuilder.toString();
+    } catch (IOException | SecurityException ex) {
+      throw new RuntimeException(
+          "Unable to create cache directory for project path: "
+              + path
+              + " - you can try to configure --project-cache manually",
+          ex);
     } catch (NoSuchAlgorithmException ex) {
       throw new RuntimeException(
           "SHA-256 algorithm implementation not found - might be a broken JVM");
