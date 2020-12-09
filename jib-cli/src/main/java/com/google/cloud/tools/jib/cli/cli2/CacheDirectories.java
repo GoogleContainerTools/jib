@@ -26,7 +26,7 @@ import java.util.Optional;
 import javax.annotation.Nullable;
 
 /** A class to determine cache locations for any cli commands. */
-public class Caches {
+public class CacheDirectories {
 
   @Nullable private final Path baseImageCache;
   private final Path projectCache;
@@ -38,13 +38,13 @@ public class Caches {
    * @param contextRoot the context root, if a single file, use the parent directory
    * @return an instance of Caches with cli specific cache locations
    */
-  public static Caches from(CommonCliOptions commonCliOptions, Path contextRoot) {
+  public static CacheDirectories from(CommonCliOptions commonCliOptions, Path contextRoot) {
     Path defaultProjectCache =
         XdgDirectories.getCacheHome()
             .resolve("cli")
             .resolve("projects")
             .resolve(hashPath(contextRoot));
-    return new Caches(
+    return new CacheDirectories(
         commonCliOptions.getBaseImageCache().orElse(null),
         commonCliOptions.getProjectCache().orElse(defaultProjectCache));
   }
@@ -66,7 +66,7 @@ public class Caches {
     }
   }
 
-  public Caches(@Nullable Path baseImageCache, Path projectCache) {
+  public CacheDirectories(@Nullable Path baseImageCache, Path projectCache) {
     this.baseImageCache = baseImageCache;
     this.projectCache = projectCache;
   }
