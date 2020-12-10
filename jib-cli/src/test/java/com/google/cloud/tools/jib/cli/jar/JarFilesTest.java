@@ -70,6 +70,7 @@ public class JarFilesTest {
         .isEqualTo(
             ImmutableList.of("java", "-cp", "/app/explodedJar:/app/dependencies/*", "HelloWorld"));
     assertThat(buildPlan.getLayers().size()).isEqualTo(3);
+    assertThat(buildPlan.getLayers().get(0).getName()).isEqualTo("dependencies");
     assertThat(((FileEntriesLayer) buildPlan.getLayers().get(0)).getEntries())
         .isEqualTo(
             FileEntriesLayer.builder()
@@ -78,6 +79,7 @@ public class JarFilesTest {
                     AbsoluteUnixPath.get("/app/dependencies/dependency1"))
                 .build()
                 .getEntries());
+    assertThat(buildPlan.getLayers().get(1).getName()).isEqualTo("resources");
     assertThat(((FileEntriesLayer) buildPlan.getLayers().get(1)).getEntries())
         .containsExactlyElementsIn(
             FileEntriesLayer.builder()
@@ -95,6 +97,7 @@ public class JarFilesTest {
                     AbsoluteUnixPath.get("/app/explodedJar/directory1/"))
                 .build()
                 .getEntries());
+    assertThat(buildPlan.getLayers().get(2).getName()).isEqualTo("classes");
     assertThat(((FileEntriesLayer) buildPlan.getLayers().get(2)).getEntries())
         .containsExactlyElementsIn(
             FileEntriesLayer.builder()
@@ -136,6 +139,7 @@ public class JarFilesTest {
     assertThat(buildPlan.getEntrypoint())
         .isEqualTo(ImmutableList.of("java", "-jar", "/app/basicStandardJar.jar"));
     assertThat(buildPlan.getLayers().size()).isEqualTo(2);
+    assertThat(buildPlan.getLayers().get(0).getName()).isEqualTo("dependencies");
     assertThat(((FileEntriesLayer) buildPlan.getLayers().get(0)).getEntries())
         .isEqualTo(
             FileEntriesLayer.builder()
@@ -144,6 +148,7 @@ public class JarFilesTest {
                     AbsoluteUnixPath.get("/app/dependency1"))
                 .build()
                 .getEntries());
+    assertThat(buildPlan.getLayers().get(1).getName()).isEqualTo("jar");
     assertThat(((FileEntriesLayer) buildPlan.getLayers().get(1)).getEntries())
         .containsExactlyElementsIn(
             FileEntriesLayer.builder()
@@ -175,12 +180,20 @@ public class JarFilesTest {
         .isEqualTo(
             ImmutableList.of("java", "-cp", "/app", "org.springframework.boot.loader.JarLauncher"));
     assertThat(buildPlan.getLayers().size()).isEqualTo(4);
+
+    assertThat(buildPlan.getLayers().get(0).getName()).isEqualTo("dependencies");
     assertThatExpectedEntriesPresentInNonSnapshotLayer_SpringBoot(
         ((FileEntriesLayer) buildPlan.getLayers().get(0)).getEntries(), destDir);
+
+    assertThat(buildPlan.getLayers().get(1).getName()).isEqualTo("spring-boot-loader");
     assertThatExpectedEntriesPresentInLoaderLayer_SpringBoot(
         ((FileEntriesLayer) buildPlan.getLayers().get(1)).getEntries(), destDir);
+
+    assertThat(buildPlan.getLayers().get(2).getName()).isEqualTo("snapshot-dependencies");
     assertThatExpectedEntriesPresentInSnapshotLayer_SpringBoot(
         ((FileEntriesLayer) buildPlan.getLayers().get(2)).getEntries(), destDir);
+
+    assertThat(buildPlan.getLayers().get(3).getName()).isEqualTo("application");
     assertThat(((FileEntriesLayer) buildPlan.getLayers().get(3)).getEntries())
         .containsExactlyElementsIn(
             FileEntriesLayer.builder()
@@ -234,12 +247,20 @@ public class JarFilesTest {
         .isEqualTo(
             ImmutableList.of("java", "-cp", "/app", "org.springframework.boot.loader.JarLauncher"));
     assertThat(buildPlan.getLayers().size()).isEqualTo(5);
+
+    assertThat(buildPlan.getLayers().get(0).getName()).isEqualTo("dependencies");
     assertThatExpectedEntriesPresentInNonSnapshotLayer_SpringBoot(
         ((FileEntriesLayer) buildPlan.getLayers().get(0)).getEntries(), destDir);
+
+    assertThat(buildPlan.getLayers().get(1).getName()).isEqualTo("spring-boot-loader");
     assertThatExpectedEntriesPresentInLoaderLayer_SpringBoot(
         ((FileEntriesLayer) buildPlan.getLayers().get(1)).getEntries(), destDir);
+
+    assertThat(buildPlan.getLayers().get(2).getName()).isEqualTo("snapshot dependencies");
     assertThatExpectedEntriesPresentInSnapshotLayer_SpringBoot(
         ((FileEntriesLayer) buildPlan.getLayers().get(2)).getEntries(), destDir);
+
+    assertThat(buildPlan.getLayers().get(3).getName()).isEqualTo("resources");
     assertThat(((FileEntriesLayer) buildPlan.getLayers().get(3)).getEntries())
         .containsExactlyElementsIn(
             FileEntriesLayer.builder()
@@ -262,6 +283,8 @@ public class JarFilesTest {
                     AbsoluteUnixPath.get("/app/org/orgDirectory/"))
                 .build()
                 .getEntries());
+
+    assertThat(buildPlan.getLayers().get(4).getName()).isEqualTo("classes");
     assertThat(((FileEntriesLayer) buildPlan.getLayers().get(4)).getEntries())
         .containsExactlyElementsIn(
             FileEntriesLayer.builder()

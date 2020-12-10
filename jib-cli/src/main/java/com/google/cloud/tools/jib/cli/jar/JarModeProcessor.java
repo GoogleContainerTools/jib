@@ -50,7 +50,7 @@ public class JarModeProcessor {
   private static final String CLASSES = "classes";
   private static final String RESOURCES = "resources";
   private static final String DEPENDENCIES = "dependencies";
-  private static final String SNAPSHOT_DEPENDENCIES = "snapshot-dependencies";
+  private static final String SNAPSHOT_DEPENDENCIES = "snapshot dependencies";
 
   /**
    * Jar Type.
@@ -87,19 +87,20 @@ public class JarModeProcessor {
    * a standard jar.
    *
    * @param jarPath path to jar file
-   * @param localExplodedJarRoot path to temporary jib local directory
+   * @param tempDirPath path to temporary jib local directory
    * @return list of {@link FileEntriesLayer}
    * @throws IOException if I/O error occurs when opening the jar file or if temporary directory
    *     provided doesn't exist
    */
-  static List<FileEntriesLayer> createLayersForExplodedStandard(
-      Path jarPath, Path localExplodedJarRoot) throws IOException {
+  static List<FileEntriesLayer> createLayersForExplodedStandard(Path jarPath, Path tempDirPath)
+      throws IOException {
     // Add dependencies layers.
     List<FileEntriesLayer> layers = getDependenciesLayers(jarPath, ProcessingMode.exploded);
 
     // Determine class and resource files in the directory containing jar contents and create
     // FileEntriesLayer for each type of layer (classes or resources), while maintaining the
     // file's original project structure.
+    Path localExplodedJarRoot = tempDirPath;
     ZipUtil.unzip(jarPath, localExplodedJarRoot);
     Predicate<Path> isClassFile = path -> path.getFileName().toString().endsWith(".class");
     Predicate<Path> isResourceFile = isClassFile.negate();
@@ -143,26 +144,26 @@ public class JarModeProcessor {
    * spring-boot-loader, snapshot dependencies, resource and classes for a spring boot fat jar.
    *
    * @param jarPath path to jar file
-   * @param localExplodedJarRoot path to temporary jib local directory
+   * @param tempDirPath path to temporary jib local directory
    * @return list of {@link FileEntriesLayer}
    * @throws IOException if I/O error occurs when opening the jar file or if temporary directory
    *     provided doesn't exist
    */
-  static List<FileEntriesLayer> createLayersForExplodedSpringBootFat(
-      Path jarPath, Path localExplodedJarRoot) throws IOException {
+  static List<FileEntriesLayer> createLayersForExplodedSpringBootFat(Path jarPath, Path tempDirPath)
+      throws IOException {
 
     try (JarFile jarFile = new JarFile(jarPath.toFile())) {
       ZipEntry layerIndex = jarFile.getEntry("BOOT-INF/layers.idx");
+      Path localExplodedJarRoot = tempDirPath;
       ZipUtil.unzip(jarPath, localExplodedJarRoot);
       if (layerIndex != null) {
         return createLayersForLayeredSpringBootJar(localExplodedJarRoot);
       }
 
-      ArrayList<FileEntriesLayer> layers = new ArrayList<>();
-
       // Non-snapshot layer
       Predicate<Path> isInBootInfLib =
-          path -> path.getParent().startsWith(localExplodedJarRoot.resolve("BOOT-INF/lib"));
+          path ->
+              path.getParent().startsWith(localExplodedJarRoot.resolve("BOOT-INF").resolve("lib"));
       Predicate<Path> isSnapshot = path -> path.getFileName().toString().contains("SNAPSHOT");
       Predicate<Path> nonSnapshotPredicate = isInBootInfLib.and(isSnapshot.negate());
       FileEntriesLayer nonSnapshotLayer =
@@ -187,9 +188,7 @@ public class JarModeProcessor {
       Predicate<Path> isInBootInfClasses =
           path ->
               path.getParent()
-                  .startsWith(
-                      localExplodedJarRoot.resolve(
-                          localExplodedJarRoot.resolve("BOOT-INF/classes")));
+                  .startsWith(localExplodedJarRoot.resolve("BOOT-INF").resolve("classes"));
       Predicate<Path> finalPredicateClasses = isInBootInfClasses.and(isClass);
       FileEntriesLayer classesLayer =
           addDirectoryContentsToLayer(
@@ -199,11 +198,12 @@ public class JarModeProcessor {
       Predicate<Path> isInMetaInf =
           path -> path.getParent().startsWith(localExplodedJarRoot.resolve("META-INF"));
       Predicate<Path> finalPredicateResources =
-          isInBootInfClasses.or(isInMetaInf).and(isClass.negate());
+          isInMetaInf.or(isInBootInfClasses.and(isClass.negate()));
       FileEntriesLayer resourcesLayer =
           addDirectoryContentsToLayer(
               RESOURCES, localExplodedJarRoot, finalPredicateResources, APP_ROOT);
 
+      ArrayList<FileEntriesLayer> layers = new ArrayList<>();
       layers.add(nonSnapshotLayer);
       layers.add(loaderLayer);
       layers.add(snapshotLayer);
@@ -335,7 +335,7 @@ public class JarModeProcessor {
    */
   private static List<FileEntriesLayer> createLayersForLayeredSpringBootJar(
       Path localExplodedJarRoot) throws IOException {
-    Path layerIndexPath = localExplodedJarRoot.resolve(Paths.get("BOOT-INF/layers.idx"));
+    Path layerIndexPath = localExplodedJarRoot.resolve("BOOT-INF").resolve("layers.idx");
     Pattern layerNamePattern = Pattern.compile("-\\s(.*):");
     Pattern fileNamePattern = Pattern.compile("\\s\\s-\\s(.*)");
     Map<String, List<String>> layersMap = new LinkedHashMap<>();
@@ -364,7 +364,7 @@ public class JarModeProcessor {
       // - dependencies:
       //   - BOOT-INF/lib/dependency1.jar
       // - application:
-      //   - BOOT-INF/classes
+      //   - BOOT-INF/classes/
       //   - META-INF/
       // The predicate for the "dependencies" layer will be true if `path` is equal to
       // `BOOT-INF/lib/dependency1.jar` and the predicate for the "spring-boot-loader" layer will be

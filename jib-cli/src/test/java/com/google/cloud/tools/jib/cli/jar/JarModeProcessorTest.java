@@ -134,7 +134,7 @@ public class JarModeProcessorTest {
                 AbsoluteUnixPath.get("/app/dependencies/dependency1"),
                 AbsoluteUnixPath.get("/app/dependencies/dependency2"),
                 AbsoluteUnixPath.get("/app/dependencies/dependency4")));
-    assertThat(snapshotLayer.getName()).isEqualTo("snapshot-dependencies");
+    assertThat(snapshotLayer.getName()).isEqualTo("snapshot dependencies");
     assertThat(
             snapshotLayer
                 .getEntries()
@@ -367,7 +367,7 @@ public class JarModeProcessorTest {
                 AbsoluteUnixPath.get("/app/dependency1"),
                 AbsoluteUnixPath.get("/app/dependency2"),
                 AbsoluteUnixPath.get("/app/directory/dependency4")));
-    assertThat(snapshotLayer.getName()).isEqualTo("snapshot-dependencies");
+    assertThat(snapshotLayer.getName()).isEqualTo("snapshot dependencies");
     assertThat(
             snapshotLayer
                 .getEntries()
@@ -427,6 +427,17 @@ public class JarModeProcessorTest {
   @Test
   public void testCreateLayersForExplodedLayeredSpringBoot()
       throws IOException, URISyntaxException {
+    // BOOT-INF/layers.idx for this springboot jar is structured in this way:
+    // - "dependencies":
+    //   - "BOOT-INF/lib/dependency1.jar"
+    //   - "BOOT-INF/lib/dependency2.jar"
+    // - "spring-boot-loader":
+    //   - "org/"
+    // - "snapshot-dependencies":
+    //   - "BOOT-INF/lib/dependency-SNAPSHOT-3.jar"
+    // - "application":
+    //   - "BOOT-INF/classes/"
+    //   - "META-INF/"
     Path springbootJar = Paths.get(Resources.getResource(SPRING_BOOT_LAYERED).toURI());
     Path destDir = temporaryFolder.newFolder().toPath();
     List<FileEntriesLayer> layers =
@@ -527,7 +538,16 @@ public class JarModeProcessorTest {
   @Test
   public void testCreateLayersForExplodedLayeredSpringBoot_singleEmptyLayerListed()
       throws IOException, URISyntaxException {
-    // Springboot JAR with "snapshot-dependencies" layer listed as empty in BOOT-INF/layers.idx
+    // BOOT-INF/layers.idx for this springboot jar is structured in this way:
+    // - "dependencies":
+    //   - "BOOT-INF/lib/dependency1.jar"
+    //   - "BOOT-INF/lib/dependency2.jar"
+    // - "spring-boot-loader":
+    //   - "org/"
+    // - "snapshot-dependencies":
+    // - "application":
+    //   - "BOOT-INF/classes/"
+    //   - "META-INF/"
     Path springbootJar =
         Paths.get(Resources.getResource(SPRING_BOOT_LAYERED_WITH_EMPTY_LAYER).toURI());
     Path destDir = temporaryFolder.newFolder().toPath();
@@ -608,6 +628,11 @@ public class JarModeProcessorTest {
   @Test
   public void testCreateLayersForExplodedLayeredSpringBoot_allEmptyLayersListed()
       throws IOException, URISyntaxException {
+    // BOOT-INF/layers.idx for this springboot jar is structured in this way:
+    // - "dependencies":
+    // - "spring-boot-loader":
+    // - "snapshot-dependencies":
+    // - "application":
     Path springbootJar =
         Paths.get(Resources.getResource(SPRING_BOOT_LAYERED_WITH_ALL_EMPTY_LAYERS_LISTED).toURI());
     Path destDir = temporaryFolder.newFolder().toPath();
@@ -634,7 +659,6 @@ public class JarModeProcessorTest {
     FileEntriesLayer resourcesLayer = layers.get(3);
     FileEntriesLayer classesLayer = layers.get(4);
 
-    // Validate dependencies layers.
     assertThat(nonSnapshotLayer.getName()).isEqualTo("dependencies");
     assertThat(
             nonSnapshotLayer
@@ -676,7 +700,7 @@ public class JarModeProcessorTest {
             AbsoluteUnixPath.get("/app/org/springframework/boot/loader/data/data1.class"),
             AbsoluteUnixPath.get("/app/org/springframework/boot/loader/launcher1.class"));
 
-    assertThat(snapshotLayer.getName()).isEqualTo("snapshot-dependencies");
+    assertThat(snapshotLayer.getName()).isEqualTo("snapshot dependencies");
     assertThat(
             snapshotLayer
                 .getEntries()
