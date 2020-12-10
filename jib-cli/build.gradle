@@ -42,9 +42,6 @@ release {
     'com.google.cloud.tools:jib-core',
     'com.google.cloud.tools:jib-plugins-common',
   ]
-  git {
-    requireBranch = /^cli_release_v\d+.*$/  //regex
-  }
 }
 
 /* ECLIPSE */
