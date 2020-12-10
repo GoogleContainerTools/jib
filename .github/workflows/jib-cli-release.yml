@@ -21,13 +21,13 @@ jobs:
           git config user.email "chanseok@google.com"
           git config user.name "Chanseok Oh"
           echo | ./gradlew jib-cli:release -Prelease.releaseVersion=${{ github.event.inputs.release_version }}
+          git push origin cli_release_v${{ github.event.inputs.release_version }}
           git push origin v${{ github.event.inputs.release_version }}-cli
 
-      - name: Create PR
-        uses: technote-space/create-pr-action@v2
+      - name: Create pull request
+        uses: peter-evans/create-pull-request@v3
         with:
-          PR_BRANCH_PREFIX: ""
-          PR_BRANCH_NAME: cli_release_v${{ github.event.inputs.release_version }}
+          branch: cli_release_v${{ github.event.inputs.release_version }}
 
       - name: Build Jib CLI
         run: |
