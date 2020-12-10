@@ -5,7 +5,7 @@ on:
       release_version:
         description: git tag from which Jib CLI should be built
         required: true
-        default: (for example, v0.1.0-cli)
+        default: (for example, 0.1.0)
 
 jobs:
   release:
@@ -15,10 +15,21 @@ jobs:
       - name: Check out code
         uses: actions/checkout@v2
 
-      - name: Create tag
+      - name: Create branch and tag
         run: |
-          git tag ${{ github.event.inputs.release_version }}
-          git push origin ${{ github.event.inputs.release_version }}
+          git checkout -b cli_release_v${{ github.event.inputs.release_version }}
+          echo | ./gradlew jib-cli:release -Prelease.releaseVersion=${{ github.event.inputs.release_version }}
+          git push origin v${{ github.event.inputs.release_version }}-cli
+
+      - name: Create PR
+        uses: technote-space/create-pr-action@v2
+        with:
+          PR_BRANCH_PREFIX: ""
+          PR_BRANCH_NAME: cli_release_v${{ github.event.inputs.release_version }}
+
+      - name: Build Jib CLI
+        run: |
+          ./gradlew clean :jib-cli:instDist
 
       - name: Draft release
         uses: actions/create-release@v1
@@ -30,10 +41,6 @@ jobs:
           tag_name: ${{ github.event.inputs.release_version }}
           release_name: ${{ github.event.inputs.release_version }}
           draft: true
-
-      - name: Build Jib CLI
-        run: |
-          ./gradlew clean :jib-cli:instDist
 
       - uses: actions/upload-release-asset@v1
         env:
