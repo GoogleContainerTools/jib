@@ -1,15 +1,15 @@
-name: "Release Jib CLI"
+name: Release Jib CLI
 on:
   workflow_dispatch:
     inputs:
       release_tag:
-        description: 'git tag from which Jib CLI should be built'
+        description: git tag from which Jib CLI should be built
         required: true
-        default: '<v0.1.0-cli> (must exist)'
+        default: <v0.1.0-cli> (must exist)
 
 jobs:
   release:
-    name: "Gradle wrapper validation"
+    name: Gradle wrapper validation
     runs-on: ubuntu-latest
     steps:
       - name: Check out code
