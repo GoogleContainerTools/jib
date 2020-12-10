@@ -1,0 +1,42 @@
+name: "Release Jib CLI"
+on:
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: 'git tag from which Jib CLI should be built'
+        required: true
+        default: '<v0.1.0-cli> (must exist)'
+
+jobs:
+  release:
+    name: "Gradle wrapper validation"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v2
+        with:
+          ref: ${{ github.event.inputs.release_tag }}
+
+      - name: Draft Release
+        uses: actions/create-release@v1
+        id: create_release
+        env:
+          # Provided by Actions. No need to create a token.
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: jib-cli ${{ github.ref }}
+          draft: true
+
+      - name: Build Jib CLI
+        run: |
+          ./gradlew :jib-cli:instDist
+
+      - uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./jib-cli/build/install/jib/bin/jib
+          asset_name: jib
+          asset_content_type: application/octet-stream
