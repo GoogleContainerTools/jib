@@ -38,10 +38,10 @@ dependencies {
 
 release {
   tagTemplate = 'v$version-cli'
-  //ignoredSnapshotDependencies = [
-  //  'com.google.cloud.tools:jib-core',
-  //  'com.google.cloud.tools:jib-plugins-common',
-  //]
+  ignoredSnapshotDependencies = [
+    'com.google.cloud.tools:jib-core',
+    'com.google.cloud.tools:jib-plugins-common',
+  ]
   git {
     requireBranch = /^cli_release_v\d+.*$/  //regex
   }
