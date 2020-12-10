@@ -26,8 +26,8 @@ jobs:
 
       - name: Create pull request
         uses: peter-evans/create-pull-request@v3
-        with:
-          branch: cli_release_v${{ github.event.inputs.release_version }}
+#        with:
+#          branch: cli_release_v${{ github.event.inputs.release_version }}
 
       - name: Build Jib CLI
         run: |
