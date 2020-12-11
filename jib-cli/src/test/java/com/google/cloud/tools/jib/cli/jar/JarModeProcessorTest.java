@@ -77,10 +77,9 @@ public class JarModeProcessorTest {
     List<FileEntriesLayer> layers =
         JarModeProcessor.createLayersForExplodedStandard(standardJar, destDir);
 
-    assertThat(layers.size()).isEqualTo(2);
+    assertThat(layers.size()).isEqualTo(1);
 
     FileEntriesLayer resourcesLayer = layers.get(0);
-    FileEntriesLayer classesLayer = layers.get(1);
 
     // Validate resources layer.
     List<AbsoluteUnixPath> actualResourcesPath =
@@ -93,15 +92,6 @@ public class JarModeProcessorTest {
         .containsExactly(
             AbsoluteUnixPath.get("/app/explodedJar/META-INF"),
             AbsoluteUnixPath.get("/app/explodedJar/META-INF/MANIFEST.MF"));
-
-    // Validate classes layer.
-    List<AbsoluteUnixPath> actualClassesPath =
-        classesLayer
-            .getEntries()
-            .stream()
-            .map(FileEntry::getExtractionPath)
-            .collect(Collectors.toList());
-    assertThat(actualClassesPath).isEmpty();
   }
 
   @Test

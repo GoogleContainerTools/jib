@@ -114,8 +114,12 @@ public class JarModeProcessor {
         addDirectoryContentsToLayer(
             RESOURCES, localExplodedJarRoot, isResourceFile, APP_ROOT.resolve("explodedJar"));
 
-    layers.add(resourcesLayer);
-    layers.add(classesLayer);
+    if (!resourcesLayer.getEntries().isEmpty()) {
+      layers.add(resourcesLayer);
+    }
+    if (!classesLayer.getEntries().isEmpty()) {
+      layers.add(classesLayer);
+    }
     return layers;
   }
 
