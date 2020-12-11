@@ -26,7 +26,6 @@ jobs:
           git config user.email "chanseok@google.com"
           git config user.name "Chanseok Oh"
           ./gradlew jib-cli:release -Prelease.useAutomaticVersion=true -Prelease.releaseVersion=${{ github.event.inputs.release_version }}
-          git push origin v${{ github.event.inputs.release_version }}-cli
 
       - name: Create pull request
         uses: repo-sync/pull-request@v2
