@@ -15,34 +15,39 @@ jobs:
       - name: Check out code
         uses: actions/checkout@v2
 
-      - name: Create commits
-        run: |
-          git checkout -b my-test
-          git push origin my-test
-          git config user.email "chanseok@google.com"
-          git config user.name "Chanseok Oh"
-          date +%s > report.txt
-          git add -A
-          git commit -am "Modify tracked file during workflow"
-          date +%s > new-report.txt
-          git add -A
-          git commit -m "Add untracked file during workflow"
-      - name: Create Pull Request
-        uses: peter-evans/create-pull-request@v3
+      #- name: Create commits
+      #  run: |
+      #    git checkout -b my-test
+      #    git push origin my-test
+      #    git config user.email "chanseok@google.com"
+      #    git config user.name "Chanseok Oh"
+      #    date +%s > report.txt
+      #    git add -A
+      #    git commit -am "Modify tracked file during workflow"
+      #    date +%s > new-report.txt
+      #    git add -A
+      #    git commit -m "Add untracked file during workflow"
+      #- name: Create Pull Request
+      #  uses: peter-evans/create-pull-request@v3
 
       - name: Create branch and tag
         run: |
           #git checkout -b cli_release_v${{ github.event.inputs.release_version }}
           #git config user.email "chanseok@google.com"
           #git config user.name "Chanseok Oh"
-          echo | ./gradlew jib-cli:release -Prelease.releaseVersion=${{ github.event.inputs.release_version }}
-          #git push origin cli_release_v${{ github.event.inputs.release_version }}
+          ./gradlew jib-cli:release -Prelease.useAutomaticVersion=true -Prelease.releaseVersion=${{ github.event.inputs.release_version }}
           git push origin v${{ github.event.inputs.release_version }}-cli
 
-      - name: Create pull request
-        uses: peter-evans/create-pull-request@v3
-        with:
-          base: master
+      - name: GitHub Pull Request Action
+        uses: repo-sync/pull-request@v2.4.3
+        #with:
+          #source_branch: # optional
+          #destination_branch: # optional, default is master
+    
+      #- name: Create pull request
+      #  uses: peter-evans/create-pull-request@v3
+      #  with:
+      #    base: master
           #branch: cli-test
 
       - name: Build Jib CLI
