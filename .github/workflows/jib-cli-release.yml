@@ -17,7 +17,7 @@ jobs:
 
       - name: Create branch and tag
         run: |
-          #git checkout -b cli_release_v${{ github.event.inputs.release_version }}
+          git checkout -b cli_release_v${{ github.event.inputs.release_version }}
           git config user.email "chanseok@google.com"
           git config user.name "Chanseok Oh"
           echo | ./gradlew jib-cli:release -Prelease.releaseVersion=${{ github.event.inputs.release_version }}
