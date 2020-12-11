@@ -421,7 +421,7 @@ public class JarModeProcessorTest {
   @Test
   public void testCreateLayersForExplodedLayeredSpringBoot()
       throws IOException, URISyntaxException {
-    // BOOT-INF/layers.idx for this springboot jar is structured in this way:
+    // BOOT-INF/layers.idx for this springboot jar as shown below:
     // - "dependencies":
     //   - "BOOT-INF/lib/dependency1.jar"
     //   - "BOOT-INF/lib/dependency2.jar"
@@ -505,7 +505,7 @@ public class JarModeProcessorTest {
   @Test
   public void testCreateLayersForExplodedLayeredSpringBoot_singleEmptyLayerListed()
       throws IOException, URISyntaxException {
-    // BOOT-INF/layers.idx for this springboot jar is structured in this way:
+    // BOOT-INF/layers.idx for this springboot jar as shown below:
     // - "dependencies":
     //   - "BOOT-INF/lib/dependency1.jar"
     //   - "BOOT-INF/lib/dependency2.jar"
@@ -576,7 +576,7 @@ public class JarModeProcessorTest {
   @Test
   public void testCreateLayersForExplodedLayeredSpringBoot_allEmptyLayersListed()
       throws IOException, URISyntaxException {
-    // BOOT-INF/layers.idx for this springboot jar is structured in this way:
+    // BOOT-INF/layers.idx for this springboot jar as shown below:
     // - "dependencies":
     // - "spring-boot-loader":
     // - "snapshot-dependencies":
