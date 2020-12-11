@@ -15,23 +15,10 @@ jobs:
       - name: Check out code
         uses: actions/checkout@v2
 
-      - name: Draft release
-        uses: actions/create-release@v1
-        id: create_release-test
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: v${{ github.event.inputs.release_version }}-cli
-          release_name: jib-cli-test v${{ github.event.inputs.release_version }}
-          draft: true
-
-      - name: Upload Jib CLI archive
-        uses: actions/upload-release-asset@v1
-        with:
-          upload_url: ${{ steps.create_release-test.outputs.upload_url }}
-          asset_path: ./jib-cli/build.gradle
-          asset_name: build.gradle
-          asset_content_type: application/octet-stream
+      - name: Build Jib CLI
+        run: |
+          # TODO: run integration test? (Requries auth with GCP.)
+          ./gradlew clean build jib-cli:instDist
 
       - name: Run Gradle release
         run: |
@@ -48,11 +35,7 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           source_branch: cli_release_v${{ github.event.inputs.release_version }}
     
-      - name: Build Jib CLI
-        run: |
-          ./gradlew clean :jib-cli:instDist
-
-      - name: Draft release
+      - name: Draft GitHub release
         uses: actions/create-release@v1
         id: create_release
         env:
@@ -62,11 +45,13 @@ jobs:
           release_name: jib-cli v${{ github.event.inputs.release_version }}
           draft: true
 
-      - uses: actions/upload-release-asset@v1
+      - name: Upload Jib CLI binaries
+        uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
+          # TODO: upload an archive
           asset_path: ./jib-cli/build/install/jib/bin/jib
           asset_name: jib
           asset_content_type: application/octet-stream
