@@ -47,7 +47,10 @@ BRANCH=extension_common_release_v${VERSION}
 git checkout -b ${BRANCH}
 
 # Changes the version for release and creates the commits/tags.
-echo | ./gradlew :jib-plugins-extension-common:release -Prelease.releaseVersion=${VERSION} ${POST_RELEASE_VERSION:+"-Prelease.newVersion=${POST_RELEASE_VERSION}"}
+./gradlew :jib-plugins-extension-common:release \
+  -Prelease.useAutomaticVersion=true \
+  -Prelease.releaseVersion=${VERSION} \
+  ${POST_RELEASE_VERSION:+"-Prelease.newVersion=${POST_RELEASE_VERSION}"}
 
 # Pushes the release branch and tag to Github.
 git push origin ${BRANCH}
