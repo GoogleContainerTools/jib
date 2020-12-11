@@ -158,7 +158,6 @@ public class JarModeProcessor {
    */
   static List<FileEntriesLayer> createLayersForExplodedSpringBootFat(Path jarPath, Path tempDirPath)
       throws IOException {
-
     try (JarFile jarFile = new JarFile(jarPath.toFile())) {
       ZipEntry layerIndex = jarFile.getEntry("BOOT-INF/layers.idx");
       Path localExplodedJarRoot = tempDirPath;
@@ -268,7 +267,7 @@ public class JarModeProcessor {
   private static List<FileEntriesLayer> getDependenciesLayers(Path jarPath, ProcessingMode mode)
       throws IOException {
     // Get dependencies from Class-Path in the jar's manifest and add a layer each for non-snapshot
-    // and snapshot dependencies. If Class-Path is not present in the jar's manifest then skip
+    // and snapshot dependencies. If Class-Path is not present in the JAR's manifest then skip
     // adding the dependencies layers.
     try (JarFile jarFile = new JarFile(jarPath.toFile())) {
       String classPath =
@@ -399,14 +398,14 @@ public class JarModeProcessor {
         .walk(
             path -> {
               Path relativePath = sourceRoot.relativize(path);
-              Path fullPath = relativePath;
-              while (fullPath != null) {
-                if (!addedPaths.contains(fullPath)) {
+              Path subPath = relativePath;
+              while (subPath != null) {
+                if (!addedPaths.contains(subPath)) {
                   builder.addEntry(
-                      sourceRoot.resolve(fullPath), basePathInContainer.resolve(fullPath));
-                  addedPaths.add(fullPath);
+                      sourceRoot.resolve(subPath), basePathInContainer.resolve(subPath));
+                  addedPaths.add(subPath);
                 }
-                fullPath = fullPath.getParent();
+                subPath = subPath.getParent();
               }
             });
     return builder.build();
