@@ -117,7 +117,8 @@ public class Build implements Callable<Integer> {
         return 1;
       }
 
-      Containerizer containerizer = Containerizers.from(commonCliOptions, logger);
+      CacheDirectories cacheDirectories = CacheDirectories.from(commonCliOptions, contextRoot);
+      Containerizer containerizer = Containerizers.from(commonCliOptions, logger, cacheDirectories);
 
       JibContainerBuilder containerBuilder =
           BuildFiles.toJibContainerBuilder(contextRoot, buildFile, this, commonCliOptions, logger);

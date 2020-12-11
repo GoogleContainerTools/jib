@@ -42,20 +42,22 @@ import java.util.List;
 public class Containerizers {
 
   /**
-   * Create a Containerizer from a jibcli command line specification.
+   * Create a Containerizer from a command line specification.
    *
    * @param commonCliOptions common cli options
    * @param logger a logger to inject into the build
+   * @param cacheDirectories the location of the relevant caches for this build
    * @return a populated Containerizer
    * @throws InvalidImageReferenceException if the image reference could not be parsed
    * @throws FileNotFoundException if a credential helper file is not found
    */
-  public static Containerizer from(CommonCliOptions commonCliOptions, ConsoleLogger logger)
+  public static Containerizer from(
+      CommonCliOptions commonCliOptions, ConsoleLogger logger, CacheDirectories cacheDirectories)
       throws InvalidImageReferenceException, FileNotFoundException {
     Containerizer containerizer = create(commonCliOptions, logger);
 
     applyHandlers(containerizer, logger);
-    applyConfiguration(containerizer, commonCliOptions);
+    applyConfiguration(containerizer, commonCliOptions, cacheDirectories);
 
     return containerizer;
   }
@@ -87,7 +89,9 @@ public class Containerizers {
   }
 
   private static void applyConfiguration(
-      Containerizer containerizer, CommonCliOptions commonCliOptions) {
+      Containerizer containerizer,
+      CommonCliOptions commonCliOptions,
+      CacheDirectories cacheDirectories) {
     containerizer.setToolName(VersionInfo.TOOL_NAME);
     containerizer.setToolVersion(VersionInfo.getVersionSimple());
 
@@ -101,8 +105,8 @@ public class Containerizers {
     }
 
     containerizer.setAllowInsecureRegistries(commonCliOptions.isAllowInsecureRegistries());
-    commonCliOptions.getBaseImageCache().ifPresent(containerizer::setBaseImageLayersCache);
-    commonCliOptions.getProjectCache().ifPresent(containerizer::setApplicationLayersCache);
+    cacheDirectories.getBaseImageCache().ifPresent(containerizer::setBaseImageLayersCache);
+    containerizer.setApplicationLayersCache(cacheDirectories.getProjectCache());
 
     commonCliOptions.getAdditionalTags().forEach(containerizer::withAdditionalTag);
   }

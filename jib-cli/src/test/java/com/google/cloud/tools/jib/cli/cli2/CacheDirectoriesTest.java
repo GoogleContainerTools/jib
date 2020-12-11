@@ -24,6 +24,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -34,10 +35,10 @@ public class CacheDirectoriesTest {
   @Rule public TemporaryFolder temporaryFolder = new TemporaryFolder();
 
   @Test
-  public void testCacheDirectories_defaults() {
+  public void testCacheDirectories_defaults() throws IOException {
     CommonCliOptions commonCliOptions =
         CommandLine.populateCommand(new CommonCliOptions(), "-t", "ignored");
-    Path buildContext = Paths.get("some-context");
+    Path buildContext = temporaryFolder.newFolder("some-context").toPath();
     CacheDirectories cacheDirectories = CacheDirectories.from(commonCliOptions, buildContext);
 
     assertThat(cacheDirectories.getBaseImageCache()).isEmpty();
@@ -46,24 +47,36 @@ public class CacheDirectoriesTest {
             XdgDirectories.getCacheHome()
                 .resolve("cli")
                 .resolve("projects")
-                .resolve(
-                    CacheDirectories.getProjectCacheDirectoryFromProject(
-                        Paths.get("some-context"))));
+                .resolve(CacheDirectories.getProjectCacheDirectoryFromProject(buildContext)));
   }
 
   @Test
-  public void testCacheDirectories_configuredValuesIgnoresBuildContext() {
+  public void testCacheDirectories_configuredValuesIgnoresBuildContext() throws IOException {
     CommonCliOptions commonCliOptions =
         CommandLine.populateCommand(
             new CommonCliOptions(),
             "-t=ignored",
             "--base-image-cache=test-base-image-cache",
             "--project-cache=test-project-cache");
-    CacheDirectories cacheDirectories =
-        CacheDirectories.from(commonCliOptions, Paths.get("ignored"));
+    Path ignoredContext = temporaryFolder.newFolder("ignored").toPath();
+    CacheDirectories cacheDirectories = CacheDirectories.from(commonCliOptions, ignoredContext);
 
     assertThat(cacheDirectories.getBaseImageCache()).hasValue(Paths.get("test-base-image-cache"));
     assertThat(cacheDirectories.getProjectCache()).isEqualTo(Paths.get("test-project-cache"));
+  }
+
+  @Test
+  public void testCacheDirectories_failIfContextIsNotDirectory() throws IOException {
+    Path badContext = temporaryFolder.newFile("a.file").toPath();
+    CommonCliOptions commonCliOptions =
+        CommandLine.populateCommand(new CommonCliOptions(), "-t", "ignored");
+    try {
+      CacheDirectories.from(commonCliOptions, badContext);
+      Assert.fail();
+    } catch (IllegalArgumentException iae) {
+      assertThat(iae.getMessage())
+          .isEqualTo("contextRoot must be a directory, but " + badContext.toString() + " is not.");
+    }
   }
 
   @Test

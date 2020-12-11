@@ -19,7 +19,9 @@ package com.google.cloud.tools.jib.cli.cli2;
 import com.google.cloud.tools.jib.filesystem.XdgDirectories;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Charsets;
+import com.google.common.base.Preconditions;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -35,12 +37,15 @@ public class CacheDirectories {
   /**
    * Create a caches helper for cli cache locations.
    *
-   * @param commonCliOptions cli options
-   * @param contextRoot the context root, if a single file, use the parent directory, this context
+   * @param commonCliOptions cli options for user configured cache directories
+   * @param contextRoot the context root, use the parent directory of single files, this context
    *     root must exist
    * @return an instance of CacheDirectories with cli specific cache locations
    */
   public static CacheDirectories from(CommonCliOptions commonCliOptions, Path contextRoot) {
+    Preconditions.checkArgument(
+        Files.isDirectory(contextRoot),
+        "contextRoot must be a directory, but " + contextRoot.toString() + " is not.");
     return new CacheDirectories(
         commonCliOptions.getBaseImageCache().orElse(null),
         commonCliOptions

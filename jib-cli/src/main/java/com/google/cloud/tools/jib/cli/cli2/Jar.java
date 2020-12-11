@@ -84,7 +84,9 @@ public class Jar implements Callable<Integer> {
         return 1;
       }
 
-      Containerizer containerizer = Containerizers.from(commonCliOptions, logger);
+      CacheDirectories cacheDirectories =
+          CacheDirectories.from(commonCliOptions, jarFile.getParent());
+      Containerizer containerizer = Containerizers.from(commonCliOptions, logger, cacheDirectories);
 
       JibContainerBuilder containerBuilder =
           JarFiles.toJibContainerBuilder(jarFile, tempDirectoryProvider.newDirectory(), mode);

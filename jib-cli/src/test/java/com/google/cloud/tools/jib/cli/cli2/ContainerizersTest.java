@@ -20,7 +20,6 @@ import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth8.assertThat;
 
 import com.google.cloud.tools.jib.api.CacheDirectoryCreationException;
-import com.google.cloud.tools.jib.api.Containerizer;
 import com.google.cloud.tools.jib.api.ContainerizerTestProxy;
 import com.google.cloud.tools.jib.api.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.configuration.ImageConfiguration;
@@ -31,11 +30,14 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Optional;
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.contrib.java.lang.system.RestoreSystemProperties;
 import org.junit.rules.TemporaryFolder;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
 import picocli.CommandLine;
@@ -49,14 +51,26 @@ public class ContainerizersTest {
   public final RestoreSystemProperties restoreSystemProperties = new RestoreSystemProperties();
 
   @Mock private ConsoleLogger consoleLogger;
+  @Mock private CacheDirectories cacheDirectories;
+
+  private static final Path baseImageCache = Paths.get("base-image-cache-for-test");
+  private static final Path projectCache = Paths.get("project-cache-for-test");
+
+  @Before
+  public void mockCaches() {
+    Mockito.when(cacheDirectories.getBaseImageCache()).thenReturn(Optional.of(baseImageCache));
+    Mockito.when(cacheDirectories.getProjectCache()).thenReturn(projectCache);
+  }
 
   @Test
   public void testApplyConfiguration_defaults()
-      throws InvalidImageReferenceException, FileNotFoundException {
+      throws InvalidImageReferenceException, FileNotFoundException,
+          CacheDirectoryCreationException {
     CommonCliOptions commonCliOptions =
         CommandLine.populateCommand(new CommonCliOptions(), "-t", "test-image-ref");
     ContainerizerTestProxy containerizer =
-        new ContainerizerTestProxy(Containerizers.from(commonCliOptions, consoleLogger));
+        new ContainerizerTestProxy(
+            Containerizers.from(commonCliOptions, consoleLogger, cacheDirectories));
 
     assertThat(Boolean.getBoolean(JibSystemProperties.SEND_CREDENTIALS_OVER_HTTP)).isFalse();
     assertThat(Boolean.getBoolean(JibSystemProperties.SERIALIZE)).isFalse();
@@ -64,10 +78,8 @@ public class ContainerizersTest {
     assertThat(containerizer.getToolVersion()).isEqualTo(VersionInfo.getVersionSimple());
     assertThat(Boolean.getBoolean("sendCredentialsOverHttp")).isFalse();
     assertThat(containerizer.getAllowInsecureRegistries()).isFalse();
-    assertThat(containerizer.getBaseImageLayersCacheDirectory())
-        .isEqualTo(Containerizer.DEFAULT_BASE_CACHE_DIRECTORY);
-    // it's a little hard to test applicationLayersCacheDirectory defaults here, so intentionally
-    // skipped
+    assertThat(containerizer.getBaseImageLayersCacheDirectory()).isEqualTo(baseImageCache);
+    assertThat(containerizer.getApplicationsLayersCacheDirectory()).isEqualTo(projectCache);
     assertThat(containerizer.getAdditionalTags()).isEqualTo(ImmutableSet.of());
   }
 
@@ -81,19 +93,17 @@ public class ContainerizersTest {
             "-t=test-image-ref",
             "--send-credentials-over-http",
             "--allow-insecure-registries",
-            "--base-image-cache=./bi-cache",
-            "--project-cache=./app-cache",
             "--additional-tags=tag1,tag2",
             "--serialize");
     ContainerizerTestProxy containerizer =
-        new ContainerizerTestProxy(Containerizers.from(commonCliOptions, consoleLogger));
+        new ContainerizerTestProxy(
+            Containerizers.from(commonCliOptions, consoleLogger, cacheDirectories));
 
     assertThat(Boolean.getBoolean(JibSystemProperties.SEND_CREDENTIALS_OVER_HTTP)).isTrue();
     assertThat(Boolean.getBoolean(JibSystemProperties.SERIALIZE)).isTrue();
     assertThat(containerizer.getAllowInsecureRegistries()).isTrue();
-    assertThat(containerizer.getBaseImageLayersCacheDirectory()).isEqualTo(Paths.get("./bi-cache"));
-    assertThat(containerizer.getApplicationsLayersCacheDirectory())
-        .isEqualTo(Paths.get("./app-cache"));
+    assertThat(containerizer.getBaseImageLayersCacheDirectory()).isEqualTo(baseImageCache);
+    assertThat(containerizer.getApplicationsLayersCacheDirectory()).isEqualTo(projectCache);
     assertThat(containerizer.getAdditionalTags()).isEqualTo(ImmutableSet.of("tag1", "tag2"));
   }
 
@@ -104,7 +114,8 @@ public class ContainerizersTest {
         CommandLine.populateCommand(
             new CommonCliOptions(), "-t", "docker://gcr.io/test/test-image-ref");
     ContainerizerTestProxy containerizer =
-        new ContainerizerTestProxy(Containerizers.from(commonCliOptions, consoleLogger));
+        new ContainerizerTestProxy(
+            Containerizers.from(commonCliOptions, consoleLogger, cacheDirectories));
 
     assertThat(containerizer.getDescription()).isEqualTo("Building image to Docker daemon");
     ImageConfiguration config = containerizer.getImageConfiguration();
@@ -124,7 +135,8 @@ public class ContainerizersTest {
             "-t=tar://" + tarPath.toAbsolutePath(),
             "--name=gcr.io/test/test-image-ref");
     ContainerizerTestProxy containerizer =
-        new ContainerizerTestProxy(Containerizers.from(commonCliOptions, consoleLogger));
+        new ContainerizerTestProxy(
+            Containerizers.from(commonCliOptions, consoleLogger, cacheDirectories));
 
     assertThat(containerizer.getDescription()).isEqualTo("Building image tarball");
     ImageConfiguration config = containerizer.getImageConfiguration();
@@ -141,7 +153,8 @@ public class ContainerizersTest {
         CommandLine.populateCommand(
             new CommonCliOptions(), "-t", "registry://gcr.io/test/test-image-ref");
     ContainerizerTestProxy containerizer =
-        new ContainerizerTestProxy(Containerizers.from(commonCliOptions, consoleLogger));
+        new ContainerizerTestProxy(
+            Containerizers.from(commonCliOptions, consoleLogger, cacheDirectories));
 
     // description from Containerizer.java
     assertThat(containerizer.getDescription()).isEqualTo("Building and pushing image");
