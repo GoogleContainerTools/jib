@@ -52,10 +52,6 @@ git checkout -b ${BRANCH}
   -Prelease.releaseVersion=${VERSION} \
   ${POST_RELEASE_VERSION:+"-Prelease.newVersion=${POST_RELEASE_VERSION}"}
 
-# Pushes the release branch and tag to Github.
-git push origin ${BRANCH}
-git push origin v${VERSION}-gradle-extension
-
 # File a PR on Github for the new branch. Have someone LGTM it, which gives you permission to continue.
 EchoGreen 'File a PR for the new release branch:'
 echo https://github.com/GoogleContainerTools/jib/pull/new/${BRANCH}
