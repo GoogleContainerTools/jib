@@ -15,22 +15,7 @@ jobs:
       - name: Check out code
         uses: actions/checkout@v2
 
-      #- name: Create commits
-      #  run: |
-      #    git checkout -b my-test
-      #    git push origin my-test
-      #    git config user.email "chanseok@google.com"
-      #    git config user.name "Chanseok Oh"
-      #    date +%s > report.txt
-      #    git add -A
-      #    git commit -am "Modify tracked file during workflow"
-      #    date +%s > new-report.txt
-      #    git add -A
-      #    git commit -m "Add untracked file during workflow"
-      #- name: Create Pull Request
-      #  uses: peter-evans/create-pull-request@v3
-
-      - name: Create branch and tag
+      - name: Run Gradle release
         run: |
           git checkout -b cli_release_v${{ github.event.inputs.release_version }}
           git config user.email "chanseok@google.com"
@@ -38,19 +23,13 @@ jobs:
           ./gradlew jib-cli:release -Prelease.useAutomaticVersion=true -Prelease.releaseVersion=${{ github.event.inputs.release_version }}
           git push origin v${{ github.event.inputs.release_version }}-cli
 
-      - name: GitHub Pull Request Action
+      - name: Create pull request
         uses: repo-sync/pull-request@v2
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          #source_branch: # optional
-          #destination_branch: # optional, default is master
+          source_branch: cli_release_v${{ github.event.inputs.release_version }}
+          destination_branch: master
     
-      #- name: Create pull request
-      #  uses: peter-evans/create-pull-request@v3
-      #  with:
-      #    base: master
-          #branch: cli-test
-
       - name: Build Jib CLI
         run: |
           ./gradlew clean :jib-cli:instDist
