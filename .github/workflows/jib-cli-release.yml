@@ -28,7 +28,7 @@ jobs:
       - name: Upload Jib CLI archive
         uses: actions/upload-release-asset@v1
         with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          upload_url: ${{ steps.create_release-test.outputs.upload_url }}
           asset_path: ./jib-cli/build.gradle
           asset_name: build.gradle
           asset_content_type: application/octet-stream
