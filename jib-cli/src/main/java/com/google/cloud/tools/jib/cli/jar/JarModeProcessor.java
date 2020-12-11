@@ -298,7 +298,7 @@ public class JarModeProcessor {
                     jarParent.resolve(path),
                     mode.equals(ProcessingMode.packaged)
                         ? APP_ROOT.resolve(path)
-                        : APP_ROOT.resolve("dependencies").resolve(path.getFileName())));
+                        : APP_ROOT.resolve(DEPENDENCIES).resolve(path.getFileName())));
         layers.add(nonSnapshotLayer.build());
       }
       if (!snapshots.isEmpty()) {
@@ -311,7 +311,7 @@ public class JarModeProcessor {
                     jarParent.resolve(path),
                     mode.equals(ProcessingMode.packaged)
                         ? APP_ROOT.resolve(path)
-                        : APP_ROOT.resolve("dependencies").resolve(path.getFileName())));
+                        : APP_ROOT.resolve(DEPENDENCIES).resolve(path.getFileName())));
         layers.add(snapshotLayer.build());
       }
       return layers;

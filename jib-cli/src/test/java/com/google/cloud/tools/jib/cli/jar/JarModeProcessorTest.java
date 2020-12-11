@@ -108,7 +108,7 @@ public class JarModeProcessorTest {
     FileEntriesLayer resourcesLayer = layers.get(2);
     FileEntriesLayer classesLayer = layers.get(3);
 
-    // Validate dependencies layer.
+    // Validate dependencies layers.
     assertThat(nonSnapshotLayer.getName()).isEqualTo("dependencies");
     assertThat(
             nonSnapshotLayer
@@ -292,7 +292,8 @@ public class JarModeProcessorTest {
     assertThat(ex)
         .hasMessageThat()
         .isEqualTo(
-            "`Main-Class:` attribute for an application main class not defined in the input JAR's manifest (`META-INF/MANIFEST.MF` in the JAR).");
+            "`Main-Class:` attribute for an application main class not defined in the input JAR's manifest "
+                + "(`META-INF/MANIFEST.MF` in the JAR).");
   }
 
   @Test
@@ -391,7 +392,8 @@ public class JarModeProcessorTest {
     assertThat(ex)
         .hasMessageThat()
         .isEqualTo(
-            "`Main-Class:` attribute for an application main class not defined in the input JAR's manifest (`META-INF/MANIFEST.MF` in the JAR).");
+            "`Main-Class:` attribute for an application main class not defined in the input JAR's manifest "
+                + "(`META-INF/MANIFEST.MF` in the JAR).");
   }
 
   @Test
