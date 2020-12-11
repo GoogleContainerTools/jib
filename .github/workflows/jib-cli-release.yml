@@ -15,6 +15,22 @@ jobs:
       - name: Check out code
         uses: actions/checkout@v2
 
+      - name: Draft release
+        uses: actions/create-release@v1
+        id: create_release-test
+        with:
+          tag_name: v${{ github.event.inputs.release_version }}-cli
+          release_name: jib-cli v${{ github.event.inputs.release_version }}
+          draft: true
+
+      - name: Upload Jib CLI archive
+        uses: actions/upload-release-asset@v1
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./jib-cli/build.gradle
+          asset_name: build.gradle
+          asset_content_type: application/octet-stream
+
       - name: Run Gradle release
         run: |
           git checkout -b cli_release_v${{ github.event.inputs.release_version }}
@@ -26,6 +42,7 @@ jobs:
       - name: Create pull request
         uses: repo-sync/pull-request@v2
         with:
+          # Provided by Actions. No need to create a token.
           github_token: ${{ secrets.GITHUB_TOKEN }}
           source_branch: cli_release_v${{ github.event.inputs.release_version }}
     
@@ -37,7 +54,6 @@ jobs:
         uses: actions/create-release@v1
         id: create_release
         env:
-          # Provided by Actions. No need to create a token.
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tag_name: v${{ github.event.inputs.release_version }}-cli
