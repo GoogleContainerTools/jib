@@ -399,16 +399,14 @@ public class JarModeProcessor {
         .walk(
             path -> {
               Path relativePath = sourceRoot.relativize(path);
-              int nameCount = relativePath.getNameCount();
-
-              // Add the parent directories and the path itself
-              for (int i = 1; i <= nameCount; i++) {
-                Path subPath = relativePath.subpath(0, i);
-                if (!addedPaths.contains(subPath)) {
+              Path fullPath = relativePath;
+              while (fullPath != null) {
+                if (!addedPaths.contains(fullPath)) {
                   builder.addEntry(
-                      sourceRoot.resolve(subPath), basePathInContainer.resolve(subPath));
-                  addedPaths.add(subPath);
+                      sourceRoot.resolve(fullPath), basePathInContainer.resolve(fullPath));
+                  addedPaths.add(fullPath);
                 }
+                fullPath = fullPath.getParent();
               }
             });
     return builder.build();

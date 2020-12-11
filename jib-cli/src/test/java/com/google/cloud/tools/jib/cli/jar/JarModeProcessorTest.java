@@ -79,11 +79,9 @@ public class JarModeProcessorTest {
 
     assertThat(layers.size()).isEqualTo(1);
 
-    FileEntriesLayer resourcesLayer = layers.get(0);
-
-    // Validate resources layer.
     List<AbsoluteUnixPath> actualResourcesPath =
-        resourcesLayer
+        layers
+            .get(0)
             .getEntries()
             .stream()
             .map(FileEntry::getExtractionPath)
