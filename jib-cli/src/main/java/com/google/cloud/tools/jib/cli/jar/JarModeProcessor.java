@@ -200,8 +200,9 @@ public class JarModeProcessor {
       Predicate<Path> isInMetaInf =
           path -> path.startsWith(localExplodedJarRoot.resolve("META-INF"));
       Predicate<Path> isFile = path -> !path.toFile().isDirectory();
+      Predicate<Path> isNotClassFile = isFile.and(isClass.negate());
       Predicate<Path> finalPredicateResources =
-          isFile.and(isInMetaInf.or(isInBootInfClasses.and(isClass.negate())));
+          isInMetaInf.or(isInBootInfClasses.and(isNotClassFile));
       FileEntriesLayer resourcesLayer =
           addDirectoryContentsToLayer(
               RESOURCES, localExplodedJarRoot, finalPredicateResources, APP_ROOT);
