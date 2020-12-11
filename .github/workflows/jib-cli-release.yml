@@ -17,6 +17,7 @@ jobs:
 
       - name: Create commits
         run: |
+          git checkout -b my-test
           git config user.email "chanseok@google.com"
           git config user.name "Chanseok Oh"
           date +%s > report.txt
