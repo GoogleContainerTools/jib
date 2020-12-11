@@ -43,7 +43,7 @@ release {
     'com.google.cloud.tools:jib-plugins-common',
   ]
   git {
-    requireBranch = /^_release_v\d+.*$/  //regex
+    requireBranch = /^cli_release_v\d+.*$/  //regex
   }
 }
 
