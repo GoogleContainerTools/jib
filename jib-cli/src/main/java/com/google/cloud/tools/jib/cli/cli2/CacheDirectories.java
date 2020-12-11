@@ -38,7 +38,7 @@ public class CacheDirectories {
    * @param commonCliOptions cli options
    * @param contextRoot the context root, if a single file, use the parent directory, this context
    *     root must exist
-   * @return an instance of Caches with cli specific cache locations
+   * @return an instance of CacheDirectories with cli specific cache locations
    */
   public static CacheDirectories from(CommonCliOptions commonCliOptions, Path contextRoot) {
     return new CacheDirectories(
