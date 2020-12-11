@@ -27,7 +27,6 @@ jobs:
         uses: repo-sync/pull-request@v2
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          source_branch: cli_release_v${{ github.event.inputs.release_version }}
           destination_branch: master
     
       - name: Build Jib CLI
