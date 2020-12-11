@@ -65,7 +65,7 @@ public class JarTest {
     assertThat(commonCliOptions.getToCredentialHelper()).isEmpty();
     assertThat(commonCliOptions.getFromCredentialHelper()).isEmpty();
     assertThat(commonCliOptions.getAdditionalTags()).isEmpty();
-    assertThat(commonCliOptions.getApplicationCache()).isEmpty();
+    assertThat(commonCliOptions.getProjectCache()).isEmpty();
     assertThat(commonCliOptions.getBaseImageCache()).isEmpty();
     assertThat(commonCliOptions.isAllowInsecureRegistries()).isFalse();
     assertThat(commonCliOptions.isSendCredentialsOverHttp()).isFalse();
@@ -87,7 +87,7 @@ public class JarTest {
     assertThat(commonCliOptions.getToCredentialHelper()).isEmpty();
     assertThat(commonCliOptions.getFromCredentialHelper()).isEmpty();
     assertThat(commonCliOptions.getAdditionalTags()).isEmpty();
-    assertThat(commonCliOptions.getApplicationCache()).isEmpty();
+    assertThat(commonCliOptions.getProjectCache()).isEmpty();
     assertThat(commonCliOptions.getBaseImageCache()).isEmpty();
     assertThat(commonCliOptions.isAllowInsecureRegistries()).isFalse();
     assertThat(commonCliOptions.isSendCredentialsOverHttp()).isFalse();
@@ -109,7 +109,7 @@ public class JarTest {
             "--additional-tags=tag1,tag2,tag3",
             "--allow-insecure-registries",
             "--send-credentials-over-http",
-            "--application-cache=test-application-cache",
+            "--project-cache=test-project-cache",
             "--base-image-cache=test-base-image-cache",
             "--verbosity=info",
             "--stacktrace",
@@ -126,8 +126,7 @@ public class JarTest {
     assertThat(commonCliOptions.getFromCredentialHelper()).isEmpty();
     assertThat(commonCliOptions.getAdditionalTags())
         .isEqualTo(ImmutableList.of("tag1", "tag2", "tag3"));
-    assertThat(commonCliOptions.getApplicationCache())
-        .hasValue(Paths.get("test-application-cache"));
+    assertThat(commonCliOptions.getProjectCache()).hasValue(Paths.get("test-project-cache"));
     assertThat(commonCliOptions.getBaseImageCache()).hasValue(Paths.get("test-base-image-cache"));
     assertThat(commonCliOptions.isAllowInsecureRegistries()).isTrue();
     assertThat(commonCliOptions.isSendCredentialsOverHttp()).isTrue();
