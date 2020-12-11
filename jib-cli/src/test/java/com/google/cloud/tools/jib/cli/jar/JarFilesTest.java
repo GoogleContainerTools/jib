@@ -105,8 +105,8 @@ public class JarFilesTest {
                     destDir.resolve("class1.class"),
                     AbsoluteUnixPath.get("/app/explodedJar/class1.class"))
                 .addEntry(
-                    destDir.resolve("directory1"),
-                    AbsoluteUnixPath.get("/app/explodedJar/directory1"))
+                    destDir.resolve("directory1/"),
+                    AbsoluteUnixPath.get("/app/explodedJar/directory1/"))
                 .addEntry(
                     destDir.resolve("directory1/class2.class"),
                     AbsoluteUnixPath.get("/app/explodedJar/directory1/class2.class"))
