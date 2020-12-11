@@ -20,6 +20,7 @@ jobs:
           git config user.email "chanseok@google.com"
           git config user.name "Chanseok Oh"
           date +%s > report.txt
+          git add -A
           git commit -am "Modify tracked file during workflow"
           date +%s > new-report.txt
           git add -A
