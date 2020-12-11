@@ -3,7 +3,7 @@ on:
   workflow_dispatch:
     inputs:
       release_version:
-        description: git tag from which Jib CLI should be built
+        description: new release version
         required: true
         default: (for example, 0.1.0)
 
