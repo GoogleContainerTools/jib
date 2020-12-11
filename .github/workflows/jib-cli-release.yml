@@ -27,6 +27,7 @@ jobs:
       - name: Create pull request
         uses: peter-evans/create-pull-request@v3
         with:
+          base: master
           branch: cli-test
 
       - name: Build Jib CLI
