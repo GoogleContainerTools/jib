@@ -40,7 +40,8 @@ jobs:
 
       - name: GitHub Pull Request Action
         uses: repo-sync/pull-request@v2
-        #with:
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
           #source_branch: # optional
           #destination_branch: # optional, default is master
     
