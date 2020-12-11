@@ -29,6 +29,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -162,8 +163,7 @@ public class JarModeProcessor {
 
       // Non-snapshot layer
       Predicate<Path> isInBootInfLib =
-          path ->
-              path.getParent().startsWith(localExplodedJarRoot.resolve("BOOT-INF").resolve("lib"));
+          path -> path.startsWith(localExplodedJarRoot.resolve("BOOT-INF").resolve("lib"));
       Predicate<Path> isSnapshot = path -> path.getFileName().toString().contains("SNAPSHOT");
       Predicate<Path> nonSnapshotPredicate = isInBootInfLib.and(isSnapshot.negate());
       FileEntriesLayer nonSnapshotLayer =
@@ -177,8 +177,7 @@ public class JarModeProcessor {
               SNAPSHOT_DEPENDENCIES, localExplodedJarRoot, snapshotPredicate, APP_ROOT);
 
       // Spring-boot-loader layer.
-      Predicate<Path> isLoader =
-          path -> path.getParent().startsWith(localExplodedJarRoot.resolve("org"));
+      Predicate<Path> isLoader = path -> path.startsWith(localExplodedJarRoot.resolve("org"));
       FileEntriesLayer loaderLayer =
           addDirectoryContentsToLayer(
               "spring-boot-loader", localExplodedJarRoot, isLoader, APP_ROOT);
@@ -186,9 +185,7 @@ public class JarModeProcessor {
       // Classes layer.
       Predicate<Path> isClass = path -> path.getFileName().toString().endsWith(".class");
       Predicate<Path> isInBootInfClasses =
-          path ->
-              path.getParent()
-                  .startsWith(localExplodedJarRoot.resolve("BOOT-INF").resolve("classes"));
+          path -> path.startsWith(localExplodedJarRoot.resolve("BOOT-INF").resolve("classes"));
       Predicate<Path> finalPredicateClasses = isInBootInfClasses.and(isClass);
       FileEntriesLayer classesLayer =
           addDirectoryContentsToLayer(
@@ -196,9 +193,10 @@ public class JarModeProcessor {
 
       // Resources layer.
       Predicate<Path> isInMetaInf =
-          path -> path.getParent().startsWith(localExplodedJarRoot.resolve("META-INF"));
+          path -> path.startsWith(localExplodedJarRoot.resolve("META-INF"));
+      Predicate<Path> isFile = path -> !path.toFile().isDirectory();
       Predicate<Path> finalPredicateResources =
-          isInMetaInf.or(isInBootInfClasses.and(isClass.negate()));
+          isFile.and(isInMetaInf.or(isInBootInfClasses.and(isClass.negate())));
       FileEntriesLayer resourcesLayer =
           addDirectoryContentsToLayer(
               RESOURCES, localExplodedJarRoot, finalPredicateResources, APP_ROOT);
@@ -336,17 +334,16 @@ public class JarModeProcessor {
   private static List<FileEntriesLayer> createLayersForLayeredSpringBootJar(
       Path localExplodedJarRoot) throws IOException {
     Path layerIndexPath = localExplodedJarRoot.resolve("BOOT-INF").resolve("layers.idx");
-    Pattern layerNamePattern = Pattern.compile("-\\s(.*):");
-    Pattern fileNamePattern = Pattern.compile("\\s\\s-\\s(.*)");
+    Pattern layerNamePattern = Pattern.compile("- \"(.*)\":");
+    Pattern fileNamePattern = Pattern.compile("  - \"(.*)\"");
     Map<String, List<String>> layersMap = new LinkedHashMap<>();
     try (Stream<String> stream = Files.lines(layerIndexPath)) {
       List<String> layerContents = null;
       List<String> layerNames = new ArrayList<>();
       List<String> lines = stream.collect(Collectors.toList());
       for (String line : lines) {
-        String cleanedUpLine = line.replace("\"", "");
-        Matcher layerMatcher = layerNamePattern.matcher(cleanedUpLine);
-        Matcher fileNameMatcher = fileNamePattern.matcher(cleanedUpLine);
+        Matcher layerMatcher = layerNamePattern.matcher(line);
+        Matcher fileNameMatcher = fileNamePattern.matcher(line);
         if (layerMatcher.matches()) {
           layerContents = new ArrayList<>();
           String layerName = layerMatcher.group(1);
@@ -403,14 +400,24 @@ public class JarModeProcessor {
       AbsoluteUnixPath basePathInContainer)
       throws IOException {
     FileEntriesLayer.Builder builder = FileEntriesLayer.builder().setName(layerName);
+    HashSet<Path> addedPaths = new HashSet<>();
     new DirectoryWalker(sourceRoot)
         .filterRoot()
-        .filter(path -> Files.isDirectory(path) || pathFilter.test(path))
+        .filter(path -> pathFilter.test(path))
         .walk(
             path -> {
-              AbsoluteUnixPath pathOnContainer =
-                  basePathInContainer.resolve(sourceRoot.relativize(path));
-              builder.addEntry(path, pathOnContainer);
+              Path relativePath = sourceRoot.relativize(path);
+              int nameCount = relativePath.getNameCount();
+
+              // Add the parent directories and the path itself
+              for (int i = 1; i <= nameCount; i++) {
+                Path subPath = relativePath.subpath(0, i);
+                if (!addedPaths.contains(subPath)) {
+                  builder.addEntry(
+                      sourceRoot.resolve(subPath), basePathInContainer.resolve(subPath));
+                  addedPaths.add(subPath);
+                }
+              }
             });
     return builder.build();
   }
