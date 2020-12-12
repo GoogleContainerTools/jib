@@ -33,7 +33,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -106,7 +105,8 @@ public class JarModeProcessor {
     Path localExplodedJarRoot = tempDirPath;
     ZipUtil.unzip(jarPath, localExplodedJarRoot);
     Predicate<Path> isClassFile = path -> path.getFileName().toString().endsWith(".class");
-    Predicate<Path> isResourceFile = isClassFile.negate();
+    Predicate<Path> isFile = path -> path.toFile().isFile();
+    Predicate<Path> isResourceFile = isFile.and(isClassFile.negate());
     FileEntriesLayer classesLayer =
         addDirectoryContentsToLayer(
             CLASSES, localExplodedJarRoot, isClassFile, APP_ROOT.resolve("explodedJar"));
@@ -167,45 +167,46 @@ public class JarModeProcessor {
       }
 
       // Non-snapshot layer
+      Predicate<Path> isFile = path -> path.toFile().isFile();
       Predicate<Path> isInBootInfLib =
           path -> path.startsWith(localExplodedJarRoot.resolve("BOOT-INF").resolve("lib"));
       Predicate<Path> isSnapshot = path -> path.getFileName().toString().contains("SNAPSHOT");
-      Predicate<Path> nonSnapshotPredicate = isInBootInfLib.and(isSnapshot.negate());
+      Predicate<Path> isInBootInfLibAndIsNotSnapshot = isInBootInfLib.and(isSnapshot.negate());
+      Predicate<Path> nonSnapshotPredicate = isFile.and(isInBootInfLibAndIsNotSnapshot);
       FileEntriesLayer nonSnapshotLayer =
           addDirectoryContentsToLayer(
               DEPENDENCIES, localExplodedJarRoot, nonSnapshotPredicate, APP_ROOT);
 
       // Snapshot layer
-      Predicate<Path> snapshotPredicate = isInBootInfLib.and(isSnapshot);
+      Predicate<Path> isInBootInfLibAndIsSnapshot = isInBootInfLib.and(isSnapshot);
+      Predicate<Path> snapshotPredicate = isFile.and(isInBootInfLibAndIsSnapshot);
       FileEntriesLayer snapshotLayer =
           addDirectoryContentsToLayer(
               SNAPSHOT_DEPENDENCIES, localExplodedJarRoot, snapshotPredicate, APP_ROOT);
 
       // Spring-boot-loader layer.
       Predicate<Path> isLoader = path -> path.startsWith(localExplodedJarRoot.resolve("org"));
+      Predicate<Path> loaderPredicate = isFile.and(isLoader);
       FileEntriesLayer loaderLayer =
           addDirectoryContentsToLayer(
-              "spring-boot-loader", localExplodedJarRoot, isLoader, APP_ROOT);
+              "spring-boot-loader", localExplodedJarRoot, loaderPredicate, APP_ROOT);
 
       // Classes layer.
       Predicate<Path> isClass = path -> path.getFileName().toString().endsWith(".class");
       Predicate<Path> isInBootInfClasses =
           path -> path.startsWith(localExplodedJarRoot.resolve("BOOT-INF").resolve("classes"));
-      Predicate<Path> finalPredicateClasses = isInBootInfClasses.and(isClass);
+      Predicate<Path> classesPredicate = isInBootInfClasses.and(isClass);
       FileEntriesLayer classesLayer =
-          addDirectoryContentsToLayer(
-              CLASSES, localExplodedJarRoot, finalPredicateClasses, APP_ROOT);
+          addDirectoryContentsToLayer(CLASSES, localExplodedJarRoot, classesPredicate, APP_ROOT);
 
       // Resources layer.
       Predicate<Path> isInMetaInf =
           path -> path.startsWith(localExplodedJarRoot.resolve("META-INF"));
-      Predicate<Path> isFile = path -> !path.toFile().isDirectory();
-      Predicate<Path> isNotClassFile = isFile.and(isClass.negate());
-      Predicate<Path> finalPredicateResources =
-          isInMetaInf.or(isInBootInfClasses.and(isNotClassFile));
+      Predicate<Path> isResource = isInMetaInf.or(isInBootInfClasses.and(isClass.negate()));
+      Predicate<Path> resourcesPredicate = isFile.and(isResource);
       FileEntriesLayer resourcesLayer =
           addDirectoryContentsToLayer(
-              RESOURCES, localExplodedJarRoot, finalPredicateResources, APP_ROOT);
+              RESOURCES, localExplodedJarRoot, resourcesPredicate, APP_ROOT);
 
       return Arrays.asList(
           nonSnapshotLayer, loaderLayer, snapshotLayer, resourcesLayer, classesLayer);
@@ -360,6 +361,7 @@ public class JarModeProcessor {
     // `BOOT-INF/lib/dependency1.jar` and the predicate for the "spring-boot-loader" layer will be
     // true if `path` is in either 'BOOT-INF/classes/` or `META-INF/`.
     List<FileEntriesLayer> layers = new ArrayList<>();
+    Predicate<Path> isFile = path -> path.toFile().isFile();
     for (Map.Entry<String, List<String>> entry : layersMap.entrySet()) {
       String layerName = entry.getKey();
       List<String> contents = entry.getValue();
@@ -368,7 +370,7 @@ public class JarModeProcessor {
             isInListedDirectoryOrIsSameFile(contents, localExplodedJarRoot);
         layers.add(
             addDirectoryContentsToLayer(
-                layerName, localExplodedJarRoot, belongsToThisLayer, APP_ROOT));
+                layerName, localExplodedJarRoot, isFile.and(belongsToThisLayer), APP_ROOT));
       }
     }
     return layers;
@@ -392,22 +394,12 @@ public class JarModeProcessor {
       AbsoluteUnixPath basePathInContainer)
       throws IOException {
     FileEntriesLayer.Builder builder = FileEntriesLayer.builder().setName(layerName);
-    HashSet<Path> addedPaths = new HashSet<>();
     new DirectoryWalker(sourceRoot)
         .filterRoot()
         .filter(path -> pathFilter.test(path))
         .walk(
             path -> {
-              Path relativePath = sourceRoot.relativize(path);
-              Path subPath = relativePath;
-              while (subPath != null) {
-                if (!addedPaths.contains(subPath)) {
-                  builder.addEntry(
-                      sourceRoot.resolve(subPath), basePathInContainer.resolve(subPath));
-                  addedPaths.add(subPath);
-                }
-                subPath = subPath.getParent();
-              }
+              builder.addEntry(path, basePathInContainer.resolve(sourceRoot.relativize(path)));
             });
     return builder.build();
   }

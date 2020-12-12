@@ -76,20 +76,11 @@ public class JarModeProcessorTest {
     Path destDir = temporaryFolder.newFolder().toPath();
     List<FileEntriesLayer> layers =
         JarModeProcessor.createLayersForExplodedStandard(standardJar, destDir);
+    FileEntriesLayer resourcesLayer = layers.get(0);
 
     assertThat(layers.size()).isEqualTo(1);
-
-    List<AbsoluteUnixPath> actualResourcesPath =
-        layers
-            .get(0)
-            .getEntries()
-            .stream()
-            .map(FileEntry::getExtractionPath)
-            .collect(Collectors.toList());
-    assertThat(actualResourcesPath)
-        .containsExactly(
-            AbsoluteUnixPath.get("/app/explodedJar/META-INF"),
-            AbsoluteUnixPath.get("/app/explodedJar/META-INF/MANIFEST.MF"));
+    assertThat(resourcesLayer.getEntries().get(0).getExtractionPath())
+        .isEqualTo(AbsoluteUnixPath.get("/app/explodedJar/META-INF/MANIFEST.MF"));
   }
 
   @Test
@@ -122,14 +113,8 @@ public class JarModeProcessorTest {
                 AbsoluteUnixPath.get("/app/dependencies/dependency2"),
                 AbsoluteUnixPath.get("/app/dependencies/dependency4")));
     assertThat(snapshotLayer.getName()).isEqualTo("snapshot dependencies");
-    assertThat(
-            snapshotLayer
-                .getEntries()
-                .stream()
-                .map(FileEntry::getExtractionPath)
-                .collect(Collectors.toList()))
-        .isEqualTo(
-            ImmutableList.of(AbsoluteUnixPath.get("/app/dependencies/dependency3-SNAPSHOT-1.jar")));
+    assertThat(snapshotLayer.getEntries().get(0).getExtractionPath())
+        .isEqualTo(AbsoluteUnixPath.get("/app/dependencies/dependency3-SNAPSHOT-1.jar"));
 
     // Validate resources layer.
     assertThat(resourcesLayer.getName()).isEqualTo("resources");
@@ -141,14 +126,9 @@ public class JarModeProcessorTest {
             .collect(Collectors.toList());
     assertThat(actualResourcesPaths)
         .containsExactly(
-            AbsoluteUnixPath.get("/app/explodedJar/META-INF/"),
             AbsoluteUnixPath.get("/app/explodedJar/META-INF/MANIFEST.MF"),
-            AbsoluteUnixPath.get("/app/explodedJar/directory1"),
             AbsoluteUnixPath.get("/app/explodedJar/directory1/resource1.txt"),
-            AbsoluteUnixPath.get("/app/explodedJar/directory2"),
-            AbsoluteUnixPath.get("/app/explodedJar/directory2/directory3"),
             AbsoluteUnixPath.get("/app/explodedJar/directory2/directory3/resource2.sql"),
-            AbsoluteUnixPath.get("/app/explodedJar/directory4"),
             AbsoluteUnixPath.get("/app/explodedJar/directory4/resource3.txt"),
             AbsoluteUnixPath.get("/app/explodedJar/resource4.sql"));
 
@@ -163,12 +143,9 @@ public class JarModeProcessorTest {
     assertThat(actualClassesPaths)
         .containsExactly(
             AbsoluteUnixPath.get("/app/explodedJar/class5.class"),
-            AbsoluteUnixPath.get("/app/explodedJar/directory1"),
             AbsoluteUnixPath.get("/app/explodedJar/directory1/class1.class"),
             AbsoluteUnixPath.get("/app/explodedJar/directory1/class2.class"),
-            AbsoluteUnixPath.get("/app/explodedJar/directory2"),
             AbsoluteUnixPath.get("/app/explodedJar/directory2/class4.class"),
-            AbsoluteUnixPath.get("/app/explodedJar/directory2/directory3"),
             AbsoluteUnixPath.get("/app/explodedJar/directory2/directory3/class3.class"));
   }
 
@@ -196,14 +173,9 @@ public class JarModeProcessorTest {
             .collect(Collectors.toList());
     assertThat(actualResourcesPaths)
         .containsExactly(
-            AbsoluteUnixPath.get("/app/explodedJar/META-INF/"),
             AbsoluteUnixPath.get("/app/explodedJar/META-INF/MANIFEST.MF"),
-            AbsoluteUnixPath.get("/app/explodedJar/directory1"),
             AbsoluteUnixPath.get("/app/explodedJar/directory1/resource1.txt"),
-            AbsoluteUnixPath.get("/app/explodedJar/directory2"),
-            AbsoluteUnixPath.get("/app/explodedJar/directory2/directory3"),
             AbsoluteUnixPath.get("/app/explodedJar/directory2/directory3/resource2.sql"),
-            AbsoluteUnixPath.get("/app/explodedJar/directory4"),
             AbsoluteUnixPath.get("/app/explodedJar/directory4/resource3.txt"),
             AbsoluteUnixPath.get("/app/explodedJar/resource4.sql"));
 
@@ -218,12 +190,9 @@ public class JarModeProcessorTest {
     assertThat(actualClassesPaths)
         .containsExactly(
             AbsoluteUnixPath.get("/app/explodedJar/class5.class"),
-            AbsoluteUnixPath.get("/app/explodedJar/directory1"),
             AbsoluteUnixPath.get("/app/explodedJar/directory1/class1.class"),
             AbsoluteUnixPath.get("/app/explodedJar/directory1/class2.class"),
-            AbsoluteUnixPath.get("/app/explodedJar/directory2"),
             AbsoluteUnixPath.get("/app/explodedJar/directory2/class4.class"),
-            AbsoluteUnixPath.get("/app/explodedJar/directory2/directory3"),
             AbsoluteUnixPath.get("/app/explodedJar/directory2/directory3/class3.class"));
   }
 
@@ -241,16 +210,8 @@ public class JarModeProcessorTest {
     FileEntriesLayer classesLayer = layers.get(1);
 
     // Validate resources layer.
-    List<AbsoluteUnixPath> actualResourcesPath =
-        resourcesLayer
-            .getEntries()
-            .stream()
-            .map(FileEntry::getExtractionPath)
-            .collect(Collectors.toList());
-    assertThat(actualResourcesPath)
-        .containsExactly(
-            AbsoluteUnixPath.get("/app/explodedJar/META-INF"),
-            AbsoluteUnixPath.get("/app/explodedJar/META-INF/MANIFEST.MF"));
+    assertThat(resourcesLayer.getEntries().get(0).getExtractionPath())
+        .isEqualTo(AbsoluteUnixPath.get("/app/explodedJar/META-INF/MANIFEST.MF"));
 
     // Validate classes layer.
     List<AbsoluteUnixPath> actualClassesPath =
@@ -443,8 +404,6 @@ public class JarModeProcessorTest {
                 .map(FileEntry::getExtractionPath)
                 .collect(Collectors.toList()))
         .containsExactly(
-            AbsoluteUnixPath.get("/app/BOOT-INF"),
-            AbsoluteUnixPath.get("/app/BOOT-INF/lib"),
             AbsoluteUnixPath.get("/app/BOOT-INF/lib/dependency1.jar"),
             AbsoluteUnixPath.get("/app/BOOT-INF/lib/dependency2.jar"));
     assertThat(loaderLayer.getName()).isEqualTo("spring-boot-loader");
@@ -455,11 +414,6 @@ public class JarModeProcessorTest {
                 .map(FileEntry::getExtractionPath)
                 .collect(Collectors.toList()))
         .containsExactly(
-            AbsoluteUnixPath.get("/app/org"),
-            AbsoluteUnixPath.get("/app/org/springframework"),
-            AbsoluteUnixPath.get("/app/org/springframework/boot"),
-            AbsoluteUnixPath.get("/app/org/springframework/boot/loader"),
-            AbsoluteUnixPath.get("/app/org/springframework/boot/loader/data"),
             AbsoluteUnixPath.get("/app/org/springframework/boot/loader/data/data1.class"),
             AbsoluteUnixPath.get("/app/org/springframework/boot/loader/launcher1.class"));
 
@@ -470,10 +424,7 @@ public class JarModeProcessorTest {
                 .stream()
                 .map(FileEntry::getExtractionPath)
                 .collect(Collectors.toList()))
-        .containsExactly(
-            AbsoluteUnixPath.get("/app/BOOT-INF"),
-            AbsoluteUnixPath.get("/app/BOOT-INF/lib"),
-            AbsoluteUnixPath.get("/app/BOOT-INF/lib/dependency3-SNAPSHOT.jar"));
+        .containsExactly(AbsoluteUnixPath.get("/app/BOOT-INF/lib/dependency3-SNAPSHOT.jar"));
 
     assertThat(applicationLayer.getName()).isEqualTo("application");
     assertThat(
@@ -483,12 +434,8 @@ public class JarModeProcessorTest {
                 .map(FileEntry::getExtractionPath)
                 .collect(Collectors.toList()))
         .containsExactly(
-            AbsoluteUnixPath.get("/app/BOOT-INF"),
-            AbsoluteUnixPath.get("/app/BOOT-INF/classes"),
             AbsoluteUnixPath.get("/app/BOOT-INF/classes/class1.class"),
-            AbsoluteUnixPath.get("/app/BOOT-INF/classes/classDirectory"),
             AbsoluteUnixPath.get("/app/BOOT-INF/classes/classDirectory/class2.class"),
-            AbsoluteUnixPath.get("/app/META-INF"),
             AbsoluteUnixPath.get("/app/META-INF/MANIFEST.MF"));
   }
 
@@ -526,8 +473,6 @@ public class JarModeProcessorTest {
                 .map(FileEntry::getExtractionPath)
                 .collect(Collectors.toList()))
         .containsExactly(
-            AbsoluteUnixPath.get("/app/BOOT-INF"),
-            AbsoluteUnixPath.get("/app/BOOT-INF/lib"),
             AbsoluteUnixPath.get("/app/BOOT-INF/lib/dependency1.jar"),
             AbsoluteUnixPath.get("/app/BOOT-INF/lib/dependency2.jar"));
     assertThat(loaderLayer.getName()).isEqualTo("spring-boot-loader");
@@ -538,11 +483,6 @@ public class JarModeProcessorTest {
                 .map(FileEntry::getExtractionPath)
                 .collect(Collectors.toList()))
         .containsExactly(
-            AbsoluteUnixPath.get("/app/org"),
-            AbsoluteUnixPath.get("/app/org/springframework"),
-            AbsoluteUnixPath.get("/app/org/springframework/boot"),
-            AbsoluteUnixPath.get("/app/org/springframework/boot/loader"),
-            AbsoluteUnixPath.get("/app/org/springframework/boot/loader/data"),
             AbsoluteUnixPath.get("/app/org/springframework/boot/loader/data/data1.class"),
             AbsoluteUnixPath.get("/app/org/springframework/boot/loader/launcher1.class"));
 
@@ -554,12 +494,8 @@ public class JarModeProcessorTest {
                 .map(FileEntry::getExtractionPath)
                 .collect(Collectors.toList()))
         .containsExactly(
-            AbsoluteUnixPath.get("/app/BOOT-INF"),
-            AbsoluteUnixPath.get("/app/BOOT-INF/classes"),
             AbsoluteUnixPath.get("/app/BOOT-INF/classes/class1.class"),
-            AbsoluteUnixPath.get("/app/BOOT-INF/classes/classDirectory"),
             AbsoluteUnixPath.get("/app/BOOT-INF/classes/classDirectory/class2.class"),
-            AbsoluteUnixPath.get("/app/META-INF"),
             AbsoluteUnixPath.get("/app/META-INF/MANIFEST.MF"));
   }
 
@@ -605,8 +541,6 @@ public class JarModeProcessorTest {
                 .map(FileEntry::getExtractionPath)
                 .collect(Collectors.toList()))
         .containsExactly(
-            AbsoluteUnixPath.get("/app/BOOT-INF"),
-            AbsoluteUnixPath.get("/app/BOOT-INF/lib"),
             AbsoluteUnixPath.get("/app/BOOT-INF/lib/dependency1.jar"),
             AbsoluteUnixPath.get("/app/BOOT-INF/lib/dependency2.jar"));
     assertThat(loaderLayer.getName()).isEqualTo("spring-boot-loader");
@@ -617,36 +551,16 @@ public class JarModeProcessorTest {
                 .map(FileEntry::getExtractionPath)
                 .collect(Collectors.toList()))
         .containsExactly(
-            AbsoluteUnixPath.get("/app/org"),
-            AbsoluteUnixPath.get("/app/org/springframework"),
-            AbsoluteUnixPath.get("/app/org/springframework/boot"),
-            AbsoluteUnixPath.get("/app/org/springframework/boot/loader"),
-            AbsoluteUnixPath.get("/app/org/springframework/boot/loader/data"),
             AbsoluteUnixPath.get("/app/org/springframework/boot/loader/data/data1.class"),
             AbsoluteUnixPath.get("/app/org/springframework/boot/loader/launcher1.class"));
 
     assertThat(snapshotLayer.getName()).isEqualTo("snapshot dependencies");
-    assertThat(
-            snapshotLayer
-                .getEntries()
-                .stream()
-                .map(FileEntry::getExtractionPath)
-                .collect(Collectors.toList()))
-        .containsExactly(
-            AbsoluteUnixPath.get("/app/BOOT-INF"),
-            AbsoluteUnixPath.get("/app/BOOT-INF/lib"),
-            AbsoluteUnixPath.get("/app/BOOT-INF/lib/dependency3-SNAPSHOT.jar"));
+    assertThat(snapshotLayer.getEntries().get(0).getExtractionPath())
+        .isEqualTo(AbsoluteUnixPath.get("/app/BOOT-INF/lib/dependency3-SNAPSHOT.jar"));
 
     assertThat(resourcesLayer.getName()).isEqualTo("resources");
-    assertThat(
-            resourcesLayer
-                .getEntries()
-                .stream()
-                .map(FileEntry::getExtractionPath)
-                .collect(Collectors.toList()))
-        .containsExactly(
-            AbsoluteUnixPath.get("/app/META-INF"),
-            AbsoluteUnixPath.get("/app/META-INF/MANIFEST.MF"));
+    assertThat(resourcesLayer.getEntries().get(0).getExtractionPath())
+        .isEqualTo(AbsoluteUnixPath.get("/app/META-INF/MANIFEST.MF"));
 
     assertThat(classesLayer.getName()).isEqualTo("classes");
     assertThat(
@@ -656,10 +570,7 @@ public class JarModeProcessorTest {
                 .map(FileEntry::getExtractionPath)
                 .collect(Collectors.toList()))
         .containsExactly(
-            AbsoluteUnixPath.get("/app/BOOT-INF"),
-            AbsoluteUnixPath.get("/app/BOOT-INF/classes"),
             AbsoluteUnixPath.get("/app/BOOT-INF/classes/class1.class"),
-            AbsoluteUnixPath.get("/app/BOOT-INF/classes/classDirectory/class2.class"),
-            AbsoluteUnixPath.get("/app/BOOT-INF/classes/classDirectory"));
+            AbsoluteUnixPath.get("/app/BOOT-INF/classes/classDirectory/class2.class"));
   }
 }

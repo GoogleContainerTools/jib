@@ -84,17 +84,11 @@ public class JarFilesTest {
         .containsExactlyElementsIn(
             FileEntriesLayer.builder()
                 .addEntry(
-                    destDir.resolve("META-INF/"),
-                    AbsoluteUnixPath.get("/app/explodedJar/META-INF/"))
-                .addEntry(
                     destDir.resolve("META-INF/MANIFEST.MF"),
                     AbsoluteUnixPath.get("/app/explodedJar/META-INF/MANIFEST.MF"))
                 .addEntry(
                     destDir.resolve("resource1.txt"),
                     AbsoluteUnixPath.get("/app/explodedJar/resource1.txt"))
-                .addEntry(
-                    destDir.resolve("directory1/"),
-                    AbsoluteUnixPath.get("/app/explodedJar/directory1/"))
                 .build()
                 .getEntries());
     assertThat(buildPlan.getLayers().get(2).getName()).isEqualTo("classes");
@@ -104,9 +98,6 @@ public class JarFilesTest {
                 .addEntry(
                     destDir.resolve("class1.class"),
                     AbsoluteUnixPath.get("/app/explodedJar/class1.class"))
-                .addEntry(
-                    destDir.resolve("directory1/"),
-                    AbsoluteUnixPath.get("/app/explodedJar/directory1/"))
                 .addEntry(
                     destDir.resolve("directory1/class2.class"),
                     AbsoluteUnixPath.get("/app/explodedJar/directory1/class2.class"))
@@ -194,20 +185,12 @@ public class JarFilesTest {
     assertThat(((FileEntriesLayer) buildPlan.getLayers().get(3)).getEntries())
         .containsExactlyElementsIn(
             FileEntriesLayer.builder()
-                .addEntry(destDir.resolve("META-INF/"), AbsoluteUnixPath.get("/app/META-INF/"))
                 .addEntry(
                     destDir.resolve("META-INF/MANIFEST.MF"),
                     AbsoluteUnixPath.get("/app/META-INF/MANIFEST.MF"))
-                .addEntry(destDir.resolve("BOOT-INF/"), AbsoluteUnixPath.get("/app/BOOT-INF/"))
-                .addEntry(
-                    destDir.resolve("BOOT-INF/classes"),
-                    AbsoluteUnixPath.get("/app/BOOT-INF/classes/"))
                 .addEntry(
                     destDir.resolve("BOOT-INF/classes/class1.class"),
                     AbsoluteUnixPath.get("/app/BOOT-INF/classes/class1.class"))
-                .addEntry(
-                    destDir.resolve("BOOT-INF/classes/classDirectory/"),
-                    AbsoluteUnixPath.get("/app/BOOT-INF/classes/classDirectory/"))
                 .addEntry(
                     destDir.resolve("BOOT-INF/classes/classDirectory/class2.class"),
                     AbsoluteUnixPath.get("/app/BOOT-INF/classes/classDirectory/class2.class"))
@@ -255,7 +238,6 @@ public class JarFilesTest {
     assertThat(((FileEntriesLayer) buildPlan.getLayers().get(3)).getEntries())
         .containsExactlyElementsIn(
             FileEntriesLayer.builder()
-                .addEntry(destDir.resolve("META-INF/"), AbsoluteUnixPath.get("/app/META-INF/"))
                 .addEntry(
                     destDir.resolve("META-INF/MANIFEST.MF"),
                     AbsoluteUnixPath.get("/app/META-INF/MANIFEST.MF"))
@@ -266,16 +248,9 @@ public class JarFilesTest {
     assertThat(((FileEntriesLayer) buildPlan.getLayers().get(4)).getEntries())
         .containsExactlyElementsIn(
             FileEntriesLayer.builder()
-                .addEntry(destDir.resolve("BOOT-INF/"), AbsoluteUnixPath.get("/app/BOOT-INF/"))
-                .addEntry(
-                    destDir.resolve("BOOT-INF/classes"),
-                    AbsoluteUnixPath.get("/app/BOOT-INF/classes/"))
                 .addEntry(
                     destDir.resolve("BOOT-INF/classes/class1.class"),
                     AbsoluteUnixPath.get("/app/BOOT-INF/classes/class1.class"))
-                .addEntry(
-                    destDir.resolve("BOOT-INF/classes/classDirectory/"),
-                    AbsoluteUnixPath.get("/app/BOOT-INF/classes/classDirectory/"))
                 .addEntry(
                     destDir.resolve("BOOT-INF/classes/classDirectory/class2.class"),
                     AbsoluteUnixPath.get("/app/BOOT-INF/classes/classDirectory/class2.class"))
@@ -288,9 +263,6 @@ public class JarFilesTest {
     assertThat(actualEntries)
         .containsExactlyElementsIn(
             FileEntriesLayer.builder()
-                .addEntry(destDir.resolve("BOOT-INF/"), AbsoluteUnixPath.get("/app/BOOT-INF/"))
-                .addEntry(
-                    destDir.resolve("BOOT-INF/lib/"), AbsoluteUnixPath.get("/app/BOOT-INF/lib/"))
                 .addEntry(
                     destDir.resolve("BOOT-INF/lib/dependency1.jar"),
                     AbsoluteUnixPath.get("/app/BOOT-INF/lib/dependency1.jar"))
@@ -303,13 +275,9 @@ public class JarFilesTest {
     assertThat(actualEntries)
         .containsExactlyElementsIn(
             FileEntriesLayer.builder()
-                .addEntry(destDir.resolve("org/"), AbsoluteUnixPath.get("/app/org/"))
                 .addEntry(
                     destDir.resolve("org/launcher.class"),
                     AbsoluteUnixPath.get("/app/org/launcher.class"))
-                .addEntry(
-                    destDir.resolve("org/orgDirectory/"),
-                    AbsoluteUnixPath.get("/app/org/orgDirectory/"))
                 .addEntry(
                     destDir.resolve("org/orgDirectory/data1.class"),
                     AbsoluteUnixPath.get("/app/org/orgDirectory/data1.class"))
@@ -322,9 +290,6 @@ public class JarFilesTest {
     assertThat(actualEntries)
         .containsExactlyElementsIn(
             FileEntriesLayer.builder()
-                .addEntry(destDir.resolve("BOOT-INF/"), AbsoluteUnixPath.get("/app/BOOT-INF/"))
-                .addEntry(
-                    destDir.resolve("BOOT-INF/lib/"), AbsoluteUnixPath.get("/app/BOOT-INF/lib"))
                 .addEntry(
                     destDir.resolve("BOOT-INF/lib/dependency3-SNAPSHOT.jar"),
                     AbsoluteUnixPath.get("/app/BOOT-INF/lib/dependency3-SNAPSHOT.jar"))
