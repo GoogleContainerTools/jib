@@ -23,7 +23,6 @@ import com.google.cloud.tools.jib.api.JibContainerBuilder;
 import com.google.cloud.tools.jib.api.buildplan.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.api.buildplan.ContainerBuildPlan;
 import com.google.cloud.tools.jib.api.buildplan.FileEntriesLayer;
-import com.google.cloud.tools.jib.api.buildplan.FileEntry;
 import com.google.cloud.tools.jib.api.buildplan.ImageFormat;
 import com.google.cloud.tools.jib.api.buildplan.Platform;
 import com.google.common.collect.ImmutableList;
@@ -34,7 +33,6 @@ import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Instant;
-import java.util.List;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -138,7 +136,7 @@ public class JarFilesTest {
                 .getEntries());
     assertThat(buildPlan.getLayers().get(1).getName()).isEqualTo("jar");
     assertThat(((FileEntriesLayer) buildPlan.getLayers().get(1)).getEntries())
-        .containsExactlyElementsIn(
+        .isEqualTo(
             FileEntriesLayer.builder()
                 .addEntry(standardJar, AbsoluteUnixPath.get("/app/basicStandardJar.jar"))
                 .build()
@@ -170,16 +168,37 @@ public class JarFilesTest {
     assertThat(buildPlan.getLayers().size()).isEqualTo(4);
 
     assertThat(buildPlan.getLayers().get(0).getName()).isEqualTo("dependencies");
-    assertThatExpectedEntriesPresentInNonSnapshotLayer_SpringBoot(
-        ((FileEntriesLayer) buildPlan.getLayers().get(0)).getEntries(), destDir);
+    assertThat(((FileEntriesLayer) buildPlan.getLayers().get(0)).getEntries())
+        .isEqualTo(
+            FileEntriesLayer.builder()
+                .addEntry(
+                    destDir.resolve("BOOT-INF/lib/dependency1.jar"),
+                    AbsoluteUnixPath.get("/app/BOOT-INF/lib/dependency1.jar"))
+                .build()
+                .getEntries());
 
     assertThat(buildPlan.getLayers().get(1).getName()).isEqualTo("spring-boot-loader");
-    assertThatExpectedEntriesPresentInLoaderLayer_SpringBoot(
-        ((FileEntriesLayer) buildPlan.getLayers().get(1)).getEntries(), destDir);
+    assertThat(((FileEntriesLayer) buildPlan.getLayers().get(1)).getEntries())
+        .containsExactlyElementsIn(
+            FileEntriesLayer.builder()
+                .addEntry(
+                    destDir.resolve("org/launcher.class"),
+                    AbsoluteUnixPath.get("/app/org/launcher.class"))
+                .addEntry(
+                    destDir.resolve("org/orgDirectory/data1.class"),
+                    AbsoluteUnixPath.get("/app/org/orgDirectory/data1.class"))
+                .build()
+                .getEntries());
 
     assertThat(buildPlan.getLayers().get(2).getName()).isEqualTo("snapshot-dependencies");
-    assertThatExpectedEntriesPresentInSnapshotLayer_SpringBoot(
-        ((FileEntriesLayer) buildPlan.getLayers().get(2)).getEntries(), destDir);
+    assertThat(((FileEntriesLayer) buildPlan.getLayers().get(2)).getEntries())
+        .isEqualTo(
+            FileEntriesLayer.builder()
+                .addEntry(
+                    destDir.resolve("BOOT-INF/lib/dependency3-SNAPSHOT.jar"),
+                    AbsoluteUnixPath.get("/app/BOOT-INF/lib/dependency3-SNAPSHOT.jar"))
+                .build()
+                .getEntries());
 
     assertThat(buildPlan.getLayers().get(3).getName()).isEqualTo("application");
     assertThat(((FileEntriesLayer) buildPlan.getLayers().get(3)).getEntries())
@@ -223,20 +242,40 @@ public class JarFilesTest {
     assertThat(buildPlan.getLayers().size()).isEqualTo(5);
 
     assertThat(buildPlan.getLayers().get(0).getName()).isEqualTo("dependencies");
-    assertThatExpectedEntriesPresentInNonSnapshotLayer_SpringBoot(
-        ((FileEntriesLayer) buildPlan.getLayers().get(0)).getEntries(), destDir);
+    assertThat(((FileEntriesLayer) buildPlan.getLayers().get(0)).getEntries())
+        .isEqualTo(
+            FileEntriesLayer.builder()
+                .addEntry(
+                    destDir.resolve("BOOT-INF/lib/dependency1.jar"),
+                    AbsoluteUnixPath.get("/app/BOOT-INF/lib/dependency1.jar"))
+                .build()
+                .getEntries());
 
     assertThat(buildPlan.getLayers().get(1).getName()).isEqualTo("spring-boot-loader");
-    assertThatExpectedEntriesPresentInLoaderLayer_SpringBoot(
-        ((FileEntriesLayer) buildPlan.getLayers().get(1)).getEntries(), destDir);
+    assertThat(((FileEntriesLayer) buildPlan.getLayers().get(1)).getEntries())
+        .containsExactlyElementsIn(
+            FileEntriesLayer.builder()
+                .addEntry(
+                    destDir.resolve("org/launcher.class"),
+                    AbsoluteUnixPath.get("/app/org/launcher.class"))
+                .addEntry(
+                    destDir.resolve("org/orgDirectory/data1.class"),
+                    AbsoluteUnixPath.get("/app/org/orgDirectory/data1.class"))
+                .build()
+                .getEntries());
 
     assertThat(buildPlan.getLayers().get(2).getName()).isEqualTo("snapshot dependencies");
-    assertThatExpectedEntriesPresentInSnapshotLayer_SpringBoot(
-        ((FileEntriesLayer) buildPlan.getLayers().get(2)).getEntries(), destDir);
-
+    assertThat(((FileEntriesLayer) buildPlan.getLayers().get(2)).getEntries())
+        .containsExactlyElementsIn(
+            FileEntriesLayer.builder()
+                .addEntry(
+                    destDir.resolve("BOOT-INF/lib/dependency3-SNAPSHOT.jar"),
+                    AbsoluteUnixPath.get("/app/BOOT-INF/lib/dependency3-SNAPSHOT.jar"))
+                .build()
+                .getEntries());
     assertThat(buildPlan.getLayers().get(3).getName()).isEqualTo("resources");
     assertThat(((FileEntriesLayer) buildPlan.getLayers().get(3)).getEntries())
-        .containsExactlyElementsIn(
+        .isEqualTo(
             FileEntriesLayer.builder()
                 .addEntry(
                     destDir.resolve("META-INF/MANIFEST.MF"),
@@ -254,45 +293,6 @@ public class JarFilesTest {
                 .addEntry(
                     destDir.resolve("BOOT-INF/classes/classDirectory/class2.class"),
                     AbsoluteUnixPath.get("/app/BOOT-INF/classes/classDirectory/class2.class"))
-                .build()
-                .getEntries());
-  }
-
-  private void assertThatExpectedEntriesPresentInNonSnapshotLayer_SpringBoot(
-      List<FileEntry> actualEntries, Path destDir) {
-    assertThat(actualEntries)
-        .containsExactlyElementsIn(
-            FileEntriesLayer.builder()
-                .addEntry(
-                    destDir.resolve("BOOT-INF/lib/dependency1.jar"),
-                    AbsoluteUnixPath.get("/app/BOOT-INF/lib/dependency1.jar"))
-                .build()
-                .getEntries());
-  }
-
-  private void assertThatExpectedEntriesPresentInLoaderLayer_SpringBoot(
-      List<FileEntry> actualEntries, Path destDir) {
-    assertThat(actualEntries)
-        .containsExactlyElementsIn(
-            FileEntriesLayer.builder()
-                .addEntry(
-                    destDir.resolve("org/launcher.class"),
-                    AbsoluteUnixPath.get("/app/org/launcher.class"))
-                .addEntry(
-                    destDir.resolve("org/orgDirectory/data1.class"),
-                    AbsoluteUnixPath.get("/app/org/orgDirectory/data1.class"))
-                .build()
-                .getEntries());
-  }
-
-  private void assertThatExpectedEntriesPresentInSnapshotLayer_SpringBoot(
-      List<FileEntry> actualEntries, Path destDir) {
-    assertThat(actualEntries)
-        .containsExactlyElementsIn(
-            FileEntriesLayer.builder()
-                .addEntry(
-                    destDir.resolve("BOOT-INF/lib/dependency3-SNAPSHOT.jar"),
-                    AbsoluteUnixPath.get("/app/BOOT-INF/lib/dependency3-SNAPSHOT.jar"))
                 .build()
                 .getEntries());
   }
