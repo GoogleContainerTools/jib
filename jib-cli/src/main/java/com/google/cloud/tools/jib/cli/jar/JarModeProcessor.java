@@ -368,10 +368,7 @@ public class JarModeProcessor {
             isInListedDirectoryOrIsSameFile(contents, localExplodedJarRoot);
         layers.add(
             addDirectoryContentsToLayer(
-                layerName,
-                localExplodedJarRoot,
-                belongsToThisLayer.and(Files::isRegularFile),
-                APP_ROOT));
+                layerName, localExplodedJarRoot, belongsToThisLayer, APP_ROOT));
       }
     }
     return layers;
@@ -415,6 +412,6 @@ public class JarModeProcessor {
         predicate = predicate.or(path -> path.equals(localExplodedJarRoot.resolve(pathName)));
       }
     }
-    return predicate;
+    return predicate.and(Files::isRegularFile);
   }
 }
