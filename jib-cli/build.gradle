@@ -1,4 +1,5 @@
 plugins {
+  id 'java-gradle-plugin'
   id 'application'
   id 'eclipse'
 }
@@ -18,6 +19,8 @@ dependencies {
   implementation project(':jib-core')
   implementation project(':jib-plugins-common')
 
+  implementation dependencyStrings.GRADLE_EXTENSION
+
   implementation dependencyStrings.COMMONS_TEXT
   implementation dependencyStrings.JACKSON_DATAFORMAT_YAML
   implementation dependencyStrings.JACKSON_DATABIND
@@ -31,6 +34,9 @@ dependencies {
   testImplementation dependencyStrings.MOCKITO_CORE
   testImplementation dependencyStrings.SLF4J_API
   testImplementation dependencyStrings.SYSTEM_RULES
+
+  // only for testing a concrete Spring Boot example in a test (not for test infrastructure)
+  testImplementation 'org.springframework.boot:spring-boot-gradle-plugin:2.2.11.RELEASE'
 
   integrationTestImplementation project(path:':jib-core', configuration:'integrationTests')
 }

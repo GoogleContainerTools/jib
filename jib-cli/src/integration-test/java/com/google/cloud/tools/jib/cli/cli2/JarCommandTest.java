@@ -19,21 +19,43 @@ package com.google.cloud.tools.jib.cli.cli2;
 import static com.google.common.truth.Truth.assertThat;
 
 import com.google.cloud.tools.jib.Command;
+import com.google.cloud.tools.jib.blob.Blobs;
 import com.google.common.io.Resources;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.net.HttpURLConnection;
 import java.net.URISyntaxException;
+import java.net.URL;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.jar.Attributes;
 import java.util.jar.JarFile;
+import javax.annotation.Nullable;
+import org.gradle.testkit.runner.BuildResult;
+import org.junit.After;
+import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Test;
 import picocli.CommandLine;
 
 public class JarCommandTest {
 
+  @ClassRule
+  public static final TestProject springBootProject = new TestProject("springbootLayered");
+
+  @Nullable private String containerName;
+
+  @After
+  public void tearDown() throws IOException, InterruptedException {
+    if (containerName != null) {
+      new Command("docker", "stop", containerName).run();
+    }
+  }
+
   @Test
+  @Ignore
   public void testErrorLogging_fileDoesNotExist() {
     CommandLine jibCli = new CommandLine(new JibCli());
     StringWriter stringWriter = new StringWriter();
@@ -47,6 +69,7 @@ public class JarCommandTest {
   }
 
   @Test
+  @Ignore
   public void testErrorLogging_directoryGiven() throws URISyntaxException {
     CommandLine jibCli = new CommandLine(new JibCli());
     StringWriter stringWriter = new StringWriter();
@@ -65,6 +88,7 @@ public class JarCommandTest {
   }
 
   @Test
+  @Ignore
   public void testStandardJar_explodedMode_toDocker()
       throws IOException, InterruptedException, URISyntaxException {
     Path jarPath = Paths.get(Resources.getResource("jarTest/standard/jarWithCp.jar").toURI());
@@ -83,6 +107,7 @@ public class JarCommandTest {
   }
 
   @Test
+  @Ignore
   public void testNoDependencyStandardJar_explodedMode_toDocker()
       throws IOException, InterruptedException, URISyntaxException {
     Path jarPath = Paths.get(Resources.getResource("jarTest/standard/noDependencyJar.jar").toURI());
@@ -101,6 +126,7 @@ public class JarCommandTest {
   }
 
   @Test
+  @Ignore
   public void testStandardJar_packagedMode_toDocker()
       throws IOException, InterruptedException, URISyntaxException {
     Path jarPath = Paths.get(Resources.getResource("jarTest/standard/jarWithCp.jar").toURI());
@@ -120,6 +146,7 @@ public class JarCommandTest {
   }
 
   @Test
+  @Ignore
   public void testNoDependencyStandardJar_packagedMode_toDocker()
       throws IOException, InterruptedException, URISyntaxException {
     Path jarPath = Paths.get(Resources.getResource("jarTest/standard/noDependencyJar.jar").toURI());
@@ -143,6 +170,7 @@ public class JarCommandTest {
   }
 
   @Test
+  @Ignore
   public void testSpringbootLayeredJar_explodedMode_toDocker()
       throws IOException, InterruptedException, URISyntaxException {
     Path jarPath =
@@ -160,6 +188,24 @@ public class JarCommandTest {
   }
 
   @Test
+  public void testSpringbootLayeredJar_explodedMode_useTestProject()
+      throws IOException, InterruptedException, URISyntaxException {
+    BuildResult buildResult = springBootProject.build("clean", "bootJar");
+    Path jarParentPath =
+        springBootProject.getProjectRoot().toAbsolutePath().resolve("build").resolve("libs");
+    Path jarPath = jarParentPath.resolve("springboot-layered.jar");
+    Integer exitCode =
+        new CommandLine(new JibCli())
+            .execute("jar", "--target", "docker://springboot-project-jar", jarPath.toString());
+    String output =
+        new Command("docker", "run", "--rm", "springboot-project-jar", "--detach", "-p8080:8080")
+            .run();
+    assertThat(getContent(new URL("http://localhost:8080"))).isEqualTo("Hello world");
+    new Command("docker", "stop", output.trim()).run();
+  }
+
+  @Test
+  @Ignore
   public void testSpringbootNonLayeredJar_explodedMode_toDocker()
       throws IOException, InterruptedException, URISyntaxException {
     Path jarPath =
@@ -176,6 +222,7 @@ public class JarCommandTest {
   }
 
   @Test
+  @Ignore
   public void testJar_unknownMode() {
     CommandLine jibCli = new CommandLine(new JibCli());
     StringWriter stringWriter = new StringWriter();
@@ -189,5 +236,23 @@ public class JarCommandTest {
     assertThat(stringWriter.toString())
         .contains(
             "Invalid value for option '--mode': expected one of [exploded, packaged] (case-sensitive) but was 'unknown'");
+  }
+
+  @Nullable
+  static String getContent(URL url) throws InterruptedException {
+    for (int i = 0; i < 40; i++) {
+      Thread.sleep(500);
+      try {
+        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+        if (connection.getResponseCode() == HttpURLConnection.HTTP_OK) {
+          try (InputStream in = connection.getInputStream()) {
+            return Blobs.writeToString(Blobs.from(in));
+          }
+        }
+      } catch (IOException ignored) {
+        // ignored
+      }
+    }
+    return null;
   }
 }
