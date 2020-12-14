@@ -273,7 +273,7 @@ public class JarFilesTest {
                     AbsoluteUnixPath.get("/app/BOOT-INF/lib/dependency3-SNAPSHOT.jar"))
                 .build()
                 .getEntries());
-    
+
     assertThat(buildPlan.getLayers().get(3).getName()).isEqualTo("resources");
     assertThat(((FileEntriesLayer) buildPlan.getLayers().get(3)).getEntries())
         .isEqualTo(
