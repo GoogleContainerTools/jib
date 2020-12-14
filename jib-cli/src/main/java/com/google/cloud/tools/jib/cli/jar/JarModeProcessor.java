@@ -105,8 +105,7 @@ public class JarModeProcessor {
     Path localExplodedJarRoot = tempDirPath;
     ZipUtil.unzip(jarPath, localExplodedJarRoot);
     Predicate<Path> isClassFile = path -> path.getFileName().toString().endsWith(".class");
-    Predicate<Path> isFile = path -> path.toFile().isFile();
-    Predicate<Path> isResourceFile = isFile.and(isClassFile.negate());
+    Predicate<Path> isResourceFile = isClassFile.negate().and(Files::isRegularFile);
     FileEntriesLayer classesLayer =
         addDirectoryContentsToLayer(
             CLASSES, localExplodedJarRoot, isClassFile, APP_ROOT.resolve("explodedJar"));
@@ -167,7 +166,7 @@ public class JarModeProcessor {
       }
 
       // Non-snapshot layer
-      Predicate<Path> isFile = path -> path.toFile().isFile();
+      Predicate<Path> isFile = Files::isRegularFile;
       Predicate<Path> isInBootInfLib =
           path -> path.startsWith(localExplodedJarRoot.resolve("BOOT-INF").resolve("lib"));
       Predicate<Path> isSnapshot = path -> path.getFileName().toString().contains("SNAPSHOT");
@@ -361,7 +360,6 @@ public class JarModeProcessor {
     // `BOOT-INF/lib/dependency1.jar` and the predicate for the "spring-boot-loader" layer will be
     // true if `path` is in either 'BOOT-INF/classes/` or `META-INF/`.
     List<FileEntriesLayer> layers = new ArrayList<>();
-    Predicate<Path> isFile = path -> path.toFile().isFile();
     for (Map.Entry<String, List<String>> entry : layersMap.entrySet()) {
       String layerName = entry.getKey();
       List<String> contents = entry.getValue();
@@ -370,7 +368,10 @@ public class JarModeProcessor {
             isInListedDirectoryOrIsSameFile(contents, localExplodedJarRoot);
         layers.add(
             addDirectoryContentsToLayer(
-                layerName, localExplodedJarRoot, isFile.and(belongsToThisLayer), APP_ROOT));
+                layerName,
+                localExplodedJarRoot,
+                belongsToThisLayer.and(Files::isRegularFile),
+                APP_ROOT));
       }
     }
     return layers;
