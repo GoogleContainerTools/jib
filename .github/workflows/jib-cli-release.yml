@@ -20,9 +20,14 @@ jobs:
           # TODO: run integration test? (Requries auth with GCP.)
           ./gradlew clean build jib-cli:instDist
 
+          cd jib-cli/build/install
+          zip -rv jib-jre.zip jib
+          sha256sum jib-jre.zip > jib-jre.zip.sha256
+
       - name: Run Gradle release
         run: |
           git checkout -b cli_release_v${{ github.event.inputs.release_version }}
+          # TODO: set this to the GitHub user triggering the workflow
           git config user.email "chanseok@google.com"
           git config user.name "Chanseok Oh"
           ./gradlew jib-cli:release -Prelease.useAutomaticVersion=true -Prelease.releaseVersion=${{ github.event.inputs.release_version }}
@@ -44,13 +49,22 @@ jobs:
           release_name: jib-cli v${{ github.event.inputs.release_version }}
           draft: true
 
-      - name: Upload Jib CLI binaries
+      - name: Upload Jib CLI
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          # TODO: upload an archive
-          asset_path: ./jib-cli/build/install/jib/bin/jib
-          asset_name: jib
-          asset_content_type: application/octet-stream
+          asset_path: ./jib-cli/build/install/jib-jre.zip
+          asset_name: jib-jre.zip
+          asset_content_type: application/zip
+
+      - name: Upload Jib CLI checksum
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./jib-cli/build/install/jib-jre.zip.sha256
+          asset_name: jib-jre.zip.sha256
+          asset_content_type: text/plain
