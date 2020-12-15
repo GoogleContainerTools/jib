@@ -174,7 +174,7 @@ public class JarCommandTest {
     springBootProjectLayered.build("clean", "bootJar");
     Path jarParentPath =
         springBootProjectLayered.getProjectRoot().toAbsolutePath().resolve("build").resolve("libs");
-    Path jarPath = jarParentPath.resolve("springboot-layered.jar");
+    Path jarPath = jarParentPath.resolve("spring-boot-layered.jar");
     Integer exitCode =
         new CommandLine(new JibCli())
             .execute("jar", "--target", "docker://springboot-project-jar", jarPath.toString());
@@ -200,7 +200,7 @@ public class JarCommandTest {
             .toAbsolutePath()
             .resolve("build")
             .resolve("libs");
-    Path jarPath = jarParentPath.resolve("springboot-nonlayered.jar");
+    Path jarPath = jarParentPath.resolve("spring-boot-nonlayered.jar");
     Integer exitCode =
         new CommandLine(new JibCli())
             .execute("jar", "--target", "docker://springboot-project-jar", jarPath.toString());
