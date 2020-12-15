@@ -4,12 +4,6 @@ plugins {
     id 'java'
 }
 
-//tasks.wrapper.configure {
-//    gradleVersion = "5.6.4"
-//}
-
-//group = 'com.example'
-//version = '0.0.1-SNAPSHOT'
 sourceCompatibility = '1.8'
 
 bootJar {

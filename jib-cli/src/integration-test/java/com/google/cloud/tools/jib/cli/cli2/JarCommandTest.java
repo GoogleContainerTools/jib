@@ -214,7 +214,7 @@ public class JarCommandTest {
       assertThat(jarFile.getEntry("BOOT-INF/layers.idx")).isNull();
       assertThat(getContent(new URL("http://localhost:8080"))).isEqualTo("Hello world");
       assertThat(exitCode).isEqualTo(0);
-      
+
       new Command("docker", "stop", output.trim()).run();
     }
   }
