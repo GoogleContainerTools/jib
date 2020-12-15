@@ -19,15 +19,22 @@ package com.google.cloud.tools.jib.api;
 import com.google.cloud.tools.jib.configuration.ImageConfiguration;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.MoreExecutors;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.concurrent.ExecutorService;
 import org.junit.Assert;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 import org.mockito.Mockito;
 
 /** Tests for {@link Containerizer}. */
 public class ContainerizerTest {
+
+  @Rule public TemporaryFolder temporaryFolder = new TemporaryFolder();
 
   @Test
   public void testTo() throws CacheDirectoryCreationException {
@@ -120,5 +127,63 @@ public class ContainerizerTest {
     ImageConfiguration imageConfiguration = containerizer.getImageConfiguration();
     Assert.assertEquals("tar/image", imageConfiguration.getImage().toString());
     Assert.assertEquals(0, imageConfiguration.getCredentialRetrievers().size());
+  }
+
+  @Test
+  public void testGetApplicationLayersCacheDirectory_defaults()
+      throws InvalidImageReferenceException, CacheDirectoryCreationException, IOException {
+    Containerizer containerizer = Containerizer.to(RegistryImage.named("registry/image"));
+    Path applicationLayersCache = containerizer.getApplicationLayersCacheDirectory();
+    Path expectedCacheDir =
+        Paths.get(System.getProperty("java.io.tmpdir"))
+            .resolve(Containerizer.DEFAULT_APPLICATION_CACHE_DIRECTORY_NAME);
+    Assert.assertTrue(Files.isSameFile(expectedCacheDir, applicationLayersCache));
+  }
+
+  @Test
+  public void testGetApplicationLayersCacheDirectory_createNew()
+      throws CacheDirectoryCreationException, InvalidImageReferenceException {
+    Path expectedLocation =
+        temporaryFolder
+            .getRoot()
+            .toPath()
+            .resolve(Containerizer.DEFAULT_APPLICATION_CACHE_DIRECTORY_NAME);
+    Containerizer containerizer = Containerizer.to(RegistryImage.named("registry/image"));
+
+    Assert.assertFalse(Files.exists(expectedLocation));
+    containerizer.getApplicationLayersCacheDirectory(() -> temporaryFolder.getRoot().toPath());
+    Assert.assertTrue(Files.exists(expectedLocation));
+  }
+
+  @Test
+  public void testGetApplicationLayersCacheDirectory_existingCache()
+      throws CacheDirectoryCreationException, InvalidImageReferenceException, IOException {
+    Path existingLocation =
+        temporaryFolder.newFolder(Containerizer.DEFAULT_APPLICATION_CACHE_DIRECTORY_NAME).toPath();
+    Containerizer containerizer = Containerizer.to(RegistryImage.named("registry/image"));
+
+    Assert.assertTrue(Files.exists(existingLocation));
+    containerizer.getApplicationLayersCacheDirectory(() -> temporaryFolder.getRoot().toPath());
+    Assert.assertTrue(Files.exists(existingLocation));
+  }
+
+  @Test
+  public void testGetApplicationLayersCacheDirectory_existingBadFile()
+      throws InvalidImageReferenceException, IOException {
+    Path existingBadFile =
+        temporaryFolder.newFile(Containerizer.DEFAULT_APPLICATION_CACHE_DIRECTORY_NAME).toPath();
+    Containerizer containerizer = Containerizer.to(RegistryImage.named("registry/image"));
+
+    Assert.assertTrue(Files.exists(existingBadFile));
+    try {
+      containerizer.getApplicationLayersCacheDirectory(() -> temporaryFolder.getRoot().toPath());
+      Assert.fail();
+    } catch (CacheDirectoryCreationException cdce) {
+      Assert.assertEquals(
+          "Could not create cache directory: "
+              + existingBadFile.toString()
+              + " already exists and is not a directory",
+          cdce.getMessage());
+    }
   }
 }

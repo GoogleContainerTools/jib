@@ -23,10 +23,12 @@ import com.google.cloud.tools.jib.configuration.ImageConfiguration;
 import com.google.cloud.tools.jib.docker.DockerClient;
 import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.filesystem.XdgDirectories;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
@@ -35,6 +37,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import javax.annotation.Nullable;
 
 /** Configures how to containerize. */
@@ -45,6 +48,9 @@ public class Containerizer {
    * home]/google-cloud-tools-java/jib}.
    */
   public static final Path DEFAULT_BASE_CACHE_DIRECTORY = XdgDirectories.getCacheHome();
+
+  public static final String DEFAULT_APPLICATION_CACHE_DIRECTORY_NAME =
+      "jib-core-application-layers-cache";
 
   private static final String DEFAULT_TOOL_NAME = "jib-core";
   private static final String DEFAULT_TOOL_VERSION =
@@ -312,11 +318,27 @@ public class Containerizer {
   }
 
   Path getApplicationLayersCacheDirectory() throws CacheDirectoryCreationException {
+    return getApplicationLayersCacheDirectory(
+        () -> Paths.get(System.getProperty("java.io.tmpdir")));
+  }
+
+  @VisibleForTesting
+  Path getApplicationLayersCacheDirectory(Supplier<Path> tmpDirSupplier)
+      throws CacheDirectoryCreationException {
     if (applicationLayersCacheDirectory == null) {
-      // Uses a temporary directory if application layers cache directory is not set.
+      // Create a directory in temp if application layers cache directory is not set.
       try {
-        applicationLayersCacheDirectory = Files.createTempDirectory(null);
-        applicationLayersCacheDirectory.toFile().deleteOnExit();
+        Path systemTmp = tmpDirSupplier.get();
+        Path jibTempCache = systemTmp.resolve(DEFAULT_APPLICATION_CACHE_DIRECTORY_NAME);
+        if (Files.exists(jibTempCache)) {
+          if (!Files.isDirectory(jibTempCache)) {
+            throw new CacheDirectoryCreationException(
+                jibTempCache.toString() + " already exists and is not a directory");
+          }
+        } else {
+          Files.createDirectory(jibTempCache);
+        }
+        applicationLayersCacheDirectory = jibTempCache;
 
       } catch (IOException ex) {
         throw new CacheDirectoryCreationException(ex);
