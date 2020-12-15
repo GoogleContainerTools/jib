@@ -24,8 +24,4 @@ public class CacheDirectoryCreationException extends Exception {
   public CacheDirectoryCreationException(Throwable cause) {
     super(MESSAGE, cause);
   }
-
-  public CacheDirectoryCreationException(String message) {
-    super(MESSAGE + ": " + message);
-  }
 }
