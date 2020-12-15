@@ -115,7 +115,7 @@ public class JibExtension {
 
     pluginExtensions = objectFactory.listProperty(ExtensionParameters.class).empty();
     extensionParametersSpec =
-        objectFactory.newInstance(ExtensionParametersSpec.class, project, pluginExtensions);
+        objectFactory.newInstance(ExtensionParametersSpec.class, pluginExtensions);
     allowInsecureRegistries = objectFactory.property(Boolean.class);
     containerizingMode = objectFactory.property(String.class);
 

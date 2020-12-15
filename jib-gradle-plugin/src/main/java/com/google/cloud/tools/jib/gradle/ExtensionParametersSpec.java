@@ -18,19 +18,19 @@ package com.google.cloud.tools.jib.gradle;
 
 import javax.inject.Inject;
 import org.gradle.api.Action;
-import org.gradle.api.Project;
+import org.gradle.api.model.ObjectFactory;
 import org.gradle.api.provider.ListProperty;
 
 /** Allows to add {@link ExtensionParameters} objects to the list property of the same type. */
 public class ExtensionParametersSpec {
 
-  private final Project project;
+  private final ObjectFactory objectFactory;
   private final ListProperty<ExtensionParameters> pluginExtensions;
 
   @Inject
   public ExtensionParametersSpec(
-      Project project, ListProperty<ExtensionParameters> pluginExtensions) {
-    this.project = project;
+      ObjectFactory objectFactory, ListProperty<ExtensionParameters> pluginExtensions) {
+    this.objectFactory = objectFactory;
     this.pluginExtensions = pluginExtensions;
   }
 
@@ -40,7 +40,7 @@ public class ExtensionParametersSpec {
    * @param action closure representing an extension configuration
    */
   public void pluginExtension(Action<? super ExtensionParameters> action) {
-    ExtensionParameters extension = project.getObjects().newInstance(ExtensionParameters.class);
+    ExtensionParameters extension = objectFactory.newInstance(ExtensionParameters.class);
     action.execute(extension);
     pluginExtensions.add(extension);
   }

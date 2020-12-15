@@ -16,30 +16,32 @@
 
 package com.google.cloud.tools.jib.cli.jar;
 
+import com.google.cloud.tools.jib.ProjectInfo;
 import com.google.cloud.tools.jib.api.buildplan.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.api.buildplan.FileEntriesLayer;
 import com.google.cloud.tools.jib.filesystem.DirectoryWalker;
 import com.google.cloud.tools.jib.plugins.common.ZipUtil;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Predicates;
 import com.google.common.base.Splitter;
 import com.google.common.base.Verify;
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.function.Predicate;
 import java.util.jar.Attributes;
 import java.util.jar.JarFile;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 
 /** Process jar file contents and create layers. */
@@ -50,7 +52,7 @@ public class JarModeProcessor {
   private static final String CLASSES = "classes";
   private static final String RESOURCES = "resources";
   private static final String DEPENDENCIES = "dependencies";
-  private static final String SNAPSHOT_DEPENDENCIES = "snapshot-dependencies";
+  private static final String SNAPSHOT_DEPENDENCIES = "snapshot dependencies";
 
   /**
    * Jar Type.
@@ -102,7 +104,7 @@ public class JarModeProcessor {
     // file's original project structure.
     ZipUtil.unzip(jarPath, localExplodedJarRoot);
     Predicate<Path> isClassFile = path -> path.getFileName().toString().endsWith(".class");
-    Predicate<Path> isResourceFile = isClassFile.negate();
+    Predicate<Path> isResourceFile = isClassFile.negate().and(Files::isRegularFile);
     FileEntriesLayer classesLayer =
         addDirectoryContentsToLayer(
             CLASSES, localExplodedJarRoot, isClassFile, APP_ROOT.resolve("explodedJar"));
@@ -110,8 +112,12 @@ public class JarModeProcessor {
         addDirectoryContentsToLayer(
             RESOURCES, localExplodedJarRoot, isResourceFile, APP_ROOT.resolve("explodedJar"));
 
-    layers.add(resourcesLayer);
-    layers.add(classesLayer);
+    if (!resourcesLayer.getEntries().isEmpty()) {
+      layers.add(resourcesLayer);
+    }
+    if (!classesLayer.getEntries().isEmpty()) {
+      layers.add(classesLayer);
+    }
     return layers;
   }
 
@@ -143,73 +149,65 @@ public class JarModeProcessor {
    * spring-boot-loader, snapshot dependencies, resource and classes for a spring boot fat jar.
    *
    * @param jarPath path to jar file
-   * @param localExplodedJarRoot path to temporary jib local directory
+   * @param tempDirPath path to temporary jib local directory
    * @return list of {@link FileEntriesLayer}
    * @throws IOException if I/O error occurs when opening the jar file or if temporary directory
    *     provided doesn't exist
    */
-  static List<FileEntriesLayer> createLayersForExplodedSpringBootFat(
-      Path jarPath, Path localExplodedJarRoot) throws IOException {
-
+  static List<FileEntriesLayer> createLayersForExplodedSpringBootFat(Path jarPath, Path tempDirPath)
+      throws IOException {
     try (JarFile jarFile = new JarFile(jarPath.toFile())) {
       ZipEntry layerIndex = jarFile.getEntry("BOOT-INF/layers.idx");
+      Path localExplodedJarRoot = tempDirPath;
       ZipUtil.unzip(jarPath, localExplodedJarRoot);
       if (layerIndex != null) {
         return createLayersForLayeredSpringBootJar(localExplodedJarRoot);
       }
 
-      ArrayList<FileEntriesLayer> layers = new ArrayList<>();
-
       // Non-snapshot layer
+      Predicate<Path> isFile = Files::isRegularFile;
       Predicate<Path> isInBootInfLib =
-          path -> path.getParent().startsWith(localExplodedJarRoot.resolve("BOOT-INF/lib"));
+          path -> path.startsWith(localExplodedJarRoot.resolve("BOOT-INF").resolve("lib"));
       Predicate<Path> isSnapshot = path -> path.getFileName().toString().contains("SNAPSHOT");
-      Predicate<Path> nonSnapshotPredicate = isInBootInfLib.and(isSnapshot.negate());
+      Predicate<Path> isInBootInfLibAndIsNotSnapshot = isInBootInfLib.and(isSnapshot.negate());
+      Predicate<Path> nonSnapshotPredicate = isFile.and(isInBootInfLibAndIsNotSnapshot);
       FileEntriesLayer nonSnapshotLayer =
           addDirectoryContentsToLayer(
               DEPENDENCIES, localExplodedJarRoot, nonSnapshotPredicate, APP_ROOT);
 
       // Snapshot layer
-      Predicate<Path> snapshotPredicate = isInBootInfLib.and(isSnapshot);
+      Predicate<Path> isInBootInfLibAndIsSnapshot = isInBootInfLib.and(isSnapshot);
+      Predicate<Path> snapshotPredicate = isFile.and(isInBootInfLibAndIsSnapshot);
       FileEntriesLayer snapshotLayer =
           addDirectoryContentsToLayer(
               SNAPSHOT_DEPENDENCIES, localExplodedJarRoot, snapshotPredicate, APP_ROOT);
 
       // Spring-boot-loader layer.
-      Predicate<Path> isLoader =
-          path -> path.getParent().startsWith(localExplodedJarRoot.resolve("org"));
+      Predicate<Path> isLoader = path -> path.startsWith(localExplodedJarRoot.resolve("org"));
+      Predicate<Path> loaderPredicate = isFile.and(isLoader);
       FileEntriesLayer loaderLayer =
           addDirectoryContentsToLayer(
-              "spring-boot-loader", localExplodedJarRoot, isLoader, APP_ROOT);
+              "spring-boot-loader", localExplodedJarRoot, loaderPredicate, APP_ROOT);
 
       // Classes layer.
       Predicate<Path> isClass = path -> path.getFileName().toString().endsWith(".class");
       Predicate<Path> isInBootInfClasses =
-          path ->
-              path.getParent()
-                  .startsWith(
-                      localExplodedJarRoot.resolve(
-                          localExplodedJarRoot.resolve("BOOT-INF/classes")));
-      Predicate<Path> finalPredicateClasses = isInBootInfClasses.and(isClass);
+          path -> path.startsWith(localExplodedJarRoot.resolve("BOOT-INF").resolve("classes"));
+      Predicate<Path> classesPredicate = isInBootInfClasses.and(isClass);
       FileEntriesLayer classesLayer =
-          addDirectoryContentsToLayer(
-              CLASSES, localExplodedJarRoot, finalPredicateClasses, APP_ROOT);
+          addDirectoryContentsToLayer(CLASSES, localExplodedJarRoot, classesPredicate, APP_ROOT);
 
       // Resources layer.
       Predicate<Path> isInMetaInf =
-          path -> path.getParent().startsWith(localExplodedJarRoot.resolve("META-INF"));
-      Predicate<Path> finalPredicateResources =
-          isInBootInfClasses.or(isInMetaInf).and(isClass.negate());
+          path -> path.startsWith(localExplodedJarRoot.resolve("META-INF"));
+      Predicate<Path> isResource = isInMetaInf.or(isInBootInfClasses.and(isClass.negate()));
+      Predicate<Path> resourcesPredicate = isFile.and(isResource);
       FileEntriesLayer resourcesLayer =
           addDirectoryContentsToLayer(
-              RESOURCES, localExplodedJarRoot, finalPredicateResources, APP_ROOT);
+              RESOURCES, localExplodedJarRoot, resourcesPredicate, APP_ROOT);
 
-      layers.add(nonSnapshotLayer);
-      layers.add(loaderLayer);
-      layers.add(snapshotLayer);
-      layers.add(resourcesLayer);
-      layers.add(classesLayer);
-      return layers;
+      return Arrays.asList(
+          nonSnapshotLayer, loaderLayer, snapshotLayer, resourcesLayer, classesLayer);
     }
   }
 
@@ -268,60 +266,54 @@ public class JarModeProcessor {
 
   private static List<FileEntriesLayer> getDependenciesLayers(Path jarPath, ProcessingMode mode)
       throws IOException {
-
     // Get dependencies from Class-Path in the jar's manifest and add a layer each for non-snapshot
-    // and snapshot dependencies. If Class-Path is not present in the jar's manifest then skip
+    // and snapshot dependencies. If Class-Path is not present in the JAR's manifest then skip
     // adding the dependencies layers.
     try (JarFile jarFile = new JarFile(jarPath.toFile())) {
       String classPath =
           jarFile.getManifest().getMainAttributes().getValue(Attributes.Name.CLASS_PATH);
       if (classPath == null) {
         return new ArrayList<>();
-      } else {
-        List<FileEntriesLayer> layers = new ArrayList<>();
-        Path jarParent = jarPath.getParent() == null ? Paths.get("") : jarPath.getParent();
-        Predicate<String> isSnapshot = name -> name.contains("SNAPSHOT");
-        List<String> allDependencies = Splitter.onPattern("\\s+").splitToList(classPath.trim());
-        List<Path> nonSnapshots =
-            allDependencies
-                .stream()
-                .filter(isSnapshot.negate())
-                .map(Paths::get)
-                .collect(Collectors.toList());
-        List<Path> snapshots =
-            allDependencies
-                .stream()
-                .filter(isSnapshot)
-                .map(Paths::get)
-                .collect(Collectors.toList());
-        if (!nonSnapshots.isEmpty()) {
-          FileEntriesLayer.Builder nonSnapshotLayer =
-              FileEntriesLayer.builder().setName(DEPENDENCIES);
-          nonSnapshots.forEach(
-              path ->
-                  addDependency(
-                      nonSnapshotLayer,
-                      jarParent.resolve(path),
-                      mode.equals(ProcessingMode.packaged)
-                          ? APP_ROOT.resolve(path)
-                          : APP_ROOT.resolve("dependencies").resolve(path.getFileName())));
-          layers.add(nonSnapshotLayer.build());
-        }
-        if (!snapshots.isEmpty()) {
-          FileEntriesLayer.Builder snapshotLayer =
-              FileEntriesLayer.builder().setName(SNAPSHOT_DEPENDENCIES);
-          snapshots.forEach(
-              path ->
-                  addDependency(
-                      snapshotLayer,
-                      jarParent.resolve(path),
-                      mode.equals(ProcessingMode.packaged)
-                          ? APP_ROOT.resolve(path)
-                          : APP_ROOT.resolve("dependencies").resolve(path.getFileName())));
-          layers.add(snapshotLayer.build());
-        }
-        return layers;
       }
+      List<FileEntriesLayer> layers = new ArrayList<>();
+      Path jarParent = jarPath.getParent() == null ? Paths.get("") : jarPath.getParent();
+      Predicate<String> isSnapshot = name -> name.contains("SNAPSHOT");
+      List<String> allDependencies = Splitter.onPattern("\\s+").splitToList(classPath.trim());
+      List<Path> nonSnapshots =
+          allDependencies
+              .stream()
+              .filter(isSnapshot.negate())
+              .map(Paths::get)
+              .collect(Collectors.toList());
+      List<Path> snapshots =
+          allDependencies.stream().filter(isSnapshot).map(Paths::get).collect(Collectors.toList());
+      if (!nonSnapshots.isEmpty()) {
+        FileEntriesLayer.Builder nonSnapshotLayer =
+            FileEntriesLayer.builder().setName(DEPENDENCIES);
+        nonSnapshots.forEach(
+            path ->
+                addDependency(
+                    nonSnapshotLayer,
+                    jarParent.resolve(path),
+                    mode.equals(ProcessingMode.packaged)
+                        ? APP_ROOT.resolve(path)
+                        : APP_ROOT.resolve(DEPENDENCIES).resolve(path.getFileName())));
+        layers.add(nonSnapshotLayer.build());
+      }
+      if (!snapshots.isEmpty()) {
+        FileEntriesLayer.Builder snapshotLayer =
+            FileEntriesLayer.builder().setName(SNAPSHOT_DEPENDENCIES);
+        snapshots.forEach(
+            path ->
+                addDependency(
+                    snapshotLayer,
+                    jarParent.resolve(path),
+                    mode.equals(ProcessingMode.packaged)
+                        ? APP_ROOT.resolve(path)
+                        : APP_ROOT.resolve(DEPENDENCIES).resolve(path.getFileName())));
+        layers.add(snapshotLayer.build());
+      }
+      return layers;
     }
   }
 
@@ -329,60 +321,56 @@ public class JarModeProcessor {
    * Creates layers as specified by the layers.idx file (located in the BOOT-INF/ directory of the
    * JAR).
    *
-   * @param localExplodedJarRoot Path to temporary directory
+   * @param localExplodedJarRoot Path to exploded JAR content root
    * @return list of {@link FileEntriesLayer}
-   * @throws IOException if temporary directory provided doesn't exist
+   * @throws IOException when an IO error occurs
    */
   private static List<FileEntriesLayer> createLayersForLayeredSpringBootJar(
       Path localExplodedJarRoot) throws IOException {
-    Path layerIndexPath = localExplodedJarRoot.resolve(Paths.get("BOOT-INF/layers.idx"));
-    Pattern layerNamePattern = Pattern.compile("-\\s(.*):");
-    Pattern fileNamePattern = Pattern.compile("\\s\\s-\\s(.*)");
+    Path layerIndexPath = localExplodedJarRoot.resolve("BOOT-INF").resolve("layers.idx");
+    Pattern layerNamePattern = Pattern.compile("- \"(.*)\":");
+    Pattern layerEntryPattern = Pattern.compile("  - \"(.*)\"");
     Map<String, List<String>> layersMap = new LinkedHashMap<>();
-    try (Stream<String> stream = Files.lines(layerIndexPath)) {
-      List<String> layerContents = null;
-      List<String> layerNames = new ArrayList<>();
-      List<String> lines = stream.collect(Collectors.toList());
-      for (String line : lines) {
-        String cleanedUpLine = line.replace("\"", "");
-        Matcher layerMatcher = layerNamePattern.matcher(cleanedUpLine);
-        Matcher fileNameMatcher = fileNamePattern.matcher(cleanedUpLine);
-        if (layerMatcher.matches()) {
-          layerContents = new ArrayList<>();
-          String layerName = layerMatcher.group(1);
-          layerNames.add(layerName);
-          layersMap.put(layerName, layerContents);
-        } else if (fileNameMatcher.matches()) {
-          Verify.verifyNotNull(layerContents).add(fileNameMatcher.group(1));
-        } else {
-          throw new IllegalStateException(
-              "Unable to parse layers.idx file in the JAR. Please check the format of layers.idx");
-        }
+    List<String> layerEntries = null;
+    for (String line : Files.readAllLines(layerIndexPath, StandardCharsets.UTF_8)) {
+      Matcher layerMatcher = layerNamePattern.matcher(line);
+      Matcher entryMatcher = layerEntryPattern.matcher(line);
+      if (layerMatcher.matches()) {
+        layerEntries = new ArrayList<>();
+        String layerName = layerMatcher.group(1);
+        layersMap.put(layerName, layerEntries);
+      } else if (entryMatcher.matches()) {
+        Verify.verifyNotNull(layerEntries).add(entryMatcher.group(1));
+      } else {
+        throw new IllegalStateException(
+            "Unable to parse BOOT-INF/layers.idx file in the JAR. Please check the format of "
+                + "layers.idx. If this is a Jib CLI bug, file an issue at "
+                + ProjectInfo.GITHUB_NEW_ISSUE_URL);
       }
-
-      // If the layers.idx file looks like this, for example:
-      // - dependencies:
-      //   - BOOT-INF/lib/dependency1.jar
-      // - application:
-      //   - BOOT-INF/classes
-      //   - META-INF/
-      // The predicate for the "dependencies" layer will be true if `path` is equal to
-      // `BOOT-INF/lib/dependency1.jar` and the predicate for the "spring-boot-loader" layer will be
-      // true if `path` is in either 'BOOT-INF/classes/` or `META-INF/`.
-      List<FileEntriesLayer> layers = new ArrayList<>();
-      for (String layerName : layerNames) {
-        List<String> contents = layersMap.getOrDefault(layerName, new ArrayList<>());
-        Optional<Predicate<Path>> finalPredicate =
-            computePredicateForLayeredSpringBoot(contents, localExplodedJarRoot);
-        if (finalPredicate.isPresent()) {
-          FileEntriesLayer layer =
-              addDirectoryContentsToLayer(
-                  layerName, localExplodedJarRoot, finalPredicate.get(), APP_ROOT);
-          layers.add(layer);
-        }
-      }
-      return layers;
     }
+
+    // If the layers.idx file looks like this, for example:
+    // - "dependencies":
+    //   - "BOOT-INF/lib/dependency1.jar"
+    // - "application":
+    //   - "BOOT-INF/classes/"
+    //   - "META-INF/"
+    // The predicate for the "dependencies" layer will be true if `path` is equal to
+    // `BOOT-INF/lib/dependency1.jar` and the predicate for the "spring-boot-loader" layer will be
+    // true if `path` is in either 'BOOT-INF/classes/` or `META-INF/`.
+    List<FileEntriesLayer> layers = new ArrayList<>();
+    for (Map.Entry<String, List<String>> entry : layersMap.entrySet()) {
+      String layerName = entry.getKey();
+      List<String> contents = entry.getValue();
+      if (!contents.isEmpty()) {
+        Predicate<Path> belongsToThisLayer =
+            isInListedDirectoryOrIsSameFile(contents, localExplodedJarRoot);
+        layers.add(
+            addDirectoryContentsToLayer(
+                layerName, localExplodedJarRoot, belongsToThisLayer, APP_ROOT));
+      }
+    }
+    return layers;
   }
 
   private static void addDependency(
@@ -405,7 +393,7 @@ public class JarModeProcessor {
     FileEntriesLayer.Builder builder = FileEntriesLayer.builder().setName(layerName);
     new DirectoryWalker(sourceRoot)
         .filterRoot()
-        .filter(path -> Files.isDirectory(path) || pathFilter.test(path))
+        .filter(path -> pathFilter.test(path))
         .walk(
             path -> {
               AbsoluteUnixPath pathOnContainer =
@@ -415,17 +403,16 @@ public class JarModeProcessor {
     return builder.build();
   }
 
-  private static Optional<Predicate<Path>> computePredicateForLayeredSpringBoot(
+  private static Predicate<Path> isInListedDirectoryOrIsSameFile(
       List<String> layerContents, Path localExplodedJarRoot) {
-    List<Predicate<Path>> allPredicates = new ArrayList<>();
+    Predicate<Path> predicate = Predicates.alwaysFalse();
     for (String pathName : layerContents) {
       if (pathName.endsWith("/")) {
-        allPredicates.add(
-            path -> path.getParent().startsWith(localExplodedJarRoot.resolve(pathName)));
+        predicate = predicate.or(path -> path.startsWith(localExplodedJarRoot.resolve(pathName)));
       } else {
-        allPredicates.add(path -> path.equals(localExplodedJarRoot.resolve(pathName)));
+        predicate = predicate.or(path -> path.equals(localExplodedJarRoot.resolve(pathName)));
       }
     }
-    return allPredicates.stream().reduce(Predicate::or);
+    return predicate.and(Files::isRegularFile);
   }
 }
