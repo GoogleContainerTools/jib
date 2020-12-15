@@ -23,15 +23,17 @@ import com.google.cloud.tools.jib.cli.cli2.logging.ConsoleOutput;
 import com.google.cloud.tools.jib.cli.cli2.logging.Verbosity;
 import com.google.common.base.Verify;
 import java.nio.file.Path;
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import picocli.CommandLine;
+import picocli.CommandLine.Model.CommandSpec;
 
 public class CommonCliOptions {
 
   @CommandLine.Spec
-  private CommandLine.Model.CommandSpec spec = CommandLine.Model.CommandSpec.create();
+  @SuppressWarnings("NullAway.Init") // initialized by picocli
+  private CommandSpec spec;
 
   // Build Configuration
   @CommandLine.Option(
@@ -58,8 +60,7 @@ public class CommonCliOptions {
       paramLabel = "<tag>",
       split = ",",
       description = "Additional tags for target image")
-  @SuppressWarnings("NullAway.Init") // initialized by picocli
-  private List<String> additionalTags = new ArrayList<>();
+  private List<String> additionalTags = Collections.emptyList();
 
   @CommandLine.Option(
       names = "--base-image-cache",
@@ -69,11 +70,11 @@ public class CommonCliOptions {
   private Path baseImageCache;
 
   @CommandLine.Option(
-      names = "--application-cache",
+      names = "--project-cache",
       paramLabel = "<cache-directory>",
-      description = "A path to an application cache")
+      description = "A path to the project cache")
   @SuppressWarnings("NullAway.Init") // initialized by picocli
-  private Path applicationCache;
+  private Path projectCache;
 
   // Auth/Security
   @CommandLine.Option(
@@ -236,13 +237,11 @@ public class CommonCliOptions {
   private boolean serialize;
 
   public Verbosity getVerbosity() {
-    Verify.verifyNotNull(verbosity);
-    return verbosity;
+    return Verify.verifyNotNull(verbosity);
   }
 
   public ConsoleOutput getConsoleOutput() {
-    Verify.verifyNotNull(consoleOutput);
-    return consoleOutput;
+    return Verify.verifyNotNull(consoleOutput);
   }
 
   public boolean isStacktrace() {
@@ -317,11 +316,10 @@ public class CommonCliOptions {
    */
   public Optional<Credential> getUsernamePassword() {
     if (credentials != null && credentials.usernamePassword != null) {
-      Verify.verifyNotNull(credentials.usernamePassword.username);
-      Verify.verifyNotNull(credentials.usernamePassword.password);
       return Optional.of(
           Credential.from(
-              credentials.usernamePassword.username, credentials.usernamePassword.password));
+              Verify.verifyNotNull(credentials.usernamePassword.username),
+              Verify.verifyNotNull(credentials.usernamePassword.password)));
     }
     return Optional.empty();
   }
@@ -337,12 +335,10 @@ public class CommonCliOptions {
         && credentials.separate != null
         && credentials.separate.to != null
         && credentials.separate.to.usernamePassword != null) {
-      Verify.verifyNotNull(credentials.separate.to.usernamePassword.username);
-      Verify.verifyNotNull(credentials.separate.to.usernamePassword.password);
       return Optional.of(
           Credential.from(
-              credentials.separate.to.usernamePassword.username,
-              credentials.separate.to.usernamePassword.password));
+              Verify.verifyNotNull(credentials.separate.to.usernamePassword.username),
+              Verify.verifyNotNull(credentials.separate.to.usernamePassword.password)));
     }
     return Optional.empty();
   }
@@ -358,12 +354,10 @@ public class CommonCliOptions {
         && credentials.separate != null
         && credentials.separate.from != null
         && credentials.separate.from.usernamePassword != null) {
-      Verify.verifyNotNull(credentials.separate.from.usernamePassword.username);
-      Verify.verifyNotNull(credentials.separate.from.usernamePassword.password);
       return Optional.of(
           Credential.from(
-              credentials.separate.from.usernamePassword.username,
-              credentials.separate.from.usernamePassword.password));
+              Verify.verifyNotNull(credentials.separate.from.usernamePassword.username),
+              Verify.verifyNotNull(credentials.separate.from.usernamePassword.password)));
     }
     return Optional.empty();
   }
@@ -380,12 +374,11 @@ public class CommonCliOptions {
     return Optional.ofNullable(baseImageCache);
   }
 
-  public Optional<Path> getApplicationCache() {
-    return Optional.ofNullable(applicationCache);
+  public Optional<Path> getProjectCache() {
+    return Optional.ofNullable(projectCache);
   }
 
   public List<String> getAdditionalTags() {
-    Verify.verifyNotNull(additionalTags);
     return additionalTags;
   }
 

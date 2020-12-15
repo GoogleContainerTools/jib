@@ -1,5 +1,6 @@
 plugins {
   id 'application'
+  id 'net.researchgate.release'
   id 'eclipse'
 }
 
@@ -33,6 +34,17 @@ dependencies {
   testImplementation dependencyStrings.SYSTEM_RULES
 
   integrationTestImplementation project(path:':jib-core', configuration:'integrationTests')
+}
+
+release {
+  tagTemplate = 'v$version-cli'
+  ignoredSnapshotDependencies = [
+    'com.google.cloud.tools:jib-core',
+    'com.google.cloud.tools:jib-plugins-common',
+  ]
+  git {
+    requireBranch = /^cli_release_v\d+.*$/  //regex
+  }
 }
 
 /* ECLIPSE */

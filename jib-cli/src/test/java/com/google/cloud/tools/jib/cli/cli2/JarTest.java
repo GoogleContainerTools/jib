@@ -34,14 +34,13 @@ import picocli.CommandLine.MissingParameterException;
 
 @RunWith(JUnitParamsRunner.class)
 public class JarTest {
-  private static String REQUIRED_JAR = "jarfile";
 
   @Test
   public void testParse_missingRequiredParams_targetImage() {
     MissingParameterException mpe =
         assertThrows(
             MissingParameterException.class,
-            () -> CommandLine.populateCommand(new Jar(), REQUIRED_JAR));
+            () -> CommandLine.populateCommand(new Jar(), "my-app.jar"));
     assertThat(mpe.getMessage()).isEqualTo("Missing required option: '--target=<target-image>'");
   }
 
@@ -56,7 +55,7 @@ public class JarTest {
 
   @Test
   public void testParse_defaults() {
-    Jar jarCommand = CommandLine.populateCommand(new Jar(), "-t", "test-image-ref", REQUIRED_JAR);
+    Jar jarCommand = CommandLine.populateCommand(new Jar(), "-t", "test-image-ref", "my-app.jar");
     CommonCliOptions commonCliOptions = jarCommand.commonCliOptions;
     assertThat(commonCliOptions.getTargetImage()).isEqualTo("test-image-ref");
     assertThat(commonCliOptions.getUsernamePassword()).isEmpty();
@@ -66,7 +65,7 @@ public class JarTest {
     assertThat(commonCliOptions.getToCredentialHelper()).isEmpty();
     assertThat(commonCliOptions.getFromCredentialHelper()).isEmpty();
     assertThat(commonCliOptions.getAdditionalTags()).isEmpty();
-    assertThat(commonCliOptions.getApplicationCache()).isEmpty();
+    assertThat(commonCliOptions.getProjectCache()).isEmpty();
     assertThat(commonCliOptions.getBaseImageCache()).isEmpty();
     assertThat(commonCliOptions.isAllowInsecureRegistries()).isFalse();
     assertThat(commonCliOptions.isSendCredentialsOverHttp()).isFalse();
@@ -78,7 +77,7 @@ public class JarTest {
 
   @Test
   public void testParse_shortFormParams() {
-    Jar jarCommand = CommandLine.populateCommand(new Jar(), "-t=test-image-ref", REQUIRED_JAR);
+    Jar jarCommand = CommandLine.populateCommand(new Jar(), "-t=test-image-ref", "my-app.jar");
     CommonCliOptions commonCliOptions = jarCommand.commonCliOptions;
     assertThat(commonCliOptions.getTargetImage()).isEqualTo("test-image-ref");
     assertThat(commonCliOptions.getUsernamePassword()).isEmpty();
@@ -88,7 +87,7 @@ public class JarTest {
     assertThat(commonCliOptions.getToCredentialHelper()).isEmpty();
     assertThat(commonCliOptions.getFromCredentialHelper()).isEmpty();
     assertThat(commonCliOptions.getAdditionalTags()).isEmpty();
-    assertThat(commonCliOptions.getApplicationCache()).isEmpty();
+    assertThat(commonCliOptions.getProjectCache()).isEmpty();
     assertThat(commonCliOptions.getBaseImageCache()).isEmpty();
     assertThat(commonCliOptions.isAllowInsecureRegistries()).isFalse();
     assertThat(commonCliOptions.isSendCredentialsOverHttp()).isFalse();
@@ -110,13 +109,13 @@ public class JarTest {
             "--additional-tags=tag1,tag2,tag3",
             "--allow-insecure-registries",
             "--send-credentials-over-http",
-            "--application-cache=test-application-cache",
+            "--project-cache=test-project-cache",
             "--base-image-cache=test-base-image-cache",
             "--verbosity=info",
             "--stacktrace",
             "--http-trace",
             "--serialize",
-            REQUIRED_JAR);
+            "my-app.jar");
     CommonCliOptions commonCliOptions = jarCommand.commonCliOptions;
     assertThat(commonCliOptions.getTargetImage()).isEqualTo("test-image-ref");
     assertThat(commonCliOptions.getUsernamePassword()).isEmpty();
@@ -127,8 +126,7 @@ public class JarTest {
     assertThat(commonCliOptions.getFromCredentialHelper()).isEmpty();
     assertThat(commonCliOptions.getAdditionalTags())
         .isEqualTo(ImmutableList.of("tag1", "tag2", "tag3"));
-    assertThat(commonCliOptions.getApplicationCache())
-        .hasValue(Paths.get("test-application-cache"));
+    assertThat(commonCliOptions.getProjectCache()).hasValue(Paths.get("test-project-cache"));
     assertThat(commonCliOptions.getBaseImageCache()).hasValue(Paths.get("test-base-image-cache"));
     assertThat(commonCliOptions.isAllowInsecureRegistries()).isTrue();
     assertThat(commonCliOptions.isSendCredentialsOverHttp()).isTrue();
@@ -145,7 +143,7 @@ public class JarTest {
             new Jar(),
             "--target=test-image-ref",
             "--credential-helper=test-cred-helper",
-            REQUIRED_JAR);
+            "my-app.jar");
     CommonCliOptions commonCliOptions = jarCommand.commonCliOptions;
     assertThat(commonCliOptions.getCredentialHelper()).hasValue("test-cred-helper");
     assertThat(commonCliOptions.getToCredentialHelper()).isEmpty();
@@ -162,7 +160,7 @@ public class JarTest {
             new Jar(),
             "--target=test-image-ref",
             "--to-credential-helper=test-cred-helper",
-            REQUIRED_JAR);
+            "my-app.jar");
     CommonCliOptions commonCliOptions = jarCommand.commonCliOptions;
 
     assertThat(commonCliOptions.getCredentialHelper()).isEmpty();
@@ -180,7 +178,7 @@ public class JarTest {
             new Jar(),
             "--target=test-image-ref",
             "--from-credential-helper=test-cred-helper",
-            REQUIRED_JAR);
+            "my-app.jar");
     CommonCliOptions commonCliOptions = jarCommand.commonCliOptions;
 
     assertThat(commonCliOptions.getCredentialHelper()).isEmpty();
@@ -199,7 +197,7 @@ public class JarTest {
             "--target=test-image-ref",
             "--username=test-username",
             "--password=test-password",
-            REQUIRED_JAR);
+            "my-app.jar");
     CommonCliOptions commonCliOptions = jarCommand.commonCliOptions;
 
     assertThat(commonCliOptions.getCredentialHelper()).isEmpty();
@@ -219,7 +217,7 @@ public class JarTest {
             "--target=test-image-ref",
             "--to-username=test-username",
             "--to-password=test-password",
-            REQUIRED_JAR);
+            "my-app.jar");
     CommonCliOptions commonCliOptions = jarCommand.commonCliOptions;
     assertThat(commonCliOptions.getCredentialHelper()).isEmpty();
     assertThat(commonCliOptions.getToCredentialHelper()).isEmpty();
@@ -238,7 +236,7 @@ public class JarTest {
             "--target=test-image-ref",
             "--from-username=test-username",
             "--from-password=test-password",
-            REQUIRED_JAR);
+            "my-app.jar");
     CommonCliOptions commonCliOptions = jarCommand.commonCliOptions;
 
     assertThat(commonCliOptions.getCredentialHelper()).isEmpty();
@@ -260,7 +258,7 @@ public class JarTest {
             "--to-password=test-password-1",
             "--from-username=test-username-2",
             "--from-password=test-password-2",
-            REQUIRED_JAR);
+            "my-app.jar");
     CommonCliOptions commonCliOptions = jarCommand.commonCliOptions;
 
     assertThat(commonCliOptions.getCredentialHelper()).isEmpty();
@@ -281,7 +279,7 @@ public class JarTest {
             "--target=test-image-ref",
             "--to-credential-helper=to-test-helper",
             "--from-credential-helper=from-test-helper",
-            REQUIRED_JAR);
+            "my-app.jar");
     CommonCliOptions commonCliOptions = jarCommand.commonCliOptions;
 
     assertThat(commonCliOptions.getCredentialHelper()).isEmpty();
@@ -301,7 +299,7 @@ public class JarTest {
             "--to-username=test-username",
             "--to-password=test-password",
             "--from-credential-helper=test-cred-helper",
-            REQUIRED_JAR);
+            "my-app.jar");
     CommonCliOptions commonCliOptions = jarCommand.commonCliOptions;
 
     assertThat(commonCliOptions.getCredentialHelper()).isEmpty();
@@ -322,7 +320,7 @@ public class JarTest {
             "--to-credential-helper=test-cred-helper",
             "--from-username=test-username",
             "--from-password=test-password",
-            REQUIRED_JAR);
+            "my-app.jar");
     CommonCliOptions commonCliOptions = jarCommand.commonCliOptions;
 
     assertThat(commonCliOptions.getCredentialHelper()).isEmpty();
@@ -354,7 +352,7 @@ public class JarTest {
                     "--target=test-image-ref",
                     usernameField,
                     "test-username",
-                    REQUIRED_JAR));
+                    "my-app.jar"));
     assertThat(mpe.getMessage()).isEqualTo("Error: Missing required argument(s): " + passwordField);
   }
 
@@ -370,7 +368,7 @@ public class JarTest {
                     "--target=test-image-ref",
                     passwordField,
                     "test-password",
-                    REQUIRED_JAR));
+                    "my-app.jar"));
     assertThat(mpe.getMessage())
         .isEqualTo("Error: Missing required argument(s): " + usernameField + "=<username>");
   }
@@ -399,7 +397,7 @@ public class JarTest {
             CommandLine.MutuallyExclusiveArgsException.class,
             () ->
                 CommandLine.populateCommand(
-                    new Jar(), ArrayUtils.addAll(authArgs, "--target=ignored", REQUIRED_JAR)));
+                    new Jar(), ArrayUtils.addAll(authArgs, "--target=ignored", "my-app.jar")));
     assertThat(meae)
         .hasMessageThat()
         .containsMatch("^Error: (--(from-|to-)?credential-helper|\\[--username)");
@@ -408,7 +406,7 @@ public class JarTest {
   @Test
   public void testValidate_nameMissingFail() {
     Jar jarCommand =
-        CommandLine.populateCommand(new Jar(), "--target=tar://sometar.tar", REQUIRED_JAR);
+        CommandLine.populateCommand(new Jar(), "--target=tar://sometar.tar", "my-app.jar");
     CommandLine.ParameterException pex =
         assertThrows(CommandLine.ParameterException.class, jarCommand.commonCliOptions::validate);
     assertThat(pex.getMessage())
@@ -419,7 +417,7 @@ public class JarTest {
   public void testValidate_pass() {
     Jar jarCommand =
         CommandLine.populateCommand(
-            new Jar(), "--target=tar://sometar.tar", "--name=test.io/test/test", REQUIRED_JAR);
+            new Jar(), "--target=tar://sometar.tar", "--name=test.io/test/test", "my-app.jar");
     jarCommand.commonCliOptions.validate();
     // pass
   }

@@ -1,0 +1,56 @@
+name: Release Jib CLI
+on:
+  workflow_dispatch:
+    inputs:
+      release_version:
+        description: new release version
+        required: true
+        default: (for example, 0.1.0)
+
+jobs:
+  release:
+    name: Release Jib CLI
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v2
+
+      - name: Build Jib CLI
+        run: |
+          # TODO: run integration test? (Requries auth with GCP.)
+          ./gradlew clean build jib-cli:instDist
+
+      - name: Run Gradle release
+        run: |
+          git checkout -b cli_release_v${{ github.event.inputs.release_version }}
+          git config user.email "chanseok@google.com"
+          git config user.name "Chanseok Oh"
+          ./gradlew jib-cli:release -Prelease.useAutomaticVersion=true -Prelease.releaseVersion=${{ github.event.inputs.release_version }}
+
+      - name: Create pull request
+        uses: repo-sync/pull-request@v2
+        with:
+          # Provided by Actions. No need to create a token.
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          source_branch: cli_release_v${{ github.event.inputs.release_version }}
+    
+      - name: Draft GitHub release
+        uses: actions/create-release@v1
+        id: create_release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: v${{ github.event.inputs.release_version }}-cli
+          release_name: jib-cli v${{ github.event.inputs.release_version }}
+          draft: true
+
+      - name: Upload Jib CLI binaries
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          # TODO: upload an archive
+          asset_path: ./jib-cli/build/install/jib/bin/jib
+          asset_name: jib
+          asset_content_type: application/octet-stream
