@@ -26,15 +26,11 @@ import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.concurrent.ExecutorService;
 import org.junit.Assert;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
 import org.mockito.Mockito;
 
 /** Tests for {@link Containerizer}. */
 public class ContainerizerTest {
-
-  @Rule public TemporaryFolder temporaryFolder = new TemporaryFolder();
 
   @Test
   public void testTo() throws CacheDirectoryCreationException {
