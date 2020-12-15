@@ -19,7 +19,6 @@ package com.google.cloud.tools.jib.cli.cli2;
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth8.assertThat;
 
-import com.google.cloud.tools.jib.filesystem.XdgDirectories;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -41,13 +40,15 @@ public class CacheDirectoriesTest {
     Path buildContext = temporaryFolder.newFolder("some-context").toPath();
     CacheDirectories cacheDirectories = CacheDirectories.from(commonCliOptions, buildContext);
 
+    Path expectedProjectCache =
+        Paths.get(System.getProperty("java.io.tmpdir"))
+            .resolve("jib-cli-cache")
+            .resolve("projects")
+            .resolve(CacheDirectories.getProjectCacheDirectoryFromProject(buildContext));
     assertThat(cacheDirectories.getBaseImageCache()).isEmpty();
-    assertThat(cacheDirectories.getProjectCache())
-        .isEqualTo(
-            XdgDirectories.getCacheHome()
-                .resolve("cli")
-                .resolve("projects")
-                .resolve(CacheDirectories.getProjectCacheDirectoryFromProject(buildContext)));
+    assertThat(cacheDirectories.getProjectCache()).isEqualTo(expectedProjectCache);
+    assertThat(cacheDirectories.getApplicationLayersCache())
+        .isEqualTo(expectedProjectCache.resolve("application-layers"));
   }
 
   @Test
@@ -63,6 +64,8 @@ public class CacheDirectoriesTest {
 
     assertThat(cacheDirectories.getBaseImageCache()).hasValue(Paths.get("test-base-image-cache"));
     assertThat(cacheDirectories.getProjectCache()).isEqualTo(Paths.get("test-project-cache"));
+    assertThat(cacheDirectories.getApplicationLayersCache())
+        .isEqualTo(Paths.get("test-project-cache").resolve("application-layers"));
   }
 
   @Test

@@ -54,12 +54,12 @@ public class ContainerizersTest {
   @Mock private CacheDirectories cacheDirectories;
 
   private static final Path baseImageCache = Paths.get("base-image-cache-for-test");
-  private static final Path projectCache = Paths.get("project-cache-for-test");
+  private static final Path applicationCache = Paths.get("application-cache-for-test");
 
   @Before
-  public void mockCaches() {
+  public void initCaches() {
     Mockito.when(cacheDirectories.getBaseImageCache()).thenReturn(Optional.of(baseImageCache));
-    Mockito.when(cacheDirectories.getProjectCache()).thenReturn(projectCache);
+    Mockito.when(cacheDirectories.getApplicationLayersCache()).thenReturn(applicationCache);
   }
 
   @Test
@@ -79,7 +79,7 @@ public class ContainerizersTest {
     assertThat(Boolean.getBoolean("sendCredentialsOverHttp")).isFalse();
     assertThat(containerizer.getAllowInsecureRegistries()).isFalse();
     assertThat(containerizer.getBaseImageLayersCacheDirectory()).isEqualTo(baseImageCache);
-    assertThat(containerizer.getApplicationsLayersCacheDirectory()).isEqualTo(projectCache);
+    assertThat(containerizer.getApplicationsLayersCacheDirectory()).isEqualTo(applicationCache);
     assertThat(containerizer.getAdditionalTags()).isEqualTo(ImmutableSet.of());
   }
 
@@ -103,7 +103,7 @@ public class ContainerizersTest {
     assertThat(Boolean.getBoolean(JibSystemProperties.SERIALIZE)).isTrue();
     assertThat(containerizer.getAllowInsecureRegistries()).isTrue();
     assertThat(containerizer.getBaseImageLayersCacheDirectory()).isEqualTo(baseImageCache);
-    assertThat(containerizer.getApplicationsLayersCacheDirectory()).isEqualTo(projectCache);
+    assertThat(containerizer.getApplicationsLayersCacheDirectory()).isEqualTo(applicationCache);
     assertThat(containerizer.getAdditionalTags()).isEqualTo(ImmutableSet.of("tag1", "tag2"));
   }
 

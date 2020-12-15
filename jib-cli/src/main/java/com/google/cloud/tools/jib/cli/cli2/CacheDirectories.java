@@ -16,13 +16,13 @@
 
 package com.google.cloud.tools.jib.cli.cli2;
 
-import com.google.cloud.tools.jib.filesystem.XdgDirectories;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Optional;
@@ -30,6 +30,8 @@ import javax.annotation.Nullable;
 
 /** A class to determine cache locations for any cli commands. */
 public class CacheDirectories {
+
+  private static final String APPLICATION_LAYER_CACHE_DIR = "application-layers";
 
   @Nullable private final Path baseImageCache;
   private final Path projectCache;
@@ -51,8 +53,8 @@ public class CacheDirectories {
         commonCliOptions
             .getProjectCache()
             .orElse(
-                XdgDirectories.getCacheHome()
-                    .resolve("cli")
+                Paths.get(System.getProperty("java.io.tmpdir"))
+                    .resolve("jib-cli-cache")
                     .resolve("projects")
                     .resolve(getProjectCacheDirectoryFromProject(contextRoot))));
   }
@@ -91,5 +93,9 @@ public class CacheDirectories {
 
   public Path getProjectCache() {
     return projectCache;
+  }
+
+  public Path getApplicationLayersCache() {
+    return projectCache.resolve(APPLICATION_LAYER_CACHE_DIR);
   }
 }
