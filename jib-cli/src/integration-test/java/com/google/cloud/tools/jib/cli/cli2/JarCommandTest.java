@@ -33,29 +33,20 @@ import java.nio.file.Paths;
 import java.util.jar.Attributes;
 import java.util.jar.JarFile;
 import javax.annotation.Nullable;
-import org.gradle.testkit.runner.BuildResult;
-import org.junit.After;
 import org.junit.ClassRule;
-import org.junit.Ignore;
 import org.junit.Test;
 import picocli.CommandLine;
 
 public class JarCommandTest {
 
   @ClassRule
-  public static final TestProject springBootProject = new TestProject("springbootLayered");
+  public static final TestProject springBootProjectLayered = new TestProject("springBootLayered");
 
-  @Nullable private String containerName;
-
-  @After
-  public void tearDown() throws IOException, InterruptedException {
-    if (containerName != null) {
-      new Command("docker", "stop", containerName).run();
-    }
-  }
+  @ClassRule
+  public static final TestProject springBootProjectNonLayered =
+      new TestProject("springBootNonLayered");
 
   @Test
-  @Ignore
   public void testErrorLogging_fileDoesNotExist() {
     CommandLine jibCli = new CommandLine(new JibCli());
     StringWriter stringWriter = new StringWriter();
@@ -69,7 +60,6 @@ public class JarCommandTest {
   }
 
   @Test
-  @Ignore
   public void testErrorLogging_directoryGiven() throws URISyntaxException {
     CommandLine jibCli = new CommandLine(new JibCli());
     StringWriter stringWriter = new StringWriter();
@@ -88,7 +78,6 @@ public class JarCommandTest {
   }
 
   @Test
-  @Ignore
   public void testStandardJar_explodedMode_toDocker()
       throws IOException, InterruptedException, URISyntaxException {
     Path jarPath = Paths.get(Resources.getResource("jarTest/standard/jarWithCp.jar").toURI());
@@ -107,7 +96,6 @@ public class JarCommandTest {
   }
 
   @Test
-  @Ignore
   public void testNoDependencyStandardJar_explodedMode_toDocker()
       throws IOException, InterruptedException, URISyntaxException {
     Path jarPath = Paths.get(Resources.getResource("jarTest/standard/noDependencyJar.jar").toURI());
@@ -126,7 +114,6 @@ public class JarCommandTest {
   }
 
   @Test
-  @Ignore
   public void testStandardJar_packagedMode_toDocker()
       throws IOException, InterruptedException, URISyntaxException {
     Path jarPath = Paths.get(Resources.getResource("jarTest/standard/jarWithCp.jar").toURI());
@@ -146,7 +133,6 @@ public class JarCommandTest {
   }
 
   @Test
-  @Ignore
   public void testNoDependencyStandardJar_packagedMode_toDocker()
       throws IOException, InterruptedException, URISyntaxException {
     Path jarPath = Paths.get(Resources.getResource("jarTest/standard/noDependencyJar.jar").toURI());
@@ -170,59 +156,6 @@ public class JarCommandTest {
   }
 
   @Test
-  @Ignore
-  public void testSpringbootLayeredJar_explodedMode_toDocker()
-      throws IOException, InterruptedException, URISyntaxException {
-    Path jarPath =
-        Paths.get(Resources.getResource("jarTest/springboot/springboot_layered.jar").toURI());
-    Integer exitCode =
-        new CommandLine(new JibCli())
-            .execute(
-                "jar", "--target", "docker://exploded-springboot-layered-jar", jarPath.toString());
-    String output = new Command("docker", "run", "--rm", "exploded-springboot-layered-jar").run();
-    try (JarFile jarFile = new JarFile(jarPath.toFile())) {
-      assertThat(jarFile.getEntry("BOOT-INF/layers.idx")).isNotNull();
-      assertThat(exitCode).isEqualTo(0);
-      assertThat(output).isEqualTo("Hello World");
-    }
-  }
-
-  @Test
-  public void testSpringbootLayeredJar_explodedMode_useTestProject()
-      throws IOException, InterruptedException, URISyntaxException {
-    BuildResult buildResult = springBootProject.build("clean", "bootJar");
-    Path jarParentPath =
-        springBootProject.getProjectRoot().toAbsolutePath().resolve("build").resolve("libs");
-    Path jarPath = jarParentPath.resolve("springboot-layered.jar");
-    Integer exitCode =
-        new CommandLine(new JibCli())
-            .execute("jar", "--target", "docker://springboot-project-jar", jarPath.toString());
-    String output =
-        new Command("docker", "run", "--rm", "springboot-project-jar", "--detach", "-p8080:8080")
-            .run();
-    assertThat(getContent(new URL("http://localhost:8080"))).isEqualTo("Hello world");
-    new Command("docker", "stop", output.trim()).run();
-  }
-
-  @Test
-  @Ignore
-  public void testSpringbootNonLayeredJar_explodedMode_toDocker()
-      throws IOException, InterruptedException, URISyntaxException {
-    Path jarPath =
-        Paths.get(Resources.getResource("jarTest/springboot/springboot_nonLayered.jar").toURI());
-    Integer exitCode =
-        new CommandLine(new JibCli())
-            .execute("jar", "--target", "docker://exploded-springboot-jar", jarPath.toString());
-    String output = new Command("docker", "run", "--rm", "exploded-springboot-jar").run();
-    try (JarFile jarFile = new JarFile(jarPath.toFile())) {
-      assertThat(jarFile.getEntry("BOOT-INF/layers.idx")).isNull();
-      assertThat(exitCode).isEqualTo(0);
-      assertThat(output).isEqualTo("Hello World");
-    }
-  }
-
-  @Test
-  @Ignore
   public void testJar_unknownMode() {
     CommandLine jibCli = new CommandLine(new JibCli());
     StringWriter stringWriter = new StringWriter();
@@ -236,6 +169,54 @@ public class JarCommandTest {
     assertThat(stringWriter.toString())
         .contains(
             "Invalid value for option '--mode': expected one of [exploded, packaged] (case-sensitive) but was 'unknown'");
+  }
+
+  @Test
+  public void testSpringbootLayeredJar_explodedMode()
+      throws IOException, InterruptedException, URISyntaxException {
+    springBootProjectLayered.build("clean", "bootJar");
+    Path jarParentPath =
+        springBootProjectLayered.getProjectRoot().toAbsolutePath().resolve("build").resolve("libs");
+    Path jarPath = jarParentPath.resolve("springboot-layered.jar");
+    Integer exitCode =
+        new CommandLine(new JibCli())
+            .execute("jar", "--target", "docker://springboot-project-jar", jarPath.toString());
+    String output =
+        new Command("docker", "run", "--rm", "--detach", "-p8080:8080", "springboot-project-jar")
+            .run();
+    try (JarFile jarFile = new JarFile(jarPath.toFile())) {
+      assertThat(jarFile.getEntry("BOOT-INF/layers.idx")).isNotNull();
+      assertThat(getContent(new URL("http://localhost:8080"))).isEqualTo("Hello world");
+      assertThat(exitCode).isEqualTo(0);
+
+      new Command("docker", "stop", output.trim()).run();
+    }
+  }
+
+  @Test
+  public void testSpringbootNonLayeredJar_explodedMode()
+      throws IOException, InterruptedException, URISyntaxException {
+    springBootProjectNonLayered.build("clean", "bootJar");
+    Path jarParentPath =
+        springBootProjectNonLayered
+            .getProjectRoot()
+            .toAbsolutePath()
+            .resolve("build")
+            .resolve("libs");
+    Path jarPath = jarParentPath.resolve("springboot-nonlayered.jar");
+    Integer exitCode =
+        new CommandLine(new JibCli())
+            .execute("jar", "--target", "docker://springboot-project-jar", jarPath.toString());
+    String output =
+        new Command("docker", "run", "--rm", "--detach", "-p8080:8080", "springboot-project-jar")
+            .run();
+    try (JarFile jarFile = new JarFile(jarPath.toFile())) {
+      assertThat(jarFile.getEntry("BOOT-INF/layers.idx")).isNull();
+      assertThat(getContent(new URL("http://localhost:8080"))).isEqualTo("Hello world");
+      assertThat(exitCode).isEqualTo(0);
+      
+      new Command("docker", "stop", output.trim()).run();
+    }
   }
 
   @Nullable

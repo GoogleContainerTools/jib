@@ -56,7 +56,7 @@ public class TestProject extends TemporaryFolder implements Closeable {
   }
 
   private final String testProjectName;
-  private String gradleVersion = GradleVersion.version("5.1").getVersion();
+  private String gradleVersion = GradleVersion.version("5.6.4").getVersion();
   private GradleRunner gradleRunner;
 
   private Path projectRoot;

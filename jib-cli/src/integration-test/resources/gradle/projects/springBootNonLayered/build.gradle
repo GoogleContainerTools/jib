@@ -1,0 +1,24 @@
+plugins {
+    id 'org.springframework.boot' version '2.3.7.RELEASE'
+    id 'io.spring.dependency-management' version '1.0.10.RELEASE'
+    id 'java'
+}
+
+//tasks.wrapper.configure {
+//    gradleVersion = "5.6.4"
+//}
+
+sourceCompatibility = '1.8'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+}
+
+test {
+    useJUnitPlatform()
+}
+
