@@ -177,9 +177,9 @@ public class JarCommandTest {
     Path jarPath = jarParentPath.resolve("spring-boot-layered.jar");
     Integer exitCode =
         new CommandLine(new JibCli())
-            .execute("jar", "--target", "docker://springboot-project-jar", jarPath.toString());
+            .execute("jar", "--target", "docker://spring-boot-jar-layered", jarPath.toString());
     String output =
-        new Command("docker", "run", "--rm", "--detach", "-p8080:8080", "springboot-project-jar")
+        new Command("docker", "run", "--rm", "--detach", "-p8080:8080", "spring-boot-jar-layered")
             .run();
     try (JarFile jarFile = new JarFile(jarPath.toFile())) {
       assertThat(jarFile.getEntry("BOOT-INF/layers.idx")).isNotNull();
@@ -203,10 +203,9 @@ public class JarCommandTest {
     Path jarPath = jarParentPath.resolve("spring-boot-nonlayered.jar");
     Integer exitCode =
         new CommandLine(new JibCli())
-            .execute("jar", "--target", "docker://springboot-project-jar", jarPath.toString());
+            .execute("jar", "--target", "docker://spring-boot-jar", jarPath.toString());
     String output =
-        new Command("docker", "run", "--rm", "--detach", "-p8080:8080", "springboot-project-jar")
-            .run();
+        new Command("docker", "run", "--rm", "--detach", "-p8080:8080", "spring-boot-jar").run();
     try (JarFile jarFile = new JarFile(jarPath.toFile())) {
       assertThat(jarFile.getEntry("BOOT-INF/layers.idx")).isNull();
       assertThat(getContent(new URL("http://localhost:8080"))).isEqualTo("Hello world");
