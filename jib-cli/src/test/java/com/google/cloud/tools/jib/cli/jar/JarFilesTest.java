@@ -168,7 +168,6 @@ public class JarFilesTest {
     assertThat(buildPlan.getEntrypoint())
         .isEqualTo(
             ImmutableList.of("java", "-cp", "/app", "org.springframework.boot.loader.JarLauncher"));
-
     assertThat(buildPlan.getLayers().size()).isEqualTo(4);
 
     assertThat(buildPlan.getLayers().get(0).getName()).isEqualTo("dependencies");

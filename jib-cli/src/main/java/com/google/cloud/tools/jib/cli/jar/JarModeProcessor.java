@@ -89,19 +89,20 @@ public class JarModeProcessor {
    * a standard jar.
    *
    * @param jarPath path to jar file
-   * @param localExplodedJarRoot path to temporary jib local directory
+   * @param tempDirPath path to temporary jib local directory
    * @return list of {@link FileEntriesLayer}
    * @throws IOException if I/O error occurs when opening the jar file or if temporary directory
    *     provided doesn't exist
    */
-  static List<FileEntriesLayer> createLayersForExplodedStandard(
-      Path jarPath, Path localExplodedJarRoot) throws IOException {
+  static List<FileEntriesLayer> createLayersForExplodedStandard(Path jarPath, Path tempDirPath)
+      throws IOException {
     // Add dependencies layers.
     List<FileEntriesLayer> layers = getDependenciesLayers(jarPath, ProcessingMode.exploded);
 
     // Determine class and resource files in the directory containing jar contents and create
     // FileEntriesLayer for each type of layer (classes or resources), while maintaining the
     // file's original project structure.
+    Path localExplodedJarRoot = tempDirPath;
     ZipUtil.unzip(jarPath, localExplodedJarRoot);
     Predicate<Path> isClassFile = path -> path.getFileName().toString().endsWith(".class");
     Predicate<Path> isResourceFile = isClassFile.negate().and(Files::isRegularFile);
