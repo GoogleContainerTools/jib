@@ -169,18 +169,19 @@ public class JarCommandTest {
   }
 
   @Test
-  public void testSpringbootLayeredJar_explodedMode()
-      throws IOException, InterruptedException, URISyntaxException {
+  public void testSpringBootLayeredJar_explodedMode() throws IOException, InterruptedException {
     springBootProjectLayered.build("clean", "bootJar");
     Path jarParentPath =
         springBootProjectLayered.getProjectRoot().toAbsolutePath().resolve("build").resolve("libs");
     Path jarPath = jarParentPath.resolve("spring-boot-layered.jar");
+
     Integer exitCode =
         new CommandLine(new JibCli())
             .execute("jar", "--target", "docker://spring-boot-jar-layered", jarPath.toString());
     String output =
         new Command("docker", "run", "--rm", "--detach", "-p8080:8080", "spring-boot-jar-layered")
             .run();
+
     try (JarFile jarFile = new JarFile(jarPath.toFile())) {
       assertThat(jarFile.getEntry("BOOT-INF/layers.idx")).isNotNull();
       assertThat(getContent(new URL("http://localhost:8080"))).isEqualTo("Hello world");
@@ -191,8 +192,7 @@ public class JarCommandTest {
   }
 
   @Test
-  public void testSpringbootNonLayeredJar_explodedMode()
-      throws IOException, InterruptedException, URISyntaxException {
+  public void testSpringBootNonLayeredJar_explodedMode() throws IOException, InterruptedException {
     springBootProjectNonLayered.build("clean", "bootJar");
     Path jarParentPath =
         springBootProjectNonLayered
@@ -201,11 +201,13 @@ public class JarCommandTest {
             .resolve("build")
             .resolve("libs");
     Path jarPath = jarParentPath.resolve("spring-boot-nonlayered.jar");
+    
     Integer exitCode =
         new CommandLine(new JibCli())
             .execute("jar", "--target", "docker://spring-boot-jar", jarPath.toString());
     String output =
         new Command("docker", "run", "--rm", "--detach", "-p8080:8080", "spring-boot-jar").run();
+
     try (JarFile jarFile = new JarFile(jarPath.toFile())) {
       assertThat(jarFile.getEntry("BOOT-INF/layers.idx")).isNull();
       assertThat(getContent(new URL("http://localhost:8080"))).isEqualTo("Hello world");

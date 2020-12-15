@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Google LLC.
+ * Copyright 2020 Google LLC.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -24,17 +24,14 @@ import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.List;
 import org.gradle.testkit.runner.BuildResult;
 import org.gradle.testkit.runner.GradleRunner;
 import org.gradle.util.GradleVersion;
 import org.junit.rules.TemporaryFolder;
 
-// TODO: Consolidate with TestProject in jib-maven-plugin.
-/** Works with the test Gradle projects in the {@code resources/projects} directory. */
 public class TestProject extends TemporaryFolder implements Closeable {
 
-  private static final String PROJECTS_PATH_IN_RESOURCES = "gradle/projects/";
+  private static final String PROJECTS_PATH_IN_RESOURCES = "jarTest/spring-boot/";
 
   /** Copies test project {@code projectName} to {@code destination} folder. */
   private static void copyProject(String projectName, Path destination)
@@ -85,16 +82,7 @@ public class TestProject extends TemporaryFolder implements Closeable {
             .withPluginClasspath();
   }
 
-  public TestProject withGradleVersion(String version) {
-    gradleVersion = version;
-    return this;
-  }
-
   public BuildResult build(String... gradleArguments) {
-    return gradleRunner.withArguments(gradleArguments).build();
-  }
-
-  public BuildResult build(List<String> gradleArguments) {
     return gradleRunner.withArguments(gradleArguments).build();
   }
 
