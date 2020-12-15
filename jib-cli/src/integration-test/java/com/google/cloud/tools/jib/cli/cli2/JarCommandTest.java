@@ -201,7 +201,7 @@ public class JarCommandTest {
             .resolve("build")
             .resolve("libs");
     Path jarPath = jarParentPath.resolve("spring-boot-nonlayered.jar");
-    
+
     Integer exitCode =
         new CommandLine(new JibCli())
             .execute("jar", "--target", "docker://spring-boot-jar", jarPath.toString());
