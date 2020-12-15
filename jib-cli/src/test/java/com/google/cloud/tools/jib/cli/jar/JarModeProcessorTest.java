@@ -76,9 +76,12 @@ public class JarModeProcessorTest {
     Path destDir = temporaryFolder.newFolder().toPath();
     List<FileEntriesLayer> layers =
         JarModeProcessor.createLayersForExplodedStandard(standardJar, destDir);
-    FileEntriesLayer resourcesLayer = layers.get(0);
 
     assertThat(layers.size()).isEqualTo(1);
+
+    FileEntriesLayer resourcesLayer = layers.get(0);
+
+    assertThat(resourcesLayer.getEntries().size()).isEqualTo(1);
     assertThat(resourcesLayer.getEntries().get(0).getExtractionPath())
         .isEqualTo(AbsoluteUnixPath.get("/app/explodedJar/META-INF/MANIFEST.MF"));
   }
@@ -113,6 +116,7 @@ public class JarModeProcessorTest {
                 AbsoluteUnixPath.get("/app/dependencies/dependency2"),
                 AbsoluteUnixPath.get("/app/dependencies/dependency4")));
     assertThat(snapshotLayer.getName()).isEqualTo("snapshot dependencies");
+    assertThat(snapshotLayer.getEntries().size()).isEqualTo(1);
     assertThat(snapshotLayer.getEntries().get(0).getExtractionPath())
         .isEqualTo(AbsoluteUnixPath.get("/app/dependencies/dependency3-SNAPSHOT-1.jar"));
 
@@ -210,6 +214,7 @@ public class JarModeProcessorTest {
     FileEntriesLayer classesLayer = layers.get(1);
 
     // Validate resources layer.
+    assertThat(resourcesLayer.getEntries().size()).isEqualTo(1);
     assertThat(resourcesLayer.getEntries().get(0).getExtractionPath())
         .isEqualTo(AbsoluteUnixPath.get("/app/explodedJar/META-INF/MANIFEST.MF"));
 

@@ -49,9 +49,10 @@ public class JarFilesTest {
   public void testToJibContainerBuilder_explodedStandard_basicInfo()
       throws IOException, URISyntaxException, InvalidImageReferenceException {
     Path standardJar = Paths.get(Resources.getResource(SIMPLE_STANDARD_JAR).toURI());
-    Path destDir = temporaryFolder.getRoot().toPath();
+    Path parentTemporaryDirectory = temporaryFolder.getRoot().toPath();
     JibContainerBuilder containerBuilder =
-        JarFiles.toJibContainerBuilder(standardJar, destDir, ProcessingMode.exploded);
+        JarFiles.toJibContainerBuilder(
+            standardJar, parentTemporaryDirectory, ProcessingMode.exploded);
     ContainerBuildPlan buildPlan = containerBuilder.toContainerBuildPlan();
 
     assertThat(buildPlan.getBaseImage()).isEqualTo("gcr.io/distroless/java");
@@ -82,10 +83,10 @@ public class JarFilesTest {
         .containsExactlyElementsIn(
             FileEntriesLayer.builder()
                 .addEntry(
-                    destDir.resolve("META-INF/MANIFEST.MF"),
+                    parentTemporaryDirectory.resolve("META-INF/MANIFEST.MF"),
                     AbsoluteUnixPath.get("/app/explodedJar/META-INF/MANIFEST.MF"))
                 .addEntry(
-                    destDir.resolve("resource1.txt"),
+                    parentTemporaryDirectory.resolve("resource1.txt"),
                     AbsoluteUnixPath.get("/app/explodedJar/resource1.txt"))
                 .build()
                 .getEntries());
@@ -94,10 +95,10 @@ public class JarFilesTest {
         .containsExactlyElementsIn(
             FileEntriesLayer.builder()
                 .addEntry(
-                    destDir.resolve("class1.class"),
+                    parentTemporaryDirectory.resolve("class1.class"),
                     AbsoluteUnixPath.get("/app/explodedJar/class1.class"))
                 .addEntry(
-                    destDir.resolve("directory1/class2.class"),
+                    parentTemporaryDirectory.resolve("directory1/class2.class"),
                     AbsoluteUnixPath.get("/app/explodedJar/directory1/class2.class"))
                 .build()
                 .getEntries());
@@ -107,9 +108,10 @@ public class JarFilesTest {
   public void testToJibContainerBuilder_packagedStandard_basicInfo()
       throws IOException, URISyntaxException, InvalidImageReferenceException {
     Path standardJar = Paths.get(Resources.getResource(SIMPLE_STANDARD_JAR).toURI());
-    Path destDir = temporaryFolder.getRoot().toPath();
+    Path parentTemporaryDirectory = temporaryFolder.getRoot().toPath();
     JibContainerBuilder containerBuilder =
-        JarFiles.toJibContainerBuilder(standardJar, destDir, ProcessingMode.packaged);
+        JarFiles.toJibContainerBuilder(
+            standardJar, parentTemporaryDirectory, ProcessingMode.packaged);
     ContainerBuildPlan buildPlan = containerBuilder.toContainerBuildPlan();
 
     assertThat(buildPlan.getBaseImage()).isEqualTo("gcr.io/distroless/java");
@@ -146,10 +148,11 @@ public class JarFilesTest {
   @Test
   public void testToJibContainerBuilder_explodedLayeredSpringBoot_basicInfo()
       throws IOException, URISyntaxException, InvalidImageReferenceException {
-    Path springbootJar = Paths.get(Resources.getResource(SIMPLE_SPRING_BOOT_LAYERED).toURI());
-    Path destDir = temporaryFolder.getRoot().toPath();
+    Path springBootJar = Paths.get(Resources.getResource(SIMPLE_SPRING_BOOT_LAYERED).toURI());
+    Path parentTemporaryDirectory = temporaryFolder.getRoot().toPath();
     JibContainerBuilder containerBuilder =
-        JarFiles.toJibContainerBuilder(springbootJar, destDir, ProcessingMode.exploded);
+        JarFiles.toJibContainerBuilder(
+            springBootJar, parentTemporaryDirectory, ProcessingMode.exploded);
     ContainerBuildPlan buildPlan = containerBuilder.toContainerBuildPlan();
 
     assertThat(buildPlan.getBaseImage()).isEqualTo("gcr.io/distroless/java");
@@ -172,7 +175,7 @@ public class JarFilesTest {
         .isEqualTo(
             FileEntriesLayer.builder()
                 .addEntry(
-                    destDir.resolve("BOOT-INF/lib/dependency1.jar"),
+                    parentTemporaryDirectory.resolve("BOOT-INF/lib/dependency1.jar"),
                     AbsoluteUnixPath.get("/app/BOOT-INF/lib/dependency1.jar"))
                 .build()
                 .getEntries());
@@ -182,10 +185,10 @@ public class JarFilesTest {
         .containsExactlyElementsIn(
             FileEntriesLayer.builder()
                 .addEntry(
-                    destDir.resolve("org/launcher.class"),
+                    parentTemporaryDirectory.resolve("org/launcher.class"),
                     AbsoluteUnixPath.get("/app/org/launcher.class"))
                 .addEntry(
-                    destDir.resolve("org/orgDirectory/data1.class"),
+                    parentTemporaryDirectory.resolve("org/orgDirectory/data1.class"),
                     AbsoluteUnixPath.get("/app/org/orgDirectory/data1.class"))
                 .build()
                 .getEntries());
@@ -195,7 +198,7 @@ public class JarFilesTest {
         .isEqualTo(
             FileEntriesLayer.builder()
                 .addEntry(
-                    destDir.resolve("BOOT-INF/lib/dependency3-SNAPSHOT.jar"),
+                    parentTemporaryDirectory.resolve("BOOT-INF/lib/dependency3-SNAPSHOT.jar"),
                     AbsoluteUnixPath.get("/app/BOOT-INF/lib/dependency3-SNAPSHOT.jar"))
                 .build()
                 .getEntries());
@@ -205,13 +208,14 @@ public class JarFilesTest {
         .containsExactlyElementsIn(
             FileEntriesLayer.builder()
                 .addEntry(
-                    destDir.resolve("META-INF/MANIFEST.MF"),
+                    parentTemporaryDirectory.resolve("META-INF/MANIFEST.MF"),
                     AbsoluteUnixPath.get("/app/META-INF/MANIFEST.MF"))
                 .addEntry(
-                    destDir.resolve("BOOT-INF/classes/class1.class"),
+                    parentTemporaryDirectory.resolve("BOOT-INF/classes/class1.class"),
                     AbsoluteUnixPath.get("/app/BOOT-INF/classes/class1.class"))
                 .addEntry(
-                    destDir.resolve("BOOT-INF/classes/classDirectory/class2.class"),
+                    parentTemporaryDirectory.resolve(
+                        "BOOT-INF/classes/classDirectory/class2.class"),
                     AbsoluteUnixPath.get("/app/BOOT-INF/classes/classDirectory/class2.class"))
                 .build()
                 .getEntries());
@@ -220,10 +224,11 @@ public class JarFilesTest {
   @Test
   public void testToJibContainerBuilder_explodedNonLayeredSpringBoot_basicInfo()
       throws IOException, URISyntaxException, InvalidImageReferenceException {
-    Path springbootJar = Paths.get(Resources.getResource(SIMPLE_SPRING_BOOT_NON_LAYERED).toURI());
-    Path destDir = temporaryFolder.getRoot().toPath();
+    Path springBootJar = Paths.get(Resources.getResource(SIMPLE_SPRING_BOOT_NON_LAYERED).toURI());
+    Path parentTemporaryDirectory = temporaryFolder.getRoot().toPath();
     JibContainerBuilder containerBuilder =
-        JarFiles.toJibContainerBuilder(springbootJar, destDir, ProcessingMode.exploded);
+        JarFiles.toJibContainerBuilder(
+            springBootJar, parentTemporaryDirectory, ProcessingMode.exploded);
     ContainerBuildPlan buildPlan = containerBuilder.toContainerBuildPlan();
 
     assertThat(buildPlan.getBaseImage()).isEqualTo("gcr.io/distroless/java");
@@ -246,7 +251,7 @@ public class JarFilesTest {
         .isEqualTo(
             FileEntriesLayer.builder()
                 .addEntry(
-                    destDir.resolve("BOOT-INF/lib/dependency1.jar"),
+                    parentTemporaryDirectory.resolve("BOOT-INF/lib/dependency1.jar"),
                     AbsoluteUnixPath.get("/app/BOOT-INF/lib/dependency1.jar"))
                 .build()
                 .getEntries());
@@ -256,20 +261,20 @@ public class JarFilesTest {
         .containsExactlyElementsIn(
             FileEntriesLayer.builder()
                 .addEntry(
-                    destDir.resolve("org/launcher.class"),
+                    parentTemporaryDirectory.resolve("org/launcher.class"),
                     AbsoluteUnixPath.get("/app/org/launcher.class"))
                 .addEntry(
-                    destDir.resolve("org/orgDirectory/data1.class"),
+                    parentTemporaryDirectory.resolve("org/orgDirectory/data1.class"),
                     AbsoluteUnixPath.get("/app/org/orgDirectory/data1.class"))
                 .build()
                 .getEntries());
 
     assertThat(buildPlan.getLayers().get(2).getName()).isEqualTo("snapshot dependencies");
     assertThat(((FileEntriesLayer) buildPlan.getLayers().get(2)).getEntries())
-        .containsExactlyElementsIn(
+        .isEqualTo(
             FileEntriesLayer.builder()
                 .addEntry(
-                    destDir.resolve("BOOT-INF/lib/dependency3-SNAPSHOT.jar"),
+                    parentTemporaryDirectory.resolve("BOOT-INF/lib/dependency3-SNAPSHOT.jar"),
                     AbsoluteUnixPath.get("/app/BOOT-INF/lib/dependency3-SNAPSHOT.jar"))
                 .build()
                 .getEntries());
@@ -279,7 +284,7 @@ public class JarFilesTest {
         .isEqualTo(
             FileEntriesLayer.builder()
                 .addEntry(
-                    destDir.resolve("META-INF/MANIFEST.MF"),
+                    parentTemporaryDirectory.resolve("META-INF/MANIFEST.MF"),
                     AbsoluteUnixPath.get("/app/META-INF/MANIFEST.MF"))
                 .build()
                 .getEntries());
@@ -289,10 +294,11 @@ public class JarFilesTest {
         .containsExactlyElementsIn(
             FileEntriesLayer.builder()
                 .addEntry(
-                    destDir.resolve("BOOT-INF/classes/class1.class"),
+                    parentTemporaryDirectory.resolve("BOOT-INF/classes/class1.class"),
                     AbsoluteUnixPath.get("/app/BOOT-INF/classes/class1.class"))
                 .addEntry(
-                    destDir.resolve("BOOT-INF/classes/classDirectory/class2.class"),
+                    parentTemporaryDirectory.resolve(
+                        "BOOT-INF/classes/classDirectory/class2.class"),
                     AbsoluteUnixPath.get("/app/BOOT-INF/classes/classDirectory/class2.class"))
                 .build()
                 .getEntries());

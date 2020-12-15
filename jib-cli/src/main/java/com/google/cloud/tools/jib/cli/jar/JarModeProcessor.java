@@ -397,7 +397,9 @@ public class JarModeProcessor {
         .filter(path -> pathFilter.test(path))
         .walk(
             path -> {
-              builder.addEntry(path, basePathInContainer.resolve(sourceRoot.relativize(path)));
+              AbsoluteUnixPath pathOnContainer =
+                  basePathInContainer.resolve(sourceRoot.relativize(path));
+              builder.addEntry(path, pathOnContainer);
             });
     return builder.build();
   }
