@@ -132,7 +132,7 @@ public class ContainerizerTest {
     Path applicationLayersCache = containerizer.getApplicationLayersCacheDirectory();
     Path expectedCacheDir =
         Paths.get(System.getProperty("java.io.tmpdir"))
-            .resolve(Containerizer.DEFAULT_APPLICATION_CACHE_DIRECTORY_NAME);
+            .resolve("jib-core-application-layers-cache");
     Assert.assertTrue(Files.isSameFile(expectedCacheDir, applicationLayersCache));
   }
 }
