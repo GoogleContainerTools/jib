@@ -18,7 +18,7 @@ jobs:
       - name: Build project
         run: |
           # TODO: run integration test? (Requries auth with GCP.)
-          ./gradlew clean build
+          ./gradlew clean build --stacktrace
 
       - name: Run Gradle release
         run: |
@@ -26,11 +26,14 @@ jobs:
           # TODO: set this to the GitHub user triggering the workflow
           git config user.email "chanseok@google.com"
           git config user.name "Chanseok Oh"
+          # This creates the tag (e.g., "v0.1.0-cli") and pushes the updated
+          # branch (e.g., "cli_release_v0.1.0") and the new tag.
           ./gradlew jib-cli:release -Prelease.useAutomaticVersion=true -Prelease.releaseVersion=${{ github.event.inputs.release_version }}
 
       - name: Build Jib CLI release binaries
         run: |
-          ./gradlew jib-cli:instDist
+          git checkout v${{ github.event.inputs.release_version }}-cli
+          ./gradlew jib-cli:instDist --stacktrace
 
           cd jib-cli/build/install
           zip -rv jib-jre.zip jib
