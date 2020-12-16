@@ -33,6 +33,7 @@ import java.nio.file.Paths;
 import java.util.jar.Attributes;
 import java.util.jar.JarFile;
 import javax.annotation.Nullable;
+import org.junit.After;
 import org.junit.ClassRule;
 import org.junit.Test;
 import picocli.CommandLine;
@@ -45,6 +46,15 @@ public class JarCommandTest {
   @ClassRule
   public static final TestProject springBootProjectNonLayered =
       new TestProject("springBootNonLayered");
+
+  @Nullable private String containerName;
+
+  @After
+  public void tearDown() throws IOException, InterruptedException {
+    if (containerName != null) {
+      new Command("docker", "stop", containerName).run();
+    }
+  }
 
   @Test
   public void testErrorLogging_fileDoesNotExist() {
@@ -171,23 +181,22 @@ public class JarCommandTest {
   @Test
   public void testSpringBootLayeredJar_explodedMode() throws IOException, InterruptedException {
     springBootProjectLayered.build("clean", "bootJar");
-    Path jarParentPath =
-        springBootProjectLayered.getProjectRoot().toAbsolutePath().resolve("build").resolve("libs");
+    Path jarParentPath = springBootProjectLayered.getProjectRoot().resolve("build").resolve("libs");
     Path jarPath = jarParentPath.resolve("spring-boot-layered.jar");
 
     Integer exitCode =
         new CommandLine(new JibCli())
             .execute("jar", "--target", "docker://spring-boot-jar-layered", jarPath.toString());
+    assertThat(exitCode).isEqualTo(0);
+
     String output =
         new Command("docker", "run", "--rm", "--detach", "-p8080:8080", "spring-boot-jar-layered")
             .run();
-
+    containerName = output.trim();
     try (JarFile jarFile = new JarFile(jarPath.toFile())) {
+
       assertThat(jarFile.getEntry("BOOT-INF/layers.idx")).isNotNull();
       assertThat(getContent(new URL("http://localhost:8080"))).isEqualTo("Hello world");
-      assertThat(exitCode).isEqualTo(0);
-
-      new Command("docker", "stop", output.trim()).run();
     }
   }
 
@@ -195,30 +204,26 @@ public class JarCommandTest {
   public void testSpringBootNonLayeredJar_explodedMode() throws IOException, InterruptedException {
     springBootProjectNonLayered.build("clean", "bootJar");
     Path jarParentPath =
-        springBootProjectNonLayered
-            .getProjectRoot()
-            .toAbsolutePath()
-            .resolve("build")
-            .resolve("libs");
+        springBootProjectNonLayered.getProjectRoot().resolve("build").resolve("libs");
     Path jarPath = jarParentPath.resolve("spring-boot-nonlayered.jar");
 
     Integer exitCode =
         new CommandLine(new JibCli())
             .execute("jar", "--target", "docker://spring-boot-jar", jarPath.toString());
+    assertThat(exitCode).isEqualTo(0);
+
     String output =
         new Command("docker", "run", "--rm", "--detach", "-p8080:8080", "spring-boot-jar").run();
-
+    containerName = output.trim();
     try (JarFile jarFile = new JarFile(jarPath.toFile())) {
+
       assertThat(jarFile.getEntry("BOOT-INF/layers.idx")).isNull();
       assertThat(getContent(new URL("http://localhost:8080"))).isEqualTo("Hello world");
-      assertThat(exitCode).isEqualTo(0);
-
-      new Command("docker", "stop", output.trim()).run();
     }
   }
 
   @Nullable
-  static String getContent(URL url) throws InterruptedException {
+  private static String getContent(URL url) throws InterruptedException {
     for (int i = 0; i < 40; i++) {
       Thread.sleep(500);
       try {
