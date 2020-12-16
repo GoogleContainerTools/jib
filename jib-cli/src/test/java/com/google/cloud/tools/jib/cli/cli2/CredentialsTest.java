@@ -36,9 +36,9 @@ import org.mockito.junit.MockitoRule;
 import picocli.CommandLine;
 
 @RunWith(JUnitParamsRunner.class)
-public class CredentialsForJarTest {
+public class CredentialsTest {
 
-  private static final String[] DEFAULT_ARGS = {"--target=ignored", "ignore-jar"};
+  private static final String[] DEFAULT_ARGS = {"--target=ignored"};
   @Rule public final MockitoRule mockitoJUnit = MockitoJUnit.rule();
   @Mock private DefaultCredentialRetrievers defaultCredentialRetrievers;
 
@@ -52,8 +52,9 @@ public class CredentialsForJarTest {
   @Test
   @Parameters(method = "paramsToNone")
   public void testGetToCredentialRetriever_none(String[] args) throws FileNotFoundException {
-    Jar jarCommand = CommandLine.populateCommand(new Jar(), ArrayUtils.addAll(DEFAULT_ARGS, args));
-    Credentials.getToCredentialRetrievers(jarCommand.commonCliOptions, defaultCredentialRetrievers);
+    CommonCliOptions commonCliOptions =
+        CommandLine.populateCommand(new CommonCliOptions(), ArrayUtils.addAll(DEFAULT_ARGS, args));
+    Credentials.getToCredentialRetrievers(commonCliOptions, defaultCredentialRetrievers);
     Mockito.verify(defaultCredentialRetrievers).asList();
     Mockito.verifyNoMoreInteractions(defaultCredentialRetrievers);
   }
@@ -68,9 +69,9 @@ public class CredentialsForJarTest {
   @Test
   @Parameters(method = "paramsFromNone")
   public void testGetFromCredentialRetriever_none(String[] args) throws FileNotFoundException {
-    Jar jarCommand = CommandLine.populateCommand(new Jar(), ArrayUtils.addAll(DEFAULT_ARGS, args));
-    Credentials.getFromCredentialRetrievers(
-        jarCommand.commonCliOptions, defaultCredentialRetrievers);
+    CommonCliOptions commonCliOptions =
+        CommandLine.populateCommand(new CommonCliOptions(), ArrayUtils.addAll(DEFAULT_ARGS, args));
+    Credentials.getFromCredentialRetrievers(commonCliOptions, defaultCredentialRetrievers);
     Mockito.verify(defaultCredentialRetrievers).asList();
     Mockito.verifyNoMoreInteractions(defaultCredentialRetrievers);
   }
@@ -89,8 +90,9 @@ public class CredentialsForJarTest {
   @Test
   @Parameters(method = "paramsToCredHelper")
   public void testGetToCredentialRetriever_credHelper(String[] args) throws FileNotFoundException {
-    Jar jarCommand = CommandLine.populateCommand(new Jar(), ArrayUtils.addAll(DEFAULT_ARGS, args));
-    Credentials.getToCredentialRetrievers(jarCommand.commonCliOptions, defaultCredentialRetrievers);
+    CommonCliOptions commonCliOptions =
+        CommandLine.populateCommand(new CommonCliOptions(), ArrayUtils.addAll(DEFAULT_ARGS, args));
+    Credentials.getToCredentialRetrievers(commonCliOptions, defaultCredentialRetrievers);
     Mockito.verify(defaultCredentialRetrievers).setCredentialHelper("abc");
     Mockito.verify(defaultCredentialRetrievers).asList();
     Mockito.verifyNoMoreInteractions(defaultCredentialRetrievers);
@@ -110,9 +112,9 @@ public class CredentialsForJarTest {
   @Test
   @Parameters(method = "paramsFromCredHelper")
   public void testGetFromCredentialHelper(String[] args) throws FileNotFoundException {
-    Jar jarCommand = CommandLine.populateCommand(new Jar(), ArrayUtils.addAll(DEFAULT_ARGS, args));
-    Credentials.getFromCredentialRetrievers(
-        jarCommand.commonCliOptions, defaultCredentialRetrievers);
+    CommonCliOptions commonCliOptions =
+        CommandLine.populateCommand(new CommonCliOptions(), ArrayUtils.addAll(DEFAULT_ARGS, args));
+    Credentials.getFromCredentialRetrievers(commonCliOptions, defaultCredentialRetrievers);
     Mockito.verify(defaultCredentialRetrievers).setCredentialHelper("abc");
     Mockito.verify(defaultCredentialRetrievers).asList();
     Mockito.verifyNoMoreInteractions(defaultCredentialRetrievers);
@@ -142,8 +144,9 @@ public class CredentialsForJarTest {
   @Parameters(method = "paramsToUsernamePassword")
   public void testGetToUsernamePassword(String expectedSource, String[] args)
       throws FileNotFoundException {
-    Jar jarCommand = CommandLine.populateCommand(new Jar(), ArrayUtils.addAll(DEFAULT_ARGS, args));
-    Credentials.getToCredentialRetrievers(jarCommand.commonCliOptions, defaultCredentialRetrievers);
+    CommonCliOptions commonCliOptions =
+        CommandLine.populateCommand(new CommonCliOptions(), ArrayUtils.addAll(DEFAULT_ARGS, args));
+    Credentials.getToCredentialRetrievers(commonCliOptions, defaultCredentialRetrievers);
     ArgumentCaptor<Credential> captor = ArgumentCaptor.forClass(Credential.class);
     Mockito.verify(defaultCredentialRetrievers)
         .setKnownCredential(captor.capture(), ArgumentMatchers.eq(expectedSource));
@@ -181,9 +184,9 @@ public class CredentialsForJarTest {
   @Parameters(method = "paramsFromUsernamePassword")
   public void testGetFromUsernamePassword(String expectedSource, String[] args)
       throws FileNotFoundException {
-    Jar jarCommand = CommandLine.populateCommand(new Jar(), ArrayUtils.addAll(DEFAULT_ARGS, args));
-    Credentials.getFromCredentialRetrievers(
-        jarCommand.commonCliOptions, defaultCredentialRetrievers);
+    CommonCliOptions commonCliOptions =
+        CommandLine.populateCommand(new CommonCliOptions(), ArrayUtils.addAll(DEFAULT_ARGS, args));
+    Credentials.getFromCredentialRetrievers(commonCliOptions, defaultCredentialRetrievers);
     ArgumentCaptor<Credential> captor = ArgumentCaptor.forClass(Credential.class);
     Mockito.verify(defaultCredentialRetrievers)
         .setKnownCredential(captor.capture(), ArgumentMatchers.eq(expectedSource));

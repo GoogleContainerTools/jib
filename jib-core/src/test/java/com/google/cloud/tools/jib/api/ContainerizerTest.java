@@ -19,6 +19,9 @@ package com.google.cloud.tools.jib.api;
 import com.google.cloud.tools.jib.configuration.ImageConfiguration;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.MoreExecutors;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.concurrent.ExecutorService;
@@ -120,5 +123,16 @@ public class ContainerizerTest {
     ImageConfiguration imageConfiguration = containerizer.getImageConfiguration();
     Assert.assertEquals("tar/image", imageConfiguration.getImage().toString());
     Assert.assertEquals(0, imageConfiguration.getCredentialRetrievers().size());
+  }
+
+  @Test
+  public void testGetApplicationLayersCacheDirectory_defaults()
+      throws InvalidImageReferenceException, CacheDirectoryCreationException, IOException {
+    Containerizer containerizer = Containerizer.to(RegistryImage.named("registry/image"));
+    Path applicationLayersCache = containerizer.getApplicationLayersCacheDirectory();
+    Path expectedCacheDir =
+        Paths.get(System.getProperty("java.io.tmpdir"))
+            .resolve("jib-core-application-layers-cache");
+    Assert.assertTrue(Files.isSameFile(expectedCacheDir, applicationLayersCache));
   }
 }

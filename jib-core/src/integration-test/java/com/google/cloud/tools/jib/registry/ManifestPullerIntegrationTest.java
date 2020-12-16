@@ -42,7 +42,7 @@ public class ManifestPullerIntegrationTest {
 
   @BeforeClass
   public static void setUp() throws IOException, InterruptedException {
-    localRegistry.pullAndPushToLocal("mirror.gcr.io/library/busybox", "busybox");
+    localRegistry.pullAndPushToLocal("busybox", "busybox");
   }
 
   private final FailoverHttpClient httpClient = new FailoverHttpClient(true, false, ignored -> {});

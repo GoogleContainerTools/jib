@@ -42,8 +42,7 @@ public class BaseImageParameters {
     auth = objectFactory.newInstance(AuthParameters.class, "from.auth");
     platforms = objectFactory.listProperty(PlatformParameters.class);
     image = objectFactory.property(String.class);
-    platformParametersSpec =
-        objectFactory.newInstance(PlatformParametersSpec.class, objectFactory, platforms);
+    platformParametersSpec = objectFactory.newInstance(PlatformParametersSpec.class, platforms);
 
     PlatformParameters amd64Linux = new PlatformParameters();
     amd64Linux.setArchitecture("amd64");
