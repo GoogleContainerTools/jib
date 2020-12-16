@@ -49,8 +49,13 @@ public class JarFiles {
     List<FileEntriesLayer> layers;
     List<String> entrypoint;
     if (JarModeProcessor.determineJarType(jarPath).equals(JarModeProcessor.JarType.SPRING_BOOT)) {
-      layers = JarModeProcessor.createLayersForExplodedSpringBootFat(jarPath, tempDirPath);
-      entrypoint = JarModeProcessor.computeEntrypointForExplodedSpringBoot();
+      if (mode.equals(ProcessingMode.packaged)) {
+        layers = JarModeProcessor.createLayerForPackagedSpringBoot(jarPath);
+        entrypoint = JarModeProcessor.computeEntrypointForPackagedSpringboot(jarPath);
+      } else {
+        layers = JarModeProcessor.createLayersForExplodedSpringBoot(jarPath, tempDirPath);
+        entrypoint = JarModeProcessor.computeEntrypointForExplodedSpringBoot();
+      }
     } else {
       if (mode.equals(ProcessingMode.packaged)) {
         layers = JarModeProcessor.createLayersForPackagedStandard(jarPath);

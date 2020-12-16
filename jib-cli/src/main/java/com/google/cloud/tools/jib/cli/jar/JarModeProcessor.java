@@ -155,7 +155,7 @@ public class JarModeProcessor {
    * @throws IOException if I/O error occurs when opening the jar file or if temporary directory
    *     provided doesn't exist
    */
-  static List<FileEntriesLayer> createLayersForExplodedSpringBootFat(Path jarPath, Path tempDirPath)
+  static List<FileEntriesLayer> createLayersForExplodedSpringBoot(Path jarPath, Path tempDirPath)
       throws IOException {
     try (JarFile jarFile = new JarFile(jarPath.toFile())) {
       ZipEntry layerIndex = jarFile.getEntry("BOOT-INF/layers.idx");
@@ -219,7 +219,7 @@ public class JarModeProcessor {
    * @return list of {@link FileEntriesLayer}
    * @throws IOException if I/O error occurs when opening the jar file
    */
-  static List<FileEntriesLayer> createLayerForPackagedSpringboot(Path jarPath) throws IOException {
+  static List<FileEntriesLayer> createLayerForPackagedSpringBoot(Path jarPath) throws IOException {
     FileEntriesLayer jarLayer =
         FileEntriesLayer.builder()
             .setName(JAR)

@@ -37,7 +37,7 @@ import org.junit.rules.TemporaryFolder;
 
 public class JarModeProcessorTest {
 
-  private static final String SPRING_BOOT_JAR = "jar/springboot/springboot_sample.jar";
+  private static final String SPRING_BOOT_JAR = "jar/spring-boot/springboot_sample.jar";
   private static final String STANDARD_JAR_WITH_CLASS_PATH_MANIFEST =
       "jar/standard/standardJarWithClassPath.jar";
   private static final String STANDARD_JAR_WITHOUT_CLASS_PATH_MANIFEST =
@@ -46,12 +46,12 @@ public class JarModeProcessorTest {
       "jar/standard/standardJarWithOnlyClasses.jar";
   private static final String STANDARD_JAR_EMPTY = "jar/standard/emptyStandardJar.jar";
   private static final String STANDARD_SINGLE_DEPENDENCY_JAR = "jar/standard/singleDepJar.jar";
-  private static final String SPRING_BOOT_LAYERED = "jar/springboot/springboot_layered.jar";
+  private static final String SPRING_BOOT_LAYERED = "jar/spring-boot/springboot_layered.jar";
   private static final String SPRING_BOOT_LAYERED_WITH_EMPTY_LAYER =
-      "jar/springboot/springboot_layered_singleEmptyLayer.jar";
+      "jar/spring-boot/springboot_layered_singleEmptyLayer.jar";
   private static final String SPRING_BOOT_LAYERED_WITH_ALL_EMPTY_LAYERS_LISTED =
-      "jar/springboot/springboot_layered_allEmptyLayers.jar";
-  private static final String SPRING_BOOT_NOT_LAYERED = "jar/springboot/springboot_notLayered.jar";
+      "jar/spring-boot/springboot_layered_allEmptyLayers.jar";
+  private static final String SPRING_BOOT_NOT_LAYERED = "jar/spring-boot/springboot_notLayered.jar";
 
   @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
@@ -391,7 +391,7 @@ public class JarModeProcessorTest {
     Path springbootJar = Paths.get(Resources.getResource(SPRING_BOOT_LAYERED).toURI());
     Path destDir = temporaryFolder.newFolder().toPath();
     List<FileEntriesLayer> layers =
-        JarModeProcessor.createLayersForExplodedSpringBootFat(springbootJar, destDir);
+        JarModeProcessor.createLayersForExplodedSpringBoot(springbootJar, destDir);
 
     assertThat(layers.size()).isEqualTo(4);
 
@@ -461,7 +461,7 @@ public class JarModeProcessorTest {
         Paths.get(Resources.getResource(SPRING_BOOT_LAYERED_WITH_EMPTY_LAYER).toURI());
     Path destDir = temporaryFolder.newFolder().toPath();
     List<FileEntriesLayer> layers =
-        JarModeProcessor.createLayersForExplodedSpringBootFat(springbootJar, destDir);
+        JarModeProcessor.createLayersForExplodedSpringBoot(springbootJar, destDir);
 
     assertThat(layers.size()).isEqualTo(3);
 
@@ -516,7 +516,7 @@ public class JarModeProcessorTest {
         Paths.get(Resources.getResource(SPRING_BOOT_LAYERED_WITH_ALL_EMPTY_LAYERS_LISTED).toURI());
     Path destDir = temporaryFolder.newFolder().toPath();
     List<FileEntriesLayer> layers =
-        JarModeProcessor.createLayersForExplodedSpringBootFat(springbootJar, destDir);
+        JarModeProcessor.createLayersForExplodedSpringBoot(springbootJar, destDir);
 
     assertThat(layers.size()).isEqualTo(0);
   }
@@ -528,7 +528,7 @@ public class JarModeProcessorTest {
 
     Path destDir = temporaryFolder.newFolder().toPath();
     List<FileEntriesLayer> layers =
-        JarModeProcessor.createLayersForExplodedSpringBootFat(springbootJar, destDir);
+        JarModeProcessor.createLayersForExplodedSpringBoot(springbootJar, destDir);
 
     assertThat(layers.size()).isEqualTo(5);
 
@@ -583,11 +583,12 @@ public class JarModeProcessorTest {
   public void testCreateLayersForPackagedSpringboot() throws IOException, URISyntaxException {
     Path springbootJar = Paths.get(Resources.getResource(SPRING_BOOT_JAR).toURI());
     List<FileEntriesLayer> layers =
-        JarModeProcessor.createLayerForPackagedSpringboot(springbootJar);
+        JarModeProcessor.createLayerForPackagedSpringBoot(springbootJar);
 
     assertThat(layers.size()).isEqualTo(1);
 
     FileEntriesLayer jarLayer = layers.get(0);
+
     assertThat(jarLayer.getName()).isEqualTo("jar");
     assertThat(jarLayer.getEntries().size()).isEqualTo(1);
     assertThat(jarLayer.getEntries().get(0).getExtractionPath())
