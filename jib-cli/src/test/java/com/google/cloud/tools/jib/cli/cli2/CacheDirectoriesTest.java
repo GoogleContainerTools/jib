@@ -70,16 +70,16 @@ public class CacheDirectoriesTest {
 
   @Test
   public void testCacheDirectories_failIfContextIsNotDirectory() throws IOException {
-    Path badContext = temporaryFolder.newFile("a.file").toPath();
+    Path badContext = temporaryFolder.newFile().toPath();
     CommonCliOptions commonCliOptions =
         CommandLine.populateCommand(new CommonCliOptions(), "-t", "ignored");
-    try {
-      CacheDirectories.from(commonCliOptions, badContext);
-      Assert.fail();
-    } catch (IllegalArgumentException iae) {
-      assertThat(iae.getMessage())
-          .isEqualTo("contextRoot must be a directory, but " + badContext.toString() + " is not.");
-    }
+
+    IllegalArgumentException iae =
+        Assert.assertThrows(
+            IllegalArgumentException.class,
+            () -> CacheDirectories.from(commonCliOptions, badContext));
+    assertThat(iae.getMessage())
+        .isEqualTo("contextRoot must be a directory, but " + badContext.toString() + " is not.");
   }
 
   @Test
