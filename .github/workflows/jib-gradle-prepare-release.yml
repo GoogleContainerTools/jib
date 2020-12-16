@@ -74,7 +74,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: v${{ github.event.inputs.release_version }}-{{ github.event.inputs.project }}
+          tag_name: v${{ github.event.inputs.release_version }}-${{ github.event.inputs.project }}
           release_name: jib-${{ github.event.inputs.project }}-plugin v${{ github.event.inputs.release_version }}
           draft: true
           body: |
