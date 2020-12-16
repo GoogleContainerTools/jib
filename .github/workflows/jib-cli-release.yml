@@ -22,7 +22,7 @@ jobs:
 
       - name: Run Gradle release
         run: |
-          git checkout -b cli_release_v${{ github.event.inputs.release_version }}
+          git checkout -b cli-release-v${{ github.event.inputs.release_version }}
           git config user.email "chanseok@google.com"
           git config user.name "Chanseok Oh"
           ./gradlew jib-cli:release -Prelease.useAutomaticVersion=true -Prelease.releaseVersion=${{ github.event.inputs.release_version }}
@@ -32,7 +32,7 @@ jobs:
         with:
           # Provided by Actions. No need to create a token.
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          source_branch: cli_release_v${{ github.event.inputs.release_version }}
+          source_branch: cli-release-v${{ github.event.inputs.release_version }}
     
       - name: Draft GitHub release
         uses: actions/create-release@v1
