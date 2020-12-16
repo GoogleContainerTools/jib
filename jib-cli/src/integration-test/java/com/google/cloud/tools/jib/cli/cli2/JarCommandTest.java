@@ -19,19 +19,42 @@ package com.google.cloud.tools.jib.cli.cli2;
 import static com.google.common.truth.Truth.assertThat;
 
 import com.google.cloud.tools.jib.Command;
+import com.google.cloud.tools.jib.blob.Blobs;
 import com.google.common.io.Resources;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.net.HttpURLConnection;
 import java.net.URISyntaxException;
+import java.net.URL;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.jar.Attributes;
 import java.util.jar.JarFile;
+import javax.annotation.Nullable;
+import org.junit.After;
+import org.junit.ClassRule;
 import org.junit.Test;
 import picocli.CommandLine;
 
 public class JarCommandTest {
+
+  @ClassRule
+  public static final TestProject springBootProjectLayered = new TestProject("springBootLayered");
+
+  @ClassRule
+  public static final TestProject springBootProjectNonLayered =
+      new TestProject("springBootNonLayered");
+
+  @Nullable private String containerName;
+
+  @After
+  public void tearDown() throws IOException, InterruptedException {
+    if (containerName != null) {
+      new Command("docker", "stop", containerName).run();
+    }
+  }
 
   @Test
   public void testErrorLogging_fileDoesNotExist() {
@@ -63,9 +86,9 @@ public class JarCommandTest {
   }
 
   @Test
-  public void testJar_explodedMode_toDocker()
+  public void testStandardJar_explodedMode_toDocker()
       throws IOException, InterruptedException, URISyntaxException {
-    Path jarPath = Paths.get(Resources.getResource("jarTest/jarWithCp.jar").toURI());
+    Path jarPath = Paths.get(Resources.getResource("jarTest/standard/jarWithCp.jar").toURI());
     Integer exitCode =
         new CommandLine(new JibCli())
             .execute("jar", "--target", "docker://exploded-jar", jarPath.toString());
@@ -81,9 +104,9 @@ public class JarCommandTest {
   }
 
   @Test
-  public void testNoDependencyJar_explodedMode_toDocker()
+  public void testNoDependencyStandardJar_explodedMode_toDocker()
       throws IOException, InterruptedException, URISyntaxException {
-    Path jarPath = Paths.get(Resources.getResource("noDependencyJar.jar").toURI());
+    Path jarPath = Paths.get(Resources.getResource("jarTest/standard/noDependencyJar.jar").toURI());
     Integer exitCode =
         new CommandLine(new JibCli())
             .execute("jar", "--target", "docker://exploded-no-dep-jar", jarPath.toString());
@@ -99,9 +122,9 @@ public class JarCommandTest {
   }
 
   @Test
-  public void testJar_packagedMode_toDocker()
+  public void testStandardJar_packagedMode_toDocker()
       throws IOException, InterruptedException, URISyntaxException {
-    Path jarPath = Paths.get(Resources.getResource("jarTest/jarWithCp.jar").toURI());
+    Path jarPath = Paths.get(Resources.getResource("jarTest/standard/jarWithCp.jar").toURI());
     Integer exitCode =
         new CommandLine(new JibCli())
             .execute(
@@ -118,9 +141,9 @@ public class JarCommandTest {
   }
 
   @Test
-  public void testNoDependencyJar_packagedMode_toDocker()
+  public void testNoDependencyStandardJar_packagedMode_toDocker()
       throws IOException, InterruptedException, URISyntaxException {
-    Path jarPath = Paths.get(Resources.getResource("noDependencyJar.jar").toURI());
+    Path jarPath = Paths.get(Resources.getResource("jarTest/standard/noDependencyJar.jar").toURI());
     Integer exitCode =
         new CommandLine(new JibCli())
             .execute(
@@ -153,5 +176,67 @@ public class JarCommandTest {
     assertThat(stringWriter.toString())
         .contains(
             "Invalid value for option '--mode': expected one of [exploded, packaged] (case-sensitive) but was 'unknown'");
+  }
+
+  @Test
+  public void testSpringBootLayeredJar_explodedMode() throws IOException, InterruptedException {
+    springBootProjectLayered.build("clean", "bootJar");
+    Path jarParentPath = springBootProjectLayered.getProjectRoot().resolve("build").resolve("libs");
+    Path jarPath = jarParentPath.resolve("spring-boot-layered.jar");
+
+    Integer exitCode =
+        new CommandLine(new JibCli())
+            .execute("jar", "--target", "docker://spring-boot-jar-layered", jarPath.toString());
+    assertThat(exitCode).isEqualTo(0);
+
+    String output =
+        new Command("docker", "run", "--rm", "--detach", "-p8080:8080", "spring-boot-jar-layered")
+            .run();
+    containerName = output.trim();
+    try (JarFile jarFile = new JarFile(jarPath.toFile())) {
+
+      assertThat(jarFile.getEntry("BOOT-INF/layers.idx")).isNotNull();
+      assertThat(getContent(new URL("http://localhost:8080"))).isEqualTo("Hello world");
+    }
+  }
+
+  @Test
+  public void testSpringBootNonLayeredJar_explodedMode() throws IOException, InterruptedException {
+    springBootProjectNonLayered.build("clean", "bootJar");
+    Path jarParentPath =
+        springBootProjectNonLayered.getProjectRoot().resolve("build").resolve("libs");
+    Path jarPath = jarParentPath.resolve("spring-boot-nonlayered.jar");
+
+    Integer exitCode =
+        new CommandLine(new JibCli())
+            .execute("jar", "--target", "docker://spring-boot-jar", jarPath.toString());
+    assertThat(exitCode).isEqualTo(0);
+
+    String output =
+        new Command("docker", "run", "--rm", "--detach", "-p8080:8080", "spring-boot-jar").run();
+    containerName = output.trim();
+    try (JarFile jarFile = new JarFile(jarPath.toFile())) {
+
+      assertThat(jarFile.getEntry("BOOT-INF/layers.idx")).isNull();
+      assertThat(getContent(new URL("http://localhost:8080"))).isEqualTo("Hello world");
+    }
+  }
+
+  @Nullable
+  private static String getContent(URL url) throws InterruptedException {
+    for (int i = 0; i < 40; i++) {
+      Thread.sleep(500);
+      try {
+        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+        if (connection.getResponseCode() == HttpURLConnection.HTTP_OK) {
+          try (InputStream in = connection.getInputStream()) {
+            return Blobs.writeToString(Blobs.from(in));
+          }
+        }
+      } catch (IOException ignored) {
+        // ignored
+      }
+    }
+    return null;
   }
 }
