@@ -32,7 +32,9 @@ jobs:
           git config user.name "Chanseok Oh"
           # This creates the tag (e.g., "v0.1.0-cli") and pushes the updated
           # branch (e.g., "cli_release_v0.1.0") and the new tag.
-          ./gradlew jib-cli:release -Prelease.useAutomaticVersion=true -Prelease.releaseVersion=${{ github.event.inputs.release_version }}
+          ./gradlew jib-cli:release \
+            -Prelease.useAutomaticVersion=true \
+            -Prelease.releaseVersion=${{ github.event.inputs.release_version }}
 
       - name: Build Jib CLI release binaries
         run: |
