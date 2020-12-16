@@ -57,7 +57,7 @@ jobs:
           body: |
             **Run `./jib-gradle-plugin/scripts/update_gcs_latest.sh ${{ github.event.inputs.release_version }}`
             when the release is complete to update the latest Gradle version string on GCS.**
-            
+            ---
             ### Major Changes
             
             See [CHANGELOG.md](https://github.com/GoogleContainerTools/jib/blob/master/jib-gradle-plugin/CHANGELOG.md) for more details.
