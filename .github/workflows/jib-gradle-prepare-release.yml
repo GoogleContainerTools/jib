@@ -53,8 +53,8 @@ jobs:
             maven|gradle)     echo jib-${{ github.event.inputs.project }}-plugin ;;
             *)                echo jib-${{ github.event.inputs.project }} ;;
           esac )
-          # This creates the tag (e.g., "v0.1.0-build-plan") and pushes the updated
-          # branch (e.g., "build-plan-release-v0.1.0") and the new tag.
+          # This creates the tag (e.g., "v0.1.0-gradle") and pushes the updated
+          # branch (e.g., "gradle-release-v0.1.0") and the new tag.
           ./gradlew "${PROJECT}":release \
             -Prelease.useAutomaticVersion=true \
             -Prelease.releaseVersion=${{ github.event.inputs.release_version }}
