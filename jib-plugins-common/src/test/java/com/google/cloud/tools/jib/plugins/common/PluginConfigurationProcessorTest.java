@@ -457,7 +457,7 @@ public class PluginConfigurationProcessorTest {
   }
 
   @Test
-  public void testEntrypoint_warningExpandClasspathDependencies()
+  public void testEntrypoint_warningOnExpandClasspathDependencies()
       throws InvalidImageReferenceException, IOException, CacheDirectoryCreationException,
           MainClassInferenceException, InvalidAppRootException, InvalidWorkingDirectoryException,
           InvalidPlatformException, InvalidContainerVolumeException,
