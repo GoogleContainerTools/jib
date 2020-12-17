@@ -388,10 +388,10 @@ public class JarModeProcessorTest {
     // - "application":
     //   - "BOOT-INF/classes/"
     //   - "META-INF/"
-    Path springbootJar = Paths.get(Resources.getResource(SPRING_BOOT_LAYERED).toURI());
+    Path springBootJar = Paths.get(Resources.getResource(SPRING_BOOT_LAYERED).toURI());
     Path destDir = temporaryFolder.newFolder().toPath();
     List<FileEntriesLayer> layers =
-        JarModeProcessor.createLayersForExplodedSpringBoot(springbootJar, destDir);
+        JarModeProcessor.createLayersForExplodedSpringBoot(springBootJar, destDir);
 
     assertThat(layers.size()).isEqualTo(4);
 
@@ -457,11 +457,11 @@ public class JarModeProcessorTest {
     // - "application":
     //   - "BOOT-INF/classes/"
     //   - "META-INF/"
-    Path springbootJar =
+    Path springBootJar =
         Paths.get(Resources.getResource(SPRING_BOOT_LAYERED_WITH_EMPTY_LAYER).toURI());
     Path destDir = temporaryFolder.newFolder().toPath();
     List<FileEntriesLayer> layers =
-        JarModeProcessor.createLayersForExplodedSpringBoot(springbootJar, destDir);
+        JarModeProcessor.createLayersForExplodedSpringBoot(springBootJar, destDir);
 
     assertThat(layers.size()).isEqualTo(3);
 
@@ -512,11 +512,11 @@ public class JarModeProcessorTest {
     // - "spring-boot-loader":
     // - "snapshot-dependencies":
     // - "application":
-    Path springbootJar =
+    Path springBootJar =
         Paths.get(Resources.getResource(SPRING_BOOT_LAYERED_WITH_ALL_EMPTY_LAYERS_LISTED).toURI());
     Path destDir = temporaryFolder.newFolder().toPath();
     List<FileEntriesLayer> layers =
-        JarModeProcessor.createLayersForExplodedSpringBoot(springbootJar, destDir);
+        JarModeProcessor.createLayersForExplodedSpringBoot(springBootJar, destDir);
 
     assertThat(layers.size()).isEqualTo(0);
   }
@@ -524,11 +524,11 @@ public class JarModeProcessorTest {
   @Test
   public void testCreateLayersForExplodedNonLayeredSpringBoot()
       throws IOException, URISyntaxException {
-    Path springbootJar = Paths.get(Resources.getResource(SPRING_BOOT_NOT_LAYERED).toURI());
+    Path springBootJar = Paths.get(Resources.getResource(SPRING_BOOT_NOT_LAYERED).toURI());
 
     Path destDir = temporaryFolder.newFolder().toPath();
     List<FileEntriesLayer> layers =
-        JarModeProcessor.createLayersForExplodedSpringBoot(springbootJar, destDir);
+        JarModeProcessor.createLayersForExplodedSpringBoot(springBootJar, destDir);
 
     assertThat(layers.size()).isEqualTo(5);
 
@@ -580,10 +580,10 @@ public class JarModeProcessorTest {
   }
 
   @Test
-  public void testCreateLayersForPackagedSpringboot() throws IOException, URISyntaxException {
-    Path springbootJar = Paths.get(Resources.getResource(SPRING_BOOT_JAR).toURI());
+  public void testCreateLayersForPackagedSpringBoot() throws URISyntaxException {
+    Path springBootJar = Paths.get(Resources.getResource(SPRING_BOOT_JAR).toURI());
     List<FileEntriesLayer> layers =
-        JarModeProcessor.createLayerForPackagedSpringBoot(springbootJar);
+        JarModeProcessor.createLayerForPackagedSpringBoot(springBootJar);
 
     assertThat(layers.size()).isEqualTo(1);
 

@@ -220,7 +220,7 @@ public class JarModeProcessor {
    * @return list of {@link FileEntriesLayer}
    * @throws IOException if I/O error occurs when opening the jar file
    */
-  static List<FileEntriesLayer> createLayerForPackagedSpringBoot(Path jarPath) throws IOException {
+  static List<FileEntriesLayer> createLayerForPackagedSpringBoot(Path jarPath) {
     FileEntriesLayer jarLayer =
         FileEntriesLayer.builder()
             .setName(JAR)
@@ -288,7 +288,7 @@ public class JarModeProcessor {
    * @param jarPath path to jar file
    * @return list of {@link String} representing entrypoint
    */
-  static ImmutableList<String> computeEntrypointForPackagedSpringboot(Path jarPath) {
+  static ImmutableList<String> computeEntrypointForPackagedSpringBoot(Path jarPath) {
     return ImmutableList.of("java", "-jar", APP_ROOT + "/" + jarPath.getFileName().toString());
   }
 

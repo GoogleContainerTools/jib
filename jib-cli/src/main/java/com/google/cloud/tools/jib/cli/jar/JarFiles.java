@@ -51,7 +51,7 @@ public class JarFiles {
     if (JarModeProcessor.determineJarType(jarPath).equals(JarModeProcessor.JarType.SPRING_BOOT)) {
       if (mode.equals(ProcessingMode.packaged)) {
         layers = JarModeProcessor.createLayerForPackagedSpringBoot(jarPath);
-        entrypoint = JarModeProcessor.computeEntrypointForPackagedSpringboot(jarPath);
+        entrypoint = JarModeProcessor.computeEntrypointForPackagedSpringBoot(jarPath);
       } else {
         layers = JarModeProcessor.createLayersForExplodedSpringBoot(jarPath, tempDirPath);
         entrypoint = JarModeProcessor.computeEntrypointForExplodedSpringBoot();
