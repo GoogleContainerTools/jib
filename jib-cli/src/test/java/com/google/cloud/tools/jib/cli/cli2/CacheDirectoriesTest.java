@@ -74,11 +74,12 @@ public class CacheDirectoriesTest {
     CommonCliOptions commonCliOptions =
         CommandLine.populateCommand(new CommonCliOptions(), "-t", "ignored");
 
-    IllegalArgumentException iae =
+    IllegalArgumentException exception =
         Assert.assertThrows(
             IllegalArgumentException.class,
             () -> CacheDirectories.from(commonCliOptions, badContext));
-    assertThat(iae.getMessage())
+    assertThat(exception)
+        .hasMessageThat()
         .isEqualTo("contextRoot must be a directory, but " + badContext.toString() + " is not.");
   }
 
