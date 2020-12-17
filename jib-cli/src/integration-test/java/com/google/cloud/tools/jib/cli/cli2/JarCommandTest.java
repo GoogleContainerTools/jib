@@ -223,7 +223,7 @@ public class JarCommandTest {
   }
 
   @Test
-  public void testSpringbootJar_packagedMode() throws IOException, InterruptedException {
+  public void testSpringBootJar_packagedMode() throws IOException, InterruptedException {
     springBootProjectNonLayered.build("clean", "bootJar");
     Path jarParentPath =
         springBootProjectNonLayered.getProjectRoot().resolve("build").resolve("libs");
