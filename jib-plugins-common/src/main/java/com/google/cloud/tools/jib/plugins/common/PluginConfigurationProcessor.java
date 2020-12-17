@@ -549,10 +549,12 @@ public class PluginConfigurationProcessor {
     if (rawEntrypoint.isPresent() && !rawEntrypoint.get().isEmpty()) {
       if (rawConfiguration.getMainClass().isPresent()
           || !rawConfiguration.getJvmFlags().isEmpty()
-          || !rawExtraClasspath.isEmpty()) {
+          || !rawExtraClasspath.isEmpty()
+          || rawConfiguration.getExpandClasspathDependencies()) {
         projectProperties.log(
             LogEvent.warn(
-                "mainClass, extraClasspath, and jvmFlags are ignored when entrypoint is specified"));
+                "mainClass, extraClasspath, jvmFlags, and expandClasspathDependencies are ignored "
+                    + "when entrypoint is specified"));
       }
 
       if (rawEntrypoint.get().size() == 1 && "INHERIT".equals(rawEntrypoint.get().get(0))) {
@@ -564,9 +566,12 @@ public class PluginConfigurationProcessor {
     if (projectProperties.isWarProject()) {
       if (rawConfiguration.getMainClass().isPresent()
           || !rawConfiguration.getJvmFlags().isEmpty()
-          || !rawExtraClasspath.isEmpty()) {
+          || !rawExtraClasspath.isEmpty()
+          || rawConfiguration.getExpandClasspathDependencies()) {
         projectProperties.log(
-            LogEvent.warn("mainClass, extraClasspath, and jvmFlags are ignored for WAR projects"));
+            LogEvent.warn(
+                "mainClass, extraClasspath, jvmFlags, and expandClasspathDependencies "
+                    + "are ignored for WAR projects"));
       }
       return null;
     }
