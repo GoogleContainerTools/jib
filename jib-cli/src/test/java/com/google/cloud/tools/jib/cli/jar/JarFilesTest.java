@@ -40,9 +40,9 @@ import org.junit.rules.TemporaryFolder;
 public class JarFilesTest {
   private static final String SIMPLE_STANDARD_JAR = "jar/standard/basicStandardJar.jar";
   private static final String SIMPLE_SPRING_BOOT_LAYERED =
-      "jar/springboot/springboot_simple_layered.jar";
+      "jar/spring-boot/springboot_simple_layered.jar";
   private static final String SIMPLE_SPRING_BOOT_NON_LAYERED =
-      "jar/springboot/springboot_simple_notLayered.jar";
+      "jar/spring-boot/springboot_simple_notLayered.jar";
   @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
   @Test
@@ -300,6 +300,39 @@ public class JarFilesTest {
                     temporaryParentDirectory.resolve(
                         "BOOT-INF/classes/classDirectory/class2.class"),
                     AbsoluteUnixPath.get("/app/BOOT-INF/classes/classDirectory/class2.class"))
+                .build()
+                .getEntries());
+  }
+
+  @Test
+  public void testToJibContainerBuilder_packagedSpringBoot_basicInfo()
+      throws IOException, URISyntaxException, InvalidImageReferenceException {
+    Path springBootJar = Paths.get(Resources.getResource(SIMPLE_SPRING_BOOT_NON_LAYERED).toURI());
+    Path temporaryParentDirectory = temporaryFolder.getRoot().toPath();
+    JibContainerBuilder containerBuilder =
+        JarFiles.toJibContainerBuilder(
+            springBootJar, temporaryParentDirectory, ProcessingMode.packaged);
+    ContainerBuildPlan buildPlan = containerBuilder.toContainerBuildPlan();
+
+    assertThat(buildPlan.getBaseImage()).isEqualTo("gcr.io/distroless/java");
+    assertThat(buildPlan.getPlatforms()).isEqualTo(ImmutableSet.of(new Platform("amd64", "linux")));
+    assertThat(buildPlan.getCreationTime()).isEqualTo(Instant.EPOCH);
+    assertThat(buildPlan.getFormat()).isEqualTo(ImageFormat.Docker);
+    assertThat(buildPlan.getEnvironment()).isEmpty();
+    assertThat(buildPlan.getLabels()).isEmpty();
+    assertThat(buildPlan.getVolumes()).isEmpty();
+    assertThat(buildPlan.getExposedPorts()).isEmpty();
+    assertThat(buildPlan.getUser()).isNull();
+    assertThat(buildPlan.getWorkingDirectory()).isNull();
+    assertThat(buildPlan.getEntrypoint())
+        .isEqualTo(ImmutableList.of("java", "-jar", "/app/springboot_simple_notLayered.jar"));
+    assertThat(buildPlan.getLayers().size()).isEqualTo(1);
+    assertThat(buildPlan.getLayers().get(0).getName()).isEqualTo("jar");
+    assertThat(((FileEntriesLayer) buildPlan.getLayers().get(0)).getEntries())
+        .isEqualTo(
+            FileEntriesLayer.builder()
+                .addEntry(
+                    springBootJar, AbsoluteUnixPath.get("/app/springboot_simple_notLayered.jar"))
                 .build()
                 .getEntries());
   }

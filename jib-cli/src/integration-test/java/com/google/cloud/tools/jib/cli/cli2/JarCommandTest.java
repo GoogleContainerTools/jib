@@ -222,6 +222,30 @@ public class JarCommandTest {
     }
   }
 
+  @Test
+  public void testSpringBootJar_packagedMode() throws IOException, InterruptedException {
+    springBootProjectNonLayered.build("clean", "bootJar");
+    Path jarParentPath =
+        springBootProjectNonLayered.getProjectRoot().resolve("build").resolve("libs");
+    Path jarPath = jarParentPath.resolve("spring-boot-nonlayered.jar");
+    Integer exitCode =
+        new CommandLine(new JibCli())
+            .execute(
+                "jar",
+                "--target",
+                "docker://packaged-spring-boot",
+                jarPath.toString(),
+                "--mode=packaged");
+    assertThat(exitCode).isEqualTo(0);
+
+    String output =
+        new Command("docker", "run", "--rm", "--detach", "-p8080:8080", "packaged-spring-boot")
+            .run();
+    containerName = output.trim();
+
+    assertThat(getContent(new URL("http://localhost:8080"))).isEqualTo("Hello world");
+  }
+
   @Nullable
   private static String getContent(URL url) throws InterruptedException {
     for (int i = 0; i < 40; i++) {
