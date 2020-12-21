@@ -33,6 +33,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -155,7 +156,7 @@ public class JarModeProcessor {
    * @throws IOException if I/O error occurs when opening the jar file or if temporary directory
    *     provided doesn't exist
    */
-  static List<FileEntriesLayer> createLayersForExplodedSpringBootFat(Path jarPath, Path tempDirPath)
+  static List<FileEntriesLayer> createLayersForExplodedSpringBoot(Path jarPath, Path tempDirPath)
       throws IOException {
     try (JarFile jarFile = new JarFile(jarPath.toFile())) {
       ZipEntry layerIndex = jarFile.getEntry("BOOT-INF/layers.idx");
@@ -213,6 +214,22 @@ public class JarModeProcessor {
   }
 
   /**
+   * Creates layer for the spring-boot jar on the container.
+   *
+   * @param jarPath path to jar file
+   * @return list of {@link FileEntriesLayer}
+   * @throws IOException if I/O error occurs when opening the jar file
+   */
+  static List<FileEntriesLayer> createLayerForPackagedSpringBoot(Path jarPath) {
+    FileEntriesLayer jarLayer =
+        FileEntriesLayer.builder()
+            .setName(JAR)
+            .addEntry(jarPath, APP_ROOT.resolve(jarPath.getFileName()))
+            .build();
+    return Collections.singletonList(jarLayer);
+  }
+
+  /**
    * Computes the entrypoint for a standard jar in exploded mode.
    *
    * @param jarPath path to jar file
@@ -256,13 +273,23 @@ public class JarModeProcessor {
   }
 
   /**
-   * Computes the entrypoint for a spring boot fat jar in exploded mode.
+   * Computes the entrypoint for a spring boot jar in exploded mode.
    *
    * @return list of {@link String} representing entrypoint
    */
   static ImmutableList<String> computeEntrypointForExplodedSpringBoot() {
     return ImmutableList.of(
         "java", "-cp", APP_ROOT.toString(), "org.springframework.boot.loader.JarLauncher");
+  }
+
+  /**
+   * Computes the entrypoint for a spring boot jar in packaged mode.
+   *
+   * @param jarPath path to jar file
+   * @return list of {@link String} representing entrypoint
+   */
+  static ImmutableList<String> computeEntrypointForPackagedSpringBoot(Path jarPath) {
+    return ImmutableList.of("java", "-jar", APP_ROOT + "/" + jarPath.getFileName().toString());
   }
 
   private static List<FileEntriesLayer> getDependenciesLayers(Path jarPath, ProcessingMode mode)

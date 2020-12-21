@@ -428,7 +428,8 @@ public class PluginConfigurationProcessorTest {
     Mockito.verify(projectProperties)
         .log(
             LogEvent.warn(
-                "mainClass, extraClasspath, and jvmFlags are ignored when entrypoint is specified"));
+                "mainClass, extraClasspath, jvmFlags, and expandClasspathDependencies are ignored "
+                    + "when entrypoint is specified"));
   }
 
   @Test
@@ -451,7 +452,32 @@ public class PluginConfigurationProcessorTest {
     Mockito.verify(projectProperties)
         .log(
             LogEvent.warn(
-                "mainClass, extraClasspath, and jvmFlags are ignored when entrypoint is specified"));
+                "mainClass, extraClasspath, jvmFlags, and expandClasspathDependencies are ignored "
+                    + "when entrypoint is specified"));
+  }
+
+  @Test
+  public void testEntrypoint_warningOnExpandClasspathDependencies()
+      throws InvalidImageReferenceException, IOException, CacheDirectoryCreationException,
+          MainClassInferenceException, InvalidAppRootException, InvalidWorkingDirectoryException,
+          InvalidPlatformException, InvalidContainerVolumeException,
+          IncompatibleBaseImageJavaVersionException, NumberFormatException,
+          InvalidContainerizingModeException, InvalidFilesModificationTimeException,
+          InvalidCreationTimeException {
+    Mockito.when(rawConfiguration.getEntrypoint())
+        .thenReturn(Optional.of(Arrays.asList("custom", "entrypoint")));
+    Mockito.when(rawConfiguration.getExpandClasspathDependencies()).thenReturn(true);
+
+    BuildContext buildContext = getBuildContext(processCommonConfiguration());
+
+    Assert.assertEquals(
+        Arrays.asList("custom", "entrypoint"),
+        buildContext.getContainerConfiguration().getEntrypoint());
+    Mockito.verify(projectProperties)
+        .log(
+            LogEvent.warn(
+                "mainClass, extraClasspath, jvmFlags, and expandClasspathDependencies are ignored "
+                    + "when entrypoint is specified"));
   }
 
   @Test
@@ -468,7 +494,30 @@ public class PluginConfigurationProcessorTest {
 
     Assert.assertNull(buildContext.getContainerConfiguration().getEntrypoint());
     Mockito.verify(projectProperties)
-        .log(LogEvent.warn("mainClass, extraClasspath, and jvmFlags are ignored for WAR projects"));
+        .log(
+            LogEvent.warn(
+                "mainClass, extraClasspath, jvmFlags, and expandClasspathDependencies "
+                    + "are ignored for WAR projects"));
+  }
+
+  @Test
+  public void testEntrypoint_warningOnExpandClasspathDependenciesForWar()
+      throws IOException, InvalidCreationTimeException, InvalidImageReferenceException,
+          IncompatibleBaseImageJavaVersionException, InvalidPlatformException,
+          InvalidContainerVolumeException, MainClassInferenceException, InvalidAppRootException,
+          InvalidWorkingDirectoryException, InvalidFilesModificationTimeException,
+          InvalidContainerizingModeException, CacheDirectoryCreationException {
+    Mockito.when(rawConfiguration.getExpandClasspathDependencies()).thenReturn(true);
+    Mockito.when(projectProperties.isWarProject()).thenReturn(true);
+
+    BuildContext buildContext = getBuildContext(processCommonConfiguration());
+
+    Assert.assertNull(buildContext.getContainerConfiguration().getEntrypoint());
+    Mockito.verify(projectProperties)
+        .log(
+            LogEvent.warn(
+                "mainClass, extraClasspath, jvmFlags, and expandClasspathDependencies "
+                    + "are ignored for WAR projects"));
   }
 
   @Test
