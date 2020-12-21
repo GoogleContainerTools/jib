@@ -370,10 +370,20 @@ public class CommonCliOptions {
     return sendCredentialsOverHttp;
   }
 
+  /**
+   * Do not use directly, use {@link CacheDirectories} instead.
+   *
+   * @return a user configured base image cache
+   */
   public Optional<Path> getBaseImageCache() {
     return Optional.ofNullable(baseImageCache);
   }
 
+  /**
+   * Do not use directly, use {@link CacheDirectories} instead.
+   *
+   * @return a user configured project cache
+   */
   public Optional<Path> getProjectCache() {
     return Optional.ofNullable(projectCache);
   }
