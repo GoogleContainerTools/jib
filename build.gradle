@@ -22,7 +22,7 @@ idea.project.settings {
 import net.ltgt.gradle.errorprone.CheckSeverity
 
 // `java-library` must be applied before `java`
-// gradle-java-plugin (in jib-gradle-plugin) auto applies java-library, so ensure that happens first
+// java-gradle-plugin (in jib-gradle-plugin) auto applies java-library, so ensure that happens first
 ['jib-core', 'jib-gradle-plugin', 'jib-gradle-plugin-extension-api', 'jib-maven-plugin-extension-api'].each { projectName ->
   project(projectName) {
     apply plugin: 'java-library'
