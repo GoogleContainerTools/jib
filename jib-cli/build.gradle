@@ -1,5 +1,4 @@
 plugins {
-  id 'java-gradle-plugin'
   id 'application'
   id 'net.researchgate.release'
   id 'eclipse'
