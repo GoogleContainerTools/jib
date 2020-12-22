@@ -80,11 +80,6 @@ eclipse.classpath.file.whenMerged {
     if (it.path == 'src/test/resources') {
       it.excludes += 'maven/projects/'
     }
-    // TODO: remove after upgrading to Gradle 5.6. (https://github.com/eclipse/buildship/issues/689)
-    if (it.path in ['src/test/java', 'src/test/resources',
-        'src/integration-test/java', 'src/integration-test/resources']) {
-      it.entryAttributes['test'] = 'true'
-    }
   }
 }
 /* ECLIPSE */
