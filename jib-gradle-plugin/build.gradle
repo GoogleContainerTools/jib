@@ -72,6 +72,7 @@ pluginBundle {
 }
 
 gradlePlugin {
+  testSourceSets sourceSets.integrationTest, sourceSets.test
   plugins {
     jibPlugin {
       id = 'com.google.cloud.tools.jib'

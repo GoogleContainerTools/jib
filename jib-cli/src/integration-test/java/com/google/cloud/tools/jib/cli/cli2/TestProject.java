@@ -76,10 +76,7 @@ public class TestProject extends TemporaryFolder implements Closeable {
     copyProject(testProjectName, projectRoot);
 
     gradleRunner =
-        GradleRunner.create()
-            .withGradleVersion(gradleVersion)
-            .withProjectDir(projectRoot.toFile())
-            .withPluginClasspath();
+        GradleRunner.create().withGradleVersion(gradleVersion).withProjectDir(projectRoot.toFile());
   }
 
   public BuildResult build(String... gradleArguments) {
