@@ -14,19 +14,26 @@
  * the License.
  */
 
-package com.google.cloud.tools.jib.cli.cli2;
+package com.google.cloud.tools.jib.cli.logging;
 
-import picocli.CommandLine;
+public enum Verbosity {
+  quiet(0),
+  error(1),
+  warn(2),
+  lifecycle(3),
+  info(4),
+  debug(5);
+  private final int value;
 
-public class VersionInfo implements CommandLine.IVersionProvider {
-  public static final String TOOL_NAME = "jib-cli";
-
-  @Override
-  public String[] getVersion() throws Exception {
-    return new String[] {getVersionSimple()};
+  Verbosity(int value) {
+    this.value = value;
   }
 
-  public static String getVersionSimple() {
-    return "preview";
+  public int value() {
+    return value;
+  }
+
+  public boolean atLeast(Verbosity target) {
+    return this.value >= target.value;
   }
 }

@@ -20,6 +20,7 @@ import static com.google.common.truth.Truth.assertThat;
 
 import com.google.cloud.tools.jib.Command;
 import com.google.cloud.tools.jib.blob.Blobs;
+import com.google.cloud.tools.jib.cli.JibCli;
 import com.google.common.io.Resources;
 import java.io.IOException;
 import java.io.InputStream;

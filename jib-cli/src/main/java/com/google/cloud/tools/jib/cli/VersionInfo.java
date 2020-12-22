@@ -14,27 +14,19 @@
  * the License.
  */
 
-package com.google.cloud.tools.jib.cli.cli2;
+package com.google.cloud.tools.jib.cli;
 
 import picocli.CommandLine;
 
-@CommandLine.Command(
-    name = "jib",
-    versionProvider = VersionInfo.class,
-    mixinStandardHelpOptions = true,
-    showAtFileInUsageHelp = true,
-    synopsisSubcommandLabel = "COMMAND",
-    description = "A tool for creating container images",
-    subcommands = {Build.class, Jar.class})
-public class JibCli {
+public class VersionInfo implements CommandLine.IVersionProvider {
+  public static final String TOOL_NAME = "jib-cli";
 
-  /**
-   * The magic starts here.
-   *
-   * @param args the command-line arguments
-   */
-  public static void main(String[] args) {
-    int exitCode = new CommandLine(new JibCli()).execute(args);
-    System.exit(exitCode);
+  @Override
+  public String[] getVersion() throws Exception {
+    return new String[] {getVersionSimple()};
+  }
+
+  public static String getVersionSimple() {
+    return "preview";
   }
 }
