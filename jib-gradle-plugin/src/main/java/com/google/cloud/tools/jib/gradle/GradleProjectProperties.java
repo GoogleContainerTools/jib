@@ -141,6 +141,8 @@ public class GradleProjectProperties implements ProjectProperties {
 
       case Auto:
         // Enables progress footer when ANSI is supported (Windows or TERM not 'dumb').
+        // Unlike jib-maven-plugin, we cannot test "System.console() != null".
+        // https://github.com/GoogleContainerTools/jib/issues/2920#issuecomment-749234458
         return Os.isFamily(Os.FAMILY_WINDOWS) || !"dumb".equals(System.getenv("TERM"));
 
       default:

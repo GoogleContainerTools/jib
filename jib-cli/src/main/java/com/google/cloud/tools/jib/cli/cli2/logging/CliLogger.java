@@ -80,7 +80,7 @@ public class CliLogger {
       case auto:
         // Enables progress footer when ANSI is supported (Windows or TERM not 'dumb').
         return System.getProperty("os.name").startsWith("windows")
-            || !"dumb".equals(System.getenv("TERM"));
+            || (System.console() != null && !"dumb".equals(System.getenv("TERM")));
       case rich:
       default:
         return true;

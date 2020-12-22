@@ -205,12 +205,6 @@ public class CliLoggerTest {
   }
 
   @Test
-  public void testIsRightConsole_autoTermTrue() {
-    environmentVariables.set("TERM", "not-dumb");
-    assertThat(CliLogger.isRichConsole(ConsoleOutput.auto)).isTrue();
-  }
-
-  @Test
   public void testIsRightConsole_autoDumbTermFalse() {
     environmentVariables.set("TERM", "dumb");
     assertThat(CliLogger.isRichConsole(ConsoleOutput.auto)).isFalse();
