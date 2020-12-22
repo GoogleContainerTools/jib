@@ -48,7 +48,7 @@ publishing {
 release {
   tagTemplate = 'v$version-build-plan'
   git {
-    requireBranch = /^build_plan_release_v\d+.*$/  //regex
+    requireBranch = /^build-plan-release-v\d+.*$/  //regex
   }
 }
 /* RELEASE */
