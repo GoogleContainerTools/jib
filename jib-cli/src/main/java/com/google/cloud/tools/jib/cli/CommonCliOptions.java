@@ -14,13 +14,13 @@
  * the License.
  */
 
-package com.google.cloud.tools.jib.cli.cli2;
+package com.google.cloud.tools.jib.cli;
 
 import static com.google.cloud.tools.jib.api.Jib.TAR_IMAGE_PREFIX;
 
 import com.google.cloud.tools.jib.api.Credential;
-import com.google.cloud.tools.jib.cli.cli2.logging.ConsoleOutput;
-import com.google.cloud.tools.jib.cli.cli2.logging.Verbosity;
+import com.google.cloud.tools.jib.cli.logging.ConsoleOutput;
+import com.google.cloud.tools.jib.cli.logging.Verbosity;
 import com.google.common.base.Verify;
 import java.nio.file.Path;
 import java.util.Collections;

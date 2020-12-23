@@ -14,7 +14,7 @@
  * the License.
  */
 
-package com.google.cloud.tools.jib.cli.cli2;
+package com.google.cloud.tools.jib.cli;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Charsets;

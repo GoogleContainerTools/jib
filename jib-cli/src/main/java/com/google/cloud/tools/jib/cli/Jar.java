@@ -14,89 +14,67 @@
  * the License.
  */
 
-package com.google.cloud.tools.jib.cli.cli2;
+package com.google.cloud.tools.jib.cli;
 
 import com.google.cloud.tools.jib.api.Containerizer;
 import com.google.cloud.tools.jib.api.JibContainerBuilder;
-import com.google.cloud.tools.jib.api.LogEvent.Level;
-import com.google.cloud.tools.jib.cli.buildfile.BuildFiles;
-import com.google.cloud.tools.jib.cli.cli2.logging.CliLogger;
+import com.google.cloud.tools.jib.api.LogEvent;
+import com.google.cloud.tools.jib.cli.jar.JarFiles;
+import com.google.cloud.tools.jib.cli.jar.ProcessingMode;
+import com.google.cloud.tools.jib.cli.logging.CliLogger;
+import com.google.cloud.tools.jib.filesystem.TempDirectoryProvider;
 import com.google.cloud.tools.jib.plugins.common.logging.ConsoleLogger;
 import com.google.cloud.tools.jib.plugins.common.logging.SingleThreadedExecutor;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Verify;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
-import java.util.Collections;
-import java.util.Map;
 import java.util.concurrent.Callable;
 import picocli.CommandLine;
 import picocli.CommandLine.Model.CommandSpec;
 
 @CommandLine.Command(
-    name = "build",
+    name = "jar",
     showAtFileInUsageHelp = true,
-    description = "Build a container")
-public class Build implements Callable<Integer> {
+    description = "Containerize a jar",
+    hidden = true)
+public class Jar implements Callable<Integer> {
 
   @CommandLine.Spec
   @SuppressWarnings("NullAway.Init") // initialized by picocli
   private CommandSpec spec;
 
   @CommandLine.Mixin
-  @SuppressWarnings("NullAway.Init") // initialized by picocli
   @VisibleForTesting
+  @SuppressWarnings("NullAway.Init") // initialized by picocli
   CommonCliOptions commonCliOptions;
 
-  @CommandLine.Option(
-      names = {"-c", "--context"},
-      defaultValue = ".",
-      paramLabel = "<project-root>",
-      description = "The context root directory of the build (ex: path/to/my/build/things)")
+  @CommandLine.Parameters(description = "The path to the jar file (ex: path/to/my-jar.jar)")
   @SuppressWarnings("NullAway.Init") // initialized by picocli
-  private Path contextRoot;
+  private Path jarFile;
 
   @CommandLine.Option(
-      names = {"-b", "--build-file"},
-      paramLabel = "<build-file>",
-      description = "The path to the build file (ex: path/to/other-jib.yaml)")
-  @SuppressWarnings("NullAway.Init") // initialized by picocli
-  private Path buildFile;
-
-  @CommandLine.Option(
-      names = {"-p", "--parameter"},
-      paramLabel = "<name>=<value>",
+      names = "--mode",
+      defaultValue = "exploded",
+      paramLabel = "<mode>",
       description =
-          "templating parameter to inject into build file, replace $${<name>} with <value> (repeatable)")
-  private Map<String, String> templateParameters = Collections.emptyMap();
-
-  public Path getContextRoot() {
-    return Verify.verifyNotNull(contextRoot);
-  }
-
-  /**
-   * Returns a user configured Path to a buildfile and if none is configured returns jib.yaml in
-   * {@link #getContextRoot()}.
-   *
-   * @return a path to a bulidfile
-   */
-  public Path getBuildFile() {
-    if (buildFile == null) {
-      return getContextRoot().resolve("jib.yaml");
-    }
-    return buildFile;
-  }
-
-  public Map<String, String> getTemplateParameters() {
-    return templateParameters;
-  }
+          "The jar processing mode, candidates: ${COMPLETION-CANDIDATES}, default: ${DEFAULT-VALUE}")
+  @SuppressWarnings("NullAway.Init") // initialized by picocli
+  private ProcessingMode mode;
 
   @Override
   public Integer call() {
+    try {
+      // Temporarily disable the command, but allow to proceed in tests.
+      Class.forName("org.junit.Test");
+    } catch (ClassNotFoundException ex) {
+      throw new UnsupportedOperationException("jar command not implemented");
+    }
+
     commonCliOptions.validate();
     SingleThreadedExecutor executor = new SingleThreadedExecutor();
-    try {
+    try (TempDirectoryProvider tempDirectoryProvider = new TempDirectoryProvider()) {
+
       ConsoleLogger logger =
           CliLogger.newLogger(
               commonCliOptions.getVerbosity(),
@@ -105,23 +83,24 @@ public class Build implements Callable<Integer> {
               spec.commandLine().getErr(),
               executor);
 
-      if (!Files.isReadable(buildFile)) {
-        logger.log(
-            Level.ERROR,
-            "The Build File YAML either does not exist or cannot be opened for reading: "
-                + buildFile);
+      if (!Files.exists(jarFile)) {
+        logger.log(LogEvent.Level.ERROR, "The file path provided does not exist: " + jarFile);
         return 1;
       }
-      if (!Files.isRegularFile(buildFile)) {
-        logger.log(Level.ERROR, "Build File YAML path is a not a file: " + buildFile);
+      if (Files.isDirectory(jarFile)) {
+        logger.log(
+            LogEvent.Level.ERROR,
+            "The file path provided is for a directory. Please provide a path to a JAR: "
+                + jarFile);
         return 1;
       }
 
-      CacheDirectories cacheDirectories = CacheDirectories.from(commonCliOptions, contextRoot);
+      CacheDirectories cacheDirectories =
+          CacheDirectories.from(commonCliOptions, jarFile.toAbsolutePath().getParent());
       Containerizer containerizer = Containerizers.from(commonCliOptions, logger, cacheDirectories);
 
       JibContainerBuilder containerBuilder =
-          BuildFiles.toJibContainerBuilder(contextRoot, buildFile, this, commonCliOptions, logger);
+          JarFiles.toJibContainerBuilder(jarFile, tempDirectoryProvider.newDirectory(), mode);
 
       containerBuilder.containerize(containerizer);
     } catch (Exception ex) {
