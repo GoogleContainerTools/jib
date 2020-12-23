@@ -42,9 +42,8 @@ jobs:
       - name: Run Gradle release
         run: |
           git checkout -b ${{ github.event.inputs.project }}-release-v${{ github.event.inputs.release_version }}
-          # TODO: set this to the GitHub user triggering the workflow
-          git config user.email "chanseok@google.com"
-          git config user.name "Chanseok Oh"
+          git config user.email ${{ github.actor }}@users.noreply.github.com
+          git config user.name ${{ github.actor }}
 
           PROJECT=$( case ${{ github.event.inputs.project }} in
             extension-common) echo jib-plugins-extension-common ;;
