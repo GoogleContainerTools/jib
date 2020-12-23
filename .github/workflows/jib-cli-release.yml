@@ -22,7 +22,7 @@ jobs:
             exit 1
           fi
           # TODO: run integration test? (Requries auth with GCP.)
-          #./gradlew clean build --stacktrace
+          ./gradlew clean build --stacktrace
 
       - name: Run Gradle release
         run: |
