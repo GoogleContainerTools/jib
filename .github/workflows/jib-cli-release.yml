@@ -30,7 +30,6 @@ jobs:
           # TODO: set this to the GitHub user triggering the workflow
           git config user.email ${{ github.actor }}@users.noreply.github.com
           git config user.name ${{ github.actor }}
-          ${{ github.actor }} <${{ github.actor }}@users.noreply.github.com>
           # This creates the tag (e.g., "v0.1.0-cli") and pushes the updated
           # branch (e.g., "cli-release-v0.1.0") and the new tag.
           ./gradlew jib-cli:release \
