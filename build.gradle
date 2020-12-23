@@ -212,6 +212,7 @@ subprojects {
 
   configurations {
     integrationTestImplementation.extendsFrom testImplementation
+    integrationTestImplementation.setCanBeResolved(true)
     integrationTestRuntime.extendsFrom testRuntime
   }
 
