@@ -51,12 +51,12 @@ subprojects {
   /* PROJECT DEPENDENCY VERSIONS */
   // define all common versioned dependencies here
   project.ext.dependencyStrings = [
-    // For Google libraries, check <http-client-bom.version>, <google.auth.version>, <guava.version>,
-    // ... in https://github.com/googleapis/google-cloud-java/blob/master/google-cloud-clients/pom.xml
-    // for best compatibility.
-    GOOGLE_HTTP_CLIENT: 'com.google.http-client:google-http-client:1.34.0',
-    GOOGLE_HTTP_CLIENT_APACHE_V2: 'com.google.http-client:google-http-client-apache-v2:1.34.0',
-    GOOGLE_AUTH_LIBRARY_OAUTH2_HTTP: 'com.google.auth:google-auth-library-oauth2-http:0.18.0',
+    // For Google libraries, check the following boms for best compatibility.
+    // - https://github.com/googleapis/java-shared-dependencies
+    // - https://github.com/googleapis/java-cloud-bom
+    GOOGLE_HTTP_CLIENT: 'com.google.http-client:google-http-client:1.38.0',
+    GOOGLE_HTTP_CLIENT_APACHE_V2: 'com.google.http-client:google-http-client-apache-v2:1.38.0',
+    GOOGLE_AUTH_LIBRARY_OAUTH2_HTTP: 'com.google.auth:google-auth-library-oauth2-http:0.22.2',
     GUAVA: 'com.google.guava:guava:30.1-jre',
     JSR305: 'com.google.code.findbugs:jsr305:3.0.2', // transitively pulled in by GUAVA
 
