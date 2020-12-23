@@ -82,7 +82,7 @@ jobs:
 
             ---
             ### Major Changes
-            
+
             See [CHANGELOG.md](https://github.com/GoogleContainerTools/jib/blob/master/jib-${{ github.event.inputs.project }}-plugin/CHANGELOG.md) for more details.
 
       - name: Draft Jib Core GitHub release
