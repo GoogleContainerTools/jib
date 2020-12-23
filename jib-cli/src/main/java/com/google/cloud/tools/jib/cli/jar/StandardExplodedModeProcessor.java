@@ -91,6 +91,7 @@ public class StandardExplodedModeProcessor implements JarModeProcessor {
             "`Main-Class:` attribute for an application main class not defined in the input JAR's "
                 + "manifest (`META-INF/MANIFEST.MF` in the JAR).");
       }
+      System.out.println(mainClass);
       String classpath =
           JarProcessorHelper.APP_ROOT
               + "/explodedJar:"

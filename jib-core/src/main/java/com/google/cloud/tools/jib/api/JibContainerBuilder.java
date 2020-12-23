@@ -596,6 +596,7 @@ public class JibContainerBuilder {
       logSources(buildContext.getEventHandlers());
 
       BuildResult buildResult = containerizer.run(buildContext);
+      System.err.println("AFTER RUN");
       return JibContainer.from(buildContext, buildResult);
 
     } catch (ExecutionException ex) {

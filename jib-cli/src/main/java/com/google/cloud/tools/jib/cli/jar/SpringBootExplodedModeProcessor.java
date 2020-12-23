@@ -45,15 +45,11 @@ public class SpringBootExplodedModeProcessor implements JarModeProcessor {
 
   @Override
   public List<FileEntriesLayer> createLayers() throws IOException {
-    if (jarPath == null) {
+    if (tempDirectoryPath == null || jarPath == null) {
       return new ArrayList<>();
     }
     try (JarFile jarFile = new JarFile(jarPath.toFile())) {
       ZipEntry layerIndex = jarFile.getEntry("BOOT-INF/layers.idx");
-
-      if (tempDirectoryPath == null || jarPath == null) {
-        return new ArrayList<>();
-      }
 
       Path localExplodedJarRoot = tempDirectoryPath;
       ZipUtil.unzip(jarPath, localExplodedJarRoot);

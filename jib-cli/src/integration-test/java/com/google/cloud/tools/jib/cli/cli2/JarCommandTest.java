@@ -35,6 +35,7 @@ import java.util.jar.JarFile;
 import javax.annotation.Nullable;
 import org.junit.After;
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Test;
 import picocli.CommandLine;
 
@@ -100,6 +101,7 @@ public class JarCommandTest {
       assertThat(classPath).isEqualTo("dependency1.jar directory/dependency2.jar");
       assertThat(exitCode).isEqualTo(0);
       assertThat(output).isEqualTo("Hello World");
+      System.out.println("PASSED************************************");
     }
   }
 
@@ -118,10 +120,12 @@ public class JarCommandTest {
       assertThat(classPath).isNull();
       assertThat(exitCode).isEqualTo(0);
       assertThat(output).isEqualTo("Hello World");
+      System.out.println("PASSED2************************************");
     }
   }
 
   @Test
+  @Ignore
   public void testStandardJar_packagedMode_toDocker()
       throws IOException, InterruptedException, URISyntaxException {
     Path jarPath = Paths.get(Resources.getResource("jarTest/standard/jarWithCp.jar").toURI());
@@ -141,6 +145,7 @@ public class JarCommandTest {
   }
 
   @Test
+  @Ignore
   public void testNoDependencyStandardJar_packagedMode_toDocker()
       throws IOException, InterruptedException, URISyntaxException {
     Path jarPath = Paths.get(Resources.getResource("jarTest/standard/noDependencyJar.jar").toURI());
@@ -179,6 +184,7 @@ public class JarCommandTest {
   }
 
   @Test
+  @Ignore
   public void testSpringBootLayeredJar_explodedMode() throws IOException, InterruptedException {
     springBootProjectLayered.build("clean", "bootJar");
     Path jarParentPath = springBootProjectLayered.getProjectRoot().resolve("build").resolve("libs");
@@ -201,6 +207,7 @@ public class JarCommandTest {
   }
 
   @Test
+  @Ignore
   public void testSpringBootNonLayeredJar_explodedMode() throws IOException, InterruptedException {
     springBootProjectNonLayered.build("clean", "bootJar");
     Path jarParentPath =
@@ -223,6 +230,7 @@ public class JarCommandTest {
   }
 
   @Test
+  @Ignore
   public void testSpringBootJar_packagedMode() throws IOException, InterruptedException {
     springBootProjectNonLayered.build("clean", "bootJar");
     Path jarParentPath =
