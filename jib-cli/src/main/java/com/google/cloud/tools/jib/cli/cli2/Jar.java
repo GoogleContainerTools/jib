@@ -95,18 +95,22 @@ public class Jar implements Callable<Integer> {
       JibContainerBuilder containerBuilder;
       if (jarType.equals(JarType.SPRING_BOOT) && mode.equals(ProcessingMode.packaged)) {
         SpringBootPackagedModeProcessor modeProcessor = new SpringBootPackagedModeProcessor();
-        containerBuilder = JarFiles.toJibContainerBuilder(jarFile, modeProcessor);
+        modeProcessor.setJarPath(jarFile);
+        containerBuilder = JarFiles.toJibContainerBuilder(modeProcessor);
       } else if (jarType.equals(JarType.SPRING_BOOT) && !mode.equals(ProcessingMode.packaged)) {
         SpringBootExplodedModeProcessor modeProcessor = new SpringBootExplodedModeProcessor();
+        modeProcessor.setJarPath(jarFile);
         modeProcessor.setTempDirectoryPath(tempDirectoryProvider.newDirectory());
-        containerBuilder = JarFiles.toJibContainerBuilder(jarFile, modeProcessor);
+        containerBuilder = JarFiles.toJibContainerBuilder(modeProcessor);
       } else if (jarType.equals(JarType.STANDARD) && mode.equals(ProcessingMode.packaged)) {
         StandardPackagedModeProcessor modeProcessor = new StandardPackagedModeProcessor();
-        containerBuilder = JarFiles.toJibContainerBuilder(jarFile, modeProcessor);
+        modeProcessor.setJarPath(jarFile);
+        containerBuilder = JarFiles.toJibContainerBuilder(modeProcessor);
       } else {
         StandardExplodedModeProcessor modeProcessor = new StandardExplodedModeProcessor();
+        modeProcessor.setJarPath(jarFile);
         modeProcessor.setTempDirectoryPath(tempDirectoryProvider.newDirectory());
-        containerBuilder = JarFiles.toJibContainerBuilder(jarFile, modeProcessor);
+        containerBuilder = JarFiles.toJibContainerBuilder(modeProcessor);
       }
       containerBuilder.containerize(containerizer);
     } catch (Exception ex) {

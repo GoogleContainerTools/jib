@@ -41,12 +41,13 @@ public class StandardPackagedModeProcessorTest {
       "jar/standard/standardJarWithClassPath.jar";
 
   @Test
-  public void testCreateLayersForPackagedStandard_emptyJar()
-      throws IOException, URISyntaxException {
+  public void testCreateLayers_emptyJar() throws IOException, URISyntaxException {
     Path standardJar = Paths.get(Resources.getResource(STANDARD_JAR_EMPTY).toURI());
     StandardPackagedModeProcessor standardPackagedModeProcessor =
         new StandardPackagedModeProcessor();
-    List<FileEntriesLayer> layers = standardPackagedModeProcessor.createLayers(standardJar);
+    standardPackagedModeProcessor.setJarPath(standardJar);
+
+    List<FileEntriesLayer> layers = standardPackagedModeProcessor.createLayers();
 
     assertThat(layers.size()).isEqualTo(1);
 
@@ -58,13 +59,14 @@ public class StandardPackagedModeProcessorTest {
   }
 
   @Test
-  public void testCreateLayersForPackagedStandard_withClassPathInManifest()
-      throws IOException, URISyntaxException {
+  public void testCreateLayers_withClassPathInManifest() throws IOException, URISyntaxException {
     Path standardJar =
         Paths.get(Resources.getResource(STANDARD_JAR_WITH_CLASS_PATH_MANIFEST).toURI());
     StandardPackagedModeProcessor standardPackagedModeProcessor =
         new StandardPackagedModeProcessor();
-    List<FileEntriesLayer> layers = standardPackagedModeProcessor.createLayers(standardJar);
+    standardPackagedModeProcessor.setJarPath(standardJar);
+
+    List<FileEntriesLayer> layers = standardPackagedModeProcessor.createLayers();
 
     assertThat(layers.size()).isEqualTo(3);
 
@@ -102,15 +104,15 @@ public class StandardPackagedModeProcessorTest {
   }
 
   @Test
-  public void testCreateLayersForPackagedStandard_dependencyDoesNotExist()
-      throws URISyntaxException {
+  public void testCreateLayers_dependencyDoesNotExist() throws URISyntaxException {
     Path standardJar = Paths.get(Resources.getResource(STANDARD_SINGLE_DEPENDENCY_JAR).toURI());
     StandardPackagedModeProcessor standardPackagedModeProcessor =
         new StandardPackagedModeProcessor();
+    standardPackagedModeProcessor.setJarPath(standardJar);
+
     IllegalArgumentException exception =
         assertThrows(
-            IllegalArgumentException.class,
-            () -> standardPackagedModeProcessor.createLayers(standardJar));
+            IllegalArgumentException.class, () -> standardPackagedModeProcessor.createLayers());
     assertThat(exception)
         .hasMessageThat()
         .isEqualTo(
@@ -119,14 +121,16 @@ public class StandardPackagedModeProcessorTest {
   }
 
   @Test
-  public void testComputeEntrypointForPackagedStandard_noMainClass() throws URISyntaxException {
+  public void testComputeEntrypoint_noMainClass() throws URISyntaxException {
     Path standardJar = Paths.get(Resources.getResource(STANDARD_JAR_EMPTY).toURI());
     StandardPackagedModeProcessor standardPackagedModeProcessor =
         new StandardPackagedModeProcessor();
+    standardPackagedModeProcessor.setJarPath(standardJar);
+
     IllegalArgumentException exception =
         assertThrows(
             IllegalArgumentException.class,
-            () -> standardPackagedModeProcessor.computeEntrypoint(standardJar));
+            () -> standardPackagedModeProcessor.computeEntrypoint());
 
     assertThat(exception)
         .hasMessageThat()
@@ -136,14 +140,14 @@ public class StandardPackagedModeProcessorTest {
   }
 
   @Test
-  public void testComputeEntrypointForPackagedStandard_withMainClass()
-      throws IOException, URISyntaxException {
+  public void testComputeEntrypoint_withMainClass() throws IOException, URISyntaxException {
     Path standardJar =
         Paths.get(Resources.getResource(STANDARD_JAR_WITH_CLASS_PATH_MANIFEST).toURI());
     StandardPackagedModeProcessor standardPackagedModeProcessor =
         new StandardPackagedModeProcessor();
-    ImmutableList<String> actualEntrypoint =
-        standardPackagedModeProcessor.computeEntrypoint(standardJar);
+    standardPackagedModeProcessor.setJarPath(standardJar);
+
+    ImmutableList<String> actualEntrypoint = standardPackagedModeProcessor.computeEntrypoint();
 
     assertThat(actualEntrypoint)
         .isEqualTo(ImmutableList.of("java", "-jar", "/app/standardJarWithClassPath.jar"));

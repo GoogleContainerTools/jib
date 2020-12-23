@@ -19,7 +19,6 @@ package com.google.cloud.tools.jib.cli.jar;
 import com.google.cloud.tools.jib.api.buildplan.FileEntriesLayer;
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
-import java.nio.file.Path;
 import java.util.List;
 
 /** Interface to process jar file contents and create layers. */
@@ -28,19 +27,17 @@ public interface JarModeProcessor {
   /**
    * Creates layers on container for a jar.
    *
-   * @param jarPath path to jar file
    * @return list of {@link FileEntriesLayer}
    * @throws IOException if I/O error occurs when opening the jar file or if temporary directory
    *     provided doesn't exist
    */
-  List<FileEntriesLayer> createLayers(Path jarPath) throws IOException;
+  List<FileEntriesLayer> createLayers() throws IOException;
 
   /**
    * Computes the entrypoint for a jar.
    *
-   * @param jarPath path to jar file
    * @return list of {@link String} representing entrypoint
    * @throws IOException if I/O error occurs when opening the jar file
    */
-  ImmutableList<String> computeEntrypoint(Path jarPath) throws IOException;
+  ImmutableList<String> computeEntrypoint() throws IOException;
 }

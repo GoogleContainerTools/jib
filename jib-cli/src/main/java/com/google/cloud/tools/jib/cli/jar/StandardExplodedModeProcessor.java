@@ -32,16 +32,16 @@ import javax.annotation.Nullable;
 public class StandardExplodedModeProcessor implements JarModeProcessor {
 
   @Nullable private static Path tempDirectoryPath = null;
+  @Nullable private static Path jarPath = null;
 
   @Override
-  public List<FileEntriesLayer> createLayers(Path jarPath) throws IOException {
+  public List<FileEntriesLayer> createLayers() throws IOException {
+    if (tempDirectoryPath == null || jarPath == null) {
+      return new ArrayList<>();
+    }
     // Add dependencies layers.
     List<FileEntriesLayer> layers =
         JarProcessorHelper.getDependenciesLayers(jarPath, ProcessingMode.exploded);
-
-    if (tempDirectoryPath == null) {
-      return new ArrayList<>();
-    }
 
     // Determine class and resource files in the directory containing jar contents and create
     // FileEntriesLayer for each type of layer (classes or resources), while maintaining the
@@ -75,12 +75,14 @@ public class StandardExplodedModeProcessor implements JarModeProcessor {
   /**
    * Computes the entrypoint for a standard jar in exploded mode.
    *
-   * @param jarPath path to jar file
    * @return list of {@link String} representing entrypoint
    * @throws IOException if I/O error occurs when opening the jar file
    */
   @Override
-  public ImmutableList<String> computeEntrypoint(Path jarPath) throws IOException {
+  public ImmutableList<String> computeEntrypoint() throws IOException {
+    if (jarPath == null) {
+      return ImmutableList.of();
+    }
     try (JarFile jarFile = new JarFile(jarPath.toFile())) {
       String mainClass =
           jarFile.getManifest().getMainAttributes().getValue(Attributes.Name.MAIN_CLASS);
@@ -100,5 +102,9 @@ public class StandardExplodedModeProcessor implements JarModeProcessor {
 
   public void setTempDirectoryPath(Path tempDirPath) {
     tempDirectoryPath = tempDirPath;
+  }
+
+  public void setJarPath(Path path) {
+    jarPath = path;
   }
 }

@@ -41,13 +41,17 @@ import javax.annotation.Nullable;
 public class SpringBootExplodedModeProcessor implements JarModeProcessor {
 
   @Nullable private static Path tempDirectoryPath = null;
+  @Nullable private static Path jarPath = null;
 
   @Override
-  public List<FileEntriesLayer> createLayers(Path jarPath) throws IOException {
+  public List<FileEntriesLayer> createLayers() throws IOException {
+    if (jarPath == null) {
+      return new ArrayList<>();
+    }
     try (JarFile jarFile = new JarFile(jarPath.toFile())) {
       ZipEntry layerIndex = jarFile.getEntry("BOOT-INF/layers.idx");
 
-      if (tempDirectoryPath == null) {
+      if (tempDirectoryPath == null || jarPath == null) {
         return new ArrayList<>();
       }
 
@@ -121,7 +125,7 @@ public class SpringBootExplodedModeProcessor implements JarModeProcessor {
   }
 
   @Override
-  public ImmutableList<String> computeEntrypoint(Path jarPath) {
+  public ImmutableList<String> computeEntrypoint() {
     return ImmutableList.of(
         "java",
         "-cp",
@@ -200,5 +204,9 @@ public class SpringBootExplodedModeProcessor implements JarModeProcessor {
 
   public void setTempDirectoryPath(Path tempDirPath) {
     tempDirectoryPath = tempDirPath;
+  }
+
+  public void setJarPath(Path path) {
+    jarPath = path;
   }
 }

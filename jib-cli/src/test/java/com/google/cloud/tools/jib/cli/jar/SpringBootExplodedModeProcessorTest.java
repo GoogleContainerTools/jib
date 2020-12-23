@@ -45,8 +45,7 @@ public class SpringBootExplodedModeProcessorTest {
   @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
   @Test
-  public void testCreateLayersForExplodedLayeredSpringBoot()
-      throws IOException, URISyntaxException {
+  public void testCreateLayers_layered_allListed() throws IOException, URISyntaxException {
     // BOOT-INF/layers.idx for this springboot jar as shown below:
     // - "dependencies":
     //   - "BOOT-INF/lib/dependency1.jar"
@@ -63,7 +62,8 @@ public class SpringBootExplodedModeProcessorTest {
     SpringBootExplodedModeProcessor springBootExplodedModeProcessor =
         new SpringBootExplodedModeProcessor();
     springBootExplodedModeProcessor.setTempDirectoryPath(destDir);
-    List<FileEntriesLayer> layers = springBootExplodedModeProcessor.createLayers(springBootJar);
+    springBootExplodedModeProcessor.setJarPath(springBootJar);
+    List<FileEntriesLayer> layers = springBootExplodedModeProcessor.createLayers();
 
     assertThat(layers.size()).isEqualTo(4);
 
@@ -117,7 +117,7 @@ public class SpringBootExplodedModeProcessorTest {
   }
 
   @Test
-  public void testCreateLayersForExplodedLayeredSpringBoot_singleEmptyLayerListed()
+  public void testCreateLayers_layered_singleEmptyLayerListed()
       throws IOException, URISyntaxException {
     // BOOT-INF/layers.idx for this springboot jar as shown below:
     // - "dependencies":
@@ -135,7 +135,8 @@ public class SpringBootExplodedModeProcessorTest {
     SpringBootExplodedModeProcessor springBootExplodedModeProcessor =
         new SpringBootExplodedModeProcessor();
     springBootExplodedModeProcessor.setTempDirectoryPath(destDir);
-    List<FileEntriesLayer> layers = springBootExplodedModeProcessor.createLayers(springBootJar);
+    springBootExplodedModeProcessor.setJarPath(springBootJar);
+    List<FileEntriesLayer> layers = springBootExplodedModeProcessor.createLayers();
 
     assertThat(layers.size()).isEqualTo(3);
 
@@ -179,7 +180,7 @@ public class SpringBootExplodedModeProcessorTest {
   }
 
   @Test
-  public void testCreateLayersForExplodedLayeredSpringBoot_allEmptyLayersListed()
+  public void testCreateLayers_layered_allEmptyLayersListed()
       throws IOException, URISyntaxException {
     // BOOT-INF/layers.idx for this springboot jar as shown below:
     // - "dependencies":
@@ -192,21 +193,22 @@ public class SpringBootExplodedModeProcessorTest {
     SpringBootExplodedModeProcessor springBootExplodedModeProcessor =
         new SpringBootExplodedModeProcessor();
     springBootExplodedModeProcessor.setTempDirectoryPath(destDir);
-    List<FileEntriesLayer> layers = springBootExplodedModeProcessor.createLayers(springBootJar);
+    springBootExplodedModeProcessor.setJarPath(springBootJar);
+    List<FileEntriesLayer> layers = springBootExplodedModeProcessor.createLayers();
 
     assertThat(layers.size()).isEqualTo(0);
   }
 
   @Test
-  public void testCreateLayersForExplodedNonLayeredSpringBoot()
-      throws IOException, URISyntaxException {
+  public void testCreateLayers_nonLayered() throws IOException, URISyntaxException {
     Path springBootJar = Paths.get(Resources.getResource(SPRING_BOOT_NOT_LAYERED).toURI());
 
     Path destDir = temporaryFolder.newFolder().toPath();
     SpringBootExplodedModeProcessor springBootExplodedModeProcessor =
         new SpringBootExplodedModeProcessor();
     springBootExplodedModeProcessor.setTempDirectoryPath(destDir);
-    List<FileEntriesLayer> layers = springBootExplodedModeProcessor.createLayers(springBootJar);
+    springBootExplodedModeProcessor.setJarPath(springBootJar);
+    List<FileEntriesLayer> layers = springBootExplodedModeProcessor.createLayers();
 
     assertThat(layers.size()).isEqualTo(5);
 

@@ -33,11 +33,12 @@ public class SpringBootPackagedModeProcessorTest {
   private static final String SPRING_BOOT_JAR = "jar/spring-boot/springboot_sample.jar";
 
   @Test
-  public void testCreateLayersForPackagedSpringBoot() throws URISyntaxException {
+  public void testCreateLayers() throws URISyntaxException {
     Path springBootJar = Paths.get(Resources.getResource(SPRING_BOOT_JAR).toURI());
     SpringBootPackagedModeProcessor springBootPackagedModeProcessor =
         new SpringBootPackagedModeProcessor();
-    List<FileEntriesLayer> layers = springBootPackagedModeProcessor.createLayers(springBootJar);
+    springBootPackagedModeProcessor.setJarPath(springBootJar);
+    List<FileEntriesLayer> layers = springBootPackagedModeProcessor.createLayers();
 
     assertThat(layers.size()).isEqualTo(1);
 

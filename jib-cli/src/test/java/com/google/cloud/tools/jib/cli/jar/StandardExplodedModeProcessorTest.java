@@ -55,7 +55,9 @@ public class StandardExplodedModeProcessorTest {
     StandardExplodedModeProcessor standardExplodedModeProcessor =
         new StandardExplodedModeProcessor();
     standardExplodedModeProcessor.setTempDirectoryPath(destDir);
-    List<FileEntriesLayer> layers = standardExplodedModeProcessor.createLayers(standardJar);
+    standardExplodedModeProcessor.setJarPath(standardJar);
+
+    List<FileEntriesLayer> layers = standardExplodedModeProcessor.createLayers();
 
     assertThat(layers.size()).isEqualTo(1);
 
@@ -74,7 +76,9 @@ public class StandardExplodedModeProcessorTest {
     StandardExplodedModeProcessor standardExplodedModeProcessor =
         new StandardExplodedModeProcessor();
     standardExplodedModeProcessor.setTempDirectoryPath(destDir);
-    List<FileEntriesLayer> layers = standardExplodedModeProcessor.createLayers(standardJar);
+    standardExplodedModeProcessor.setJarPath(standardJar);
+
+    List<FileEntriesLayer> layers = standardExplodedModeProcessor.createLayers();
 
     assertThat(layers.size()).isEqualTo(4);
 
@@ -142,7 +146,8 @@ public class StandardExplodedModeProcessorTest {
     StandardExplodedModeProcessor standardExplodedModeProcessor =
         new StandardExplodedModeProcessor();
     standardExplodedModeProcessor.setTempDirectoryPath(destDir);
-    List<FileEntriesLayer> layers = standardExplodedModeProcessor.createLayers(standardJar);
+    standardExplodedModeProcessor.setJarPath(standardJar);
+    List<FileEntriesLayer> layers = standardExplodedModeProcessor.createLayers();
 
     assertThat(layers.size()).isEqualTo(2);
 
@@ -190,7 +195,8 @@ public class StandardExplodedModeProcessorTest {
     StandardExplodedModeProcessor standardExplodedModeProcessor =
         new StandardExplodedModeProcessor();
     standardExplodedModeProcessor.setTempDirectoryPath(destDir);
-    List<FileEntriesLayer> layers = standardExplodedModeProcessor.createLayers(standardJar);
+    standardExplodedModeProcessor.setJarPath(standardJar);
+    List<FileEntriesLayer> layers = standardExplodedModeProcessor.createLayers();
 
     assertThat(layers.size()).isEqualTo(2);
 
@@ -222,10 +228,11 @@ public class StandardExplodedModeProcessorTest {
     StandardExplodedModeProcessor standardExplodedModeProcessor =
         new StandardExplodedModeProcessor();
     standardExplodedModeProcessor.setTempDirectoryPath(destDir);
+    standardExplodedModeProcessor.setJarPath(standardJar);
+
     IllegalArgumentException exception =
         assertThrows(
-            IllegalArgumentException.class,
-            () -> standardExplodedModeProcessor.createLayers(standardJar));
+            IllegalArgumentException.class, () -> standardExplodedModeProcessor.createLayers());
     assertThat(exception)
         .hasMessageThat()
         .isEqualTo(
@@ -238,10 +245,11 @@ public class StandardExplodedModeProcessorTest {
     Path standardJar = Paths.get(Resources.getResource(STANDARD_JAR_EMPTY).toURI());
     StandardExplodedModeProcessor standardExplodedModeProcessor =
         new StandardExplodedModeProcessor();
+    standardExplodedModeProcessor.setJarPath(standardJar);
     IllegalArgumentException exception =
         assertThrows(
             IllegalArgumentException.class,
-            () -> standardExplodedModeProcessor.computeEntrypoint(standardJar));
+            () -> standardExplodedModeProcessor.computeEntrypoint());
 
     assertThat(exception)
         .hasMessageThat()
@@ -256,9 +264,9 @@ public class StandardExplodedModeProcessorTest {
         Paths.get(Resources.getResource(STANDARD_JAR_WITH_CLASS_PATH_MANIFEST).toURI());
     StandardExplodedModeProcessor standardExplodedModeProcessor =
         new StandardExplodedModeProcessor();
+    standardExplodedModeProcessor.setJarPath(standardJar);
 
-    ImmutableList<String> actualEntrypoint =
-        standardExplodedModeProcessor.computeEntrypoint(standardJar);
+    ImmutableList<String> actualEntrypoint = standardExplodedModeProcessor.computeEntrypoint();
 
     assertThat(actualEntrypoint)
         .isEqualTo(

@@ -20,14 +20,21 @@ import com.google.cloud.tools.jib.api.buildplan.FileEntriesLayer;
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.jar.Attributes;
 import java.util.jar.JarFile;
+import javax.annotation.Nullable;
 
 public class StandardPackagedModeProcessor implements JarModeProcessor {
 
+  @Nullable private static Path jarPath = null;
+
   @Override
-  public List<FileEntriesLayer> createLayers(Path jarPath) throws IOException {
+  public List<FileEntriesLayer> createLayers() throws IOException {
+    if (jarPath == null) {
+      return new ArrayList<>();
+    }
     // Add dependencies layers.
     List<FileEntriesLayer> layers =
         JarProcessorHelper.getDependenciesLayers(jarPath, ProcessingMode.packaged);
@@ -44,7 +51,10 @@ public class StandardPackagedModeProcessor implements JarModeProcessor {
   }
 
   @Override
-  public ImmutableList<String> computeEntrypoint(Path jarPath) throws IOException {
+  public ImmutableList<String> computeEntrypoint() throws IOException {
+    if (jarPath == null) {
+      return ImmutableList.of();
+    }
     try (JarFile jarFile = new JarFile(jarPath.toFile())) {
       String mainClass =
           jarFile.getManifest().getMainAttributes().getValue(Attributes.Name.MAIN_CLASS);
@@ -56,5 +66,9 @@ public class StandardPackagedModeProcessor implements JarModeProcessor {
       return ImmutableList.of(
           "java", "-jar", JarProcessorHelper.APP_ROOT + "/" + jarPath.getFileName().toString());
     }
+  }
+
+  public void setJarPath(Path path) {
+    jarPath = path;
   }
 }
