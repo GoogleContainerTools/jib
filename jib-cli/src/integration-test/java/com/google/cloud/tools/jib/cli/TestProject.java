@@ -79,9 +79,7 @@ public class TestProject extends TemporaryFolder implements Closeable {
     List<String> cmd = new ArrayList<>();
     cmd.add("./gradlew");
     cmd.addAll(Arrays.asList(gradleArguments));
-    new Command(cmd)
-        .setWorkingDir(projectRoot)
-        .run();
+    new Command(cmd).setWorkingDir(projectRoot).run();
   }
 
   public Path getProjectRoot() {
