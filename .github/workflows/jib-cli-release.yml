@@ -15,27 +15,22 @@ jobs:
       - name: Check out code
         uses: actions/checkout@v2
 
-      - name: Print GitHub context
-        run: echo "$GITHUB_CONTEXT"
-        env:
-          GITHUB_CONTEXT: ${{ toJson(github) }}
-
       - name: Build project
         run: |
           if [[ ! "${{ github.event.inputs.release_version }}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
             echo 'version "${{ github.event.inputs.release_version }}" not in ###.###.### format'
             exit 1
           fi
-          exit 1
           # TODO: run integration test? (Requries auth with GCP.)
-          ./gradlew clean build --stacktrace
+          #./gradlew clean build --stacktrace
 
       - name: Run Gradle release
         run: |
           git checkout -b cli-release-v${{ github.event.inputs.release_version }}
           # TODO: set this to the GitHub user triggering the workflow
-          git config user.email "chanseok@google.com"
-          git config user.name "Chanseok Oh"
+          git config user.email ${{ github.actor }}@users.noreply.github.com
+          git config user.name ${{ github.actor }}
+          ${{ github.actor }} <${{ github.actor }}@users.noreply.github.com>
           # This creates the tag (e.g., "v0.1.0-cli") and pushes the updated
           # branch (e.g., "cli-release-v0.1.0") and the new tag.
           ./gradlew jib-cli:release \
