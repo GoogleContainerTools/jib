@@ -15,12 +15,18 @@ jobs:
       - name: Check out code
         uses: actions/checkout@v2
 
+      - name: Print GitHub context
+        run: echo "$GITHUB_CONTEXT"
+        env:
+          GITHUB_CONTEXT: ${{ toJson(github) }}
+
       - name: Build project
         run: |
           if [[ ! "${{ github.event.inputs.release_version }}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
             echo 'version "${{ github.event.inputs.release_version }}" not in ###.###.### format'
             exit 1
           fi
+          exit 1
           # TODO: run integration test? (Requries auth with GCP.)
           ./gradlew clean build --stacktrace
 
@@ -53,7 +59,7 @@ jobs:
           source_branch: cli-release-v${{ github.event.inputs.release_version }}
           pr_title: "CLI release v${{ github.event.inputs.release_version }}"
           pr_body: "To be merged after the release is complete."
-    
+
       - name: Draft GitHub release
         uses: actions/create-release@v1
         id: create_release
