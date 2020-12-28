@@ -20,6 +20,7 @@ import com.google.cloud.tools.jib.api.Containerizer;
 import com.google.cloud.tools.jib.api.JibContainerBuilder;
 import com.google.cloud.tools.jib.api.LogEvent;
 import com.google.cloud.tools.jib.cli.jar.JarFiles;
+import com.google.cloud.tools.jib.cli.jar.JarModeProcessor;
 import com.google.cloud.tools.jib.cli.jar.JarProcessorHelper;
 import com.google.cloud.tools.jib.cli.jar.ProcessingMode;
 import com.google.cloud.tools.jib.cli.jar.SpringBootExplodedModeProcessor;

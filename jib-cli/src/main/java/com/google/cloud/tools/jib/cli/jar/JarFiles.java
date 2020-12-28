@@ -40,9 +40,9 @@ public class JarFiles {
 
     // Use distroless as the base image.
     JibContainerBuilder containerBuilder = Jib.from("gcr.io/distroless/java");
+
     List<FileEntriesLayer> layers = modeProcessor.createLayers();
     List<String> entrypoint = modeProcessor.computeEntrypoint();
-
     containerBuilder.setEntrypoint(entrypoint).setFileEntriesLayers(layers);
     return containerBuilder;
   }

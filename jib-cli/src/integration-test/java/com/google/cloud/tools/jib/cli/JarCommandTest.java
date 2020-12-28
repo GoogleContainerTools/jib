@@ -118,7 +118,6 @@ public class JarCommandTest {
       assertThat(classPath).isNull();
       assertThat(exitCode).isEqualTo(0);
       assertThat(output).isEqualTo("Hello World");
-      System.out.println("PASSED2************************************");
     }
   }
 
