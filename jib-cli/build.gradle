@@ -34,7 +34,6 @@ dependencies {
   testImplementation dependencyStrings.SYSTEM_RULES
 
   integrationTestImplementation project(path:':jib-core', configuration:'integrationTests')
-  integrationTestImplementation gradleTestKit()
 }
 
 release {

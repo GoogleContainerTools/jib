@@ -40,12 +40,7 @@ import picocli.CommandLine;
 
 public class JarCommandTest {
 
-  @ClassRule
-  public static final TestProject springBootProjectLayered = new TestProject("springBootLayered");
-
-  @ClassRule
-  public static final TestProject springBootProjectNonLayered =
-      new TestProject("springBootNonLayered");
+  @ClassRule public static final TestProject springBootProject = new TestProject("spring-boot");
 
   @Nullable private String containerName;
 
@@ -180,9 +175,9 @@ public class JarCommandTest {
 
   @Test
   public void testSpringBootLayeredJar_explodedMode() throws IOException, InterruptedException {
-    springBootProjectLayered.build("clean", "bootJar");
-    Path jarParentPath = springBootProjectLayered.getProjectRoot().resolve("build").resolve("libs");
-    Path jarPath = jarParentPath.resolve("spring-boot-layered.jar");
+    springBootProject.build("-c", "settings-layered.gradle", "clean", "bootJar");
+    Path jarParentPath = springBootProject.getProjectRoot().resolve("build").resolve("libs");
+    Path jarPath = jarParentPath.resolve("spring-boot.jar");
 
     Integer exitCode =
         new CommandLine(new JibCli())
@@ -202,10 +197,9 @@ public class JarCommandTest {
 
   @Test
   public void testSpringBootNonLayeredJar_explodedMode() throws IOException, InterruptedException {
-    springBootProjectNonLayered.build("clean", "bootJar");
-    Path jarParentPath =
-        springBootProjectNonLayered.getProjectRoot().resolve("build").resolve("libs");
-    Path jarPath = jarParentPath.resolve("spring-boot-nonlayered.jar");
+    springBootProject.build("clean", "bootJar");
+    Path jarParentPath = springBootProject.getProjectRoot().resolve("build").resolve("libs");
+    Path jarPath = jarParentPath.resolve("spring-boot.jar");
 
     Integer exitCode =
         new CommandLine(new JibCli())
@@ -224,10 +218,9 @@ public class JarCommandTest {
 
   @Test
   public void testSpringBootJar_packagedMode() throws IOException, InterruptedException {
-    springBootProjectNonLayered.build("clean", "bootJar");
-    Path jarParentPath =
-        springBootProjectNonLayered.getProjectRoot().resolve("build").resolve("libs");
-    Path jarPath = jarParentPath.resolve("spring-boot-nonlayered.jar");
+    springBootProject.build("clean", "bootJar");
+    Path jarParentPath = springBootProject.getProjectRoot().resolve("build").resolve("libs");
+    Path jarPath = jarParentPath.resolve("spring-boot.jar");
     Integer exitCode =
         new CommandLine(new JibCli())
             .execute(

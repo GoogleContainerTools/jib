@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.cli;
 
+import com.google.cloud.tools.jib.Command;
 import com.google.cloud.tools.jib.filesystem.DirectoryWalker;
 import com.google.common.io.Resources;
 import java.io.Closeable;
@@ -24,14 +25,14 @@ import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import org.gradle.testkit.runner.BuildResult;
-import org.gradle.testkit.runner.GradleRunner;
-import org.gradle.util.GradleVersion;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import org.junit.rules.TemporaryFolder;
 
 public class TestProject extends TemporaryFolder implements Closeable {
 
-  private static final String PROJECTS_PATH_IN_RESOURCES = "jarTest/spring-boot/";
+  private static final String PROJECTS_PATH_IN_RESOURCES = "jarTest/";
 
   /** Copies test project {@code projectName} to {@code destination} folder. */
   private static void copyProject(String projectName, Path destination)
@@ -53,8 +54,6 @@ public class TestProject extends TemporaryFolder implements Closeable {
   }
 
   private final String testProjectName;
-  private final String gradleVersion = GradleVersion.version("5.6.4").getVersion();
-  private GradleRunner gradleRunner;
 
   private Path projectRoot;
 
@@ -74,13 +73,13 @@ public class TestProject extends TemporaryFolder implements Closeable {
 
     projectRoot = newFolder().toPath();
     copyProject(testProjectName, projectRoot);
-
-    gradleRunner =
-        GradleRunner.create().withGradleVersion(gradleVersion).withProjectDir(projectRoot.toFile());
   }
 
-  public BuildResult build(String... gradleArguments) {
-    return gradleRunner.withArguments(gradleArguments).build();
+  public void build(String... gradleArguments) throws IOException, InterruptedException {
+    List<String> cmd = new ArrayList<>();
+    cmd.add("./gradlew");
+    cmd.addAll(Arrays.asList(gradleArguments));
+    new Command(cmd).setWorkingDir(projectRoot).run();
   }
 
   public Path getProjectRoot() {
