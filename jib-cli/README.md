@@ -22,36 +22,141 @@ A tool for creating container images.
 ...
 ```
 
-## Examples
+## Usage
 
-### Using nginx to serve a static website
+Currently only one command is supported: `build`
 
-The following example creates an nginx-based container to serve static content that is found in `path/to/website`.
-The result is loaded to the local Docker daemon as `my-static-website`:
+```
+jib build -t gcr.io/my-project/my-image [options]
+```
 
-    $ ./build/install/jib/bin/jib build \
-      --docker \
-      nginx \
-      my-static-website \
-      --port 80 \
-      --entrypoint "nginx,-g,daemon off;" \
-      path/to/website:/usr/share/nginx/html
-    $ docker run -it --rm -p 8080:80 my-static-website
+#### Options
+```
+      [@<filename>...]      One or more argument files containing options.
+      --additional-tags=<tag>[,<tag>...]
+                            Additional tags for target image
+      --allow-insecure-registries
+                            Allow jib to communicate with registries over http
+                              (insecure)
+  -b, --build-file=<build-file>
+                            The path to the build file (ex: path/to/other-jib.
+                              yaml)
+      --base-image-cache=<cache-directory>
+                            A path to a base image cache
+  -c, --context=<project-root>
+                            The context root directory of the build (ex:
+                              path/to/my/build/things)
+      --console=<type>      set console output type, candidates: auto, rich,
+                              plain, default: auto
+      --credential-helper=<credential-helper>
+                            credential helper for communicating with both
+                              target and base image registries, either a path
+                              to the helper, or a suffix for an executable
+                              named `docker-credential-<suffix>`
+      --from-credential-helper=<credential-helper>
+                            credential helper for communicating with base image
+                              registry, either a path to the helper, or a
+                              suffix for an executable named
+                              `docker-credential-<suffix>`
+      --from-password[=<password>]
+                            password for communicating with base image registry
+      --from-username=<username>
+                            username for communicating with base image registry
+      --name=<image-reference>
+                            The image reference to inject into the tar
+                              configuration (required when using --target tar:
+                              //...)
+  -p, --parameter=<name>=<value>
+                            templating parameter to inject into build file,
+                              replace ${<name>} with <value> (repeatable)
+      --password[=<password>]
+                            password for communicating with both target and
+                              base image registries
+      --project-cache=<cache-directory>
+                            A path to the project cache
+      --send-credentials-over-http
+                            Allow jib to send credentials over http (very
+                              insecure)
+  -t, --target=<target-image>
+                            The destination image reference or jib style url,
+                            examples:
+                             gcr.io/project/image,
+                             registry://image-ref,
+                             docker://image,
+                             tar://path
+      --to-credential-helper=<credential-helper>
+                            credential helper for communicating with target
+                              registry, either a path to the helper, or a
+                              suffix for an executable named
+                              `docker-credential-<suffix>`
+      --to-password[=<password>]
+                            password for communicating with target image
+                              registry
+      --to-username=<username>
+                            username for communicating with target image
+                              registry
+      --username=<username> username for communicating with both target and
+                              base image registries
+      --verbosity=<level>   set logging verbosity, candidates: quiet, error,
+                              warn, lifecycle, info, debug, default: lifecycle
 
-### Containerizing a Java application
+```
 
-The following example uses _jib_ to containerize itself.  The image is pushed to a registry at `localhost:5000`:
+## Build File
 
-    $ ../gradlew installDist
-    $ ./build/install/jib/bin/jib --insecure build \
-      --registry \
-      gcr.io/distroless/java \
-      localhost:5000/jib:latest \
-      --entrypoint "java,-cp,/app/lib/*,com.google.cloud.tools.jib.cli.JibCli" \
-      build/install/jib/lib,/app/lib
-    $ docker run --rm localhost:5000/cram:latest
+The CLI uses a build file to define the container being built. The default is a file named `jib.yaml` in the project root.
 
-We need to use `--insecure` assuming the local registry does not support SSL.
+### Annotated `jib.yaml`
 
-(Note that we'd be better off using `jib-gradle-plugin` to create the container since it would create better layer strategy that negates the
-need to use a fatjar.)
+Contains all possible options of the `jib.yaml`
+
+```
+# required apiVersion and kind, no real value yet, should help with compatibility over version of the cli
+apiVersion: jib/v1alpha1
+kind: BuildFile
+
+# full base image specification with detail for manifest lists or multiple architectures
+from:
+  image: "ubuntu"
+  # optional: if missing, then defaults to `linux/amd64`
+  platforms:
+    - architecture: "arm"
+      os: "linux"
+    - architecture: "amd64"
+      os: "darwin"
+
+creationTime: 2000 # millis since epoch or an ISO 8601 creation time
+format: Docker # Docker (default) or OCI
+
+environment:
+  "KEY1": "v1"
+  "KEY2": "v2"
+labels:
+  "label1": "l1"
+  "label2": "l2"
+volumes:
+  - "/volume1"
+  - "/volume2"
+
+exposedPorts:
+  - "123/udp"
+  - "456"
+  - "789/tcp"
+
+user: "customUser"
+workingDirectory: "/home"
+entrypoint:
+  - "sh"
+  - "script.sh"
+cmd:
+  - "--param"
+  - "param"
+
+layers:
+  entries:
+    - name: "scripts"
+      files:
+        - src: "project/script.sh"
+          dest: "/home/script.sh"
+
+```
