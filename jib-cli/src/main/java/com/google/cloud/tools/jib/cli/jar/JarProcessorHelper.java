@@ -124,17 +124,6 @@ public class JarProcessorHelper {
     }
   }
 
-  static void addDependency(
-      FileEntriesLayer.Builder layerbuilder, Path fullDepPath, AbsoluteUnixPath pathOnContainer) {
-    if (!Files.exists(fullDepPath)) {
-      throw new IllegalArgumentException(
-          String.format(
-              "Dependency required by the JAR (as specified in `Class-Path` in the JAR manifest) doesn't exist: %s",
-              fullDepPath));
-    }
-    layerbuilder.addEntry(fullDepPath, pathOnContainer);
-  }
-
   static FileEntriesLayer addDirectoryContentsToLayer(
       String layerName,
       Path sourceRoot,
@@ -152,5 +141,16 @@ public class JarProcessorHelper {
               builder.addEntry(path, pathOnContainer);
             });
     return builder.build();
+  }
+
+  private static void addDependency(
+      FileEntriesLayer.Builder layerbuilder, Path fullDepPath, AbsoluteUnixPath pathOnContainer) {
+    if (!Files.exists(fullDepPath)) {
+      throw new IllegalArgumentException(
+          String.format(
+              "Dependency required by the JAR (as specified in `Class-Path` in the JAR manifest) doesn't exist: %s",
+              fullDepPath));
+    }
+    layerbuilder.addEntry(fullDepPath, pathOnContainer);
   }
 }

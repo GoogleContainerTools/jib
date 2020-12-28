@@ -44,8 +44,7 @@ public class StandardExplodedModeProcessor implements JarModeProcessor {
         JarProcessorHelper.getDependenciesLayers(jarPath, ProcessingMode.exploded);
 
     // Determine class and resource files in the directory containing jar contents and create
-    // FileEntriesLayer for each type of layer (classes or resources), while maintaining the
-    // file's original project structure.
+    // FileEntriesLayer for each type of layer (classes or resources).
     Path localExplodedJarRoot = tempDirectoryPath;
     ZipUtil.unzip(jarPath, localExplodedJarRoot);
     Predicate<Path> isClassFile = path -> path.getFileName().toString().endsWith(".class");
@@ -72,12 +71,6 @@ public class StandardExplodedModeProcessor implements JarModeProcessor {
     return layers;
   }
 
-  /**
-   * Computes the entrypoint for a standard jar in exploded mode.
-   *
-   * @return list of {@link String} representing entrypoint
-   * @throws IOException if I/O error occurs when opening the jar file
-   */
   @Override
   public ImmutableList<String> computeEntrypoint() throws IOException {
     if (jarPath == null) {

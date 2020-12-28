@@ -203,7 +203,6 @@ public class SpringBootExplodedModeProcessorTest {
   @Test
   public void testCreateLayers_nonLayered() throws IOException, URISyntaxException {
     Path springBootJar = Paths.get(Resources.getResource(SPRING_BOOT_NOT_LAYERED).toURI());
-
     Path destDir = temporaryFolder.newFolder().toPath();
     SpringBootExplodedModeProcessor springBootExplodedModeProcessor =
         new SpringBootExplodedModeProcessor();

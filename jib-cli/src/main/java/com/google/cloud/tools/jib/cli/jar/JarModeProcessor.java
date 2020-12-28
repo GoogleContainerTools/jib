@@ -21,7 +21,7 @@ import com.google.common.collect.ImmutableList;
 import java.io.IOException;
 import java.util.List;
 
-/** Interface to process jar file contents and create layers. */
+/** Interface to create layers and compute entrypoint from jar file contents. */
 public interface JarModeProcessor {
 
   /**

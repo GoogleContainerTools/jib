@@ -49,10 +49,9 @@ public class SpringBootExplodedModeProcessor implements JarModeProcessor {
       return new ArrayList<>();
     }
     try (JarFile jarFile = new JarFile(jarPath.toFile())) {
-      ZipEntry layerIndex = jarFile.getEntry("BOOT-INF/layers.idx");
-
       Path localExplodedJarRoot = tempDirectoryPath;
       ZipUtil.unzip(jarPath, localExplodedJarRoot);
+      ZipEntry layerIndex = jarFile.getEntry("BOOT-INF/layers.idx");
       if (layerIndex != null) {
         return createLayersForLayeredSpringBootJar(localExplodedJarRoot);
       }
@@ -137,8 +136,8 @@ public class SpringBootExplodedModeProcessor implements JarModeProcessor {
    * @return list of {@link FileEntriesLayer}
    * @throws IOException when an IO error occurs
    */
-  static List<FileEntriesLayer> createLayersForLayeredSpringBootJar(Path localExplodedJarRoot)
-      throws IOException {
+  private static List<FileEntriesLayer> createLayersForLayeredSpringBootJar(
+      Path localExplodedJarRoot) throws IOException {
     Path layerIndexPath = localExplodedJarRoot.resolve("BOOT-INF").resolve("layers.idx");
     Pattern layerNamePattern = Pattern.compile("- \"(.*)\":");
     Pattern layerEntryPattern = Pattern.compile("  - \"(.*)\"");
@@ -185,7 +184,7 @@ public class SpringBootExplodedModeProcessor implements JarModeProcessor {
     return layers;
   }
 
-  static Predicate<Path> isInListedDirectoryOrIsSameFile(
+  private static Predicate<Path> isInListedDirectoryOrIsSameFile(
       List<String> layerContents, Path localExplodedJarRoot) {
     Predicate<Path> predicate = Predicates.alwaysFalse();
     for (String pathName : layerContents) {
