@@ -23,7 +23,7 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import org.gradle.internal.impldep.org.junit.Test;
+import org.junit.Test;
 
 /** Tests for {@link JarProcessorHelper}. */
 public class JarProcessorHelperTest {

@@ -37,7 +37,7 @@ publishing {
 release {
   tagTemplate = 'v$version-extension-common'
   git {
-    requireBranch = /^extension_common_release_v\d+.*$/  //regex
+    requireBranch = /^extension-common-release-v\d+.*$/  //regex
   }
 }
 /* RELEASE */

@@ -75,7 +75,6 @@ import org.gradle.api.tasks.SourceSet;
 import org.gradle.api.tasks.SourceSetContainer;
 import org.gradle.api.tasks.SourceSetOutput;
 import org.gradle.api.tasks.TaskContainer;
-import org.gradle.api.tasks.TaskDependency;
 import org.gradle.api.tasks.TaskProvider;
 import org.gradle.jvm.tasks.Jar;
 import org.hamcrest.CoreMatchers;
@@ -116,11 +115,6 @@ public class GradleProjectPropertiesTest {
     @Override
     public Set<File> getFiles() {
       return files;
-    }
-
-    @Override
-    public TaskDependency getBuildDependencies() {
-      return task -> Collections.emptySet();
     }
   }
 

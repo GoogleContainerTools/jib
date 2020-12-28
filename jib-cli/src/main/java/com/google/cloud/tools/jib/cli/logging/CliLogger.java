@@ -14,7 +14,7 @@
  * the License.
  */
 
-package com.google.cloud.tools.jib.cli.cli2.logging;
+package com.google.cloud.tools.jib.cli.logging;
 
 import com.google.cloud.tools.jib.plugins.common.logging.ConsoleLogger;
 import com.google.cloud.tools.jib.plugins.common.logging.ConsoleLoggerBuilder;
@@ -80,7 +80,7 @@ public class CliLogger {
       case auto:
         // Enables progress footer when ANSI is supported (Windows or TERM not 'dumb').
         return System.getProperty("os.name").startsWith("windows")
-            || !"dumb".equals(System.getenv("TERM"));
+            || (System.console() != null && !"dumb".equals(System.getenv("TERM")));
       case rich:
       default:
         return true;

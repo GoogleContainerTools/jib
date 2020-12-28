@@ -61,7 +61,7 @@ release {
     'com.google.cloud.tools:jib-plugins-common',
   ]
   git {
-    requireBranch = /^gradle_release_v\d+.*$/  //regex
+    requireBranch = /^gradle-release-v\d+.*$/  //regex
   }
 }
 // Gradle Plugin Portal releases
@@ -72,6 +72,7 @@ pluginBundle {
 }
 
 gradlePlugin {
+  testSourceSets sourceSets.integrationTest, sourceSets.test
   plugins {
     jibPlugin {
       id = 'com.google.cloud.tools.jib'
@@ -89,11 +90,6 @@ eclipse.classpath.file.whenMerged {
   entries.each {
     if (it.path == 'src/test/resources' || it.path == 'src/integration-test/resources') {
       it.excludes += 'gradle/projects/'
-    }
-    // TODO: remove after upgrading to Gradle 5.6. (https://github.com/eclipse/buildship/issues/689)
-    if (it.path in ['src/test/java', 'src/test/resources',
-        'src/integration-test/java', 'src/integration-test/resources']) {
-      it.entryAttributes['test'] = 'true'
     }
   }
 }

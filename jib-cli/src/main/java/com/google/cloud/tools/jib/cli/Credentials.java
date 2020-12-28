@@ -14,7 +14,7 @@
  * the License.
  */
 
-package com.google.cloud.tools.jib.cli.cli2;
+package com.google.cloud.tools.jib.cli;
 
 import com.google.cloud.tools.jib.api.CredentialRetriever;
 import com.google.cloud.tools.jib.plugins.common.DefaultCredentialRetrievers;

@@ -42,9 +42,6 @@ public class JarFiles {
     JibContainerBuilder containerBuilder = Jib.from("gcr.io/distroless/java");
     List<FileEntriesLayer> layers = modeProcessor.createLayers();
     List<String> entrypoint = modeProcessor.computeEntrypoint();
-    for (String en : entrypoint) {
-      System.err.println(en);
-    }
 
     containerBuilder.setEntrypoint(entrypoint).setFileEntriesLayers(layers);
     return containerBuilder;

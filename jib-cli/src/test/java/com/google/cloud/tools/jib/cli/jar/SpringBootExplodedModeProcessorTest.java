@@ -21,6 +21,7 @@ import static com.google.common.truth.Truth.assertThat;
 import com.google.cloud.tools.jib.api.buildplan.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.api.buildplan.FileEntriesLayer;
 import com.google.cloud.tools.jib.api.buildplan.FileEntry;
+import com.google.common.collect.ImmutableList;
 import com.google.common.io.Resources;
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -257,5 +258,14 @@ public class SpringBootExplodedModeProcessorTest {
         .containsExactly(
             AbsoluteUnixPath.get("/app/BOOT-INF/classes/class1.class"),
             AbsoluteUnixPath.get("/app/BOOT-INF/classes/classDirectory/class2.class"));
+  }
+
+  @Test
+  public void testComputeEntrypoint() {
+    SpringBootExplodedModeProcessor bootProcessor = new SpringBootExplodedModeProcessor();
+    ImmutableList<String> actualEntrypoint = bootProcessor.computeEntrypoint();
+    assertThat(actualEntrypoint)
+        .isEqualTo(
+            ImmutableList.of("java", "-cp", "/app", "org.springframework.boot.loader.JarLauncher"));
   }
 }

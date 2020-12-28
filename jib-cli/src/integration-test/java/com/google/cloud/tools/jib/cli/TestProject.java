@@ -14,7 +14,7 @@
  * the License.
  */
 
-package com.google.cloud.tools.jib.cli.cli2;
+package com.google.cloud.tools.jib.cli;
 
 import com.google.cloud.tools.jib.filesystem.DirectoryWalker;
 import com.google.common.io.Resources;
@@ -76,10 +76,7 @@ public class TestProject extends TemporaryFolder implements Closeable {
     copyProject(testProjectName, projectRoot);
 
     gradleRunner =
-        GradleRunner.create()
-            .withGradleVersion(gradleVersion)
-            .withProjectDir(projectRoot.toFile())
-            .withPluginClasspath();
+        GradleRunner.create().withGradleVersion(gradleVersion).withProjectDir(projectRoot.toFile());
   }
 
   public BuildResult build(String... gradleArguments) {

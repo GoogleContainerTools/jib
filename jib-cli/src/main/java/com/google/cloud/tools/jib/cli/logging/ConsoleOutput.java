@@ -14,7 +14,7 @@
  * the License.
  */
 
-package com.google.cloud.tools.jib.cli.cli2.logging;
+package com.google.cloud.tools.jib.cli.logging;
 
 public enum ConsoleOutput {
   auto,

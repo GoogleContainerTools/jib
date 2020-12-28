@@ -14,16 +14,15 @@
  * the License.
  */
 
-package com.google.cloud.tools.jib.cli.cli2;
+package com.google.cloud.tools.jib.cli;
 
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth8.assertThat;
 import static org.junit.Assert.assertThrows;
 
 import com.google.cloud.tools.jib.api.Credential;
-import com.google.cloud.tools.jib.cli.cli2.logging.Verbosity;
+import com.google.cloud.tools.jib.cli.logging.Verbosity;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
 import java.nio.file.Paths;
 import junitparams.JUnitParamsRunner;
 import junitparams.Parameters;
@@ -34,19 +33,30 @@ import picocli.CommandLine;
 import picocli.CommandLine.MissingParameterException;
 
 @RunWith(JUnitParamsRunner.class)
-public class BuildTest {
+public class JarTest {
+
   @Test
-  public void testParse_missingRequiredParams() {
+  public void testParse_missingRequiredParams_targetImage() {
     MissingParameterException mpe =
         assertThrows(
-            MissingParameterException.class, () -> CommandLine.populateCommand(new Build(), ""));
+            MissingParameterException.class,
+            () -> CommandLine.populateCommand(new Jar(), "my-app.jar"));
     assertThat(mpe.getMessage()).isEqualTo("Missing required option: '--target=<target-image>'");
   }
 
   @Test
+  public void testParse_missingRequiredParams_jarfile() {
+    MissingParameterException mpe =
+        assertThrows(
+            MissingParameterException.class,
+            () -> CommandLine.populateCommand(new Jar(), "--target=test-image-ref"));
+    assertThat(mpe.getMessage()).isEqualTo("Missing required parameter: '<jarFile>'");
+  }
+
+  @Test
   public void testParse_defaults() {
-    Build buildCommand = CommandLine.populateCommand(new Build(), "-t", "test-image-ref");
-    CommonCliOptions commonCliOptions = buildCommand.commonCliOptions;
+    Jar jarCommand = CommandLine.populateCommand(new Jar(), "-t", "test-image-ref", "my-app.jar");
+    CommonCliOptions commonCliOptions = jarCommand.commonCliOptions;
     assertThat(commonCliOptions.getTargetImage()).isEqualTo("test-image-ref");
     assertThat(commonCliOptions.getUsernamePassword()).isEmpty();
     assertThat(commonCliOptions.getToUsernamePassword()).isEmpty();
@@ -54,10 +64,7 @@ public class BuildTest {
     assertThat(commonCliOptions.getCredentialHelper()).isEmpty();
     assertThat(commonCliOptions.getToCredentialHelper()).isEmpty();
     assertThat(commonCliOptions.getFromCredentialHelper()).isEmpty();
-    assertThat(buildCommand.getBuildFile()).isEqualTo(Paths.get("./jib.yaml"));
-    assertThat(buildCommand.getContextRoot()).isEqualTo(Paths.get("."));
     assertThat(commonCliOptions.getAdditionalTags()).isEmpty();
-    assertThat(buildCommand.getTemplateParameters()).isEmpty();
     assertThat(commonCliOptions.getProjectCache()).isEmpty();
     assertThat(commonCliOptions.getBaseImageCache()).isEmpty();
     assertThat(commonCliOptions.isAllowInsecureRegistries()).isFalse();
@@ -70,15 +77,8 @@ public class BuildTest {
 
   @Test
   public void testParse_shortFormParams() {
-    Build buildCommand =
-        CommandLine.populateCommand(
-            new Build(),
-            "-t=test-image-ref",
-            "-c=test-context",
-            "-b=test-build-file",
-            "-p=param1=value1",
-            "-p=param2=value2");
-    CommonCliOptions commonCliOptions = buildCommand.commonCliOptions;
+    Jar jarCommand = CommandLine.populateCommand(new Jar(), "-t=test-image-ref", "my-app.jar");
+    CommonCliOptions commonCliOptions = jarCommand.commonCliOptions;
     assertThat(commonCliOptions.getTargetImage()).isEqualTo("test-image-ref");
     assertThat(commonCliOptions.getUsernamePassword()).isEmpty();
     assertThat(commonCliOptions.getToUsernamePassword()).isEmpty();
@@ -86,11 +86,7 @@ public class BuildTest {
     assertThat(commonCliOptions.getCredentialHelper()).isEmpty();
     assertThat(commonCliOptions.getToCredentialHelper()).isEmpty();
     assertThat(commonCliOptions.getFromCredentialHelper()).isEmpty();
-    assertThat(buildCommand.getBuildFile()).isEqualTo(Paths.get("test-build-file"));
-    assertThat(buildCommand.getContextRoot()).isEqualTo(Paths.get("test-context"));
     assertThat(commonCliOptions.getAdditionalTags()).isEmpty();
-    assertThat(buildCommand.getTemplateParameters())
-        .isEqualTo(ImmutableMap.of("param1", "value1", "param2", "value2"));
     assertThat(commonCliOptions.getProjectCache()).isEmpty();
     assertThat(commonCliOptions.getBaseImageCache()).isEmpty();
     assertThat(commonCliOptions.isAllowInsecureRegistries()).isFalse();
@@ -106,14 +102,10 @@ public class BuildTest {
   public void testParse_longFormParams() {
     // this test does not check credential helpers, scroll down for specialized credential helper
     // tests
-    Build buildCommand =
+    Jar jarCommand =
         CommandLine.populateCommand(
-            new Build(),
+            new Jar(),
             "--target=test-image-ref",
-            "--context=test-context",
-            "--build-file=test-build-file",
-            "--parameter=param1=value1",
-            "--parameter=param2=value2",
             "--additional-tags=tag1,tag2,tag3",
             "--allow-insecure-registries",
             "--send-credentials-over-http",
@@ -122,8 +114,9 @@ public class BuildTest {
             "--verbosity=info",
             "--stacktrace",
             "--http-trace",
-            "--serialize");
-    CommonCliOptions commonCliOptions = buildCommand.commonCliOptions;
+            "--serialize",
+            "my-app.jar");
+    CommonCliOptions commonCliOptions = jarCommand.commonCliOptions;
     assertThat(commonCliOptions.getTargetImage()).isEqualTo("test-image-ref");
     assertThat(commonCliOptions.getUsernamePassword()).isEmpty();
     assertThat(commonCliOptions.getToUsernamePassword()).isEmpty();
@@ -131,12 +124,8 @@ public class BuildTest {
     assertThat(commonCliOptions.getCredentialHelper()).isEmpty();
     assertThat(commonCliOptions.getToCredentialHelper()).isEmpty();
     assertThat(commonCliOptions.getFromCredentialHelper()).isEmpty();
-    assertThat(buildCommand.getBuildFile()).isEqualTo(Paths.get("test-build-file"));
-    assertThat(buildCommand.getContextRoot()).isEqualTo(Paths.get("test-context"));
     assertThat(commonCliOptions.getAdditionalTags())
         .isEqualTo(ImmutableList.of("tag1", "tag2", "tag3"));
-    assertThat(buildCommand.getTemplateParameters())
-        .isEqualTo(ImmutableMap.of("param1", "value1", "param2", "value2"));
     assertThat(commonCliOptions.getProjectCache()).hasValue(Paths.get("test-project-cache"));
     assertThat(commonCliOptions.getBaseImageCache()).hasValue(Paths.get("test-base-image-cache"));
     assertThat(commonCliOptions.isAllowInsecureRegistries()).isTrue();
@@ -148,20 +137,14 @@ public class BuildTest {
   }
 
   @Test
-  public void testParse_buildFileDefaultForContext() {
-    Build buildCommand =
-        CommandLine.populateCommand(
-            new Build(), "--target", "test-image-ref", "--context", "test-context");
-    assertThat(buildCommand.getBuildFile()).isEqualTo(Paths.get("test-context/jib.yaml"));
-    assertThat(buildCommand.getContextRoot()).isEqualTo(Paths.get("test-context"));
-  }
-
-  @Test
   public void testParse_credentialHelper() {
-    Build buildCommand =
+    Jar jarCommand =
         CommandLine.populateCommand(
-            new Build(), "--target=test-image-ref", "--credential-helper=test-cred-helper");
-    CommonCliOptions commonCliOptions = buildCommand.commonCliOptions;
+            new Jar(),
+            "--target=test-image-ref",
+            "--credential-helper=test-cred-helper",
+            "my-app.jar");
+    CommonCliOptions commonCliOptions = jarCommand.commonCliOptions;
     assertThat(commonCliOptions.getCredentialHelper()).hasValue("test-cred-helper");
     assertThat(commonCliOptions.getToCredentialHelper()).isEmpty();
     assertThat(commonCliOptions.getFromCredentialHelper()).isEmpty();
@@ -172,10 +155,13 @@ public class BuildTest {
 
   @Test
   public void testParse_toCredentialHelper() {
-    Build buildCommand =
+    Jar jarCommand =
         CommandLine.populateCommand(
-            new Build(), "--target=test-image-ref", "--to-credential-helper=test-cred-helper");
-    CommonCliOptions commonCliOptions = buildCommand.commonCliOptions;
+            new Jar(),
+            "--target=test-image-ref",
+            "--to-credential-helper=test-cred-helper",
+            "my-app.jar");
+    CommonCliOptions commonCliOptions = jarCommand.commonCliOptions;
 
     assertThat(commonCliOptions.getCredentialHelper()).isEmpty();
     assertThat(commonCliOptions.getToCredentialHelper()).hasValue("test-cred-helper");
@@ -187,10 +173,13 @@ public class BuildTest {
 
   @Test
   public void testParse_fromCredentialHelper() {
-    Build buildCommand =
+    Jar jarCommand =
         CommandLine.populateCommand(
-            new Build(), "--target=test-image-ref", "--from-credential-helper=test-cred-helper");
-    CommonCliOptions commonCliOptions = buildCommand.commonCliOptions;
+            new Jar(),
+            "--target=test-image-ref",
+            "--from-credential-helper=test-cred-helper",
+            "my-app.jar");
+    CommonCliOptions commonCliOptions = jarCommand.commonCliOptions;
 
     assertThat(commonCliOptions.getCredentialHelper()).isEmpty();
     assertThat(commonCliOptions.getToCredentialHelper()).isEmpty();
@@ -202,13 +191,14 @@ public class BuildTest {
 
   @Test
   public void testParse_usernamePassword() {
-    Build buildCommand =
+    Jar jarCommand =
         CommandLine.populateCommand(
-            new Build(),
+            new Jar(),
             "--target=test-image-ref",
             "--username=test-username",
-            "--password=test-password");
-    CommonCliOptions commonCliOptions = buildCommand.commonCliOptions;
+            "--password=test-password",
+            "my-app.jar");
+    CommonCliOptions commonCliOptions = jarCommand.commonCliOptions;
 
     assertThat(commonCliOptions.getCredentialHelper()).isEmpty();
     assertThat(commonCliOptions.getToCredentialHelper()).isEmpty();
@@ -221,13 +211,14 @@ public class BuildTest {
 
   @Test
   public void testParse_toUsernamePassword() {
-    Build buildCommand =
+    Jar jarCommand =
         CommandLine.populateCommand(
-            new Build(),
+            new Jar(),
             "--target=test-image-ref",
             "--to-username=test-username",
-            "--to-password=test-password");
-    CommonCliOptions commonCliOptions = buildCommand.commonCliOptions;
+            "--to-password=test-password",
+            "my-app.jar");
+    CommonCliOptions commonCliOptions = jarCommand.commonCliOptions;
     assertThat(commonCliOptions.getCredentialHelper()).isEmpty();
     assertThat(commonCliOptions.getToCredentialHelper()).isEmpty();
     assertThat(commonCliOptions.getFromCredentialHelper()).isEmpty();
@@ -239,13 +230,14 @@ public class BuildTest {
 
   @Test
   public void testParse_fromUsernamePassword() {
-    Build buildCommand =
+    Jar jarCommand =
         CommandLine.populateCommand(
-            new Build(),
+            new Jar(),
             "--target=test-image-ref",
             "--from-username=test-username",
-            "--from-password=test-password");
-    CommonCliOptions commonCliOptions = buildCommand.commonCliOptions;
+            "--from-password=test-password",
+            "my-app.jar");
+    CommonCliOptions commonCliOptions = jarCommand.commonCliOptions;
 
     assertThat(commonCliOptions.getCredentialHelper()).isEmpty();
     assertThat(commonCliOptions.getToCredentialHelper()).isEmpty();
@@ -258,15 +250,16 @@ public class BuildTest {
 
   @Test
   public void testParse_toAndFromUsernamePassword() {
-    Build buildCommand =
+    Jar jarCommand =
         CommandLine.populateCommand(
-            new Build(),
+            new Jar(),
             "--target=test-image-ref",
             "--to-username=test-username-1",
             "--to-password=test-password-1",
             "--from-username=test-username-2",
-            "--from-password=test-password-2");
-    CommonCliOptions commonCliOptions = buildCommand.commonCliOptions;
+            "--from-password=test-password-2",
+            "my-app.jar");
+    CommonCliOptions commonCliOptions = jarCommand.commonCliOptions;
 
     assertThat(commonCliOptions.getCredentialHelper()).isEmpty();
     assertThat(commonCliOptions.getToCredentialHelper()).isEmpty();
@@ -280,13 +273,14 @@ public class BuildTest {
 
   @Test
   public void testParse_toAndFromCredentialHelper() {
-    Build buildCommand =
+    Jar jarCommand =
         CommandLine.populateCommand(
-            new Build(),
+            new Jar(),
             "--target=test-image-ref",
             "--to-credential-helper=to-test-helper",
-            "--from-credential-helper=from-test-helper");
-    CommonCliOptions commonCliOptions = buildCommand.commonCliOptions;
+            "--from-credential-helper=from-test-helper",
+            "my-app.jar");
+    CommonCliOptions commonCliOptions = jarCommand.commonCliOptions;
 
     assertThat(commonCliOptions.getCredentialHelper()).isEmpty();
     assertThat(commonCliOptions.getToCredentialHelper()).hasValue("to-test-helper");
@@ -298,14 +292,15 @@ public class BuildTest {
 
   @Test
   public void testParse_toUsernamePasswordAndFromCredentialHelper() {
-    Build buildCommand =
+    Jar jarCommand =
         CommandLine.populateCommand(
-            new Build(),
+            new Jar(),
             "--target=test-image-ref",
             "--to-username=test-username",
             "--to-password=test-password",
-            "--from-credential-helper=test-cred-helper");
-    CommonCliOptions commonCliOptions = buildCommand.commonCliOptions;
+            "--from-credential-helper=test-cred-helper",
+            "my-app.jar");
+    CommonCliOptions commonCliOptions = jarCommand.commonCliOptions;
 
     assertThat(commonCliOptions.getCredentialHelper()).isEmpty();
     assertThat(commonCliOptions.getToCredentialHelper()).isEmpty();
@@ -318,14 +313,15 @@ public class BuildTest {
 
   @Test
   public void testParse_toCredentialHelperAndFromUsernamePassword() {
-    Build buildCommand =
+    Jar jarCommand =
         CommandLine.populateCommand(
-            new Build(),
+            new Jar(),
             "--target=test-image-ref",
             "--to-credential-helper=test-cred-helper",
             "--from-username=test-username",
-            "--from-password=test-password");
-    CommonCliOptions commonCliOptions = buildCommand.commonCliOptions;
+            "--from-password=test-password",
+            "my-app.jar");
+    CommonCliOptions commonCliOptions = jarCommand.commonCliOptions;
 
     assertThat(commonCliOptions.getCredentialHelper()).isEmpty();
     assertThat(commonCliOptions.getToCredentialHelper()).hasValue("test-cred-helper");
@@ -352,7 +348,11 @@ public class BuildTest {
             MissingParameterException.class,
             () ->
                 CommandLine.populateCommand(
-                    new Build(), "--target", "test-image-ref", usernameField, "test-username"));
+                    new Jar(),
+                    "--target=test-image-ref",
+                    usernameField,
+                    "test-username",
+                    "my-app.jar"));
     assertThat(mpe.getMessage()).isEqualTo("Error: Missing required argument(s): " + passwordField);
   }
 
@@ -364,7 +364,11 @@ public class BuildTest {
             MissingParameterException.class,
             () ->
                 CommandLine.populateCommand(
-                    new Build(), "--target", "test-image-ref", passwordField, "test-password"));
+                    new Jar(),
+                    "--target=test-image-ref",
+                    passwordField,
+                    "test-password",
+                    "my-app.jar"));
     assertThat(mpe.getMessage())
         .isEqualTo("Error: Missing required argument(s): " + usernameField + "=<username>");
   }
@@ -393,7 +397,7 @@ public class BuildTest {
             CommandLine.MutuallyExclusiveArgsException.class,
             () ->
                 CommandLine.populateCommand(
-                    new Build(), ArrayUtils.add(authArgs, "--target=ignored")));
+                    new Jar(), ArrayUtils.addAll(authArgs, "--target=ignored", "my-app.jar")));
     assertThat(meae)
         .hasMessageThat()
         .containsMatch("^Error: (--(from-|to-)?credential-helper|\\[--username)");
@@ -401,19 +405,20 @@ public class BuildTest {
 
   @Test
   public void testValidate_nameMissingFail() {
-    Build buildCommand = CommandLine.populateCommand(new Build(), "--target=tar://sometar.tar");
+    Jar jarCommand =
+        CommandLine.populateCommand(new Jar(), "--target=tar://sometar.tar", "my-app.jar");
     CommandLine.ParameterException pex =
-        assertThrows(CommandLine.ParameterException.class, buildCommand.commonCliOptions::validate);
+        assertThrows(CommandLine.ParameterException.class, jarCommand.commonCliOptions::validate);
     assertThat(pex.getMessage())
         .isEqualTo("Missing option: --name must be specified when using --target=tar://....");
   }
 
   @Test
   public void testValidate_pass() {
-    Build buildCommand =
+    Jar jarCommand =
         CommandLine.populateCommand(
-            new Build(), "--target=tar://sometar.tar", "--name=test.io/test/test");
-    buildCommand.commonCliOptions.validate();
+            new Jar(), "--target=tar://sometar.tar", "--name=test.io/test/test", "my-app.jar");
+    jarCommand.commonCliOptions.validate();
     // pass
   }
 }

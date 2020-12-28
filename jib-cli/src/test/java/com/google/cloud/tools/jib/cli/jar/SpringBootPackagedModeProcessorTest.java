@@ -20,6 +20,7 @@ import static com.google.common.truth.Truth.assertThat;
 
 import com.google.cloud.tools.jib.api.buildplan.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.api.buildplan.FileEntriesLayer;
+import com.google.common.collect.ImmutableList;
 import com.google.common.io.Resources;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
@@ -35,10 +36,9 @@ public class SpringBootPackagedModeProcessorTest {
   @Test
   public void testCreateLayers() throws URISyntaxException {
     Path springBootJar = Paths.get(Resources.getResource(SPRING_BOOT_JAR).toURI());
-    SpringBootPackagedModeProcessor springBootPackagedModeProcessor =
-        new SpringBootPackagedModeProcessor();
-    springBootPackagedModeProcessor.setJarPath(springBootJar);
-    List<FileEntriesLayer> layers = springBootPackagedModeProcessor.createLayers();
+    SpringBootPackagedModeProcessor springBootProcessor = new SpringBootPackagedModeProcessor();
+    springBootProcessor.setJarPath(springBootJar);
+    List<FileEntriesLayer> layers = springBootProcessor.createLayers();
 
     assertThat(layers.size()).isEqualTo(1);
 
@@ -48,5 +48,17 @@ public class SpringBootPackagedModeProcessorTest {
     assertThat(jarLayer.getEntries().size()).isEqualTo(1);
     assertThat(jarLayer.getEntries().get(0).getExtractionPath())
         .isEqualTo(AbsoluteUnixPath.get("/app/springboot_sample.jar"));
+  }
+
+  @Test
+  public void testComputeEntrypoint() throws URISyntaxException {
+    Path standardJar = Paths.get(Resources.getResource(SPRING_BOOT_JAR).toURI());
+    SpringBootPackagedModeProcessor springBootProcessor = new SpringBootPackagedModeProcessor();
+    springBootProcessor.setJarPath(standardJar);
+
+    ImmutableList<String> actualEntrypoint = springBootProcessor.computeEntrypoint();
+
+    assertThat(actualEntrypoint)
+        .isEqualTo(ImmutableList.of("java", "-jar", "/app/springboot_sample.jar"));
   }
 }

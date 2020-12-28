@@ -14,7 +14,7 @@
  * the License.
  */
 
-package com.google.cloud.tools.jib.cli.cli2.logging;
+package com.google.cloud.tools.jib.cli.logging;
 
 import static com.google.common.truth.Truth.assertThat;
 
@@ -201,12 +201,6 @@ public class CliLoggerTest {
   @Test
   public void testIsRightConsole_autoWindowsTrue() {
     System.setProperty("os.name", "windows");
-    assertThat(CliLogger.isRichConsole(ConsoleOutput.auto)).isTrue();
-  }
-
-  @Test
-  public void testIsRightConsole_autoTermTrue() {
-    environmentVariables.set("TERM", "not-dumb");
     assertThat(CliLogger.isRichConsole(ConsoleOutput.auto)).isTrue();
   }
 

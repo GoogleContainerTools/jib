@@ -1,5 +1,4 @@
 plugins {
-  id 'java-gradle-plugin'
   id 'application'
   id 'net.researchgate.release'
   id 'eclipse'
@@ -35,6 +34,7 @@ dependencies {
   testImplementation dependencyStrings.SYSTEM_RULES
 
   integrationTestImplementation project(path:':jib-core', configuration:'integrationTests')
+  integrationTestImplementation gradleTestKit()
 }
 
 release {
@@ -44,18 +44,6 @@ release {
     'com.google.cloud.tools:jib-plugins-common',
   ]
   git {
-    requireBranch = /^cli_release_v\d+.*$/  //regex
+    requireBranch = /^cli-release-v\d+.*$/  //regex
   }
 }
-
-/* ECLIPSE */
-// TODO: remove after upgrading to Gradle 5.6. (https://github.com/eclipse/buildship/issues/689)
-// Also remove the 'eclipse' plugin.
-eclipse.classpath.file.whenMerged {
-  entries.findAll {
-    it.path in ['src/test/java', 'src/test/resources', 'test-resources']
-  }.each {
-    it.entryAttributes['test'] = 'true'
-  }
-}
-/* ECLIPSE */
