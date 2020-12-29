@@ -38,7 +38,7 @@ import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
 import javax.annotation.Nullable;
 
-public class SpringBootExplodedModeProcessor implements JarModeProcessor {
+public class SpringBootExplodedProcessor implements JarProcessor {
 
   @Nullable private static Path tempDirectoryPath = null;
   @Nullable private static Path jarPath = null;
@@ -64,31 +64,28 @@ public class SpringBootExplodedModeProcessor implements JarModeProcessor {
       Predicate<Path> isInBootInfLibAndIsNotSnapshot = isInBootInfLib.and(isSnapshot.negate());
       Predicate<Path> nonSnapshotPredicate = isFile.and(isInBootInfLibAndIsNotSnapshot);
       FileEntriesLayer nonSnapshotLayer =
-          JarProcessorHelper.addDirectoryContentsToLayer(
-              JarProcessorHelper.DEPENDENCIES,
+          JarLayers.getDirectoryContentsAsLayer(
+              JarLayers.DEPENDENCIES,
               localExplodedJarRoot,
               nonSnapshotPredicate,
-              JarProcessorHelper.APP_ROOT);
+              JarLayers.APP_ROOT);
 
       // Snapshot layer
       Predicate<Path> isInBootInfLibAndIsSnapshot = isInBootInfLib.and(isSnapshot);
       Predicate<Path> snapshotPredicate = isFile.and(isInBootInfLibAndIsSnapshot);
       FileEntriesLayer snapshotLayer =
-          JarProcessorHelper.addDirectoryContentsToLayer(
-              JarProcessorHelper.SNAPSHOT_DEPENDENCIES,
+          JarLayers.getDirectoryContentsAsLayer(
+              JarLayers.SNAPSHOT_DEPENDENCIES,
               localExplodedJarRoot,
               snapshotPredicate,
-              JarProcessorHelper.APP_ROOT);
+              JarLayers.APP_ROOT);
 
       // Spring-boot-loader layer.
       Predicate<Path> isLoader = path -> path.startsWith(localExplodedJarRoot.resolve("org"));
       Predicate<Path> loaderPredicate = isFile.and(isLoader);
       FileEntriesLayer loaderLayer =
-          JarProcessorHelper.addDirectoryContentsToLayer(
-              "spring-boot-loader",
-              localExplodedJarRoot,
-              loaderPredicate,
-              JarProcessorHelper.APP_ROOT);
+          JarLayers.getDirectoryContentsAsLayer(
+              "spring-boot-loader", localExplodedJarRoot, loaderPredicate, JarLayers.APP_ROOT);
 
       // Classes layer.
       Predicate<Path> isClass = path -> path.getFileName().toString().endsWith(".class");
@@ -96,11 +93,8 @@ public class SpringBootExplodedModeProcessor implements JarModeProcessor {
           path -> path.startsWith(localExplodedJarRoot.resolve("BOOT-INF").resolve("classes"));
       Predicate<Path> classesPredicate = isInBootInfClasses.and(isClass);
       FileEntriesLayer classesLayer =
-          JarProcessorHelper.addDirectoryContentsToLayer(
-              JarProcessorHelper.CLASSES,
-              localExplodedJarRoot,
-              classesPredicate,
-              JarProcessorHelper.APP_ROOT);
+          JarLayers.getDirectoryContentsAsLayer(
+              JarLayers.CLASSES, localExplodedJarRoot, classesPredicate, JarLayers.APP_ROOT);
 
       // Resources layer.
       Predicate<Path> isInMetaInf =
@@ -108,11 +102,8 @@ public class SpringBootExplodedModeProcessor implements JarModeProcessor {
       Predicate<Path> isResource = isInMetaInf.or(isInBootInfClasses.and(isClass.negate()));
       Predicate<Path> resourcesPredicate = isFile.and(isResource);
       FileEntriesLayer resourcesLayer =
-          JarProcessorHelper.addDirectoryContentsToLayer(
-              JarProcessorHelper.RESOURCES,
-              localExplodedJarRoot,
-              resourcesPredicate,
-              JarProcessorHelper.APP_ROOT);
+          JarLayers.getDirectoryContentsAsLayer(
+              JarLayers.RESOURCES, localExplodedJarRoot, resourcesPredicate, JarLayers.APP_ROOT);
 
       return Arrays.asList(
           nonSnapshotLayer, loaderLayer, snapshotLayer, resourcesLayer, classesLayer);
@@ -124,7 +115,7 @@ public class SpringBootExplodedModeProcessor implements JarModeProcessor {
     return ImmutableList.of(
         "java",
         "-cp",
-        JarProcessorHelper.APP_ROOT.toString(),
+        JarLayers.APP_ROOT.toString(),
         "org.springframework.boot.loader.JarLauncher");
   }
 
@@ -177,8 +168,8 @@ public class SpringBootExplodedModeProcessor implements JarModeProcessor {
         Predicate<Path> belongsToThisLayer =
             isInListedDirectoryOrIsSameFile(contents, localExplodedJarRoot);
         layers.add(
-            JarProcessorHelper.addDirectoryContentsToLayer(
-                layerName, localExplodedJarRoot, belongsToThisLayer, JarProcessorHelper.APP_ROOT));
+            JarLayers.getDirectoryContentsAsLayer(
+                layerName, localExplodedJarRoot, belongsToThisLayer, JarLayers.APP_ROOT));
       }
     }
     return layers;
@@ -195,6 +186,16 @@ public class SpringBootExplodedModeProcessor implements JarModeProcessor {
       }
     }
     return predicate.and(Files::isRegularFile);
+  }
+
+  @Nullable
+  public Path getTempDirectoryPath() {
+    return tempDirectoryPath;
+  }
+
+  @Nullable
+  public Path getJarPath() {
+    return jarPath;
   }
 
   public void setTempDirectoryPath(Path tempDirPath) {

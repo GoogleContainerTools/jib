@@ -42,13 +42,13 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class JarFilesTest {
 
-  @Mock private StandardExplodedModeProcessor mockStandardExplodedModeProcessor;
+  @Mock private StandardExplodedProcessor mockStandardExplodedModeProcessor;
 
-  @Mock private StandardPackagedModeProcessor mockStandardPackagedModeProcessor;
+  @Mock private StandardPackagedProcessor mockStandardPackagedModeProcessor;
 
-  @Mock private SpringBootExplodedModeProcessor mockSpringBootExplodedModeProcessor;
+  @Mock private SpringBootExplodedProcessor mockSpringBootExplodedModeProcessor;
 
-  @Mock private SpringBootPackagedModeProcessor mockSpringBootPackagedModeProcessor;
+  @Mock private SpringBootPackagedProcessor mockSpringBootPackagedModeProcessor;
 
   @Test
   public void testToJibContainerBuilder_explodedStandard_basicInfo()

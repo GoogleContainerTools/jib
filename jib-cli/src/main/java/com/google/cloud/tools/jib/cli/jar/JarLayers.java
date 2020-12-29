@@ -19,7 +19,6 @@ package com.google.cloud.tools.jib.cli.jar;
 import com.google.cloud.tools.jib.api.buildplan.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.api.buildplan.FileEntriesLayer;
 import com.google.cloud.tools.jib.filesystem.DirectoryWalker;
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Splitter;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -32,7 +31,7 @@ import java.util.jar.Attributes;
 import java.util.jar.JarFile;
 import java.util.stream.Collectors;
 
-public class JarProcessorHelper {
+public class JarLayers {
 
   static final AbsoluteUnixPath APP_ROOT = AbsoluteUnixPath.get("/app");
   static final String JAR = "jar";
@@ -40,36 +39,6 @@ public class JarProcessorHelper {
   static final String RESOURCES = "resources";
   static final String DEPENDENCIES = "dependencies";
   static final String SNAPSHOT_DEPENDENCIES = "snapshot dependencies";
-
-  /**
-   * Jar Type.
-   *
-   * <ul>
-   *   <li>{@code STANDARD} a regular jar.
-   *   <li>{@code SPRING_BOOT} a spring boot fat jar.
-   * </ul>
-   */
-  public enum JarType {
-    STANDARD,
-    SPRING_BOOT
-  }
-
-  /**
-   * Determines whether the jar is a spring boot or standard jar.
-   *
-   * @param jarPath path to the jar
-   * @return the jar type
-   * @throws IOException if I/O error occurs when opening the file
-   */
-  @VisibleForTesting
-  public static JarType determineJarType(Path jarPath) throws IOException {
-    try (JarFile jarFile = new JarFile(jarPath.toFile())) {
-      if (jarFile.getEntry("BOOT-INF") != null) {
-        return JarType.SPRING_BOOT;
-      }
-      return JarType.STANDARD;
-    }
-  }
 
   static List<FileEntriesLayer> getDependenciesLayers(Path jarPath, ProcessingMode mode)
       throws IOException {
@@ -124,7 +93,7 @@ public class JarProcessorHelper {
     }
   }
 
-  static FileEntriesLayer addDirectoryContentsToLayer(
+  static FileEntriesLayer getDirectoryContentsAsLayer(
       String layerName,
       Path sourceRoot,
       Predicate<Path> pathFilter,

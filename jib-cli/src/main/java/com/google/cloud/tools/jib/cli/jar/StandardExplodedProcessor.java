@@ -29,7 +29,7 @@ import java.util.jar.Attributes;
 import java.util.jar.JarFile;
 import javax.annotation.Nullable;
 
-public class StandardExplodedModeProcessor implements JarModeProcessor {
+public class StandardExplodedProcessor implements JarProcessor {
 
   @Nullable private static Path tempDirectoryPath = null;
   @Nullable private static Path jarPath = null;
@@ -41,7 +41,7 @@ public class StandardExplodedModeProcessor implements JarModeProcessor {
     }
     // Add dependencies layers.
     List<FileEntriesLayer> layers =
-        JarProcessorHelper.getDependenciesLayers(jarPath, ProcessingMode.exploded);
+        JarLayers.getDependenciesLayers(jarPath, ProcessingMode.exploded);
 
     // Determine class and resource files in the directory containing jar contents and create
     // FileEntriesLayer for each type of layer (classes or resources).
@@ -50,17 +50,17 @@ public class StandardExplodedModeProcessor implements JarModeProcessor {
     Predicate<Path> isClassFile = path -> path.getFileName().toString().endsWith(".class");
     Predicate<Path> isResourceFile = isClassFile.negate().and(Files::isRegularFile);
     FileEntriesLayer classesLayer =
-        JarProcessorHelper.addDirectoryContentsToLayer(
-            JarProcessorHelper.CLASSES,
+        JarLayers.getDirectoryContentsAsLayer(
+            JarLayers.CLASSES,
             localExplodedJarRoot,
             isClassFile,
-            JarProcessorHelper.APP_ROOT.resolve("explodedJar"));
+            JarLayers.APP_ROOT.resolve("explodedJar"));
     FileEntriesLayer resourcesLayer =
-        JarProcessorHelper.addDirectoryContentsToLayer(
-            JarProcessorHelper.RESOURCES,
+        JarLayers.getDirectoryContentsAsLayer(
+            JarLayers.RESOURCES,
             localExplodedJarRoot,
             isResourceFile,
-            JarProcessorHelper.APP_ROOT.resolve("explodedJar"));
+            JarLayers.APP_ROOT.resolve("explodedJar"));
 
     if (!resourcesLayer.getEntries().isEmpty()) {
       layers.add(resourcesLayer);
@@ -85,12 +85,19 @@ public class StandardExplodedModeProcessor implements JarModeProcessor {
                 + "manifest (`META-INF/MANIFEST.MF` in the JAR).");
       }
       String classpath =
-          JarProcessorHelper.APP_ROOT
-              + "/explodedJar:"
-              + JarProcessorHelper.APP_ROOT
-              + "/dependencies/*";
+          JarLayers.APP_ROOT + "/explodedJar:" + JarLayers.APP_ROOT + "/dependencies/*";
       return ImmutableList.of("java", "-cp", classpath, mainClass);
     }
+  }
+
+  @Nullable
+  public Path getTempDirectoryPath() {
+    return tempDirectoryPath;
+  }
+
+  @Nullable
+  public Path getJarPath() {
+    return jarPath;
   }
 
   public void setTempDirectoryPath(Path tempDirPath) {

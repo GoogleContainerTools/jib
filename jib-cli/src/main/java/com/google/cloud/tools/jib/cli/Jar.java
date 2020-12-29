@@ -20,12 +20,9 @@ import com.google.cloud.tools.jib.api.Containerizer;
 import com.google.cloud.tools.jib.api.JibContainerBuilder;
 import com.google.cloud.tools.jib.api.LogEvent;
 import com.google.cloud.tools.jib.cli.jar.JarFiles;
-import com.google.cloud.tools.jib.cli.jar.JarProcessorHelper;
+import com.google.cloud.tools.jib.cli.jar.JarProcessor;
+import com.google.cloud.tools.jib.cli.jar.JarProcessors;
 import com.google.cloud.tools.jib.cli.jar.ProcessingMode;
-import com.google.cloud.tools.jib.cli.jar.SpringBootExplodedModeProcessor;
-import com.google.cloud.tools.jib.cli.jar.SpringBootPackagedModeProcessor;
-import com.google.cloud.tools.jib.cli.jar.StandardExplodedModeProcessor;
-import com.google.cloud.tools.jib.cli.jar.StandardPackagedModeProcessor;
 import com.google.cloud.tools.jib.cli.logging.CliLogger;
 import com.google.cloud.tools.jib.filesystem.TempDirectoryProvider;
 import com.google.cloud.tools.jib.plugins.common.logging.ConsoleLogger;
@@ -100,30 +97,9 @@ public class Jar implements Callable<Integer> {
         return 1;
       }
 
-      JarProcessorHelper.JarType jarType = JarProcessorHelper.determineJarType(jarFile);
-      JibContainerBuilder containerBuilder;
-      if (jarType.equals(JarProcessorHelper.JarType.SPRING_BOOT)
-          && mode.equals(ProcessingMode.packaged)) {
-        SpringBootPackagedModeProcessor modeProcessor = new SpringBootPackagedModeProcessor();
-        modeProcessor.setJarPath(jarFile);
-        containerBuilder = JarFiles.toJibContainerBuilder(modeProcessor);
-      } else if (jarType.equals(JarProcessorHelper.JarType.SPRING_BOOT)
-          && mode.equals(ProcessingMode.exploded)) {
-        SpringBootExplodedModeProcessor modeProcessor = new SpringBootExplodedModeProcessor();
-        modeProcessor.setJarPath(jarFile);
-        modeProcessor.setTempDirectoryPath(tempDirectoryProvider.newDirectory());
-        containerBuilder = JarFiles.toJibContainerBuilder(modeProcessor);
-      } else if (jarType.equals(JarProcessorHelper.JarType.STANDARD)
-          && mode.equals(ProcessingMode.packaged)) {
-        StandardPackagedModeProcessor modeProcessor = new StandardPackagedModeProcessor();
-        modeProcessor.setJarPath(jarFile);
-        containerBuilder = JarFiles.toJibContainerBuilder(modeProcessor);
-      } else {
-        StandardExplodedModeProcessor modeProcessor = new StandardExplodedModeProcessor();
-        modeProcessor.setJarPath(jarFile);
-        modeProcessor.setTempDirectoryPath(tempDirectoryProvider.newDirectory());
-        containerBuilder = JarFiles.toJibContainerBuilder(modeProcessor);
-      }
+      JarProcessor processor =
+          JarProcessors.from(jarFile, tempDirectoryProvider.newDirectory(), mode);
+      JibContainerBuilder containerBuilder = JarFiles.toJibContainerBuilder(processor);
       CacheDirectories cacheDirectories =
           CacheDirectories.from(commonCliOptions, jarFile.toAbsolutePath().getParent());
       Containerizer containerizer = Containerizers.from(commonCliOptions, logger, cacheDirectories);

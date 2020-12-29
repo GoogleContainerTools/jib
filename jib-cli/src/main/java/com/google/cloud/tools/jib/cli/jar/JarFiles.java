@@ -35,7 +35,7 @@ public class JarFiles {
    *     provided doesn't exist
    * @throws InvalidImageReferenceException if the base image reference is invalid
    */
-  public static JibContainerBuilder toJibContainerBuilder(JarModeProcessor modeProcessor)
+  public static JibContainerBuilder toJibContainerBuilder(JarProcessor modeProcessor)
       throws IOException, InvalidImageReferenceException {
 
     // Use distroless as the base image.

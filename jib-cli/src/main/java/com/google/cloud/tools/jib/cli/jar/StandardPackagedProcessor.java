@@ -26,7 +26,7 @@ import java.util.jar.Attributes;
 import java.util.jar.JarFile;
 import javax.annotation.Nullable;
 
-public class StandardPackagedModeProcessor implements JarModeProcessor {
+public class StandardPackagedProcessor implements JarProcessor {
 
   @Nullable private static Path jarPath = null;
 
@@ -37,13 +37,13 @@ public class StandardPackagedModeProcessor implements JarModeProcessor {
     }
     // Add dependencies layers.
     List<FileEntriesLayer> layers =
-        JarProcessorHelper.getDependenciesLayers(jarPath, ProcessingMode.packaged);
+        JarLayers.getDependenciesLayers(jarPath, ProcessingMode.packaged);
 
     // Add layer for jar.
     FileEntriesLayer jarLayer =
         FileEntriesLayer.builder()
-            .setName(JarProcessorHelper.JAR)
-            .addEntry(jarPath, JarProcessorHelper.APP_ROOT.resolve(jarPath.getFileName()))
+            .setName(JarLayers.JAR)
+            .addEntry(jarPath, JarLayers.APP_ROOT.resolve(jarPath.getFileName()))
             .build();
     layers.add(jarLayer);
 
@@ -64,8 +64,13 @@ public class StandardPackagedModeProcessor implements JarModeProcessor {
                 + "manifest (`META-INF/MANIFEST.MF` in the JAR).");
       }
       return ImmutableList.of(
-          "java", "-jar", JarProcessorHelper.APP_ROOT + "/" + jarPath.getFileName().toString());
+          "java", "-jar", JarLayers.APP_ROOT + "/" + jarPath.getFileName().toString());
     }
+  }
+
+  @Nullable
+  public Path getJarPath() {
+    return jarPath;
   }
 
   public void setJarPath(Path path) {

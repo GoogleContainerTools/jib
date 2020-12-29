@@ -33,7 +33,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
-/** Tests for {@link SpringBootExplodedModeProcessor}. */
+/** Tests for {@link SpringBootExplodedProcessor}. */
 public class SpringBootExplodedModeProcessorTest {
 
   private static final String SPRING_BOOT_LAYERED = "jar/spring-boot/springboot_layered.jar";
@@ -60,8 +60,7 @@ public class SpringBootExplodedModeProcessorTest {
     //   - "META-INF/"
     Path springBootJar = Paths.get(Resources.getResource(SPRING_BOOT_LAYERED).toURI());
     Path destDir = temporaryFolder.newFolder().toPath();
-    SpringBootExplodedModeProcessor springBootExplodedModeProcessor =
-        new SpringBootExplodedModeProcessor();
+    SpringBootExplodedProcessor springBootExplodedModeProcessor = new SpringBootExplodedProcessor();
     springBootExplodedModeProcessor.setTempDirectoryPath(destDir);
     springBootExplodedModeProcessor.setJarPath(springBootJar);
     List<FileEntriesLayer> layers = springBootExplodedModeProcessor.createLayers();
@@ -133,8 +132,7 @@ public class SpringBootExplodedModeProcessorTest {
     Path springBootJar =
         Paths.get(Resources.getResource(SPRING_BOOT_LAYERED_WITH_EMPTY_LAYER).toURI());
     Path destDir = temporaryFolder.newFolder().toPath();
-    SpringBootExplodedModeProcessor springBootExplodedModeProcessor =
-        new SpringBootExplodedModeProcessor();
+    SpringBootExplodedProcessor springBootExplodedModeProcessor = new SpringBootExplodedProcessor();
     springBootExplodedModeProcessor.setTempDirectoryPath(destDir);
     springBootExplodedModeProcessor.setJarPath(springBootJar);
     List<FileEntriesLayer> layers = springBootExplodedModeProcessor.createLayers();
@@ -191,8 +189,7 @@ public class SpringBootExplodedModeProcessorTest {
     Path springBootJar =
         Paths.get(Resources.getResource(SPRING_BOOT_LAYERED_WITH_ALL_EMPTY_LAYERS_LISTED).toURI());
     Path destDir = temporaryFolder.newFolder().toPath();
-    SpringBootExplodedModeProcessor springBootExplodedModeProcessor =
-        new SpringBootExplodedModeProcessor();
+    SpringBootExplodedProcessor springBootExplodedModeProcessor = new SpringBootExplodedProcessor();
     springBootExplodedModeProcessor.setTempDirectoryPath(destDir);
     springBootExplodedModeProcessor.setJarPath(springBootJar);
     List<FileEntriesLayer> layers = springBootExplodedModeProcessor.createLayers();
@@ -204,8 +201,7 @@ public class SpringBootExplodedModeProcessorTest {
   public void testCreateLayers_nonLayered() throws IOException, URISyntaxException {
     Path springBootJar = Paths.get(Resources.getResource(SPRING_BOOT_NOT_LAYERED).toURI());
     Path destDir = temporaryFolder.newFolder().toPath();
-    SpringBootExplodedModeProcessor springBootExplodedModeProcessor =
-        new SpringBootExplodedModeProcessor();
+    SpringBootExplodedProcessor springBootExplodedModeProcessor = new SpringBootExplodedProcessor();
     springBootExplodedModeProcessor.setTempDirectoryPath(destDir);
     springBootExplodedModeProcessor.setJarPath(springBootJar);
     List<FileEntriesLayer> layers = springBootExplodedModeProcessor.createLayers();
@@ -261,7 +257,7 @@ public class SpringBootExplodedModeProcessorTest {
 
   @Test
   public void testComputeEntrypoint() {
-    SpringBootExplodedModeProcessor bootProcessor = new SpringBootExplodedModeProcessor();
+    SpringBootExplodedProcessor bootProcessor = new SpringBootExplodedProcessor();
     ImmutableList<String> actualEntrypoint = bootProcessor.computeEntrypoint();
     assertThat(actualEntrypoint)
         .isEqualTo(

@@ -23,7 +23,7 @@ import java.util.Collections;
 import java.util.List;
 import javax.annotation.Nullable;
 
-public class SpringBootPackagedModeProcessor implements JarModeProcessor {
+public class SpringBootPackagedProcessor implements JarProcessor {
 
   @Nullable private static Path jarPath = null;
 
@@ -34,8 +34,8 @@ public class SpringBootPackagedModeProcessor implements JarModeProcessor {
     }
     FileEntriesLayer jarLayer =
         FileEntriesLayer.builder()
-            .setName(JarProcessorHelper.JAR)
-            .addEntry(jarPath, JarProcessorHelper.APP_ROOT.resolve(jarPath.getFileName()))
+            .setName(JarLayers.JAR)
+            .addEntry(jarPath, JarLayers.APP_ROOT.resolve(jarPath.getFileName()))
             .build();
     return Collections.singletonList(jarLayer);
   }
@@ -46,7 +46,12 @@ public class SpringBootPackagedModeProcessor implements JarModeProcessor {
       return ImmutableList.of();
     }
     return ImmutableList.of(
-        "java", "-jar", JarProcessorHelper.APP_ROOT + "/" + jarPath.getFileName().toString());
+        "java", "-jar", JarLayers.APP_ROOT + "/" + jarPath.getFileName().toString());
+  }
+
+  @Nullable
+  public Path getJarPath() {
+    return jarPath;
   }
 
   public void setJarPath(Path path) {

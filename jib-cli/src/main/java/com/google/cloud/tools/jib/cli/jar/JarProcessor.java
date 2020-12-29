@@ -22,7 +22,7 @@ import java.io.IOException;
 import java.util.List;
 
 /** Interface to create layers and compute entrypoint from jar file contents. */
-public interface JarModeProcessor {
+public interface JarProcessor {
 
   /**
    * Creates layers on container for a jar.

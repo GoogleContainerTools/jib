@@ -28,7 +28,7 @@ import java.nio.file.Paths;
 import java.util.List;
 import org.junit.Test;
 
-/** Tests for {@link SpringBootPackagedModeProcessor}. */
+/** Tests for {@link SpringBootPackagedProcessor}. */
 public class SpringBootPackagedModeProcessorTest {
 
   private static final String SPRING_BOOT_JAR = "jar/spring-boot/springboot_sample.jar";
@@ -36,7 +36,7 @@ public class SpringBootPackagedModeProcessorTest {
   @Test
   public void testCreateLayers() throws URISyntaxException {
     Path springBootJar = Paths.get(Resources.getResource(SPRING_BOOT_JAR).toURI());
-    SpringBootPackagedModeProcessor springBootProcessor = new SpringBootPackagedModeProcessor();
+    SpringBootPackagedProcessor springBootProcessor = new SpringBootPackagedProcessor();
     springBootProcessor.setJarPath(springBootJar);
     List<FileEntriesLayer> layers = springBootProcessor.createLayers();
 
@@ -53,7 +53,7 @@ public class SpringBootPackagedModeProcessorTest {
   @Test
   public void testComputeEntrypoint() throws URISyntaxException {
     Path standardJar = Paths.get(Resources.getResource(SPRING_BOOT_JAR).toURI());
-    SpringBootPackagedModeProcessor springBootProcessor = new SpringBootPackagedModeProcessor();
+    SpringBootPackagedProcessor springBootProcessor = new SpringBootPackagedProcessor();
     springBootProcessor.setJarPath(standardJar);
 
     ImmutableList<String> actualEntrypoint = springBootProcessor.computeEntrypoint();
