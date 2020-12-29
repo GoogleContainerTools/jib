@@ -29,20 +29,20 @@ public class JarFiles {
   /**
    * Generates a {@link JibContainerBuilder} from contents of a jar file.
    *
-   * @param modeProcessor jar mode processor
+   * @param processor jar processor
    * @return JibContainerBuilder
    * @throws IOException if I/O error occurs when opening the jar file or if temporary directory
    *     provided doesn't exist
    * @throws InvalidImageReferenceException if the base image reference is invalid
    */
-  public static JibContainerBuilder toJibContainerBuilder(JarProcessor modeProcessor)
+  public static JibContainerBuilder toJibContainerBuilder(JarProcessor processor)
       throws IOException, InvalidImageReferenceException {
 
     // Use distroless as the base image.
     JibContainerBuilder containerBuilder = Jib.from("gcr.io/distroless/java");
 
-    List<FileEntriesLayer> layers = modeProcessor.createLayers();
-    List<String> entrypoint = modeProcessor.computeEntrypoint();
+    List<FileEntriesLayer> layers = processor.createLayers();
+    List<String> entrypoint = processor.computeEntrypoint();
     containerBuilder.setEntrypoint(entrypoint).setFileEntriesLayers(layers);
     return containerBuilder;
   }
