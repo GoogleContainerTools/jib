@@ -166,14 +166,17 @@ cmd:
 layers: 
   properties:                        # file properties applied to all layers
     filePermissions: "123"           # octal file permissions, default is 644
-    directoryPermissions: "123"      # octal file permissions, default is 755
+    directoryPermissions: "123"      # octal directory permissions, default is 755
     user: "2"                        # default user is 0
     group: "4"                       # default group is 0
     timestamp: "1232"                # timestamp can be millis since epoch or ISO 8601 format, default is "Epoch + 1 second"
   entries:
     - name: "scripts"                # first layer
+      properties:                    # file properties applied to only this layer
+        filePermissions: "123"           
+        # see above for full list of properties...
       files:
-        - src: "project/run.sh"      # a simple copy directive
+        - src: "project/run.sh"      # a simple copy directive (inherits layer level file properties)
           dest: "/home/run.sh"       # all 'dest' specifications must be absolute paths on the container
         - src: "scripts"             # a second copy directive in the same layer
           dest: "/home/scripts"
@@ -182,7 +185,10 @@ layers:
             - "**/*.ignore"
           includes:                  # include only files matching these patterns
             - "**/include.me"            
-    - name: "images"                 # second layer
+          properties:                # file properties applied to only this copy directive
+            filePermissions: "123"           
+            # see above for full list of properties...  
+    - name: "images"                 # second layer, inherits file properties from global
       files:
         - src: "images"
         - dest: "/images"            
