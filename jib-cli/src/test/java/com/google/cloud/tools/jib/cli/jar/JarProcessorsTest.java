@@ -41,7 +41,7 @@ public class JarProcessorsTest {
     assertThat(((StandardExplodedProcessor) processor).getJarPath().getFileName().toString())
         .isEqualTo("emptyStandardJar.jar");
     assertThat(((StandardExplodedProcessor) processor).getTempDirectoryPath().toString())
-        .isEqualTo("path/to/tempDirectory");
+        .isEqualTo(Paths.get("path/to/tempDirectory").toString());
   }
 
   @Test
@@ -76,6 +76,6 @@ public class JarProcessorsTest {
     assertThat(((SpringBootExplodedProcessor) processor).getJarPath().getFileName().toString())
         .isEqualTo("springboot_sample.jar");
     assertThat(((SpringBootExplodedProcessor) processor).getTempDirectoryPath().toString())
-        .isEqualTo("path/to/tempDirectory");
+        .isEqualTo(Paths.get("path/to/tempDirectory").toString());
   }
 }
