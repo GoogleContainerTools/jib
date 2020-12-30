@@ -229,21 +229,18 @@ layers:
        - "**/exclude-dir/**
      ```
      
-#### Base image value inheritance
-The value(s) defined in the base image are preserved and propagated into the
-config of the new container.
+#### Base image parameter inheritance
+Some values defined in the base image may be preserved and propogated into the new container.
 
-The behavior of the buildfile values post-inheritance must be considered
+Parameters will append to base image value:
+  - `volumes`
+  - `exposedPorts`
 
-These parameters will allow appending to the base image value:
-- `volumes`
-- `exposedPorts`
-
-These parameters will allow appending for new keys, and overwriting for existing keys:
+Parameters that will append any new keys, and overwrite existing keys:
 - `labels`
 - `environment`
 
-These parameters will be overwritten:
+Parameters that will be overwritten:
 - `user`
 - `workingDirectory`
 - `entrypoint`
