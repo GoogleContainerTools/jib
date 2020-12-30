@@ -175,7 +175,7 @@ layers:
       properties:                    # file properties applied to only this layer
         filePermissions: "123"           
         # see above for full list of properties...
-      files:
+      files:                         # a list of copy directives constitute a single layer
         - src: "project/run.sh"      # a simple copy directive (inherits layer level file properties)
           dest: "/home/run.sh"       # all 'dest' specifications must be absolute paths on the container
         - src: "scripts"             # a second copy directive in the same layer
@@ -194,4 +194,57 @@ layers:
         - dest: "/images"            
 ```
 
-TODO: Layer building has some quirks. Explain it all here.
+#### Layers behavior
+- Copy directives are bound by the following rules
+  `src`: filetype determined by type on local disk
+   - if `src` is directory, `dest` is always considered a directory, directory and contents will be copied over and renamed to `dest`
+   - if `src` is file
+     - if `dest` ends with `/` then it is considered a target directory, file will be copied into directory
+     - if `dest` doesn't end with `/` then is is the target file location, `src` file will be copied and renamed to `dest`
+- Permissions for a file or directory that appear in multiple layers will prioritize the *last* layer and copy directive the file appears in. In the following example, `file.txt` as seen on the running container will have filePermissions `234`.
+    ```
+    - name: layer1
+      properties:
+        filePermissions: "123"
+      - src: file.txt
+        dest: /file.txt
+    - name: layer2
+      properties:
+        filePermissions: "234"
+      - src: file.txt
+        dest: /file.txt
+     ```
+- Parent directories that are not exiplicitly defined in a layer will the default properties in jib-core (permissions: 755, modification-time: epoch+1). In the following example, `/somewhere` on the container will have the directory permissions `755`, not `777` as some might expect.
+    ```
+    - name: layer
+      properties:
+        directoryPermissions: "777"
+      - src: file.txt
+        dest: /somewhere/file.txt
+    ```
+- `excludes` on a directory can lead to unintended inclusion of files in the directory, to exclude a directory *and* all its files
+     ```
+     excludes:
+       - "**/exclude-dir"
+       - "**/exclude-dir/**
+     ```
+     
+#### Base image value inheritance
+The value(s) defined in the base image are preserved and propagated into the
+config of the new container.
+
+The behavior of the buildfile values post-inheritance must be considered
+
+These parameters will allow appending to the base image value:
+- `volumes`
+- `exposedPorts`
+
+These parameters will allow appending for new keys, and overwriting for existing keys:
+- `labels`
+- `environment`
+
+These parameters will be overwritten:
+- `user`
+- `workingDirectory`
+- `entrypoint`
+- `cmd`
