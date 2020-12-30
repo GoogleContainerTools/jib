@@ -27,6 +27,7 @@ import java.nio.file.Paths;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
 /** Tests for {@link JarProcessors}. */
@@ -43,6 +44,7 @@ public class JarProcessorsTest {
     Path jarPath = Paths.get(Resources.getResource(STANDARD).toURI());
     JarProcessor processor =
         JarProcessors.from(jarPath, mockTemporaryDirectoryProvider, ProcessingMode.exploded);
+    Mockito.verify(mockTemporaryDirectoryProvider).newDirectory();
     assertThat(processor).isInstanceOf(StandardExplodedProcessor.class);
   }
 
@@ -51,6 +53,7 @@ public class JarProcessorsTest {
     Path jarPath = Paths.get(Resources.getResource(STANDARD).toURI());
     JarProcessor processor =
         JarProcessors.from(jarPath, mockTemporaryDirectoryProvider, ProcessingMode.packaged);
+    Mockito.verifyNoInteractions(mockTemporaryDirectoryProvider);
     assertThat(processor).isInstanceOf(StandardPackagedProcessor.class);
   }
 
@@ -59,6 +62,7 @@ public class JarProcessorsTest {
     Path jarPath = Paths.get(Resources.getResource(SPRING_BOOT).toURI());
     JarProcessor processor =
         JarProcessors.from(jarPath, mockTemporaryDirectoryProvider, ProcessingMode.packaged);
+    Mockito.verifyNoInteractions(mockTemporaryDirectoryProvider);
     assertThat(processor).isInstanceOf(SpringBootPackagedProcessor.class);
   }
 
@@ -67,6 +71,7 @@ public class JarProcessorsTest {
     Path jarPath = Paths.get(Resources.getResource(SPRING_BOOT).toURI());
     JarProcessor processor =
         JarProcessors.from(jarPath, mockTemporaryDirectoryProvider, ProcessingMode.exploded);
+    Mockito.verify(mockTemporaryDirectoryProvider).newDirectory();
     assertThat(processor).isInstanceOf(SpringBootExplodedProcessor.class);
   }
 }
