@@ -31,8 +31,13 @@ import javax.annotation.Nullable;
 
 public class StandardExplodedProcessor implements JarProcessor {
 
-  @Nullable private static Path tempDirectoryPath = null;
-  @Nullable private static Path jarPath = null;
+  @Nullable private static Path tempDirectoryPath;
+  @Nullable private static Path jarPath;
+
+  public StandardExplodedProcessor(Path jarPath, Path tempDirectoryPath) {
+    this.jarPath = jarPath;
+    this.tempDirectoryPath = tempDirectoryPath;
+  }
 
   @Override
   public List<FileEntriesLayer> createLayers() throws IOException {
@@ -91,20 +96,12 @@ public class StandardExplodedProcessor implements JarProcessor {
   }
 
   @Nullable
-  public Path getTempDirectoryPath() {
-    return tempDirectoryPath;
-  }
-
-  @Nullable
   public Path getJarPath() {
     return jarPath;
   }
 
-  public void setTempDirectoryPath(Path tempDirPath) {
-    tempDirectoryPath = tempDirPath;
-  }
-
-  public void setJarPath(Path path) {
-    jarPath = path;
+  @Nullable
+  public Path getTempDirectoryPath() {
+    return tempDirectoryPath;
   }
 }

@@ -52,9 +52,8 @@ public class StandardExplodedModeProcessorTest {
   public void testCreateLayers_emptyJar() throws IOException, URISyntaxException {
     Path standardJar = Paths.get(Resources.getResource(STANDARD_JAR_EMPTY).toURI());
     Path destDir = temporaryFolder.newFolder().toPath();
-    StandardExplodedProcessor standardExplodedModeProcessor = new StandardExplodedProcessor();
-    standardExplodedModeProcessor.setTempDirectoryPath(destDir);
-    standardExplodedModeProcessor.setJarPath(standardJar);
+    StandardExplodedProcessor standardExplodedModeProcessor =
+        new StandardExplodedProcessor(standardJar, destDir);
 
     List<FileEntriesLayer> layers = standardExplodedModeProcessor.createLayers();
 
@@ -72,9 +71,8 @@ public class StandardExplodedModeProcessorTest {
     Path standardJar =
         Paths.get(Resources.getResource(STANDARD_JAR_WITH_CLASS_PATH_MANIFEST).toURI());
     Path destDir = temporaryFolder.newFolder().toPath();
-    StandardExplodedProcessor standardExplodedModeProcessor = new StandardExplodedProcessor();
-    standardExplodedModeProcessor.setTempDirectoryPath(destDir);
-    standardExplodedModeProcessor.setJarPath(standardJar);
+    StandardExplodedProcessor standardExplodedModeProcessor =
+        new StandardExplodedProcessor(standardJar, destDir);
 
     List<FileEntriesLayer> layers = standardExplodedModeProcessor.createLayers();
 
@@ -141,9 +139,8 @@ public class StandardExplodedModeProcessorTest {
     Path standardJar =
         Paths.get(Resources.getResource(STANDARD_JAR_WITHOUT_CLASS_PATH_MANIFEST).toURI());
     Path destDir = temporaryFolder.newFolder().toPath();
-    StandardExplodedProcessor standardExplodedModeProcessor = new StandardExplodedProcessor();
-    standardExplodedModeProcessor.setTempDirectoryPath(destDir);
-    standardExplodedModeProcessor.setJarPath(standardJar);
+    StandardExplodedProcessor standardExplodedModeProcessor =
+        new StandardExplodedProcessor(standardJar, destDir);
     List<FileEntriesLayer> layers = standardExplodedModeProcessor.createLayers();
 
     assertThat(layers.size()).isEqualTo(2);
@@ -189,9 +186,9 @@ public class StandardExplodedModeProcessorTest {
       throws IOException, URISyntaxException {
     Path standardJar = Paths.get(Resources.getResource(STANDARD_JAR_WITH_ONLY_CLASSES).toURI());
     Path destDir = temporaryFolder.newFolder().toPath();
-    StandardExplodedProcessor standardExplodedModeProcessor = new StandardExplodedProcessor();
-    standardExplodedModeProcessor.setTempDirectoryPath(destDir);
-    standardExplodedModeProcessor.setJarPath(standardJar);
+    StandardExplodedProcessor standardExplodedModeProcessor =
+        new StandardExplodedProcessor(standardJar, destDir);
+
     List<FileEntriesLayer> layers = standardExplodedModeProcessor.createLayers();
 
     assertThat(layers.size()).isEqualTo(2);
@@ -221,9 +218,8 @@ public class StandardExplodedModeProcessorTest {
   public void testCreateLayers_dependencyDoesNotExist() throws URISyntaxException {
     Path standardJar = Paths.get(Resources.getResource(STANDARD_SINGLE_DEPENDENCY_JAR).toURI());
     Path destDir = temporaryFolder.getRoot().toPath();
-    StandardExplodedProcessor standardExplodedModeProcessor = new StandardExplodedProcessor();
-    standardExplodedModeProcessor.setTempDirectoryPath(destDir);
-    standardExplodedModeProcessor.setJarPath(standardJar);
+    StandardExplodedProcessor standardExplodedModeProcessor =
+        new StandardExplodedProcessor(standardJar, destDir);
 
     IllegalArgumentException exception =
         assertThrows(
@@ -238,8 +234,8 @@ public class StandardExplodedModeProcessorTest {
   @Test
   public void testComputeEntrypoint_noMainClass() throws URISyntaxException {
     Path standardJar = Paths.get(Resources.getResource(STANDARD_JAR_EMPTY).toURI());
-    StandardExplodedProcessor standardExplodedModeProcessor = new StandardExplodedProcessor();
-    standardExplodedModeProcessor.setJarPath(standardJar);
+    StandardExplodedProcessor standardExplodedModeProcessor =
+        new StandardExplodedProcessor(standardJar, Paths.get("ignore"));
     IllegalArgumentException exception =
         assertThrows(
             IllegalArgumentException.class,
@@ -256,8 +252,8 @@ public class StandardExplodedModeProcessorTest {
   public void testComputeEntrypoint_withMainClass() throws IOException, URISyntaxException {
     Path standardJar =
         Paths.get(Resources.getResource(STANDARD_JAR_WITH_CLASS_PATH_MANIFEST).toURI());
-    StandardExplodedProcessor standardExplodedModeProcessor = new StandardExplodedProcessor();
-    standardExplodedModeProcessor.setJarPath(standardJar);
+    StandardExplodedProcessor standardExplodedModeProcessor =
+        new StandardExplodedProcessor(standardJar, Paths.get("ignore"));
 
     ImmutableList<String> actualEntrypoint = standardExplodedModeProcessor.computeEntrypoint();
 

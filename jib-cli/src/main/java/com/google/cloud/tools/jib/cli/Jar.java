@@ -97,8 +97,7 @@ public class Jar implements Callable<Integer> {
         return 1;
       }
 
-      JarProcessor processor =
-          JarProcessors.from(jarFile, tempDirectoryProvider.newDirectory(), mode);
+      JarProcessor processor = JarProcessors.from(jarFile, tempDirectoryProvider, mode);
       JibContainerBuilder containerBuilder = JarFiles.toJibContainerBuilder(processor);
       CacheDirectories cacheDirectories =
           CacheDirectories.from(commonCliOptions, jarFile.toAbsolutePath().getParent());

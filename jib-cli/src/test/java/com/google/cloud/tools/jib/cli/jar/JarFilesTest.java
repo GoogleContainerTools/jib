@@ -42,21 +42,18 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class JarFilesTest {
 
-  @Mock private StandardExplodedProcessor mockStandardExplodedModeProcessor;
+  @Mock private StandardExplodedProcessor mockStandardExplodedProcessor;
 
-  @Mock private StandardPackagedProcessor mockStandardPackagedModeProcessor;
+  @Mock private StandardPackagedProcessor mockStandardPackagedProcessor;
 
-  @Mock private SpringBootExplodedProcessor mockSpringBootExplodedModeProcessor;
+  @Mock private SpringBootExplodedProcessor mockSpringBootExplodedProcessor;
 
-  @Mock private SpringBootPackagedProcessor mockSpringBootPackagedModeProcessor;
+  @Mock private SpringBootPackagedProcessor mockSpringBootPackagedProcessor;
 
   @Test
   public void testToJibContainerBuilder_explodedStandard_basicInfo()
       throws IOException, InvalidImageReferenceException {
-    Path standardJar = Paths.get("path/to/standardJar.jar");
     Path temporaryParentDirectory = Paths.get("path/to/tempDirectory");
-    mockStandardExplodedModeProcessor.setTempDirectoryPath(temporaryParentDirectory);
-    mockStandardExplodedModeProcessor.setJarPath(standardJar);
     FileEntriesLayer layer =
         FileEntriesLayer.builder()
             .setName("classes")
@@ -64,13 +61,13 @@ public class JarFilesTest {
                 temporaryParentDirectory.resolve("class1.class"),
                 AbsoluteUnixPath.get("/app/explodedJar/class1.class"))
             .build();
-    Mockito.when(mockStandardExplodedModeProcessor.createLayers()).thenReturn(Arrays.asList(layer));
-    Mockito.when(mockStandardExplodedModeProcessor.computeEntrypoint())
+    Mockito.when(mockStandardExplodedProcessor.createLayers()).thenReturn(Arrays.asList(layer));
+    Mockito.when(mockStandardExplodedProcessor.computeEntrypoint())
         .thenReturn(
             ImmutableList.of("java", "-cp", "/app/explodedJar:/app/dependencies/*", "HelloWorld"));
 
     JibContainerBuilder containerBuilder =
-        JarFiles.toJibContainerBuilder(mockStandardExplodedModeProcessor);
+        JarFiles.toJibContainerBuilder(mockStandardExplodedProcessor);
     ContainerBuildPlan buildPlan = containerBuilder.toContainerBuildPlan();
 
     assertThat(buildPlan.getBaseImage()).isEqualTo("gcr.io/distroless/java");
@@ -101,19 +98,18 @@ public class JarFilesTest {
   @Test
   public void testToJibContainerBuilder_packagedStandard_basicInfo()
       throws IOException, InvalidImageReferenceException {
-    Path standardJar = Paths.get("path/to/standardJar.jar");
     FileEntriesLayer layer =
         FileEntriesLayer.builder()
             .setName("jar")
-            .addEntry(standardJar, AbsoluteUnixPath.get("/app/standardJar.jar"))
+            .addEntry(
+                Paths.get("path/to/standardJar.jar"), AbsoluteUnixPath.get("/app/standardJar.jar"))
             .build();
-    mockStandardPackagedModeProcessor.setJarPath(standardJar);
-    Mockito.when(mockStandardPackagedModeProcessor.createLayers()).thenReturn(Arrays.asList(layer));
-    Mockito.when(mockStandardPackagedModeProcessor.computeEntrypoint())
+    Mockito.when(mockStandardPackagedProcessor.createLayers()).thenReturn(Arrays.asList(layer));
+    Mockito.when(mockStandardPackagedProcessor.computeEntrypoint())
         .thenReturn(ImmutableList.of("java", "-jar", "/app/standardJar.jar"));
 
     JibContainerBuilder containerBuilder =
-        JarFiles.toJibContainerBuilder(mockStandardPackagedModeProcessor);
+        JarFiles.toJibContainerBuilder(mockStandardPackagedProcessor);
     ContainerBuildPlan buildPlan = containerBuilder.toContainerBuildPlan();
 
     assertThat(buildPlan.getBaseImage()).isEqualTo("gcr.io/distroless/java");
@@ -142,10 +138,7 @@ public class JarFilesTest {
   @Test
   public void testToJibContainerBuilder_explodedLayeredSpringBoot_basicInfo()
       throws IOException, InvalidImageReferenceException {
-    Path springBootJar = Paths.get("path/to/spring-boot.jar");
     Path temporaryParentDirectory = Paths.get("path/to/tempDirectory");
-    mockSpringBootExplodedModeProcessor.setTempDirectoryPath(temporaryParentDirectory);
-    mockSpringBootExplodedModeProcessor.setJarPath(springBootJar);
     FileEntriesLayer layer =
         FileEntriesLayer.builder()
             .setName("classes")
@@ -153,14 +146,13 @@ public class JarFilesTest {
                 temporaryParentDirectory.resolve("BOOT-INF/classes/class1.class"),
                 AbsoluteUnixPath.get("/app/BOOT-INF/classes/class1.class"))
             .build();
-    Mockito.when(mockSpringBootExplodedModeProcessor.createLayers())
-        .thenReturn(Arrays.asList(layer));
-    Mockito.when(mockSpringBootExplodedModeProcessor.computeEntrypoint())
+    Mockito.when(mockSpringBootExplodedProcessor.createLayers()).thenReturn(Arrays.asList(layer));
+    Mockito.when(mockSpringBootExplodedProcessor.computeEntrypoint())
         .thenReturn(
             ImmutableList.of("java", "-cp", "/app", "org.springframework.boot.loader.JarLauncher"));
 
     JibContainerBuilder containerBuilder =
-        JarFiles.toJibContainerBuilder(mockSpringBootExplodedModeProcessor);
+        JarFiles.toJibContainerBuilder(mockSpringBootExplodedProcessor);
     ContainerBuildPlan buildPlan = containerBuilder.toContainerBuildPlan();
 
     assertThat(buildPlan.getBaseImage()).isEqualTo("gcr.io/distroless/java");
@@ -191,20 +183,18 @@ public class JarFilesTest {
   @Test
   public void testToJibContainerBuilder_packagedSpringBoot_basicInfo()
       throws IOException, InvalidImageReferenceException {
-    Path springBootJar = Paths.get("path/to/spring-boot.jar");
     FileEntriesLayer layer =
         FileEntriesLayer.builder()
             .setName("jar")
-            .addEntry(springBootJar, AbsoluteUnixPath.get("/app/spring-boot.jar"))
+            .addEntry(
+                Paths.get("path/to/spring-boot.jar"), AbsoluteUnixPath.get("/app/spring-boot.jar"))
             .build();
-    Mockito.when(mockSpringBootPackagedModeProcessor.createLayers())
-        .thenReturn(Arrays.asList(layer));
-    Mockito.when(mockSpringBootPackagedModeProcessor.computeEntrypoint())
+    Mockito.when(mockSpringBootPackagedProcessor.createLayers()).thenReturn(Arrays.asList(layer));
+    Mockito.when(mockSpringBootPackagedProcessor.computeEntrypoint())
         .thenReturn(ImmutableList.of("java", "-jar", "/app/spring-boot.jar"));
-    mockSpringBootPackagedModeProcessor.setJarPath(springBootJar);
 
     JibContainerBuilder containerBuilder =
-        JarFiles.toJibContainerBuilder(mockSpringBootPackagedModeProcessor);
+        JarFiles.toJibContainerBuilder(mockSpringBootPackagedProcessor);
     ContainerBuildPlan buildPlan = containerBuilder.toContainerBuildPlan();
 
     assertThat(buildPlan.getBaseImage()).isEqualTo("gcr.io/distroless/java");

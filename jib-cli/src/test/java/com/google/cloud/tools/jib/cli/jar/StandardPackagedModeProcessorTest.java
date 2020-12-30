@@ -43,8 +43,8 @@ public class StandardPackagedModeProcessorTest {
   @Test
   public void testCreateLayers_emptyJar() throws IOException, URISyntaxException {
     Path standardJar = Paths.get(Resources.getResource(STANDARD_JAR_EMPTY).toURI());
-    StandardPackagedProcessor standardPackagedModeProcessor = new StandardPackagedProcessor();
-    standardPackagedModeProcessor.setJarPath(standardJar);
+    StandardPackagedProcessor standardPackagedModeProcessor =
+        new StandardPackagedProcessor(standardJar);
 
     List<FileEntriesLayer> layers = standardPackagedModeProcessor.createLayers();
 
@@ -61,8 +61,8 @@ public class StandardPackagedModeProcessorTest {
   public void testCreateLayers_withClassPathInManifest() throws IOException, URISyntaxException {
     Path standardJar =
         Paths.get(Resources.getResource(STANDARD_JAR_WITH_CLASS_PATH_MANIFEST).toURI());
-    StandardPackagedProcessor standardPackagedModeProcessor = new StandardPackagedProcessor();
-    standardPackagedModeProcessor.setJarPath(standardJar);
+    StandardPackagedProcessor standardPackagedModeProcessor =
+        new StandardPackagedProcessor(standardJar);
 
     List<FileEntriesLayer> layers = standardPackagedModeProcessor.createLayers();
 
@@ -104,8 +104,8 @@ public class StandardPackagedModeProcessorTest {
   @Test
   public void testCreateLayers_dependencyDoesNotExist() throws URISyntaxException {
     Path standardJar = Paths.get(Resources.getResource(STANDARD_SINGLE_DEPENDENCY_JAR).toURI());
-    StandardPackagedProcessor standardPackagedModeProcessor = new StandardPackagedProcessor();
-    standardPackagedModeProcessor.setJarPath(standardJar);
+    StandardPackagedProcessor standardPackagedModeProcessor =
+        new StandardPackagedProcessor(standardJar);
 
     IllegalArgumentException exception =
         assertThrows(
@@ -120,8 +120,8 @@ public class StandardPackagedModeProcessorTest {
   @Test
   public void testComputeEntrypoint_noMainClass() throws URISyntaxException {
     Path standardJar = Paths.get(Resources.getResource(STANDARD_JAR_EMPTY).toURI());
-    StandardPackagedProcessor standardPackagedModeProcessor = new StandardPackagedProcessor();
-    standardPackagedModeProcessor.setJarPath(standardJar);
+    StandardPackagedProcessor standardPackagedModeProcessor =
+        new StandardPackagedProcessor(standardJar);
 
     IllegalArgumentException exception =
         assertThrows(
@@ -139,8 +139,8 @@ public class StandardPackagedModeProcessorTest {
   public void testComputeEntrypoint_withMainClass() throws IOException, URISyntaxException {
     Path standardJar =
         Paths.get(Resources.getResource(STANDARD_JAR_WITH_CLASS_PATH_MANIFEST).toURI());
-    StandardPackagedProcessor standardPackagedModeProcessor = new StandardPackagedProcessor();
-    standardPackagedModeProcessor.setJarPath(standardJar);
+    StandardPackagedProcessor standardPackagedModeProcessor =
+        new StandardPackagedProcessor(standardJar);
 
     ImmutableList<String> actualEntrypoint = standardPackagedModeProcessor.computeEntrypoint();
 

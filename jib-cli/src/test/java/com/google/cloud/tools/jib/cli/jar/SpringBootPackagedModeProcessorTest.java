@@ -36,8 +36,8 @@ public class SpringBootPackagedModeProcessorTest {
   @Test
   public void testCreateLayers() throws URISyntaxException {
     Path springBootJar = Paths.get(Resources.getResource(SPRING_BOOT_JAR).toURI());
-    SpringBootPackagedProcessor springBootProcessor = new SpringBootPackagedProcessor();
-    springBootProcessor.setJarPath(springBootJar);
+    SpringBootPackagedProcessor springBootProcessor =
+        new SpringBootPackagedProcessor(springBootJar);
     List<FileEntriesLayer> layers = springBootProcessor.createLayers();
 
     assertThat(layers.size()).isEqualTo(1);
@@ -52,9 +52,9 @@ public class SpringBootPackagedModeProcessorTest {
 
   @Test
   public void testComputeEntrypoint() throws URISyntaxException {
-    Path standardJar = Paths.get(Resources.getResource(SPRING_BOOT_JAR).toURI());
-    SpringBootPackagedProcessor springBootProcessor = new SpringBootPackagedProcessor();
-    springBootProcessor.setJarPath(standardJar);
+    Path springBootJar = Paths.get(Resources.getResource(SPRING_BOOT_JAR).toURI());
+    SpringBootPackagedProcessor springBootProcessor =
+        new SpringBootPackagedProcessor(springBootJar);
 
     ImmutableList<String> actualEntrypoint = springBootProcessor.computeEntrypoint();
 

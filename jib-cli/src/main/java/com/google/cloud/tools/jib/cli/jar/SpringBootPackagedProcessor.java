@@ -25,7 +25,11 @@ import javax.annotation.Nullable;
 
 public class SpringBootPackagedProcessor implements JarProcessor {
 
-  @Nullable private static Path jarPath = null;
+  @Nullable private static Path jarPath;
+
+  public SpringBootPackagedProcessor(Path jarPath) {
+    this.jarPath = jarPath;
+  }
 
   @Override
   public List<FileEntriesLayer> createLayers() {
@@ -52,9 +56,5 @@ public class SpringBootPackagedProcessor implements JarProcessor {
   @Nullable
   public Path getJarPath() {
     return jarPath;
-  }
-
-  public void setJarPath(Path path) {
-    jarPath = path;
   }
 }

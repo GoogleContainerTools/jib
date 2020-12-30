@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.cli.jar;
 
+import com.google.cloud.tools.jib.filesystem.TempDirectoryProvider;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.jar.JarFile;
@@ -29,32 +30,23 @@ public class JarProcessors {
    * Creates a {@link JarProcessor} instance based on jar type and processing mode.
    *
    * @param jarPath path to the jar
-   * @param temporaryDirectory path to temporary directory
+   * @param temporaryDirectoryProvider temporary directory provider
    * @param mode processing mode
    * @return JarProcessor
    * @throws IOException if I/O error occurs when opening the jar file
    */
-  public static JarProcessor from(Path jarPath, Path temporaryDirectory, ProcessingMode mode)
+  public static JarProcessor from(
+      Path jarPath, TempDirectoryProvider temporaryDirectoryProvider, ProcessingMode mode)
       throws IOException {
     String jarType = determineJarType(jarPath);
     if (jarType.equals(SPRING_BOOT) && mode.equals(ProcessingMode.packaged)) {
-      SpringBootPackagedProcessor processor = new SpringBootPackagedProcessor();
-      processor.setJarPath(jarPath);
-      return processor;
+      return new SpringBootPackagedProcessor(jarPath);
     } else if (jarType.equals(SPRING_BOOT) && mode.equals(ProcessingMode.exploded)) {
-      SpringBootExplodedProcessor processor = new SpringBootExplodedProcessor();
-      processor.setJarPath(jarPath);
-      processor.setTempDirectoryPath(temporaryDirectory);
-      return processor;
+      return new SpringBootExplodedProcessor(jarPath, temporaryDirectoryProvider.newDirectory());
     } else if (jarType.equals(STANDARD) && mode.equals(ProcessingMode.packaged)) {
-      StandardPackagedProcessor processor = new StandardPackagedProcessor();
-      processor.setJarPath(jarPath);
-      return processor;
+      return new StandardPackagedProcessor(jarPath);
     } else {
-      StandardExplodedProcessor processor = new StandardExplodedProcessor();
-      processor.setJarPath(jarPath);
-      processor.setTempDirectoryPath(temporaryDirectory);
-      return processor;
+      return new StandardExplodedProcessor(jarPath, temporaryDirectoryProvider.newDirectory());
     }
   }
 

@@ -28,7 +28,11 @@ import javax.annotation.Nullable;
 
 public class StandardPackagedProcessor implements JarProcessor {
 
-  @Nullable private static Path jarPath = null;
+  @Nullable private static Path jarPath;
+
+  public StandardPackagedProcessor(Path jarPath) {
+    this.jarPath = jarPath;
+  }
 
   @Override
   public List<FileEntriesLayer> createLayers() throws IOException {
@@ -71,9 +75,5 @@ public class StandardPackagedProcessor implements JarProcessor {
   @Nullable
   public Path getJarPath() {
     return jarPath;
-  }
-
-  public void setJarPath(Path path) {
-    jarPath = path;
   }
 }
