@@ -14,12 +14,10 @@ are almost certain to change.
 Use the `application` plugin's `installDist` task to create a runnable installation in
 `build/install/jib`.  A zip and tar file are also created in `build/distributions`.
 ```sh
-$ ../gradlew installDist
-$ ./build/install/jib/bin/jib
-Missing required subcommand
-Usage: jib [-kv] [-C=helper]... COMMAND
-A tool for creating container images.
-...
+# build
+$ ./gradlew jib-cli:installDist
+# run
+$ ./jib-cli/build/install/jib/bin/jib
 ```
 
 ## Usage
