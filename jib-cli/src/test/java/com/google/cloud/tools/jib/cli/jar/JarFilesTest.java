@@ -28,7 +28,6 @@ import com.google.cloud.tools.jib.api.buildplan.Platform;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import java.io.IOException;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Instant;
 import java.util.Arrays;
@@ -53,12 +52,11 @@ public class JarFilesTest {
   @Test
   public void testToJibContainerBuilder_explodedStandard_basicInfo()
       throws IOException, InvalidImageReferenceException {
-    Path temporaryParentDirectory = Paths.get("path/to/tempDirectory");
     FileEntriesLayer layer =
         FileEntriesLayer.builder()
             .setName("classes")
             .addEntry(
-                temporaryParentDirectory.resolve("class1.class"),
+                Paths.get("path/to/tempDirectory/class1.class"),
                 AbsoluteUnixPath.get("/app/explodedJar/class1.class"))
             .build();
     Mockito.when(mockStandardExplodedProcessor.createLayers()).thenReturn(Arrays.asList(layer));
@@ -138,12 +136,11 @@ public class JarFilesTest {
   @Test
   public void testToJibContainerBuilder_explodedLayeredSpringBoot_basicInfo()
       throws IOException, InvalidImageReferenceException {
-    Path temporaryParentDirectory = Paths.get("path/to/tempDirectory");
     FileEntriesLayer layer =
         FileEntriesLayer.builder()
             .setName("classes")
             .addEntry(
-                temporaryParentDirectory.resolve("BOOT-INF/classes/class1.class"),
+                Paths.get("path/to/tempDirectory/BOOT-INF/classes/class1.class"),
                 AbsoluteUnixPath.get("/app/BOOT-INF/classes/class1.class"))
             .build();
     Mockito.when(mockSpringBootExplodedProcessor.createLayers()).thenReturn(Arrays.asList(layer));

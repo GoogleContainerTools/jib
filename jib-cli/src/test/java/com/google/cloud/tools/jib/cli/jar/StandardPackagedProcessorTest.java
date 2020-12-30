@@ -33,7 +33,7 @@ import java.util.stream.Collectors;
 import org.junit.Test;
 
 /** Tests for {@link StandardPackagedProcessor}. */
-public class StandardPackagedModeProcessorTest {
+public class StandardPackagedProcessorTest {
 
   private static final String STANDARD_JAR_EMPTY = "jar/standard/emptyStandardJar.jar";
   private static final String STANDARD_SINGLE_DEPENDENCY_JAR = "jar/standard/singleDepJar.jar";
@@ -110,6 +110,7 @@ public class StandardPackagedModeProcessorTest {
     IllegalArgumentException exception =
         assertThrows(
             IllegalArgumentException.class, () -> standardPackagedModeProcessor.createLayers());
+
     assertThat(exception)
         .hasMessageThat()
         .isEqualTo(

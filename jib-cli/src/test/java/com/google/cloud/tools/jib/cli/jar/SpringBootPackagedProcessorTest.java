@@ -29,7 +29,7 @@ import java.util.List;
 import org.junit.Test;
 
 /** Tests for {@link SpringBootPackagedProcessor}. */
-public class SpringBootPackagedModeProcessorTest {
+public class SpringBootPackagedProcessorTest {
 
   private static final String SPRING_BOOT_JAR = "jar/spring-boot/springboot_sample.jar";
 
@@ -38,6 +38,7 @@ public class SpringBootPackagedModeProcessorTest {
     Path springBootJar = Paths.get(Resources.getResource(SPRING_BOOT_JAR).toURI());
     SpringBootPackagedProcessor springBootProcessor =
         new SpringBootPackagedProcessor(springBootJar);
+
     List<FileEntriesLayer> layers = springBootProcessor.createLayers();
 
     assertThat(layers.size()).isEqualTo(1);

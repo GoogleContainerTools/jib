@@ -34,7 +34,7 @@ import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
 /** Tests for {@link SpringBootExplodedProcessor}. */
-public class SpringBootExplodedModeProcessorTest {
+public class SpringBootExplodedProcessorTest {
 
   private static final String SPRING_BOOT_LAYERED = "jar/spring-boot/springboot_layered.jar";
   private static final String SPRING_BOOT_LAYERED_WITH_EMPTY_LAYER =
@@ -47,7 +47,7 @@ public class SpringBootExplodedModeProcessorTest {
 
   @Test
   public void testCreateLayers_layered_allListed() throws IOException, URISyntaxException {
-    // BOOT-INF/layers.idx for this springboot jar as shown below:
+    // BOOT-INF/layers.idx for this spring-boot jar is as follows:
     // - "dependencies":
     //   - "BOOT-INF/lib/dependency1.jar"
     //   - "BOOT-INF/lib/dependency2.jar"
@@ -62,6 +62,7 @@ public class SpringBootExplodedModeProcessorTest {
     Path destDir = temporaryFolder.newFolder().toPath();
     SpringBootExplodedProcessor springBootExplodedModeProcessor =
         new SpringBootExplodedProcessor(springBootJar, destDir);
+
     List<FileEntriesLayer> layers = springBootExplodedModeProcessor.createLayers();
 
     assertThat(layers.size()).isEqualTo(4);
@@ -71,7 +72,6 @@ public class SpringBootExplodedModeProcessorTest {
     FileEntriesLayer snapshotLayer = layers.get(2);
     FileEntriesLayer applicationLayer = layers.get(3);
 
-    // Validate dependencies layers.
     assertThat(nonSnapshotLayer.getName()).isEqualTo("dependencies");
     assertThat(
             nonSnapshotLayer
@@ -82,6 +82,7 @@ public class SpringBootExplodedModeProcessorTest {
         .containsExactly(
             AbsoluteUnixPath.get("/app/BOOT-INF/lib/dependency1.jar"),
             AbsoluteUnixPath.get("/app/BOOT-INF/lib/dependency2.jar"));
+
     assertThat(loaderLayer.getName()).isEqualTo("spring-boot-loader");
     assertThat(
             loaderLayer
@@ -118,7 +119,7 @@ public class SpringBootExplodedModeProcessorTest {
   @Test
   public void testCreateLayers_layered_singleEmptyLayerListed()
       throws IOException, URISyntaxException {
-    // BOOT-INF/layers.idx for this springboot jar as shown below:
+    // BOOT-INF/layers.idx for this spring-boot jar is as follows:
     // - "dependencies":
     //   - "BOOT-INF/lib/dependency1.jar"
     //   - "BOOT-INF/lib/dependency2.jar"
@@ -133,6 +134,7 @@ public class SpringBootExplodedModeProcessorTest {
     Path destDir = temporaryFolder.newFolder().toPath();
     SpringBootExplodedProcessor springBootExplodedModeProcessor =
         new SpringBootExplodedProcessor(springBootJar, destDir);
+
     List<FileEntriesLayer> layers = springBootExplodedModeProcessor.createLayers();
 
     assertThat(layers.size()).isEqualTo(3);
@@ -141,7 +143,6 @@ public class SpringBootExplodedModeProcessorTest {
     FileEntriesLayer loaderLayer = layers.get(1);
     FileEntriesLayer applicationLayer = layers.get(2);
 
-    // Validate dependencies layers.
     assertThat(nonSnapshotLayer.getName()).isEqualTo("dependencies");
     assertThat(
             nonSnapshotLayer
@@ -152,6 +153,7 @@ public class SpringBootExplodedModeProcessorTest {
         .containsExactly(
             AbsoluteUnixPath.get("/app/BOOT-INF/lib/dependency1.jar"),
             AbsoluteUnixPath.get("/app/BOOT-INF/lib/dependency2.jar"));
+
     assertThat(loaderLayer.getName()).isEqualTo("spring-boot-loader");
     assertThat(
             loaderLayer
@@ -179,7 +181,7 @@ public class SpringBootExplodedModeProcessorTest {
   @Test
   public void testCreateLayers_layered_allEmptyLayersListed()
       throws IOException, URISyntaxException {
-    // BOOT-INF/layers.idx for this springboot jar as shown below:
+    // BOOT-INF/layers.idx for this spring-boot jar is as follows:
     // - "dependencies":
     // - "spring-boot-loader":
     // - "snapshot-dependencies":
@@ -189,6 +191,7 @@ public class SpringBootExplodedModeProcessorTest {
     Path destDir = temporaryFolder.newFolder().toPath();
     SpringBootExplodedProcessor springBootExplodedModeProcessor =
         new SpringBootExplodedProcessor(springBootJar, destDir);
+
     List<FileEntriesLayer> layers = springBootExplodedModeProcessor.createLayers();
 
     assertThat(layers.size()).isEqualTo(0);
@@ -200,6 +203,7 @@ public class SpringBootExplodedModeProcessorTest {
     Path destDir = temporaryFolder.newFolder().toPath();
     SpringBootExplodedProcessor springBootExplodedModeProcessor =
         new SpringBootExplodedProcessor(springBootJar, destDir);
+
     List<FileEntriesLayer> layers = springBootExplodedModeProcessor.createLayers();
 
     assertThat(layers.size()).isEqualTo(5);
@@ -220,6 +224,7 @@ public class SpringBootExplodedModeProcessorTest {
         .containsExactly(
             AbsoluteUnixPath.get("/app/BOOT-INF/lib/dependency1.jar"),
             AbsoluteUnixPath.get("/app/BOOT-INF/lib/dependency2.jar"));
+
     assertThat(loaderLayer.getName()).isEqualTo("spring-boot-loader");
     assertThat(
             loaderLayer

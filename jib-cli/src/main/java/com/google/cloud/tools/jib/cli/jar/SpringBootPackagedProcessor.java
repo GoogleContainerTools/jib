@@ -52,9 +52,4 @@ public class SpringBootPackagedProcessor implements JarProcessor {
     return ImmutableList.of(
         "java", "-jar", JarLayers.APP_ROOT + "/" + jarPath.getFileName().toString());
   }
-
-  @Nullable
-  public Path getJarPath() {
-    return jarPath;
-  }
 }

@@ -31,8 +31,8 @@ import javax.annotation.Nullable;
 
 public class StandardExplodedProcessor implements JarProcessor {
 
-  @Nullable private static Path tempDirectoryPath;
   @Nullable private static Path jarPath;
+  @Nullable private static Path tempDirectoryPath;
 
   public StandardExplodedProcessor(Path jarPath, Path tempDirectoryPath) {
     this.jarPath = jarPath;
@@ -44,6 +44,7 @@ public class StandardExplodedProcessor implements JarProcessor {
     if (tempDirectoryPath == null || jarPath == null) {
       return new ArrayList<>();
     }
+
     // Add dependencies layers.
     List<FileEntriesLayer> layers =
         JarLayers.getDependenciesLayers(jarPath, ProcessingMode.exploded);
@@ -93,15 +94,5 @@ public class StandardExplodedProcessor implements JarProcessor {
           JarLayers.APP_ROOT + "/explodedJar:" + JarLayers.APP_ROOT + "/dependencies/*";
       return ImmutableList.of("java", "-cp", classpath, mainClass);
     }
-  }
-
-  @Nullable
-  public Path getJarPath() {
-    return jarPath;
-  }
-
-  @Nullable
-  public Path getTempDirectoryPath() {
-    return tempDirectoryPath;
   }
 }

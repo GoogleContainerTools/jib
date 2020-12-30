@@ -35,7 +35,7 @@ import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
 /** Tests for {@link StandardExplodedProcessor}. */
-public class StandardExplodedModeProcessorTest {
+public class StandardExplodedProcessorTest {
 
   private static final String STANDARD_JAR_WITHOUT_CLASS_PATH_MANIFEST =
       "jar/standard/standardJarWithoutClassPath.jar";
@@ -141,6 +141,7 @@ public class StandardExplodedModeProcessorTest {
     Path destDir = temporaryFolder.newFolder().toPath();
     StandardExplodedProcessor standardExplodedModeProcessor =
         new StandardExplodedProcessor(standardJar, destDir);
+
     List<FileEntriesLayer> layers = standardExplodedModeProcessor.createLayers();
 
     assertThat(layers.size()).isEqualTo(2);
@@ -224,6 +225,7 @@ public class StandardExplodedModeProcessorTest {
     IllegalArgumentException exception =
         assertThrows(
             IllegalArgumentException.class, () -> standardExplodedModeProcessor.createLayers());
+
     assertThat(exception)
         .hasMessageThat()
         .isEqualTo(
@@ -236,6 +238,7 @@ public class StandardExplodedModeProcessorTest {
     Path standardJar = Paths.get(Resources.getResource(STANDARD_JAR_EMPTY).toURI());
     StandardExplodedProcessor standardExplodedModeProcessor =
         new StandardExplodedProcessor(standardJar, Paths.get("ignore"));
+
     IllegalArgumentException exception =
         assertThrows(
             IllegalArgumentException.class,

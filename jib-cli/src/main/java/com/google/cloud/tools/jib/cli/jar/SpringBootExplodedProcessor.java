@@ -40,8 +40,8 @@ import javax.annotation.Nullable;
 
 public class SpringBootExplodedProcessor implements JarProcessor {
 
-  @Nullable private static Path tempDirectoryPath;
   @Nullable private static Path jarPath;
+  @Nullable private static Path tempDirectoryPath;
 
   public SpringBootExplodedProcessor(Path jarPath, Path tempDirectoryPath) {
     this.jarPath = jarPath;
@@ -61,8 +61,9 @@ public class SpringBootExplodedProcessor implements JarProcessor {
         return createLayersForLayeredSpringBootJar(localExplodedJarRoot);
       }
 
-      // Non-snapshot layer
       Predicate<Path> isFile = Files::isRegularFile;
+
+      // Non-snapshot layer
       Predicate<Path> isInBootInfLib =
           path -> path.startsWith(localExplodedJarRoot.resolve("BOOT-INF").resolve("lib"));
       Predicate<Path> isSnapshot = path -> path.getFileName().toString().contains("SNAPSHOT");
@@ -122,16 +123,6 @@ public class SpringBootExplodedProcessor implements JarProcessor {
         "-cp",
         JarLayers.APP_ROOT.toString(),
         "org.springframework.boot.loader.JarLauncher");
-  }
-
-  @Nullable
-  public Path getJarPath() {
-    return jarPath;
-  }
-
-  @Nullable
-  public Path getTempDirectoryPath() {
-    return tempDirectoryPath;
   }
 
   /**

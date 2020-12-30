@@ -71,9 +71,4 @@ public class StandardPackagedProcessor implements JarProcessor {
           "java", "-jar", JarLayers.APP_ROOT + "/" + jarPath.getFileName().toString());
     }
   }
-
-  @Nullable
-  public Path getJarPath() {
-    return jarPath;
-  }
 }

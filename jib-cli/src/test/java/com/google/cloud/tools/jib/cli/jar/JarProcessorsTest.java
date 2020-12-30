@@ -52,8 +52,6 @@ public class JarProcessorsTest {
     JarProcessor processor =
         JarProcessors.from(jarPath, mockTemporaryDirectoryProvider, ProcessingMode.packaged);
     assertThat(processor).isInstanceOf(StandardPackagedProcessor.class);
-    assertThat(((StandardPackagedProcessor) processor).getJarPath().getFileName().toString())
-        .isEqualTo("emptyStandardJar.jar");
   }
 
   @Test
