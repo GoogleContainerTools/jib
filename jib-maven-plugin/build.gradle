@@ -75,6 +75,7 @@ release {
 /* RELEASE */
 
 /* ECLIPSE */
+eclipse.classpath.plusConfigurations += [configurations.integrationTestImplementation]
 eclipse.classpath.file.whenMerged {
   entries.each {
     if (it.path == 'src/test/resources') {

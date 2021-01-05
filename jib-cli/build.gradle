@@ -46,3 +46,14 @@ release {
     requireBranch = /^cli-release-v\d+.*$/  //regex
   }
 }
+
+/* ECLIPSE */
+eclipse.classpath.plusConfigurations += [configurations.integrationTestImplementation]
+eclipse.classpath.file.whenMerged {
+  entries.each {
+    if (it.path == 'src/integration-test/resources') {
+      it.excludes += 'jarTest/'
+    }
+  }
+}
+/* ECLIPSE */

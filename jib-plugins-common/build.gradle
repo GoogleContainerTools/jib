@@ -21,3 +21,7 @@ dependencies {
 }
 
 sourceSets.test.resources.srcDirs project(':jib-core').sourceSets.test.resources
+
+/* ECLIPSE */
+eclipse.classpath.plusConfigurations += [configurations.integrationTestImplementation]
+/* ECLIPSE */
