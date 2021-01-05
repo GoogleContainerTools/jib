@@ -9,7 +9,9 @@ a Java library for building containers without Docker.
 This CLI tool is _experimental_ and its options and structure
 are almost certain to change.
 
-## Building
+## Get the Jib CLI
+
+### Build yourself
 
 Use the `application` plugin's `installDist` task to create a runnable installation in
 `build/install/jib`.  A zip and tar file are also created in `build/distributions`.
@@ -20,12 +22,16 @@ $ ./gradlew jib-cli:installDist
 $ ./jib-cli/build/install/jib/bin/jib
 ```
 
+[comment]: <> TODO: ### Download a java application
+
+[comment]: <> TODO: ### Download an executable
+
 ## Usage
 
 Currently only one command is supported: `build`
 
 ```
-jib build -t gcr.io/my-project/my-image [options]
+jib build --target gcr.io/my-project/my-image [options]
 ```
 
 #### Options
