@@ -27,9 +27,8 @@ jobs:
       - name: Run Gradle release
         run: |
           git checkout -b cli-release-v${{ github.event.inputs.release_version }}
-          # TODO: set this to the GitHub user triggering the workflow
-          git config user.email "chanseok@google.com"
-          git config user.name "Chanseok Oh"
+          git config user.email ${{ github.actor }}@users.noreply.github.com
+          git config user.name ${{ github.actor }}
           # This creates the tag (e.g., "v0.1.0-cli") and pushes the updated
           # branch (e.g., "cli-release-v0.1.0") and the new tag.
           ./gradlew jib-cli:release \
@@ -53,7 +52,8 @@ jobs:
           source_branch: cli-release-v${{ github.event.inputs.release_version }}
           pr_title: "CLI release v${{ github.event.inputs.release_version }}"
           pr_body: "To be merged after the release is complete."
-    
+          pr_label: "kokoro:run"
+
       - name: Draft GitHub release
         uses: actions/create-release@v1
         id: create_release
