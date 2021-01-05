@@ -22,9 +22,9 @@ $ ./gradlew jib-cli:installDist
 $ ./jib-cli/build/install/jib/bin/jib
 ```
 
-[comment]: <> TODO: ### Download a java application
+<!-- TODO: ### Download a java application -->
 
-[comment]: <> TODO: ### Download an executable
+<!-- TODO: ### Download an executable -->
 
 ## Usage
 
