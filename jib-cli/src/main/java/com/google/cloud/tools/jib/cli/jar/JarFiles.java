@@ -73,7 +73,7 @@ public class JarFiles {
     return containerBuilder;
   }
 
-  static JibContainerBuilder createJibContainerBuilder(
+  private static JibContainerBuilder createJibContainerBuilder(
       String from, CommonCliOptions commonCliOptions, ConsoleLogger logger)
       throws InvalidImageReferenceException, FileNotFoundException {
     String baseImageReference = from;
