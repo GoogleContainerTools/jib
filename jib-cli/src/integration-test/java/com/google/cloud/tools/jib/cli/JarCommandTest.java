@@ -239,6 +239,24 @@ public class JarCommandTest {
     assertThat(getContent(new URL("http://localhost:8080"))).isEqualTo("Hello world");
   }
 
+  @Test
+  public void testJar_baseImageSpecified()
+      throws IOException, URISyntaxException, InterruptedException {
+    Path jarPath = Paths.get(Resources.getResource("jarTest/standard/noDependencyJar.jar").toURI());
+    Integer exitCode =
+        new CommandLine(new JibCli())
+            .execute(
+                "jar",
+                "--target",
+                "docker://cli-gcr-base",
+                "--from",
+                "gcr.io/google-appengine/openjdk:8",
+                jarPath.toString());
+    assertThat(exitCode).isEqualTo(0);
+    String output = new Command("docker", "run", "--rm", "cli-gcr-base").run();
+    assertThat(output).isEqualTo("Hello World");
+  }
+
   @Nullable
   private static String getContent(URL url) throws InterruptedException {
     for (int i = 0; i < 40; i++) {

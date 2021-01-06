@@ -25,12 +25,17 @@ import com.google.cloud.tools.jib.api.buildplan.ContainerBuildPlan;
 import com.google.cloud.tools.jib.api.buildplan.FileEntriesLayer;
 import com.google.cloud.tools.jib.api.buildplan.ImageFormat;
 import com.google.cloud.tools.jib.api.buildplan.Platform;
+import com.google.cloud.tools.jib.cli.CommonCliOptions;
+import com.google.cloud.tools.jib.cli.Jar;
+import com.google.cloud.tools.jib.plugins.common.logging.ConsoleLogger;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.time.Instant;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.Optional;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
@@ -49,6 +54,12 @@ public class JarFilesTest {
 
   @Mock private SpringBootPackagedProcessor mockSpringBootPackagedProcessor;
 
+  @Mock private Jar mockJarCommand;
+
+  @Mock private CommonCliOptions mockCommonCliOptions;
+
+  @Mock private ConsoleLogger mockLogger;
+
   @Test
   public void testToJibContainerBuilder_explodedStandard_basicInfo()
       throws IOException, InvalidImageReferenceException {
@@ -63,9 +74,11 @@ public class JarFilesTest {
     Mockito.when(mockStandardExplodedProcessor.computeEntrypoint())
         .thenReturn(
             ImmutableList.of("java", "-cp", "/app/explodedJar:/app/dependencies/*", "HelloWorld"));
+    Mockito.when(mockJarCommand.getFrom()).thenReturn(Optional.empty());
 
     JibContainerBuilder containerBuilder =
-        JarFiles.toJibContainerBuilder(mockStandardExplodedProcessor);
+        JarFiles.toJibContainerBuilder(
+            mockStandardExplodedProcessor, mockJarCommand, mockCommonCliOptions, mockLogger);
     ContainerBuildPlan buildPlan = containerBuilder.toContainerBuildPlan();
 
     assertThat(buildPlan.getBaseImage()).isEqualTo("gcr.io/distroless/java");
@@ -105,9 +118,11 @@ public class JarFilesTest {
     Mockito.when(mockStandardPackagedProcessor.createLayers()).thenReturn(Arrays.asList(layer));
     Mockito.when(mockStandardPackagedProcessor.computeEntrypoint())
         .thenReturn(ImmutableList.of("java", "-jar", "/app/standardJar.jar"));
+    Mockito.when(mockJarCommand.getFrom()).thenReturn(Optional.empty());
 
     JibContainerBuilder containerBuilder =
-        JarFiles.toJibContainerBuilder(mockStandardPackagedProcessor);
+        JarFiles.toJibContainerBuilder(
+            mockStandardPackagedProcessor, mockJarCommand, mockCommonCliOptions, mockLogger);
     ContainerBuildPlan buildPlan = containerBuilder.toContainerBuildPlan();
 
     assertThat(buildPlan.getBaseImage()).isEqualTo("gcr.io/distroless/java");
@@ -143,13 +158,16 @@ public class JarFilesTest {
                 Paths.get("path/to/tempDirectory/BOOT-INF/classes/class1.class"),
                 AbsoluteUnixPath.get("/app/BOOT-INF/classes/class1.class"))
             .build();
+    Mockito.when(mockJarCommand.getFrom()).thenReturn(Optional.empty());
     Mockito.when(mockSpringBootExplodedProcessor.createLayers()).thenReturn(Arrays.asList(layer));
     Mockito.when(mockSpringBootExplodedProcessor.computeEntrypoint())
         .thenReturn(
             ImmutableList.of("java", "-cp", "/app", "org.springframework.boot.loader.JarLauncher"));
+    Mockito.when(mockJarCommand.getFrom()).thenReturn(Optional.empty());
 
     JibContainerBuilder containerBuilder =
-        JarFiles.toJibContainerBuilder(mockSpringBootExplodedProcessor);
+        JarFiles.toJibContainerBuilder(
+            mockSpringBootExplodedProcessor, mockJarCommand, mockCommonCliOptions, mockLogger);
     ContainerBuildPlan buildPlan = containerBuilder.toContainerBuildPlan();
 
     assertThat(buildPlan.getBaseImage()).isEqualTo("gcr.io/distroless/java");
@@ -189,9 +207,11 @@ public class JarFilesTest {
     Mockito.when(mockSpringBootPackagedProcessor.createLayers()).thenReturn(Arrays.asList(layer));
     Mockito.when(mockSpringBootPackagedProcessor.computeEntrypoint())
         .thenReturn(ImmutableList.of("java", "-jar", "/app/spring-boot.jar"));
+    Mockito.when(mockJarCommand.getFrom()).thenReturn(Optional.empty());
 
     JibContainerBuilder containerBuilder =
-        JarFiles.toJibContainerBuilder(mockSpringBootPackagedProcessor);
+        JarFiles.toJibContainerBuilder(
+            mockSpringBootPackagedProcessor, mockJarCommand, mockCommonCliOptions, mockLogger);
     ContainerBuildPlan buildPlan = containerBuilder.toContainerBuildPlan();
 
     assertThat(buildPlan.getBaseImage()).isEqualTo("gcr.io/distroless/java");
@@ -216,5 +236,35 @@ public class JarFilesTest {
                     AbsoluteUnixPath.get("/app/spring-boot.jar"))
                 .build()
                 .getEntries());
+  }
+
+  @Test
+  public void testToJibContainerBuilder_dockerBaseImage()
+      throws IOException, InvalidImageReferenceException {
+    Mockito.when(mockStandardExplodedProcessor.createLayers()).thenReturn(Collections.EMPTY_LIST);
+    Mockito.when(mockStandardExplodedProcessor.computeEntrypoint())
+        .thenReturn(ImmutableList.of("ignore"));
+    Mockito.when(mockJarCommand.getFrom()).thenReturn(Optional.of("docker://docker-image-ref"));
+
+    JibContainerBuilder containerBuilder =
+        JarFiles.toJibContainerBuilder(
+            mockStandardExplodedProcessor, mockJarCommand, mockCommonCliOptions, mockLogger);
+    String baseImage = containerBuilder.toContainerBuildPlan().getBaseImage();
+    assertThat(baseImage).isEqualTo("docker-image-ref");
+  }
+
+  @Test
+  public void testToJibContainerBuilder_registry()
+      throws IOException, InvalidImageReferenceException {
+    Mockito.when(mockStandardExplodedProcessor.createLayers()).thenReturn(Collections.EMPTY_LIST);
+    Mockito.when(mockStandardExplodedProcessor.computeEntrypoint())
+        .thenReturn(ImmutableList.of("ignore"));
+    Mockito.when(mockJarCommand.getFrom()).thenReturn(Optional.of("registry://registry-image-ref"));
+
+    JibContainerBuilder containerBuilder =
+        JarFiles.toJibContainerBuilder(
+            mockStandardExplodedProcessor, mockJarCommand, mockCommonCliOptions, mockLogger);
+    String baseImage = containerBuilder.toContainerBuildPlan().getBaseImage();
+    assertThat(baseImage).isEqualTo("registry-image-ref");
   }
 }
