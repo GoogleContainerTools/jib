@@ -125,9 +125,9 @@ public class Jar implements Callable<Integer> {
   }
 
   /**
-   * Returns the base image.
+   * Returns the user specified base image.
    *
-   * @return base image
+   * @return an optional base image
    */
   public Optional<String> getFrom() {
     if (from != null) {
