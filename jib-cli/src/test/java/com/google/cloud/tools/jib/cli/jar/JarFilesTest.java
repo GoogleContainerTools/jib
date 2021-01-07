@@ -18,12 +18,8 @@ package com.google.cloud.tools.jib.cli.jar;
 
 import static com.google.common.truth.Truth.assertThat;
 
-import com.google.cloud.tools.jib.api.CacheDirectoryCreationException;
-import com.google.cloud.tools.jib.api.Containerizer;
 import com.google.cloud.tools.jib.api.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.api.JibContainerBuilder;
-import com.google.cloud.tools.jib.api.JibContainerBuilderTestHelper;
-import com.google.cloud.tools.jib.api.RegistryImage;
 import com.google.cloud.tools.jib.api.buildplan.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.api.buildplan.ContainerBuildPlan;
 import com.google.cloud.tools.jib.api.buildplan.FileEntriesLayer;
@@ -31,8 +27,6 @@ import com.google.cloud.tools.jib.api.buildplan.ImageFormat;
 import com.google.cloud.tools.jib.api.buildplan.Platform;
 import com.google.cloud.tools.jib.cli.CommonCliOptions;
 import com.google.cloud.tools.jib.cli.Jar;
-import com.google.cloud.tools.jib.configuration.BuildContext;
-import com.google.cloud.tools.jib.configuration.ImageConfiguration;
 import com.google.cloud.tools.jib.plugins.common.logging.ConsoleLogger;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
@@ -50,8 +44,6 @@ import org.mockito.junit.MockitoJUnitRunner;
 /** Tests for {@link JarFiles}. */
 @RunWith(MockitoJUnitRunner.class)
 public class JarFilesTest {
-
-  @Mock private JarProcessor mockJarProcessor;
 
   @Mock private StandardExplodedProcessor mockStandardExplodedProcessor;
 
@@ -243,51 +235,5 @@ public class JarFilesTest {
                     AbsoluteUnixPath.get("/app/spring-boot.jar"))
                 .build()
                 .getEntries());
-  }
-
-  @Test
-  public void testToJibContainerBuilder_dockerBaseImage()
-      throws IOException, InvalidImageReferenceException, CacheDirectoryCreationException {
-    Mockito.when(mockJarCommand.getFrom()).thenReturn(Optional.of("docker://docker-image-ref"));
-
-    ImageConfiguration imageConfiguration = getCommonImageConfiguration();
-
-    assertThat(imageConfiguration.getImage().toString()).isEqualTo("docker-image-ref");
-    assertThat(imageConfiguration.getDockerClient().isPresent()).isTrue();
-    assertThat(imageConfiguration.getTarPath().isPresent()).isFalse();
-  }
-
-  @Test
-  public void testToJibContainerBuilder_registry()
-      throws IOException, InvalidImageReferenceException, CacheDirectoryCreationException {
-    Mockito.when(mockJarCommand.getFrom()).thenReturn(Optional.of("registry://registry-image-ref"));
-
-    ImageConfiguration imageConfiguration = getCommonImageConfiguration();
-
-    assertThat(imageConfiguration.getImage().toString()).isEqualTo("registry-image-ref");
-    assertThat(imageConfiguration.getDockerClient().isPresent()).isFalse();
-    assertThat(imageConfiguration.getTarPath().isPresent()).isFalse();
-  }
-
-  @Test
-  public void testToJibContainerBuilder_tarBase()
-      throws IOException, InvalidImageReferenceException, CacheDirectoryCreationException {
-    Mockito.when(mockJarCommand.getFrom()).thenReturn(Optional.of("tar:///path/to.tar"));
-
-    ImageConfiguration imageConfiguration = getCommonImageConfiguration();
-
-    assertThat(imageConfiguration.getTarPath()).isEqualTo(Optional.of(Paths.get("/path/to.tar")));
-    assertThat(imageConfiguration.getDockerClient().isPresent()).isFalse();
-  }
-
-  private ImageConfiguration getCommonImageConfiguration()
-      throws IOException, InvalidImageReferenceException, CacheDirectoryCreationException {
-    JibContainerBuilder containerBuilder =
-        JarFiles.toJibContainerBuilder(
-            mockJarProcessor, mockJarCommand, mockCommonCliOptions, mockLogger);
-    BuildContext buildContext =
-        JibContainerBuilderTestHelper.toBuildContext(
-            containerBuilder, Containerizer.to(RegistryImage.named("ignored")));
-    return buildContext.getBaseImageConfiguration();
   }
 }
