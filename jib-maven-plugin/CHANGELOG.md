@@ -9,6 +9,12 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
+## 2.7.1
+
+### Fixed
+
+- Updated jackson dependency version causing compatibility issues. ([#2931](https://github.com/GoogleContainerTools/jib/issues/2931))
+
 ## 2.7.0
 
 ### Changed
