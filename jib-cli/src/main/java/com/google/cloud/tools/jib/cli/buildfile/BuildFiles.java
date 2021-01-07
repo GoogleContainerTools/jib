@@ -31,8 +31,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -105,17 +104,12 @@ public class BuildFiles {
   private static JibContainerBuilder createJibContainerBuilder(
       BaseImageSpec baseImageSpec, CommonCliOptions commonCliOptions, ConsoleLogger logger)
       throws InvalidImageReferenceException, FileNotFoundException {
-    List<Platform> platforms = new ArrayList<>();
-    if (!baseImageSpec.getPlatforms().isEmpty()) {
-      platforms =
-          baseImageSpec
-              .getPlatforms()
-              .stream()
-              .map(
-                  platformSpec ->
-                      new Platform(platformSpec.getArchitecture(), platformSpec.getOs()))
-              .collect(Collectors.toList());
-    }
+    LinkedHashSet<Platform> platforms =
+        baseImageSpec
+            .getPlatforms()
+            .stream()
+            .map(platformSpec -> new Platform(platformSpec.getArchitecture(), platformSpec.getOs()))
+            .collect(Collectors.toCollection(LinkedHashSet::new));
     return ContainerBuilders.create(baseImageSpec.getImage(), platforms, commonCliOptions, logger);
   }
 }

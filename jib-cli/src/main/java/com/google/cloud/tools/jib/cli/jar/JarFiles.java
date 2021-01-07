@@ -54,7 +54,7 @@ public class JarFiles {
     JibContainerBuilder containerBuilder =
         jarOptions.getFrom().isPresent()
             ? ContainerBuilders.create(
-                jarOptions.getFrom().get(), Collections.emptyList(), commonCliOptions, logger)
+                jarOptions.getFrom().get(), Collections.emptySet(), commonCliOptions, logger)
             : Jib.from("gcr.io/distroless/java");
 
     List<FileEntriesLayer> layers = processor.createLayers();

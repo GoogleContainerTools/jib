@@ -28,7 +28,6 @@ import com.google.cloud.tools.jib.api.buildplan.Platform;
 import com.google.cloud.tools.jib.configuration.BuildContext;
 import com.google.cloud.tools.jib.configuration.ImageConfiguration;
 import com.google.cloud.tools.jib.plugins.common.logging.ConsoleLogger;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import java.io.IOException;
 import java.nio.file.Paths;
@@ -52,7 +51,7 @@ public class ContainerBuildersTest {
       throws IOException, InvalidImageReferenceException, CacheDirectoryCreationException {
     JibContainerBuilder containerBuilder =
         ContainerBuilders.create(
-            "docker://docker-image-ref", Collections.EMPTY_LIST, mockCommonCliOptions, mockLogger);
+            "docker://docker-image-ref", Collections.EMPTY_SET, mockCommonCliOptions, mockLogger);
     BuildContext buildContext =
         JibContainerBuilderTestHelper.toBuildContext(
             containerBuilder, Containerizer.to(RegistryImage.named("ignored")));
@@ -69,7 +68,7 @@ public class ContainerBuildersTest {
     JibContainerBuilder containerBuilder =
         ContainerBuilders.create(
             "registry://registry-image-ref",
-            Collections.EMPTY_LIST,
+            Collections.EMPTY_SET,
             mockCommonCliOptions,
             mockLogger);
     BuildContext buildContext =
@@ -87,7 +86,7 @@ public class ContainerBuildersTest {
       throws IOException, InvalidImageReferenceException, CacheDirectoryCreationException {
     JibContainerBuilder containerBuilder =
         ContainerBuilders.create(
-            "tar:///path/to.tar", Collections.EMPTY_LIST, mockCommonCliOptions, mockLogger);
+            "tar:///path/to.tar", Collections.EMPTY_SET, mockCommonCliOptions, mockLogger);
     BuildContext buildContext =
         JibContainerBuilderTestHelper.toBuildContext(
             containerBuilder, Containerizer.to(RegistryImage.named("ignored")));
@@ -98,12 +97,11 @@ public class ContainerBuildersTest {
   }
 
   @Test
-  public void testCreate_platforms()
-      throws IOException, InvalidImageReferenceException, CacheDirectoryCreationException {
+  public void testCreate_platforms() throws IOException, InvalidImageReferenceException {
     JibContainerBuilder containerBuilder =
         ContainerBuilders.create(
             "registry://registry-image-ref",
-            ImmutableList.of(new Platform("arch1", "os1"), new Platform("arch2", "os2")),
+            ImmutableSet.of(new Platform("arch1", "os1"), new Platform("arch2", "os2")),
             mockCommonCliOptions,
             mockLogger);
 

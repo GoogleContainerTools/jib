@@ -247,10 +247,8 @@ public class JarCommandTest {
         new CommandLine(new JibCli())
             .execute(
                 "jar",
-                "--target",
-                "docker://cli-gcr-base",
-                "--from",
-                "gcr.io/google-appengine/openjdk:8",
+                "--target=docker://cli-gcr-base",
+                "--from=gcr.io/google-appengine/openjdk:8",
                 jarPath.toString());
     assertThat(exitCode).isEqualTo(0);
     String output = new Command("docker", "run", "--rm", "cli-gcr-base").run();

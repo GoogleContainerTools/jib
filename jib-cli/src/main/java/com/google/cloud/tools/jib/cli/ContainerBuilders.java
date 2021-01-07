@@ -33,8 +33,7 @@ import com.google.cloud.tools.jib.plugins.common.DefaultCredentialRetrievers;
 import com.google.cloud.tools.jib.plugins.common.logging.ConsoleLogger;
 import java.io.FileNotFoundException;
 import java.nio.file.Paths;
-import java.util.List;
-import java.util.stream.Collectors;
+import java.util.Set;
 
 /** Helper class for creating JibContainerBuilders from JibCli specifications. */
 public class ContainerBuilders {
@@ -42,8 +41,8 @@ public class ContainerBuilders {
   /**
    * Creates a {@link JibContainerBuilder} depending on the base image specified.
    *
-   * @param baseImageReference base image
-   * @param platforms platforms for multi-platform support in build command.
+   * @param baseImageReference base image reference
+   * @param platforms platforms for multi-platform support in build command
    * @param commonCliOptions common cli options
    * @param logger console logger
    * @return a {@link JibContainerBuilder}
@@ -52,7 +51,7 @@ public class ContainerBuilders {
    */
   public static JibContainerBuilder create(
       String baseImageReference,
-      List<Platform> platforms,
+      Set<Platform> platforms,
       CommonCliOptions commonCliOptions,
       ConsoleLogger logger)
       throws InvalidImageReferenceException, FileNotFoundException {
@@ -76,7 +75,7 @@ public class ContainerBuilders {
         .forEach(registryImage::addCredentialRetriever);
     JibContainerBuilder containerBuilder = Jib.from(registryImage);
     if (!platforms.isEmpty()) {
-      containerBuilder.setPlatforms(platforms.stream().collect(Collectors.toSet()));
+      containerBuilder.setPlatforms(platforms);
     }
     return containerBuilder;
   }
