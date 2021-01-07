@@ -276,7 +276,7 @@ public class JarFilesTest {
 
     ImageConfiguration imageConfiguration = getCommonImageConfiguration();
 
-    assertThat(imageConfiguration.getTarPath().get().toString()).isEqualTo("/path/to.tar");
+    assertThat(imageConfiguration.getTarPath()).isEqualTo(Optional.of(Paths.get("/path/to.tar")));
     assertThat(imageConfiguration.getDockerClient().isPresent()).isFalse();
   }
 
