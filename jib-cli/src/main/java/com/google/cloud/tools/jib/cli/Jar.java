@@ -19,6 +19,8 @@ package com.google.cloud.tools.jib.cli;
 import com.google.cloud.tools.jib.api.Containerizer;
 import com.google.cloud.tools.jib.api.JibContainerBuilder;
 import com.google.cloud.tools.jib.api.LogEvent;
+import com.google.cloud.tools.jib.api.Ports;
+import com.google.cloud.tools.jib.api.buildplan.Port;
 import com.google.cloud.tools.jib.cli.jar.JarFiles;
 import com.google.cloud.tools.jib.cli.jar.JarProcessor;
 import com.google.cloud.tools.jib.cli.jar.JarProcessors;
@@ -28,12 +30,14 @@ import com.google.cloud.tools.jib.filesystem.TempDirectoryProvider;
 import com.google.cloud.tools.jib.plugins.common.logging.ConsoleLogger;
 import com.google.cloud.tools.jib.plugins.common.logging.SingleThreadedExecutor;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.ImmutableSet;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.Callable;
 import picocli.CommandLine;
 import picocli.CommandLine.Model.CommandSpec;
@@ -80,6 +84,13 @@ public class Jar implements Callable<Integer> {
       split = ",",
       description = "JVM arguments")
   private List<String> jvmFlags = Collections.emptyList();
+
+  @CommandLine.Option(
+      names = "--exposed-ports",
+      paramLabel = "<exposd-ports>",
+      split = ",",
+      description = "Exposed ports")
+  private List<String> exposedPorts = Collections.emptyList();
 
   @Override
   public Integer call() {
@@ -147,5 +158,9 @@ public class Jar implements Callable<Integer> {
 
   public List<String> getJvmFlags() {
     return jvmFlags;
+  }
+
+  public Set<Port> getExposedPorts() {
+    return (exposedPorts == null) ? ImmutableSet.of() : Ports.parse(exposedPorts);
   }
 }

@@ -25,6 +25,7 @@ import com.google.cloud.tools.jib.api.buildplan.ContainerBuildPlan;
 import com.google.cloud.tools.jib.api.buildplan.FileEntriesLayer;
 import com.google.cloud.tools.jib.api.buildplan.ImageFormat;
 import com.google.cloud.tools.jib.api.buildplan.Platform;
+import com.google.cloud.tools.jib.api.buildplan.Port;
 import com.google.cloud.tools.jib.cli.CommonCliOptions;
 import com.google.cloud.tools.jib.cli.Jar;
 import com.google.cloud.tools.jib.plugins.common.logging.ConsoleLogger;
@@ -267,5 +268,54 @@ public class JarFilesTest {
             mockStandardExplodedProcessor, mockJarCommand, mockCommonCliOptions, mockLogger);
     String baseImage = containerBuilder.toContainerBuildPlan().getBaseImage();
     assertThat(baseImage).isEqualTo("registry-image-ref");
+  }
+
+  @Test
+  public void testToJibContainerBuilder_optionsSpecified()
+      throws IOException, InvalidImageReferenceException {
+    FileEntriesLayer layer =
+        FileEntriesLayer.builder()
+            .setName("classes")
+            .addEntry(
+                Paths.get("path/to/tempDirectory/class1.class"),
+                AbsoluteUnixPath.get("/app/explodedJar/class1.class"))
+            .build();
+    Mockito.when(mockStandardExplodedProcessor.createLayers()).thenReturn(Arrays.asList(layer));
+    Mockito.when(mockStandardExplodedProcessor.computeEntrypoint(ArgumentMatchers.anyList()))
+        .thenReturn(
+            ImmutableList.of(
+                "java", "jvm-flag1", "-cp", "/app/explodedJar:/app/dependencies/*", "HelloWorld"));
+    Mockito.when(mockJarCommand.getFrom()).thenReturn(Optional.of("base-image"));
+    Mockito.when(mockJarCommand.getExposedPorts()).thenReturn(ImmutableSet.of(Port.udp(123)));
+
+    JibContainerBuilder containerBuilder =
+        JarFiles.toJibContainerBuilder(
+            mockStandardExplodedProcessor, mockJarCommand, mockCommonCliOptions, mockLogger);
+    ContainerBuildPlan buildPlan = containerBuilder.toContainerBuildPlan();
+
+    assertThat(buildPlan.getBaseImage()).isEqualTo("base-image");
+    assertThat(buildPlan.getPlatforms()).isEqualTo(ImmutableSet.of(new Platform("amd64", "linux")));
+    assertThat(buildPlan.getCreationTime()).isEqualTo(Instant.EPOCH);
+    assertThat(buildPlan.getFormat()).isEqualTo(ImageFormat.Docker);
+    assertThat(buildPlan.getEnvironment()).isEmpty();
+    assertThat(buildPlan.getLabels()).isEmpty();
+    assertThat(buildPlan.getVolumes()).isEmpty();
+    assertThat(buildPlan.getExposedPorts()).isEqualTo(ImmutableSet.of(Port.udp(123)));
+    assertThat(buildPlan.getUser()).isNull();
+    assertThat(buildPlan.getWorkingDirectory()).isNull();
+    assertThat(buildPlan.getEntrypoint())
+        .isEqualTo(
+            ImmutableList.of(
+                "java", "jvm-flag1", "-cp", "/app/explodedJar:/app/dependencies/*", "HelloWorld"));
+    assertThat(buildPlan.getLayers().size()).isEqualTo(1);
+    assertThat(buildPlan.getLayers().get(0).getName()).isEqualTo("classes");
+    assertThat(((FileEntriesLayer) buildPlan.getLayers().get(0)).getEntries())
+        .containsExactlyElementsIn(
+            FileEntriesLayer.builder()
+                .addEntry(
+                    Paths.get("path/to/tempDirectory/class1.class"),
+                    AbsoluteUnixPath.get("/app/explodedJar/class1.class"))
+                .build()
+                .getEntries());
   }
 }

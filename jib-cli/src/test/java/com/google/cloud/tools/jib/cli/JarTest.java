@@ -21,6 +21,7 @@ import static com.google.common.truth.Truth8.assertThat;
 import static org.junit.Assert.assertThrows;
 
 import com.google.cloud.tools.jib.api.Credential;
+import com.google.cloud.tools.jib.api.Ports;
 import com.google.cloud.tools.jib.cli.logging.Verbosity;
 import com.google.common.collect.ImmutableList;
 import java.nio.file.Paths;
@@ -421,6 +422,14 @@ public class JarTest {
             "--jvm-flags=jvm-flag1,jvm-flag2",
             "my-app.jar");
     assertThat(jarCommand.getJvmFlags()).isEqualTo(ImmutableList.of("jvm-flag1", "jvm-flag2"));
+  }
+
+  @Test
+  public void testParse_exposedPorts() {
+    Jar jarCommand =
+        CommandLine.populateCommand(
+            new Jar(), "--target", "test-image-ref", "--exposed-ports=8080", "my-app.jar");
+    assertThat(jarCommand.getExposedPorts()).isEqualTo(Ports.parse(ImmutableList.of("8080")));
   }
 
   @Test
