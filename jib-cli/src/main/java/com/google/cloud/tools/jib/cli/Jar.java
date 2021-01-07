@@ -88,7 +88,7 @@ public class Jar implements Callable<Integer> {
   private List<String> jvmFlags = Collections.emptyList();
 
   @CommandLine.Option(
-      names = "--exposed-ports",
+      names = "--expose",
       paramLabel = "<exposed-ports>",
       split = ",",
       description = "Ports to expose on container")

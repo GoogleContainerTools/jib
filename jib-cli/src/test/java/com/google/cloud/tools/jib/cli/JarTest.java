@@ -430,7 +430,7 @@ public class JarTest {
   public void testParse_exposedPorts() {
     Jar jarCommand =
         CommandLine.populateCommand(
-            new Jar(), "--target", "test-image-ref", "--exposed-ports=8080", "my-app.jar");
+            new Jar(), "--target", "test-image-ref", "--expose=8080", "my-app.jar");
     assertThat(jarCommand.getExposedPorts()).isEqualTo(Ports.parse(ImmutableList.of("8080")));
   }
 
