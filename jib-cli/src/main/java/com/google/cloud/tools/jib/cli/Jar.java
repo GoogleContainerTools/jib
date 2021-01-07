@@ -20,6 +20,7 @@ import com.google.cloud.tools.jib.api.Containerizer;
 import com.google.cloud.tools.jib.api.JibContainerBuilder;
 import com.google.cloud.tools.jib.api.LogEvent;
 import com.google.cloud.tools.jib.api.Ports;
+import com.google.cloud.tools.jib.api.buildplan.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.api.buildplan.Port;
 import com.google.cloud.tools.jib.cli.jar.JarFiles;
 import com.google.cloud.tools.jib.cli.jar.JarProcessor;
@@ -39,6 +40,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.Callable;
+import java.util.stream.Collectors;
 import picocli.CommandLine;
 import picocli.CommandLine.Model.CommandSpec;
 
@@ -87,10 +89,17 @@ public class Jar implements Callable<Integer> {
 
   @CommandLine.Option(
       names = "--exposed-ports",
-      paramLabel = "<exposd-ports>",
+      paramLabel = "<exposed-ports>",
       split = ",",
-      description = "Exposed ports")
+      description = "Ports to expose on container")
   private List<String> exposedPorts = Collections.emptyList();
+
+  @CommandLine.Option(
+      names = "--volumes",
+      paramLabel = "<volumes>",
+      split = ",",
+      description = "Directories on container to hold extra volumes")
+  private List<String> volumes = Collections.emptyList();
 
   @Override
   public Integer call() {
@@ -145,7 +154,7 @@ public class Jar implements Callable<Integer> {
   }
 
   /**
-   * Returns the user specified base image.
+   * Returns the user-specified base image.
    *
    * @return an optional base image
    */
@@ -160,7 +169,25 @@ public class Jar implements Callable<Integer> {
     return jvmFlags;
   }
 
+  /**
+   * Returns set of {@link Port} representing ports to be exposed on container (if specified).
+   *
+   * @return set of exposed ports
+   */
   public Set<Port> getExposedPorts() {
     return (exposedPorts == null) ? ImmutableSet.of() : Ports.parse(exposedPorts);
+  }
+
+  /**
+   * Returns a set of {@link AbsoluteUnixPath} representing directories on container to hold volumes
+   * (if specified).
+   *
+   * @return set of volumes
+   */
+  public Set<AbsoluteUnixPath> getVolumes() {
+    if (volumes == null) {
+      return ImmutableSet.of();
+    }
+    return volumes.stream().map(AbsoluteUnixPath::get).collect(Collectors.toSet());
   }
 }

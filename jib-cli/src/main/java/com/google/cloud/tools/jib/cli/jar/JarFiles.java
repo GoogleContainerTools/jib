@@ -69,8 +69,10 @@ public class JarFiles {
 
     List<FileEntriesLayer> layers = processor.createLayers();
     List<String> entrypoint = processor.computeEntrypoint(jarOptions.getJvmFlags());
+
     containerBuilder.setEntrypoint(entrypoint).setFileEntriesLayers(layers);
     containerBuilder.setExposedPorts(jarOptions.getExposedPorts());
+    containerBuilder.setVolumes(jarOptions.getVolumes());
 
     return containerBuilder;
   }

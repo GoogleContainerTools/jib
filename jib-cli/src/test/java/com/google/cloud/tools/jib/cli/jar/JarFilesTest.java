@@ -287,6 +287,9 @@ public class JarFilesTest {
                 "java", "jvm-flag1", "-cp", "/app/explodedJar:/app/dependencies/*", "HelloWorld"));
     Mockito.when(mockJarCommand.getFrom()).thenReturn(Optional.of("base-image"));
     Mockito.when(mockJarCommand.getExposedPorts()).thenReturn(ImmutableSet.of(Port.udp(123)));
+    Mockito.when(mockJarCommand.getVolumes())
+        .thenReturn(
+            ImmutableSet.of(AbsoluteUnixPath.get("/volume1"), AbsoluteUnixPath.get("/volume2")));
 
     JibContainerBuilder containerBuilder =
         JarFiles.toJibContainerBuilder(
@@ -299,7 +302,9 @@ public class JarFilesTest {
     assertThat(buildPlan.getFormat()).isEqualTo(ImageFormat.Docker);
     assertThat(buildPlan.getEnvironment()).isEmpty();
     assertThat(buildPlan.getLabels()).isEmpty();
-    assertThat(buildPlan.getVolumes()).isEmpty();
+    assertThat(buildPlan.getVolumes())
+        .isEqualTo(
+            ImmutableSet.of(AbsoluteUnixPath.get("/volume1"), AbsoluteUnixPath.get("/volume2")));
     assertThat(buildPlan.getExposedPorts()).isEqualTo(ImmutableSet.of(Port.udp(123)));
     assertThat(buildPlan.getUser()).isNull();
     assertThat(buildPlan.getWorkingDirectory()).isNull();

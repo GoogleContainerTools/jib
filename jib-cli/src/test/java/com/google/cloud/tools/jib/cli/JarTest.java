@@ -22,8 +22,10 @@ import static org.junit.Assert.assertThrows;
 
 import com.google.cloud.tools.jib.api.Credential;
 import com.google.cloud.tools.jib.api.Ports;
+import com.google.cloud.tools.jib.api.buildplan.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.cli.logging.Verbosity;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import java.nio.file.Paths;
 import junitparams.JUnitParamsRunner;
 import junitparams.Parameters;
@@ -430,6 +432,16 @@ public class JarTest {
         CommandLine.populateCommand(
             new Jar(), "--target", "test-image-ref", "--exposed-ports=8080", "my-app.jar");
     assertThat(jarCommand.getExposedPorts()).isEqualTo(Ports.parse(ImmutableList.of("8080")));
+  }
+
+  @Test
+  public void testParse_volumes() {
+    Jar jarCommand =
+        CommandLine.populateCommand(
+            new Jar(), "--target", "test-image-ref", "--volumes=/volume1,/volume2", "my-app.jar");
+    assertThat(jarCommand.getVolumes())
+        .isEqualTo(
+            ImmutableSet.of(AbsoluteUnixPath.get("/volume1"), AbsoluteUnixPath.get("/volume2")));
   }
 
   @Test
