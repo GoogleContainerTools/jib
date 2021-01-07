@@ -130,9 +130,6 @@ public class Jar implements Callable<Integer> {
    * @return an optional base image
    */
   public Optional<String> getFrom() {
-    if (from != null) {
-      return Optional.of(from);
-    }
-    return Optional.empty();
+    return Optional.ofNullable(from);
   }
 }
