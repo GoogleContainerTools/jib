@@ -412,6 +412,18 @@ public class JarTest {
   }
 
   @Test
+  public void testParse_jvmFlags() {
+    Jar jarCommand =
+        CommandLine.populateCommand(
+            new Jar(),
+            "--target",
+            "test-image-ref",
+            "--jvm-flags=jvm-flag1,jvm-flag2",
+            "my-app.jar");
+    assertThat(jarCommand.getJvmFlags()).isEqualTo(ImmutableList.of("jvm-flag1", "jvm-flag2"));
+  }
+
+  @Test
   public void testValidate_nameMissingFail() {
     Jar jarCommand =
         CommandLine.populateCommand(new Jar(), "--target=tar://sometar.tar", "my-app.jar");

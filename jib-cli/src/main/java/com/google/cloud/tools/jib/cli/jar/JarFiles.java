@@ -68,7 +68,7 @@ public class JarFiles {
             : Jib.from("gcr.io/distroless/java");
 
     List<FileEntriesLayer> layers = processor.createLayers();
-    List<String> entrypoint = processor.computeEntrypoint();
+    List<String> entrypoint = processor.computeEntrypoint(jarOptions.getJvmFlags());
     containerBuilder.setEntrypoint(entrypoint).setFileEntriesLayers(layers);
     return containerBuilder;
   }

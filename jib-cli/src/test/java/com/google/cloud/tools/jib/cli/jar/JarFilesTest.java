@@ -38,6 +38,7 @@ import java.util.Collections;
 import java.util.Optional;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentMatchers;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
@@ -71,7 +72,7 @@ public class JarFilesTest {
                 AbsoluteUnixPath.get("/app/explodedJar/class1.class"))
             .build();
     Mockito.when(mockStandardExplodedProcessor.createLayers()).thenReturn(Arrays.asList(layer));
-    Mockito.when(mockStandardExplodedProcessor.computeEntrypoint())
+    Mockito.when(mockStandardExplodedProcessor.computeEntrypoint(ArgumentMatchers.anyList()))
         .thenReturn(
             ImmutableList.of("java", "-cp", "/app/explodedJar:/app/dependencies/*", "HelloWorld"));
     Mockito.when(mockJarCommand.getFrom()).thenReturn(Optional.empty());
@@ -116,7 +117,7 @@ public class JarFilesTest {
                 Paths.get("path/to/standardJar.jar"), AbsoluteUnixPath.get("/app/standardJar.jar"))
             .build();
     Mockito.when(mockStandardPackagedProcessor.createLayers()).thenReturn(Arrays.asList(layer));
-    Mockito.when(mockStandardPackagedProcessor.computeEntrypoint())
+    Mockito.when(mockStandardPackagedProcessor.computeEntrypoint(ArgumentMatchers.anyList()))
         .thenReturn(ImmutableList.of("java", "-jar", "/app/standardJar.jar"));
     Mockito.when(mockJarCommand.getFrom()).thenReturn(Optional.empty());
 
@@ -160,7 +161,7 @@ public class JarFilesTest {
             .build();
     Mockito.when(mockJarCommand.getFrom()).thenReturn(Optional.empty());
     Mockito.when(mockSpringBootExplodedProcessor.createLayers()).thenReturn(Arrays.asList(layer));
-    Mockito.when(mockSpringBootExplodedProcessor.computeEntrypoint())
+    Mockito.when(mockSpringBootExplodedProcessor.computeEntrypoint(ArgumentMatchers.anyList()))
         .thenReturn(
             ImmutableList.of("java", "-cp", "/app", "org.springframework.boot.loader.JarLauncher"));
     Mockito.when(mockJarCommand.getFrom()).thenReturn(Optional.empty());
@@ -205,7 +206,7 @@ public class JarFilesTest {
                 Paths.get("path/to/spring-boot.jar"), AbsoluteUnixPath.get("/app/spring-boot.jar"))
             .build();
     Mockito.when(mockSpringBootPackagedProcessor.createLayers()).thenReturn(Arrays.asList(layer));
-    Mockito.when(mockSpringBootPackagedProcessor.computeEntrypoint())
+    Mockito.when(mockSpringBootPackagedProcessor.computeEntrypoint(ArgumentMatchers.anyList()))
         .thenReturn(ImmutableList.of("java", "-jar", "/app/spring-boot.jar"));
     Mockito.when(mockJarCommand.getFrom()).thenReturn(Optional.empty());
 
@@ -242,7 +243,7 @@ public class JarFilesTest {
   public void testToJibContainerBuilder_dockerBaseImage()
       throws IOException, InvalidImageReferenceException {
     Mockito.when(mockStandardExplodedProcessor.createLayers()).thenReturn(Collections.EMPTY_LIST);
-    Mockito.when(mockStandardExplodedProcessor.computeEntrypoint())
+    Mockito.when(mockStandardExplodedProcessor.computeEntrypoint(ArgumentMatchers.anyList()))
         .thenReturn(ImmutableList.of("ignore"));
     Mockito.when(mockJarCommand.getFrom()).thenReturn(Optional.of("docker://docker-image-ref"));
 
@@ -257,7 +258,7 @@ public class JarFilesTest {
   public void testToJibContainerBuilder_registry()
       throws IOException, InvalidImageReferenceException {
     Mockito.when(mockStandardExplodedProcessor.createLayers()).thenReturn(Collections.EMPTY_LIST);
-    Mockito.when(mockStandardExplodedProcessor.computeEntrypoint())
+    Mockito.when(mockStandardExplodedProcessor.computeEntrypoint(ArgumentMatchers.anyList()))
         .thenReturn(ImmutableList.of("ignore"));
     Mockito.when(mockJarCommand.getFrom()).thenReturn(Optional.of("registry://registry-image-ref"));
 

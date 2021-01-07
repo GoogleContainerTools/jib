@@ -19,6 +19,7 @@ package com.google.cloud.tools.jib.cli.jar;
 import com.google.cloud.tools.jib.api.buildplan.FileEntriesLayer;
 import com.google.common.collect.ImmutableList;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import javax.annotation.Nullable;
@@ -45,11 +46,15 @@ public class SpringBootPackagedProcessor implements JarProcessor {
   }
 
   @Override
-  public ImmutableList<String> computeEntrypoint() {
+  public ImmutableList<String> computeEntrypoint(List<String> jvmFlags) {
     if (jarPath == null) {
       return ImmutableList.of();
     }
-    return ImmutableList.of(
-        "java", "-jar", JarLayers.APP_ROOT + "/" + jarPath.getFileName().toString());
+    List<String> entrypoint = new ArrayList<>(3 + jvmFlags.size());
+    entrypoint.add("java");
+    entrypoint.addAll(jvmFlags);
+    entrypoint.add("-jar");
+    entrypoint.add(JarLayers.APP_ROOT + "/" + jarPath.getFileName().toString());
+    return ImmutableList.copyOf(entrypoint);
   }
 }

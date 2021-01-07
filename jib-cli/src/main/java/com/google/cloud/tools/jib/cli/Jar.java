@@ -31,6 +31,8 @@ import com.google.common.annotations.VisibleForTesting;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
+import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.Callable;
 import picocli.CommandLine;
@@ -71,6 +73,13 @@ public class Jar implements Callable<Integer> {
       description = "The base image to use.")
   @SuppressWarnings("NullAway.Init") // initialized by picocli
   private String from;
+
+  @CommandLine.Option(
+      names = "--jvm-flags",
+      paramLabel = "<jvm-flags>",
+      split = ",",
+      description = "JVM arguments")
+  private List<String> jvmFlags = Collections.emptyList();
 
   @Override
   public Integer call() {
@@ -134,5 +143,9 @@ public class Jar implements Callable<Integer> {
       return Optional.of(from);
     }
     return Optional.empty();
+  }
+
+  public List<String> getJvmFlags() {
+    return jvmFlags;
   }
 }

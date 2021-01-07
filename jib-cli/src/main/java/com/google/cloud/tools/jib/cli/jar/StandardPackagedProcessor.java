@@ -55,7 +55,7 @@ public class StandardPackagedProcessor implements JarProcessor {
   }
 
   @Override
-  public ImmutableList<String> computeEntrypoint() throws IOException {
+  public ImmutableList<String> computeEntrypoint(List<String> jvmFlags) throws IOException {
     if (jarPath == null) {
       return ImmutableList.of();
     }
@@ -67,8 +67,12 @@ public class StandardPackagedProcessor implements JarProcessor {
             "`Main-Class:` attribute for an application main class not defined in the input JAR's "
                 + "manifest (`META-INF/MANIFEST.MF` in the JAR).");
       }
-      return ImmutableList.of(
-          "java", "-jar", JarLayers.APP_ROOT + "/" + jarPath.getFileName().toString());
+      List<String> entrypoint = new ArrayList<>(3 + jvmFlags.size());
+      entrypoint.add("java");
+      entrypoint.addAll(jvmFlags);
+      entrypoint.add("-jar");
+      entrypoint.add(JarLayers.APP_ROOT + "/" + jarPath.getFileName().toString());
+      return ImmutableList.copyOf(entrypoint);
     }
   }
 }
