@@ -36,11 +36,11 @@ import java.nio.file.Paths;
 import java.util.List;
 import java.util.stream.Collectors;
 
-/** Creates jib container builder. */
+/** Helper class for creating JibContainerBuilders from JibCli specifications. */
 public class ContainerBuilders {
 
   /**
-   * Generates a {@link JibContainerBuilder} depending on the base image specified.
+   * Creates a {@link JibContainerBuilder} depending on the base image specified.
    *
    * @param baseImageReference base image
    * @param platforms platforms for multi-platform support in build command.
