@@ -139,19 +139,11 @@ class PullBaseImageStep implements Callable<ImagesAndRegistryClient> {
         }
       }
 
-      List<String> baseImageMirrors = Arrays.asList("mirror.gcr.io");
-      for (String mirrorHost : baseImageMirrors) {
-        // First, try with no credentials. This works with public GCR images (but not Docker Hub).
-        RegistryClient noAuthRegistryClient =
-            buildContext.newBaseImageRegistryClientFactory(mirrorHost).newRegistryClient();
-        try {
-          return new ImagesAndRegistryClient(
-              pullBaseImages(noAuthRegistryClient, progressEventDispatcher), noAuthRegistryClient);
-
-        } catch (RegistryUnauthorizedException ex) {
-          eventHandlers.dispatch(LogEvent.lifecycle("TBD"));
-          noAuthRegistryClient.doPullBearerAuth();
-        }
+      Optional<ImagesAndRegistryClient> mirrorPull =
+          tryMirrors(buildContext, progressEventDispatcher);
+      if (mirrorPull.isPresent()) {
+        eventHandlers.dispatch(LogEvent.info("pulled manifest from a mirror"));
+        return mirrorPull.get();
       }
 
       try {
@@ -209,6 +201,44 @@ class PullBaseImageStep implements Callable<ImagesAndRegistryClient> {
         }
       }
     }
+  }
+
+  // TODO: time the sub-operation
+  private Optional<ImagesAndRegistryClient> tryMirrors(
+      BuildContext buildContext, ProgressEventDispatcher progressEventDispatcher)
+      throws LayerCountMismatchException, BadContainerConfigurationFormatException {
+    EventHandlers eventHandlers = buildContext.getEventHandlers();
+
+    // List<String> baseImageMirrors = buildContext.getBaseImageMirrors();
+    List<String> baseImageMirrors = Arrays.asList("registry-1.travis-ci.com", "mirror.gcr.io");
+    for (String mirrorHost : baseImageMirrors) {
+      eventHandlers.dispatch(LogEvent.info("trying mirror " + mirrorHost + " for the base image"));
+      try {
+        // First, try with no credentials. This works with public GCR images.
+        RegistryClient registryClient =
+            buildContext.newBaseImageRegistryClientFactory(mirrorHost).newRegistryClient();
+        try {
+          return Optional.of(
+              new ImagesAndRegistryClient(
+                  pullBaseImages(registryClient, progressEventDispatcher), registryClient));
+
+        } catch (RegistryUnauthorizedException ex) {
+          // in case if a mirror requires bearer auth
+          eventHandlers.dispatch(LogEvent.debug("mirror " + mirrorHost + " requires auth"));
+          registryClient.doPullBearerAuth();
+          return Optional.of(
+              new ImagesAndRegistryClient(
+                  pullBaseImages(registryClient, progressEventDispatcher), registryClient));
+        }
+
+      } catch (IOException | RegistryException ex) {
+        // Ignore errors from this mirror and continue.
+        eventHandlers.dispatch(
+            LogEvent.debug(
+                "failed to get manifest from mirror " + mirrorHost + ": " + ex.getMessage()));
+      }
+    }
+    return Optional.empty();
   }
 
   /**

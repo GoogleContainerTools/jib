@@ -509,16 +509,16 @@ public class BuildContext implements Closeable {
   }
 
   /**
-   * Creates a new {@link RegistryClient.Factory} for the base image repository on registry {@code
-   * serverHost}. Compared to @link #newBaseImageRegistryClientFactory()), this method is useful to
-   * try a mirror.
+   * Creates a new {@link RegistryClient.Factory} for the base image repository on the registry
+   * {@code serverUrl}. Compared to @link #newBaseImageRegistryClientFactory()), this method is
+   * useful to try a mirror.
    *
-   * @param serverHost the host of a registry
+   * @param serverUrl the server URL for the registry (for example, {@code gcr.io})
    * @return a new {@link RegistryClient.Factory}
    */
-  public RegistryClient.Factory newBaseImageRegistryClientFactory(String serverHost) {
+  public RegistryClient.Factory newBaseImageRegistryClientFactory(String serverUrl) {
     return RegistryClient.factory(
-            getEventHandlers(), serverHost, baseImageConfiguration.getImageRepository(), httpClient)
+            getEventHandlers(), serverUrl, baseImageConfiguration.getImageRepository(), httpClient)
         .setUserAgent(makeUserAgent());
   }
 
