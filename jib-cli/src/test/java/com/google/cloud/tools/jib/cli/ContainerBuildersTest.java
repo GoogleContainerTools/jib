@@ -51,7 +51,7 @@ public class ContainerBuildersTest {
       throws IOException, InvalidImageReferenceException, CacheDirectoryCreationException {
     JibContainerBuilder containerBuilder =
         ContainerBuilders.create(
-            "docker://docker-image-ref", Collections.EMPTY_SET, mockCommonCliOptions, mockLogger);
+            "docker://docker-image-ref", Collections.emptySet(), mockCommonCliOptions, mockLogger);
     BuildContext buildContext =
         JibContainerBuilderTestHelper.toBuildContext(
             containerBuilder, Containerizer.to(RegistryImage.named("ignored")));
@@ -68,7 +68,7 @@ public class ContainerBuildersTest {
     JibContainerBuilder containerBuilder =
         ContainerBuilders.create(
             "registry://registry-image-ref",
-            Collections.EMPTY_SET,
+            Collections.emptySet(),
             mockCommonCliOptions,
             mockLogger);
     BuildContext buildContext =
@@ -86,7 +86,7 @@ public class ContainerBuildersTest {
       throws IOException, InvalidImageReferenceException, CacheDirectoryCreationException {
     JibContainerBuilder containerBuilder =
         ContainerBuilders.create(
-            "tar:///path/to.tar", Collections.EMPTY_SET, mockCommonCliOptions, mockLogger);
+            "tar:///path/to.tar", Collections.emptySet(), mockCommonCliOptions, mockLogger);
     BuildContext buildContext =
         JibContainerBuilderTestHelper.toBuildContext(
             containerBuilder, Containerizer.to(RegistryImage.named("ignored")));
