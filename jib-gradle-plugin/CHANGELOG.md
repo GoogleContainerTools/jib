@@ -14,6 +14,7 @@ All notable changes to this project will be documented in this file.
 ### Fixed
 
 - Updated jackson dependency version causing compatibility issues. ([#2931](https://github.com/GoogleContainerTools/jib/issues/2931))
+- Deprecated use of `@Optional` on boolean attribute ([#2930](https://github.com/GoogleContainerTools/jib/issues/2930))
 
 ## 2.7.0
 
