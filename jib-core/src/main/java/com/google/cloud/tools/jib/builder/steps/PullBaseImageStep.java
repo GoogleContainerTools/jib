@@ -56,6 +56,7 @@ import com.google.common.base.Verify;
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -138,13 +139,28 @@ class PullBaseImageStep implements Callable<ImagesAndRegistryClient> {
         }
       }
 
-      // First, try with no credentials. This works with public GCR images (but not Docker Hub).
-      // TODO: investigate if we should just pass credentials up front. However, this involves
-      // some risk. https://github.com/GoogleContainerTools/jib/pull/2200#discussion_r359069026
-      // contains some related discussions.
-      RegistryClient noAuthRegistryClient =
-          buildContext.newBaseImageRegistryClientFactory().newRegistryClient();
+      List<String> baseImageMirrors = Arrays.asList("mirror.gcr.io");
+      for (String mirrorHost : baseImageMirrors) {
+        // First, try with no credentials. This works with public GCR images (but not Docker Hub).
+        RegistryClient noAuthRegistryClient =
+            buildContext.newBaseImageRegistryClientFactory(mirrorHost).newRegistryClient();
+        try {
+          return new ImagesAndRegistryClient(
+              pullBaseImages(noAuthRegistryClient, progressEventDispatcher), noAuthRegistryClient);
+
+        } catch (RegistryUnauthorizedException ex) {
+          eventHandlers.dispatch(LogEvent.lifecycle("TBD"));
+          noAuthRegistryClient.doPullBearerAuth();
+        }
+      }
+
       try {
+        // First, try with no credentials. This works with public GCR images (but not Docker Hub).
+        // TODO: investigate if we should just pass credentials up front. However, this involves
+        // some risk. https://github.com/GoogleContainerTools/jib/pull/2200#discussion_r359069026
+        // contains some related discussions.
+        RegistryClient noAuthRegistryClient =
+            buildContext.newBaseImageRegistryClientFactory().newRegistryClient();
         return new ImagesAndRegistryClient(
             pullBaseImages(noAuthRegistryClient, progressEventDispatcher), noAuthRegistryClient);
 
