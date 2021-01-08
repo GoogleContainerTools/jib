@@ -404,6 +404,14 @@ public class JarTest {
   }
 
   @Test
+  public void testParse_from() {
+    Jar jarCommand =
+        CommandLine.populateCommand(
+            new Jar(), "--target", "test-image-ref", "--from", "base-image-ref", "my-app.jar");
+    assertThat(jarCommand.getFrom()).hasValue("base-image-ref");
+  }
+
+  @Test
   public void testValidate_nameMissingFail() {
     Jar jarCommand =
         CommandLine.populateCommand(new Jar(), "--target=tar://sometar.tar", "my-app.jar");
