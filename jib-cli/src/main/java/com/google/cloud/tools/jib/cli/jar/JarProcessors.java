@@ -48,7 +48,6 @@ public class JarProcessors {
   public static JarProcessor from(
       Path jarPath, TempDirectoryProvider temporaryDirectoryProvider, ProcessingMode mode)
       throws IOException, IncompatibleBaseImageJavaVersionException {
-
     Integer jarVersion = getVersion(jarPath);
     if (jarVersion > 11) {
       throw new IncompatibleBaseImageJavaVersionException(11, jarVersion);
@@ -83,8 +82,8 @@ public class JarProcessors {
   }
 
   /**
-   * Determines implementation version of JAR. Derives the version from the first .class file it
-   * finds in the JAR.
+   * Determines the java version of JAR. Derives the version from the first .class file it finds in
+   * the JAR.
    *
    * @param jarPath path to jar
    * @return String representing version
@@ -92,17 +91,17 @@ public class JarProcessors {
    */
   private static Integer getVersion(Path jarPath) throws IOException {
     try (JarFile jarFile = new JarFile(jarPath.toFile())) {
-      Enumeration<JarEntry> ent = jarFile.entries();
-      while (ent.hasMoreElements()) {
-        String jarEntry = ent.nextElement().toString();
+      Enumeration<JarEntry> jarEntries = jarFile.entries();
+      while (jarEntries.hasMoreElements()) {
+        String jarEntry = jarEntries.nextElement().toString();
         if (jarEntry.endsWith(".class")) {
           URLClassLoader loader = new URLClassLoader(new URL[] {jarPath.toUri().toURL()});
-          try (InputStream stream = loader.getResourceAsStream(jarEntry)) {
-            DataInputStream data = new DataInputStream(stream);
+          try (InputStream classFileInfo = loader.getResourceAsStream(jarEntry)) {
+            DataInputStream data = new DataInputStream(classFileInfo);
 
             // Check magic number
             if (data.readInt() != 0xCAFEBABE) {
-              throw new IOException("Invalid class file header.");
+              throw new IOException("Invalid class file format.");
             }
 
             // Skip over minor version
