@@ -17,6 +17,7 @@
 package com.google.cloud.tools.jib.cli.jar;
 
 import static com.google.common.truth.Truth.assertThat;
+import static org.junit.Assert.assertThrows;
 
 import com.google.cloud.tools.jib.filesystem.TempDirectoryProvider;
 import com.google.cloud.tools.jib.plugins.common.IncompatibleBaseImageJavaVersionException;
@@ -25,6 +26,7 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
@@ -37,6 +39,7 @@ public class JarProcessorsTest {
 
   private static final String SPRING_BOOT = "jar/spring-boot/springboot_sample.jar";
   private static final String STANDARD = "jar/standard/emptyStandardJar.jar";
+  private static final String JAVA_14_JAR = "jar/java14Jar.jar";
 
   @Mock private static TempDirectoryProvider mockTemporaryDirectoryProvider;
 
@@ -81,8 +84,15 @@ public class JarProcessorsTest {
   }
 
   @Test
-  public void testGetVersion() throws IOException, URISyntaxException {
-    Path jarPath = Paths.get(Resources.getResource(STANDARD).toURI());
-    Integer version = JarProcessors.getVersion(jarPath);
+  public void testFrom_incompatibleBaseImage() throws URISyntaxException {
+    Path jarPath = Paths.get(Resources.getResource(JAVA_14_JAR).toURI());
+    IncompatibleBaseImageJavaVersionException exception =
+        assertThrows(
+            IncompatibleBaseImageJavaVersionException.class,
+            () ->
+                JarProcessors.from(
+                    jarPath, mockTemporaryDirectoryProvider, ProcessingMode.exploded));
+    Assert.assertEquals(11, exception.getBaseImageMajorJavaVersion());
+    Assert.assertEquals(14, exception.getProjectMajorJavaVersion());
   }
 }

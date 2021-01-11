@@ -18,8 +18,6 @@ package com.google.cloud.tools.jib.cli.jar;
 
 import com.google.cloud.tools.jib.filesystem.TempDirectoryProvider;
 import com.google.cloud.tools.jib.plugins.common.IncompatibleBaseImageJavaVersionException;
-import com.google.common.annotations.VisibleForTesting;
-
 import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -85,14 +83,14 @@ public class JarProcessors {
   }
 
   /**
-   * Determine implementation version of JAR.
+   * Determines implementation version of JAR. Derives the version from the first .class file it
+   * finds in the JAR.
    *
    * @param jarPath path to jar
    * @return String representing version
    * @throws IOException if io exception thrown when jar file not found
    */
-  @VisibleForTesting
-  static Integer getVersion(Path jarPath) throws IOException {
+  private static Integer getVersion(Path jarPath) throws IOException {
     try (JarFile jarFile = new JarFile(jarPath.toFile())) {
       Enumeration<JarEntry> ent = jarFile.entries();
       while (ent.hasMoreElements()) {
