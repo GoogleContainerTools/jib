@@ -19,6 +19,7 @@ package com.google.cloud.tools.jib.cli.jar;
 import static com.google.common.truth.Truth.assertThat;
 
 import com.google.cloud.tools.jib.filesystem.TempDirectoryProvider;
+import com.google.cloud.tools.jib.plugins.common.IncompatibleBaseImageJavaVersionException;
 import com.google.common.io.Resources;
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -38,9 +39,11 @@ public class JarProcessorsTest {
   private static final String STANDARD = "jar/standard/emptyStandardJar.jar";
 
   @Mock private static TempDirectoryProvider mockTemporaryDirectoryProvider;
+  @Mock private JarProcessors mockJarProcessors;
 
   @Test
-  public void testFrom_standardExploded() throws IOException, URISyntaxException {
+  public void testFrom_standardExploded()
+      throws IOException, URISyntaxException, IncompatibleBaseImageJavaVersionException {
     Path jarPath = Paths.get(Resources.getResource(STANDARD).toURI());
     JarProcessor processor =
         JarProcessors.from(jarPath, mockTemporaryDirectoryProvider, ProcessingMode.exploded);
@@ -49,7 +52,8 @@ public class JarProcessorsTest {
   }
 
   @Test
-  public void testFrom_standardPackaged() throws IOException, URISyntaxException {
+  public void testFrom_standardPackaged()
+      throws IOException, URISyntaxException, IncompatibleBaseImageJavaVersionException {
     Path jarPath = Paths.get(Resources.getResource(STANDARD).toURI());
     JarProcessor processor =
         JarProcessors.from(jarPath, mockTemporaryDirectoryProvider, ProcessingMode.packaged);
@@ -58,7 +62,8 @@ public class JarProcessorsTest {
   }
 
   @Test
-  public void testFrom_springBootPackaged() throws IOException, URISyntaxException {
+  public void testFrom_springBootPackaged()
+      throws IOException, URISyntaxException, IncompatibleBaseImageJavaVersionException {
     Path jarPath = Paths.get(Resources.getResource(SPRING_BOOT).toURI());
     JarProcessor processor =
         JarProcessors.from(jarPath, mockTemporaryDirectoryProvider, ProcessingMode.packaged);
@@ -67,7 +72,8 @@ public class JarProcessorsTest {
   }
 
   @Test
-  public void testFrom_springBootExploded() throws IOException, URISyntaxException {
+  public void testFrom_springBootExploded()
+      throws IOException, URISyntaxException, IncompatibleBaseImageJavaVersionException {
     Path jarPath = Paths.get(Resources.getResource(SPRING_BOOT).toURI());
     JarProcessor processor =
         JarProcessors.from(jarPath, mockTemporaryDirectoryProvider, ProcessingMode.exploded);

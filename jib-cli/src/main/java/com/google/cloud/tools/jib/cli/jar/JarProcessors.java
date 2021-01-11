@@ -17,8 +17,15 @@
 package com.google.cloud.tools.jib.cli.jar;
 
 import com.google.cloud.tools.jib.filesystem.TempDirectoryProvider;
+import com.google.cloud.tools.jib.plugins.common.IncompatibleBaseImageJavaVersionException;
+import java.io.DataInputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.net.URL;
+import java.net.URLClassLoader;
 import java.nio.file.Path;
+import java.util.Enumeration;
+import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
 /** Class to create a {@link JarProcessor} instance depending on jar type and processsing mode. */
@@ -34,10 +41,18 @@ public class JarProcessors {
    * @param mode processing mode
    * @return JarProcessor
    * @throws IOException if I/O error occurs when opening the jar file
+   * @throws IncompatibleBaseImageJavaVersionException if the base image java version cannot support
+   *     this build
    */
   public static JarProcessor from(
       Path jarPath, TempDirectoryProvider temporaryDirectoryProvider, ProcessingMode mode)
-      throws IOException {
+      throws IOException, IncompatibleBaseImageJavaVersionException {
+
+    Integer jarJavaVersion = getVersion(jarPath);
+    if (jarJavaVersion > 11) {
+      throw new IncompatibleBaseImageJavaVersionException(11, jarJavaVersion);
+    }
+
     String jarType = determineJarType(jarPath);
     if (jarType.equals(SPRING_BOOT) && mode.equals(ProcessingMode.packaged)) {
       return new SpringBootPackagedProcessor(jarPath);
@@ -63,6 +78,41 @@ public class JarProcessors {
         return SPRING_BOOT;
       }
       return STANDARD;
+    }
+  }
+
+  /**
+   * Determine version of jar application.
+   *
+   * @param jarPath path to jar
+   * @return String representing version
+   * @throws IOException if io exception thrown when jar file not found
+   */
+  private static Integer getVersion(Path jarPath) throws IOException {
+    try (JarFile jarFile = new JarFile(jarPath.toFile())) {
+      Enumeration<JarEntry> ent = jarFile.entries();
+      while (ent.hasMoreElements()) {
+        String jarEntry = ent.nextElement().toString();
+        if (jarEntry.endsWith(".class")) {
+          URLClassLoader loader = new URLClassLoader(new URL[] {jarPath.toUri().toURL()});
+          try (InputStream stream = loader.getResourceAsStream(jarEntry)) {
+            DataInputStream data = new DataInputStream(stream);
+
+            // Check magic number
+            if (data.readInt() != 0xCAFEBABE) {
+              throw new IOException("Invalid class file header.");
+            }
+
+            // Skip over minor version
+            data.skipBytes(2);
+
+            int majorVersion = data.readUnsignedShort();
+            int javaVersion = (majorVersion - 45) + 1;
+            return javaVersion;
+          }
+        }
+      }
+      return 0;
     }
   }
 }
