@@ -85,9 +85,9 @@ public class JarProcessors {
    * Determines the java version of JAR. Derives the version from the first .class file it finds in
    * the JAR.
    *
-   * @param jarPath path to jar
-   * @return String representing version
-   * @throws IOException if io exception thrown when jar file not found
+   * @param jarPath path to the jar
+   * @return java version
+   * @throws IOException if I/O exception thrown when opening the jar file
    */
   private static Integer getVersion(Path jarPath) throws IOException {
     try (JarFile jarFile = new JarFile(jarPath.toFile())) {
