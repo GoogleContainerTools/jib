@@ -18,6 +18,8 @@ package com.google.cloud.tools.jib.cli.jar;
 
 import com.google.cloud.tools.jib.filesystem.TempDirectoryProvider;
 import com.google.cloud.tools.jib.plugins.common.IncompatibleBaseImageJavaVersionException;
+import com.google.common.annotations.VisibleForTesting;
+
 import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -28,10 +30,11 @@ import java.util.Enumeration;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
-/** Class to create a {@link JarProcessor} instance depending on jar type and processsing mode. */
+/** Class to create a {@link JarProcessor} instance depending on jar type and processing mode. */
 public class JarProcessors {
   private static String SPRING_BOOT = "spring-boot";
   private static String STANDARD = "standard";
+  private static Integer VERSION_NOT_FOUND = 0;
 
   /**
    * Creates a {@link JarProcessor} instance based on jar type and processing mode.
@@ -48,9 +51,9 @@ public class JarProcessors {
       Path jarPath, TempDirectoryProvider temporaryDirectoryProvider, ProcessingMode mode)
       throws IOException, IncompatibleBaseImageJavaVersionException {
 
-    Integer jarJavaVersion = getVersion(jarPath);
-    if (jarJavaVersion > 11) {
-      throw new IncompatibleBaseImageJavaVersionException(11, jarJavaVersion);
+    Integer jarVersion = getVersion(jarPath);
+    if (jarVersion > 11) {
+      throw new IncompatibleBaseImageJavaVersionException(11, jarVersion);
     }
 
     String jarType = determineJarType(jarPath);
@@ -82,13 +85,14 @@ public class JarProcessors {
   }
 
   /**
-   * Determine version of jar application.
+   * Determine implementation version of JAR.
    *
    * @param jarPath path to jar
    * @return String representing version
    * @throws IOException if io exception thrown when jar file not found
    */
-  private static Integer getVersion(Path jarPath) throws IOException {
+  @VisibleForTesting
+  static Integer getVersion(Path jarPath) throws IOException {
     try (JarFile jarFile = new JarFile(jarPath.toFile())) {
       Enumeration<JarEntry> ent = jarFile.entries();
       while (ent.hasMoreElements()) {
@@ -112,7 +116,7 @@ public class JarProcessors {
           }
         }
       }
-      return 0;
+      return VERSION_NOT_FOUND;
     }
   }
 }

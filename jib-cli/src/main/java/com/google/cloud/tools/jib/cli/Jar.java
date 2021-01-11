@@ -132,8 +132,4 @@ public class Jar implements Callable<Integer> {
   public Optional<String> getFrom() {
     return Optional.ofNullable(from);
   }
-
-  public Path getJarFile() {
-    return jarFile;
-  }
 }

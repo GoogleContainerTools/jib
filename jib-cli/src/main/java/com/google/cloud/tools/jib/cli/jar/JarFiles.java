@@ -55,7 +55,7 @@ public class JarFiles {
         jarOptions.getFrom().isPresent()
             ? ContainerBuilders.create(
                 jarOptions.getFrom().get(), Collections.emptySet(), commonCliOptions, logger)
-            : Jib.from("gcr.io/distroless/java");
+            : Jib.from("gcr.io/distroless/java:11");
 
     List<FileEntriesLayer> layers = processor.createLayers();
     List<String> entrypoint = processor.computeEntrypoint();

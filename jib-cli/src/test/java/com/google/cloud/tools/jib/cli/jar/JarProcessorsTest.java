@@ -39,7 +39,6 @@ public class JarProcessorsTest {
   private static final String STANDARD = "jar/standard/emptyStandardJar.jar";
 
   @Mock private static TempDirectoryProvider mockTemporaryDirectoryProvider;
-  @Mock private JarProcessors mockJarProcessors;
 
   @Test
   public void testFrom_standardExploded()
@@ -79,5 +78,11 @@ public class JarProcessorsTest {
         JarProcessors.from(jarPath, mockTemporaryDirectoryProvider, ProcessingMode.exploded);
     Mockito.verify(mockTemporaryDirectoryProvider).newDirectory();
     assertThat(processor).isInstanceOf(SpringBootExplodedProcessor.class);
+  }
+
+  @Test
+  public void testGetVersion() throws IOException, URISyntaxException {
+    Path jarPath = Paths.get(Resources.getResource(STANDARD).toURI());
+    Integer version = JarProcessors.getVersion(jarPath);
   }
 }
