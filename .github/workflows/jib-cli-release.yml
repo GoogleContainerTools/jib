@@ -41,7 +41,7 @@ jobs:
           ./gradlew jib-cli:instDist --stacktrace
 
           cd jib-cli/build/distributions
-          sha256sum jib-${{ github.event.inputs.release_version }}.zip > jib-jre.zip.sha256
+          sha256sum jib-${{ github.event.inputs.release_version }}.zip > zip.sha256
 
       - name: Create pull request
         uses: repo-sync/pull-request@v2
@@ -69,7 +69,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./jib-cli/build/install/jib-jre.zip
+          asset_path: ./jib-cli/build/distributions/jib-{{ github.event.inputs.release_version }}.zip
           asset_name: jib-jre-{{ github.event.inputs.release_version }}.zip
           asset_content_type: application/zip
 
@@ -79,6 +79,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./jib-cli/build/install/jib-jre.zip.sha256
+          asset_path: ./jib-cli/build/distributions/zip.sha256
           asset_name: jib-jre-{{ github.event.inputs.release_version }}.zip.sha256
           asset_content_type: text/plain
