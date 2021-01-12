@@ -16,7 +16,7 @@ dependencies {
 
 jar {
   manifest {
-    attributes 'Implementation-Version': version
+    attributes 'Implementation-Version': archiveVersion
     attributes 'Automatic-Module-Name': 'com.google.cloud.tools.jib.api.buildplan'
 
     // OSGi metadata

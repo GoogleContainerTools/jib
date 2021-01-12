@@ -6,7 +6,7 @@ plugins {
 
 jar {
   manifest {
-    attributes 'Implementation-Version': version
+    attributes 'Implementation-Version': archiveVersion
     attributes 'Automatic-Module-Name': 'com.google.cloud.tools.jib.plugins.extension'
 
     // OSGi metadata
