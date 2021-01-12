@@ -14,6 +14,9 @@ dependencies {
   implementation dependencyStrings.EXTENSION_COMMON
 
   testImplementation dependencyStrings.JUNIT
+  testImplementation dependencyStrings.JUNIT_PARAMS
+  testImplementation dependencyStrings.TRUTH
+  testImplementation dependencyStrings.TRUTH8
   testImplementation dependencyStrings.MOCKITO_CORE
   testImplementation dependencyStrings.SLF4J_API
   testImplementation dependencyStrings.SYSTEM_RULES

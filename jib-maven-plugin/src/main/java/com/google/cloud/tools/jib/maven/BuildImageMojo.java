@@ -32,6 +32,7 @@ import com.google.cloud.tools.jib.plugins.common.InvalidPlatformException;
 import com.google.cloud.tools.jib.plugins.common.InvalidWorkingDirectoryException;
 import com.google.cloud.tools.jib.plugins.common.MainClassInferenceException;
 import com.google.cloud.tools.jib.plugins.common.PluginConfigurationProcessor;
+import com.google.cloud.tools.jib.plugins.common.globalconfig.GlobalConfig;
 import com.google.cloud.tools.jib.plugins.extension.JibPluginExtensionException;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
@@ -96,8 +97,16 @@ public class BuildImageMojo extends JibPluginConfiguration {
             getSession(),
             getLog(),
             tempDirectoryProvider);
+
+    GlobalConfig globalConfig = null;
+    try {
+      globalConfig = GlobalConfig.readConfig();
+    } catch (IOException ex) {
+      throw new MojoExecutionException(ex.getMessage(), ex);
+    }
     Future<Optional<String>> updateCheckFuture =
-        MojoCommon.newUpdateChecker(projectProperties, getLog());
+        MojoCommon.newUpdateChecker(projectProperties, globalConfig, getLog());
+
     try {
       PluginConfigurationProcessor.createJibBuildRunnerForRegistryImage(
               new MavenRawConfiguration(this),
