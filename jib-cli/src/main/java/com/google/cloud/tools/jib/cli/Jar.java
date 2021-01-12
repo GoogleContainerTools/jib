@@ -31,6 +31,7 @@ import com.google.common.annotations.VisibleForTesting;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
+import java.util.Optional;
 import java.util.concurrent.Callable;
 import picocli.CommandLine;
 import picocli.CommandLine.Model.CommandSpec;
@@ -63,6 +64,13 @@ public class Jar implements Callable<Integer> {
           "The jar processing mode, candidates: ${COMPLETION-CANDIDATES}, default: ${DEFAULT-VALUE}")
   @SuppressWarnings("NullAway.Init") // initialized by picocli
   private ProcessingMode mode;
+
+  @CommandLine.Option(
+      names = "--from",
+      paramLabel = "<from>",
+      description = "The base image to use.")
+  @SuppressWarnings("NullAway.Init") // initialized by picocli
+  private String from;
 
   @Override
   public Integer call() {
@@ -98,7 +106,8 @@ public class Jar implements Callable<Integer> {
       }
 
       JarProcessor processor = JarProcessors.from(jarFile, tempDirectoryProvider, mode);
-      JibContainerBuilder containerBuilder = JarFiles.toJibContainerBuilder(processor);
+      JibContainerBuilder containerBuilder =
+          JarFiles.toJibContainerBuilder(processor, this, commonCliOptions, logger);
       CacheDirectories cacheDirectories =
           CacheDirectories.from(commonCliOptions, jarFile.toAbsolutePath().getParent());
       Containerizer containerizer = Containerizers.from(commonCliOptions, logger, cacheDirectories);
@@ -113,5 +122,14 @@ public class Jar implements Callable<Integer> {
       executor.shutDownAndAwaitTermination(Duration.ofSeconds(3));
     }
     return 0;
+  }
+
+  /**
+   * Returns the user specified base image.
+   *
+   * @return an optional base image
+   */
+  public Optional<String> getFrom() {
+    return Optional.ofNullable(from);
   }
 }
