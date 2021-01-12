@@ -45,7 +45,38 @@ public class GlobalConfigTest {
   }
 
   @Test
-  public void testIsDisableUpdateCheck_systemProperty() throws IOException {
+  public void testReadConfig_default() throws IOException {
+    GlobalConfig globalConfig = GlobalConfig.readConfig(configDir);
+    assertThat(globalConfig.isDisableUpdateCheck()).isFalse();
+  }
+
+  @Test
+  public void testReadConfig_newConfigCreated() throws IOException {
+    GlobalConfig.readConfig(configDir);
+    String configJson =
+        new String(Files.readAllBytes(configDir.resolve("config.json")), StandardCharsets.UTF_8);
+    assertThat(configJson).isEqualTo("{\"disableUpdateCheck\":false}");
+  }
+
+  @Test
+  public void testReadConfig_emptyJson() throws IOException {
+    Files.write(configDir.resolve("config.json"), "{}".getBytes(StandardCharsets.UTF_8));
+    GlobalConfig globalConfig = GlobalConfig.readConfig(configDir);
+    assertThat(globalConfig.isDisableUpdateCheck()).isFalse();
+  }
+
+  @Test
+  public void testReadConfig() throws IOException {
+    Files.write(
+        configDir.resolve("config.json"),
+        "{\"disableUpdateCheck\":true}".getBytes(StandardCharsets.UTF_8));
+
+    GlobalConfig globalConfig = GlobalConfig.readConfig(configDir);
+    assertThat(globalConfig.isDisableUpdateCheck()).isTrue();
+  }
+
+  @Test
+  public void testReadConfig_systemProperties() throws IOException {
     Files.write(
         configDir.resolve("config.json"),
         "{\"disableUpdateCheck\":false}".getBytes(StandardCharsets.UTF_8));
@@ -56,17 +87,18 @@ public class GlobalConfigTest {
   }
 
   @Test
-  public void testIsDisableUpdateCheck_disabled() throws IOException {
-    Files.write(
-        configDir.resolve("config.json"),
-        "{\"disableUpdateCheck\":true}".getBytes(StandardCharsets.UTF_8));
-
-    GlobalConfig globalConfig = GlobalConfig.readConfig(configDir);
-    assertThat(globalConfig.isDisableUpdateCheck()).isTrue();
+  public void testReadConfig_emptyFile() throws IOException {
+    temporaryFolder.newFile("config.json");
+    IOException exception =
+        assertThrows(IOException.class, () -> GlobalConfig.readConfig(configDir));
+    assertThat(exception)
+        .hasMessageThat()
+        .startsWith("Failed to read global Jib config; you may need to fix or delete");
+    assertThat(exception).hasMessageThat().endsWith(File.separator + "config.json");
   }
 
   @Test
-  public void testPerformUpdateCheck_badConfig() throws IOException {
+  public void testReadConfig_corrupted() throws IOException {
     Files.write(
         configDir.resolve("config.json"), "corrupt config".getBytes(StandardCharsets.UTF_8));
     IOException exception =
