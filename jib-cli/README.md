@@ -11,7 +11,13 @@ are almost certain to change.
 
 ## Get the Jib CLI
 
-### Build yourself
+### Download a java application
+
+A JRE is required to run this Jib CLI distribution.
+
+Find the latest jib-core release on the [Releases page](https://github.com/GoogleContainerTools/jib/releases), download `jib-jre-<version>.zip`, and unzip it. The zip file contains the `jib` (`jib.bat` for Windows) script at `jib/bin/`. Optionally, add the binary directory to your `$PATH` so that you can call `jib` from anywhere.
+
+### Build yourself from source
 
 Use the `application` plugin's `installDist` task to create a runnable installation in
 `build/install/jib`.  A zip and tar file are also created in `build/distributions`.
@@ -21,8 +27,6 @@ $ ./gradlew jib-cli:installDist
 # run
 $ ./jib-cli/build/install/jib/bin/jib
 ```
-
-<!-- TODO: ### Download a java application -->
 
 <!-- TODO: ### Download an executable -->
 
