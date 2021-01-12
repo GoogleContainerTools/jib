@@ -21,7 +21,6 @@ import com.google.cloud.tools.jib.api.ImageReference;
 import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.blob.Blobs;
-import com.google.cloud.tools.jib.filesystem.FileOperations;
 import com.google.cloud.tools.jib.filesystem.LockFile;
 import com.google.cloud.tools.jib.filesystem.TempDirectoryProvider;
 import com.google.cloud.tools.jib.hash.CountingDigestOutputStream;
@@ -432,7 +431,7 @@ class CacheStorageWriter {
     // Writes the selector to a temporary file and then moves the file to the intended location.
     Path temporarySelectorFile = Files.createTempFile(null, null);
     temporarySelectorFile.toFile().deleteOnExit();
-    try (OutputStream fileOut = FileOperations.newLockingOutputStream(temporarySelectorFile)) {
+    try (OutputStream fileOut = Files.newOutputStream(temporarySelectorFile)) {
       fileOut.write(layerDigest.getHash().getBytes(StandardCharsets.UTF_8));
     }
 
