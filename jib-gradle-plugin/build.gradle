@@ -86,6 +86,7 @@ tasks.publishPlugins.dependsOn integrationTest
 /* RELEASE */
 
 /* ECLIPSE */
+eclipse.classpath.plusConfigurations += [configurations.integrationTestImplementation]
 eclipse.classpath.file.whenMerged {
   entries.each {
     if (it.path == 'src/test/resources' || it.path == 'src/integration-test/resources') {

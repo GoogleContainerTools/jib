@@ -25,34 +25,59 @@ import com.google.cloud.tools.jib.api.buildplan.ContainerBuildPlan;
 import com.google.cloud.tools.jib.api.buildplan.FileEntriesLayer;
 import com.google.cloud.tools.jib.api.buildplan.ImageFormat;
 import com.google.cloud.tools.jib.api.buildplan.Platform;
+import com.google.cloud.tools.jib.cli.CommonCliOptions;
+import com.google.cloud.tools.jib.cli.Jar;
+import com.google.cloud.tools.jib.plugins.common.logging.ConsoleLogger;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.io.Resources;
 import java.io.IOException;
-import java.net.URISyntaxException;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Instant;
-import org.junit.Rule;
+import java.util.Arrays;
+import java.util.Optional;
 import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.runner.RunWith;
+import org.mockito.Mock;
+import org.mockito.Mockito;
+import org.mockito.junit.MockitoJUnitRunner;
 
+/** Tests for {@link JarFiles}. */
+@RunWith(MockitoJUnitRunner.class)
 public class JarFilesTest {
-  private static final String SIMPLE_STANDARD_JAR = "jar/standard/basicStandardJar.jar";
-  private static final String SIMPLE_SPRING_BOOT_LAYERED =
-      "jar/spring-boot/springboot_simple_layered.jar";
-  private static final String SIMPLE_SPRING_BOOT_NON_LAYERED =
-      "jar/spring-boot/springboot_simple_notLayered.jar";
-  @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
+
+  @Mock private StandardExplodedProcessor mockStandardExplodedProcessor;
+
+  @Mock private StandardPackagedProcessor mockStandardPackagedProcessor;
+
+  @Mock private SpringBootExplodedProcessor mockSpringBootExplodedProcessor;
+
+  @Mock private SpringBootPackagedProcessor mockSpringBootPackagedProcessor;
+
+  @Mock private Jar mockJarCommand;
+
+  @Mock private CommonCliOptions mockCommonCliOptions;
+
+  @Mock private ConsoleLogger mockLogger;
 
   @Test
   public void testToJibContainerBuilder_explodedStandard_basicInfo()
-      throws IOException, URISyntaxException, InvalidImageReferenceException {
-    Path standardJar = Paths.get(Resources.getResource(SIMPLE_STANDARD_JAR).toURI());
-    Path temporaryParentDirectory = temporaryFolder.getRoot().toPath();
+      throws IOException, InvalidImageReferenceException {
+    FileEntriesLayer layer =
+        FileEntriesLayer.builder()
+            .setName("classes")
+            .addEntry(
+                Paths.get("path/to/tempDirectory/class1.class"),
+                AbsoluteUnixPath.get("/app/explodedJar/class1.class"))
+            .build();
+    Mockito.when(mockStandardExplodedProcessor.createLayers()).thenReturn(Arrays.asList(layer));
+    Mockito.when(mockStandardExplodedProcessor.computeEntrypoint())
+        .thenReturn(
+            ImmutableList.of("java", "-cp", "/app/explodedJar:/app/dependencies/*", "HelloWorld"));
+    Mockito.when(mockJarCommand.getFrom()).thenReturn(Optional.empty());
+
     JibContainerBuilder containerBuilder =
         JarFiles.toJibContainerBuilder(
-            standardJar, temporaryParentDirectory, ProcessingMode.exploded);
+            mockStandardExplodedProcessor, mockJarCommand, mockCommonCliOptions, mockLogger);
     ContainerBuildPlan buildPlan = containerBuilder.toContainerBuildPlan();
 
     assertThat(buildPlan.getBaseImage()).isEqualTo("gcr.io/distroless/java");
@@ -68,50 +93,35 @@ public class JarFilesTest {
     assertThat(buildPlan.getEntrypoint())
         .isEqualTo(
             ImmutableList.of("java", "-cp", "/app/explodedJar:/app/dependencies/*", "HelloWorld"));
-    assertThat(buildPlan.getLayers().size()).isEqualTo(3);
-    assertThat(buildPlan.getLayers().get(0).getName()).isEqualTo("dependencies");
+    assertThat(buildPlan.getLayers().size()).isEqualTo(1);
+    assertThat(buildPlan.getLayers().get(0).getName()).isEqualTo("classes");
     assertThat(((FileEntriesLayer) buildPlan.getLayers().get(0)).getEntries())
-        .isEqualTo(
-            FileEntriesLayer.builder()
-                .addEntry(
-                    standardJar.getParent().resolve("dependency1"),
-                    AbsoluteUnixPath.get("/app/dependencies/dependency1"))
-                .build()
-                .getEntries());
-    assertThat(buildPlan.getLayers().get(1).getName()).isEqualTo("resources");
-    assertThat(((FileEntriesLayer) buildPlan.getLayers().get(1)).getEntries())
         .containsExactlyElementsIn(
             FileEntriesLayer.builder()
                 .addEntry(
-                    temporaryParentDirectory.resolve("META-INF/MANIFEST.MF"),
-                    AbsoluteUnixPath.get("/app/explodedJar/META-INF/MANIFEST.MF"))
-                .addEntry(
-                    temporaryParentDirectory.resolve("resource1.txt"),
-                    AbsoluteUnixPath.get("/app/explodedJar/resource1.txt"))
-                .build()
-                .getEntries());
-    assertThat(buildPlan.getLayers().get(2).getName()).isEqualTo("classes");
-    assertThat(((FileEntriesLayer) buildPlan.getLayers().get(2)).getEntries())
-        .containsExactlyElementsIn(
-            FileEntriesLayer.builder()
-                .addEntry(
-                    temporaryParentDirectory.resolve("class1.class"),
+                    Paths.get("path/to/tempDirectory/class1.class"),
                     AbsoluteUnixPath.get("/app/explodedJar/class1.class"))
-                .addEntry(
-                    temporaryParentDirectory.resolve("directory1/class2.class"),
-                    AbsoluteUnixPath.get("/app/explodedJar/directory1/class2.class"))
                 .build()
                 .getEntries());
   }
 
   @Test
   public void testToJibContainerBuilder_packagedStandard_basicInfo()
-      throws IOException, URISyntaxException, InvalidImageReferenceException {
-    Path standardJar = Paths.get(Resources.getResource(SIMPLE_STANDARD_JAR).toURI());
-    Path temporaryParentDirectory = temporaryFolder.getRoot().toPath();
+      throws IOException, InvalidImageReferenceException {
+    FileEntriesLayer layer =
+        FileEntriesLayer.builder()
+            .setName("jar")
+            .addEntry(
+                Paths.get("path/to/standardJar.jar"), AbsoluteUnixPath.get("/app/standardJar.jar"))
+            .build();
+    Mockito.when(mockStandardPackagedProcessor.createLayers()).thenReturn(Arrays.asList(layer));
+    Mockito.when(mockStandardPackagedProcessor.computeEntrypoint())
+        .thenReturn(ImmutableList.of("java", "-jar", "/app/standardJar.jar"));
+    Mockito.when(mockJarCommand.getFrom()).thenReturn(Optional.empty());
+
     JibContainerBuilder containerBuilder =
         JarFiles.toJibContainerBuilder(
-            standardJar, temporaryParentDirectory, ProcessingMode.packaged);
+            mockStandardPackagedProcessor, mockJarCommand, mockCommonCliOptions, mockLogger);
     ContainerBuildPlan buildPlan = containerBuilder.toContainerBuildPlan();
 
     assertThat(buildPlan.getBaseImage()).isEqualTo("gcr.io/distroless/java");
@@ -125,34 +135,38 @@ public class JarFilesTest {
     assertThat(buildPlan.getUser()).isNull();
     assertThat(buildPlan.getWorkingDirectory()).isNull();
     assertThat(buildPlan.getEntrypoint())
-        .isEqualTo(ImmutableList.of("java", "-jar", "/app/basicStandardJar.jar"));
-    assertThat(buildPlan.getLayers().size()).isEqualTo(2);
-    assertThat(buildPlan.getLayers().get(0).getName()).isEqualTo("dependencies");
+        .isEqualTo(ImmutableList.of("java", "-jar", "/app/standardJar.jar"));
+    assertThat(buildPlan.getLayers().get(0).getName()).isEqualTo("jar");
     assertThat(((FileEntriesLayer) buildPlan.getLayers().get(0)).getEntries())
         .isEqualTo(
             FileEntriesLayer.builder()
                 .addEntry(
-                    standardJar.getParent().resolve("dependency1"),
-                    AbsoluteUnixPath.get("/app/dependency1"))
-                .build()
-                .getEntries());
-    assertThat(buildPlan.getLayers().get(1).getName()).isEqualTo("jar");
-    assertThat(((FileEntriesLayer) buildPlan.getLayers().get(1)).getEntries())
-        .isEqualTo(
-            FileEntriesLayer.builder()
-                .addEntry(standardJar, AbsoluteUnixPath.get("/app/basicStandardJar.jar"))
+                    Paths.get("path/to/standardJar.jar"),
+                    AbsoluteUnixPath.get("/app/standardJar.jar"))
                 .build()
                 .getEntries());
   }
 
   @Test
   public void testToJibContainerBuilder_explodedLayeredSpringBoot_basicInfo()
-      throws IOException, URISyntaxException, InvalidImageReferenceException {
-    Path springBootJar = Paths.get(Resources.getResource(SIMPLE_SPRING_BOOT_LAYERED).toURI());
-    Path temporaryParentDirectory = temporaryFolder.getRoot().toPath();
+      throws IOException, InvalidImageReferenceException {
+    FileEntriesLayer layer =
+        FileEntriesLayer.builder()
+            .setName("classes")
+            .addEntry(
+                Paths.get("path/to/tempDirectory/BOOT-INF/classes/class1.class"),
+                AbsoluteUnixPath.get("/app/BOOT-INF/classes/class1.class"))
+            .build();
+    Mockito.when(mockJarCommand.getFrom()).thenReturn(Optional.empty());
+    Mockito.when(mockSpringBootExplodedProcessor.createLayers()).thenReturn(Arrays.asList(layer));
+    Mockito.when(mockSpringBootExplodedProcessor.computeEntrypoint())
+        .thenReturn(
+            ImmutableList.of("java", "-cp", "/app", "org.springframework.boot.loader.JarLauncher"));
+    Mockito.when(mockJarCommand.getFrom()).thenReturn(Optional.empty());
+
     JibContainerBuilder containerBuilder =
         JarFiles.toJibContainerBuilder(
-            springBootJar, temporaryParentDirectory, ProcessingMode.exploded);
+            mockSpringBootExplodedProcessor, mockJarCommand, mockCommonCliOptions, mockLogger);
     ContainerBuildPlan buildPlan = containerBuilder.toContainerBuildPlan();
 
     assertThat(buildPlan.getBaseImage()).isEqualTo("gcr.io/distroless/java");
@@ -168,150 +182,35 @@ public class JarFilesTest {
     assertThat(buildPlan.getEntrypoint())
         .isEqualTo(
             ImmutableList.of("java", "-cp", "/app", "org.springframework.boot.loader.JarLauncher"));
-    assertThat(buildPlan.getLayers().size()).isEqualTo(4);
-
-    assertThat(buildPlan.getLayers().get(0).getName()).isEqualTo("dependencies");
+    assertThat(buildPlan.getLayers().size()).isEqualTo(1);
+    assertThat(buildPlan.getLayers().get(0).getName()).isEqualTo("classes");
     assertThat(((FileEntriesLayer) buildPlan.getLayers().get(0)).getEntries())
-        .isEqualTo(
-            FileEntriesLayer.builder()
-                .addEntry(
-                    temporaryParentDirectory.resolve("BOOT-INF/lib/dependency1.jar"),
-                    AbsoluteUnixPath.get("/app/BOOT-INF/lib/dependency1.jar"))
-                .build()
-                .getEntries());
-
-    assertThat(buildPlan.getLayers().get(1).getName()).isEqualTo("spring-boot-loader");
-    assertThat(((FileEntriesLayer) buildPlan.getLayers().get(1)).getEntries())
         .containsExactlyElementsIn(
             FileEntriesLayer.builder()
                 .addEntry(
-                    temporaryParentDirectory.resolve("org/launcher.class"),
-                    AbsoluteUnixPath.get("/app/org/launcher.class"))
-                .addEntry(
-                    temporaryParentDirectory.resolve("org/orgDirectory/data1.class"),
-                    AbsoluteUnixPath.get("/app/org/orgDirectory/data1.class"))
-                .build()
-                .getEntries());
-
-    assertThat(buildPlan.getLayers().get(2).getName()).isEqualTo("snapshot-dependencies");
-    assertThat(((FileEntriesLayer) buildPlan.getLayers().get(2)).getEntries())
-        .isEqualTo(
-            FileEntriesLayer.builder()
-                .addEntry(
-                    temporaryParentDirectory.resolve("BOOT-INF/lib/dependency3-SNAPSHOT.jar"),
-                    AbsoluteUnixPath.get("/app/BOOT-INF/lib/dependency3-SNAPSHOT.jar"))
-                .build()
-                .getEntries());
-
-    assertThat(buildPlan.getLayers().get(3).getName()).isEqualTo("application");
-    assertThat(((FileEntriesLayer) buildPlan.getLayers().get(3)).getEntries())
-        .containsExactlyElementsIn(
-            FileEntriesLayer.builder()
-                .addEntry(
-                    temporaryParentDirectory.resolve("META-INF/MANIFEST.MF"),
-                    AbsoluteUnixPath.get("/app/META-INF/MANIFEST.MF"))
-                .addEntry(
-                    temporaryParentDirectory.resolve("BOOT-INF/classes/class1.class"),
+                    Paths.get("path/to/tempDirectory/BOOT-INF/classes/class1.class"),
                     AbsoluteUnixPath.get("/app/BOOT-INF/classes/class1.class"))
-                .addEntry(
-                    temporaryParentDirectory.resolve(
-                        "BOOT-INF/classes/classDirectory/class2.class"),
-                    AbsoluteUnixPath.get("/app/BOOT-INF/classes/classDirectory/class2.class"))
-                .build()
-                .getEntries());
-  }
-
-  @Test
-  public void testToJibContainerBuilder_explodedNonLayeredSpringBoot_basicInfo()
-      throws IOException, URISyntaxException, InvalidImageReferenceException {
-    Path springBootJar = Paths.get(Resources.getResource(SIMPLE_SPRING_BOOT_NON_LAYERED).toURI());
-    Path temporaryParentDirectory = temporaryFolder.getRoot().toPath();
-    JibContainerBuilder containerBuilder =
-        JarFiles.toJibContainerBuilder(
-            springBootJar, temporaryParentDirectory, ProcessingMode.exploded);
-    ContainerBuildPlan buildPlan = containerBuilder.toContainerBuildPlan();
-
-    assertThat(buildPlan.getBaseImage()).isEqualTo("gcr.io/distroless/java");
-    assertThat(buildPlan.getPlatforms()).isEqualTo(ImmutableSet.of(new Platform("amd64", "linux")));
-    assertThat(buildPlan.getCreationTime()).isEqualTo(Instant.EPOCH);
-    assertThat(buildPlan.getFormat()).isEqualTo(ImageFormat.Docker);
-    assertThat(buildPlan.getEnvironment()).isEmpty();
-    assertThat(buildPlan.getLabels()).isEmpty();
-    assertThat(buildPlan.getVolumes()).isEmpty();
-    assertThat(buildPlan.getExposedPorts()).isEmpty();
-    assertThat(buildPlan.getUser()).isNull();
-    assertThat(buildPlan.getWorkingDirectory()).isNull();
-    assertThat(buildPlan.getEntrypoint())
-        .isEqualTo(
-            ImmutableList.of("java", "-cp", "/app", "org.springframework.boot.loader.JarLauncher"));
-    assertThat(buildPlan.getLayers().size()).isEqualTo(5);
-
-    assertThat(buildPlan.getLayers().get(0).getName()).isEqualTo("dependencies");
-    assertThat(((FileEntriesLayer) buildPlan.getLayers().get(0)).getEntries())
-        .isEqualTo(
-            FileEntriesLayer.builder()
-                .addEntry(
-                    temporaryParentDirectory.resolve("BOOT-INF/lib/dependency1.jar"),
-                    AbsoluteUnixPath.get("/app/BOOT-INF/lib/dependency1.jar"))
-                .build()
-                .getEntries());
-
-    assertThat(buildPlan.getLayers().get(1).getName()).isEqualTo("spring-boot-loader");
-    assertThat(((FileEntriesLayer) buildPlan.getLayers().get(1)).getEntries())
-        .containsExactlyElementsIn(
-            FileEntriesLayer.builder()
-                .addEntry(
-                    temporaryParentDirectory.resolve("org/launcher.class"),
-                    AbsoluteUnixPath.get("/app/org/launcher.class"))
-                .addEntry(
-                    temporaryParentDirectory.resolve("org/orgDirectory/data1.class"),
-                    AbsoluteUnixPath.get("/app/org/orgDirectory/data1.class"))
-                .build()
-                .getEntries());
-
-    assertThat(buildPlan.getLayers().get(2).getName()).isEqualTo("snapshot dependencies");
-    assertThat(((FileEntriesLayer) buildPlan.getLayers().get(2)).getEntries())
-        .isEqualTo(
-            FileEntriesLayer.builder()
-                .addEntry(
-                    temporaryParentDirectory.resolve("BOOT-INF/lib/dependency3-SNAPSHOT.jar"),
-                    AbsoluteUnixPath.get("/app/BOOT-INF/lib/dependency3-SNAPSHOT.jar"))
-                .build()
-                .getEntries());
-
-    assertThat(buildPlan.getLayers().get(3).getName()).isEqualTo("resources");
-    assertThat(((FileEntriesLayer) buildPlan.getLayers().get(3)).getEntries())
-        .isEqualTo(
-            FileEntriesLayer.builder()
-                .addEntry(
-                    temporaryParentDirectory.resolve("META-INF/MANIFEST.MF"),
-                    AbsoluteUnixPath.get("/app/META-INF/MANIFEST.MF"))
-                .build()
-                .getEntries());
-
-    assertThat(buildPlan.getLayers().get(4).getName()).isEqualTo("classes");
-    assertThat(((FileEntriesLayer) buildPlan.getLayers().get(4)).getEntries())
-        .containsExactlyElementsIn(
-            FileEntriesLayer.builder()
-                .addEntry(
-                    temporaryParentDirectory.resolve("BOOT-INF/classes/class1.class"),
-                    AbsoluteUnixPath.get("/app/BOOT-INF/classes/class1.class"))
-                .addEntry(
-                    temporaryParentDirectory.resolve(
-                        "BOOT-INF/classes/classDirectory/class2.class"),
-                    AbsoluteUnixPath.get("/app/BOOT-INF/classes/classDirectory/class2.class"))
                 .build()
                 .getEntries());
   }
 
   @Test
   public void testToJibContainerBuilder_packagedSpringBoot_basicInfo()
-      throws IOException, URISyntaxException, InvalidImageReferenceException {
-    Path springBootJar = Paths.get(Resources.getResource(SIMPLE_SPRING_BOOT_NON_LAYERED).toURI());
-    Path temporaryParentDirectory = temporaryFolder.getRoot().toPath();
+      throws IOException, InvalidImageReferenceException {
+    FileEntriesLayer layer =
+        FileEntriesLayer.builder()
+            .setName("jar")
+            .addEntry(
+                Paths.get("path/to/spring-boot.jar"), AbsoluteUnixPath.get("/app/spring-boot.jar"))
+            .build();
+    Mockito.when(mockSpringBootPackagedProcessor.createLayers()).thenReturn(Arrays.asList(layer));
+    Mockito.when(mockSpringBootPackagedProcessor.computeEntrypoint())
+        .thenReturn(ImmutableList.of("java", "-jar", "/app/spring-boot.jar"));
+    Mockito.when(mockJarCommand.getFrom()).thenReturn(Optional.empty());
+
     JibContainerBuilder containerBuilder =
         JarFiles.toJibContainerBuilder(
-            springBootJar, temporaryParentDirectory, ProcessingMode.packaged);
+            mockSpringBootPackagedProcessor, mockJarCommand, mockCommonCliOptions, mockLogger);
     ContainerBuildPlan buildPlan = containerBuilder.toContainerBuildPlan();
 
     assertThat(buildPlan.getBaseImage()).isEqualTo("gcr.io/distroless/java");
@@ -325,14 +224,15 @@ public class JarFilesTest {
     assertThat(buildPlan.getUser()).isNull();
     assertThat(buildPlan.getWorkingDirectory()).isNull();
     assertThat(buildPlan.getEntrypoint())
-        .isEqualTo(ImmutableList.of("java", "-jar", "/app/springboot_simple_notLayered.jar"));
+        .isEqualTo(ImmutableList.of("java", "-jar", "/app/spring-boot.jar"));
     assertThat(buildPlan.getLayers().size()).isEqualTo(1);
     assertThat(buildPlan.getLayers().get(0).getName()).isEqualTo("jar");
     assertThat(((FileEntriesLayer) buildPlan.getLayers().get(0)).getEntries())
         .isEqualTo(
             FileEntriesLayer.builder()
                 .addEntry(
-                    springBootJar, AbsoluteUnixPath.get("/app/springboot_simple_notLayered.jar"))
+                    Paths.get("path/to/spring-boot.jar"),
+                    AbsoluteUnixPath.get("/app/spring-boot.jar"))
                 .build()
                 .getEntries());
   }

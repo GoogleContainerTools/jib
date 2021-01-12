@@ -1,6 +1,7 @@
 plugins {
   id 'net.researchgate.release'
   id 'maven-publish'
+  id 'eclipse'
 }
 
 jar {
@@ -41,3 +42,7 @@ release {
   }
 }
 /* RELEASE */
+
+/* ECLIPSE */
+eclipse.classpath.plusConfigurations += [configurations.integrationTestImplementation]
+/* ECLIPSE */

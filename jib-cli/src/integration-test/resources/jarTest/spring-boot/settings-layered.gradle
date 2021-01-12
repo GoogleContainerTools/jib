@@ -1,0 +1,2 @@
+rootProject.name = 'spring-boot'
+rootProject.buildFileName = 'build-layered.gradle'
