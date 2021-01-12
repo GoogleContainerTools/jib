@@ -80,9 +80,9 @@ public class UpdateChecker {
       String versionUrl,
       String toolName,
       Consumer<LogEvent> log) {
-    try {
-      Path lastUpdateCheck = configDir.resolve(LAST_UPDATE_CHECK_FILENAME);
+    Path lastUpdateCheck = configDir.resolve(LAST_UPDATE_CHECK_FILENAME);
 
+    try {
       // Check time of last update check
       if (Files.exists(lastUpdateCheck)) {
         try {
