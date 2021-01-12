@@ -70,7 +70,7 @@ jobs:
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: ./jib-cli/build/distributions/jib-${{ github.event.inputs.release_version }}.zip
-          asset_name: jib-jre-{{ github.event.inputs.release_version }}.zip
+          asset_name: jib-jre-${{ github.event.inputs.release_version }}.zip
           asset_content_type: application/zip
 
       - name: Upload Jib CLI checksum
