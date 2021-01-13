@@ -85,7 +85,7 @@ public class GlobalConfig {
     return XdgDirectories.getConfigHome();
   }
 
-  private GlobalConfigTemplate jsonConfig;
+  private final GlobalConfigTemplate jsonConfig;
 
   private GlobalConfig(GlobalConfigTemplate jsonConfig) {
     this.jsonConfig = jsonConfig;

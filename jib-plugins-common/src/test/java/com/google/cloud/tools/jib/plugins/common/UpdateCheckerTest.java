@@ -53,19 +53,13 @@ public class UpdateCheckerTest {
 
   private TestWebServer testWebServer;
   private Path configDir;
-  private String versionUrl;
 
   @Before
   public void setUp()
       throws InterruptedException, GeneralSecurityException, URISyntaxException, IOException {
-    testWebServer =
-        new TestWebServer(
-            false,
-            Collections.singletonList(
-                "HTTP/1.1 200 OK\nContent-Length:18\n\n{\"latest\":\"2.0.0\"}"),
-            1);
+    String response = "HTTP/1.1 200 OK\nContent-Length:18\n\n{\"latest\":\"2.0.0\"}";
+    testWebServer = new TestWebServer(false, Collections.singletonList(response), 1);
     configDir = temporaryFolder.getRoot().toPath();
-    versionUrl = testWebServer.getEndpoint();
   }
 
   @After
@@ -79,7 +73,7 @@ public class UpdateCheckerTest {
     setupLastUpdateCheck();
     Optional<String> message =
         UpdateChecker.performUpdateCheck(
-            configDir, "1.0.2", versionUrl, "tool name", ignored -> {});
+            configDir, "1.0.2", testWebServer.getEndpoint(), "tool name", ignored -> {});
     Assert.assertTrue(testWebServer.getInputRead().contains("User-Agent: jib 1.0.2 tool name"));
     Assert.assertTrue(message.isPresent());
     Assert.assertEquals(
@@ -116,7 +110,7 @@ public class UpdateCheckerTest {
     setupLastUpdateCheck();
     Optional<String> message =
         UpdateChecker.performUpdateCheck(
-            configDir, "2.0.0", versionUrl, "tool name", ignored -> {});
+            configDir, "2.0.0", testWebServer.getEndpoint(), "tool name", ignored -> {});
     Assert.assertFalse(message.isPresent());
     String modifiedTime =
         new String(
@@ -130,7 +124,7 @@ public class UpdateCheckerTest {
     Instant before = Instant.now();
     Optional<String> message =
         UpdateChecker.performUpdateCheck(
-            configDir, "1.0.2", versionUrl, "tool name", ignored -> {});
+            configDir, "1.0.2", testWebServer.getEndpoint(), "tool name", ignored -> {});
     Assert.assertTrue(message.isPresent());
     Assert.assertEquals(
         "A new version of Jib (2.0.0) is available (currently using 1.0.2). Update your build "
@@ -148,7 +142,7 @@ public class UpdateCheckerTest {
     Instant before = Instant.now();
     Optional<String> message =
         UpdateChecker.performUpdateCheck(
-            configDir, "1.0.2", versionUrl, "tool name", ignored -> {});
+            configDir, "1.0.2", testWebServer.getEndpoint(), "tool name", ignored -> {});
     Assert.assertTrue(message.isPresent());
     Assert.assertEquals(
         "A new version of Jib (2.0.0) is available (currently using 1.0.2). Update your build "
@@ -169,7 +163,7 @@ public class UpdateCheckerTest {
         modifiedTime.toString().getBytes(StandardCharsets.UTF_8));
     Optional<String> message =
         UpdateChecker.performUpdateCheck(
-            configDir, "1.0.2", versionUrl, "tool name", ignored -> {});
+            configDir, "1.0.2", testWebServer.getEndpoint(), "tool name", ignored -> {});
     Assert.assertFalse(message.isPresent());
 
     // lastUpdateCheck should not have changed
@@ -186,7 +180,7 @@ public class UpdateCheckerTest {
         configDir.resolve("lastUpdateCheck"), "bad timestamp".getBytes(StandardCharsets.UTF_8));
     Optional<String> message =
         UpdateChecker.performUpdateCheck(
-            configDir, "1.0.2", versionUrl, "tool name", ignored -> {});
+            configDir, "1.0.2", testWebServer.getEndpoint(), "tool name", ignored -> {});
     String modifiedTime =
         new String(
             Files.readAllBytes(configDir.resolve("lastUpdateCheck")), StandardCharsets.UTF_8);
@@ -201,11 +195,9 @@ public class UpdateCheckerTest {
   @Test
   public void testPerformUpdateCheck_failSilently()
       throws InterruptedException, GeneralSecurityException, URISyntaxException, IOException {
+    String response = "HTTP/1.1 400 Bad Request\nContent-Length: 0\n\n";
     try (TestWebServer badServer =
-        new TestWebServer(
-            false,
-            Collections.singletonList("HTTP/1.1 400 Bad Request\nContent-Length: 0\n\n"),
-            1)) {
+        new TestWebServer(false, Collections.singletonList(response), 1)) {
       Optional<String> message =
           UpdateChecker.performUpdateCheck(
               configDir,
