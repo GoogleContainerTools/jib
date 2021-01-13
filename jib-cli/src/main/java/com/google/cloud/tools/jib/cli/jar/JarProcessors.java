@@ -47,9 +47,9 @@ public class JarProcessors {
     Integer jarJavaVersion = getJavaMajorVersion(jarPath);
     if (jarJavaVersion > 11) {
       throw new IllegalStateException(
-          "The java major version of your application (java "
+          "This application is in java "
               + jarJavaVersion
-              + ") is incompatible with the default base image which supports applications up to java 11. "
+              + ". It is incompatible with the default base image which only supports versions up to java 11. "
               + "Please consider specifying a base image of your choice.");
     }
 

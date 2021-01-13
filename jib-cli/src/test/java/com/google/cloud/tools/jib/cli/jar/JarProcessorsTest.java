@@ -89,7 +89,7 @@ public class JarProcessorsTest {
     assertThat(exception)
         .hasMessageThat()
         .startsWith(
-            "The java major version of your application (java 14) is incompatible with the "
-                + "default base image which supports applications up to java 11.");
+            "This application is in java 14. It is incompatible with the "
+                + "default base image which only supports versions up to java 11.");
   }
 }
