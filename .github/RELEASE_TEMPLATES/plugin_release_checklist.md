@@ -21,7 +21,7 @@ labels: release
 
 #### Jib-Extensions
 - [ ] Update versions in [Jib Extensions](https://github.com/GoogleContainerTools/jib-extensions)
-- [ ] If there were Gradle API or Jib API changes, double-check compatibility and update Version Matrix on jib-extensions. It may require re-releasing first-party extensions. See [jib-extensions#45](https://github.com/GoogleContainerTools/jib-extensions/pull/45), [jib-extensions#44](https://github.com/GoogleContainerTools/jib-extensions/pull/44), and [jib-extensions#42](https://github.com/GoogleContainerTools/jib-extensions/pull/44)
+- [ ] If there were Gradle API or Jib API changes, double-check compatibility and update Version Matrix on jib-extensions. It may require re-releasing first-party extensions. See [jib-extensions#45](https://github.com/GoogleContainerTools/jib-extensions/pull/45), [jib-extensions#44](https://github.com/GoogleContainerTools/jib-extensions/pull/44), and [jib-extensions#42](https://github.com/GoogleContainerTools/jib-extensions/pull/42)
 
 ## Announce
 - [ ] Email jib users
