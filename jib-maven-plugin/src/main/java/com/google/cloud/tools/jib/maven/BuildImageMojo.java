@@ -101,14 +101,15 @@ public class BuildImageMojo extends JibPluginConfiguration {
 
     Future<Optional<String>> updateCheckFuture = Futures.immediateFuture(Optional.empty());
     try {
-      updateCheckFuture =
-          MojoCommon.newUpdateChecker(projectProperties, GlobalConfig.readConfig(), getLog());
+      GlobalConfig globalConfig = GlobalConfig.readConfig();
+      updateCheckFuture = MojoCommon.newUpdateChecker(projectProperties, globalConfig, getLog());
 
       PluginConfigurationProcessor.createJibBuildRunnerForRegistryImage(
               new MavenRawConfiguration(this),
               new MavenSettingsServerCredentials(
                   getSession().getSettings(), getSettingsDecrypter()),
               projectProperties,
+              globalConfig,
               new MavenHelpfulSuggestions(HELPFUL_SUGGESTIONS_PREFIX))
           .runBuild();
 

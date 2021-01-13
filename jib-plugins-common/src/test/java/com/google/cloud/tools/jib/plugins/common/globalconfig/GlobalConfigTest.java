@@ -25,6 +25,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Arrays;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -47,7 +48,9 @@ public class GlobalConfigTest {
   @Test
   public void testReadConfig_default() throws IOException {
     GlobalConfig globalConfig = GlobalConfig.readConfig(configDir);
+
     assertThat(globalConfig.isDisableUpdateCheck()).isFalse();
+    assertThat(globalConfig.getRegistryMirrors()).isEmpty();
   }
 
   @Test
@@ -55,24 +58,36 @@ public class GlobalConfigTest {
     GlobalConfig.readConfig(configDir);
     String configJson =
         new String(Files.readAllBytes(configDir.resolve("config.json")), StandardCharsets.UTF_8);
-    assertThat(configJson).isEqualTo("{\"disableUpdateCheck\":false}");
+    assertThat(configJson).isEqualTo("{\"disableUpdateCheck\":false,\"registryMirrors\":[]}");
   }
 
   @Test
   public void testReadConfig_emptyJson() throws IOException {
     Files.write(configDir.resolve("config.json"), "{}".getBytes(StandardCharsets.UTF_8));
     GlobalConfig globalConfig = GlobalConfig.readConfig(configDir);
+
     assertThat(globalConfig.isDisableUpdateCheck()).isFalse();
+    assertThat(globalConfig.getRegistryMirrors()).isEmpty();
   }
 
   @Test
   public void testReadConfig() throws IOException {
-    Files.write(
-        configDir.resolve("config.json"),
-        "{\"disableUpdateCheck\":true}".getBytes(StandardCharsets.UTF_8));
+    String json =
+        "{\"disableUpdateCheck\":true, \"registryMirrors\":["
+            + "{ \"registry\": \"registry-1.docker.io\","
+            + "  \"mirrors\": [\"mirror.gcr.io\", \"localhost:5000\"] },"
+            + "{ \"registry\": \"another.registry\", \"mirrors\": [\"another.mirror\"] }"
+            + "]}";
+    Files.write(configDir.resolve("config.json"), json.getBytes(StandardCharsets.UTF_8));
 
     GlobalConfig globalConfig = GlobalConfig.readConfig(configDir);
     assertThat(globalConfig.isDisableUpdateCheck()).isTrue();
+    assertThat(globalConfig.getRegistryMirrors())
+        .containsExactly(
+            "registry-1.docker.io",
+            Arrays.asList("mirror.gcr.io", "localhost:5000"),
+            "another.registry",
+            Arrays.asList("another.mirror"));
   }
 
   @Test

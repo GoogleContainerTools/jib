@@ -28,7 +28,10 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
@@ -136,6 +139,7 @@ public class Containerizer {
   private String toolName = DEFAULT_TOOL_NAME;
   @Nullable private String toolVersion = DEFAULT_TOOL_VERSION;
   private boolean alwaysCacheBaseImage = false;
+  private Map<String, List<String>> registryMirrors = new HashMap<>();
 
   /** Instantiate with {@link #to}. */
   private Containerizer(
@@ -303,8 +307,25 @@ public class Containerizer {
     return this;
   }
 
+  /**
+   * Sets mirrors for registries. If {@code registryMirrors} contains an entry for a base image
+   * registry, Jib will try its mirrors in the given order first.
+   *
+   * @param registryMirrors a map where the key is a base image registry and the value is a list of
+   *     mirrors in the form of {@code host[:port]}
+   * @return this
+   */
+  public Containerizer setRegistryMirrors(Map<String, List<String>> registryMirrors) {
+    this.registryMirrors = registryMirrors;
+    return this;
+  }
+
   Set<String> getAdditionalTags() {
     return additionalTags;
+  }
+
+  Map<String, List<String>> getRegistryMirrors() {
+    return registryMirrors;
   }
 
   Optional<ExecutorService> getExecutorService() {

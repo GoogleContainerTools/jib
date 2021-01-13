@@ -33,12 +33,14 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.base.Verify;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import java.io.Closeable;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.StringJoiner;
 import java.util.concurrent.ExecutorService;
@@ -80,6 +82,7 @@ public class BuildContext implements Closeable {
     private EventHandlers eventHandlers = EventHandlers.NONE;
     @Nullable private ExecutorService executorService;
     private boolean alwaysCacheBaseImage = false;
+    private ImmutableMap<String, List<String>> registryMirrors = ImmutableMap.of();
 
     private Builder() {}
 
@@ -256,6 +259,16 @@ public class BuildContext implements Closeable {
       return this;
     }
 
+    /** TODO */
+    public Builder setRegistryMirrors(Map<String, List<String>> registryMirrors) {
+      ImmutableMap.Builder<String, List<String>> copy = ImmutableMap.builder();
+      for (Map.Entry<String, List<String>> entry : registryMirrors.entrySet()) {
+        copy.put(entry.getKey(), ImmutableList.copyOf(entry.getValue()));
+      }
+      this.registryMirrors = copy.build();
+      return this;
+    }
+
     /**
      * Builds a new {@link BuildContext} using the parameters passed into the builder.
      *
@@ -313,7 +326,8 @@ public class BuildContext implements Closeable {
                   eventHandlers::dispatch),
               executorService == null ? Executors.newCachedThreadPool() : executorService,
               executorService == null, // shutDownExecutorService
-              alwaysCacheBaseImage);
+              alwaysCacheBaseImage,
+              registryMirrors);
 
         case 1:
           throw new IllegalStateException(missingFields.get(0) + " is required but not set");
@@ -370,6 +384,7 @@ public class BuildContext implements Closeable {
   private final ExecutorService executorService;
   private final boolean shutDownExecutorService;
   private final boolean alwaysCacheBaseImage;
+  private final ImmutableMap<String, List<String>> registryMirrors;
 
   /** Instantiate with {@link #builder}. */
   private BuildContext(
@@ -388,7 +403,8 @@ public class BuildContext implements Closeable {
       FailoverHttpClient httpClient,
       ExecutorService executorService,
       boolean shutDownExecutorService,
-      boolean alwaysCacheBaseImage) {
+      boolean alwaysCacheBaseImage,
+      ImmutableMap<String, List<String>> registryMirrors) {
     this.baseImageConfiguration = baseImageConfiguration;
     this.targetImageConfiguration = targetImageConfiguration;
     this.additionalTargetImageTags = additionalTargetImageTags;
@@ -405,6 +421,7 @@ public class BuildContext implements Closeable {
     this.executorService = executorService;
     this.shutDownExecutorService = shutDownExecutorService;
     this.alwaysCacheBaseImage = alwaysCacheBaseImage;
+    this.registryMirrors = registryMirrors;
   }
 
   public ImageConfiguration getBaseImageConfiguration() {
@@ -496,6 +513,15 @@ public class BuildContext implements Closeable {
    */
   public ImmutableList<FileEntriesLayer> getLayerConfigurations() {
     return layerConfigurations;
+  }
+
+  /**
+   * Gets the registry mirrors.
+   *
+   * @return the registry mirrors
+   */
+  public ImmutableMap<String, List<String>> getRegistryMirrors() {
+    return registryMirrors;
   }
 
   /**

@@ -27,6 +27,9 @@ import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /** Represents read-only Jib global configuration. */
 public class GlobalConfig {
@@ -94,5 +97,13 @@ public class GlobalConfig {
   public boolean isDisableUpdateCheck() {
     return Boolean.getBoolean(PropertyNames.DISABLE_UPDATE_CHECKS)
         || jsonConfig.isDisableUpdateCheck();
+  }
+
+  public Map<String, List<String>> getRegistryMirrors() {
+    Map<String, List<String>> map = new HashMap<>();
+    for (RegistryMirrorsTemplate registryMirrors : jsonConfig.getRegistryMirrors()) {
+      map.put(registryMirrors.getRegistry(), registryMirrors.getMirrors());
+    }
+    return map;
   }
 }
