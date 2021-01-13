@@ -88,8 +88,6 @@ public class JarProcessorsTest {
                     jarPath, mockTemporaryDirectoryProvider, ProcessingMode.exploded));
     assertThat(exception)
         .hasMessageThat()
-        .startsWith(
-            "This application is in java 14. It is incompatible with the "
-                + "default base image which only supports versions up to java 11.");
+        .startsWith("The input JAR (" + jarPath + ") is compiled with Java " + 14);
   }
 }

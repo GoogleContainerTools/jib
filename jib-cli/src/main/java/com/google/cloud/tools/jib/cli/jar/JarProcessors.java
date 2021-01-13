@@ -47,10 +47,11 @@ public class JarProcessors {
     Integer jarJavaVersion = getJavaMajorVersion(jarPath);
     if (jarJavaVersion > 11) {
       throw new IllegalStateException(
-          "This application is in java "
+          "The input JAR ("
+              + jarPath
+              + ") is compiled with Java "
               + jarJavaVersion
-              + ". It is incompatible with the default base image which only supports versions up to java 11. "
-              + "Please consider specifying a base image of your choice.");
+              + ", but the default base image only supports versions up to Java 11. Specify a custom base image with --from.");
     }
 
     String jarType = determineJarType(jarPath);
@@ -94,7 +95,7 @@ public class JarProcessors {
       Enumeration<JarEntry> jarEntries = jarFile.entries();
       while (jarEntries.hasMoreElements()) {
         String jarEntry = jarEntries.nextElement().toString();
-        if (jarEntry.endsWith(".class") && !jarEntry.equals("module-info.class")) {
+        if (jarEntry.endsWith(".class") && !jarEntry.endsWith("module-info.class")) {
           URLClassLoader loader = new URLClassLoader(new URL[] {jarPath.toUri().toURL()});
           try (DataInputStream classFile =
               new DataInputStream(loader.getResourceAsStream(jarEntry))) {
