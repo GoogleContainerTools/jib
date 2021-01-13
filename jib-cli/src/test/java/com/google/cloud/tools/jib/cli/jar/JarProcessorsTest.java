@@ -20,13 +20,11 @@ import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assert.assertThrows;
 
 import com.google.cloud.tools.jib.filesystem.TempDirectoryProvider;
-import com.google.cloud.tools.jib.plugins.common.IncompatibleBaseImageJavaVersionException;
 import com.google.common.io.Resources;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
@@ -39,13 +37,12 @@ public class JarProcessorsTest {
 
   private static final String SPRING_BOOT = "jar/spring-boot/springboot_sample.jar";
   private static final String STANDARD = "jar/standard/emptyStandardJar.jar";
-  private static final String JAVA_14_JAR = "jar/java14Jar.jar";
+  private static final String JAVA_14_JAR = "jar/java14WithModuleInfo.jar";
 
   @Mock private static TempDirectoryProvider mockTemporaryDirectoryProvider;
 
   @Test
-  public void testFrom_standardExploded()
-      throws IOException, URISyntaxException, IncompatibleBaseImageJavaVersionException {
+  public void testFrom_standardExploded() throws IOException, URISyntaxException {
     Path jarPath = Paths.get(Resources.getResource(STANDARD).toURI());
     JarProcessor processor =
         JarProcessors.from(jarPath, mockTemporaryDirectoryProvider, ProcessingMode.exploded);
@@ -54,8 +51,7 @@ public class JarProcessorsTest {
   }
 
   @Test
-  public void testFrom_standardPackaged()
-      throws IOException, URISyntaxException, IncompatibleBaseImageJavaVersionException {
+  public void testFrom_standardPackaged() throws IOException, URISyntaxException {
     Path jarPath = Paths.get(Resources.getResource(STANDARD).toURI());
     JarProcessor processor =
         JarProcessors.from(jarPath, mockTemporaryDirectoryProvider, ProcessingMode.packaged);
@@ -64,8 +60,7 @@ public class JarProcessorsTest {
   }
 
   @Test
-  public void testFrom_springBootPackaged()
-      throws IOException, URISyntaxException, IncompatibleBaseImageJavaVersionException {
+  public void testFrom_springBootPackaged() throws IOException, URISyntaxException {
     Path jarPath = Paths.get(Resources.getResource(SPRING_BOOT).toURI());
     JarProcessor processor =
         JarProcessors.from(jarPath, mockTemporaryDirectoryProvider, ProcessingMode.packaged);
@@ -74,8 +69,7 @@ public class JarProcessorsTest {
   }
 
   @Test
-  public void testFrom_springBootExploded()
-      throws IOException, URISyntaxException, IncompatibleBaseImageJavaVersionException {
+  public void testFrom_springBootExploded() throws IOException, URISyntaxException {
     Path jarPath = Paths.get(Resources.getResource(SPRING_BOOT).toURI());
     JarProcessor processor =
         JarProcessors.from(jarPath, mockTemporaryDirectoryProvider, ProcessingMode.exploded);
@@ -86,13 +80,16 @@ public class JarProcessorsTest {
   @Test
   public void testFrom_incompatibleBaseImage() throws URISyntaxException {
     Path jarPath = Paths.get(Resources.getResource(JAVA_14_JAR).toURI());
-    IncompatibleBaseImageJavaVersionException exception =
+    IllegalStateException exception =
         assertThrows(
-            IncompatibleBaseImageJavaVersionException.class,
+            IllegalStateException.class,
             () ->
                 JarProcessors.from(
                     jarPath, mockTemporaryDirectoryProvider, ProcessingMode.exploded));
-    Assert.assertEquals(11, exception.getBaseImageMajorJavaVersion());
-    Assert.assertEquals(14, exception.getProjectMajorJavaVersion());
+    assertThat(exception)
+        .hasMessageThat()
+        .startsWith(
+            "The java major version of your application (java 14) is incompatible with the "
+                + "default base image which supports applications up to java 11.");
   }
 }

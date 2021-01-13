@@ -17,10 +17,8 @@
 package com.google.cloud.tools.jib.cli.jar;
 
 import com.google.cloud.tools.jib.filesystem.TempDirectoryProvider;
-import com.google.cloud.tools.jib.plugins.common.IncompatibleBaseImageJavaVersionException;
 import java.io.DataInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.file.Path;
@@ -42,15 +40,17 @@ public class JarProcessors {
    * @param mode processing mode
    * @return JarProcessor
    * @throws IOException if I/O error occurs when opening the jar file
-   * @throws IncompatibleBaseImageJavaVersionException if the base image java version cannot support
-   *     this build
    */
   public static JarProcessor from(
       Path jarPath, TempDirectoryProvider temporaryDirectoryProvider, ProcessingMode mode)
-      throws IOException, IncompatibleBaseImageJavaVersionException {
-    Integer jarVersion = getVersion(jarPath);
-    if (jarVersion > 11) {
-      throw new IncompatibleBaseImageJavaVersionException(11, jarVersion);
+      throws IOException {
+    Integer jarJavaVersion = getJavaMajorVersion(jarPath);
+    if (jarJavaVersion > 11) {
+      throw new IllegalStateException(
+          "The java major version of your application (java "
+              + jarJavaVersion
+              + ") is incompatible with the default base image which supports applications up to java 11. "
+              + "Please consider specifying a base image of your choice.");
     }
 
     String jarType = determineJarType(jarPath);
@@ -89,25 +89,25 @@ public class JarProcessors {
    * @return java version
    * @throws IOException if I/O exception thrown when opening the jar file
    */
-  private static Integer getVersion(Path jarPath) throws IOException {
+  private static Integer getJavaMajorVersion(Path jarPath) throws IOException {
     try (JarFile jarFile = new JarFile(jarPath.toFile())) {
       Enumeration<JarEntry> jarEntries = jarFile.entries();
       while (jarEntries.hasMoreElements()) {
         String jarEntry = jarEntries.nextElement().toString();
-        if (jarEntry.endsWith(".class")) {
+        if (jarEntry.endsWith(".class") && !jarEntry.equals("module-info.class")) {
           URLClassLoader loader = new URLClassLoader(new URL[] {jarPath.toUri().toURL()});
-          try (InputStream classFileInfo = loader.getResourceAsStream(jarEntry)) {
-            DataInputStream data = new DataInputStream(classFileInfo);
+          try (DataInputStream classFile =
+              new DataInputStream(loader.getResourceAsStream(jarEntry))) {
 
             // Check magic number
-            if (data.readInt() != 0xCAFEBABE) {
+            if (classFile.readInt() != 0xCAFEBABE) {
               throw new IOException("Invalid class file format.");
             }
 
             // Skip over minor version
-            data.skipBytes(2);
+            classFile.skipBytes(2);
 
-            int majorVersion = data.readUnsignedShort();
+            int majorVersion = classFile.readUnsignedShort();
             int javaVersion = (majorVersion - 45) + 1;
             return javaVersion;
           }
