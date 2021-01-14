@@ -26,4 +26,4 @@ labels: release
 ## Announce
 - [ ] Email jib users
 - [ ] Post to [gitter](https://gitter.im/google/jib)
-- [ ] Menntion on all fixed issues that latest release has addressed the issue (usually any closed issues in a milestone)
+- [ ] Menntion on all fixed issues that latest release has addressed the issue (usually any closed issues in a [milestone](https://github.com/GoogleContainerTools/jib/milestones))
