@@ -78,7 +78,7 @@ public class Jar implements Callable<Integer> {
 
   @CommandLine.Option(
       names = "--from",
-      paramLabel = "<from>",
+      paramLabel = "<base-image>",
       description = "The base image to use.")
   @SuppressWarnings("NullAway.Init") // initialized by picocli
   private String from;
@@ -87,21 +87,21 @@ public class Jar implements Callable<Integer> {
       names = "--jvm-flags",
       paramLabel = "<jvm-flags>",
       split = ",",
-      description = "JVM arguments")
+      description = "JVM arguments.")
   private List<String> jvmFlags = Collections.emptyList();
 
   @CommandLine.Option(
       names = "--expose",
       paramLabel = "<exposed-ports>",
       split = ",",
-      description = "Ports to expose on container")
+      description = "Ports to expose on container.")
   private List<String> exposedPorts = Collections.emptyList();
 
   @CommandLine.Option(
       names = "--volumes",
       paramLabel = "<volumes>",
       split = ",",
-      description = "Directories on container to hold extra volumes")
+      description = "Directories on container to hold extra volumes.")
   private List<String> volumes = Collections.emptyList();
 
   @CommandLine.Option(
@@ -109,7 +109,7 @@ public class Jar implements Callable<Integer> {
       paramLabel = "<environment-variables>",
       split = ",",
       description =
-          "Environment Variables to write into container. Usage example: --environment-variables key1=value1,key2=value2")
+          "Environment Variables to write into container. Usage example: --environment-variables key1=value1,key2=value2.")
   private Map<String, String> environment = new LinkedHashMap<>();
 
   @CommandLine.Option(
@@ -117,13 +117,13 @@ public class Jar implements Callable<Integer> {
       paramLabel = "<labels>",
       split = ",",
       description =
-          "Labels to write into container metadata. Usage example: --labels label1=value1,label2=value2")
+          "Labels to write into container metadata. Usage example: --labels label1=value1,label2=value2.")
   private Map<String, String> labels = new LinkedHashMap<>();
 
   @CommandLine.Option(
       names = {"-u", "--user"},
       paramLabel = "<user>",
-      description = "The username or id to run the container")
+      description = "The user to run the container.")
   @SuppressWarnings("NullAway.Init") // initialized by picocli
   private String user;
 
@@ -132,9 +132,16 @@ public class Jar implements Callable<Integer> {
       defaultValue = "Docker",
       paramLabel = "<image-format>",
       description =
-          "Format of container, candidates: ${COMPLETION-CANDIDATES}, default: ${DEFAULT-VALUE}")
+          "Format of container, candidates: ${COMPLETION-CANDIDATES}, default: ${DEFAULT-VALUE}.")
   @SuppressWarnings("NullAway.Init") // initialized by picocli
   private ImageFormat format;
+
+  @CommandLine.Option(
+      names = "--program-args",
+      paramLabel = "<program-arguments>",
+      split = ",",
+      description = "Program arguments for container entrypoint.")
+  private List<String> programArguments = Collections.emptyList();
 
   @Override
   public Integer call() {
@@ -237,5 +244,9 @@ public class Jar implements Callable<Integer> {
 
   public Optional<ImageFormat> getFormat() {
     return Optional.ofNullable(format);
+  }
+
+  public List<String> getProgramArguments() {
+    return programArguments;
   }
 }

@@ -252,6 +252,7 @@ public class JarFilesTest {
     Mockito.when(mockJarCommand.getLabels()).thenReturn(ImmutableMap.of("label", "mylabel"));
     Mockito.when(mockJarCommand.getUser()).thenReturn(Optional.of("customUser"));
     Mockito.when(mockJarCommand.getFormat()).thenReturn(Optional.of(ImageFormat.OCI));
+    Mockito.when(mockJarCommand.getProgramArguments()).thenReturn(ImmutableList.of("arg1"));
 
     JibContainerBuilder containerBuilder =
         JarFiles.toJibContainerBuilder(
@@ -267,5 +268,6 @@ public class JarFilesTest {
     assertThat(buildPlan.getLabels()).isEqualTo(ImmutableMap.of("label", "mylabel"));
     assertThat(buildPlan.getUser()).isEqualTo("customUser");
     assertThat(buildPlan.getFormat()).isEqualTo(ImageFormat.OCI);
+    assertThat(buildPlan.getCmd()).isEqualTo(ImmutableList.of("arg1"));
   }
 }

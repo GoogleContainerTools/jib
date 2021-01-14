@@ -498,6 +498,14 @@ public class JarTest {
   }
 
   @Test
+  public void testParse_programArguments() {
+    Jar jarCommand =
+        CommandLine.populateCommand(
+            new Jar(), "--target=test-image-ref", "--program-args=arg1,arg2", "my-app.jar");
+    assertThat(jarCommand.getProgramArguments()).isEqualTo(ImmutableList.of("arg1", "arg2"));
+  }
+
+  @Test
   public void testValidate_nameMissingFail() {
     Jar jarCommand =
         CommandLine.populateCommand(new Jar(), "--target=tar://sometar.tar", "my-app.jar");
