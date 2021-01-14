@@ -468,6 +468,14 @@ public class JarTest {
   }
 
   @Test
+  public void testParse_user() {
+    Jar jarCommand =
+        CommandLine.populateCommand(
+            new Jar(), "--target", "test-image-ref", "--user", "customUser", "my-app.jar");
+    assertThat(jarCommand.getUser()).hasValue("customUser");
+  }
+
+  @Test
   public void testValidate_nameMissingFail() {
     Jar jarCommand =
         CommandLine.populateCommand(new Jar(), "--target=tar://sometar.tar", "my-app.jar");

@@ -119,6 +119,13 @@ public class Jar implements Callable<Integer> {
           "Labels to write into container metadata. Usage example: --labels label1=value1,label2=value2")
   private Map<String, String> labels = new LinkedHashMap<>();
 
+  @CommandLine.Option(
+      names = {"-u", "--user"},
+      paramLabel = "<user>",
+      description = "The username or id to run the container")
+  @SuppressWarnings("NullAway.Init") // initialized by picocli
+  private String user;
+
   @Override
   public Integer call() {
     try {
@@ -215,5 +222,9 @@ public class Jar implements Callable<Integer> {
 
   public Map<String, String> getLabels() {
     return labels;
+  }
+
+  public Optional<String> getUser() {
+    return Optional.ofNullable(user);
   }
 }

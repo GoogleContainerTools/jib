@@ -293,6 +293,7 @@ public class JarFilesTest {
             ImmutableSet.of(AbsoluteUnixPath.get("/volume1"), AbsoluteUnixPath.get("/volume2")));
     Mockito.when(mockJarCommand.getEnvironment()).thenReturn(ImmutableMap.of("key1", "value1"));
     Mockito.when(mockJarCommand.getLabels()).thenReturn(ImmutableMap.of("label", "mylabel"));
+    Mockito.when(mockJarCommand.getUser()).thenReturn(Optional.of("customUser"));
 
     JibContainerBuilder containerBuilder =
         JarFiles.toJibContainerBuilder(
@@ -309,7 +310,7 @@ public class JarFilesTest {
         .isEqualTo(
             ImmutableSet.of(AbsoluteUnixPath.get("/volume1"), AbsoluteUnixPath.get("/volume2")));
     assertThat(buildPlan.getExposedPorts()).isEqualTo(ImmutableSet.of(Port.udp(123)));
-    assertThat(buildPlan.getUser()).isNull();
+    assertThat(buildPlan.getUser()).isEqualTo("customUser");
     assertThat(buildPlan.getWorkingDirectory()).isNull();
     assertThat(buildPlan.getEntrypoint())
         .isEqualTo(
