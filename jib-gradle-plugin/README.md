@@ -28,6 +28,7 @@ For information about the project, see the [Jib project README](../README.md).
 * [Multi Module Projects](#multi-module-projects)
 * [Extended Usage](#extended-usage)
   * [System Properties](#system-properties)
+  * [Global Jib Configuration](#global-jib-configuration)
   * [Example](#example)
   * [Adding Arbitrary Files to the Image](#adding-arbitrary-files-to-the-image)
   * [Authentication Methods](#authentication-methods)
@@ -309,6 +310,35 @@ Property | Type | Default | Description
  * *Linux: `[cache root]/google-cloud-tools-java/jib/`, where `[cache root]` is `$XDG_CACHE_HOME` (`$HOME/.cache/` if not set)*
  * *Mac: `[cache root]/Google/Jib/`, where `[cache root]` is `$XDG_CACHE_HOME` (`$HOME/Library/Caches/` if not set)*
  * *Windows: `[cache root]\Google\Jib\Cache`, where `[cache root]` is `$XDG_CACHE_HOME` (`%LOCALAPPDATA%` if not set)*
+
+### Global Jib Configuration
+
+Some options can be set in the global Jib configuration file. The file is at the following locations on each platform:
+
+* *Linux: `[config root]/google-cloud-tools-java/jib/config.json`, where `[config root]` is `$XDG_CONFIG_HOME` (`$HOME/.config/` if not set)*
+* *Mac: `[config root]/Google/Jib/config.json`, where `[config root]` is `$XDG_CONFIG_HOME` (`$HOME/Library/Preferences/Config/` if not set)*
+* *Windows: `[config root]\Google\Jib\Config\config.json`, where `[config root]` is `$XDG_CONFIG_HOME` (`%LOCALAPPDATA%` if not set)*
+
+#### Properties 
+
+* `disableUpdateCheck`: when set to true, disables the periodic up-to-date version check.
+* `registryMirrors`: a list of mirror settings for each base image registry. In the following example, if the base image configured in Jib is for a Docker Hub image, then `mirror.gcr.io`, `localhost:5000`, and the Docker Hub (`registry-1.docker.io`) are tried in order until Jib can successfuly pull a base image.
+
+```json
+{
+  "disableUpdateCheck": false,
+  "registryMirrors": [
+    {
+      "registry": "registry-1.docker.io",
+      "mirrors": ["mirror.gcr.io", "localhost:5000"]
+    },
+    {
+      "registry": "quary.io",
+      "mirrors": ["private-mirror.test.com"]
+    }
+  ]
+}
+```
 
 ### Example
 
