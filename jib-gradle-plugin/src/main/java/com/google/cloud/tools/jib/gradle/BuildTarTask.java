@@ -35,6 +35,7 @@ import com.google.cloud.tools.jib.plugins.common.globalconfig.GlobalConfig;
 import com.google.cloud.tools.jib.plugins.common.globalconfig.InvalidGlobalConfigException;
 import com.google.cloud.tools.jib.plugins.extension.JibPluginExtensionException;
 import com.google.common.base.Preconditions;
+import com.google.common.util.concurrent.Futures;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
@@ -50,7 +51,6 @@ import org.gradle.api.tasks.Nested;
 import org.gradle.api.tasks.OutputFile;
 import org.gradle.api.tasks.TaskAction;
 import org.gradle.api.tasks.options.Option;
-import org.gradle.internal.impldep.com.google.common.util.concurrent.Futures;
 
 /** Builds a container image to a tarball. */
 public class BuildTarTask extends DefaultTask implements JibTask {
