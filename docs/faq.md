@@ -28,7 +28,9 @@ If a question you have is not answered below, please [submit an issue](/../../is
 [How can I inspect the image Jib built?](#how-can-i-inspect-the-image-jib-built)\
 [I would like to run my application with a javaagent.](#i-would-like-to-run-my-application-with-a-javaagent)\
 [How can I tag my image with a timestamp?](#how-can-i-tag-my-image-with-a-timestamp)\
-[How do I specify a platform in the manifest list (or OCI index) of a base image?](#how-do-i-specify-a-platform-in-the-manifest-list-or-oci-index-of-a-base-image)
+[How do I specify a platform in the manifest list (or OCI index) of a base image?](#how-do-i-specify-a-platform-in-the-manifest-list-or-oci-index-of-a-base-image)\
+[I am hitting the Docker Hub rate limiting. How can I configure registry mirrors?](#i-am-hitting-the-docker-hub-rate-limiting-how-can-i-configure-registry mirrors)\
+[Where is the global Jib configuration file and how I can configure it?](#where-is-the-global-jib-configuration-file-and-how-i-can-configure-it)
 
 **Build Problems**\
 [How can I diagnose problems pulling or pushing from remote registries?](#how-can-i-diagnose-problems-pulling-or-pushing-from-remote-registries)\
@@ -536,6 +538,15 @@ $ docker manifest inspect openjdk:8
    ]
 }
 ```
+
+### I am hitting the Docker Hub rate limiting. How can I configure registry mirrors?
+
+See the [Maven](https://github.com/GoogleContainerTools/jib/tree/global-config-doc/jib-maven-plugin#global-jib-configuration) and [Gradle](https://github.com/GoogleContainerTools/jib/tree/global-config-doc/jib-gradle-plugin#global-jib-configuration) docs. Note that the example in the docs uses [Google's Docker Hub mirror on `mirror.gcr.io`](https://cloud.google.com/container-registry/docs/pulling-cached-images).
+
+### Where is the global Jib configuration file and how I can configure it?
+
+See the [Maven](https://github.com/GoogleContainerTools/jib/tree/global-config-doc/jib-maven-plugin#global-jib-configuration) and [Gradle](https://github.com/GoogleContainerTools/jib/tree/global-config-doc/jib-gradle-plugin#global-jib-configuration) docs.
+
 
 ## Build Problems
 
