@@ -96,7 +96,7 @@ jobs:
           RELEASE_NAME: v${{ github.event.inputs.release_version }}-${{ github.event.inputs.project }}
           CHANGELOG_URL: https://github.com/GoogleContainerTools/jib/blob/master/jib-${{ github.event.inputs.project }}-plugin/CHANGELOG.md
           README_URL: https://github.com/GoogleContainerTools/jib/blob/master/jib-${{ github.event.inputs.project }}-plugin/README.md
-          RELEASE_VERSION: $ {{ github.events.inputs.release_version }}
+          GCS_UPDATE_SCRIPT: "`./jib-${{ github.event.inputs.project }}-plugin/scripts/update_gcs_latest.sh ${{ github.event.inputs.release_version }}`"
           RELEASE_DRAFT: ${{ steps.create-plugin-release.outputs.html_url }}
           RELEASE_PR: ${{steps.create-pr.outputs.pr_url}}
         with:
