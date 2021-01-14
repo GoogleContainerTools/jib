@@ -110,8 +110,8 @@ public class GlobalConfigTest {
         .hasMessageThat()
         .startsWith(
             "Failed to open or parse global Jib config file; see "
-                + "https://github.com/GoogleContainerTools/jib/tree/master/jib-maven-plugin#global-jib-configuration "
-                + "to fix or you may need to fix or delete");
+                + "https://github.com/GoogleContainerTools/jib/blob/global-config-doc/docs/faq.md#where-is-the-global-jib-configuration-file-and-how-i-can-configure-it "
+                + "to fix or you may need to delete");
     assertThat(exception).hasMessageThat().endsWith(File.separator + "config.json");
   }
 
@@ -125,8 +125,36 @@ public class GlobalConfigTest {
         .hasMessageThat()
         .startsWith(
             "Failed to open or parse global Jib config file; see "
-                + "https://github.com/GoogleContainerTools/jib/tree/master/jib-maven-plugin#global-jib-configuration "
-                + "to fix or you may need to fix or delete");
+                + "https://github.com/GoogleContainerTools/jib/blob/global-config-doc/docs/faq.md#where-is-the-global-jib-configuration-file-and-how-i-can-configure-it "
+                + "to fix or you may need to delete ");
     assertThat(exception).hasMessageThat().endsWith(File.separator + "config.json");
+  }
+
+  @Test
+  public void testReadConfig_missingRegistry() throws IOException {
+    String json = "{\"registryMirrors\":[{\"mirrors\":[\"mirror.gcr.io\"]}]}";
+    Files.write(configDir.resolve("config.json"), json.getBytes(StandardCharsets.UTF_8));
+    InvalidGlobalConfigException exception =
+        assertThrows(InvalidGlobalConfigException.class, () -> GlobalConfig.readConfig(configDir));
+    assertThat(exception)
+        .hasMessageThat()
+        .startsWith(
+            "'registryMirrors.registry' property is missing; see "
+                + "https://github.com/GoogleContainerTools/jib/blob/global-config-doc/docs/faq.md#where-is-the-global-jib-configuration-file-and-how-i-can-configure-it "
+                + "to fix or you may need to delete ");
+  }
+
+  @Test
+  public void testReadConfig_missingMirrors() throws IOException {
+    String json = "{\"registryMirrors\":[{\"registry\": \"registry\"}]}";
+    Files.write(configDir.resolve("config.json"), json.getBytes(StandardCharsets.UTF_8));
+    InvalidGlobalConfigException exception =
+        assertThrows(InvalidGlobalConfigException.class, () -> GlobalConfig.readConfig(configDir));
+    assertThat(exception)
+        .hasMessageThat()
+        .startsWith(
+            "'registryMirrors.mirrors' property is missing; see "
+                + "https://github.com/GoogleContainerTools/jib/blob/global-config-doc/docs/faq.md#where-is-the-global-jib-configuration-file-and-how-i-can-configure-it "
+                + "to fix or you may need to delete");
   }
 }

@@ -36,6 +36,7 @@ import com.google.cloud.tools.jib.plugins.common.globalconfig.InvalidGlobalConfi
 import com.google.cloud.tools.jib.plugins.extension.JibPluginExtensionException;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import com.google.common.util.concurrent.Futures;
 import java.io.IOException;
 import java.util.Optional;
 import java.util.concurrent.Future;
@@ -45,7 +46,6 @@ import org.gradle.api.GradleException;
 import org.gradle.api.tasks.Nested;
 import org.gradle.api.tasks.TaskAction;
 import org.gradle.api.tasks.options.Option;
-import org.gradle.internal.impldep.com.google.common.util.concurrent.Futures;
 
 /** Builds a container image to registry. */
 public class BuildImageTask extends DefaultTask implements JibTask {

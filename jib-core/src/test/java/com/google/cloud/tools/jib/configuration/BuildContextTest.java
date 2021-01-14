@@ -83,7 +83,7 @@ public class BuildContextTest {
     List<String> expectedEntrypoint = Arrays.asList("some", "entrypoint");
     List<String> expectedProgramArguments = Arrays.asList("arg1", "arg2");
     Map<String, String> expectedEnvironment = ImmutableMap.of("key", "value");
-    ImmutableSet<Port> expectedExposedPorts = ImmutableSet.of(Port.tcp(1000), Port.tcp(2000));
+    Set<Port> expectedExposedPorts = ImmutableSet.of(Port.tcp(1000), Port.tcp(2000));
     Map<String, String> expectedLabels = ImmutableMap.of("key1", "value1", "key2", "value2");
     Class<? extends BuildableManifestTemplate> expectedTargetFormat = OciManifestTemplate.class;
     Path expectedApplicationLayersCacheDirectory = Paths.get("application/layers");
@@ -94,6 +94,8 @@ public class BuildContextTest {
                 .addEntry(Paths.get("sourceFile"), AbsoluteUnixPath.get("/path/in/container"))
                 .build());
     String expectedCreatedBy = "createdBy";
+    Map<String, List<String>> expectedRegistryMirrors =
+        ImmutableMap.of("some.registry", Arrays.asList("mirror1", "mirror2"));
 
     ImageConfiguration baseImageConfiguration =
         ImageConfiguration.builder(
@@ -126,7 +128,8 @@ public class BuildContextTest {
             .setTargetFormat(ImageFormat.OCI)
             .setAllowInsecureRegistries(true)
             .setLayerConfigurations(expectedLayerConfigurations)
-            .setToolName(expectedCreatedBy);
+            .setToolName(expectedCreatedBy)
+            .setRegistryMirrors(expectedRegistryMirrors);
     BuildContext buildContext = buildContextBuilder.build();
 
     Assert.assertEquals(
@@ -170,6 +173,7 @@ public class BuildContextTest {
     Assert.assertEquals(
         expectedEntrypoint, buildContext.getContainerConfiguration().getEntrypoint());
     Assert.assertEquals(expectedCreatedBy, buildContext.getToolName());
+    Assert.assertEquals(expectedRegistryMirrors, buildContext.getRegistryMirrors());
     Assert.assertNotNull(buildContext.getExecutorService());
   }
 
@@ -213,6 +217,7 @@ public class BuildContextTest {
     Assert.assertEquals("12345", buildContext.getContainerConfiguration().getUser());
     Assert.assertEquals(Collections.emptyList(), buildContext.getLayerConfigurations());
     Assert.assertEquals("jib", buildContext.getToolName());
+    Assert.assertEquals(Collections.emptyMap(), buildContext.getRegistryMirrors());
   }
 
   @Test

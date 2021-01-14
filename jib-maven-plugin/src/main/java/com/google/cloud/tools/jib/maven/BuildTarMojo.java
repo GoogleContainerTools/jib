@@ -150,6 +150,7 @@ public class BuildTarMojo extends JibPluginConfiguration {
         | CacheDirectoryCreationException
         | MainClassInferenceException
         | InvalidGlobalConfigException ex) {
+      throw new MojoExecutionException(ex.getMessage(), ex);
 
     } catch (BuildStepsExecutionException ex) {
       throw new MojoExecutionException(ex.getMessage(), ex.getCause());

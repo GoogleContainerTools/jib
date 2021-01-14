@@ -82,7 +82,7 @@ public class BuildContext implements Closeable {
     private EventHandlers eventHandlers = EventHandlers.NONE;
     @Nullable private ExecutorService executorService;
     private boolean alwaysCacheBaseImage = false;
-    private ImmutableMap<String, List<String>> registryMirrors = ImmutableMap.of();
+    private ImmutableMap<String, ImmutableList<String>> registryMirrors = ImmutableMap.of();
 
     private Builder() {}
 
@@ -259,9 +259,14 @@ public class BuildContext implements Closeable {
       return this;
     }
 
-    /** TODO */
+    /**
+     * Sets the registry mirrors.
+     *
+     * @param registryMirrors registry mirrors
+     * @return this
+     */
     public Builder setRegistryMirrors(Map<String, List<String>> registryMirrors) {
-      ImmutableMap.Builder<String, List<String>> copy = ImmutableMap.builder();
+      ImmutableMap.Builder<String, ImmutableList<String>> copy = ImmutableMap.builder();
       for (Map.Entry<String, List<String>> entry : registryMirrors.entrySet()) {
         copy.put(entry.getKey(), ImmutableList.copyOf(entry.getValue()));
       }
@@ -384,7 +389,7 @@ public class BuildContext implements Closeable {
   private final ExecutorService executorService;
   private final boolean shutDownExecutorService;
   private final boolean alwaysCacheBaseImage;
-  private final ImmutableMap<String, List<String>> registryMirrors;
+  private final ImmutableMap<String, ImmutableList<String>> registryMirrors;
 
   /** Instantiate with {@link #builder}. */
   private BuildContext(
@@ -404,7 +409,7 @@ public class BuildContext implements Closeable {
       ExecutorService executorService,
       boolean shutDownExecutorService,
       boolean alwaysCacheBaseImage,
-      ImmutableMap<String, List<String>> registryMirrors) {
+      ImmutableMap<String, ImmutableList<String>> registryMirrors) {
     this.baseImageConfiguration = baseImageConfiguration;
     this.targetImageConfiguration = targetImageConfiguration;
     this.additionalTargetImageTags = additionalTargetImageTags;
@@ -520,7 +525,7 @@ public class BuildContext implements Closeable {
    *
    * @return the registry mirrors
    */
-  public ImmutableMap<String, List<String>> getRegistryMirrors() {
+  public ImmutableMap<String, ImmutableList<String>> getRegistryMirrors() {
     return registryMirrors;
   }
 

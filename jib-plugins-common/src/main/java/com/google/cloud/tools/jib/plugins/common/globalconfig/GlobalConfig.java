@@ -69,30 +69,30 @@ public class GlobalConfig {
     } catch (InvalidGlobalConfigException ex) {
       throw new InvalidGlobalConfigException(
           ex.getMessage()
-              + "; see https://github.com/GoogleContainerTools/jib/tree/master/jib-maven-plugin#global-jib-configuration "
-              + "to fix or you may need to fix or delete"
+              + "; see https://github.com/GoogleContainerTools/jib/blob/global-config-doc/docs/faq.md#where-is-the-global-jib-configuration-file-and-how-i-can-configure-it "
+              + "to fix or you may need to delete "
               + configFile);
 
     } catch (IOException ex) {
       throw new IOException(
           "Failed to open or parse global Jib config file; see "
-              + "https://github.com/GoogleContainerTools/jib/tree/master/jib-maven-plugin#global-jib-configuration "
-              + "to fix or you may need to fix or delete "
+              + "https://github.com/GoogleContainerTools/jib/blob/global-config-doc/docs/faq.md#where-is-the-global-jib-configuration-file-and-how-i-can-configure-it "
+              + "to fix or you may need to delete "
               + configFile,
           ex);
     }
   }
 
-  @VisibleForTesting
-  static GlobalConfig from(GlobalConfigTemplate configJson) throws InvalidGlobalConfigException {
+  private static GlobalConfig from(GlobalConfigTemplate configJson)
+      throws InvalidGlobalConfigException {
     ImmutableMap.Builder<String, ImmutableList<String>> registryMirrors = ImmutableMap.builder();
     for (RegistryMirrorsTemplate mirrorConfig : configJson.getRegistryMirrors()) {
       // validation
       if (Strings.isNullOrEmpty(mirrorConfig.getRegistry())) {
-        throw new InvalidGlobalConfigException("'registry' property is null or empty");
+        throw new InvalidGlobalConfigException("'registryMirrors.registry' property is missing");
       }
       if (mirrorConfig.getMirrors().isEmpty()) {
-        throw new InvalidGlobalConfigException("'mirrors' property is empty");
+        throw new InvalidGlobalConfigException("'registryMirrors.mirrors' property is missing");
       }
 
       registryMirrors.put(
