@@ -36,7 +36,6 @@ import java.io.IOException;
 import java.nio.file.Paths;
 import java.time.Instant;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Optional;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -239,36 +238,6 @@ public class JarFilesTest {
                     AbsoluteUnixPath.get("/app/spring-boot.jar"))
                 .build()
                 .getEntries());
-  }
-
-  @Test
-  public void testToJibContainerBuilder_dockerBaseImage()
-      throws IOException, InvalidImageReferenceException {
-    Mockito.when(mockStandardExplodedProcessor.createLayers()).thenReturn(Collections.EMPTY_LIST);
-    Mockito.when(mockStandardExplodedProcessor.computeEntrypoint(ArgumentMatchers.anyList()))
-        .thenReturn(ImmutableList.of("ignore"));
-    Mockito.when(mockJarCommand.getFrom()).thenReturn(Optional.of("docker://docker-image-ref"));
-
-    JibContainerBuilder containerBuilder =
-        JarFiles.toJibContainerBuilder(
-            mockStandardExplodedProcessor, mockJarCommand, mockCommonCliOptions, mockLogger);
-    String baseImage = containerBuilder.toContainerBuildPlan().getBaseImage();
-    assertThat(baseImage).isEqualTo("docker-image-ref");
-  }
-
-  @Test
-  public void testToJibContainerBuilder_registry()
-      throws IOException, InvalidImageReferenceException {
-    Mockito.when(mockStandardExplodedProcessor.createLayers()).thenReturn(Collections.EMPTY_LIST);
-    Mockito.when(mockStandardExplodedProcessor.computeEntrypoint(ArgumentMatchers.anyList()))
-        .thenReturn(ImmutableList.of("ignore"));
-    Mockito.when(mockJarCommand.getFrom()).thenReturn(Optional.of("registry://registry-image-ref"));
-
-    JibContainerBuilder containerBuilder =
-        JarFiles.toJibContainerBuilder(
-            mockStandardExplodedProcessor, mockJarCommand, mockCommonCliOptions, mockLogger);
-    String baseImage = containerBuilder.toContainerBuildPlan().getBaseImage();
-    assertThat(baseImage).isEqualTo("registry-image-ref");
   }
 
   @Test

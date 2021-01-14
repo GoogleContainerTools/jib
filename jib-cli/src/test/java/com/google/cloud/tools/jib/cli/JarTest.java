@@ -412,7 +412,7 @@ public class JarTest {
   public void testParse_from() {
     Jar jarCommand =
         CommandLine.populateCommand(
-            new Jar(), "--target", "test-image-ref", "--from", "base-image-ref", "my-app.jar");
+            new Jar(), "--target=test-image-ref", "--from=base-image-ref", "my-app.jar");
     assertThat(jarCommand.getFrom()).hasValue("base-image-ref");
   }
 
@@ -420,11 +420,7 @@ public class JarTest {
   public void testParse_jvmFlags() {
     Jar jarCommand =
         CommandLine.populateCommand(
-            new Jar(),
-            "--target",
-            "test-image-ref",
-            "--jvm-flags=jvm-flag1,jvm-flag2",
-            "my-app.jar");
+            new Jar(), "--target=test-image-ref", "--jvm-flags=jvm-flag1,jvm-flag2", "my-app.jar");
     assertThat(jarCommand.getJvmFlags()).isEqualTo(ImmutableList.of("jvm-flag1", "jvm-flag2"));
   }
 
@@ -432,15 +428,16 @@ public class JarTest {
   public void testParse_exposedPorts() {
     Jar jarCommand =
         CommandLine.populateCommand(
-            new Jar(), "--target", "test-image-ref", "--expose=8080", "my-app.jar");
-    assertThat(jarCommand.getExposedPorts()).isEqualTo(Ports.parse(ImmutableList.of("8080")));
+            new Jar(), "--target=test-image-ref", "--expose=8080,3306", "my-app.jar");
+    assertThat(jarCommand.getExposedPorts())
+        .isEqualTo(Ports.parse(ImmutableList.of("8080", "3306")));
   }
 
   @Test
   public void testParse_volumes() {
     Jar jarCommand =
         CommandLine.populateCommand(
-            new Jar(), "--target", "test-image-ref", "--volumes=/volume1,/volume2", "my-app.jar");
+            new Jar(), "--target=test-image-ref", "--volumes=/volume1,/volume2", "my-app.jar");
     assertThat(jarCommand.getVolumes())
         .isEqualTo(
             ImmutableSet.of(AbsoluteUnixPath.get("/volume1"), AbsoluteUnixPath.get("/volume2")));
@@ -451,28 +448,30 @@ public class JarTest {
     Jar jarCommand =
         CommandLine.populateCommand(
             new Jar(),
-            "--target",
-            "test-image-ref",
-            "--environment-variables",
-            "key1=value1,key2=value2",
+            "--target=test-image-ref",
+            "--environment-variables=ENV_VAR1=value1,ENV_VAR2=value2",
             "my-app.jar");
     assertThat(jarCommand.getEnvironment())
-        .isEqualTo(ImmutableMap.of("key1", "value1", "key2", "value2"));
+        .isEqualTo(ImmutableMap.of("ENV_VAR1", "value1", "ENV_VAR2", "value2"));
   }
 
   @Test
   public void testParse_labels() {
     Jar jarCommand =
         CommandLine.populateCommand(
-            new Jar(), "--target", "test-image-ref", "--labels", "key1=,key2=value2", "my-app.jar");
-    assertThat(jarCommand.getLabels()).isEqualTo(ImmutableMap.of("key1", "", "key2", "value2"));
+            new Jar(),
+            "--target=test-image-ref",
+            "--labels=label1=value2,label2=value2",
+            "my-app.jar");
+    assertThat(jarCommand.getLabels())
+        .isEqualTo(ImmutableMap.of("label1", "value2", "label2", "value2"));
   }
 
   @Test
   public void testParse_user() {
     Jar jarCommand =
         CommandLine.populateCommand(
-            new Jar(), "--target", "test-image-ref", "--user", "customUser", "my-app.jar");
+            new Jar(), "--target=test-image-ref", "--user=customUser", "my-app.jar");
     assertThat(jarCommand.getUser()).hasValue("customUser");
   }
 
@@ -480,7 +479,7 @@ public class JarTest {
   public void testParse_imageFormat() {
     Jar jarCommand =
         CommandLine.populateCommand(
-            new Jar(), "--target", "test-image-ref", "--image-format", "OCI", "my-app.jar");
+            new Jar(), "--target=test-image-ref", "--image-format=OCI", "my-app.jar");
     assertThat(jarCommand.getFormat()).hasValue(ImageFormat.OCI);
   }
 
@@ -491,12 +490,7 @@ public class JarTest {
             CommandLine.ParameterException.class,
             () ->
                 CommandLine.populateCommand(
-                    new Jar(),
-                    "--target",
-                    "test-image-ref",
-                    "--image-format",
-                    "unknown",
-                    "my-app.jar"));
+                    new Jar(), "--target=test-image-ref", "--image-format=unknown", "my-app.jar"));
     assertThat(exception)
         .hasMessageThat()
         .isEqualTo(
