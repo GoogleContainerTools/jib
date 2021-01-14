@@ -14,7 +14,7 @@ labels: release
 - [ ] Update [CONTRIBUTING.md](https://github.com/GoogleContainerTools/jib/blob/master/CONTRIBUTING.md)
 - [ ] Complete [Release]({{ env.RELEASE_DRAFT }})
 - [ ] Merge PR({{ env.RELEASE_PR }})
-- [ ] Update the current [milestone](https://github.com/GoogleContainerTools/jib/milestones), roll over any incomplete issues to next milestone, mention on all fixed issues that latest release has addressed issue
+- [ ] Update the current [milestone](https://github.com/GoogleContainerTools/jib/milestones), roll over any incomplete issues to next milestone.
 
 #### Skaffold
 - [ ] Update versions in Skaffold ([example PR](https://github.com/GoogleContainerTools/skaffold/pull/4639))
@@ -26,3 +26,4 @@ labels: release
 ## Announce
 - [ ] Email jib users
 - [ ] Post to [gitter](https://gitter.im/google/jib)
+- [ ] Menntion on all fixed issues that latest release has addressed the issue (usually any closed issues in a milestone)
