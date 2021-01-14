@@ -29,7 +29,7 @@ If a question you have is not answered below, please [submit an issue](/../../is
 [I would like to run my application with a javaagent.](#i-would-like-to-run-my-application-with-a-javaagent)\
 [How can I tag my image with a timestamp?](#how-can-i-tag-my-image-with-a-timestamp)\
 [How do I specify a platform in the manifest list (or OCI index) of a base image?](#how-do-i-specify-a-platform-in-the-manifest-list-or-oci-index-of-a-base-image)\
-[I am hitting the Docker Hub rate limiting. How can I configure registry mirrors?](#i-am-hitting-the-docker-hub-rate-limiting-how-can-i-configure-registry mirrors)\
+[I am hitting the Docker Hub rate limiting. How can I configure registry mirrors?](#i-am-hitting-the-docker-hub-rate-limiting-how-can-i-configure-registry-mirrors)\
 [Where is the global Jib configuration file and how I can configure it?](#where-is-the-global-jib-configuration-file-and-how-i-can-configure-it)
 
 **Build Problems**\
