@@ -89,7 +89,8 @@ public class GlobalConfig {
     for (RegistryMirrorsTemplate mirrorConfig : configJson.getRegistryMirrors()) {
       // validation
       if (Strings.isNullOrEmpty(mirrorConfig.getRegistry())) {
-        throw new InvalidGlobalConfigException("'registryMirrors.registry' property is missing");
+        throw new InvalidGlobalConfigException(
+            "'registryMirrors.registry' property is null or empty");
       }
       if (mirrorConfig.getMirrors().isEmpty()) {
         throw new InvalidGlobalConfigException("'registryMirrors.mirrors' property is missing");

@@ -28,6 +28,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -308,24 +309,28 @@ public class Containerizer {
   }
 
   /**
-   * Sets mirrors for registries. If {@code registryMirrors} contains an entry for a base image
-   * registry, Jib will try its mirrors in the given order first.
+   * Sets mirrors for a base image registry. Jib will try its mirrors in the given order before
+   * finally trying the registry.
    *
-   * @param registryMirrors a map where the key is a base image registry and the value is a list of
-   *     mirrors in the form of {@code host[:port]}
+   * @param registry base image registry for which mirrors are configured
+   * @param mirrors a list of mirrors, where each element is in the form of {@code host[:port]}
    * @return this
    */
-  public Containerizer setRegistryMirrors(Map<String, List<String>> registryMirrors) {
-    this.registryMirrors = registryMirrors;
+  public Containerizer withRegistryMirrors(String registry, List<String> mirrors) {
+    registryMirrors.put(registry, new ArrayList<>(mirrors));
     return this;
   }
 
   Set<String> getAdditionalTags() {
-    return additionalTags;
+    return new HashSet<>(additionalTags);
   }
 
   Map<String, List<String>> getRegistryMirrors() {
-    return registryMirrors;
+    Map<String, List<String>> copy = new HashMap<>();
+    for (Map.Entry<String, List<String>> entry : registryMirrors.entrySet()) {
+      copy.put(entry.getKey(), new ArrayList<>(entry.getValue()));
+    }
+    return copy;
   }
 
   Optional<ExecutorService> getExecutorService() {

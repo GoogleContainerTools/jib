@@ -39,6 +39,7 @@ import java.nio.file.Path;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -723,7 +724,7 @@ public class JibContainerBuilder {
         .setExecutorService(containerizer.getExecutorService().orElse(null))
         .setEventHandlers(containerizer.buildEventHandlers())
         .setAlwaysCacheBaseImage(containerizer.getAlwaysCacheBaseImage())
-        .setRegistryMirrors(containerizer.getRegistryMirrors())
+        .setRegistryMirrors(new HashMap<>(containerizer.getRegistryMirrors()))
         .build();
   }
 
