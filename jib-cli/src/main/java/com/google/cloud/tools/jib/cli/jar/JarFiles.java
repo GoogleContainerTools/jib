@@ -73,6 +73,8 @@ public class JarFiles {
     containerBuilder.setEntrypoint(entrypoint).setFileEntriesLayers(layers);
     containerBuilder.setExposedPorts(jarOptions.getExposedPorts());
     containerBuilder.setVolumes(jarOptions.getVolumes());
+    containerBuilder.setEnvironment(jarOptions.getEnvironment());
+    containerBuilder.setLabels(jarOptions.getLabels());
 
     return containerBuilder;
   }

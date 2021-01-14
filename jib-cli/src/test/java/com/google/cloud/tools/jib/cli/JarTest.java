@@ -25,6 +25,7 @@ import com.google.cloud.tools.jib.api.Ports;
 import com.google.cloud.tools.jib.api.buildplan.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.cli.logging.Verbosity;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import java.nio.file.Paths;
 import junitparams.JUnitParamsRunner;
@@ -442,6 +443,28 @@ public class JarTest {
     assertThat(jarCommand.getVolumes())
         .isEqualTo(
             ImmutableSet.of(AbsoluteUnixPath.get("/volume1"), AbsoluteUnixPath.get("/volume2")));
+  }
+
+  @Test
+  public void testParse_environment() {
+    Jar jarCommand =
+        CommandLine.populateCommand(
+            new Jar(),
+            "--target",
+            "test-image-ref",
+            "--environment-variables",
+            "key1=value1,key2=value2",
+            "my-app.jar");
+    assertThat(jarCommand.getEnvironment())
+        .isEqualTo(ImmutableMap.of("key1", "value1", "key2", "value2"));
+  }
+
+  @Test
+  public void testParse_labels() {
+    Jar jarCommand =
+        CommandLine.populateCommand(
+            new Jar(), "--target", "test-image-ref", "--labels", "key1=,key2=value2", "my-app.jar");
+    assertThat(jarCommand.getLabels()).isEqualTo(ImmutableMap.of("key1", "", "key2", "value2"));
   }
 
   @Test

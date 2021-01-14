@@ -36,7 +36,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.Callable;
@@ -100,6 +102,22 @@ public class Jar implements Callable<Integer> {
       split = ",",
       description = "Directories on container to hold extra volumes")
   private List<String> volumes = Collections.emptyList();
+
+  @CommandLine.Option(
+      names = "--environment-variables",
+      paramLabel = "<environment-variables>",
+      split = ",",
+      description =
+          "Environment Variables to write into container. Usage example: --environment-variables key1=value1,key2=value2")
+  private Map<String, String> environment = new LinkedHashMap<>();
+
+  @CommandLine.Option(
+      names = "--labels",
+      paramLabel = "<labels>",
+      split = ",",
+      description =
+          "Labels to write into container metadata. Usage example: --labels label1=value1,label2=value2")
+  private Map<String, String> labels = new LinkedHashMap<>();
 
   @Override
   public Integer call() {
@@ -189,5 +207,13 @@ public class Jar implements Callable<Integer> {
       return ImmutableSet.of();
     }
     return volumes.stream().map(AbsoluteUnixPath::get).collect(Collectors.toSet());
+  }
+
+  public Map<String, String> getEnvironment() {
+    return environment;
+  }
+
+  public Map<String, String> getLabels() {
+    return labels;
   }
 }
