@@ -6,7 +6,7 @@ labels: release
 - [ ] ⚠️ Ensure the release process has succeeded before proceeding
 
 ## GCS
-- [ ] Run the `update_gcs_latest.sh` scripts in the {{ env.PROJECT_NAME }} projects to update GCS with the latest version number
+- [ ] Run the `update_gcs_latest.sh {{ env.RELEASE_VERSION }}` scripts in the {{ env.PROJECT_NAME }} projects to update GCS with the latest version number
 
 ## Github
 - [ ] Update [CHANGELOG.md]({{ env.CHANGELOG_URL }})
