@@ -272,20 +272,8 @@ public class JarFilesTest {
   }
 
   @Test
-  public void testToJibContainerBuilder_optionsSpecified()
+  public void testToJibContainerBuilder_optionalParameters()
       throws IOException, InvalidImageReferenceException {
-    FileEntriesLayer layer =
-        FileEntriesLayer.builder()
-            .setName("classes")
-            .addEntry(
-                Paths.get("path/to/tempDirectory/class1.class"),
-                AbsoluteUnixPath.get("/app/explodedJar/class1.class"))
-            .build();
-    Mockito.when(mockStandardExplodedProcessor.createLayers()).thenReturn(Arrays.asList(layer));
-    Mockito.when(mockStandardExplodedProcessor.computeEntrypoint(ArgumentMatchers.anyList()))
-        .thenReturn(
-            ImmutableList.of(
-                "java", "jvm-flag1", "-cp", "/app/explodedJar:/app/dependencies/*", "HelloWorld"));
     Mockito.when(mockJarCommand.getFrom()).thenReturn(Optional.of("base-image"));
     Mockito.when(mockJarCommand.getExposedPorts()).thenReturn(ImmutableSet.of(Port.udp(123)));
     Mockito.when(mockJarCommand.getVolumes())
@@ -302,30 +290,13 @@ public class JarFilesTest {
     ContainerBuildPlan buildPlan = containerBuilder.toContainerBuildPlan();
 
     assertThat(buildPlan.getBaseImage()).isEqualTo("base-image");
-    assertThat(buildPlan.getPlatforms()).isEqualTo(ImmutableSet.of(new Platform("amd64", "linux")));
-    assertThat(buildPlan.getCreationTime()).isEqualTo(Instant.EPOCH);
-    assertThat(buildPlan.getFormat()).isEqualTo(ImageFormat.OCI);
-    assertThat(buildPlan.getEnvironment()).isEqualTo(ImmutableMap.of("key1", "value1"));
-    assertThat(buildPlan.getLabels()).isEqualTo(ImmutableMap.of("label", "mylabel"));
+    assertThat(buildPlan.getExposedPorts()).isEqualTo(ImmutableSet.of(Port.udp(123)));
     assertThat(buildPlan.getVolumes())
         .isEqualTo(
             ImmutableSet.of(AbsoluteUnixPath.get("/volume1"), AbsoluteUnixPath.get("/volume2")));
-    assertThat(buildPlan.getExposedPorts()).isEqualTo(ImmutableSet.of(Port.udp(123)));
+    assertThat(buildPlan.getEnvironment()).isEqualTo(ImmutableMap.of("key1", "value1"));
+    assertThat(buildPlan.getLabels()).isEqualTo(ImmutableMap.of("label", "mylabel"));
     assertThat(buildPlan.getUser()).isEqualTo("customUser");
-    assertThat(buildPlan.getWorkingDirectory()).isNull();
-    assertThat(buildPlan.getEntrypoint())
-        .isEqualTo(
-            ImmutableList.of(
-                "java", "jvm-flag1", "-cp", "/app/explodedJar:/app/dependencies/*", "HelloWorld"));
-    assertThat(buildPlan.getLayers().size()).isEqualTo(1);
-    assertThat(buildPlan.getLayers().get(0).getName()).isEqualTo("classes");
-    assertThat(((FileEntriesLayer) buildPlan.getLayers().get(0)).getEntries())
-        .containsExactlyElementsIn(
-            FileEntriesLayer.builder()
-                .addEntry(
-                    Paths.get("path/to/tempDirectory/class1.class"),
-                    AbsoluteUnixPath.get("/app/explodedJar/class1.class"))
-                .build()
-                .getEntries());
+    assertThat(buildPlan.getFormat()).isEqualTo(ImageFormat.OCI);
   }
 }
