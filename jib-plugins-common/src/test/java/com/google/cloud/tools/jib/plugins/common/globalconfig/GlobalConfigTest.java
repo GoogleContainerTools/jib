@@ -46,7 +46,7 @@ public class GlobalConfigTest {
   }
 
   @Test
-  public void testReadConfig_default() throws IOException {
+  public void testReadConfig_default() throws IOException, InvalidGlobalConfigException {
     GlobalConfig globalConfig = GlobalConfig.readConfig(configDir);
 
     assertThat(globalConfig.isDisableUpdateCheck()).isFalse();
@@ -54,7 +54,7 @@ public class GlobalConfigTest {
   }
 
   @Test
-  public void testReadConfig_newConfigCreated() throws IOException {
+  public void testReadConfig_newConfigCreated() throws IOException, InvalidGlobalConfigException {
     GlobalConfig.readConfig(configDir);
     String configJson =
         new String(Files.readAllBytes(configDir.resolve("config.json")), StandardCharsets.UTF_8);
@@ -62,7 +62,7 @@ public class GlobalConfigTest {
   }
 
   @Test
-  public void testReadConfig_emptyJson() throws IOException {
+  public void testReadConfig_emptyJson() throws IOException, InvalidGlobalConfigException {
     Files.write(configDir.resolve("config.json"), "{}".getBytes(StandardCharsets.UTF_8));
     GlobalConfig globalConfig = GlobalConfig.readConfig(configDir);
 
@@ -71,7 +71,7 @@ public class GlobalConfigTest {
   }
 
   @Test
-  public void testReadConfig() throws IOException {
+  public void testReadConfig() throws IOException, InvalidGlobalConfigException {
     String json =
         "{\"disableUpdateCheck\":true, \"registryMirrors\":["
             + "{ \"registry\": \"registry-1.docker.io\","
@@ -91,7 +91,7 @@ public class GlobalConfigTest {
   }
 
   @Test
-  public void testReadConfig_systemProperties() throws IOException {
+  public void testReadConfig_systemProperties() throws IOException, InvalidGlobalConfigException {
     Files.write(
         configDir.resolve("config.json"),
         "{\"disableUpdateCheck\":false}".getBytes(StandardCharsets.UTF_8));
@@ -108,7 +108,10 @@ public class GlobalConfigTest {
         assertThrows(IOException.class, () -> GlobalConfig.readConfig(configDir));
     assertThat(exception)
         .hasMessageThat()
-        .startsWith("Failed to read global Jib config; you may need to fix or delete");
+        .startsWith(
+            "Failed to open or parse global Jib config file; see "
+                + "https://github.com/GoogleContainerTools/jib/tree/master/jib-maven-plugin#global-jib-configuration "
+                + "to fix or you may need to fix or delete");
     assertThat(exception).hasMessageThat().endsWith(File.separator + "config.json");
   }
 
@@ -120,7 +123,10 @@ public class GlobalConfigTest {
         assertThrows(IOException.class, () -> GlobalConfig.readConfig(configDir));
     assertThat(exception)
         .hasMessageThat()
-        .startsWith("Failed to read global Jib config; you may need to fix or delete");
+        .startsWith(
+            "Failed to open or parse global Jib config file; see "
+                + "https://github.com/GoogleContainerTools/jib/tree/master/jib-maven-plugin#global-jib-configuration "
+                + "to fix or you may need to fix or delete");
     assertThat(exception).hasMessageThat().endsWith(File.separator + "config.json");
   }
 }

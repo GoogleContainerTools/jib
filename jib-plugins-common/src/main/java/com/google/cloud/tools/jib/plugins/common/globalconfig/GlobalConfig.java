@@ -21,34 +21,33 @@ import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import com.google.cloud.tools.jib.plugins.common.PropertyNames;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 /** Represents read-only Jib global configuration. */
 public class GlobalConfig {
 
   private static final String CONFIG_FILENAME = "config.json";
 
-  public static GlobalConfig readConfig() throws IOException {
+  public static GlobalConfig readConfig() throws IOException, InvalidGlobalConfigException {
     return readConfig(getConfigDir());
   }
 
   @VisibleForTesting
-  static GlobalConfig readConfig(Path configDir) throws IOException {
+  static GlobalConfig readConfig(Path configDir) throws IOException, InvalidGlobalConfigException {
     Path configFile = configDir.resolve(CONFIG_FILENAME);
 
     try {
       if (Files.exists(configFile)) {
         GlobalConfigTemplate configJson =
             JsonTemplateMapper.readJsonFromFile(configFile, GlobalConfigTemplate.class);
-        return new GlobalConfig(configJson);
+        return from(configJson);
       }
 
       // Generate config file if it doesn't exist
@@ -60,17 +59,47 @@ public class GlobalConfig {
       try (OutputStream outputStream = Files.newOutputStream(tempConfigFile)) {
         JsonTemplateMapper.writeTo(configJson, outputStream);
         Files.move(tempConfigFile, configFile);
-        return new GlobalConfig(configJson);
+        return from(configJson);
 
       } catch (FileAlreadyExistsException ex) {
         // Perhaps created concurrently. Read again.
         return readConfig(configDir);
       }
 
+    } catch (InvalidGlobalConfigException ex) {
+      throw new InvalidGlobalConfigException(
+          ex.getMessage()
+              + "; see https://github.com/GoogleContainerTools/jib/tree/master/jib-maven-plugin#global-jib-configuration "
+              + "to fix or you may need to fix or delete"
+              + configFile);
+
     } catch (IOException ex) {
       throw new IOException(
-          "Failed to read global Jib config; you may need to fix or delete " + configFile, ex);
+          "Failed to open or parse global Jib config file; see "
+              + "https://github.com/GoogleContainerTools/jib/tree/master/jib-maven-plugin#global-jib-configuration "
+              + "to fix or you may need to fix or delete "
+              + configFile,
+          ex);
     }
+  }
+
+  @VisibleForTesting
+  static GlobalConfig from(GlobalConfigTemplate configJson) throws InvalidGlobalConfigException {
+    ImmutableMap.Builder<String, ImmutableList<String>> registryMirrors = ImmutableMap.builder();
+    for (RegistryMirrorsTemplate mirrorConfig : configJson.getRegistryMirrors()) {
+      // validation
+      if (Strings.isNullOrEmpty(mirrorConfig.getRegistry())) {
+        throw new InvalidGlobalConfigException("'registry' property is null or empty");
+      }
+      if (mirrorConfig.getMirrors().isEmpty()) {
+        throw new InvalidGlobalConfigException("'mirrors' property is empty");
+      }
+
+      registryMirrors.put(
+          mirrorConfig.getRegistry(), ImmutableList.copyOf(mirrorConfig.getMirrors()));
+    }
+
+    return new GlobalConfig(configJson.isDisableUpdateCheck(), registryMirrors.build());
   }
 
   /**
@@ -88,22 +117,20 @@ public class GlobalConfig {
     return XdgDirectories.getConfigHome();
   }
 
-  private final GlobalConfigTemplate jsonConfig;
+  private final boolean disableUpdateCheck;
+  private final ImmutableMap<String, ImmutableList<String>> registryMirrors;
 
-  private GlobalConfig(GlobalConfigTemplate jsonConfig) {
-    this.jsonConfig = jsonConfig;
+  private GlobalConfig(
+      boolean disableUpdateCheck, ImmutableMap<String, ImmutableList<String>> registryMirrors) {
+    this.disableUpdateCheck = disableUpdateCheck;
+    this.registryMirrors = registryMirrors;
   }
 
   public boolean isDisableUpdateCheck() {
-    return Boolean.getBoolean(PropertyNames.DISABLE_UPDATE_CHECKS)
-        || jsonConfig.isDisableUpdateCheck();
+    return Boolean.getBoolean(PropertyNames.DISABLE_UPDATE_CHECKS) || disableUpdateCheck;
   }
 
-  public Map<String, List<String>> getRegistryMirrors() {
-    Map<String, List<String>> map = new HashMap<>();
-    for (RegistryMirrorsTemplate registryMirrors : jsonConfig.getRegistryMirrors()) {
-      map.put(registryMirrors.getRegistry(), registryMirrors.getMirrors());
-    }
-    return map;
+  public ImmutableMap<String, ImmutableList<String>> getRegistryMirrors() {
+    return registryMirrors;
   }
 }

@@ -33,6 +33,7 @@ import com.google.cloud.tools.jib.plugins.common.InvalidWorkingDirectoryExceptio
 import com.google.cloud.tools.jib.plugins.common.MainClassInferenceException;
 import com.google.cloud.tools.jib.plugins.common.PluginConfigurationProcessor;
 import com.google.cloud.tools.jib.plugins.common.globalconfig.GlobalConfig;
+import com.google.cloud.tools.jib.plugins.common.globalconfig.InvalidGlobalConfigException;
 import com.google.cloud.tools.jib.plugins.extension.JibPluginExtensionException;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
@@ -153,7 +154,10 @@ public class BuildDockerMojo extends JibPluginConfiguration {
       throw new MojoExecutionException(
           HelpfulSuggestions.forInvalidImageReference(ex.getInvalidReference()), ex);
 
-    } catch (IOException | CacheDirectoryCreationException | MainClassInferenceException ex) {
+    } catch (IOException
+        | CacheDirectoryCreationException
+        | MainClassInferenceException
+        | InvalidGlobalConfigException ex) {
       throw new MojoExecutionException(ex.getMessage(), ex);
 
     } catch (BuildStepsExecutionException ex) {

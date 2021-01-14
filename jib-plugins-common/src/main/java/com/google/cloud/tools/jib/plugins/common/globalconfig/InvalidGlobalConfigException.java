@@ -16,25 +16,10 @@
 
 package com.google.cloud.tools.jib.plugins.common.globalconfig;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.google.cloud.tools.jib.json.JsonTemplate;
-import java.util.Collections;
-import java.util.List;
-import javax.annotation.Nullable;
+/** Exception when the global Jib configuration file cannot be parsed or has invalid values. */
+public class InvalidGlobalConfigException extends Exception {
 
-/** JSON template for registry mirror config. */
-@JsonIgnoreProperties(ignoreUnknown = true)
-public class RegistryMirrorsTemplate implements JsonTemplate {
-
-  @Nullable private String registry;
-  private List<String> mirrors = Collections.emptyList();
-
-  @Nullable
-  String getRegistry() {
-    return registry;
-  }
-
-  List<String> getMirrors() {
-    return mirrors;
+  public InvalidGlobalConfigException(String message) {
+    super(message);
   }
 }

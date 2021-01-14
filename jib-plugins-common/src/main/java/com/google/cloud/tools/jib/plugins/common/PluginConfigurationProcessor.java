@@ -54,6 +54,7 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeFormatterBuilder;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -274,7 +275,7 @@ public class PluginConfigurationProcessor {
     Containerizer containerizer =
         Containerizer.to(targetImage)
             .setAlwaysCacheBaseImage(alwaysCacheBaseImage)
-            .setRegistryMirrors(globalConfig.getRegistryMirrors());
+            .setRegistryMirrors(new HashMap<>(globalConfig.getRegistryMirrors()));
 
     JibContainerBuilder jibContainerBuilder =
         processCommonConfiguration(

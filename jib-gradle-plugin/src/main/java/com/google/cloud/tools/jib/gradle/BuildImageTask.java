@@ -32,6 +32,7 @@ import com.google.cloud.tools.jib.plugins.common.InvalidWorkingDirectoryExceptio
 import com.google.cloud.tools.jib.plugins.common.MainClassInferenceException;
 import com.google.cloud.tools.jib.plugins.common.PluginConfigurationProcessor;
 import com.google.cloud.tools.jib.plugins.common.globalconfig.GlobalConfig;
+import com.google.cloud.tools.jib.plugins.common.globalconfig.InvalidGlobalConfigException;
 import com.google.cloud.tools.jib.plugins.extension.JibPluginExtensionException;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
@@ -44,6 +45,7 @@ import org.gradle.api.GradleException;
 import org.gradle.api.tasks.Nested;
 import org.gradle.api.tasks.TaskAction;
 import org.gradle.api.tasks.options.Option;
+import org.gradle.internal.impldep.com.google.common.util.concurrent.Futures;
 
 /** Builds a container image to registry. */
 public class BuildImageTask extends DefaultTask implements JibTask {
@@ -81,11 +83,12 @@ public class BuildImageTask extends DefaultTask implements JibTask {
    * @throws BuildStepsExecutionException if an error occurs while executing build steps
    * @throws CacheDirectoryCreationException if a new cache directory could not be created
    * @throws MainClassInferenceException if a main class could not be found
+   * @throws InvalidGlobalConfigException if the global config file is invalid
    */
   @TaskAction
   public void buildImage()
       throws IOException, BuildStepsExecutionException, CacheDirectoryCreationException,
-          MainClassInferenceException {
+          MainClassInferenceException, InvalidGlobalConfigException {
     // Asserts required @Input parameters are not null.
     Preconditions.checkNotNull(jibExtension);
     TaskCommon.disableHttpLogging();
@@ -93,9 +96,11 @@ public class BuildImageTask extends DefaultTask implements JibTask {
 
     GradleProjectProperties projectProperties =
         GradleProjectProperties.getForProject(getProject(), getLogger(), tempDirectoryProvider);
-    Future<Optional<String>> updateCheckFuture =
-        TaskCommon.newUpdateChecker(projectProperties, GlobalConfig.readConfig(), getLogger());
+    Future<Optional<String>> updateCheckFuture = Futures.immediateFuture(Optional.empty());
     try {
+      GlobalConfig globalConfig = GlobalConfig.readConfig();
+      updateCheckFuture = TaskCommon.newUpdateChecker(projectProperties, globalConfig, getLogger());
+
       if (Strings.isNullOrEmpty(jibExtension.getTo().getImage())) {
         throw new GradleException(
             HelpfulSuggestions.forToNotConfigured(
@@ -109,6 +114,7 @@ public class BuildImageTask extends DefaultTask implements JibTask {
               new GradleRawConfiguration(jibExtension),
               ignored -> Optional.empty(),
               projectProperties,
+              globalConfig,
               new GradleHelpfulSuggestions(HELPFUL_SUGGESTIONS_PREFIX))
           .runBuild();
 
