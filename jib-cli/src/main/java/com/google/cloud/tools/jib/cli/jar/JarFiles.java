@@ -76,6 +76,7 @@ public class JarFiles {
     containerBuilder.setEnvironment(jarOptions.getEnvironment());
     containerBuilder.setLabels(jarOptions.getLabels());
     jarOptions.getUser().ifPresent(containerBuilder::setUser);
+    jarOptions.getFormat().ifPresent(containerBuilder::setFormat);
 
     return containerBuilder;
   }

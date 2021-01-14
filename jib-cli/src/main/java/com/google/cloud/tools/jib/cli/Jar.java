@@ -21,6 +21,7 @@ import com.google.cloud.tools.jib.api.JibContainerBuilder;
 import com.google.cloud.tools.jib.api.LogEvent;
 import com.google.cloud.tools.jib.api.Ports;
 import com.google.cloud.tools.jib.api.buildplan.AbsoluteUnixPath;
+import com.google.cloud.tools.jib.api.buildplan.ImageFormat;
 import com.google.cloud.tools.jib.api.buildplan.Port;
 import com.google.cloud.tools.jib.cli.jar.JarFiles;
 import com.google.cloud.tools.jib.cli.jar.JarProcessor;
@@ -126,6 +127,15 @@ public class Jar implements Callable<Integer> {
   @SuppressWarnings("NullAway.Init") // initialized by picocli
   private String user;
 
+  @CommandLine.Option(
+      names = {"--image-format"},
+      defaultValue = "Docker",
+      paramLabel = "<image-format>",
+      description =
+          "Format of container, candidates: ${COMPLETION-CANDIDATES}, default: ${DEFAULT-VALUE}")
+  @SuppressWarnings("NullAway.Init") // initialized by picocli
+  private ImageFormat format;
+
   @Override
   public Integer call() {
     try {
@@ -226,5 +236,9 @@ public class Jar implements Callable<Integer> {
 
   public Optional<String> getUser() {
     return Optional.ofNullable(user);
+  }
+
+  public Optional<ImageFormat> getFormat() {
+    return Optional.ofNullable(format);
   }
 }

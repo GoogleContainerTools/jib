@@ -23,6 +23,7 @@ import static org.junit.Assert.assertThrows;
 import com.google.cloud.tools.jib.api.Credential;
 import com.google.cloud.tools.jib.api.Ports;
 import com.google.cloud.tools.jib.api.buildplan.AbsoluteUnixPath;
+import com.google.cloud.tools.jib.api.buildplan.ImageFormat;
 import com.google.cloud.tools.jib.cli.logging.Verbosity;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -473,6 +474,33 @@ public class JarTest {
         CommandLine.populateCommand(
             new Jar(), "--target", "test-image-ref", "--user", "customUser", "my-app.jar");
     assertThat(jarCommand.getUser()).hasValue("customUser");
+  }
+
+  @Test
+  public void testParse_imageFormat() {
+    Jar jarCommand =
+        CommandLine.populateCommand(
+            new Jar(), "--target", "test-image-ref", "--image-format", "OCI", "my-app.jar");
+    assertThat(jarCommand.getFormat()).hasValue(ImageFormat.OCI);
+  }
+
+  @Test
+  public void testParse_invalidImageFormat() {
+    CommandLine.ParameterException exception =
+        assertThrows(
+            CommandLine.ParameterException.class,
+            () ->
+                CommandLine.populateCommand(
+                    new Jar(),
+                    "--target",
+                    "test-image-ref",
+                    "--image-format",
+                    "unknown",
+                    "my-app.jar"));
+    assertThat(exception)
+        .hasMessageThat()
+        .isEqualTo(
+            "Invalid value for option '--image-format': expected one of [Docker, OCI] (case-sensitive) but was 'unknown'");
   }
 
   @Test

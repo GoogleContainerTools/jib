@@ -294,6 +294,7 @@ public class JarFilesTest {
     Mockito.when(mockJarCommand.getEnvironment()).thenReturn(ImmutableMap.of("key1", "value1"));
     Mockito.when(mockJarCommand.getLabels()).thenReturn(ImmutableMap.of("label", "mylabel"));
     Mockito.when(mockJarCommand.getUser()).thenReturn(Optional.of("customUser"));
+    Mockito.when(mockJarCommand.getFormat()).thenReturn(Optional.of(ImageFormat.OCI));
 
     JibContainerBuilder containerBuilder =
         JarFiles.toJibContainerBuilder(
@@ -303,7 +304,7 @@ public class JarFilesTest {
     assertThat(buildPlan.getBaseImage()).isEqualTo("base-image");
     assertThat(buildPlan.getPlatforms()).isEqualTo(ImmutableSet.of(new Platform("amd64", "linux")));
     assertThat(buildPlan.getCreationTime()).isEqualTo(Instant.EPOCH);
-    assertThat(buildPlan.getFormat()).isEqualTo(ImageFormat.Docker);
+    assertThat(buildPlan.getFormat()).isEqualTo(ImageFormat.OCI);
     assertThat(buildPlan.getEnvironment()).isEqualTo(ImmutableMap.of("key1", "value1"));
     assertThat(buildPlan.getLabels()).isEqualTo(ImmutableMap.of("label", "mylabel"));
     assertThat(buildPlan.getVolumes())
