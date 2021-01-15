@@ -40,6 +40,7 @@ import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.configuration.ConsoleOutput;
 import org.gradle.api.model.ObjectFactory;
 import org.hamcrest.CoreMatchers;
+import org.hamcrest.MatcherAssert;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -321,7 +322,7 @@ public class GradleProjectPropertiesExtensionTest {
       Assert.fail();
     } catch (JibPluginExtensionException ex) {
       Assert.assertEquals("invalid base image reference:  in*val+id", ex.getMessage());
-      Assert.assertThat(
+      MatcherAssert.assertThat(
           ex.getCause(), CoreMatchers.instanceOf(InvalidImageReferenceException.class));
     }
   }

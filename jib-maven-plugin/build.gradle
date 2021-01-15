@@ -12,30 +12,31 @@ dependencies {
   sourceProject project(':jib-plugins-common')
   ensureNoProjectDependencies()
 
-  implementation "com.google.cloud.tools:jib-maven-plugin-extension-api:${dependencyVersions.MAVEN_EXTENSION}"
+  implementation dependencyStrings.MAVEN_EXTENSION
 
-  implementation "org.apache.maven:maven-plugin-api:${dependencyVersions.MAVEN_API}"
-  implementation "org.apache.maven:maven-core:${dependencyVersions.MAVEN_API}"
+  implementation dependencyStrings.MAVEN_API
+  implementation dependencyStrings.MAVEN_CORE
 
   // compileOnly + testImplementation equivalent to "provided"
-  compileOnly 'org.apache.maven.plugin-tools:maven-plugin-annotations:3.5'
+  compileOnly dependencyStrings.MAVEN_PLUGIN_ANNOTATIONS
   // needed to suppress "unknown enum constant" warnings
-  testImplementation 'org.apache.maven.plugin-tools:maven-plugin-annotations:3.5'
+  testImplementation dependencyStrings.MAVEN_PLUGIN_ANNOTATIONS
 
   // maven-plugin-testing-harness pulls in conflicting implementations of DefaultPlexusContainer
   // (sisu (correct) vs default-plexus-container (wrong)) so ensure this is first in the test classpath
-  testImplementation 'org.eclipse.sisu:org.eclipse.sisu.plexus:0.3.3'
-  testImplementation 'org.apache.maven.plugin-testing:maven-plugin-testing-harness:3.3.0'
+  testImplementation dependencyStrings.SISU_PLEXUS
+  testImplementation dependencyStrings.MAVEN_TESTING_HARNESS
 
-  testImplementation "junit:junit:${dependencyVersions.JUNIT}"
-  testImplementation "org.mockito:mockito-core:${dependencyVersions.MOCKITO_CORE}"
-  testImplementation "org.slf4j:slf4j-api:${dependencyVersions.SLF4J_API}"
-  testImplementation "com.github.stefanbirkner:system-rules:${dependencyVersions.SYSTEM_RULES}"
+  testImplementation dependencyStrings.JUNIT
+  testImplementation dependencyStrings.MOCKITO_CORE
+  testImplementation dependencyStrings.SLF4J_API
+  testImplementation dependencyStrings.SYSTEM_RULES
 
-  testImplementation 'org.apache.maven.shared:maven-verifier:1.6'
-  testImplementation "org.apache.maven:maven-compat:${dependencyVersions.MAVEN_API}"
-  testImplementation 'org.slf4j:slf4j-api:1.7.30'
-  testImplementation 'org.slf4j:slf4j-simple:1.7.30'
+  testImplementation dependencyStrings.MAVEN_VERIFIER
+  testImplementation dependencyStrings.MAVEN_COMPAT
+  testImplementation dependencyStrings.SLF4J_SIMPLE
+
+  integrationTestImplementation dependencyStrings.JBCRYPT
 
   testImplementation project(path:':jib-plugins-common', configuration:'tests')
   integrationTestImplementation project(path:':jib-core', configuration:'integrationTests')
@@ -66,27 +67,19 @@ release {
   ignoredSnapshotDependencies = [
     'com.google.cloud.tools:jib-core',
     'com.google.cloud.tools:jib-plugins-common',
-    // TODO: remove when depending on published artifacts.
-    'com.google.cloud.tools:jib-build-plan',
-    'com.google.cloud.tools:jib-plugins-extension-common',
-    'com.google.cloud.tools:jib-maven-plugin-extension-api',
   ]
   git {
-    requireBranch = /^maven_release_v\d+.*$/  //regex
+    requireBranch = /^maven-release-v\d+.*$/  //regex
   }
 }
 /* RELEASE */
 
 /* ECLIPSE */
+eclipse.classpath.plusConfigurations += [configurations.integrationTestImplementation]
 eclipse.classpath.file.whenMerged {
   entries.each {
     if (it.path == 'src/test/resources') {
       it.excludes += 'maven/projects/'
-    }
-    // TODO: remove after upgrading to Gradle 5.6. (https://github.com/eclipse/buildship/issues/689)
-    if (it.path in ['src/test/java', 'src/test/resources',
-        'src/integration-test/java', 'src/integration-test/resources']) {
-      it.entryAttributes['test'] = 'true'
     }
   }
 }

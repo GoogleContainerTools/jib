@@ -32,6 +32,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
 import java.util.Collections;
 import org.hamcrest.CoreMatchers;
+import org.hamcrest.MatcherAssert;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -247,7 +248,7 @@ public class RegistryAuthenticatorTest {
       } catch (RegistryAuthenticationFailedException ex) {
         // Doesn't matter if auth fails. We only examine what we sent.
       }
-      Assert.assertThat(
+      MatcherAssert.assertThat(
           server.getInputRead(), CoreMatchers.containsString("User-Agent: Competent-Agent"));
     }
   }
@@ -263,7 +264,7 @@ public class RegistryAuthenticatorTest {
                 httpClient)
             .get();
     authenticator.authenticatePush(null);
-    Assert.assertThat(
+    MatcherAssert.assertThat(
         urlCaptor.getValue().toString(),
         CoreMatchers.endsWith(
             "scope=repository:someimage:pull,push&scope=repository:anotherimage:pull"));
@@ -280,7 +281,7 @@ public class RegistryAuthenticatorTest {
                 httpClient)
             .get();
     authenticator.authenticatePush(null);
-    Assert.assertThat(
+    MatcherAssert.assertThat(
         urlCaptor.getValue().toString(),
         CoreMatchers.endsWith("service=someserver&scope=repository:someimage:pull,push"));
   }

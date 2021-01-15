@@ -67,18 +67,13 @@ class SettingsFixture {
       injectedDispatcher.setConfigurationFile(settingsSecurityFile.toAbsolutePath().toString());
       setField(DefaultSecDispatcher.class, injectedDispatcher, "_cipher", injectCypher);
 
-      DefaultSettingsDecrypter settingsDecrypter = new DefaultSettingsDecrypter();
-      setField(
-          DefaultSettingsDecrypter.class,
-          settingsDecrypter,
-          "securityDispatcher",
-          injectedDispatcher);
-      return settingsDecrypter;
+      return new DefaultSettingsDecrypter(injectedDispatcher);
     } catch (Exception ex) {
       throw new IllegalStateException("Tests need to be rewritten: " + ex.getMessage(), ex);
     }
   }
 
+  /** Inject fields into object that would have otherwise been injected by the build system. */
   private static <T> void setField(
       Class<T> clazz, T instance, String fieldName, Object injectedField)
       throws NoSuchFieldException, IllegalAccessException {

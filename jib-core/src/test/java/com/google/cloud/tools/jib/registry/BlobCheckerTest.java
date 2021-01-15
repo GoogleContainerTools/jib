@@ -29,6 +29,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.security.DigestException;
 import org.hamcrest.CoreMatchers;
+import org.hamcrest.MatcherAssert;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -76,7 +77,7 @@ public class BlobCheckerTest {
       Assert.fail("Should throw exception if Content-Length header is not present");
 
     } catch (RegistryErrorException ex) {
-      Assert.assertThat(
+      MatcherAssert.assertThat(
           ex.getMessage(), CoreMatchers.containsString("Did not receive Content-Length header"));
     }
   }

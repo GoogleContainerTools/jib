@@ -19,6 +19,7 @@ package com.google.cloud.tools.jib.api;
 import com.google.cloud.tools.jib.ProjectInfo;
 import com.google.cloud.tools.jib.api.buildplan.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.api.buildplan.FileEntriesLayer;
+import com.google.cloud.tools.jib.api.buildplan.ModificationTimeProvider;
 import com.google.cloud.tools.jib.api.buildplan.RelativeUnixPath;
 import com.google.cloud.tools.jib.filesystem.DirectoryWalker;
 import com.google.common.annotations.VisibleForTesting;
@@ -37,7 +38,6 @@ import java.util.EnumMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.function.BiFunction;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
@@ -203,7 +203,7 @@ public class JavaContainerBuilder {
   private RelativeUnixPath dependenciesDestination = RelativeUnixPath.get("libs");
   private RelativeUnixPath othersDestination = RelativeUnixPath.get("classpath");
   @Nullable private String mainClass;
-  private BiFunction<Path, AbsoluteUnixPath, Instant> modificationTimeProvider =
+  private ModificationTimeProvider modificationTimeProvider =
       FileEntriesLayer.DEFAULT_MODIFICATION_TIME_PROVIDER;
 
   private JavaContainerBuilder(JibContainerBuilder jibContainerBuilder) {
@@ -522,7 +522,7 @@ public class JavaContainerBuilder {
    * @return this
    */
   public JavaContainerBuilder setModificationTimeProvider(
-      BiFunction<Path, AbsoluteUnixPath, Instant> modificationTimeProvider) {
+      ModificationTimeProvider modificationTimeProvider) {
     this.modificationTimeProvider = modificationTimeProvider;
     return this;
   }
@@ -686,7 +686,7 @@ public class JavaContainerBuilder {
     if (!layerBuilders.containsKey(layerType)) {
       layerBuilders.put(layerType, FileEntriesLayer.builder());
     }
-    Instant modificationTime = modificationTimeProvider.apply(sourceFile, pathInContainer);
+    Instant modificationTime = modificationTimeProvider.get(sourceFile, pathInContainer);
     layerBuilders.get(layerType).addEntry(sourceFile, pathInContainer, modificationTime);
   }
 
@@ -709,7 +709,7 @@ public class JavaContainerBuilder {
             path -> {
               AbsoluteUnixPath pathOnContainer =
                   basePathInContainer.resolve(sourceRoot.relativize(path));
-              Instant modificationTime = modificationTimeProvider.apply(path, pathOnContainer);
+              Instant modificationTime = modificationTimeProvider.get(path, pathOnContainer);
               builder.addEntry(path, pathOnContainer, modificationTime);
             });
   }

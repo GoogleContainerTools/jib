@@ -25,7 +25,7 @@ import com.google.cloud.tools.jib.hash.Digests;
 import com.google.cloud.tools.jib.http.BlobHttpContent;
 import com.google.cloud.tools.jib.http.Response;
 import com.google.cloud.tools.jib.http.ResponseException;
-import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
+import com.google.cloud.tools.jib.image.json.ManifestTemplate;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -64,13 +64,13 @@ class ManifestPusher implements RegistryEndpointProvider<DescriptorDigest> {
   }
 
   private final RegistryEndpointRequestProperties registryEndpointRequestProperties;
-  private final BuildableManifestTemplate manifestTemplate;
+  private final ManifestTemplate manifestTemplate;
   private final String imageTag;
   private final EventHandlers eventHandlers;
 
   ManifestPusher(
       RegistryEndpointRequestProperties registryEndpointRequestProperties,
-      BuildableManifestTemplate manifestTemplate,
+      ManifestTemplate manifestTemplate,
       String imageTag,
       EventHandlers eventHandlers) {
     this.registryEndpointRequestProperties = registryEndpointRequestProperties;

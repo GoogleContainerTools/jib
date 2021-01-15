@@ -23,6 +23,7 @@ import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collections;
 import org.hamcrest.CoreMatchers;
+import org.hamcrest.MatcherAssert;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -34,8 +35,7 @@ public class ContainerBuildPlanTest {
     ContainerBuildPlan plan = ContainerBuildPlan.builder().build();
 
     Assert.assertEquals("scratch", plan.getBaseImage());
-    Assert.assertEquals("amd64", plan.getArchitectureHint());
-    Assert.assertEquals("linux", plan.getOsHint());
+    Assert.assertEquals(ImmutableSet.of(new Platform("amd64", "linux")), plan.getPlatforms());
     Assert.assertEquals(ImageFormat.Docker, plan.getFormat());
     Assert.assertEquals(Instant.EPOCH, plan.getCreationTime());
     Assert.assertEquals(Collections.emptyMap(), plan.getEnvironment());
@@ -54,8 +54,8 @@ public class ContainerBuildPlanTest {
     ContainerBuildPlan plan = createSamplePlan();
 
     Assert.assertEquals("base/image", plan.getBaseImage());
-    Assert.assertEquals("arch", plan.getArchitectureHint());
-    Assert.assertEquals("os", plan.getOsHint());
+    Assert.assertEquals(
+        ImmutableSet.of(new Platform("testOs", "testArchitecture")), plan.getPlatforms());
     Assert.assertEquals(ImageFormat.OCI, plan.getFormat());
     Assert.assertEquals(Instant.ofEpochMilli(30), plan.getCreationTime());
     Assert.assertEquals(ImmutableMap.of("env", "var"), plan.getEnvironment());
@@ -70,7 +70,8 @@ public class ContainerBuildPlanTest {
     Assert.assertEquals(Arrays.asList("bar", "cmd"), plan.getCmd());
 
     Assert.assertEquals(1, plan.getLayers().size());
-    Assert.assertThat(plan.getLayers().get(0), CoreMatchers.instanceOf(FileEntriesLayer.class));
+    MatcherAssert.assertThat(
+        plan.getLayers().get(0), CoreMatchers.instanceOf(FileEntriesLayer.class));
     Assert.assertEquals(
         Arrays.asList(
             new FileEntry(
@@ -86,8 +87,8 @@ public class ContainerBuildPlanTest {
     ContainerBuildPlan plan = createSamplePlan().toBuilder().build();
 
     Assert.assertEquals("base/image", plan.getBaseImage());
-    Assert.assertEquals("arch", plan.getArchitectureHint());
-    Assert.assertEquals("os", plan.getOsHint());
+    Assert.assertEquals(
+        ImmutableSet.of(new Platform("testOs", "testArchitecture")), plan.getPlatforms());
     Assert.assertEquals(ImageFormat.OCI, plan.getFormat());
     Assert.assertEquals(Instant.ofEpochMilli(30), plan.getCreationTime());
     Assert.assertEquals(ImmutableMap.of("env", "var"), plan.getEnvironment());
@@ -102,7 +103,8 @@ public class ContainerBuildPlanTest {
     Assert.assertEquals(Arrays.asList("bar", "cmd"), plan.getCmd());
 
     Assert.assertEquals(1, plan.getLayers().size());
-    Assert.assertThat(plan.getLayers().get(0), CoreMatchers.instanceOf(FileEntriesLayer.class));
+    MatcherAssert.assertThat(
+        plan.getLayers().get(0), CoreMatchers.instanceOf(FileEntriesLayer.class));
     Assert.assertEquals(
         Arrays.asList(
             new FileEntry(
@@ -113,15 +115,37 @@ public class ContainerBuildPlanTest {
         ((FileEntriesLayer) plan.getLayers().get(0)).getEntries());
   }
 
+  @Test
+  public void testAddPlatform_duplicatePlatforms() {
+    ContainerBuildPlan plan =
+        ContainerBuildPlan.builder()
+            .addPlatform("testOS", "testArchitecture")
+            .addPlatform("testOS", "testArchitecture")
+            .build();
+    Assert.assertEquals(
+        ImmutableSet.of(new Platform("amd64", "linux"), new Platform("testOS", "testArchitecture")),
+        plan.getPlatforms());
+  }
+
+  @Test
+  public void testSetPlatforms_emptyPlatformsSet() {
+    try {
+      ContainerBuildPlan.builder().setPlatforms(Collections.emptySet());
+      Assert.fail();
+    } catch (IllegalArgumentException ex) {
+      Assert.assertEquals("platforms set cannot be empty", ex.getMessage());
+    }
+  }
+
   private ContainerBuildPlan createSamplePlan() {
     FileEntriesLayer layer =
         FileEntriesLayer.builder()
             .addEntry(Paths.get("/src/file/foo"), AbsoluteUnixPath.get("/path/in/container"))
             .build();
+
     return ContainerBuildPlan.builder()
         .setBaseImage("base/image")
-        .setArchitectureHint("arch")
-        .setOsHint("os")
+        .setPlatforms(ImmutableSet.of(new Platform("testOs", "testArchitecture")))
         .setFormat(ImageFormat.OCI)
         .setCreationTime(Instant.ofEpochMilli(30))
         .setEnvironment(ImmutableMap.of("env", "var"))

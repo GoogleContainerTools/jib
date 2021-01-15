@@ -19,6 +19,9 @@ package com.google.cloud.tools.jib.gradle;
 import com.google.cloud.tools.jib.plugins.common.AuthProperty;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
+import org.gradle.api.model.ObjectFactory;
+import org.gradle.api.provider.Property;
+import org.gradle.api.provider.Provider;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.Internal;
 import org.gradle.api.tasks.Optional;
@@ -29,12 +32,14 @@ import org.gradle.api.tasks.Optional;
  */
 public class AuthParameters implements AuthProperty {
 
-  @Nullable private String username;
-  @Nullable private String password;
+  private Property<String> username;
+  private Property<String> password;
   private final String source;
 
   @Inject
-  public AuthParameters(String source) {
+  public AuthParameters(ObjectFactory objectFactory, String source) {
+    username = objectFactory.property(String.class);
+    password = objectFactory.property(String.class);
     this.source = source;
   }
 
@@ -43,11 +48,15 @@ public class AuthParameters implements AuthProperty {
   @Override
   @Nullable
   public String getUsername() {
-    return username;
+    return username.getOrNull();
   }
 
   public void setUsername(String username) {
-    this.username = username;
+    this.username.set(username);
+  }
+
+  public void setUsername(Provider<String> username) {
+    this.username.set(username);
   }
 
   @Input
@@ -55,11 +64,15 @@ public class AuthParameters implements AuthProperty {
   @Override
   @Nullable
   public String getPassword() {
-    return password;
+    return password.getOrNull();
   }
 
   public void setPassword(String password) {
-    this.password = password;
+    this.password.set(password);
+  }
+
+  public void setPassword(Provider<String> password) {
+    this.password.set(password);
   }
 
   @Internal

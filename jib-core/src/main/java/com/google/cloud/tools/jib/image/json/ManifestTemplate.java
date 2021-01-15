@@ -19,9 +19,11 @@ package com.google.cloud.tools.jib.image.json;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.google.cloud.tools.jib.json.JsonTemplate;
 
-/** Parent class for image manifest JSON templates. */
+/** Parent class for image manifest and manifest list JSON templates. */
 @JsonIgnoreProperties(ignoreUnknown = true)
 public interface ManifestTemplate extends JsonTemplate {
 
   int getSchemaVersion();
+
+  String getManifestMediaType();
 }

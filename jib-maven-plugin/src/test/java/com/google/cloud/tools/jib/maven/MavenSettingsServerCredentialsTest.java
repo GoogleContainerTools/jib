@@ -22,6 +22,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Optional;
 import org.hamcrest.CoreMatchers;
+import org.hamcrest.MatcherAssert;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -55,7 +56,7 @@ public class MavenSettingsServerCredentialsTest {
       mavenSettingsServerCredentials.inferAuth("badServer");
       Assert.fail();
     } catch (InferredAuthException ex) {
-      Assert.assertThat(
+      MatcherAssert.assertThat(
           ex.getMessage(),
           CoreMatchers.startsWith("Unable to decrypt server(badServer) info from settings.xml:"));
     }

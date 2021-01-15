@@ -5,25 +5,28 @@ plugins {
 }
 
 dependencies {
-  api "com.google.cloud.tools:jib-build-plan:${dependencyVersions.BUILD_PLAN}"
-  implementation "com.google.http-client:google-http-client:${dependencyVersions.GOOGLE_HTTP_CLIENT}"
-  implementation "com.google.http-client:google-http-client-apache-v2:${dependencyVersions.GOOGLE_HTTP_CLIENT_APACHE_V2}"
-  implementation "com.google.auth:google-auth-library-oauth2-http:${dependencyVersions.GOOGLE_AUTH_LIBRARY_OAUTH2_HTTP}"
+  api dependencyStrings.BUILD_PLAN
+  implementation dependencyStrings.GOOGLE_HTTP_CLIENT
+  implementation dependencyStrings.GOOGLE_HTTP_CLIENT_APACHE_V2
+  implementation dependencyStrings.GOOGLE_AUTH_LIBRARY_OAUTH2_HTTP
 
-  implementation "org.apache.commons:commons-compress:${dependencyVersions.COMMONS_COMPRESS}"
-  implementation "com.google.guava:guava:${dependencyVersions.GUAVA}"
-  implementation "com.fasterxml.jackson.core:jackson-databind:${dependencyVersions.JACKSON_DATABIND}"
-  implementation "org.ow2.asm:asm:${dependencyVersions.ASM}"
+  implementation dependencyStrings.COMMONS_COMPRESS
+  implementation dependencyStrings.GUAVA
+  implementation dependencyStrings.JACKSON_DATABIND
+  implementation dependencyStrings.JACKSON_DATATYPE_JSR310
+  implementation dependencyStrings.ASM
 
-  testImplementation "junit:junit:${dependencyVersions.JUNIT}"
-  testImplementation "org.mockito:mockito-core:${dependencyVersions.MOCKITO_CORE}"
-  testImplementation "org.slf4j:slf4j-api:${dependencyVersions.SLF4J_API}"
-  testImplementation "com.github.stefanbirkner:system-rules:${dependencyVersions.SYSTEM_RULES}"
+  testImplementation dependencyStrings.JUNIT
+  testImplementation dependencyStrings.MOCKITO_CORE
+  testImplementation dependencyStrings.SLF4J_API
+  testImplementation dependencyStrings.SYSTEM_RULES
+
+  integrationTestImplementation dependencyStrings.JBCRYPT
 }
 
 jar {
   manifest {
-    attributes 'Implementation-Version': version
+    attributes 'Implementation-Version': archiveVersion
     attributes 'Automatic-Module-Name': 'com.google.cloud.tools.jib'
 
     // OSGi metadata
@@ -55,19 +58,11 @@ publishing {
 release {
   tagTemplate = 'v$version-core'
   git {
-    requireBranch = /^core_release_v\d+.*$/  //regex
+    requireBranch = /^core-release-v\d+.*$/  //regex
   }
 }
 /* RELEASE */
 
 /* ECLIPSE */
-// TODO: remove after upgrading to Gradle 5.6. (https://github.com/eclipse/buildship/issues/689)
-// Also remove the 'eclipse' plugin.
-eclipse.classpath.file.whenMerged {
-  entries.findAll {
-    it.path in ['src/test/java', 'src/test/resources', 'src/integration-test/java', 'src/integration-test/resources']
-  }.each {
-    it.entryAttributes['test'] = 'true'
-  }
-}
+eclipse.classpath.plusConfigurations += [configurations.integrationTestImplementation]
 /* ECLIPSE */

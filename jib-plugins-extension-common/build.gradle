@@ -1,11 +1,12 @@
 plugins {
   id 'net.researchgate.release'
   id 'maven-publish'
+  id 'eclipse'
 }
 
 jar {
   manifest {
-    attributes 'Implementation-Version': version
+    attributes 'Implementation-Version': archiveVersion
     attributes 'Automatic-Module-Name': 'com.google.cloud.tools.jib.plugins.extension'
 
     // OSGi metadata
@@ -37,7 +38,11 @@ publishing {
 release {
   tagTemplate = 'v$version-extension-common'
   git {
-    requireBranch = /^extension_common_release_v\d+.*$/  //regex
+    requireBranch = /^extension-common-release-v\d+.*$/  //regex
   }
 }
 /* RELEASE */
+
+/* ECLIPSE */
+eclipse.classpath.plusConfigurations += [configurations.integrationTestImplementation]
+/* ECLIPSE */

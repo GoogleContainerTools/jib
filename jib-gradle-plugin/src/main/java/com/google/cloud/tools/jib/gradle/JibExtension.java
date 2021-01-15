@@ -37,6 +37,12 @@ import org.gradle.api.tasks.Optional;
  *   from {
  *     image = 'gcr.io/my-gcp-project/my-base-image'
  *     credHelper = 'gcr'
+ *     platforms {
+ *       platform {
+ *         os = 'linux'
+ *         architecture = 'amd64'
+ *       }
+ *     }
  *   }
  *   to {
  *     image = 'gcr.io/gcp-project/my-app:built-with-jib'
@@ -46,7 +52,7 @@ import org.gradle.api.tasks.Optional;
  *     jvmFlags = ['-Xms512m', '-Xdebug']
  *     mainClass = 'com.mycompany.myproject.Main'
  *     args = ['arg1', 'arg2']
- *     exposedPorts = ['1000', '2000-2010', '3000']
+ *     ports = ['1000', '2000-2010', '3000']
  *     format = OCI
  *     appRoot = '/app'
  *   }
@@ -109,7 +115,7 @@ public class JibExtension {
 
     pluginExtensions = objectFactory.listProperty(ExtensionParameters.class).empty();
     extensionParametersSpec =
-        objectFactory.newInstance(ExtensionParametersSpec.class, project, pluginExtensions);
+        objectFactory.newInstance(ExtensionParametersSpec.class, pluginExtensions);
     allowInsecureRegistries = objectFactory.property(Boolean.class);
     containerizingMode = objectFactory.property(String.class);
 

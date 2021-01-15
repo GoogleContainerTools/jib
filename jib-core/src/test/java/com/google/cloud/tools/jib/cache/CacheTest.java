@@ -35,6 +35,7 @@ import java.time.Instant;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 import org.hamcrest.CoreMatchers;
+import org.hamcrest.MatcherAssert;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
@@ -97,7 +98,7 @@ public class CacheTest {
     return new FileEntry(
         source,
         destination,
-        FileEntriesLayer.DEFAULT_FILE_PERMISSIONS_PROVIDER.apply(source, destination),
+        FileEntriesLayer.DEFAULT_FILE_PERMISSIONS_PROVIDER.get(source, destination),
         FileEntriesLayer.DEFAULT_MODIFICATION_TIME);
   }
 
@@ -151,7 +152,8 @@ public class CacheTest {
       Assert.fail();
 
     } catch (CacheDirectoryCreationException ex) {
-      Assert.assertThat(ex.getCause(), CoreMatchers.instanceOf(FileAlreadyExistsException.class));
+      MatcherAssert.assertThat(
+          ex.getCause(), CoreMatchers.instanceOf(FileAlreadyExistsException.class));
     }
   }
 

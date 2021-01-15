@@ -23,6 +23,7 @@ import org.apache.maven.settings.Proxy;
 import org.apache.maven.settings.Settings;
 import org.apache.maven.settings.crypto.SettingsDecrypter;
 import org.hamcrest.CoreMatchers;
+import org.hamcrest.MatcherAssert;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -274,7 +275,7 @@ public class MavenSettingsProxyProviderTest {
           badProxyEncryptedSettings, settingsDecrypter);
       Assert.fail();
     } catch (MojoExecutionException ex) {
-      Assert.assertThat(
+      MatcherAssert.assertThat(
           ex.getMessage(),
           CoreMatchers.startsWith("Unable to decrypt proxy info from settings.xml:"));
     }
@@ -287,7 +288,7 @@ public class MavenSettingsProxyProviderTest {
           mixedProxyEncryptedSettings, emptySettingsDecrypter);
       Assert.fail();
     } catch (MojoExecutionException ex) {
-      Assert.assertThat(
+      MatcherAssert.assertThat(
           ex.getMessage(),
           CoreMatchers.startsWith("Unable to decrypt proxy info from settings.xml:"));
     }

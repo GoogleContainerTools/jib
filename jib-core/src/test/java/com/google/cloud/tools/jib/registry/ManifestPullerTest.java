@@ -20,6 +20,7 @@ import com.google.cloud.tools.jib.api.DescriptorDigest;
 import com.google.cloud.tools.jib.hash.Digests;
 import com.google.cloud.tools.jib.http.Response;
 import com.google.cloud.tools.jib.image.json.ManifestTemplate;
+import com.google.cloud.tools.jib.image.json.OciIndexTemplate;
 import com.google.cloud.tools.jib.image.json.OciManifestTemplate;
 import com.google.cloud.tools.jib.image.json.UnknownManifestFormatException;
 import com.google.cloud.tools.jib.image.json.V21ManifestTemplate;
@@ -39,6 +40,7 @@ import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Collections;
 import org.hamcrest.CoreMatchers;
+import org.hamcrest.MatcherAssert;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -77,7 +79,7 @@ public class ManifestPullerTest {
                 fakeRegistryEndpointRequestProperties, "test-image-tag", V21ManifestTemplate.class)
             .handleResponse(mockResponse);
 
-    Assert.assertThat(
+    MatcherAssert.assertThat(
         manifestAndDigest.getManifest(), CoreMatchers.instanceOf(V21ManifestTemplate.class));
     Assert.assertEquals(expectedDigest, manifestAndDigest.getDigest());
   }
@@ -97,7 +99,7 @@ public class ManifestPullerTest {
                 fakeRegistryEndpointRequestProperties, "test-image-tag", V22ManifestTemplate.class)
             .handleResponse(mockResponse);
 
-    Assert.assertThat(
+    MatcherAssert.assertThat(
         manifestAndDigest.getManifest(), CoreMatchers.instanceOf(V22ManifestTemplate.class));
     Assert.assertEquals(expectedDigest, manifestAndDigest.getDigest());
   }
@@ -136,7 +138,8 @@ public class ManifestPullerTest {
             .handleResponse(mockResponse);
     ManifestTemplate manifestTemplate = manifestAndDigest.getManifest();
 
-    Assert.assertThat(manifestTemplate, CoreMatchers.instanceOf(V22ManifestListTemplate.class));
+    MatcherAssert.assertThat(
+        manifestTemplate, CoreMatchers.instanceOf(V22ManifestListTemplate.class));
     Assert.assertTrue(((V22ManifestListTemplate) manifestTemplate).getManifests().size() > 0);
     Assert.assertEquals(expectedDigest, manifestAndDigest.getDigest());
   }
@@ -160,7 +163,8 @@ public class ManifestPullerTest {
             .handleResponse(mockResponse);
     V22ManifestListTemplate manifestTemplate = manifestAndDigest.getManifest();
 
-    Assert.assertThat(manifestTemplate, CoreMatchers.instanceOf(V22ManifestListTemplate.class));
+    MatcherAssert.assertThat(
+        manifestTemplate, CoreMatchers.instanceOf(V22ManifestListTemplate.class));
     Assert.assertTrue(manifestTemplate.getManifests().size() > 0);
     Assert.assertEquals(expectedDigest, manifestAndDigest.getDigest());
   }
@@ -186,7 +190,7 @@ public class ManifestPullerTest {
       Assert.fail("A non-integer schemaVersion should throw an error");
 
     } catch (UnknownManifestFormatException ex) {
-      Assert.assertEquals("`schemaVersion` field is not an integer", ex.getMessage());
+      Assert.assertEquals("'schemaVersion' field is not an integer", ex.getMessage());
     }
   }
 
@@ -200,6 +204,86 @@ public class ManifestPullerTest {
 
     } catch (UnknownManifestFormatException ex) {
       Assert.assertEquals("Unknown schemaVersion: 0 - only 1 and 2 are supported", ex.getMessage());
+    }
+  }
+
+  @Test
+  public void testHandleResponse_ociIndexWithNoMediaType()
+      throws IOException, UnknownManifestFormatException {
+    String ociManifestJson =
+        "{\n"
+            + "  \"schemaVersion\": 2,\n"
+            + "  \"manifests\": [\n"
+            + "    {\n"
+            + "      \"mediaType\": \"application/vnd.oci.image.manifest.v1+json\",\n"
+            + "      \"size\": 7143,\n"
+            + "      \"digest\": \"sha256:e692418e4cbaf90ca69d05a66403747baa33ee08806650b51fab815ad7fc331f\"\n"
+            + "    }\n"
+            + "  ]\n"
+            + "}";
+    Mockito.when(mockResponse.getBody()).thenReturn(stringToInputStreamUtf8(ociManifestJson));
+
+    ManifestTemplate manifest =
+        new ManifestPuller<>(
+                fakeRegistryEndpointRequestProperties, "test-image-tag", ManifestTemplate.class)
+            .handleResponse(mockResponse)
+            .getManifest();
+
+    MatcherAssert.assertThat(manifest, CoreMatchers.instanceOf(OciIndexTemplate.class));
+    OciIndexTemplate ociIndex = (OciIndexTemplate) manifest;
+
+    Assert.assertEquals("application/vnd.oci.image.index.v1+json", manifest.getManifestMediaType());
+    Assert.assertEquals(1, ociIndex.getManifests().size());
+    Assert.assertEquals(
+        "e692418e4cbaf90ca69d05a66403747baa33ee08806650b51fab815ad7fc331f",
+        ociIndex.getManifests().get(0).getDigest().getHash());
+  }
+
+  @Test
+  public void testHandleResponse_ociManfiestWithNoMediaType()
+      throws IOException, UnknownManifestFormatException {
+    String ociManifestJson =
+        "{\n"
+            + "  \"schemaVersion\": 2,\n"
+            + "  \"config\": {\n"
+            + "    \"mediaType\": \"application/vnd.oci.image.config.v1+json\",\n"
+            + "    \"size\": 7023,\n"
+            + "    \"digest\": \"sha256:b5b2b2c507a0944348e0303114d8d93aaaa081732b86451d9bce1f432a537bc7\"\n"
+            + "  },\n"
+            + "  \"layers\": []\n"
+            + "}";
+    Mockito.when(mockResponse.getBody()).thenReturn(stringToInputStreamUtf8(ociManifestJson));
+
+    ManifestTemplate manifest =
+        new ManifestPuller<>(
+                fakeRegistryEndpointRequestProperties, "test-image-tag", ManifestTemplate.class)
+            .handleResponse(mockResponse)
+            .getManifest();
+
+    MatcherAssert.assertThat(manifest, CoreMatchers.instanceOf(OciManifestTemplate.class));
+    OciManifestTemplate ociManifest = (OciManifestTemplate) manifest;
+
+    Assert.assertEquals(
+        "application/vnd.oci.image.manifest.v1+json", manifest.getManifestMediaType());
+    Assert.assertEquals(
+        "b5b2b2c507a0944348e0303114d8d93aaaa081732b86451d9bce1f432a537bc7",
+        ociManifest.getContainerConfiguration().getDigest().getHash());
+  }
+
+  @Test
+  public void testHandleResponse_invalidOciManfiest() throws IOException {
+    Mockito.when(mockResponse.getBody())
+        .thenReturn(stringToInputStreamUtf8("{\"schemaVersion\": 2}"));
+
+    ManifestPuller<ManifestTemplate> manifestPuller =
+        new ManifestPuller<>(
+            fakeRegistryEndpointRequestProperties, "test-image-tag", ManifestTemplate.class);
+    try {
+      manifestPuller.handleResponse(mockResponse);
+      Assert.fail();
+    } catch (UnknownManifestFormatException ex) {
+      Assert.assertEquals(
+          "'schemaVersion' is 2, but neither 'manifests' nor 'config' exists", ex.getMessage());
     }
   }
 
@@ -233,7 +317,8 @@ public class ManifestPullerTest {
         Arrays.asList(
             OciManifestTemplate.MANIFEST_MEDIA_TYPE,
             V22ManifestTemplate.MANIFEST_MEDIA_TYPE,
-            V21ManifestTemplate.MEDIA_TYPE),
+            V21ManifestTemplate.MEDIA_TYPE,
+            V22ManifestListTemplate.MANIFEST_MEDIA_TYPE),
         testManifestPuller.getAccept());
 
     Assert.assertEquals(

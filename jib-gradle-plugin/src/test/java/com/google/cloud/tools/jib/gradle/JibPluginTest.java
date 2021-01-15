@@ -35,6 +35,7 @@ import org.gradle.testfixtures.ProjectBuilder;
 import org.gradle.testkit.runner.GradleRunner;
 import org.gradle.testkit.runner.UnexpectedBuildFailure;
 import org.hamcrest.CoreMatchers;
+import org.hamcrest.MatcherAssert;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Assume;
@@ -56,6 +57,7 @@ public class JibPluginTest {
   }
 
   @Rule public final TemporaryFolder testProjectRoot = new TemporaryFolder();
+  @Rule public final TestProject testProject = new TestProject("lazy-evaluation");
 
   @After
   public void tearDown() {
@@ -273,12 +275,12 @@ public class JibPluginTest {
       tasks.getByPath(":jar");
       Assert.fail();
     } catch (GradleException ex) {
-      Assert.assertThat(
+      MatcherAssert.assertThat(
           ex.getCause().getMessage(),
           CoreMatchers.startsWith(
               "Both 'bootJar' and 'jar' tasks are enabled, but they write their jar file into the "
                   + "same location at "));
-      Assert.assertThat(
+      MatcherAssert.assertThat(
           ex.getCause().getMessage(),
           CoreMatchers.endsWith(
               "root.jar. Did you forget to set 'archiveClassifier' on either task?"));
@@ -367,6 +369,25 @@ public class JibPluginTest {
     TaskContainer tasks = project.getTasks();
     KNOWN_JIB_TASKS.forEach(
         taskName -> Assert.assertEquals(taskName, "Jib", tasks.getByPath(taskName).getGroup()));
+  }
+
+  @Test
+  public void testLazyEvalForImageAndTags() {
+    // TODO: Pass in `-Djib.console=plain` as argument for build and remove filtering for cyan
+    // coloring regex once [#2764](https://github.com/GoogleContainerTools/jib/issues/2764) is
+    // submitted.
+    try {
+      testProject.build(JibPlugin.BUILD_IMAGE_TASK_NAME);
+      Assert.fail("Expect this to fail");
+    } catch (UnexpectedBuildFailure ex) {
+      String output = ex.getBuildResult().getOutput().trim();
+      String cleanOutput = output.replace("\u001B[36m", "").replace("\u001B[0m", "");
+
+      MatcherAssert.assertThat(
+          cleanOutput,
+          CoreMatchers.containsString(
+              "Containerizing application to updated-image, updated-image:updated-tag, updated-image:tag2"));
+    }
   }
 
   private Project createProject(String... plugins) {

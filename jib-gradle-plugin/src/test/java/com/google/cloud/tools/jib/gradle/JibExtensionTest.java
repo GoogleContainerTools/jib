@@ -25,6 +25,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Properties;
 import org.gradle.api.Project;
 import org.gradle.testfixtures.ProjectBuilder;
@@ -56,17 +58,35 @@ public class JibExtensionTest {
     Assert.assertNull(testJibExtension.getFrom().getImage());
     Assert.assertNull(testJibExtension.getFrom().getCredHelper());
 
+    List<PlatformParameters> defaultPlatforms = testJibExtension.getFrom().getPlatforms().get();
+    Assert.assertEquals(1, defaultPlatforms.size());
+    Assert.assertEquals("amd64", defaultPlatforms.get(0).getArchitecture());
+    Assert.assertEquals("linux", defaultPlatforms.get(0).getOs());
+
     testJibExtension.from(
         from -> {
           from.setImage("some image");
           from.setCredHelper("some cred helper");
           from.auth(auth -> auth.setUsername("some username"));
           from.auth(auth -> auth.setPassword("some password"));
+          from.platforms(
+              platformSpec -> {
+                platformSpec.platform(
+                    platform -> {
+                      platform.setArchitecture("arm");
+                      platform.setOs("windows");
+                    });
+              });
         });
     Assert.assertEquals("some image", testJibExtension.getFrom().getImage());
     Assert.assertEquals("some cred helper", testJibExtension.getFrom().getCredHelper());
     Assert.assertEquals("some username", testJibExtension.getFrom().getAuth().getUsername());
     Assert.assertEquals("some password", testJibExtension.getFrom().getAuth().getPassword());
+
+    List<PlatformParameters> platforms = testJibExtension.getFrom().getPlatforms().get();
+    Assert.assertEquals(1, platforms.size());
+    Assert.assertEquals("arm", platforms.get(0).getArchitecture());
+    Assert.assertEquals("windows", platforms.get(0).getOs());
   }
 
   @Test
@@ -88,11 +108,39 @@ public class JibExtensionTest {
   }
 
   @Test
+  public void testToTags_noTagsPropertySet() {
+    Assert.assertEquals(Collections.emptySet(), testJibExtension.getTo().getTags());
+  }
+
+  @Test
+  public void testToTags_containsNullTag() {
+    TargetImageParameters testToParameters = generateTargetImageParametersWithTags(null, "tag1");
+    try {
+      testToParameters.getTags();
+      Assert.fail();
+    } catch (IllegalArgumentException ex) {
+      Assert.assertEquals("jib.to.tags contains null tag", ex.getMessage());
+    }
+  }
+
+  @Test
+  public void testToTags_containsEmptyTag() {
+    TargetImageParameters testToParameters = generateTargetImageParametersWithTags("", "tag1");
+    try {
+      testToParameters.getTags();
+      Assert.fail();
+    } catch (IllegalArgumentException ex) {
+      Assert.assertEquals("jib.to.tags contains empty tag", ex.getMessage());
+    }
+  }
+
+  @Test
   public void testContainer() {
     Assert.assertEquals(Collections.emptyList(), testJibExtension.getContainer().getJvmFlags());
     Assert.assertEquals(Collections.emptyMap(), testJibExtension.getContainer().getEnvironment());
     Assert.assertEquals(
         Collections.emptyList(), testJibExtension.getContainer().getExtraClasspath());
+    Assert.assertFalse(testJibExtension.getContainer().getExpandClasspathDependencies());
     Assert.assertNull(testJibExtension.getContainer().getMainClass());
     Assert.assertNull(testJibExtension.getContainer().getArgs());
     Assert.assertSame(ImageFormat.Docker, testJibExtension.getContainer().getFormat());
@@ -109,6 +157,7 @@ public class JibExtensionTest {
           container.setEnvironment(ImmutableMap.of("var1", "value1", "var2", "value2"));
           container.setEntrypoint(Arrays.asList("foo", "bar", "baz"));
           container.setExtraClasspath(Arrays.asList("/d1", "/d2", "/d3"));
+          container.setExpandClasspathDependencies(true);
           container.setMainClass("mainClass");
           container.setArgs(Arrays.asList("arg1", "arg2", "arg3"));
           container.setPorts(Arrays.asList("1000", "2000-2010", "3000"));
@@ -123,6 +172,7 @@ public class JibExtensionTest {
     Assert.assertEquals(
         ImmutableMap.of("var1", "value1", "var2", "value2"), container.getEnvironment());
     Assert.assertEquals(ImmutableList.of("/d1", "/d2", "/d3"), container.getExtraClasspath());
+    Assert.assertTrue(testJibExtension.getContainer().getExpandClasspathDependencies());
     Assert.assertEquals("mainClass", testJibExtension.getContainer().getMainClass());
     Assert.assertEquals(Arrays.asList("arg1", "arg2", "arg3"), container.getArgs());
     Assert.assertEquals(Arrays.asList("1000", "2000-2010", "3000"), container.getPorts());
@@ -334,6 +384,8 @@ public class JibExtensionTest {
     System.setProperty("jib.container.extraClasspath", "/d1,/d2,/d3");
     Assert.assertEquals(
         ImmutableList.of("/d1", "/d2", "/d3"), testJibExtension.getContainer().getExtraClasspath());
+    System.setProperty("jib.container.expandClasspathDependencies", "true");
+    Assert.assertTrue(testJibExtension.getContainer().getExpandClasspathDependencies());
     System.setProperty("jib.container.format", "OCI");
     Assert.assertSame(ImageFormat.OCI, testJibExtension.getContainer().getFormat());
     System.setProperty("jib.container.jvmFlags", "flag1,flag2,flag3");
@@ -399,5 +451,14 @@ public class JibExtensionTest {
     Assert.assertEquals(
         fakeProject.getProjectDir().toPath().resolve(Paths.get("tar/path")),
         testJibExtension.getOutputPaths().getTarPath());
+  }
+
+  public TargetImageParameters generateTargetImageParametersWithTags(String... tags) {
+    HashSet<String> set = new HashSet<>(Arrays.asList(tags));
+    testJibExtension.to(
+        to -> {
+          to.setTags(set);
+        });
+    return testJibExtension.getTo();
   }
 }

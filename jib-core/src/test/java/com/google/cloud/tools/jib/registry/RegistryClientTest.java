@@ -24,6 +24,8 @@ import com.google.cloud.tools.jib.api.RegistryUnauthorizedException;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.http.TestWebServer;
+import com.google.cloud.tools.jib.image.json.V22ManifestListTemplate;
+import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.security.DigestException;
@@ -35,6 +37,7 @@ import java.util.List;
 import java.util.Optional;
 import javax.annotation.Nullable;
 import org.hamcrest.CoreMatchers;
+import org.hamcrest.MatcherAssert;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -207,8 +210,175 @@ public class RegistryClientTest {
 
     Optional<BlobDescriptor> digestAndSize = registryClient.checkBlob(digest);
     Assert.assertEquals(56789, digestAndSize.get().getSize());
-    Assert.assertThat(
+    MatcherAssert.assertThat(
         registry.getInputRead(), CoreMatchers.containsString("Authorization: Basic dXNlcjpwYXNz"));
+  }
+
+  @Test
+  public void testAuthPullByWwwAuthenticate_bearerAuth()
+      throws IOException, InterruptedException, GeneralSecurityException, URISyntaxException,
+          RegistryException {
+    String tokenResponse = "HTTP/1.1 200 OK\nContent-Length: 26\n\n{\"token\":\"awesome-token!\"}";
+    authServer = new TestWebServer(false, Arrays.asList(tokenResponse), 1);
+
+    String blobResponse = "HTTP/1.1 200 OK\nContent-Length: 5678\n\n";
+    registry = new TestWebServer(false, Arrays.asList(blobResponse), 1);
+
+    RegistryClient registryClient = createRegistryClient(Credential.from("user", "pass"));
+    registryClient.authPullByWwwAuthenticate("Bearer realm=\"" + authServer.getEndpoint() + "\"");
+
+    Optional<BlobDescriptor> digestAndSize = registryClient.checkBlob(digest);
+    Assert.assertEquals(5678, digestAndSize.get().getSize());
+
+    Mockito.verify(eventHandlers).dispatch(logContains("bearer auth succeeded"));
+  }
+
+  @Test
+  public void testAuthPullByWwwAuthenticate_basicAuth()
+      throws IOException, InterruptedException, GeneralSecurityException, URISyntaxException,
+          RegistryException {
+    String blobResponse = "HTTP/1.1 200 OK\nContent-Length: 5678\n\n";
+    registry = new TestWebServer(false, Arrays.asList(blobResponse), 1);
+
+    RegistryClient registryClient = createRegistryClient(Credential.from("user", "pass"));
+    registryClient.authPullByWwwAuthenticate("Basic foo");
+
+    Optional<BlobDescriptor> digestAndSize = registryClient.checkBlob(digest);
+    Assert.assertEquals(5678, digestAndSize.get().getSize());
+
+    MatcherAssert.assertThat(
+        registry.getInputRead(), CoreMatchers.containsString("Authorization: Basic dXNlcjpwYXNz"));
+  }
+
+  @Test
+  public void testAuthPullByWwwAuthenticate_basicAuthRequestedButNullCredential()
+      throws IOException, InterruptedException, GeneralSecurityException, URISyntaxException,
+          RegistryException {
+    String blobResponse = "HTTP/1.1 200 OK\nContent-Length: 5678\n\n";
+    registry = new TestWebServer(false, Arrays.asList(blobResponse), 1);
+
+    RegistryClient registryClient = createRegistryClient(null);
+    registryClient.authPullByWwwAuthenticate("Basic foo");
+
+    Optional<BlobDescriptor> digestAndSize = registryClient.checkBlob(digest);
+    Assert.assertEquals(5678, digestAndSize.get().getSize());
+
+    MatcherAssert.assertThat(
+        registry.getInputRead(), CoreMatchers.not(CoreMatchers.containsString("Authorization:")));
+  }
+
+  @Test
+  public void testAuthPullByWwwAuthenticate_basicAuthRequestedButOAuth2Credential()
+      throws IOException, InterruptedException, GeneralSecurityException, URISyntaxException,
+          RegistryException {
+    String blobResponse = "HTTP/1.1 200 OK\nContent-Length: 5678\n\n";
+    registry = new TestWebServer(false, Arrays.asList(blobResponse), 1);
+
+    Credential credential = Credential.from(Credential.OAUTH2_TOKEN_USER_NAME, "pass");
+    Assert.assertTrue(credential.isOAuth2RefreshToken());
+    RegistryClient registryClient = createRegistryClient(credential);
+    registryClient.authPullByWwwAuthenticate("Basic foo");
+
+    Optional<BlobDescriptor> digestAndSize = registryClient.checkBlob(digest);
+    Assert.assertEquals(5678, digestAndSize.get().getSize());
+
+    MatcherAssert.assertThat(
+        registry.getInputRead(), CoreMatchers.not(CoreMatchers.containsString("Authorization:")));
+  }
+
+  @Test
+  public void testAuthPullByWwwAuthenticate_invalidAuthMethod() {
+    RegistryClient registryClient =
+        RegistryClient.factory(eventHandlers, "server", "foo/bar", null).newRegistryClient();
+    try {
+      registryClient.authPullByWwwAuthenticate("invalid WWW-Authenticate");
+      Assert.fail();
+    } catch (RegistryException ex) {
+      Assert.assertEquals(
+          "Failed to authenticate with registry server/foo/bar because: 'Bearer' was not found in "
+              + "the 'WWW-Authenticate' header, tried to parse: invalid WWW-Authenticate",
+          ex.getMessage());
+    }
+  }
+
+  @Test
+  public void testPullManifest()
+      throws IOException, InterruptedException, GeneralSecurityException, URISyntaxException,
+          RegistryException {
+    String manifestResponse =
+        "HTTP/1.1 200 OK\nContent-Length: 307\n\n{\n"
+            + "    \"schemaVersion\": 2,\n"
+            + "    \"mediaType\": \"application/vnd.docker.distribution.manifest.v2+json\",\n"
+            + "    \"config\": {\n"
+            + "        \"mediaType\": \"application/vnd.docker.container.image.v1+json\",\n"
+            + "        \"size\": 7023,\n"
+            + "        \"digest\": \"sha256:b5b2b2c507a0944348e0303114d8d93aaaa081732b86451d9bce1f432a537bc7\"\n"
+            + "    }\n"
+            + "}";
+
+    registry = new TestWebServer(false, Arrays.asList(manifestResponse), 1);
+    RegistryClient registryClient = createRegistryClient(null);
+    ManifestAndDigest<?> manifestAndDigest = registryClient.pullManifest("image-tag");
+
+    Assert.assertEquals(
+        "sha256:6b61466eabab6e5ffb68ae2bd9b85c789225540c2ac54ea1f71eb327588e8946",
+        manifestAndDigest.getDigest().toString());
+
+    Assert.assertTrue(manifestAndDigest.getManifest() instanceof V22ManifestTemplate);
+    V22ManifestTemplate manifest = (V22ManifestTemplate) manifestAndDigest.getManifest();
+    Assert.assertEquals(2, manifest.getSchemaVersion());
+    Assert.assertEquals(
+        "application/vnd.docker.distribution.manifest.v2+json", manifest.getManifestMediaType());
+    Assert.assertEquals(
+        "sha256:b5b2b2c507a0944348e0303114d8d93aaaa081732b86451d9bce1f432a537bc7",
+        manifest.getContainerConfiguration().getDigest().toString());
+    Assert.assertEquals(7023, manifest.getContainerConfiguration().getSize());
+
+    MatcherAssert.assertThat(
+        registry.getInputRead(),
+        CoreMatchers.containsString("GET /v2/foo/bar/manifests/image-tag "));
+  }
+
+  @Test
+  public void testPullManifest_manifestList()
+      throws IOException, InterruptedException, GeneralSecurityException, URISyntaxException,
+          RegistryException {
+    String manifestResponse =
+        "HTTP/1.1 200 OK\nContent-Length: 403\n\n{\n"
+            + "  \"schemaVersion\": 2,\n"
+            + "  \"mediaType\": \"application/vnd.docker.distribution.manifest.list.v2+json\",\n"
+            + "  \"manifests\": [\n"
+            + "    {\n"
+            + "      \"mediaType\": \"application/vnd.docker.distribution.manifest.v2+json\",\n"
+            + "      \"size\": 7143,\n"
+            + "      \"digest\": \"sha256:e692418e4cbaf90ca69d05a66403747baa33ee08806650b51fab815ad7fc331f\",\n"
+            + "      \"platform\": {\n"
+            + "        \"architecture\": \"amd64\",\n"
+            + "        \"os\": \"linux\"\n"
+            + "      }\n"
+            + "    }\n"
+            + "  ]\n"
+            + "}";
+
+    registry = new TestWebServer(false, Arrays.asList(manifestResponse), 1);
+    RegistryClient registryClient = createRegistryClient(null);
+    ManifestAndDigest<?> manifestAndDigest = registryClient.pullManifest("image-tag");
+
+    Assert.assertEquals(
+        "sha256:a340fa38667f765f8cfd79d4bc684ec8a6f48cdd63abfe36e109f4125ee38488",
+        manifestAndDigest.getDigest().toString());
+
+    Assert.assertTrue(manifestAndDigest.getManifest() instanceof V22ManifestListTemplate);
+    V22ManifestListTemplate manifestList =
+        (V22ManifestListTemplate) manifestAndDigest.getManifest();
+    Assert.assertEquals(2, manifestList.getSchemaVersion());
+    Assert.assertEquals(
+        Arrays.asList("sha256:e692418e4cbaf90ca69d05a66403747baa33ee08806650b51fab815ad7fc331f"),
+        manifestList.getDigestsForPlatform("amd64", "linux"));
+
+    MatcherAssert.assertThat(
+        registry.getInputRead(),
+        CoreMatchers.containsString("GET /v2/foo/bar/manifests/image-tag "));
   }
 
   /**

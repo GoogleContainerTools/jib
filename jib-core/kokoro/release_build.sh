@@ -1,9 +1,9 @@
 #!/bin/bash
 
 # Fail on any error.
-set -e
+set -o errexit
 # Display commands to stderr.
-set -x
+set -o xtrace
 
 cd github/jib
 ./gradlew :jib-core:prepareRelease

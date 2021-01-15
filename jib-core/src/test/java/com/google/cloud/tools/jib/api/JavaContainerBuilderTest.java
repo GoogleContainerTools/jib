@@ -20,7 +20,6 @@ import com.google.cloud.tools.jib.api.buildplan.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.api.buildplan.FileEntry;
 import com.google.cloud.tools.jib.api.buildplan.RelativeUnixPath;
 import com.google.cloud.tools.jib.configuration.BuildContext;
-import com.google.cloud.tools.jib.configuration.ContainerConfiguration;
 import com.google.common.collect.ImmutableList;
 import com.google.common.io.Resources;
 import java.io.IOException;
@@ -86,8 +85,6 @@ public class JavaContainerBuilderTest {
             .toBuildContext(Containerizer.to(RegistryImage.named("hello")));
 
     // Check entrypoint
-    ContainerConfiguration containerConfiguration = buildContext.getContainerConfiguration();
-    Assert.assertNotNull(containerConfiguration);
     Assert.assertEquals(
         ImmutableList.of(
             "java",
@@ -96,7 +93,7 @@ public class JavaContainerBuilderTest {
             "-cp",
             "/hello/different-resources:/hello/different-classes:/hello/different-libs/*:/hello/different-classpath",
             "HelloWorld"),
-        containerConfiguration.getEntrypoint());
+        buildContext.getContainerConfiguration().getEntrypoint());
 
     // Check dependencies
     List<AbsoluteUnixPath> expectedDependencies =
@@ -159,11 +156,9 @@ public class JavaContainerBuilderTest {
             .toBuildContext(Containerizer.to(RegistryImage.named("hello")));
 
     // Check entrypoint
-    ContainerConfiguration containerConfiguration = buildContext.getContainerConfiguration();
-    Assert.assertNotNull(containerConfiguration);
     Assert.assertEquals(
         ImmutableList.of("java", "-cp", "/app/libs/*:/app/classes", "HelloWorld"),
-        containerConfiguration.getEntrypoint());
+        buildContext.getContainerConfiguration().getEntrypoint());
 
     // Check dependencies
     List<AbsoluteUnixPath> expectedDependencies =
@@ -211,15 +206,13 @@ public class JavaContainerBuilderTest {
             .toBuildContext(Containerizer.to(RegistryImage.named("hello")));
 
     // Check entrypoint
-    ContainerConfiguration containerConfiguration = buildContext.getContainerConfiguration();
-    Assert.assertNotNull(containerConfiguration);
     Assert.assertEquals(
         ImmutableList.of(
             "java",
             "-cp",
             "/different/classes:/different/resources:/different/libs/*:/different/classpath",
             "HelloWorld"),
-        containerConfiguration.getEntrypoint());
+        buildContext.getContainerConfiguration().getEntrypoint());
 
     // Check classes
     List<AbsoluteUnixPath> expectedClasses =
@@ -258,7 +251,6 @@ public class JavaContainerBuilderTest {
             .addClasses(getResource("core/application/classes/"))
             .toContainerBuilder()
             .toBuildContext(Containerizer.to(RegistryImage.named("hello")));
-    Assert.assertNotNull(buildContext.getContainerConfiguration());
     Assert.assertNull(buildContext.getContainerConfiguration().getEntrypoint());
 
     try {

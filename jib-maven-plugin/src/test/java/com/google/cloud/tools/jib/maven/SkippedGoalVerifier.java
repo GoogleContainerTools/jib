@@ -24,7 +24,7 @@ import java.nio.file.Paths;
 import org.apache.maven.it.VerificationException;
 import org.apache.maven.it.Verifier;
 import org.hamcrest.CoreMatchers;
-import org.junit.Assert;
+import org.hamcrest.MatcherAssert;
 
 /** A simple verifier utility to test goal skipping across all our jib goals. */
 class SkippedGoalVerifier {
@@ -39,7 +39,7 @@ class SkippedGoalVerifier {
     verifier.executeGoal("jib:" + goal);
 
     Path logFile = Paths.get(verifier.getBasedir(), verifier.getLogFileName());
-    Assert.assertThat(
+    MatcherAssert.assertThat(
         new String(Files.readAllBytes(logFile), StandardCharsets.UTF_8),
         CoreMatchers.containsString(
             "[INFO] Skipping containerization because jib-maven-plugin: skip = true\n"
@@ -58,7 +58,7 @@ class SkippedGoalVerifier {
     verifier.executeGoal("jib:" + goal);
 
     Path logFile = Paths.get(verifier.getBasedir(), verifier.getLogFileName());
-    Assert.assertThat(
+    MatcherAssert.assertThat(
         new String(Files.readAllBytes(logFile), StandardCharsets.UTF_8),
         CoreMatchers.containsString(
             "[INFO] Skipping containerization of this module (not specified in jib.containerize)\n"

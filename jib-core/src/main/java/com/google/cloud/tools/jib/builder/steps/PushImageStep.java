@@ -24,20 +24,25 @@ import com.google.cloud.tools.jib.builder.ProgressEventDispatcher;
 import com.google.cloud.tools.jib.builder.TimerEventDispatcher;
 import com.google.cloud.tools.jib.configuration.BuildContext;
 import com.google.cloud.tools.jib.event.EventHandlers;
+import com.google.cloud.tools.jib.global.JibSystemProperties;
 import com.google.cloud.tools.jib.hash.Digests;
 import com.google.cloud.tools.jib.image.Image;
 import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
 import com.google.cloud.tools.jib.image.json.ImageToJsonTranslator;
+import com.google.cloud.tools.jib.image.json.ManifestTemplate;
 import com.google.cloud.tools.jib.registry.RegistryClient;
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.Set;
 import java.util.concurrent.Callable;
 
 /**
- * Pushes a manifest for a tag. Returns the manifest digest ("image digest") and the container
- * configuration digest ("image id") as {#link BuildResult}.
+ * Pushes a manifest or a manifest list for a tag. If not a manifest list, returns the manifest
+ * digest ("image digest") and the container configuration digest ("image id") as {@link
+ * BuildResult}. If a manifest list, returns the manifest list digest only.
  */
+// TODO: figure out the right return value and type when pushing a manifest list.
 class PushImageStep implements Callable<BuildResult> {
 
   private static final String DESCRIPTION = "Pushing manifest";
@@ -47,15 +52,23 @@ class PushImageStep implements Callable<BuildResult> {
       ProgressEventDispatcher.Factory progressEventDispatcherFactory,
       RegistryClient registryClient,
       BlobDescriptor containerConfigurationDigestAndSize,
-      Image builtImage)
+      Image builtImage,
+      boolean manifestAlreadyExists)
       throws IOException {
+    boolean singlePlatform = buildContext.getContainerConfiguration().getPlatforms().size() == 1;
     Set<String> tags = buildContext.getAllTargetImageTags();
+    int numPushers = singlePlatform ? tags.size() : 1;
 
+    EventHandlers eventHandlers = buildContext.getEventHandlers();
     try (TimerEventDispatcher ignored =
-            new TimerEventDispatcher(
-                buildContext.getEventHandlers(), "Preparing manifest pushers");
-        ProgressEventDispatcher progressEventDispatcher =
-            progressEventDispatcherFactory.create("launching manifest pushers", tags.size())) {
+            new TimerEventDispatcher(eventHandlers, "Preparing manifest pushers");
+        ProgressEventDispatcher progressDispatcher =
+            progressEventDispatcherFactory.create("launching manifest pushers", numPushers)) {
+
+      if (JibSystemProperties.skipExistingImages() && manifestAlreadyExists) {
+        eventHandlers.dispatch(LogEvent.info("Skipping pushing manifest; already exists."));
+        return ImmutableList.of();
+      }
 
       // Gets the image manifest to push.
       BuildableManifestTemplate manifestTemplate =
@@ -65,6 +78,48 @@ class PushImageStep implements Callable<BuildResult> {
 
       DescriptorDigest manifestDigest = Digests.computeJsonDigest(manifestTemplate);
 
+      Set<String> imageQualifiers =
+          singlePlatform ? tags : Collections.singleton(manifestDigest.toString());
+      return imageQualifiers
+          .stream()
+          .map(
+              qualifier ->
+                  new PushImageStep(
+                      buildContext,
+                      progressDispatcher.newChildProducer(),
+                      registryClient,
+                      manifestTemplate,
+                      qualifier,
+                      manifestDigest,
+                      containerConfigurationDigestAndSize.getDigest()))
+          .collect(ImmutableList.toImmutableList());
+    }
+  }
+
+  static ImmutableList<PushImageStep> makeListForManifestList(
+      BuildContext buildContext,
+      ProgressEventDispatcher.Factory progressEventDispatcherFactory,
+      RegistryClient registryClient,
+      ManifestTemplate manifestList,
+      boolean manifestListAlreadyExists)
+      throws IOException {
+    Set<String> tags = buildContext.getAllTargetImageTags();
+
+    EventHandlers eventHandlers = buildContext.getEventHandlers();
+    try (TimerEventDispatcher ignored =
+            new TimerEventDispatcher(eventHandlers, "Preparing manifest list pushers");
+        ProgressEventDispatcher progressEventDispatcher =
+            progressEventDispatcherFactory.create("launching manifest list pushers", tags.size())) {
+      boolean singlePlatform = buildContext.getContainerConfiguration().getPlatforms().size() == 1;
+      if (singlePlatform) {
+        return ImmutableList.of(); // single image; no need to push a manifest list
+      }
+
+      if (JibSystemProperties.skipExistingImages() && manifestListAlreadyExists) {
+        eventHandlers.dispatch(LogEvent.info("Skipping pushing manifest list; already exists."));
+        return ImmutableList.of();
+      }
+      DescriptorDigest manifestListDigest = Digests.computeJsonDigest(manifestList);
       return tags.stream()
           .map(
               tag ->
@@ -72,20 +127,21 @@ class PushImageStep implements Callable<BuildResult> {
                       buildContext,
                       progressEventDispatcher.newChildProducer(),
                       registryClient,
-                      manifestTemplate,
+                      manifestList,
                       tag,
-                      manifestDigest,
-                      containerConfigurationDigestAndSize.getDigest()))
+                      manifestListDigest,
+                      // TODO: a manifest list digest isn't an "image id". Figure out the right
+                      // return value and type.
+                      manifestListDigest))
           .collect(ImmutableList.toImmutableList());
     }
   }
 
   private final BuildContext buildContext;
   private final ProgressEventDispatcher.Factory progressEventDispatcherFactory;
-
-  private final BuildableManifestTemplate manifestTemplate;
   private final RegistryClient registryClient;
-  private final String tag;
+  private final ManifestTemplate manifestTemplate;
+  private final String imageQualifier;
   private final DescriptorDigest imageDigest;
   private final DescriptorDigest imageId;
 
@@ -93,15 +149,15 @@ class PushImageStep implements Callable<BuildResult> {
       BuildContext buildContext,
       ProgressEventDispatcher.Factory progressEventDispatcherFactory,
       RegistryClient registryClient,
-      BuildableManifestTemplate manifestTemplate,
-      String tag,
+      ManifestTemplate manifestTemplate,
+      String imageQualifier,
       DescriptorDigest imageDigest,
       DescriptorDigest imageId) {
     this.buildContext = buildContext;
     this.progressEventDispatcherFactory = progressEventDispatcherFactory;
     this.registryClient = registryClient;
     this.manifestTemplate = manifestTemplate;
-    this.tag = tag;
+    this.imageQualifier = imageQualifier;
     this.imageDigest = imageDigest;
     this.imageId = imageId;
   }
@@ -111,10 +167,10 @@ class PushImageStep implements Callable<BuildResult> {
     EventHandlers eventHandlers = buildContext.getEventHandlers();
     try (TimerEventDispatcher ignored = new TimerEventDispatcher(eventHandlers, DESCRIPTION);
         ProgressEventDispatcher ignored2 =
-            progressEventDispatcherFactory.create("pushing manifest for " + tag, 1)) {
-      eventHandlers.dispatch(LogEvent.info("Pushing manifest for " + tag + "..."));
+            progressEventDispatcherFactory.create("pushing manifest for " + imageQualifier, 1)) {
+      eventHandlers.dispatch(LogEvent.info("Pushing manifest for " + imageQualifier + "..."));
 
-      registryClient.pushManifest(manifestTemplate, tag);
+      registryClient.pushManifest(manifestTemplate, imageQualifier);
       return new BuildResult(imageDigest, imageId);
     }
   }

@@ -40,6 +40,7 @@ import java.time.Instant;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.hamcrest.CoreMatchers;
+import org.hamcrest.MatcherAssert;
 import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
@@ -95,7 +96,7 @@ public class ReproducibleLayerBuilderTest {
     return new FileEntry(
         source,
         destination,
-        FileEntriesLayer.DEFAULT_FILE_PERMISSIONS_PROVIDER.apply(source, destination),
+        FileEntriesLayer.DEFAULT_FILE_PERMISSIONS_PROVIDER.get(source, destination),
         FileEntriesLayer.DEFAULT_MODIFICATION_TIME);
   }
 
@@ -189,7 +190,7 @@ public class ReproducibleLayerBuilderTest {
     byte[] layerContent = Blobs.writeToByteArray(layer);
     byte[] reproducedLayerContent = Blobs.writeToByteArray(reproduced);
 
-    Assert.assertThat(layerContent, CoreMatchers.is(reproducedLayerContent));
+    MatcherAssert.assertThat(layerContent, CoreMatchers.is(reproducedLayerContent));
   }
 
   @SuppressWarnings("JdkObsolete") // use of Date from TarArchiveEntry

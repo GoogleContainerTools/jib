@@ -23,6 +23,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import javax.annotation.Nullable;
 
@@ -46,7 +47,8 @@ public class ImageConfiguration {
      */
     public Builder setCredentialRetrievers(List<CredentialRetriever> credentialRetrievers) {
       Preconditions.checkArgument(
-          !credentialRetrievers.contains(null), "credential retriever list contains null elements");
+          credentialRetrievers.stream().allMatch(Objects::nonNull),
+          "credential retriever list contains null elements");
       this.credentialRetrievers = ImmutableList.copyOf(credentialRetrievers);
       return this;
     }

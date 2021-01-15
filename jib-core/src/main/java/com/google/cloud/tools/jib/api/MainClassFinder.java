@@ -113,12 +113,12 @@ public class MainClassFinder {
 
     /** Accessors that main may or may not have. */
     private static final int OPTIONAL_ACCESS =
-        Opcodes.ACC_FINAL | Opcodes.ACC_DEPRECATED | Opcodes.ACC_VARARGS;
+        Opcodes.ACC_FINAL | Opcodes.ACC_DEPRECATED | Opcodes.ACC_VARARGS | Opcodes.ACC_SYNTHETIC;
 
     private boolean visitedMainClass;
 
     private MainClassVisitor() {
-      super(Opcodes.ASM7);
+      super(Opcodes.ASM9);
     }
 
     @Override

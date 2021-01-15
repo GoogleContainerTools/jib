@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.security.DigestException;
 import org.gradle.testkit.runner.UnexpectedBuildFailure;
 import org.hamcrest.CoreMatchers;
+import org.hamcrest.MatcherAssert;
 import org.junit.Assert;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -41,7 +42,7 @@ public class DefaultTargetProjectIntegrationTest {
   private static void assertDockerInspect(String imageReference)
       throws IOException, InterruptedException {
     String dockerInspect = new Command("docker", "inspect", imageReference).run();
-    Assert.assertThat(
+    MatcherAssert.assertThat(
         dockerInspect,
         CoreMatchers.containsString(
             "            \"ExposedPorts\": {\n"
@@ -50,7 +51,7 @@ public class DefaultTargetProjectIntegrationTest {
                 + "                \"2001/udp\": {},\n"
                 + "                \"2002/udp\": {},\n"
                 + "                \"2003/udp\": {}"));
-    Assert.assertThat(
+    MatcherAssert.assertThat(
         dockerInspect,
         CoreMatchers.containsString(
             "            \"Labels\": {\n"
@@ -67,7 +68,7 @@ public class DefaultTargetProjectIntegrationTest {
           "clean", "jib", "-Djib.useOnlyProjectCache=true", "-x=classes");
       Assert.fail();
     } catch (UnexpectedBuildFailure ex) {
-      Assert.assertThat(
+      MatcherAssert.assertThat(
           ex.getMessage(),
           CoreMatchers.containsString(
               "Missing target image parameter, perhaps you should add a 'jib.to.image' "

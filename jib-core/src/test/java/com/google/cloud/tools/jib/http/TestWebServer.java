@@ -23,6 +23,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.URISyntaxException;
@@ -90,8 +91,8 @@ public class TestWebServer implements Closeable {
   }
 
   public String getEndpoint() {
-    String host = serverSocket.getInetAddress().getHostAddress();
-    return (https ? "https" : "http") + "://" + host + ":" + serverSocket.getLocalPort();
+    String localhost = InetAddress.getLoopbackAddress().getHostAddress();
+    return (https ? "https" : "http") + "://" + localhost + ":" + serverSocket.getLocalPort();
   }
 
   @Override

@@ -34,7 +34,6 @@ import com.google.cloud.tools.jib.global.JibSystemProperties;
 import com.google.cloud.tools.jib.http.Authorization;
 import com.google.cloud.tools.jib.http.FailoverHttpClient;
 import com.google.cloud.tools.jib.http.Response;
-import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
 import com.google.cloud.tools.jib.image.json.ManifestTemplate;
 import com.google.cloud.tools.jib.json.JsonTemplate;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
@@ -326,15 +325,26 @@ public class RegistryClient {
       return false; // server returned "WWW-Authenticate: Basic ..."
     }
 
-    initialBearerAuthenticator.set(authenticator.get());
+    doBearerAuth(readOnlyBearerAuth, authenticator.get());
+    return true;
+  }
+
+  private void doBearerAuth(boolean readOnlyBearerAuth, RegistryAuthenticator authenticator)
+      throws RegistryException {
+    initialBearerAuthenticator.set(authenticator);
     if (readOnlyBearerAuth) {
-      authorization.set(authenticator.get().authenticatePull(credential));
+      authorization.set(authenticator.authenticatePull(credential));
     } else {
-      authorization.set(authenticator.get().authenticatePush(credential));
+      authorization.set(authenticator.authenticatePush(credential));
     }
     this.readOnlyBearerAuth = readOnlyBearerAuth;
-    eventHandlers.dispatch(LogEvent.debug("bearer auth succeeded for " + image));
-    return true;
+
+    eventHandlers.dispatch(
+        LogEvent.debug(
+            "bearer auth succeeded for "
+                + registryEndpointRequestProperties.getServerUrl()
+                + "/"
+                + registryEndpointRequestProperties.getImageName()));
   }
 
   private Authorization refreshBearerAuth(@Nullable String wwwAuthenticate)
@@ -368,10 +378,49 @@ public class RegistryClient {
   }
 
   /**
+   * Configure basic authentication or attempts bearer authentication for pulling based on the
+   * specified authentication method in a server response.
+   *
+   * @param wwwAuthenticate {@code WWW-Authenticate} HTTP header value from a server response
+   *     specifying a required authentication method
+   * @throws RegistryException if communicating with the endpoint fails
+   * @throws RegistryAuthenticationFailedException if authentication fails
+   * @throws RegistryCredentialsNotSentException if authentication failed and credentials were not
+   */
+  public void authPullByWwwAuthenticate(String wwwAuthenticate) throws RegistryException {
+    Optional<RegistryAuthenticator> authenticator =
+        RegistryAuthenticator.fromAuthenticationMethod(
+            wwwAuthenticate, registryEndpointRequestProperties, getUserAgent(), httpClient);
+    if (authenticator.isPresent()) {
+      doBearerAuth(true, authenticator.get());
+    } else if (credential != null && !credential.isOAuth2RefreshToken()) {
+      configureBasicAuth();
+    }
+  }
+
+  /**
+   * Check if a manifest referred to by {@code imageQualifier} (tag or digest) exists on the
+   * registry.
+   *
+   * @param imageQualifier the tag or digest to check for
+   * @return the {@link ManifestAndDigest} referred to by {@code imageQualifier} if the manifest
+   *     exists on the registry, or {@link Optional#empty()} otherwise
+   * @throws IOException if communicating with the endpoint fails
+   * @throws RegistryException if communicating with the endpoint fails
+   */
+  public Optional<ManifestAndDigest<ManifestTemplate>> checkManifest(String imageQualifier)
+      throws IOException, RegistryException {
+    ManifestChecker<ManifestTemplate> manifestChecker =
+        new ManifestChecker<>(
+            registryEndpointRequestProperties, imageQualifier, ManifestTemplate.class);
+    return callRegistryEndpoint(manifestChecker);
+  }
+
+  /**
    * Pulls the image manifest and digest for a specific tag.
    *
    * @param <T> child type of ManifestTemplate
-   * @param imageTag the tag to pull on
+   * @param imageQualifier the tag or digest to pull on
    * @param manifestTemplateClass the specific version of manifest template to pull, or {@link
    *     ManifestTemplate} to pull predefined subclasses; see: {@link
    *     ManifestPuller#handleResponse(Response)}
@@ -380,14 +429,16 @@ public class RegistryClient {
    * @throws RegistryException if communicating with the endpoint fails
    */
   public <T extends ManifestTemplate> ManifestAndDigest<T> pullManifest(
-      String imageTag, Class<T> manifestTemplateClass) throws IOException, RegistryException {
+      String imageQualifier, Class<T> manifestTemplateClass) throws IOException, RegistryException {
     ManifestPuller<T> manifestPuller =
-        new ManifestPuller<>(registryEndpointRequestProperties, imageTag, manifestTemplateClass);
+        new ManifestPuller<>(
+            registryEndpointRequestProperties, imageQualifier, manifestTemplateClass);
     return callRegistryEndpoint(manifestPuller);
   }
 
-  public ManifestAndDigest<?> pullManifest(String imageTag) throws IOException, RegistryException {
-    return pullManifest(imageTag, ManifestTemplate.class);
+  public ManifestAndDigest<ManifestTemplate> pullManifest(String imageQualifier)
+      throws IOException, RegistryException {
+    return pullManifest(imageQualifier, ManifestTemplate.class);
   }
 
   /**
@@ -399,7 +450,7 @@ public class RegistryClient {
    * @throws IOException if communicating with the endpoint fails
    * @throws RegistryException if communicating with the endpoint fails
    */
-  public DescriptorDigest pushManifest(BuildableManifestTemplate manifestTemplate, String imageTag)
+  public DescriptorDigest pushManifest(ManifestTemplate manifestTemplate, String imageTag)
       throws IOException, RegistryException {
     if (isBearerAuth(authorization.get()) && readOnlyBearerAuth) {
       throw new IllegalStateException("push may fail with pull-only bearer auth token");

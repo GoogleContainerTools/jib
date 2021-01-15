@@ -194,4 +194,15 @@ public class DockerConfigCredentialRetrieverTest {
     Assert.assertEquals("<token>", credentials.get().getUsername());
     Assert.assertEquals("cool identity token", credentials.get().getPassword());
   }
+
+  @Test
+  public void testRetrieve_noErrorWhenMissingAuthField() throws IOException, URISyntaxException {
+    Path dockerConfigFile = Paths.get(Resources.getResource("core/json/dockerconfig.json").toURI());
+
+    DockerConfigCredentialRetriever dockerConfigCredentialRetriever =
+        DockerConfigCredentialRetriever.create("no auth field", dockerConfigFile);
+
+    Optional<Credential> credentials = dockerConfigCredentialRetriever.retrieve(mockLogger);
+    Assert.assertFalse(credentials.isPresent());
+  }
 }

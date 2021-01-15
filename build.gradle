@@ -1,14 +1,14 @@
 // define all versioned plugins here and apply in subprojects as necessary without version
 plugins {
-  id 'com.github.sherter.google-java-format' version '0.8' apply false
-  id 'net.ltgt.apt' version '0.19' apply false
-  id 'net.ltgt.errorprone' version '0.6' apply false
-  id 'net.researchgate.release' version '2.7.0' apply false
-  id 'com.gradle.plugin-publish' version '0.11.0' apply false
-  id 'io.freefair.maven-plugin' version '3.8.1' apply false
+  id 'com.github.sherter.google-java-format' version '0.9' apply false
+  id 'net.ltgt.apt' version '0.21' apply false
+  id 'net.ltgt.errorprone' version '1.3.0' apply false
+  id 'net.researchgate.release' version '2.8.1' apply false
+  id 'com.gradle.plugin-publish' version '0.12.0' apply false
+  id 'io.freefair.maven-plugin' version '5.3.0' apply false
 
   // apply so we can correctly configure the test runner to be gradle at the project level
-  id 'org.jetbrains.gradle.plugin.idea-ext' version '0.7'
+  id 'org.jetbrains.gradle.plugin.idea-ext' version '0.10'
 }
 
 // run tests in intellij using gradle test runner
@@ -21,7 +21,9 @@ idea.project.settings {
 
 import net.ltgt.gradle.errorprone.CheckSeverity
 
-['jib-core', 'jib-gradle-plugin-extension-api', 'jib-maven-plugin-extension-api'].each { projectName ->
+// `java-library` must be applied before `java`
+// java-gradle-plugin (in jib-gradle-plugin) auto applies java-library, so ensure that happens first
+['jib-core', 'jib-gradle-plugin', 'jib-gradle-plugin-extension-api', 'jib-maven-plugin-extension-api'].each { projectName ->
   project(projectName) {
     apply plugin: 'java-library'
   }
@@ -48,43 +50,55 @@ subprojects {
 
   /* PROJECT DEPENDENCY VERSIONS */
   // define all common versioned dependencies here
-  project.ext.dependencyVersions = [
-    // For Google libraries, check <http-client-bom.version>, <google.auth.version>, <guava.version>,
-    // ... in https://github.com/googleapis/google-cloud-java/blob/master/google-cloud-clients/pom.xml
-    // for best compatibility.
-    GOOGLE_HTTP_CLIENT: '1.34.0',
-    GOOGLE_HTTP_CLIENT_APACHE_V2: '1.34.0',
-    GOOGLE_AUTH_LIBRARY_OAUTH2_HTTP: '0.18.0',
-    GUAVA: '28.1-jre',
-    JSR305: '3.0.2', // transitively pulled in by GUAVA
+  project.ext.dependencyStrings = [
+    // For Google libraries, check the following boms for best compatibility.
+    // - https://github.com/googleapis/java-shared-dependencies
+    // - https://github.com/googleapis/java-cloud-bom
+    GOOGLE_HTTP_CLIENT: 'com.google.http-client:google-http-client:1.38.1',
+    GOOGLE_HTTP_CLIENT_APACHE_V2: 'com.google.http-client:google-http-client-apache-v2:1.38.1',
+    GOOGLE_AUTH_LIBRARY_OAUTH2_HTTP: 'com.google.auth:google-auth-library-oauth2-http:0.22.2',
+    GUAVA: 'com.google.guava:guava:30.1-jre',
+    JSR305: 'com.google.code.findbugs:jsr305:3.0.2', // transitively pulled in by GUAVA
 
     // for Build Plan and Jib Plugins Extension API
-    BUILD_PLAN: '0.2.0',
-    EXTENSION_COMMON: '0.2.0',
-    GRADLE_EXTENSION: '0.3.0',
-    MAVEN_EXTENSION: '0.3.0',
+    BUILD_PLAN: 'com.google.cloud.tools:jib-build-plan:0.4.0',
+    EXTENSION_COMMON: 'com.google.cloud.tools:jib-plugins-extension-common:0.2.0',
+    GRADLE_EXTENSION: 'com.google.cloud.tools:jib-gradle-plugin-extension-api:0.4.0',
+    MAVEN_EXTENSION: 'com.google.cloud.tools:jib-maven-plugin-extension-api:0.4.0',
 
-    COMMONS_COMPRESS: '1.19',
-    JACKSON_DATABIND: '2.9.10',
-    ASM: '7.3.1',
-    PICOCLI: '4.2.0',
+    COMMONS_COMPRESS: 'org.apache.commons:commons-compress:1.20',
+    COMMONS_TEXT: 'org.apache.commons:commons-text:1.9',
+    JACKSON_DATABIND: 'com.fasterxml.jackson.core:jackson-databind:2.12.1',
+    JACKSON_DATAFORMAT_YAML: 'com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.12.1',
+    JACKSON_DATATYPE_JSR310: 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.12.1',
+    ASM: 'org.ow2.asm:asm:9.0',
+    PICOCLI: 'info.picocli:picocli:4.6.1',
 
-    MAVEN_API: '3.5.2',
+    MAVEN_API: 'org.apache.maven:maven-plugin-api:3.6.3',
+    MAVEN_CORE: 'org.apache.maven:maven-core:3.6.3',
+    MAVEN_COMPAT: 'org.apache.maven:maven-compat:3.6.3',
+    MAVEN_PLUGIN_ANNOTATIONS: 'org.apache.maven.plugin-tools:maven-plugin-annotations:3.6.0',
 
     //test
-    JUNIT: '4.12',
-    MOCKITO_CORE: '3.2.4',
-    SLF4J_API: '1.7.25',
-    SYSTEM_RULES: '1.19.0',
+    TRUTH: 'com.google.truth:truth:1.1',
+    TRUTH8: 'com.google.truth.extensions:truth-java8-extension:1.1', // should match TRUTH version
+    JUNIT: 'junit:junit:4.13.1',
+    JUNIT_PARAMS: 'pl.pragmatists:JUnitParams:1.1.1',
+    MAVEN_TESTING_HARNESS: 'org.apache.maven.plugin-testing:maven-plugin-testing-harness:3.3.0',
+    MAVEN_VERIFIER: 'org.apache.maven.shared:maven-verifier:1.7.2',
+    MOCKITO_CORE: 'org.mockito:mockito-core:3.7.0',
+    SISU_PLEXUS: 'org.eclipse.sisu:org.eclipse.sisu.plexus:0.3.4',
+    SLF4J_API: 'org.slf4j:slf4j-api:1.7.30',
+    SLF4J_SIMPLE: 'org.slf4j:slf4j-simple:1.7.30',
+    SYSTEM_RULES:  'com.github.stefanbirkner:system-rules:1.19.0',
+    JBCRYPT: 'org.mindrot:jbcrypt:0.4',
   ]
 
   // Use this to ensure we correctly override transitive dependencies
   // TODO: There might be a plugin that does this
   task ensureTransitiveDependencyOverrides {
-    def rules = [
-        'google-http-client': dependencyVersions.GOOGLE_HTTP_CLIENT,
-        'google-http-client-apache-v2': dependencyVersions.GOOGLE_HTTP_CLIENT_APACHE_V2,
-    ]
+    def dependenciesList = [dependencyStrings.GOOGLE_HTTP_CLIENT, dependencyStrings.GOOGLE_HTTP_CLIENT_APACHE_V2]
+    def rules = dependenciesList.collectEntries{[/*name*/ it.split(':')[1], /*version*/ it.split(':')[2]]}
     doLast {
       configurations.runtimeClasspath.resolvedConfiguration.resolvedArtifacts.each { artifact ->
         def dependency = artifact.moduleVersion.id
@@ -103,8 +117,8 @@ subprojects {
   /* ERROR PRONE */
   dependencies {
     // NullAway errorprone plugin
-    annotationProcessor 'com.uber.nullaway:nullaway:0.7.9'
-    errorprone 'com.google.errorprone:error_prone_core:2.4.0'
+    annotationProcessor 'com.uber.nullaway:nullaway:0.8.0'
+    errorprone 'com.google.errorprone:error_prone_core:2.5.1'
     // Using github.com/google/error-prone-javac is required when running on
     // JDK 8. Remove when migrating to JDK 11.
     if (System.getProperty('java.version').startsWith('1.8.')) {
@@ -117,7 +131,6 @@ subprojects {
     if (!name.toLowerCase().contains('test')) {
       options.errorprone {
         check('NullAway', CheckSeverity.ERROR)
-        check('InlineFormatString', CheckSeverity.OFF)
         option('NullAway:ExcludedFieldAnnotations', 'org.apache.maven.plugins.annotations.Component')
         option('NullAway:AnnotatedPackages', 'com.google.cloud.tools')
       }
@@ -199,6 +212,7 @@ subprojects {
 
   configurations {
     integrationTestImplementation.extendsFrom testImplementation
+    integrationTestImplementation.setCanBeResolved(true)
     integrationTestRuntime.extendsFrom testRuntime
   }
 
@@ -218,7 +232,6 @@ subprojects {
     systemProperty '_JIB_DISABLE_USER_AGENT', true
   }
 
-  integrationTest.dependsOn test
 
   task integrationTestJar(type: Jar) {
     from sourceSets.integrationTest.output.classesDirs
@@ -231,6 +244,13 @@ subprojects {
 
   artifacts {
     integrationTests integrationTestJar
+  }
+
+  integrationTest {
+    testLogging {
+      showStandardStreams = true
+      exceptionFormat = 'full'
+    }
   }
   /* INTEGRATION TESTS */
 
@@ -246,7 +266,7 @@ subprojects {
   jar {
     manifest {
       attributes 'Implementation-Title': project.name,
-                 'Implementation-Version': version,
+                 'Implementation-Version': archiveVersion,
                  'Built-By': System.getProperty('user.name'),
                  'Built-Date': new Date(),
                  'Built-JDK': System.getProperty('java.version'),
@@ -398,22 +418,17 @@ subprojects {
     }
   }
   /* INCLUDED PROJECT DEPENDENCY HELPER */
-}
 
-
-/* LOCAL DEVELOPMENT HELPER TASKS */
-tasks.register('dev') {
-  subprojects.each { subproject ->
-    subproject.tasks.classes.dependsOn subproject.tasks.googleJavaFormat
-    dependsOn subproject.tasks.check
-    dependsOn subproject.tasks.javadoc
+  /* LOCAL DEVELOPMENT HELPER TASKS */
+  tasks.register('dev') {
+    classes.dependsOn tasks.googleJavaFormat
+    dependsOn check
+    dependsOn javadoc
   }
-}
 
-tasks.register('devFull') {
-  dependsOn tasks.dev
-  subprojects.each { subproject ->
-    dependsOn subproject.tasks.integrationTest
+  tasks.register('devFull') {
+    dependsOn dev
+    dependsOn integrationTest
   }
+  /* LOCAL DEVELOPMENT HELPER TASKS */
 }
-/* LOCAL DEVELOPMENT HELPER TASKS */

@@ -1,0 +1,84 @@
+name: Release Jib CLI
+on:
+  workflow_dispatch:
+    inputs:
+      release_version:
+        description: new release version
+        required: true
+        default: (for example, 0.1.0)
+
+jobs:
+  release:
+    name: Release Jib CLI
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v2
+
+      - name: Build project
+        run: |
+          if [[ ! "${{ github.event.inputs.release_version }}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo 'version "${{ github.event.inputs.release_version }}" not in ###.###.### format'
+            exit 1
+          fi
+          # TODO: run integration test? (Requries auth with GCP.)
+          ./gradlew clean build --stacktrace
+
+      - name: Run Gradle release
+        run: |
+          git checkout -b cli-release-v${{ github.event.inputs.release_version }}
+          git config user.email ${{ github.actor }}@users.noreply.github.com
+          git config user.name ${{ github.actor }}
+          # This creates the tag (e.g., "v0.1.0-cli") and pushes the updated
+          # branch (e.g., "cli-release-v0.1.0") and the new tag.
+          ./gradlew jib-cli:release \
+            -Prelease.useAutomaticVersion=true \
+            -Prelease.releaseVersion=${{ github.event.inputs.release_version }}
+
+      - name: Build Jib CLI release binaries
+        run: |
+          git checkout v${{ github.event.inputs.release_version }}-cli
+          ./gradlew jib-cli:instDist --stacktrace
+
+          cd jib-cli/build/distributions
+          sha256sum jib-${{ github.event.inputs.release_version }}.zip > zip.sha256
+
+      - name: Create pull request
+        uses: repo-sync/pull-request@v2
+        with:
+          # Provided by Actions. No need to create a token.
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          source_branch: cli-release-v${{ github.event.inputs.release_version }}
+          pr_title: "CLI release v${{ github.event.inputs.release_version }}"
+          pr_body: "To be merged after the release is complete."
+          pr_label: "kokoro:run"
+
+      - name: Draft GitHub release
+        uses: actions/create-release@v1
+        id: create_release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: v${{ github.event.inputs.release_version }}-cli
+          release_name: jib-cli v${{ github.event.inputs.release_version }}
+          draft: true
+
+      - name: Upload Jib CLI
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./jib-cli/build/distributions/jib-${{ github.event.inputs.release_version }}.zip
+          asset_name: jib-jre-${{ github.event.inputs.release_version }}.zip
+          asset_content_type: application/zip
+
+      - name: Upload Jib CLI checksum
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./jib-cli/build/distributions/zip.sha256
+          asset_name: jib-jre-${{ github.event.inputs.release_version }}.zip.sha256
+          asset_content_type: text/plain

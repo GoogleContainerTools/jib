@@ -9,7 +9,7 @@
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <jib-maven-plugin.version>2.3.0</jib-maven-plugin.version>
+    <jib-maven-plugin.version>2.7.1</jib-maven-plugin.version>
     <maven-compiler-plugin.version>3.8.0</maven-compiler-plugin.version>
     <download-maven-plugin.version>1.4.2</download-maven-plugin.version>
     <git-commit-id-plugin.version>3.0.1</git-commit-id-plugin.version>

@@ -24,11 +24,9 @@ import com.google.cloud.tools.jib.builder.ProgressEventDispatcher;
 import com.google.cloud.tools.jib.builder.steps.PreparedLayer.StateInTarget;
 import com.google.cloud.tools.jib.cache.CacheCorruptedException;
 import com.google.cloud.tools.jib.configuration.BuildContext;
-import com.google.cloud.tools.jib.image.Image;
 import com.google.cloud.tools.jib.image.Layer;
 import com.google.cloud.tools.jib.image.ReferenceLayer;
 import com.google.cloud.tools.jib.registry.RegistryClient;
-import com.google.common.collect.ImmutableList;
 import java.io.IOException;
 import java.security.DigestException;
 import java.util.Optional;
@@ -51,7 +49,8 @@ public class ObtainBaseImageLayerStepTest {
   private DescriptorDigest existingLayerDigest;
   private DescriptorDigest freshLayerDigest;
 
-  @Mock private Image image;
+  @Mock private Layer existingLayer;
+  @Mock private Layer freshLayer;
   @Mock private RegistryClient registryClient;
 
   @Mock(answer = Answers.RETURNS_MOCKS)
@@ -70,9 +69,8 @@ public class ObtainBaseImageLayerStepTest {
             "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb");
 
     DescriptorDigest diffId = Mockito.mock(DescriptorDigest.class);
-    Layer existingLayer = new ReferenceLayer(new BlobDescriptor(existingLayerDigest), diffId);
-    Layer freshLayer = new ReferenceLayer(new BlobDescriptor(freshLayerDigest), diffId);
-    Mockito.when(image.getLayers()).thenReturn(ImmutableList.of(existingLayer, freshLayer));
+    existingLayer = new ReferenceLayer(new BlobDescriptor(existingLayerDigest), diffId);
+    freshLayer = new ReferenceLayer(new BlobDescriptor(freshLayerDigest), diffId);
 
     Mockito.when(registryClient.checkBlob(existingLayerDigest))
         .thenReturn(Optional.of(Mockito.mock(BlobDescriptor.class)));
@@ -89,54 +87,75 @@ public class ObtainBaseImageLayerStepTest {
   }
 
   @Test
-  public void testMakeListForSelectiveDownload()
+  public void testForSelectiveDownload_existingLayer()
       throws IOException, CacheCorruptedException, RegistryException {
-    ImmutableList<ObtainBaseImageLayerStep> pullers =
-        ObtainBaseImageLayerStep.makeListForSelectiveDownload(
-            buildContext, progressDispatcherFactory, image, registryClient, registryClient);
+    ObtainBaseImageLayerStep puller =
+        ObtainBaseImageLayerStep.forSelectiveDownload(
+            buildContext, progressDispatcherFactory, existingLayer, registryClient, registryClient);
 
-    Assert.assertEquals(2, pullers.size());
-    PreparedLayer preparedExistingLayer = pullers.get(0).call();
-    PreparedLayer preparedFreshLayer = pullers.get(1).call();
+    PreparedLayer preparedLayer = puller.call();
 
-    Assert.assertEquals(StateInTarget.EXISTING, preparedExistingLayer.getStateInTarget());
-    Assert.assertEquals(StateInTarget.MISSING, preparedFreshLayer.getStateInTarget());
-
-    // Should have queried all blobs.
+    Assert.assertEquals(StateInTarget.EXISTING, preparedLayer.getStateInTarget());
+    // Should have queried the blob.
     Mockito.verify(registryClient).checkBlob(existingLayerDigest);
-    Mockito.verify(registryClient).checkBlob(freshLayerDigest);
-
-    // Only the missing layer should be pulled.
+    // The layer should not be pulled.
     Mockito.verify(registryClient, Mockito.never())
         .pullBlob(Mockito.eq(existingLayerDigest), Mockito.any(), Mockito.any());
-    Mockito.verify(registryClient)
-        .pullBlob(Mockito.eq(freshLayerDigest), Mockito.any(), Mockito.any());
+    Mockito.verifyNoMoreInteractions(registryClient);
   }
 
   @Test
-  public void testMakeListForForcedDownload()
+  public void testForSelectiveDownload_freshLayer()
       throws IOException, CacheCorruptedException, RegistryException {
-    ImmutableList<ObtainBaseImageLayerStep> pullers =
-        ObtainBaseImageLayerStep.makeListForForcedDownload(
-            buildContext, progressDispatcherFactory, image, registryClient);
+    ObtainBaseImageLayerStep puller =
+        ObtainBaseImageLayerStep.forSelectiveDownload(
+            buildContext, progressDispatcherFactory, freshLayer, registryClient, registryClient);
 
-    Assert.assertEquals(2, pullers.size());
-    PreparedLayer preparedExistingLayer = pullers.get(0).call();
-    PreparedLayer preparedFreshLayer = pullers.get(1).call();
+    PreparedLayer preparedLayer = puller.call();
 
-    // existence unknown
-    Assert.assertEquals(StateInTarget.UNKNOWN, preparedExistingLayer.getStateInTarget());
-    Assert.assertEquals(StateInTarget.UNKNOWN, preparedFreshLayer.getStateInTarget());
-
-    // No blob checking should happen.
-    Mockito.verify(registryClient, Mockito.never()).checkBlob(existingLayerDigest);
-    Mockito.verify(registryClient, Mockito.never()).checkBlob(freshLayerDigest);
-
-    // All layers should be pulled.
-    Mockito.verify(registryClient)
-        .pullBlob(Mockito.eq(existingLayerDigest), Mockito.any(), Mockito.any());
+    Assert.assertEquals(StateInTarget.MISSING, preparedLayer.getStateInTarget());
+    // Should have queried the blob.
+    Mockito.verify(registryClient).checkBlob(freshLayerDigest);
+    // The layer should not be pulled.
     Mockito.verify(registryClient)
         .pullBlob(Mockito.eq(freshLayerDigest), Mockito.any(), Mockito.any());
+    Mockito.verifyNoMoreInteractions(registryClient);
+  }
+
+  @Test
+  public void testForForcedDownload_existingLayer()
+      throws IOException, CacheCorruptedException, RegistryException {
+    ObtainBaseImageLayerStep puller =
+        ObtainBaseImageLayerStep.forForcedDownload(
+            buildContext, progressDispatcherFactory, existingLayer, registryClient);
+    PreparedLayer preparedLayer = puller.call();
+
+    // existence unknown
+    Assert.assertEquals(StateInTarget.UNKNOWN, preparedLayer.getStateInTarget());
+    // No blob checking should happen.
+    Mockito.verify(registryClient, Mockito.never()).checkBlob(Mockito.any());
+    // The layer should be pulled.
+    Mockito.verify(registryClient)
+        .pullBlob(Mockito.eq(existingLayerDigest), Mockito.any(), Mockito.any());
+    Mockito.verifyNoMoreInteractions(registryClient);
+  }
+
+  @Test
+  public void testForForcedDownload_freshLayer()
+      throws IOException, CacheCorruptedException, RegistryException {
+    ObtainBaseImageLayerStep puller =
+        ObtainBaseImageLayerStep.forForcedDownload(
+            buildContext, progressDispatcherFactory, freshLayer, registryClient);
+    PreparedLayer preparedLayer = puller.call();
+
+    // existence unknown
+    Assert.assertEquals(StateInTarget.UNKNOWN, preparedLayer.getStateInTarget());
+    // No blob checking should happen.
+    Mockito.verify(registryClient, Mockito.never()).checkBlob(Mockito.any());
+    // The layer should be pulled.
+    Mockito.verify(registryClient)
+        .pullBlob(Mockito.eq(freshLayerDigest), Mockito.any(), Mockito.any());
+    Mockito.verifyNoMoreInteractions(registryClient);
   }
 
   @Test
@@ -144,11 +163,11 @@ public class ObtainBaseImageLayerStepTest {
       throws CacheCorruptedException, RegistryException {
     Mockito.when(buildContext.isOffline()).thenReturn(true);
 
-    ImmutableList<ObtainBaseImageLayerStep> pullers =
-        ObtainBaseImageLayerStep.makeListForForcedDownload(
-            buildContext, progressDispatcherFactory, image, registryClient);
+    ObtainBaseImageLayerStep puller =
+        ObtainBaseImageLayerStep.forForcedDownload(
+            buildContext, progressDispatcherFactory, freshLayer, registryClient);
     try {
-      pullers.get(1).call();
+      puller.call();
       Assert.fail();
     } catch (IOException ex) {
       Assert.assertEquals(

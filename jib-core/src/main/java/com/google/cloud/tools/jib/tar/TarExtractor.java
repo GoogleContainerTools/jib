@@ -25,6 +25,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 
@@ -61,8 +62,13 @@ public class TarExtractor {
           if (entryPath.getParent() != null) {
             Files.createDirectories(entryPath.getParent());
           }
-          try (OutputStream out = new BufferedOutputStream(Files.newOutputStream(entryPath))) {
-            ByteStreams.copy(tarArchiveInputStream, out);
+
+          if (entry.isSymbolicLink()) {
+            Files.createSymbolicLink(entryPath, Paths.get(entry.getLinkName()));
+          } else {
+            try (OutputStream out = new BufferedOutputStream(Files.newOutputStream(entryPath))) {
+              ByteStreams.copy(tarArchiveInputStream, out);
+            }
           }
         }
       }

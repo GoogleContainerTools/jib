@@ -28,6 +28,7 @@ import java.util.List;
 import java.util.function.Consumer;
 import javax.net.ssl.SSLException;
 import org.hamcrest.CoreMatchers;
+import org.hamcrest.MatcherAssert;
 import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
@@ -140,7 +141,7 @@ public class WithServerFailoverHttpClientTest {
       System.setProperty("http.proxyPassword", "pass_sys_prop");
 
       try (Response response = httpClient.get(new URL("http://does.not.matter"), request)) {
-        Assert.assertThat(
+        MatcherAssert.assertThat(
             server.getInputRead(),
             CoreMatchers.containsString(
                 "Proxy-Authorization: Basic dXNlcl9zeXNfcHJvcDpwYXNzX3N5c19wcm9w"));
@@ -193,21 +194,21 @@ public class WithServerFailoverHttpClientTest {
     try (TestWebServer server = new TestWebServer(false, responses, 1)) {
       httpClient.get(new URL(server.getEndpoint()), request);
 
-      Assert.assertThat(
+      MatcherAssert.assertThat(
           server.getInputRead(),
           CoreMatchers.containsString("GET /?id=301&_auth_=exp=1572285389~hmac=f0a387f0 "));
-      Assert.assertThat(
+      MatcherAssert.assertThat(
           server.getInputRead(),
           CoreMatchers.containsString(
               "GET /?id=302&Signature=2wYOD0a%2BDAkK%2F9lQJUOuIpYti8o%3D&Expires=1569997614 "));
-      Assert.assertThat(
+      MatcherAssert.assertThat(
           server.getInputRead(),
           CoreMatchers.containsString("GET /?id=303&_auth_=exp=1572285389~hmac=f0a387f0 "));
-      Assert.assertThat(
+      MatcherAssert.assertThat(
           server.getInputRead(),
           CoreMatchers.containsString(
               "GET /?id=307&Signature=2wYOD0a%2BDAkK%2F9lQJUOuIpYti8o%3D&Expires=1569997614 "));
-      Assert.assertThat(
+      MatcherAssert.assertThat(
           server.getInputRead(),
           CoreMatchers.containsString("GET /?id=308&_auth_=exp=1572285389~hmac=f0a387f0 "));
     }

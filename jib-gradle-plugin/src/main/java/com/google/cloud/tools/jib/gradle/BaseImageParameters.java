@@ -21,6 +21,9 @@ import javax.annotation.Nullable;
 import javax.inject.Inject;
 import org.gradle.api.Action;
 import org.gradle.api.model.ObjectFactory;
+import org.gradle.api.provider.ListProperty;
+import org.gradle.api.provider.Property;
+import org.gradle.api.provider.Provider;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.Nested;
 import org.gradle.api.tasks.Optional;
@@ -29,13 +32,33 @@ import org.gradle.api.tasks.Optional;
 public class BaseImageParameters {
 
   private final AuthParameters auth;
-
-  @Nullable private String image;
+  private Property<String> image;
   @Nullable private String credHelper;
+  private final PlatformParametersSpec platformParametersSpec;
+  private final ListProperty<PlatformParameters> platforms;
 
   @Inject
   public BaseImageParameters(ObjectFactory objectFactory) {
     auth = objectFactory.newInstance(AuthParameters.class, "from.auth");
+    platforms = objectFactory.listProperty(PlatformParameters.class);
+    image = objectFactory.property(String.class);
+    platformParametersSpec = objectFactory.newInstance(PlatformParametersSpec.class, platforms);
+
+    PlatformParameters amd64Linux = new PlatformParameters();
+    amd64Linux.setArchitecture("amd64");
+    amd64Linux.setOs("linux");
+    platforms.add(amd64Linux);
+  }
+
+  @Nested
+  @Optional
+  public ListProperty<PlatformParameters> getPlatforms() {
+    return platforms;
+  }
+
+  public void platforms(Action<? super PlatformParametersSpec> action) {
+    platforms.empty();
+    action.execute(platformParametersSpec);
   }
 
   @Input
@@ -45,11 +68,15 @@ public class BaseImageParameters {
     if (System.getProperty(PropertyNames.FROM_IMAGE) != null) {
       return System.getProperty(PropertyNames.FROM_IMAGE);
     }
-    return image;
+    return image.getOrNull();
   }
 
   public void setImage(String image) {
-    this.image = image;
+    this.image.set(image);
+  }
+
+  public void setImage(Provider<String> image) {
+    this.image.set(image);
   }
 
   @Input

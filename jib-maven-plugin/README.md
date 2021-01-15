@@ -43,7 +43,7 @@ For information about the project, see the [Jib project README](../README.md).
 You can containerize your application easily with one command:
 
 ```shell
-mvn compile com.google.cloud.tools:jib-maven-plugin:2.3.0:build -Dimage=<MY IMAGE>
+mvn compile com.google.cloud.tools:jib-maven-plugin:2.7.1:build -Dimage=<MY IMAGE>
 ```
 
 This builds and pushes a container image for your application to a container registry. *If you encounter authentication issues, see [Authentication Methods](#authentication-methods).*
@@ -51,7 +51,7 @@ This builds and pushes a container image for your application to a container reg
 To build to a Docker daemon, use:
 
 ```shell
-mvn compile com.google.cloud.tools:jib-maven-plugin:2.3.0:dockerBuild
+mvn compile com.google.cloud.tools:jib-maven-plugin:2.7.1:dockerBuild
 ```
 
 If you would like to set up Jib as part of your Maven build, follow the guide below.
@@ -69,7 +69,7 @@ In your Maven Java project, add the plugin to your `pom.xml`:
       <plugin>
         <groupId>com.google.cloud.tools</groupId>
         <artifactId>jib-maven-plugin</artifactId>
-        <version>2.3.0</version>
+        <version>2.7.1</version>
         <configuration>
           <to>
             <image>myimage</image>
@@ -243,15 +243,16 @@ Field | Type | Default | Description
 Property | Type | Default | Description
 --- | --- | --- | ---
 `image` | string | `gcr.io/distroless/java` | The image reference for the base image. The source type can be specified using a [special type prefix](#setting-the-base-image).
-`auth` | [`auth`](#auth-object) | *None* | Specify credentials directly (alternative to `credHelper`).
+`auth` | [`auth`](#auth-object) | *None* | Specifies credentials directly (alternative to `credHelper`).
 `credHelper` | string | *None* | Specifies a credential helper that can authenticate pulling the base image. This parameter can either be configured as an absolute path to the credential helper executable or as a credential helper suffix (following `docker-credential-`).
+`platforms` | list | See [`platform`](#platform-object) | _Incubating feature_: Configures platforms of base images to select from a manifest list.
 
 <a name="to-object"></a>`to` is an object with the following properties:
 
 Property | Type | Default | Description
 --- | --- | --- | ---
 `image` | string | *Required* | The image reference for the target image. This can also be specified via the `-Dimage` command line option.
-`auth` | [`auth`](#auth-object) | *None* | Specify credentials directly (alternative to `credHelper`).
+`auth` | [`auth`](#auth-object) | *None* | Specifies credentials directly (alternative to `credHelper`).
 `credHelper` | string | *None* | Specifies a credential helper that can authenticate pushing the target image. This parameter can either be configured as an absolute path to the credential helper executable or as a credential helper suffix (following `docker-credential-`).
 `tags` | list | *None* | Additional tags to push to.
 
@@ -262,6 +263,15 @@ Property | Type
 `username` | string
 `password` | string
 
+<a name="platform-object"></a>`platform` is an object with the following properties:
+
+Property | Type | Default | Description
+--- | --- | --- | ---
+`architecture` | string | `amd64` | The architecture of a base image to select from a manifest list.
+`os` | string | `linux` | The OS of a base image to select from a manifest list.
+
+See [How do I specify a platform in the manifest list (or OCI index) of a base image?](../docs/faq.md#how-do-i-specify-a-platform-in-the-manifest-list-or-oci-index-of-a-base-image) for examples.
+
 <a name="container-object"></a>`container` is an object with the following properties:
 
 Property | Type | Default | Description
@@ -269,9 +279,10 @@ Property | Type | Default | Description
 `appRoot` | string | `/app` | The root directory on the container where the app's contents are placed. Particularly useful for WAR-packaging projects to work with different Servlet engine base images by designating where to put exploded WAR contents; see [WAR usage](#war-projects) as an example.
 `args` | list | *None* | Additional program arguments appended to the command to start the container (similar to Docker's [CMD](https://docs.docker.com/engine/reference/builder/#cmd) instruction in relation with [ENTRYPOINT](https://docs.docker.com/engine/reference/builder/#entrypoint)). In the default case where you do not set a custom `entrypoint`, this parameter is effectively the arguments to the main method of your Java application.
 `creationTime` | string | `EPOCH` | Sets the container creation time. (Note that this property does not affect the file modification times, which are configured using `<filesModificationTime>`.) The value can be `EPOCH` to set the timestamps to Epoch (default behavior), `USE_CURRENT_TIMESTAMP` to forgo reproducibility and use the real creation time, or an ISO 8601 date-time parsable with [`DateTimeFormatter.ISO_DATE_TIME`](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/time/format/DateTimeFormatter.html#ISO_DATE_TIME) such as `2019-07-15T10:15:30+09:00` or `2011-12-03T22:42:05Z`.
-`entrypoint` | list | *None* | The command to start the container with (similar to Docker's [ENTRYPOINT](https://docs.docker.com/engine/reference/builder/#entrypoint) instruction). If set, then `jvmFlags` and `mainClass` are ignored. You may also set `<entrypoint>INHERIT</entrypoint>` (`<entrypoint><entry>INHERIT</entry></entrypoint>` in old Maven versions) to indicate that the `entrypoint` and `args` should be inherited from the base image.\*
+`entrypoint` | list | *None* | The command to start the container with (similar to Docker's [ENTRYPOINT](https://docs.docker.com/engine/reference/builder/#entrypoint) instruction). If set, then `jvmFlags`, `mainClass`, `extraClasspath`, and `expandClasspathDependencies` are ignored. You may also set `<entrypoint>INHERIT</entrypoint>` (`<entrypoint><entry>INHERIT</entry></entrypoint>` in old Maven versions) to indicate that the `entrypoint` and `args` should be inherited from the base image.\*
 `environment` | map | *None* | Key-value pairs for setting environment variables on the container (similar to Docker's [ENV](https://docs.docker.com/engine/reference/builder/#env) instruction).
 `extraClasspath` | list | *None* | Additional paths in the container to prepend to the computed Java classpath.
+`expandClasspathDependencies` | boolean | `false` | When set to true, does not use a wildcard (for example, `/app/lib/*`) for dependency JARs in the default Java runtime classpath but instead enumerates the JARs. Has the effect of preserving the classpath loading order as defined by the Maven project.
 `filesModificationTime` | string | `EPOCH_PLUS_SECOND` | Sets the modification time (last modified time) of files in the image put by Jib. (Note that this does not set the image creation time, which can be set using `<creationTime>`.) The value should either be `EPOCH_PLUS_SECOND` to set the timestamps to Epoch + 1 second (default behavior), or an ISO 8601 date-time parsable with [`DateTimeFormatter.ISO_DATE_TIME`](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/time/format/DateTimeFormatter.html#ISO_DATE_TIME) such as `2019-07-15T10:15:30+09:00` or `2011-12-03T22:42:05Z`.
 `format` | string | `Docker` | Use `OCI` to build an [OCI container image](https://www.opencontainers.org/).
 `jvmFlags` | list | *None* | Additional flags to pass into the JVM when running your application.
@@ -287,7 +298,7 @@ Property | Type | Default | Description
 Property | Type | Default | Description
 --- | --- | --- | ---
 `paths` | list | `[(project-dir)/src/main/jib]` | List of [`path`](#path-object) objects and/or extra directory paths. Can be absolute or relative to the project root.
-`permissions` | list | *None* | Maps file paths on container to Unix permissions. (Effective only for files added from extra directories.) If not configured, permissions default to "755" for directories and "644" for files.
+`permissions` | list | *None* | Maps file paths (glob patterns) on container to Unix permissions. (Effective only for files added from extra directories.) If not configured, permissions default to "755" for directories and "644" for files. See [Adding Arbitrary Files to the Image](#adding-arbitrary-files-to-the-image) for an example.
 
 <a name="path-object"></a>`path` is an object with the following properties (see [Adding Arbitrary Files to the Image](#adding-arbitrary-files-to-the-image)):
 
@@ -351,7 +362,7 @@ Property | Type | Default | Description
 In this configuration, the image:
 * Is built from a base of `openjdk:alpine` (pulled from Docker Hub)
 * Is pushed to `localhost:5000/my-image:built-with-jib`, `localhost:5000/my-image:tag2`, and `localhost:5000/my-image:latest`
-* Runs by calling `java -Xms512m -Xdebug -Xmy:flag=jib-rules -cp app/libs/*:app/resources:app/classes mypackage.MyApp some args`
+* Runs by calling `java -Dmy.property=example.value -Xms512m -Xdebug -cp app/libs/*:app/resources:app/classes mypackage.MyApp some args`
 * Exposes port 1000 for tcp (default), and ports 2000, 2001, 2002, and 2003 for udp
 * Has two labels (key1:value1 and key2:value2)
 * Is built as OCI format
@@ -371,9 +382,9 @@ In this configuration, the image:
   </to>
   <container>
     <jvmFlags>
+      <jvmFlag>-Dmy.property=example.value</jvmFlag>
       <jvmFlag>-Xms512m</jvmFlag>
       <jvmFlag>-Xdebug</jvmFlag>
-      <jvmFlag>-Xmy:flag=jib-rules</jvmFlag>
     </jvmFlags>
     <mainClass>mypackage.MyApp</mainClass>
     <args>
@@ -408,7 +419,7 @@ Prefix | Example | Type
 
 *\* Note: this is an incubating feature and may change in the future.*
 
-You can add arbitrary, non-classpath files to the image by placing them in a `src/main/jib` directory. This will copy all files within the `jib` folder to the image's root directory, maintaining the same structure (e.g. if you have a text file at `src/main/jib/dir/hello.txt`, then your image will contain `/dir/hello.txt` after being built with Jib).
+You can add arbitrary, non-classpath files to the image by placing them in a `src/main/jib` directory. This will copy all files within the `jib` folder to the target directory (`/` by default) in the image, maintaining the same structure (e.g. if you have a text file at `src/main/jib/dir/hello.txt`, then your image will contain `/dir/hello.txt` after being built with Jib).
 
 Note that Jib does not follow symbolic links in the container image.  If a symbolic link is present, _it will be removed_ prior to placing the files and directories.
 
@@ -444,6 +455,10 @@ Alternatively, the `<extraDirectories>` parameter can be used as an object to se
       <permission>
         <file>/path/to/another/file</file>
         <mode>644</mode> <!-- Read/write for owner, read-only for group/other -->
+      </permission>
+      <permission>
+        <file>/glob/pattern/**/*.sh</file>
+        <mode>755</mode>
       </permission>
     </permissions>
   </extraDirectories>
@@ -519,7 +534,7 @@ Property | Description
 
 e.g. `mvn compile jib:build -Djib.to.auth.username=user -Djib.to.auth.password=pass`
 
-**Note:** This method of authentication should be used only as a last resort, as it is insecure to make your password visible in plain text.
+**Note:** This method of authentication should be used only as a last resort, as it is insecure to make your password visible in plain text. Note that often cloud registries (for example, Google GCR, Amazon ECR, and Azure ACR) do not accept "user credentials" (such as Gmail account name and password) but require different forms of credentials. For example, you may use [`oauth2accesstoken` or `_json_key`](https://cloud.google.com/container-registry/docs/advanced-authentication) as the username for GCR, and [`AWS`](https://serverfault.com/questions/1004915/what-is-the-proper-way-to-log-in-to-ecr) for ECR. For ACR, you may use a [_service principle_](https://docs.microsoft.com/en-us/azure/container-registry/container-registry-auth-service-principal).
 
 #### Using Maven Settings
 

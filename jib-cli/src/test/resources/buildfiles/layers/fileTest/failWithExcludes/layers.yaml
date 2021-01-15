@@ -1,0 +1,7 @@
+entries:
+  - name: "default"
+    files:
+      - src: "toFile.txt"
+        dest: "/target/toFile.txt"
+        excludes:
+          - "**/*"

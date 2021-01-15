@@ -22,6 +22,7 @@ import com.google.cloud.tools.jib.api.JibContainerBuilder;
 import com.google.cloud.tools.jib.api.buildplan.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.api.buildplan.FileEntriesLayer;
 import com.google.cloud.tools.jib.api.buildplan.FilePermissions;
+import com.google.cloud.tools.jib.api.buildplan.ModificationTimeProvider;
 import com.google.cloud.tools.jib.api.buildplan.RelativeUnixPath;
 import com.google.cloud.tools.jib.filesystem.DirectoryWalker;
 import java.io.IOException;
@@ -33,7 +34,7 @@ import java.nio.file.Paths;
 import java.time.Instant;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.function.BiFunction;
+import java.util.Set;
 import java.util.function.Predicate;
 
 /** Helper for constructing {@link JavaContainerBuilder}-based {@link JibContainerBuilder}s. */
@@ -53,7 +54,7 @@ public class JavaContainerBuilderHelper {
       Path sourceDirectory,
       AbsoluteUnixPath targetDirectory,
       Map<String, FilePermissions> extraDirectoryPermissions,
-      BiFunction<Path, AbsoluteUnixPath, Instant> modificationTimeProvider)
+      ModificationTimeProvider modificationTimeProvider)
       throws IOException {
     FileEntriesLayer.Builder builder =
         FileEntriesLayer.builder().setName(LayerType.EXTRA_FILES.getName());
@@ -69,7 +70,7 @@ public class JavaContainerBuilderHelper {
             localPath -> {
               AbsoluteUnixPath pathOnContainer =
                   targetDirectory.resolve(sourceDirectory.relativize(localPath));
-              Instant modificationTime = modificationTimeProvider.apply(localPath, pathOnContainer);
+              Instant modificationTime = modificationTimeProvider.get(localPath, pathOnContainer);
               FilePermissions permissions =
                   extraDirectoryPermissions.get(pathOnContainer.toString());
               if (permissions == null) {
@@ -98,11 +99,15 @@ public class JavaContainerBuilderHelper {
    *
    * @param javaContainerBuilder Java container builder to start with
    * @param explodedWar the exploded WAR directory
+   * @param projectArtifactFilename the file names of project artifacts for project dependencies
    * @return {@link JibContainerBuilder} containing the layers for the exploded WAR
    * @throws IOException if adding layer contents fails
    */
   public static JibContainerBuilder fromExplodedWar(
-      JavaContainerBuilder javaContainerBuilder, Path explodedWar) throws IOException {
+      JavaContainerBuilder javaContainerBuilder,
+      Path explodedWar,
+      Set<String> projectArtifactFilename)
+      throws IOException {
     Path webInfLib = explodedWar.resolve("WEB-INF/lib");
     Path webInfClasses = explodedWar.resolve("WEB-INF/classes");
     Predicate<Path> isDependency = path -> path.startsWith(webInfLib);
@@ -110,6 +115,9 @@ public class JavaContainerBuilderHelper {
         // Don't use Path.endsWith(), since Path works on path elements.
         path -> path.startsWith(webInfClasses) && path.getFileName().toString().endsWith(".class");
     Predicate<Path> isResource = isDependency.or(isClassFile).negate();
+    Predicate<Path> isSnapshot = path -> path.getFileName().toString().contains("SNAPSHOT");
+    Predicate<Path> isProjectDependency =
+        path -> projectArtifactFilename.contains(path.getFileName().toString());
 
     javaContainerBuilder
         .setResourcesDestination(RelativeUnixPath.get(""))
@@ -123,16 +131,17 @@ public class JavaContainerBuilderHelper {
       javaContainerBuilder.addClasses(webInfClasses, isClassFile);
     }
     if (Files.exists(webInfLib)) {
+
       javaContainerBuilder.addDependencies(
           new DirectoryWalker(webInfLib)
               .filterRoot()
-              .filter(path -> !path.getFileName().toString().contains("SNAPSHOT"))
+              .filter(isSnapshot.negate())
+              .filter(isProjectDependency.negate())
               .walk());
       javaContainerBuilder.addSnapshotDependencies(
-          new DirectoryWalker(webInfLib)
-              .filterRoot()
-              .filter(path -> path.getFileName().toString().contains("SNAPSHOT"))
-              .walk());
+          new DirectoryWalker(webInfLib).filterRoot().filter(isSnapshot).walk());
+      javaContainerBuilder.addProjectDependencies(
+          new DirectoryWalker(webInfLib).filterRoot().filter(isProjectDependency).walk());
     }
     return javaContainerBuilder.toContainerBuilder();
   }

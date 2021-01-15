@@ -16,33 +16,64 @@
 
 package com.google.cloud.tools.jib.cache;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.cloud.tools.jib.api.DescriptorDigest;
 import com.google.cloud.tools.jib.api.ImageReference;
 import com.google.cloud.tools.jib.blob.Blobs;
 import com.google.cloud.tools.jib.filesystem.LockFile;
+import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
 import com.google.cloud.tools.jib.image.json.ContainerConfigurationTemplate;
-import com.google.cloud.tools.jib.image.json.ManifestAndConfig;
+import com.google.cloud.tools.jib.image.json.ImageMetadataTemplate;
+import com.google.cloud.tools.jib.image.json.ManifestAndConfigTemplate;
 import com.google.cloud.tools.jib.image.json.ManifestTemplate;
-import com.google.cloud.tools.jib.image.json.OciManifestTemplate;
 import com.google.cloud.tools.jib.image.json.V21ManifestTemplate;
-import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
+import com.google.common.annotations.VisibleForTesting;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.DigestException;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /** Reads from the default cache storage engine. */
 class CacheStorageReader {
+
+  @VisibleForTesting
+  static void verifyImageMetadata(ImageMetadataTemplate metadata, Path metadataCacheDirectory)
+      throws CacheCorruptedException {
+    List<ManifestAndConfigTemplate> manifestsAndConfigs = metadata.getManifestsAndConfigs();
+    if (manifestsAndConfigs.isEmpty()) {
+      throw new CacheCorruptedException(metadataCacheDirectory, "Manifest cache empty");
+    }
+    if (manifestsAndConfigs.stream().anyMatch(entry -> entry.getManifest() == null)) {
+      throw new CacheCorruptedException(metadataCacheDirectory, "Manifest(s) missing");
+    }
+    if (metadata.getManifestList() == null && manifestsAndConfigs.size() != 1) {
+      throw new CacheCorruptedException(metadataCacheDirectory, "Manifest list missing");
+    }
+
+    ManifestTemplate firstManifest = manifestsAndConfigs.get(0).getManifest();
+    if (firstManifest instanceof V21ManifestTemplate) {
+      if (metadata.getManifestList() != null
+          || manifestsAndConfigs.stream().anyMatch(entry -> entry.getConfig() != null)) {
+        throw new CacheCorruptedException(metadataCacheDirectory, "Schema 1 manifests corrupted");
+      }
+    } else if (firstManifest instanceof BuildableManifestTemplate) {
+      if (manifestsAndConfigs.stream().anyMatch(entry -> entry.getConfig() == null)) {
+        throw new CacheCorruptedException(metadataCacheDirectory, "Schema 2 manifests corrupted");
+      }
+      if (metadata.getManifestList() != null
+          && manifestsAndConfigs.stream().anyMatch(entry -> entry.getManifestDigest() == null)) {
+        throw new CacheCorruptedException(metadataCacheDirectory, "Schema 2 manifests corrupted");
+      }
+    } else {
+      throw new CacheCorruptedException(
+          metadataCacheDirectory, "Unknown manifest type: " + firstManifest);
+    }
+  }
 
   private final CacheStorageFiles cacheStorageFiles;
 
@@ -51,100 +82,28 @@ class CacheStorageReader {
   }
 
   /**
-   * Lists all the layer digests stored.
-   *
-   * @return the list of layer digests
-   * @throws CacheCorruptedException if the cache was found to be corrupted
-   * @throws IOException if an I/O exception occurs
-   */
-  Set<DescriptorDigest> fetchDigests() throws IOException, CacheCorruptedException {
-    try (Stream<Path> layerDirectories = Files.list(cacheStorageFiles.getLayersDirectory())) {
-      List<Path> layerDirectoriesList = layerDirectories.collect(Collectors.toList());
-      Set<DescriptorDigest> layerDigests = new HashSet<>(layerDirectoriesList.size());
-      for (Path layerDirectory : layerDirectoriesList) {
-        try {
-          layerDigests.add(DescriptorDigest.fromHash(layerDirectory.getFileName().toString()));
-
-        } catch (DigestException ex) {
-          throw new CacheCorruptedException(
-              cacheStorageFiles.getCacheDirectory(),
-              "Found non-digest file in layers directory",
-              ex);
-        }
-      }
-      return layerDigests;
-    }
-  }
-
-  /**
-   * Retrieves the cached manifest and container configuration for an image reference.
+   * Retrieves the cached image metadata (a manifest list and a list of manifest/container
+   * configuration pairs) for an image reference.
    *
    * @param imageReference the image reference
-   * @return the manifest and container configuration for the image reference, if found
+   * @return the image metadata for the image reference, if found
    * @throws IOException if an I/O exception occurs
    * @throws CacheCorruptedException if the cache is corrupted
    */
-  Optional<ManifestAndConfig> retrieveMetadata(ImageReference imageReference)
+  Optional<ImageMetadataTemplate> retrieveMetadata(ImageReference imageReference)
       throws IOException, CacheCorruptedException {
     Path imageDirectory = cacheStorageFiles.getImageDirectory(imageReference);
-    Path manifestPath = imageDirectory.resolve("manifest.json");
-    if (!Files.exists(manifestPath)) {
+    Path metadataPath = imageDirectory.resolve("manifests_configs.json");
+    if (!Files.exists(metadataPath)) {
       return Optional.empty();
     }
 
+    ImageMetadataTemplate metadata;
     try (LockFile ignored = LockFile.lock(imageDirectory.resolve("lock"))) {
-      // TODO: Consolidate with ManifestPuller
-      ObjectNode node =
-          new ObjectMapper().readValue(Files.newInputStream(manifestPath), ObjectNode.class);
-      if (!node.has("schemaVersion")) {
-        throw new CacheCorruptedException(
-            cacheStorageFiles.getCacheDirectory(), "Cannot find field 'schemaVersion' in manifest");
-      }
-
-      int schemaVersion = node.get("schemaVersion").asInt(-1);
-      if (schemaVersion == -1) {
-        throw new CacheCorruptedException(
-            cacheStorageFiles.getCacheDirectory(),
-            "`schemaVersion` field is not an integer in manifest");
-      }
-
-      if (schemaVersion == 1) {
-        return Optional.of(
-            new ManifestAndConfig(
-                JsonTemplateMapper.readJsonFromFile(manifestPath, V21ManifestTemplate.class),
-                null));
-      }
-      if (schemaVersion == 2) {
-        // 'schemaVersion' of 2 can be either Docker V2.2 or OCI.
-        String mediaType = node.get("mediaType").asText();
-
-        ManifestTemplate manifestTemplate;
-        if (V22ManifestTemplate.MANIFEST_MEDIA_TYPE.equals(mediaType)) {
-          manifestTemplate =
-              JsonTemplateMapper.readJsonFromFile(manifestPath, V22ManifestTemplate.class);
-        } else if (OciManifestTemplate.MANIFEST_MEDIA_TYPE.equals(mediaType)) {
-          manifestTemplate =
-              JsonTemplateMapper.readJsonFromFile(manifestPath, OciManifestTemplate.class);
-        } else {
-          throw new CacheCorruptedException(
-              cacheStorageFiles.getCacheDirectory(), "Unknown manifest mediaType: " + mediaType);
-        }
-
-        Path configPath = imageDirectory.resolve("config.json");
-        if (!Files.exists(configPath)) {
-          throw new CacheCorruptedException(
-              cacheStorageFiles.getCacheDirectory(),
-              "Manifest found, but missing container configuration");
-        }
-        ContainerConfigurationTemplate config =
-            JsonTemplateMapper.readJsonFromFile(configPath, ContainerConfigurationTemplate.class);
-
-        return Optional.of(new ManifestAndConfig(manifestTemplate, config));
-      }
-      throw new CacheCorruptedException(
-          cacheStorageFiles.getCacheDirectory(),
-          "Unknown schemaVersion in manifest: " + schemaVersion + " - only 1 and 2 are supported");
+      metadata = JsonTemplateMapper.readJsonFromFile(metadataPath, ImageMetadataTemplate.class);
     }
+    verifyImageMetadata(metadata, imageDirectory);
+    return Optional.of(metadata);
   }
 
   /**

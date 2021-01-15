@@ -28,9 +28,11 @@ import com.google.cloud.tools.jib.plugins.common.InvalidContainerVolumeException
 import com.google.cloud.tools.jib.plugins.common.InvalidContainerizingModeException;
 import com.google.cloud.tools.jib.plugins.common.InvalidCreationTimeException;
 import com.google.cloud.tools.jib.plugins.common.InvalidFilesModificationTimeException;
+import com.google.cloud.tools.jib.plugins.common.InvalidPlatformException;
 import com.google.cloud.tools.jib.plugins.common.InvalidWorkingDirectoryException;
 import com.google.cloud.tools.jib.plugins.common.MainClassInferenceException;
 import com.google.cloud.tools.jib.plugins.common.PluginConfigurationProcessor;
+import com.google.cloud.tools.jib.plugins.common.globalconfig.GlobalConfig;
 import com.google.cloud.tools.jib.plugins.extension.JibPluginExtensionException;
 import com.google.common.base.Preconditions;
 import java.io.IOException;
@@ -104,7 +106,7 @@ public class BuildDockerTask extends DefaultTask implements JibTask {
     GradleProjectProperties projectProperties =
         GradleProjectProperties.getForProject(getProject(), getLogger(), tempDirectoryProvider);
     Future<Optional<String>> updateCheckFuture =
-        TaskCommon.newUpdateChecker(projectProperties, getLogger());
+        TaskCommon.newUpdateChecker(projectProperties, GlobalConfig.readConfig(), getLogger());
     try {
       PluginConfigurationProcessor.createJibBuildRunnerForDockerDaemonImage(
               new GradleRawConfiguration(jibExtension),
@@ -125,6 +127,14 @@ public class BuildDockerTask extends DefaultTask implements JibTask {
       throw new GradleException(
           "container.workingDirectory is not an absolute Unix-style path: "
               + ex.getInvalidPathValue(),
+          ex);
+
+    } catch (InvalidPlatformException ex) {
+      throw new GradleException(
+          "from.platforms contains a platform configuration that is missing required values or has invalid values: "
+              + ex.getMessage()
+              + ": "
+              + ex.getInvalidPlatform(),
           ex);
 
     } catch (InvalidContainerVolumeException ex) {

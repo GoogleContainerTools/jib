@@ -168,4 +168,19 @@ public class FileEntry {
   public int hashCode() {
     return Objects.hash(sourceFile, extractionPath, permissions, modificationTime, ownership);
   }
+
+  @Override
+  public String toString() {
+    return "{"
+        + sourceFile
+        + ","
+        + extractionPath
+        + ","
+        + permissions
+        + ","
+        + modificationTime
+        + ","
+        + ownership
+        + "}";
+  }
 }

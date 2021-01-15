@@ -24,6 +24,7 @@ import java.util.Arrays;
 import org.apache.maven.it.VerificationException;
 import org.apache.maven.it.Verifier;
 import org.hamcrest.CoreMatchers;
+import org.hamcrest.MatcherAssert;
 import org.junit.Assert;
 import org.junit.Assume;
 import org.junit.ClassRule;
@@ -63,14 +64,14 @@ public class BuildDockerMojoIntegrationTest {
     buildToDockerDaemon(projectRoot, imageReference, "pom.xml");
 
     String dockerInspect = new Command("docker", "inspect", imageReference).run();
-    Assert.assertThat(
+    MatcherAssert.assertThat(
         dockerInspect,
         CoreMatchers.containsString(
             "            \"Volumes\": {\n"
                 + "                \"/var/log\": {},\n"
                 + "                \"/var/log2\": {}\n"
                 + "            },"));
-    Assert.assertThat(
+    MatcherAssert.assertThat(
         dockerInspect,
         CoreMatchers.containsString(
             "            \"ExposedPorts\": {\n"
@@ -79,7 +80,7 @@ public class BuildDockerMojoIntegrationTest {
                 + "                \"2001/udp\": {},\n"
                 + "                \"2002/udp\": {},\n"
                 + "                \"2003/udp\": {}"));
-    Assert.assertThat(
+    MatcherAssert.assertThat(
         dockerInspect,
         CoreMatchers.containsString(
             "            \"Labels\": {\n"
@@ -210,7 +211,7 @@ public class BuildDockerMojoIntegrationTest {
       Assert.fail();
 
     } catch (VerificationException ex) {
-      Assert.assertThat(
+      MatcherAssert.assertThat(
           ex.getMessage(),
           CoreMatchers.containsString(
               "Obtaining project build output files failed; make sure you have packaged your "
@@ -242,7 +243,7 @@ public class BuildDockerMojoIntegrationTest {
       verifier.executeGoals(Arrays.asList("package", "jib:dockerBuild"));
       Assert.fail();
     } catch (VerificationException ex) {
-      Assert.assertThat(
+      MatcherAssert.assertThat(
           ex.getMessage(), CoreMatchers.containsString("but is required to be [,1.0]"));
     }
   }

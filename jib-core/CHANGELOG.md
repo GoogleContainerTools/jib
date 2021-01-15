@@ -5,10 +5,50 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+### Changed
+
+### Fixed
+
+## 0.17.0
+
+### Fixed
+
+- Updated jackson dependency version causing compatibility issues. ([#2931](https://github.com/GoogleContainerTools/jib/issues/2931))
+- Fixed `NullPointerException` when pulling an OCI base image whose manifest does not have `mediaType` information. ([#2819](https://github.com/GoogleContainerTools/jib/issues/2819))
+- Fixed build failure when using a Docker daemon base image (`docker://...`) that has duplicate layers. ([#2829](https://github.com/GoogleContainerTools/jib/issues/2829))
+
+## 0.16.0
+
+### Added
+
+- Allow setting platform when building image from scratch. ([#2765](https://github.com/GoogleContainerTools/jib/issues/2765))
+- New system property `jib.skipExistingImages` (false by default) to skip pushing images (manifests) if the image already exists in the registry. ([#2360](https://github.com/GoogleContainerTools/jib/issues/2360))
+- _Incubating feature_: can now configure multiple platforms (such as architectures) to build multiple images as a bundle and push as a manifest list (also known as a fat manifest). As an incubating feature, there are certain limitations. For example, OCI image indices are not supported, and building a manifest list is supported only for registry pushing (using `RegistryImage`). ([#2523](https://github.com/GoogleContainerTools/jib/issues/2523), [#1567](https://github.com/GoogleContainerTools/jib/issues/1567))
+
+### Changed
+
+- Upgraded jib-build-plan to 0.4.0. ([#2660](https://github.com/GoogleContainerTools/jib/pull/2660))
+- Previous locally cached base image manifests will be ignored, as the caching mechanism changed to enable multi-platform image building. ([#2730](https://github.com/GoogleContainerTools/jib/pull/2730), [#2711](https://github.com/GoogleContainerTools/jib/pull/2711))
+- Upgraded the ASM library to 9.0 to resolve an issue when auto-inferring main class in Java 15+. ([#2776](https://github.com/GoogleContainerTools/jib/pull/2776))
+
+### Fixed
+
+- Fixed `NullPointerException` when the `"auths":` section in `~/.docker/config.json` has an entry with no `"auth":` field. ([#2535](https://github.com/GoogleContainerTools/jib/issues/2535))
+- Fixed `NullPointerException` to return a helpful message when a server does not provide any message in certain error cases (400 Bad Request, 404 Not Found, and 405 Method Not Allowed). ([#2532](https://github.com/GoogleContainerTools/jib/issues/2532))
+- Now supports sending client certificate (for example, via the `javax.net.ssl.keyStore` and `javax.net.ssl.keyStorePassword` system properties) and thus enabling mutual TLS authentication. ([#2585](https://github.com/GoogleContainerTools/jib/issues/2585), [#2226](https://github.com/GoogleContainerTools/jib/issues/2226))
+- Fixed `NullPointerException` during input validation (in Java 9+) when configuring Jib parameters using certain immutable collections (such as `List.of()`). ([#2702](https://github.com/GoogleContainerTools/jib/issues/2702))
+- Fixed authentication failure with Azure Container Registry when using ["tokens"](https://docs.microsoft.com/en-us/azure/container-registry/container-registry-repository-scoped-permissions). ([#2784](https://github.com/GoogleContainerTools/jib/issues/2784))
+- Improved authentication flow for base image registry. ([#2134](https://github.com/GoogleContainerTools/jib/issues/2134))
+
+## 0.15.0
+
+### Added
+
 - Now sets configured file ownership when creating layer tars. ([#2499](https://github.com/GoogleContainerTools/jib/pull/2499))
 
 ### Changed
 
+- `Ports.parse(List<String> ports)` now returns a `Set`(as a `HashSet`) instead of `ImmutableSet` ([#2513](https://github.com/GoogleContainerTools/jib/pull/2513))
 - Previous locally cached application layers will be ignored because of changes to the caching selectors. ([#2499](https://github.com/GoogleContainerTools/jib/pull/2499))
 
 ### Fixed

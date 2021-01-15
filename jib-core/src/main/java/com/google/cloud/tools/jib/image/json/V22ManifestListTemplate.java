@@ -20,6 +20,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.google.cloud.tools.jib.json.JsonTemplate;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
@@ -68,12 +69,32 @@ public class V22ManifestListTemplate implements ManifestTemplate {
       "application/vnd.docker.distribution.manifest.list.v2+json";
   private static final int SCHEMA_VERSION = 2;
 
+  private final int schemaVersion = SCHEMA_VERSION;
+  private final String mediaType = MANIFEST_MEDIA_TYPE;
+
   @Override
   public int getSchemaVersion() {
-    return SCHEMA_VERSION;
+    return schemaVersion;
+  }
+
+  @Override
+  public String getManifestMediaType() {
+    return mediaType;
   }
 
   @Nullable private List<ManifestDescriptorTemplate> manifests;
+
+  /**
+   * Adds a manifest.
+   *
+   * @param manifest a manifest descriptor
+   */
+  public void addManifest(ManifestDescriptorTemplate manifest) {
+    if (manifests == null) {
+      manifests = new ArrayList<>();
+    }
+    manifests.add(manifest);
+  }
 
   @VisibleForTesting
   public List<ManifestDescriptorTemplate> getManifests() {
@@ -107,6 +128,16 @@ public class V22ManifestListTemplate implements ManifestTemplate {
     public static class Platform implements JsonTemplate {
       @Nullable private String architecture;
       @Nullable private String os;
+
+      @Nullable
+      public String getArchitecture() {
+        return architecture;
+      }
+
+      @Nullable
+      public String getOs() {
+        return os;
+      }
     }
 
     @Nullable private String mediaType;
@@ -117,9 +148,21 @@ public class V22ManifestListTemplate implements ManifestTemplate {
 
     @Nullable private Platform platform;
 
+    public void setSize(long size) {
+      this.size = size;
+    }
+
+    public void setDigest(String digest) {
+      this.digest = digest;
+    }
+
     @Nullable
-    private String getDigest() {
+    public String getDigest() {
       return digest;
+    }
+
+    public void setMediaType(String mediaType) {
+      this.mediaType = mediaType;
     }
 
     @Nullable
@@ -127,9 +170,20 @@ public class V22ManifestListTemplate implements ManifestTemplate {
       return mediaType;
     }
 
-    @VisibleForTesting
+    /**
+     * Sets a platform.
+     *
+     * @param architecture the manifest architecture
+     * @param os the manifest os
+     */
+    public void setPlatform(String architecture, String os) {
+      platform = new Platform();
+      platform.architecture = architecture;
+      platform.os = os;
+    }
+
     @Nullable
-    Platform getPlatform() {
+    public Platform getPlatform() {
       return platform;
     }
   }

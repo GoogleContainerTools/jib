@@ -5,18 +5,18 @@ plugins {
 }
 
 dependencies {
-  compileOnly "com.google.code.findbugs:jsr305:${dependencyVersions.JSR305}"
+  compileOnly dependencyStrings.JSR305
 
-  testImplementation "com.google.guava:guava:${dependencyVersions.GUAVA}"
-  testImplementation "junit:junit:${dependencyVersions.JUNIT}"
-  testImplementation "org.mockito:mockito-core:${dependencyVersions.MOCKITO_CORE}"
-  testImplementation "org.slf4j:slf4j-api:${dependencyVersions.SLF4J_API}"
-  testImplementation "com.github.stefanbirkner:system-rules:${dependencyVersions.SYSTEM_RULES}"
+  testImplementation dependencyStrings.GUAVA
+  testImplementation dependencyStrings.JUNIT
+  testImplementation dependencyStrings.MOCKITO_CORE
+  testImplementation dependencyStrings.SLF4J_API
+  testImplementation dependencyStrings.SYSTEM_RULES
 }
 
 jar {
   manifest {
-    attributes 'Implementation-Version': version
+    attributes 'Implementation-Version': archiveVersion
     attributes 'Automatic-Module-Name': 'com.google.cloud.tools.jib.api.buildplan'
 
     // OSGi metadata
@@ -48,19 +48,11 @@ publishing {
 release {
   tagTemplate = 'v$version-build-plan'
   git {
-    requireBranch = /^build_plan_release_v\d+.*$/  //regex
+    requireBranch = /^build-plan-release-v\d+.*$/  //regex
   }
 }
 /* RELEASE */
 
 /* ECLIPSE */
-// TODO: remove after upgrading to Gradle 5.6. (https://github.com/eclipse/buildship/issues/689)
-// Also remove the 'eclipse' plugin.
-eclipse.classpath.file.whenMerged {
-  entries.findAll {
-    it.path in ['src/test/java', 'src/test/resources']
-  }.each {
-    it.entryAttributes['test'] = 'true'
-  }
-}
+eclipse.classpath.plusConfigurations += [configurations.integrationTestImplementation]
 /* ECLIPSE */

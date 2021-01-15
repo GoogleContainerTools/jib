@@ -24,6 +24,7 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Paths;
 import org.hamcrest.CoreMatchers;
+import org.hamcrest.MatcherAssert;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -60,7 +61,7 @@ public class MainClassResolverTest {
       Assert.fail();
 
     } catch (MainClassInferenceException ex) {
-      Assert.assertThat(
+      MatcherAssert.assertThat(
           ex.getMessage(),
           CoreMatchers.containsString(
               "'mainClass' configured in jib-plugin is not a valid Java class: In Val id"));
@@ -99,7 +100,7 @@ public class MainClassResolverTest {
       Assert.fail();
 
     } catch (MainClassInferenceException ex) {
-      Assert.assertThat(
+      MatcherAssert.assertThat(
           ex.getMessage(),
           CoreMatchers.containsString(
               "Multiple valid main classes were found: HelloWorld, multi.layered.HelloMoon"));
@@ -132,7 +133,7 @@ public class MainClassResolverTest {
       Assert.fail();
 
     } catch (MainClassInferenceException ex) {
-      Assert.assertThat(
+      MatcherAssert.assertThat(
           ex.getMessage(),
           CoreMatchers.containsString(
               "Multiple valid main classes were found: HelloWorld, multi.layered.HelloMoon"));
@@ -159,7 +160,8 @@ public class MainClassResolverTest {
       Assert.fail();
 
     } catch (MainClassInferenceException ex) {
-      Assert.assertThat(ex.getMessage(), CoreMatchers.containsString("Main class was not found"));
+      MatcherAssert.assertThat(
+          ex.getMessage(), CoreMatchers.containsString("Main class was not found"));
 
       String info1 =
           "Searching for main class... Add a 'mainClass' configuration to 'jib-plugin' to "
@@ -184,7 +186,8 @@ public class MainClassResolverTest {
       Assert.fail();
 
     } catch (MainClassInferenceException ex) {
-      Assert.assertThat(ex.getMessage(), CoreMatchers.containsString("Main class was not found"));
+      MatcherAssert.assertThat(
+          ex.getMessage(), CoreMatchers.containsString("Main class was not found"));
 
       String info1 =
           "Searching for main class... Add a 'mainClass' configuration to 'jib-plugin' to "

@@ -1,0 +1,11 @@
+entries:
+  - name: "root writer"
+    files:
+      - src: "dir"
+        dest: "/"
+  - name: "root parent fill"
+    files:
+      - src: "."
+        dest: "/"
+        includes:
+          - "**/file.txt"

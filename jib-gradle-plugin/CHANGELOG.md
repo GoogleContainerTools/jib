@@ -7,6 +7,101 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
+### Fixed
+
+## 2.7.1
+
+### Fixed
+
+- Updated jackson dependency version causing compatibility issues. ([#2931](https://github.com/GoogleContainerTools/jib/issues/2931))
+- Deprecated use of `@Optional` on boolean attribute ([#2930](https://github.com/GoogleContainerTools/jib/issues/2930))
+
+## 2.7.0
+
+### Added
+
+- Added an option `jib.container.expandClasspathDependencies` to preserve the order of loading dependencies as configured in a project. The option enumerates dependency JARs instead of using a wildcard (`/app/libs/*`) in the Java runtime classpath for an image entrypoint. ([#1871](https://github.com/GoogleContainerTools/jib/issues/1871), [#1907](https://github.com/GoogleContainerTools/jib/issues/1907), [#2228](https://github.com/GoogleContainerTools/jib/issues/2228), [#2733](https://github.com/GoogleContainerTools/jib/issues/2733))
+    - The option is also useful for AppCDS. ([#2471](https://github.com/GoogleContainerTools/jib/issues/2471))
+    - Turning on the option may result in a very long classpath string, and the OS may not support passing such a long string to JVM.
+- Added lazy evaluation for `jib.(to|from).auth.(username|password)` and `jib.from.image` using Gradle Property and Provider. ([#2905](https://github.com/GoogleContainerTools/jib/issues/2905))
+
+### Fixed
+
+- Fixed `NullPointerException` when pulling an OCI base image whose manifest does not have `mediaType` information. ([#2819](https://github.com/GoogleContainerTools/jib/issues/2819))
+- Fixed build failure when using a Docker daemon base image (`docker://...`) that has duplicate layers. ([#2829](https://github.com/GoogleContainerTools/jib/issues/2829))
+
+## 2.6.0
+
+### Added
+
+- Added lazy evaluation for `jib.to.image` and `jib.to.tags` using Gradle Property and Provider. ([#2727](https://github.com/GoogleContainerTools/jib/issues/2727))
+- _Incubating feature_: can now configure multiple platforms (such as architectures) to build multiple images as a bundle and push as a manifest list (also known as a fat manifest). As an incubating feature, there are certain limitations. For example, OCI image indices are not supported, and building a manifest list is supported only for registry pushing (the `jib` task). ([#2523](https://github.com/GoogleContainerTools/jib/issues/2523))
+   ```gradle
+   jib.from {
+     image = '... image reference to a manifest list ...'
+     platforms {
+       platform {
+         architecture = 'arm64'
+         os = 'linux'
+       }
+     }
+   }
+   ```
+
+### Changed
+
+- Previous locally cached base image manifests will be ignored, as the caching mechanism changed to enable multi-platform image building. ([#2730](https://github.com/GoogleContainerTools/jib/pull/2730), [#2711](https://github.com/GoogleContainerTools/jib/pull/2711))
+- Upgraded the ASM library to 9.0 to resolve an issue when auto-inferring main class in Java 15+. ([#2776](https://github.com/GoogleContainerTools/jib/pull/2776))
+
+### Fixed
+
+- Fixed `NullPointerException` during input validation (in Java 9+) when configuring Jib parameters using certain immutable collections (such as `List.of()`). ([#2702](https://github.com/GoogleContainerTools/jib/issues/2702))
+- Fixed authentication failure with Azure Container Registry when using ["tokens"](https://docs.microsoft.com/en-us/azure/container-registry/container-registry-repository-scoped-permissions). ([#2784](https://github.com/GoogleContainerTools/jib/issues/2784))
+- Improved authentication flow for base image registry. ([#2134](https://github.com/GoogleContainerTools/jib/issues/2134))
+- Throw `IllegalArgumentException` with an error message instead of throwing a `NullPointerException` when `jib.to.tags` is set to a collection containing a `null` value. ([#2760](https://github.com/GoogleContainerTools/jib/issues/2760))
+
+## 2.5.1
+
+### Fixed
+
+- Fixed an issue that configuring `jib.from.platforms` was always additive to the default `amd64/linux` platform. ([#2783](https://github.com/GoogleContainerTools/jib/issues/2783))
+
+## 2.5.0
+
+### Added
+
+- Also tries `.exe` file extension for credential helpers on Windows. ([#2527](https://github.com/GoogleContainerTools/jib/issues/2527))
+- New system property `jib.skipExistingImages` (false by default) to skip pushing images (manifests) if the image already exists in the registry. ([#2360](https://github.com/GoogleContainerTools/jib/issues/2360))
+- _Incubating feature_: can now configure desired platform (architecture and OS) to select the matching manifest from a Docker manifest list. Currently supports building only one image. OCI image indices are not supported. ([#1567](https://github.com/GoogleContainerTools/jib/issues/1567))
+   ```gradle
+   jib.from {
+     image = '... image reference to a manifest list ...'
+     platforms {
+       platform {
+         architecture = 'arm64'
+         os = 'linux'
+       }
+     }
+   }
+   ```
+
+### Fixed
+
+- Fixed reporting a wrong credential helper name when the helper does not exist on Windows. ([#2527](https://github.com/GoogleContainerTools/jib/issues/2527))
+- Fixed `NullPointerException` when the `"auths":` section in `~/.docker/config.json` has an entry with no `"auth":` field. ([#2535](https://github.com/GoogleContainerTools/jib/issues/2535))
+- Fixed `NullPointerException` to return a helpful message when a server does not provide any message in certain error cases (400 Bad Request, 404 Not Found, and 405 Method Not Allowed). ([#2532](https://github.com/GoogleContainerTools/jib/issues/2532))
+- Now supports sending client certificate (for example, via the `javax.net.ssl.keyStore` and `javax.net.ssl.keyStorePassword` system properties) and thus enabling mutual TLS authentication. ([#2585](https://github.com/GoogleContainerTools/jib/issues/2585), [#2226](https://github.com/GoogleContainerTools/jib/issues/2226))
+- Fixed an issue where Jib cannot infer Kotlin main class that takes no arguments. ([#2666](https://github.com/GoogleContainerTools/jib/pull/2666))
+
+## 2.4.0
+
+### Added
+
+- Jib Extension Framework! The framework enables anyone to easily extend and tailor the Jib Gradle plugin behavior to their liking. Check out the new [Jib Extensions](https://github.com/GoogleContainerTools/jib-extensions) GitHub repository to learn more. ([#2401](https://github.com/GoogleContainerTools/jib/issues/2401))
+- Project dependencies in a multi-module WAR project are now stored in a separate "project dependencies" layer (as currently done for a non-WAR project). ([#2450](https://github.com/GoogleContainerTools/jib/issues/2450))
+
+### Changed
+
 - Previous locally cached application layers (`<project root>/target/jib-cache`) will be ignored because of changes to the caching selectors. ([#2499](https://github.com/GoogleContainerTools/jib/pull/2499))
 
 ### Fixed
@@ -33,6 +128,7 @@ All notable changes to this project will be documented in this file.
 - Glob pattern support for `jib.extraDirectories.permissions`. ([#1200](https://github.com/GoogleContainerTools/jib/issues/1200))
 - Support for image references with both a tag and a digest. ([#1481](https://github.com/GoogleContainerTools/jib/issues/1481))
 - The `DOCKER_CONFIG` environment variable specifying the directory containing docker configs is now checked during credential retrieval. ([#1618](https://github.com/GoogleContainerTools/jib/issues/1618))
+- Also tries `.cmd` file extension for credential helpers on Windows. ([#2399](https://github.com/GoogleContainerTools/jib/issues/2399))
 
 ### Changed
 
@@ -494,7 +590,7 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
-- Using base images that lack entrypoints. ([#284](https://github.com/GoogleContainerTools/jib/pull/284)
+- Using base images that lack entrypoints. ([#284](https://github.com/GoogleContainerTools/jib/pull/284))
 
 ## 0.1.1
 

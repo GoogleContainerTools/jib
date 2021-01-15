@@ -1,0 +1,14 @@
+properties:
+  # file properties applied to all layers
+  filePermissions: "644"
+  directoryPermissions: "755"
+  user: "0"
+  group: "0"
+  timestamp: "0"
+entries:
+  - name: "default"
+    files:
+      - src: "toFile.txt"
+        dest: "/target/toFile.txt"
+      - src: "toDir.txt"
+        dest: "/target/dir/"

@@ -21,6 +21,7 @@ import com.google.common.collect.ImmutableSet;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -46,7 +47,7 @@ public class PortsTest {
                 Port.udp(6001),
                 Port.udp(6002))
             .build();
-    ImmutableSet<Port> result = Ports.parse(goodInputs);
+    Set<Port> result = Ports.parse(goodInputs);
     Assert.assertEquals(expected, result);
 
     List<String> badInputs = Arrays.asList("abc", "/udp", "1000/abc", "a100/tcp", "20/udpabc");

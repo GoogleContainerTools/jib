@@ -1,0 +1,5 @@
+entries:
+  - name: "default"
+    files:
+      - src: "something-that-does-not-exist"
+        dest: "/target/"

@@ -1,0 +1,47 @@
+properties:
+  filePermissions: "000"
+  directoryPermissions: "700"
+  user: "0"
+  group: "0"
+  timestamp: "0"
+entries:
+  - name: "level 0 passthrough"
+    files:
+      - src: "dir"
+        dest: "/app/"
+  - name: "level 1 overrides"
+    properties:
+      filePermissions: "111"
+      directoryPermissions: "711"
+      user: "1"
+      group: "1"
+      timestamp: "1000"
+    files:
+      - src: "dir"
+        dest: "/app/"
+  - name: "level 2 overrides"
+    properties:
+      filePermissions: "111"
+      directoryPermissions: "711"
+      user: "1"
+      group: "1"
+      timestamp: "1000"
+    files:
+      - src: "dir"
+        dest: "/app/"
+        properties:
+          filePermissions: "222"
+          directoryPermissions: "722"
+          user: "2"
+          group: "2"
+          timestamp: "2000"
+  - name: "partial overrides"
+    properties:
+      filePermissions: "111"
+      directoryPermissions: "711"
+    files:
+      - src: "dir"
+        dest: "/app/"
+        properties:
+          group: "2"
+          timestamp: "2000"

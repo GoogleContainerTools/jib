@@ -31,6 +31,7 @@ import com.google.cloud.tools.jib.registry.RegistryClient;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import com.google.common.base.Verify;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import java.io.Closeable;
@@ -270,6 +271,9 @@ public class BuildContext implements Closeable {
       if (targetImageConfiguration == null) {
         missingFields.add("target image configuration");
       }
+      if (containerConfiguration == null) {
+        missingFields.add("container configuration");
+      }
       if (baseImageLayersCacheDirectory == null) {
         missingFields.add("base image layers cache directory");
       }
@@ -291,9 +295,9 @@ public class BuildContext implements Closeable {
 
           return new BuildContext(
               baseImageConfiguration,
-              Preconditions.checkNotNull(targetImageConfiguration),
+              Verify.verifyNotNull(targetImageConfiguration),
               additionalTargetImageTags,
-              containerConfiguration,
+              Verify.verifyNotNull(containerConfiguration),
               Cache.withDirectory(Preconditions.checkNotNull(baseImageLayersCacheDirectory)),
               Cache.withDirectory(Preconditions.checkNotNull(applicationLayersCacheDirectory)),
               targetFormat,
@@ -353,7 +357,7 @@ public class BuildContext implements Closeable {
   private final ImageConfiguration baseImageConfiguration;
   private final ImageConfiguration targetImageConfiguration;
   private final ImmutableSet<String> additionalTargetImageTags;
-  @Nullable private final ContainerConfiguration containerConfiguration;
+  private final ContainerConfiguration containerConfiguration;
   private final Cache baseImageLayersCache;
   private final Cache applicationLayersCache;
   private Class<? extends BuildableManifestTemplate> targetFormat;
@@ -372,7 +376,7 @@ public class BuildContext implements Closeable {
       ImageConfiguration baseImageConfiguration,
       ImageConfiguration targetImageConfiguration,
       ImmutableSet<String> additionalTargetImageTags,
-      @Nullable ContainerConfiguration containerConfiguration,
+      ContainerConfiguration containerConfiguration,
       Cache baseImageLayersCache,
       Cache applicationLayersCache,
       Class<? extends BuildableManifestTemplate> targetFormat,
@@ -424,7 +428,6 @@ public class BuildContext implements Closeable {
     return allTargetImageTags.build();
   }
 
-  @Nullable
   public ContainerConfiguration getContainerConfiguration() {
     return containerConfiguration;
   }

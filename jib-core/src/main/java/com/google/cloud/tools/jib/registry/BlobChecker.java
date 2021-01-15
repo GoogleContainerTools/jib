@@ -66,13 +66,13 @@ class BlobChecker implements RegistryEndpointProvider<Optional<BlobDescriptor>> 
       throw responseException;
     }
 
-    // Finds a BLOB_UNKNOWN error response code.
     if (responseException.getContent() == null) {
       // TODO: The Google HTTP client gives null content for HEAD requests. Make the content never
       // be null, even for HEAD requests.
       return Optional.empty();
     }
 
+    // Find a BLOB_UNKNOWN error response code.
     ErrorCodes errorCode = ErrorResponseUtil.getErrorCode(responseException);
     if (errorCode == ErrorCodes.BLOB_UNKNOWN) {
       return Optional.empty();

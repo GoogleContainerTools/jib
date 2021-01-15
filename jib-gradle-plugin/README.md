@@ -48,7 +48,7 @@ In your Gradle Java project, add the plugin to your `build.gradle`:
 
 ```groovy
 plugins {
-  id 'com.google.cloud.tools.jib' version '2.3.0'
+  id 'com.google.cloud.tools.jib' version '2.7.1'
 }
 ```
 
@@ -197,15 +197,16 @@ Field | Type | Default | Description
 Property | Type | Default | Description
 --- | --- | --- | ---
 `image` | `String` | `gcr.io/distroless/java` | The image reference for the base image. The source type can be specified using a [special type prefix](#setting-the-base-image).
-`auth` | [`auth`](#auth-closure) | *None* | Specify credentials directly (alternative to `credHelper`).
+`auth` | [`auth`](#auth-closure) | *None* | Specifies credentials directly (alternative to `credHelper`).
 `credHelper` | `String` | *None* | Specifies a credential helper that can authenticate pulling the base image. This parameter can either be configured as an absolute path to the credential helper executable or as a credential helper suffix (following `docker-credential-`).
+`platforms` | [`platforms`](#platforms-closure) | See [`platforms`](#platforms-closure) | _Incubating feature_: Configures platforms of base images to select from a manifest list.
 
 <a name="to-closure"></a>`to` is a closure with the following properties:
 
 Property | Type | Default | Description
 --- | --- | --- | ---
 `image` | `String` | *Required* | The image reference for the target image. This can also be specified via the `--image` command line option.
-`auth` | [`auth`](#auth-closure) | *None* | Specify credentials directly (alternative to `credHelper`).
+`auth` | [`auth`](#auth-closure) | *None* | Specifies credentials directly (alternative to `credHelper`).
 `credHelper` | `String` | *None* | Specifies a credential helper that can authenticate pushing the target image. This parameter can either be configured as an absolute path to the credential helper executable or as a credential helper suffix (following `docker-credential-`).
 `tags` | `List<String>` | *None* | Additional tags to push to.
 
@@ -216,6 +217,15 @@ Property | Type
 `username` | `String`
 `password` | `String`
 
+<a name="platforms-closure"></a>`platforms` can configure multiple `platform` closures.  Each individual `platform` has the following properties:
+
+Property | Type | Default | Description
+--- | --- | --- | ---
+`architecture` | `String` | `amd64` | The architecture of a base image to select from a manifest list.
+`os` | `String` | `linux` | The OS of a base image to select from a manifest list.
+
+See [How do I specify a platform in the manifest list (or OCI index) of a base image?](../docs/faq.md#how-do-i-specify-a-platform-in-the-manifest-list-or-oci-index-of-a-base-image) for examples.
+
 <a name="container-closure"></a>`container` is a closure with the following properties:
 
 Property | Type | Default | Description
@@ -223,9 +233,10 @@ Property | Type | Default | Description
 `appRoot` | `String` | `/app` | The root directory on the container where the app's contents are placed. Particularly useful for WAR-packaging projects to work with different Servlet engine base images by designating where to put exploded WAR contents; see [WAR usage](#war-projects) as an example.
 `args` | `List<String>` | *None* | Additional program arguments appended to the command to start the container (similar to Docker's [CMD](https://docs.docker.com/engine/reference/builder/#cmd) instruction in relation with [ENTRYPOINT](https://docs.docker.com/engine/reference/builder/#entrypoint)). In the default case where you do not set a custom `entrypoint`, this parameter is effectively the arguments to the main method of your Java application.
 `creationTime` | `String` | `EPOCH` | Sets the container creation time. (Note that this property does not affect the file modification times, which are configured using `jib.container.filesModificationTime`.) The value can be `EPOCH` to set the timestamps to Epoch (default behavior), `USE_CURRENT_TIMESTAMP` to forgo reproducibility and use the real creation time, or an ISO 8601 date-time parsable with [`DateTimeFormatter.ISO_DATE_TIME`](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/time/format/DateTimeFormatter.html#ISO_DATE_TIME) such as `2019-07-15T10:15:30+09:00` or `2011-12-03T22:42:05Z`.
-`entrypoint` | `List<String>` | *None* | The command to start the container with (similar to Docker's [ENTRYPOINT](https://docs.docker.com/engine/reference/builder/#entrypoint) instruction). If set, then `jvmFlags` and `mainClass` are ignored. You may also set `jib.container.entrypoint = 'INHERIT'` to indicate that the `entrypoint` and `args` should be inherited from the base image.\*
+`entrypoint` | `List<String>` | *None* | The command to start the container with (similar to Docker's [ENTRYPOINT](https://docs.docker.com/engine/reference/builder/#entrypoint) instruction). If set, then `jvmFlags`, `mainClass`, `extraClasspath`, and `expandClasspathDependencies` are ignored. You may also set `jib.container.entrypoint = 'INHERIT'` to indicate that the `entrypoint` and `args` should be inherited from the base image.\*
 `environment` | `Map<String, String>` | *None* | Key-value pairs for setting environment variables on the container (similar to Docker's [ENV](https://docs.docker.com/engine/reference/builder/#env) instruction).
 `extraClasspath` | `List<String>` | *None* | Additional paths in the container to prepend to the computed Java classpath.
+`expandClasspathDependencies` | `boolean` | `false` | When set to true, does not use a wildcard (for example, `/app/lib/*`) for dependency JARs in the default Java runtime classpath but instead enumerates the JARs. Has the effect of preserving the classpath loading order as defined by the Gradle project.
 `filesModificationTime` | `String` | `EPOCH_PLUS_SECOND` | Sets the modification time (last modified time) of files in the image put by Jib. (Note that this does not set the image creation time, which can be set using `jib.container.creationTime`.) The value should either be `EPOCH_PLUS_SECOND` to set the timestamps to Epoch + 1 second (default behavior), or an ISO 8601 date-time parsable with [`DateTimeFormatter.ISO_DATE_TIME`](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/time/format/DateTimeFormatter.html#ISO_DATE_TIME) such as `2019-07-15T10:15:30+09:00` or `2011-12-03T22:42:05Z`.
 `format` | `String` | `Docker` | Use `OCI` to build an [OCI container image](https://www.opencontainers.org/).
 `jvmFlags` | `List<String>` | *None* | Additional flags to pass into the JVM when running your application.
@@ -241,7 +252,7 @@ Property | Type | Default | Description
 Property | Type | Default | Description
 --- | --- | --- | ---
 `paths` | [`paths`](#paths-closure) closure, or `Object` | `(project-dir)/src/main/jib` | May be configured as a closure configuring `path` elements, or as source directory values recognized by [`Project.files()`](https://docs.gradle.org/current/javadoc/org/gradle/api/Project.html#files-java.lang.Object...-), such as `String`, `File`, `Path`, `List<String\|File\|Path>`, etc.
-`permissions` | `Map<String, String>` | *None* | Maps file paths on container to Unix permissions. (Effective only for files added from extra directories.) If not configured, permissions default to "755" for directories and "644" for files.
+`permissions` | `Map<String, String>` | *None* | Maps file paths (glob patterns) on container to Unix permissions. (Effective only for files added from extra directories.) If not configured, permissions default to "755" for directories and "644" for files. See [Adding Arbitrary Files to the Image](#adding-arbitrary-files-to-the-image) for an example.
 
 <a name="paths-closure"></a>`paths` can configure multiple `path` closures (see [Adding Arbitrary Files to the Image](#adding-arbitrary-files-to-the-image)). Each individual `path` has the following properties:
 
@@ -304,7 +315,7 @@ Property | Type | Default | Description
 In this configuration, the image:
 * Is built from a base of `openjdk:alpine` (pulled from Docker Hub)
 * Is pushed to `localhost:5000/my-image:built-with-jib`, `localhost:5000/my-image:tag2`, and `localhost:5000/my-image:latest`
-* Runs by calling `java -Xms512m -Xdebug -Xmy:flag=jib-rules -cp app/libs/*:app/resources:app/classes mypackage.MyApp some args`
+* Runs by calling `java -Dmy.property=example.value -Xms512m -Xdebug -cp app/libs/*:app/resources:app/classes mypackage.MyApp some args`
 * Exposes port 1000 for tcp (default), and ports 2000, 2001, 2002, and 2003 for udp
 * Has two labels (key1:value1 and key2:value2)
 * Is built as OCI format
@@ -320,7 +331,7 @@ jib {
     tags = ['tag2', 'latest']
   }
   container {
-    jvmFlags = ['-Xms512m', '-Xdebug', '-Xmy:flag=jib-rules']
+    jvmFlags = ['-Dmy.property=example.value', '-Xms512m', '-Xdebug']
     mainClass = 'mypackage.MyApp'
     args = ['some', 'args']
     ports = ['1000', '2000-2003/udp']
@@ -343,7 +354,7 @@ Prefix | Example | Type
 
 ### Adding Arbitrary Files to the Image
 
-You can add arbitrary, non-classpath files to the image without extra configuration by placing them in a `src/main/jib` directory. This will copy all files within the `jib` folder to the image's root directory, maintaining the same structure (e.g. if you have a text file at `src/main/jib/dir/hello.txt`, then your image will contain `/dir/hello.txt` after being built with Jib).
+You can add arbitrary, non-classpath files to the image without extra configuration by placing them in a `src/main/jib` directory. This will copy all files within the `jib` folder to the target directory (`/` by default) in the image, maintaining the same structure (e.g. if you have a text file at `src/main/jib/dir/hello.txt`, then your image will contain `/dir/hello.txt` after being built with Jib).
 
 Note that Jib does not follow symbolic links in the container image.  If a symbolic link is present, _it will be removed_ prior to placing the files and directories.
 
@@ -363,7 +374,8 @@ jib {
     paths = 'src/main/custom-extra-dir'  // Copies files from 'src/main/custom-extra-dir'
     permissions = [
         '/path/on/container/to/fileA': '755',  // Read/write/execute for owner, read/execute for group/other
-        '/path/to/another/file': '644'  // Read/write for owner, read-only for group/other
+        '/path/to/another/file': '644',  // Read/write for owner, read-only for group/other
+        '/glob/pattern/**/*.sh': 755
     ]
   }
 }

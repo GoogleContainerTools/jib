@@ -69,9 +69,13 @@ public class JibPluginConfigurationTest {
 
   @Test
   public void testDefaults() {
+    Assert.assertEquals("linux", testPluginConfiguration.getPlatforms().get(0).getOsName().get());
+    Assert.assertEquals(
+        "amd64", testPluginConfiguration.getPlatforms().get(0).getArchitectureName().get());
     Assert.assertEquals("", testPluginConfiguration.getAppRoot());
     Assert.assertNull(testPluginConfiguration.getWorkingDirectory());
     Assert.assertTrue(testPluginConfiguration.getExtraClasspath().isEmpty());
+    Assert.assertFalse(testPluginConfiguration.getExpandClasspathDependencies());
     Assert.assertEquals("exploded", testPluginConfiguration.getContainerizingMode());
     Assert.assertEquals("EPOCH_PLUS_SECOND", testPluginConfiguration.getFilesModificationTime());
     Assert.assertEquals("EPOCH", testPluginConfiguration.getCreationTime());
@@ -131,6 +135,8 @@ public class JibPluginConfigurationTest {
     sessionProperties.put("jib.container.extraClasspath", "/foo,/bar");
     Assert.assertEquals(
         ImmutableList.of("/foo", "/bar"), testPluginConfiguration.getExtraClasspath());
+    sessionProperties.put("jib.container.expandClasspathDependencies", "true");
+    Assert.assertTrue(testPluginConfiguration.getExpandClasspathDependencies());
     sessionProperties.put("jib.containerizingMode", "packaged");
     Assert.assertEquals("packaged", testPluginConfiguration.getContainerizingMode());
 
@@ -235,6 +241,8 @@ public class JibPluginConfigurationTest {
     project.getProperties().setProperty("jib.container.extraClasspath", "/foo,/bar");
     Assert.assertEquals(
         ImmutableList.of("/foo", "/bar"), testPluginConfiguration.getExtraClasspath());
+    project.getProperties().setProperty("jib.container.expandClasspathDependencies", "true");
+    Assert.assertTrue(testPluginConfiguration.getExpandClasspathDependencies());
     project.getProperties().setProperty("jib.containerizingMode", "packaged");
     Assert.assertEquals("packaged", testPluginConfiguration.getContainerizingMode());
 

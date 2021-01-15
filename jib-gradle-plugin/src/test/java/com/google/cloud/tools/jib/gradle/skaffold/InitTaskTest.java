@@ -28,6 +28,7 @@ import org.gradle.testkit.runner.BuildResult;
 import org.gradle.testkit.runner.BuildTask;
 import org.gradle.testkit.runner.TaskOutcome;
 import org.hamcrest.CoreMatchers;
+import org.hamcrest.MatcherAssert;
 import org.junit.Assert;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -53,7 +54,7 @@ public class InitTaskTest {
     Assert.assertNotNull(jibTask);
     Assert.assertEquals(TaskOutcome.SUCCESS, jibTask.getOutcome());
     String output = buildResult.getOutput().trim();
-    Assert.assertThat(output, CoreMatchers.startsWith("BEGIN JIB JSON"));
+    MatcherAssert.assertThat(output, CoreMatchers.startsWith("BEGIN JIB JSON"));
 
     Pattern pattern = Pattern.compile("BEGIN JIB JSON\r?\n(\\{.*})");
     Matcher matcher = pattern.matcher(output);

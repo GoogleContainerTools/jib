@@ -20,6 +20,7 @@ import com.google.cloud.tools.jib.plugins.common.AuthProperty;
 import com.google.cloud.tools.jib.plugins.common.ConfigurationPropertyValidator;
 import com.google.cloud.tools.jib.plugins.common.PropertyNames;
 import com.google.cloud.tools.jib.plugins.common.RawConfiguration.ExtensionConfiguration;
+import com.google.cloud.tools.jib.plugins.common.RawConfiguration.PlatformConfiguration;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
@@ -127,6 +128,22 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
     }
   }
 
+  /** Configuration for {@code platform} parameter. */
+  public static class PlatformParameters implements PlatformConfiguration {
+    @Nullable @Parameter private String os;
+    @Nullable @Parameter private String architecture;
+
+    @Override
+    public Optional<String> getOsName() {
+      return Optional.ofNullable(os);
+    }
+
+    @Override
+    public Optional<String> getArchitectureName() {
+      return Optional.ofNullable(architecture);
+    }
+  }
+
   /** Configuration for {@code from} parameter. */
   public static class FromConfiguration {
 
@@ -135,6 +152,16 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
     @Nullable @Parameter private String credHelper;
 
     @Parameter private FromAuthConfiguration auth = new FromAuthConfiguration();
+
+    @Parameter private List<PlatformParameters> platforms;
+
+    /** Constructor for defaults. */
+    public FromConfiguration() {
+      PlatformParameters platform = new PlatformParameters();
+      platform.os = "linux";
+      platform.architecture = "amd64";
+      platforms = Collections.singletonList(platform);
+    }
   }
 
   /** Configuration for {@code to} parameter, where image is required. */
@@ -165,6 +192,8 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
     @Parameter private Map<String, String> environment = Collections.emptyMap();
 
     @Parameter private List<String> extraClasspath = Collections.emptyList();
+
+    private boolean expandClasspathDependencies;
 
     @Nullable @Parameter private String mainClass;
 
@@ -331,6 +360,15 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
   }
 
   /**
+   * Gets the specified platforms.
+   *
+   * @return the specified platforms
+   */
+  List<PlatformParameters> getPlatforms() {
+    return from.platforms;
+  }
+
+  /**
    * Gets the base image reference.
    *
    * @return the configured base image reference
@@ -467,6 +505,19 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
       return ConfigurationPropertyValidator.parseListProperty(property);
     }
     return container.extraClasspath;
+  }
+
+  /**
+   * Returns whether to expand classpath dependencies.
+   *
+   * @return {@code true} to expand classpath dependencies. {@code false} otherwise.
+   */
+  public boolean getExpandClasspathDependencies() {
+    String property = getProperty(PropertyNames.EXPAND_CLASSPATH_DEPENDENCIES);
+    if (property != null) {
+      return Boolean.valueOf(property);
+    }
+    return container.expandClasspathDependencies;
   }
 
   /**

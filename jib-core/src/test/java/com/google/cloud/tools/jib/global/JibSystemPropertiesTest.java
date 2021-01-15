@@ -160,4 +160,10 @@ public class JibSystemPropertiesTest {
     System.setProperty(JibSystemProperties.CROSS_REPOSITORY_BLOB_MOUNTS, "nonbool");
     Assert.assertFalse(JibSystemProperties.useCrossRepositoryBlobMounts());
   }
+
+  @Test
+  public void testSkipExistingImages_undefined() {
+    System.clearProperty(JibSystemProperties.SKIP_EXISTING_IMAGES);
+    Assert.assertFalse(JibSystemProperties.skipExistingImages());
+  }
 }

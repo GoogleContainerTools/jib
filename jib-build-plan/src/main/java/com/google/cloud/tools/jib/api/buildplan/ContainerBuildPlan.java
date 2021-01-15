@@ -18,8 +18,10 @@ package com.google.cloud.tools.jib.api.buildplan;
 
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -34,10 +36,12 @@ public class ContainerBuildPlan {
   public static class Builder {
 
     private String baseImage = "scratch";
-    private String architectureHint = "amd64";
-    private String osHint = "linux";
     private Instant creationTime = Instant.EPOCH;
     private ImageFormat format = ImageFormat.Docker;
+
+    // LinkedHashSet to preserve the order
+    private Set<Platform> platforms =
+        new LinkedHashSet<>(Collections.singleton(new Platform("amd64", "linux")));
 
     // image execution parameters
     private Map<String, String> environment = new HashMap<>();
@@ -65,31 +69,42 @@ public class ContainerBuildPlan {
     }
 
     /**
-     * Desired image architecture. If the base image reference is a Docker manifest list or an OCI
-     * image index, must be set so that an image builder can select the image matching the given
-     * architecture. If the base image reference is not a manifest list or an OCI image index, this
-     * value is ignored and the architecture of the built image follows that of the base image. The
-     * default is {@code amd64}.
+     * Adds a desired image platform (OS and architecture pair). If the base image reference is a
+     * Docker manifest list or an OCI image index, an image builder may select the base image
+     * matching the given platform. If the base image reference is an image manifest, an image
+     * builder may ignore the given platform and use the platform of the base image or may decide to
+     * raise on error.
      *
-     * @param architectureHint architecture value to select a base image in case of a manifest list
+     * <p>Note that a new build plan starts with "amd64/linux" as the default platform. If you want
+     * to reset the default platform instead of adding a new one, use {@link #setPlatforms(Set)}.
+     *
+     * @param architecture architecture (for example, {@code amd64}) to select a base image in case
+     *     of a manifest list
+     * @param os OS (for example, {@code linux}) to select a base image in case of a manifest list
      * @return this
      */
-    public Builder setArchitectureHint(String architectureHint) {
-      this.architectureHint = architectureHint;
+    public Builder addPlatform(String architecture, String os) {
+      platforms.add(new Platform(architecture, os));
       return this;
     }
 
     /**
-     * Desired image OS. If the base image reference is a Docker manifest list or an OCI image
-     * index, must be set so that an image builder can select the image matching the given OS. If
-     * the base image reference is an image manifest, this value is ignored and the OS of the built
-     * image follows that of the base image. The default is {@code linux}.
+     * Sets a desired platform (properties including OS and architecture) list. If the base image
+     * reference is a Docker manifest list or an OCI image index, an image builder may select the
+     * base images matching the given platforms. If the base image reference is an image manifest,
+     * an image builder may ignore the given platforms and use the platform of the base image or may
+     * decide to raise on error.
      *
-     * @param osHint OS value to select a base image in case of a manifest list
+     * <p>Note that a new build plan starts with "amd64/linux" as the default platform.
+     *
+     * @param platforms list of platforms to select base images in case of a manifest list
      * @return this
      */
-    public Builder setOsHint(String osHint) {
-      this.osHint = osHint;
+    public Builder setPlatforms(Set<Platform> platforms) {
+      if (platforms.isEmpty()) {
+        throw new IllegalArgumentException("platforms set cannot be empty");
+      }
+      this.platforms = new LinkedHashSet<>(platforms);
       return this;
     }
 
@@ -341,8 +356,7 @@ public class ContainerBuildPlan {
     public ContainerBuildPlan build() {
       return new ContainerBuildPlan(
           baseImage,
-          architectureHint,
-          osHint,
+          platforms,
           creationTime,
           format,
           environment,
@@ -362,8 +376,7 @@ public class ContainerBuildPlan {
   }
 
   private final String baseImage;
-  private final String architectureHint;
-  private final String osHint;
+  private final Set<Platform> platforms;
   private final Instant creationTime;
   private final ImageFormat format;
 
@@ -381,8 +394,7 @@ public class ContainerBuildPlan {
 
   private ContainerBuildPlan(
       String baseImage,
-      String architectureHint,
-      String osHint,
+      Set<Platform> platforms,
       Instant creationTime,
       ImageFormat format,
       Map<String, String> environment,
@@ -395,8 +407,7 @@ public class ContainerBuildPlan {
       @Nullable List<String> cmd,
       List<LayerObject> layers) {
     this.baseImage = baseImage;
-    this.architectureHint = architectureHint;
-    this.osHint = osHint;
+    this.platforms = platforms;
     this.creationTime = creationTime;
     this.format = format;
     this.environment = environment;
@@ -414,12 +425,14 @@ public class ContainerBuildPlan {
     return baseImage;
   }
 
-  public String getArchitectureHint() {
-    return architectureHint;
-  }
-
-  public String getOsHint() {
-    return osHint;
+  /**
+   * Creates and returns a default platform if the user hasn't added or set any platforms ,else
+   * returns a list of user specified platforms .
+   *
+   * @return platforms a list of user specified platforms.
+   */
+  public Set<Platform> getPlatforms() {
+    return new LinkedHashSet<>(platforms);
   }
 
   public ImageFormat getFormat() {
@@ -478,8 +491,7 @@ public class ContainerBuildPlan {
   public Builder toBuilder() {
     return builder()
         .setBaseImage(baseImage)
-        .setArchitectureHint(architectureHint)
-        .setOsHint(osHint)
+        .setPlatforms(platforms)
         .setCreationTime(creationTime)
         .setFormat(format)
         .setEnvironment(environment)

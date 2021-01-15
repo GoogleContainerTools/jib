@@ -40,6 +40,13 @@ public interface RawConfiguration {
     Optional<Object> getExtraConfiguration();
   }
 
+  static interface PlatformConfiguration {
+
+    Optional<String> getOsName();
+
+    Optional<String> getArchitectureName();
+  }
+
   Optional<String> getFromImage();
 
   Optional<String> getToImage();
@@ -52,11 +59,15 @@ public interface RawConfiguration {
 
   Optional<String> getToCredHelper();
 
+  List<? extends PlatformConfiguration> getPlatforms();
+
   Set<String> getToTags();
 
   Optional<List<String>> getEntrypoint();
 
   List<String> getExtraClasspath();
+
+  boolean getExpandClasspathDependencies();
 
   Optional<List<String>> getProgramArguments();
 

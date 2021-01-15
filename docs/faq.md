@@ -284,7 +284,7 @@ jib.from.image = 'custom-base-image'
 
 ### Can I ADD a custom directory to the image?
 
-We currently support adding a custom directory with an **incubating** feature called _extra directories_. This feature may change in later versions. If your application needs to use custom files, place them into the `src/main/jib` folder. Files placed here will be added to the filesystem of the container. For example, `src/main/jib/foo/bar` would add `/foo/bar` into the container filesystem.
+Yes, using the _extra directories_ feature. See the [Maven](https://github.com/GoogleContainerTools/jib/tree/master/jib-maven-plugin#adding-arbitrary-files-to-the-image) and [Gradle](https://github.com/GoogleContainerTools/jib/tree/master/jib-gradle-plugin#adding-arbitrary-files-to-the-image) docs for examples.
 
 ### I need to add files generated during the build process to a custom directory on the image.
 
@@ -469,18 +469,57 @@ To inspect the image that is produced from the build using Docker, you can use c
 
 ### How do I specify a platform in the manifest list (or OCI index) of a base image?
 
-By design, if the target image reference is a [manifest list](https://docs.docker.com/registry/spec/manifest-v2-2/#manifest-list), Jib will always select an image for the platform `amd64/linux`. If you need to specify a different image from a manifest list you must specify the digest for the platform you are targeting.
+Newer Jib verisons added an _incubating feature_ that provides support for selecting base images with the desired platforms from a manifest list. For example,
 
-To view a manifest, [enable experimental docker CLI](https://docs.docker.com/engine/reference/commandline/cli/#experimental-features) features and then run the [manifest inspect](https://docs.docker.com/engine/reference/commandline/manifest_inspect/) command.
+```xml
+  <from>
+    <image>... image reference to a manifest list ...</image>
+    <platforms>
+      <platform>
+        <architecture>amd64</architecture>
+        <os>linux</os>
+      </platform>
+      <platform>
+        <architecture>arm64</architecture>
+        <os>linux</os>
+      </platform>
+    </platforms>
+  </from>
+```
+
+```gradle
+jib.from {
+  image = '... image reference to a manifest list ...'
+  platforms {
+    platform {
+      architecture = 'amd64'
+      os = 'linux'
+    }
+    platform {
+      architecture = 'arm64'
+      os = 'linux'
+    }
+  }
+}
+```
+
+The default when not specified is a single "amd64/linux" platform, whose behavior is backward-compatible.
+
+When multiple platforms are specified, Jib creates and pushes a manifest list (also known as a fat manifest) after building and pushing all the images for the specified platforms.
+
+As an incubating feature, there are certain limitations:
+- OCI image indices are not supported (as opposed to Docker manifest lists).
+- Only `architecture` and `os` are supported. If the base image manifest list contains multiple images with the given architecture and os, the first image will be selected.
+- Does not support using a local Docker daemon or tarball image for a base image.
+- Does not support pushing to a Docker daemon (`jib:dockerBuild` / `jibDockerBuild`) or building a local tarball (`jib:buildTar` / `jibBuildTar`).
+
+Make sure to specify a manifest _list_ in `<from><image>` (whether by a tag name or a digest (`@sha256:...`)). For troubleshooting, you may want to check what platforms the manifest list contains. To view a manifest list, [enable experimental docker CLI](https://docs.docker.com/engine/reference/commandline/cli/#experimental-features) features and then run the [manifest inspect](https://docs.docker.com/engine/reference/commandline/manifest_inspect/) command.
+
 ```
 $ docker manifest inspect openjdk:8
-```
-
-You can then inspect the output for the specific image you want (in this example an image for the platform `arm64/linux`)
-```java
 {         
    ...
-   // This whole BLOB itself is a manifest list.
+   // This confirms that openjdk:8 points to a manifest list.
    "mediaType": "application/vnd.docker.distribution.manifest.list.v2+json",
    "manifests": [
       {
@@ -497,8 +536,6 @@ You can then inspect the output for the specific image you want (in this example
    ]
 }
 ```
-
-You then use the digest for the target platform you desire in your `jib.to.image` in the form `"opendjdk@sha256:1fbd49e3fc5e53154fa93cad15f211112d899a6b0c5dc1e8661d6eb6c18b30a6"` or if you wish to preserve the tag for documentation purposes, you can also use the form `"opendjdk:8@sha256:1fbd49e3fc5e53154fa93cad15f211112d899a6b0c5dc1e8661d6eb6c18b30a6"`.
 
 ## Build Problems
 
@@ -536,7 +573,9 @@ If the registry returns `401 Unauthorized` or `"code":"UNAUTHORIZED"`, it is oft
 * Different auth configurations exist in multiple places, and Jib is not picking up the auth information you are working on.
 * You configured a credential helper, but the helper is not on `$PATH`. This is especially common when running Jib inside IDE where the IDE binary is launched directly from an OS menu and does not have access to your shell's environment.
 * Configured credentials have access to the base image repository but not to the target image repository (or vice versa).
-* Typos in username, password, image names, or registry names.
+* Typos in username, password, image names, repository names, or registry names. This is a very common error.
+* Image names do not conform to the structure or policy that a registry requires. For example, [Docker Hub returns 401 Unauthorized](https://github.com/GoogleContainerTools/jib/issues/2650#issuecomment-667323777) when trying to use a multi-level repository name.
+* Incorrect port number in image references (`registry.hostname:<port>/...`).
 * You are using a private registry without HTTPS. See [How can I diagnose problems pulling or pushing from remote registries?](#how-can-i-diagnose-problems-pulling-or-pushing-from-remote-registries).
 
 Note, if Jib was able to retrieve credentials, you should see a log message like these:

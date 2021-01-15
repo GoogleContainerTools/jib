@@ -18,10 +18,22 @@ package com.google.cloud.tools.jib.maven;
 
 import com.google.cloud.tools.jib.Command;
 import com.google.cloud.tools.jib.IntegrationTestingConfiguration;
+import com.google.cloud.tools.jib.api.Credential;
 import com.google.cloud.tools.jib.api.DescriptorDigest;
 import com.google.cloud.tools.jib.api.ImageReference;
 import com.google.cloud.tools.jib.api.InvalidImageReferenceException;
+import com.google.cloud.tools.jib.api.RegistryException;
+import com.google.cloud.tools.jib.blob.Blob;
+import com.google.cloud.tools.jib.blob.Blobs;
+import com.google.cloud.tools.jib.event.EventHandlers;
+import com.google.cloud.tools.jib.http.FailoverHttpClient;
+import com.google.cloud.tools.jib.image.json.ManifestTemplate;
+import com.google.cloud.tools.jib.image.json.V22ManifestListTemplate;
+import com.google.cloud.tools.jib.image.json.V22ManifestListTemplate.ManifestDescriptorTemplate;
+import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
+import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import com.google.cloud.tools.jib.registry.LocalRegistry;
+import com.google.cloud.tools.jib.registry.RegistryClient;
 import com.google.common.base.Splitter;
 import java.io.IOException;
 import java.net.URL;
@@ -32,12 +44,14 @@ import java.nio.file.Paths;
 import java.security.DigestException;
 import java.time.Instant;
 import java.util.Arrays;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.annotation.Nullable;
 import org.apache.maven.it.VerificationException;
 import org.apache.maven.it.Verifier;
 import org.hamcrest.CoreMatchers;
+import org.hamcrest.MatcherAssert;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Assume;
@@ -51,12 +65,8 @@ import org.junit.rules.TemporaryFolder;
 public class BuildImageMojoIntegrationTest {
 
   @ClassRule
-  public static final LocalRegistry localRegistry1 =
+  public static final LocalRegistry localRegistry =
       new LocalRegistry(5000, "testuser", "testpassword");
-
-  @ClassRule
-  public static final LocalRegistry localRegistry2 =
-      new LocalRegistry(6000, "testuser2", "testpassword2");
 
   @ClassRule public static final TestProject simpleTestProject = new TestProject("simple");
 
@@ -70,8 +80,6 @@ public class BuildImageMojoIntegrationTest {
   @ClassRule public static final TestProject servlet25Project = new TestProject("war_servlet25");
 
   @ClassRule public static final TestProject springBootProject = new TestProject("spring-boot");
-
-  @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
   private static String getTestImageReference(String label) {
     String nameBase = IntegrationTestingConfiguration.getTestRepositoryLocation() + '/';
@@ -216,18 +224,13 @@ public class BuildImageMojoIntegrationTest {
     return output;
   }
 
-  private static String buildAndRunComplex(
-      String imageReference,
-      String username,
-      String password,
-      LocalRegistry targetRegistry,
-      String pomFile)
+  private static String buildAndRunComplex(String imageReference, String pomFile)
       throws VerificationException, IOException, InterruptedException {
     Verifier verifier = new Verifier(simpleTestProject.getProjectRoot().toString());
     verifier.setSystemProperty("jib.useOnlyProjectCache", "true");
     verifier.setSystemProperty("_TARGET_IMAGE", imageReference);
-    verifier.setSystemProperty("_TARGET_USERNAME", username);
-    verifier.setSystemProperty("_TARGET_PASSWORD", password);
+    verifier.setSystemProperty("_TARGET_USERNAME", "testuser");
+    verifier.setSystemProperty("_TARGET_PASSWORD", "testpassword");
     verifier.setSystemProperty("sendCredentialsOverHttp", "true");
     verifier.setAutoclean(false);
     verifier.addCliOption("-X");
@@ -236,7 +239,7 @@ public class BuildImageMojoIntegrationTest {
     verifier.verifyErrorFreeLog();
 
     // Verify output
-    targetRegistry.pull(imageReference);
+    localRegistry.pull(imageReference);
     assertDockerInspectParameters(imageReference);
     return new Command("docker", "run", "--rm", imageReference).run();
   }
@@ -260,7 +263,7 @@ public class BuildImageMojoIntegrationTest {
   private static void assertDockerInspectParameters(String imageReference)
       throws IOException, InterruptedException {
     String dockerInspect = new Command("docker", "inspect", imageReference).run();
-    Assert.assertThat(
+    MatcherAssert.assertThat(
         dockerInspect,
         CoreMatchers.containsString(
             "            \"ExposedPorts\": {\n"
@@ -269,7 +272,7 @@ public class BuildImageMojoIntegrationTest {
                 + "                \"2001/udp\": {},\n"
                 + "                \"2002/udp\": {},\n"
                 + "                \"2003/udp\": {}"));
-    Assert.assertThat(
+    MatcherAssert.assertThat(
         dockerInspect,
         CoreMatchers.containsString(
             "            \"Labels\": {\n"
@@ -277,7 +280,7 @@ public class BuildImageMojoIntegrationTest {
                 + "                \"key2\": \"value2\"\n"
                 + "            }"));
     String history = new Command("docker", "history", imageReference).run();
-    Assert.assertThat(history, CoreMatchers.containsString("jib-maven-plugin"));
+    MatcherAssert.assertThat(history, CoreMatchers.containsString("jib-maven-plugin"));
   }
 
   private static float getBuildTimeFromVerifierLog(Verifier verifier) throws IOException {
@@ -337,12 +340,14 @@ public class BuildImageMojoIntegrationTest {
     Assert.assertEquals(expected, Splitter.on(",").splitToList(layers).size());
   }
 
+  @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
+
   @Nullable private String detachedContainerName;
 
   @Before
   public void setUp() throws IOException, InterruptedException {
     // Pull distroless to local registry so we can test 'from' credentials
-    localRegistry1.pullAndPushToLocal("gcr.io/distroless/java:latest", "distroless/java");
+    localRegistry.pullAndPushToLocal("gcr.io/distroless/java:latest", "distroless/java");
 
     // Make sure resource file has a consistent value at the beginning of each test
     // (testExecute_simple overwrites it)
@@ -377,7 +382,7 @@ public class BuildImageMojoIntegrationTest {
       Assert.fail();
 
     } catch (VerificationException ex) {
-      Assert.assertThat(
+      MatcherAssert.assertThat(
           ex.getMessage(),
           CoreMatchers.containsString(
               "Obtaining project build output files failed; make sure you have compiled your "
@@ -409,7 +414,7 @@ public class BuildImageMojoIntegrationTest {
 
     assertCreationTimeEpoch(targetImage);
     assertWorkingDirectory("/home", targetImage);
-    assertLayerSize(8, targetImage);
+    assertLayerSize(9, targetImage);
   }
 
   @Test
@@ -460,7 +465,7 @@ public class BuildImageMojoIntegrationTest {
       Assert.fail();
 
     } catch (VerificationException ex) {
-      Assert.assertThat(
+      MatcherAssert.assertThat(
           ex.getMessage(),
           CoreMatchers.containsString("Cannot build to a container registry in offline mode"));
     }
@@ -487,7 +492,7 @@ public class BuildImageMojoIntegrationTest {
           simpleTestProject.getProjectRoot(), "willnotbuild", "pom-java11-incompatible.xml", false);
       Assert.fail();
     } catch (VerificationException ex) {
-      Assert.assertThat(
+      MatcherAssert.assertThat(
           ex.getMessage(),
           CoreMatchers.containsString(
               "Your project is using Java 11 but the base image is for Java 8, perhaps you should "
@@ -504,7 +509,7 @@ public class BuildImageMojoIntegrationTest {
     Assert.assertEquals(
         "", buildAndRun(emptyTestProject.getProjectRoot(), targetImage, "pom.xml", false));
     assertCreationTimeEpoch(targetImage);
-    assertWorkingDirectory("", targetImage);
+    assertWorkingDirectory("/", targetImage);
   }
 
   @Test
@@ -526,7 +531,7 @@ public class BuildImageMojoIntegrationTest {
         "Hello, world. An argument.\n1970-01-01T00:00:01Z\nrw-r--r--\nrw-r--r--\nfoo\ncat\n"
             + "1970-01-01T00:00:01Z\n1970-01-01T00:00:01Z\nbaz\n1970-01-01T00:00:01Z\n",
         buildAndRun(simpleTestProject.getProjectRoot(), targetImage, "pom-extra-dirs.xml", false));
-    assertLayerSize(9, targetImage); // one more than usual
+    assertLayerSize(10, targetImage); // one more than usual
   }
 
   @Test
@@ -539,7 +544,7 @@ public class BuildImageMojoIntegrationTest {
       Assert.fail();
 
     } catch (VerificationException ex) {
-      Assert.assertThat(
+      MatcherAssert.assertThat(
           ex.getMessage(),
           CoreMatchers.containsString(
               "Missing target image parameter, perhaps you should add a <to><image> configuration "
@@ -551,11 +556,9 @@ public class BuildImageMojoIntegrationTest {
   @Test
   public void testExecute_complex()
       throws IOException, InterruptedException, VerificationException, DigestException {
-    String targetImage = "localhost:6000/compleximage:maven" + System.nanoTime();
+    String targetImage = "localhost:5000/compleximage:maven" + System.nanoTime();
     Instant before = Instant.now();
-    String output =
-        buildAndRunComplex(
-            targetImage, "testuser2", "testpassword2", localRegistry2, "pom-complex.xml");
+    String output = buildAndRunComplex(targetImage, "pom-complex.xml");
     Assert.assertEquals(
         "Hello, world. An argument.\n1970-01-01T00:00:01Z\nrwxr-xr-x\nrwxrwxrwx\nfoo\ncat\n"
             + "1970-01-01T00:00:01Z\n1970-01-01T00:00:01Z\n"
@@ -570,7 +573,7 @@ public class BuildImageMojoIntegrationTest {
     Assert.assertEquals(output, new Command("docker", "run", "--rm", id).run());
 
     assertCreationTimeIsAfter(before, targetImage);
-    assertWorkingDirectory("", targetImage);
+    assertWorkingDirectory("/", targetImage);
     assertEntrypoint(
         "[java -Xms512m -Xdebug -cp /other:/app/resources:/app/classes:/app/libs/* "
             + "com.test.HelloWorld]",
@@ -580,12 +583,12 @@ public class BuildImageMojoIntegrationTest {
   @Test
   public void testExecute_timestampCustom()
       throws IOException, InterruptedException, VerificationException {
-    String targetImage = "localhost:6000/simpleimage:maven" + System.nanoTime();
+    String targetImage = "localhost:5000/simpleimage:maven" + System.nanoTime();
     String pom = "pom-timestamps-custom.xml";
     Assert.assertEquals(
         "Hello, world. \n2019-06-17T16:30:00Z\nrw-r--r--\nrw-r--r--\n"
             + "foo\ncat\n2019-06-17T16:30:00Z\n2019-06-17T16:30:00Z\n",
-        buildAndRunComplex(targetImage, "testuser2", "testpassword2", localRegistry2, pom));
+        buildAndRunComplex(targetImage, pom));
 
     String inspect =
         new Command("docker", "inspect", "-f", "{{.Created}}", targetImage).run().trim();
@@ -601,26 +604,20 @@ public class BuildImageMojoIntegrationTest {
         "Hello, world. An argument.\n1970-01-01T00:00:01Z\nrwxr-xr-x\nrwxrwxrwx\nfoo\ncat\n"
             + "1970-01-01T00:00:01Z\n1970-01-01T00:00:01Z\n"
             + "-Xms512m\n-Xdebug\nenvvalue1\nenvvalue2\n",
-        buildAndRunComplex(
-            targetImage, "testuser", "testpassword", localRegistry1, "pom-complex.xml"));
-    assertWorkingDirectory("", targetImage);
+        buildAndRunComplex(targetImage, "pom-complex.xml"));
+    assertWorkingDirectory("/", targetImage);
   }
 
   @Test
   public void testExecute_complexProperties()
       throws InterruptedException, VerificationException, IOException {
-    String targetImage = "localhost:6000/compleximage:maven" + System.nanoTime();
+    String targetImage = "localhost:5000/compleximage:maven" + System.nanoTime();
     Assert.assertEquals(
         "Hello, world. An argument.\n1970-01-01T00:00:01Z\nrwxr-xr-x\nrwxrwxrwx\nfoo\ncat\n"
             + "1970-01-01T00:00:01Z\n1970-01-01T00:00:01Z\n"
             + "-Xms512m\n-Xdebug\nenvvalue1\nenvvalue2\n",
-        buildAndRunComplex(
-            targetImage,
-            "testuser2",
-            "testpassword2",
-            localRegistry2,
-            "pom-complex-properties.xml"));
-    assertWorkingDirectory("", targetImage);
+        buildAndRunComplex(targetImage, "pom-complex-properties.xml"));
+    assertWorkingDirectory("/", targetImage);
   }
 
   @Test
@@ -635,13 +632,13 @@ public class BuildImageMojoIntegrationTest {
 
   @Test
   public void testExecute_jibRequireVersion_ok() throws VerificationException, IOException {
-    String targetImage = "localhost:6000/simpleimage:maven" + System.nanoTime();
+    String targetImage = "localhost:5000/simpleimage:maven" + System.nanoTime();
 
     Verifier verifier = new Verifier(simpleTestProject.getProjectRoot().toString());
     verifier.setSystemProperty("_TARGET_IMAGE", targetImage);
-    // properties required to push to :6000 for plain pom.xml
-    verifier.setSystemProperty("jib.to.auth.username", "testuser2");
-    verifier.setSystemProperty("jib.to.auth.password", "testpassword2");
+    // properties required to push to :5000 for plain pom.xml
+    verifier.setSystemProperty("jib.to.auth.username", "testuser");
+    verifier.setSystemProperty("jib.to.auth.password", "testpassword");
     verifier.setSystemProperty("sendCredentialsOverHttp", "true");
     verifier.setSystemProperty("jib.allowInsecureRegistries", "true");
     // this test plugin should match 1.0
@@ -652,17 +649,16 @@ public class BuildImageMojoIntegrationTest {
 
   @Test
   public void testExecute_jibRequireVersion_fail() throws IOException {
-    String targetImage = "localhost:6000/simpleimage:maven" + System.nanoTime();
     try {
       Verifier verifier = new Verifier(simpleTestProject.getProjectRoot().toString());
       // other properties aren't required as this should fail due to jib.requiredVersion
-      verifier.setSystemProperty("_TARGET_IMAGE", targetImage);
+      verifier.setSystemProperty("_TARGET_IMAGE", "ignored");
       // this plugin should be > 1.0 and so jib:build should fail
       verifier.setSystemProperty("jib.requiredVersion", "[,1.0]");
       verifier.executeGoals(Arrays.asList("package", "jib:build"));
       Assert.fail();
     } catch (VerificationException ex) {
-      Assert.assertThat(
+      MatcherAssert.assertThat(
           ex.getMessage(), CoreMatchers.containsString("but is required to be [,1.0]"));
     }
   }
@@ -695,12 +691,92 @@ public class BuildImageMojoIntegrationTest {
                 "-c",
                 "/app/classpath/spring-boot-0.1.0.original.jar")
             .run();
-    Assert.assertThat(
+    MatcherAssert.assertThat(
         sizeOutput, CoreMatchers.containsString(" /app/classpath/spring-boot-0.1.0.original.jar"));
     int fileSize = Integer.parseInt(sizeOutput.substring(0, sizeOutput.indexOf(' ')));
     Assert.assertTrue(fileSize < 3000); // should not be a large fat jar
 
     HttpGetVerifier.verifyBody("Hello world", new URL("http://localhost:8080"));
+  }
+
+  @Test
+  public void testExecute_multiPlatformBuild()
+      throws IOException, VerificationException, RegistryException {
+    String targetImage = "localhost:5000/multiplatform:maven" + System.nanoTime();
+
+    Verifier verifier = new Verifier(simpleTestProject.getProjectRoot().toString());
+    verifier.setSystemProperty("_TARGET_IMAGE", targetImage);
+
+    verifier.setSystemProperty("jib.to.auth.username", "testuser");
+    verifier.setSystemProperty("jib.to.auth.password", "testpassword");
+    verifier.setSystemProperty("sendCredentialsOverHttp", "true");
+    verifier.setSystemProperty("jib.allowInsecureRegistries", "true");
+
+    verifier.setAutoclean(false);
+    verifier.addCliOption("--file=pom-multiplatform-build.xml");
+    verifier.executeGoals(Arrays.asList("clean", "compile", "jib:build"));
+    verifier.verifyErrorFreeLog();
+
+    FailoverHttpClient httpClient = new FailoverHttpClient(true, true, ignored -> {});
+    RegistryClient registryClient =
+        RegistryClient.factory(EventHandlers.NONE, "localhost:5000", "multiplatform", httpClient)
+            .setCredential(Credential.from("testuser", "testpassword"))
+            .newRegistryClient();
+    registryClient.configureBasicAuth();
+
+    // manifest list by tag ":latest"
+    ManifestTemplate manifestList = registryClient.pullManifest("latest").getManifest();
+    MatcherAssert.assertThat(manifestList, CoreMatchers.instanceOf(V22ManifestListTemplate.class));
+    V22ManifestListTemplate v22ManifestList = (V22ManifestListTemplate) manifestList;
+
+    Assert.assertEquals(2, v22ManifestList.getManifests().size());
+    ManifestDescriptorTemplate.Platform platform1 =
+        v22ManifestList.getManifests().get(0).getPlatform();
+    ManifestDescriptorTemplate.Platform platform2 =
+        v22ManifestList.getManifests().get(1).getPlatform();
+
+    Assert.assertEquals("arm64", platform1.getArchitecture());
+    Assert.assertEquals("linux", platform1.getOs());
+    Assert.assertEquals("amd64", platform2.getArchitecture());
+    Assert.assertEquals("linux", platform2.getOs());
+
+    // manifest list by tag ":another"
+    ManifestTemplate anotherManifestList = registryClient.pullManifest("another").getManifest();
+    Assert.assertEquals(
+        JsonTemplateMapper.toUtf8String(manifestList),
+        JsonTemplateMapper.toUtf8String(anotherManifestList));
+
+    // Check arm64/linux container config.
+    List<String> arm64Digests = v22ManifestList.getDigestsForPlatform("arm64", "linux");
+    Assert.assertEquals(1, arm64Digests.size());
+    String arm64Digest = arm64Digests.get(0);
+
+    ManifestTemplate arm64Manifest = registryClient.pullManifest(arm64Digest).getManifest();
+    MatcherAssert.assertThat(arm64Manifest, CoreMatchers.instanceOf(V22ManifestTemplate.class));
+    V22ManifestTemplate arm64V22Manifest = (V22ManifestTemplate) arm64Manifest;
+    DescriptorDigest arm64ConfigDigest = arm64V22Manifest.getContainerConfiguration().getDigest();
+
+    Blob arm64ConfigBlob = registryClient.pullBlob(arm64ConfigDigest, ignored -> {}, ignored -> {});
+    String arm64Config = Blobs.writeToString(arm64ConfigBlob);
+    MatcherAssert.assertThat(
+        arm64Config, CoreMatchers.containsString("\"architecture\":\"arm64\""));
+    MatcherAssert.assertThat(arm64Config, CoreMatchers.containsString("\"os\":\"linux\""));
+
+    // Check amd64/linux container config.
+    List<String> amd64Digests = v22ManifestList.getDigestsForPlatform("amd64", "linux");
+    Assert.assertEquals(1, amd64Digests.size());
+    String amd64Digest = amd64Digests.get(0);
+
+    ManifestTemplate amd64Manifest = registryClient.pullManifest(amd64Digest).getManifest();
+    MatcherAssert.assertThat(amd64Manifest, CoreMatchers.instanceOf(V22ManifestTemplate.class));
+    V22ManifestTemplate amd64V22Manifest = (V22ManifestTemplate) amd64Manifest;
+    DescriptorDigest amd64ConfigDigest = amd64V22Manifest.getContainerConfiguration().getDigest();
+
+    Blob amd64ConfigBlob = registryClient.pullBlob(amd64ConfigDigest, ignored -> {}, ignored -> {});
+    String amd64Config = Blobs.writeToString(amd64ConfigBlob);
+    MatcherAssert.assertThat(
+        amd64Config, CoreMatchers.containsString("\"architecture\":\"amd64\""));
+    MatcherAssert.assertThat(amd64Config, CoreMatchers.containsString("\"os\":\"linux\""));
   }
 
   private void buildAndRunWebApp(TestProject project, String label, String pomXml)

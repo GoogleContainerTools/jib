@@ -21,13 +21,15 @@ import com.google.cloud.tools.jib.api.ImageReference;
 import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.blob.Blobs;
-import com.google.cloud.tools.jib.filesystem.FileOperations;
 import com.google.cloud.tools.jib.filesystem.LockFile;
 import com.google.cloud.tools.jib.filesystem.TempDirectoryProvider;
 import com.google.cloud.tools.jib.hash.CountingDigestOutputStream;
 import com.google.cloud.tools.jib.hash.Digests;
 import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
 import com.google.cloud.tools.jib.image.json.ContainerConfigurationTemplate;
+import com.google.cloud.tools.jib.image.json.ImageMetadataTemplate;
+import com.google.cloud.tools.jib.image.json.ManifestAndConfigTemplate;
+import com.google.cloud.tools.jib.image.json.ManifestTemplate;
 import com.google.cloud.tools.jib.image.json.V21ManifestTemplate;
 import com.google.cloud.tools.jib.json.JsonTemplate;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
@@ -43,7 +45,9 @@ import java.nio.file.FileSystemException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Predicate;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 import javax.annotation.Nullable;
@@ -66,6 +70,37 @@ class CacheStorageWriter {
     }
   }
 
+  private static void verifyImageMetadata(ImageMetadataTemplate metadata) {
+    Predicate<ManifestAndConfigTemplate> isManifestNull = pair -> pair.getManifest() == null;
+    Predicate<ManifestAndConfigTemplate> isConfigNull = pair -> pair.getConfig() == null;
+    Predicate<ManifestAndConfigTemplate> isDigestNull = pair -> pair.getManifestDigest() == null;
+
+    List<ManifestAndConfigTemplate> manifestsAndConfigs = metadata.getManifestsAndConfigs();
+    Preconditions.checkArgument(!manifestsAndConfigs.isEmpty(), "no manifests given");
+    Preconditions.checkArgument(
+        manifestsAndConfigs.stream().noneMatch(isManifestNull), "null manifest(s)");
+    Preconditions.checkArgument(
+        metadata.getManifestList() != null || manifestsAndConfigs.size() == 1,
+        "manifest list missing while multiple manifests given");
+
+    ManifestTemplate firstManifest = manifestsAndConfigs.get(0).getManifest();
+    if (firstManifest instanceof V21ManifestTemplate) {
+      Preconditions.checkArgument(
+          metadata.getManifestList() == null, "manifest list given for schema 1");
+      Preconditions.checkArgument(
+          isConfigNull.test(manifestsAndConfigs.get(0)), "container config given for schema 1");
+    } else if (firstManifest instanceof BuildableManifestTemplate) {
+      Preconditions.checkArgument(
+          manifestsAndConfigs.stream().noneMatch(isConfigNull), "null container config(s)");
+      if (metadata.getManifestList() != null) {
+        Preconditions.checkArgument(
+            manifestsAndConfigs.stream().noneMatch(isDigestNull), "null manifest digest(s)");
+      }
+    } else {
+      throw new IllegalArgumentException("Unknown manifest type: " + firstManifest);
+    }
+  }
+
   /**
    * Attempts to move {@code source} to {@code destination}. If {@code destination} already exists,
    * this does nothing. Attempts an atomic move first, and falls back to non-atomic if the
@@ -84,8 +119,8 @@ class CacheStorageWriter {
                 () -> {
                   if (Files.exists(destination)) {
                     // If the file already exists, we skip renaming and use the existing file.
-                    // This happens if a new layer happens to have the same content as a
-                    // previously-cached layer.
+                    // This happens, e.g., if a new layer happens to have the same content as a
+                    // previously-cached layer or the same layer is being cached concurrently.
                     return true;
                   }
                   Files.move(source, destination);
@@ -98,7 +133,8 @@ class CacheStorageWriter {
     if (!success) {
       String message =
           String.format(
-              "unable to move: %s to %s; such failures are often caused by interference from antivirus",
+              "unable to move: %s to %s; such failures are often caused by interference from antivirus or if the "
+                  + "operation is not supported by the file system (for example: special non-local file system)",
               source, destination);
       throw new IOException(message);
     }
@@ -127,7 +163,7 @@ class CacheStorageWriter {
    * @param destination the destination path
    * @throws IOException if an I/O exception occurs
    */
-  private static void writeMetadata(JsonTemplate jsonTemplate, Path destination)
+  private static void writeJsonTemplate(JsonTemplate jsonTemplate, Path destination)
       throws IOException {
     Path temporaryFile = Files.createTempFile(destination.getParent(), null, null);
     temporaryFile.toFile().deleteOnExit();
@@ -295,42 +331,20 @@ class CacheStorageWriter {
   }
 
   /**
-   * Saves the manifest and container configuration for a V2.2 or OCI image.
+   * Saves image metadata (a manifest list and a list of manifest/container configuration pairs) for
+   * an image reference.
    *
    * @param imageReference the image reference to store the metadata for
-   * @param manifestTemplate the manifest
-   * @param containerConfiguration the container configuration
+   * @param metadata the image metadata
    */
-  void writeMetadata(
-      ImageReference imageReference,
-      BuildableManifestTemplate manifestTemplate,
-      ContainerConfigurationTemplate containerConfiguration)
+  void writeMetadata(ImageReference imageReference, ImageMetadataTemplate metadata)
       throws IOException {
-    Preconditions.checkNotNull(manifestTemplate.getContainerConfiguration());
-    Preconditions.checkNotNull(manifestTemplate.getContainerConfiguration().getDigest());
-
-    Path imageDirectory = cacheStorageFiles.getImageDirectory(imageReference);
-    Files.createDirectories(imageDirectory);
-
-    try (LockFile ignored1 = LockFile.lock(imageDirectory.resolve("lock"))) {
-      writeMetadata(manifestTemplate, imageDirectory.resolve("manifest.json"));
-      writeMetadata(containerConfiguration, imageDirectory.resolve("config.json"));
-    }
-  }
-
-  /**
-   * Writes a V2.1 manifest for a given image reference.
-   *
-   * @param imageReference the image reference to store the metadata for
-   * @param manifestTemplate the manifest
-   */
-  void writeMetadata(ImageReference imageReference, V21ManifestTemplate manifestTemplate)
-      throws IOException {
+    verifyImageMetadata(metadata);
     Path imageDirectory = cacheStorageFiles.getImageDirectory(imageReference);
     Files.createDirectories(imageDirectory);
 
     try (LockFile ignored = LockFile.lock(imageDirectory.resolve("lock"))) {
-      writeMetadata(manifestTemplate, imageDirectory.resolve("manifest.json"));
+      writeJsonTemplate(metadata, imageDirectory.resolve("manifests_configs.json"));
     }
   }
 
@@ -346,7 +360,7 @@ class CacheStorageWriter {
       throws IOException {
     Path configDirectory = cacheStorageFiles.getLocalDirectory().resolve("config");
     Files.createDirectories(configDirectory);
-    writeMetadata(containerConfiguration, configDirectory.resolve(imageId.getHash()));
+    writeJsonTemplate(containerConfiguration, configDirectory.resolve(imageId.getHash()));
   }
 
   /**
@@ -432,7 +446,7 @@ class CacheStorageWriter {
     // Writes the selector to a temporary file and then moves the file to the intended location.
     Path temporarySelectorFile = Files.createTempFile(null, null);
     temporarySelectorFile.toFile().deleteOnExit();
-    try (OutputStream fileOut = FileOperations.newLockingOutputStream(temporarySelectorFile)) {
+    try (OutputStream fileOut = Files.newOutputStream(temporarySelectorFile)) {
       fileOut.write(layerDigest.getHash().getBytes(StandardCharsets.UTF_8));
     }
 

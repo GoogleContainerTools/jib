@@ -1,0 +1,51 @@
+properties:
+  # file properties applied to all layers
+  filePermissions: "644"
+  directoryPermissions: "755"
+  user: "0"
+  group: "0"
+  timestamp: "0"
+entries:
+  - name: "includes and excludes"
+    files:
+      - src: "project"
+        dest: "/target/ie"
+        excludes:
+          - "**/exclude.me"
+        includes:
+          - "**/*.me"
+  - name: "includes only"
+    files:
+      - src: "project"
+        dest: "/target/io"
+        includes:
+          - "**/include.me"
+  - name: "excludes only"
+    files:
+      - src: "project"
+        dest: "/target/eo"
+        excludes:
+          - "**/excludedDir/**"
+  - name: "excludes only shortcut"
+    files:
+      - src: "project"
+        dest: "/target/eo"
+        excludes:
+          # equivalent to "**/excludedDir/**"
+          - "**/excludedDir/"
+  - name: "exclude dir and contents"
+    files:
+      - src: "project"
+        dest: "/target/edac"
+        excludes:
+          - "**/excludedDir/**"
+          - "**/excludedDir"
+  - name: "excludes only wrong"
+    files:
+      - src: "project"
+        dest: "/target/eo"
+        # this is not a safe excludes of directories
+        # only excludes the directory, but doesn't match any of the file contents
+        # and in the end, it will be included anyway because its children are included
+        excludes:
+          - "**/excludedDir"

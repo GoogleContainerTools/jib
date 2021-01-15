@@ -22,12 +22,20 @@ import com.google.cloud.tools.jib.api.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.blob.Blobs;
-import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
+import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate.ContentDescriptorTemplate;
 import com.google.cloud.tools.jib.image.json.ContainerConfigurationTemplate;
+import com.google.cloud.tools.jib.image.json.ImageMetadataTemplate;
+import com.google.cloud.tools.jib.image.json.ManifestAndConfigTemplate;
+import com.google.cloud.tools.jib.image.json.OciIndexTemplate;
+import com.google.cloud.tools.jib.image.json.OciManifestTemplate;
 import com.google.cloud.tools.jib.image.json.V21ManifestTemplate;
+import com.google.cloud.tools.jib.image.json.V22ManifestListTemplate;
+import com.google.cloud.tools.jib.image.json.V22ManifestListTemplate.ManifestDescriptorTemplate;
 import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
+import com.google.cloud.tools.jib.json.JsonTemplate;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import com.google.common.io.ByteStreams;
+import com.google.common.io.Resources;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -35,8 +43,13 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.DigestException;
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
+import org.hamcrest.CoreMatchers;
+import org.hamcrest.MatcherAssert;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
@@ -63,23 +76,30 @@ public class CacheStorageWriterTest {
     return Blobs.from(new GZIPInputStream(new ByteArrayInputStream(Blobs.writeToByteArray(blob))));
   }
 
+  private static <T extends JsonTemplate> T loadJsonResource(String path, Class<T> jsonClass)
+      throws URISyntaxException, IOException {
+    return JsonTemplateMapper.readJsonFromFile(
+        Paths.get(Resources.getResource(path).toURI()), jsonClass);
+  }
+
   @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
   private CacheStorageFiles cacheStorageFiles;
+  private CacheStorageWriter cacheStorageWriter;
   private Path cacheRoot;
 
   @Before
   public void setUp() throws IOException {
     cacheRoot = temporaryFolder.newFolder().toPath();
     cacheStorageFiles = new CacheStorageFiles(cacheRoot);
+    cacheStorageWriter = new CacheStorageWriter(cacheStorageFiles);
   }
 
   @Test
   public void testWriteCompressed() throws IOException {
     Blob uncompressedLayerBlob = Blobs.from("uncompressedLayerBlob");
 
-    CachedLayer cachedLayer =
-        new CacheStorageWriter(cacheStorageFiles).writeCompressed(compress(uncompressedLayerBlob));
+    CachedLayer cachedLayer = cacheStorageWriter.writeCompressed(compress(uncompressedLayerBlob));
 
     verifyCachedLayer(cachedLayer, uncompressedLayerBlob);
   }
@@ -90,9 +110,7 @@ public class CacheStorageWriterTest {
     DescriptorDigest layerDigest = getDigest(compress(uncompressedLayerBlob)).getDigest();
     DescriptorDigest selector = getDigest(Blobs.from("selector")).getDigest();
 
-    CachedLayer cachedLayer =
-        new CacheStorageWriter(cacheStorageFiles)
-            .writeUncompressed(uncompressedLayerBlob, selector);
+    CachedLayer cachedLayer = cacheStorageWriter.writeUncompressed(uncompressedLayerBlob, selector);
 
     verifyCachedLayer(cachedLayer, uncompressedLayerBlob);
 
@@ -108,8 +126,7 @@ public class CacheStorageWriterTest {
     DescriptorDigest diffId = getDigest(uncompressedLayerBlob).getDigest();
 
     CachedLayer cachedLayer =
-        new CacheStorageWriter(cacheStorageFiles)
-            .writeTarLayer(diffId, compress(uncompressedLayerBlob));
+        cacheStorageWriter.writeTarLayer(diffId, compress(uncompressedLayerBlob));
 
     BlobDescriptor layerBlobDescriptor = getDigest(compress(uncompressedLayerBlob));
 
@@ -133,73 +150,180 @@ public class CacheStorageWriterTest {
   @Test
   public void testWriteMetadata_v21()
       throws IOException, URISyntaxException, InvalidImageReferenceException {
-    Path manifestJsonFile =
-        Paths.get(getClass().getClassLoader().getResource("core/json/v21manifest.json").toURI());
-    V21ManifestTemplate manifestTemplate =
-        JsonTemplateMapper.readJsonFromFile(manifestJsonFile, V21ManifestTemplate.class);
+    V21ManifestTemplate v21Manifest =
+        loadJsonResource("core/json/v21manifest.json", V21ManifestTemplate.class);
     ImageReference imageReference = ImageReference.parse("image.reference/project/thing:tag");
 
-    new CacheStorageWriter(cacheStorageFiles).writeMetadata(imageReference, manifestTemplate);
+    ManifestAndConfigTemplate manifestAndConfig = new ManifestAndConfigTemplate(v21Manifest, null);
+    cacheStorageWriter.writeMetadata(
+        imageReference, new ImageMetadataTemplate(null, Arrays.asList(manifestAndConfig)));
 
-    Path savedManifestPath =
-        cacheRoot.resolve("images/image.reference/project/thing!tag/manifest.json");
-    Assert.assertTrue(Files.exists(savedManifestPath));
+    Path savedMetadataPath =
+        cacheRoot.resolve("images/image.reference/project/thing!tag/manifests_configs.json");
+    Assert.assertTrue(Files.exists(savedMetadataPath));
 
-    V21ManifestTemplate savedManifest =
-        JsonTemplateMapper.readJsonFromFile(savedManifestPath, V21ManifestTemplate.class);
-    Assert.assertEquals("amd64", savedManifest.getContainerConfiguration().get().getArchitecture());
+    ImageMetadataTemplate savedMetadata =
+        JsonTemplateMapper.readJsonFromFile(savedMetadataPath, ImageMetadataTemplate.class);
+    Assert.assertNull(savedMetadata.getManifestList());
+    Assert.assertEquals(1, savedMetadata.getManifestsAndConfigs().size());
+
+    ManifestAndConfigTemplate savedManifestAndConfig =
+        savedMetadata.getManifestsAndConfigs().get(0);
+    Assert.assertNull(savedManifestAndConfig.getConfig());
+
+    V21ManifestTemplate savedManifest = (V21ManifestTemplate) savedManifestAndConfig.getManifest();
+    Assert.assertEquals(
+        "ppc64le", savedManifest.getContainerConfiguration().get().getArchitecture());
   }
 
   @Test
   public void testWriteMetadata_v22()
       throws IOException, URISyntaxException, InvalidImageReferenceException {
-    Path containerConfigurationJsonFile =
-        Paths.get(
-            getClass().getClassLoader().getResource("core/json/containerconfig.json").toURI());
-    ContainerConfigurationTemplate containerConfigurationTemplate =
-        JsonTemplateMapper.readJsonFromFile(
-            containerConfigurationJsonFile, ContainerConfigurationTemplate.class);
-    Path manifestJsonFile =
-        Paths.get(getClass().getClassLoader().getResource("core/json/v22manifest.json").toURI());
-    BuildableManifestTemplate manifestTemplate =
-        JsonTemplateMapper.readJsonFromFile(manifestJsonFile, V22ManifestTemplate.class);
+    ContainerConfigurationTemplate containerConfig =
+        loadJsonResource("core/json/containerconfig.json", ContainerConfigurationTemplate.class);
+    V22ManifestTemplate manifest1 =
+        loadJsonResource("core/json/v22manifest.json", V22ManifestTemplate.class);
+    V22ManifestTemplate manifest2 =
+        loadJsonResource(
+            "core/json/v22manifest_optional_properties.json", V22ManifestTemplate.class);
+    V22ManifestListTemplate manifestList =
+        loadJsonResource("core/json/v22manifest_list.json", V22ManifestListTemplate.class);
+
     ImageReference imageReference = ImageReference.parse("image.reference/project/thing:tag");
 
-    new CacheStorageWriter(cacheStorageFiles)
-        .writeMetadata(imageReference, manifestTemplate, containerConfigurationTemplate);
+    List<ManifestAndConfigTemplate> manifestsAndConfigs =
+        Arrays.asList(
+            new ManifestAndConfigTemplate(manifest1, containerConfig, "sha256:digest"),
+            new ManifestAndConfigTemplate(manifest2, containerConfig, "sha256:digest"));
+    cacheStorageWriter.writeMetadata(
+        imageReference, new ImageMetadataTemplate(manifestList, manifestsAndConfigs));
 
-    Path savedManifestPath =
-        cacheRoot.resolve("images/image.reference/project/thing!tag/manifest.json");
-    Path savedConfigPath =
-        cacheRoot.resolve("images/image.reference/project/thing!tag/config.json");
-    Assert.assertTrue(Files.exists(savedManifestPath));
-    Assert.assertTrue(Files.exists(savedConfigPath));
+    Path savedMetadataPath =
+        cacheRoot.resolve("images/image.reference/project/thing!tag/manifests_configs.json");
+    Assert.assertTrue(Files.exists(savedMetadataPath));
 
-    V22ManifestTemplate savedManifest =
-        JsonTemplateMapper.readJsonFromFile(savedManifestPath, V22ManifestTemplate.class);
+    ImageMetadataTemplate savedMetadata =
+        JsonTemplateMapper.readJsonFromFile(savedMetadataPath, ImageMetadataTemplate.class);
+
+    MatcherAssert.assertThat(
+        savedMetadata.getManifestList(), CoreMatchers.instanceOf(V22ManifestListTemplate.class));
+    List<ManifestDescriptorTemplate> savedManifestDescriptors =
+        ((V22ManifestListTemplate) savedMetadata.getManifestList()).getManifests();
+
+    Assert.assertEquals(3, savedManifestDescriptors.size());
+    Assert.assertEquals(
+        "sha256:e692418e4cbaf90ca69d05a66403747baa33ee08806650b51fab815ad7fc331f",
+        savedManifestDescriptors.get(0).getDigest());
+    Assert.assertEquals(
+        "sha256:5b0bcabd1ed22e9fb1310cf6c2dec7cdef19f0ad69efa1f392e94a4333501270",
+        savedManifestDescriptors.get(1).getDigest());
+    Assert.assertEquals(
+        "sha256:cccbcabd1ed22e9fb1310cf6c2dec7cdef19f0ad69efa1f392e94a4333501999",
+        savedManifestDescriptors.get(2).getDigest());
+
+    Assert.assertEquals(2, savedMetadata.getManifestsAndConfigs().size());
+    ManifestAndConfigTemplate savedManifestAndConfig1 =
+        savedMetadata.getManifestsAndConfigs().get(0);
+    ManifestAndConfigTemplate savedManifestAndConfig2 =
+        savedMetadata.getManifestsAndConfigs().get(1);
+
+    V22ManifestTemplate savedManifest1 =
+        (V22ManifestTemplate) savedManifestAndConfig1.getManifest();
+    V22ManifestTemplate savedManifest2 =
+        (V22ManifestTemplate) savedManifestAndConfig2.getManifest();
+    Assert.assertEquals(2, savedManifest1.getSchemaVersion());
+    Assert.assertEquals(2, savedManifest2.getSchemaVersion());
+
+    Assert.assertEquals(1, savedManifest1.getLayers().size());
+    Assert.assertEquals(
+        "4945ba5011739b0b98c4a41afe224e417f47c7c99b2ce76830999c9a0861b236",
+        savedManifest1.getLayers().get(0).getDigest().getHash());
+    Assert.assertEquals(
+        Arrays.asList(
+            "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"),
+        savedManifest2
+            .getLayers()
+            .stream()
+            .map(layer -> layer.getDigest().getHash())
+            .collect(Collectors.toList()));
+
     Assert.assertEquals(
         "8c662931926fa990b41da3c9f42663a537ccd498130030f9149173a0493832ad",
-        savedManifest.getContainerConfiguration().getDigest().getHash());
+        savedManifest1.getContainerConfiguration().getDigest().getHash());
+    Assert.assertEquals(
+        "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        savedManifest2.getContainerConfiguration().getDigest().getHash());
 
-    ContainerConfigurationTemplate savedContainerConfig =
-        JsonTemplateMapper.readJsonFromFile(savedConfigPath, ContainerConfigurationTemplate.class);
-    Assert.assertEquals("wasm", savedContainerConfig.getArchitecture());
+    Assert.assertEquals("wasm", savedManifestAndConfig1.getConfig().getArchitecture());
+    Assert.assertEquals("wasm", savedManifestAndConfig2.getConfig().getArchitecture());
+  }
+
+  @Test
+  public void testWriteMetadata_oci()
+      throws URISyntaxException, IOException, InvalidImageReferenceException {
+    ContainerConfigurationTemplate containerConfig =
+        loadJsonResource("core/json/containerconfig.json", ContainerConfigurationTemplate.class);
+    OciManifestTemplate manifest =
+        loadJsonResource("core/json/ocimanifest.json", OciManifestTemplate.class);
+    OciIndexTemplate ociIndex = loadJsonResource("core/json/ociindex.json", OciIndexTemplate.class);
+
+    ImageReference imageReference = ImageReference.parse("image.reference/project/thing:tag");
+
+    cacheStorageWriter.writeMetadata(
+        imageReference,
+        new ImageMetadataTemplate(
+            ociIndex,
+            Arrays.asList(
+                new ManifestAndConfigTemplate(manifest, containerConfig, "sha256:digest"))));
+
+    Path savedMetadataPath =
+        cacheRoot.resolve("images/image.reference/project/thing!tag/manifests_configs.json");
+    Assert.assertTrue(Files.exists(savedMetadataPath));
+
+    ImageMetadataTemplate savedMetadata =
+        JsonTemplateMapper.readJsonFromFile(savedMetadataPath, ImageMetadataTemplate.class);
+
+    MatcherAssert.assertThat(
+        savedMetadata.getManifestList(), CoreMatchers.instanceOf(OciIndexTemplate.class));
+    List<ContentDescriptorTemplate> savedManifestDescriptors =
+        ((OciIndexTemplate) savedMetadata.getManifestList()).getManifests();
+
+    Assert.assertEquals(1, savedManifestDescriptors.size());
+    Assert.assertEquals(
+        "8c662931926fa990b41da3c9f42663a537ccd498130030f9149173a0493832ad",
+        savedManifestDescriptors.get(0).getDigest().getHash());
+
+    Assert.assertEquals(1, savedMetadata.getManifestsAndConfigs().size());
+    ManifestAndConfigTemplate savedManifestAndConfig =
+        savedMetadata.getManifestsAndConfigs().get(0);
+
+    OciManifestTemplate savedManifest1 = (OciManifestTemplate) savedManifestAndConfig.getManifest();
+    Assert.assertEquals(2, savedManifest1.getSchemaVersion());
+
+    Assert.assertEquals(1, savedManifest1.getLayers().size());
+    Assert.assertEquals(
+        "4945ba5011739b0b98c4a41afe224e417f47c7c99b2ce76830999c9a0861b236",
+        savedManifest1.getLayers().get(0).getDigest().getHash());
+
+    Assert.assertEquals(
+        "8c662931926fa990b41da3c9f42663a537ccd498130030f9149173a0493832ad",
+        savedManifest1.getContainerConfiguration().getDigest().getHash());
+
+    Assert.assertEquals("wasm", savedManifestAndConfig.getConfig().getArchitecture());
   }
 
   @Test
   public void testWriteLocalConfig() throws IOException, URISyntaxException, DigestException {
-    Path containerConfigurationJsonFile =
-        Paths.get(
-            getClass().getClassLoader().getResource("core/json/containerconfig.json").toURI());
     ContainerConfigurationTemplate containerConfigurationTemplate =
-        JsonTemplateMapper.readJsonFromFile(
-            containerConfigurationJsonFile, ContainerConfigurationTemplate.class);
+        loadJsonResource("core/json/containerconfig.json", ContainerConfigurationTemplate.class);
 
-    new CacheStorageWriter(cacheStorageFiles)
-        .writeLocalConfig(
-            DescriptorDigest.fromHash(
-                "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"),
-            containerConfigurationTemplate);
+    cacheStorageWriter.writeLocalConfig(
+        DescriptorDigest.fromHash(
+            "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"),
+        containerConfigurationTemplate);
 
     Path savedConfigPath =
         cacheStorageFiles

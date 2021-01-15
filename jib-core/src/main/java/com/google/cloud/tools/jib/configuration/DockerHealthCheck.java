@@ -20,6 +20,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import java.time.Duration;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import javax.annotation.Nullable;
 
@@ -97,7 +98,8 @@ public class DockerHealthCheck {
    */
   public static DockerHealthCheck.Builder fromCommand(List<String> command) {
     Preconditions.checkArgument(command.size() > 0, "command must not be empty");
-    Preconditions.checkArgument(!command.contains(null), "command must not contain null elements");
+    Preconditions.checkArgument(
+        command.stream().allMatch(Objects::nonNull), "command must not contain null elements");
     return new Builder(ImmutableList.copyOf(command));
   }
 

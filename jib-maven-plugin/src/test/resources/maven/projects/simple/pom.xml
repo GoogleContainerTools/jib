@@ -39,6 +39,9 @@
         <artifactId>jib-maven-plugin</artifactId>
         <version>${jib-maven-plugin.version}</version>
         <configuration>
+          <from>
+            <image>gcr.io/distroless/java@sha256:2315ed1472a09826c1f31ab93ff13ceaa3a4e7d5482f357d15a296b3db0d1c96</image>
+          </from>
           <to>
             <image>${_TARGET_IMAGE}</image>
           </to>

@@ -89,6 +89,11 @@ public class GradleRawConfiguration implements RawConfiguration {
   }
 
   @Override
+  public boolean getExpandClasspathDependencies() {
+    return jibExtension.getContainer().getExpandClasspathDependencies();
+  }
+
+  @Override
   public Optional<String> getMainClass() {
     return Optional.ofNullable(jibExtension.getContainer().getMainClass());
   }
@@ -214,5 +219,10 @@ public class GradleRawConfiguration implements RawConfiguration {
   @Override
   public List<? extends ExtensionConfiguration> getPluginExtensions() {
     return jibExtension.getPluginExtensions().get();
+  }
+
+  @Override
+  public List<? extends PlatformConfiguration> getPlatforms() {
+    return jibExtension.getFrom().getPlatforms().get();
   }
 }

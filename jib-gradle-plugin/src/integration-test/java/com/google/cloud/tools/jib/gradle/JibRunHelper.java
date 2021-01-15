@@ -38,6 +38,7 @@ import org.gradle.testkit.runner.BuildResult;
 import org.gradle.testkit.runner.BuildTask;
 import org.gradle.testkit.runner.TaskOutcome;
 import org.hamcrest.CoreMatchers;
+import org.hamcrest.MatcherAssert;
 import org.junit.Assert;
 
 /** Helper class to run integration tests. */
@@ -83,7 +84,7 @@ public class JibRunHelper {
             "-b=" + gradleBuildFile);
     assertBuildSuccess(buildResult, "jib", "Built and pushed image as ");
     assertImageDigestAndId(testProject.getProjectRoot());
-    Assert.assertThat(buildResult.getOutput(), CoreMatchers.containsString(imageReference));
+    MatcherAssert.assertThat(buildResult.getOutput(), CoreMatchers.containsString(imageReference));
 
     return pullAndRunBuiltImage(imageReference, extraRunArguments);
   }
@@ -102,7 +103,7 @@ public class JibRunHelper {
             "-b=" + "build-local-base.gradle");
     assertBuildSuccess(buildResult, "jib", "Built and pushed image as ");
     assertImageDigestAndId(SingleProjectIntegrationTest.simpleTestProject.getProjectRoot());
-    Assert.assertThat(buildResult.getOutput(), CoreMatchers.containsString(target));
+    MatcherAssert.assertThat(buildResult.getOutput(), CoreMatchers.containsString(target));
     return pullAndRunBuiltImage(target);
   }
 
@@ -120,11 +121,11 @@ public class JibRunHelper {
             "-D_ADDITIONAL_TAG=" + additionalTag);
     assertBuildSuccess(buildResult, "jib", "Built and pushed image as ");
     assertImageDigestAndId(testProject.getProjectRoot());
-    Assert.assertThat(buildResult.getOutput(), CoreMatchers.containsString(imageReference));
+    MatcherAssert.assertThat(buildResult.getOutput(), CoreMatchers.containsString(imageReference));
 
     String additionalImageReference =
         ImageReference.parse(imageReference).withQualifier(additionalTag).toString();
-    Assert.assertThat(
+    MatcherAssert.assertThat(
         buildResult.getOutput(), CoreMatchers.containsString(additionalImageReference));
 
     Assert.assertEquals(expectedOutput, pullAndRunBuiltImage(imageReference));
@@ -147,10 +148,10 @@ public class JibRunHelper {
             "-b=" + gradleBuildFile);
     assertBuildSuccess(buildResult, "jibDockerBuild", "Built image to Docker daemon as ");
     assertImageDigestAndId(testProject.getProjectRoot());
-    Assert.assertThat(buildResult.getOutput(), CoreMatchers.containsString(imageReference));
+    MatcherAssert.assertThat(buildResult.getOutput(), CoreMatchers.containsString(imageReference));
 
     String history = new Command("docker", "history", imageReference).run();
-    Assert.assertThat(history, CoreMatchers.containsString("jib-gradle-plugin"));
+    MatcherAssert.assertThat(history, CoreMatchers.containsString("jib-gradle-plugin"));
 
     return buildResult;
   }
@@ -177,7 +178,7 @@ public class JibRunHelper {
     Assert.assertEquals(TaskOutcome.SUCCESS, classesTask.getOutcome());
     Assert.assertNotNull(jibTask);
     Assert.assertEquals(TaskOutcome.SUCCESS, jibTask.getOutcome());
-    Assert.assertThat(buildResult.getOutput(), CoreMatchers.containsString(successMessage));
+    MatcherAssert.assertThat(buildResult.getOutput(), CoreMatchers.containsString(successMessage));
   }
 
   static void assertSimpleCreationTimeIsEqual(Instant match, String imageReference)
@@ -223,7 +224,7 @@ public class JibRunHelper {
       throws IOException, InterruptedException {
     new Command("docker", "pull", imageReference).run();
     String history = new Command("docker", "history", imageReference).run();
-    Assert.assertThat(history, CoreMatchers.containsString("jib-gradle-plugin"));
+    MatcherAssert.assertThat(history, CoreMatchers.containsString("jib-gradle-plugin"));
 
     List<String> command = new ArrayList<>(Arrays.asList("docker", "run", "--rm"));
     command.addAll(Arrays.asList(extraRunArguments));

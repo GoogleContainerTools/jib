@@ -22,6 +22,7 @@ import com.google.cloud.tools.jib.api.buildplan.FileEntriesLayer;
 import com.google.cloud.tools.jib.api.buildplan.FileEntry;
 import com.google.cloud.tools.jib.api.buildplan.ImageFormat;
 import com.google.cloud.tools.jib.api.buildplan.LayerObject;
+import com.google.cloud.tools.jib.api.buildplan.Platform;
 import com.google.cloud.tools.jib.api.buildplan.Port;
 import com.google.cloud.tools.jib.builder.TimerEventDispatcher;
 import com.google.cloud.tools.jib.builder.steps.BuildResult;
@@ -67,14 +68,13 @@ import org.apache.http.conn.HttpHostConnectException;
 public class JibContainerBuilder {
 
   private static String capitalizeFirstLetter(String string) {
-    if (string.length() == 0) {
+    if (string.isEmpty()) {
       return string;
     }
     return Character.toUpperCase(string.charAt(0)) + string.substring(1);
   }
 
-  private final ContainerBuildPlan.Builder containerBuildPlanBuilder =
-      ContainerBuildPlan.builder().setArchitectureHint("amd64").setOsHint("linux");
+  private final ContainerBuildPlan.Builder containerBuildPlanBuilder = ContainerBuildPlan.builder();
   // TODO(chanseok): remove and use containerBuildPlanBuilder instead. Note that
   // ContainerConfiguation implements equals() and hashCode(), so need to verify
   // if they are required.
@@ -490,6 +490,46 @@ public class JibContainerBuilder {
   }
 
   /**
+   * Sets a desired platform (properties including OS and architecture) list. If the base image
+   * reference is a Docker manifest list or an OCI image index, an image builder may select the base
+   * images matching the given platforms. If the base image reference is an image manifest, an image
+   * builder may ignore the given platforms and use the platform of the base image or may decide to
+   * raise on error.
+   *
+   * <p>Note that a new container builder starts with "amd64/linux" as the default platform.
+   *
+   * @param platforms list of platforms to select base images in case of a manifest list
+   * @return this
+   */
+  public JibContainerBuilder setPlatforms(Set<Platform> platforms) {
+    containerBuildPlanBuilder.setPlatforms(platforms);
+    containerConfigurationBuilder.setPlatforms(platforms);
+    return this;
+  }
+
+  /**
+   * Adds a desired image platform (OS and architecture pair). If the base image reference is a
+   * Docker manifest list or an OCI image index, an image builder may select the base image matching
+   * the given platform. If the base image reference is an image manifest, an image builder may
+   * ignore the given platform and use the platform of the base image or may decide to raise on
+   * error.
+   *
+   * <p>Note that a new new container builder starts with "amd64/linux" as the default platform. If
+   * you want to reset the default platform instead of adding a new one, use {@link
+   * #setPlatforms(Set)}.
+   *
+   * @param architecture architecture (for example, {@code amd64}) to select a base image in case of
+   *     a manifest list
+   * @param os OS (for example, {@code linux}) to select a base image in case of a manifest list
+   * @return this
+   */
+  public JibContainerBuilder addPlatform(String architecture, String os) {
+    containerBuildPlanBuilder.addPlatform(architecture, os);
+    containerConfigurationBuilder.addPlatform(architecture, os);
+    return this;
+  }
+
+  /**
    * Sets the user and group to run the container as. {@code user} can be a username or UID along
    * with an optional groupname or GID.
    *
@@ -610,8 +650,7 @@ public class JibContainerBuilder {
       throws InvalidImageReferenceException {
     containerBuildPlanBuilder
         .setBaseImage(buildPlan.getBaseImage())
-        .setArchitectureHint(buildPlan.getArchitectureHint())
-        .setOsHint(buildPlan.getOsHint())
+        .setPlatforms(buildPlan.getPlatforms())
         .setCreationTime(buildPlan.getCreationTime())
         .setFormat(buildPlan.getFormat())
         .setEnvironment(buildPlan.getEnvironment())
@@ -625,6 +664,7 @@ public class JibContainerBuilder {
         .setLayers(buildPlan.getLayers());
 
     containerConfigurationBuilder
+        .setPlatforms(buildPlan.getPlatforms())
         .setCreationTime(buildPlan.getCreationTime())
         .setEnvironment(buildPlan.getEnvironment())
         .setLabels(buildPlan.getLabels())

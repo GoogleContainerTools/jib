@@ -24,8 +24,11 @@ import com.google.cloud.tools.jib.configuration.ContainerConfiguration;
 import com.google.cloud.tools.jib.image.Image;
 import com.google.cloud.tools.jib.image.LayerPropertyNotFoundException;
 import com.google.cloud.tools.jib.image.json.HistoryEntry;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.UnmodifiableIterator;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
 import javax.annotation.Nullable;
@@ -34,6 +37,26 @@ import javax.annotation.Nullable;
 class BuildImageStep implements Callable<Image> {
 
   private static final String DESCRIPTION = "Building container configuration";
+
+  @VisibleForTesting
+  static String truncateLongClasspath(ImmutableList<String> imageEntrypoint) {
+    List<String> truncated = new ArrayList<>();
+    UnmodifiableIterator<String> iterator = imageEntrypoint.iterator();
+    while (iterator.hasNext()) {
+      String element = iterator.next();
+      truncated.add(element);
+
+      if (element.equals("-cp") || element.equals("-classpath")) {
+        String classpath = iterator.next();
+        if (classpath.length() > 200) {
+          truncated.add(classpath.substring(0, 200) + "<... classpath truncated ...>");
+        } else {
+          truncated.add(classpath);
+        }
+      }
+    }
+    return truncated.toString();
+  }
 
   private final BuildContext buildContext;
   private final ProgressEventDispatcher.Factory progressEventDispatcherFactory;
@@ -62,7 +85,6 @@ class BuildImageStep implements Callable<Image> {
             new TimerEventDispatcher(buildContext.getEventHandlers(), DESCRIPTION)) {
       // Constructs the image.
       Image.Builder imageBuilder = Image.builder(buildContext.getTargetFormat());
-      ContainerConfiguration containerConfiguration = buildContext.getContainerConfiguration();
 
       // Base image layers
       baseImageLayers.forEach(imageBuilder::addLayer);
@@ -86,11 +108,9 @@ class BuildImageStep implements Callable<Image> {
           .setUser(baseImage.getUser())
           .setWorkingDirectory(baseImage.getWorkingDirectory());
 
+      ContainerConfiguration containerConfiguration = buildContext.getContainerConfiguration();
       // Add history elements for non-empty layers that don't have one yet
-      Instant layerCreationTime =
-          containerConfiguration == null
-              ? ContainerConfiguration.DEFAULT_CREATION_TIME
-              : containerConfiguration.getCreationTime();
+      Instant layerCreationTime = containerConfiguration.getCreationTime();
       for (int count = 0; count < baseImageLayers.size() - nonEmptyLayerCount; count++) {
         imageBuilder.addHistory(
             HistoryEntry.builder()
@@ -111,21 +131,20 @@ class BuildImageStep implements Callable<Image> {
                     .setComment(applicationLayer.getName())
                     .build());
       }
-      if (containerConfiguration != null) {
-        imageBuilder
-            .addEnvironment(containerConfiguration.getEnvironmentMap())
-            .setCreated(containerConfiguration.getCreationTime())
-            .setEntrypoint(computeEntrypoint(baseImage, containerConfiguration))
-            .setProgramArguments(computeProgramArguments(baseImage, containerConfiguration))
-            .addExposedPorts(containerConfiguration.getExposedPorts())
-            .addVolumes(containerConfiguration.getVolumes())
-            .addLabels(containerConfiguration.getLabels());
-        if (containerConfiguration.getUser() != null) {
-          imageBuilder.setUser(containerConfiguration.getUser());
-        }
-        if (containerConfiguration.getWorkingDirectory() != null) {
-          imageBuilder.setWorkingDirectory(containerConfiguration.getWorkingDirectory().toString());
-        }
+
+      imageBuilder
+          .addEnvironment(containerConfiguration.getEnvironmentMap())
+          .setCreated(containerConfiguration.getCreationTime())
+          .setEntrypoint(computeEntrypoint(baseImage, containerConfiguration))
+          .setProgramArguments(computeProgramArguments(baseImage, containerConfiguration))
+          .addExposedPorts(containerConfiguration.getExposedPorts())
+          .addVolumes(containerConfiguration.getVolumes())
+          .addLabels(containerConfiguration.getLabels());
+      if (containerConfiguration.getUser() != null) {
+        imageBuilder.setUser(containerConfiguration.getUser());
+      }
+      if (containerConfiguration.getWorkingDirectory() != null) {
+        imageBuilder.setWorkingDirectory(containerConfiguration.getWorkingDirectory().toString());
       }
 
       // Gets the container configuration content descriptor.
@@ -152,10 +171,15 @@ class BuildImageStep implements Callable<Image> {
         shouldInherit ? baseImage.getEntrypoint() : containerConfiguration.getEntrypoint();
 
     if (entrypointToUse != null) {
-      String logSuffix = shouldInherit ? " (inherited from base image)" : "";
-      String message = "Container entrypoint set to " + entrypointToUse + logSuffix;
       buildContext.getEventHandlers().dispatch(LogEvent.lifecycle(""));
-      buildContext.getEventHandlers().dispatch(LogEvent.lifecycle(message));
+      if (shouldInherit) {
+        String message =
+            "Container entrypoint set to " + entrypointToUse + " (inherited from base image)";
+        buildContext.getEventHandlers().dispatch(LogEvent.lifecycle(message));
+      } else {
+        String message = "Container entrypoint set to " + truncateLongClasspath(entrypointToUse);
+        buildContext.getEventHandlers().dispatch(LogEvent.lifecycle(message));
+      }
     }
 
     return entrypointToUse;

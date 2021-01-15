@@ -73,7 +73,8 @@ public class DefaultCredentialRetrievers {
    *     CredentialRetriever}s
    * @return a new {@link DefaultCredentialRetrievers}
    */
-  static DefaultCredentialRetrievers init(CredentialRetrieverFactory credentialRetrieverFactory) {
+  public static DefaultCredentialRetrievers init(
+      CredentialRetrieverFactory credentialRetrieverFactory) {
     return new DefaultCredentialRetrievers(
         credentialRetrieverFactory, System.getProperties(), System.getenv());
   }
@@ -153,7 +154,9 @@ public class DefaultCredentialRetrievers {
       if (credentialHelper.contains(FileSystems.getDefault().getSeparator())) {
         if (!Files.exists(Paths.get(credentialHelper))) {
           String osName = systemProperties.getProperty("os.name").toLowerCase(Locale.ENGLISH);
-          if (!osName.contains("windows") || !Files.exists(Paths.get(credentialHelper + ".cmd"))) {
+          if (!osName.contains("windows")
+              || (!Files.exists(Paths.get(credentialHelper + ".cmd"))
+                  && !Files.exists(Paths.get(credentialHelper + ".exe")))) {
             throw new FileNotFoundException(
                 "Specified credential helper was not found: " + credentialHelper);
           }

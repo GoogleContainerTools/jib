@@ -53,6 +53,7 @@ import java.nio.file.Paths;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.ServiceLoader;
 import java.util.function.Predicate;
@@ -140,6 +141,8 @@ public class GradleProjectProperties implements ProjectProperties {
 
       case Auto:
         // Enables progress footer when ANSI is supported (Windows or TERM not 'dumb').
+        // Unlike jib-maven-plugin, we cannot test "System.console() != null".
+        // https://github.com/GoogleContainerTools/jib/issues/2920#issuecomment-749234458
         return Os.isFamily(Os.FAMILY_WINDOWS) || !"dumb".equals(System.getenv("TERM"));
 
       default:
@@ -186,24 +189,6 @@ public class GradleProjectProperties implements ProjectProperties {
   public JibContainerBuilder createJibContainerBuilder(
       JavaContainerBuilder javaContainerBuilder, ContainerizingMode containerizingMode) {
     try {
-      if (isWarProject()) {
-        String warFilePath = getWarFilePath();
-        log(LogEvent.info("WAR project identified, creating WAR image from: " + warFilePath));
-        Path explodedWarPath = tempDirectoryProvider.newDirectory();
-        ZipUtil.unzip(Paths.get(warFilePath), explodedWarPath);
-        return JavaContainerBuilderHelper.fromExplodedWar(javaContainerBuilder, explodedWarPath);
-      }
-
-      JavaPluginConvention javaPluginConvention =
-          project.getConvention().getPlugin(JavaPluginConvention.class);
-      SourceSet mainSourceSet =
-          javaPluginConvention.getSourceSets().getByName(MAIN_SOURCE_SET_NAME);
-
-      FileCollection classesOutputDirectories =
-          mainSourceSet.getOutput().getClassesDirs().filter(File::exists);
-      Path resourcesOutputDirectory = mainSourceSet.getOutput().getResourcesDir().toPath();
-      FileCollection allFiles = mainSourceSet.getRuntimeClasspath().filter(File::exists);
-
       FileCollection projectDependencies =
           project.files(
               project
@@ -218,6 +203,23 @@ public class GradleProjectProperties implements ProjectProperties {
                               instanceof ProjectComponentIdentifier)
                   .map(ResolvedArtifact::getFile)
                   .collect(Collectors.toList()));
+
+      if (isWarProject()) {
+        String warFilePath = getWarFilePath();
+        log(LogEvent.info("WAR project identified, creating WAR image from: " + warFilePath));
+        Path explodedWarPath = tempDirectoryProvider.newDirectory();
+        ZipUtil.unzip(Paths.get(warFilePath), explodedWarPath);
+        return JavaContainerBuilderHelper.fromExplodedWar(
+            javaContainerBuilder,
+            explodedWarPath,
+            projectDependencies.getFiles().stream().map(File::getName).collect(Collectors.toSet()));
+      }
+
+      SourceSet mainSourceSet = getMainSourceSet();
+      FileCollection classesOutputDirectories =
+          mainSourceSet.getOutput().getClassesDirs().filter(File::exists);
+      Path resourcesOutputDirectory = mainSourceSet.getOutput().getResourcesDir().toPath();
+      FileCollection allFiles = mainSourceSet.getRuntimeClasspath().filter(File::exists);
 
       FileCollection nonProjectDependencies =
           allFiles
@@ -284,16 +286,29 @@ public class GradleProjectProperties implements ProjectProperties {
   @Override
   public List<Path> getClassFiles() throws IOException {
     // TODO: Consolidate with createJibContainerBuilder
-    JavaPluginConvention javaPluginConvention =
-        project.getConvention().getPlugin(JavaPluginConvention.class);
-    SourceSet mainSourceSet = javaPluginConvention.getSourceSets().getByName(MAIN_SOURCE_SET_NAME);
     FileCollection classesOutputDirectories =
-        mainSourceSet.getOutput().getClassesDirs().filter(File::exists);
+        getMainSourceSet().getOutput().getClassesDirs().filter(File::exists);
     List<Path> classFiles = new ArrayList<>();
     for (File classesOutputDirectory : classesOutputDirectories) {
       classFiles.addAll(new DirectoryWalker(classesOutputDirectory.toPath()).walk().asList());
     }
     return classFiles;
+  }
+
+  @Override
+  public List<Path> getDependencies() {
+    List<Path> dependencies = new ArrayList<>();
+    FileCollection runtimeClasspath = getMainSourceSet().getRuntimeClasspath();
+    // To be on the safe side with the order, calling "forEach" first (no filtering operations).
+    runtimeClasspath.forEach(
+        file -> {
+          if (file.exists()
+              && file.isFile()
+              && file.getName().toLowerCase(Locale.US).endsWith(".jar")) {
+            dependencies.add(file.toPath());
+          }
+        });
+    return dependencies;
   }
 
   @Override
@@ -502,5 +517,11 @@ public class GradleProjectProperties implements ProjectProperties {
               + config.getExtensionClass());
     }
     return found.get();
+  }
+
+  private SourceSet getMainSourceSet() {
+    JavaPluginConvention javaPluginConvention =
+        project.getConvention().getPlugin(JavaPluginConvention.class);
+    return javaPluginConvention.getSourceSets().getByName(MAIN_SOURCE_SET_NAME);
   }
 }

@@ -1,17 +1,18 @@
 plugins {
   id 'net.researchgate.release'
   id 'maven-publish'
+  id 'eclipse'
 }
 
 dependencies {
-  api "com.google.cloud.tools:jib-build-plan:${dependencyVersions.BUILD_PLAN}"
-  api "com.google.cloud.tools:jib-plugins-extension-common:${dependencyVersions.EXTENSION_COMMON}"
+  api dependencyStrings.BUILD_PLAN
+  api dependencyStrings.EXTENSION_COMMON
   api gradleApi()
 }
 
 jar {
   manifest {
-    attributes 'Implementation-Version': version
+    attributes 'Implementation-Version': archiveVersion
     attributes 'Automatic-Module-Name': 'com.google.cloud.tools.jib.gradle.extension'
 
     // OSGi metadata
@@ -43,7 +44,11 @@ publishing {
 release {
   tagTemplate = 'v$version-gradle-extension'
   git {
-    requireBranch = /^gradle_extension_release_v\d+.*$/  //regex
+    requireBranch = /^gradle-extension-release-v\d+.*$/  //regex
   }
 }
 /* RELEASE */
+
+/* ECLIPSE */
+eclipse.classpath.plusConfigurations += [configurations.integrationTestImplementation]
+/* ECLIPSE */

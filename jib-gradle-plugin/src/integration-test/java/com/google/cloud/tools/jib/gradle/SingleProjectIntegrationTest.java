@@ -32,6 +32,7 @@ import java.time.Instant;
 import org.gradle.testkit.runner.BuildResult;
 import org.gradle.testkit.runner.UnexpectedBuildFailure;
 import org.hamcrest.CoreMatchers;
+import org.hamcrest.MatcherAssert;
 import org.junit.Assert;
 import org.junit.Assume;
 import org.junit.Before;
@@ -96,14 +97,14 @@ public class SingleProjectIntegrationTest {
   private static void assertDockerInspect(String imageReference)
       throws IOException, InterruptedException {
     String dockerInspect = new Command("docker", "inspect", imageReference).run();
-    Assert.assertThat(
+    MatcherAssert.assertThat(
         dockerInspect,
         CoreMatchers.containsString(
             "            \"Volumes\": {\n"
                 + "                \"/var/log\": {},\n"
                 + "                \"/var/log2\": {}\n"
                 + "            },"));
-    Assert.assertThat(
+    MatcherAssert.assertThat(
         dockerInspect,
         CoreMatchers.containsString(
             "            \"ExposedPorts\": {\n"
@@ -112,7 +113,7 @@ public class SingleProjectIntegrationTest {
                 + "                \"2001/udp\": {},\n"
                 + "                \"2002/udp\": {},\n"
                 + "                \"2003/udp\": {}"));
-    Assert.assertThat(
+    MatcherAssert.assertThat(
         dockerInspect,
         CoreMatchers.containsString(
             "            \"Labels\": {\n"
@@ -144,12 +145,12 @@ public class SingleProjectIntegrationTest {
             "-b=complex-build.gradle");
 
     JibRunHelper.assertBuildSuccess(buildResult, "jib", "Built and pushed image as ");
-    Assert.assertThat(buildResult.getOutput(), CoreMatchers.containsString(imageReference));
+    MatcherAssert.assertThat(buildResult.getOutput(), CoreMatchers.containsString(imageReference));
 
     targetRegistry.pull(imageReference);
     assertDockerInspect(imageReference);
     String history = new Command("docker", "history", imageReference).run();
-    Assert.assertThat(history, CoreMatchers.containsString("jib-gradle-plugin"));
+    MatcherAssert.assertThat(history, CoreMatchers.containsString("jib-gradle-plugin"));
 
     String output = new Command("docker", "run", "--rm", imageReference).run();
     Assert.assertEquals(
@@ -186,7 +187,7 @@ public class SingleProjectIntegrationTest {
       Assert.fail();
 
     } catch (UnexpectedBuildFailure ex) {
-      Assert.assertThat(
+      MatcherAssert.assertThat(
           ex.getMessage(),
           CoreMatchers.containsString(
               "No classes files were found - did you compile your project?"));
@@ -215,7 +216,7 @@ public class SingleProjectIntegrationTest {
     assertEntrypoint(
         "[java -cp /d1:/d2:/app/resources:/app/classes:/app/libs/* com.test.HelloWorld]",
         targetImage);
-    assertLayerSize(8, targetImage);
+    assertLayerSize(9, targetImage);
   }
 
   @Test
@@ -263,7 +264,7 @@ public class SingleProjectIntegrationTest {
           "-D_TARGET_IMAGE=" + targetImage);
       Assert.fail();
     } catch (UnexpectedBuildFailure ex) {
-      Assert.assertThat(
+      MatcherAssert.assertThat(
           ex.getMessage(),
           CoreMatchers.containsString("Cannot build to a container registry in offline mode"));
     }
@@ -292,7 +293,7 @@ public class SingleProjectIntegrationTest {
       Assert.fail();
 
     } catch (UnexpectedBuildFailure ex) {
-      Assert.assertThat(
+      MatcherAssert.assertThat(
           ex.getMessage(),
           CoreMatchers.containsString(
               "Your project is using Java 11 but the base image is for Java 8, perhaps you should "
@@ -311,7 +312,7 @@ public class SingleProjectIntegrationTest {
             + "1970-01-01T00:00:01Z\n1970-01-01T00:00:01Z\n",
         JibRunHelper.buildToDockerDaemonAndRun(
             simpleTestProject, targetImage, "build-extra-dirs.gradle"));
-    assertLayerSize(9, targetImage); // one more than usual
+    assertLayerSize(10, targetImage); // one more than usual
   }
 
   @Test
@@ -323,7 +324,7 @@ public class SingleProjectIntegrationTest {
             + "1970-01-01T00:00:01Z\n1970-01-01T00:00:01Z\n",
         JibRunHelper.buildToDockerDaemonAndRun(
             simpleTestProject, targetImage, "build-extra-dirs2.gradle"));
-    assertLayerSize(9, targetImage); // one more than usual
+    assertLayerSize(10, targetImage); // one more than usual
   }
 
   @Test
@@ -335,7 +336,7 @@ public class SingleProjectIntegrationTest {
             + "1970-01-01T00:00:01Z\n1970-01-01T00:00:01Z\nbaz\n1970-01-01T00:00:01Z\n",
         JibRunHelper.buildToDockerDaemonAndRun(
             simpleTestProject, targetImage, "build-extra-dirs3.gradle"));
-    assertLayerSize(9, targetImage); // one more than usual
+    assertLayerSize(10, targetImage); // one more than usual
   }
 
   @Test
@@ -360,7 +361,7 @@ public class SingleProjectIntegrationTest {
     Assert.assertEquals(output, new Command("docker", "run", "--rm", id).run());
 
     JibRunHelper.assertSimpleCreationTimeIsAfter(beforeBuild, targetImage);
-    assertWorkingDirectory("", targetImage);
+    assertWorkingDirectory("/", targetImage);
   }
 
   @Test
@@ -369,7 +370,7 @@ public class SingleProjectIntegrationTest {
     Instant beforeBuild = Instant.now();
     buildAndRunComplex(targetImage, "testuser", "testpassword", localRegistry1);
     JibRunHelper.assertSimpleCreationTimeIsAfter(beforeBuild, targetImage);
-    assertWorkingDirectory("", targetImage);
+    assertWorkingDirectory("/", targetImage);
   }
 
   @Test
@@ -443,8 +444,8 @@ public class SingleProjectIntegrationTest {
     JibRunHelper.assertBuildSuccess(
         buildResult, "jibDockerBuild", "Built image to Docker daemon as ");
     JibRunHelper.assertImageDigestAndId(simpleTestProject.getProjectRoot());
-    Assert.assertThat(buildResult.getOutput(), CoreMatchers.containsString(targetImage));
-    Assert.assertThat(
+    MatcherAssert.assertThat(buildResult.getOutput(), CoreMatchers.containsString(targetImage));
+    MatcherAssert.assertThat(
         buildResult.getOutput(), CoreMatchers.containsString("Docker load called. value1 value2"));
   }
 
@@ -467,7 +468,7 @@ public class SingleProjectIntegrationTest {
             "-D_TARGET_IMAGE=" + targetImage);
 
     JibRunHelper.assertBuildSuccess(buildResult, "jibBuildTar", "Built image tarball at ");
-    Assert.assertThat(buildResult.getOutput(), CoreMatchers.containsString(outputPath));
+    MatcherAssert.assertThat(buildResult.getOutput(), CoreMatchers.containsString(outputPath));
 
     new Command("docker", "load", "--input", outputPath).run();
     Assert.assertEquals(

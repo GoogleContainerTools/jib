@@ -1,5 +1,6 @@
 plugins {
   id 'application'
+  id 'net.researchgate.release'
   id 'eclipse'
 }
 
@@ -16,23 +17,43 @@ application {
 
 dependencies {
   implementation project(':jib-core')
-  implementation "com.google.guava:guava:${dependencyVersions.GUAVA}"
-  implementation "info.picocli:picocli:${dependencyVersions.PICOCLI}"
+  implementation project(':jib-plugins-common')
 
-  testImplementation "junit:junit:${dependencyVersions.JUNIT}"
-  testImplementation "org.mockito:mockito-core:${dependencyVersions.MOCKITO_CORE}"
-  testImplementation "org.slf4j:slf4j-api:${dependencyVersions.SLF4J_API}"
-  testImplementation "com.github.stefanbirkner:system-rules:${dependencyVersions.SYSTEM_RULES}"
+  implementation dependencyStrings.COMMONS_TEXT
+  implementation dependencyStrings.JACKSON_DATAFORMAT_YAML
+  implementation dependencyStrings.JACKSON_DATABIND
+  implementation dependencyStrings.GUAVA
+  implementation dependencyStrings.PICOCLI
+
+  testImplementation dependencyStrings.JUNIT
+  testImplementation dependencyStrings.JUNIT_PARAMS
+  testImplementation dependencyStrings.TRUTH
+  testImplementation dependencyStrings.TRUTH8
+  testImplementation dependencyStrings.MOCKITO_CORE
+  testImplementation dependencyStrings.SLF4J_API
+  testImplementation dependencyStrings.SYSTEM_RULES
+
+  integrationTestImplementation project(path:':jib-core', configuration:'integrationTests')
+}
+
+release {
+  tagTemplate = 'v$version-cli'
+  ignoredSnapshotDependencies = [
+    'com.google.cloud.tools:jib-core',
+    'com.google.cloud.tools:jib-plugins-common',
+  ]
+  git {
+    requireBranch = /^cli-release-v\d+.*$/  //regex
+  }
 }
 
 /* ECLIPSE */
-// TODO: remove after upgrading to Gradle 5.6. (https://github.com/eclipse/buildship/issues/689)
-// Also remove the 'eclipse' plugin.
+eclipse.classpath.plusConfigurations += [configurations.integrationTestImplementation]
 eclipse.classpath.file.whenMerged {
-  entries.findAll {
-    it.path in ['src/test/java', 'src/test/resources', 'test-resources']
-  }.each {
-    it.entryAttributes['test'] = 'true'
+  entries.each {
+    if (it.path == 'src/integration-test/resources') {
+      it.excludes += 'jarTest/'
+    }
   }
 }
 /* ECLIPSE */

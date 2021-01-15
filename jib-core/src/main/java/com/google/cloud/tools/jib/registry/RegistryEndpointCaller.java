@@ -46,8 +46,8 @@ import javax.net.ssl.SSLException;
 class RegistryEndpointCaller<T> {
 
   /**
-   * <a
-   * href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/308">https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/308</a>.
+   * <a href =
+   * "https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/308">https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/308</a>.
    */
   @VisibleForTesting static final int STATUS_CODE_PERMANENT_REDIRECT = 308;
 
@@ -188,22 +188,28 @@ class RegistryEndpointCaller<T> {
     RegistryErrorExceptionBuilder registryErrorExceptionBuilder =
         new RegistryErrorExceptionBuilder(
             registryEndpointProvider.getActionDescription(), responseException);
-
-    try {
-      ErrorResponseTemplate errorResponse =
-          JsonTemplateMapper.readJson(responseException.getContent(), ErrorResponseTemplate.class);
-      for (ErrorEntryTemplate errorEntry : errorResponse.getErrors()) {
-        registryErrorExceptionBuilder.addReason(errorEntry);
+    if (responseException.getContent() != null) {
+      try {
+        ErrorResponseTemplate errorResponse =
+            JsonTemplateMapper.readJson(
+                responseException.getContent(), ErrorResponseTemplate.class);
+        for (ErrorEntryTemplate errorEntry : errorResponse.getErrors()) {
+          registryErrorExceptionBuilder.addReason(errorEntry);
+        }
+      } catch (IOException ex) {
+        registryErrorExceptionBuilder.addReason(
+            "registry returned error code "
+                + responseException.getStatusCode()
+                + "; possible causes include invalid or wrong reference. Actual error output follows:\n"
+                + responseException.getContent()
+                + "\n");
       }
-    } catch (IOException ex) {
+    } else {
       registryErrorExceptionBuilder.addReason(
           "registry returned error code "
               + responseException.getStatusCode()
-              + "; possible causes include invalid or wrong reference. Actual error output follows:\n"
-              + responseException.getContent()
-              + "\n");
+              + " but did not return any details; possible causes include invalid or wrong reference, or proxy/firewall/VPN interfering \n");
     }
-
     return registryErrorExceptionBuilder.build();
   }
 

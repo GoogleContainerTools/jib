@@ -33,6 +33,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.concurrent.atomic.LongAdder;
 import org.hamcrest.CoreMatchers;
+import org.hamcrest.MatcherAssert;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -106,7 +107,7 @@ public class BlobPusherTest {
       Assert.fail("Multiple 'Location' headers should be a registry error");
 
     } catch (RegistryErrorException ex) {
-      Assert.assertThat(
+      MatcherAssert.assertThat(
           ex.getMessage(),
           CoreMatchers.containsString("Expected 1 'Location' header, but found 2"));
     }
@@ -120,7 +121,7 @@ public class BlobPusherTest {
       Assert.fail("Multiple 'Location' headers should be a registry error");
 
     } catch (RegistryErrorException ex) {
-      Assert.assertThat(
+      MatcherAssert.assertThat(
           ex.getMessage(), CoreMatchers.containsString("Received unrecognized status code -1"));
     }
   }

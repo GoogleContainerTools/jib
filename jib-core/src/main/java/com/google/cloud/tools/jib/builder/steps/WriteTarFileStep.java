@@ -19,7 +19,6 @@ package com.google.cloud.tools.jib.builder.steps;
 import com.google.cloud.tools.jib.api.LogEvent;
 import com.google.cloud.tools.jib.builder.ProgressEventDispatcher;
 import com.google.cloud.tools.jib.configuration.BuildContext;
-import com.google.cloud.tools.jib.filesystem.FileOperations;
 import com.google.cloud.tools.jib.image.Image;
 import com.google.cloud.tools.jib.image.ImageTarball;
 import java.io.BufferedOutputStream;
@@ -59,7 +58,7 @@ public class WriteTarFileStep implements Callable<BuildResult> {
         Files.createDirectories(outputPath.getParent());
       }
       try (OutputStream outputStream =
-          new BufferedOutputStream(FileOperations.newLockingOutputStream(outputPath))) {
+          new BufferedOutputStream(Files.newOutputStream(outputPath))) {
         new ImageTarball(
                 builtImage,
                 buildContext.getTargetImageConfiguration().getImage(),

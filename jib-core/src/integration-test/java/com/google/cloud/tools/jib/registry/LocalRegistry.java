@@ -17,6 +17,7 @@
 package com.google.cloud.tools.jib.registry;
 
 import com.google.cloud.tools.jib.Command;
+import com.google.common.collect.Lists;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
@@ -25,11 +26,12 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.UUID;
 import javax.annotation.Nullable;
 import org.junit.rules.ExternalResource;
+import org.mindrot.jbcrypt.BCrypt;
 
 /** Runs a local registry. */
 public class LocalRegistry extends ExternalResource {
@@ -63,27 +65,15 @@ public class LocalRegistry extends ExternalResource {
   /** Starts the registry. */
   public void start() throws IOException, InterruptedException {
     // Runs the Docker registry.
-    ArrayList<String> dockerTokens =
-        new ArrayList<>(
-            Arrays.asList(
-                "docker", "run", "--rm", "-d", "-p", port + ":5000", "--name", containerName));
+    List<String> dockerTokens =
+        Lists.newArrayList(
+            "docker", "run", "--rm", "-d", "-p", port + ":5000", "--name", containerName);
     if (username != null && password != null) {
-      // Generate the htpasswd file to store credentials
-      String credentialString =
-          new Command(
-                  "docker",
-                  "run",
-                  "--rm",
-                  "--entrypoint",
-                  "htpasswd",
-                  "registry:2",
-                  "-Bbn",
-                  username,
-                  password)
-              .run();
-      // Creates the temporary directory in /tmp since that is one of the default directories
-      // mounted into Docker.
-      // See: https://docs.docker.com/docker-for-mac/osxfs
+      // Equivalent of "$ htpasswd -nbB username password".
+      // https://httpd.apache.org/docs/2.4/misc/password_encryptions.html
+      // BCrypt generates hashes using $2a$ algorithm (instead of $2y$ from docs), but this seems
+      // to work okay
+      String credentialString = username + ":" + BCrypt.hashpw(password, BCrypt.gensalt());
       Path tempFolder = Files.createTempDirectory(Paths.get("/tmp"), "");
       Files.write(
           tempFolder.resolve("htpasswd"), credentialString.getBytes(StandardCharsets.UTF_8));
@@ -118,7 +108,7 @@ public class LocalRegistry extends ExternalResource {
   }
 
   /**
-   * Pulls an image.
+   * Pulls an image to a Docker daemon (not to this local registry).
    *
    * @param from the image reference to pull
    * @throws IOException if the pull command fails

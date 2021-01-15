@@ -31,6 +31,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import org.hamcrest.CoreMatchers;
+import org.hamcrest.MatcherAssert;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
@@ -270,7 +271,7 @@ public class DefaultCredentialRetrieversTest {
   }
 
   @Test
-  public void testCredentialHelper() throws IOException {
+  public void testCredentialHelper_cmdExtension() throws IOException {
     Path credHelper = temporaryFolder.newFile("foo.cmd").toPath();
     Path pathWithoutCmd = credHelper.getParent().resolve("foo");
     Assert.assertEquals(pathWithoutCmd.getParent().resolve("foo.cmd"), credHelper);
@@ -282,15 +283,56 @@ public class DefaultCredentialRetrieversTest {
       credentialRetrievers.asList();
       Assert.fail("shouldn't check .cmd suffix on non-Windows");
     } catch (FileNotFoundException ex) {
-      Assert.assertThat(
+      MatcherAssert.assertThat(
           ex.getMessage(), CoreMatchers.startsWith("Specified credential helper was not found:"));
-      Assert.assertThat(ex.getMessage(), CoreMatchers.endsWith("foo"));
+      MatcherAssert.assertThat(ex.getMessage(), CoreMatchers.endsWith("foo"));
     }
 
     properties.setProperty("os.name", "winDOWs");
     List<CredentialRetriever> retrieverList =
         new DefaultCredentialRetrievers(mockCredentialRetrieverFactory, properties, environment)
             .setCredentialHelper(pathWithoutCmd.toString())
+            .asList();
+
+    Assert.assertEquals(
+        Arrays.asList(
+            mockDockerCredentialHelperCredentialRetriever,
+            mockDockerConfigEnvDockerConfigCredentialRetriever,
+            mockDockerConfigEnvKubernetesDockerConfigCredentialRetriever,
+            mockDockerConfigEnvLegacyDockerConfigCredentialRetriever,
+            mockSystemHomeDockerConfigCredentialRetriever,
+            mockSystemHomeKubernetesDockerConfigCredentialRetriever,
+            mockSystemHomeLegacyDockerConfigCredentialRetriever,
+            mockEnvHomeDockerConfigCredentialRetriever,
+            mockEnvHomeKubernetesDockerConfigCredentialRetriever,
+            mockEnvHomeLegacyDockerConfigCredentialRetriever,
+            mockWellKnownCredentialHelpersCredentialRetriever,
+            mockApplicationDefaultCredentialRetriever),
+        retrieverList);
+  }
+
+  @Test
+  public void testCredentialHelper_exeExtension() throws IOException {
+    Path credHelper = temporaryFolder.newFile("foo.exe").toPath();
+    Path pathWithoutExe = credHelper.getParent().resolve("foo");
+    Assert.assertEquals(pathWithoutExe.getParent().resolve("foo.exe"), credHelper);
+
+    DefaultCredentialRetrievers credentialRetrievers =
+        new DefaultCredentialRetrievers(mockCredentialRetrieverFactory, properties, environment)
+            .setCredentialHelper(pathWithoutExe.toString());
+    try {
+      credentialRetrievers.asList();
+      Assert.fail("shouldn't check .exe suffix on non-Windows");
+    } catch (FileNotFoundException ex) {
+      MatcherAssert.assertThat(
+          ex.getMessage(), CoreMatchers.startsWith("Specified credential helper was not found:"));
+      MatcherAssert.assertThat(ex.getMessage(), CoreMatchers.endsWith("foo"));
+    }
+
+    properties.setProperty("os.name", "winDOWs");
+    List<CredentialRetriever> retrieverList =
+        new DefaultCredentialRetrievers(mockCredentialRetrieverFactory, properties, environment)
+            .setCredentialHelper(pathWithoutExe.toString())
             .asList();
 
     Assert.assertEquals(

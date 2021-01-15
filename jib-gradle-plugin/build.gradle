@@ -35,18 +35,21 @@ dependencies {
   sourceProject project(':jib-plugins-common')
   ensureNoProjectDependencies()
 
-  implementation "com.google.cloud.tools:jib-gradle-plugin-extension-api:${dependencyVersions.GRADLE_EXTENSION}"
+  implementation dependencyStrings.GRADLE_EXTENSION
 
-  testImplementation "junit:junit:${dependencyVersions.JUNIT}"
-  testImplementation "org.mockito:mockito-core:${dependencyVersions.MOCKITO_CORE}"
-  testImplementation "org.slf4j:slf4j-api:${dependencyVersions.SLF4J_API}"
-  testImplementation "com.github.stefanbirkner:system-rules:${dependencyVersions.SYSTEM_RULES}"
+  testImplementation dependencyStrings.JUNIT
+  testImplementation dependencyStrings.MOCKITO_CORE
+  testImplementation dependencyStrings.SLF4J_API
+  testImplementation dependencyStrings.SYSTEM_RULES
+
 
   testImplementation project(path:':jib-plugins-common', configuration:'tests')
   integrationTestImplementation project(path:':jib-core', configuration:'integrationTests')
 
+  integrationTestImplementation dependencyStrings.JBCRYPT
+
   // only for testing a concrete Spring Boot example in a test (not for test infrastructure)
-  testImplementation 'org.springframework.boot:spring-boot-gradle-plugin:2.1.6.RELEASE'
+  testImplementation 'org.springframework.boot:spring-boot-gradle-plugin:2.2.11.RELEASE'
 }
 
 /* RELEASE */
@@ -56,13 +59,9 @@ release {
   ignoredSnapshotDependencies = [
     'com.google.cloud.tools:jib-core',
     'com.google.cloud.tools:jib-plugins-common',
-    // TODO: remove when depending on published artifacts.
-    'com.google.cloud.tools:jib-build-plan',
-    'com.google.cloud.tools:jib-plugins-extension-common',
-    'com.google.cloud.tools:jib-gradle-plugin-extension-api',
   ]
   git {
-    requireBranch = /^gradle_release_v\d+.*$/  //regex
+    requireBranch = /^gradle-release-v\d+.*$/  //regex
   }
 }
 // Gradle Plugin Portal releases
@@ -73,6 +72,7 @@ pluginBundle {
 }
 
 gradlePlugin {
+  testSourceSets sourceSets.integrationTest, sourceSets.test
   plugins {
     jibPlugin {
       id = 'com.google.cloud.tools.jib'
@@ -86,15 +86,11 @@ tasks.publishPlugins.dependsOn integrationTest
 /* RELEASE */
 
 /* ECLIPSE */
+eclipse.classpath.plusConfigurations += [configurations.integrationTestImplementation]
 eclipse.classpath.file.whenMerged {
   entries.each {
     if (it.path == 'src/test/resources' || it.path == 'src/integration-test/resources') {
       it.excludes += 'gradle/projects/'
-    }
-    // TODO: remove after upgrading to Gradle 5.6. (https://github.com/eclipse/buildship/issues/689)
-    if (it.path in ['src/test/java', 'src/test/resources',
-        'src/integration-test/java', 'src/integration-test/resources']) {
-      it.entryAttributes['test'] = 'true'
     }
   }
 }

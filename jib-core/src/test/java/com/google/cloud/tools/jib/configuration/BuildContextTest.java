@@ -56,6 +56,17 @@ public class BuildContextTest {
 
   @Rule public final RestoreSystemProperties systemPropertyRestorer = new RestoreSystemProperties();
 
+  private static BuildContext.Builder createBasicTestBuilder() {
+    return BuildContext.builder()
+        .setBaseImageConfiguration(
+            ImageConfiguration.builder(Mockito.mock(ImageReference.class)).build())
+        .setTargetImageConfiguration(
+            ImageConfiguration.builder(Mockito.mock(ImageReference.class)).build())
+        .setContainerConfiguration(ContainerConfiguration.builder().build())
+        .setBaseImageLayersCacheDirectory(Paths.get("ignored"))
+        .setApplicationLayersCacheDirectory(Paths.get("ignored"));
+  }
+
   @Test
   public void testBuilder() throws Exception {
     String expectedBaseImageServerUrl = "someserver";
@@ -118,7 +129,6 @@ public class BuildContextTest {
             .setToolName(expectedCreatedBy);
     BuildContext buildContext = buildContextBuilder.build();
 
-    Assert.assertNotNull(buildContext.getContainerConfiguration());
     Assert.assertEquals(
         expectedCreationTime, buildContext.getContainerConfiguration().getCreationTime());
     Assert.assertEquals(
@@ -187,6 +197,7 @@ public class BuildContextTest {
         BuildContext.builder()
             .setBaseImageConfiguration(baseImageConfiguration)
             .setTargetImageConfiguration(targetImageConfiguration)
+            .setContainerConfiguration(ContainerConfiguration.builder().setUser("12345").build())
             .setBaseImageLayersCacheDirectory(Paths.get("ignored"))
             .setApplicationLayersCacheDirectory(Paths.get("ignored"));
     BuildContext buildContext = buildContextBuilder.build();
@@ -199,7 +210,7 @@ public class BuildContextTest {
     Assert.assertNotNull(buildContextBuilder.getBaseImageLayersCacheDirectory());
     Assert.assertEquals(
         Paths.get("ignored"), buildContextBuilder.getBaseImageLayersCacheDirectory());
-    Assert.assertNull(buildContext.getContainerConfiguration());
+    Assert.assertEquals("12345", buildContext.getContainerConfiguration().getUser());
     Assert.assertEquals(Collections.emptyList(), buildContext.getLayerConfigurations());
     Assert.assertEquals("jib", buildContext.getToolName());
   }
@@ -212,6 +223,7 @@ public class BuildContextTest {
           .setBaseImageConfiguration(
               ImageConfiguration.builder(Mockito.mock(ImageReference.class)).build())
           .setBaseImageLayersCacheDirectory(Paths.get("ignored"))
+          .setContainerConfiguration(ContainerConfiguration.builder().build())
           .setApplicationLayersCacheDirectory(Paths.get("ignored"))
           .build();
       Assert.fail("BuildContext should not be built with missing values");
@@ -225,6 +237,7 @@ public class BuildContextTest {
       BuildContext.builder()
           .setBaseImageLayersCacheDirectory(Paths.get("ignored"))
           .setApplicationLayersCacheDirectory(Paths.get("ignored"))
+          .setContainerConfiguration(ContainerConfiguration.builder().build())
           .build();
       Assert.fail("BuildContext should not be built with missing values");
 
@@ -241,8 +254,9 @@ public class BuildContextTest {
 
     } catch (IllegalStateException ex) {
       Assert.assertEquals(
-          "base image configuration, target image configuration, base image layers cache "
-              + "directory, and application layers cache directory are required but not set",
+          "base image configuration, target image configuration, container configuration, base "
+              + "image layers cache directory, and application layers cache directory are required "
+              + "but not set",
           ex.getMessage());
     }
   }
@@ -251,13 +265,7 @@ public class BuildContextTest {
   public void testBuilder_digestWarning()
       throws CacheDirectoryCreationException, InvalidImageReferenceException {
     EventHandlers mockEventHandlers = Mockito.mock(EventHandlers.class);
-    BuildContext.Builder builder =
-        BuildContext.builder()
-            .setEventHandlers(mockEventHandlers)
-            .setTargetImageConfiguration(
-                ImageConfiguration.builder(Mockito.mock(ImageReference.class)).build())
-            .setBaseImageLayersCacheDirectory(Paths.get("ignored"))
-            .setApplicationLayersCacheDirectory(Paths.get("ignored"));
+    BuildContext.Builder builder = createBasicTestBuilder().setEventHandlers(mockEventHandlers);
 
     builder
         .setBaseImageConfiguration(
@@ -276,16 +284,6 @@ public class BuildContextTest {
         .dispatch(
             LogEvent.warn(
                 "Base image 'image:tag' does not use a specific image digest - build may not be reproducible"));
-  }
-
-  private BuildContext.Builder createBasicTestBuilder() {
-    return BuildContext.builder()
-        .setBaseImageConfiguration(
-            ImageConfiguration.builder(Mockito.mock(ImageReference.class)).build())
-        .setTargetImageConfiguration(
-            ImageConfiguration.builder(Mockito.mock(ImageReference.class)).build())
-        .setBaseImageLayersCacheDirectory(Paths.get("ignored"))
-        .setApplicationLayersCacheDirectory(Paths.get("ignored"));
   }
 
   @Test
