@@ -23,10 +23,9 @@ import java.io.IOException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.file.Path;
-import java.util.List;
+import java.util.Enumeration;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
-import java.util.stream.Collectors;
 
 /** Class to create a {@link JarProcessor} instance depending on jar type and processing mode. */
 public class JarProcessors {
@@ -96,9 +95,9 @@ public class JarProcessors {
   @VisibleForTesting
   static Integer getJavaMajorVersion(Path jarPath) throws IOException {
     try (JarFile jarFile = new JarFile(jarPath.toFile())) {
-      List<String> jarEntries =
-          jarFile.stream().map(JarEntry::toString).collect(Collectors.toList());
-      for (String jarEntry : jarEntries) {
+      Enumeration<JarEntry> jarEntries = jarFile.entries();
+      while (jarEntries.hasMoreElements()) {
+        String jarEntry = jarEntries.nextElement().toString();
         if (jarEntry.endsWith(".class") && !jarEntry.endsWith("module-info.class")) {
           URLClassLoader loader = new URLClassLoader(new URL[] {jarPath.toUri().toURL()});
           try (DataInputStream classFile =
