@@ -88,7 +88,8 @@ jobs:
 
             See [CHANGELOG.md](https://github.com/GoogleContainerTools/jib/blob/master/jib-${{ github.event.inputs.project }}-plugin/CHANGELOG.md) for more details.
       
-      - uses: JasonEtco/create-an-issue@v2
+      - name: Create Maven/Gradle release checklist issue
+        uses: JasonEtco/create-an-issue@v2
         if: ${{ github.event.inputs.project == 'maven' || github.event.inputs.project == 'gradle' }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
