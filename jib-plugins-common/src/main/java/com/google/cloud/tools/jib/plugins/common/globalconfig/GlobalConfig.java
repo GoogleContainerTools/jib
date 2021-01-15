@@ -126,10 +126,20 @@ public class GlobalConfig {
     this.registryMirrors = registryMirrors;
   }
 
+  /**
+   * Returns whether to disable update check.
+   *
+   * @return whether update check is disabled
+   */
   public boolean isDisableUpdateCheck() {
     return Boolean.getBoolean(PropertyNames.DISABLE_UPDATE_CHECKS) || disableUpdateCheck;
   }
 
+  /**
+   * Gets the registry mirror configuration.
+   *
+   * @return registry mirrors
+   */
   public Map<String, List<String>> getRegistryMirrors() {
     Map<String, List<String>> copy = new HashMap<>();
     for (Map.Entry<String, List<String>> entry : registryMirrors.entrySet()) {
