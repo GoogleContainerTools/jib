@@ -16,12 +16,18 @@
 
 package com.google.cloud.tools.jib.plugins.common;
 
+import static com.google.common.truth.Truth.assertThat;
+import static com.google.common.truth.Truth8.assertThat;
+
 import com.google.common.io.Resources;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.nio.file.attribute.FileTime;
+import java.util.zip.ZipFile;
 import org.hamcrest.CoreMatchers;
 import org.hamcrest.MatcherAssert;
 import org.junit.Assert;
@@ -64,6 +70,38 @@ public class ZipUtilTest {
     Path archive =
         Paths.get(Resources.getResource("plugins-common/test-archives/zip-slip.zip").toURI());
     verifyZipSlipSafe(archive);
+  }
+
+  @Test
+  public void testModificationTimePreserved() throws URISyntaxException, IOException {
+    Path destination = tempFolder.getRoot().toPath();
+    Path archive =
+        Paths.get(Resources.getResource("plugins-common/test-archives/test.zip").toURI());
+
+    try (ZipFile zipFile = new ZipFile(archive.toString())) {
+      FileTime sourceModificationTime1 = zipFile.getEntry("file1.txt").getLastModifiedTime();
+      FileTime sourceModificationTime2 = zipFile.getEntry("my-zip/file2.txt").getLastModifiedTime();
+      FileTime sourceModificationTime3 =
+              zipFile.getEntry("my-zip/some/sub/folder/file3.txt").getLastModifiedTime();
+
+      ZipUtil.unzip(archive, destination);
+      
+      FileTime modificationTimeAfterUnzip1 =
+          Files.readAttributes(destination.resolve("file1.txt"), BasicFileAttributes.class)
+              .lastModifiedTime();
+      FileTime modificationTimeAfterUnzip2 =
+          Files.readAttributes(destination.resolve("my-zip/file2.txt"), BasicFileAttributes.class)
+              .lastModifiedTime();
+      FileTime modificationTimeAfterUnzip3 =
+          Files.readAttributes(
+                  destination.resolve("my-zip/some/sub/folder/file3.txt"),
+                  BasicFileAttributes.class)
+              .lastModifiedTime();
+
+      assertThat(modificationTimeAfterUnzip1).isEqualTo(sourceModificationTime1);
+      assertThat(modificationTimeAfterUnzip2).isEqualTo(sourceModificationTime2);
+      assertThat(modificationTimeAfterUnzip3).isEqualTo(sourceModificationTime3);
+    }
   }
 
   private void verifyUnzip(Path destination) throws URISyntaxException, IOException {

@@ -25,6 +25,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.attribute.FileTime;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
@@ -52,7 +53,6 @@ public class ZipUtil {
           String offender = entry.getName() + " from " + archive;
           throw new IOException("Blocked unzipping files outside destination: " + offender);
         }
-
         if (entry.isDirectory()) {
           Files.createDirectories(entryPath);
         } else {
@@ -63,6 +63,8 @@ public class ZipUtil {
             ByteStreams.copy(zipIn, out);
           }
         }
+        FileTime sourceModificationTime = entry.getLastModifiedTime();
+        Files.setLastModifiedTime(entryPath, sourceModificationTime);
       }
     }
   }
