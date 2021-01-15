@@ -32,10 +32,12 @@ import com.google.cloud.tools.jib.plugins.common.InvalidPlatformException;
 import com.google.cloud.tools.jib.plugins.common.InvalidWorkingDirectoryException;
 import com.google.cloud.tools.jib.plugins.common.MainClassInferenceException;
 import com.google.cloud.tools.jib.plugins.common.PluginConfigurationProcessor;
+import com.google.cloud.tools.jib.plugins.common.globalconfig.GlobalConfig;
 import com.google.cloud.tools.jib.plugins.extension.JibPluginExtensionException;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import com.google.common.util.concurrent.Futures;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Optional;
@@ -96,9 +98,12 @@ public class BuildImageMojo extends JibPluginConfiguration {
             getSession(),
             getLog(),
             tempDirectoryProvider);
-    Future<Optional<String>> updateCheckFuture =
-        MojoCommon.newUpdateChecker(projectProperties, getLog());
+
+    Future<Optional<String>> updateCheckFuture = Futures.immediateFuture(Optional.empty());
     try {
+      updateCheckFuture =
+          MojoCommon.newUpdateChecker(projectProperties, GlobalConfig.readConfig(), getLog());
+
       PluginConfigurationProcessor.createJibBuildRunnerForRegistryImage(
               new MavenRawConfiguration(this),
               new MavenSettingsServerCredentials(
