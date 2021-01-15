@@ -157,7 +157,6 @@ public class ReproducibleImageTest {
             Assert.assertTrue(layerEntry.isFile() || layerEntry.isDirectory()));
   }
 
-  @SuppressWarnings("JdkObsolete") // use of Date from TarArchiveEntry
   @Test
   public void testTimestampsEpochPlus1s() throws IOException {
     layerEntriesDo(

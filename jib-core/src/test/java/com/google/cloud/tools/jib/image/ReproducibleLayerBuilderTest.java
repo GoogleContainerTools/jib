@@ -193,7 +193,6 @@ public class ReproducibleLayerBuilderTest {
     MatcherAssert.assertThat(layerContent, CoreMatchers.is(reproducedLayerContent));
   }
 
-  @SuppressWarnings("JdkObsolete") // use of Date from TarArchiveEntry
   @Test
   public void testBuild_parentDirBehavior() throws IOException {
     Path testRoot = temporaryFolder.getRoot().toPath();
@@ -274,7 +273,6 @@ public class ReproducibleLayerBuilderTest {
     }
   }
 
-  @SuppressWarnings("JdkObsolete") // use of Date from TarArchiveEntry
   @Test
   public void testBuild_timestampDefault() throws IOException {
     Path file = createFile(temporaryFolder.getRoot().toPath(), "fileA", "some content", 54321);
@@ -296,7 +294,6 @@ public class ReproducibleLayerBuilderTest {
     }
   }
 
-  @SuppressWarnings("JdkObsolete") // use of Date from TarArchiveEntry
   @Test
   public void testBuild_timestampNonDefault() throws IOException {
     Path file = createFile(temporaryFolder.getRoot().toPath(), "fileA", "some content", 54321);

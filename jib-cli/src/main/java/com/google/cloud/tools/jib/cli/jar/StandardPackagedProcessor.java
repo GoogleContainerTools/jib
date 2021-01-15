@@ -28,7 +28,7 @@ import javax.annotation.Nullable;
 
 public class StandardPackagedProcessor implements JarProcessor {
 
-  @Nullable private static Path jarPath;
+  @Nullable private final Path jarPath;
 
   public StandardPackagedProcessor(Path jarPath) {
     this.jarPath = jarPath;
