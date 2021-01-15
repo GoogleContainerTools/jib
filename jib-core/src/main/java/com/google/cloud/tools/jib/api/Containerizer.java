@@ -24,15 +24,16 @@ import com.google.cloud.tools.jib.docker.DockerClient;
 import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.filesystem.XdgDirectories;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.ImmutableListMultimap;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.ListMultimap;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
@@ -140,7 +141,7 @@ public class Containerizer {
   private String toolName = DEFAULT_TOOL_NAME;
   @Nullable private String toolVersion = DEFAULT_TOOL_VERSION;
   private boolean alwaysCacheBaseImage = false;
-  private Map<String, List<String>> registryMirrors = new HashMap<>();
+  private ListMultimap<String, String> registryMirrors = ArrayListMultimap.create();
 
   /** Instantiate with {@link #to}. */
   private Containerizer(
@@ -317,20 +318,16 @@ public class Containerizer {
    * @return this
    */
   public Containerizer withRegistryMirrors(String registry, List<String> mirrors) {
-    registryMirrors.put(registry, new ArrayList<>(mirrors));
+    registryMirrors.putAll(registry, mirrors);
     return this;
   }
 
   Set<String> getAdditionalTags() {
-    return new HashSet<>(additionalTags);
+    return ImmutableSet.copyOf(additionalTags);
   }
 
-  Map<String, List<String>> getRegistryMirrors() {
-    Map<String, List<String>> copy = new HashMap<>();
-    for (Map.Entry<String, List<String>> entry : registryMirrors.entrySet()) {
-      copy.put(entry.getKey(), new ArrayList<>(entry.getValue()));
-    }
-    return copy;
+  ListMultimap<String, String> getRegistryMirrors() {
+    return ImmutableListMultimap.copyOf(registryMirrors);
   }
 
   Optional<ExecutorService> getExecutorService() {
