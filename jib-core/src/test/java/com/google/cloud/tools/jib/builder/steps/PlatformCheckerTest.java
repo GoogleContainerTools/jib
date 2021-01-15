@@ -19,13 +19,11 @@ package com.google.cloud.tools.jib.builder.steps;
 import com.google.cloud.tools.jib.api.ImageReference;
 import com.google.cloud.tools.jib.api.LogEvent;
 import com.google.cloud.tools.jib.api.buildplan.Platform;
-import com.google.cloud.tools.jib.builder.ProgressEventDispatcher;
 import com.google.cloud.tools.jib.configuration.BuildContext;
 import com.google.cloud.tools.jib.configuration.ContainerConfiguration;
 import com.google.cloud.tools.jib.configuration.ImageConfiguration;
 import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.image.json.ContainerConfigurationTemplate;
-import com.google.cloud.tools.jib.registry.RegistryClient;
 import com.google.common.collect.ImmutableSet;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -40,10 +38,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class PlatformCheckerTest {
 
-  @Mock private ProgressEventDispatcher.Factory progressDispatcherFactory;
   @Mock private BuildContext buildContext;
-  @Mock private RegistryClient registryClient;
-  @Mock private ImageConfiguration imageConfiguration;
   @Mock private ContainerConfiguration containerConfig;
   @Mock private EventHandlers eventHandlers;
 

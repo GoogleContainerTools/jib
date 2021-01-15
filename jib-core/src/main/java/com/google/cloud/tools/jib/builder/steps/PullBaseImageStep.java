@@ -309,11 +309,7 @@ class PullBaseImageStep implements Callable<ImagesAndRegistryClient> {
    *     ProgressEvent}s
    * @return pulled {@link ContainerConfigurationTemplate}
    * @throws IOException when an I/O exception occurs during the pulling
-   * @throws LayerCountMismatchException if the manifest and configuration contain conflicting layer
-   *     information
    * @throws LayerPropertyNotFoundException if adding image layers fails
-   * @throws BadContainerConfigurationFormatException if the container configuration is in a bad
-   *     format
    */
   private ContainerConfigurationTemplate pullContainerConfigJson(
       ManifestAndDigest<?> manifestAndDigest,

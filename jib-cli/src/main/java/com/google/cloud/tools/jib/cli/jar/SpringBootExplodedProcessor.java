@@ -40,8 +40,8 @@ import javax.annotation.Nullable;
 
 public class SpringBootExplodedProcessor implements JarProcessor {
 
-  @Nullable private static Path jarPath;
-  @Nullable private static Path tempDirectoryPath;
+  @Nullable private final Path jarPath;
+  @Nullable private final Path tempDirectoryPath;
 
   public SpringBootExplodedProcessor(Path jarPath, Path tempDirectoryPath) {
     this.jarPath = jarPath;

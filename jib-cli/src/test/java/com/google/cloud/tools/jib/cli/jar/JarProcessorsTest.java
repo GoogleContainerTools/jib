@@ -37,7 +37,7 @@ public class JarProcessorsTest {
   private static final String SPRING_BOOT = "jar/spring-boot/springboot_sample.jar";
   private static final String STANDARD = "jar/standard/emptyStandardJar.jar";
 
-  @Mock private static TempDirectoryProvider mockTemporaryDirectoryProvider;
+  @Mock private TempDirectoryProvider mockTemporaryDirectoryProvider;
 
   @Test
   public void testFrom_standardExploded() throws IOException, URISyntaxException {

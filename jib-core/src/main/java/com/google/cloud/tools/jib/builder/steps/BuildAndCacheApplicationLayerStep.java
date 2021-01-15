@@ -37,6 +37,7 @@ import java.util.concurrent.Callable;
 /** Builds and caches application layers. */
 class BuildAndCacheApplicationLayerStep implements Callable<PreparedLayer> {
 
+  @SuppressWarnings("InlineFormatString")
   private static final String DESCRIPTION = "Building %s layer";
 
   /**
