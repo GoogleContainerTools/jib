@@ -31,6 +31,7 @@ import com.google.cloud.tools.jib.global.JibSystemProperties;
 import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
 import com.google.cloud.tools.jib.image.json.OciManifestTemplate;
 import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
+import com.google.common.collect.ImmutableListMultimap;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.MoreExecutors;
@@ -94,8 +95,8 @@ public class BuildContextTest {
                 .addEntry(Paths.get("sourceFile"), AbsoluteUnixPath.get("/path/in/container"))
                 .build());
     String expectedCreatedBy = "createdBy";
-    Map<String, List<String>> expectedRegistryMirrors =
-        ImmutableMap.of("some.registry", Arrays.asList("mirror1", "mirror2"));
+    ImmutableListMultimap<String, String> expectedRegistryMirrors =
+        ImmutableListMultimap.of("some.registry", "mirror1", "some.registry", "mirror2");
 
     ImageConfiguration baseImageConfiguration =
         ImageConfiguration.builder(
@@ -217,7 +218,7 @@ public class BuildContextTest {
     Assert.assertEquals("12345", buildContext.getContainerConfiguration().getUser());
     Assert.assertEquals(Collections.emptyList(), buildContext.getLayerConfigurations());
     Assert.assertEquals("jib", buildContext.getToolName());
-    Assert.assertEquals(Collections.emptyMap(), buildContext.getRegistryMirrors());
+    Assert.assertEquals(0, buildContext.getRegistryMirrors().size());
   }
 
   @Test

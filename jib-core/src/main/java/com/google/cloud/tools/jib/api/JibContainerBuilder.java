@@ -33,13 +33,13 @@ import com.google.cloud.tools.jib.docker.DockerClient;
 import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Verify;
+import com.google.common.collect.ImmutableListMultimap;
 import java.io.IOException;
 import java.net.UnknownHostException;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -73,6 +73,12 @@ public class JibContainerBuilder {
       return string;
     }
     return Character.toUpperCase(string.charAt(0)) + string.substring(1);
+  }
+
+  private static <K, V> ImmutableListMultimap<K, V> toMultimap(Map<K, List<V>> map) {
+    ImmutableListMultimap.Builder<K, V> multimap = ImmutableListMultimap.builder();
+    map.forEach(multimap::putAll);
+    return multimap.build();
   }
 
   private final ContainerBuildPlan.Builder containerBuildPlanBuilder = ContainerBuildPlan.builder();
@@ -724,7 +730,7 @@ public class JibContainerBuilder {
         .setExecutorService(containerizer.getExecutorService().orElse(null))
         .setEventHandlers(containerizer.buildEventHandlers())
         .setAlwaysCacheBaseImage(containerizer.getAlwaysCacheBaseImage())
-        .setRegistryMirrors(new HashMap<>(containerizer.getRegistryMirrors()))
+        .setRegistryMirrors(toMultimap(containerizer.getRegistryMirrors()))
         .build();
   }
 

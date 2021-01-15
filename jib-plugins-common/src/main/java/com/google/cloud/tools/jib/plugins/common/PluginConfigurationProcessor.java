@@ -44,6 +44,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Verify;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Multimaps;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -273,7 +274,7 @@ public class PluginConfigurationProcessor {
             rawConfiguration.getProperty(PropertyNames.ALWAYS_CACHE_BASE_IMAGE).orElse("false"));
     Containerizer containerizer =
         Containerizer.to(targetImage).setAlwaysCacheBaseImage(alwaysCacheBaseImage);
-    globalConfig.getRegistryMirrors().forEach(containerizer::withRegistryMirrors);
+    Multimaps.asMap(globalConfig.getRegistryMirrors()).forEach(containerizer::withRegistryMirrors);
 
     JibContainerBuilder jibContainerBuilder =
         processCommonConfiguration(

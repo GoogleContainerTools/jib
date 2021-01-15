@@ -33,14 +33,14 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.base.Verify;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableListMultimap;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.ListMultimap;
 import java.io.Closeable;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.StringJoiner;
 import java.util.concurrent.ExecutorService;
@@ -82,7 +82,7 @@ public class BuildContext implements Closeable {
     private EventHandlers eventHandlers = EventHandlers.NONE;
     @Nullable private ExecutorService executorService;
     private boolean alwaysCacheBaseImage = false;
-    private ImmutableMap<String, ImmutableList<String>> registryMirrors = ImmutableMap.of();
+    private ImmutableListMultimap<String, String> registryMirrors = ImmutableListMultimap.of();
 
     private Builder() {}
 
@@ -265,12 +265,8 @@ public class BuildContext implements Closeable {
      * @param registryMirrors registry mirrors
      * @return this
      */
-    public Builder setRegistryMirrors(Map<String, List<String>> registryMirrors) {
-      ImmutableMap.Builder<String, ImmutableList<String>> copy = ImmutableMap.builder();
-      for (Map.Entry<String, List<String>> entry : registryMirrors.entrySet()) {
-        copy.put(entry.getKey(), ImmutableList.copyOf(entry.getValue()));
-      }
-      this.registryMirrors = copy.build();
+    public Builder setRegistryMirrors(ListMultimap<String, String> registryMirrors) {
+      this.registryMirrors = ImmutableListMultimap.copyOf(registryMirrors);
       return this;
     }
 
@@ -389,7 +385,7 @@ public class BuildContext implements Closeable {
   private final ExecutorService executorService;
   private final boolean shutDownExecutorService;
   private final boolean alwaysCacheBaseImage;
-  private final ImmutableMap<String, ImmutableList<String>> registryMirrors;
+  private final ImmutableListMultimap<String, String> registryMirrors;
 
   /** Instantiate with {@link #builder}. */
   private BuildContext(
@@ -409,7 +405,7 @@ public class BuildContext implements Closeable {
       ExecutorService executorService,
       boolean shutDownExecutorService,
       boolean alwaysCacheBaseImage,
-      ImmutableMap<String, ImmutableList<String>> registryMirrors) {
+      ImmutableListMultimap<String, String> registryMirrors) {
     this.baseImageConfiguration = baseImageConfiguration;
     this.targetImageConfiguration = targetImageConfiguration;
     this.additionalTargetImageTags = additionalTargetImageTags;
@@ -525,7 +521,7 @@ public class BuildContext implements Closeable {
    *
    * @return the registry mirrors
    */
-  public ImmutableMap<String, ImmutableList<String>> getRegistryMirrors() {
+  public ImmutableListMultimap<String, String> getRegistryMirrors() {
     return registryMirrors;
   }
 

@@ -21,16 +21,14 @@ import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import com.google.cloud.tools.jib.plugins.common.PropertyNames;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableListMultimap;
+import com.google.common.collect.ListMultimap;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 /** Represents read-only Jib global configuration. */
 public class GlobalConfig {
@@ -87,7 +85,7 @@ public class GlobalConfig {
 
   private static GlobalConfig from(GlobalConfigTemplate configJson)
       throws InvalidGlobalConfigException {
-    Map<String, List<String>> registryMirrors = new HashMap<>();
+    ImmutableListMultimap.Builder<String, String> registryMirrors = ImmutableListMultimap.builder();
     for (RegistryMirrorsTemplate mirrorConfig : configJson.getRegistryMirrors()) {
       // validation
       if (Strings.isNullOrEmpty(mirrorConfig.getRegistry())) {
@@ -97,10 +95,10 @@ public class GlobalConfig {
         throw new InvalidGlobalConfigException("'registryMirrors.mirrors' property is missing");
       }
 
-      registryMirrors.put(mirrorConfig.getRegistry(), new ArrayList<>(mirrorConfig.getMirrors()));
+      registryMirrors.putAll(mirrorConfig.getRegistry(), mirrorConfig.getMirrors());
     }
 
-    return new GlobalConfig(configJson.isDisableUpdateCheck(), registryMirrors);
+    return new GlobalConfig(configJson.isDisableUpdateCheck(), registryMirrors.build());
   }
 
   /**
@@ -119,9 +117,10 @@ public class GlobalConfig {
   }
 
   private final boolean disableUpdateCheck;
-  private final Map<String, List<String>> registryMirrors;
+  private final ImmutableListMultimap<String, String> registryMirrors;
 
-  private GlobalConfig(boolean disableUpdateCheck, Map<String, List<String>> registryMirrors) {
+  private GlobalConfig(
+      boolean disableUpdateCheck, ImmutableListMultimap<String, String> registryMirrors) {
     this.disableUpdateCheck = disableUpdateCheck;
     this.registryMirrors = registryMirrors;
   }
@@ -140,11 +139,7 @@ public class GlobalConfig {
    *
    * @return registry mirrors
    */
-  public Map<String, List<String>> getRegistryMirrors() {
-    Map<String, List<String>> copy = new HashMap<>();
-    for (Map.Entry<String, List<String>> entry : registryMirrors.entrySet()) {
-      copy.put(entry.getKey(), new ArrayList<>(entry.getValue()));
-    }
-    return copy;
+  public ListMultimap<String, String> getRegistryMirrors() {
+    return registryMirrors;
   }
 }
