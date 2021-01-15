@@ -17,20 +17,23 @@
 package com.google.cloud.tools.jib.cli.jar;
 
 import com.google.cloud.tools.jib.filesystem.TempDirectoryProvider;
+import com.google.common.annotations.VisibleForTesting;
 import java.io.DataInputStream;
 import java.io.IOException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.file.Path;
-import java.util.Enumeration;
+import java.util.List;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
+import java.util.stream.Collectors;
 
 /** Class to create a {@link JarProcessor} instance depending on jar type and processing mode. */
 public class JarProcessors {
   private static String SPRING_BOOT = "spring-boot";
   private static String STANDARD = "standard";
-  private static Integer VERSION_NOT_FOUND = 0;
+
+  @VisibleForTesting static Integer VERSION_NOT_FOUND = 0;
 
   /**
    * Creates a {@link JarProcessor} instance based on jar type and processing mode.
@@ -90,11 +93,12 @@ public class JarProcessors {
    * @return java version
    * @throws IOException if I/O exception thrown when opening the jar file
    */
-  private static Integer getJavaMajorVersion(Path jarPath) throws IOException {
+  @VisibleForTesting
+  static Integer getJavaMajorVersion(Path jarPath) throws IOException {
     try (JarFile jarFile = new JarFile(jarPath.toFile())) {
-      Enumeration<JarEntry> jarEntries = jarFile.entries();
-      while (jarEntries.hasMoreElements()) {
-        String jarEntry = jarEntries.nextElement().toString();
+      List<String> jarEntries =
+          jarFile.stream().map(JarEntry::toString).collect(Collectors.toList());
+      for (String jarEntry : jarEntries) {
         if (jarEntry.endsWith(".class") && !jarEntry.endsWith("module-info.class")) {
           URLClassLoader loader = new URLClassLoader(new URL[] {jarPath.toUri().toURL()});
           try (DataInputStream classFile =
