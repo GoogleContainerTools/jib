@@ -60,6 +60,7 @@ jobs:
 
       - name: Create pull request
         uses: repo-sync/pull-request@v2
+        id: create-pr
         with:
           # Provided by Actions. No need to create a token.
           github_token: ${{ secrets.GITHUB_TOKEN }}
@@ -70,6 +71,7 @@ jobs:
 
       - name: Draft Maven/Gradle GitHub release
         uses: actions/create-release@v1
+        id: create-plugin-release
         if: ${{ github.event.inputs.project == 'maven' || github.event.inputs.project == 'gradle' }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -85,6 +87,21 @@ jobs:
             ### Major Changes
 
             See [CHANGELOG.md](https://github.com/GoogleContainerTools/jib/blob/master/jib-${{ github.event.inputs.project }}-plugin/CHANGELOG.md) for more details.
+      
+      - name: Create Maven/Gradle release checklist issue
+        uses: JasonEtco/create-an-issue@v2
+        if: ${{ github.event.inputs.project == 'maven' || github.event.inputs.project == 'gradle' }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_NAME: v${{ github.event.inputs.release_version }}-${{ github.event.inputs.project }}
+          CHANGELOG_URL: https://github.com/GoogleContainerTools/jib/blob/master/jib-${{ github.event.inputs.project }}-plugin/CHANGELOG.md
+          README_URL: https://github.com/GoogleContainerTools/jib/blob/master/jib-${{ github.event.inputs.project }}-plugin/README.md
+          GCS_UPDATE_SCRIPT: "`./jib-${{ github.event.inputs.project }}-plugin/scripts/update_gcs_latest.sh ${{ github.event.inputs.release_version }}`"
+          RELEASE_DRAFT: ${{ steps.create-plugin-release.outputs.html_url }}
+          RELEASE_PR: ${{steps.create-pr.outputs.pr_url}}
+        with:
+          filename: .github/RELEASE_TEMPLATES/plugin_release_checklist.md
+
 
       - name: Draft Jib Core GitHub release
         uses: actions/create-release@v1
