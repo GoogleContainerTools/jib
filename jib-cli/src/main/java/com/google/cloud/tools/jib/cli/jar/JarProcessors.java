@@ -31,8 +31,7 @@ import java.util.jar.JarFile;
 public class JarProcessors {
   private static String SPRING_BOOT = "spring-boot";
   private static String STANDARD = "standard";
-
-  @VisibleForTesting static Integer VERSION_NOT_FOUND = 0;
+  private static Integer VERSION_NOT_FOUND = 0;
 
   /**
    * Creates a {@link JarProcessor} instance based on jar type and processing mode.

@@ -88,13 +88,13 @@ public class JarProcessorsTest {
                     jarPath, mockTemporaryDirectoryProvider, ProcessingMode.exploded));
     assertThat(exception)
         .hasMessageThat()
-        .startsWith("The input JAR (" + jarPath + ") is compiled with Java " + 14);
+        .startsWith("The input JAR (" + jarPath + ") is compiled with Java 14");
   }
 
   @Test
-  public void testGetVersion_versionNotFound() throws URISyntaxException, IOException {
+  public void testGetMajorJavaVersion_versionNotFound() throws URISyntaxException, IOException {
     Path jarPath = Paths.get(Resources.getResource(STANDARD).toURI());
     Integer version = JarProcessors.getJavaMajorVersion(jarPath);
-    assertThat(version).isEqualTo(JarProcessors.VERSION_NOT_FOUND);
+    assertThat(version).isEqualTo(0);
   }
 }
