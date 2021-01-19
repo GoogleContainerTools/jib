@@ -53,6 +53,7 @@ public class ZipUtil {
           String offender = entry.getName() + " from " + archive;
           throw new IOException("Blocked unzipping files outside destination: " + offender);
         }
+
         if (entry.isDirectory()) {
           Files.createDirectories(entryPath);
         } else {
