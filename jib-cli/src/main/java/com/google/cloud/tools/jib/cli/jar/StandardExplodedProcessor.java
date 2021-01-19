@@ -31,8 +31,8 @@ import javax.annotation.Nullable;
 
 public class StandardExplodedProcessor implements JarProcessor {
 
-  @Nullable private static Path jarPath;
-  @Nullable private static Path tempDirectoryPath;
+  @Nullable private final Path jarPath;
+  @Nullable private final Path tempDirectoryPath;
 
   public StandardExplodedProcessor(Path jarPath, Path tempDirectoryPath) {
     this.jarPath = jarPath;

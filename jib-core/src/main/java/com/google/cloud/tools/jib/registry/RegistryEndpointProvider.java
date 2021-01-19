@@ -16,7 +16,6 @@
 
 package com.google.cloud.tools.jib.registry;
 
-import com.google.api.client.http.HttpResponseException;
 import com.google.cloud.tools.jib.api.RegistryException;
 import com.google.cloud.tools.jib.http.BlobHttpContent;
 import com.google.cloud.tools.jib.http.Response;
@@ -60,8 +59,8 @@ interface RegistryEndpointProvider<T> {
    * exception if it did not conclusively handled the response exception.
    *
    * @param responseException the {@link ResponseException} to handle
-   * @throws HttpResponseException {@code responseException} if {@code responseException} could not
-   *     be handled
+   * @throws ResponseException {@code responseException} if {@code responseException} could not be
+   *     handled
    * @throws RegistryErrorException if there is an error with a remote registry
    */
   T handleHttpResponseException(ResponseException responseException)

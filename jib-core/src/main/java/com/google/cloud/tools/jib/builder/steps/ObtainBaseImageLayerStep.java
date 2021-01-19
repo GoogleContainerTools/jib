@@ -38,6 +38,7 @@ import javax.annotation.Nullable;
 /** Pulls and caches a single base image layer. */
 class ObtainBaseImageLayerStep implements Callable<PreparedLayer> {
 
+  @SuppressWarnings("InlineFormatString")
   private static final String DESCRIPTION = "Pulling base image layer %s";
 
   @FunctionalInterface

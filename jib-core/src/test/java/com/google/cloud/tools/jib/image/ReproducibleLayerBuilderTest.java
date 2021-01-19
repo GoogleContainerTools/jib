@@ -37,7 +37,6 @@ import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.FileTime;
 import java.time.Instant;
-import java.util.Date;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.hamcrest.CoreMatchers;
@@ -291,7 +290,7 @@ public class ReproducibleLayerBuilderTest {
     // Reads the file back.
     try (TarArchiveInputStream in = new TarArchiveInputStream(Files.newInputStream(tarFile))) {
       Assert.assertEquals(
-          Date.from(Instant.EPOCH.plusSeconds(1)), in.getNextEntry().getLastModifiedDate());
+          Instant.EPOCH.plusSeconds(1), in.getNextEntry().getLastModifiedDate().toInstant());
     }
   }
 
@@ -317,7 +316,7 @@ public class ReproducibleLayerBuilderTest {
     // Reads the file back.
     try (TarArchiveInputStream in = new TarArchiveInputStream(Files.newInputStream(tarFile))) {
       Assert.assertEquals(
-          Date.from(Instant.EPOCH.plusSeconds(123)), in.getNextEntry().getLastModifiedDate());
+          Instant.EPOCH.plusSeconds(123), in.getNextEntry().getLastModifiedDate().toInstant());
     }
   }
 

@@ -564,8 +564,8 @@ public class MavenProjectProperties implements ProjectProperties {
   }
 
   /**
-   * Returns Spring Boot {@code &lt;configuration&gt;} if the Spring Boot plugin is configured to
-   * run the {@code repackage} goal to create a Spring Boot artifact.
+   * Returns Spring Boot {@code <configuration>} if the Spring Boot plugin is configured to run the
+   * {@code repackage} goal to create a Spring Boot artifact.
    */
   @VisibleForTesting
   Optional<Xpp3Dom> getSpringBootRepackageConfiguration() {

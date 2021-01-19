@@ -6,7 +6,7 @@ labels: release
 - [ ] ⚠️ Ensure the release process has succeeded before proceeding
 
 ## GCS
-- [ ] Run the `update_gcs_latest.sh` scripts in the {{ env.PROJECT_NAME }} projects to update GCS with the latest version number
+- [ ] Run {{ env.GCS_UPDATE_SCRIPT }} script to update GCS with the latest version number
 
 ## Github
 - [ ] Update [CHANGELOG.md]({{ env.CHANGELOG_URL }})
@@ -26,4 +26,4 @@ labels: release
 ## Announce
 - [ ] Email jib users
 - [ ] Post to [gitter](https://gitter.im/google/jib)
-- [ ] Menntion on all fixed issues that latest release has addressed the issue (usually any closed issues in a milestone)
+- [ ] Menntion on all fixed issues that latest release has addressed the issue (usually any closed issues in a [milestone](https://github.com/GoogleContainerTools/jib/milestones))
