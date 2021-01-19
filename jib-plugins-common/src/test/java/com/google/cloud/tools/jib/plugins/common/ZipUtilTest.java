@@ -24,7 +24,6 @@ import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileTime;
 import java.util.zip.ZipFile;
 import org.hamcrest.CoreMatchers;
@@ -84,21 +83,12 @@ public class ZipUtilTest {
 
       ZipUtil.unzip(archive, destination);
 
-      FileTime modificationTimeAfterUnzip1 =
-          Files.readAttributes(destination.resolve("file1.txt"), BasicFileAttributes.class)
-              .lastModifiedTime();
-      FileTime modificationTimeAfterUnzip2 =
-          Files.readAttributes(destination.resolve("my-zip/file2.txt"), BasicFileAttributes.class)
-              .lastModifiedTime();
-      FileTime modificationTimeAfterUnzip3 =
-          Files.readAttributes(
-                  destination.resolve("my-zip/some/sub/folder/file3.txt"),
-                  BasicFileAttributes.class)
-              .lastModifiedTime();
-
-      assertThat(modificationTimeAfterUnzip1).isEqualTo(sourceModificationTime1);
-      assertThat(modificationTimeAfterUnzip2).isEqualTo(sourceModificationTime2);
-      assertThat(modificationTimeAfterUnzip3).isEqualTo(sourceModificationTime3);
+      assertThat(Files.getLastModifiedTime(destination.resolve("file1.txt")))
+          .isEqualTo(sourceModificationTime1);
+      assertThat(Files.getLastModifiedTime(destination.resolve("my-zip/file2.txt")))
+          .isEqualTo(sourceModificationTime2);
+      assertThat(Files.getLastModifiedTime(destination.resolve("my-zip/some/sub/folder/file3.txt")))
+          .isEqualTo(sourceModificationTime3);
     }
   }
 
