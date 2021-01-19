@@ -25,7 +25,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.attribute.FileTime;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
@@ -64,8 +63,7 @@ public class ZipUtil {
             ByteStreams.copy(zipIn, out);
           }
         }
-        FileTime sourceModificationTime = entry.getLastModifiedTime();
-        Files.setLastModifiedTime(entryPath, sourceModificationTime);
+        Files.setLastModifiedTime(entryPath, entry.getLastModifiedTime());
       }
     }
   }
