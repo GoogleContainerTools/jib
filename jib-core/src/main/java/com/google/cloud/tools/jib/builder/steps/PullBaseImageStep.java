@@ -56,9 +56,9 @@ import com.google.common.base.Verify;
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.Callable;
@@ -209,14 +209,19 @@ class PullBaseImageStep implements Callable<ImagesAndRegistryClient> {
       throws LayerCountMismatchException, BadContainerConfigurationFormatException {
     EventHandlers eventHandlers = buildContext.getEventHandlers();
 
-    // List<String> baseImageMirrors = buildContext.getBaseImageMirrors();
-    List<String> baseImageMirrors = Arrays.asList("registry-1.travis-ci.com", "mirror.gcr.io");
-    for (String mirrorHost : baseImageMirrors) {
-      eventHandlers.dispatch(LogEvent.info("trying mirror " + mirrorHost + " for the base image"));
+    for (Map.Entry<String, String> entry : buildContext.getRegistryMirrors().entries()) {
+      String registry = entry.getKey();
+      String mirror = entry.getValue();
+      eventHandlers.dispatch(LogEvent.debug("mirror config: " + registry + " --> " + mirror));
+      if (!buildContext.getBaseImageConfiguration().getImageRegistry().equals(registry)) {
+        continue;
+      }
+
+      eventHandlers.dispatch(LogEvent.info("trying mirror " + mirror + " for the base image"));
       try {
         // First, try with no credentials. This works with public GCR images.
         RegistryClient registryClient =
-            buildContext.newBaseImageRegistryClientFactory(mirrorHost).newRegistryClient();
+            buildContext.newBaseImageRegistryClientFactory(mirror).newRegistryClient();
         try {
           return Optional.of(
               new ImagesAndRegistryClient(
@@ -224,7 +229,7 @@ class PullBaseImageStep implements Callable<ImagesAndRegistryClient> {
 
         } catch (RegistryUnauthorizedException ex) {
           // in case if a mirror requires bearer auth
-          eventHandlers.dispatch(LogEvent.debug("mirror " + mirrorHost + " requires auth"));
+          eventHandlers.dispatch(LogEvent.debug("mirror " + mirror + " requires auth"));
           registryClient.doPullBearerAuth();
           return Optional.of(
               new ImagesAndRegistryClient(
@@ -235,7 +240,7 @@ class PullBaseImageStep implements Callable<ImagesAndRegistryClient> {
         // Ignore errors from this mirror and continue.
         eventHandlers.dispatch(
             LogEvent.debug(
-                "failed to get manifest from mirror " + mirrorHost + ": " + ex.getMessage()));
+                "failed to get manifest from mirror " + mirror + ": " + ex.getMessage()));
       }
     }
     return Optional.empty();
