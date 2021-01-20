@@ -71,7 +71,7 @@ public class ZipUtilTest {
   }
 
   @Test
-  public void testModificationTimePreserved() throws URISyntaxException, IOException {
+  public void testUnzip_modificationTimePreserved() throws URISyntaxException, IOException {
     Path destination = tempFolder.getRoot().toPath();
     Path archive =
         Paths.get(Resources.getResource("plugins-common/test-archives/test.zip").toURI());
