@@ -25,7 +25,6 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Arrays;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -85,9 +84,11 @@ public class GlobalConfigTest {
     assertThat(globalConfig.getRegistryMirrors())
         .containsExactly(
             "registry-1.docker.io",
-            Arrays.asList("mirror.gcr.io", "localhost:5000"),
+            "mirror.gcr.io",
+            "registry-1.docker.io",
+            "localhost:5000",
             "another.registry",
-            Arrays.asList("another.mirror"));
+            "another.mirror");
   }
 
   @Test
