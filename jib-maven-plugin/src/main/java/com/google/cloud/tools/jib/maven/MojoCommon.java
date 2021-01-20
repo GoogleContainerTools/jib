@@ -16,16 +16,16 @@
 
 package com.google.cloud.tools.jib.maven;
 
-import static com.google.cloud.tools.jib.maven.JibPluginConfiguration.ExtraDirectoryParameters;
-
 import com.google.cloud.tools.jib.ProjectInfo;
 import com.google.cloud.tools.jib.api.LogEvent;
 import com.google.cloud.tools.jib.api.buildplan.FilePermissions;
+import com.google.cloud.tools.jib.maven.JibPluginConfiguration.ExtraDirectoryParameters;
 import com.google.cloud.tools.jib.maven.JibPluginConfiguration.PermissionConfiguration;
 import com.google.cloud.tools.jib.plugins.common.ProjectProperties;
 import com.google.cloud.tools.jib.plugins.common.PropertyNames;
 import com.google.cloud.tools.jib.plugins.common.UpdateChecker;
 import com.google.cloud.tools.jib.plugins.common.VersionChecker;
+import com.google.cloud.tools.jib.plugins.common.globalconfig.GlobalConfig;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.Futures;
@@ -53,18 +53,20 @@ public class MojoCommon {
   public static final String VERSION_URL = "https://storage.googleapis.com/jib-versions/jib-maven";
 
   static Future<Optional<String>> newUpdateChecker(
-      ProjectProperties projectProperties, Log logger) {
-    if (projectProperties.isOffline() || !logger.isInfoEnabled()) {
+      ProjectProperties projectProperties, GlobalConfig globalConfig, Log logger) {
+    if (projectProperties.isOffline()
+        || !logger.isInfoEnabled()
+        || globalConfig.isDisableUpdateCheck()) {
       return Futures.immediateFuture(Optional.empty());
     }
     ExecutorService executorService = Executors.newSingleThreadExecutor();
     try {
       return UpdateChecker.checkForUpdate(
           executorService,
-          projectProperties::log,
           VERSION_URL,
           projectProperties.getToolName(),
-          projectProperties.getToolVersion());
+          projectProperties.getToolVersion(),
+          projectProperties::log);
     } finally {
       executorService.shutdown();
     }

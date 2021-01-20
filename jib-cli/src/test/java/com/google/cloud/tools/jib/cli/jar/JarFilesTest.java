@@ -83,7 +83,7 @@ public class JarFilesTest {
             mockStandardExplodedProcessor, mockJarCommand, mockCommonCliOptions, mockLogger);
     ContainerBuildPlan buildPlan = containerBuilder.toContainerBuildPlan();
 
-    assertThat(buildPlan.getBaseImage()).isEqualTo("gcr.io/distroless/java");
+    assertThat(buildPlan.getBaseImage()).isEqualTo("gcr.io/distroless/java-debian10:11");
     assertThat(buildPlan.getPlatforms()).isEqualTo(ImmutableSet.of(new Platform("amd64", "linux")));
     assertThat(buildPlan.getCreationTime()).isEqualTo(Instant.EPOCH);
     assertThat(buildPlan.getFormat()).isEqualTo(ImageFormat.Docker);
@@ -127,7 +127,7 @@ public class JarFilesTest {
             mockStandardPackagedProcessor, mockJarCommand, mockCommonCliOptions, mockLogger);
     ContainerBuildPlan buildPlan = containerBuilder.toContainerBuildPlan();
 
-    assertThat(buildPlan.getBaseImage()).isEqualTo("gcr.io/distroless/java");
+    assertThat(buildPlan.getBaseImage()).isEqualTo("gcr.io/distroless/java-debian10:11");
     assertThat(buildPlan.getPlatforms()).isEqualTo(ImmutableSet.of(new Platform("amd64", "linux")));
     assertThat(buildPlan.getCreationTime()).isEqualTo(Instant.EPOCH);
     assertThat(buildPlan.getFormat()).isEqualTo(ImageFormat.Docker);
@@ -172,7 +172,7 @@ public class JarFilesTest {
             mockSpringBootExplodedProcessor, mockJarCommand, mockCommonCliOptions, mockLogger);
     ContainerBuildPlan buildPlan = containerBuilder.toContainerBuildPlan();
 
-    assertThat(buildPlan.getBaseImage()).isEqualTo("gcr.io/distroless/java");
+    assertThat(buildPlan.getBaseImage()).isEqualTo("gcr.io/distroless/java-debian10:11");
     assertThat(buildPlan.getPlatforms()).isEqualTo(ImmutableSet.of(new Platform("amd64", "linux")));
     assertThat(buildPlan.getCreationTime()).isEqualTo(Instant.EPOCH);
     assertThat(buildPlan.getFormat()).isEqualTo(ImageFormat.Docker);
@@ -216,7 +216,7 @@ public class JarFilesTest {
             mockSpringBootPackagedProcessor, mockJarCommand, mockCommonCliOptions, mockLogger);
     ContainerBuildPlan buildPlan = containerBuilder.toContainerBuildPlan();
 
-    assertThat(buildPlan.getBaseImage()).isEqualTo("gcr.io/distroless/java");
+    assertThat(buildPlan.getBaseImage()).isEqualTo("gcr.io/distroless/java-debian10:11");
     assertThat(buildPlan.getPlatforms()).isEqualTo(ImmutableSet.of(new Platform("amd64", "linux")));
     assertThat(buildPlan.getCreationTime()).isEqualTo(Instant.EPOCH);
     assertThat(buildPlan.getFormat()).isEqualTo(ImageFormat.Docker);

@@ -34,6 +34,7 @@ import java.util.concurrent.Callable;
  */
 class AuthenticatePushStep implements Callable<RegistryClient> {
 
+  @SuppressWarnings("InlineFormatString")
   private static final String DESCRIPTION = "Authenticating push to %s";
 
   private final BuildContext buildContext;
