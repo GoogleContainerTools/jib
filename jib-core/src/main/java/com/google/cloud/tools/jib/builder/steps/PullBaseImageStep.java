@@ -270,7 +270,7 @@ class PullBaseImageStep implements Callable<ImagesAndRegistryClient> {
                   (V22ManifestListTemplate) manifestTemplate, platform);
           // TODO: pull multiple manifests (+ container configs) in parallel.
           ManifestAndDigest<?> imageManifestAndDigest = registryClient.pullManifest(manifestDigest);
-          progressDispatcher1.dispatchProgress(1);
+          progressDispatcher2.dispatchProgress(1);
 
           BuildableManifestTemplate imageManifest =
               (BuildableManifestTemplate) imageManifestAndDigest.getManifest();
