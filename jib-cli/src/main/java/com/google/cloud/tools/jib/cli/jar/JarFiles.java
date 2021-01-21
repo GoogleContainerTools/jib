@@ -19,7 +19,6 @@ package com.google.cloud.tools.jib.cli.jar;
 import com.google.cloud.tools.jib.api.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.api.Jib;
 import com.google.cloud.tools.jib.api.JibContainerBuilder;
-import com.google.cloud.tools.jib.api.LogEvent;
 import com.google.cloud.tools.jib.api.buildplan.FileEntriesLayer;
 import com.google.cloud.tools.jib.cli.CommonCliOptions;
 import com.google.cloud.tools.jib.cli.ContainerBuilders;
@@ -64,10 +63,6 @@ public class JarFiles {
         customEntrypoint.isEmpty()
             ? processor.computeEntrypoint(jarOptions.getJvmFlags())
             : customEntrypoint;
-
-    if (!customEntrypoint.isEmpty() && !jarOptions.getJvmFlags().isEmpty()) {
-      logger.log(LogEvent.Level.WARN, "--jvm-flag is ignored when --entrypoint is specified");
-    }
 
     containerBuilder
         .setEntrypoint(entrypoint)
