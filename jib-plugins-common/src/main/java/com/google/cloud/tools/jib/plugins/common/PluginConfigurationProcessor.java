@@ -274,7 +274,7 @@ public class PluginConfigurationProcessor {
             rawConfiguration.getProperty(PropertyNames.ALWAYS_CACHE_BASE_IMAGE).orElse("false"));
     Containerizer containerizer =
         Containerizer.to(targetImage).setAlwaysCacheBaseImage(alwaysCacheBaseImage);
-    Multimaps.asMap(globalConfig.getRegistryMirrors()).forEach(containerizer::withRegistryMirrors);
+    Multimaps.asMap(globalConfig.getRegistryMirrors()).forEach(containerizer::addRegistryMirrors);
 
     JibContainerBuilder jibContainerBuilder =
         processCommonConfiguration(

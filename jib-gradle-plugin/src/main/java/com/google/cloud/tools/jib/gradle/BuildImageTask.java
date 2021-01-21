@@ -36,7 +36,6 @@ import com.google.cloud.tools.jib.plugins.common.globalconfig.InvalidGlobalConfi
 import com.google.cloud.tools.jib.plugins.extension.JibPluginExtensionException;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
-import com.google.common.util.concurrent.Futures;
 import java.io.IOException;
 import java.util.Optional;
 import java.util.concurrent.Future;
@@ -96,11 +95,10 @@ public class BuildImageTask extends DefaultTask implements JibTask {
 
     GradleProjectProperties projectProperties =
         GradleProjectProperties.getForProject(getProject(), getLogger(), tempDirectoryProvider);
-    Future<Optional<String>> updateCheckFuture = Futures.immediateFuture(Optional.empty());
+    GlobalConfig globalConfig = GlobalConfig.readConfig();
+    Future<Optional<String>> updateCheckFuture =
+        TaskCommon.newUpdateChecker(projectProperties, globalConfig, getLogger());
     try {
-      GlobalConfig globalConfig = GlobalConfig.readConfig();
-      updateCheckFuture = TaskCommon.newUpdateChecker(projectProperties, globalConfig, getLogger());
-
       if (Strings.isNullOrEmpty(jibExtension.getTo().getImage())) {
         throw new GradleException(
             HelpfulSuggestions.forToNotConfigured(

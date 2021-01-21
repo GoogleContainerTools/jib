@@ -34,6 +34,7 @@ import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
 import com.google.common.collect.ImmutableListMultimap;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.ListMultimap;
 import com.google.common.util.concurrent.MoreExecutors;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -95,7 +96,7 @@ public class BuildContextTest {
                 .addEntry(Paths.get("sourceFile"), AbsoluteUnixPath.get("/path/in/container"))
                 .build());
     String expectedCreatedBy = "createdBy";
-    ImmutableListMultimap<String, String> expectedRegistryMirrors =
+    ListMultimap<String, String> expectedRegistryMirrors =
         ImmutableListMultimap.of("some.registry", "mirror1", "some.registry", "mirror2");
 
     ImageConfiguration baseImageConfiguration =

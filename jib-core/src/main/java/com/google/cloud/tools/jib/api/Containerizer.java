@@ -310,14 +310,14 @@ public class Containerizer {
   }
 
   /**
-   * Sets mirrors for a base image registry. Jib will try its mirrors in the given order before
+   * Adds mirrors for a base image registry. Jib will try its mirrors in the given order before
    * finally trying the registry.
    *
    * @param registry base image registry for which mirrors are configured
    * @param mirrors a list of mirrors, where each element is in the form of {@code host[:port]}
    * @return this
    */
-  public Containerizer withRegistryMirrors(String registry, List<String> mirrors) {
+  public Containerizer addRegistryMirrors(String registry, List<String> mirrors) {
     registryMirrors.putAll(registry, mirrors);
     return this;
   }

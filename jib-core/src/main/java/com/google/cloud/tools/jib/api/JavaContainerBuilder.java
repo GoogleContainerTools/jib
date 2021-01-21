@@ -38,7 +38,6 @@ import java.util.EnumMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
@@ -583,7 +582,7 @@ public class JavaContainerBuilder {
             .entrySet()
             .stream()
             .filter(entry -> entry.getValue() > 1)
-            .map(Entry::getKey)
+            .map(Map.Entry::getKey)
             .collect(Collectors.toList());
 
     ImmutableMap<LayerType, List<Path>> layerMap =
