@@ -81,12 +81,12 @@ class PullBaseImageStep implements Callable<ImagesAndRegistryClient> {
   }
 
   private final BuildContext buildContext;
-  private final ProgressEventDispatcher.Factory progressEventDispatcherFactory;
+  private final ProgressEventDispatcher.Factory progressDispatcherFactory;
 
   PullBaseImageStep(
-      BuildContext buildContext, ProgressEventDispatcher.Factory progressEventDispatcherFactory) {
+      BuildContext buildContext, ProgressEventDispatcher.Factory progressDispatcherFactory) {
     this.buildContext = buildContext;
-    this.progressEventDispatcherFactory = progressEventDispatcherFactory;
+    this.progressDispatcherFactory = progressDispatcherFactory;
   }
 
   @Override
@@ -96,7 +96,7 @@ class PullBaseImageStep implements Callable<ImagesAndRegistryClient> {
           CacheCorruptedException, CredentialRetrievalException {
     EventHandlers eventHandlers = buildContext.getEventHandlers();
     try (ProgressEventDispatcher progressDispatcher =
-            progressEventDispatcherFactory.create("pulling base image manifest", 4);
+            progressDispatcherFactory.create("pulling base image manifest", 3);
         TimerEventDispatcher ignored1 = new TimerEventDispatcher(eventHandlers, DESCRIPTION)) {
 
       // Skip this step if this is a scratch image
@@ -221,14 +221,16 @@ class PullBaseImageStep implements Callable<ImagesAndRegistryClient> {
     Cache cache = buildContext.getBaseImageLayersCache();
     EventHandlers eventHandlers = buildContext.getEventHandlers();
     ImageConfiguration baseImageConfig = buildContext.getBaseImageConfiguration();
-    Set<Platform> platforms = buildContext.getContainerConfiguration().getPlatforms();
 
-    try (ProgressEventDispatcher progressDispatcher =
-        progressDispatcherFactory.create("pulling manifest list and manifests", platforms.size())) {
+    try (ProgressEventDispatcher progressDispatcher1 =
+        progressDispatcherFactory.create("pulling base image manifest and container config", 2)) {
       ManifestAndDigest<?> manifestAndDigest =
           registryClient.pullManifest(baseImageConfig.getImageQualifier());
       eventHandlers.dispatch(
           LogEvent.lifecycle("Using base image with digest: " + manifestAndDigest.getDigest()));
+      progressDispatcher1.dispatchProgress(1);
+      ProgressEventDispatcher.Factory childProgressDispatcherFactory =
+          progressDispatcher1.newChildProducer();
 
       ManifestTemplate manifestTemplate = manifestAndDigest.getManifest();
       if (manifestTemplate instanceof V21ManifestTemplate) {
@@ -241,7 +243,7 @@ class PullBaseImageStep implements Callable<ImagesAndRegistryClient> {
         BuildableManifestTemplate imageManifest = (BuildableManifestTemplate) manifestTemplate;
         ContainerConfigurationTemplate containerConfig =
             pullContainerConfigJson(
-                manifestAndDigest, registryClient, progressDispatcher.newChildProducer());
+                manifestAndDigest, registryClient, childProgressDispatcherFactory);
         PlatformChecker.checkManifestPlatform(buildContext, containerConfig);
         cache.writeMetadata(baseImageConfig.getImage(), imageManifest, containerConfig);
         return Collections.singletonList(
@@ -253,27 +255,33 @@ class PullBaseImageStep implements Callable<ImagesAndRegistryClient> {
 
       List<ManifestAndConfigTemplate> manifestsAndConfigs = new ArrayList<>();
       ImmutableList.Builder<Image> images = ImmutableList.builder();
-      // If a manifest list, search for the manifests matching the given platforms.
-      for (Platform platform : platforms) {
-        String message = "Searching for architecture=%s, os=%s in the base image manifest list";
-        eventHandlers.dispatch(
-            LogEvent.info(String.format(message, platform.getArchitecture(), platform.getOs())));
+      Set<Platform> platforms = buildContext.getContainerConfiguration().getPlatforms();
+      try (ProgressEventDispatcher progressDispatcher2 =
+          childProgressDispatcherFactory.create(
+              "pulling platform-specific manifests and container configs", 2 * platforms.size())) {
+        // If a manifest list, search for the manifests matching the given platforms.
+        for (Platform platform : platforms) {
+          String message = "Searching for architecture=%s, os=%s in the base image manifest list";
+          eventHandlers.dispatch(
+              LogEvent.info(String.format(message, platform.getArchitecture(), platform.getOs())));
 
-        String manifestDigest =
-            lookUpPlatformSpecificImageManifest(
-                (V22ManifestListTemplate) manifestTemplate, platform);
-        // TODO: pull multiple manifests (+ container configs) in parallel.
-        ManifestAndDigest<?> imageManifestAndDigest = registryClient.pullManifest(manifestDigest);
+          String manifestDigest =
+              lookUpPlatformSpecificImageManifest(
+                  (V22ManifestListTemplate) manifestTemplate, platform);
+          // TODO: pull multiple manifests (+ container configs) in parallel.
+          ManifestAndDigest<?> imageManifestAndDigest = registryClient.pullManifest(manifestDigest);
+          progressDispatcher1.dispatchProgress(1);
 
-        BuildableManifestTemplate imageManifest =
-            (BuildableManifestTemplate) imageManifestAndDigest.getManifest();
-        ContainerConfigurationTemplate containerConfig =
-            pullContainerConfigJson(
-                imageManifestAndDigest, registryClient, progressDispatcher.newChildProducer());
+          BuildableManifestTemplate imageManifest =
+              (BuildableManifestTemplate) imageManifestAndDigest.getManifest();
+          ContainerConfigurationTemplate containerConfig =
+              pullContainerConfigJson(
+                  imageManifestAndDigest, registryClient, progressDispatcher2.newChildProducer());
 
-        manifestsAndConfigs.add(
-            new ManifestAndConfigTemplate(imageManifest, containerConfig, manifestDigest));
-        images.add(JsonToImageTranslator.toImage(imageManifest, containerConfig));
+          manifestsAndConfigs.add(
+              new ManifestAndConfigTemplate(imageManifest, containerConfig, manifestDigest));
+          images.add(JsonToImageTranslator.toImage(imageManifest, containerConfig));
+        }
       }
 
       cache.writeMetadata(
