@@ -136,6 +136,7 @@ public class BuildTarTask extends DefaultTask implements JibTask {
               new GradleRawConfiguration(jibExtension),
               ignored -> Optional.empty(),
               projectProperties,
+              globalConfig,
               new GradleHelpfulSuggestions(HELPFUL_SUGGESTIONS_PREFIX))
           .runBuild();
 

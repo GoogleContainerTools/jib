@@ -401,16 +401,17 @@ class PullBaseImageStep implements Callable<ImagesAndRegistryClient> {
         (BuildableManifestTemplate) manifestAndDigest.getManifest();
     Preconditions.checkArgument(manifest.getSchemaVersion() == 2);
 
+    if (manifest.getContainerConfiguration() == null
+        || manifest.getContainerConfiguration().getDigest() == null) {
+      throw new UnknownManifestFormatException(
+          "Invalid container configuration in Docker V2.2/OCI manifest: \n"
+              + JsonTemplateMapper.toUtf8String(manifest));
+    }
+
     try (ThrottledProgressEventDispatcherWrapper progressDispatcherWrapper =
         new ThrottledProgressEventDispatcherWrapper(
             progressDispatcherFactory,
             "pull container configuration " + manifest.getContainerConfiguration().getDigest())) {
-      if (manifest.getContainerConfiguration() == null
-          || manifest.getContainerConfiguration().getDigest() == null) {
-        throw new UnknownManifestFormatException(
-            "Invalid container configuration in Docker V2.2/OCI manifest: \n"
-                + JsonTemplateMapper.toUtf8String(manifest));
-      }
 
       String containerConfigString =
           Blobs.writeToString(
