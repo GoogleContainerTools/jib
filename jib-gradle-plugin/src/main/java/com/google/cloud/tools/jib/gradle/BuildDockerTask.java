@@ -36,7 +36,6 @@ import com.google.cloud.tools.jib.plugins.common.globalconfig.GlobalConfig;
 import com.google.cloud.tools.jib.plugins.common.globalconfig.InvalidGlobalConfigException;
 import com.google.cloud.tools.jib.plugins.extension.JibPluginExtensionException;
 import com.google.common.base.Preconditions;
-import com.google.common.util.concurrent.Futures;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Optional;
@@ -108,10 +107,10 @@ public class BuildDockerTask extends DefaultTask implements JibTask {
 
     GradleProjectProperties projectProperties =
         GradleProjectProperties.getForProject(getProject(), getLogger(), tempDirectoryProvider);
-    Future<Optional<String>> updateCheckFuture = Futures.immediateFuture(Optional.empty());
+    GlobalConfig globalConfig = GlobalConfig.readConfig();
+    Future<Optional<String>> updateCheckFuture =
+        TaskCommon.newUpdateChecker(projectProperties, globalConfig, getLogger());
     try {
-      GlobalConfig globalConfig = GlobalConfig.readConfig();
-      updateCheckFuture = TaskCommon.newUpdateChecker(projectProperties, globalConfig, getLogger());
 
       PluginConfigurationProcessor.createJibBuildRunnerForDockerDaemonImage(
               new GradleRawConfiguration(jibExtension),
