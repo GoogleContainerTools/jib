@@ -148,7 +148,8 @@ public class Jar implements Callable<Integer> {
       names = "--entrypoint",
       paramLabel = "<entrypoint>",
       split = "\\s+",
-      description = "Entrypoint for container. Overrides the default entrypoint.")
+      description =
+          "Entrypoint for container. Overrides the default entrypoint, example: --entrypoint='custom entrypoint'")
   private List<String> entrypoint = Collections.emptyList();
 
   @Override
