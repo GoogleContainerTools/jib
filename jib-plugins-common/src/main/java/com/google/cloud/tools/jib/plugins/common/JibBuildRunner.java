@@ -44,6 +44,7 @@ import javax.annotation.Nullable;
 import org.apache.http.conn.HttpHostConnectException;
 
 /** Runs Jib and builds helpful error messages. */
+@SuppressWarnings("InlineFormatString")
 public class JibBuildRunner {
 
   private static final String STARTUP_MESSAGE_PREFIX_FOR_DOCKER_REGISTRY =
@@ -58,6 +59,7 @@ public class JibBuildRunner {
 
   private static final String STARTUP_MESSAGE_FORMAT_FOR_TARBALL =
       "Containerizing application to file at '%s'...";
+
   private static final String SUCCESS_MESSAGE_FORMAT_FOR_TARBALL =
       "Built image tarball at \u001B[36m%s\u001B[0m";
 

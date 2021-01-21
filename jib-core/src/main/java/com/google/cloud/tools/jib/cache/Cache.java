@@ -164,8 +164,8 @@ public class Cache {
    * ID is a SHA hash of a container configuration JSON. The value is also shown as IMAGE ID in
    * {@code docker images}.
    *
-   * <p>Note: the {@code imageID} to the {@code containerConfiguration} is a one-way relationship;
-   * there is no guarantee that {@code containerConfiguration}'s SHA will be {@code imageID}, since
+   * <p>Note: the {@code imageId} to the {@code containerConfiguration} is a one-way relationship;
+   * there is no guarantee that {@code containerConfiguration}'s SHA will be {@code imageId}, since
    * the original container configuration is being rewritten here rather than being moved.
    *
    * @param imageId the ID of the image to store the container configuration for
@@ -242,9 +242,9 @@ public class Cache {
    * ID. An image ID is a SHA hash of a container configuration JSON. The value is also shown as
    * IMAGE ID in {@code docker images}.
    *
-   * <p>Note: the {@code imageID} is only used to find the {@code containerConfiguration}, and is
+   * <p>Note: the {@code imageId} is only used to find the {@code containerConfiguration}, and is
    * not necessarily the actual SHA of {@code containerConfiguration}. There is no guarantee that
-   * {@code containerConfiguration}'s SHA will be {@code imageID}, since the saved container
+   * {@code containerConfiguration}'s SHA will be {@code imageId}, since the saved container
    * configuration is not a direct copy of the base image's original configuration.
    *
    * @param imageId the image ID

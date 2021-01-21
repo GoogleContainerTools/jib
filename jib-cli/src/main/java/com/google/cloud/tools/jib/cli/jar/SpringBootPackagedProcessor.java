@@ -25,7 +25,7 @@ import javax.annotation.Nullable;
 
 public class SpringBootPackagedProcessor implements JarProcessor {
 
-  @Nullable private static Path jarPath;
+  @Nullable private final Path jarPath;
 
   public SpringBootPackagedProcessor(Path jarPath) {
     this.jarPath = jarPath;
