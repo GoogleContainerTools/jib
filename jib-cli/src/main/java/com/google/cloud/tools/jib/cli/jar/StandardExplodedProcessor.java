@@ -92,13 +92,13 @@ public class StandardExplodedProcessor implements JarProcessor {
       }
       String classpath =
           JarLayers.APP_ROOT + "/explodedJar:" + JarLayers.APP_ROOT + "/dependencies/*";
-      List<String> entrypoint = new ArrayList<>(4 + jvmFlags.size());
+      ImmutableList.Builder<String> entrypoint = ImmutableList.builder();
       entrypoint.add("java");
       entrypoint.addAll(jvmFlags);
       entrypoint.add("-cp");
       entrypoint.add(classpath);
       entrypoint.add(mainClass);
-      return ImmutableList.copyOf(entrypoint);
+      return entrypoint.build();
     }
   }
 }

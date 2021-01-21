@@ -60,12 +60,14 @@ public class JarFiles {
     List<FileEntriesLayer> layers = processor.createLayers();
     List<String> entrypoint = processor.computeEntrypoint(jarOptions.getJvmFlags());
 
-    containerBuilder.setEntrypoint(entrypoint).setFileEntriesLayers(layers);
-    containerBuilder.setExposedPorts(jarOptions.getExposedPorts());
-    containerBuilder.setVolumes(jarOptions.getVolumes());
-    containerBuilder.setEnvironment(jarOptions.getEnvironment());
-    containerBuilder.setLabels(jarOptions.getLabels());
-    containerBuilder.setProgramArguments(jarOptions.getProgramArguments());
+    containerBuilder
+        .setEntrypoint(entrypoint)
+        .setFileEntriesLayers(layers)
+        .setExposedPorts(jarOptions.getExposedPorts())
+        .setVolumes(jarOptions.getVolumes())
+        .setEnvironment(jarOptions.getEnvironment())
+        .setLabels(jarOptions.getLabels())
+        .setProgramArguments(jarOptions.getProgramArguments());
     jarOptions.getUser().ifPresent(containerBuilder::setUser);
     jarOptions.getFormat().ifPresent(containerBuilder::setFormat);
 

@@ -67,12 +67,12 @@ public class StandardPackagedProcessor implements JarProcessor {
             "`Main-Class:` attribute for an application main class not defined in the input JAR's "
                 + "manifest (`META-INF/MANIFEST.MF` in the JAR).");
       }
-      List<String> entrypoint = new ArrayList<>(3 + jvmFlags.size());
+      ImmutableList.Builder<String> entrypoint = ImmutableList.builder();
       entrypoint.add("java");
       entrypoint.addAll(jvmFlags);
       entrypoint.add("-jar");
       entrypoint.add(JarLayers.APP_ROOT + "/" + jarPath.getFileName().toString());
-      return ImmutableList.copyOf(entrypoint);
+      return entrypoint.build();
     }
   }
 }

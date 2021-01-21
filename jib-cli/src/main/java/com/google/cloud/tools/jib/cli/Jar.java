@@ -87,21 +87,22 @@ public class Jar implements Callable<Integer> {
       names = "--jvm-flags",
       paramLabel = "<jvm-flags>",
       split = ",",
-      description = "JVM arguments.")
+      description = "JVM arguments, example: --jvm-flags=-Dmy.property=value,-Xshare:off")
   private List<String> jvmFlags = Collections.emptyList();
 
   @CommandLine.Option(
       names = "--expose",
       paramLabel = "<exposed-ports>",
       split = ",",
-      description = "Ports to expose on container.")
+      description = "Ports to expose on container, example: --expose=5000,7/udp.")
   private List<String> exposedPorts = Collections.emptyList();
 
   @CommandLine.Option(
       names = "--volumes",
       paramLabel = "<volumes>",
       split = ",",
-      description = "Directories on container to hold extra volumes.")
+      description =
+          "Directories on container to hold extra volumes,  example: --volumes=/var/log,/var/log2.")
   private List<String> volumes = Collections.emptyList();
 
   @CommandLine.Option(
@@ -109,7 +110,7 @@ public class Jar implements Callable<Integer> {
       paramLabel = "<environment-variables>",
       split = ",",
       description =
-          "Environment Variables to write into container. Usage example: --environment-variables key1=value1,key2=value2.")
+          "Environment variables to write into container, example: --environment-variables env1=env_value1,env2=env_value2.")
   private Map<String, String> environment = new LinkedHashMap<>();
 
   @CommandLine.Option(
@@ -117,13 +118,13 @@ public class Jar implements Callable<Integer> {
       paramLabel = "<labels>",
       split = ",",
       description =
-          "Labels to write into container metadata. Usage example: --labels label1=value1,label2=value2.")
+          "Labels to write into container metadata, example: --labels=label1=value1,label2=value2.")
   private Map<String, String> labels = new LinkedHashMap<>();
 
   @CommandLine.Option(
       names = {"-u", "--user"},
       paramLabel = "<user>",
-      description = "The user to run the container.")
+      description = "The user to run the container as, example: --user=myuser:mygroup.")
   @SuppressWarnings("NullAway.Init") // initialized by picocli
   private String user;
 
