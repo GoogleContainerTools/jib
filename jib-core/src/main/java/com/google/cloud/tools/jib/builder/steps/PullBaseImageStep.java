@@ -213,32 +213,32 @@ class PullBaseImageStep implements Callable<ImagesAndRegistryClient> {
       throws LayerCountMismatchException, BadContainerConfigurationFormatException {
     EventHandlers eventHandlers = buildContext.getEventHandlers();
 
-    Collection<Map.Entry<String, String>> entries = buildContext.getRegistryMirrors().entries();
-    try (ProgressEventDispatcher progressDispatcher =
-            progressDispatcherFactory.create("trying base image mirrors", 2 * entries.size());
+    Collection<Map.Entry<String, String>> mirrorEntries =
+        buildContext.getRegistryMirrors().entries();
+    try (ProgressEventDispatcher progressDispatcher1 =
+            progressDispatcherFactory.create("trying mirrors", mirrorEntries.size());
         TimerEventDispatcher ignored1 = new TimerEventDispatcher(eventHandlers, "trying mirrors")) {
-      for (Map.Entry<String, String> entry : entries) {
+      for (Map.Entry<String, String> entry : mirrorEntries) {
         String registry = entry.getKey();
         String mirror = entry.getValue();
         eventHandlers.dispatch(LogEvent.debug("mirror config: " + registry + " --> " + mirror));
 
         if (!buildContext.getBaseImageConfiguration().getImageRegistry().equals(registry)) {
-          progressDispatcher.dispatchProgress(2);
+          progressDispatcher1.dispatchProgress(1);
           continue;
         }
 
         eventHandlers.dispatch(LogEvent.info("trying mirror " + mirror + " for the base image"));
-        try {
+        try (ProgressEventDispatcher progressDispatcher2 =
+            progressDispatcher1.newChildProducer().create("trying mirror " + mirror, 2)) {
           // First, try with no credentials. This works with public GCR images.
           RegistryClient registryClient =
               buildContext.newBaseImageRegistryClientFactory(mirror).newRegistryClient();
           try {
-            ImagesAndRegistryClient imagesAndRegistryClient =
+            return Optional.of(
                 new ImagesAndRegistryClient(
-                    pullBaseImages(registryClient, progressDispatcher.newChildProducer()),
-                    registryClient);
-            progressDispatcher.dispatchProgress(1);
-            return Optional.of(imagesAndRegistryClient);
+                    pullBaseImages(registryClient, progressDispatcher2.newChildProducer()),
+                    registryClient));
 
           } catch (RegistryUnauthorizedException ex) {
             // in case if a mirror requires bearer auth
@@ -246,7 +246,7 @@ class PullBaseImageStep implements Callable<ImagesAndRegistryClient> {
             registryClient.doPullBearerAuth();
             return Optional.of(
                 new ImagesAndRegistryClient(
-                    pullBaseImages(registryClient, progressDispatcher.newChildProducer()),
+                    pullBaseImages(registryClient, progressDispatcher2.newChildProducer()),
                     registryClient));
           }
 
@@ -332,7 +332,7 @@ class PullBaseImageStep implements Callable<ImagesAndRegistryClient> {
                   (V22ManifestListTemplate) manifestTemplate, platform);
           // TODO: pull multiple manifests (+ container configs) in parallel.
           ManifestAndDigest<?> imageManifestAndDigest = registryClient.pullManifest(manifestDigest);
-          progressDispatcher1.dispatchProgress(1);
+          progressDispatcher2.dispatchProgress(1);
 
           BuildableManifestTemplate imageManifest =
               (BuildableManifestTemplate) imageManifestAndDigest.getManifest();
