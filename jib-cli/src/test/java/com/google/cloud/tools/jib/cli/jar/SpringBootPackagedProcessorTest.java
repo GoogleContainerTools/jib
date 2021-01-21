@@ -57,9 +57,23 @@ public class SpringBootPackagedProcessorTest {
     SpringBootPackagedProcessor springBootProcessor =
         new SpringBootPackagedProcessor(springBootJar);
 
-    ImmutableList<String> actualEntrypoint = springBootProcessor.computeEntrypoint();
+    ImmutableList<String> actualEntrypoint =
+        springBootProcessor.computeEntrypoint(ImmutableList.of());
 
     assertThat(actualEntrypoint)
         .isEqualTo(ImmutableList.of("java", "-jar", "/app/springboot_sample.jar"));
+  }
+
+  @Test
+  public void testComputeEntrypoint_jvmFlag() throws URISyntaxException {
+    Path springBootJar = Paths.get(Resources.getResource(SPRING_BOOT_JAR).toURI());
+    SpringBootPackagedProcessor springBootProcessor =
+        new SpringBootPackagedProcessor(springBootJar);
+
+    ImmutableList<String> actualEntrypoint =
+        springBootProcessor.computeEntrypoint(ImmutableList.of("-jvm-flag"));
+
+    assertThat(actualEntrypoint)
+        .isEqualTo(ImmutableList.of("java", "-jvm-flag", "-jar", "/app/springboot_sample.jar"));
   }
 }

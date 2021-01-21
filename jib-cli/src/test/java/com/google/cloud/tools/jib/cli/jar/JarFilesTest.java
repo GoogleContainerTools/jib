@@ -25,10 +25,12 @@ import com.google.cloud.tools.jib.api.buildplan.ContainerBuildPlan;
 import com.google.cloud.tools.jib.api.buildplan.FileEntriesLayer;
 import com.google.cloud.tools.jib.api.buildplan.ImageFormat;
 import com.google.cloud.tools.jib.api.buildplan.Platform;
+import com.google.cloud.tools.jib.api.buildplan.Port;
 import com.google.cloud.tools.jib.cli.CommonCliOptions;
 import com.google.cloud.tools.jib.cli.Jar;
 import com.google.cloud.tools.jib.plugins.common.logging.ConsoleLogger;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import java.io.IOException;
 import java.nio.file.Paths;
@@ -37,6 +39,7 @@ import java.util.Arrays;
 import java.util.Optional;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentMatchers;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
@@ -70,7 +73,7 @@ public class JarFilesTest {
                 AbsoluteUnixPath.get("/app/explodedJar/class1.class"))
             .build();
     Mockito.when(mockStandardExplodedProcessor.createLayers()).thenReturn(Arrays.asList(layer));
-    Mockito.when(mockStandardExplodedProcessor.computeEntrypoint())
+    Mockito.when(mockStandardExplodedProcessor.computeEntrypoint(ArgumentMatchers.anyList()))
         .thenReturn(
             ImmutableList.of("java", "-cp", "/app/explodedJar:/app/dependencies/*", "HelloWorld"));
     Mockito.when(mockJarCommand.getFrom()).thenReturn(Optional.empty());
@@ -115,7 +118,7 @@ public class JarFilesTest {
                 Paths.get("path/to/standardJar.jar"), AbsoluteUnixPath.get("/app/standardJar.jar"))
             .build();
     Mockito.when(mockStandardPackagedProcessor.createLayers()).thenReturn(Arrays.asList(layer));
-    Mockito.when(mockStandardPackagedProcessor.computeEntrypoint())
+    Mockito.when(mockStandardPackagedProcessor.computeEntrypoint(ArgumentMatchers.anyList()))
         .thenReturn(ImmutableList.of("java", "-jar", "/app/standardJar.jar"));
     Mockito.when(mockJarCommand.getFrom()).thenReturn(Optional.empty());
 
@@ -159,7 +162,7 @@ public class JarFilesTest {
             .build();
     Mockito.when(mockJarCommand.getFrom()).thenReturn(Optional.empty());
     Mockito.when(mockSpringBootExplodedProcessor.createLayers()).thenReturn(Arrays.asList(layer));
-    Mockito.when(mockSpringBootExplodedProcessor.computeEntrypoint())
+    Mockito.when(mockSpringBootExplodedProcessor.computeEntrypoint(ArgumentMatchers.anyList()))
         .thenReturn(
             ImmutableList.of("java", "-cp", "/app", "org.springframework.boot.loader.JarLauncher"));
     Mockito.when(mockJarCommand.getFrom()).thenReturn(Optional.empty());
@@ -204,7 +207,7 @@ public class JarFilesTest {
                 Paths.get("path/to/spring-boot.jar"), AbsoluteUnixPath.get("/app/spring-boot.jar"))
             .build();
     Mockito.when(mockSpringBootPackagedProcessor.createLayers()).thenReturn(Arrays.asList(layer));
-    Mockito.when(mockSpringBootPackagedProcessor.computeEntrypoint())
+    Mockito.when(mockSpringBootPackagedProcessor.computeEntrypoint(ArgumentMatchers.anyList()))
         .thenReturn(ImmutableList.of("java", "-jar", "/app/spring-boot.jar"));
     Mockito.when(mockJarCommand.getFrom()).thenReturn(Optional.empty());
 
@@ -235,5 +238,36 @@ public class JarFilesTest {
                     AbsoluteUnixPath.get("/app/spring-boot.jar"))
                 .build()
                 .getEntries());
+  }
+
+  @Test
+  public void testToJibContainerBuilder_optionalParameters()
+      throws IOException, InvalidImageReferenceException {
+    Mockito.when(mockJarCommand.getFrom()).thenReturn(Optional.of("base-image"));
+    Mockito.when(mockJarCommand.getExposedPorts()).thenReturn(ImmutableSet.of(Port.udp(123)));
+    Mockito.when(mockJarCommand.getVolumes())
+        .thenReturn(
+            ImmutableSet.of(AbsoluteUnixPath.get("/volume1"), AbsoluteUnixPath.get("/volume2")));
+    Mockito.when(mockJarCommand.getEnvironment()).thenReturn(ImmutableMap.of("key1", "value1"));
+    Mockito.when(mockJarCommand.getLabels()).thenReturn(ImmutableMap.of("label", "mylabel"));
+    Mockito.when(mockJarCommand.getUser()).thenReturn(Optional.of("customUser"));
+    Mockito.when(mockJarCommand.getFormat()).thenReturn(Optional.of(ImageFormat.OCI));
+    Mockito.when(mockJarCommand.getProgramArguments()).thenReturn(ImmutableList.of("arg1"));
+
+    JibContainerBuilder containerBuilder =
+        JarFiles.toJibContainerBuilder(
+            mockStandardExplodedProcessor, mockJarCommand, mockCommonCliOptions, mockLogger);
+    ContainerBuildPlan buildPlan = containerBuilder.toContainerBuildPlan();
+
+    assertThat(buildPlan.getBaseImage()).isEqualTo("base-image");
+    assertThat(buildPlan.getExposedPorts()).isEqualTo(ImmutableSet.of(Port.udp(123)));
+    assertThat(buildPlan.getVolumes())
+        .isEqualTo(
+            ImmutableSet.of(AbsoluteUnixPath.get("/volume1"), AbsoluteUnixPath.get("/volume2")));
+    assertThat(buildPlan.getEnvironment()).isEqualTo(ImmutableMap.of("key1", "value1"));
+    assertThat(buildPlan.getLabels()).isEqualTo(ImmutableMap.of("label", "mylabel"));
+    assertThat(buildPlan.getUser()).isEqualTo("customUser");
+    assertThat(buildPlan.getFormat()).isEqualTo(ImageFormat.OCI);
+    assertThat(buildPlan.getCmd()).isEqualTo(ImmutableList.of("arg1"));
   }
 }
