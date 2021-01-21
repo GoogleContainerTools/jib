@@ -37,7 +37,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.Collections;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -111,7 +110,7 @@ public class Jar implements Callable<Integer> {
       split = ",",
       description =
           "Environment variables to write into container, example: --environment-variables env1=env_value1,env2=env_value2.")
-  private Map<String, String> environment = new LinkedHashMap<>();
+  private Map<String, String> environment = Collections.emptyMap();
 
   @CommandLine.Option(
       names = "--labels",
@@ -119,7 +118,7 @@ public class Jar implements Callable<Integer> {
       split = ",",
       description =
           "Labels to write into container metadata, example: --labels=label1=value1,label2=value2.")
-  private Map<String, String> labels = new LinkedHashMap<>();
+  private Map<String, String> labels = Collections.emptyMap();
 
   @CommandLine.Option(
       names = {"-u", "--user"},
