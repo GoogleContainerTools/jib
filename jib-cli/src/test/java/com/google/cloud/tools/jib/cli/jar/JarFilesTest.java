@@ -20,6 +20,7 @@ import static com.google.common.truth.Truth.assertThat;
 
 import com.google.cloud.tools.jib.api.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.api.JibContainerBuilder;
+import com.google.cloud.tools.jib.api.LogEvent;
 import com.google.cloud.tools.jib.api.buildplan.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.api.buildplan.ContainerBuildPlan;
 import com.google.cloud.tools.jib.api.buildplan.FileEntriesLayer;
@@ -271,6 +272,23 @@ public class JarFilesTest {
     assertThat(buildPlan.getUser()).isEqualTo("customUser");
     assertThat(buildPlan.getFormat()).isEqualTo(ImageFormat.OCI);
     assertThat(buildPlan.getCmd()).isEqualTo(ImmutableList.of("arg1"));
+    assertThat(buildPlan.getEntrypoint()).isEqualTo(ImmutableList.of("custom", "entrypoint"));
+  }
+
+  @Test
+  public void testToJibContainerBuilder_entrypoint_warningOnJvmFlags()
+      throws IOException, InvalidImageReferenceException {
+    Mockito.when(mockJarCommand.getEntrypoint())
+        .thenReturn(ImmutableList.of("custom", "entrypoint"));
+    Mockito.when(mockJarCommand.getJvmFlags()).thenReturn(ImmutableList.of("flag1"));
+
+    JibContainerBuilder containerBuilder =
+        JarFiles.toJibContainerBuilder(
+            mockStandardExplodedProcessor, mockJarCommand, mockCommonCliOptions, mockLogger);
+    ContainerBuildPlan buildPlan = containerBuilder.toContainerBuildPlan();
+
+    Mockito.verify(mockLogger)
+        .log(LogEvent.Level.WARN, "--jvm-flag is ignored when --entrypoint is specified");
     assertThat(buildPlan.getEntrypoint()).isEqualTo(ImmutableList.of("custom", "entrypoint"));
   }
 }
