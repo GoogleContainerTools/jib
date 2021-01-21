@@ -58,7 +58,10 @@ public class JarFiles {
             : Jib.from("gcr.io/distroless/java-debian10:11");
 
     List<FileEntriesLayer> layers = processor.createLayers();
-    List<String> entrypoint = processor.computeEntrypoint(jarOptions.getJvmFlags());
+    List<String> entrypoint =
+        jarOptions.getEntrypoint().isEmpty()
+            ? processor.computeEntrypoint(jarOptions.getJvmFlags())
+            : jarOptions.getEntrypoint();
 
     containerBuilder
         .setEntrypoint(entrypoint)
