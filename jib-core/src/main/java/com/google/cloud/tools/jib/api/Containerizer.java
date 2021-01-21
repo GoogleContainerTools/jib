@@ -24,11 +24,16 @@ import com.google.cloud.tools.jib.docker.DockerClient;
 import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.filesystem.XdgDirectories;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.ImmutableListMultimap;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.ListMultimap;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
@@ -136,6 +141,7 @@ public class Containerizer {
   private String toolName = DEFAULT_TOOL_NAME;
   @Nullable private String toolVersion = DEFAULT_TOOL_VERSION;
   private boolean alwaysCacheBaseImage = false;
+  private ListMultimap<String, String> registryMirrors = ArrayListMultimap.create();
 
   /** Instantiate with {@link #to}. */
   private Containerizer(
@@ -303,8 +309,25 @@ public class Containerizer {
     return this;
   }
 
+  /**
+   * Adds mirrors for a base image registry. Jib will try its mirrors in the given order before
+   * finally trying the registry.
+   *
+   * @param registry base image registry for which mirrors are configured
+   * @param mirrors a list of mirrors, where each element is in the form of {@code host[:port]}
+   * @return this
+   */
+  public Containerizer addRegistryMirrors(String registry, List<String> mirrors) {
+    registryMirrors.putAll(registry, mirrors);
+    return this;
+  }
+
   Set<String> getAdditionalTags() {
-    return additionalTags;
+    return ImmutableSet.copyOf(additionalTags);
+  }
+
+  ListMultimap<String, String> getRegistryMirrors() {
+    return ImmutableListMultimap.copyOf(registryMirrors);
   }
 
   Optional<ExecutorService> getExecutorService() {
