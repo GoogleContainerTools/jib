@@ -143,7 +143,6 @@ public class Jar implements Callable<Integer> {
       description = "Program arguments for container entrypoint.")
   private List<String> programArguments = Collections.emptyList();
 
-<<<<<<< HEAD
   @CommandLine.Option(
       names = "--entrypoint",
       paramLabel = "<entrypoint>",
@@ -152,8 +151,6 @@ public class Jar implements Callable<Integer> {
           "Entrypoint for container. Overrides the default entrypoint, example: --entrypoint='custom entrypoint'")
   private List<String> entrypoint = Collections.emptyList();
 
-=======
->>>>>>> 8c74a70ca01495cb95db2fb9f8b0f71fcd8ec663
   @Override
   public Integer call() {
     try {
@@ -263,11 +260,8 @@ public class Jar implements Callable<Integer> {
   public List<String> getProgramArguments() {
     return programArguments;
   }
-<<<<<<< HEAD
 
   public List<String> getEntrypoint() {
     return entrypoint;
   }
-=======
->>>>>>> 8c74a70ca01495cb95db2fb9f8b0f71fcd8ec663
 }
