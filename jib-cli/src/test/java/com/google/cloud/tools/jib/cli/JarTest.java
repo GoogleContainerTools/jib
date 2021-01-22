@@ -506,6 +506,14 @@ public class JarTest {
   }
 
   @Test
+  public void testParse_entrypoint() {
+    Jar jarCommand =
+        CommandLine.populateCommand(
+            new Jar(), "--target=test-image-ref", "--entrypoint=java -cp myClass", "my-app.jar");
+    assertThat(jarCommand.getEntrypoint()).isEqualTo(ImmutableList.of("java", "-cp", "myClass"));
+  }
+
+  @Test
   public void testValidate_nameMissingFail() {
     Jar jarCommand =
         CommandLine.populateCommand(new Jar(), "--target=tar://sometar.tar", "my-app.jar");

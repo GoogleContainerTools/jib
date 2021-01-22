@@ -143,6 +143,14 @@ public class Jar implements Callable<Integer> {
       description = "Program arguments for container entrypoint.")
   private List<String> programArguments = Collections.emptyList();
 
+  @CommandLine.Option(
+      names = "--entrypoint",
+      paramLabel = "<entrypoint>",
+      split = "\\s+",
+      description =
+          "Entrypoint for container. Overrides the default entrypoint, example: --entrypoint='custom entrypoint'")
+  private List<String> entrypoint = Collections.emptyList();
+
   @Override
   public Integer call() {
     try {
@@ -174,6 +182,9 @@ public class Jar implements Callable<Integer> {
             "The file path provided is for a directory. Please provide a path to a JAR: "
                 + jarFile);
         return 1;
+      }
+      if (!entrypoint.isEmpty() && !jvmFlags.isEmpty()) {
+        logger.log(LogEvent.Level.WARN, "--jvm-flags is ignored when --entrypoint is specified");
       }
 
       JarProcessor processor = JarProcessors.from(jarFile, tempDirectoryProvider, mode);
@@ -248,5 +259,9 @@ public class Jar implements Callable<Integer> {
 
   public List<String> getProgramArguments() {
     return programArguments;
+  }
+
+  public List<String> getEntrypoint() {
+    return entrypoint;
   }
 }
