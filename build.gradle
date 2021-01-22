@@ -80,7 +80,7 @@ subprojects {
     MAVEN_PLUGIN_ANNOTATIONS: 'org.apache.maven.plugin-tools:maven-plugin-annotations:3.6.0',
 
     //test
-    TRUTH: 'com.google.truth:truth:1.1',
+    TRUTH: 'com.google.truth:truth:1.1.1',
     TRUTH8: 'com.google.truth.extensions:truth-java8-extension:1.1', // should match TRUTH version
     JUNIT: 'junit:junit:4.13.1',
     JUNIT_PARAMS: 'pl.pragmatists:JUnitParams:1.1.1',
