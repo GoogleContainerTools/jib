@@ -19,8 +19,10 @@ package com.google.cloud.tools.jib.builder.steps;
 import com.google.cloud.tools.jib.api.DescriptorDigest;
 import com.google.cloud.tools.jib.api.ImageReference;
 import com.google.cloud.tools.jib.api.InvalidImageReferenceException;
+import com.google.cloud.tools.jib.api.LogEvent;
 import com.google.cloud.tools.jib.api.RegistryException;
 import com.google.cloud.tools.jib.api.buildplan.Platform;
+import com.google.cloud.tools.jib.blob.Blobs;
 import com.google.cloud.tools.jib.builder.ProgressEventDispatcher;
 import com.google.cloud.tools.jib.builder.steps.PullBaseImageStep.ImagesAndRegistryClient;
 import com.google.cloud.tools.jib.cache.Cache;
@@ -41,14 +43,17 @@ import com.google.cloud.tools.jib.image.json.V21ManifestTemplate;
 import com.google.cloud.tools.jib.image.json.V22ManifestListTemplate;
 import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
+import com.google.cloud.tools.jib.registry.ManifestAndDigest;
 import com.google.cloud.tools.jib.registry.RegistryClient;
 import com.google.cloud.tools.jib.registry.credentials.CredentialRetrievalException;
+import com.google.common.collect.ImmutableListMultimap;
 import com.google.common.collect.ImmutableSet;
 import java.io.IOException;
 import java.security.DigestException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Consumer;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -62,8 +67,10 @@ import org.mockito.junit.MockitoJUnitRunner;
 public class PullBaseImageStepTest {
 
   @Mock private ProgressEventDispatcher.Factory progressDispatcherFactory;
+  @Mock private ProgressEventDispatcher progressDispatcher;
   @Mock private BuildContext buildContext;
   @Mock private RegistryClient registryClient;
+  @Mock private RegistryClient.Factory registryClientFactory;
   @Mock private ImageConfiguration imageConfiguration;
   @Mock private ContainerConfiguration containerConfig;
   @Mock private Cache cache;
@@ -76,13 +83,15 @@ public class PullBaseImageStepTest {
     Mockito.when(buildContext.getBaseImageConfiguration()).thenReturn(imageConfiguration);
     Mockito.when(buildContext.getEventHandlers()).thenReturn(eventHandlers);
     Mockito.when(buildContext.getBaseImageLayersCache()).thenReturn(cache);
-    RegistryClient.Factory registryClientFactory = Mockito.mock(RegistryClient.Factory.class);
     Mockito.when(buildContext.newBaseImageRegistryClientFactory())
         .thenReturn(registryClientFactory);
     Mockito.when(registryClientFactory.newRegistryClient()).thenReturn(registryClient);
     Mockito.when(buildContext.getContainerConfiguration()).thenReturn(containerConfig);
     Mockito.when(containerConfig.getPlatforms())
         .thenReturn(ImmutableSet.of(new Platform("slim arch", "fat system")));
+    Mockito.when(progressDispatcherFactory.create(Mockito.anyString(), Mockito.anyLong()))
+        .thenReturn(progressDispatcher);
+    Mockito.when(progressDispatcher.newChildProducer()).thenReturn(progressDispatcherFactory);
 
     pullBaseImageStep = new PullBaseImageStep(buildContext, progressDispatcherFactory);
   }
@@ -408,5 +417,96 @@ public class PullBaseImageStepTest {
 
     Assert.assertEquals(1, images.size());
     Assert.assertEquals("target-user", images.get(0).getUser());
+  }
+
+  @Test
+  public void testTryMirrors_noMatchingMirrors()
+      throws LayerCountMismatchException, BadContainerConfigurationFormatException {
+    Mockito.when(imageConfiguration.getImageRegistry()).thenReturn("registry");
+    Mockito.when(buildContext.getRegistryMirrors())
+        .thenReturn(ImmutableListMultimap.of("unmatched1", "mirror1", "unmatched2", "mirror2"));
+
+    Optional<ImagesAndRegistryClient> result =
+        pullBaseImageStep.tryMirrors(buildContext, progressDispatcherFactory);
+    Assert.assertEquals(Optional.empty(), result);
+
+    Mockito.verify(eventHandlers).dispatch(LogEvent.debug("mirror config: unmatched1 --> mirror1"));
+    Mockito.verify(eventHandlers).dispatch(LogEvent.debug("mirror config: unmatched2 --> mirror2"));
+    Mockito.verify(buildContext, Mockito.never()).newBaseImageRegistryClientFactory(Mockito.any());
+  }
+
+  @Test
+  public void testTryMirrors_mirrorIoError()
+      throws LayerCountMismatchException, BadContainerConfigurationFormatException, IOException,
+          RegistryException {
+    Mockito.when(imageConfiguration.getImageRegistry()).thenReturn("registry");
+    Mockito.when(buildContext.getRegistryMirrors())
+        .thenReturn(ImmutableListMultimap.of("registry", "gcr.io"));
+    Mockito.when(buildContext.newBaseImageRegistryClientFactory("gcr.io"))
+        .thenReturn(registryClientFactory);
+    Mockito.when(registryClient.pullManifest(Mockito.any()))
+        .thenThrow(new IOException("test exception"));
+
+    Optional<ImagesAndRegistryClient> result =
+        pullBaseImageStep.tryMirrors(buildContext, progressDispatcherFactory);
+    Assert.assertEquals(Optional.empty(), result);
+
+    Mockito.verify(eventHandlers)
+        .dispatch(LogEvent.info("trying mirror gcr.io for the base image"));
+    Mockito.verify(eventHandlers)
+        .dispatch(LogEvent.debug("failed to get manifest from mirror gcr.io: test exception"));
+  }
+
+  @Test
+  public void testTryMirrors_multipleMirrors()
+      throws LayerCountMismatchException, BadContainerConfigurationFormatException, IOException,
+          RegistryException, InvalidImageReferenceException {
+    Mockito.when(imageConfiguration.getImage()).thenReturn(ImageReference.parse("registry/repo"));
+    Mockito.when(imageConfiguration.getImageRegistry()).thenReturn("registry");
+    Mockito.when(buildContext.getRegistryMirrors())
+        .thenReturn(ImmutableListMultimap.of("registry", "quay.io", "registry", "gcr.io"));
+
+    Mockito.when(buildContext.newBaseImageRegistryClientFactory("quay.io"))
+        .thenReturn(registryClientFactory);
+    Mockito.when(registryClient.pullManifest(Mockito.any()))
+        .thenThrow(new RegistryException("not found"));
+
+    RegistryClient.Factory gcrRegistryClientFactory = setUpWorkingRegistryClientFactory();
+    Mockito.when(buildContext.newBaseImageRegistryClientFactory("gcr.io"))
+        .thenReturn(gcrRegistryClientFactory);
+
+    Optional<ImagesAndRegistryClient> result =
+        pullBaseImageStep.tryMirrors(buildContext, progressDispatcherFactory);
+    Assert.assertTrue(result.isPresent());
+    Assert.assertEquals(gcrRegistryClientFactory.newRegistryClient(), result.get().registryClient);
+
+    Mockito.verify(eventHandlers)
+        .dispatch(LogEvent.info("trying mirror quay.io for the base image"));
+    Mockito.verify(eventHandlers)
+        .dispatch(LogEvent.info("trying mirror gcr.io for the base image"));
+    Mockito.verify(eventHandlers)
+        .dispatch(LogEvent.debug("failed to get manifest from mirror quay.io: not found"));
+  }
+
+  private static RegistryClient.Factory setUpWorkingRegistryClientFactory()
+      throws IOException, RegistryException {
+    DescriptorDigest digest = Mockito.mock(DescriptorDigest.class);
+    V22ManifestTemplate manifest = new V22ManifestTemplate();
+    manifest.setContainerConfiguration(1234, digest);
+
+    RegistryClient.Factory clientFactory = Mockito.mock(RegistryClient.Factory.class);
+    RegistryClient client = Mockito.mock(RegistryClient.class);
+    Mockito.when(clientFactory.newRegistryClient()).thenReturn(client);
+    Mockito.when(client.pullManifest(Mockito.any()))
+        .thenReturn(new ManifestAndDigest<>(manifest, digest));
+    // mocking pulling container config json
+    Mockito.when(client.pullBlob(Mockito.any(), Mockito.any(), Mockito.any()))
+        .then(
+            invocation -> {
+              Consumer<Long> blobSizeListener = invocation.getArgument(1);
+              blobSizeListener.accept(1L);
+              return Blobs.from("{}");
+            });
+    return clientFactory;
   }
 }

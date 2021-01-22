@@ -208,7 +208,8 @@ class PullBaseImageStep implements Callable<ImagesAndRegistryClient> {
     }
   }
 
-  private Optional<ImagesAndRegistryClient> tryMirrors(
+  @VisibleForTesting
+  Optional<ImagesAndRegistryClient> tryMirrors(
       BuildContext buildContext, ProgressEventDispatcher.Factory progressDispatcherFactory)
       throws LayerCountMismatchException, BadContainerConfigurationFormatException {
     EventHandlers eventHandlers = buildContext.getEventHandlers();
