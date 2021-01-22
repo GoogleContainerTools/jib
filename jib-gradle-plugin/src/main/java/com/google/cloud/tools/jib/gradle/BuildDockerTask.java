@@ -33,6 +33,7 @@ import com.google.cloud.tools.jib.plugins.common.InvalidWorkingDirectoryExceptio
 import com.google.cloud.tools.jib.plugins.common.MainClassInferenceException;
 import com.google.cloud.tools.jib.plugins.common.PluginConfigurationProcessor;
 import com.google.cloud.tools.jib.plugins.common.globalconfig.GlobalConfig;
+import com.google.cloud.tools.jib.plugins.common.globalconfig.InvalidGlobalConfigException;
 import com.google.cloud.tools.jib.plugins.extension.JibPluginExtensionException;
 import com.google.common.base.Preconditions;
 import java.io.IOException;
@@ -82,11 +83,12 @@ public class BuildDockerTask extends DefaultTask implements JibTask {
    * @throws BuildStepsExecutionException if an error occurs while executing build steps
    * @throws CacheDirectoryCreationException if a new cache directory could not be created
    * @throws MainClassInferenceException if a main class could not be found
+   * @throws InvalidGlobalConfigException if the global config file is invalid
    */
   @TaskAction
   public void buildDocker()
       throws IOException, BuildStepsExecutionException, CacheDirectoryCreationException,
-          MainClassInferenceException {
+          MainClassInferenceException, InvalidGlobalConfigException {
     Preconditions.checkNotNull(jibExtension);
 
     // Check deprecated parameters
@@ -105,9 +107,11 @@ public class BuildDockerTask extends DefaultTask implements JibTask {
 
     GradleProjectProperties projectProperties =
         GradleProjectProperties.getForProject(getProject(), getLogger(), tempDirectoryProvider);
+    GlobalConfig globalConfig = GlobalConfig.readConfig();
     Future<Optional<String>> updateCheckFuture =
-        TaskCommon.newUpdateChecker(projectProperties, GlobalConfig.readConfig(), getLogger());
+        TaskCommon.newUpdateChecker(projectProperties, globalConfig, getLogger());
     try {
+
       PluginConfigurationProcessor.createJibBuildRunnerForDockerDaemonImage(
               new GradleRawConfiguration(jibExtension),
               ignored -> java.util.Optional.empty(),

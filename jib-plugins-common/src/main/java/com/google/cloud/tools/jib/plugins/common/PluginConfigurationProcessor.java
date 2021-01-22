@@ -38,11 +38,13 @@ import com.google.cloud.tools.jib.api.buildplan.Platform;
 import com.google.cloud.tools.jib.frontend.CredentialRetrieverFactory;
 import com.google.cloud.tools.jib.global.JibSystemProperties;
 import com.google.cloud.tools.jib.plugins.common.RawConfiguration.PlatformConfiguration;
+import com.google.cloud.tools.jib.plugins.common.globalconfig.GlobalConfig;
 import com.google.cloud.tools.jib.plugins.extension.JibPluginExtensionException;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Verify;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Multimaps;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -217,6 +219,7 @@ public class PluginConfigurationProcessor {
    * @param rawConfiguration the raw configuration from the plugin
    * @param inferredAuthProvider the plugin specific auth provider
    * @param projectProperties an plugin specific implementation of {@link ProjectProperties}
+   * @param globalConfig the Jib global config
    * @param helpfulSuggestions a plugin specific instance of {@link HelpfulSuggestions}
    * @return new {@link JibBuildRunner} to execute a build
    * @throws InvalidImageReferenceException if the image reference is invalid
@@ -242,6 +245,7 @@ public class PluginConfigurationProcessor {
       RawConfiguration rawConfiguration,
       InferredAuthProvider inferredAuthProvider,
       ProjectProperties projectProperties,
+      GlobalConfig globalConfig,
       HelpfulSuggestions helpfulSuggestions)
       throws InvalidImageReferenceException, MainClassInferenceException, InvalidAppRootException,
           IOException, InvalidWorkingDirectoryException, InvalidPlatformException,
@@ -270,6 +274,7 @@ public class PluginConfigurationProcessor {
             rawConfiguration.getProperty(PropertyNames.ALWAYS_CACHE_BASE_IMAGE).orElse("false"));
     Containerizer containerizer =
         Containerizer.to(targetImage).setAlwaysCacheBaseImage(alwaysCacheBaseImage);
+    Multimaps.asMap(globalConfig.getRegistryMirrors()).forEach(containerizer::addRegistryMirrors);
 
     JibContainerBuilder jibContainerBuilder =
         processCommonConfiguration(

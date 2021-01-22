@@ -20,19 +20,21 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.google.cloud.tools.jib.json.JsonTemplate;
 import java.util.Collections;
 import java.util.List;
+import javax.annotation.Nullable;
 
-/** JSON template for the global configuration file. */
+/** JSON template for registry mirror config. */
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class GlobalConfigTemplate implements JsonTemplate {
+public class RegistryMirrorsTemplate implements JsonTemplate {
 
-  private boolean disableUpdateCheck;
-  private List<RegistryMirrorsTemplate> registryMirrors = Collections.emptyList();
+  @Nullable private String registry;
+  private List<String> mirrors = Collections.emptyList();
 
-  boolean isDisableUpdateCheck() {
-    return disableUpdateCheck;
+  @Nullable
+  String getRegistry() {
+    return registry;
   }
 
-  List<RegistryMirrorsTemplate> getRegistryMirrors() {
-    return registryMirrors;
+  List<String> getMirrors() {
+    return mirrors;
   }
 }
