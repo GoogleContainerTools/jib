@@ -184,7 +184,7 @@ public class Jar implements Callable<Integer> {
         return 1;
       }
       if (!entrypoint.isEmpty() && !jvmFlags.isEmpty()) {
-        logger.log(LogEvent.Level.WARN, "--jvm-flag is ignored when --entrypoint is specified");
+        logger.log(LogEvent.Level.WARN, "--jvm-flags is ignored when --entrypoint is specified");
       }
 
       JarProcessor processor = JarProcessors.from(jarFile, tempDirectoryProvider, mode);
