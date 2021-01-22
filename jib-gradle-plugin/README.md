@@ -333,7 +333,7 @@ Some options can be set in the global Jib configuration file. The file is at the
       "mirrors": ["mirror.gcr.io", "localhost:5000"]
     },
     {
-      "registry": "quary.io",
+      "registry": "quay.io",
       "mirrors": ["private-mirror.test.com"]
     }
   ]
