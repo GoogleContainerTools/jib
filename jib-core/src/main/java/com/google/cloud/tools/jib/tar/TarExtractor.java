@@ -26,6 +26,9 @@ import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.attribute.FileTime;
+import java.util.HashMap;
+import java.util.Map;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 
@@ -41,13 +44,15 @@ public class TarExtractor {
    */
   public static void extract(Path source, Path destination) throws IOException {
     String canonicalDestination = destination.toFile().getCanonicalPath();
-
     try (InputStream in = new BufferedInputStream(Files.newInputStream(source));
         TarArchiveInputStream tarArchiveInputStream = new TarArchiveInputStream(in)) {
-
+      Map<TarArchiveEntry, FileTime> entryModificationTimeMap = new HashMap();
       for (TarArchiveEntry entry = tarArchiveInputStream.getNextTarEntry();
           entry != null;
           entry = tarArchiveInputStream.getNextTarEntry()) {
+        entryModificationTimeMap.put(entry, FileTime.from(entry.getModTime().toInstant()));
+        //        System.out.println(entry.getName());
+        //        System.out.println(FileTime.from(entry.getModTime().toInstant()));
         Path entryPath = destination.resolve(entry.getName());
 
         String canonicalTarget = entryPath.toFile().getCanonicalPath();
@@ -55,7 +60,6 @@ public class TarExtractor {
           String offender = entry.getName() + " from " + source;
           throw new IOException("Blocked unzipping files outside destination: " + offender);
         }
-
         if (entry.isDirectory()) {
           Files.createDirectories(entryPath);
         } else {
@@ -71,6 +75,18 @@ public class TarExtractor {
             }
           }
         }
+      }
+
+      // Preserve source modification timestamps for files. If entry is a symbolic link, set
+      // modification time of the symbolic link to that of the target file.
+      for (TarArchiveEntry entry : entryModificationTimeMap.keySet()) {
+        FileTime sourceModificationTime = entryModificationTimeMap.get(entry);
+        if (entry.isSymbolicLink()) {
+          Path targetPath = destination.resolve(entry.getName()).toRealPath();
+          Path targetRelativePath = destination.relativize(targetPath);
+          sourceModificationTime = entryModificationTimeMap.get(targetRelativePath);
+        }
+        Files.setLastModifiedTime(destination.resolve(entry.getName()), sourceModificationTime);
       }
     }
   }

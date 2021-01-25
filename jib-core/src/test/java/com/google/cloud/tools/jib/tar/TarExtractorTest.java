@@ -16,12 +16,16 @@
 
 package com.google.cloud.tools.jib.tar;
 
+import static com.google.common.truth.Truth.assertThat;
+
 import com.google.common.io.Resources;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.attribute.FileTime;
+import java.time.Instant;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.junit.Assert;
@@ -78,5 +82,24 @@ public class TarExtractorTest {
     Assert.assertTrue(Files.isRegularFile(destination.resolve("directory2/regular")));
     Assert.assertTrue(Files.isSymbolicLink(destination.resolve("directory-symlink")));
     Assert.assertTrue(Files.isSymbolicLink(destination.resolve("directory1/file-symlink")));
+  }
+
+  @Test
+  public void testExtract_preserveTimestamps() throws URISyntaxException, IOException {
+    Path source = Paths.get(Resources.getResource("core/symlinks.tar").toURI());
+    Path destination = temporaryFolder.getRoot().toPath();
+
+    TarExtractor.extract(source, destination);
+
+    assertThat(Files.getLastModifiedTime(destination.resolve("directory1")))
+        .isEqualTo(FileTime.from(Instant.parse("2020-10-16T21:09:46Z")));
+    assertThat(Files.getLastModifiedTime(destination.resolve("directory2")))
+        .isEqualTo(FileTime.from(Instant.parse("2020-10-16T21:09:54Z")));
+    assertThat(Files.getLastModifiedTime(destination.resolve("directory2/regular")))
+        .isEqualTo(FileTime.from(Instant.parse("2020-10-16T21:09:54Z")));
+    assertThat(Files.getLastModifiedTime(destination.resolve("directory-symlink")))
+        .isEqualTo(FileTime.from(Instant.parse("2020-10-16T21:09:46Z")));
+    assertThat(Files.getLastModifiedTime(destination.resolve("directory1/file-symlink")))
+        .isEqualTo(FileTime.from(Instant.parse("2020-10-16T21:09:54Z")));
   }
 }

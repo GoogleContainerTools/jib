@@ -17,6 +17,7 @@ dependencies {
   implementation dependencyStrings.ASM
 
   testImplementation dependencyStrings.JUNIT
+  testImplementation dependencyStrings.TRUTH
   testImplementation dependencyStrings.MOCKITO_CORE
   testImplementation dependencyStrings.SLF4J_API
   testImplementation dependencyStrings.SYSTEM_RULES
