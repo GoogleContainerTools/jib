@@ -25,7 +25,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.FileTime;
-import java.util.zip.ZipFile;
+import java.time.Instant;
 import org.hamcrest.CoreMatchers;
 import org.hamcrest.MatcherAssert;
 import org.junit.Assert;
@@ -75,21 +75,15 @@ public class ZipUtilTest {
     Path destination = tempFolder.getRoot().toPath();
     Path archive =
         Paths.get(Resources.getResource("plugins-common/test-archives/test.zip").toURI());
-    try (ZipFile zipFile = new ZipFile(archive.toString())) {
-      FileTime sourceModificationTime1 = zipFile.getEntry("file1.txt").getLastModifiedTime();
-      FileTime sourceModificationTime2 = zipFile.getEntry("my-zip/file2.txt").getLastModifiedTime();
-      FileTime sourceModificationTime3 =
-          zipFile.getEntry("my-zip/some/sub/folder/file3.txt").getLastModifiedTime();
 
-      ZipUtil.unzip(archive, destination);
+    ZipUtil.unzip(archive, destination);
 
-      assertThat(Files.getLastModifiedTime(destination.resolve("file1.txt")))
-          .isEqualTo(sourceModificationTime1);
-      assertThat(Files.getLastModifiedTime(destination.resolve("my-zip/file2.txt")))
-          .isEqualTo(sourceModificationTime2);
-      assertThat(Files.getLastModifiedTime(destination.resolve("my-zip/some/sub/folder/file3.txt")))
-          .isEqualTo(sourceModificationTime3);
-    }
+    assertThat(Files.getLastModifiedTime(destination.resolve("file1.txt")))
+        .isEqualTo(FileTime.from(Instant.parse("2018-08-30T14:53:05Z")));
+    assertThat(Files.getLastModifiedTime(destination.resolve("my-zip/file2.txt")))
+        .isEqualTo(FileTime.from(Instant.parse("2018-08-30T14:53:44Z")));
+    assertThat(Files.getLastModifiedTime(destination.resolve("my-zip/some/sub/folder/file3.txt")))
+        .isEqualTo(FileTime.from(Instant.parse("2018-08-30T15:16:12Z")));
   }
 
   private void verifyUnzip(Path destination) throws URISyntaxException, IOException {

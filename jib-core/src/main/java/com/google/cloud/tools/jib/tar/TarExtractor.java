@@ -46,13 +46,11 @@ public class TarExtractor {
     String canonicalDestination = destination.toFile().getCanonicalPath();
     try (InputStream in = new BufferedInputStream(Files.newInputStream(source));
         TarArchiveInputStream tarArchiveInputStream = new TarArchiveInputStream(in)) {
-      Map<TarArchiveEntry, FileTime> entryModificationTimeMap = new HashMap();
+      Map<TarArchiveEntry, FileTime> modificationTimeMap = new HashMap();
       for (TarArchiveEntry entry = tarArchiveInputStream.getNextTarEntry();
           entry != null;
           entry = tarArchiveInputStream.getNextTarEntry()) {
-        entryModificationTimeMap.put(entry, FileTime.from(entry.getModTime().toInstant()));
-        //        System.out.println(entry.getName());
-        //        System.out.println(FileTime.from(entry.getModTime().toInstant()));
+        modificationTimeMap.put(entry, FileTime.from(entry.getModTime().toInstant()));
         Path entryPath = destination.resolve(entry.getName());
 
         String canonicalTarget = entryPath.toFile().getCanonicalPath();
@@ -77,14 +75,14 @@ public class TarExtractor {
         }
       }
 
-      // Preserve source modification timestamps for files. If entry is a symbolic link, set
-      // modification time of the symbolic link to that of the target file.
-      for (TarArchiveEntry entry : entryModificationTimeMap.keySet()) {
-        FileTime sourceModificationTime = entryModificationTimeMap.get(entry);
+      // Preserve source modification timestamps of files. If the entry is a symbolic link then set
+      // it's modification time to that of the target file.
+      for (TarArchiveEntry entry : modificationTimeMap.keySet()) {
+        FileTime sourceModificationTime = modificationTimeMap.get(entry);
         if (entry.isSymbolicLink()) {
           Path targetPath = destination.resolve(entry.getName()).toRealPath();
           Path targetRelativePath = destination.relativize(targetPath);
-          sourceModificationTime = entryModificationTimeMap.get(targetRelativePath);
+          sourceModificationTime = modificationTimeMap.get(targetRelativePath);
         }
         Files.setLastModifiedTime(destination.resolve(entry.getName()), sourceModificationTime);
       }
