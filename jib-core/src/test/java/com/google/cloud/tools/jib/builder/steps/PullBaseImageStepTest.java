@@ -58,6 +58,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
@@ -430,8 +431,9 @@ public class PullBaseImageStepTest {
         pullBaseImageStep.tryMirrors(buildContext, progressDispatcherFactory);
     Assert.assertEquals(Optional.empty(), result);
 
-    Mockito.verify(eventHandlers).dispatch(LogEvent.debug("mirror config: unmatched1 --> mirror1"));
-    Mockito.verify(eventHandlers).dispatch(LogEvent.debug("mirror config: unmatched2 --> mirror2"));
+    InOrder inOrder = Mockito.inOrder(eventHandlers);
+    inOrder.verify(eventHandlers).dispatch(LogEvent.debug("mirror config: unmatched1 --> mirror1"));
+    inOrder.verify(eventHandlers).dispatch(LogEvent.debug("mirror config: unmatched2 --> mirror2"));
     Mockito.verify(buildContext, Mockito.never()).newBaseImageRegistryClientFactory(Mockito.any());
   }
 
@@ -451,9 +453,12 @@ public class PullBaseImageStepTest {
         pullBaseImageStep.tryMirrors(buildContext, progressDispatcherFactory);
     Assert.assertEquals(Optional.empty(), result);
 
-    Mockito.verify(eventHandlers)
+    InOrder inOrder = Mockito.inOrder(eventHandlers);
+    inOrder
+        .verify(eventHandlers)
         .dispatch(LogEvent.info("trying mirror gcr.io for the base image"));
-    Mockito.verify(eventHandlers)
+    inOrder
+        .verify(eventHandlers)
         .dispatch(LogEvent.debug("failed to get manifest from mirror gcr.io: test exception"));
   }
 
@@ -480,12 +485,55 @@ public class PullBaseImageStepTest {
     Assert.assertTrue(result.isPresent());
     Assert.assertEquals(gcrRegistryClientFactory.newRegistryClient(), result.get().registryClient);
 
-    Mockito.verify(eventHandlers)
+    InOrder inOrder = Mockito.inOrder(eventHandlers);
+    inOrder
+        .verify(eventHandlers)
         .dispatch(LogEvent.info("trying mirror quay.io for the base image"));
-    Mockito.verify(eventHandlers)
-        .dispatch(LogEvent.info("trying mirror gcr.io for the base image"));
-    Mockito.verify(eventHandlers)
+    inOrder
+        .verify(eventHandlers)
         .dispatch(LogEvent.debug("failed to get manifest from mirror quay.io: not found"));
+    inOrder
+        .verify(eventHandlers)
+        .dispatch(LogEvent.info("trying mirror gcr.io for the base image"));
+  }
+
+  @Test
+  public void testCall_allMirrorsFail()
+      throws InvalidImageReferenceException, IOException, RegistryException,
+          LayerPropertyNotFoundException, LayerCountMismatchException,
+          BadContainerConfigurationFormatException, CacheCorruptedException,
+          CredentialRetrievalException {
+    Mockito.when(imageConfiguration.getImage()).thenReturn(ImageReference.parse("registry/repo"));
+    Mockito.when(imageConfiguration.getImageRegistry()).thenReturn("registry");
+    Mockito.when(buildContext.getRegistryMirrors())
+        .thenReturn(ImmutableListMultimap.of("registry", "quay.io", "registry", "gcr.io"));
+
+    Mockito.when(buildContext.newBaseImageRegistryClientFactory(Mockito.any()))
+        .thenReturn(registryClientFactory);
+    Mockito.when(registryClient.pullManifest(Mockito.any()))
+        .thenThrow(new RegistryException("not found"));
+
+    RegistryClient.Factory dockerHubRegistryClientFactory = setUpWorkingRegistryClientFactory();
+    Mockito.when(buildContext.newBaseImageRegistryClientFactory())
+        .thenReturn(dockerHubRegistryClientFactory);
+
+    ImagesAndRegistryClient result = pullBaseImageStep.call();
+    Assert.assertEquals(
+        dockerHubRegistryClientFactory.newRegistryClient(), result.registryClient);
+
+    InOrder inOrder = Mockito.inOrder(eventHandlers);
+    inOrder
+        .verify(eventHandlers)
+        .dispatch(LogEvent.info("trying mirror quay.io for the base image"));
+    inOrder
+        .verify(eventHandlers)
+        .dispatch(LogEvent.debug("failed to get manifest from mirror quay.io: not found"));
+    inOrder
+        .verify(eventHandlers)
+        .dispatch(LogEvent.info("trying mirror gcr.io for the base image"));
+    inOrder
+        .verify(eventHandlers)
+        .dispatch(LogEvent.debug("failed to get manifest from mirror gcr.io: not found"));
   }
 
   private static RegistryClient.Factory setUpWorkingRegistryClientFactory()
