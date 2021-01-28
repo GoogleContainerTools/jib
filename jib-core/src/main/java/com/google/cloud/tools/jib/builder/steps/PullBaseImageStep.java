@@ -143,7 +143,6 @@ class PullBaseImageStep implements Callable<ImagesAndRegistryClient> {
       Optional<ImagesAndRegistryClient> mirrorPull =
           tryMirrors(buildContext, progressDispatcher.newChildProducer());
       if (mirrorPull.isPresent()) {
-        eventHandlers.dispatch(LogEvent.info("pulled manifest from a mirror"));
         return mirrorPull.get();
       }
 
@@ -236,19 +235,19 @@ class PullBaseImageStep implements Callable<ImagesAndRegistryClient> {
           RegistryClient registryClient =
               buildContext.newBaseImageRegistryClientFactory(mirror).newRegistryClient();
           try {
-            return Optional.of(
-                new ImagesAndRegistryClient(
-                    pullBaseImages(registryClient, progressDispatcher2.newChildProducer()),
-                    registryClient));
+            List<Image> images =
+                pullBaseImages(registryClient, progressDispatcher2.newChildProducer());
+            eventHandlers.dispatch(LogEvent.info("pulled manifest from mirror " + mirror));
+            return Optional.of(new ImagesAndRegistryClient(images, registryClient));
 
           } catch (RegistryUnauthorizedException ex) {
             // in case if a mirror requires bearer auth
             eventHandlers.dispatch(LogEvent.debug("mirror " + mirror + " requires auth"));
             registryClient.doPullBearerAuth();
-            return Optional.of(
-                new ImagesAndRegistryClient(
-                    pullBaseImages(registryClient, progressDispatcher2.newChildProducer()),
-                    registryClient));
+            List<Image> images =
+                pullBaseImages(registryClient, progressDispatcher2.newChildProducer());
+            eventHandlers.dispatch(LogEvent.info("pulled manifest from mirror " + mirror));
+            return Optional.of(new ImagesAndRegistryClient(images, registryClient));
           }
 
         } catch (IOException | RegistryException ex) {

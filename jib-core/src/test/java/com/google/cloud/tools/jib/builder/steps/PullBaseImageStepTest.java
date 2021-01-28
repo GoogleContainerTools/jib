@@ -495,6 +495,7 @@ public class PullBaseImageStepTest {
     inOrder
         .verify(eventHandlers)
         .dispatch(LogEvent.info("trying mirror gcr.io for the base image"));
+    inOrder.verify(eventHandlers).dispatch(LogEvent.info("pulled manifest from mirror gcr.io"));
   }
 
   @Test
