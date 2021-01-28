@@ -54,8 +54,9 @@ public class BuildTest {
     assertThat(commonCliOptions.getCredentialHelper()).isEmpty();
     assertThat(commonCliOptions.getToCredentialHelper()).isEmpty();
     assertThat(commonCliOptions.getFromCredentialHelper()).isEmpty();
+    assertThat(buildCommand.buildFileUnprocessed).isNull();
     assertThat(buildCommand.getBuildFile()).isEqualTo(Paths.get("./jib.yaml"));
-    assertThat(buildCommand.getContextRoot()).isEqualTo(Paths.get("."));
+    assertThat(buildCommand.contextRoot).isEqualTo(Paths.get("."));
     assertThat(commonCliOptions.getAdditionalTags()).isEmpty();
     assertThat(buildCommand.getTemplateParameters()).isEmpty();
     assertThat(commonCliOptions.getProjectCache()).isEmpty();
@@ -86,8 +87,9 @@ public class BuildTest {
     assertThat(commonCliOptions.getCredentialHelper()).isEmpty();
     assertThat(commonCliOptions.getToCredentialHelper()).isEmpty();
     assertThat(commonCliOptions.getFromCredentialHelper()).isEmpty();
+    assertThat(buildCommand.buildFileUnprocessed).isEqualTo(Paths.get("test-build-file"));
     assertThat(buildCommand.getBuildFile()).isEqualTo(Paths.get("test-build-file"));
-    assertThat(buildCommand.getContextRoot()).isEqualTo(Paths.get("test-context"));
+    assertThat(buildCommand.contextRoot).isEqualTo(Paths.get("test-context"));
     assertThat(commonCliOptions.getAdditionalTags()).isEmpty();
     assertThat(buildCommand.getTemplateParameters())
         .isEqualTo(ImmutableMap.of("param1", "value1", "param2", "value2"));
@@ -131,8 +133,9 @@ public class BuildTest {
     assertThat(commonCliOptions.getCredentialHelper()).isEmpty();
     assertThat(commonCliOptions.getToCredentialHelper()).isEmpty();
     assertThat(commonCliOptions.getFromCredentialHelper()).isEmpty();
+    assertThat(buildCommand.buildFileUnprocessed).isEqualTo(Paths.get("test-build-file"));
     assertThat(buildCommand.getBuildFile()).isEqualTo(Paths.get("test-build-file"));
-    assertThat(buildCommand.getContextRoot()).isEqualTo(Paths.get("test-context"));
+    assertThat(buildCommand.contextRoot).isEqualTo(Paths.get("test-context"));
     assertThat(commonCliOptions.getAdditionalTags())
         .isEqualTo(ImmutableList.of("tag1", "tag2", "tag3"));
     assertThat(buildCommand.getTemplateParameters())
@@ -152,8 +155,9 @@ public class BuildTest {
     Build buildCommand =
         CommandLine.populateCommand(
             new Build(), "--target", "test-image-ref", "--context", "test-context");
+    assertThat(buildCommand.buildFileUnprocessed).isNull();
     assertThat(buildCommand.getBuildFile()).isEqualTo(Paths.get("test-context/jib.yaml"));
-    assertThat(buildCommand.getContextRoot()).isEqualTo(Paths.get("test-context"));
+    assertThat(buildCommand.contextRoot).isEqualTo(Paths.get("test-context"));
   }
 
   @Test
