@@ -78,7 +78,8 @@ public class Build implements Callable<Integer> {
    *
    * @return a path to a buildfile
    */
-  public Path getBuildFile() {
+  @VisibleForTesting
+  Path getBuildFile() {
     if (buildFileUnprocessed == null) {
       return contextRoot.resolve("jib.yaml");
     }
