@@ -116,6 +116,7 @@ public class BuildDockerTask extends DefaultTask implements JibTask {
               new GradleRawConfiguration(jibExtension),
               ignored -> java.util.Optional.empty(),
               projectProperties,
+              globalConfig,
               new GradleHelpfulSuggestions(HELPFUL_SUGGESTIONS_PREFIX))
           .runBuild();
 

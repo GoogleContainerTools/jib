@@ -56,8 +56,10 @@ import com.google.common.base.Verify;
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.Callable;
@@ -96,7 +98,7 @@ class PullBaseImageStep implements Callable<ImagesAndRegistryClient> {
           CacheCorruptedException, CredentialRetrievalException {
     EventHandlers eventHandlers = buildContext.getEventHandlers();
     try (ProgressEventDispatcher progressDispatcher =
-            progressDispatcherFactory.create("pulling base image manifest", 3);
+            progressDispatcherFactory.create("pulling base image manifest", 4);
         TimerEventDispatcher ignored1 = new TimerEventDispatcher(eventHandlers, DESCRIPTION)) {
 
       // Skip this step if this is a scratch image
@@ -136,6 +138,12 @@ class PullBaseImageStep implements Callable<ImagesAndRegistryClient> {
           // https://github.com/GoogleContainerTools/jib/issues/2220
           return new ImagesAndRegistryClient(images, noAuthRegistryClient);
         }
+      }
+
+      Optional<ImagesAndRegistryClient> mirrorPull =
+          tryMirrors(buildContext, progressDispatcher.newChildProducer());
+      if (mirrorPull.isPresent()) {
+        return mirrorPull.get();
       }
 
       try {
@@ -196,6 +204,60 @@ class PullBaseImageStep implements Callable<ImagesAndRegistryClient> {
               registryClient);
         }
       }
+    }
+  }
+
+  @VisibleForTesting
+  Optional<ImagesAndRegistryClient> tryMirrors(
+      BuildContext buildContext, ProgressEventDispatcher.Factory progressDispatcherFactory)
+      throws LayerCountMismatchException, BadContainerConfigurationFormatException {
+    EventHandlers eventHandlers = buildContext.getEventHandlers();
+
+    Collection<Map.Entry<String, String>> mirrorEntries =
+        buildContext.getRegistryMirrors().entries();
+    try (ProgressEventDispatcher progressDispatcher1 =
+            progressDispatcherFactory.create("trying mirrors", mirrorEntries.size());
+        TimerEventDispatcher ignored1 = new TimerEventDispatcher(eventHandlers, "trying mirrors")) {
+      for (Map.Entry<String, String> entry : mirrorEntries) {
+        String registry = entry.getKey();
+        String mirror = entry.getValue();
+        eventHandlers.dispatch(LogEvent.debug("mirror config: " + registry + " --> " + mirror));
+
+        if (!buildContext.getBaseImageConfiguration().getImageRegistry().equals(registry)) {
+          progressDispatcher1.dispatchProgress(1);
+          continue;
+        }
+
+        eventHandlers.dispatch(LogEvent.info("trying mirror " + mirror + " for the base image"));
+        try (ProgressEventDispatcher progressDispatcher2 =
+            progressDispatcher1.newChildProducer().create("trying mirror " + mirror, 2)) {
+          // First, try with no credentials. This works with public GCR images.
+          RegistryClient registryClient =
+              buildContext.newBaseImageRegistryClientFactory(mirror).newRegistryClient();
+          try {
+            List<Image> images =
+                pullBaseImages(registryClient, progressDispatcher2.newChildProducer());
+            eventHandlers.dispatch(LogEvent.info("pulled manifest from mirror " + mirror));
+            return Optional.of(new ImagesAndRegistryClient(images, registryClient));
+
+          } catch (RegistryUnauthorizedException ex) {
+            // in case if a mirror requires bearer auth
+            eventHandlers.dispatch(LogEvent.debug("mirror " + mirror + " requires auth"));
+            registryClient.doPullBearerAuth();
+            List<Image> images =
+                pullBaseImages(registryClient, progressDispatcher2.newChildProducer());
+            eventHandlers.dispatch(LogEvent.info("pulled manifest from mirror " + mirror));
+            return Optional.of(new ImagesAndRegistryClient(images, registryClient));
+          }
+
+        } catch (IOException | RegistryException ex) {
+          // Ignore errors from this mirror and continue.
+          eventHandlers.dispatch(
+              LogEvent.debug(
+                  "failed to get manifest from mirror " + mirror + ": " + ex.getMessage()));
+        }
+      }
+      return Optional.empty();
     }
   }
 
@@ -350,6 +412,7 @@ class PullBaseImageStep implements Callable<ImagesAndRegistryClient> {
         new ThrottledProgressEventDispatcherWrapper(
             progressDispatcherFactory,
             "pull container configuration " + manifest.getContainerConfiguration().getDigest())) {
+
       String containerConfigString =
           Blobs.writeToString(
               registryClient.pullBlob(
