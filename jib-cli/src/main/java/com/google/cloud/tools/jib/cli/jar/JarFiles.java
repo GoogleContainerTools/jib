@@ -58,8 +58,23 @@ public class JarFiles {
             : Jib.from("gcr.io/distroless/java-debian10:11");
 
     List<FileEntriesLayer> layers = processor.createLayers();
-    List<String> entrypoint = processor.computeEntrypoint();
-    containerBuilder.setEntrypoint(entrypoint).setFileEntriesLayers(layers);
+    List<String> customEntrypoint = jarOptions.getEntrypoint();
+    List<String> entrypoint =
+        customEntrypoint.isEmpty()
+            ? processor.computeEntrypoint(jarOptions.getJvmFlags())
+            : customEntrypoint;
+
+    containerBuilder
+        .setEntrypoint(entrypoint)
+        .setFileEntriesLayers(layers)
+        .setExposedPorts(jarOptions.getExposedPorts())
+        .setVolumes(jarOptions.getVolumes())
+        .setEnvironment(jarOptions.getEnvironment())
+        .setLabels(jarOptions.getLabels())
+        .setProgramArguments(jarOptions.getProgramArguments());
+    jarOptions.getUser().ifPresent(containerBuilder::setUser);
+    jarOptions.getFormat().ifPresent(containerBuilder::setFormat);
+
     return containerBuilder;
   }
 }

@@ -242,7 +242,7 @@ public class StandardExplodedProcessorTest {
     IllegalArgumentException exception =
         assertThrows(
             IllegalArgumentException.class,
-            () -> standardExplodedModeProcessor.computeEntrypoint());
+            () -> standardExplodedModeProcessor.computeEntrypoint(ImmutableList.of()));
 
     assertThat(exception)
         .hasMessageThat()
@@ -258,10 +258,28 @@ public class StandardExplodedProcessorTest {
     StandardExplodedProcessor standardExplodedModeProcessor =
         new StandardExplodedProcessor(standardJar, Paths.get("ignore"));
 
-    ImmutableList<String> actualEntrypoint = standardExplodedModeProcessor.computeEntrypoint();
+    ImmutableList<String> actualEntrypoint =
+        standardExplodedModeProcessor.computeEntrypoint(ImmutableList.of());
 
     assertThat(actualEntrypoint)
         .isEqualTo(
             ImmutableList.of("java", "-cp", "/app/explodedJar:/app/dependencies/*", "HelloWorld"));
+  }
+
+  @Test
+  public void testComputeEntrypoint_withMainClass_jvmFlags()
+      throws IOException, URISyntaxException {
+    Path standardJar =
+        Paths.get(Resources.getResource(STANDARD_JAR_WITH_CLASS_PATH_MANIFEST).toURI());
+    StandardExplodedProcessor standardExplodedModeProcessor =
+        new StandardExplodedProcessor(standardJar, Paths.get("ignore"));
+
+    ImmutableList<String> actualEntrypoint =
+        standardExplodedModeProcessor.computeEntrypoint(ImmutableList.of("-jvm-flag"));
+
+    assertThat(actualEntrypoint)
+        .isEqualTo(
+            ImmutableList.of(
+                "java", "-jvm-flag", "-cp", "/app/explodedJar:/app/dependencies/*", "HelloWorld"));
   }
 }

@@ -36,8 +36,9 @@ public interface JarProcessor {
   /**
    * Computes the entrypoint for a jar.
    *
+   * @param jvmFlags list of jvm flags
    * @return list of {@link String} representing entrypoint
    * @throws IOException if I/O error occurs when opening the jar file
    */
-  ImmutableList<String> computeEntrypoint() throws IOException;
+  ImmutableList<String> computeEntrypoint(List<String> jvmFlags) throws IOException;
 }
