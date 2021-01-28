@@ -21,15 +21,15 @@ jobs:
       - uses: actions/setup-java@v1
         with:
           java-version: ${{ matrix.java }}
-	  - uses: actions/cache@v2
-		with:
-		  path: |
+      - uses: actions/cache@v2
+        with:
+          path: |
             ~/.m2/repository
-			~/.gradle/caches
-			~/.gradle/wrapper
-		  key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
-		  restore-keys: |
-			${{ runner.os }}-gradle-
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
       - name: Run tests
         run: |
           ./gradlew clean build --stacktrace
