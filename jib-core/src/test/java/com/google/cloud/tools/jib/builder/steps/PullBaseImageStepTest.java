@@ -518,8 +518,7 @@ public class PullBaseImageStepTest {
         .thenReturn(dockerHubRegistryClientFactory);
 
     ImagesAndRegistryClient result = pullBaseImageStep.call();
-    Assert.assertEquals(
-        dockerHubRegistryClientFactory.newRegistryClient(), result.registryClient);
+    Assert.assertEquals(dockerHubRegistryClientFactory.newRegistryClient(), result.registryClient);
 
     InOrder inOrder = Mockito.inOrder(eventHandlers);
     inOrder
