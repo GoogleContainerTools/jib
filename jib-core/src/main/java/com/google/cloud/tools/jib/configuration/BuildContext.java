@@ -527,7 +527,7 @@ public class BuildContext implements Closeable {
 
   /**
    * Creates a new {@link RegistryClient.Factory} for the base image with fields from the build
-   * configuration.
+   * configuration. The server URL is derived from the base {@link ImageConfiguration}.
    *
    * @return a new {@link RegistryClient.Factory}
    */
