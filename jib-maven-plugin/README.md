@@ -33,6 +33,8 @@ For information about the project, see the [Jib project README](../README.md).
   * [Authentication Methods](#authentication-methods)
     * [Using Docker Credential Helpers](#using-docker-credential-helpers)
     * [Using Specific Credentials](#using-specific-credentials)
+    * [Using Maven Settings](#using-maven-settings)
+  * [Jib Extensions](#jib-extensions)
   * [WAR Projects](#war-projects)
   * [Skaffold Integration](#skaffold-integration)
 * [Frequently Asked Questions (FAQ)](#frequently-asked-questions-faq)
@@ -559,6 +561,12 @@ If you're considering putting credentials in Maven, we highly *recommend* using 
 
 * The `id` field should be the registry server these credentials are for.
 * We *do not* recommend putting your raw password in `settings.xml`.
+
+
+### Jib Extensions
+
+The Jib plugins have an extension framework that enables anyone to easily extend and tailor the Jib behavior to their liking. We have already written a few useful extensions, for example, that enables [fine-grained layer control](https://github.com/GoogleContainerTools/jib-extensions/tree/master/first-party/jib-layer-filter-extension-maven) (such as including deleting files and moving files into new layers), builds a [GraalVM native image](https://github.com/GoogleContainerTools/jib-extensions/tree/master/first-party/jib-native-image-extension-maven), and [supports Quarkus](https://github.com/GoogleContainerTools/jib-extensions/tree/master/first-party/jib-quarkus-extension-maven). You can also write your own extension. Check out the [jib-extensions](https://github.com/GoogleContainerTools/jib-extensions) repository.
+
 
 ### WAR Projects
 
