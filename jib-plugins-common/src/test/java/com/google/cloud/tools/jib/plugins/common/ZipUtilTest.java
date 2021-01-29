@@ -82,6 +82,14 @@ public class ZipUtilTest {
         .isEqualTo(FileTime.from(Instant.parse("2018-08-30T14:53:05Z")));
     assertThat(Files.getLastModifiedTime(destination.resolve("my-zip/file2.txt")))
         .isEqualTo(FileTime.from(Instant.parse("2018-08-30T14:53:44Z")));
+    assertThat(Files.getLastModifiedTime(destination.resolve("my-zip")))
+        .isEqualTo(FileTime.from(Instant.parse("2018-08-30T15:15:48Z")));
+    assertThat(Files.getLastModifiedTime(destination.resolve("my-zip/some")))
+        .isEqualTo(FileTime.from(Instant.parse("2018-08-30T14:53:38Z")));
+    assertThat(Files.getLastModifiedTime(destination.resolve("my-zip/some/sub")))
+        .isEqualTo(FileTime.from(Instant.parse("2018-08-30T14:53:38Z")));
+    assertThat(Files.getLastModifiedTime(destination.resolve("my-zip/some/sub/folder")))
+        .isEqualTo(FileTime.from(Instant.parse("2018-08-30T15:16:11Z")));
     assertThat(Files.getLastModifiedTime(destination.resolve("my-zip/some/sub/folder/file3.txt")))
         .isEqualTo(FileTime.from(Instant.parse("2018-08-30T15:16:12Z")));
   }

@@ -27,8 +27,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.FileTime;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.List;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 
@@ -44,13 +44,13 @@ public class TarExtractor {
    */
   public static void extract(Path source, Path destination) throws IOException {
     String canonicalDestination = destination.toFile().getCanonicalPath();
+    List<TarArchiveEntry> entries = new ArrayList<>();
     try (InputStream in = new BufferedInputStream(Files.newInputStream(source));
         TarArchiveInputStream tarArchiveInputStream = new TarArchiveInputStream(in)) {
-      Map<TarArchiveEntry, FileTime> modificationTimeMap = new HashMap();
       for (TarArchiveEntry entry = tarArchiveInputStream.getNextTarEntry();
           entry != null;
           entry = tarArchiveInputStream.getNextTarEntry()) {
-        modificationTimeMap.put(entry, FileTime.from(entry.getModTime().toInstant()));
+        entries.add(entry);
         Path entryPath = destination.resolve(entry.getName());
 
         String canonicalTarget = entryPath.toFile().getCanonicalPath();
@@ -74,17 +74,16 @@ public class TarExtractor {
           }
         }
       }
+      preserveModificationTimes(destination, entries);
+    }
+  }
 
-      // Preserve source modification timestamps of files. If the entry is a symbolic link then set
-      // it's modification time to that of the target file.
-      for (TarArchiveEntry entry : modificationTimeMap.keySet()) {
-        FileTime sourceModificationTime = modificationTimeMap.get(entry);
-        if (entry.isSymbolicLink()) {
-          Path targetPath = destination.resolve(entry.getName()).toRealPath();
-          Path targetRelativePath = destination.relativize(targetPath);
-          sourceModificationTime = modificationTimeMap.get(targetRelativePath);
-        }
-        Files.setLastModifiedTime(destination.resolve(entry.getName()), sourceModificationTime);
+  private static void preserveModificationTimes(Path destination, List<TarArchiveEntry> entries)
+      throws IOException {
+    for (TarArchiveEntry entry : entries) {
+      if (!entry.isSymbolicLink()) {
+        Files.setLastModifiedTime(
+            destination.resolve(entry.getName()), FileTime.from(entry.getModTime().toInstant()));
       }
     }
   }

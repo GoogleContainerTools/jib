@@ -35,6 +35,7 @@ import java.util.stream.Stream;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -101,52 +102,13 @@ public class TarExtractorTest {
         .isEqualTo(FileTime.from(Instant.parse("2019-08-01T16:13:09Z")));
     assertThat(Files.getLastModifiedTime(destination.resolve("file B")))
         .isEqualTo(FileTime.from(Instant.parse("2019-08-01T16:12:00Z")));
+    assertThat(Files.getLastModifiedTime(destination.resolve("folder")))
+            .isEqualTo(FileTime.from(Instant.parse("2019-08-01T16:12:00Z")));
+    assertThat(Files.getLastModifiedTime(destination.resolve("folder").resolve("nested folder")))
+            .isEqualTo(FileTime.from(Instant.parse("2019-08-01T16:12:00Z")));
     assertThat(
             Files.getLastModifiedTime(
                 destination.resolve("folder").resolve("nested folder").resolve("file C")))
         .isEqualTo(FileTime.from(Instant.parse("2019-08-01T16:12:21Z")));
-  }
-
-  @Test
-  public void testExtract_symlinks_modificationTimePreserved()
-      throws URISyntaxException, IOException {
-    Path source = Paths.get(Resources.getResource("core/symlinks.tar").toURI());
-    Path destination = temporaryFolder.getRoot().toPath();
-
-    Map<String, FileTime> originalModificationTimeMap = createModificationTimeMap(source);
-
-    TarExtractor.extract(source, destination);
-
-    // Validate that the symlink's modification time is set to the target's.
-    assertThat(originalModificationTimeMap.get("directory1/"))
-        .isEqualTo(FileTime.from(Instant.parse("2020-10-16T21:09:46Z")));
-    assertThat(Files.getLastModifiedTime(destination.resolve("directory1")))
-        .isEqualTo(FileTime.from(Instant.parse("2020-10-16T21:09:46Z")));
-    assertThat(originalModificationTimeMap.get("directory-symlink"))
-        .isEqualTo(FileTime.from(Instant.parse("2020-10-16T21:09:23Z")));
-    assertThat(Files.getLastModifiedTime(destination.resolve("directory-symlink")))
-        .isEqualTo(FileTime.from(Instant.parse("2020-10-16T21:09:46Z")));
-
-    assertThat(originalModificationTimeMap.get("directory2/regular"))
-        .isEqualTo(FileTime.from(Instant.parse("2020-10-16T21:09:54Z")));
-    assertThat(Files.getLastModifiedTime(destination.resolve("directory2/regular")))
-        .isEqualTo(FileTime.from(Instant.parse("2020-10-16T21:09:54Z")));
-    assertThat(originalModificationTimeMap.get("directory1/file-symlink"))
-        .isEqualTo(FileTime.from(Instant.parse("2020-10-16T21:09:46Z")));
-    assertThat(Files.getLastModifiedTime(destination.resolve("directory1/file-symlink")))
-        .isEqualTo(FileTime.from(Instant.parse("2020-10-16T21:09:54Z")));
-  }
-
-  private static Map<String, FileTime> createModificationTimeMap(Path source) throws IOException {
-    Map<String, FileTime> modificationTimeMap = new HashMap();
-    try (InputStream in = new BufferedInputStream(Files.newInputStream(source));
-        TarArchiveInputStream tarArchiveInputStream = new TarArchiveInputStream(in)) {
-      for (TarArchiveEntry entry = tarArchiveInputStream.getNextTarEntry();
-          entry != null;
-          entry = tarArchiveInputStream.getNextTarEntry()) {
-        modificationTimeMap.put(entry.getName(), FileTime.from(entry.getModTime().toInstant()));
-      }
-      return modificationTimeMap;
-    }
   }
 }

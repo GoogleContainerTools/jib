@@ -25,6 +25,8 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
@@ -43,8 +45,9 @@ public class ZipUtil {
 
     try (InputStream fileIn = new BufferedInputStream(Files.newInputStream(archive));
         ZipInputStream zipIn = new ZipInputStream(fileIn)) {
-
+      List<ZipEntry> entries = new ArrayList<>();
       for (ZipEntry entry = zipIn.getNextEntry(); entry != null; entry = zipIn.getNextEntry()) {
+        entries.add(entry);
         Path entryPath = destination.resolve(entry.getName());
 
         String canonicalTarget = entryPath.toFile().getCanonicalPath();
@@ -57,14 +60,22 @@ public class ZipUtil {
           Files.createDirectories(entryPath);
         } else {
           if (entryPath.getParent() != null) {
+
             Files.createDirectories(entryPath.getParent());
           }
           try (OutputStream out = new BufferedOutputStream(Files.newOutputStream(entryPath))) {
             ByteStreams.copy(zipIn, out);
           }
         }
-        Files.setLastModifiedTime(entryPath, entry.getLastModifiedTime());
       }
+      preserveModificationTimes(destination, entries);
+    }
+  }
+
+  private static void preserveModificationTimes(Path destination, List<ZipEntry> entries)
+      throws IOException {
+    for (ZipEntry entry : entries) {
+      Files.setLastModifiedTime(destination.resolve(entry.getName()), entry.getLastModifiedTime());
     }
   }
 }
