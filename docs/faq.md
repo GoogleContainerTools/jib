@@ -28,7 +28,9 @@ If a question you have is not answered below, please [submit an issue](/../../is
 [How can I inspect the image Jib built?](#how-can-i-inspect-the-image-jib-built)\
 [I would like to run my application with a javaagent.](#i-would-like-to-run-my-application-with-a-javaagent)\
 [How can I tag my image with a timestamp?](#how-can-i-tag-my-image-with-a-timestamp)\
-[How do I specify a platform in the manifest list (or OCI index) of a base image?](#how-do-i-specify-a-platform-in-the-manifest-list-or-oci-index-of-a-base-image)
+[How do I specify a platform in the manifest list (or OCI index) of a base image?](#how-do-i-specify-a-platform-in-the-manifest-list-or-oci-index-of-a-base-image) \
+[I want to exclude files from layers, have more fine-grained control over layers, change file ownership, etc.](#i-want-to-exclude-files-from-layers-have-more-fine-grained-control-over-layers-change-file-ownership-etc) \
+[Jib build plugins don't have the feature that I need.](#jib-build-plugins-dont-have-the-feature-that-i-need)
 
 **Build Problems**\
 [How can I diagnose problems pulling or pushing from remote registries?](#how-can-i-diagnose-problems-pulling-or-pushing-from-remote-registries)\
@@ -536,6 +538,15 @@ $ docker manifest inspect openjdk:8
    ]
 }
 ```
+
+### I want to exclude files from layers, have more fine-grained control over layers, change file ownership, etc.
+
+See ["Jib build plugins don't have the feature that I need"](#jib-build-plugins-dont-have-the-feature-that-i-need).
+
+### Jib build plugins don't have the feature that I need.
+
+The Jib build plugins have an extension framework that enables anyone to easily extend Jib's behavior to their needs. We maintain select [first-party](https://github.com/GoogleContainerTools/jib-extensions/tree/master/first-party) plugins for popular use cases like [fine-grained layer control](https://github.com/GoogleContainerTools/jib-extensions/tree/master/first-party/jib-layer-filter-extension-gradle) and [Quarkus support](https://github.com/GoogleContainerTools/jib-extensions/tree/master/first-party/jib-quarkus-extension-gradle), but anyone can write and publish an extension. Check out the [jib-extensions](https://github.com/GoogleContainerTools/jib-extensions) repository for more information.
+
 
 ## Build Problems
 
