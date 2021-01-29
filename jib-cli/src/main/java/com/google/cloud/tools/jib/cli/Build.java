@@ -24,7 +24,6 @@ import com.google.cloud.tools.jib.cli.logging.CliLogger;
 import com.google.cloud.tools.jib.plugins.common.logging.ConsoleLogger;
 import com.google.cloud.tools.jib.plugins.common.logging.SingleThreadedExecutor;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Verify;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
@@ -49,20 +48,22 @@ public class Build implements Callable<Integer> {
   @VisibleForTesting
   CommonCliOptions commonCliOptions;
 
+  @VisibleForTesting
   @CommandLine.Option(
       names = {"-c", "--context"},
       defaultValue = ".",
       paramLabel = "<project-root>",
       description = "The context root directory of the build (ex: path/to/my/build/things)")
   @SuppressWarnings("NullAway.Init") // initialized by picocli
-  private Path contextRoot;
+  Path contextRoot;
 
+  @VisibleForTesting
   @CommandLine.Option(
       names = {"-b", "--build-file"},
       paramLabel = "<build-file>",
       description = "The path to the build file (ex: path/to/other-jib.yaml)")
   @SuppressWarnings("NullAway.Init") // initialized by picocli
-  private Path buildFile;
+  Path buildFileUnprocessed;
 
   @CommandLine.Option(
       names = {"-p", "--parameter"},
@@ -71,21 +72,18 @@ public class Build implements Callable<Integer> {
           "templating parameter to inject into build file, replace $${<name>} with <value> (repeatable)")
   private Map<String, String> templateParameters = Collections.emptyMap();
 
-  public Path getContextRoot() {
-    return Verify.verifyNotNull(contextRoot);
-  }
-
   /**
    * Returns a user configured Path to a buildfile and if none is configured returns jib.yaml in
-   * {@link #getContextRoot()}.
+   * {@link #contextRoot}.
    *
-   * @return a path to a bulidfile
+   * @return a path to a buildfile
    */
-  public Path getBuildFile() {
-    if (buildFile == null) {
-      return getContextRoot().resolve("jib.yaml");
+  @VisibleForTesting
+  Path getBuildFile() {
+    if (buildFileUnprocessed == null) {
+      return contextRoot.resolve("jib.yaml");
     }
-    return buildFile;
+    return buildFileUnprocessed;
   }
 
   public Map<String, String> getTemplateParameters() {
@@ -95,6 +93,7 @@ public class Build implements Callable<Integer> {
   @Override
   public Integer call() {
     commonCliOptions.validate();
+    Path buildFile = getBuildFile();
     SingleThreadedExecutor executor = new SingleThreadedExecutor();
     try {
       ConsoleLogger logger =
