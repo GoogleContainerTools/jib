@@ -46,7 +46,9 @@ public class JarTest {
         assertThrows(
             MissingParameterException.class,
             () -> CommandLine.populateCommand(new Jar(), "my-app.jar"));
-    assertThat(mpe.getMessage()).isEqualTo("Missing required option: '--target=<target-image>'");
+    assertThat(mpe)
+        .hasMessageThat()
+        .isEqualTo("Missing required option: '--target=<target-image>'");
   }
 
   @Test
@@ -55,7 +57,7 @@ public class JarTest {
         assertThrows(
             MissingParameterException.class,
             () -> CommandLine.populateCommand(new Jar(), "--target=test-image-ref"));
-    assertThat(mpe.getMessage()).isEqualTo("Missing required parameter: '<jarFile>'");
+    assertThat(mpe).hasMessageThat().isEqualTo("Missing required parameter: '<jarFile>'");
   }
 
   @Test
@@ -358,7 +360,9 @@ public class JarTest {
                     usernameField,
                     "test-username",
                     "my-app.jar"));
-    assertThat(mpe.getMessage()).isEqualTo("Error: Missing required argument(s): " + passwordField);
+    assertThat(mpe)
+        .hasMessageThat()
+        .isEqualTo("Error: Missing required argument(s): " + passwordField);
   }
 
   @Test
@@ -374,7 +378,8 @@ public class JarTest {
                     passwordField,
                     "test-password",
                     "my-app.jar"));
-    assertThat(mpe.getMessage())
+    assertThat(mpe)
+        .hasMessageThat()
         .isEqualTo("Error: Missing required argument(s): " + usernameField + "=<username>");
   }
 
@@ -519,7 +524,8 @@ public class JarTest {
         CommandLine.populateCommand(new Jar(), "--target=tar://sometar.tar", "my-app.jar");
     CommandLine.ParameterException pex =
         assertThrows(CommandLine.ParameterException.class, jarCommand.commonCliOptions::validate);
-    assertThat(pex.getMessage())
+    assertThat(pex)
+        .hasMessageThat()
         .isEqualTo("Missing option: --name must be specified when using --target=tar://....");
   }
 
