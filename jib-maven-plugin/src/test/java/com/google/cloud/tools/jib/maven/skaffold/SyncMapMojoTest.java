@@ -16,6 +16,9 @@
 
 package com.google.cloud.tools.jib.maven.skaffold;
 
+import static com.google.common.truth.Truth.assertThat;
+import static org.junit.Assert.assertThrows;
+
 import com.google.cloud.tools.jib.api.buildplan.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.maven.TestProject;
 import com.google.cloud.tools.jib.plugins.common.SkaffoldSyncMapTemplate;
@@ -157,28 +160,27 @@ public class SyncMapMojoTest {
   @Test
   public void testSyncMapMojo_failIfPackagingNotJar() throws IOException {
     Path projectRoot = warProject.getProjectRoot();
-    try {
-      runBuild(projectRoot, null, null);
-      Assert.fail();
-    } catch (VerificationException ex) {
-      Assert.assertTrue(
-          ex.getMessage()
-              .contains(
-                  "org.apache.maven.plugin.MojoExecutionException: Skaffold sync is currently only available for 'jar' style Jib projects, but the packaging of servlet25 is 'war'"));
-    }
+    VerificationException ve =
+        assertThrows(VerificationException.class, () -> runBuild(projectRoot, null, null));
+    assertThat(ve)
+        .hasMessageThat()
+        .contains(
+            "MojoExecutionException: Skaffold sync is currently only available for 'jar' style Jib "
+                + "projects, but the packaging of servlet25 is 'war'");
   }
 
   @Test
   public void testSyncMapMojo_failIfJarContainerizationMode() throws IOException {
     Path projectRoot = simpleTestProject.getProjectRoot();
-    try {
-      runBuild(projectRoot, null, "pom-jar-containerization.xml");
-      Assert.fail();
-    } catch (VerificationException ex) {
-      Assert.assertTrue(
-          ex.getMessage()
-              .contains(
-                  "org.apache.maven.plugin.MojoExecutionException: Skaffold sync is currently only available for Jib projects in 'exploded' containerizing mode, but the containerizing mode of hello-world is 'packaged'"));
-    }
+    VerificationException ve =
+        assertThrows(
+            VerificationException.class,
+            () -> runBuild(projectRoot, null, "pom-jar-containerization.xml"));
+    assertThat(ve)
+        .hasMessageThat()
+        .contains(
+            "MojoExecutionException: Skaffold sync is currently only available for Jib projects in "
+                + "'exploded' containerizing mode, but the containerizing mode of hello-world is "
+                + "'packaged'");
   }
 }
