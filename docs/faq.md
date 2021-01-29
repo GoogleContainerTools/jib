@@ -47,7 +47,9 @@ If a question you have is not answered below, please [submit an issue](/../../is
 
 ### But, I'm not a Java developer.
 
-See [rules_docker](https://github.com/bazelbuild/rules_docker) for a similar existing container image build tool for the [Bazel build system](https://github.com/bazelbuild/bazel). The tool can build images for languages such as Python, NodeJS, Java, Scala, Groovy, C, Go, Rust, and D.
+Check out [Jib CLI](https://github.com/GoogleContainerTools/jib/tree/master/jib-cli), a general-purpose command-line tool for building containers images from file system content.
+
+Also see [rules_docker](https://github.com/bazelbuild/rules_docker) for a similar existing container image build tool for the [Bazel build system](https://github.com/bazelbuild/bazel). The tool can build images for languages such as Python, NodeJS, Java, Scala, Groovy, C, Go, Rust, and D.
 
 ### How do I run the image I built?
 
