@@ -19,23 +19,16 @@ package com.google.cloud.tools.jib.tar;
 import static com.google.common.truth.Truth.assertThat;
 
 import com.google.common.io.Resources;
-import java.io.BufferedInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.FileTime;
 import java.time.Instant;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
-import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.junit.Assert;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -103,9 +96,9 @@ public class TarExtractorTest {
     assertThat(Files.getLastModifiedTime(destination.resolve("file B")))
         .isEqualTo(FileTime.from(Instant.parse("2019-08-01T16:12:00Z")));
     assertThat(Files.getLastModifiedTime(destination.resolve("folder")))
-            .isEqualTo(FileTime.from(Instant.parse("2019-08-01T16:12:00Z")));
+        .isEqualTo(FileTime.from(Instant.parse("2019-08-01T16:12:33Z")));
     assertThat(Files.getLastModifiedTime(destination.resolve("folder").resolve("nested folder")))
-            .isEqualTo(FileTime.from(Instant.parse("2019-08-01T16:12:00Z")));
+        .isEqualTo(FileTime.from(Instant.parse("2019-08-01T16:13:30Z")));
     assertThat(
             Files.getLastModifiedTime(
                 destination.resolve("folder").resolve("nested folder").resolve("file C")))
