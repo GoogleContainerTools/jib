@@ -25,7 +25,7 @@ import javax.annotation.Nullable;
 
 public class SpringBootPackagedProcessor implements JarProcessor {
 
-  @Nullable private static Path jarPath;
+  @Nullable private final Path jarPath;
 
   public SpringBootPackagedProcessor(Path jarPath) {
     this.jarPath = jarPath;
@@ -45,11 +45,15 @@ public class SpringBootPackagedProcessor implements JarProcessor {
   }
 
   @Override
-  public ImmutableList<String> computeEntrypoint() {
+  public ImmutableList<String> computeEntrypoint(List<String> jvmFlags) {
     if (jarPath == null) {
       return ImmutableList.of();
     }
-    return ImmutableList.of(
-        "java", "-jar", JarLayers.APP_ROOT + "/" + jarPath.getFileName().toString());
+    ImmutableList.Builder<String> entrypoint = ImmutableList.builder();
+    entrypoint.add("java");
+    entrypoint.addAll(jvmFlags);
+    entrypoint.add("-jar");
+    entrypoint.add(JarLayers.APP_ROOT + "/" + jarPath.getFileName().toString());
+    return entrypoint.build();
   }
 }

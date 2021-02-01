@@ -27,6 +27,7 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.junit.Rule;
@@ -260,9 +261,21 @@ public class SpringBootExplodedProcessorTest {
   public void testComputeEntrypoint() {
     SpringBootExplodedProcessor bootProcessor =
         new SpringBootExplodedProcessor(Paths.get("ignored"), Paths.get("ignored"));
-    ImmutableList<String> actualEntrypoint = bootProcessor.computeEntrypoint();
+    ImmutableList<String> actualEntrypoint = bootProcessor.computeEntrypoint(new ArrayList<>());
     assertThat(actualEntrypoint)
         .isEqualTo(
             ImmutableList.of("java", "-cp", "/app", "org.springframework.boot.loader.JarLauncher"));
+  }
+
+  @Test
+  public void testComputeEntrypoint_withJvmFlags() {
+    SpringBootExplodedProcessor bootProcessor =
+        new SpringBootExplodedProcessor(Paths.get("ignored"), Paths.get("ignored"));
+    ImmutableList<String> actualEntrypoint =
+        bootProcessor.computeEntrypoint(ImmutableList.of("-jvm-flag"));
+    assertThat(actualEntrypoint)
+        .isEqualTo(
+            ImmutableList.of(
+                "java", "-jvm-flag", "-cp", "/app", "org.springframework.boot.loader.JarLauncher"));
   }
 }

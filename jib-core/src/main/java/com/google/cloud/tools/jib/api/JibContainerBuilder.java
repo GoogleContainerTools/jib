@@ -131,8 +131,8 @@ public class JibContainerBuilder {
    * files are:
    *
    * <ul>
-   *   <li>{@code fileA}
-   *   <li>{@code fileB}
+   *   <li>{@code fileFoo}
+   *   <li>{@code fileBar}
    *   <li>{@code directory/}
    * </ul>
    *
@@ -140,8 +140,8 @@ public class JibContainerBuilder {
    * the following entries for the container file system:
    *
    * <ul>
-   *   <li>{@code /path/in/container/fileA}
-   *   <li>{@code /path/in/container/fileB}
+   *   <li>{@code /path/in/container/fileFoo}
+   *   <li>{@code /path/in/container/fileBar}
    *   <li>{@code /path/in/container/directory/}
    *   <li>{@code /path/in/container/directory/...} (all contents of {@code directory/})
    * </ul>
@@ -723,6 +723,7 @@ public class JibContainerBuilder {
         .setExecutorService(containerizer.getExecutorService().orElse(null))
         .setEventHandlers(containerizer.buildEventHandlers())
         .setAlwaysCacheBaseImage(containerizer.getAlwaysCacheBaseImage())
+        .setRegistryMirrors(containerizer.getRegistryMirrors())
         .build();
   }
 

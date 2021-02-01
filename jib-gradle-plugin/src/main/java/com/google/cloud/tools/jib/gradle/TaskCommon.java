@@ -22,6 +22,7 @@ import com.google.cloud.tools.jib.api.LogEvent;
 import com.google.cloud.tools.jib.api.buildplan.FilePermissions;
 import com.google.cloud.tools.jib.plugins.common.ProjectProperties;
 import com.google.cloud.tools.jib.plugins.common.UpdateChecker;
+import com.google.cloud.tools.jib.plugins.common.globalconfig.GlobalConfig;
 import com.google.common.util.concurrent.Futures;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -47,18 +48,20 @@ class TaskCommon {
   public static final String VERSION_URL = "https://storage.googleapis.com/jib-versions/jib-gradle";
 
   static Future<Optional<String>> newUpdateChecker(
-      ProjectProperties projectProperties, Logger logger) {
-    if (projectProperties.isOffline() || !logger.isLifecycleEnabled()) {
+      ProjectProperties projectProperties, GlobalConfig globalConfig, Logger logger) {
+    if (projectProperties.isOffline()
+        || !logger.isLifecycleEnabled()
+        || globalConfig.isDisableUpdateCheck()) {
       return Futures.immediateFuture(Optional.empty());
     }
     ExecutorService executorService = Executors.newSingleThreadExecutor();
     try {
       return UpdateChecker.checkForUpdate(
           executorService,
-          projectProperties::log,
           VERSION_URL,
           projectProperties.getToolName(),
-          projectProperties.getToolVersion());
+          projectProperties.getToolVersion(),
+          projectProperties::log);
     } finally {
       executorService.shutdown();
     }

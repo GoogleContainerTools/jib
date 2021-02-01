@@ -32,10 +32,13 @@ import com.google.cloud.tools.jib.plugins.common.InvalidPlatformException;
 import com.google.cloud.tools.jib.plugins.common.InvalidWorkingDirectoryException;
 import com.google.cloud.tools.jib.plugins.common.MainClassInferenceException;
 import com.google.cloud.tools.jib.plugins.common.PluginConfigurationProcessor;
+import com.google.cloud.tools.jib.plugins.common.globalconfig.GlobalConfig;
+import com.google.cloud.tools.jib.plugins.common.globalconfig.InvalidGlobalConfigException;
 import com.google.cloud.tools.jib.plugins.extension.JibPluginExtensionException;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import com.google.common.util.concurrent.Futures;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Optional;
@@ -96,14 +99,18 @@ public class BuildImageMojo extends JibPluginConfiguration {
             getSession(),
             getLog(),
             tempDirectoryProvider);
-    Future<Optional<String>> updateCheckFuture =
-        MojoCommon.newUpdateChecker(projectProperties, getLog());
+
+    Future<Optional<String>> updateCheckFuture = Futures.immediateFuture(Optional.empty());
     try {
+      GlobalConfig globalConfig = GlobalConfig.readConfig();
+      updateCheckFuture = MojoCommon.newUpdateChecker(projectProperties, globalConfig, getLog());
+
       PluginConfigurationProcessor.createJibBuildRunnerForRegistryImage(
               new MavenRawConfiguration(this),
               new MavenSettingsServerCredentials(
                   getSession().getSettings(), getSettingsDecrypter()),
               projectProperties,
+              globalConfig,
               new MavenHelpfulSuggestions(HELPFUL_SUGGESTIONS_PREFIX))
           .runBuild();
 
@@ -162,7 +169,10 @@ public class BuildImageMojo extends JibPluginConfiguration {
       throw new MojoExecutionException(
           HelpfulSuggestions.forInvalidImageReference(ex.getInvalidReference()), ex);
 
-    } catch (IOException | CacheDirectoryCreationException | MainClassInferenceException ex) {
+    } catch (IOException
+        | CacheDirectoryCreationException
+        | MainClassInferenceException
+        | InvalidGlobalConfigException ex) {
       throw new MojoExecutionException(ex.getMessage(), ex);
 
     } catch (BuildStepsExecutionException ex) {

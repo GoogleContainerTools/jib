@@ -18,22 +18,18 @@ package com.google.cloud.tools.jib.plugins.common;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.google.cloud.tools.jib.api.LogEvent;
-import com.google.cloud.tools.jib.filesystem.XdgDirectories;
 import com.google.cloud.tools.jib.http.FailoverHttpClient;
 import com.google.cloud.tools.jib.http.Request;
 import com.google.cloud.tools.jib.http.Response;
 import com.google.cloud.tools.jib.json.JsonTemplate;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
+import com.google.cloud.tools.jib.plugins.common.globalconfig.GlobalConfig;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Strings;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.AtomicMoveNotSupportedException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.time.Duration;
 import java.time.Instant;
@@ -47,19 +43,7 @@ import java.util.function.Consumer;
 /** Checks if Jib is up-to-date. */
 public class UpdateChecker {
 
-  private static final String CONFIG_FILENAME = "config.json";
   private static final String LAST_UPDATE_CHECK_FILENAME = "lastUpdateCheck";
-
-  /** JSON template for the configuration file used to enable/disable update checks. */
-  @VisibleForTesting
-  static class ConfigJsonTemplate implements JsonTemplate {
-    private boolean disableUpdateCheck;
-
-    @VisibleForTesting
-    void setDisableUpdateCheck(boolean disableUpdateCheck) {
-      this.disableUpdateCheck = disableUpdateCheck;
-    }
-  }
 
   /** JSON template for content downloaded during version check. */
   @JsonIgnoreProperties(ignoreUnknown = true)
@@ -71,80 +55,34 @@ public class UpdateChecker {
    * Begins checking for an update in a separate thread.
    *
    * @param executorService the {@link ExecutorService}
-   * @param log {@link Consumer} used to log messages
    * @param versionUrl the location to check for the latest version
    * @param toolName the tool name
    * @param toolVersion the tool version
+   * @param log {@link Consumer} used to log messages
    * @return a new {@link UpdateChecker}
    */
   public static Future<Optional<String>> checkForUpdate(
       ExecutorService executorService,
-      Consumer<LogEvent> log,
       String versionUrl,
       String toolName,
-      String toolVersion) {
+      String toolVersion,
+      Consumer<LogEvent> log) {
     return executorService.submit(
-        () -> performUpdateCheck(log, toolVersion, versionUrl, getConfigDir(), toolName));
+        () ->
+            performUpdateCheck(
+                GlobalConfig.getConfigDir(), toolVersion, versionUrl, toolName, log));
   }
 
   @VisibleForTesting
   static Optional<String> performUpdateCheck(
-      Consumer<LogEvent> log,
+      Path configDir,
       String currentVersion,
       String versionUrl,
-      Path configDir,
-      String toolName) {
-    // Abort if offline or update checks are disabled
-    if (Boolean.getBoolean(PropertyNames.DISABLE_UPDATE_CHECKS)) {
-      return Optional.empty();
-    }
-
-    Path configFile = configDir.resolve(CONFIG_FILENAME);
+      String toolName,
+      Consumer<LogEvent> log) {
     Path lastUpdateCheck = configDir.resolve(LAST_UPDATE_CHECK_FILENAME);
 
     try {
-      // Check global config
-      if (Files.exists(configFile) && Files.size(configFile) > 0) {
-        // Abort if update checks are disabled
-        try {
-          ConfigJsonTemplate config =
-              JsonTemplateMapper.readJsonFromFile(configFile, ConfigJsonTemplate.class);
-          if (config.disableUpdateCheck) {
-            return Optional.empty();
-          }
-        } catch (IOException ex) {
-          log.accept(
-              LogEvent.warn(
-                  "Failed to read global Jib config; you may need to fix or delete "
-                      + configFile
-                      + ": "
-                      + ex.getMessage()));
-          return Optional.empty();
-        }
-      } else {
-        // Generate config file if it doesn't exist
-        ConfigJsonTemplate config = new ConfigJsonTemplate();
-        Files.createDirectories(configDir);
-        Path tempConfigFile = configDir.resolve(CONFIG_FILENAME + ".tmp");
-        try (OutputStream outputStream = Files.newOutputStream(tempConfigFile)) {
-          JsonTemplateMapper.writeTo(config, outputStream);
-          tryAtomicMove(tempConfigFile, configFile);
-        } catch (IOException ex) {
-          // If attempt to generate new config file failed, delete so we can try again next time
-          log.accept(LogEvent.debug("Failed to generate global Jib config; " + ex.getMessage()));
-          try {
-            Files.deleteIfExists(tempConfigFile);
-          } catch (IOException cleanupEx) {
-            log.accept(
-                LogEvent.debug(
-                    "Failed to cleanup "
-                        + tempConfigFile.toString()
-                        + " -- "
-                        + cleanupEx.getMessage()));
-          }
-        }
-      }
-
       // Check time of last update check
       if (Files.exists(lastUpdateCheck)) {
         try {
@@ -173,9 +111,13 @@ public class UpdateChecker {
                     .build());
         VersionJsonTemplate version =
             JsonTemplateMapper.readJson(response.getBody(), VersionJsonTemplate.class);
-        Path lastUpdateCheckTemp = configDir.resolve(LAST_UPDATE_CHECK_FILENAME + ".tmp");
+
+        Path lastUpdateCheckTemp =
+            Files.createTempFile(configDir, LAST_UPDATE_CHECK_FILENAME, null);
+        lastUpdateCheckTemp.toFile().deleteOnExit();
         Files.write(lastUpdateCheckTemp, Instant.now().toString().getBytes(StandardCharsets.UTF_8));
-        tryAtomicMove(lastUpdateCheckTemp, lastUpdateCheck);
+        Files.move(lastUpdateCheckTemp, lastUpdateCheck, StandardCopyOption.REPLACE_EXISTING);
+
         if (currentVersion.equals(version.latest)) {
           return Optional.empty();
         }
@@ -216,38 +158,6 @@ public class UpdateChecker {
     }
     updateMessageFuture.cancel(true);
     return Optional.empty();
-  }
-
-  /**
-   * Returns the config directory set by {@link PropertyNames#CONFIG_DIRECTORY} if not null,
-   * otherwise returns the default config directory.
-   *
-   * @return the config directory set by {@link PropertyNames#CONFIG_DIRECTORY} if not null,
-   *     otherwise returns the default config directory.
-   */
-  private static Path getConfigDir() {
-    String configDirProperty = System.getProperty(PropertyNames.CONFIG_DIRECTORY);
-    if (!Strings.isNullOrEmpty(configDirProperty)) {
-      return Paths.get(configDirProperty);
-    }
-    return XdgDirectories.getConfigHome();
-  }
-
-  /**
-   * Attempts an atomic move first, and falls back to non-atomic if the file system does not support
-   * atomic moves.
-   *
-   * @param source the source path
-   * @param destination the destination path
-   * @throws IOException if the move fails
-   */
-  private static void tryAtomicMove(Path source, Path destination) throws IOException {
-    try {
-      Files.move(
-          source, destination, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
-    } catch (AtomicMoveNotSupportedException ignored) {
-      Files.move(source, destination, StandardCopyOption.REPLACE_EXISTING);
-    }
   }
 
   private UpdateChecker() {}

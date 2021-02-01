@@ -19,6 +19,10 @@ package com.google.cloud.tools.jib.cli;
 import com.google.cloud.tools.jib.api.Containerizer;
 import com.google.cloud.tools.jib.api.JibContainerBuilder;
 import com.google.cloud.tools.jib.api.LogEvent;
+import com.google.cloud.tools.jib.api.Ports;
+import com.google.cloud.tools.jib.api.buildplan.AbsoluteUnixPath;
+import com.google.cloud.tools.jib.api.buildplan.ImageFormat;
+import com.google.cloud.tools.jib.api.buildplan.Port;
 import com.google.cloud.tools.jib.cli.jar.JarFiles;
 import com.google.cloud.tools.jib.cli.jar.JarProcessor;
 import com.google.cloud.tools.jib.cli.jar.JarProcessors;
@@ -28,11 +32,17 @@ import com.google.cloud.tools.jib.filesystem.TempDirectoryProvider;
 import com.google.cloud.tools.jib.plugins.common.logging.ConsoleLogger;
 import com.google.cloud.tools.jib.plugins.common.logging.SingleThreadedExecutor;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.ImmutableSet;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.Callable;
+import java.util.stream.Collectors;
 import picocli.CommandLine;
 import picocli.CommandLine.Model.CommandSpec;
 
@@ -67,10 +77,79 @@ public class Jar implements Callable<Integer> {
 
   @CommandLine.Option(
       names = "--from",
-      paramLabel = "<from>",
+      paramLabel = "<base-image>",
       description = "The base image to use.")
   @SuppressWarnings("NullAway.Init") // initialized by picocli
   private String from;
+
+  @CommandLine.Option(
+      names = "--jvm-flags",
+      paramLabel = "<jvm-flags>",
+      split = ",",
+      description = "JVM arguments, example: --jvm-flags=-Dmy.property=value,-Xshare:off")
+  private List<String> jvmFlags = Collections.emptyList();
+
+  @CommandLine.Option(
+      names = "--expose",
+      paramLabel = "<exposed-ports>",
+      split = ",",
+      description = "Ports to expose on container, example: --expose=5000,7/udp.")
+  private List<String> exposedPorts = Collections.emptyList();
+
+  @CommandLine.Option(
+      names = "--volumes",
+      paramLabel = "<volumes>",
+      split = ",",
+      description =
+          "Directories on container to hold extra volumes,  example: --volumes=/var/log,/var/log2.")
+  private List<String> volumes = Collections.emptyList();
+
+  @CommandLine.Option(
+      names = "--environment-variables",
+      paramLabel = "<environment-variables>",
+      split = ",",
+      description =
+          "Environment variables to write into container, example: --environment-variables env1=env_value1,env2=env_value2.")
+  private Map<String, String> environment = Collections.emptyMap();
+
+  @CommandLine.Option(
+      names = "--labels",
+      paramLabel = "<labels>",
+      split = ",",
+      description =
+          "Labels to write into container metadata, example: --labels=label1=value1,label2=value2.")
+  private Map<String, String> labels = Collections.emptyMap();
+
+  @CommandLine.Option(
+      names = {"-u", "--user"},
+      paramLabel = "<user>",
+      description = "The user to run the container as, example: --user=myuser:mygroup.")
+  @SuppressWarnings("NullAway.Init") // initialized by picocli
+  private String user;
+
+  @CommandLine.Option(
+      names = {"--image-format"},
+      defaultValue = "Docker",
+      paramLabel = "<image-format>",
+      description =
+          "Format of container, candidates: ${COMPLETION-CANDIDATES}, default: ${DEFAULT-VALUE}.")
+  @SuppressWarnings("NullAway.Init") // initialized by picocli
+  private ImageFormat format;
+
+  @CommandLine.Option(
+      names = "--program-args",
+      paramLabel = "<program-arguments>",
+      split = ",",
+      description = "Program arguments for container entrypoint.")
+  private List<String> programArguments = Collections.emptyList();
+
+  @CommandLine.Option(
+      names = "--entrypoint",
+      paramLabel = "<entrypoint>",
+      split = "\\s+",
+      description =
+          "Entrypoint for container. Overrides the default entrypoint, example: --entrypoint='custom entrypoint'")
+  private List<String> entrypoint = Collections.emptyList();
 
   @Override
   public Integer call() {
@@ -104,6 +183,9 @@ public class Jar implements Callable<Integer> {
                 + jarFile);
         return 1;
       }
+      if (!entrypoint.isEmpty() && !jvmFlags.isEmpty()) {
+        logger.log(LogEvent.Level.WARN, "--jvm-flags is ignored when --entrypoint is specified");
+      }
 
       JarProcessor processor = JarProcessors.from(jarFile, tempDirectoryProvider, mode);
       JibContainerBuilder containerBuilder =
@@ -125,11 +207,61 @@ public class Jar implements Callable<Integer> {
   }
 
   /**
-   * Returns the user specified base image.
+   * Returns the user-specified base image.
    *
    * @return an optional base image
    */
   public Optional<String> getFrom() {
     return Optional.ofNullable(from);
+  }
+
+  public List<String> getJvmFlags() {
+    return jvmFlags;
+  }
+
+  /**
+   * Returns set of {@link Port} representing ports to be exposed on container (if specified).
+   *
+   * @return set of exposed ports
+   */
+  public Set<Port> getExposedPorts() {
+    return (exposedPorts == null) ? ImmutableSet.of() : Ports.parse(exposedPorts);
+  }
+
+  /**
+   * Returns a set of {@link AbsoluteUnixPath} representing directories on container to hold volumes
+   * (if specified).
+   *
+   * @return set of volumes
+   */
+  public Set<AbsoluteUnixPath> getVolumes() {
+    if (volumes == null) {
+      return ImmutableSet.of();
+    }
+    return volumes.stream().map(AbsoluteUnixPath::get).collect(Collectors.toSet());
+  }
+
+  public Map<String, String> getEnvironment() {
+    return environment;
+  }
+
+  public Map<String, String> getLabels() {
+    return labels;
+  }
+
+  public Optional<String> getUser() {
+    return Optional.ofNullable(user);
+  }
+
+  public Optional<ImageFormat> getFormat() {
+    return Optional.ofNullable(format);
+  }
+
+  public List<String> getProgramArguments() {
+    return programArguments;
+  }
+
+  public List<String> getEntrypoint() {
+    return entrypoint;
   }
 }

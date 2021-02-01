@@ -17,6 +17,7 @@
 package com.google.cloud.tools.jib.cli.jar;
 
 import static com.google.common.truth.Truth.assertThat;
+import static org.junit.Assert.assertThrows;
 
 import com.google.cloud.tools.jib.filesystem.TempDirectoryProvider;
 import com.google.common.io.Resources;
@@ -36,8 +37,9 @@ public class JarProcessorsTest {
 
   private static final String SPRING_BOOT = "jar/spring-boot/springboot_sample.jar";
   private static final String STANDARD = "jar/standard/emptyStandardJar.jar";
+  private static final String JAVA_14_JAR = "jar/java14WithModuleInfo.jar";
 
-  @Mock private static TempDirectoryProvider mockTemporaryDirectoryProvider;
+  @Mock private TempDirectoryProvider mockTemporaryDirectoryProvider;
 
   @Test
   public void testFrom_standardExploded() throws IOException, URISyntaxException {
@@ -73,5 +75,26 @@ public class JarProcessorsTest {
         JarProcessors.from(jarPath, mockTemporaryDirectoryProvider, ProcessingMode.exploded);
     Mockito.verify(mockTemporaryDirectoryProvider).newDirectory();
     assertThat(processor).isInstanceOf(SpringBootExplodedProcessor.class);
+  }
+
+  @Test
+  public void testFrom_incompatibleBaseImage() throws URISyntaxException {
+    Path jarPath = Paths.get(Resources.getResource(JAVA_14_JAR).toURI());
+    IllegalStateException exception =
+        assertThrows(
+            IllegalStateException.class,
+            () ->
+                JarProcessors.from(
+                    jarPath, mockTemporaryDirectoryProvider, ProcessingMode.exploded));
+    assertThat(exception)
+        .hasMessageThat()
+        .startsWith("The input JAR (" + jarPath + ") is compiled with Java 14");
+  }
+
+  @Test
+  public void testGetMajorJavaVersion_versionNotFound() throws URISyntaxException, IOException {
+    Path jarPath = Paths.get(Resources.getResource(STANDARD).toURI());
+    Integer version = JarProcessors.getJavaMajorVersion(jarPath);
+    assertThat(version).isEqualTo(0);
   }
 }

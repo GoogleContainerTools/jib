@@ -54,8 +54,8 @@ subprojects {
     // For Google libraries, check the following boms for best compatibility.
     // - https://github.com/googleapis/java-shared-dependencies
     // - https://github.com/googleapis/java-cloud-bom
-    GOOGLE_HTTP_CLIENT: 'com.google.http-client:google-http-client:1.38.0',
-    GOOGLE_HTTP_CLIENT_APACHE_V2: 'com.google.http-client:google-http-client-apache-v2:1.38.0',
+    GOOGLE_HTTP_CLIENT: 'com.google.http-client:google-http-client:1.38.1',
+    GOOGLE_HTTP_CLIENT_APACHE_V2: 'com.google.http-client:google-http-client-apache-v2:1.38.1',
     GOOGLE_AUTH_LIBRARY_OAUTH2_HTTP: 'com.google.auth:google-auth-library-oauth2-http:0.22.2',
     GUAVA: 'com.google.guava:guava:30.1-jre',
     JSR305: 'com.google.code.findbugs:jsr305:3.0.2', // transitively pulled in by GUAVA
@@ -80,13 +80,13 @@ subprojects {
     MAVEN_PLUGIN_ANNOTATIONS: 'org.apache.maven.plugin-tools:maven-plugin-annotations:3.6.0',
 
     //test
-    TRUTH: 'com.google.truth:truth:1.1',
-    TRUTH8: 'com.google.truth.extensions:truth-java8-extension:1.1', // should match TRUTH version
+    TRUTH: 'com.google.truth:truth:1.1.2',
+    TRUTH8: 'com.google.truth.extensions:truth-java8-extension:1.1.2', // should match TRUTH version
     JUNIT: 'junit:junit:4.13.1',
     JUNIT_PARAMS: 'pl.pragmatists:JUnitParams:1.1.1',
     MAVEN_TESTING_HARNESS: 'org.apache.maven.plugin-testing:maven-plugin-testing-harness:3.3.0',
     MAVEN_VERIFIER: 'org.apache.maven.shared:maven-verifier:1.7.2',
-    MOCKITO_CORE: 'org.mockito:mockito-core:3.7.0',
+    MOCKITO_CORE: 'org.mockito:mockito-core:3.7.7',
     SISU_PLEXUS: 'org.eclipse.sisu:org.eclipse.sisu.plexus:0.3.4',
     SLF4J_API: 'org.slf4j:slf4j-api:1.7.30',
     SLF4J_SIMPLE: 'org.slf4j:slf4j-simple:1.7.30',
@@ -118,7 +118,7 @@ subprojects {
   dependencies {
     // NullAway errorprone plugin
     annotationProcessor 'com.uber.nullaway:nullaway:0.8.0'
-    errorprone 'com.google.errorprone:error_prone_core:2.3.4'
+    errorprone 'com.google.errorprone:error_prone_core:2.5.1'
     // Using github.com/google/error-prone-javac is required when running on
     // JDK 8. Remove when migrating to JDK 11.
     if (System.getProperty('java.version').startsWith('1.8.')) {

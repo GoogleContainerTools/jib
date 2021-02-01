@@ -40,8 +40,8 @@ import javax.annotation.Nullable;
 
 public class SpringBootExplodedProcessor implements JarProcessor {
 
-  @Nullable private static Path jarPath;
-  @Nullable private static Path tempDirectoryPath;
+  @Nullable private final Path jarPath;
+  @Nullable private final Path tempDirectoryPath;
 
   public SpringBootExplodedProcessor(Path jarPath, Path tempDirectoryPath) {
     this.jarPath = jarPath;
@@ -117,12 +117,14 @@ public class SpringBootExplodedProcessor implements JarProcessor {
   }
 
   @Override
-  public ImmutableList<String> computeEntrypoint() {
-    return ImmutableList.of(
-        "java",
-        "-cp",
-        JarLayers.APP_ROOT.toString(),
-        "org.springframework.boot.loader.JarLauncher");
+  public ImmutableList<String> computeEntrypoint(List<String> jvmFlags) {
+    ImmutableList.Builder<String> entrypoint = ImmutableList.builder();
+    entrypoint.add("java");
+    entrypoint.addAll(jvmFlags);
+    entrypoint.add("-cp");
+    entrypoint.add(JarLayers.APP_ROOT.toString());
+    entrypoint.add("org.springframework.boot.loader.JarLauncher");
+    return entrypoint.build();
   }
 
   /**

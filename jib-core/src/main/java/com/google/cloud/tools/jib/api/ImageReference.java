@@ -252,11 +252,10 @@ public class ImageReference {
   }
 
   /**
-   * Returns {@code true} if {@code tag} is the default tag ((@code latest}); {@code false} if not.
+   * Returns {@code true} if {@code tag} is the default tag ({@code latest}); {@code false} if not.
    *
    * @param tag the tag to check
-   * @return {@code true} if {@code tag} is the default tag ((@code latest} or empty); {@code false}
-   *     if not
+   * @return {@code true} if {@code tag} is the default tag ({@code latest}); {@code false} if not
    */
   public static boolean isDefaultTag(@Nullable String tag) {
     return DEFAULT_TAG.equals(tag);
@@ -330,8 +329,8 @@ public class ImageReference {
   }
 
   /**
-   * Returns {@code true} if the {@link ImageReference} uses the default tag ((@code latest}; {@code
-   * false} if not.
+   * Returns {@code true} if the {@link ImageReference} uses the default tag ({@code latest});
+   * {@code false} if not.
    *
    * @return {@code true} if uses the default tag; {@code false} if not
    */

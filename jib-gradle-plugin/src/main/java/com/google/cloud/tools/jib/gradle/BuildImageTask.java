@@ -31,6 +31,8 @@ import com.google.cloud.tools.jib.plugins.common.InvalidPlatformException;
 import com.google.cloud.tools.jib.plugins.common.InvalidWorkingDirectoryException;
 import com.google.cloud.tools.jib.plugins.common.MainClassInferenceException;
 import com.google.cloud.tools.jib.plugins.common.PluginConfigurationProcessor;
+import com.google.cloud.tools.jib.plugins.common.globalconfig.GlobalConfig;
+import com.google.cloud.tools.jib.plugins.common.globalconfig.InvalidGlobalConfigException;
 import com.google.cloud.tools.jib.plugins.extension.JibPluginExtensionException;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
@@ -80,11 +82,12 @@ public class BuildImageTask extends DefaultTask implements JibTask {
    * @throws BuildStepsExecutionException if an error occurs while executing build steps
    * @throws CacheDirectoryCreationException if a new cache directory could not be created
    * @throws MainClassInferenceException if a main class could not be found
+   * @throws InvalidGlobalConfigException if the global config file is invalid
    */
   @TaskAction
   public void buildImage()
       throws IOException, BuildStepsExecutionException, CacheDirectoryCreationException,
-          MainClassInferenceException {
+          MainClassInferenceException, InvalidGlobalConfigException {
     // Asserts required @Input parameters are not null.
     Preconditions.checkNotNull(jibExtension);
     TaskCommon.disableHttpLogging();
@@ -92,8 +95,9 @@ public class BuildImageTask extends DefaultTask implements JibTask {
 
     GradleProjectProperties projectProperties =
         GradleProjectProperties.getForProject(getProject(), getLogger(), tempDirectoryProvider);
+    GlobalConfig globalConfig = GlobalConfig.readConfig();
     Future<Optional<String>> updateCheckFuture =
-        TaskCommon.newUpdateChecker(projectProperties, getLogger());
+        TaskCommon.newUpdateChecker(projectProperties, globalConfig, getLogger());
     try {
       if (Strings.isNullOrEmpty(jibExtension.getTo().getImage())) {
         throw new GradleException(
@@ -108,6 +112,7 @@ public class BuildImageTask extends DefaultTask implements JibTask {
               new GradleRawConfiguration(jibExtension),
               ignored -> Optional.empty(),
               projectProperties,
+              globalConfig,
               new GradleHelpfulSuggestions(HELPFUL_SUGGESTIONS_PREFIX))
           .runBuild();
 
