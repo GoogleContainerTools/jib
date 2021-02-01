@@ -539,7 +539,7 @@ $ docker manifest inspect openjdk:8
 }
 ```
 
-### I am hitting the Docker Hub rate limiting. How can I configure registry mirrors?
+### I am hitting Docker Hub rate limits. How can I configure registry mirrors?
 
 See the [Maven](https://github.com/GoogleContainerTools/jib/tree/global-config-doc/jib-maven-plugin#global-jib-configuration) and [Gradle](https://github.com/GoogleContainerTools/jib/tree/global-config-doc/jib-gradle-plugin#global-jib-configuration) docs. Note that the example in the docs uses [Google's Docker Hub mirror on `mirror.gcr.io`](https://cloud.google.com/container-registry/docs/pulling-cached-images).
 
