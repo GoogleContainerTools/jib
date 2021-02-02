@@ -84,7 +84,7 @@ public class TarExtractor {
       throws IOException {
     new DirectoryWalker(destination)
         .filter(path -> Files.isDirectory(path))
-        .walk(path -> Files.setLastModifiedTime(path, FileTime.from(Instant.EPOCH.plusMillis(1L))));
+        .walk(path -> Files.setLastModifiedTime(path, FileTime.from(Instant.ofEpochSecond(1L))));
     for (TarArchiveEntry entry : entries) {
       Files.setLastModifiedTime(
           destination.resolve(entry.getName()), FileTime.from(entry.getModTime().toInstant()));

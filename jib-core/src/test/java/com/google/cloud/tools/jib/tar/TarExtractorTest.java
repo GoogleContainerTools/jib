@@ -116,13 +116,13 @@ public class TarExtractorTest {
     TarExtractor.extract(source, destination);
 
     assertThat(Files.getLastModifiedTime(destination.resolve("level-1")))
-        .isEqualTo(FileTime.from(Instant.parse("1970-01-01T00:00:00Z")));
+        .isEqualTo(FileTime.from(Instant.ofEpochSecond(1L)));
     assertThat(Files.getLastModifiedTime(destination.resolve("level-1").resolve("level-2")))
-        .isEqualTo(FileTime.from(Instant.parse("1970-01-01T00:00:00Z")));
+        .isEqualTo(FileTime.from(Instant.ofEpochSecond(1L)));
     assertThat(
             Files.getLastModifiedTime(
                 destination.resolve("level-1").resolve("level-2").resolve("level-3")))
-        .isEqualTo(FileTime.from(Instant.parse("1970-01-01T00:00:00Z")));
+        .isEqualTo(FileTime.from(Instant.ofEpochSecond(1L)));
     assertThat(
             Files.getLastModifiedTime(
                 destination
