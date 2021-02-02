@@ -18,6 +18,7 @@ package com.google.cloud.tools.jib.plugins.common;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import com.google.api.client.testing.http.FixedClock;
 import com.google.common.io.Resources;
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -38,6 +39,7 @@ import org.junit.rules.TemporaryFolder;
 public class ZipUtilTest {
 
   @Rule public final TemporaryFolder tempFolder = new TemporaryFolder();
+  public final FixedClock clock = new FixedClock();
 
   @Test
   public void testUnzip() throws URISyntaxException, IOException {
@@ -72,9 +74,9 @@ public class ZipUtilTest {
 
   @Test
   public void testUnzip_modificationTimePreserved() throws URISyntaxException, IOException {
-    Path destination = tempFolder.getRoot().toPath();
     Path archive =
         Paths.get(Resources.getResource("plugins-common/test-archives/test.zip").toURI());
+    Path destination = tempFolder.getRoot().toPath();
 
     ZipUtil.unzip(archive, destination);
 
@@ -92,6 +94,37 @@ public class ZipUtilTest {
         .isEqualTo(FileTime.from(Instant.parse("2018-08-30T15:16:11Z")));
     assertThat(Files.getLastModifiedTime(destination.resolve("my-zip/some/sub/folder/file3.txt")))
         .isEqualTo(FileTime.from(Instant.parse("2018-08-30T15:16:12Z")));
+  }
+
+  @Test
+  public void testUnzip_modificationTimePreserved_onlyFilePackaged()
+      throws URISyntaxException, IOException {
+    // The zipfile has only level1/level2/level3/file.txt packaged
+    Path archive =
+        Paths.get(
+            Resources.getResource("plugins-common/test-archives/zip-only-file-packaged.zip")
+                .toURI());
+
+    Path destination = tempFolder.getRoot().toPath();
+
+    ZipUtil.unzip(archive, destination);
+
+    assertThat(Files.getLastModifiedTime(destination.resolve("level-1")))
+        .isEqualTo(FileTime.from(Instant.parse("1970-01-01T00:00:00Z")));
+    assertThat(Files.getLastModifiedTime(destination.resolve("level-1").resolve("level-2")))
+        .isEqualTo(FileTime.from(Instant.parse("1970-01-01T00:00:00Z")));
+    assertThat(
+            Files.getLastModifiedTime(
+                destination.resolve("level-1").resolve("level-2").resolve("level-3")))
+        .isEqualTo(FileTime.from(Instant.parse("1970-01-01T00:00:00Z")));
+    assertThat(
+            Files.getLastModifiedTime(
+                destination
+                    .resolve("level-1")
+                    .resolve("level-2")
+                    .resolve("level-3")
+                    .resolve("file.txt")))
+        .isEqualTo(FileTime.from(Instant.parse("2021-01-29T21:10:02Z")));
   }
 
   private void verifyUnzip(Path destination) throws URISyntaxException, IOException {

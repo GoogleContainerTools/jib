@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.tar;
 
+import com.google.cloud.tools.jib.filesystem.DirectoryWalker;
 import com.google.common.io.ByteStreams;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -27,6 +28,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.FileTime;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
@@ -80,11 +82,12 @@ public class TarExtractor {
 
   private static void preserveModificationTimes(Path destination, List<TarArchiveEntry> entries)
       throws IOException {
+    new DirectoryWalker(destination)
+        .filter(path -> Files.isDirectory(path))
+        .walk(path -> Files.setLastModifiedTime(path, FileTime.from(Instant.EPOCH.plusMillis(1L))));
     for (TarArchiveEntry entry : entries) {
-      if (!entry.isSymbolicLink()) {
-        Files.setLastModifiedTime(
-            destination.resolve(entry.getName()), FileTime.from(entry.getModTime().toInstant()));
-      }
+      Files.setLastModifiedTime(
+          destination.resolve(entry.getName()), FileTime.from(entry.getModTime().toInstant()));
     }
   }
 }

@@ -104,4 +104,32 @@ public class TarExtractorTest {
                 destination.resolve("folder").resolve("nested folder").resolve("file C")))
         .isEqualTo(FileTime.from(Instant.parse("2019-08-01T16:12:21Z")));
   }
+
+  @Test
+  public void testExtract_modificationTimePreserved_onlyFilePackaged()
+      throws URISyntaxException, IOException {
+    // The tarfile has only level1/level2/level3/file.txt packaged
+    Path source = Paths.get(Resources.getResource("core/tarfile-only-file-packaged.tar").toURI());
+
+    Path destination = temporaryFolder.getRoot().toPath();
+
+    TarExtractor.extract(source, destination);
+
+    assertThat(Files.getLastModifiedTime(destination.resolve("level-1")))
+        .isEqualTo(FileTime.from(Instant.parse("1970-01-01T00:00:00Z")));
+    assertThat(Files.getLastModifiedTime(destination.resolve("level-1").resolve("level-2")))
+        .isEqualTo(FileTime.from(Instant.parse("1970-01-01T00:00:00Z")));
+    assertThat(
+            Files.getLastModifiedTime(
+                destination.resolve("level-1").resolve("level-2").resolve("level-3")))
+        .isEqualTo(FileTime.from(Instant.parse("1970-01-01T00:00:00Z")));
+    assertThat(
+            Files.getLastModifiedTime(
+                destination
+                    .resolve("level-1")
+                    .resolve("level-2")
+                    .resolve("level-3")
+                    .resolve("file.txt")))
+        .isEqualTo(FileTime.from(Instant.parse("2021-01-29T21:10:02Z")));
+  }
 }

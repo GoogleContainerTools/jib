@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.plugins.common;
 
+import com.google.cloud.tools.jib.filesystem.DirectoryWalker;
 import com.google.common.io.ByteStreams;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -25,6 +26,8 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.attribute.FileTime;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.zip.ZipEntry;
@@ -66,6 +69,7 @@ public class ZipUtil {
             ByteStreams.copy(zipIn, out);
           }
         }
+        Files.setLastModifiedTime(entryPath, entry.getLastModifiedTime());
       }
       preserveModificationTimes(destination, entries);
     }
@@ -73,6 +77,9 @@ public class ZipUtil {
 
   private static void preserveModificationTimes(Path destination, List<ZipEntry> entries)
       throws IOException {
+    new DirectoryWalker(destination)
+        .filter(path -> Files.isDirectory(path))
+        .walk(path -> Files.setLastModifiedTime(path, FileTime.from(Instant.EPOCH.plusMillis(1L))));
     for (ZipEntry entry : entries) {
       Files.setLastModifiedTime(destination.resolve(entry.getName()), entry.getLastModifiedTime());
     }
