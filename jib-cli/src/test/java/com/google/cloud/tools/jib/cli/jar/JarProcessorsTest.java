@@ -18,7 +18,6 @@ package com.google.cloud.tools.jib.cli.jar;
 
 import static com.google.common.truth.Truth.assertThat;
 
-import com.google.cloud.tools.jib.filesystem.TempDirectoryProvider;
 import com.google.common.io.Resources;
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -26,8 +25,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
 /** Tests for {@link JarProcessors}. */
@@ -37,41 +34,39 @@ public class JarProcessorsTest {
   private static final String SPRING_BOOT = "jar/spring-boot/springboot_sample.jar";
   private static final String STANDARD = "jar/standard/emptyStandardJar.jar";
 
-  @Mock private TempDirectoryProvider mockTemporaryDirectoryProvider;
-
   @Test
   public void testFrom_standardExploded() throws IOException, URISyntaxException {
     Path jarPath = Paths.get(Resources.getResource(STANDARD).toURI());
+    Path applicationCachePath = Paths.get("path").resolve("to").resolve("cache");
     JarProcessor processor =
-        JarProcessors.from(jarPath, mockTemporaryDirectoryProvider, ProcessingMode.exploded);
-    Mockito.verify(mockTemporaryDirectoryProvider).newDirectory();
+        JarProcessors.from(jarPath, applicationCachePath, ProcessingMode.exploded);
     assertThat(processor).isInstanceOf(StandardExplodedProcessor.class);
   }
 
   @Test
   public void testFrom_standardPackaged() throws IOException, URISyntaxException {
     Path jarPath = Paths.get(Resources.getResource(STANDARD).toURI());
+    Path applicationCachePath = Paths.get("path").resolve("to").resolve("cache");
     JarProcessor processor =
-        JarProcessors.from(jarPath, mockTemporaryDirectoryProvider, ProcessingMode.packaged);
-    Mockito.verifyNoInteractions(mockTemporaryDirectoryProvider);
+        JarProcessors.from(jarPath, applicationCachePath, ProcessingMode.packaged);
     assertThat(processor).isInstanceOf(StandardPackagedProcessor.class);
   }
 
   @Test
   public void testFrom_springBootPackaged() throws IOException, URISyntaxException {
     Path jarPath = Paths.get(Resources.getResource(SPRING_BOOT).toURI());
+    Path applicationCachePath = Paths.get("path").resolve("to").resolve("cache");
     JarProcessor processor =
-        JarProcessors.from(jarPath, mockTemporaryDirectoryProvider, ProcessingMode.packaged);
-    Mockito.verifyNoInteractions(mockTemporaryDirectoryProvider);
+        JarProcessors.from(jarPath, applicationCachePath, ProcessingMode.packaged);
     assertThat(processor).isInstanceOf(SpringBootPackagedProcessor.class);
   }
 
   @Test
   public void testFrom_springBootExploded() throws IOException, URISyntaxException {
     Path jarPath = Paths.get(Resources.getResource(SPRING_BOOT).toURI());
+    Path applicationCachePath = Paths.get("path").resolve("to").resolve("cache");
     JarProcessor processor =
-        JarProcessors.from(jarPath, mockTemporaryDirectoryProvider, ProcessingMode.exploded);
-    Mockito.verify(mockTemporaryDirectoryProvider).newDirectory();
+        JarProcessors.from(jarPath, applicationCachePath, ProcessingMode.exploded);
     assertThat(processor).isInstanceOf(SpringBootExplodedProcessor.class);
   }
 }
