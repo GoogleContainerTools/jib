@@ -33,6 +33,8 @@ import java.nio.file.Path;
 import java.time.Duration;
 import java.util.Optional;
 import java.util.concurrent.Callable;
+
+import com.google.common.io.RecursiveDeleteOption;
 import picocli.CommandLine;
 import picocli.CommandLine.Model.CommandSpec;
 
@@ -110,7 +112,7 @@ public class Jar implements Callable<Integer> {
       Path applicationLayerCache = cacheDirectories.getApplicationLayersCache();
 
       // Clear application-cache directory first
-      MoreFiles.deleteRecursively(applicationLayerCache);
+      MoreFiles.deleteRecursively(applicationLayerCache, RecursiveDeleteOption.ALLOW_INSECURE);
 
       JarProcessor processor = JarProcessors.from(jarFile, applicationLayerCache, mode);
       JibContainerBuilder containerBuilder =
