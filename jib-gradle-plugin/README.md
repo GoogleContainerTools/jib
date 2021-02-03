@@ -33,6 +33,7 @@ For information about the project, see the [Jib project README](../README.md).
   * [Authentication Methods](#authentication-methods)
     * [Using Docker Credential Helpers](#using-docker-credential-helpers)
     * [Using Specific Credentials](#using-specific-credentials)
+  * [Jib Extensions](#jib-extensions)
   * [WAR Projects](#war-projects)
   * [Skaffold Integration](#skaffold-integration)
 * [Frequently Asked Questions (FAQ)](#frequently-asked-questions-faq)
@@ -468,6 +469,12 @@ jib {
   }
 }
 ```
+
+
+### Jib Extensions
+
+The Jib build plugins have an extension framework that enables anyone to easily extend Jib's behavior to their needs. We maintain select [first-party](https://github.com/GoogleContainerTools/jib-extensions/tree/master/first-party) plugins for popular use cases like [fine-grained layer control](https://github.com/GoogleContainerTools/jib-extensions/tree/master/first-party/jib-layer-filter-extension-gradle) and [Quarkus support](https://github.com/GoogleContainerTools/jib-extensions/tree/master/first-party/jib-quarkus-extension-gradle), but anyone can write and publish an extension. Check out the [jib-extensions](https://github.com/GoogleContainerTools/jib-extensions) repository for more information.
+
 
 ### WAR Projects
 

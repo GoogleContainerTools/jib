@@ -21,8 +21,13 @@ import static com.google.common.truth.Truth8.assertThat;
 import static org.junit.Assert.assertThrows;
 
 import com.google.cloud.tools.jib.api.Credential;
+import com.google.cloud.tools.jib.api.Ports;
+import com.google.cloud.tools.jib.api.buildplan.AbsoluteUnixPath;
+import com.google.cloud.tools.jib.api.buildplan.ImageFormat;
 import com.google.cloud.tools.jib.cli.logging.Verbosity;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import java.nio.file.Paths;
 import junitparams.JUnitParamsRunner;
 import junitparams.Parameters;
@@ -41,7 +46,9 @@ public class JarTest {
         assertThrows(
             MissingParameterException.class,
             () -> CommandLine.populateCommand(new Jar(), "my-app.jar"));
-    assertThat(mpe.getMessage()).isEqualTo("Missing required option: '--target=<target-image>'");
+    assertThat(mpe)
+        .hasMessageThat()
+        .isEqualTo("Missing required option: '--target=<target-image>'");
   }
 
   @Test
@@ -50,7 +57,7 @@ public class JarTest {
         assertThrows(
             MissingParameterException.class,
             () -> CommandLine.populateCommand(new Jar(), "--target=test-image-ref"));
-    assertThat(mpe.getMessage()).isEqualTo("Missing required parameter: '<jarFile>'");
+    assertThat(mpe).hasMessageThat().isEqualTo("Missing required parameter: '<jarFile>'");
   }
 
   @Test
@@ -353,7 +360,9 @@ public class JarTest {
                     usernameField,
                     "test-username",
                     "my-app.jar"));
-    assertThat(mpe.getMessage()).isEqualTo("Error: Missing required argument(s): " + passwordField);
+    assertThat(mpe)
+        .hasMessageThat()
+        .isEqualTo("Error: Missing required argument(s): " + passwordField);
   }
 
   @Test
@@ -369,7 +378,8 @@ public class JarTest {
                     passwordField,
                     "test-password",
                     "my-app.jar"));
-    assertThat(mpe.getMessage())
+    assertThat(mpe)
+        .hasMessageThat()
         .isEqualTo("Error: Missing required argument(s): " + usernameField + "=<username>");
   }
 
@@ -407,8 +417,105 @@ public class JarTest {
   public void testParse_from() {
     Jar jarCommand =
         CommandLine.populateCommand(
-            new Jar(), "--target", "test-image-ref", "--from", "base-image-ref", "my-app.jar");
+            new Jar(), "--target=test-image-ref", "--from=base-image-ref", "my-app.jar");
     assertThat(jarCommand.getFrom()).hasValue("base-image-ref");
+  }
+
+  @Test
+  public void testParse_jvmFlags() {
+    Jar jarCommand =
+        CommandLine.populateCommand(
+            new Jar(), "--target=test-image-ref", "--jvm-flags=jvm-flag1,jvm-flag2", "my-app.jar");
+    assertThat(jarCommand.getJvmFlags()).isEqualTo(ImmutableList.of("jvm-flag1", "jvm-flag2"));
+  }
+
+  @Test
+  public void testParse_exposedPorts() {
+    Jar jarCommand =
+        CommandLine.populateCommand(
+            new Jar(), "--target=test-image-ref", "--expose=8080,3306", "my-app.jar");
+    assertThat(jarCommand.getExposedPorts())
+        .isEqualTo(Ports.parse(ImmutableList.of("8080", "3306")));
+  }
+
+  @Test
+  public void testParse_volumes() {
+    Jar jarCommand =
+        CommandLine.populateCommand(
+            new Jar(), "--target=test-image-ref", "--volumes=/volume1,/volume2", "my-app.jar");
+    assertThat(jarCommand.getVolumes())
+        .isEqualTo(
+            ImmutableSet.of(AbsoluteUnixPath.get("/volume1"), AbsoluteUnixPath.get("/volume2")));
+  }
+
+  @Test
+  public void testParse_environment() {
+    Jar jarCommand =
+        CommandLine.populateCommand(
+            new Jar(),
+            "--target=test-image-ref",
+            "--environment-variables=ENV_VAR1=value1,ENV_VAR2=value2",
+            "my-app.jar");
+    assertThat(jarCommand.getEnvironment())
+        .isEqualTo(ImmutableMap.of("ENV_VAR1", "value1", "ENV_VAR2", "value2"));
+  }
+
+  @Test
+  public void testParse_labels() {
+    Jar jarCommand =
+        CommandLine.populateCommand(
+            new Jar(),
+            "--target=test-image-ref",
+            "--labels=label1=value2,label2=value2",
+            "my-app.jar");
+    assertThat(jarCommand.getLabels())
+        .isEqualTo(ImmutableMap.of("label1", "value2", "label2", "value2"));
+  }
+
+  @Test
+  public void testParse_user() {
+    Jar jarCommand =
+        CommandLine.populateCommand(
+            new Jar(), "--target=test-image-ref", "--user=customUser", "my-app.jar");
+    assertThat(jarCommand.getUser()).hasValue("customUser");
+  }
+
+  @Test
+  public void testParse_imageFormat() {
+    Jar jarCommand =
+        CommandLine.populateCommand(
+            new Jar(), "--target=test-image-ref", "--image-format=OCI", "my-app.jar");
+    assertThat(jarCommand.getFormat()).hasValue(ImageFormat.OCI);
+  }
+
+  @Test
+  public void testParse_invalidImageFormat() {
+    CommandLine.ParameterException exception =
+        assertThrows(
+            CommandLine.ParameterException.class,
+            () ->
+                CommandLine.populateCommand(
+                    new Jar(), "--target=test-image-ref", "--image-format=unknown", "my-app.jar"));
+    assertThat(exception)
+        .hasMessageThat()
+        .isEqualTo(
+            "Invalid value for option '--image-format': expected one of [Docker, OCI] (case-sensitive) but was 'unknown'");
+  }
+
+  @Test
+  public void testParse_programArguments() {
+    Jar jarCommand =
+        CommandLine.populateCommand(
+            new Jar(), "--target=test-image-ref", "--program-args=arg1,arg2", "my-app.jar");
+    assertThat(jarCommand.getProgramArguments()).isEqualTo(ImmutableList.of("arg1", "arg2"));
+  }
+
+  @Test
+  public void testParse_entrypoint() {
+    Jar jarCommand =
+        CommandLine.populateCommand(
+            new Jar(), "--target=test-image-ref", "--entrypoint=java -cp myClass", "my-app.jar");
+    assertThat(jarCommand.getEntrypoint()).isEqualTo(ImmutableList.of("java", "-cp", "myClass"));
   }
 
   @Test
@@ -417,7 +524,8 @@ public class JarTest {
         CommandLine.populateCommand(new Jar(), "--target=tar://sometar.tar", "my-app.jar");
     CommandLine.ParameterException pex =
         assertThrows(CommandLine.ParameterException.class, jarCommand.commonCliOptions::validate);
-    assertThat(pex.getMessage())
+    assertThat(pex)
+        .hasMessageThat()
         .isEqualTo("Missing option: --name must be specified when using --target=tar://....");
   }
 

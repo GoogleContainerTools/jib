@@ -28,6 +28,8 @@ dependencies {
   testImplementation dependencyStrings.MAVEN_TESTING_HARNESS
 
   testImplementation dependencyStrings.JUNIT
+  testImplementation dependencyStrings.TRUTH
+  testImplementation dependencyStrings.TRUTH8
   testImplementation dependencyStrings.MOCKITO_CORE
   testImplementation dependencyStrings.SLF4J_API
   testImplementation dependencyStrings.SYSTEM_RULES

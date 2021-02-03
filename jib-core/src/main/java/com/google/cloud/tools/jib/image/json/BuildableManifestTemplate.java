@@ -40,7 +40,6 @@ public interface BuildableManifestTemplate extends ManifestTemplate {
    * @see <a href="https://github.com/opencontainers/image-spec/blob/master/descriptor.md">OCI
    *     Content Descriptors</a>
    */
-  @VisibleForTesting
   class ContentDescriptorTemplate implements JsonTemplate {
 
     @SuppressWarnings("unused")

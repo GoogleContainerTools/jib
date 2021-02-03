@@ -33,12 +33,10 @@ import org.mockito.Mockito;
 public class ContainerizerTest {
 
   @Test
-  public void testTo() throws CacheDirectoryCreationException {
-    RegistryImage registryImage = RegistryImage.named(ImageReference.of(null, "repository", null));
-    DockerDaemonImage dockerDaemonImage =
-        DockerDaemonImage.named(ImageReference.of(null, "repository", null));
-    TarImage tarImage =
-        TarImage.at(Paths.get("ignored")).named(ImageReference.of(null, "repository", null));
+  public void testTo() throws CacheDirectoryCreationException, InvalidImageReferenceException {
+    RegistryImage registryImage = RegistryImage.named("registry/image");
+    DockerDaemonImage dockerDaemonImage = DockerDaemonImage.named("daemon/image");
+    TarImage tarImage = TarImage.at(Paths.get("ignored")).named("tar/iamge");
 
     verifyTo(Containerizer.to(registryImage));
     verifyTo(Containerizer.to(dockerDaemonImage));
@@ -79,10 +77,8 @@ public class ContainerizerTest {
   }
 
   @Test
-  public void testWithAdditionalTag() {
-    DockerDaemonImage dockerDaemonImage =
-        DockerDaemonImage.named(ImageReference.of(null, "repository", null));
-    Containerizer containerizer = Containerizer.to(dockerDaemonImage);
+  public void testWithAdditionalTag() throws InvalidImageReferenceException {
+    Containerizer containerizer = Containerizer.to(DockerDaemonImage.named("image"));
 
     containerizer.withAdditionalTag("tag");
     try {

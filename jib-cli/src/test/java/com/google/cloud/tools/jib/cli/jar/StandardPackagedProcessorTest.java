@@ -127,7 +127,7 @@ public class StandardPackagedProcessorTest {
     IllegalArgumentException exception =
         assertThrows(
             IllegalArgumentException.class,
-            () -> standardPackagedModeProcessor.computeEntrypoint());
+            () -> standardPackagedModeProcessor.computeEntrypoint(ImmutableList.of()));
 
     assertThat(exception)
         .hasMessageThat()
@@ -143,9 +143,26 @@ public class StandardPackagedProcessorTest {
     StandardPackagedProcessor standardPackagedModeProcessor =
         new StandardPackagedProcessor(standardJar);
 
-    ImmutableList<String> actualEntrypoint = standardPackagedModeProcessor.computeEntrypoint();
+    ImmutableList<String> actualEntrypoint =
+        standardPackagedModeProcessor.computeEntrypoint(ImmutableList.of());
 
     assertThat(actualEntrypoint)
         .isEqualTo(ImmutableList.of("java", "-jar", "/app/standardJarWithClassPath.jar"));
+  }
+
+  @Test
+  public void testComputeEntrypoint_withMainClass_jvmFlags()
+      throws IOException, URISyntaxException {
+    Path standardJar =
+        Paths.get(Resources.getResource(STANDARD_JAR_WITH_CLASS_PATH_MANIFEST).toURI());
+    StandardPackagedProcessor standardPackagedModeProcessor =
+        new StandardPackagedProcessor(standardJar);
+
+    ImmutableList<String> actualEntrypoint =
+        standardPackagedModeProcessor.computeEntrypoint(ImmutableList.of("-jvm-flag"));
+
+    assertThat(actualEntrypoint)
+        .isEqualTo(
+            ImmutableList.of("java", "-jvm-flag", "-jar", "/app/standardJarWithClassPath.jar"));
   }
 }
