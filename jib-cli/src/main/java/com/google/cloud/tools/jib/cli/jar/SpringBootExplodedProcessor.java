@@ -55,7 +55,7 @@ public class SpringBootExplodedProcessor implements JarProcessor {
     }
     try (JarFile jarFile = new JarFile(jarPath.toFile())) {
       Path localExplodedJarRoot = tempDirectoryPath;
-      ZipUtil.unzip(jarPath, localExplodedJarRoot);
+      ZipUtil.unzip(jarPath, localExplodedJarRoot, true);
       ZipEntry layerIndex = jarFile.getEntry("BOOT-INF/layers.idx");
       if (layerIndex != null) {
         return createLayersForLayeredSpringBootJar(localExplodedJarRoot);
