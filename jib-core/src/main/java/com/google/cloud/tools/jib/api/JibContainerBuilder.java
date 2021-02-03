@@ -723,6 +723,7 @@ public class JibContainerBuilder {
         .setExecutorService(containerizer.getExecutorService().orElse(null))
         .setEventHandlers(containerizer.buildEventHandlers())
         .setAlwaysCacheBaseImage(containerizer.getAlwaysCacheBaseImage())
+        .setRegistryMirrors(containerizer.getRegistryMirrors())
         .build();
   }
 

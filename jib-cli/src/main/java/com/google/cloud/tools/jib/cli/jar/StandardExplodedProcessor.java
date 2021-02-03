@@ -78,7 +78,7 @@ public class StandardExplodedProcessor implements JarProcessor {
   }
 
   @Override
-  public ImmutableList<String> computeEntrypoint() throws IOException {
+  public ImmutableList<String> computeEntrypoint(List<String> jvmFlags) throws IOException {
     if (jarPath == null) {
       return ImmutableList.of();
     }
@@ -92,7 +92,13 @@ public class StandardExplodedProcessor implements JarProcessor {
       }
       String classpath =
           JarLayers.APP_ROOT + "/explodedJar:" + JarLayers.APP_ROOT + "/dependencies/*";
-      return ImmutableList.of("java", "-cp", classpath, mainClass);
+      ImmutableList.Builder<String> entrypoint = ImmutableList.builder();
+      entrypoint.add("java");
+      entrypoint.addAll(jvmFlags);
+      entrypoint.add("-cp");
+      entrypoint.add(classpath);
+      entrypoint.add(mainClass);
+      return entrypoint.build();
     }
   }
 }
