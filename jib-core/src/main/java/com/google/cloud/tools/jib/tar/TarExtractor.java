@@ -76,8 +76,8 @@ public class TarExtractor {
           }
         }
       }
-      preserveModificationTimes(destination, entries);
     }
+    preserveModificationTimes(destination, entries);
   }
 
   private static void preserveModificationTimes(Path destination, List<TarArchiveEntry> entries)

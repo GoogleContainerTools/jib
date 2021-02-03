@@ -45,10 +45,9 @@ public class ZipUtil {
    */
   public static void unzip(Path archive, Path destination) throws IOException {
     String canonicalDestination = destination.toFile().getCanonicalPath();
-
+    List<ZipEntry> entries = new ArrayList<>();
     try (InputStream fileIn = new BufferedInputStream(Files.newInputStream(archive));
         ZipInputStream zipIn = new ZipInputStream(fileIn)) {
-      List<ZipEntry> entries = new ArrayList<>();
       for (ZipEntry entry = zipIn.getNextEntry(); entry != null; entry = zipIn.getNextEntry()) {
         entries.add(entry);
         Path entryPath = destination.resolve(entry.getName());
@@ -69,10 +68,9 @@ public class ZipUtil {
             ByteStreams.copy(zipIn, out);
           }
         }
-        Files.setLastModifiedTime(entryPath, entry.getLastModifiedTime());
       }
-      preserveModificationTimes(destination, entries);
     }
+    preserveModificationTimes(destination, entries);
   }
 
   private static void preserveModificationTimes(Path destination, List<ZipEntry> entries)

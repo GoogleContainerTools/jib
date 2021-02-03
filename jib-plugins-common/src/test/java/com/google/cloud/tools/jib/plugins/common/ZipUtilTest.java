@@ -18,7 +18,6 @@ package com.google.cloud.tools.jib.plugins.common;
 
 import static com.google.common.truth.Truth.assertThat;
 
-import com.google.api.client.testing.http.FixedClock;
 import com.google.common.io.Resources;
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -39,7 +38,6 @@ import org.junit.rules.TemporaryFolder;
 public class ZipUtilTest {
 
   @Rule public final TemporaryFolder tempFolder = new TemporaryFolder();
-  public final FixedClock clock = new FixedClock();
 
   @Test
   public void testUnzip() throws URISyntaxException, IOException {
@@ -111,19 +109,11 @@ public class ZipUtilTest {
 
     assertThat(Files.getLastModifiedTime(destination.resolve("level-1")))
         .isEqualTo(FileTime.from(Instant.ofEpochSecond(1L)));
-    assertThat(Files.getLastModifiedTime(destination.resolve("level-1").resolve("level-2")))
+    assertThat(Files.getLastModifiedTime(destination.resolve("level-1/level-2")))
         .isEqualTo(FileTime.from(Instant.ofEpochSecond(1L)));
-    assertThat(
-            Files.getLastModifiedTime(
-                destination.resolve("level-1").resolve("level-2").resolve("level-3")))
+    assertThat(Files.getLastModifiedTime(destination.resolve("level-1/level-2/level-3")))
         .isEqualTo(FileTime.from(Instant.ofEpochSecond(1L)));
-    assertThat(
-            Files.getLastModifiedTime(
-                destination
-                    .resolve("level-1")
-                    .resolve("level-2")
-                    .resolve("level-3")
-                    .resolve("file.txt")))
+    assertThat(Files.getLastModifiedTime(destination.resolve("level-1/level-2/level-3/file.txt")))
         .isEqualTo(FileTime.from(Instant.parse("2021-01-29T21:10:02Z")));
   }
 
