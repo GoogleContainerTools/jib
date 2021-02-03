@@ -104,21 +104,20 @@ public class TarExtractorTest {
   }
 
   @Test
-  public void testExtract_modificationTimePreserved_onlyFilePackaged()
-      throws URISyntaxException, IOException {
+  public void testExtract_reproducibleTimestampsEnabled() throws URISyntaxException, IOException {
     // The tarfile has only level1/level2/level3/file.txt packaged
     Path source = Paths.get(Resources.getResource("core/tarfile-only-file-packaged.tar").toURI());
 
     Path destination = temporaryFolder.getRoot().toPath();
 
-    TarExtractor.extract(source, destination);
+    TarExtractor.extract(source, destination, true);
 
     assertThat(Files.getLastModifiedTime(destination.resolve("level-1")))
-        .isEqualTo(FileTime.from(Instant.ofEpochSecond(1L)));
+        .isEqualTo(FileTime.fromMillis(1000L));
     assertThat(Files.getLastModifiedTime(destination.resolve("level-1/level-2")))
-        .isEqualTo(FileTime.from(Instant.ofEpochSecond(1L)));
+        .isEqualTo(FileTime.fromMillis(1000L));
     assertThat(Files.getLastModifiedTime(destination.resolve("level-1/level-2/level-3")))
-        .isEqualTo(FileTime.from(Instant.ofEpochSecond(1L)));
+        .isEqualTo(FileTime.fromMillis(1000L));
     assertThat(Files.getLastModifiedTime(destination.resolve("level-1/level-2/level-3/file.txt")))
         .isEqualTo(FileTime.from(Instant.parse("2021-01-29T21:10:02Z")));
   }

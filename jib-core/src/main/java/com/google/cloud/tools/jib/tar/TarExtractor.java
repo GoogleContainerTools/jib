@@ -28,7 +28,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.FileTime;
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
@@ -45,6 +44,19 @@ public class TarExtractor {
    * @throws IOException if extraction fails
    */
   public static void extract(Path source, Path destination) throws IOException {
+    extract(source, destination, false);
+  }
+
+  /**
+   * Extracts a tarball to the specified destination.
+   *
+   * @param source the tarball to extract
+   * @param destination the output directory
+   * @param enableReproducibleTimestamps whether or not reproducible timestamps should be used
+   * @throws IOException if extraction fails
+   */
+  public static void extract(Path source, Path destination, boolean enableReproducibleTimestamps)
+      throws IOException {
     String canonicalDestination = destination.toFile().getCanonicalPath();
     List<TarArchiveEntry> entries = new ArrayList<>();
     try (InputStream in = new BufferedInputStream(Files.newInputStream(source));
@@ -77,14 +89,31 @@ public class TarExtractor {
         }
       }
     }
-    preserveModificationTimes(destination, entries);
+    preserveModificationTimes(destination, entries, enableReproducibleTimestamps);
   }
 
-  private static void preserveModificationTimes(Path destination, List<TarArchiveEntry> entries)
+  /**
+   * Preserve modification time of files and directories in a tar file. If a directory is not an
+   * entry in the tar file and reproducible timestamps are enabled then it's modification timestamp
+   * is set to a constant value.
+   *
+   * @param destination target root for unzipping
+   * @param entries list of entries in tar file
+   * @param enableReproducibleTimestamps whether or not reproducible timestamps should be used
+   * @throws IOException when I/O error occurs
+   */
+  private static void preserveModificationTimes(
+      Path destination, List<TarArchiveEntry> entries, boolean enableReproducibleTimestamps)
       throws IOException {
-    new DirectoryWalker(destination)
-        .filter(path -> Files.isDirectory(path))
-        .walk(path -> Files.setLastModifiedTime(path, FileTime.from(Instant.ofEpochSecond(1L))));
+    if (!Files.exists(destination)) {
+      return;
+    }
+    if (enableReproducibleTimestamps) {
+      FileTime epochPlusOne = FileTime.fromMillis(1000L);
+      new DirectoryWalker(destination)
+          .filter(path -> Files.isDirectory(path))
+          .walk(path -> Files.setLastModifiedTime(path, epochPlusOne));
+    }
     for (TarArchiveEntry entry : entries) {
       Files.setLastModifiedTime(
           destination.resolve(entry.getName()), FileTime.from(entry.getModTime().toInstant()));
