@@ -95,8 +95,7 @@ public class ZipUtilTest {
   }
 
   @Test
-  public void testUnzip_modificationTimePreserved_onlyFilePackaged()
-      throws URISyntaxException, IOException {
+  public void testUnzip_reproducibleTimestampsEnabled() throws URISyntaxException, IOException {
     // The zipfile has only level1/level2/level3/file.txt packaged
     Path archive =
         Paths.get(
@@ -105,14 +104,14 @@ public class ZipUtilTest {
 
     Path destination = tempFolder.getRoot().toPath();
 
-    ZipUtil.unzip(archive, destination);
+    ZipUtil.unzip(archive, destination, true);
 
     assertThat(Files.getLastModifiedTime(destination.resolve("level-1")))
-        .isEqualTo(FileTime.from(Instant.ofEpochSecond(1L)));
+        .isEqualTo(FileTime.fromMillis(1000L));
     assertThat(Files.getLastModifiedTime(destination.resolve("level-1/level-2")))
-        .isEqualTo(FileTime.from(Instant.ofEpochSecond(1L)));
+        .isEqualTo(FileTime.fromMillis(1000L));
     assertThat(Files.getLastModifiedTime(destination.resolve("level-1/level-2/level-3")))
-        .isEqualTo(FileTime.from(Instant.ofEpochSecond(1L)));
+        .isEqualTo(FileTime.fromMillis(1000L));
     assertThat(Files.getLastModifiedTime(destination.resolve("level-1/level-2/level-3/file.txt")))
         .isEqualTo(FileTime.from(Instant.parse("2021-01-29T21:10:02Z")));
   }
