@@ -17,6 +17,7 @@
 package com.google.cloud.tools.jib.plugins.common;
 
 import static com.google.common.truth.Truth.assertThat;
+import static org.junit.Assert.assertThrows;
 
 import com.google.common.io.Resources;
 import java.io.IOException;
@@ -114,6 +115,15 @@ public class ZipUtilTest {
         .isEqualTo(FileTime.fromMillis(1000L));
     assertThat(Files.getLastModifiedTime(destination.resolve("level-1/level-2/level-3/file.txt")))
         .isEqualTo(FileTime.from(Instant.parse("2021-01-29T21:10:02Z")));
+  }
+
+  @Test
+  public void testUnzip_reproducibleTimestampsEnabled_invalidDestination() throws IOException {
+    Path destination = tempFolder.getRoot().toPath();
+    Files.createDirectory(destination.resolve("directory"));
+
+    assertThrows(
+        IllegalStateException.class, () -> ZipUtil.unzip(Paths.get("ignore"), destination, true));
   }
 
   private void verifyUnzip(Path destination) throws URISyntaxException, IOException {

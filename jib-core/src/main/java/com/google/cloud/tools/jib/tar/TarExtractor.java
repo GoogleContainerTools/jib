@@ -54,9 +54,17 @@ public class TarExtractor {
    * @param destination the output directory
    * @param enableReproducibleTimestamps whether or not reproducible timestamps should be used
    * @throws IOException if extraction fails
+   * @throws IllegalStateException when reproducible timestamps are enabled but the target root used
+   *     for extracting the tar contents is not empty
    */
   public static void extract(Path source, Path destination, boolean enableReproducibleTimestamps)
       throws IOException {
+    boolean isEmptyDestination =
+        Files.isDirectory(destination) && destination.toFile().list().length == 0;
+    if (enableReproducibleTimestamps && !isEmptyDestination) {
+      throw new IllegalStateException(
+          "Reproducible timestamps can only be enabled when the target root is an empty directory.");
+    }
     String canonicalDestination = destination.toFile().getCanonicalPath();
     List<TarArchiveEntry> entries = new ArrayList<>();
     try (InputStream in = new BufferedInputStream(Files.newInputStream(source));
@@ -105,9 +113,6 @@ public class TarExtractor {
   private static void preserveModificationTimes(
       Path destination, List<TarArchiveEntry> entries, boolean enableReproducibleTimestamps)
       throws IOException {
-    if (!Files.exists(destination)) {
-      return;
-    }
     if (enableReproducibleTimestamps) {
       FileTime epochPlusOne = FileTime.fromMillis(1000L);
       new DirectoryWalker(destination)

@@ -17,6 +17,7 @@
 package com.google.cloud.tools.jib.tar;
 
 import static com.google.common.truth.Truth.assertThat;
+import static org.junit.Assert.assertThrows;
 
 import com.google.common.io.Resources;
 import java.io.IOException;
@@ -120,5 +121,15 @@ public class TarExtractorTest {
         .isEqualTo(FileTime.fromMillis(1000L));
     assertThat(Files.getLastModifiedTime(destination.resolve("level-1/level-2/level-3/file.txt")))
         .isEqualTo(FileTime.from(Instant.parse("2021-01-29T21:10:02Z")));
+  }
+
+  @Test
+  public void testExtract_reproducibleTimestampsEnabled_invalidDestination() throws IOException {
+    Path destination = temporaryFolder.getRoot().toPath();
+    Files.createDirectory(destination.resolve("directory"));
+
+    assertThrows(
+        IllegalStateException.class,
+        () -> TarExtractor.extract(Paths.get("ignore"), destination, true));
   }
 }

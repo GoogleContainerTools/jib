@@ -53,9 +53,17 @@ public class ZipUtil {
    * @param destination target root for unzipping
    * @param enableReproducibleTimestamps whether or not reproducible timestamps should be used
    * @throws IOException when I/O error occurs
+   * @throws IllegalStateException when reproducible timestamps are enabled but the target root used
+   *     for unzipping is not empty
    */
   public static void unzip(Path archive, Path destination, boolean enableReproducibleTimestamps)
       throws IOException {
+    boolean isEmptyDestination =
+        Files.isDirectory(destination) && destination.toFile().list().length == 0;
+    if (enableReproducibleTimestamps && !isEmptyDestination) {
+      throw new IllegalStateException(
+          "Reproducible timestamps can only be enabled when the target root is an empty directory.");
+    }
     String canonicalDestination = destination.toFile().getCanonicalPath();
     List<ZipEntry> entries = new ArrayList<>();
     try (InputStream fileIn = new BufferedInputStream(Files.newInputStream(archive));
@@ -98,9 +106,6 @@ public class ZipUtil {
   private static void preserveModificationTimes(
       Path destination, List<ZipEntry> entries, boolean enableReproducibleTimestamps)
       throws IOException {
-    if (!Files.exists(destination)) {
-      return;
-    }
     if (enableReproducibleTimestamps) {
       FileTime epochPlusOne = FileTime.fromMillis(1000L);
       new DirectoryWalker(destination)
