@@ -95,7 +95,7 @@ public class BuildTarTask extends DefaultTask implements JibTask {
             .stream()
             .map(ExtraDirectoryParameters::getFrom)
             .collect(Collectors.toList());
-    return GradleProjectProperties.getInputFiles(getProject(), extraDirectories);
+    return GradleProjectProperties.getInputFiles(getProject(), extraDirectories, jibExtension.readConfigurationName());
   }
 
   /**

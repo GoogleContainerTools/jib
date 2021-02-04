@@ -37,6 +37,7 @@ import com.google.cloud.tools.jib.api.buildplan.ModificationTimeProvider;
 import com.google.cloud.tools.jib.api.buildplan.Platform;
 import com.google.cloud.tools.jib.frontend.CredentialRetrieverFactory;
 import com.google.cloud.tools.jib.global.JibSystemProperties;
+import com.google.cloud.tools.jib.gradle.InvalidConfigurationNameException;
 import com.google.cloud.tools.jib.plugins.common.RawConfiguration.PlatformConfiguration;
 import com.google.cloud.tools.jib.plugins.common.globalconfig.GlobalConfig;
 import com.google.cloud.tools.jib.plugins.extension.JibPluginExtensionException;
@@ -411,7 +412,8 @@ public class PluginConfigurationProcessor {
         projectProperties
             .createJibContainerBuilder(
                 javaContainerBuilder,
-                getContainerizingModeChecked(rawConfiguration, projectProperties))
+                getContainerizingModeChecked(rawConfiguration, projectProperties),
+                rawConfiguration.getConfigurationName())
             .setFormat(rawConfiguration.getImageFormat())
             .setPlatforms(getPlatformsSet(rawConfiguration))
             .setEntrypoint(computeEntrypoint(rawConfiguration, projectProperties))
@@ -607,7 +609,7 @@ public class PluginConfigurationProcessor {
     if (rawConfiguration.getExpandClasspathDependencies()) {
       List<String> dependencies =
           projectProperties
-              .getDependencies()
+              .getDependencies(rawConfiguration.getConfigurationName())
               .stream()
               .map(path -> appRoot.resolve("libs").resolve(path.getFileName()).toString())
               .collect(Collectors.toList());

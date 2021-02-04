@@ -61,12 +61,12 @@ public interface ProjectProperties {
    * @throws IOException if there is a problem walking the project files
    */
   JibContainerBuilder createJibContainerBuilder(
-      JavaContainerBuilder javaContainerBuilder, ContainerizingMode containerizingMode)
+      JavaContainerBuilder javaContainerBuilder, ContainerizingMode containerizingMode, String configurationName)
       throws IOException;
 
   List<Path> getClassFiles() throws IOException;
 
-  List<Path> getDependencies();
+  List<Path> getDependencies(String configurationName);
 
   Path getDefaultCacheDirectory();
 

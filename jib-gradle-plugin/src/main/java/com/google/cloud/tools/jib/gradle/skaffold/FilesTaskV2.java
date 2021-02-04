@@ -24,11 +24,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayDeque;
-import java.util.Deque;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import org.gradle.api.DefaultTask;
@@ -38,7 +34,6 @@ import org.gradle.api.artifacts.Dependency;
 import org.gradle.api.artifacts.ProjectDependency;
 import org.gradle.api.artifacts.PublishArtifact;
 import org.gradle.api.initialization.Settings;
-import org.gradle.api.plugins.JavaPlugin;
 import org.gradle.api.plugins.JavaPluginConvention;
 import org.gradle.api.tasks.SourceSet;
 import org.gradle.api.tasks.TaskAction;
@@ -110,7 +105,7 @@ public class FilesTaskV2 extends DefaultTask {
 
     // Add SNAPSHOT, non-project dependency jars
     for (File file :
-        project.getConfigurations().getByName(JavaPlugin.RUNTIME_CLASSPATH_CONFIGURATION_NAME)) {
+        project.getConfigurations().getByName(jibExtension.readConfigurationName())) {
       if (!projectDependencyJars.contains(file) && file.toString().contains("SNAPSHOT")) {
         skaffoldFilesOutput.addInput(file.toPath());
         projectDependencyJars.add(file); // Add to set to avoid printing the same files twice
@@ -192,9 +187,13 @@ public class FilesTaskV2 extends DefaultTask {
    * @return the set of project dependencies
    */
   private Set<ProjectDependency> findProjectDependencies(Project project) {
+    Preconditions.checkNotNull(jibExtension);
+
     Set<ProjectDependency> projectDependencies = new HashSet<>();
     Deque<Project> projects = new ArrayDeque<>();
     projects.push(project);
+
+    String configurationName = jibExtension.readConfigurationName();
 
     while (!projects.isEmpty()) {
       Project currentProject = projects.pop();
@@ -203,7 +202,7 @@ public class FilesTaskV2 extends DefaultTask {
       Configuration runtimeClasspath =
           currentProject
               .getConfigurations()
-              .findByName(JavaPlugin.RUNTIME_CLASSPATH_CONFIGURATION_NAME);
+              .findByName(configurationName);
       if (runtimeClasspath != null) {
         for (Configuration configuration : runtimeClasspath.getHierarchy()) {
           for (Dependency dependency : configuration.getDependencies()) {

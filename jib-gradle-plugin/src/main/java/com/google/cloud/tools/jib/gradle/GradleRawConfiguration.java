@@ -197,6 +197,11 @@ public class GradleRawConfiguration implements RawConfiguration {
   }
 
   @Override
+  public String getConfigurationName() {
+    return jibExtension.readConfigurationName();
+  }
+
+  @Override
   public Path getTarOutputPath() {
     return jibExtension.getOutputPaths().getTarPath();
   }

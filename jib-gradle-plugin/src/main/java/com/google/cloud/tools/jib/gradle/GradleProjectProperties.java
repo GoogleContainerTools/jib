@@ -187,13 +187,13 @@ public class GradleProjectProperties implements ProjectProperties {
 
   @Override
   public JibContainerBuilder createJibContainerBuilder(
-      JavaContainerBuilder javaContainerBuilder, ContainerizingMode containerizingMode) {
+      JavaContainerBuilder javaContainerBuilder, ContainerizingMode containerizingMode, String configurationName) {
     try {
       FileCollection projectDependencies =
           project.files(
               project
                   .getConfigurations()
-                  .getByName(JavaPlugin.RUNTIME_CLASSPATH_CONFIGURATION_NAME)
+                  .getByName(configurationName)
                   .getResolvedConfiguration()
                   .getResolvedArtifacts()
                   .stream()
@@ -219,7 +219,7 @@ public class GradleProjectProperties implements ProjectProperties {
       FileCollection classesOutputDirectories =
           mainSourceSet.getOutput().getClassesDirs().filter(File::exists);
       Path resourcesOutputDirectory = mainSourceSet.getOutput().getResourcesDir().toPath();
-      FileCollection allFiles = mainSourceSet.getRuntimeClasspath().filter(File::exists);
+      FileCollection allFiles = project.getConfigurations().getByName(configurationName).filter(File::exists);
 
       FileCollection nonProjectDependencies =
           allFiles
@@ -296,9 +296,9 @@ public class GradleProjectProperties implements ProjectProperties {
   }
 
   @Override
-  public List<Path> getDependencies() {
+  public List<Path> getDependencies(String configurationName) {
     List<Path> dependencies = new ArrayList<>();
-    FileCollection runtimeClasspath = getMainSourceSet().getRuntimeClasspath();
+    FileCollection runtimeClasspath = project.getConfigurations().getByName(configurationName);
     // To be on the safe side with the order, calling "forEach" first (no filtering operations).
     runtimeClasspath.forEach(
         file -> {
@@ -387,12 +387,12 @@ public class GradleProjectProperties implements ProjectProperties {
    * @param extraDirectories the image's configured extra directories
    * @return the input files
    */
-  static FileCollection getInputFiles(Project project, List<Path> extraDirectories) {
+  static FileCollection getInputFiles(Project project, List<Path> extraDirectories, String configurationName) {
     JavaPluginConvention javaPluginConvention =
         project.getConvention().getPlugin(JavaPluginConvention.class);
     SourceSet mainSourceSet = javaPluginConvention.getSourceSets().getByName(MAIN_SOURCE_SET_NAME);
     List<FileCollection> dependencyFileCollections = new ArrayList<>();
-    dependencyFileCollections.add(mainSourceSet.getRuntimeClasspath());
+    dependencyFileCollections.add(project.getConfigurations().getByName(configurationName));
 
     extraDirectories
         .stream()
