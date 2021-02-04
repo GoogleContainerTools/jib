@@ -124,12 +124,14 @@ public class TarExtractorTest {
   }
 
   @Test
-  public void testExtract_reproducibleTimestampsEnabled_invalidDestination() throws IOException {
+  public void testExtract_reproducibleTimestampsEnabled_destinationNotEmpty() throws IOException {
     Path destination = temporaryFolder.getRoot().toPath();
-    Files.createDirectory(destination.resolve("directory"));
+    temporaryFolder.newFile();
 
-    assertThrows(
-        IllegalStateException.class,
-        () -> TarExtractor.extract(Paths.get("ignore"), destination, true));
+    IllegalStateException exception =
+        assertThrows(
+            IllegalStateException.class,
+            () -> TarExtractor.extract(Paths.get("ignore"), destination, true));
+    assertThat(exception).hasMessageThat().startsWith("Cannot enable reproducible timestamps");
   }
 }

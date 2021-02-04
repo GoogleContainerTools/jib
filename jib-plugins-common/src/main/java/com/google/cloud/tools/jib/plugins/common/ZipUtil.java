@@ -58,11 +58,11 @@ public class ZipUtil {
    */
   public static void unzip(Path archive, Path destination, boolean enableReproducibleTimestamps)
       throws IOException {
-    boolean isEmptyDestination =
-        Files.isDirectory(destination) && destination.toFile().list().length == 0;
-    if (enableReproducibleTimestamps && Files.exists(destination) && !isEmptyDestination) {
+    if (enableReproducibleTimestamps
+        && Files.isDirectory(destination)
+        && destination.toFile().list().length != 0) {
       throw new IllegalStateException(
-          "Reproducible timestamps can only be enabled when the target root is an empty directory.");
+          "Cannot enable reproducible timestamps. They can only be enabled when the target root doesn't exist or is an empty directory");
     }
     String canonicalDestination = destination.toFile().getCanonicalPath();
     List<ZipEntry> entries = new ArrayList<>();
@@ -95,7 +95,7 @@ public class ZipUtil {
 
   /**
    * Preserve modification time of files and directories in a zip file. If a directory is not an
-   * entry in the zip file and reproducible timestamps are enabled then it's modification timestamp
+   * entry in the zip file and reproducible timestamps are enabled then its modification timestamp
    * is set to a constant value.
    *
    * @param destination target root for unzipping
@@ -109,7 +109,7 @@ public class ZipUtil {
     if (enableReproducibleTimestamps) {
       FileTime epochPlusOne = FileTime.fromMillis(1000L);
       new DirectoryWalker(destination)
-          .filter(path -> Files.isDirectory(path))
+          .filter(Files::isDirectory)
           .walk(path -> Files.setLastModifiedTime(path, epochPlusOne));
     }
     for (ZipEntry entry : entries) {

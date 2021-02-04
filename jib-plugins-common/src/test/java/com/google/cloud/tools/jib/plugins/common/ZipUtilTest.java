@@ -118,12 +118,15 @@ public class ZipUtilTest {
   }
 
   @Test
-  public void testUnzip_reproducibleTimestampsEnabled_invalidDestination() throws IOException {
+  public void testUnzip_reproducibleTimestampsEnabled_destinationNotEmpty() throws IOException {
     Path destination = tempFolder.getRoot().toPath();
-    Files.createDirectory(destination.resolve("directory"));
+    tempFolder.newFile();
 
-    assertThrows(
-        IllegalStateException.class, () -> ZipUtil.unzip(Paths.get("ignore"), destination, true));
+    IllegalStateException exception =
+        assertThrows(
+            IllegalStateException.class,
+            () -> ZipUtil.unzip(Paths.get("ignore"), destination, true));
+    assertThat(exception).hasMessageThat().startsWith("Cannot enable reproducible timestamps");
   }
 
   private void verifyUnzip(Path destination) throws URISyntaxException, IOException {
