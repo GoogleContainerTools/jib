@@ -52,7 +52,7 @@ public class StandardExplodedProcessor implements JarProcessor {
     // Determine class and resource files in the directory containing jar contents and create
     // FileEntriesLayer for each type of layer (classes or resources).
     Path localExplodedJarRoot = tempDirectoryPath;
-    ZipUtil.unzip(jarPath, localExplodedJarRoot);
+    ZipUtil.unzip(jarPath, localExplodedJarRoot, true);
     Predicate<Path> isClassFile = path -> path.getFileName().toString().endsWith(".class");
     Predicate<Path> isResourceFile = isClassFile.negate().and(Files::isRegularFile);
     FileEntriesLayer classesLayer =
