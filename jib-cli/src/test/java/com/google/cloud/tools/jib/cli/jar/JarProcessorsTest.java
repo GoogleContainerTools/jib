@@ -17,14 +17,21 @@
 package com.google.cloud.tools.jib.cli.jar;
 
 import static com.google.common.truth.Truth.assertThat;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.when;
 
+import com.google.cloud.tools.jib.cli.CacheDirectories;
 import com.google.common.io.Resources;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 import org.junit.runner.RunWith;
+import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 /** Tests for {@link JarProcessors}. */
@@ -34,39 +41,53 @@ public class JarProcessorsTest {
   private static final String SPRING_BOOT = "jar/spring-boot/springboot_sample.jar";
   private static final String STANDARD = "jar/standard/emptyStandardJar.jar";
 
+  @Mock private CacheDirectories mockCacheDirectories;
+
+  @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
+
   @Test
   public void testFrom_standardExploded() throws IOException, URISyntaxException {
     Path jarPath = Paths.get(Resources.getResource(STANDARD).toURI());
-    Path applicationCachePath = Paths.get("path").resolve("to").resolve("cache");
+    Path destination = temporaryFolder.getRoot().toPath();
+    when(mockCacheDirectories.getExplodedJarCache()).thenReturn(destination);
+
     JarProcessor processor =
-        JarProcessors.from(jarPath, applicationCachePath, ProcessingMode.exploded);
+        JarProcessors.from(jarPath, mockCacheDirectories, ProcessingMode.exploded);
+
+    verify(mockCacheDirectories).getExplodedJarCache();
     assertThat(processor).isInstanceOf(StandardExplodedProcessor.class);
   }
 
   @Test
   public void testFrom_standardPackaged() throws IOException, URISyntaxException {
     Path jarPath = Paths.get(Resources.getResource(STANDARD).toURI());
-    Path applicationCachePath = Paths.get("path").resolve("to").resolve("cache");
     JarProcessor processor =
-        JarProcessors.from(jarPath, applicationCachePath, ProcessingMode.packaged);
+        JarProcessors.from(jarPath, mockCacheDirectories, ProcessingMode.packaged);
+
+    verifyNoInteractions(mockCacheDirectories);
     assertThat(processor).isInstanceOf(StandardPackagedProcessor.class);
   }
 
   @Test
   public void testFrom_springBootPackaged() throws IOException, URISyntaxException {
     Path jarPath = Paths.get(Resources.getResource(SPRING_BOOT).toURI());
-    Path applicationCachePath = Paths.get("path").resolve("to").resolve("cache");
     JarProcessor processor =
-        JarProcessors.from(jarPath, applicationCachePath, ProcessingMode.packaged);
+        JarProcessors.from(jarPath, mockCacheDirectories, ProcessingMode.packaged);
+
+    verifyNoInteractions(mockCacheDirectories);
     assertThat(processor).isInstanceOf(SpringBootPackagedProcessor.class);
   }
 
   @Test
   public void testFrom_springBootExploded() throws IOException, URISyntaxException {
     Path jarPath = Paths.get(Resources.getResource(SPRING_BOOT).toURI());
-    Path applicationCachePath = Paths.get("path").resolve("to").resolve("cache");
+    Path destination = temporaryFolder.getRoot().toPath();
+    when(mockCacheDirectories.getExplodedJarCache()).thenReturn(destination);
+
     JarProcessor processor =
-        JarProcessors.from(jarPath, applicationCachePath, ProcessingMode.exploded);
+        JarProcessors.from(jarPath, mockCacheDirectories, ProcessingMode.exploded);
+
+    verify(mockCacheDirectories).getExplodedJarCache();
     assertThat(processor).isInstanceOf(SpringBootExplodedProcessor.class);
   }
 }

@@ -27,14 +27,11 @@ import com.google.cloud.tools.jib.cli.logging.CliLogger;
 import com.google.cloud.tools.jib.plugins.common.logging.ConsoleLogger;
 import com.google.cloud.tools.jib.plugins.common.logging.SingleThreadedExecutor;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.io.MoreFiles;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.Optional;
 import java.util.concurrent.Callable;
-
-import com.google.common.io.RecursiveDeleteOption;
 import picocli.CommandLine;
 import picocli.CommandLine.Model.CommandSpec;
 
@@ -109,15 +106,9 @@ public class Jar implements Callable<Integer> {
 
       CacheDirectories cacheDirectories =
           CacheDirectories.from(commonCliOptions, jarFile.toAbsolutePath().getParent());
-      Path applicationLayerCache = cacheDirectories.getApplicationLayersCache();
-
-      // Clear application-cache directory first
-      MoreFiles.deleteRecursively(applicationLayerCache, RecursiveDeleteOption.ALLOW_INSECURE);
-
-      JarProcessor processor = JarProcessors.from(jarFile, applicationLayerCache, mode);
+      JarProcessor processor = JarProcessors.from(jarFile, cacheDirectories, mode);
       JibContainerBuilder containerBuilder =
           JarFiles.toJibContainerBuilder(processor, this, commonCliOptions, logger);
-
       Containerizer containerizer = Containerizers.from(commonCliOptions, logger, cacheDirectories);
       containerBuilder.containerize(containerizer);
     } catch (Exception ex) {

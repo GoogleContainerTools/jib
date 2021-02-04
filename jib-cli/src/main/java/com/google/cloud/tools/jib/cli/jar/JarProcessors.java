@@ -16,6 +16,9 @@
 
 package com.google.cloud.tools.jib.cli.jar;
 
+import com.google.cloud.tools.jib.cli.CacheDirectories;
+import com.google.common.io.MoreFiles;
+import com.google.common.io.RecursiveDeleteOption;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.jar.JarFile;
@@ -29,22 +32,30 @@ public class JarProcessors {
    * Creates a {@link JarProcessor} instance based on jar type and processing mode.
    *
    * @param jarPath path to the jar
-   * @param applicationLayerCache path to application-layer cache directory
+   * @param cacheDirectories the location of the relevant caches
    * @param mode processing mode
    * @return JarProcessor
    * @throws IOException if I/O error occurs when opening the jar file
    */
-  public static JarProcessor from(Path jarPath, Path applicationLayerCache, ProcessingMode mode)
-      throws IOException {
+  public static JarProcessor from(
+      Path jarPath, CacheDirectories cacheDirectories, ProcessingMode mode) throws IOException {
     String jarType = determineJarType(jarPath);
     if (jarType.equals(SPRING_BOOT) && mode.equals(ProcessingMode.packaged)) {
       return new SpringBootPackagedProcessor(jarPath);
     } else if (jarType.equals(SPRING_BOOT) && mode.equals(ProcessingMode.exploded)) {
-      return new SpringBootExplodedProcessor(jarPath, applicationLayerCache);
+      Path explodedJarCache = cacheDirectories.getExplodedJarCache();
+      // Clear the exploded-jar cache directory first
+      MoreFiles.deleteRecursively(explodedJarCache, RecursiveDeleteOption.ALLOW_INSECURE);
+
+      return new SpringBootExplodedProcessor(jarPath, explodedJarCache);
     } else if (jarType.equals(STANDARD) && mode.equals(ProcessingMode.packaged)) {
       return new StandardPackagedProcessor(jarPath);
     } else {
-      return new StandardExplodedProcessor(jarPath, applicationLayerCache);
+      Path explodedJarCache = cacheDirectories.getExplodedJarCache();
+      // Clear the exploded-jar cache directory first
+      MoreFiles.deleteRecursively(explodedJarCache, RecursiveDeleteOption.ALLOW_INSECURE);
+
+      return new StandardExplodedProcessor(jarPath, explodedJarCache);
     }
   }
 
