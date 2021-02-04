@@ -101,7 +101,7 @@ public class TarExtractor {
   }
 
   /**
-   * Preserve modification time of files and directories in a tar file. If a directory is not an
+   * Preserve modification timestamps of files and directories in a tar file. If a directory is not an
    * entry in the tar file and reproducible timestamps are enabled then its modification timestamp
    * is set to a constant value. Note that the modification timestamps of symbolic links are not
    * preserved even with reproducible timestamps being enabled.
