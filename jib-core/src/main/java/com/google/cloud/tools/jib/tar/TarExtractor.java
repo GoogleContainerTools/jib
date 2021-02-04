@@ -61,7 +61,7 @@ public class TarExtractor {
       throws IOException {
     boolean isEmptyDestination =
         Files.isDirectory(destination) && destination.toFile().list().length == 0;
-    if (enableReproducibleTimestamps && !isEmptyDestination) {
+    if (enableReproducibleTimestamps && Files.exists(destination) && !isEmptyDestination) {
       throw new IllegalStateException(
           "Reproducible timestamps can only be enabled when the target root is an empty directory.");
     }
