@@ -120,8 +120,13 @@ public class TarExtractor {
           .walk(path -> Files.setLastModifiedTime(path, epochPlusOne));
     }
     for (TarArchiveEntry entry : entries) {
-      Files.setLastModifiedTime(
-          destination.resolve(entry.getName()), FileTime.from(entry.getModTime().toInstant()));
+
+      // Setting the symbolic link's modification timestamp will cause the modification timestamp of
+      // the target to change
+      if (!entry.isSymbolicLink()) {
+        Files.setLastModifiedTime(
+            destination.resolve(entry.getName()), FileTime.from(entry.getModTime().toInstant()));
+      }
     }
   }
 }
