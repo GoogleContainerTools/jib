@@ -39,5 +39,5 @@ See [java-agent](java-agent) for launching with the Stackdriver Debugger Java ag
 ### Kafka Connect+Streams example
 
 See the following projects for using Jib-packaged applications in coordination with [Apache Kafka](http://kafka.apache.org/documentation).
-  - [Kakfa Streams](http://kafka.apache.org/documentation/streams) - [`OneCricketeer/kafka-streams-jib-example`](https://github.com/OneCricketeer/kafka-streams-jib-example)
+  - [Kafka Streams](http://kafka.apache.org/documentation/streams) - [`OneCricketeer/kafka-streams-jib-example`](https://github.com/OneCricketeer/kafka-streams-jib-example)
   - [Kafka Connect](http://kafka.apache.org/documentation#connect) - [`OneCricketeer/apache-kafka-connect-docker`](https://github.com/OneCricketeer/apache-kafka-connect-docker)
