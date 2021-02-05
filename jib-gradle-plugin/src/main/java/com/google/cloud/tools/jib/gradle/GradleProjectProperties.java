@@ -104,6 +104,7 @@ public class GradleProjectProperties implements ProjectProperties {
    * @param project a gradle project
    * @param logger a gradle logging instance to use for logging during the build
    * @param tempDirectoryProvider for scratch space during the build
+   * @param configurationName the configuration of which the dependencies should be packed into the container
    * @return a GradleProjectProperties instance to use in a jib build
    */
   public static GradleProjectProperties getForProject(
@@ -391,8 +392,6 @@ public class GradleProjectProperties implements ProjectProperties {
    * @return the input files
    */
   static FileCollection getInputFiles(Project project, List<Path> extraDirectories, String configurationName) {
-    JavaPluginConvention javaPluginConvention =
-        project.getConvention().getPlugin(JavaPluginConvention.class);
     List<FileCollection> dependencyFileCollections = new ArrayList<>();
     dependencyFileCollections.add(project.getConfigurations().getByName(configurationName));
 
