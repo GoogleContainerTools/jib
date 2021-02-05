@@ -17,10 +17,10 @@
 package com.google.cloud.tools.jib.cli.jar;
 
 import static com.google.common.truth.Truth.assertThat;
+import static org.junit.Assert.assertThrows;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
-import static org.junit.Assert.assertThrows;
 
 import com.google.cloud.tools.jib.cli.CacheDirectories;
 import com.google.common.io.Resources;
@@ -99,9 +99,7 @@ public class JarProcessorsTest {
     IllegalStateException exception =
         assertThrows(
             IllegalStateException.class,
-            () ->
-                JarProcessors.from(
-                    jarPath, mockCacheDirectories, ProcessingMode.exploded));
+            () -> JarProcessors.from(jarPath, mockCacheDirectories, ProcessingMode.exploded));
     assertThat(exception)
         .hasMessageThat()
         .startsWith("The input JAR (" + jarPath + ") is compiled with Java 14");

@@ -100,7 +100,6 @@ public class TarExtractor {
     preserveModificationTimes(destination, entries, enableReproducibleTimestamps);
   }
 
-
   /**
    * Preserve modification timestamps of files and directories in a tar file. If a directory is not
    * an entry in the tar file and reproducible timestamps are enabled then its modification

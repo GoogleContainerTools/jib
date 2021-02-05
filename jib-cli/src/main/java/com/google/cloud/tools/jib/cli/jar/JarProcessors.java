@@ -17,16 +17,14 @@
 package com.google.cloud.tools.jib.cli.jar;
 
 import com.google.cloud.tools.jib.cli.CacheDirectories;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.io.MoreFiles;
 import com.google.common.io.RecursiveDeleteOption;
-import java.io.IOException;
-import java.nio.file.Files;
-import com.google.cloud.tools.jib.filesystem.TempDirectoryProvider;
-import com.google.common.annotations.VisibleForTesting;
 import java.io.DataInputStream;
 import java.io.IOException;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Enumeration;
 import java.util.jar.JarEntry;
