@@ -49,9 +49,6 @@ public class SpringBootExplodedProcessor implements JarProcessor {
 
   @Override
   public List<FileEntriesLayer> createLayers() throws IOException {
-    if (targetExplodedJarRoot == null || jarPath == null) {
-      return new ArrayList<>();
-    }
     try (JarFile jarFile = new JarFile(jarPath.toFile())) {
       ZipUtil.unzip(jarPath, targetExplodedJarRoot, true);
       ZipEntry layerIndex = jarFile.getEntry("BOOT-INF/layers.idx");
