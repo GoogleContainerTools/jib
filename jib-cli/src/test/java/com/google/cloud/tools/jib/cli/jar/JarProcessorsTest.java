@@ -51,12 +51,12 @@ public class JarProcessorsTest {
   public void testFrom_standardExploded() throws IOException, URISyntaxException {
     Path jarPath = Paths.get(Resources.getResource(STANDARD).toURI());
     Path destination = temporaryFolder.getRoot().toPath();
-    when(mockCacheDirectories.getExplodedJarCache()).thenReturn(destination);
+    when(mockCacheDirectories.getExplodedJarDirectory()).thenReturn(destination);
 
     JarProcessor processor =
         JarProcessors.from(jarPath, mockCacheDirectories, ProcessingMode.exploded);
 
-    verify(mockCacheDirectories).getExplodedJarCache();
+    verify(mockCacheDirectories).getExplodedJarDirectory();
     assertThat(processor).isInstanceOf(StandardExplodedProcessor.class);
   }
 
@@ -84,12 +84,12 @@ public class JarProcessorsTest {
   public void testFrom_springBootExploded() throws IOException, URISyntaxException {
     Path jarPath = Paths.get(Resources.getResource(SPRING_BOOT).toURI());
     Path destination = temporaryFolder.getRoot().toPath();
-    when(mockCacheDirectories.getExplodedJarCache()).thenReturn(destination);
+    when(mockCacheDirectories.getExplodedJarDirectory()).thenReturn(destination);
 
     JarProcessor processor =
         JarProcessors.from(jarPath, mockCacheDirectories, ProcessingMode.exploded);
 
-    verify(mockCacheDirectories).getExplodedJarCache();
+    verify(mockCacheDirectories).getExplodedJarDirectory();
     assertThat(processor).isInstanceOf(SpringBootExplodedProcessor.class);
   }
 
