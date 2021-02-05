@@ -50,6 +50,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.StringJoiner;
 import java.util.function.Function;
@@ -57,9 +58,24 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
+
+import groovy.lang.Closure;
+import org.gradle.api.Action;
 import org.gradle.api.JavaVersion;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
+import org.gradle.api.artifacts.Configuration;
+import org.gradle.api.artifacts.ConfigurationContainer;
+import org.gradle.api.artifacts.ConfigurationPublications;
+import org.gradle.api.artifacts.Dependency;
+import org.gradle.api.artifacts.DependencyConstraintSet;
+import org.gradle.api.artifacts.DependencySet;
+import org.gradle.api.artifacts.ExcludeRule;
+import org.gradle.api.artifacts.PublishArtifactSet;
+import org.gradle.api.artifacts.ResolutionStrategy;
+import org.gradle.api.artifacts.ResolvableDependencies;
+import org.gradle.api.artifacts.ResolvedConfiguration;
+import org.gradle.api.attributes.AttributeContainer;
 import org.gradle.api.file.ConfigurableFileCollection;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.internal.file.AbstractFileCollection;
@@ -71,10 +87,12 @@ import org.gradle.api.plugins.Convention;
 import org.gradle.api.plugins.JavaPlugin;
 import org.gradle.api.plugins.JavaPluginConvention;
 import org.gradle.api.plugins.WarPlugin;
+import org.gradle.api.specs.Spec;
 import org.gradle.api.tasks.SourceSet;
 import org.gradle.api.tasks.SourceSetContainer;
 import org.gradle.api.tasks.SourceSetOutput;
 import org.gradle.api.tasks.TaskContainer;
+import org.gradle.api.tasks.TaskDependency;
 import org.gradle.api.tasks.TaskProvider;
 import org.gradle.jvm.tasks.Jar;
 import org.hamcrest.CoreMatchers;
@@ -89,6 +107,8 @@ import org.mockito.Answers;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
+
+import javax.annotation.Nullable;
 
 /** Test for {@link GradleProjectProperties}. */
 @RunWith(MockitoJUnitRunner.class)
@@ -115,6 +135,271 @@ public class GradleProjectPropertiesTest {
     @Override
     public Set<File> getFiles() {
       return files;
+    }
+  }
+
+  private static class TestConfiguration extends TestFileCollection implements Configuration {
+    private final ResolvedConfiguration resolvedConfiguration;
+
+    private TestConfiguration(Set<Path> files, ResolvedConfiguration resolvedConfiguration) {
+      super(files);
+      this.resolvedConfiguration = resolvedConfiguration;
+    }
+
+    @Override
+    public ResolutionStrategy getResolutionStrategy() {
+      return null;
+    }
+
+    @Override
+    public Configuration resolutionStrategy(Closure closure) {
+      return null;
+    }
+
+    @Override
+    public Configuration resolutionStrategy(Action<? super ResolutionStrategy> action) {
+      return null;
+    }
+
+    @Override
+    public State getState() {
+      return null;
+    }
+
+    @Override
+    public String getName() {
+      return null;
+    }
+
+    @Override
+    public boolean isVisible() {
+      return false;
+    }
+
+    @Override
+    public Configuration setVisible(boolean b) {
+      return null;
+    }
+
+    @Override
+    public Set<Configuration> getExtendsFrom() {
+      return null;
+    }
+
+    @Override
+    public Configuration setExtendsFrom(Iterable<Configuration> iterable) {
+      return null;
+    }
+
+    @Override
+    public Configuration extendsFrom(Configuration... configurations) {
+      return null;
+    }
+
+    @Override
+    public boolean isTransitive() {
+      return false;
+    }
+
+    @Override
+    public Configuration setTransitive(boolean b) {
+      return null;
+    }
+
+    @Nullable
+    @Override
+    public String getDescription() {
+      return null;
+    }
+
+    @Override
+    public Configuration setDescription(@Nullable String s) {
+      return null;
+    }
+
+    @Override
+    public Set<Configuration> getHierarchy() {
+      return null;
+    }
+
+    @Override
+    public Set<File> resolve() {
+      return null;
+    }
+
+    @Override
+    public Set<File> files(Closure closure) {
+      return null;
+    }
+
+    @Override
+    public Set<File> files(Spec<? super Dependency> spec) {
+      return null;
+    }
+
+    @Override
+    public Set<File> files(Dependency... dependencies) {
+      return null;
+    }
+
+    @Override
+    public FileCollection fileCollection(Spec<? super Dependency> spec) {
+      return null;
+    }
+
+    @Override
+    public FileCollection fileCollection(Closure closure) {
+      return null;
+    }
+
+    @Override
+    public FileCollection fileCollection(Dependency... dependencies) {
+      return null;
+    }
+
+    @Override
+    public ResolvedConfiguration getResolvedConfiguration() {
+      return resolvedConfiguration;
+    }
+
+    @Override
+    public String getUploadTaskName() {
+      return null;
+    }
+
+    @Override
+    public TaskDependency getTaskDependencyFromProjectDependency(boolean b, String s) {
+      return null;
+    }
+
+    @Override
+    public DependencySet getDependencies() {
+      return null;
+    }
+
+    @Override
+    public DependencySet getAllDependencies() {
+      return null;
+    }
+
+    @Override
+    public DependencyConstraintSet getDependencyConstraints() {
+      return null;
+    }
+
+    @Override
+    public DependencyConstraintSet getAllDependencyConstraints() {
+      return null;
+    }
+
+    @Override
+    public PublishArtifactSet getArtifacts() {
+      return null;
+    }
+
+    @Override
+    public PublishArtifactSet getAllArtifacts() {
+      return null;
+    }
+
+    @Override
+    public Set<ExcludeRule> getExcludeRules() {
+      return null;
+    }
+
+    @Override
+    public Configuration exclude(Map<String, String> map) {
+      return null;
+    }
+
+    @Override
+    public Configuration defaultDependencies(Action<? super DependencySet> action) {
+      return null;
+    }
+
+    @Override
+    public Configuration withDependencies(Action<? super DependencySet> action) {
+      return null;
+    }
+
+    @Override
+    public Set<Configuration> getAll() {
+      return null;
+    }
+
+    @Override
+    public ResolvableDependencies getIncoming() {
+      return null;
+    }
+
+    @Override
+    public ConfigurationPublications getOutgoing() {
+      return null;
+    }
+
+    @Override
+    public void outgoing(Action<? super ConfigurationPublications> action) {
+
+    }
+
+    @Override
+    public Configuration copy() {
+      return null;
+    }
+
+    @Override
+    public Configuration copyRecursive() {
+      return null;
+    }
+
+    @Override
+    public Configuration copy(Spec<? super Dependency> spec) {
+      return null;
+    }
+
+    @Override
+    public Configuration copyRecursive(Spec<? super Dependency> spec) {
+      return null;
+    }
+
+    @Override
+    public Configuration copy(Closure closure) {
+      return null;
+    }
+
+    @Override
+    public Configuration copyRecursive(Closure closure) {
+      return null;
+    }
+
+    @Override
+    public void setCanBeConsumed(boolean b) {
+
+    }
+
+    @Override
+    public boolean isCanBeConsumed() {
+      return false;
+    }
+
+    @Override
+    public void setCanBeResolved(boolean b) {
+
+    }
+
+    @Override
+    public boolean isCanBeResolved() {
+      return true;
+    }
+
+    @Override
+    public Configuration attributes(Action<? super AttributeContainer> action) {
+      return null;
+    }
+
+    @Override
+    public AttributeContainer getAttributes() {
+      return null;
     }
   }
 
@@ -183,6 +468,9 @@ public class GradleProjectPropertiesTest {
   @Mock private Supplier<List<JibGradlePluginExtension<?>>> mockExtensionLoader;
   @Mock private FileResolver mockFileResolver;
   @Mock private Convention mockConvention;
+  @Mock private ConfigurationContainer mockConfigurationContainer;
+  @Mock private Configuration mockConfiguration;
+  @Mock private ResolvedConfiguration mockResolvedConfiguration;
   @Mock private TaskContainer mockTaskContainer;
   @Mock private Logger mockLogger;
   @Mock private JavaPluginConvention mockJavaPluginConvention;
@@ -212,17 +500,13 @@ public class GradleProjectPropertiesTest {
     Mockito.when(mockConvention.getPlugin(JavaPluginConvention.class))
         .thenReturn(mockJavaPluginConvention);
     Mockito.when(mockJavaPluginConvention.getSourceSets()).thenReturn(mockSourceSetContainer);
+    Mockito.when(mockProject.getConfigurations()).thenReturn(mockConfigurationContainer);
     Mockito.when(mockProject.getTasks()).thenReturn(mockTaskContainer);
     Mockito.when(mockProject.getGradle().getStartParameter().getConsoleOutput())
         .thenReturn(ConsoleOutput.Plain);
 
     // mocking to complete ignore project dependency resolution
-    Mockito.when(
-            mockProject
-                .getConfigurations()
-                .getByName(JavaPlugin.RUNTIME_CLASSPATH_CONFIGURATION_NAME)
-                .getResolvedConfiguration()
-                .getResolvedArtifacts())
+    Mockito.when(mockResolvedConfiguration.getResolvedArtifacts())
         .thenReturn(ImmutableSet.of());
     ConfigurableFileCollection emptyFileCollection = Mockito.mock(ConfigurableFileCollection.class);
     Mockito.when(emptyFileCollection.getFiles()).thenReturn(ImmutableSet.of());
@@ -242,13 +526,13 @@ public class GradleProjectPropertiesTest {
     allFiles.add(getResource("gradle/application/dependencies/more/dependency-1.0.0.jar"));
     allFiles.add(getResource("gradle/application/dependencies/another/one/dependency-1.0.0.jar"));
     allFiles.add(getResource("gradle/application/dependencies/dependencyX-1.0.0-SNAPSHOT.jar"));
-    FileCollection runtimeFileCollection = new TestFileCollection(allFiles);
 
     Mockito.when(mockSourceSetContainer.getByName("main")).thenReturn(mockMainSourceSet);
     Mockito.when(mockMainSourceSet.getOutput()).thenReturn(mockMainSourceSetOutput);
     Mockito.when(mockMainSourceSetOutput.getClassesDirs()).thenReturn(classesFileCollection);
     Mockito.when(mockMainSourceSetOutput.getResourcesDir()).thenReturn(resourcesOutputDir.toFile());
-    Mockito.when(mockMainSourceSet.getRuntimeClasspath()).thenReturn(runtimeFileCollection);
+    Mockito.when(mockConfigurationContainer.getByName(JavaPlugin.RUNTIME_CLASSPATH_CONFIGURATION_NAME))
+        .thenReturn(new TestConfiguration(allFiles, mockResolvedConfiguration));
     // We can't commit an empty directory in Git, so create (if not exist).
     Path emptyDirectory = getResource("gradle/webapp").resolve("WEB-INF/classes/empty_dir");
     Files.createDirectories(emptyDirectory);
