@@ -106,7 +106,7 @@ public class BuildDockerTask extends DefaultTask implements JibTask {
     TempDirectoryProvider tempDirectoryProvider = new TempDirectoryProvider();
 
     GradleProjectProperties projectProperties =
-        GradleProjectProperties.getForProject(getProject(), getLogger(), tempDirectoryProvider);
+        GradleProjectProperties.getForProject(getProject(), getLogger(), tempDirectoryProvider, jibExtension.readConfigurationName());
     GlobalConfig globalConfig = GlobalConfig.readConfig();
     Future<Optional<String>> updateCheckFuture =
         TaskCommon.newUpdateChecker(projectProperties, globalConfig, getLogger());

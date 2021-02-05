@@ -107,7 +107,7 @@ public class GradleProjectProperties implements ProjectProperties {
    * @return a GradleProjectProperties instance to use in a jib build
    */
   public static GradleProjectProperties getForProject(
-      Project project, Logger logger, TempDirectoryProvider tempDirectoryProvider) {
+      Project project, Logger logger, TempDirectoryProvider tempDirectoryProvider, String configurationName) {
     Supplier<List<JibGradlePluginExtension<?>>> extensionLoader =
         () -> {
           List<JibGradlePluginExtension<?>> extensions = new ArrayList<>();
@@ -117,7 +117,7 @@ public class GradleProjectProperties implements ProjectProperties {
           }
           return extensions;
         };
-    return new GradleProjectProperties(project, logger, tempDirectoryProvider, extensionLoader);
+    return new GradleProjectProperties(project, logger, tempDirectoryProvider, extensionLoader, configurationName);
   }
 
   String getWarFilePath() {
@@ -155,16 +155,19 @@ public class GradleProjectProperties implements ProjectProperties {
   private final ConsoleLogger consoleLogger;
   private final TempDirectoryProvider tempDirectoryProvider;
   private final Supplier<List<JibGradlePluginExtension<?>>> extensionLoader;
+  private final String configurationName;
 
   @VisibleForTesting
   GradleProjectProperties(
       Project project,
       Logger logger,
       TempDirectoryProvider tempDirectoryProvider,
-      Supplier<List<JibGradlePluginExtension<?>>> extensionLoader) {
+      Supplier<List<JibGradlePluginExtension<?>>> extensionLoader,
+      String configurationName) {
     this.project = project;
     this.tempDirectoryProvider = tempDirectoryProvider;
     this.extensionLoader = extensionLoader;
+    this.configurationName = configurationName;
     ConsoleLoggerBuilder consoleLoggerBuilder =
         (isProgressFooterEnabled(project)
                 ? ConsoleLoggerBuilder.rich(singleThreadedExecutor, false)
@@ -187,7 +190,7 @@ public class GradleProjectProperties implements ProjectProperties {
 
   @Override
   public JibContainerBuilder createJibContainerBuilder(
-      JavaContainerBuilder javaContainerBuilder, ContainerizingMode containerizingMode, String configurationName) {
+      JavaContainerBuilder javaContainerBuilder, ContainerizingMode containerizingMode) {
     try {
       FileCollection projectDependencies =
           project.files(
@@ -296,7 +299,7 @@ public class GradleProjectProperties implements ProjectProperties {
   }
 
   @Override
-  public List<Path> getDependencies(String configurationName) {
+  public List<Path> getDependencies() {
     List<Path> dependencies = new ArrayList<>();
     FileCollection runtimeClasspath = project.getConfigurations().getByName(configurationName);
     // To be on the safe side with the order, calling "forEach" first (no filtering operations).
@@ -390,7 +393,6 @@ public class GradleProjectProperties implements ProjectProperties {
   static FileCollection getInputFiles(Project project, List<Path> extraDirectories, String configurationName) {
     JavaPluginConvention javaPluginConvention =
         project.getConvention().getPlugin(JavaPluginConvention.class);
-    SourceSet mainSourceSet = javaPluginConvention.getSourceSets().getByName(MAIN_SOURCE_SET_NAME);
     List<FileCollection> dependencyFileCollections = new ArrayList<>();
     dependencyFileCollections.add(project.getConfigurations().getByName(configurationName));
 

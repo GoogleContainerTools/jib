@@ -411,8 +411,7 @@ public class PluginConfigurationProcessor {
         projectProperties
             .createJibContainerBuilder(
                 javaContainerBuilder,
-                getContainerizingModeChecked(rawConfiguration, projectProperties),
-                rawConfiguration.getConfigurationName())
+                getContainerizingModeChecked(rawConfiguration, projectProperties))
             .setFormat(rawConfiguration.getImageFormat())
             .setPlatforms(getPlatformsSet(rawConfiguration))
             .setEntrypoint(computeEntrypoint(rawConfiguration, projectProperties))
@@ -608,7 +607,7 @@ public class PluginConfigurationProcessor {
     if (rawConfiguration.getExpandClasspathDependencies()) {
       List<String> dependencies =
           projectProperties
-              .getDependencies(rawConfiguration.getConfigurationName())
+              .getDependencies()
               .stream()
               .map(path -> appRoot.resolve("libs").resolve(path.getFileName()).toString())
               .collect(Collectors.toList());

@@ -109,8 +109,6 @@ public interface RawConfiguration {
 
   String getContainerizingMode();
 
-  String getConfigurationName();
-
   Path getTarOutputPath();
 
   Path getDigestOutputPath();
