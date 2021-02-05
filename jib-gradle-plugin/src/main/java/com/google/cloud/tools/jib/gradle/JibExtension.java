@@ -27,9 +27,6 @@ import org.gradle.api.provider.Property;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.Nested;
 import org.gradle.api.tasks.Optional;
-import org.gradle.internal.impldep.com.esotericsoftware.kryo.NotNull;
-
-import java.util.Objects;
 
 /**
  * Plugin extension for {@link JibPlugin}.
