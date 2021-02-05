@@ -32,7 +32,7 @@ import javax.annotation.Nullable;
 public class CacheDirectories {
 
   private static final String APPLICATION_LAYER_CACHE_DIR = "application-layers";
-  private static final String EXPLODED_JAR_CACHE_DIR = "exploded-jar";
+  private static final String EXPLODED_JAR_DIR = "exploded-jar";
 
   @Nullable private final Path baseImageCache;
   private final Path projectCache;
@@ -100,7 +100,7 @@ public class CacheDirectories {
     return projectCache.resolve(APPLICATION_LAYER_CACHE_DIR);
   }
 
-  public Path getExplodedJarCache() {
-    return projectCache.resolve(EXPLODED_JAR_CACHE_DIR);
+  public Path getExplodedJarDirectory() {
+    return projectCache.resolve(EXPLODED_JAR_DIR);
   }
 }

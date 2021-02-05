@@ -61,22 +61,22 @@ public class JarProcessors {
     if (jarType.equals(SPRING_BOOT) && mode.equals(ProcessingMode.packaged)) {
       return new SpringBootPackagedProcessor(jarPath);
     } else if (jarType.equals(SPRING_BOOT) && mode.equals(ProcessingMode.exploded)) {
-      Path explodedJarCache = cacheDirectories.getExplodedJarCache();
-      // Clear the exploded-jar cache directory first
-      if (Files.exists(explodedJarCache)) {
-        MoreFiles.deleteRecursively(explodedJarCache, RecursiveDeleteOption.ALLOW_INSECURE);
+      Path explodedJar = cacheDirectories.getExplodedJarDirectory();
+      // Clear the exploded-jar directory first
+      if (Files.exists(explodedJar)) {
+        MoreFiles.deleteRecursively(explodedJar, RecursiveDeleteOption.ALLOW_INSECURE);
       }
 
-      return new SpringBootExplodedProcessor(jarPath, explodedJarCache);
+      return new SpringBootExplodedProcessor(jarPath, explodedJar);
     } else if (jarType.equals(STANDARD) && mode.equals(ProcessingMode.packaged)) {
       return new StandardPackagedProcessor(jarPath);
     } else {
-      Path explodedJarCache = cacheDirectories.getExplodedJarCache();
-      // Clear the exploded-jar cache directory first
-      if (Files.exists(explodedJarCache)) {
-        MoreFiles.deleteRecursively(explodedJarCache, RecursiveDeleteOption.ALLOW_INSECURE);
+      Path explodedJar = cacheDirectories.getExplodedJarDirectory();
+      // Clear the exploded-jar directory first
+      if (Files.exists(explodedJar)) {
+        MoreFiles.deleteRecursively(explodedJar, RecursiveDeleteOption.ALLOW_INSECURE);
       }
-      return new StandardExplodedProcessor(jarPath, explodedJarCache);
+      return new StandardExplodedProcessor(jarPath, explodedJar);
     }
   }
 

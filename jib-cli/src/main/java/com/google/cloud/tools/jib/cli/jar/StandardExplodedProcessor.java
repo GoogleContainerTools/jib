@@ -22,49 +22,42 @@ import com.google.common.collect.ImmutableList;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Predicate;
 import java.util.jar.Attributes;
 import java.util.jar.JarFile;
-import javax.annotation.Nullable;
 
 public class StandardExplodedProcessor implements JarProcessor {
 
-  @Nullable private final Path jarPath;
-  @Nullable private final Path targetDirectoryPath;
+  private final Path jarPath;
+  private final Path targetExplodedJarRoot;
 
-  public StandardExplodedProcessor(Path jarPath, Path targetDirectoryPath) {
+  public StandardExplodedProcessor(Path jarPath, Path targetExplodedJarRoot) {
     this.jarPath = jarPath;
-    this.targetDirectoryPath = targetDirectoryPath;
+    this.targetExplodedJarRoot = targetExplodedJarRoot;
   }
 
   @Override
   public List<FileEntriesLayer> createLayers() throws IOException {
-    if (targetDirectoryPath == null || jarPath == null) {
-      return new ArrayList<>();
-    }
-
     // Add dependencies layers.
     List<FileEntriesLayer> layers =
         JarLayers.getDependenciesLayers(jarPath, ProcessingMode.exploded);
 
     // Determine class and resource files in the directory containing jar contents and create
     // FileEntriesLayer for each type of layer (classes or resources).
-    Path localExplodedJarRoot = targetDirectoryPath;
-    ZipUtil.unzip(jarPath, localExplodedJarRoot, true);
+    ZipUtil.unzip(jarPath, targetExplodedJarRoot, true);
     Predicate<Path> isClassFile = path -> path.getFileName().toString().endsWith(".class");
     Predicate<Path> isResourceFile = isClassFile.negate().and(Files::isRegularFile);
     FileEntriesLayer classesLayer =
         JarLayers.getDirectoryContentsAsLayer(
             JarLayers.CLASSES,
-            localExplodedJarRoot,
+            targetExplodedJarRoot,
             isClassFile,
             JarLayers.APP_ROOT.resolve("explodedJar"));
     FileEntriesLayer resourcesLayer =
         JarLayers.getDirectoryContentsAsLayer(
             JarLayers.RESOURCES,
-            localExplodedJarRoot,
+            targetExplodedJarRoot,
             isResourceFile,
             JarLayers.APP_ROOT.resolve("explodedJar"));
 
@@ -79,9 +72,6 @@ public class StandardExplodedProcessor implements JarProcessor {
 
   @Override
   public ImmutableList<String> computeEntrypoint(List<String> jvmFlags) throws IOException {
-    if (jarPath == null) {
-      return ImmutableList.of();
-    }
     try (JarFile jarFile = new JarFile(jarPath.toFile())) {
       String mainClass =
           jarFile.getManifest().getMainAttributes().getValue(Attributes.Name.MAIN_CLASS);
