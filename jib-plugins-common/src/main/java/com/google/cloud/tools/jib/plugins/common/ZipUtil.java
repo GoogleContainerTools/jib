@@ -68,7 +68,6 @@ public class ZipUtil {
     List<ZipEntry> entries = new ArrayList<>();
     try (InputStream fileIn = new BufferedInputStream(Files.newInputStream(archive));
         ZipInputStream zipIn = new ZipInputStream(fileIn)) {
-
       for (ZipEntry entry = zipIn.getNextEntry(); entry != null; entry = zipIn.getNextEntry()) {
         entries.add(entry);
         Path entryPath = destination.resolve(entry.getName());
