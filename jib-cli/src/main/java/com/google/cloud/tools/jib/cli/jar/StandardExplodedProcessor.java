@@ -32,16 +32,16 @@ import javax.annotation.Nullable;
 public class StandardExplodedProcessor implements JarProcessor {
 
   @Nullable private final Path jarPath;
-  @Nullable private final Path tempDirectoryPath;
+  @Nullable private final Path targetDirectoryPath;
 
-  public StandardExplodedProcessor(Path jarPath, Path tempDirectoryPath) {
+  public StandardExplodedProcessor(Path jarPath, Path targetDirectoryPath) {
     this.jarPath = jarPath;
-    this.tempDirectoryPath = tempDirectoryPath;
+    this.targetDirectoryPath = targetDirectoryPath;
   }
 
   @Override
   public List<FileEntriesLayer> createLayers() throws IOException {
-    if (tempDirectoryPath == null || jarPath == null) {
+    if (targetDirectoryPath == null || jarPath == null) {
       return new ArrayList<>();
     }
 
@@ -51,7 +51,7 @@ public class StandardExplodedProcessor implements JarProcessor {
 
     // Determine class and resource files in the directory containing jar contents and create
     // FileEntriesLayer for each type of layer (classes or resources).
-    Path localExplodedJarRoot = tempDirectoryPath;
+    Path localExplodedJarRoot = targetDirectoryPath;
     ZipUtil.unzip(jarPath, localExplodedJarRoot, true);
     Predicate<Path> isClassFile = path -> path.getFileName().toString().endsWith(".class");
     Predicate<Path> isResourceFile = isClassFile.negate().and(Files::isRegularFile);

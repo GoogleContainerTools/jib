@@ -41,20 +41,20 @@ import javax.annotation.Nullable;
 public class SpringBootExplodedProcessor implements JarProcessor {
 
   @Nullable private final Path jarPath;
-  @Nullable private final Path tempDirectoryPath;
+  @Nullable private final Path targetDirectoryPath;
 
-  public SpringBootExplodedProcessor(Path jarPath, Path tempDirectoryPath) {
+  public SpringBootExplodedProcessor(Path jarPath, Path targetDirectoryPath) {
     this.jarPath = jarPath;
-    this.tempDirectoryPath = tempDirectoryPath;
+    this.targetDirectoryPath = targetDirectoryPath;
   }
 
   @Override
   public List<FileEntriesLayer> createLayers() throws IOException {
-    if (tempDirectoryPath == null || jarPath == null) {
+    if (targetDirectoryPath == null || jarPath == null) {
       return new ArrayList<>();
     }
     try (JarFile jarFile = new JarFile(jarPath.toFile())) {
-      Path localExplodedJarRoot = tempDirectoryPath;
+      Path localExplodedJarRoot = targetDirectoryPath;
       ZipUtil.unzip(jarPath, localExplodedJarRoot, true);
       ZipEntry layerIndex = jarFile.getEntry("BOOT-INF/layers.idx");
       if (layerIndex != null) {
