@@ -108,8 +108,7 @@ public class FilesTaskV2 extends DefaultTask {
     }
 
     // Add SNAPSHOT, non-project dependency jars
-    for (File file :
-        project.getConfigurations().getByName(jibExtension.readConfigurationName())) {
+    for (File file : project.getConfigurations().getByName(jibExtension.readConfigurationName())) {
       if (!projectDependencyJars.contains(file) && file.toString().contains("SNAPSHOT")) {
         skaffoldFilesOutput.addInput(file.toPath());
         projectDependencyJars.add(file); // Add to set to avoid printing the same files twice
@@ -204,9 +203,7 @@ public class FilesTaskV2 extends DefaultTask {
 
       // Search through all dependencies
       Configuration runtimeClasspath =
-          currentProject
-              .getConfigurations()
-              .findByName(configurationName);
+          currentProject.getConfigurations().findByName(configurationName);
       if (runtimeClasspath != null) {
         for (Configuration configuration : runtimeClasspath.getHierarchy()) {
           for (Dependency dependency : configuration.getDependencies()) {

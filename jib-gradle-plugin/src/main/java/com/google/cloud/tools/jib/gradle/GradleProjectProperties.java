@@ -70,7 +70,6 @@ import org.gradle.api.artifacts.ResolvedArtifact;
 import org.gradle.api.artifacts.component.ProjectComponentIdentifier;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.logging.Logger;
-import org.gradle.api.plugins.JavaPlugin;
 import org.gradle.api.plugins.JavaPluginConvention;
 import org.gradle.api.plugins.WarPlugin;
 import org.gradle.api.tasks.SourceSet;
@@ -104,11 +103,15 @@ public class GradleProjectProperties implements ProjectProperties {
    * @param project a gradle project
    * @param logger a gradle logging instance to use for logging during the build
    * @param tempDirectoryProvider for scratch space during the build
-   * @param configurationName the configuration of which the dependencies should be packed into the container
+   * @param configurationName the configuration of which the dependencies should be packed into the
+   *     container
    * @return a GradleProjectProperties instance to use in a jib build
    */
   public static GradleProjectProperties getForProject(
-      Project project, Logger logger, TempDirectoryProvider tempDirectoryProvider, String configurationName) {
+      Project project,
+      Logger logger,
+      TempDirectoryProvider tempDirectoryProvider,
+      String configurationName) {
     Supplier<List<JibGradlePluginExtension<?>>> extensionLoader =
         () -> {
           List<JibGradlePluginExtension<?>> extensions = new ArrayList<>();
@@ -118,7 +121,8 @@ public class GradleProjectProperties implements ProjectProperties {
           }
           return extensions;
         };
-    return new GradleProjectProperties(project, logger, tempDirectoryProvider, extensionLoader, configurationName);
+    return new GradleProjectProperties(
+        project, logger, tempDirectoryProvider, extensionLoader, configurationName);
   }
 
   String getWarFilePath() {
@@ -223,7 +227,8 @@ public class GradleProjectProperties implements ProjectProperties {
       FileCollection classesOutputDirectories =
           mainSourceSet.getOutput().getClassesDirs().filter(File::exists);
       Path resourcesOutputDirectory = mainSourceSet.getOutput().getResourcesDir().toPath();
-      FileCollection allFiles = project.getConfigurations().getByName(configurationName).filter(File::exists);
+      FileCollection allFiles =
+          project.getConfigurations().getByName(configurationName).filter(File::exists);
 
       FileCollection nonProjectDependencies =
           allFiles
@@ -391,7 +396,8 @@ public class GradleProjectProperties implements ProjectProperties {
    * @param extraDirectories the image's configured extra directories
    * @return the input files
    */
-  static FileCollection getInputFiles(Project project, List<Path> extraDirectories, String configurationName) {
+  static FileCollection getInputFiles(
+      Project project, List<Path> extraDirectories, String configurationName) {
     List<FileCollection> dependencyFileCollections = new ArrayList<>();
     dependencyFileCollections.add(project.getConfigurations().getByName(configurationName));
 

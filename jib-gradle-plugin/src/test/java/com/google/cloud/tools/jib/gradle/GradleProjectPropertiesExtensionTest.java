@@ -234,7 +234,11 @@ public class GradleProjectPropertiesExtensionTest {
 
     gradleProjectProperties =
         new GradleProjectProperties(
-            mockProject, mockLogger, mockTempDirectoryProvider, () -> loadedExtensions, JavaPlugin.RUNTIME_CLASSPATH_CONFIGURATION_NAME);
+            mockProject,
+            mockLogger,
+            mockTempDirectoryProvider,
+            () -> loadedExtensions,
+            JavaPlugin.RUNTIME_CLASSPATH_CONFIGURATION_NAME);
   }
 
   @Test

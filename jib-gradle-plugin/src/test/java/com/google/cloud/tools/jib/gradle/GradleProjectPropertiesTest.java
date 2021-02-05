@@ -38,6 +38,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.Resources;
+import groovy.lang.Closure;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -58,8 +59,7 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
-
-import groovy.lang.Closure;
+import javax.annotation.Nullable;
 import org.gradle.api.Action;
 import org.gradle.api.JavaVersion;
 import org.gradle.api.Project;
@@ -107,8 +107,6 @@ import org.mockito.Answers;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
-
-import javax.annotation.Nullable;
 
 /** Test for {@link GradleProjectProperties}. */
 @RunWith(MockitoJUnitRunner.class)
@@ -338,9 +336,7 @@ public class GradleProjectPropertiesTest {
     }
 
     @Override
-    public void outgoing(Action<? super ConfigurationPublications> action) {
-
-    }
+    public void outgoing(Action<? super ConfigurationPublications> action) {}
 
     @Override
     public Configuration copy() {
@@ -373,9 +369,7 @@ public class GradleProjectPropertiesTest {
     }
 
     @Override
-    public void setCanBeConsumed(boolean b) {
-
-    }
+    public void setCanBeConsumed(boolean b) {}
 
     @Override
     public boolean isCanBeConsumed() {
@@ -383,9 +377,7 @@ public class GradleProjectPropertiesTest {
     }
 
     @Override
-    public void setCanBeResolved(boolean b) {
-
-    }
+    public void setCanBeResolved(boolean b) {}
 
     @Override
     public boolean isCanBeResolved() {
@@ -469,7 +461,6 @@ public class GradleProjectPropertiesTest {
   @Mock private FileResolver mockFileResolver;
   @Mock private Convention mockConvention;
   @Mock private ConfigurationContainer mockConfigurationContainer;
-  @Mock private Configuration mockConfiguration;
   @Mock private ResolvedConfiguration mockResolvedConfiguration;
   @Mock private TaskContainer mockTaskContainer;
   @Mock private Logger mockLogger;
@@ -506,8 +497,7 @@ public class GradleProjectPropertiesTest {
         .thenReturn(ConsoleOutput.Plain);
 
     // mocking to complete ignore project dependency resolution
-    Mockito.when(mockResolvedConfiguration.getResolvedArtifacts())
-        .thenReturn(ImmutableSet.of());
+    Mockito.when(mockResolvedConfiguration.getResolvedArtifacts()).thenReturn(ImmutableSet.of());
     ConfigurableFileCollection emptyFileCollection = Mockito.mock(ConfigurableFileCollection.class);
     Mockito.when(emptyFileCollection.getFiles()).thenReturn(ImmutableSet.of());
     Mockito.when(mockProject.files(ImmutableList.of())).thenReturn(emptyFileCollection);
@@ -531,7 +521,8 @@ public class GradleProjectPropertiesTest {
     Mockito.when(mockMainSourceSet.getOutput()).thenReturn(mockMainSourceSetOutput);
     Mockito.when(mockMainSourceSetOutput.getClassesDirs()).thenReturn(classesFileCollection);
     Mockito.when(mockMainSourceSetOutput.getResourcesDir()).thenReturn(resourcesOutputDir.toFile());
-    Mockito.when(mockConfigurationContainer.getByName(JavaPlugin.RUNTIME_CLASSPATH_CONFIGURATION_NAME))
+    Mockito.when(
+            mockConfigurationContainer.getByName(JavaPlugin.RUNTIME_CLASSPATH_CONFIGURATION_NAME))
         .thenReturn(new TestConfiguration(allFiles, mockResolvedConfiguration));
     // We can't commit an empty directory in Git, so create (if not exist).
     Path emptyDirectory = getResource("gradle/webapp").resolve("WEB-INF/classes/empty_dir");
@@ -539,7 +530,11 @@ public class GradleProjectPropertiesTest {
 
     gradleProjectProperties =
         new GradleProjectProperties(
-            mockProject, mockLogger, mockTempDirectoryProvider, mockExtensionLoader, JavaPlugin.RUNTIME_CLASSPATH_CONFIGURATION_NAME);
+            mockProject,
+            mockLogger,
+            mockTempDirectoryProvider,
+            mockExtensionLoader,
+            JavaPlugin.RUNTIME_CLASSPATH_CONFIGURATION_NAME);
   }
 
   @Test
