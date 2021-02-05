@@ -20,6 +20,7 @@ import static com.google.common.truth.Truth.assertThat;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
+import static org.junit.Assert.assertThrows;
 
 import com.google.cloud.tools.jib.cli.CacheDirectories;
 import com.google.common.io.Resources;
@@ -40,6 +41,7 @@ public class JarProcessorsTest {
 
   private static final String SPRING_BOOT = "jar/spring-boot/springboot_sample.jar";
   private static final String STANDARD = "jar/standard/emptyStandardJar.jar";
+  private static final String JAVA_14_JAR = "jar/java14WithModuleInfo.jar";
 
   @Mock private CacheDirectories mockCacheDirectories;
 
@@ -89,5 +91,26 @@ public class JarProcessorsTest {
 
     verify(mockCacheDirectories).getExplodedJarCache();
     assertThat(processor).isInstanceOf(SpringBootExplodedProcessor.class);
+  }
+
+  @Test
+  public void testFrom_incompatibleBaseImage() throws URISyntaxException {
+    Path jarPath = Paths.get(Resources.getResource(JAVA_14_JAR).toURI());
+    IllegalStateException exception =
+        assertThrows(
+            IllegalStateException.class,
+            () ->
+                JarProcessors.from(
+                    jarPath, mockCacheDirectories, ProcessingMode.exploded));
+    assertThat(exception)
+        .hasMessageThat()
+        .startsWith("The input JAR (" + jarPath + ") is compiled with Java 14");
+  }
+
+  @Test
+  public void testGetMajorJavaVersion_versionNotFound() throws URISyntaxException, IOException {
+    Path jarPath = Paths.get(Resources.getResource(STANDARD).toURI());
+    Integer version = JarProcessors.getJavaMajorVersion(jarPath);
+    assertThat(version).isEqualTo(0);
   }
 }

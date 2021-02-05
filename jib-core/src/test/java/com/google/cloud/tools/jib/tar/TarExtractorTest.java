@@ -17,6 +17,7 @@
 package com.google.cloud.tools.jib.tar;
 
 import static com.google.common.truth.Truth.assertThat;
+import static org.junit.Assert.assertThrows;
 
 import com.google.common.io.Resources;
 import java.io.IOException;
@@ -97,39 +98,40 @@ public class TarExtractorTest {
         .isEqualTo(FileTime.from(Instant.parse("2019-08-01T16:12:00Z")));
     assertThat(Files.getLastModifiedTime(destination.resolve("folder")))
         .isEqualTo(FileTime.from(Instant.parse("2019-08-01T16:12:33Z")));
-    assertThat(Files.getLastModifiedTime(destination.resolve("folder").resolve("nested folder")))
+    assertThat(Files.getLastModifiedTime(destination.resolve("folder/nested folder")))
         .isEqualTo(FileTime.from(Instant.parse("2019-08-01T16:13:30Z")));
-    assertThat(
-            Files.getLastModifiedTime(
-                destination.resolve("folder").resolve("nested folder").resolve("file C")))
+    assertThat(Files.getLastModifiedTime(destination.resolve("folder/nested folder/file C")))
         .isEqualTo(FileTime.from(Instant.parse("2019-08-01T16:12:21Z")));
   }
 
   @Test
-  public void testExtract_modificationTimePreserved_onlyFilePackaged()
-      throws URISyntaxException, IOException {
+  public void testExtract_reproducibleTimestampsEnabled() throws URISyntaxException, IOException {
     // The tarfile has only level1/level2/level3/file.txt packaged
     Path source = Paths.get(Resources.getResource("core/tarfile-only-file-packaged.tar").toURI());
 
     Path destination = temporaryFolder.getRoot().toPath();
 
-    TarExtractor.extract(source, destination);
+    TarExtractor.extract(source, destination, true);
 
     assertThat(Files.getLastModifiedTime(destination.resolve("level-1")))
-        .isEqualTo(FileTime.from(Instant.ofEpochSecond(1L)));
-    assertThat(Files.getLastModifiedTime(destination.resolve("level-1").resolve("level-2")))
-        .isEqualTo(FileTime.from(Instant.ofEpochSecond(1L)));
-    assertThat(
-            Files.getLastModifiedTime(
-                destination.resolve("level-1").resolve("level-2").resolve("level-3")))
-        .isEqualTo(FileTime.from(Instant.ofEpochSecond(1L)));
-    assertThat(
-            Files.getLastModifiedTime(
-                destination
-                    .resolve("level-1")
-                    .resolve("level-2")
-                    .resolve("level-3")
-                    .resolve("file.txt")))
+        .isEqualTo(FileTime.fromMillis(1000L));
+    assertThat(Files.getLastModifiedTime(destination.resolve("level-1/level-2")))
+        .isEqualTo(FileTime.fromMillis(1000L));
+    assertThat(Files.getLastModifiedTime(destination.resolve("level-1/level-2/level-3")))
+        .isEqualTo(FileTime.fromMillis(1000L));
+    assertThat(Files.getLastModifiedTime(destination.resolve("level-1/level-2/level-3/file.txt")))
         .isEqualTo(FileTime.from(Instant.parse("2021-01-29T21:10:02Z")));
+  }
+
+  @Test
+  public void testExtract_reproducibleTimestampsEnabled_destinationNotEmpty() throws IOException {
+    Path destination = temporaryFolder.getRoot().toPath();
+    temporaryFolder.newFile();
+
+    IllegalStateException exception =
+        assertThrows(
+            IllegalStateException.class,
+            () -> TarExtractor.extract(Paths.get("ignore"), destination, true));
+    assertThat(exception).hasMessageThat().startsWith("Cannot enable reproducible timestamps");
   }
 }

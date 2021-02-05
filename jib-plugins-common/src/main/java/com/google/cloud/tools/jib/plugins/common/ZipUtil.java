@@ -27,7 +27,6 @@ import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.FileTime;
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.zip.ZipEntry;
@@ -44,11 +43,32 @@ public class ZipUtil {
    * @throws IOException when I/O error occurs
    */
   public static void unzip(Path archive, Path destination) throws IOException {
-    String canonicalDestination = destination.toFile().getCanonicalPath();
+    unzip(archive, destination, false);
+  }
 
+  /**
+   * Unzips {@code archive} into {@code destination}.
+   *
+   * @param archive zip archive to unzip
+   * @param destination target root for unzipping
+   * @param enableReproducibleTimestamps whether or not reproducible timestamps should be used
+   * @throws IOException when I/O error occurs
+   * @throws IllegalStateException when reproducible timestamps are enabled but the target root used
+   *     for unzipping is not empty
+   */
+  public static void unzip(Path archive, Path destination, boolean enableReproducibleTimestamps)
+      throws IOException {
+    if (enableReproducibleTimestamps
+        && Files.isDirectory(destination)
+        && destination.toFile().list().length != 0) {
+      throw new IllegalStateException(
+          "Cannot enable reproducible timestamps. They can only be enabled when the target root doesn't exist or is an empty directory");
+    }
+    String canonicalDestination = destination.toFile().getCanonicalPath();
+    List<ZipEntry> entries = new ArrayList<>();
     try (InputStream fileIn = new BufferedInputStream(Files.newInputStream(archive));
         ZipInputStream zipIn = new ZipInputStream(fileIn)) {
-      List<ZipEntry> entries = new ArrayList<>();
+
       for (ZipEntry entry = zipIn.getNextEntry(); entry != null; entry = zipIn.getNextEntry()) {
         entries.add(entry);
         Path entryPath = destination.resolve(entry.getName());
@@ -69,17 +89,30 @@ public class ZipUtil {
             ByteStreams.copy(zipIn, out);
           }
         }
-        Files.setLastModifiedTime(entryPath, entry.getLastModifiedTime());
       }
-      preserveModificationTimes(destination, entries);
     }
+    preserveModificationTimes(destination, entries, enableReproducibleTimestamps);
   }
 
-  private static void preserveModificationTimes(Path destination, List<ZipEntry> entries)
+  /**
+   * Preserve modification time of files and directories in a zip file. If a directory is not an
+   * entry in the zip file and reproducible timestamps are enabled then its modification timestamp
+   * is set to a constant value.
+   *
+   * @param destination target root for unzipping
+   * @param entries list of entries in zip file
+   * @param enableReproducibleTimestamps whether or not reproducible timestamps should be used
+   * @throws IOException when I/O error occurs
+   */
+  private static void preserveModificationTimes(
+      Path destination, List<ZipEntry> entries, boolean enableReproducibleTimestamps)
       throws IOException {
-    new DirectoryWalker(destination)
-        .filter(path -> Files.isDirectory(path))
-        .walk(path -> Files.setLastModifiedTime(path, FileTime.from(Instant.ofEpochSecond(1L))));
+    if (enableReproducibleTimestamps) {
+      FileTime epochPlusOne = FileTime.fromMillis(1000L);
+      new DirectoryWalker(destination)
+          .filter(Files::isDirectory)
+          .walk(path -> Files.setLastModifiedTime(path, epochPlusOne));
+    }
     for (ZipEntry entry : entries) {
       Files.setLastModifiedTime(destination.resolve(entry.getName()), entry.getLastModifiedTime());
     }

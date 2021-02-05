@@ -45,38 +45,54 @@ public class GlobalConfigTest {
   }
 
   @Test
-  public void testReadConfig_default() throws IOException {
+  public void testReadConfig_default() throws IOException, InvalidGlobalConfigException {
     GlobalConfig globalConfig = GlobalConfig.readConfig(configDir);
+
     assertThat(globalConfig.isDisableUpdateCheck()).isFalse();
+    assertThat(globalConfig.getRegistryMirrors()).isEmpty();
   }
 
   @Test
-  public void testReadConfig_newConfigCreated() throws IOException {
+  public void testReadConfig_newConfigCreated() throws IOException, InvalidGlobalConfigException {
     GlobalConfig.readConfig(configDir);
     String configJson =
         new String(Files.readAllBytes(configDir.resolve("config.json")), StandardCharsets.UTF_8);
-    assertThat(configJson).isEqualTo("{\"disableUpdateCheck\":false}");
+    assertThat(configJson).isEqualTo("{\"disableUpdateCheck\":false,\"registryMirrors\":[]}");
   }
 
   @Test
-  public void testReadConfig_emptyJson() throws IOException {
+  public void testReadConfig_emptyJson() throws IOException, InvalidGlobalConfigException {
     Files.write(configDir.resolve("config.json"), "{}".getBytes(StandardCharsets.UTF_8));
     GlobalConfig globalConfig = GlobalConfig.readConfig(configDir);
+
     assertThat(globalConfig.isDisableUpdateCheck()).isFalse();
+    assertThat(globalConfig.getRegistryMirrors()).isEmpty();
   }
 
   @Test
-  public void testReadConfig() throws IOException {
-    Files.write(
-        configDir.resolve("config.json"),
-        "{\"disableUpdateCheck\":true}".getBytes(StandardCharsets.UTF_8));
+  public void testReadConfig() throws IOException, InvalidGlobalConfigException {
+    String json =
+        "{\"disableUpdateCheck\":true, \"registryMirrors\":["
+            + "{ \"registry\": \"registry-1.docker.io\","
+            + "  \"mirrors\": [\"mirror.gcr.io\", \"localhost:5000\"] },"
+            + "{ \"registry\": \"another.registry\", \"mirrors\": [\"another.mirror\"] }"
+            + "]}";
+    Files.write(configDir.resolve("config.json"), json.getBytes(StandardCharsets.UTF_8));
 
     GlobalConfig globalConfig = GlobalConfig.readConfig(configDir);
     assertThat(globalConfig.isDisableUpdateCheck()).isTrue();
+    assertThat(globalConfig.getRegistryMirrors())
+        .containsExactly(
+            "registry-1.docker.io",
+            "mirror.gcr.io",
+            "registry-1.docker.io",
+            "localhost:5000",
+            "another.registry",
+            "another.mirror");
   }
 
   @Test
-  public void testReadConfig_systemProperties() throws IOException {
+  public void testReadConfig_systemProperties() throws IOException, InvalidGlobalConfigException {
     Files.write(
         configDir.resolve("config.json"),
         "{\"disableUpdateCheck\":false}".getBytes(StandardCharsets.UTF_8));
@@ -93,7 +109,10 @@ public class GlobalConfigTest {
         assertThrows(IOException.class, () -> GlobalConfig.readConfig(configDir));
     assertThat(exception)
         .hasMessageThat()
-        .startsWith("Failed to read global Jib config; you may need to fix or delete");
+        .startsWith(
+            "Failed to open or parse global Jib config file; see "
+                + "https://github.com/GoogleContainerTools/jib/blob/global-config-doc/docs/faq.md#where-is-the-global-jib-configuration-file-and-how-i-can-configure-it "
+                + "to fix or you may need to delete");
     assertThat(exception).hasMessageThat().endsWith(File.separator + "config.json");
   }
 
@@ -105,7 +124,38 @@ public class GlobalConfigTest {
         assertThrows(IOException.class, () -> GlobalConfig.readConfig(configDir));
     assertThat(exception)
         .hasMessageThat()
-        .startsWith("Failed to read global Jib config; you may need to fix or delete");
+        .startsWith(
+            "Failed to open or parse global Jib config file; see "
+                + "https://github.com/GoogleContainerTools/jib/blob/global-config-doc/docs/faq.md#where-is-the-global-jib-configuration-file-and-how-i-can-configure-it "
+                + "to fix or you may need to delete ");
     assertThat(exception).hasMessageThat().endsWith(File.separator + "config.json");
+  }
+
+  @Test
+  public void testReadConfig_missingRegistry() throws IOException {
+    String json = "{\"registryMirrors\":[{\"mirrors\":[\"mirror.gcr.io\"]}]}";
+    Files.write(configDir.resolve("config.json"), json.getBytes(StandardCharsets.UTF_8));
+    InvalidGlobalConfigException exception =
+        assertThrows(InvalidGlobalConfigException.class, () -> GlobalConfig.readConfig(configDir));
+    assertThat(exception)
+        .hasMessageThat()
+        .startsWith(
+            "'registryMirrors.registry' property is missing; see "
+                + "https://github.com/GoogleContainerTools/jib/blob/global-config-doc/docs/faq.md#where-is-the-global-jib-configuration-file-and-how-i-can-configure-it "
+                + "to fix or you may need to delete ");
+  }
+
+  @Test
+  public void testReadConfig_missingMirrors() throws IOException {
+    String json = "{\"registryMirrors\":[{\"registry\": \"registry\"}]}";
+    Files.write(configDir.resolve("config.json"), json.getBytes(StandardCharsets.UTF_8));
+    InvalidGlobalConfigException exception =
+        assertThrows(InvalidGlobalConfigException.class, () -> GlobalConfig.readConfig(configDir));
+    assertThat(exception)
+        .hasMessageThat()
+        .startsWith(
+            "'registryMirrors.mirrors' property is missing; see "
+                + "https://github.com/GoogleContainerTools/jib/blob/global-config-doc/docs/faq.md#where-is-the-global-jib-configuration-file-and-how-i-can-configure-it "
+                + "to fix or you may need to delete");
   }
 }

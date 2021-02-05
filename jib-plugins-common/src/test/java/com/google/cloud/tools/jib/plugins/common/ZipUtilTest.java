@@ -17,8 +17,8 @@
 package com.google.cloud.tools.jib.plugins.common;
 
 import static com.google.common.truth.Truth.assertThat;
+import static org.junit.Assert.assertThrows;
 
-import com.google.api.client.testing.http.FixedClock;
 import com.google.common.io.Resources;
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -39,7 +39,6 @@ import org.junit.rules.TemporaryFolder;
 public class ZipUtilTest {
 
   @Rule public final TemporaryFolder tempFolder = new TemporaryFolder();
-  public final FixedClock clock = new FixedClock();
 
   @Test
   public void testUnzip() throws URISyntaxException, IOException {
@@ -97,8 +96,7 @@ public class ZipUtilTest {
   }
 
   @Test
-  public void testUnzip_modificationTimePreserved_onlyFilePackaged()
-      throws URISyntaxException, IOException {
+  public void testUnzip_reproducibleTimestampsEnabled() throws URISyntaxException, IOException {
     // The zipfile has only level1/level2/level3/file.txt packaged
     Path archive =
         Paths.get(
@@ -107,24 +105,28 @@ public class ZipUtilTest {
 
     Path destination = tempFolder.getRoot().toPath();
 
-    ZipUtil.unzip(archive, destination);
+    ZipUtil.unzip(archive, destination, true);
 
     assertThat(Files.getLastModifiedTime(destination.resolve("level-1")))
-        .isEqualTo(FileTime.from(Instant.ofEpochSecond(1L)));
-    assertThat(Files.getLastModifiedTime(destination.resolve("level-1").resolve("level-2")))
-        .isEqualTo(FileTime.from(Instant.ofEpochSecond(1L)));
-    assertThat(
-            Files.getLastModifiedTime(
-                destination.resolve("level-1").resolve("level-2").resolve("level-3")))
-        .isEqualTo(FileTime.from(Instant.ofEpochSecond(1L)));
-    assertThat(
-            Files.getLastModifiedTime(
-                destination
-                    .resolve("level-1")
-                    .resolve("level-2")
-                    .resolve("level-3")
-                    .resolve("file.txt")))
+        .isEqualTo(FileTime.fromMillis(1000L));
+    assertThat(Files.getLastModifiedTime(destination.resolve("level-1/level-2")))
+        .isEqualTo(FileTime.fromMillis(1000L));
+    assertThat(Files.getLastModifiedTime(destination.resolve("level-1/level-2/level-3")))
+        .isEqualTo(FileTime.fromMillis(1000L));
+    assertThat(Files.getLastModifiedTime(destination.resolve("level-1/level-2/level-3/file.txt")))
         .isEqualTo(FileTime.from(Instant.parse("2021-01-29T21:10:02Z")));
+  }
+
+  @Test
+  public void testUnzip_reproducibleTimestampsEnabled_destinationNotEmpty() throws IOException {
+    Path destination = tempFolder.getRoot().toPath();
+    tempFolder.newFile();
+
+    IllegalStateException exception =
+        assertThrows(
+            IllegalStateException.class,
+            () -> ZipUtil.unzip(Paths.get("ignore"), destination, true));
+    assertThat(exception).hasMessageThat().startsWith("Cannot enable reproducible timestamps");
   }
 
   private void verifyUnzip(Path destination) throws URISyntaxException, IOException {

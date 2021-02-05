@@ -55,7 +55,7 @@ public class SpringBootExplodedProcessor implements JarProcessor {
     }
     try (JarFile jarFile = new JarFile(jarPath.toFile())) {
       Path localExplodedJarRoot = tempDirectoryPath;
-      ZipUtil.unzip(jarPath, localExplodedJarRoot);
+      ZipUtil.unzip(jarPath, localExplodedJarRoot, true);
       ZipEntry layerIndex = jarFile.getEntry("BOOT-INF/layers.idx");
       if (layerIndex != null) {
         return createLayersForLayeredSpringBootJar(localExplodedJarRoot);
@@ -117,12 +117,14 @@ public class SpringBootExplodedProcessor implements JarProcessor {
   }
 
   @Override
-  public ImmutableList<String> computeEntrypoint() {
-    return ImmutableList.of(
-        "java",
-        "-cp",
-        JarLayers.APP_ROOT.toString(),
-        "org.springframework.boot.loader.JarLauncher");
+  public ImmutableList<String> computeEntrypoint(List<String> jvmFlags) {
+    ImmutableList.Builder<String> entrypoint = ImmutableList.builder();
+    entrypoint.add("java");
+    entrypoint.addAll(jvmFlags);
+    entrypoint.add("-cp");
+    entrypoint.add(JarLayers.APP_ROOT.toString());
+    entrypoint.add("org.springframework.boot.loader.JarLauncher");
+    return entrypoint.build();
   }
 
   /**

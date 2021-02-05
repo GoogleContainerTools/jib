@@ -32,6 +32,7 @@ import com.google.cloud.tools.jib.plugins.common.InvalidWorkingDirectoryExceptio
 import com.google.cloud.tools.jib.plugins.common.MainClassInferenceException;
 import com.google.cloud.tools.jib.plugins.common.PluginConfigurationProcessor;
 import com.google.cloud.tools.jib.plugins.common.globalconfig.GlobalConfig;
+import com.google.cloud.tools.jib.plugins.common.globalconfig.InvalidGlobalConfigException;
 import com.google.cloud.tools.jib.plugins.extension.JibPluginExtensionException;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
@@ -79,14 +80,15 @@ public class BuildTarMojo extends JibPluginConfiguration {
 
     Future<Optional<String>> updateCheckFuture = Futures.immediateFuture(Optional.empty());
     try {
-      updateCheckFuture =
-          MojoCommon.newUpdateChecker(projectProperties, GlobalConfig.readConfig(), getLog());
+      GlobalConfig globalConfig = GlobalConfig.readConfig();
+      updateCheckFuture = MojoCommon.newUpdateChecker(projectProperties, globalConfig, getLog());
 
       PluginConfigurationProcessor.createJibBuildRunnerForTarImage(
               new MavenRawConfiguration(this),
               new MavenSettingsServerCredentials(
                   getSession().getSettings(), getSettingsDecrypter()),
               projectProperties,
+              globalConfig,
               new MavenHelpfulSuggestions(HELPFUL_SUGGESTIONS_PREFIX))
           .runBuild();
 
@@ -145,7 +147,10 @@ public class BuildTarMojo extends JibPluginConfiguration {
       throw new MojoExecutionException(
           HelpfulSuggestions.forInvalidImageReference(ex.getInvalidReference()), ex);
 
-    } catch (IOException | CacheDirectoryCreationException | MainClassInferenceException ex) {
+    } catch (IOException
+        | CacheDirectoryCreationException
+        | MainClassInferenceException
+        | InvalidGlobalConfigException ex) {
       throw new MojoExecutionException(ex.getMessage(), ex);
 
     } catch (BuildStepsExecutionException ex) {
