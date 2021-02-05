@@ -61,7 +61,7 @@ public class JarProcessors {
     if (jarType.equals(SPRING_BOOT) && mode.equals(ProcessingMode.packaged)) {
       return new SpringBootPackagedProcessor(jarPath);
     } else if (jarType.equals(SPRING_BOOT) && mode.equals(ProcessingMode.exploded)) {
-      Path explodedJarCache = cacheDirectories.getExplodedJarDirectory();
+      Path explodedJarCache = cacheDirectories.getExplodedJarCache();
       // Clear the exploded-jar cache directory first
       if (Files.exists(explodedJarCache)) {
         MoreFiles.deleteRecursively(explodedJarCache, RecursiveDeleteOption.ALLOW_INSECURE);
@@ -71,7 +71,7 @@ public class JarProcessors {
     } else if (jarType.equals(STANDARD) && mode.equals(ProcessingMode.packaged)) {
       return new StandardPackagedProcessor(jarPath);
     } else {
-      Path explodedJarCache = cacheDirectories.getExplodedJarDirectory();
+      Path explodedJarCache = cacheDirectories.getExplodedJarCache();
       // Clear the exploded-jar cache directory first
       if (Files.exists(explodedJarCache)) {
         MoreFiles.deleteRecursively(explodedJarCache, RecursiveDeleteOption.ALLOW_INSECURE);
