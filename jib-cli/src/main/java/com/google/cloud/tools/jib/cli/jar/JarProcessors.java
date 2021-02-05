@@ -20,6 +20,7 @@ import com.google.cloud.tools.jib.cli.CacheDirectories;
 import com.google.common.io.MoreFiles;
 import com.google.common.io.RecursiveDeleteOption;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.jar.JarFile;
 
@@ -45,7 +46,9 @@ public class JarProcessors {
     } else if (jarType.equals(SPRING_BOOT) && mode.equals(ProcessingMode.exploded)) {
       Path explodedJarCache = cacheDirectories.getExplodedJarCache();
       // Clear the exploded-jar cache directory first
-      MoreFiles.deleteRecursively(explodedJarCache, RecursiveDeleteOption.ALLOW_INSECURE);
+      if (Files.exists(explodedJarCache)) {
+        MoreFiles.deleteRecursively(explodedJarCache, RecursiveDeleteOption.ALLOW_INSECURE);
+      }
 
       return new SpringBootExplodedProcessor(jarPath, explodedJarCache);
     } else if (jarType.equals(STANDARD) && mode.equals(ProcessingMode.packaged)) {
@@ -53,8 +56,9 @@ public class JarProcessors {
     } else {
       Path explodedJarCache = cacheDirectories.getExplodedJarCache();
       // Clear the exploded-jar cache directory first
-      MoreFiles.deleteRecursively(explodedJarCache, RecursiveDeleteOption.ALLOW_INSECURE);
-
+      if (Files.exists(explodedJarCache)) {
+        MoreFiles.deleteRecursively(explodedJarCache, RecursiveDeleteOption.ALLOW_INSECURE);
+      }
       return new StandardExplodedProcessor(jarPath, explodedJarCache);
     }
   }
