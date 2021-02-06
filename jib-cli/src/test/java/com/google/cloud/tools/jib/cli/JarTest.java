@@ -29,6 +29,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import java.nio.file.Paths;
+import java.time.Instant;
 import junitparams.JUnitParamsRunner;
 import junitparams.Parameters;
 import org.apache.commons.lang3.ArrayUtils;
@@ -516,6 +517,14 @@ public class JarTest {
         CommandLine.populateCommand(
             new Jar(), "--target=test-image-ref", "--entrypoint=java -cp myClass", "my-app.jar");
     assertThat(jarCommand.getEntrypoint()).isEqualTo(ImmutableList.of("java", "-cp", "myClass"));
+  }
+
+  @Test
+  public void testParse_creationTime() {
+    Jar jarCommand =
+        CommandLine.populateCommand(
+            new Jar(), "--target=test-image-ref", "--creation-time=23", "my-app.jar");
+    assertThat(jarCommand.getCreationTime()).hasValue(Instant.ofEpochMilli(23));
   }
 
   @Test

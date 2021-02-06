@@ -14,13 +14,13 @@
  * the License.
  */
 
-package com.google.cloud.tools.jib.cli.buildfile;
+package com.google.cloud.tools.jib.cli;
 
 import java.time.Instant;
 import org.junit.Assert;
 import org.junit.Test;
 
-/** Tests for {@link Instants}. */
+/** Tests for {@link com.google.cloud.tools.jib.cli.Instants}. */
 public class InstantsTest {
 
   @Test
