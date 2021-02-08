@@ -34,7 +34,7 @@ jobs:
             ${{ runner.os }}-gradle-
       - name: Run tests
         run: |
-          ./gradlew clean build codeCoverageReport --stacktrace
+          ./gradlew clean build jacocoTestReport --stacktrace
       - name: Test Coverage
         uses: codecov/codecov-action@v1
         with:
