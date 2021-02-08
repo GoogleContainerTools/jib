@@ -41,6 +41,7 @@ subprojects {
   apply plugin: 'com.github.sherter.google-java-format'
   apply plugin: 'net.ltgt.apt'
   apply plugin: 'net.ltgt.errorprone'
+  apply plugin: 'jacoco'
 
   sourceCompatibility = JavaVersion.VERSION_1_8
   targetCompatibility = JavaVersion.VERSION_1_8
@@ -417,6 +418,15 @@ subprojects {
       }
     }
   }
+
+  /* Add Test Coverage */
+  jacocoTestReport {
+    reports {
+      xml.enabled true
+      html.enabled false
+    }
+  }
+
   /* INCLUDED PROJECT DEPENDENCY HELPER */
 
   /* LOCAL DEVELOPMENT HELPER TASKS */
