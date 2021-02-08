@@ -33,3 +33,7 @@ jobs:
       - name: Run tests
         run: |
           ./gradlew clean build --stacktrace
+      - name: Test Coverage
+        uses: codecov/codecov-action@v1
+        with:
+          name: actions ${{matrix.java}}
