@@ -21,7 +21,7 @@ jobs:
       - uses: actions/setup-java@v1
         with:
           java-version: ${{ matrix.java }}
-      - uses: actions/cache@v2
+      - uses: actions/cache@v2.1.4
         with:
           path: |
             ~/.m2/repository
@@ -33,3 +33,7 @@ jobs:
       - name: Run tests
         run: |
           ./gradlew clean build --stacktrace
+      - name: Test Coverage
+        uses: codecov/codecov-action@v1
+        with:
+          name: actions ${{matrix.java}}
