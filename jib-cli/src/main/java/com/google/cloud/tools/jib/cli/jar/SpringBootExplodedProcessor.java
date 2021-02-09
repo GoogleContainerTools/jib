@@ -22,6 +22,8 @@ import com.google.cloud.tools.jib.plugins.common.ZipUtil;
 import com.google.common.base.Predicates;
 import com.google.common.base.Verify;
 import com.google.common.collect.ImmutableList;
+import com.google.common.io.MoreFiles;
+import com.google.common.io.RecursiveDeleteOption;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -49,6 +51,11 @@ public class SpringBootExplodedProcessor implements JarProcessor {
 
   @Override
   public List<FileEntriesLayer> createLayers() throws IOException {
+    // Clear the exploded-jar root first
+    if (Files.exists(targetExplodedJarRoot)) {
+      MoreFiles.deleteRecursively(targetExplodedJarRoot, RecursiveDeleteOption.ALLOW_INSECURE);
+    }
+
     try (JarFile jarFile = new JarFile(jarPath.toFile())) {
       ZipUtil.unzip(jarPath, targetExplodedJarRoot, true);
       ZipEntry layerIndex = jarFile.getEntry("BOOT-INF/layers.idx");

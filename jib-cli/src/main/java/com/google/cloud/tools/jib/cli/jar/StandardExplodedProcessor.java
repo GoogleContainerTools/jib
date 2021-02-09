@@ -19,6 +19,8 @@ package com.google.cloud.tools.jib.cli.jar;
 import com.google.cloud.tools.jib.api.buildplan.FileEntriesLayer;
 import com.google.cloud.tools.jib.plugins.common.ZipUtil;
 import com.google.common.collect.ImmutableList;
+import com.google.common.io.MoreFiles;
+import com.google.common.io.RecursiveDeleteOption;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -39,6 +41,11 @@ public class StandardExplodedProcessor implements JarProcessor {
 
   @Override
   public List<FileEntriesLayer> createLayers() throws IOException {
+    // Clear the exploded-jar root first
+    if (Files.exists(targetExplodedJarRoot)) {
+      MoreFiles.deleteRecursively(targetExplodedJarRoot, RecursiveDeleteOption.ALLOW_INSECURE);
+    }
+
     // Add dependencies layers.
     List<FileEntriesLayer> layers =
         JarLayers.getDependenciesLayers(jarPath, ProcessingMode.exploded);

@@ -18,13 +18,10 @@ package com.google.cloud.tools.jib.cli.jar;
 
 import com.google.cloud.tools.jib.cli.CacheDirectories;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.io.MoreFiles;
-import com.google.common.io.RecursiveDeleteOption;
 import java.io.DataInputStream;
 import java.io.IOException;
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Enumeration;
 import java.util.jar.JarEntry;
@@ -61,22 +58,11 @@ public class JarProcessors {
     if (jarType.equals(SPRING_BOOT) && mode.equals(ProcessingMode.packaged)) {
       return new SpringBootPackagedProcessor(jarPath);
     } else if (jarType.equals(SPRING_BOOT) && mode.equals(ProcessingMode.exploded)) {
-      Path explodedJarRoot = cacheDirectories.getExplodedJarDirectory();
-      // Clear the exploded-jar directory first
-      if (Files.exists(explodedJarRoot)) {
-        MoreFiles.deleteRecursively(explodedJarRoot, RecursiveDeleteOption.ALLOW_INSECURE);
-      }
-
-      return new SpringBootExplodedProcessor(jarPath, explodedJarRoot);
+      return new SpringBootExplodedProcessor(jarPath, cacheDirectories.getExplodedJarDirectory());
     } else if (jarType.equals(STANDARD) && mode.equals(ProcessingMode.packaged)) {
       return new StandardPackagedProcessor(jarPath);
     } else {
-      Path explodedJarRoot = cacheDirectories.getExplodedJarDirectory();
-      // Clear the exploded-jar directory first
-      if (Files.exists(explodedJarRoot)) {
-        MoreFiles.deleteRecursively(explodedJarRoot, RecursiveDeleteOption.ALLOW_INSECURE);
-      }
-      return new StandardExplodedProcessor(jarPath, explodedJarRoot);
+      return new StandardExplodedProcessor(jarPath, cacheDirectories.getExplodedJarDirectory());
     }
   }
 
