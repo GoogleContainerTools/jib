@@ -419,14 +419,15 @@ subprojects {
     }
   }
 
-  /* Add Test Coverage */
+  /* TEST COVERAGE */
   jacocoTestReport {
     reports {
       xml.enabled true
       html.enabled false
     }
   }
-
+  /* TEST COVERAGE */
+  
   /* INCLUDED PROJECT DEPENDENCY HELPER */
 
   /* LOCAL DEVELOPMENT HELPER TASKS */
