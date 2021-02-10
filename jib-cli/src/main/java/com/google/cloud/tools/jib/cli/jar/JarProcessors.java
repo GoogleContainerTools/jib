@@ -16,7 +16,7 @@
 
 package com.google.cloud.tools.jib.cli.jar;
 
-import com.google.cloud.tools.jib.filesystem.TempDirectoryProvider;
+import com.google.cloud.tools.jib.cli.CacheDirectories;
 import com.google.common.annotations.VisibleForTesting;
 import java.io.DataInputStream;
 import java.io.IOException;
@@ -37,14 +37,13 @@ public class JarProcessors {
    * Creates a {@link JarProcessor} instance based on jar type and processing mode.
    *
    * @param jarPath path to the jar
-   * @param temporaryDirectoryProvider temporary directory provider
+   * @param cacheDirectories the location of the relevant caches
    * @param mode processing mode
    * @return JarProcessor
    * @throws IOException if I/O error occurs when opening the jar file
    */
   public static JarProcessor from(
-      Path jarPath, TempDirectoryProvider temporaryDirectoryProvider, ProcessingMode mode)
-      throws IOException {
+      Path jarPath, CacheDirectories cacheDirectories, ProcessingMode mode) throws IOException {
     Integer jarJavaVersion = getJavaMajorVersion(jarPath);
     if (jarJavaVersion > 11) {
       throw new IllegalStateException(
@@ -59,11 +58,11 @@ public class JarProcessors {
     if (jarType.equals(SPRING_BOOT) && mode.equals(ProcessingMode.packaged)) {
       return new SpringBootPackagedProcessor(jarPath);
     } else if (jarType.equals(SPRING_BOOT) && mode.equals(ProcessingMode.exploded)) {
-      return new SpringBootExplodedProcessor(jarPath, temporaryDirectoryProvider.newDirectory());
+      return new SpringBootExplodedProcessor(jarPath, cacheDirectories.getExplodedJarDirectory());
     } else if (jarType.equals(STANDARD) && mode.equals(ProcessingMode.packaged)) {
       return new StandardPackagedProcessor(jarPath);
     } else {
-      return new StandardExplodedProcessor(jarPath, temporaryDirectoryProvider.newDirectory());
+      return new StandardExplodedProcessor(jarPath, cacheDirectories.getExplodedJarDirectory());
     }
   }
 

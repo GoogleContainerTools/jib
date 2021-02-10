@@ -20,15 +20,13 @@ import com.google.cloud.tools.jib.api.buildplan.FileEntriesLayer;
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.jar.Attributes;
 import java.util.jar.JarFile;
-import javax.annotation.Nullable;
 
 public class StandardPackagedProcessor implements JarProcessor {
 
-  @Nullable private final Path jarPath;
+  private final Path jarPath;
 
   public StandardPackagedProcessor(Path jarPath) {
     this.jarPath = jarPath;
@@ -36,9 +34,6 @@ public class StandardPackagedProcessor implements JarProcessor {
 
   @Override
   public List<FileEntriesLayer> createLayers() throws IOException {
-    if (jarPath == null) {
-      return new ArrayList<>();
-    }
     // Add dependencies layers.
     List<FileEntriesLayer> layers =
         JarLayers.getDependenciesLayers(jarPath, ProcessingMode.packaged);
@@ -56,9 +51,6 @@ public class StandardPackagedProcessor implements JarProcessor {
 
   @Override
   public ImmutableList<String> computeEntrypoint(List<String> jvmFlags) throws IOException {
-    if (jarPath == null) {
-      return ImmutableList.of();
-    }
     try (JarFile jarFile = new JarFile(jarPath.toFile())) {
       String mainClass =
           jarFile.getManifest().getMainAttributes().getValue(Attributes.Name.MAIN_CLASS);

@@ -28,7 +28,6 @@ import com.google.cloud.tools.jib.cli.jar.JarProcessor;
 import com.google.cloud.tools.jib.cli.jar.JarProcessors;
 import com.google.cloud.tools.jib.cli.jar.ProcessingMode;
 import com.google.cloud.tools.jib.cli.logging.CliLogger;
-import com.google.cloud.tools.jib.filesystem.TempDirectoryProvider;
 import com.google.cloud.tools.jib.plugins.common.logging.ConsoleLogger;
 import com.google.cloud.tools.jib.plugins.common.logging.SingleThreadedExecutor;
 import com.google.common.annotations.VisibleForTesting;
@@ -171,7 +170,7 @@ public class Jar implements Callable<Integer> {
 
     commonCliOptions.validate();
     SingleThreadedExecutor executor = new SingleThreadedExecutor();
-    try (TempDirectoryProvider tempDirectoryProvider = new TempDirectoryProvider()) {
+    try {
 
       ConsoleLogger logger =
           CliLogger.newLogger(
@@ -196,11 +195,11 @@ public class Jar implements Callable<Integer> {
         logger.log(LogEvent.Level.WARN, "--jvm-flags is ignored when --entrypoint is specified");
       }
 
-      JarProcessor processor = JarProcessors.from(jarFile, tempDirectoryProvider, mode);
-      JibContainerBuilder containerBuilder =
-          JarFiles.toJibContainerBuilder(processor, this, commonCliOptions, logger);
       CacheDirectories cacheDirectories =
           CacheDirectories.from(commonCliOptions, jarFile.toAbsolutePath().getParent());
+      JarProcessor processor = JarProcessors.from(jarFile, cacheDirectories, mode);
+      JibContainerBuilder containerBuilder =
+          JarFiles.toJibContainerBuilder(processor, this, commonCliOptions, logger);
       Containerizer containerizer = Containerizers.from(commonCliOptions, logger, cacheDirectories);
       containerBuilder.containerize(containerizer);
     } catch (Exception ex) {
