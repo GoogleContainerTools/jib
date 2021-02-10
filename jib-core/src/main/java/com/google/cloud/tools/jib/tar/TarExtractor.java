@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.tar;
 
+import com.google.cloud.tools.jib.filesystem.DirectoryWalker;
 import com.google.common.io.ByteStreams;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -26,6 +27,9 @@ import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.attribute.FileTime;
+import java.util.ArrayList;
+import java.util.List;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 
@@ -40,14 +44,35 @@ public class TarExtractor {
    * @throws IOException if extraction fails
    */
   public static void extract(Path source, Path destination) throws IOException {
-    String canonicalDestination = destination.toFile().getCanonicalPath();
+    extract(source, destination, false);
+  }
 
+  /**
+   * Extracts a tarball to the specified destination.
+   *
+   * @param source the tarball to extract
+   * @param destination the output directory
+   * @param enableReproducibleTimestamps whether or not reproducible timestamps should be used
+   * @throws IOException if extraction fails
+   * @throws IllegalStateException when reproducible timestamps are enabled but the target root used
+   *     for extracting the tar contents is not empty
+   */
+  public static void extract(Path source, Path destination, boolean enableReproducibleTimestamps)
+      throws IOException {
+    if (enableReproducibleTimestamps
+        && Files.isDirectory(destination)
+        && destination.toFile().list().length != 0) {
+      throw new IllegalStateException(
+          "Cannot enable reproducible timestamps. They can only be enabled when the target root doesn't exist or is an empty directory");
+    }
+    String canonicalDestination = destination.toFile().getCanonicalPath();
+    List<TarArchiveEntry> entries = new ArrayList<>();
     try (InputStream in = new BufferedInputStream(Files.newInputStream(source));
         TarArchiveInputStream tarArchiveInputStream = new TarArchiveInputStream(in)) {
-
       for (TarArchiveEntry entry = tarArchiveInputStream.getNextTarEntry();
           entry != null;
           entry = tarArchiveInputStream.getNextTarEntry()) {
+        entries.add(entry);
         Path entryPath = destination.resolve(entry.getName());
 
         String canonicalTarget = entryPath.toFile().getCanonicalPath();
@@ -55,7 +80,6 @@ public class TarExtractor {
           String offender = entry.getName() + " from " + source;
           throw new IOException("Blocked unzipping files outside destination: " + offender);
         }
-
         if (entry.isDirectory()) {
           Files.createDirectories(entryPath);
         } else {
@@ -71,6 +95,38 @@ public class TarExtractor {
             }
           }
         }
+      }
+    }
+    preserveModificationTimes(destination, entries, enableReproducibleTimestamps);
+  }
+
+  /**
+   * Preserve modification timestamps of files and directories in a tar file. If a directory is not
+   * an entry in the tar file and reproducible timestamps are enabled then its modification
+   * timestamp is set to a constant value. Note that the modification timestamps of symbolic links
+   * are not preserved even with reproducible timestamps enabled.
+   *
+   * @param destination target root for unzipping
+   * @param entries list of entries in tar file
+   * @param enableReproducibleTimestamps whether or not reproducible timestamps should be used
+   * @throws IOException when I/O error occurs
+   */
+  private static void preserveModificationTimes(
+      Path destination, List<TarArchiveEntry> entries, boolean enableReproducibleTimestamps)
+      throws IOException {
+    if (enableReproducibleTimestamps) {
+      FileTime epochPlusOne = FileTime.fromMillis(1000L);
+      new DirectoryWalker(destination)
+          .filter(Files::isDirectory)
+          .walk(path -> Files.setLastModifiedTime(path, epochPlusOne));
+    }
+    for (TarArchiveEntry entry : entries) {
+
+      // Setting the symbolic link's modification timestamp will cause the modification timestamp of
+      // the target to change
+      if (!entry.isSymbolicLink()) {
+        Files.setLastModifiedTime(
+            destination.resolve(entry.getName()), FileTime.from(entry.getModTime().toInstant()));
       }
     }
   }
