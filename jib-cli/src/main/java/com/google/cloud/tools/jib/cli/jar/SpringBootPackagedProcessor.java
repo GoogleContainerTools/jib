@@ -21,11 +21,10 @@ import com.google.common.collect.ImmutableList;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
-import javax.annotation.Nullable;
 
 public class SpringBootPackagedProcessor implements JarProcessor {
 
-  @Nullable private final Path jarPath;
+  private final Path jarPath;
 
   public SpringBootPackagedProcessor(Path jarPath) {
     this.jarPath = jarPath;
@@ -33,9 +32,6 @@ public class SpringBootPackagedProcessor implements JarProcessor {
 
   @Override
   public List<FileEntriesLayer> createLayers() {
-    if (jarPath == null) {
-      return Collections.emptyList();
-    }
     FileEntriesLayer jarLayer =
         FileEntriesLayer.builder()
             .setName(JarLayers.JAR)
@@ -46,9 +42,6 @@ public class SpringBootPackagedProcessor implements JarProcessor {
 
   @Override
   public ImmutableList<String> computeEntrypoint(List<String> jvmFlags) {
-    if (jarPath == null) {
-      return ImmutableList.of();
-    }
     ImmutableList.Builder<String> entrypoint = ImmutableList.builder();
     entrypoint.add("java");
     entrypoint.addAll(jvmFlags);
