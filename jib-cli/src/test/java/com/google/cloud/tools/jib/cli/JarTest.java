@@ -558,13 +558,6 @@ public class JarTest {
   }
 
   @Test
-  public void testParse_noCreationTime() {
-    Jar jarCommand =
-        CommandLine.populateCommand(new Jar(), "--target=test-image-ref", "my-app.jar");
-    assertThat(jarCommand.getCreationTime()).isEmpty();
-  }
-
-  @Test
   public void testValidate_nameMissingFail() {
     Jar jarCommand =
         CommandLine.populateCommand(new Jar(), "--target=tar://sometar.tar", "my-app.jar");
