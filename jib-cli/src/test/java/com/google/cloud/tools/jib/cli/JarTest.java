@@ -65,6 +65,7 @@ public class JarTest {
   public void testParse_defaults() {
     Jar jarCommand = CommandLine.populateCommand(new Jar(), "-t", "test-image-ref", "my-app.jar");
     CommonCliOptions commonCliOptions = jarCommand.commonCliOptions;
+
     assertThat(commonCliOptions.getTargetImage()).isEqualTo("test-image-ref");
     assertThat(commonCliOptions.getUsernamePassword()).isEmpty();
     assertThat(commonCliOptions.getToUsernamePassword()).isEmpty();
@@ -81,6 +82,17 @@ public class JarTest {
     assertThat(commonCliOptions.isStacktrace()).isFalse();
     assertThat(commonCliOptions.isHttpTrace()).isFalse();
     assertThat(commonCliOptions.isSerialize()).isFalse();
+    assertThat(jarCommand.getFrom()).isEmpty();
+    assertThat(jarCommand.getJvmFlags()).isEmpty();
+    assertThat(jarCommand.getExposedPorts()).isEmpty();
+    assertThat(jarCommand.getVolumes()).isEmpty();
+    assertThat(jarCommand.getEnvironment()).isEmpty();
+    assertThat(jarCommand.getLabels()).isEmpty();
+    assertThat(jarCommand.getUser()).isEmpty();
+    assertThat(jarCommand.getFormat()).hasValue(ImageFormat.Docker);
+    assertThat(jarCommand.getProgramArguments()).isEmpty();
+    assertThat(jarCommand.getEntrypoint()).isEmpty();
+    assertThat(jarCommand.getCreationTime()).isEmpty();
   }
 
   @Test
@@ -490,6 +502,13 @@ public class JarTest {
   }
 
   @Test
+  public void testParse_noImageFormat() {
+    Jar jarCommand =
+        CommandLine.populateCommand(new Jar(), "--target=test-image-ref", "my-app.jar");
+    assertThat(jarCommand.getFormat()).hasValue(ImageFormat.Docker);
+  }
+
+  @Test
   public void testParse_invalidImageFormat() {
     CommandLine.ParameterException exception =
         assertThrows(
@@ -536,6 +555,13 @@ public class JarTest {
             "--creation-time=2011-12-03T22:42:05Z",
             "my-app.jar");
     assertThat(jarCommand.getCreationTime()).hasValue(Instant.parse("2011-12-03T22:42:05Z"));
+  }
+
+  @Test
+  public void testParse_noCreationTime() {
+    Jar jarCommand =
+        CommandLine.populateCommand(new Jar(), "--target=test-image-ref", "my-app.jar");
+    assertThat(jarCommand.getCreationTime()).isEmpty();
   }
 
   @Test

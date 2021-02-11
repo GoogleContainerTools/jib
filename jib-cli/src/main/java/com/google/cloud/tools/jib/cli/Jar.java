@@ -279,8 +279,9 @@ public class Jar implements Callable<Integer> {
    * @return an optional creation time
    */
   public Optional<Instant> getCreationTime() {
-    return (creationTime == null)
-        ? Optional.empty()
-        : Optional.of(Instants.fromMillisOrIso8601(creationTime, "creationTime"));
+    if (creationTime != null) {
+      return Optional.of(Instants.fromMillisOrIso8601(creationTime, "creationTime"));
+    }
+    return Optional.empty();
   }
 }
