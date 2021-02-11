@@ -520,11 +520,22 @@ public class JarTest {
   }
 
   @Test
-  public void testParse_creationTime() {
+  public void testParse_creationTime_milliseconds() {
     Jar jarCommand =
         CommandLine.populateCommand(
             new Jar(), "--target=test-image-ref", "--creation-time=23", "my-app.jar");
     assertThat(jarCommand.getCreationTime()).hasValue(Instant.ofEpochMilli(23));
+  }
+
+  @Test
+  public void testParse_creationTime_iso8601() {
+    Jar jarCommand =
+        CommandLine.populateCommand(
+            new Jar(),
+            "--target=test-image-ref",
+            "--creation-time=2011-12-03T22:42:05Z",
+            "my-app.jar");
+    assertThat(jarCommand.getCreationTime()).hasValue(Instant.parse("2011-12-03T22:42:05Z"));
   }
 
   @Test

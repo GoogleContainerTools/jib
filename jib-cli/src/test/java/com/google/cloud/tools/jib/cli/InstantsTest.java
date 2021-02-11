@@ -20,7 +20,7 @@ import java.time.Instant;
 import org.junit.Assert;
 import org.junit.Test;
 
-/** Tests for {@link com.google.cloud.tools.jib.cli.Instants}. */
+/** Tests for {@link Instants}. */
 public class InstantsTest {
 
   @Test
