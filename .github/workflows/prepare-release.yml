@@ -1,0 +1,118 @@
+name: Prepare Jib release
+on:
+  workflow_dispatch:
+    inputs:
+      project:
+        description: Jib project to release
+        required: true
+        default: (build-plan | core | maven | gradle | extension-common | maven-extension | gradle-extension)
+      release_version:
+        description: new release version
+        required: true
+        default: (for example, 0.1.0)
+
+jobs:
+  release:
+    name: Prepare Jib release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v2
+
+      - name: Check input
+        run: |
+          echo '* input project: "${{ github.event.inputs.project }}"'
+
+          case ${{ github.event.inputs.project }} in
+            build-plan|core|maven|gradle|extension-common|maven-extension|gradle-extension) ;;
+            *) echo 'invalid input project name "${{ github.event.inputs.project }}"'
+               exit 1
+               ;;
+          esac
+          if [[ ! "${{ github.event.inputs.release_version }}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo 'version "${{ github.event.inputs.release_version }}" not in ###.###.### format'
+            exit 1
+          fi
+
+      - name: Build project
+        run: |
+          # TODO: run integration test? (Requries auth with GCP.)
+          ./gradlew clean build --stacktrace
+
+      - name: Run Gradle release
+        run: |
+          git checkout -b ${{ github.event.inputs.project }}-release-v${{ github.event.inputs.release_version }}
+          git config user.email ${{ github.actor }}@users.noreply.github.com
+          git config user.name ${{ github.actor }}
+
+          PROJECT=$( case ${{ github.event.inputs.project }} in
+            extension-common) echo jib-plugins-extension-common ;;
+            maven-extension)  echo jib-maven-plugin-extension-api ;;
+            gradle-extension) echo jib-gradle-plugin-extension-api ;;
+            maven|gradle)     echo jib-${{ github.event.inputs.project }}-plugin ;;
+            *)                echo jib-${{ github.event.inputs.project }} ;;
+          esac )
+          # This creates the tag (e.g., "v0.1.0-gradle") and pushes the updated
+          # branch (e.g., "gradle-release-v0.1.0") and the new tag.
+          ./gradlew "${PROJECT}":release \
+            -Prelease.useAutomaticVersion=true \
+            -Prelease.releaseVersion=${{ github.event.inputs.release_version }}
+
+      - name: Create pull request
+        uses: repo-sync/pull-request@v2
+        id: create-pr
+        with:
+          # Provided by Actions. No need to create a token.
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          source_branch: ${{ github.event.inputs.project }}-release-v${{ github.event.inputs.release_version }}
+          pr_title: "${{ github.event.inputs.project }} release v${{ github.event.inputs.release_version }}"
+          pr_body: "To be merged after the release is complete."
+          pr_label: "kokoro:run,PR: Merge After Release"
+
+      - name: Draft Maven/Gradle GitHub release
+        uses: actions/create-release@v1
+        id: create-plugin-release
+        if: ${{ github.event.inputs.project == 'maven' || github.event.inputs.project == 'gradle' }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: v${{ github.event.inputs.release_version }}-${{ github.event.inputs.project }}
+          release_name: jib-${{ github.event.inputs.project }}-plugin v${{ github.event.inputs.release_version }}
+          draft: true
+          body: |
+            **Run `./jib-${{ github.event.inputs.project }}-plugin/scripts/update_gcs_latest.sh ${{ github.event.inputs.release_version }}`
+            when the release is complete to update the latest version string on GCS.**
+
+            ---
+            ### Major Changes
+
+            See [CHANGELOG.md](https://github.com/GoogleContainerTools/jib/blob/master/jib-${{ github.event.inputs.project }}-plugin/CHANGELOG.md) for more details.
+      
+      - name: Create Maven/Gradle release checklist issue
+        uses: JasonEtco/create-an-issue@v2
+        if: ${{ github.event.inputs.project == 'maven' || github.event.inputs.project == 'gradle' }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_NAME: v${{ github.event.inputs.release_version }}-${{ github.event.inputs.project }}
+          CHANGELOG_URL: https://github.com/GoogleContainerTools/jib/blob/master/jib-${{ github.event.inputs.project }}-plugin/CHANGELOG.md
+          README_URL: https://github.com/GoogleContainerTools/jib/blob/master/jib-${{ github.event.inputs.project }}-plugin/README.md
+          GCS_UPDATE_SCRIPT: "`./jib-${{ github.event.inputs.project }}-plugin/scripts/update_gcs_latest.sh ${{ github.event.inputs.release_version }}`"
+          RELEASE_DRAFT: ${{ steps.create-plugin-release.outputs.html_url }}
+          RELEASE_PR: ${{steps.create-pr.outputs.pr_url}}
+        with:
+          filename: .github/RELEASE_TEMPLATES/plugin_release_checklist.md
+
+
+      - name: Draft Jib Core GitHub release
+        uses: actions/create-release@v1
+        if: ${{ github.event.inputs.project == 'core' }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: v${{ github.event.inputs.release_version }}-core
+          release_name: jib-core v${{ github.event.inputs.release_version }}
+          draft: true
+          body: |
+            ### Major Changes
+
+            See [CHANGELOG.md](https://github.com/GoogleContainerTools/jib/blob/master/jib-core/CHANGELOG.md) for more details.
