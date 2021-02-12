@@ -35,6 +35,7 @@ import com.google.common.collect.ImmutableSet;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
+import java.time.Instant;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -150,6 +151,14 @@ public class Jar implements Callable<Integer> {
           "Entrypoint for container. Overrides the default entrypoint, example: --entrypoint='custom entrypoint'")
   private List<String> entrypoint = Collections.emptyList();
 
+  @CommandLine.Option(
+      names = "--creation-time",
+      paramLabel = "<creation-time>",
+      description =
+          "The creation time of the container in milliseconds since epoch or iso8601 format. Overrides the default (1970-01-01T00:00:00Z)")
+  @SuppressWarnings("NullAway.Init") // initialized by picocli
+  private String creationTime;
+
   @Override
   public Integer call() {
     try {
@@ -262,5 +271,17 @@ public class Jar implements Callable<Integer> {
 
   public List<String> getEntrypoint() {
     return entrypoint;
+  }
+
+  /**
+   * Returns {@link Instant} representing creation time of container.
+   *
+   * @return an optional creation time
+   */
+  public Optional<Instant> getCreationTime() {
+    if (creationTime != null) {
+      return Optional.of(Instants.fromMillisOrIso8601(creationTime, "creationTime"));
+    }
+    return Optional.empty();
   }
 }

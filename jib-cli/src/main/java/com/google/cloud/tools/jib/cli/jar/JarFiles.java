@@ -74,6 +74,7 @@ public class JarFiles {
         .setProgramArguments(jarOptions.getProgramArguments());
     jarOptions.getUser().ifPresent(containerBuilder::setUser);
     jarOptions.getFormat().ifPresent(containerBuilder::setFormat);
+    jarOptions.getCreationTime().ifPresent(containerBuilder::setCreationTime);
 
     return containerBuilder;
   }

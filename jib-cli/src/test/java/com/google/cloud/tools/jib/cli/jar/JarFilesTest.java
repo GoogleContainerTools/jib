@@ -255,6 +255,8 @@ public class JarFilesTest {
     Mockito.when(mockJarCommand.getProgramArguments()).thenReturn(ImmutableList.of("arg1"));
     Mockito.when(mockJarCommand.getEntrypoint())
         .thenReturn(ImmutableList.of("custom", "entrypoint"));
+    Mockito.when(mockJarCommand.getCreationTime())
+        .thenReturn(Optional.of(Instant.ofEpochSecond(5)));
 
     JibContainerBuilder containerBuilder =
         JarFiles.toJibContainerBuilder(
@@ -272,5 +274,6 @@ public class JarFilesTest {
     assertThat(buildPlan.getFormat()).isEqualTo(ImageFormat.OCI);
     assertThat(buildPlan.getCmd()).isEqualTo(ImmutableList.of("arg1"));
     assertThat(buildPlan.getEntrypoint()).isEqualTo(ImmutableList.of("custom", "entrypoint"));
+    assertThat(buildPlan.getCreationTime()).isEqualTo(Instant.ofEpochSecond(5));
   }
 }
