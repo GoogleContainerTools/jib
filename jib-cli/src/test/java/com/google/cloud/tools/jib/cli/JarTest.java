@@ -502,13 +502,6 @@ public class JarTest {
   }
 
   @Test
-  public void testParse_noImageFormat() {
-    Jar jarCommand =
-        CommandLine.populateCommand(new Jar(), "--target=test-image-ref", "my-app.jar");
-    assertThat(jarCommand.getFormat()).hasValue(ImageFormat.Docker);
-  }
-
-  @Test
   public void testParse_invalidImageFormat() {
     CommandLine.ParameterException exception =
         assertThrows(
