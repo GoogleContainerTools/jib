@@ -155,7 +155,7 @@ public class Jar implements Callable<Integer> {
       names = "--creation-time",
       paramLabel = "<creation-time>",
       description =
-          "The creation time of the container in milliseconds since epoch or iso8601 format")
+          "The creation time of the container in milliseconds since epoch or iso8601 format. Overrides the default (1970-01-01T00:00:00Z)")
   @SuppressWarnings("NullAway.Init") // initialized by picocli
   private String creationTime;
 
