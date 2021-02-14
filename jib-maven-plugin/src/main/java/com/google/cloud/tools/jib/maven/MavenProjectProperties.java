@@ -42,6 +42,7 @@ import com.google.cloud.tools.jib.plugins.common.logging.ConsoleLogger;
 import com.google.cloud.tools.jib.plugins.common.logging.ConsoleLoggerBuilder;
 import com.google.cloud.tools.jib.plugins.common.logging.ProgressDisplayGenerator;
 import com.google.cloud.tools.jib.plugins.common.logging.SingleThreadedExecutor;
+import com.google.cloud.tools.jib.plugins.extension.JibPluginExtension;
 import com.google.cloud.tools.jib.plugins.extension.JibPluginExtensionException;
 import com.google.cloud.tools.jib.plugins.extension.NullExtension;
 import com.google.common.annotations.VisibleForTesting;
@@ -674,6 +675,20 @@ public class MavenProjectProperties implements ProjectProperties {
   private JibMavenPluginExtension<?> findConfiguredExtension(
       List<JibMavenPluginExtension<?>> extensions, ExtensionConfiguration config)
       throws JibPluginExtensionException {
+    
+    // If the extension has been injected, always prefer that one.
+    // Extensions might support both approaches (injection and JDK service loader) at the same time for compatibility reasons.
+    Optional<? extends JibPluginExtension> injectedExtension = config.getInjectedExtension();
+    if(injectedExtension.isPresent()) {
+      JibPluginExtension ext = config.getInjectedExtension().get();
+      if(ext instanceof JibMavenPluginExtension) {
+        return (JibMavenPluginExtension<?>) ext;
+      } else {
+        throw new JibPluginExtensionException(ext.getClass(), 
+            "injected extension is no JibMavenPluginExtension: "+ext.getClass().getName());
+      }
+    }
+    
     Predicate<JibMavenPluginExtension<?>> matchesClassName =
         extension -> extension.getClass().getName().equals(config.getExtensionClass());
     Optional<JibMavenPluginExtension<?>> found =

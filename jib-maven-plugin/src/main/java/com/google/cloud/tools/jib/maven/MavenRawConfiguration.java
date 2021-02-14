@@ -22,12 +22,16 @@ import com.google.cloud.tools.jib.api.buildplan.ImageFormat;
 import com.google.cloud.tools.jib.maven.JibPluginConfiguration.ExtraDirectoryParameters;
 import com.google.cloud.tools.jib.plugins.common.AuthProperty;
 import com.google.cloud.tools.jib.plugins.common.RawConfiguration;
+import com.google.cloud.tools.jib.plugins.extension.JibPluginExtension;
+import com.google.cloud.tools.jib.maven.extension.JibMavenPluginExtension;
+
 import java.nio.file.Path;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /** Maven-specific adapter for providing raw configuration parameter values. */
 public class MavenRawConfiguration implements RawConfiguration {
@@ -220,7 +224,33 @@ public class MavenRawConfiguration implements RawConfiguration {
 
   @Override
   public List<? extends ExtensionConfiguration> getPluginExtensions() {
-    return jibPluginConfiguration.getPluginExtensions();
+    return jibPluginConfiguration.getPluginExtensions().stream().map(extConf -> {
+      return new ExtensionConfiguration() {
+        
+        @Override
+        public Map<String, String> getProperties() {
+          return extConf.getProperties();
+        }
+        
+        @Override
+        public Optional<Object> getExtraConfiguration() {
+          return extConf.getExtraConfiguration();
+        }
+        
+        @Override
+        public String getExtensionClass() {
+          return extConf.getExtensionClass();
+        }
+        
+        @Override
+        public Optional<JibMavenPluginExtension<?>> getInjectedExtension() {
+          return jibPluginConfiguration.getInjectedPluginExtensions()
+              .stream()
+              .filter(ext -> ext.getClass().getName().equals(extConf.getExtensionClass()))
+              .findFirst();
+        }
+      };
+    }).collect(Collectors.toList());
   }
 
   @Override
