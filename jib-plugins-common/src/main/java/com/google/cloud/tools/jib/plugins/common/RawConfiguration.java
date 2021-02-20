@@ -39,7 +39,6 @@ public interface RawConfiguration {
     Map<String, String> getProperties();
 
     Optional<Object> getExtraConfiguration();
-
   }
   
   static interface PlatformConfiguration {

@@ -679,15 +679,15 @@ public class MavenProjectProperties implements ProjectProperties {
     
     // If the extension has been injected, always prefer that one.
     // Extensions might support both approaches (injection and JDK service loader) at the same time for compatibility reasons.
-    if(config instanceof ExtensionConfigurationWithInjectedPlugin) {
+    if (config instanceof ExtensionConfigurationWithInjectedPlugin) {
       Optional<? extends JibPluginExtension> injectedExtension = ((ExtensionConfigurationWithInjectedPlugin)config).getInjectedExtension();
-      if(injectedExtension.isPresent()) {
+      if (injectedExtension.isPresent()) {
         JibPluginExtension ext = injectedExtension.get();
-        if(ext instanceof JibMavenPluginExtension) {
+        if (ext instanceof JibMavenPluginExtension) {
           return (JibMavenPluginExtension<?>) ext;
         } else {
           throw new JibPluginExtensionException(ext.getClass(), 
-              "injected extension is no JibMavenPluginExtension: "+ext.getClass().getName());
+              "injected extension is no JibMavenPluginExtension: " + ext.getClass().getName());
         }
       }
     }

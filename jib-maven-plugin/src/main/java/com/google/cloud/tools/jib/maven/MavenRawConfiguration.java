@@ -23,9 +23,7 @@ import com.google.cloud.tools.jib.maven.JibPluginConfiguration.ExtraDirectoryPar
 import com.google.cloud.tools.jib.plugins.common.AuthProperty;
 import com.google.cloud.tools.jib.plugins.common.ExtensionConfigurationWithInjectedPlugin;
 import com.google.cloud.tools.jib.plugins.common.RawConfiguration;
-import com.google.cloud.tools.jib.plugins.extension.JibPluginExtension;
 import com.google.cloud.tools.jib.maven.extension.JibMavenPluginExtension;
-
 import java.nio.file.Path;
 import java.util.LinkedHashMap;
 import java.util.List;
