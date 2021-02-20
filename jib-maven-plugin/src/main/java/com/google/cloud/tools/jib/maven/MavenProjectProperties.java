@@ -54,6 +54,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -100,6 +101,7 @@ public class MavenProjectProperties implements ProjectProperties {
    * @param session the {@link MavenSession} for the plugin.
    * @param log the Maven {@link Log} to log messages during Jib execution
    * @param tempDirectoryProvider temporary directory provider
+   * @param injectedExtensions the extensions injected into the Mojo
    * @return a MavenProjectProperties from the given project and logger.
    */
   public static MavenProjectProperties getForProject(
@@ -107,11 +109,17 @@ public class MavenProjectProperties implements ProjectProperties {
       MavenProject project,
       MavenSession session,
       Log log,
-      TempDirectoryProvider tempDirectoryProvider) {
+      TempDirectoryProvider tempDirectoryProvider,
+      Collection<JibMavenPluginExtension<?>> injectedExtensions) {
     Preconditions.checkNotNull(jibPluginDescriptor);
     Supplier<List<JibMavenPluginExtension<?>>> extensionLoader =
         () -> {
           List<JibMavenPluginExtension<?>> extensions = new ArrayList<>();
+          // Add the injected extensions at first to prefer them over the ones from JDK service
+          // loader.
+          // Extensions might support both approaches (injection and JDK service loader) at the same
+          // time for compatibility reasons.
+          extensions.addAll(injectedExtensions);
           for (JibMavenPluginExtension<?> extension :
               ServiceLoader.load(JibMavenPluginExtension.class)) {
             extensions.add(extension);
@@ -674,16 +682,6 @@ public class MavenProjectProperties implements ProjectProperties {
   private JibMavenPluginExtension<?> findConfiguredExtension(
       List<JibMavenPluginExtension<?>> extensions, ExtensionConfiguration config)
       throws JibPluginExtensionException {
-    // If the extension has been injected, always prefer that one.
-    // Extensions might support both approaches (injection and JDK service loader) at the same time
-    // for compatibility reasons.
-    if (config instanceof ExtensionConfigurationWithInjectedPlugin) {
-      Optional<? extends JibMavenPluginExtension<?>> injectedExtension =
-          ((ExtensionConfigurationWithInjectedPlugin) config).getInjectedExtension();
-      if (injectedExtension.isPresent()) {
-        return (JibMavenPluginExtension<?>) injectedExtension.get();
-      }
-    }
     Predicate<JibMavenPluginExtension<?>> matchesClassName =
         extension -> extension.getClass().getName().equals(config.getExtensionClass());
     Optional<JibMavenPluginExtension<?>> found =
