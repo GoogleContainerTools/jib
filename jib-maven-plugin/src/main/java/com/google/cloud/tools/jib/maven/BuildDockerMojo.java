@@ -36,7 +36,6 @@ import com.google.cloud.tools.jib.plugins.common.globalconfig.GlobalConfig;
 import com.google.cloud.tools.jib.plugins.common.globalconfig.InvalidGlobalConfigException;
 import com.google.cloud.tools.jib.plugins.extension.JibPluginExtensionException;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.Futures;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -78,14 +77,7 @@ public class BuildDockerMojo extends JibPluginConfiguration {
         getSession().getSettings(), getSettingsDecrypter());
 
     TempDirectoryProvider tempDirectoryProvider = new TempDirectoryProvider();
-    MavenProjectProperties projectProperties =
-        MavenProjectProperties.getForProject(
-            Preconditions.checkNotNull(descriptor),
-            getProject(),
-            getSession(),
-            getLog(),
-            tempDirectoryProvider,
-            getInjectedPluginExtensions());
+    MavenProjectProperties projectProperties = getMavenProjectProperties(tempDirectoryProvider);
 
     Future<Optional<String>> updateCheckFuture = Futures.immediateFuture(Optional.empty());
     try {
