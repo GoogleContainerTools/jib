@@ -16,15 +16,27 @@
 
 package com.google.cloud.tools.jib.maven;
 
+import com.google.cloud.tools.jib.api.buildplan.ContainerBuildPlan;
 import com.google.cloud.tools.jib.event.EventHandlers;
+import com.google.cloud.tools.jib.maven.JibPluginConfiguration.ExtensionParameters;
 import com.google.cloud.tools.jib.maven.JibPluginConfiguration.FromAuthConfiguration;
+import com.google.cloud.tools.jib.maven.extension.JibMavenPluginExtension;
+import com.google.cloud.tools.jib.maven.extension.MavenData;
 import com.google.cloud.tools.jib.plugins.common.AuthProperty;
+import com.google.cloud.tools.jib.plugins.common.ExtensionConfigurationWithInjectedPlugin;
+import com.google.cloud.tools.jib.plugins.common.RawConfiguration.ExtensionConfiguration;
+import com.google.cloud.tools.jib.plugins.extension.ExtensionLogger;
+import com.google.cloud.tools.jib.plugins.extension.JibPluginExtensionException;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Sets;
 import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.settings.Server;
 import org.apache.maven.settings.Settings;
@@ -34,6 +46,25 @@ import org.mockito.Mockito;
 
 /** Test for {@link MavenRawConfiguration}. */
 public class MavenRawConfigurationTest {
+
+  static class FooExtension implements JibMavenPluginExtension<Object> {
+
+    @Override
+    public Optional<Class<Object>> getExtraConfigType() {
+      return null;
+    }
+
+    @Override
+    public ContainerBuildPlan extendContainerBuildPlan(
+        ContainerBuildPlan buildPlan,
+        Map<String, String> properties,
+        Optional<Object> extraConfig,
+        MavenData mavenData,
+        ExtensionLogger logger)
+        throws JibPluginExtensionException {
+      return null;
+    }
+  }
 
   @Test
   public void testGetters() {
@@ -87,6 +118,28 @@ public class MavenRawConfigurationTest {
         .thenReturn(Paths.get("json/path"));
     Mockito.when(jibPluginConfiguration.getTarOutputPath()).thenReturn(Paths.get("tar/path"));
 
+    ExtensionParameters fooExtensionParams = Mockito.mock(ExtensionParameters.class);
+    Mockito.when(fooExtensionParams.getExtensionClass()).thenReturn(FooExtension.class.getName());
+    Object fooExtraConfig = new Object();
+    Mockito.when(fooExtensionParams.getExtraConfiguration())
+        .thenReturn(Optional.of(fooExtraConfig));
+    Mockito.when(fooExtensionParams.getProperties()).thenReturn(Collections.emptyMap());
+
+    ExtensionParameters barExtensionParams = Mockito.mock(ExtensionParameters.class);
+    Mockito.when(barExtensionParams.getExtensionClass()).thenReturn("com.bar.Bar");
+    Mockito.when(barExtensionParams.getExtraConfiguration()).thenReturn(Optional.empty());
+
+    Map<String, String> barProperties = new HashMap<>();
+    barProperties.put("bar1", "value1");
+    Mockito.when(barExtensionParams.getProperties()).thenReturn(barProperties);
+
+    Mockito.when(jibPluginConfiguration.getPluginExtensions())
+        .thenReturn(Arrays.asList(fooExtensionParams, barExtensionParams));
+    FooExtension fooExtension = new FooExtension();
+    // FooExtension is dependency injected
+    Mockito.when(jibPluginConfiguration.getInjectedPluginExtensions())
+        .thenReturn(new HashSet<>(Arrays.asList(fooExtension)));
+
     MavenRawConfiguration rawConfiguration = new MavenRawConfiguration(jibPluginConfiguration);
 
     AuthProperty fromAuth = rawConfiguration.getFromAuth();
@@ -122,6 +175,25 @@ public class MavenRawConfigurationTest {
     Assert.assertEquals(Paths.get("id/path"), jibPluginConfiguration.getImageIdOutputPath());
     Assert.assertEquals(Paths.get("json/path"), jibPluginConfiguration.getImageJsonOutputPath());
     Assert.assertEquals(Paths.get("tar/path"), jibPluginConfiguration.getTarOutputPath());
+
+    List<? extends ExtensionConfiguration> pluginExtensions =
+        rawConfiguration.getPluginExtensions();
+    Assert.assertEquals(2, pluginExtensions.size());
+    ExtensionConfiguration fooExtConfig = pluginExtensions.get(0);
+    Assert.assertEquals(FooExtension.class.getName(), fooExtConfig.getExtensionClass());
+    Assert.assertEquals(fooExtraConfig, fooExtConfig.getExtraConfiguration().get());
+    Assert.assertEquals(Collections.emptyMap(), fooExtConfig.getProperties());
+    Assert.assertEquals(
+        fooExtension,
+        ((ExtensionConfigurationWithInjectedPlugin) fooExtConfig).getInjectedExtension().get());
+
+    ExtensionConfiguration barExtConfig = pluginExtensions.get(1);
+    Assert.assertEquals("com.bar.Bar", barExtConfig.getExtensionClass());
+    Assert.assertEquals(Optional.empty(), barExtConfig.getExtraConfiguration());
+    Assert.assertEquals(barProperties, barExtConfig.getProperties());
+    Assert.assertEquals(
+        Optional.empty(),
+        ((ExtensionConfigurationWithInjectedPlugin) barExtConfig).getInjectedExtension());
 
     Mockito.verifyNoMoreInteractions(eventHandlers);
   }

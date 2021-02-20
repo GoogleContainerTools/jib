@@ -110,6 +110,8 @@ public class MavenProjectPropertiesExtensionTest {
     }
   }
 
+  private static class NotMavenExtension implements JibPluginExtension {}
+
   private static class BaseExtensionConfig<T> implements ExtensionConfigurationWithInjectedPlugin {
 
     private final String extensionClass;
@@ -274,30 +276,6 @@ public class MavenProjectPropertiesExtensionTest {
     JibContainerBuilder extendedBuilder =
         mavenProjectProperties.runPluginExtensions(
             Arrays.asList(new FooExtensionConfig()), containerBuilder);
-    Assert.assertEquals("user from extension", extendedBuilder.toContainerBuildPlan().getUser());
-
-    mavenProjectProperties.waitForLoggingThread();
-    Mockito.verify(mockLog).error("awesome error from my extension");
-    Mockito.verify(mockLog)
-        .info(
-            Mockito.startsWith(
-                "Running extension: com.google.cloud.tools.jib.maven.MavenProjectProperties"));
-  }
-
-  @Test
-  public void testRunInjectedPluginExtensions() throws JibPluginExtensionException {
-    FooExtension extension =
-        new FooExtension(
-            (buildPlan, properties, extraConfig, mavenData, logger) -> {
-              logger.log(LogLevel.ERROR, "awesome error from my extension");
-              return buildPlan.toBuilder().setUser("user from extension").build();
-            });
-    // Extension is not provided by JDK Service Loader, but is injected and thus
-    // comes with FooExtensionConfig
-    loadedExtensions = Collections.emptyList();
-    JibContainerBuilder extendedBuilder =
-        mavenProjectProperties.runPluginExtensions(
-            Arrays.asList(new FooExtensionConfig(extension)), containerBuilder);
     Assert.assertEquals("user from extension", extendedBuilder.toContainerBuildPlan().getUser());
 
     mavenProjectProperties.waitForLoggingThread();
@@ -493,6 +471,52 @@ public class MavenProjectPropertiesExtensionTest {
     } catch (JibPluginExtensionException ex) {
       Assert.assertEquals(FooExtension.class, ex.getExtensionClass());
       Assert.assertEquals("extension crashed: buggy extension", ex.getMessage());
+    }
+  }
+
+  @Test
+  public void testRunInjectedPluginExtensions() throws JibPluginExtensionException {
+    FooExtension extension =
+        new FooExtension(
+            (buildPlan, properties, extraConfig, mavenData, logger) -> {
+              logger.log(LogLevel.ERROR, "awesome error from my extension");
+              return buildPlan.toBuilder().setUser("user from extension").build();
+            });
+    // Extension is not provided by JDK Service Loader, but is injected and thus
+    // comes with the ExtensionConfig
+    loadedExtensions = Collections.emptyList();
+    JibContainerBuilder extendedBuilder =
+        mavenProjectProperties.runPluginExtensions(
+            Arrays.asList(new FooExtensionConfig(extension)), containerBuilder);
+    Assert.assertEquals("user from extension", extendedBuilder.toContainerBuildPlan().getUser());
+
+    mavenProjectProperties.waitForLoggingThread();
+    Mockito.verify(mockLog).error("awesome error from my extension");
+    Mockito.verify(mockLog)
+        .info(
+            Mockito.startsWith(
+                "Running extension: com.google.cloud.tools.jib.maven.MavenProjectProperties"));
+  }
+
+  @Test
+  public void testRunInjectedPluginExtensions_notMavenPluginExtension()
+      throws JibPluginExtensionException {
+    JibPluginExtension extension = new NotMavenExtension();
+    // Extension is not provided by JDK Service Loader, but is injected and thus
+    // comes with the ExtensionConfig
+    loadedExtensions = Collections.emptyList();
+    try {
+      mavenProjectProperties.runPluginExtensions(
+          Arrays.asList(
+              new BaseExtensionConfig<Object>(
+                  NotMavenExtension.class.getName(), Collections.emptyMap(), null, extension)),
+          containerBuilder);
+      Assert.fail();
+    } catch (JibPluginExtensionException ex) {
+      Assert.assertEquals(NotMavenExtension.class, ex.getExtensionClass());
+      Assert.assertEquals(
+          "injected extension is no JibMavenPluginExtension: " + NotMavenExtension.class.getName(),
+          ex.getMessage());
     }
   }
 }
