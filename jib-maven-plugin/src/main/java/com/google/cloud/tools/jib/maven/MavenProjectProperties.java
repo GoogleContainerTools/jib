@@ -687,7 +687,8 @@ public class MavenProjectProperties implements ProjectProperties {
         if (ext instanceof JibMavenPluginExtension) {
           return (JibMavenPluginExtension<?>) ext;
         } else {
-          throw new JibPluginExtensionException(ext.getClass(),
+          throw new JibPluginExtensionException(
+              ext.getClass(),
               "injected extension is no JibMavenPluginExtension: " + ext.getClass().getName());
         }
       }

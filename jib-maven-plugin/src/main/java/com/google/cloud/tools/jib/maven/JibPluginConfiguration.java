@@ -348,8 +348,7 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
 
   @Component protected SettingsDecrypter settingsDecrypter;
 
-  @Inject
-  private Set<JibMavenPluginExtension<?>> injectedPluginExtensions = Collections.emptySet();
+  @Inject private Set<JibMavenPluginExtension<?>> injectedPluginExtensions = Collections.emptySet();
 
   protected Set<JibMavenPluginExtension<?>> getInjectedPluginExtensions() {
     return injectedPluginExtensions;

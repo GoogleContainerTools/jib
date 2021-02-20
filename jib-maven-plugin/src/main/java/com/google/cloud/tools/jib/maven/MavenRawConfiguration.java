@@ -223,33 +223,39 @@ public class MavenRawConfiguration implements RawConfiguration {
 
   @Override
   public List<? extends ExtensionConfiguration> getPluginExtensions() {
-    return jibPluginConfiguration.getPluginExtensions().stream().map(extConf -> {
-      return new ExtensionConfigurationWithInjectedPlugin() {
-        
-        @Override
-        public Map<String, String> getProperties() {
-          return extConf.getProperties();
-        }
-        
-        @Override
-        public Optional<Object> getExtraConfiguration() {
-          return extConf.getExtraConfiguration();
-        }
-        
-        @Override
-        public String getExtensionClass() {
-          return extConf.getExtensionClass();
-        }
-        
-        @Override
-        public Optional<JibMavenPluginExtension<?>> getInjectedExtension() {
-          return jibPluginConfiguration.getInjectedPluginExtensions()
-              .stream()
-              .filter(ext -> ext.getClass().getName().equals(extConf.getExtensionClass()))
-              .findFirst();
-        }
-      };
-    }).collect(Collectors.toList());
+    return jibPluginConfiguration
+        .getPluginExtensions()
+        .stream()
+        .map(
+            extConf -> {
+              return new ExtensionConfigurationWithInjectedPlugin() {
+
+                @Override
+                public Map<String, String> getProperties() {
+                  return extConf.getProperties();
+                }
+
+                @Override
+                public Optional<Object> getExtraConfiguration() {
+                  return extConf.getExtraConfiguration();
+                }
+
+                @Override
+                public String getExtensionClass() {
+                  return extConf.getExtensionClass();
+                }
+
+                @Override
+                public Optional<JibMavenPluginExtension<?>> getInjectedExtension() {
+                  return jibPluginConfiguration
+                      .getInjectedPluginExtensions()
+                      .stream()
+                      .filter(ext -> ext.getClass().getName().equals(extConf.getExtensionClass()))
+                      .findFirst();
+                }
+              };
+            })
+        .collect(Collectors.toList());
   }
 
   @Override
