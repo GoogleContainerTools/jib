@@ -25,6 +25,7 @@ import com.google.cloud.tools.jib.maven.extension.JibMavenPluginExtension;
 import com.google.cloud.tools.jib.maven.extension.MavenData;
 import com.google.cloud.tools.jib.plugins.common.RawConfiguration.ExtensionConfiguration;
 import com.google.cloud.tools.jib.plugins.extension.ExtensionLogger;
+import com.google.cloud.tools.jib.plugins.extension.JibPluginExtension;
 import com.google.cloud.tools.jib.plugins.extension.ExtensionLogger.LogLevel;
 import com.google.cloud.tools.jib.plugins.extension.JibPluginExtensionException;
 import com.google.common.collect.ImmutableMap;
@@ -113,12 +114,19 @@ public class MavenProjectPropertiesExtensionTest {
     private final String extensionClass;
     private final Map<String, String> properties;
     private final T extraConfig;
+    private final Optional<? extends JibPluginExtension> injectedExtension;
 
     private BaseExtensionConfig(
-        String extensionClass, Map<String, String> properties, T extraConfig) {
+        String extensionClass, Map<String, String> properties, T extraConfig, JibPluginExtension injectedExtension) {
       this.extensionClass = extensionClass;
       this.properties = properties;
       this.extraConfig = extraConfig;
+      this.injectedExtension = Optional.ofNullable(injectedExtension);
+    }
+    
+    private BaseExtensionConfig(
+        String extensionClass, Map<String, String> properties, T extraConfig) {
+      this(extensionClass, properties, extraConfig, null);
     }
 
     @Override
@@ -135,6 +143,11 @@ public class MavenProjectPropertiesExtensionTest {
     public Optional<Object> getExtraConfiguration() {
       return Optional.ofNullable(extraConfig);
     }
+    
+    @Override
+    public Optional<? extends JibPluginExtension> getInjectedExtension() {
+      return injectedExtension;
+    }
   }
 
   private static class FooExtensionConfig extends BaseExtensionConfig<ExtensionDefinedFooConfig> {
@@ -149,6 +162,10 @@ public class MavenProjectPropertiesExtensionTest {
 
     private FooExtensionConfig(ExtensionDefinedFooConfig extraConfig) {
       super(FooExtension.class.getName(), Collections.emptyMap(), extraConfig);
+    }
+    
+    private FooExtensionConfig(FooExtension fooExtension) {
+      super(FooExtension.class.getName(), Collections.emptyMap(), null, fooExtension);
     }
   }
 
@@ -253,6 +270,30 @@ public class MavenProjectPropertiesExtensionTest {
     JibContainerBuilder extendedBuilder =
         mavenProjectProperties.runPluginExtensions(
             Arrays.asList(new FooExtensionConfig()), containerBuilder);
+    Assert.assertEquals("user from extension", extendedBuilder.toContainerBuildPlan().getUser());
+
+    mavenProjectProperties.waitForLoggingThread();
+    Mockito.verify(mockLog).error("awesome error from my extension");
+    Mockito.verify(mockLog)
+        .info(
+            Mockito.startsWith(
+                "Running extension: com.google.cloud.tools.jib.maven.MavenProjectProperties"));
+  }
+  
+  @Test
+  public void testRunInjectedPluginExtensions() throws JibPluginExtensionException {
+    FooExtension extension =
+        new FooExtension(
+            (buildPlan, properties, extraConfig, mavenData, logger) -> {
+              logger.log(LogLevel.ERROR, "awesome error from my extension");
+              return buildPlan.toBuilder().setUser("user from extension").build();
+            });
+    // Extension is not provided by JDK Service Loader, but is injected and thus 
+    // comes with FooExtensionConfig
+    loadedExtensions = Collections.emptyList();
+    JibContainerBuilder extendedBuilder =
+        mavenProjectProperties.runPluginExtensions(
+            Arrays.asList(new FooExtensionConfig(extension)), containerBuilder);
     Assert.assertEquals("user from extension", extendedBuilder.toContainerBuildPlan().getUser());
 
     mavenProjectProperties.waitForLoggingThread();
