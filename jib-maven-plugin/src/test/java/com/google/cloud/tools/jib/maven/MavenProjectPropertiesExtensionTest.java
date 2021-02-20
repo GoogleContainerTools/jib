@@ -209,6 +209,7 @@ public class MavenProjectPropertiesExtensionTest {
             mockMavenSession,
             mockLog,
             mockTempDirectoryProvider,
+            Collections.emptyList(),
             () -> loadedExtensions);
   }
 
@@ -449,5 +450,77 @@ public class MavenProjectPropertiesExtensionTest {
       Assert.assertEquals(FooExtension.class, ex.getExtensionClass());
       Assert.assertEquals("extension crashed: buggy extension", ex.getMessage());
     }
+  }
+
+  @Test
+  public void testRunPluginExtensions_injected() throws JibPluginExtensionException {
+    FooExtension injectedExtension =
+        new FooExtension(
+            (buildPlan, properties, extraConfig, mavenData, logger) -> {
+              logger.log(LogLevel.ERROR, "awesome error from my extension");
+              return buildPlan.toBuilder().setUser("user from extension").build();
+            });
+
+    mavenProjectProperties =
+        new MavenProjectProperties(
+            mockJibPluginDescriptor,
+            mockMavenProject,
+            mockMavenSession,
+            mockLog,
+            mockTempDirectoryProvider,
+            Arrays.asList(injectedExtension),
+            () -> Collections.emptyList());
+
+    JibContainerBuilder extendedBuilder =
+        mavenProjectProperties.runPluginExtensions(
+            Arrays.asList(new FooExtensionConfig()), containerBuilder);
+    Assert.assertEquals("user from extension", extendedBuilder.toContainerBuildPlan().getUser());
+
+    mavenProjectProperties.waitForLoggingThread();
+    Mockito.verify(mockLog).error("awesome error from my extension");
+    Mockito.verify(mockLog)
+        .info(
+            Mockito.startsWith(
+                "Running extension: com.google.cloud.tools.jib.maven.MavenProjectProperties"));
+  }
+
+  @Test
+  public void testRunPluginExtensions_preferInjectionOverServiceLoader()
+      throws JibPluginExtensionException {
+    FooExtension injectedExtension =
+        new FooExtension(
+            (buildPlan, properties, extraConfig, mavenData, logger) -> {
+              logger.log(LogLevel.ERROR, "awesome error from my extension");
+              return buildPlan.toBuilder().setUser("user from injected extension").build();
+            });
+
+    FooExtension loadedExtension =
+        new FooExtension(
+            (buildPlan, properties, extraConfig, mavenData, logger) -> {
+              return buildPlan.toBuilder().setUser("user from extension").build();
+            });
+
+    mavenProjectProperties =
+        new MavenProjectProperties(
+            mockJibPluginDescriptor,
+            mockMavenProject,
+            mockMavenSession,
+            mockLog,
+            mockTempDirectoryProvider,
+            Arrays.asList(injectedExtension),
+            () -> Arrays.asList(loadedExtension));
+
+    JibContainerBuilder extendedBuilder =
+        mavenProjectProperties.runPluginExtensions(
+            Arrays.asList(new FooExtensionConfig()), containerBuilder);
+    Assert.assertEquals(
+        "user from injected extension", extendedBuilder.toContainerBuildPlan().getUser());
+
+    mavenProjectProperties.waitForLoggingThread();
+    Mockito.verify(mockLog).error("awesome error from my extension");
+    Mockito.verify(mockLog)
+        .info(
+            Mockito.startsWith(
+                "Running extension: com.google.cloud.tools.jib.maven.MavenProjectProperties"));
   }
 }

@@ -259,6 +259,7 @@ public class MavenProjectPropertiesTest {
             mockMavenSession,
             mockLog,
             mockTempDirectoryProvider,
+            Collections.emptyList(),
             mockExtensionLoader);
 
     Path outputPath = getResource("maven/application/output");
