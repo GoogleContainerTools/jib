@@ -676,22 +676,22 @@ public class MavenProjectProperties implements ProjectProperties {
   private JibMavenPluginExtension<?> findConfiguredExtension(
       List<JibMavenPluginExtension<?>> extensions, ExtensionConfiguration config)
       throws JibPluginExtensionException {
-    
     // If the extension has been injected, always prefer that one.
-    // Extensions might support both approaches (injection and JDK service loader) at the same time for compatibility reasons.
+    // Extensions might support both approaches (injection and JDK service loader) at the same time
+    // for compatibility reasons.
     if (config instanceof ExtensionConfigurationWithInjectedPlugin) {
-      Optional<? extends JibPluginExtension> injectedExtension = ((ExtensionConfigurationWithInjectedPlugin)config).getInjectedExtension();
+      Optional<? extends JibPluginExtension> injectedExtension =
+          ((ExtensionConfigurationWithInjectedPlugin) config).getInjectedExtension();
       if (injectedExtension.isPresent()) {
         JibPluginExtension ext = injectedExtension.get();
         if (ext instanceof JibMavenPluginExtension) {
           return (JibMavenPluginExtension<?>) ext;
         } else {
-          throw new JibPluginExtensionException(ext.getClass(), 
+          throw new JibPluginExtensionException(ext.getClass(),
               "injected extension is no JibMavenPluginExtension: " + ext.getClass().getName());
         }
       }
     }
-    
     Predicate<JibMavenPluginExtension<?>> matchesClassName =
         extension -> extension.getClass().getName().equals(config.getExtensionClass());
     Optional<JibMavenPluginExtension<?>> found =

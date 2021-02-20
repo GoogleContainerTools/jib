@@ -19,7 +19,6 @@ package com.google.cloud.tools.jib.plugins.common;
 import com.google.cloud.tools.jib.api.buildplan.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.api.buildplan.FilePermissions;
 import com.google.cloud.tools.jib.api.buildplan.ImageFormat;
-
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
@@ -40,7 +39,7 @@ public interface RawConfiguration {
 
     Optional<Object> getExtraConfiguration();
   }
-  
+
   static interface PlatformConfiguration {
 
     Optional<String> getOsName();
