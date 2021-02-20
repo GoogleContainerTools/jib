@@ -14,18 +14,18 @@
  * the License.
  */
 
-package com.google.cloud.tools.jib.plugins.common;
+package com.google.cloud.tools.jib.maven;
 
+import com.google.cloud.tools.jib.maven.extension.JibMavenPluginExtension;
 import com.google.cloud.tools.jib.plugins.common.RawConfiguration.ExtensionConfiguration;
-import com.google.cloud.tools.jib.plugins.extension.JibPluginExtension;
 import java.util.Optional;
 
-/** To be implemented if dependency injection of extensions is supported by the build system. */
+/** To support dependency injection of the plugin. */
 public interface ExtensionConfigurationWithInjectedPlugin extends ExtensionConfiguration {
   /**
    * The matching extension, if it has been injected.
    *
    * @return the extension
    */
-  Optional<? extends JibPluginExtension> getInjectedExtension();
+  Optional<? extends JibMavenPluginExtension<?>> getInjectedExtension();
 }

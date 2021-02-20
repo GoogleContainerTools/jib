@@ -23,7 +23,6 @@ import com.google.cloud.tools.jib.maven.JibPluginConfiguration.FromAuthConfigura
 import com.google.cloud.tools.jib.maven.extension.JibMavenPluginExtension;
 import com.google.cloud.tools.jib.maven.extension.MavenData;
 import com.google.cloud.tools.jib.plugins.common.AuthProperty;
-import com.google.cloud.tools.jib.plugins.common.ExtensionConfigurationWithInjectedPlugin;
 import com.google.cloud.tools.jib.plugins.common.RawConfiguration.ExtensionConfiguration;
 import com.google.cloud.tools.jib.plugins.extension.ExtensionLogger;
 import com.google.cloud.tools.jib.plugins.extension.JibPluginExtensionException;

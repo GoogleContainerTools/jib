@@ -23,11 +23,9 @@ import com.google.cloud.tools.jib.api.buildplan.ContainerBuildPlan;
 import com.google.cloud.tools.jib.filesystem.TempDirectoryProvider;
 import com.google.cloud.tools.jib.maven.extension.JibMavenPluginExtension;
 import com.google.cloud.tools.jib.maven.extension.MavenData;
-import com.google.cloud.tools.jib.plugins.common.ExtensionConfigurationWithInjectedPlugin;
 import com.google.cloud.tools.jib.plugins.common.RawConfiguration.ExtensionConfiguration;
 import com.google.cloud.tools.jib.plugins.extension.ExtensionLogger;
 import com.google.cloud.tools.jib.plugins.extension.ExtensionLogger.LogLevel;
-import com.google.cloud.tools.jib.plugins.extension.JibPluginExtension;
 import com.google.cloud.tools.jib.plugins.extension.JibPluginExtensionException;
 import com.google.common.collect.ImmutableMap;
 import java.io.FileNotFoundException;
@@ -110,20 +108,18 @@ public class MavenProjectPropertiesExtensionTest {
     }
   }
 
-  private static class NotMavenExtension implements JibPluginExtension {}
-
   private static class BaseExtensionConfig<T> implements ExtensionConfigurationWithInjectedPlugin {
 
     private final String extensionClass;
     private final Map<String, String> properties;
     private final T extraConfig;
-    private final Optional<? extends JibPluginExtension> injectedExtension;
+    private final Optional<? extends JibMavenPluginExtension<?>> injectedExtension;
 
     private BaseExtensionConfig(
         String extensionClass,
         Map<String, String> properties,
         T extraConfig,
-        JibPluginExtension injectedExtension) {
+        JibMavenPluginExtension<?> injectedExtension) {
       this.extensionClass = extensionClass;
       this.properties = properties;
       this.extraConfig = extraConfig;
@@ -151,7 +147,7 @@ public class MavenProjectPropertiesExtensionTest {
     }
 
     @Override
-    public Optional<? extends JibPluginExtension> getInjectedExtension() {
+    public Optional<? extends JibMavenPluginExtension<?>> getInjectedExtension() {
       return injectedExtension;
     }
   }
@@ -496,27 +492,5 @@ public class MavenProjectPropertiesExtensionTest {
         .info(
             Mockito.startsWith(
                 "Running extension: com.google.cloud.tools.jib.maven.MavenProjectProperties"));
-  }
-
-  @Test
-  public void testRunInjectedPluginExtensions_notMavenPluginExtension()
-      throws JibPluginExtensionException {
-    JibPluginExtension extension = new NotMavenExtension();
-    // Extension is not provided by JDK Service Loader, but is injected and thus
-    // comes with the ExtensionConfig
-    loadedExtensions = Collections.emptyList();
-    try {
-      mavenProjectProperties.runPluginExtensions(
-          Arrays.asList(
-              new BaseExtensionConfig<Object>(
-                  NotMavenExtension.class.getName(), Collections.emptyMap(), null, extension)),
-          containerBuilder);
-      Assert.fail();
-    } catch (JibPluginExtensionException ex) {
-      Assert.assertEquals(NotMavenExtension.class, ex.getExtensionClass());
-      Assert.assertEquals(
-          "injected extension is no JibMavenPluginExtension: " + NotMavenExtension.class.getName(),
-          ex.getMessage());
-    }
   }
 }

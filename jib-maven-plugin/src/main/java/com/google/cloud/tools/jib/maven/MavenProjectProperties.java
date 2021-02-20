@@ -31,7 +31,6 @@ import com.google.cloud.tools.jib.filesystem.DirectoryWalker;
 import com.google.cloud.tools.jib.filesystem.TempDirectoryProvider;
 import com.google.cloud.tools.jib.maven.extension.JibMavenPluginExtension;
 import com.google.cloud.tools.jib.plugins.common.ContainerizingMode;
-import com.google.cloud.tools.jib.plugins.common.ExtensionConfigurationWithInjectedPlugin;
 import com.google.cloud.tools.jib.plugins.common.JavaContainerBuilderHelper;
 import com.google.cloud.tools.jib.plugins.common.PluginExtensionLogger;
 import com.google.cloud.tools.jib.plugins.common.ProjectProperties;
@@ -43,7 +42,6 @@ import com.google.cloud.tools.jib.plugins.common.logging.ConsoleLogger;
 import com.google.cloud.tools.jib.plugins.common.logging.ConsoleLoggerBuilder;
 import com.google.cloud.tools.jib.plugins.common.logging.ProgressDisplayGenerator;
 import com.google.cloud.tools.jib.plugins.common.logging.SingleThreadedExecutor;
-import com.google.cloud.tools.jib.plugins.extension.JibPluginExtension;
 import com.google.cloud.tools.jib.plugins.extension.JibPluginExtensionException;
 import com.google.cloud.tools.jib.plugins.extension.NullExtension;
 import com.google.common.annotations.VisibleForTesting;
@@ -680,17 +678,10 @@ public class MavenProjectProperties implements ProjectProperties {
     // Extensions might support both approaches (injection and JDK service loader) at the same time
     // for compatibility reasons.
     if (config instanceof ExtensionConfigurationWithInjectedPlugin) {
-      Optional<? extends JibPluginExtension> injectedExtension =
+      Optional<? extends JibMavenPluginExtension<?>> injectedExtension =
           ((ExtensionConfigurationWithInjectedPlugin) config).getInjectedExtension();
       if (injectedExtension.isPresent()) {
-        JibPluginExtension ext = injectedExtension.get();
-        if (ext instanceof JibMavenPluginExtension) {
-          return (JibMavenPluginExtension<?>) ext;
-        } else {
-          throw new JibPluginExtensionException(
-              ext.getClass(),
-              "injected extension is no JibMavenPluginExtension: " + ext.getClass().getName());
-        }
+        return (JibMavenPluginExtension<?>) injectedExtension.get();
       }
     }
     Predicate<JibMavenPluginExtension<?>> matchesClassName =
