@@ -23,6 +23,7 @@ import com.google.cloud.tools.jib.api.buildplan.ContainerBuildPlan;
 import com.google.cloud.tools.jib.filesystem.TempDirectoryProvider;
 import com.google.cloud.tools.jib.maven.extension.JibMavenPluginExtension;
 import com.google.cloud.tools.jib.maven.extension.MavenData;
+import com.google.cloud.tools.jib.plugins.common.ExtensionConfigurationWithInjectedPlugin;
 import com.google.cloud.tools.jib.plugins.common.RawConfiguration.ExtensionConfiguration;
 import com.google.cloud.tools.jib.plugins.extension.ExtensionLogger;
 import com.google.cloud.tools.jib.plugins.extension.JibPluginExtension;
@@ -109,7 +110,7 @@ public class MavenProjectPropertiesExtensionTest {
     }
   }
 
-  private static class BaseExtensionConfig<T> implements ExtensionConfiguration {
+  private static class BaseExtensionConfig<T> implements ExtensionConfigurationWithInjectedPlugin {
 
     private final String extensionClass;
     private final Map<String, String> properties;

@@ -21,6 +21,7 @@ import com.google.cloud.tools.jib.api.buildplan.FilePermissions;
 import com.google.cloud.tools.jib.api.buildplan.ImageFormat;
 import com.google.cloud.tools.jib.maven.JibPluginConfiguration.ExtraDirectoryParameters;
 import com.google.cloud.tools.jib.plugins.common.AuthProperty;
+import com.google.cloud.tools.jib.plugins.common.ExtensionConfigurationWithInjectedPlugin;
 import com.google.cloud.tools.jib.plugins.common.RawConfiguration;
 import com.google.cloud.tools.jib.plugins.extension.JibPluginExtension;
 import com.google.cloud.tools.jib.maven.extension.JibMavenPluginExtension;
@@ -225,7 +226,7 @@ public class MavenRawConfiguration implements RawConfiguration {
   @Override
   public List<? extends ExtensionConfiguration> getPluginExtensions() {
     return jibPluginConfiguration.getPluginExtensions().stream().map(extConf -> {
-      return new ExtensionConfiguration() {
+      return new ExtensionConfigurationWithInjectedPlugin() {
         
         @Override
         public Map<String, String> getProperties() {

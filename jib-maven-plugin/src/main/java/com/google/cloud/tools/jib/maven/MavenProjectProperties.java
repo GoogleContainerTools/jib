@@ -31,6 +31,7 @@ import com.google.cloud.tools.jib.filesystem.DirectoryWalker;
 import com.google.cloud.tools.jib.filesystem.TempDirectoryProvider;
 import com.google.cloud.tools.jib.maven.extension.JibMavenPluginExtension;
 import com.google.cloud.tools.jib.plugins.common.ContainerizingMode;
+import com.google.cloud.tools.jib.plugins.common.ExtensionConfigurationWithInjectedPlugin;
 import com.google.cloud.tools.jib.plugins.common.JavaContainerBuilderHelper;
 import com.google.cloud.tools.jib.plugins.common.PluginExtensionLogger;
 import com.google.cloud.tools.jib.plugins.common.ProjectProperties;
@@ -678,14 +679,16 @@ public class MavenProjectProperties implements ProjectProperties {
     
     // If the extension has been injected, always prefer that one.
     // Extensions might support both approaches (injection and JDK service loader) at the same time for compatibility reasons.
-    Optional<? extends JibPluginExtension> injectedExtension = config.getInjectedExtension();
-    if(injectedExtension.isPresent()) {
-      JibPluginExtension ext = config.getInjectedExtension().get();
-      if(ext instanceof JibMavenPluginExtension) {
-        return (JibMavenPluginExtension<?>) ext;
-      } else {
-        throw new JibPluginExtensionException(ext.getClass(), 
-            "injected extension is no JibMavenPluginExtension: "+ext.getClass().getName());
+    if(config instanceof ExtensionConfigurationWithInjectedPlugin) {
+      Optional<? extends JibPluginExtension> injectedExtension = ((ExtensionConfigurationWithInjectedPlugin)config).getInjectedExtension();
+      if(injectedExtension.isPresent()) {
+        JibPluginExtension ext = injectedExtension.get();
+        if(ext instanceof JibMavenPluginExtension) {
+          return (JibMavenPluginExtension<?>) ext;
+        } else {
+          throw new JibPluginExtensionException(ext.getClass(), 
+              "injected extension is no JibMavenPluginExtension: "+ext.getClass().getName());
+        }
       }
     }
     

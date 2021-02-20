@@ -19,7 +19,6 @@ package com.google.cloud.tools.jib.plugins.common;
 import com.google.cloud.tools.jib.api.buildplan.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.api.buildplan.FilePermissions;
 import com.google.cloud.tools.jib.api.buildplan.ImageFormat;
-import com.google.cloud.tools.jib.plugins.extension.JibPluginExtension;
 
 import java.nio.file.Path;
 import java.util.List;
@@ -40,17 +39,9 @@ public interface RawConfiguration {
     Map<String, String> getProperties();
 
     Optional<Object> getExtraConfiguration();
-    
-    /**
-     * To be implemented if dependency injection of extensions is supported by the build system.
-     * 
-     * @return the matching extension, if it has been injected.
-     */
-    default Optional<? extends JibPluginExtension> getInjectedExtension() {
-      return Optional.empty();
-    }
-  }
 
+  }
+  
   static interface PlatformConfiguration {
 
     Optional<String> getOsName();
