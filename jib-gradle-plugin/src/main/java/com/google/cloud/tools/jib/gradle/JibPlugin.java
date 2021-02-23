@@ -26,14 +26,10 @@ import com.google.common.collect.ImmutableSet;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 import org.gradle.api.GradleException;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
-import org.gradle.api.artifacts.Configuration;
-import org.gradle.api.artifacts.DependencySet;
-import org.gradle.api.artifacts.ProjectDependency;
 import org.gradle.api.plugins.JavaPluginConvention;
 import org.gradle.api.tasks.SourceSet;
 import org.gradle.api.tasks.TaskContainer;
@@ -56,28 +52,6 @@ public class JibPlugin implements Plugin<Project> {
       "_skaffoldFailIfJibOutOfDate";
 
   public static final String REQUIRED_VERSION_PROPERTY_NAME = "jib.requiredVersion";
-
-  /**
-   * Collects all project dependencies of the style "compile project(':mylib')" for any kind of
-   * configuration [compile, runtime, etc]. It potentially will collect common test libraries in
-   * configs like [test, integrationTest, etc], but it's either that or filter based on a
-   * configuration containing the word "test" which feels dangerous.
-   *
-   * @param project this project we are containerizing
-   * @return a list of projects that this project depends on.
-   */
-  @VisibleForTesting
-  static List<Project> getProjectDependencies(Project project) {
-    return project
-        .getConfigurations()
-        .stream()
-        .map(Configuration::getDependencies)
-        .flatMap(DependencySet::stream)
-        .filter(ProjectDependency.class::isInstance)
-        .map(ProjectDependency.class::cast)
-        .map(ProjectDependency::getDependencyProject)
-        .collect(Collectors.toList());
-  }
 
   private static void checkGradleVersion() {
     if (GRADLE_MIN_VERSION.compareTo(GradleVersion.current()) > 0) {
