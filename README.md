@@ -5,6 +5,7 @@
 ![Build Status](https://storage.googleapis.com/cloud-tools-for-java-kokoro-build-badges/jib-windows-master-orb.svg)
 ![Build Status](https://storage.googleapis.com/cloud-tools-for-java-kokoro-build-badges/jib-macos-master-orb.svg)
 [![Gitter version](https://img.shields.io/gitter/room/gitterHQ/gitter.svg)](https://gitter.im/google/jib)
+[![Codecov](https://codecov.io/gh/GoogleContainerTools/jib/branch/master/graph/badge.svg)](https://codecov.io/gh/GoogleContainerTools/jib)
 
 # Jib
 
