@@ -50,7 +50,7 @@ public class JarFiles {
       ConsoleLogger logger)
       throws IOException, InvalidImageReferenceException {
 
-    // Use adoptopenjdk image as the default base image.
+    // Use openjdk:11-jre-slim as the default base image.
     JibContainerBuilder containerBuilder =
         jarOptions.getFrom().isPresent()
             ? ContainerBuilders.create(
