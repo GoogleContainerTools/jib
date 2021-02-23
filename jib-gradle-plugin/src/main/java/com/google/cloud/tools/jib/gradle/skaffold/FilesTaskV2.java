@@ -108,7 +108,8 @@ public class FilesTaskV2 extends DefaultTask {
     }
 
     // Add SNAPSHOT, non-project dependency jars
-    for (File file : project.getConfigurations().getByName(jibExtension.readConfigurationName())) {
+    for (File file :
+        project.getConfigurations().getByName(jibExtension.getConfigurationName().get())) {
       if (!projectDependencyJars.contains(file) && file.toString().contains("SNAPSHOT")) {
         skaffoldFilesOutput.addInput(file.toPath());
         projectDependencyJars.add(file); // Add to set to avoid printing the same files twice
@@ -196,7 +197,7 @@ public class FilesTaskV2 extends DefaultTask {
     Deque<Project> projects = new ArrayDeque<>();
     projects.push(project);
 
-    String configurationName = jibExtension.readConfigurationName();
+    String configurationName = jibExtension.getConfigurationName().get();
 
     while (!projects.isEmpty()) {
       Project currentProject = projects.pop();

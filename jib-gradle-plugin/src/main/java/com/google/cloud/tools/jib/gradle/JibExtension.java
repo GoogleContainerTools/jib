@@ -123,7 +123,12 @@ public class JibExtension {
     configurationName =
         objectFactory
             .property(String.class)
-            .convention(JavaPlugin.RUNTIME_CLASSPATH_CONFIGURATION_NAME);
+            .convention(
+                project.provider(
+                    () ->
+                        System.getProperty(
+                            PropertyNames.CONFIGURATION_NAME,
+                            JavaPlugin.RUNTIME_CLASSPATH_CONFIGURATION_NAME)));
 
     // Sets defaults.
     allowInsecureRegistries.set(DEFAULT_ALLOW_INSECURE_REGISTIRIES);
@@ -231,11 +236,6 @@ public class JibExtension {
   @Optional
   public Property<String> getConfigurationName() {
     return configurationName;
-  }
-
-  public String readConfigurationName() {
-    String property = System.getProperty(PropertyNames.CONFIGURATION_NAME);
-    return property != null ? property : configurationName.get();
   }
 
   @Nested

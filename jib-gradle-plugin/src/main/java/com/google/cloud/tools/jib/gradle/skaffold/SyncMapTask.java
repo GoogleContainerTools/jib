@@ -55,7 +55,7 @@ public class SyncMapTask extends DefaultTask {
               getProject(),
               getLogger(),
               tempDirectoryProvider,
-              jibExtension.readConfigurationName());
+              jibExtension.getConfigurationName().get());
 
       GradleRawConfiguration configuration = new GradleRawConfiguration(jibExtension);
 
