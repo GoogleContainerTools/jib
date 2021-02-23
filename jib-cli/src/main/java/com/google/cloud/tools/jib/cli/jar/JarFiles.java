@@ -50,12 +50,12 @@ public class JarFiles {
       ConsoleLogger logger)
       throws IOException, InvalidImageReferenceException {
 
-    // Use distroless as the default base image.
+    // Use adoptopenjdk image as the default base image.
     JibContainerBuilder containerBuilder =
         jarOptions.getFrom().isPresent()
             ? ContainerBuilders.create(
                 jarOptions.getFrom().get(), Collections.emptySet(), commonCliOptions, logger)
-            : Jib.from("gcr.io/distroless/java-debian10:11");
+            : Jib.from("openjdk:11-jre-slim");
 
     List<FileEntriesLayer> layers = processor.createLayers();
     List<String> customEntrypoint = jarOptions.getEntrypoint();
