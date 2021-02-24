@@ -63,6 +63,17 @@ public class JarFilesTest {
   @Mock private ConsoleLogger mockLogger;
 
   @Test
+  public void testToJibContainer_defaultBaseImage_java8()
+      throws IOException, InvalidImageReferenceException {
+    JibContainerBuilder containerBuilder =
+        JarFiles.toJibContainerBuilder(
+            mockStandardExplodedProcessor, mockJarCommand, mockCommonCliOptions, mockLogger, 8);
+    ContainerBuildPlan buildPlan = containerBuilder.toContainerBuildPlan();
+
+    assertThat(buildPlan.getBaseImage()).isEqualTo("openjdk:8-jre-slim");
+  }
+
+  @Test
   public void testToJibContainerBuilder_explodedStandard_basicInfo()
       throws IOException, InvalidImageReferenceException {
     FileEntriesLayer layer =
@@ -80,7 +91,7 @@ public class JarFilesTest {
 
     JibContainerBuilder containerBuilder =
         JarFiles.toJibContainerBuilder(
-            mockStandardExplodedProcessor, mockJarCommand, mockCommonCliOptions, mockLogger);
+            mockStandardExplodedProcessor, mockJarCommand, mockCommonCliOptions, mockLogger, 11);
     ContainerBuildPlan buildPlan = containerBuilder.toContainerBuildPlan();
 
     assertThat(buildPlan.getBaseImage()).isEqualTo("openjdk:11-jre-slim");
@@ -124,7 +135,7 @@ public class JarFilesTest {
 
     JibContainerBuilder containerBuilder =
         JarFiles.toJibContainerBuilder(
-            mockStandardPackagedProcessor, mockJarCommand, mockCommonCliOptions, mockLogger);
+            mockStandardPackagedProcessor, mockJarCommand, mockCommonCliOptions, mockLogger, 11);
     ContainerBuildPlan buildPlan = containerBuilder.toContainerBuildPlan();
 
     assertThat(buildPlan.getBaseImage()).isEqualTo("openjdk:11-jre-slim");
@@ -169,7 +180,7 @@ public class JarFilesTest {
 
     JibContainerBuilder containerBuilder =
         JarFiles.toJibContainerBuilder(
-            mockSpringBootExplodedProcessor, mockJarCommand, mockCommonCliOptions, mockLogger);
+            mockSpringBootExplodedProcessor, mockJarCommand, mockCommonCliOptions, mockLogger, 11);
     ContainerBuildPlan buildPlan = containerBuilder.toContainerBuildPlan();
 
     assertThat(buildPlan.getBaseImage()).isEqualTo("openjdk:11-jre-slim");
@@ -213,7 +224,7 @@ public class JarFilesTest {
 
     JibContainerBuilder containerBuilder =
         JarFiles.toJibContainerBuilder(
-            mockSpringBootPackagedProcessor, mockJarCommand, mockCommonCliOptions, mockLogger);
+            mockSpringBootPackagedProcessor, mockJarCommand, mockCommonCliOptions, mockLogger, 11);
     ContainerBuildPlan buildPlan = containerBuilder.toContainerBuildPlan();
 
     assertThat(buildPlan.getBaseImage()).isEqualTo("openjdk:11-jre-slim");
@@ -260,7 +271,7 @@ public class JarFilesTest {
 
     JibContainerBuilder containerBuilder =
         JarFiles.toJibContainerBuilder(
-            mockStandardExplodedProcessor, mockJarCommand, mockCommonCliOptions, mockLogger);
+            mockStandardExplodedProcessor, mockJarCommand, mockCommonCliOptions, mockLogger, 11);
     ContainerBuildPlan buildPlan = containerBuilder.toContainerBuildPlan();
 
     assertThat(buildPlan.getBaseImage()).isEqualTo("base-image");

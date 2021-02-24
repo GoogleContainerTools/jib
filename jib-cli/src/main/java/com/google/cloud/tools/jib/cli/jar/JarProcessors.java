@@ -17,7 +17,6 @@
 package com.google.cloud.tools.jib.cli.jar;
 
 import com.google.cloud.tools.jib.cli.CacheDirectories;
-import com.google.common.annotations.VisibleForTesting;
 import java.io.DataInputStream;
 import java.io.IOException;
 import java.net.URL;
@@ -90,8 +89,7 @@ public class JarProcessors {
    * @return java version
    * @throws IOException if I/O exception thrown when opening the jar file
    */
-  @VisibleForTesting
-  static Integer getJavaMajorVersion(Path jarPath) throws IOException {
+  public static Integer getJavaMajorVersion(Path jarPath) throws IOException {
     try (JarFile jarFile = new JarFile(jarPath.toFile())) {
       Enumeration<JarEntry> jarEntries = jarFile.entries();
       while (jarEntries.hasMoreElements()) {

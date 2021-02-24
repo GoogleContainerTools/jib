@@ -38,6 +38,7 @@ public class JarFiles {
    * @param jarOptions jar cli options
    * @param commonCliOptions common cli options
    * @param logger console logger
+   * @param jarJavaVersion jar java version
    * @return JibContainerBuilder
    * @throws IOException if I/O error occurs when opening the jar file or if temporary directory
    *     provided doesn't exist
@@ -47,15 +48,20 @@ public class JarFiles {
       JarProcessor processor,
       Jar jarOptions,
       CommonCliOptions commonCliOptions,
-      ConsoleLogger logger)
+      ConsoleLogger logger,
+      Integer jarJavaVersion)
       throws IOException, InvalidImageReferenceException {
 
     // Use openjdk:11-jre-slim as the default base image.
-    JibContainerBuilder containerBuilder =
-        jarOptions.getFrom().isPresent()
-            ? ContainerBuilders.create(
-                jarOptions.getFrom().get(), Collections.emptySet(), commonCliOptions, logger)
-            : Jib.from("openjdk:11-jre-slim");
+    JibContainerBuilder containerBuilder;
+    if (jarOptions.getFrom().isPresent()) {
+      containerBuilder =
+          ContainerBuilders.create(
+              jarOptions.getFrom().get(), Collections.emptySet(), commonCliOptions, logger);
+    } else {
+      containerBuilder =
+          (jarJavaVersion <= 8) ? Jib.from("openjdk:8-jre-slim") : Jib.from("openjdk:11-jre-slim");
+    }
 
     List<FileEntriesLayer> layers = processor.createLayers();
     List<String> customEntrypoint = jarOptions.getEntrypoint();
