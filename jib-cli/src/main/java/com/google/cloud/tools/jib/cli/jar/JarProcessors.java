@@ -99,8 +99,8 @@ public class JarProcessors {
       while (jarEntries.hasMoreElements()) {
         String jarEntry = jarEntries.nextElement().toString();
         if (jarEntry.endsWith(".class") && !jarEntry.endsWith("module-info.class")) {
-          URLClassLoader loader = new URLClassLoader(new URL[] {jarPath.toUri().toURL()});
-          try (DataInputStream classFile =
+          try (URLClassLoader loader = new URLClassLoader(new URL[] {jarPath.toUri().toURL()});
+           DataInputStream classFile =
               new DataInputStream(loader.getResourceAsStream(jarEntry))) {
 
             // Check magic number
