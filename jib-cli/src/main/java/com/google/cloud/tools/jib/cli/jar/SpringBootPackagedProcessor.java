@@ -22,7 +22,7 @@ import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
 
-public class SpringBootPackagedProcessor implements JarProcessor {
+class SpringBootPackagedProcessor implements JarProcessor {
 
   private final Path jarPath;
   private final Integer jarJavaVersion;

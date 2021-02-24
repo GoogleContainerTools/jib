@@ -39,7 +39,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
 
-public class SpringBootExplodedProcessor implements JarProcessor {
+class SpringBootExplodedProcessor implements JarProcessor {
 
   private final Path jarPath;
   private final Path targetExplodedJarRoot;

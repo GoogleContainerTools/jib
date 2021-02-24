@@ -24,7 +24,7 @@ import java.util.List;
 import java.util.jar.Attributes;
 import java.util.jar.JarFile;
 
-public class StandardPackagedProcessor implements JarProcessor {
+class StandardPackagedProcessor implements JarProcessor {
 
   private final Path jarPath;
   private final Integer jarJavaVersion;

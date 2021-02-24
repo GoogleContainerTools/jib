@@ -29,7 +29,7 @@ import java.util.function.Predicate;
 import java.util.jar.Attributes;
 import java.util.jar.JarFile;
 
-public class StandardExplodedProcessor implements JarProcessor {
+class StandardExplodedProcessor implements JarProcessor {
 
   private final Path jarPath;
   private final Path targetExplodedJarRoot;
