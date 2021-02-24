@@ -74,6 +74,17 @@ public class JarFilesTest {
   }
 
   @Test
+  public void testToJibContainer_defaultBaseImage_java9()
+      throws IOException, InvalidImageReferenceException {
+    JibContainerBuilder containerBuilder =
+        JarFiles.toJibContainerBuilder(
+            mockStandardExplodedProcessor, mockJarCommand, mockCommonCliOptions, mockLogger, 9);
+    ContainerBuildPlan buildPlan = containerBuilder.toContainerBuildPlan();
+
+    assertThat(buildPlan.getBaseImage()).isEqualTo("openjdk:11-jre-slim");
+  }
+
+  @Test
   public void testToJibContainerBuilder_explodedStandard_basicInfo()
       throws IOException, InvalidImageReferenceException {
     FileEntriesLayer layer =
