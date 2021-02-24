@@ -52,7 +52,7 @@ public class JarFiles {
       Integer jarJavaVersion)
       throws IOException, InvalidImageReferenceException {
 
-    // Use openjdk:11-jre-slim as the default base image.
+    // Use AdoptOpenJDK image as the default base image.
     JibContainerBuilder containerBuilder;
     if (jarOptions.getFrom().isPresent()) {
       containerBuilder =
