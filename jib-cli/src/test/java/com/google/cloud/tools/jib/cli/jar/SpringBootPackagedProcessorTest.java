@@ -77,4 +77,11 @@ public class SpringBootPackagedProcessorTest {
     assertThat(actualEntrypoint)
         .isEqualTo(ImmutableList.of("java", "-jvm-flag", "-jar", "/app/springboot_sample.jar"));
   }
+
+  @Test
+  public void testGetJarJavaVersion() {
+    SpringBootPackagedProcessor springBootPackagedProcessor =
+        new SpringBootPackagedProcessor(Paths.get("ignore"), 8);
+    assertThat(springBootPackagedProcessor.getJarJavaVersion()).isEqualTo(8);
+  }
 }

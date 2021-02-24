@@ -283,4 +283,11 @@ public class StandardExplodedProcessorTest {
             ImmutableList.of(
                 "java", "-jvm-flag", "-cp", "/app/explodedJar:/app/dependencies/*", "HelloWorld"));
   }
+
+  @Test
+  public void testGetJarJavaVersion() {
+    StandardExplodedProcessor standardExplodedProcessor =
+        new StandardExplodedProcessor(Paths.get("ignore"), Paths.get("ignore"), 8);
+    assertThat(standardExplodedProcessor.getJarJavaVersion()).isEqualTo(8);
+  }
 }

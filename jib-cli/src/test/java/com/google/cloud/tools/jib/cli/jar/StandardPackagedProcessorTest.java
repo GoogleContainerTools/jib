@@ -166,4 +166,11 @@ public class StandardPackagedProcessorTest {
         .isEqualTo(
             ImmutableList.of("java", "-jvm-flag", "-jar", "/app/standardJarWithClassPath.jar"));
   }
+
+  @Test
+  public void testGetJarJavaVersion() {
+    StandardPackagedProcessor standardPackagedProcessor =
+        new StandardPackagedProcessor(Paths.get("ignore"), 8);
+    assertThat(standardPackagedProcessor.getJarJavaVersion()).isEqualTo(8);
+  }
 }

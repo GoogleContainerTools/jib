@@ -281,4 +281,11 @@ public class SpringBootExplodedProcessorTest {
             ImmutableList.of(
                 "java", "-jvm-flag", "-cp", "/app", "org.springframework.boot.loader.JarLauncher"));
   }
+
+  @Test
+  public void testGetJarJavaVersion() {
+    SpringBootExplodedProcessor springBootExplodedProcessor =
+        new SpringBootExplodedProcessor(Paths.get("ignore"), Paths.get("ignore"), 8);
+    assertThat(springBootExplodedProcessor.getJarJavaVersion()).isEqualTo(8);
+  }
 }
