@@ -232,9 +232,19 @@ public class JibExtension {
     return property != null ? property : containerizingMode.get();
   }
 
+  /**
+   * Returns the configurationName property while setting it to the value of the system property if
+   * present.
+   *
+   * @return The configurationName property
+   */
   @Input
   @Optional
   public Property<String> getConfigurationName() {
+    String property = System.getProperty(PropertyNames.CONFIGURATION_NAME);
+    if (property != null) {
+      configurationName.set(property);
+    }
     return configurationName;
   }
 

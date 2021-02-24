@@ -51,7 +51,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.StringJoiner;
 import java.util.function.Function;
@@ -59,25 +58,18 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
-import javax.annotation.Nullable;
 import org.gradle.api.Action;
 import org.gradle.api.JavaVersion;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
 import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.artifacts.ConfigurationContainer;
-import org.gradle.api.artifacts.ConfigurationPublications;
-import org.gradle.api.artifacts.Dependency;
-import org.gradle.api.artifacts.DependencyConstraintSet;
-import org.gradle.api.artifacts.DependencySet;
-import org.gradle.api.artifacts.ExcludeRule;
-import org.gradle.api.artifacts.PublishArtifactSet;
-import org.gradle.api.artifacts.ResolutionStrategy;
-import org.gradle.api.artifacts.ResolvableDependencies;
 import org.gradle.api.artifacts.ResolvedConfiguration;
-import org.gradle.api.attributes.AttributeContainer;
 import org.gradle.api.file.ConfigurableFileCollection;
 import org.gradle.api.file.FileCollection;
+import org.gradle.api.file.FileTree;
+import org.gradle.api.file.FileVisitDetails;
+import org.gradle.api.file.FileVisitor;
 import org.gradle.api.internal.file.AbstractFileCollection;
 import org.gradle.api.internal.file.FileResolver;
 import org.gradle.api.java.archives.internal.DefaultManifest;
@@ -87,13 +79,12 @@ import org.gradle.api.plugins.Convention;
 import org.gradle.api.plugins.JavaPlugin;
 import org.gradle.api.plugins.JavaPluginConvention;
 import org.gradle.api.plugins.WarPlugin;
-import org.gradle.api.specs.Spec;
 import org.gradle.api.tasks.SourceSet;
 import org.gradle.api.tasks.SourceSetContainer;
 import org.gradle.api.tasks.SourceSetOutput;
 import org.gradle.api.tasks.TaskContainer;
-import org.gradle.api.tasks.TaskDependency;
 import org.gradle.api.tasks.TaskProvider;
+import org.gradle.api.tasks.util.PatternFilterable;
 import org.gradle.jvm.tasks.Jar;
 import org.hamcrest.CoreMatchers;
 import org.junit.Assert;
@@ -136,261 +127,43 @@ public class GradleProjectPropertiesTest {
     }
   }
 
-  private static class TestConfiguration extends TestFileCollection implements Configuration {
-    private final ResolvedConfiguration resolvedConfiguration;
-
-    private TestConfiguration(Set<Path> files, ResolvedConfiguration resolvedConfiguration) {
+  class TestFileTree extends TestFileCollection implements FileTree {
+    private TestFileTree(Set<Path> files) {
       super(files);
-      this.resolvedConfiguration = resolvedConfiguration;
     }
 
     @Override
-    public ResolutionStrategy getResolutionStrategy() {
+    public FileTree matching(Closure closure) {
       return null;
     }
 
     @Override
-    public Configuration resolutionStrategy(Closure closure) {
+    public FileTree matching(Action<? super PatternFilterable> action) {
       return null;
     }
 
     @Override
-    public Configuration resolutionStrategy(Action<? super ResolutionStrategy> action) {
+    public FileTree matching(PatternFilterable patternFilterable) {
       return null;
     }
 
     @Override
-    public State getState() {
+    public FileTree visit(FileVisitor fileVisitor) {
       return null;
     }
 
     @Override
-    public String getName() {
+    public FileTree visit(Closure closure) {
       return null;
     }
 
     @Override
-    public boolean isVisible() {
-      return false;
-    }
-
-    @Override
-    public Configuration setVisible(boolean b) {
+    public FileTree visit(Action<? super FileVisitDetails> action) {
       return null;
     }
 
     @Override
-    public Set<Configuration> getExtendsFrom() {
-      return null;
-    }
-
-    @Override
-    public Configuration setExtendsFrom(Iterable<Configuration> iterable) {
-      return null;
-    }
-
-    @Override
-    public Configuration extendsFrom(Configuration... configurations) {
-      return null;
-    }
-
-    @Override
-    public boolean isTransitive() {
-      return false;
-    }
-
-    @Override
-    public Configuration setTransitive(boolean b) {
-      return null;
-    }
-
-    @Nullable
-    @Override
-    public String getDescription() {
-      return null;
-    }
-
-    @Override
-    public Configuration setDescription(@Nullable String s) {
-      return null;
-    }
-
-    @Override
-    public Set<Configuration> getHierarchy() {
-      return null;
-    }
-
-    @Override
-    public Set<File> resolve() {
-      return null;
-    }
-
-    @Override
-    public Set<File> files(Closure closure) {
-      return null;
-    }
-
-    @Override
-    public Set<File> files(Spec<? super Dependency> spec) {
-      return null;
-    }
-
-    @Override
-    public Set<File> files(Dependency... dependencies) {
-      return null;
-    }
-
-    @Override
-    public FileCollection fileCollection(Spec<? super Dependency> spec) {
-      return null;
-    }
-
-    @Override
-    public FileCollection fileCollection(Closure closure) {
-      return null;
-    }
-
-    @Override
-    public FileCollection fileCollection(Dependency... dependencies) {
-      return null;
-    }
-
-    @Override
-    public ResolvedConfiguration getResolvedConfiguration() {
-      return resolvedConfiguration;
-    }
-
-    @Override
-    public String getUploadTaskName() {
-      return null;
-    }
-
-    @Override
-    public TaskDependency getTaskDependencyFromProjectDependency(boolean b, String s) {
-      return null;
-    }
-
-    @Override
-    public DependencySet getDependencies() {
-      return null;
-    }
-
-    @Override
-    public DependencySet getAllDependencies() {
-      return null;
-    }
-
-    @Override
-    public DependencyConstraintSet getDependencyConstraints() {
-      return null;
-    }
-
-    @Override
-    public DependencyConstraintSet getAllDependencyConstraints() {
-      return null;
-    }
-
-    @Override
-    public PublishArtifactSet getArtifacts() {
-      return null;
-    }
-
-    @Override
-    public PublishArtifactSet getAllArtifacts() {
-      return null;
-    }
-
-    @Override
-    public Set<ExcludeRule> getExcludeRules() {
-      return null;
-    }
-
-    @Override
-    public Configuration exclude(Map<String, String> map) {
-      return null;
-    }
-
-    @Override
-    public Configuration defaultDependencies(Action<? super DependencySet> action) {
-      return null;
-    }
-
-    @Override
-    public Configuration withDependencies(Action<? super DependencySet> action) {
-      return null;
-    }
-
-    @Override
-    public Set<Configuration> getAll() {
-      return null;
-    }
-
-    @Override
-    public ResolvableDependencies getIncoming() {
-      return null;
-    }
-
-    @Override
-    public ConfigurationPublications getOutgoing() {
-      return null;
-    }
-
-    @Override
-    public void outgoing(Action<? super ConfigurationPublications> action) {}
-
-    @Override
-    public Configuration copy() {
-      return null;
-    }
-
-    @Override
-    public Configuration copyRecursive() {
-      return null;
-    }
-
-    @Override
-    public Configuration copy(Spec<? super Dependency> spec) {
-      return null;
-    }
-
-    @Override
-    public Configuration copyRecursive(Spec<? super Dependency> spec) {
-      return null;
-    }
-
-    @Override
-    public Configuration copy(Closure closure) {
-      return null;
-    }
-
-    @Override
-    public Configuration copyRecursive(Closure closure) {
-      return null;
-    }
-
-    @Override
-    public void setCanBeConsumed(boolean b) {}
-
-    @Override
-    public boolean isCanBeConsumed() {
-      return false;
-    }
-
-    @Override
-    public void setCanBeResolved(boolean b) {}
-
-    @Override
-    public boolean isCanBeResolved() {
-      return true;
-    }
-
-    @Override
-    public Configuration attributes(Action<? super AttributeContainer> action) {
-      return null;
-    }
-
-    @Override
-    public AttributeContainer getAttributes() {
+    public FileTree plus(FileTree fileTree) {
       return null;
     }
   }
@@ -461,6 +234,7 @@ public class GradleProjectPropertiesTest {
   @Mock private FileResolver mockFileResolver;
   @Mock private Convention mockConvention;
   @Mock private ConfigurationContainer mockConfigurationContainer;
+  @Mock private Configuration mockConfiguration;
   @Mock private ResolvedConfiguration mockResolvedConfiguration;
   @Mock private TaskContainer mockTaskContainer;
   @Mock private Logger mockLogger;
@@ -523,7 +297,10 @@ public class GradleProjectPropertiesTest {
     Mockito.when(mockMainSourceSetOutput.getResourcesDir()).thenReturn(resourcesOutputDir.toFile());
     Mockito.when(
             mockConfigurationContainer.getByName(JavaPlugin.RUNTIME_CLASSPATH_CONFIGURATION_NAME))
-        .thenReturn(new TestConfiguration(allFiles, mockResolvedConfiguration));
+        .thenReturn(mockConfiguration);
+    Mockito.when(mockConfiguration.getResolvedConfiguration())
+        .thenReturn(mockResolvedConfiguration);
+    Mockito.when(mockConfiguration.getAsFileTree()).thenReturn(new TestFileTree(allFiles));
     // We can't commit an empty directory in Git, so create (if not exist).
     Path emptyDirectory = getResource("gradle/webapp").resolve("WEB-INF/classes/empty_dir");
     Files.createDirectories(emptyDirectory);

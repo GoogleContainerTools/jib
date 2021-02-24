@@ -228,7 +228,11 @@ public class GradleProjectProperties implements ProjectProperties {
           mainSourceSet.getOutput().getClassesDirs().filter(File::exists);
       Path resourcesOutputDirectory = mainSourceSet.getOutput().getResourcesDir().toPath();
       FileCollection allFiles =
-          project.getConfigurations().getByName(configurationName).filter(File::exists);
+          project
+              .getConfigurations()
+              .getByName(configurationName)
+              .getAsFileTree()
+              .filter(File::exists);
 
       FileCollection nonProjectDependencies =
           allFiles
@@ -309,14 +313,16 @@ public class GradleProjectProperties implements ProjectProperties {
     List<Path> dependencies = new ArrayList<>();
     FileCollection runtimeClasspath = project.getConfigurations().getByName(configurationName);
     // To be on the safe side with the order, calling "forEach" first (no filtering operations).
-    runtimeClasspath.forEach(
-        file -> {
-          if (file.exists()
-              && file.isFile()
-              && file.getName().toLowerCase(Locale.US).endsWith(".jar")) {
-            dependencies.add(file.toPath());
-          }
-        });
+    runtimeClasspath
+        .getAsFileTree()
+        .forEach(
+            file -> {
+              if (file.exists()
+                  && file.isFile()
+                  && file.getName().toLowerCase(Locale.US).endsWith(".jar")) {
+                dependencies.add(file.toPath());
+              }
+            });
     return dependencies;
   }
 
