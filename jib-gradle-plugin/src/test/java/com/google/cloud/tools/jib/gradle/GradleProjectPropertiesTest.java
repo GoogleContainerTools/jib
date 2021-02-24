@@ -127,47 +127,6 @@ public class GradleProjectPropertiesTest {
     }
   }
 
-  class TestFileTree extends TestFileCollection implements FileTree {
-    private TestFileTree(Set<Path> files) {
-      super(files);
-    }
-
-    @Override
-    public FileTree matching(Closure closure) {
-      return null;
-    }
-
-    @Override
-    public FileTree matching(Action<? super PatternFilterable> action) {
-      return null;
-    }
-
-    @Override
-    public FileTree matching(PatternFilterable patternFilterable) {
-      return null;
-    }
-
-    @Override
-    public FileTree visit(FileVisitor fileVisitor) {
-      return null;
-    }
-
-    @Override
-    public FileTree visit(Closure closure) {
-      return null;
-    }
-
-    @Override
-    public FileTree visit(Action<? super FileVisitDetails> action) {
-      return null;
-    }
-
-    @Override
-    public FileTree plus(FileTree fileTree) {
-      return null;
-    }
-  }
-
   /** Helper for reading back layers in a {@link BuildContext}. */
   private static class ContainerBuilderLayers {
 
@@ -300,7 +259,8 @@ public class GradleProjectPropertiesTest {
         .thenReturn(mockConfiguration);
     Mockito.when(mockConfiguration.getResolvedConfiguration())
         .thenReturn(mockResolvedConfiguration);
-    Mockito.when(mockConfiguration.getAsFileTree()).thenReturn(new TestFileTree(allFiles));
+    // TODO: Some how fix this
+    // Mockito.when(mockConfiguration.forEach()).thenReturn(something with allFiles);
     // We can't commit an empty directory in Git, so create (if not exist).
     Path emptyDirectory = getResource("gradle/webapp").resolve("WEB-INF/classes/empty_dir");
     Files.createDirectories(emptyDirectory);
