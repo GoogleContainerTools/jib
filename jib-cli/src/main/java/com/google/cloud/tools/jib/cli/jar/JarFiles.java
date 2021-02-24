@@ -38,7 +38,6 @@ public class JarFiles {
    * @param jarOptions jar cli options
    * @param commonCliOptions common cli options
    * @param logger console logger
-   * @param jarJavaVersion jar java version
    * @return JibContainerBuilder
    * @throws IOException if I/O error occurs when opening the jar file or if temporary directory
    *     provided doesn't exist
@@ -48,8 +47,7 @@ public class JarFiles {
       JarProcessor processor,
       Jar jarOptions,
       CommonCliOptions commonCliOptions,
-      ConsoleLogger logger,
-      Integer jarJavaVersion)
+      ConsoleLogger logger)
       throws IOException, InvalidImageReferenceException {
 
     // Use AdoptOpenJDK image as the default base image.
@@ -60,7 +58,9 @@ public class JarFiles {
               jarOptions.getFrom().get(), Collections.emptySet(), commonCliOptions, logger);
     } else {
       containerBuilder =
-          (jarJavaVersion <= 8) ? Jib.from("openjdk:8-jre-slim") : Jib.from("openjdk:11-jre-slim");
+          (processor.getJarJavaVersion() <= 8)
+              ? Jib.from("openjdk:8-jre-slim")
+              : Jib.from("openjdk:11-jre-slim");
     }
 
     List<FileEntriesLayer> layers = processor.createLayers();

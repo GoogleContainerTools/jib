@@ -32,12 +32,13 @@ import org.junit.Test;
 public class SpringBootPackagedProcessorTest {
 
   private static final String SPRING_BOOT_JAR = "jar/spring-boot/springboot_sample.jar";
+  private static final Integer JAR_JAVA_VERSION = 0; // any value
 
   @Test
   public void testCreateLayers() throws URISyntaxException {
     Path springBootJar = Paths.get(Resources.getResource(SPRING_BOOT_JAR).toURI());
     SpringBootPackagedProcessor springBootProcessor =
-        new SpringBootPackagedProcessor(springBootJar);
+        new SpringBootPackagedProcessor(springBootJar, JAR_JAVA_VERSION);
 
     List<FileEntriesLayer> layers = springBootProcessor.createLayers();
 
@@ -55,7 +56,7 @@ public class SpringBootPackagedProcessorTest {
   public void testComputeEntrypoint() throws URISyntaxException {
     Path springBootJar = Paths.get(Resources.getResource(SPRING_BOOT_JAR).toURI());
     SpringBootPackagedProcessor springBootProcessor =
-        new SpringBootPackagedProcessor(springBootJar);
+        new SpringBootPackagedProcessor(springBootJar, JAR_JAVA_VERSION);
 
     ImmutableList<String> actualEntrypoint =
         springBootProcessor.computeEntrypoint(ImmutableList.of());
@@ -68,7 +69,7 @@ public class SpringBootPackagedProcessorTest {
   public void testComputeEntrypoint_jvmFlag() throws URISyntaxException {
     Path springBootJar = Paths.get(Resources.getResource(SPRING_BOOT_JAR).toURI());
     SpringBootPackagedProcessor springBootProcessor =
-        new SpringBootPackagedProcessor(springBootJar);
+        new SpringBootPackagedProcessor(springBootJar, JAR_JAVA_VERSION);
 
     ImmutableList<String> actualEntrypoint =
         springBootProcessor.computeEntrypoint(ImmutableList.of("-jvm-flag"));

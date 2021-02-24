@@ -23,7 +23,7 @@ import java.util.List;
 
 /** Interface to create layers and compute entrypoint from jar file contents. */
 public interface JarProcessor {
-
+  
   /**
    * Creates layers on container for a jar.
    *
@@ -41,4 +41,6 @@ public interface JarProcessor {
    * @throws IOException if I/O error occurs when opening the jar file
    */
   ImmutableList<String> computeEntrypoint(List<String> jvmFlags) throws IOException;
+
+  Integer getJarJavaVersion();
 }

@@ -33,10 +33,20 @@ public class StandardExplodedProcessor implements JarProcessor {
 
   private final Path jarPath;
   private final Path targetExplodedJarRoot;
+  private final Integer jarJavaVersion;
 
-  public StandardExplodedProcessor(Path jarPath, Path targetExplodedJarRoot) {
+  /**
+   * Constructor for {@link StandardExplodedProcessor}.
+   *
+   * @param jarPath path to jar file
+   * @param targetExplodedJarRoot path to exploded-jar root
+   * @param jarJavaVersion jar java version
+   */
+  public StandardExplodedProcessor(
+      Path jarPath, Path targetExplodedJarRoot, Integer jarJavaVersion) {
     this.jarPath = jarPath;
     this.targetExplodedJarRoot = targetExplodedJarRoot;
+    this.jarJavaVersion = jarJavaVersion;
   }
 
   @Override
@@ -97,5 +107,10 @@ public class StandardExplodedProcessor implements JarProcessor {
       entrypoint.add(mainClass);
       return entrypoint.build();
     }
+  }
+
+  @Override
+  public Integer getJarJavaVersion() {
+    return jarJavaVersion;
   }
 }

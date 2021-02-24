@@ -198,9 +198,8 @@ public class Jar implements Callable<Integer> {
       CacheDirectories cacheDirectories =
           CacheDirectories.from(commonCliOptions, jarFile.toAbsolutePath().getParent());
       JarProcessor processor = JarProcessors.from(jarFile, cacheDirectories, mode);
-      Integer jarJavaVersion = JarProcessors.getJavaMajorVersion(jarFile);
       JibContainerBuilder containerBuilder =
-          JarFiles.toJibContainerBuilder(processor, this, commonCliOptions, logger, jarJavaVersion);
+          JarFiles.toJibContainerBuilder(processor, this, commonCliOptions, logger);
       Containerizer containerizer = Containerizers.from(commonCliOptions, logger, cacheDirectories);
       containerBuilder.containerize(containerizer);
     } catch (Exception ex) {

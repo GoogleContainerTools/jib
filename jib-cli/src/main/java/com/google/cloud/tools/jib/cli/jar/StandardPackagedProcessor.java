@@ -27,9 +27,17 @@ import java.util.jar.JarFile;
 public class StandardPackagedProcessor implements JarProcessor {
 
   private final Path jarPath;
+  private final Integer jarJavaVersion;
 
-  public StandardPackagedProcessor(Path jarPath) {
+  /**
+   * Constructor for {@link StandardExplodedProcessor}.
+   *
+   * @param jarPath path to jar file
+   * @param jarJavaVersion jar java version
+   */
+  public StandardPackagedProcessor(Path jarPath, Integer jarJavaVersion) {
     this.jarPath = jarPath;
+    this.jarJavaVersion = jarJavaVersion;
   }
 
   @Override
@@ -66,5 +74,10 @@ public class StandardPackagedProcessor implements JarProcessor {
       entrypoint.add(JarLayers.APP_ROOT + "/" + jarPath.getFileName().toString());
       return entrypoint.build();
     }
+  }
+
+  @Override
+  public Integer getJarJavaVersion() {
+    return jarJavaVersion;
   }
 }

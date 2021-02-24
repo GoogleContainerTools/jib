@@ -108,7 +108,7 @@ public class JarProcessorsTest {
   @Test
   public void testGetMajorJavaVersion_versionNotFound() throws URISyntaxException, IOException {
     Path jarPath = Paths.get(Resources.getResource(STANDARD).toURI());
-    Integer version = JarProcessors.getJavaMajorVersion(jarPath);
+    Integer version = JarProcessors.determineJavaMajorVersion(jarPath);
     assertThat(version).isEqualTo(0);
   }
 }

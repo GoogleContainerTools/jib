@@ -43,10 +43,20 @@ public class SpringBootExplodedProcessor implements JarProcessor {
 
   private final Path jarPath;
   private final Path targetExplodedJarRoot;
+  private final Integer jarJavaVersion;
 
-  public SpringBootExplodedProcessor(Path jarPath, Path targetExplodedJarRoot) {
+  /**
+   * Constructor for {@link SpringBootExplodedProcessor}.
+   *
+   * @param jarPath path to jar file
+   * @param targetExplodedJarRoot path to exploded-jar root
+   * @param jarJavaVersion jar java version
+   */
+  public SpringBootExplodedProcessor(
+      Path jarPath, Path targetExplodedJarRoot, Integer jarJavaVersion) {
     this.jarPath = jarPath;
     this.targetExplodedJarRoot = targetExplodedJarRoot;
+    this.jarJavaVersion = jarJavaVersion;
   }
 
   @Override
@@ -127,6 +137,11 @@ public class SpringBootExplodedProcessor implements JarProcessor {
     entrypoint.add(JarLayers.APP_ROOT.toString());
     entrypoint.add("org.springframework.boot.loader.JarLauncher");
     return entrypoint.build();
+  }
+
+  @Override
+  public Integer getJarJavaVersion() {
+    return jarJavaVersion;
   }
 
   /**

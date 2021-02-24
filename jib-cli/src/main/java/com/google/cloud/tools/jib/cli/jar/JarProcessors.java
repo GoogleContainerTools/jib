@@ -17,6 +17,7 @@
 package com.google.cloud.tools.jib.cli.jar;
 
 import com.google.cloud.tools.jib.cli.CacheDirectories;
+import com.google.common.annotations.VisibleForTesting;
 import java.io.DataInputStream;
 import java.io.IOException;
 import java.net.URL;
@@ -43,7 +44,7 @@ public class JarProcessors {
    */
   public static JarProcessor from(
       Path jarPath, CacheDirectories cacheDirectories, ProcessingMode mode) throws IOException {
-    Integer jarJavaVersion = getJavaMajorVersion(jarPath);
+    Integer jarJavaVersion = determineJavaMajorVersion(jarPath);
     if (jarJavaVersion > 11) {
       throw new IllegalStateException(
           "The input JAR ("
@@ -55,13 +56,15 @@ public class JarProcessors {
 
     String jarType = determineJarType(jarPath);
     if (jarType.equals(SPRING_BOOT) && mode.equals(ProcessingMode.packaged)) {
-      return new SpringBootPackagedProcessor(jarPath);
+      return new SpringBootPackagedProcessor(jarPath, jarJavaVersion);
     } else if (jarType.equals(SPRING_BOOT) && mode.equals(ProcessingMode.exploded)) {
-      return new SpringBootExplodedProcessor(jarPath, cacheDirectories.getExplodedJarDirectory());
+      return new SpringBootExplodedProcessor(
+          jarPath, cacheDirectories.getExplodedJarDirectory(), jarJavaVersion);
     } else if (jarType.equals(STANDARD) && mode.equals(ProcessingMode.packaged)) {
-      return new StandardPackagedProcessor(jarPath);
+      return new StandardPackagedProcessor(jarPath, jarJavaVersion);
     } else {
-      return new StandardExplodedProcessor(jarPath, cacheDirectories.getExplodedJarDirectory());
+      return new StandardExplodedProcessor(
+          jarPath, cacheDirectories.getExplodedJarDirectory(), jarJavaVersion);
     }
   }
 
@@ -89,7 +92,8 @@ public class JarProcessors {
    * @return java version
    * @throws IOException if I/O exception thrown when opening the jar file
    */
-  public static Integer getJavaMajorVersion(Path jarPath) throws IOException {
+  @VisibleForTesting
+  static Integer determineJavaMajorVersion(Path jarPath) throws IOException {
     try (JarFile jarFile = new JarFile(jarPath.toFile())) {
       Enumeration<JarEntry> jarEntries = jarFile.entries();
       while (jarEntries.hasMoreElements()) {
