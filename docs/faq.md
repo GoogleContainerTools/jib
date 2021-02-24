@@ -32,8 +32,7 @@ If a question you have is not answered below, please [submit an issue](/../../is
 [I want to exclude files from layers, have more fine-grained control over layers, change file ownership, etc.](#i-want-to-exclude-files-from-layers-have-more-fine-grained-control-over-layers-change-file-ownership-etc)\
 [Jib build plugins don't have the feature that I need.](#jib-build-plugins-dont-have-the-feature-that-i-need)\
 [I am hitting Docker Hub rate limits. How can I configure registry mirrors?](#i-am-hitting-docker-hub-rate-limits-how-can-i-configure-registry-mirrors)\
-[Where is the global Jib configuration file and how I can configure it?](#where-is-the-
--jib-configuration-file-and-how-i-can-configure-it)
+[Where is the global Jib configuration file and how I can configure it?](#where-is-the-global-jib-configuration-file-and-how-i-can-configure-it)
 
 **Build Problems**\
 [How can I diagnose problems pulling or pushing from remote registries?](#how-can-i-diagnose-problems-pulling-or-pushing-from-remote-registries)\
