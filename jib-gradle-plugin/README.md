@@ -136,7 +136,7 @@ Jib can also build your image directly to a Docker daemon. This uses the `docker
 gradle jibDockerBuild
 ```
 
-If you are using [`minikube`](https://github.com/kubernetes/minikube)'s remote Docker daemon, make sure you [set up the correct environment variables](https://github.com/kubernetes/minikube/blob/master/docs/reusing_the_docker_daemon.md) to point to the remote daemon:
+If you are using [`minikube`](https://github.com/kubernetes/minikube)'s remote Docker daemon, make sure you [set up the correct environment variables](https://minikube.sigs.k8s.io/docs/handbook/pushing/#1-pushing-directly-to-the-in-cluster-docker-daemon-docker-env) to point to the remote daemon:
 
 ```shell
 eval $(minikube docker-env)
