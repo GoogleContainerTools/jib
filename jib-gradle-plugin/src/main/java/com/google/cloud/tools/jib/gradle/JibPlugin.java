@@ -209,7 +209,7 @@ public class JibPlugin implements Plugin<Project> {
           }
 
           SourceSet mainSourceSet =
-              project
+              projectAfterEvaluation
                   .getConvention()
                   .getPlugin(JavaPluginConvention.class)
                   .getSourceSets()
