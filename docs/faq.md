@@ -557,7 +557,7 @@ See the [Maven](https://github.com/GoogleContainerTools/jib/tree/master/jib-grad
 
 ### Where is the global Jib configuration file and how I can configure it?
 
-See the [Maven](https://github.com/GoogleContainerTools/jib/tree/global-config-doc/jib-maven-plugin#global-jib-configuration) and [Gradle](https://github.com/GoogleContainerTools/jib/tree/global-config-doc/jib-gradle-plugin#global-jib-configuration) docs.
+See the [Maven](https://github.com/GoogleContainerTools/jib/tree/master/jib-maven-plugin#global-jib-configuration) and [Gradle](https://github.com/GoogleContainerTools/jib/tree/master/jib-gradle-plugin#global-jib-configuration) docs.
 
 
 ## Build Problems
