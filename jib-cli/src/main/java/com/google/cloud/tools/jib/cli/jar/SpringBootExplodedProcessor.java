@@ -52,8 +52,7 @@ public class SpringBootExplodedProcessor implements JarProcessor {
    * @param targetExplodedJarRoot path to exploded-jar root
    * @param jarJavaVersion jar java version
    */
-  public SpringBootExplodedProcessor(
-      Path jarPath, Path targetExplodedJarRoot, Integer jarJavaVersion) {
+  SpringBootExplodedProcessor(Path jarPath, Path targetExplodedJarRoot, Integer jarJavaVersion) {
     this.jarPath = jarPath;
     this.targetExplodedJarRoot = targetExplodedJarRoot;
     this.jarJavaVersion = jarJavaVersion;

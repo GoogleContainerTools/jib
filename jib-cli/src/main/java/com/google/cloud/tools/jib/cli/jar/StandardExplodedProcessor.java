@@ -42,8 +42,7 @@ public class StandardExplodedProcessor implements JarProcessor {
    * @param targetExplodedJarRoot path to exploded-jar root
    * @param jarJavaVersion jar java version
    */
-  public StandardExplodedProcessor(
-      Path jarPath, Path targetExplodedJarRoot, Integer jarJavaVersion) {
+  StandardExplodedProcessor(Path jarPath, Path targetExplodedJarRoot, Integer jarJavaVersion) {
     this.jarPath = jarPath;
     this.targetExplodedJarRoot = targetExplodedJarRoot;
     this.jarJavaVersion = jarJavaVersion;

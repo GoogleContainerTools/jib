@@ -100,8 +100,8 @@ public class JarProcessors {
         String jarEntry = jarEntries.nextElement().toString();
         if (jarEntry.endsWith(".class") && !jarEntry.endsWith("module-info.class")) {
           try (URLClassLoader loader = new URLClassLoader(new URL[] {jarPath.toUri().toURL()});
-           DataInputStream classFile =
-              new DataInputStream(loader.getResourceAsStream(jarEntry))) {
+              DataInputStream classFile =
+                  new DataInputStream(loader.getResourceAsStream(jarEntry))) {
 
             // Check magic number
             if (classFile.readInt() != 0xCAFEBABE) {

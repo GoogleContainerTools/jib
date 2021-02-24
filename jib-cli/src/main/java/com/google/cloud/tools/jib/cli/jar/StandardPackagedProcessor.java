@@ -35,7 +35,7 @@ public class StandardPackagedProcessor implements JarProcessor {
    * @param jarPath path to jar file
    * @param jarJavaVersion jar java version
    */
-  public StandardPackagedProcessor(Path jarPath, Integer jarJavaVersion) {
+  StandardPackagedProcessor(Path jarPath, Integer jarJavaVersion) {
     this.jarPath = jarPath;
     this.jarJavaVersion = jarJavaVersion;
   }

@@ -33,7 +33,7 @@ public class SpringBootPackagedProcessor implements JarProcessor {
    * @param jarPath path to jar file
    * @param jarJavaVersion jar java version
    */
-  public SpringBootPackagedProcessor(Path jarPath, Integer jarJavaVersion) {
+  SpringBootPackagedProcessor(Path jarPath, Integer jarJavaVersion) {
     this.jarPath = jarPath;
     this.jarJavaVersion = jarJavaVersion;
   }
