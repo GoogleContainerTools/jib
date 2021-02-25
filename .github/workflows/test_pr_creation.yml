@@ -24,7 +24,7 @@ jobs:
         with:
           # Provided by Actions. No need to create a token.
           github_token: ${{ secrets.GA_SECRET }}
-          source_branch: release-pr-test
+          source_branch: fix-2195-tar-npe
           pr_title: "Test Release PR Creation"
           pr_body: "To be merged after the release is complete."
           pr_label: "kokoro:run,PR: Merge After Release"
