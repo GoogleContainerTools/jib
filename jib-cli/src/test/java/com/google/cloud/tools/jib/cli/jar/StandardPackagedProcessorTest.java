@@ -39,12 +39,13 @@ public class StandardPackagedProcessorTest {
   private static final String STANDARD_SINGLE_DEPENDENCY_JAR = "jar/standard/singleDepJar.jar";
   private static final String STANDARD_JAR_WITH_CLASS_PATH_MANIFEST =
       "jar/standard/standardJarWithClassPath.jar";
+  private static final Integer JAR_JAVA_VERSION = 0; // any value
 
   @Test
   public void testCreateLayers_emptyJar() throws IOException, URISyntaxException {
     Path standardJar = Paths.get(Resources.getResource(STANDARD_JAR_EMPTY).toURI());
     StandardPackagedProcessor standardPackagedModeProcessor =
-        new StandardPackagedProcessor(standardJar);
+        new StandardPackagedProcessor(standardJar, JAR_JAVA_VERSION);
 
     List<FileEntriesLayer> layers = standardPackagedModeProcessor.createLayers();
 
@@ -62,7 +63,7 @@ public class StandardPackagedProcessorTest {
     Path standardJar =
         Paths.get(Resources.getResource(STANDARD_JAR_WITH_CLASS_PATH_MANIFEST).toURI());
     StandardPackagedProcessor standardPackagedModeProcessor =
-        new StandardPackagedProcessor(standardJar);
+        new StandardPackagedProcessor(standardJar, JAR_JAVA_VERSION);
 
     List<FileEntriesLayer> layers = standardPackagedModeProcessor.createLayers();
 
@@ -105,7 +106,7 @@ public class StandardPackagedProcessorTest {
   public void testCreateLayers_dependencyDoesNotExist() throws URISyntaxException {
     Path standardJar = Paths.get(Resources.getResource(STANDARD_SINGLE_DEPENDENCY_JAR).toURI());
     StandardPackagedProcessor standardPackagedModeProcessor =
-        new StandardPackagedProcessor(standardJar);
+        new StandardPackagedProcessor(standardJar, JAR_JAVA_VERSION);
 
     IllegalArgumentException exception =
         assertThrows(
@@ -122,7 +123,7 @@ public class StandardPackagedProcessorTest {
   public void testComputeEntrypoint_noMainClass() throws URISyntaxException {
     Path standardJar = Paths.get(Resources.getResource(STANDARD_JAR_EMPTY).toURI());
     StandardPackagedProcessor standardPackagedModeProcessor =
-        new StandardPackagedProcessor(standardJar);
+        new StandardPackagedProcessor(standardJar, JAR_JAVA_VERSION);
 
     IllegalArgumentException exception =
         assertThrows(
@@ -141,7 +142,7 @@ public class StandardPackagedProcessorTest {
     Path standardJar =
         Paths.get(Resources.getResource(STANDARD_JAR_WITH_CLASS_PATH_MANIFEST).toURI());
     StandardPackagedProcessor standardPackagedModeProcessor =
-        new StandardPackagedProcessor(standardJar);
+        new StandardPackagedProcessor(standardJar, JAR_JAVA_VERSION);
 
     ImmutableList<String> actualEntrypoint =
         standardPackagedModeProcessor.computeEntrypoint(ImmutableList.of());
@@ -156,7 +157,7 @@ public class StandardPackagedProcessorTest {
     Path standardJar =
         Paths.get(Resources.getResource(STANDARD_JAR_WITH_CLASS_PATH_MANIFEST).toURI());
     StandardPackagedProcessor standardPackagedModeProcessor =
-        new StandardPackagedProcessor(standardJar);
+        new StandardPackagedProcessor(standardJar, JAR_JAVA_VERSION);
 
     ImmutableList<String> actualEntrypoint =
         standardPackagedModeProcessor.computeEntrypoint(ImmutableList.of("-jvm-flag"));
@@ -164,5 +165,12 @@ public class StandardPackagedProcessorTest {
     assertThat(actualEntrypoint)
         .isEqualTo(
             ImmutableList.of("java", "-jvm-flag", "-jar", "/app/standardJarWithClassPath.jar"));
+  }
+
+  @Test
+  public void testGetJarJavaVersion() {
+    StandardPackagedProcessor standardPackagedProcessor =
+        new StandardPackagedProcessor(Paths.get("ignore"), 8);
+    assertThat(standardPackagedProcessor.getJarJavaVersion()).isEqualTo(8);
   }
 }

@@ -22,12 +22,20 @@ import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
 
-public class SpringBootPackagedProcessor implements JarProcessor {
+class SpringBootPackagedProcessor implements JarProcessor {
 
   private final Path jarPath;
+  private final Integer jarJavaVersion;
 
-  public SpringBootPackagedProcessor(Path jarPath) {
+  /**
+   * Constructor for {@link SpringBootPackagedProcessor}.
+   *
+   * @param jarPath path to jar file
+   * @param jarJavaVersion jar java version
+   */
+  SpringBootPackagedProcessor(Path jarPath, Integer jarJavaVersion) {
     this.jarPath = jarPath;
+    this.jarJavaVersion = jarJavaVersion;
   }
 
   @Override
@@ -48,5 +56,10 @@ public class SpringBootPackagedProcessor implements JarProcessor {
     entrypoint.add("-jar");
     entrypoint.add(JarLayers.APP_ROOT + "/" + jarPath.getFileName().toString());
     return entrypoint.build();
+  }
+
+  @Override
+  public Integer getJarJavaVersion() {
+    return jarJavaVersion;
   }
 }

@@ -43,6 +43,7 @@ public class SpringBootExplodedProcessorTest {
   private static final String SPRING_BOOT_LAYERED_WITH_ALL_EMPTY_LAYERS_LISTED =
       "jar/spring-boot/springboot_layered_allEmptyLayers.jar";
   private static final String SPRING_BOOT_NOT_LAYERED = "jar/spring-boot/springboot_notLayered.jar";
+  private static final Integer JAR_JAVA_VERSION = 0; // any value
 
   @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
@@ -62,7 +63,7 @@ public class SpringBootExplodedProcessorTest {
     Path springBootJar = Paths.get(Resources.getResource(SPRING_BOOT_LAYERED).toURI());
     Path destDir = temporaryFolder.newFolder().toPath();
     SpringBootExplodedProcessor springBootExplodedModeProcessor =
-        new SpringBootExplodedProcessor(springBootJar, destDir);
+        new SpringBootExplodedProcessor(springBootJar, destDir, JAR_JAVA_VERSION);
 
     List<FileEntriesLayer> layers = springBootExplodedModeProcessor.createLayers();
 
@@ -134,7 +135,7 @@ public class SpringBootExplodedProcessorTest {
         Paths.get(Resources.getResource(SPRING_BOOT_LAYERED_WITH_EMPTY_LAYER).toURI());
     Path destDir = temporaryFolder.newFolder().toPath();
     SpringBootExplodedProcessor springBootExplodedModeProcessor =
-        new SpringBootExplodedProcessor(springBootJar, destDir);
+        new SpringBootExplodedProcessor(springBootJar, destDir, JAR_JAVA_VERSION);
 
     List<FileEntriesLayer> layers = springBootExplodedModeProcessor.createLayers();
 
@@ -191,7 +192,7 @@ public class SpringBootExplodedProcessorTest {
         Paths.get(Resources.getResource(SPRING_BOOT_LAYERED_WITH_ALL_EMPTY_LAYERS_LISTED).toURI());
     Path destDir = temporaryFolder.newFolder().toPath();
     SpringBootExplodedProcessor springBootExplodedModeProcessor =
-        new SpringBootExplodedProcessor(springBootJar, destDir);
+        new SpringBootExplodedProcessor(springBootJar, destDir, JAR_JAVA_VERSION);
 
     List<FileEntriesLayer> layers = springBootExplodedModeProcessor.createLayers();
 
@@ -203,7 +204,7 @@ public class SpringBootExplodedProcessorTest {
     Path springBootJar = Paths.get(Resources.getResource(SPRING_BOOT_NOT_LAYERED).toURI());
     Path destDir = temporaryFolder.newFolder().toPath();
     SpringBootExplodedProcessor springBootExplodedModeProcessor =
-        new SpringBootExplodedProcessor(springBootJar, destDir);
+        new SpringBootExplodedProcessor(springBootJar, destDir, JAR_JAVA_VERSION);
 
     List<FileEntriesLayer> layers = springBootExplodedModeProcessor.createLayers();
 
@@ -260,7 +261,8 @@ public class SpringBootExplodedProcessorTest {
   @Test
   public void testComputeEntrypoint() {
     SpringBootExplodedProcessor bootProcessor =
-        new SpringBootExplodedProcessor(Paths.get("ignored"), Paths.get("ignored"));
+        new SpringBootExplodedProcessor(
+            Paths.get("ignored"), Paths.get("ignored"), JAR_JAVA_VERSION);
     ImmutableList<String> actualEntrypoint = bootProcessor.computeEntrypoint(new ArrayList<>());
     assertThat(actualEntrypoint)
         .isEqualTo(
@@ -270,12 +272,20 @@ public class SpringBootExplodedProcessorTest {
   @Test
   public void testComputeEntrypoint_withJvmFlags() {
     SpringBootExplodedProcessor bootProcessor =
-        new SpringBootExplodedProcessor(Paths.get("ignored"), Paths.get("ignored"));
+        new SpringBootExplodedProcessor(
+            Paths.get("ignored"), Paths.get("ignored"), JAR_JAVA_VERSION);
     ImmutableList<String> actualEntrypoint =
         bootProcessor.computeEntrypoint(ImmutableList.of("-jvm-flag"));
     assertThat(actualEntrypoint)
         .isEqualTo(
             ImmutableList.of(
                 "java", "-jvm-flag", "-cp", "/app", "org.springframework.boot.loader.JarLauncher"));
+  }
+
+  @Test
+  public void testGetJarJavaVersion() {
+    SpringBootExplodedProcessor springBootExplodedProcessor =
+        new SpringBootExplodedProcessor(Paths.get("ignore"), Paths.get("ignore"), 8);
+    assertThat(springBootExplodedProcessor.getJarJavaVersion()).isEqualTo(8);
   }
 }

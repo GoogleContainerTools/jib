@@ -29,14 +29,23 @@ import java.util.function.Predicate;
 import java.util.jar.Attributes;
 import java.util.jar.JarFile;
 
-public class StandardExplodedProcessor implements JarProcessor {
+class StandardExplodedProcessor implements JarProcessor {
 
   private final Path jarPath;
   private final Path targetExplodedJarRoot;
+  private final Integer jarJavaVersion;
 
-  public StandardExplodedProcessor(Path jarPath, Path targetExplodedJarRoot) {
+  /**
+   * Constructor for {@link StandardExplodedProcessor}.
+   *
+   * @param jarPath path to jar file
+   * @param targetExplodedJarRoot path to exploded-jar root
+   * @param jarJavaVersion jar java version
+   */
+  StandardExplodedProcessor(Path jarPath, Path targetExplodedJarRoot, Integer jarJavaVersion) {
     this.jarPath = jarPath;
     this.targetExplodedJarRoot = targetExplodedJarRoot;
+    this.jarJavaVersion = jarJavaVersion;
   }
 
   @Override
@@ -97,5 +106,10 @@ public class StandardExplodedProcessor implements JarProcessor {
       entrypoint.add(mainClass);
       return entrypoint.build();
     }
+  }
+
+  @Override
+  public Integer getJarJavaVersion() {
+    return jarJavaVersion;
   }
 }
