@@ -13,7 +13,7 @@ on:
 
 jobs:
   release:
-    name: Prepare Jib release
+    name: Temporary Jib Release
     runs-on: ubuntu-latest
     steps:
       - name: Check out code
@@ -23,7 +23,7 @@ jobs:
         id: create-pr
         with:
           # Provided by Actions. No need to create a token.
-          secret: ${{ secrets.GA_SECRET }}
+          github_token: ${{ secrets.GA_SECRET }}
           source_branch: release-pr-test
           pr_title: "Test Release PR Creation"
           pr_body: "To be merged after the release is complete."
