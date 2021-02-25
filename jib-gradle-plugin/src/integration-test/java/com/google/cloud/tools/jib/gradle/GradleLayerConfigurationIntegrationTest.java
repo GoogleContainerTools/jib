@@ -36,6 +36,7 @@ public class GradleLayerConfigurationIntegrationTest {
 
   @Test
   public void testGradleLayerConfiguration_multiModule() throws IOException {
+    System.out.println("HELLO");
     multiTestProject.build(":complex-service:jibBuildTar");
 
     Path jibTar = multiTestProject.getProjectRoot().resolve("complex-service/build/jib-image.tar");
