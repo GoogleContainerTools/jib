@@ -1,0 +1,30 @@
+name: Prepare Jib release
+on:
+  workflow_dispatch:
+    inputs:
+      project:
+        description: Jib project to release
+        required: true
+        default: (build-plan | core | maven | gradle | extension-common | maven-extension | gradle-extension)
+      release_version:
+        description: new release version
+        required: true
+        default: (for example, 0.1.0)
+
+jobs:
+  release:
+    name: Prepare Jib release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v2
+      - name: Create pull request
+        uses: repo-sync/pull-request@v2
+        id: create-pr
+        with:
+          # Provided by Actions. No need to create a token.
+          secret: ${{ secrets.GA_SECRET }}
+          source_branch: release-pr-test
+          pr_title: "Test Release PR Creation"
+          pr_body: "To be merged after the release is complete."
+          pr_label: "kokoro:run,PR: Merge After Release"
