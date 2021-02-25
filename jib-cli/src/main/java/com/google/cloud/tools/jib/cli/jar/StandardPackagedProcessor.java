@@ -30,7 +30,7 @@ class StandardPackagedProcessor implements JarProcessor {
   private final Integer jarJavaVersion;
 
   /**
-   * Constructor for {@link StandardExplodedProcessor}.
+   * Constructor for {@link StandardPackagedProcessor}.
    *
    * @param jarPath path to jar file
    * @param jarJavaVersion jar java version
