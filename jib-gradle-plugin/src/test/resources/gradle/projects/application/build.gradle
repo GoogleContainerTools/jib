@@ -1,0 +1,19 @@
+plugins {
+  id 'java'
+}
+
+configurations {
+  runtimeClasspath
+}
+
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+repositories {
+  mavenCentral()
+}
+
+dependencies {
+  compile 'com.google.guava:guava:23.6-jre'
+  //compile files('libs/dependency-1.0.0.jar')
+}
