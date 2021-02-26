@@ -39,7 +39,7 @@ public class JarProcessors {
    *
    * @param jarPath path to the jar
    * @param cacheDirectories the location of the relevant caches
-   * @param jarOptions jar command line options
+   * @param jarOptions jar cli options
    * @return JarProcessor
    * @throws IOException if I/O error occurs when opening the jar file
    */
