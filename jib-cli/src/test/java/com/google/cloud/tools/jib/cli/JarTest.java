@@ -553,7 +553,7 @@ public class JarTest {
   }
 
   @Test
-  public void testParse_mode_packaged() {
+  public void testParse_mode() {
     Jar jarCommand =
         CommandLine.populateCommand(
             new Jar(), "--target=test-image-ref", "--mode=packaged", "my-app.jar");
