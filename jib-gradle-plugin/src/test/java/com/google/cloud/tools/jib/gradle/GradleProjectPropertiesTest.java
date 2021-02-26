@@ -491,37 +491,43 @@ public class GradleProjectPropertiesTest {
   }
 
   @Test
-  public void testGetWarFilePath() {
+  public void testGetWarFilePath() throws IOException {
+    Path outputDir = temporaryFolder.newFolder("output").toPath();
+
     project.getPlugins().apply("war");
     War war = project.getTasks().withType(War.class).getByName("war");
-    war.getDestinationDirectory().set(new File("/war/file"));
+    war.getDestinationDirectory().set(outputDir.toFile());
 
-    Assert.assertEquals("/war/file/my-app.war", gradleProjectProperties.getWarFilePath());
+    Assert.assertEquals(
+        outputDir.resolve("my-app.war").toString(), gradleProjectProperties.getWarFilePath());
   }
 
   @Test
-  public void testGetWarFilePath_bootWar() {
-    project.getPlugins().apply("war");
-    War war = project.getTasks().withType(War.class).getByName("war");
-    war.getDestinationDirectory().set(new File("/war"));
+  public void testGetWarFilePath_bootWar() throws IOException {
+    Path outputDir = temporaryFolder.newFolder("output").toPath();
 
+    project.getPlugins().apply("war");
     project.getPlugins().apply("org.springframework.boot");
     War bootWar = project.getTasks().withType(War.class).getByName("bootWar");
-    bootWar.getDestinationDirectory().set(new File("/boot/war"));
+    bootWar.getDestinationDirectory().set(outputDir.toFile());
 
-    Assert.assertEquals("/boot/war/my-app.war", gradleProjectProperties.getWarFilePath());
+    Assert.assertEquals(
+        outputDir.resolve("my-app.war").toString(), gradleProjectProperties.getWarFilePath());
   }
 
   @Test
-  public void testGetWarFilePath_bootWarDisabled() {
+  public void testGetWarFilePath_bootWarDisabled() throws IOException {
+    Path outputDir = temporaryFolder.newFolder("output").toPath();
+
     project.getPlugins().apply("war");
     War war = project.getTasks().withType(War.class).getByName("war");
-    war.getDestinationDirectory().set(new File("/war"));
+    war.getDestinationDirectory().set(outputDir.toFile());
 
     project.getPlugins().apply("org.springframework.boot");
     project.getTasks().getByName("bootWar").setEnabled(false);
 
-    Assert.assertEquals("/war/my-app.war", gradleProjectProperties.getWarFilePath());
+    Assert.assertEquals(
+        outputDir.resolve("my-app.war").toString(), gradleProjectProperties.getWarFilePath());
   }
 
   @Test
