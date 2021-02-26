@@ -1,4 +1,4 @@
-name: Prepare Jib release
+name: Temporary Jib release
 on:
   workflow_dispatch:
     inputs:
