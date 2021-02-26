@@ -1,4 +1,5 @@
 build/
+!jib-gradle-plugin/src/test/resources/gradle/application/build/
 target/
 out
 bin/
