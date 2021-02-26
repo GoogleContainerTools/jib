@@ -46,12 +46,12 @@ jobs:
       - name: Create pull request
         uses: repo-sync/pull-request@v2
         with:
-          # Use a personal access token instead of the one created by Github Actions.
+          # Use a personal token to file a PR as a non-bot author to trigger other workflows (e.g., unit tests):
+          # https://docs.github.com/en/actions/reference/events-that-trigger-workflows#triggering-new-workflows-using-a-personal-access-token;
           github_token: ${{ secrets.GA_RELEASE_PR_PERSONAL_TOKEN }}
           source_branch: cli-release-v${{ github.event.inputs.release_version }}
           pr_title: "CLI release v${{ github.event.inputs.release_version }}"
           pr_body: "To be merged after the release is complete."
-          pr_label: "kokoro:run"
 
       - name: Draft GitHub release
         uses: actions/create-release@v1
