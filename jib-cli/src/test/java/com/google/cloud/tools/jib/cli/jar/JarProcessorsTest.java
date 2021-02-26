@@ -23,11 +23,13 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import com.google.cloud.tools.jib.cli.CacheDirectories;
+import com.google.cloud.tools.jib.cli.Jar;
 import com.google.common.io.Resources;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Optional;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -44,6 +46,7 @@ public class JarProcessorsTest {
   private static final String JAVA_14_JAR = "jar/java14WithModuleInfo.jar";
 
   @Mock private CacheDirectories mockCacheDirectories;
+  @Mock private Jar mockJarCommand;
 
   @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
@@ -52,9 +55,9 @@ public class JarProcessorsTest {
     Path jarPath = Paths.get(Resources.getResource(STANDARD).toURI());
     Path explodedJarRoot = temporaryFolder.getRoot().toPath();
     when(mockCacheDirectories.getExplodedJarDirectory()).thenReturn(explodedJarRoot);
+    when(mockJarCommand.getMode()).thenReturn(ProcessingMode.exploded);
 
-    JarProcessor processor =
-        JarProcessors.from(jarPath, mockCacheDirectories, ProcessingMode.exploded);
+    JarProcessor processor = JarProcessors.from(jarPath, mockCacheDirectories, mockJarCommand);
 
     verify(mockCacheDirectories).getExplodedJarDirectory();
     assertThat(processor).isInstanceOf(StandardExplodedProcessor.class);
@@ -63,8 +66,9 @@ public class JarProcessorsTest {
   @Test
   public void testFrom_standardPackaged() throws IOException, URISyntaxException {
     Path jarPath = Paths.get(Resources.getResource(STANDARD).toURI());
-    JarProcessor processor =
-        JarProcessors.from(jarPath, mockCacheDirectories, ProcessingMode.packaged);
+    when(mockJarCommand.getMode()).thenReturn(ProcessingMode.packaged);
+
+    JarProcessor processor = JarProcessors.from(jarPath, mockCacheDirectories, mockJarCommand);
 
     verifyNoInteractions(mockCacheDirectories);
     assertThat(processor).isInstanceOf(StandardPackagedProcessor.class);
@@ -73,8 +77,9 @@ public class JarProcessorsTest {
   @Test
   public void testFrom_springBootPackaged() throws IOException, URISyntaxException {
     Path jarPath = Paths.get(Resources.getResource(SPRING_BOOT).toURI());
-    JarProcessor processor =
-        JarProcessors.from(jarPath, mockCacheDirectories, ProcessingMode.packaged);
+    when(mockJarCommand.getMode()).thenReturn(ProcessingMode.packaged);
+
+    JarProcessor processor = JarProcessors.from(jarPath, mockCacheDirectories, mockJarCommand);
 
     verifyNoInteractions(mockCacheDirectories);
     assertThat(processor).isInstanceOf(SpringBootPackagedProcessor.class);
@@ -85,28 +90,43 @@ public class JarProcessorsTest {
     Path jarPath = Paths.get(Resources.getResource(SPRING_BOOT).toURI());
     Path explodedJarRoot = temporaryFolder.getRoot().toPath();
     when(mockCacheDirectories.getExplodedJarDirectory()).thenReturn(explodedJarRoot);
+    when(mockJarCommand.getMode()).thenReturn(ProcessingMode.exploded);
 
-    JarProcessor processor =
-        JarProcessors.from(jarPath, mockCacheDirectories, ProcessingMode.exploded);
+    JarProcessor processor = JarProcessors.from(jarPath, mockCacheDirectories, mockJarCommand);
 
     verify(mockCacheDirectories).getExplodedJarDirectory();
     assertThat(processor).isInstanceOf(SpringBootExplodedProcessor.class);
   }
 
   @Test
-  public void testFrom_incompatibleBaseImage() throws URISyntaxException {
+  public void testFrom_incompatibleDefaultBaseImage() throws URISyntaxException {
     Path jarPath = Paths.get(Resources.getResource(JAVA_14_JAR).toURI());
+
     IllegalStateException exception =
         assertThrows(
             IllegalStateException.class,
-            () -> JarProcessors.from(jarPath, mockCacheDirectories, ProcessingMode.exploded));
+            () -> JarProcessors.from(jarPath, mockCacheDirectories, mockJarCommand));
     assertThat(exception)
         .hasMessageThat()
         .startsWith("The input JAR (" + jarPath + ") is compiled with Java 14");
   }
 
   @Test
-  public void testGetMajorJavaVersion_versionNotFound() throws URISyntaxException, IOException {
+  public void testFrom_incompatibleDefaultBaseImage_baseImageSpecified()
+      throws URISyntaxException, IOException {
+    Path jarPath = Paths.get(Resources.getResource(JAVA_14_JAR).toURI());
+    when(mockJarCommand.getMode()).thenReturn(ProcessingMode.exploded);
+    when(mockJarCommand.getFrom()).thenReturn(Optional.of("base-image"));
+
+    JarProcessor processor = JarProcessors.from(jarPath, mockCacheDirectories, mockJarCommand);
+
+    verify(mockCacheDirectories).getExplodedJarDirectory();
+    assertThat(processor).isInstanceOf(StandardExplodedProcessor.class);
+  }
+
+  @Test
+  public void testDetermineJavaMajorVersion_versionNotFound()
+      throws URISyntaxException, IOException {
     Path jarPath = Paths.get(Resources.getResource(STANDARD).toURI());
     Integer version = JarProcessors.determineJavaMajorVersion(jarPath);
     assertThat(version).isEqualTo(0);

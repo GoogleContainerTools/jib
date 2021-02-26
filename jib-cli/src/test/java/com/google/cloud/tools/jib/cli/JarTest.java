@@ -24,6 +24,7 @@ import com.google.cloud.tools.jib.api.Credential;
 import com.google.cloud.tools.jib.api.Ports;
 import com.google.cloud.tools.jib.api.buildplan.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.api.buildplan.ImageFormat;
+import com.google.cloud.tools.jib.cli.jar.ProcessingMode;
 import com.google.cloud.tools.jib.cli.logging.Verbosity;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -93,6 +94,7 @@ public class JarTest {
     assertThat(jarCommand.getProgramArguments()).isEmpty();
     assertThat(jarCommand.getEntrypoint()).isEmpty();
     assertThat(jarCommand.getCreationTime()).isEmpty();
+    assertThat(jarCommand.getMode()).isEqualTo(ProcessingMode.exploded);
   }
 
   @Test
@@ -548,6 +550,28 @@ public class JarTest {
             "--creation-time=2011-12-03T22:42:05Z",
             "my-app.jar");
     assertThat(jarCommand.getCreationTime()).hasValue(Instant.parse("2011-12-03T22:42:05Z"));
+  }
+
+  @Test
+  public void testParse_mode() {
+    Jar jarCommand =
+        CommandLine.populateCommand(
+            new Jar(), "--target=test-image-ref", "--mode=packaged", "my-app.jar");
+    assertThat(jarCommand.getMode()).isEqualTo(ProcessingMode.packaged);
+  }
+
+  @Test
+  public void testParse_invalidMode() {
+    CommandLine.ParameterException exception =
+        assertThrows(
+            CommandLine.ParameterException.class,
+            () ->
+                CommandLine.populateCommand(
+                    new Jar(), "--target=test-image-ref", "--mode=unknown", "my-app.jar"));
+    assertThat(exception)
+        .hasMessageThat()
+        .isEqualTo(
+            "Invalid value for option '--mode': expected one of [exploded, packaged] (case-sensitive) but was 'unknown'");
   }
 
   @Test
