@@ -99,7 +99,7 @@ public class JarProcessorsTest {
   }
 
   @Test
-  public void testFrom_incompatibleBaseImage() throws URISyntaxException {
+  public void testFrom_incompatibleDefaultBaseImage() throws URISyntaxException {
     Path jarPath = Paths.get(Resources.getResource(JAVA_14_JAR).toURI());
 
     IllegalStateException exception =
@@ -112,7 +112,7 @@ public class JarProcessorsTest {
   }
 
   @Test
-  public void testFrom_incompatibleBaseImage_baseImageSpecified()
+  public void testFrom_incompatibleDefaultBaseImage_baseImageSpecified()
       throws URISyntaxException, IOException {
     Path jarPath = Paths.get(Resources.getResource(JAVA_14_JAR).toURI());
     when(mockJarCommand.getMode()).thenReturn(ProcessingMode.exploded);
