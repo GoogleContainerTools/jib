@@ -38,10 +38,11 @@ dependencies {
   implementation dependencyStrings.GRADLE_EXTENSION
 
   testImplementation dependencyStrings.JUNIT
+  testImplementation dependencyStrings.TRUTH
+  testImplementation dependencyStrings.TRUTH8
   testImplementation dependencyStrings.MOCKITO_CORE
   testImplementation dependencyStrings.SLF4J_API
   testImplementation dependencyStrings.SYSTEM_RULES
-
 
   testImplementation project(path:':jib-plugins-common', configuration:'tests')
   integrationTestImplementation project(path:':jib-core', configuration:'integrationTests')
