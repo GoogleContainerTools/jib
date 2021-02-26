@@ -17,6 +17,7 @@
 package com.google.cloud.tools.jib.cli.jar;
 
 import com.google.cloud.tools.jib.cli.CacheDirectories;
+import com.google.cloud.tools.jib.cli.Jar;
 import com.google.common.annotations.VisibleForTesting;
 import java.io.DataInputStream;
 import java.io.IOException;
@@ -38,14 +39,14 @@ public class JarProcessors {
    *
    * @param jarPath path to the jar
    * @param cacheDirectories the location of the relevant caches
-   * @param mode processing mode
+   * @param jarOptions jar command line options
    * @return JarProcessor
    * @throws IOException if I/O error occurs when opening the jar file
    */
-  public static JarProcessor from(
-      Path jarPath, CacheDirectories cacheDirectories, ProcessingMode mode) throws IOException {
+  public static JarProcessor from(Path jarPath, CacheDirectories cacheDirectories, Jar jarOptions)
+      throws IOException {
     Integer jarJavaVersion = determineJavaMajorVersion(jarPath);
-    if (jarJavaVersion > 11) {
+    if (jarJavaVersion > 11 && !jarOptions.getFrom().isPresent()) {
       throw new IllegalStateException(
           "The input JAR ("
               + jarPath
@@ -55,6 +56,7 @@ public class JarProcessors {
     }
 
     String jarType = determineJarType(jarPath);
+    ProcessingMode mode = jarOptions.getMode();
     if (jarType.equals(SPRING_BOOT) && mode.equals(ProcessingMode.packaged)) {
       return new SpringBootPackagedProcessor(jarPath, jarJavaVersion);
     } else if (jarType.equals(SPRING_BOOT) && mode.equals(ProcessingMode.exploded)) {

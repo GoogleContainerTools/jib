@@ -197,7 +197,7 @@ public class Jar implements Callable<Integer> {
 
       CacheDirectories cacheDirectories =
           CacheDirectories.from(commonCliOptions, jarFile.toAbsolutePath().getParent());
-      JarProcessor processor = JarProcessors.from(jarFile, cacheDirectories, mode);
+      JarProcessor processor = JarProcessors.from(jarFile, cacheDirectories, this);
       JibContainerBuilder containerBuilder =
           JarFiles.toJibContainerBuilder(processor, this, commonCliOptions, logger);
       Containerizer containerizer = Containerizers.from(commonCliOptions, logger, cacheDirectories);
@@ -283,5 +283,9 @@ public class Jar implements Callable<Integer> {
       return Optional.of(Instants.fromMillisOrIso8601(creationTime, "creationTime"));
     }
     return Optional.empty();
+  }
+
+  public ProcessingMode getMode() {
+    return mode;
   }
 }
