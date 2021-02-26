@@ -52,6 +52,7 @@ jobs:
           source_branch: cli-release-v${{ github.event.inputs.release_version }}
           pr_title: "CLI release v${{ github.event.inputs.release_version }}"
           pr_body: "To be merged after the release is complete."
+          pr_label: "PR: Merge After Release"
 
       - name: Draft GitHub release
         uses: actions/create-release@v1
