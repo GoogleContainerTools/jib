@@ -1,4 +1,4 @@
-name: Prepare Jib release
+name: Temporary Jib release
 on:
   workflow_dispatch:
     inputs:
@@ -24,7 +24,7 @@ jobs:
         with:
           # Provided by Actions. No need to create a token.
           github_token: ${{ secrets.GA_SECRET }}
-          source_branch: fix-2195-tar-npe
+          source_branch: test-release-pr
           pr_title: "Test Release PR Creation"
           pr_body: "To be merged after the release is complete."
           pr_label: "kokoro:run,PR: Merge After Release"
