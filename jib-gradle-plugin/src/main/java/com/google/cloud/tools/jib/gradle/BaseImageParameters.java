@@ -28,12 +28,16 @@ import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.Nested;
 import org.gradle.api.tasks.Optional;
 
+import java.util.HashMap;
+import java.util.Map;
+
 /** Object in {@link JibExtension} that configures the base image. */
 public class BaseImageParameters {
 
   private final AuthParameters auth;
   private Property<String> image;
   @Nullable private String credHelper;
+  @Nullable private Map<String, String> environment;
   private final PlatformParametersSpec platformParametersSpec;
   private final ListProperty<PlatformParameters> platforms;
 
@@ -48,6 +52,7 @@ public class BaseImageParameters {
     amd64Linux.setArchitecture("amd64");
     amd64Linux.setOs("linux");
     platforms.add(amd64Linux);
+    environment = new HashMap<>();
   }
 
   @Nested
@@ -91,6 +96,17 @@ public class BaseImageParameters {
 
   public void setCredHelper(String credHelper) {
     this.credHelper = credHelper;
+  }
+
+  @Input
+  @Nullable
+  @Optional
+  public Map<String, String> getEnvironment() {
+    return environment;
+  }
+
+  public void setEnvironment(Map<String, String> environment) {
+    this.environment = environment;
   }
 
   @Nested
