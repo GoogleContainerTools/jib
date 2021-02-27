@@ -275,7 +275,8 @@ public class PluginConfigurationProcessor {
         PropertyNames.TO_AUTH_PASSWORD,
         rawConfiguration.getToAuth(),
         inferredAuthProvider,
-        rawConfiguration.getToCredHelper().orElse(null));
+        rawConfiguration.getToCredHelper().orElse(null),
+        rawConfiguration.getToEnvironment());
 
     boolean alwaysCacheBaseImage =
         Boolean.parseBoolean(
@@ -528,7 +529,8 @@ public class PluginConfigurationProcessor {
         PropertyNames.FROM_AUTH_PASSWORD,
         rawConfiguration.getFromAuth(),
         inferredAuthProvider,
-        rawConfiguration.getFromCredHelper().orElse(null));
+        rawConfiguration.getFromCredHelper().orElse(null),
+            rawConfiguration.getFromEnvironment());
     return JavaContainerBuilder.from(baseImage);
   }
 
@@ -858,11 +860,12 @@ public class PluginConfigurationProcessor {
       String passwordPropertyName,
       AuthProperty rawAuthConfiguration,
       InferredAuthProvider inferredAuthProvider,
-      @Nullable String credHelper)
+      @Nullable String credHelper,
+      Map<String, String> environment)
       throws FileNotFoundException {
     DefaultCredentialRetrievers defaultCredentialRetrievers =
         DefaultCredentialRetrievers.init(
-            CredentialRetrieverFactory.forImage(imageReference, projectProperties::log));
+            CredentialRetrieverFactory.forImage(imageReference, projectProperties::log, environment));
     Optional<Credential> optionalCredential =
         ConfigurationPropertyValidator.getImageCredential(
             projectProperties::log,
