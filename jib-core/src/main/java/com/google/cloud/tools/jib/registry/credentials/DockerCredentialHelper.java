@@ -30,10 +30,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Locale;
-import java.util.Properties;
+import java.util.*;
 import java.util.function.Function;
 import javax.annotation.Nullable;
 
@@ -49,6 +46,7 @@ public class DockerCredentialHelper {
   private final Path credentialHelper;
   private final Properties systemProperties;
   private Function<List<String>, ProcessBuilder> processBuilderFactory;
+  private Map<String, String> environment;
 
   /** Template for a Docker credential helper output. */
   @VisibleForTesting
@@ -72,18 +70,24 @@ public class DockerCredentialHelper {
    * @param serverUrl the server URL to pass into the credential helper
    * @param credentialHelper the path to the credential helper executable
    */
+  public DockerCredentialHelper(String serverUrl, Path credentialHelper, Map<String, String> environment) {
+    this(serverUrl, credentialHelper, environment, System.getProperties(), ProcessBuilder::new);
+  }
+
   public DockerCredentialHelper(String serverUrl, Path credentialHelper) {
-    this(serverUrl, credentialHelper, System.getProperties(), ProcessBuilder::new);
+    this(serverUrl, credentialHelper, new HashMap<>(), System.getProperties(), ProcessBuilder::new);
   }
 
   @VisibleForTesting
   DockerCredentialHelper(
       String serverUrl,
       Path credentialHelper,
+      Map<String, String> environment,
       Properties systemProperties,
       Function<List<String>, ProcessBuilder> processBuilderFactory) {
     this.serverUrl = serverUrl;
     this.credentialHelper = credentialHelper;
+    this.environment = environment;
     this.systemProperties = systemProperties;
     this.processBuilderFactory = processBuilderFactory;
   }
@@ -131,7 +135,9 @@ public class DockerCredentialHelper {
       throws IOException, CredentialHelperUnhandledServerUrlException,
           CredentialHelperNotFoundException {
     try {
-      Process process = processBuilderFactory.apply(credentialHelperCommand).start();
+      ProcessBuilder processBuilder = processBuilderFactory.apply(credentialHelperCommand);
+      processBuilder.environment().putAll(environment);
+      Process process = processBuilder.start();
 
       try (OutputStream processStdin = process.getOutputStream()) {
         processStdin.write(serverUrl.getBytes(StandardCharsets.UTF_8));
