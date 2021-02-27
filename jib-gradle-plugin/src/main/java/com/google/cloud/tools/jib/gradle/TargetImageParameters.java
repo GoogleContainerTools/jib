@@ -19,7 +19,10 @@ package com.google.cloud.tools.jib.gradle;
 import com.google.cloud.tools.jib.plugins.common.ConfigurationPropertyValidator;
 import com.google.cloud.tools.jib.plugins.common.PropertyNames;
 import com.google.common.collect.ImmutableSet;
+
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
@@ -40,12 +43,14 @@ public class TargetImageParameters {
   private Property<String> image;
   private SetProperty<String> tags;
   @Nullable private String credHelper;
+  @Nullable private Map<String, String> environment;
 
   @Inject
   public TargetImageParameters(ObjectFactory objectFactory) {
     auth = objectFactory.newInstance(AuthParameters.class, "to.auth");
     image = objectFactory.property(String.class);
     tags = objectFactory.setProperty(String.class).empty();
+    environment = new HashMap<>();
   }
 
   @Input
@@ -110,6 +115,17 @@ public class TargetImageParameters {
 
   public void setCredHelper(String credHelper) {
     this.credHelper = credHelper;
+  }
+
+  @Input
+  @Nullable
+  @Optional
+  public Map<String, String> getEnvironment() {
+    return environment;
+  }
+
+  public void setEnvironment(Map<String, String> environment) {
+    this.environment = environment;
   }
 
   @Nested
