@@ -23,11 +23,7 @@ import com.google.cloud.tools.jib.plugins.common.AuthProperty;
 import com.google.cloud.tools.jib.plugins.common.RawConfiguration;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
 /** Gradle-specific adapter for providing raw configuration parameter values. */
 public class GradleRawConfiguration implements RawConfiguration {
@@ -224,5 +220,23 @@ public class GradleRawConfiguration implements RawConfiguration {
   @Override
   public List<? extends PlatformConfiguration> getPlatforms() {
     return jibExtension.getFrom().getPlatforms().get();
+  }
+
+  @Override
+  public Map<String, String> getFromEnvironment() {
+    Map<String, String> environment = jibExtension.getFrom().getEnvironment();
+    if (environment == null) {
+      return new HashMap<>();
+    }
+    return environment;
+  }
+
+  @Override
+  public Map<String, String> getToEnvironment() {
+    Map<String, String> environment = jibExtension.getTo().getEnvironment();
+    if (environment == null) {
+      return new HashMap<>();
+    }
+    return environment;
   }
 }

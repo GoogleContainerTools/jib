@@ -118,4 +118,8 @@ public interface RawConfiguration {
   Path getImageJsonOutputPath();
 
   List<? extends ExtensionConfiguration> getPluginExtensions();
+
+  Map<String, String> getFromEnvironment();
+
+  Map<String, String> getToEnvironment();
 }
