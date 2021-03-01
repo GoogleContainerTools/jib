@@ -107,7 +107,7 @@ public class JarProcessors {
 
             // Check magic number
             if (classFile.readInt() != 0xCAFEBABE) {
-              throw new IOException("Invalid class file format.");
+              throw new IOException("The class file (" + jarEntry + ") is of an invalid format.");
             }
 
             // Skip over minor version
