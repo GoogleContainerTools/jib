@@ -138,8 +138,9 @@ public class JarProcessorsTest {
   @Test
   public void testDetermineJavaMajorVersion_invalidClassFile() throws URISyntaxException {
     Path jarPath = Paths.get(Resources.getResource(STANDARD_WITH_INVALID_CLASS).toURI());
-    IOException exception =
-        assertThrows(IOException.class, () -> JarProcessors.determineJavaMajorVersion(jarPath));
+    IllegalArgumentException exception =
+        assertThrows(
+            IllegalArgumentException.class, () -> JarProcessors.determineJavaMajorVersion(jarPath));
     assertThat(exception)
         .hasMessageThat()
         .isEqualTo("The class file (class1.class) is of an invalid format.");
