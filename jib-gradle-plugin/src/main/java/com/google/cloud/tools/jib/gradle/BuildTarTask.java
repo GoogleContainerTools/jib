@@ -95,7 +95,8 @@ public class BuildTarTask extends DefaultTask implements JibTask {
             .stream()
             .map(ExtraDirectoryParameters::getFrom)
             .collect(Collectors.toList());
-    return GradleProjectProperties.getInputFiles(getProject(), extraDirectories);
+    return GradleProjectProperties.getInputFiles(
+        getProject(), extraDirectories, jibExtension.getConfigurationName().get());
   }
 
   /**
@@ -127,7 +128,11 @@ public class BuildTarTask extends DefaultTask implements JibTask {
     TempDirectoryProvider tempDirectoryProvider = new TempDirectoryProvider();
 
     GradleProjectProperties projectProperties =
-        GradleProjectProperties.getForProject(getProject(), getLogger(), tempDirectoryProvider);
+        GradleProjectProperties.getForProject(
+            getProject(),
+            getLogger(),
+            tempDirectoryProvider,
+            jibExtension.getConfigurationName().get());
     GlobalConfig globalConfig = GlobalConfig.readConfig();
     Future<Optional<String>> updateCheckFuture =
         TaskCommon.newUpdateChecker(projectProperties, globalConfig, getLogger());

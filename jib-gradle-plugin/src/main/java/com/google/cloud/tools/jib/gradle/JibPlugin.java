@@ -183,12 +183,16 @@ public class JibPlugin implements Plugin<Project> {
           }
 
           SourceSet mainSourceSet =
-              project
+              projectAfterEvaluation
                   .getConvention()
                   .getPlugin(JavaPluginConvention.class)
                   .getSourceSets()
                   .getByName(SourceSet.MAIN_SOURCE_SET_NAME);
           jibDependencies.add(mainSourceSet.getRuntimeClasspath());
+          jibDependencies.add(
+              projectAfterEvaluation
+                  .getConfigurations()
+                  .getByName(jibExtension.getConfigurationName().get()));
 
           Set<TaskProvider<?>> jibTaskProviders =
               ImmutableSet.of(buildImageTask, buildDockerTask, buildTarTask, syncMapTask);

@@ -21,6 +21,7 @@ import com.google.cloud.tools.jib.plugins.common.PropertyNames;
 import org.gradle.api.Action;
 import org.gradle.api.Project;
 import org.gradle.api.model.ObjectFactory;
+import org.gradle.api.plugins.JavaPlugin;
 import org.gradle.api.provider.ListProperty;
 import org.gradle.api.provider.Property;
 import org.gradle.api.tasks.Input;
@@ -94,6 +95,7 @@ public class JibExtension {
   private final SkaffoldParameters skaffold;
   private final Property<Boolean> allowInsecureRegistries;
   private final Property<String> containerizingMode;
+  private final Property<String> configurationName;
   private final ListProperty<ExtensionParameters> pluginExtensions;
   private final ExtensionParametersSpec extensionParametersSpec;
 
@@ -118,6 +120,10 @@ public class JibExtension {
         objectFactory.newInstance(ExtensionParametersSpec.class, pluginExtensions);
     allowInsecureRegistries = objectFactory.property(Boolean.class);
     containerizingMode = objectFactory.property(String.class);
+    configurationName =
+        objectFactory
+            .property(String.class)
+            .convention(JavaPlugin.RUNTIME_CLASSPATH_CONFIGURATION_NAME);
 
     // Sets defaults.
     allowInsecureRegistries.set(DEFAULT_ALLOW_INSECURE_REGISTIRIES);
@@ -219,6 +225,22 @@ public class JibExtension {
   public String getContainerizingMode() {
     String property = System.getProperty(PropertyNames.CONTAINERIZING_MODE);
     return property != null ? property : containerizingMode.get();
+  }
+
+  /**
+   * Returns the configurationName property while setting it to the value of the system property if
+   * present.
+   *
+   * @return The configurationName property
+   */
+  @Input
+  @Optional
+  public Property<String> getConfigurationName() {
+    String property = System.getProperty(PropertyNames.CONFIGURATION_NAME);
+    if (property != null) {
+      configurationName.set(property);
+    }
+    return configurationName;
   }
 
   @Nested

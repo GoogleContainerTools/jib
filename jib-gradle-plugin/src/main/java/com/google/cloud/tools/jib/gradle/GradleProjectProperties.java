@@ -70,7 +70,6 @@ import org.gradle.api.artifacts.ResolvedArtifact;
 import org.gradle.api.artifacts.component.ProjectComponentIdentifier;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.logging.Logger;
-import org.gradle.api.plugins.JavaPlugin;
 import org.gradle.api.plugins.JavaPluginConvention;
 import org.gradle.api.plugins.WarPlugin;
 import org.gradle.api.tasks.SourceSet;
@@ -104,10 +103,15 @@ public class GradleProjectProperties implements ProjectProperties {
    * @param project a gradle project
    * @param logger a gradle logging instance to use for logging during the build
    * @param tempDirectoryProvider for scratch space during the build
+   * @param configurationName the configuration of which the dependencies should be packed into the
+   *     container
    * @return a GradleProjectProperties instance to use in a jib build
    */
   public static GradleProjectProperties getForProject(
-      Project project, Logger logger, TempDirectoryProvider tempDirectoryProvider) {
+      Project project,
+      Logger logger,
+      TempDirectoryProvider tempDirectoryProvider,
+      String configurationName) {
     Supplier<List<JibGradlePluginExtension<?>>> extensionLoader =
         () -> {
           List<JibGradlePluginExtension<?>> extensions = new ArrayList<>();
@@ -117,7 +121,8 @@ public class GradleProjectProperties implements ProjectProperties {
           }
           return extensions;
         };
-    return new GradleProjectProperties(project, logger, tempDirectoryProvider, extensionLoader);
+    return new GradleProjectProperties(
+        project, logger, tempDirectoryProvider, extensionLoader, configurationName);
   }
 
   String getWarFilePath() {
@@ -155,16 +160,19 @@ public class GradleProjectProperties implements ProjectProperties {
   private final ConsoleLogger consoleLogger;
   private final TempDirectoryProvider tempDirectoryProvider;
   private final Supplier<List<JibGradlePluginExtension<?>>> extensionLoader;
+  private final String configurationName;
 
   @VisibleForTesting
   GradleProjectProperties(
       Project project,
       Logger logger,
       TempDirectoryProvider tempDirectoryProvider,
-      Supplier<List<JibGradlePluginExtension<?>>> extensionLoader) {
+      Supplier<List<JibGradlePluginExtension<?>>> extensionLoader,
+      String configurationName) {
     this.project = project;
     this.tempDirectoryProvider = tempDirectoryProvider;
     this.extensionLoader = extensionLoader;
+    this.configurationName = configurationName;
     ConsoleLoggerBuilder consoleLoggerBuilder =
         (isProgressFooterEnabled(project)
                 ? ConsoleLoggerBuilder.rich(singleThreadedExecutor, false)
@@ -193,7 +201,7 @@ public class GradleProjectProperties implements ProjectProperties {
           project.files(
               project
                   .getConfigurations()
-                  .getByName(JavaPlugin.RUNTIME_CLASSPATH_CONFIGURATION_NAME)
+                  .getByName(configurationName)
                   .getResolvedConfiguration()
                   .getResolvedArtifacts()
                   .stream()
@@ -219,7 +227,8 @@ public class GradleProjectProperties implements ProjectProperties {
       FileCollection classesOutputDirectories =
           mainSourceSet.getOutput().getClassesDirs().filter(File::exists);
       Path resourcesOutputDirectory = mainSourceSet.getOutput().getResourcesDir().toPath();
-      FileCollection allFiles = mainSourceSet.getRuntimeClasspath().filter(File::exists);
+      FileCollection allFiles =
+          project.getConfigurations().getByName(configurationName).filter(File::exists);
 
       FileCollection nonProjectDependencies =
           allFiles
@@ -298,7 +307,7 @@ public class GradleProjectProperties implements ProjectProperties {
   @Override
   public List<Path> getDependencies() {
     List<Path> dependencies = new ArrayList<>();
-    FileCollection runtimeClasspath = getMainSourceSet().getRuntimeClasspath();
+    FileCollection runtimeClasspath = project.getConfigurations().getByName(configurationName);
     // To be on the safe side with the order, calling "forEach" first (no filtering operations).
     runtimeClasspath.forEach(
         file -> {
@@ -387,12 +396,10 @@ public class GradleProjectProperties implements ProjectProperties {
    * @param extraDirectories the image's configured extra directories
    * @return the input files
    */
-  static FileCollection getInputFiles(Project project, List<Path> extraDirectories) {
-    JavaPluginConvention javaPluginConvention =
-        project.getConvention().getPlugin(JavaPluginConvention.class);
-    SourceSet mainSourceSet = javaPluginConvention.getSourceSets().getByName(MAIN_SOURCE_SET_NAME);
+  static FileCollection getInputFiles(
+      Project project, List<Path> extraDirectories, String configurationName) {
     List<FileCollection> dependencyFileCollections = new ArrayList<>();
-    dependencyFileCollections.add(mainSourceSet.getRuntimeClasspath());
+    dependencyFileCollections.add(project.getConfigurations().getByName(configurationName));
 
     extraDirectories
         .stream()
