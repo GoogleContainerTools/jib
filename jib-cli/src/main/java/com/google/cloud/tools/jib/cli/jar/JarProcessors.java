@@ -20,6 +20,7 @@ import com.google.cloud.tools.jib.cli.CacheDirectories;
 import com.google.cloud.tools.jib.cli.Jar;
 import com.google.common.annotations.VisibleForTesting;
 import java.io.DataInputStream;
+import java.io.EOFException;
 import java.io.IOException;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -106,7 +107,7 @@ public class JarProcessors {
                   new DataInputStream(loader.getResourceAsStream(jarEntry))) {
 
             // Check magic number
-            if (classFile.readInt() != 0xCAFEBABE) {
+            if (classFile == null || classFile.readInt() != 0xCAFEBABE) {
               throw new IOException("The class file (" + jarEntry + ") is of an invalid format.");
             }
 
@@ -116,6 +117,11 @@ public class JarProcessors {
             int majorVersion = classFile.readUnsignedShort();
             int javaVersion = (majorVersion - 45) + 1;
             return javaVersion;
+          } catch (EOFException ex) {
+            throw new IllegalArgumentException(
+                "Reached end of class file ("
+                    + jarEntry
+                    + ") before being able to read the java major version. Make sure that the file is of the correct format.");
           }
         }
       }
