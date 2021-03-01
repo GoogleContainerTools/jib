@@ -43,6 +43,9 @@ public class JarProcessorsTest {
 
   private static final String SPRING_BOOT = "jar/spring-boot/springboot_sample.jar";
   private static final String STANDARD = "jar/standard/emptyStandardJar.jar";
+  private static final String STANDARD_WITH_INVALID_CLASS = "jar/standard/jarWithInvalidClass.jar";
+  private static final String STANDARD_WITH_EMPTY_CLASS_FILE =
+      "jar/standard/standardJarWithOnlyClasses.jar";
   private static final String JAVA_14_JAR = "jar/java14WithModuleInfo.jar";
 
   @Mock private CacheDirectories mockCacheDirectories;
@@ -130,5 +133,25 @@ public class JarProcessorsTest {
     Path jarPath = Paths.get(Resources.getResource(STANDARD).toURI());
     Integer version = JarProcessors.determineJavaMajorVersion(jarPath);
     assertThat(version).isEqualTo(0);
+  }
+
+  @Test
+  public void testDetermineJavaMajorVersion_invalidClassFile() throws URISyntaxException {
+    Path jarPath = Paths.get(Resources.getResource(STANDARD_WITH_INVALID_CLASS).toURI());
+    IllegalArgumentException exception =
+        assertThrows(
+            IllegalArgumentException.class, () -> JarProcessors.determineJavaMajorVersion(jarPath));
+    assertThat(exception)
+        .hasMessageThat()
+        .isEqualTo("The class file (class1.class) is of an invalid format.");
+  }
+
+  @Test
+  public void testDetermineJavaMajorVersion_emptyClassFile() throws URISyntaxException {
+    Path jarPath = Paths.get(Resources.getResource(STANDARD_WITH_EMPTY_CLASS_FILE).toURI());
+    IllegalArgumentException exception =
+        assertThrows(
+            IllegalArgumentException.class, () -> JarProcessors.determineJavaMajorVersion(jarPath));
+    assertThat(exception).hasMessageThat().startsWith("Reached end of class file (class1.class)");
   }
 }
