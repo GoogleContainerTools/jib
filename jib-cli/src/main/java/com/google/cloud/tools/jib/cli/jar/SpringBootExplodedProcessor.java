@@ -22,6 +22,8 @@ import com.google.cloud.tools.jib.plugins.common.ZipUtil;
 import com.google.common.base.Predicates;
 import com.google.common.base.Verify;
 import com.google.common.collect.ImmutableList;
+import com.google.common.io.MoreFiles;
+import com.google.common.io.RecursiveDeleteOption;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -36,43 +38,52 @@ import java.util.jar.JarFile;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
-import javax.annotation.Nullable;
 
-public class SpringBootExplodedProcessor implements JarProcessor {
+class SpringBootExplodedProcessor implements JarProcessor {
 
-  @Nullable private final Path jarPath;
-  @Nullable private final Path tempDirectoryPath;
+  private final Path jarPath;
+  private final Path targetExplodedJarRoot;
+  private final Integer jarJavaVersion;
 
-  public SpringBootExplodedProcessor(Path jarPath, Path tempDirectoryPath) {
+  /**
+   * Constructor for {@link SpringBootExplodedProcessor}.
+   *
+   * @param jarPath path to jar file
+   * @param targetExplodedJarRoot path to exploded-jar root
+   * @param jarJavaVersion jar java version
+   */
+  SpringBootExplodedProcessor(Path jarPath, Path targetExplodedJarRoot, Integer jarJavaVersion) {
     this.jarPath = jarPath;
-    this.tempDirectoryPath = tempDirectoryPath;
+    this.targetExplodedJarRoot = targetExplodedJarRoot;
+    this.jarJavaVersion = jarJavaVersion;
   }
 
   @Override
   public List<FileEntriesLayer> createLayers() throws IOException {
-    if (tempDirectoryPath == null || jarPath == null) {
-      return new ArrayList<>();
+    // Clear the exploded-jar root first
+    if (Files.exists(targetExplodedJarRoot)) {
+      MoreFiles.deleteRecursively(targetExplodedJarRoot, RecursiveDeleteOption.ALLOW_INSECURE);
     }
+
     try (JarFile jarFile = new JarFile(jarPath.toFile())) {
-      Path localExplodedJarRoot = tempDirectoryPath;
-      ZipUtil.unzip(jarPath, localExplodedJarRoot, true);
+      ZipUtil.unzip(jarPath, targetExplodedJarRoot, true);
       ZipEntry layerIndex = jarFile.getEntry("BOOT-INF/layers.idx");
       if (layerIndex != null) {
-        return createLayersForLayeredSpringBootJar(localExplodedJarRoot);
+        return createLayersForLayeredSpringBootJar(targetExplodedJarRoot);
       }
 
       Predicate<Path> isFile = Files::isRegularFile;
 
       // Non-snapshot layer
       Predicate<Path> isInBootInfLib =
-          path -> path.startsWith(localExplodedJarRoot.resolve("BOOT-INF").resolve("lib"));
+          path -> path.startsWith(targetExplodedJarRoot.resolve("BOOT-INF").resolve("lib"));
       Predicate<Path> isSnapshot = path -> path.getFileName().toString().contains("SNAPSHOT");
       Predicate<Path> isInBootInfLibAndIsNotSnapshot = isInBootInfLib.and(isSnapshot.negate());
       Predicate<Path> nonSnapshotPredicate = isFile.and(isInBootInfLibAndIsNotSnapshot);
       FileEntriesLayer nonSnapshotLayer =
           JarLayers.getDirectoryContentsAsLayer(
               JarLayers.DEPENDENCIES,
-              localExplodedJarRoot,
+              targetExplodedJarRoot,
               nonSnapshotPredicate,
               JarLayers.APP_ROOT);
 
@@ -82,34 +93,34 @@ public class SpringBootExplodedProcessor implements JarProcessor {
       FileEntriesLayer snapshotLayer =
           JarLayers.getDirectoryContentsAsLayer(
               JarLayers.SNAPSHOT_DEPENDENCIES,
-              localExplodedJarRoot,
+              targetExplodedJarRoot,
               snapshotPredicate,
               JarLayers.APP_ROOT);
 
       // Spring-boot-loader layer.
-      Predicate<Path> isLoader = path -> path.startsWith(localExplodedJarRoot.resolve("org"));
+      Predicate<Path> isLoader = path -> path.startsWith(targetExplodedJarRoot.resolve("org"));
       Predicate<Path> loaderPredicate = isFile.and(isLoader);
       FileEntriesLayer loaderLayer =
           JarLayers.getDirectoryContentsAsLayer(
-              "spring-boot-loader", localExplodedJarRoot, loaderPredicate, JarLayers.APP_ROOT);
+              "spring-boot-loader", targetExplodedJarRoot, loaderPredicate, JarLayers.APP_ROOT);
 
       // Classes layer.
       Predicate<Path> isClass = path -> path.getFileName().toString().endsWith(".class");
       Predicate<Path> isInBootInfClasses =
-          path -> path.startsWith(localExplodedJarRoot.resolve("BOOT-INF").resolve("classes"));
+          path -> path.startsWith(targetExplodedJarRoot.resolve("BOOT-INF").resolve("classes"));
       Predicate<Path> classesPredicate = isInBootInfClasses.and(isClass);
       FileEntriesLayer classesLayer =
           JarLayers.getDirectoryContentsAsLayer(
-              JarLayers.CLASSES, localExplodedJarRoot, classesPredicate, JarLayers.APP_ROOT);
+              JarLayers.CLASSES, targetExplodedJarRoot, classesPredicate, JarLayers.APP_ROOT);
 
       // Resources layer.
       Predicate<Path> isInMetaInf =
-          path -> path.startsWith(localExplodedJarRoot.resolve("META-INF"));
+          path -> path.startsWith(targetExplodedJarRoot.resolve("META-INF"));
       Predicate<Path> isResource = isInMetaInf.or(isInBootInfClasses.and(isClass.negate()));
       Predicate<Path> resourcesPredicate = isFile.and(isResource);
       FileEntriesLayer resourcesLayer =
           JarLayers.getDirectoryContentsAsLayer(
-              JarLayers.RESOURCES, localExplodedJarRoot, resourcesPredicate, JarLayers.APP_ROOT);
+              JarLayers.RESOURCES, targetExplodedJarRoot, resourcesPredicate, JarLayers.APP_ROOT);
 
       return Arrays.asList(
           nonSnapshotLayer, loaderLayer, snapshotLayer, resourcesLayer, classesLayer);
@@ -125,6 +136,11 @@ public class SpringBootExplodedProcessor implements JarProcessor {
     entrypoint.add(JarLayers.APP_ROOT.toString());
     entrypoint.add("org.springframework.boot.loader.JarLauncher");
     return entrypoint.build();
+  }
+
+  @Override
+  public Integer getJarJavaVersion() {
+    return jarJavaVersion;
   }
 
   /**

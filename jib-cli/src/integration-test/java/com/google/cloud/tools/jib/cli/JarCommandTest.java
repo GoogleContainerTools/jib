@@ -159,21 +159,6 @@ public class JarCommandTest {
   }
 
   @Test
-  public void testJar_unknownMode() {
-    StringWriter stringWriter = new StringWriter();
-    CommandLine jibCli = new CommandLine(new JibCli()).setErr(new PrintWriter(stringWriter));
-
-    Integer exitCode =
-        jibCli.execute(
-            "jar", "--target", "docker://jib-cli-image", "ignored.jar", "--mode=unknown");
-
-    assertThat(exitCode).isEqualTo(2);
-    assertThat(stringWriter.toString())
-        .contains(
-            "Invalid value for option '--mode': expected one of [exploded, packaged] (case-sensitive) but was 'unknown'");
-  }
-
-  @Test
   public void testSpringBootLayeredJar_explodedMode() throws IOException, InterruptedException {
     springBootProject.build("-c", "settings-layered.gradle", "clean", "bootJar");
     Path jarParentPath = springBootProject.getProjectRoot().resolve("build").resolve("libs");

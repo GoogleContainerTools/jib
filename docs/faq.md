@@ -28,9 +28,11 @@ If a question you have is not answered below, please [submit an issue](/../../is
 [How can I inspect the image Jib built?](#how-can-i-inspect-the-image-jib-built)\
 [I would like to run my application with a javaagent.](#i-would-like-to-run-my-application-with-a-javaagent)\
 [How can I tag my image with a timestamp?](#how-can-i-tag-my-image-with-a-timestamp)\
-[How do I specify a platform in the manifest list (or OCI index) of a base image?](#how-do-i-specify-a-platform-in-the-manifest-list-or-oci-index-of-a-base-image) \
-[I want to exclude files from layers, have more fine-grained control over layers, change file ownership, etc.](#i-want-to-exclude-files-from-layers-have-more-fine-grained-control-over-layers-change-file-ownership-etc) \
-[Jib build plugins don't have the feature that I need.](#jib-build-plugins-dont-have-the-feature-that-i-need)
+[How do I specify a platform in the manifest list (or OCI index) of a base image?](#how-do-i-specify-a-platform-in-the-manifest-list-or-oci-index-of-a-base-image)\
+[I want to exclude files from layers, have more fine-grained control over layers, change file ownership, etc.](#i-want-to-exclude-files-from-layers-have-more-fine-grained-control-over-layers-change-file-ownership-etc)\
+[Jib build plugins don't have the feature that I need.](#jib-build-plugins-dont-have-the-feature-that-i-need)\
+[I am hitting Docker Hub rate limits. How can I configure registry mirrors?](#i-am-hitting-docker-hub-rate-limits-how-can-i-configure-registry-mirrors)\
+[Where is the global Jib configuration file and how I can configure it?](#where-is-the-global-jib-configuration-file-and-how-i-can-configure-it)
 
 **Build Problems**\
 [How can I diagnose problems pulling or pushing from remote registries?](#how-can-i-diagnose-problems-pulling-or-pushing-from-remote-registries)\
@@ -548,6 +550,14 @@ See ["Jib build plugins don't have the feature that I need"](#jib-build-plugins-
 ### Jib build plugins don't have the feature that I need.
 
 The Jib build plugins have an extension framework that enables anyone to easily extend Jib's behavior to their needs. We maintain select [first-party](https://github.com/GoogleContainerTools/jib-extensions/tree/master/first-party) plugins for popular use cases like [fine-grained layer control](https://github.com/GoogleContainerTools/jib-extensions/tree/master/first-party/jib-layer-filter-extension-gradle) and [Quarkus support](https://github.com/GoogleContainerTools/jib-extensions/tree/master/first-party/jib-quarkus-extension-gradle), but anyone can write and publish an extension. Check out the [jib-extensions](https://github.com/GoogleContainerTools/jib-extensions) repository for more information.
+
+### I am hitting Docker Hub rate limits. How can I configure registry mirrors?
+
+See the [Maven](https://github.com/GoogleContainerTools/jib/tree/master/jib-maven-plugin#global-jib-configuration) and [Gradle](https://github.com/GoogleContainerTools/jib/tree/master/jib-gradle-plugin#global-jib-configuration) docs. Note that the example in the docs uses [Google's Docker Hub mirror on `mirror.gcr.io`](https://cloud.google.com/container-registry/docs/pulling-cached-images).
+
+### Where is the global Jib configuration file and how I can configure it?
+
+See the [Maven](https://github.com/GoogleContainerTools/jib/tree/master/jib-maven-plugin#global-jib-configuration) and [Gradle](https://github.com/GoogleContainerTools/jib/tree/master/jib-gradle-plugin#global-jib-configuration) docs.
 
 
 ## Build Problems

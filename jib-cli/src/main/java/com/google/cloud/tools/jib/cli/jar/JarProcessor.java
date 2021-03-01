@@ -41,4 +41,6 @@ public interface JarProcessor {
    * @throws IOException if I/O error occurs when opening the jar file
    */
   ImmutableList<String> computeEntrypoint(List<String> jvmFlags) throws IOException;
+
+  Integer getJarJavaVersion();
 }

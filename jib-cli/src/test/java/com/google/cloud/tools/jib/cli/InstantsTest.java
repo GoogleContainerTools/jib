@@ -14,7 +14,7 @@
  * the License.
  */
 
-package com.google.cloud.tools.jib.cli.buildfile;
+package com.google.cloud.tools.jib.cli;
 
 import java.time.Instant;
 import org.junit.Assert;

@@ -24,11 +24,13 @@ import com.google.cloud.tools.jib.api.Credential;
 import com.google.cloud.tools.jib.api.Ports;
 import com.google.cloud.tools.jib.api.buildplan.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.api.buildplan.ImageFormat;
+import com.google.cloud.tools.jib.cli.jar.ProcessingMode;
 import com.google.cloud.tools.jib.cli.logging.Verbosity;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import java.nio.file.Paths;
+import java.time.Instant;
 import junitparams.JUnitParamsRunner;
 import junitparams.Parameters;
 import org.apache.commons.lang3.ArrayUtils;
@@ -64,6 +66,7 @@ public class JarTest {
   public void testParse_defaults() {
     Jar jarCommand = CommandLine.populateCommand(new Jar(), "-t", "test-image-ref", "my-app.jar");
     CommonCliOptions commonCliOptions = jarCommand.commonCliOptions;
+
     assertThat(commonCliOptions.getTargetImage()).isEqualTo("test-image-ref");
     assertThat(commonCliOptions.getUsernamePassword()).isEmpty();
     assertThat(commonCliOptions.getToUsernamePassword()).isEmpty();
@@ -80,6 +83,18 @@ public class JarTest {
     assertThat(commonCliOptions.isStacktrace()).isFalse();
     assertThat(commonCliOptions.isHttpTrace()).isFalse();
     assertThat(commonCliOptions.isSerialize()).isFalse();
+    assertThat(jarCommand.getFrom()).isEmpty();
+    assertThat(jarCommand.getJvmFlags()).isEmpty();
+    assertThat(jarCommand.getExposedPorts()).isEmpty();
+    assertThat(jarCommand.getVolumes()).isEmpty();
+    assertThat(jarCommand.getEnvironment()).isEmpty();
+    assertThat(jarCommand.getLabels()).isEmpty();
+    assertThat(jarCommand.getUser()).isEmpty();
+    assertThat(jarCommand.getFormat()).hasValue(ImageFormat.Docker);
+    assertThat(jarCommand.getProgramArguments()).isEmpty();
+    assertThat(jarCommand.getEntrypoint()).isEmpty();
+    assertThat(jarCommand.getCreationTime()).isEmpty();
+    assertThat(jarCommand.getMode()).isEqualTo(ProcessingMode.exploded);
   }
 
   @Test
@@ -516,6 +531,47 @@ public class JarTest {
         CommandLine.populateCommand(
             new Jar(), "--target=test-image-ref", "--entrypoint=java -cp myClass", "my-app.jar");
     assertThat(jarCommand.getEntrypoint()).isEqualTo(ImmutableList.of("java", "-cp", "myClass"));
+  }
+
+  @Test
+  public void testParse_creationTime_milliseconds() {
+    Jar jarCommand =
+        CommandLine.populateCommand(
+            new Jar(), "--target=test-image-ref", "--creation-time=23", "my-app.jar");
+    assertThat(jarCommand.getCreationTime()).hasValue(Instant.ofEpochMilli(23));
+  }
+
+  @Test
+  public void testParse_creationTime_iso8601() {
+    Jar jarCommand =
+        CommandLine.populateCommand(
+            new Jar(),
+            "--target=test-image-ref",
+            "--creation-time=2011-12-03T22:42:05Z",
+            "my-app.jar");
+    assertThat(jarCommand.getCreationTime()).hasValue(Instant.parse("2011-12-03T22:42:05Z"));
+  }
+
+  @Test
+  public void testParse_mode() {
+    Jar jarCommand =
+        CommandLine.populateCommand(
+            new Jar(), "--target=test-image-ref", "--mode=packaged", "my-app.jar");
+    assertThat(jarCommand.getMode()).isEqualTo(ProcessingMode.packaged);
+  }
+
+  @Test
+  public void testParse_invalidMode() {
+    CommandLine.ParameterException exception =
+        assertThrows(
+            CommandLine.ParameterException.class,
+            () ->
+                CommandLine.populateCommand(
+                    new Jar(), "--target=test-image-ref", "--mode=unknown", "my-app.jar"));
+    assertThat(exception)
+        .hasMessageThat()
+        .isEqualTo(
+            "Invalid value for option '--mode': expected one of [exploded, packaged] (case-sensitive) but was 'unknown'");
   }
 
   @Test

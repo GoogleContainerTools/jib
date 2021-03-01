@@ -28,7 +28,6 @@ import com.google.cloud.tools.jib.cli.jar.JarProcessor;
 import com.google.cloud.tools.jib.cli.jar.JarProcessors;
 import com.google.cloud.tools.jib.cli.jar.ProcessingMode;
 import com.google.cloud.tools.jib.cli.logging.CliLogger;
-import com.google.cloud.tools.jib.filesystem.TempDirectoryProvider;
 import com.google.cloud.tools.jib.plugins.common.logging.ConsoleLogger;
 import com.google.cloud.tools.jib.plugins.common.logging.SingleThreadedExecutor;
 import com.google.common.annotations.VisibleForTesting;
@@ -36,6 +35,7 @@ import com.google.common.collect.ImmutableSet;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
+import java.time.Instant;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -151,6 +151,14 @@ public class Jar implements Callable<Integer> {
           "Entrypoint for container. Overrides the default entrypoint, example: --entrypoint='custom entrypoint'")
   private List<String> entrypoint = Collections.emptyList();
 
+  @CommandLine.Option(
+      names = "--creation-time",
+      paramLabel = "<creation-time>",
+      description =
+          "The creation time of the container in milliseconds since epoch or iso8601 format. Overrides the default (1970-01-01T00:00:00Z)")
+  @SuppressWarnings("NullAway.Init") // initialized by picocli
+  private String creationTime;
+
   @Override
   public Integer call() {
     try {
@@ -162,7 +170,7 @@ public class Jar implements Callable<Integer> {
 
     commonCliOptions.validate();
     SingleThreadedExecutor executor = new SingleThreadedExecutor();
-    try (TempDirectoryProvider tempDirectoryProvider = new TempDirectoryProvider()) {
+    try {
 
       ConsoleLogger logger =
           CliLogger.newLogger(
@@ -187,11 +195,11 @@ public class Jar implements Callable<Integer> {
         logger.log(LogEvent.Level.WARN, "--jvm-flags is ignored when --entrypoint is specified");
       }
 
-      JarProcessor processor = JarProcessors.from(jarFile, tempDirectoryProvider, mode);
-      JibContainerBuilder containerBuilder =
-          JarFiles.toJibContainerBuilder(processor, this, commonCliOptions, logger);
       CacheDirectories cacheDirectories =
           CacheDirectories.from(commonCliOptions, jarFile.toAbsolutePath().getParent());
+      JarProcessor processor = JarProcessors.from(jarFile, cacheDirectories, this);
+      JibContainerBuilder containerBuilder =
+          JarFiles.toJibContainerBuilder(processor, this, commonCliOptions, logger);
       Containerizer containerizer = Containerizers.from(commonCliOptions, logger, cacheDirectories);
       containerBuilder.containerize(containerizer);
     } catch (Exception ex) {
@@ -263,5 +271,21 @@ public class Jar implements Callable<Integer> {
 
   public List<String> getEntrypoint() {
     return entrypoint;
+  }
+
+  /**
+   * Returns {@link Instant} representing creation time of container.
+   *
+   * @return an optional creation time
+   */
+  public Optional<Instant> getCreationTime() {
+    if (creationTime != null) {
+      return Optional.of(Instants.fromMillisOrIso8601(creationTime, "creationTime"));
+    }
+    return Optional.empty();
+  }
+
+  public ProcessingMode getMode() {
+    return mode;
   }
 }

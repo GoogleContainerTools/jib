@@ -14,7 +14,7 @@
  * the License.
  */
 
-package com.google.cloud.tools.jib.cli.buildfile;
+package com.google.cloud.tools.jib.cli;
 
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
@@ -22,7 +22,7 @@ import java.time.format.DateTimeFormatterBuilder;
 import java.time.format.DateTimeParseException;
 
 /** Helper class to convert various strings in a buildfile to Instants. */
-class Instants {
+public class Instants {
   /**
    * Parses a time string into Instant. The string must be time in milliseconds since unix epoch or
    * an iso8601 datetime.
@@ -31,7 +31,7 @@ class Instants {
    * @param fieldName name of field being parsed (for error messaging)
    * @return Instant value of parsed time
    */
-  static Instant fromMillisOrIso8601(String time, String fieldName) {
+  public static Instant fromMillisOrIso8601(String time, String fieldName) {
     try {
       return Instant.ofEpochMilli(Long.parseLong(time));
     } catch (NumberFormatException nfe) {

@@ -9,6 +9,12 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
+## 0.18.0
+
+### Added
+
+- New method: `Containerizer#addRegistryMirrors` for configuring registry mirrors for base images. This is useful when hitting [Docker Hub rate limits](https://www.docker.com/increase-rate-limits). Only public mirrors (such as `mirror.gcr.io`) are supported. ([#2999](https://github.com/GoogleContainerTools/jib/issues/2999))
+
 ## 0.17.0
 
 ### Fixed

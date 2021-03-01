@@ -21,21 +21,25 @@ import com.google.common.collect.ImmutableList;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
-import javax.annotation.Nullable;
 
-public class SpringBootPackagedProcessor implements JarProcessor {
+class SpringBootPackagedProcessor implements JarProcessor {
 
-  @Nullable private final Path jarPath;
+  private final Path jarPath;
+  private final Integer jarJavaVersion;
 
-  public SpringBootPackagedProcessor(Path jarPath) {
+  /**
+   * Constructor for {@link SpringBootPackagedProcessor}.
+   *
+   * @param jarPath path to jar file
+   * @param jarJavaVersion jar java version
+   */
+  SpringBootPackagedProcessor(Path jarPath, Integer jarJavaVersion) {
     this.jarPath = jarPath;
+    this.jarJavaVersion = jarJavaVersion;
   }
 
   @Override
   public List<FileEntriesLayer> createLayers() {
-    if (jarPath == null) {
-      return Collections.emptyList();
-    }
     FileEntriesLayer jarLayer =
         FileEntriesLayer.builder()
             .setName(JarLayers.JAR)
@@ -46,14 +50,16 @@ public class SpringBootPackagedProcessor implements JarProcessor {
 
   @Override
   public ImmutableList<String> computeEntrypoint(List<String> jvmFlags) {
-    if (jarPath == null) {
-      return ImmutableList.of();
-    }
     ImmutableList.Builder<String> entrypoint = ImmutableList.builder();
     entrypoint.add("java");
     entrypoint.addAll(jvmFlags);
     entrypoint.add("-jar");
     entrypoint.add(JarLayers.APP_ROOT + "/" + jarPath.getFileName().toString());
     return entrypoint.build();
+  }
+
+  @Override
+  public Integer getJarJavaVersion() {
+    return jarJavaVersion;
   }
 }

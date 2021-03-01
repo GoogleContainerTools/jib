@@ -45,6 +45,7 @@ public class StandardExplodedProcessorTest {
       "jar/standard/standardJarWithOnlyClasses.jar";
   private static final String STANDARD_JAR_EMPTY = "jar/standard/emptyStandardJar.jar";
   private static final String STANDARD_SINGLE_DEPENDENCY_JAR = "jar/standard/singleDepJar.jar";
+  private static final Integer JAR_JAVA_VERSION = 0; // any value
 
   @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
@@ -53,7 +54,7 @@ public class StandardExplodedProcessorTest {
     Path standardJar = Paths.get(Resources.getResource(STANDARD_JAR_EMPTY).toURI());
     Path destDir = temporaryFolder.newFolder().toPath();
     StandardExplodedProcessor standardExplodedModeProcessor =
-        new StandardExplodedProcessor(standardJar, destDir);
+        new StandardExplodedProcessor(standardJar, destDir, JAR_JAVA_VERSION);
 
     List<FileEntriesLayer> layers = standardExplodedModeProcessor.createLayers();
 
@@ -72,7 +73,7 @@ public class StandardExplodedProcessorTest {
         Paths.get(Resources.getResource(STANDARD_JAR_WITH_CLASS_PATH_MANIFEST).toURI());
     Path destDir = temporaryFolder.newFolder().toPath();
     StandardExplodedProcessor standardExplodedModeProcessor =
-        new StandardExplodedProcessor(standardJar, destDir);
+        new StandardExplodedProcessor(standardJar, destDir, JAR_JAVA_VERSION);
 
     List<FileEntriesLayer> layers = standardExplodedModeProcessor.createLayers();
 
@@ -140,7 +141,7 @@ public class StandardExplodedProcessorTest {
         Paths.get(Resources.getResource(STANDARD_JAR_WITHOUT_CLASS_PATH_MANIFEST).toURI());
     Path destDir = temporaryFolder.newFolder().toPath();
     StandardExplodedProcessor standardExplodedModeProcessor =
-        new StandardExplodedProcessor(standardJar, destDir);
+        new StandardExplodedProcessor(standardJar, destDir, JAR_JAVA_VERSION);
 
     List<FileEntriesLayer> layers = standardExplodedModeProcessor.createLayers();
 
@@ -188,7 +189,7 @@ public class StandardExplodedProcessorTest {
     Path standardJar = Paths.get(Resources.getResource(STANDARD_JAR_WITH_ONLY_CLASSES).toURI());
     Path destDir = temporaryFolder.newFolder().toPath();
     StandardExplodedProcessor standardExplodedModeProcessor =
-        new StandardExplodedProcessor(standardJar, destDir);
+        new StandardExplodedProcessor(standardJar, destDir, JAR_JAVA_VERSION);
 
     List<FileEntriesLayer> layers = standardExplodedModeProcessor.createLayers();
 
@@ -220,7 +221,7 @@ public class StandardExplodedProcessorTest {
     Path standardJar = Paths.get(Resources.getResource(STANDARD_SINGLE_DEPENDENCY_JAR).toURI());
     Path destDir = temporaryFolder.getRoot().toPath();
     StandardExplodedProcessor standardExplodedModeProcessor =
-        new StandardExplodedProcessor(standardJar, destDir);
+        new StandardExplodedProcessor(standardJar, destDir, JAR_JAVA_VERSION);
 
     IllegalArgumentException exception =
         assertThrows(
@@ -237,7 +238,7 @@ public class StandardExplodedProcessorTest {
   public void testComputeEntrypoint_noMainClass() throws URISyntaxException {
     Path standardJar = Paths.get(Resources.getResource(STANDARD_JAR_EMPTY).toURI());
     StandardExplodedProcessor standardExplodedModeProcessor =
-        new StandardExplodedProcessor(standardJar, Paths.get("ignore"));
+        new StandardExplodedProcessor(standardJar, Paths.get("ignore"), JAR_JAVA_VERSION);
 
     IllegalArgumentException exception =
         assertThrows(
@@ -256,7 +257,7 @@ public class StandardExplodedProcessorTest {
     Path standardJar =
         Paths.get(Resources.getResource(STANDARD_JAR_WITH_CLASS_PATH_MANIFEST).toURI());
     StandardExplodedProcessor standardExplodedModeProcessor =
-        new StandardExplodedProcessor(standardJar, Paths.get("ignore"));
+        new StandardExplodedProcessor(standardJar, Paths.get("ignore"), JAR_JAVA_VERSION);
 
     ImmutableList<String> actualEntrypoint =
         standardExplodedModeProcessor.computeEntrypoint(ImmutableList.of());
@@ -272,7 +273,7 @@ public class StandardExplodedProcessorTest {
     Path standardJar =
         Paths.get(Resources.getResource(STANDARD_JAR_WITH_CLASS_PATH_MANIFEST).toURI());
     StandardExplodedProcessor standardExplodedModeProcessor =
-        new StandardExplodedProcessor(standardJar, Paths.get("ignore"));
+        new StandardExplodedProcessor(standardJar, Paths.get("ignore"), JAR_JAVA_VERSION);
 
     ImmutableList<String> actualEntrypoint =
         standardExplodedModeProcessor.computeEntrypoint(ImmutableList.of("-jvm-flag"));
@@ -281,5 +282,12 @@ public class StandardExplodedProcessorTest {
         .isEqualTo(
             ImmutableList.of(
                 "java", "-jvm-flag", "-cp", "/app/explodedJar:/app/dependencies/*", "HelloWorld"));
+  }
+
+  @Test
+  public void testGetJarJavaVersion() {
+    StandardExplodedProcessor standardExplodedProcessor =
+        new StandardExplodedProcessor(Paths.get("ignore"), Paths.get("ignore"), 8);
+    assertThat(standardExplodedProcessor.getJarJavaVersion()).isEqualTo(8);
   }
 }

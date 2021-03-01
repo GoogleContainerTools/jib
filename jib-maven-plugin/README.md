@@ -28,6 +28,7 @@ For information about the project, see the [Jib project README](../README.md).
 * [Multi Module Projects](#multi-module-projects)
 * [Extended Usage](#extended-usage)
   * [System Properties](#system-properties)
+  * [Global Jib Configuration](#global-jib-configuration)
   * [Example](#example)
   * [Adding Arbitrary Files to the Image](#adding-arbitrary-files-to-the-image)
   * [Authentication Methods](#authentication-methods)
@@ -45,7 +46,7 @@ For information about the project, see the [Jib project README](../README.md).
 You can containerize your application easily with one command:
 
 ```shell
-mvn compile com.google.cloud.tools:jib-maven-plugin:2.7.1:build -Dimage=<MY IMAGE>
+mvn compile com.google.cloud.tools:jib-maven-plugin:2.8.0:build -Dimage=<MY IMAGE>
 ```
 
 This builds and pushes a container image for your application to a container registry. *If you encounter authentication issues, see [Authentication Methods](#authentication-methods).*
@@ -53,7 +54,7 @@ This builds and pushes a container image for your application to a container reg
 To build to a Docker daemon, use:
 
 ```shell
-mvn compile com.google.cloud.tools:jib-maven-plugin:2.7.1:dockerBuild
+mvn compile com.google.cloud.tools:jib-maven-plugin:2.8.0:dockerBuild
 ```
 
 If you would like to set up Jib as part of your Maven build, follow the guide below.
@@ -71,7 +72,7 @@ In your Maven Java project, add the plugin to your `pom.xml`:
       <plugin>
         <groupId>com.google.cloud.tools</groupId>
         <artifactId>jib-maven-plugin</artifactId>
-        <version>2.7.1</version>
+        <version>2.8.0</version>
         <configuration>
           <to>
             <image>myimage</image>
@@ -165,7 +166,7 @@ Jib can also build your image directly to a Docker daemon. This uses the `docker
 mvn compile jib:dockerBuild
 ```
 
-If you are using [`minikube`](https://github.com/kubernetes/minikube)'s remote Docker daemon, make sure you [set up the correct environment variables](https://github.com/kubernetes/minikube/blob/master/docs/reusing_the_docker_daemon.md) to point to the remote daemon:
+If you are using [`minikube`](https://github.com/kubernetes/minikube)'s remote Docker daemon, make sure you [set up the correct environment variables](https://minikube.sigs.k8s.io/docs/handbook/pushing/#1-pushing-directly-to-the-in-cluster-docker-daemon-docker-env) to point to the remote daemon:
 
 ```shell
 eval $(minikube docker-env)
@@ -358,6 +359,35 @@ Property | Type | Default | Description
  * *Linux: `[cache root]/google-cloud-tools-java/jib/`, where `[cache root]` is `$XDG_CACHE_HOME` (`$HOME/.cache/` if not set)*
  * *Mac: `[cache root]/Google/Jib/`, where `[cache root]` is `$XDG_CACHE_HOME` (`$HOME/Library/Caches/` if not set)*
  * *Windows: `[cache root]\Google\Jib\Cache`, where `[cache root]` is `$XDG_CACHE_HOME` (`%LOCALAPPDATA%` if not set)*
+
+### Global Jib Configuration
+
+Some options can be set in the global Jib configuration file. The file is at the following locations on each platform:
+
+* *Linux: `[config root]/google-cloud-tools-java/jib/config.json`, where `[config root]` is `$XDG_CONFIG_HOME` (`$HOME/.config/` if not set)*
+* *Mac: `[config root]/Google/Jib/config.json`, where `[config root]` is `$XDG_CONFIG_HOME` (`$HOME/Library/Preferences/Config/` if not set)*
+* *Windows: `[config root]\Google\Jib\Config\config.json`, where `[config root]` is `$XDG_CONFIG_HOME` (`%LOCALAPPDATA%` if not set)*
+
+#### Properties 
+
+* `disableUpdateCheck`: when set to true, disables the periodic up-to-date version check.
+* `registryMirrors`: a list of mirror settings for each base image registry. In the following example, if the base image configured in Jib is for a Docker Hub image, then `mirror.gcr.io`, `localhost:5000`, and the Docker Hub (`registry-1.docker.io`) are tried in order until Jib can successfuly pull a base image.
+
+```json
+{
+  "disableUpdateCheck": false,
+  "registryMirrors": [
+    {
+      "registry": "registry-1.docker.io",
+      "mirrors": ["mirror.gcr.io", "localhost:5000"]
+    },
+    {
+      "registry": "quay.io",
+      "mirrors": ["private-mirror.test.com"]
+    }
+  ]
+}
+```
 
 ### Example
 

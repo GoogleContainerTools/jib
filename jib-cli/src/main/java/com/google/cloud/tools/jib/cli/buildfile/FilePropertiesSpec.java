@@ -19,6 +19,7 @@ package com.google.cloud.tools.jib.cli.buildfile;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.cloud.tools.jib.api.buildplan.FilePermissions;
+import com.google.cloud.tools.jib.cli.Instants;
 import java.time.Instant;
 import java.util.Optional;
 import javax.annotation.Nullable;

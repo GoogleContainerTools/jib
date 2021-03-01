@@ -18,10 +18,12 @@ jobs:
       TERM: dumb
     steps:
       - uses: actions/checkout@v2
+        with:
+          fetch-depth: 2
       - uses: actions/setup-java@v1
         with:
           java-version: ${{ matrix.java }}
-      - uses: actions/cache@v2
+      - uses: actions/cache@v2.1.4
         with:
           path: |
             ~/.m2/repository
@@ -32,4 +34,8 @@ jobs:
             ${{ runner.os }}-gradle-
       - name: Run tests
         run: |
-          ./gradlew clean build --stacktrace
+          ./gradlew clean build jacocoTestReport --stacktrace
+      - name: Test Coverage
+        uses: codecov/codecov-action@v1
+        with:
+          name: actions ${{matrix.java}}

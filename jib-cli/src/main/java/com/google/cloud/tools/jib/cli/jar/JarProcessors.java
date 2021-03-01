@@ -16,7 +16,8 @@
 
 package com.google.cloud.tools.jib.cli.jar;
 
-import com.google.cloud.tools.jib.filesystem.TempDirectoryProvider;
+import com.google.cloud.tools.jib.cli.CacheDirectories;
+import com.google.cloud.tools.jib.cli.Jar;
 import com.google.common.annotations.VisibleForTesting;
 import java.io.DataInputStream;
 import java.io.IOException;
@@ -37,16 +38,15 @@ public class JarProcessors {
    * Creates a {@link JarProcessor} instance based on jar type and processing mode.
    *
    * @param jarPath path to the jar
-   * @param temporaryDirectoryProvider temporary directory provider
-   * @param mode processing mode
+   * @param cacheDirectories the location of the relevant caches
+   * @param jarOptions jar cli options
    * @return JarProcessor
    * @throws IOException if I/O error occurs when opening the jar file
    */
-  public static JarProcessor from(
-      Path jarPath, TempDirectoryProvider temporaryDirectoryProvider, ProcessingMode mode)
+  public static JarProcessor from(Path jarPath, CacheDirectories cacheDirectories, Jar jarOptions)
       throws IOException {
-    Integer jarJavaVersion = getJavaMajorVersion(jarPath);
-    if (jarJavaVersion > 11) {
+    Integer jarJavaVersion = determineJavaMajorVersion(jarPath);
+    if (jarJavaVersion > 11 && !jarOptions.getFrom().isPresent()) {
       throw new IllegalStateException(
           "The input JAR ("
               + jarPath
@@ -56,14 +56,17 @@ public class JarProcessors {
     }
 
     String jarType = determineJarType(jarPath);
+    ProcessingMode mode = jarOptions.getMode();
     if (jarType.equals(SPRING_BOOT) && mode.equals(ProcessingMode.packaged)) {
-      return new SpringBootPackagedProcessor(jarPath);
+      return new SpringBootPackagedProcessor(jarPath, jarJavaVersion);
     } else if (jarType.equals(SPRING_BOOT) && mode.equals(ProcessingMode.exploded)) {
-      return new SpringBootExplodedProcessor(jarPath, temporaryDirectoryProvider.newDirectory());
+      return new SpringBootExplodedProcessor(
+          jarPath, cacheDirectories.getExplodedJarDirectory(), jarJavaVersion);
     } else if (jarType.equals(STANDARD) && mode.equals(ProcessingMode.packaged)) {
-      return new StandardPackagedProcessor(jarPath);
+      return new StandardPackagedProcessor(jarPath, jarJavaVersion);
     } else {
-      return new StandardExplodedProcessor(jarPath, temporaryDirectoryProvider.newDirectory());
+      return new StandardExplodedProcessor(
+          jarPath, cacheDirectories.getExplodedJarDirectory(), jarJavaVersion);
     }
   }
 
@@ -92,15 +95,15 @@ public class JarProcessors {
    * @throws IOException if I/O exception thrown when opening the jar file
    */
   @VisibleForTesting
-  static Integer getJavaMajorVersion(Path jarPath) throws IOException {
+  static Integer determineJavaMajorVersion(Path jarPath) throws IOException {
     try (JarFile jarFile = new JarFile(jarPath.toFile())) {
       Enumeration<JarEntry> jarEntries = jarFile.entries();
       while (jarEntries.hasMoreElements()) {
         String jarEntry = jarEntries.nextElement().toString();
         if (jarEntry.endsWith(".class") && !jarEntry.endsWith("module-info.class")) {
-          URLClassLoader loader = new URLClassLoader(new URL[] {jarPath.toUri().toURL()});
-          try (DataInputStream classFile =
-              new DataInputStream(loader.getResourceAsStream(jarEntry))) {
+          try (URLClassLoader loader = new URLClassLoader(new URL[] {jarPath.toUri().toURL()});
+              DataInputStream classFile =
+                  new DataInputStream(loader.getResourceAsStream(jarEntry))) {
 
             // Check magic number
             if (classFile.readInt() != 0xCAFEBABE) {
