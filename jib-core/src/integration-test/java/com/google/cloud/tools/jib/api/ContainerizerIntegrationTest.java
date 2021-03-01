@@ -96,7 +96,7 @@ public class ContainerizerIntegrationTest {
 
   /**
    * Lists the files in the {@code resourcePath} resources directory and builds a {@link
-   * LayerConfiguration} from those files.
+   * FileEntriesLayer} from those files.
    */
   private static FileEntriesLayer makeLayerConfiguration(
       String resourcePath, String pathInContainer) throws URISyntaxException, IOException {

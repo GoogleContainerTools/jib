@@ -64,6 +64,7 @@ import org.gradle.api.Project;
 import org.gradle.api.artifacts.dsl.DependencyHandler;
 import org.gradle.api.java.archives.internal.DefaultManifest;
 import org.gradle.api.logging.Logger;
+import org.gradle.api.plugins.JavaPlugin;
 import org.gradle.api.plugins.JavaPluginConvention;
 import org.gradle.api.tasks.bundling.War;
 import org.gradle.jvm.tasks.Jar;
@@ -158,7 +159,11 @@ public class GradleProjectPropertiesTest {
 
     gradleProjectProperties =
         new GradleProjectProperties(
-            project, mockLogger, mockTempDirectoryProvider, mockExtensionLoader);
+            project,
+            mockLogger,
+            mockTempDirectoryProvider,
+            mockExtensionLoader,
+            JavaPlugin.RUNTIME_CLASSPATH_CONFIGURATION_NAME);
   }
 
   @Test
@@ -284,7 +289,11 @@ public class GradleProjectPropertiesTest {
 
     gradleProjectProperties =
         new GradleProjectProperties(
-            project, mockLogger, mockTempDirectoryProvider, mockExtensionLoader);
+            project,
+            mockLogger,
+            mockTempDirectoryProvider,
+            mockExtensionLoader,
+            JavaPlugin.RUNTIME_CLASSPATH_CONFIGURATION_NAME);
 
     gradleProjectProperties.createJibContainerBuilder(
         JavaContainerBuilder.from(RegistryImage.named("base")), ContainerizingMode.EXPLODED);
