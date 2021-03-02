@@ -46,11 +46,7 @@ import java.util.stream.Collectors;
 import picocli.CommandLine;
 import picocli.CommandLine.Model.CommandSpec;
 
-@CommandLine.Command(
-    name = "jar",
-    showAtFileInUsageHelp = true,
-    description = "Containerize a jar",
-    hidden = true)
+@CommandLine.Command(name = "jar", showAtFileInUsageHelp = true, description = "Containerize a jar")
 public class Jar implements Callable<Integer> {
 
   @CommandLine.Spec
@@ -161,13 +157,6 @@ public class Jar implements Callable<Integer> {
 
   @Override
   public Integer call() {
-    try {
-      // Temporarily disable the command, but allow to proceed in tests.
-      Class.forName("org.junit.Test");
-    } catch (ClassNotFoundException ex) {
-      throw new UnsupportedOperationException("jar command not implemented");
-    }
-
     commonCliOptions.validate();
     SingleThreadedExecutor executor = new SingleThreadedExecutor();
     try {
