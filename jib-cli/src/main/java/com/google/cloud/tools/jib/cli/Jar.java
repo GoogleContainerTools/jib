@@ -80,7 +80,7 @@ public class Jar implements Callable<Integer> {
 
   @CommandLine.Option(
       names = "--jvm-flags",
-      paramLabel = "<jvm-flags>",
+      paramLabel = "<jvm-flag>",
       split = ",",
       description = "JVM arguments, example: --jvm-flags=-Dmy.property=value,-Xshare:off")
   private List<String> jvmFlags = Collections.emptyList();
