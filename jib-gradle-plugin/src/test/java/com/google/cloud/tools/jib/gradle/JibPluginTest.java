@@ -130,12 +130,11 @@ public class JibPluginTest {
     } catch (GradleException ex) {
       // Gradle tests aren't run from a jar and so don't have an identifiable plugin version
       Assert.assertEquals(
-          "Failed to apply plugin [id 'com.google.cloud.tools.jib']", ex.getMessage());
+          "Failed to apply plugin 'com.google.cloud.tools.jib'.", ex.getMessage());
       Assert.assertEquals("Could not determine Jib plugin version", ex.getCause().getMessage());
     }
   }
 
-  @SuppressWarnings("unchecked")
   @Test
   public void testWebAppProject() {
     Project project = createProject("java", "war", "com.google.cloud.tools.jib");
@@ -158,7 +157,6 @@ public class JibPluginTest {
     }
   }
 
-  @SuppressWarnings("unchecked")
   @Test
   public void testWebAppProject_bootWar() {
     Project project =
@@ -184,7 +182,6 @@ public class JibPluginTest {
     }
   }
 
-  @SuppressWarnings("unchecked")
   @Test
   public void testWebAppProject_bootWarDisabled() {
     Project project =
