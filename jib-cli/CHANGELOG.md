@@ -12,4 +12,4 @@ All notable changes to this project will be documented in this file.
 ## 0.2.0
 
 ### Added
-- Added the `jar` command which can be used to containerize a JAR. Currently offering two modes: `exploded`, where the contents of the JAR are put into optimized layers on the container, and `packaged`, where the JAR is containerized as is.([#11](https://github.com/GoogleContainerTools/jib/projects/11))
+- Added the `jar` command which can be used to containerize a JAR with `$ jar jar --target ... my-app.jar`. By default, the command will add the contents of the JAR into optimized layers on the container. ([#11](https://github.com/GoogleContainerTools/jib/projects/11))
