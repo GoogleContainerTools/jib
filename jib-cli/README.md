@@ -15,7 +15,7 @@ are almost certain to change.
 
 A JRE is required to run this Jib CLI distribution.
 
-Find the latest jib-core release on the [Releases page](https://github.com/GoogleContainerTools/jib/releases), download `jib-jre-<version>.zip`, and unzip it. The zip file contains the `jib` (`jib.bat` for Windows) script at `jib/bin/`. Optionally, add the binary directory to your `$PATH` so that you can call `jib` from anywhere.
+Find the latest jib-cli release on the [Releases page](https://github.com/GoogleContainerTools/jib/releases), download `jib-jre-<version>.zip`, and unzip it. The zip file contains the `jib` (`jib.bat` for Windows) script at `jib/bin/`. Optionally, add the binary directory to your `$PATH` so that you can call `jib` from anywhere.
 
 ### Build yourself from source
 
@@ -32,7 +32,11 @@ $ ./jib-cli/build/install/jib/bin/jib
 
 ## Usage
 
-Currently only one command is supported: `build`
+Currently two commands are supported:
+ 1. `build`
+ 2. `jar`
+
+### Build
 
 ```
 jib build --target gcr.io/my-project/my-image [options]
@@ -40,81 +44,22 @@ jib build --target gcr.io/my-project/my-image [options]
 
 #### Options
 ```
-      [@<filename>...]      One or more argument files containing options.
-      --additional-tags=<tag>[,<tag>...]
-                            Additional tags for target image
-      --allow-insecure-registries
-                            Allow jib to communicate with registries over http
-                              (insecure)
-  -b, --build-file=<build-file>
+-b, --build-file=<build-file>
                             The path to the build file (ex: path/to/other-jib.
                               yaml)
-      --base-image-cache=<cache-directory>
-                            A path to a base image cache
-  -c, --context=<project-root>
+-c, --context=<project-root>
                             The context root directory of the build (ex:
                               path/to/my/build/things)
-      --console=<type>      set console output type, candidates: auto, rich,
-                              plain, default: auto
-      --credential-helper=<credential-helper>
-                            credential helper for communicating with both
-                              target and base image registries, either a path
-                              to the helper, or a suffix for an executable
-                              named `docker-credential-<suffix>`
-      --from-credential-helper=<credential-helper>
-                            credential helper for communicating with base image
-                              registry, either a path to the helper, or a
-                              suffix for an executable named
-                              `docker-credential-<suffix>`
-      --from-password[=<password>]
-                            password for communicating with base image registry
-      --from-username=<username>
-                            username for communicating with base image registry
-      --name=<image-reference>
-                            The image reference to inject into the tar
-                              configuration (required when using --target tar:
-                              //...)
-  -p, --parameter=<name>=<value>
+-p, --parameter=<name>=<value>
                             templating parameter to inject into build file,
                               replace ${<name>} with <value> (repeatable)
-      --password[=<password>]
-                            password for communicating with both target and
-                              base image registries
-      --project-cache=<cache-directory>
-                            A path to the project cache
-      --send-credentials-over-http
-                            Allow jib to send credentials over http (very
-                              insecure)
-  -t, --target=<target-image>
-                            The destination image reference or jib style url,
-                            examples:
-                             gcr.io/project/image,
-                             registry://image-ref,
-                             docker://image,
-                             tar://path
-      --to-credential-helper=<credential-helper>
-                            credential helper for communicating with target
-                              registry, either a path to the helper, or a
-                              suffix for an executable named
-                              `docker-credential-<suffix>`
-      --to-password[=<password>]
-                            password for communicating with target image
-                              registry
-      --to-username=<username>
-                            username for communicating with target image
-                              registry
-      --username=<username> username for communicating with both target and
-                              base image registries
-      --verbosity=<level>   set logging verbosity, candidates: quiet, error,
-                              warn, lifecycle, info, debug, default: lifecycle
-
 ```
 
-## Build File
+#### Build File
 
 The CLI uses a build file to define the container being built. The default is a file named `jib.yaml` in the project root.
 
-### Annotated `jib.yaml`
+#### Annotated `jib.yaml`
 
 ```yaml
 # required apiVersion and kind, for compatibility over versions of the cli
@@ -253,3 +198,112 @@ Parameters that will be overwritten:
 - `workingDirectory`
 - `entrypoint`
 - `cmd`
+
+### Jar
+
+```
+jib jar --target gcr.io/my-project/my-image /path/to/jar.jar [options]
+```
+
+#### Options
+```
+--creation-time=<creation-time>
+                            The creation time of the container in milliseconds
+                              since epoch or iso8601 format. Overrides the
+                              default (1970-01-01T00:00:00Z)
+--entrypoint=<entrypoint>[\s+<entrypoint>...]
+                            Entrypoint for container. Overrides the default
+                              entrypoint, example: --entrypoint='custom
+                              entrypoint'
+--environment-variables=<environment-variables>[,
+  <environment-variables>...]
+                      Environment variables to write into container,
+                        example: --environment-variables env1=env_value1,
+                        env2=env_value2.
+--expose=<exposed-ports>[,<exposed-ports>...]
+                     Ports to expose on container, example:
+                       --expose=5000,7/udp.
+--from=<base-image>   The base image to use.
+--image-format=<image-format>
+                      Format of container, candidates: Docker, OCI,
+                        default: Docker.
+--jvm-flags=<jvm-flags>[,<jvm-flags>...]
+                      JVM arguments, example: --jvm-flags=-Dmy.
+                        property=value,-Xshare:off
+--labels=<labels>[,<labels>...]
+                     Labels to write into container metadata, example:
+                       --labels=label1=value1,label2=value2.
+--mode=<mode>        The jar processing mode, candidates: exploded,
+                        packaged, default: exploded
+--program-args=<program-arguments>[,<program-arguments>...]
+                      Program arguments for container entrypoint.
+-u, --user=<user>     The user to run the container as, example:
+                        --user=myuser:mygroup.
+--volumes=<volumes>[,<volumes>...]
+                     Directories on container to hold extra volumes,
+                        example: --volumes=/var/log,/var/log2.
+```
+
+### Common CLI Options
+
+```
+      [@<filename>...]      One or more argument files containing options.
+      --additional-tags=<tag>[,<tag>...]
+                            Additional tags for target image
+      --allow-insecure-registries
+                            Allow jib to communicate with registries over http
+                              (insecure)
+      --base-image-cache=<cache-directory>
+                            A path to a base image cache
+      --console=<type>      set console output type, candidates: auto, rich,
+                              plain, default: auto
+      --credential-helper=<credential-helper>
+                            credential helper for communicating with both
+                              target and base image registries, either a path
+                              to the helper, or a suffix for an executable
+                              named `docker-credential-<suffix>`
+      --from-credential-helper=<credential-helper>
+                            credential helper for communicating with base image
+                              registry, either a path to the helper, or a
+                              suffix for an executable named
+                              `docker-credential-<suffix>`
+      --from-password[=<password>]
+                            password for communicating with base image registry
+      --from-username=<username>
+                            username for communicating with base image registry
+      --name=<image-reference>
+                            The image reference to inject into the tar
+                              configuration (required when using --target tar:
+                              //...)
+      --password[=<password>]
+                            password for communicating with both target and
+                              base image registries
+      --project-cache=<cache-directory>
+                            A path to the project cache
+      --send-credentials-over-http
+                            Allow jib to send credentials over http (very
+                              insecure)
+  -t, --target=<target-image>
+                            The destination image reference or jib style url,
+                            examples:
+                             gcr.io/project/image,
+                             registry://image-ref,
+                             docker://image,
+                             tar://path
+      --to-credential-helper=<credential-helper>
+                            credential helper for communicating with target
+                              registry, either a path to the helper, or a
+                              suffix for an executable named
+                              `docker-credential-<suffix>`
+      --to-password[=<password>]
+                            password for communicating with target image
+                              registry
+      --to-username=<username>
+                            username for communicating with target image
+                              registry
+      --username=<username> username for communicating with both target and
+                              base image registries
+      --verbosity=<level>   set logging verbosity, candidates: quiet, error,
+                              warn, lifecycle, info, debug, default: lifecycle
+
+```
