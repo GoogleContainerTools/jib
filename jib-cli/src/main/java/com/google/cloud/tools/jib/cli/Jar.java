@@ -91,14 +91,14 @@ public class Jar implements Callable<Integer> {
 
   @CommandLine.Option(
       names = "--expose",
-      paramLabel = "<exposed-ports>",
+      paramLabel = "<port>",
       split = ",",
       description = "Ports to expose on container, example: --expose=5000,7/udp.")
   private List<String> exposedPorts = Collections.emptyList();
 
   @CommandLine.Option(
       names = "--volumes",
-      paramLabel = "<volumes>",
+      paramLabel = "<volume>",
       split = ",",
       description =
           "Directories on container to hold extra volumes,  example: --volumes=/var/log,/var/log2.")
@@ -106,7 +106,7 @@ public class Jar implements Callable<Integer> {
 
   @CommandLine.Option(
       names = "--environment-variables",
-      paramLabel = "<environment-variables>",
+      paramLabel = "<key>=<value>",
       split = ",",
       description =
           "Environment variables to write into container, example: --environment-variables env1=env_value1,env2=env_value2.")
@@ -114,7 +114,7 @@ public class Jar implements Callable<Integer> {
 
   @CommandLine.Option(
       names = "--labels",
-      paramLabel = "<labels>",
+      paramLabel = "<key>=<value>",
       split = ",",
       description =
           "Labels to write into container metadata, example: --labels=label1=value1,label2=value2.")
@@ -138,7 +138,7 @@ public class Jar implements Callable<Integer> {
 
   @CommandLine.Option(
       names = "--program-args",
-      paramLabel = "<program-arguments>",
+      paramLabel = "<program-argument>",
       split = ",",
       description = "Program arguments for container entrypoint.")
   private List<String> programArguments = Collections.emptyList();
