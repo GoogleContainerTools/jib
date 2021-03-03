@@ -280,7 +280,7 @@ The options can either be specified in the command line or defined in a configur
     --send-credentials-over-http           Allow jib to send credentials over http (very insecure)
 ```
 
-##### Credentials
+#### Credentials
 Credentials can be specified using credential helpers or username + password. The following options are available:
 
 ```
