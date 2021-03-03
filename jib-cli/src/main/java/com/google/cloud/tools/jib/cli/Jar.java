@@ -46,11 +46,7 @@ import java.util.stream.Collectors;
 import picocli.CommandLine;
 import picocli.CommandLine.Model.CommandSpec;
 
-@CommandLine.Command(
-    name = "jar",
-    showAtFileInUsageHelp = true,
-    description = "Containerize a jar",
-    hidden = true)
+@CommandLine.Command(name = "jar", showAtFileInUsageHelp = true, description = "Containerize a jar")
 public class Jar implements Callable<Integer> {
 
   @CommandLine.Spec
@@ -84,21 +80,21 @@ public class Jar implements Callable<Integer> {
 
   @CommandLine.Option(
       names = "--jvm-flags",
-      paramLabel = "<jvm-flags>",
+      paramLabel = "<jvm-flag>",
       split = ",",
       description = "JVM arguments, example: --jvm-flags=-Dmy.property=value,-Xshare:off")
   private List<String> jvmFlags = Collections.emptyList();
 
   @CommandLine.Option(
       names = "--expose",
-      paramLabel = "<exposed-ports>",
+      paramLabel = "<port>",
       split = ",",
       description = "Ports to expose on container, example: --expose=5000,7/udp.")
   private List<String> exposedPorts = Collections.emptyList();
 
   @CommandLine.Option(
       names = "--volumes",
-      paramLabel = "<volumes>",
+      paramLabel = "<volume>",
       split = ",",
       description =
           "Directories on container to hold extra volumes,  example: --volumes=/var/log,/var/log2.")
@@ -106,7 +102,7 @@ public class Jar implements Callable<Integer> {
 
   @CommandLine.Option(
       names = "--environment-variables",
-      paramLabel = "<environment-variables>",
+      paramLabel = "<key>=<value>",
       split = ",",
       description =
           "Environment variables to write into container, example: --environment-variables env1=env_value1,env2=env_value2.")
@@ -114,7 +110,7 @@ public class Jar implements Callable<Integer> {
 
   @CommandLine.Option(
       names = "--labels",
-      paramLabel = "<labels>",
+      paramLabel = "<key>=<value>",
       split = ",",
       description =
           "Labels to write into container metadata, example: --labels=label1=value1,label2=value2.")
@@ -138,7 +134,7 @@ public class Jar implements Callable<Integer> {
 
   @CommandLine.Option(
       names = "--program-args",
-      paramLabel = "<program-arguments>",
+      paramLabel = "<program-argument>",
       split = ",",
       description = "Program arguments for container entrypoint.")
   private List<String> programArguments = Collections.emptyList();
@@ -161,13 +157,6 @@ public class Jar implements Callable<Integer> {
 
   @Override
   public Integer call() {
-    try {
-      // Temporarily disable the command, but allow to proceed in tests.
-      Class.forName("org.junit.Test");
-    } catch (ClassNotFoundException ex) {
-      throw new UnsupportedOperationException("jar command not implemented");
-    }
-
     commonCliOptions.validate();
     SingleThreadedExecutor executor = new SingleThreadedExecutor();
     try {
