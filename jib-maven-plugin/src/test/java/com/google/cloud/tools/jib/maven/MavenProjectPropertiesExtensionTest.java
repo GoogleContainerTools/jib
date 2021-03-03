@@ -497,7 +497,7 @@ public class MavenProjectPropertiesExtensionTest {
     FooExtension loadedExtension =
         new FooExtension(
             (buildPlan, properties, extraConfig, mavenData, logger) -> {
-              return buildPlan.toBuilder().setUser("user from extension").build();
+              return buildPlan.toBuilder().setBaseImage("loadedExtBaseImage").build();
             });
 
     mavenProjectProperties =
@@ -515,6 +515,7 @@ public class MavenProjectPropertiesExtensionTest {
             Arrays.asList(new FooExtensionConfig()), containerBuilder);
     Assert.assertEquals(
         "user from injected extension", extendedBuilder.toContainerBuildPlan().getUser());
+    Assert.assertEquals("scratch", extendedBuilder.toContainerBuildPlan().getBaseImage());
 
     mavenProjectProperties.waitForLoggingThread();
     Mockito.verify(mockLog).error("awesome error from my extension");
