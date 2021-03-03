@@ -247,7 +247,7 @@ Option | Description
 ## Jar Command: Containerizing a JAR app
 This command follows the following pattern:
 ```
-jib jar --target ... path/to/myapp.jar [options]`
+jib jar --target <image name> path/to/myapp.jar [options]
 ```
 
 #### Options
