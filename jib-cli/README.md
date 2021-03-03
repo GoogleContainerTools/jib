@@ -71,8 +71,7 @@ jib build --target <image name> [options]
     from:
       image: ubuntu
     
-    entrypoint:
-      - ./script.sh
+    entrypoint: ["./script.sh"]
     
     layers:
       entries:
