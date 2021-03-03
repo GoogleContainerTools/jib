@@ -202,7 +202,7 @@ Parameters that will be overwritten:
 ### Jar
 
 ```
-jib jar --target gcr.io/my-project/my-image /path/to/jar.jar [options] [common cli options]
+jib jar --target gcr.io/my-project/my-image /path/to/myapp.jar [options] [common cli options]
 ```
 
 #### Options
