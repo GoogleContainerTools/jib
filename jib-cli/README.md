@@ -270,7 +270,10 @@ Option | Description
 
 
 ### Common Jib CLI Options
-
+The options can either be specified in the command line or defined in a configuration file:
+```
+[@<filename>...]      One or more argument files containing options.
+```
 #### Auth/security
 ```
     --allow-insecure-registries            Allow jib to send credentials over http (insecure)
