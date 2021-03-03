@@ -278,7 +278,8 @@ Option | Description
 ```
 
 ##### Credentials
-Credentials can be specified using credential helpers or username + password. The following options are available
+Credentials can be specified using credential helpers or username + password. The following options are available:
+
 ```
     --credential-helper <credHelper>      credential helper for communicating with both target and base image registries, either a path to the helper, or a suffix for an executable named `docker-credential-<suffix>`
     --to-crendential-helper <credHelper>  credential helper for communicating with target registry, either a path to the helper, or a suffix for an executable named `docker-credential-<suffix>
@@ -291,7 +292,7 @@ Credentials can be specified using credential helpers or username + password. Th
     --from-username <username>             username for communicating with base image registry
     --from-password <password>             password for communicating with base image registry
 ```
-combinations of `credential-helper`, `username` and `password` flags come with restrictions and can be use only in the following ways:
+*Note* - Combinations of `credential-helper`, `username` and `password` flags come with restrictions and can be use only in the following ways:
 
 Only Credential Helper
 1. `--credential-helper`
