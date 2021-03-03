@@ -55,7 +55,7 @@ The Jib CLI currently supports two commands:
 ## Build
 This command follows the following pattern:
 ```
-jib build --target ... [options]
+jib build --target <image name> [options]
 ```
 ### Quickstart
 1. Create a hello world script (`script.sh`) containing:
