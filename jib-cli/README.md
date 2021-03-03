@@ -274,7 +274,7 @@ The options can either be specified in the command line or defined in a configur
 ```
 [@<filename>...]      One or more argument files containing options.
 ```
-#### Auth/security
+### Auth/Security
 ```
     --allow-insecure-registries            Allow jib to send credentials over http (insecure)
     --send-credentials-over-http           Allow jib to send credentials over http (very insecure)
