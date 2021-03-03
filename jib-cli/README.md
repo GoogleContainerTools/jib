@@ -60,6 +60,7 @@ jib build --target <image name> [options]
 ### Quickstart
 1. Create a hello world script (`script.sh`) containing:
     ```
+    #!/bin/sh
     echo "Hello World"
     ```
 2. Create a buildfile. The default is a file named `jib.yaml` in the project root.
