@@ -234,7 +234,7 @@ Parameters that will be overwritten:
 - `cmd`
 
 
-#### Options
+### Options
 Here is the list of optional flags for the `build` command:
 
 Option | Description
