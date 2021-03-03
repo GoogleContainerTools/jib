@@ -250,7 +250,7 @@ This command follows the following pattern:
 jib jar --target <image name> path/to/myapp.jar [options]
 ```
 
-#### Options
+### Options
 Here is a list of optional flags for the `jar` command:
 
 Option | Description
