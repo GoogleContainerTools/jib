@@ -16,7 +16,6 @@
 
 package com.google.cloud.tools.jib.maven;
 
-import com.google.cloud.tools.jib.filesystem.TempDirectoryProvider;
 import com.google.cloud.tools.jib.maven.JibPluginConfiguration.PermissionConfiguration;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -25,10 +24,8 @@ import java.io.File;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.Properties;
-import org.apache.maven.execution.MavenExecutionRequest;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.model.Build;
-import org.apache.maven.plugin.descriptor.PluginDescriptor;
 import org.apache.maven.plugin.logging.Log;
 import org.apache.maven.project.MavenProject;
 import org.junit.Assert;
@@ -46,16 +43,13 @@ public class JibPluginConfigurationTest {
   private final MavenProject project = new MavenProject();
   private final Properties sessionProperties = new Properties();
   @Mock private MavenSession session;
-  @Mock private MavenExecutionRequest mockMavenRequest;
   @Mock private Log log;
-  @Mock private PluginDescriptor descriptor;
   @Mock private Build build;
   private JibPluginConfiguration testPluginConfiguration;
 
   @Before
   public void setup() {
     Mockito.when(session.getSystemProperties()).thenReturn(sessionProperties);
-    Mockito.when(session.getRequest()).thenReturn(mockMavenRequest);
     Mockito.when(build.getDirectory()).thenReturn("/test/directory");
     testPluginConfiguration =
         new JibPluginConfiguration() {
@@ -71,7 +65,6 @@ public class JibPluginConfigurationTest {
     project.setFile(new File("/repository/project/pom.xml")); // sets baseDir
     testPluginConfiguration.setProject(project);
     testPluginConfiguration.setSession(session);
-    testPluginConfiguration.setDescriptor(descriptor);
   }
 
   @Test
@@ -349,13 +342,5 @@ public class JibPluginConfigurationTest {
 
     projectProperties.setProperty("jib.containerize", "project2");
     Assert.assertFalse(testPluginConfiguration.isContainerizable());
-  }
-
-  @Test
-  public void testGetMavenProjectProperties() {
-    TempDirectoryProvider tdp = new TempDirectoryProvider();
-    MavenProjectProperties mavenProjectProperties =
-        testPluginConfiguration.getMavenProjectProperties(tdp);
-    Assert.assertNotNull(mavenProjectProperties);
   }
 }

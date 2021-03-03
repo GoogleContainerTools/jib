@@ -16,7 +16,6 @@
 
 package com.google.cloud.tools.jib.maven;
 
-import com.google.cloud.tools.jib.filesystem.TempDirectoryProvider;
 import com.google.cloud.tools.jib.maven.extension.JibMavenPluginExtension;
 import com.google.cloud.tools.jib.plugins.common.AuthProperty;
 import com.google.cloud.tools.jib.plugins.common.ConfigurationPropertyValidator;
@@ -321,7 +320,7 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
 
   @Nullable
   @Parameter(defaultValue = "${plugin}", readonly = true)
-  private PluginDescriptor descriptor;
+  protected PluginDescriptor descriptor;
 
   @Parameter private FromConfiguration from = new FromConfiguration();
 
@@ -830,24 +829,8 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
     this.session = session;
   }
 
-  @VisibleForTesting
-  void setDescriptor(PluginDescriptor descriptor) {
-    this.descriptor = descriptor;
-  }
-
   @Nullable
   String getProperty(String propertyName) {
     return MavenProjectProperties.getProperty(propertyName, project, session);
-  }
-
-  protected MavenProjectProperties getMavenProjectProperties(
-      TempDirectoryProvider tempDirectoryProvider) {
-    return MavenProjectProperties.getForProject(
-        Preconditions.checkNotNull(descriptor),
-        getProject(),
-        getSession(),
-        getLog(),
-        tempDirectoryProvider,
-        getInjectedPluginExtensions());
   }
 }
