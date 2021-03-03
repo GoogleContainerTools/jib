@@ -269,7 +269,7 @@ Option | Description
 `--volumes`       | Directories on container to hold extra volumes, example: `--volumes=/var/log,/var/log2`.
 
 
-### Common Jib CLI Options
+## Common Jib CLI Options
 The options can either be specified in the command line or defined in a configuration file:
 ```
 [@<filename>...]      One or more argument files containing options.
