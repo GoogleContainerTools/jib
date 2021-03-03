@@ -244,7 +244,7 @@ Option | Description
 `-p, --parameter`  |  Templating parameter to inject into build file, replace ${<name>} with <value> (repeatable)
 
 
-### Jar
+## Jar Command: Containerizing a JAR app
 This command follows the following pattern:
 ```
 jib jar --target ... path/to/myapp.jar [options]`
