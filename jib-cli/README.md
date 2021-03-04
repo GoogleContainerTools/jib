@@ -26,14 +26,15 @@ The CLI tool is powered by [Jib Core](https://github.com/GoogleContainerTools/ji
 * [Supported Commands](#supported-commands)
 * [Build Command](#build-command)
   * [Quickstart](#quickstart)
-  * [Fully Annotated `jib.yaml`](#fully-annotated-jibyaml)
   * [Options](#options)
 * [Jar Command](#jar-command)
   * [Options](#options)
-* [Common Jib CLI Options](#common-cli-options)
+* [Common Jib CLI Options](#common-jib-cli-options)
   * [Auth/Security](#authsecurity)
   * [Info Params](#info-params)
   * [Debugging Params](#debugging-params)
+* [References](#references)
+  * [Fully Annotated Build File (`jib.yaml`)](#fully-annotated-build-file-jibyaml)
 
 ## Get the Jib CLI
 
@@ -59,7 +60,7 @@ $ ./jib-cli/build/install/jib/bin/jib
 ## Supported Commands
 
 The Jib CLI supports two commands:
- 1. `build` - containerizes using a [build file](#fully-annotated-jibyaml).
+ 1. `build` - containerizes using a [build file](#fully-annotated-build-file-jibyaml).
  2. `jar` - containerizes JAR files.
 
 ## Build Command
@@ -69,12 +70,12 @@ jib build --target <image name> [options]
 ```
 ### Quickstart
 1. Create a hello world script (`script.sh`) containing:
-    ```
+    ```sh
     #!/bin/sh
     echo "Hello World"
     ```
-2. Create a buildfile. The default is a file named `jib.yaml` in the project root.
-    ```
+2. Create a [build file](#fully-annotated-build-file-jibyaml). The default is a file named `jib.yaml` in the project root.
+    ```yaml
     apiVersion: jib/v1alpha1
     kind: BuildFile
     
@@ -92,7 +93,8 @@ jib build --target <image name> [options]
               src: script.sh
               dest: /script.sh
 
-    ``` 
+    ```
+
 3. Build to docker daemon
    ```
     $ jib build --target=docker://jib-cli-quickstart
@@ -103,7 +105,102 @@ jib build --target <image name> [options]
     Hello World
    ```
 
-### Fully Annotated `jib.yaml`
+### Options
+Optional flags for the `build` command:
+
+Option | Description
+---     | ---
+`-b, --build-file` |  The path to the build file (ex: path/to/other-jib.yaml)
+`-c, --context`    |  The context root directory of the build (ex: path/to/my/build/things)
+`-p, --parameter`  |  Templating parameter to inject into build file, replace ${<name>} with <value> (repeatable)
+
+
+## Jar Command
+This command follows the following pattern:
+```
+jib jar --target <image name> path/to/myapp.jar [options]
+```
+
+### Options
+Optional flags for the `jar` command:
+
+Option | Description
+---       | ---
+`--creation-time` | The creation time of the container in milliseconds since epoch or iso8601 format. Overrides the default (1970-01-01T00:00:00Z)
+`--entrypoint`    | Entrypoint for container. Overrides the default entrypoint, example: `--entrypoint='custom entrypoint'`
+`--environment-variables`  | Environment variables to write into container, example: `--environment-variables env1=env_value1, env2=env_value2`.
+`--expose`        | Ports to expose on container, example: `--expose=5000,7/udp`.
+`--from`          | The base image to use.
+`--image-format`  | Format of container, candidates: Docker, OCI, default: Docker.
+`--jvm-flags`     | JVM arguments, example: `--jvm-flags=-Dmy.property=value,-Xshare:off`
+`--labels`        | Labels to write into container metadata, example: `--labels=label1=value1,label2=value2`.
+`--mode`          | The jar processing mode, candidates: exploded, packaged, default: exploded
+`--program-args`  | Program arguments for container entrypoint.
+`-u, --user`      | The user to run the container as, example: `--user=myuser:mygroup`.
+`--volumes`       | Directories on container to hold extra volumes, example: `--volumes=/var/log,/var/log2`.
+
+
+## Common Jib CLI Options
+The options can either be specified in the command line or defined in a configuration file:
+```
+[@<filename>...]      One or more argument files containing options.
+```
+### Auth/Security
+```
+    --allow-insecure-registries            Allow jib to send credentials over http (insecure)
+    --send-credentials-over-http           Allow jib to send credentials over http (very insecure)
+```
+
+### Registry Credentials
+Credentials can be specified using credential helpers or username + password. The following options are available:
+
+```
+    --credential-helper <credHelper>      credential helper for communicating with both target and base image registries, either a path to the helper, or a suffix for an executable named `docker-credential-<suffix>`
+    --to-crendential-helper <credHelper>  credential helper for communicating with target registry, either a path to the helper, or a suffix for an executable named `docker-credential-<suffix>
+    --from-credential-helper <credHelper> credential helper for communicating with base image registry, either a path to the helper, or a suffix for an executable named `docker-credential-<suffix>`
+
+    --username <username>                  username for communicating with both target and base image registries
+    --password <password>                  password for communicating with both target and base image registries
+    --to-username <username>               username for communicating with target image registry
+    --to-password <password>               password for communicating with target image registry
+    --from-username <username>             username for communicating with base image registry
+    --from-password <password>             password for communicating with base image registry
+```
+*Note* - Combinations of `credential-helper`, `username` and `password` flags come with restrictions and can be use only in the following ways:
+
+Only Credential Helper
+1. `--credential-helper`
+2. `--to-credential-helper`
+3. `--from-credential-helper`
+4. `--to-credential-helper`, `--from-credential-helper`
+
+Only Username and Password
+1. `--username`, `--password`
+2. `--to-username`, `--to-password`
+3. `--from-username`, `--from-password`
+4. `--to-username`, `--to-password`, `--from-username`, `--from-password`
+
+Mixed Mode
+1. `--to-credential-helper`, `--from-username`, `--from-password`
+2. `--from-credential-helper`, `--to-username`, `--to-password`
+
+### Info Params
+```
+    --help                  print usage and exit
+    --console <type>        set console output type, candidates: auto, rich, plain, default: auto
+    --verbosity <level>     set logging verbosity, candidates: quiet, error, warn, lifecycle, info, debug, default: lifecycle
+-v, --version               Jib CLI version information
+```
+
+### Debugging Params
+```
+    --stacktrace            print stacktrace on error (for debugging issues in the jib-cli)
+    --http-trace            enable http tracing at level=config, output=console
+    --serialize             run jib in serialized mode
+```
+## References
+
+### Fully Annotated Build File (`jib.yaml`)
 
 ```yaml
 # required apiVersion and kind, for compatibility over versions of the cli
@@ -242,98 +339,3 @@ Parameters that will be overwritten:
 - `workingDirectory`
 - `entrypoint`
 - `cmd`
-
-
-### Options
-Optional flags for the `build` command:
-
-Option | Description
----     | ---
-`-b, --build-file` |  The path to the build file (ex: path/to/other-jib.yaml)
-`-c, --context`    |  The context root directory of the build (ex: path/to/my/build/things)
-`-p, --parameter`  |  Templating parameter to inject into build file, replace ${<name>} with <value> (repeatable)
-
-
-## Jar Command
-This command follows the following pattern:
-```
-jib jar --target <image name> path/to/myapp.jar [options]
-```
-
-### Options
-Optional flags for the `jar` command:
-
-Option | Description
----       | ---
-`--creation-time` | The creation time of the container in milliseconds since epoch or iso8601 format. Overrides the default (1970-01-01T00:00:00Z)
-`--entrypoint`    | Entrypoint for container. Overrides the default entrypoint, example: `--entrypoint='custom entrypoint'`
-`--environment-variables`  | Environment variables to write into container, example: `--environment-variables env1=env_value1, env2=env_value2`.
-`--expose`        | Ports to expose on container, example: `--expose=5000,7/udp`.
-`--from`          | The base image to use.
-`--image-format`  | Format of container, candidates: Docker, OCI, default: Docker.
-`--jvm-flags`     | JVM arguments, example: `--jvm-flags=-Dmy.property=value,-Xshare:off`
-`--labels`        | Labels to write into container metadata, example: `--labels=label1=value1,label2=value2`.
-`--mode`          | The jar processing mode, candidates: exploded, packaged, default: exploded
-`--program-args`  | Program arguments for container entrypoint.
-`-u, --user`      | The user to run the container as, example: `--user=myuser:mygroup`.
-`--volumes`       | Directories on container to hold extra volumes, example: `--volumes=/var/log,/var/log2`.
-
-
-## Common Jib CLI Options
-The options can either be specified in the command line or defined in a configuration file:
-```
-[@<filename>...]      One or more argument files containing options.
-```
-### Auth/Security
-```
-    --allow-insecure-registries            Allow jib to send credentials over http (insecure)
-    --send-credentials-over-http           Allow jib to send credentials over http (very insecure)
-```
-
-### Credentials
-Credentials can be specified using credential helpers or username + password. The following options are available:
-
-```
-    --credential-helper <credHelper>      credential helper for communicating with both target and base image registries, either a path to the helper, or a suffix for an executable named `docker-credential-<suffix>`
-    --to-crendential-helper <credHelper>  credential helper for communicating with target registry, either a path to the helper, or a suffix for an executable named `docker-credential-<suffix>
-    --from-credential-helper <credHelper> credential helper for communicating with base image registry, either a path to the helper, or a suffix for an executable named `docker-credential-<suffix>`
-
-    --username <username>                  username for communicating with both target and base image registries
-    --password <password>                  password for communicating with both target and base image registries
-    --to-username <username>               username for communicating with target image registry
-    --to-password <password>               password for communicating with target image registry
-    --from-username <username>             username for communicating with base image registry
-    --from-password <password>             password for communicating with base image registry
-```
-*Note* - Combinations of `credential-helper`, `username` and `password` flags come with restrictions and can be use only in the following ways:
-
-Only Credential Helper
-1. `--credential-helper`
-2. `--to-credential-helper`
-3. `--from-credential-helper`
-4. `--to-credential-helper`, `--from-credential-helper`
-
-Only Username and Password
-1. `--username`, `--password`
-2. `--to-username`, `--to-password`
-3. `--from-username`, `--from-password`
-4. `--to-username`, `--to-password`, `--from-username`, `--from-password`
-
-Mixed Mode
-1. `--to-credential-helper`, `--from-username`, `--from-password`
-2. `--from-credential-helper`, `--to-username`, `--to-password`
-
-### Info Params
-```
-    --help                  print usage and exit
-    --console <type>        set console output type, candidates: auto, rich, plain, default: auto
-    --verbosity <level>     set logging verbosity, candidates: quiet, error, warn, lifecycle, info, debug, default: lifecycle
--v, --version               Jib CLI version information
-```
-
-### Debugging Params
-```
-    --stacktrace            print stacktrace on error (for debugging issues in the jib-cli)
-    --http-trace            enable http tracing at level=config, output=console
-    --serialize             run jib in serialized mode
-```
