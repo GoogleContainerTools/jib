@@ -5,12 +5,12 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
-- Added an option `configurationName` to specify the name of the [Gradle Configuration](https://docs.gradle.org/current/dsl/org.gradle.api.artifacts.Configuration.html) to use. This change introduces lazy evaluation by exposing the Gradle Property through a getter, which is different from the traditional route of using Gradle Provider and Property. ([#3034](https://github.com/GoogleContainerTools/jib/pull/3034))
-  ```gradle
-  jib {
-    configurationName.set("myconfig")
-  }
-  ```
+- Added an option `configurationName` to specify the name of the [Gradle Configuration](https://docs.gradle.org/current/dsl/org.gradle.api.artifacts.ConfigurationContainer.html) to use. The option can be lazily configured, for example, using Gradle `Provider` or `Property`. ([#3034](https://github.com/GoogleContainerTools/jib/pull/3034))
+```gradle
+    jib {
+      configurationName.set = 'myconfig'
+    }
+```                                                                                                                                                                      
   
 ### Changed
 
