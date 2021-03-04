@@ -81,7 +81,8 @@ public class SyncMapMojo extends JibPluginConfiguration {
               getProject(),
               getSession(),
               getLog(),
-              tempDirectoryProvider);
+              tempDirectoryProvider,
+              getInjectedPluginExtensions());
 
       MavenRawConfiguration configuration = new MavenRawConfiguration(this);
 
