@@ -12,7 +12,7 @@ All notable changes to this project will be documented in this file.
 ## 0.3.0
 
 ### Changed
-- Changed the default base image of the Jib CLI jar command from the `openjdk` images to the `adoptopenjdk` images on Docker Hub. ([#3108](https://github.com/GoogleContainerTools/jib/pull/3108]))
+- Changed the default base image of the Jib CLI jar command from the `openjdk` images to the `adoptopenjdk` images on Docker Hub. ([#3108](https://github.com/GoogleContainerTools/jib/pull/3108))
 
 ## 0.2.0
 
