@@ -70,12 +70,12 @@ jib build --target <image name> [options]
 ```
 ### Quickstart
 1. Create a hello world script (`script.sh`) containing:
-    ```
+    ```sh
     #!/bin/sh
     echo "Hello World"
     ```
 2. Create a [build file](#fully-annotated-build-file-jibyaml). The default is a file named `jib.yaml` in the project root.
-    ```
+    ```yaml
     apiVersion: jib/v1alpha1
     kind: BuildFile
     
