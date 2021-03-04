@@ -59,8 +59,8 @@ public class JarFiles {
     } else {
       containerBuilder =
           (processor.getJarJavaVersion() <= 8)
-              ? Jib.from("openjdk:8-jre-slim")
-              : Jib.from("openjdk:11-jre-slim");
+              ? Jib.from("adoptopenjdk:8-jre")
+              : Jib.from("adoptopenjdk:11-jre");
     }
 
     List<FileEntriesLayer> layers = processor.createLayers();
