@@ -17,6 +17,7 @@
 package com.google.cloud.tools.jib.maven;
 
 import static com.google.common.truth.Truth.assertThat;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -147,7 +148,7 @@ public class MavenProjectPropertiesTest {
   }
 
   private static Artifact newArtifact(Path sourceJar) {
-    Artifact artifact = Mockito.mock(Artifact.class);
+    Artifact artifact = mock(Artifact.class);
     when(artifact.getFile()).thenReturn(sourceJar.toFile());
     return artifact;
   }
@@ -631,13 +632,13 @@ public class MavenProjectPropertiesTest {
 
   @Test
   public void testGetProjectDependencies() {
-    MavenProject rootPomProject = Mockito.mock(MavenProject.class);
-    MavenProject jibSubModule = Mockito.mock(MavenProject.class);
-    MavenProject sharedLibSubModule = Mockito.mock(MavenProject.class);
+    MavenProject rootPomProject = mock(MavenProject.class);
+    MavenProject jibSubModule = mock(MavenProject.class);
+    MavenProject sharedLibSubModule = mock(MavenProject.class);
     when(mockMavenSession.getProjects())
         .thenReturn(Arrays.asList(rootPomProject, sharedLibSubModule, jibSubModule));
 
-    Artifact nullFileArtifact = Mockito.mock(Artifact.class);
+    Artifact nullFileArtifact = mock(Artifact.class);
     Artifact projectJar = newArtifact("com.test", "my-app", "1.0");
     Artifact sharedLibJar = newArtifact("com.test", "shared-lib", "1.0");
 
@@ -1067,8 +1068,8 @@ public class MavenProjectPropertiesTest {
 
   private Xpp3Dom setUpSpringBootFatJar() {
     Xpp3Dom pluginConfiguration = new Xpp3Dom("configuration");
-    PluginExecution execution = Mockito.mock(PluginExecution.class);
-    Plugin plugin = Mockito.mock(Plugin.class);
+    PluginExecution execution = mock(PluginExecution.class);
+    Plugin plugin = mock(Plugin.class);
     when(mockMavenProject.getPlugin("org.springframework.boot:spring-boot-maven-plugin"))
         .thenReturn(plugin);
     when(plugin.getExecutions()).thenReturn(Arrays.asList(execution));
