@@ -6,7 +6,7 @@ All notable changes to this project will be documented in this file.
 ### Added
 
 ### Changed
-- Changed the default base image of the Jib CLI jar command from `OpenJDK` to `AdoptOpenJDK`. ((#3108)[https://github.com/GoogleContainerTools/jib/pull/3108])
+- Changed the default base image of the Jib CLI jar command from `OpenJDK` to `AdoptOpenJDK`. ([#3108](https://github.com/GoogleContainerTools/jib/pull/3108]))
 
 ### Fixed
 
