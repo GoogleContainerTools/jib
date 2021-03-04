@@ -1,23 +1,52 @@
 # Jib CLI
 
-<img src="https://img.shields.io/badge/status-experimental-orange">
+<img src="https://img.shields.io/badge/status-preview-orange">
 
-`jib` is a command-line utility for building containers images from file system content. 
-It serves as a demonstration of [Jib Core](https://github.com/GoogleContainerTools/jib/tree/master/jib-core),
-a Java library for building containers without Docker.
+`jib` is a general-purpose command-line utility for building Docker or [OCI](https://github.com/opencontainers/image-spec) container images from file system content as well as JAR files. Jib CLI builds containers [fast and reproducibly without Docker](https://github.com/GoogleContainerTools/jib#goals) like [other Jib tools](https://github.com/GoogleContainerTools/jib#what-is-jib).
 
-This CLI tool is _experimental_ and its options and structure
-are almost certain to change.
+```sh
+# docker not required
+$ docker
+-bash: docker: command not found
+# build and upload an image
+$ jib build --target=my-registry.example.com/built-by-jib
+```
+
+Additionally, Jib CLI can directly build an optimized image for JAR files (including Spring Boot fat JAR).
+```sh
+$ jib jar --target=my-registry.example.com/jar-app myapp.jar
+```
+
+The CLI tool is powered by [Jib Core](https://github.com/GoogleContainerTools/jib/tree/master/jib-core), a Java library for building containers without Docker.
+
+## Table of Contents
+* [Get the Jib CLI](#get-the-jib-cli)
+  * [Download a Java Application](#download-a-java-application)
+  * [Build Yourself from Source (for Advanced Users)](#build-yourself-from-source-for-advanced-users)
+* [Supported Commands](#supported-commands)
+* [Build Command](#build-command)
+  * [Quickstart](#quickstart)
+  * [Options](#options)
+* [Jar Command](#jar-command)
+  * [Options](#options)
+* [Common Jib CLI Options](#common-jib-cli-options)
+  * [Auth/Security](#authsecurity)
+  * [Info Params](#info-params)
+  * [Debugging Params](#debugging-params)
+* [References](#references)
+  * [Fully Annotated Build File (`jib.yaml`)](#fully-annotated-build-file-jibyaml)
 
 ## Get the Jib CLI
 
-### Download a java application
+Most users should download a ZIP archive (Java application). We are working on releasing a native executable binary.
+
+### Download a Java Application
 
 A JRE is required to run this Jib CLI distribution.
 
-Find the latest jib-core release on the [Releases page](https://github.com/GoogleContainerTools/jib/releases), download `jib-jre-<version>.zip`, and unzip it. The zip file contains the `jib` (`jib.bat` for Windows) script at `jib/bin/`. Optionally, add the binary directory to your `$PATH` so that you can call `jib` from anywhere.
+Find the [latest jib-cli 0.2.0 release](https://github.com/GoogleContainerTools/jib/releases/tag/v0.2.0-cli) on the [Releases page](https://github.com/GoogleContainerTools/jib/releases), download `jib-jre-<version>.zip`, and unzip it. The zip file contains the `jib` (`jib.bat` for Windows) script at `jib/bin/`. Optionally, add the binary directory to your `$PATH` so that you can call `jib` from anywhere.
 
-### Build yourself from source
+### Build Yourself from Source (for Advanced Users)
 
 Use the `application` plugin's `installDist` task to create a runnable installation in
 `build/install/jib`.  A zip and tar file are also created in `build/distributions`.
@@ -26,95 +55,152 @@ Use the `application` plugin's `installDist` task to create a runnable installat
 $ ./gradlew jib-cli:installDist
 # run
 $ ./jib-cli/build/install/jib/bin/jib
-```
-
-<!-- TODO: ### Download an executable -->
-
-## Usage
-
-Currently only one command is supported: `build`
 
 ```
-jib build --target gcr.io/my-project/my-image [options]
+## Supported Commands
+
+The Jib CLI supports two commands:
+ 1. `build` - containerizes using a [build file](#fully-annotated-build-file-jibyaml).
+ 2. `jar` - containerizes JAR files.
+
+## Build Command
+This command follows the following pattern:
+```
+jib build --target <image name> [options]
+```
+### Quickstart
+1. Create a hello world script (`script.sh`) containing:
+    ```sh
+    #!/bin/sh
+    echo "Hello World"
+    ```
+2. Create a [build file](#fully-annotated-build-file-jibyaml). The default is a file named `jib.yaml` in the project root.
+    ```yaml
+    apiVersion: jib/v1alpha1
+    kind: BuildFile
+    
+    from:
+      image: ubuntu
+    
+    entrypoint: ["./script.sh"]
+    
+    layers:
+      entries:
+        - name: scripts
+          files:
+            - properties:
+                filePermissions: 755
+              src: script.sh
+              dest: /script.sh
+
+    ```
+
+3. Build to docker daemon
+   ```
+    $ jib build --target=docker://jib-cli-quickstart
+   ```
+4. Run the container
+   ```
+    $ docker run jib-cli-quickstart
+    Hello World
+   ```
+
+### Options
+Optional flags for the `build` command:
+
+Option | Description
+---     | ---
+`-b, --build-file` |  The path to the build file (ex: path/to/other-jib.yaml)
+`-c, --context`    |  The context root directory of the build (ex: path/to/my/build/things)
+`-p, --parameter`  |  Templating parameter to inject into build file, replace ${<name>} with <value> (repeatable)
+
+
+## Jar Command
+This command follows the following pattern:
+```
+jib jar --target <image name> path/to/myapp.jar [options]
 ```
 
-#### Options
-```
-      [@<filename>...]      One or more argument files containing options.
-      --additional-tags=<tag>[,<tag>...]
-                            Additional tags for target image
-      --allow-insecure-registries
-                            Allow jib to communicate with registries over http
-                              (insecure)
-  -b, --build-file=<build-file>
-                            The path to the build file (ex: path/to/other-jib.
-                              yaml)
-      --base-image-cache=<cache-directory>
-                            A path to a base image cache
-  -c, --context=<project-root>
-                            The context root directory of the build (ex:
-                              path/to/my/build/things)
-      --console=<type>      set console output type, candidates: auto, rich,
-                              plain, default: auto
-      --credential-helper=<credential-helper>
-                            credential helper for communicating with both
-                              target and base image registries, either a path
-                              to the helper, or a suffix for an executable
-                              named `docker-credential-<suffix>`
-      --from-credential-helper=<credential-helper>
-                            credential helper for communicating with base image
-                              registry, either a path to the helper, or a
-                              suffix for an executable named
-                              `docker-credential-<suffix>`
-      --from-password[=<password>]
-                            password for communicating with base image registry
-      --from-username=<username>
-                            username for communicating with base image registry
-      --name=<image-reference>
-                            The image reference to inject into the tar
-                              configuration (required when using --target tar:
-                              //...)
-  -p, --parameter=<name>=<value>
-                            templating parameter to inject into build file,
-                              replace ${<name>} with <value> (repeatable)
-      --password[=<password>]
-                            password for communicating with both target and
-                              base image registries
-      --project-cache=<cache-directory>
-                            A path to the project cache
-      --send-credentials-over-http
-                            Allow jib to send credentials over http (very
-                              insecure)
-  -t, --target=<target-image>
-                            The destination image reference or jib style url,
-                            examples:
-                             gcr.io/project/image,
-                             registry://image-ref,
-                             docker://image,
-                             tar://path
-      --to-credential-helper=<credential-helper>
-                            credential helper for communicating with target
-                              registry, either a path to the helper, or a
-                              suffix for an executable named
-                              `docker-credential-<suffix>`
-      --to-password[=<password>]
-                            password for communicating with target image
-                              registry
-      --to-username=<username>
-                            username for communicating with target image
-                              registry
-      --username=<username> username for communicating with both target and
-                              base image registries
-      --verbosity=<level>   set logging verbosity, candidates: quiet, error,
-                              warn, lifecycle, info, debug, default: lifecycle
+### Options
+Optional flags for the `jar` command:
 
+Option | Description
+---       | ---
+`--creation-time` | The creation time of the container in milliseconds since epoch or iso8601 format. Overrides the default (1970-01-01T00:00:00Z)
+`--entrypoint`    | Entrypoint for container. Overrides the default entrypoint, example: `--entrypoint='custom entrypoint'`
+`--environment-variables`  | Environment variables to write into container, example: `--environment-variables env1=env_value1, env2=env_value2`.
+`--expose`        | Ports to expose on container, example: `--expose=5000,7/udp`.
+`--from`          | The base image to use.
+`--image-format`  | Format of container, candidates: Docker, OCI, default: Docker.
+`--jvm-flags`     | JVM arguments, example: `--jvm-flags=-Dmy.property=value,-Xshare:off`
+`--labels`        | Labels to write into container metadata, example: `--labels=label1=value1,label2=value2`.
+`--mode`          | The jar processing mode, candidates: exploded, packaged, default: exploded
+`--program-args`  | Program arguments for container entrypoint.
+`-u, --user`      | The user to run the container as, example: `--user=myuser:mygroup`.
+`--volumes`       | Directories on container to hold extra volumes, example: `--volumes=/var/log,/var/log2`.
+
+
+## Common Jib CLI Options
+The options can either be specified in the command line or defined in a configuration file:
+```
+[@<filename>...]      One or more argument files containing options.
+```
+### Auth/Security
+```
+    --allow-insecure-registries            Allow jib to send credentials over http (insecure)
+    --send-credentials-over-http           Allow jib to send credentials over http (very insecure)
 ```
 
-## Build File
+### Registry Credentials
+Credentials can be specified using credential helpers or username + password. The following options are available:
 
-The CLI uses a build file to define the container being built. The default is a file named `jib.yaml` in the project root.
+```
+    --credential-helper <credHelper>      credential helper for communicating with both target and base image registries, either a path to the helper, or a suffix for an executable named `docker-credential-<suffix>`
+    --to-crendential-helper <credHelper>  credential helper for communicating with target registry, either a path to the helper, or a suffix for an executable named `docker-credential-<suffix>
+    --from-credential-helper <credHelper> credential helper for communicating with base image registry, either a path to the helper, or a suffix for an executable named `docker-credential-<suffix>`
 
-### Annotated `jib.yaml`
+    --username <username>                  username for communicating with both target and base image registries
+    --password <password>                  password for communicating with both target and base image registries
+    --to-username <username>               username for communicating with target image registry
+    --to-password <password>               password for communicating with target image registry
+    --from-username <username>             username for communicating with base image registry
+    --from-password <password>             password for communicating with base image registry
+```
+*Note* - Combinations of `credential-helper`, `username` and `password` flags come with restrictions and can be use only in the following ways:
+
+Only Credential Helper
+1. `--credential-helper`
+2. `--to-credential-helper`
+3. `--from-credential-helper`
+4. `--to-credential-helper`, `--from-credential-helper`
+
+Only Username and Password
+1. `--username`, `--password`
+2. `--to-username`, `--to-password`
+3. `--from-username`, `--from-password`
+4. `--to-username`, `--to-password`, `--from-username`, `--from-password`
+
+Mixed Mode
+1. `--to-credential-helper`, `--from-username`, `--from-password`
+2. `--from-credential-helper`, `--to-username`, `--to-password`
+
+### Info Params
+```
+    --help                  print usage and exit
+    --console <type>        set console output type, candidates: auto, rich, plain, default: auto
+    --verbosity <level>     set logging verbosity, candidates: quiet, error, warn, lifecycle, info, debug, default: lifecycle
+-v, --version               Jib CLI version information
+```
+
+### Debugging Params
+```
+    --stacktrace            print stacktrace on error (for debugging issues in the jib-cli)
+    --http-trace            enable http tracing at level=config, output=console
+    --serialize             run jib in serialized mode
+```
+## References
+
+### Fully Annotated Build File (`jib.yaml`)
 
 ```yaml
 # required apiVersion and kind, for compatibility over versions of the cli
@@ -202,7 +288,7 @@ layers:
         - dest: "/images"            
 ```
 
-#### Layers behavior
+#### Layers Behavior
 - Copy directives are bound by the following rules
   `src`: filetype determined by type on local disk
    - if `src` is directory, `dest` is always considered a directory, directory and contents will be copied over and renamed to `dest`
@@ -237,12 +323,12 @@ layers:
        - "**/exclude-dir/**
      ```
      
-#### Base image parameter inheritance
+#### Base Image Parameter Inheritance
 Some values defined in the base image may be preserved and propogated into the new container.
 
 Parameters will append to base image value:
-  - `volumes`
-  - `exposedPorts`
+- `volumes`
+- `exposedPorts`
 
 Parameters that will append any new keys, and overwrite existing keys:
 - `labels`

@@ -79,6 +79,7 @@ public class JibPluginConfigurationTest {
     Assert.assertEquals("exploded", testPluginConfiguration.getContainerizingMode());
     Assert.assertEquals("EPOCH_PLUS_SECOND", testPluginConfiguration.getFilesModificationTime());
     Assert.assertEquals("EPOCH", testPluginConfiguration.getCreationTime());
+    Assert.assertTrue(testPluginConfiguration.getInjectedPluginExtensions().isEmpty());
   }
 
   @Test

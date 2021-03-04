@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.maven;
 
+import com.google.cloud.tools.jib.maven.extension.JibMavenPluginExtension;
 import com.google.cloud.tools.jib.plugins.common.AuthProperty;
 import com.google.cloud.tools.jib.plugins.common.ConfigurationPropertyValidator;
 import com.google.cloud.tools.jib.plugins.common.PropertyNames;
@@ -36,6 +37,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
+import javax.inject.Inject;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -345,6 +347,12 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
   @Parameter private List<ExtensionParameters> pluginExtensions = Collections.emptyList();
 
   @Component protected SettingsDecrypter settingsDecrypter;
+
+  @Inject private Set<JibMavenPluginExtension<?>> injectedPluginExtensions = Collections.emptySet();
+
+  protected Set<JibMavenPluginExtension<?>> getInjectedPluginExtensions() {
+    return injectedPluginExtensions;
+  }
 
   protected MavenSession getSession() {
     return Preconditions.checkNotNull(session);

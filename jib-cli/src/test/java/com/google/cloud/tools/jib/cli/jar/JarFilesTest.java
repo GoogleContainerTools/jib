@@ -71,7 +71,7 @@ public class JarFilesTest {
             mockStandardExplodedProcessor, mockJarCommand, mockCommonCliOptions, mockLogger);
     ContainerBuildPlan buildPlan = containerBuilder.toContainerBuildPlan();
 
-    assertThat(buildPlan.getBaseImage()).isEqualTo("openjdk:8-jre-slim");
+    assertThat(buildPlan.getBaseImage()).isEqualTo("adoptopenjdk:8-jre");
   }
 
   @Test
@@ -83,7 +83,7 @@ public class JarFilesTest {
             mockStandardExplodedProcessor, mockJarCommand, mockCommonCliOptions, mockLogger);
     ContainerBuildPlan buildPlan = containerBuilder.toContainerBuildPlan();
 
-    assertThat(buildPlan.getBaseImage()).isEqualTo("openjdk:11-jre-slim");
+    assertThat(buildPlan.getBaseImage()).isEqualTo("adoptopenjdk:11-jre");
   }
 
   @Test
@@ -108,7 +108,7 @@ public class JarFilesTest {
             mockStandardExplodedProcessor, mockJarCommand, mockCommonCliOptions, mockLogger);
     ContainerBuildPlan buildPlan = containerBuilder.toContainerBuildPlan();
 
-    assertThat(buildPlan.getBaseImage()).isEqualTo("openjdk:8-jre-slim");
+    assertThat(buildPlan.getBaseImage()).isEqualTo("adoptopenjdk:8-jre");
     assertThat(buildPlan.getPlatforms()).isEqualTo(ImmutableSet.of(new Platform("amd64", "linux")));
     assertThat(buildPlan.getCreationTime()).isEqualTo(Instant.EPOCH);
     assertThat(buildPlan.getFormat()).isEqualTo(ImageFormat.Docker);
@@ -153,7 +153,7 @@ public class JarFilesTest {
             mockStandardPackagedProcessor, mockJarCommand, mockCommonCliOptions, mockLogger);
     ContainerBuildPlan buildPlan = containerBuilder.toContainerBuildPlan();
 
-    assertThat(buildPlan.getBaseImage()).isEqualTo("openjdk:8-jre-slim");
+    assertThat(buildPlan.getBaseImage()).isEqualTo("adoptopenjdk:8-jre");
     assertThat(buildPlan.getPlatforms()).isEqualTo(ImmutableSet.of(new Platform("amd64", "linux")));
     assertThat(buildPlan.getCreationTime()).isEqualTo(Instant.EPOCH);
     assertThat(buildPlan.getFormat()).isEqualTo(ImageFormat.Docker);
@@ -199,7 +199,7 @@ public class JarFilesTest {
             mockSpringBootExplodedProcessor, mockJarCommand, mockCommonCliOptions, mockLogger);
     ContainerBuildPlan buildPlan = containerBuilder.toContainerBuildPlan();
 
-    assertThat(buildPlan.getBaseImage()).isEqualTo("openjdk:8-jre-slim");
+    assertThat(buildPlan.getBaseImage()).isEqualTo("adoptopenjdk:8-jre");
     assertThat(buildPlan.getPlatforms()).isEqualTo(ImmutableSet.of(new Platform("amd64", "linux")));
     assertThat(buildPlan.getCreationTime()).isEqualTo(Instant.EPOCH);
     assertThat(buildPlan.getFormat()).isEqualTo(ImageFormat.Docker);
@@ -244,7 +244,7 @@ public class JarFilesTest {
             mockSpringBootPackagedProcessor, mockJarCommand, mockCommonCliOptions, mockLogger);
     ContainerBuildPlan buildPlan = containerBuilder.toContainerBuildPlan();
 
-    assertThat(buildPlan.getBaseImage()).isEqualTo("openjdk:8-jre-slim");
+    assertThat(buildPlan.getBaseImage()).isEqualTo("adoptopenjdk:8-jre");
     assertThat(buildPlan.getPlatforms()).isEqualTo(ImmutableSet.of(new Platform("amd64", "linux")));
     assertThat(buildPlan.getCreationTime()).isEqualTo(Instant.EPOCH);
     assertThat(buildPlan.getFormat()).isEqualTo(ImageFormat.Docker);

@@ -54,6 +54,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -100,6 +101,7 @@ public class MavenProjectProperties implements ProjectProperties {
    * @param session the {@link MavenSession} for the plugin.
    * @param log the Maven {@link Log} to log messages during Jib execution
    * @param tempDirectoryProvider temporary directory provider
+   * @param injectedExtensions the extensions injected into the Mojo
    * @return a MavenProjectProperties from the given project and logger.
    */
   public static MavenProjectProperties getForProject(
@@ -107,7 +109,8 @@ public class MavenProjectProperties implements ProjectProperties {
       MavenProject project,
       MavenSession session,
       Log log,
-      TempDirectoryProvider tempDirectoryProvider) {
+      TempDirectoryProvider tempDirectoryProvider,
+      Collection<JibMavenPluginExtension<?>> injectedExtensions) {
     Preconditions.checkNotNull(jibPluginDescriptor);
     Supplier<List<JibMavenPluginExtension<?>>> extensionLoader =
         () -> {
@@ -119,7 +122,13 @@ public class MavenProjectProperties implements ProjectProperties {
           return extensions;
         };
     return new MavenProjectProperties(
-        jibPluginDescriptor, project, session, log, tempDirectoryProvider, extensionLoader);
+        jibPluginDescriptor,
+        project,
+        session,
+        log,
+        tempDirectoryProvider,
+        injectedExtensions,
+        extensionLoader);
   }
 
   /**
@@ -213,6 +222,7 @@ public class MavenProjectProperties implements ProjectProperties {
   private final SingleThreadedExecutor singleThreadedExecutor = new SingleThreadedExecutor();
   private final ConsoleLogger consoleLogger;
   private final TempDirectoryProvider tempDirectoryProvider;
+  private final Collection<JibMavenPluginExtension<?>> injectedExtensions;
   private final Supplier<List<JibMavenPluginExtension<?>>> extensionLoader;
 
   @VisibleForTesting
@@ -222,11 +232,13 @@ public class MavenProjectProperties implements ProjectProperties {
       MavenSession session,
       Log log,
       TempDirectoryProvider tempDirectoryProvider,
+      Collection<JibMavenPluginExtension<?>> injectedExtensions,
       Supplier<List<JibMavenPluginExtension<?>>> extensionLoader) {
     this.jibPluginDescriptor = jibPluginDescriptor;
     this.project = project;
     this.session = session;
     this.tempDirectoryProvider = tempDirectoryProvider;
+    this.injectedExtensions = injectedExtensions;
     this.extensionLoader = extensionLoader;
     ConsoleLoggerBuilder consoleLoggerBuilder =
         (isProgressFooterEnabled(session)
@@ -597,7 +609,12 @@ public class MavenProjectProperties implements ProjectProperties {
       return jibContainerBuilder;
     }
 
-    List<JibMavenPluginExtension<?>> loadedExtensions = extensionLoader.get();
+    // Add the injected extensions at first to prefer them over the ones from JDK service
+    // loader.
+    // Extensions might support both approaches (injection and JDK service loader) at the same
+    // time for compatibility reasons.
+    List<JibMavenPluginExtension<?>> loadedExtensions = new ArrayList<>(injectedExtensions);
+    loadedExtensions.addAll(extensionLoader.get());
     JibMavenPluginExtension<?> extension = null;
     ContainerBuildPlan buildPlan = jibContainerBuilder.toContainerBuildPlan();
     try {

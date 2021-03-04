@@ -84,7 +84,8 @@ public class BuildDockerMojo extends JibPluginConfiguration {
             getProject(),
             getSession(),
             getLog(),
-            tempDirectoryProvider);
+            tempDirectoryProvider,
+            getInjectedPluginExtensions());
 
     Future<Optional<String>> updateCheckFuture = Futures.immediateFuture(Optional.empty());
     try {
