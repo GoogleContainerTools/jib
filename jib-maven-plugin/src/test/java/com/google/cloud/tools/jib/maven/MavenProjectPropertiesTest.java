@@ -16,6 +16,10 @@
 
 package com.google.cloud.tools.jib.maven;
 
+import static com.google.common.truth.Truth.assertThat;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 import com.google.cloud.tools.jib.api.CacheDirectoryCreationException;
 import com.google.cloud.tools.jib.api.Containerizer;
 import com.google.cloud.tools.jib.api.InvalidImageReferenceException;
@@ -32,10 +36,11 @@ import com.google.cloud.tools.jib.filesystem.DirectoryWalker;
 import com.google.cloud.tools.jib.filesystem.TempDirectoryProvider;
 import com.google.cloud.tools.jib.maven.extension.JibMavenPluginExtension;
 import com.google.cloud.tools.jib.plugins.common.ContainerizingMode;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.Resources;
+import com.google.common.truth.Correspondence;
+import com.google.common.truth.Truth8;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -44,6 +49,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -52,9 +58,9 @@ import java.util.Optional;
 import java.util.Properties;
 import java.util.Set;
 import java.util.StringJoiner;
-import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
+import javax.annotation.Nullable;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.DefaultArtifact;
 import org.apache.maven.execution.MavenExecutionRequest;
@@ -82,97 +88,36 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class MavenProjectPropertiesTest {
 
-  private static final ContainerizingMode DEFAULT_CONTAINERIZING_MODE = ContainerizingMode.EXPLODED;
-  private static final Instant SAMPLE_FILE_MODIFICATION_TIME = Instant.ofEpochSecond(32);
+  private static final Correspondence<FileEntry, Path> SOURCE_FILE_OF =
+      Correspondence.transforming(FileEntry::getSourceFile, "has sourceFile of");
+  private static final Correspondence<FileEntry, String> EXTRACTION_PATH_OF =
+      Correspondence.transforming(
+          entry -> entry.getExtractionPath().toString(), "has extractionPath of");
+
+  private static final Instant EPOCH_PLUS_32 = Instant.ofEpochSecond(32);
 
   /** Helper for reading back layers in a {@link BuildContext}. */
   private static class ContainerBuilderLayers {
 
-    private final List<FileEntriesLayer> resourcesLayers;
-    private final List<FileEntriesLayer> classesLayers;
-    private final List<FileEntriesLayer> dependenciesLayers;
-    private final List<FileEntriesLayer> snapshotsLayers;
-    private final List<FileEntriesLayer> extraFilesLayers;
+    @Nullable private final FileEntriesLayer resourcesLayer;
+    @Nullable private final FileEntriesLayer classesLayer;
+    @Nullable private final FileEntriesLayer dependenciesLayer;
+    @Nullable private final FileEntriesLayer snapshotsLayer;
+    @Nullable private final FileEntriesLayer extraFilesLayer;
 
     private ContainerBuilderLayers(BuildContext buildContext) {
-      resourcesLayers = getLayerConfigurationsByName(buildContext, LayerType.RESOURCES.getName());
-      classesLayers = getLayerConfigurationsByName(buildContext, LayerType.CLASSES.getName());
-      dependenciesLayers =
-          getLayerConfigurationsByName(buildContext, LayerType.DEPENDENCIES.getName());
-      snapshotsLayers =
-          getLayerConfigurationsByName(buildContext, LayerType.SNAPSHOT_DEPENDENCIES.getName());
-      extraFilesLayers =
-          getLayerConfigurationsByName(buildContext, LayerType.EXTRA_FILES.getName());
+      resourcesLayer = getLayerByName(buildContext, LayerType.RESOURCES.getName());
+      classesLayer = getLayerByName(buildContext, LayerType.CLASSES.getName());
+      dependenciesLayer = getLayerByName(buildContext, LayerType.DEPENDENCIES.getName());
+      snapshotsLayer = getLayerByName(buildContext, LayerType.SNAPSHOT_DEPENDENCIES.getName());
+      extraFilesLayer = getLayerByName(buildContext, LayerType.EXTRA_FILES.getName());
     }
-  }
 
-  private static List<FileEntriesLayer> getLayerConfigurationsByName(
-      BuildContext buildContext, String name) {
-    return buildContext
-        .getLayerConfigurations()
-        .stream()
-        .filter(layer -> layer.getName().equals(name))
-        .collect(Collectors.toList());
-  }
-
-  private static <T> void assertLayerEntriesUnordered(
-      List<T> expectedPaths, List<FileEntry> entries, Function<FileEntry, T> fieldSelector) {
-    List<T> expected = expectedPaths.stream().sorted().collect(Collectors.toList());
-    List<T> actual = entries.stream().map(fieldSelector).sorted().collect(Collectors.toList());
-    Assert.assertEquals(expected, actual);
-  }
-
-  private static void assertSourcePathsUnordered(
-      List<Path> expectedPaths, List<FileEntry> entries) {
-    assertLayerEntriesUnordered(expectedPaths, entries, FileEntry::getSourceFile);
-  }
-
-  private static void assertExtractionPathsUnordered(
-      List<String> expectedPaths, List<FileEntry> entries) {
-    assertLayerEntriesUnordered(
-        expectedPaths, entries, layerEntry -> layerEntry.getExtractionPath().toString());
-  }
-
-  private static void assertModificationTime(Instant instant, List<FileEntriesLayer> layers) {
-    for (FileEntriesLayer layer : layers) {
-      for (FileEntry entry : layer.getEntries()) {
-        String message = "wrong time: " + entry.getSourceFile() + "-->" + entry.getExtractionPath();
-        Assert.assertEquals(message, instant, entry.getModificationTime());
-      }
+    @Nullable
+    private static FileEntriesLayer getLayerByName(BuildContext buildContext, String name) {
+      List<FileEntriesLayer> layers = buildContext.getLayerConfigurations();
+      return layers.stream().filter(layer -> layer.getName().equals(name)).findFirst().orElse(null);
     }
-  }
-
-  private static void assertNonDefaultAppRoot(BuildContext buildContext) {
-    ContainerBuilderLayers layers = new ContainerBuilderLayers(buildContext);
-    assertExtractionPathsUnordered(
-        Arrays.asList(
-            "/my/app/libs/dependency-1.0.0-770.jar",
-            "/my/app/libs/dependency-1.0.0-200.jar",
-            "/my/app/libs/dependency-1.0.0-480.jar",
-            "/my/app/libs/libraryA.jar",
-            "/my/app/libs/libraryB.jar",
-            "/my/app/libs/library.jarC.jar"),
-        layers.dependenciesLayers.get(0).getEntries());
-    assertExtractionPathsUnordered(
-        Collections.singletonList("/my/app/libs/dependencyX-1.0.0-SNAPSHOT.jar"),
-        layers.snapshotsLayers.get(0).getEntries());
-    assertExtractionPathsUnordered(
-        Arrays.asList(
-            "/my/app/resources/directory",
-            "/my/app/resources/directory/somefile",
-            "/my/app/resources/package",
-            "/my/app/resources/resourceA",
-            "/my/app/resources/resourceB",
-            "/my/app/resources/world"),
-        layers.resourcesLayers.get(0).getEntries());
-    assertExtractionPathsUnordered(
-        Arrays.asList(
-            "/my/app/classes/HelloWorld.class",
-            "/my/app/classes/directory",
-            "/my/app/classes/package",
-            "/my/app/classes/package/some.class",
-            "/my/app/classes/some.class"),
-        layers.classesLayers.get(0).getEntries());
   }
 
   private static Path getResource(String path) throws URISyntaxException {
@@ -203,7 +148,7 @@ public class MavenProjectPropertiesTest {
 
   private static Artifact newArtifact(Path sourceJar) {
     Artifact artifact = Mockito.mock(Artifact.class);
-    Mockito.when(artifact.getFile()).thenReturn(sourceJar.toFile());
+    when(artifact.getFile()).thenReturn(sourceJar.toFile());
     return artifact;
   }
 
@@ -247,11 +192,11 @@ public class MavenProjectPropertiesTest {
 
   @Before
   public void setUp() throws IOException, URISyntaxException {
-    Mockito.when(mockLog.isDebugEnabled()).thenReturn(true);
-    Mockito.when(mockLog.isWarnEnabled()).thenReturn(true);
-    Mockito.when(mockLog.isErrorEnabled()).thenReturn(true);
+    when(mockLog.isDebugEnabled()).thenReturn(true);
+    when(mockLog.isWarnEnabled()).thenReturn(true);
+    when(mockLog.isErrorEnabled()).thenReturn(true);
 
-    Mockito.when(mockMavenSession.getRequest()).thenReturn(mockMavenRequest);
+    when(mockMavenSession.getRequest()).thenReturn(mockMavenRequest);
     mavenProjectProperties =
         new MavenProjectProperties(
             mockJibPluginDescriptor,
@@ -264,8 +209,8 @@ public class MavenProjectPropertiesTest {
     Path outputPath = getResource("maven/application/output");
     Path dependenciesPath = getResource("maven/application/dependencies");
 
-    Mockito.when(mockMavenProject.getBuild()).thenReturn(mockBuild);
-    Mockito.when(mockBuild.getOutputDirectory()).thenReturn(outputPath.toString());
+    when(mockMavenProject.getBuild()).thenReturn(mockBuild);
+    when(mockBuild.getOutputDirectory()).thenReturn(outputPath.toString());
 
     Set<Artifact> artifacts =
         ImmutableSet.of(
@@ -278,34 +223,34 @@ public class MavenProjectPropertiesTest {
             // repository
             testRepository.findArtifact("com.test", "dependency", "1.0.0"),
             testRepository.findArtifact("com.test", "dependencyX", "1.0.0-SNAPSHOT"));
-    Mockito.when(mockMavenProject.getArtifacts()).thenReturn(artifacts);
+    when(mockMavenProject.getArtifacts()).thenReturn(artifacts);
 
     Path emptyDirectory =
         getResource("maven/webapp").resolve("final-name/WEB-INF/classes/empty_dir");
     Files.createDirectories(emptyDirectory);
 
-    Mockito.when(mockMavenProject.getProperties()).thenReturn(mockMavenProperties);
+    when(mockMavenProject.getProperties()).thenReturn(mockMavenProperties);
   }
 
   @Test
   public void testGetMainClassFromJar_success() {
-    Mockito.when(mockMavenProject.getPlugin("org.apache.maven.plugins:maven-jar-plugin"))
+    when(mockMavenProject.getPlugin("org.apache.maven.plugins:maven-jar-plugin"))
         .thenReturn(mockPlugin);
-    Mockito.when(mockPlugin.getConfiguration()).thenReturn(pluginConfiguration);
+    when(mockPlugin.getConfiguration()).thenReturn(pluginConfiguration);
     Xpp3Dom archive = new Xpp3Dom("archive");
     Xpp3Dom manifest = new Xpp3Dom("manifest");
     pluginConfiguration.addChild(archive);
     archive.addChild(manifest);
     manifest.addChild(newXpp3Dom("mainClass", "some.main.class"));
 
-    Assert.assertEquals("some.main.class", mavenProjectProperties.getMainClassFromJarPlugin());
+    assertThat(mavenProjectProperties.getMainClassFromJarPlugin()).isEqualTo("some.main.class");
   }
 
   @Test
   public void testGetMainClassFromJar_missingMainClass() {
-    Mockito.when(mockMavenProject.getPlugin("org.apache.maven.plugins:maven-jar-plugin"))
+    when(mockMavenProject.getPlugin("org.apache.maven.plugins:maven-jar-plugin"))
         .thenReturn(mockPlugin);
-    Mockito.when(mockPlugin.getConfiguration()).thenReturn(pluginConfiguration);
+    when(mockPlugin.getConfiguration()).thenReturn(pluginConfiguration);
     Xpp3Dom archive = new Xpp3Dom("archive");
     archive.addChild(new Xpp3Dom("manifest"));
     pluginConfiguration.addChild(archive);
@@ -315,9 +260,9 @@ public class MavenProjectPropertiesTest {
 
   @Test
   public void testGetMainClassFromJar_missingManifest() {
-    Mockito.when(mockMavenProject.getPlugin("org.apache.maven.plugins:maven-jar-plugin"))
+    when(mockMavenProject.getPlugin("org.apache.maven.plugins:maven-jar-plugin"))
         .thenReturn(mockPlugin);
-    Mockito.when(mockPlugin.getConfiguration()).thenReturn(pluginConfiguration);
+    when(mockPlugin.getConfiguration()).thenReturn(pluginConfiguration);
     pluginConfiguration.addChild(new Xpp3Dom("archive"));
 
     Assert.assertNull(mavenProjectProperties.getMainClassFromJarPlugin());
@@ -325,16 +270,16 @@ public class MavenProjectPropertiesTest {
 
   @Test
   public void testGetMainClassFromJar_missingArchive() {
-    Mockito.when(mockMavenProject.getPlugin("org.apache.maven.plugins:maven-jar-plugin"))
+    when(mockMavenProject.getPlugin("org.apache.maven.plugins:maven-jar-plugin"))
         .thenReturn(mockPlugin);
-    Mockito.when(mockPlugin.getConfiguration()).thenReturn(pluginConfiguration);
+    when(mockPlugin.getConfiguration()).thenReturn(pluginConfiguration);
 
     Assert.assertNull(mavenProjectProperties.getMainClassFromJarPlugin());
   }
 
   @Test
   public void testGetMainClassFromJar_missingConfiguration() {
-    Mockito.when(mockMavenProject.getPlugin("org.apache.maven.plugins:maven-jar-plugin"))
+    when(mockMavenProject.getPlugin("org.apache.maven.plugins:maven-jar-plugin"))
         .thenReturn(mockPlugin);
 
     Assert.assertNull(mavenProjectProperties.getMainClassFromJarPlugin());
@@ -352,85 +297,85 @@ public class MavenProjectPropertiesTest {
 
   @Test
   public void testGetVersionFromString() {
-    Assert.assertEquals(8, MavenProjectProperties.getVersionFromString("1.8"));
-    Assert.assertEquals(8, MavenProjectProperties.getVersionFromString("1.8.0_123"));
-    Assert.assertEquals(11, MavenProjectProperties.getVersionFromString("11"));
-    Assert.assertEquals(11, MavenProjectProperties.getVersionFromString("11.0.1"));
+    assertThat(MavenProjectProperties.getVersionFromString("1.8")).isEqualTo(8);
+    assertThat(MavenProjectProperties.getVersionFromString("1.8.0_123")).isEqualTo(8);
+    assertThat(MavenProjectProperties.getVersionFromString("11")).isEqualTo(11);
+    assertThat(MavenProjectProperties.getVersionFromString("11.0.1")).isEqualTo(11);
 
-    Assert.assertEquals(0, MavenProjectProperties.getVersionFromString("asdfasdf"));
-    Assert.assertEquals(0, MavenProjectProperties.getVersionFromString(""));
-    Assert.assertEquals(0, MavenProjectProperties.getVersionFromString("11abc"));
-    Assert.assertEquals(0, MavenProjectProperties.getVersionFromString("1.abc"));
+    assertThat(MavenProjectProperties.getVersionFromString("asdfasdf")).isEqualTo(0);
+    assertThat(MavenProjectProperties.getVersionFromString("")).isEqualTo(0);
+    assertThat(MavenProjectProperties.getVersionFromString("11abc")).isEqualTo(0);
+    assertThat(MavenProjectProperties.getVersionFromString("1.abc")).isEqualTo(0);
   }
 
   @Test
   public void testGetMajorJavaVersion_undefinedDefaultsTo6() {
-    Assert.assertEquals(6, mavenProjectProperties.getMajorJavaVersion());
+    assertThat(mavenProjectProperties.getMajorJavaVersion()).isEqualTo(6);
   }
 
   @Test
   public void testGetMajorJavaVersion_targetProperty() {
-    Mockito.when(mockMavenProperties.getProperty("maven.compiler.target")).thenReturn("1.8");
-    Assert.assertEquals(8, mavenProjectProperties.getMajorJavaVersion());
+    when(mockMavenProperties.getProperty("maven.compiler.target")).thenReturn("1.8");
+    assertThat(mavenProjectProperties.getMajorJavaVersion()).isEqualTo(8);
 
-    Mockito.when(mockMavenProperties.getProperty("maven.compiler.target")).thenReturn("1.7");
-    Assert.assertEquals(7, mavenProjectProperties.getMajorJavaVersion());
+    when(mockMavenProperties.getProperty("maven.compiler.target")).thenReturn("1.7");
+    assertThat(mavenProjectProperties.getMajorJavaVersion()).isEqualTo(7);
 
-    Mockito.when(mockMavenProperties.getProperty("maven.compiler.target")).thenReturn("11");
-    Assert.assertEquals(11, mavenProjectProperties.getMajorJavaVersion());
+    when(mockMavenProperties.getProperty("maven.compiler.target")).thenReturn("11");
+    assertThat(mavenProjectProperties.getMajorJavaVersion()).isEqualTo(11);
   }
 
   @Test
   public void testValidateBaseImageVersion_releaseProperty() {
-    Mockito.when(mockMavenProperties.getProperty("maven.compiler.release")).thenReturn("1.8");
-    Assert.assertEquals(8, mavenProjectProperties.getMajorJavaVersion());
+    when(mockMavenProperties.getProperty("maven.compiler.release")).thenReturn("1.8");
+    assertThat(mavenProjectProperties.getMajorJavaVersion()).isEqualTo(8);
 
-    Mockito.when(mockMavenProperties.getProperty("maven.compiler.release")).thenReturn("1.7");
-    Assert.assertEquals(7, mavenProjectProperties.getMajorJavaVersion());
+    when(mockMavenProperties.getProperty("maven.compiler.release")).thenReturn("1.7");
+    assertThat(mavenProjectProperties.getMajorJavaVersion()).isEqualTo(7);
 
-    Mockito.when(mockMavenProperties.getProperty("maven.compiler.release")).thenReturn("9");
-    Assert.assertEquals(9, mavenProjectProperties.getMajorJavaVersion());
+    when(mockMavenProperties.getProperty("maven.compiler.release")).thenReturn("9");
+    assertThat(mavenProjectProperties.getMajorJavaVersion()).isEqualTo(9);
   }
 
   @Test
   public void testValidateBaseImageVersion_compilerPluginTarget() {
-    Mockito.when(mockMavenProject.getPlugin("org.apache.maven.plugins:maven-compiler-plugin"))
+    when(mockMavenProject.getPlugin("org.apache.maven.plugins:maven-compiler-plugin"))
         .thenReturn(mockPlugin);
-    Mockito.when(mockPlugin.getConfiguration()).thenReturn(pluginConfiguration);
+    when(mockPlugin.getConfiguration()).thenReturn(pluginConfiguration);
     Xpp3Dom compilerTarget = new Xpp3Dom("target");
     pluginConfiguration.addChild(compilerTarget);
 
     compilerTarget.setValue("1.8");
-    Assert.assertEquals(8, mavenProjectProperties.getMajorJavaVersion());
+    assertThat(mavenProjectProperties.getMajorJavaVersion()).isEqualTo(8);
 
     compilerTarget.setValue("1.6");
-    Assert.assertEquals(6, mavenProjectProperties.getMajorJavaVersion());
+    assertThat(mavenProjectProperties.getMajorJavaVersion()).isEqualTo(6);
 
     compilerTarget.setValue("13");
-    Assert.assertEquals(13, mavenProjectProperties.getMajorJavaVersion());
+    assertThat(mavenProjectProperties.getMajorJavaVersion()).isEqualTo(13);
   }
 
   @Test
   public void testValidateBaseImageVersion_compilerPluginRelease() {
-    Mockito.when(mockMavenProject.getPlugin("org.apache.maven.plugins:maven-compiler-plugin"))
+    when(mockMavenProject.getPlugin("org.apache.maven.plugins:maven-compiler-plugin"))
         .thenReturn(mockPlugin);
-    Mockito.when(mockPlugin.getConfiguration()).thenReturn(pluginConfiguration);
+    when(mockPlugin.getConfiguration()).thenReturn(pluginConfiguration);
     Xpp3Dom compilerRelease = new Xpp3Dom("release");
     pluginConfiguration.addChild(compilerRelease);
 
     compilerRelease.setValue("1.8");
-    Assert.assertEquals(8, mavenProjectProperties.getMajorJavaVersion());
+    assertThat(mavenProjectProperties.getMajorJavaVersion()).isEqualTo(8);
 
     compilerRelease.setValue("10");
-    Assert.assertEquals(10, mavenProjectProperties.getMajorJavaVersion());
+    assertThat(mavenProjectProperties.getMajorJavaVersion()).isEqualTo(10);
 
     compilerRelease.setValue("13");
-    Assert.assertEquals(13, mavenProjectProperties.getMajorJavaVersion());
+    assertThat(mavenProjectProperties.getMajorJavaVersion()).isEqualTo(13);
   }
 
   @Test
   public void isProgressFooterEnabled() {
-    Mockito.when(mockMavenRequest.isInteractiveMode()).thenReturn(false);
+    when(mockMavenRequest.isInteractiveMode()).thenReturn(false);
     Assert.assertFalse(MavenProjectProperties.isProgressFooterEnabled(mockMavenSession));
   }
 
@@ -438,53 +383,49 @@ public class MavenProjectPropertiesTest {
   public void testCreateContainerBuilder_correctFiles()
       throws URISyntaxException, IOException, InvalidImageReferenceException,
           CacheDirectoryCreationException {
-    BuildContext buildContext = setUpBuildContext("/app", DEFAULT_CONTAINERIZING_MODE);
-    ContainerBuilderLayers layers = new ContainerBuilderLayers(buildContext);
+    ContainerBuilderLayers layers = new ContainerBuilderLayers(setUpBuildContext());
 
     Path dependenciesPath = getResource("maven/application/dependencies");
     Path applicationDirectory = getResource("maven/application");
-    assertSourcePathsUnordered(
-        ImmutableList.of(
+    assertThat(layers.dependenciesLayer.getEntries())
+        .comparingElementsUsing(SOURCE_FILE_OF)
+        .containsExactly(
             testRepository.artifactPathOnDisk("com.test", "dependency", "1.0.0"),
             dependenciesPath.resolve("more/dependency-1.0.0.jar"),
             dependenciesPath.resolve("another/one/dependency-1.0.0.jar"),
             dependenciesPath.resolve("libraryA.jar"),
             dependenciesPath.resolve("libraryB.jar"),
-            dependenciesPath.resolve("library.jarC.jar")),
-        layers.dependenciesLayers.get(0).getEntries());
-    assertSourcePathsUnordered(
-        ImmutableList.of(
-            testRepository.artifactPathOnDisk("com.test", "dependencyX", "1.0.0-SNAPSHOT")),
-        layers.snapshotsLayers.get(0).getEntries());
-    assertSourcePathsUnordered(
-        ImmutableList.of(
+            dependenciesPath.resolve("library.jarC.jar"));
+    assertThat(layers.snapshotsLayer.getEntries())
+        .comparingElementsUsing(SOURCE_FILE_OF)
+        .containsExactly(
+            testRepository.artifactPathOnDisk("com.test", "dependencyX", "1.0.0-SNAPSHOT"));
+    assertThat(layers.resourcesLayer.getEntries())
+        .comparingElementsUsing(SOURCE_FILE_OF)
+        .containsExactly(
             applicationDirectory.resolve("output/directory"),
             applicationDirectory.resolve("output/directory/somefile"),
             applicationDirectory.resolve("output/package"),
             applicationDirectory.resolve("output/resourceA"),
             applicationDirectory.resolve("output/resourceB"),
-            applicationDirectory.resolve("output/world")),
-        layers.resourcesLayers.get(0).getEntries());
-    assertSourcePathsUnordered(
-        ImmutableList.of(
+            applicationDirectory.resolve("output/world"));
+    assertThat(layers.classesLayer.getEntries())
+        .comparingElementsUsing(SOURCE_FILE_OF)
+        .containsExactly(
             applicationDirectory.resolve("output/HelloWorld.class"),
             applicationDirectory.resolve("output/directory"),
             applicationDirectory.resolve("output/package"),
             applicationDirectory.resolve("output/package/some.class"),
-            applicationDirectory.resolve("output/some.class")),
-        layers.classesLayers.get(0).getEntries());
+            applicationDirectory.resolve("output/some.class"));
 
-    assertModificationTime(SAMPLE_FILE_MODIFICATION_TIME, layers.dependenciesLayers);
-    assertModificationTime(SAMPLE_FILE_MODIFICATION_TIME, layers.snapshotsLayers);
-    assertModificationTime(SAMPLE_FILE_MODIFICATION_TIME, layers.resourcesLayers);
-    assertModificationTime(SAMPLE_FILE_MODIFICATION_TIME, layers.classesLayers);
-  }
-
-  @Test
-  public void testCreateContainerBuilder_nonDefaultAppRoot()
-      throws IOException, InvalidImageReferenceException, CacheDirectoryCreationException {
-    BuildContext buildContext = setUpBuildContext("/my/app", DEFAULT_CONTAINERIZING_MODE);
-    assertNonDefaultAppRoot(buildContext);
+    List<FileEntry> allFileEntries = new ArrayList<>();
+    allFileEntries.addAll(layers.dependenciesLayer.getEntries());
+    allFileEntries.addAll(layers.snapshotsLayer.getEntries());
+    allFileEntries.addAll(layers.resourcesLayer.getEntries());
+    allFileEntries.addAll(layers.classesLayer.getEntries());
+    Set<Instant> modificationTimes =
+        allFileEntries.stream().map(FileEntry::getModificationTime).collect(Collectors.toSet());
+    assertThat(modificationTimes).containsExactly(EPOCH_PLUS_32);
   }
 
   @Test
@@ -492,67 +433,68 @@ public class MavenProjectPropertiesTest {
       throws InvalidImageReferenceException, IOException, CacheDirectoryCreationException,
           URISyntaxException {
     Path jar = temporaryFolder.newFile("final-name.jar").toPath();
-    Mockito.when(mockBuild.getDirectory()).thenReturn(temporaryFolder.getRoot().toString());
-    Mockito.when(mockBuild.getFinalName()).thenReturn("final-name");
+    when(mockBuild.getDirectory()).thenReturn(temporaryFolder.getRoot().toString());
+    when(mockBuild.getFinalName()).thenReturn("final-name");
 
-    BuildContext buildContext = setUpBuildContext("/app-root", ContainerizingMode.PACKAGED);
-
-    ContainerBuilderLayers layers = new ContainerBuilderLayers(buildContext);
-    Assert.assertEquals(1, layers.dependenciesLayers.size());
-    Assert.assertEquals(1, layers.snapshotsLayers.size());
-    Assert.assertEquals(0, layers.resourcesLayers.size());
-    Assert.assertEquals(0, layers.classesLayers.size());
-    Assert.assertEquals(1, layers.extraFilesLayers.size());
+    ContainerBuilderLayers layers =
+        new ContainerBuilderLayers(setUpBuildContext(ContainerizingMode.PACKAGED));
+    assertThat(layers.dependenciesLayer).isNotNull();
+    assertThat(layers.snapshotsLayer).isNotNull();
+    assertThat(layers.resourcesLayer).isNull();
+    assertThat(layers.classesLayer).isNull();
+    assertThat(layers.extraFilesLayer).isNotNull();
 
     Path dependenciesPath = getResource("maven/application/dependencies");
-    assertSourcePathsUnordered(
-        Arrays.asList(
+    assertThat(layers.dependenciesLayer.getEntries())
+        .comparingElementsUsing(SOURCE_FILE_OF)
+        .containsExactly(
             testRepository.artifactPathOnDisk("com.test", "dependency", "1.0.0"),
             dependenciesPath.resolve("more/dependency-1.0.0.jar"),
             dependenciesPath.resolve("another/one/dependency-1.0.0.jar"),
             dependenciesPath.resolve("libraryA.jar"),
             dependenciesPath.resolve("libraryB.jar"),
-            dependenciesPath.resolve("library.jarC.jar")),
-        layers.dependenciesLayers.get(0).getEntries());
-    assertSourcePathsUnordered(
-        Arrays.asList(
-            testRepository.artifactPathOnDisk("com.test", "dependencyX", "1.0.0-SNAPSHOT")),
-        layers.snapshotsLayers.get(0).getEntries());
-    assertSourcePathsUnordered(Arrays.asList(jar), layers.extraFilesLayers.get(0).getEntries());
+            dependenciesPath.resolve("library.jarC.jar"));
+    assertThat(layers.snapshotsLayer.getEntries())
+        .comparingElementsUsing(SOURCE_FILE_OF)
+        .containsExactly(
+            testRepository.artifactPathOnDisk("com.test", "dependencyX", "1.0.0-SNAPSHOT"));
+    assertThat(layers.extraFilesLayer.getEntries())
+        .comparingElementsUsing(SOURCE_FILE_OF)
+        .containsExactly(jar);
 
-    assertExtractionPathsUnordered(
-        Arrays.asList(
-            "/app-root/libs/dependency-1.0.0-200.jar",
-            "/app-root/libs/dependency-1.0.0-480.jar",
-            "/app-root/libs/dependency-1.0.0-770.jar",
-            "/app-root/libs/library.jarC.jar",
-            "/app-root/libs/libraryA.jar",
-            "/app-root/libs/libraryB.jar"),
-        layers.dependenciesLayers.get(0).getEntries());
-    assertExtractionPathsUnordered(
-        Arrays.asList("/app-root/libs/dependencyX-1.0.0-SNAPSHOT.jar"),
-        layers.snapshotsLayers.get(0).getEntries());
-    assertExtractionPathsUnordered(
-        Arrays.asList("/app-root/classpath/final-name.jar"),
-        layers.extraFilesLayers.get(0).getEntries());
+    assertThat(layers.dependenciesLayer.getEntries())
+        .comparingElementsUsing(EXTRACTION_PATH_OF)
+        .containsExactly(
+            "/my/app/libs/dependency-1.0.0-200.jar",
+            "/my/app/libs/dependency-1.0.0-480.jar",
+            "/my/app/libs/dependency-1.0.0-770.jar",
+            "/my/app/libs/library.jarC.jar",
+            "/my/app/libs/libraryA.jar",
+            "/my/app/libs/libraryB.jar");
+    assertThat(layers.snapshotsLayer.getEntries())
+        .comparingElementsUsing(EXTRACTION_PATH_OF)
+        .containsExactly("/my/app/libs/dependencyX-1.0.0-SNAPSHOT.jar");
+    assertThat(layers.extraFilesLayer.getEntries())
+        .comparingElementsUsing(EXTRACTION_PATH_OF)
+        .containsExactly("/my/app/classpath/final-name.jar");
   }
 
   @Test
-  public void testCreateContainerBuilder_warNonDefaultAppRoot()
+  public void testCreateContainerBuilder_war()
       throws URISyntaxException, IOException, InvalidImageReferenceException,
           CacheDirectoryCreationException {
     Path unzipTarget = setUpWar(getResource("maven/webapp/final-name"));
 
-    BuildContext buildContext = setUpBuildContext("/my/app", DEFAULT_CONTAINERIZING_MODE);
-    ContainerBuilderLayers layers = new ContainerBuilderLayers(buildContext);
-    assertSourcePathsUnordered(
-        ImmutableList.of(unzipTarget.resolve("WEB-INF/lib/dependency-1.0.0.jar")),
-        layers.dependenciesLayers.get(0).getEntries());
-    assertSourcePathsUnordered(
-        ImmutableList.of(unzipTarget.resolve("WEB-INF/lib/dependencyX-1.0.0-SNAPSHOT.jar")),
-        layers.snapshotsLayers.get(0).getEntries());
-    assertSourcePathsUnordered(
-        ImmutableList.of(
+    ContainerBuilderLayers layers = new ContainerBuilderLayers(setUpBuildContext());
+    assertThat(layers.dependenciesLayer.getEntries())
+        .comparingElementsUsing(SOURCE_FILE_OF)
+        .containsExactly(unzipTarget.resolve("WEB-INF/lib/dependency-1.0.0.jar"));
+    assertThat(layers.snapshotsLayer.getEntries())
+        .comparingElementsUsing(SOURCE_FILE_OF)
+        .containsExactly(unzipTarget.resolve("WEB-INF/lib/dependencyX-1.0.0-SNAPSHOT.jar"));
+    assertThat(layers.resourcesLayer.getEntries())
+        .comparingElementsUsing(SOURCE_FILE_OF)
+        .containsExactly(
             unzipTarget.resolve("META-INF"),
             unzipTarget.resolve("META-INF/context.xml"),
             unzipTarget.resolve("Test.jsp"),
@@ -562,24 +504,24 @@ public class MavenProjectPropertiesTest {
             unzipTarget.resolve("WEB-INF/classes/package"),
             unzipTarget.resolve("WEB-INF/classes/package/test.properties"),
             unzipTarget.resolve("WEB-INF/lib"),
-            unzipTarget.resolve("WEB-INF/web.xml")),
-        layers.resourcesLayers.get(0).getEntries());
-    assertSourcePathsUnordered(
-        ImmutableList.of(
+            unzipTarget.resolve("WEB-INF/web.xml"));
+    assertThat(layers.classesLayer.getEntries())
+        .comparingElementsUsing(SOURCE_FILE_OF)
+        .containsExactly(
             unzipTarget.resolve("WEB-INF/classes/HelloWorld.class"),
             unzipTarget.resolve("WEB-INF/classes/empty_dir"),
             unzipTarget.resolve("WEB-INF/classes/package"),
-            unzipTarget.resolve("WEB-INF/classes/package/Other.class")),
-        layers.classesLayers.get(0).getEntries());
+            unzipTarget.resolve("WEB-INF/classes/package/Other.class"));
 
-    assertExtractionPathsUnordered(
-        Collections.singletonList("/my/app/WEB-INF/lib/dependency-1.0.0.jar"),
-        layers.dependenciesLayers.get(0).getEntries());
-    assertExtractionPathsUnordered(
-        Collections.singletonList("/my/app/WEB-INF/lib/dependencyX-1.0.0-SNAPSHOT.jar"),
-        layers.snapshotsLayers.get(0).getEntries());
-    assertExtractionPathsUnordered(
-        Arrays.asList(
+    assertThat(layers.dependenciesLayer.getEntries())
+        .comparingElementsUsing(EXTRACTION_PATH_OF)
+        .containsExactly("/my/app/WEB-INF/lib/dependency-1.0.0.jar");
+    assertThat(layers.snapshotsLayer.getEntries())
+        .comparingElementsUsing(EXTRACTION_PATH_OF)
+        .containsExactly("/my/app/WEB-INF/lib/dependencyX-1.0.0-SNAPSHOT.jar");
+    assertThat(layers.resourcesLayer.getEntries())
+        .comparingElementsUsing(EXTRACTION_PATH_OF)
+        .containsExactly(
             "/my/app/META-INF",
             "/my/app/META-INF/context.xml",
             "/my/app/Test.jsp",
@@ -589,24 +531,14 @@ public class MavenProjectPropertiesTest {
             "/my/app/WEB-INF/classes/package",
             "/my/app/WEB-INF/classes/package/test.properties",
             "/my/app/WEB-INF/lib",
-            "/my/app/WEB-INF/web.xml"),
-        layers.resourcesLayers.get(0).getEntries());
-    assertExtractionPathsUnordered(
-        Arrays.asList(
+            "/my/app/WEB-INF/web.xml");
+    assertThat(layers.classesLayer.getEntries())
+        .comparingElementsUsing(EXTRACTION_PATH_OF)
+        .containsExactly(
             "/my/app/WEB-INF/classes/HelloWorld.class",
             "/my/app/WEB-INF/classes/empty_dir",
             "/my/app/WEB-INF/classes/package",
-            "/my/app/WEB-INF/classes/package/Other.class"),
-        layers.classesLayers.get(0).getEntries());
-  }
-
-  @Test
-  public void testCreateContainerBuilder_jarNonDefaultAppRoot()
-      throws IOException, InvalidImageReferenceException, CacheDirectoryCreationException {
-    // Test when the default packaging is set
-    Mockito.when(mockMavenProject.getPackaging()).thenReturn("jar");
-    BuildContext buildContext = setUpBuildContext("/my/app", DEFAULT_CONTAINERIZING_MODE);
-    assertNonDefaultAppRoot(buildContext);
+            "/my/app/WEB-INF/classes/package/Other.class");
   }
 
   @Test
@@ -614,7 +546,7 @@ public class MavenProjectPropertiesTest {
       throws IOException, InvalidImageReferenceException, CacheDirectoryCreationException {
     setUpWar(temporaryFolder.newFolder("final-name").toPath());
 
-    setUpBuildContext("/anything", DEFAULT_CONTAINERIZING_MODE); // should pass
+    setUpBuildContext(); // should pass
   }
 
   @Test
@@ -623,7 +555,7 @@ public class MavenProjectPropertiesTest {
     temporaryFolder.newFolder("final-name", "WEB-INF", "classes");
     setUpWar(temporaryFolder.getRoot().toPath());
 
-    setUpBuildContext("/anything", DEFAULT_CONTAINERIZING_MODE); // should pass
+    setUpBuildContext(); // should pass
   }
 
   @Test
@@ -632,30 +564,30 @@ public class MavenProjectPropertiesTest {
     temporaryFolder.newFolder("final-name", "WEB-INF", "lib");
     setUpWar(temporaryFolder.getRoot().toPath());
 
-    setUpBuildContext("/anything", DEFAULT_CONTAINERIZING_MODE); // should pass
+    setUpBuildContext(); // should pass
   }
 
   @Test
   public void testIsWarProject_warPackagingIsWar() {
-    Mockito.when(mockMavenProject.getPackaging()).thenReturn("war");
+    when(mockMavenProject.getPackaging()).thenReturn("war");
     Assert.assertTrue(mavenProjectProperties.isWarProject());
   }
 
   @Test
   public void testIsWarProject_gwtAppPackagingIsWar() {
-    Mockito.when(mockMavenProject.getPackaging()).thenReturn("gwt-app");
+    when(mockMavenProject.getPackaging()).thenReturn("gwt-app");
     Assert.assertTrue(mavenProjectProperties.isWarProject());
   }
 
   @Test
   public void testIsWarProject_jarPackagingIsNotWar() {
-    Mockito.when(mockMavenProject.getPackaging()).thenReturn("jar");
+    when(mockMavenProject.getPackaging()).thenReturn("jar");
     Assert.assertFalse(mavenProjectProperties.isWarProject());
   }
 
   @Test
   public void testIsWarProject_gwtLibPackagingIsNotWar() {
-    Mockito.when(mockMavenProject.getPackaging()).thenReturn("gwt-lib");
+    when(mockMavenProject.getPackaging()).thenReturn("gwt-lib");
     Assert.assertFalse(mavenProjectProperties.isWarProject());
   }
 
@@ -677,27 +609,24 @@ public class MavenProjectPropertiesTest {
             newArtifact("com.test", "projectB", "1.0-SNAPSHOT"),
             newArtifact("com.test", "projectC", "3.0"));
 
-    Map<LayerType, List<Path>> classifyDependencies =
+    Map<LayerType, List<Path>> classified =
         mavenProjectProperties.classifyDependencies(artifacts, projectArtifacts);
 
-    Assert.assertEquals(
-        classifyDependencies.get(LayerType.DEPENDENCIES),
-        ImmutableList.of(
+    assertThat(classified.get(LayerType.DEPENDENCIES))
+        .containsExactly(
             newArtifact("com.test", "dependencyA", "1.0").getFile().toPath(),
-            newArtifact("com.test", "dependencyD", "4.0").getFile().toPath()));
+            newArtifact("com.test", "dependencyD", "4.0").getFile().toPath());
 
-    Assert.assertEquals(
-        classifyDependencies.get(LayerType.SNAPSHOT_DEPENDENCIES),
-        ImmutableList.of(
+    assertThat(classified.get(LayerType.SNAPSHOT_DEPENDENCIES))
+        .containsExactly(
             newArtifact("com.test", "dependencyB", "4.0-SNAPSHOT").getFile().toPath(),
-            newArtifact("com.test", "dependencyC", "1.0-SNAPSHOT").getFile().toPath()));
+            newArtifact("com.test", "dependencyC", "1.0-SNAPSHOT").getFile().toPath());
 
-    Assert.assertEquals(
-        classifyDependencies.get(LayerType.PROJECT_DEPENDENCIES),
-        ImmutableList.of(
+    assertThat(classified.get(LayerType.PROJECT_DEPENDENCIES))
+        .containsExactly(
             newArtifact("com.test", "projectA", "1.0").getFile().toPath(),
             newArtifact("com.test", "projectB", "1.0-SNAPSHOT").getFile().toPath(),
-            newArtifact("com.test", "projectC", "3.0").getFile().toPath()));
+            newArtifact("com.test", "projectC", "3.0").getFile().toPath());
   }
 
   @Test
@@ -705,21 +634,21 @@ public class MavenProjectPropertiesTest {
     MavenProject rootPomProject = Mockito.mock(MavenProject.class);
     MavenProject jibSubModule = Mockito.mock(MavenProject.class);
     MavenProject sharedLibSubModule = Mockito.mock(MavenProject.class);
-    Mockito.when(mockMavenSession.getProjects())
+    when(mockMavenSession.getProjects())
         .thenReturn(Arrays.asList(rootPomProject, sharedLibSubModule, jibSubModule));
 
     Artifact nullFileArtifact = Mockito.mock(Artifact.class);
     Artifact projectJar = newArtifact("com.test", "my-app", "1.0");
     Artifact sharedLibJar = newArtifact("com.test", "shared-lib", "1.0");
 
-    Mockito.when(rootPomProject.getArtifact()).thenReturn(nullFileArtifact);
-    Mockito.when(jibSubModule.getArtifact()).thenReturn(projectJar);
-    Mockito.when(sharedLibSubModule.getArtifact()).thenReturn(sharedLibJar);
+    when(rootPomProject.getArtifact()).thenReturn(nullFileArtifact);
+    when(jibSubModule.getArtifact()).thenReturn(projectJar);
+    when(sharedLibSubModule.getArtifact()).thenReturn(sharedLibJar);
 
-    Mockito.when(mockMavenProject.getArtifact()).thenReturn(projectJar);
+    when(mockMavenProject.getArtifact()).thenReturn(projectJar);
 
-    Assert.assertEquals(
-        ImmutableSet.of(sharedLibJar), mavenProjectProperties.getProjectDependencies());
+    assertThat(mavenProjectProperties.getProjectDependencies())
+        .isEqualTo(ImmutableSet.of(sharedLibJar));
   }
 
   @Test
@@ -732,7 +661,7 @@ public class MavenProjectPropertiesTest {
   public void testGetChildValue_noPathGiven() {
     Xpp3Dom root = newXpp3Dom("root", "value");
 
-    Assert.assertEquals(Optional.of("value"), MavenProjectProperties.getChildValue(root));
+    assertThat(MavenProjectProperties.getChildValue(root)).isEqualTo(Optional.of("value"));
   }
 
   @Test
@@ -749,10 +678,10 @@ public class MavenProjectPropertiesTest {
     Xpp3Dom foo = addXpp3DomChild(root, "foo", "foo");
     addXpp3DomChild(foo, "bar", "bar");
 
-    Assert.assertEquals(Optional.of("foo"), MavenProjectProperties.getChildValue(root, "foo"));
-    Assert.assertEquals(
-        Optional.of("bar"), MavenProjectProperties.getChildValue(root, "foo", "bar"));
-    Assert.assertEquals(Optional.of("bar"), MavenProjectProperties.getChildValue(foo, "bar"));
+    assertThat(MavenProjectProperties.getChildValue(root, "foo")).isEqualTo(Optional.of("foo"));
+    assertThat(MavenProjectProperties.getChildValue(root, "foo", "bar"))
+        .isEqualTo(Optional.of("bar"));
+    assertThat(MavenProjectProperties.getChildValue(foo, "bar")).isEqualTo(Optional.of("bar"));
   }
 
   @Test
@@ -776,351 +705,346 @@ public class MavenProjectPropertiesTest {
 
   @Test
   public void testGetSpringBootRepackageConfiguration_pluginNotApplied() {
-    Assert.assertEquals(
-        Optional.empty(), mavenProjectProperties.getSpringBootRepackageConfiguration());
+    assertThat(mavenProjectProperties.getSpringBootRepackageConfiguration())
+        .isEqualTo(Optional.empty());
   }
 
   @Test
   public void testGetSpringBootRepackageConfiguration_noConfigurationBlock() {
-    Mockito.when(mockMavenProject.getPlugin("org.springframework.boot:spring-boot-maven-plugin"))
+    when(mockMavenProject.getPlugin("org.springframework.boot:spring-boot-maven-plugin"))
         .thenReturn(mockPlugin);
-    Mockito.when(mockPlugin.getExecutions()).thenReturn(Arrays.asList(mockPluginExecution));
-    Mockito.when(mockPluginExecution.getGoals()).thenReturn(Arrays.asList("repackage"));
-    Mockito.when(mockPluginExecution.getConfiguration()).thenReturn(null);
-    Assert.assertEquals(
-        Optional.of(new Xpp3Dom("configuration")),
-        mavenProjectProperties.getSpringBootRepackageConfiguration());
+    when(mockPlugin.getExecutions()).thenReturn(Arrays.asList(mockPluginExecution));
+    when(mockPluginExecution.getGoals()).thenReturn(Arrays.asList("repackage"));
+    when(mockPluginExecution.getConfiguration()).thenReturn(null);
+    assertThat(mavenProjectProperties.getSpringBootRepackageConfiguration())
+        .isEqualTo(Optional.of(new Xpp3Dom("configuration")));
   }
 
   @Test
   public void testGetSpringBootRepackageConfiguration_noExecutions() {
-    Mockito.when(mockMavenProject.getPlugin("org.springframework.boot:spring-boot-maven-plugin"))
+    when(mockMavenProject.getPlugin("org.springframework.boot:spring-boot-maven-plugin"))
         .thenReturn(mockPlugin);
-    Mockito.when(mockPlugin.getExecutions()).thenReturn(Collections.emptyList());
-    Assert.assertEquals(
-        Optional.empty(), mavenProjectProperties.getSpringBootRepackageConfiguration());
+    when(mockPlugin.getExecutions()).thenReturn(Collections.emptyList());
+    assertThat(mavenProjectProperties.getSpringBootRepackageConfiguration())
+        .isEqualTo(Optional.empty());
   }
 
   @Test
   public void testGetSpringBootRepackageConfiguration_noRepackageGoal() {
-    Mockito.when(mockMavenProject.getPlugin("org.springframework.boot:spring-boot-maven-plugin"))
+    when(mockMavenProject.getPlugin("org.springframework.boot:spring-boot-maven-plugin"))
         .thenReturn(mockPlugin);
-    Mockito.when(mockPlugin.getExecutions()).thenReturn(Arrays.asList(mockPluginExecution));
-    Mockito.when(mockPluginExecution.getGoals()).thenReturn(Arrays.asList("goal", "foo", "bar"));
-    Assert.assertEquals(
-        Optional.empty(), mavenProjectProperties.getSpringBootRepackageConfiguration());
+    when(mockPlugin.getExecutions()).thenReturn(Arrays.asList(mockPluginExecution));
+    when(mockPluginExecution.getGoals()).thenReturn(Arrays.asList("goal", "foo", "bar"));
+    assertThat(mavenProjectProperties.getSpringBootRepackageConfiguration())
+        .isEqualTo(Optional.empty());
   }
 
   @Test
   public void testGetSpringBootRepackageConfiguration_repackageGoal() {
-    Mockito.when(mockMavenProject.getPlugin("org.springframework.boot:spring-boot-maven-plugin"))
+    when(mockMavenProject.getPlugin("org.springframework.boot:spring-boot-maven-plugin"))
         .thenReturn(mockPlugin);
-    Mockito.when(mockPlugin.getExecutions()).thenReturn(Arrays.asList(mockPluginExecution));
-    Mockito.when(mockPluginExecution.getGoals()).thenReturn(Arrays.asList("goal", "repackage"));
-    Mockito.when(mockPluginExecution.getConfiguration()).thenReturn(pluginConfiguration);
-    Assert.assertEquals(
-        Optional.of(pluginConfiguration),
-        mavenProjectProperties.getSpringBootRepackageConfiguration());
+    when(mockPlugin.getExecutions()).thenReturn(Arrays.asList(mockPluginExecution));
+    when(mockPluginExecution.getGoals()).thenReturn(Arrays.asList("goal", "repackage"));
+    when(mockPluginExecution.getConfiguration()).thenReturn(pluginConfiguration);
+    assertThat(mavenProjectProperties.getSpringBootRepackageConfiguration())
+        .isEqualTo(Optional.of(pluginConfiguration));
   }
 
   @Test
   public void testGetSpringBootRepackageConfiguration_skipped() {
-    Mockito.when(mockMavenProject.getPlugin("org.springframework.boot:spring-boot-maven-plugin"))
+    when(mockMavenProject.getPlugin("org.springframework.boot:spring-boot-maven-plugin"))
         .thenReturn(mockPlugin);
-    Mockito.when(mockPlugin.getExecutions()).thenReturn(Arrays.asList(mockPluginExecution));
-    Mockito.when(mockPluginExecution.getGoals()).thenReturn(Arrays.asList("repackage"));
-    Mockito.when(mockPluginExecution.getConfiguration()).thenReturn(pluginConfiguration);
+    when(mockPlugin.getExecutions()).thenReturn(Arrays.asList(mockPluginExecution));
+    when(mockPluginExecution.getGoals()).thenReturn(Arrays.asList("repackage"));
+    when(mockPluginExecution.getConfiguration()).thenReturn(pluginConfiguration);
     addXpp3DomChild(pluginConfiguration, "skip", "true");
-    Assert.assertEquals(
-        Optional.empty(), mavenProjectProperties.getSpringBootRepackageConfiguration());
+    assertThat(mavenProjectProperties.getSpringBootRepackageConfiguration())
+        .isEqualTo(Optional.empty());
   }
 
   @Test
   public void testGetSpringBootRepackageConfiguration_skipNotTrue() {
-    Mockito.when(mockMavenProject.getPlugin("org.springframework.boot:spring-boot-maven-plugin"))
+    when(mockMavenProject.getPlugin("org.springframework.boot:spring-boot-maven-plugin"))
         .thenReturn(mockPlugin);
-    Mockito.when(mockPlugin.getExecutions()).thenReturn(Arrays.asList(mockPluginExecution));
-    Mockito.when(mockPluginExecution.getGoals()).thenReturn(Arrays.asList("repackage"));
-    Mockito.when(mockPluginExecution.getConfiguration()).thenReturn(pluginConfiguration);
+    when(mockPlugin.getExecutions()).thenReturn(Arrays.asList(mockPluginExecution));
+    when(mockPluginExecution.getGoals()).thenReturn(Arrays.asList("repackage"));
+    when(mockPluginExecution.getConfiguration()).thenReturn(pluginConfiguration);
     addXpp3DomChild(pluginConfiguration, "skip", null);
-    Assert.assertEquals(
-        Optional.of(pluginConfiguration),
-        mavenProjectProperties.getSpringBootRepackageConfiguration());
+    assertThat(mavenProjectProperties.getSpringBootRepackageConfiguration())
+        .isEqualTo(Optional.of(pluginConfiguration));
   }
 
   @Test
   public void testGetJarArtifact() throws IOException {
-    Mockito.when(mockBuild.getDirectory()).thenReturn(Paths.get("/foo/bar").toString());
-    Mockito.when(mockBuild.getFinalName()).thenReturn("helloworld-1");
+    when(mockBuild.getDirectory()).thenReturn(Paths.get("/foo/bar").toString());
+    when(mockBuild.getFinalName()).thenReturn("helloworld-1");
 
-    Assert.assertEquals(
-        Paths.get("/foo/bar/helloworld-1.jar"), mavenProjectProperties.getJarArtifact());
+    Truth8.assertThat(mavenProjectProperties.getJarArtifact())
+        .isEqualTo(Paths.get("/foo/bar/helloworld-1.jar"));
   }
 
   @Test
   public void testGetJarArtifact_outputDirectoryFromJarPlugin() throws IOException {
-    Mockito.when(mockMavenProject.getBasedir()).thenReturn(new File("/should/ignore"));
-    Mockito.when(mockBuild.getDirectory()).thenReturn("/should/ignore");
-    Mockito.when(mockBuild.getFinalName()).thenReturn("helloworld-1");
+    when(mockMavenProject.getBasedir()).thenReturn(new File("/should/ignore"));
+    when(mockBuild.getDirectory()).thenReturn("/should/ignore");
+    when(mockBuild.getFinalName()).thenReturn("helloworld-1");
 
-    Mockito.when(mockMavenProject.getPlugin("org.apache.maven.plugins:maven-jar-plugin"))
+    when(mockMavenProject.getPlugin("org.apache.maven.plugins:maven-jar-plugin"))
         .thenReturn(mockPlugin);
-    Mockito.when(mockPlugin.getExecutions()).thenReturn(Arrays.asList(mockPluginExecution));
-    Mockito.when(mockPluginExecution.getId()).thenReturn("default-jar");
-    Mockito.when(mockPluginExecution.getConfiguration()).thenReturn(pluginConfiguration);
+    when(mockPlugin.getExecutions()).thenReturn(Arrays.asList(mockPluginExecution));
+    when(mockPluginExecution.getId()).thenReturn("default-jar");
+    when(mockPluginExecution.getConfiguration()).thenReturn(pluginConfiguration);
     addXpp3DomChild(pluginConfiguration, "outputDirectory", Paths.get("/jar/out").toString());
 
-    Assert.assertEquals(
-        Paths.get("/jar/out/helloworld-1.jar"), mavenProjectProperties.getJarArtifact());
+    Truth8.assertThat(mavenProjectProperties.getJarArtifact())
+        .isEqualTo(Paths.get("/jar/out/helloworld-1.jar"));
   }
 
   @Test
   public void testGetJarArtifact_relativeOutputDirectoryFromJarPlugin() throws IOException {
-    Mockito.when(mockMavenProject.getBasedir()).thenReturn(new File("/base/dir"));
-    Mockito.when(mockBuild.getDirectory()).thenReturn(temporaryFolder.getRoot().toString());
-    Mockito.when(mockBuild.getFinalName()).thenReturn("helloworld-1");
+    when(mockMavenProject.getBasedir()).thenReturn(new File("/base/dir"));
+    when(mockBuild.getDirectory()).thenReturn(temporaryFolder.getRoot().toString());
+    when(mockBuild.getFinalName()).thenReturn("helloworld-1");
 
-    Mockito.when(mockMavenProject.getPlugin("org.apache.maven.plugins:maven-jar-plugin"))
+    when(mockMavenProject.getPlugin("org.apache.maven.plugins:maven-jar-plugin"))
         .thenReturn(mockPlugin);
-    Mockito.when(mockPlugin.getExecutions()).thenReturn(Arrays.asList(mockPluginExecution));
-    Mockito.when(mockPluginExecution.getId()).thenReturn("default-jar");
-    Mockito.when(mockPluginExecution.getConfiguration()).thenReturn(pluginConfiguration);
+    when(mockPlugin.getExecutions()).thenReturn(Arrays.asList(mockPluginExecution));
+    when(mockPluginExecution.getId()).thenReturn("default-jar");
+    when(mockPluginExecution.getConfiguration()).thenReturn(pluginConfiguration);
     addXpp3DomChild(pluginConfiguration, "outputDirectory", Paths.get("relative").toString());
 
-    Assert.assertEquals(
-        Paths.get("/base/dir/relative/helloworld-1.jar"), mavenProjectProperties.getJarArtifact());
+    Truth8.assertThat(mavenProjectProperties.getJarArtifact())
+        .isEqualTo(Paths.get("/base/dir/relative/helloworld-1.jar"));
   }
 
   @Test
   public void testGetJarArtifact_classifier() throws IOException {
-    Mockito.when(mockBuild.getDirectory()).thenReturn(Paths.get("/foo/bar").toString());
-    Mockito.when(mockBuild.getFinalName()).thenReturn("helloworld-1");
+    when(mockBuild.getDirectory()).thenReturn(Paths.get("/foo/bar").toString());
+    when(mockBuild.getFinalName()).thenReturn("helloworld-1");
 
-    Mockito.when(mockMavenProject.getPlugin("org.apache.maven.plugins:maven-jar-plugin"))
+    when(mockMavenProject.getPlugin("org.apache.maven.plugins:maven-jar-plugin"))
         .thenReturn(mockPlugin);
-    Mockito.when(mockPlugin.getExecutions()).thenReturn(Arrays.asList(mockPluginExecution));
-    Mockito.when(mockPluginExecution.getId()).thenReturn("default-jar");
-    Mockito.when(mockPluginExecution.getConfiguration()).thenReturn(pluginConfiguration);
+    when(mockPlugin.getExecutions()).thenReturn(Arrays.asList(mockPluginExecution));
+    when(mockPluginExecution.getId()).thenReturn("default-jar");
+    when(mockPluginExecution.getConfiguration()).thenReturn(pluginConfiguration);
     addXpp3DomChild(pluginConfiguration, "classifier", "a-class");
 
-    Assert.assertEquals(
-        Paths.get("/foo/bar/helloworld-1-a-class.jar"), mavenProjectProperties.getJarArtifact());
+    Truth8.assertThat(mavenProjectProperties.getJarArtifact())
+        .isEqualTo(Paths.get("/foo/bar/helloworld-1-a-class.jar"));
   }
 
   @Test
   public void testGetJarArtifact_executionIdNotMatched() throws IOException {
-    Mockito.when(mockBuild.getDirectory()).thenReturn(Paths.get("/foo/bar").toString());
-    Mockito.when(mockBuild.getFinalName()).thenReturn("helloworld-1");
+    when(mockBuild.getDirectory()).thenReturn(Paths.get("/foo/bar").toString());
+    when(mockBuild.getFinalName()).thenReturn("helloworld-1");
 
-    Mockito.when(mockMavenProject.getPlugin("org.apache.maven.plugins:maven-jar-plugin"))
+    when(mockMavenProject.getPlugin("org.apache.maven.plugins:maven-jar-plugin"))
         .thenReturn(mockPlugin);
-    Mockito.when(mockPlugin.getExecutions()).thenReturn(Arrays.asList(mockPluginExecution));
-    Mockito.when(mockPluginExecution.getId()).thenReturn("no-id-match");
+    when(mockPlugin.getExecutions()).thenReturn(Arrays.asList(mockPluginExecution));
+    when(mockPluginExecution.getId()).thenReturn("no-id-match");
     Mockito.lenient().when(mockPluginExecution.getConfiguration()).thenReturn(pluginConfiguration);
     addXpp3DomChild(pluginConfiguration, "outputDirectory", "/should/ignore");
     addXpp3DomChild(pluginConfiguration, "classifier", "a-class");
 
-    Assert.assertEquals(
-        Paths.get("/foo/bar/helloworld-1.jar"), mavenProjectProperties.getJarArtifact());
+    Truth8.assertThat(mavenProjectProperties.getJarArtifact())
+        .isEqualTo(Paths.get("/foo/bar/helloworld-1.jar"));
   }
 
   @Test
   public void testGetJarArtifact_originalJarCopiedIfSpringBoot() throws IOException {
     temporaryFolder.newFile("helloworld-1.jar.original");
-    Mockito.when(mockBuild.getDirectory()).thenReturn(temporaryFolder.getRoot().toString());
-    Mockito.when(mockBuild.getFinalName()).thenReturn("helloworld-1");
+    when(mockBuild.getDirectory()).thenReturn(temporaryFolder.getRoot().toString());
+    when(mockBuild.getFinalName()).thenReturn("helloworld-1");
 
     setUpSpringBootFatJar();
     Path tempDirectory = temporaryFolder.newFolder("tmp").toPath();
-    Mockito.when(mockTempDirectoryProvider.newDirectory()).thenReturn(tempDirectory);
+    when(mockTempDirectoryProvider.newDirectory()).thenReturn(tempDirectory);
 
-    Assert.assertEquals(
-        tempDirectory.resolve("helloworld-1.original.jar"),
-        mavenProjectProperties.getJarArtifact());
+    Truth8.assertThat(mavenProjectProperties.getJarArtifact())
+        .isEqualTo(tempDirectory.resolve("helloworld-1.original.jar"));
 
     mavenProjectProperties.waitForLoggingThread();
-    Mockito.verify(mockLog)
-        .info("Spring Boot repackaging (fat JAR) detected; using the original JAR");
+    verify(mockLog).info("Spring Boot repackaging (fat JAR) detected; using the original JAR");
   }
 
   @Test
   public void testGetJarArtifact_originalJarIfSpringBoot_differentDirectories() throws IOException {
-    Mockito.when(mockMavenProject.getBasedir()).thenReturn(new File("/should/ignore"));
-    Mockito.when(mockBuild.getDirectory()).thenReturn("/should/ignore");
-    Mockito.when(mockBuild.getFinalName()).thenReturn("helloworld-1");
+    when(mockMavenProject.getBasedir()).thenReturn(new File("/should/ignore"));
+    when(mockBuild.getDirectory()).thenReturn("/should/ignore");
+    when(mockBuild.getFinalName()).thenReturn("helloworld-1");
 
-    Mockito.when(mockMavenProject.getPlugin("org.apache.maven.plugins:maven-jar-plugin"))
+    when(mockMavenProject.getPlugin("org.apache.maven.plugins:maven-jar-plugin"))
         .thenReturn(mockPlugin);
-    Mockito.when(mockPlugin.getExecutions()).thenReturn(Arrays.asList(mockPluginExecution));
-    Mockito.when(mockPluginExecution.getId()).thenReturn("default-jar");
-    Mockito.when(mockPluginExecution.getConfiguration()).thenReturn(pluginConfiguration);
+    when(mockPlugin.getExecutions()).thenReturn(Arrays.asList(mockPluginExecution));
+    when(mockPluginExecution.getId()).thenReturn("default-jar");
+    when(mockPluginExecution.getConfiguration()).thenReturn(pluginConfiguration);
     addXpp3DomChild(pluginConfiguration, "outputDirectory", Paths.get("/jar/out").toString());
 
     setUpSpringBootFatJar();
 
-    Assert.assertEquals(
-        Paths.get("/jar/out/helloworld-1.jar"), mavenProjectProperties.getJarArtifact());
+    Truth8.assertThat(mavenProjectProperties.getJarArtifact())
+        .isEqualTo(Paths.get("/jar/out/helloworld-1.jar"));
 
     mavenProjectProperties.waitForLoggingThread();
-    Mockito.verify(mockLog)
-        .info("Spring Boot repackaging (fat JAR) detected; using the original JAR");
+    verify(mockLog).info("Spring Boot repackaging (fat JAR) detected; using the original JAR");
   }
 
   @Test
   public void testGetJarArtifact_originalJarIfSpringBoot_differentFinalNames() throws IOException {
     Path buildDirectory = temporaryFolder.newFolder("target").toPath();
     Files.createFile(buildDirectory.resolve("helloworld-1.jar"));
-    Mockito.when(mockMavenProject.getBasedir()).thenReturn(temporaryFolder.getRoot());
-    Mockito.when(mockBuild.getDirectory()).thenReturn(buildDirectory.toString());
-    Mockito.when(mockBuild.getFinalName()).thenReturn("helloworld-1");
+    when(mockMavenProject.getBasedir()).thenReturn(temporaryFolder.getRoot());
+    when(mockBuild.getDirectory()).thenReturn(buildDirectory.toString());
+    when(mockBuild.getFinalName()).thenReturn("helloworld-1");
 
-    Mockito.when(mockMavenProject.getPlugin("org.apache.maven.plugins:maven-jar-plugin"))
+    when(mockMavenProject.getPlugin("org.apache.maven.plugins:maven-jar-plugin"))
         .thenReturn(mockPlugin);
-    Mockito.when(mockPlugin.getExecutions()).thenReturn(Arrays.asList(mockPluginExecution));
-    Mockito.when(mockPluginExecution.getId()).thenReturn("default-jar");
-    Mockito.when(mockPluginExecution.getConfiguration()).thenReturn(pluginConfiguration);
+    when(mockPlugin.getExecutions()).thenReturn(Arrays.asList(mockPluginExecution));
+    when(mockPluginExecution.getId()).thenReturn("default-jar");
+    when(mockPluginExecution.getConfiguration()).thenReturn(pluginConfiguration);
     addXpp3DomChild(pluginConfiguration, "outputDirectory", "target");
 
     Xpp3Dom bootPluginConfiguration = setUpSpringBootFatJar();
     addXpp3DomChild(bootPluginConfiguration, "finalName", "boot-helloworld-1");
 
-    Assert.assertEquals(
-        buildDirectory.resolve("helloworld-1.jar"), mavenProjectProperties.getJarArtifact());
+    Truth8.assertThat(mavenProjectProperties.getJarArtifact())
+        .isEqualTo(buildDirectory.resolve("helloworld-1.jar"));
 
     mavenProjectProperties.waitForLoggingThread();
-    Mockito.verify(mockLog)
-        .info("Spring Boot repackaging (fat JAR) detected; using the original JAR");
+    verify(mockLog).info("Spring Boot repackaging (fat JAR) detected; using the original JAR");
   }
 
   @Test
   public void testGetJarArtifact_originalJarIfSpringBoot_differentClassifier() throws IOException {
     Path buildDirectory = temporaryFolder.newFolder("target").toPath();
     Files.createFile(buildDirectory.resolve("helloworld-1.jar"));
-    Mockito.when(mockMavenProject.getBasedir()).thenReturn(temporaryFolder.getRoot());
-    Mockito.when(mockBuild.getDirectory()).thenReturn(buildDirectory.toString());
-    Mockito.when(mockBuild.getFinalName()).thenReturn("helloworld-1");
+    when(mockMavenProject.getBasedir()).thenReturn(temporaryFolder.getRoot());
+    when(mockBuild.getDirectory()).thenReturn(buildDirectory.toString());
+    when(mockBuild.getFinalName()).thenReturn("helloworld-1");
 
-    Mockito.when(mockMavenProject.getPlugin("org.apache.maven.plugins:maven-jar-plugin"))
+    when(mockMavenProject.getPlugin("org.apache.maven.plugins:maven-jar-plugin"))
         .thenReturn(mockPlugin);
-    Mockito.when(mockPlugin.getExecutions()).thenReturn(Arrays.asList(mockPluginExecution));
-    Mockito.when(mockPluginExecution.getId()).thenReturn("default-jar");
-    Mockito.when(mockPluginExecution.getConfiguration()).thenReturn(pluginConfiguration);
+    when(mockPlugin.getExecutions()).thenReturn(Arrays.asList(mockPluginExecution));
+    when(mockPluginExecution.getId()).thenReturn("default-jar");
+    when(mockPluginExecution.getConfiguration()).thenReturn(pluginConfiguration);
     addXpp3DomChild(pluginConfiguration, "outputDirectory", "target");
 
     Xpp3Dom bootPluginConfiguration = setUpSpringBootFatJar();
     addXpp3DomChild(bootPluginConfiguration, "classifier", "boot-class");
 
-    Assert.assertEquals(
-        buildDirectory.resolve("helloworld-1.jar"), mavenProjectProperties.getJarArtifact());
+    Truth8.assertThat(mavenProjectProperties.getJarArtifact())
+        .isEqualTo(buildDirectory.resolve("helloworld-1.jar"));
 
     mavenProjectProperties.waitForLoggingThread();
-    Mockito.verify(mockLog)
-        .info("Spring Boot repackaging (fat JAR) detected; using the original JAR");
+    verify(mockLog).info("Spring Boot repackaging (fat JAR) detected; using the original JAR");
   }
 
   @Test
   public void testGetJarArtifact_originalJarCopiedIfSpringBoot_sameDirectory() throws IOException {
     Path buildDirectory = temporaryFolder.newFolder("target").toPath();
     Files.createFile(buildDirectory.resolve("helloworld-1.jar.original"));
-    Mockito.when(mockMavenProject.getBasedir()).thenReturn(temporaryFolder.getRoot());
-    Mockito.when(mockBuild.getDirectory()).thenReturn(buildDirectory.toString());
-    Mockito.when(mockBuild.getFinalName()).thenReturn("helloworld-1");
+    when(mockMavenProject.getBasedir()).thenReturn(temporaryFolder.getRoot());
+    when(mockBuild.getDirectory()).thenReturn(buildDirectory.toString());
+    when(mockBuild.getFinalName()).thenReturn("helloworld-1");
 
-    Mockito.when(mockMavenProject.getPlugin("org.apache.maven.plugins:maven-jar-plugin"))
+    when(mockMavenProject.getPlugin("org.apache.maven.plugins:maven-jar-plugin"))
         .thenReturn(mockPlugin);
-    Mockito.when(mockPlugin.getExecutions()).thenReturn(Arrays.asList(mockPluginExecution));
-    Mockito.when(mockPluginExecution.getId()).thenReturn("default-jar");
-    Mockito.when(mockPluginExecution.getConfiguration()).thenReturn(pluginConfiguration);
+    when(mockPlugin.getExecutions()).thenReturn(Arrays.asList(mockPluginExecution));
+    when(mockPluginExecution.getId()).thenReturn("default-jar");
+    when(mockPluginExecution.getConfiguration()).thenReturn(pluginConfiguration);
     addXpp3DomChild(pluginConfiguration, "outputDirectory", "target");
 
     setUpSpringBootFatJar();
     Path tempDirectory = temporaryFolder.newFolder("tmp").toPath();
-    Mockito.when(mockTempDirectoryProvider.newDirectory()).thenReturn(tempDirectory);
+    when(mockTempDirectoryProvider.newDirectory()).thenReturn(tempDirectory);
 
-    Assert.assertEquals(
-        tempDirectory.resolve("helloworld-1.original.jar"),
-        mavenProjectProperties.getJarArtifact());
+    Truth8.assertThat(mavenProjectProperties.getJarArtifact())
+        .isEqualTo(tempDirectory.resolve("helloworld-1.original.jar"));
 
     mavenProjectProperties.waitForLoggingThread();
-    Mockito.verify(mockLog)
-        .info("Spring Boot repackaging (fat JAR) detected; using the original JAR");
+    verify(mockLog).info("Spring Boot repackaging (fat JAR) detected; using the original JAR");
   }
 
   @Test
   public void testGetWarArtifact() {
-    Mockito.when(mockBuild.getDirectory()).thenReturn(Paths.get("/foo/bar").toString());
-    Mockito.when(mockBuild.getFinalName()).thenReturn("helloworld-1");
+    when(mockBuild.getDirectory()).thenReturn(Paths.get("/foo/bar").toString());
+    when(mockBuild.getFinalName()).thenReturn("helloworld-1");
 
-    Assert.assertEquals(
-        Paths.get("/foo/bar/helloworld-1.war"), mavenProjectProperties.getWarArtifact());
+    Truth8.assertThat(mavenProjectProperties.getWarArtifact())
+        .isEqualTo(Paths.get("/foo/bar/helloworld-1.war"));
   }
 
   @Test
   public void testGetWarArtifact_warNameProperty() {
-    Mockito.when(mockBuild.getDirectory()).thenReturn(Paths.get("/foo/bar").toString());
-    Mockito.when(mockBuild.getFinalName()).thenReturn("helloworld-1");
+    when(mockBuild.getDirectory()).thenReturn(Paths.get("/foo/bar").toString());
+    when(mockBuild.getFinalName()).thenReturn("helloworld-1");
 
-    Mockito.when(mockMavenProject.getPlugin("org.apache.maven.plugins:maven-war-plugin"))
+    when(mockMavenProject.getPlugin("org.apache.maven.plugins:maven-war-plugin"))
         .thenReturn(mockPlugin);
-    Mockito.when(mockPlugin.getExecutions()).thenReturn(Arrays.asList(mockPluginExecution));
-    Mockito.when(mockPluginExecution.getId()).thenReturn("default-war");
-    Mockito.when(mockPluginExecution.getConfiguration()).thenReturn(pluginConfiguration);
+    when(mockPlugin.getExecutions()).thenReturn(Arrays.asList(mockPluginExecution));
+    when(mockPluginExecution.getId()).thenReturn("default-war");
+    when(mockPluginExecution.getConfiguration()).thenReturn(pluginConfiguration);
     addXpp3DomChild(pluginConfiguration, "warName", "baz");
 
-    Assert.assertEquals(Paths.get("/foo/bar/baz.war"), mavenProjectProperties.getWarArtifact());
+    Truth8.assertThat(mavenProjectProperties.getWarArtifact())
+        .isEqualTo(Paths.get("/foo/bar/baz.war"));
   }
 
   @Test
   public void testGetWarArtifact_noWarNameProperty() {
-    Mockito.when(mockBuild.getDirectory()).thenReturn(Paths.get("/foo/bar").toString());
-    Mockito.when(mockBuild.getFinalName()).thenReturn("helloworld-1");
+    when(mockBuild.getDirectory()).thenReturn(Paths.get("/foo/bar").toString());
+    when(mockBuild.getFinalName()).thenReturn("helloworld-1");
 
-    Mockito.when(mockMavenProject.getPlugin("org.apache.maven.plugins:maven-war-plugin"))
+    when(mockMavenProject.getPlugin("org.apache.maven.plugins:maven-war-plugin"))
         .thenReturn(mockPlugin);
-    Mockito.when(mockPlugin.getExecutions()).thenReturn(Arrays.asList(mockPluginExecution));
-    Mockito.when(mockPluginExecution.getId()).thenReturn("default-war");
+    when(mockPlugin.getExecutions()).thenReturn(Arrays.asList(mockPluginExecution));
+    when(mockPluginExecution.getId()).thenReturn("default-war");
     Mockito.lenient().when(mockPluginExecution.getConfiguration()).thenReturn(pluginConfiguration);
 
-    Assert.assertEquals(
-        Paths.get("/foo/bar/helloworld-1.war"), mavenProjectProperties.getWarArtifact());
+    Truth8.assertThat(mavenProjectProperties.getWarArtifact())
+        .isEqualTo(Paths.get("/foo/bar/helloworld-1.war"));
   }
 
   @Test
   public void testGetWarArtifact_executionIdNotMatched() {
-    Mockito.when(mockBuild.getDirectory()).thenReturn(Paths.get("/foo/bar").toString());
-    Mockito.when(mockBuild.getFinalName()).thenReturn("helloworld-1");
+    when(mockBuild.getDirectory()).thenReturn(Paths.get("/foo/bar").toString());
+    when(mockBuild.getFinalName()).thenReturn("helloworld-1");
 
-    Mockito.when(mockMavenProject.getPlugin("org.apache.maven.plugins:maven-war-plugin"))
+    when(mockMavenProject.getPlugin("org.apache.maven.plugins:maven-war-plugin"))
         .thenReturn(mockPlugin);
-    Mockito.when(mockPlugin.getExecutions()).thenReturn(Arrays.asList(mockPluginExecution));
-    Mockito.when(mockPluginExecution.getId()).thenReturn("no-id-match");
+    when(mockPlugin.getExecutions()).thenReturn(Arrays.asList(mockPluginExecution));
+    when(mockPluginExecution.getId()).thenReturn("no-id-match");
     Mockito.lenient().when(mockPluginExecution.getConfiguration()).thenReturn(pluginConfiguration);
     addXpp3DomChild(pluginConfiguration, "warName", "baz");
 
-    Assert.assertEquals(
-        Paths.get("/foo/bar/helloworld-1.war"), mavenProjectProperties.getWarArtifact());
+    Truth8.assertThat(mavenProjectProperties.getWarArtifact())
+        .isEqualTo(Paths.get("/foo/bar/helloworld-1.war"));
   }
 
   @Test
   public void testGetDependencies() throws URISyntaxException {
-    Assert.assertEquals(
-        Arrays.asList(
+    assertThat(mavenProjectProperties.getDependencies())
+        .containsExactly(
             getResource("maven/application/dependencies/library.jarC.jar"),
             getResource("maven/application/dependencies/libraryB.jar"),
             getResource("maven/application/dependencies/libraryA.jar"),
             getResource("maven/application/dependencies/more/dependency-1.0.0.jar"),
             getResource("maven/application/dependencies/another/one/dependency-1.0.0.jar"),
             testRepository.artifactPathOnDisk("com.test", "dependency", "1.0.0"),
-            testRepository.artifactPathOnDisk("com.test", "dependencyX", "1.0.0-SNAPSHOT")),
-        mavenProjectProperties.getDependencies());
+            testRepository.artifactPathOnDisk("com.test", "dependencyX", "1.0.0-SNAPSHOT"));
   }
 
-  private BuildContext setUpBuildContext(String appRoot, ContainerizingMode containerizingMode)
+  private BuildContext setUpBuildContext()
+      throws InvalidImageReferenceException, IOException, CacheDirectoryCreationException {
+    return setUpBuildContext(ContainerizingMode.EXPLODED);
+  }
+
+  private BuildContext setUpBuildContext(ContainerizingMode containerizingMode)
       throws InvalidImageReferenceException, IOException, CacheDirectoryCreationException {
     JavaContainerBuilder javaContainerBuilder =
         JavaContainerBuilder.from(RegistryImage.named("base"))
-            .setAppRoot(AbsoluteUnixPath.get(appRoot))
-            .setModificationTimeProvider((ignored1, ignored2) -> SAMPLE_FILE_MODIFICATION_TIME);
+            .setAppRoot(AbsoluteUnixPath.get("/my/app"))
+            .setModificationTimeProvider((ignored1, ignored2) -> EPOCH_PLUS_32);
     JibContainerBuilder jibContainerBuilder =
         mavenProjectProperties.createJibContainerBuilder(javaContainerBuilder, containerizingMode);
     return JibContainerBuilderTestHelper.toBuildContext(
@@ -1129,15 +1053,15 @@ public class MavenProjectPropertiesTest {
 
   private Path setUpWar(Path explodedWar) throws IOException {
     Path fakeMavenBuildDirectory = temporaryFolder.getRoot().toPath();
-    Mockito.when(mockBuild.getDirectory()).thenReturn(fakeMavenBuildDirectory.toString());
-    Mockito.when(mockBuild.getFinalName()).thenReturn("final-name");
-    Mockito.when(mockMavenProject.getPackaging()).thenReturn("war");
+    when(mockBuild.getDirectory()).thenReturn(fakeMavenBuildDirectory.toString());
+    when(mockBuild.getFinalName()).thenReturn("final-name");
+    when(mockMavenProject.getPackaging()).thenReturn("war");
 
     zipUpDirectory(explodedWar, fakeMavenBuildDirectory.resolve("final-name.war"));
 
     // Make "MavenProjectProperties" use this folder to explode the WAR into.
     Path unzipTarget = temporaryFolder.newFolder("exploded").toPath();
-    Mockito.when(mockTempDirectoryProvider.newDirectory()).thenReturn(unzipTarget);
+    when(mockTempDirectoryProvider.newDirectory()).thenReturn(unzipTarget);
     return unzipTarget;
   }
 
@@ -1145,11 +1069,11 @@ public class MavenProjectPropertiesTest {
     Xpp3Dom pluginConfiguration = new Xpp3Dom("configuration");
     PluginExecution execution = Mockito.mock(PluginExecution.class);
     Plugin plugin = Mockito.mock(Plugin.class);
-    Mockito.when(mockMavenProject.getPlugin("org.springframework.boot:spring-boot-maven-plugin"))
+    when(mockMavenProject.getPlugin("org.springframework.boot:spring-boot-maven-plugin"))
         .thenReturn(plugin);
-    Mockito.when(plugin.getExecutions()).thenReturn(Arrays.asList(execution));
-    Mockito.when(execution.getGoals()).thenReturn(Arrays.asList("repackage"));
-    Mockito.when(execution.getConfiguration()).thenReturn(pluginConfiguration);
+    when(plugin.getExecutions()).thenReturn(Arrays.asList(execution));
+    when(execution.getGoals()).thenReturn(Arrays.asList("repackage"));
+    when(execution.getConfiguration()).thenReturn(pluginConfiguration);
     return pluginConfiguration;
   }
 }
