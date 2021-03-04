@@ -1,24 +1,34 @@
 # Jib CLI
 
-<img src="https://img.shields.io/badge/status-experimental-orange">
+<img src="https://img.shields.io/badge/status-preview-orange">
 
-`jib` is a command-line utility for building containers images from file system content. 
-It serves as a demonstration of [Jib Core](https://github.com/GoogleContainerTools/jib/tree/master/jib-core),
-a Java library for building containers without Docker.
+`jib` is a general-purpose command-line utility for building Docker or [OCI](https://github.com/opencontainers/image-spec) container images from file system content as well as JAR files. Jib CLI builds containers [fast and reproducibly without Docker](https://github.com/GoogleContainerTools/jib#goals) like [other Jib tools](https://github.com/GoogleContainerTools/jib#what-is-jib).
 
-This CLI tool is _experimental_ and its options and structure
-are almost certain to change.
+```sh
+# docker not required
+$ docker
+-bash: docker: command not found
+# build and upload an image
+$ jib build --target=my-registry.example.com/built-by-jib
+```
+
+Additionally, Jib CLI can directly build an optimized image for JAR files (including Spring Boot fat JAR).
+```sh
+$ jib jar --target=my-registry.example.com/jar-app myapp.jar
+```
+
+The CLI tool is powered by [Jib Core](https://github.com/GoogleContainerTools/jib/tree/master/jib-core), a Java library for building containers without Docker.
 
 ## Table of Contents
 * [Get the Jib CLI](#get-the-jib-cli)
-  * [Download a java application](#download-a-java-application)
-  * [Build yourself from source](#build-yourself-from-source)
+  * [Download a Java Application](#download-a-java-application)
+  * [Build Yourself from Source (for Advanced Users)](#build-yourself-from-source-for-advanced-users)
 * [Supported Commands](#supported-commands)
-* [Build](#build)
+* [Build Command](#build-command)
   * [Quickstart](#quickstart)
   * [Fully Annotated `jib.yaml`](#fully-annotated-jibyaml)
   * [Options](#options)
-* [Jar](#jar)
+* [Jar Command](#jar-command)
   * [Options](#options)
 * [Common Jib CLI Options](#common-cli-options)
   * [Auth/Security](#authsecurity)
@@ -27,13 +37,15 @@ are almost certain to change.
 
 ## Get the Jib CLI
 
-### Download a java application
+Most users should download a ZIP archive (Java application). We are working on releasing a native executable binary.
+
+### Download a Java Application
 
 A JRE is required to run this Jib CLI distribution.
 
 Find the [latest jib-cli 0.2.0 release](https://github.com/GoogleContainerTools/jib/releases/tag/v0.2.0-cli) on the [Releases page](https://github.com/GoogleContainerTools/jib/releases), download `jib-jre-<version>.zip`, and unzip it. The zip file contains the `jib` (`jib.bat` for Windows) script at `jib/bin/`. Optionally, add the binary directory to your `$PATH` so that you can call `jib` from anywhere.
 
-### Build yourself from source
+### Build Yourself from Source (for Advanced Users)
 
 Use the `application` plugin's `installDist` task to create a runnable installation in
 `build/install/jib`.  A zip and tar file are also created in `build/distributions`.
@@ -42,17 +54,15 @@ Use the `application` plugin's `installDist` task to create a runnable installat
 $ ./gradlew jib-cli:installDist
 # run
 $ ./jib-cli/build/install/jib/bin/jib
+
 ```
-
-<!-- TODO: ### Download an executable -->
-
 ## Supported Commands
 
-The Jib CLI currently supports two commands:
- 1. `build` - To build a container with the help of a build file.
- 2. `jar` - To containerize a jar.
+The Jib CLI supports two commands:
+ 1. `build` - containerizes using a [build file](#fully-annotated-jibyaml).
+ 2. `jar` - containerizes JAR files.
 
-## Build
+## Build Command
 This command follows the following pattern:
 ```
 jib build --target <image name> [options]
@@ -181,7 +191,7 @@ layers:
         - dest: "/images"            
 ```
 
-#### Layers behavior
+#### Layers Behavior
 - Copy directives are bound by the following rules
   `src`: filetype determined by type on local disk
    - if `src` is directory, `dest` is always considered a directory, directory and contents will be copied over and renamed to `dest`
@@ -216,12 +226,12 @@ layers:
        - "**/exclude-dir/**
      ```
      
-#### Base image parameter inheritance
+#### Base Image Parameter Inheritance
 Some values defined in the base image may be preserved and propogated into the new container.
 
 Parameters will append to base image value:
-  - `volumes`
-  - `exposedPorts`
+- `volumes`
+- `exposedPorts`
 
 Parameters that will append any new keys, and overwrite existing keys:
 - `labels`
@@ -235,7 +245,7 @@ Parameters that will be overwritten:
 
 
 ### Options
-Here is the list of optional flags for the `build` command:
+Optional flags for the `build` command:
 
 Option | Description
 ---     | ---
@@ -244,14 +254,14 @@ Option | Description
 `-p, --parameter`  |  Templating parameter to inject into build file, replace ${<name>} with <value> (repeatable)
 
 
-## Jar Command: Containerizing a JAR app
+## Jar Command
 This command follows the following pattern:
 ```
 jib jar --target <image name> path/to/myapp.jar [options]
 ```
 
 ### Options
-Here is a list of optional flags for the `jar` command:
+Optional flags for the `jar` command:
 
 Option | Description
 ---       | ---
@@ -280,7 +290,7 @@ The options can either be specified in the command line or defined in a configur
     --send-credentials-over-http           Allow jib to send credentials over http (very insecure)
 ```
 
-#### Credentials
+### Credentials
 Credentials can be specified using credential helpers or username + password. The following options are available:
 
 ```
@@ -313,7 +323,7 @@ Mixed Mode
 1. `--to-credential-helper`, `--from-username`, `--from-password`
 2. `--from-credential-helper`, `--to-username`, `--to-password`
 
-#### Info Params
+### Info Params
 ```
     --help                  print usage and exit
     --console <type>        set console output type, candidates: auto, rich, plain, default: auto
@@ -321,7 +331,7 @@ Mixed Mode
 -v, --version               Jib CLI version information
 ```
 
-#### Debugging Params
+### Debugging Params
 ```
     --stacktrace            print stacktrace on error (for debugging issues in the jib-cli)
     --http-trace            enable http tracing at level=config, output=console
