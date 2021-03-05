@@ -478,7 +478,7 @@ public class MavenProjectPropertiesTest {
   }
 
   @Test
-  public void testCreateContainerBuilder_war()
+  public void testCreateContainerBuilder_war_correctSourceFilePaths()
       throws URISyntaxException, IOException, InvalidImageReferenceException,
           CacheDirectoryCreationException {
     Path unzipTarget = setUpWar(getResource("maven/webapp/final-name"));
@@ -510,7 +510,15 @@ public class MavenProjectPropertiesTest {
             unzipTarget.resolve("WEB-INF/classes/empty_dir"),
             unzipTarget.resolve("WEB-INF/classes/package"),
             unzipTarget.resolve("WEB-INF/classes/package/Other.class"));
+  }
 
+  @Test
+  public void testCreateContainerBuilder_war_correctExtractionPaths()
+      throws URISyntaxException, IOException, InvalidImageReferenceException,
+          CacheDirectoryCreationException {
+    setUpWar(getResource("maven/webapp/final-name"));
+
+    ContainerBuilderLayers layers = new ContainerBuilderLayers(setUpBuildContext());
     assertThat(layers.dependenciesLayer.getEntries())
         .comparingElementsUsing(EXTRACTION_PATH_OF)
         .containsExactly("/my/app/WEB-INF/lib/dependency-1.0.0.jar");
