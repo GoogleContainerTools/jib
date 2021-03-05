@@ -29,7 +29,7 @@ It will result in the following layers on the container:
 **Entrypoint** : `java -jar ${JAR_NAME}.jar`
 
 ## Spring-Boot Fat Jar
-A Spring-Boot Fat Jar can be containerized in two modes, exploded or packaged. 
+~~A Spring-Boot Fat Jar can be containerized in two modes, exploded or packaged. 
 
 ### Exploded Mode
 Achieved by calling `jib jar ${JAR_NAME}.jar --target ${TARGET_REGISTRY}`
@@ -46,7 +46,7 @@ The default mode for containerizing a jar. It will explode a jar according to wh
 Achieved by calling `jib jar ${JAR_NAME}.jar --target ${TARGET_REGISTRY} --mode packaged`
 It will containerize the jar as is. However, **note** that we highly recommend against using packaged mode for containerizing spring-boot fat jars. 
 
-**Entrypoint**: `java -jar ${JAR_NAME}.jar`
+**Entrypoint**: `java -jar ${JAR_NAME}.jar`~~
 
 ### Optional Parameters
 The `jar` command also provides the option to configure the parameters listed below.  
