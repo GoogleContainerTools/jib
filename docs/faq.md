@@ -19,6 +19,7 @@ If a question you have is not answered below, please [submit an issue](/../../is
 [How do I set parameters for my image at runtime?](#how-do-i-set-parameters-for-my-image-at-runtime)\
 [Can I define a custom entrypoint?](#can-i-define-a-custom-entrypoint-at-runtime)\
 [I want to containerize a JAR.](#i-want-to-containerize-a-jar)\
+[I'm looking for more JAR support in Jib](#im-looking-for-more-jar-support-in-jib)\
 [I need to RUN commands like `apt-get`.](#i-need-to-run-commands-like-apt-get)\
 [Can I ADD a custom directory to the image?](#can-i-add-a-custom-directory-to-the-image)\
 [I need to add files generated during the build process to a custom directory on the image.](#i-need-to-add-files-generated-during-the-build-process-to-a-custom-directory-on-the-image)\
@@ -47,6 +48,10 @@ If a question you have is not answered below, please [submit an issue](/../../is
 [I am seeing `Method Not Found` or `Class Not Found` errors when building.](#i-am-seeing-method-not-found-or-class-not-found-errors-when-building)\
 [Why won't my container start?](#why-wont-my-container-start)
 
+**Jib CLI**\
+[My build process doesn't let me integrate with the Jib Plugins](#my-build-process-doesnt-let-me-integrate-with-the-jib-plugins)\
+[How does the `jar` command support Standard JARs?](#how-does-the-jar-command-support-standard-jars)\
+[How does the `jar` command support Spring Boot JARs?](#how-does-the-jar-command-support-spring-boot-jars)
 ---
 
 ### But, I'm not a Java developer.
@@ -256,6 +261,10 @@ However, you can set `<containerizingMode>packaged` (Maven) or `jib.containerizi
 
 Note that for runnable JARs/WARs, currently Jib does not natively support creating an image that runs a JAR (or WAR) through `java -jar runnable.jar` (although it is not impossible to configure Jib to do so at the expense of more complex project setup.)
 
+### I'm looking for more JAR support in Jib 
+Check out the [Jib CLI's `jar`](https://github.com/GoogleContainerTools/jib/tree/master/jib-cli) command. This command opens up the contents of your JAR into optimized layers on your container and intelligently determines the entrypoint of your container. It also lets you containerize your jar as-is.
+
+Take a look at the [Jib CLI section](#jib-cli) of the FAQ for more information on how the `jar` command handles layering.
 ### I need to RUN commands like `apt-get`.
 
 Running commands like `apt-get` slows down the container build process. We **do not recommend or support** running commands as part of the build.
@@ -756,3 +765,54 @@ On examining the container structure with [Dive](https://github.com/wagoodman/di
 The user had used Jib's ability to install extra files into the image ([Maven](https://github.com/GoogleContainerTools/jib/tree/master/jib-maven-plugin#adding-arbitrary-files-to-the-image), [Gradle](https://github.com/GoogleContainerTools/jib/tree/master/jib-gradle-plugin#adding-arbitrary-files-to-the-image)) to install a library file by placing it in `src/main/jib/lib/libfoo.so`. This would normally cause the `libfoo.so` to be installed in the image as `/lib/libfoo.so`. But `/lib` and `/lib64` in the user's base image were symbolic links. Jib does not follow such symbolic links when creating the image. And at container initialization time, Docker treats these symlinks as a file, and thus the symbolic link was replaced with `/lib` as a new directory. As a result, none of the system shared libraries were resolved and dynamically-linked programs failed.
 
 Solution: The user installed the file in a different location.
+
+## Jib CLI 
+### My build process doesn't let me integrate with the Jib Plugins
+The Jib CLI can be useful for users with complex build workflows that make it hard to integrate the Jib Maven or Gradle plugins. It is a standalone application that is powered by Jib-Core and offers two modes:
+
+Build: A general purpose builder which builds from the file source with the help of a yaml build file.
+ 
+Jar: Which lets you containerize your jar as is or opens up your Jar into optimized layers.
+ 
+### How does the `jar` command support Standard JARs?
+
+A standard jar can be containerized by the `jar` command in two modes, exploded or packaged. 
+
+#### Exploded Mode (Recommended)
+Achieved by calling `jib jar ${JAR_NAME}.jar --target ${TARGET_REGISTRY}`
+The default mode for containerizing a jar. It will explode a jar into the following layers:  
+- Dependencies Layer: Contains dependencies whose versions do not contain `SNAPSHOT`. Note that this layer will not be created if `Class-Path` is not present in the manifest.
+- Snapshot-Dependencies Layer: Contains dependencies whose versions contain `SNAPSHOT`. Note that this layer will not be created if `Class-Path` is not present in the manifest.
+- Resources Layer: Contains resources parsed from jar file. Note that it will also include `MANIFEST.MF`.
+- Classes Layer: Contains classes parsed from jar file. 
+
+**Entrypoint** : `java -cp /app/dependencies/:/app/explodedJar/ ${MAIN_CLASS}`
+
+#### Packaged Mode
+Achieved by calling `jib jar ${JAR_NAME}.jar --target ${TARGET_REGISTRY} --mode packaged`.
+It will result in the following layers on the container:
+- Dependencies Layer: Contains the dependencies derived from `Class-Path` in jar manifest. Note that this layer will not be created if `Class-Path` is not present in the manifest.
+- Jar Layer: Contains the original jar.
+
+**Entrypoint** : `java -jar ${JAR_NAME}.jar`
+
+### How does the `jar` command support Spring Boot JARs?
+The `jar` command currently supports containerization of Spring Boot Fat JARs.
+A Spring-Boot Fat Jar can be containerized in two modes, exploded or packaged. 
+
+#### Exploded Mode
+Achieved by calling `jib jar ${JAR_NAME}.jar --target ${TARGET_REGISTRY}`
+The default mode for containerizing a jar. It will explode a jar according to what is specified in the `layers.idx` file of the jar, if present, or according to following format:
+- Dependencies Layer: For a dependency whose version does not contain `SNAPSHOT`.
+- Spring-Boot-Loader Layer: Contains jar loader classes.
+- Snapshot-Dependencies Layer: For a dependency whose version contains `SNAPSHOT`.
+- Resources Layer: Contains resources parsed from `BOOT-INF/classes/` in the jar and `META-INF/`.
+- Classes Layer: Contains classes parsed from `BOOT-INF/classes/` in the jar.
+
+**Entrypoint** : `java -cp /app org.springframework.boot.loader.JarLauncher`
+
+#### Packaged Mode
+Achieved by calling `jib jar ${JAR_NAME}.jar --target ${TARGET_REGISTRY} --mode packaged`
+It will containerize the jar as is. However, **note** that we highly recommend against using packaged mode for containerizing spring-boot fat jars. 
+
+**Entrypoint**: `java -jar ${JAR_NAME}.jar`
