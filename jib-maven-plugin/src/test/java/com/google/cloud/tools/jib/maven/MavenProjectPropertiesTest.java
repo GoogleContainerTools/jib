@@ -17,6 +17,7 @@
 package com.google.cloud.tools.jib.maven;
 
 import static com.google.common.truth.Truth.assertThat;
+import static com.google.common.truth.Truth8.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -41,7 +42,6 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.Resources;
 import com.google.common.truth.Correspondence;
-import com.google.common.truth.Truth8;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -75,7 +75,6 @@ import org.apache.maven.project.MavenProject;
 import org.codehaus.plexus.archiver.zip.ZipEntry;
 import org.codehaus.plexus.archiver.zip.ZipOutputStream;
 import org.codehaus.plexus.util.xml.Xpp3Dom;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -257,7 +256,7 @@ public class MavenProjectPropertiesTest {
     archive.addChild(new Xpp3Dom("manifest"));
     pluginConfiguration.addChild(archive);
 
-    Assert.assertNull(mavenProjectProperties.getMainClassFromJarPlugin());
+    assertThat(mavenProjectProperties.getMainClassFromJarPlugin()).isNull();
   }
 
   @Test
@@ -267,7 +266,7 @@ public class MavenProjectPropertiesTest {
     when(mockPlugin.getConfiguration()).thenReturn(pluginConfiguration);
     pluginConfiguration.addChild(new Xpp3Dom("archive"));
 
-    Assert.assertNull(mavenProjectProperties.getMainClassFromJarPlugin());
+    assertThat(mavenProjectProperties.getMainClassFromJarPlugin()).isNull();
   }
 
   @Test
@@ -276,7 +275,7 @@ public class MavenProjectPropertiesTest {
         .thenReturn(mockPlugin);
     when(mockPlugin.getConfiguration()).thenReturn(pluginConfiguration);
 
-    Assert.assertNull(mavenProjectProperties.getMainClassFromJarPlugin());
+    assertThat(mavenProjectProperties.getMainClassFromJarPlugin()).isNull();
   }
 
   @Test
@@ -284,17 +283,17 @@ public class MavenProjectPropertiesTest {
     when(mockMavenProject.getPlugin("org.apache.maven.plugins:maven-jar-plugin"))
         .thenReturn(mockPlugin);
 
-    Assert.assertNull(mavenProjectProperties.getMainClassFromJarPlugin());
+    assertThat(mavenProjectProperties.getMainClassFromJarPlugin()).isNull();
   }
 
   @Test
   public void testGetMainClassFromJar_missingPlugin() {
-    Assert.assertNull(mavenProjectProperties.getMainClassFromJarPlugin());
+    assertThat(mavenProjectProperties.getMainClassFromJarPlugin()).isNull();
   }
 
   @Test
   public void testIsWarProject() {
-    Assert.assertFalse(mavenProjectProperties.isWarProject());
+    assertThat(mavenProjectProperties.isWarProject()).isFalse();
   }
 
   @Test
@@ -370,15 +369,12 @@ public class MavenProjectPropertiesTest {
 
     compilerRelease.setValue("10");
     assertThat(mavenProjectProperties.getMajorJavaVersion()).isEqualTo(10);
-
-    compilerRelease.setValue("13");
-    assertThat(mavenProjectProperties.getMajorJavaVersion()).isEqualTo(13);
   }
 
   @Test
   public void isProgressFooterEnabled() {
     when(mockMavenRequest.isInteractiveMode()).thenReturn(false);
-    Assert.assertFalse(MavenProjectProperties.isProgressFooterEnabled(mockMavenSession));
+    assertThat(MavenProjectProperties.isProgressFooterEnabled(mockMavenSession)).isFalse();
   }
 
   @Test
@@ -440,13 +436,9 @@ public class MavenProjectPropertiesTest {
 
     ContainerBuilderLayers layers =
         new ContainerBuilderLayers(setUpBuildContext(ContainerizingMode.PACKAGED));
-    assertThat(layers.dependenciesLayer).isNotNull();
-    assertThat(layers.snapshotsLayer).isNotNull();
-    assertThat(layers.resourcesLayer).isNull();
-    assertThat(layers.classesLayer).isNull();
-    assertThat(layers.extraFilesLayer).isNotNull();
 
     Path dependenciesPath = getResource("maven/application/dependencies");
+    assertThat(layers.dependenciesLayer).isNotNull();
     assertThat(layers.dependenciesLayer.getEntries())
         .comparingElementsUsing(SOURCE_FILE_OF)
         .containsExactly(
@@ -456,13 +448,17 @@ public class MavenProjectPropertiesTest {
             dependenciesPath.resolve("libraryA.jar"),
             dependenciesPath.resolve("libraryB.jar"),
             dependenciesPath.resolve("library.jarC.jar"));
+    assertThat(layers.snapshotsLayer).isNotNull();
     assertThat(layers.snapshotsLayer.getEntries())
         .comparingElementsUsing(SOURCE_FILE_OF)
         .containsExactly(
             testRepository.artifactPathOnDisk("com.test", "dependencyX", "1.0.0-SNAPSHOT"));
+    assertThat(layers.extraFilesLayer).isNotNull();
     assertThat(layers.extraFilesLayer.getEntries())
         .comparingElementsUsing(SOURCE_FILE_OF)
         .containsExactly(jar);
+    assertThat(layers.resourcesLayer).isNull();
+    assertThat(layers.classesLayer).isNull();
 
     assertThat(layers.dependenciesLayer.getEntries())
         .comparingElementsUsing(EXTRACTION_PATH_OF)
@@ -572,25 +568,25 @@ public class MavenProjectPropertiesTest {
   @Test
   public void testIsWarProject_warPackagingIsWar() {
     when(mockMavenProject.getPackaging()).thenReturn("war");
-    Assert.assertTrue(mavenProjectProperties.isWarProject());
+    assertThat(mavenProjectProperties.isWarProject()).isTrue();
   }
 
   @Test
   public void testIsWarProject_gwtAppPackagingIsWar() {
     when(mockMavenProject.getPackaging()).thenReturn("gwt-app");
-    Assert.assertTrue(mavenProjectProperties.isWarProject());
+    assertThat(mavenProjectProperties.isWarProject()).isTrue();
   }
 
   @Test
   public void testIsWarProject_jarPackagingIsNotWar() {
     when(mockMavenProject.getPackaging()).thenReturn("jar");
-    Assert.assertFalse(mavenProjectProperties.isWarProject());
+    assertThat(mavenProjectProperties.isWarProject()).isFalse();
   }
 
   @Test
   public void testIsWarProject_gwtLibPackagingIsNotWar() {
     when(mockMavenProject.getPackaging()).thenReturn("gwt-lib");
-    Assert.assertFalse(mavenProjectProperties.isWarProject());
+    assertThat(mavenProjectProperties.isWarProject()).isFalse();
   }
 
   @Test
@@ -649,14 +645,13 @@ public class MavenProjectPropertiesTest {
 
     when(mockMavenProject.getArtifact()).thenReturn(projectJar);
 
-    assertThat(mavenProjectProperties.getProjectDependencies())
-        .isEqualTo(ImmutableSet.of(sharedLibJar));
+    assertThat(mavenProjectProperties.getProjectDependencies()).containsExactly(sharedLibJar);
   }
 
   @Test
   public void testGetChildValue_null() {
-    Assert.assertFalse(MavenProjectProperties.getChildValue(null).isPresent());
-    Assert.assertFalse(MavenProjectProperties.getChildValue(null, "foo", "bar").isPresent());
+    assertThat(MavenProjectProperties.getChildValue(null)).isEmpty();
+    assertThat(MavenProjectProperties.getChildValue(null, "foo", "bar")).isEmpty();
   }
 
   @Test
@@ -670,8 +665,8 @@ public class MavenProjectPropertiesTest {
   public void testGetChildValue_noChild() {
     Xpp3Dom root = newXpp3Dom("root", "value");
 
-    Assert.assertFalse(MavenProjectProperties.getChildValue(root, "foo").isPresent());
-    Assert.assertFalse(MavenProjectProperties.getChildValue(root, "foo", "bar").isPresent());
+    assertThat(MavenProjectProperties.getChildValue(root, "foo")).isEmpty();
+    assertThat(MavenProjectProperties.getChildValue(root, "foo", "bar")).isEmpty();
   }
 
   @Test
@@ -692,8 +687,8 @@ public class MavenProjectPropertiesTest {
     Xpp3Dom foo = addXpp3DomChild(root, "foo", "foo");
 
     addXpp3DomChild(foo, "bar", "bar");
-    Assert.assertFalse(MavenProjectProperties.getChildValue(root, "baz").isPresent());
-    Assert.assertFalse(MavenProjectProperties.getChildValue(root, "foo", "baz").isPresent());
+    assertThat(MavenProjectProperties.getChildValue(root, "baz")).isEmpty();
+    assertThat(MavenProjectProperties.getChildValue(root, "foo", "baz")).isEmpty();
   }
 
   @Test
@@ -701,14 +696,13 @@ public class MavenProjectPropertiesTest {
     Xpp3Dom root = new Xpp3Dom("root");
     addXpp3DomChild(root, "foo", null);
 
-    Assert.assertFalse(MavenProjectProperties.getChildValue(root).isPresent());
-    Assert.assertFalse(MavenProjectProperties.getChildValue(root, "foo").isPresent());
+    assertThat(MavenProjectProperties.getChildValue(root)).isEmpty();
+    assertThat(MavenProjectProperties.getChildValue(root, "foo")).isEmpty();
   }
 
   @Test
   public void testGetSpringBootRepackageConfiguration_pluginNotApplied() {
-    assertThat(mavenProjectProperties.getSpringBootRepackageConfiguration())
-        .isEqualTo(Optional.empty());
+    assertThat(mavenProjectProperties.getSpringBootRepackageConfiguration()).isEmpty();
   }
 
   @Test
@@ -727,8 +721,7 @@ public class MavenProjectPropertiesTest {
     when(mockMavenProject.getPlugin("org.springframework.boot:spring-boot-maven-plugin"))
         .thenReturn(mockPlugin);
     when(mockPlugin.getExecutions()).thenReturn(Collections.emptyList());
-    assertThat(mavenProjectProperties.getSpringBootRepackageConfiguration())
-        .isEqualTo(Optional.empty());
+    assertThat(mavenProjectProperties.getSpringBootRepackageConfiguration()).isEmpty();
   }
 
   @Test
@@ -737,8 +730,7 @@ public class MavenProjectPropertiesTest {
         .thenReturn(mockPlugin);
     when(mockPlugin.getExecutions()).thenReturn(Arrays.asList(mockPluginExecution));
     when(mockPluginExecution.getGoals()).thenReturn(Arrays.asList("goal", "foo", "bar"));
-    assertThat(mavenProjectProperties.getSpringBootRepackageConfiguration())
-        .isEqualTo(Optional.empty());
+    assertThat(mavenProjectProperties.getSpringBootRepackageConfiguration()).isEmpty();
   }
 
   @Test
@@ -760,8 +752,7 @@ public class MavenProjectPropertiesTest {
     when(mockPluginExecution.getGoals()).thenReturn(Arrays.asList("repackage"));
     when(mockPluginExecution.getConfiguration()).thenReturn(pluginConfiguration);
     addXpp3DomChild(pluginConfiguration, "skip", "true");
-    assertThat(mavenProjectProperties.getSpringBootRepackageConfiguration())
-        .isEqualTo(Optional.empty());
+    assertThat(mavenProjectProperties.getSpringBootRepackageConfiguration()).isEmpty();
   }
 
   @Test
@@ -781,7 +772,7 @@ public class MavenProjectPropertiesTest {
     when(mockBuild.getDirectory()).thenReturn(Paths.get("/foo/bar").toString());
     when(mockBuild.getFinalName()).thenReturn("helloworld-1");
 
-    Truth8.assertThat(mavenProjectProperties.getJarArtifact())
+    assertThat(mavenProjectProperties.getJarArtifact())
         .isEqualTo(Paths.get("/foo/bar/helloworld-1.jar"));
   }
 
@@ -798,7 +789,7 @@ public class MavenProjectPropertiesTest {
     when(mockPluginExecution.getConfiguration()).thenReturn(pluginConfiguration);
     addXpp3DomChild(pluginConfiguration, "outputDirectory", Paths.get("/jar/out").toString());
 
-    Truth8.assertThat(mavenProjectProperties.getJarArtifact())
+    assertThat(mavenProjectProperties.getJarArtifact())
         .isEqualTo(Paths.get("/jar/out/helloworld-1.jar"));
   }
 
@@ -815,7 +806,7 @@ public class MavenProjectPropertiesTest {
     when(mockPluginExecution.getConfiguration()).thenReturn(pluginConfiguration);
     addXpp3DomChild(pluginConfiguration, "outputDirectory", Paths.get("relative").toString());
 
-    Truth8.assertThat(mavenProjectProperties.getJarArtifact())
+    assertThat(mavenProjectProperties.getJarArtifact())
         .isEqualTo(Paths.get("/base/dir/relative/helloworld-1.jar"));
   }
 
@@ -831,7 +822,7 @@ public class MavenProjectPropertiesTest {
     when(mockPluginExecution.getConfiguration()).thenReturn(pluginConfiguration);
     addXpp3DomChild(pluginConfiguration, "classifier", "a-class");
 
-    Truth8.assertThat(mavenProjectProperties.getJarArtifact())
+    assertThat(mavenProjectProperties.getJarArtifact())
         .isEqualTo(Paths.get("/foo/bar/helloworld-1-a-class.jar"));
   }
 
@@ -848,7 +839,7 @@ public class MavenProjectPropertiesTest {
     addXpp3DomChild(pluginConfiguration, "outputDirectory", "/should/ignore");
     addXpp3DomChild(pluginConfiguration, "classifier", "a-class");
 
-    Truth8.assertThat(mavenProjectProperties.getJarArtifact())
+    assertThat(mavenProjectProperties.getJarArtifact())
         .isEqualTo(Paths.get("/foo/bar/helloworld-1.jar"));
   }
 
@@ -862,7 +853,7 @@ public class MavenProjectPropertiesTest {
     Path tempDirectory = temporaryFolder.newFolder("tmp").toPath();
     when(mockTempDirectoryProvider.newDirectory()).thenReturn(tempDirectory);
 
-    Truth8.assertThat(mavenProjectProperties.getJarArtifact())
+    assertThat(mavenProjectProperties.getJarArtifact())
         .isEqualTo(tempDirectory.resolve("helloworld-1.original.jar"));
 
     mavenProjectProperties.waitForLoggingThread();
@@ -884,7 +875,7 @@ public class MavenProjectPropertiesTest {
 
     setUpSpringBootFatJar();
 
-    Truth8.assertThat(mavenProjectProperties.getJarArtifact())
+    assertThat(mavenProjectProperties.getJarArtifact())
         .isEqualTo(Paths.get("/jar/out/helloworld-1.jar"));
 
     mavenProjectProperties.waitForLoggingThread();
@@ -909,7 +900,7 @@ public class MavenProjectPropertiesTest {
     Xpp3Dom bootPluginConfiguration = setUpSpringBootFatJar();
     addXpp3DomChild(bootPluginConfiguration, "finalName", "boot-helloworld-1");
 
-    Truth8.assertThat(mavenProjectProperties.getJarArtifact())
+    assertThat(mavenProjectProperties.getJarArtifact())
         .isEqualTo(buildDirectory.resolve("helloworld-1.jar"));
 
     mavenProjectProperties.waitForLoggingThread();
@@ -934,7 +925,7 @@ public class MavenProjectPropertiesTest {
     Xpp3Dom bootPluginConfiguration = setUpSpringBootFatJar();
     addXpp3DomChild(bootPluginConfiguration, "classifier", "boot-class");
 
-    Truth8.assertThat(mavenProjectProperties.getJarArtifact())
+    assertThat(mavenProjectProperties.getJarArtifact())
         .isEqualTo(buildDirectory.resolve("helloworld-1.jar"));
 
     mavenProjectProperties.waitForLoggingThread();
@@ -960,7 +951,7 @@ public class MavenProjectPropertiesTest {
     Path tempDirectory = temporaryFolder.newFolder("tmp").toPath();
     when(mockTempDirectoryProvider.newDirectory()).thenReturn(tempDirectory);
 
-    Truth8.assertThat(mavenProjectProperties.getJarArtifact())
+    assertThat(mavenProjectProperties.getJarArtifact())
         .isEqualTo(tempDirectory.resolve("helloworld-1.original.jar"));
 
     mavenProjectProperties.waitForLoggingThread();
@@ -972,7 +963,7 @@ public class MavenProjectPropertiesTest {
     when(mockBuild.getDirectory()).thenReturn(Paths.get("/foo/bar").toString());
     when(mockBuild.getFinalName()).thenReturn("helloworld-1");
 
-    Truth8.assertThat(mavenProjectProperties.getWarArtifact())
+    assertThat(mavenProjectProperties.getWarArtifact())
         .isEqualTo(Paths.get("/foo/bar/helloworld-1.war"));
   }
 
@@ -988,8 +979,7 @@ public class MavenProjectPropertiesTest {
     when(mockPluginExecution.getConfiguration()).thenReturn(pluginConfiguration);
     addXpp3DomChild(pluginConfiguration, "warName", "baz");
 
-    Truth8.assertThat(mavenProjectProperties.getWarArtifact())
-        .isEqualTo(Paths.get("/foo/bar/baz.war"));
+    assertThat(mavenProjectProperties.getWarArtifact()).isEqualTo(Paths.get("/foo/bar/baz.war"));
   }
 
   @Test
@@ -1003,7 +993,7 @@ public class MavenProjectPropertiesTest {
     when(mockPluginExecution.getId()).thenReturn("default-war");
     Mockito.lenient().when(mockPluginExecution.getConfiguration()).thenReturn(pluginConfiguration);
 
-    Truth8.assertThat(mavenProjectProperties.getWarArtifact())
+    assertThat(mavenProjectProperties.getWarArtifact())
         .isEqualTo(Paths.get("/foo/bar/helloworld-1.war"));
   }
 
@@ -1019,7 +1009,7 @@ public class MavenProjectPropertiesTest {
     Mockito.lenient().when(mockPluginExecution.getConfiguration()).thenReturn(pluginConfiguration);
     addXpp3DomChild(pluginConfiguration, "warName", "baz");
 
-    Truth8.assertThat(mavenProjectProperties.getWarArtifact())
+    assertThat(mavenProjectProperties.getWarArtifact())
         .isEqualTo(Paths.get("/foo/bar/helloworld-1.war"));
   }
 
