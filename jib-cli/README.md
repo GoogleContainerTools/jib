@@ -130,7 +130,7 @@ jib jar --target <image name> path/to/myapp.jar [options]
    ```
 2. Containerize your JAR using the `jar` command. In the default mode (exploded), the entrypoint will be set to `java -cp /app/dependencies/:/app/explodedJar/ HelloWorld`
    ```
-    $ jib jar --target=docker://cli-jar-quickstart target/spring-petclinic-2.4.2.jar
+    $ jib jar --target=docker://cli-jar-quickstart target/spring-petclinic-*.jar
    ```
 
 3. Run the image and open your browser at http://localhost:8080
