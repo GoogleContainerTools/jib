@@ -28,7 +28,7 @@ The CLI tool is powered by [Jib Core](https://github.com/GoogleContainerTools/ji
   * [Quickstart](#quickstart)
   * [Options](#options)
 * [Jar Command](#jar-command)
-  * [Quickstart](#quickstart)
+  * [Quickstart](#quickstart-1)
   * [Options](#options)
 * [Common Jib CLI Options](#common-jib-cli-options)
   * [Auth/Security](#authsecurity)
@@ -130,7 +130,7 @@ jib jar --target <image name> path/to/myapp.jar [options]
         }
     }
     ```
-2. Compile the java file
+2. Compile the java file to generate `HelloWorld.class`
    ```
     $ javac HelloWorld.java
    ```
@@ -147,7 +147,7 @@ jib jar --target <image name> path/to/myapp.jar [options]
     $ jar cmf myapp.jar Manifest.txt HelloWorld.class
    ```
 
-5. Containerize your JAR using the `jar` command. In the default mode (exploded), the entrypoint will be set to `java -cp java -cp /app/dependencies/:/app/explodedJar/ HelloWorld`
+5. Containerize your JAR using the `jar` command. In the default mode (exploded), the entrypoint will be set to `java -cp /app/dependencies/:/app/explodedJar/ HelloWorld`
    ```
     $ jib jar --target=docker://cli-jar-quickstart myapp.jar
    ```
