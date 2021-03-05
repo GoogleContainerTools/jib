@@ -301,7 +301,7 @@ public class GradleProjectPropertiesTest {
   }
 
   @Test
-  public void testCreateContainerBuilder_extractionPaths()
+  public void testCreateContainerBuilder_correctExtractionPaths()
       throws InvalidImageReferenceException, CacheDirectoryCreationException {
     ContainerBuilderLayers layers = new ContainerBuilderLayers(setupBuildContext());
 
