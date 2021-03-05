@@ -51,6 +51,7 @@ If a question you have is not answered below, please [submit an issue](/../../is
 **Jib CLI**\
 [How does the `jar` command support Standard JARs?](#how-does-the-jar-command-support-standard-jars)\
 [How does the `jar` command support Spring Boot JARs?](#how-does-the-jar-command-support-spring-boot-jars)
+
 ---
 
 ### But, I'm not a Java developer.
@@ -63,9 +64,9 @@ Also see [rules_docker](https://github.com/bazelbuild/rules_docker) for a simila
 
 The [Jib CLI](https://github.com/GoogleContainerTools/jib/tree/master/jib-cli) can be useful for users with complex build workflows that make it hard to integrate the Jib Maven or Gradle plugins. It is a standalone application that is powered by [Jib-Core](#https://github.com/GoogleContainerTools/jib/tree/master/jib-core) and offers two commands:
 
-Build: Which builds from the file system content with the help of a yaml build file.
+[Build](https://github.com/GoogleContainerTools/jib/tree/master/jib-cli#build-command): Which builds from the file system content with the help of a yaml build file.
  
-Jar: Which opens up your JAR into optimized layers on the container or containerizes it as-is. It will also intelligently determine the entrypoint of the container, based on how the JAR is containerized.
+[Jar](https://github.com/GoogleContainerTools/jib/tree/master/jib-cli#jar-command): Which opens up your JAR into optimized layers on the container or containerizes it as-is. It will also intelligently determine the entrypoint of the container, based on how the JAR is containerized.
 
 Check out the [Jib CLI section](#jib-cli) of the FAQ for more information.
 
