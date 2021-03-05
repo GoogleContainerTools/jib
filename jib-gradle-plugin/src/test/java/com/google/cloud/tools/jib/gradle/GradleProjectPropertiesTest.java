@@ -236,7 +236,7 @@ public class GradleProjectPropertiesTest {
   }
 
   @Test
-  public void testCreateContainerBuilder_correctFiles()
+  public void testCreateContainerBuilder_correctSourceFiles()
       throws URISyntaxException, InvalidImageReferenceException, CacheDirectoryCreationException {
     ContainerBuilderLayers layers = new ContainerBuilderLayers(setupBuildContext());
 
