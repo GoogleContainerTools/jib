@@ -28,6 +28,7 @@ The CLI tool is powered by [Jib Core](https://github.com/GoogleContainerTools/ji
   * [Quickstart](#quickstart)
   * [Options](#options)
 * [Jar Command](#jar-command)
+  * [Quickstart]
   * [Options](#options)
 * [Common Jib CLI Options](#common-jib-cli-options)
   * [Auth/Security](#authsecurity)
@@ -120,7 +121,43 @@ This command follows the following pattern:
 ```
 jib jar --target <image name> path/to/myapp.jar [options]
 ```
+### Quickstart
+1. Create a simple hello world java program in `HelloWorld.java`
+   ```
+    public class HelloWorld {
+        public static void main(String[] args) {
+            System.out.println("Hello World");
+        }
+    }
+    ```
+2. Compile the java file
+   ```
+    $ javac HelloWorld.java
+   ```
 
+3. Create a `Manifest.txt` with a `Main-Class`:
+   ```
+    Manifest-Version: 1.0
+    Created-By: 1.8.0_221 (Oracle Corporation) # specify the version of the JDK you're using
+    Main-Class: HelloWorld
+   ```
+
+4. Create the JAR
+   ```
+    $ jar cmf myapp.jar Manifest.txt HelloWorld.class
+   ```
+
+5. Containerize your JAR using the `jar` command. In the default mode (exploded), the entrypoint will be set to `java -cp java -cp /app/dependencies/:/app/explodedJar/ HelloWorld`
+   ```
+    $ jib jar --target=docker://cli-jar-quickstart myapp.jar
+   ```
+
+6. Run the container
+   ```
+    $ docker run cli-jar-quickstart
+    Hello World
+   ```
+   
 ### Options
 Optional flags for the `jar` command:
 
