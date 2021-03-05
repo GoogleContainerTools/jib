@@ -28,7 +28,8 @@ The CLI tool is powered by [Jib Core](https://github.com/GoogleContainerTools/ji
   * [Quickstart](#quickstart)
   * [Options](#options)
 * [Jar Command](#jar-command)
-  * [Options](#options)
+  * [Quickstart](#quickstart-1)
+  * [Options](#options-1)
 * [Common Jib CLI Options](#common-jib-cli-options)
   * [Auth/Security](#authsecurity)
   * [Info Params](#info-params)
@@ -38,13 +39,13 @@ The CLI tool is powered by [Jib Core](https://github.com/GoogleContainerTools/ji
 
 ## Get the Jib CLI
 
-Most users should download a ZIP archive (Java application). We are working on releasing a native executable binary.
+Most users should download a ZIP archive (Java application). We are working on releasing a native executable binary using GraalVM. (Help wanted!)
 
 ### Download a Java Application
 
 A JRE is required to run this Jib CLI distribution.
 
-Find the [latest jib-cli 0.2.0 release](https://github.com/GoogleContainerTools/jib/releases/tag/v0.2.0-cli) on the [Releases page](https://github.com/GoogleContainerTools/jib/releases), download `jib-jre-<version>.zip`, and unzip it. The zip file contains the `jib` (`jib.bat` for Windows) script at `jib/bin/`. Optionally, add the binary directory to your `$PATH` so that you can call `jib` from anywhere.
+Find the [latest jib-cli 0.3.0 release](https://github.com/GoogleContainerTools/jib/releases/tag/v0.3.0-cli) on the [Releases page](https://github.com/GoogleContainerTools/jib/releases), download `jib-jre-<version>.zip`, and unzip it. The zip file contains the `jib` (`jib.bat` for Windows) script at `jib/bin/`. Optionally, add the binary directory to your `$PATH` so that you can call `jib` from anywhere.
 
 ### Build Yourself from Source (for Advanced Users)
 
@@ -82,7 +83,7 @@ jib build --target <image name> [options]
     from:
       image: ubuntu
     
-    entrypoint: ["./script.sh"]
+    entrypoint: ["/script.sh"]
     
     layers:
       entries:
@@ -120,7 +121,23 @@ This command follows the following pattern:
 ```
 jib jar --target <image name> path/to/myapp.jar [options]
 ```
+### Quickstart
+1. Have your JAR (thin or fat) ready. We will be using the [Spring Petclinic](https://projects.spring.io/spring-petclinic/) JAR in this Quickstart.
+   ```
+    $ git clone https://github.com/spring-projects/spring-petclinic.git
+    $ cd spring-petclinic
+    $ ./mvnw package
+   ```
+2. Containerize your JAR using the `jar` command. In the default mode (exploded), the entrypoint will be set to `java -cp /app/dependencies/:/app/explodedJar/ HelloWorld`
+   ```
+    $ jib jar --target=docker://cli-jar-quickstart target/spring-petclinic-*.jar
+   ```
 
+3. Run the image and open your browser at http://localhost:8080
+   ```
+    $ docker run -p 8080:8080 cli-jar-quickstart
+   ```
+   
 ### Options
 Optional flags for the `jar` command:
 
