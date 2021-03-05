@@ -28,7 +28,7 @@ The CLI tool is powered by [Jib Core](https://github.com/GoogleContainerTools/ji
   * [Quickstart](#quickstart)
   * [Options](#options)
 * [Jar Command](#jar-command)
-  * [Quickstart]
+  * [Quickstart](#quickstart)
   * [Options](#options)
 * [Common Jib CLI Options](#common-jib-cli-options)
   * [Auth/Security](#authsecurity)
