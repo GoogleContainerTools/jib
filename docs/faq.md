@@ -7,7 +7,7 @@ If a question you have is not answered below, please [submit an issue](/../../is
 | What do you like best about Jib? What needs to be improved? Please tell us by taking a [one-minute survey](https://forms.gle/YRFeamGj51xmgnx28). Your responses will help us understand Jib usage and allow us to serve our customers (you!) better. |
 
 [But, I'm not a Java developer.](#but-im-not-a-java-developer)\
-[My build process doesn't let me integrate with the Jib Plugins](#my-build-process-doesnt-let-me-integrate-with-the-jib-plugins)\
+[My build process doesn't let me integrate with the Jib plugins](#my-build-process-doesnt-let-me-integrate-with-the-jib-plugins)\
 [How do I run the image I built?](#how-do-i-run-the-image-i-built)\
 [Where is bash?](#where-is-bash)\
 [What image format does Jib use?](#what-image-format-does-jib-use)\
@@ -60,7 +60,7 @@ Check out [Jib CLI](https://github.com/GoogleContainerTools/jib/tree/master/jib-
 
 Also see [rules_docker](https://github.com/bazelbuild/rules_docker) for a similar existing container image build tool for the [Bazel build system](https://github.com/bazelbuild/bazel). The tool can build images for languages such as Python, NodeJS, Java, Scala, Groovy, C, Go, Rust, and D.
 
-### My build process doesn't let me integrate with the Jib Plugins
+### My build process doesn't let me integrate with the Jib plugins
 
 The [Jib CLI](https://github.com/GoogleContainerTools/jib/tree/master/jib-cli) can be useful for users with complex build workflows that make it hard to integrate the Jib Maven or Gradle plugins. It is a standalone application that is powered by [Jib-Core](#https://github.com/GoogleContainerTools/jib/tree/master/jib-core) and offers two commands:
 
