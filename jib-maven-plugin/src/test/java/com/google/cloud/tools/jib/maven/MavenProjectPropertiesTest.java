@@ -549,28 +549,37 @@ public class MavenProjectPropertiesTest {
 
   @Test
   public void testCreateContainerBuilder_noErrorIfWebInfDoesNotExist()
-      throws IOException, InvalidImageReferenceException, CacheDirectoryCreationException {
+      throws IOException, InvalidImageReferenceException {
     setUpWar(temporaryFolder.newFolder("final-name").toPath());
 
-    setUpBuildContext(); // should pass
+    assertThat(
+            mavenProjectProperties.createJibContainerBuilder(
+                JavaContainerBuilder.from("ignored"), ContainerizingMode.EXPLODED))
+        .isNotNull();
   }
 
   @Test
   public void testCreateContainerBuilder_noErrorIfWebInfLibDoesNotExist()
-      throws IOException, InvalidImageReferenceException, CacheDirectoryCreationException {
+      throws IOException, InvalidImageReferenceException {
     temporaryFolder.newFolder("final-name", "WEB-INF", "classes");
     setUpWar(temporaryFolder.getRoot().toPath());
 
-    setUpBuildContext(); // should pass
+    assertThat(
+            mavenProjectProperties.createJibContainerBuilder(
+                JavaContainerBuilder.from("ignored"), ContainerizingMode.EXPLODED))
+        .isNotNull();
   }
 
   @Test
   public void testCreateContainerBuilder_noErrorIfWebInfClassesDoesNotExist()
-      throws IOException, InvalidImageReferenceException, CacheDirectoryCreationException {
+      throws IOException, InvalidImageReferenceException {
     temporaryFolder.newFolder("final-name", "WEB-INF", "lib");
     setUpWar(temporaryFolder.getRoot().toPath());
 
-    setUpBuildContext(); // should pass
+    assertThat(
+            mavenProjectProperties.createJibContainerBuilder(
+                JavaContainerBuilder.from("ignored"), ContainerizingMode.EXPLODED))
+        .isNotNull();
   }
 
   @Test
