@@ -202,7 +202,7 @@ public class JibPluginTest {
 
     Jar jar = (Jar) project.getTasks().getByPath(":jar");
     assertThat(jar.getEnabled()).isFalse();
-    assertThat(jar.getArchiveClassifier().get()).isEqualTo("");
+    assertThat(jar.getArchiveClassifier().get()).isEmpty();
   }
 
   @Test
@@ -242,7 +242,7 @@ public class JibPluginTest {
 
     Jar jar = (Jar) project.getTasks().getByPath(":jar");
     assertThat(jar.getEnabled()).isTrue();
-    assertThat(jar.getArchiveClassifier().get()).isEqualTo("");
+    assertThat(jar.getArchiveClassifier().get()).isEmpty();
   }
 
   @Test
@@ -291,7 +291,7 @@ public class JibPluginTest {
 
     Jar jar = (Jar) project.getTasks().getByPath(":jar");
     assertThat(jar.getEnabled()).isTrue();
-    assertThat(jar.getArchiveClassifier().get()).isEqualTo("");
+    assertThat(jar.getArchiveClassifier().get()).isEmpty();
   }
 
   @Test
@@ -306,7 +306,7 @@ public class JibPluginTest {
     Jar jar = (Jar) project.getTasks().getByPath(":jar");
     assertThat(jar.getEnabled()).isTrue();
     assertThat(project.getTasks().getByPath(":bootJar").getEnabled()).isFalse();
-    assertThat(jar.getArchiveClassifier().get()).isEqualTo("");
+    assertThat(jar.getArchiveClassifier().get()).isEmpty();
   }
 
   @Test
