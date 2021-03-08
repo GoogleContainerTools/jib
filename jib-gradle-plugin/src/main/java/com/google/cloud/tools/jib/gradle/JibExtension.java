@@ -118,16 +118,14 @@ public class JibExtension {
     pluginExtensions = objectFactory.listProperty(ExtensionParameters.class).empty();
     extensionParametersSpec =
         objectFactory.newInstance(ExtensionParametersSpec.class, pluginExtensions);
-    allowInsecureRegistries = objectFactory.property(Boolean.class);
-    containerizingMode = objectFactory.property(String.class);
+    allowInsecureRegistries =
+        objectFactory.property(Boolean.class).convention(DEFAULT_ALLOW_INSECURE_REGISTIRIES);
+    containerizingMode =
+        objectFactory.property(String.class).convention(DEFAULT_CONTAINERIZING_MODE);
     configurationName =
         objectFactory
             .property(String.class)
             .convention(JavaPlugin.RUNTIME_CLASSPATH_CONFIGURATION_NAME);
-
-    // Sets defaults.
-    allowInsecureRegistries.set(DEFAULT_ALLOW_INSECURE_REGISTIRIES);
-    containerizingMode.set(DEFAULT_CONTAINERIZING_MODE);
   }
 
   public void from(Action<? super BaseImageParameters> action) {
@@ -237,7 +235,7 @@ public class JibExtension {
   @Optional
   public Property<String> getConfigurationName() {
     String property = System.getProperty(PropertyNames.CONFIGURATION_NAME);
-    if (property != null) {
+    if (property != null && !property.equals(configurationName.get())) {
       configurationName.set(property);
     }
     return configurationName;
