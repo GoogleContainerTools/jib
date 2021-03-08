@@ -392,25 +392,37 @@ public class GradleProjectPropertiesTest {
 
   @Test
   public void testCreateContainerBuilder_noErrorIfWebInfClassesDoesNotExist()
-      throws IOException, InvalidImageReferenceException, CacheDirectoryCreationException {
+      throws IOException, InvalidImageReferenceException {
     temporaryFolder.newFolder("WEB-INF", "lib");
     setUpWarProject(temporaryFolder.getRoot().toPath());
-    setupBuildContext(); // should pass
+
+    assertThat(
+            gradleProjectProperties.createJibContainerBuilder(
+                JavaContainerBuilder.from("ignored"), ContainerizingMode.EXPLODED))
+        .isNotNull();
   }
 
   @Test
   public void testCreateContainerBuilder_noErrorIfWebInfLibDoesNotExist()
-      throws IOException, InvalidImageReferenceException, CacheDirectoryCreationException {
+      throws IOException, InvalidImageReferenceException {
     temporaryFolder.newFolder("WEB-INF", "classes");
     setUpWarProject(temporaryFolder.getRoot().toPath());
-    setupBuildContext(); // should pass
+
+    assertThat(
+            gradleProjectProperties.createJibContainerBuilder(
+                JavaContainerBuilder.from("ignored"), ContainerizingMode.EXPLODED))
+        .isNotNull();
   }
 
   @Test
   public void testCreateContainerBuilder_noErrorIfWebInfDoesNotExist()
-      throws IOException, InvalidImageReferenceException, CacheDirectoryCreationException {
+      throws IOException, InvalidImageReferenceException {
     setUpWarProject(temporaryFolder.getRoot().toPath());
-    setupBuildContext(); // should pass
+
+    assertThat(
+            gradleProjectProperties.createJibContainerBuilder(
+                JavaContainerBuilder.from("ignored"), ContainerizingMode.EXPLODED))
+        .isNotNull();
   }
 
   @Test
