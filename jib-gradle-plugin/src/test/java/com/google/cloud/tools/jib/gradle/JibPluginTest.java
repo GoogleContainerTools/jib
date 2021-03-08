@@ -16,14 +16,17 @@
 
 package com.google.cloud.tools.jib.gradle;
 
+import static com.google.common.truth.Truth.assertThat;
+import static org.junit.Assert.assertThrows;
+
 import com.google.common.collect.ImmutableList;
+import com.google.common.truth.Correspondence;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Set;
-import java.util.stream.Collectors;
 import org.gradle.api.GradleException;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
@@ -34,10 +37,7 @@ import org.gradle.jvm.tasks.Jar;
 import org.gradle.testfixtures.ProjectBuilder;
 import org.gradle.testkit.runner.GradleRunner;
 import org.gradle.testkit.runner.UnexpectedBuildFailure;
-import org.hamcrest.CoreMatchers;
-import org.hamcrest.MatcherAssert;
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Assume;
 import org.junit.Rule;
 import org.junit.Test;
@@ -51,6 +51,12 @@ public class JibPluginTest {
           JibPlugin.BUILD_IMAGE_TASK_NAME,
           JibPlugin.BUILD_DOCKER_TASK_NAME,
           JibPlugin.BUILD_TAR_TASK_NAME);
+
+  private static final Correspondence<Object, Task> PROVIDES_TASK_OF =
+      Correspondence.from(
+          (object, task) ->
+              object instanceof TaskProvider && ((TaskProvider<?>) object).get().equals(task),
+          "provides task of");
 
   private static boolean isJava8Runtime() {
     return System.getProperty("java.version").startsWith("1.8.");
@@ -97,68 +103,58 @@ public class JibPluginTest {
             .withProjectDir(testProjectRoot.getRoot())
             .withPluginClasspath()
             .withGradleVersion("4.3");
-    try {
-      gradleRunner.build();
-      Assert.fail();
-    } catch (UnexpectedBuildFailure ex) {
-      Assert.assertTrue(
-          ex.getMessage()
-              .contains(
-                  "Detected Gradle 4.3, but jib requires "
-                      + JibPlugin.GRADLE_MIN_VERSION
-                      + " or higher. You can upgrade by running 'gradle wrapper --gradle-version="
-                      + JibPlugin.GRADLE_MIN_VERSION.getVersion()
-                      + "'."));
-    }
+
+    Exception exception = assertThrows(UnexpectedBuildFailure.class, () -> gradleRunner.build());
+    assertThat(exception)
+        .hasMessageThat()
+        .contains(
+            "Detected Gradle 4.3, but jib requires "
+                + JibPlugin.GRADLE_MIN_VERSION
+                + " or higher. You can upgrade by running 'gradle wrapper --gradle-version="
+                + JibPlugin.GRADLE_MIN_VERSION.getVersion()
+                + "'.");
   }
 
   @Test
   public void testCheckJibVersionNames() {
     // These identifiers will be baked into Skaffold and should not be changed
-    Assert.assertEquals(JibPlugin.REQUIRED_VERSION_PROPERTY_NAME, "jib.requiredVersion");
-    Assert.assertEquals(
-        JibPlugin.SKAFFOLD_CHECK_REQUIRED_VERSION_TASK_NAME, "_skaffoldFailIfJibOutOfDate");
+    assertThat(JibPlugin.REQUIRED_VERSION_PROPERTY_NAME).isEqualTo("jib.requiredVersion");
+    assertThat(JibPlugin.SKAFFOLD_CHECK_REQUIRED_VERSION_TASK_NAME)
+        .isEqualTo("_skaffoldFailIfJibOutOfDate");
   }
 
   @Test
   public void testCheckJibVersionInvoked() {
     Project project = createProject();
     System.setProperty(JibPlugin.REQUIRED_VERSION_PROPERTY_NAME, "10000.0"); // not here yet
-    try {
-      project.getPluginManager().apply("com.google.cloud.tools.jib");
-      Assert.fail("should have failed");
-    } catch (GradleException ex) {
-      // Gradle tests aren't run from a jar and so don't have an identifiable plugin version
-      Assert.assertEquals(
-          "Failed to apply plugin [id 'com.google.cloud.tools.jib']", ex.getMessage());
-      Assert.assertEquals("Could not determine Jib plugin version", ex.getCause().getMessage());
-    }
+
+    Exception exception =
+        assertThrows(
+            GradleException.class,
+            () -> project.getPluginManager().apply("com.google.cloud.tools.jib"));
+    // Gradle tests aren't run from a jar and so don't have an identifiable plugin version
+    assertThat(exception)
+        .hasMessageThat()
+        .isEqualTo("Failed to apply plugin [id 'com.google.cloud.tools.jib']");
+    assertThat(exception.getCause())
+        .hasMessageThat()
+        .isEqualTo("Could not determine Jib plugin version");
   }
 
-  @SuppressWarnings("unchecked")
   @Test
   public void testWebAppProject() {
     Project project = createProject("java", "war", "com.google.cloud.tools.jib");
 
     TaskContainer tasks = project.getTasks();
     Task warTask = tasks.getByPath(":war");
-    Assert.assertNotNull(warTask);
+    assertThat(warTask).isNotNull();
 
     for (String taskName : KNOWN_JIB_TASKS) {
-      Set<Task> taskDependencies =
-          tasks
-              .getByPath(taskName)
-              .getDependsOn()
-              .stream()
-              .filter(TaskProvider.class::isInstance)
-              .map(it -> ((TaskProvider<?>) it).get())
-              .collect(Collectors.toSet());
-
-      Assert.assertTrue(taskDependencies.contains(warTask));
+      Set<Object> taskDependencies = tasks.getByPath(taskName).getDependsOn();
+      assertThat(taskDependencies).comparingElementsUsing(PROVIDES_TASK_OF).contains(warTask);
     }
   }
 
-  @SuppressWarnings("unchecked")
   @Test
   public void testWebAppProject_bootWar() {
     Project project =
@@ -167,24 +163,17 @@ public class JibPluginTest {
     TaskContainer tasks = project.getTasks();
     Task warTask = tasks.getByPath(":war");
     Task bootWarTask = tasks.getByPath(":bootWar");
-    Assert.assertNotNull(warTask);
-    Assert.assertNotNull(bootWarTask);
+    assertThat(warTask).isNotNull();
+    assertThat(bootWarTask).isNotNull();
 
     for (String taskName : KNOWN_JIB_TASKS) {
-      Set<Task> taskDependencies =
-          tasks
-              .getByPath(taskName)
-              .getDependsOn()
-              .stream()
-              .filter(TaskProvider.class::isInstance)
-              .map(it -> ((TaskProvider<?>) it).get())
-              .collect(Collectors.toSet());
-
-      Assert.assertTrue(taskDependencies.containsAll(Arrays.asList(warTask, bootWarTask)));
+      Set<Object> taskDependencies = tasks.getByPath(taskName).getDependsOn();
+      assertThat(taskDependencies)
+          .comparingElementsUsing(PROVIDES_TASK_OF)
+          .containsAtLeast(warTask, bootWarTask);
     }
   }
 
-  @SuppressWarnings("unchecked")
   @Test
   public void testWebAppProject_bootWarDisabled() {
     Project project =
@@ -195,20 +184,14 @@ public class JibPluginTest {
 
     Task warTask = tasks.getByPath(":war");
     Task bootWarTask = tasks.getByPath(":bootWar");
-    Assert.assertNotNull(warTask);
-    Assert.assertNotNull(bootWarTask);
+    assertThat(warTask).isNotNull();
+    assertThat(bootWarTask).isNotNull();
 
     for (String taskName : KNOWN_JIB_TASKS) {
-      Set<Task> taskDependencies =
-          tasks
-              .getByPath(taskName)
-              .getDependsOn()
-              .stream()
-              .filter(TaskProvider.class::isInstance)
-              .map(it -> ((TaskProvider<?>) it).get())
-              .collect(Collectors.toSet());
-
-      Assert.assertTrue(taskDependencies.containsAll(Arrays.asList(warTask, bootWarTask)));
+      Set<Object> taskDependencies = tasks.getByPath(taskName).getDependsOn();
+      assertThat(taskDependencies)
+          .comparingElementsUsing(PROVIDES_TASK_OF)
+          .containsAtLeast(warTask, bootWarTask);
     }
   }
 
@@ -218,8 +201,8 @@ public class JibPluginTest {
         createProject("java", "org.springframework.boot", "com.google.cloud.tools.jib");
 
     Jar jar = (Jar) project.getTasks().getByPath(":jar");
-    Assert.assertFalse(jar.getEnabled());
-    Assert.assertEquals("", jar.getArchiveClassifier().get());
+    assertThat(jar.getEnabled()).isFalse();
+    assertThat(jar.getArchiveClassifier().get()).isEmpty();
   }
 
   @Test
@@ -230,8 +213,8 @@ public class JibPluginTest {
     jibExtension.setContainerizingMode("packaged");
 
     Jar jar = (Jar) project.getTasks().getByPath(":jar");
-    Assert.assertTrue(jar.getEnabled());
-    Assert.assertEquals("original", jar.getArchiveClassifier().get());
+    assertThat(jar.getEnabled()).isTrue();
+    assertThat(jar.getArchiveClassifier().get()).isEqualTo("original");
   }
 
   @Test
@@ -244,8 +227,8 @@ public class JibPluginTest {
     jarTask.configure(task -> ((Jar) task).getArchiveClassifier().set("jar-classifier"));
 
     Jar jar = (Jar) project.getTasks().getByPath(":jar");
-    Assert.assertTrue(jar.getEnabled());
-    Assert.assertEquals("jar-classifier", jar.getArchiveClassifier().get());
+    assertThat(jar.getEnabled()).isTrue();
+    assertThat(jar.getArchiveClassifier().get()).isEqualTo("jar-classifier");
   }
 
   @Test
@@ -258,8 +241,8 @@ public class JibPluginTest {
     bootJarTask.configure(task -> ((Jar) task).getArchiveClassifier().set("boot-classifier"));
 
     Jar jar = (Jar) project.getTasks().getByPath(":jar");
-    Assert.assertTrue(jar.getEnabled());
-    Assert.assertEquals("", jar.getArchiveClassifier().get());
+    assertThat(jar.getEnabled()).isTrue();
+    assertThat(jar.getArchiveClassifier().get()).isEmpty();
   }
 
   @Test
@@ -271,20 +254,15 @@ public class JibPluginTest {
     project.getTasks().named("jar").configure(task -> task.setEnabled(true));
 
     TaskContainer tasks = project.getTasks();
-    try {
-      tasks.getByPath(":jar");
-      Assert.fail();
-    } catch (GradleException ex) {
-      MatcherAssert.assertThat(
-          ex.getCause().getMessage(),
-          CoreMatchers.startsWith(
-              "Both 'bootJar' and 'jar' tasks are enabled, but they write their jar file into the "
-                  + "same location at "));
-      MatcherAssert.assertThat(
-          ex.getCause().getMessage(),
-          CoreMatchers.endsWith(
-              "root.jar. Did you forget to set 'archiveClassifier' on either task?"));
-    }
+    Exception exception = assertThrows(GradleException.class, () -> tasks.getByPath(":jar"));
+    assertThat(exception.getCause())
+        .hasMessageThat()
+        .startsWith(
+            "Both 'bootJar' and 'jar' tasks are enabled, but they write their jar file into the "
+                + "same location at ");
+    assertThat(exception.getCause())
+        .hasMessageThat()
+        .endsWith("root.jar. Did you forget to set 'archiveClassifier' on either task?");
   }
 
   @Test
@@ -298,8 +276,8 @@ public class JibPluginTest {
     jarTask.configure(task -> ((Jar) task).getArchiveClassifier().set("jar-classifier"));
 
     Jar jar = (Jar) project.getTasks().getByPath(":jar");
-    Assert.assertTrue(jar.getEnabled());
-    Assert.assertEquals("jar-classifier", jar.getArchiveClassifier().get());
+    assertThat(jar.getEnabled()).isTrue();
+    assertThat(jar.getArchiveClassifier().get()).isEqualTo("jar-classifier");
   }
 
   @Test
@@ -311,9 +289,9 @@ public class JibPluginTest {
     TaskProvider<Task> bootJarTask = project.getTasks().named("bootJar");
     bootJarTask.configure(task -> ((Jar) task).getArchiveClassifier().set("boot-classifier"));
 
-    Jar jarTask = (Jar) project.getTasks().getByPath(":jar");
-    Assert.assertTrue(jarTask.getEnabled());
-    Assert.assertEquals("", jarTask.getArchiveClassifier().get());
+    Jar jar = (Jar) project.getTasks().getByPath(":jar");
+    assertThat(jar.getEnabled()).isTrue();
+    assertThat(jar.getArchiveClassifier().get()).isEmpty();
   }
 
   @Test
@@ -326,9 +304,9 @@ public class JibPluginTest {
     project.getTasks().named("bootJar").configure(task -> task.setEnabled(false));
 
     Jar jar = (Jar) project.getTasks().getByPath(":jar");
-    Assert.assertTrue(jar.getEnabled());
-    Assert.assertFalse(project.getTasks().getByPath(":bootJar").getEnabled());
-    Assert.assertEquals("", jar.getArchiveClassifier().get());
+    assertThat(jar.getEnabled()).isTrue();
+    assertThat(project.getTasks().getByPath(":bootJar").getEnabled()).isFalse();
+    assertThat(jar.getArchiveClassifier().get()).isEmpty();
   }
 
   @Test
@@ -344,9 +322,9 @@ public class JibPluginTest {
     project.getTasks().named("bootJar").configure(task -> task.setEnabled(false));
 
     Jar jar = (Jar) project.getTasks().getByPath(":jar");
-    Assert.assertTrue(jar.getEnabled());
-    Assert.assertFalse(project.getTasks().getByPath(":bootJar").getEnabled());
-    Assert.assertEquals("jar-classifier", jar.getArchiveClassifier().get());
+    assertThat(jar.getEnabled()).isTrue();
+    assertThat(project.getTasks().getByPath(":bootJar").getEnabled()).isFalse();
+    assertThat(jar.getArchiveClassifier().get()).isEqualTo("jar-classifier");
   }
 
   @Test
@@ -354,12 +332,8 @@ public class JibPluginTest {
     Project project = createProject("java", "com.google.cloud.tools.jib");
 
     TaskContainer tasks = project.getTasks();
-    try {
-      tasks.getByPath(":war");
-      Assert.fail();
-    } catch (UnknownTaskException ex) {
-      Assert.assertNotNull(ex.getMessage());
-    }
+    Exception exception = assertThrows(UnknownTaskException.class, () -> tasks.getByPath(":war"));
+    assertThat(exception).hasMessageThat().isNotNull();
   }
 
   @Test
@@ -368,7 +342,7 @@ public class JibPluginTest {
 
     TaskContainer tasks = project.getTasks();
     KNOWN_JIB_TASKS.forEach(
-        taskName -> Assert.assertEquals(taskName, "Jib", tasks.getByPath(taskName).getGroup()));
+        taskName -> assertThat(tasks.getByPath(taskName).getGroup()).isEqualTo("Jib"));
   }
 
   @Test
@@ -376,18 +350,15 @@ public class JibPluginTest {
     // TODO: Pass in `-Djib.console=plain` as argument for build and remove filtering for cyan
     // coloring regex once [#2764](https://github.com/GoogleContainerTools/jib/issues/2764) is
     // submitted.
-    try {
-      testProject.build(JibPlugin.BUILD_IMAGE_TASK_NAME);
-      Assert.fail("Expect this to fail");
-    } catch (UnexpectedBuildFailure ex) {
-      String output = ex.getBuildResult().getOutput().trim();
-      String cleanOutput = output.replace("\u001B[36m", "").replace("\u001B[0m", "");
+    UnexpectedBuildFailure exception =
+        assertThrows(
+            UnexpectedBuildFailure.class, () -> testProject.build(JibPlugin.BUILD_IMAGE_TASK_NAME));
 
-      MatcherAssert.assertThat(
-          cleanOutput,
-          CoreMatchers.containsString(
-              "Containerizing application to updated-image, updated-image:updated-tag, updated-image:tag2"));
-    }
+    String output = exception.getBuildResult().getOutput().trim();
+    String cleanOutput = output.replace("\u001B[36m", "").replace("\u001B[0m", "");
+    assertThat(cleanOutput)
+        .contains(
+            "Containerizing application to updated-image, updated-image:updated-tag, updated-image:tag2");
   }
 
   private Project createProject(String... plugins) {
