@@ -236,10 +236,9 @@ public class GradleProjectPropertiesTest {
   }
 
   @Test
-  public void testCreateContainerBuilder_correctFiles()
+  public void testCreateContainerBuilder_correctSourceFiles()
       throws URISyntaxException, InvalidImageReferenceException, CacheDirectoryCreationException {
-    BuildContext buildContext = setupBuildContext("/app");
-    ContainerBuilderLayers layers = new ContainerBuilderLayers(buildContext);
+    ContainerBuilderLayers layers = new ContainerBuilderLayers(setupBuildContext());
 
     Path applicationDirectory = getResource("gradle/application");
     assertThat(layers.snapshotsLayer.getEntries())
@@ -302,10 +301,9 @@ public class GradleProjectPropertiesTest {
   }
 
   @Test
-  public void testCreateContainerBuilder_nonDefaultAppRoot()
+  public void testCreateContainerBuilder_correctExtractionPaths()
       throws InvalidImageReferenceException, CacheDirectoryCreationException {
-    BuildContext buildContext = setupBuildContext("/my/app");
-    ContainerBuilderLayers layers = new ContainerBuilderLayers(buildContext);
+    ContainerBuilderLayers layers = new ContainerBuilderLayers(setupBuildContext());
 
     assertThat(layers.dependenciesLayer.getEntries())
         .comparingElementsUsing(EXTRACTION_PATH_OF)
@@ -331,40 +329,12 @@ public class GradleProjectPropertiesTest {
   }
 
   @Test
-  public void testCreateContainerBuilder_defaultAppRoot()
-      throws InvalidImageReferenceException, CacheDirectoryCreationException {
-    BuildContext buildContext = setupBuildContext(JavaContainerBuilder.DEFAULT_APP_ROOT);
-    ContainerBuilderLayers layers = new ContainerBuilderLayers(buildContext);
-    assertThat(layers.dependenciesLayer.getEntries())
-        .comparingElementsUsing(EXTRACTION_PATH_OF)
-        .containsExactly(
-            "/app/libs/dependency-1.0.0-770.jar",
-            "/app/libs/dependency-1.0.0-200.jar",
-            "/app/libs/dependency-1.0.0-480.jar",
-            "/app/libs/libraryA.jar",
-            "/app/libs/libraryB.jar",
-            "/app/libs/library.jarC.jar");
-    assertThat(layers.snapshotsLayer.getEntries())
-        .comparingElementsUsing(EXTRACTION_PATH_OF)
-        .containsExactly("/app/libs/dependencyX-1.0.0-SNAPSHOT.jar");
-    assertThat(layers.resourcesLayer.getEntries())
-        .comparingElementsUsing(EXTRACTION_PATH_OF)
-        .containsExactly(
-            "/app/resources/resourceA", "/app/resources/resourceB", "/app/resources/world");
-    assertThat(layers.classesLayer.getEntries())
-        .comparingElementsUsing(EXTRACTION_PATH_OF)
-        .containsExactly("/app/classes/HelloWorld.class", "/app/classes/some.class");
-  }
-
-  @Test
   public void testCreateContainerBuilder_war()
       throws URISyntaxException, IOException, InvalidImageReferenceException,
           CacheDirectoryCreationException {
-    Path webAppDirectory = getResource("gradle/webapp");
-    Path unzipTarget = setUpWarProject(webAppDirectory);
+    Path unzipTarget = setUpWarProject(getResource("gradle/webapp"));
 
-    BuildContext buildContext = setupBuildContext("/my/app");
-    ContainerBuilderLayers layers = new ContainerBuilderLayers(buildContext);
+    ContainerBuilderLayers layers = new ContainerBuilderLayers(setupBuildContext());
     assertThat(layers.dependenciesLayer.getEntries())
         .comparingElementsUsing(SOURCE_FILE_OF)
         .containsExactly(unzipTarget.resolve("WEB-INF/lib/dependency-1.0.0.jar"));
@@ -421,62 +391,38 @@ public class GradleProjectPropertiesTest {
   }
 
   @Test
-  public void testCreateContainerBuilder_defaultWebAppRoot()
-      throws URISyntaxException, IOException, InvalidImageReferenceException,
-          CacheDirectoryCreationException {
-    Path unzipTarget = setUpWarProject(getResource("gradle/webapp"));
-
-    BuildContext buildContext = setupBuildContext(JavaContainerBuilder.DEFAULT_WEB_APP_ROOT);
-    ContainerBuilderLayers layers = new ContainerBuilderLayers(buildContext);
-    assertThat(layers.dependenciesLayer.getEntries())
-        .comparingElementsUsing(SOURCE_FILE_OF)
-        .containsExactly(unzipTarget.resolve("WEB-INF/lib/dependency-1.0.0.jar"));
-    assertThat(layers.snapshotsLayer.getEntries())
-        .comparingElementsUsing(SOURCE_FILE_OF)
-        .containsExactly(unzipTarget.resolve("WEB-INF/lib/dependencyX-1.0.0-SNAPSHOT.jar"));
-    assertThat(layers.resourcesLayer.getEntries())
-        .comparingElementsUsing(SOURCE_FILE_OF)
-        .containsExactly(
-            unzipTarget.resolve("META-INF"),
-            unzipTarget.resolve("META-INF/context.xml"),
-            unzipTarget.resolve("Test.jsp"),
-            unzipTarget.resolve("WEB-INF"),
-            unzipTarget.resolve("WEB-INF/classes"),
-            unzipTarget.resolve("WEB-INF/classes/empty_dir"),
-            unzipTarget.resolve("WEB-INF/classes/package"),
-            unzipTarget.resolve("WEB-INF/classes/package/test.properties"),
-            unzipTarget.resolve("WEB-INF/lib"),
-            unzipTarget.resolve("WEB-INF/web.xml"));
-    assertThat(layers.classesLayer.getEntries())
-        .comparingElementsUsing(SOURCE_FILE_OF)
-        .containsExactly(
-            unzipTarget.resolve("WEB-INF/classes/HelloWorld.class"),
-            unzipTarget.resolve("WEB-INF/classes/empty_dir"),
-            unzipTarget.resolve("WEB-INF/classes/package"),
-            unzipTarget.resolve("WEB-INF/classes/package/Other.class"));
-  }
-
-  @Test
   public void testCreateContainerBuilder_noErrorIfWebInfClassesDoesNotExist()
-      throws IOException, InvalidImageReferenceException, CacheDirectoryCreationException {
+      throws IOException, InvalidImageReferenceException {
     temporaryFolder.newFolder("WEB-INF", "lib");
     setUpWarProject(temporaryFolder.getRoot().toPath());
-    setupBuildContext("/anything"); // should pass
+
+    assertThat(
+            gradleProjectProperties.createJibContainerBuilder(
+                JavaContainerBuilder.from("ignored"), ContainerizingMode.EXPLODED))
+        .isNotNull();
   }
 
   @Test
   public void testCreateContainerBuilder_noErrorIfWebInfLibDoesNotExist()
-      throws IOException, InvalidImageReferenceException, CacheDirectoryCreationException {
+      throws IOException, InvalidImageReferenceException {
     temporaryFolder.newFolder("WEB-INF", "classes");
     setUpWarProject(temporaryFolder.getRoot().toPath());
-    setupBuildContext("/anything"); // should pass
+
+    assertThat(
+            gradleProjectProperties.createJibContainerBuilder(
+                JavaContainerBuilder.from("ignored"), ContainerizingMode.EXPLODED))
+        .isNotNull();
   }
 
   @Test
   public void testCreateContainerBuilder_noErrorIfWebInfDoesNotExist()
-      throws IOException, InvalidImageReferenceException, CacheDirectoryCreationException {
+      throws IOException, InvalidImageReferenceException {
     setUpWarProject(temporaryFolder.getRoot().toPath());
-    setupBuildContext("/anything"); // should pass
+
+    assertThat(
+            gradleProjectProperties.createJibContainerBuilder(
+                JavaContainerBuilder.from("ignored"), ContainerizingMode.EXPLODED))
+        .isNotNull();
   }
 
   @Test
@@ -533,11 +479,11 @@ public class GradleProjectPropertiesTest {
         .inOrder();
   }
 
-  private BuildContext setupBuildContext(String appRoot)
+  private BuildContext setupBuildContext()
       throws InvalidImageReferenceException, CacheDirectoryCreationException {
     JavaContainerBuilder javaContainerBuilder =
         JavaContainerBuilder.from(RegistryImage.named("base"))
-            .setAppRoot(AbsoluteUnixPath.get(appRoot))
+            .setAppRoot(AbsoluteUnixPath.get("/my/app"))
             .setModificationTimeProvider((ignored1, ignored2) -> EPOCH_PLUS_32);
     JibContainerBuilder jibContainerBuilder =
         gradleProjectProperties.createJibContainerBuilder(
