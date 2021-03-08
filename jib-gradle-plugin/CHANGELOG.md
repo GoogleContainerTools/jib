@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- Added an option `configurationName` to specify the name of the [Gradle Configuration](https://docs.gradle.org/current/dsl/org.gradle.api.artifacts.ConfigurationContainer.html) to use. The option can be lazily configured, for example, using Gradle `Provider` or `Property`. ([#3034](https://github.com/GoogleContainerTools/jib/pull/3034))
+```gradle
+    jib {
+      configurationName = 'myconfig'
+    }
+```                                                                                                                                                                      
+  
 ### Changed
 
 ### Fixed
