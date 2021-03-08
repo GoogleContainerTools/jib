@@ -435,7 +435,7 @@ public class JibExtensionTest {
     System.setProperty("jib.outputPaths.tar", "tar/path");
     assertThat(testJibExtension.getOutputPaths().getTarPath())
         .isEqualTo(fakeProject.getProjectDir().toPath().resolve("tar/path"));
-    System.setProperty("jib.configurationName", "myRuntimeClasspath");
+    System.setProperty("jib.configurationName", "myConfiguration");
     assertThat(testJibExtension.getConfigurationName().get()).isEqualTo("myRuntimeClasspath");
   }
 
