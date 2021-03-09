@@ -367,15 +367,14 @@ class PullBaseImageStep implements Callable<ImagesAndRegistryClient> {
     List<String> digests =
         manifestListTemplate.getDigestsForPlatform(platform.getArchitecture(), platform.getOs());
     if (digests.size() == 0) {
-      String errorMessage =
+      String errorTemplate =
           buildContext.getBaseImageConfiguration().getImage()
               + " is a manifest list, but the list does not contain an image for architecture=%s, "
               + "os=%s. If your intention was to specify a platform for your image, see "
               + "https://github.com/GoogleContainerTools/jib/blob/master/docs/faq.md#how-do-i-specify-a-platform-in-the-manifest-list-or-oci-index-of-a-base-image";
-      eventHandlers.dispatch(
-          LogEvent.error(
-              String.format(errorMessage, platform.getArchitecture(), platform.getOs())));
-      throw new UnlistedPlatformInManifestListException(errorMessage);
+      String error = String.format(errorTemplate, platform.getArchitecture(), platform.getOs());
+      eventHandlers.dispatch(LogEvent.error(error));
+      throw new UnlistedPlatformInManifestListException(error);
     }
     // TODO: perhaps we should return multiple digests matching the platform.
     return digests.get(0);

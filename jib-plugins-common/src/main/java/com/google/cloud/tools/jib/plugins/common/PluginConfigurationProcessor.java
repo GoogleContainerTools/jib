@@ -720,9 +720,9 @@ public class PluginConfigurationProcessor {
   }
 
   /**
-   * Gets the value of the {@code appRoot} parameter. If the parameter is empty, returns {@link
-   * JavaContainerBuilder#DEFAULT_WEB_APP_ROOT} for WAR projects or {@link
-   * JavaContainerBuilder#DEFAULT_APP_ROOT} for other projects.
+   * Gets the value of the {@code appRoot} parameter. If the parameter is empty, returns {@code
+   * /var/lib/jetty/webapps/ROOT} for WAR projects or {@link JavaContainerBuilder#DEFAULT_APP_ROOT}
+   * for other projects.
    *
    * @param rawConfiguration raw configuration data
    * @param projectProperties the project properties
