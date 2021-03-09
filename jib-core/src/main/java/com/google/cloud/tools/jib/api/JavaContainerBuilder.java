@@ -90,8 +90,7 @@ public class JavaContainerBuilder {
    *
    * @return a new {@link JavaContainerBuilder}
    * @see <a href="https://github.com/GoogleContainerTools/distroless">The distroless repository</a>
-   * @deprecated Use other {@code from()} methods with the image reference {@code
-   *     gcr.io/distroless/java}.
+   * @deprecated Use {@code from()} with the image reference {@code gcr.io/distroless/java}.
    */
   @Deprecated
   public static JavaContainerBuilder fromDistroless() {
@@ -123,8 +122,8 @@ public class JavaContainerBuilder {
    *
    * @return a new {@link JavaContainerBuilder}
    * @see <a href="https://github.com/GoogleContainerTools/distroless">The distroless repository</a>
-   * @deprecated Use other {@code from()} methods with the image reference {@code
-   *     gcr.io/distroless/java/jetty} and change the app root by calling {@code
+   * @deprecated Use {@code from()} with the image reference {@code gcr.io/distroless/java/jetty}
+   *     and change the app root by calling {@code
    *     JavaContainerBuilder.setAppRoot("/jetty/webapps/ROOT")}.
    */
   @Deprecated
