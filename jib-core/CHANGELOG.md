@@ -7,7 +7,7 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
-- `JavaContainerBuilder#fromDistroless()` and `JavaContainerBuilder#fromDistrolessJetty()` are deprecated. To migrate, check the Javadoc.
+- `JavaContainerBuilder#fromDistroless()` and `JavaContainerBuilder#fromDistrolessJetty()` are deprecated. To migrate, check the Javadoc. ([#3123](https://github.com/GoogleContainerTools/jib/pull/3123))
 
 ### Fixed
 
