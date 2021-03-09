@@ -31,8 +31,6 @@ import com.google.cloud.tools.jib.api.RegistryImage;
 import com.google.cloud.tools.jib.api.TarImage;
 import com.google.cloud.tools.jib.api.buildplan.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.api.buildplan.FileEntriesLayer;
-import com.google.cloud.tools.jib.api.buildplan.FileEntry;
-import com.google.cloud.tools.jib.api.buildplan.FilePermissions;
 import com.google.cloud.tools.jib.api.buildplan.ImageFormat;
 import com.google.cloud.tools.jib.api.buildplan.LayerObject;
 import com.google.cloud.tools.jib.api.buildplan.ModificationTimeProvider;
@@ -444,21 +442,6 @@ public class PluginConfigurationProcessor {
                 rawConfiguration.getExtraDirectoryPermissions(),
                 modificationTimeProvider));
       }
-    }
-
-    // Due to , the owner of "/var/lib/jetty" in the default "jetty" base image becomes "0:0".
-    // Restore the original owner by adding a directly in a new layer.
-    if (projectProperties.isWarProject() && !rawConfiguration.getFromImage().isPresent()) {
-      FileEntry fileEntry =
-          new FileEntry(
-              Paths.get("."),
-              AbsoluteUnixPath.get("/var/lib/jetty"),
-              FilePermissions.DEFAULT_FOLDER_PERMISSIONS,
-              FileEntriesLayer.DEFAULT_MODIFICATION_TIME,
-              "999:999");
-      FileEntriesLayer newLayer =
-          FileEntriesLayer.builder().setName("jetty-home-owner-fix").addEntry(fileEntry).build();
-      jibContainerBuilder.addFileEntriesLayer(newLayer);
     }
 
     return jibContainerBuilder;
