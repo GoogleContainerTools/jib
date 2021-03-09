@@ -84,6 +84,8 @@ public class PluginConfigurationProcessor {
   private static final ImmutableList<String> CONST_LAYERS =
       ImmutableList.of(LayerType.DEPENDENCIES.getName());
 
+  private static final String DEFAULT_JETTY_APP_ROOT = "/jetty/webapps/ROOT";
+
   /**
    * Generate a runner for image builds to docker daemon.
    *
@@ -718,9 +720,9 @@ public class PluginConfigurationProcessor {
   }
 
   /**
-   * Gets the value of the {@code appRoot} parameter. If the parameter is empty, returns {@link
-   * JavaContainerBuilder#DEFAULT_WEB_APP_ROOT} for WAR projects or {@link
-   * JavaContainerBuilder#DEFAULT_APP_ROOT} for other projects.
+   * Gets the value of the {@code appRoot} parameter. If the parameter is empty, returns {@code
+   * /jetty/webapps/ROOT} for WAR projects or {@link JavaContainerBuilder#DEFAULT_APP_ROOT} for
+   * other projects.
    *
    * @param rawConfiguration raw configuration data
    * @param projectProperties the project properties
@@ -735,7 +737,7 @@ public class PluginConfigurationProcessor {
     if (appRoot.isEmpty()) {
       appRoot =
           projectProperties.isWarProject()
-              ? JavaContainerBuilder.DEFAULT_WEB_APP_ROOT
+              ? DEFAULT_JETTY_APP_ROOT
               : JavaContainerBuilder.DEFAULT_APP_ROOT;
     }
     try {
