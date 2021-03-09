@@ -82,7 +82,7 @@ public class ImageReference {
    * Parses a string {@code reference} into an {@link ImageReference}.
    *
    * <p>Image references should generally be in the form: {@code <registry>/<repository>:<tag>} For
-   * example, an image reference could be {@code gcr.io/distroless/java:debug}.
+   * example, an image reference could be {@code gcr.io/k8s-skaffold/skaffold:v1.20.0}.
    *
    * <p>See <a
    * href="https://docs.docker.com/engine/reference/commandline/tag/#extended-description">https://docs.docker.com/engine/reference/commandline/tag/#extended-description</a>
@@ -220,7 +220,7 @@ public class ImageReference {
 
   /**
    * Returns {@code true} if {@code repository} is a valid repository string. For example, a valid
-   * repository could be {@code distroless} or {@code my/container-image/repository}.
+   * repository string could be {@code my-repository} or {@code k8s-skaffold/skaffold}.
    *
    * @param repository the repository to check
    * @return {@code true} if is a valid repository; {@code false} otherwise

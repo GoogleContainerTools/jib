@@ -62,7 +62,7 @@ public class JavaContainerBuilderTest {
       throws InvalidImageReferenceException, URISyntaxException, IOException,
           CacheDirectoryCreationException {
     BuildContext buildContext =
-        JavaContainerBuilder.fromDistroless()
+        JavaContainerBuilder.from("scratch")
             .setAppRoot("/hello")
             .addResources(getResource("core/application/resources"))
             .addClasses(getResource("core/application/classes"))
@@ -144,7 +144,7 @@ public class JavaContainerBuilderTest {
       throws InvalidImageReferenceException, URISyntaxException, IOException,
           CacheDirectoryCreationException {
     BuildContext buildContext =
-        JavaContainerBuilder.fromDistroless()
+        JavaContainerBuilder.from("scratch")
             .addDependencies(getResource("core/application/dependencies/libraryA.jar"))
             .addDependencies(getResource("core/application/dependencies/libraryB.jar"))
             .addSnapshotDependencies(
@@ -195,7 +195,7 @@ public class JavaContainerBuilderTest {
       throws URISyntaxException, IOException, InvalidImageReferenceException,
           CacheDirectoryCreationException {
     BuildContext buildContext =
-        JavaContainerBuilder.fromDistroless()
+        JavaContainerBuilder.from("scratch")
             .addClasses(getResource("core/application/classes"))
             .addResources(getResource("core/application/resources"))
             .addDependencies(getResource("core/application/dependencies/libraryA.jar"))
@@ -247,14 +247,14 @@ public class JavaContainerBuilderTest {
       throws IOException, InvalidImageReferenceException, CacheDirectoryCreationException,
           URISyntaxException {
     BuildContext buildContext =
-        JavaContainerBuilder.fromDistroless()
+        JavaContainerBuilder.from("scratch")
             .addClasses(getResource("core/application/classes/"))
             .toContainerBuilder()
             .toBuildContext(Containerizer.to(RegistryImage.named("hello")));
     Assert.assertNull(buildContext.getContainerConfiguration().getEntrypoint());
 
     try {
-      JavaContainerBuilder.fromDistroless().addJvmFlags("-flag1", "-flag2").toContainerBuilder();
+      JavaContainerBuilder.from("scratch").addJvmFlags("-flag1", "-flag2").toContainerBuilder();
       Assert.fail();
 
     } catch (IllegalStateException ex) {
@@ -268,9 +268,10 @@ public class JavaContainerBuilderTest {
   }
 
   @Test
-  public void testToJibContainerBuilder_classpathEmpty() throws IOException {
+  public void testToJibContainerBuilder_classpathEmpty()
+      throws IOException, InvalidImageReferenceException {
     try {
-      JavaContainerBuilder.fromDistroless().setMainClass("Hello").toContainerBuilder();
+      JavaContainerBuilder.from("scratch").setMainClass("Hello").toContainerBuilder();
       Assert.fail();
 
     } catch (IllegalStateException ex) {

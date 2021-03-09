@@ -31,6 +31,8 @@ import com.google.cloud.tools.jib.api.RegistryImage;
 import com.google.cloud.tools.jib.api.TarImage;
 import com.google.cloud.tools.jib.api.buildplan.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.api.buildplan.FileEntriesLayer;
+import com.google.cloud.tools.jib.api.buildplan.FileEntry;
+import com.google.cloud.tools.jib.api.buildplan.FilePermissions;
 import com.google.cloud.tools.jib.api.buildplan.ImageFormat;
 import com.google.cloud.tools.jib.api.buildplan.LayerObject;
 import com.google.cloud.tools.jib.api.buildplan.ModificationTimeProvider;
@@ -55,6 +57,7 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeFormatterBuilder;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -83,6 +86,8 @@ public class PluginConfigurationProcessor {
   // which we consider non-syncable. These should not be included in the sync-map.
   private static final ImmutableList<String> CONST_LAYERS =
       ImmutableList.of(LayerType.DEPENDENCIES.getName());
+
+  private static final String DEFAULT_JETTY_APP_ROOT = "/var/lib/jetty/webapps/ROOT";
 
   /**
    * Generate a runner for image builds to docker daemon.
@@ -440,6 +445,22 @@ public class PluginConfigurationProcessor {
                 modificationTimeProvider));
       }
     }
+
+    // Due to , the owner of "/var/lib/jetty" in the default "jetty" base image becomes "0:0".
+    // Restore the original owner by adding a directly in a new layer.
+    if (projectProperties.isWarProject() && !rawConfiguration.getFromImage().isPresent()) {
+      FileEntry fileEntry =
+          new FileEntry(
+              Paths.get("."),
+              AbsoluteUnixPath.get("/var/lib/jetty"),
+              FilePermissions.DEFAULT_FOLDER_PERMISSIONS,
+              FileEntriesLayer.DEFAULT_MODIFICATION_TIME,
+              "999:999");
+      FileEntriesLayer newLayer =
+          FileEntriesLayer.builder().setName("jetty-home-owner-fix").addEntry(fileEntry).build();
+      jibContainerBuilder.addFileEntriesLayer(newLayer);
+    }
+
     return jibContainerBuilder;
   }
 
@@ -500,10 +521,10 @@ public class PluginConfigurationProcessor {
     // Verify Java version is compatible
     String prefixRemoved = baseImageConfig.replaceFirst(".*://", "");
     int javaVersion = projectProperties.getMajorJavaVersion();
-    if (isKnownDistrolessJava8Image(prefixRemoved) && javaVersion > 8) {
+    if (isKnownJava8Image(prefixRemoved) && javaVersion > 8) {
       throw new IncompatibleBaseImageJavaVersionException(8, javaVersion);
     }
-    if (isKnownDistrolessJava11Image(prefixRemoved) && javaVersion > 11) {
+    if (isKnownJava11Image(prefixRemoved) && javaVersion > 11) {
       throw new IncompatibleBaseImageJavaVersionException(11, javaVersion);
     }
 
@@ -586,7 +607,7 @@ public class PluginConfigurationProcessor {
                 "mainClass, extraClasspath, jvmFlags, and expandClasspathDependencies "
                     + "are ignored for WAR projects"));
       }
-      return null;
+      return Arrays.asList("java", "-jar", "/usr/local/jetty/start.jar");
     }
 
     List<String> classpath = new ArrayList<>(rawExtraClasspath);
@@ -632,8 +653,8 @@ public class PluginConfigurationProcessor {
 
   /**
    * Gets the suitable value for the base image. If the raw base image parameter is null, returns
-   * {@code "gcr.io/distroless/java/jetty"} for WAR projects or {@code "gcr.io/distroless/java"} for
-   * non-WAR.
+   * {@code "jetty"} for WAR projects or {@code "adoptopenjdk:8-jre"} or {@code
+   * "adoptopenjdk:11-jre"} for non-WAR.
    *
    * @param projectProperties used for providing additional information
    * @return the base image
@@ -643,16 +664,14 @@ public class PluginConfigurationProcessor {
   @VisibleForTesting
   static String getDefaultBaseImage(ProjectProperties projectProperties)
       throws IncompatibleBaseImageJavaVersionException {
+    if (projectProperties.isWarProject()) {
+      return "jetty";
+    }
     int javaVersion = projectProperties.getMajorJavaVersion();
     if (javaVersion <= 8) {
-      return projectProperties.isWarProject()
-          ? "gcr.io/distroless/java/jetty:java8"
-          : "gcr.io/distroless/java:8";
-    }
-    if (javaVersion <= 11) {
-      return projectProperties.isWarProject()
-          ? "gcr.io/distroless/java/jetty:java11"
-          : "gcr.io/distroless/java:11";
+      return "adoptopenjdk:8-jre";
+    } else if (javaVersion <= 11) {
+      return "adoptopenjdk:11-jre";
     }
     throw new IncompatibleBaseImageJavaVersionException(11, javaVersion);
   }
@@ -735,7 +754,7 @@ public class PluginConfigurationProcessor {
     if (appRoot.isEmpty()) {
       appRoot =
           projectProperties.isWarProject()
-              ? JavaContainerBuilder.DEFAULT_WEB_APP_ROOT
+              ? DEFAULT_JETTY_APP_ROOT
               : JavaContainerBuilder.DEFAULT_APP_ROOT;
     }
     try {
@@ -950,40 +969,22 @@ public class PluginConfigurationProcessor {
   }
 
   /**
-   * Checks if the given image is a known Java 8 distroless image. Checking against only images
-   * known to Java 8, the method may to return {@code false} for Java 8 distroless unknown to it.
+   * Checks if the given image is a known Java 8 image. May return false negative.
    *
    * @param imageReference the image reference
-   * @return {@code true} if the image is equal to one of the known Java 8 distroless images, else
-   *     {@code false}
+   * @return {@code true} if the image is a known Java 8 image
    */
-  private static boolean isKnownDistrolessJava8Image(String imageReference) {
-    // TODO: drop "latest", "debug", and the like once they no longer point to Java 8.
-    return imageReference.equals("gcr.io/distroless/java")
-        || imageReference.equals("gcr.io/distroless/java:latest")
-        || imageReference.equals("gcr.io/distroless/java:debug")
-        || imageReference.equals("gcr.io/distroless/java:8")
-        || imageReference.equals("gcr.io/distroless/java:8-debug")
-        || imageReference.equals("gcr.io/distroless/java/jetty")
-        || imageReference.equals("gcr.io/distroless/java/jetty:latest")
-        || imageReference.equals("gcr.io/distroless/java/jetty:debug")
-        || imageReference.equals("gcr.io/distroless/java/jetty:java8")
-        || imageReference.equals("gcr.io/distroless/java/jetty:java8-debug");
+  private static boolean isKnownJava8Image(String imageReference) {
+    return imageReference.startsWith("adoptopenjdk:8");
   }
 
   /**
-   * Checks if the given image is a known Java 11 distroless image. Checking against only images
-   * known to Java 11, the method may to return {@code false} for Java 11 distroless unknown to it.
+   * Checks if the given image is a known Java 11 image. May return false negative.
    *
    * @param imageReference the image reference
-   * @return {@code true} if the image is equal to one of the known Java 11 distroless images, else
-   *     {@code false}
+   * @return {@code true} if the image is a known Java 11 image
    */
-  private static boolean isKnownDistrolessJava11Image(String imageReference) {
-    // TODO: add "latest", "debug", and the like to this list once they point to Java 11.
-    return imageReference.equals("gcr.io/distroless/java:11")
-        || imageReference.equals("gcr.io/distroless/java:11-debug")
-        || imageReference.equals("gcr.io/distroless/java/jetty:java11")
-        || imageReference.equals("gcr.io/distroless/java/jetty:java11-debug");
+  private static boolean isKnownJava11Image(String imageReference) {
+    return imageReference.startsWith("adoptopenjdk:11");
   }
 }
