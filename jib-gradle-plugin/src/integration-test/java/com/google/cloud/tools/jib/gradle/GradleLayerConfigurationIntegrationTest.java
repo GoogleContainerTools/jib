@@ -16,6 +16,8 @@
 
 package com.google.cloud.tools.jib.gradle;
 
+import static com.google.common.truth.Truth.assertThat;
+
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -33,6 +35,44 @@ public class GradleLayerConfigurationIntegrationTest {
 
   @ClassRule
   public static final TestProject multiTestProject = new TestProject("all-local-multi-service");
+
+  @ClassRule public static final TestProject configTestProject = new TestProject("simple");
+
+  @Test
+  public void testGradleLayerConfiguration_configurationName() throws IOException {
+    configTestProject.build("jibBuildTar", "-b=build-configuration.gradle");
+    Path jibTar = configTestProject.getProjectRoot().resolve("build/jib-image.tar");
+    List<List<String>> layers = getLayers(jibTar);
+
+    // the expected order is:
+    // no base image layers (scratch)
+    // classes (0)
+    // resources (1)
+    // dependencies (2)
+    // verify dependencies
+    List<String> dependencies = layers.get(2);
+    assertThat(dependencies).containsExactly("app/", "app/libs/", "app/libs/dependency2").inOrder();
+  }
+
+  @Test
+  public void testGradleLayerConfiguration_configurationName_prioritizeSystemProperty()
+      throws IOException {
+    configTestProject.build(
+        "jibBuildTar",
+        "-Djib.configurationName=otherConfiguration",
+        "-b=build-configuration.gradle");
+    Path jibTar = configTestProject.getProjectRoot().resolve("build/jib-image.tar");
+    List<List<String>> layers = getLayers(jibTar);
+
+    // the expected order is:
+    // no base image layers (scratch)
+    // classes (0)
+    // resources (1)
+    // dependencies (2)
+    // verify dependencies
+    List<String> dependencies = layers.get(2);
+    assertThat(dependencies).containsExactly("app/", "app/libs/", "app/libs/dependency3").inOrder();
+  }
 
   @Test
   public void testGradleLayerConfiguration_multiModule() throws IOException {
