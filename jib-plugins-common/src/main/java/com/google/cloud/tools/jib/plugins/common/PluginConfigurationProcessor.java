@@ -443,7 +443,6 @@ public class PluginConfigurationProcessor {
                 modificationTimeProvider));
       }
     }
-
     return jibContainerBuilder;
   }
 
