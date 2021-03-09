@@ -90,7 +90,10 @@ public class JavaContainerBuilder {
    *
    * @return a new {@link JavaContainerBuilder}
    * @see <a href="https://github.com/GoogleContainerTools/distroless">The distroless repository</a>
+   * @deprecated Use other {@code from()} methods with the image reference {@code
+   *     gcr.io/distroless/java}.
    */
+  @Deprecated
   public static JavaContainerBuilder fromDistroless() {
     try {
       return from(RegistryImage.named("gcr.io/distroless/java"));
@@ -108,8 +111,10 @@ public class JavaContainerBuilder {
   /**
    * The default webapp root in the image. For example, if this is set to {@code
    * "/jetty/webapps/ROOT"}, dependency JARs will be in {@code "/jetty/webapps/ROOT/WEB-INF/lib"}.
+   *
+   * @deprecated Use the string {@code "/jetty/webapps/ROOT"}.
    */
-  public static final String DEFAULT_WEB_APP_ROOT = "/jetty/webapps/ROOT";
+  @Deprecated public static final String DEFAULT_WEB_APP_ROOT = "/jetty/webapps/ROOT";
 
   /**
    * Creates a new {@link JavaContainerBuilder} that uses distroless jetty as the base image. For
@@ -118,7 +123,11 @@ public class JavaContainerBuilder {
    *
    * @return a new {@link JavaContainerBuilder}
    * @see <a href="https://github.com/GoogleContainerTools/distroless">The distroless repository</a>
+   * @deprecated Use other {@code from()} methods with the image reference {@code
+   *     gcr.io/distroless/java/jetty} and change the app root by calling {@code
+   *     JavaContainerBuilder.setAppRoot("/jetty/webapps/ROOT")}.
    */
+  @Deprecated
   public static JavaContainerBuilder fromDistrolessJetty() {
     try {
       return from(RegistryImage.named("gcr.io/distroless/java/jetty"))
@@ -197,7 +206,7 @@ public class JavaContainerBuilder {
   private final List<Path> addedProjectDependencies = new ArrayList<>();
   private final List<Path> addedOthers = new ArrayList<>();
 
-  private AbsoluteUnixPath appRoot = AbsoluteUnixPath.get("/app");
+  private AbsoluteUnixPath appRoot = AbsoluteUnixPath.get(DEFAULT_APP_ROOT);
   private RelativeUnixPath classesDestination = RelativeUnixPath.get("classes");
   private RelativeUnixPath resourcesDestination = RelativeUnixPath.get("resources");
   private RelativeUnixPath dependenciesDestination = RelativeUnixPath.get("libs");
