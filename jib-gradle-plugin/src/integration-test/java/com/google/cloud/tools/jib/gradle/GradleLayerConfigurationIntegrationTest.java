@@ -51,8 +51,7 @@ public class GradleLayerConfigurationIntegrationTest {
     // dependencies (2)
     // verify dependencies
     List<String> dependencies = layers.get(2);
-    assertThat(dependencies)
-        .isEqualTo(ImmutableList.of("app/", "app/libs/", "app/libs/dependency2"));
+    assertThat(dependencies).containsExactly("app/", "app/libs/", "app/libs/dependency2").inOrder();
   }
 
   @Test
@@ -72,8 +71,7 @@ public class GradleLayerConfigurationIntegrationTest {
     // dependencies (2)
     // verify dependencies
     List<String> dependencies = layers.get(2);
-    assertThat(dependencies)
-        .isEqualTo(ImmutableList.of("app/", "app/libs/", "app/libs/dependency3"));
+    assertThat(dependencies).containsExactly("app/", "app/libs/", "app/libs/dependency3").inOrder();
   }
 
   @Test
