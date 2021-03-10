@@ -184,12 +184,12 @@ Jib makes use of [layering](https://containers.gitbook.io/build-containers-the-h
 
 Jib applications are split into the following layers:
 
-* Each extra directory (`jib.extraDirectories` in Gradle, `<extraDirectories>` in Maven) builds to its own layer
 * All other dependencies
 * Snapshot dependencies
 * Project dependencies
 * Resources
 * Classes
+* Each extra directory (`jib.extraDirectories` in Gradle, `<extraDirectories>` in Maven) builds to its own layer
 
 ### Can I learn more about container images?
 
