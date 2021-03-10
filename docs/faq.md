@@ -62,7 +62,7 @@ Also see [rules_docker](https://github.com/bazelbuild/rules_docker) for a simila
 
 ### My build process doesn't let me integrate with the Jib Maven or Gradle plugin
 
-The [Jib CLI](https://github.com/GoogleContainerTools/jib/tree/master/jib-cli) can be useful for users with complex build workflows that make it hard to integrate the Jib Maven or Gradle plugins. It is a standalone application that is powered by [Jib Core](https://github.com/GoogleContainerTools/jib/tree/master/jib-core) and offers two commands:
+The [Jib CLI](https://github.com/GoogleContainerTools/jib/tree/master/jib-cli) can be useful for users with complex build workflows that make it hard to integrate the Jib Maven or Gradle plugin. It is a standalone application that is powered by [Jib Core](https://github.com/GoogleContainerTools/jib/tree/master/jib-core) and offers two commands:
 
 * [Build](https://github.com/GoogleContainerTools/jib/tree/master/jib-cli#build-command): Builds images from the filesystem content.
  
@@ -183,12 +183,13 @@ Jib packages your Java application into the following paths on the image:
 Jib makes use of [layering](https://containers.gitbook.io/build-containers-the-hard-way/#layers) to allow for fast rebuilds - it will only rebuild the layers containing files that changed since the previous build and will reuse cached layers containing files that didn't change. Jib organizes files in a way that groups frequently changing files separately from large, rarely changing files. For example, `SNAPSHOT` dependencies are placed in a separate layer from other dependencies, so that a frequently changing `SNAPSHOT` will not force the entire dependency layer to rebuild itself.
 
 Jib applications are split into the following layers:
-* Classes
-* Resources
-* Project dependencies
-* Snapshot dependencies
-* All other dependencies
+
 * Each extra directory (`jib.extraDirectories` in Gradle, `<extraDirectories>` in Maven) builds to its own layer
+* All other dependencies
+* Snapshot dependencies
+* Project dependencies
+* Resources
+* Classes
 
 ### Can I learn more about container images?
 
@@ -775,18 +776,22 @@ Solution: The user installed the file in a different location.
 ## Jib CLI 
  
 ### How does the `jar` command support Standard JARs?
+The Jib CLI supports both [thin JARs](https://docs.oracle.com/javase/tutorial/deployment/jar/downman.html) (where dependencies are specified in the JAR's manifest) and fat JARs.
+
+However, the current limitation of using a fat JAR is that the embedded dependencies will not be placed into the designated dependencies layers.
+They will instead be placed into the classes or resources layer. We hope to have better support for fat JARs in the future.
 
 A standard JAR can be containerized by the `jar` command in two modes, exploded or packaged. 
 
 #### Exploded Mode (Recommended)
 Achieved by calling `jib jar --target ${TARGET_REGISTRY} ${JAR_NAME}.jar`
 
-The default mode for containerizing a JAR. It will open up the JAR into the following layers:  
+The default mode for containerizing a JAR. It will open up the JAR and optimally place files into the following layers:  
 
-- Other Dependencies Layer
-- Snapshot-Dependencies Layer
-- Resources Layer
-- Classes Layer
+* Other Dependencies Layer
+* Snapshot-Dependencies Layer
+* Resources Layer
+* Classes Layer
 
 **Entrypoint** : `java -cp /app/dependencies/:/app/explodedJar/ ${MAIN_CLASS}`
 
@@ -794,25 +799,26 @@ The default mode for containerizing a JAR. It will open up the JAR into the foll
 Achieved by calling `jib jar --target ${TARGET_REGISTRY} ${JAR_NAME}.jar --mode packaged`.
 
 It will result in the following layers on the container:
-- Dependencies Layer
-- Jar Layer
+
+* Dependencies Layer
+* Jar Layer
 
 **Entrypoint** : `java -jar ${JAR_NAME}.jar`
 
 ### How does the `jar` command support Spring Boot JARs?
-The `jar` command currently supports containerization of Spring Boot Fat JARs.
-A Spring-Boot Fat JAR can be containerized in two modes, exploded or packaged. 
+The `jar` command currently supports containerization of Spring Boot fat JARs.
+A Spring-Boot fat JAR can be containerized in two modes, exploded or packaged. 
 
 #### Exploded Mode (Recommended)
 Achieved by calling `jib jar --target ${TARGET_REGISTRY} ${JAR_NAME}.jar`
 
-The default mode for containerizing a JAR. It will respect `layers.idx` (if present) or create layers in the following format:
+The default mode for containerizing a JAR. It will respect [`layers.idx`](https://spring.io/blog/2020/08/14/creating-efficient-docker-images-with-spring-boot-2-3) (if present) or create layers in the following format:
 
-- Other Dependencies Layer
-- Spring-Boot-Loader Layer
-- Snapshot-Dependencies Layer
-- Resources Layer
-- Classes Layer
+* Other Dependencies Layer
+* Spring-Boot-Loader Layer
+* Snapshot-Dependencies Layer
+* Resources Layer
+* Classes Layer
 
 **Entrypoint** : `java -cp /app org.springframework.boot.loader.JarLauncher`
 
