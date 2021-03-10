@@ -49,12 +49,12 @@ public class PlainConsoleLoggerTest {
     testPlainConsoleLogger =
         new PlainConsoleLogger(messageConsumers.build(), singleThreadedExecutor);
 
-    testPlainConsoleLogger.log(Level.LIFECYCLE, "\u001B[36;1mlifecycle\u001B[0m");
-    testPlainConsoleLogger.log(Level.PROGRESS, "\u001B[33m progress\u001B[0m");
+    testPlainConsoleLogger.log(Level.LIFECYCLE, "lifecycle");
+    testPlainConsoleLogger.log(Level.PROGRESS, "progress");
     testPlainConsoleLogger.log(Level.INFO, "info");
     testPlainConsoleLogger.log(Level.DEBUG, "debug");
     testPlainConsoleLogger.log(Level.WARN, "warn");
-    testPlainConsoleLogger.log(Level.ERROR, "\u001B[31;1m error \u001B[0m");
+    testPlainConsoleLogger.log(Level.ERROR, "error");
 
     singleThreadedExecutor.shutDownAndAwaitTermination(SHUTDOWN_TIMEOUT);
 
@@ -63,7 +63,31 @@ public class PlainConsoleLoggerTest {
             Level.LIFECYCLE, Level.PROGRESS, Level.INFO, Level.DEBUG, Level.WARN, Level.ERROR),
         levels);
     Assert.assertEquals(
-        Arrays.asList("lifecycle", " progress", "info", "debug", "warn", " error "), messages);
+        Arrays.asList("lifecycle", "progress", "info", "debug", "warn", "error"), messages);
+  }
+
+  @Test
+  public void testLog_filterOutColors() {
+    ImmutableMap.Builder<Level, Consumer<String>> messageConsumers = ImmutableMap.builder();
+    for (Level level : Level.values()) {
+      messageConsumers.put(level, createMessageConsumer(level));
+    }
+
+    testPlainConsoleLogger =
+            new PlainConsoleLogger(messageConsumers.build(), singleThreadedExecutor);
+
+    testPlainConsoleLogger.log(Level.LIFECYCLE, "\u001B[36;1mlifecycle\u001B[0m");
+    testPlainConsoleLogger.log(Level.PROGRESS, "\u001B[33mprogress\u001B[0m");
+    testPlainConsoleLogger.log(Level.ERROR, "\u001B[31;1merror\u001B[0m");
+
+    singleThreadedExecutor.shutDownAndAwaitTermination(SHUTDOWN_TIMEOUT);
+
+    Assert.assertEquals(
+            Arrays.asList(
+                    Level.LIFECYCLE, Level.PROGRESS, Level.ERROR),
+            levels);
+    Assert.assertEquals(
+            Arrays.asList("lifecycle", "progress", "error"), messages);
   }
 
   @Test
