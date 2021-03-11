@@ -34,7 +34,10 @@ public class JibCli {
    * @param args the command-line arguments
    */
   public static void main(String[] args) {
-    int exitCode = new CommandLine(new JibCli()).execute(args);
+    int exitCode =
+        new CommandLine(new JibCli())
+            .setParameterExceptionHandler(new ShortErrorMessageHandler())
+            .execute(args);
     System.exit(exitCode);
   }
 }

@@ -35,7 +35,6 @@ public class CommonCliOptions {
   @SuppressWarnings("NullAway.Init") // initialized by picocli
   private CommandSpec spec;
 
-  // Build Configuration
   @CommandLine.Option(
       names = {"-t", "--target"},
       required = true,
