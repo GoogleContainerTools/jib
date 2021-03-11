@@ -12,6 +12,8 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
+- Now disabling color in `plain` console output. ([#3087](https://github.com/GoogleContainerTools/jib/pull/3087))
+
 ## 2.8.0
 
 ### Added
