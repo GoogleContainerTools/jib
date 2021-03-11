@@ -147,7 +147,7 @@ public class BuildTest {
     assertThat(commonCliOptions.isSendCredentialsOverHttp()).isTrue();
     assertThat(commonCliOptions.getVerbosity()).isEqualTo(Verbosity.info);
     assertThat(commonCliOptions.isStacktrace()).isTrue();
-    assertThat(commonCliOptions.getHttpTrace()).isEqualTo(HttpTraceLevel.off);
+    assertThat(commonCliOptions.getHttpTrace()).isEqualTo(HttpTraceLevel.config);
     assertThat(commonCliOptions.isSerialize()).isTrue();
   }
 
