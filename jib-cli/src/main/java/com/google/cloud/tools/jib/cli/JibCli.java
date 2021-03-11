@@ -32,13 +32,14 @@ import picocli.CommandLine;
     subcommands = {Build.class, Jar.class})
 public class JibCli {
 
-  static void configureHttpLogging(Level level) {
+  static Logger configureHttpLogging(Level level) {
     ConsoleHandler consoleHandler = new ConsoleHandler();
     consoleHandler.setLevel(level);
 
     Logger logger = Logger.getLogger(HttpTransport.class.getName());
     logger.setLevel(level);
     logger.addHandler(consoleHandler);
+    return logger;
   }
 
   /**
