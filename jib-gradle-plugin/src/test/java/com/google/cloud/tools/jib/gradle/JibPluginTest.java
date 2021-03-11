@@ -347,16 +347,13 @@ public class JibPluginTest {
 
   @Test
   public void testLazyEvalForImageAndTags() {
-    // TODO: Pass in `-Djib.console=plain` as argument for build and remove filtering for cyan
-    // coloring regex once [#2764](https://github.com/GoogleContainerTools/jib/issues/2764) is
-    // submitted.
     UnexpectedBuildFailure exception =
         assertThrows(
-            UnexpectedBuildFailure.class, () -> testProject.build(JibPlugin.BUILD_IMAGE_TASK_NAME));
+            UnexpectedBuildFailure.class,
+            () -> testProject.build(JibPlugin.BUILD_IMAGE_TASK_NAME, "-Djib.console=plain"));
 
     String output = exception.getBuildResult().getOutput().trim();
-    String cleanOutput = output.replace("\u001B[36m", "").replace("\u001B[0m", "");
-    assertThat(cleanOutput)
+    assertThat(output)
         .contains(
             "Containerizing application to updated-image, updated-image:updated-tag, updated-image:tag2");
   }
