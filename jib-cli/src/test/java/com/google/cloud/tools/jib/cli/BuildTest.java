@@ -21,6 +21,7 @@ import static com.google.common.truth.Truth8.assertThat;
 import static org.junit.Assert.assertThrows;
 
 import com.google.cloud.tools.jib.api.Credential;
+import com.google.cloud.tools.jib.cli.logging.HttpTraceLevel;
 import com.google.cloud.tools.jib.cli.logging.Verbosity;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -65,7 +66,7 @@ public class BuildTest {
     assertThat(commonCliOptions.isSendCredentialsOverHttp()).isFalse();
     assertThat(commonCliOptions.getVerbosity()).isEqualTo(Verbosity.lifecycle);
     assertThat(commonCliOptions.isStacktrace()).isFalse();
-    assertThat(commonCliOptions.isHttpTrace()).isFalse();
+    assertThat(commonCliOptions.getHttpTrace()).isEqualTo(HttpTraceLevel.off);
     assertThat(commonCliOptions.isSerialize()).isFalse();
   }
 
@@ -100,7 +101,7 @@ public class BuildTest {
     assertThat(commonCliOptions.getVerbosity()).isEqualTo(Verbosity.lifecycle);
     assertThat(commonCliOptions.isStacktrace()).isFalse();
     assertThat(commonCliOptions.isStacktrace()).isFalse();
-    assertThat(commonCliOptions.isHttpTrace()).isFalse();
+    assertThat(commonCliOptions.getHttpTrace()).isEqualTo(HttpTraceLevel.off);
     assertThat(commonCliOptions.isSerialize()).isFalse();
   }
 
@@ -146,7 +147,7 @@ public class BuildTest {
     assertThat(commonCliOptions.isSendCredentialsOverHttp()).isTrue();
     assertThat(commonCliOptions.getVerbosity()).isEqualTo(Verbosity.info);
     assertThat(commonCliOptions.isStacktrace()).isTrue();
-    assertThat(commonCliOptions.isHttpTrace()).isTrue();
+    assertThat(commonCliOptions.getHttpTrace()).isEqualTo(HttpTraceLevel.off);
     assertThat(commonCliOptions.isSerialize()).isTrue();
   }
 

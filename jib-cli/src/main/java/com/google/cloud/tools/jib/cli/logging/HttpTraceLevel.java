@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Google LLC.
+ * Copyright 2021 Google LLC.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,25 +16,20 @@
 
 package com.google.cloud.tools.jib.cli.logging;
 
-public enum Verbosity {
-  quiet(0),
-  error(1),
-  warn(2),
-  lifecycle(3),
-  info(4),
-  debug(5);
+import java.util.logging.Level;
 
-  private final int value;
+public enum HttpTraceLevel {
+  off("OFF"),
+  config("CONFIG"),
+  all("ALL");
 
-  private Verbosity(int value) {
+  private final String value;
+
+  private HttpTraceLevel(String value) {
     this.value = value;
   }
 
-  public int value() {
-    return value;
-  }
-
-  public boolean atLeast(Verbosity target) {
-    return value >= target.value;
+  public Level toJulLevel() {
+    return Level.parse(value);
   }
 }
