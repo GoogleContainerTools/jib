@@ -74,7 +74,7 @@ public class PlainConsoleLoggerTest {
     }
 
     testPlainConsoleLogger =
-            new PlainConsoleLogger(messageConsumers.build(), singleThreadedExecutor);
+        new PlainConsoleLogger(messageConsumers.build(), singleThreadedExecutor);
 
     testPlainConsoleLogger.log(Level.LIFECYCLE, "\u001B[36;1mlifecycle\u001B[0m");
     testPlainConsoleLogger.log(Level.PROGRESS, "\u001B[33mprogress\u001B[0m");
@@ -82,12 +82,8 @@ public class PlainConsoleLoggerTest {
 
     singleThreadedExecutor.shutDownAndAwaitTermination(SHUTDOWN_TIMEOUT);
 
-    Assert.assertEquals(
-            Arrays.asList(
-                    Level.LIFECYCLE, Level.PROGRESS, Level.ERROR),
-            levels);
-    Assert.assertEquals(
-            Arrays.asList("lifecycle", "progress", "error"), messages);
+    Assert.assertEquals(Arrays.asList(Level.LIFECYCLE, Level.PROGRESS, Level.ERROR), levels);
+    Assert.assertEquals(Arrays.asList("lifecycle", "progress", "error"), messages);
   }
 
   @Test
