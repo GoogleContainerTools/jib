@@ -352,7 +352,7 @@ public class JibPluginTest {
             UnexpectedBuildFailure.class,
             () -> testProject.build(JibPlugin.BUILD_IMAGE_TASK_NAME, "-Djib.console=plain"));
 
-    String output = exception.getBuildResult().getOutput().trim();
+    String output = exception.getBuildResult().getOutput();
     assertThat(output)
         .contains(
             "Containerizing application to updated-image, updated-image:updated-tag, updated-image:tag2");
