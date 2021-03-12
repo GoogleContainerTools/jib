@@ -20,6 +20,7 @@ import static com.google.cloud.tools.jib.api.Jib.TAR_IMAGE_PREFIX;
 
 import com.google.cloud.tools.jib.api.Credential;
 import com.google.cloud.tools.jib.cli.logging.ConsoleOutput;
+import com.google.cloud.tools.jib.cli.logging.HttpTraceLevel;
 import com.google.cloud.tools.jib.cli.logging.Verbosity;
 import com.google.common.base.Verify;
 import java.nio.file.Path;
@@ -228,9 +229,17 @@ public class CommonCliOptions {
   @SuppressWarnings("NullAway.Init") // initialized by picocli
   private boolean stacktrace;
 
-  @CommandLine.Option(names = "--http-trace", hidden = true, scope = CommandLine.ScopeType.INHERIT)
+  @CommandLine.Option(
+      names = "--http-trace",
+      hidden = true,
+      arity = "0..1",
+      defaultValue = "off",
+      fallbackValue = "config",
+      description =
+          "set http logging level, candidates: ${COMPLETION-CANDIDATES}, default: ${DEFAULT-VALUE}",
+      scope = CommandLine.ScopeType.INHERIT)
   @SuppressWarnings("NullAway.Init") // initialized by picocli
-  private boolean httpTrace;
+  private HttpTraceLevel httpTrace;
 
   @CommandLine.Option(names = "--serialize", hidden = true, scope = CommandLine.ScopeType.INHERIT)
   @SuppressWarnings("NullAway.Init") // initialized by picocli
@@ -248,7 +257,7 @@ public class CommonCliOptions {
     return stacktrace;
   }
 
-  public boolean isHttpTrace() {
+  public HttpTraceLevel getHttpTrace() {
     return httpTrace;
   }
 

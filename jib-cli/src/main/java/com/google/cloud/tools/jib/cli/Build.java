@@ -103,6 +103,7 @@ public class Build implements Callable<Integer> {
               spec.commandLine().getOut(),
               spec.commandLine().getErr(),
               executor);
+      JibCli.configureHttpLogging(commonCliOptions.getHttpTrace().toJulLevel());
 
       if (!Files.isReadable(buildFile)) {
         logger.log(

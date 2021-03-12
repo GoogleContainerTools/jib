@@ -160,7 +160,6 @@ public class Jar implements Callable<Integer> {
     commonCliOptions.validate();
     SingleThreadedExecutor executor = new SingleThreadedExecutor();
     try {
-
       ConsoleLogger logger =
           CliLogger.newLogger(
               commonCliOptions.getVerbosity(),
@@ -168,6 +167,7 @@ public class Jar implements Callable<Integer> {
               spec.commandLine().getOut(),
               spec.commandLine().getErr(),
               executor);
+      JibCli.configureHttpLogging(commonCliOptions.getHttpTrace().toJulLevel());
 
       if (!Files.exists(jarFile)) {
         logger.log(LogEvent.Level.ERROR, "The file path provided does not exist: " + jarFile);

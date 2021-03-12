@@ -16,6 +16,10 @@
 
 package com.google.cloud.tools.jib.cli;
 
+import com.google.api.client.http.HttpTransport;
+import java.util.logging.ConsoleHandler;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import picocli.CommandLine;
 
 @CommandLine.Command(
@@ -27,6 +31,16 @@ import picocli.CommandLine;
     description = "A tool for creating container images",
     subcommands = {Build.class, Jar.class})
 public class JibCli {
+
+  static Logger configureHttpLogging(Level level) {
+    ConsoleHandler consoleHandler = new ConsoleHandler();
+    consoleHandler.setLevel(level);
+
+    Logger logger = Logger.getLogger(HttpTransport.class.getName());
+    logger.setLevel(level);
+    logger.addHandler(consoleHandler);
+    return logger;
+  }
 
   /**
    * The magic starts here.

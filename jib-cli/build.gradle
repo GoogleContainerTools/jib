@@ -24,6 +24,7 @@ dependencies {
   implementation dependencyStrings.JACKSON_DATABIND
   implementation dependencyStrings.GUAVA
   implementation dependencyStrings.PICOCLI
+  implementation dependencyStrings.GOOGLE_HTTP_CLIENT
 
   testImplementation dependencyStrings.JUNIT
   testImplementation dependencyStrings.JUNIT_PARAMS
