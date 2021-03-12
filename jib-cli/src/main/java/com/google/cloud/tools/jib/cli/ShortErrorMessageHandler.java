@@ -17,8 +17,6 @@
 package com.google.cloud.tools.jib.cli;
 
 import java.io.PrintWriter;
-
-import com.google.common.annotations.VisibleForTesting;
 import picocli.CommandLine;
 import picocli.CommandLine.IParameterExceptionHandler;
 import picocli.CommandLine.Model.CommandSpec;
