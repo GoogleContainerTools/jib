@@ -16,6 +16,9 @@
 
 package com.google.cloud.tools.jib.cache;
 
+import static com.google.common.truth.Truth.assertThat;
+import static org.junit.Assert.assertThrows;
+
 import com.google.cloud.tools.jib.api.DescriptorDigest;
 import com.google.cloud.tools.jib.api.ImageReference;
 import com.google.cloud.tools.jib.api.InvalidImageReferenceException;
@@ -334,6 +337,21 @@ public class CacheStorageWriterTest {
     ContainerConfigurationTemplate savedContainerConfig =
         JsonTemplateMapper.readJsonFromFile(savedConfigPath, ContainerConfigurationTemplate.class);
     Assert.assertEquals("wasm", savedContainerConfig.getArchitecture());
+  }
+
+  @Test
+  public void testMoveIfDoesNotExist_exceptionAfterFailure() {
+    Exception exception =
+        assertThrows(
+            IOException.class,
+            () -> CacheStorageWriter.moveIfDoesNotExist(Paths.get("/foo"), Paths.get("/bar")));
+    assertThat(exception)
+        .hasMessageThat()
+        .isEqualTo(
+            "unable to move: /foo to /bar; such failures are often caused by interference from "
+                + "antivirus (https://github.com/GoogleContainerTools/jib/issues/3127#issuecomment-796838294), "
+                + "or rarely if the operation is not supported by the file system (for example: "
+                + "special non-local file system)");
   }
 
   private void verifyCachedLayer(CachedLayer cachedLayer, Blob uncompressedLayerBlob)
