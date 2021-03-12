@@ -46,7 +46,11 @@ import java.util.stream.Collectors;
 import picocli.CommandLine;
 import picocli.CommandLine.Model.CommandSpec;
 
-@CommandLine.Command(name = "jar", showAtFileInUsageHelp = true, description = "Containerize a jar")
+@CommandLine.Command(
+    name = "jar",
+    mixinStandardHelpOptions = true,
+    showAtFileInUsageHelp = true,
+    description = "Containerize a jar")
 public class Jar implements Callable<Integer> {
 
   @CommandLine.Spec

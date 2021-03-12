@@ -35,6 +35,7 @@ import picocli.CommandLine.Model.CommandSpec;
 
 @CommandLine.Command(
     name = "build",
+    mixinStandardHelpOptions = true,
     showAtFileInUsageHelp = true,
     description = "Build a container")
 public class Build implements Callable<Integer> {
