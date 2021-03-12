@@ -43,6 +43,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.DigestException;
@@ -352,6 +353,8 @@ public class CacheStorageWriterTest {
                 + "antivirus (https://github.com/GoogleContainerTools/jib/issues/3127#issuecomment-796838294), "
                 + "or rarely if the operation is not supported by the file system (for example: "
                 + "special non-local file system)");
+    assertThat(exception).hasCauseThat().isInstanceOf(NoSuchFileException.class);
+    assertThat(exception.getCause()).hasMessageThat().isEqualTo("/foo");
   }
 
   private void verifyCachedLayer(CachedLayer cachedLayer, Blob uncompressedLayerBlob)
