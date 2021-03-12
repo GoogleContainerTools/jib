@@ -21,9 +21,11 @@ import com.google.cloud.tools.jib.api.JibContainerBuilder;
 import com.google.cloud.tools.jib.api.LogEvent.Level;
 import com.google.cloud.tools.jib.cli.buildfile.BuildFiles;
 import com.google.cloud.tools.jib.cli.logging.CliLogger;
+import com.google.cloud.tools.jib.plugins.common.globalconfig.GlobalConfig;
 import com.google.cloud.tools.jib.plugins.common.logging.ConsoleLogger;
 import com.google.cloud.tools.jib.plugins.common.logging.SingleThreadedExecutor;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.Multimaps;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
@@ -123,6 +125,10 @@ public class Build implements Callable<Integer> {
 
       JibContainerBuilder containerBuilder =
           BuildFiles.toJibContainerBuilder(contextRoot, buildFile, this, commonCliOptions, logger);
+
+      // Enable registry mirrors
+      GlobalConfig globalConfig = GlobalConfig.readConfig();
+      Multimaps.asMap(globalConfig.getRegistryMirrors()).forEach(containerizer::addRegistryMirrors);
 
       containerBuilder.containerize(containerizer);
     } catch (Exception ex) {

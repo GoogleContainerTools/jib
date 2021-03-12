@@ -28,6 +28,8 @@ import java.io.StringWriter;
 import java.net.HttpURLConnection;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.jar.Attributes;
@@ -35,12 +37,17 @@ import java.util.jar.JarFile;
 import javax.annotation.Nullable;
 import org.junit.After;
 import org.junit.ClassRule;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 import picocli.CommandLine;
 
 public class JarCommandTest {
 
   @ClassRule public static final TestProject springBootProject = new TestProject("spring-boot");
+
+  @Rule
+  public final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
   @Nullable private String containerName;
 
