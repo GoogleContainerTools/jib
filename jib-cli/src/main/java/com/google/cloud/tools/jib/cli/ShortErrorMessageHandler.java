@@ -17,13 +17,15 @@
 package com.google.cloud.tools.jib.cli;
 
 import java.io.PrintWriter;
+
+import com.google.common.annotations.VisibleForTesting;
 import picocli.CommandLine;
 import picocli.CommandLine.IParameterExceptionHandler;
 import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.ParameterException;
 
 /** Class to print a short error message when an invalid input is passed in. */
-class ShortErrorMessageHandler implements IParameterExceptionHandler {
+public class ShortErrorMessageHandler implements IParameterExceptionHandler {
 
   @Override
   public int handleParseException(ParameterException exception, String[] args) {
@@ -33,9 +35,10 @@ class ShortErrorMessageHandler implements IParameterExceptionHandler {
     // Print error message
     writer.println(exception.getMessage());
     CommandLine.UnmatchedArgumentException.printSuggestions(exception, writer);
+    writer.print(command.getHelp().fullSynopsis());
 
     CommandSpec commandSpec = command.getCommandSpec();
-    writer.printf("Try '%s --help' for more information on usage.%n", commandSpec.qualifiedName());
+    writer.printf("Run '%s --help' for more information on usage.%n", commandSpec.qualifiedName());
     return command.getExitCodeExceptionMapper() != null
         ? command.getExitCodeExceptionMapper().getExitCode(exception)
         : commandSpec.exitCodeOnInvalidInput();
