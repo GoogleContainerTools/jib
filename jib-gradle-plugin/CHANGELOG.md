@@ -16,6 +16,8 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
+- Fixed an issue where some log messages used color in the "plain" console output. ([#2764](https://github.com/GoogleContainerTools/jib/pull/2764))
+
 ## 2.8.0
 
 ### Added
