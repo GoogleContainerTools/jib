@@ -32,7 +32,7 @@ public class JibCliTest {
     assertThat(logger.getName()).isEqualTo("com.google.api.client.http.HttpTransport");
     assertThat(logger.getLevel()).isEqualTo(Level.ALL);
 
-    assertThat(logger.getHandlers()).asList().hasSize(1);
+    assertThat(logger.getHandlers()).hasLength(1);
     Handler handler = logger.getHandlers()[0];
     assertThat(handler).isInstanceOf(ConsoleHandler.class);
     assertThat(handler.getLevel()).isEqualTo(Level.ALL);
