@@ -28,10 +28,12 @@ import com.google.cloud.tools.jib.cli.jar.JarProcessor;
 import com.google.cloud.tools.jib.cli.jar.JarProcessors;
 import com.google.cloud.tools.jib.cli.jar.ProcessingMode;
 import com.google.cloud.tools.jib.cli.logging.CliLogger;
+import com.google.cloud.tools.jib.plugins.common.globalconfig.GlobalConfig;
 import com.google.cloud.tools.jib.plugins.common.logging.ConsoleLogger;
 import com.google.cloud.tools.jib.plugins.common.logging.SingleThreadedExecutor;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Multimaps;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
@@ -194,6 +196,11 @@ public class Jar implements Callable<Integer> {
       JibContainerBuilder containerBuilder =
           JarFiles.toJibContainerBuilder(processor, this, commonCliOptions, logger);
       Containerizer containerizer = Containerizers.from(commonCliOptions, logger, cacheDirectories);
+
+      // Enable registry mirrors
+      GlobalConfig globalConfig = GlobalConfig.readConfig();
+      Multimaps.asMap(globalConfig.getRegistryMirrors()).forEach(containerizer::addRegistryMirrors);
+
       containerBuilder.containerize(containerizer);
     } catch (Exception ex) {
       if (commonCliOptions.isStacktrace()) {
