@@ -345,16 +345,14 @@ public class CacheStorageWriterTest {
     Exception exception =
         assertThrows(
             IOException.class,
-            () -> CacheStorageWriter.moveIfDoesNotExist(Paths.get("/foo"), Paths.get("/bar")));
+            () -> CacheStorageWriter.moveIfDoesNotExist(Paths.get("foo"), Paths.get("bar")));
     assertThat(exception)
         .hasMessageThat()
-        .isEqualTo(
-            "unable to move: /foo to /bar; such failures are often caused by interference from "
-                + "antivirus (https://github.com/GoogleContainerTools/jib/issues/3127#issuecomment-796838294), "
-                + "or rarely if the operation is not supported by the file system (for example: "
-                + "special non-local file system)");
+        .contains(
+            "unable to move: foo to bar; such failures are often caused by interference from "
+                + "antivirus");
     assertThat(exception).hasCauseThat().isInstanceOf(NoSuchFileException.class);
-    assertThat(exception.getCause()).hasMessageThat().isEqualTo("/foo");
+    assertThat(exception.getCause()).hasMessageThat().isEqualTo("foo");
   }
 
   private void verifyCachedLayer(CachedLayer cachedLayer, Blob uncompressedLayerBlob)
