@@ -34,6 +34,7 @@ The CLI tool is powered by [Jib Core](https://github.com/GoogleContainerTools/ji
   * [Auth/Security](#authsecurity)
   * [Info Params](#info-params)
   * [Debugging Params](#debugging-params)
+* [Global Jib Configuration](#global-jib-configuration)
 * [References](#references)
   * [Fully Annotated Build File (`jib.yaml`)](#fully-annotated-build-file-jibyaml)
 
@@ -215,6 +216,36 @@ Mixed Mode
     --http-trace            enable http tracing at level=config, output=console
     --serialize             run jib in serialized mode
 ```
+
+## Global Jib Configuration
+
+Some options can be set in the global Jib configuration file. The file is at the following locations on each platform:
+
+* *Linux: `[config root]/google-cloud-tools-java/jib/config.json`, where `[config root]` is `$XDG_CONFIG_HOME` (`$HOME/.config/` if not set)*
+* *Mac: `[config root]/Google/Jib/config.json`, where `[config root]` is `$XDG_CONFIG_HOME` (`$HOME/Library/Preferences/Config/` if not set)*
+* *Windows: `[config root]\Google\Jib\Config\config.json`, where `[config root]` is `$XDG_CONFIG_HOME` (`%LOCALAPPDATA%` if not set)*
+
+### Properties 
+
+* `disableUpdateCheck`: when set to true, disables the periodic up-to-date version check.
+* `registryMirrors`: a list of mirror settings for each base image registry. In the following example, if the base image configured in Jib is for a Docker Hub image, then `mirror.gcr.io`, `localhost:5000`, and the Docker Hub (`registry-1.docker.io`) are tried in order until Jib can successfuly pull a base image.
+
+```json
+{
+  "disableUpdateCheck": false,
+  "registryMirrors": [
+    {
+      "registry": "registry-1.docker.io",
+      "mirrors": ["mirror.gcr.io", "localhost:5000"]
+    },
+    {
+      "registry": "quay.io",
+      "mirrors": ["private-mirror.test.com"]
+    }
+  ]
+}
+```
+
 ## References
 
 ### Fully Annotated Build File (`jib.yaml`)
