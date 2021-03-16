@@ -22,7 +22,7 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
-- Build will fail if Jib cannot access the [global Jib configuration file](https://github.com/GoogleContainerTools/jib/tree/master/jib-maven-plugin#global-jib-configuration). ([#2996](https://github.com/GoogleContainerTools/jib/pull/2996))
+- Build will fail if Jib cannot create or read the [global Jib configuration file](https://github.com/GoogleContainerTools/jib/tree/master/jib-maven-plugin#global-jib-configuration). ([#2996](https://github.com/GoogleContainerTools/jib/pull/2996))
 
 ## 2.7.1
 
