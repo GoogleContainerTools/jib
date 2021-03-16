@@ -57,7 +57,7 @@ public class Retry<E extends Exception> {
    * @return the instance
    */
   public static <E extends Exception> Retry<E> action(Action<E> action) {
-    return new Retry<E>(action);
+    return new Retry<>(action);
   }
 
   private final Action<E> action;
