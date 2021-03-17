@@ -778,8 +778,7 @@ Solution: The user installed the file in a different location.
 ### How does the `jar` command support Standard JARs?
 The Jib CLI supports both [thin JARs](https://docs.oracle.com/javase/tutorial/deployment/jar/downman.html) (where dependencies are specified in the JAR's manifest) and fat JARs.
 
-However, the current limitation of using a fat JAR is that the embedded dependencies will not be placed into the designated dependencies layers.
-They will instead be placed into the classes or resources layer. We hope to have better support for fat JARs in the future.
+However, the current limitation of using a fat JAR is that the embedded dependencies will not be placed into the designated dependencies layers. They will instead be placed into the classes or resources layer. We hope to have better support for fat JARs in the future.
 
 A standard JAR can be containerized by the `jar` command in two modes, exploded or packaged. 
 
@@ -812,7 +811,7 @@ A Spring-Boot fat JAR can be containerized in two modes, exploded or packaged.
 #### Exploded Mode (Recommended)
 Achieved by calling `jib jar --target ${TARGET_REGISTRY} ${JAR_NAME}.jar`
 
-The default mode for containerizing a JAR. It will respect [`layers.idx`](https://spring.io/blog/2020/08/14/creating-efficient-docker-images-with-spring-boot-2-3) (if present) or create layers in the following format:
+The default mode for containerizing a JAR. It will respect [`layers.idx`](https://spring.io/blog/2020/08/14/creating-efficient-docker-images-with-spring-boot-2-3) in the JAR (if present) or create optimized layers in the following format:
 
 * Other Dependencies Layer
 * Spring-Boot-Loader Layer
