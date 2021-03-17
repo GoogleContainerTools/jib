@@ -778,7 +778,7 @@ Solution: The user installed the file in a different location.
 ### How does the `jar` command support Standard JARs?
 The Jib CLI supports both [thin JARs](https://docs.oracle.com/javase/tutorial/deployment/jar/downman.html) (where dependencies are specified in the JAR's manifest) and fat JARs.
 
-However, the current limitation of using a fat JAR is that the embedded dependencies will not be placed into the designated dependencies layers. They will instead be placed into the classes or resources layer. We hope to have better support for fat JARs in the future.
+The current limitation of using a fat JAR is that the embedded dependencies will not be placed into the designated dependencies layers. They will instead be placed into the classes or resources layer. Therefore, for efficiency, we recommend against containerizing fat JARs (Spring Boot fat JARs are an [exception](#how-does-the-jar-command-support-spring-boot-jars)) if you can prepare thin JARs. We hope to have better support for fat JARs in the future.
 
 A standard JAR can be containerized by the `jar` command in two modes, exploded or packaged. 
 
