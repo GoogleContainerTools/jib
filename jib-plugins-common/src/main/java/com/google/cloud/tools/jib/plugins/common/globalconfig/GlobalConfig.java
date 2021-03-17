@@ -75,7 +75,7 @@ public class GlobalConfig {
 
     } catch (IOException ex) {
       throw new IOException(
-          "Failed to open or parse global Jib config file; see "
+          "Failed to create, open, or parse global Jib config file; see "
               + "https://github.com/GoogleContainerTools/jib/blob/master/docs/faq.md#where-is-the-global-jib-configuration-file-and-how-i-can-configure-it "
               + "to fix or you may need to delete "
               + configFile,
