@@ -29,6 +29,7 @@ public class CliLogger {
    * Create a new logger for the CLI.
    *
    * @param verbosity the configure verbosity
+   * @param httpTraceLevel the log level for http trace
    * @param consoleOutput the configured consoleOutput format
    * @param stdout the writer to store stdout
    * @param stderr the writer to store stderr
