@@ -15,6 +15,21 @@ application {
   mainClassName = cliMainClass
 }
 
+sourceSets.main.java.srcDirs += ["${buildDir}/generated-src"]
+
+tasks.register('generateSources', Copy) {
+  // to re-run the task whenever the file changes
+  inputs.file 'gradle.properties'
+
+  from fileTree('src/java-templates')
+  into "${buildDir}/generated-src"
+
+  rename('\\.template$', '')
+  expand(['version': "${version}"])
+}
+
+compileJava.source generateSources
+
 dependencies {
   implementation project(':jib-core')
   implementation project(':jib-plugins-common')
