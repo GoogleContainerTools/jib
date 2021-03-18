@@ -47,7 +47,8 @@ public class CliLoggerTest {
   private void createLoggerAndSendMessages(Verbosity verbosity, ConsoleOutput consoleOutput) {
     SingleThreadedExecutor executor = new SingleThreadedExecutor();
     ConsoleLogger logger =
-        CliLogger.newLogger(verbosity, consoleOutput, mockOut, mockErr, executor);
+        CliLogger.newLogger(
+            verbosity, HttpTraceLevel.off, consoleOutput, mockOut, mockErr, executor);
 
     logger.log(Level.DEBUG, "debug");
     logger.log(Level.INFO, "info");
@@ -190,23 +191,28 @@ public class CliLoggerTest {
 
   @Test
   public void testIsRichConsole_true() {
-    assertThat(CliLogger.isRichConsole(ConsoleOutput.rich)).isTrue();
+    assertThat(CliLogger.isRichConsole(ConsoleOutput.rich, HttpTraceLevel.off)).isTrue();
+  }
+
+  @Test
+  public void testIsRichConsole_falseIfHttpTrace() {
+    assertThat(CliLogger.isRichConsole(ConsoleOutput.rich, HttpTraceLevel.config)).isFalse();
   }
 
   @Test
   public void testIsRichConsole_false() {
-    assertThat(CliLogger.isRichConsole(ConsoleOutput.plain)).isFalse();
+    assertThat(CliLogger.isRichConsole(ConsoleOutput.plain, HttpTraceLevel.off)).isFalse();
   }
 
   @Test
   public void testIsRightConsole_autoWindowsTrue() {
     System.setProperty("os.name", "windows");
-    assertThat(CliLogger.isRichConsole(ConsoleOutput.auto)).isTrue();
+    assertThat(CliLogger.isRichConsole(ConsoleOutput.auto, HttpTraceLevel.off)).isTrue();
   }
 
   @Test
   public void testIsRightConsole_autoDumbTermFalse() {
     environmentVariables.set("TERM", "dumb");
-    assertThat(CliLogger.isRichConsole(ConsoleOutput.auto)).isFalse();
+    assertThat(CliLogger.isRichConsole(ConsoleOutput.auto, HttpTraceLevel.off)).isFalse();
   }
 }

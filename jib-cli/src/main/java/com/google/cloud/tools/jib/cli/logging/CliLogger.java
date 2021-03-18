@@ -38,12 +38,13 @@ public class CliLogger {
    */
   public static ConsoleLogger newLogger(
       Verbosity verbosity,
+      HttpTraceLevel httpTraceLevel,
       ConsoleOutput consoleOutput,
       PrintWriter stdout,
       PrintWriter stderr,
       SingleThreadedExecutor executor) {
     boolean enableRichProgress =
-        isRichConsole(consoleOutput) && verbosity.atLeast(Verbosity.lifecycle);
+        isRichConsole(consoleOutput, httpTraceLevel) && verbosity.atLeast(Verbosity.lifecycle);
     ConsoleLoggerBuilder builder =
         enableRichProgress
             ? ConsoleLoggerBuilder.rich(executor, false)
@@ -73,7 +74,11 @@ public class CliLogger {
   }
 
   @VisibleForTesting
-  static boolean isRichConsole(ConsoleOutput consoleOutput) {
+  static boolean isRichConsole(ConsoleOutput consoleOutput, HttpTraceLevel httpTraceLevel) {
+    if (httpTraceLevel != HttpTraceLevel.off) {
+      return false;
+    }
+
     switch (consoleOutput) {
       case plain:
         return false;

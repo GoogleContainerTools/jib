@@ -18,7 +18,7 @@ package com.google.cloud.tools.jib.cli;
 
 import com.google.cloud.tools.jib.api.Containerizer;
 import com.google.cloud.tools.jib.api.JibContainerBuilder;
-import com.google.cloud.tools.jib.api.LogEvent.Level;
+import com.google.cloud.tools.jib.api.LogEvent;
 import com.google.cloud.tools.jib.cli.buildfile.BuildFiles;
 import com.google.cloud.tools.jib.cli.logging.CliLogger;
 import com.google.cloud.tools.jib.plugins.common.globalconfig.GlobalConfig;
@@ -102,6 +102,7 @@ public class Build implements Callable<Integer> {
       ConsoleLogger logger =
           CliLogger.newLogger(
               commonCliOptions.getVerbosity(),
+              commonCliOptions.getHttpTrace(),
               commonCliOptions.getConsoleOutput(),
               spec.commandLine().getOut(),
               spec.commandLine().getErr(),
@@ -110,13 +111,13 @@ public class Build implements Callable<Integer> {
 
       if (!Files.isReadable(buildFile)) {
         logger.log(
-            Level.ERROR,
+            LogEvent.Level.ERROR,
             "The Build File YAML either does not exist or cannot be opened for reading: "
                 + buildFile);
         return 1;
       }
       if (!Files.isRegularFile(buildFile)) {
-        logger.log(Level.ERROR, "Build File YAML path is a not a file: " + buildFile);
+        logger.log(LogEvent.Level.ERROR, "Build File YAML path is a not a file: " + buildFile);
         return 1;
       }
 
