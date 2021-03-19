@@ -17,6 +17,7 @@
 package com.google.cloud.tools.jib.cli;
 
 import com.google.api.client.http.HttpTransport;
+import com.google.api.client.http.apache.v2.ApacheHttpTransport;
 import java.util.logging.ConsoleHandler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -33,6 +34,7 @@ import picocli.CommandLine;
 public class JibCli {
 
   static Logger configureHttpLogging(Level level) {
+    new ApacheHttpTransport(); // fixes https://github.com/GoogleContainerTools/jib/issues/3156
     ConsoleHandler consoleHandler = new ConsoleHandler();
     consoleHandler.setLevel(level);
 
