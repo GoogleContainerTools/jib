@@ -21,6 +21,7 @@ import com.google.cloud.tools.jib.blob.Blobs;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
+import java.time.Instant;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
@@ -28,6 +29,7 @@ import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
 
 /** Builds a tarball archive. */
 public class TarStreamBuilder {
+  public static final Instant DEFAULT_MODIFICATION_TIME = Instant.ofEpochSecond(1);
 
   /**
    * Maps from {@link TarArchiveEntry} to a {@link Blob}. The order of the entries is the order they
@@ -89,6 +91,7 @@ public class TarStreamBuilder {
   public void addBlobEntry(Blob blob, long size, String name) {
     TarArchiveEntry entry = new TarArchiveEntry(name);
     entry.setSize(size);
+    entry.setModTime(DEFAULT_MODIFICATION_TIME.getEpochSecond());
     archiveMap.put(entry, blob);
   }
 }
