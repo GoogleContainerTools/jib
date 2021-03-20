@@ -27,6 +27,6 @@ public class VersionInfo implements CommandLine.IVersionProvider {
   }
 
   public static String getVersionSimple() {
-    return "preview";
+    return "${version}";
   }
 }
