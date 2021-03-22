@@ -98,14 +98,14 @@ public class Build implements Callable<Integer> {
     commonCliOptions.validate();
     Path buildFile = getBuildFile();
     SingleThreadedExecutor executor = new SingleThreadedExecutor();
+    ConsoleLogger logger =
+        CliLogger.newLogger(
+            commonCliOptions.getVerbosity(),
+            commonCliOptions.getConsoleOutput(),
+            spec.commandLine().getOut(),
+            spec.commandLine().getErr(),
+            executor);
     try {
-      ConsoleLogger logger =
-          CliLogger.newLogger(
-              commonCliOptions.getVerbosity(),
-              commonCliOptions.getConsoleOutput(),
-              spec.commandLine().getOut(),
-              spec.commandLine().getErr(),
-              executor);
       JibCli.configureHttpLogging(commonCliOptions.getHttpTrace().toJulLevel());
 
       if (!Files.isReadable(buildFile)) {
@@ -132,10 +132,7 @@ public class Build implements Callable<Integer> {
 
       containerBuilder.containerize(containerizer);
     } catch (Exception ex) {
-      if (commonCliOptions.isStacktrace()) {
-        ex.printStackTrace();
-      }
-      System.err.println(ex.getClass().getName() + ": " + ex.getMessage());
+      JibCli.logTerminatingException(logger, ex, commonCliOptions.isStacktrace());
       return 1;
     } finally {
       executor.shutDownAndAwaitTermination(Duration.ofSeconds(3));
