@@ -168,6 +168,7 @@ public class Jar implements Callable<Integer> {
     ConsoleLogger logger =
         CliLogger.newLogger(
             commonCliOptions.getVerbosity(),
+            commonCliOptions.getHttpTrace(),
             commonCliOptions.getConsoleOutput(),
             spec.commandLine().getOut(),
             spec.commandLine().getErr(),
