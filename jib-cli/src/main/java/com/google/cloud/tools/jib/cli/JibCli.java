@@ -34,7 +34,9 @@ import picocli.CommandLine;
 public class JibCli {
 
   static Logger configureHttpLogging(Level level) {
-    new ApacheHttpTransport(); // fixes https://github.com/GoogleContainerTools/jib/issues/3156
+    // To instantiate the static HttpTransport logger field.
+    // Fixes https://github.com/GoogleContainerTools/jib/issues/3156.
+    new ApacheHttpTransport();
     ConsoleHandler consoleHandler = new ConsoleHandler();
     consoleHandler.setLevel(level);
 
