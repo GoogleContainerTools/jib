@@ -165,15 +165,15 @@ public class Jar implements Callable<Integer> {
   public Integer call() {
     commonCliOptions.validate();
     SingleThreadedExecutor executor = new SingleThreadedExecutor();
+    ConsoleLogger logger =
+        CliLogger.newLogger(
+            commonCliOptions.getVerbosity(),
+            commonCliOptions.getHttpTrace(),
+            commonCliOptions.getConsoleOutput(),
+            spec.commandLine().getOut(),
+            spec.commandLine().getErr(),
+            executor);
     try {
-      ConsoleLogger logger =
-          CliLogger.newLogger(
-              commonCliOptions.getVerbosity(),
-              commonCliOptions.getHttpTrace(),
-              commonCliOptions.getConsoleOutput(),
-              spec.commandLine().getOut(),
-              spec.commandLine().getErr(),
-              executor);
       JibCli.configureHttpLogging(commonCliOptions.getHttpTrace().toJulLevel());
 
       if (!Files.exists(jarFile)) {
@@ -204,10 +204,7 @@ public class Jar implements Callable<Integer> {
 
       containerBuilder.containerize(containerizer);
     } catch (Exception ex) {
-      if (commonCliOptions.isStacktrace()) {
-        ex.printStackTrace();
-      }
-      System.err.println(ex.getClass().getName() + ": " + ex.getMessage());
+      JibCli.logTerminatingException(logger, ex, commonCliOptions.isStacktrace());
       return 1;
     } finally {
       executor.shutDownAndAwaitTermination(Duration.ofSeconds(3));

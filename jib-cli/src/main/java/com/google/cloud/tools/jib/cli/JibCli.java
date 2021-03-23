@@ -18,6 +18,10 @@ package com.google.cloud.tools.jib.cli;
 
 import com.google.api.client.http.HttpTransport;
 import com.google.api.client.http.apache.v2.ApacheHttpTransport;
+import com.google.cloud.tools.jib.api.LogEvent;
+import com.google.cloud.tools.jib.plugins.common.logging.ConsoleLogger;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.logging.ConsoleHandler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -44,6 +48,23 @@ public class JibCli {
     logger.setLevel(level);
     logger.addHandler(consoleHandler);
     return logger;
+  }
+
+  static void logTerminatingException(
+      ConsoleLogger consoleLogger, Exception exception, boolean logStackTrace) {
+    if (logStackTrace) {
+      StringWriter writer = new StringWriter();
+      exception.printStackTrace(new PrintWriter(writer));
+      consoleLogger.log(LogEvent.Level.ERROR, writer.toString());
+    }
+
+    consoleLogger.log(
+        LogEvent.Level.ERROR,
+        "\u001B[31;1m"
+            + exception.getClass().getName()
+            + ": "
+            + exception.getMessage()
+            + "\u001B[0m");
   }
 
   /**
