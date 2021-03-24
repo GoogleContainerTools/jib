@@ -19,13 +19,12 @@ package com.google.cloud.tools.jib.cli;
 import static com.google.common.truth.Truth.assertThat;
 import static org.mockito.ArgumentMatchers.contains;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.when;
 
 import com.google.cloud.tools.jib.api.LogEvent;
 import com.google.cloud.tools.jib.cli.logging.Verbosity;
-import com.google.cloud.tools.jib.plugins.common.UpdateChecker;
 import com.google.cloud.tools.jib.plugins.common.globalconfig.GlobalConfig;
 import com.google.cloud.tools.jib.plugins.common.logging.ConsoleLogger;
 import java.io.IOException;
@@ -41,7 +40,6 @@ import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -50,7 +48,7 @@ public class JibCliTest {
   @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
   @Mock GlobalConfig globalConfig;
-  @Mock UpdateChecker updateChecker;
+  @Mock ConsoleLogger logger;
 
   @Test
   public void testConfigureHttpLogging() {
@@ -66,7 +64,6 @@ public class JibCliTest {
 
   @Test
   public void testLogTerminatingException() {
-    ConsoleLogger logger = mock(ConsoleLogger.class);
     JibCli.logTerminatingException(logger, new IOException("test error message"), false);
 
     verify(logger)
@@ -76,7 +73,6 @@ public class JibCliTest {
 
   @Test
   public void testLogTerminatingException_stackTrace() {
-    ConsoleLogger logger = mock(ConsoleLogger.class);
     JibCli.logTerminatingException(logger, new IOException("test error message"), true);
 
     String stackTraceLine =
@@ -89,7 +85,7 @@ public class JibCliTest {
 
   @Test
   public void testNewUpdateChecker_noUpdateCheck() throws ExecutionException, InterruptedException {
-    Mockito.when(globalConfig.isDisableUpdateCheck()).thenReturn(true);
+    when(globalConfig.isDisableUpdateCheck()).thenReturn(true);
     Future<Optional<String>> updateChecker =
         JibCli.newUpdateChecker(globalConfig, Verbosity.info, logEvent -> {});
     assertThat(updateChecker.get()).isEqualTo(Optional.empty());
