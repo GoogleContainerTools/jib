@@ -17,6 +17,7 @@
 package com.google.cloud.tools.jib.cli;
 
 import com.google.api.client.http.HttpTransport;
+import com.google.api.client.http.apache.v2.ApacheHttpTransport;
 import com.google.cloud.tools.jib.ProjectInfo;
 import com.google.cloud.tools.jib.api.LogEvent;
 import com.google.cloud.tools.jib.cli.logging.Verbosity;
@@ -24,14 +25,13 @@ import com.google.cloud.tools.jib.plugins.common.UpdateChecker;
 import com.google.cloud.tools.jib.plugins.common.globalconfig.GlobalConfig;
 import com.google.cloud.tools.jib.plugins.common.logging.ConsoleLogger;
 import com.google.common.util.concurrent.Futures;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.function.Consumer;
-import com.google.api.client.http.apache.v2.ApacheHttpTransport;
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.util.logging.ConsoleHandler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -63,7 +63,7 @@ public class JibCli {
   }
 
   static void logTerminatingException(
-          ConsoleLogger consoleLogger, Exception exception, boolean logStackTrace) {
+      ConsoleLogger consoleLogger, Exception exception, boolean logStackTrace) {
     if (logStackTrace) {
       StringWriter writer = new StringWriter();
       exception.printStackTrace(new PrintWriter(writer));
@@ -71,12 +71,12 @@ public class JibCli {
     }
 
     consoleLogger.log(
-            LogEvent.Level.ERROR,
-            "\u001B[31;1m"
-                    + exception.getClass().getName()
-                    + ": "
-                    + exception.getMessage()
-                    + "\u001B[0m");
+        LogEvent.Level.ERROR,
+        "\u001B[31;1m"
+            + exception.getClass().getName()
+            + ": "
+            + exception.getMessage()
+            + "\u001B[0m");
   }
 
   static Future<Optional<String>> newUpdateChecker(
@@ -100,23 +100,23 @@ public class JibCli {
   static void finishUpdateChecker(
       ConsoleLogger logger, Future<Optional<String>> updateCheckFuture) {
     UpdateChecker.finishUpdateCheck(updateCheckFuture)
-            .ifPresent(
-                    updateMessage -> {
-                      System.out.print("HELLOOOOOOO333333");
-                      logger.log(LogEvent.Level.LIFECYCLE, "");
-                      logger.log(LogEvent.Level.LIFECYCLE, "\u001B[33m" + updateMessage + "\u001B[0m");
-                      logger.log(
-                              LogEvent.Level.LIFECYCLE,
-                              "\u001B[33m"
-                                      + ProjectInfo.GITHUB_URL
-                                      + "/blob/master/jib-cli/CHANGELOG.md\u001B[0m");
-                      logger.log(
-                              LogEvent.Level.LIFECYCLE,
-                              "Please see "
-                                      + ProjectInfo.GITHUB_URL
-                                      + "blob/master/docs/privacy.md for info on disabling this update check.");
-                      logger.log(LogEvent.Level.LIFECYCLE, "");
-                    });
+        .ifPresent(
+            updateMessage -> {
+              System.out.print("HELLOOOOOOO333333");
+              logger.log(LogEvent.Level.LIFECYCLE, "");
+              logger.log(LogEvent.Level.LIFECYCLE, "\u001B[33m" + updateMessage + "\u001B[0m");
+              logger.log(
+                  LogEvent.Level.LIFECYCLE,
+                  "\u001B[33m"
+                      + ProjectInfo.GITHUB_URL
+                      + "/blob/master/jib-cli/CHANGELOG.md\u001B[0m");
+              logger.log(
+                  LogEvent.Level.LIFECYCLE,
+                  "Please see "
+                      + ProjectInfo.GITHUB_URL
+                      + "blob/master/docs/privacy.md for info on disabling this update check.");
+              logger.log(LogEvent.Level.LIFECYCLE, "");
+            });
   }
 
   /**

@@ -166,7 +166,6 @@ public class Jar implements Callable<Integer> {
   @Override
   public Integer call() {
     commonCliOptions.validate();
-
     SingleThreadedExecutor executor = new SingleThreadedExecutor();
     ConsoleLogger logger =
         CliLogger.newLogger(

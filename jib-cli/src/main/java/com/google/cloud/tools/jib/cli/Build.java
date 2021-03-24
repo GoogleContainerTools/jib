@@ -26,6 +26,7 @@ import com.google.cloud.tools.jib.plugins.common.logging.ConsoleLogger;
 import com.google.cloud.tools.jib.plugins.common.logging.SingleThreadedExecutor;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Multimaps;
+import com.google.common.util.concurrent.Futures;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
@@ -34,8 +35,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
-
-import com.google.common.util.concurrent.Futures;
 import picocli.CommandLine;
 import picocli.CommandLine.Model.CommandSpec;
 
@@ -115,10 +114,10 @@ public class Build implements Callable<Integer> {
       JibCli.configureHttpLogging(commonCliOptions.getHttpTrace().toJulLevel());
       GlobalConfig globalConfig = GlobalConfig.readConfig();
       updateCheckFuture =
-              JibCli.newUpdateChecker(
-                      globalConfig,
-                      commonCliOptions.getVerbosity(),
-                      logEvent -> logger.log(logEvent.getLevel(), logEvent.getMessage()));
+          JibCli.newUpdateChecker(
+              globalConfig,
+              commonCliOptions.getVerbosity(),
+              logEvent -> logger.log(logEvent.getLevel(), logEvent.getMessage()));
       if (!Files.isReadable(buildFile)) {
         logger.log(
             LogEvent.Level.ERROR,
