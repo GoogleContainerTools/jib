@@ -24,15 +24,33 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 import com.google.cloud.tools.jib.api.LogEvent;
+import com.google.cloud.tools.jib.cli.logging.Verbosity;
+import com.google.cloud.tools.jib.plugins.common.UpdateChecker;
+import com.google.cloud.tools.jib.plugins.common.globalconfig.GlobalConfig;
 import com.google.cloud.tools.jib.plugins.common.logging.ConsoleLogger;
 import java.io.IOException;
+import java.util.Optional;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 import java.util.logging.ConsoleHandler;
 import java.util.logging.Handler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
+import org.junit.runner.RunWith;
+import org.mockito.Mock;
+import org.mockito.Mockito;
+import org.mockito.junit.MockitoJUnitRunner;
 
+@RunWith(MockitoJUnitRunner.class)
 public class JibCliTest {
+
+  @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
+
+  @Mock GlobalConfig globalConfig;
+  @Mock UpdateChecker updateChecker;
 
   @Test
   public void testConfigureHttpLogging() {
@@ -67,5 +85,13 @@ public class JibCliTest {
     verify(logger)
         .log(LogEvent.Level.ERROR, "\u001B[31;1mjava.io.IOException: test error message\u001B[0m");
     verifyNoMoreInteractions(logger);
+  }
+
+  @Test
+  public void testNewUpdateChecker_noUpdateCheck() throws ExecutionException, InterruptedException {
+    Mockito.when(globalConfig.isDisableUpdateCheck()).thenReturn(true);
+    Future<Optional<String>> updateChecker =
+        JibCli.newUpdateChecker(globalConfig, Verbosity.info, logEvent -> {});
+    assertThat(updateChecker.get()).isEqualTo(Optional.empty());
   }
 }
