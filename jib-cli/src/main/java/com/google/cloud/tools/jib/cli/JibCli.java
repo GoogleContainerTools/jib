@@ -81,7 +81,7 @@ public class JibCli {
 
   static Future<Optional<String>> newUpdateChecker(
       GlobalConfig globalConfig, Verbosity verbosity, Consumer<LogEvent> log) {
-    if (!verbosity.atLeast(Verbosity.lifecycle) || globalConfig.isDisableUpdateCheck()) {
+    if (!verbosity.equals(Verbosity.info) || globalConfig.isDisableUpdateCheck()) {
       return Futures.immediateFuture(Optional.empty());
     }
     ExecutorService executorService = Executors.newSingleThreadExecutor();
@@ -102,7 +102,6 @@ public class JibCli {
     UpdateChecker.finishUpdateCheck(updateCheckFuture)
         .ifPresent(
             updateMessage -> {
-              System.out.print("HELLOOOOOOO333333");
               logger.log(LogEvent.Level.LIFECYCLE, "");
               logger.log(LogEvent.Level.LIFECYCLE, "\u001B[33m" + updateMessage + "\u001B[0m");
               logger.log(
@@ -114,7 +113,7 @@ public class JibCli {
                   LogEvent.Level.LIFECYCLE,
                   "Please see "
                       + ProjectInfo.GITHUB_URL
-                      + "blob/master/docs/privacy.md for info on disabling this update check.");
+                      + "/blob/master/docs/privacy.md for info on disabling this update check.");
               logger.log(LogEvent.Level.LIFECYCLE, "");
             });
   }

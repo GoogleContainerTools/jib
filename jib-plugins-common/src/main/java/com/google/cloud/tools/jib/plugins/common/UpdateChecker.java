@@ -122,11 +122,13 @@ public class UpdateChecker {
           return Optional.empty();
         }
         return Optional.of(
-            "A new version of Jib ("
+            "A new version of "
+                + toolName
+                + " ("
                 + version.latest
                 + ") is available (currently using "
                 + currentVersion
-                + "). Update your build configuration to use the latest features and fixes!");
+                + "). Upgrade to use the latest features and fixes!");
 
       } finally {
         httpClient.shutDown();

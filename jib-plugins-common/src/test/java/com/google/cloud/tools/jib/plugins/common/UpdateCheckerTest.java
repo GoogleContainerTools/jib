@@ -73,12 +73,11 @@ public class UpdateCheckerTest {
     setupLastUpdateCheck();
     Optional<String> message =
         UpdateChecker.performUpdateCheck(
-            configDir, "1.0.2", testWebServer.getEndpoint(), "tool name", ignored -> {});
-    Assert.assertTrue(testWebServer.getInputRead().contains("User-Agent: jib 1.0.2 tool name"));
+            configDir, "1.0.2", testWebServer.getEndpoint(), "tool-name", ignored -> {});
+    Assert.assertTrue(testWebServer.getInputRead().contains("User-Agent: jib 1.0.2 tool-name"));
     Assert.assertTrue(message.isPresent());
     Assert.assertEquals(
-        "A new version of Jib (2.0.0) is available (currently using 1.0.2). Update your build "
-            + "configuration to use the latest features and fixes!",
+        "A new version of tool-name (2.0.0) is available (currently using 1.0.2). Upgrade to use the latest features and fixes!",
         message.get());
     String modifiedTime =
         new String(
@@ -95,11 +94,10 @@ public class UpdateCheckerTest {
       setupLastUpdateCheck();
       Optional<String> message =
           UpdateChecker.performUpdateCheck(
-              configDir, "1.0.2", server.getEndpoint(), "tool name", ignored -> {});
+              configDir, "1.0.2", server.getEndpoint(), "tool-name", ignored -> {});
       Assert.assertTrue(message.isPresent());
       Assert.assertEquals(
-          "A new version of Jib (2.0.0) is available (currently using 1.0.2). Update your build "
-              + "configuration to use the latest features and fixes!",
+          "A new version of tool-name (2.0.0) is available (currently using 1.0.2). Upgrade to use the latest features and fixes!",
           message.get());
     }
   }
@@ -110,12 +108,12 @@ public class UpdateCheckerTest {
     setupLastUpdateCheck();
     Optional<String> message =
         UpdateChecker.performUpdateCheck(
-            configDir, "2.0.0", testWebServer.getEndpoint(), "tool name", ignored -> {});
+            configDir, "2.0.0", testWebServer.getEndpoint(), "tool-name", ignored -> {});
     Assert.assertFalse(message.isPresent());
     String modifiedTime =
         new String(
             Files.readAllBytes(configDir.resolve("lastUpdateCheck")), StandardCharsets.UTF_8);
-    Assert.assertTrue(testWebServer.getInputRead().contains("User-Agent: jib 2.0.0 tool name"));
+    Assert.assertTrue(testWebServer.getInputRead().contains("User-Agent: jib 2.0.0 tool-name"));
     Assert.assertTrue(Instant.parse(modifiedTime).isAfter(before));
   }
 
@@ -124,11 +122,10 @@ public class UpdateCheckerTest {
     Instant before = Instant.now();
     Optional<String> message =
         UpdateChecker.performUpdateCheck(
-            configDir, "1.0.2", testWebServer.getEndpoint(), "tool name", ignored -> {});
+            configDir, "1.0.2", testWebServer.getEndpoint(), "tool-name", ignored -> {});
     Assert.assertTrue(message.isPresent());
     Assert.assertEquals(
-        "A new version of Jib (2.0.0) is available (currently using 1.0.2). Update your build "
-            + "configuration to use the latest features and fixes!",
+        "A new version of tool-name (2.0.0) is available (currently using 1.0.2). Upgrade to use the latest features and fixes!",
         message.get());
     String modifiedTime =
         new String(
@@ -142,11 +139,10 @@ public class UpdateCheckerTest {
     Instant before = Instant.now();
     Optional<String> message =
         UpdateChecker.performUpdateCheck(
-            configDir, "1.0.2", testWebServer.getEndpoint(), "tool name", ignored -> {});
+            configDir, "1.0.2", testWebServer.getEndpoint(), "tool-name", ignored -> {});
     Assert.assertTrue(message.isPresent());
     Assert.assertEquals(
-        "A new version of Jib (2.0.0) is available (currently using 1.0.2). Update your build "
-            + "configuration to use the latest features and fixes!",
+        "A new version of tool-name (2.0.0) is available (currently using 1.0.2). Upgrade to use the latest features and fixes!",
         message.get());
     String modifiedTime =
         new String(
@@ -163,7 +159,7 @@ public class UpdateCheckerTest {
         modifiedTime.toString().getBytes(StandardCharsets.UTF_8));
     Optional<String> message =
         UpdateChecker.performUpdateCheck(
-            configDir, "1.0.2", testWebServer.getEndpoint(), "tool name", ignored -> {});
+            configDir, "1.0.2", testWebServer.getEndpoint(), "tool-name", ignored -> {});
     Assert.assertFalse(message.isPresent());
 
     // lastUpdateCheck should not have changed
@@ -180,15 +176,14 @@ public class UpdateCheckerTest {
         configDir.resolve("lastUpdateCheck"), "bad timestamp".getBytes(StandardCharsets.UTF_8));
     Optional<String> message =
         UpdateChecker.performUpdateCheck(
-            configDir, "1.0.2", testWebServer.getEndpoint(), "tool name", ignored -> {});
+            configDir, "1.0.2", testWebServer.getEndpoint(), "tool-name", ignored -> {});
     String modifiedTime =
         new String(
             Files.readAllBytes(configDir.resolve("lastUpdateCheck")), StandardCharsets.UTF_8);
     Assert.assertTrue(Instant.parse(modifiedTime).isAfter(before));
     Assert.assertTrue(message.isPresent());
     Assert.assertEquals(
-        "A new version of Jib (2.0.0) is available (currently using 1.0.2). Update your build "
-            + "configuration to use the latest features and fixes!",
+        "A new version of tool-name (2.0.0) is available (currently using 1.0.2). Upgrade to use the latest features and fixes!",
         message.get());
   }
 
@@ -203,7 +198,7 @@ public class UpdateCheckerTest {
               configDir,
               "1.0.2",
               badServer.getEndpoint(),
-              "tool name",
+              "tool-name",
               logEvent -> {
                 Assert.assertEquals(Level.DEBUG, logEvent.getLevel());
                 MatcherAssert.assertThat(
