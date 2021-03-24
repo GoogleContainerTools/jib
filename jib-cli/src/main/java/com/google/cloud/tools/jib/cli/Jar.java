@@ -171,6 +171,7 @@ public class Jar implements Callable<Integer> {
     ConsoleLogger logger =
         CliLogger.newLogger(
             commonCliOptions.getVerbosity(),
+            commonCliOptions.getHttpTrace(),
             commonCliOptions.getConsoleOutput(),
             spec.commandLine().getOut(),
             spec.commandLine().getErr(),
@@ -211,10 +212,7 @@ public class Jar implements Callable<Integer> {
 
       containerBuilder.containerize(containerizer);
     } catch (Exception ex) {
-      if (commonCliOptions.isStacktrace()) {
-        ex.printStackTrace();
-      }
-      System.err.println(ex.getClass().getName() + ": " + ex.getMessage());
+      JibCli.logTerminatingException(logger, ex, commonCliOptions.isStacktrace());
       return 1;
     } finally {
       JibCli.finishUpdateChecker(logger, updateCheckFuture);

@@ -29,6 +29,9 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.function.Consumer;
+import com.google.api.client.http.apache.v2.ApacheHttpTransport;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.logging.ConsoleHandler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -47,6 +50,9 @@ public class JibCli {
   public static final String VERSION_URL = "https://storage.googleapis.com/jib-versions/jib-cli";
 
   static Logger configureHttpLogging(Level level) {
+    // To instantiate the static HttpTransport logger field.
+    // Fixes https://github.com/GoogleContainerTools/jib/issues/3156.
+    new ApacheHttpTransport();
     ConsoleHandler consoleHandler = new ConsoleHandler();
     consoleHandler.setLevel(level);
 
@@ -54,6 +60,23 @@ public class JibCli {
     logger.setLevel(level);
     logger.addHandler(consoleHandler);
     return logger;
+  }
+
+  static void logTerminatingException(
+          ConsoleLogger consoleLogger, Exception exception, boolean logStackTrace) {
+    if (logStackTrace) {
+      StringWriter writer = new StringWriter();
+      exception.printStackTrace(new PrintWriter(writer));
+      consoleLogger.log(LogEvent.Level.ERROR, writer.toString());
+    }
+
+    consoleLogger.log(
+            LogEvent.Level.ERROR,
+            "\u001B[31;1m"
+                    + exception.getClass().getName()
+                    + ": "
+                    + exception.getMessage()
+                    + "\u001B[0m");
   }
 
   static Future<Optional<String>> newUpdateChecker(
@@ -77,23 +100,23 @@ public class JibCli {
   static void finishUpdateChecker(
       ConsoleLogger logger, Future<Optional<String>> updateCheckFuture) {
     UpdateChecker.finishUpdateCheck(updateCheckFuture)
-        .ifPresent(
-            updateMessage -> {
-              System.out.print("HELLOOOOOOO333333");
-              logger.log(LogEvent.Level.LIFECYCLE, "");
-              logger.log(LogEvent.Level.LIFECYCLE, "\u001B[33m" + updateMessage + "\u001B[0m");
-              logger.log(
-                  LogEvent.Level.LIFECYCLE,
-                  "\u001B[33m"
-                      + ProjectInfo.GITHUB_URL
-                      + "/blob/master/jib-cli/CHANGELOG.md\u001B[0m");
-              logger.log(
-                  LogEvent.Level.LIFECYCLE,
-                  "Please see "
-                      + ProjectInfo.GITHUB_URL
-                      + "blob/master/docs/privacy.md for info on disabling this update check.");
-              logger.log(LogEvent.Level.LIFECYCLE, "");
-            });
+            .ifPresent(
+                    updateMessage -> {
+                      System.out.print("HELLOOOOOOO333333");
+                      logger.log(LogEvent.Level.LIFECYCLE, "");
+                      logger.log(LogEvent.Level.LIFECYCLE, "\u001B[33m" + updateMessage + "\u001B[0m");
+                      logger.log(
+                              LogEvent.Level.LIFECYCLE,
+                              "\u001B[33m"
+                                      + ProjectInfo.GITHUB_URL
+                                      + "/blob/master/jib-cli/CHANGELOG.md\u001B[0m");
+                      logger.log(
+                              LogEvent.Level.LIFECYCLE,
+                              "Please see "
+                                      + ProjectInfo.GITHUB_URL
+                                      + "blob/master/docs/privacy.md for info on disabling this update check.");
+                      logger.log(LogEvent.Level.LIFECYCLE, "");
+                    });
   }
 
   /**

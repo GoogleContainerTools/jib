@@ -18,7 +18,7 @@ package com.google.cloud.tools.jib.cli;
 
 import com.google.cloud.tools.jib.api.Containerizer;
 import com.google.cloud.tools.jib.api.JibContainerBuilder;
-import com.google.cloud.tools.jib.api.LogEvent.Level;
+import com.google.cloud.tools.jib.api.LogEvent;
 import com.google.cloud.tools.jib.cli.buildfile.BuildFiles;
 import com.google.cloud.tools.jib.cli.logging.CliLogger;
 import com.google.cloud.tools.jib.plugins.common.globalconfig.GlobalConfig;
@@ -31,7 +31,11 @@ import java.nio.file.Path;
 import java.time.Duration;
 import java.util.Collections;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.Callable;
+import java.util.concurrent.Future;
+
+import com.google.common.util.concurrent.Futures;
 import picocli.CommandLine;
 import picocli.CommandLine.Model.CommandSpec;
 
@@ -98,25 +102,32 @@ public class Build implements Callable<Integer> {
     commonCliOptions.validate();
     Path buildFile = getBuildFile();
     SingleThreadedExecutor executor = new SingleThreadedExecutor();
+    ConsoleLogger logger =
+        CliLogger.newLogger(
+            commonCliOptions.getVerbosity(),
+            commonCliOptions.getHttpTrace(),
+            commonCliOptions.getConsoleOutput(),
+            spec.commandLine().getOut(),
+            spec.commandLine().getErr(),
+            executor);
+    Future<Optional<String>> updateCheckFuture = Futures.immediateFuture(Optional.empty());
     try {
-      ConsoleLogger logger =
-          CliLogger.newLogger(
-              commonCliOptions.getVerbosity(),
-              commonCliOptions.getConsoleOutput(),
-              spec.commandLine().getOut(),
-              spec.commandLine().getErr(),
-              executor);
       JibCli.configureHttpLogging(commonCliOptions.getHttpTrace().toJulLevel());
-
+      GlobalConfig globalConfig = GlobalConfig.readConfig();
+      updateCheckFuture =
+              JibCli.newUpdateChecker(
+                      globalConfig,
+                      commonCliOptions.getVerbosity(),
+                      logEvent -> logger.log(logEvent.getLevel(), logEvent.getMessage()));
       if (!Files.isReadable(buildFile)) {
         logger.log(
-            Level.ERROR,
+            LogEvent.Level.ERROR,
             "The Build File YAML either does not exist or cannot be opened for reading: "
                 + buildFile);
         return 1;
       }
       if (!Files.isRegularFile(buildFile)) {
-        logger.log(Level.ERROR, "Build File YAML path is a not a file: " + buildFile);
+        logger.log(LogEvent.Level.ERROR, "Build File YAML path is a not a file: " + buildFile);
         return 1;
       }
 
@@ -127,17 +138,14 @@ public class Build implements Callable<Integer> {
           BuildFiles.toJibContainerBuilder(contextRoot, buildFile, this, commonCliOptions, logger);
 
       // Enable registry mirrors
-      GlobalConfig globalConfig = GlobalConfig.readConfig();
       Multimaps.asMap(globalConfig.getRegistryMirrors()).forEach(containerizer::addRegistryMirrors);
 
       containerBuilder.containerize(containerizer);
     } catch (Exception ex) {
-      if (commonCliOptions.isStacktrace()) {
-        ex.printStackTrace();
-      }
-      System.err.println(ex.getClass().getName() + ": " + ex.getMessage());
+      JibCli.logTerminatingException(logger, ex, commonCliOptions.isStacktrace());
       return 1;
     } finally {
+      JibCli.finishUpdateChecker(logger, updateCheckFuture);
       executor.shutDownAndAwaitTermination(Duration.ofSeconds(3));
     }
     return 0;

@@ -40,6 +40,7 @@ dependencies {
   implementation dependencyStrings.GUAVA
   implementation dependencyStrings.PICOCLI
   implementation dependencyStrings.GOOGLE_HTTP_CLIENT
+  implementation dependencyStrings.GOOGLE_HTTP_CLIENT_APACHE_V2
 
   testImplementation dependencyStrings.JUNIT
   testImplementation dependencyStrings.JUNIT_PARAMS

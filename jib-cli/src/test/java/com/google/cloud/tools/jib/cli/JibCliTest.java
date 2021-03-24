@@ -17,7 +17,15 @@
 package com.google.cloud.tools.jib.cli;
 
 import static com.google.common.truth.Truth.assertThat;
+import static org.mockito.ArgumentMatchers.contains;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 
+import com.google.cloud.tools.jib.api.LogEvent;
+import com.google.cloud.tools.jib.plugins.common.logging.ConsoleLogger;
+import java.io.IOException;
 import java.util.logging.ConsoleHandler;
 import java.util.logging.Handler;
 import java.util.logging.Level;
@@ -36,5 +44,28 @@ public class JibCliTest {
     Handler handler = logger.getHandlers()[0];
     assertThat(handler).isInstanceOf(ConsoleHandler.class);
     assertThat(handler.getLevel()).isEqualTo(Level.ALL);
+  }
+
+  @Test
+  public void testLogTerminatingException() {
+    ConsoleLogger logger = mock(ConsoleLogger.class);
+    JibCli.logTerminatingException(logger, new IOException("test error message"), false);
+
+    verify(logger)
+        .log(LogEvent.Level.ERROR, "\u001B[31;1mjava.io.IOException: test error message\u001B[0m");
+    verifyNoMoreInteractions(logger);
+  }
+
+  @Test
+  public void testLogTerminatingException_stackTrace() {
+    ConsoleLogger logger = mock(ConsoleLogger.class);
+    JibCli.logTerminatingException(logger, new IOException("test error message"), true);
+
+    String stackTraceLine =
+        "at com.google.cloud.tools.jib.cli.JibCliTest.testLogTerminatingException_stackTrace";
+    verify(logger).log(eq(LogEvent.Level.ERROR), contains(stackTraceLine));
+    verify(logger)
+        .log(LogEvent.Level.ERROR, "\u001B[31;1mjava.io.IOException: test error message\u001B[0m");
+    verifyNoMoreInteractions(logger);
   }
 }
