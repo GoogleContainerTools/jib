@@ -21,6 +21,7 @@ import com.google.cloud.tools.jib.plugins.common.AuthProperty;
 import com.google.cloud.tools.jib.plugins.common.ConfigurationPropertyValidator;
 import com.google.cloud.tools.jib.plugins.common.PropertyNames;
 import com.google.cloud.tools.jib.plugins.common.RawConfiguration.ExtensionConfiguration;
+import com.google.cloud.tools.jib.plugins.common.RawConfiguration.ExtraDirectoriesConfiguration;
 import com.google.cloud.tools.jib.plugins.common.RawConfiguration.PlatformConfiguration;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
@@ -132,6 +133,7 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
 
   /** Configuration for {@code platform} parameter. */
   public static class PlatformParameters implements PlatformConfiguration {
+
     @Nullable @Parameter private String os;
     @Nullable @Parameter private String architecture;
 
@@ -150,11 +152,8 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
   public static class FromConfiguration {
 
     @Nullable @Parameter private String image;
-
     @Nullable @Parameter private String credHelper;
-
     @Parameter private FromAuthConfiguration auth = new FromAuthConfiguration();
-
     @Parameter private List<PlatformParameters> platforms;
 
     /** Constructor for defaults. */
@@ -170,11 +169,8 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
   public static class ToConfiguration {
 
     @Nullable @Parameter private String image;
-
     @Parameter private List<String> tags = Collections.emptyList();
-
     @Nullable @Parameter private String credHelper;
-
     @Parameter private ToAuthConfiguration auth = new ToAuthConfiguration();
 
     public void set(String image) {
@@ -188,35 +184,20 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
     // Note: `entrypoint` and `args` are @Nullable to handle inheriting values from the base image
 
     @Nullable @Parameter private List<String> entrypoint;
-
     @Parameter private List<String> jvmFlags = Collections.emptyList();
-
     @Parameter private Map<String, String> environment = Collections.emptyMap();
-
     @Parameter private List<String> extraClasspath = Collections.emptyList();
-
     private boolean expandClasspathDependencies;
-
     @Nullable @Parameter private String mainClass;
-
     @Nullable @Parameter private List<String> args;
-
     @Parameter private String format = "Docker";
-
     @Parameter private List<String> ports = Collections.emptyList();
-
     @Parameter private List<String> volumes = Collections.emptyList();
-
     @Parameter private Map<String, String> labels = Collections.emptyMap();
-
     @Parameter private String appRoot = "";
-
     @Nullable @Parameter private String user;
-
     @Nullable @Parameter private String workingDirectory;
-
     @Parameter private String filesModificationTime = "EPOCH_PLUS_SECOND";
-
     @Parameter private String creationTime = "EPOCH";
   }
 
@@ -224,7 +205,6 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
   public static class ExtraDirectoriesParameters {
 
     @Parameter private List<ExtraDirectoryParameters> paths = Collections.emptyList();
-
     @Parameter private List<PermissionConfiguration> permissions = Collections.emptyList();
 
     public List<ExtraDirectoryParameters> getPaths() {
@@ -233,11 +213,12 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
   }
 
   /** A bean that configures the source and destination of an extra directory. */
-  public static class ExtraDirectoryParameters {
+  public static class ExtraDirectoryParameters implements ExtraDirectoriesConfiguration {
 
     @Parameter private File from = new File("");
-
     @Parameter private String into = "/";
+    @Parameter private List<String> includes = Collections.emptyList();
+    @Parameter private List<String> excludes = Collections.emptyList();
 
     // Need default constructor for Maven
     public ExtraDirectoryParameters() {}
@@ -254,6 +235,7 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
       into = "/";
     }
 
+    @Override
     public Path getFrom() {
       return from.toPath();
     }
@@ -262,8 +244,19 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
       this.from = from;
     }
 
-    String getInto() {
+    @Override
+    public String getInto() {
       return into;
+    }
+
+    @Override
+    public List<String> getIncludes() {
+      return includes;
+    }
+
+    @Override
+    public List<String> getExcludes() {
+      return excludes;
     }
   }
 
@@ -271,27 +264,21 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
   public static class DockerClientParameters {
 
     @Nullable @Parameter private File executable;
-
     @Parameter private Map<String, String> environment = Collections.emptyMap();
   }
 
   public static class OutputPathsParameters {
 
     @Nullable @Parameter private File tar;
-
     @Nullable @Parameter private File digest;
-
     @Nullable @Parameter private File imageId;
-
     @Nullable @Parameter private File imageJson;
   }
 
   public static class ExtensionParameters implements ExtensionConfiguration {
 
     @Parameter private String implementation = "<extension implementation not configured>";
-
     @Parameter private Map<String, String> properties = Collections.emptyMap();
-
     @Nullable @Parameter private Object configuration;
 
     @Override
@@ -322,17 +309,14 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
   @Parameter(defaultValue = "${plugin}", readonly = true)
   protected PluginDescriptor descriptor;
 
+  @Component protected SettingsDecrypter settingsDecrypter;
+
   @Parameter private FromConfiguration from = new FromConfiguration();
-
   @Parameter private ToConfiguration to = new ToConfiguration();
-
   @Parameter private ContainerParameters container = new ContainerParameters();
-
   // this parameter is cloned in FilesMojo
   @Parameter private ExtraDirectoriesParameters extraDirectories = new ExtraDirectoriesParameters();
-
   @Parameter private DockerClientParameters dockerClient = new DockerClientParameters();
-
   @Parameter private OutputPathsParameters outputPaths = new OutputPathsParameters();
 
   @Parameter(property = PropertyNames.ALLOW_INSECURE_REGISTRIES)
@@ -345,9 +329,6 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
   private boolean skip;
 
   @Parameter private List<ExtensionParameters> pluginExtensions = Collections.emptyList();
-
-  @Component protected SettingsDecrypter settingsDecrypter;
-
   @Inject private Set<JibMavenPluginExtension<?>> injectedPluginExtensions = Collections.emptySet();
 
   protected Set<JibMavenPluginExtension<?>> getInjectedPluginExtensions() {

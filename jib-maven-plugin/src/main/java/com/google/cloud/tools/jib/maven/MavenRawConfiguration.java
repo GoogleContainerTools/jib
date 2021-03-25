@@ -16,14 +16,11 @@
 
 package com.google.cloud.tools.jib.maven;
 
-import com.google.cloud.tools.jib.api.buildplan.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.api.buildplan.FilePermissions;
 import com.google.cloud.tools.jib.api.buildplan.ImageFormat;
-import com.google.cloud.tools.jib.maven.JibPluginConfiguration.ExtraDirectoryParameters;
 import com.google.cloud.tools.jib.plugins.common.AuthProperty;
 import com.google.cloud.tools.jib.plugins.common.RawConfiguration;
 import java.nio.file.Path;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -169,13 +166,8 @@ public class MavenRawConfiguration implements RawConfiguration {
   }
 
   @Override
-  public Map<Path, AbsoluteUnixPath> getExtraDirectories() {
-    Map<Path, AbsoluteUnixPath> directoryMap = new LinkedHashMap<>();
-    for (ExtraDirectoryParameters extraDirectory :
-        MojoCommon.getExtraDirectories(jibPluginConfiguration)) {
-      directoryMap.put(extraDirectory.getFrom(), AbsoluteUnixPath.get(extraDirectory.getInto()));
-    }
-    return directoryMap;
+  public List<? extends ExtraDirectoriesConfiguration> getExtraDirectories() {
+    return MojoCommon.getExtraDirectories(jibPluginConfiguration);
   }
 
   @Override
