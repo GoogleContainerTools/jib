@@ -50,7 +50,6 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.io.Resources;
 import com.google.common.truth.Correspondence;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
@@ -798,79 +797,75 @@ public class PluginConfigurationProcessorTest {
   }
 
   @Test
-  public void testGetJavaContainerBuilderWithBaseImage_incompatibleJava8BaseImage()
-      throws InvalidImageReferenceException, FileNotFoundException {
+  public void testGetJavaContainerBuilderWithBaseImage_incompatibleJava8BaseImage() {
     when(projectProperties.getMajorJavaVersion()).thenReturn(11);
 
     when(rawConfiguration.getFromImage()).thenReturn(Optional.of("gcr.io/distroless/java:8"));
-    try {
-      PluginConfigurationProcessor.getJavaContainerBuilderWithBaseImage(
-          rawConfiguration, projectProperties, inferredAuthProvider);
-      fail();
-    } catch (IncompatibleBaseImageJavaVersionException ex) {
-      assertThat(ex.getBaseImageMajorJavaVersion()).isEqualTo(8);
-      assertThat(ex.getProjectMajorJavaVersion()).isEqualTo(11);
-    }
+    IncompatibleBaseImageJavaVersionException exception1 =
+        assertThrows(
+            IncompatibleBaseImageJavaVersionException.class,
+            () ->
+                PluginConfigurationProcessor.getJavaContainerBuilderWithBaseImage(
+                    rawConfiguration, projectProperties, inferredAuthProvider));
+    assertThat(exception1.getBaseImageMajorJavaVersion()).isEqualTo(8);
+    assertThat(exception1.getProjectMajorJavaVersion()).isEqualTo(11);
 
     when(rawConfiguration.getFromImage()).thenReturn(Optional.of("gcr.io/distroless/java:latest"));
-    try {
-      PluginConfigurationProcessor.getJavaContainerBuilderWithBaseImage(
-          rawConfiguration, projectProperties, inferredAuthProvider);
-      fail();
-    } catch (IncompatibleBaseImageJavaVersionException ex) {
-      assertThat(ex.getBaseImageMajorJavaVersion()).isEqualTo(8);
-      assertThat(ex.getProjectMajorJavaVersion()).isEqualTo(11);
-    }
+    IncompatibleBaseImageJavaVersionException exception2 =
+        assertThrows(
+            IncompatibleBaseImageJavaVersionException.class,
+            () ->
+                PluginConfigurationProcessor.getJavaContainerBuilderWithBaseImage(
+                    rawConfiguration, projectProperties, inferredAuthProvider));
+    assertThat(exception2.getBaseImageMajorJavaVersion()).isEqualTo(8);
+    assertThat(exception2.getProjectMajorJavaVersion()).isEqualTo(11);
   }
 
   @Test
-  public void testGetJavaContainerBuilderWithBaseImage_incompatibleJava11BaseImage()
-      throws InvalidImageReferenceException, FileNotFoundException {
+  public void testGetJavaContainerBuilderWithBaseImage_incompatibleJava11BaseImage() {
     when(projectProperties.getMajorJavaVersion()).thenReturn(15);
 
     when(rawConfiguration.getFromImage()).thenReturn(Optional.of("gcr.io/distroless/java:11"));
-    try {
-      PluginConfigurationProcessor.getJavaContainerBuilderWithBaseImage(
-          rawConfiguration, projectProperties, inferredAuthProvider);
-      fail();
-    } catch (IncompatibleBaseImageJavaVersionException ex) {
-      assertThat(ex.getBaseImageMajorJavaVersion()).isEqualTo(11);
-      assertThat(ex.getProjectMajorJavaVersion()).isEqualTo(15);
-    }
+    IncompatibleBaseImageJavaVersionException exception =
+        assertThrows(
+            IncompatibleBaseImageJavaVersionException.class,
+            () ->
+                PluginConfigurationProcessor.getJavaContainerBuilderWithBaseImage(
+                    rawConfiguration, projectProperties, inferredAuthProvider));
+    assertThat(exception.getBaseImageMajorJavaVersion()).isEqualTo(11);
+    assertThat(exception.getProjectMajorJavaVersion()).isEqualTo(15);
   }
 
   @Test
-  public void testGetJavaContainerBuilderWithBaseImage_incompatibleJava8JettyBaseImage()
-      throws InvalidImageReferenceException, FileNotFoundException {
+  public void testGetJavaContainerBuilderWithBaseImage_incompatibleJava8JettyBaseImage() {
     when(projectProperties.getMajorJavaVersion()).thenReturn(11);
 
     when(rawConfiguration.getFromImage())
         .thenReturn(Optional.of("gcr.io/distroless/java/jetty:java8"));
-    try {
-      PluginConfigurationProcessor.getJavaContainerBuilderWithBaseImage(
-          rawConfiguration, projectProperties, inferredAuthProvider);
-      fail();
-    } catch (IncompatibleBaseImageJavaVersionException ex) {
-      assertThat(ex.getBaseImageMajorJavaVersion()).isEqualTo(8);
-      assertThat(ex.getProjectMajorJavaVersion()).isEqualTo(11);
-    }
+    IncompatibleBaseImageJavaVersionException exception =
+        assertThrows(
+            IncompatibleBaseImageJavaVersionException.class,
+            () ->
+                PluginConfigurationProcessor.getJavaContainerBuilderWithBaseImage(
+                    rawConfiguration, projectProperties, inferredAuthProvider));
+    assertThat(exception.getBaseImageMajorJavaVersion()).isEqualTo(8);
+    assertThat(exception.getProjectMajorJavaVersion()).isEqualTo(11);
   }
 
   @Test
-  public void testGetJavaContainerBuilderWithBaseImage_incompatibleJava11JettyBaseImage()
-      throws InvalidImageReferenceException, FileNotFoundException {
+  public void testGetJavaContainerBuilderWithBaseImage_incompatibleJava11JettyBaseImage() {
     when(projectProperties.getMajorJavaVersion()).thenReturn(15);
 
     when(rawConfiguration.getFromImage())
         .thenReturn(Optional.of("gcr.io/distroless/java/jetty:java11"));
-    try {
-      PluginConfigurationProcessor.getJavaContainerBuilderWithBaseImage(
-          rawConfiguration, projectProperties, inferredAuthProvider);
-      fail();
-    } catch (IncompatibleBaseImageJavaVersionException ex) {
-      assertThat(ex.getBaseImageMajorJavaVersion()).isEqualTo(11);
-      assertThat(ex.getProjectMajorJavaVersion()).isEqualTo(15);
-    }
+    IncompatibleBaseImageJavaVersionException exception =
+        assertThrows(
+            IncompatibleBaseImageJavaVersionException.class,
+            () ->
+                PluginConfigurationProcessor.getJavaContainerBuilderWithBaseImage(
+                    rawConfiguration, projectProperties, inferredAuthProvider));
+    assertThat(exception.getBaseImageMajorJavaVersion()).isEqualTo(11);
+    assertThat(exception.getProjectMajorJavaVersion()).isEqualTo(15);
   }
 
   // https://github.com/GoogleContainerTools/jib/issues/1995
@@ -886,18 +881,17 @@ public class PluginConfigurationProcessorTest {
   }
 
   @Test
-  public void testGetJavaContainerBuilderWithBaseImage_java12NoBaseImage()
-      throws InvalidImageReferenceException, IOException {
+  public void testGetJavaContainerBuilderWithBaseImage_java12NoBaseImage() {
     when(projectProperties.getMajorJavaVersion()).thenReturn(12);
     when(rawConfiguration.getFromImage()).thenReturn(Optional.empty());
-    try {
-      PluginConfigurationProcessor.getJavaContainerBuilderWithBaseImage(
-          rawConfiguration, projectProperties, inferredAuthProvider);
-      fail();
-    } catch (IncompatibleBaseImageJavaVersionException ex) {
-      assertThat(ex.getBaseImageMajorJavaVersion()).isEqualTo(11);
-      assertThat(ex.getProjectMajorJavaVersion()).isEqualTo(12);
-    }
+    IncompatibleBaseImageJavaVersionException exception =
+        assertThrows(
+            IncompatibleBaseImageJavaVersionException.class,
+            () ->
+                PluginConfigurationProcessor.getJavaContainerBuilderWithBaseImage(
+                    rawConfiguration, projectProperties, inferredAuthProvider));
+    assertThat(exception.getBaseImageMajorJavaVersion()).isEqualTo(11);
+    assertThat(exception.getProjectMajorJavaVersion()).isEqualTo(12);
   }
 
   @Test
