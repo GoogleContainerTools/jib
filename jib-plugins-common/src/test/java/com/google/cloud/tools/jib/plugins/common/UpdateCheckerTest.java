@@ -77,12 +77,26 @@ public class UpdateCheckerTest {
     Assert.assertTrue(testWebServer.getInputRead().contains("User-Agent: jib 1.0.2 tool-name"));
     Assert.assertTrue(message.isPresent());
     Assert.assertEquals(
-        "A new version of tool-name (2.0.0) is available (currently using 1.0.2). Upgrade to use the latest features and fixes!",
+        "A new version of tool-name (2.0.0) is available (currently using 1.0.2). Update your build configuration to use the latest features and fixes!",
         message.get());
     String modifiedTime =
         new String(
             Files.readAllBytes(configDir.resolve("lastUpdateCheck")), StandardCharsets.UTF_8);
     Assert.assertTrue(Instant.parse(modifiedTime).isAfter(before));
+  }
+
+  @Test
+  public void testPerformUpdateCheck_newVersionFound_differentMessageForJibCli()
+      throws IOException {
+    setupLastUpdateCheck();
+    Optional<String> message =
+        UpdateChecker.performUpdateCheck(
+            configDir, "1.0.2", testWebServer.getEndpoint(), "jib-cli", ignored -> {});
+    Assert.assertTrue(testWebServer.getInputRead().contains("User-Agent: jib 1.0.2 jib-cli"));
+    Assert.assertTrue(message.isPresent());
+    Assert.assertEquals(
+        "A new version of jib-cli (2.0.0) is available (currently using 1.0.2). Download the latest jib-cli version from https://github.com/GoogleContainerTools/jib/releases.",
+        message.get());
   }
 
   @Test
@@ -97,7 +111,7 @@ public class UpdateCheckerTest {
               configDir, "1.0.2", server.getEndpoint(), "tool-name", ignored -> {});
       Assert.assertTrue(message.isPresent());
       Assert.assertEquals(
-          "A new version of tool-name (2.0.0) is available (currently using 1.0.2). Upgrade to use the latest features and fixes!",
+          "A new version of tool-name (2.0.0) is available (currently using 1.0.2). Update your build configuration to use the latest features and fixes!",
           message.get());
     }
   }
@@ -125,7 +139,7 @@ public class UpdateCheckerTest {
             configDir, "1.0.2", testWebServer.getEndpoint(), "tool-name", ignored -> {});
     Assert.assertTrue(message.isPresent());
     Assert.assertEquals(
-        "A new version of tool-name (2.0.0) is available (currently using 1.0.2). Upgrade to use the latest features and fixes!",
+        "A new version of tool-name (2.0.0) is available (currently using 1.0.2). Update your build configuration to use the latest features and fixes!",
         message.get());
     String modifiedTime =
         new String(
@@ -142,7 +156,7 @@ public class UpdateCheckerTest {
             configDir, "1.0.2", testWebServer.getEndpoint(), "tool-name", ignored -> {});
     Assert.assertTrue(message.isPresent());
     Assert.assertEquals(
-        "A new version of tool-name (2.0.0) is available (currently using 1.0.2). Upgrade to use the latest features and fixes!",
+        "A new version of tool-name (2.0.0) is available (currently using 1.0.2). Update your build configuration to use the latest features and fixes!",
         message.get());
     String modifiedTime =
         new String(
@@ -183,7 +197,7 @@ public class UpdateCheckerTest {
     Assert.assertTrue(Instant.parse(modifiedTime).isAfter(before));
     Assert.assertTrue(message.isPresent());
     Assert.assertEquals(
-        "A new version of tool-name (2.0.0) is available (currently using 1.0.2). Upgrade to use the latest features and fixes!",
+        "A new version of tool-name (2.0.0) is available (currently using 1.0.2). Update your build configuration to use the latest features and fixes!",
         message.get());
   }
 

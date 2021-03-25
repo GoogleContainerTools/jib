@@ -121,14 +121,22 @@ public class UpdateChecker {
         if (currentVersion.equals(version.latest)) {
           return Optional.empty();
         }
-        return Optional.of(
+        String updateMessage =
             "A new version of "
                 + toolName
                 + " ("
                 + version.latest
                 + ") is available (currently using "
                 + currentVersion
-                + "). Upgrade to use the latest features and fixes!");
+                + "). ";
+        if (toolName.equals("jib-cli")) {
+          return Optional.of(
+              updateMessage
+                  + "Download the latest jib-cli version from https://github.com/GoogleContainerTools/jib/releases.");
+        }
+        return Optional.of(
+            updateMessage
+                + "Update your build configuration to use the latest features and fixes!");
 
       } finally {
         httpClient.shutDown();

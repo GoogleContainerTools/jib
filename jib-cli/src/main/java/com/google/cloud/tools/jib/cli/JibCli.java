@@ -81,17 +81,13 @@ public class JibCli {
 
   static Future<Optional<String>> newUpdateChecker(
       GlobalConfig globalConfig, Verbosity verbosity, Consumer<LogEvent> log) {
-    if (!verbosity.equals(Verbosity.info) || globalConfig.isDisableUpdateCheck()) {
+    if (!verbosity.atLeast(Verbosity.info) || globalConfig.isDisableUpdateCheck()) {
       return Futures.immediateFuture(Optional.empty());
     }
     ExecutorService executorService = Executors.newSingleThreadExecutor();
     try {
       return UpdateChecker.checkForUpdate(
-          executorService,
-          VERSION_URL,
-          JibCli.class.getPackage().getImplementationTitle(),
-          JibCli.class.getPackage().getImplementationVersion(),
-          log);
+          executorService, VERSION_URL, VersionInfo.TOOL_NAME, VersionInfo.getVersionSimple(), log);
     } finally {
       executorService.shutdown();
     }

@@ -47,8 +47,8 @@ public class JibCliTest {
 
   @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
-  @Mock GlobalConfig globalConfig;
-  @Mock ConsoleLogger logger;
+  @Mock private GlobalConfig globalConfig;
+  @Mock private ConsoleLogger logger;
 
   @Test
   public void testConfigureHttpLogging() {
@@ -87,7 +87,7 @@ public class JibCliTest {
   public void testNewUpdateChecker_noUpdateCheck() throws ExecutionException, InterruptedException {
     when(globalConfig.isDisableUpdateCheck()).thenReturn(true);
     Future<Optional<String>> updateChecker =
-        JibCli.newUpdateChecker(globalConfig, Verbosity.info, logEvent -> {});
+        JibCli.newUpdateChecker(globalConfig, Verbosity.info, ignored -> {});
     assertThat(updateChecker.get()).isEqualTo(Optional.empty());
   }
 }
