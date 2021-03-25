@@ -231,7 +231,7 @@ public class PluginConfigurationProcessorTest {
                 layerEntry ->
                     layerEntry.getExtractionPath().equals(AbsoluteUnixPath.get("/target/dir/foo")))
             .findFirst();
-    assertThat(fooEntry.isPresent());
+    assertThat(fooEntry).isPresent();
     assertEquals("123", fooEntry.get().getPermissions().toOctalString());
   }
 
