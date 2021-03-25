@@ -19,7 +19,6 @@ package com.google.cloud.tools.jib.plugins.common;
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth8.assertThat;
 import static org.junit.Assert.assertThrows;
-import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.never;
@@ -900,7 +899,7 @@ public class PluginConfigurationProcessorTest {
         .thenReturn(Arrays.asList(new TestPlatformConfiguration("testArchitecture", "testOs")));
 
     assertThat(PluginConfigurationProcessor.getPlatformsSet(rawConfiguration))
-        .isEqualTo(ImmutableSet.of(new Platform("testArchitecture", "testOs")));
+        .containsExactly(new Platform("testArchitecture", "testOs"));
   }
 
   @Test
@@ -908,15 +907,14 @@ public class PluginConfigurationProcessorTest {
     TestPlatformConfiguration platform = new TestPlatformConfiguration(null, "testOs");
     Mockito.<List<?>>when(rawConfiguration.getPlatforms()).thenReturn(Arrays.asList(platform));
 
-    try {
-      PluginConfigurationProcessor.getPlatformsSet(rawConfiguration);
-      fail();
-    } catch (InvalidPlatformException ex) {
-      assertThat(ex)
-          .hasMessageThat()
-          .isEqualTo("platform configuration is missing an architecture value");
-      assertThat(ex.getInvalidPlatform()).isEqualTo("architecture=<missing>, os=testOs");
-    }
+    InvalidPlatformException exception =
+        assertThrows(
+            InvalidPlatformException.class,
+            () -> PluginConfigurationProcessor.getPlatformsSet(rawConfiguration));
+    assertThat(exception)
+        .hasMessageThat()
+        .isEqualTo("platform configuration is missing an architecture value");
+    assertThat(exception.getInvalidPlatform()).isEqualTo("architecture=<missing>, os=testOs");
   }
 
   @Test
@@ -940,7 +938,7 @@ public class PluginConfigurationProcessorTest {
     when(rawConfiguration.getVolumes()).thenReturn(Collections.singletonList("/some/root"));
 
     assertThat(PluginConfigurationProcessor.getVolumesSet(rawConfiguration))
-        .isEqualTo(ImmutableSet.of(AbsoluteUnixPath.get("/some/root")));
+        .containsExactly(AbsoluteUnixPath.get("/some/root"));
   }
 
   @Test
@@ -995,7 +993,6 @@ public class PluginConfigurationProcessorTest {
     Instant now = Instant.now().minusSeconds(2);
     Instant time =
         PluginConfigurationProcessor.getCreationTime("USE_CURRENT_TIMESTAMP", projectProperties);
-    assertThat(time.isAfter(now)).isTrue();
     assertThat(time).isGreaterThan(now);
   }
 
