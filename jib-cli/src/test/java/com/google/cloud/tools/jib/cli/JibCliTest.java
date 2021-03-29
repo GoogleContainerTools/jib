@@ -24,6 +24,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
+import com.google.cloud.tools.jib.ProjectInfo;
 import com.google.cloud.tools.jib.api.LogEvent;
 import com.google.cloud.tools.jib.cli.logging.Verbosity;
 import com.google.cloud.tools.jib.plugins.common.globalconfig.GlobalConfig;
@@ -103,6 +104,8 @@ public class JibCliTest {
             contains(
                 "A new version of jib-cli (2.0.0) is available (currently using "
                     + VersionInfo.getVersionSimple()
-                    + ")"));
+                    + "). Download the latest jib-cli version from "
+                    + ProjectInfo.GITHUB_URL
+                    + "/releases/tag/v2.0.0-cli"));
   }
 }

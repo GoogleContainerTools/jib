@@ -50,7 +50,7 @@ public class JibCli {
 
   private static final String VERSION_URL = "https://storage.googleapis.com/jib-versions/jib-cli";
 
-  @VisibleForTesting static final String TOOL_VERSION = VersionInfo.getVersionSimple();
+  private static final String TOOL_VERSION = VersionInfo.getVersionSimple();
 
   static Logger configureHttpLogging(Level level) {
     // To instantiate the static HttpTransport logger field.
