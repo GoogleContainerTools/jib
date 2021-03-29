@@ -49,7 +49,6 @@ import picocli.CommandLine;
 public class JibCli {
 
   private static final String VERSION_URL = "https://storage.googleapis.com/jib-versions/jib-cli";
-
   private static final String TOOL_VERSION = VersionInfo.getVersionSimple();
 
   static Logger configureHttpLogging(Level level) {
