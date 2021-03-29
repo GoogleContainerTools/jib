@@ -17,6 +17,7 @@
 package com.google.cloud.tools.jib.cli;
 
 import static com.google.common.truth.Truth.assertThat;
+import static com.google.common.truth.Truth8.assertThat;
 import static org.mockito.ArgumentMatchers.contains;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
@@ -27,6 +28,7 @@ import com.google.cloud.tools.jib.api.LogEvent;
 import com.google.cloud.tools.jib.cli.logging.Verbosity;
 import com.google.cloud.tools.jib.plugins.common.globalconfig.GlobalConfig;
 import com.google.cloud.tools.jib.plugins.common.logging.ConsoleLogger;
+import com.google.common.util.concurrent.Futures;
 import java.io.IOException;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
@@ -88,6 +90,19 @@ public class JibCliTest {
     when(globalConfig.isDisableUpdateCheck()).thenReturn(true);
     Future<Optional<String>> updateChecker =
         JibCli.newUpdateChecker(globalConfig, Verbosity.info, ignored -> {});
-    assertThat(updateChecker.get()).isEqualTo(Optional.empty());
+    assertThat(updateChecker.get()).isEmpty();
+  }
+
+  @Test
+  public void testFinishUpdateChecker_correctMessageReturned() {
+    Future<Optional<String>> updateCheckFuture = Futures.immediateFuture(Optional.of("2.0.0"));
+    JibCli.finishUpdateCheck(logger, updateCheckFuture);
+    verify(logger)
+        .log(
+            eq(LogEvent.Level.LIFECYCLE),
+            contains(
+                "A new version of jib-cli (2.0.0) is available (currently using "
+                    + VersionInfo.getVersionSimple()
+                    + ")"));
   }
 }

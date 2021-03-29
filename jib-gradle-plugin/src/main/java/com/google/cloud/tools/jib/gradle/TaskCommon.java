@@ -23,6 +23,7 @@ import com.google.cloud.tools.jib.api.buildplan.FilePermissions;
 import com.google.cloud.tools.jib.plugins.common.ProjectProperties;
 import com.google.cloud.tools.jib.plugins.common.UpdateChecker;
 import com.google.cloud.tools.jib.plugins.common.globalconfig.GlobalConfig;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.util.concurrent.Futures;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -67,19 +68,29 @@ class TaskCommon {
     }
   }
 
+  @VisibleForTesting
   static void finishUpdateChecker(
       ProjectProperties projectProperties, Future<Optional<String>> updateCheckFuture) {
     UpdateChecker.finishUpdateCheck(updateCheckFuture)
         .ifPresent(
-            updateMessage ->
-                projectProperties.log(
-                    LogEvent.lifecycle(
-                        "\n\u001B[33m"
-                            + updateMessage
-                            + "\n"
-                            + ProjectInfo.GITHUB_URL
-                            + "/blob/master/jib-gradle-plugin/CHANGELOG.md\u001B[0m\n"
-                            + "Please see https://github.com/GoogleContainerTools/jib/blob/master/docs/privacy.md for info on disabling this update check.\n")));
+            latestVersion -> {
+              projectProperties.log(
+                  LogEvent.lifecycle(
+                      "\n\u001B[33m"
+                          + "A new version of "
+                          + projectProperties.getToolName()
+                          + " ("
+                          + latestVersion
+                          + ") is available (currently using "
+                          + projectProperties.getToolVersion()
+                          + "). Update your build configuration to use the latest features and fixes!"
+                          + "\n"
+                          + ProjectInfo.GITHUB_URL
+                          + "/blob/master/jib-gradle-plugin/CHANGELOG.md\u001B[0m\n"
+                          + "Please see "
+                          + ProjectInfo.GITHUB_URL
+                          + "/blob/master/docs/privacy.md for info on disabling this update check.\n"));
+            });
   }
 
   @Nullable

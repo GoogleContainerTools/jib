@@ -144,7 +144,7 @@ public class Build implements Callable<Integer> {
       JibCli.logTerminatingException(logger, ex, commonCliOptions.isStacktrace());
       return 1;
     } finally {
-      JibCli.finishUpdateChecker(logger, updateCheckFuture);
+      JibCli.finishUpdateCheck(logger, updateCheckFuture);
       executor.shutDownAndAwaitTermination(Duration.ofSeconds(3));
     }
     return 0;

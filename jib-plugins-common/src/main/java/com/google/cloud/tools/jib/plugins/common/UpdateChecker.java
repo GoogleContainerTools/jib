@@ -121,23 +121,7 @@ public class UpdateChecker {
         if (currentVersion.equals(version.latest)) {
           return Optional.empty();
         }
-        String updateMessage =
-            "A new version of "
-                + toolName
-                + " ("
-                + version.latest
-                + ") is available (currently using "
-                + currentVersion
-                + "). ";
-        if (toolName.equals("jib-cli")) {
-          return Optional.of(
-              updateMessage
-                  + "Download the latest jib-cli version from https://github.com/GoogleContainerTools/jib/releases.");
-        }
-        return Optional.of(
-            updateMessage
-                + "Update your build configuration to use the latest features and fixes!");
-
+        return Optional.of(version.latest);
       } finally {
         httpClient.shutDown();
       }
@@ -150,9 +134,9 @@ public class UpdateChecker {
   }
 
   /**
-   * Returns a message indicating Jib should be upgraded if the check succeeded and the current
-   * version is outdated, or returns {@code Optional.empty()} if the check was interrupted or did
-   * not determine that a later version was available.
+   * Returns the latest Jib version available if the check succeeded and the current version is
+   * outdated, or returns {@code Optional.empty()} if the check was interrupted or did not determine
+   * that a later version was available.
    *
    * @param updateMessageFuture the {@link Future} returned by {@link UpdateChecker#checkForUpdate}
    * @return the {@link Optional} message to upgrade Jib if a later version was found, else {@code

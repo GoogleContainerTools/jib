@@ -24,6 +24,7 @@ import com.google.cloud.tools.jib.cli.logging.Verbosity;
 import com.google.cloud.tools.jib.plugins.common.UpdateChecker;
 import com.google.cloud.tools.jib.plugins.common.globalconfig.GlobalConfig;
 import com.google.cloud.tools.jib.plugins.common.logging.ConsoleLogger;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.util.concurrent.Futures;
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -47,7 +48,9 @@ import picocli.CommandLine;
     subcommands = {Build.class, Jar.class})
 public class JibCli {
 
-  public static final String VERSION_URL = "https://storage.googleapis.com/jib-versions/jib-cli";
+  private static final String VERSION_URL = "https://storage.googleapis.com/jib-versions/jib-cli";
+
+  @VisibleForTesting static final String TOOL_VERSION = VersionInfo.getVersionSimple();
 
   static Logger configureHttpLogging(Level level) {
     // To instantiate the static HttpTransport logger field.
@@ -87,30 +90,37 @@ public class JibCli {
     ExecutorService executorService = Executors.newSingleThreadExecutor();
     try {
       return UpdateChecker.checkForUpdate(
-          executorService, VERSION_URL, VersionInfo.TOOL_NAME, VersionInfo.getVersionSimple(), log);
+          executorService, VERSION_URL, VersionInfo.TOOL_NAME, TOOL_VERSION, log);
     } finally {
       executorService.shutdown();
     }
   }
 
-  static void finishUpdateChecker(
-      ConsoleLogger logger, Future<Optional<String>> updateCheckFuture) {
+  @VisibleForTesting
+  static void finishUpdateCheck(ConsoleLogger logger, Future<Optional<String>> updateCheckFuture) {
     UpdateChecker.finishUpdateCheck(updateCheckFuture)
         .ifPresent(
-            updateMessage -> {
-              logger.log(LogEvent.Level.LIFECYCLE, "");
-              logger.log(LogEvent.Level.LIFECYCLE, "\u001B[33m" + updateMessage + "\u001B[0m");
+            latestVersion -> {
               logger.log(
                   LogEvent.Level.LIFECYCLE,
-                  "\u001B[33m"
+                  "\n\u001B[33m"
+                      + "A new version of "
+                      + VersionInfo.TOOL_NAME
+                      + " ("
+                      + latestVersion
+                      + ") is available (currently using "
+                      + TOOL_VERSION
+                      + "). Download the latest jib-cli version from "
                       + ProjectInfo.GITHUB_URL
-                      + "/blob/master/jib-cli/CHANGELOG.md\u001B[0m");
-              logger.log(
-                  LogEvent.Level.LIFECYCLE,
-                  "Please see "
+                      + "/releases/tag/v"
+                      + latestVersion
+                      + "-cli"
+                      + "\n"
                       + ProjectInfo.GITHUB_URL
-                      + "/blob/master/docs/privacy.md for info on disabling this update check.");
-              logger.log(LogEvent.Level.LIFECYCLE, "");
+                      + "/blob/master/jib-cli/CHANGELOG.md\u001B[0m"
+                      + "Please see "
+                      + ProjectInfo.GITHUB_URL
+                      + "/blob/master/docs/privacy.md for info on disabling this update check.\n");
             });
   }
 
