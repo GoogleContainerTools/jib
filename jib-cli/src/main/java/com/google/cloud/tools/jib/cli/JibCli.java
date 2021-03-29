@@ -49,7 +49,6 @@ import picocli.CommandLine;
 public class JibCli {
 
   private static final String VERSION_URL = "https://storage.googleapis.com/jib-versions/jib-cli";
-  private static final String TOOL_VERSION = VersionInfo.getVersionSimple();
 
   static Logger configureHttpLogging(Level level) {
     // To instantiate the static HttpTransport logger field.
@@ -89,7 +88,7 @@ public class JibCli {
     ExecutorService executorService = Executors.newSingleThreadExecutor();
     try {
       return UpdateChecker.checkForUpdate(
-          executorService, VERSION_URL, VersionInfo.TOOL_NAME, TOOL_VERSION, log);
+          executorService, VERSION_URL, VersionInfo.TOOL_NAME, VersionInfo.getVersionSimple(), log);
     } finally {
       executorService.shutdown();
     }
@@ -101,26 +100,20 @@ public class JibCli {
     UpdateChecker.finishUpdateCheck(updateCheckFuture)
         .ifPresent(
             latestVersion -> {
-              logger.log(
-                  LogEvent.Level.LIFECYCLE,
-                  "\n\u001B[33m"
-                      + "A new version of "
-                      + VersionInfo.TOOL_NAME
-                      + " ("
-                      + latestVersion
-                      + ") is available (currently using "
-                      + TOOL_VERSION
-                      + "). Download the latest jib-cli version from "
-                      + ProjectInfo.GITHUB_URL
-                      + "/releases/tag/v"
-                      + latestVersion
-                      + "-cli"
-                      + "\n"
-                      + ProjectInfo.GITHUB_URL
-                      + "/blob/master/jib-cli/CHANGELOG.md\u001B[0m"
-                      + "Please see "
-                      + ProjectInfo.GITHUB_URL
-                      + "/blob/master/docs/privacy.md for info on disabling this update check.\n");
+              String cliReleaseUrl =
+                  ProjectInfo.GITHUB_URL + "/releases/tag/v" + latestVersion + "-cli";
+              String changelogUrl = ProjectInfo.GITHUB_URL + "/blob/master/jib-cli/CHANGELOG.md";
+              String privacyUrl = ProjectInfo.GITHUB_URL + "/blob/master/docs/privacy.md";
+              String message =
+                  String.format(
+                      "\n\u001B[33mA new version of Jib CLI (%s) is available (currently using %s). Download the latest"
+                          + " version from %s.\n%s.\u001B[0m\n\nPlease see %s for info on disabling this update check.\n",
+                      latestVersion,
+                      VersionInfo.getVersionSimple(),
+                      cliReleaseUrl,
+                      changelogUrl,
+                      privacyUrl);
+              logger.log(LogEvent.Level.LIFECYCLE, message);
             });
   }
 

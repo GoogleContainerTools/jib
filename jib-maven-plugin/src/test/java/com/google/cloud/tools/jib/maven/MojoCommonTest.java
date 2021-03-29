@@ -48,7 +48,7 @@ public class MojoCommonTest {
                 "\n\u001B[33mA new version of tool-name (2.1.0) is available (currently using 2.0.0). "
                     + "Update your build configuration to use the latest features and fixes!\n"
                     + ProjectInfo.GITHUB_URL
-                    + "/blob/master/jib-maven-plugin/CHANGELOG.md\u001B[0m\n"
+                    + "/blob/master/jib-maven-plugin/CHANGELOG.md.\u001B[0m\n\n"
                     + "Please see "
                     + ProjectInfo.GITHUB_URL
                     + "/blob/master/docs/privacy.md for info on disabling this update check.\n"));

@@ -139,8 +139,7 @@ public class UpdateChecker {
    * that a later version was available.
    *
    * @param updateMessageFuture the {@link Future} returned by {@link UpdateChecker#checkForUpdate}
-   * @return the {@link Optional} message to upgrade Jib if a later version was found, else {@code
-   *     Optional.empty()}.
+   * @return the latest version, if found, else {@code Optional.empty()}.
    */
   public static Optional<String> finishUpdateCheck(Future<Optional<String>> updateMessageFuture) {
     if (updateMessageFuture.isDone()) {

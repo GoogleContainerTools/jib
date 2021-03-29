@@ -38,17 +38,13 @@ import java.util.logging.ConsoleHandler;
 import java.util.logging.Handler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
 public class JibCliTest {
-
-  @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
   @Mock private GlobalConfig globalConfig;
   @Mock private ConsoleLogger logger;
@@ -102,9 +98,9 @@ public class JibCliTest {
         .log(
             eq(LogEvent.Level.LIFECYCLE),
             contains(
-                "A new version of jib-cli (2.0.0) is available (currently using "
+                "A new version of Jib CLI (2.0.0) is available (currently using "
                     + VersionInfo.getVersionSimple()
-                    + "). Download the latest jib-cli version from "
+                    + "). Download the latest version from "
                     + ProjectInfo.GITHUB_URL
                     + "/releases/tag/v2.0.0-cli"));
   }
