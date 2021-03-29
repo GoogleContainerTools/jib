@@ -76,10 +76,12 @@ public class ExtraDirectoryParameters implements ExtraDirectoriesConfiguration {
     this.into = into;
   }
 
+  @Input
   public ListProperty<String> getIncludes() {
     return includes;
   }
 
+  @Input
   public ListProperty<String> getExcludes() {
     return excludes;
   }
