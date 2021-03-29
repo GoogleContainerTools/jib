@@ -123,6 +123,35 @@ public class PluginConfigurationProcessorTest {
     }
   }
 
+  private static class TestExtraDirectoriesConfiguration implements ExtraDirectoriesConfiguration {
+
+    private final Path from;
+
+    private TestExtraDirectoriesConfiguration(Path from) {
+      this.from = from;
+    }
+
+    @Override
+    public Path getFrom() {
+      return from;
+    }
+
+    @Override
+    public String getInto() {
+      return "/target/dir";
+    }
+
+    @Override
+    public List<String> getIncludesList() {
+      return Collections.emptyList();
+    }
+
+    @Override
+    public List<String> getExcludesList() {
+      return Collections.emptyList();
+    }
+  };
+
   @Before
   public void setUp() throws IOException, InvalidImageReferenceException, InferredAuthException {
     when(rawConfiguration.getFromAuth()).thenReturn(authProperty);
@@ -178,31 +207,8 @@ public class PluginConfigurationProcessorTest {
           InvalidContainerizingModeException, InvalidFilesModificationTimeException,
           InvalidCreationTimeException {
     Path extraDirectory = Paths.get(Resources.getResource("core/layer").toURI());
-    ExtraDirectoriesConfiguration extraDirectoryConfig =
-        new ExtraDirectoriesConfiguration() {
-
-          @Override
-          public Path getFrom() {
-            return extraDirectory;
-          }
-
-          @Override
-          public String getInto() {
-            return "/target/dir";
-          }
-
-          @Override
-          public List<String> getIncludes() {
-            return Collections.emptyList();
-          }
-
-          @Override
-          public List<String> getExcludes() {
-            return Collections.emptyList();
-          }
-        };
     Mockito.<List<?>>when(rawConfiguration.getExtraDirectories())
-        .thenReturn(Arrays.asList(extraDirectoryConfig));
+        .thenReturn(Arrays.asList(new TestExtraDirectoriesConfiguration(extraDirectory)));
     when(rawConfiguration.getExtraDirectoryPermissions())
         .thenReturn(ImmutableMap.of("/target/dir/foo", FilePermissions.fromOctalString("123")));
 

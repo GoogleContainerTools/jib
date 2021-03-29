@@ -250,12 +250,12 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
     }
 
     @Override
-    public List<String> getIncludes() {
+    public List<String> getIncludesList() {
       return includes;
     }
 
     @Override
-    public List<String> getExcludes() {
+    public List<String> getExcludesList() {
       return excludes;
     }
   }

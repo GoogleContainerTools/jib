@@ -52,9 +52,9 @@ public interface RawConfiguration {
 
     String getInto();
 
-    List<String> getIncludes();
+    List<String> getIncludesList();
 
-    List<String> getExcludes();
+    List<String> getExcludesList();
   }
 
   Optional<String> getFromImage();
