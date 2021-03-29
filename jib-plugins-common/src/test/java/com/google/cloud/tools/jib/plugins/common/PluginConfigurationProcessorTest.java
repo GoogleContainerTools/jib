@@ -18,11 +18,12 @@ package com.google.cloud.tools.jib.plugins.common;
 
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth8.assertThat;
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThrows;
-import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import com.google.cloud.tools.jib.api.CacheDirectoryCreationException;
@@ -47,8 +48,8 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.io.Resources;
+import com.google.common.truth.Correspondence;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
@@ -61,10 +62,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 import javax.annotation.Nullable;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -81,28 +79,16 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class PluginConfigurationProcessorTest {
 
+  private static final Correspondence<FileEntry, Path> SOURCE_FILE_OF =
+      Correspondence.transforming(FileEntry::getSourceFile, "has sourceFile of");
+  private static final Correspondence<FileEntry, String> EXTRACTION_PATH_OF =
+      Correspondence.transforming(
+          entry -> entry.getExtractionPath().toString(), "has extractionPath of");
+
   private static BuildContext getBuildContext(JibContainerBuilder jibContainerBuilder)
       throws InvalidImageReferenceException, CacheDirectoryCreationException {
     return JibContainerBuilderTestHelper.toBuildContext(
         jibContainerBuilder, Containerizer.to(RegistryImage.named("ignored")));
-  }
-
-  private static <T> void assertLayerEntriesUnordered(
-      List<T> expectedPaths, List<FileEntry> entries, Function<FileEntry, T> fieldSelector) {
-    List<T> expected = expectedPaths.stream().sorted().collect(Collectors.toList());
-    List<T> actual = entries.stream().map(fieldSelector).sorted().collect(Collectors.toList());
-    assertEquals(expected, actual);
-  }
-
-  private static void assertSourcePathsUnordered(
-      List<Path> expectedPaths, List<FileEntry> entries) {
-    assertLayerEntriesUnordered(expectedPaths, entries, FileEntry::getSourceFile);
-  }
-
-  private static void assertExtractionPathsUnordered(
-      List<String> expectedPaths, List<FileEntry> entries) {
-    assertLayerEntriesUnordered(
-        expectedPaths, entries, layerEntry -> layerEntry.getExtractionPath().toString());
   }
 
   @Rule public final RestoreSystemProperties systemPropertyRestorer = new RestoreSystemProperties();
@@ -171,15 +157,16 @@ public class PluginConfigurationProcessorTest {
           InvalidCreationTimeException {
     BuildContext buildContext = getBuildContext(processCommonConfiguration());
 
-    assertEquals(
-        Arrays.asList("java", "-cp", "/app/resources:/app/classes:/app/libs/*", "java.lang.Object"),
-        buildContext.getContainerConfiguration().getEntrypoint());
+    assertThat(buildContext.getContainerConfiguration().getEntrypoint())
+        .containsExactly(
+            "java", "-cp", "/app/resources:/app/classes:/app/libs/*", "java.lang.Object")
+        .inOrder();
 
     verify(containerizer).setBaseImageLayersCache(Containerizer.DEFAULT_BASE_CACHE_DIRECTORY);
     verify(containerizer).setApplicationLayersCache(Paths.get("cache"));
 
     ArgumentMatcher<LogEvent> isLogWarn = logEvent -> logEvent.getLevel() == LogEvent.Level.WARN;
-    verify(logger, Mockito.never()).accept(Mockito.argThat(isLogWarn));
+    verify(logger, never()).accept(argThat(isLogWarn));
   }
 
   @Test
@@ -225,28 +212,28 @@ public class PluginConfigurationProcessorTest {
             .getLayerConfigurations()
             .stream()
             .filter(layer -> layer.getName().equals("extra files"))
-            .collect(Collectors.toList())
-            .get(0)
+            .findFirst()
+            .get()
             .getEntries();
 
-    assertSourcePathsUnordered(
-        Arrays.asList(
+    assertThat(extraFiles)
+        .comparingElementsUsing(SOURCE_FILE_OF)
+        .containsExactly(
             extraDirectory.resolve("a"),
             extraDirectory.resolve("a/b"),
             extraDirectory.resolve("a/b/bar"),
             extraDirectory.resolve("c"),
             extraDirectory.resolve("c/cat"),
-            extraDirectory.resolve("foo")),
-        extraFiles);
-    assertExtractionPathsUnordered(
-        Arrays.asList(
+            extraDirectory.resolve("foo"));
+    assertThat(extraFiles)
+        .comparingElementsUsing(EXTRACTION_PATH_OF)
+        .containsExactly(
             "/target/dir/a",
             "/target/dir/a/b",
             "/target/dir/a/b/bar",
             "/target/dir/c",
             "/target/dir/c/cat",
-            "/target/dir/foo"),
-        extraFiles);
+            "/target/dir/foo");
 
     Optional<FileEntry> fooEntry =
         extraFiles
@@ -255,8 +242,8 @@ public class PluginConfigurationProcessorTest {
                 layerEntry ->
                     layerEntry.getExtractionPath().equals(AbsoluteUnixPath.get("/target/dir/foo")))
             .findFirst();
-    assertThat(fooEntry.isPresent());
-    assertEquals("123", fooEntry.get().getPermissions().toOctalString());
+    assertThat(fooEntry).isPresent();
+    assertThat(fooEntry.get().getPermissions().toOctalString()).isEqualTo("123");
   }
 
   @Test
@@ -288,10 +275,10 @@ public class PluginConfigurationProcessorTest {
 
     BuildContext buildContext = getBuildContext(processCommonConfiguration());
 
-    assertEquals(
-        Arrays.asList("custom", "entrypoint"),
-        buildContext.getContainerConfiguration().getEntrypoint());
-    Mockito.verifyNoInteractions(logger);
+    assertThat(buildContext.getContainerConfiguration().getEntrypoint())
+        .containsExactly("custom", "entrypoint")
+        .inOrder();
+    verifyNoInteractions(logger);
   }
 
   @Test
@@ -301,8 +288,8 @@ public class PluginConfigurationProcessorTest {
     when(rawConfiguration.getEntrypoint())
         .thenReturn(Optional.of(Collections.singletonList("INHERIT")));
 
-    Assert.assertNull(
-        PluginConfigurationProcessor.computeEntrypoint(rawConfiguration, projectProperties));
+    assertThat(PluginConfigurationProcessor.computeEntrypoint(rawConfiguration, projectProperties))
+        .isNull();
   }
 
   @Test
@@ -311,17 +298,18 @@ public class PluginConfigurationProcessorTest {
           InvalidContainerizingModeException {
     when(rawConfiguration.getEntrypoint()).thenReturn(Optional.of(Arrays.asList("INHERIT", "")));
 
-    Assert.assertNotNull(
-        PluginConfigurationProcessor.computeEntrypoint(rawConfiguration, projectProperties));
+    assertThat(PluginConfigurationProcessor.computeEntrypoint(rawConfiguration, projectProperties))
+        .isNotNull();
   }
 
   @Test
   public void testComputeEntrypoint_default()
       throws MainClassInferenceException, InvalidAppRootException, IOException,
           InvalidContainerizingModeException {
-    assertEquals(
-        Arrays.asList("java", "-cp", "/app/resources:/app/classes:/app/libs/*", "java.lang.Object"),
-        PluginConfigurationProcessor.computeEntrypoint(rawConfiguration, projectProperties));
+    assertThat(PluginConfigurationProcessor.computeEntrypoint(rawConfiguration, projectProperties))
+        .containsExactly(
+            "java", "-cp", "/app/resources:/app/classes:/app/libs/*", "java.lang.Object")
+        .inOrder();
   }
 
   @Test
@@ -329,9 +317,9 @@ public class PluginConfigurationProcessorTest {
       throws MainClassInferenceException, InvalidAppRootException, IOException,
           InvalidContainerizingModeException {
     when(rawConfiguration.getContainerizingMode()).thenReturn("packaged");
-    assertEquals(
-        Arrays.asList("java", "-cp", "/app/classpath/*:/app/libs/*", "java.lang.Object"),
-        PluginConfigurationProcessor.computeEntrypoint(rawConfiguration, projectProperties));
+    assertThat(PluginConfigurationProcessor.computeEntrypoint(rawConfiguration, projectProperties))
+        .containsExactly("java", "-cp", "/app/classpath/*:/app/libs/*", "java.lang.Object")
+        .inOrder();
   }
 
   @Test
@@ -339,13 +327,13 @@ public class PluginConfigurationProcessorTest {
       throws MainClassInferenceException, InvalidAppRootException, IOException,
           InvalidContainerizingModeException {
     when(rawConfiguration.getExpandClasspathDependencies()).thenReturn(true);
-    assertEquals(
-        Arrays.asList(
+    assertThat(PluginConfigurationProcessor.computeEntrypoint(rawConfiguration, projectProperties))
+        .containsExactly(
             "java",
             "-cp",
             "/app/resources:/app/classes:/app/libs/foo-1.jar:/app/libs/bar-2.jar",
-            "java.lang.Object"),
-        PluginConfigurationProcessor.computeEntrypoint(rawConfiguration, projectProperties));
+            "java.lang.Object")
+        .inOrder();
   }
 
   @Test
@@ -361,8 +349,8 @@ public class PluginConfigurationProcessorTest {
 
     BuildContext buildContext = getBuildContext(processCommonConfiguration());
 
-    Assert.assertNull(buildContext.getContainerConfiguration().getEntrypoint());
-    Mockito.verifyNoInteractions(logger);
+    assertThat(buildContext.getContainerConfiguration().getEntrypoint()).isNull();
+    verifyNoInteractions(logger);
   }
 
   @Test
@@ -378,12 +366,13 @@ public class PluginConfigurationProcessorTest {
 
     BuildContext buildContext = getBuildContext(processCommonConfiguration());
 
-    assertEquals(
-        Arrays.asList("java", "-cp", "/app/resources:/app/classes:/app/libs/*", "java.lang.Object"),
-        buildContext.getContainerConfiguration().getEntrypoint());
+    assertThat(buildContext.getContainerConfiguration().getEntrypoint())
+        .containsExactly(
+            "java", "-cp", "/app/resources:/app/classes:/app/libs/*", "java.lang.Object")
+        .inOrder();
 
     ArgumentMatcher<LogEvent> isLogWarn = logEvent -> logEvent.getLevel() == LogEvent.Level.WARN;
-    verify(logger, Mockito.never()).accept(Mockito.argThat(isLogWarn));
+    verify(logger, never()).accept(argThat(isLogWarn));
   }
 
   @Test
@@ -400,13 +389,13 @@ public class PluginConfigurationProcessorTest {
 
     BuildContext buildContext = getBuildContext(processCommonConfiguration());
 
-    assertEquals(
-        Arrays.asList(
-            "java", "-cp", "/foo:/app/resources:/app/classes:/app/libs/*", "java.lang.Object"),
-        buildContext.getContainerConfiguration().getEntrypoint());
+    assertThat(buildContext.getContainerConfiguration().getEntrypoint())
+        .containsExactly(
+            "java", "-cp", "/foo:/app/resources:/app/classes:/app/libs/*", "java.lang.Object")
+        .inOrder();
 
     ArgumentMatcher<LogEvent> isLogWarn = logEvent -> logEvent.getLevel() == LogEvent.Level.WARN;
-    verify(logger, Mockito.never()).accept(Mockito.argThat(isLogWarn));
+    verify(logger, never()).accept(argThat(isLogWarn));
   }
 
   @Test
@@ -421,7 +410,7 @@ public class PluginConfigurationProcessorTest {
 
     BuildContext buildContext = getBuildContext(processCommonConfiguration());
 
-    assertEquals("customUser", buildContext.getContainerConfiguration().getUser());
+    assertThat(buildContext.getContainerConfiguration().getUser()).isEqualTo("customUser");
   }
 
   @Test
@@ -434,7 +423,7 @@ public class PluginConfigurationProcessorTest {
           InvalidCreationTimeException {
     BuildContext buildContext = getBuildContext(processCommonConfiguration());
 
-    Assert.assertNull(buildContext.getContainerConfiguration().getUser());
+    assertThat(buildContext.getContainerConfiguration().getUser()).isNull();
   }
 
   @Test
@@ -451,9 +440,9 @@ public class PluginConfigurationProcessorTest {
 
     BuildContext buildContext = getBuildContext(processCommonConfiguration());
 
-    assertEquals(
-        Arrays.asList("custom", "entrypoint"),
-        buildContext.getContainerConfiguration().getEntrypoint());
+    assertThat(buildContext.getContainerConfiguration().getEntrypoint())
+        .containsExactly("custom", "entrypoint")
+        .inOrder();
     verify(projectProperties)
         .log(
             LogEvent.warn(
@@ -475,9 +464,9 @@ public class PluginConfigurationProcessorTest {
 
     BuildContext buildContext = getBuildContext(processCommonConfiguration());
 
-    assertEquals(
-        Arrays.asList("custom", "entrypoint"),
-        buildContext.getContainerConfiguration().getEntrypoint());
+    assertThat(buildContext.getContainerConfiguration().getEntrypoint())
+        .containsExactly("custom", "entrypoint")
+        .inOrder();
     verify(projectProperties)
         .log(
             LogEvent.warn(
@@ -499,9 +488,9 @@ public class PluginConfigurationProcessorTest {
 
     BuildContext buildContext = getBuildContext(processCommonConfiguration());
 
-    assertEquals(
-        Arrays.asList("custom", "entrypoint"),
-        buildContext.getContainerConfiguration().getEntrypoint());
+    assertThat(buildContext.getContainerConfiguration().getEntrypoint())
+        .containsExactly("custom", "entrypoint")
+        .inOrder();
     verify(projectProperties)
         .log(
             LogEvent.warn(
@@ -521,7 +510,7 @@ public class PluginConfigurationProcessorTest {
 
     BuildContext buildContext = getBuildContext(processCommonConfiguration());
 
-    Assert.assertNull(buildContext.getContainerConfiguration().getEntrypoint());
+    assertThat(buildContext.getContainerConfiguration().getEntrypoint()).isNull();
     verify(projectProperties)
         .log(
             LogEvent.warn(
@@ -541,7 +530,7 @@ public class PluginConfigurationProcessorTest {
 
     BuildContext buildContext = getBuildContext(processCommonConfiguration());
 
-    Assert.assertNull(buildContext.getContainerConfiguration().getEntrypoint());
+    assertThat(buildContext.getContainerConfiguration().getEntrypoint()).isNull();
     verify(projectProperties)
         .log(
             LogEvent.warn(
@@ -561,10 +550,10 @@ public class PluginConfigurationProcessorTest {
 
     BuildContext buildContext = getBuildContext(processCommonConfiguration());
 
-    assertEquals(
-        Arrays.asList(
-            "java", "-cp", "/my/app/resources:/my/app/classes:/my/app/libs/*", "java.lang.Object"),
-        buildContext.getContainerConfiguration().getEntrypoint());
+    assertThat(buildContext.getContainerConfiguration().getEntrypoint())
+        .containsExactly(
+            "java", "-cp", "/my/app/resources:/my/app/classes:/my/app/libs/*", "java.lang.Object")
+        .inOrder();
   }
 
   @Test
@@ -579,16 +568,15 @@ public class PluginConfigurationProcessorTest {
 
     BuildContext buildContext = getBuildContext(processCommonConfiguration());
 
-    Assert.assertNull(buildContext.getContainerConfiguration().getEntrypoint());
+    assertThat(buildContext.getContainerConfiguration().getEntrypoint()).isNull();
   }
 
   @Test
   public void testGetAppRootChecked() throws InvalidAppRootException {
     when(rawConfiguration.getAppRoot()).thenReturn("/some/root");
 
-    assertEquals(
-        AbsoluteUnixPath.get("/some/root"),
-        PluginConfigurationProcessor.getAppRootChecked(rawConfiguration, projectProperties));
+    assertThat(PluginConfigurationProcessor.getAppRootChecked(rawConfiguration, projectProperties))
+        .isEqualTo(AbsoluteUnixPath.get("/some/root"));
   }
 
   @Test
@@ -635,9 +623,8 @@ public class PluginConfigurationProcessorTest {
     when(rawConfiguration.getAppRoot()).thenReturn("");
     when(projectProperties.isWarProject()).thenReturn(false);
 
-    assertEquals(
-        AbsoluteUnixPath.get("/app"),
-        PluginConfigurationProcessor.getAppRootChecked(rawConfiguration, projectProperties));
+    assertThat(PluginConfigurationProcessor.getAppRootChecked(rawConfiguration, projectProperties))
+        .isEqualTo(AbsoluteUnixPath.get("/app"));
   }
 
   @Test
@@ -645,9 +632,8 @@ public class PluginConfigurationProcessorTest {
     when(rawConfiguration.getAppRoot()).thenReturn("");
     when(projectProperties.isWarProject()).thenReturn(true);
 
-    assertEquals(
-        AbsoluteUnixPath.get("/jetty/webapps/ROOT"),
-        PluginConfigurationProcessor.getAppRootChecked(rawConfiguration, projectProperties));
+    assertThat(PluginConfigurationProcessor.getAppRootChecked(rawConfiguration, projectProperties))
+        .isEqualTo(AbsoluteUnixPath.get("/jetty/webapps/ROOT"));
   }
 
   @Test
@@ -672,8 +658,7 @@ public class PluginConfigurationProcessorTest {
 
     Optional<AbsoluteUnixPath> checkedPath =
         PluginConfigurationProcessor.getWorkingDirectoryChecked(rawConfiguration);
-    assertThat(checkedPath).isPresent();
-    assertEquals(AbsoluteUnixPath.get("/valid/path"), checkedPath.get());
+    assertThat(checkedPath).hasValue(AbsoluteUnixPath.get("/valid/path"));
   }
 
   @Test
@@ -699,9 +684,8 @@ public class PluginConfigurationProcessorTest {
       throws IncompatibleBaseImageJavaVersionException {
     when(projectProperties.isWarProject()).thenReturn(false);
 
-    assertEquals(
-        "gcr.io/distroless/java:8",
-        PluginConfigurationProcessor.getDefaultBaseImage(projectProperties));
+    assertThat(PluginConfigurationProcessor.getDefaultBaseImage(projectProperties))
+        .isEqualTo("gcr.io/distroless/java:8");
   }
 
   @Test
@@ -709,47 +693,40 @@ public class PluginConfigurationProcessorTest {
       throws IncompatibleBaseImageJavaVersionException {
     when(projectProperties.isWarProject()).thenReturn(true);
 
-    assertEquals(
-        "gcr.io/distroless/java/jetty:java8",
-        PluginConfigurationProcessor.getDefaultBaseImage(projectProperties));
+    assertThat(PluginConfigurationProcessor.getDefaultBaseImage(projectProperties))
+        .isEqualTo("gcr.io/distroless/java/jetty:java8");
   }
 
   @Test
   public void testGetDefaultBaseImage_chooseJava8Distroless()
       throws IncompatibleBaseImageJavaVersionException {
     when(projectProperties.getMajorJavaVersion()).thenReturn(6);
-    assertEquals(
-        "gcr.io/distroless/java:8",
-        PluginConfigurationProcessor.getDefaultBaseImage(projectProperties));
+    assertThat(PluginConfigurationProcessor.getDefaultBaseImage(projectProperties))
+        .isEqualTo("gcr.io/distroless/java:8");
 
     when(projectProperties.getMajorJavaVersion()).thenReturn(7);
-    assertEquals(
-        "gcr.io/distroless/java:8",
-        PluginConfigurationProcessor.getDefaultBaseImage(projectProperties));
+    assertThat(PluginConfigurationProcessor.getDefaultBaseImage(projectProperties))
+        .isEqualTo("gcr.io/distroless/java:8");
 
     when(projectProperties.getMajorJavaVersion()).thenReturn(8);
-    assertEquals(
-        "gcr.io/distroless/java:8",
-        PluginConfigurationProcessor.getDefaultBaseImage(projectProperties));
+    assertThat(PluginConfigurationProcessor.getDefaultBaseImage(projectProperties))
+        .isEqualTo("gcr.io/distroless/java:8");
   }
 
   @Test
   public void testGetDefaultBaseImage_chooseJava11Distroless()
       throws IncompatibleBaseImageJavaVersionException {
     when(projectProperties.getMajorJavaVersion()).thenReturn(9);
-    assertEquals(
-        "gcr.io/distroless/java:11",
-        PluginConfigurationProcessor.getDefaultBaseImage(projectProperties));
+    assertThat(PluginConfigurationProcessor.getDefaultBaseImage(projectProperties))
+        .isEqualTo("gcr.io/distroless/java:11");
 
     when(projectProperties.getMajorJavaVersion()).thenReturn(10);
-    assertEquals(
-        "gcr.io/distroless/java:11",
-        PluginConfigurationProcessor.getDefaultBaseImage(projectProperties));
+    assertThat(PluginConfigurationProcessor.getDefaultBaseImage(projectProperties))
+        .isEqualTo("gcr.io/distroless/java:11");
 
     when(projectProperties.getMajorJavaVersion()).thenReturn(11);
-    assertEquals(
-        "gcr.io/distroless/java:11",
-        PluginConfigurationProcessor.getDefaultBaseImage(projectProperties));
+    assertThat(PluginConfigurationProcessor.getDefaultBaseImage(projectProperties))
+        .isEqualTo("gcr.io/distroless/java:11");
   }
 
   @Test
@@ -757,19 +734,16 @@ public class PluginConfigurationProcessorTest {
       throws IncompatibleBaseImageJavaVersionException {
     when(projectProperties.getMajorJavaVersion()).thenReturn(6);
     when(projectProperties.isWarProject()).thenReturn(true);
-    assertEquals(
-        "gcr.io/distroless/java/jetty:java8",
-        PluginConfigurationProcessor.getDefaultBaseImage(projectProperties));
+    assertThat(PluginConfigurationProcessor.getDefaultBaseImage(projectProperties))
+        .isEqualTo("gcr.io/distroless/java/jetty:java8");
 
     when(projectProperties.getMajorJavaVersion()).thenReturn(7);
-    assertEquals(
-        "gcr.io/distroless/java/jetty:java8",
-        PluginConfigurationProcessor.getDefaultBaseImage(projectProperties));
+    assertThat(PluginConfigurationProcessor.getDefaultBaseImage(projectProperties))
+        .isEqualTo("gcr.io/distroless/java/jetty:java8");
 
     when(projectProperties.getMajorJavaVersion()).thenReturn(8);
-    assertEquals(
-        "gcr.io/distroless/java/jetty:java8",
-        PluginConfigurationProcessor.getDefaultBaseImage(projectProperties));
+    assertThat(PluginConfigurationProcessor.getDefaultBaseImage(projectProperties))
+        .isEqualTo("gcr.io/distroless/java/jetty:java8");
   }
 
   @Test
@@ -777,19 +751,16 @@ public class PluginConfigurationProcessorTest {
       throws IncompatibleBaseImageJavaVersionException {
     when(projectProperties.getMajorJavaVersion()).thenReturn(9);
     when(projectProperties.isWarProject()).thenReturn(true);
-    assertEquals(
-        "gcr.io/distroless/java/jetty:java11",
-        PluginConfigurationProcessor.getDefaultBaseImage(projectProperties));
+    assertThat(PluginConfigurationProcessor.getDefaultBaseImage(projectProperties))
+        .isEqualTo("gcr.io/distroless/java/jetty:java11");
 
     when(projectProperties.getMajorJavaVersion()).thenReturn(10);
-    assertEquals(
-        "gcr.io/distroless/java/jetty:java11",
-        PluginConfigurationProcessor.getDefaultBaseImage(projectProperties));
+    assertThat(PluginConfigurationProcessor.getDefaultBaseImage(projectProperties))
+        .isEqualTo("gcr.io/distroless/java/jetty:java11");
 
     when(projectProperties.getMajorJavaVersion()).thenReturn(11);
-    assertEquals(
-        "gcr.io/distroless/java/jetty:java11",
-        PluginConfigurationProcessor.getDefaultBaseImage(projectProperties));
+    assertThat(PluginConfigurationProcessor.getDefaultBaseImage(projectProperties))
+        .isEqualTo("gcr.io/distroless/java/jetty:java11");
   }
 
   @Test
@@ -811,7 +782,7 @@ public class PluginConfigurationProcessorTest {
           CacheDirectoryCreationException {
     when(rawConfiguration.getFromImage()).thenReturn(Optional.of("docker://ima.ge/name"));
     ImageConfiguration result = getCommonImageConfiguration();
-    assertEquals("ima.ge/name", result.getImage().toString());
+    assertThat(result.getImage().toString()).isEqualTo("ima.ge/name");
     assertThat(result.getDockerClient()).isPresent();
     assertThat(result.getTarPath()).isEmpty();
   }
@@ -822,7 +793,7 @@ public class PluginConfigurationProcessorTest {
           CacheDirectoryCreationException {
     when(rawConfiguration.getFromImage()).thenReturn(Optional.of("tar:///path/to.tar"));
     ImageConfiguration result = getCommonImageConfiguration();
-    assertEquals(Paths.get("/path/to.tar"), result.getTarPath().get());
+    assertThat(result.getTarPath()).hasValue(Paths.get("/path/to.tar"));
     assertThat(result.getDockerClient()).isEmpty();
   }
 
@@ -832,7 +803,7 @@ public class PluginConfigurationProcessorTest {
           CacheDirectoryCreationException {
     when(rawConfiguration.getFromImage()).thenReturn(Optional.of("ima.ge/name"));
     ImageConfiguration result = getCommonImageConfiguration();
-    assertEquals("ima.ge/name", result.getImage().toString());
+    assertThat(result.getImage().toString()).isEqualTo("ima.ge/name");
     assertThat(result.getDockerClient()).isEmpty();
     assertThat(result.getTarPath()).isEmpty();
   }
@@ -843,85 +814,81 @@ public class PluginConfigurationProcessorTest {
           CacheDirectoryCreationException {
     when(rawConfiguration.getFromImage()).thenReturn(Optional.of("registry://ima.ge/name"));
     ImageConfiguration result = getCommonImageConfiguration();
-    assertEquals("ima.ge/name", result.getImage().toString());
+    assertThat(result.getImage().toString()).isEqualTo("ima.ge/name");
     assertThat(result.getDockerClient()).isEmpty();
     assertThat(result.getTarPath()).isEmpty();
   }
 
   @Test
-  public void testGetJavaContainerBuilderWithBaseImage_incompatibleJava8BaseImage()
-      throws InvalidImageReferenceException, FileNotFoundException {
+  public void testGetJavaContainerBuilderWithBaseImage_incompatibleJava8BaseImage() {
     when(projectProperties.getMajorJavaVersion()).thenReturn(11);
 
     when(rawConfiguration.getFromImage()).thenReturn(Optional.of("gcr.io/distroless/java:8"));
-    try {
-      PluginConfigurationProcessor.getJavaContainerBuilderWithBaseImage(
-          rawConfiguration, projectProperties, inferredAuthProvider);
-      fail();
-    } catch (IncompatibleBaseImageJavaVersionException ex) {
-      assertEquals(8, ex.getBaseImageMajorJavaVersion());
-      assertEquals(11, ex.getProjectMajorJavaVersion());
-    }
+    IncompatibleBaseImageJavaVersionException exception1 =
+        assertThrows(
+            IncompatibleBaseImageJavaVersionException.class,
+            () ->
+                PluginConfigurationProcessor.getJavaContainerBuilderWithBaseImage(
+                    rawConfiguration, projectProperties, inferredAuthProvider));
+    assertThat(exception1.getBaseImageMajorJavaVersion()).isEqualTo(8);
+    assertThat(exception1.getProjectMajorJavaVersion()).isEqualTo(11);
 
     when(rawConfiguration.getFromImage()).thenReturn(Optional.of("gcr.io/distroless/java:latest"));
-    try {
-      PluginConfigurationProcessor.getJavaContainerBuilderWithBaseImage(
-          rawConfiguration, projectProperties, inferredAuthProvider);
-      fail();
-    } catch (IncompatibleBaseImageJavaVersionException ex) {
-      assertEquals(8, ex.getBaseImageMajorJavaVersion());
-      assertEquals(11, ex.getProjectMajorJavaVersion());
-    }
+    IncompatibleBaseImageJavaVersionException exception2 =
+        assertThrows(
+            IncompatibleBaseImageJavaVersionException.class,
+            () ->
+                PluginConfigurationProcessor.getJavaContainerBuilderWithBaseImage(
+                    rawConfiguration, projectProperties, inferredAuthProvider));
+    assertThat(exception2.getBaseImageMajorJavaVersion()).isEqualTo(8);
+    assertThat(exception2.getProjectMajorJavaVersion()).isEqualTo(11);
   }
 
   @Test
-  public void testGetJavaContainerBuilderWithBaseImage_incompatibleJava11BaseImage()
-      throws InvalidImageReferenceException, FileNotFoundException {
+  public void testGetJavaContainerBuilderWithBaseImage_incompatibleJava11BaseImage() {
     when(projectProperties.getMajorJavaVersion()).thenReturn(15);
 
     when(rawConfiguration.getFromImage()).thenReturn(Optional.of("gcr.io/distroless/java:11"));
-    try {
-      PluginConfigurationProcessor.getJavaContainerBuilderWithBaseImage(
-          rawConfiguration, projectProperties, inferredAuthProvider);
-      fail();
-    } catch (IncompatibleBaseImageJavaVersionException ex) {
-      assertEquals(11, ex.getBaseImageMajorJavaVersion());
-      assertEquals(15, ex.getProjectMajorJavaVersion());
-    }
+    IncompatibleBaseImageJavaVersionException exception =
+        assertThrows(
+            IncompatibleBaseImageJavaVersionException.class,
+            () ->
+                PluginConfigurationProcessor.getJavaContainerBuilderWithBaseImage(
+                    rawConfiguration, projectProperties, inferredAuthProvider));
+    assertThat(exception.getBaseImageMajorJavaVersion()).isEqualTo(11);
+    assertThat(exception.getProjectMajorJavaVersion()).isEqualTo(15);
   }
 
   @Test
-  public void testGetJavaContainerBuilderWithBaseImage_incompatibleJava8JettyBaseImage()
-      throws InvalidImageReferenceException, FileNotFoundException {
+  public void testGetJavaContainerBuilderWithBaseImage_incompatibleJava8JettyBaseImage() {
     when(projectProperties.getMajorJavaVersion()).thenReturn(11);
 
     when(rawConfiguration.getFromImage())
         .thenReturn(Optional.of("gcr.io/distroless/java/jetty:java8"));
-    try {
-      PluginConfigurationProcessor.getJavaContainerBuilderWithBaseImage(
-          rawConfiguration, projectProperties, inferredAuthProvider);
-      fail();
-    } catch (IncompatibleBaseImageJavaVersionException ex) {
-      assertEquals(8, ex.getBaseImageMajorJavaVersion());
-      assertEquals(11, ex.getProjectMajorJavaVersion());
-    }
+    IncompatibleBaseImageJavaVersionException exception =
+        assertThrows(
+            IncompatibleBaseImageJavaVersionException.class,
+            () ->
+                PluginConfigurationProcessor.getJavaContainerBuilderWithBaseImage(
+                    rawConfiguration, projectProperties, inferredAuthProvider));
+    assertThat(exception.getBaseImageMajorJavaVersion()).isEqualTo(8);
+    assertThat(exception.getProjectMajorJavaVersion()).isEqualTo(11);
   }
 
   @Test
-  public void testGetJavaContainerBuilderWithBaseImage_incompatibleJava11JettyBaseImage()
-      throws InvalidImageReferenceException, FileNotFoundException {
+  public void testGetJavaContainerBuilderWithBaseImage_incompatibleJava11JettyBaseImage() {
     when(projectProperties.getMajorJavaVersion()).thenReturn(15);
 
     when(rawConfiguration.getFromImage())
         .thenReturn(Optional.of("gcr.io/distroless/java/jetty:java11"));
-    try {
-      PluginConfigurationProcessor.getJavaContainerBuilderWithBaseImage(
-          rawConfiguration, projectProperties, inferredAuthProvider);
-      fail();
-    } catch (IncompatibleBaseImageJavaVersionException ex) {
-      assertEquals(11, ex.getBaseImageMajorJavaVersion());
-      assertEquals(15, ex.getProjectMajorJavaVersion());
-    }
+    IncompatibleBaseImageJavaVersionException exception =
+        assertThrows(
+            IncompatibleBaseImageJavaVersionException.class,
+            () ->
+                PluginConfigurationProcessor.getJavaContainerBuilderWithBaseImage(
+                    rawConfiguration, projectProperties, inferredAuthProvider));
+    assertThat(exception.getBaseImageMajorJavaVersion()).isEqualTo(11);
+    assertThat(exception.getProjectMajorJavaVersion()).isEqualTo(15);
   }
 
   // https://github.com/GoogleContainerTools/jib/issues/1995
@@ -932,23 +899,22 @@ public class PluginConfigurationProcessorTest {
     when(projectProperties.getMajorJavaVersion()).thenReturn(12);
     when(rawConfiguration.getFromImage()).thenReturn(Optional.of("regis.try/java12image"));
     ImageConfiguration imageConfiguration = getCommonImageConfiguration();
-    assertEquals("regis.try", imageConfiguration.getImageRegistry());
-    assertEquals("java12image", imageConfiguration.getImageRepository());
+    assertThat(imageConfiguration.getImageRegistry()).isEqualTo("regis.try");
+    assertThat(imageConfiguration.getImageRepository()).isEqualTo("java12image");
   }
 
   @Test
-  public void testGetJavaContainerBuilderWithBaseImage_java12NoBaseImage()
-      throws InvalidImageReferenceException, IOException {
+  public void testGetJavaContainerBuilderWithBaseImage_java12NoBaseImage() {
     when(projectProperties.getMajorJavaVersion()).thenReturn(12);
     when(rawConfiguration.getFromImage()).thenReturn(Optional.empty());
-    try {
-      PluginConfigurationProcessor.getJavaContainerBuilderWithBaseImage(
-          rawConfiguration, projectProperties, inferredAuthProvider);
-      fail();
-    } catch (IncompatibleBaseImageJavaVersionException ex) {
-      assertEquals(11, ex.getBaseImageMajorJavaVersion());
-      assertEquals(12, ex.getProjectMajorJavaVersion());
-    }
+    IncompatibleBaseImageJavaVersionException exception =
+        assertThrows(
+            IncompatibleBaseImageJavaVersionException.class,
+            () ->
+                PluginConfigurationProcessor.getJavaContainerBuilderWithBaseImage(
+                    rawConfiguration, projectProperties, inferredAuthProvider));
+    assertThat(exception.getBaseImageMajorJavaVersion()).isEqualTo(11);
+    assertThat(exception.getProjectMajorJavaVersion()).isEqualTo(12);
   }
 
   @Test
@@ -956,9 +922,8 @@ public class PluginConfigurationProcessorTest {
     Mockito.<List<?>>when(rawConfiguration.getPlatforms())
         .thenReturn(Arrays.asList(new TestPlatformConfiguration("testArchitecture", "testOs")));
 
-    assertEquals(
-        ImmutableSet.of(new Platform("testArchitecture", "testOs")),
-        PluginConfigurationProcessor.getPlatformsSet(rawConfiguration));
+    assertThat(PluginConfigurationProcessor.getPlatformsSet(rawConfiguration))
+        .containsExactly(new Platform("testArchitecture", "testOs"));
   }
 
   @Test
@@ -966,13 +931,14 @@ public class PluginConfigurationProcessorTest {
     TestPlatformConfiguration platform = new TestPlatformConfiguration(null, "testOs");
     Mockito.<List<?>>when(rawConfiguration.getPlatforms()).thenReturn(Arrays.asList(platform));
 
-    try {
-      PluginConfigurationProcessor.getPlatformsSet(rawConfiguration);
-      fail();
-    } catch (InvalidPlatformException ex) {
-      assertEquals("platform configuration is missing an architecture value", ex.getMessage());
-      assertEquals("architecture=<missing>, os=testOs", ex.getInvalidPlatform());
-    }
+    InvalidPlatformException exception =
+        assertThrows(
+            InvalidPlatformException.class,
+            () -> PluginConfigurationProcessor.getPlatformsSet(rawConfiguration));
+    assertThat(exception)
+        .hasMessageThat()
+        .isEqualTo("platform configuration is missing an architecture value");
+    assertThat(exception.getInvalidPlatform()).isEqualTo("architecture=<missing>, os=testOs");
   }
 
   @Test
@@ -984,17 +950,19 @@ public class PluginConfigurationProcessorTest {
         assertThrows(
             InvalidPlatformException.class,
             () -> PluginConfigurationProcessor.getPlatformsSet(rawConfiguration));
-    assertEquals("platform configuration is missing an OS value", exception.getMessage());
-    assertEquals("architecture=testArchitecture, os=<missing>", exception.getInvalidPlatform());
+    assertThat(exception)
+        .hasMessageThat()
+        .isEqualTo("platform configuration is missing an OS value");
+    assertThat(exception.getInvalidPlatform())
+        .isEqualTo("architecture=testArchitecture, os=<missing>");
   }
 
   @Test
   public void testGetValidVolumesList() throws InvalidContainerVolumeException {
     when(rawConfiguration.getVolumes()).thenReturn(Collections.singletonList("/some/root"));
 
-    assertEquals(
-        ImmutableSet.of(AbsoluteUnixPath.get("/some/root")),
-        PluginConfigurationProcessor.getVolumesSet(rawConfiguration));
+    assertThat(PluginConfigurationProcessor.getVolumesSet(rawConfiguration))
+        .containsExactly(AbsoluteUnixPath.get("/some/root"));
   }
 
   @Test
@@ -1049,7 +1017,6 @@ public class PluginConfigurationProcessorTest {
     Instant now = Instant.now().minusSeconds(2);
     Instant time =
         PluginConfigurationProcessor.getCreationTime("USE_CURRENT_TIMESTAMP", projectProperties);
-    assertThat(time.isAfter(now)).isTrue();
     assertThat(time).isGreaterThan(now);
   }
 
@@ -1135,17 +1102,16 @@ public class PluginConfigurationProcessorTest {
     File rootFile = temporaryFolder.newFile("file");
     File folder = temporaryFolder.newFolder("folder");
     File folderFile = temporaryFolder.newFile("folder/file2");
-    assertEquals(
-        ImmutableSet.of(rootFile.toPath().toAbsolutePath(), folderFile.toPath().toAbsolutePath()),
-        PluginConfigurationProcessor.getAllFiles(
-            ImmutableSet.of(rootFile.toPath(), folder.toPath())));
+    assertThat(
+            PluginConfigurationProcessor.getAllFiles(
+                ImmutableSet.of(rootFile.toPath(), folder.toPath())))
+        .containsExactly(rootFile.toPath().toAbsolutePath(), folderFile.toPath().toAbsolutePath());
   }
 
   @Test
   public void getAllFiles_doesntBreakForNonExistentFiles() throws IOException {
     Path testPath = Paths.get("/a/file/that/doesnt/exist");
-    Assert.assertFalse(Files.exists(testPath));
-    assertEquals(
-        ImmutableSet.of(), PluginConfigurationProcessor.getAllFiles(ImmutableSet.of(testPath)));
+    assertThat(Files.exists(testPath)).isFalse();
+    assertThat(PluginConfigurationProcessor.getAllFiles(ImmutableSet.of(testPath))).isEmpty();
   }
 }
