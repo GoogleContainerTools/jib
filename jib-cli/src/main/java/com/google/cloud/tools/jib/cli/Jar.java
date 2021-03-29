@@ -214,7 +214,7 @@ public class Jar implements Callable<Integer> {
       JibCli.logTerminatingException(logger, ex, commonCliOptions.isStacktrace());
       return 1;
     } finally {
-      JibCli.finishUpdateCheck(logger, updateCheckFuture);
+      JibCli.finishUpdateChecker(logger, updateCheckFuture);
       executor.shutDownAndAwaitTermination(Duration.ofSeconds(3));
     }
     return 0;

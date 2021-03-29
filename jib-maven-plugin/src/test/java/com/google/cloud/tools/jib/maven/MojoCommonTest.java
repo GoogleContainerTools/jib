@@ -36,7 +36,7 @@ public class MojoCommonTest {
   @Mock private ProjectProperties mockProjectProperties;
 
   @Test
-  public void testFinishUpdateCheck_correctMessageReturned() {
+  public void testFinishUpdateChecker_correctMessageReturned() {
     when(mockProjectProperties.getToolName()).thenReturn("tool-name");
     when(mockProjectProperties.getToolVersion()).thenReturn("2.0.0");
     Future<Optional<String>> updateCheckFuture = Futures.immediateFuture(Optional.of("2.1.0"));

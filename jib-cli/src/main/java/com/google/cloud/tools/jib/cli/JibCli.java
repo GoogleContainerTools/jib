@@ -96,7 +96,8 @@ public class JibCli {
   }
 
   @VisibleForTesting
-  static void finishUpdateCheck(ConsoleLogger logger, Future<Optional<String>> updateCheckFuture) {
+  static void finishUpdateChecker(
+      ConsoleLogger logger, Future<Optional<String>> updateCheckFuture) {
     UpdateChecker.finishUpdateCheck(updateCheckFuture)
         .ifPresent(
             latestVersion -> {

@@ -97,7 +97,7 @@ public class JibCliTest {
   @Test
   public void testFinishUpdateChecker_correctMessageReturned() {
     Future<Optional<String>> updateCheckFuture = Futures.immediateFuture(Optional.of("2.0.0"));
-    JibCli.finishUpdateCheck(logger, updateCheckFuture);
+    JibCli.finishUpdateChecker(logger, updateCheckFuture);
     verify(logger)
         .log(
             eq(LogEvent.Level.LIFECYCLE),
