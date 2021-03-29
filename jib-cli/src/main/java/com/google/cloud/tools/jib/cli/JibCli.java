@@ -107,7 +107,7 @@ public class JibCli {
               String message =
                   String.format(
                       "\n\u001B[33mA new version of Jib CLI (%s) is available (currently using %s). Download the latest"
-                          + " version from %s.\n%s.\u001B[0m\n\nPlease see %s for info on disabling this update check.\n",
+                          + " Jib CLI version from %s.\n%s.\u001B[0m\n\nPlease see %s for info on disabling this update check.\n",
                       latestVersion,
                       VersionInfo.getVersionSimple(),
                       cliReleaseUrl,

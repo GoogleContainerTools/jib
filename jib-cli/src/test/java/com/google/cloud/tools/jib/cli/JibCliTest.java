@@ -91,7 +91,7 @@ public class JibCliTest {
   }
 
   @Test
-  public void testFinishUpdateChecker_correctMessageReturned() {
+  public void testFinishUpdateChecker_correctMessageLogged() {
     Future<Optional<String>> updateCheckFuture = Futures.immediateFuture(Optional.of("2.0.0"));
     JibCli.finishUpdateChecker(logger, updateCheckFuture);
     verify(logger)
@@ -100,7 +100,7 @@ public class JibCliTest {
             contains(
                 "A new version of Jib CLI (2.0.0) is available (currently using "
                     + VersionInfo.getVersionSimple()
-                    + "). Download the latest version from "
+                    + "). Download the latest Jib CLI version from "
                     + ProjectInfo.GITHUB_URL
                     + "/releases/tag/v2.0.0-cli"));
   }
