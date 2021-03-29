@@ -5,6 +5,8 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- Added automatic update check. Jib CLI will now display a message if a new version is available. See the [privacy page](https://github.com/GoogleContainerTools/jib/blob/master/docs/privacy.md) for more details. ([#3165](https://github.com/GoogleContainerTools/jib/pull/3165))
+
 ### Changed
 
 ### Fixed
