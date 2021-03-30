@@ -429,12 +429,12 @@ public class PluginConfigurationProcessor {
         getCreationTime(rawConfiguration.getCreationTime(), projectProperties));
 
     // Adds all the extra files.
-    for (ExtraDirectoriesConfiguration entry : rawConfiguration.getExtraDirectories()) {
-      if (Files.exists(entry.getFrom())) {
+    for (ExtraDirectoriesConfiguration extraDirectory : rawConfiguration.getExtraDirectories()) {
+      if (Files.exists(extraDirectory.getFrom())) {
         jibContainerBuilder.addFileEntriesLayer(
             JavaContainerBuilderHelper.extraDirectoryLayerConfiguration(
-                entry.getFrom(),
-                AbsoluteUnixPath.get(entry.getInto()),
+                extraDirectory.getFrom(),
+                AbsoluteUnixPath.get(extraDirectory.getInto()),
                 rawConfiguration.getExtraDirectoryPermissions(),
                 modificationTimeProvider));
       }
