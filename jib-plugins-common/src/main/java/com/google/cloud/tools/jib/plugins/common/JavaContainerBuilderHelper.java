@@ -33,6 +33,7 @@ import java.nio.file.PathMatcher;
 import java.nio.file.Paths;
 import java.time.Instant;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Predicate;
@@ -45,6 +46,8 @@ public class JavaContainerBuilderHelper {
    *
    * @param sourceDirectory the source extra directory path
    * @param targetDirectory the root directory on the container to place the files in
+   * @param includes the list of glob patterns to include from the source directory
+   * @param excludes the list of glob patterns to exclude from the source directory
    * @param extraDirectoryPermissions map from path on container to file permissions
    * @param modificationTimeProvider file modification time provider
    * @return a {@link FileEntriesLayer} for adding the extra directory to the container
@@ -53,6 +56,8 @@ public class JavaContainerBuilderHelper {
   public static FileEntriesLayer extraDirectoryLayerConfiguration(
       Path sourceDirectory,
       AbsoluteUnixPath targetDirectory,
+      List<String> includes,
+      List<String> excludes,
       Map<String, FilePermissions> extraDirectoryPermissions,
       ModificationTimeProvider modificationTimeProvider)
       throws IOException {
@@ -64,33 +69,40 @@ public class JavaContainerBuilderHelper {
           FileSystems.getDefault().getPathMatcher("glob:" + entry.getKey()), entry.getValue());
     }
 
-    new DirectoryWalker(sourceDirectory)
-        .filterRoot()
-        .walk(
-            localPath -> {
-              AbsoluteUnixPath pathOnContainer =
-                  targetDirectory.resolve(sourceDirectory.relativize(localPath));
-              Instant modificationTime = modificationTimeProvider.get(localPath, pathOnContainer);
-              FilePermissions permissions =
-                  extraDirectoryPermissions.get(pathOnContainer.toString());
-              if (permissions == null) {
-                // Check for matching globs
-                Path containerPath = Paths.get(pathOnContainer.toString());
-                for (Map.Entry<PathMatcher, FilePermissions> entry : pathMatchers.entrySet()) {
-                  if (entry.getKey().matches(containerPath)) {
-                    builder.addEntry(
-                        localPath, pathOnContainer, entry.getValue(), modificationTime);
-                    return;
-                  }
-                }
-
-                // Add with default permissions
-                builder.addEntry(localPath, pathOnContainer, modificationTime);
-              } else {
-                // Add with explicit permissions
-                builder.addEntry(localPath, pathOnContainer, permissions, modificationTime);
+    DirectoryWalker walker = new DirectoryWalker(sourceDirectory).filterRoot();
+    excludes
+        .stream()
+        .map(pattern -> FileSystems.getDefault().getPathMatcher("glob:" + pattern))
+        .forEach(pathMatcher -> walker.filter(path -> !pathMatcher.matches(path)));
+    includes
+        .stream()
+        .map(pattern -> FileSystems.getDefault().getPathMatcher("glob:" + pattern))
+        .map(pathMatcher -> (Predicate<Path>) (path -> pathMatcher.matches(path)))
+        .reduce((matches1, matches2) -> matches1.or(matches2))
+        .ifPresent(walker::filter);
+    walker.walk(
+        localPath -> {
+          AbsoluteUnixPath pathOnContainer =
+              targetDirectory.resolve(sourceDirectory.relativize(localPath));
+          Instant modificationTime = modificationTimeProvider.get(localPath, pathOnContainer);
+          FilePermissions permissions = extraDirectoryPermissions.get(pathOnContainer.toString());
+          if (permissions == null) {
+            // Check for matching globs
+            Path containerPath = Paths.get(pathOnContainer.toString());
+            for (Map.Entry<PathMatcher, FilePermissions> entry : pathMatchers.entrySet()) {
+              if (entry.getKey().matches(containerPath)) {
+                builder.addEntry(localPath, pathOnContainer, entry.getValue(), modificationTime);
+                return;
               }
-            });
+            }
+
+            // Add with default permissions
+            builder.addEntry(localPath, pathOnContainer, modificationTime);
+          } else {
+            // Add with explicit permissions
+            builder.addEntry(localPath, pathOnContainer, permissions, modificationTime);
+          }
+        });
     return builder.build();
   }
 
