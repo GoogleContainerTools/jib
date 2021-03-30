@@ -150,7 +150,7 @@ public class PluginConfigurationProcessorTest {
     public List<String> getExcludesList() {
       return Collections.emptyList();
     }
-  };
+  }
 
   @Before
   public void setUp() throws IOException, InvalidImageReferenceException, InferredAuthException {
