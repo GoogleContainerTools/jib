@@ -77,20 +77,28 @@ public class MojoCommon {
     UpdateChecker.finishUpdateCheck(updateCheckFuture)
         .ifPresent(
             latestVersion -> {
-              String changelogUrl =
-                  ProjectInfo.GITHUB_URL + "/blob/master/jib-maven-plugin/CHANGELOG.md";
-              String privacyUrl = ProjectInfo.GITHUB_URL + "/blob/master/docs/privacy.md";
-              String message =
+              String updateMessage =
                   String.format(
-                      "\n\u001B[33mA new version of %s (%s) is available (currently using %s). Update your"
-                          + " build configuration to use the latest features and fixes!\n%s.\u001B[0m\n\nPlease see"
-                          + " %s for info on disabling this update check.\n",
+                      "A new version of %s (%s) is available (currently using %s). Update your"
+                          + " build configuration to use the latest features and fixes!",
                       projectProperties.getToolName(),
                       latestVersion,
-                      projectProperties.getToolVersion(),
-                      changelogUrl,
-                      privacyUrl);
-              projectProperties.log(LogEvent.lifecycle(message));
+                      projectProperties.getToolVersion());
+              String privacyUrl = ProjectInfo.GITHUB_URL + "/blob/master/docs/privacy.md";
+              String privacyMessage =
+                  String.format(
+                      "Please see %s for info on disabling this update check.", privacyUrl);
+              projectProperties.log(LogEvent.lifecycle(""));
+              projectProperties.log(LogEvent.lifecycle("\u001B[33m" + updateMessage + "\u001B[0m"));
+              projectProperties.log(
+                  LogEvent.lifecycle(
+                      "\u001B[33m"
+                          + ProjectInfo.GITHUB_URL
+                          + "/blob/master/jib-maven-plugin/CHANGELOG.md"
+                          + "\u001B[0m"));
+              projectProperties.log(LogEvent.lifecycle(""));
+              projectProperties.log(LogEvent.lifecycle(privacyMessage));
+              projectProperties.log(LogEvent.lifecycle(""));
             });
   }
 

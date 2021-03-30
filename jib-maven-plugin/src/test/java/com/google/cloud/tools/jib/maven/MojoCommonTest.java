@@ -45,12 +45,20 @@ public class MojoCommonTest {
     verify(mockProjectProperties)
         .log(
             LogEvent.lifecycle(
-                "\n\u001B[33mA new version of tool-name (2.1.0) is available (currently using 2.0.0). "
-                    + "Update your build configuration to use the latest features and fixes!\n"
+                "\u001B[33mA new version of tool-name (2.1.0) is available (currently using 2.0.0). "
+                    + "Update your build configuration to use the latest features and fixes!\u001B[0m"));
+    verify(mockProjectProperties)
+        .log(
+            LogEvent.lifecycle(
+                "\u001B[33m"
                     + ProjectInfo.GITHUB_URL
-                    + "/blob/master/jib-maven-plugin/CHANGELOG.md.\u001B[0m\n\n"
-                    + "Please see "
+                    + "/blob/master/jib-maven-plugin/CHANGELOG.md"
+                    + "\u001B[0m"));
+    verify(mockProjectProperties)
+        .log(
+            LogEvent.lifecycle(
+                "Please see "
                     + ProjectInfo.GITHUB_URL
-                    + "/blob/master/docs/privacy.md for info on disabling this update check.\n"));
+                    + "/blob/master/docs/privacy.md for info on disabling this update check."));
   }
 }

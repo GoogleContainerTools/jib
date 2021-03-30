@@ -23,7 +23,6 @@ import com.google.cloud.tools.jib.api.buildplan.FilePermissions;
 import com.google.cloud.tools.jib.plugins.common.ProjectProperties;
 import com.google.cloud.tools.jib.plugins.common.UpdateChecker;
 import com.google.cloud.tools.jib.plugins.common.globalconfig.GlobalConfig;
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.util.concurrent.Futures;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -68,7 +67,6 @@ class TaskCommon {
     }
   }
 
-  @VisibleForTesting
   static void finishUpdateChecker(
       ProjectProperties projectProperties, Future<Optional<String>> updateCheckFuture) {
     UpdateChecker.finishUpdateCheck(updateCheckFuture)
@@ -80,7 +78,7 @@ class TaskCommon {
               String message =
                   String.format(
                       "\n\u001B[33mA new version of %s (%s) is available (currently using %s). Update your"
-                          + " build configuration to use the latest features and fixes!\n%s.\u001B[0m\n\nPlease see"
+                          + " build configuration to use the latest features and fixes!\n%s\u001B[0m\n\nPlease see"
                           + " %s for info on disabling this update check.\n",
                       projectProperties.getToolName(),
                       latestVersion,
