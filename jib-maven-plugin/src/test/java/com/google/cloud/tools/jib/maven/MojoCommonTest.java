@@ -52,8 +52,7 @@ public class MojoCommonTest {
             LogEvent.lifecycle(
                 "\u001B[33m"
                     + ProjectInfo.GITHUB_URL
-                    + "/blob/master/jib-maven-plugin/CHANGELOG.md"
-                    + "\u001B[0m"));
+                    + "/blob/master/jib-maven-plugin/CHANGELOG.md\u001B[0m"));
     verify(mockProjectProperties)
         .log(
             LogEvent.lifecycle(
