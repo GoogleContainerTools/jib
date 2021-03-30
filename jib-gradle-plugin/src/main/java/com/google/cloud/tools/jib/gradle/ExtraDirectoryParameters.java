@@ -43,8 +43,8 @@ public class ExtraDirectoryParameters implements ExtraDirectoriesConfiguration {
     excludes = objects.listProperty(String.class).empty();
   }
 
-  ExtraDirectoryParameters(Project project, Path from, String into) {
-    this.project = project;
+  ExtraDirectoryParameters(ObjectFactory objects, Project project, Path from, String into) {
+    this(objects, project);
     this.from = from;
     this.into = into;
   }

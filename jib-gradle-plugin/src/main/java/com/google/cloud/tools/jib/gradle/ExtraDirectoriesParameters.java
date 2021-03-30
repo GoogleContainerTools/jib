@@ -27,6 +27,7 @@ import java.util.stream.Collectors;
 import javax.inject.Inject;
 import org.gradle.api.Action;
 import org.gradle.api.Project;
+import org.gradle.api.model.ObjectFactory;
 import org.gradle.api.provider.ListProperty;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.Internal;
@@ -34,6 +35,7 @@ import org.gradle.api.tasks.Internal;
 /** Object in {@link JibExtension} that configures the extra directories. */
 public class ExtraDirectoriesParameters {
 
+  private final ObjectFactory objects;
   private final Project project;
 
   private ListProperty<ExtraDirectoryParameters> paths;
@@ -41,10 +43,11 @@ public class ExtraDirectoriesParameters {
   private Map<String, String> permissions = Collections.emptyMap();
 
   @Inject
-  public ExtraDirectoriesParameters(Project project) {
+  public ExtraDirectoriesParameters(ObjectFactory objects, Project project) {
+    this.objects = objects;
     this.project = project;
-    paths = project.getObjects().listProperty(ExtraDirectoryParameters.class).empty();
-    spec = project.getObjects().newInstance(ExtraDirectoryParametersSpec.class, project, paths);
+    paths = objects.listProperty(ExtraDirectoryParameters.class).empty();
+    spec = objects.newInstance(ExtraDirectoryParametersSpec.class, project, paths);
   }
 
   public void paths(Action<? super ExtraDirectoryParametersSpec> action) {
@@ -70,12 +73,13 @@ public class ExtraDirectoriesParameters {
       List<String> pathStrings = ConfigurationPropertyValidator.parseListProperty(property);
       return pathStrings
           .stream()
-          .map(path -> new ExtraDirectoryParameters(project, Paths.get(path), "/"))
+          .map(path -> new ExtraDirectoryParameters(objects, project, Paths.get(path), "/"))
           .collect(Collectors.toList());
     }
     if (paths.get().isEmpty()) {
       return Collections.singletonList(
           new ExtraDirectoryParameters(
+              objects,
               project,
               project.getProjectDir().toPath().resolve("src").resolve("main").resolve("jib"),
               "/"));
@@ -95,7 +99,7 @@ public class ExtraDirectoriesParameters {
             .files(paths)
             .getFiles()
             .stream()
-            .map(file -> new ExtraDirectoryParameters(project, file.toPath(), "/"))
+            .map(file -> new ExtraDirectoryParameters(objects, project, file.toPath(), "/"))
             .collect(Collectors.toList()));
   }
 
