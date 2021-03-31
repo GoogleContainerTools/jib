@@ -35,6 +35,7 @@ import java.time.Instant;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Predicate;
 
@@ -63,47 +64,60 @@ public class JavaContainerBuilderHelper {
       throws IOException {
     FileEntriesLayer.Builder builder =
         FileEntriesLayer.builder().setName(LayerType.EXTRA_FILES.getName());
-    Map<PathMatcher, FilePermissions> pathMatchers = new LinkedHashMap<>();
+    Map<PathMatcher, FilePermissions> permissionsPathMatchers = new LinkedHashMap<>();
     for (Map.Entry<String, FilePermissions> entry : extraDirectoryPermissions.entrySet()) {
-      pathMatchers.put(
+      permissionsPathMatchers.put(
           FileSystems.getDefault().getPathMatcher("glob:" + entry.getKey()), entry.getValue());
     }
 
     DirectoryWalker walker = new DirectoryWalker(sourceDirectory).filterRoot();
+    // add exclusion filters
     excludes
         .stream()
         .map(pattern -> FileSystems.getDefault().getPathMatcher("glob:" + pattern))
         .forEach(pathMatcher -> walker.filter(path -> !pathMatcher.matches(path)));
+    // add an inclusion filter
     includes
         .stream()
         .map(pattern -> FileSystems.getDefault().getPathMatcher("glob:" + pattern))
         .map(pathMatcher -> (Predicate<Path>) (path -> pathMatcher.matches(path)))
         .reduce((matches1, matches2) -> matches1.or(matches2))
         .ifPresent(walker::filter);
+    // walk the source tree and add layer entries
     walker.walk(
         localPath -> {
           AbsoluteUnixPath pathOnContainer =
               targetDirectory.resolve(sourceDirectory.relativize(localPath));
           Instant modificationTime = modificationTimeProvider.get(localPath, pathOnContainer);
-          FilePermissions permissions = extraDirectoryPermissions.get(pathOnContainer.toString());
-          if (permissions == null) {
-            // Check for matching globs
-            Path containerPath = Paths.get(pathOnContainer.toString());
-            for (Map.Entry<PathMatcher, FilePermissions> entry : pathMatchers.entrySet()) {
-              if (entry.getKey().matches(containerPath)) {
-                builder.addEntry(localPath, pathOnContainer, entry.getValue(), modificationTime);
-                return;
-              }
-            }
-
-            // Add with default permissions
-            builder.addEntry(localPath, pathOnContainer, modificationTime);
+          Optional<FilePermissions> permissions =
+              determinePermissions(
+                  pathOnContainer, extraDirectoryPermissions, permissionsPathMatchers);
+          if (permissions.isPresent()) {
+            builder.addEntry(localPath, pathOnContainer, permissions.get(), modificationTime);
           } else {
-            // Add with explicit permissions
-            builder.addEntry(localPath, pathOnContainer, permissions, modificationTime);
+            builder.addEntry(localPath, pathOnContainer, modificationTime);
           }
         });
     return builder.build();
+  }
+
+  private static Optional<FilePermissions> determinePermissions(
+      AbsoluteUnixPath path,
+      Map<String, FilePermissions> extraDirectoryPermissions,
+      Map<PathMatcher, FilePermissions> permissionsPathMatchers) {
+    // The check is only for optimization. (`permissionsPathMatchers` is constructed from the map.)
+    FilePermissions permissions = extraDirectoryPermissions.get(path.toString());
+    if (permissions != null) {
+      return Optional.of(permissions);
+    }
+
+    // Check for matching globs
+    for (Map.Entry<PathMatcher, FilePermissions> entry : permissionsPathMatchers.entrySet()) {
+      if (entry.getKey().matches(Paths.get(path.toString()))) {
+        return Optional.of(entry.getValue());
+      }
+    }
+    return Optional.empty();
   }
 
   /**
