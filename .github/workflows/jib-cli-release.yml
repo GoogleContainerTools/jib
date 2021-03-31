@@ -56,13 +56,17 @@ jobs:
 
       - name: Draft GitHub release
         uses: actions/create-release@v1
-        id: create_release
+        id: create-release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tag_name: v${{ github.event.inputs.release_version }}-cli
           release_name: jib-cli v${{ github.event.inputs.release_version }}
           draft: true
+          body: |
+            ### Major Changes
+
+            See [CHANGELOG.md](https://github.com/GoogleContainerTools/jib/blob/master/jib-cli/CHANGELOG.md) for more details.
 
       - name: Upload Jib CLI
         uses: actions/upload-release-asset@v1
@@ -83,3 +87,15 @@ jobs:
           asset_path: ./jib-cli/build/distributions/zip.sha256
           asset_name: jib-jre-${{ github.event.inputs.release_version }}.zip.sha256
           asset_content_type: text/plain
+
+      - name: Create Jib CLI release checklist issue
+        uses: JasonEtco/create-an-issue@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_NAME: v${{ github.event.inputs.release_version }}-cli
+          CHANGELOG_URL: https://github.com/GoogleContainerTools/jib/blob/master/jib-cli/CHANGELOG.md
+          README_URL: https://github.com/GoogleContainerTools/jib/blob/master/jib-cli/README.md
+          RELEASE_DRAFT: ${{ steps.create-release.outputs.html_url }}
+        with:
+          filename: .github/RELEASE_TEMPLATES/cli_release_checklist.md
+
