@@ -37,6 +37,7 @@ import com.google.cloud.tools.jib.api.buildplan.ModificationTimeProvider;
 import com.google.cloud.tools.jib.api.buildplan.Platform;
 import com.google.cloud.tools.jib.frontend.CredentialRetrieverFactory;
 import com.google.cloud.tools.jib.global.JibSystemProperties;
+import com.google.cloud.tools.jib.plugins.common.RawConfiguration.ExtraDirectoriesConfiguration;
 import com.google.cloud.tools.jib.plugins.common.RawConfiguration.PlatformConfiguration;
 import com.google.cloud.tools.jib.plugins.common.globalconfig.GlobalConfig;
 import com.google.cloud.tools.jib.plugins.extension.JibPluginExtensionException;
@@ -58,7 +59,6 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -429,15 +429,13 @@ public class PluginConfigurationProcessor {
         getCreationTime(rawConfiguration.getCreationTime(), projectProperties));
 
     // Adds all the extra files.
-    for (Map.Entry<Path, AbsoluteUnixPath> entry :
-        rawConfiguration.getExtraDirectories().entrySet()) {
-      Path sourceDirectory = entry.getKey();
-      AbsoluteUnixPath targetDirectory = entry.getValue();
-      if (Files.exists(sourceDirectory)) {
+    for (ExtraDirectoriesConfiguration extraDirectory : rawConfiguration.getExtraDirectories()) {
+      Path from = extraDirectory.getFrom();
+      if (Files.exists(from)) {
         jibContainerBuilder.addFileEntriesLayer(
             JavaContainerBuilderHelper.extraDirectoryLayerConfiguration(
-                sourceDirectory,
-                targetDirectory,
+                from,
+                AbsoluteUnixPath.get(extraDirectory.getInto()),
                 rawConfiguration.getExtraDirectoryPermissions(),
                 modificationTimeProvider));
       }
