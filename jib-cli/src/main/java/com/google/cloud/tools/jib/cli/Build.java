@@ -36,10 +36,10 @@ import picocli.CommandLine;
 import picocli.CommandLine.Model.CommandSpec;
 
 @CommandLine.Command(
-        name = "build",
-        mixinStandardHelpOptions = true,
-        showAtFileInUsageHelp = true,
-        description = "Build a container")
+    name = "build",
+    mixinStandardHelpOptions = true,
+    showAtFileInUsageHelp = true,
+    description = "Build a container")
 public class Build implements Callable<Integer> {
 
   @CommandLine.Spec
@@ -53,26 +53,26 @@ public class Build implements Callable<Integer> {
 
   @VisibleForTesting
   @CommandLine.Option(
-          names = {"-c", "--context"},
-          defaultValue = ".",
-          paramLabel = "<project-root>",
-          description = "The context root directory of the build (ex: path/to/my/build/things)")
+      names = {"-c", "--context"},
+      defaultValue = ".",
+      paramLabel = "<project-root>",
+      description = "The context root directory of the build (ex: path/to/my/build/things)")
   @SuppressWarnings("NullAway.Init") // initialized by picocli
   Path contextRoot;
 
   @VisibleForTesting
   @CommandLine.Option(
-          names = {"-b", "--build-file"},
-          paramLabel = "<build-file>",
-          description = "The path to the build file (ex: path/to/other-jib.yaml)")
+      names = {"-b", "--build-file"},
+      paramLabel = "<build-file>",
+      description = "The path to the build file (ex: path/to/other-jib.yaml)")
   @SuppressWarnings("NullAway.Init") // initialized by picocli
   Path buildFileUnprocessed;
 
   @CommandLine.Option(
-          names = {"-p", "--parameter"},
-          paramLabel = "<name>=<value>",
-          description =
-                  "templating parameter to inject into build file, replace $${<name>} with <value> (repeatable)")
+      names = {"-p", "--parameter"},
+      paramLabel = "<name>=<value>",
+      description =
+          "templating parameter to inject into build file, replace $${<name>} with <value> (repeatable)")
   private Map<String, String> templateParameters = Collections.emptyMap();
 
   /**
@@ -99,21 +99,21 @@ public class Build implements Callable<Integer> {
     Path buildFile = getBuildFile();
     SingleThreadedExecutor executor = new SingleThreadedExecutor();
     ConsoleLogger logger =
-            CliLogger.newLogger(
-                    commonCliOptions.getVerbosity(),
-                    commonCliOptions.getHttpTrace(),
-                    commonCliOptions.getConsoleOutput(),
-                    spec.commandLine().getOut(),
-                    spec.commandLine().getErr(),
-                    executor);
+        CliLogger.newLogger(
+            commonCliOptions.getVerbosity(),
+            commonCliOptions.getHttpTrace(),
+            commonCliOptions.getConsoleOutput(),
+            spec.commandLine().getOut(),
+            spec.commandLine().getErr(),
+            executor);
     try {
       JibCli.configureHttpLogging(commonCliOptions.getHttpTrace().toJulLevel());
 
       if (!Files.isReadable(buildFile)) {
         logger.log(
-                LogEvent.Level.ERROR,
-                "The Build File YAML either does not exist or cannot be opened for reading: "
-                        + buildFile);
+            LogEvent.Level.ERROR,
+            "The Build File YAML either does not exist or cannot be opened for reading: "
+                + buildFile);
         return 1;
       }
       if (!Files.isRegularFile(buildFile)) {
@@ -125,7 +125,7 @@ public class Build implements Callable<Integer> {
       Containerizer containerizer = Containerizers.from(commonCliOptions, logger, cacheDirectories);
 
       JibContainerBuilder containerBuilder =
-              BuildFiles.toJibContainerBuilder(contextRoot, buildFile, this, commonCliOptions, logger);
+          BuildFiles.toJibContainerBuilder(contextRoot, buildFile, this, commonCliOptions, logger);
 
       // Enable registry mirrors
       GlobalConfig globalConfig = GlobalConfig.readConfig();

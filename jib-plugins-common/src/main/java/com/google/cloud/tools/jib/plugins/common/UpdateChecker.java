@@ -62,24 +62,24 @@ public class UpdateChecker {
    * @return a new {@link UpdateChecker}
    */
   public static Future<Optional<String>> checkForUpdate(
-          ExecutorService executorService,
-          String versionUrl,
-          String toolName,
-          String toolVersion,
-          Consumer<LogEvent> log) {
+      ExecutorService executorService,
+      String versionUrl,
+      String toolName,
+      String toolVersion,
+      Consumer<LogEvent> log) {
     return executorService.submit(
-            () ->
-                    performUpdateCheck(
-                            GlobalConfig.getConfigDir(), toolVersion, versionUrl, toolName, log));
+        () ->
+            performUpdateCheck(
+                GlobalConfig.getConfigDir(), toolVersion, versionUrl, toolName, log));
   }
 
   @VisibleForTesting
   static Optional<String> performUpdateCheck(
-          Path configDir,
-          String currentVersion,
-          String versionUrl,
-          String toolName,
-          Consumer<LogEvent> log) {
+      Path configDir,
+      String currentVersion,
+      String versionUrl,
+      String toolName,
+      Consumer<LogEvent> log) {
     Path lastUpdateCheck = configDir.resolve(LAST_UPDATE_CHECK_FILENAME);
 
     try {
@@ -87,7 +87,7 @@ public class UpdateChecker {
       if (Files.exists(lastUpdateCheck)) {
         try {
           String fileContents =
-                  new String(Files.readAllBytes(lastUpdateCheck), StandardCharsets.UTF_8);
+              new String(Files.readAllBytes(lastUpdateCheck), StandardCharsets.UTF_8);
           Instant modifiedTime = Instant.parse(fileContents);
           if (modifiedTime.plus(Duration.ofDays(1)).isAfter(Instant.now())) {
             return Optional.empty();
@@ -103,17 +103,17 @@ public class UpdateChecker {
       FailoverHttpClient httpClient = new FailoverHttpClient(true, false, ignored -> {});
       try {
         Response response =
-                httpClient.get(
-                        new URL(versionUrl),
-                        Request.builder()
-                                .setHttpTimeout(3000)
-                                .setUserAgent("jib " + currentVersion + " " + toolName)
-                                .build());
+            httpClient.get(
+                new URL(versionUrl),
+                Request.builder()
+                    .setHttpTimeout(3000)
+                    .setUserAgent("jib " + currentVersion + " " + toolName)
+                    .build());
         VersionJsonTemplate version =
-                JsonTemplateMapper.readJson(response.getBody(), VersionJsonTemplate.class);
+            JsonTemplateMapper.readJson(response.getBody(), VersionJsonTemplate.class);
 
         Path lastUpdateCheckTemp =
-                Files.createTempFile(configDir, LAST_UPDATE_CHECK_FILENAME, null);
+            Files.createTempFile(configDir, LAST_UPDATE_CHECK_FILENAME, null);
         lastUpdateCheckTemp.toFile().deleteOnExit();
         Files.write(lastUpdateCheckTemp, Instant.now().toString().getBytes(StandardCharsets.UTF_8));
         Files.move(lastUpdateCheckTemp, lastUpdateCheck, StandardCopyOption.REPLACE_EXISTING);
@@ -122,11 +122,11 @@ public class UpdateChecker {
           return Optional.empty();
         }
         return Optional.of(
-                "A new version of Jib ("
-                        + version.latest
-                        + ") is available (currently using "
-                        + currentVersion
-                        + "). Update your build configuration to use the latest features and fixes!");
+            "A new version of Jib ("
+                + version.latest
+                + ") is available (currently using "
+                + currentVersion
+                + "). Update your build configuration to use the latest features and fixes!");
 
       } finally {
         httpClient.shutDown();

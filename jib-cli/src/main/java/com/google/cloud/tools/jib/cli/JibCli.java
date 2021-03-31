@@ -28,13 +28,13 @@ import java.util.logging.Logger;
 import picocli.CommandLine;
 
 @CommandLine.Command(
-        name = "jib",
-        versionProvider = VersionInfo.class,
-        mixinStandardHelpOptions = true,
-        showAtFileInUsageHelp = true,
-        synopsisSubcommandLabel = "COMMAND",
-        description = "A tool for creating container images",
-        subcommands = {Build.class, Jar.class})
+    name = "jib",
+    versionProvider = VersionInfo.class,
+    mixinStandardHelpOptions = true,
+    showAtFileInUsageHelp = true,
+    synopsisSubcommandLabel = "COMMAND",
+    description = "A tool for creating container images",
+    subcommands = {Build.class, Jar.class})
 public class JibCli {
 
   static Logger configureHttpLogging(Level level) {
@@ -51,7 +51,7 @@ public class JibCli {
   }
 
   static void logTerminatingException(
-          ConsoleLogger consoleLogger, Exception exception, boolean logStackTrace) {
+      ConsoleLogger consoleLogger, Exception exception, boolean logStackTrace) {
     if (logStackTrace) {
       StringWriter writer = new StringWriter();
       exception.printStackTrace(new PrintWriter(writer));
@@ -59,12 +59,12 @@ public class JibCli {
     }
 
     consoleLogger.log(
-            LogEvent.Level.ERROR,
-            "\u001B[31;1m"
-                    + exception.getClass().getName()
-                    + ": "
-                    + exception.getMessage()
-                    + "\u001B[0m");
+        LogEvent.Level.ERROR,
+        "\u001B[31;1m"
+            + exception.getClass().getName()
+            + ": "
+            + exception.getMessage()
+            + "\u001B[0m");
   }
 
   /**
@@ -74,9 +74,9 @@ public class JibCli {
    */
   public static void main(String[] args) {
     int exitCode =
-            new CommandLine(new JibCli())
-                    .setParameterExceptionHandler(new ShortErrorMessageHandler())
-                    .execute(args);
+        new CommandLine(new JibCli())
+            .setParameterExceptionHandler(new ShortErrorMessageHandler())
+            .execute(args);
     System.exit(exitCode);
   }
 }

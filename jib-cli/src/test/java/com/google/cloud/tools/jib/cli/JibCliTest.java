@@ -52,7 +52,7 @@ public class JibCliTest {
     JibCli.logTerminatingException(logger, new IOException("test error message"), false);
 
     verify(logger)
-            .log(LogEvent.Level.ERROR, "\u001B[31;1mjava.io.IOException: test error message\u001B[0m");
+        .log(LogEvent.Level.ERROR, "\u001B[31;1mjava.io.IOException: test error message\u001B[0m");
     verifyNoMoreInteractions(logger);
   }
 
@@ -62,10 +62,10 @@ public class JibCliTest {
     JibCli.logTerminatingException(logger, new IOException("test error message"), true);
 
     String stackTraceLine =
-            "at com.google.cloud.tools.jib.cli.JibCliTest.testLogTerminatingException_stackTrace";
+        "at com.google.cloud.tools.jib.cli.JibCliTest.testLogTerminatingException_stackTrace";
     verify(logger).log(eq(LogEvent.Level.ERROR), contains(stackTraceLine));
     verify(logger)
-            .log(LogEvent.Level.ERROR, "\u001B[31;1mjava.io.IOException: test error message\u001B[0m");
+        .log(LogEvent.Level.ERROR, "\u001B[31;1mjava.io.IOException: test error message\u001B[0m");
     verifyNoMoreInteractions(logger);
   }
 }

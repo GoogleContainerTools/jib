@@ -49,10 +49,10 @@ import picocli.CommandLine;
 import picocli.CommandLine.Model.CommandSpec;
 
 @CommandLine.Command(
-        name = "jar",
-        mixinStandardHelpOptions = true,
-        showAtFileInUsageHelp = true,
-        description = "Containerize a jar")
+    name = "jar",
+    mixinStandardHelpOptions = true,
+    showAtFileInUsageHelp = true,
+    description = "Containerize a jar")
 public class Jar implements Callable<Integer> {
 
   @CommandLine.Spec
@@ -69,95 +69,95 @@ public class Jar implements Callable<Integer> {
   private Path jarFile;
 
   @CommandLine.Option(
-          names = "--mode",
-          defaultValue = "exploded",
-          paramLabel = "<mode>",
-          description =
-                  "The jar processing mode, candidates: ${COMPLETION-CANDIDATES}, default: ${DEFAULT-VALUE}")
+      names = "--mode",
+      defaultValue = "exploded",
+      paramLabel = "<mode>",
+      description =
+          "The jar processing mode, candidates: ${COMPLETION-CANDIDATES}, default: ${DEFAULT-VALUE}")
   @SuppressWarnings("NullAway.Init") // initialized by picocli
   private ProcessingMode mode;
 
   @CommandLine.Option(
-          names = "--from",
-          paramLabel = "<base-image>",
-          description = "The base image to use.")
+      names = "--from",
+      paramLabel = "<base-image>",
+      description = "The base image to use.")
   @SuppressWarnings("NullAway.Init") // initialized by picocli
   private String from;
 
   @CommandLine.Option(
-          names = "--jvm-flags",
-          paramLabel = "<jvm-flag>",
-          split = ",",
-          description = "JVM arguments, example: --jvm-flags=-Dmy.property=value,-Xshare:off")
+      names = "--jvm-flags",
+      paramLabel = "<jvm-flag>",
+      split = ",",
+      description = "JVM arguments, example: --jvm-flags=-Dmy.property=value,-Xshare:off")
   private List<String> jvmFlags = Collections.emptyList();
 
   @CommandLine.Option(
-          names = "--expose",
-          paramLabel = "<port>",
-          split = ",",
-          description = "Ports to expose on container, example: --expose=5000,7/udp.")
+      names = "--expose",
+      paramLabel = "<port>",
+      split = ",",
+      description = "Ports to expose on container, example: --expose=5000,7/udp.")
   private List<String> exposedPorts = Collections.emptyList();
 
   @CommandLine.Option(
-          names = "--volumes",
-          paramLabel = "<volume>",
-          split = ",",
-          description =
-                  "Directories on container to hold extra volumes,  example: --volumes=/var/log,/var/log2.")
+      names = "--volumes",
+      paramLabel = "<volume>",
+      split = ",",
+      description =
+          "Directories on container to hold extra volumes,  example: --volumes=/var/log,/var/log2.")
   private List<String> volumes = Collections.emptyList();
 
   @CommandLine.Option(
-          names = "--environment-variables",
-          paramLabel = "<key>=<value>",
-          split = ",",
-          description =
-                  "Environment variables to write into container, example: --environment-variables env1=env_value1,env2=env_value2.")
+      names = "--environment-variables",
+      paramLabel = "<key>=<value>",
+      split = ",",
+      description =
+          "Environment variables to write into container, example: --environment-variables env1=env_value1,env2=env_value2.")
   private Map<String, String> environment = Collections.emptyMap();
 
   @CommandLine.Option(
-          names = "--labels",
-          paramLabel = "<key>=<value>",
-          split = ",",
-          description =
-                  "Labels to write into container metadata, example: --labels=label1=value1,label2=value2.")
+      names = "--labels",
+      paramLabel = "<key>=<value>",
+      split = ",",
+      description =
+          "Labels to write into container metadata, example: --labels=label1=value1,label2=value2.")
   private Map<String, String> labels = Collections.emptyMap();
 
   @CommandLine.Option(
-          names = {"-u", "--user"},
-          paramLabel = "<user>",
-          description = "The user to run the container as, example: --user=myuser:mygroup.")
+      names = {"-u", "--user"},
+      paramLabel = "<user>",
+      description = "The user to run the container as, example: --user=myuser:mygroup.")
   @SuppressWarnings("NullAway.Init") // initialized by picocli
   private String user;
 
   @CommandLine.Option(
-          names = {"--image-format"},
-          defaultValue = "Docker",
-          paramLabel = "<image-format>",
-          description =
-                  "Format of container, candidates: ${COMPLETION-CANDIDATES}, default: ${DEFAULT-VALUE}.")
+      names = {"--image-format"},
+      defaultValue = "Docker",
+      paramLabel = "<image-format>",
+      description =
+          "Format of container, candidates: ${COMPLETION-CANDIDATES}, default: ${DEFAULT-VALUE}.")
   @SuppressWarnings("NullAway.Init") // initialized by picocli
   private ImageFormat format;
 
   @CommandLine.Option(
-          names = "--program-args",
-          paramLabel = "<program-argument>",
-          split = ",",
-          description = "Program arguments for container entrypoint.")
+      names = "--program-args",
+      paramLabel = "<program-argument>",
+      split = ",",
+      description = "Program arguments for container entrypoint.")
   private List<String> programArguments = Collections.emptyList();
 
   @CommandLine.Option(
-          names = "--entrypoint",
-          paramLabel = "<entrypoint>",
-          split = "\\s+",
-          description =
-                  "Entrypoint for container. Overrides the default entrypoint, example: --entrypoint='custom entrypoint'")
+      names = "--entrypoint",
+      paramLabel = "<entrypoint>",
+      split = "\\s+",
+      description =
+          "Entrypoint for container. Overrides the default entrypoint, example: --entrypoint='custom entrypoint'")
   private List<String> entrypoint = Collections.emptyList();
 
   @CommandLine.Option(
-          names = "--creation-time",
-          paramLabel = "<creation-time>",
-          description =
-                  "The creation time of the container in milliseconds since epoch or iso8601 format. Overrides the default (1970-01-01T00:00:00Z)")
+      names = "--creation-time",
+      paramLabel = "<creation-time>",
+      description =
+          "The creation time of the container in milliseconds since epoch or iso8601 format. Overrides the default (1970-01-01T00:00:00Z)")
   @SuppressWarnings("NullAway.Init") // initialized by picocli
   private String creationTime;
 
@@ -166,13 +166,13 @@ public class Jar implements Callable<Integer> {
     commonCliOptions.validate();
     SingleThreadedExecutor executor = new SingleThreadedExecutor();
     ConsoleLogger logger =
-            CliLogger.newLogger(
-                    commonCliOptions.getVerbosity(),
-                    commonCliOptions.getHttpTrace(),
-                    commonCliOptions.getConsoleOutput(),
-                    spec.commandLine().getOut(),
-                    spec.commandLine().getErr(),
-                    executor);
+        CliLogger.newLogger(
+            commonCliOptions.getVerbosity(),
+            commonCliOptions.getHttpTrace(),
+            commonCliOptions.getConsoleOutput(),
+            spec.commandLine().getOut(),
+            spec.commandLine().getErr(),
+            executor);
     try {
       JibCli.configureHttpLogging(commonCliOptions.getHttpTrace().toJulLevel());
 
@@ -182,9 +182,9 @@ public class Jar implements Callable<Integer> {
       }
       if (Files.isDirectory(jarFile)) {
         logger.log(
-                LogEvent.Level.ERROR,
-                "The file path provided is for a directory. Please provide a path to a JAR: "
-                        + jarFile);
+            LogEvent.Level.ERROR,
+            "The file path provided is for a directory. Please provide a path to a JAR: "
+                + jarFile);
         return 1;
       }
       if (!entrypoint.isEmpty() && !jvmFlags.isEmpty()) {
@@ -192,10 +192,10 @@ public class Jar implements Callable<Integer> {
       }
 
       CacheDirectories cacheDirectories =
-              CacheDirectories.from(commonCliOptions, jarFile.toAbsolutePath().getParent());
+          CacheDirectories.from(commonCliOptions, jarFile.toAbsolutePath().getParent());
       JarProcessor processor = JarProcessors.from(jarFile, cacheDirectories, this);
       JibContainerBuilder containerBuilder =
-              JarFiles.toJibContainerBuilder(processor, this, commonCliOptions, logger);
+          JarFiles.toJibContainerBuilder(processor, this, commonCliOptions, logger);
       Containerizer containerizer = Containerizers.from(commonCliOptions, logger, cacheDirectories);
 
       // Enable registry mirrors

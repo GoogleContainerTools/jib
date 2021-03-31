@@ -48,38 +48,38 @@ class TaskCommon {
   public static final String VERSION_URL = "https://storage.googleapis.com/jib-versions/jib-gradle";
 
   static Future<Optional<String>> newUpdateChecker(
-          ProjectProperties projectProperties, GlobalConfig globalConfig, Logger logger) {
+      ProjectProperties projectProperties, GlobalConfig globalConfig, Logger logger) {
     if (projectProperties.isOffline()
-            || !logger.isLifecycleEnabled()
-            || globalConfig.isDisableUpdateCheck()) {
+        || !logger.isLifecycleEnabled()
+        || globalConfig.isDisableUpdateCheck()) {
       return Futures.immediateFuture(Optional.empty());
     }
     ExecutorService executorService = Executors.newSingleThreadExecutor();
     try {
       return UpdateChecker.checkForUpdate(
-              executorService,
-              VERSION_URL,
-              projectProperties.getToolName(),
-              projectProperties.getToolVersion(),
-              projectProperties::log);
+          executorService,
+          VERSION_URL,
+          projectProperties.getToolName(),
+          projectProperties.getToolVersion(),
+          projectProperties::log);
     } finally {
       executorService.shutdown();
     }
   }
 
   static void finishUpdateChecker(
-          ProjectProperties projectProperties, Future<Optional<String>> updateCheckFuture) {
+      ProjectProperties projectProperties, Future<Optional<String>> updateCheckFuture) {
     UpdateChecker.finishUpdateCheck(updateCheckFuture)
-            .ifPresent(
-                    updateMessage ->
-                            projectProperties.log(
-                                    LogEvent.lifecycle(
-                                            "\n\u001B[33m"
-                                                    + updateMessage
-                                                    + "\n"
-                                                    + ProjectInfo.GITHUB_URL
-                                                    + "/blob/master/jib-gradle-plugin/CHANGELOG.md\u001B[0m\n"
-                                                    + "Please see https://github.com/GoogleContainerTools/jib/blob/master/docs/privacy.md for info on disabling this update check.\n")));
+        .ifPresent(
+            updateMessage ->
+                projectProperties.log(
+                    LogEvent.lifecycle(
+                        "\n\u001B[33m"
+                            + updateMessage
+                            + "\n"
+                            + ProjectInfo.GITHUB_URL
+                            + "/blob/master/jib-gradle-plugin/CHANGELOG.md\u001B[0m\n"
+                            + "Please see https://github.com/GoogleContainerTools/jib/blob/master/docs/privacy.md for info on disabling this update check.\n")));
   }
 
   @Nullable
@@ -105,16 +105,16 @@ class TaskCommon {
   static void disableHttpLogging() {
     // Disables Apache HTTP client logging.
     OutputEventListenerBackedLoggerContext context =
-            (OutputEventListenerBackedLoggerContext) LoggerFactory.getILoggerFactory();
+        (OutputEventListenerBackedLoggerContext) LoggerFactory.getILoggerFactory();
     OutputEventListener defaultOutputEventListener = context.getOutputEventListener();
     context.setOutputEventListener(
-            event -> {
-              org.gradle.internal.logging.events.LogEvent logEvent =
-                      (org.gradle.internal.logging.events.LogEvent) event;
-              if (!logEvent.getCategory().contains("org.apache")) {
-                defaultOutputEventListener.onOutput(event);
-              }
-            });
+        event -> {
+          org.gradle.internal.logging.events.LogEvent logEvent =
+              (org.gradle.internal.logging.events.LogEvent) event;
+          if (!logEvent.getCategory().contains("org.apache")) {
+            defaultOutputEventListener.onOutput(event);
+          }
+        });
 
     // Disable Google HTTP Client network logging only when 'java.util.logging.config.file' system
     // property is undefined: https://github.com/GoogleContainerTools/jib/issues/2356
