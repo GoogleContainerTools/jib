@@ -53,42 +53,42 @@ public class MojoCommon {
   public static final String VERSION_URL = "https://storage.googleapis.com/jib-versions/jib-maven";
 
   static Future<Optional<String>> newUpdateChecker(
-      ProjectProperties projectProperties, GlobalConfig globalConfig, Log logger) {
+          ProjectProperties projectProperties, GlobalConfig globalConfig, Log logger) {
     if (projectProperties.isOffline()
-        || !logger.isInfoEnabled()
-        || globalConfig.isDisableUpdateCheck()) {
+            || !logger.isInfoEnabled()
+            || globalConfig.isDisableUpdateCheck()) {
       return Futures.immediateFuture(Optional.empty());
     }
     ExecutorService executorService = Executors.newSingleThreadExecutor();
     try {
       return UpdateChecker.checkForUpdate(
-          executorService,
-          VERSION_URL,
-          projectProperties.getToolName(),
-          projectProperties.getToolVersion(),
-          projectProperties::log);
+              executorService,
+              VERSION_URL,
+              projectProperties.getToolName(),
+              projectProperties.getToolVersion(),
+              projectProperties::log);
     } finally {
       executorService.shutdown();
     }
   }
 
   static void finishUpdateChecker(
-      ProjectProperties projectProperties, Future<Optional<String>> updateCheckFuture) {
+          ProjectProperties projectProperties, Future<Optional<String>> updateCheckFuture) {
     UpdateChecker.finishUpdateCheck(updateCheckFuture)
-        .ifPresent(
-            updateMessage -> {
-              projectProperties.log(LogEvent.lifecycle(""));
-              projectProperties.log(LogEvent.lifecycle("\u001B[33m" + updateMessage + "\u001B[0m"));
-              projectProperties.log(
-                  LogEvent.lifecycle(
-                      "\u001B[33m"
-                          + ProjectInfo.GITHUB_URL
-                          + "/blob/master/jib-maven-plugin/CHANGELOG.md\u001B[0m"));
-              projectProperties.log(
-                  LogEvent.lifecycle(
-                      "Please see https://github.com/GoogleContainerTools/jib/blob/master/docs/privacy.md for info on disabling this update check."));
-              projectProperties.log(LogEvent.lifecycle(""));
-            });
+            .ifPresent(
+                    updateMessage -> {
+                      projectProperties.log(LogEvent.lifecycle(""));
+                      projectProperties.log(LogEvent.lifecycle("\u001B[33m" + updateMessage + "\u001B[0m"));
+                      projectProperties.log(
+                              LogEvent.lifecycle(
+                                      "\u001B[33m"
+                                              + ProjectInfo.GITHUB_URL
+                                              + "/blob/master/jib-maven-plugin/CHANGELOG.md\u001B[0m"));
+                      projectProperties.log(
+                              LogEvent.lifecycle(
+                                      "Please see https://github.com/GoogleContainerTools/jib/blob/master/docs/privacy.md for info on disabling this update check."));
+                      projectProperties.log(LogEvent.lifecycle(""));
+                    });
   }
 
   /**
@@ -99,13 +99,13 @@ public class MojoCommon {
    * @return the list of resolved extra directories
    */
   static List<ExtraDirectoryParameters> getExtraDirectories(
-      JibPluginConfiguration jibPluginConfiguration) {
+          JibPluginConfiguration jibPluginConfiguration) {
     List<ExtraDirectoryParameters> extraDirectories = jibPluginConfiguration.getExtraDirectories();
     if (!extraDirectories.isEmpty()) {
       for (ExtraDirectoryParameters directory : extraDirectories) {
         if (directory.getFrom().equals(Paths.get(""))) {
           throw new IllegalArgumentException(
-              "Incomplete <extraDirectories><paths> configuration; source directory must be set");
+                  "Incomplete <extraDirectories><paths> configuration; source directory must be set");
         }
       }
       return extraDirectories;
@@ -113,9 +113,9 @@ public class MojoCommon {
 
     MavenProject project = Preconditions.checkNotNull(jibPluginConfiguration.getProject());
     return Collections.singletonList(
-        new ExtraDirectoryParameters(
-            project.getBasedir().toPath().resolve("src").resolve("main").resolve("jib").toFile(),
-            "/"));
+            new ExtraDirectoryParameters(
+                    project.getBasedir().toPath().resolve("src").resolve("main").resolve("jib").toFile(),
+                    "/"));
   }
 
   /**
@@ -126,16 +126,16 @@ public class MojoCommon {
    * @return the resulting map
    */
   static Map<String, FilePermissions> convertPermissionsList(
-      List<PermissionConfiguration> permissionList) {
+          List<PermissionConfiguration> permissionList) {
     // Order is important, so use a LinkedHashMap
     Map<String, FilePermissions> permissionsMap = new LinkedHashMap<>();
     for (PermissionConfiguration permission : permissionList) {
       if (!permission.getFile().isPresent() || !permission.getMode().isPresent()) {
         throw new IllegalArgumentException(
-            "Incomplete <permission> configuration; requires <file> and <mode> fields to be set");
+                "Incomplete <permission> configuration; requires <file> and <mode> fields to be set");
       }
       permissionsMap.put(
-          permission.getFile().get(), FilePermissions.fromOctalString(permission.getMode().get()));
+              permission.getFile().get(), FilePermissions.fromOctalString(permission.getMode().get()));
     }
     return permissionsMap;
   }
@@ -157,12 +157,12 @@ public class MojoCommon {
       throw new MojoExecutionException("Could not determine Jib plugin version");
     }
     VersionChecker<DefaultArtifactVersion> checker =
-        new VersionChecker<>(DefaultArtifactVersion::new);
+            new VersionChecker<>(DefaultArtifactVersion::new);
     if (!checker.compatibleVersion(acceptableVersionSpec, actualVersion)) {
       String failure =
-          String.format(
-              "Jib plugin version is %s but is required to be %s",
-              actualVersion, acceptableVersionSpec);
+              String.format(
+                      "Jib plugin version is %s but is required to be %s",
+                      actualVersion, acceptableVersionSpec);
       throw new MojoExecutionException(failure);
     }
   }
@@ -182,9 +182,9 @@ public class MojoCommon {
     }
     if (!jibPluginConfiguration.isContainerizable()) {
       log.info(
-          "Skipping containerization of this module (not specified in "
-              + PropertyNames.CONTAINERIZE
-              + ")");
+              "Skipping containerization of this module (not specified in "
+                      + PropertyNames.CONTAINERIZE
+                      + ")");
       return true;
     }
     if ("pom".equals(jibPluginConfiguration.getProject().getPackaging())) {
