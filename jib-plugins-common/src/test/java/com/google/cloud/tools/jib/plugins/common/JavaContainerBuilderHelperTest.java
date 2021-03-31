@@ -164,13 +164,7 @@ public class JavaContainerBuilderHelperTest {
             (ignored1, ignored2) -> Instant.EPOCH);
     assertThat(layerConfiguration.getEntries())
         .comparingElementsUsing(SOURCE_FILE_OF)
-        .containsExactly(
-            extraFilesDirectory.resolve("a"),
-            extraFilesDirectory.resolve("a/b"),
-            extraFilesDirectory.resolve("a/b/bar"),
-            extraFilesDirectory.resolve("c"),
-            extraFilesDirectory.resolve("c/cat"),
-            extraFilesDirectory.resolve("foo"));
+        .containsExactly(extraFilesDirectory.resolve("a"), extraFilesDirectory.resolve("a/b/bar"));
   }
 
   @Test
