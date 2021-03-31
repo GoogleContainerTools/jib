@@ -436,6 +436,8 @@ public class PluginConfigurationProcessor {
             JavaContainerBuilderHelper.extraDirectoryLayerConfiguration(
                 from,
                 AbsoluteUnixPath.get(extraDirectory.getInto()),
+                extraDirectory.getIncludesList(),
+                extraDirectory.getExcludesList(),
                 rawConfiguration.getExtraDirectoryPermissions(),
                 modificationTimeProvider));
       }
