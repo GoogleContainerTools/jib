@@ -115,7 +115,8 @@ public class BuildDockerMojoIntegrationTest {
     String output =
         new Command("docker", "run", "--rm", "--entrypoint=ls", targetImage, "-1R", "/extras")
             .run();
-    // No "bar" or "*.txt" files. Specifically,
+
+    // No "bar" or "*.txt" files. Only copies the following:
     //   /extras/cat.json
     //   /extras/foo
     //   /extras/sub/
