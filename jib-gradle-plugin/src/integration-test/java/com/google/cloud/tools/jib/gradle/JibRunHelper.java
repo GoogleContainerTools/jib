@@ -85,7 +85,7 @@ public class JibRunHelper {
             "-Djib.allowInsecureRegistries=" + imageReference.startsWith("localhost"),
             "-b=" + gradleBuildFile);
     assertBuildSuccess(buildResult, "jib", "Built and pushed image as ");
-    assertValidImageDigestAndIdOutputFiles(testProject.getProjectRoot());
+    assertThatExpectedImageDigestAndIdReturned(testProject.getProjectRoot());
     MatcherAssert.assertThat(buildResult.getOutput(), CoreMatchers.containsString(imageReference));
 
     return pullAndRunBuiltImage(imageReference, extraRunArguments);
@@ -104,7 +104,7 @@ public class JibRunHelper {
             "-Djib.allowInsecureRegistries=" + target.startsWith("localhost"),
             "-b=" + "build-local-base.gradle");
     assertBuildSuccess(buildResult, "jib", "Built and pushed image as ");
-    assertValidImageDigestAndIdOutputFiles(
+    assertThatExpectedImageDigestAndIdReturned(
         SingleProjectIntegrationTest.simpleTestProject.getProjectRoot());
     MatcherAssert.assertThat(buildResult.getOutput(), CoreMatchers.containsString(target));
     return pullAndRunBuiltImage(target);
@@ -123,7 +123,7 @@ public class JibRunHelper {
             "-Djib.allowInsecureRegistries=" + imageReference.startsWith("localhost"),
             "-D_ADDITIONAL_TAG=" + additionalTag);
     assertBuildSuccess(buildResult, "jib", "Built and pushed image as ");
-    assertValidImageDigestAndIdOutputFiles(testProject.getProjectRoot());
+    assertThatExpectedImageDigestAndIdReturned(testProject.getProjectRoot());
     MatcherAssert.assertThat(buildResult.getOutput(), CoreMatchers.containsString(imageReference));
 
     String additionalImageReference =
@@ -150,7 +150,7 @@ public class JibRunHelper {
             "-Djib.allowInsecureRegistries=" + imageReference.startsWith("localhost"),
             "-b=" + gradleBuildFile);
     assertBuildSuccess(buildResult, "jibDockerBuild", "Built image to Docker daemon as ");
-    assertValidImageDigestAndIdOutputFiles(testProject.getProjectRoot());
+    assertThatExpectedImageDigestAndIdReturned(testProject.getProjectRoot());
     MatcherAssert.assertThat(buildResult.getOutput(), CoreMatchers.containsString(imageReference));
 
     String history = new Command("docker", "history", imageReference).run();
@@ -190,7 +190,7 @@ public class JibRunHelper {
     return Instant.parse(inspect);
   }
 
-  static void assertValidImageDigestAndIdOutputFiles(Path projectRoot)
+  static void assertThatExpectedImageDigestAndIdReturned(Path projectRoot)
       throws IOException, DigestException {
     Path digestPath = projectRoot.resolve("build/jib-image.digest");
     Assert.assertTrue(Files.exists(digestPath));
