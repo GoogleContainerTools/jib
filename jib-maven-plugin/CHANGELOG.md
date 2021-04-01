@@ -5,8 +5,8 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
-- [Jib extensions](https://github.com/GoogleContainerTools/jib-extensions) can be loaded via the [Maven dependency injection mechanism](https://maven.apache.org/maven-jsr330.html
-). This also enables injecting arbitrary dependencies (for example, Maven components) into an extension. ([#3036](https://github.com/GoogleContainerTools/jib/issues/3036))
+- New `<includes>` and `<excludes>` options for `<extraDirectories>`. This enables copying a subset of files from the source directory using glob patterns. ([#2564](https://github.com/GoogleContainerTools/jib/issues/2564))
+- [Jib extensions](https://github.com/GoogleContainerTools/jib-extensions) can be loaded via the [Maven dependency injection mechanism](https://maven.apache.org/maven-jsr330.html). This also enables injecting arbitrary dependencies (for example, Maven components) into an extension. ([#3036](https://github.com/GoogleContainerTools/jib/issues/3036))
 
 ### Changed
 

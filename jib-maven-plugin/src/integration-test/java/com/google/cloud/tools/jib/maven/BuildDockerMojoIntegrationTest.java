@@ -16,9 +16,10 @@
 
 package com.google.cloud.tools.jib.maven;
 
+import static com.google.common.truth.Truth.assertThat;
+
 import com.google.cloud.tools.jib.Command;
 import java.io.IOException;
-import java.nio.file.Path;
 import java.security.DigestException;
 import java.util.Arrays;
 import org.apache.maven.it.VerificationException;
@@ -40,9 +41,9 @@ public class BuildDockerMojoIntegrationTest {
   @ClassRule
   public static final TestProject defaultTargetTestProject = new TestProject("default-target");
 
-  private static void buildToDockerDaemon(Path projectRoot, String imageReference, String pomXml)
+  private static void buildToDockerDaemon(TestProject project, String imageReference, String pomXml)
       throws VerificationException, DigestException, IOException {
-    Verifier verifier = new Verifier(projectRoot.toString());
+    Verifier verifier = new Verifier(project.getProjectRoot().toString());
     verifier.setSystemProperty("jib.useOnlyProjectCache", "true");
     verifier.setSystemProperty("_TARGET_IMAGE", imageReference);
     verifier.setAutoclean(false);
@@ -52,16 +53,17 @@ public class BuildDockerMojoIntegrationTest {
     verifier.executeGoal("jib:dockerBuild");
     verifier.verifyErrorFreeLog();
 
-    BuildImageMojoIntegrationTest.readDigestFile(projectRoot.resolve("target/jib-image.digest"));
+    BuildImageMojoIntegrationTest.readDigestFile(
+        project.getProjectRoot().resolve("target/jib-image.digest"));
   }
 
   /**
    * Builds and runs jib:buildDocker on a project at {@code projectRoot} pushing to {@code
    * imageReference}.
    */
-  private static String buildToDockerDaemonAndRun(Path projectRoot, String imageReference)
+  private static String buildToDockerDaemonAndRun(TestProject project, String imageReference)
       throws VerificationException, IOException, InterruptedException, DigestException {
-    buildToDockerDaemon(projectRoot, imageReference, "pom.xml");
+    buildToDockerDaemon(project, imageReference, "pom.xml");
 
     String dockerInspect = new Command("docker", "inspect", imageReference).run();
     MatcherAssert.assertThat(
@@ -99,10 +101,27 @@ public class BuildDockerMojoIntegrationTest {
     Assert.assertEquals(
         "Hello, world. An argument.\n1970-01-01T00:00:01Z\nrw-r--r--\nrw-r--r--\nfoo\ncat\n"
             + "1970-01-01T00:00:01Z\n1970-01-01T00:00:01Z\n",
-        buildToDockerDaemonAndRun(simpleTestProject.getProjectRoot(), targetImage));
+        buildToDockerDaemonAndRun(simpleTestProject, targetImage));
     Assert.assertEquals(
         "1970-01-01T00:00:00Z",
         new Command("docker", "inspect", "-f", "{{.Created}}", targetImage).run().trim());
+  }
+
+  @Test
+  public void testExecute_simple_extraDirectoriesFiltering()
+      throws DigestException, IOException, InterruptedException, VerificationException {
+    String targetImage = "simpleimage:maven" + System.nanoTime();
+    buildToDockerDaemon(simpleTestProject, targetImage, "pom-extra-dirs-filtering.xml");
+    String output =
+        new Command("docker", "run", "--rm", "--entrypoint=ls", targetImage, "-1R", "/extras")
+            .run();
+
+    // No "bar" or "*.txt" files. Only copies the following:
+    //   /extras/cat.json
+    //   /extras/foo
+    //   /extras/sub/
+    //   /extras/sub/a.json
+    assertThat(output).isEqualTo("/extras:\ncat.json\nfoo\nsub\n\n/extras/sub:\na.json\n");
   }
 
   @Test
@@ -132,8 +151,7 @@ public class BuildDockerMojoIntegrationTest {
       throws InterruptedException, IOException, VerificationException, DigestException {
     String targetImage = "emptyimage:maven" + System.nanoTime();
 
-    Assert.assertEquals(
-        "", buildToDockerDaemonAndRun(emptyTestProject.getProjectRoot(), targetImage));
+    Assert.assertEquals("", buildToDockerDaemonAndRun(emptyTestProject, targetImage));
     Assert.assertEquals(
         "1970-01-01T00:00:00Z",
         new Command("docker", "inspect", "-f", "{{.Created}}", targetImage).run().trim());
@@ -145,8 +163,7 @@ public class BuildDockerMojoIntegrationTest {
     Assert.assertEquals(
         "Hello, world. An argument.\n",
         buildToDockerDaemonAndRun(
-            defaultTargetTestProject.getProjectRoot(),
-            "default-target-name:default-target-version"));
+            defaultTargetTestProject, "default-target-name:default-target-version"));
   }
 
   @Test
@@ -163,7 +180,7 @@ public class BuildDockerMojoIntegrationTest {
   public void testExecute_userNumeric()
       throws VerificationException, IOException, InterruptedException, DigestException {
     String targetImage = "emptyimage:maven" + System.nanoTime();
-    buildToDockerDaemon(emptyTestProject.getProjectRoot(), targetImage, "pom.xml");
+    buildToDockerDaemon(emptyTestProject, targetImage, "pom.xml");
     Assert.assertEquals(
         "12345:54321",
         new Command("docker", "inspect", "-f", "{{.Config.User}}", targetImage).run().trim());
@@ -173,7 +190,7 @@ public class BuildDockerMojoIntegrationTest {
   public void testExecute_userNames()
       throws VerificationException, IOException, InterruptedException, DigestException {
     String targetImage = "brokenuserimage:maven" + System.nanoTime();
-    buildToDockerDaemon(emptyTestProject.getProjectRoot(), targetImage, "pom-broken-user.xml");
+    buildToDockerDaemon(emptyTestProject, targetImage, "pom-broken-user.xml");
     Assert.assertEquals(
         "myuser:mygroup",
         new Command("docker", "inspect", "-f", "{{.Config.User}}", targetImage).run().trim());
@@ -182,8 +199,7 @@ public class BuildDockerMojoIntegrationTest {
   @Test
   public void testExecute_noToImageAndInvalidProjectName()
       throws DigestException, VerificationException, IOException, InterruptedException {
-    buildToDockerDaemon(
-        simpleTestProject.getProjectRoot(), "image reference ignored", "pom-no-to-image.xml");
+    buildToDockerDaemon(simpleTestProject, "image reference ignored", "pom-no-to-image.xml");
     Assert.assertEquals(
         "Hello, world. \n1970-01-01T00:00:01Z\n",
         new Command("docker", "run", "--rm", "my-artifact-id:1").run());
@@ -193,8 +209,7 @@ public class BuildDockerMojoIntegrationTest {
   public void testExecute_jarContainerization()
       throws DigestException, VerificationException, IOException, InterruptedException {
     String targetImage = "jarcontainerizationimage:maven" + System.nanoTime();
-    buildToDockerDaemon(
-        simpleTestProject.getProjectRoot(), targetImage, "pom-jar-containerization.xml");
+    buildToDockerDaemon(simpleTestProject, targetImage, "pom-jar-containerization.xml");
     Assert.assertEquals(
         "Hello, world. \nImplementation-Title: hello-world\nImplementation-Version: 1\n",
         new Command("docker", "run", "--rm", targetImage).run());

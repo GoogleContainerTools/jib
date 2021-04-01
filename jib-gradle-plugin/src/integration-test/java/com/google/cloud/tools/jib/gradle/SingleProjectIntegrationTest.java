@@ -16,6 +16,8 @@
 
 package com.google.cloud.tools.jib.gradle;
 
+import static com.google.common.truth.Truth.assertThat;
+
 import com.google.cloud.tools.jib.Command;
 import com.google.cloud.tools.jib.IntegrationTestingConfiguration;
 import com.google.cloud.tools.jib.api.DescriptorDigest;
@@ -61,30 +63,25 @@ public class SingleProjectIntegrationTest {
     return Integer.valueOf(split.iterator().next()) >= 11;
   }
 
-  private static void assertWorkingDirectory(String expected, String imageReference)
+  private static String getWorkingDirectory(String imageReference)
       throws IOException, InterruptedException {
-    Assert.assertEquals(
-        expected,
-        new Command("docker", "inspect", "-f", "{{.Config.WorkingDir}}", imageReference)
-            .run()
-            .trim());
+    return new Command("docker", "inspect", "-f", "{{.Config.WorkingDir}}", imageReference)
+        .run()
+        .trim();
   }
 
-  private static void assertEntrypoint(String expected, String imageReference)
+  private static String getEntrypoint(String imageReference)
       throws IOException, InterruptedException {
-    Assert.assertEquals(
-        expected,
-        new Command("docker", "inspect", "-f", "{{.Config.Entrypoint}}", imageReference)
-            .run()
-            .trim());
+    return new Command("docker", "inspect", "-f", "{{.Config.Entrypoint}}", imageReference)
+        .run()
+        .trim();
   }
 
-  private static void assertLayerSize(int expected, String imageReference)
-      throws IOException, InterruptedException {
+  private static int getLayerSize(String imageReference) throws IOException, InterruptedException {
     Command command =
         new Command("docker", "inspect", "-f", "{{join .RootFS.Layers \",\"}}", imageReference);
     String layers = command.run().trim();
-    Assert.assertEquals(expected, Splitter.on(",").splitToList(layers).size());
+    return Splitter.on(",").splitToList(layers).size();
   }
 
   /**
@@ -97,32 +94,29 @@ public class SingleProjectIntegrationTest {
   private static void assertDockerInspect(String imageReference)
       throws IOException, InterruptedException {
     String dockerInspect = new Command("docker", "inspect", imageReference).run();
-    MatcherAssert.assertThat(
-        dockerInspect,
-        CoreMatchers.containsString(
+    assertThat(dockerInspect)
+        .contains(
             "            \"Volumes\": {\n"
                 + "                \"/var/log\": {},\n"
                 + "                \"/var/log2\": {}\n"
-                + "            },"));
-    MatcherAssert.assertThat(
-        dockerInspect,
-        CoreMatchers.containsString(
+                + "            },");
+    assertThat(dockerInspect)
+        .contains(
             "            \"ExposedPorts\": {\n"
                 + "                \"1000/tcp\": {},\n"
                 + "                \"2000/udp\": {},\n"
                 + "                \"2001/udp\": {},\n"
                 + "                \"2002/udp\": {},\n"
-                + "                \"2003/udp\": {}"));
-    MatcherAssert.assertThat(
-        dockerInspect,
-        CoreMatchers.containsString(
+                + "                \"2003/udp\": {}");
+    assertThat(dockerInspect)
+        .contains(
             "            \"Labels\": {\n"
                 + "                \"key1\": \"value1\",\n"
                 + "                \"key2\": \"value2\"\n"
-                + "            }"));
+                + "            }");
   }
 
-  static String readDigestFile(Path digestPath) throws IOException, DigestException {
+  private static String readDigestFile(Path digestPath) throws IOException, DigestException {
     Assert.assertTrue(Files.exists(digestPath));
     String digest = new String(Files.readAllBytes(digestPath), StandardCharsets.UTF_8);
     return DescriptorDigest.fromDigest(digest).toString();
@@ -212,11 +206,11 @@ public class SingleProjectIntegrationTest {
 
     assertDockerInspect(targetImage);
     JibRunHelper.assertSimpleCreationTimeIsEqual(Instant.EPOCH, targetImage);
-    assertWorkingDirectory("/home", targetImage);
-    assertEntrypoint(
-        "[java -cp /d1:/d2:/app/resources:/app/classes:/app/libs/* com.test.HelloWorld]",
-        targetImage);
-    assertLayerSize(9, targetImage);
+    assertThat(getWorkingDirectory(targetImage)).isEqualTo("/home");
+    assertThat(getEntrypoint(targetImage))
+        .isEqualTo(
+            "[java -cp /d1:/d2:/app/resources:/app/classes:/app/libs/* com.test.HelloWorld]");
+    assertThat(getLayerSize(targetImage)).isEqualTo(9);
   }
 
   @Test
@@ -275,7 +269,7 @@ public class SingleProjectIntegrationTest {
       throws DigestException, IOException, InterruptedException {
     Assume.assumeTrue(isJava11RuntimeOrHigher());
 
-    String targetImage = "localhost:6000/simpleimage:gradle" + System.nanoTime();
+    String targetImage = "simpleimage:gradle" + System.nanoTime();
     Assert.assertEquals(
         "Hello, world. \n1970-01-01T00:00:01Z\n",
         JibRunHelper.buildToDockerDaemonAndRun(
@@ -306,37 +300,55 @@ public class SingleProjectIntegrationTest {
   @Test
   public void testDockerDaemon_simple_multipleExtraDirectories()
       throws DigestException, IOException, InterruptedException {
-    String targetImage = "localhost:6000/simpleimage:gradle" + System.nanoTime();
+    String targetImage = "simpleimage:gradle" + System.nanoTime();
     Assert.assertEquals(
         "Hello, world. \n1970-01-01T00:00:01Z\nrw-r--r--\nrw-r--r--\nfoo\ncat\n"
             + "1970-01-01T00:00:01Z\n1970-01-01T00:00:01Z\n",
         JibRunHelper.buildToDockerDaemonAndRun(
             simpleTestProject, targetImage, "build-extra-dirs.gradle"));
-    assertLayerSize(10, targetImage); // one more than usual
+    assertThat(getLayerSize(targetImage)).isEqualTo(10); // one more than usual
   }
 
   @Test
   public void testDockerDaemon_simple_multipleExtraDirectoriesWithAlternativeConfig()
       throws DigestException, IOException, InterruptedException {
-    String targetImage = "localhost:6000/simpleimage:gradle" + System.nanoTime();
+    String targetImage = "simpleimage:gradle" + System.nanoTime();
     Assert.assertEquals(
         "Hello, world. \n1970-01-01T00:00:01Z\nrw-r--r--\nrw-r--r--\nfoo\ncat\n"
             + "1970-01-01T00:00:01Z\n1970-01-01T00:00:01Z\n",
         JibRunHelper.buildToDockerDaemonAndRun(
             simpleTestProject, targetImage, "build-extra-dirs2.gradle"));
-    assertLayerSize(10, targetImage); // one more than usual
+    assertThat(getLayerSize(targetImage)).isEqualTo(10); // one more than usual
   }
 
   @Test
   public void testDockerDaemon_simple_multipleExtraDirectoriesWithClosure()
       throws DigestException, IOException, InterruptedException {
-    String targetImage = "localhost:6000/simpleimage:gradle" + System.nanoTime();
+    String targetImage = "simpleimage:gradle" + System.nanoTime();
     Assert.assertEquals(
         "Hello, world. \n1970-01-01T00:00:01Z\nrw-r--r--\nrw-r--r--\nfoo\ncat\n"
             + "1970-01-01T00:00:01Z\n1970-01-01T00:00:01Z\nbaz\n1970-01-01T00:00:01Z\n",
         JibRunHelper.buildToDockerDaemonAndRun(
             simpleTestProject, targetImage, "build-extra-dirs3.gradle"));
-    assertLayerSize(10, targetImage); // one more than usual
+    assertThat(getLayerSize(targetImage)).isEqualTo(10); // one more than usual
+  }
+
+  @Test
+  public void testDockerDaemon_simple_extraDirectoriesFiltering()
+      throws DigestException, IOException, InterruptedException {
+    String targetImage = "simpleimage:gradle" + System.nanoTime();
+    JibRunHelper.buildToDockerDaemon(
+        simpleTestProject, targetImage, "build-extra-dirs-filtering.gradle");
+    String output =
+        new Command("docker", "run", "--rm", "--entrypoint=ls", targetImage, "-1R", "/extras")
+            .run();
+
+    // No "bar" or "*.txt" files. Only copies the following:
+    //   /extras/cat.json
+    //   /extras/foo
+    //   /extras/sub/
+    //   /extras/sub/a.json
+    assertThat(output).isEqualTo("/extras:\ncat.json\nfoo\nsub\n\n/extras/sub:\na.json\n");
   }
 
   @Test
@@ -361,7 +373,7 @@ public class SingleProjectIntegrationTest {
     Assert.assertEquals(output, new Command("docker", "run", "--rm", id).run());
 
     JibRunHelper.assertSimpleCreationTimeIsAfter(beforeBuild, targetImage);
-    assertWorkingDirectory("/", targetImage);
+    assertThat(getWorkingDirectory(targetImage)).isEqualTo("/");
   }
 
   @Test
@@ -370,7 +382,7 @@ public class SingleProjectIntegrationTest {
     Instant beforeBuild = Instant.now();
     buildAndRunComplex(targetImage, "testuser", "testpassword", localRegistry1);
     JibRunHelper.assertSimpleCreationTimeIsAfter(beforeBuild, targetImage);
-    assertWorkingDirectory("/", targetImage);
+    assertThat(getWorkingDirectory(targetImage)).isEqualTo("/");
   }
 
   @Test
@@ -382,7 +394,7 @@ public class SingleProjectIntegrationTest {
         JibRunHelper.buildToDockerDaemonAndRun(simpleTestProject, targetImage, "build.gradle"));
     JibRunHelper.assertSimpleCreationTimeIsEqual(Instant.EPOCH, targetImage);
     assertDockerInspect(targetImage);
-    assertWorkingDirectory("/home", targetImage);
+    assertThat(getWorkingDirectory(targetImage)).isEqualTo("/home");
   }
 
   @Test
@@ -477,6 +489,6 @@ public class SingleProjectIntegrationTest {
         new Command("docker", "run", "--rm", targetImage).run());
     assertDockerInspect(targetImage);
     JibRunHelper.assertSimpleCreationTimeIsEqual(Instant.EPOCH, targetImage);
-    assertWorkingDirectory("/home", targetImage);
+    assertThat(getWorkingDirectory(targetImage)).isEqualTo("/home");
   }
 }

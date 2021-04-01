@@ -80,7 +80,7 @@ public class JavaContainerBuilderHelper {
     includes
         .stream()
         .map(pattern -> FileSystems.getDefault().getPathMatcher("glob:" + pattern))
-        .map(pathMatcher -> (Predicate<Path>) (path -> pathMatcher.matches(path)))
+        .map(pathMatcher -> (Predicate<Path>) path -> pathMatcher.matches(path))
         .reduce((matches1, matches2) -> matches1.or(matches2))
         .ifPresent(walker::filter);
     // walk the source tree and add layer entries
