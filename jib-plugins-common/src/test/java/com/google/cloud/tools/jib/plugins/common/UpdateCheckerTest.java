@@ -116,7 +116,7 @@ public class UpdateCheckerTest {
         new String(
             Files.readAllBytes(configDir.resolve("lastUpdateCheck")), StandardCharsets.UTF_8);
     assertThat(testWebServer.getInputRead()).contains("User-Agent: jib 2.0.0 tool name");
-    assertThat(Instant.parse(modifiedTime).isAfter(before)).isTrue();
+    assertThat(Instant.parse(modifiedTime)).isGreaterThan(before);
   }
 
   @Test
@@ -133,7 +133,7 @@ public class UpdateCheckerTest {
     String modifiedTime =
         new String(
             Files.readAllBytes(configDir.resolve("lastUpdateCheck")), StandardCharsets.UTF_8);
-    assertThat(Instant.parse(modifiedTime).isAfter(before)).isTrue();
+    assertThat(Instant.parse(modifiedTime)).isGreaterThan(before);
   }
 
   @Test
@@ -151,7 +151,7 @@ public class UpdateCheckerTest {
     String modifiedTime =
         new String(
             Files.readAllBytes(configDir.resolve("lastUpdateCheck")), StandardCharsets.UTF_8);
-    assertThat(Instant.parse(modifiedTime).isAfter(before)).isTrue();
+    assertThat(Instant.parse(modifiedTime)).isGreaterThan(before);
   }
 
   @Test
@@ -186,7 +186,7 @@ public class UpdateCheckerTest {
         new String(
             Files.readAllBytes(configDir.resolve("lastUpdateCheck")), StandardCharsets.UTF_8);
 
-    assertThat(Instant.parse(modifiedTime).isAfter(before)).isTrue();
+    assertThat(Instant.parse(modifiedTime)).isGreaterThan(before);
     assertThat(message)
         .hasValue(
             "A new version of Jib (2.0.0) is available (currently using 1.0.2). Update your build "
