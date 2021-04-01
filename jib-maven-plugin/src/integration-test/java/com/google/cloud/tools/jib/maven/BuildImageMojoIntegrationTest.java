@@ -560,7 +560,7 @@ public class BuildImageMojoIntegrationTest {
     Assert.assertNotEquals(digest, id);
     Assert.assertEquals(output, new Command("docker", "run", "--rm", id).run());
 
-    assertThat(getCreationTime(targetImage)).isAtLeast(before);
+    assertThat(getCreationTime(targetImage)).isGreaterThan(before);
     assertThat(getWorkingDirectory(targetImage)).isEqualTo("/");
     assertThat(getEntrypoint(targetImage))
         .isEqualTo(
