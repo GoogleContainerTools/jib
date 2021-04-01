@@ -83,7 +83,7 @@ public class UpdateCheckerTest {
     String modifiedTime =
         new String(
             Files.readAllBytes(configDir.resolve("lastUpdateCheck")), StandardCharsets.UTF_8);
-    assertThat(Instant.parse(modifiedTime).isAfter(before)).isTrue();
+    assertThat(Instant.parse(modifiedTime)).isGreaterThan(before);
   }
 
   @Test
