@@ -13,7 +13,7 @@ labels: release
 - [ ] Update [README.md]({{ env.README_URL }})
 - [ ] Update [CONTRIBUTING.md](https://github.com/GoogleContainerTools/jib/blob/master/CONTRIBUTING.md)
 - [ ] Update [examples](https://github.com/GoogleContainerTools/jib/tree/master/examples)
-- [ ] Complete [Release]({{ env.RELEASE_DRAFT }})
+- [ ] Publish [Release]({{ env.RELEASE_DRAFT }})
 - [ ] Merge PR ({{ env.RELEASE_PR }})
 - [ ] Update the current [milestone](https://github.com/GoogleContainerTools/jib/milestones), roll over any incomplete issues to next milestone.
 
