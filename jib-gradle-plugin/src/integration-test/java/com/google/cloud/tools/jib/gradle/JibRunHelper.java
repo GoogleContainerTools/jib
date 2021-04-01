@@ -16,6 +16,8 @@
 
 package com.google.cloud.tools.jib.gradle;
 
+import static com.google.common.truth.Truth.assertThat;
+
 import com.google.cloud.tools.jib.Command;
 import com.google.cloud.tools.jib.api.DescriptorDigest;
 import com.google.cloud.tools.jib.api.ImageReference;
@@ -130,8 +132,8 @@ public class JibRunHelper {
 
     Assert.assertEquals(expectedOutput, pullAndRunBuiltImage(imageReference));
     Assert.assertEquals(expectedOutput, pullAndRunBuiltImage(additionalImageReference));
-    assertSimpleCreationTimeIsEqual(Instant.EPOCH, imageReference);
-    assertSimpleCreationTimeIsEqual(Instant.EPOCH, additionalImageReference);
+    assertThat(getCreationTime(imageReference)).isEqualTo(Instant.EPOCH);
+    assertThat(getCreationTime(additionalImageReference)).isEqualTo(Instant.EPOCH);
   }
 
   static BuildResult buildToDockerDaemon(
@@ -181,20 +183,10 @@ public class JibRunHelper {
     MatcherAssert.assertThat(buildResult.getOutput(), CoreMatchers.containsString(successMessage));
   }
 
-  static void assertSimpleCreationTimeIsEqual(Instant match, String imageReference)
-      throws IOException, InterruptedException {
+  static Instant getCreationTime(String imageReference) throws IOException, InterruptedException {
     String inspect =
         new Command("docker", "inspect", "-f", "{{.Created}}", imageReference).run().trim();
-    Instant parsed = Instant.parse(inspect);
-    Assert.assertEquals(match, parsed);
-  }
-
-  static void assertSimpleCreationTimeIsAfter(Instant before, String imageReference)
-      throws IOException, InterruptedException {
-    String inspect =
-        new Command("docker", "inspect", "-f", "{{.Created}}", imageReference).run().trim();
-    Instant parsed = Instant.parse(inspect);
-    Assert.assertTrue(parsed.isAfter(before));
+    return Instant.parse(inspect);
   }
 
   static void assertImageDigestAndId(Path projectRoot) throws IOException, DigestException {
