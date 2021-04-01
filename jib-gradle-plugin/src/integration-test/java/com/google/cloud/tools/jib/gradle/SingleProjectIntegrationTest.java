@@ -269,7 +269,7 @@ public class SingleProjectIntegrationTest {
       throws DigestException, IOException, InterruptedException {
     Assume.assumeTrue(isJava11RuntimeOrHigher());
 
-    String targetImage = "localhost:6000/simpleimage:gradle" + System.nanoTime();
+    String targetImage = "simpleimage:gradle" + System.nanoTime();
     Assert.assertEquals(
         "Hello, world. \n1970-01-01T00:00:01Z\n",
         JibRunHelper.buildToDockerDaemonAndRun(
@@ -300,7 +300,7 @@ public class SingleProjectIntegrationTest {
   @Test
   public void testDockerDaemon_simple_multipleExtraDirectories()
       throws DigestException, IOException, InterruptedException {
-    String targetImage = "localhost:6000/simpleimage:gradle" + System.nanoTime();
+    String targetImage = "simpleimage:gradle" + System.nanoTime();
     Assert.assertEquals(
         "Hello, world. \n1970-01-01T00:00:01Z\nrw-r--r--\nrw-r--r--\nfoo\ncat\n"
             + "1970-01-01T00:00:01Z\n1970-01-01T00:00:01Z\n",
@@ -312,7 +312,7 @@ public class SingleProjectIntegrationTest {
   @Test
   public void testDockerDaemon_simple_multipleExtraDirectoriesWithAlternativeConfig()
       throws DigestException, IOException, InterruptedException {
-    String targetImage = "localhost:6000/simpleimage:gradle" + System.nanoTime();
+    String targetImage = "simpleimage:gradle" + System.nanoTime();
     Assert.assertEquals(
         "Hello, world. \n1970-01-01T00:00:01Z\nrw-r--r--\nrw-r--r--\nfoo\ncat\n"
             + "1970-01-01T00:00:01Z\n1970-01-01T00:00:01Z\n",
@@ -324,7 +324,7 @@ public class SingleProjectIntegrationTest {
   @Test
   public void testDockerDaemon_simple_multipleExtraDirectoriesWithClosure()
       throws DigestException, IOException, InterruptedException {
-    String targetImage = "localhost:6000/simpleimage:gradle" + System.nanoTime();
+    String targetImage = "simpleimage:gradle" + System.nanoTime();
     Assert.assertEquals(
         "Hello, world. \n1970-01-01T00:00:01Z\nrw-r--r--\nrw-r--r--\nfoo\ncat\n"
             + "1970-01-01T00:00:01Z\n1970-01-01T00:00:01Z\nbaz\n1970-01-01T00:00:01Z\n",
@@ -336,7 +336,7 @@ public class SingleProjectIntegrationTest {
   @Test
   public void testDockerDaemon_simple_extraDirectoriesFiltering()
       throws DigestException, IOException, InterruptedException {
-    String targetImage = "localhost:6000/simpleimage:gradle" + System.nanoTime();
+    String targetImage = "simpleimage:gradle" + System.nanoTime();
     JibRunHelper.buildToDockerDaemon(
         simpleTestProject, targetImage, "build-extra-dirs-filtering.gradle");
     String output =

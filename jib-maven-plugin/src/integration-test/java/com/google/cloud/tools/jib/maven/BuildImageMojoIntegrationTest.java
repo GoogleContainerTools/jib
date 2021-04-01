@@ -16,6 +16,8 @@
 
 package com.google.cloud.tools.jib.maven;
 
+import static com.google.common.truth.Truth.assertThat;
+
 import com.google.cloud.tools.jib.Command;
 import com.google.cloud.tools.jib.IntegrationTestingConfiguration;
 import com.google.cloud.tools.jib.api.Credential;
@@ -218,8 +220,8 @@ public class BuildImageMojoIntegrationTest {
     String digestOutput = pullAndRunBuiltImage(digestImageReference);
     Assert.assertEquals(output, digestOutput);
 
-    assertCreationTimeEpoch(imageReference);
-    assertCreationTimeEpoch(additionalImageReference);
+    assertThat(getCreationTime(imageReference)).isEqualTo(Instant.EPOCH);
+    assertThat(getCreationTime(additionalImageReference)).isEqualTo(Instant.EPOCH);
 
     return output;
   }
@@ -263,24 +265,22 @@ public class BuildImageMojoIntegrationTest {
   private static void assertDockerInspectParameters(String imageReference)
       throws IOException, InterruptedException {
     String dockerInspect = new Command("docker", "inspect", imageReference).run();
-    MatcherAssert.assertThat(
-        dockerInspect,
-        CoreMatchers.containsString(
+    assertThat(dockerInspect)
+        .contains(
             "            \"ExposedPorts\": {\n"
                 + "                \"1000/tcp\": {},\n"
                 + "                \"2000/udp\": {},\n"
                 + "                \"2001/udp\": {},\n"
                 + "                \"2002/udp\": {},\n"
-                + "                \"2003/udp\": {}"));
-    MatcherAssert.assertThat(
-        dockerInspect,
-        CoreMatchers.containsString(
+                + "                \"2003/udp\": {}");
+    assertThat(dockerInspect)
+        .contains(
             "            \"Labels\": {\n"
                 + "                \"key1\": \"value1\",\n"
                 + "                \"key2\": \"value2\"\n"
-                + "            }"));
+                + "            }");
     String history = new Command("docker", "history", imageReference).run();
-    MatcherAssert.assertThat(history, CoreMatchers.containsString("jib-maven-plugin"));
+    assertThat(history).contains("jib-maven-plugin");
   }
 
   private static float getBuildTimeFromVerifierLog(Verifier verifier) throws IOException {
@@ -299,37 +299,25 @@ public class BuildImageMojoIntegrationTest {
     return -1;
   }
 
-  private static void assertCreationTimeEpoch(String imageReference)
-      throws IOException, InterruptedException {
-    Assert.assertEquals(
-        "1970-01-01T00:00:00Z",
-        new Command("docker", "inspect", "-f", "{{.Created}}", imageReference).run().trim());
-  }
-
-  private static void assertCreationTimeIsAfter(Instant before, String imageReference)
+  private static Instant getCreationTime(String imageReference)
       throws IOException, InterruptedException {
     String inspect =
         new Command("docker", "inspect", "-f", "{{.Created}}", imageReference).run().trim();
-    Instant after = Instant.parse(inspect);
-    Assert.assertTrue(after.isAfter(before));
+    return Instant.parse(inspect);
   }
 
-  private static void assertWorkingDirectory(String expected, String imageReference)
+  private static String getWorkingDirectory(String imageReference)
       throws IOException, InterruptedException {
-    Assert.assertEquals(
-        expected,
-        new Command("docker", "inspect", "-f", "{{.Config.WorkingDir}}", imageReference)
-            .run()
-            .trim());
+    return new Command("docker", "inspect", "-f", "{{.Config.WorkingDir}}", imageReference)
+        .run()
+        .trim();
   }
 
-  private static void assertEntrypoint(String expected, String imageReference)
+  private static String getEntrypoint(String imageReference)
       throws IOException, InterruptedException {
-    Assert.assertEquals(
-        expected,
-        new Command("docker", "inspect", "-f", "{{.Config.Entrypoint}}", imageReference)
-            .run()
-            .trim());
+    return new Command("docker", "inspect", "-f", "{{.Config.Entrypoint}}", imageReference)
+        .run()
+        .trim();
   }
 
   private static void assertLayerSize(int expected, String imageReference)
@@ -412,8 +400,8 @@ public class BuildImageMojoIntegrationTest {
             + "1970-01-01T00:00:01Z\n1970-01-01T00:00:01Z\n",
         buildAndRun(simpleTestProject.getProjectRoot(), targetImage, "pom.xml", true));
 
-    assertCreationTimeEpoch(targetImage);
-    assertWorkingDirectory("/home", targetImage);
+    assertThat(getCreationTime(targetImage)).isEqualTo(Instant.EPOCH);
+    assertThat(getWorkingDirectory(targetImage)).isEqualTo("/home");
     assertLayerSize(9, targetImage);
   }
 
@@ -508,8 +496,8 @@ public class BuildImageMojoIntegrationTest {
     String targetImage = getTestImageReference("emptyimage:maven");
     Assert.assertEquals(
         "", buildAndRun(emptyTestProject.getProjectRoot(), targetImage, "pom.xml", false));
-    assertCreationTimeEpoch(targetImage);
-    assertWorkingDirectory("/", targetImage);
+    assertThat(getCreationTime(targetImage)).isEqualTo(Instant.EPOCH);
+    assertThat(getWorkingDirectory(targetImage)).isEqualTo("/");
   }
 
   @Test
@@ -572,12 +560,12 @@ public class BuildImageMojoIntegrationTest {
     Assert.assertNotEquals(digest, id);
     Assert.assertEquals(output, new Command("docker", "run", "--rm", id).run());
 
-    assertCreationTimeIsAfter(before, targetImage);
-    assertWorkingDirectory("/", targetImage);
-    assertEntrypoint(
-        "[java -Xms512m -Xdebug -cp /other:/app/resources:/app/classes:/app/libs/* "
-            + "com.test.HelloWorld]",
-        targetImage);
+    assertThat(getCreationTime(targetImage)).isAtLeast(before);
+    assertThat(getWorkingDirectory(targetImage)).isEqualTo("/");
+    assertThat(getEntrypoint(targetImage))
+        .isEqualTo(
+            "[java -Xms512m -Xdebug -cp /other:/app/resources:/app/classes:/app/libs/* "
+                + "com.test.HelloWorld]");
   }
 
   @Test
@@ -590,10 +578,7 @@ public class BuildImageMojoIntegrationTest {
             + "foo\ncat\n2019-06-17T16:30:00Z\n2019-06-17T16:30:00Z\n",
         buildAndRunComplex(targetImage, pom));
 
-    String inspect =
-        new Command("docker", "inspect", "-f", "{{.Created}}", targetImage).run().trim();
-    Instant parsed = Instant.parse(inspect);
-    Assert.assertEquals(Instant.parse("2013-11-05T06:29:30Z"), parsed);
+    assertThat(getCreationTime(targetImage)).isEqualTo(Instant.parse("2013-11-05T06:29:30Z"));
   }
 
   @Test
@@ -605,7 +590,7 @@ public class BuildImageMojoIntegrationTest {
             + "1970-01-01T00:00:01Z\n1970-01-01T00:00:01Z\n"
             + "-Xms512m\n-Xdebug\nenvvalue1\nenvvalue2\n",
         buildAndRunComplex(targetImage, "pom-complex.xml"));
-    assertWorkingDirectory("/", targetImage);
+    assertThat(getWorkingDirectory(targetImage)).isEqualTo("/");
   }
 
   @Test
@@ -617,7 +602,7 @@ public class BuildImageMojoIntegrationTest {
             + "1970-01-01T00:00:01Z\n1970-01-01T00:00:01Z\n"
             + "-Xms512m\n-Xdebug\nenvvalue1\nenvvalue2\n",
         buildAndRunComplex(targetImage, "pom-complex-properties.xml"));
-    assertWorkingDirectory("/", targetImage);
+    assertThat(getWorkingDirectory(targetImage)).isEqualTo("/");
   }
 
   @Test
