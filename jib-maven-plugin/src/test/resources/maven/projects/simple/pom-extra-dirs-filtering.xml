@@ -48,14 +48,14 @@
               <path>
                 <from>${project.basedir}/src/main/jib-custom-3</from>
                 <into>/extras</into>
-                <includes>**/*a*</includes>
+                <includes>**/*a*,*.txt</includes>
                 <excludes>**/*.txt</excludes>
               </path>
               <path>
                 <from>src/main/jib-custom-4</from>
                 <into>/extras</into>
                 <includes>
-                  <include>**/foo</include>
+                  <include>foo</include>
                 </includes>
               </path>
             </paths>
