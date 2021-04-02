@@ -110,9 +110,7 @@ public class JavaContainerBuilderHelperTest {
     assertThat(layerConfiguration.getEntries())
         .comparingElementsUsing(SOURCE_FILE_OF)
         .containsExactly(
-            extraFilesDirectory.resolve("a"),
-            extraFilesDirectory.resolve("a/b/bar"),
-            extraFilesDirectory.resolve("c/cat"));
+            extraFilesDirectory.resolve("a/b/bar"), extraFilesDirectory.resolve("c/cat"));
   }
 
   @Test
@@ -130,6 +128,7 @@ public class JavaContainerBuilderHelperTest {
     assertThat(layerConfiguration.getEntries())
         .comparingElementsUsing(SOURCE_FILE_OF)
         .containsExactly(
+            extraFilesDirectory.resolve("a"),
             extraFilesDirectory.resolve("a/b"),
             extraFilesDirectory.resolve("c"),
             extraFilesDirectory.resolve("foo"));
@@ -158,7 +157,7 @@ public class JavaContainerBuilderHelperTest {
         JavaContainerBuilderHelper.extraDirectoryLayerConfiguration(
             extraFilesDirectory,
             AbsoluteUnixPath.get("/"),
-            Arrays.asList("**/*a*"),
+            Arrays.asList("**/*a*", "a"),
             Arrays.asList("**/*c*"),
             Collections.emptyMap(),
             (ignored1, ignored2) -> Instant.EPOCH);

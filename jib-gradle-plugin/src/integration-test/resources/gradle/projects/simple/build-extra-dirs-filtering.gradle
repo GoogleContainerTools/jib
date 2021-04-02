@@ -22,13 +22,13 @@ jib {
       path {
         from = 'src/main/custom-extra-dir3'
         into = '/extras'
-        includes = ['**/*a*']
+        includes = ['**/*a*', '*.txt']
         excludes = ['**/*.txt']
       }
       path {
         from = 'src/main/custom-extra-dir4'
         into = '/extras'
-        includes = ['**/foo']
+        includes = ['foo']
       }
     }
   }

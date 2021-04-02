@@ -116,12 +116,11 @@ public class BuildDockerMojoIntegrationTest {
         new Command("docker", "run", "--rm", "--entrypoint=ls", targetImage, "-1R", "/extras")
             .run();
 
-    // No "bar" or "*.txt" files. Only copies the following:
-    //   /extras/cat.json
+    //   /extras/cat.txt
     //   /extras/foo
     //   /extras/sub/
     //   /extras/sub/a.json
-    assertThat(output).isEqualTo("/extras:\ncat.json\nfoo\nsub\n\n/extras/sub:\na.json\n");
+    assertThat(output).isEqualTo("/extras:\ncat.txt\nfoo\nsub\n\n/extras/sub:\na.json\n");
   }
 
   @Test
