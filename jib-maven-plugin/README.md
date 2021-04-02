@@ -512,7 +512,7 @@ You may also specify the target of the copy and include or exclude files:
         <into>/extras</into>
       </path>
       <path>
-        // copies a single file
+        // copies a single-file.xml
         <from>src/main/resources/xml-files</from>
         <into>/dest-in-container</into>
         <includes>single-file.xml</includes>
