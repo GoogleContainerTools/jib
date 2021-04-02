@@ -193,6 +193,7 @@ Field | Type | Default | Description
 `skaffold` | [`skaffold`](#skaffold-integration) | See [`skaffold`](#skaffold-integration) | Configures the internal skaffold tasks. This configuration should only be used when integrating with [`skaffold`](#skaffold-integration). |
 `containerizingMode` | `String` | `exploded` | If set to `packaged`, puts the JAR artifact built by the Gradle Java plugin into the final image. If set to `exploded` (default), containerizes individual `.class` files and resources files.
 `allowInsecureRegistries` | `boolean` | `false` | If set to true, Jib ignores HTTPS certificate errors and may fall back to HTTP as a last resort. Leaving this parameter set to `false` is strongly recommended, since HTTP communication is unencrypted and visible to others on the network, and insecure HTTPS is no better than plain HTTP. [If accessing a registry with a self-signed certificate, adding the certificate to your Java runtime's trusted keys](https://github.com/GoogleContainerTools/jib/tree/master/docs/self_sign_cert.md) may be an alternative to enabling this option.
+`configurationName` | `String` | `main` | Specify the name of the [Gradle Configuration](https://docs.gradle.org/current/dsl/org.gradle.api.artifacts.ConfigurationContainer.html) to use.
 
 <a name="from-closure"></a>`from` is a closure with the following properties:
 
@@ -262,6 +263,8 @@ Property | Type | Default | Description
 --- | --- | --- | ---
 `from` | `Object` | `(project-dir)/src/main/jib` | Accepts source directories that are recognized by [`Project.files()`](https://docs.gradle.org/current/javadoc/org/gradle/api/Project.html#files-java.lang.Object...-), such as `String`, `File`, `Path`, `List<String\|File\|Path>`, etc.
 `into` | `String` | `/` | The absolute unix path on the container to copy the extra directory contents into.
+`includes` | `List<String>` | *None* | Glob patterns for including files. See [Adding Arbitrary Files to the Image](#adding-arbitrary-files-to-the-image) for an example.
+`excludes` | `List<String>` | *None* | Glob patterns for excluding files. See [Adding Arbitrary Files to the Image](#adding-arbitrary-files-to-the-image) for an example.
 
 <a name="outputpaths-closure"></a>`outputPaths` is a closure with the following properties:
 
@@ -412,7 +415,7 @@ jib {
 }
 ```
 
-You may also specify the target of the copy using `paths` as a closure:
+Using `paths` as a closure, you may also specify the target of the copy and include or exclude files:
 
 ```groovy
   extraDirectories {
@@ -425,6 +428,19 @@ You may also specify the target of the copy using `paths` as a closure:
         // copies the contents of 'src/main/another/dir' into '/extras' on the container
         from = file('src/main/another/dir')
         into = '/extras'
+      }
+      path {
+        // copies a single file
+        from = 'src/main/resources/xml-files'
+        into = '/dest-in-container'
+        includes = ['single-file.xml']
+      }
+      path {
+        // copies only .txt files except for 'hidden.txt' at the source root
+        from = 'build/some-output'
+        into = '/txt-files'
+        includes = ['*.txt', '**/*.txt']
+        excludes = ['hidden.txt']
       }
     }
   }
