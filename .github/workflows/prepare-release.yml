@@ -88,7 +88,7 @@ jobs:
             ### Major Changes
 
             See [CHANGELOG.md](https://github.com/GoogleContainerTools/jib/blob/master/jib-${{ github.event.inputs.project }}-plugin/CHANGELOG.md) for more details.
-      
+
       - name: Create Maven/Gradle release checklist issue
         uses: JasonEtco/create-an-issue@v2
         if: ${{ github.event.inputs.project == 'maven' || github.event.inputs.project == 'gradle' }}
@@ -103,9 +103,9 @@ jobs:
         with:
           filename: .github/RELEASE_TEMPLATES/plugin_release_checklist.md
 
-
-      - name: Draft Jib Core GitHub release
+      - name: Draft Core GitHub release
         uses: actions/create-release@v1
+        id: create-core-release
         if: ${{ github.event.inputs.project == 'core' }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -117,3 +117,16 @@ jobs:
             ### Major Changes
 
             See [CHANGELOG.md](https://github.com/GoogleContainerTools/jib/blob/master/jib-core/CHANGELOG.md) for more details.
+
+      - name: Create Core release checklist issue
+        uses: JasonEtco/create-an-issue@v2
+        if: ${{ github.event.inputs.project == 'core' }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_NAME: v${{ github.event.inputs.release_version }}-core
+          CHANGELOG_URL: https://github.com/GoogleContainerTools/jib/blob/master/jib-core/CHANGELOG.md
+          README_URL: https://github.com/GoogleContainerTools/jib/blob/master/jib-core/README.md
+          RELEASE_DRAFT: ${{ steps.create-core-release.outputs.html_url }}
+          RELEASE_PR: ${{steps.create-pr.outputs.pr_url}}
+        with:
+          filename: .github/RELEASE_TEMPLATES/core_release_checklist.md
