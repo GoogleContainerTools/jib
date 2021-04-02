@@ -634,8 +634,7 @@ public class PluginConfigurationProcessorTest {
   }
 
   @Test
-  public void testGetContainerizingModeChecked_packagedWithWar()
-      throws InvalidContainerizingModeException {
+  public void testGetContainerizingModeChecked_packagedWithWar() {
     when(rawConfiguration.getContainerizingMode()).thenReturn("packaged");
     when(projectProperties.isWarProject()).thenReturn(true);
 
