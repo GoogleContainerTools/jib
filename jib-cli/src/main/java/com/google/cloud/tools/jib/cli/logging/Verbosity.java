@@ -23,9 +23,10 @@ public enum Verbosity {
   lifecycle(3),
   info(4),
   debug(5);
+
   private final int value;
 
-  Verbosity(int value) {
+  private Verbosity(int value) {
     this.value = value;
   }
 
@@ -34,6 +35,6 @@ public enum Verbosity {
   }
 
   public boolean atLeast(Verbosity target) {
-    return this.value >= target.value;
+    return value >= target.value;
   }
 }

@@ -16,6 +16,9 @@
 
 package com.google.cloud.tools.jib.cache;
 
+import static com.google.common.truth.Truth.assertThat;
+import static org.junit.Assert.assertThrows;
+
 import com.google.cloud.tools.jib.api.DescriptorDigest;
 import com.google.cloud.tools.jib.api.ImageReference;
 import com.google.cloud.tools.jib.api.InvalidImageReferenceException;
@@ -40,6 +43,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.DigestException;
@@ -334,6 +338,21 @@ public class CacheStorageWriterTest {
     ContainerConfigurationTemplate savedContainerConfig =
         JsonTemplateMapper.readJsonFromFile(savedConfigPath, ContainerConfigurationTemplate.class);
     Assert.assertEquals("wasm", savedContainerConfig.getArchitecture());
+  }
+
+  @Test
+  public void testMoveIfDoesNotExist_exceptionAfterFailure() {
+    Exception exception =
+        assertThrows(
+            IOException.class,
+            () -> CacheStorageWriter.moveIfDoesNotExist(Paths.get("foo"), Paths.get("bar")));
+    assertThat(exception)
+        .hasMessageThat()
+        .contains(
+            "unable to move: foo to bar; such failures are often caused by interference from "
+                + "antivirus");
+    assertThat(exception).hasCauseThat().isInstanceOf(NoSuchFileException.class);
+    assertThat(exception.getCause()).hasMessageThat().isEqualTo("foo");
   }
 
   private void verifyCachedLayer(CachedLayer cachedLayer, Blob uncompressedLayerBlob)

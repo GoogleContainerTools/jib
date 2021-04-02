@@ -25,6 +25,7 @@ import com.google.cloud.tools.jib.api.Ports;
 import com.google.cloud.tools.jib.api.buildplan.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.api.buildplan.ImageFormat;
 import com.google.cloud.tools.jib.cli.jar.ProcessingMode;
+import com.google.cloud.tools.jib.cli.logging.HttpTraceLevel;
 import com.google.cloud.tools.jib.cli.logging.Verbosity;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -81,7 +82,7 @@ public class JarTest {
     assertThat(commonCliOptions.isSendCredentialsOverHttp()).isFalse();
     assertThat(commonCliOptions.getVerbosity()).isEqualTo(Verbosity.lifecycle);
     assertThat(commonCliOptions.isStacktrace()).isFalse();
-    assertThat(commonCliOptions.isHttpTrace()).isFalse();
+    assertThat(commonCliOptions.getHttpTrace()).isEqualTo(HttpTraceLevel.off);
     assertThat(commonCliOptions.isSerialize()).isFalse();
     assertThat(jarCommand.getFrom()).isEmpty();
     assertThat(jarCommand.getJvmFlags()).isEmpty();
@@ -116,7 +117,7 @@ public class JarTest {
     assertThat(commonCliOptions.getVerbosity()).isEqualTo(Verbosity.lifecycle);
     assertThat(commonCliOptions.isStacktrace()).isFalse();
     assertThat(commonCliOptions.isStacktrace()).isFalse();
-    assertThat(commonCliOptions.isHttpTrace()).isFalse();
+    assertThat(commonCliOptions.getHttpTrace()).isEqualTo(HttpTraceLevel.off);
     assertThat(commonCliOptions.isSerialize()).isFalse();
   }
 
@@ -154,7 +155,7 @@ public class JarTest {
     assertThat(commonCliOptions.isSendCredentialsOverHttp()).isTrue();
     assertThat(commonCliOptions.getVerbosity()).isEqualTo(Verbosity.info);
     assertThat(commonCliOptions.isStacktrace()).isTrue();
-    assertThat(commonCliOptions.isHttpTrace()).isTrue();
+    assertThat(commonCliOptions.getHttpTrace()).isEqualTo(HttpTraceLevel.config);
     assertThat(commonCliOptions.isSerialize()).isTrue();
   }
 

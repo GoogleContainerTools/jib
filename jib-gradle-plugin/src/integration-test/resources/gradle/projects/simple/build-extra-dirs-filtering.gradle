@@ -1,0 +1,35 @@
+plugins {
+  id 'java'
+  id 'com.google.cloud.tools.jib'
+}
+
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+repositories {
+  mavenCentral()
+}
+
+dependencies {
+  compile files('libs/dependency-1.0.0.jar')
+}
+
+jib {
+  from.image = 'busybox'
+  to.image = System.getProperty("_TARGET_IMAGE")
+  extraDirectories {
+    paths {
+      path {
+        from = 'src/main/custom-extra-dir3'
+        into = '/extras'
+        includes = ['**/*a*']
+        excludes = ['**/*.txt']
+      }
+      path {
+        from = 'src/main/custom-extra-dir4'
+        into = '/extras'
+        includes = ['**/foo']
+      }
+    }
+  }
+}

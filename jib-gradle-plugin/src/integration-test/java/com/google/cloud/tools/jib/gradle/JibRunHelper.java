@@ -16,6 +16,8 @@
 
 package com.google.cloud.tools.jib.gradle;
 
+import static com.google.common.truth.Truth.assertThat;
+
 import com.google.cloud.tools.jib.Command;
 import com.google.cloud.tools.jib.api.DescriptorDigest;
 import com.google.cloud.tools.jib.api.ImageReference;
@@ -83,7 +85,7 @@ public class JibRunHelper {
             "-Djib.allowInsecureRegistries=" + imageReference.startsWith("localhost"),
             "-b=" + gradleBuildFile);
     assertBuildSuccess(buildResult, "jib", "Built and pushed image as ");
-    assertImageDigestAndId(testProject.getProjectRoot());
+    assertThatExpectedImageDigestAndIdReturned(testProject.getProjectRoot());
     MatcherAssert.assertThat(buildResult.getOutput(), CoreMatchers.containsString(imageReference));
 
     return pullAndRunBuiltImage(imageReference, extraRunArguments);
@@ -102,7 +104,8 @@ public class JibRunHelper {
             "-Djib.allowInsecureRegistries=" + target.startsWith("localhost"),
             "-b=" + "build-local-base.gradle");
     assertBuildSuccess(buildResult, "jib", "Built and pushed image as ");
-    assertImageDigestAndId(SingleProjectIntegrationTest.simpleTestProject.getProjectRoot());
+    assertThatExpectedImageDigestAndIdReturned(
+        SingleProjectIntegrationTest.simpleTestProject.getProjectRoot());
     MatcherAssert.assertThat(buildResult.getOutput(), CoreMatchers.containsString(target));
     return pullAndRunBuiltImage(target);
   }
@@ -120,7 +123,7 @@ public class JibRunHelper {
             "-Djib.allowInsecureRegistries=" + imageReference.startsWith("localhost"),
             "-D_ADDITIONAL_TAG=" + additionalTag);
     assertBuildSuccess(buildResult, "jib", "Built and pushed image as ");
-    assertImageDigestAndId(testProject.getProjectRoot());
+    assertThatExpectedImageDigestAndIdReturned(testProject.getProjectRoot());
     MatcherAssert.assertThat(buildResult.getOutput(), CoreMatchers.containsString(imageReference));
 
     String additionalImageReference =
@@ -130,8 +133,8 @@ public class JibRunHelper {
 
     Assert.assertEquals(expectedOutput, pullAndRunBuiltImage(imageReference));
     Assert.assertEquals(expectedOutput, pullAndRunBuiltImage(additionalImageReference));
-    assertSimpleCreationTimeIsEqual(Instant.EPOCH, imageReference);
-    assertSimpleCreationTimeIsEqual(Instant.EPOCH, additionalImageReference);
+    assertThat(getCreationTime(imageReference)).isEqualTo(Instant.EPOCH);
+    assertThat(getCreationTime(additionalImageReference)).isEqualTo(Instant.EPOCH);
   }
 
   static BuildResult buildToDockerDaemon(
@@ -147,7 +150,7 @@ public class JibRunHelper {
             "-Djib.allowInsecureRegistries=" + imageReference.startsWith("localhost"),
             "-b=" + gradleBuildFile);
     assertBuildSuccess(buildResult, "jibDockerBuild", "Built image to Docker daemon as ");
-    assertImageDigestAndId(testProject.getProjectRoot());
+    assertThatExpectedImageDigestAndIdReturned(testProject.getProjectRoot());
     MatcherAssert.assertThat(buildResult.getOutput(), CoreMatchers.containsString(imageReference));
 
     String history = new Command("docker", "history", imageReference).run();
@@ -181,23 +184,14 @@ public class JibRunHelper {
     MatcherAssert.assertThat(buildResult.getOutput(), CoreMatchers.containsString(successMessage));
   }
 
-  static void assertSimpleCreationTimeIsEqual(Instant match, String imageReference)
-      throws IOException, InterruptedException {
+  static Instant getCreationTime(String imageReference) throws IOException, InterruptedException {
     String inspect =
         new Command("docker", "inspect", "-f", "{{.Created}}", imageReference).run().trim();
-    Instant parsed = Instant.parse(inspect);
-    Assert.assertEquals(match, parsed);
+    return Instant.parse(inspect);
   }
 
-  static void assertSimpleCreationTimeIsAfter(Instant before, String imageReference)
-      throws IOException, InterruptedException {
-    String inspect =
-        new Command("docker", "inspect", "-f", "{{.Created}}", imageReference).run().trim();
-    Instant parsed = Instant.parse(inspect);
-    Assert.assertTrue(parsed.isAfter(before));
-  }
-
-  static void assertImageDigestAndId(Path projectRoot) throws IOException, DigestException {
+  static void assertThatExpectedImageDigestAndIdReturned(Path projectRoot)
+      throws IOException, DigestException {
     Path digestPath = projectRoot.resolve("build/jib-image.digest");
     Assert.assertTrue(Files.exists(digestPath));
     String digest = new String(Files.readAllBytes(digestPath), StandardCharsets.UTF_8);

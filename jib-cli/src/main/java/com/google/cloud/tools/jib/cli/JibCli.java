@@ -16,6 +16,15 @@
 
 package com.google.cloud.tools.jib.cli;
 
+import com.google.api.client.http.HttpTransport;
+import com.google.api.client.http.apache.v2.ApacheHttpTransport;
+import com.google.cloud.tools.jib.api.LogEvent;
+import com.google.cloud.tools.jib.plugins.common.logging.ConsoleLogger;
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.util.logging.ConsoleHandler;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import picocli.CommandLine;
 
 @CommandLine.Command(
@@ -28,13 +37,46 @@ import picocli.CommandLine;
     subcommands = {Build.class, Jar.class})
 public class JibCli {
 
+  static Logger configureHttpLogging(Level level) {
+    // To instantiate the static HttpTransport logger field.
+    // Fixes https://github.com/GoogleContainerTools/jib/issues/3156.
+    new ApacheHttpTransport();
+    ConsoleHandler consoleHandler = new ConsoleHandler();
+    consoleHandler.setLevel(level);
+
+    Logger logger = Logger.getLogger(HttpTransport.class.getName());
+    logger.setLevel(level);
+    logger.addHandler(consoleHandler);
+    return logger;
+  }
+
+  static void logTerminatingException(
+      ConsoleLogger consoleLogger, Exception exception, boolean logStackTrace) {
+    if (logStackTrace) {
+      StringWriter writer = new StringWriter();
+      exception.printStackTrace(new PrintWriter(writer));
+      consoleLogger.log(LogEvent.Level.ERROR, writer.toString());
+    }
+
+    consoleLogger.log(
+        LogEvent.Level.ERROR,
+        "\u001B[31;1m"
+            + exception.getClass().getName()
+            + ": "
+            + exception.getMessage()
+            + "\u001B[0m");
+  }
+
   /**
    * The magic starts here.
    *
    * @param args the command-line arguments
    */
   public static void main(String[] args) {
-    int exitCode = new CommandLine(new JibCli()).execute(args);
+    int exitCode =
+        new CommandLine(new JibCli())
+            .setParameterExceptionHandler(new ShortErrorMessageHandler())
+            .execute(args);
     System.exit(exitCode);
   }
 }

@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- New `includes` and `excludes` options for `jib.extraDirectories`. This enables copying a subset of files from the source directory using glob patterns. ([#2564](https://github.com/GoogleContainerTools/jib/issues/2564))
 - Added an option `configurationName` to specify the name of the [Gradle Configuration](https://docs.gradle.org/current/dsl/org.gradle.api.artifacts.ConfigurationContainer.html) to use. The option can be lazily configured, for example, using Gradle `Provider` or `Property`. ([#3034](https://github.com/GoogleContainerTools/jib/pull/3034))
 ```gradle
     jib {
@@ -16,11 +17,17 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
+- Fixed an issue where some log messages used color in the "plain" console output. ([#2764](https://github.com/GoogleContainerTools/jib/pull/2764))
+
 ## 2.8.0
 
 ### Added
 
 - Added support for [configuring registry mirrors](https://github.com/GoogleContainerTools/jib/blob/master/docs/faq.md#i-am-hitting-docker-hub-rate-limits-how-can-i-configure-registry-mirrors) for base images. This is useful when hitting [Docker Hub rate limits](https://www.docker.com/increase-rate-limits). Only public mirrors (such as `mirror.gcr.io`) are supported. ([#3011](https://github.com/GoogleContainerTools/jib/issues/3011))
+
+### Changed
+
+- Build will fail if Jib cannot create or read the [global Jib configuration file](https://github.com/GoogleContainerTools/jib/tree/master/jib-gradle-plugin#global-jib-configuration). ([#2996](https://github.com/GoogleContainerTools/jib/pull/2996))
 
 ## 2.7.1
 

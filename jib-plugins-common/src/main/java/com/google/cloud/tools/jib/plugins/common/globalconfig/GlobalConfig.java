@@ -69,14 +69,14 @@ public class GlobalConfig {
     } catch (InvalidGlobalConfigException ex) {
       throw new InvalidGlobalConfigException(
           ex.getMessage()
-              + "; see https://github.com/GoogleContainerTools/jib/blob/global-config-doc/docs/faq.md#where-is-the-global-jib-configuration-file-and-how-i-can-configure-it "
+              + "; see https://github.com/GoogleContainerTools/jib/blob/master/docs/faq.md#where-is-the-global-jib-configuration-file-and-how-i-can-configure-it "
               + "to fix or you may need to delete "
               + configFile);
 
     } catch (IOException ex) {
       throw new IOException(
-          "Failed to open or parse global Jib config file; see "
-              + "https://github.com/GoogleContainerTools/jib/blob/global-config-doc/docs/faq.md#where-is-the-global-jib-configuration-file-and-how-i-can-configure-it "
+          "Failed to create, open, or parse global Jib config file; see "
+              + "https://github.com/GoogleContainerTools/jib/blob/master/docs/faq.md#where-is-the-global-jib-configuration-file-and-how-i-can-configure-it "
               + "to fix or you may need to delete "
               + configFile,
           ex);

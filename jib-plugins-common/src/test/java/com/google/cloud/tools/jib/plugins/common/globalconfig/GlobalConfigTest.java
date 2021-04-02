@@ -110,8 +110,8 @@ public class GlobalConfigTest {
     assertThat(exception)
         .hasMessageThat()
         .startsWith(
-            "Failed to open or parse global Jib config file; see "
-                + "https://github.com/GoogleContainerTools/jib/blob/global-config-doc/docs/faq.md#where-is-the-global-jib-configuration-file-and-how-i-can-configure-it "
+            "Failed to create, open, or parse global Jib config file; see "
+                + "https://github.com/GoogleContainerTools/jib/blob/master/docs/faq.md#where-is-the-global-jib-configuration-file-and-how-i-can-configure-it "
                 + "to fix or you may need to delete");
     assertThat(exception).hasMessageThat().endsWith(File.separator + "config.json");
   }
@@ -125,8 +125,8 @@ public class GlobalConfigTest {
     assertThat(exception)
         .hasMessageThat()
         .startsWith(
-            "Failed to open or parse global Jib config file; see "
-                + "https://github.com/GoogleContainerTools/jib/blob/global-config-doc/docs/faq.md#where-is-the-global-jib-configuration-file-and-how-i-can-configure-it "
+            "Failed to create, open, or parse global Jib config file; see "
+                + "https://github.com/GoogleContainerTools/jib/blob/master/docs/faq.md#where-is-the-global-jib-configuration-file-and-how-i-can-configure-it "
                 + "to fix or you may need to delete ");
     assertThat(exception).hasMessageThat().endsWith(File.separator + "config.json");
   }
@@ -141,7 +141,7 @@ public class GlobalConfigTest {
         .hasMessageThat()
         .startsWith(
             "'registryMirrors.registry' property is missing; see "
-                + "https://github.com/GoogleContainerTools/jib/blob/global-config-doc/docs/faq.md#where-is-the-global-jib-configuration-file-and-how-i-can-configure-it "
+                + "https://github.com/GoogleContainerTools/jib/blob/master/docs/faq.md#where-is-the-global-jib-configuration-file-and-how-i-can-configure-it "
                 + "to fix or you may need to delete ");
   }
 
@@ -155,7 +155,7 @@ public class GlobalConfigTest {
         .hasMessageThat()
         .startsWith(
             "'registryMirrors.mirrors' property is missing; see "
-                + "https://github.com/GoogleContainerTools/jib/blob/global-config-doc/docs/faq.md#where-is-the-global-jib-configuration-file-and-how-i-can-configure-it "
+                + "https://github.com/GoogleContainerTools/jib/blob/master/docs/faq.md#where-is-the-global-jib-configuration-file-and-how-i-can-configure-it "
                 + "to fix or you may need to delete");
   }
 }

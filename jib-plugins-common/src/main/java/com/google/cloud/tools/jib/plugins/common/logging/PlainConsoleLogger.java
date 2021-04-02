@@ -49,7 +49,9 @@ class PlainConsoleLogger implements ConsoleLogger {
     }
     Consumer<String> messageConsumer = messageConsumers.get(logLevel);
 
-    singleThreadedExecutor.execute(() -> messageConsumer.accept(message));
+    // remove the color from the message
+    final String plainMessage = message.replaceAll("\u001B\\[[0-9;]{1,5}m", "");
+    singleThreadedExecutor.execute(() -> messageConsumer.accept(plainMessage));
   }
 
   @Override

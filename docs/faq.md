@@ -7,6 +7,7 @@ If a question you have is not answered below, please [submit an issue](/../../is
 | What do you like best about Jib? What needs to be improved? Please tell us by taking a [one-minute survey](https://forms.gle/YRFeamGj51xmgnx28). Your responses will help us understand Jib usage and allow us to serve our customers (you!) better. |
 
 [But, I'm not a Java developer.](#but-im-not-a-java-developer)\
+[My build process doesn't let me integrate with the Jib Maven or Gradle plugin](#my-build-process-doesnt-let-me-integrate-with-the-jib-maven-or-gradle-plugin)\
 [How do I run the image I built?](#how-do-i-run-the-image-i-built)\
 [Where is bash?](#where-is-bash)\
 [What image format does Jib use?](#what-image-format-does-jib-use)\
@@ -47,6 +48,10 @@ If a question you have is not answered below, please [submit an issue](/../../is
 [I am seeing `Method Not Found` or `Class Not Found` errors when building.](#i-am-seeing-method-not-found-or-class-not-found-errors-when-building)\
 [Why won't my container start?](#why-wont-my-container-start)
 
+**Jib CLI**\
+[How does the `jar` command support Standard JARs?](#how-does-the-jar-command-support-standard-jars)\
+[How does the `jar` command support Spring Boot JARs?](#how-does-the-jar-command-support-spring-boot-jars)
+
 ---
 
 ### But, I'm not a Java developer.
@@ -54,6 +59,16 @@ If a question you have is not answered below, please [submit an issue](/../../is
 Check out [Jib CLI](https://github.com/GoogleContainerTools/jib/tree/master/jib-cli), a general-purpose command-line tool for building containers images from filesystem content.
 
 Also see [rules_docker](https://github.com/bazelbuild/rules_docker) for a similar existing container image build tool for the [Bazel build system](https://github.com/bazelbuild/bazel). The tool can build images for languages such as Python, NodeJS, Java, Scala, Groovy, C, Go, Rust, and D.
+
+### My build process doesn't let me integrate with the Jib Maven or Gradle plugin
+
+The [Jib CLI](https://github.com/GoogleContainerTools/jib/tree/master/jib-cli) can be useful for users with complex build workflows that make it hard to integrate the Jib Maven or Gradle plugin. It is a standalone application that is powered by [Jib Core](https://github.com/GoogleContainerTools/jib/tree/master/jib-core) and offers two commands:
+
+* [Build](https://github.com/GoogleContainerTools/jib/tree/master/jib-cli#build-command): Builds images from the filesystem content.
+ 
+* [Jar](https://github.com/GoogleContainerTools/jib/tree/master/jib-cli#jar-command): Examines your JAR and builds an image with optimized layers or containerizes the JAR as-is.
+
+Check out the [Jib CLI section](#jib-cli) of the FAQ for more information.
 
 ### How do I run the image I built?
 
@@ -168,11 +183,12 @@ Jib packages your Java application into the following paths on the image:
 Jib makes use of [layering](https://containers.gitbook.io/build-containers-the-hard-way/#layers) to allow for fast rebuilds - it will only rebuild the layers containing files that changed since the previous build and will reuse cached layers containing files that didn't change. Jib organizes files in a way that groups frequently changing files separately from large, rarely changing files. For example, `SNAPSHOT` dependencies are placed in a separate layer from other dependencies, so that a frequently changing `SNAPSHOT` will not force the entire dependency layer to rebuild itself.
 
 Jib applications are split into the following layers:
-* Classes
-* Resources
-* Project dependencies
-* Snapshot dependencies
+
 * All other dependencies
+* Snapshot dependencies
+* Project dependencies
+* Resources
+* Classes
 * Each extra directory (`jib.extraDirectories` in Gradle, `<extraDirectories>` in Maven) builds to its own layer
 
 ### Can I learn more about container images?
@@ -553,11 +569,11 @@ The Jib build plugins have an extension framework that enables anyone to easily 
 
 ### I am hitting Docker Hub rate limits. How can I configure registry mirrors?
 
-See the [Maven](https://github.com/GoogleContainerTools/jib/tree/master/jib-maven-plugin#global-jib-configuration) and [Gradle](https://github.com/GoogleContainerTools/jib/tree/master/jib-gradle-plugin#global-jib-configuration) docs. Note that the example in the docs uses [Google's Docker Hub mirror on `mirror.gcr.io`](https://cloud.google.com/container-registry/docs/pulling-cached-images).
+See the [Maven](https://github.com/GoogleContainerTools/jib/tree/master/jib-maven-plugin#global-jib-configuration), [Gradle](https://github.com/GoogleContainerTools/jib/tree/master/jib-gradle-plugin#global-jib-configuration) or [Jib CLI](https://github.com/GoogleContainerTools/jib/blob/master/jib-cli/README.md#global-jib-configuration) docs. Note that the example in the docs uses [Google's Docker Hub mirror on `mirror.gcr.io`](https://cloud.google.com/container-registry/docs/pulling-cached-images).
 
 ### Where is the global Jib configuration file and how I can configure it?
 
-See the [Maven](https://github.com/GoogleContainerTools/jib/tree/master/jib-maven-plugin#global-jib-configuration) and [Gradle](https://github.com/GoogleContainerTools/jib/tree/master/jib-gradle-plugin#global-jib-configuration) docs.
+See the [Maven](https://github.com/GoogleContainerTools/jib/tree/master/jib-maven-plugin#global-jib-configuration), [Gradle](https://github.com/GoogleContainerTools/jib/tree/master/jib-gradle-plugin#global-jib-configuration) or [Jib CLI](https://github.com/GoogleContainerTools/jib/blob/master/jib-cli/README.md#global-jib-configuration) docs.
 
 
 ## Build Problems
@@ -756,3 +772,58 @@ On examining the container structure with [Dive](https://github.com/wagoodman/di
 The user had used Jib's ability to install extra files into the image ([Maven](https://github.com/GoogleContainerTools/jib/tree/master/jib-maven-plugin#adding-arbitrary-files-to-the-image), [Gradle](https://github.com/GoogleContainerTools/jib/tree/master/jib-gradle-plugin#adding-arbitrary-files-to-the-image)) to install a library file by placing it in `src/main/jib/lib/libfoo.so`. This would normally cause the `libfoo.so` to be installed in the image as `/lib/libfoo.so`. But `/lib` and `/lib64` in the user's base image were symbolic links. Jib does not follow such symbolic links when creating the image. And at container initialization time, Docker treats these symlinks as a file, and thus the symbolic link was replaced with `/lib` as a new directory. As a result, none of the system shared libraries were resolved and dynamically-linked programs failed.
 
 Solution: The user installed the file in a different location.
+
+## Jib CLI 
+ 
+### How does the `jar` command support Standard JARs?
+The Jib CLI supports both [thin JARs](https://docs.oracle.com/javase/tutorial/deployment/jar/downman.html) (where dependencies are specified in the JAR's manifest) and fat JARs.
+
+The current limitation of using a fat JAR is that the embedded dependencies will not be placed into the designated dependencies layers. They will instead be placed into the classes or resources layer. Therefore, for efficiency, we recommend against containerizing fat JARs (Spring Boot fat JARs are an [exception](#how-does-the-jar-command-support-spring-boot-jars)) if you can prepare thin JARs. We hope to have better support for fat JARs in the future.
+
+A standard JAR can be containerized by the `jar` command in two modes, exploded or packaged. 
+
+#### Exploded Mode (Recommended)
+Achieved by calling `jib jar --target ${TARGET_REGISTRY} ${JAR_NAME}.jar`
+
+The default mode for containerizing a JAR. It will open up the JAR and optimally place files into the following layers:  
+
+* Other Dependencies Layer
+* Snapshot-Dependencies Layer
+* Resources Layer
+* Classes Layer
+
+**Entrypoint** : `java -cp /app/dependencies/:/app/explodedJar/ ${MAIN_CLASS}`
+
+#### Packaged Mode
+Achieved by calling `jib jar --target ${TARGET_REGISTRY} ${JAR_NAME}.jar --mode packaged`.
+
+It will result in the following layers on the container:
+
+* Dependencies Layer
+* Jar Layer
+
+**Entrypoint** : `java -jar ${JAR_NAME}.jar`
+
+### How does the `jar` command support Spring Boot JARs?
+The `jar` command currently supports containerization of Spring Boot fat JARs.
+A Spring-Boot fat JAR can be containerized in two modes, exploded or packaged. 
+
+#### Exploded Mode (Recommended)
+Achieved by calling `jib jar --target ${TARGET_REGISTRY} ${JAR_NAME}.jar`
+
+The default mode for containerizing a JAR. It will respect [`layers.idx`](https://spring.io/blog/2020/08/14/creating-efficient-docker-images-with-spring-boot-2-3) in the JAR (if present) or create optimized layers in the following format:
+
+* Other Dependencies Layer
+* Spring-Boot-Loader Layer
+* Snapshot-Dependencies Layer
+* Resources Layer
+* Classes Layer
+
+**Entrypoint** : `java -cp /app org.springframework.boot.loader.JarLauncher`
+
+#### Packaged Mode
+Achieved by calling `jib jar --target ${TARGET_REGISTRY} ${JAR_NAME}.jar --mode packaged`
+
+It will containerize the JAR as is. However, **note** that we highly recommend against using packaged mode for containerizing Spring Boot fat JARs. 
+
+**Entrypoint**: `java -jar ${JAR_NAME}.jar`

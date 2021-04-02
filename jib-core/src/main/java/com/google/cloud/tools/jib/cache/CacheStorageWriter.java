@@ -21,6 +21,7 @@ import com.google.cloud.tools.jib.api.ImageReference;
 import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.blob.Blobs;
+import com.google.cloud.tools.jib.cache.Retry.Action;
 import com.google.cloud.tools.jib.filesystem.LockFile;
 import com.google.cloud.tools.jib.filesystem.TempDirectoryProvider;
 import com.google.cloud.tools.jib.hash.CountingDigestOutputStream;
@@ -33,6 +34,7 @@ import com.google.cloud.tools.jib.image.json.ManifestTemplate;
 import com.google.cloud.tools.jib.image.json.V21ManifestTemplate;
 import com.google.cloud.tools.jib.json.JsonTemplate;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -110,33 +112,41 @@ class CacheStorageWriter {
    * @param destination the destination path
    * @throws IOException if an I/O exception occurs
    */
-  private static void moveIfDoesNotExist(Path source, Path destination) throws IOException {
-    // Some Windows users report java.nio.file.AccessDeniedException that we suspect is caused
-    // by anti-virus programs, like Windows Defender, that open new files for scanning.
-    // Retry the rename up to 5 times, with 15ms pause between each retry.
-    boolean success =
-        Retry.action(
-                () -> {
-                  if (Files.exists(destination)) {
-                    // If the file already exists, we skip renaming and use the existing file.
-                    // This happens, e.g., if a new layer happens to have the same content as a
-                    // previously-cached layer or the same layer is being cached concurrently.
-                    return true;
-                  }
-                  Files.move(source, destination);
-                  return Files.exists(destination);
-                })
-            .maximumRetries(5)
-            .retryOnException(ex -> ex instanceof FileSystemException)
-            .sleep(15, TimeUnit.MILLISECONDS)
-            .run();
-    if (!success) {
-      String message =
-          String.format(
-              "unable to move: %s to %s; such failures are often caused by interference from antivirus or if the "
-                  + "operation is not supported by the file system (for example: special non-local file system)",
-              source, destination);
-      throw new IOException(message);
+  @VisibleForTesting
+  static void moveIfDoesNotExist(Path source, Path destination) throws IOException {
+    String errorMessage =
+        String.format(
+            "unable to move: %s to %s; such failures are often caused by interference from "
+                + "antivirus (https://github.com/GoogleContainerTools/jib/issues/3127#issuecomment-796838294), "
+                + "or rarely if the operation is not supported by the file system (for example: "
+                + "special non-local file system)",
+            source, destination);
+
+    try {
+      Action<IOException> rename =
+          () -> {
+            if (Files.exists(destination)) {
+              // If the file already exists, we skip renaming and use the existing file.
+              // This happens, e.g., if a new layer happens to have the same content as a
+              // previously-cached layer or the same layer is being cached concurrently.
+              return true;
+            }
+            Files.move(source, destination);
+            return Files.exists(destination);
+          };
+      // Some Windows users report java.nio.file.AccessDeniedException that we suspect is caused
+      // by anti-virus programs, like Windows Defender, that open new files for scanning.
+      // Retry the rename up to 10 times, with 15ms pause between each retry.
+      if (!Retry.action(rename)
+          .maximumRetries(10)
+          .retryOnException(ex -> ex instanceof FileSystemException)
+          .sleep(15, TimeUnit.MILLISECONDS)
+          .run()) {
+        throw new IOException(errorMessage);
+      }
+
+    } catch (IOException ex) {
+      throw new IOException(errorMessage, ex);
     }
   }
 
