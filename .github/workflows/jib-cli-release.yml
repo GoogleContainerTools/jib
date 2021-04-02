@@ -45,6 +45,7 @@ jobs:
 
       - name: Create pull request
         uses: repo-sync/pull-request@v2
+        id: create-pr
         with:
           # Use a personal token to file a PR as a non-bot author to trigger other workflows (e.g., unit tests):
           # https://docs.github.com/en/actions/reference/events-that-trigger-workflows#triggering-new-workflows-using-a-personal-access-token;
@@ -96,6 +97,7 @@ jobs:
           CHANGELOG_URL: https://github.com/GoogleContainerTools/jib/blob/master/jib-cli/CHANGELOG.md
           README_URL: https://github.com/GoogleContainerTools/jib/blob/master/jib-cli/README.md
           RELEASE_DRAFT: ${{ steps.create-release.outputs.html_url }}
+          RELEASE_PR: ${{steps.create-pr.outputs.pr_url}}
         with:
           filename: .github/RELEASE_TEMPLATES/cli_release_checklist.md
 
