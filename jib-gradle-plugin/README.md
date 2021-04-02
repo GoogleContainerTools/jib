@@ -430,7 +430,7 @@ Using `paths` as a closure, you may also specify the target of the copy and incl
         into = '/extras'
       }
       path {
-        // copies a single file
+        // copies a single-file.xml
         from = 'src/main/resources/xml-files'
         into = '/dest-in-container'
         includes = ['single-file.xml']
