@@ -244,6 +244,15 @@ public class CommonCliOptions {
   @SuppressWarnings("NullAway.Init") // initialized by picocli
   private boolean serialize;
 
+  @CommandLine.Option(
+      names = "--image-json",
+      paramLabel = "<path-to-json>",
+      description =
+          "A path to the destination directory of jib-image.json. If provided, image details (for example, digest, id"
+              + "and tags) will be written to this json file.")
+  @SuppressWarnings("NullAway.Init") // initialized by picocli
+  private Path imageJsonPath;
+
   public Verbosity getVerbosity() {
     return Verify.verifyNotNull(verbosity);
   }
@@ -398,6 +407,18 @@ public class CommonCliOptions {
 
   public List<String> getAdditionalTags() {
     return additionalTags;
+  }
+
+  /**
+   * Returns the full path to jib-image.json.
+   *
+   * @return optional value of path to jib-image.json
+   */
+  public Optional<Path> getImageJsonOutputPath() {
+    if (imageJsonPath != null) {
+      return Optional.of(imageJsonPath.resolve("jib-image.json"));
+    }
+    return Optional.empty();
   }
 
   /** Validates parameters defined in this class that could not be done declaratively. */
