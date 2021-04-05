@@ -497,7 +497,7 @@ public class BuildImageMojoIntegrationTest {
     Assert.assertEquals(
         "", buildAndRun(emptyTestProject.getProjectRoot(), targetImage, "pom.xml", false));
     assertThat(getCreationTime(targetImage)).isEqualTo(Instant.EPOCH);
-    assertThat(getWorkingDirectory(targetImage)).isEqualTo("/");
+    assertThat(getWorkingDirectory(targetImage)).isEmpty();
   }
 
   @Test
