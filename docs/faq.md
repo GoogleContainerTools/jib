@@ -86,39 +86,28 @@ For more information, see [steps 4-6 of the Kubernetes Engine deployment tutoria
 
 ### Where is bash?
 
-By default, Jib uses [`distroless/java`](https://github.com/GoogleContainerTools/distroless/tree/master/java) as the base image. Distroless images contain only runtime dependencies. They do not contain package managers, shells or any other programs you would expect to find in a standard Linux distribution. Check out the [distroless project](https://github.com/GoogleContainerTools/distroless#distroless-docker-images) for more information about distroless images.
+By default, old Jib Maven and Gradle plugin versions used [`distroless/java`](https://github.com/GoogleContainerTools/distroless/tree/master/java) as the base image, which did not have a shell program (such as `sh`, `bash`, or `dash`). Starting from Jib build plugins 3.0, the default base image is [`adoptopenjdk`](default_base_image.md) (and [`jetty`](https://hub.docker.com/_/jetty) for WAR projects), which contains shell programs.
 
-If you would like to include a shell for debugging, set the base image to `gcr.io/distroless/java:debug` instead. The shell will be located at `/busybox/sh`. Note that `:debug` images are **not** recommended for production use.
+Note that you can always set a different base image. Jib's default choice for AdoptOpenJDK does not imply any endorsement to it; you should do your due diligence to choose the right image that works best for you. Also note that the default base image is unpinned (the tag can point to different images over time), so we recommend configuring a base image with a SHA digest for strong reproducibility.
 
-<details>
-<summary>Configuring a base image in Maven (click to expand)</summary>
-<p>
+* Configuring a base image in Maven
+   ```xml
+   <configuration>
+     <from>
+       <image>openjdk:11-jre-slim@sha256:...</image>
+     </from>
+   </configuration>
+   ```
 
-In [`jib-maven-plugin`](../jib-maven-plugin), you can use the `gcr.io/distroless/java:debug` base image by adding the following configuration:
+* Configuring a base image in Gradle
+   ```groovy
+   jib.from.image = 'openjdk:11-jre-slim@sha256:...'
+   ```
 
-```xml
-<configuration>
-  <from>
-    <image>gcr.io/distroless/java:debug</image>
-  </from>
-</configuration>
-```
-</p>
-</details>
-
-<details>
-<summary>Configuring a base image in Gradle (click to expand)</summary>
-<p>
-
-In [`jib-gradle-plugin`](../jib-gradle-plugin), you can use the `gcr.io/distroless/java:debug` base image by adding the following configuration:
-
-```groovy
-jib.from.image = 'gcr.io/distroless/java:debug'
-```
-</p>
-</details><br />
-
-You can then run the image in shell form with Docker: `docker run -it --entrypoint /busybox/sh <image name>`
+* Configuring a base image in Jib CLI
+   ```
+   $ jib jar --from openjdk:11-jre-slim@sha256:... --target ... app.jar
+   ```
 
 ### What image format does Jib use?
 
@@ -202,7 +191,7 @@ If you'd like to learn more about container images, [@coollog](https://github.co
 
 #### JVM Flags
 
-For the default `distroless/java` base image, you can use the `JAVA_TOOL_OPTIONS` environment variable (note that other JRE images may require using other environment variables):
+For the default base image, you can use the `JAVA_TOOL_OPTIONS` environment variable (note that other JRE images may require using other environment variables):
 
 Using Docker: `docker run -e "JAVA_TOOL_OPTIONS=<JVM flags>" <image name>`
 
@@ -387,7 +376,7 @@ There are several ways of doing this:
 
 ### How do I enable debugging?
 
-If using the `distroless/java` base image, then use the [`JAVA_TOOL_OPTIONS`](#how-do-i-set-parameters-for-my-image-at-runtime) to pass along debugging configuration arguments.  For example, to have the remote VM accept local debug connections on port 5005, but not suspend:
+Use the [`JAVA_TOOL_OPTIONS`](#how-do-i-set-parameters-for-my-image-at-runtime) to pass along debugging configuration arguments.  For example, to have the remote VM accept local debug connections on port 5005, but not suspend:
 ```
 -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=localhost:5005
 ```
@@ -463,8 +452,7 @@ jib.to.image = 'gcr.io/my-gcp-project/my-app:' + System.nanoTime()
 A Dockerfile that performs a Jib-like build is shown below:
 
 ```Dockerfile
-# Jib uses distroless java as the default base image
-FROM gcr.io/distroless/java:latest
+FROM adoptopenjdk:11-jre
 
 # Multiple copy statements are used to break the app into layers, allowing for faster rebuilds after small changes
 COPY dependencyJars /app/libs
@@ -756,9 +744,7 @@ There are some common reasons why containers fail on launch.
 
 #### My shell script won't run
  
-The default base image used by Jib, ([`distoless/java`](https://github.com/GoogleContainerTools/distroless/tree/master/java)), does not include a shell, and thus shell scripts won't launch.
-
-Solution: use a different base image with a shell.
+The default base image used by the old Jib Maven and Gradle plugins did not have a shell, and thus shell scripts won't launch. See [Where is bash?](#where-is-bash) for more details.
 
 #### The container fails with `exec` errors 
 
