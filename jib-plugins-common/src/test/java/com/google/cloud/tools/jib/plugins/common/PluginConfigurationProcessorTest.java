@@ -569,6 +569,22 @@ public class PluginConfigurationProcessorTest {
   }
 
   @Test
+  public void testWebAppEntrypoint_inheritedFromCustomBaseImage()
+      throws InvalidImageReferenceException, IOException, CacheDirectoryCreationException,
+          MainClassInferenceException, InvalidAppRootException, InvalidWorkingDirectoryException,
+          InvalidPlatformException, InvalidContainerVolumeException,
+          IncompatibleBaseImageJavaVersionException, NumberFormatException,
+          InvalidContainerizingModeException, InvalidFilesModificationTimeException,
+          InvalidCreationTimeException {
+    when(projectProperties.isWarProject()).thenReturn(true);
+    when(rawConfiguration.getFromImage()).thenReturn(Optional.of("custom-base-image"));
+
+    BuildContext buildContext = getBuildContext(processCommonConfiguration());
+
+    assertThat(buildContext.getContainerConfiguration().getEntrypoint()).isNull();
+  }
+
+  @Test
   public void testGetAppRootChecked() throws InvalidAppRootException {
     when(rawConfiguration.getAppRoot()).thenReturn("/some/root");
 

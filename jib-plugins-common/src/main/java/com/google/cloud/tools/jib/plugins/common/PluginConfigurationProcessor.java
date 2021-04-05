@@ -543,7 +543,8 @@ public class PluginConfigurationProcessor {
    * <ol>
    *   <li>null (inheriting from the base image), if the user specified value is {@code INHERIT}
    *   <li>the user specified one, if set
-   *   <li>for a WAR project, {@code ["java", "-jar", "/usr/local/jetty/start.jar"]}
+   *   <li>for a WAR project, null (inheriting) if a custom base image is specified, and {@code
+   *       ["java", "-jar", "/usr/local/jetty/start.jar"]} otherwise (default Jetty base image)
    *   <li>for a non-WAR project, by resolving the main class
    * </ol>
    *
@@ -589,7 +590,9 @@ public class PluginConfigurationProcessor {
                 "mainClass, extraClasspath, jvmFlags, and expandClasspathDependencies "
                     + "are ignored for WAR projects"));
       }
-      return Arrays.asList("java", "-jar", "/usr/local/jetty/start.jar");
+      return rawConfiguration.getFromImage().isPresent()
+          ? null
+          : Arrays.asList("java", "-jar", "/usr/local/jetty/start.jar");
     }
 
     List<String> classpath = new ArrayList<>(rawExtraClasspath);
