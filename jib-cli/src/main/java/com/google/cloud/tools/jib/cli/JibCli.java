@@ -87,8 +87,8 @@ public class JibCli {
       throws IOException {
     if (imageJsonOutputPath.isPresent()) {
       ImageMetadataOutput metadataOutput = ImageMetadataOutput.fromJibContainer(jibContainer);
-      String imageJson = metadataOutput.toJson();
-      Files.write(imageJsonOutputPath.get(), imageJson.getBytes(StandardCharsets.UTF_8));
+      Files.write(
+          imageJsonOutputPath.get(), metadataOutput.toJson().getBytes(StandardCharsets.UTF_8));
     }
   }
 
