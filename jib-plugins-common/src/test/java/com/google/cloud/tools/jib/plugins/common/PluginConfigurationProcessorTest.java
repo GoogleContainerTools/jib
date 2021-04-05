@@ -355,7 +355,9 @@ public class PluginConfigurationProcessorTest {
 
     BuildContext buildContext = getBuildContext(processCommonConfiguration());
 
-    assertThat(buildContext.getContainerConfiguration().getEntrypoint()).isNull();
+    assertThat(buildContext.getContainerConfiguration().getEntrypoint())
+        .containsExactly("java", "-jar", "/usr/local/jetty/start.jar")
+        .inOrder();
     verifyNoInteractions(logger);
   }
 
@@ -516,7 +518,9 @@ public class PluginConfigurationProcessorTest {
 
     BuildContext buildContext = getBuildContext(processCommonConfiguration());
 
-    assertThat(buildContext.getContainerConfiguration().getEntrypoint()).isNull();
+    assertThat(buildContext.getContainerConfiguration().getEntrypoint())
+        .containsExactly("java", "-jar", "/usr/local/jetty/start.jar")
+        .inOrder();
     verify(projectProperties)
         .log(
             LogEvent.warn(
@@ -536,7 +540,9 @@ public class PluginConfigurationProcessorTest {
 
     BuildContext buildContext = getBuildContext(processCommonConfiguration());
 
-    assertThat(buildContext.getContainerConfiguration().getEntrypoint()).isNull();
+    assertThat(buildContext.getContainerConfiguration().getEntrypoint())
+        .containsExactly("java", "-jar", "/usr/local/jetty/start.jar")
+        .inOrder();
     verify(projectProperties)
         .log(
             LogEvent.warn(
@@ -560,21 +566,6 @@ public class PluginConfigurationProcessorTest {
         .containsExactly(
             "java", "-cp", "/my/app/resources:/my/app/classes:/my/app/libs/*", "java.lang.Object")
         .inOrder();
-  }
-
-  @Test
-  public void testWebAppEntrypoint_inheritedFromBaseImage()
-      throws InvalidImageReferenceException, IOException, CacheDirectoryCreationException,
-          MainClassInferenceException, InvalidAppRootException, InvalidWorkingDirectoryException,
-          InvalidPlatformException, InvalidContainerVolumeException,
-          IncompatibleBaseImageJavaVersionException, NumberFormatException,
-          InvalidContainerizingModeException, InvalidFilesModificationTimeException,
-          InvalidCreationTimeException {
-    when(projectProperties.isWarProject()).thenReturn(true);
-
-    BuildContext buildContext = getBuildContext(processCommonConfiguration());
-
-    assertThat(buildContext.getContainerConfiguration().getEntrypoint()).isNull();
   }
 
   @Test
@@ -639,7 +630,7 @@ public class PluginConfigurationProcessorTest {
     when(projectProperties.isWarProject()).thenReturn(true);
 
     assertThat(PluginConfigurationProcessor.getAppRootChecked(rawConfiguration, projectProperties))
-        .isEqualTo(AbsoluteUnixPath.get("/jetty/webapps/ROOT"));
+        .isEqualTo(AbsoluteUnixPath.get("/var/lib/jetty/webapps/ROOT"));
   }
 
   @Test
@@ -691,7 +682,7 @@ public class PluginConfigurationProcessorTest {
     when(projectProperties.isWarProject()).thenReturn(false);
 
     assertThat(PluginConfigurationProcessor.getDefaultBaseImage(projectProperties))
-        .isEqualTo("gcr.io/distroless/java:8");
+        .isEqualTo("adoptopenjdk:8-jre");
   }
 
   @Test
@@ -700,73 +691,39 @@ public class PluginConfigurationProcessorTest {
     when(projectProperties.isWarProject()).thenReturn(true);
 
     assertThat(PluginConfigurationProcessor.getDefaultBaseImage(projectProperties))
-        .isEqualTo("gcr.io/distroless/java/jetty:java8");
+        .isEqualTo("jetty");
   }
 
   @Test
-  public void testGetDefaultBaseImage_chooseJava8Distroless()
+  public void testGetDefaultBaseImage_chooseJava8BaseImage()
       throws IncompatibleBaseImageJavaVersionException {
     when(projectProperties.getMajorJavaVersion()).thenReturn(6);
     assertThat(PluginConfigurationProcessor.getDefaultBaseImage(projectProperties))
-        .isEqualTo("gcr.io/distroless/java:8");
+        .isEqualTo("adoptopenjdk:8-jre");
 
     when(projectProperties.getMajorJavaVersion()).thenReturn(7);
     assertThat(PluginConfigurationProcessor.getDefaultBaseImage(projectProperties))
-        .isEqualTo("gcr.io/distroless/java:8");
+        .isEqualTo("adoptopenjdk:8-jre");
 
     when(projectProperties.getMajorJavaVersion()).thenReturn(8);
     assertThat(PluginConfigurationProcessor.getDefaultBaseImage(projectProperties))
-        .isEqualTo("gcr.io/distroless/java:8");
+        .isEqualTo("adoptopenjdk:8-jre");
   }
 
   @Test
-  public void testGetDefaultBaseImage_chooseJava11Distroless()
+  public void testGetDefaultBaseImage_chooseJava11BaseImage()
       throws IncompatibleBaseImageJavaVersionException {
     when(projectProperties.getMajorJavaVersion()).thenReturn(9);
     assertThat(PluginConfigurationProcessor.getDefaultBaseImage(projectProperties))
-        .isEqualTo("gcr.io/distroless/java:11");
+        .isEqualTo("adoptopenjdk:11-jre");
 
     when(projectProperties.getMajorJavaVersion()).thenReturn(10);
     assertThat(PluginConfigurationProcessor.getDefaultBaseImage(projectProperties))
-        .isEqualTo("gcr.io/distroless/java:11");
+        .isEqualTo("adoptopenjdk:11-jre");
 
     when(projectProperties.getMajorJavaVersion()).thenReturn(11);
     assertThat(PluginConfigurationProcessor.getDefaultBaseImage(projectProperties))
-        .isEqualTo("gcr.io/distroless/java:11");
-  }
-
-  @Test
-  public void testGetDefaultBaseImage_chooseJava8JettyDistroless()
-      throws IncompatibleBaseImageJavaVersionException {
-    when(projectProperties.getMajorJavaVersion()).thenReturn(6);
-    when(projectProperties.isWarProject()).thenReturn(true);
-    assertThat(PluginConfigurationProcessor.getDefaultBaseImage(projectProperties))
-        .isEqualTo("gcr.io/distroless/java/jetty:java8");
-
-    when(projectProperties.getMajorJavaVersion()).thenReturn(7);
-    assertThat(PluginConfigurationProcessor.getDefaultBaseImage(projectProperties))
-        .isEqualTo("gcr.io/distroless/java/jetty:java8");
-
-    when(projectProperties.getMajorJavaVersion()).thenReturn(8);
-    assertThat(PluginConfigurationProcessor.getDefaultBaseImage(projectProperties))
-        .isEqualTo("gcr.io/distroless/java/jetty:java8");
-  }
-
-  @Test
-  public void testGetDefaultBaseImage_chooseJava11JettyDistroless()
-      throws IncompatibleBaseImageJavaVersionException {
-    when(projectProperties.getMajorJavaVersion()).thenReturn(9);
-    when(projectProperties.isWarProject()).thenReturn(true);
-    assertThat(PluginConfigurationProcessor.getDefaultBaseImage(projectProperties))
-        .isEqualTo("gcr.io/distroless/java/jetty:java11");
-
-    when(projectProperties.getMajorJavaVersion()).thenReturn(10);
-    assertThat(PluginConfigurationProcessor.getDefaultBaseImage(projectProperties))
-        .isEqualTo("gcr.io/distroless/java/jetty:java11");
-
-    when(projectProperties.getMajorJavaVersion()).thenReturn(11);
-    assertThat(PluginConfigurationProcessor.getDefaultBaseImage(projectProperties))
-        .isEqualTo("gcr.io/distroless/java/jetty:java11");
+        .isEqualTo("adoptopenjdk:11-jre");
   }
 
   @Test
@@ -829,7 +786,7 @@ public class PluginConfigurationProcessorTest {
   public void testGetJavaContainerBuilderWithBaseImage_incompatibleJava8BaseImage() {
     when(projectProperties.getMajorJavaVersion()).thenReturn(11);
 
-    when(rawConfiguration.getFromImage()).thenReturn(Optional.of("gcr.io/distroless/java:8"));
+    when(rawConfiguration.getFromImage()).thenReturn(Optional.of("adoptopenjdk:8"));
     IncompatibleBaseImageJavaVersionException exception1 =
         assertThrows(
             IncompatibleBaseImageJavaVersionException.class,
@@ -839,7 +796,7 @@ public class PluginConfigurationProcessorTest {
     assertThat(exception1.getBaseImageMajorJavaVersion()).isEqualTo(8);
     assertThat(exception1.getProjectMajorJavaVersion()).isEqualTo(11);
 
-    when(rawConfiguration.getFromImage()).thenReturn(Optional.of("gcr.io/distroless/java:latest"));
+    when(rawConfiguration.getFromImage()).thenReturn(Optional.of("adoptopenjdk:8-jre"));
     IncompatibleBaseImageJavaVersionException exception2 =
         assertThrows(
             IncompatibleBaseImageJavaVersionException.class,
@@ -854,47 +811,25 @@ public class PluginConfigurationProcessorTest {
   public void testGetJavaContainerBuilderWithBaseImage_incompatibleJava11BaseImage() {
     when(projectProperties.getMajorJavaVersion()).thenReturn(15);
 
-    when(rawConfiguration.getFromImage()).thenReturn(Optional.of("gcr.io/distroless/java:11"));
-    IncompatibleBaseImageJavaVersionException exception =
+    when(rawConfiguration.getFromImage()).thenReturn(Optional.of("adoptopenjdk:11"));
+    IncompatibleBaseImageJavaVersionException exception1 =
         assertThrows(
             IncompatibleBaseImageJavaVersionException.class,
             () ->
                 PluginConfigurationProcessor.getJavaContainerBuilderWithBaseImage(
                     rawConfiguration, projectProperties, inferredAuthProvider));
-    assertThat(exception.getBaseImageMajorJavaVersion()).isEqualTo(11);
-    assertThat(exception.getProjectMajorJavaVersion()).isEqualTo(15);
-  }
+    assertThat(exception1.getBaseImageMajorJavaVersion()).isEqualTo(11);
+    assertThat(exception1.getProjectMajorJavaVersion()).isEqualTo(15);
 
-  @Test
-  public void testGetJavaContainerBuilderWithBaseImage_incompatibleJava8JettyBaseImage() {
-    when(projectProperties.getMajorJavaVersion()).thenReturn(11);
-
-    when(rawConfiguration.getFromImage())
-        .thenReturn(Optional.of("gcr.io/distroless/java/jetty:java8"));
-    IncompatibleBaseImageJavaVersionException exception =
+    when(rawConfiguration.getFromImage()).thenReturn(Optional.of("adoptopenjdk:11-jre"));
+    IncompatibleBaseImageJavaVersionException exception2 =
         assertThrows(
             IncompatibleBaseImageJavaVersionException.class,
             () ->
                 PluginConfigurationProcessor.getJavaContainerBuilderWithBaseImage(
                     rawConfiguration, projectProperties, inferredAuthProvider));
-    assertThat(exception.getBaseImageMajorJavaVersion()).isEqualTo(8);
-    assertThat(exception.getProjectMajorJavaVersion()).isEqualTo(11);
-  }
-
-  @Test
-  public void testGetJavaContainerBuilderWithBaseImage_incompatibleJava11JettyBaseImage() {
-    when(projectProperties.getMajorJavaVersion()).thenReturn(15);
-
-    when(rawConfiguration.getFromImage())
-        .thenReturn(Optional.of("gcr.io/distroless/java/jetty:java11"));
-    IncompatibleBaseImageJavaVersionException exception =
-        assertThrows(
-            IncompatibleBaseImageJavaVersionException.class,
-            () ->
-                PluginConfigurationProcessor.getJavaContainerBuilderWithBaseImage(
-                    rawConfiguration, projectProperties, inferredAuthProvider));
-    assertThat(exception.getBaseImageMajorJavaVersion()).isEqualTo(11);
-    assertThat(exception.getProjectMajorJavaVersion()).isEqualTo(15);
+    assertThat(exception2.getBaseImageMajorJavaVersion()).isEqualTo(11);
+    assertThat(exception2.getProjectMajorJavaVersion()).isEqualTo(15);
   }
 
   // https://github.com/GoogleContainerTools/jib/issues/1995
