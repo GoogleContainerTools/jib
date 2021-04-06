@@ -744,7 +744,7 @@ There are some common reasons why containers fail on launch.
 
 #### My shell script won't run
  
-The default base image used by the old Jib Maven and Gradle plugins did not have a shell, and thus shell scripts won't launch. See [Where is bash?](#where-is-bash) for more details.
+The default base image used by the Jib Maven and Gradle plugins prior to 3.0 did not have a shell, and thus shell scripts won't launch. See [Where is bash?](#where-is-bash) for more details.
 
 #### The container fails with `exec` errors 
 
