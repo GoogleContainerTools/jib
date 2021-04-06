@@ -457,6 +457,7 @@ jib.to.image = 'gcr.io/my-gcp-project/my-app:' + System.nanoTime()
 A Dockerfile that performs a Jib-like build is shown below:
 
 ```Dockerfile
+# Jib uses AdoptOpenJDK as the default base image
 FROM adoptopenjdk:11-jre
 
 # Multiple copy statements are used to break the app into layers, allowing for faster rebuilds after small changes
