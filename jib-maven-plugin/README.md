@@ -600,7 +600,7 @@ The Jib build plugins have an extension framework that enables anyone to easily 
 
 ### WAR Projects
 
-Jib also containerizes WAR projects. If the Maven project uses [the `war`-packaging type](https://maven.apache.org/plugins/maven-war-plugin/index.html), Jib will by default use the [jetty](https://hub.docker.com/_/jetty) as a base image to deploy the project WAR. No extra configuration is necessary other than having the packaging type to `war`.
+Jib also containerizes WAR projects. If the Maven project uses [the `war`-packaging type](https://maven.apache.org/plugins/maven-war-plugin/index.html), Jib will by default use [jetty](https://hub.docker.com/_/jetty) as a base image to deploy the project WAR. No extra configuration is necessary other than having the packaging type to `war`.
 
 Note that Jib will work slightly differently for WAR projects from JAR projects:
    - `<container><mainClass>` and `<container><jvmFlags>` are ignored.

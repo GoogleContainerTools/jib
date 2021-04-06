@@ -87,7 +87,7 @@ For more information, see [steps 4-6 of the Kubernetes Engine deployment tutoria
 
 ### Where is bash?
 
-By default, old Jib Maven and Gradle plugin versions used [`distroless/java`](https://github.com/GoogleContainerTools/distroless/tree/master/java) as the base image, which did not have a shell program (such as `sh`, `bash`, or `dash`). Starting from Jib build plugins 3.0, the default base image is [`adoptopenjdk`](default_base_image.md) (and [`jetty`](https://hub.docker.com/_/jetty) for WAR projects), which contains shell programs.
+By default, Jib Maven and Gradle plugin versions prior to 3.0 used [`distroless/java`](https://github.com/GoogleContainerTools/distroless/tree/master/java) as the base image, which did not have a shell program (such as `sh`, `bash`, or `dash`). Starting from Jib build plugins 3.0, the default base image is [`adoptopenjdk`](default_base_image.md) (and [`jetty`](https://hub.docker.com/_/jetty) for WAR projects), which contains shell programs.
 
 Note that you can always set a different base image. Jib's default choice for AdoptOpenJDK does not imply any endorsement to it; you should do your due diligence to choose the right image that works best for you. Also note that the default base image is unpinned (the tag can point to different images over time), so we recommend configuring a base image with a SHA digest for strong reproducibility.
 
@@ -749,7 +749,7 @@ There are some common reasons why containers fail on launch.
 
 #### My shell script won't run
  
-The default base image used by the old Jib Maven and Gradle plugins did not have a shell, and thus shell scripts won't launch. See [Where is bash?](#where-is-bash) for more details.
+The default base image used by the Jib Maven and Gradle plugins prior to 3.0 did not have a shell, and thus shell scripts won't launch. See [Where is bash?](#where-is-bash) for more details.
 
 #### The container fails with `exec` errors 
 
