@@ -133,7 +133,7 @@ public class Build implements Callable<Integer> {
       Multimaps.asMap(globalConfig.getRegistryMirrors()).forEach(containerizer::addRegistryMirrors);
 
       JibContainer jibContainer = containerBuilder.containerize(containerizer);
-      JibCli.writeImageJson(commonCliOptions.getImageJsonOutputPath(), jibContainer);
+      JibCli.writeImageJson(commonCliOptions.getImageJsonPath(), jibContainer);
     } catch (Exception ex) {
       JibCli.logTerminatingException(logger, ex, commonCliOptions.isStacktrace());
       return 1;

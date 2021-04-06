@@ -68,7 +68,7 @@ public class BuildTest {
     assertThat(commonCliOptions.isStacktrace()).isFalse();
     assertThat(commonCliOptions.getHttpTrace()).isEqualTo(HttpTraceLevel.off);
     assertThat(commonCliOptions.isSerialize()).isFalse();
-    assertThat(commonCliOptions.getImageJsonOutputPath()).isEmpty();
+    assertThat(commonCliOptions.getImageJsonPath()).isEmpty();
   }
 
   @Test
@@ -104,7 +104,7 @@ public class BuildTest {
     assertThat(commonCliOptions.isStacktrace()).isFalse();
     assertThat(commonCliOptions.getHttpTrace()).isEqualTo(HttpTraceLevel.off);
     assertThat(commonCliOptions.isSerialize()).isFalse();
-    assertThat(commonCliOptions.getImageJsonOutputPath()).isEmpty();
+    assertThat(commonCliOptions.getImageJsonPath()).isEmpty();
   }
 
   @Test
@@ -128,7 +128,7 @@ public class BuildTest {
             "--stacktrace",
             "--http-trace",
             "--serialize",
-            "--image-json=path/to/json/");
+            "--result-json=path/to/json/jib-image.json");
     CommonCliOptions commonCliOptions = buildCommand.commonCliOptions;
     assertThat(commonCliOptions.getTargetImage()).isEqualTo("test-image-ref");
     assertThat(commonCliOptions.getUsernamePassword()).isEmpty();
@@ -152,7 +152,7 @@ public class BuildTest {
     assertThat(commonCliOptions.isStacktrace()).isTrue();
     assertThat(commonCliOptions.getHttpTrace()).isEqualTo(HttpTraceLevel.config);
     assertThat(commonCliOptions.isSerialize()).isTrue();
-    assertThat(commonCliOptions.getImageJsonOutputPath())
+    assertThat(commonCliOptions.getImageJsonPath())
         .hasValue(Paths.get("path/to/json/jib-image.json"));
   }
 

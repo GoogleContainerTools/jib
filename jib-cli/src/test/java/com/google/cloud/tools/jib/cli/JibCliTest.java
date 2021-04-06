@@ -53,7 +53,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class JibCliTest {
 
-  @Rule public TemporaryFolder temporaryFolder = new TemporaryFolder();
+  @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
   @Mock private JibContainer mockJibContainer;
 
@@ -102,7 +102,7 @@ public class JibCliTest {
     when(mockJibContainer.getDigest()).thenReturn(DescriptorDigest.fromDigest(digest));
     when(mockJibContainer.getTags()).thenReturn(ImmutableSet.of("latest", "tag-2"));
 
-    Path outputPath = temporaryFolder.newFile("jib-image.json").toPath();
+    Path outputPath = temporaryFolder.getRoot().toPath().resolve("jib-image.json");
     JibCli.writeImageJson(Optional.of(outputPath), mockJibContainer);
 
     String outputJson = new String(Files.readAllBytes(outputPath), StandardCharsets.UTF_8);

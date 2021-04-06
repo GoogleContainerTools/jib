@@ -75,10 +75,10 @@ public class JibCli {
   }
 
   /**
-   * Writes image details (imageId, digest, tags, etc.) to a json file (jib-image.json), if the
-   * destination of the json is provided.
+   * Writes image details (imageId, digest, tags, etc.) to a json file, if the path to the json is
+   * provided.
    *
-   * @param imageJsonOutputPath optional path to jib-image.json (for example,
+   * @param imageJsonOutputPath optional path to json file (for example,
    *     path/to/json/jib-image.json)
    * @param jibContainer the {@link JibContainer} to derive image details from
    * @throws IOException if error occurs when writing to the json file.

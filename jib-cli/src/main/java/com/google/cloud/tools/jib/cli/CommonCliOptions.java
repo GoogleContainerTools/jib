@@ -245,11 +245,12 @@ public class CommonCliOptions {
   private boolean serialize;
 
   @CommandLine.Option(
-      names = "--image-json",
+      names = "--result-json",
       paramLabel = "<path-to-json>",
       description =
-          "A path to the destination directory of jib-image.json. If provided, image details (for example, digest, id"
-              + "and tags) will be written to this json file.")
+          "A path to the json file that should contain image metadata (for example, digest, id and tags) after build is"
+              + "complete.",
+      scope = CommandLine.ScopeType.INHERIT)
   @SuppressWarnings("NullAway.Init") // initialized by picocli
   private Path imageJsonPath;
 
@@ -410,15 +411,12 @@ public class CommonCliOptions {
   }
 
   /**
-   * Returns the full path to jib-image.json.
+   * Returns the full path to the image metadata json file, if provided.
    *
-   * @return optional value of path to jib-image.json
+   * @return optional value of path to image json file
    */
-  public Optional<Path> getImageJsonOutputPath() {
-    if (imageJsonPath != null) {
-      return Optional.of(imageJsonPath.resolve("jib-image.json"));
-    }
-    return Optional.empty();
+  public Optional<Path> getImageJsonPath() {
+    return Optional.ofNullable(imageJsonPath);
   }
 
   /** Validates parameters defined in this class that could not be done declaratively. */
