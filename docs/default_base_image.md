@@ -30,7 +30,7 @@ For some reason if you have to keep the exact same behavior when using 3.0, you 
    ```
    However, even when you decide to keep using Distroless, at least we strongly recommend `gcr.io/distroless/java-debian10:11`, because, as of Apr 2021, `gcr.io/distroless/java:{8,11}` is based on Debian 9 that reached end-of-life. (Note `gcr.io/distroless/java-debian10` doesn't have `:8`.)
 
-* WAR proejcts
+* WAR projects
    ```
    jib {
      from.image = 'gcr.io/distroless/java/jetty:java11' // or ":java8"
