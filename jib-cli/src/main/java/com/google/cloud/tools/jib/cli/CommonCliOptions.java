@@ -244,6 +244,15 @@ public class CommonCliOptions {
   @SuppressWarnings("NullAway.Init") // initialized by picocli
   private boolean serialize;
 
+  @CommandLine.Option(
+      names = "--image-metadata-out",
+      paramLabel = "<path-to-json>",
+      description =
+          "path to the json file that should contain image metadata (for example, digest, id and tags) after build is"
+              + "complete")
+  @SuppressWarnings("NullAway.Init") // initialized by picocli
+  private Path imageJsonPath;
+
   public Verbosity getVerbosity() {
     return Verify.verifyNotNull(verbosity);
   }
@@ -398,6 +407,15 @@ public class CommonCliOptions {
 
   public List<String> getAdditionalTags() {
     return additionalTags;
+  }
+
+  /**
+   * Returns the full path to the image metadata json file, if provided.
+   *
+   * @return optional value of path to image json file
+   */
+  public Optional<Path> getImageJsonPath() {
+    return Optional.ofNullable(imageJsonPath);
   }
 
   /** Validates parameters defined in this class that could not be done declaratively. */
