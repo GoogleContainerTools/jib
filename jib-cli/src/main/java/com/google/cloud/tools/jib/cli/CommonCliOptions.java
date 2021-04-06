@@ -248,8 +248,8 @@ public class CommonCliOptions {
       names = "--image-metadata-out",
       paramLabel = "<path-to-json>",
       description =
-          "A path to the json file that should contain image metadata (for example, digest, id and tags) after build is"
-              + "complete.")
+          "path to the json file that should contain image metadata (for example, digest, id and tags) after build is"
+              + "complete")
   @SuppressWarnings("NullAway.Init") // initialized by picocli
   private Path imageJsonPath;
 
