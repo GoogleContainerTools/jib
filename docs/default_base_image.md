@@ -42,13 +42,13 @@ For some reason if you have to keep the exact same behavior when using 3.0, you 
    }
    ```
    ```xml
-   <configuration>
+     <configuration>
        <from><image>gcr.io/distroless/java/jetty:java11</image></from> <!-- or ":java8" -->
        <container>
          <entrypoint>INHERIT</entrypoint>
          <appRoot>/jetty/webapps/ROOT</appRoot>
        </container>
-   </configuration>
+     </configuration>
    ```
 
 ## Jib CLI
