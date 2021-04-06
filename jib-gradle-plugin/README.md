@@ -508,7 +508,7 @@ The Jib build plugins have an extension framework that enables anyone to easily 
 
 ### WAR Projects
 
-Jib also containerizes WAR projects. If the Gradle project uses the [WAR Plugin](https://docs.gradle.org/current/userguide/war_plugin.html), Jib will by default use the [jetty](https://hub.docker.com/_/jetty) as a base image to deploy the project WAR. No extra configuration is necessary other than using the WAR Plugin to make Jib build WAR images.
+Jib also containerizes WAR projects. If the Gradle project uses the [WAR Plugin](https://docs.gradle.org/current/userguide/war_plugin.html), Jib will by default use [jetty](https://hub.docker.com/_/jetty) as a base image to deploy the project WAR. No extra configuration is necessary other than using the WAR Plugin to make Jib build WAR images.
 
 Note that Jib will work slightly differently for WAR projects from JAR projects:
    - `container.mainClass` and `container.jvmFlags` are ignored.
