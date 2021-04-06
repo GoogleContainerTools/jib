@@ -6,7 +6,7 @@ Starting from version 3.0, the default base image is the official [`adoptopenjdk
 
 For WAR projects, the default is the official [`jetty`](https://hub.docker.com/_/jetty) image on Docker Hub.
 
-Note that Jib's default choice for AdoptOpenJDK and Jetty does not imply any endorsement to them. In fact, for strong reproducibility, we always recommend configuring [`jib.from.image`](https://github.com/GoogleContainerTools/jib/tree/master/jib-gradle-plugin#from-closure) (Gradle) or [`<from><image>`](https://github.com/GoogleContainerTools/jib/tree/master/jib-maven-plugin#from-object) (Maven) to pin to a specific base image using a digest (or at least a tag). And while doing so, you should do your due diligence to figure out which base image will work best for you.
+Note that Jib's default choice for AdoptOpenJDK and Jetty does not imply any endorsement to them. In fact, for strong reproducibility (which also results in better performance and efficiency), we always recommend configuring [`jib.from.image`](https://github.com/GoogleContainerTools/jib/tree/master/jib-gradle-plugin#from-closure) (Gradle) or [`<from><image>`](https://github.com/GoogleContainerTools/jib/tree/master/jib-maven-plugin#from-object) (Maven) to pin to a specific base image using a digest (or at least a tag). And while doing so, you should do your due diligence to figure out which base image will work best for you.
 
 ### Migration from Pre-3.0
 
