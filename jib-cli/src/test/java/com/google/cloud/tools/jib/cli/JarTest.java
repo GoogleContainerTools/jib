@@ -140,7 +140,7 @@ public class JarTest {
             "--stacktrace",
             "--http-trace",
             "--serialize",
-            "--result-json=path/to/json/jib-image.json",
+            "--image-metadata-out=path/to/json/jib-image.json",
             "my-app.jar");
     CommonCliOptions commonCliOptions = jarCommand.commonCliOptions;
     assertThat(commonCliOptions.getTargetImage()).isEqualTo("test-image-ref");

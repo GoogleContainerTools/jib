@@ -128,7 +128,7 @@ public class BuildTest {
             "--stacktrace",
             "--http-trace",
             "--serialize",
-            "--result-json=path/to/json/jib-image.json");
+            "--image-metadata-out=path/to/json/jib-image.json");
     CommonCliOptions commonCliOptions = buildCommand.commonCliOptions;
     assertThat(commonCliOptions.getTargetImage()).isEqualTo("test-image-ref");
     assertThat(commonCliOptions.getUsernamePassword()).isEmpty();

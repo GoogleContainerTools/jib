@@ -245,12 +245,11 @@ public class CommonCliOptions {
   private boolean serialize;
 
   @CommandLine.Option(
-      names = "--result-json",
+      names = "--image-metadata-out",
       paramLabel = "<path-to-json>",
       description =
           "A path to the json file that should contain image metadata (for example, digest, id and tags) after build is"
-              + "complete.",
-      scope = CommandLine.ScopeType.INHERIT)
+              + "complete.")
   @SuppressWarnings("NullAway.Init") // initialized by picocli
   private Path imageJsonPath;
 
