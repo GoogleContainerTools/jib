@@ -15,6 +15,7 @@ If a question you have is not answered below, please [submit an issue](/../../is
 [Where is the application in the container filesystem?](#where-is-the-application-in-the-container-filesystem)\
 [How are Jib applications layered?](#how-are-jib-applications-layered)\
 [Can I learn more about container images?](#can-i-learn-more-about-container-images)
+[Which base image (JDK) does Jib use?](#which-base-image-jdk-does-jib-use)
 
 **How-Tos**\
 [How do I set parameters for my image at runtime?](#how-do-i-set-parameters-for-my-image-at-runtime)\
@@ -179,6 +180,10 @@ Jib applications are split into the following layers:
 * Resources
 * Classes
 * Each extra directory (`jib.extraDirectories` in Gradle, `<extraDirectories>` in Maven) builds to its own layer
+
+### Which base image (JDK) does Jib use?
+
+[`adoptopenjdk`](https://hub.docker.com/_/adoptopenjdk) and [`jetty`](https://hub.docker.com/_/jetty) (for WAR). See [default_base_image.md] for details.
 
 ### Can I learn more about container images?
 
