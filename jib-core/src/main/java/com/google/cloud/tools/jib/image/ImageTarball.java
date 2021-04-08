@@ -31,6 +31,7 @@ import com.google.common.collect.ImmutableSet;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
+import java.time.Instant;
 import java.util.Collections;
 
 /** Translates an {@link Image} to a tarball that can be loaded into Docker. */
@@ -48,6 +49,7 @@ public class ImageTarball {
   private final Image image;
   private final ImageReference imageReference;
   private final ImmutableSet<String> allTargetImageTags;
+  private final Instant creationTime = Instant.EPOCH;
 
   /**
    * Instantiate with an {@link Image}.
@@ -88,7 +90,8 @@ public class ImageTarball {
       DescriptorDigest digest = layer.getBlobDescriptor().getDigest();
       long size = layer.getBlobDescriptor().getSize();
 
-      tarStreamBuilder.addBlobEntry(layer.getBlob(), size, "blobs/sha256/" + digest.getHash());
+      tarStreamBuilder.addBlobEntry(
+          layer.getBlob(), size, "blobs/sha256/" + digest.getHash(), creationTime);
       manifest.addLayer(size, digest);
     }
 
@@ -99,21 +102,26 @@ public class ImageTarball {
     manifest.setContainerConfiguration(configDescriptor.getSize(), configDescriptor.getDigest());
     tarStreamBuilder.addByteEntry(
         JsonTemplateMapper.toByteArray(containerConfiguration),
-        "blobs/sha256/" + configDescriptor.getDigest().getHash());
+        "blobs/sha256/" + configDescriptor.getDigest().getHash(),
+        creationTime);
 
     // Adds the manifest to the tarball
     BlobDescriptor manifestDescriptor = Digests.computeDigest(manifest);
     tarStreamBuilder.addByteEntry(
         JsonTemplateMapper.toByteArray(manifest),
-        "blobs/sha256/" + manifestDescriptor.getDigest().getHash());
+        "blobs/sha256/" + manifestDescriptor.getDigest().getHash(),
+        creationTime);
 
     // Adds the oci-layout and index.json
     tarStreamBuilder.addByteEntry(
-        "{\"imageLayoutVersion\": \"1.0.0\"}".getBytes(StandardCharsets.UTF_8), "oci-layout");
+        "{\"imageLayoutVersion\": \"1.0.0\"}".getBytes(StandardCharsets.UTF_8),
+        "oci-layout",
+        creationTime);
     OciIndexTemplate index = new OciIndexTemplate();
     // TODO: figure out how to tag with allTargetImageTags
     index.addManifest(manifestDescriptor, imageReference.toStringWithQualifier());
-    tarStreamBuilder.addByteEntry(JsonTemplateMapper.toByteArray(index), "index.json");
+    tarStreamBuilder.addByteEntry(
+        JsonTemplateMapper.toByteArray(index), "index.json", creationTime);
 
     tarStreamBuilder.writeAsTarArchiveTo(out);
   }
@@ -127,7 +135,7 @@ public class ImageTarball {
       String layerName = layer.getBlobDescriptor().getDigest().getHash() + LAYER_FILE_EXTENSION;
 
       tarStreamBuilder.addBlobEntry(
-          layer.getBlob(), layer.getBlobDescriptor().getSize(), layerName);
+          layer.getBlob(), layer.getBlobDescriptor().getSize(), layerName, creationTime);
       manifestTemplate.addLayerFile(layerName);
     }
 
@@ -136,7 +144,8 @@ public class ImageTarball {
         new ImageToJsonTranslator(image).getContainerConfiguration();
     tarStreamBuilder.addByteEntry(
         JsonTemplateMapper.toByteArray(containerConfiguration),
-        CONTAINER_CONFIGURATION_JSON_FILE_NAME);
+        CONTAINER_CONFIGURATION_JSON_FILE_NAME,
+        creationTime);
 
     // Adds the manifest to tarball.
     for (String tag : allTargetImageTags) {
@@ -144,7 +153,8 @@ public class ImageTarball {
     }
     tarStreamBuilder.addByteEntry(
         JsonTemplateMapper.toByteArray(Collections.singletonList(manifestTemplate)),
-        MANIFEST_JSON_FILE_NAME);
+        MANIFEST_JSON_FILE_NAME,
+        creationTime);
 
     tarStreamBuilder.writeAsTarArchiveTo(out);
   }

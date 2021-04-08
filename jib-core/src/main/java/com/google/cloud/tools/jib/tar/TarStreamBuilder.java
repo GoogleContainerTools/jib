@@ -21,6 +21,7 @@ import com.google.cloud.tools.jib.blob.Blobs;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
+import java.time.Instant;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
@@ -71,10 +72,12 @@ public class TarStreamBuilder {
    *
    * @param contents the bytes to add to the tarball
    * @param name the name of the entry (i.e. filename)
+   * @param modTime the time the entry is created
    */
-  public void addByteEntry(byte[] contents, String name) {
+  public void addByteEntry(byte[] contents, String name, Instant modTime) {
     TarArchiveEntry entry = new TarArchiveEntry(name);
     entry.setSize(contents.length);
+    entry.setModTime(modTime.getEpochSecond());
     archiveMap.put(entry, Blobs.from(outputStream -> outputStream.write(contents)));
   }
 
@@ -85,10 +88,12 @@ public class TarStreamBuilder {
    * @param blob the {@link Blob} to add to the tarball
    * @param size the size (in bytes) of {@code blob}
    * @param name the name of the entry (i.e. filename)
+   * @param modTime the time the entry is created
    */
-  public void addBlobEntry(Blob blob, long size, String name) {
+  public void addBlobEntry(Blob blob, long size, String name, Instant modTime) {
     TarArchiveEntry entry = new TarArchiveEntry(name);
     entry.setSize(size);
+    entry.setModTime(modTime.getEpochSecond());
     archiveMap.put(entry, blob);
   }
 }
