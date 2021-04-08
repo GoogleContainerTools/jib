@@ -29,7 +29,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Arrays;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
@@ -130,26 +129,6 @@ public class TarStreamBuilderTest {
         "jib", new String(ByteStreams.toByteArray(tarArchiveInputStream), StandardCharsets.UTF_8));
 
     Assert.assertNull(tarArchiveInputStream.getNextTarEntry());
-  }
-
-  @Test
-  public void testTarStreamAreReproducible() throws IOException, InterruptedException {
-    testTarStreamBuilder.addBlobEntry(
-        Blobs.from("jib"), "jib".getBytes(StandardCharsets.UTF_8).length, "jib");
-    ByteArrayOutputStream firstTarByteOutputStream = new ByteArrayOutputStream();
-    testTarStreamBuilder.writeAsTarArchiveTo(firstTarByteOutputStream);
-
-    Thread.sleep(2000);
-
-    TarStreamBuilder anotherTestTarStreamBuilder = new TarStreamBuilder();
-    anotherTestTarStreamBuilder.addBlobEntry(
-        Blobs.from("jib"), "jib".getBytes(StandardCharsets.UTF_8).length, "jib");
-    ByteArrayOutputStream secondTarByteOutputStream = new ByteArrayOutputStream();
-    anotherTestTarStreamBuilder.writeAsTarArchiveTo(secondTarByteOutputStream);
-
-    Assert.assertTrue(
-        Arrays.equals(
-            firstTarByteOutputStream.toByteArray(), secondTarByteOutputStream.toByteArray()));
   }
 
   /** Creates a TarStreamBuilder using TarArchiveEntries. */
