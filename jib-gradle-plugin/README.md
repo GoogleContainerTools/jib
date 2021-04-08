@@ -199,7 +199,7 @@ Field | Type | Default | Description
 
 Property | Type | Default | Description
 --- | --- | --- | ---
-`image` | `String` | `gcr.io/distroless/java` | The image reference for the base image. The source type can be specified using a [special type prefix](#setting-the-base-image).
+`image` | `String` | `adoptopenjdk:{8,11}-jre` (or `jetty` for WAR) | The image reference for the base image. The source type can be specified using a [special type prefix](#setting-the-base-image).
 `auth` | [`auth`](#auth-closure) | *None* | Specifies credentials directly (alternative to `credHelper`).
 `credHelper` | `String` | *None* | Specifies a credential helper that can authenticate pulling the base image. This parameter can either be configured as an absolute path to the credential helper executable or as a credential helper suffix (following `docker-credential-`).
 `platforms` | [`platforms`](#platforms-closure) | See [`platforms`](#platforms-closure) | _Incubating feature_: Configures platforms of base images to select from a manifest list.
@@ -381,8 +381,8 @@ There are three different types of base images that Jib accepts: an image from a
 
 Prefix | Example | Type
 --- | --- | ---
-*None* | `gcr.io/distroless/java` | Pulls the base image from a registry.
-`registry://` | `registry://gcr.io/distroless/java` | Pulls the base image from a registry.
+*None* | `adoptopenjdk:11-jre` | Pulls the base image from a registry.
+`registry://` | `registry://adoptopenjdk:11-jre` | Pulls the base image from a registry.
 `docker://` | `docker://busybox` | Retrieves the base image from the Docker daemon.
 `tar://` | `tar:///path/to/file.tar` | Uses an image tarball stored at the specified path as the base image. Also accepts relative paths (e.g. `tar://build/jib-image.tar`).
 
@@ -524,11 +524,11 @@ The Jib build plugins have an extension framework that enables anyone to easily 
 
 ### WAR Projects
 
-Jib also containerizes WAR projects. If the Gradle project uses the [WAR Plugin](https://docs.gradle.org/current/userguide/war_plugin.html), Jib will by default use the [distroless Jetty](https://github.com/GoogleContainerTools/distroless/tree/master/java/jetty) as a base image to deploy the project WAR. No extra configuration is necessary other than using the WAR Plugin to make Jib build WAR images.
+Jib also containerizes WAR projects. If the Gradle project uses the [WAR Plugin](https://docs.gradle.org/current/userguide/war_plugin.html), Jib will by default use [jetty](https://hub.docker.com/_/jetty) as a base image to deploy the project WAR. No extra configuration is necessary other than using the WAR Plugin to make Jib build WAR images.
 
 Note that Jib will work slightly differently for WAR projects from JAR projects:
    - `container.mainClass` and `container.jvmFlags` are ignored.
-   - The WAR will be exploded into `/jetty/webapps/ROOT`, which is the expected WAR location for the distroless Jetty base image.
+   - The WAR will be exploded into `/var/lib/jetty/webapps/ROOT`, which is the expected WAR location for the Jetty base image.
 
 To use a different Servlet engine base image, you can customize `container.appRoot`, `container.entrypoint`, and `container.args`. If you do not set `entrypoint` or `args`, Jib will inherit the `ENTRYPOINT` and `CMD` of the base image, so in many cases, you may not need to configure them. However, you will most likely have to set `container.appRoot` to a proper location depending on the base image. Here is an example of using a Tomcat image:
 
