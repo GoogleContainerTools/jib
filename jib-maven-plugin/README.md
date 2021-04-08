@@ -309,6 +309,8 @@ Property | Type | Default | Description
 --- | --- | --- | ---
 `from` | file | `[(project-dir)/src/main/jib]` | The source directory. Can be absolute or relative to the project root.
 `into` | string | `/` | The absolute unix path on the container to copy the extra directory contents into.
+`includes` | list | *None* | Glob patterns for including files. See [Adding Arbitrary Files to the Image](#adding-arbitrary-files-to-the-image) for an example.
+`excludes` | list | *None* | Glob patterns for excluding files. See [Adding Arbitrary Files to the Image](#adding-arbitrary-files-to-the-image) for an example.
 
 <a name="outputpaths-object"></a>`outputPaths` is an object with the following properties:
 
@@ -476,7 +478,6 @@ You can configure different directories by using the `<extraDirectories>` parame
 Alternatively, the `<extraDirectories>` parameter can be used as an object to set custom extra directories, as well as the extra files' permissions on the container:
 
 ```xml
-<configuration>
   <extraDirectories>
     <paths>src/main/custom-extra-dir</paths> <!-- Copies files from 'src/main/custom-extra-dir' -->
     <permissions>
@@ -494,7 +495,39 @@ Alternatively, the `<extraDirectories>` parameter can be used as an object to se
       </permission>
     </permissions>
   </extraDirectories>
-</configuration>
+```
+
+You may also specify the target of the copy and include or exclude files:
+
+```xml
+  <extraDirectories>
+    <paths>
+      <path>
+        // copies the contents of 'src/main/extra-dir' into '/' on the container
+        <from>src/main/extra-dir</from>
+      </path>
+      <path>
+        // copies the contents of 'src/main/another/dir' into '/extras' on the container
+        <from>src/main/another/dir</from>
+        <into>/extras</into>
+      </path>
+      <path>
+        // copies a single-file.xml
+        <from>src/main/resources/xml-files</from>
+        <into>/dest-in-container</into>
+        <includes>single-file.xml</includes>
+      </path>
+      <path>
+        // copies only .txt files except for 'hidden.txt' at the source root
+        <from>build/some-output</from>
+        <into>/txt-files</into>
+        <includes>*.txt,**/*.txt</includes>
+        <excludes>
+          <exclude>hidden.txt</exclude>
+        </excludes>
+      </path>
+    </paths>
+  </extraDirectories>
 ```
 
 ### Authentication Methods
