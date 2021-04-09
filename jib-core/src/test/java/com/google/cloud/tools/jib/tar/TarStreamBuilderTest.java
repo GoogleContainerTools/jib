@@ -101,7 +101,7 @@ public class TarStreamBuilderTest {
     testTarStreamBuilder.addByteEntry(
         "asdf".getBytes(StandardCharsets.UTF_8), "crepecake", creationTime);
     testTarStreamBuilder.addBlobEntry(
-        Blobs.from("jib"), "jib".getBytes(StandardCharsets.UTF_8).length, "jib", creationTime);
+        Blobs.from("jib"), "jib".getBytes(StandardCharsets.UTF_8).length, "jib", Instant.EPOCH);
 
     // Writes the BLOB and captures the output.
     ByteArrayOutputStream tarByteOutputStream = new ByteArrayOutputStream();
