@@ -47,7 +47,6 @@ public class TarStreamBuilderTest {
   private byte[] fileAContents;
   private byte[] fileBContents;
   private TarStreamBuilder testTarStreamBuilder = new TarStreamBuilder();
-  private final Instant creationTime = Instant.EPOCH;
 
   @Before
   public void setup() throws URISyntaxException, IOException {
