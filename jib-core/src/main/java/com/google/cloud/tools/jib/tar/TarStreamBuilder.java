@@ -74,7 +74,7 @@ public class TarStreamBuilder {
    * @param name the name of the entry (i.e. filename)
    * @param modTime the time the entry is created
    */
-  public void addByteEntry(byte[] contents, String name, Instant modTime) {
+  public void addByteEntry(byte[] contents, String name, Instant modificationTime) {
     TarArchiveEntry entry = new TarArchiveEntry(name);
     entry.setSize(contents.length);
     entry.setModTime(modTime.getEpochSecond());
