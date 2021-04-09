@@ -49,7 +49,7 @@ public class ImageTarball {
   private final Image image;
   private final ImageReference imageReference;
   private final ImmutableSet<String> allTargetImageTags;
-  private final Instant creationTime = Instant.EPOCH;
+  private static final Instant TAR_ENTRY_MODIFICATION_TIME = Instant.EPOCH;
 
   /**
    * Instantiate with an {@link Image}.
