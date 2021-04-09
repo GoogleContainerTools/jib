@@ -218,21 +218,18 @@ public class TarStreamBuilderTest {
     // Verifies fileB was archived correctly.
     TarArchiveEntry headerFileB = tarArchiveInputStream.getNextTarEntry();
     Assert.assertEquals("crepecake", headerFileB.getName());
-    Assert.assertEquals(Instant.EPOCH, headerFileB.getModTime().toInstant());
     byte[] fileBString = ByteStreams.toByteArray(tarArchiveInputStream);
     Assert.assertArrayEquals(fileBContents, fileBString);
 
     // Verifies directoryA was archived correctly.
     TarArchiveEntry headerDirectoryA = tarArchiveInputStream.getNextTarEntry();
     Assert.assertEquals("some/path/to/", headerDirectoryA.getName());
-    Assert.assertEquals(Instant.EPOCH, headerDirectoryA.getModTime().toInstant());
 
     // Verifies the long file was archived correctly.
     TarArchiveEntry headerFileALong = tarArchiveInputStream.getNextTarEntry();
     Assert.assertEquals(
         "some/really/long/path/that/exceeds/100/characters/abcdefghijklmnopqrstuvwxyz0123456789012345678901234567890",
         headerFileALong.getName());
-    Assert.assertEquals(Instant.EPOCH, headerFileALong);
     byte[] fileALongString = ByteStreams.toByteArray(tarArchiveInputStream);
     Assert.assertArrayEquals(fileAContents, fileALongString);
 
