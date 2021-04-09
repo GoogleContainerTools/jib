@@ -77,7 +77,7 @@ public class TarStreamBuilder {
   public void addByteEntry(byte[] contents, String name, Instant modificationTime) {
     TarArchiveEntry entry = new TarArchiveEntry(name);
     entry.setSize(contents.length);
-    entry.setModTime(modTime.getEpochSecond());
+    entry.setModTime(modificationTime.getEpochSecond());
     archiveMap.put(entry, Blobs.from(outputStream -> outputStream.write(contents)));
   }
 
@@ -88,12 +88,12 @@ public class TarStreamBuilder {
    * @param blob the {@link Blob} to add to the tarball
    * @param size the size (in bytes) of {@code blob}
    * @param name the name of the entry (i.e. filename)
-   * @param modTime the time the entry is created
+   * @param modificationTime the modification time of the entry
    */
-  public void addBlobEntry(Blob blob, long size, String name, Instant modTime) {
+  public void addBlobEntry(Blob blob, long size, String name, Instant modificationTime) {
     TarArchiveEntry entry = new TarArchiveEntry(name);
     entry.setSize(size);
-    entry.setModTime(modTime.getEpochSecond());
+    entry.setModTime(modificationTime.getEpochSecond());
     archiveMap.put(entry, blob);
   }
 }

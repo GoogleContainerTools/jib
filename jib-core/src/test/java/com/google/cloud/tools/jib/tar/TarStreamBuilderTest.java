@@ -97,9 +97,10 @@ public class TarStreamBuilderTest {
 
   @Test
   public void testToBlob_multiByte() throws IOException {
-    testTarStreamBuilder.addByteEntry("日本語".getBytes(StandardCharsets.UTF_8), "test", creationTime);
     testTarStreamBuilder.addByteEntry(
-        "asdf".getBytes(StandardCharsets.UTF_8), "crepecake", creationTime);
+        "日本語".getBytes(StandardCharsets.UTF_8), "test", Instant.EPOCH);
+    testTarStreamBuilder.addByteEntry(
+        "asdf".getBytes(StandardCharsets.UTF_8), "crepecake", Instant.EPOCH);
     testTarStreamBuilder.addBlobEntry(
         Blobs.from("jib"), "jib".getBytes(StandardCharsets.UTF_8).length, "jib", Instant.EPOCH);
 
@@ -124,11 +125,13 @@ public class TarStreamBuilderTest {
     Assert.assertEquals("crepecake", headerFile.getName());
     Assert.assertEquals(
         "asdf", new String(ByteStreams.toByteArray(tarArchiveInputStream), StandardCharsets.UTF_8));
+    Assert.assertEquals(Instant.EPOCH, headerFile.getModTime().toInstant());
 
     headerFile = tarArchiveInputStream.getNextTarEntry();
     Assert.assertEquals("jib", headerFile.getName());
     Assert.assertEquals(
         "jib", new String(ByteStreams.toByteArray(tarArchiveInputStream), StandardCharsets.UTF_8));
+    Assert.assertEquals(Instant.EPOCH, headerFile.getModTime().toInstant());
 
     Assert.assertNull(tarArchiveInputStream.getNextTarEntry());
   }
@@ -150,27 +153,27 @@ public class TarStreamBuilderTest {
   /** Creates a TarStreamBuilder using Strings. */
   private void setUpWithStrings() {
     // Prepares a test TarStreamBuilder.
-    testTarStreamBuilder.addByteEntry(fileAContents, "some/path/to/resourceFileA", creationTime);
-    testTarStreamBuilder.addByteEntry(fileBContents, "crepecake", creationTime);
+    testTarStreamBuilder.addByteEntry(fileAContents, "some/path/to/resourceFileA", Instant.EPOCH);
+    testTarStreamBuilder.addByteEntry(fileBContents, "crepecake", Instant.EPOCH);
     testTarStreamBuilder.addTarArchiveEntry(
         new TarArchiveEntry(directoryA.toFile(), "some/path/to"));
     testTarStreamBuilder.addByteEntry(
         fileAContents,
         "some/really/long/path/that/exceeds/100/characters/abcdefghijklmnopqrstuvwxyz0123456789012345678901234567890",
-        creationTime);
+        Instant.EPOCH);
   }
 
   /** Creates a TarStreamBuilder using Strings and TarArchiveEntries. */
   private void setUpWithStringsAndTarEntries() {
     // Prepares a test TarStreamBuilder.
-    testTarStreamBuilder.addByteEntry(fileAContents, "some/path/to/resourceFileA", creationTime);
+    testTarStreamBuilder.addByteEntry(fileAContents, "some/path/to/resourceFileA", Instant.EPOCH);
     testTarStreamBuilder.addTarArchiveEntry(new TarArchiveEntry(fileB.toFile(), "crepecake"));
     testTarStreamBuilder.addTarArchiveEntry(
         new TarArchiveEntry(directoryA.toFile(), "some/path/to"));
     testTarStreamBuilder.addByteEntry(
         fileAContents,
         "some/really/long/path/that/exceeds/100/characters/abcdefghijklmnopqrstuvwxyz0123456789012345678901234567890",
-        creationTime);
+        Instant.EPOCH);
   }
 
   /** Creates a compressed blob from the TarStreamBuilder and verifies it. */
@@ -215,18 +218,21 @@ public class TarStreamBuilderTest {
     // Verifies fileB was archived correctly.
     TarArchiveEntry headerFileB = tarArchiveInputStream.getNextTarEntry();
     Assert.assertEquals("crepecake", headerFileB.getName());
+    Assert.assertEquals(Instant.EPOCH, headerFileB.getModTime().toInstant());
     byte[] fileBString = ByteStreams.toByteArray(tarArchiveInputStream);
     Assert.assertArrayEquals(fileBContents, fileBString);
 
     // Verifies directoryA was archived correctly.
     TarArchiveEntry headerDirectoryA = tarArchiveInputStream.getNextTarEntry();
     Assert.assertEquals("some/path/to/", headerDirectoryA.getName());
+    Assert.assertEquals(Instant.EPOCH, headerDirectoryA.getModTime().toInstant());
 
     // Verifies the long file was archived correctly.
     TarArchiveEntry headerFileALong = tarArchiveInputStream.getNextTarEntry();
     Assert.assertEquals(
         "some/really/long/path/that/exceeds/100/characters/abcdefghijklmnopqrstuvwxyz0123456789012345678901234567890",
         headerFileALong.getName());
+    Assert.assertEquals(Instant.EPOCH, headerFileALong);
     byte[] fileALongString = ByteStreams.toByteArray(tarArchiveInputStream);
     Assert.assertArrayEquals(fileAContents, fileALongString);
 
