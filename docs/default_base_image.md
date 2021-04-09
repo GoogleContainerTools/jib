@@ -28,8 +28,10 @@ Note that, even after Jib fully cached a base image, Jib still connects to Docke
 Some options:
 * Configure a registry mirror.
 * Prevent Jib from accessing Docker Hub (after Jib cached a base image locally).
-  * Pin to a specific base image using a SHA digest (for example, `jib.from.image=adoptopenjdk:11-jre@sha256:...`).
-  * Do offline building.
+   - Pin to a specific base image using a SHA digest (for example, `jib.from.image='adoptopenjdk:11-jre@sha256:...'`).
+   - Do offline building.
+   - Read a base from a local Docker deamon.
+   - Set up a local registry, store a base image, and read it from the local registry.
 * Retry with increasing backoffs.
 
 See this [FAQ](https://github.com/GoogleContainerTools/jib/blob/master/docs/faq.md#i-am-hitting-docker-hub-rate-limits-how-can-i-configure-registry-mirrors) for more details about the options.
