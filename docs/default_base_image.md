@@ -23,7 +23,7 @@ Docker Hub enforces download rate limit. Because Jib pulls base images from Dock
         ]
       }
 ```
-Note that, even after Jib fully cached a base image, Jib still connects to Docker Hub to check the imaage every time it runs (unless you pin to a specific base image using a SHA digest). This is to check if the cached base image is up-to-date.
+Note that, even after Jib fully cached a base image, Jib still connects to Docker Hub to check the image every time it runs (unless you pin to a specific base image using a SHA digest). This is to check if the cached base image is up-to-date.
 
 Some options:
 * Configure a registry mirror.
