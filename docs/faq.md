@@ -565,6 +565,21 @@ The Jib build plugins have an extension framework that enables anyone to easily 
 
 See the [Maven](https://github.com/GoogleContainerTools/jib/tree/master/jib-maven-plugin#global-jib-configuration), [Gradle](https://github.com/GoogleContainerTools/jib/tree/master/jib-gradle-plugin#global-jib-configuration) or [Jib CLI](https://github.com/GoogleContainerTools/jib/blob/master/jib-cli/README.md#global-jib-configuration) docs. Note that the example in the docs uses [Google's Docker Hub mirror on `mirror.gcr.io`](https://cloud.google.com/container-registry/docs/pulling-cached-images).
 
+Starting from Jib build plugins 3.0, [the default base image is `adoptopenjdk` and `jetty` on Docker Hub](default_base_image.md), so you may start to encounter the rate limits if you are not explicitly setting a base image.
+
+Some other alternatives get around the rate limits:
+
+- Prevent Jib from accessing Docker Hub (after Jib cached a base image locally).
+   - Pin to a specific base image using a SHA digest (for example, `jib.from.image='adoptopenjdk:11-jre@sha256:...'`).
+      - If you are not setting a base image with a SHA digest (which is the case if you don't set `jib.from.image` at all), then every time Jib runs, it reaches out to the registry to check if the base image is up-to-date. On the other hand, if you pin to a specific image with a digest, then the image is immutable. Therefore, if Jib has cached the image once (by running Jib online once to fully cache the image), Jib will not reach out the Docker Hub. See [this Stack Overflow answer](https://stackoverflow.com/a/61190005/1701388) for more details.
+   - Do offline building.
+      - Pass `--offline` to Maven or Gradle. Before that, you need to run Jib online once to cache the image. However, `--offline` means you cannot push to a remote registry. See [this Stack Overflow answer](https://stackoverflow.com/a/61190005/1701388) for more details.
+   - Read a base from a local Docker deamon.
+      - Store an image to your local Docker daemon, and set, say, `jib.from.image='docker://adoptopenjdk:11-jre'`. It can be slow for an initial build where Jib has to cache the image in Jib's format. For performance reasons, we usually recommend using an image on a registry.
+   - Set up a local registry, store a base image, and read it from the local registry.
+      - Setting up a local registry is as simple as running `docker run -d -p5000:5000 registry:2`, but nevertheless, the whole process is a bit involved.
+- Retry with increasing backoffs. For example,
+
 ### Where is the global Jib configuration file and how I can configure it?
 
 See the [Maven](https://github.com/GoogleContainerTools/jib/tree/master/jib-maven-plugin#global-jib-configuration), [Gradle](https://github.com/GoogleContainerTools/jib/tree/master/jib-gradle-plugin#global-jib-configuration) or [Jib CLI](https://github.com/GoogleContainerTools/jib/blob/master/jib-cli/README.md#global-jib-configuration) docs.
