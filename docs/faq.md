@@ -567,7 +567,7 @@ See the [Maven](https://github.com/GoogleContainerTools/jib/tree/master/jib-mave
 
 Starting from Jib build plugins 3.0, [the default base image is `adoptopenjdk` and `jetty` on Docker Hub](default_base_image.md), so you may start to encounter the rate limits if you are not explicitly setting a base image.
 
-Some other alternatives get around the rate limits:
+Some other alternatives to get around the rate limits:
 
 * Prevent Jib from accessing Docker Hub (after Jib cached a base image locally).
    - **Pin to a specific base image using a SHA digest (for example, `jib.from.image='adoptopenjdk:11-jre@sha256:...'`).** If you are not setting a base image with a SHA digest (which is the case if you don't set `jib.from.image` at all), then every time Jib runs, it reaches out to the registry to check if the base image is up-to-date. On the other hand, if you pin to a specific image with a digest, then the image is immutable. Therefore, if Jib has cached the image once (by running Jib online once to fully cache the image), Jib will not reach out the Docker Hub. See [this Stack Overflow answer](https://stackoverflow.com/a/61190005/1701388) for more details.
