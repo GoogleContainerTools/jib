@@ -2,6 +2,9 @@
 
 <img src="https://img.shields.io/badge/status-preview-orange">
 
+[![Chocolatey](https://img.shields.io/chocolatey/v/jib.svg)](https://chocolatey.org/packages/jib)
+[![Chocolatey](https://img.shields.io/chocolatey/dt/jib.svg)](https://chocolatey.org/packages/jib)
+
 `jib` is a general-purpose command-line utility for building Docker or [OCI](https://github.com/opencontainers/image-spec) container images from file system content as well as JAR files. Jib CLI builds containers [fast and reproducibly without Docker](https://github.com/GoogleContainerTools/jib#goals) like [other Jib tools](https://github.com/GoogleContainerTools/jib#what-is-jib).
 
 ```sh
@@ -22,6 +25,7 @@ The CLI tool is powered by [Jib Core](https://github.com/GoogleContainerTools/ji
 ## Table of Contents
 * [Get the Jib CLI](#get-the-jib-cli)
   * [Download a Java Application](#download-a-java-application)
+  * [Install on Windows with `choco`](#Windows-install-with-choco)
   * [Build Yourself from Source (for Advanced Users)](#build-yourself-from-source-for-advanced-users)
 * [Supported Commands](#supported-commands)
 * [Build Command](#build-command)
@@ -47,6 +51,28 @@ Most users should download a ZIP archive (Java application). We are working on r
 A JRE is required to run this Jib CLI distribution.
 
 Find the [latest jib-cli 0.5.0 release](https://github.com/GoogleContainerTools/jib/releases/tag/v0.5.0-cli) on the [Releases page](https://github.com/GoogleContainerTools/jib/releases), download `jib-jre-<version>.zip`, and unzip it. The zip file contains the `jib` (`jib.bat` for Windows) script at `jib/bin/`. Optionally, add the binary directory to your `$PATH` so that you can call `jib` from anywhere.
+
+### Windows install with choco
+
+On Windows, you can use the [`choco`](https://community.chocolatey.org/packages/jib) commmand to install, upgrade or uninstall `Jib`.
+
+To install Jib CLI, run the following command from the command line or from PowerShell:
+
+```
+choco install jib
+```
+
+To upgrade Jib CLI, run the following command from the command line or from PowerShell:
+
+```
+choco upgrade jib
+```
+
+To uninstall Jib CLI, run the following command from the command line or from PowerShell:
+
+```
+choco uninstall jib
+```
 
 ### Build Yourself from Source (for Advanced Users)
 
