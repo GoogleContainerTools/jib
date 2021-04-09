@@ -72,7 +72,7 @@ public class TarStreamBuilder {
    *
    * @param contents the bytes to add to the tarball
    * @param name the name of the entry (i.e. filename)
-   * @param modTime the time the entry is created
+   * @param modificationTime the modification time of the entry
    */
   public void addByteEntry(byte[] contents, String name, Instant modificationTime) {
     TarArchiveEntry entry = new TarArchiveEntry(name);
