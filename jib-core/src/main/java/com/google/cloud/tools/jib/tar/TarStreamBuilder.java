@@ -77,7 +77,7 @@ public class TarStreamBuilder {
   public void addByteEntry(byte[] contents, String name, Instant modificationTime) {
     TarArchiveEntry entry = new TarArchiveEntry(name);
     entry.setSize(contents.length);
-    entry.setModTime(modificationTime.getEpochSecond());
+    entry.setModTime(modificationTime.toEpochMilli());
     archiveMap.put(entry, Blobs.from(outputStream -> outputStream.write(contents)));
   }
 
@@ -93,7 +93,7 @@ public class TarStreamBuilder {
   public void addBlobEntry(Blob blob, long size, String name, Instant modificationTime) {
     TarArchiveEntry entry = new TarArchiveEntry(name);
     entry.setSize(size);
-    entry.setModTime(modificationTime.getEpochSecond());
+    entry.setModTime(modificationTime.toEpochMilli());
     archiveMap.put(entry, blob);
   }
 }

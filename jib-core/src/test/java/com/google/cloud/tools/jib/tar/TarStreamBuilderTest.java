@@ -38,8 +38,11 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
+import static java.time.temporal.ChronoUnit.SECONDS;
+
 /** Tests for {@link TarStreamBuilder}. */
 public class TarStreamBuilderTest {
+
 
   private Path fileA;
   private Path fileB;
@@ -97,12 +100,15 @@ public class TarStreamBuilderTest {
 
   @Test
   public void testToBlob_multiByte() throws IOException {
+    Instant MODIFICATION_TIME = Instant.ofEpochMilli(1618041179516l);
+    Instant TIME_FROM_TAR_ARCHIVE_ENTRY = MODIFICATION_TIME.truncatedTo(SECONDS);
+
     testTarStreamBuilder.addByteEntry(
-        "日本語".getBytes(StandardCharsets.UTF_8), "test", Instant.EPOCH);
+        "日本語".getBytes(StandardCharsets.UTF_8), "test", MODIFICATION_TIME);
     testTarStreamBuilder.addByteEntry(
-        "asdf".getBytes(StandardCharsets.UTF_8), "crepecake", Instant.EPOCH);
+        "asdf".getBytes(StandardCharsets.UTF_8), "crepecake", MODIFICATION_TIME);
     testTarStreamBuilder.addBlobEntry(
-        Blobs.from("jib"), "jib".getBytes(StandardCharsets.UTF_8).length, "jib", Instant.EPOCH);
+        Blobs.from("jib"), "jib".getBytes(StandardCharsets.UTF_8).length, "jib", MODIFICATION_TIME);
 
     // Writes the BLOB and captures the output.
     ByteArrayOutputStream tarByteOutputStream = new ByteArrayOutputStream();
@@ -125,13 +131,13 @@ public class TarStreamBuilderTest {
     Assert.assertEquals("crepecake", headerFile.getName());
     Assert.assertEquals(
         "asdf", new String(ByteStreams.toByteArray(tarArchiveInputStream), StandardCharsets.UTF_8));
-    Assert.assertEquals(Instant.EPOCH, headerFile.getModTime().toInstant());
+    Assert.assertEquals(TIME_FROM_TAR_ARCHIVE_ENTRY, headerFile.getModTime().toInstant());
 
     headerFile = tarArchiveInputStream.getNextTarEntry();
     Assert.assertEquals("jib", headerFile.getName());
     Assert.assertEquals(
         "jib", new String(ByteStreams.toByteArray(tarArchiveInputStream), StandardCharsets.UTF_8));
-    Assert.assertEquals(Instant.EPOCH, headerFile.getModTime().toInstant());
+    Assert.assertEquals(TIME_FROM_TAR_ARCHIVE_ENTRY, headerFile.getModTime().toInstant());
 
     Assert.assertNull(tarArchiveInputStream.getNextTarEntry());
   }
