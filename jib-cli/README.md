@@ -25,7 +25,7 @@ The CLI tool is powered by [Jib Core](https://github.com/GoogleContainerTools/ji
 ## Table of Contents
 * [Get the Jib CLI](#get-the-jib-cli)
   * [Download a Java Application](#download-a-java-application)
-  * [Install on Windows with `choco`](#Windows-install-with-choco)
+  * [Windows: Install with `choco`](#windows-install-with-choco)
   * [Build Yourself from Source (for Advanced Users)](#build-yourself-from-source-for-advanced-users)
 * [Supported Commands](#supported-commands)
 * [Build Command](#build-command)
@@ -52,25 +52,12 @@ A JRE is required to run this Jib CLI distribution.
 
 Find the [latest jib-cli 0.5.0 release](https://github.com/GoogleContainerTools/jib/releases/tag/v0.5.0-cli) on the [Releases page](https://github.com/GoogleContainerTools/jib/releases), download `jib-jre-<version>.zip`, and unzip it. The zip file contains the `jib` (`jib.bat` for Windows) script at `jib/bin/`. Optionally, add the binary directory to your `$PATH` so that you can call `jib` from anywhere.
 
-### Windows install with choco
+### Windows: Install with `choco`
 
-On Windows, you can use the [`choco`](https://community.chocolatey.org/packages/jib) commmand to install, upgrade or uninstall `Jib`.
-
-To install Jib CLI, run the following command from the command line or from PowerShell:
-
+On Windows, you can use the [`choco`](https://community.chocolatey.org/packages/jib) command. To install, upgradle, or uninstall Jib CLI, run the following commands from the command-line or PowerShell:
 ```
 choco install jib
-```
-
-To upgrade Jib CLI, run the following command from the command line or from PowerShell:
-
-```
 choco upgrade jib
-```
-
-To uninstall Jib CLI, run the following command from the command line or from PowerShell:
-
-```
 choco uninstall jib
 ```
 
