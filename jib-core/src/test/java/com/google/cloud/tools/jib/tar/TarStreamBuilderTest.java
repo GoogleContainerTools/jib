@@ -43,7 +43,6 @@ import org.junit.Test;
 /** Tests for {@link TarStreamBuilder}. */
 public class TarStreamBuilderTest {
 
-
   private Path fileA;
   private Path fileB;
   private Path directoryA;
