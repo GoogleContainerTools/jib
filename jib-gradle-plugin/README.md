@@ -541,7 +541,7 @@ jib {
   container.appRoot = '/usr/local/tomcat/webapps/ROOT'
 }
 ```
-When specifying a [`jetty`](https://hub.docker.com/_/jetty) image yourself with `from.image`, you may run into an issue (#3204) and need to override the entrypoint.
+When specifying a [`jetty`](https://hub.docker.com/_/jetty) image yourself with `from.image`, you may run into an issue ([#3204](https://github.com/GoogleContainerTools/jib/issues/3204)) and need to override the entrypoint.
 ```gradle
 jib {
   from.image = 'jetty:11.0.2-jre11'
