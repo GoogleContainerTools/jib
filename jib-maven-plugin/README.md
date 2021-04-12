@@ -655,7 +655,7 @@ To use a different Servlet engine base image, you can customize `<container><app
   </container>
 </configuration>
 ```
-When specifying a [`jetty`](https://hub.docker.com/_/jetty) image yourself with `<from><image>`, you may run into an issue (#3204) and need to override the entrypoint.
+When specifying a [`jetty`](https://hub.docker.com/_/jetty) image yourself with `<from><image>`, you may run into an issue ([#3204](https://github.com/GoogleContainerTools/jib/issues/3204)) and need to override the entrypoint.
 ```xml
 <configuration>
   <from>
