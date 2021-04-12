@@ -633,7 +633,7 @@ The Jib build plugins have an extension framework that enables anyone to easily 
 
 ### WAR Projects
 
-Jib also containerizes WAR projects. If the Maven project uses [the `war`-packaging type](https://maven.apache.org/plugins/maven-war-plugin/index.html), Jib will by default use [jetty](https://hub.docker.com/_/jetty) as a base image to deploy the project WAR. No extra configuration is necessary other than having the packaging type to `war`.
+Jib also containerizes WAR projects. If the Maven project uses [the `war`-packaging type](https://maven.apache.org/plugins/maven-war-plugin/index.html), Jib will by default use [`jetty`](https://hub.docker.com/_/jetty) as a base image to deploy the project WAR. No extra configuration is necessary other than having the packaging type to `war`.
 
 Note that Jib will work slightly differently for WAR projects from JAR projects:
    - `<container><mainClass>` and `<container><jvmFlags>` are ignored.
@@ -655,6 +655,18 @@ To use a different Servlet engine base image, you can customize `<container><app
   </container>
 </configuration>
 ```
+When specifying a [`jetty`](https://hub.docker.com/_/jetty) image yourself with `<from><image>`, you may run into an issue ([#3204](https://github.com/GoogleContainerTools/jib/issues/3204)) and need to override the entrypoint.
+```xml
+<configuration>
+  <from>
+    <image>jetty:11.0.2-jre11</image>
+  </from>
+  <container>
+    <entrypoint>java,-jar,/usr/local/jetty/start.jar</entrypoint>
+  </container>
+</configuration>
+```
+
 
 ### Skaffold Integration
 
