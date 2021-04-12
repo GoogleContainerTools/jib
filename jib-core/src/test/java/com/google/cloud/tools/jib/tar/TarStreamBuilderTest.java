@@ -100,7 +100,7 @@ public class TarStreamBuilderTest {
 
   @Test
   public void testToBlob_multiByte() throws IOException {
-    Instant modificationTime = Instant.ofEpochMilli(1618041179516l);
+    Instant modificationTime = Instant.ofEpochMilli(1618041179516L);
     Instant timeFromTarArchiveEntry = modificationTime.truncatedTo(SECONDS);
 
     testTarStreamBuilder.addByteEntry(
