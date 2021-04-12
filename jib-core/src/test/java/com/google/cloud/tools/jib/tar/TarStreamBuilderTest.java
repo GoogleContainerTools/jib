@@ -16,6 +16,8 @@
 
 package com.google.cloud.tools.jib.tar;
 
+import static java.time.temporal.ChronoUnit.SECONDS;
+
 import com.google.cloud.tools.jib.blob.Blobs;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.Resources;
@@ -37,8 +39,6 @@ import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-
-import static java.time.temporal.ChronoUnit.SECONDS;
 
 /** Tests for {@link TarStreamBuilder}. */
 public class TarStreamBuilderTest {
