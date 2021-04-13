@@ -57,7 +57,7 @@ subprojects {
     // - https://github.com/googleapis/java-cloud-bom
     GOOGLE_HTTP_CLIENT: 'com.google.http-client:google-http-client:1.38.1',
     GOOGLE_HTTP_CLIENT_APACHE_V2: 'com.google.http-client:google-http-client-apache-v2:1.38.1',
-    GOOGLE_AUTH_LIBRARY_OAUTH2_HTTP: 'com.google.auth:google-auth-library-oauth2-http:0.22.2',
+    GOOGLE_AUTH_LIBRARY_OAUTH2_HTTP: 'com.google.auth:google-auth-library-oauth2-http:0.25.3',
     GUAVA: 'com.google.guava:guava:30.1-jre',
     JSR305: 'com.google.code.findbugs:jsr305:3.0.2', // transitively pulled in by GUAVA
 
