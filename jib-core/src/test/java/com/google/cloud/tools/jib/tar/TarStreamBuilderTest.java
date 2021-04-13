@@ -16,7 +16,7 @@
 
 package com.google.cloud.tools.jib.tar;
 
-import static java.time.temporal.ChronoUnit.SECONDS;
+import static com.google.common.truth.Truth.assertThat;
 
 import com.google.cloud.tools.jib.blob.Blobs;
 import com.google.common.io.ByteStreams;
@@ -48,7 +48,7 @@ public class TarStreamBuilderTest {
   private Path directoryA;
   private byte[] fileAContents;
   private byte[] fileBContents;
-  private TarStreamBuilder testTarStreamBuilder = new TarStreamBuilder();
+  private final TarStreamBuilder testTarStreamBuilder = new TarStreamBuilder();
 
   @Before
   public void setup() throws URISyntaxException, IOException {
@@ -99,15 +99,12 @@ public class TarStreamBuilderTest {
 
   @Test
   public void testToBlob_multiByte() throws IOException {
-    Instant modificationTime = Instant.ofEpochMilli(1618041179516L);
-    Instant timeFromTarArchiveEntry = modificationTime.truncatedTo(SECONDS);
-
     testTarStreamBuilder.addByteEntry(
-        "日本語".getBytes(StandardCharsets.UTF_8), "test", modificationTime);
+        "日本語".getBytes(StandardCharsets.UTF_8), "test", Instant.EPOCH);
     testTarStreamBuilder.addByteEntry(
-        "asdf".getBytes(StandardCharsets.UTF_8), "crepecake", modificationTime);
+        "asdf".getBytes(StandardCharsets.UTF_8), "crepecake", Instant.EPOCH);
     testTarStreamBuilder.addBlobEntry(
-        Blobs.from("jib"), "jib".getBytes(StandardCharsets.UTF_8).length, "jib", modificationTime);
+        Blobs.from("jib"), "jib".getBytes(StandardCharsets.UTF_8).length, "jib", Instant.EPOCH);
 
     // Writes the BLOB and captures the output.
     ByteArrayOutputStream tarByteOutputStream = new ByteArrayOutputStream();
@@ -130,15 +127,38 @@ public class TarStreamBuilderTest {
     Assert.assertEquals("crepecake", headerFile.getName());
     Assert.assertEquals(
         "asdf", new String(ByteStreams.toByteArray(tarArchiveInputStream), StandardCharsets.UTF_8));
-    Assert.assertEquals(timeFromTarArchiveEntry, headerFile.getModTime().toInstant());
 
     headerFile = tarArchiveInputStream.getNextTarEntry();
     Assert.assertEquals("jib", headerFile.getName());
     Assert.assertEquals(
         "jib", new String(ByteStreams.toByteArray(tarArchiveInputStream), StandardCharsets.UTF_8));
-    Assert.assertEquals(timeFromTarArchiveEntry, headerFile.getModTime().toInstant());
 
     Assert.assertNull(tarArchiveInputStream.getNextTarEntry());
+  }
+
+  @Test
+  public void testToBlob_modificationTime() throws IOException {
+    testTarStreamBuilder.addByteEntry(
+        "foo".getBytes(StandardCharsets.UTF_8), "foo", Instant.ofEpochSecond(1234));
+    testTarStreamBuilder.addBlobEntry(
+        Blobs.from("bar"),
+        "bar".getBytes(StandardCharsets.UTF_8).length,
+        "bar",
+        Instant.ofEpochSecond(3));
+
+    ByteArrayOutputStream outStream = new ByteArrayOutputStream();
+    testTarStreamBuilder.writeAsTarArchiveTo(outStream);
+
+    TarArchiveInputStream tarInStream =
+        new TarArchiveInputStream(new ByteArrayInputStream(outStream.toByteArray()));
+
+    TarArchiveEntry headerFile = tarInStream.getNextTarEntry();
+    assertThat(headerFile.getName()).isEqualTo("foo");
+    assertThat(headerFile.getModTime().toInstant()).isEqualTo(Instant.ofEpochSecond(1234));
+
+    headerFile = tarInStream.getNextTarEntry();
+    assertThat(headerFile.getName()).isEqualTo("bar");
+    assertThat(headerFile.getModTime().toInstant()).isEqualTo(Instant.ofEpochSecond(3));
   }
 
   /** Creates a TarStreamBuilder using TarArchiveEntries. */
