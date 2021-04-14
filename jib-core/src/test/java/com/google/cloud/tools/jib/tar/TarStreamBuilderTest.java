@@ -151,14 +151,13 @@ public class TarStreamBuilderTest {
 
     TarArchiveInputStream tarInStream =
         new TarArchiveInputStream(new ByteArrayInputStream(outStream.toByteArray()));
+    TarArchiveEntry entry1 = tarInStream.getNextTarEntry();
+    TarArchiveEntry entry2 = tarInStream.getNextTarEntry();
 
-    TarArchiveEntry headerFile = tarInStream.getNextTarEntry();
-    assertThat(headerFile.getName()).isEqualTo("foo");
-    assertThat(headerFile.getModTime().toInstant()).isEqualTo(Instant.ofEpochSecond(1234));
-
-    headerFile = tarInStream.getNextTarEntry();
-    assertThat(headerFile.getName()).isEqualTo("bar");
-    assertThat(headerFile.getModTime().toInstant()).isEqualTo(Instant.ofEpochSecond(3));
+    assertThat(entry1.getName()).isEqualTo("foo");
+    assertThat(entry1.getModTime().toInstant()).isEqualTo(Instant.ofEpochSecond(1234));
+    assertThat(entry2.getName()).isEqualTo("bar");
+    assertThat(entry2.getModTime().toInstant()).isEqualTo(Instant.ofEpochSecond(3));
   }
 
   /** Creates a TarStreamBuilder using TarArchiveEntries. */
