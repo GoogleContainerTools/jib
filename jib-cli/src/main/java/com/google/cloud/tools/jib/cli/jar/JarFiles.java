@@ -23,6 +23,7 @@ import com.google.cloud.tools.jib.api.buildplan.FileEntriesLayer;
 import com.google.cloud.tools.jib.cli.CommonCliOptions;
 import com.google.cloud.tools.jib.cli.ContainerBuilders;
 import com.google.cloud.tools.jib.cli.Jar;
+import com.google.cloud.tools.jib.cli.JarProcessor;
 import com.google.cloud.tools.jib.plugins.common.logging.ConsoleLogger;
 import java.io.IOException;
 import java.util.Collections;

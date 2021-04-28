@@ -14,7 +14,7 @@
  * the License.
  */
 
-package com.google.cloud.tools.jib.cli.jar;
+package com.google.cloud.tools.jib.cli;
 
 import com.google.cloud.tools.jib.api.buildplan.FileEntriesLayer;
 import com.google.common.collect.ImmutableList;

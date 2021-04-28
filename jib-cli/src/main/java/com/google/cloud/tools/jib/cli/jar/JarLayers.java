@@ -93,7 +93,18 @@ public class JarLayers {
     }
   }
 
-  static FileEntriesLayer getDirectoryContentsAsLayer(
+  /**
+   * Creates a layer containing contents of a directory. Only paths that match a particular
+   * predicate will be added.
+   *
+   * @param layerName name of the layer
+   * @param sourceRoot path to source directory
+   * @param pathFilter predicate to determine whether to add the path or not
+   * @param basePathInContainer path to destination on container
+   * @return {@link FileEntriesLayer} representing the layer
+   * @throws IOException if io exception occurs when reading from the source directory
+   */
+  public static FileEntriesLayer getDirectoryContentsAsLayer(
       String layerName,
       Path sourceRoot,
       Predicate<Path> pathFilter,

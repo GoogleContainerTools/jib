@@ -18,6 +18,7 @@ package com.google.cloud.tools.jib.cli.jar;
 
 import com.google.cloud.tools.jib.ProjectInfo;
 import com.google.cloud.tools.jib.api.buildplan.FileEntriesLayer;
+import com.google.cloud.tools.jib.cli.JarProcessor;
 import com.google.cloud.tools.jib.plugins.common.ZipUtil;
 import com.google.common.base.Predicates;
 import com.google.common.base.Verify;

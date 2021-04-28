@@ -25,7 +25,6 @@ import com.google.cloud.tools.jib.api.buildplan.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.api.buildplan.ImageFormat;
 import com.google.cloud.tools.jib.api.buildplan.Port;
 import com.google.cloud.tools.jib.cli.jar.JarFiles;
-import com.google.cloud.tools.jib.cli.jar.JarProcessor;
 import com.google.cloud.tools.jib.cli.jar.JarProcessors;
 import com.google.cloud.tools.jib.cli.jar.ProcessingMode;
 import com.google.cloud.tools.jib.cli.logging.CliLogger;

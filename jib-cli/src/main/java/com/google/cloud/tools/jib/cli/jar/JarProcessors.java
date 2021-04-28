@@ -18,6 +18,7 @@ package com.google.cloud.tools.jib.cli.jar;
 
 import com.google.cloud.tools.jib.cli.CacheDirectories;
 import com.google.cloud.tools.jib.cli.Jar;
+import com.google.cloud.tools.jib.cli.JarProcessor;
 import com.google.common.annotations.VisibleForTesting;
 import java.io.DataInputStream;
 import java.io.EOFException;

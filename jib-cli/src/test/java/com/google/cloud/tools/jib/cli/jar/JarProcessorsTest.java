@@ -24,6 +24,7 @@ import static org.mockito.Mockito.when;
 
 import com.google.cloud.tools.jib.cli.CacheDirectories;
 import com.google.cloud.tools.jib.cli.Jar;
+import com.google.cloud.tools.jib.cli.JarProcessor;
 import com.google.common.io.Resources;
 import java.io.IOException;
 import java.net.URISyntaxException;

@@ -17,6 +17,7 @@
 package com.google.cloud.tools.jib.cli.jar;
 
 import com.google.cloud.tools.jib.api.buildplan.FileEntriesLayer;
+import com.google.cloud.tools.jib.cli.JarProcessor;
 import com.google.common.collect.ImmutableList;
 import java.nio.file.Path;
 import java.util.Collections;
