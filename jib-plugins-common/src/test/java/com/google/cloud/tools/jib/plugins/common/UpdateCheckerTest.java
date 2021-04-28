@@ -73,13 +73,10 @@ public class UpdateCheckerTest {
     setupLastUpdateCheck();
     Optional<String> message =
         UpdateChecker.performUpdateCheck(
-            configDir, "1.0.2", testWebServer.getEndpoint(), "tool name", ignored -> {});
+            configDir, "1.0.2", testWebServer.getEndpoint(), "tool-name", ignored -> {});
 
-    assertThat(testWebServer.getInputRead()).contains("User-Agent: jib 1.0.2 tool name");
-    assertThat(message)
-        .hasValue(
-            "A new version of Jib (2.0.0) is available (currently using 1.0.2). Update your build "
-                + "configuration to use the latest features and fixes!");
+    assertThat(testWebServer.getInputRead()).contains("User-Agent: jib 1.0.2 tool-name");
+    assertThat(message).hasValue("2.0.0");
     String modifiedTime =
         new String(
             Files.readAllBytes(configDir.resolve("lastUpdateCheck")), StandardCharsets.UTF_8);
@@ -95,11 +92,9 @@ public class UpdateCheckerTest {
       setupLastUpdateCheck();
       Optional<String> message =
           UpdateChecker.performUpdateCheck(
-              configDir, "1.0.2", server.getEndpoint(), "tool name", ignored -> {});
-      assertThat(message)
-          .hasValue(
-              "A new version of Jib (2.0.0) is available (currently using 1.0.2). Update your build "
-                  + "configuration to use the latest features and fixes!");
+              configDir, "1.0.2", server.getEndpoint(), "tool-name", ignored -> {});
+
+      assertThat(message).hasValue("2.0.0");
     }
   }
 
@@ -109,13 +104,13 @@ public class UpdateCheckerTest {
     setupLastUpdateCheck();
     Optional<String> message =
         UpdateChecker.performUpdateCheck(
-            configDir, "2.0.0", testWebServer.getEndpoint(), "tool name", ignored -> {});
+            configDir, "2.0.0", testWebServer.getEndpoint(), "tool-name", ignored -> {});
 
     assertThat(message).isEmpty();
     String modifiedTime =
         new String(
             Files.readAllBytes(configDir.resolve("lastUpdateCheck")), StandardCharsets.UTF_8);
-    assertThat(testWebServer.getInputRead()).contains("User-Agent: jib 2.0.0 tool name");
+    assertThat(testWebServer.getInputRead()).contains("User-Agent: jib 2.0.0 tool-name");
     assertThat(Instant.parse(modifiedTime)).isGreaterThan(before);
   }
 
@@ -124,12 +119,9 @@ public class UpdateCheckerTest {
     Instant before = Instant.now();
     Optional<String> message =
         UpdateChecker.performUpdateCheck(
-            configDir, "1.0.2", testWebServer.getEndpoint(), "tool name", ignored -> {});
+            configDir, "1.0.2", testWebServer.getEndpoint(), "tool-name", ignored -> {});
 
-    assertThat(message)
-        .hasValue(
-            "A new version of Jib (2.0.0) is available (currently using 1.0.2). Update your build "
-                + "configuration to use the latest features and fixes!");
+    assertThat(message).hasValue("2.0.0");
     String modifiedTime =
         new String(
             Files.readAllBytes(configDir.resolve("lastUpdateCheck")), StandardCharsets.UTF_8);
@@ -142,12 +134,9 @@ public class UpdateCheckerTest {
     Instant before = Instant.now();
     Optional<String> message =
         UpdateChecker.performUpdateCheck(
-            configDir, "1.0.2", testWebServer.getEndpoint(), "tool name", ignored -> {});
+            configDir, "1.0.2", testWebServer.getEndpoint(), "tool-name", ignored -> {});
 
-    assertThat(message)
-        .hasValue(
-            "A new version of Jib (2.0.0) is available (currently using 1.0.2). Update your build "
-                + "configuration to use the latest features and fixes!");
+    assertThat(message).hasValue("2.0.0");
     String modifiedTime =
         new String(
             Files.readAllBytes(configDir.resolve("lastUpdateCheck")), StandardCharsets.UTF_8);
@@ -163,7 +152,7 @@ public class UpdateCheckerTest {
         modifiedTime.toString().getBytes(StandardCharsets.UTF_8));
     Optional<String> message =
         UpdateChecker.performUpdateCheck(
-            configDir, "1.0.2", testWebServer.getEndpoint(), "tool name", ignored -> {});
+            configDir, "1.0.2", testWebServer.getEndpoint(), "tool-name", ignored -> {});
 
     assertThat(message).isEmpty();
 
@@ -181,16 +170,13 @@ public class UpdateCheckerTest {
         configDir.resolve("lastUpdateCheck"), "bad timestamp".getBytes(StandardCharsets.UTF_8));
     Optional<String> message =
         UpdateChecker.performUpdateCheck(
-            configDir, "1.0.2", testWebServer.getEndpoint(), "tool name", ignored -> {});
+            configDir, "1.0.2", testWebServer.getEndpoint(), "tool-name", ignored -> {});
     String modifiedTime =
         new String(
             Files.readAllBytes(configDir.resolve("lastUpdateCheck")), StandardCharsets.UTF_8);
 
     assertThat(Instant.parse(modifiedTime)).isGreaterThan(before);
-    assertThat(message)
-        .hasValue(
-            "A new version of Jib (2.0.0) is available (currently using 1.0.2). Update your build "
-                + "configuration to use the latest features and fixes!");
+    assertThat(message).hasValue("2.0.0");
   }
 
   @Test
@@ -204,7 +190,7 @@ public class UpdateCheckerTest {
               configDir,
               "1.0.2",
               badServer.getEndpoint(),
-              "tool name",
+              "tool-name",
               logEvent -> {
                 assertThat(logEvent.getLevel()).isEqualTo(LogEvent.Level.DEBUG);
                 assertThat(logEvent.getMessage()).contains("Update check failed; ");

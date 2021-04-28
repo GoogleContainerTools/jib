@@ -71,15 +71,22 @@ class TaskCommon {
       ProjectProperties projectProperties, Future<Optional<String>> updateCheckFuture) {
     UpdateChecker.finishUpdateCheck(updateCheckFuture)
         .ifPresent(
-            updateMessage ->
-                projectProperties.log(
-                    LogEvent.lifecycle(
-                        "\n\u001B[33m"
-                            + updateMessage
-                            + "\n"
-                            + ProjectInfo.GITHUB_URL
-                            + "/blob/master/jib-gradle-plugin/CHANGELOG.md\u001B[0m\n"
-                            + "Please see https://github.com/GoogleContainerTools/jib/blob/master/docs/privacy.md for info on disabling this update check.\n")));
+            latestVersion -> {
+              String changelogUrl =
+                  ProjectInfo.GITHUB_URL + "/blob/master/jib-gradle-plugin/CHANGELOG.md";
+              String privacyUrl = ProjectInfo.GITHUB_URL + "/blob/master/docs/privacy.md";
+              String message =
+                  String.format(
+                      "\n\u001B[33mA new version of %s (%s) is available (currently using %s). Update your"
+                          + " build configuration to use the latest features and fixes!\n%s\u001B[0m\n\nPlease see"
+                          + " %s for info on disabling this update check.\n",
+                      projectProperties.getToolName(),
+                      latestVersion,
+                      projectProperties.getToolVersion(),
+                      changelogUrl,
+                      privacyUrl);
+              projectProperties.log(LogEvent.lifecycle(message));
+            });
   }
 
   @Nullable

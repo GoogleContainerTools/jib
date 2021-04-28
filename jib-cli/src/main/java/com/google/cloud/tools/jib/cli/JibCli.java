@@ -18,10 +18,16 @@ package com.google.cloud.tools.jib.cli;
 
 import com.google.api.client.http.HttpTransport;
 import com.google.api.client.http.apache.v2.ApacheHttpTransport;
+import com.google.cloud.tools.jib.ProjectInfo;
 import com.google.cloud.tools.jib.api.JibContainer;
 import com.google.cloud.tools.jib.api.LogEvent;
+import com.google.cloud.tools.jib.cli.logging.Verbosity;
 import com.google.cloud.tools.jib.plugins.common.ImageMetadataOutput;
+import com.google.cloud.tools.jib.plugins.common.UpdateChecker;
+import com.google.cloud.tools.jib.plugins.common.globalconfig.GlobalConfig;
 import com.google.cloud.tools.jib.plugins.common.logging.ConsoleLogger;
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.util.concurrent.Futures;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -29,6 +35,10 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Optional;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.function.Consumer;
 import java.util.logging.ConsoleHandler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -43,6 +53,8 @@ import picocli.CommandLine;
     description = "A tool for creating container images",
     subcommands = {Build.class, Jar.class})
 public class JibCli {
+
+  private static final String VERSION_URL = "https://storage.googleapis.com/jib-versions/jib-cli";
 
   static Logger configureHttpLogging(Level level) {
     // To instantiate the static HttpTransport logger field.
@@ -72,6 +84,43 @@ public class JibCli {
             + ": "
             + exception.getMessage()
             + "\u001B[0m");
+  }
+
+  static Future<Optional<String>> newUpdateChecker(
+      GlobalConfig globalConfig, Verbosity verbosity, Consumer<LogEvent> log) {
+    if (!verbosity.atLeast(Verbosity.info) || globalConfig.isDisableUpdateCheck()) {
+      return Futures.immediateFuture(Optional.empty());
+    }
+    ExecutorService executorService = Executors.newSingleThreadExecutor();
+    try {
+      return UpdateChecker.checkForUpdate(
+          executorService, VERSION_URL, VersionInfo.TOOL_NAME, VersionInfo.getVersionSimple(), log);
+    } finally {
+      executorService.shutdown();
+    }
+  }
+
+  @VisibleForTesting
+  static void finishUpdateChecker(
+      ConsoleLogger logger, Future<Optional<String>> updateCheckFuture) {
+    UpdateChecker.finishUpdateCheck(updateCheckFuture)
+        .ifPresent(
+            latestVersion -> {
+              String cliReleaseUrl =
+                  ProjectInfo.GITHUB_URL + "/releases/tag/v" + latestVersion + "-cli";
+              String changelogUrl = ProjectInfo.GITHUB_URL + "/blob/master/jib-cli/CHANGELOG.md";
+              String privacyUrl = ProjectInfo.GITHUB_URL + "/blob/master/docs/privacy.md";
+              String message =
+                  String.format(
+                      "\n\u001B[33mA new version of Jib CLI (%s) is available (currently using %s). Download the latest"
+                          + " Jib CLI version from %s\n%s\u001B[0m\n\nPlease see %s for info on disabling this update check.\n",
+                      latestVersion,
+                      VersionInfo.getVersionSimple(),
+                      cliReleaseUrl,
+                      changelogUrl,
+                      privacyUrl);
+              logger.log(LogEvent.Level.LIFECYCLE, message);
+            });
   }
 
   /**

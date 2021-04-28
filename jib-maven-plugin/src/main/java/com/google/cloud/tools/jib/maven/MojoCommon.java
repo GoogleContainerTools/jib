@@ -76,7 +76,18 @@ public class MojoCommon {
       ProjectProperties projectProperties, Future<Optional<String>> updateCheckFuture) {
     UpdateChecker.finishUpdateCheck(updateCheckFuture)
         .ifPresent(
-            updateMessage -> {
+            latestVersion -> {
+              String updateMessage =
+                  String.format(
+                      "A new version of %s (%s) is available (currently using %s). Update your"
+                          + " build configuration to use the latest features and fixes!",
+                      projectProperties.getToolName(),
+                      latestVersion,
+                      projectProperties.getToolVersion());
+              String privacyUrl = ProjectInfo.GITHUB_URL + "/blob/master/docs/privacy.md";
+              String privacyMessage =
+                  String.format(
+                      "Please see %s for info on disabling this update check.", privacyUrl);
               projectProperties.log(LogEvent.lifecycle(""));
               projectProperties.log(LogEvent.lifecycle("\u001B[33m" + updateMessage + "\u001B[0m"));
               projectProperties.log(
@@ -84,9 +95,8 @@ public class MojoCommon {
                       "\u001B[33m"
                           + ProjectInfo.GITHUB_URL
                           + "/blob/master/jib-maven-plugin/CHANGELOG.md\u001B[0m"));
-              projectProperties.log(
-                  LogEvent.lifecycle(
-                      "Please see https://github.com/GoogleContainerTools/jib/blob/master/docs/privacy.md for info on disabling this update check."));
+              projectProperties.log(LogEvent.lifecycle(""));
+              projectProperties.log(LogEvent.lifecycle(privacyMessage));
               projectProperties.log(LogEvent.lifecycle(""));
             });
   }

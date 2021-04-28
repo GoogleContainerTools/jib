@@ -121,13 +121,7 @@ public class UpdateChecker {
         if (currentVersion.equals(version.latest)) {
           return Optional.empty();
         }
-        return Optional.of(
-            "A new version of Jib ("
-                + version.latest
-                + ") is available (currently using "
-                + currentVersion
-                + "). Update your build configuration to use the latest features and fixes!");
-
+        return Optional.of(version.latest);
       } finally {
         httpClient.shutDown();
       }
@@ -140,13 +134,12 @@ public class UpdateChecker {
   }
 
   /**
-   * Returns a message indicating Jib should be upgraded if the check succeeded and the current
-   * version is outdated, or returns {@code Optional.empty()} if the check was interrupted or did
-   * not determine that a later version was available.
+   * Returns the latest Jib version available if the check succeeded and the current version is
+   * outdated, or returns {@code Optional.empty()} if the check was interrupted or did not determine
+   * that a later version was available.
    *
    * @param updateMessageFuture the {@link Future} returned by {@link UpdateChecker#checkForUpdate}
-   * @return the {@link Optional} message to upgrade Jib if a later version was found, else {@code
-   *     Optional.empty()}.
+   * @return the latest version, if found, else {@code Optional.empty()}.
    */
   public static Optional<String> finishUpdateCheck(Future<Optional<String>> updateMessageFuture) {
     if (updateMessageFuture.isDone()) {
