@@ -41,6 +41,7 @@ The CLI tool is powered by [Jib Core](https://github.com/GoogleContainerTools/ji
 * [Global Jib Configuration](#global-jib-configuration)
 * [References](#references)
   * [Fully Annotated Build File (`jib.yaml`)](#fully-annotated-build-file-jibyaml)
+* [Privacy](#privacy)
 
 ## Get the Jib CLI
 
@@ -400,3 +401,6 @@ Parameters that will be overwritten:
 - `workingDirectory`
 - `entrypoint`
 - `cmd`
+
+## Privacy
+See the [Privacy page](https://github.com/GoogleContainerTools/jib/blob/master/docs/privacy.md).
