@@ -20,8 +20,9 @@ jobs:
       - uses: actions/checkout@v2
         with:
           fetch-depth: 2
-      - uses: actions/setup-java@v1
+      - uses: actions/setup-java@v2
         with:
+          distribution: 'adopt'
           java-version: ${{ matrix.java }}
       - uses: actions/cache@v2.1.4
         with:
@@ -35,7 +36,3 @@ jobs:
       - name: Run tests
         run: |
           ./gradlew clean build jacocoTestReport --stacktrace
-      - name: Test Coverage
-        uses: codecov/codecov-action@v1
-        with:
-          name: actions ${{matrix.java}}

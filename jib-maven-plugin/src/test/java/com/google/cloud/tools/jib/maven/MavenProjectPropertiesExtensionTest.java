@@ -496,9 +496,8 @@ public class MavenProjectPropertiesExtensionTest {
 
     FooExtension loadedExtension =
         new FooExtension(
-            (buildPlan, properties, extraConfig, mavenData, logger) -> {
-              return buildPlan.toBuilder().setBaseImage("loadedExtBaseImage").build();
-            });
+            (buildPlan, properties, extraConfig, mavenData, logger) ->
+                buildPlan.toBuilder().setBaseImage("loadedExtBaseImage").build());
 
     mavenProjectProperties =
         new MavenProjectProperties(

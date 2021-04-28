@@ -16,27 +16,35 @@
 
 package com.google.cloud.tools.jib.gradle;
 
+import com.google.cloud.tools.jib.plugins.common.RawConfiguration.ExtraDirectoriesConfiguration;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.List;
 import javax.inject.Inject;
 import org.gradle.api.Project;
+import org.gradle.api.model.ObjectFactory;
+import org.gradle.api.provider.ListProperty;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.Internal;
 
 /** Configuration of an extra directory. */
-public class ExtraDirectoryParameters {
+public class ExtraDirectoryParameters implements ExtraDirectoriesConfiguration {
 
   private Project project;
   private Path from = Paths.get("");
   private String into = "/";
+  private ListProperty<String> includes;
+  private ListProperty<String> excludes;
 
   @Inject
-  public ExtraDirectoryParameters(Project project) {
+  public ExtraDirectoryParameters(ObjectFactory objects, Project project) {
     this.project = project;
+    includes = objects.listProperty(String.class).empty();
+    excludes = objects.listProperty(String.class).empty();
   }
 
-  public ExtraDirectoryParameters(Project project, Path from, String into) {
-    this.project = project;
+  ExtraDirectoryParameters(ObjectFactory objects, Project project, Path from, String into) {
+    this(objects, project);
     this.from = from;
     this.into = into;
   }
@@ -48,6 +56,7 @@ public class ExtraDirectoryParameters {
     return from.toString();
   }
 
+  @Override
   @Internal
   public Path getFrom() {
     return from;
@@ -57,6 +66,7 @@ public class ExtraDirectoryParameters {
     this.from = project.file(from).toPath();
   }
 
+  @Override
   @Input
   public String getInto() {
     return into;
@@ -64,5 +74,27 @@ public class ExtraDirectoryParameters {
 
   public void setInto(String into) {
     this.into = into;
+  }
+
+  @Input
+  public ListProperty<String> getIncludes() {
+    return includes;
+  }
+
+  @Input
+  public ListProperty<String> getExcludes() {
+    return excludes;
+  }
+
+  @Override
+  @Internal
+  public List<String> getIncludesList() {
+    return includes.get();
+  }
+
+  @Override
+  @Internal
+  public List<String> getExcludesList() {
+    return excludes.get();
   }
 }

@@ -8,7 +8,7 @@ Although looking similar, the structure and semantics of similary named properti
 
 ```
 {
-  "baseImage": "gcr.io/distroless/java@sha256:b715126ebd36e5d5c2fd730f46a5b3c3b760e82dc18dffff7f5498d0151137c9",
+  "baseImage": "adoptopenjdk:11-jre@sha256:318dc2103fb30d0e02c373d04f7c337229268879af9fb3f77f89c6a9037efcb1",
   "architectureHint": "amd64",
   "osHint": "linux",
   "format": "Docker",

@@ -84,6 +84,7 @@ public class JarTest {
     assertThat(commonCliOptions.isStacktrace()).isFalse();
     assertThat(commonCliOptions.getHttpTrace()).isEqualTo(HttpTraceLevel.off);
     assertThat(commonCliOptions.isSerialize()).isFalse();
+    assertThat(commonCliOptions.getImageJsonPath()).isEmpty();
     assertThat(jarCommand.getFrom()).isEmpty();
     assertThat(jarCommand.getJvmFlags()).isEmpty();
     assertThat(jarCommand.getExposedPorts()).isEmpty();
@@ -119,6 +120,7 @@ public class JarTest {
     assertThat(commonCliOptions.isStacktrace()).isFalse();
     assertThat(commonCliOptions.getHttpTrace()).isEqualTo(HttpTraceLevel.off);
     assertThat(commonCliOptions.isSerialize()).isFalse();
+    assertThat(commonCliOptions.getImageJsonPath()).isEmpty();
   }
 
   @Test
@@ -138,6 +140,7 @@ public class JarTest {
             "--stacktrace",
             "--http-trace",
             "--serialize",
+            "--image-metadata-out=path/to/json/jib-image.json",
             "my-app.jar");
     CommonCliOptions commonCliOptions = jarCommand.commonCliOptions;
     assertThat(commonCliOptions.getTargetImage()).isEqualTo("test-image-ref");
@@ -157,6 +160,8 @@ public class JarTest {
     assertThat(commonCliOptions.isStacktrace()).isTrue();
     assertThat(commonCliOptions.getHttpTrace()).isEqualTo(HttpTraceLevel.config);
     assertThat(commonCliOptions.isSerialize()).isTrue();
+    assertThat(commonCliOptions.getImageJsonPath())
+        .hasValue(Paths.get("path/to/json/jib-image.json"));
   }
 
   @Test

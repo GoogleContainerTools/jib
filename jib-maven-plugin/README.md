@@ -46,7 +46,7 @@ For information about the project, see the [Jib project README](../README.md).
 You can containerize your application easily with one command:
 
 ```shell
-mvn compile com.google.cloud.tools:jib-maven-plugin:2.8.0:build -Dimage=<MY IMAGE>
+mvn compile com.google.cloud.tools:jib-maven-plugin:3.0.0:build -Dimage=<MY IMAGE>
 ```
 
 This builds and pushes a container image for your application to a container registry. *If you encounter authentication issues, see [Authentication Methods](#authentication-methods).*
@@ -54,7 +54,7 @@ This builds and pushes a container image for your application to a container reg
 To build to a Docker daemon, use:
 
 ```shell
-mvn compile com.google.cloud.tools:jib-maven-plugin:2.8.0:dockerBuild
+mvn compile com.google.cloud.tools:jib-maven-plugin:3.0.0:dockerBuild
 ```
 
 If you would like to set up Jib as part of your Maven build, follow the guide below.
@@ -72,7 +72,7 @@ In your Maven Java project, add the plugin to your `pom.xml`:
       <plugin>
         <groupId>com.google.cloud.tools</groupId>
         <artifactId>jib-maven-plugin</artifactId>
-        <version>2.8.0</version>
+        <version>3.0.0</version>
         <configuration>
           <to>
             <image>myimage</image>
@@ -245,7 +245,7 @@ Field | Type | Default | Description
 
 Property | Type | Default | Description
 --- | --- | --- | ---
-`image` | string | `gcr.io/distroless/java` | The image reference for the base image. The source type can be specified using a [special type prefix](#setting-the-base-image).
+`image` | string | `adoptopenjdk:{8,11}-jre` (or `jetty` for WAR) | The image reference for the base image. The source type can be specified using a [special type prefix](#setting-the-base-image).
 `auth` | [`auth`](#auth-object) | *None* | Specifies credentials directly (alternative to `credHelper`).
 `credHelper` | string | *None* | Specifies a credential helper that can authenticate pulling the base image. This parameter can either be configured as an absolute path to the credential helper executable or as a credential helper suffix (following `docker-credential-`).
 `platforms` | list | See [`platform`](#platform-object) | _Incubating feature_: Configures platforms of base images to select from a manifest list.
@@ -309,6 +309,8 @@ Property | Type | Default | Description
 --- | --- | --- | ---
 `from` | file | `[(project-dir)/src/main/jib]` | The source directory. Can be absolute or relative to the project root.
 `into` | string | `/` | The absolute unix path on the container to copy the extra directory contents into.
+`includes` | list | *None* | Glob patterns for including files. See [Adding Arbitrary Files to the Image](#adding-arbitrary-files-to-the-image) for an example.
+`excludes` | list | *None* | Glob patterns for excluding files. See [Adding Arbitrary Files to the Image](#adding-arbitrary-files-to-the-image) for an example.
 
 <a name="outputpaths-object"></a>`outputPaths` is an object with the following properties:
 
@@ -442,8 +444,8 @@ There are three different types of base images that Jib accepts: an image from a
 
 Prefix | Example | Type
 --- | --- | ---
-*None* | `gcr.io/distroless/java` | Pulls the base image from a registry.
-`registry://` | `registry://gcr.io/distroless/java` | Pulls the base image from a registry.
+*None* | `adoptopenjdk:11-jre` | Pulls the base image from a registry.
+`registry://` | `registry://adoptopenjdk:11-jre` | Pulls the base image from a registry.
 `docker://` | `docker://busybox` | Retrieves the base image from the Docker daemon.
 `tar://` | `tar:///path/to/file.tar` | Uses an image tarball stored at the specified path as the base image. Also accepts relative paths (e.g. `tar://target/jib-image.tar`).
 
@@ -476,7 +478,6 @@ You can configure different directories by using the `<extraDirectories>` parame
 Alternatively, the `<extraDirectories>` parameter can be used as an object to set custom extra directories, as well as the extra files' permissions on the container:
 
 ```xml
-<configuration>
   <extraDirectories>
     <paths>src/main/custom-extra-dir</paths> <!-- Copies files from 'src/main/custom-extra-dir' -->
     <permissions>
@@ -494,7 +495,39 @@ Alternatively, the `<extraDirectories>` parameter can be used as an object to se
       </permission>
     </permissions>
   </extraDirectories>
-</configuration>
+```
+
+You may also specify the target of the copy and include or exclude files:
+
+```xml
+  <extraDirectories>
+    <paths>
+      <path>
+        // copies the contents of 'src/main/extra-dir' into '/' on the container
+        <from>src/main/extra-dir</from>
+      </path>
+      <path>
+        // copies the contents of 'src/main/another/dir' into '/extras' on the container
+        <from>src/main/another/dir</from>
+        <into>/extras</into>
+      </path>
+      <path>
+        // copies a single-file.xml
+        <from>src/main/resources/xml-files</from>
+        <into>/dest-in-container</into>
+        <includes>single-file.xml</includes>
+      </path>
+      <path>
+        // copies only .txt files except for 'hidden.txt' at the source root
+        <from>build/some-output</from>
+        <into>/txt-files</into>
+        <includes>*.txt,**/*.txt</includes>
+        <excludes>
+          <exclude>hidden.txt</exclude>
+        </excludes>
+      </path>
+    </paths>
+  </extraDirectories>
 ```
 
 ### Authentication Methods
@@ -600,11 +633,11 @@ The Jib build plugins have an extension framework that enables anyone to easily 
 
 ### WAR Projects
 
-Jib also containerizes WAR projects. If the Maven project uses [the `war`-packaging type](https://maven.apache.org/plugins/maven-war-plugin/index.html), Jib will by default use the [distroless Jetty](https://github.com/GoogleContainerTools/distroless/tree/master/java/jetty) as a base image to deploy the project WAR. No extra configuration is necessary other than having the packaging type to `war`.
+Jib also containerizes WAR projects. If the Maven project uses [the `war`-packaging type](https://maven.apache.org/plugins/maven-war-plugin/index.html), Jib will by default use [`jetty`](https://hub.docker.com/_/jetty) as a base image to deploy the project WAR. No extra configuration is necessary other than having the packaging type to `war`.
 
 Note that Jib will work slightly differently for WAR projects from JAR projects:
    - `<container><mainClass>` and `<container><jvmFlags>` are ignored.
-   - The WAR will be exploded into `/jetty/webapps/ROOT`, which is the expected WAR location for the distroless Jetty base image.
+   - The WAR will be exploded into `/var/lib/jetty/webapps/ROOT`, which is the expected WAR location for the Jetty base image.
 
 To use a different Servlet engine base image, you can customize `<container><appRoot>`, `<container><entrypoint>`, and `<container><args>`. If you do not set `entrypoint` or `args`, Jib will inherit the `ENTRYPOINT` and `CMD` of the base image, so in many cases, you may not need to configure them. However, you will most likely have to set `<container><appRoot>` to a proper location depending on the base image. Here is an example of using a Tomcat image:
 
@@ -622,6 +655,18 @@ To use a different Servlet engine base image, you can customize `<container><app
   </container>
 </configuration>
 ```
+When specifying a [`jetty`](https://hub.docker.com/_/jetty) image yourself with `<from><image>`, you may run into an issue ([#3204](https://github.com/GoogleContainerTools/jib/issues/3204)) and need to override the entrypoint.
+```xml
+<configuration>
+  <from>
+    <image>jetty:11.0.2-jre11</image>
+  </from>
+  <container>
+    <entrypoint>java,-jar,/usr/local/jetty/start.jar</entrypoint>
+  </container>
+</configuration>
+```
+
 
 ### Skaffold Integration
 

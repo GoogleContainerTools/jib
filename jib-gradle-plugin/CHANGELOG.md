@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+### Changed
+
+- Timestamps of file entries in a tarball built with `jibBuildTar` are set to the epoch, making the tarball reproducible. ([#3158](https://github.com/GoogleContainerTools/jib/issues/3158))
+
+### Fixed
+
+## 3.0.0
+
+### Added
+
+- New `includes` and `excludes` options for `jib.extraDirectories`. This enables copying a subset of files from the source directory using glob patterns. ([#2564](https://github.com/GoogleContainerTools/jib/issues/2564))
 - Added an option `configurationName` to specify the name of the [Gradle Configuration](https://docs.gradle.org/current/dsl/org.gradle.api.artifacts.ConfigurationContainer.html) to use. The option can be lazily configured, for example, using Gradle `Provider` or `Property`. ([#3034](https://github.com/GoogleContainerTools/jib/pull/3034))
 ```gradle
     jib {
@@ -13,6 +24,8 @@ All notable changes to this project will be documented in this file.
 ```                                                                                                                                                                      
   
 ### Changed
+
+- [Switched the default base images](https://github.com/GoogleContainerTools/jib/blob/master/docs/default_base_image.md) from Distroless to [`adoptopenjdk:{8,11}-jre`](https://hub.docker.com/_/adoptopenjdk) and [`jetty`](https://hub.docker.com/_/jetty) (for WAR). ([#3124](https://github.com/GoogleContainerTools/jib/pull/3124))
 
 ### Fixed
 

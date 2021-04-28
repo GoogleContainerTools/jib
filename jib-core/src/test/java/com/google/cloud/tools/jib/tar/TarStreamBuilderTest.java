@@ -16,6 +16,8 @@
 
 package com.google.cloud.tools.jib.tar;
 
+import static com.google.common.truth.Truth.assertThat;
+
 import com.google.cloud.tools.jib.blob.Blobs;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.Resources;
@@ -29,6 +31,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.Instant;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
@@ -45,7 +48,7 @@ public class TarStreamBuilderTest {
   private Path directoryA;
   private byte[] fileAContents;
   private byte[] fileBContents;
-  private TarStreamBuilder testTarStreamBuilder = new TarStreamBuilder();
+  private final TarStreamBuilder testTarStreamBuilder = new TarStreamBuilder();
 
   @Before
   public void setup() throws URISyntaxException, IOException {
@@ -96,10 +99,12 @@ public class TarStreamBuilderTest {
 
   @Test
   public void testToBlob_multiByte() throws IOException {
-    testTarStreamBuilder.addByteEntry("日本語".getBytes(StandardCharsets.UTF_8), "test");
-    testTarStreamBuilder.addByteEntry("asdf".getBytes(StandardCharsets.UTF_8), "crepecake");
+    testTarStreamBuilder.addByteEntry(
+        "日本語".getBytes(StandardCharsets.UTF_8), "test", Instant.EPOCH);
+    testTarStreamBuilder.addByteEntry(
+        "asdf".getBytes(StandardCharsets.UTF_8), "crepecake", Instant.EPOCH);
     testTarStreamBuilder.addBlobEntry(
-        Blobs.from("jib"), "jib".getBytes(StandardCharsets.UTF_8).length, "jib");
+        Blobs.from("jib"), "jib".getBytes(StandardCharsets.UTF_8).length, "jib", Instant.EPOCH);
 
     // Writes the BLOB and captures the output.
     ByteArrayOutputStream tarByteOutputStream = new ByteArrayOutputStream();
@@ -131,6 +136,30 @@ public class TarStreamBuilderTest {
     Assert.assertNull(tarArchiveInputStream.getNextTarEntry());
   }
 
+  @Test
+  public void testToBlob_modificationTime() throws IOException {
+    testTarStreamBuilder.addByteEntry(
+        "foo".getBytes(StandardCharsets.UTF_8), "foo", Instant.ofEpochSecond(1234));
+    testTarStreamBuilder.addBlobEntry(
+        Blobs.from("bar"),
+        "bar".getBytes(StandardCharsets.UTF_8).length,
+        "bar",
+        Instant.ofEpochSecond(3));
+
+    ByteArrayOutputStream outStream = new ByteArrayOutputStream();
+    testTarStreamBuilder.writeAsTarArchiveTo(outStream);
+
+    TarArchiveInputStream tarInStream =
+        new TarArchiveInputStream(new ByteArrayInputStream(outStream.toByteArray()));
+    TarArchiveEntry entry1 = tarInStream.getNextTarEntry();
+    TarArchiveEntry entry2 = tarInStream.getNextTarEntry();
+
+    assertThat(entry1.getName()).isEqualTo("foo");
+    assertThat(entry1.getModTime().toInstant()).isEqualTo(Instant.ofEpochSecond(1234));
+    assertThat(entry2.getName()).isEqualTo("bar");
+    assertThat(entry2.getModTime().toInstant()).isEqualTo(Instant.ofEpochSecond(3));
+  }
+
   /** Creates a TarStreamBuilder using TarArchiveEntries. */
   private void setUpWithTarEntries() {
     // Prepares a test TarStreamBuilder.
@@ -148,25 +177,27 @@ public class TarStreamBuilderTest {
   /** Creates a TarStreamBuilder using Strings. */
   private void setUpWithStrings() {
     // Prepares a test TarStreamBuilder.
-    testTarStreamBuilder.addByteEntry(fileAContents, "some/path/to/resourceFileA");
-    testTarStreamBuilder.addByteEntry(fileBContents, "crepecake");
+    testTarStreamBuilder.addByteEntry(fileAContents, "some/path/to/resourceFileA", Instant.EPOCH);
+    testTarStreamBuilder.addByteEntry(fileBContents, "crepecake", Instant.EPOCH);
     testTarStreamBuilder.addTarArchiveEntry(
         new TarArchiveEntry(directoryA.toFile(), "some/path/to"));
     testTarStreamBuilder.addByteEntry(
         fileAContents,
-        "some/really/long/path/that/exceeds/100/characters/abcdefghijklmnopqrstuvwxyz0123456789012345678901234567890");
+        "some/really/long/path/that/exceeds/100/characters/abcdefghijklmnopqrstuvwxyz0123456789012345678901234567890",
+        Instant.EPOCH);
   }
 
   /** Creates a TarStreamBuilder using Strings and TarArchiveEntries. */
   private void setUpWithStringsAndTarEntries() {
     // Prepares a test TarStreamBuilder.
-    testTarStreamBuilder.addByteEntry(fileAContents, "some/path/to/resourceFileA");
+    testTarStreamBuilder.addByteEntry(fileAContents, "some/path/to/resourceFileA", Instant.EPOCH);
     testTarStreamBuilder.addTarArchiveEntry(new TarArchiveEntry(fileB.toFile(), "crepecake"));
     testTarStreamBuilder.addTarArchiveEntry(
         new TarArchiveEntry(directoryA.toFile(), "some/path/to"));
     testTarStreamBuilder.addByteEntry(
         fileAContents,
-        "some/really/long/path/that/exceeds/100/characters/abcdefghijklmnopqrstuvwxyz0123456789012345678901234567890");
+        "some/really/long/path/that/exceeds/100/characters/abcdefghijklmnopqrstuvwxyz0123456789012345678901234567890",
+        Instant.EPOCH);
   }
 
   /** Creates a compressed blob from the TarStreamBuilder and verifies it. */

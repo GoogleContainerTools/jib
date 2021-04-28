@@ -17,6 +17,7 @@
 package com.google.cloud.tools.jib.cli;
 
 import com.google.cloud.tools.jib.api.Containerizer;
+import com.google.cloud.tools.jib.api.JibContainer;
 import com.google.cloud.tools.jib.api.JibContainerBuilder;
 import com.google.cloud.tools.jib.api.LogEvent;
 import com.google.cloud.tools.jib.cli.buildfile.BuildFiles;
@@ -139,7 +140,8 @@ public class Build implements Callable<Integer> {
       // Enable registry mirrors
       Multimaps.asMap(globalConfig.getRegistryMirrors()).forEach(containerizer::addRegistryMirrors);
 
-      containerBuilder.containerize(containerizer);
+      JibContainer jibContainer = containerBuilder.containerize(containerizer);
+      JibCli.writeImageJson(commonCliOptions.getImageJsonPath(), jibContainer);
     } catch (Exception ex) {
       JibCli.logTerminatingException(logger, ex, commonCliOptions.isStacktrace());
       return 1;

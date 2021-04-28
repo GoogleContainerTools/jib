@@ -91,8 +91,6 @@ $ ./mvnw -Djavax.net.ssl.trustStore=path/to/truststore.jks \
   -Dimage=<host>:<port>/<image> jib:build
 ```
 
-You may choose to configure your registry credentials with [the `~/.m2/settings.xml` mechanism](https://github.com/GoogleContainerTools/jib/blob/master/jib-maven-plugin/README.md#using-maven-settings).
-
 ##### Gradle
 
 The following snippet shows how to configure Gradle to use this new truststore file:
@@ -102,8 +100,6 @@ $ ./gradlew jib \
   -Djavax.net.ssl.trustStore=path/to/truststore.jks \
   -Djavax.net.ssl.trustStorePassword=password
 ```
-
-You may choose to explicitly configure your registry credentials [in your build.gradle](https://github.com/GoogleContainerTools/jib/tree/master/jib-gradle-plugin#using-specific-credentials).
 
 #### Option 2: Modify the JRE `cacerts`
 

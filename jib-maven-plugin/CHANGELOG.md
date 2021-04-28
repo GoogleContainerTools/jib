@@ -5,10 +5,22 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
-- [Jib extensions](https://github.com/GoogleContainerTools/jib-extensions) can be loaded via the [Maven dependency injection mechanism](https://maven.apache.org/maven-jsr330.html
-). This also enables injecting arbitrary dependencies (for example, Maven components) into an extension. ([#3036](https://github.com/GoogleContainerTools/jib/issues/3036))
+### Changed
+
+- Timestamps of file entries in a tarball built with `jib:buildTar` are set to the epoch, making the tarball reproducible. ([#3158](https://github.com/GoogleContainerTools/jib/issues/3158))
+
+### Fixed
+
+## 3.0.0
+
+### Added
+
+- New `<includes>` and `<excludes>` options for `<extraDirectories>`. This enables copying a subset of files from the source directory using glob patterns. ([#2564](https://github.com/GoogleContainerTools/jib/issues/2564))
+- [Jib extensions](https://github.com/GoogleContainerTools/jib-extensions) can be loaded via the [Maven dependency injection mechanism](https://maven.apache.org/maven-jsr330.html). This also enables injecting arbitrary dependencies (for example, Maven components) into an extension. ([#3036](https://github.com/GoogleContainerTools/jib/issues/3036))
 
 ### Changed
+
+- [Switched the default base images](https://github.com/GoogleContainerTools/jib/blob/master/docs/default_base_image.md) from Distroless to [`adoptopenjdk:{8,11}-jre`](https://hub.docker.com/_/adoptopenjdk) and [`jetty`](https://hub.docker.com/_/jetty) (for WAR). ([#3124](https://github.com/GoogleContainerTools/jib/pull/3124))
 
 ### Fixed
 
