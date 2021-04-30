@@ -63,6 +63,9 @@ public class StandardWarExplodedProcessorTest {
         new StandardWarExplodedProcessor(
             standardWar, explodedWarDestination, WAR_JAVA_VERSION, APP_ROOT);
     List<FileEntriesLayer> layers = processor.createLayers();
+
+    assertThat(layers.size()).isEqualTo(4);
+
     FileEntriesLayer nonSnapshotLayer = layers.get(0);
     FileEntriesLayer snapshotLayer = layers.get(1);
     FileEntriesLayer resourcesLayer = layers.get(2);
@@ -103,6 +106,7 @@ public class StandardWarExplodedProcessorTest {
     List<FileEntriesLayer> layers = processor.createLayers();
 
     assertThat(layers.size()).isEqualTo(2);
+
     FileEntriesLayer resourcesLayer = layers.get(0);
     FileEntriesLayer classesLayer = layers.get(1);
 

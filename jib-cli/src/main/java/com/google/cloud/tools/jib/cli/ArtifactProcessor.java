@@ -21,7 +21,7 @@ import com.google.common.collect.ImmutableList;
 import java.io.IOException;
 import java.util.List;
 
-/** Interface to create layers and compute entrypoint from jar file contents. */
+/** Interface to create layers and compute entrypoint from JAR or WAR file contents. */
 public interface ArtifactProcessor {
 
   /**

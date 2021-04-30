@@ -33,7 +33,7 @@ import java.util.jar.JarFile;
 /**
  * Class to create a {@link ArtifactProcessor} instance depending on jar type and processing mode.
  */
-public class JarProcessors {
+public class ArtifactProcessors {
   private static String SPRING_BOOT = "spring-boot";
   private static String STANDARD = "standard";
   private static Integer VERSION_NOT_FOUND = 0;

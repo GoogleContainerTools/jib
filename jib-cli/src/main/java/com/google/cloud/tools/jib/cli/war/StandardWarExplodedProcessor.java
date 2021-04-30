@@ -41,10 +41,10 @@ class StandardWarExplodedProcessor implements ArtifactProcessor {
   /**
    * Constructor for {@link StandardWarExplodedProcessor}.
    *
-   * @param warPath path to war file
+   * @param warPath path to WAR file
    * @param targetExplodedWarRoot path to exploded-war root
    * @param warJavaVersion war java version
-   * @param appRoot app root in container
+   * @param appRoot the absolute path of the app on the container
    */
   StandardWarExplodedProcessor(
       Path warPath, Path targetExplodedWarRoot, Integer warJavaVersion, AbsoluteUnixPath appRoot) {
@@ -99,7 +99,7 @@ class StandardWarExplodedProcessor implements ArtifactProcessor {
         ArtifactLayers.getDirectoryContentsAsLayer(
             ArtifactLayers.RESOURCES,
             targetExplodedWarRoot,
-            resourcesPredicate.and(Files::isRegularFile),
+            isFile.and(resourcesPredicate),
             appRoot);
 
     ArrayList<FileEntriesLayer> layers = new ArrayList<>();
