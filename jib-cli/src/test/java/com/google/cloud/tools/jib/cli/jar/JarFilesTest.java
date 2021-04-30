@@ -65,7 +65,7 @@ public class JarFilesTest {
   @Test
   public void testToJibContainer_defaultBaseImage_java8()
       throws IOException, InvalidImageReferenceException {
-    Mockito.when(mockStandardExplodedProcessor.getJarJavaVersion()).thenReturn(8);
+    Mockito.when(mockStandardExplodedProcessor.getJavaVersion()).thenReturn(8);
     JibContainerBuilder containerBuilder =
         JarFiles.toJibContainerBuilder(
             mockStandardExplodedProcessor, mockJarCommand, mockCommonCliOptions, mockLogger);
@@ -77,7 +77,7 @@ public class JarFilesTest {
   @Test
   public void testToJibContainer_defaultBaseImage_java9()
       throws IOException, InvalidImageReferenceException {
-    Mockito.when(mockStandardExplodedProcessor.getJarJavaVersion()).thenReturn(9);
+    Mockito.when(mockStandardExplodedProcessor.getJavaVersion()).thenReturn(9);
     JibContainerBuilder containerBuilder =
         JarFiles.toJibContainerBuilder(
             mockStandardExplodedProcessor, mockJarCommand, mockCommonCliOptions, mockLogger);
@@ -89,7 +89,7 @@ public class JarFilesTest {
   @Test
   public void testToJibContainerBuilder_explodedStandard_basicInfo()
       throws IOException, InvalidImageReferenceException {
-    Mockito.when(mockStandardExplodedProcessor.getJarJavaVersion()).thenReturn(8);
+    Mockito.when(mockStandardExplodedProcessor.getJavaVersion()).thenReturn(8);
     FileEntriesLayer layer =
         FileEntriesLayer.builder()
             .setName("classes")
@@ -136,7 +136,7 @@ public class JarFilesTest {
   @Test
   public void testToJibContainerBuilder_packagedStandard_basicInfo()
       throws IOException, InvalidImageReferenceException {
-    Mockito.when(mockStandardPackagedProcessor.getJarJavaVersion()).thenReturn(8);
+    Mockito.when(mockStandardPackagedProcessor.getJavaVersion()).thenReturn(8);
     FileEntriesLayer layer =
         FileEntriesLayer.builder()
             .setName("jar")
@@ -179,7 +179,7 @@ public class JarFilesTest {
   @Test
   public void testToJibContainerBuilder_explodedLayeredSpringBoot_basicInfo()
       throws IOException, InvalidImageReferenceException {
-    Mockito.when(mockSpringBootExplodedProcessor.getJarJavaVersion()).thenReturn(8);
+    Mockito.when(mockSpringBootExplodedProcessor.getJavaVersion()).thenReturn(8);
     FileEntriesLayer layer =
         FileEntriesLayer.builder()
             .setName("classes")
@@ -227,7 +227,7 @@ public class JarFilesTest {
   @Test
   public void testToJibContainerBuilder_packagedSpringBoot_basicInfo()
       throws IOException, InvalidImageReferenceException {
-    Mockito.when(mockSpringBootPackagedProcessor.getJarJavaVersion()).thenReturn(8);
+    Mockito.when(mockSpringBootPackagedProcessor.getJavaVersion()).thenReturn(8);
     FileEntriesLayer layer =
         FileEntriesLayer.builder()
             .setName("jar")

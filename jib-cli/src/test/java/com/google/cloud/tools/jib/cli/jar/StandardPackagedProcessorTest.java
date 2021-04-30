@@ -168,9 +168,9 @@ public class StandardPackagedProcessorTest {
   }
 
   @Test
-  public void testGetJarJavaVersion() {
+  public void testGetJavaVersion() {
     StandardPackagedProcessor standardPackagedProcessor =
         new StandardPackagedProcessor(Paths.get("ignore"), 8);
-    assertThat(standardPackagedProcessor.getJarJavaVersion()).isEqualTo(8);
+    assertThat(standardPackagedProcessor.getJavaVersion()).isEqualTo(8);
   }
 }

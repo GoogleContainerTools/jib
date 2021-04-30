@@ -22,9 +22,9 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
+import com.google.cloud.tools.jib.cli.ArtifactProcessor;
 import com.google.cloud.tools.jib.cli.CacheDirectories;
 import com.google.cloud.tools.jib.cli.Jar;
-import com.google.cloud.tools.jib.cli.JarProcessor;
 import com.google.common.io.Resources;
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -61,7 +61,7 @@ public class JarProcessorsTest {
     when(mockCacheDirectories.getExplodedJarDirectory()).thenReturn(explodedJarRoot);
     when(mockJarCommand.getMode()).thenReturn(ProcessingMode.exploded);
 
-    JarProcessor processor = JarProcessors.from(jarPath, mockCacheDirectories, mockJarCommand);
+    ArtifactProcessor processor = JarProcessors.from(jarPath, mockCacheDirectories, mockJarCommand);
 
     verify(mockCacheDirectories).getExplodedJarDirectory();
     assertThat(processor).isInstanceOf(StandardExplodedProcessor.class);
@@ -72,7 +72,7 @@ public class JarProcessorsTest {
     Path jarPath = Paths.get(Resources.getResource(STANDARD).toURI());
     when(mockJarCommand.getMode()).thenReturn(ProcessingMode.packaged);
 
-    JarProcessor processor = JarProcessors.from(jarPath, mockCacheDirectories, mockJarCommand);
+    ArtifactProcessor processor = JarProcessors.from(jarPath, mockCacheDirectories, mockJarCommand);
 
     verifyNoInteractions(mockCacheDirectories);
     assertThat(processor).isInstanceOf(StandardPackagedProcessor.class);
@@ -83,7 +83,7 @@ public class JarProcessorsTest {
     Path jarPath = Paths.get(Resources.getResource(SPRING_BOOT).toURI());
     when(mockJarCommand.getMode()).thenReturn(ProcessingMode.packaged);
 
-    JarProcessor processor = JarProcessors.from(jarPath, mockCacheDirectories, mockJarCommand);
+    ArtifactProcessor processor = JarProcessors.from(jarPath, mockCacheDirectories, mockJarCommand);
 
     verifyNoInteractions(mockCacheDirectories);
     assertThat(processor).isInstanceOf(SpringBootPackagedProcessor.class);
@@ -96,7 +96,7 @@ public class JarProcessorsTest {
     when(mockCacheDirectories.getExplodedJarDirectory()).thenReturn(explodedJarRoot);
     when(mockJarCommand.getMode()).thenReturn(ProcessingMode.exploded);
 
-    JarProcessor processor = JarProcessors.from(jarPath, mockCacheDirectories, mockJarCommand);
+    ArtifactProcessor processor = JarProcessors.from(jarPath, mockCacheDirectories, mockJarCommand);
 
     verify(mockCacheDirectories).getExplodedJarDirectory();
     assertThat(processor).isInstanceOf(SpringBootExplodedProcessor.class);
@@ -122,7 +122,7 @@ public class JarProcessorsTest {
     when(mockJarCommand.getMode()).thenReturn(ProcessingMode.exploded);
     when(mockJarCommand.getFrom()).thenReturn(Optional.of("base-image"));
 
-    JarProcessor processor = JarProcessors.from(jarPath, mockCacheDirectories, mockJarCommand);
+    ArtifactProcessor processor = JarProcessors.from(jarPath, mockCacheDirectories, mockJarCommand);
 
     verify(mockCacheDirectories).getExplodedJarDirectory();
     assertThat(processor).isInstanceOf(StandardExplodedProcessor.class);

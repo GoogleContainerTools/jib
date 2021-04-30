@@ -285,9 +285,9 @@ public class StandardExplodedProcessorTest {
   }
 
   @Test
-  public void testGetJarJavaVersion() {
+  public void testGetJavaVersion() {
     StandardExplodedProcessor standardExplodedProcessor =
         new StandardExplodedProcessor(Paths.get("ignore"), Paths.get("ignore"), 8);
-    assertThat(standardExplodedProcessor.getJarJavaVersion()).isEqualTo(8);
+    assertThat(standardExplodedProcessor.getJavaVersion()).isEqualTo(8);
   }
 }

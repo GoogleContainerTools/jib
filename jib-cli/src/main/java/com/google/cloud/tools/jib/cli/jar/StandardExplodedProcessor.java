@@ -17,7 +17,8 @@
 package com.google.cloud.tools.jib.cli.jar;
 
 import com.google.cloud.tools.jib.api.buildplan.FileEntriesLayer;
-import com.google.cloud.tools.jib.cli.JarProcessor;
+import com.google.cloud.tools.jib.cli.ArtifactLayers;
+import com.google.cloud.tools.jib.cli.ArtifactProcessor;
 import com.google.cloud.tools.jib.plugins.common.ZipUtil;
 import com.google.common.collect.ImmutableList;
 import com.google.common.io.MoreFiles;
@@ -30,7 +31,7 @@ import java.util.function.Predicate;
 import java.util.jar.Attributes;
 import java.util.jar.JarFile;
 
-class StandardExplodedProcessor implements JarProcessor {
+class StandardExplodedProcessor implements ArtifactProcessor {
 
   private final Path jarPath;
   private final Path targetExplodedJarRoot;
@@ -66,14 +67,14 @@ class StandardExplodedProcessor implements JarProcessor {
     Predicate<Path> isClassFile = path -> path.getFileName().toString().endsWith(".class");
     Predicate<Path> isResourceFile = isClassFile.negate().and(Files::isRegularFile);
     FileEntriesLayer classesLayer =
-        JarLayers.getDirectoryContentsAsLayer(
-            JarLayers.CLASSES,
+        ArtifactLayers.getDirectoryContentsAsLayer(
+            ArtifactLayers.CLASSES,
             targetExplodedJarRoot,
             isClassFile,
             JarLayers.APP_ROOT.resolve("explodedJar"));
     FileEntriesLayer resourcesLayer =
-        JarLayers.getDirectoryContentsAsLayer(
-            JarLayers.RESOURCES,
+        ArtifactLayers.getDirectoryContentsAsLayer(
+            ArtifactLayers.RESOURCES,
             targetExplodedJarRoot,
             isResourceFile,
             JarLayers.APP_ROOT.resolve("explodedJar"));
@@ -110,7 +111,7 @@ class StandardExplodedProcessor implements JarProcessor {
   }
 
   @Override
-  public Integer getJarJavaVersion() {
+  public Integer getJavaVersion() {
     return jarJavaVersion;
   }
 }

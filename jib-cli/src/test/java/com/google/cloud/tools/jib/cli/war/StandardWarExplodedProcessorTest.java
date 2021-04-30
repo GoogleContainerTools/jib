@@ -42,7 +42,7 @@ import org.junit.rules.TemporaryFolder;
 
 public class StandardWarExplodedProcessorTest {
 
-  private static final Integer JAR_JAVA_VERSION = 0; // any value
+  private static final Integer WAR_JAVA_VERSION = 0; // any value
   private static final AbsoluteUnixPath APP_ROOT = AbsoluteUnixPath.get("/my/app");
   private static final Correspondence<FileEntry, String> EXTRACTION_PATH_OF =
       Correspondence.transforming(
@@ -53,7 +53,6 @@ public class StandardWarExplodedProcessorTest {
   @Test
   public void testCreateLayers_allLayers_correctExtractionPaths()
       throws IOException, URISyntaxException {
-
     // Prepare war file for test
     Path tempDirectory = temporaryFolder.getRoot().toPath();
     Path warContents = Paths.get(Resources.getResource("war/standard/allLayers").toURI());
@@ -62,7 +61,7 @@ public class StandardWarExplodedProcessorTest {
     Path explodedWarDestination = temporaryFolder.newFolder("exploded-war").toPath();
     StandardWarExplodedProcessor processor =
         new StandardWarExplodedProcessor(
-            standardWar, explodedWarDestination, JAR_JAVA_VERSION, APP_ROOT);
+            standardWar, explodedWarDestination, WAR_JAVA_VERSION, APP_ROOT);
     List<FileEntriesLayer> layers = processor.createLayers();
     FileEntriesLayer nonSnapshotLayer = layers.get(0);
     FileEntriesLayer snapshotLayer = layers.get(1);
@@ -100,7 +99,7 @@ public class StandardWarExplodedProcessorTest {
     Path explodedWarDestination = temporaryFolder.newFolder("exploded-war").toPath();
     StandardWarExplodedProcessor processor =
         new StandardWarExplodedProcessor(
-            standardWar, explodedWarDestination, JAR_JAVA_VERSION, APP_ROOT);
+            standardWar, explodedWarDestination, WAR_JAVA_VERSION, APP_ROOT);
     List<FileEntriesLayer> layers = processor.createLayers();
 
     assertThat(layers.size()).isEqualTo(2);
@@ -128,7 +127,7 @@ public class StandardWarExplodedProcessorTest {
     Path explodedWarDestination = temporaryFolder.newFolder("exploded-war").toPath();
     StandardWarExplodedProcessor processor =
         new StandardWarExplodedProcessor(
-            standardWar, explodedWarDestination, JAR_JAVA_VERSION, APP_ROOT);
+            standardWar, explodedWarDestination, WAR_JAVA_VERSION, APP_ROOT);
     List<FileEntriesLayer> layers = processor.createLayers();
 
     assertThat(layers.size()).isEqualTo(3);
@@ -152,9 +151,17 @@ public class StandardWarExplodedProcessorTest {
   public void testComputeEntrypoint() {
     StandardWarExplodedProcessor processor =
         new StandardWarExplodedProcessor(
-            Paths.get("ignore"), Paths.get("ignore"), JAR_JAVA_VERSION, APP_ROOT);
+            Paths.get("ignore"), Paths.get("ignore"), WAR_JAVA_VERSION, APP_ROOT);
     ImmutableList<String> entrypoint = processor.computeEntrypoint(ImmutableList.of("ignored"));
-    assertThat(entrypoint).containsExactly("java", "-jar", "/usr/local/jetty/start.jar").inOrder();
+    assertThat(entrypoint)
+        .isEqualTo(ImmutableList.of("java", "-jar", "/usr/local/jetty/start.jar"));
+  }
+
+  @Test
+  public void testGetJavaVersion() {
+    StandardWarExplodedProcessor processor =
+        new StandardWarExplodedProcessor(Paths.get("ignore"), Paths.get("ignore"), 8, APP_ROOT);
+    assertThat(processor.getJavaVersion()).isEqualTo(8);
   }
 
   private static Path zipUpDirectory(Path sourceRoot, Path targetZip) throws IOException {

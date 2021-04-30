@@ -79,9 +79,9 @@ public class SpringBootPackagedProcessorTest {
   }
 
   @Test
-  public void testGetJarJavaVersion() {
+  public void testGetJavaVersion() {
     SpringBootPackagedProcessor springBootPackagedProcessor =
         new SpringBootPackagedProcessor(Paths.get("ignore"), 8);
-    assertThat(springBootPackagedProcessor.getJarJavaVersion()).isEqualTo(8);
+    assertThat(springBootPackagedProcessor.getJavaVersion()).isEqualTo(8);
   }
 }

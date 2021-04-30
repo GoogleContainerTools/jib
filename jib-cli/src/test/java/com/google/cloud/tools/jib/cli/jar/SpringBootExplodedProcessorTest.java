@@ -283,9 +283,9 @@ public class SpringBootExplodedProcessorTest {
   }
 
   @Test
-  public void testGetJarJavaVersion() {
+  public void testGetJavaVersion() {
     SpringBootExplodedProcessor springBootExplodedProcessor =
         new SpringBootExplodedProcessor(Paths.get("ignore"), Paths.get("ignore"), 8);
-    assertThat(springBootExplodedProcessor.getJarJavaVersion()).isEqualTo(8);
+    assertThat(springBootExplodedProcessor.getJavaVersion()).isEqualTo(8);
   }
 }

@@ -16,9 +16,9 @@
 
 package com.google.cloud.tools.jib.cli.jar;
 
+import com.google.cloud.tools.jib.cli.ArtifactProcessor;
 import com.google.cloud.tools.jib.cli.CacheDirectories;
 import com.google.cloud.tools.jib.cli.Jar;
-import com.google.cloud.tools.jib.cli.JarProcessor;
 import com.google.common.annotations.VisibleForTesting;
 import java.io.DataInputStream;
 import java.io.EOFException;
@@ -30,23 +30,25 @@ import java.util.Enumeration;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
-/** Class to create a {@link JarProcessor} instance depending on jar type and processing mode. */
+/**
+ * Class to create a {@link ArtifactProcessor} instance depending on jar type and processing mode.
+ */
 public class JarProcessors {
   private static String SPRING_BOOT = "spring-boot";
   private static String STANDARD = "standard";
   private static Integer VERSION_NOT_FOUND = 0;
 
   /**
-   * Creates a {@link JarProcessor} instance based on jar type and processing mode.
+   * Creates a {@link ArtifactProcessor} instance based on jar type and processing mode.
    *
    * @param jarPath path to the jar
    * @param cacheDirectories the location of the relevant caches
    * @param jarOptions jar cli options
-   * @return JarProcessor
+   * @return ArtifactProcessor
    * @throws IOException if I/O error occurs when opening the jar file
    */
-  public static JarProcessor from(Path jarPath, CacheDirectories cacheDirectories, Jar jarOptions)
-      throws IOException {
+  public static ArtifactProcessor from(
+      Path jarPath, CacheDirectories cacheDirectories, Jar jarOptions) throws IOException {
     Integer jarJavaVersion = determineJavaMajorVersion(jarPath);
     if (jarJavaVersion > 11 && !jarOptions.getFrom().isPresent()) {
       throw new IllegalStateException(

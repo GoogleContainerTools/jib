@@ -193,7 +193,7 @@ public class Jar implements Callable<Integer> {
 
       CacheDirectories cacheDirectories =
           CacheDirectories.from(commonCliOptions, jarFile.toAbsolutePath().getParent());
-      JarProcessor processor = JarProcessors.from(jarFile, cacheDirectories, this);
+      ArtifactProcessor processor = JarProcessors.from(jarFile, cacheDirectories, this);
       JibContainerBuilder containerBuilder =
           JarFiles.toJibContainerBuilder(processor, this, commonCliOptions, logger);
       Containerizer containerizer = Containerizers.from(commonCliOptions, logger, cacheDirectories);

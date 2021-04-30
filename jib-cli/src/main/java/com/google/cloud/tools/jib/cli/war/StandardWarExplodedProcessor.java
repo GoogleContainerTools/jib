@@ -18,8 +18,8 @@ package com.google.cloud.tools.jib.cli.war;
 
 import com.google.cloud.tools.jib.api.buildplan.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.api.buildplan.FileEntriesLayer;
-import com.google.cloud.tools.jib.cli.JarProcessor;
-import com.google.cloud.tools.jib.cli.jar.JarLayers;
+import com.google.cloud.tools.jib.cli.ArtifactLayers;
+import com.google.cloud.tools.jib.cli.ArtifactProcessor;
 import com.google.cloud.tools.jib.plugins.common.ZipUtil;
 import com.google.common.collect.ImmutableList;
 import com.google.common.io.MoreFiles;
@@ -31,7 +31,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Predicate;
 
-class StandardWarExplodedProcessor implements JarProcessor {
+class StandardWarExplodedProcessor implements ArtifactProcessor {
 
   private final Path warPath;
   private final Path targetExplodedWarRoot;
@@ -71,15 +71,18 @@ class StandardWarExplodedProcessor implements JarProcessor {
     Predicate<Path> isInWebInfLibAndIsNotSnapshot = isInWebInfLib.and(isSnapshot.negate());
     Predicate<Path> nonSnapshotPredicate = isFile.and(isInWebInfLibAndIsNotSnapshot);
     FileEntriesLayer nonSnapshotLayer =
-        JarLayers.getDirectoryContentsAsLayer(
-            "dependencies", targetExplodedWarRoot, nonSnapshotPredicate, appRoot);
+        ArtifactLayers.getDirectoryContentsAsLayer(
+            ArtifactLayers.DEPENDENCIES, targetExplodedWarRoot, nonSnapshotPredicate, appRoot);
 
     // Snapshot layer
     Predicate<Path> isInWebInfLibAndIsSnapshot = isInWebInfLib.and(isSnapshot);
     Predicate<Path> snapshotPredicate = isFile.and(isInWebInfLibAndIsSnapshot);
     FileEntriesLayer snapshotLayer =
-        JarLayers.getDirectoryContentsAsLayer(
-            "snapshot dependencies", targetExplodedWarRoot, snapshotPredicate, appRoot);
+        ArtifactLayers.getDirectoryContentsAsLayer(
+            ArtifactLayers.SNAPSHOT_DEPENDENCIES,
+            targetExplodedWarRoot,
+            snapshotPredicate,
+            appRoot);
 
     // Classes layer.
     Predicate<Path> isClass = path -> path.getFileName().toString().endsWith(".class");
@@ -87,14 +90,14 @@ class StandardWarExplodedProcessor implements JarProcessor {
         path -> path.startsWith(targetExplodedWarRoot.resolve("WEB-INF").resolve("classes"));
     Predicate<Path> classesPredicate = isInWebInfClasses.and(isClass);
     FileEntriesLayer classesLayer =
-        JarLayers.getDirectoryContentsAsLayer(
-            "classes", targetExplodedWarRoot, classesPredicate, appRoot);
+        ArtifactLayers.getDirectoryContentsAsLayer(
+            ArtifactLayers.CLASSES, targetExplodedWarRoot, classesPredicate, appRoot);
 
     // Resources layer.
     Predicate<Path> resourcesPredicate = isInWebInfLib.or(isClass).negate();
     FileEntriesLayer resourcesLayer =
-        JarLayers.getDirectoryContentsAsLayer(
-            "resources",
+        ArtifactLayers.getDirectoryContentsAsLayer(
+            ArtifactLayers.RESOURCES,
             targetExplodedWarRoot,
             resourcesPredicate.and(Files::isRegularFile),
             appRoot);
@@ -118,15 +121,12 @@ class StandardWarExplodedProcessor implements JarProcessor {
 
   @Override
   public ImmutableList<String> computeEntrypoint(List<String> jvmFlags) {
-    ImmutableList.Builder<String> entrypoint = ImmutableList.builder();
-    entrypoint.add("java");
-    entrypoint.add("-jar");
-    entrypoint.add("/usr/local/jetty/start.jar");
-    return entrypoint.build();
+    // JVM flags are ignored.
+    return ImmutableList.of("java", "-jar", "/usr/local/jetty/start.jar");
   }
 
   @Override
-  public Integer getJarJavaVersion() {
+  public Integer getJavaVersion() {
     return warJavaVersion;
   }
 }
