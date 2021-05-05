@@ -25,6 +25,7 @@ import java.util.function.Predicate;
 
 public class ArtifactLayers {
 
+  // Used for layer names.
   public static final String CLASSES = "classes";
   public static final String RESOURCES = "resources";
   public static final String DEPENDENCIES = "dependencies";

@@ -69,19 +69,22 @@ class StandardWarExplodedProcessor implements ArtifactProcessor {
 
     // Non-snapshot layer
     Predicate<Path> isInWebInfLibAndIsNotSnapshot = isInWebInfLib.and(isSnapshot.negate());
-    Predicate<Path> nonSnapshotPredicate = isFile.and(isInWebInfLibAndIsNotSnapshot);
+    Predicate<Path> nonSnapshotPredicate = isInWebInfLibAndIsNotSnapshot;
     FileEntriesLayer nonSnapshotLayer =
         ArtifactLayers.getDirectoryContentsAsLayer(
-            ArtifactLayers.DEPENDENCIES, targetExplodedWarRoot, nonSnapshotPredicate, appRoot);
+            ArtifactLayers.DEPENDENCIES,
+            targetExplodedWarRoot,
+            isFile.and(nonSnapshotPredicate),
+            appRoot);
 
     // Snapshot layer
     Predicate<Path> isInWebInfLibAndIsSnapshot = isInWebInfLib.and(isSnapshot);
-    Predicate<Path> snapshotPredicate = isFile.and(isInWebInfLibAndIsSnapshot);
+    Predicate<Path> snapshotPredicate = isInWebInfLibAndIsSnapshot;
     FileEntriesLayer snapshotLayer =
         ArtifactLayers.getDirectoryContentsAsLayer(
             ArtifactLayers.SNAPSHOT_DEPENDENCIES,
             targetExplodedWarRoot,
-            snapshotPredicate,
+            isFile.and(snapshotPredicate),
             appRoot);
 
     // Classes layer.

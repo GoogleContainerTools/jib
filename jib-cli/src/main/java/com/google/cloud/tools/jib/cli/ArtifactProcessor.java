@@ -25,20 +25,20 @@ import java.util.List;
 public interface ArtifactProcessor {
 
   /**
-   * Creates layers on container for a jar.
+   * Creates layers on container for a JAR or WAR.
    *
    * @return list of {@link FileEntriesLayer}
-   * @throws IOException if I/O error occurs when opening the jar file or if temporary directory
-   *     provided doesn't exist
+   * @throws IOException if I/O error occurs when opening the java artifact or if temporary
+   *     directory provided doesn't exist
    */
   List<FileEntriesLayer> createLayers() throws IOException;
 
   /**
-   * Computes the entrypoint for a jar.
+   * Computes the entrypoint for a JAR or WAR.
    *
    * @param jvmFlags list of jvm flags
    * @return list of {@link String} representing entrypoint
-   * @throws IOException if I/O error occurs when opening the jar file
+   * @throws IOException if I/O error occurs when opening the java artifact
    */
   ImmutableList<String> computeEntrypoint(List<String> jvmFlags) throws IOException;
 
