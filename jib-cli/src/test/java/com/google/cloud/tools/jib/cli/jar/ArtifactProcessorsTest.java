@@ -22,6 +22,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
+import com.google.cloud.tools.jib.cli.ArtifactProcessor;
 import com.google.cloud.tools.jib.cli.CacheDirectories;
 import com.google.cloud.tools.jib.cli.Jar;
 import com.google.common.io.Resources;
@@ -37,9 +38,9 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
-/** Tests for {@link JarProcessors}. */
+/** Tests for {@link ArtifactProcessors}. */
 @RunWith(MockitoJUnitRunner.class)
-public class JarProcessorsTest {
+public class ArtifactProcessorsTest {
 
   private static final String SPRING_BOOT = "jar/spring-boot/springboot_sample.jar";
   private static final String STANDARD = "jar/standard/emptyStandardJar.jar";
@@ -60,7 +61,8 @@ public class JarProcessorsTest {
     when(mockCacheDirectories.getExplodedJarDirectory()).thenReturn(explodedJarRoot);
     when(mockJarCommand.getMode()).thenReturn(ProcessingMode.exploded);
 
-    JarProcessor processor = JarProcessors.from(jarPath, mockCacheDirectories, mockJarCommand);
+    ArtifactProcessor processor =
+        ArtifactProcessors.from(jarPath, mockCacheDirectories, mockJarCommand);
 
     verify(mockCacheDirectories).getExplodedJarDirectory();
     assertThat(processor).isInstanceOf(StandardExplodedProcessor.class);
@@ -71,7 +73,8 @@ public class JarProcessorsTest {
     Path jarPath = Paths.get(Resources.getResource(STANDARD).toURI());
     when(mockJarCommand.getMode()).thenReturn(ProcessingMode.packaged);
 
-    JarProcessor processor = JarProcessors.from(jarPath, mockCacheDirectories, mockJarCommand);
+    ArtifactProcessor processor =
+        ArtifactProcessors.from(jarPath, mockCacheDirectories, mockJarCommand);
 
     verifyNoInteractions(mockCacheDirectories);
     assertThat(processor).isInstanceOf(StandardPackagedProcessor.class);
@@ -82,7 +85,8 @@ public class JarProcessorsTest {
     Path jarPath = Paths.get(Resources.getResource(SPRING_BOOT).toURI());
     when(mockJarCommand.getMode()).thenReturn(ProcessingMode.packaged);
 
-    JarProcessor processor = JarProcessors.from(jarPath, mockCacheDirectories, mockJarCommand);
+    ArtifactProcessor processor =
+        ArtifactProcessors.from(jarPath, mockCacheDirectories, mockJarCommand);
 
     verifyNoInteractions(mockCacheDirectories);
     assertThat(processor).isInstanceOf(SpringBootPackagedProcessor.class);
@@ -95,7 +99,8 @@ public class JarProcessorsTest {
     when(mockCacheDirectories.getExplodedJarDirectory()).thenReturn(explodedJarRoot);
     when(mockJarCommand.getMode()).thenReturn(ProcessingMode.exploded);
 
-    JarProcessor processor = JarProcessors.from(jarPath, mockCacheDirectories, mockJarCommand);
+    ArtifactProcessor processor =
+        ArtifactProcessors.from(jarPath, mockCacheDirectories, mockJarCommand);
 
     verify(mockCacheDirectories).getExplodedJarDirectory();
     assertThat(processor).isInstanceOf(SpringBootExplodedProcessor.class);
@@ -108,7 +113,7 @@ public class JarProcessorsTest {
     IllegalStateException exception =
         assertThrows(
             IllegalStateException.class,
-            () -> JarProcessors.from(jarPath, mockCacheDirectories, mockJarCommand));
+            () -> ArtifactProcessors.from(jarPath, mockCacheDirectories, mockJarCommand));
     assertThat(exception)
         .hasMessageThat()
         .startsWith("The input JAR (" + jarPath + ") is compiled with Java 14");
@@ -121,7 +126,8 @@ public class JarProcessorsTest {
     when(mockJarCommand.getMode()).thenReturn(ProcessingMode.exploded);
     when(mockJarCommand.getFrom()).thenReturn(Optional.of("base-image"));
 
-    JarProcessor processor = JarProcessors.from(jarPath, mockCacheDirectories, mockJarCommand);
+    ArtifactProcessor processor =
+        ArtifactProcessors.from(jarPath, mockCacheDirectories, mockJarCommand);
 
     verify(mockCacheDirectories).getExplodedJarDirectory();
     assertThat(processor).isInstanceOf(StandardExplodedProcessor.class);
@@ -131,7 +137,7 @@ public class JarProcessorsTest {
   public void testDetermineJavaMajorVersion_versionNotFound()
       throws URISyntaxException, IOException {
     Path jarPath = Paths.get(Resources.getResource(STANDARD).toURI());
-    Integer version = JarProcessors.determineJavaMajorVersion(jarPath);
+    Integer version = ArtifactProcessors.determineJavaMajorVersion(jarPath);
     assertThat(version).isEqualTo(0);
   }
 
@@ -140,7 +146,8 @@ public class JarProcessorsTest {
     Path jarPath = Paths.get(Resources.getResource(STANDARD_WITH_INVALID_CLASS).toURI());
     IllegalArgumentException exception =
         assertThrows(
-            IllegalArgumentException.class, () -> JarProcessors.determineJavaMajorVersion(jarPath));
+            IllegalArgumentException.class,
+            () -> ArtifactProcessors.determineJavaMajorVersion(jarPath));
     assertThat(exception)
         .hasMessageThat()
         .isEqualTo("The class file (class1.class) is of an invalid format.");
@@ -151,7 +158,8 @@ public class JarProcessorsTest {
     Path jarPath = Paths.get(Resources.getResource(STANDARD_WITH_EMPTY_CLASS_FILE).toURI());
     IllegalArgumentException exception =
         assertThrows(
-            IllegalArgumentException.class, () -> JarProcessors.determineJavaMajorVersion(jarPath));
+            IllegalArgumentException.class,
+            () -> ArtifactProcessors.determineJavaMajorVersion(jarPath));
     assertThat(exception).hasMessageThat().startsWith("Reached end of class file (class1.class)");
   }
 }

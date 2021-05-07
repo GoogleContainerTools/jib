@@ -18,6 +18,8 @@ package com.google.cloud.tools.jib.cli.jar;
 
 import com.google.cloud.tools.jib.ProjectInfo;
 import com.google.cloud.tools.jib.api.buildplan.FileEntriesLayer;
+import com.google.cloud.tools.jib.cli.ArtifactLayers;
+import com.google.cloud.tools.jib.cli.ArtifactProcessor;
 import com.google.cloud.tools.jib.plugins.common.ZipUtil;
 import com.google.common.base.Predicates;
 import com.google.common.base.Verify;
@@ -39,7 +41,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
 
-class SpringBootExplodedProcessor implements JarProcessor {
+class SpringBootExplodedProcessor implements ArtifactProcessor {
 
   private final Path jarPath;
   private final Path targetExplodedJarRoot;
@@ -81,8 +83,8 @@ class SpringBootExplodedProcessor implements JarProcessor {
       Predicate<Path> isInBootInfLibAndIsNotSnapshot = isInBootInfLib.and(isSnapshot.negate());
       Predicate<Path> nonSnapshotPredicate = isFile.and(isInBootInfLibAndIsNotSnapshot);
       FileEntriesLayer nonSnapshotLayer =
-          JarLayers.getDirectoryContentsAsLayer(
-              JarLayers.DEPENDENCIES,
+          ArtifactLayers.getDirectoryContentsAsLayer(
+              ArtifactLayers.DEPENDENCIES,
               targetExplodedJarRoot,
               nonSnapshotPredicate,
               JarLayers.APP_ROOT);
@@ -91,8 +93,8 @@ class SpringBootExplodedProcessor implements JarProcessor {
       Predicate<Path> isInBootInfLibAndIsSnapshot = isInBootInfLib.and(isSnapshot);
       Predicate<Path> snapshotPredicate = isFile.and(isInBootInfLibAndIsSnapshot);
       FileEntriesLayer snapshotLayer =
-          JarLayers.getDirectoryContentsAsLayer(
-              JarLayers.SNAPSHOT_DEPENDENCIES,
+          ArtifactLayers.getDirectoryContentsAsLayer(
+              ArtifactLayers.SNAPSHOT_DEPENDENCIES,
               targetExplodedJarRoot,
               snapshotPredicate,
               JarLayers.APP_ROOT);
@@ -101,7 +103,7 @@ class SpringBootExplodedProcessor implements JarProcessor {
       Predicate<Path> isLoader = path -> path.startsWith(targetExplodedJarRoot.resolve("org"));
       Predicate<Path> loaderPredicate = isFile.and(isLoader);
       FileEntriesLayer loaderLayer =
-          JarLayers.getDirectoryContentsAsLayer(
+          ArtifactLayers.getDirectoryContentsAsLayer(
               "spring-boot-loader", targetExplodedJarRoot, loaderPredicate, JarLayers.APP_ROOT);
 
       // Classes layer.
@@ -110,8 +112,8 @@ class SpringBootExplodedProcessor implements JarProcessor {
           path -> path.startsWith(targetExplodedJarRoot.resolve("BOOT-INF").resolve("classes"));
       Predicate<Path> classesPredicate = isInBootInfClasses.and(isClass);
       FileEntriesLayer classesLayer =
-          JarLayers.getDirectoryContentsAsLayer(
-              JarLayers.CLASSES, targetExplodedJarRoot, classesPredicate, JarLayers.APP_ROOT);
+          ArtifactLayers.getDirectoryContentsAsLayer(
+              ArtifactLayers.CLASSES, targetExplodedJarRoot, classesPredicate, JarLayers.APP_ROOT);
 
       // Resources layer.
       Predicate<Path> isInMetaInf =
@@ -119,8 +121,11 @@ class SpringBootExplodedProcessor implements JarProcessor {
       Predicate<Path> isResource = isInMetaInf.or(isInBootInfClasses.and(isClass.negate()));
       Predicate<Path> resourcesPredicate = isFile.and(isResource);
       FileEntriesLayer resourcesLayer =
-          JarLayers.getDirectoryContentsAsLayer(
-              JarLayers.RESOURCES, targetExplodedJarRoot, resourcesPredicate, JarLayers.APP_ROOT);
+          ArtifactLayers.getDirectoryContentsAsLayer(
+              ArtifactLayers.RESOURCES,
+              targetExplodedJarRoot,
+              resourcesPredicate,
+              JarLayers.APP_ROOT);
 
       return Arrays.asList(
           nonSnapshotLayer, loaderLayer, snapshotLayer, resourcesLayer, classesLayer);
@@ -139,7 +144,7 @@ class SpringBootExplodedProcessor implements JarProcessor {
   }
 
   @Override
-  public Integer getJarJavaVersion() {
+  public Integer getJavaVersion() {
     return jarJavaVersion;
   }
 
@@ -192,7 +197,7 @@ class SpringBootExplodedProcessor implements JarProcessor {
         Predicate<Path> belongsToThisLayer =
             isInListedDirectoryOrIsSameFile(contents, localExplodedJarRoot);
         layers.add(
-            JarLayers.getDirectoryContentsAsLayer(
+            ArtifactLayers.getDirectoryContentsAsLayer(
                 layerName, localExplodedJarRoot, belongsToThisLayer, JarLayers.APP_ROOT));
       }
     }

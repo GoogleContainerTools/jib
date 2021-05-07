@@ -18,7 +18,7 @@ package com.google.cloud.tools.jib.cli.jar;
 
 import com.google.cloud.tools.jib.api.buildplan.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.api.buildplan.FileEntriesLayer;
-import com.google.cloud.tools.jib.filesystem.DirectoryWalker;
+import com.google.cloud.tools.jib.cli.ArtifactLayers;
 import com.google.common.base.Splitter;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -35,10 +35,6 @@ public class JarLayers {
 
   static final AbsoluteUnixPath APP_ROOT = AbsoluteUnixPath.get("/app");
   static final String JAR = "jar";
-  static final String CLASSES = "classes";
-  static final String RESOURCES = "resources";
-  static final String DEPENDENCIES = "dependencies";
-  static final String SNAPSHOT_DEPENDENCIES = "snapshot dependencies";
 
   static List<FileEntriesLayer> getDependenciesLayers(Path jarPath, ProcessingMode mode)
       throws IOException {
@@ -65,7 +61,7 @@ public class JarLayers {
           allDependencies.stream().filter(isSnapshot).map(Paths::get).collect(Collectors.toList());
       if (!nonSnapshots.isEmpty()) {
         FileEntriesLayer.Builder nonSnapshotLayer =
-            FileEntriesLayer.builder().setName(DEPENDENCIES);
+            FileEntriesLayer.builder().setName(ArtifactLayers.DEPENDENCIES);
         nonSnapshots.forEach(
             path ->
                 addDependency(
@@ -73,12 +69,14 @@ public class JarLayers {
                     jarParent.resolve(path),
                     mode.equals(ProcessingMode.packaged)
                         ? APP_ROOT.resolve(path)
-                        : APP_ROOT.resolve(DEPENDENCIES).resolve(path.getFileName())));
+                        : APP_ROOT
+                            .resolve(ArtifactLayers.DEPENDENCIES)
+                            .resolve(path.getFileName())));
         layers.add(nonSnapshotLayer.build());
       }
       if (!snapshots.isEmpty()) {
         FileEntriesLayer.Builder snapshotLayer =
-            FileEntriesLayer.builder().setName(SNAPSHOT_DEPENDENCIES);
+            FileEntriesLayer.builder().setName(ArtifactLayers.SNAPSHOT_DEPENDENCIES);
         snapshots.forEach(
             path ->
                 addDependency(
@@ -86,30 +84,13 @@ public class JarLayers {
                     jarParent.resolve(path),
                     mode.equals(ProcessingMode.packaged)
                         ? APP_ROOT.resolve(path)
-                        : APP_ROOT.resolve(DEPENDENCIES).resolve(path.getFileName())));
+                        : APP_ROOT
+                            .resolve(ArtifactLayers.DEPENDENCIES)
+                            .resolve(path.getFileName())));
         layers.add(snapshotLayer.build());
       }
       return layers;
     }
-  }
-
-  static FileEntriesLayer getDirectoryContentsAsLayer(
-      String layerName,
-      Path sourceRoot,
-      Predicate<Path> pathFilter,
-      AbsoluteUnixPath basePathInContainer)
-      throws IOException {
-    FileEntriesLayer.Builder builder = FileEntriesLayer.builder().setName(layerName);
-    new DirectoryWalker(sourceRoot)
-        .filterRoot()
-        .filter(path -> pathFilter.test(path))
-        .walk(
-            path -> {
-              AbsoluteUnixPath pathOnContainer =
-                  basePathInContainer.resolve(sourceRoot.relativize(path));
-              builder.addEntry(path, pathOnContainer);
-            });
-    return builder.build();
   }
 
   private static void addDependency(

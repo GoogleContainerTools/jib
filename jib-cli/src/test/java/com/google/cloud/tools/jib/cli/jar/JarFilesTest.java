@@ -17,6 +17,7 @@
 package com.google.cloud.tools.jib.cli.jar;
 
 import static com.google.common.truth.Truth.assertThat;
+import static org.mockito.Mockito.when;
 
 import com.google.cloud.tools.jib.api.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.api.JibContainerBuilder;
@@ -41,7 +42,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentMatchers;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
 /** Tests for {@link JarFiles}. */
@@ -65,7 +65,7 @@ public class JarFilesTest {
   @Test
   public void testToJibContainer_defaultBaseImage_java8()
       throws IOException, InvalidImageReferenceException {
-    Mockito.when(mockStandardExplodedProcessor.getJarJavaVersion()).thenReturn(8);
+    when(mockStandardExplodedProcessor.getJavaVersion()).thenReturn(8);
     JibContainerBuilder containerBuilder =
         JarFiles.toJibContainerBuilder(
             mockStandardExplodedProcessor, mockJarCommand, mockCommonCliOptions, mockLogger);
@@ -77,7 +77,7 @@ public class JarFilesTest {
   @Test
   public void testToJibContainer_defaultBaseImage_java9()
       throws IOException, InvalidImageReferenceException {
-    Mockito.when(mockStandardExplodedProcessor.getJarJavaVersion()).thenReturn(9);
+    when(mockStandardExplodedProcessor.getJavaVersion()).thenReturn(9);
     JibContainerBuilder containerBuilder =
         JarFiles.toJibContainerBuilder(
             mockStandardExplodedProcessor, mockJarCommand, mockCommonCliOptions, mockLogger);
@@ -89,7 +89,7 @@ public class JarFilesTest {
   @Test
   public void testToJibContainerBuilder_explodedStandard_basicInfo()
       throws IOException, InvalidImageReferenceException {
-    Mockito.when(mockStandardExplodedProcessor.getJarJavaVersion()).thenReturn(8);
+    when(mockStandardExplodedProcessor.getJavaVersion()).thenReturn(8);
     FileEntriesLayer layer =
         FileEntriesLayer.builder()
             .setName("classes")
@@ -97,11 +97,11 @@ public class JarFilesTest {
                 Paths.get("path/to/tempDirectory/class1.class"),
                 AbsoluteUnixPath.get("/app/explodedJar/class1.class"))
             .build();
-    Mockito.when(mockStandardExplodedProcessor.createLayers()).thenReturn(Arrays.asList(layer));
-    Mockito.when(mockStandardExplodedProcessor.computeEntrypoint(ArgumentMatchers.anyList()))
+    when(mockStandardExplodedProcessor.createLayers()).thenReturn(Arrays.asList(layer));
+    when(mockStandardExplodedProcessor.computeEntrypoint(ArgumentMatchers.anyList()))
         .thenReturn(
             ImmutableList.of("java", "-cp", "/app/explodedJar:/app/dependencies/*", "HelloWorld"));
-    Mockito.when(mockJarCommand.getFrom()).thenReturn(Optional.empty());
+    when(mockJarCommand.getFrom()).thenReturn(Optional.empty());
 
     JibContainerBuilder containerBuilder =
         JarFiles.toJibContainerBuilder(
@@ -136,17 +136,17 @@ public class JarFilesTest {
   @Test
   public void testToJibContainerBuilder_packagedStandard_basicInfo()
       throws IOException, InvalidImageReferenceException {
-    Mockito.when(mockStandardPackagedProcessor.getJarJavaVersion()).thenReturn(8);
+    when(mockStandardPackagedProcessor.getJavaVersion()).thenReturn(8);
     FileEntriesLayer layer =
         FileEntriesLayer.builder()
             .setName("jar")
             .addEntry(
                 Paths.get("path/to/standardJar.jar"), AbsoluteUnixPath.get("/app/standardJar.jar"))
             .build();
-    Mockito.when(mockStandardPackagedProcessor.createLayers()).thenReturn(Arrays.asList(layer));
-    Mockito.when(mockStandardPackagedProcessor.computeEntrypoint(ArgumentMatchers.anyList()))
+    when(mockStandardPackagedProcessor.createLayers()).thenReturn(Arrays.asList(layer));
+    when(mockStandardPackagedProcessor.computeEntrypoint(ArgumentMatchers.anyList()))
         .thenReturn(ImmutableList.of("java", "-jar", "/app/standardJar.jar"));
-    Mockito.when(mockJarCommand.getFrom()).thenReturn(Optional.empty());
+    when(mockJarCommand.getFrom()).thenReturn(Optional.empty());
 
     JibContainerBuilder containerBuilder =
         JarFiles.toJibContainerBuilder(
@@ -179,7 +179,7 @@ public class JarFilesTest {
   @Test
   public void testToJibContainerBuilder_explodedLayeredSpringBoot_basicInfo()
       throws IOException, InvalidImageReferenceException {
-    Mockito.when(mockSpringBootExplodedProcessor.getJarJavaVersion()).thenReturn(8);
+    when(mockSpringBootExplodedProcessor.getJavaVersion()).thenReturn(8);
     FileEntriesLayer layer =
         FileEntriesLayer.builder()
             .setName("classes")
@@ -187,12 +187,12 @@ public class JarFilesTest {
                 Paths.get("path/to/tempDirectory/BOOT-INF/classes/class1.class"),
                 AbsoluteUnixPath.get("/app/BOOT-INF/classes/class1.class"))
             .build();
-    Mockito.when(mockJarCommand.getFrom()).thenReturn(Optional.empty());
-    Mockito.when(mockSpringBootExplodedProcessor.createLayers()).thenReturn(Arrays.asList(layer));
-    Mockito.when(mockSpringBootExplodedProcessor.computeEntrypoint(ArgumentMatchers.anyList()))
+    when(mockJarCommand.getFrom()).thenReturn(Optional.empty());
+    when(mockSpringBootExplodedProcessor.createLayers()).thenReturn(Arrays.asList(layer));
+    when(mockSpringBootExplodedProcessor.computeEntrypoint(ArgumentMatchers.anyList()))
         .thenReturn(
             ImmutableList.of("java", "-cp", "/app", "org.springframework.boot.loader.JarLauncher"));
-    Mockito.when(mockJarCommand.getFrom()).thenReturn(Optional.empty());
+    when(mockJarCommand.getFrom()).thenReturn(Optional.empty());
 
     JibContainerBuilder containerBuilder =
         JarFiles.toJibContainerBuilder(
@@ -227,17 +227,17 @@ public class JarFilesTest {
   @Test
   public void testToJibContainerBuilder_packagedSpringBoot_basicInfo()
       throws IOException, InvalidImageReferenceException {
-    Mockito.when(mockSpringBootPackagedProcessor.getJarJavaVersion()).thenReturn(8);
+    when(mockSpringBootPackagedProcessor.getJavaVersion()).thenReturn(8);
     FileEntriesLayer layer =
         FileEntriesLayer.builder()
             .setName("jar")
             .addEntry(
                 Paths.get("path/to/spring-boot.jar"), AbsoluteUnixPath.get("/app/spring-boot.jar"))
             .build();
-    Mockito.when(mockSpringBootPackagedProcessor.createLayers()).thenReturn(Arrays.asList(layer));
-    Mockito.when(mockSpringBootPackagedProcessor.computeEntrypoint(ArgumentMatchers.anyList()))
+    when(mockSpringBootPackagedProcessor.createLayers()).thenReturn(Arrays.asList(layer));
+    when(mockSpringBootPackagedProcessor.computeEntrypoint(ArgumentMatchers.anyList()))
         .thenReturn(ImmutableList.of("java", "-jar", "/app/spring-boot.jar"));
-    Mockito.when(mockJarCommand.getFrom()).thenReturn(Optional.empty());
+    when(mockJarCommand.getFrom()).thenReturn(Optional.empty());
 
     JibContainerBuilder containerBuilder =
         JarFiles.toJibContainerBuilder(
@@ -271,20 +271,18 @@ public class JarFilesTest {
   @Test
   public void testToJibContainerBuilder_optionalParameters()
       throws IOException, InvalidImageReferenceException {
-    Mockito.when(mockJarCommand.getFrom()).thenReturn(Optional.of("base-image"));
-    Mockito.when(mockJarCommand.getExposedPorts()).thenReturn(ImmutableSet.of(Port.udp(123)));
-    Mockito.when(mockJarCommand.getVolumes())
+    when(mockJarCommand.getFrom()).thenReturn(Optional.of("base-image"));
+    when(mockJarCommand.getExposedPorts()).thenReturn(ImmutableSet.of(Port.udp(123)));
+    when(mockJarCommand.getVolumes())
         .thenReturn(
             ImmutableSet.of(AbsoluteUnixPath.get("/volume1"), AbsoluteUnixPath.get("/volume2")));
-    Mockito.when(mockJarCommand.getEnvironment()).thenReturn(ImmutableMap.of("key1", "value1"));
-    Mockito.when(mockJarCommand.getLabels()).thenReturn(ImmutableMap.of("label", "mylabel"));
-    Mockito.when(mockJarCommand.getUser()).thenReturn(Optional.of("customUser"));
-    Mockito.when(mockJarCommand.getFormat()).thenReturn(Optional.of(ImageFormat.OCI));
-    Mockito.when(mockJarCommand.getProgramArguments()).thenReturn(ImmutableList.of("arg1"));
-    Mockito.when(mockJarCommand.getEntrypoint())
-        .thenReturn(ImmutableList.of("custom", "entrypoint"));
-    Mockito.when(mockJarCommand.getCreationTime())
-        .thenReturn(Optional.of(Instant.ofEpochSecond(5)));
+    when(mockJarCommand.getEnvironment()).thenReturn(ImmutableMap.of("key1", "value1"));
+    when(mockJarCommand.getLabels()).thenReturn(ImmutableMap.of("label", "mylabel"));
+    when(mockJarCommand.getUser()).thenReturn(Optional.of("customUser"));
+    when(mockJarCommand.getFormat()).thenReturn(Optional.of(ImageFormat.OCI));
+    when(mockJarCommand.getProgramArguments()).thenReturn(ImmutableList.of("arg1"));
+    when(mockJarCommand.getEntrypoint()).thenReturn(ImmutableList.of("custom", "entrypoint"));
+    when(mockJarCommand.getCreationTime()).thenReturn(Optional.of(Instant.ofEpochSecond(5)));
 
     JibContainerBuilder containerBuilder =
         JarFiles.toJibContainerBuilder(

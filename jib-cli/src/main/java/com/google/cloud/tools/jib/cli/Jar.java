@@ -24,9 +24,8 @@ import com.google.cloud.tools.jib.api.Ports;
 import com.google.cloud.tools.jib.api.buildplan.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.api.buildplan.ImageFormat;
 import com.google.cloud.tools.jib.api.buildplan.Port;
+import com.google.cloud.tools.jib.cli.jar.ArtifactProcessors;
 import com.google.cloud.tools.jib.cli.jar.JarFiles;
-import com.google.cloud.tools.jib.cli.jar.JarProcessor;
-import com.google.cloud.tools.jib.cli.jar.JarProcessors;
 import com.google.cloud.tools.jib.cli.jar.ProcessingMode;
 import com.google.cloud.tools.jib.cli.logging.CliLogger;
 import com.google.cloud.tools.jib.plugins.common.globalconfig.GlobalConfig;
@@ -202,7 +201,7 @@ public class Jar implements Callable<Integer> {
 
       CacheDirectories cacheDirectories =
           CacheDirectories.from(commonCliOptions, jarFile.toAbsolutePath().getParent());
-      JarProcessor processor = JarProcessors.from(jarFile, cacheDirectories, this);
+      ArtifactProcessor processor = ArtifactProcessors.from(jarFile, cacheDirectories, this);
       JibContainerBuilder containerBuilder =
           JarFiles.toJibContainerBuilder(processor, this, commonCliOptions, logger);
       Containerizer containerizer = Containerizers.from(commonCliOptions, logger, cacheDirectories);

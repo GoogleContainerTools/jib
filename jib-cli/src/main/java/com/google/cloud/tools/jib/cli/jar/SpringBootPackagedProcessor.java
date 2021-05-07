@@ -17,12 +17,13 @@
 package com.google.cloud.tools.jib.cli.jar;
 
 import com.google.cloud.tools.jib.api.buildplan.FileEntriesLayer;
+import com.google.cloud.tools.jib.cli.ArtifactProcessor;
 import com.google.common.collect.ImmutableList;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
 
-class SpringBootPackagedProcessor implements JarProcessor {
+class SpringBootPackagedProcessor implements ArtifactProcessor {
 
   private final Path jarPath;
   private final Integer jarJavaVersion;
@@ -59,7 +60,7 @@ class SpringBootPackagedProcessor implements JarProcessor {
   }
 
   @Override
-  public Integer getJarJavaVersion() {
+  public Integer getJavaVersion() {
     return jarJavaVersion;
   }
 }

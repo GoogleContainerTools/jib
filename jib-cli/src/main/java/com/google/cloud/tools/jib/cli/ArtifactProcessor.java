@@ -14,33 +14,33 @@
  * the License.
  */
 
-package com.google.cloud.tools.jib.cli.jar;
+package com.google.cloud.tools.jib.cli;
 
 import com.google.cloud.tools.jib.api.buildplan.FileEntriesLayer;
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
 import java.util.List;
 
-/** Interface to create layers and compute entrypoint from jar file contents. */
-public interface JarProcessor {
+/** Interface to create layers and compute entrypoint from JAR or WAR file contents. */
+public interface ArtifactProcessor {
 
   /**
-   * Creates layers on container for a jar.
+   * Creates layers on container for a JAR or WAR.
    *
    * @return list of {@link FileEntriesLayer}
-   * @throws IOException if I/O error occurs when opening the jar file or if temporary directory
-   *     provided doesn't exist
+   * @throws IOException if I/O error occurs when opening the java artifact or if temporary
+   *     directory provided doesn't exist
    */
   List<FileEntriesLayer> createLayers() throws IOException;
 
   /**
-   * Computes the entrypoint for a jar.
+   * Computes the entrypoint for a JAR or WAR.
    *
    * @param jvmFlags list of jvm flags
    * @return list of {@link String} representing entrypoint
-   * @throws IOException if I/O error occurs when opening the jar file
+   * @throws IOException if I/O error occurs when opening the java artifact
    */
   ImmutableList<String> computeEntrypoint(List<String> jvmFlags) throws IOException;
 
-  Integer getJarJavaVersion();
+  Integer getJavaVersion();
 }
