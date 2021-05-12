@@ -70,7 +70,7 @@ jobs:
             See [CHANGELOG.md](https://github.com/GoogleContainerTools/jib/blob/master/jib-cli/CHANGELOG.md) for more details.
 
       - name: Upload Jib CLI
-        uses: actions/upload-release-asset@v1
+        uses: actions/upload-release-asset@v1.0.2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
@@ -80,7 +80,7 @@ jobs:
           asset_content_type: application/zip
 
       - name: Upload Jib CLI checksum
-        uses: actions/upload-release-asset@v1
+        uses: actions/upload-release-asset@v1.0.2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
