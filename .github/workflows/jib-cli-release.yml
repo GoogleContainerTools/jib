@@ -56,7 +56,7 @@ jobs:
           pr_label: "PR: Merge After Release"
 
       - name: Draft GitHub release
-        uses: actions/create-release@v1
+        uses: actions/create-release@v1.1.4
         id: create-release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
