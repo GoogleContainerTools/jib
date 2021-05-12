@@ -71,7 +71,7 @@ jobs:
           pr_label: "PR: Merge After Release"
 
       - name: Draft Maven/Gradle GitHub release
-        uses: actions/create-release@v1
+        uses: actions/create-release@v1.1.4
         id: create-plugin-release
         if: ${{ github.event.inputs.project == 'maven' || github.event.inputs.project == 'gradle' }}
         env:
@@ -104,7 +104,7 @@ jobs:
           filename: .github/RELEASE_TEMPLATES/plugin_release_checklist.md
 
       - name: Draft Core GitHub release
-        uses: actions/create-release@v1
+        uses: actions/create-release@v1.1.4
         id: create-core-release
         if: ${{ github.event.inputs.project == 'core' }}
         env:
