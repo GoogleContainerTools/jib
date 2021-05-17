@@ -42,7 +42,6 @@ native-image --static --no-fallback --no-server \
   -H:ReflectionConfigurationFiles=picocli-reflect.json \
   -H:ConfigurationFileDirectories=../../../../jib-cli/graalvm11/ \
   -H:+ReportExceptionStackTraces \
-  -H:+ReportUnsupportedElementsAtRuntime \
   -cp "${CLASSPATH}" \
   "${MAIN_CLASS}" bin/jib-native
 
