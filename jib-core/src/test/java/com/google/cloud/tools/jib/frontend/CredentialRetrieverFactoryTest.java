@@ -214,6 +214,28 @@ public class CredentialRetrieverFactoryTest {
   }
 
   @Test
+  public void testGoogleApplicationDefaultCredentials_endUserCredentials_artifactRegistry()
+      throws CredentialRetrievalException {
+    CredentialRetrieverFactory credentialRetrieverFactory =
+        createCredentialRetrieverFactory("us-docker.pkg.dev", "my-project/repo/my-app");
+
+    Credential credential =
+        credentialRetrieverFactory.googleApplicationDefaultCredentials().retrieve().get();
+    Assert.assertEquals("oauth2accesstoken", credential.getUsername());
+    Assert.assertEquals("my-token", credential.getPassword());
+
+    Mockito.verify(mockGoogleCredentials, Mockito.never()).createScoped(Mockito.anyString());
+
+    Mockito.verify(mockLogger).accept(LogEvent.info("Google ADC found"));
+    Mockito.verify(mockLogger)
+        .accept(
+            LogEvent.lifecycle(
+                "Using Google Application Default Credentials for "
+                    + "us-docker.pkg.dev/my-project/repo/my-app"));
+    Mockito.verifyNoMoreInteractions(mockLogger);
+  }
+
+  @Test
   public void testGoogleApplicationDefaultCredentials_serviceAccount()
       throws CredentialRetrievalException {
     Mockito.when(mockGoogleCredentials.createScopedRequired()).thenReturn(true);

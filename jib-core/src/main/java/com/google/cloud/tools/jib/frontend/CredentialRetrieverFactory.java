@@ -240,7 +240,8 @@ public class CredentialRetrieverFactory {
   public CredentialRetriever googleApplicationDefaultCredentials() {
     return () -> {
       try {
-        if (imageReference.getRegistry().endsWith("gcr.io")) {
+        if (imageReference.getRegistry().endsWith("gcr.io")
+            || imageReference.getRegistry().endsWith("docker.pkg.dev")) {
           GoogleCredentials googleCredentials = googleCredentialsProvider.get();
           logger.accept(LogEvent.info("Google ADC found"));
           if (googleCredentials.createScopedRequired()) { // not scoped if service account
