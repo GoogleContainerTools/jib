@@ -140,7 +140,7 @@ public class JibExtensionTest {
     assertThat(testJibExtension.getContainer().getArgs()).isNull();
     assertThat(testJibExtension.getContainer().getFormat()).isSameInstanceAs(ImageFormat.Docker);
     assertThat(testJibExtension.getContainer().getPorts()).isEmpty();
-    assertThat(testJibExtension.getContainer().getLabels()).isEmpty();
+    assertThat(testJibExtension.getContainer().getLabels().get()).isEmpty();
     assertThat(testJibExtension.getContainer().getAppRoot()).isEmpty();
     assertThat(testJibExtension.getContainer().getFilesModificationTime())
         .isEqualTo("EPOCH_PLUS_SECOND");
@@ -156,7 +156,6 @@ public class JibExtensionTest {
           container.setMainClass("mainClass");
           container.setArgs(Arrays.asList("arg1", "arg2", "arg3"));
           container.setPorts(Arrays.asList("1000", "2000-2010", "3000"));
-          container.setLabels(ImmutableMap.of("label1", "value1", "label2", "value2"));
           container.setFormat(ImageFormat.OCI);
           container.setAppRoot("some invalid appRoot value");
           container.setFilesModificationTime("some invalid time value");
@@ -172,9 +171,6 @@ public class JibExtensionTest {
     assertThat(testJibExtension.getContainer().getMainClass()).isEqualTo("mainClass");
     assertThat(container.getArgs()).containsExactly("arg1", "arg2", "arg3").inOrder();
     assertThat(container.getPorts()).containsExactly("1000", "2000-2010", "3000").inOrder();
-    assertThat(container.getLabels())
-        .containsExactly("label1", "value1", "label2", "value2")
-        .inOrder();
     assertThat(container.getFormat()).isSameInstanceAs(ImageFormat.OCI);
     assertThat(container.getAppRoot()).isEqualTo("some invalid appRoot value");
     assertThat(container.getFilesModificationTime()).isEqualTo("some invalid time value");
@@ -379,7 +375,7 @@ public class JibExtensionTest {
         .containsExactly("flag1", "flag2", "flag3")
         .inOrder();
     System.setProperty("jib.container.labels", "label1=val1,label2=val2");
-    assertThat(testJibExtension.getContainer().getLabels())
+    assertThat(testJibExtension.getContainer().getLabels().get())
         .containsExactly("label1", "val1", "label2", "val2")
         .inOrder();
     System.setProperty("jib.container.mainClass", "main");

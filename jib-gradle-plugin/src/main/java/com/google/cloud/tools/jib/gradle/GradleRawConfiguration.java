@@ -113,7 +113,7 @@ public class GradleRawConfiguration implements RawConfiguration {
 
   @Override
   public Map<String, String> getLabels() {
-    return jibExtension.getContainer().getLabels();
+    return jibExtension.getContainer().getLabels().get();
   }
 
   @Override

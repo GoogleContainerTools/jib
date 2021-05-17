@@ -24,6 +24,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
+import javax.inject.Inject;
+import org.gradle.api.model.ObjectFactory;
+import org.gradle.api.provider.MapProperty;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.Optional;
 
@@ -43,12 +46,17 @@ public class ContainerParameters {
   private ImageFormat format = ImageFormat.Docker;
   private List<String> ports = Collections.emptyList();
   private List<String> volumes = Collections.emptyList();
-  private Map<String, String> labels = Collections.emptyMap();
+  private MapProperty<String, String> labels;
   private String appRoot = "";
   @Nullable private String user;
   @Nullable private String workingDirectory;
   private String filesModificationTime = "EPOCH_PLUS_SECOND";
   private String creationTime = "EPOCH";
+
+  @Inject
+  public ContainerParameters(ObjectFactory objectFactory) {
+    labels = objectFactory.mapProperty(String.class, String.class).empty();
+  }
 
   @Input
   @Nullable
@@ -195,16 +203,16 @@ public class ContainerParameters {
 
   @Input
   @Optional
-  public Map<String, String> getLabels() {
-    if (System.getProperty(PropertyNames.CONTAINER_LABELS) != null) {
-      return ConfigurationPropertyValidator.parseMapProperty(
-          System.getProperty(PropertyNames.CONTAINER_LABELS));
+  public MapProperty<String, String> getLabels() {
+    String labelsProperty = System.getProperty(PropertyNames.CONTAINER_LABELS);
+    if (labelsProperty != null) {
+      Map<String, String> parsedLabels =
+          ConfigurationPropertyValidator.parseMapProperty(labelsProperty);
+      if (!parsedLabels.equals(labels.get())) {
+        labels.set(parsedLabels);
+      }
     }
     return labels;
-  }
-
-  public void setLabels(Map<String, String> labels) {
-    this.labels = labels;
   }
 
   @Input
