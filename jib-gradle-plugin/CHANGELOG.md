@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
-- For Google Artifact Registry (`*-docker.pkg.dev`), Jib now tries Google Application Default Credentials](https://developers.google.com/identity/protocols/application-default-credentials) last like it has been doing for `gcr.io`. ([#3241](https://github.com/GoogleContainerTools/jib/pull/3241))
+- For Google Artifact Registry (`*-docker.pkg.dev`), Jib now tries [Google Application Default Credentials](https://developers.google.com/identity/protocols/application-default-credentials) last like it has been doing for `gcr.io`. ([#3241](https://github.com/GoogleContainerTools/jib/pull/3241))
 
 ### Changed
 
