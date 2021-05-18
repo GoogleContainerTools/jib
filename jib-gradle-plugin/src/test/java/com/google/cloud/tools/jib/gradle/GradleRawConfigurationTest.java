@@ -21,14 +21,22 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Sets;
 import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import org.gradle.api.provider.MapProperty;
 import org.junit.Assert;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.Mock;
 import org.mockito.Mockito;
+import org.mockito.junit.MockitoJUnitRunner;
 
 /** Test for {@link GradleRawConfiguration}. */
+@RunWith(MockitoJUnitRunner.class)
 public class GradleRawConfigurationTest {
+
+  @Mock private MapProperty<String, String> labels;
 
   @Test
   public void testGetters() {
@@ -67,8 +75,8 @@ public class GradleRawConfigurationTest {
     Mockito.when(containerParameters.getEnvironment())
         .thenReturn(new HashMap<>(ImmutableMap.of("currency", "dollar")));
     Mockito.when(containerParameters.getJvmFlags()).thenReturn(Arrays.asList("-cp", "."));
-    Mockito.when(containerParameters.getLabels())
-        .thenReturn(new HashMap<>(ImmutableMap.of("unit", "cm")));
+    Mockito.when(labels.get()).thenReturn(Collections.singletonMap("unit", "cm"));
+    Mockito.when(containerParameters.getLabels()).thenReturn(labels);
     Mockito.when(containerParameters.getMainClass()).thenReturn("com.example.Main");
     Mockito.when(containerParameters.getPorts()).thenReturn(Arrays.asList("80/tcp", "0"));
     Mockito.when(containerParameters.getUser()).thenReturn("admin:wheel");
