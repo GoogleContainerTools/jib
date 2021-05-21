@@ -31,7 +31,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Predicate;
 
-class StandardWarExplodedProcessor implements ArtifactProcessor {
+public class StandardWarExplodedProcessor implements ArtifactProcessor {
 
   private final Path warPath;
   private final Path targetExplodedWarRoot;
@@ -46,7 +46,7 @@ class StandardWarExplodedProcessor implements ArtifactProcessor {
    * @param warJavaVersion war java version
    * @param appRoot the absolute path of the app on the container
    */
-  StandardWarExplodedProcessor(
+  public StandardWarExplodedProcessor(
       Path warPath, Path targetExplodedWarRoot, Integer warJavaVersion, AbsoluteUnixPath appRoot) {
     this.warPath = warPath;
     this.targetExplodedWarRoot = targetExplodedWarRoot;

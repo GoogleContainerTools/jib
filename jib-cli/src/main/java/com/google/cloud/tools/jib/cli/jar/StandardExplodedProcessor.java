@@ -31,7 +31,7 @@ import java.util.function.Predicate;
 import java.util.jar.Attributes;
 import java.util.jar.JarFile;
 
-class StandardExplodedProcessor implements ArtifactProcessor {
+public class StandardExplodedProcessor implements ArtifactProcessor {
 
   private final Path jarPath;
   private final Path targetExplodedJarRoot;
@@ -44,7 +44,8 @@ class StandardExplodedProcessor implements ArtifactProcessor {
    * @param targetExplodedJarRoot path to exploded-jar root
    * @param jarJavaVersion jar java version
    */
-  StandardExplodedProcessor(Path jarPath, Path targetExplodedJarRoot, Integer jarJavaVersion) {
+  public StandardExplodedProcessor(
+      Path jarPath, Path targetExplodedJarRoot, Integer jarJavaVersion) {
     this.jarPath = jarPath;
     this.targetExplodedJarRoot = targetExplodedJarRoot;
     this.jarJavaVersion = jarJavaVersion;

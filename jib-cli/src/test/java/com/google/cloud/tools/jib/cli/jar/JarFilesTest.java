@@ -30,6 +30,7 @@ import com.google.cloud.tools.jib.api.buildplan.Port;
 import com.google.cloud.tools.jib.cli.CommonArtifactCommandOptions;
 import com.google.cloud.tools.jib.cli.CommonCliOptions;
 import com.google.cloud.tools.jib.cli.Jar;
+import com.google.cloud.tools.jib.cli.SharedArtifactCliOptions;
 import com.google.cloud.tools.jib.plugins.common.logging.ConsoleLogger;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -58,6 +59,8 @@ public class JarFilesTest {
   @Mock private SpringBootPackagedProcessor mockSpringBootPackagedProcessor;
 
   @Mock private Jar mockJarCommand;
+
+  @Mock private SharedArtifactCliOptions mockSharedArtifactCliOptions;
 
   @Mock private CommonCliOptions mockCommonCliOptions;
 

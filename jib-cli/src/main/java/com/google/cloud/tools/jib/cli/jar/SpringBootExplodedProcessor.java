@@ -41,7 +41,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
 
-class SpringBootExplodedProcessor implements ArtifactProcessor {
+public class SpringBootExplodedProcessor implements ArtifactProcessor {
 
   private final Path jarPath;
   private final Path targetExplodedJarRoot;
@@ -54,7 +54,8 @@ class SpringBootExplodedProcessor implements ArtifactProcessor {
    * @param targetExplodedJarRoot path to exploded-jar root
    * @param jarJavaVersion jar java version
    */
-  SpringBootExplodedProcessor(Path jarPath, Path targetExplodedJarRoot, Integer jarJavaVersion) {
+  public SpringBootExplodedProcessor(
+      Path jarPath, Path targetExplodedJarRoot, Integer jarJavaVersion) {
     this.jarPath = jarPath;
     this.targetExplodedJarRoot = targetExplodedJarRoot;
     this.jarJavaVersion = jarJavaVersion;

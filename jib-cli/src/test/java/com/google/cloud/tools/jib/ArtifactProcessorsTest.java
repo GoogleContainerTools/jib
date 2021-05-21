@@ -14,7 +14,7 @@
  * the License.
  */
 
-package com.google.cloud.tools.jib.cli.jar;
+package com.google.cloud.tools.jib;
 
 import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assert.assertThrows;
@@ -23,9 +23,16 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import com.google.cloud.tools.jib.cli.ArtifactProcessor;
+import com.google.cloud.tools.jib.cli.ArtifactProcessors;
 import com.google.cloud.tools.jib.cli.CacheDirectories;
 import com.google.cloud.tools.jib.cli.CommonArtifactCommandOptions;
 import com.google.cloud.tools.jib.cli.Jar;
+import com.google.cloud.tools.jib.cli.SharedArtifactCliOptions;
+import com.google.cloud.tools.jib.cli.jar.ProcessingMode;
+import com.google.cloud.tools.jib.cli.jar.SpringBootExplodedProcessor;
+import com.google.cloud.tools.jib.cli.jar.SpringBootPackagedProcessor;
+import com.google.cloud.tools.jib.cli.jar.StandardExplodedProcessor;
+import com.google.cloud.tools.jib.cli.jar.StandardPackagedProcessor;
 import com.google.common.io.Resources;
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -64,7 +71,7 @@ public class ArtifactProcessorsTest {
     when(mockJarCommand.getMode()).thenReturn(ProcessingMode.exploded);
 
     ArtifactProcessor processor =
-        ArtifactProcessors.from(
+        ArtifactProcessors.fromJar(
             jarPath, mockCacheDirectories, mockJarCommand, mockCommonArtifactCommandOptions);
 
     verify(mockCacheDirectories).getExplodedJarDirectory();
@@ -77,7 +84,7 @@ public class ArtifactProcessorsTest {
     when(mockJarCommand.getMode()).thenReturn(ProcessingMode.packaged);
 
     ArtifactProcessor processor =
-        ArtifactProcessors.from(
+        ArtifactProcessors.fromJar(
             jarPath, mockCacheDirectories, mockJarCommand, mockCommonArtifactCommandOptions);
 
     verifyNoInteractions(mockCacheDirectories);
@@ -90,7 +97,7 @@ public class ArtifactProcessorsTest {
     when(mockJarCommand.getMode()).thenReturn(ProcessingMode.packaged);
 
     ArtifactProcessor processor =
-        ArtifactProcessors.from(
+        ArtifactProcessors.fromJar(
             jarPath, mockCacheDirectories, mockJarCommand, mockCommonArtifactCommandOptions);
 
     verifyNoInteractions(mockCacheDirectories);
@@ -105,7 +112,7 @@ public class ArtifactProcessorsTest {
     when(mockJarCommand.getMode()).thenReturn(ProcessingMode.exploded);
 
     ArtifactProcessor processor =
-        ArtifactProcessors.from(
+        ArtifactProcessors.fromJar(
             jarPath, mockCacheDirectories, mockJarCommand, mockCommonArtifactCommandOptions);
 
     verify(mockCacheDirectories).getExplodedJarDirectory();
@@ -120,7 +127,7 @@ public class ArtifactProcessorsTest {
         assertThrows(
             IllegalStateException.class,
             () ->
-                ArtifactProcessors.from(
+                ArtifactProcessors.fromJar(
                     jarPath,
                     mockCacheDirectories,
                     mockJarCommand,
@@ -138,7 +145,7 @@ public class ArtifactProcessorsTest {
     when(mockCommonArtifactCommandOptions.getFrom()).thenReturn(Optional.of("base-image"));
 
     ArtifactProcessor processor =
-        ArtifactProcessors.from(
+        ArtifactProcessors.fromJar(
             jarPath, mockCacheDirectories, mockJarCommand, mockCommonArtifactCommandOptions);
 
     verify(mockCacheDirectories).getExplodedJarDirectory();

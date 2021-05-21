@@ -14,13 +14,15 @@
  * the License.
  */
 
-package com.google.cloud.tools.jib.cli.jar;
+package com.google.cloud.tools.jib.cli;
 
-import com.google.cloud.tools.jib.cli.ArtifactProcessor;
-import com.google.cloud.tools.jib.cli.CacheDirectories;
-import com.google.cloud.tools.jib.cli.CommonArtifactCommandOptions;
-import com.google.cloud.tools.jib.cli.Jar;
-import com.google.common.annotations.VisibleForTesting;
+import com.google.cloud.tools.jib.api.buildplan.AbsoluteUnixPath;
+import com.google.cloud.tools.jib.cli.jar.ProcessingMode;
+import com.google.cloud.tools.jib.cli.jar.SpringBootExplodedProcessor;
+import com.google.cloud.tools.jib.cli.jar.SpringBootPackagedProcessor;
+import com.google.cloud.tools.jib.cli.jar.StandardExplodedProcessor;
+import com.google.cloud.tools.jib.cli.jar.StandardPackagedProcessor;
+import com.google.cloud.tools.jib.cli.war.StandardWarExplodedProcessor;
 import java.io.DataInputStream;
 import java.io.EOFException;
 import java.io.IOException;
@@ -28,19 +30,23 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.file.Path;
 import java.util.Enumeration;
+import java.util.Optional;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
 /**
- * Class to create a {@link ArtifactProcessor} instance depending on jar type and processing mode.
+ * Class to create a {@link com.google.cloud.tools.jib.cli.ArtifactProcessor} instance depending on
+ * jar type and processing mode.
  */
 public class ArtifactProcessors {
   private static String SPRING_BOOT = "spring-boot";
   private static String STANDARD = "standard";
   private static Integer VERSION_NOT_FOUND = 0;
+  private static final String DEFAULT_JETTY_APP_ROOT = "/var/lib/jetty/webapps/ROOT";
 
   /**
-   * Creates a {@link ArtifactProcessor} instance based on jar type and processing mode.
+   * Creates a {@link com.google.cloud.tools.jib.cli.ArtifactProcessor} instance based on jar type
+   * and processing mode.
    *
    * @param jarPath path to the jar
    * @param cacheDirectories the location of the relevant caches
@@ -49,7 +55,7 @@ public class ArtifactProcessors {
    * @return ArtifactProcessor
    * @throws IOException if I/O error occurs when opening the jar file
    */
-  public static ArtifactProcessor from(
+  public static ArtifactProcessor fromJar(
       Path jarPath,
       CacheDirectories cacheDirectories,
       Jar jarOptions,
@@ -81,6 +87,39 @@ public class ArtifactProcessors {
   }
 
   /**
+   * Creates a {@link com.google.cloud.tools.jib.cli.ArtifactProcessor} instance based on jar type
+   * and processing mode.
+   *
+   * @param warPath path to the jar
+   * @param cacheDirectories the location of the relevant caches
+   * @param warOptions jar cli options
+   * @param sharedArtifactCliOptions shared artifact cli options
+   * @return ArtifactProcessor
+   * @throws IOException if I/O error occurs when opening the jar file
+   */
+  public static ArtifactProcessor fromWar(
+      Path warPath,
+      CacheDirectories cacheDirectories,
+      War warOptions,
+      SharedArtifactCliOptions sharedArtifactCliOptions)
+      throws IOException {
+    Integer warJavaVersion = determineJavaMajorVersion(warPath);
+    Optional<Path> appRoot = warOptions.getAppRoot();
+    Optional<String> baseImage = sharedArtifactCliOptions.getFrom();
+    if (baseImage.isPresent() && !baseImage.get().startsWith("jetty")) {
+      if (!warOptions.getAppRoot().isPresent()) {
+        throw new IllegalStateException("provide app root");
+      }
+    }
+    AbsoluteUnixPath appRootPath =
+        appRoot.isPresent()
+            ? AbsoluteUnixPath.fromPath(appRoot.get())
+            : AbsoluteUnixPath.get(DEFAULT_JETTY_APP_ROOT);
+    return new StandardWarExplodedProcessor(
+        warPath, cacheDirectories.getExplodedJarDirectory(), warJavaVersion, appRootPath);
+  }
+
+  /**
    * Determines whether the jar is a spring boot or standard jar.
    *
    * @param jarPath path to the jar
@@ -104,8 +143,7 @@ public class ArtifactProcessors {
    * @return java version
    * @throws IOException if I/O exception thrown when opening the jar file
    */
-  @VisibleForTesting
-  static Integer determineJavaMajorVersion(Path jarPath) throws IOException {
+  public static Integer determineJavaMajorVersion(Path jarPath) throws IOException {
     try (JarFile jarFile = new JarFile(jarPath.toFile())) {
       Enumeration<JarEntry> jarEntries = jarFile.entries();
       while (jarEntries.hasMoreElements()) {

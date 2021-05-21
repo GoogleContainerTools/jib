@@ -24,6 +24,10 @@ import com.google.cloud.tools.jib.api.JibContainerBuilder;
 import com.google.cloud.tools.jib.api.buildplan.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.api.buildplan.ContainerBuildPlan;
 import com.google.cloud.tools.jib.api.buildplan.FileEntriesLayer;
+import com.google.cloud.tools.jib.cli.CommonCliOptions;
+import com.google.cloud.tools.jib.cli.SharedArtifactCliOptions;
+import com.google.cloud.tools.jib.cli.War;
+import com.google.cloud.tools.jib.plugins.common.logging.ConsoleLogger;
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
 import java.nio.file.Paths;
@@ -39,6 +43,10 @@ import org.mockito.junit.MockitoJUnitRunner;
 public class WarFilesTest {
 
   @Mock private StandardWarExplodedProcessor mockStandardWarExplodedProcessor;
+  @Mock private War mockWarCommand;
+  @Mock private CommonCliOptions mockCommonCliOptions;
+  @Mock private SharedArtifactCliOptions mockSharedArtifactCLiOptions;
+  @Mock private ConsoleLogger mockConsoleLogger;
 
   @Test
   public void testToJibContainerBuilder_explodedStandard_basicInfo()
@@ -55,7 +63,12 @@ public class WarFilesTest {
         .thenReturn(ImmutableList.of("java", "-jar", "/usr/local/jetty/start.jar"));
 
     JibContainerBuilder containerBuilder =
-        WarFiles.toJibContainerBuilder(mockStandardWarExplodedProcessor);
+        WarFiles.toJibContainerBuilder(
+            mockStandardWarExplodedProcessor,
+            mockWarCommand,
+            mockCommonCliOptions,
+            mockSharedArtifactCLiOptions,
+            mockConsoleLogger);
     ContainerBuildPlan buildPlan = containerBuilder.toContainerBuildPlan();
 
     assertThat(buildPlan.getBaseImage()).isEqualTo("jetty");
