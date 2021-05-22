@@ -57,7 +57,18 @@ public class WarFiles {
     // JVM Flags are ignored
     List<String> entrypoint = processor.computeEntrypoint(ImmutableList.of());
 
-    containerBuilder.setEntrypoint(entrypoint).setFileEntriesLayers(layers);
+    containerBuilder
+        .setEntrypoint(entrypoint)
+        .setFileEntriesLayers(layers)
+        .setExposedPorts(sharedArtifactCliOptions.getExposedPorts())
+        .setVolumes(sharedArtifactCliOptions.getVolumes())
+        .setEnvironment(sharedArtifactCliOptions.getEnvironment())
+        .setLabels(sharedArtifactCliOptions.getLabels())
+        .setProgramArguments(sharedArtifactCliOptions.getProgramArguments());
+    sharedArtifactCliOptions.getUser().ifPresent(containerBuilder::setUser);
+    sharedArtifactCliOptions.getFormat().ifPresent(containerBuilder::setFormat);
+    sharedArtifactCliOptions.getCreationTime().ifPresent(containerBuilder::setCreationTime);
+
     return containerBuilder;
   }
 }

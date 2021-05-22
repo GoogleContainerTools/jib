@@ -24,14 +24,23 @@ import com.google.cloud.tools.jib.api.JibContainerBuilder;
 import com.google.cloud.tools.jib.api.buildplan.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.api.buildplan.ContainerBuildPlan;
 import com.google.cloud.tools.jib.api.buildplan.FileEntriesLayer;
+import com.google.cloud.tools.jib.api.buildplan.ImageFormat;
+import com.google.cloud.tools.jib.api.buildplan.Platform;
+import com.google.cloud.tools.jib.api.buildplan.Port;
 import com.google.cloud.tools.jib.cli.CommonCliOptions;
 import com.google.cloud.tools.jib.cli.SharedArtifactCliOptions;
 import com.google.cloud.tools.jib.cli.War;
+import com.google.cloud.tools.jib.cli.jar.JarFiles;
 import com.google.cloud.tools.jib.plugins.common.logging.ConsoleLogger;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import java.io.IOException;
 import java.nio.file.Paths;
+import java.time.Instant;
 import java.util.Arrays;
+import java.util.Optional;
+
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentMatchers;
@@ -45,8 +54,8 @@ public class WarFilesTest {
   @Mock private StandardWarExplodedProcessor mockStandardWarExplodedProcessor;
   @Mock private War mockWarCommand;
   @Mock private CommonCliOptions mockCommonCliOptions;
-  @Mock private SharedArtifactCliOptions mockSharedArtifactCLiOptions;
-  @Mock private ConsoleLogger mockConsoleLogger;
+  @Mock private SharedArtifactCliOptions mockSharedArtifactCliOptions;
+  @Mock private ConsoleLogger mockLogger;
 
   @Test
   public void testToJibContainerBuilder_explodedStandard_basicInfo()
@@ -67,11 +76,20 @@ public class WarFilesTest {
             mockStandardWarExplodedProcessor,
             mockWarCommand,
             mockCommonCliOptions,
-            mockSharedArtifactCLiOptions,
-            mockConsoleLogger);
+                mockSharedArtifactCliOptions,
+                mockLogger);
     ContainerBuildPlan buildPlan = containerBuilder.toContainerBuildPlan();
 
     assertThat(buildPlan.getBaseImage()).isEqualTo("jetty");
+    assertThat(buildPlan.getPlatforms()).isEqualTo(ImmutableSet.of(new Platform("amd64", "linux")));
+    assertThat(buildPlan.getCreationTime()).isEqualTo(Instant.EPOCH);
+    assertThat(buildPlan.getFormat()).isEqualTo(ImageFormat.Docker);
+    assertThat(buildPlan.getEnvironment()).isEmpty();
+    assertThat(buildPlan.getLabels()).isEmpty();
+    assertThat(buildPlan.getVolumes()).isEmpty();
+    assertThat(buildPlan.getExposedPorts()).isEmpty();
+    assertThat(buildPlan.getUser()).isNull();
+    assertThat(buildPlan.getWorkingDirectory()).isNull();
     assertThat(buildPlan.getEntrypoint())
         .isEqualTo(ImmutableList.of("java", "-jar", "/usr/local/jetty/start.jar"));
     assertThat(buildPlan.getLayers().size()).isEqualTo(1);
@@ -84,5 +102,47 @@ public class WarFilesTest {
                     AbsoluteUnixPath.get("/my/app/class1.class"))
                 .build()
                 .getEntries());
+  }
+
+  @Test
+  public void testToJibContainerBuilder_optionalParameters()
+          throws IOException, InvalidImageReferenceException {
+    when(mockSharedArtifactCliOptions.getFrom()).thenReturn(Optional.of("base-image"));
+    when(mockSharedArtifactCliOptions.getExposedPorts()).thenReturn(ImmutableSet.of(Port.udp(123)));
+    when(mockSharedArtifactCliOptions.getVolumes())
+            .thenReturn(
+                    ImmutableSet.of(AbsoluteUnixPath.get("/volume1"), AbsoluteUnixPath.get("/volume2")));
+    when(mockSharedArtifactCliOptions.getEnvironment())
+            .thenReturn(ImmutableMap.of("key1", "value1"));
+    when(mockSharedArtifactCliOptions.getLabels()).thenReturn(ImmutableMap.of("label", "mylabel"));
+    when(mockSharedArtifactCliOptions.getUser()).thenReturn(Optional.of("customUser"));
+    when(mockSharedArtifactCliOptions.getFormat()).thenReturn(Optional.of(ImageFormat.OCI));
+    when(mockSharedArtifactCliOptions.getProgramArguments()).thenReturn(ImmutableList.of("arg1"));
+    when(mockSharedArtifactCliOptions.getEntrypoint())
+            .thenReturn(ImmutableList.of("custom", "entrypoint"));
+    when(mockSharedArtifactCliOptions.getCreationTime())
+            .thenReturn(Optional.of(Instant.ofEpochSecond(5)));
+
+    JibContainerBuilder containerBuilder =
+            WarFiles.toJibContainerBuilder(
+                    mockStandardWarExplodedProcessor,
+                    mockWarCommand,
+                    mockCommonCliOptions,
+                    mockSharedArtifactCliOptions,
+                    mockLogger);
+    ContainerBuildPlan buildPlan = containerBuilder.toContainerBuildPlan();
+
+    assertThat(buildPlan.getBaseImage()).isEqualTo("base-image");
+    assertThat(buildPlan.getExposedPorts()).isEqualTo(ImmutableSet.of(Port.udp(123)));
+    assertThat(buildPlan.getVolumes())
+            .isEqualTo(
+                    ImmutableSet.of(AbsoluteUnixPath.get("/volume1"), AbsoluteUnixPath.get("/volume2")));
+    assertThat(buildPlan.getEnvironment()).isEqualTo(ImmutableMap.of("key1", "value1"));
+    assertThat(buildPlan.getLabels()).isEqualTo(ImmutableMap.of("label", "mylabel"));
+    assertThat(buildPlan.getUser()).isEqualTo("customUser");
+    assertThat(buildPlan.getFormat()).isEqualTo(ImageFormat.OCI);
+    assertThat(buildPlan.getCmd()).isEqualTo(ImmutableList.of("arg1"));
+    assertThat(buildPlan.getEntrypoint()).isEqualTo(ImmutableList.of("custom", "entrypoint"));
+    assertThat(buildPlan.getCreationTime()).isEqualTo(Instant.ofEpochSecond(5));
   }
 }
