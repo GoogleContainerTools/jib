@@ -27,6 +27,7 @@ import com.google.cloud.tools.jib.api.buildplan.FileEntriesLayer;
 import com.google.cloud.tools.jib.api.buildplan.ImageFormat;
 import com.google.cloud.tools.jib.api.buildplan.Platform;
 import com.google.cloud.tools.jib.api.buildplan.Port;
+import com.google.cloud.tools.jib.cli.CommonArtifactCommandOptions;
 import com.google.cloud.tools.jib.cli.CommonCliOptions;
 import com.google.cloud.tools.jib.cli.Jar;
 import com.google.cloud.tools.jib.plugins.common.logging.ConsoleLogger;
@@ -60,6 +61,8 @@ public class JarFilesTest {
 
   @Mock private CommonCliOptions mockCommonCliOptions;
 
+  @Mock private CommonArtifactCommandOptions mockCommonArtifactCommandOptions;
+
   @Mock private ConsoleLogger mockLogger;
 
   @Test
@@ -68,7 +71,11 @@ public class JarFilesTest {
     when(mockStandardExplodedProcessor.getJavaVersion()).thenReturn(8);
     JibContainerBuilder containerBuilder =
         JarFiles.toJibContainerBuilder(
-            mockStandardExplodedProcessor, mockJarCommand, mockCommonCliOptions, mockLogger);
+            mockStandardExplodedProcessor,
+            mockJarCommand,
+            mockCommonCliOptions,
+            mockCommonArtifactCommandOptions,
+            mockLogger);
     ContainerBuildPlan buildPlan = containerBuilder.toContainerBuildPlan();
 
     assertThat(buildPlan.getBaseImage()).isEqualTo("adoptopenjdk:8-jre");
@@ -80,7 +87,11 @@ public class JarFilesTest {
     when(mockStandardExplodedProcessor.getJavaVersion()).thenReturn(9);
     JibContainerBuilder containerBuilder =
         JarFiles.toJibContainerBuilder(
-            mockStandardExplodedProcessor, mockJarCommand, mockCommonCliOptions, mockLogger);
+            mockStandardExplodedProcessor,
+            mockJarCommand,
+            mockCommonCliOptions,
+            mockCommonArtifactCommandOptions,
+            mockLogger);
     ContainerBuildPlan buildPlan = containerBuilder.toContainerBuildPlan();
 
     assertThat(buildPlan.getBaseImage()).isEqualTo("adoptopenjdk:11-jre");
@@ -101,11 +112,15 @@ public class JarFilesTest {
     when(mockStandardExplodedProcessor.computeEntrypoint(ArgumentMatchers.anyList()))
         .thenReturn(
             ImmutableList.of("java", "-cp", "/app/explodedJar:/app/dependencies/*", "HelloWorld"));
-    when(mockJarCommand.getFrom()).thenReturn(Optional.empty());
+    when(mockCommonArtifactCommandOptions.getFrom()).thenReturn(Optional.empty());
 
     JibContainerBuilder containerBuilder =
         JarFiles.toJibContainerBuilder(
-            mockStandardExplodedProcessor, mockJarCommand, mockCommonCliOptions, mockLogger);
+            mockStandardExplodedProcessor,
+            mockJarCommand,
+            mockCommonCliOptions,
+            mockCommonArtifactCommandOptions,
+            mockLogger);
     ContainerBuildPlan buildPlan = containerBuilder.toContainerBuildPlan();
 
     assertThat(buildPlan.getBaseImage()).isEqualTo("adoptopenjdk:8-jre");
@@ -146,11 +161,15 @@ public class JarFilesTest {
     when(mockStandardPackagedProcessor.createLayers()).thenReturn(Arrays.asList(layer));
     when(mockStandardPackagedProcessor.computeEntrypoint(ArgumentMatchers.anyList()))
         .thenReturn(ImmutableList.of("java", "-jar", "/app/standardJar.jar"));
-    when(mockJarCommand.getFrom()).thenReturn(Optional.empty());
+    when(mockCommonArtifactCommandOptions.getFrom()).thenReturn(Optional.empty());
 
     JibContainerBuilder containerBuilder =
         JarFiles.toJibContainerBuilder(
-            mockStandardPackagedProcessor, mockJarCommand, mockCommonCliOptions, mockLogger);
+            mockStandardPackagedProcessor,
+            mockJarCommand,
+            mockCommonCliOptions,
+            mockCommonArtifactCommandOptions,
+            mockLogger);
     ContainerBuildPlan buildPlan = containerBuilder.toContainerBuildPlan();
 
     assertThat(buildPlan.getBaseImage()).isEqualTo("adoptopenjdk:8-jre");
@@ -187,16 +206,20 @@ public class JarFilesTest {
                 Paths.get("path/to/tempDirectory/BOOT-INF/classes/class1.class"),
                 AbsoluteUnixPath.get("/app/BOOT-INF/classes/class1.class"))
             .build();
-    when(mockJarCommand.getFrom()).thenReturn(Optional.empty());
+    when(mockCommonArtifactCommandOptions.getFrom()).thenReturn(Optional.empty());
     when(mockSpringBootExplodedProcessor.createLayers()).thenReturn(Arrays.asList(layer));
     when(mockSpringBootExplodedProcessor.computeEntrypoint(ArgumentMatchers.anyList()))
         .thenReturn(
             ImmutableList.of("java", "-cp", "/app", "org.springframework.boot.loader.JarLauncher"));
-    when(mockJarCommand.getFrom()).thenReturn(Optional.empty());
+    when(mockCommonArtifactCommandOptions.getFrom()).thenReturn(Optional.empty());
 
     JibContainerBuilder containerBuilder =
         JarFiles.toJibContainerBuilder(
-            mockSpringBootExplodedProcessor, mockJarCommand, mockCommonCliOptions, mockLogger);
+            mockSpringBootExplodedProcessor,
+            mockJarCommand,
+            mockCommonCliOptions,
+            mockCommonArtifactCommandOptions,
+            mockLogger);
     ContainerBuildPlan buildPlan = containerBuilder.toContainerBuildPlan();
 
     assertThat(buildPlan.getBaseImage()).isEqualTo("adoptopenjdk:8-jre");
@@ -237,11 +260,15 @@ public class JarFilesTest {
     when(mockSpringBootPackagedProcessor.createLayers()).thenReturn(Arrays.asList(layer));
     when(mockSpringBootPackagedProcessor.computeEntrypoint(ArgumentMatchers.anyList()))
         .thenReturn(ImmutableList.of("java", "-jar", "/app/spring-boot.jar"));
-    when(mockJarCommand.getFrom()).thenReturn(Optional.empty());
+    when(mockCommonArtifactCommandOptions.getFrom()).thenReturn(Optional.empty());
 
     JibContainerBuilder containerBuilder =
         JarFiles.toJibContainerBuilder(
-            mockSpringBootPackagedProcessor, mockJarCommand, mockCommonCliOptions, mockLogger);
+            mockSpringBootPackagedProcessor,
+            mockJarCommand,
+            mockCommonCliOptions,
+            mockCommonArtifactCommandOptions,
+            mockLogger);
     ContainerBuildPlan buildPlan = containerBuilder.toContainerBuildPlan();
 
     assertThat(buildPlan.getBaseImage()).isEqualTo("adoptopenjdk:8-jre");
@@ -271,22 +298,32 @@ public class JarFilesTest {
   @Test
   public void testToJibContainerBuilder_optionalParameters()
       throws IOException, InvalidImageReferenceException {
-    when(mockJarCommand.getFrom()).thenReturn(Optional.of("base-image"));
-    when(mockJarCommand.getExposedPorts()).thenReturn(ImmutableSet.of(Port.udp(123)));
-    when(mockJarCommand.getVolumes())
+    when(mockCommonArtifactCommandOptions.getFrom()).thenReturn(Optional.of("base-image"));
+    when(mockCommonArtifactCommandOptions.getExposedPorts())
+        .thenReturn(ImmutableSet.of(Port.udp(123)));
+    when(mockCommonArtifactCommandOptions.getVolumes())
         .thenReturn(
             ImmutableSet.of(AbsoluteUnixPath.get("/volume1"), AbsoluteUnixPath.get("/volume2")));
-    when(mockJarCommand.getEnvironment()).thenReturn(ImmutableMap.of("key1", "value1"));
-    when(mockJarCommand.getLabels()).thenReturn(ImmutableMap.of("label", "mylabel"));
-    when(mockJarCommand.getUser()).thenReturn(Optional.of("customUser"));
-    when(mockJarCommand.getFormat()).thenReturn(Optional.of(ImageFormat.OCI));
-    when(mockJarCommand.getProgramArguments()).thenReturn(ImmutableList.of("arg1"));
-    when(mockJarCommand.getEntrypoint()).thenReturn(ImmutableList.of("custom", "entrypoint"));
-    when(mockJarCommand.getCreationTime()).thenReturn(Optional.of(Instant.ofEpochSecond(5)));
+    when(mockCommonArtifactCommandOptions.getEnvironment())
+        .thenReturn(ImmutableMap.of("key1", "value1"));
+    when(mockCommonArtifactCommandOptions.getLabels())
+        .thenReturn(ImmutableMap.of("label", "mylabel"));
+    when(mockCommonArtifactCommandOptions.getUser()).thenReturn(Optional.of("customUser"));
+    when(mockCommonArtifactCommandOptions.getFormat()).thenReturn(Optional.of(ImageFormat.OCI));
+    when(mockCommonArtifactCommandOptions.getProgramArguments())
+        .thenReturn(ImmutableList.of("arg1"));
+    when(mockCommonArtifactCommandOptions.getEntrypoint())
+        .thenReturn(ImmutableList.of("custom", "entrypoint"));
+    when(mockCommonArtifactCommandOptions.getCreationTime())
+        .thenReturn(Optional.of(Instant.ofEpochSecond(5)));
 
     JibContainerBuilder containerBuilder =
         JarFiles.toJibContainerBuilder(
-            mockStandardExplodedProcessor, mockJarCommand, mockCommonCliOptions, mockLogger);
+            mockStandardExplodedProcessor,
+            mockJarCommand,
+            mockCommonCliOptions,
+            mockCommonArtifactCommandOptions,
+            mockLogger);
     ContainerBuildPlan buildPlan = containerBuilder.toContainerBuildPlan();
 
     assertThat(buildPlan.getBaseImage()).isEqualTo("base-image");

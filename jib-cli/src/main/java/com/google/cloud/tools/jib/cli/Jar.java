@@ -20,10 +20,6 @@ import com.google.cloud.tools.jib.api.Containerizer;
 import com.google.cloud.tools.jib.api.JibContainer;
 import com.google.cloud.tools.jib.api.JibContainerBuilder;
 import com.google.cloud.tools.jib.api.LogEvent;
-import com.google.cloud.tools.jib.api.Ports;
-import com.google.cloud.tools.jib.api.buildplan.AbsoluteUnixPath;
-import com.google.cloud.tools.jib.api.buildplan.ImageFormat;
-import com.google.cloud.tools.jib.api.buildplan.Port;
 import com.google.cloud.tools.jib.cli.jar.ArtifactProcessors;
 import com.google.cloud.tools.jib.cli.jar.JarFiles;
 import com.google.cloud.tools.jib.cli.jar.ProcessingMode;
@@ -32,21 +28,16 @@ import com.google.cloud.tools.jib.plugins.common.globalconfig.GlobalConfig;
 import com.google.cloud.tools.jib.plugins.common.logging.ConsoleLogger;
 import com.google.cloud.tools.jib.plugins.common.logging.SingleThreadedExecutor;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Multimaps;
 import com.google.common.util.concurrent.Futures;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
-import java.time.Instant;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
-import java.util.stream.Collectors;
 import picocli.CommandLine;
 import picocli.CommandLine.Model.CommandSpec;
 
@@ -66,6 +57,11 @@ public class Jar implements Callable<Integer> {
   @SuppressWarnings("NullAway.Init") // initialized by picocli
   CommonCliOptions commonCliOptions;
 
+  @CommandLine.Mixin
+  @VisibleForTesting
+  @SuppressWarnings("NullAway.Init") // initialized by picocli
+  CommonArtifactCommandOptions commonArtifactCommandOptions;
+
   @CommandLine.Parameters(description = "The path to the jar file (ex: path/to/my-jar.jar)")
   @SuppressWarnings("NullAway.Init") // initialized by picocli
   private Path jarFile;
@@ -80,88 +76,11 @@ public class Jar implements Callable<Integer> {
   private ProcessingMode mode;
 
   @CommandLine.Option(
-      names = "--from",
-      paramLabel = "<base-image>",
-      description = "The base image to use.")
-  @SuppressWarnings("NullAway.Init") // initialized by picocli
-  private String from;
-
-  @CommandLine.Option(
       names = "--jvm-flags",
       paramLabel = "<jvm-flag>",
       split = ",",
       description = "JVM arguments, example: --jvm-flags=-Dmy.property=value,-Xshare:off")
   private List<String> jvmFlags = Collections.emptyList();
-
-  @CommandLine.Option(
-      names = "--expose",
-      paramLabel = "<port>",
-      split = ",",
-      description = "Ports to expose on container, example: --expose=5000,7/udp.")
-  private List<String> exposedPorts = Collections.emptyList();
-
-  @CommandLine.Option(
-      names = "--volumes",
-      paramLabel = "<volume>",
-      split = ",",
-      description =
-          "Directories on container to hold extra volumes,  example: --volumes=/var/log,/var/log2.")
-  private List<String> volumes = Collections.emptyList();
-
-  @CommandLine.Option(
-      names = "--environment-variables",
-      paramLabel = "<key>=<value>",
-      split = ",",
-      description =
-          "Environment variables to write into container, example: --environment-variables env1=env_value1,env2=env_value2.")
-  private Map<String, String> environment = Collections.emptyMap();
-
-  @CommandLine.Option(
-      names = "--labels",
-      paramLabel = "<key>=<value>",
-      split = ",",
-      description =
-          "Labels to write into container metadata, example: --labels=label1=value1,label2=value2.")
-  private Map<String, String> labels = Collections.emptyMap();
-
-  @CommandLine.Option(
-      names = {"-u", "--user"},
-      paramLabel = "<user>",
-      description = "The user to run the container as, example: --user=myuser:mygroup.")
-  @SuppressWarnings("NullAway.Init") // initialized by picocli
-  private String user;
-
-  @CommandLine.Option(
-      names = {"--image-format"},
-      defaultValue = "Docker",
-      paramLabel = "<image-format>",
-      description =
-          "Format of container, candidates: ${COMPLETION-CANDIDATES}, default: ${DEFAULT-VALUE}.")
-  @SuppressWarnings("NullAway.Init") // initialized by picocli
-  private ImageFormat format;
-
-  @CommandLine.Option(
-      names = "--program-args",
-      paramLabel = "<program-argument>",
-      split = ",",
-      description = "Program arguments for container entrypoint.")
-  private List<String> programArguments = Collections.emptyList();
-
-  @CommandLine.Option(
-      names = "--entrypoint",
-      paramLabel = "<entrypoint>",
-      split = "\\s+",
-      description =
-          "Entrypoint for container. Overrides the default entrypoint, example: --entrypoint='custom entrypoint'")
-  private List<String> entrypoint = Collections.emptyList();
-
-  @CommandLine.Option(
-      names = "--creation-time",
-      paramLabel = "<creation-time>",
-      description =
-          "The creation time of the container in milliseconds since epoch or iso8601 format. Overrides the default (1970-01-01T00:00:00Z)")
-  @SuppressWarnings("NullAway.Init") // initialized by picocli
-  private String creationTime;
 
   @Override
   public Integer call() {
@@ -195,15 +114,17 @@ public class Jar implements Callable<Integer> {
                 + jarFile);
         return 1;
       }
-      if (!entrypoint.isEmpty() && !jvmFlags.isEmpty()) {
+      if (!commonArtifactCommandOptions.getEntrypoint().isEmpty() && !jvmFlags.isEmpty()) {
         logger.log(LogEvent.Level.WARN, "--jvm-flags is ignored when --entrypoint is specified");
       }
 
       CacheDirectories cacheDirectories =
           CacheDirectories.from(commonCliOptions, jarFile.toAbsolutePath().getParent());
-      ArtifactProcessor processor = ArtifactProcessors.from(jarFile, cacheDirectories, this);
+      ArtifactProcessor processor =
+          ArtifactProcessors.from(jarFile, cacheDirectories, this, commonArtifactCommandOptions);
       JibContainerBuilder containerBuilder =
-          JarFiles.toJibContainerBuilder(processor, this, commonCliOptions, logger);
+          JarFiles.toJibContainerBuilder(
+              processor, this, commonCliOptions, commonArtifactCommandOptions, logger);
       Containerizer containerizer = Containerizers.from(commonCliOptions, logger, cacheDirectories);
 
       // Enable registry mirrors
@@ -221,75 +142,8 @@ public class Jar implements Callable<Integer> {
     return 0;
   }
 
-  /**
-   * Returns the user-specified base image.
-   *
-   * @return an optional base image
-   */
-  public Optional<String> getFrom() {
-    return Optional.ofNullable(from);
-  }
-
   public List<String> getJvmFlags() {
     return jvmFlags;
-  }
-
-  /**
-   * Returns set of {@link Port} representing ports to be exposed on container (if specified).
-   *
-   * @return set of exposed ports
-   */
-  public Set<Port> getExposedPorts() {
-    return (exposedPorts == null) ? ImmutableSet.of() : Ports.parse(exposedPorts);
-  }
-
-  /**
-   * Returns a set of {@link AbsoluteUnixPath} representing directories on container to hold volumes
-   * (if specified).
-   *
-   * @return set of volumes
-   */
-  public Set<AbsoluteUnixPath> getVolumes() {
-    if (volumes == null) {
-      return ImmutableSet.of();
-    }
-    return volumes.stream().map(AbsoluteUnixPath::get).collect(Collectors.toSet());
-  }
-
-  public Map<String, String> getEnvironment() {
-    return environment;
-  }
-
-  public Map<String, String> getLabels() {
-    return labels;
-  }
-
-  public Optional<String> getUser() {
-    return Optional.ofNullable(user);
-  }
-
-  public Optional<ImageFormat> getFormat() {
-    return Optional.ofNullable(format);
-  }
-
-  public List<String> getProgramArguments() {
-    return programArguments;
-  }
-
-  public List<String> getEntrypoint() {
-    return entrypoint;
-  }
-
-  /**
-   * Returns {@link Instant} representing creation time of container.
-   *
-   * @return an optional creation time
-   */
-  public Optional<Instant> getCreationTime() {
-    if (creationTime != null) {
-      return Optional.of(Instants.fromMillisOrIso8601(creationTime, "creationTime"));
-    }
-    return Optional.empty();
   }
 
   public ProcessingMode getMode() {

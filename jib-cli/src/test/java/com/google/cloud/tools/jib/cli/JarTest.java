@@ -67,6 +67,8 @@ public class JarTest {
   public void testParse_defaults() {
     Jar jarCommand = CommandLine.populateCommand(new Jar(), "-t", "test-image-ref", "my-app.jar");
     CommonCliOptions commonCliOptions = jarCommand.commonCliOptions;
+    CommonArtifactCommandOptions commonArtifactCommandOptions =
+        jarCommand.commonArtifactCommandOptions;
 
     assertThat(commonCliOptions.getTargetImage()).isEqualTo("test-image-ref");
     assertThat(commonCliOptions.getUsernamePassword()).isEmpty();
@@ -85,17 +87,17 @@ public class JarTest {
     assertThat(commonCliOptions.getHttpTrace()).isEqualTo(HttpTraceLevel.off);
     assertThat(commonCliOptions.isSerialize()).isFalse();
     assertThat(commonCliOptions.getImageJsonPath()).isEmpty();
-    assertThat(jarCommand.getFrom()).isEmpty();
+    assertThat(commonArtifactCommandOptions.getFrom()).isEmpty();
     assertThat(jarCommand.getJvmFlags()).isEmpty();
-    assertThat(jarCommand.getExposedPorts()).isEmpty();
-    assertThat(jarCommand.getVolumes()).isEmpty();
-    assertThat(jarCommand.getEnvironment()).isEmpty();
-    assertThat(jarCommand.getLabels()).isEmpty();
-    assertThat(jarCommand.getUser()).isEmpty();
-    assertThat(jarCommand.getFormat()).hasValue(ImageFormat.Docker);
-    assertThat(jarCommand.getProgramArguments()).isEmpty();
-    assertThat(jarCommand.getEntrypoint()).isEmpty();
-    assertThat(jarCommand.getCreationTime()).isEmpty();
+    assertThat(commonArtifactCommandOptions.getExposedPorts()).isEmpty();
+    assertThat(commonArtifactCommandOptions.getVolumes()).isEmpty();
+    assertThat(commonArtifactCommandOptions.getEnvironment()).isEmpty();
+    assertThat(commonArtifactCommandOptions.getLabels()).isEmpty();
+    assertThat(commonArtifactCommandOptions.getUser()).isEmpty();
+    assertThat(commonArtifactCommandOptions.getFormat()).hasValue(ImageFormat.Docker);
+    assertThat(commonArtifactCommandOptions.getProgramArguments()).isEmpty();
+    assertThat(commonArtifactCommandOptions.getEntrypoint()).isEmpty();
+    assertThat(commonArtifactCommandOptions.getCreationTime()).isEmpty();
     assertThat(jarCommand.getMode()).isEqualTo(ProcessingMode.exploded);
   }
 
@@ -439,7 +441,7 @@ public class JarTest {
     Jar jarCommand =
         CommandLine.populateCommand(
             new Jar(), "--target=test-image-ref", "--from=base-image-ref", "my-app.jar");
-    assertThat(jarCommand.getFrom()).hasValue("base-image-ref");
+    assertThat(jarCommand.commonArtifactCommandOptions.getFrom()).hasValue("base-image-ref");
   }
 
   @Test
@@ -455,7 +457,7 @@ public class JarTest {
     Jar jarCommand =
         CommandLine.populateCommand(
             new Jar(), "--target=test-image-ref", "--expose=8080,3306", "my-app.jar");
-    assertThat(jarCommand.getExposedPorts())
+    assertThat(jarCommand.commonArtifactCommandOptions.getExposedPorts())
         .isEqualTo(Ports.parse(ImmutableList.of("8080", "3306")));
   }
 
@@ -464,7 +466,7 @@ public class JarTest {
     Jar jarCommand =
         CommandLine.populateCommand(
             new Jar(), "--target=test-image-ref", "--volumes=/volume1,/volume2", "my-app.jar");
-    assertThat(jarCommand.getVolumes())
+    assertThat(jarCommand.commonArtifactCommandOptions.getVolumes())
         .isEqualTo(
             ImmutableSet.of(AbsoluteUnixPath.get("/volume1"), AbsoluteUnixPath.get("/volume2")));
   }
@@ -477,7 +479,7 @@ public class JarTest {
             "--target=test-image-ref",
             "--environment-variables=ENV_VAR1=value1,ENV_VAR2=value2",
             "my-app.jar");
-    assertThat(jarCommand.getEnvironment())
+    assertThat(jarCommand.commonArtifactCommandOptions.getEnvironment())
         .isEqualTo(ImmutableMap.of("ENV_VAR1", "value1", "ENV_VAR2", "value2"));
   }
 
@@ -489,7 +491,7 @@ public class JarTest {
             "--target=test-image-ref",
             "--labels=label1=value2,label2=value2",
             "my-app.jar");
-    assertThat(jarCommand.getLabels())
+    assertThat(jarCommand.commonArtifactCommandOptions.getLabels())
         .isEqualTo(ImmutableMap.of("label1", "value2", "label2", "value2"));
   }
 
@@ -498,7 +500,7 @@ public class JarTest {
     Jar jarCommand =
         CommandLine.populateCommand(
             new Jar(), "--target=test-image-ref", "--user=customUser", "my-app.jar");
-    assertThat(jarCommand.getUser()).hasValue("customUser");
+    assertThat(jarCommand.commonArtifactCommandOptions.getUser()).hasValue("customUser");
   }
 
   @Test
@@ -506,7 +508,7 @@ public class JarTest {
     Jar jarCommand =
         CommandLine.populateCommand(
             new Jar(), "--target=test-image-ref", "--image-format=OCI", "my-app.jar");
-    assertThat(jarCommand.getFormat()).hasValue(ImageFormat.OCI);
+    assertThat(jarCommand.commonArtifactCommandOptions.getFormat()).hasValue(ImageFormat.OCI);
   }
 
   @Test
@@ -528,7 +530,8 @@ public class JarTest {
     Jar jarCommand =
         CommandLine.populateCommand(
             new Jar(), "--target=test-image-ref", "--program-args=arg1,arg2", "my-app.jar");
-    assertThat(jarCommand.getProgramArguments()).isEqualTo(ImmutableList.of("arg1", "arg2"));
+    assertThat(jarCommand.commonArtifactCommandOptions.getProgramArguments())
+        .isEqualTo(ImmutableList.of("arg1", "arg2"));
   }
 
   @Test
@@ -536,7 +539,8 @@ public class JarTest {
     Jar jarCommand =
         CommandLine.populateCommand(
             new Jar(), "--target=test-image-ref", "--entrypoint=java -cp myClass", "my-app.jar");
-    assertThat(jarCommand.getEntrypoint()).isEqualTo(ImmutableList.of("java", "-cp", "myClass"));
+    assertThat(jarCommand.commonArtifactCommandOptions.getEntrypoint())
+        .isEqualTo(ImmutableList.of("java", "-cp", "myClass"));
   }
 
   @Test
@@ -544,7 +548,8 @@ public class JarTest {
     Jar jarCommand =
         CommandLine.populateCommand(
             new Jar(), "--target=test-image-ref", "--creation-time=23", "my-app.jar");
-    assertThat(jarCommand.getCreationTime()).hasValue(Instant.ofEpochMilli(23));
+    assertThat(jarCommand.commonArtifactCommandOptions.getCreationTime())
+        .hasValue(Instant.ofEpochMilli(23));
   }
 
   @Test
@@ -555,7 +560,8 @@ public class JarTest {
             "--target=test-image-ref",
             "--creation-time=2011-12-03T22:42:05Z",
             "my-app.jar");
-    assertThat(jarCommand.getCreationTime()).hasValue(Instant.parse("2011-12-03T22:42:05Z"));
+    assertThat(jarCommand.commonArtifactCommandOptions.getCreationTime())
+        .hasValue(Instant.parse("2011-12-03T22:42:05Z"));
   }
 
   @Test
