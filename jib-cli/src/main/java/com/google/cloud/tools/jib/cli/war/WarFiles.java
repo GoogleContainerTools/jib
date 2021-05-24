@@ -19,7 +19,6 @@ package com.google.cloud.tools.jib.cli.war;
 import com.google.cloud.tools.jib.api.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.api.Jib;
 import com.google.cloud.tools.jib.api.JibContainerBuilder;
-import com.google.cloud.tools.jib.api.buildplan.FileEntriesLayer;
 import com.google.cloud.tools.jib.cli.ArtifactProcessor;
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
@@ -39,12 +38,11 @@ public class WarFiles {
   public static JibContainerBuilder toJibContainerBuilder(ArtifactProcessor processor)
       throws IOException, InvalidImageReferenceException {
     JibContainerBuilder containerBuilder = Jib.from("jetty");
-    List<FileEntriesLayer> layers = processor.createLayers();
 
     // JVM Flags are ignored
     List<String> entrypoint = processor.computeEntrypoint(ImmutableList.of());
 
-    containerBuilder.setEntrypoint(entrypoint).setFileEntriesLayers(layers);
+    containerBuilder.setEntrypoint(entrypoint).setFileEntriesLayers(processor.createLayers());
     return containerBuilder;
   }
 }
