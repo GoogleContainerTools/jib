@@ -37,6 +37,11 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 import picocli.CommandLine;
 
+@CommandLine.Command(
+    name = "war",
+    mixinStandardHelpOptions = true,
+    showAtFileInUsageHelp = true,
+    description = "Containerize a war")
 public class War implements Callable<Integer> {
   @CommandLine.Spec
   @SuppressWarnings("NullAway.Init") // initialized by picocli
