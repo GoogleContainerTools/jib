@@ -27,7 +27,6 @@ import com.google.cloud.tools.jib.cli.ArtifactProcessors;
 import com.google.cloud.tools.jib.cli.CacheDirectories;
 import com.google.cloud.tools.jib.cli.CommonArtifactCommandOptions;
 import com.google.cloud.tools.jib.cli.Jar;
-import com.google.cloud.tools.jib.cli.SharedArtifactCliOptions;
 import com.google.cloud.tools.jib.cli.jar.ProcessingMode;
 import com.google.cloud.tools.jib.cli.jar.SpringBootExplodedProcessor;
 import com.google.cloud.tools.jib.cli.jar.SpringBootPackagedProcessor;
@@ -64,7 +63,7 @@ public class ArtifactProcessorsTest {
   @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
   @Test
-  public void testFrom_standardExploded() throws IOException, URISyntaxException {
+  public void testFromJar_standardExploded() throws IOException, URISyntaxException {
     Path jarPath = Paths.get(Resources.getResource(STANDARD).toURI());
     Path explodedJarRoot = temporaryFolder.getRoot().toPath();
     when(mockCacheDirectories.getExplodedJarDirectory()).thenReturn(explodedJarRoot);
@@ -79,7 +78,7 @@ public class ArtifactProcessorsTest {
   }
 
   @Test
-  public void testFrom_standardPackaged() throws IOException, URISyntaxException {
+  public void testFromJar_standardPackaged() throws IOException, URISyntaxException {
     Path jarPath = Paths.get(Resources.getResource(STANDARD).toURI());
     when(mockJarCommand.getMode()).thenReturn(ProcessingMode.packaged);
 
@@ -92,7 +91,7 @@ public class ArtifactProcessorsTest {
   }
 
   @Test
-  public void testFrom_springBootPackaged() throws IOException, URISyntaxException {
+  public void testFromJar_springBootPackaged() throws IOException, URISyntaxException {
     Path jarPath = Paths.get(Resources.getResource(SPRING_BOOT).toURI());
     when(mockJarCommand.getMode()).thenReturn(ProcessingMode.packaged);
 
@@ -105,7 +104,7 @@ public class ArtifactProcessorsTest {
   }
 
   @Test
-  public void testFrom_springBootExploded() throws IOException, URISyntaxException {
+  public void testFromJar_springBootExploded() throws IOException, URISyntaxException {
     Path jarPath = Paths.get(Resources.getResource(SPRING_BOOT).toURI());
     Path explodedJarRoot = temporaryFolder.getRoot().toPath();
     when(mockCacheDirectories.getExplodedJarDirectory()).thenReturn(explodedJarRoot);
@@ -120,7 +119,7 @@ public class ArtifactProcessorsTest {
   }
 
   @Test
-  public void testFrom_incompatibleDefaultBaseImage() throws URISyntaxException {
+  public void testFromJar_incompatibleDefaultBaseImage() throws URISyntaxException {
     Path jarPath = Paths.get(Resources.getResource(JAVA_14_JAR).toURI());
 
     IllegalStateException exception =
@@ -138,7 +137,7 @@ public class ArtifactProcessorsTest {
   }
 
   @Test
-  public void testFrom_incompatibleDefaultBaseImage_baseImageSpecified()
+  public void testFromJar_incompatibleDefaultBaseImage_baseImageSpecified()
       throws URISyntaxException, IOException {
     Path jarPath = Paths.get(Resources.getResource(JAVA_14_JAR).toURI());
     when(mockJarCommand.getMode()).thenReturn(ProcessingMode.exploded);

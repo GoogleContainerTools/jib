@@ -25,7 +25,6 @@ import com.google.cloud.tools.jib.cli.CommonArtifactCommandOptions;
 import com.google.cloud.tools.jib.cli.CommonCliOptions;
 import com.google.cloud.tools.jib.cli.ContainerBuilders;
 import com.google.cloud.tools.jib.cli.Jar;
-import com.google.cloud.tools.jib.cli.SharedArtifactCliOptions;
 import com.google.cloud.tools.jib.plugins.common.logging.ConsoleLogger;
 import java.io.IOException;
 import java.util.Collections;

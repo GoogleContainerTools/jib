@@ -61,7 +61,6 @@ public class Jar implements Callable<Integer> {
   @SuppressWarnings("NullAway.Init") // initialized by picocli
   CommonArtifactCommandOptions commonArtifactCommandOptions;
 
-
   @CommandLine.Parameters(description = "The path to the jar file (ex: path/to/my-jar.jar)")
   @SuppressWarnings("NullAway.Init") // initialized by picocli
   private Path jarFile;

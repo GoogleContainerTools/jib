@@ -93,7 +93,7 @@ public class ArtifactProcessors {
    * @param warPath path to the jar
    * @param cacheDirectories the location of the relevant caches
    * @param warOptions jar cli options
-   * @param sharedArtifactCliOptions shared artifact cli options
+   * @param commonArtifactCommandOptions common cli options shared between jar and war command
    * @return ArtifactProcessor
    * @throws IOException if I/O error occurs when opening the jar file
    */
@@ -101,20 +101,19 @@ public class ArtifactProcessors {
       Path warPath,
       CacheDirectories cacheDirectories,
       War warOptions,
-      SharedArtifactCliOptions sharedArtifactCliOptions)
+      CommonArtifactCommandOptions commonArtifactCommandOptions)
       throws IOException {
     Integer warJavaVersion = determineJavaMajorVersion(warPath);
-    Optional<Path> appRoot = warOptions.getAppRoot();
-    Optional<String> baseImage = sharedArtifactCliOptions.getFrom();
-    if (baseImage.isPresent() && !baseImage.get().startsWith("jetty")) {
-      if (!warOptions.getAppRoot().isPresent()) {
-        throw new IllegalStateException("provide app root");
-      }
+    Optional<AbsoluteUnixPath> appRoot = warOptions.getAppRoot();
+    Optional<String> baseImage = commonArtifactCommandOptions.getFrom();
+    // IF base image is present and not jetty and doesn't have app root
+    if (baseImage.isPresent()
+        && !baseImage.get().startsWith("jetty")
+        && !warOptions.getAppRoot().isPresent()) {
+      throw new IllegalStateException("Provide app root and entrypoint.");
     }
     AbsoluteUnixPath appRootPath =
-        appRoot.isPresent()
-            ? AbsoluteUnixPath.fromPath(appRoot.get())
-            : AbsoluteUnixPath.get(DEFAULT_JETTY_APP_ROOT);
+        appRoot.isPresent() ? appRoot.get() : AbsoluteUnixPath.get(DEFAULT_JETTY_APP_ROOT);
     return new StandardWarExplodedProcessor(
         warPath, cacheDirectories.getExplodedJarDirectory(), warJavaVersion, appRootPath);
   }

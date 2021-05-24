@@ -20,6 +20,7 @@ import com.google.cloud.tools.jib.api.Containerizer;
 import com.google.cloud.tools.jib.api.JibContainer;
 import com.google.cloud.tools.jib.api.JibContainerBuilder;
 import com.google.cloud.tools.jib.api.LogEvent;
+import com.google.cloud.tools.jib.api.buildplan.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.cli.logging.CliLogger;
 import com.google.cloud.tools.jib.cli.war.WarFiles;
 import com.google.cloud.tools.jib.plugins.common.globalconfig.GlobalConfig;
@@ -49,7 +50,7 @@ public class War implements Callable<Integer> {
   @CommandLine.Mixin
   @VisibleForTesting
   @SuppressWarnings("NullAway.Init") // initialized by picocli
-  SharedArtifactCliOptions sharedArtifactCliOptions;
+  CommonArtifactCommandOptions commonArtifactCommandOptions;
 
   @CommandLine.Parameters(description = "The path to the war file (ex: path/to/my-war.war)")
   @SuppressWarnings("NullAway.Init") // initialized by picocli
@@ -60,7 +61,7 @@ public class War implements Callable<Integer> {
       paramLabel = "<app root>",
       description = "The app root on the container")
   @SuppressWarnings("NullAway.Init") // initialized by picocli
-  private Path appRoot;
+  private AbsoluteUnixPath appRoot;
 
   @Override
   public Integer call() {
@@ -97,10 +98,10 @@ public class War implements Callable<Integer> {
       CacheDirectories cacheDirectories =
           CacheDirectories.from(commonCliOptions, warFile.toAbsolutePath().getParent());
       ArtifactProcessor processor =
-          ArtifactProcessors.fromWar(warFile, cacheDirectories, this, sharedArtifactCliOptions);
+          ArtifactProcessors.fromWar(warFile, cacheDirectories, this, commonArtifactCommandOptions);
       JibContainerBuilder containerBuilder =
           WarFiles.toJibContainerBuilder(
-              processor, this, commonCliOptions, sharedArtifactCliOptions, logger);
+              processor, this, commonCliOptions, commonArtifactCommandOptions, logger);
       Containerizer containerizer = Containerizers.from(commonCliOptions, logger, cacheDirectories);
 
       // Enable registry mirrors
@@ -123,7 +124,7 @@ public class War implements Callable<Integer> {
    *
    * @return a user configured app root
    */
-  public Optional<Path> getAppRoot() {
+  public Optional<AbsoluteUnixPath> getAppRoot() {
     return Optional.ofNullable(appRoot);
   }
 }

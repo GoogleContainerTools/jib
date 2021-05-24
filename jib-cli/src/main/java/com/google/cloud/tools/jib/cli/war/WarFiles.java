@@ -21,13 +21,16 @@ import com.google.cloud.tools.jib.api.Jib;
 import com.google.cloud.tools.jib.api.JibContainerBuilder;
 import com.google.cloud.tools.jib.api.buildplan.FileEntriesLayer;
 import com.google.cloud.tools.jib.cli.ArtifactProcessor;
+import com.google.cloud.tools.jib.cli.CommonArtifactCommandOptions;
 import com.google.cloud.tools.jib.cli.CommonCliOptions;
-import com.google.cloud.tools.jib.cli.SharedArtifactCliOptions;
+import com.google.cloud.tools.jib.cli.ContainerBuilders;
 import com.google.cloud.tools.jib.cli.War;
 import com.google.cloud.tools.jib.plugins.common.logging.ConsoleLogger;
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 public class WarFiles {
 
@@ -37,7 +40,7 @@ public class WarFiles {
    * @param processor artifact processor
    * @param warOptions war cli options
    * @param commonCliOptions common cli options
-   * @param sharedArtifactCliOptions shared artifact cli options
+   * @param commonArtifactCommandOptions common cli options shared between jar and war command
    * @param logger console logger
    * @return JibContainerBuilder
    * @throws IOException if I/O error occurs when opening the jar file or if temporary directory
@@ -48,26 +51,43 @@ public class WarFiles {
       ArtifactProcessor processor,
       War warOptions,
       CommonCliOptions commonCliOptions,
-      SharedArtifactCliOptions sharedArtifactCliOptions,
+      CommonArtifactCommandOptions commonArtifactCommandOptions,
       ConsoleLogger logger)
       throws IOException, InvalidImageReferenceException {
-    JibContainerBuilder containerBuilder = Jib.from("jetty");
-    List<FileEntriesLayer> layers = processor.createLayers();
+    JibContainerBuilder containerBuilder;
+    List<FileEntriesLayer> layers;
+    Optional<String> baseImage = commonArtifactCommandOptions.getFrom();
+    if (commonArtifactCommandOptions.getFrom().isPresent()) {
+      containerBuilder =
+          ContainerBuilders.create(
+              commonArtifactCommandOptions.getFrom().get(),
+              Collections.emptySet(),
+              commonCliOptions,
+              logger);
+    } else {
+      containerBuilder = Jib.from("jetty");
+    }
 
-    // JVM Flags are ignored
-    List<String> entrypoint = processor.computeEntrypoint(ImmutableList.of());
-
+    List<String> entrypoint = null;
+    if (baseImage.isPresent() && !baseImage.get().startsWith("jetty")) {
+      if (!commonArtifactCommandOptions.getEntrypoint().isEmpty()) {
+        entrypoint = commonArtifactCommandOptions.getEntrypoint();
+      }
+    } else {
+      entrypoint = processor.computeEntrypoint(ImmutableList.of());
+    }
+    layers = processor.createLayers();
     containerBuilder
         .setEntrypoint(entrypoint)
         .setFileEntriesLayers(layers)
-        .setExposedPorts(sharedArtifactCliOptions.getExposedPorts())
-        .setVolumes(sharedArtifactCliOptions.getVolumes())
-        .setEnvironment(sharedArtifactCliOptions.getEnvironment())
-        .setLabels(sharedArtifactCliOptions.getLabels())
-        .setProgramArguments(sharedArtifactCliOptions.getProgramArguments());
-    sharedArtifactCliOptions.getUser().ifPresent(containerBuilder::setUser);
-    sharedArtifactCliOptions.getFormat().ifPresent(containerBuilder::setFormat);
-    sharedArtifactCliOptions.getCreationTime().ifPresent(containerBuilder::setCreationTime);
+        .setExposedPorts(commonArtifactCommandOptions.getExposedPorts())
+        .setVolumes(commonArtifactCommandOptions.getVolumes())
+        .setEnvironment(commonArtifactCommandOptions.getEnvironment())
+        .setLabels(commonArtifactCommandOptions.getLabels())
+        .setProgramArguments(commonArtifactCommandOptions.getProgramArguments());
+    commonArtifactCommandOptions.getUser().ifPresent(containerBuilder::setUser);
+    commonArtifactCommandOptions.getFormat().ifPresent(containerBuilder::setFormat);
+    commonArtifactCommandOptions.getCreationTime().ifPresent(containerBuilder::setCreationTime);
 
     return containerBuilder;
   }
