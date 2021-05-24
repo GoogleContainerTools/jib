@@ -17,6 +17,7 @@
 package com.google.cloud.tools.jib.cli.war;
 
 import static com.google.common.truth.Truth.assertThat;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.when;
 
 import com.google.cloud.tools.jib.api.InvalidImageReferenceException;
@@ -30,7 +31,6 @@ import java.nio.file.Paths;
 import java.util.Arrays;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.ArgumentMatchers;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
@@ -51,7 +51,7 @@ public class WarFilesTest {
                 AbsoluteUnixPath.get("/my/app/class1.class"))
             .build();
     when(mockStandardWarExplodedProcessor.createLayers()).thenReturn(Arrays.asList(layer));
-    when(mockStandardWarExplodedProcessor.computeEntrypoint(ArgumentMatchers.anyList()))
+    when(mockStandardWarExplodedProcessor.computeEntrypoint(anyList()))
         .thenReturn(ImmutableList.of("java", "-jar", "/usr/local/jetty/start.jar"));
 
     JibContainerBuilder containerBuilder =
@@ -60,8 +60,9 @@ public class WarFilesTest {
 
     assertThat(buildPlan.getBaseImage()).isEqualTo("jetty");
     assertThat(buildPlan.getEntrypoint())
-        .isEqualTo(ImmutableList.of("java", "-jar", "/usr/local/jetty/start.jar"));
-    assertThat(buildPlan.getLayers().size()).isEqualTo(1);
+        .containsExactly("java", "-jar", "/usr/local/jetty/start.jar")
+        .inOrder();
+    assertThat(buildPlan.getLayers()).hasSize(1);
     assertThat(buildPlan.getLayers().get(0).getName()).isEqualTo("classes");
     assertThat(((FileEntriesLayer) buildPlan.getLayers().get(0)).getEntries())
         .containsExactlyElementsIn(

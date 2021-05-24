@@ -17,6 +17,7 @@
 package com.google.cloud.tools.jib.cli.jar;
 
 import static com.google.common.truth.Truth.assertThat;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.when;
 
 import com.google.cloud.tools.jib.api.InvalidImageReferenceException;
@@ -40,7 +41,6 @@ import java.util.Arrays;
 import java.util.Optional;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.ArgumentMatchers;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
@@ -98,7 +98,7 @@ public class JarFilesTest {
                 AbsoluteUnixPath.get("/app/explodedJar/class1.class"))
             .build();
     when(mockStandardExplodedProcessor.createLayers()).thenReturn(Arrays.asList(layer));
-    when(mockStandardExplodedProcessor.computeEntrypoint(ArgumentMatchers.anyList()))
+    when(mockStandardExplodedProcessor.computeEntrypoint(anyList()))
         .thenReturn(
             ImmutableList.of("java", "-cp", "/app/explodedJar:/app/dependencies/*", "HelloWorld"));
     when(mockJarCommand.getFrom()).thenReturn(Optional.empty());
@@ -119,9 +119,9 @@ public class JarFilesTest {
     assertThat(buildPlan.getUser()).isNull();
     assertThat(buildPlan.getWorkingDirectory()).isNull();
     assertThat(buildPlan.getEntrypoint())
-        .isEqualTo(
-            ImmutableList.of("java", "-cp", "/app/explodedJar:/app/dependencies/*", "HelloWorld"));
-    assertThat(buildPlan.getLayers().size()).isEqualTo(1);
+        .containsExactly("java", "-cp", "/app/explodedJar:/app/dependencies/*", "HelloWorld")
+        .inOrder();
+    assertThat(buildPlan.getLayers()).hasSize(1);
     assertThat(buildPlan.getLayers().get(0).getName()).isEqualTo("classes");
     assertThat(((FileEntriesLayer) buildPlan.getLayers().get(0)).getEntries())
         .containsExactlyElementsIn(
@@ -144,7 +144,7 @@ public class JarFilesTest {
                 Paths.get("path/to/standardJar.jar"), AbsoluteUnixPath.get("/app/standardJar.jar"))
             .build();
     when(mockStandardPackagedProcessor.createLayers()).thenReturn(Arrays.asList(layer));
-    when(mockStandardPackagedProcessor.computeEntrypoint(ArgumentMatchers.anyList()))
+    when(mockStandardPackagedProcessor.computeEntrypoint(anyList()))
         .thenReturn(ImmutableList.of("java", "-jar", "/app/standardJar.jar"));
     when(mockJarCommand.getFrom()).thenReturn(Optional.empty());
 
@@ -164,7 +164,8 @@ public class JarFilesTest {
     assertThat(buildPlan.getUser()).isNull();
     assertThat(buildPlan.getWorkingDirectory()).isNull();
     assertThat(buildPlan.getEntrypoint())
-        .isEqualTo(ImmutableList.of("java", "-jar", "/app/standardJar.jar"));
+        .containsExactly("java", "-jar", "/app/standardJar.jar")
+        .inOrder();
     assertThat(buildPlan.getLayers().get(0).getName()).isEqualTo("jar");
     assertThat(((FileEntriesLayer) buildPlan.getLayers().get(0)).getEntries())
         .isEqualTo(
@@ -189,7 +190,7 @@ public class JarFilesTest {
             .build();
     when(mockJarCommand.getFrom()).thenReturn(Optional.empty());
     when(mockSpringBootExplodedProcessor.createLayers()).thenReturn(Arrays.asList(layer));
-    when(mockSpringBootExplodedProcessor.computeEntrypoint(ArgumentMatchers.anyList()))
+    when(mockSpringBootExplodedProcessor.computeEntrypoint(anyList()))
         .thenReturn(
             ImmutableList.of("java", "-cp", "/app", "org.springframework.boot.loader.JarLauncher"));
     when(mockJarCommand.getFrom()).thenReturn(Optional.empty());
@@ -210,9 +211,9 @@ public class JarFilesTest {
     assertThat(buildPlan.getUser()).isNull();
     assertThat(buildPlan.getWorkingDirectory()).isNull();
     assertThat(buildPlan.getEntrypoint())
-        .isEqualTo(
-            ImmutableList.of("java", "-cp", "/app", "org.springframework.boot.loader.JarLauncher"));
-    assertThat(buildPlan.getLayers().size()).isEqualTo(1);
+        .containsExactly("java", "-cp", "/app", "org.springframework.boot.loader.JarLauncher")
+        .inOrder();
+    assertThat(buildPlan.getLayers()).hasSize(1);
     assertThat(buildPlan.getLayers().get(0).getName()).isEqualTo("classes");
     assertThat(((FileEntriesLayer) buildPlan.getLayers().get(0)).getEntries())
         .containsExactlyElementsIn(
@@ -235,7 +236,7 @@ public class JarFilesTest {
                 Paths.get("path/to/spring-boot.jar"), AbsoluteUnixPath.get("/app/spring-boot.jar"))
             .build();
     when(mockSpringBootPackagedProcessor.createLayers()).thenReturn(Arrays.asList(layer));
-    when(mockSpringBootPackagedProcessor.computeEntrypoint(ArgumentMatchers.anyList()))
+    when(mockSpringBootPackagedProcessor.computeEntrypoint(anyList()))
         .thenReturn(ImmutableList.of("java", "-jar", "/app/spring-boot.jar"));
     when(mockJarCommand.getFrom()).thenReturn(Optional.empty());
 
@@ -255,8 +256,9 @@ public class JarFilesTest {
     assertThat(buildPlan.getUser()).isNull();
     assertThat(buildPlan.getWorkingDirectory()).isNull();
     assertThat(buildPlan.getEntrypoint())
-        .isEqualTo(ImmutableList.of("java", "-jar", "/app/spring-boot.jar"));
-    assertThat(buildPlan.getLayers().size()).isEqualTo(1);
+        .containsExactly("java", "-jar", "/app/spring-boot.jar")
+        .inOrder();
+    assertThat(buildPlan.getLayers()).hasSize(1);
     assertThat(buildPlan.getLayers().get(0).getName()).isEqualTo("jar");
     assertThat(((FileEntriesLayer) buildPlan.getLayers().get(0)).getEntries())
         .isEqualTo(
