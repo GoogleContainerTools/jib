@@ -18,7 +18,7 @@ package com.google.cloud.tools.jib.cli.jar;
 
 import com.google.cloud.tools.jib.cli.ArtifactProcessor;
 import com.google.cloud.tools.jib.cli.CacheDirectories;
-import com.google.cloud.tools.jib.cli.CommonArtifactCommandOptions;
+import com.google.cloud.tools.jib.cli.CommonContainerConfigCliOptions;
 import com.google.cloud.tools.jib.cli.Jar;
 import com.google.common.annotations.VisibleForTesting;
 import java.io.DataInputStream;
@@ -45,7 +45,7 @@ public class ArtifactProcessors {
    * @param jarPath path to the jar
    * @param cacheDirectories the location of the relevant caches
    * @param jarOptions jar cli options
-   * @param commonArtifactCommandOptions common cli options shared between jar and war command
+   * @param commonContainerConfigCliOptions common cli options shared between jar and war command
    * @return ArtifactProcessor
    * @throws IOException if I/O error occurs when opening the jar file
    */
@@ -53,10 +53,10 @@ public class ArtifactProcessors {
       Path jarPath,
       CacheDirectories cacheDirectories,
       Jar jarOptions,
-      CommonArtifactCommandOptions commonArtifactCommandOptions)
+      CommonContainerConfigCliOptions commonContainerConfigCliOptions)
       throws IOException {
     Integer jarJavaVersion = determineJavaMajorVersion(jarPath);
-    if (jarJavaVersion > 11 && !commonArtifactCommandOptions.getFrom().isPresent()) {
+    if (jarJavaVersion > 11 && !commonContainerConfigCliOptions.getFrom().isPresent()) {
       throw new IllegalStateException(
           "The input JAR ("
               + jarPath

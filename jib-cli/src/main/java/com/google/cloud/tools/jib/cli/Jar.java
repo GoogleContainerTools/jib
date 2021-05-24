@@ -60,7 +60,7 @@ public class Jar implements Callable<Integer> {
   @CommandLine.Mixin
   @VisibleForTesting
   @SuppressWarnings("NullAway.Init") // initialized by picocli
-  CommonArtifactCommandOptions commonArtifactCommandOptions;
+  CommonContainerConfigCliOptions commonContainerConfigCliOptions;
 
   @CommandLine.Parameters(description = "The path to the jar file (ex: path/to/my-jar.jar)")
   @SuppressWarnings("NullAway.Init") // initialized by picocli
@@ -114,17 +114,17 @@ public class Jar implements Callable<Integer> {
                 + jarFile);
         return 1;
       }
-      if (!commonArtifactCommandOptions.getEntrypoint().isEmpty() && !jvmFlags.isEmpty()) {
+      if (!commonContainerConfigCliOptions.getEntrypoint().isEmpty() && !jvmFlags.isEmpty()) {
         logger.log(LogEvent.Level.WARN, "--jvm-flags is ignored when --entrypoint is specified");
       }
 
       CacheDirectories cacheDirectories =
           CacheDirectories.from(commonCliOptions, jarFile.toAbsolutePath().getParent());
       ArtifactProcessor processor =
-          ArtifactProcessors.from(jarFile, cacheDirectories, this, commonArtifactCommandOptions);
+          ArtifactProcessors.from(jarFile, cacheDirectories, this, commonContainerConfigCliOptions);
       JibContainerBuilder containerBuilder =
           JarFiles.toJibContainerBuilder(
-              processor, this, commonCliOptions, commonArtifactCommandOptions, logger);
+              processor, this, commonCliOptions, commonContainerConfigCliOptions, logger);
       Containerizer containerizer = Containerizers.from(commonCliOptions, logger, cacheDirectories);
 
       // Enable registry mirrors
