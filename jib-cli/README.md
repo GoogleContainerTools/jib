@@ -259,6 +259,7 @@ Some options can be set in the global Jib configuration file. The file is at the
   ]
 }
 ```
+**Note about `mirror.gcr.io`**: it is _not_ a Docker Hub mirror but a cache. It caches [frequently-accessed public Docker Hub images](https://cloud.google.com/container-registry/docs/pulling-cached-images), and it's often possible that your base image does not exist in `mirror.gcr.io`. In that case, Jib will have to fall back to use Docker Hub.
 
 ## References
 
