@@ -452,8 +452,6 @@ Prefix | Example | Type
 
 ### Adding Arbitrary Files to the Image
 
-*\* Note: this is an incubating feature and may change in the future.*
-
 You can add arbitrary, non-classpath files to the image by placing them in a `src/main/jib` directory. This will copy all files within the `jib` folder to the target directory (`/` by default) in the image, maintaining the same structure (e.g. if you have a text file at `src/main/jib/dir/hello.txt`, then your image will contain `/dir/hello.txt` after being built with Jib).
 
 Note that Jib does not follow symbolic links in the container image.  If a symbolic link is present, _it will be removed_ prior to placing the files and directories.
