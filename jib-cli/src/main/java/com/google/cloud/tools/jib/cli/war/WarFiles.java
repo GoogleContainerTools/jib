@@ -32,19 +32,18 @@ public class WarFiles {
    *
    * @param processor artifact processor
    * @return JibContainerBuilder
-   * @throws IOException if I/O error occurs when opening the jar file or if temporary directory
+   * @throws IOException if I/O error occurs when opening the war file or if temporary directory
    *     provided doesn't exist
    * @throws InvalidImageReferenceException if the base image reference is invalid
    */
   public static JibContainerBuilder toJibContainerBuilder(ArtifactProcessor processor)
       throws IOException, InvalidImageReferenceException {
     JibContainerBuilder containerBuilder = Jib.from("jetty");
-    List<FileEntriesLayer> layers = processor.createLayers();
 
     // JVM Flags are ignored
     List<String> entrypoint = processor.computeEntrypoint(ImmutableList.of());
 
-    containerBuilder.setEntrypoint(entrypoint).setFileEntriesLayers(layers);
+    containerBuilder.setEntrypoint(entrypoint).setFileEntriesLayers(processor.createLayers());
     return containerBuilder;
   }
 }

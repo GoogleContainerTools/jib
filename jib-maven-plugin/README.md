@@ -390,6 +390,7 @@ Some options can be set in the global Jib configuration file. The file is at the
   ]
 }
 ```
+**Note about `mirror.gcr.io`**: it is _not_ a Docker Hub mirror but a cache. It caches [frequently-accessed public Docker Hub images](https://cloud.google.com/container-registry/docs/pulling-cached-images), and it's often possible that your base image does not exist in `mirror.gcr.io`. In that case, Jib will have to fall back to use Docker Hub.
 
 ### Example
 
@@ -450,8 +451,6 @@ Prefix | Example | Type
 `tar://` | `tar:///path/to/file.tar` | Uses an image tarball stored at the specified path as the base image. Also accepts relative paths (e.g. `tar://target/jib-image.tar`).
 
 ### Adding Arbitrary Files to the Image
-
-*\* Note: this is an incubating feature and may change in the future.*
 
 You can add arbitrary, non-classpath files to the image by placing them in a `src/main/jib` directory. This will copy all files within the `jib` folder to the target directory (`/` by default) in the image, maintaining the same structure (e.g. if you have a text file at `src/main/jib/dir/hello.txt`, then your image will contain `/dir/hello.txt` after being built with Jib).
 
