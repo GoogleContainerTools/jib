@@ -47,8 +47,8 @@ public class WarFilesTest {
         FileEntriesLayer.builder()
             .setName("classes")
             .addEntry(
-                Paths.get("path/to/tempDirectory/class1.class"),
-                AbsoluteUnixPath.get("/my/app/class1.class"))
+                Paths.get("path/to/tempDirectory/WEB-INF/classes/class1.class"),
+                AbsoluteUnixPath.get("/my/app/WEB-INF/classes/class1.class"))
             .build();
     when(mockStandardWarExplodedProcessor.createLayers()).thenReturn(Arrays.asList(layer));
     when(mockStandardWarExplodedProcessor.computeEntrypoint(anyList()))
@@ -68,8 +68,8 @@ public class WarFilesTest {
         .containsExactlyElementsIn(
             FileEntriesLayer.builder()
                 .addEntry(
-                    Paths.get("path/to/tempDirectory/class1.class"),
-                    AbsoluteUnixPath.get("/my/app/class1.class"))
+                    Paths.get("path/to/tempDirectory/WEB-INF/classes/class1.class"),
+                    AbsoluteUnixPath.get("/my/app/WEB-INF/classes/class1.class"))
                 .build()
                 .getEntries());
   }
