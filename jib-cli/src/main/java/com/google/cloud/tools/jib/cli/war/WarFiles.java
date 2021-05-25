@@ -19,7 +19,6 @@ package com.google.cloud.tools.jib.cli.war;
 import com.google.cloud.tools.jib.api.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.api.Jib;
 import com.google.cloud.tools.jib.api.JibContainerBuilder;
-import com.google.cloud.tools.jib.api.buildplan.FileEntriesLayer;
 import com.google.cloud.tools.jib.cli.ArtifactProcessor;
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
