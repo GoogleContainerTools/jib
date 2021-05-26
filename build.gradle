@@ -123,7 +123,7 @@ subprojects {
     // Using github.com/google/error-prone-javac is required when running on
     // JDK 8. Remove when migrating to JDK 11.
     if (System.getProperty('java.version').startsWith('1.8.')) {
-      errorproneJavac('com.google.errorprone:javac:9+181-r4173-1')
+      errorproneJavac('com.google.errorprone:javac:1+')
     }
   }
 
