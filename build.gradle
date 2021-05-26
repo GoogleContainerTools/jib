@@ -82,7 +82,7 @@ subprojects {
 
     //test
     TRUTH: 'com.google.truth:truth:1.1.2',
-    TRUTH8: 'com.google.truth.extensions:truth-java8-extension:1.1.2', // should match TRUTH version
+    TRUTH8: 'com.google.truth.extensions:truth-java8-extension:1.1.3', // should match TRUTH version
     JUNIT: 'junit:junit:4.13.2',
     JUNIT_PARAMS: 'pl.pragmatists:JUnitParams:1.1.1',
     MAVEN_TESTING_HARNESS: 'org.apache.maven.plugin-testing:maven-plugin-testing-harness:3.3.0',
