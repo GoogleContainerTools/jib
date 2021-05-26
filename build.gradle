@@ -76,7 +76,7 @@ subprojects {
     PICOCLI: 'info.picocli:picocli:4.6.1',
 
     MAVEN_API: 'org.apache.maven:maven-plugin-api:3.8.1',
-    MAVEN_CORE: 'org.apache.maven:maven-core:3.6.3',
+    MAVEN_CORE: 'org.apache.maven:maven-core:3.8.1',
     MAVEN_COMPAT: 'org.apache.maven:maven-compat:3.8.1',
     MAVEN_PLUGIN_ANNOTATIONS: 'org.apache.maven.plugin-tools:maven-plugin-annotations:3.6.0',
 
@@ -87,7 +87,7 @@ subprojects {
     JUNIT_PARAMS: 'pl.pragmatists:JUnitParams:1.1.1',
     MAVEN_TESTING_HARNESS: 'org.apache.maven.plugin-testing:maven-plugin-testing-harness:3.3.0',
     MAVEN_VERIFIER: 'org.apache.maven.shared:maven-verifier:1.7.2',
-    MOCKITO_CORE: 'org.mockito:mockito-core:3.8.0',
+    MOCKITO_CORE: 'org.mockito:mockito-core:3.10.0',
     SISU_PLEXUS: 'org.eclipse.sisu:org.eclipse.sisu.plexus:0.3.4',
     SLF4J_API: 'org.slf4j:slf4j-api:1.7.30',
     SLF4J_SIMPLE: 'org.slf4j:slf4j-simple:1.7.30',
