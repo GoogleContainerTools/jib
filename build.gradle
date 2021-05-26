@@ -71,7 +71,7 @@ subprojects {
     COMMONS_TEXT: 'org.apache.commons:commons-text:1.9',
     JACKSON_DATABIND: 'com.fasterxml.jackson.core:jackson-databind:2.12.3',
     JACKSON_DATAFORMAT_YAML: 'com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.12.3',
-    JACKSON_DATATYPE_JSR310: 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.12.1',
+    JACKSON_DATATYPE_JSR310: 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.12.3',
     ASM: 'org.ow2.asm:asm:9.1',
     PICOCLI: 'info.picocli:picocli:4.6.1',
 
