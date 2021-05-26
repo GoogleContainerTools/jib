@@ -77,7 +77,7 @@ subprojects {
 
     MAVEN_API: 'org.apache.maven:maven-plugin-api:3.6.3',
     MAVEN_CORE: 'org.apache.maven:maven-core:3.6.3',
-    MAVEN_COMPAT: 'org.apache.maven:maven-compat:3.6.3',
+    MAVEN_COMPAT: 'org.apache.maven:maven-compat:3.8.1',
     MAVEN_PLUGIN_ANNOTATIONS: 'org.apache.maven.plugin-tools:maven-plugin-annotations:3.6.0',
 
     //test
