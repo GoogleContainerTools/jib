@@ -48,6 +48,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Multimaps;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -83,9 +84,12 @@ public class PluginConfigurationProcessor {
   // Known "constant" layers -- changes to these layers require a change to the build definition,
   // which we consider non-syncable. These should not be included in the sync-map.
   private static final ImmutableList<String> CONST_LAYERS =
-      ImmutableList.of(LayerType.DEPENDENCIES.getName());
+      ImmutableList.of(LayerType.DEPENDENCIES.getName(), LayerType.JVM_ARG_FILES.getName());
 
   private static final String DEFAULT_JETTY_APP_ROOT = "/var/lib/jetty/webapps/ROOT";
+
+  private static final String JIB_CLASSPATH_FILE = "jib-classpath-file";
+  private static final String JIB_MAIN_CLASS_FILE = "jib-main-class-file";
 
   /**
    * Generate a runner for image builds to docker daemon.
@@ -417,17 +421,18 @@ public class PluginConfigurationProcessor {
                 getContainerizingModeChecked(rawConfiguration, projectProperties))
             .setFormat(rawConfiguration.getImageFormat())
             .setPlatforms(getPlatformsSet(rawConfiguration))
-            .setEntrypoint(computeEntrypoint(rawConfiguration, projectProperties))
             .setProgramArguments(rawConfiguration.getProgramArguments().orElse(null))
             .setEnvironment(rawConfiguration.getEnvironment())
             .setExposedPorts(Ports.parse(rawConfiguration.getPorts()))
             .setVolumes(getVolumesSet(rawConfiguration))
             .setLabels(rawConfiguration.getLabels())
-            .setUser(rawConfiguration.getUser().orElse(null));
+            .setUser(rawConfiguration.getUser().orElse(null))
+            .setCreationTime(
+                getCreationTime(rawConfiguration.getCreationTime(), projectProperties));
+    jibContainerBuilder.setEntrypoint(
+        computeEntrypoint(rawConfiguration, projectProperties, jibContainerBuilder));
     getWorkingDirectoryChecked(rawConfiguration)
         .ifPresent(jibContainerBuilder::setWorkingDirectory);
-    jibContainerBuilder.setCreationTime(
-        getCreationTime(rawConfiguration.getCreationTime(), projectProperties));
 
     // Adds all the extra files.
     for (ExtraDirectoriesConfiguration extraDirectory : rawConfiguration.getExtraDirectories()) {
@@ -550,6 +555,7 @@ public class PluginConfigurationProcessor {
    *
    * @param rawConfiguration raw configuration data
    * @param projectProperties used for providing additional information
+   * @param jibContainerBuilder container builder
    * @return the entrypoint
    * @throws MainClassInferenceException if no valid main class is configured or discovered
    * @throws InvalidAppRootException if {@code appRoot} value is not an absolute Unix path
@@ -558,12 +564,32 @@ public class PluginConfigurationProcessor {
   @Nullable
   @VisibleForTesting
   static List<String> computeEntrypoint(
-      RawConfiguration rawConfiguration, ProjectProperties projectProperties)
+      RawConfiguration rawConfiguration,
+      ProjectProperties projectProperties,
+      JibContainerBuilder jibContainerBuilder)
       throws MainClassInferenceException, InvalidAppRootException, IOException,
           InvalidContainerizingModeException {
     Optional<List<String>> rawEntrypoint = rawConfiguration.getEntrypoint();
     List<String> rawExtraClasspath = rawConfiguration.getExtraClasspath();
-    if (rawEntrypoint.isPresent() && !rawEntrypoint.get().isEmpty()) {
+
+    if (projectProperties.isWarProject()) {
+      if (rawEntrypoint.isPresent() && !rawEntrypoint.get().isEmpty()) {
+        if (rawConfiguration.getMainClass().isPresent()
+            || !rawConfiguration.getJvmFlags().isEmpty()
+            || !rawExtraClasspath.isEmpty()
+            || rawConfiguration.getExpandClasspathDependencies()) {
+          projectProperties.log(
+              LogEvent.warn(
+                  "mainClass, extraClasspath, jvmFlags, and expandClasspathDependencies are ignored "
+                      + "when entrypoint is specified"));
+        }
+
+        if (rawEntrypoint.get().size() == 1 && "INHERIT".equals(rawEntrypoint.get().get(0))) {
+          return null;
+        }
+        return rawEntrypoint.get();
+      }
+
       if (rawConfiguration.getMainClass().isPresent()
           || !rawConfiguration.getJvmFlags().isEmpty()
           || !rawExtraClasspath.isEmpty()
@@ -571,27 +597,10 @@ public class PluginConfigurationProcessor {
         projectProperties.log(
             LogEvent.warn(
                 "mainClass, extraClasspath, jvmFlags, and expandClasspathDependencies are ignored "
-                    + "when entrypoint is specified"));
-      }
-
-      if (rawEntrypoint.get().size() == 1 && "INHERIT".equals(rawEntrypoint.get().get(0))) {
-        return null;
-      }
-      return rawEntrypoint.get();
-    }
-
-    if (projectProperties.isWarProject()) {
-      if (rawConfiguration.getMainClass().isPresent()
-          || !rawConfiguration.getJvmFlags().isEmpty()
-          || !rawExtraClasspath.isEmpty()
-          || rawConfiguration.getExpandClasspathDependencies()) {
-        projectProperties.log(
-            LogEvent.warn(
-                "mainClass, extraClasspath, jvmFlags, and expandClasspathDependencies "
-                    + "are ignored for WAR projects"));
+                    + "for WAR projects"));
       }
       return rawConfiguration.getFromImage().isPresent()
-          ? null
+          ? null // Inherit if a custom base image.
           : Arrays.asList("java", "-jar", "/usr/local/jetty/start.jar");
     }
 
@@ -610,7 +619,8 @@ public class PluginConfigurationProcessor {
         throw new IllegalStateException("unknown containerizing mode: " + mode);
     }
 
-    if (rawConfiguration.getExpandClasspathDependencies()) {
+    if (projectProperties.getMajorJavaVersion() >= 9
+        || rawConfiguration.getExpandClasspathDependencies()) {
       List<String> dependencies =
           projectProperties
               .getDependencies()
@@ -626,6 +636,29 @@ public class PluginConfigurationProcessor {
     String mainClass =
         MainClassResolver.resolveMainClass(
             rawConfiguration.getMainClass().orElse(null), projectProperties);
+    addJvmArgFilesLayer(
+        rawConfiguration, projectProperties, jibContainerBuilder, classpathString, mainClass);
+
+    if (projectProperties.getMajorJavaVersion() >= 9) {
+      classpathString = "@" + appRoot.resolve(JIB_CLASSPATH_FILE);
+    }
+
+    if (rawEntrypoint.isPresent() && !rawEntrypoint.get().isEmpty()) {
+      if (rawConfiguration.getMainClass().isPresent()
+          || !rawConfiguration.getJvmFlags().isEmpty()
+          || !rawExtraClasspath.isEmpty()
+          || rawConfiguration.getExpandClasspathDependencies()) {
+        projectProperties.log(
+            LogEvent.warn(
+                "mainClass, extraClasspath, jvmFlags, and expandClasspathDependencies are ignored "
+                    + "when entrypoint is specified"));
+      }
+
+      if (rawEntrypoint.get().size() == 1 && "INHERIT".equals(rawEntrypoint.get().get(0))) {
+        return null;
+      }
+      return rawEntrypoint.get();
+    }
 
     List<String> entrypoint = new ArrayList<>(4 + rawConfiguration.getJvmFlags().size());
     entrypoint.add("java");
@@ -634,6 +667,53 @@ public class PluginConfigurationProcessor {
     entrypoint.add(classpathString);
     entrypoint.add(mainClass);
     return entrypoint;
+  }
+
+  // It's perfectly fine to always generate a new temp file or rewrite an existing file. However,
+  // fixing the source file path and preserving the file timestamp prevents polluting the Jib layer
+  // cache space by not creating new cache selectors every time. (Note, however, creating new
+  // selectors does not affect correctness at all.)
+  @VisibleForTesting
+  static void addJvmArgFilesLayer(
+      RawConfiguration rawConfiguration,
+      ProjectProperties projectProperties,
+      JibContainerBuilder jibContainerBuilder,
+      String classpath,
+      String mainClass)
+      throws IOException, InvalidAppRootException {
+    Path projectCache = projectProperties.getDefaultCacheDirectory();
+    Path classpathFile = projectCache.resolve(JIB_CLASSPATH_FILE);
+    Path mainClassFile = projectCache.resolve(JIB_MAIN_CLASS_FILE);
+
+    writeFileConservatively(classpathFile, classpath);
+    writeFileConservatively(mainClassFile, mainClass);
+
+    AbsoluteUnixPath appRoot = getAppRootChecked(rawConfiguration, projectProperties);
+    jibContainerBuilder.addFileEntriesLayer(
+        FileEntriesLayer.builder()
+            .setName(LayerType.JVM_ARG_FILES.getName())
+            .addEntry(classpathFile, appRoot.resolve(JIB_CLASSPATH_FILE))
+            .addEntry(mainClassFile, appRoot.resolve(JIB_MAIN_CLASS_FILE))
+            .build());
+  }
+
+  /**
+   * Writes a file only when needed (the file does not exist or the existing file has a different
+   * content.
+   *
+   * @param file target file to write
+   * @param content file content to write
+   * @throws IOException if file I/O error
+   */
+  @Nullable
+  static void writeFileConservatively(Path file, String content) throws IOException {
+    if (Files.exists(file)) {
+      String oldContent = new String(Files.readAllBytes(file), StandardCharsets.UTF_8);
+      if (oldContent.equals(content)) {
+        return;
+      }
+    }
+    Files.write(file, content.getBytes(StandardCharsets.UTF_8));
   }
 
   /**

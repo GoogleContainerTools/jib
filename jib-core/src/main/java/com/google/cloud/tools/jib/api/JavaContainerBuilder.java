@@ -65,7 +65,8 @@ public class JavaContainerBuilder {
     PROJECT_DEPENDENCIES("project dependencies"),
     RESOURCES("resources"),
     CLASSES("classes"),
-    EXTRA_FILES("extra files");
+    EXTRA_FILES("extra files"),
+    JVM_ARG_FILES("jvm arg files");
 
     private final String name;
 
