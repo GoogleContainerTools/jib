@@ -698,14 +698,15 @@ public class PluginConfigurationProcessor {
   }
 
   /**
-   * Writes a file only when needed (the file does not exist or the existing file has a different
-   * content.
+   * Writes a file only when needed (when the file does not exist or the existing file has a
+   * different content). It reads the entire bytes into a {@code String} for content comparison, so
+   * care should be taken when using this method for a huge file.
    *
    * @param file target file to write
    * @param content file content to write
    * @throws IOException if file I/O error
    */
-  @Nullable
+  @VisibleForTesting
   static void writeFileConservatively(Path file, String content) throws IOException {
     if (Files.exists(file)) {
       String oldContent = new String(Files.readAllBytes(file), StandardCharsets.UTF_8);
@@ -713,6 +714,7 @@ public class PluginConfigurationProcessor {
         return;
       }
     }
+    Files.createDirectories(file.getParent());
     Files.write(file, content.getBytes(StandardCharsets.UTF_8));
   }
 

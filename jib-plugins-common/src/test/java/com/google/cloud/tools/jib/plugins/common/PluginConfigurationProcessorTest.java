@@ -161,7 +161,7 @@ public class PluginConfigurationProcessorTest {
   @Mock private Consumer<LogEvent> logger;
 
   private Path appCacheDirectory;
-  private JibContainerBuilder jibContainerBuilder = Jib.fromScratch();
+  private final JibContainerBuilder jibContainerBuilder = Jib.fromScratch();
 
   @Before
   public void setUp() throws IOException, InvalidImageReferenceException, InferredAuthException {
@@ -275,29 +275,26 @@ public class PluginConfigurationProcessorTest {
 
   @Test
   public void testAddJvmArgFilesLayer() throws IOException, InvalidAppRootException {
-    Path classpathFile = appCacheDirectory.resolve("jib-classpath-file");
-    Path mainClassFile = appCacheDirectory.resolve("jib-main-class-file");
-
     String classpath = "/extra:/app/classes:/app/libs/dep.jar";
     String mainClass = "com.example.Main";
     PluginConfigurationProcessor.addJvmArgFilesLayer(
         rawConfiguration, projectProperties, jibContainerBuilder, classpath, mainClass);
 
+    Path classpathFile = appCacheDirectory.resolve("jib-classpath-file");
+    Path mainClassFile = appCacheDirectory.resolve("jib-main-class-file");
     String classpathRead = new String(Files.readAllBytes(classpathFile), StandardCharsets.UTF_8);
     String mainClassRead = new String(Files.readAllBytes(mainClassFile), StandardCharsets.UTF_8);
     assertThat(classpathRead).isEqualTo(classpath);
     assertThat(mainClassRead).isEqualTo(mainClass);
 
-    @SuppressWarnings("unchecked")
-    List<FileEntriesLayer> layers =
-        (List<FileEntriesLayer>) jibContainerBuilder.toContainerBuildPlan().getLayers();
-    assertThat(layers).hasSize(1);
-    assertThat(layers.get(0).getEntries())
+    List<FileEntry> layerEntries =
+        getLayerEntries(jibContainerBuilder.toContainerBuildPlan(), "jvm arg files");
+    assertThat(layerEntries)
         .comparingElementsUsing(SOURCE_FILE_OF)
         .containsExactly(
             appCacheDirectory.resolve("jib-classpath-file"),
             appCacheDirectory.resolve("jib-main-class-file"));
-    assertThat(layers.get(0).getEntries())
+    assertThat(layerEntries)
         .comparingElementsUsing(EXTRACTION_PATH_OF)
         .containsExactly("/app/jib-classpath-file", "/app/jib-main-class-file");
   }
