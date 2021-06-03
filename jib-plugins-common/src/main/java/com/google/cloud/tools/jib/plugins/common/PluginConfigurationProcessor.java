@@ -415,22 +415,20 @@ public class PluginConfigurationProcessor {
             .setAppRoot(getAppRootChecked(rawConfiguration, projectProperties))
             .setModificationTimeProvider(modificationTimeProvider);
     JibContainerBuilder jibContainerBuilder =
-        projectProperties
-            .createJibContainerBuilder(
-                javaContainerBuilder,
-                getContainerizingModeChecked(rawConfiguration, projectProperties))
-            .setFormat(rawConfiguration.getImageFormat())
-            .setPlatforms(getPlatformsSet(rawConfiguration))
-            .setProgramArguments(rawConfiguration.getProgramArguments().orElse(null))
-            .setEnvironment(rawConfiguration.getEnvironment())
-            .setExposedPorts(Ports.parse(rawConfiguration.getPorts()))
-            .setVolumes(getVolumesSet(rawConfiguration))
-            .setLabels(rawConfiguration.getLabels())
-            .setUser(rawConfiguration.getUser().orElse(null))
-            .setCreationTime(
-                getCreationTime(rawConfiguration.getCreationTime(), projectProperties));
-    jibContainerBuilder.setEntrypoint(
-        computeEntrypoint(rawConfiguration, projectProperties, jibContainerBuilder));
+        projectProperties.createJibContainerBuilder(
+            javaContainerBuilder,
+            getContainerizingModeChecked(rawConfiguration, projectProperties));
+    jibContainerBuilder
+        .setFormat(rawConfiguration.getImageFormat())
+        .setPlatforms(getPlatformsSet(rawConfiguration))
+        .setEntrypoint(computeEntrypoint(rawConfiguration, projectProperties, jibContainerBuilder))
+        .setProgramArguments(rawConfiguration.getProgramArguments().orElse(null))
+        .setEnvironment(rawConfiguration.getEnvironment())
+        .setExposedPorts(Ports.parse(rawConfiguration.getPorts()))
+        .setVolumes(getVolumesSet(rawConfiguration))
+        .setLabels(rawConfiguration.getLabels())
+        .setUser(rawConfiguration.getUser().orElse(null))
+        .setCreationTime(getCreationTime(rawConfiguration.getCreationTime(), projectProperties));
     getWorkingDirectoryChecked(rawConfiguration)
         .ifPresent(jibContainerBuilder::setWorkingDirectory);
 
