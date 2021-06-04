@@ -151,7 +151,7 @@ public class BuildImageMojoIntegrationTest {
       // Test running using image id
       String id = readDigestFile(projectRoot.resolve("target/jib-image.id"));
       assertThat(id).isNotEqualTo(digest);
-      assertThat(new Command("docker", "run", "--rm").run()).isEqualTo(output);
+      assertThat(new Command("docker", "run", "--rm", id).run()).isEqualTo(output);
 
     } catch (InvalidImageReferenceException ex) {
       fail("error replacing tag with digest");
@@ -559,7 +559,7 @@ public class BuildImageMojoIntegrationTest {
     String id =
         readDigestFile(simpleTestProject.getProjectRoot().resolve("different-jib-image.id"));
     assertThat(id).isNotEqualTo(digest);
-    assertThat(new Command("docker", "run", "--rm").run()).isEqualTo(output);
+    assertThat(new Command("docker", "run", "--rm", id).run()).isEqualTo(output);
 
     assertThat(getCreationTime(targetImage)).isGreaterThan(before);
     assertThat(getWorkingDirectory(targetImage)).isEqualTo("/");
