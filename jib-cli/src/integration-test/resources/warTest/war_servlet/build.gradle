@@ -1,0 +1,26 @@
+plugins {
+  id 'java'
+  id 'war'
+}
+
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+repositories {
+  mavenCentral()
+}
+
+configurations {
+  moreLibs
+}
+
+dependencies {
+  providedCompile 'javax.servlet:servlet-api:2.5'
+  moreLibs 'javax.annotation:javax.annotation-api:1.2' // random extra JAR
+}
+
+war {
+  from ('src/extra_static')
+  from ('src/extra_js', { into 'js' })
+  classpath configurations.moreLibs
+}

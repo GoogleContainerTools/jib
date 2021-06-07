@@ -35,7 +35,6 @@ public class StandardWarExplodedProcessor implements ArtifactProcessor {
 
   private final Path warPath;
   private final Path targetExplodedWarRoot;
-  private final Integer warJavaVersion;
   private final AbsoluteUnixPath appRoot;
 
   /**
@@ -43,14 +42,12 @@ public class StandardWarExplodedProcessor implements ArtifactProcessor {
    *
    * @param warPath path to WAR file
    * @param targetExplodedWarRoot path to exploded-war root
-   * @param warJavaVersion war java version
    * @param appRoot the absolute path of the app on the container
    */
   public StandardWarExplodedProcessor(
-      Path warPath, Path targetExplodedWarRoot, Integer warJavaVersion, AbsoluteUnixPath appRoot) {
+      Path warPath, Path targetExplodedWarRoot, AbsoluteUnixPath appRoot) {
     this.warPath = warPath;
     this.targetExplodedWarRoot = targetExplodedWarRoot;
-    this.warJavaVersion = warJavaVersion;
     this.appRoot = appRoot;
   }
 
@@ -126,8 +123,7 @@ public class StandardWarExplodedProcessor implements ArtifactProcessor {
     return ImmutableList.of("java", "-jar", "/usr/local/jetty/start.jar");
   }
 
-  @Override
-  public Integer getJavaVersion() {
-    return warJavaVersion;
+  public AbsoluteUnixPath getAppRoot() {
+    return appRoot;
   }
 }

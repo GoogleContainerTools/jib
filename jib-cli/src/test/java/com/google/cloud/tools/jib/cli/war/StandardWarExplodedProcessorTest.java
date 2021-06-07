@@ -42,7 +42,6 @@ import org.junit.rules.TemporaryFolder;
 
 public class StandardWarExplodedProcessorTest {
 
-  private static final Integer WAR_JAVA_VERSION = 0; // any value
   private static final AbsoluteUnixPath APP_ROOT = AbsoluteUnixPath.get("/my/app");
   private static final Correspondence<FileEntry, String> EXTRACTION_PATH_OF =
       Correspondence.transforming(
@@ -60,8 +59,7 @@ public class StandardWarExplodedProcessorTest {
 
     Path explodedWarDestination = temporaryFolder.newFolder("exploded-war").toPath();
     StandardWarExplodedProcessor processor =
-        new StandardWarExplodedProcessor(
-            standardWar, explodedWarDestination, WAR_JAVA_VERSION, APP_ROOT);
+        new StandardWarExplodedProcessor(standardWar, explodedWarDestination, APP_ROOT);
     List<FileEntriesLayer> layers = processor.createLayers();
 
     assertThat(layers.size()).isEqualTo(4);
@@ -101,8 +99,7 @@ public class StandardWarExplodedProcessorTest {
 
     Path explodedWarDestination = temporaryFolder.newFolder("exploded-war").toPath();
     StandardWarExplodedProcessor processor =
-        new StandardWarExplodedProcessor(
-            standardWar, explodedWarDestination, WAR_JAVA_VERSION, APP_ROOT);
+        new StandardWarExplodedProcessor(standardWar, explodedWarDestination, APP_ROOT);
     List<FileEntriesLayer> layers = processor.createLayers();
 
     assertThat(layers.size()).isEqualTo(2);
@@ -130,8 +127,7 @@ public class StandardWarExplodedProcessorTest {
 
     Path explodedWarDestination = temporaryFolder.newFolder("exploded-war").toPath();
     StandardWarExplodedProcessor processor =
-        new StandardWarExplodedProcessor(
-            standardWar, explodedWarDestination, WAR_JAVA_VERSION, APP_ROOT);
+        new StandardWarExplodedProcessor(standardWar, explodedWarDestination, APP_ROOT);
     List<FileEntriesLayer> layers = processor.createLayers();
 
     assertThat(layers.size()).isEqualTo(3);
@@ -154,8 +150,7 @@ public class StandardWarExplodedProcessorTest {
   @Test
   public void testComputeEntrypoint() {
     StandardWarExplodedProcessor processor =
-        new StandardWarExplodedProcessor(
-            Paths.get("ignore"), Paths.get("ignore"), WAR_JAVA_VERSION, APP_ROOT);
+        new StandardWarExplodedProcessor(Paths.get("ignore"), Paths.get("ignore"), APP_ROOT);
     ImmutableList<String> entrypoint = processor.computeEntrypoint(ImmutableList.of("ignored"));
     assertThat(entrypoint)
         .isEqualTo(ImmutableList.of("java", "-jar", "/usr/local/jetty/start.jar"));
@@ -164,7 +159,7 @@ public class StandardWarExplodedProcessorTest {
   @Test
   public void testGetJavaVersion() {
     StandardWarExplodedProcessor processor =
-        new StandardWarExplodedProcessor(Paths.get("ignore"), Paths.get("ignore"), 8, APP_ROOT);
+        new StandardWarExplodedProcessor(Paths.get("ignore"), Paths.get("ignore"), APP_ROOT);
     assertThat(processor.getJavaVersion()).isEqualTo(8);
   }
 

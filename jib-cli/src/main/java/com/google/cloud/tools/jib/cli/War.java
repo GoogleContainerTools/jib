@@ -50,63 +50,63 @@ public class War implements Callable<Integer> {
   @CommandLine.Mixin
   @VisibleForTesting
   @SuppressWarnings("NullAway.Init") // initialized by picocli
-  CommonCliOptions commonCliOptions;
+          CommonCliOptions commonCliOptions;
 
   @CommandLine.Mixin
   @VisibleForTesting
   @SuppressWarnings("NullAway.Init") // initialized by picocli
-  CommonArtifactCommandOptions commonArtifactCommandOptions;
+          CommonArtifactCommandOptions commonArtifactCommandOptions;
 
   @CommandLine.Parameters(description = "The path to the war file (ex: path/to/my-war.war)")
   @SuppressWarnings("NullAway.Init") // initialized by picocli
   private Path warFile;
 
   @CommandLine.Option(
-      names = "--app-root",
-      paramLabel = "<app root>",
-      description = "The app root on the container")
+          names = "--app-root",
+          paramLabel = "<app root>",
+          description = "The app root on the container")
   @SuppressWarnings("NullAway.Init") // initialized by picocli
-  private AbsoluteUnixPath appRoot;
+  private Path appRoot;
 
   @Override
   public Integer call() {
     commonCliOptions.validate();
     SingleThreadedExecutor executor = new SingleThreadedExecutor();
     ConsoleLogger logger =
-        CliLogger.newLogger(
-            commonCliOptions.getVerbosity(),
-            commonCliOptions.getHttpTrace(),
-            commonCliOptions.getConsoleOutput(),
-            spec.commandLine().getOut(),
-            spec.commandLine().getErr(),
-            executor);
+            CliLogger.newLogger(
+                    commonCliOptions.getVerbosity(),
+                    commonCliOptions.getHttpTrace(),
+                    commonCliOptions.getConsoleOutput(),
+                    spec.commandLine().getOut(),
+                    spec.commandLine().getErr(),
+                    executor);
     Future<Optional<String>> updateCheckFuture = Futures.immediateFuture(Optional.empty());
     try {
       JibCli.configureHttpLogging(commonCliOptions.getHttpTrace().toJulLevel());
       GlobalConfig globalConfig = GlobalConfig.readConfig();
       updateCheckFuture =
-          JibCli.newUpdateChecker(
-              globalConfig,
-              commonCliOptions.getVerbosity(),
-              logEvent -> logger.log(logEvent.getLevel(), logEvent.getMessage()));
+              JibCli.newUpdateChecker(
+                      globalConfig,
+                      commonCliOptions.getVerbosity(),
+                      logEvent -> logger.log(logEvent.getLevel(), logEvent.getMessage()));
       if (!Files.exists(warFile)) {
         logger.log(LogEvent.Level.ERROR, "The file path provided does not exist: " + warFile);
         return 1;
       }
       if (Files.isDirectory(warFile)) {
         logger.log(
-            LogEvent.Level.ERROR,
-            "The file path provided is for a directory. Please provide a path to a JAR: "
-                + warFile);
+                LogEvent.Level.ERROR,
+                "The file path provided is for a directory. Please provide a path to a WAR: "
+                        + warFile);
         return 1;
       }
       CacheDirectories cacheDirectories =
-          CacheDirectories.from(commonCliOptions, warFile.toAbsolutePath().getParent());
+              CacheDirectories.from(commonCliOptions, warFile.toAbsolutePath().getParent());
       ArtifactProcessor processor =
-          ArtifactProcessors.fromWar(warFile, cacheDirectories, this, commonArtifactCommandOptions);
+              ArtifactProcessors.fromWar(warFile, cacheDirectories, this, commonArtifactCommandOptions);
       JibContainerBuilder containerBuilder =
-          WarFiles.toJibContainerBuilder(
-              processor, this, commonCliOptions, commonArtifactCommandOptions, logger);
+              WarFiles.toJibContainerBuilder(
+                      processor, commonCliOptions, commonArtifactCommandOptions, logger);
       Containerizer containerizer = Containerizers.from(commonCliOptions, logger, cacheDirectories);
 
       // Enable registry mirrors
@@ -130,6 +130,9 @@ public class War implements Callable<Integer> {
    * @return a user configured app root
    */
   public Optional<AbsoluteUnixPath> getAppRoot() {
-    return Optional.ofNullable(appRoot);
+    if (appRoot == null) {
+      return Optional.empty();
+    }
+    return Optional.of(AbsoluteUnixPath.fromPath(appRoot));
   }
 }

@@ -87,35 +87,32 @@ public class ArtifactProcessors {
   }
 
   /**
-   * Creates a {@link com.google.cloud.tools.jib.cli.ArtifactProcessor} instance based on jar type
-   * and processing mode.
+   * Creates a {@link ArtifactProcessor} instance based on jar type and processing mode.
    *
    * @param warPath path to the jar
    * @param cacheDirectories the location of the relevant caches
    * @param warOptions jar cli options
    * @param commonArtifactCommandOptions common cli options shared between jar and war command
    * @return ArtifactProcessor
-   * @throws IOException if I/O error occurs when opening the jar file
    */
   public static ArtifactProcessor fromWar(
       Path warPath,
       CacheDirectories cacheDirectories,
       War warOptions,
-      CommonArtifactCommandOptions commonArtifactCommandOptions)
-      throws IOException {
-    Integer warJavaVersion = determineJavaMajorVersion(warPath);
+      CommonArtifactCommandOptions commonArtifactCommandOptions) {
     Optional<AbsoluteUnixPath> appRoot = warOptions.getAppRoot();
     Optional<String> baseImage = commonArtifactCommandOptions.getFrom();
-    // IF base image is present and not jetty and doesn't have app root
+
     if (baseImage.isPresent()
         && !baseImage.get().startsWith("jetty")
         && !warOptions.getAppRoot().isPresent()) {
-      throw new IllegalStateException("Provide app root and entrypoint.");
+      throw new IllegalStateException(
+          "Please set the app-root of the container with `--app-root` when specifying a base image.");
     }
     AbsoluteUnixPath appRootPath =
         appRoot.isPresent() ? appRoot.get() : AbsoluteUnixPath.get(DEFAULT_JETTY_APP_ROOT);
     return new StandardWarExplodedProcessor(
-        warPath, cacheDirectories.getExplodedJarDirectory(), warJavaVersion, appRootPath);
+        warPath, cacheDirectories.getExplodedJarDirectory(), appRootPath);
   }
 
   /**

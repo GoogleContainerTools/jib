@@ -32,13 +32,11 @@ import org.junit.rules.TemporaryFolder;
 
 public class TestProject extends TemporaryFolder implements Closeable {
 
-  private static final String PROJECTS_PATH_IN_RESOURCES = "jarTest/";
-
   /** Copies test project {@code projectName} to {@code destination} folder. */
   private static void copyProject(String projectName, Path destination)
       throws IOException, URISyntaxException {
     Path projectPathInResources =
-        Paths.get(Resources.getResource(PROJECTS_PATH_IN_RESOURCES + projectName).toURI());
+        Paths.get(Resources.getResource( projectName).toURI());
     new DirectoryWalker(projectPathInResources)
         .filterRoot()
         .walk(

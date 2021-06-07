@@ -22,16 +22,19 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
+import com.google.cloud.tools.jib.api.buildplan.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.cli.ArtifactProcessor;
 import com.google.cloud.tools.jib.cli.ArtifactProcessors;
 import com.google.cloud.tools.jib.cli.CacheDirectories;
 import com.google.cloud.tools.jib.cli.CommonArtifactCommandOptions;
 import com.google.cloud.tools.jib.cli.Jar;
+import com.google.cloud.tools.jib.cli.War;
 import com.google.cloud.tools.jib.cli.jar.ProcessingMode;
 import com.google.cloud.tools.jib.cli.jar.SpringBootExplodedProcessor;
 import com.google.cloud.tools.jib.cli.jar.SpringBootPackagedProcessor;
 import com.google.cloud.tools.jib.cli.jar.StandardExplodedProcessor;
 import com.google.cloud.tools.jib.cli.jar.StandardPackagedProcessor;
+import com.google.cloud.tools.jib.cli.war.StandardWarExplodedProcessor;
 import com.google.common.io.Resources;
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -59,6 +62,7 @@ public class ArtifactProcessorsTest {
   @Mock private CacheDirectories mockCacheDirectories;
   @Mock private Jar mockJarCommand;
   @Mock private CommonArtifactCommandOptions mockCommonArtifactCommandOptions;
+  @Mock private War mockWarCommand;
 
   @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
@@ -179,5 +183,52 @@ public class ArtifactProcessorsTest {
             IllegalArgumentException.class,
             () -> ArtifactProcessors.determineJavaMajorVersion(jarPath));
     assertThat(exception).hasMessageThat().startsWith("Reached end of class file (class1.class)");
+  }
+
+  @Test
+  public void testFromWar_noJettyBaseImageAndNoAppRoot() {
+    when(mockCommonArtifactCommandOptions.getFrom()).thenReturn(Optional.of("base-image"));
+
+    IllegalStateException exception =
+        assertThrows(
+            IllegalStateException.class,
+            () ->
+                ArtifactProcessors.fromWar(
+                    Paths.get("my-app.war"),
+                    mockCacheDirectories,
+                    mockWarCommand,
+                    mockCommonArtifactCommandOptions));
+
+    assertThat(exception)
+        .hasMessageThat()
+        .isEqualTo(
+            "Please set the app-root of the container with `--app-root` when specifying a base image.");
+  }
+
+  @Test
+  public void testFromWar_noJettyBaseImageAndAppRootPresent_success() {
+    when(mockCommonArtifactCommandOptions.getFrom()).thenReturn(Optional.of("base-image"));
+    when(mockWarCommand.getAppRoot()).thenReturn(Optional.of(AbsoluteUnixPath.get("/app-root")));
+    when(mockCacheDirectories.getExplodedJarDirectory()).thenReturn(Paths.get("exploded-jar"));
+    ArtifactProcessor processor =
+        ArtifactProcessors.fromWar(
+            Paths.get("my-app.war"),
+            mockCacheDirectories,
+            mockWarCommand,
+            mockCommonArtifactCommandOptions);
+
+    assertThat(processor).isInstanceOf(StandardWarExplodedProcessor.class);
+  }
+
+  @Test
+  public void testFromWar_jettyBaseImageSpecified_success() {
+    when(mockCommonArtifactCommandOptions.getFrom()).thenReturn(Optional.of("jetty"));
+    ArtifactProcessor processor =
+        ArtifactProcessors.fromWar(
+            Paths.get("my-app.war"),
+            mockCacheDirectories,
+            mockWarCommand,
+            mockCommonArtifactCommandOptions);
+    assertThat(processor).isInstanceOf(StandardWarExplodedProcessor.class);
   }
 }

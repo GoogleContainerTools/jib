@@ -42,5 +42,7 @@ public interface ArtifactProcessor {
    */
   ImmutableList<String> computeEntrypoint(List<String> jvmFlags) throws IOException;
 
-  Integer getJavaVersion();
+  default Integer getJavaVersion() {
+    return 8;
+  }
 }

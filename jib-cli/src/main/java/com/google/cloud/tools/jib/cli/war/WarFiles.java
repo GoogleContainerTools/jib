@@ -24,7 +24,6 @@ import com.google.cloud.tools.jib.cli.ArtifactProcessor;
 import com.google.cloud.tools.jib.cli.CommonArtifactCommandOptions;
 import com.google.cloud.tools.jib.cli.CommonCliOptions;
 import com.google.cloud.tools.jib.cli.ContainerBuilders;
-import com.google.cloud.tools.jib.cli.War;
 import com.google.cloud.tools.jib.plugins.common.logging.ConsoleLogger;
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
@@ -38,7 +37,6 @@ public class WarFiles {
    * Generates a {@link JibContainerBuilder} from contents of a WAR file.
    *
    * @param processor artifact processor
-   * @param warOptions war cli options
    * @param commonCliOptions common cli options
    * @param commonArtifactCommandOptions common cli options shared between jar and war command
    * @param logger console logger
@@ -49,7 +47,6 @@ public class WarFiles {
    */
   public static JibContainerBuilder toJibContainerBuilder(
       ArtifactProcessor processor,
-      War warOptions,
       CommonCliOptions commonCliOptions,
       CommonArtifactCommandOptions commonArtifactCommandOptions,
       ConsoleLogger logger)
@@ -57,7 +54,7 @@ public class WarFiles {
     JibContainerBuilder containerBuilder;
     List<FileEntriesLayer> layers;
     Optional<String> baseImage = commonArtifactCommandOptions.getFrom();
-    if (commonArtifactCommandOptions.getFrom().isPresent()) {
+    if (baseImage.isPresent()) {
       containerBuilder =
           ContainerBuilders.create(
               commonArtifactCommandOptions.getFrom().get(),
@@ -68,11 +65,13 @@ public class WarFiles {
       containerBuilder = Jib.from("jetty");
     }
 
-    List<String> entrypoint = null;
+    List<String> entrypoint;
     if (baseImage.isPresent() && !baseImage.get().startsWith("jetty")) {
-      if (!commonArtifactCommandOptions.getEntrypoint().isEmpty()) {
-        entrypoint = commonArtifactCommandOptions.getEntrypoint();
-      }
+      List<String> entrypointFromCli = commonArtifactCommandOptions.getEntrypoint();
+      entrypoint =
+          entrypointFromCli.isEmpty()
+              ? null // inherit from base image
+              : entrypointFromCli;
     } else {
       entrypoint = processor.computeEntrypoint(ImmutableList.of());
     }

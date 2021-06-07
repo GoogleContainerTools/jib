@@ -29,7 +29,6 @@ import com.google.cloud.tools.jib.api.buildplan.Platform;
 import com.google.cloud.tools.jib.api.buildplan.Port;
 import com.google.cloud.tools.jib.cli.CommonArtifactCommandOptions;
 import com.google.cloud.tools.jib.cli.CommonCliOptions;
-import com.google.cloud.tools.jib.cli.War;
 import com.google.cloud.tools.jib.plugins.common.logging.ConsoleLogger;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -50,7 +49,6 @@ import org.mockito.junit.MockitoJUnitRunner;
 public class WarFilesTest {
 
   @Mock private StandardWarExplodedProcessor mockStandardWarExplodedProcessor;
-  @Mock private War mockWarCommand;
   @Mock private CommonCliOptions mockCommonCliOptions;
   @Mock private CommonArtifactCommandOptions mockCommonArtifactCommandOptions;
   @Mock private ConsoleLogger mockLogger;
@@ -72,7 +70,6 @@ public class WarFilesTest {
     JibContainerBuilder containerBuilder =
         WarFiles.toJibContainerBuilder(
             mockStandardWarExplodedProcessor,
-            mockWarCommand,
             mockCommonCliOptions,
             mockCommonArtifactCommandOptions,
             mockLogger);
@@ -127,7 +124,6 @@ public class WarFilesTest {
     JibContainerBuilder containerBuilder =
         WarFiles.toJibContainerBuilder(
             mockStandardWarExplodedProcessor,
-            mockWarCommand,
             mockCommonCliOptions,
             mockCommonArtifactCommandOptions,
             mockLogger);
@@ -145,5 +141,43 @@ public class WarFilesTest {
     assertThat(buildPlan.getCmd()).isEqualTo(ImmutableList.of("arg1"));
     assertThat(buildPlan.getEntrypoint()).isEqualTo(ImmutableList.of("custom", "entrypoint"));
     assertThat(buildPlan.getCreationTime()).isEqualTo(Instant.ofEpochSecond(5));
+  }
+
+  @Test
+  public void testToJibContainerBuilder_nonJettyBaseImageSpecifiedAndNoEntrypoint()
+      throws IOException, InvalidImageReferenceException {
+    when(mockCommonArtifactCommandOptions.getFrom()).thenReturn(Optional.of("base-image"));
+
+    JibContainerBuilder containerBuilder =
+        WarFiles.toJibContainerBuilder(
+            mockStandardWarExplodedProcessor,
+            mockCommonCliOptions,
+            mockCommonArtifactCommandOptions,
+            mockLogger);
+    ContainerBuildPlan buildPlan = containerBuilder.toContainerBuildPlan();
+
+    assertThat(buildPlan.getBaseImage()).isEqualTo("base-image");
+    assertThat(buildPlan.getEntrypoint()).isNull();
+  }
+
+  @Test
+  public void testToJibContainerBuilder_jettyBaseImageSpecified_usesDefaultEntrypoint()
+      throws IOException, InvalidImageReferenceException {
+    when(mockCommonArtifactCommandOptions.getFrom()).thenReturn(Optional.of("jetty"));
+    when(mockStandardWarExplodedProcessor.computeEntrypoint(ArgumentMatchers.anyList()))
+        .thenReturn(ImmutableList.of("java", "-jar", "/usr/local/jetty/start.jar"));
+
+    JibContainerBuilder containerBuilder =
+        WarFiles.toJibContainerBuilder(
+            mockStandardWarExplodedProcessor,
+            mockCommonCliOptions,
+            mockCommonArtifactCommandOptions,
+            mockLogger);
+    ContainerBuildPlan buildPlan = containerBuilder.toContainerBuildPlan();
+
+    assertThat(buildPlan.getBaseImage()).isEqualTo("jetty");
+    assertThat(buildPlan.getEntrypoint())
+        .containsExactly("java", "-jar", "/usr/local/jetty/start.jar")
+        .inOrder();
   }
 }

@@ -40,7 +40,7 @@ import picocli.CommandLine;
 
 public class JarCommandTest {
 
-  @ClassRule public static final TestProject springBootProject = new TestProject("spring-boot");
+  @ClassRule public static final TestProject springBootProject = new TestProject("jarTest/spring-boot");
 
   @Nullable private String containerName;
 
