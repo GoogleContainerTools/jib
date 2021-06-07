@@ -25,11 +25,6 @@ if (version.contains("SNAPSHOT")) {
 }
 /* LOCAL SNAPSHOT DEV */
 
-repositories {
-  // because gradle plugin dependencies are pulling from jcenter
-  jcenter()
-}
-
 dependencies {
   sourceProject project(':jib-core')
   sourceProject project(':jib-plugins-common')

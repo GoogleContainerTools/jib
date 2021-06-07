@@ -58,6 +58,5 @@ jib {
 }
 
 repositories {
-    jcenter()
     mavenCentral()
 }
