@@ -210,7 +210,7 @@ public class SingleProjectIntegrationTest {
     assertThat(getEntrypoint(targetImage))
         .isEqualTo(
             "[java -cp /d1:/d2:/app/resources:/app/classes:/app/libs/* com.test.HelloWorld]");
-    assertThat(getLayerSize(targetImage)).isEqualTo(9);
+    assertThat(getLayerSize(targetImage)).isEqualTo(10);
   }
 
   @Test
@@ -306,7 +306,7 @@ public class SingleProjectIntegrationTest {
             + "1970-01-01T00:00:01Z\n1970-01-01T00:00:01Z\n",
         JibRunHelper.buildToDockerDaemonAndRun(
             simpleTestProject, targetImage, "build-extra-dirs.gradle"));
-    assertThat(getLayerSize(targetImage)).isEqualTo(10); // one more than usual
+    assertThat(getLayerSize(targetImage)).isEqualTo(11); // one more than usual
   }
 
   @Test
@@ -318,7 +318,7 @@ public class SingleProjectIntegrationTest {
             + "1970-01-01T00:00:01Z\n1970-01-01T00:00:01Z\n",
         JibRunHelper.buildToDockerDaemonAndRun(
             simpleTestProject, targetImage, "build-extra-dirs2.gradle"));
-    assertThat(getLayerSize(targetImage)).isEqualTo(10); // one more than usual
+    assertThat(getLayerSize(targetImage)).isEqualTo(11); // one more than usual
   }
 
   @Test
@@ -330,7 +330,7 @@ public class SingleProjectIntegrationTest {
             + "1970-01-01T00:00:01Z\n1970-01-01T00:00:01Z\nbaz\n1970-01-01T00:00:01Z\n",
         JibRunHelper.buildToDockerDaemonAndRun(
             simpleTestProject, targetImage, "build-extra-dirs3.gradle"));
-    assertThat(getLayerSize(targetImage)).isEqualTo(10); // one more than usual
+    assertThat(getLayerSize(targetImage)).isEqualTo(11); // one more than usual
   }
 
   @Test

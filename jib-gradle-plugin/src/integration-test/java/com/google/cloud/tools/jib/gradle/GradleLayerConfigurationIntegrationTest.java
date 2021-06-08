@@ -18,7 +18,6 @@ package com.google.cloud.tools.jib.gradle;
 
 import static com.google.common.truth.Truth.assertThat;
 
-import com.google.common.collect.ImmutableList;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -27,7 +26,6 @@ import java.util.List;
 import java.util.zip.GZIPInputStream;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
-import org.junit.Assert;
 import org.junit.ClassRule;
 import org.junit.Test;
 
@@ -46,11 +44,12 @@ public class GradleLayerConfigurationIntegrationTest {
 
     // the expected order is:
     // no base image layers (scratch)
-    // classes (0)
-    // resources (1)
-    // dependencies (2)
+    // jvm arg files (0)
+    // classes (1)
+    // resources (2)
+    // dependencies (3)
     // verify dependencies
-    List<String> dependencies = layers.get(2);
+    List<String> dependencies = layers.get(3);
     assertThat(dependencies).containsExactly("app/", "app/libs/", "app/libs/dependency2").inOrder();
   }
 
@@ -59,6 +58,7 @@ public class GradleLayerConfigurationIntegrationTest {
       throws IOException {
     configTestProject.build(
         "jibBuildTar",
+        "--stacktrace",
         "-Djib.configurationName=otherConfiguration",
         "-b=build-configuration.gradle");
     Path jibTar = configTestProject.getProjectRoot().resolve("build/jib-image.tar");
@@ -66,11 +66,12 @@ public class GradleLayerConfigurationIntegrationTest {
 
     // the expected order is:
     // no base image layers (scratch)
-    // classes (0)
-    // resources (1)
-    // dependencies (2)
+    // jvm arg files (0)
+    // classes (1)
+    // resources (2)
+    // dependencies (3)
     // verify dependencies
-    List<String> dependencies = layers.get(2);
+    List<String> dependencies = layers.get(3);
     assertThat(dependencies).containsExactly("app/", "app/libs/", "app/libs/dependency3").inOrder();
   }
 
@@ -82,57 +83,53 @@ public class GradleLayerConfigurationIntegrationTest {
 
     List<List<String>> layers = getLayers(jibTar);
 
-    Assert.assertEquals(6, layers.size());
+    assertThat(layers).hasSize(7);
 
     // the expected order is:
     // no base image layers (scratch)
     // extra-files (0)
-    // classes (1)
-    // resources (2)
-    // project dependencies (3)
-    // snapshot dependencies (4)
-    // dependencies (5)
+    // jvm arg files (1)
+    // classes (2)
+    // resources (3)
+    // project dependencies (4)
+    // snapshot dependencies (5)
+    // dependencies (6)
 
     // verify dependencies
-    List<String> dependencies = layers.get(5);
-    List<String> expectedDependencies =
-        ImmutableList.of("app/", "app/libs/", "app/libs/dependency-1.0.0.jar");
-    Assert.assertEquals(expectedDependencies, dependencies);
+    assertThat(layers.get(6))
+        .containsExactly("app/", "app/libs/", "app/libs/dependency-1.0.0.jar")
+        .inOrder();
 
     // verify snapshot dependencies
-    List<String> snapshotDependencies = layers.get(4);
-    List<String> expectedSnapshotDependencies =
-        ImmutableList.of("app/", "app/libs/", "app/libs/dependencyX-1.0.0-SNAPSHOT.jar");
-    Assert.assertEquals(expectedSnapshotDependencies, snapshotDependencies);
+    assertThat(layers.get(5))
+        .containsExactly("app/", "app/libs/", "app/libs/dependencyX-1.0.0-SNAPSHOT.jar")
+        .inOrder();
 
     // verify project dependencies
-    List<String> projectDependencies = layers.get(3);
-    List<String> expectedProjectDependencies =
-        ImmutableList.of("app/", "app/libs/", "app/libs/lib.jar");
-    Assert.assertEquals(expectedProjectDependencies, projectDependencies);
+    assertThat(layers.get(4)).containsExactly("app/", "app/libs/", "app/libs/lib.jar").inOrder();
 
     // verify resources
-    List<String> resources = layers.get(2);
-    List<String> expectedResources =
-        ImmutableList.of(
-            "app/", "app/resources/", "app/resources/resource1.txt", "app/resources/resource2.txt");
-    Assert.assertEquals(expectedResources, resources);
+    assertThat(layers.get(3))
+        .containsExactly(
+            "app/", "app/resources/", "app/resources/resource1.txt", "app/resources/resource2.txt")
+        .inOrder();
 
     // verify classes
-    List<String> classes = layers.get(1);
-    List<String> expectedClasses =
-        ImmutableList.of(
+    assertThat(layers.get(2))
+        .containsExactly(
             "app/",
             "app/classes/",
             "app/classes/com/",
             "app/classes/com/test/",
             "app/classes/com/test/HelloWorld.class");
-    Assert.assertEquals(expectedClasses, classes);
+
+    // verify jvm arg files
+    assertThat(layers.get(1))
+        .containsExactly("app/", "app/jib-classpath-file", "app/jib-main-class-file")
+        .inOrder();
 
     // verify extra files
-    List<String> extraFiles = layers.get(0);
-    List<String> expectedExtraFiles = ImmutableList.of("extra-file");
-    Assert.assertEquals(expectedExtraFiles, extraFiles);
+    assertThat(layers.get(0)).containsExactly("extra-file");
   }
 
   @Test
@@ -143,22 +140,27 @@ public class GradleLayerConfigurationIntegrationTest {
 
     List<List<String>> layers = getLayers(jibTar);
 
-    Assert.assertEquals(1, layers.size());
+    assertThat(layers).hasSize(2);
 
     // the expected order is:
     // no base image layers (scratch)
-    // classes (0)
+    // jvm arg files (0)
+    // classes (1)
 
     // verify classes
-    List<String> classes = layers.get(0);
-    List<String> expectedClasses =
-        ImmutableList.of(
+    assertThat(layers.get(1))
+        .containsExactly(
             "app/",
             "app/classes/",
             "app/classes/com/",
             "app/classes/com/test/",
-            "app/classes/com/test/HelloWorld.class");
-    Assert.assertEquals(expectedClasses, classes);
+            "app/classes/com/test/HelloWorld.class")
+        .inOrder();
+
+    // verify jvm arg files
+    assertThat(layers.get(0))
+        .containsExactly("app/", "app/jib-classpath-file", "app/jib-main-class-file")
+        .inOrder();
   }
 
   // returns all files in layers (*.tar.gz) in a image tar

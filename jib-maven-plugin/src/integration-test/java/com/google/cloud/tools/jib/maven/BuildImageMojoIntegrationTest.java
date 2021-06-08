@@ -17,6 +17,7 @@
 package com.google.cloud.tools.jib.maven;
 
 import static com.google.common.truth.Truth.assertThat;
+import static org.junit.Assert.fail;
 
 import com.google.cloud.tools.jib.Command;
 import com.google.cloud.tools.jib.IntegrationTestingConfiguration;
@@ -52,10 +53,7 @@ import java.util.regex.Pattern;
 import javax.annotation.Nullable;
 import org.apache.maven.it.VerificationException;
 import org.apache.maven.it.Verifier;
-import org.hamcrest.CoreMatchers;
-import org.hamcrest.MatcherAssert;
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Assume;
 import org.junit.Before;
 import org.junit.ClassRule;
@@ -89,7 +87,7 @@ public class BuildImageMojoIntegrationTest {
   }
 
   static String readDigestFile(Path digestPath) throws IOException, DigestException {
-    Assert.assertTrue("File missing: " + digestPath, Files.exists(digestPath));
+    assertThat(Files.exists(digestPath)).isTrue();
     String digest = new String(Files.readAllBytes(digestPath), StandardCharsets.UTF_8);
     return DescriptorDigest.fromDigest(digest).toString();
   }
@@ -127,8 +125,8 @@ public class BuildImageMojoIntegrationTest {
     verifier.executeGoal("jib:build");
     float timeTwo = getBuildTimeFromVerifierLog(verifier);
 
-    String failMessage = "First build time (%s) is not greater than second build time (%s)";
-    Assert.assertTrue(String.format(failMessage, timeOne, timeTwo), timeOne > timeTwo);
+    // The first build should take longer than the second build.
+    assertThat(timeOne).isGreaterThan(timeTwo);
     return verifier;
   }
 
@@ -148,15 +146,15 @@ public class BuildImageMojoIntegrationTest {
       String digest = readDigestFile(projectRoot.resolve("target/jib-image.digest"));
       String imageReferenceWithDigest =
           ImageReference.parse(imageReference).withQualifier(digest).toString();
-      Assert.assertEquals(output, pullAndRunBuiltImage(imageReferenceWithDigest));
+      assertThat(pullAndRunBuiltImage(imageReferenceWithDigest)).isEqualTo(output);
 
       // Test running using image id
       String id = readDigestFile(projectRoot.resolve("target/jib-image.id"));
-      Assert.assertNotEquals(digest, id);
-      Assert.assertEquals(output, new Command("docker", "run", "--rm", id).run());
+      assertThat(id).isNotEqualTo(digest);
+      assertThat(new Command("docker", "run", "--rm", id).run()).isEqualTo(output);
 
     } catch (InvalidImageReferenceException ex) {
-      throw new AssertionError("error replacing tag with digest");
+      fail("error replacing tag with digest");
     }
 
     return output;
@@ -186,8 +184,8 @@ public class BuildImageMojoIntegrationTest {
     verifier.executeGoal("jib:build");
     float timeTwo = getBuildTimeFromVerifierLog(verifier);
 
-    String failMessage = "First build time (%s) is not greater than second build time (%s)";
-    Assert.assertTrue(String.format(failMessage, timeOne, timeTwo), timeOne > timeTwo);
+    // The first build should take longer than the second build.
+    assertThat(timeOne).isGreaterThan(timeTwo);
     return pullAndRunBuiltImage(targetImage);
   }
 
@@ -212,13 +210,13 @@ public class BuildImageMojoIntegrationTest {
 
     String output = pullAndRunBuiltImage(imageReference);
     String additionalOutput = pullAndRunBuiltImage(additionalImageReference);
-    Assert.assertEquals(output, additionalOutput);
+    assertThat(additionalOutput).isEqualTo(output);
 
     String digest = readDigestFile(projectRoot.resolve("target/jib-image.digest"));
     String digestImageReference =
         ImageReference.parse(imageReference).withQualifier(digest).toString();
     String digestOutput = pullAndRunBuiltImage(digestImageReference);
-    Assert.assertEquals(output, digestOutput);
+    assertThat(digestOutput).isEqualTo(output);
 
     assertThat(getCreationTime(imageReference)).isEqualTo(Instant.EPOCH);
     assertThat(getCreationTime(additionalImageReference)).isEqualTo(Instant.EPOCH);
@@ -294,7 +292,7 @@ public class BuildImageMojoIntegrationTest {
       }
     }
 
-    Assert.fail("Could not find build execution time in logs");
+    fail("Could not find build execution time in logs");
     // Should not reach here.
     return -1;
   }
@@ -320,12 +318,11 @@ public class BuildImageMojoIntegrationTest {
         .trim();
   }
 
-  private static void assertLayerSize(int expected, String imageReference)
-      throws IOException, InterruptedException {
+  private static int getLayerSize(String imageReference) throws IOException, InterruptedException {
     Command command =
         new Command("docker", "inspect", "-f", "{{join .RootFS.Layers \",\"}}", imageReference);
     String layers = command.run().trim();
-    Assert.assertEquals(expected, Splitter.on(",").splitToList(layers).size());
+    return Splitter.on(",").splitToList(layers).size();
   }
 
   @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
@@ -367,15 +364,15 @@ public class BuildImageMojoIntegrationTest {
       verifier.setSystemProperty("_TARGET_IMAGE", targetImage);
       verifier.setAutoclean(false);
       verifier.executeGoals(Arrays.asList("clean", "jib:build"));
-      Assert.fail();
+      fail();
 
     } catch (VerificationException ex) {
-      MatcherAssert.assertThat(
-          ex.getMessage(),
-          CoreMatchers.containsString(
+      assertThat(ex)
+          .hasMessageThat()
+          .contains(
               "Obtaining project build output files failed; make sure you have compiled your "
                   + "project before trying to build the image. (Did you accidentally run \"mvn "
-                  + "clean jib:build\" instead of \"mvn clean compile jib:build\"?)"));
+                  + "clean jib:build\" instead of \"mvn clean compile jib:build\"?)");
     }
 
     Instant before = Instant.now();
@@ -393,16 +390,16 @@ public class BuildImageMojoIntegrationTest {
             .resolve("world"),
         before.toString().getBytes(StandardCharsets.UTF_8));
 
-    Assert.assertEquals(
-        "Hello, "
-            + before
-            + ". An argument.\n1970-01-01T00:00:01Z\nrw-r--r--\nrw-r--r--\nfoo\ncat\n"
-            + "1970-01-01T00:00:01Z\n1970-01-01T00:00:01Z\n",
-        buildAndRun(simpleTestProject.getProjectRoot(), targetImage, "pom.xml", true));
+    assertThat(buildAndRun(simpleTestProject.getProjectRoot(), targetImage, "pom.xml", true))
+        .isEqualTo(
+            "Hello, "
+                + before
+                + ". An argument.\n1970-01-01T00:00:01Z\nrw-r--r--\nrw-r--r--\nfoo\ncat\n"
+                + "1970-01-01T00:00:01Z\n1970-01-01T00:00:01Z\n");
 
     assertThat(getCreationTime(targetImage)).isEqualTo(Instant.EPOCH);
     assertThat(getWorkingDirectory(targetImage)).isEqualTo("/home");
-    assertLayerSize(9, targetImage);
+    assertThat(getLayerSize(targetImage)).isEqualTo(10);
   }
 
   @Test
@@ -413,14 +410,15 @@ public class BuildImageMojoIntegrationTest {
             + "/simplewithdockerdaemonbase:maven"
             + System.nanoTime();
 
-    Assert.assertEquals(
-        "Hello, world. An argument.\n1970-01-01T00:00:01Z\nrw-r--r--\nrw-r--r--\nfoo\ncat\n"
-            + "1970-01-01T00:00:01Z\n1970-01-01T00:00:01Z\n",
-        buildAndRunFromLocalBase(
-            simpleTestProject.getProjectRoot(),
-            targetImage,
-            "docker://gcr.io/distroless/java:latest",
-            false));
+    assertThat(
+            buildAndRunFromLocalBase(
+                simpleTestProject.getProjectRoot(),
+                targetImage,
+                "docker://gcr.io/distroless/java:latest",
+                false))
+        .isEqualTo(
+            "Hello, world. An argument.\n1970-01-01T00:00:01Z\nrw-r--r--\nrw-r--r--\nfoo\ncat\n"
+                + "1970-01-01T00:00:01Z\n1970-01-01T00:00:01Z\n");
   }
 
   @Test
@@ -432,11 +430,12 @@ public class BuildImageMojoIntegrationTest {
             + "/simplewithtarbase:maven"
             + System.nanoTime();
 
-    Assert.assertEquals(
-        "Hello, world. An argument.\n1970-01-01T00:00:01Z\nrw-r--r--\nrw-r--r--\nfoo\ncat\n"
-            + "1970-01-01T00:00:01Z\n1970-01-01T00:00:01Z\n",
-        buildAndRunFromLocalBase(
-            simpleTestProject.getProjectRoot(), targetImage, "tar://" + path, true));
+    assertThat(
+            buildAndRunFromLocalBase(
+                simpleTestProject.getProjectRoot(), targetImage, "tar://" + path, true))
+        .isEqualTo(
+            "Hello, world. An argument.\n1970-01-01T00:00:01Z\nrw-r--r--\nrw-r--r--\nfoo\ncat\n"
+                + "1970-01-01T00:00:01Z\n1970-01-01T00:00:01Z\n");
   }
 
   @Test
@@ -450,12 +449,12 @@ public class BuildImageMojoIntegrationTest {
       verifier.setAutoclean(false);
       verifier.addCliOption("--offline");
       verifier.executeGoals(Arrays.asList("clean", "compile", "jib:build"));
-      Assert.fail();
+      fail();
 
     } catch (VerificationException ex) {
-      MatcherAssert.assertThat(
-          ex.getMessage(),
-          CoreMatchers.containsString("Cannot build to a container registry in offline mode"));
+      assertThat(ex)
+          .hasMessageThat()
+          .contains("Cannot build to a container registry in offline mode");
     }
   }
 
@@ -465,9 +464,9 @@ public class BuildImageMojoIntegrationTest {
     Assume.assumeTrue(isJava11RuntimeOrHigher());
 
     String targetImage = getTestImageReference("simpleimage:maven");
-    Assert.assertEquals(
-        "Hello, world. An argument.\n1970-01-01T00:00:01Z\n",
-        buildAndRun(simpleTestProject.getProjectRoot(), targetImage, "pom-java11.xml", false));
+    assertThat(
+            buildAndRun(simpleTestProject.getProjectRoot(), targetImage, "pom-java11.xml", false))
+        .isEqualTo("Hello, world. An argument.\n1970-01-01T00:00:01Z\n");
   }
 
   @Test
@@ -478,15 +477,15 @@ public class BuildImageMojoIntegrationTest {
     try {
       buildAndRun(
           simpleTestProject.getProjectRoot(), "willnotbuild", "pom-java11-incompatible.xml", false);
-      Assert.fail();
+      fail();
     } catch (VerificationException ex) {
-      MatcherAssert.assertThat(
-          ex.getMessage(),
-          CoreMatchers.containsString(
+      assertThat(ex)
+          .hasMessageThat()
+          .contains(
               "Your project is using Java 11 but the base image is for Java 8, perhaps you should "
                   + "configure a Java 11-compatible base image using the '<from><image>' "
                   + "parameter, or set maven-compiler-plugin's '<target>' or '<release>' version "
-                  + "to 8 or below in your build configuration"));
+                  + "to 8 or below in your build configuration");
     }
   }
 
@@ -494,8 +493,8 @@ public class BuildImageMojoIntegrationTest {
   public void testExecute_empty()
       throws InterruptedException, IOException, VerificationException, DigestException {
     String targetImage = getTestImageReference("emptyimage:maven");
-    Assert.assertEquals(
-        "", buildAndRun(emptyTestProject.getProjectRoot(), targetImage, "pom.xml", false));
+    assertThat(buildAndRun(emptyTestProject.getProjectRoot(), targetImage, "pom.xml", false))
+        .isEmpty();
     assertThat(getCreationTime(targetImage)).isEqualTo(Instant.EPOCH);
     assertThat(getWorkingDirectory(targetImage)).isEmpty();
   }
@@ -505,21 +504,23 @@ public class BuildImageMojoIntegrationTest {
       throws IOException, InterruptedException, InvalidImageReferenceException,
           VerificationException, DigestException {
     String targetImage = getTestImageReference("multitag-image:maven");
-    Assert.assertEquals(
-        "",
-        buildAndRunAdditionalTag(
-            emptyTestProject.getProjectRoot(), targetImage, "maven-2" + System.nanoTime()));
+    assertThat(
+            buildAndRunAdditionalTag(
+                emptyTestProject.getProjectRoot(), targetImage, "maven-2" + System.nanoTime()))
+        .isEmpty();
   }
 
   @Test
   public void testExecute_multipleExtraDirectories()
       throws DigestException, VerificationException, IOException, InterruptedException {
     String targetImage = getTestImageReference("simpleimage:maven");
-    Assert.assertEquals(
-        "Hello, world. An argument.\n1970-01-01T00:00:01Z\nrw-r--r--\nrw-r--r--\nfoo\ncat\n"
-            + "1970-01-01T00:00:01Z\n1970-01-01T00:00:01Z\nbaz\n1970-01-01T00:00:01Z\n",
-        buildAndRun(simpleTestProject.getProjectRoot(), targetImage, "pom-extra-dirs.xml", false));
-    assertLayerSize(10, targetImage); // one more than usual
+    assertThat(
+            buildAndRun(
+                simpleTestProject.getProjectRoot(), targetImage, "pom-extra-dirs.xml", false))
+        .isEqualTo(
+            "Hello, world. An argument.\n1970-01-01T00:00:01Z\nrw-r--r--\nrw-r--r--\nfoo\ncat\n"
+                + "1970-01-01T00:00:01Z\n1970-01-01T00:00:01Z\nbaz\n1970-01-01T00:00:01Z\n");
+    assertThat(getLayerSize(targetImage)).isEqualTo(11); // one more than usual
   }
 
   @Test
@@ -529,15 +530,15 @@ public class BuildImageMojoIntegrationTest {
       Verifier verifier = new Verifier(defaultTargetTestProject.getProjectRoot().toString());
       verifier.setAutoclean(false);
       verifier.executeGoals(Arrays.asList("clean", "jib:build"));
-      Assert.fail();
+      fail();
 
     } catch (VerificationException ex) {
-      MatcherAssert.assertThat(
-          ex.getMessage(),
-          CoreMatchers.containsString(
+      assertThat(ex)
+          .hasMessageThat()
+          .contains(
               "Missing target image parameter, perhaps you should add a <to><image> configuration "
                   + "parameter to your pom.xml or set the parameter via the commandline (e.g. 'mvn "
-                  + "compile jib:build -Dimage=<your image name>')."));
+                  + "compile jib:build -Dimage=<your image name>').");
     }
   }
 
@@ -547,18 +548,18 @@ public class BuildImageMojoIntegrationTest {
     String targetImage = "localhost:5000/compleximage:maven" + System.nanoTime();
     Instant before = Instant.now();
     String output = buildAndRunComplex(targetImage, "pom-complex.xml");
-    Assert.assertEquals(
-        "Hello, world. An argument.\n1970-01-01T00:00:01Z\nrwxr-xr-x\nrwxrwxrwx\nfoo\ncat\n"
-            + "1970-01-01T00:00:01Z\n1970-01-01T00:00:01Z\n"
-            + "-Xms512m\n-Xdebug\nenvvalue1\nenvvalue2\n",
-        output);
+    assertThat(output)
+        .isEqualTo(
+            "Hello, world. An argument.\n1970-01-01T00:00:01Z\nrwxr-xr-x\nrwxrwxrwx\nfoo\ncat\n"
+                + "1970-01-01T00:00:01Z\n1970-01-01T00:00:01Z\n"
+                + "-Xms512m\n-Xdebug\nenvvalue1\nenvvalue2\n");
     String digest =
         readDigestFile(
             simpleTestProject.getProjectRoot().resolve("target/different-jib-image.digest"));
     String id =
         readDigestFile(simpleTestProject.getProjectRoot().resolve("different-jib-image.id"));
-    Assert.assertNotEquals(digest, id);
-    Assert.assertEquals(output, new Command("docker", "run", "--rm", id).run());
+    assertThat(id).isNotEqualTo(digest);
+    assertThat(new Command("docker", "run", "--rm", id).run()).isEqualTo(output);
 
     assertThat(getCreationTime(targetImage)).isGreaterThan(before);
     assertThat(getWorkingDirectory(targetImage)).isEqualTo("/");
@@ -573,10 +574,10 @@ public class BuildImageMojoIntegrationTest {
       throws IOException, InterruptedException, VerificationException {
     String targetImage = "localhost:5000/simpleimage:maven" + System.nanoTime();
     String pom = "pom-timestamps-custom.xml";
-    Assert.assertEquals(
-        "Hello, world. \n2019-06-17T16:30:00Z\nrw-r--r--\nrw-r--r--\n"
-            + "foo\ncat\n2019-06-17T16:30:00Z\n2019-06-17T16:30:00Z\n",
-        buildAndRunComplex(targetImage, pom));
+    assertThat(buildAndRunComplex(targetImage, pom))
+        .isEqualTo(
+            "Hello, world. \n2019-06-17T16:30:00Z\nrw-r--r--\nrw-r--r--\n"
+                + "foo\ncat\n2019-06-17T16:30:00Z\n2019-06-17T16:30:00Z\n");
 
     assertThat(getCreationTime(targetImage)).isEqualTo(Instant.parse("2013-11-05T06:29:30Z"));
   }
@@ -585,11 +586,11 @@ public class BuildImageMojoIntegrationTest {
   public void testExecute_complex_sameFromAndToRegistry()
       throws IOException, InterruptedException, VerificationException {
     String targetImage = "localhost:5000/compleximage:maven" + System.nanoTime();
-    Assert.assertEquals(
-        "Hello, world. An argument.\n1970-01-01T00:00:01Z\nrwxr-xr-x\nrwxrwxrwx\nfoo\ncat\n"
-            + "1970-01-01T00:00:01Z\n1970-01-01T00:00:01Z\n"
-            + "-Xms512m\n-Xdebug\nenvvalue1\nenvvalue2\n",
-        buildAndRunComplex(targetImage, "pom-complex.xml"));
+    assertThat(buildAndRunComplex(targetImage, "pom-complex.xml"))
+        .isEqualTo(
+            "Hello, world. An argument.\n1970-01-01T00:00:01Z\nrwxr-xr-x\nrwxrwxrwx\nfoo\ncat\n"
+                + "1970-01-01T00:00:01Z\n1970-01-01T00:00:01Z\n"
+                + "-Xms512m\n-Xdebug\nenvvalue1\nenvvalue2\n");
     assertThat(getWorkingDirectory(targetImage)).isEqualTo("/");
   }
 
@@ -597,11 +598,11 @@ public class BuildImageMojoIntegrationTest {
   public void testExecute_complexProperties()
       throws InterruptedException, VerificationException, IOException {
     String targetImage = "localhost:5000/compleximage:maven" + System.nanoTime();
-    Assert.assertEquals(
-        "Hello, world. An argument.\n1970-01-01T00:00:01Z\nrwxr-xr-x\nrwxrwxrwx\nfoo\ncat\n"
-            + "1970-01-01T00:00:01Z\n1970-01-01T00:00:01Z\n"
-            + "-Xms512m\n-Xdebug\nenvvalue1\nenvvalue2\n",
-        buildAndRunComplex(targetImage, "pom-complex-properties.xml"));
+    assertThat(buildAndRunComplex(targetImage, "pom-complex-properties.xml"))
+        .isEqualTo(
+            "Hello, world. An argument.\n1970-01-01T00:00:01Z\nrwxr-xr-x\nrwxrwxrwx\nfoo\ncat\n"
+                + "1970-01-01T00:00:01Z\n1970-01-01T00:00:01Z\n"
+                + "-Xms512m\n-Xdebug\nenvvalue1\nenvvalue2\n");
     assertThat(getWorkingDirectory(targetImage)).isEqualTo("/");
   }
 
@@ -641,10 +642,9 @@ public class BuildImageMojoIntegrationTest {
       // this plugin should be > 1.0 and so jib:build should fail
       verifier.setSystemProperty("jib.requiredVersion", "[,1.0]");
       verifier.executeGoals(Arrays.asList("package", "jib:build"));
-      Assert.fail();
+      fail();
     } catch (VerificationException ex) {
-      MatcherAssert.assertThat(
-          ex.getMessage(), CoreMatchers.containsString("but is required to be [,1.0]"));
+      assertThat(ex).hasMessageThat().contains("but is required to be [,1.0]");
     }
   }
 
@@ -676,10 +676,9 @@ public class BuildImageMojoIntegrationTest {
                 "-c",
                 "/app/classpath/spring-boot-0.1.0.original.jar")
             .run();
-    MatcherAssert.assertThat(
-        sizeOutput, CoreMatchers.containsString(" /app/classpath/spring-boot-0.1.0.original.jar"));
+    assertThat(sizeOutput).contains(" /app/classpath/spring-boot-0.1.0.original.jar");
     int fileSize = Integer.parseInt(sizeOutput.substring(0, sizeOutput.indexOf(' ')));
-    Assert.assertTrue(fileSize < 3000); // should not be a large fat jar
+    assertThat(fileSize).isLessThan(3000); // should not be a large fat jar
 
     HttpGetVerifier.verifyBody("Hello world", new URL("http://localhost:8080"));
   }
@@ -711,57 +710,54 @@ public class BuildImageMojoIntegrationTest {
 
     // manifest list by tag ":latest"
     ManifestTemplate manifestList = registryClient.pullManifest("latest").getManifest();
-    MatcherAssert.assertThat(manifestList, CoreMatchers.instanceOf(V22ManifestListTemplate.class));
+    assertThat(manifestList).isInstanceOf(V22ManifestListTemplate.class);
     V22ManifestListTemplate v22ManifestList = (V22ManifestListTemplate) manifestList;
 
-    Assert.assertEquals(2, v22ManifestList.getManifests().size());
+    assertThat(v22ManifestList.getManifests().size()).isEqualTo(2);
     ManifestDescriptorTemplate.Platform platform1 =
         v22ManifestList.getManifests().get(0).getPlatform();
     ManifestDescriptorTemplate.Platform platform2 =
         v22ManifestList.getManifests().get(1).getPlatform();
 
-    Assert.assertEquals("arm64", platform1.getArchitecture());
-    Assert.assertEquals("linux", platform1.getOs());
-    Assert.assertEquals("amd64", platform2.getArchitecture());
-    Assert.assertEquals("linux", platform2.getOs());
+    assertThat(platform1.getArchitecture()).isEqualTo("arm64");
+    assertThat(platform1.getOs()).isEqualTo("linux");
+    assertThat(platform2.getArchitecture()).isEqualTo("amd64");
+    assertThat(platform2.getOs()).isEqualTo("linux");
 
     // manifest list by tag ":another"
     ManifestTemplate anotherManifestList = registryClient.pullManifest("another").getManifest();
-    Assert.assertEquals(
-        JsonTemplateMapper.toUtf8String(manifestList),
-        JsonTemplateMapper.toUtf8String(anotherManifestList));
+    assertThat(JsonTemplateMapper.toUtf8String(anotherManifestList))
+        .isEqualTo(JsonTemplateMapper.toUtf8String(manifestList));
 
     // Check arm64/linux container config.
     List<String> arm64Digests = v22ManifestList.getDigestsForPlatform("arm64", "linux");
-    Assert.assertEquals(1, arm64Digests.size());
+    assertThat(arm64Digests.size()).isEqualTo(1);
     String arm64Digest = arm64Digests.get(0);
 
     ManifestTemplate arm64Manifest = registryClient.pullManifest(arm64Digest).getManifest();
-    MatcherAssert.assertThat(arm64Manifest, CoreMatchers.instanceOf(V22ManifestTemplate.class));
+    assertThat(arm64Manifest).isInstanceOf(V22ManifestTemplate.class);
     V22ManifestTemplate arm64V22Manifest = (V22ManifestTemplate) arm64Manifest;
     DescriptorDigest arm64ConfigDigest = arm64V22Manifest.getContainerConfiguration().getDigest();
 
     Blob arm64ConfigBlob = registryClient.pullBlob(arm64ConfigDigest, ignored -> {}, ignored -> {});
     String arm64Config = Blobs.writeToString(arm64ConfigBlob);
-    MatcherAssert.assertThat(
-        arm64Config, CoreMatchers.containsString("\"architecture\":\"arm64\""));
-    MatcherAssert.assertThat(arm64Config, CoreMatchers.containsString("\"os\":\"linux\""));
+    assertThat(arm64Config).contains("\"architecture\":\"arm64\"");
+    assertThat(arm64Config).contains("\"os\":\"linux\"");
 
     // Check amd64/linux container config.
     List<String> amd64Digests = v22ManifestList.getDigestsForPlatform("amd64", "linux");
-    Assert.assertEquals(1, amd64Digests.size());
+    assertThat(amd64Digests.size()).isEqualTo(1);
     String amd64Digest = amd64Digests.get(0);
 
     ManifestTemplate amd64Manifest = registryClient.pullManifest(amd64Digest).getManifest();
-    MatcherAssert.assertThat(amd64Manifest, CoreMatchers.instanceOf(V22ManifestTemplate.class));
+    assertThat(amd64Manifest).isInstanceOf(V22ManifestTemplate.class);
     V22ManifestTemplate amd64V22Manifest = (V22ManifestTemplate) amd64Manifest;
     DescriptorDigest amd64ConfigDigest = amd64V22Manifest.getContainerConfiguration().getDigest();
 
     Blob amd64ConfigBlob = registryClient.pullBlob(amd64ConfigDigest, ignored -> {}, ignored -> {});
     String amd64Config = Blobs.writeToString(amd64ConfigBlob);
-    MatcherAssert.assertThat(
-        amd64Config, CoreMatchers.containsString("\"architecture\":\"amd64\""));
-    MatcherAssert.assertThat(amd64Config, CoreMatchers.containsString("\"os\":\"linux\""));
+    assertThat(amd64Config).contains("\"architecture\":\"amd64\"");
+    assertThat(amd64Config).contains("\"os\":\"linux\"");
   }
 
   private void buildAndRunWebApp(TestProject project, String label, String pomXml)
