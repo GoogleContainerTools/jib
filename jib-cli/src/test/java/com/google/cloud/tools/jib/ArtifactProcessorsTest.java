@@ -26,7 +26,7 @@ import com.google.cloud.tools.jib.api.buildplan.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.cli.ArtifactProcessor;
 import com.google.cloud.tools.jib.cli.ArtifactProcessors;
 import com.google.cloud.tools.jib.cli.CacheDirectories;
-import com.google.cloud.tools.jib.cli.CommonArtifactCommandOptions;
+import com.google.cloud.tools.jib.cli.CommonContainerConfigCliOptions;
 import com.google.cloud.tools.jib.cli.Jar;
 import com.google.cloud.tools.jib.cli.War;
 import com.google.cloud.tools.jib.cli.jar.ProcessingMode;
@@ -61,8 +61,8 @@ public class ArtifactProcessorsTest {
 
   @Mock private CacheDirectories mockCacheDirectories;
   @Mock private Jar mockJarCommand;
-  @Mock private CommonArtifactCommandOptions mockCommonArtifactCommandOptions;
   @Mock private War mockWarCommand;
+  @Mock private CommonContainerConfigCliOptions mockCommonContainerConfigCliOptions;
 
   @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
@@ -75,7 +75,7 @@ public class ArtifactProcessorsTest {
 
     ArtifactProcessor processor =
         ArtifactProcessors.fromJar(
-            jarPath, mockCacheDirectories, mockJarCommand, mockCommonArtifactCommandOptions);
+            jarPath, mockCacheDirectories, mockJarCommand, mockCommonContainerConfigCliOptions);
 
     verify(mockCacheDirectories).getExplodedJarDirectory();
     assertThat(processor).isInstanceOf(StandardExplodedProcessor.class);
@@ -88,7 +88,7 @@ public class ArtifactProcessorsTest {
 
     ArtifactProcessor processor =
         ArtifactProcessors.fromJar(
-            jarPath, mockCacheDirectories, mockJarCommand, mockCommonArtifactCommandOptions);
+            jarPath, mockCacheDirectories, mockJarCommand, mockCommonContainerConfigCliOptions);
 
     verifyNoInteractions(mockCacheDirectories);
     assertThat(processor).isInstanceOf(StandardPackagedProcessor.class);
@@ -101,7 +101,7 @@ public class ArtifactProcessorsTest {
 
     ArtifactProcessor processor =
         ArtifactProcessors.fromJar(
-            jarPath, mockCacheDirectories, mockJarCommand, mockCommonArtifactCommandOptions);
+            jarPath, mockCacheDirectories, mockJarCommand, mockCommonContainerConfigCliOptions);
 
     verifyNoInteractions(mockCacheDirectories);
     assertThat(processor).isInstanceOf(SpringBootPackagedProcessor.class);
@@ -116,7 +116,7 @@ public class ArtifactProcessorsTest {
 
     ArtifactProcessor processor =
         ArtifactProcessors.fromJar(
-            jarPath, mockCacheDirectories, mockJarCommand, mockCommonArtifactCommandOptions);
+            jarPath, mockCacheDirectories, mockJarCommand, mockCommonContainerConfigCliOptions);
 
     verify(mockCacheDirectories).getExplodedJarDirectory();
     assertThat(processor).isInstanceOf(SpringBootExplodedProcessor.class);
@@ -134,7 +134,8 @@ public class ArtifactProcessorsTest {
                     jarPath,
                     mockCacheDirectories,
                     mockJarCommand,
-                    mockCommonArtifactCommandOptions));
+                    mockCommonContainerConfigCliOptions));
+
     assertThat(exception)
         .hasMessageThat()
         .startsWith("The input JAR (" + jarPath + ") is compiled with Java 14");
@@ -145,11 +146,11 @@ public class ArtifactProcessorsTest {
       throws URISyntaxException, IOException {
     Path jarPath = Paths.get(Resources.getResource(JAVA_14_JAR).toURI());
     when(mockJarCommand.getMode()).thenReturn(ProcessingMode.exploded);
-    when(mockCommonArtifactCommandOptions.getFrom()).thenReturn(Optional.of("base-image"));
+    when(mockCommonContainerConfigCliOptions.getFrom()).thenReturn(Optional.of("base-image"));
 
     ArtifactProcessor processor =
         ArtifactProcessors.fromJar(
-            jarPath, mockCacheDirectories, mockJarCommand, mockCommonArtifactCommandOptions);
+            jarPath, mockCacheDirectories, mockJarCommand, mockCommonContainerConfigCliOptions);
 
     verify(mockCacheDirectories).getExplodedJarDirectory();
     assertThat(processor).isInstanceOf(StandardExplodedProcessor.class);
@@ -187,7 +188,7 @@ public class ArtifactProcessorsTest {
 
   @Test
   public void testFromWar_noJettyBaseImageAndNoAppRoot() {
-    when(mockCommonArtifactCommandOptions.getFrom()).thenReturn(Optional.of("base-image"));
+    when(mockCommonContainerConfigCliOptions.getFrom()).thenReturn(Optional.of("base-image"));
 
     IllegalStateException exception =
         assertThrows(
@@ -197,17 +198,16 @@ public class ArtifactProcessorsTest {
                     Paths.get("my-app.war"),
                     mockCacheDirectories,
                     mockWarCommand,
-                    mockCommonArtifactCommandOptions));
+                    mockCommonContainerConfigCliOptions));
 
     assertThat(exception)
         .hasMessageThat()
-        .isEqualTo(
-            "Please set the app-root of the container with `--app-root` when specifying a base image.");
+        .startsWith("Please set the app root of the container with `--app-root`");
   }
 
   @Test
   public void testFromWar_noJettyBaseImageAndAppRootPresent_success() {
-    when(mockCommonArtifactCommandOptions.getFrom()).thenReturn(Optional.of("base-image"));
+    when(mockCommonContainerConfigCliOptions.getFrom()).thenReturn(Optional.of("base-image"));
     when(mockWarCommand.getAppRoot()).thenReturn(Optional.of(AbsoluteUnixPath.get("/app-root")));
     when(mockCacheDirectories.getExplodedJarDirectory()).thenReturn(Paths.get("exploded-jar"));
     ArtifactProcessor processor =
@@ -215,20 +215,20 @@ public class ArtifactProcessorsTest {
             Paths.get("my-app.war"),
             mockCacheDirectories,
             mockWarCommand,
-            mockCommonArtifactCommandOptions);
+            mockCommonContainerConfigCliOptions);
 
     assertThat(processor).isInstanceOf(StandardWarExplodedProcessor.class);
   }
 
   @Test
   public void testFromWar_jettyBaseImageSpecified_success() {
-    when(mockCommonArtifactCommandOptions.getFrom()).thenReturn(Optional.of("jetty"));
+    when(mockCommonContainerConfigCliOptions.getFrom()).thenReturn(Optional.of("jetty"));
     ArtifactProcessor processor =
         ArtifactProcessors.fromWar(
             Paths.get("my-app.war"),
             mockCacheDirectories,
             mockWarCommand,
-            mockCommonArtifactCommandOptions);
+            mockCommonContainerConfigCliOptions);
     assertThat(processor).isInstanceOf(StandardWarExplodedProcessor.class);
   }
 }

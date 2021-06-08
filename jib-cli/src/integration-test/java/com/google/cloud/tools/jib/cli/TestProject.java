@@ -35,8 +35,7 @@ public class TestProject extends TemporaryFolder implements Closeable {
   /** Copies test project {@code projectName} to {@code destination} folder. */
   private static void copyProject(String projectName, Path destination)
       throws IOException, URISyntaxException {
-    Path projectPathInResources =
-        Paths.get(Resources.getResource( projectName).toURI());
+    Path projectPathInResources = Paths.get(Resources.getResource(projectName).toURI());
     new DirectoryWalker(projectPathInResources)
         .filterRoot()
         .walk(

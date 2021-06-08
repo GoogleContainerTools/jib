@@ -21,8 +21,8 @@ import com.google.cloud.tools.jib.api.Jib;
 import com.google.cloud.tools.jib.api.JibContainerBuilder;
 import com.google.cloud.tools.jib.api.buildplan.FileEntriesLayer;
 import com.google.cloud.tools.jib.cli.ArtifactProcessor;
-import com.google.cloud.tools.jib.cli.CommonArtifactCommandOptions;
 import com.google.cloud.tools.jib.cli.CommonCliOptions;
+import com.google.cloud.tools.jib.cli.CommonContainerConfigCliOptions;
 import com.google.cloud.tools.jib.cli.ContainerBuilders;
 import com.google.cloud.tools.jib.plugins.common.logging.ConsoleLogger;
 import com.google.common.collect.ImmutableList;
@@ -38,7 +38,7 @@ public class WarFiles {
    *
    * @param processor artifact processor
    * @param commonCliOptions common cli options
-   * @param commonArtifactCommandOptions common cli options shared between jar and war command
+   * @param commonContainerConfigCliOptions common cli options shared between jar and war command
    * @param logger console logger
    * @return JibContainerBuilder
    * @throws IOException if I/O error occurs when opening the jar file or if temporary directory
@@ -48,16 +48,16 @@ public class WarFiles {
   public static JibContainerBuilder toJibContainerBuilder(
       ArtifactProcessor processor,
       CommonCliOptions commonCliOptions,
-      CommonArtifactCommandOptions commonArtifactCommandOptions,
+      CommonContainerConfigCliOptions commonContainerConfigCliOptions,
       ConsoleLogger logger)
       throws IOException, InvalidImageReferenceException {
     JibContainerBuilder containerBuilder;
     List<FileEntriesLayer> layers;
-    Optional<String> baseImage = commonArtifactCommandOptions.getFrom();
+    Optional<String> baseImage = commonContainerConfigCliOptions.getFrom();
     if (baseImage.isPresent()) {
       containerBuilder =
           ContainerBuilders.create(
-              commonArtifactCommandOptions.getFrom().get(),
+              commonContainerConfigCliOptions.getFrom().get(),
               Collections.emptySet(),
               commonCliOptions,
               logger);
@@ -67,7 +67,7 @@ public class WarFiles {
 
     List<String> entrypoint;
     if (baseImage.isPresent() && !baseImage.get().startsWith("jetty")) {
-      List<String> entrypointFromCli = commonArtifactCommandOptions.getEntrypoint();
+      List<String> entrypointFromCli = commonContainerConfigCliOptions.getEntrypoint();
       entrypoint =
           entrypointFromCli.isEmpty()
               ? null // inherit from base image
@@ -79,14 +79,14 @@ public class WarFiles {
     containerBuilder
         .setEntrypoint(entrypoint)
         .setFileEntriesLayers(layers)
-        .setExposedPorts(commonArtifactCommandOptions.getExposedPorts())
-        .setVolumes(commonArtifactCommandOptions.getVolumes())
-        .setEnvironment(commonArtifactCommandOptions.getEnvironment())
-        .setLabels(commonArtifactCommandOptions.getLabels())
-        .setProgramArguments(commonArtifactCommandOptions.getProgramArguments());
-    commonArtifactCommandOptions.getUser().ifPresent(containerBuilder::setUser);
-    commonArtifactCommandOptions.getFormat().ifPresent(containerBuilder::setFormat);
-    commonArtifactCommandOptions.getCreationTime().ifPresent(containerBuilder::setCreationTime);
+        .setExposedPorts(commonContainerConfigCliOptions.getExposedPorts())
+        .setVolumes(commonContainerConfigCliOptions.getVolumes())
+        .setEnvironment(commonContainerConfigCliOptions.getEnvironment())
+        .setLabels(commonContainerConfigCliOptions.getLabels())
+        .setProgramArguments(commonContainerConfigCliOptions.getProgramArguments());
+    commonContainerConfigCliOptions.getUser().ifPresent(containerBuilder::setUser);
+    commonContainerConfigCliOptions.getFormat().ifPresent(containerBuilder::setFormat);
+    commonContainerConfigCliOptions.getCreationTime().ifPresent(containerBuilder::setCreationTime);
 
     return containerBuilder;
   }

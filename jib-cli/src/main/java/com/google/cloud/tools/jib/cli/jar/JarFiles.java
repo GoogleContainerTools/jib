@@ -21,8 +21,8 @@ import com.google.cloud.tools.jib.api.Jib;
 import com.google.cloud.tools.jib.api.JibContainerBuilder;
 import com.google.cloud.tools.jib.api.buildplan.FileEntriesLayer;
 import com.google.cloud.tools.jib.cli.ArtifactProcessor;
-import com.google.cloud.tools.jib.cli.CommonArtifactCommandOptions;
 import com.google.cloud.tools.jib.cli.CommonCliOptions;
+import com.google.cloud.tools.jib.cli.CommonContainerConfigCliOptions;
 import com.google.cloud.tools.jib.cli.ContainerBuilders;
 import com.google.cloud.tools.jib.cli.Jar;
 import com.google.cloud.tools.jib.plugins.common.logging.ConsoleLogger;
@@ -39,7 +39,7 @@ public class JarFiles {
    * @param processor jar processor
    * @param jarOptions jar cli options
    * @param commonCliOptions common cli options
-   * @param commonArtifactCommandOptions common command line options shared between jar and war
+   * @param commonContainerConfigCliOptions common command line options shared between jar and war
    *     command
    * @param logger console logger
    * @return JibContainerBuilder
@@ -51,16 +51,16 @@ public class JarFiles {
       ArtifactProcessor processor,
       Jar jarOptions,
       CommonCliOptions commonCliOptions,
-      CommonArtifactCommandOptions commonArtifactCommandOptions,
+      CommonContainerConfigCliOptions commonContainerConfigCliOptions,
       ConsoleLogger logger)
       throws IOException, InvalidImageReferenceException {
 
     // Use AdoptOpenJDK image as the default base image.
     JibContainerBuilder containerBuilder;
-    if (commonArtifactCommandOptions.getFrom().isPresent()) {
+    if (commonContainerConfigCliOptions.getFrom().isPresent()) {
       containerBuilder =
           ContainerBuilders.create(
-              commonArtifactCommandOptions.getFrom().get(),
+              commonContainerConfigCliOptions.getFrom().get(),
               Collections.emptySet(),
               commonCliOptions,
               logger);
@@ -72,7 +72,7 @@ public class JarFiles {
     }
 
     List<FileEntriesLayer> layers = processor.createLayers();
-    List<String> customEntrypoint = commonArtifactCommandOptions.getEntrypoint();
+    List<String> customEntrypoint = commonContainerConfigCliOptions.getEntrypoint();
     List<String> entrypoint =
         customEntrypoint.isEmpty()
             ? processor.computeEntrypoint(jarOptions.getJvmFlags())
@@ -81,14 +81,14 @@ public class JarFiles {
     containerBuilder
         .setEntrypoint(entrypoint)
         .setFileEntriesLayers(layers)
-        .setExposedPorts(commonArtifactCommandOptions.getExposedPorts())
-        .setVolumes(commonArtifactCommandOptions.getVolumes())
-        .setEnvironment(commonArtifactCommandOptions.getEnvironment())
-        .setLabels(commonArtifactCommandOptions.getLabels())
-        .setProgramArguments(commonArtifactCommandOptions.getProgramArguments());
-    commonArtifactCommandOptions.getUser().ifPresent(containerBuilder::setUser);
-    commonArtifactCommandOptions.getFormat().ifPresent(containerBuilder::setFormat);
-    commonArtifactCommandOptions.getCreationTime().ifPresent(containerBuilder::setCreationTime);
+        .setExposedPorts(commonContainerConfigCliOptions.getExposedPorts())
+        .setVolumes(commonContainerConfigCliOptions.getVolumes())
+        .setEnvironment(commonContainerConfigCliOptions.getEnvironment())
+        .setLabels(commonContainerConfigCliOptions.getLabels())
+        .setProgramArguments(commonContainerConfigCliOptions.getProgramArguments());
+    commonContainerConfigCliOptions.getUser().ifPresent(containerBuilder::setUser);
+    commonContainerConfigCliOptions.getFormat().ifPresent(containerBuilder::setFormat);
+    commonContainerConfigCliOptions.getCreationTime().ifPresent(containerBuilder::setCreationTime);
 
     return containerBuilder;
   }

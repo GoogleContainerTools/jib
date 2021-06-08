@@ -51,7 +51,7 @@ public class ArtifactProcessors {
    * @param jarPath path to the jar
    * @param cacheDirectories the location of the relevant caches
    * @param jarOptions jar cli options
-   * @param commonArtifactCommandOptions common cli options shared between jar and war command
+   * @param commonContainerConfigCliOptions common cli options shared between jar and war command
    * @return ArtifactProcessor
    * @throws IOException if I/O error occurs when opening the jar file
    */
@@ -59,10 +59,10 @@ public class ArtifactProcessors {
       Path jarPath,
       CacheDirectories cacheDirectories,
       Jar jarOptions,
-      CommonArtifactCommandOptions commonArtifactCommandOptions)
+      CommonContainerConfigCliOptions commonContainerConfigCliOptions)
       throws IOException {
     Integer jarJavaVersion = determineJavaMajorVersion(jarPath);
-    if (jarJavaVersion > 11 && !commonArtifactCommandOptions.getFrom().isPresent()) {
+    if (jarJavaVersion > 11 && !commonContainerConfigCliOptions.getFrom().isPresent()) {
       throw new IllegalStateException(
           "The input JAR ("
               + jarPath
@@ -92,25 +92,25 @@ public class ArtifactProcessors {
    * @param warPath path to the jar
    * @param cacheDirectories the location of the relevant caches
    * @param warOptions jar cli options
-   * @param commonArtifactCommandOptions common cli options shared between jar and war command
+   * @param commonContainerConfigCliOptions common cli options shared between jar and war command
    * @return ArtifactProcessor
    */
   public static ArtifactProcessor fromWar(
       Path warPath,
       CacheDirectories cacheDirectories,
       War warOptions,
-      CommonArtifactCommandOptions commonArtifactCommandOptions) {
+      CommonContainerConfigCliOptions commonContainerConfigCliOptions) {
     Optional<AbsoluteUnixPath> appRoot = warOptions.getAppRoot();
-    Optional<String> baseImage = commonArtifactCommandOptions.getFrom();
-
-    if (baseImage.isPresent()
-        && !baseImage.get().startsWith("jetty")
-        && !warOptions.getAppRoot().isPresent()) {
+    Optional<String> baseImage = commonContainerConfigCliOptions.getFrom();
+    Boolean isNotJettyBaseImage = baseImage.isPresent() && !baseImage.get().startsWith("jetty");
+    if (isNotJettyBaseImage && !warOptions.getAppRoot().isPresent()) {
       throw new IllegalStateException(
-          "Please set the app-root of the container with `--app-root` when specifying a base image.");
+          "Please set the app root of the container with `--app-root` when specifying a base image that is not jetty.");
     }
     AbsoluteUnixPath appRootPath =
-        appRoot.isPresent() ? appRoot.get() : AbsoluteUnixPath.get(DEFAULT_JETTY_APP_ROOT);
+        appRoot.isPresent() && isNotJettyBaseImage
+            ? appRoot.get()
+            : AbsoluteUnixPath.get(DEFAULT_JETTY_APP_ROOT);
     return new StandardWarExplodedProcessor(
         warPath, cacheDirectories.getExplodedJarDirectory(), appRootPath);
   }

@@ -17,6 +17,7 @@
 package com.google.cloud.tools.jib.cli.war;
 
 import static com.google.common.truth.Truth.assertThat;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.when;
 
 import com.google.cloud.tools.jib.api.InvalidImageReferenceException;
@@ -25,10 +26,9 @@ import com.google.cloud.tools.jib.api.buildplan.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.api.buildplan.ContainerBuildPlan;
 import com.google.cloud.tools.jib.api.buildplan.FileEntriesLayer;
 import com.google.cloud.tools.jib.api.buildplan.ImageFormat;
-import com.google.cloud.tools.jib.api.buildplan.Platform;
 import com.google.cloud.tools.jib.api.buildplan.Port;
-import com.google.cloud.tools.jib.cli.CommonArtifactCommandOptions;
 import com.google.cloud.tools.jib.cli.CommonCliOptions;
+import com.google.cloud.tools.jib.cli.CommonContainerConfigCliOptions;
 import com.google.cloud.tools.jib.plugins.common.logging.ConsoleLogger;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -50,7 +50,7 @@ public class WarFilesTest {
 
   @Mock private StandardWarExplodedProcessor mockStandardWarExplodedProcessor;
   @Mock private CommonCliOptions mockCommonCliOptions;
-  @Mock private CommonArtifactCommandOptions mockCommonArtifactCommandOptions;
+  @Mock private CommonContainerConfigCliOptions mockCommonContainerConfigCliOptions;
   @Mock private ConsoleLogger mockLogger;
 
   @Test
@@ -60,41 +60,33 @@ public class WarFilesTest {
         FileEntriesLayer.builder()
             .setName("classes")
             .addEntry(
-                Paths.get("path/to/tempDirectory/class1.class"),
-                AbsoluteUnixPath.get("/my/app/class1.class"))
+                Paths.get("path/to/tempDirectory/WEB-INF/classes/class1.class"),
+                AbsoluteUnixPath.get("/my/app/WEB-INF/classes/class1.class"))
             .build();
     when(mockStandardWarExplodedProcessor.createLayers()).thenReturn(Arrays.asList(layer));
-    when(mockStandardWarExplodedProcessor.computeEntrypoint(ArgumentMatchers.anyList()))
+    when(mockStandardWarExplodedProcessor.computeEntrypoint(anyList()))
         .thenReturn(ImmutableList.of("java", "-jar", "/usr/local/jetty/start.jar"));
 
     JibContainerBuilder containerBuilder =
         WarFiles.toJibContainerBuilder(
             mockStandardWarExplodedProcessor,
             mockCommonCliOptions,
-            mockCommonArtifactCommandOptions,
+            mockCommonContainerConfigCliOptions,
             mockLogger);
     ContainerBuildPlan buildPlan = containerBuilder.toContainerBuildPlan();
 
     assertThat(buildPlan.getBaseImage()).isEqualTo("jetty");
-    assertThat(buildPlan.getPlatforms()).isEqualTo(ImmutableSet.of(new Platform("amd64", "linux")));
-    assertThat(buildPlan.getCreationTime()).isEqualTo(Instant.EPOCH);
-    assertThat(buildPlan.getFormat()).isEqualTo(ImageFormat.Docker);
-    assertThat(buildPlan.getEnvironment()).isEmpty();
-    assertThat(buildPlan.getLabels()).isEmpty();
-    assertThat(buildPlan.getVolumes()).isEmpty();
-    assertThat(buildPlan.getExposedPorts()).isEmpty();
-    assertThat(buildPlan.getUser()).isNull();
-    assertThat(buildPlan.getWorkingDirectory()).isNull();
     assertThat(buildPlan.getEntrypoint())
-        .isEqualTo(ImmutableList.of("java", "-jar", "/usr/local/jetty/start.jar"));
-    assertThat(buildPlan.getLayers().size()).isEqualTo(1);
+        .containsExactly("java", "-jar", "/usr/local/jetty/start.jar")
+        .inOrder();
+    assertThat(buildPlan.getLayers()).hasSize(1);
     assertThat(buildPlan.getLayers().get(0).getName()).isEqualTo("classes");
     assertThat(((FileEntriesLayer) buildPlan.getLayers().get(0)).getEntries())
         .containsExactlyElementsIn(
             FileEntriesLayer.builder()
                 .addEntry(
-                    Paths.get("path/to/tempDirectory/class1.class"),
-                    AbsoluteUnixPath.get("/my/app/class1.class"))
+                    Paths.get("path/to/tempDirectory/WEB-INF/classes/class1.class"),
+                    AbsoluteUnixPath.get("/my/app/WEB-INF/classes/class1.class"))
                 .build()
                 .getEntries());
   }
@@ -102,30 +94,30 @@ public class WarFilesTest {
   @Test
   public void testToJibContainerBuilder_optionalParameters()
       throws IOException, InvalidImageReferenceException {
-    when(mockCommonArtifactCommandOptions.getFrom()).thenReturn(Optional.of("base-image"));
-    when(mockCommonArtifactCommandOptions.getExposedPorts())
+    when(mockCommonContainerConfigCliOptions.getFrom()).thenReturn(Optional.of("base-image"));
+    when(mockCommonContainerConfigCliOptions.getExposedPorts())
         .thenReturn(ImmutableSet.of(Port.udp(123)));
-    when(mockCommonArtifactCommandOptions.getVolumes())
+    when(mockCommonContainerConfigCliOptions.getVolumes())
         .thenReturn(
             ImmutableSet.of(AbsoluteUnixPath.get("/volume1"), AbsoluteUnixPath.get("/volume2")));
-    when(mockCommonArtifactCommandOptions.getEnvironment())
+    when(mockCommonContainerConfigCliOptions.getEnvironment())
         .thenReturn(ImmutableMap.of("key1", "value1"));
-    when(mockCommonArtifactCommandOptions.getLabels())
+    when(mockCommonContainerConfigCliOptions.getLabels())
         .thenReturn(ImmutableMap.of("label", "mylabel"));
-    when(mockCommonArtifactCommandOptions.getUser()).thenReturn(Optional.of("customUser"));
-    when(mockCommonArtifactCommandOptions.getFormat()).thenReturn(Optional.of(ImageFormat.OCI));
-    when(mockCommonArtifactCommandOptions.getProgramArguments())
+    when(mockCommonContainerConfigCliOptions.getUser()).thenReturn(Optional.of("customUser"));
+    when(mockCommonContainerConfigCliOptions.getFormat()).thenReturn(Optional.of(ImageFormat.OCI));
+    when(mockCommonContainerConfigCliOptions.getProgramArguments())
         .thenReturn(ImmutableList.of("arg1"));
-    when(mockCommonArtifactCommandOptions.getEntrypoint())
+    when(mockCommonContainerConfigCliOptions.getEntrypoint())
         .thenReturn(ImmutableList.of("custom", "entrypoint"));
-    when(mockCommonArtifactCommandOptions.getCreationTime())
+    when(mockCommonContainerConfigCliOptions.getCreationTime())
         .thenReturn(Optional.of(Instant.ofEpochSecond(5)));
 
     JibContainerBuilder containerBuilder =
         WarFiles.toJibContainerBuilder(
             mockStandardWarExplodedProcessor,
             mockCommonCliOptions,
-            mockCommonArtifactCommandOptions,
+            mockCommonContainerConfigCliOptions,
             mockLogger);
     ContainerBuildPlan buildPlan = containerBuilder.toContainerBuildPlan();
 
@@ -146,13 +138,13 @@ public class WarFilesTest {
   @Test
   public void testToJibContainerBuilder_nonJettyBaseImageSpecifiedAndNoEntrypoint()
       throws IOException, InvalidImageReferenceException {
-    when(mockCommonArtifactCommandOptions.getFrom()).thenReturn(Optional.of("base-image"));
+    when(mockCommonContainerConfigCliOptions.getFrom()).thenReturn(Optional.of("base-image"));
 
     JibContainerBuilder containerBuilder =
         WarFiles.toJibContainerBuilder(
             mockStandardWarExplodedProcessor,
             mockCommonCliOptions,
-            mockCommonArtifactCommandOptions,
+            mockCommonContainerConfigCliOptions,
             mockLogger);
     ContainerBuildPlan buildPlan = containerBuilder.toContainerBuildPlan();
 
@@ -163,7 +155,7 @@ public class WarFilesTest {
   @Test
   public void testToJibContainerBuilder_jettyBaseImageSpecified_usesDefaultEntrypoint()
       throws IOException, InvalidImageReferenceException {
-    when(mockCommonArtifactCommandOptions.getFrom()).thenReturn(Optional.of("jetty"));
+    when(mockCommonContainerConfigCliOptions.getFrom()).thenReturn(Optional.of("jetty"));
     when(mockStandardWarExplodedProcessor.computeEntrypoint(ArgumentMatchers.anyList()))
         .thenReturn(ImmutableList.of("java", "-jar", "/usr/local/jetty/start.jar"));
 
@@ -171,7 +163,7 @@ public class WarFilesTest {
         WarFiles.toJibContainerBuilder(
             mockStandardWarExplodedProcessor,
             mockCommonCliOptions,
-            mockCommonArtifactCommandOptions,
+            mockCommonContainerConfigCliOptions,
             mockLogger);
     ContainerBuildPlan buildPlan = containerBuilder.toContainerBuildPlan();
 

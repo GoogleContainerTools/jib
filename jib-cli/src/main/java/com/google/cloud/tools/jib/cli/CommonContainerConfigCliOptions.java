@@ -31,7 +31,7 @@ import java.util.stream.Collectors;
 import picocli.CommandLine;
 
 /** Common command line options shared between jar and war command. */
-public class CommonArtifactCommandOptions {
+public class CommonContainerConfigCliOptions {
 
   @CommandLine.Option(
       names = "--from",

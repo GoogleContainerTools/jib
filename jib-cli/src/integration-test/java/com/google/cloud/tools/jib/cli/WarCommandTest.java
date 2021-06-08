@@ -19,6 +19,7 @@ package com.google.cloud.tools.jib.cli;
 import static com.google.common.truth.Truth.assertThat;
 
 import com.google.cloud.tools.jib.Command;
+import com.google.cloud.tools.jib.blob.Blobs;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
@@ -28,17 +29,15 @@ import java.net.URL;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import javax.annotation.Nullable;
-
-import com.google.cloud.tools.jib.blob.Blobs;
 import org.junit.After;
 import org.junit.ClassRule;
-import org.junit.Ignore;
 import org.junit.Test;
 import picocli.CommandLine;
 
 public class WarCommandTest {
 
-  @ClassRule public static final TestProject servletProject = new TestProject("warTest/war_servlet");
+  @ClassRule
+  public static final TestProject servletProject = new TestProject("warTest/war_servlet");
 
   @Nullable private String containerName;
 
@@ -88,8 +87,7 @@ public class WarCommandTest {
             .execute("war", "--target", "docker://exploded-war", warPath.toString());
     assertThat(exitCode).isEqualTo(0);
     String output =
-            new Command("docker", "run", "--rm", "--detach", "-p8080:8080", "exploded-war")
-                    .run();
+        new Command("docker", "run", "--rm", "--detach", "-p8080:8080", "exploded-war").run();
     containerName = output.trim();
 
     assertThat(getContent(new URL("http://localhost:8080/hello"))).isEqualTo("Hello world");
@@ -101,17 +99,22 @@ public class WarCommandTest {
     Path warParentPath = servletProject.getProjectRoot().resolve("build").resolve("libs");
     Path warPath = warParentPath.resolve("standard-war.war");
     Integer exitCode =
-            new CommandLine(new JibCli())
-                    .execute("war", "--target", "docker://exploded-war","--from=tomcat:8.5-jre8-alpine", "--app-root", "/usr/local/tomcat/webapps/ROOT", warPath.toString());
+        new CommandLine(new JibCli())
+            .execute(
+                "war",
+                "--target",
+                "docker://exploded-war",
+                "--from=tomcat:8.5-jre8-alpine",
+                "--app-root",
+                "/usr/local/tomcat/webapps/ROOT",
+                warPath.toString());
     assertThat(exitCode).isEqualTo(0);
     String output =
-            new Command("docker", "run", "--rm", "--detach", "-p8080:8080", "exploded-war")
-                    .run();
+        new Command("docker", "run", "--rm", "--detach", "-p8080:8080", "exploded-war").run();
     containerName = output.trim();
 
     assertThat(getContent(new URL("http://localhost:8080/hello"))).isEqualTo("Hello world");
   }
-
 
   @Nullable
   private static String getContent(URL url) throws InterruptedException {
