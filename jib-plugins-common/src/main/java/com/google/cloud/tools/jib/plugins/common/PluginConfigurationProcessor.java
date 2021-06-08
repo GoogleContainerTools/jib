@@ -569,23 +569,24 @@ public class PluginConfigurationProcessor {
           InvalidContainerizingModeException {
     Optional<List<String>> rawEntrypoint = rawConfiguration.getEntrypoint();
     List<String> rawExtraClasspath = rawConfiguration.getExtraClasspath();
+    boolean entrypointDefined = rawEntrypoint.isPresent() && !rawEntrypoint.get().isEmpty();
 
-    if (projectProperties.isWarProject()) {
-      if (rawEntrypoint.isPresent() && !rawEntrypoint.get().isEmpty()) {
-        if (rawConfiguration.getMainClass().isPresent()
+    if (entrypointDefined
+        && (rawConfiguration.getMainClass().isPresent()
             || !rawConfiguration.getJvmFlags().isEmpty()
             || !rawExtraClasspath.isEmpty()
-            || rawConfiguration.getExpandClasspathDependencies()) {
-          projectProperties.log(
-              LogEvent.warn(
-                  "mainClass, extraClasspath, jvmFlags, and expandClasspathDependencies are ignored "
-                      + "when entrypoint is specified"));
-        }
+            || rawConfiguration.getExpandClasspathDependencies())) {
+      projectProperties.log(
+          LogEvent.warn(
+              "mainClass, extraClasspath, jvmFlags, and expandClasspathDependencies are ignored "
+                  + "when entrypoint is specified"));
+    }
 
-        if (rawEntrypoint.get().size() == 1 && "INHERIT".equals(rawEntrypoint.get().get(0))) {
-          return null;
-        }
-        return rawEntrypoint.get();
+    if (projectProperties.isWarProject()) {
+      if (entrypointDefined) {
+        return rawEntrypoint.get().size() == 1 && "INHERIT".equals(rawEntrypoint.get().get(0))
+            ? null
+            : rawEntrypoint.get();
       }
 
       if (rawConfiguration.getMainClass().isPresent()
@@ -641,21 +642,10 @@ public class PluginConfigurationProcessor {
       classpathString = "@" + appRoot.resolve(JIB_CLASSPATH_FILE);
     }
 
-    if (rawEntrypoint.isPresent() && !rawEntrypoint.get().isEmpty()) {
-      if (rawConfiguration.getMainClass().isPresent()
-          || !rawConfiguration.getJvmFlags().isEmpty()
-          || !rawExtraClasspath.isEmpty()
-          || rawConfiguration.getExpandClasspathDependencies()) {
-        projectProperties.log(
-            LogEvent.warn(
-                "mainClass, extraClasspath, jvmFlags, and expandClasspathDependencies are ignored "
-                    + "when entrypoint is specified"));
-      }
-
-      if (rawEntrypoint.get().size() == 1 && "INHERIT".equals(rawEntrypoint.get().get(0))) {
-        return null;
-      }
-      return rawEntrypoint.get();
+    if (entrypointDefined) {
+      return rawEntrypoint.get().size() == 1 && "INHERIT".equals(rawEntrypoint.get().get(0))
+          ? null
+          : rawEntrypoint.get();
     }
 
     List<String> entrypoint = new ArrayList<>(4 + rawConfiguration.getJvmFlags().size());
