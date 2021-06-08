@@ -657,10 +657,6 @@ public class PluginConfigurationProcessor {
     return entrypoint;
   }
 
-  // It's perfectly fine to always generate a new temp file or rewrite an existing file. However,
-  // fixing the source file path and preserving the file timestamp prevents polluting the Jib layer
-  // cache space by not creating new cache selectors every time. (Note, however, creating new
-  // selectors does not affect correctness at all.)
   @VisibleForTesting
   static void addJvmArgFilesLayer(
       RawConfiguration rawConfiguration,
@@ -673,6 +669,10 @@ public class PluginConfigurationProcessor {
     Path classpathFile = projectCache.resolve(JIB_CLASSPATH_FILE);
     Path mainClassFile = projectCache.resolve(JIB_MAIN_CLASS_FILE);
 
+    // It's perfectly fine to always generate a new temp file or rewrite an existing file. However,
+    // fixing the source file path and preserving the file timestamp prevents polluting the Jib
+    // layer cache space by not creating new cache selectors every time. (Note, however, creating
+    // new selectors does not affect correctness at all.)
     writeFileConservatively(classpathFile, classpath);
     writeFileConservatively(mainClassFile, mainClass);
 
