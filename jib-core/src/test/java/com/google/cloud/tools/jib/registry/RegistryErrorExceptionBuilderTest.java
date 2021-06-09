@@ -55,8 +55,7 @@ public class RegistryErrorExceptionBuilderTest {
           "Tried to do something but failed because: manifest invalid (something went wrong), blob "
               + "unknown (something went wrong), manifest unknown, tag invalid, manifest "
               + "unverified, other: some other error happened, unknown error code: unknown (some "
-              + "unknown error happened) | If this is a bug, please file an issue at "
-              + "https://github.com/GoogleContainerTools/jib/issues/new",
+              + "unknown error happened)",
           ex.getMessage());
     }
   }
