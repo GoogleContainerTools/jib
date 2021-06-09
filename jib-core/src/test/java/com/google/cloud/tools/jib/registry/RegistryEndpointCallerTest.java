@@ -412,8 +412,7 @@ public class RegistryEndpointCallerTest {
         endpointCaller.newRegistryErrorException(httpException);
     Assert.assertSame(httpException, registryException.getCause());
     Assert.assertEquals(
-        "Tried to actionDescription but failed because: manifest unknown | If this is a bug, "
-            + "please file an issue at https://github.com/GoogleContainerTools/jib/issues/new",
+        "Tried to actionDescription but failed because: manifest unknown",
         registryException.getMessage());
   }
 
@@ -430,9 +429,7 @@ public class RegistryEndpointCallerTest {
     Assert.assertEquals(
         "Tried to actionDescription but failed because: registry returned error code 404; "
             + "possible causes include invalid or wrong reference. Actual error output follows:\n"
-            + ">>>>> (404) page not found <<<<<\n"
-            + " | If this is a bug, please file an issue at "
-            + "https://github.com/GoogleContainerTools/jib/issues/new",
+            + ">>>>> (404) page not found <<<<<\n",
         registryException.getMessage());
   }
 
@@ -448,9 +445,7 @@ public class RegistryEndpointCallerTest {
     Assert.assertSame(httpException, registryException.getCause());
     Assert.assertEquals(
         "Tried to actionDescription but failed because: registry returned error code 404 "
-            + "but did not return any details; possible causes include invalid or wrong reference, or proxy/firewall/VPN interfering \n"
-            + " | If this is a bug, please file an issue at "
-            + "https://github.com/GoogleContainerTools/jib/issues/new",
+            + "but did not return any details; possible causes include invalid or wrong reference, or proxy/firewall/VPN interfering \n",
         registryException.getMessage());
   }
 

@@ -16,7 +16,6 @@
 
 package com.google.cloud.tools.jib.registry;
 
-import com.google.cloud.tools.jib.ProjectInfo;
 import com.google.cloud.tools.jib.registry.json.ErrorEntryTemplate;
 import javax.annotation.Nullable;
 
@@ -99,9 +98,6 @@ class RegistryErrorExceptionBuilder {
   }
 
   RegistryErrorException build() {
-    // Provides a feedback channel.
-    errorMessageBuilder.append(
-        " | If this is a bug, please file an issue at " + ProjectInfo.GITHUB_NEW_ISSUE_URL);
     return new RegistryErrorException(errorMessageBuilder.toString(), cause);
   }
 }

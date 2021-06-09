@@ -68,9 +68,10 @@ public class CacheStorageFilesTest {
       Assert.fail("Should have thrown CacheCorruptedException");
 
     } catch (CacheCorruptedException ex) {
-      MatcherAssert.assertThat(
-          ex.getMessage(),
-          CoreMatchers.startsWith("Layer file did not include valid hash: not long enough"));
+      Assert.assertEquals("Layer file did not include valid hash: not long enough. "
+                      + "You may need to clear the cache by deleting the '"
+                      + TEST_CACHE_STORAGE_FILES.getCacheDirectory()
+                      + "' directory", ex.getMessage());
       MatcherAssert.assertThat(ex.getCause(), CoreMatchers.instanceOf(DigestException.class));
     }
 
@@ -79,13 +80,12 @@ public class CacheStorageFilesTest {
           Paths.get(
               "not valid hash bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"));
       Assert.fail("Should have thrown CacheCorruptedException");
-
     } catch (CacheCorruptedException ex) {
-      MatcherAssert.assertThat(
-          ex.getMessage(),
-          CoreMatchers.startsWith(
-              "Layer file did not include valid hash: "
-                  + "not valid hash bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"));
+      Assert.assertEquals("Layer file did not include valid hash: "
+              + "not valid hash bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb. "
+              + "You may need to clear the cache by deleting the '"
+              + TEST_CACHE_STORAGE_FILES.getCacheDirectory()
+              + "' directory", ex.getMessage());
       MatcherAssert.assertThat(ex.getCause(), CoreMatchers.instanceOf(DigestException.class));
     }
   }

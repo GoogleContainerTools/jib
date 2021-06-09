@@ -16,7 +16,6 @@
 
 package com.google.cloud.tools.jib.cli.jar;
 
-import com.google.cloud.tools.jib.ProjectInfo;
 import com.google.cloud.tools.jib.api.buildplan.FileEntriesLayer;
 import com.google.cloud.tools.jib.cli.ArtifactLayers;
 import com.google.cloud.tools.jib.cli.ArtifactProcessor;
@@ -174,9 +173,7 @@ class SpringBootExplodedProcessor implements ArtifactProcessor {
         Verify.verifyNotNull(layerEntries).add(entryMatcher.group(1));
       } else {
         throw new IllegalStateException(
-            "Unable to parse BOOT-INF/layers.idx file in the JAR. Please check the format of "
-                + "layers.idx. If this is a Jib CLI bug, file an issue at "
-                + ProjectInfo.GITHUB_NEW_ISSUE_URL);
+            "Unable to parse BOOT-INF/layers.idx file in the JAR. Please check the format of layers.idx.");
       }
     }
 
