@@ -35,6 +35,7 @@ For information about the project, see the [Jib project README](../README.md).
     * [Using Docker Credential Helpers](#using-docker-credential-helpers)
     * [Using Specific Credentials](#using-specific-credentials)
     * [Using Maven Settings](#using-maven-settings)
+  * [Custom Container Entrypoint](#custom-container-entrypoint)
   * [Jib Extensions](#jib-extensions)
   * [WAR Projects](#war-projects)
   * [Skaffold Integration](#skaffold-integration)
@@ -623,6 +624,11 @@ If you're considering putting credentials in Maven, we highly *recommend* using 
 
 * The `id` field should be the registry server these credentials are for.
 * We *do not* recommend putting your raw password in `settings.xml`.
+
+
+### Custom Container Entrypoint
+
+If you don't set `<container><entrypoint>`, the default container entrypoint to launch your app (the JVM command) will be basically `java -cp <runtime classpath> <main class>`. The actual `java` command can be further extended by setting `<container>{<jvmFlags>|<args>|<extraClasspath>|<mainClass>|<expandClasspathDependencies>}`.
 
 
 ### Jib Extensions
