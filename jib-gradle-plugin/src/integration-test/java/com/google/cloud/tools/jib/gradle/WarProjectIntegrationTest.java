@@ -49,6 +49,7 @@ public class WarProjectIntegrationTest {
   @Test
   public void testBuild_tomcatServlet25()
       throws IOException, InterruptedException, DigestException {
+    System.out.println("GRADLEEEEE");
     verifyBuildAndRun(servlet25Project, "war_tomcat_servlet25:gradle", "build-tomcat.gradle");
   }
 

@@ -26,7 +26,10 @@ import com.google.cloud.tools.jib.cli.CommonContainerConfigCliOptions;
 import com.google.cloud.tools.jib.cli.ContainerBuilders;
 import com.google.cloud.tools.jib.plugins.common.logging.ConsoleLogger;
 import com.google.common.collect.ImmutableList;
+
+import javax.annotation.Nullable;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -57,37 +60,48 @@ public class WarFiles {
     if (baseImage.isPresent()) {
       containerBuilder =
           ContainerBuilders.create(
-              commonContainerConfigCliOptions.getFrom().get(),
+              baseImage.get(),
               Collections.emptySet(),
               commonCliOptions,
               logger);
     } else {
-      containerBuilder = Jib.from("jetty");
+      containerBuilder = ContainerBuilders.create("jetty",   Collections.emptySet(), commonCliOptions, logger);
     }
 
-    List<String> entrypoint;
-    if (baseImage.isPresent() && !baseImage.get().startsWith("jetty")) {
-      List<String> entrypointFromCli = commonContainerConfigCliOptions.getEntrypoint();
-      entrypoint =
-          entrypointFromCli.isEmpty()
-              ? null // inherit from base image
-              : entrypointFromCli;
-    } else {
-      entrypoint = processor.computeEntrypoint(ImmutableList.of());
+    if (commonContainerConfigCliOptions.getProgramArguments().isEmpty()){
+      containerBuilder.setProgramArguments((List<String>) null);
+    }
+    else{
+      containerBuilder.setProgramArguments(commonContainerConfigCliOptions.getProgramArguments());
     }
     layers = processor.createLayers();
     containerBuilder
-        .setEntrypoint(entrypoint)
+        .setEntrypoint(computeEntrypoint(commonContainerConfigCliOptions, processor))
         .setFileEntriesLayers(layers)
         .setExposedPorts(commonContainerConfigCliOptions.getExposedPorts())
         .setVolumes(commonContainerConfigCliOptions.getVolumes())
         .setEnvironment(commonContainerConfigCliOptions.getEnvironment())
-        .setLabels(commonContainerConfigCliOptions.getLabels())
-        .setProgramArguments(commonContainerConfigCliOptions.getProgramArguments());
+        .setLabels(commonContainerConfigCliOptions.getLabels());
     commonContainerConfigCliOptions.getUser().ifPresent(containerBuilder::setUser);
     commonContainerConfigCliOptions.getFormat().ifPresent(containerBuilder::setFormat);
     commonContainerConfigCliOptions.getCreationTime().ifPresent(containerBuilder::setCreationTime);
 
     return containerBuilder;
   }
+
+  @Nullable
+  public static List<String> computeEntrypoint(CommonContainerConfigCliOptions commonContainerConfigCliOptions, ArtifactProcessor processor) throws IOException {
+    Optional<String> baseImage = commonContainerConfigCliOptions.getFrom();
+    List<String> entrypoint = commonContainerConfigCliOptions.getEntrypoint();
+    if (!entrypoint.isEmpty()){
+      return entrypoint;
+    }
+    Boolean isJetty = baseImage.isPresent() || (baseImage.isPresent() && baseImage.get().startsWith("jetty"));
+    if (isJetty){
+       return processor.computeEntrypoint(ImmutableList.of());
+    }
+    return null;
+  }
+
+
 }

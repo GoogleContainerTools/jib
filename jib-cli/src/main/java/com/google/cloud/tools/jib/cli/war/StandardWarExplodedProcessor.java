@@ -123,6 +123,11 @@ public class StandardWarExplodedProcessor implements ArtifactProcessor {
     return ImmutableList.of("java", "-jar", "/usr/local/jetty/start.jar");
   }
 
+  @Override
+  public Integer getJavaVersion(){
+    return 8;
+  }
+
   public AbsoluteUnixPath getAppRoot() {
     return appRoot;
   }

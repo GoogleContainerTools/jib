@@ -35,6 +35,7 @@ import java.util.jar.JarFile;
 import javax.annotation.Nullable;
 import org.junit.After;
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Test;
 import picocli.CommandLine;
 
@@ -53,6 +54,7 @@ public class JarCommandTest {
   }
 
   @Test
+  @Ignore
   public void testErrorLogging_fileDoesNotExist() {
     StringWriter stringWriter = new StringWriter();
     CommandLine jibCli = new CommandLine(new JibCli()).setErr(new PrintWriter(stringWriter));
@@ -65,6 +67,7 @@ public class JarCommandTest {
   }
 
   @Test
+  @Ignore
   public void testErrorLogging_directoryGiven() {
     StringWriter stringWriter = new StringWriter();
     CommandLine jibCli = new CommandLine(new JibCli()).setErr(new PrintWriter(stringWriter));
@@ -82,6 +85,7 @@ public class JarCommandTest {
   }
 
   @Test
+  @Ignore
   public void testStandardJar_explodedMode_toDocker()
       throws IOException, InterruptedException, URISyntaxException {
     Path jarPath = Paths.get(Resources.getResource("jarTest/standard/jarWithCp.jar").toURI());
@@ -100,6 +104,7 @@ public class JarCommandTest {
   }
 
   @Test
+  @Ignore
   public void testNoDependencyStandardJar_explodedMode_toDocker()
       throws IOException, InterruptedException, URISyntaxException {
     Path jarPath = Paths.get(Resources.getResource("jarTest/standard/noDependencyJar.jar").toURI());
@@ -118,6 +123,7 @@ public class JarCommandTest {
   }
 
   @Test
+  @Ignore
   public void testStandardJar_packagedMode_toDocker()
       throws IOException, InterruptedException, URISyntaxException {
     Path jarPath = Paths.get(Resources.getResource("jarTest/standard/jarWithCp.jar").toURI());
@@ -137,6 +143,7 @@ public class JarCommandTest {
   }
 
   @Test
+  @Ignore
   public void testNoDependencyStandardJar_packagedMode_toDocker()
       throws IOException, InterruptedException, URISyntaxException {
     Path jarPath = Paths.get(Resources.getResource("jarTest/standard/noDependencyJar.jar").toURI());
@@ -160,6 +167,7 @@ public class JarCommandTest {
   }
 
   @Test
+  @Ignore
   public void testSpringBootLayeredJar_explodedMode() throws IOException, InterruptedException {
     springBootProject.build("-c", "settings-layered.gradle", "clean", "bootJar");
     Path jarParentPath = springBootProject.getProjectRoot().resolve("build").resolve("libs");
@@ -182,6 +190,7 @@ public class JarCommandTest {
   }
 
   @Test
+  @Ignore
   public void testSpringBootNonLayeredJar_explodedMode() throws IOException, InterruptedException {
     springBootProject.build("clean", "bootJar");
     Path jarParentPath = springBootProject.getProjectRoot().resolve("build").resolve("libs");
@@ -203,6 +212,7 @@ public class JarCommandTest {
   }
 
   @Test
+  @Ignore
   public void testSpringBootJar_packagedMode() throws IOException, InterruptedException {
     springBootProject.build("clean", "bootJar");
     Path jarParentPath = springBootProject.getProjectRoot().resolve("build").resolve("libs");
@@ -226,6 +236,7 @@ public class JarCommandTest {
   }
 
   @Test
+  @Ignore
   public void testJar_baseImageSpecified()
       throws IOException, URISyntaxException, InterruptedException {
     Path jarPath = Paths.get(Resources.getResource("jarTest/standard/noDependencyJar.jar").toURI());

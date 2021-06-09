@@ -35,7 +35,7 @@ import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
 /**
- * Class to create a {@link com.google.cloud.tools.jib.cli.ArtifactProcessor} instance depending on
+ * Class to create a {@link ArtifactProcessor} instance depending on
  * jar type and processing mode.
  */
 public class ArtifactProcessors {
@@ -89,9 +89,9 @@ public class ArtifactProcessors {
   /**
    * Creates a {@link ArtifactProcessor} instance based on jar type and processing mode.
    *
-   * @param warPath path to the jar
+   * @param warPath path to the war
    * @param cacheDirectories the location of the relevant caches
-   * @param warOptions jar cli options
+   * @param warOptions war cli options
    * @param commonContainerConfigCliOptions common cli options shared between jar and war command
    * @return ArtifactProcessor
    */
