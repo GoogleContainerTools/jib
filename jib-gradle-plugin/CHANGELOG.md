@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+### Changed
+
+### Fixed
+
+## 3.1.0
+
+### Added
+
 - For Google Artifact Registry (`*-docker.pkg.dev`), Jib now tries [Google Application Default Credentials](https://developers.google.com/identity/protocols/application-default-credentials) last like it has been doing for `gcr.io`. ([#3241](https://github.com/GoogleContainerTools/jib/pull/3241))
 - Added lazy evaluation for `jib.container.labels` using Gradle Property and Provider. ([#3242](https://github.com/GoogleContainerTools/jib/issues/3242))
 
