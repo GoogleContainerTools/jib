@@ -22,8 +22,6 @@ All notable changes to this project will be documented in this file.
 - For Java 9+ apps, the default Java runtime classpath explicitly lists all the app dependencies, preserving the dependency loading order declared by Gradle. This is done by changing the default entrypoint to use the new classpath JVM argument file (basically `java -cp @/app/jib-classpath-file`). As such, `jib.container.expandClasspathDependencies` takes no effect for Java 9+. ([#3280](https://github.com/GoogleContainerTools/jib/pull/3280))
 - Timestamps of file entries in a tarball built with `jibBuildTar` are set to the epoch, making the tarball reproducible. ([#3158](https://github.com/GoogleContainerTools/jib/issues/3158))
 
-### Fixed
-
 ## 3.0.0
 
 ### Added
