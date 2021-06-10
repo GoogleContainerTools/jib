@@ -100,6 +100,7 @@ public class War implements Callable<Integer> {
                 + warFile);
         return 1;
       }
+
       CacheDirectories cacheDirectories =
           CacheDirectories.from(commonCliOptions, warFile.toAbsolutePath().getParent());
       ArtifactProcessor processor =

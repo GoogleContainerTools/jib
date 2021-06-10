@@ -35,8 +35,8 @@ import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
 /**
- * Class to create a {@link ArtifactProcessor} instance depending on
- * jar type and processing mode.
+ * Class to create a {@link ArtifactProcessor} instance depending on jar or war type and processing
+ * mode.
  */
 public class ArtifactProcessors {
   private static String SPRING_BOOT = "spring-boot";
@@ -45,8 +45,7 @@ public class ArtifactProcessors {
   private static final String DEFAULT_JETTY_APP_ROOT = "/var/lib/jetty/webapps/ROOT";
 
   /**
-   * Creates a {@link com.google.cloud.tools.jib.cli.ArtifactProcessor} instance based on jar type
-   * and processing mode.
+   * Creates a {@link ArtifactProcessor} instance based on jar type and processing mode.
    *
    * @param jarPath path to the jar
    * @param cacheDirectories the location of the relevant caches
@@ -87,7 +86,7 @@ public class ArtifactProcessors {
   }
 
   /**
-   * Creates a {@link ArtifactProcessor} instance based on jar type and processing mode.
+   * Creates a {@link ArtifactProcessor} instance based on war type and processing mode.
    *
    * @param warPath path to the war
    * @param cacheDirectories the location of the relevant caches

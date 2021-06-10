@@ -172,4 +172,18 @@ public class WarFilesTest {
         .containsExactly("java", "-jar", "/usr/local/jetty/start.jar")
         .inOrder();
   }
+
+  @Test
+  public void testToJibContainerBuilder_noProgramArgumentsSpecified()
+      throws IOException, InvalidImageReferenceException {
+    JibContainerBuilder containerBuilder =
+        WarFiles.toJibContainerBuilder(
+            mockStandardWarExplodedProcessor,
+            mockCommonCliOptions,
+            mockCommonContainerConfigCliOptions,
+            mockLogger);
+    ContainerBuildPlan buildPlan = containerBuilder.toContainerBuildPlan();
+
+    assertThat(buildPlan.getCmd()).isNull();
+  }
 }

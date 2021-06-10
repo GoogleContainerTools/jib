@@ -115,7 +115,8 @@ public class WarCommandTest {
                 warPath.toString());
     assertThat(exitCode).isEqualTo(0);
     String output =
-        new Command("docker", "run", "--rm", "--detach", "-p8080:8080", "exploded-war-tomcat").run();
+        new Command("docker", "run", "--rm", "--detach", "-p8080:8080", "exploded-war-tomcat")
+            .run();
     containerName = output.trim();
 
     assertThat(getContent(new URL("http://localhost:8080/hello"))).isEqualTo("Hello world");

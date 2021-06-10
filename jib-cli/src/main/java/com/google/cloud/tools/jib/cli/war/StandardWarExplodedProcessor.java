@@ -124,7 +124,7 @@ public class StandardWarExplodedProcessor implements ArtifactProcessor {
   }
 
   @Override
-  public Integer getJavaVersion(){
+  public Integer getJavaVersion() {
     return 8;
   }
 
