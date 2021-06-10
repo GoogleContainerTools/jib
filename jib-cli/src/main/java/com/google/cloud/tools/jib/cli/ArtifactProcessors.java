@@ -86,7 +86,7 @@ public class ArtifactProcessors {
   }
 
   /**
-   * Creates a {@link ArtifactProcessor} instance based on war type and processing mode.
+   * Creates a {@link ArtifactProcessor} instance.
    *
    * @param warPath path to the war
    * @param cacheDirectories the location of the relevant caches

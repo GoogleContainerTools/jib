@@ -42,7 +42,7 @@ public class WarFiles {
    * @param commonContainerConfigCliOptions common cli options shared between jar and war command
    * @param logger console logger
    * @return JibContainerBuilder
-   * @throws IOException if I/O error occurs when opening the jar file or if temporary directory
+   * @throws IOException if I/O error occurs when opening the war file or if temporary directory
    *     provided doesn't exist
    * @throws InvalidImageReferenceException if the base image reference is invalid
    */
@@ -87,11 +87,11 @@ public class WarFiles {
   private static List<String> computeEntrypoint(
       CommonContainerConfigCliOptions commonContainerConfigCliOptions, ArtifactProcessor processor)
       throws IOException {
-    Optional<String> baseImage = commonContainerConfigCliOptions.getFrom();
     List<String> entrypoint = commonContainerConfigCliOptions.getEntrypoint();
     if (!entrypoint.isEmpty()) {
       return entrypoint;
     }
+    Optional<String> baseImage = commonContainerConfigCliOptions.getFrom();
     Boolean isDefaultBaseImage =
         !baseImage.isPresent() || (baseImage.isPresent() && baseImage.get().startsWith("jetty"));
     if (isDefaultBaseImage) {

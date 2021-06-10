@@ -35,7 +35,6 @@ import java.util.jar.JarFile;
 import javax.annotation.Nullable;
 import org.junit.After;
 import org.junit.ClassRule;
-import org.junit.Ignore;
 import org.junit.Test;
 import picocli.CommandLine;
 
@@ -183,7 +182,6 @@ public class JarCommandTest {
   }
 
   @Test
-  @Ignore
   public void testSpringBootNonLayeredJar_explodedMode() throws IOException, InterruptedException {
     springBootProject.build("clean", "bootJar");
     Path jarParentPath = springBootProject.getProjectRoot().resolve("build").resolve("libs");
@@ -205,7 +203,6 @@ public class JarCommandTest {
   }
 
   @Test
-  @Ignore
   public void testSpringBootJar_packagedMode() throws IOException, InterruptedException {
     springBootProject.build("clean", "bootJar");
     Path jarParentPath = springBootProject.getProjectRoot().resolve("build").resolve("libs");
@@ -229,7 +226,6 @@ public class JarCommandTest {
   }
 
   @Test
-  @Ignore
   public void testJar_baseImageSpecified()
       throws IOException, URISyntaxException, InterruptedException {
     Path jarPath = Paths.get(Resources.getResource("jarTest/standard/noDependencyJar.jar").toURI());
