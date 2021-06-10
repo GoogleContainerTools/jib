@@ -105,7 +105,6 @@ public class WarCommandTest {
                 "--target",
                 "docker://exploded-war-tomcat",
                 "--from=tomcat:8.5-jre8-alpine",
-                "--to-credential-helper=gcr",
                 "--app-root",
                 "/usr/local/tomcat/webapps/ROOT",
                 warPath.toString());

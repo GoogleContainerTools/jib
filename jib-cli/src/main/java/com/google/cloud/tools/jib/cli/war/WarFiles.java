@@ -17,7 +17,6 @@
 package com.google.cloud.tools.jib.cli.war;
 
 import com.google.cloud.tools.jib.api.InvalidImageReferenceException;
-import com.google.cloud.tools.jib.api.Jib;
 import com.google.cloud.tools.jib.api.JibContainerBuilder;
 import com.google.cloud.tools.jib.api.buildplan.FileEntriesLayer;
 import com.google.cloud.tools.jib.cli.ArtifactProcessor;
@@ -60,7 +59,8 @@ public class WarFiles {
           ContainerBuilders.create(
               baseImage.get(), Collections.emptySet(), commonCliOptions, logger);
     } else {
-      containerBuilder = Jib.from("jetty");
+      containerBuilder =
+          ContainerBuilders.create("jetty", Collections.emptySet(), commonCliOptions, logger);
     }
 
     List<String> programArguments =
