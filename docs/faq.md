@@ -331,7 +331,7 @@ In Maven, you can use the `maven-resources-plugin` to copy files to your extra d
   ...
   <plugin>
     <artifact>maven-resources-plugin</artifact>
-    <version>3.1.0</version>
+    <version>3.1.1</version>
     <configuration>
       <outputDirectory>${project.basedir}/target/extra-directory/my/files</outputDirectory>
       <resources>

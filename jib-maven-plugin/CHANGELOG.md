@@ -9,6 +9,10 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
+## 3.1.1
+
+### Fixed
+
 - Fixed the regression introduced in 3.1.0 where a build may fail due to an error from main class inference even if `jib.container.entrypoint` is configured. ([#3295](https://github.com/GoogleContainerTools/jib/pull/3295))
 
 ## 3.1.0
