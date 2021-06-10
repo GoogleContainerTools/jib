@@ -632,9 +632,19 @@ public class PluginConfigurationProcessor {
     }
 
     String classpathString = String.join(":", classpath);
-    String mainClass =
-        MainClassResolver.resolveMainClass(
-            rawConfiguration.getMainClass().orElse(null), projectProperties);
+    String mainClass;
+    try {
+      mainClass =
+          MainClassResolver.resolveMainClass(
+              rawConfiguration.getMainClass().orElse(null), projectProperties);
+    } catch (MainClassInferenceException ex) {
+      if (entrypointDefined) {
+        // We will use the user-given entrypoint, so don't fail.
+        mainClass = "could-not-infer-a-main-class";
+      } else {
+        throw ex;
+      }
+    }
     addJvmArgFilesLayer(
         rawConfiguration, projectProperties, jibContainerBuilder, classpathString, mainClass);
 

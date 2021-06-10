@@ -496,6 +496,54 @@ public class PluginConfigurationProcessorTest {
     assertThat(jvmArgFiles)
         .comparingElementsUsing(EXTRACTION_PATH_OF)
         .containsExactly("/app/jib-classpath-file", "/app/jib-main-class-file");
+
+    String classpath =
+        new String(
+            Files.readAllBytes(appCacheDirectory.resolve("jib-classpath-file")),
+            StandardCharsets.UTF_8);
+    assertThat(classpath)
+        .isEqualTo("/foo:/app/resources:/app/classes:/app/libs/foo-1.jar:/app/libs/bar-2.jar");
+    String mainClass =
+        new String(
+            Files.readAllBytes(appCacheDirectory.resolve("jib-main-class-file")),
+            StandardCharsets.UTF_8);
+    assertThat(mainClass).isEqualTo("java.lang.Object");
+  }
+
+  @Test
+  public void testClasspathArgumentFile_mainClassInferenceFailureWithCustomEntrypoint()
+      throws NumberFormatException, InvalidImageReferenceException, MainClassInferenceException,
+          InvalidAppRootException, IOException, InvalidWorkingDirectoryException,
+          InvalidPlatformException, InvalidContainerVolumeException,
+          IncompatibleBaseImageJavaVersionException, InvalidContainerizingModeException,
+          InvalidFilesModificationTimeException, InvalidCreationTimeException {
+    when(rawConfiguration.getMainClass()).thenReturn(Optional.of("invalid main class"));
+    when(rawConfiguration.getEntrypoint()).thenReturn(Optional.of(Arrays.asList("bash")));
+
+    ContainerBuildPlan buildPlan = processCommonConfiguration();
+
+    assertThat(buildPlan.getEntrypoint()).containsExactly("bash");
+
+    List<FileEntry> jvmArgFiles = getLayerEntries(buildPlan, "jvm arg files");
+    assertThat(jvmArgFiles)
+        .comparingElementsUsing(SOURCE_FILE_OF)
+        .containsExactly(
+            appCacheDirectory.resolve("jib-classpath-file"),
+            appCacheDirectory.resolve("jib-main-class-file"));
+    assertThat(jvmArgFiles)
+        .comparingElementsUsing(EXTRACTION_PATH_OF)
+        .containsExactly("/app/jib-classpath-file", "/app/jib-main-class-file");
+
+    String classpath =
+        new String(
+            Files.readAllBytes(appCacheDirectory.resolve("jib-classpath-file")),
+            StandardCharsets.UTF_8);
+    assertThat(classpath).isEqualTo("/app/resources:/app/classes:/app/libs/*");
+    String mainClass =
+        new String(
+            Files.readAllBytes(appCacheDirectory.resolve("jib-main-class-file")),
+            StandardCharsets.UTF_8);
+    assertThat(mainClass).isEqualTo("could-not-infer-a-main-class");
   }
 
   @Test
