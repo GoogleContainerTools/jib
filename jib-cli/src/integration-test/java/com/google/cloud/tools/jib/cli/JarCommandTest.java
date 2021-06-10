@@ -54,7 +54,6 @@ public class JarCommandTest {
   }
 
   @Test
-  @Ignore
   public void testErrorLogging_fileDoesNotExist() {
     StringWriter stringWriter = new StringWriter();
     CommandLine jibCli = new CommandLine(new JibCli()).setErr(new PrintWriter(stringWriter));
@@ -67,7 +66,6 @@ public class JarCommandTest {
   }
 
   @Test
-  @Ignore
   public void testErrorLogging_directoryGiven() {
     StringWriter stringWriter = new StringWriter();
     CommandLine jibCli = new CommandLine(new JibCli()).setErr(new PrintWriter(stringWriter));
@@ -85,7 +83,6 @@ public class JarCommandTest {
   }
 
   @Test
-  @Ignore
   public void testStandardJar_explodedMode_toDocker()
       throws IOException, InterruptedException, URISyntaxException {
     Path jarPath = Paths.get(Resources.getResource("jarTest/standard/jarWithCp.jar").toURI());
@@ -104,7 +101,6 @@ public class JarCommandTest {
   }
 
   @Test
-  @Ignore
   public void testNoDependencyStandardJar_explodedMode_toDocker()
       throws IOException, InterruptedException, URISyntaxException {
     Path jarPath = Paths.get(Resources.getResource("jarTest/standard/noDependencyJar.jar").toURI());
@@ -123,7 +119,6 @@ public class JarCommandTest {
   }
 
   @Test
-  @Ignore
   public void testStandardJar_packagedMode_toDocker()
       throws IOException, InterruptedException, URISyntaxException {
     Path jarPath = Paths.get(Resources.getResource("jarTest/standard/jarWithCp.jar").toURI());
@@ -143,7 +138,6 @@ public class JarCommandTest {
   }
 
   @Test
-  @Ignore
   public void testNoDependencyStandardJar_packagedMode_toDocker()
       throws IOException, InterruptedException, URISyntaxException {
     Path jarPath = Paths.get(Resources.getResource("jarTest/standard/noDependencyJar.jar").toURI());
@@ -167,7 +161,6 @@ public class JarCommandTest {
   }
 
   @Test
-  @Ignore
   public void testSpringBootLayeredJar_explodedMode() throws IOException, InterruptedException {
     springBootProject.build("-c", "settings-layered.gradle", "clean", "bootJar");
     Path jarParentPath = springBootProject.getProjectRoot().resolve("build").resolve("libs");
