@@ -94,6 +94,28 @@ public class WarCommandTest {
   }
 
   @Test
+  public void testWar_customJettySpecified() throws IOException, InterruptedException {
+    servletProject.build("clean", "war");
+    Path warParentPath = servletProject.getProjectRoot().resolve("build").resolve("libs");
+    Path warPath = warParentPath.resolve("standard-war.war");
+    Integer exitCode =
+        new CommandLine(new JibCli())
+            .execute(
+                "war",
+                "--target",
+                "docker://exploded-war-custom-jetty",
+                "--from=jetty",
+                warPath.toString());
+    assertThat(exitCode).isEqualTo(0);
+    String output =
+        new Command("docker", "run", "--rm", "--detach", "-p8080:8080", "exploded-war-custom-jetty")
+            .run();
+    containerName = output.trim();
+
+    assertThat(getContent(new URL("http://localhost:8080/hello"))).isEqualTo("Hello world");
+  }
+
+  @Test
   public void testWar_tomcat() throws IOException, InterruptedException {
     servletProject.build("clean", "war");
     Path warParentPath = servletProject.getProjectRoot().resolve("build").resolve("libs");
