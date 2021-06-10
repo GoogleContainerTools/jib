@@ -24,13 +24,11 @@ import com.google.cloud.tools.jib.cli.jar.JarFiles;
 import com.google.cloud.tools.jib.cli.jar.ProcessingMode;
 import com.google.cloud.tools.jib.cli.logging.CliLogger;
 import com.google.cloud.tools.jib.plugins.common.globalconfig.GlobalConfig;
-import com.google.cloud.tools.jib.plugins.common.globalconfig.InvalidGlobalConfigException;
 import com.google.cloud.tools.jib.plugins.common.logging.ConsoleLogger;
 import com.google.cloud.tools.jib.plugins.common.logging.SingleThreadedExecutor;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Multimaps;
 import com.google.common.util.concurrent.Futures;
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
@@ -84,7 +82,7 @@ public class Jar implements Callable<Integer> {
   private List<String> jvmFlags = Collections.emptyList();
 
   @Override
-  public Integer call() throws IOException, InvalidGlobalConfigException {
+  public Integer call() {
     commonCliOptions.validate();
     SingleThreadedExecutor executor = new SingleThreadedExecutor();
     ConsoleLogger logger =
