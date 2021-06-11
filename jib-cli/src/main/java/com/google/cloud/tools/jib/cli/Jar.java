@@ -113,7 +113,6 @@ public class Jar implements Callable<Integer> {
                 + jarFile);
         return 1;
       }
-
       if (!commonContainerConfigCliOptions.getEntrypoint().isEmpty() && !jvmFlags.isEmpty()) {
         logger.log(LogEvent.Level.WARN, "--jvm-flags is ignored when --entrypoint is specified");
       }

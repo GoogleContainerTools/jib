@@ -22,6 +22,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
+import com.google.cloud.tools.jib.api.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.api.buildplan.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.cli.ArtifactProcessor;
 import com.google.cloud.tools.jib.cli.ArtifactProcessors;
@@ -206,7 +207,8 @@ public class ArtifactProcessorsTest {
   }
 
   @Test
-  public void testFromWar_noJettyBaseImageAndAppRootPresent_success() {
+  public void testFromWar_noJettyBaseImageAndAppRootPresent_success()
+      throws InvalidImageReferenceException {
     when(mockCommonContainerConfigCliOptions.getFrom()).thenReturn(Optional.of("base-image"));
     when(mockWarCommand.getAppRoot()).thenReturn(Optional.of(AbsoluteUnixPath.get("/app-root")));
     when(mockCacheDirectories.getExplodedJarDirectory()).thenReturn(Paths.get("exploded-jar"));
@@ -221,7 +223,7 @@ public class ArtifactProcessorsTest {
   }
 
   @Test
-  public void testFromWar_jettyBaseImageSpecified_success() {
+  public void testFromWar_jettyBaseImageSpecified_success() throws InvalidImageReferenceException {
     when(mockCommonContainerConfigCliOptions.getFrom()).thenReturn(Optional.of("jetty:tag"));
     ArtifactProcessor processor =
         ArtifactProcessors.fromWar(

@@ -81,7 +81,7 @@ public class WarFiles {
       return entrypoint;
     }
     Optional<String> baseImage = commonContainerConfigCliOptions.getFrom();
-    Boolean isDefaultBaseImage =
+    boolean isDefaultBaseImage =
         !baseImage.isPresent() || (baseImage.isPresent() && baseImage.get().startsWith("jetty"));
     if (isDefaultBaseImage) {
       return processor.computeEntrypoint(ImmutableList.of());

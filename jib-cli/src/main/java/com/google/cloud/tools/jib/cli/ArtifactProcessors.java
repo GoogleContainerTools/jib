@@ -16,6 +16,8 @@
 
 package com.google.cloud.tools.jib.cli;
 
+import com.google.cloud.tools.jib.api.ImageReference;
+import com.google.cloud.tools.jib.api.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.api.buildplan.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.cli.jar.ProcessingMode;
 import com.google.cloud.tools.jib.cli.jar.SpringBootExplodedProcessor;
@@ -93,17 +95,19 @@ public class ArtifactProcessors {
    * @param warOptions war cli options
    * @param commonContainerConfigCliOptions common cli options shared between jar and war command
    * @return ArtifactProcessor
+   * @throws InvalidImageReferenceException if base image reference is invalid
    */
   public static ArtifactProcessor fromWar(
       Path warPath,
       CacheDirectories cacheDirectories,
       War warOptions,
-      CommonContainerConfigCliOptions commonContainerConfigCliOptions) {
+      CommonContainerConfigCliOptions commonContainerConfigCliOptions)
+      throws InvalidImageReferenceException {
     Optional<AbsoluteUnixPath> appRoot = warOptions.getAppRoot();
     Optional<String> baseImage = commonContainerConfigCliOptions.getFrom();
     boolean isCustomJetty =
         baseImage.isPresent()
-            && (baseImage.get().equals("jetty") || baseImage.get().startsWith("jetty:"));
+            && ImageReference.parse(baseImage.get()).getRepository().contains("jetty");
     boolean isDefaultBaseImage = !baseImage.isPresent() || isCustomJetty;
     if (!isDefaultBaseImage && !warOptions.getAppRoot().isPresent()) {
       throw new IllegalArgumentException(
