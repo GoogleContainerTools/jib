@@ -101,16 +101,16 @@ public class ArtifactProcessors {
       CommonContainerConfigCliOptions commonContainerConfigCliOptions) {
     Optional<AbsoluteUnixPath> appRoot = warOptions.getAppRoot();
     Optional<String> baseImage = commonContainerConfigCliOptions.getFrom();
-    Boolean isDefaultBaseImage =
-        !baseImage.isPresent() || (baseImage.isPresent() && baseImage.get().startsWith("jetty"));
+    boolean isCustomJetty =
+        baseImage.isPresent()
+            && (baseImage.get().equals("jetty") || baseImage.get().startsWith("jetty:"));
+    boolean isDefaultBaseImage = !baseImage.isPresent() || isCustomJetty;
     if (!isDefaultBaseImage && !warOptions.getAppRoot().isPresent()) {
-      throw new IllegalStateException(
+      throw new IllegalArgumentException(
           "Please set the app root of the container with `--app-root` when specifying a base image that is not jetty.");
     }
     AbsoluteUnixPath appRootPath =
-        appRoot.isPresent() && !isDefaultBaseImage
-            ? appRoot.get()
-            : AbsoluteUnixPath.get(DEFAULT_JETTY_APP_ROOT);
+        appRoot.isPresent() ? appRoot.get() : AbsoluteUnixPath.get(DEFAULT_JETTY_APP_ROOT);
     return new StandardWarExplodedProcessor(
         warPath, cacheDirectories.getExplodedJarDirectory(), appRootPath);
   }

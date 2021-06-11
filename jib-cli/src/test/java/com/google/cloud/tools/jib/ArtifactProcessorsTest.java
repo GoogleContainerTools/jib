@@ -190,9 +190,9 @@ public class ArtifactProcessorsTest {
   public void testFromWar_noJettyBaseImageAndNoAppRoot() {
     when(mockCommonContainerConfigCliOptions.getFrom()).thenReturn(Optional.of("base-image"));
 
-    IllegalStateException exception =
+    IllegalArgumentException exception =
         assertThrows(
-            IllegalStateException.class,
+            IllegalArgumentException.class,
             () ->
                 ArtifactProcessors.fromWar(
                     Paths.get("my-app.war"),
@@ -222,7 +222,7 @@ public class ArtifactProcessorsTest {
 
   @Test
   public void testFromWar_jettyBaseImageSpecified_success() {
-    when(mockCommonContainerConfigCliOptions.getFrom()).thenReturn(Optional.of("jetty"));
+    when(mockCommonContainerConfigCliOptions.getFrom()).thenReturn(Optional.of("jetty:tag"));
     ArtifactProcessor processor =
         ArtifactProcessors.fromWar(
             Paths.get("my-app.war"),

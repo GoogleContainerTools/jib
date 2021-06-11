@@ -125,10 +125,7 @@ public class StandardWarExplodedProcessor implements ArtifactProcessor {
 
   @Override
   public Integer getJavaVersion() {
-    return 8;
-  }
-
-  public AbsoluteUnixPath getAppRoot() {
-    return appRoot;
+    throw new UnsupportedOperationException(
+        "Getting the java version from a WAR file is currently not supported.");
   }
 }

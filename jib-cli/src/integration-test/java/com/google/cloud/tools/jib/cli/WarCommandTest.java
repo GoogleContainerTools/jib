@@ -104,7 +104,7 @@ public class WarCommandTest {
                 "war",
                 "--target",
                 "docker://exploded-war-custom-jetty",
-                "--from=jetty",
+                "--from=jetty:9.4-jre11",
                 warPath.toString());
     assertThat(exitCode).isEqualTo(0);
     String output =

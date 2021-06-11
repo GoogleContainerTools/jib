@@ -18,7 +18,6 @@ package com.google.cloud.tools.jib.cli.war;
 
 import com.google.cloud.tools.jib.api.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.api.JibContainerBuilder;
-import com.google.cloud.tools.jib.api.buildplan.FileEntriesLayer;
 import com.google.cloud.tools.jib.cli.ArtifactProcessor;
 import com.google.cloud.tools.jib.cli.CommonCliOptions;
 import com.google.cloud.tools.jib.cli.CommonContainerConfigCliOptions;
@@ -51,27 +50,17 @@ public class WarFiles {
       CommonContainerConfigCliOptions commonContainerConfigCliOptions,
       ConsoleLogger logger)
       throws IOException, InvalidImageReferenceException {
-    JibContainerBuilder containerBuilder;
-    List<FileEntriesLayer> layers;
-    Optional<String> baseImage = commonContainerConfigCliOptions.getFrom();
-    if (baseImage.isPresent()) {
-      containerBuilder =
-          ContainerBuilders.create(
-              baseImage.get(), Collections.emptySet(), commonCliOptions, logger);
-    } else {
-      containerBuilder =
-          ContainerBuilders.create("jetty", Collections.emptySet(), commonCliOptions, logger);
-    }
-
+    String baseImage = commonContainerConfigCliOptions.getFrom().orElse("jetty");
+    JibContainerBuilder containerBuilder =
+        ContainerBuilders.create(baseImage, Collections.emptySet(), commonCliOptions, logger);
     List<String> programArguments =
         commonContainerConfigCliOptions.getProgramArguments().isEmpty()
             ? null
             : commonContainerConfigCliOptions.getProgramArguments();
-    layers = processor.createLayers();
     containerBuilder
         .setEntrypoint(computeEntrypoint(commonContainerConfigCliOptions, processor))
         .setProgramArguments(programArguments)
-        .setFileEntriesLayers(layers)
+        .setFileEntriesLayers(processor.createLayers())
         .setExposedPorts(commonContainerConfigCliOptions.getExposedPorts())
         .setVolumes(commonContainerConfigCliOptions.getVolumes())
         .setEnvironment(commonContainerConfigCliOptions.getEnvironment())

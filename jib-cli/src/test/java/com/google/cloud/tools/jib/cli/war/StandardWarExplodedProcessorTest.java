@@ -17,6 +17,7 @@
 package com.google.cloud.tools.jib.cli.war;
 
 import static com.google.common.truth.Truth.assertThat;
+import static org.junit.Assert.assertThrows;
 
 import com.google.cloud.tools.jib.api.buildplan.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.api.buildplan.FileEntriesLayer;
@@ -160,7 +161,11 @@ public class StandardWarExplodedProcessorTest {
   public void testGetJavaVersion() {
     StandardWarExplodedProcessor processor =
         new StandardWarExplodedProcessor(Paths.get("ignore"), Paths.get("ignore"), APP_ROOT);
-    assertThat(processor.getJavaVersion()).isEqualTo(8);
+    UnsupportedOperationException exception =
+        assertThrows(UnsupportedOperationException.class, () -> processor.getJavaVersion());
+    assertThat(exception)
+        .hasMessageThat()
+        .isEqualTo("Getting the java version from a WAR file is currently not supported.");
   }
 
   private static Path zipUpDirectory(Path sourceRoot, Path targetZip) throws IOException {
