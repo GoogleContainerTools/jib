@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.cli.war;
 
+import com.google.cloud.tools.jib.api.ImageReference;
 import com.google.cloud.tools.jib.api.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.api.JibContainerBuilder;
 import com.google.cloud.tools.jib.cli.ArtifactProcessor;
@@ -53,13 +54,12 @@ public class WarFiles {
     String baseImage = commonContainerConfigCliOptions.getFrom().orElse("jetty");
     JibContainerBuilder containerBuilder =
         ContainerBuilders.create(baseImage, Collections.emptySet(), commonCliOptions, logger);
-    List<String> programArguments =
-        commonContainerConfigCliOptions.getProgramArguments().isEmpty()
-            ? null
-            : commonContainerConfigCliOptions.getProgramArguments();
+    List<String> programArguments = commonContainerConfigCliOptions.getProgramArguments();
+    if (!commonContainerConfigCliOptions.getProgramArguments().isEmpty()) {
+      containerBuilder.setProgramArguments(programArguments);
+    }
     containerBuilder
         .setEntrypoint(computeEntrypoint(commonContainerConfigCliOptions, processor))
-        .setProgramArguments(programArguments)
         .setFileEntriesLayers(processor.createLayers())
         .setExposedPorts(commonContainerConfigCliOptions.getExposedPorts())
         .setVolumes(commonContainerConfigCliOptions.getVolumes())
@@ -75,17 +75,24 @@ public class WarFiles {
   @Nullable
   private static List<String> computeEntrypoint(
       CommonContainerConfigCliOptions commonContainerConfigCliOptions, ArtifactProcessor processor)
-      throws IOException {
+      throws IOException, InvalidImageReferenceException {
     List<String> entrypoint = commonContainerConfigCliOptions.getEntrypoint();
     if (!entrypoint.isEmpty()) {
       return entrypoint;
     }
     Optional<String> baseImage = commonContainerConfigCliOptions.getFrom();
-    boolean isDefaultBaseImage =
-        !baseImage.isPresent() || (baseImage.isPresent() && baseImage.get().startsWith("jetty"));
-    if (isDefaultBaseImage) {
+    if (isJetty(baseImage)) {
       return processor.computeEntrypoint(ImmutableList.of());
     }
     return null;
+  }
+
+  private static Boolean isJetty(Optional<String> baseImage) throws InvalidImageReferenceException {
+    if (baseImage.isPresent()) {
+      ImageReference baseImageReference = ImageReference.parse(baseImage.get());
+      return baseImageReference.getRegistry().equals("registry-1.docker.io")
+          && baseImageReference.getRepository().equals("library/jetty");
+    }
+    return true;
   }
 }

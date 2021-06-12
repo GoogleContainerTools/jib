@@ -71,7 +71,6 @@ public class ArtifactProcessors {
               + jarJavaVersion
               + ", but the default base image only supports versions up to Java 11. Specify a custom base image with --from.");
     }
-
     String jarType = determineJarType(jarPath);
     ProcessingMode mode = jarOptions.getMode();
     if (jarType.equals(SPRING_BOOT) && mode.equals(ProcessingMode.packaged)) {
@@ -105,18 +104,13 @@ public class ArtifactProcessors {
       throws InvalidImageReferenceException {
     Optional<AbsoluteUnixPath> appRoot = warOptions.getAppRoot();
     Optional<String> baseImage = commonContainerConfigCliOptions.getFrom();
-    boolean isCustomJetty =
-        baseImage.isPresent()
-            && ImageReference.parse(baseImage.get()).getRepository().contains("jetty");
-    boolean isDefaultBaseImage = !baseImage.isPresent() || isCustomJetty;
-    if (!isDefaultBaseImage && !warOptions.getAppRoot().isPresent()) {
+    if (!isJetty(baseImage) && !appRoot.isPresent()) {
       throw new IllegalArgumentException(
           "Please set the app root of the container with `--app-root` when specifying a base image that is not jetty.");
     }
-    AbsoluteUnixPath appRootPath =
-        appRoot.isPresent() ? appRoot.get() : AbsoluteUnixPath.get(DEFAULT_JETTY_APP_ROOT);
+    AbsoluteUnixPath chosenAppRoot = appRoot.orElse(AbsoluteUnixPath.get(DEFAULT_JETTY_APP_ROOT));
     return new StandardWarExplodedProcessor(
-        warPath, cacheDirectories.getExplodedJarDirectory(), appRootPath);
+        warPath, cacheDirectories.getExplodedJarDirectory(), chosenAppRoot);
   }
 
   /**
@@ -175,5 +169,14 @@ public class ArtifactProcessors {
       }
       return VERSION_NOT_FOUND;
     }
+  }
+
+  private static Boolean isJetty(Optional<String> baseImage) throws InvalidImageReferenceException {
+    if (baseImage.isPresent()) {
+      ImageReference baseImageReference = ImageReference.parse(baseImage.get());
+      return baseImageReference.getRegistry().equals("registry-1.docker.io")
+          && baseImageReference.getRepository().equals("library/jetty");
+    }
+    return true;
   }
 }
