@@ -18,6 +18,7 @@ package com.google.cloud.tools.jib.maven;
 
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth8.assertThat;
+import static org.junit.Assert.assertThrows;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -76,7 +77,6 @@ import org.apache.maven.project.MavenProject;
 import org.codehaus.plexus.archiver.zip.ZipEntry;
 import org.codehaus.plexus.archiver.zip.ZipOutputStream;
 import org.codehaus.plexus.util.xml.Xpp3Dom;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -586,12 +586,12 @@ public class MavenProjectPropertiesTest {
 
     for (ContainerizingMode containerizingMode : ContainerizingMode.values()) {
       IOException thrownException =
-          Assert.assertThrows(
+          assertThrows(
               IOException.class,
               () ->
                   mavenProjectProperties.createJibContainerBuilder(
                       mockJavaContainerBuilder, containerizingMode));
-      Assert.assertEquals(thrownException.getMessage(), expectedMessage);
+      assertThat(thrownException).hasMessageThat().isEqualTo(expectedMessage);
     }
   }
 
@@ -608,12 +608,12 @@ public class MavenProjectPropertiesTest {
     when(mockJavaContainerBuilder.addResources(any(), any())).thenThrow(IOException.class);
 
     IOException thrownException =
-        Assert.assertThrows(
+        assertThrows(
             IOException.class,
             () ->
                 mavenProjectProperties.createJibContainerBuilder(
                     mockJavaContainerBuilder, ContainerizingMode.EXPLODED));
-    Assert.assertEquals(thrownException.getMessage(), expectedMessage);
+    assertThat(thrownException).hasMessageThat().isEqualTo(expectedMessage);
   }
 
   @Test
