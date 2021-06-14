@@ -7,10 +7,14 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
+### Fixed
+
+## 0.19.0
+
+### Changed
+
 - `JavaContainerBuilder#fromDistroless()` and `JavaContainerBuilder#fromDistrolessJetty()` are deprecated. To migrate, check the Javadoc. ([#3123](https://github.com/GoogleContainerTools/jib/pull/3123))
 - Timestamps of file entries in a built `TarImage` are set to the epoch, making the tarball reproducible. ([#3158](https://github.com/GoogleContainerTools/jib/issues/3158))
-
-### Fixed
 
 ## 0.18.0
 
