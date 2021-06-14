@@ -152,9 +152,13 @@ public class StandardWarExplodedProcessorTest {
   public void testComputeEntrypoint() {
     StandardWarExplodedProcessor processor =
         new StandardWarExplodedProcessor(Paths.get("ignore"), Paths.get("ignore"), APP_ROOT);
-    ImmutableList<String> entrypoint = processor.computeEntrypoint(ImmutableList.of("ignored"));
-    assertThat(entrypoint)
-        .isEqualTo(ImmutableList.of("java", "-jar", "/usr/local/jetty/start.jar"));
+    UnsupportedOperationException exception =
+        assertThrows(
+            UnsupportedOperationException.class,
+            () -> processor.computeEntrypoint(ImmutableList.of()));
+    assertThat(exception)
+        .hasMessageThat()
+        .isEqualTo("Computing the entrypoint is currently not supported.");
   }
 
   @Test

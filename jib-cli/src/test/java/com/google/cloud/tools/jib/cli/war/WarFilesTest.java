@@ -17,7 +17,6 @@
 package com.google.cloud.tools.jib.cli.war;
 
 import static com.google.common.truth.Truth.assertThat;
-import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.when;
 
 import com.google.cloud.tools.jib.api.InvalidImageReferenceException;
@@ -40,7 +39,6 @@ import java.util.Arrays;
 import java.util.Optional;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.ArgumentMatchers;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
@@ -64,8 +62,6 @@ public class WarFilesTest {
                 AbsoluteUnixPath.get("/my/app/WEB-INF/classes/class1.class"))
             .build();
     when(mockStandardWarExplodedProcessor.createLayers()).thenReturn(Arrays.asList(layer));
-    when(mockStandardWarExplodedProcessor.computeEntrypoint(anyList()))
-        .thenReturn(ImmutableList.of("java", "-jar", "/usr/local/jetty/start.jar"));
 
     JibContainerBuilder containerBuilder =
         WarFiles.toJibContainerBuilder(
@@ -155,9 +151,7 @@ public class WarFilesTest {
   @Test
   public void testToJibContainerBuilder_jettyBaseImageSpecified_usesDefaultEntrypoint()
       throws IOException, InvalidImageReferenceException {
-    when(mockCommonContainerConfigCliOptions.getFrom()).thenReturn(Optional.of("jetty"));
-    when(mockStandardWarExplodedProcessor.computeEntrypoint(ArgumentMatchers.anyList()))
-        .thenReturn(ImmutableList.of("java", "-jar", "/usr/local/jetty/start.jar"));
+    when(mockCommonContainerConfigCliOptions.getFrom()).thenReturn(Optional.of("jetty:tag"));
 
     JibContainerBuilder containerBuilder =
         WarFiles.toJibContainerBuilder(
@@ -167,7 +161,7 @@ public class WarFilesTest {
             mockLogger);
     ContainerBuildPlan buildPlan = containerBuilder.toContainerBuildPlan();
 
-    assertThat(buildPlan.getBaseImage()).isEqualTo("jetty");
+    assertThat(buildPlan.getBaseImage()).isEqualTo("jetty:tag");
     assertThat(buildPlan.getEntrypoint())
         .containsExactly("java", "-jar", "/usr/local/jetty/start.jar")
         .inOrder();

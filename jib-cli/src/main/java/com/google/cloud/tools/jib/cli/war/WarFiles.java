@@ -59,7 +59,7 @@ public class WarFiles {
       containerBuilder.setProgramArguments(programArguments);
     }
     containerBuilder
-        .setEntrypoint(computeEntrypoint(commonContainerConfigCliOptions, processor))
+        .setEntrypoint(computeEntrypoint(commonContainerConfigCliOptions))
         .setFileEntriesLayers(processor.createLayers())
         .setExposedPorts(commonContainerConfigCliOptions.getExposedPorts())
         .setVolumes(commonContainerConfigCliOptions.getVolumes())
@@ -74,15 +74,15 @@ public class WarFiles {
 
   @Nullable
   private static List<String> computeEntrypoint(
-      CommonContainerConfigCliOptions commonContainerConfigCliOptions, ArtifactProcessor processor)
-      throws IOException, InvalidImageReferenceException {
+      CommonContainerConfigCliOptions commonContainerConfigCliOptions)
+      throws InvalidImageReferenceException {
     List<String> entrypoint = commonContainerConfigCliOptions.getEntrypoint();
     if (!entrypoint.isEmpty()) {
       return entrypoint;
     }
     Optional<String> baseImage = commonContainerConfigCliOptions.getFrom();
     if (isJetty(baseImage)) {
-      return processor.computeEntrypoint(ImmutableList.of());
+      return ImmutableList.of("java", "-jar", "/usr/local/jetty/start.jar");
     }
     return null;
   }

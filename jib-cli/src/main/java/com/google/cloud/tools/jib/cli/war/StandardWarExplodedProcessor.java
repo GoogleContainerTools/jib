@@ -119,8 +119,7 @@ public class StandardWarExplodedProcessor implements ArtifactProcessor {
 
   @Override
   public ImmutableList<String> computeEntrypoint(List<String> jvmFlags) {
-    // JVM flags are ignored.
-    return ImmutableList.of("java", "-jar", "/usr/local/jetty/start.jar");
+    throw new UnsupportedOperationException("Computing the entrypoint is currently not supported.");
   }
 
   @Override
