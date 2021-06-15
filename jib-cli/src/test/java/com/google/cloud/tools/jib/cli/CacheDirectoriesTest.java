@@ -49,8 +49,8 @@ public class CacheDirectoriesTest {
     assertThat(cacheDirectories.getProjectCache()).isEqualTo(expectedProjectCache);
     assertThat(cacheDirectories.getApplicationLayersCache())
         .isEqualTo(expectedProjectCache.resolve("application-layers"));
-    assertThat(cacheDirectories.getExplodedJarDirectory())
-        .isEqualTo(expectedProjectCache.resolve("exploded-jar"));
+    assertThat(cacheDirectories.getExplodedArtifactDirectory())
+        .isEqualTo(expectedProjectCache.resolve("exploded-artifact"));
   }
 
   @Test
@@ -68,8 +68,8 @@ public class CacheDirectoriesTest {
     assertThat(cacheDirectories.getProjectCache()).isEqualTo(Paths.get("test-project-cache"));
     assertThat(cacheDirectories.getApplicationLayersCache())
         .isEqualTo(Paths.get("test-project-cache").resolve("application-layers"));
-    assertThat(cacheDirectories.getExplodedJarDirectory())
-        .isEqualTo(Paths.get("test-project-cache").resolve("exploded-jar"));
+    assertThat(cacheDirectories.getExplodedArtifactDirectory())
+        .isEqualTo(Paths.get("test-project-cache").resolve("exploded-artifact"));
   }
 
   @Test

@@ -36,8 +36,7 @@ import picocli.CommandLine;
 
 public class WarCommandTest {
 
-  @ClassRule
-  public static final TestProject servletProject = new TestProject("warTest/war_servlet");
+  @ClassRule public static final TestProject servletProject = new TestProject("warTest");
 
   @Nullable private String containerName;
 

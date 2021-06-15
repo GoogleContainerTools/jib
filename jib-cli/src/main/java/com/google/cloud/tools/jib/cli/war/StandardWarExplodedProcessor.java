@@ -53,7 +53,7 @@ public class StandardWarExplodedProcessor implements ArtifactProcessor {
 
   @Override
   public List<FileEntriesLayer> createLayers() throws IOException {
-    // Clear the exploded-jar root first
+    // Clear the exploded-artifact root first
     if (Files.exists(targetExplodedWarRoot)) {
       MoreFiles.deleteRecursively(targetExplodedWarRoot, RecursiveDeleteOption.ALLOW_INSECURE);
     }

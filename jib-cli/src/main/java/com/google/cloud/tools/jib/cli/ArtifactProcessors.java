@@ -77,12 +77,12 @@ public class ArtifactProcessors {
       return new SpringBootPackagedProcessor(jarPath, jarJavaVersion);
     } else if (jarType.equals(SPRING_BOOT) && mode.equals(ProcessingMode.exploded)) {
       return new SpringBootExplodedProcessor(
-          jarPath, cacheDirectories.getExplodedJarDirectory(), jarJavaVersion);
+          jarPath, cacheDirectories.getExplodedArtifactDirectory(), jarJavaVersion);
     } else if (jarType.equals(STANDARD) && mode.equals(ProcessingMode.packaged)) {
       return new StandardPackagedProcessor(jarPath, jarJavaVersion);
     } else {
       return new StandardExplodedProcessor(
-          jarPath, cacheDirectories.getExplodedJarDirectory(), jarJavaVersion);
+          jarPath, cacheDirectories.getExplodedArtifactDirectory(), jarJavaVersion);
     }
   }
 
@@ -110,7 +110,7 @@ public class ArtifactProcessors {
     }
     AbsoluteUnixPath chosenAppRoot = appRoot.orElse(AbsoluteUnixPath.get(DEFAULT_JETTY_APP_ROOT));
     return new StandardWarExplodedProcessor(
-        warPath, cacheDirectories.getExplodedJarDirectory(), chosenAppRoot);
+        warPath, cacheDirectories.getExplodedArtifactDirectory(), chosenAppRoot);
   }
 
   /**

@@ -71,14 +71,14 @@ public class ArtifactProcessorsTest {
   public void testFromJar_standardExploded() throws IOException, URISyntaxException {
     Path jarPath = Paths.get(Resources.getResource(STANDARD).toURI());
     Path explodedJarRoot = temporaryFolder.getRoot().toPath();
-    when(mockCacheDirectories.getExplodedJarDirectory()).thenReturn(explodedJarRoot);
+    when(mockCacheDirectories.getExplodedArtifactDirectory()).thenReturn(explodedJarRoot);
     when(mockJarCommand.getMode()).thenReturn(ProcessingMode.exploded);
 
     ArtifactProcessor processor =
         ArtifactProcessors.fromJar(
             jarPath, mockCacheDirectories, mockJarCommand, mockCommonContainerConfigCliOptions);
 
-    verify(mockCacheDirectories).getExplodedJarDirectory();
+    verify(mockCacheDirectories).getExplodedArtifactDirectory();
     assertThat(processor).isInstanceOf(StandardExplodedProcessor.class);
   }
 
@@ -112,14 +112,14 @@ public class ArtifactProcessorsTest {
   public void testFromJar_springBootExploded() throws IOException, URISyntaxException {
     Path jarPath = Paths.get(Resources.getResource(SPRING_BOOT).toURI());
     Path explodedJarRoot = temporaryFolder.getRoot().toPath();
-    when(mockCacheDirectories.getExplodedJarDirectory()).thenReturn(explodedJarRoot);
+    when(mockCacheDirectories.getExplodedArtifactDirectory()).thenReturn(explodedJarRoot);
     when(mockJarCommand.getMode()).thenReturn(ProcessingMode.exploded);
 
     ArtifactProcessor processor =
         ArtifactProcessors.fromJar(
             jarPath, mockCacheDirectories, mockJarCommand, mockCommonContainerConfigCliOptions);
 
-    verify(mockCacheDirectories).getExplodedJarDirectory();
+    verify(mockCacheDirectories).getExplodedArtifactDirectory();
     assertThat(processor).isInstanceOf(SpringBootExplodedProcessor.class);
   }
 
@@ -153,7 +153,7 @@ public class ArtifactProcessorsTest {
         ArtifactProcessors.fromJar(
             jarPath, mockCacheDirectories, mockJarCommand, mockCommonContainerConfigCliOptions);
 
-    verify(mockCacheDirectories).getExplodedJarDirectory();
+    verify(mockCacheDirectories).getExplodedArtifactDirectory();
     assertThat(processor).isInstanceOf(StandardExplodedProcessor.class);
   }
 
@@ -211,7 +211,8 @@ public class ArtifactProcessorsTest {
       throws InvalidImageReferenceException {
     when(mockCommonContainerConfigCliOptions.getFrom()).thenReturn(Optional.of("base-image"));
     when(mockWarCommand.getAppRoot()).thenReturn(Optional.of(AbsoluteUnixPath.get("/app-root")));
-    when(mockCacheDirectories.getExplodedJarDirectory()).thenReturn(Paths.get("exploded-jar"));
+    when(mockCacheDirectories.getExplodedArtifactDirectory())
+        .thenReturn(Paths.get("exploded-artifact"));
     ArtifactProcessor processor =
         ArtifactProcessors.fromWar(
             Paths.get("my-app.war"),
