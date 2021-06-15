@@ -314,11 +314,11 @@ public class MavenProjectProperties implements ProjectProperties {
     } catch (IOException ex) {
       throw new IOException(
           "Obtaining project build output files failed; make sure you have "
-              + (containerizingMode == ContainerizingMode.PACKAGED ? "packaged" : "compiled")
+              + (isPackageErrorMessage(containerizingMode) ? "packaged" : "compiled")
               + " your project "
               + "before trying to build the image. (Did you accidentally run \"mvn clean "
               + "jib:build\" instead of \"mvn clean "
-              + (containerizingMode == ContainerizingMode.PACKAGED ? "package" : "compile")
+              + (isPackageErrorMessage(containerizingMode) ? "package" : "compile")
               + " jib:build\"?)",
           ex);
     }
@@ -702,5 +702,9 @@ public class MavenProjectProperties implements ProjectProperties {
               + config.getExtensionClass());
     }
     return found.get();
+  }
+
+  private boolean isPackageErrorMessage(ContainerizingMode containerizingMode) {
+    return containerizingMode == ContainerizingMode.PACKAGED || isWarProject();
   }
 }

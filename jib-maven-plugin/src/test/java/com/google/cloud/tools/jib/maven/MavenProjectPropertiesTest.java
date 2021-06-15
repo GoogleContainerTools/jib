@@ -18,6 +18,8 @@ package com.google.cloud.tools.jib.maven;
 
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth8.assertThat;
+import static org.junit.Assert.assertThrows;
+import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -187,6 +189,7 @@ public class MavenProjectPropertiesTest {
   @Mock private Log mockLog;
   @Mock private TempDirectoryProvider mockTempDirectoryProvider;
   @Mock private Supplier<List<JibMavenPluginExtension<?>>> mockExtensionLoader;
+  @Mock private JavaContainerBuilder mockJavaContainerBuilder;
 
   private MavenProjectProperties mavenProjectProperties;
 
@@ -568,6 +571,49 @@ public class MavenProjectPropertiesTest {
             mavenProjectProperties.createJibContainerBuilder(
                 JavaContainerBuilder.from("ignored"), ContainerizingMode.EXPLODED))
         .isNotNull();
+  }
+
+  @Test
+  public void testCreateContainerBuilder_exceptionMessageHasPackageSuggestionIfProjectIsWar()
+      throws IOException {
+    String expectedMessage =
+        "Obtaining project build output files failed; make sure you have "
+            + "packaged your project before trying to build the image. (Did you accidentally run \"mvn clean "
+            + "jib:build\" instead of \"mvn clean package jib:build\"?)";
+
+    when(mockMavenProject.getPackaging()).thenReturn("war");
+    when(mockTempDirectoryProvider.newDirectory()).thenThrow(IOException.class);
+
+    for (ContainerizingMode containerizingMode : ContainerizingMode.values()) {
+      IOException thrownException =
+          assertThrows(
+              IOException.class,
+              () ->
+                  mavenProjectProperties.createJibContainerBuilder(
+                      mockJavaContainerBuilder, containerizingMode));
+      assertThat(thrownException).hasMessageThat().isEqualTo(expectedMessage);
+    }
+  }
+
+  @Test
+  public void
+      testCreateContainerBuilder_exceptionMessageHasCompileSuggestionIfProjectIsExplodedAndNotWar()
+          throws IOException {
+    String expectedMessage =
+        "Obtaining project build output files failed; make sure you have "
+            + "compiled your project before trying to build the image. (Did you accidentally run \"mvn clean "
+            + "jib:build\" instead of \"mvn clean compile jib:build\"?)";
+
+    when(mockMavenProject.getPackaging()).thenReturn("jar");
+    when(mockJavaContainerBuilder.addResources(any(), any())).thenThrow(IOException.class);
+
+    IOException thrownException =
+        assertThrows(
+            IOException.class,
+            () ->
+                mavenProjectProperties.createJibContainerBuilder(
+                    mockJavaContainerBuilder, ContainerizingMode.EXPLODED));
+    assertThat(thrownException).hasMessageThat().isEqualTo(expectedMessage);
   }
 
   @Test
