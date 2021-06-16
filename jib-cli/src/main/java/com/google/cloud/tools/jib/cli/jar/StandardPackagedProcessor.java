@@ -25,7 +25,7 @@ import java.util.List;
 import java.util.jar.Attributes;
 import java.util.jar.JarFile;
 
-class StandardPackagedProcessor implements ArtifactProcessor {
+public class StandardPackagedProcessor implements ArtifactProcessor {
 
   private final Path jarPath;
   private final Integer jarJavaVersion;
@@ -36,7 +36,7 @@ class StandardPackagedProcessor implements ArtifactProcessor {
    * @param jarPath path to jar file
    * @param jarJavaVersion jar java version
    */
-  StandardPackagedProcessor(Path jarPath, Integer jarJavaVersion) {
+  public StandardPackagedProcessor(Path jarPath, Integer jarJavaVersion) {
     this.jarPath = jarPath;
     this.jarJavaVersion = jarJavaVersion;
   }

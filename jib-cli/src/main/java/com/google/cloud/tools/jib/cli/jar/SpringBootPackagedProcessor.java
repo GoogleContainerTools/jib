@@ -23,7 +23,7 @@ import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
 
-class SpringBootPackagedProcessor implements ArtifactProcessor {
+public class SpringBootPackagedProcessor implements ArtifactProcessor {
 
   private final Path jarPath;
   private final Integer jarJavaVersion;
@@ -34,7 +34,7 @@ class SpringBootPackagedProcessor implements ArtifactProcessor {
    * @param jarPath path to jar file
    * @param jarJavaVersion jar java version
    */
-  SpringBootPackagedProcessor(Path jarPath, Integer jarJavaVersion) {
+  public SpringBootPackagedProcessor(Path jarPath, Integer jarJavaVersion) {
     this.jarPath = jarPath;
     this.jarJavaVersion = jarJavaVersion;
   }

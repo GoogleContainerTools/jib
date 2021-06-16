@@ -14,7 +14,7 @@
  * the License.
  */
 
-package com.google.cloud.tools.jib.cli.jar;
+package com.google.cloud.tools.jib;
 
 import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assert.assertThrows;
@@ -22,10 +22,20 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
+import com.google.cloud.tools.jib.api.InvalidImageReferenceException;
+import com.google.cloud.tools.jib.api.buildplan.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.cli.ArtifactProcessor;
+import com.google.cloud.tools.jib.cli.ArtifactProcessors;
 import com.google.cloud.tools.jib.cli.CacheDirectories;
 import com.google.cloud.tools.jib.cli.CommonContainerConfigCliOptions;
 import com.google.cloud.tools.jib.cli.Jar;
+import com.google.cloud.tools.jib.cli.War;
+import com.google.cloud.tools.jib.cli.jar.ProcessingMode;
+import com.google.cloud.tools.jib.cli.jar.SpringBootExplodedProcessor;
+import com.google.cloud.tools.jib.cli.jar.SpringBootPackagedProcessor;
+import com.google.cloud.tools.jib.cli.jar.StandardExplodedProcessor;
+import com.google.cloud.tools.jib.cli.jar.StandardPackagedProcessor;
+import com.google.cloud.tools.jib.cli.war.StandardWarExplodedProcessor;
 import com.google.common.io.Resources;
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -52,32 +62,33 @@ public class ArtifactProcessorsTest {
 
   @Mock private CacheDirectories mockCacheDirectories;
   @Mock private Jar mockJarCommand;
+  @Mock private War mockWarCommand;
   @Mock private CommonContainerConfigCliOptions mockCommonContainerConfigCliOptions;
 
   @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
   @Test
-  public void testFrom_standardExploded() throws IOException, URISyntaxException {
+  public void testFromJar_standardExploded() throws IOException, URISyntaxException {
     Path jarPath = Paths.get(Resources.getResource(STANDARD).toURI());
     Path explodedJarRoot = temporaryFolder.getRoot().toPath();
-    when(mockCacheDirectories.getExplodedJarDirectory()).thenReturn(explodedJarRoot);
+    when(mockCacheDirectories.getExplodedArtifactDirectory()).thenReturn(explodedJarRoot);
     when(mockJarCommand.getMode()).thenReturn(ProcessingMode.exploded);
 
     ArtifactProcessor processor =
-        ArtifactProcessors.from(
+        ArtifactProcessors.fromJar(
             jarPath, mockCacheDirectories, mockJarCommand, mockCommonContainerConfigCliOptions);
 
-    verify(mockCacheDirectories).getExplodedJarDirectory();
+    verify(mockCacheDirectories).getExplodedArtifactDirectory();
     assertThat(processor).isInstanceOf(StandardExplodedProcessor.class);
   }
 
   @Test
-  public void testFrom_standardPackaged() throws IOException, URISyntaxException {
+  public void testFromJar_standardPackaged() throws IOException, URISyntaxException {
     Path jarPath = Paths.get(Resources.getResource(STANDARD).toURI());
     when(mockJarCommand.getMode()).thenReturn(ProcessingMode.packaged);
 
     ArtifactProcessor processor =
-        ArtifactProcessors.from(
+        ArtifactProcessors.fromJar(
             jarPath, mockCacheDirectories, mockJarCommand, mockCommonContainerConfigCliOptions);
 
     verifyNoInteractions(mockCacheDirectories);
@@ -85,12 +96,12 @@ public class ArtifactProcessorsTest {
   }
 
   @Test
-  public void testFrom_springBootPackaged() throws IOException, URISyntaxException {
+  public void testFromJar_springBootPackaged() throws IOException, URISyntaxException {
     Path jarPath = Paths.get(Resources.getResource(SPRING_BOOT).toURI());
     when(mockJarCommand.getMode()).thenReturn(ProcessingMode.packaged);
 
     ArtifactProcessor processor =
-        ArtifactProcessors.from(
+        ArtifactProcessors.fromJar(
             jarPath, mockCacheDirectories, mockJarCommand, mockCommonContainerConfigCliOptions);
 
     verifyNoInteractions(mockCacheDirectories);
@@ -98,50 +109,51 @@ public class ArtifactProcessorsTest {
   }
 
   @Test
-  public void testFrom_springBootExploded() throws IOException, URISyntaxException {
+  public void testFromJar_springBootExploded() throws IOException, URISyntaxException {
     Path jarPath = Paths.get(Resources.getResource(SPRING_BOOT).toURI());
     Path explodedJarRoot = temporaryFolder.getRoot().toPath();
-    when(mockCacheDirectories.getExplodedJarDirectory()).thenReturn(explodedJarRoot);
+    when(mockCacheDirectories.getExplodedArtifactDirectory()).thenReturn(explodedJarRoot);
     when(mockJarCommand.getMode()).thenReturn(ProcessingMode.exploded);
 
     ArtifactProcessor processor =
-        ArtifactProcessors.from(
+        ArtifactProcessors.fromJar(
             jarPath, mockCacheDirectories, mockJarCommand, mockCommonContainerConfigCliOptions);
 
-    verify(mockCacheDirectories).getExplodedJarDirectory();
+    verify(mockCacheDirectories).getExplodedArtifactDirectory();
     assertThat(processor).isInstanceOf(SpringBootExplodedProcessor.class);
   }
 
   @Test
-  public void testFrom_incompatibleDefaultBaseImage() throws URISyntaxException {
+  public void testFromJar_incompatibleDefaultBaseImage() throws URISyntaxException {
     Path jarPath = Paths.get(Resources.getResource(JAVA_14_JAR).toURI());
 
     IllegalStateException exception =
         assertThrows(
             IllegalStateException.class,
             () ->
-                ArtifactProcessors.from(
+                ArtifactProcessors.fromJar(
                     jarPath,
                     mockCacheDirectories,
                     mockJarCommand,
                     mockCommonContainerConfigCliOptions));
+
     assertThat(exception)
         .hasMessageThat()
         .startsWith("The input JAR (" + jarPath + ") is compiled with Java 14");
   }
 
   @Test
-  public void testFrom_incompatibleDefaultBaseImage_baseImageSpecified()
+  public void testFromJar_incompatibleDefaultBaseImage_baseImageSpecified()
       throws URISyntaxException, IOException {
     Path jarPath = Paths.get(Resources.getResource(JAVA_14_JAR).toURI());
     when(mockJarCommand.getMode()).thenReturn(ProcessingMode.exploded);
     when(mockCommonContainerConfigCliOptions.getFrom()).thenReturn(Optional.of("base-image"));
 
     ArtifactProcessor processor =
-        ArtifactProcessors.from(
+        ArtifactProcessors.fromJar(
             jarPath, mockCacheDirectories, mockJarCommand, mockCommonContainerConfigCliOptions);
 
-    verify(mockCacheDirectories).getExplodedJarDirectory();
+    verify(mockCacheDirectories).getExplodedArtifactDirectory();
     assertThat(processor).isInstanceOf(StandardExplodedProcessor.class);
   }
 
@@ -173,5 +185,53 @@ public class ArtifactProcessorsTest {
             IllegalArgumentException.class,
             () -> ArtifactProcessors.determineJavaMajorVersion(jarPath));
     assertThat(exception).hasMessageThat().startsWith("Reached end of class file (class1.class)");
+  }
+
+  @Test
+  public void testFromWar_noJettyBaseImageAndNoAppRoot() {
+    when(mockCommonContainerConfigCliOptions.getFrom()).thenReturn(Optional.of("base-image"));
+
+    IllegalArgumentException exception =
+        assertThrows(
+            IllegalArgumentException.class,
+            () ->
+                ArtifactProcessors.fromWar(
+                    Paths.get("my-app.war"),
+                    mockCacheDirectories,
+                    mockWarCommand,
+                    mockCommonContainerConfigCliOptions));
+
+    assertThat(exception)
+        .hasMessageThat()
+        .startsWith("Please set the app root of the container with `--app-root`");
+  }
+
+  @Test
+  public void testFromWar_noJettyBaseImageAndAppRootPresent_success()
+      throws InvalidImageReferenceException {
+    when(mockCommonContainerConfigCliOptions.getFrom()).thenReturn(Optional.of("base-image"));
+    when(mockWarCommand.getAppRoot()).thenReturn(Optional.of(AbsoluteUnixPath.get("/app-root")));
+    when(mockCacheDirectories.getExplodedArtifactDirectory())
+        .thenReturn(Paths.get("exploded-artifact"));
+    ArtifactProcessor processor =
+        ArtifactProcessors.fromWar(
+            Paths.get("my-app.war"),
+            mockCacheDirectories,
+            mockWarCommand,
+            mockCommonContainerConfigCliOptions);
+
+    assertThat(processor).isInstanceOf(StandardWarExplodedProcessor.class);
+  }
+
+  @Test
+  public void testFromWar_jettyBaseImageSpecified_success() throws InvalidImageReferenceException {
+    when(mockCommonContainerConfigCliOptions.getFrom()).thenReturn(Optional.of("jetty:tag"));
+    ArtifactProcessor processor =
+        ArtifactProcessors.fromWar(
+            Paths.get("my-app.war"),
+            mockCacheDirectories,
+            mockWarCommand,
+            mockCommonContainerConfigCliOptions);
+    assertThat(processor).isInstanceOf(StandardWarExplodedProcessor.class);
   }
 }

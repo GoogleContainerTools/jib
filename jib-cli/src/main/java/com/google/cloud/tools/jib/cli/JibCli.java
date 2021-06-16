@@ -51,7 +51,7 @@ import picocli.CommandLine;
     showAtFileInUsageHelp = true,
     synopsisSubcommandLabel = "COMMAND",
     description = "A tool for creating container images",
-    subcommands = {Build.class, Jar.class})
+    subcommands = {Build.class, Jar.class, War.class})
 public class JibCli {
 
   private static final String VERSION_URL = "https://storage.googleapis.com/jib-versions/jib-cli";

@@ -40,7 +40,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
 
-class SpringBootExplodedProcessor implements ArtifactProcessor {
+public class SpringBootExplodedProcessor implements ArtifactProcessor {
 
   private final Path jarPath;
   private final Path targetExplodedJarRoot;
@@ -53,7 +53,8 @@ class SpringBootExplodedProcessor implements ArtifactProcessor {
    * @param targetExplodedJarRoot path to exploded-jar root
    * @param jarJavaVersion jar java version
    */
-  SpringBootExplodedProcessor(Path jarPath, Path targetExplodedJarRoot, Integer jarJavaVersion) {
+  public SpringBootExplodedProcessor(
+      Path jarPath, Path targetExplodedJarRoot, Integer jarJavaVersion) {
     this.jarPath = jarPath;
     this.targetExplodedJarRoot = targetExplodedJarRoot;
     this.jarJavaVersion = jarJavaVersion;
@@ -61,7 +62,7 @@ class SpringBootExplodedProcessor implements ArtifactProcessor {
 
   @Override
   public List<FileEntriesLayer> createLayers() throws IOException {
-    // Clear the exploded-jar root first
+    // Clear the exploded-artifact root first
     if (Files.exists(targetExplodedJarRoot)) {
       MoreFiles.deleteRecursively(targetExplodedJarRoot, RecursiveDeleteOption.ALLOW_INSECURE);
     }

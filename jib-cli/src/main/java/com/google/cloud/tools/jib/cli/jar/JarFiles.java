@@ -17,7 +17,6 @@
 package com.google.cloud.tools.jib.cli.jar;
 
 import com.google.cloud.tools.jib.api.InvalidImageReferenceException;
-import com.google.cloud.tools.jib.api.Jib;
 import com.google.cloud.tools.jib.api.JibContainerBuilder;
 import com.google.cloud.tools.jib.api.buildplan.FileEntriesLayer;
 import com.google.cloud.tools.jib.cli.ArtifactProcessor;
@@ -67,8 +66,10 @@ public class JarFiles {
     } else {
       containerBuilder =
           (processor.getJavaVersion() <= 8)
-              ? Jib.from("adoptopenjdk:8-jre")
-              : Jib.from("adoptopenjdk:11-jre");
+              ? ContainerBuilders.create(
+                  "adoptopenjdk:8-jre", Collections.emptySet(), commonCliOptions, logger)
+              : ContainerBuilders.create(
+                  "adoptopenjdk:11-jre", Collections.emptySet(), commonCliOptions, logger);
     }
 
     List<FileEntriesLayer> layers = processor.createLayers();

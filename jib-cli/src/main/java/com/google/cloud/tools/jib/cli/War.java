@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Google LLC.
+ * Copyright 2021 Google LLC.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,9 +20,9 @@ import com.google.cloud.tools.jib.api.Containerizer;
 import com.google.cloud.tools.jib.api.JibContainer;
 import com.google.cloud.tools.jib.api.JibContainerBuilder;
 import com.google.cloud.tools.jib.api.LogEvent;
-import com.google.cloud.tools.jib.cli.jar.JarFiles;
-import com.google.cloud.tools.jib.cli.jar.ProcessingMode;
+import com.google.cloud.tools.jib.api.buildplan.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.cli.logging.CliLogger;
+import com.google.cloud.tools.jib.cli.war.WarFiles;
 import com.google.cloud.tools.jib.plugins.common.globalconfig.GlobalConfig;
 import com.google.cloud.tools.jib.plugins.common.logging.ConsoleLogger;
 import com.google.cloud.tools.jib.plugins.common.logging.SingleThreadedExecutor;
@@ -32,24 +32,20 @@ import com.google.common.util.concurrent.Futures;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
-import java.util.Collections;
-import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 import picocli.CommandLine;
-import picocli.CommandLine.Model.CommandSpec;
 
 @CommandLine.Command(
-    name = "jar",
+    name = "war",
     mixinStandardHelpOptions = true,
     showAtFileInUsageHelp = true,
-    description = "Containerize a jar")
-public class Jar implements Callable<Integer> {
-
+    description = "Containerize a war")
+public class War implements Callable<Integer> {
   @CommandLine.Spec
   @SuppressWarnings("NullAway.Init") // initialized by picocli
-  private CommandSpec spec;
+  private CommandLine.Model.CommandSpec spec;
 
   @CommandLine.Mixin
   @VisibleForTesting
@@ -61,25 +57,16 @@ public class Jar implements Callable<Integer> {
   @SuppressWarnings("NullAway.Init") // initialized by picocli
   CommonContainerConfigCliOptions commonContainerConfigCliOptions;
 
-  @CommandLine.Parameters(description = "The path to the jar file (ex: path/to/my-jar.jar)")
+  @CommandLine.Parameters(description = "The path to the war file (ex: path/to/my-war.war)")
   @SuppressWarnings("NullAway.Init") // initialized by picocli
-  private Path jarFile;
+  private Path warFile;
 
   @CommandLine.Option(
-      names = "--mode",
-      defaultValue = "exploded",
-      paramLabel = "<mode>",
-      description =
-          "The jar processing mode, candidates: ${COMPLETION-CANDIDATES}, default: ${DEFAULT-VALUE}")
+      names = "--app-root",
+      paramLabel = "<app root>",
+      description = "The app root on the container")
   @SuppressWarnings("NullAway.Init") // initialized by picocli
-  private ProcessingMode mode;
-
-  @CommandLine.Option(
-      names = "--jvm-flags",
-      paramLabel = "<jvm-flag>",
-      split = ",",
-      description = "JVM arguments, example: --jvm-flags=-Dmy.property=value,-Xshare:off")
-  private List<String> jvmFlags = Collections.emptyList();
+  private Path appRoot;
 
   @Override
   public Integer call() {
@@ -102,29 +89,26 @@ public class Jar implements Callable<Integer> {
               globalConfig,
               commonCliOptions.getVerbosity(),
               logEvent -> logger.log(logEvent.getLevel(), logEvent.getMessage()));
-      if (!Files.exists(jarFile)) {
-        logger.log(LogEvent.Level.ERROR, "The file path provided does not exist: " + jarFile);
+      if (!Files.exists(warFile)) {
+        logger.log(LogEvent.Level.ERROR, "The file path provided does not exist: " + warFile);
         return 1;
       }
-      if (Files.isDirectory(jarFile)) {
+      if (Files.isDirectory(warFile)) {
         logger.log(
             LogEvent.Level.ERROR,
-            "The file path provided is for a directory. Please provide a path to a JAR: "
-                + jarFile);
+            "The file path provided is for a directory. Please provide a path to a WAR: "
+                + warFile);
         return 1;
-      }
-      if (!commonContainerConfigCliOptions.getEntrypoint().isEmpty() && !jvmFlags.isEmpty()) {
-        logger.log(LogEvent.Level.WARN, "--jvm-flags is ignored when --entrypoint is specified");
       }
 
       CacheDirectories cacheDirectories =
-          CacheDirectories.from(commonCliOptions, jarFile.toAbsolutePath().getParent());
+          CacheDirectories.from(commonCliOptions, warFile.toAbsolutePath().getParent());
       ArtifactProcessor processor =
-          ArtifactProcessors.fromJar(
-              jarFile, cacheDirectories, this, commonContainerConfigCliOptions);
+          ArtifactProcessors.fromWar(
+              warFile, cacheDirectories, this, commonContainerConfigCliOptions);
       JibContainerBuilder containerBuilder =
-          JarFiles.toJibContainerBuilder(
-              processor, this, commonCliOptions, commonContainerConfigCliOptions, logger);
+          WarFiles.toJibContainerBuilder(
+              processor, commonCliOptions, commonContainerConfigCliOptions, logger);
       Containerizer containerizer = Containerizers.from(commonCliOptions, logger, cacheDirectories);
 
       // Enable registry mirrors
@@ -142,11 +126,15 @@ public class Jar implements Callable<Integer> {
     return 0;
   }
 
-  public List<String> getJvmFlags() {
-    return jvmFlags;
-  }
-
-  public ProcessingMode getMode() {
-    return mode;
+  /**
+   * Returns the user-specified app root in the container.
+   *
+   * @return a user configured app root
+   */
+  public Optional<AbsoluteUnixPath> getAppRoot() {
+    if (appRoot == null) {
+      return Optional.empty();
+    }
+    return Optional.of(AbsoluteUnixPath.fromPath(appRoot));
   }
 }
