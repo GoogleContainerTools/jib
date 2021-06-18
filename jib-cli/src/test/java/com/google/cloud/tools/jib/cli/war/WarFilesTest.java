@@ -135,8 +135,6 @@ public class WarFilesTest {
   @Test
   public void testToJibContainerBuilder_nonJettyBaseImageSpecifiedAndNoEntrypoint()
       throws IOException, InvalidImageReferenceException {
-    when(mockCommonContainerConfigCliOptions.isJetty()).thenReturn(false);
-
     JibContainerBuilder containerBuilder =
         WarFiles.toJibContainerBuilder(
             mockStandardWarExplodedProcessor,
