@@ -180,7 +180,8 @@ public class CommonContainerConfigCliOptions {
   }
 
   /**
-   * Returns {@code true} if image is jetty.
+   * Returns {@code true} if the user-specified base image is jetty or if a custom base image is not
+   * specified.
    *
    * @param baseImage the base image
    * @return a boolean
