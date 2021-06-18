@@ -16,7 +16,6 @@
 
 package com.google.cloud.tools.jib.cli.war;
 
-import com.google.cloud.tools.jib.api.ImageReference;
 import com.google.cloud.tools.jib.api.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.api.JibContainerBuilder;
 import com.google.cloud.tools.jib.cli.ArtifactProcessor;
@@ -81,18 +80,9 @@ public class WarFiles {
       return entrypoint;
     }
     Optional<String> baseImage = commonContainerConfigCliOptions.getFrom();
-    if (isJetty(baseImage)) {
+    if (CommonContainerConfigCliOptions.isJetty(baseImage)) {
       return ImmutableList.of("java", "-jar", "/usr/local/jetty/start.jar");
     }
     return null;
-  }
-
-  private static Boolean isJetty(Optional<String> baseImage) throws InvalidImageReferenceException {
-    if (baseImage.isPresent()) {
-      ImageReference baseImageReference = ImageReference.parse(baseImage.get());
-      return baseImageReference.getRegistry().equals("registry-1.docker.io")
-          && baseImageReference.getRepository().equals("library/jetty");
-    }
-    return true;
   }
 }
