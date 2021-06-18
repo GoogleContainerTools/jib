@@ -222,7 +222,7 @@ public class ArtifactProcessorsTest {
 
   @Test
   public void testFromWar_jettyBaseImageSpecified_success() throws InvalidImageReferenceException {
-    when(mockCommonContainerConfigCliOptions.isJetty()).thenReturn(true);
+    when(mockCommonContainerConfigCliOptions.isJettyBaseimage()).thenReturn(true);
 
     ArtifactProcessor processor =
         ArtifactProcessors.fromWar(

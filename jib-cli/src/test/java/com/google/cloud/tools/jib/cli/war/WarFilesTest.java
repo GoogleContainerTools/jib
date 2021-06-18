@@ -62,7 +62,7 @@ public class WarFilesTest {
                 AbsoluteUnixPath.get("/my/app/WEB-INF/classes/class1.class"))
             .build();
     when(mockStandardWarExplodedProcessor.createLayers()).thenReturn(Arrays.asList(layer));
-    when(mockCommonContainerConfigCliOptions.isJetty()).thenReturn(true);
+    when(mockCommonContainerConfigCliOptions.isJettyBaseimage()).thenReturn(true);
 
     JibContainerBuilder containerBuilder =
         WarFiles.toJibContainerBuilder(
@@ -143,6 +143,7 @@ public class WarFilesTest {
             mockLogger);
     ContainerBuildPlan buildPlan = containerBuilder.toContainerBuildPlan();
 
+    assertThat(mockCommonContainerConfigCliOptions.isJettyBaseimage()).isFalse();
     assertThat(buildPlan.getEntrypoint()).isNull();
   }
 

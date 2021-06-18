@@ -78,7 +78,7 @@ public class WarFiles {
     if (!entrypoint.isEmpty()) {
       return entrypoint;
     }
-    if (commonContainerConfigCliOptions.isJetty()) {
+    if (commonContainerConfigCliOptions.isJettyBaseimage()) {
       return ImmutableList.of("java", "-jar", "/usr/local/jetty/start.jar");
     }
     return null;

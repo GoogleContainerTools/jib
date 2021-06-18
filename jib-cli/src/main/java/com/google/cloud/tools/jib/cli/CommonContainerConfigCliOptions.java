@@ -186,7 +186,7 @@ public class CommonContainerConfigCliOptions {
    * @return a boolean
    * @throws InvalidImageReferenceException if image reference is invalid
    */
-  public Boolean isJetty() throws InvalidImageReferenceException {
+  public Boolean isJettyBaseimage() throws InvalidImageReferenceException {
     if (from != null) {
       ImageReference baseImageReference = ImageReference.parse(from);
       return baseImageReference.getRegistry().equals("registry-1.docker.io")

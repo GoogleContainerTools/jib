@@ -102,7 +102,7 @@ public class ArtifactProcessors {
       CommonContainerConfigCliOptions commonContainerConfigCliOptions)
       throws InvalidImageReferenceException {
     Optional<AbsoluteUnixPath> appRoot = warOptions.getAppRoot();
-    if (!commonContainerConfigCliOptions.isJetty() && !appRoot.isPresent()) {
+    if (!commonContainerConfigCliOptions.isJettyBaseimage() && !appRoot.isPresent()) {
       throw new IllegalArgumentException(
           "Please set the app root of the container with `--app-root` when specifying a base image that is not jetty.");
     }

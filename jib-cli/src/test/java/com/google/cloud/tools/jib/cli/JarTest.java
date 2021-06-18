@@ -611,7 +611,7 @@ public class JarTest {
   public void testIsJetty_noCustomBaseImage() throws InvalidImageReferenceException {
     Jar jarCommand =
         CommandLine.populateCommand(new Jar(), "--target=test-image-ref", "my-app.jar");
-    assertThat(jarCommand.commonContainerConfigCliOptions.isJetty()).isTrue();
+    assertThat(jarCommand.commonContainerConfigCliOptions.isJettyBaseimage()).isTrue();
   }
 
   @Test
@@ -619,7 +619,7 @@ public class JarTest {
     Jar jarCommand =
         CommandLine.populateCommand(
             new Jar(), "--target=test-image-ref", "--from=base-image", "my-app.jar");
-    assertThat(jarCommand.commonContainerConfigCliOptions.isJetty()).isFalse();
+    assertThat(jarCommand.commonContainerConfigCliOptions.isJettyBaseimage()).isFalse();
   }
 
   @Test
@@ -627,6 +627,6 @@ public class JarTest {
     Jar jarCommand =
         CommandLine.populateCommand(
             new Jar(), "--target=test-image-ref", "--from=jetty:tag", "my-app.jar");
-    assertThat(jarCommand.commonContainerConfigCliOptions.isJetty()).isTrue();
+    assertThat(jarCommand.commonContainerConfigCliOptions.isJettyBaseimage()).isTrue();
   }
 }

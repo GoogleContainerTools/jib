@@ -587,7 +587,7 @@ public class WarTest {
   public void testIsJetty_noCustomBaseImage() throws InvalidImageReferenceException {
     War warCommand =
         CommandLine.populateCommand(new War(), "--target=test-image-ref", "my-app.war");
-    assertThat(warCommand.commonContainerConfigCliOptions.isJetty()).isTrue();
+    assertThat(warCommand.commonContainerConfigCliOptions.isJettyBaseimage()).isTrue();
   }
 
   @Test
@@ -595,7 +595,7 @@ public class WarTest {
     War warCommand =
         CommandLine.populateCommand(
             new War(), "--target=test-image-ref", "--from=base-image", "my-app.war");
-    assertThat(warCommand.commonContainerConfigCliOptions.isJetty()).isFalse();
+    assertThat(warCommand.commonContainerConfigCliOptions.isJettyBaseimage()).isFalse();
   }
 
   @Test
@@ -603,6 +603,6 @@ public class WarTest {
     War warCommand =
         CommandLine.populateCommand(
             new War(), "--target=test-image-ref", "--from=jetty:tag", "my-app.war");
-    assertThat(warCommand.commonContainerConfigCliOptions.isJetty()).isTrue();
+    assertThat(warCommand.commonContainerConfigCliOptions.isJettyBaseimage()).isTrue();
   }
 }
