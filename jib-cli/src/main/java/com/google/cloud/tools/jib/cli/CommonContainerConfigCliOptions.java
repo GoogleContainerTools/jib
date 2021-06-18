@@ -183,13 +183,12 @@ public class CommonContainerConfigCliOptions {
    * Returns {@code true} if the user-specified base image is jetty or if a custom base image is not
    * specified.
    *
-   * @param baseImage the base image
    * @return a boolean
    * @throws InvalidImageReferenceException if image reference is invalid
    */
-  public static Boolean isJetty(Optional<String> baseImage) throws InvalidImageReferenceException {
-    if (baseImage.isPresent()) {
-      ImageReference baseImageReference = ImageReference.parse(baseImage.get());
+  public Boolean isJetty() throws InvalidImageReferenceException {
+    if (from != null) {
+      ImageReference baseImageReference = ImageReference.parse(from);
       return baseImageReference.getRegistry().equals("registry-1.docker.io")
           && baseImageReference.getRepository().equals("library/jetty");
     }

@@ -27,7 +27,6 @@ import com.google.common.collect.ImmutableList;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 import javax.annotation.Nullable;
 
 public class WarFiles {
@@ -79,8 +78,7 @@ public class WarFiles {
     if (!entrypoint.isEmpty()) {
       return entrypoint;
     }
-    Optional<String> baseImage = commonContainerConfigCliOptions.getFrom();
-    if (CommonContainerConfigCliOptions.isJetty(baseImage)) {
+    if (commonContainerConfigCliOptions.isJetty()) {
       return ImmutableList.of("java", "-jar", "/usr/local/jetty/start.jar");
     }
     return null;
