@@ -189,8 +189,6 @@ public class ArtifactProcessorsTest {
 
   @Test
   public void testFromWar_noJettyBaseImageAndNoAppRoot() {
-    when(mockCommonContainerConfigCliOptions.getFrom()).thenReturn(Optional.of("base-image"));
-
     IllegalArgumentException exception =
         assertThrows(
             IllegalArgumentException.class,
@@ -209,7 +207,6 @@ public class ArtifactProcessorsTest {
   @Test
   public void testFromWar_noJettyBaseImageAndAppRootPresent_success()
       throws InvalidImageReferenceException {
-    when(mockCommonContainerConfigCliOptions.getFrom()).thenReturn(Optional.of("base-image"));
     when(mockWarCommand.getAppRoot()).thenReturn(Optional.of(AbsoluteUnixPath.get("/app-root")));
     when(mockCacheDirectories.getExplodedArtifactDirectory())
         .thenReturn(Paths.get("exploded-artifact"));
@@ -225,7 +222,8 @@ public class ArtifactProcessorsTest {
 
   @Test
   public void testFromWar_jettyBaseImageSpecified_success() throws InvalidImageReferenceException {
-    when(mockCommonContainerConfigCliOptions.getFrom()).thenReturn(Optional.of("jetty:tag"));
+    when(mockCommonContainerConfigCliOptions.isJettyBaseimage()).thenReturn(true);
+
     ArtifactProcessor processor =
         ArtifactProcessors.fromWar(
             Paths.get("my-app.war"),

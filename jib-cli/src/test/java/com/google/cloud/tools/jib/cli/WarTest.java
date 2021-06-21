@@ -21,6 +21,7 @@ import static com.google.common.truth.Truth8.assertThat;
 import static org.junit.Assert.assertThrows;
 
 import com.google.cloud.tools.jib.api.Credential;
+import com.google.cloud.tools.jib.api.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.api.Ports;
 import com.google.cloud.tools.jib.api.buildplan.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.api.buildplan.ImageFormat;
@@ -580,5 +581,28 @@ public class WarTest {
             new War(), "--target=tar://sometar.tar", "--name=test.io/test/test", "my-app.war");
     warCommand.commonCliOptions.validate();
     // pass
+  }
+
+  @Test
+  public void testIsJetty_noCustomBaseImage() throws InvalidImageReferenceException {
+    War warCommand =
+        CommandLine.populateCommand(new War(), "--target=test-image-ref", "my-app.war");
+    assertThat(warCommand.commonContainerConfigCliOptions.isJettyBaseimage()).isTrue();
+  }
+
+  @Test
+  public void testIsJetty_nonJetty() throws InvalidImageReferenceException {
+    War warCommand =
+        CommandLine.populateCommand(
+            new War(), "--target=test-image-ref", "--from=base-image", "my-app.war");
+    assertThat(warCommand.commonContainerConfigCliOptions.isJettyBaseimage()).isFalse();
+  }
+
+  @Test
+  public void testIsJetty_customJetty() throws InvalidImageReferenceException {
+    War warCommand =
+        CommandLine.populateCommand(
+            new War(), "--target=test-image-ref", "--from=jetty:tag", "my-app.war");
+    assertThat(warCommand.commonContainerConfigCliOptions.isJettyBaseimage()).isTrue();
   }
 }

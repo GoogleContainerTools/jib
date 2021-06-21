@@ -16,7 +16,6 @@
 
 package com.google.cloud.tools.jib.cli;
 
-import com.google.cloud.tools.jib.api.ImageReference;
 import com.google.cloud.tools.jib.api.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.api.buildplan.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.cli.jar.ProcessingMode;
@@ -103,8 +102,7 @@ public class ArtifactProcessors {
       CommonContainerConfigCliOptions commonContainerConfigCliOptions)
       throws InvalidImageReferenceException {
     Optional<AbsoluteUnixPath> appRoot = warOptions.getAppRoot();
-    Optional<String> baseImage = commonContainerConfigCliOptions.getFrom();
-    if (!isJetty(baseImage) && !appRoot.isPresent()) {
+    if (!commonContainerConfigCliOptions.isJettyBaseimage() && !appRoot.isPresent()) {
       throw new IllegalArgumentException(
           "Please set the app root of the container with `--app-root` when specifying a base image that is not jetty.");
     }
@@ -169,14 +167,5 @@ public class ArtifactProcessors {
       }
       return VERSION_NOT_FOUND;
     }
-  }
-
-  private static Boolean isJetty(Optional<String> baseImage) throws InvalidImageReferenceException {
-    if (baseImage.isPresent()) {
-      ImageReference baseImageReference = ImageReference.parse(baseImage.get());
-      return baseImageReference.getRegistry().equals("registry-1.docker.io")
-          && baseImageReference.getRepository().equals("library/jetty");
-    }
-    return true;
   }
 }

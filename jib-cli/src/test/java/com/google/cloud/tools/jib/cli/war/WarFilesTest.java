@@ -62,6 +62,7 @@ public class WarFilesTest {
                 AbsoluteUnixPath.get("/my/app/WEB-INF/classes/class1.class"))
             .build();
     when(mockStandardWarExplodedProcessor.createLayers()).thenReturn(Arrays.asList(layer));
+    when(mockCommonContainerConfigCliOptions.isJettyBaseimage()).thenReturn(true);
 
     JibContainerBuilder containerBuilder =
         WarFiles.toJibContainerBuilder(
@@ -134,8 +135,6 @@ public class WarFilesTest {
   @Test
   public void testToJibContainerBuilder_nonJettyBaseImageSpecifiedAndNoEntrypoint()
       throws IOException, InvalidImageReferenceException {
-    when(mockCommonContainerConfigCliOptions.getFrom()).thenReturn(Optional.of("base-image"));
-
     JibContainerBuilder containerBuilder =
         WarFiles.toJibContainerBuilder(
             mockStandardWarExplodedProcessor,
@@ -144,27 +143,8 @@ public class WarFilesTest {
             mockLogger);
     ContainerBuildPlan buildPlan = containerBuilder.toContainerBuildPlan();
 
-    assertThat(buildPlan.getBaseImage()).isEqualTo("base-image");
+    assertThat(mockCommonContainerConfigCliOptions.isJettyBaseimage()).isFalse();
     assertThat(buildPlan.getEntrypoint()).isNull();
-  }
-
-  @Test
-  public void testToJibContainerBuilder_jettyBaseImageSpecified_usesDefaultEntrypoint()
-      throws IOException, InvalidImageReferenceException {
-    when(mockCommonContainerConfigCliOptions.getFrom()).thenReturn(Optional.of("jetty:tag"));
-
-    JibContainerBuilder containerBuilder =
-        WarFiles.toJibContainerBuilder(
-            mockStandardWarExplodedProcessor,
-            mockCommonCliOptions,
-            mockCommonContainerConfigCliOptions,
-            mockLogger);
-    ContainerBuildPlan buildPlan = containerBuilder.toContainerBuildPlan();
-
-    assertThat(buildPlan.getBaseImage()).isEqualTo("jetty:tag");
-    assertThat(buildPlan.getEntrypoint())
-        .containsExactly("java", "-jar", "/usr/local/jetty/start.jar")
-        .inOrder();
   }
 
   @Test

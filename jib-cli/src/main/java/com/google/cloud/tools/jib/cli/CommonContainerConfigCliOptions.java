@@ -16,6 +16,8 @@
 
 package com.google.cloud.tools.jib.cli;
 
+import com.google.cloud.tools.jib.api.ImageReference;
+import com.google.cloud.tools.jib.api.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.api.Ports;
 import com.google.cloud.tools.jib.api.buildplan.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.api.buildplan.ImageFormat;
@@ -175,5 +177,21 @@ public class CommonContainerConfigCliOptions {
       return Optional.of(Instants.fromMillisOrIso8601(creationTime, "creationTime"));
     }
     return Optional.empty();
+  }
+
+  /**
+   * Returns {@code true} if the user-specified base image is jetty or if a custom base image is not
+   * specified.
+   *
+   * @return a boolean
+   * @throws InvalidImageReferenceException if image reference is invalid
+   */
+  public Boolean isJettyBaseimage() throws InvalidImageReferenceException {
+    if (from != null) {
+      ImageReference baseImageReference = ImageReference.parse(from);
+      return baseImageReference.getRegistry().equals("registry-1.docker.io")
+          && baseImageReference.getRepository().equals("library/jetty");
+    }
+    return true;
   }
 }
