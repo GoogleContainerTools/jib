@@ -417,7 +417,10 @@ You can run your container with a javaagent by placing it somewhere in the `src/
 jib.container.jvmFlags = ['-javaagent:/myfolder/agent.jar']
 ```
 
-See also [Can I ADD a custom directory to the image?](#can-i-add-a-custom-directory-to-the-image)
+See also:
+- [Can I ADD a custom directory to the image?](#can-i-add-a-custom-directory-to-the-image)
+- [Javaagent sample](https://github.com/GoogleContainerTools/jib/tree/master/examples/java-agent): dynamically downloads a javaagent during build
+- (Gradle) [javaagent-gradle-plugin](https://github.com/ryandens/javaagent-gradle-plugin#jib-integration): third-party Jib extension
 
 ### How can I tag my image with a timestamp?
 
