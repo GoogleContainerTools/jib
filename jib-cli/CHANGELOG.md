@@ -5,11 +5,15 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
-- Added the `war` command which can be used to containerize a Standard WAR with `$ jib war --target ... my-app.war`. The command will explode out the contents of the WAR into optimized layers on the container.([#3285](https://github.com/GoogleContainerTools/jib/pull/3285))
-
 ### Changed
 
 ### Fixed
+
+## 0.7.0
+
+### Added
+
+- Added the `war` command which can be used to containerize a standard WAR with `$ jib war --target ... my-app.war`. The command will explode out the contents of the WAR into optimized layers on the container. ([#3285](https://github.com/GoogleContainerTools/jib/pull/3285))
 
 ## 0.6.0
 
