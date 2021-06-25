@@ -52,7 +52,7 @@ If a question you have is not answered below, please [submit an issue](/../../is
 **Jib CLI**\
 [How does the `jar` command support Standard JARs?](#how-does-the-jar-command-support-standard-jars)\
 [How does the `jar` command support Spring Boot JARs?](#how-does-the-jar-command-support-spring-boot-jars)\
-[How does the `war` command support WARs?](#how-does-the-war-command-support-wars)
+[How does the `war` command work?](#how-does-the-war-command-work)
 
 ---
 
@@ -835,7 +835,7 @@ It will containerize the JAR as is. However, **note** that we highly recommend a
 
 **Entrypoint**: `java -jar ${JAR_NAME}.jar`
 
-### How does the `war` command support WARs?
+### How does the `war` command work?
 The `war` command currently supports containerization of standard WARs. It uses the official [`jetty`](https://hub.docker.com/_/jetty) on Docker Hub as the default base image and explodes out the WAR into `/var/lib/jetty/webapps/ROOT` on the container. It creates the following layers:
 
 * Other Dependencies Layer

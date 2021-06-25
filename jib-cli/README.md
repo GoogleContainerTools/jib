@@ -186,6 +186,8 @@ Option | Description
 
 ## Options Shared Between the Jar and War Command
 Here are a few container configurations that can be customized when using the `jar` and `war` commands.
+
+Option | Description
 ---       | ---
 `--creation-time` | The creation time of the container in milliseconds since epoch or iso8601 format. Overrides the default (1970-01-01T00:00:00Z)
 `--entrypoint`    | Entrypoint for container. Overrides the default entrypoint, example: `--entrypoint='custom entrypoint'`
@@ -197,6 +199,7 @@ Here are a few container configurations that can be customized when using the `j
 `--program-args`  | Program arguments for container entrypoint.
 `-u, --user`      | The user to run the container as, example: `--user=myuser:mygroup`.
 `--volumes`       | Directories on container to hold extra volumes, example: `--volumes=/var/log,/var/log2`.
+
 
 ## Common Jib CLI Options
 The options can either be specified in the command line or defined in a configuration file:
