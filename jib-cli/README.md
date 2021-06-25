@@ -37,7 +37,7 @@ The CLI tool is powered by [Jib Core](https://github.com/GoogleContainerTools/ji
 * [War Command](#war-command)
   * [Quickstart](#quickstart-2)
   * [Options](#options-2)
-* [Options Shared Between Jar and War Command](#options-shared-between-jar-and-war-command)
+* [Options Shared Between Jar and War Commands](#options-shared-between-jar-and-war-commands)
 * [Common Jib CLI Options](#common-jib-cli-options)
   * [Auth/Security](#authsecurity)
   * [Info Params](#info-params)
