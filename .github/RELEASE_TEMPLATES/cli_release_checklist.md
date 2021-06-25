@@ -5,6 +5,9 @@ labels: release
 ## Requirements
 - [ ] ⚠️ Ensure the release process has succeeded before proceeding
 
+## GCS
+- [ ] Run {{ env.GCS_UPDATE_SCRIPT }} script to update GCS with the latest version number
+
 ## Github
 - [ ] Update [CHANGELOG.md]({{ env.CHANGELOG_URL }})
 - [ ] Update [README.md]({{ env.README_URL }})

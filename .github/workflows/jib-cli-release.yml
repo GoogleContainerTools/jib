@@ -96,6 +96,7 @@ jobs:
           RELEASE_NAME: v${{ github.event.inputs.release_version }}-cli
           CHANGELOG_URL: https://github.com/GoogleContainerTools/jib/blob/master/jib-cli/CHANGELOG.md
           README_URL: https://github.com/GoogleContainerTools/jib/blob/master/jib-cli/README.md
+          GCS_UPDATE_SCRIPT: "`./jib-cli/scripts/update_gcs_latest.sh ${{ github.event.inputs.release_version }}`"
           RELEASE_DRAFT: ${{ steps.create-release.outputs.html_url }}
           RELEASE_PR: ${{steps.create-pr.outputs.pr_url}}
         with:
