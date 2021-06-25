@@ -180,6 +180,8 @@ This command follows the following pattern:
      $ docker run -p 8080:8080 cli-war-quickstart
     ```
 ## Options
+Flags for the `war` command:
+
 Option | Description
 ---       | ---
 `--app-root` | The app root on the container. Customizing the app-root is helpful if you are using a different Servlet engine base image (for example, Tomcat)

@@ -843,10 +843,10 @@ The `war` command currently supports containerization of standard WARs. It uses 
 * Resources Layer
 * Classes Layer
 
+The default entrypoint when using a jetty base image will be `java -jar /usr/local/jetty/start.jar` unless you choose to specify a custom one.
+
 You can use a different Servlet engine base image with the help of the `--from` option and customize `--app-root`, `--entrypoint` and `--program-args`. If you don't set the `entrypoint` or `program-arguments`, Jib will inherit them from the base image. However, setting the `--app-root` is **required** if you use a non-jetty base image. Here is how the `war` command may look if you're using a Tomcat image:
 ```
  $ jib war --target=<image-reference> myapp.war --from=tomcat:8.5-jre8-alpine --app-root=/usr/local/tomcat/webapps/ROOT
 ```
-
-**Entrypoint**: `java -jar /usr/local/jetty/start.jar`
  
