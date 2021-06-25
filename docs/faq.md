@@ -51,7 +51,8 @@ If a question you have is not answered below, please [submit an issue](/../../is
 
 **Jib CLI**\
 [How does the `jar` command support Standard JARs?](#how-does-the-jar-command-support-standard-jars)\
-[How does the `jar` command support Spring Boot JARs?](#how-does-the-jar-command-support-spring-boot-jars)
+[How does the `jar` command support Spring Boot JARs?](#how-does-the-jar-command-support-spring-boot-jars)\
+[How does the `war` command support WARs?](#how-does-the-war-command-support-wars)
 
 ---
 
@@ -833,3 +834,19 @@ Achieved by calling `jib jar --target ${TARGET_REGISTRY} ${JAR_NAME}.jar --mode 
 It will containerize the JAR as is. However, **note** that we highly recommend against using packaged mode for containerizing Spring Boot fat JARs. 
 
 **Entrypoint**: `java -jar ${JAR_NAME}.jar`
+
+### How does the `war` command support WARs?
+The `war` command currently supports containerization of standard WARs. It uses the official [`jetty`](https://hub.docker.com/_/jetty) on Docker Hub as the default base image and explodes out the WAR into `/var/lib/jetty/webapps/ROOT` on the container. It creates the following layers:
+
+* Other Dependencies Layer
+* Snapshot-Dependencies Layer
+* Resources Layer
+* Classes Layer
+
+You can use a different Servlet engine base image with the help of the `--from` option and customize `--app-root`, `--entrypoint` and `--program-args`. If you don't set the `entrypoint` or `program-arguments`, Jib will inherit them from the base image. However, setting the `--app-root` is **required** if you use a non-jetty base image. Here is how the `war` command may look if you're using a Tomcat image:
+```
+ $ jib war --target=<image-reference> myapp.war --from=tomcat:8.5-jre8-alpine --app-root=/usr/local/tomcat/webapps/ROOT
+```
+
+**Entrypoint**: `java -jar /usr/local/jetty/start.jar`
+ 

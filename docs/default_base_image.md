@@ -81,4 +81,4 @@ For some reason if you have to keep the exact same behavior when using 3.0, you 
 
 ## Jib CLI
 
-For the JAR mode, Jib CLI has always used AdoptOpenJDK.
+The JAR mode of the Jib CLI has always used AdoptOpenJDK and the WAR mode uses `jetty`.

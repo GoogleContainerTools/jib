@@ -34,6 +34,10 @@ The CLI tool is powered by [Jib Core](https://github.com/GoogleContainerTools/ji
 * [Jar Command](#jar-command)
   * [Quickstart](#quickstart-1)
   * [Options](#options-1)
+* [War Command](#war-command)
+  * [Quickstart](#quickstart-2)
+  * [Options](#options-2)
+* [Options Shared Between Jar and War Command](#options-shared-between-jar-and-war-command)
 * [Common Jib CLI Options](#common-jib-cli-options)
   * [Auth/Security](#authsecurity)
   * [Info Params](#info-params)
@@ -158,19 +162,41 @@ Optional flags for the `jar` command:
 
 Option | Description
 ---       | ---
+`--jvm-flags`     | JVM arguments, example: `--jvm-flags=-Dmy.property=value,-Xshare:off`
+`--mode`          | The jar processing mode, candidates: exploded, packaged, default: exploded
+
+## War Command
+This command follows the following pattern:
+```
+ $ jib war --target <image-name> path/to/myapp.war 
+```
+## Quickstart
+1. Have your sample WAR ready and use the `war` command to containerize your WAR. By default, the WAR command uses [`jetty`](https://hub.docker.com/_/jetty) as the base image so the entrypoint is set to `java -jar /usr/local/jetty/start.jar`:
+    ```
+     $ jib war --target=docker://cli-war-quickstart <your-sample>.war
+    ```
+2.  Run the image and open your browser at http://localhost:8080
+    ```
+     $ docker run -p 8080:8080 cli-war-quickstart
+    ```
+## Options
+Option | Description
+---       | ---
+`--app-root` | The app root on the container. Customizing the app-root is helpful if you are using a different Servlet engine base image (for example, Tomcat)
+
+## Options Shared Between the Jar and War Command
+Here are a few container configurations that can be customized when using the `jar` and `war` commands.
+---       | ---
 `--creation-time` | The creation time of the container in milliseconds since epoch or iso8601 format. Overrides the default (1970-01-01T00:00:00Z)
 `--entrypoint`    | Entrypoint for container. Overrides the default entrypoint, example: `--entrypoint='custom entrypoint'`
 `--environment-variables`  | Environment variables to write into container, example: `--environment-variables env1=env_value1, env2=env_value2`.
 `--expose`        | Ports to expose on container, example: `--expose=5000,7/udp`.
 `--from`          | The base image to use.
 `--image-format`  | Format of container, candidates: Docker, OCI, default: Docker.
-`--jvm-flags`     | JVM arguments, example: `--jvm-flags=-Dmy.property=value,-Xshare:off`
 `--labels`        | Labels to write into container metadata, example: `--labels=label1=value1,label2=value2`.
-`--mode`          | The jar processing mode, candidates: exploded, packaged, default: exploded
 `--program-args`  | Program arguments for container entrypoint.
 `-u, --user`      | The user to run the container as, example: `--user=myuser:mygroup`.
 `--volumes`       | Directories on container to hold extra volumes, example: `--volumes=/var/log,/var/log2`.
-
 
 ## Common Jib CLI Options
 The options can either be specified in the command line or defined in a configuration file:
