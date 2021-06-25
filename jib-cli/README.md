@@ -186,7 +186,7 @@ Option | Description
 ---       | ---
 `--app-root` | The app root on the container. Customizing the app-root is helpful if you are using a different Servlet engine base image (for example, Tomcat)
 
-## Options Shared Between the Jar and War Command
+## Options Shared Between the Jar and War Commands
 Here are a few container configurations that can be customized when using the `jar` and `war` commands.
 
 Option | Description
