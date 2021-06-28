@@ -184,7 +184,7 @@ Jib applications are split into the following layers:
 
 ### Which base image (JDK) does Jib use?
 
-[`adoptopenjdk`](https://hub.docker.com/_/adoptopenjdk) and [`jetty`](https://hub.docker.com/_/jetty) (for WAR). See [Default Base Image](default_base_image.md) for details.
+[`adoptopenjdk`](https://hub.docker.com/_/adoptopenjdk) and [`jetty`](https://hub.docker.com/_/jetty) (for WAR). See [Default Base Images in Jib](default_base_image.md) for details.
 
 ### Can I learn more about container images?
 
