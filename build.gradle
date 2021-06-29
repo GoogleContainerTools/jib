@@ -72,7 +72,7 @@ subprojects {
     JACKSON_DATABIND: 'com.fasterxml.jackson.core:jackson-databind:2.12.3',
     JACKSON_DATAFORMAT_YAML: 'com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.12.3',
     JACKSON_DATATYPE_JSR310: 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.12.3',
-    ASM: 'org.ow2.asm:asm:9.1',
+    ASM: 'org.ow2.asm:asm:9.2',
     PICOCLI: 'info.picocli:picocli:4.6.1',
 
     MAVEN_API: 'org.apache.maven:maven-plugin-api:3.8.1',
