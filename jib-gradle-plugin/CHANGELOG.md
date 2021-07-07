@@ -9,6 +9,8 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
+- Fixed the bug introduced in 3.1 that constructs a wrong Java runtime classpath when two dependencies have the same artifact ID and version but different group IDs. The bug occurs only when using Java 9+ or setting `jib.container.expandClasspathDependencies`. ([#3331](https://github.com/GoogleContainerTools/jib/pull/3331))
+
 ## 3.1.1
 
 ### Fixed
