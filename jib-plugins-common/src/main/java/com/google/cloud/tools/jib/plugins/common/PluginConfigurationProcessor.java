@@ -61,6 +61,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -620,13 +621,27 @@ public class PluginConfigurationProcessor {
 
     if (projectProperties.getMajorJavaVersion() >= 9
         || rawConfiguration.getExpandClasspathDependencies()) {
-      List<String> dependencies =
-          projectProperties
-              .getDependencies()
+      List<Path> jars = projectProperties.getDependencies();
+      List<String> duplicates =
+          jars.stream()
+              .map(path -> path.getFileName().toString())
+              .collect(Collectors.groupingBy(filename -> filename, Collectors.counting()))
+              .entrySet()
               .stream()
-              .map(path -> appRoot.resolve("libs").resolve(path.getFileName()).toString())
+              .filter(entry -> entry.getValue() > 1)
+              .map(Map.Entry::getKey)
               .collect(Collectors.toList());
-      classpath.addAll(dependencies);
+
+      for (Path jar : jars) {
+        // Handle duplicates by appending filesize to the end of the file. This renaming logic
+        // must be in sync with the code that does the same in the other place. See
+        // https://github.com/GoogleContainerTools/jib/issues/3331
+        String jarName = jar.getFileName().toString();
+        if (duplicates.contains(jarName)) {
+          jarName = jarName.replaceFirst("\\.jar$", "-" + Files.size(jar)) + ".jar";
+        }
+        classpath.add(appRoot.resolve("libs").resolve(jarName).toString());
+      }
     } else {
       classpath.add(appRoot.resolve("libs/*").toString());
     }
