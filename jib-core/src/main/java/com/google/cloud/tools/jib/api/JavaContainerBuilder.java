@@ -580,14 +580,15 @@ public class JavaContainerBuilder {
     }
 
     // Detect duplicate filenames across all dependency layer types
-    List<String> duplicates =
+    Map<String, Long> occurrences =
         Streams.concat(
                 addedDependencies.stream(),
                 addedSnapshotDependencies.stream(),
                 addedProjectDependencies.stream())
-            .map(Path::getFileName)
-            .map(Path::toString)
-            .collect(Collectors.groupingBy(filename -> filename, Collectors.counting()))
+            .map(path -> path.getFileName().toString())
+            .collect(Collectors.groupingBy(filename -> filename, Collectors.counting()));
+    List<String> duplicates =
+        occurrences
             .entrySet()
             .stream()
             .filter(entry -> entry.getValue() > 1)

@@ -622,10 +622,13 @@ public class PluginConfigurationProcessor {
     if (projectProperties.getMajorJavaVersion() >= 9
         || rawConfiguration.getExpandClasspathDependencies()) {
       List<Path> jars = projectProperties.getDependencies();
-      List<String> duplicates =
+
+      Map<String, Long> occurrences =
           jars.stream()
               .map(path -> path.getFileName().toString())
-              .collect(Collectors.groupingBy(filename -> filename, Collectors.counting()))
+              .collect(Collectors.groupingBy(filename -> filename, Collectors.counting()));
+      List<String> duplicates =
+          occurrences
               .entrySet()
               .stream()
               .filter(entry -> entry.getValue() > 1)
