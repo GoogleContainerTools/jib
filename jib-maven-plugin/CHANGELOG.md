@@ -9,11 +9,13 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
+- Fixed the bug introduced in 3.1 that constructs a wrong Java runtime classpath when two dependencies have the same artifact ID and version but different group IDs. The bug occurs only when using Java 9+ or setting `<container><expandClasspathDependencies>`. ([#3331](https://github.com/GoogleContainerTools/jib/pull/3331))
+
 ## 3.1.1
 
 ### Fixed
 
-- Fixed the regression introduced in 3.1.0 where a build may fail due to an error from main class inference even if `jib.container.entrypoint` is configured. ([#3295](https://github.com/GoogleContainerTools/jib/pull/3295))
+- Fixed the regression introduced in 3.1.0 where a build may fail due to an error from main class inference even if `<container><entrypoint>` is configured. ([#3295](https://github.com/GoogleContainerTools/jib/pull/3295))
 
 ## 3.1.0
 

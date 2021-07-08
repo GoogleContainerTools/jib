@@ -580,14 +580,15 @@ public class JavaContainerBuilder {
     }
 
     // Detect duplicate filenames across all dependency layer types
-    List<String> duplicates =
+    Map<String, Long> occurrences =
         Streams.concat(
                 addedDependencies.stream(),
                 addedSnapshotDependencies.stream(),
                 addedProjectDependencies.stream())
-            .map(Path::getFileName)
-            .map(Path::toString)
-            .collect(Collectors.groupingBy(filename -> filename, Collectors.counting()))
+            .map(path -> path.getFileName().toString())
+            .collect(Collectors.groupingBy(filename -> filename, Collectors.counting()));
+    List<String> duplicates =
+        occurrences
             .entrySet()
             .stream()
             .filter(entry -> entry.getValue() > 1)
@@ -601,7 +602,9 @@ public class JavaContainerBuilder {
             LayerType.PROJECT_DEPENDENCIES, addedProjectDependencies);
     for (LayerType layerType : layerMap.keySet()) {
       for (Path file : Preconditions.checkNotNull(layerMap.get(layerType))) {
-        // handle duplicates by appending filesize to the end of the file
+        // Handle duplicates by appending filesize to the end of the file. This renaming logic
+        // must be in sync with the code that does the same in the other place. See
+        // https://github.com/GoogleContainerTools/jib/issues/3331
         String jarName = file.getFileName().toString();
         if (duplicates.contains(jarName)) {
           jarName = jarName.replaceFirst("\\.jar$", "-" + Files.size(file)) + ".jar";

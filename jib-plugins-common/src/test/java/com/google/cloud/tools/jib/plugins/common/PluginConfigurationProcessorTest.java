@@ -414,6 +414,31 @@ public class PluginConfigurationProcessorTest {
   }
 
   @Test
+  public void testComputeEntrypoint_expandClasspathDependencies_sizeAddedForDuplicateJars()
+      throws MainClassInferenceException, InvalidAppRootException, IOException,
+          InvalidContainerizingModeException {
+    Path libFoo13 = temporaryFolder.newFolder().toPath().resolve("foo-1.jar");
+    Path libFoo45 = temporaryFolder.newFolder().toPath().resolve("foo-1.jar");
+    Files.write(libFoo13, new byte[13]);
+    Files.write(libFoo45, new byte[45]);
+
+    when(rawConfiguration.getExpandClasspathDependencies()).thenReturn(true);
+    when(projectProperties.getDependencies())
+        .thenReturn(Arrays.asList(libFoo13, Paths.get("/home/libs/bar-2.jar"), libFoo45));
+
+    assertThat(
+            PluginConfigurationProcessor.computeEntrypoint(
+                rawConfiguration, projectProperties, jibContainerBuilder))
+        .containsExactly(
+            "java",
+            "-cp",
+            "/app/resources:/app/classes:"
+                + "/app/libs/foo-1-13.jar:/app/libs/bar-2.jar:/app/libs/foo-1-45.jar",
+            "java.lang.Object")
+        .inOrder();
+  }
+
+  @Test
   public void testEntrypoint_defaultWarPackaging()
       throws IOException, InvalidImageReferenceException, MainClassInferenceException,
           InvalidAppRootException, InvalidWorkingDirectoryException, InvalidPlatformException,
