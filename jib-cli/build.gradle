@@ -69,7 +69,7 @@ eclipse.classpath.plusConfigurations += [configurations.integrationTestImplement
 eclipse.classpath.file.whenMerged {
   entries.each {
     if (it.path == 'src/integration-test/resources') {
-      it.excludes += 'jarTest/'
+      it.excludes += ['jarTest/', 'warTest/']
     }
   }
 }
