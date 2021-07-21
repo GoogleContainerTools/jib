@@ -17,12 +17,15 @@
 package com.google.cloud.tools.jib.http;
 
 import com.google.api.client.http.GenericUrl;
+import com.google.api.client.http.HttpBackOffIOExceptionHandler;
 import com.google.api.client.http.HttpHeaders;
 import com.google.api.client.http.HttpMethods;
 import com.google.api.client.http.HttpRequest;
 import com.google.api.client.http.HttpResponseException;
 import com.google.api.client.http.HttpTransport;
 import com.google.api.client.http.apache.v2.ApacheHttpTransport;
+import com.google.api.client.util.BackOff;
+import com.google.api.client.util.ExponentialBackOff;
 import com.google.api.client.util.SslUtils;
 import com.google.cloud.tools.jib.api.LogEvent;
 import com.google.common.annotations.VisibleForTesting;
@@ -312,6 +315,19 @@ public class FailoverHttpClient {
         httpTransport
             .createRequestFactory()
             .buildRequest(httpMethod, new GenericUrl(url), request.getHttpContent())
+            .setIOExceptionHandler(new HttpBackOffIOExceptionHandler(new ExponentialBackOff()) {
+              @Override
+              public boolean handleIOException(final HttpRequest request, final boolean supportsRetry) throws IOException {
+                final boolean result = super.handleIOException(request, supportsRetry);
+                final String reqString = request.getRequestMethod() + " " + request.getUrl();
+                if (result) { // google-http-client does not log that properly so let's compensate it
+                  logger.accept(LogEvent.warn(reqString + " failed and will be retried"));
+                } else {
+                  logger.accept(LogEvent.warn(reqString + " failed and will NOT be retried"));
+                }
+                return result;
+              }
+            })
             .setUseRawRedirectUrls(true)
             .setHeaders(requestHeaders);
     if (request.getHttpTimeout() != null) {

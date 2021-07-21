@@ -34,4 +34,9 @@ class JsonBlob implements Blob {
   public BlobDescriptor writeTo(OutputStream outputStream) throws IOException {
     return Digests.computeDigest(template, outputStream);
   }
+
+  @Override
+  public boolean isRetryable() {
+    return true;
+  }
 }

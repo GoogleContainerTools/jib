@@ -59,7 +59,7 @@ public class BlobHttpContent implements HttpContent {
 
   @Override
   public boolean retrySupported() {
-    return false;
+    return blob.isRetryable();
   }
 
   @Override

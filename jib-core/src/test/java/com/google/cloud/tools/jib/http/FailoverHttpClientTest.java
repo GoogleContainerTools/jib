@@ -16,6 +16,9 @@
 
 package com.google.cloud.tools.jib.http;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
 import com.google.api.client.http.GenericUrl;
 import com.google.api.client.http.HttpHeaders;
 import com.google.api.client.http.HttpMethods;
@@ -25,15 +28,21 @@ import com.google.api.client.http.HttpResponse;
 import com.google.api.client.http.HttpTransport;
 import com.google.cloud.tools.jib.api.LogEvent;
 import com.google.cloud.tools.jib.blob.Blobs;
+import com.sun.net.httpserver.HttpHandler;
+import com.sun.net.httpserver.HttpServer;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.ConnectException;
+import java.net.InetSocketAddress;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -416,6 +425,55 @@ public class FailoverHttpClientTest {
         "Cannot verify server at https://url:2. Attempting again with no TLS verification.");
   }
 
+  @Test
+  public void testRetries() throws IOException {
+    final HttpServer server = HttpServer.create(new InetSocketAddress("localhost", 0), 64);
+    final AtomicReference<HttpHandler> current = new AtomicReference<>();
+    server.createContext("/").setHandler(exchange -> current.get().handle(exchange));
+    final AtomicBoolean failed = new AtomicBoolean();
+    final List<LogEvent> events = new ArrayList<>();
+
+    // simulate a failure
+    current.set(ex -> {
+      if (failed.compareAndSet(false, true)) {
+        // simulate a success after this (first) failure
+        current.set(exch -> {
+          exch.sendResponseHeaders(200, 0);
+          exch.close();
+        });
+
+        // here is the failure - no response sent (IOException for the client)
+        ex.close();
+        return;
+      }
+      // make the test fail
+      ex.sendResponseHeaders(123, 0);
+      ex.close();
+    });
+
+    try {
+      server.start();
+      assertEquals(
+              200,
+              new FailoverHttpClient(true, true, events::add)
+                      .post(new URL("http://localhost:" + server.getAddress().getPort() + "/test"),
+                              Request.builder()
+                                      .setBody(new BlobHttpContent(Blobs.from("foo"), "text/plain"))
+                                      .build())
+                      .getStatusCode());
+    } finally {
+      server.stop(0);
+    }
+    assertTrue(failed.get());
+    assertEquals(1, events.size());
+
+    final LogEvent warn = events.iterator().next();
+    assertEquals(LogEvent.Level.WARN, warn.getLevel());
+    assertEquals(
+            "POST http://localhost:" + server.getAddress().getPort() + "/test failed and will be retried",
+            warn.getMessage());
+  }
+
   private void setUpMocks(
       HttpTransport mockHttpTransport,
       HttpRequestFactory mockHttpRequestFactory,
@@ -426,6 +484,8 @@ public class FailoverHttpClientTest {
             mockHttpRequestFactory.buildRequest(Mockito.any(), urlCaptor.capture(), Mockito.any()))
         .thenReturn(mockHttpRequest);
 
+    Mockito.when(mockHttpRequest.setIOExceptionHandler(Mockito.any()))
+        .thenReturn(mockHttpRequest);
     Mockito.when(mockHttpRequest.setUseRawRedirectUrls(Mockito.anyBoolean()))
         .thenReturn(mockHttpRequest);
     Mockito.when(mockHttpRequest.setHeaders(httpHeadersCaptor.capture()))

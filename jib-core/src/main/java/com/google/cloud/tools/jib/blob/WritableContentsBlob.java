@@ -34,4 +34,10 @@ class WritableContentsBlob implements Blob {
   public BlobDescriptor writeTo(OutputStream outputStream) throws IOException {
     return Digests.computeDigest(writableContents, outputStream);
   }
+
+  // in general it is since the underlying data is accessed in the lambda
+  @Override
+  public boolean isRetryable() {
+    return true;
+  }
 }
