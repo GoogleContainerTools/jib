@@ -49,7 +49,7 @@ public class ReproducibleLayerBuilder {
     /**
      * Uses the current directory to act as the file input to TarArchiveEntry (since all directories
      * are treated the same in {@link TarArchiveEntry#TarArchiveEntry(File, String)}, except for
-     * modification time, which is wiped away in {@link #build}).
+     * modification time, UID, GID, etc., which are wiped away in {@link #build}).
      */
     private static final File DIRECTORY_FILE = Paths.get(".").toFile();
 
@@ -74,6 +74,10 @@ public class ReproducibleLayerBuilder {
       if (namePath.getParent() != namePath.getRoot()) {
         TarArchiveEntry dir = new TarArchiveEntry(DIRECTORY_FILE, namePath.getParent().toString());
         dir.setModTime(FileEntriesLayer.DEFAULT_MODIFICATION_TIME.toEpochMilli());
+        dir.setUserId(0);
+        dir.setGroupId(0);
+        dir.setUserName("");
+        dir.setGroupName("");
         add(dir);
       }
 
