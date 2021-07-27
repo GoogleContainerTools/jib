@@ -36,7 +36,11 @@ public class FileOperations {
       PathConsumer copyPathConsumer =
           path -> {
             // Creates the same path in the destDir.
-            Path destPath = destDir.resolve(sourceFile.getParent().relativize(path));
+            Path parent = sourceFile.getParent();
+            if (parent == null) {
+              throw new IOException("Parent path unavailable for " + sourceFile);
+            }
+            Path destPath = destDir.resolve(parent.relativize(path));
             if (Files.isDirectory(path)) {
               Files.createDirectories(destPath);
             } else {

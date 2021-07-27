@@ -101,8 +101,12 @@ public class War implements Callable<Integer> {
         return 1;
       }
 
-      CacheDirectories cacheDirectories =
-          CacheDirectories.from(commonCliOptions, warFile.toAbsolutePath().getParent());
+      Path warFileParentDir = warFile.toAbsolutePath().getParent();
+      if (warFileParentDir == null) {
+        logger.log(LogEvent.Level.ERROR, "Parent path unavailable for " + warFile);
+        return 1;
+      }
+      CacheDirectories cacheDirectories = CacheDirectories.from(commonCliOptions, warFileParentDir);
       ArtifactProcessor processor =
           ArtifactProcessors.fromWar(
               warFile, cacheDirectories, this, commonContainerConfigCliOptions);

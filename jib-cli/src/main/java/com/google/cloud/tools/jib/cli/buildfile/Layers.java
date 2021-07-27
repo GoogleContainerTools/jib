@@ -154,7 +154,7 @@ class Layers {
                   }
                   Path parent = path.getParent();
                   while (true) {
-                    if (addedDirectories.contains(parent)) {
+                    if (parent == null || addedDirectories.contains(parent)) {
                       break;
                     }
                     layerBuiler.addEntry(

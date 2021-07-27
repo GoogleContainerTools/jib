@@ -71,8 +71,9 @@ public class ReproducibleLayerBuilder {
       // Adds all directories along extraction paths to explicitly set permissions for those
       // directories.
       Path namePath = Paths.get(tarArchiveEntry.getName());
-      if (namePath.getParent() != namePath.getRoot()) {
-        TarArchiveEntry dir = new TarArchiveEntry(DIRECTORY_FILE, namePath.getParent().toString());
+      Path tarArchiveParentDir = namePath.getParent();
+      if (tarArchiveParentDir != null && tarArchiveParentDir != namePath.getRoot()) {
+        TarArchiveEntry dir = new TarArchiveEntry(DIRECTORY_FILE, tarArchiveParentDir.toString());
         dir.setModTime(FileEntriesLayer.DEFAULT_MODIFICATION_TIME.toEpochMilli());
         dir.setUserId(0);
         dir.setGroupId(0);

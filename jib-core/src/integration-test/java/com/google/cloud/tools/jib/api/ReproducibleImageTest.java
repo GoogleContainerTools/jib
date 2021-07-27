@@ -208,7 +208,7 @@ public class ReproducibleImageTest {
       List<String> sorted = new ArrayList<>(paths);
       // ReproducibleLayerBuilder sorts by TarArchiveEntry::getName()
       Collections.sort(sorted);
-      assertThat(paths).isEqualTo(sorted);
+      assertThat(paths).containsExactlyElementsIn(sorted);
     }
   }
 

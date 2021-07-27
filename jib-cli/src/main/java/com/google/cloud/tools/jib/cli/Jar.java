@@ -117,8 +117,13 @@ public class Jar implements Callable<Integer> {
         logger.log(LogEvent.Level.WARN, "--jvm-flags is ignored when --entrypoint is specified");
       }
 
-      CacheDirectories cacheDirectories =
-          CacheDirectories.from(commonCliOptions, jarFile.toAbsolutePath().getParent());
+      Path jarFileParentDir = jarFile.toAbsolutePath().getParent();
+      if (jarFileParentDir == null) {
+        logger.log(LogEvent.Level.ERROR, "Parent path unavailable for " + jarFile);
+        return 1;
+      }
+
+      CacheDirectories cacheDirectories = CacheDirectories.from(commonCliOptions, jarFileParentDir);
       ArtifactProcessor processor =
           ArtifactProcessors.fromJar(
               jarFile, cacheDirectories, this, commonContainerConfigCliOptions);
