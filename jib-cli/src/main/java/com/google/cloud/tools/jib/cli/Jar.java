@@ -27,6 +27,7 @@ import com.google.cloud.tools.jib.plugins.common.globalconfig.GlobalConfig;
 import com.google.cloud.tools.jib.plugins.common.logging.ConsoleLogger;
 import com.google.cloud.tools.jib.plugins.common.logging.SingleThreadedExecutor;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Verify;
 import com.google.common.collect.Multimaps;
 import com.google.common.util.concurrent.Futures;
 import java.nio.file.Files;
@@ -117,8 +118,8 @@ public class Jar implements Callable<Integer> {
         logger.log(LogEvent.Level.WARN, "--jvm-flags is ignored when --entrypoint is specified");
       }
 
-      CacheDirectories cacheDirectories =
-          CacheDirectories.from(commonCliOptions, jarFile.toAbsolutePath().getParent());
+      Path jarFileParentDir = Verify.verifyNotNull(jarFile.toAbsolutePath().getParent());
+      CacheDirectories cacheDirectories = CacheDirectories.from(commonCliOptions, jarFileParentDir);
       ArtifactProcessor processor =
           ArtifactProcessors.fromJar(
               jarFile, cacheDirectories, this, commonContainerConfigCliOptions);

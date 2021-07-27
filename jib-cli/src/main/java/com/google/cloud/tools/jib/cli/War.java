@@ -27,6 +27,7 @@ import com.google.cloud.tools.jib.plugins.common.globalconfig.GlobalConfig;
 import com.google.cloud.tools.jib.plugins.common.logging.ConsoleLogger;
 import com.google.cloud.tools.jib.plugins.common.logging.SingleThreadedExecutor;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Verify;
 import com.google.common.collect.Multimaps;
 import com.google.common.util.concurrent.Futures;
 import java.nio.file.Files;
@@ -101,8 +102,8 @@ public class War implements Callable<Integer> {
         return 1;
       }
 
-      CacheDirectories cacheDirectories =
-          CacheDirectories.from(commonCliOptions, warFile.toAbsolutePath().getParent());
+      Path warFileParentDir = Verify.verifyNotNull(warFile.toAbsolutePath().getParent());
+      CacheDirectories cacheDirectories = CacheDirectories.from(commonCliOptions, warFileParentDir);
       ArtifactProcessor processor =
           ArtifactProcessors.fromWar(
               warFile, cacheDirectories, this, commonContainerConfigCliOptions);

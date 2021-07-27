@@ -72,7 +72,8 @@ public class ReproducibleLayerBuilder {
       // directories.
       Path namePath = Paths.get(tarArchiveEntry.getName());
       if (namePath.getParent() != namePath.getRoot()) {
-        TarArchiveEntry dir = new TarArchiveEntry(DIRECTORY_FILE, namePath.getParent().toString());
+        Path tarArchiveParentDir = Verify.verifyNotNull(namePath.getParent());
+        TarArchiveEntry dir = new TarArchiveEntry(DIRECTORY_FILE, tarArchiveParentDir.toString());
         dir.setModTime(FileEntriesLayer.DEFAULT_MODIFICATION_TIME.toEpochMilli());
         dir.setUserId(0);
         dir.setGroupId(0);
