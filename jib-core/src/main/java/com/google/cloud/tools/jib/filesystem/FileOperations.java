@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.filesystem;
 
+import com.google.common.base.Verify;
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -36,10 +37,7 @@ public class FileOperations {
       PathConsumer copyPathConsumer =
           path -> {
             // Creates the same path in the destDir.
-            Path parent = sourceFile.getParent();
-            if (parent == null) {
-              throw new IOException("Parent path unavailable for " + sourceFile);
-            }
+            Path parent = Verify.verifyNotNull(sourceFile.getParent());
             Path destPath = destDir.resolve(parent.relativize(path));
             if (Files.isDirectory(path)) {
               Files.createDirectories(destPath);
