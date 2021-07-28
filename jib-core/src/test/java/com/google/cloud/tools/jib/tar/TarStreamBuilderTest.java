@@ -161,26 +161,24 @@ public class TarStreamBuilderTest {
   }
 
   /** Creates a TarStreamBuilder using TarArchiveEntries. */
-  private void setUpWithTarEntries() {
+  private void setUpWithTarEntries() throws IOException {
     // Prepares a test TarStreamBuilder.
     testTarStreamBuilder.addTarArchiveEntry(
-        new TarArchiveEntry(fileA.toFile(), "some/path/to/resourceFileA"));
-    testTarStreamBuilder.addTarArchiveEntry(new TarArchiveEntry(fileB.toFile(), "crepecake"));
-    testTarStreamBuilder.addTarArchiveEntry(
-        new TarArchiveEntry(directoryA.toFile(), "some/path/to"));
+        new TarArchiveEntry(fileA, "some/path/to/resourceFileA"));
+    testTarStreamBuilder.addTarArchiveEntry(new TarArchiveEntry(fileB, "crepecake"));
+    testTarStreamBuilder.addTarArchiveEntry(new TarArchiveEntry(directoryA, "some/path/to"));
     testTarStreamBuilder.addTarArchiveEntry(
         new TarArchiveEntry(
-            fileA.toFile(),
+            fileA,
             "some/really/long/path/that/exceeds/100/characters/abcdefghijklmnopqrstuvwxyz0123456789012345678901234567890"));
   }
 
   /** Creates a TarStreamBuilder using Strings. */
-  private void setUpWithStrings() {
+  private void setUpWithStrings() throws IOException {
     // Prepares a test TarStreamBuilder.
     testTarStreamBuilder.addByteEntry(fileAContents, "some/path/to/resourceFileA", Instant.EPOCH);
     testTarStreamBuilder.addByteEntry(fileBContents, "crepecake", Instant.EPOCH);
-    testTarStreamBuilder.addTarArchiveEntry(
-        new TarArchiveEntry(directoryA.toFile(), "some/path/to"));
+    testTarStreamBuilder.addTarArchiveEntry(new TarArchiveEntry(directoryA, "some/path/to"));
     testTarStreamBuilder.addByteEntry(
         fileAContents,
         "some/really/long/path/that/exceeds/100/characters/abcdefghijklmnopqrstuvwxyz0123456789012345678901234567890",
@@ -188,12 +186,11 @@ public class TarStreamBuilderTest {
   }
 
   /** Creates a TarStreamBuilder using Strings and TarArchiveEntries. */
-  private void setUpWithStringsAndTarEntries() {
+  private void setUpWithStringsAndTarEntries() throws IOException {
     // Prepares a test TarStreamBuilder.
     testTarStreamBuilder.addByteEntry(fileAContents, "some/path/to/resourceFileA", Instant.EPOCH);
-    testTarStreamBuilder.addTarArchiveEntry(new TarArchiveEntry(fileB.toFile(), "crepecake"));
-    testTarStreamBuilder.addTarArchiveEntry(
-        new TarArchiveEntry(directoryA.toFile(), "some/path/to"));
+    testTarStreamBuilder.addTarArchiveEntry(new TarArchiveEntry(fileB, "crepecake"));
+    testTarStreamBuilder.addTarArchiveEntry(new TarArchiveEntry(directoryA, "some/path/to"));
     testTarStreamBuilder.addByteEntry(
         fileAContents,
         "some/really/long/path/that/exceeds/100/characters/abcdefghijklmnopqrstuvwxyz0123456789012345678901234567890",

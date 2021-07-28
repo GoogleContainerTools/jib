@@ -62,8 +62,7 @@ public class TarStreamBuilder {
    * @param entry the {@link TarArchiveEntry}
    */
   public void addTarArchiveEntry(TarArchiveEntry entry) {
-    archiveMap.put(
-        entry, entry.isFile() ? Blobs.from(entry.getFile().toPath()) : Blobs.from(ignored -> {}));
+    archiveMap.put(entry, entry.isFile() ? Blobs.from(entry.getPath()) : Blobs.from(ignored -> {}));
   }
 
   /**
