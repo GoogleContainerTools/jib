@@ -9,6 +9,9 @@ plugins {
 
   // apply so we can correctly configure the test runner to be gradle at the project level
   id 'org.jetbrains.gradle.plugin.idea-ext' version '1.0.1'
+
+  // apply so that we can collect quality metrics at the root project level
+  id 'org.sonarqube' version '3.3'
 }
 
 // run tests in intellij using gradle test runner
@@ -443,3 +446,14 @@ subprojects {
   }
   /* LOCAL DEVELOPMENT HELPER TASKS */
 }
+
+/* SONARQUBE */
+sonarqube {
+  properties {
+    property 'sonar.projectName', 'jib'
+    property 'sonar.projectKey', 'GoogleContainerTools_jib'
+    property 'sonar.host.url', 'https://sonarcloud.io'
+    property 'sonar.organization', 'googlecontainertools-1'
+  }
+}
+/* SONARQUBE */
