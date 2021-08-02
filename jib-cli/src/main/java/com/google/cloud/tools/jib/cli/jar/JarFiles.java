@@ -28,6 +28,7 @@ import com.google.cloud.tools.jib.plugins.common.logging.ConsoleLogger;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 /** Class to build a container representation from the contents of a jar file. */
 public class JarFiles {
@@ -56,13 +57,11 @@ public class JarFiles {
 
     // Use AdoptOpenJDK image as the default base image.
     JibContainerBuilder containerBuilder;
-    if (commonContainerConfigCliOptions.getFrom().isPresent()) {
+    Optional<String> baseImageRef = commonContainerConfigCliOptions.getFrom();
+    if (baseImageRef.isPresent()) {
       containerBuilder =
           ContainerBuilders.create(
-              commonContainerConfigCliOptions.getFrom().get(),
-              Collections.emptySet(),
-              commonCliOptions,
-              logger);
+              baseImageRef.get(), Collections.emptySet(), commonCliOptions, logger);
     } else {
       containerBuilder =
           (processor.getJavaVersion() <= 8)
