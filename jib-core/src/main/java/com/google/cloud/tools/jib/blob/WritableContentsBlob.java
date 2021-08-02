@@ -25,9 +25,11 @@ import java.io.OutputStream;
 class WritableContentsBlob implements Blob {
 
   private final WritableContents writableContents;
+  private final boolean retryable;
 
-  WritableContentsBlob(WritableContents writableContents) {
+  WritableContentsBlob(WritableContents writableContents, boolean retryable) {
     this.writableContents = writableContents;
+    this.retryable = retryable;
   }
 
   @Override
@@ -38,6 +40,6 @@ class WritableContentsBlob implements Blob {
   // in general it is since the underlying data is accessed in the lambda
   @Override
   public boolean isRetryable() {
-    return true;
+    return retryable;
   }
 }

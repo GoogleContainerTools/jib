@@ -504,7 +504,7 @@ public class RegistryClient {
           } catch (RegistryException ex) {
             throw new IOException(ex);
           }
-        });
+        }, false);
   }
 
   /**
