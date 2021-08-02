@@ -447,7 +447,7 @@ public class FailoverHttpClientTest {
         return;
       }
       // make the test fail
-      ex.sendResponseHeaders(123, 0);
+      ex.sendResponseHeaders(423, 0);
       ex.close();
     });
 

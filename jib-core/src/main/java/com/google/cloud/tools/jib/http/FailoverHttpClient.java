@@ -321,9 +321,9 @@ public class FailoverHttpClient {
                 boolean result = super.handleIOException(request, supportsRetry);
                 String requestUrl = request.getRequestMethod() + " " + request.getUrl();
                 if (result) { // google-http-client does not log that properly so let's compensate it
-                  logger.accept(LogEvent.warn(reqString + " failed and will be retried"));
+                  logger.accept(LogEvent.warn(requestUrl + " failed and will be retried"));
                 } else {
-                  logger.accept(LogEvent.warn(reqString + " failed and will NOT be retried"));
+                  logger.accept(LogEvent.warn(requestUrl + " failed and will NOT be retried"));
                 }
                 return result;
               }
