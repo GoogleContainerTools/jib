@@ -94,9 +94,9 @@ public class BuildFiles {
     buildFile.getEntrypoint().ifPresent(containerBuilder::setEntrypoint);
     buildFile.getCmd().ifPresent(containerBuilder::setProgramArguments);
 
-    if (buildFile.getLayers().isPresent()) {
-      containerBuilder.setFileEntriesLayers(
-          Layers.toLayers(projectRoot, buildFile.getLayers().get()));
+    Optional<LayersSpec> layersSpec = buildFile.getLayers();
+    if (layersSpec.isPresent()) {
+      containerBuilder.setFileEntriesLayers(Layers.toLayers(projectRoot, layersSpec.get()));
     }
     return containerBuilder;
   }
