@@ -503,7 +503,7 @@ public class FailoverHttpClientTest {
           mockInsecureHttpTransport, mockInsecureHttpRequestFactory, mockInsecureHttpRequest);
     }
     return new FailoverHttpClient(
-        insecure, authOverHttp, logger, () -> mockHttpTransport, () -> mockInsecureHttpTransport);
+        true, insecure, authOverHttp, logger, () -> mockHttpTransport, () -> mockInsecureHttpTransport);
   }
 
   private Request fakeRequest(Integer httpTimeout) {

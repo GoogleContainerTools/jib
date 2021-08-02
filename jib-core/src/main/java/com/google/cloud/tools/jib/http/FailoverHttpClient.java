@@ -123,6 +123,7 @@ public class FailoverHttpClient {
     }
   }
 
+  private final boolean enableRetries;
   private final boolean enableHttpAndInsecureFailover;
   private final boolean sendAuthorizationOverHttp;
   private final Consumer<LogEvent> logger;
@@ -146,6 +147,7 @@ public class FailoverHttpClient {
       boolean sendAuthorizationOverHttp,
       Consumer<LogEvent> logger) {
     this(
+        true,
         enableHttpAndInsecureFailover,
         sendAuthorizationOverHttp,
         logger,
@@ -155,11 +157,28 @@ public class FailoverHttpClient {
 
   @VisibleForTesting
   FailoverHttpClient(
+      boolean enableRetries,
+      boolean enableHttpAndInsecureFailover,
+      boolean sendAuthorizationOverHttp,
+      Consumer<LogEvent> logger) {
+    this(
+        enableRetries,
+        enableHttpAndInsecureFailover,
+        sendAuthorizationOverHttp,
+        logger,
+        FailoverHttpClient::getSecureHttpTransport,
+        FailoverHttpClient::getInsecureHttpTransport);
+  }
+
+  @VisibleForTesting
+  FailoverHttpClient(
+      boolean enableRetries,
       boolean enableHttpAndInsecureFailover,
       boolean sendAuthorizationOverHttp,
       Consumer<LogEvent> logger,
       Supplier<HttpTransport> secureHttpTransportFactory,
       Supplier<HttpTransport> insecureHttpTransportFactory) {
+    this.enableRetries = enableRetries;
     this.enableHttpAndInsecureFailover = enableHttpAndInsecureFailover;
     this.sendAuthorizationOverHttp = sendAuthorizationOverHttp;
     this.logger = logger;
@@ -318,7 +337,7 @@ public class FailoverHttpClient {
             .setIOExceptionHandler(new HttpBackOffIOExceptionHandler(new ExponentialBackOff()) {
               @Override
               public boolean handleIOException(HttpRequest request, boolean supportsRetry) throws IOException {
-                boolean result = super.handleIOException(request, supportsRetry);
+                boolean result = enableRetries && super.handleIOException(request, supportsRetry);
                 String requestUrl = request.getRequestMethod() + " " + request.getUrl();
                 if (result) { // google-http-client does not log that properly so let's compensate it
                   logger.accept(LogEvent.warn(requestUrl + " failed and will be retried"));

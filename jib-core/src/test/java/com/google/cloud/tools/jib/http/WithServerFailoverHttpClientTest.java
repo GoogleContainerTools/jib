@@ -81,7 +81,7 @@ public class WithServerFailoverHttpClientTest {
   public void testInsecureConnection_insecureHttpsFailover()
       throws IOException, InterruptedException, GeneralSecurityException, URISyntaxException {
     FailoverHttpClient insecureHttpClient =
-        new FailoverHttpClient(true /*insecure*/, false, logger);
+        new FailoverHttpClient(false, true /*insecure*/, false, logger);
     try (TestWebServer server = new TestWebServer(true, 2);
         Response response = insecureHttpClient.get(new URL(server.getEndpoint()), request)) {
 
@@ -132,7 +132,7 @@ public class WithServerFailoverHttpClientTest {
             + "Content-Length: 0\n\n";
     String targetServerResponse = "HTTP/1.1 200 OK\nContent-Length:12\n\nHello World!";
 
-    FailoverHttpClient httpClient = new FailoverHttpClient(true /*insecure*/, false, logger);
+    FailoverHttpClient httpClient = new FailoverHttpClient(false, true /*insecure*/, false, logger);
     try (TestWebServer server =
         new TestWebServer(false, Arrays.asList(proxyResponse, targetServerResponse), 1)) {
       System.setProperty("http.proxyHost", "localhost");
