@@ -41,9 +41,7 @@ import org.apache.commons.text.io.StringSubstitutorReader;
 /** Class to convert BuildFiles to build container representations. */
 public class BuildFiles {
 
-  private BuildFiles() {
-    throw new IllegalStateException("Utility class, should not be instantiated.");
-  }
+  private BuildFiles() {}
 
   /** Read a build file from disk and apply templating parameters. */
   private static BuildFileSpec toBuildFileSpec(
