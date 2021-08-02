@@ -17,6 +17,7 @@
 package com.google.cloud.tools.jib.filesystem;
 
 import com.google.common.base.Preconditions;
+import com.google.common.base.Verify;
 import java.io.Closeable;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -61,15 +62,16 @@ public class LockFile implements Closeable {
     }
 
     Files.createDirectories(lockFile.getParent());
-    FileOutputStream outputStream = new FileOutputStream(lockFile.toFile());
     FileLock fileLock = null;
+    FileOutputStream outputStream = null;
     try {
+      outputStream = new FileOutputStream(lockFile.toFile());
       fileLock = outputStream.getChannel().lock();
       return new LockFile(lockFile, fileLock, outputStream);
 
     } finally {
       if (fileLock == null) {
-        outputStream.close();
+        Verify.verifyNotNull(outputStream).close();
       }
     }
   }
