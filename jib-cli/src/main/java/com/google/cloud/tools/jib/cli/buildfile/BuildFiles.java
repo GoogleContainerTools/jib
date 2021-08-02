@@ -41,6 +41,10 @@ import org.apache.commons.text.io.StringSubstitutorReader;
 /** Class to convert BuildFiles to build container representations. */
 public class BuildFiles {
 
+  private BuildFiles() {
+    throw new IllegalStateException("Static utility class");
+  }
+
   /** Read a build file from disk and apply templating parameters. */
   private static BuildFileSpec toBuildFileSpec(
       Path buildFilePath, Map<String, String> templateParameters) throws IOException {
