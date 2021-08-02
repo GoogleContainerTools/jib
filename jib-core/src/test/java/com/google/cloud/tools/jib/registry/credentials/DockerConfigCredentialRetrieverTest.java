@@ -77,6 +77,36 @@ public class DockerConfigCredentialRetrieverTest {
   }
 
   @Test
+  public void testRetrieve_authTakesPrecedenceOverUsernameAndPassword() throws IOException {
+    DockerConfigCredentialRetriever dockerConfigCredentialRetriever =
+        DockerConfigCredentialRetriever.create("auth and userpw registry", dockerConfigFile);
+
+    Optional<Credential> credentials = dockerConfigCredentialRetriever.retrieve(mockLogger);
+    Assert.assertTrue(credentials.isPresent());
+    Assert.assertEquals("some", credentials.get().getUsername());
+    Assert.assertEquals("auth", credentials.get().getPassword());
+    Mockito.verify(mockLogger)
+        .accept(
+            LogEvent.info(
+                "Docker config auths section defines credentials for auth and userpw registry"));
+  }
+
+  @Test
+  public void testRetrieve_hasAuthWithUsernameAndPassword() throws IOException {
+    DockerConfigCredentialRetriever dockerConfigCredentialRetriever =
+        DockerConfigCredentialRetriever.create("userpw registry", dockerConfigFile);
+
+    Optional<Credential> credentials = dockerConfigCredentialRetriever.retrieve(mockLogger);
+    Assert.assertTrue(credentials.isPresent());
+    Assert.assertEquals("someuser", credentials.get().getUsername());
+    Assert.assertEquals("somepw", credentials.get().getPassword());
+    Mockito.verify(mockLogger)
+        .accept(
+            LogEvent.info(
+                "Docker config auths section defines username and password for userpw registry"));
+  }
+
+  @Test
   public void testRetrieve_hasAuth_legacyConfigFormat() throws IOException, URISyntaxException {
     dockerConfigFile = Paths.get(Resources.getResource("core/json/legacy_dockercfg").toURI());
 
