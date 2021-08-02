@@ -42,7 +42,7 @@ import org.apache.commons.text.io.StringSubstitutorReader;
 public class BuildFiles {
 
   private BuildFiles() {
-    throw new IllegalStateException("Static utility class");
+    throw new IllegalStateException("Utility class, should not be instantiated.");
   }
 
   /** Read a build file from disk and apply templating parameters. */
