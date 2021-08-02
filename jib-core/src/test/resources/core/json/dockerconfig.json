@@ -2,6 +2,8 @@
   "auths":{
     "some other registry":{"auth":"c29tZTpvdGhlcjphdXRo"},
     "some registry":{"auth":"c29tZTphdXRo","password":"ignored"},
+    "auth and userpw registry":{"auth":"c29tZTphdXRo","username":"ignored","password":"ignored"},
+    "userpw registry":{"username":"someuser","password":"somepw"},
     "https://registry":{"auth":"dG9rZW4="},
 
     "example.com":{"auth":"should not match example"},
