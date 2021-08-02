@@ -317,9 +317,9 @@ public class FailoverHttpClient {
             .buildRequest(httpMethod, new GenericUrl(url), request.getHttpContent())
             .setIOExceptionHandler(new HttpBackOffIOExceptionHandler(new ExponentialBackOff()) {
               @Override
-              public boolean handleIOException(final HttpRequest request, final boolean supportsRetry) throws IOException {
-                final boolean result = super.handleIOException(request, supportsRetry);
-                final String reqString = request.getRequestMethod() + " " + request.getUrl();
+              public boolean handleIOException(HttpRequest request, boolean supportsRetry) throws IOException {
+                boolean result = super.handleIOException(request, supportsRetry);
+                String requestUrl = request.getRequestMethod() + " " + request.getUrl();
                 if (result) { // google-http-client does not log that properly so let's compensate it
                   logger.accept(LogEvent.warn(reqString + " failed and will be retried"));
                 } else {
