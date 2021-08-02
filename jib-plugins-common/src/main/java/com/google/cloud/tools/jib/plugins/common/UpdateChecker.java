@@ -145,8 +145,11 @@ public class UpdateChecker {
     if (updateMessageFuture.isDone()) {
       try {
         return updateMessageFuture.get();
-      } catch (InterruptedException | ExecutionException ignored) {
-        // Fail silently;
+      } catch (InterruptedException ex) {
+        // Restore the interrupted status
+        Thread.currentThread().interrupt();
+      } catch (ExecutionException ex) {
+        // fail silently
       }
     }
     updateMessageFuture.cancel(true);
