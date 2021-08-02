@@ -57,11 +57,11 @@ public class JarFiles {
 
     // Use AdoptOpenJDK image as the default base image.
     JibContainerBuilder containerBuilder;
-    Optional<String> baseImageRef = commonContainerConfigCliOptions.getFrom();
-    if (baseImageRef.isPresent()) {
+    Optional<String> imageReference = commonContainerConfigCliOptions.getFrom();
+    if (imageReference.isPresent()) {
       containerBuilder =
           ContainerBuilders.create(
-              baseImageRef.get(), Collections.emptySet(), commonCliOptions, logger);
+              imageReference.get(), Collections.emptySet(), commonCliOptions, logger);
     } else {
       containerBuilder =
           (processor.getJavaVersion() <= 8)

@@ -110,15 +110,15 @@ public class Containerizer {
    * @return a new {@link Containerizer}
    */
   public static Containerizer to(TarImage tarImage) {
-    Optional<ImageReference> tarImageReference = tarImage.getImageReference();
-    if (!tarImageReference.isPresent()) {
+    Optional<ImageReference> imageReference = tarImage.getImageReference();
+    if (!imageReference.isPresent()) {
       throw new IllegalArgumentException(
           "Image name must be set when building a TarImage; use TarImage#named(...) to set the name"
               + " of the target image");
     }
 
     ImageConfiguration imageConfiguration =
-        ImageConfiguration.builder(tarImageReference.get()).build();
+        ImageConfiguration.builder(imageReference.get()).build();
 
     Function<BuildContext, StepsRunner> stepsRunnerFactory =
         buildContext -> StepsRunner.begin(buildContext).tarBuildSteps(tarImage.getPath());
