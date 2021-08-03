@@ -22,7 +22,6 @@ import com.google.cloud.tools.jib.api.buildplan.FileEntriesLayer;
 import com.google.cloud.tools.jib.api.buildplan.ModificationTimeProvider;
 import com.google.cloud.tools.jib.api.buildplan.RelativeUnixPath;
 import com.google.cloud.tools.jib.filesystem.DirectoryWalker;
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Streams;
@@ -58,7 +57,6 @@ public class JavaContainerBuilder {
   }
 
   /** Represents the different types of layers for a Java application. */
-  @VisibleForTesting
   public enum LayerType {
     DEPENDENCIES("dependencies"),
     SNAPSHOT_DEPENDENCIES("snapshot dependencies"),

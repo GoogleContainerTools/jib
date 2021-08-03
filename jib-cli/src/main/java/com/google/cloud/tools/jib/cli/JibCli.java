@@ -26,7 +26,6 @@ import com.google.cloud.tools.jib.plugins.common.ImageMetadataOutput;
 import com.google.cloud.tools.jib.plugins.common.UpdateChecker;
 import com.google.cloud.tools.jib.plugins.common.globalconfig.GlobalConfig;
 import com.google.cloud.tools.jib.plugins.common.logging.ConsoleLogger;
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.util.concurrent.Futures;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -100,7 +99,6 @@ public class JibCli {
     }
   }
 
-  @VisibleForTesting
   static void finishUpdateChecker(
       ConsoleLogger logger, Future<Optional<String>> updateCheckFuture) {
     UpdateChecker.finishUpdateCheck(updateCheckFuture)

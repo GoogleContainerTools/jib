@@ -26,7 +26,6 @@ import com.google.cloud.tools.jib.plugins.common.PropertyNames;
 import com.google.cloud.tools.jib.plugins.common.UpdateChecker;
 import com.google.cloud.tools.jib.plugins.common.VersionChecker;
 import com.google.cloud.tools.jib.plugins.common.globalconfig.GlobalConfig;
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.Futures;
 import java.nio.file.Paths;
@@ -47,7 +46,6 @@ import org.apache.maven.project.MavenProject;
 /** Collection of common methods to share between Maven goals. */
 public class MojoCommon {
   /** Describes a minimum required version or version range for Jib. */
-  @VisibleForTesting
   public static final String REQUIRED_VERSION_PROPERTY_NAME = "jib.requiredVersion";
 
   public static final String VERSION_URL = "https://storage.googleapis.com/jib-versions/jib-maven";

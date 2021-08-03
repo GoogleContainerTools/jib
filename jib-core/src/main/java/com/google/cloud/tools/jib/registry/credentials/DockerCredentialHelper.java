@@ -188,7 +188,6 @@ public class DockerCredentialHelper {
     }
   }
 
-  @VisibleForTesting
   Path getCredentialHelper() {
     return credentialHelper;
   }

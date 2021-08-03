@@ -98,7 +98,6 @@ public class VersionChecker<V extends Comparable<? super V>> {
    * @return true if the version is acceptable
    * @throws IllegalArgumentException if the version could not be parsed
    */
-  @VisibleForTesting
   public boolean compatibleVersion(String acceptableVersionRange, String actualVersion) {
     V pluginVersion = parseVersion(actualVersion);
 
