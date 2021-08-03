@@ -431,7 +431,7 @@ public class GradleProjectPropertiesExtensionTest {
       Assert.fail();
     } catch (IllegalArgumentException ex) {
       Assert.assertEquals(
-          "extension BaseExtension does not expect extension-specific configruation; remove the "
+          "extension BaseExtension does not expect extension-specific configuration; remove the "
               + "inapplicable 'pluginExtension.configuration' from Gradle build script",
           ex.getMessage());
     }
