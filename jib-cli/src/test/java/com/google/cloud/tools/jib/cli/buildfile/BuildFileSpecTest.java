@@ -254,22 +254,36 @@ public class BuildFileSpecTest {
 
     @Parameterized.Parameters(name = "{0}")
     public static Collection<Object[]> data() {
-      return Arrays.asList(new Object[][] {{"environment"}, {"labels"}});
+      return Arrays.asList(
+          new Object[][] {
+            {"environment", "  key: null", "' cannot contain null values"},
+            {"environment", "  key: ' '", "' cannot contain empty string values"},
+            {"environment", "  ' ': value", "' cannot contain empty string keys"},
+            {"labels", "  key: null", "' cannot contain null values"},
+            {"labels", "  key: ' '", "' cannot contain empty string values"},
+            {"labels", "  ' ': value", "' cannot contain empty string keys"},
+          });
     }
 
-    @Parameterized.Parameter public String fieldName;
+    @Parameterized.Parameter(0)
+    public String fieldName;
+
+    @Parameterized.Parameter(1)
+    public String input;
+
+    @Parameterized.Parameter(2)
+    public String expectedErrorMessage;
 
     @Test
-    public void testBuildFileSpec_noNullValues() {
-      String data =
-          "apiVersion: v1alpha1\n" + "kind: BuildFile\n" + fieldName + ":\n" + "  key: null";
+    public void testBuildFileSpec_invalidMapEntries() {
+      String data = "apiVersion: v1alpha1\n" + "kind: BuildFile\n" + fieldName + ":\n" + input;
 
       JsonProcessingException exception =
           assertThrows(
               JsonProcessingException.class, () -> mapper.readValue(data, BuildFileSpec.class));
       assertThat(exception)
           .hasMessageThat()
-          .contains("Property '" + fieldName + "' cannot contain null values");
+          .contains("Property '" + fieldName + expectedErrorMessage);
     }
 
     /**
@@ -282,32 +296,6 @@ public class BuildFileSpecTest {
           "apiVersion: v1alpha1\n" + "kind: BuildFile\n" + fieldName + ":\n" + "  null: value";
 
       assertThat(mapper.readValue(data, BuildFileSpec.class)).isNotNull();
-    }
-
-    @Test
-    public void testBuildFileSpec_noEmptyValues() {
-      String data =
-          "apiVersion: v1alpha1\n" + "kind: BuildFile\n" + fieldName + ":\n" + "  key: ' '";
-
-      JsonProcessingException exception =
-          assertThrows(
-              JsonProcessingException.class, () -> mapper.readValue(data, BuildFileSpec.class));
-      assertThat(exception)
-          .hasMessageThat()
-          .contains("Property '" + fieldName + "' cannot contain empty string values");
-    }
-
-    @Test
-    public void testBuildFileSpec_noEmptyKeys() {
-      String data =
-          "apiVersion: v1alpha1\n" + "kind: BuildFile\n" + fieldName + ":\n" + "  ' ': value";
-
-      JsonProcessingException exception =
-          assertThrows(
-              JsonProcessingException.class, () -> mapper.readValue(data, BuildFileSpec.class));
-      assertThat(exception)
-          .hasMessageThat()
-          .contains("Property '" + fieldName + "' cannot contain empty string keys");
     }
 
     @Test
