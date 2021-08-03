@@ -858,12 +858,12 @@ public class PluginConfigurationProcessor {
   @VisibleForTesting
   static Optional<AbsoluteUnixPath> getWorkingDirectoryChecked(RawConfiguration rawConfiguration)
       throws InvalidWorkingDirectoryException {
-    Optional<String> dir = rawConfiguration.getWorkingDirectory();
-    if (!dir.isPresent()) {
+    Optional<String> directory = rawConfiguration.getWorkingDirectory();
+    if (!directory.isPresent()) {
       return Optional.empty();
     }
 
-    String path = dir.get();
+    String path = directory.get();
     try {
       return Optional.of(AbsoluteUnixPath.get(path));
     } catch (IllegalArgumentException ex) {
