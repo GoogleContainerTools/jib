@@ -81,7 +81,8 @@ public class JibBuildRunnerTest {
   @Test
   public void testBuildImage_pass()
       throws BuildStepsExecutionException, IOException, CacheDirectoryCreationException {
-    testJibBuildRunner.runBuild();
+    JibContainer buildResult = testJibBuildRunner.runBuild();
+    Assert.assertNull(buildResult);
   }
 
   @Test
