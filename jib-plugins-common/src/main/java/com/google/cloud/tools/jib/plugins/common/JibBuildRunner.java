@@ -285,6 +285,7 @@ public class JibBuildRunner {
           message == null ? "(null exception message)" : message, ex.getCause());
 
     } catch (InterruptedException ex) {
+      Thread.currentThread().interrupt();
       throw new BuildStepsExecutionException(helpfulSuggestions.none(), ex);
     }
 

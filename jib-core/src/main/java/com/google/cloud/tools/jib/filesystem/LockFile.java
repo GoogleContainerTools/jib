@@ -57,6 +57,7 @@ public class LockFile implements Closeable {
       lockMap.computeIfAbsent(lockFile, key -> new ReentrantLock()).lockInterruptibly();
 
     } catch (InterruptedException ex) {
+      Thread.currentThread().interrupt();
       throw new IOException("Interrupted while trying to acquire lock", ex);
     }
 

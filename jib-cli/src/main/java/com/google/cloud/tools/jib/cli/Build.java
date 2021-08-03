@@ -144,6 +144,7 @@ public class Build implements Callable<Integer> {
       JibCli.writeImageJson(commonCliOptions.getImageJsonPath(), jibContainer);
     } catch (Exception ex) {
       JibCli.logTerminatingException(logger, ex, commonCliOptions.isStacktrace());
+      Thread.currentThread().interrupt();
       return 1;
     } finally {
       JibCli.finishUpdateChecker(logger, updateCheckFuture);
