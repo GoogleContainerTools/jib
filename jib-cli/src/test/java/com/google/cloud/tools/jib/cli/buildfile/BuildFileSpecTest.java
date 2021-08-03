@@ -253,7 +253,7 @@ public class BuildFileSpecTest {
   public static class OptionalStringMapTests {
 
     @Parameterized.Parameters(name = "{0}")
-    public static Collection<Object[]> data() {
+    public static Collection<Object[]> invalidMapEntries() {
       return Arrays.asList(
           new Object[][] {
             {"environment", "  key: null", "' cannot contain null values"},
@@ -265,8 +265,7 @@ public class BuildFileSpecTest {
           });
     }
 
-    @Parameterized.Parameter(0)
-    public String fieldName;
+    @Parameterized.Parameter public String fieldName;
 
     @Parameterized.Parameter(1)
     public String input;
