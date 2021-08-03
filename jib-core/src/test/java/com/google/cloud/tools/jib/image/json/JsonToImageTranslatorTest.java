@@ -85,7 +85,7 @@ public class JsonToImageTranslatorTest {
     testToImage_buildable("core/json/ocimanifest.json", OciManifestTemplate.class);
   }
 
-  @Test
+  @Test(expected = Test.None.class /* no exception expected */)
   public void testToImage_canParseTimestampWithOffset()
       throws IOException, LayerPropertyNotFoundException, URISyntaxException,
           LayerCountMismatchException, BadContainerConfigurationFormatException {
