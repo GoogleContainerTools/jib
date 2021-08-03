@@ -135,8 +135,9 @@ public class PluginConfigurationProcessor {
     ImageReference targetImageReference =
         getGeneratedTargetDockerTag(rawConfiguration, projectProperties, helpfulSuggestions);
     DockerDaemonImage targetImage = DockerDaemonImage.named(targetImageReference);
-    if (rawConfiguration.getDockerExecutable().isPresent()) {
-      targetImage.setDockerExecutable(rawConfiguration.getDockerExecutable().get());
+    Optional<Path> dockerExecutable = rawConfiguration.getDockerExecutable();
+    if (dockerExecutable.isPresent()) {
+      targetImage.setDockerExecutable(dockerExecutable.get());
     }
     targetImage.setDockerEnvironment(rawConfiguration.getDockerEnvironment());
 
@@ -269,9 +270,10 @@ public class PluginConfigurationProcessor {
           NumberFormatException, InvalidContainerizingModeException,
           InvalidFilesModificationTimeException, InvalidCreationTimeException,
           JibPluginExtensionException {
-    Preconditions.checkArgument(rawConfiguration.getToImage().isPresent());
+    Optional<String> image = rawConfiguration.getToImage();
+    Preconditions.checkArgument(image.isPresent());
 
-    ImageReference targetImageReference = ImageReference.parse(rawConfiguration.getToImage().get());
+    ImageReference targetImageReference = ImageReference.parse(image.get());
     RegistryImage targetImage = RegistryImage.named(targetImageReference);
 
     configureCredentialRetrievers(
@@ -496,10 +498,9 @@ public class PluginConfigurationProcessor {
       throws IncompatibleBaseImageJavaVersionException, InvalidImageReferenceException,
           FileNotFoundException {
     // Use image configuration as-is if it's a local base image
+    Optional<String> image = rawConfiguration.getFromImage();
     String baseImageConfig =
-        rawConfiguration.getFromImage().isPresent()
-            ? rawConfiguration.getFromImage().get()
-            : getDefaultBaseImage(projectProperties);
+        image.isPresent() ? image.get() : getDefaultBaseImage(projectProperties);
     if (baseImageConfig.startsWith(Jib.TAR_IMAGE_PREFIX)) {
       return JavaContainerBuilder.from(baseImageConfig);
     }
@@ -519,8 +520,9 @@ public class PluginConfigurationProcessor {
       DockerDaemonImage dockerDaemonImage =
           DockerDaemonImage.named(baseImageReference)
               .setDockerEnvironment(rawConfiguration.getDockerEnvironment());
-      if (rawConfiguration.getDockerExecutable().isPresent()) {
-        dockerDaemonImage.setDockerExecutable(rawConfiguration.getDockerExecutable().get());
+      Optional<Path> dockerExecutable = rawConfiguration.getDockerExecutable();
+      if (dockerExecutable.isPresent()) {
+        dockerDaemonImage.setDockerExecutable(dockerExecutable.get());
       }
       return JavaContainerBuilder.from(dockerDaemonImage);
     }
@@ -772,26 +774,21 @@ public class PluginConfigurationProcessor {
       throws InvalidPlatformException {
     Set<Platform> platforms = new LinkedHashSet<>();
     for (PlatformConfiguration platformConfiguration : rawConfiguration.getPlatforms()) {
-
+      Optional<String> architecture = platformConfiguration.getArchitectureName();
+      Optional<String> os = platformConfiguration.getOsName();
       String platformToString =
-          "architecture="
-              + platformConfiguration.getArchitectureName().orElse("<missing>")
-              + ", os="
-              + platformConfiguration.getOsName().orElse("<missing>");
+          "architecture=" + architecture.orElse("<missing>") + ", os=" + os.orElse("<missing>");
 
-      if (!platformConfiguration.getArchitectureName().isPresent()) {
+      if (!architecture.isPresent()) {
         throw new InvalidPlatformException(
             "platform configuration is missing an architecture value", platformToString);
       }
-      if (!platformConfiguration.getOsName().isPresent()) {
+      if (!os.isPresent()) {
         throw new InvalidPlatformException(
             "platform configuration is missing an OS value", platformToString);
       }
 
-      platforms.add(
-          new Platform(
-              platformConfiguration.getArchitectureName().get(),
-              platformConfiguration.getOsName().get()));
+      platforms.add(new Platform(architecture.get(), os.get()));
     }
     return platforms;
   }
@@ -861,11 +858,12 @@ public class PluginConfigurationProcessor {
   @VisibleForTesting
   static Optional<AbsoluteUnixPath> getWorkingDirectoryChecked(RawConfiguration rawConfiguration)
       throws InvalidWorkingDirectoryException {
-    if (!rawConfiguration.getWorkingDirectory().isPresent()) {
+    Optional<String> dir = rawConfiguration.getWorkingDirectory();
+    if (!dir.isPresent()) {
       return Optional.empty();
     }
 
-    String path = rawConfiguration.getWorkingDirectory().get();
+    String path = dir.get();
     try {
       return Optional.of(AbsoluteUnixPath.get(path));
     } catch (IllegalArgumentException ex) {
