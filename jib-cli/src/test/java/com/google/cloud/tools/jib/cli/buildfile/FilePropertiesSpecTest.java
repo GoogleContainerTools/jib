@@ -146,8 +146,11 @@ public class FilePropertiesSpecTest {
     public void testFilePropertiesSpec_nullOkay() throws JsonProcessingException {
       String data = fieldName + ": null";
 
-      mapper.readValue(data, FilePropertiesSpec.class);
-      // pass
+      FilePropertiesSpec parsed = mapper.readValue(data, FilePropertiesSpec.class);
+      Assert.assertFalse(parsed.getFilePermissions().isPresent());
+      Assert.assertFalse(parsed.getDirectoryPermissions().isPresent());
+      Assert.assertFalse(parsed.getUser().isPresent());
+      Assert.assertFalse(parsed.getGroup().isPresent());
     }
   }
 }
