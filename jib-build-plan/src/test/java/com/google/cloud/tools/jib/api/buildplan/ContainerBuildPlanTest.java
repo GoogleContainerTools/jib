@@ -36,7 +36,7 @@ public class ContainerBuildPlanTest {
 
     Assert.assertEquals("scratch", plan.getBaseImage());
     Assert.assertEquals(ImmutableSet.of(new Platform("amd64", "linux")), plan.getPlatforms());
-    Assert.assertEquals(ImageFormat.Docker, plan.getFormat());
+    Assert.assertEquals(ImageFormat.DOCKER, plan.getFormat());
     Assert.assertEquals(Instant.EPOCH, plan.getCreationTime());
     Assert.assertEquals(Collections.emptyMap(), plan.getEnvironment());
     Assert.assertEquals(Collections.emptySet(), plan.getVolumes());

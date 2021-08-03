@@ -37,7 +37,7 @@ public class ContainerBuildPlan {
 
     private String baseImage = "scratch";
     private Instant creationTime = Instant.EPOCH;
-    private ImageFormat format = ImageFormat.Docker;
+    private ImageFormat format = ImageFormat.DOCKER;
 
     // LinkedHashSet to preserve the order
     private Set<Platform> platforms =
@@ -120,7 +120,7 @@ public class ContainerBuildPlan {
     }
 
     /**
-     * Sets the format to build the container image as. Use {@link ImageFormat#Docker} for Docker
+     * Sets the format to build the container image as. Use {@link ImageFormat#DOCKER} for Docker
      * V2.2 or {@link ImageFormat#OCI} for OCI.
      *
      * @param format the {@link ImageFormat}
