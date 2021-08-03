@@ -16,18 +16,23 @@
 
 package com.google.cloud.tools.jib.cli;
 
+import com.google.cloud.tools.jib.api.CacheDirectoryCreationException;
 import com.google.cloud.tools.jib.api.Containerizer;
+import com.google.cloud.tools.jib.api.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.api.JibContainer;
 import com.google.cloud.tools.jib.api.JibContainerBuilder;
 import com.google.cloud.tools.jib.api.LogEvent;
+import com.google.cloud.tools.jib.api.RegistryException;
 import com.google.cloud.tools.jib.cli.buildfile.BuildFiles;
 import com.google.cloud.tools.jib.cli.logging.CliLogger;
 import com.google.cloud.tools.jib.plugins.common.globalconfig.GlobalConfig;
+import com.google.cloud.tools.jib.plugins.common.globalconfig.InvalidGlobalConfigException;
 import com.google.cloud.tools.jib.plugins.common.logging.ConsoleLogger;
 import com.google.cloud.tools.jib.plugins.common.logging.SingleThreadedExecutor;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Multimaps;
 import com.google.common.util.concurrent.Futures;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
@@ -35,6 +40,7 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import picocli.CommandLine;
 import picocli.CommandLine.Model.CommandSpec;
@@ -142,7 +148,15 @@ public class Build implements Callable<Integer> {
 
       JibContainer jibContainer = containerBuilder.containerize(containerizer);
       JibCli.writeImageJson(commonCliOptions.getImageJsonPath(), jibContainer);
-    } catch (Exception ex) {
+    } catch (IOException
+        | InvalidImageReferenceException
+        | CacheDirectoryCreationException
+        | ExecutionException
+        | RegistryException
+        | InvalidGlobalConfigException ex) {
+      JibCli.logTerminatingException(logger, ex, commonCliOptions.isStacktrace());
+      return 1;
+    } catch (InterruptedException ex) {
       JibCli.logTerminatingException(logger, ex, commonCliOptions.isStacktrace());
       Thread.currentThread().interrupt();
       return 1;
