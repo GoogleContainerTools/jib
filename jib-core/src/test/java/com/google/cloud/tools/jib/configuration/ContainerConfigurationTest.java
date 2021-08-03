@@ -114,11 +114,11 @@ public class ContainerConfigurationTest {
   @SuppressWarnings("JdkObsolete") // for hashtable
   public void testBuilder_environmentMapTypes() {
     // Can accept empty environment.
-    ContainerConfiguration.builder().setEnvironment(ImmutableMap.of()).build();
-
+    Assert.assertNotNull(
+        ContainerConfiguration.builder().setEnvironment(ImmutableMap.of()).build());
     // Can handle other map types (https://github.com/GoogleContainerTools/jib/issues/632)
-    ContainerConfiguration.builder().setEnvironment(new TreeMap<>());
-    ContainerConfiguration.builder().setEnvironment(new Hashtable<>());
+    Assert.assertNotNull(ContainerConfiguration.builder().setEnvironment(new TreeMap<>()));
+    Assert.assertNotNull(ContainerConfiguration.builder().setEnvironment(new Hashtable<>()));
   }
 
   @Test
