@@ -61,7 +61,6 @@ public interface BuildableManifestTemplate extends ManifestTemplate {
     @SuppressWarnings("unused")
     private ContentDescriptorTemplate() {}
 
-    @VisibleForTesting
     public long getSize() {
       return size;
     }
