@@ -67,7 +67,8 @@ public class WithServerFailoverHttpClientTest {
   @Test
   public void testSecureConnectionOnInsecureHttpsServer()
       throws IOException, InterruptedException, GeneralSecurityException, URISyntaxException {
-    FailoverHttpClient secureHttpClient = new FailoverHttpClient(false, false /*secure*/, false, logger);
+    FailoverHttpClient secureHttpClient =
+        new FailoverHttpClient(false, false /*secure*/, false, logger);
     try (TestWebServer server = new TestWebServer(true);
         Response ignored = secureHttpClient.get(new URL(server.getEndpoint()), request)) {
       Assert.fail("Should fail if cannot verify peer");
