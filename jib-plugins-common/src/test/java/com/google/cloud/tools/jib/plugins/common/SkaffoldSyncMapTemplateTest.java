@@ -101,9 +101,12 @@ public class SkaffoldSyncMapTemplateTest {
 
   @Test
   public void testFrom_validEmpty() throws Exception {
-    SkaffoldSyncMapTemplate.from(TEST_JSON_EMPTY_GENERATED);
-    SkaffoldSyncMapTemplate.from(TEST_JSON_NO_GENERATED);
-    // pass if no exceptions
+    SkaffoldSyncMapTemplate templateEmptyGenerated =
+        SkaffoldSyncMapTemplate.from(TEST_JSON_EMPTY_GENERATED);
+    SkaffoldSyncMapTemplate templateNoGenerated =
+        SkaffoldSyncMapTemplate.from(TEST_JSON_NO_GENERATED);
+    Assert.assertTrue(templateEmptyGenerated.getGenerated().isEmpty());
+    Assert.assertTrue(templateNoGenerated.getGenerated().isEmpty());
   }
 
   @Test
