@@ -107,7 +107,6 @@ public class SkaffoldSyncMapTemplateTest {
         SkaffoldSyncMapTemplate.from(TEST_JSON_NO_GENERATED);
     Assert.assertTrue(templateEmptyGenerated.getGenerated().isEmpty());
     Assert.assertTrue(templateNoGenerated.getGenerated().isEmpty());
-    // pass if no exceptions
   }
 
   @Test
