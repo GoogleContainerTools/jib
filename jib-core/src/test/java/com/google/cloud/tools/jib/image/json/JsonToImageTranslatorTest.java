@@ -85,7 +85,7 @@ public class JsonToImageTranslatorTest {
     testToImage_buildable("core/json/ocimanifest.json", OciManifestTemplate.class);
   }
 
-  @Test(expected = Test.None.class /* no exception expected */)
+  @Test
   public void testToImage_canParseTimestampWithOffset()
       throws IOException, LayerPropertyNotFoundException, URISyntaxException,
           LayerCountMismatchException, BadContainerConfigurationFormatException {
@@ -104,7 +104,8 @@ public class JsonToImageTranslatorTest {
 
     // Should not throw BadContainerConfigFormatException.
     // https://github.com/GoogleContainerTools/jib/issues/2428
-    JsonToImageTranslator.toImage(manifest, containerConfig);
+    Image image = JsonToImageTranslator.toImage(manifest, containerConfig);
+    Assert.assertEquals(1587500530L, image.getCreated().getEpochSecond());
   }
 
   @Test

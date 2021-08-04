@@ -78,10 +78,11 @@ public class JibBuildRunnerTest {
             "ignored");
   }
 
-  @Test(expected = Test.None.class /* no exception expected */)
+  @Test
   public void testBuildImage_pass()
       throws BuildStepsExecutionException, IOException, CacheDirectoryCreationException {
-    testJibBuildRunner.runBuild();
+    JibContainer buildResult = testJibBuildRunner.runBuild();
+    Assert.assertNull(buildResult);
   }
 
   @Test
