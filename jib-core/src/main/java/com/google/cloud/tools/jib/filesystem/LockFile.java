@@ -62,7 +62,7 @@ public class LockFile implements Closeable {
 
     Files.createDirectories(lockFile.getParent());
     FileOutputStream outputStream = new FileOutputStream(lockFile.toFile());
-    try (FileLock fileLock = outputStream.getChannel().lock(); ) {
+    try (FileLock fileLock = outputStream.getChannel().lock()) {
       return new LockFile(lockFile, fileLock, outputStream);
     }
   }
