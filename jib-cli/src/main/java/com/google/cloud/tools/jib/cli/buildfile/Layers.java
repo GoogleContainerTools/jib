@@ -38,6 +38,8 @@ import java.util.stream.Stream;
 /** Class to convert between different layer representations. */
 class Layers {
 
+  private Layers() {}
+
   /**
    * Convert a layer spec to a list of layer objects.
    *

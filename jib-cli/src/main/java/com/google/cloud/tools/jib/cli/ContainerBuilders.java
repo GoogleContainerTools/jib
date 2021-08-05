@@ -38,6 +38,8 @@ import java.util.Set;
 /** Helper class for creating JibContainerBuilders from JibCli specifications. */
 public class ContainerBuilders {
 
+  private ContainerBuilders() {}
+
   /**
    * Creates a {@link JibContainerBuilder} depending on the base image specified.
    *

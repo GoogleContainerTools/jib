@@ -23,6 +23,9 @@ import java.time.format.DateTimeParseException;
 
 /** Helper class to convert various strings in a buildfile to Instants. */
 public class Instants {
+
+  private Instants() {}
+
   /**
    * Parses a time string into Instant. The string must be time in milliseconds since unix epoch or
    * an iso8601 datetime.

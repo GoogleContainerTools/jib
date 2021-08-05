@@ -41,6 +41,8 @@ import java.util.List;
 /** Helper class for creating Containerizers from JibCli specifications. */
 public class Containerizers {
 
+  private Containerizers() {}
+
   /**
    * Create a Containerizer from a command line specification.
    *
