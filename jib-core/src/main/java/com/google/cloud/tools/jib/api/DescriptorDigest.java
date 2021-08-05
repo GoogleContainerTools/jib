@@ -89,7 +89,7 @@ public class DescriptorDigest {
 
   @Override
   public String toString() {
-    return "sha256:" + hash;
+    return DIGEST_PREFIX + hash;
   }
 
   /** Pass-through hash code of the digest string. */
