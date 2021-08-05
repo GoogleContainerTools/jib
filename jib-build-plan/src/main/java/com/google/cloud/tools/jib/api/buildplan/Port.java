@@ -59,11 +59,11 @@ public class Port {
     return new Port(port, protocol);
   }
 
-  private final int port;
+  private final int portNumber;
   private final String protocol;
 
-  private Port(int port, String protocol) {
-    this.port = port;
+  private Port(int portNumber, String protocol) {
+    this.portNumber = portNumber;
     this.protocol = protocol;
   }
 
@@ -73,7 +73,7 @@ public class Port {
    * @return the port number
    */
   public int getPort() {
-    return port;
+    return portNumber;
   }
 
   /**
@@ -94,12 +94,12 @@ public class Port {
       return false;
     }
     Port otherPort = (Port) other;
-    return port == otherPort.port && protocol.equals(otherPort.protocol);
+    return portNumber == otherPort.portNumber && protocol.equals(otherPort.protocol);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(port, protocol);
+    return Objects.hash(portNumber, protocol);
   }
 
   /**
@@ -110,6 +110,6 @@ public class Port {
    */
   @Override
   public String toString() {
-    return port + "/" + protocol;
+    return portNumber + "/" + protocol;
   }
 }
