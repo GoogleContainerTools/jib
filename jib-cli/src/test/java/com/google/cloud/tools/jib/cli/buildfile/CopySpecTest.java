@@ -16,6 +16,8 @@
 
 package com.google.cloud.tools.jib.cli.buildfile;
 
+import static com.google.common.truth.Truth.assertThat;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
@@ -207,16 +209,14 @@ public class CopySpecTest {
     public void testCopySpec_emptyOkay() throws JsonProcessingException {
       String data = "src: target/classes\n" + "dest: /app/classes\n" + fieldName + ": []";
 
-      mapper.readValue(data, CopySpec.class);
-      // pass
+      assertThat(mapper.readValue(data, CopySpec.class)).isNotNull();
     }
 
     @Test
     public void testCopySpec_nullOkay() throws JsonProcessingException {
       String data = "src: target/classes\n" + "dest: /app/classes\n" + fieldName + ": null";
 
-      mapper.readValue(data, CopySpec.class);
-      // pass
+      assertThat(mapper.readValue(data, CopySpec.class)).isNotNull();
     }
   }
 }
