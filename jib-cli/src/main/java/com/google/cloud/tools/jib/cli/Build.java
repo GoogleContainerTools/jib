@@ -142,6 +142,10 @@ public class Build implements Callable<Integer> {
 
       JibContainer jibContainer = containerBuilder.containerize(containerizer);
       JibCli.writeImageJson(commonCliOptions.getImageJsonPath(), jibContainer);
+    } catch (InterruptedException ex) {
+      JibCli.logTerminatingException(logger, ex, commonCliOptions.isStacktrace());
+      Thread.currentThread().interrupt();
+      return 1;
     } catch (Exception ex) {
       JibCli.logTerminatingException(logger, ex, commonCliOptions.isStacktrace());
       return 1;
