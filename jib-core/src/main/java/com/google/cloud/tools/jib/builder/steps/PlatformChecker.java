@@ -27,6 +27,8 @@ import java.util.Set;
 /** Provides helper methods to check platforms. */
 public class PlatformChecker {
 
+  private PlatformChecker() {}
+
   /**
    * Assuming the base image is not a manifest list, checks and warns misconfigured platforms.
    *

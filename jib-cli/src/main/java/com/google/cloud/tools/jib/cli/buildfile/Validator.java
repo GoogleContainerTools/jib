@@ -27,6 +27,8 @@ import javax.annotation.Nullable;
  */
 public class Validator {
 
+  private Validator() {}
+
   /**
    * Checks if string is non null and non empty.
    *

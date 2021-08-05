@@ -77,6 +77,8 @@ public class LocalBaseImageSteps {
     }
   }
 
+  private LocalBaseImageSteps() {}
+
   /**
    * Checks the first two bytes of a file to see if it has been gzipped.
    *

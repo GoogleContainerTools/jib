@@ -25,6 +25,8 @@ import java.io.PrintWriter;
 /** A simple CLI logger that logs to the command line based on the configured log level. */
 public class CliLogger {
 
+  private CliLogger() {}
+
   /**
    * Create a new logger for the CLI.
    *

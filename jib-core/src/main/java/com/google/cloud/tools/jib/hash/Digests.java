@@ -35,6 +35,8 @@ import java.util.List;
 // more general.
 public class Digests {
 
+  private Digests() {}
+
   public static DescriptorDigest computeJsonDigest(JsonTemplate template) throws IOException {
     return computeDigest(template, ByteStreams.nullOutputStream()).getDigest();
   }

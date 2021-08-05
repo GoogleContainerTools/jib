@@ -33,6 +33,8 @@ import java.util.Optional;
 /** Class to build a container representation from the contents of a jar file. */
 public class JarFiles {
 
+  private JarFiles() {}
+
   /**
    * Generates a {@link JibContainerBuilder} from contents of a jar file.
    *

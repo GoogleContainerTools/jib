@@ -92,6 +92,8 @@ public class PluginConfigurationProcessor {
   private static final String JIB_CLASSPATH_FILE = "jib-classpath-file";
   private static final String JIB_MAIN_CLASS_FILE = "jib-main-class-file";
 
+  private PluginConfigurationProcessor() {}
+
   /**
    * Generate a runner for image builds to docker daemon.
    *

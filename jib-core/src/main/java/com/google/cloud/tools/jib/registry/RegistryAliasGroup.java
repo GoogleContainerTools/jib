@@ -27,6 +27,8 @@ import java.util.stream.Stream;
 /** Provides known aliases and alternative hosts for a given registry. */
 public class RegistryAliasGroup {
 
+  private RegistryAliasGroup() {}
+
   private static final ImmutableList<ImmutableSet<String>> REGISTRY_ALIAS_GROUPS =
       ImmutableList.of(
           // Docker Hub alias group (https://github.com/moby/moby/pull/28100)

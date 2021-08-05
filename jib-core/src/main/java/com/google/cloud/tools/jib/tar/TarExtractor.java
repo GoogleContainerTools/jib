@@ -36,6 +36,8 @@ import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 /** Extracts a tarball. */
 public class TarExtractor {
 
+  private TarExtractor() {}
+
   /**
    * Extracts a tarball to the specified destination.
    *

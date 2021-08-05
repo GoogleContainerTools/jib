@@ -35,6 +35,8 @@ import java.util.zip.ZipInputStream;
 /** Utility class for Zip archives. */
 public class ZipUtil {
 
+  private ZipUtil() {}
+
   /**
    * Unzips {@code archive} into {@code destination}.
    *
