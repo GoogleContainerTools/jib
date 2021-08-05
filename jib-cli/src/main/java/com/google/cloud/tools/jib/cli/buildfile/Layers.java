@@ -21,6 +21,7 @@ import com.google.cloud.tools.jib.api.buildplan.FileEntriesLayer;
 import com.google.cloud.tools.jib.api.buildplan.FileEntry;
 import com.google.cloud.tools.jib.api.buildplan.FilePermissions;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Verify;
 import java.io.IOException;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
@@ -152,7 +153,7 @@ class Layers {
                     throw new IllegalStateException(
                         src.toString() + " is not a parent of " + path.toString());
                   }
-                  Path parent = path.getParent();
+                  Path parent = Verify.verifyNotNull(path.getParent());
                   while (true) {
                     if (addedDirectories.contains(parent)) {
                       break;
@@ -163,7 +164,7 @@ class Layers {
                     if (parent.equals(src)) {
                       break;
                     }
-                    parent = parent.getParent();
+                    parent = Verify.verifyNotNull(parent.getParent());
                   }
                   layerBuiler.addEntry(
                       newEntry.apply(path, filePropertiesStack.getFilePermissions()));

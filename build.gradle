@@ -9,6 +9,9 @@ plugins {
 
   // apply so we can correctly configure the test runner to be gradle at the project level
   id 'org.jetbrains.gradle.plugin.idea-ext' version '1.0.1'
+
+  // apply so that we can collect quality metrics at the root project level
+  id 'org.sonarqube' version '3.3'
 }
 
 // run tests in intellij using gradle test runner
@@ -67,7 +70,7 @@ subprojects {
     GRADLE_EXTENSION: 'com.google.cloud.tools:jib-gradle-plugin-extension-api:0.4.0',
     MAVEN_EXTENSION: 'com.google.cloud.tools:jib-maven-plugin-extension-api:0.4.0',
 
-    COMMONS_COMPRESS: 'org.apache.commons:commons-compress:1.20',
+    COMMONS_COMPRESS: 'org.apache.commons:commons-compress:1.21',
     COMMONS_TEXT: 'org.apache.commons:commons-text:1.9',
     JACKSON_DATABIND: 'com.fasterxml.jackson.core:jackson-databind:2.12.4',
     JACKSON_DATAFORMAT_YAML: 'com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.12.4',
@@ -90,7 +93,7 @@ subprojects {
     MOCKITO_CORE: 'org.mockito:mockito-core:3.11.2',
     SISU_PLEXUS: 'org.eclipse.sisu:org.eclipse.sisu.plexus:0.3.4',
     SLF4J_API: 'org.slf4j:slf4j-api:1.7.30',
-    SLF4J_SIMPLE: 'org.slf4j:slf4j-simple:1.7.31',
+    SLF4J_SIMPLE: 'org.slf4j:slf4j-simple:1.7.32',
     SYSTEM_RULES:  'com.github.stefanbirkner:system-rules:1.19.0',
     JBCRYPT: 'org.mindrot:jbcrypt:0.4',
   ]
@@ -118,8 +121,8 @@ subprojects {
   /* ERROR PRONE */
   dependencies {
     // NullAway errorprone plugin
-    annotationProcessor 'com.uber.nullaway:nullaway:0.9.1'
-    errorprone 'com.google.errorprone:error_prone_core:2.7.1'
+    annotationProcessor 'com.uber.nullaway:nullaway:0.9.2'
+    errorprone 'com.google.errorprone:error_prone_core:2.8.1'
     // Using github.com/google/error-prone-javac is required when running on
     // JDK 8. Remove when migrating to JDK 11.
     if (System.getProperty('java.version').startsWith('1.8.')) {
@@ -443,3 +446,14 @@ subprojects {
   }
   /* LOCAL DEVELOPMENT HELPER TASKS */
 }
+
+/* SONARQUBE */
+sonarqube {
+  properties {
+    property 'sonar.projectName', 'jib'
+    property 'sonar.projectKey', 'GoogleContainerTools_jib'
+    property 'sonar.host.url', 'https://sonarcloud.io'
+    property 'sonar.organization', 'googlecontainertools-1'
+  }
+}
+/* SONARQUBE */

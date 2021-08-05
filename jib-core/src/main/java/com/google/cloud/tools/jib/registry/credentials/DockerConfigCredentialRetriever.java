@@ -140,25 +140,34 @@ public class DockerConfigCredentialRetriever {
 
       // Lastly, find defined auth.
       AuthTemplate auth = dockerConfig.getAuthFor(registryAlias);
-      if (auth != null && auth.getAuth() != null) {
-        // 'auth' is a basic authentication token that should be parsed back into credentials
-        String usernameColonPassword =
-            new String(Base64.decodeBase64(auth.getAuth()), StandardCharsets.UTF_8);
-        String username = usernameColonPassword.substring(0, usernameColonPassword.indexOf(":"));
-        String password = usernameColonPassword.substring(usernameColonPassword.indexOf(":") + 1);
-        logger.accept(
-            LogEvent.info("Docker config auths section defines credentials for " + registryAlias));
-        if (auth.getIdentityToken() != null
-            // These username and password checks may be unnecessary, but doing so to restrict the
-            // scope only to the Azure behavior to maintain maximum backward-compatibilty.
-            && username.equals("00000000-0000-0000-0000-000000000000")
-            && password.isEmpty()) {
+      if (auth != null) {
+        if (auth.getAuth() != null) {
+          // 'auth' is a basic authentication token that should be parsed back into credentials
+          String usernameColonPassword =
+              new String(Base64.decodeBase64(auth.getAuth()), StandardCharsets.UTF_8);
+          String username = usernameColonPassword.substring(0, usernameColonPassword.indexOf(":"));
+          String password = usernameColonPassword.substring(usernameColonPassword.indexOf(":") + 1);
           logger.accept(
-              LogEvent.info("Using 'identityToken' in Docker config auth for " + registryAlias));
-          return Optional.of(
-              Credential.from(Credential.OAUTH2_TOKEN_USER_NAME, auth.getIdentityToken()));
+              LogEvent.info(
+                  "Docker config auths section defines credentials for " + registryAlias));
+          if (auth.getIdentityToken() != null
+              // These username and password checks may be unnecessary, but doing so to restrict the
+              // scope only to the Azure behavior to maintain maximum backward-compatibilty.
+              && username.equals("00000000-0000-0000-0000-000000000000")
+              && password.isEmpty()) {
+            logger.accept(
+                LogEvent.info("Using 'identityToken' in Docker config auth for " + registryAlias));
+            return Optional.of(
+                Credential.from(Credential.OAUTH2_TOKEN_USER_NAME, auth.getIdentityToken()));
+          }
+          return Optional.of(Credential.from(username, password));
+        } else if (auth.getUsername() != null && auth.getPassword() != null) {
+          logger.accept(
+              LogEvent.info(
+                  "Docker config auths section defines username and password for "
+                      + registryAlias));
+          return Optional.of(Credential.from(auth.getUsername(), auth.getPassword()));
         }
-        return Optional.of(Credential.from(username, password));
       }
     }
     return Optional.empty();

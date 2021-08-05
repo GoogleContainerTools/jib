@@ -24,6 +24,7 @@ import com.google.cloud.tools.jib.tar.TarStreamBuilder;
 import com.google.common.base.Verify;
 import com.google.common.collect.ImmutableList;
 import java.io.File;
+import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -49,9 +50,9 @@ public class ReproducibleLayerBuilder {
     /**
      * Uses the current directory to act as the file input to TarArchiveEntry (since all directories
      * are treated the same in {@link TarArchiveEntry#TarArchiveEntry(File, String)}, except for
-     * modification time, which is wiped away in {@link #build}).
+     * modification time, UID, GID, etc., which are wiped away in {@link #build}).
      */
-    private static final File DIRECTORY_FILE = Paths.get(".").toFile();
+    private static final Path DIRECTORY_FILE = Paths.get(".");
 
     private final List<TarArchiveEntry> entries = new ArrayList<>();
     private final Set<String> names = new HashSet<>();
@@ -62,8 +63,9 @@ public class ReproducibleLayerBuilder {
      * modification time set to {@link FileEntriesLayer#DEFAULT_MODIFICATION_TIME}.
      *
      * @param tarArchiveEntry the {@link TarArchiveEntry}
+     * @throws IOException if an I/O error occurs
      */
-    private void add(TarArchiveEntry tarArchiveEntry) {
+    private void add(TarArchiveEntry tarArchiveEntry) throws IOException {
       if (names.contains(tarArchiveEntry.getName())) {
         return;
       }
@@ -72,8 +74,13 @@ public class ReproducibleLayerBuilder {
       // directories.
       Path namePath = Paths.get(tarArchiveEntry.getName());
       if (namePath.getParent() != namePath.getRoot()) {
-        TarArchiveEntry dir = new TarArchiveEntry(DIRECTORY_FILE, namePath.getParent().toString());
+        Path tarArchiveParentDir = Verify.verifyNotNull(namePath.getParent());
+        TarArchiveEntry dir = new TarArchiveEntry(DIRECTORY_FILE, tarArchiveParentDir.toString());
         dir.setModTime(FileEntriesLayer.DEFAULT_MODIFICATION_TIME.toEpochMilli());
+        dir.setUserId(0);
+        dir.setGroupId(0);
+        dir.setUserName("");
+        dir.setGroupName("");
         add(dir);
       }
 
@@ -133,8 +140,9 @@ public class ReproducibleLayerBuilder {
    * Builds and returns the layer {@link Blob}.
    *
    * @return the new layer
+   * @throws IOException if an I/O error occurs
    */
-  public Blob build() {
+  public Blob build() throws IOException {
     UniqueTarArchiveEntries uniqueTarArchiveEntries = new UniqueTarArchiveEntries();
 
     // Adds all the layer entries as tar entries.
@@ -143,7 +151,7 @@ public class ReproducibleLayerBuilder {
       // adds parent directories for each extraction path.
       TarArchiveEntry entry =
           new TarArchiveEntry(
-              layerEntry.getSourceFile().toFile(), layerEntry.getExtractionPath().toString());
+              layerEntry.getSourceFile(), layerEntry.getExtractionPath().toString());
 
       // Sets the entry's permissions by masking out the permission bits from the entry's mode (the
       // lowest 9 bits) then using a bitwise OR to set them to the layerEntry's permissions.

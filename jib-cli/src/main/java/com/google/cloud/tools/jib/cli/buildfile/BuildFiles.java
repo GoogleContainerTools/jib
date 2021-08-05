@@ -41,6 +41,8 @@ import org.apache.commons.text.io.StringSubstitutorReader;
 /** Class to convert BuildFiles to build container representations. */
 public class BuildFiles {
 
+  private BuildFiles() {}
+
   /** Read a build file from disk and apply templating parameters. */
   private static BuildFileSpec toBuildFileSpec(
       Path buildFilePath, Map<String, String> templateParameters) throws IOException {
@@ -94,9 +96,9 @@ public class BuildFiles {
     buildFile.getEntrypoint().ifPresent(containerBuilder::setEntrypoint);
     buildFile.getCmd().ifPresent(containerBuilder::setProgramArguments);
 
-    if (buildFile.getLayers().isPresent()) {
-      containerBuilder.setFileEntriesLayers(
-          Layers.toLayers(projectRoot, buildFile.getLayers().get()));
+    Optional<LayersSpec> layersSpec = buildFile.getLayers();
+    if (layersSpec.isPresent()) {
+      containerBuilder.setFileEntriesLayers(Layers.toLayers(projectRoot, layersSpec.get()));
     }
     return containerBuilder;
   }

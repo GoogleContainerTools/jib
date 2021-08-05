@@ -427,7 +427,7 @@ public class MavenProjectPropertiesExtensionTest {
       Assert.fail();
     } catch (IllegalArgumentException ex) {
       Assert.assertEquals(
-          "extension BaseExtension does not expect extension-specific configruation; remove the "
+          "extension BaseExtension does not expect extension-specific configuration; remove the "
               + "inapplicable <pluginExtension><configuration> from pom.xml",
           ex.getMessage());
     }

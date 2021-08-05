@@ -16,12 +16,13 @@
 
 package com.google.cloud.tools.jib.api;
 
+import static com.google.common.truth.Truth.assertThat;
+
 import com.google.cloud.tools.jib.api.buildplan.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.api.buildplan.FileEntriesLayer;
 import com.google.cloud.tools.jib.api.buildplan.FilePermissions;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Multimap;
 import com.google.common.io.CharStreams;
 import java.io.File;
@@ -42,7 +43,6 @@ import java.util.function.BiConsumer;
 import java.util.zip.GZIPInputStream;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
-import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -91,14 +91,6 @@ public class ReproducibleImageTest {
   @Test
   public void testTarballStructure() throws IOException {
     // known content should produce known results
-    List<String> expected =
-        ImmutableList.of(
-            "c46572ef74f58d95e44dd36c1fbdfebd3752e8b56a794a13c11cfed35a1a6e1c.tar.gz",
-            "6d2763b0f3940d324ea6b55386429e5b173899608abf7d1bff62e25dd2e4dcea.tar.gz",
-            "530c1954a2b087d0b989895ea56435c9dc739a973f2d2b6cb9bb98e55bbea7ac.tar.gz",
-            "config.json",
-            "manifest.json");
-
     List<String> actual = new ArrayList<>();
     try (TarArchiveInputStream input =
         new TarArchiveInputStream(Files.newInputStream(imageTar.toPath()))) {
@@ -108,27 +100,34 @@ public class ReproducibleImageTest {
       }
     }
 
-    Assert.assertEquals(expected, actual);
+    assertThat(actual)
+        .containsExactly(
+            "c46572ef74f58d95e44dd36c1fbdfebd3752e8b56a794a13c11cfed35a1a6e1c.tar.gz",
+            "6d2763b0f3940d324ea6b55386429e5b173899608abf7d1bff62e25dd2e4dcea.tar.gz",
+            "530c1954a2b087d0b989895ea56435c9dc739a973f2d2b6cb9bb98e55bbea7ac.tar.gz",
+            "config.json",
+            "manifest.json")
+        .inOrder();
   }
 
   @Test
   public void testManifest() throws IOException {
-    String exectedManifest =
+    String expectedManifest =
         "[{\"Config\":\"config.json\",\"RepoTags\":[\"jib-core/reproducible:latest\"],"
             + "\"Layers\":[\"c46572ef74f58d95e44dd36c1fbdfebd3752e8b56a794a13c11cfed35a1a6e1c.tar.gz\",\"6d2763b0f3940d324ea6b55386429e5b173899608abf7d1bff62e25dd2e4dcea.tar.gz\",\"530c1954a2b087d0b989895ea56435c9dc739a973f2d2b6cb9bb98e55bbea7ac.tar.gz\"]}]";
     String generatedManifest = extractFromTarFileAsString(imageTar, "manifest.json");
-    Assert.assertEquals(exectedManifest, generatedManifest);
+    assertThat(generatedManifest).isEqualTo(expectedManifest);
   }
 
   @Test
   public void testConfiguration() throws IOException {
-    String exectedConfig =
+    String expectedConfig =
         "{\"created\":\"1970-01-01T00:00:00Z\",\"architecture\":\"amd64\",\"os\":\"linux\","
             + "\"config\":{\"Env\":[],\"Entrypoint\":[\"echo\",\"Hello World\"],\"ExposedPorts\":{},\"Labels\":{},\"Volumes\":{}},"
             + "\"history\":[{\"created\":\"1970-01-01T00:00:00Z\",\"author\":\"Jib\",\"created_by\":\"jib-core:null\",\"comment\":\"\"},{\"created\":\"1970-01-01T00:00:00Z\",\"author\":\"Jib\",\"created_by\":\"jib-core:null\",\"comment\":\"\"},{\"created\":\"1970-01-01T00:00:00Z\",\"author\":\"Jib\",\"created_by\":\"jib-core:null\",\"comment\":\"\"}],"
             + "\"rootfs\":{\"type\":\"layers\",\"diff_ids\":[\"sha256:18e4f44e6d1835bd968339b166057bd17ab7d4cbb56dc7262a5cafea7cf8d405\",\"sha256:13369c34f073f2b9c1fa6431e23d925f1a8eac65b1726c8cc8fcc2596c69b414\",\"sha256:4f92c507112d7880ca0f504ef8272b7fdee107263270125036a260a741565923\"]}}";
     String generatedConfig = extractFromTarFileAsString(imageTar, "config.json");
-    Assert.assertEquals(exectedConfig, generatedConfig);
+    assertThat(generatedConfig).isEqualTo(expectedConfig);
   }
 
   @Test
@@ -140,21 +139,20 @@ public class ReproducibleImageTest {
             paths.add(layerEntry.getName());
           }
         });
-    Assert.assertEquals(
-        ImmutableSet.of(
+    assertThat(paths)
+        .containsExactly(
             "app/fileA.txt",
             "app/fileB.txt",
             "app/fileC.txt",
             "app/fileD.txt",
-            "app/subdir/fileE.txt"),
-        paths);
+            "app/subdir/fileE.txt");
   }
 
   @Test
   public void testAllFileAndDirectories() throws IOException {
     layerEntriesDo(
         (layerName, layerEntry) ->
-            Assert.assertTrue(layerEntry.isFile() || layerEntry.isDirectory()));
+            assertThat(layerEntry.isFile() || layerEntry.isDirectory()).isTrue());
   }
 
   @Test
@@ -162,23 +160,20 @@ public class ReproducibleImageTest {
     layerEntriesDo(
         (layerName, layerEntry) -> {
           Instant modificationTime = layerEntry.getLastModifiedDate().toInstant();
-          Assert.assertEquals(
-              layerName + ": " + layerEntry.getName(), Instant.ofEpochSecond(1), modificationTime);
+          assertThat(modificationTime).isEqualTo(Instant.ofEpochSecond(1));
         });
   }
 
   @Test
   public void testPermissions() throws IOException {
-    Assert.assertEquals(0644, FilePermissions.DEFAULT_FILE_PERMISSIONS.getPermissionBits());
-    Assert.assertEquals(0755, FilePermissions.DEFAULT_FOLDER_PERMISSIONS.getPermissionBits());
+    assertThat(FilePermissions.DEFAULT_FILE_PERMISSIONS.getPermissionBits()).isEqualTo(0644);
+    assertThat(FilePermissions.DEFAULT_FOLDER_PERMISSIONS.getPermissionBits()).isEqualTo(0755);
     layerEntriesDo(
         (layerName, layerEntry) -> {
           if (layerEntry.isFile()) {
-            Assert.assertEquals(
-                layerName + ": " + layerEntry.getName(), 0644, layerEntry.getMode() & 0777);
+            assertThat(layerEntry.getMode() & 0777).isEqualTo(0644);
           } else if (layerEntry.isDirectory()) {
-            Assert.assertEquals(
-                layerName + ": " + layerEntry.getName(), 0755, layerEntry.getMode() & 0777);
+            assertThat(layerEntry.getMode() & 0777).isEqualTo(0755);
           }
         });
   }
@@ -190,15 +185,14 @@ public class ReproducibleImageTest {
         (layerName, layerEntry) -> {
           String entryPath = layerEntry.getName();
           if (layerEntry.isDirectory()) {
-            Assert.assertTrue("directories in tar end with /", entryPath.endsWith("/"));
+            assertThat(entryPath.endsWith("/")).isTrue();
             entryPath = entryPath.substring(0, entryPath.length() - 1);
           }
 
           int lastSlashPosition = entryPath.lastIndexOf('/');
           String parent = entryPath.substring(0, Math.max(0, lastSlashPosition));
           if (!parent.isEmpty()) {
-            Assert.assertTrue(
-                "layer has implicit parent directory: " + parent, directories.contains(parent));
+            assertThat(directories.contains(parent)).isTrue();
           }
           if (layerEntry.isDirectory()) {
             directories.add(entryPath);
@@ -214,7 +208,7 @@ public class ReproducibleImageTest {
       List<String> sorted = new ArrayList<>(paths);
       // ReproducibleLayerBuilder sorts by TarArchiveEntry::getName()
       Collections.sort(sorted);
-      Assert.assertEquals("layer files are not consistently sorted", sorted, (List<String>) paths);
+      assertThat(paths).containsExactlyElementsIn(sorted).inOrder();
     }
   }
 

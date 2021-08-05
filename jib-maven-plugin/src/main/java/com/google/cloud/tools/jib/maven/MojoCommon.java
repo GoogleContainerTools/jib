@@ -140,12 +140,13 @@ public class MojoCommon {
     // Order is important, so use a LinkedHashMap
     Map<String, FilePermissions> permissionsMap = new LinkedHashMap<>();
     for (PermissionConfiguration permission : permissionList) {
-      if (!permission.getFile().isPresent() || !permission.getMode().isPresent()) {
+      Optional<String> file = permission.getFile();
+      Optional<String> mode = permission.getMode();
+      if (!file.isPresent() || !mode.isPresent()) {
         throw new IllegalArgumentException(
             "Incomplete <permission> configuration; requires <file> and <mode> fields to be set");
       }
-      permissionsMap.put(
-          permission.getFile().get(), FilePermissions.fromOctalString(permission.getMode().get()));
+      permissionsMap.put(file.get(), FilePermissions.fromOctalString(mode.get()));
     }
     return permissionsMap;
   }
