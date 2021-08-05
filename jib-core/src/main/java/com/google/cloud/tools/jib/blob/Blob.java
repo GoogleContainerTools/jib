@@ -38,7 +38,5 @@ public interface Blob {
    * @return {@code true} if {@link #writeTo(OutputStream)} can be called multiple times, {@code
    *     false} otherwise.
    */
-  default boolean isRetryable() {
-    return false;
-  }
+  boolean isRetryable();
 }

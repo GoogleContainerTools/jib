@@ -46,4 +46,9 @@ class InputStreamBlob implements Blob {
       isWritten = true;
     }
   }
+
+  @Override
+  public boolean isRetryable() {
+    return false;
+  }
 }
