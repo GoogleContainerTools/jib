@@ -305,7 +305,8 @@ public class LocalBaseImageSteps {
                         new NotifyingOutputStream(compressorStream, throttledProgressReporter)) {
                   Blobs.from(layerFile).writeTo(notifyingOutputStream);
                 }
-              });
+              },
+              true);
       return new PreparedLayer.Builder(cache.writeTarLayer(diffId, compressedBlob)).build();
     }
   }

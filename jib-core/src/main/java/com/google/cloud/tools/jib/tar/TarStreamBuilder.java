@@ -62,7 +62,8 @@ public class TarStreamBuilder {
    * @param entry the {@link TarArchiveEntry}
    */
   public void addTarArchiveEntry(TarArchiveEntry entry) {
-    archiveMap.put(entry, entry.isFile() ? Blobs.from(entry.getPath()) : Blobs.from(ignored -> {}));
+    archiveMap.put(
+        entry, entry.isFile() ? Blobs.from(entry.getPath()) : Blobs.from(ignored -> {}, true));
   }
 
   /**
@@ -77,7 +78,7 @@ public class TarStreamBuilder {
     TarArchiveEntry entry = new TarArchiveEntry(name);
     entry.setSize(contents.length);
     entry.setModTime(modificationTime.toEpochMilli());
-    archiveMap.put(entry, Blobs.from(outputStream -> outputStream.write(contents)));
+    archiveMap.put(entry, Blobs.from(outputStream -> outputStream.write(contents), true));
   }
 
   /**

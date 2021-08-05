@@ -50,7 +50,11 @@ public class Blobs {
   }
 
   public static Blob from(WritableContents writable) {
-    return new WritableContentsBlob(writable);
+    return from(writable, false);
+  }
+
+  public static Blob from(WritableContents writable, boolean retryable) {
+    return new WritableContentsBlob(writable, retryable);
   }
 
   /**

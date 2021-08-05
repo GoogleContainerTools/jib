@@ -39,4 +39,9 @@ class FileBlob implements Blob {
       return Digests.computeDigest(fileIn, outputStream);
     }
   }
+
+  @Override
+  public boolean isRetryable() {
+    return true;
+  }
 }

@@ -39,4 +39,9 @@ class StringBlob implements Blob {
       return Digests.computeDigest(stringIn, outputStream);
     }
   }
+
+  @Override
+  public boolean isRetryable() {
+    return true;
+  }
 }

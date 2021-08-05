@@ -25,13 +25,20 @@ import java.io.OutputStream;
 class WritableContentsBlob implements Blob {
 
   private final WritableContents writableContents;
+  private final boolean retryable;
 
-  WritableContentsBlob(WritableContents writableContents) {
+  WritableContentsBlob(WritableContents writableContents, boolean retryable) {
     this.writableContents = writableContents;
+    this.retryable = retryable;
   }
 
   @Override
   public BlobDescriptor writeTo(OutputStream outputStream) throws IOException {
     return Digests.computeDigest(writableContents, outputStream);
+  }
+
+  @Override
+  public boolean isRetryable() {
+    return retryable;
   }
 }
