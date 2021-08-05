@@ -176,6 +176,6 @@ public class ReproducibleLayerBuilder {
       tarStreamBuilder.addTarArchiveEntry(entry);
     }
 
-    return Blobs.from(tarStreamBuilder::writeAsTarArchiveTo, true);
+    return Blobs.from(tarStreamBuilder::writeAsTarArchiveTo, false);
   }
 }
