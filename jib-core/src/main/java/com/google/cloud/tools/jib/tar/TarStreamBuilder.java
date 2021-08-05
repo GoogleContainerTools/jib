@@ -78,7 +78,7 @@ public class TarStreamBuilder {
     TarArchiveEntry entry = new TarArchiveEntry(name);
     entry.setSize(contents.length);
     entry.setModTime(modificationTime.toEpochMilli());
-    archiveMap.put(entry, Blobs.from(outputStream -> outputStream.write(contents), false));
+    archiveMap.put(entry, Blobs.from(outputStream -> outputStream.write(contents), true));
   }
 
   /**
