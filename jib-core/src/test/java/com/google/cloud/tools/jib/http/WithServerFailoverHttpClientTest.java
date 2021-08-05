@@ -52,7 +52,7 @@ public class WithServerFailoverHttpClientTest {
   public void testGet()
       throws IOException, InterruptedException, GeneralSecurityException, URISyntaxException {
     FailoverHttpClient insecureHttpClient =
-        new FailoverHttpClient(false, true /*insecure*/, false, logger);
+        new FailoverHttpClient(true /*insecure*/, false, logger, false);
     try (TestWebServer server = new TestWebServer(false);
         Response response = insecureHttpClient.get(new URL(server.getEndpoint()), request)) {
 
@@ -68,7 +68,7 @@ public class WithServerFailoverHttpClientTest {
   public void testSecureConnectionOnInsecureHttpsServer()
       throws IOException, InterruptedException, GeneralSecurityException, URISyntaxException {
     FailoverHttpClient secureHttpClient =
-        new FailoverHttpClient(false, false /*secure*/, false, logger);
+        new FailoverHttpClient(false /*secure*/, false, logger, false);
     try (TestWebServer server = new TestWebServer(true);
         Response ignored = secureHttpClient.get(new URL(server.getEndpoint()), request)) {
       Assert.fail("Should fail if cannot verify peer");
@@ -82,7 +82,7 @@ public class WithServerFailoverHttpClientTest {
   public void testInsecureConnection_insecureHttpsFailover()
       throws IOException, InterruptedException, GeneralSecurityException, URISyntaxException {
     FailoverHttpClient insecureHttpClient =
-        new FailoverHttpClient(false, true /*insecure*/, false, logger);
+        new FailoverHttpClient(true /*insecure*/, false, logger, false);
     try (TestWebServer server = new TestWebServer(true, 2);
         Response response = insecureHttpClient.get(new URL(server.getEndpoint()), request)) {
 
@@ -102,7 +102,7 @@ public class WithServerFailoverHttpClientTest {
   public void testInsecureConnection_plainHttpFailover()
       throws IOException, InterruptedException, GeneralSecurityException, URISyntaxException {
     FailoverHttpClient insecureHttpClient =
-        new FailoverHttpClient(false, true /*insecure*/, false, logger);
+        new FailoverHttpClient(true /*insecure*/, false, logger, false);
     try (TestWebServer server = new TestWebServer(false, 3)) {
       String httpsUrl = server.getEndpoint().replace("http://", "https://");
       try (Response response = insecureHttpClient.get(new URL(httpsUrl), request)) {
@@ -133,7 +133,7 @@ public class WithServerFailoverHttpClientTest {
             + "Content-Length: 0\n\n";
     String targetServerResponse = "HTTP/1.1 200 OK\nContent-Length:12\n\nHello World!";
 
-    FailoverHttpClient httpClient = new FailoverHttpClient(false, true /*insecure*/, false, logger);
+    FailoverHttpClient httpClient = new FailoverHttpClient(true /*insecure*/, false, logger, false);
     try (TestWebServer server =
         new TestWebServer(false, Arrays.asList(proxyResponse, targetServerResponse), 1)) {
       System.setProperty("http.proxyHost", "localhost");
@@ -156,7 +156,7 @@ public class WithServerFailoverHttpClientTest {
   @Test
   public void testClosingResourcesMultipleTimes_noErrors()
       throws IOException, InterruptedException, GeneralSecurityException, URISyntaxException {
-    FailoverHttpClient httpClient = new FailoverHttpClient(false, true /*insecure*/, false, logger);
+    FailoverHttpClient httpClient = new FailoverHttpClient(true /*insecure*/, false, logger, false);
     try (TestWebServer server = new TestWebServer(false, 2);
         Response ignored1 = httpClient.get(new URL(server.getEndpoint()), request);
         Response ignored2 = httpClient.get(new URL(server.getEndpoint()), request)) {
@@ -191,7 +191,7 @@ public class WithServerFailoverHttpClientTest {
     List<String> responses =
         Arrays.asList(redirect301, redirect302, redirect303, redirect307, redirect308, ok200);
 
-    FailoverHttpClient httpClient = new FailoverHttpClient(false, true /*insecure*/, false, logger);
+    FailoverHttpClient httpClient = new FailoverHttpClient(true /*insecure*/, false, logger, false);
     try (TestWebServer server = new TestWebServer(false, responses, 1)) {
       httpClient.get(new URL(server.getEndpoint()), request);
 

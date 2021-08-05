@@ -63,7 +63,7 @@ public class BlobTest {
     WritableContents writableContents =
         outputStream -> outputStream.write(expected.getBytes(StandardCharsets.UTF_8));
 
-    verifyBlobWriteTo(expected, Blobs.from(writableContents));
+    verifyBlobWriteTo(expected, Blobs.from(writableContents, false));
   }
 
   /** Checks that the {@link Blob} streams the expected string. */

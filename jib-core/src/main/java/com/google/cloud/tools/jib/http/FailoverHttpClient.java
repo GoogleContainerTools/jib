@@ -122,12 +122,12 @@ public class FailoverHttpClient {
     }
   }
 
-  private final boolean enableRetries;
   private final boolean enableHttpAndInsecureFailover;
   private final boolean sendAuthorizationOverHttp;
   private final Consumer<LogEvent> logger;
   private final Supplier<HttpTransport> secureHttpTransportFactory;
   private final Supplier<HttpTransport> insecureHttpTransportFactory;
+  private final boolean retryOnIoException;
 
   private final ConcurrentHashMap<String, Failover> failoverHistory = new ConcurrentHashMap<>();
 
@@ -145,44 +145,38 @@ public class FailoverHttpClient {
       boolean enableHttpAndInsecureFailover,
       boolean sendAuthorizationOverHttp,
       Consumer<LogEvent> logger) {
-    this(
-        true,
-        enableHttpAndInsecureFailover,
-        sendAuthorizationOverHttp,
-        logger,
-        FailoverHttpClient::getSecureHttpTransport,
-        FailoverHttpClient::getInsecureHttpTransport);
+    this(enableHttpAndInsecureFailover, sendAuthorizationOverHttp, logger, true);
   }
 
   @VisibleForTesting
   FailoverHttpClient(
-      boolean enableRetries,
       boolean enableHttpAndInsecureFailover,
       boolean sendAuthorizationOverHttp,
-      Consumer<LogEvent> logger) {
+      Consumer<LogEvent> logger,
+      boolean retryOnIoException) {
     this(
-        enableRetries,
         enableHttpAndInsecureFailover,
         sendAuthorizationOverHttp,
         logger,
         FailoverHttpClient::getSecureHttpTransport,
-        FailoverHttpClient::getInsecureHttpTransport);
+        FailoverHttpClient::getInsecureHttpTransport,
+        retryOnIoException);
   }
 
   @VisibleForTesting
   FailoverHttpClient(
-      boolean enableRetries,
       boolean enableHttpAndInsecureFailover,
       boolean sendAuthorizationOverHttp,
       Consumer<LogEvent> logger,
       Supplier<HttpTransport> secureHttpTransportFactory,
-      Supplier<HttpTransport> insecureHttpTransportFactory) {
-    this.enableRetries = enableRetries;
+      Supplier<HttpTransport> insecureHttpTransportFactory,
+      boolean retryOnIoException) {
     this.enableHttpAndInsecureFailover = enableHttpAndInsecureFailover;
     this.sendAuthorizationOverHttp = sendAuthorizationOverHttp;
     this.logger = logger;
     this.secureHttpTransportFactory = secureHttpTransportFactory;
     this.insecureHttpTransportFactory = insecureHttpTransportFactory;
+    this.retryOnIoException = retryOnIoException;
   }
 
   /**
@@ -338,16 +332,13 @@ public class FailoverHttpClient {
                   @Override
                   public boolean handleIOException(HttpRequest request, boolean supportsRetry)
                       throws IOException {
-                    boolean result =
-                        enableRetries && super.handleIOException(request, supportsRetry);
                     String requestUrl = request.getRequestMethod() + " " + request.getUrl();
-                    if (result) { // google-http-client does not log that properly so let's
-                      // compensate it
+                    if (retryOnIoException && super.handleIOException(request, supportsRetry)) {
                       logger.accept(LogEvent.warn(requestUrl + " failed and will be retried"));
-                    } else {
-                      logger.accept(LogEvent.warn(requestUrl + " failed and will NOT be retried"));
+                      return true;
                     }
-                    return result;
+                    logger.accept(LogEvent.warn(requestUrl + " failed and will NOT be retried"));
+                    return false;
                   }
                 })
             .setUseRawRedirectUrls(true)
