@@ -31,6 +31,8 @@ public class ArtifactLayers {
   public static final String DEPENDENCIES = "dependencies";
   public static final String SNAPSHOT_DEPENDENCIES = "snapshot dependencies";
 
+  private ArtifactLayers() {}
+
   /**
    * Creates a layer containing contents of a directory. Only paths that match the given predicate
    * will be added.
