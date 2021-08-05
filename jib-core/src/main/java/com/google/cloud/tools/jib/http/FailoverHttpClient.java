@@ -348,4 +348,9 @@ public class FailoverHttpClient {
     String log = "Cannot verify server at " + url + ". Attempting again with no TLS verification.";
     logger.accept(LogEvent.warn(log));
   }
+
+  @VisibleForTesting
+  public Deque<HttpTransport> getTransportsCreated() {
+    return transportsCreated;
+  }
 }

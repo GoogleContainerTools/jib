@@ -162,8 +162,12 @@ public class WithServerFailoverHttpClientTest {
       ignored1.close();
       ignored2.close();
     } finally {
+
+      // Validate that calling shutdown() many times completes with no errors
+      Assert.assertEquals(2, httpClient.getTransportsCreated().size());
       httpClient.shutDown();
-      httpClient.shutDown(); // test should complete with no error
+      httpClient.shutDown();
+      Assert.assertEquals(0, httpClient.getTransportsCreated().size());
     }
   }
 
