@@ -37,6 +37,7 @@ import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.annotation.Nullable;
@@ -80,9 +81,10 @@ public class JsonToImageTranslator {
       imageBuilder.addLayer(new DigestOnlyLayer(digest));
     }
 
-    if (manifestTemplate.getContainerConfiguration().isPresent()) {
-      configureBuilderWithContainerConfiguration(
-          imageBuilder, manifestTemplate.getContainerConfiguration().get());
+    Optional<ContainerConfigurationTemplate> configurations =
+        manifestTemplate.getContainerConfiguration();
+    if (configurations.isPresent()) {
+      configureBuilderWithContainerConfiguration(imageBuilder, configurations.get());
     }
     return imageBuilder.build();
   }
