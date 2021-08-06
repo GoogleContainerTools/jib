@@ -320,7 +320,7 @@ class PullBaseImageStep implements Callable<ImagesAndRegistryClient> {
       Set<Platform> platforms = buildContext.getContainerConfiguration().getPlatforms();
       try (ProgressEventDispatcher progressDispatcher2 =
           childProgressDispatcherFactory.create(
-              "pulling platform-specific manifests and container configs", 2 * platforms.size())) {
+              "pulling platform-specific manifests and container configs", 2L * platforms.size())) {
         // If a manifest list, search for the manifests matching the given platforms.
         for (Platform platform : platforms) {
           String message = "Searching for architecture=%s, os=%s in the base image manifest list";
