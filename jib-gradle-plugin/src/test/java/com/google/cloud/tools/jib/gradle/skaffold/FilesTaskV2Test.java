@@ -16,6 +16,8 @@
 
 package com.google.cloud.tools.jib.gradle.skaffold;
 
+import static com.google.common.truth.Truth.assertThat;
+
 import com.google.cloud.tools.jib.gradle.JibPlugin;
 import com.google.cloud.tools.jib.gradle.TestProject;
 import com.google.cloud.tools.jib.plugins.common.SkaffoldFilesOutput;
@@ -99,7 +101,7 @@ public class FilesTaskV2Test {
             projectRoot.resolve("src/main/java"),
             projectRoot.resolve("src/main/custom-extra-dir")),
         result.getInputs());
-    Assert.assertEquals(0, result.getIgnore().size());
+    assertThat(result.getIgnore()).isEmpty();
   }
 
   @Test
@@ -117,7 +119,7 @@ public class FilesTaskV2Test {
         result.getBuild());
     assertPathListsAreEqual(
         ImmutableList.of(simpleServiceRoot.resolve("src/main/java")), result.getInputs());
-    Assert.assertEquals(0, result.getIgnore().size());
+    assertThat(result.getIgnore()).isEmpty();
   }
 
   @Test
@@ -146,7 +148,7 @@ public class FilesTaskV2Test {
             complexServiceRoot.resolve(
                 "local-m2-repo/com/google/cloud/tools/tiny-test-lib/0.0.1-SNAPSHOT/tiny-test-lib-0.0.1-SNAPSHOT.jar")),
         result.getInputs());
-    Assert.assertEquals(0, result.getIgnore().size());
+    assertThat(result.getIgnore()).isEmpty();
   }
 
   @Test
@@ -165,7 +167,7 @@ public class FilesTaskV2Test {
         result.getBuild());
     assertPathListsAreEqual(
         ImmutableList.of(serviceRoot.resolve("src/main/java")), result.getInputs());
-    Assert.assertEquals(0, result.getIgnore().size());
+    assertThat(result.getIgnore()).isEmpty();
   }
 
   @Test
