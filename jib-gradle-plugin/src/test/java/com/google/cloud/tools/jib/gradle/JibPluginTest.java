@@ -81,12 +81,13 @@ public class JibPluginTest {
         getClass().getClassLoader().getResourceAsStream("gradle/plugin-test/build.gradle");
     Files.copy(buildFileContent, buildFile);
 
-    GradleRunner.create()
-        .withProjectDir(testProjectRoot.getRoot())
-        .withPluginClasspath()
-        .withGradleVersion(JibPlugin.GRADLE_MIN_VERSION.getVersion())
-        .build();
-    // pass
+    BuildResult result =
+        GradleRunner.create()
+            .withProjectDir(testProjectRoot.getRoot())
+            .withPluginClasspath()
+            .withGradleVersion(JibPlugin.GRADLE_MIN_VERSION.getVersion())
+            .build();
+    assertThat(result).isNotNull();
   }
 
   @Test
