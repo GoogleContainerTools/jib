@@ -16,6 +16,8 @@
 
 package com.google.cloud.tools.jib.http;
 
+import static com.google.common.truth.Truth.assertThat;
+
 import com.google.cloud.tools.jib.api.LogEvent;
 import com.google.common.io.ByteStreams;
 import java.io.IOException;
@@ -164,10 +166,10 @@ public class WithServerFailoverHttpClientTest {
     } finally {
 
       // Validate that calling shutdown() many times completes with no errors
-      Assert.assertEquals(2, httpClient.getTransportsCreated().size());
+      assertThat(httpClient.getTransportsCreated()).hasSize(2);
       httpClient.shutDown();
       httpClient.shutDown();
-      Assert.assertEquals(0, httpClient.getTransportsCreated().size());
+      assertThat(httpClient.getTransportsCreated()).hasSize(0);
     }
   }
 
