@@ -115,7 +115,7 @@ public class ContainerConfigurationTemplate implements JsonTemplate {
     @Nullable private HealthCheckObjectTemplate Healthcheck;
 
     /** Network ports the container exposes. */
-    @Nullable private Map<String, Map<?, ?>> ExposedPorts;
+    @Nullable private Map<String, Map<String, String>> ExposedPorts;
 
     /** Labels. */
     @Nullable private Map<String, String> Labels;
@@ -127,7 +127,7 @@ public class ContainerConfigurationTemplate implements JsonTemplate {
     @Nullable private String User;
 
     /** Volumes. */
-    @Nullable private Map<String, Map<?, ?>> Volumes;
+    @Nullable private Map<String, Map<String, String>> Volumes;
   }
 
   /** Template for inner JSON object representing the healthcheck configuration. */
@@ -266,7 +266,7 @@ public class ContainerConfigurationTemplate implements JsonTemplate {
     Preconditions.checkNotNull(config.Healthcheck).Retries = retries;
   }
 
-  public void setContainerExposedPorts(@Nullable Map<String, Map<?, ?>> exposedPorts) {
+  public void setContainerExposedPorts(@Nullable Map<String, Map<String, String>> exposedPorts) {
     config.ExposedPorts = exposedPorts;
   }
 
@@ -282,7 +282,7 @@ public class ContainerConfigurationTemplate implements JsonTemplate {
     config.User = user;
   }
 
-  public void setContainerVolumes(@Nullable Map<String, Map<?, ?>> volumes) {
+  public void setContainerVolumes(@Nullable Map<String, Map<String, String>> volumes) {
     config.Volumes = volumes;
   }
 
@@ -370,7 +370,7 @@ public class ContainerConfigurationTemplate implements JsonTemplate {
   }
 
   @Nullable
-  Map<String, Map<?, ?>> getContainerExposedPorts() {
+  Map<String, Map<String, String>> getContainerExposedPorts() {
     return config.ExposedPorts;
   }
 
@@ -390,7 +390,7 @@ public class ContainerConfigurationTemplate implements JsonTemplate {
   }
 
   @Nullable
-  Map<String, Map<?, ?>> getContainerVolumes() {
+  Map<String, Map<String, String>> getContainerVolumes() {
     return config.Volumes;
   }
 

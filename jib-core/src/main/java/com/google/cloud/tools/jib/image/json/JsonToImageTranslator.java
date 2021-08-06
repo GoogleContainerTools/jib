@@ -225,13 +225,13 @@ public class JsonToImageTranslator {
    * @return a set of {@link Port}s
    */
   @VisibleForTesting
-  static ImmutableSet<Port> portMapToSet(@Nullable Map<String, Map<?, ?>> portMap)
+  static ImmutableSet<Port> portMapToSet(@Nullable Map<String, Map<String, String>> portMap)
       throws BadContainerConfigurationFormatException {
     if (portMap == null) {
       return ImmutableSet.of();
     }
     ImmutableSet.Builder<Port> ports = new ImmutableSet.Builder<>();
-    for (Map.Entry<String, Map<?, ?>> entry : portMap.entrySet()) {
+    for (Map.Entry<String, Map<String, String>> entry : portMap.entrySet()) {
       String port = entry.getKey();
       Matcher matcher = PORT_PATTERN.matcher(port);
       if (!matcher.matches()) {
@@ -254,7 +254,8 @@ public class JsonToImageTranslator {
    * @return a set of {@link AbsoluteUnixPath}s
    */
   @VisibleForTesting
-  static ImmutableSet<AbsoluteUnixPath> volumeMapToSet(@Nullable Map<String, Map<?, ?>> volumeMap)
+  static ImmutableSet<AbsoluteUnixPath> volumeMapToSet(
+      @Nullable Map<String, Map<String, String>> volumeMap)
       throws BadContainerConfigurationFormatException {
     if (volumeMap == null) {
       return ImmutableSet.of();

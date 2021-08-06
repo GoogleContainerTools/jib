@@ -48,7 +48,7 @@ public class ImageToJsonTranslator {
    */
   @VisibleForTesting
   @Nullable
-  static Map<String, Map<?, ?>> portSetToMap(@Nullable Set<Port> exposedPorts) {
+  static Map<String, Map<String, String>> portSetToMap(@Nullable Set<Port> exposedPorts) {
     return setToMap(exposedPorts, port -> port.getPort() + "/" + port.getProtocol());
   }
 
@@ -63,7 +63,7 @@ public class ImageToJsonTranslator {
    */
   @VisibleForTesting
   @Nullable
-  static Map<String, Map<?, ?>> volumesSetToMap(@Nullable Set<AbsoluteUnixPath> volumes) {
+  static Map<String, Map<String, String>> volumesSetToMap(@Nullable Set<AbsoluteUnixPath> volumes) {
     return setToMap(volumes, AbsoluteUnixPath::toString);
   }
 
@@ -105,7 +105,7 @@ public class ImageToJsonTranslator {
    * @return an map
    */
   @Nullable
-  private static <E> Map<String, Map<?, ?>> setToMap(
+  private static <E> Map<String, Map<String, String>> setToMap(
       @Nullable Set<E> set, Function<E, String> keyMapper) {
     if (set == null) {
       return null;
