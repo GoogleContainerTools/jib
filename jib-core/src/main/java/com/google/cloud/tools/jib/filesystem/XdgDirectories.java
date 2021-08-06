@@ -23,6 +23,7 @@ import java.nio.file.Paths;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
@@ -132,7 +133,7 @@ public class XdgDirectories {
       }
       Path localAppData = Paths.get(localAppDataEnv);
       if (!Files.exists(localAppData)) {
-        LOGGER.warning(localAppData + " does not exist");
+        LOGGER.log(Level.WARNING, "{} does not exist", localAppData);
         return xdgPath.resolve(windowsSubDirectory);
       }
       return localAppData.resolve(windowsSubDirectory);
@@ -146,7 +147,7 @@ public class XdgDirectories {
       // Use '~/Library/...' for macOS.
       Path macDirectory = Paths.get(userHome, "Library", macFolder);
       if (!Files.exists(macDirectory)) {
-        LOGGER.warning(macDirectory + " does not exist");
+        LOGGER.log(Level.WARNING, "{} does not exist", macDirectory);
         return xdgPath.resolve(JIB_SUBDIRECTORY_OTHER);
       }
       return macDirectory.resolve(JIB_SUBDIRECTORY_OTHER);
