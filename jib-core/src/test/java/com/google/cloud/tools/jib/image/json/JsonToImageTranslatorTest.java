@@ -110,7 +110,7 @@ public class JsonToImageTranslatorTest {
 
   @Test
   public void testPortMapToList() throws BadContainerConfigurationFormatException {
-    ImmutableSortedMap<String, Map<?, ?>> input =
+    ImmutableSortedMap<String, Map<String, String>> input =
         ImmutableSortedMap.of(
             "1000",
             ImmutableMap.of(),
@@ -121,13 +121,13 @@ public class JsonToImageTranslatorTest {
     ImmutableSet<Port> expected = ImmutableSet.of(Port.tcp(1000), Port.tcp(2000), Port.udp(3000));
     Assert.assertEquals(expected, JsonToImageTranslator.portMapToSet(input));
 
-    ImmutableList<Map<String, Map<?, ?>>> badInputs =
+    ImmutableList<Map<String, Map<String, String>>> badInputs =
         ImmutableList.of(
             ImmutableMap.of("abc", ImmutableMap.of()),
             ImmutableMap.of("1000-2000", ImmutableMap.of()),
             ImmutableMap.of("/udp", ImmutableMap.of()),
             ImmutableMap.of("123/xxx", ImmutableMap.of()));
-    for (Map<String, Map<?, ?>> badInput : badInputs) {
+    for (Map<String, Map<String, String>> badInput : badInputs) {
       try {
         JsonToImageTranslator.portMapToSet(badInput);
         Assert.fail();
@@ -139,7 +139,7 @@ public class JsonToImageTranslatorTest {
 
   @Test
   public void testVolumeMapToList() throws BadContainerConfigurationFormatException {
-    ImmutableSortedMap<String, Map<?, ?>> input =
+    ImmutableSortedMap<String, Map<String, String>> input =
         ImmutableSortedMap.of(
             "/var/job-result-data", ImmutableMap.of(), "/var/log/my-app-logs", ImmutableMap.of());
     ImmutableSet<AbsoluteUnixPath> expected =
@@ -148,12 +148,12 @@ public class JsonToImageTranslatorTest {
             AbsoluteUnixPath.get("/var/log/my-app-logs"));
     Assert.assertEquals(expected, JsonToImageTranslator.volumeMapToSet(input));
 
-    ImmutableList<Map<String, Map<?, ?>>> badInputs =
+    ImmutableList<Map<String, Map<String, String>>> badInputs =
         ImmutableList.of(
             ImmutableMap.of("var/job-result-data", ImmutableMap.of()),
             ImmutableMap.of("log", ImmutableMap.of()),
             ImmutableMap.of("C:/udp", ImmutableMap.of()));
-    for (Map<String, Map<?, ?>> badInput : badInputs) {
+    for (Map<String, Map<String, String>> badInput : badInputs) {
       try {
         JsonToImageTranslator.volumeMapToSet(badInput);
         Assert.fail();
