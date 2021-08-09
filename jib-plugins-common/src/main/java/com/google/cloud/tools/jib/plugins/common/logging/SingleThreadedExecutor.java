@@ -20,6 +20,8 @@ import java.time.Duration;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Executes methods on a single managed thread. Make sure to call {@link
@@ -29,6 +31,7 @@ import java.util.concurrent.TimeUnit;
  */
 public class SingleThreadedExecutor {
 
+  private static final Logger LOGGER = Logger.getLogger(SingleThreadedExecutor.class.getName());
   private final ExecutorService executorService = Executors.newSingleThreadExecutor();
 
   /**
@@ -44,7 +47,7 @@ public class SingleThreadedExecutor {
       if (!executorService.awaitTermination(timeout.getSeconds(), TimeUnit.SECONDS)) {
         executorService.shutdownNow();
         if (!executorService.awaitTermination(timeout.getSeconds(), TimeUnit.SECONDS)) {
-          System.err.println("Could not shut down SingleThreadedExecutor");
+          LOGGER.log(Level.SEVERE, "Could not shut down SingleThreadedExecutor");
         }
       }
 

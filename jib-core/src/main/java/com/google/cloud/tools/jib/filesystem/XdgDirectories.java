@@ -132,7 +132,7 @@ public class XdgDirectories {
       }
       Path localAppData = Paths.get(localAppDataEnv);
       if (!Files.exists(localAppData)) {
-        LOGGER.warning(localAppData + " does not exist");
+        LOGGER.warning(() -> localAppData + " does not exist");
         return xdgPath.resolve(windowsSubDirectory);
       }
       return localAppData.resolve(windowsSubDirectory);
@@ -146,7 +146,7 @@ public class XdgDirectories {
       // Use '~/Library/...' for macOS.
       Path macDirectory = Paths.get(userHome, "Library", macFolder);
       if (!Files.exists(macDirectory)) {
-        LOGGER.warning(macDirectory + " does not exist");
+        LOGGER.warning(() -> macDirectory + " does not exist");
         return xdgPath.resolve(JIB_SUBDIRECTORY_OTHER);
       }
       return macDirectory.resolve(JIB_SUBDIRECTORY_OTHER);
