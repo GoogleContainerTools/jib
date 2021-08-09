@@ -73,7 +73,8 @@ public class CacheStorageWriterTest {
           try (GZIPOutputStream compressorStream = new GZIPOutputStream(outputStream)) {
             blob.writeTo(compressorStream);
           }
-        });
+        },
+        false);
   }
 
   private static Blob decompress(Blob blob) throws IOException {
