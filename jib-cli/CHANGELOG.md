@@ -5,6 +5,8 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- Now also supports `username` and `password` properties for the `auths` section in a Docker config (`~/.docker/config.json`). (Previously, only supported was a base64-encoded username and password string of the `auth` property.) ([#3365](https://github.com/GoogleContainerTools/jib/pull/3365))
+
 ### Changed
 
 - Upgraded Google HTTP libraries to 1.39.2. ([#3387](https://github.com/GoogleContainerTools/jib/pull/3387))
