@@ -19,6 +19,7 @@ package com.google.cloud.tools.jib.http;
 import com.google.api.client.http.GenericUrl;
 import com.google.api.client.http.HttpBackOffIOExceptionHandler;
 import com.google.api.client.http.HttpHeaders;
+import com.google.api.client.http.HttpIOExceptionHandler;
 import com.google.api.client.http.HttpMethods;
 import com.google.api.client.http.HttpRequest;
 import com.google.api.client.http.HttpResponseException;
@@ -327,20 +328,7 @@ public class FailoverHttpClient {
         httpTransport
             .createRequestFactory()
             .buildRequest(httpMethod, new GenericUrl(url), request.getHttpContent())
-            .setIOExceptionHandler(
-                new HttpBackOffIOExceptionHandler(new ExponentialBackOff()) {
-                  @Override
-                  public boolean handleIOException(HttpRequest request, boolean supportsRetry)
-                      throws IOException {
-                    String requestUrl = request.getRequestMethod() + " " + request.getUrl();
-                    if (retryOnIoException && super.handleIOException(request, supportsRetry)) {
-                      logger.accept(LogEvent.warn(requestUrl + " failed and will be retried"));
-                      return true;
-                    }
-                    logger.accept(LogEvent.warn(requestUrl + " failed and will NOT be retried"));
-                    return false;
-                  }
-                })
+            .setIOExceptionHandler(createBackOffRetryHandler())
             .setUseRawRedirectUrls(true)
             .setHeaders(requestHeaders);
     if (request.getHttpTimeout() != null) {
@@ -357,6 +345,22 @@ public class FailoverHttpClient {
     } catch (HttpResponseException ex) {
       throw new ResponseException(ex, clearAuthorization);
     }
+  }
+
+  private HttpIOExceptionHandler createBackOffRetryHandler() {
+    return new HttpBackOffIOExceptionHandler(new ExponentialBackOff()) {
+      @Override
+      public boolean handleIOException(HttpRequest request, boolean supportsRetry)
+          throws IOException {
+        String requestUrl = request.getRequestMethod() + " " + request.getUrl();
+        if (retryOnIoException && super.handleIOException(request, supportsRetry)) {
+          logger.accept(LogEvent.warn(requestUrl + " failed and will be retried"));
+          return true;
+        }
+        logger.accept(LogEvent.warn(requestUrl + " failed and will NOT be retried"));
+        return false;
+      }
+    };
   }
 
   private HttpTransport getHttpTransport(boolean secureTransport) {
