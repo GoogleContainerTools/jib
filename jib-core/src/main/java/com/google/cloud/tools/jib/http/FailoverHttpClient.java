@@ -19,6 +19,7 @@ package com.google.cloud.tools.jib.http;
 import com.google.api.client.http.GenericUrl;
 import com.google.api.client.http.HttpBackOffIOExceptionHandler;
 import com.google.api.client.http.HttpHeaders;
+import com.google.api.client.http.HttpIOExceptionHandler;
 import com.google.api.client.http.HttpMethods;
 import com.google.api.client.http.HttpRequest;
 import com.google.api.client.http.HttpResponseException;
@@ -122,12 +123,12 @@ public class FailoverHttpClient {
     }
   }
 
-  private final boolean enableRetries;
   private final boolean enableHttpAndInsecureFailover;
   private final boolean sendAuthorizationOverHttp;
   private final Consumer<LogEvent> logger;
   private final Supplier<HttpTransport> secureHttpTransportFactory;
   private final Supplier<HttpTransport> insecureHttpTransportFactory;
+  private final boolean retryOnIoException;
 
   private final ConcurrentHashMap<String, Failover> failoverHistory = new ConcurrentHashMap<>();
 
@@ -145,44 +146,38 @@ public class FailoverHttpClient {
       boolean enableHttpAndInsecureFailover,
       boolean sendAuthorizationOverHttp,
       Consumer<LogEvent> logger) {
-    this(
-        true,
-        enableHttpAndInsecureFailover,
-        sendAuthorizationOverHttp,
-        logger,
-        FailoverHttpClient::getSecureHttpTransport,
-        FailoverHttpClient::getInsecureHttpTransport);
+    this(enableHttpAndInsecureFailover, sendAuthorizationOverHttp, logger, true);
   }
 
   @VisibleForTesting
   FailoverHttpClient(
-      boolean enableRetries,
       boolean enableHttpAndInsecureFailover,
       boolean sendAuthorizationOverHttp,
-      Consumer<LogEvent> logger) {
+      Consumer<LogEvent> logger,
+      boolean retryOnIoException) {
     this(
-        enableRetries,
         enableHttpAndInsecureFailover,
         sendAuthorizationOverHttp,
         logger,
         FailoverHttpClient::getSecureHttpTransport,
-        FailoverHttpClient::getInsecureHttpTransport);
+        FailoverHttpClient::getInsecureHttpTransport,
+        retryOnIoException);
   }
 
   @VisibleForTesting
   FailoverHttpClient(
-      boolean enableRetries,
       boolean enableHttpAndInsecureFailover,
       boolean sendAuthorizationOverHttp,
       Consumer<LogEvent> logger,
       Supplier<HttpTransport> secureHttpTransportFactory,
-      Supplier<HttpTransport> insecureHttpTransportFactory) {
-    this.enableRetries = enableRetries;
+      Supplier<HttpTransport> insecureHttpTransportFactory,
+      boolean retryOnIoException) {
     this.enableHttpAndInsecureFailover = enableHttpAndInsecureFailover;
     this.sendAuthorizationOverHttp = sendAuthorizationOverHttp;
     this.logger = logger;
     this.secureHttpTransportFactory = secureHttpTransportFactory;
     this.insecureHttpTransportFactory = insecureHttpTransportFactory;
+    this.retryOnIoException = retryOnIoException;
   }
 
   /**
@@ -333,23 +328,7 @@ public class FailoverHttpClient {
         httpTransport
             .createRequestFactory()
             .buildRequest(httpMethod, new GenericUrl(url), request.getHttpContent())
-            .setIOExceptionHandler(
-                new HttpBackOffIOExceptionHandler(new ExponentialBackOff()) {
-                  @Override
-                  public boolean handleIOException(HttpRequest request, boolean supportsRetry)
-                      throws IOException {
-                    boolean result =
-                        enableRetries && super.handleIOException(request, supportsRetry);
-                    String requestUrl = request.getRequestMethod() + " " + request.getUrl();
-                    if (result) { // google-http-client does not log that properly so let's
-                      // compensate it
-                      logger.accept(LogEvent.warn(requestUrl + " failed and will be retried"));
-                    } else {
-                      logger.accept(LogEvent.warn(requestUrl + " failed and will NOT be retried"));
-                    }
-                    return result;
-                  }
-                })
+            .setIOExceptionHandler(createBackOffRetryHandler())
             .setUseRawRedirectUrls(true)
             .setHeaders(requestHeaders);
     if (request.getHttpTimeout() != null) {
@@ -366,6 +345,22 @@ public class FailoverHttpClient {
     } catch (HttpResponseException ex) {
       throw new ResponseException(ex, clearAuthorization);
     }
+  }
+
+  private HttpIOExceptionHandler createBackOffRetryHandler() {
+    return new HttpBackOffIOExceptionHandler(new ExponentialBackOff()) {
+      @Override
+      public boolean handleIOException(HttpRequest request, boolean supportsRetry)
+          throws IOException {
+        String requestUrl = request.getRequestMethod() + " " + request.getUrl();
+        if (retryOnIoException && super.handleIOException(request, supportsRetry)) {
+          logger.accept(LogEvent.warn(requestUrl + " failed and will be retried"));
+          return true;
+        }
+        logger.accept(LogEvent.warn(requestUrl + " failed and will NOT be retried"));
+        return false;
+      }
+    };
   }
 
   private HttpTransport getHttpTransport(boolean secureTransport) {

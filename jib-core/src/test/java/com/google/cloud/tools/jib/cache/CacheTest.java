@@ -58,7 +58,8 @@ public class CacheTest {
           try (GZIPOutputStream compressorStream = new GZIPOutputStream(outputStream)) {
             blob.writeTo(compressorStream);
           }
-        });
+        },
+        false);
   }
 
   /**
