@@ -39,7 +39,7 @@ import javax.annotation.Nullable;
  * excludes:
  *   - **\/goose.txt
  *   - **\/moose.txt
- * properties: see {@link FilePropertiesSpec}
+ * properties: see }{@link FilePropertiesSpec}{@code
  * }</pre>
  */
 public class CopySpec {

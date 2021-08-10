@@ -247,8 +247,8 @@ public class JsonToImageTranslator {
   }
 
   /**
-   * Converts a map of volumes strings to a set of {@link AbsoluteUnixPath}s (e.g. {@code {@code
-   * {"/var/log/my-app-logs":{}}} -> AbsoluteUnixPath().get("/var/log/my-app-logs")}).
+   * Converts a map of volumes strings to a set of {@link AbsoluteUnixPath}s (e.g. {@code
+   * {"/var/log/my-app-logs":{}}} -> {@code AbsoluteUnixPath().get("/var/log/my-app-logs")}).
    *
    * @param volumeMap the map to convert
    * @return a set of {@link AbsoluteUnixPath}s

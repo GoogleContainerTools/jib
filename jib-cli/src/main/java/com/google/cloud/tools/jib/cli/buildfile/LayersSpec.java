@@ -28,10 +28,10 @@ import javax.annotation.Nullable;
  * <p>Example use of this yaml snippet.
  *
  * <pre>{@code
- * properties: see {@link FilePropertiesSpec}
+ * properties: see }{@link FilePropertiesSpec}{@code
  * entries:
- *   - see {@link LayerSpec}
- *   - see {@link LayerSpec}
+ *   - see }{@link LayerSpec}{@code
+ *   - see }{@link LayerSpec}{@code
  * }</pre>
  */
 public class LayersSpec {

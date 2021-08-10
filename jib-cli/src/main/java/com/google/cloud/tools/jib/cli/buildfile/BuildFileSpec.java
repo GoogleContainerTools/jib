@@ -42,7 +42,7 @@ import javax.annotation.Nullable;
  * <pre>{@code
  * apiVersion: v1alpha1
  * kind: BuildFile
- * from: see {@link BaseImageSpec}
+ * from: see }{@link BaseImageSpec}{@code
  * creationTime: 100
  * format: docker
  * environment:
@@ -60,7 +60,7 @@ import javax.annotation.Nullable;
  *   - -jar
  * cmd:
  *   - myjar.jar
- * layers: see {@link LayersSpec}
+ * layers: see }{@link LayersSpec}{@code
  * }</pre>
  */
 public class BuildFileSpec {
