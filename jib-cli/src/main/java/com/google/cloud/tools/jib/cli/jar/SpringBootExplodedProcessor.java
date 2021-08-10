@@ -42,10 +42,11 @@ import java.util.zip.ZipEntry;
 
 public class SpringBootExplodedProcessor implements ArtifactProcessor {
 
+  private static final String BOOT_INF = "BOOT-INF";
+  
   private final Path jarPath;
   private final Path targetExplodedJarRoot;
   private final Integer jarJavaVersion;
-  private static final String BOOT_INF = "BOOT-INF";
 
   /**
    * Constructor for {@link SpringBootExplodedProcessor}.
@@ -70,7 +71,7 @@ public class SpringBootExplodedProcessor implements ArtifactProcessor {
 
     try (JarFile jarFile = new JarFile(jarPath.toFile())) {
       ZipUtil.unzip(jarPath, targetExplodedJarRoot, true);
-      ZipEntry layerIndex = jarFile.getEntry(BOOT_INF + "/" + "layers.idx");
+      ZipEntry layerIndex = jarFile.getEntry(BOOT_INF + "/layers.idx");
       if (layerIndex != null) {
         return createLayersForLayeredSpringBootJar(targetExplodedJarRoot);
       }
