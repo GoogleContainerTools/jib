@@ -598,8 +598,8 @@ public class JavaContainerBuilder {
             LayerType.DEPENDENCIES, addedDependencies,
             LayerType.SNAPSHOT_DEPENDENCIES, addedSnapshotDependencies,
             LayerType.PROJECT_DEPENDENCIES, addedProjectDependencies);
-    for (LayerType layerType : layerMap.keySet()) {
-      for (Path file : Preconditions.checkNotNull(layerMap.get(layerType))) {
+    for (Map.Entry<LayerType, List<Path>> entry : layerMap.entrySet()) {
+      for (Path file : Preconditions.checkNotNull(entry.getValue())) {
         // Handle duplicates by appending filesize to the end of the file. This renaming logic
         // must be in sync with the code that does the same in the other place. See
         // https://github.com/GoogleContainerTools/jib/issues/3331
@@ -610,7 +610,7 @@ public class JavaContainerBuilder {
         // Add dependencies to layer configuration
         addFileToLayer(
             layerBuilders,
-            layerType,
+            entry.getKey(),
             file,
             appRoot.resolve(dependenciesDestination).resolve(jarName));
       }
@@ -696,6 +696,7 @@ public class JavaContainerBuilder {
     if (!layerBuilders.containsKey(layerType)) {
       layerBuilders.put(layerType, FileEntriesLayer.builder());
     }
+    //    layerBuilders.computeIfAbsent(layerType, x -> FileEntriesLayer.builder());
     Instant modificationTime = modificationTimeProvider.get(sourceFile, pathInContainer);
     layerBuilders.get(layerType).addEntry(sourceFile, pathInContainer, modificationTime);
   }
@@ -710,6 +711,7 @@ public class JavaContainerBuilder {
     if (!layerBuilders.containsKey(layerType)) {
       layerBuilders.put(layerType, FileEntriesLayer.builder());
     }
+    //    layerBuilders.computeIfAbsent(layerType, x -> FileEntriesLayer.builder());
     FileEntriesLayer.Builder builder = layerBuilders.get(layerType);
 
     new DirectoryWalker(sourceRoot)
