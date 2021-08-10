@@ -479,7 +479,7 @@ public class ContainerBuildPlan {
     return cmd == null ? null : new ArrayList<>(cmd);
   }
 
-  public List<? extends LayerObject> getLayers() {
+  public List<LayerObject> getLayers() {
     return new ArrayList<>(layers);
   }
 
