@@ -43,7 +43,7 @@ import java.util.zip.ZipEntry;
 public class SpringBootExplodedProcessor implements ArtifactProcessor {
 
   private static final String BOOT_INF = "BOOT-INF";
-  
+
   private final Path jarPath;
   private final Path targetExplodedJarRoot;
   private final Integer jarJavaVersion;
