@@ -45,6 +45,7 @@ public class SpringBootExplodedProcessor implements ArtifactProcessor {
   private final Path jarPath;
   private final Path targetExplodedJarRoot;
   private final Integer jarJavaVersion;
+  private static final String BOOT_INF = "BOOT-INF";
 
   /**
    * Constructor for {@link SpringBootExplodedProcessor}.
@@ -69,7 +70,7 @@ public class SpringBootExplodedProcessor implements ArtifactProcessor {
 
     try (JarFile jarFile = new JarFile(jarPath.toFile())) {
       ZipUtil.unzip(jarPath, targetExplodedJarRoot, true);
-      ZipEntry layerIndex = jarFile.getEntry("BOOT-INF/layers.idx");
+      ZipEntry layerIndex = jarFile.getEntry(BOOT_INF + "/" + "layers.idx");
       if (layerIndex != null) {
         return createLayersForLayeredSpringBootJar(targetExplodedJarRoot);
       }
@@ -78,7 +79,7 @@ public class SpringBootExplodedProcessor implements ArtifactProcessor {
 
       // Non-snapshot layer
       Predicate<Path> isInBootInfLib =
-          path -> path.startsWith(targetExplodedJarRoot.resolve("BOOT-INF").resolve("lib"));
+          path -> path.startsWith(targetExplodedJarRoot.resolve(BOOT_INF).resolve("lib"));
       Predicate<Path> isSnapshot = path -> path.getFileName().toString().contains("SNAPSHOT");
       Predicate<Path> isInBootInfLibAndIsNotSnapshot = isInBootInfLib.and(isSnapshot.negate());
       Predicate<Path> nonSnapshotPredicate = isFile.and(isInBootInfLibAndIsNotSnapshot);
@@ -109,7 +110,7 @@ public class SpringBootExplodedProcessor implements ArtifactProcessor {
       // Classes layer.
       Predicate<Path> isClass = path -> path.getFileName().toString().endsWith(".class");
       Predicate<Path> isInBootInfClasses =
-          path -> path.startsWith(targetExplodedJarRoot.resolve("BOOT-INF").resolve("classes"));
+          path -> path.startsWith(targetExplodedJarRoot.resolve(BOOT_INF).resolve("classes"));
       Predicate<Path> classesPredicate = isInBootInfClasses.and(isClass);
       FileEntriesLayer classesLayer =
           ArtifactLayers.getDirectoryContentsAsLayer(
@@ -158,7 +159,7 @@ public class SpringBootExplodedProcessor implements ArtifactProcessor {
    */
   private static List<FileEntriesLayer> createLayersForLayeredSpringBootJar(
       Path localExplodedJarRoot) throws IOException {
-    Path layerIndexPath = localExplodedJarRoot.resolve("BOOT-INF").resolve("layers.idx");
+    Path layerIndexPath = localExplodedJarRoot.resolve(BOOT_INF).resolve("layers.idx");
     Pattern layerNamePattern = Pattern.compile("- \"(.*)\":");
     Pattern layerEntryPattern = Pattern.compile("  - \"(.*)\"");
     Map<String, List<String>> layersMap = new LinkedHashMap<>();
