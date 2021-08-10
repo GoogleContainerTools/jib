@@ -41,7 +41,7 @@ class Timer implements TimerEvent.Timer {
   }
 
   @Override
-  public Optional<? extends Timer> getParent() {
+  public Optional<TimerEvent.Timer> getParent() {
     return Optional.ofNullable(parentTimer);
   }
 

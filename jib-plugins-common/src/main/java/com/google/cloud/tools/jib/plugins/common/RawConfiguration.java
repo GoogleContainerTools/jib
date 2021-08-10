@@ -69,7 +69,7 @@ public interface RawConfiguration {
 
   Optional<String> getToCredHelper();
 
-  List<? extends PlatformConfiguration> getPlatforms();
+  List<PlatformConfiguration> getPlatforms();
 
   Set<String> getToTags();
 
@@ -109,7 +109,7 @@ public interface RawConfiguration {
 
   String getCreationTime();
 
-  List<? extends ExtraDirectoriesConfiguration> getExtraDirectories();
+  List<ExtraDirectoriesConfiguration> getExtraDirectories();
 
   Map<String, FilePermissions> getExtraDirectoryPermissions();
 
@@ -127,5 +127,5 @@ public interface RawConfiguration {
 
   Path getImageJsonOutputPath();
 
-  List<? extends ExtensionConfiguration> getPluginExtensions();
+  List<ExtensionConfiguration> getPluginExtensions();
 }

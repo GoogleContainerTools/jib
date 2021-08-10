@@ -166,8 +166,10 @@ public class MavenRawConfiguration implements RawConfiguration {
   }
 
   @Override
-  public List<? extends ExtraDirectoriesConfiguration> getExtraDirectories() {
-    return MojoCommon.getExtraDirectories(jibPluginConfiguration);
+  public List<ExtraDirectoriesConfiguration> getExtraDirectories() {
+    return (List<ExtraDirectoriesConfiguration>)
+        (List<? extends ExtraDirectoriesConfiguration>)
+            MojoCommon.getExtraDirectories(jibPluginConfiguration);
   }
 
   @Override
@@ -211,12 +213,14 @@ public class MavenRawConfiguration implements RawConfiguration {
   }
 
   @Override
-  public List<? extends ExtensionConfiguration> getPluginExtensions() {
-    return jibPluginConfiguration.getPluginExtensions();
+  public List<ExtensionConfiguration> getPluginExtensions() {
+    return (List<ExtensionConfiguration>)
+        (List<? extends ExtensionConfiguration>) jibPluginConfiguration.getPluginExtensions();
   }
 
   @Override
-  public List<? extends PlatformConfiguration> getPlatforms() {
-    return jibPluginConfiguration.getPlatforms();
+  public List<PlatformConfiguration> getPlatforms() {
+    return (List<PlatformConfiguration>)
+        (List<? extends PlatformConfiguration>) jibPluginConfiguration.getPlatforms();
   }
 }

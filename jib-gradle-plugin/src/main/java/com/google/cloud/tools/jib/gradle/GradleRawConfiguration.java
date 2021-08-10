@@ -162,14 +162,16 @@ public class GradleRawConfiguration implements RawConfiguration {
   }
 
   @Override
-  public List<? extends ExtraDirectoriesConfiguration> getExtraDirectories() {
+  public List<ExtraDirectoriesConfiguration> getExtraDirectories() {
     for (ExtraDirectoryParameters path : jibExtension.getExtraDirectories().getPaths()) {
       if (path.getFrom().equals(Paths.get(""))) {
         throw new IllegalArgumentException(
             "Incomplete extraDirectories.paths configuration; source directory must be set");
       }
     }
-    return jibExtension.getExtraDirectories().getPaths();
+    return (List<ExtraDirectoriesConfiguration>)
+        (List<? extends ExtraDirectoriesConfiguration>)
+            jibExtension.getExtraDirectories().getPaths();
   }
 
   @Override
@@ -213,12 +215,14 @@ public class GradleRawConfiguration implements RawConfiguration {
   }
 
   @Override
-  public List<? extends ExtensionConfiguration> getPluginExtensions() {
-    return jibExtension.getPluginExtensions().get();
+  public List<ExtensionConfiguration> getPluginExtensions() {
+    return (List<ExtensionConfiguration>)
+        (List<? extends ExtensionConfiguration>) jibExtension.getPluginExtensions().get();
   }
 
   @Override
-  public List<? extends PlatformConfiguration> getPlatforms() {
-    return jibExtension.getFrom().getPlatforms().get();
+  public List<PlatformConfiguration> getPlatforms() {
+    return (List<PlatformConfiguration>)
+        (List<? extends PlatformConfiguration>) jibExtension.getFrom().getPlatforms().get();
   }
 }

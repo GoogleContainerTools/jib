@@ -58,7 +58,7 @@ public class TimerEvent implements JibEvent {
      *
      * @return the parent of this {@link Timer}
      */
-    Optional<? extends Timer> getParent();
+    Optional<Timer> getParent();
   }
 
   private final State state;
