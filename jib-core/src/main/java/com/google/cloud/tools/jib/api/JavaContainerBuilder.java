@@ -696,7 +696,6 @@ public class JavaContainerBuilder {
     if (!layerBuilders.containsKey(layerType)) {
       layerBuilders.put(layerType, FileEntriesLayer.builder());
     }
-    //    layerBuilders.computeIfAbsent(layerType, x -> FileEntriesLayer.builder());
     Instant modificationTime = modificationTimeProvider.get(sourceFile, pathInContainer);
     layerBuilders.get(layerType).addEntry(sourceFile, pathInContainer, modificationTime);
   }
@@ -711,7 +710,6 @@ public class JavaContainerBuilder {
     if (!layerBuilders.containsKey(layerType)) {
       layerBuilders.put(layerType, FileEntriesLayer.builder());
     }
-    //    layerBuilders.computeIfAbsent(layerType, x -> FileEntriesLayer.builder());
     FileEntriesLayer.Builder builder = layerBuilders.get(layerType);
 
     new DirectoryWalker(sourceRoot)
