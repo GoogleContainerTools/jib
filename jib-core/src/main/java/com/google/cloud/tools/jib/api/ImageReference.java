@@ -38,6 +38,7 @@ public class ImageReference {
   private static final String DOCKER_HUB_REGISTRY = "registry-1.docker.io";
   private static final String DEFAULT_TAG = "latest";
   private static final String LIBRARY_REPOSITORY_PREFIX = "library/";
+  private static final String SCRATCH = "scratch";
 
   /**
    * Matches all sequences of alphanumeric characters possibly separated by any number of dashes in
@@ -94,7 +95,7 @@ public class ImageReference {
    * @throws InvalidImageReferenceException if {@code reference} is formatted incorrectly
    */
   public static ImageReference parse(String reference) throws InvalidImageReferenceException {
-    if (reference.equals("scratch")) {
+    if (reference.equals(SCRATCH)) {
       return ImageReference.scratch();
     }
 
@@ -204,7 +205,7 @@ public class ImageReference {
    *     to "scratch"
    */
   public static ImageReference scratch() {
-    return new ImageReference("", "scratch", null, null);
+    return new ImageReference("", SCRATCH, null, null);
   }
 
   /**
@@ -270,9 +271,7 @@ public class ImageReference {
   private ImageReference(
       String registry, String repository, @Nullable String tag, @Nullable String digest) {
     Preconditions.checkArgument(
-        "scratch".equals(repository)
-            || !Strings.isNullOrEmpty(tag)
-            || !Strings.isNullOrEmpty(digest),
+        SCRATCH.equals(repository) || !Strings.isNullOrEmpty(tag) || !Strings.isNullOrEmpty(digest),
         "Either tag or digest needs to be set.");
     this.registry = RegistryAliasGroup.getHost(registry);
     this.repository = repository;
@@ -345,7 +344,7 @@ public class ImageReference {
    */
   public boolean isScratch() {
     return "".equals(registry)
-        && "scratch".equals(repository)
+        && SCRATCH.equals(repository)
         && Strings.isNullOrEmpty(tag)
         && Strings.isNullOrEmpty(digest);
   }
@@ -395,7 +394,7 @@ public class ImageReference {
    */
   private String toString(boolean singleQualifier) {
     if (isScratch()) {
-      return "scratch";
+      return SCRATCH;
     }
 
     StringBuilder referenceString = new StringBuilder();

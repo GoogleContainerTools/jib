@@ -42,6 +42,8 @@ import java.util.function.Predicate;
 /** Helper for constructing {@link JavaContainerBuilder}-based {@link JibContainerBuilder}s. */
 public class JavaContainerBuilderHelper {
 
+  private static final String GLOB_PREFIX = "glob:";
+
   /**
    * Returns a {@link FileEntriesLayer} for adding the extra directory to the container.
    *
@@ -67,21 +69,21 @@ public class JavaContainerBuilderHelper {
     Map<PathMatcher, FilePermissions> permissionsPathMatchers = new LinkedHashMap<>();
     for (Map.Entry<String, FilePermissions> entry : extraDirectoryPermissions.entrySet()) {
       permissionsPathMatchers.put(
-          FileSystems.getDefault().getPathMatcher("glob:" + entry.getKey()), entry.getValue());
+          FileSystems.getDefault().getPathMatcher(GLOB_PREFIX + entry.getKey()), entry.getValue());
     }
 
     DirectoryWalker walker = new DirectoryWalker(sourceDirectory).filterRoot();
     // add exclusion filters
     excludes
         .stream()
-        .map(pattern -> FileSystems.getDefault().getPathMatcher("glob:" + pattern))
+        .map(pattern -> FileSystems.getDefault().getPathMatcher(GLOB_PREFIX + pattern))
         .forEach(
             pathMatcher ->
                 walker.filter(path -> !pathMatcher.matches(sourceDirectory.relativize(path))));
     // add an inclusion filter
     includes
         .stream()
-        .map(pattern -> FileSystems.getDefault().getPathMatcher("glob:" + pattern))
+        .map(pattern -> FileSystems.getDefault().getPathMatcher(GLOB_PREFIX + pattern))
         .map(
             pathMatcher ->
                 (Predicate<Path>) path -> pathMatcher.matches(sourceDirectory.relativize(path)))

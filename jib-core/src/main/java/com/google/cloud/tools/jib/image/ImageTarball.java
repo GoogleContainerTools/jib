@@ -49,6 +49,8 @@ public class ImageTarball {
   /** Time that entry is set in the tar. */
   private static final Instant TAR_ENTRY_MODIFICATION_TIME = Instant.EPOCH;
 
+  private static final String BLOB_PREFIX = "blobs/sha256/";
+
   private final Image image;
   private final ImageReference imageReference;
   private final ImmutableSet<String> allTargetImageTags;
@@ -93,7 +95,7 @@ public class ImageTarball {
       long size = layer.getBlobDescriptor().getSize();
 
       tarStreamBuilder.addBlobEntry(
-          layer.getBlob(), size, "blobs/sha256/" + digest.getHash(), TAR_ENTRY_MODIFICATION_TIME);
+          layer.getBlob(), size, BLOB_PREFIX + digest.getHash(), TAR_ENTRY_MODIFICATION_TIME);
       manifest.addLayer(size, digest);
     }
 
@@ -104,14 +106,14 @@ public class ImageTarball {
     manifest.setContainerConfiguration(configDescriptor.getSize(), configDescriptor.getDigest());
     tarStreamBuilder.addByteEntry(
         JsonTemplateMapper.toByteArray(containerConfiguration),
-        "blobs/sha256/" + configDescriptor.getDigest().getHash(),
+        BLOB_PREFIX + configDescriptor.getDigest().getHash(),
         TAR_ENTRY_MODIFICATION_TIME);
 
     // Adds the manifest to the tarball
     BlobDescriptor manifestDescriptor = Digests.computeDigest(manifest);
     tarStreamBuilder.addByteEntry(
         JsonTemplateMapper.toByteArray(manifest),
-        "blobs/sha256/" + manifestDescriptor.getDigest().getHash(),
+        BLOB_PREFIX + manifestDescriptor.getDigest().getHash(),
         TAR_ENTRY_MODIFICATION_TIME);
 
     // Adds the oci-layout and index.json
