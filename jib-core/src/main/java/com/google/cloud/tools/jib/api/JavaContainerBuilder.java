@@ -598,8 +598,8 @@ public class JavaContainerBuilder {
             LayerType.DEPENDENCIES, addedDependencies,
             LayerType.SNAPSHOT_DEPENDENCIES, addedSnapshotDependencies,
             LayerType.PROJECT_DEPENDENCIES, addedProjectDependencies);
-    for (LayerType layerType : layerMap.keySet()) {
-      for (Path file : Preconditions.checkNotNull(layerMap.get(layerType))) {
+    for (Map.Entry<LayerType, List<Path>> entry : layerMap.entrySet()) {
+      for (Path file : Preconditions.checkNotNull(entry.getValue())) {
         // Handle duplicates by appending filesize to the end of the file. This renaming logic
         // must be in sync with the code that does the same in the other place. See
         // https://github.com/GoogleContainerTools/jib/issues/3331
@@ -610,7 +610,7 @@ public class JavaContainerBuilder {
         // Add dependencies to layer configuration
         addFileToLayer(
             layerBuilders,
-            layerType,
+            entry.getKey(),
             file,
             appRoot.resolve(dependenciesDestination).resolve(jarName));
       }
