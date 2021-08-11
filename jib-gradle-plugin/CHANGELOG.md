@@ -5,14 +5,20 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+### Changed
+
+### Fixed
+
+## 3.1.3
+
+### Added
+
 - Increased robustness in registry communications by retrying HTTP requests (to the effect of retrying image pushes or pulls) on I/O exceptions with exponential backoffs. ([#3351](https://github.com/GoogleContainerTools/jib/pull/3351))
 - Now also supports `username` and `password` properties for the `auths` section in a Docker config (`~/.docker/config.json`). (Previously, only supported was a base64-encoded username and password string of the `auth` property.) ([#3365](https://github.com/GoogleContainerTools/jib/pull/3365))
 
 ### Changed
 
 - Upgraded Google HTTP libraries to 1.39.2. ([#3387](https://github.com/GoogleContainerTools/jib/pull/3387))
-
-### Fixed
 
 ## 3.1.2
 
