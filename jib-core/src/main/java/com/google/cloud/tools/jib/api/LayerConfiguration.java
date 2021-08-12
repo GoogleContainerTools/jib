@@ -42,7 +42,7 @@ public class LayerConfiguration {
   /** Builds a {@link LayerConfiguration}. */
   public static class Builder {
 
-    private FileEntriesLayer.Builder builder = FileEntriesLayer.builder();
+    private FileEntriesLayer.Builder layerBuilder = FileEntriesLayer.builder();
 
     private Builder() {}
 
@@ -53,7 +53,7 @@ public class LayerConfiguration {
      * @return this
      */
     public Builder setName(String name) {
-      builder.setName(name);
+      layerBuilder.setName(name);
       return this;
     }
 
@@ -64,7 +64,7 @@ public class LayerConfiguration {
      * @return this
      */
     public Builder setEntries(List<LayerEntry> entries) {
-      builder.setEntries(
+      layerBuilder.setEntries(
           entries.stream().map(LayerEntry::toFileEntry).collect(Collectors.toList()));
       return this;
     }
@@ -76,7 +76,7 @@ public class LayerConfiguration {
      * @return this
      */
     public Builder addEntry(LayerEntry entry) {
-      builder.addEntry(entry.toFileEntry());
+      layerBuilder.addEntry(entry.toFileEntry());
       return this;
     }
 
@@ -99,7 +99,7 @@ public class LayerConfiguration {
      * @return this
      */
     public Builder addEntry(Path sourceFile, AbsoluteUnixPath pathInContainer) {
-      builder.addEntry(sourceFile, pathInContainer);
+      layerBuilder.addEntry(sourceFile, pathInContainer);
       return this;
     }
 
@@ -119,7 +119,7 @@ public class LayerConfiguration {
      */
     public Builder addEntry(
         Path sourceFile, AbsoluteUnixPath pathInContainer, FilePermissions permissions) {
-      builder.addEntry(sourceFile, pathInContainer, permissions);
+      layerBuilder.addEntry(sourceFile, pathInContainer, permissions);
       return this;
     }
 
@@ -137,7 +137,7 @@ public class LayerConfiguration {
      */
     public Builder addEntry(
         Path sourceFile, AbsoluteUnixPath pathInContainer, Instant modificationTime) {
-      builder.addEntry(sourceFile, pathInContainer, modificationTime);
+      layerBuilder.addEntry(sourceFile, pathInContainer, modificationTime);
       return this;
     }
 
@@ -161,7 +161,8 @@ public class LayerConfiguration {
         AbsoluteUnixPath pathInContainer,
         FilePermissions permissions,
         Instant modificationTime) {
-      builder.addEntry(new FileEntry(sourceFile, pathInContainer, permissions, modificationTime));
+      layerBuilder.addEntry(
+          new FileEntry(sourceFile, pathInContainer, permissions, modificationTime));
       return this;
     }
 
@@ -182,7 +183,7 @@ public class LayerConfiguration {
      */
     public Builder addEntryRecursive(Path sourceFile, AbsoluteUnixPath pathInContainer)
         throws IOException {
-      builder.addEntryRecursive(sourceFile, pathInContainer);
+      layerBuilder.addEntryRecursive(sourceFile, pathInContainer);
       return this;
     }
 
@@ -203,7 +204,7 @@ public class LayerConfiguration {
         AbsoluteUnixPath pathInContainer,
         FilePermissionsProvider filePermissionProvider)
         throws IOException {
-      builder.addEntryRecursive(sourceFile, pathInContainer, filePermissionProvider);
+      layerBuilder.addEntryRecursive(sourceFile, pathInContainer, filePermissionProvider);
       return this;
     }
 
@@ -227,7 +228,7 @@ public class LayerConfiguration {
         FilePermissionsProvider filePermissionProvider,
         ModificationTimeProvider modificationTimeProvider)
         throws IOException {
-      builder.addEntryRecursive(
+      layerBuilder.addEntryRecursive(
           sourceFile, pathInContainer, filePermissionProvider, modificationTimeProvider);
       return this;
     }
@@ -238,7 +239,7 @@ public class LayerConfiguration {
      * @return the built {@link LayerConfiguration}
      */
     public LayerConfiguration build() {
-      return new LayerConfiguration(builder.build());
+      return new LayerConfiguration(layerBuilder.build());
     }
   }
 
