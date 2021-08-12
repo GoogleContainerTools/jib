@@ -506,7 +506,8 @@ public class PluginConfigurationProcessor {
     }
 
     // Verify Java version is compatible
-    String prefixRemoved = baseImageConfig.replaceFirst(".*://", "");
+    String[] splits = baseImageConfig.split("://");
+    String prefixRemoved = splits[splits.length - 1];
     int javaVersion = projectProperties.getMajorJavaVersion();
     if (isKnownJava8Image(prefixRemoved) && javaVersion > 8) {
       throw new IncompatibleBaseImageJavaVersionException(8, javaVersion);
