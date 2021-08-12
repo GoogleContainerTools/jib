@@ -34,13 +34,13 @@ class InputStreamBlob implements Blob {
   }
 
   @Override
-  public BlobDescriptor writeTo(OutputStream outputStream) throws IOException {
+  public BlobDescriptor writeTo(OutputStream outStream) throws IOException {
     // Cannot rewrite.
     if (isWritten) {
       throw new IllegalStateException("Cannot rewrite Blob backed by an InputStream");
     }
-    try (InputStream inputStream = this.inputStream) {
-      return Digests.computeDigest(inputStream, outputStream);
+    try (InputStream inStream = this.inputStream) {
+      return Digests.computeDigest(inStream, outStream);
 
     } finally {
       isWritten = true;
