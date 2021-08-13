@@ -47,9 +47,9 @@ public class ConsoleLoggerBuilder {
   public static ConsoleLoggerBuilder rich(
       SingleThreadedExecutor singleThreadedExecutor, boolean enableTwoCursorUpJump) {
     return new ConsoleLoggerBuilder(
-        messageConsumers ->
+        messageConsumerMap ->
             new AnsiLoggerWithFooter(
-                messageConsumers, singleThreadedExecutor, enableTwoCursorUpJump));
+                messageConsumerMap, singleThreadedExecutor, enableTwoCursorUpJump));
   }
 
   /**
@@ -61,7 +61,7 @@ public class ConsoleLoggerBuilder {
    */
   public static ConsoleLoggerBuilder plain(SingleThreadedExecutor singleThreadedExecutor) {
     return new ConsoleLoggerBuilder(
-        messageConsumers -> new PlainConsoleLogger(messageConsumers, singleThreadedExecutor));
+        messageConsumerMap -> new PlainConsoleLogger(messageConsumerMap, singleThreadedExecutor));
   }
 
   private final ImmutableMap.Builder<Level, Consumer<String>> messageConsumers =

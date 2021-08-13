@@ -33,12 +33,12 @@ public class LockFile implements Closeable {
 
   private static final ConcurrentHashMap<Path, Lock> lockMap = new ConcurrentHashMap<>();
 
-  private final Path lockFile;
+  private final Path lockFilePath;
   private final FileLock fileLock;
   private final OutputStream outputStream;
 
-  private LockFile(Path lockFile, FileLock fileLock, OutputStream outputStream) {
-    this.lockFile = lockFile;
+  private LockFile(Path lockFilePath, FileLock fileLock, OutputStream outputStream) {
+    this.lockFilePath = lockFilePath;
     this.fileLock = fileLock;
     this.outputStream = outputStream;
   }
@@ -86,7 +86,7 @@ public class LockFile implements Closeable {
       throw new IllegalStateException("Unable to release lock", ex);
 
     } finally {
-      Preconditions.checkNotNull(lockMap.get(lockFile)).unlock();
+      Preconditions.checkNotNull(lockMap.get(lockFilePath)).unlock();
     }
   }
 }
