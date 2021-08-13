@@ -430,7 +430,7 @@ public class FailoverHttpClientTest {
         .createContext("/")
         .setHandler(
             exchange ->
-                exchange.sendResponseHeaders(failed.compareAndSet(false, true) ? 123 : 200, 0));
+                exchange.sendResponseHeaders(failed.compareAndSet(false, true) ? 123 : 200, -1));
     try {
       server.start();
       int port = server.getAddress().getPort();
@@ -482,7 +482,7 @@ public class FailoverHttpClientTest {
         logger,
         () -> mockHttpTransport,
         () -> mockInsecureHttpTransport,
-        true);
+        false);
   }
 
   private Request fakeRequest(Integer httpTimeout) {
