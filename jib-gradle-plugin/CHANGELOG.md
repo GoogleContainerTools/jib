@@ -7,6 +7,8 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
+- Downgraded Google HTTP libraries to 1.34.0 to resolve network issues. ([#3058](https://github.com/GoogleContainerTools/jib/issue/3058) and [#3409](https://github.com/GoogleContainerTools/jib/issue/3409])) ([#xxxx](https://github.com/GoogleContainerTools/jib/pull/xxxx))
+
 ### Fixed
 
 ## 3.1.3
