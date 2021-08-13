@@ -146,7 +146,7 @@ public class ArtifactProcessors {
                   new DataInputStream(loader.getResourceAsStream(jarEntry))) {
 
             // Check magic number
-            if (classFile == null || classFile.readInt() != 0xCAFEBABE) {
+            if (classFile.readInt() != 0xCAFEBABE) {
               throw new IllegalArgumentException(
                   "The class file (" + jarEntry + ") is of an invalid format.");
             }
