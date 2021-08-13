@@ -78,13 +78,9 @@ public class AbsoluteUnixPathTest {
   public void testResolve_Path_notRelative() {
     AbsoluteUnixPath absoluteUnixPath = AbsoluteUnixPath.get("/");
     Path path = Paths.get("/not/relative");
-    try {
-      absoluteUnixPath.resolve(path);
-      Assert.fail();
-
-    } catch (IllegalArgumentException ex) {
-      Assert.assertEquals("Cannot resolve against absolute Path: " + path, ex.getMessage());
-    }
+    IllegalArgumentException exception =
+        Assert.assertThrows(IllegalArgumentException.class, () -> absoluteUnixPath.resolve(path));
+    Assert.assertEquals("Cannot resolve against absolute Path: " + path, exception.getMessage());
   }
 
   @Test
