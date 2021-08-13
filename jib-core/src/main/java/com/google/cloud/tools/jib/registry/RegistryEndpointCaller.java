@@ -86,7 +86,6 @@ class RegistryEndpointCaller<T> {
    * @param registryEndpointRequestProperties properties of the registry endpoint request
    * @param httpClient HTTP client
    */
-  @VisibleForTesting
   RegistryEndpointCaller(
       EventHandlers eventHandlers,
       @Nullable String userAgent,
