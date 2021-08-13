@@ -141,6 +141,17 @@ public class JibPluginConfigurationTest {
     sessionProperties.put("jib.containerizingMode", "packaged");
     Assert.assertEquals("packaged", testPluginConfiguration.getContainerizingMode());
 
+    sessionProperties.put("jib.dockerClient.executable", "test-exec");
+    Assert.assertEquals(
+        Paths.get("test-exec"), testPluginConfiguration.getDockerClientExecutable());
+    sessionProperties.put("jib.dockerClient.environment", "env1=val1,env2=val2");
+    Assert.assertEquals(
+        ImmutableMap.of("env1", "val1", "env2", "val2"),
+        testPluginConfiguration.getDockerClientEnvironment());
+  }
+
+  @Test
+  public void testSystemPropertiesExtraDirectories() {
     sessionProperties.put("jib.extraDirectories.paths", "custom-jib");
     Assert.assertEquals(1, testPluginConfiguration.getExtraDirectories().size());
     Assert.assertEquals(
@@ -153,15 +164,10 @@ public class JibPluginConfigurationTest {
     Assert.assertEquals("123", permissions.get(0).getMode().get());
     Assert.assertEquals("/another/file", permissions.get(1).getFile().get());
     Assert.assertEquals("456", permissions.get(1).getMode().get());
+  }
 
-    sessionProperties.put("jib.dockerClient.executable", "test-exec");
-    Assert.assertEquals(
-        Paths.get("test-exec"), testPluginConfiguration.getDockerClientExecutable());
-    sessionProperties.put("jib.dockerClient.environment", "env1=val1,env2=val2");
-    Assert.assertEquals(
-        ImmutableMap.of("env1", "val1", "env2", "val2"),
-        testPluginConfiguration.getDockerClientEnvironment());
-
+  @Test
+  public void testSystemPropertiesOutputPaths() {
     // Absolute paths
     sessionProperties.put("jib.outputPaths.digest", "/digest/path");
     Assert.assertEquals(Paths.get("/digest/path"), testPluginConfiguration.getDigestOutputPath());
@@ -247,6 +253,17 @@ public class JibPluginConfigurationTest {
     project.getProperties().setProperty("jib.containerizingMode", "packaged");
     Assert.assertEquals("packaged", testPluginConfiguration.getContainerizingMode());
 
+    project.getProperties().setProperty("jib.dockerClient.executable", "test-exec");
+    Assert.assertEquals(
+        Paths.get("test-exec"), testPluginConfiguration.getDockerClientExecutable());
+    project.getProperties().setProperty("jib.dockerClient.environment", "env1=val1,env2=val2");
+    Assert.assertEquals(
+        ImmutableMap.of("env1", "val1", "env2", "val2"),
+        testPluginConfiguration.getDockerClientEnvironment());
+  }
+
+  @Test
+  public void testPomPropertiesExtraDirectories() {
     project.getProperties().setProperty("jib.extraDirectories.paths", "custom-jib");
     Assert.assertEquals(1, testPluginConfiguration.getExtraDirectories().size());
     Assert.assertEquals(
@@ -261,15 +278,10 @@ public class JibPluginConfigurationTest {
     Assert.assertEquals("123", permissions.get(0).getMode().get());
     Assert.assertEquals("/another/file", permissions.get(1).getFile().get());
     Assert.assertEquals("456", permissions.get(1).getMode().get());
+  }
 
-    project.getProperties().setProperty("jib.dockerClient.executable", "test-exec");
-    Assert.assertEquals(
-        Paths.get("test-exec"), testPluginConfiguration.getDockerClientExecutable());
-    project.getProperties().setProperty("jib.dockerClient.environment", "env1=val1,env2=val2");
-    Assert.assertEquals(
-        ImmutableMap.of("env1", "val1", "env2", "val2"),
-        testPluginConfiguration.getDockerClientEnvironment());
-
+  @Test
+  public void testPomPropertiesOutputPaths() {
     project.getProperties().setProperty("jib.outputPaths.digest", "/digest/path");
     Assert.assertEquals(Paths.get("/digest/path"), testPluginConfiguration.getDigestOutputPath());
     project.getProperties().setProperty("jib.outputPaths.imageId", "/id/path");

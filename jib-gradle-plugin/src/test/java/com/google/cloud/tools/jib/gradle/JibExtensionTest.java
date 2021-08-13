@@ -410,7 +410,11 @@ public class JibExtensionTest {
     assertThat(testJibExtension.getDockerClient().getEnvironment())
         .containsExactly("env1", "val1", "env2", "val2")
         .inOrder();
+  }
 
+  @Test
+  public void testPropertiesOutputPaths() {
+    System.setProperties(new Properties());
     // Absolute paths
     System.setProperty("jib.outputPaths.digest", "/digest/path");
     assertThat(testJibExtension.getOutputPaths().getDigestPath())
