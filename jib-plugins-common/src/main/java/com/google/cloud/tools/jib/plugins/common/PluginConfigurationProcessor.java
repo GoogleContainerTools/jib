@@ -43,6 +43,7 @@ import com.google.cloud.tools.jib.plugins.common.globalconfig.GlobalConfig;
 import com.google.cloud.tools.jib.plugins.extension.JibPluginExtensionException;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Splitter;
 import com.google.common.base.Verify;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Multimaps;
@@ -506,8 +507,8 @@ public class PluginConfigurationProcessor {
     }
 
     // Verify Java version is compatible
-    String[] splits = baseImageConfig.split("://");
-    String prefixRemoved = splits[splits.length - 1];
+    List<String> splits = Splitter.on("://").splitToList(baseImageConfig);
+    String prefixRemoved = splits.get(splits.size() - 1);
     int javaVersion = projectProperties.getMajorJavaVersion();
     if (isKnownJava8Image(prefixRemoved) && javaVersion > 8) {
       throw new IncompatibleBaseImageJavaVersionException(8, javaVersion);
