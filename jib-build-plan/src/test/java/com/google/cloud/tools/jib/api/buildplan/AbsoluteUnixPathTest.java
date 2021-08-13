@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.api.buildplan;
 
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import org.junit.Assert;
 import org.junit.Assume;
@@ -75,13 +76,14 @@ public class AbsoluteUnixPathTest {
 
   @Test
   public void testResolve_Path_notRelative() {
+    AbsoluteUnixPath absolutePath = AbsoluteUnixPath.get("/");
+    Path path = Paths.get("/not/relative");
     try {
-      AbsoluteUnixPath.get("/").resolve(Paths.get("/not/relative"));
+      absolutePath.resolve(path);
       Assert.fail();
 
     } catch (IllegalArgumentException ex) {
-      Assert.assertEquals(
-          "Cannot resolve against absolute Path: " + Paths.get("/not/relative"), ex.getMessage());
+      Assert.assertEquals("Cannot resolve against absolute Path: " + path, ex.getMessage());
     }
   }
 
