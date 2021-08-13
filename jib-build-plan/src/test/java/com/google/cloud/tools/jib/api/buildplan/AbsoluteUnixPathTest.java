@@ -76,10 +76,10 @@ public class AbsoluteUnixPathTest {
 
   @Test
   public void testResolve_Path_notRelative() {
-    AbsoluteUnixPath absolutePath = AbsoluteUnixPath.get("/");
+    AbsoluteUnixPath absoluteUnixPath = AbsoluteUnixPath.get("/");
     Path path = Paths.get("/not/relative");
     try {
-      absolutePath.resolve(path);
+      absoluteUnixPath.resolve(path);
       Assert.fail();
 
     } catch (IllegalArgumentException ex) {
