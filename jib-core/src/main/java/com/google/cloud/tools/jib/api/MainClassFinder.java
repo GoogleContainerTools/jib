@@ -182,7 +182,7 @@ public class MainClassFinder {
       // Valid class found.
       return Result.success(mainClasses.get(0));
     }
-    if (mainClasses.size() == 0) {
+    if (mainClasses.isEmpty()) {
       // No main class found anywhere.
       return Result.mainClassNotFound();
     }

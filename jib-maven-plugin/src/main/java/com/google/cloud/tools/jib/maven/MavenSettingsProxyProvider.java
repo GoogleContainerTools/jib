@@ -58,7 +58,7 @@ class MavenSettingsProxyProvider {
           .ifPresent(proxies::add);
     }
 
-    if (proxies.size() == 0) {
+    if (proxies.isEmpty()) {
       return;
     }
 

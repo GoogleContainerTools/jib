@@ -63,7 +63,7 @@ class FilePropertiesStack {
 
   /** Remove the last layer from the stack. All values are recalculated. */
   public void pop() {
-    Preconditions.checkState(stack.size() > 0, "Error in file properties stack pop, popping at 0");
+    Preconditions.checkState(!stack.isEmpty(), "Error in file properties stack pop, popping at 0");
     stack.remove(stack.size() - 1);
     updateProperties();
   }
