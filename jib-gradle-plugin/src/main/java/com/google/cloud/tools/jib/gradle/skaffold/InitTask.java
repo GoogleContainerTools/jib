@@ -48,7 +48,7 @@ public class InitTask extends DefaultTask {
   public void listModulesAndTargets() throws IOException {
     Project project = getProject();
     // Ignore parent projects
-    if (project.getSubprojects().size() > 0) {
+    if (!project.getSubprojects().isEmpty()) {
       return;
     }
     SkaffoldInitOutput skaffoldInitOutput = new SkaffoldInitOutput();

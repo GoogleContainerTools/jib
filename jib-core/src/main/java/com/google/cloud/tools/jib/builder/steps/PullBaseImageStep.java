@@ -366,7 +366,7 @@ class PullBaseImageStep implements Callable<ImagesAndRegistryClient> {
 
     List<String> digests =
         manifestListTemplate.getDigestsForPlatform(platform.getArchitecture(), platform.getOs());
-    if (digests.size() == 0) {
+    if (digests.isEmpty()) {
       String errorTemplate =
           buildContext.getBaseImageConfiguration().getImage()
               + " is a manifest list, but the list does not contain an image for architecture=%s, "

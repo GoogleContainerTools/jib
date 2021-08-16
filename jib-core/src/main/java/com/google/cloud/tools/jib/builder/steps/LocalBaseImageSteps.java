@@ -244,7 +244,7 @@ public class LocalBaseImageSteps {
       // Check the first layer to see if the layers are compressed already. 'docker save' output
       // is uncompressed, but a jib-built tar has compressed layers.
       boolean layersAreCompressed =
-          layerFiles.size() > 0 && isGzipped(destination.resolve(layerFiles.get(0)));
+          !layerFiles.isEmpty() && isGzipped(destination.resolve(layerFiles.get(0)));
 
       // Process layer blobs
       try (ProgressEventDispatcher progressEventDispatcher =
