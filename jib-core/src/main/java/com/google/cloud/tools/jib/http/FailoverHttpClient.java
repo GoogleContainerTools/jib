@@ -133,7 +133,7 @@ public class FailoverHttpClient {
 
   private final Deque<HttpTransport> transportsCreated = new ArrayDeque<>();
   private final Deque<Response> responsesCreated = new ArrayDeque<>();
-  private final boolean turnOffRetry;
+  private final boolean enableRetry;
 
   /**
    * Create a new FailoverHttpclient.
@@ -146,7 +146,7 @@ public class FailoverHttpClient {
       boolean enableHttpAndInsecureFailover,
       boolean sendAuthorizationOverHttp,
       Consumer<LogEvent> logger) {
-    this(enableHttpAndInsecureFailover, sendAuthorizationOverHttp, logger, false);
+    this(enableHttpAndInsecureFailover, sendAuthorizationOverHttp, logger, true);
   }
 
   @VisibleForTesting
@@ -154,14 +154,14 @@ public class FailoverHttpClient {
       boolean enableHttpAndInsecureFailover,
       boolean sendAuthorizationOverHttp,
       Consumer<LogEvent> logger,
-      boolean turnOffRetry) {
+      boolean enableRetry) {
     this(
         enableHttpAndInsecureFailover,
         sendAuthorizationOverHttp,
         logger,
         FailoverHttpClient::getSecureHttpTransport,
         FailoverHttpClient::getInsecureHttpTransport,
-        turnOffRetry);
+        enableRetry);
   }
 
   @VisibleForTesting
@@ -171,13 +171,13 @@ public class FailoverHttpClient {
       Consumer<LogEvent> logger,
       Supplier<HttpTransport> secureHttpTransportFactory,
       Supplier<HttpTransport> insecureHttpTransportFactory,
-      boolean turnOffRetry) {
+      boolean enableRetry) {
     this.enableHttpAndInsecureFailover = enableHttpAndInsecureFailover;
     this.sendAuthorizationOverHttp = sendAuthorizationOverHttp;
     this.logger = logger;
     this.secureHttpTransportFactory = secureHttpTransportFactory;
     this.insecureHttpTransportFactory = insecureHttpTransportFactory;
-    this.turnOffRetry = turnOffRetry;
+    this.enableRetry = enableRetry;
   }
 
   /**
@@ -335,7 +335,7 @@ public class FailoverHttpClient {
             .buildRequest(httpMethod, new GenericUrl(url), request.getHttpContent())
             .setUseRawRedirectUrls(true)
             .setHeaders(requestHeaders);
-    if (!turnOffRetry && retryOnIoException) {
+    if (enableRetry && retryOnIoException) {
       httpRequest.setIOExceptionHandler(createBackOffRetryHandler());
     }
     if (request.getHttpTimeout() != null) {

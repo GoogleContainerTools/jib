@@ -482,7 +482,7 @@ public class FailoverHttpClientTest {
         logger,
         () -> mockHttpTransport,
         () -> mockInsecureHttpTransport,
-        false);
+        true);
   }
 
   private Request fakeRequest(Integer httpTimeout) {
