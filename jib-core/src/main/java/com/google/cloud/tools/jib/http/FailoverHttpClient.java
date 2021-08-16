@@ -315,12 +315,14 @@ public class FailoverHttpClient {
     }
   }
 
+  // TODO: remove retryOnIoException and turn on/off retry based on whether it's an SSLException or
+  // not: https://github.com/GoogleContainerTools/jib/issues/3422
   private Response call(
       String httpMethod,
       URL url,
       Request request,
       HttpTransport httpTransport,
-      boolean retryOnIoException)
+      boolean retryOnIoException) // See https://github.com/GoogleContainerTools/jib/issues/3424
       throws IOException {
     boolean clearAuthorization = !isHttpsProtocol(url) && !sendAuthorizationOverHttp;
 
