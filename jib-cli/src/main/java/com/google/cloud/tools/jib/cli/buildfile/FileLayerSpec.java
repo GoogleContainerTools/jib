@@ -32,7 +32,7 @@ import javax.annotation.Nullable;
  * <pre>{@code
  * name: "my classes layer"
  * files:
- *   - }{@link CopySpec}{@code 
+ *   - }{@link CopySpec}{@code
  *   - }{@link CopySpec}{@code
  * // optional properties
  * properties: see }{@link FilePropertiesSpec}{@code
