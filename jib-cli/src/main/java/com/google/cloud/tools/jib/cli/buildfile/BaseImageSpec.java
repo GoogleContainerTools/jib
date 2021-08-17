@@ -29,8 +29,8 @@ import java.util.List;
  * <pre>{@code
  * image: gcr.io/example/baseimage
  * platforms:
- *   - see {@link PlatformSpec}
- *   - see {@link PlatformSpec}
+ *   - see }{@link PlatformSpec}{@code
+ *   - see }{@link PlatformSpec}{@code
  * }</pre>
  */
 public class BaseImageSpec {

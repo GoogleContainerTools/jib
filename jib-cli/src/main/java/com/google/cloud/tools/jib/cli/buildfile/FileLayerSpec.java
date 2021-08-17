@@ -32,10 +32,10 @@ import javax.annotation.Nullable;
  * <pre>{@code
  * name: "my classes layer"
  * files:
- *   - {@link CopySpec}
- *   - {@link CopySpec}
+ *   - }{@link CopySpec}{@code
+ *   - }{@link CopySpec}{@code
  * // optional properties
- * properties: see {@link FilePropertiesSpec}
+ * properties: see }{@link FilePropertiesSpec}{@code
  * }</pre>
  */
 @JsonDeserialize(using = JsonDeserializer.None.class) // required since LayerSpec overrides this

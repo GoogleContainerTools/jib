@@ -154,7 +154,7 @@ public class BuildImageMojoIntegrationTest {
       assertThat(new Command("docker", "run", "--rm", id).run()).isEqualTo(output);
 
     } catch (InvalidImageReferenceException ex) {
-      fail("error replacing tag with digest");
+      throw new AssertionError("error replacing tag with digest", ex);
     }
 
     return output;
