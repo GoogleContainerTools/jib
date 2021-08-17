@@ -78,7 +78,7 @@ subprojects {
     ASM: 'org.ow2.asm:asm:9.2',
     PICOCLI: 'info.picocli:picocli:4.6.1',
 
-    MAVEN_API: 'org.apache.maven:maven-plugin-api:3.8.1',
+    MAVEN_API: 'org.apache.maven:maven-plugin-api:3.8.2',
     MAVEN_CORE: 'org.apache.maven:maven-core:3.8.1',
     MAVEN_COMPAT: 'org.apache.maven:maven-compat:3.8.1',
     MAVEN_PLUGIN_ANNOTATIONS: 'org.apache.maven.plugin-tools:maven-plugin-annotations:3.6.1',
