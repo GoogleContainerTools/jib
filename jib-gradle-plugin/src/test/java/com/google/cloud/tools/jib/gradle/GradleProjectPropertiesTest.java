@@ -66,6 +66,7 @@ import org.gradle.api.java.archives.internal.DefaultManifest;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.plugins.JavaPlugin;
 import org.gradle.api.plugins.JavaPluginConvention;
+import org.gradle.api.provider.Property;
 import org.gradle.api.tasks.bundling.War;
 import org.gradle.jvm.tasks.Jar;
 import org.gradle.testfixtures.ProjectBuilder;
@@ -177,6 +178,27 @@ public class GradleProjectPropertiesTest {
 
   @Test
   public void testGetMainClassFromJar_missing() {
+    assertThat(gradleProjectProperties.getMainClassFromJarPlugin()).isNull();
+  }
+
+  @Test
+  public void testGetMainClassFromJarAsProperty_success() {
+    Property<String> mainClass =
+        project.getObjects().property(String.class).value("some.main.class");
+
+    Jar jar = project.getTasks().withType(Jar.class).getByName("jar");
+    jar.setManifest(new DefaultManifest(null).attributes(ImmutableMap.of("Main-Class", mainClass)));
+
+    assertThat(gradleProjectProperties.getMainClassFromJarPlugin()).isEqualTo("some.main.class");
+  }
+
+  @Test
+  public void testGetMainClassFromJarAsPropertyWithValueNull_missing() {
+    Property<String> mainClass = project.getObjects().property(String.class).value((String) null);
+
+    Jar jar = project.getTasks().withType(Jar.class).getByName("jar");
+    jar.setManifest(new DefaultManifest(null).attributes(ImmutableMap.of("Main-Class", mainClass)));
+
     assertThat(gradleProjectProperties.getMainClassFromJarPlugin()).isNull();
   }
 
