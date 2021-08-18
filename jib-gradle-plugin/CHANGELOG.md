@@ -9,7 +9,7 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
-- Fix ClassCastException when using non string value for `Main-Class` manifest attribute ([#3396](https://github.com/GoogleContainerTools/jib/issues/3396))
+- Fixed `ClassCastException` when using non-`String` value (for example, [`Provider`](https://docs.gradle.org/current/javadoc/org/gradle/api/provider/Provider.html)) for `Main-Class` manifest attribute of the `jar` task. ([#3396](https://github.com/GoogleContainerTools/jib/issues/3396))
 
 ## 3.1.4
 
