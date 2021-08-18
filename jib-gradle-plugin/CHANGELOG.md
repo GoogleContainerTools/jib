@@ -7,10 +7,14 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
+### Fixed
+
+## 3.1.4
+
+### Changed
+
 - Downgraded Google HTTP libraries to 1.34.0 to resolve network issues. ([#3415](https://github.com/GoogleContainerTools/jib/pull/3415), [#3058](https://github.com/GoogleContainerTools/jib/issues/3058), [#3409](https://github.com/GoogleContainerTools/jib/issues/3409))
 - If `allowInsecureRegistries=true`, HTTP requests are retried on I/O errors only after insecure failover is finalized for each server. ([#3422](https://github.com/GoogleContainerTools/jib/issues/3422))
-
-### Fixed
 
 ## 3.1.3
 
