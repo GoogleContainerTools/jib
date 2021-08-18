@@ -9,6 +9,8 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
+- Fixed `ClassCastException` when using non-`String` value (for example, [`Provider`](https://docs.gradle.org/current/javadoc/org/gradle/api/provider/Provider.html)) for `Main-Class` manifest attribute of the `jar` task. ([#3396](https://github.com/GoogleContainerTools/jib/issues/3396))
+
 ## 3.1.4
 
 ### Changed
@@ -62,8 +64,8 @@ All notable changes to this project will be documented in this file.
     jib {
       configurationName = 'myconfig'
     }
-```                                                                                                                                                                      
-  
+```
+
 ### Changed
 
 - [Switched the default base images](https://github.com/GoogleContainerTools/jib/blob/master/docs/default_base_image.md) from Distroless to [`adoptopenjdk:{8,11}-jre`](https://hub.docker.com/_/adoptopenjdk) and [`jetty`](https://hub.docker.com/_/jetty) (for WAR). ([#3124](https://github.com/GoogleContainerTools/jib/pull/3124))

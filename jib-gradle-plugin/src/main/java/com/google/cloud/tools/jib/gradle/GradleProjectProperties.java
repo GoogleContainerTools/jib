@@ -72,6 +72,7 @@ import org.gradle.api.file.FileCollection;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.plugins.JavaPluginConvention;
 import org.gradle.api.plugins.WarPlugin;
+import org.gradle.api.provider.Provider;
 import org.gradle.api.tasks.SourceSet;
 import org.gradle.api.tasks.TaskProvider;
 import org.gradle.jvm.tasks.Jar;
@@ -370,7 +371,22 @@ public class GradleProjectProperties implements ProjectProperties {
     if (jarTask == null) {
       return null;
     }
-    return (String) jarTask.getManifest().getAttributes().get("Main-Class");
+
+    Object value = jarTask.getManifest().getAttributes().get("Main-Class");
+
+    if (value instanceof Provider) {
+      value = ((Provider<?>) value).getOrNull();
+    }
+
+    if (value instanceof String) {
+      return (String) value;
+    }
+
+    if (value == null) {
+      return null;
+    }
+
+    return String.valueOf(value);
   }
 
   @Override
