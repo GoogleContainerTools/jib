@@ -5,13 +5,19 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+### Changed
+
+### Fixed
+
+## 0.20.0
+
+### Added
+
 - Increased robustness in registry communications by retrying HTTP requests (to the effect of retrying image pushes or pulls) on I/O exceptions with exponential backoffs. ([#3351](https://github.com/GoogleContainerTools/jib/pull/3351))
 
 ### Changed
 
 - Downgraded Google HTTP libraries to 1.34.0 to resolve network issues. ([#3415](https://github.com/GoogleContainerTools/jib/pull/3415), [#3058](https://github.com/GoogleContainerTools/jib/issues/3058), [#3409](https://github.com/GoogleContainerTools/jib/issues/3409))
-
-### Fixed
 
 ## 0.19.0
 
