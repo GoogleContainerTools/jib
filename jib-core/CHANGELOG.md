@@ -9,7 +9,7 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
-## 0.20. 0
+## 0.20.0
 
 ### Added
 
