@@ -231,11 +231,11 @@ class PullBaseImageStep implements Callable<ImagesAndRegistryClient> {
         eventHandlers.dispatch(LogEvent.info("trying mirror " + mirror + " for the base image"));
         try (ProgressEventDispatcher progressDispatcher2 =
             progressDispatcher1.newChildProducer().create("trying mirror " + mirror, 2)) {
-          // First, try with no credentials. This works with public GCR images.
           RegistryClient registryClient =
               buildContext.newBaseImageRegistryClientFactory(mirror).newRegistryClient();
-          return getImagesAndRegistryClient(
-              eventHandlers, mirror, progressDispatcher2, registryClient);
+          List<Image> images = pullPublicImages(eventHandlers, registryClient, progressDispatcher2);
+          eventHandlers.dispatch(LogEvent.info("pulled manifest from mirror " + mirror));
+          return Optional.of(new ImagesAndRegistryClient(images, registryClient));
 
         } catch (IOException | RegistryException ex) {
           // Ignore errors from this mirror and continue.
@@ -248,25 +248,20 @@ class PullBaseImageStep implements Callable<ImagesAndRegistryClient> {
     }
   }
 
-  private Optional<ImagesAndRegistryClient> getImagesAndRegistryClient(
+  private List<Image> pullPublicImages(
       EventHandlers eventHandlers,
-      String mirror,
-      ProgressEventDispatcher progressDispatcher2,
-      RegistryClient registryClient)
+      RegistryClient registryClient,
+      ProgressEventDispatcher progressDispatcher)
       throws IOException, RegistryException, LayerCountMismatchException,
           BadContainerConfigurationFormatException {
     try {
-      List<Image> images = pullBaseImages(registryClient, progressDispatcher2.newChildProducer());
-      eventHandlers.dispatch(LogEvent.info("pulled manifest from mirror " + mirror));
-      return Optional.of(new ImagesAndRegistryClient(images, registryClient));
+      // First, try with no credentials. This works with public GCR images.
+      return pullBaseImages(registryClient, progressDispatcher.newChildProducer());
 
     } catch (RegistryUnauthorizedException ex) {
-      // in case if a mirror requires bearer auth
-      eventHandlers.dispatch(LogEvent.debug("mirror " + mirror + " requires auth"));
+      // in case if a registry requires bearer auth
       registryClient.doPullBearerAuth();
-      List<Image> images = pullBaseImages(registryClient, progressDispatcher2.newChildProducer());
-      eventHandlers.dispatch(LogEvent.info("pulled manifest from mirror " + mirror));
-      return Optional.of(new ImagesAndRegistryClient(images, registryClient));
+      return pullBaseImages(registryClient, progressDispatcher.newChildProducer());
     }
   }
 
