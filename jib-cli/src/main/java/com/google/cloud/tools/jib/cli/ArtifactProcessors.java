@@ -45,6 +45,8 @@ public class ArtifactProcessors {
   private static Integer VERSION_NOT_FOUND = 0;
   private static final String DEFAULT_JETTY_APP_ROOT = "/var/lib/jetty/webapps/ROOT";
 
+  private ArtifactProcessors() {}
+
   /**
    * Creates a {@link ArtifactProcessor} instance based on jar type and processing mode.
    *

@@ -28,6 +28,8 @@ import java.util.Optional;
 /** Attempts to retrieve registry credentials. */
 class RegistryCredentialRetriever {
 
+  private RegistryCredentialRetriever() {}
+
   /** Retrieves credentials for the base image. */
   static Optional<Credential> getBaseImageCredential(BuildContext buildContext)
       throws CredentialRetrievalException {

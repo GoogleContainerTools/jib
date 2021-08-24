@@ -36,6 +36,8 @@ class MavenSettingsProxyProvider {
   private static final ImmutableList<String> PROXY_PROPERTIES =
       ImmutableList.of("proxyHost", "proxyPort", "proxyUser", "proxyPassword");
 
+  private MavenSettingsProxyProvider() {}
+
   /**
    * Initializes proxy settings based on Maven settings if they are not already set by the user
    * directly.

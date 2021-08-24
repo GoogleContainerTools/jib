@@ -25,6 +25,9 @@ import java.util.List;
  * A helper class to process command line args and generate a list of {@link CredentialRetriever}s.
  */
 public class Credentials {
+
+  private Credentials() {}
+
   /**
    * Gets credentials for a target image registry.
    *

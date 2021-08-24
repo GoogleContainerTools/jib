@@ -31,6 +31,8 @@ import javax.annotation.Nullable;
 
 public class WarFiles {
 
+  private WarFiles() {}
+
   /**
    * Generates a {@link JibContainerBuilder} from contents of a WAR file.
    *

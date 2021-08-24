@@ -36,6 +36,8 @@ public class JarLayers {
   static final AbsoluteUnixPath APP_ROOT = AbsoluteUnixPath.get("/app");
   static final String JAR = "jar";
 
+  private JarLayers() {}
+
   static List<FileEntriesLayer> getDependenciesLayers(Path jarPath, ProcessingMode mode)
       throws IOException {
     // Get dependencies from Class-Path in the jar's manifest and add a layer each for non-snapshot
