@@ -558,33 +558,20 @@ $ docker manifest inspect openjdk:8
 ```
 
 You can inspect the digest (`@sha256:...`) of a manifest image with the `--verbose` option.
-```
-$ docker manifest inspect --verbose openjdk:8
-[
-	{
-		"Ref": "docker.io/library/openjdk:8@sha256:74a0711547137cd3787c0b84266a7ba4cb814b98b8950cf95bc2e526bfc05e47",
-    ...
-  }
-]    
-   ...
-   // This confirms that openjdk:8 points to a manifest list.
-   "mediaType": "application/vnd.docker.distribution.manifest.list.v2+json",
-   "manifests": [
-      {
-         // This entry in the list points to the manifest for the ARM64/Linux manifest.
-         "mediaType": "application/vnd.docker.distribution.manifest.v2+json",
-         ...
-         "digest": "sha256:1fbd49e3fc5e53154fa93cad15f211112d899a6b0c5dc1e8661d6eb6c18b30a6",
-         "platform": {
-            "architecture": "arm64",
-            "os": "linux",
-            "variant": "v8"
-         }
-      }
-   ]
-}
-```
 
+`docker manifest inspect --verbose openjdk:8`
+```json
+[
+  {
+    "Ref": "docker.io/library/openjdk:8@sha256:a0bd10514aa39bef1f4b78299599d7bf67d6570198b22b6d40a3d595bd3a909d",
+    "Descriptor": { "platform": { "architecture": "amd64", "os": "linux" } }
+  },
+  {
+    "Ref": "docker.io/library/openjdk:8@sha256:9951cac523b5234148d6df82e26139e5791b2fa894d38f04fbebac98195e06f9",
+    "Descriptor": { "platform": { "architecture": "arm64", "os": "linux", "variant": "v8" } }
+  }
+]
+```
 
 ### I want to exclude files from layers, have more fine-grained control over layers, change file ownership, etc.
 
