@@ -62,8 +62,10 @@ jobs:
         uses: repo-sync/pull-request@v2.6
         id: create-pr
         with:
-          # Use a personal token to file a PR as a non-bot author to trigger other workflows (e.g., unit tests):
-          # https://docs.github.com/en/actions/reference/events-that-trigger-workflows#triggering-new-workflows-using-a-personal-access-token;
+          # Use a personal token to file a PR to trigger other workflows (e.g., unit tests).
+          # Save your access token as GA_RELEASE_PR_PERSONAL_TOKEN.             
+          # https://docs.github.com/en/actions/reference/events-that-trigger-workflows#triggering-new-workflows-using-a-personal-access-token
+          # https://docs.github.com/en/actions/configuring-and-managing-workflows/creating-and-storing-encrypted-secrets
           github_token: ${{ secrets.GA_RELEASE_PR_PERSONAL_TOKEN }}
           source_branch: ${{ github.event.inputs.project }}-release-v${{ github.event.inputs.release_version }}
           pr_title: "${{ github.event.inputs.project }} release v${{ github.event.inputs.release_version }}"
