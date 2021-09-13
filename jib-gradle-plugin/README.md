@@ -38,7 +38,7 @@ For information about the project, see the [Jib project README](../README.md).
   * [Jib Extensions](#jib-extensions)
   * [WAR Projects](#war-projects)
   * [Skaffold Integration](#skaffold-integration)
-* [Frequently Asked Questions (FAQ)](#frequently-asked-questions-faq)
+* [Need Help?](#need-help)
 * [Community](#community)
 
 ## Quickstart
@@ -600,7 +600,7 @@ Field | Type | Default | Description
 --- | --- | --- | ---
 `excludes` | `List<String>` | *None* | Files and directories that skaffold should not sync
 
-## Need Help?
+## <a name=frequently-ask-questions-faq></a>Need Help?
 
 A lot of questions are already answered!
 
