@@ -75,8 +75,8 @@ Use the `application` plugin's `installDist` task to create a runnable installat
 $ ./gradlew jib-cli:installDist
 # run
 $ ./jib-cli/build/install/jib/bin/jib
-
 ```
+
 ## Supported Commands
 
 The Jib CLI supports two commands:
@@ -84,11 +84,14 @@ The Jib CLI supports two commands:
  2. `jar` - containerizes JAR files.
 
 ## Build Command
+
 This command follows the following pattern:
 ```
 jib build --target <image name> [options]
 ```
+
 ### Quickstart
+
 1. Create a hello world script (`script.sh`) containing:
     ```sh
     #!/bin/sh
@@ -112,9 +115,7 @@ jib build --target <image name> [options]
                 filePermissions: 755
               src: script.sh
               dest: /script.sh
-
     ```
-
 3. Build to docker daemon
    ```
     $ jib build --target=docker://jib-cli-quickstart
@@ -126,6 +127,7 @@ jib build --target <image name> [options]
    ```
 
 ### Options
+
 Optional flags for the `build` command:
 
 Option | Description
@@ -134,13 +136,15 @@ Option | Description
 `-c, --context`    |  The context root directory of the build (ex: path/to/my/build/things)
 `-p, --parameter`  |  Templating parameter to inject into build file, replace ${<name>} with <value> (repeatable)
 
-
 ## Jar Command
+
 This command follows the following pattern:
 ```
 jib jar --target <image name> path/to/myapp.jar [options]
 ```
+
 ### Quickstart
+
 1. Have your JAR (thin or fat) ready. We will be using the [Spring Petclinic](https://projects.spring.io/spring-petclinic/) JAR in this Quickstart.
    ```
     $ git clone https://github.com/spring-projects/spring-petclinic.git
@@ -151,13 +155,13 @@ jib jar --target <image name> path/to/myapp.jar [options]
    ```
     $ jib jar --target=docker://cli-jar-quickstart target/spring-petclinic-*.jar
    ```
-
 3. Run the image and open your browser at http://localhost:8080
    ```
     $ docker run -p 8080:8080 cli-jar-quickstart
    ```
-   
+
 ### Options
+
 Optional flags for the `jar` command:
 
 Option | Description
@@ -166,11 +170,14 @@ Option | Description
 `--mode`          | The jar processing mode, candidates: exploded, packaged, default: exploded
 
 ## War Command
+
 This command follows the following pattern:
 ```
  $ jib war --target <image-name> path/to/myapp.war 
 ```
+
 ## Quickstart
+
 1. Have your sample WAR ready and use the `war` command to containerize your WAR. By default, the WAR command uses [`jetty`](https://hub.docker.com/_/jetty) as the base image so the entrypoint is set to `java -jar /usr/local/jetty/start.jar`:
     ```
      $ jib war --target=docker://cli-war-quickstart <your-sample>.war
@@ -180,6 +187,7 @@ This command follows the following pattern:
      $ docker run -p 8080:8080 cli-war-quickstart
     ```
 ## Options
+
 Flags for the `war` command:
 
 Option | Description
@@ -202,19 +210,22 @@ Option | Description
 `-u, --user`      | The user to run the container as, example: `--user=myuser:mygroup`.
 `--volumes`       | Directories on container to hold extra volumes, example: `--volumes=/var/log,/var/log2`.
 
-
 ## Common Jib CLI Options
+
 The options can either be specified in the command line or defined in a configuration file:
 ```
 [@<filename>...]      One or more argument files containing options.
 ```
+ 
 ### Auth/Security
+
 ```
     --allow-insecure-registries            Allow jib to send credentials over http (insecure)
     --send-credentials-over-http           Allow jib to send credentials over http (very insecure)
 ```
 
 ### Registry Credentials
+
 Credentials can be specified using credential helpers or username + password. The following options are available:
 
 ```
@@ -248,6 +259,7 @@ Mixed Mode
 2. `--from-credential-helper`, `--to-username`, `--to-password`
 
 ### Info Params
+
 ```
     --help                  print usage and exit
     --console <type>        set console output type, candidates: auto, rich, plain, default: auto
@@ -256,6 +268,7 @@ Mixed Mode
 ```
 
 ### Debugging Params
+
 ```
     --stacktrace            print stacktrace on error (for debugging issues in the jib-cli)
     --http-trace            enable http tracing at level=config, output=console
@@ -383,6 +396,7 @@ layers:
 ```
 
 #### Layers Behavior
+
 - Copy directives are bound by the following rules
   `src`: filetype determined by type on local disk
    - if `src` is directory, `dest` is always considered a directory, directory and contents will be copied over and renamed to `dest`
@@ -418,6 +432,7 @@ layers:
      ```
      
 #### Base Image Parameter Inheritance
+
 Some values defined in the base image may be preserved and propogated into the new container.
 
 Parameters will append to base image value:
@@ -435,4 +450,9 @@ Parameters that will be overwritten:
 - `cmd`
 
 ## Privacy
+
 See the [Privacy page](https://github.com/GoogleContainerTools/jib/blob/master/docs/privacy.md).
+
+## Disclaimer
+
+This is not an officially supported Google product.
