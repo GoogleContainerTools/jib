@@ -600,7 +600,7 @@ Field | Type | Default | Description
 --- | --- | --- | ---
 `excludes` | `List<String>` | *None* | Files and directories that skaffold should not sync
 
-## <a name=frequently-ask-questions-faq></a>Need Help?
+## <a name=frequently-asked-questions-faq></a>Need Help?
 
 A lot of questions are already answered!
 
