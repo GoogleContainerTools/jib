@@ -91,10 +91,7 @@ public class SyncMapMojo extends JibPluginConfiguration {
             PluginConfigurationProcessor.getSkaffoldSyncMap(
                 configuration,
                 projectProperties,
-                skaffold
-                    .sync
-                    .excludes
-                    .stream()
+                skaffold.sync.excludes.stream()
                     .map(File::toPath)
                     .map(Path::toAbsolutePath)
                     .collect(Collectors.toSet()));

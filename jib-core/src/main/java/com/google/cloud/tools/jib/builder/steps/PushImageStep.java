@@ -80,8 +80,7 @@ class PushImageStep implements Callable<BuildResult> {
 
       Set<String> imageQualifiers =
           singlePlatform ? tags : Collections.singleton(manifestDigest.toString());
-      return imageQualifiers
-          .stream()
+      return imageQualifiers.stream()
           .map(
               qualifier ->
                   new PushImageStep(

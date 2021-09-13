@@ -479,8 +479,7 @@ class PullBaseImageStep implements Callable<ImagesAndRegistryClient> {
           lookUpPlatformSpecificImageManifest((V22ManifestListTemplate) manifestList, platform);
 
       Optional<ManifestAndConfigTemplate> manifestAndConfigFound =
-          manifestsAndConfigs
-              .stream()
+          manifestsAndConfigs.stream()
               .filter(entry -> manifestDigest.equals(entry.getManifestDigest()))
               .findFirst();
       if (!manifestAndConfigFound.isPresent()) {

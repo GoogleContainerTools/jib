@@ -117,9 +117,7 @@ class AllocationCompletionTracker {
    */
   @VisibleForTesting
   List<Allocation> getUnfinishedAllocations() {
-    return completionMap
-        .values()
-        .stream()
+    return completionMap.values().stream()
         .filter(IndexedRemainingUnits::isUnfinished)
         .sorted()
         .map(remainingUnits -> remainingUnits.allocation)

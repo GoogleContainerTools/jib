@@ -140,8 +140,7 @@ public class PluginConfigurationProcessorTest {
   private static List<FileEntry> getLayerEntries(ContainerBuildPlan buildPlan, String layerName) {
     @SuppressWarnings("unchecked")
     List<FileEntriesLayer> layers = ((List<FileEntriesLayer>) buildPlan.getLayers());
-    return layers
-        .stream()
+    return layers.stream()
         .filter(layer -> layer.getName().equals(layerName))
         .findFirst()
         .get()
@@ -247,8 +246,7 @@ public class PluginConfigurationProcessorTest {
             "/target/dir/foo");
 
     Optional<FileEntry> fooEntry =
-        extraFiles
-            .stream()
+        extraFiles.stream()
             .filter(
                 layerEntry ->
                     layerEntry.getExtractionPath().equals(AbsoluteUnixPath.get("/target/dir/foo")))

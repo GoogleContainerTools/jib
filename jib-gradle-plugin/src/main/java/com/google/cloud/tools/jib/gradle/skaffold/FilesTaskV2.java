@@ -78,10 +78,7 @@ public class FilesTaskV2 extends DefaultTask {
 
     // Add extra layer
     List<Path> extraDirectories =
-        jibExtension
-            .getExtraDirectories()
-            .getPaths()
-            .stream()
+        jibExtension.getExtraDirectories().getPaths().stream()
             .map(ExtraDirectoryParameters::getFrom)
             .collect(Collectors.toList());
     extraDirectories.stream().filter(Files::exists).forEach(skaffoldFilesOutput::addInput);

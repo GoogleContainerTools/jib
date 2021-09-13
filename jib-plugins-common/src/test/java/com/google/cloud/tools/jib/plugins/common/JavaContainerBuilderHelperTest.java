@@ -63,9 +63,7 @@ public class JavaContainerBuilderHelperTest {
 
   private static FileEntriesLayer getLayerConfigurationByName(
       BuildContext buildContext, String name) {
-    return buildContext
-        .getLayerConfigurations()
-        .stream()
+    return buildContext.getLayerConfigurations().stream()
         .filter(layer -> layer.getName().equals(name))
         .findFirst()
         .get();

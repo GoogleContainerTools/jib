@@ -200,12 +200,8 @@ public class GradleProjectProperties implements ProjectProperties {
     try {
       FileCollection projectDependencies =
           project.files(
-              project
-                  .getConfigurations()
-                  .getByName(configurationName)
-                  .getResolvedConfiguration()
-                  .getResolvedArtifacts()
-                  .stream()
+              project.getConfigurations().getByName(configurationName).getResolvedConfiguration()
+                  .getResolvedArtifacts().stream()
                   .filter(
                       artifact ->
                           artifact.getId().getComponentIdentifier()
@@ -246,15 +242,11 @@ public class GradleProjectProperties implements ProjectProperties {
           .addDependencies(
               dependencies.getFiles().stream().map(File::toPath).collect(Collectors.toList()))
           .addSnapshotDependencies(
-              snapshotDependencies
-                  .getFiles()
-                  .stream()
+              snapshotDependencies.getFiles().stream()
                   .map(File::toPath)
                   .collect(Collectors.toList()))
           .addProjectDependencies(
-              projectDependencies
-                  .getFiles()
-                  .stream()
+              projectDependencies.getFiles().stream()
                   .map(File::toPath)
                   .collect(Collectors.toList()));
 
@@ -417,8 +409,7 @@ public class GradleProjectProperties implements ProjectProperties {
     List<FileCollection> dependencyFileCollections = new ArrayList<>();
     dependencyFileCollections.add(project.getConfigurations().getByName(configurationName));
 
-    extraDirectories
-        .stream()
+    extraDirectories.stream()
         .filter(Files::exists)
         .map(Path::toFile)
         .map(project::files)

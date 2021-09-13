@@ -272,8 +272,7 @@ public class MavenProjectProperties implements ProjectProperties {
         return JavaContainerBuilderHelper.fromExplodedWar(
             javaContainerBuilder,
             explodedWarPath,
-            getProjectDependencies()
-                .stream()
+            getProjectDependencies().stream()
                 .map(Artifact::getFile)
                 .map(File::getName)
                 .collect(Collectors.toSet()));
@@ -326,9 +325,7 @@ public class MavenProjectProperties implements ProjectProperties {
 
   @VisibleForTesting
   Set<Artifact> getProjectDependencies() {
-    return session
-        .getProjects()
-        .stream()
+    return session.getProjects().stream()
         .map(MavenProject::getArtifact)
         .filter(artifact -> !artifact.equals(project.getArtifact()))
         .filter(artifact -> artifact.getFile() != null)
@@ -364,9 +361,7 @@ public class MavenProjectProperties implements ProjectProperties {
 
   @Override
   public List<Path> getDependencies() {
-    return project
-        .getArtifacts()
-        .stream()
+    return project.getArtifacts().stream()
         .map(artifact -> artifact.getFile().toPath())
         .collect(Collectors.toList());
   }

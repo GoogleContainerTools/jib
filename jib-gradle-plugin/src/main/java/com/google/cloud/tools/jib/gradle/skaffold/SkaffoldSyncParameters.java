@@ -54,10 +54,7 @@ public class SkaffoldSyncParameters {
    */
   public void setExcludes(Object paths) {
     this.excludes =
-        project
-            .files(paths)
-            .getFiles()
-            .stream()
+        project.files(paths).getFiles().stream()
             .map(File::toPath)
             .map(Path::toAbsolutePath)
             .collect(Collectors.toSet());

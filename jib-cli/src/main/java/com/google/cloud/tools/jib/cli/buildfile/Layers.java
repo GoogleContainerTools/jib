@@ -95,15 +95,11 @@ class Layers {
                 filePropertiesStack.getOwnership());
           } else if (Files.isDirectory(src)) { // directory
             List<PathMatcher> excludes =
-                copySpec
-                    .getExcludes()
-                    .stream()
+                copySpec.getExcludes().stream()
                     .map(Layers::toPathMatcher)
                     .collect(Collectors.toList());
             List<PathMatcher> includes =
-                copySpec
-                    .getIncludes()
-                    .stream()
+                copySpec.getIncludes().stream()
                     .map(Layers::toPathMatcher)
                     .collect(Collectors.toList());
             try (Stream<Path> dirWalk = Files.walk(src)) {

@@ -74,15 +74,13 @@ public class JavaContainerBuilderHelper {
 
     DirectoryWalker walker = new DirectoryWalker(sourceDirectory).filterRoot();
     // add exclusion filters
-    excludes
-        .stream()
+    excludes.stream()
         .map(pattern -> FileSystems.getDefault().getPathMatcher(GLOB_PREFIX + pattern))
         .forEach(
             pathMatcher ->
                 walker.filter(path -> !pathMatcher.matches(sourceDirectory.relativize(path))));
     // add an inclusion filter
-    includes
-        .stream()
+    includes.stream()
         .map(pattern -> FileSystems.getDefault().getPathMatcher(GLOB_PREFIX + pattern))
         .map(
             pathMatcher ->

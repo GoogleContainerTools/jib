@@ -66,9 +66,7 @@ public class PackageGoalsMojo extends SkaffoldBindingMojo {
       throw new MojoExecutionException("failed to calculate execution plan", ex);
     }
 
-    mavenExecutionPlan
-        .getMojoExecutions()
-        .stream()
+    mavenExecutionPlan.getMojoExecutions().stream()
         .filter(mojoExecution -> "package".equals(mojoExecution.getLifecyclePhase()))
         .filter(
             mojoExecution ->

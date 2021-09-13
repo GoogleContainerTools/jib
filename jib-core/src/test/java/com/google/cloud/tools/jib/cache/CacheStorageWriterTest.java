@@ -249,9 +249,7 @@ public class CacheStorageWriterTest {
             "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
             "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
             "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"),
-        savedManifest2
-            .getLayers()
-            .stream()
+        savedManifest2.getLayers().stream()
             .map(layer -> layer.getDigest().getHash())
             .collect(Collectors.toList()));
 

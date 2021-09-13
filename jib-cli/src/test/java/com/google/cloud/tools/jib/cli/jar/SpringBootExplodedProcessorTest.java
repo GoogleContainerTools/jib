@@ -76,9 +76,7 @@ public class SpringBootExplodedProcessorTest {
 
     assertThat(nonSnapshotLayer.getName()).isEqualTo("dependencies");
     assertThat(
-            nonSnapshotLayer
-                .getEntries()
-                .stream()
+            nonSnapshotLayer.getEntries().stream()
                 .map(FileEntry::getExtractionPath)
                 .collect(Collectors.toList()))
         .containsExactly(
@@ -87,9 +85,7 @@ public class SpringBootExplodedProcessorTest {
 
     assertThat(loaderLayer.getName()).isEqualTo("spring-boot-loader");
     assertThat(
-            loaderLayer
-                .getEntries()
-                .stream()
+            loaderLayer.getEntries().stream()
                 .map(FileEntry::getExtractionPath)
                 .collect(Collectors.toList()))
         .containsExactly(
@@ -98,18 +94,14 @@ public class SpringBootExplodedProcessorTest {
 
     assertThat(snapshotLayer.getName()).isEqualTo("snapshot-dependencies");
     assertThat(
-            snapshotLayer
-                .getEntries()
-                .stream()
+            snapshotLayer.getEntries().stream()
                 .map(FileEntry::getExtractionPath)
                 .collect(Collectors.toList()))
         .containsExactly(AbsoluteUnixPath.get("/app/BOOT-INF/lib/dependency3-SNAPSHOT.jar"));
 
     assertThat(applicationLayer.getName()).isEqualTo("application");
     assertThat(
-            applicationLayer
-                .getEntries()
-                .stream()
+            applicationLayer.getEntries().stream()
                 .map(FileEntry::getExtractionPath)
                 .collect(Collectors.toList()))
         .containsExactly(
@@ -147,9 +139,7 @@ public class SpringBootExplodedProcessorTest {
 
     assertThat(nonSnapshotLayer.getName()).isEqualTo("dependencies");
     assertThat(
-            nonSnapshotLayer
-                .getEntries()
-                .stream()
+            nonSnapshotLayer.getEntries().stream()
                 .map(FileEntry::getExtractionPath)
                 .collect(Collectors.toList()))
         .containsExactly(
@@ -158,9 +148,7 @@ public class SpringBootExplodedProcessorTest {
 
     assertThat(loaderLayer.getName()).isEqualTo("spring-boot-loader");
     assertThat(
-            loaderLayer
-                .getEntries()
-                .stream()
+            loaderLayer.getEntries().stream()
                 .map(FileEntry::getExtractionPath)
                 .collect(Collectors.toList()))
         .containsExactly(
@@ -169,9 +157,7 @@ public class SpringBootExplodedProcessorTest {
 
     assertThat(applicationLayer.getName()).isEqualTo("application");
     assertThat(
-            applicationLayer
-                .getEntries()
-                .stream()
+            applicationLayer.getEntries().stream()
                 .map(FileEntry::getExtractionPath)
                 .collect(Collectors.toList()))
         .containsExactly(
@@ -218,9 +204,7 @@ public class SpringBootExplodedProcessorTest {
 
     assertThat(nonSnapshotLayer.getName()).isEqualTo("dependencies");
     assertThat(
-            nonSnapshotLayer
-                .getEntries()
-                .stream()
+            nonSnapshotLayer.getEntries().stream()
                 .map(FileEntry::getExtractionPath)
                 .collect(Collectors.toList()))
         .containsExactly(
@@ -229,9 +213,7 @@ public class SpringBootExplodedProcessorTest {
 
     assertThat(loaderLayer.getName()).isEqualTo("spring-boot-loader");
     assertThat(
-            loaderLayer
-                .getEntries()
-                .stream()
+            loaderLayer.getEntries().stream()
                 .map(FileEntry::getExtractionPath)
                 .collect(Collectors.toList()))
         .containsExactly(
@@ -248,9 +230,7 @@ public class SpringBootExplodedProcessorTest {
 
     assertThat(classesLayer.getName()).isEqualTo("classes");
     assertThat(
-            classesLayer
-                .getEntries()
-                .stream()
+            classesLayer.getEntries().stream()
                 .map(FileEntry::getExtractionPath)
                 .collect(Collectors.toList()))
         .containsExactly(

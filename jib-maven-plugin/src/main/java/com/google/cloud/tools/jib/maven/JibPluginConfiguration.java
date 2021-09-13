@@ -666,8 +666,7 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
     String property = getProperty(PropertyNames.EXTRA_DIRECTORIES_PATHS);
     if (property != null) {
       List<String> paths = ConfigurationPropertyValidator.parseListProperty(property);
-      return paths
-          .stream()
+      return paths.stream()
           .map(path -> new ExtraDirectoryParameters(new File(path), "/"))
           .collect(Collectors.toList());
     }
@@ -682,9 +681,7 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
   List<PermissionConfiguration> getExtraDirectoryPermissions() {
     String property = getProperty(PropertyNames.EXTRA_DIRECTORIES_PERMISSIONS);
     if (property != null) {
-      return ConfigurationPropertyValidator.parseMapProperty(property)
-          .entrySet()
-          .stream()
+      return ConfigurationPropertyValidator.parseMapProperty(property).entrySet().stream()
           .map(entry -> new PermissionConfiguration(entry.getKey(), entry.getValue()))
           .collect(Collectors.toList());
     }

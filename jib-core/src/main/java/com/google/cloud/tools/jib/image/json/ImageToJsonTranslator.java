@@ -81,9 +81,7 @@ public class ImageToJsonTranslator {
     Preconditions.checkArgument(
         environment.keySet().stream().noneMatch(key -> key.contains("=")),
         "Illegal environment variable: name cannot contain '='");
-    return environment
-        .entrySet()
-        .stream()
+    return environment.entrySet().stream()
         .map(entry -> entry.getKey() + "=" + entry.getValue())
         .collect(ImmutableList.toImmutableList());
   }

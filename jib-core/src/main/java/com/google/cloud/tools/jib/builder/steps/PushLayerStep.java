@@ -43,8 +43,7 @@ class PushLayerStep implements Callable<BlobDescriptor> {
             progressEventDispatcherFactory.create("launching layer pushers", cachedLayers.size())) {
 
       // Constructs a PushBlobStep for each layer.
-      return cachedLayers
-          .stream()
+      return cachedLayers.stream()
           .map(
               layer ->
                   new PushLayerStep(

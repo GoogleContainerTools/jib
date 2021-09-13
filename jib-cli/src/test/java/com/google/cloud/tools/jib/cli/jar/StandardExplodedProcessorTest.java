@@ -87,9 +87,7 @@ public class StandardExplodedProcessorTest {
     // Validate dependencies layers.
     assertThat(nonSnapshotLayer.getName()).isEqualTo("dependencies");
     assertThat(
-            nonSnapshotLayer
-                .getEntries()
-                .stream()
+            nonSnapshotLayer.getEntries().stream()
                 .map(FileEntry::getExtractionPath)
                 .collect(Collectors.toList()))
         .isEqualTo(
@@ -105,9 +103,7 @@ public class StandardExplodedProcessorTest {
     // Validate resources layer.
     assertThat(resourcesLayer.getName()).isEqualTo("resources");
     List<AbsoluteUnixPath> actualResourcesPaths =
-        resourcesLayer
-            .getEntries()
-            .stream()
+        resourcesLayer.getEntries().stream()
             .map(FileEntry::getExtractionPath)
             .collect(Collectors.toList());
     assertThat(actualResourcesPaths)
@@ -121,9 +117,7 @@ public class StandardExplodedProcessorTest {
     // Validate classes layer.
     assertThat(classesLayer.getName()).isEqualTo("classes");
     List<AbsoluteUnixPath> actualClassesPaths =
-        classesLayer
-            .getEntries()
-            .stream()
+        classesLayer.getEntries().stream()
             .map(FileEntry::getExtractionPath)
             .collect(Collectors.toList());
     assertThat(actualClassesPaths)
@@ -153,9 +147,7 @@ public class StandardExplodedProcessorTest {
     // Validate resources layer.
     assertThat(resourcesLayer.getName()).isEqualTo("resources");
     List<AbsoluteUnixPath> actualResourcesPaths =
-        resourcesLayer
-            .getEntries()
-            .stream()
+        resourcesLayer.getEntries().stream()
             .map(FileEntry::getExtractionPath)
             .collect(Collectors.toList());
     assertThat(actualResourcesPaths)
@@ -169,9 +161,7 @@ public class StandardExplodedProcessorTest {
     // Validate classes layer.
     assertThat(classesLayer.getName()).isEqualTo("classes");
     List<AbsoluteUnixPath> actualClassesPaths =
-        classesLayer
-            .getEntries()
-            .stream()
+        classesLayer.getEntries().stream()
             .map(FileEntry::getExtractionPath)
             .collect(Collectors.toList());
     assertThat(actualClassesPaths)
@@ -205,9 +195,7 @@ public class StandardExplodedProcessorTest {
 
     // Validate classes layer.
     List<AbsoluteUnixPath> actualClassesPath =
-        classesLayer
-            .getEntries()
-            .stream()
+        classesLayer.getEntries().stream()
             .map(FileEntry::getExtractionPath)
             .collect(Collectors.toList());
     assertThat(actualClassesPath)

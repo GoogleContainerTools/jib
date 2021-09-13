@@ -586,9 +586,7 @@ public class JavaContainerBuilder {
             .map(path -> path.getFileName().toString())
             .collect(Collectors.groupingBy(filename -> filename, Collectors.counting()));
     List<String> duplicates =
-        occurrences
-            .entrySet()
-            .stream()
+        occurrences.entrySet().stream()
             .filter(entry -> entry.getValue() > 1)
             .map(Map.Entry::getKey)
             .collect(Collectors.toList());

@@ -36,8 +36,7 @@ class DockerConfig {
   @Nullable
   private static <K, T> Map.Entry<K, T> findFirstInMapByKey(
       Map<K, T> map, List<Predicate<K>> keyMatches) {
-    return keyMatches
-        .stream()
+    return keyMatches.stream()
         .map(keyMatch -> findFirstInMapByKey(map, keyMatch))
         .filter(Objects::nonNull)
         .findFirst()
@@ -47,8 +46,7 @@ class DockerConfig {
   /** Returns the first entry matching the given key predicate. */
   @Nullable
   private static <K, T> Map.Entry<K, T> findFirstInMapByKey(Map<K, T> map, Predicate<K> keyMatch) {
-    return map.entrySet()
-        .stream()
+    return map.entrySet().stream()
         .filter(entry -> keyMatch.test(entry.getKey()))
         .findFirst()
         .orElse(null);

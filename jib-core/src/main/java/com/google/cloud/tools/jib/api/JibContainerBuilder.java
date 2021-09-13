@@ -215,8 +215,7 @@ public class JibContainerBuilder {
   @Deprecated
   public JibContainerBuilder setLayers(List<LayerConfiguration> layerConfigurations) {
     return setFileEntriesLayers(
-        layerConfigurations
-            .stream()
+        layerConfigurations.stream()
             .map(LayerConfiguration::toFileEntriesLayer)
             .collect(Collectors.toList()));
   }

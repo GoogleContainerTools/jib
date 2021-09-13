@@ -58,8 +58,7 @@ public class ExtraDirectoriesParameters {
   public List<String> getPathStrings() {
     // Gradle warns about @Input annotations on File objects, so we have to expose a getter for a
     // String to make them go away.
-    return getPaths()
-        .stream()
+    return getPaths().stream()
         .map(extraDirectoryParameters -> extraDirectoryParameters.getFrom().toString())
         .collect(Collectors.toList());
   }
@@ -71,8 +70,7 @@ public class ExtraDirectoriesParameters {
     String property = System.getProperty(PropertyNames.EXTRA_DIRECTORIES_PATHS);
     if (property != null) {
       List<String> pathStrings = ConfigurationPropertyValidator.parseListProperty(property);
-      return pathStrings
-          .stream()
+      return pathStrings.stream()
           .map(path -> new ExtraDirectoryParameters(objects, project, Paths.get(path), "/"))
           .collect(Collectors.toList());
     }
@@ -95,10 +93,7 @@ public class ExtraDirectoriesParameters {
    */
   public void setPaths(Object paths) {
     this.paths.set(
-        project
-            .files(paths)
-            .getFiles()
-            .stream()
+        project.files(paths).getFiles().stream()
             .map(file -> new ExtraDirectoryParameters(objects, project, file.toPath(), "/"))
             .collect(Collectors.toList()));
   }

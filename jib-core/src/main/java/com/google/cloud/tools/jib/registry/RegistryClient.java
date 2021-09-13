@@ -218,9 +218,7 @@ public class RegistryClient {
       if (payload.access == null) {
         return null;
       }
-      return payload
-          .access
-          .stream()
+      return payload.access.stream()
           .filter(claim -> "repository".equals(claim.type))
           .collect(
               ImmutableSetMultimap.<AccessClaim, String, String>flatteningToImmutableSetMultimap(

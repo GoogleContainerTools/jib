@@ -107,9 +107,7 @@ public class BuildFiles {
       BaseImageSpec baseImageSpec, CommonCliOptions commonCliOptions, ConsoleLogger logger)
       throws InvalidImageReferenceException, FileNotFoundException {
     LinkedHashSet<Platform> platforms =
-        baseImageSpec
-            .getPlatforms()
-            .stream()
+        baseImageSpec.getPlatforms().stream()
             .map(platformSpec -> new Platform(platformSpec.getArchitecture(), platformSpec.getOs()))
             .collect(Collectors.toCollection(LinkedHashSet::new));
     return ContainerBuilders.create(baseImageSpec.getImage(), platforms, commonCliOptions, logger);
