@@ -39,7 +39,7 @@ For information about the project, see the [Jib project README](../README.md).
   * [Jib Extensions](#jib-extensions)
   * [WAR Projects](#war-projects)
   * [Skaffold Integration](#skaffold-integration)
-* [Frequently Asked Questions (FAQ)](#frequently-asked-questions-faq)
+* [Need Help?](#need-help)
 * [Community](#community)
 
 ## Quickstart
