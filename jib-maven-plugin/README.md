@@ -720,9 +720,15 @@ Field | Type | Default | Description
 --- | --- | --- | ---
 `excludes` | `List<String>` | *None* | Files and directories that skaffold should not sync
 
-## Frequently Asked Questions (FAQ)
+## <a name=frequently-ask-questions-faq></a>Need Help?
 
-See the [Jib project FAQ](../docs/faq.md).
+A lot of questions are already answered!
+
+* [Frequently Asked Questions (FAQ)](../docs/faq.md)
+* [Stack Overflow](https://stackoverflow.com/questions/tagged/jib)
+* [GitHub issues](https://github.com/GoogleContainerTools/jib/issues)
+
+_For usage questions, please ask them on Stack Overflow._
 
 ## Privacy
 
@@ -735,3 +741,7 @@ See [Milestones](https://github.com/GoogleContainerTools/jib/milestones) for pla
 ## Community
 
 See the [Jib project README](/../../#community).
+
+## Disclaimer
+
+This is not an officially supported Google product.
