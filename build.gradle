@@ -144,7 +144,7 @@ subprojects {
 
   /* GOOGLE JAVA FORMAT */
   googleJavaFormat {
-    toolVersion = '1.6'
+    toolVersion = '1.7'
   }
   check.dependsOn verifyGoogleJavaFormat
   /* GOOGLE JAVA FORMAT */
