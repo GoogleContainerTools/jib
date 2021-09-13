@@ -110,8 +110,7 @@ public class V22ManifestListTemplate implements ManifestTemplate {
    * @return a list of matching digests
    */
   public List<String> getDigestsForPlatform(String architecture, String os) {
-    return getManifests()
-        .stream()
+    return getManifests().stream()
         .filter(
             manifest ->
                 manifest.platform != null

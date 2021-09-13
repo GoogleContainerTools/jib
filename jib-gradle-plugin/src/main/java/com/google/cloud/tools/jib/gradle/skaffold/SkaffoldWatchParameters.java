@@ -57,10 +57,7 @@ public class SkaffoldWatchParameters {
    */
   public void setBuildIncludes(Object paths) {
     this.buildIncludes =
-        project
-            .files(paths)
-            .getFiles()
-            .stream()
+        project.files(paths).getFiles().stream()
             .map(File::toPath)
             .map(Path::toAbsolutePath)
             .collect(Collectors.toSet());
@@ -84,10 +81,7 @@ public class SkaffoldWatchParameters {
    */
   public void setIncludes(Object paths) {
     this.includes =
-        project
-            .files(paths)
-            .getFiles()
-            .stream()
+        project.files(paths).getFiles().stream()
             .map(File::toPath)
             .map(Path::toAbsolutePath)
             .collect(Collectors.toSet());
@@ -113,10 +107,7 @@ public class SkaffoldWatchParameters {
    */
   public void setExcludes(Object paths) {
     this.excludes =
-        project
-            .files(paths)
-            .getFiles()
-            .stream()
+        project.files(paths).getFiles().stream()
             .map(File::toPath)
             .map(Path::toAbsolutePath)
             .collect(Collectors.toSet());

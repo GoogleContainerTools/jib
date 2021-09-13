@@ -49,9 +49,7 @@ class MavenSettingsProxyProvider {
       if (areProxyPropertiesSet(protocol)) {
         continue;
       }
-      settings
-          .getProxies()
-          .stream()
+      settings.getProxies().stream()
           .filter(Proxy::isActive)
           .filter(proxy -> protocol.equals(proxy.getProtocol()))
           .findFirst()
@@ -106,8 +104,7 @@ class MavenSettingsProxyProvider {
    */
   @VisibleForTesting
   static boolean areProxyPropertiesSet(String protocol) {
-    return PROXY_PROPERTIES
-        .stream()
+    return PROXY_PROPERTIES.stream()
         .anyMatch(property -> System.getProperty(protocol + "." + property) != null);
   }
 }

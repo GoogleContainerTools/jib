@@ -89,10 +89,7 @@ public class BuildTarTask extends DefaultTask implements JibTask {
   @InputFiles
   public FileCollection getInputFiles() {
     List<Path> extraDirectories =
-        Preconditions.checkNotNull(jibExtension)
-            .getExtraDirectories()
-            .getPaths()
-            .stream()
+        Preconditions.checkNotNull(jibExtension).getExtraDirectories().getPaths().stream()
             .map(ExtraDirectoryParameters::getFrom)
             .collect(Collectors.toList());
     return GradleProjectProperties.getInputFiles(

@@ -52,8 +52,7 @@ public class JarLayers {
       Predicate<String> isSnapshot = name -> name.contains("SNAPSHOT");
       List<String> allDependencies = Splitter.onPattern("\\s+").splitToList(classPath.trim());
       List<Path> nonSnapshots =
-          allDependencies
-              .stream()
+          allDependencies.stream()
               .filter(isSnapshot.negate())
               .map(Paths::get)
               .collect(Collectors.toList());

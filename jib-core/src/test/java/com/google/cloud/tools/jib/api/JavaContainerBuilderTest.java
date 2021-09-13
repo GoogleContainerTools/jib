@@ -42,16 +42,12 @@ public class JavaContainerBuilderTest {
   /** Gets the extraction paths in the specified layer of a give {@link BuildContext}. */
   private static List<AbsoluteUnixPath> getExtractionPaths(
       BuildContext buildContext, String layerName) {
-    return buildContext
-        .getLayerConfigurations()
-        .stream()
+    return buildContext.getLayerConfigurations().stream()
         .filter(layerConfiguration -> layerConfiguration.getName().equals(layerName))
         .findFirst()
         .map(
             layerConfiguration ->
-                layerConfiguration
-                    .getEntries()
-                    .stream()
+                layerConfiguration.getEntries().stream()
                     .map(FileEntry::getExtractionPath)
                     .collect(Collectors.toList()))
         .orElse(ImmutableList.of());

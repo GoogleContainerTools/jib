@@ -362,18 +362,14 @@ public class PluginConfigurationProcessor {
         continue;
       }
       if (GENERATED_LAYERS.contains(layer.getName())) {
-        layer
-            .getEntries()
-            .stream()
+        layer.getEntries().stream()
             .filter(layerEntry -> Files.isRegularFile(layerEntry.getSourceFile()))
             .filter(
                 layerEntry ->
                     !excludesExpanded.contains(layerEntry.getSourceFile().toAbsolutePath()))
             .forEach(syncMap::addGenerated);
       } else { // this is a direct layer
-        layer
-            .getEntries()
-            .stream()
+        layer.getEntries().stream()
             .filter(layerEntry -> Files.isRegularFile(layerEntry.getSourceFile()))
             .filter(
                 layerEntry ->
@@ -632,9 +628,7 @@ public class PluginConfigurationProcessor {
               .map(path -> path.getFileName().toString())
               .collect(Collectors.groupingBy(filename -> filename, Collectors.counting()));
       List<String> duplicates =
-          occurrences
-              .entrySet()
-              .stream()
+          occurrences.entrySet().stream()
               .filter(entry -> entry.getValue() > 1)
               .map(Map.Entry::getKey)
               .collect(Collectors.toList());

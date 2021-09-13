@@ -90,9 +90,7 @@ public class FilesMojoV2 extends SkaffoldBindingMojo {
     //   </sourceDirs>
     // </configuration></execution></executions>
     Set<Path> kotlinSourceDirectories =
-        kotlinPlugin
-            .getExecutions()
-            .stream()
+        kotlinPlugin.getExecutions().stream()
             .filter(execution -> !execution.getGoals().contains("test-compile"))
             .map(execution -> (Xpp3Dom) execution.getConfiguration())
             .filter(Objects::nonNull)
@@ -148,10 +146,7 @@ public class FilesMojoV2 extends SkaffoldBindingMojo {
       }
 
       // Add resources directory (resolved by maven to be an absolute path)
-      project
-          .getBuild()
-          .getResources()
-          .stream()
+      project.getBuild().getResources().stream()
           .map(FileSet::getDirectory)
           .map(Paths::get)
           .forEach(skaffoldFilesOutput::addInput);
@@ -177,8 +172,7 @@ public class FilesMojoV2 extends SkaffoldBindingMojo {
       // TODO: this whole sections relies on internal maven API, it could break. We need to explore
       // TODO: better ways to resolve dependencies using the public maven API.
       Set<String> projectArtifacts =
-          projects
-              .stream()
+          projects.stream()
               .map(MavenProject::getArtifact)
               .map(Artifact::toString)
               .collect(Collectors.toSet());
@@ -202,9 +196,7 @@ public class FilesMojoV2 extends SkaffoldBindingMojo {
             projectDependenciesResolver.resolve(
                 new DefaultDependencyResolutionRequest(project, session.getRepositorySession())
                     .setResolutionFilter(ignoreProjectDependenciesFilter));
-        resolutionResult
-            .getDependencies()
-            .stream()
+        resolutionResult.getDependencies().stream()
             .map(org.eclipse.aether.graph.Dependency::getArtifact)
             .filter(org.eclipse.aether.artifact.Artifact::isSnapshot)
             .map(org.eclipse.aether.artifact.Artifact::getFile)
@@ -227,8 +219,7 @@ public class FilesMojoV2 extends SkaffoldBindingMojo {
   }
 
   private List<Path> resolveExtraDirectories(MavenProject project) {
-    return collectExtraDirectories(project)
-        .stream()
+    return collectExtraDirectories(project).stream()
         .map(path -> path.isAbsolute() ? path : project.getBasedir().toPath().resolve(path))
         .collect(Collectors.toList());
   }
@@ -305,8 +296,7 @@ public class FilesMojoV2 extends SkaffoldBindingMojo {
   }
 
   private List<Path> resolveFiles(List<File> files, MavenProject project) {
-    return files
-        .stream()
+    return files.stream()
         .map(File::toPath)
         .map(path -> path.isAbsolute() ? path : project.getBasedir().toPath().resolve(path))
         .collect(Collectors.toList());
