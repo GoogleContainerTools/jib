@@ -8,7 +8,7 @@ plugins {
   id 'io.freefair.maven-plugin' version '5.3.3.3' apply false
 
   // apply so we can correctly configure the test runner to be gradle at the project level
-  id 'org.jetbrains.gradle.plugin.idea-ext' version '1.0.1'
+  id 'org.jetbrains.gradle.plugin.idea-ext' version '1.1'
 
   // apply so that we can collect quality metrics at the root project level
   id 'org.sonarqube' version '3.3'
