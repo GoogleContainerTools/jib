@@ -20,6 +20,7 @@ import com.google.common.base.Preconditions;
 import java.lang.reflect.Field;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.HashMap;
 import org.apache.maven.settings.Settings;
 import org.apache.maven.settings.building.DefaultSettingsBuilderFactory;
 import org.apache.maven.settings.building.DefaultSettingsBuildingRequest;
@@ -30,6 +31,7 @@ import org.apache.maven.settings.crypto.DefaultSettingsDecrypter;
 import org.apache.maven.settings.crypto.SettingsDecrypter;
 import org.sonatype.plexus.components.cipher.DefaultPlexusCipher;
 import org.sonatype.plexus.components.sec.dispatcher.DefaultSecDispatcher;
+import org.sonatype.plexus.components.sec.dispatcher.PasswordDecryptor;
 
 class SettingsFixture {
 
@@ -62,9 +64,11 @@ class SettingsFixture {
     try {
 
       DefaultPlexusCipher injectCypher = new DefaultPlexusCipher();
-
-      DefaultSecDispatcher injectedDispatcher = new DefaultSecDispatcher();
-      injectedDispatcher.setConfigurationFile(settingsSecurityFile.toAbsolutePath().toString());
+      DefaultSecDispatcher injectedDispatcher =
+          new DefaultSecDispatcher(
+              injectCypher,
+              new HashMap<String, PasswordDecryptor>(),
+              settingsSecurityFile.toAbsolutePath().toString());
       setField(DefaultSecDispatcher.class, injectedDispatcher, "_cipher", injectCypher);
 
       return new DefaultSettingsDecrypter(injectedDispatcher);
