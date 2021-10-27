@@ -30,7 +30,7 @@ public class HelloWorld {
     try (Reader reader = new InputStreamReader(
         HelloWorld.class.getResourceAsStream("/world"), StandardCharsets.UTF_8)) {
       String world = CharStreams.toString(reader);
-      System.out.println("Hello " + world);
+      System.out.println("Hello " + world + "!");
     }
   }
 }
