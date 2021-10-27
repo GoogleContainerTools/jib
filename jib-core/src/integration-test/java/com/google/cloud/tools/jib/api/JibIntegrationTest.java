@@ -97,13 +97,13 @@ public class JibIntegrationTest {
     String toImage = "localhost:5000/basic-helloworld";
     JibContainer jibContainer =
         Jib.from("localhost:5000/busybox")
-            .setEntrypoint("echo", "Hello World")
+            .setEntrypoint("echo", "Hello World!")
             .containerize(
                 Containerizer.to(RegistryImage.named(toImage)).setAllowInsecureRegistries(true));
 
-    Assert.assertEquals("Hello World\n", pullAndRunBuiltImage(toImage));
+    Assert.assertEquals("Hello World!\n", pullAndRunBuiltImage(toImage));
     Assert.assertEquals(
-        "Hello World\n", pullAndRunBuiltImage(toImage + "@" + jibContainer.getDigest()));
+        "Hello World!\n", pullAndRunBuiltImage(toImage + "@" + jibContainer.getDigest()));
   }
 
   @Test
@@ -113,13 +113,13 @@ public class JibIntegrationTest {
     String toImage = "localhost:5000/basic-dockerdaemon";
     JibContainer jibContainer =
         Jib.from("docker://localhost:5000/busybox")
-            .setEntrypoint("echo", "Hello World")
+            .setEntrypoint("echo", "Hello World!")
             .containerize(
                 Containerizer.to(RegistryImage.named(toImage)).setAllowInsecureRegistries(true));
 
-    Assert.assertEquals("Hello World\n", pullAndRunBuiltImage(toImage));
+    Assert.assertEquals("Hello World!\n", pullAndRunBuiltImage(toImage));
     Assert.assertEquals(
-        "Hello World\n", pullAndRunBuiltImage(toImage + "@" + jibContainer.getDigest()));
+        "Hello World!\n", pullAndRunBuiltImage(toImage + "@" + jibContainer.getDigest()));
   }
 
   @Test
@@ -127,7 +127,7 @@ public class JibIntegrationTest {
       throws IOException, InterruptedException, InvalidImageReferenceException, ExecutionException,
           RegistryException, CacheDirectoryCreationException {
     Jib.from(DockerDaemonImage.named("localhost:5000/busybox"))
-        .setEntrypoint("echo", "Hello World")
+        .setEntrypoint("echo", "Hello World!")
         .containerize(Containerizer.to(DockerDaemonImage.named("localhost:5000/docker-to-docker")));
 
     String output = new Command("docker", "run", "--rm", "localhost:5000/docker-to-docker").run();
@@ -144,13 +144,13 @@ public class JibIntegrationTest {
     String toImage = "localhost:5000/basic-dockersavedcommand";
     JibContainer jibContainer =
         Jib.from("tar://" + path)
-            .setEntrypoint("echo", "Hello World")
+            .setEntrypoint("echo", "Hello World!")
             .containerize(
                 Containerizer.to(RegistryImage.named(toImage)).setAllowInsecureRegistries(true));
 
-    Assert.assertEquals("Hello World\n", pullAndRunBuiltImage(toImage));
+    Assert.assertEquals("Hello World!\n", pullAndRunBuiltImage(toImage));
     Assert.assertEquals(
-        "Hello World\n", pullAndRunBuiltImage(toImage + "@" + jibContainer.getDigest()));
+        "Hello World!\n", pullAndRunBuiltImage(toImage + "@" + jibContainer.getDigest()));
   }
 
   @Test
