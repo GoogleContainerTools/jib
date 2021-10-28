@@ -14,7 +14,7 @@ If a question you have is not answered below, please [submit an issue](/../../is
 [Why is my image created 48+ years ago?](#why-is-my-image-created-48-years-ago)\
 [Where is the application in the container filesystem?](#where-is-the-application-in-the-container-filesystem)\
 [How are Jib applications layered?](#how-are-jib-applications-layered)\
-[Can I learn more about container images?](#can-i-learn-more-about-container-images)
+[Can I learn more about container images?](#can-i-learn-more-about-container-images)\
 [Which base image (JDK) does Jib use?](#which-base-image-jdk-does-jib-use)
 
 **How-Tos**\
