@@ -98,6 +98,38 @@ public class JarFilesTest {
   }
 
   @Test
+  public void testToJibContainer_defaultBaseImage_java11()
+      throws IOException, InvalidImageReferenceException {
+    when(mockStandardExplodedProcessor.getJavaVersion()).thenReturn(11);
+    JibContainerBuilder containerBuilder =
+        JarFiles.toJibContainerBuilder(
+            mockStandardExplodedProcessor,
+            mockJarCommand,
+            mockCommonCliOptions,
+            mockCommonContainerConfigCliOptions,
+            mockLogger);
+    ContainerBuildPlan buildPlan = containerBuilder.toContainerBuildPlan();
+
+    assertThat(buildPlan.getBaseImage()).isEqualTo("eclipse-temurin:11-jre");
+  }
+
+  @Test
+  public void testToJibContainer_defaultBaseImage_java13()
+      throws IOException, InvalidImageReferenceException {
+    when(mockStandardExplodedProcessor.getJavaVersion()).thenReturn(13);
+    JibContainerBuilder containerBuilder =
+        JarFiles.toJibContainerBuilder(
+            mockStandardExplodedProcessor,
+            mockJarCommand,
+            mockCommonCliOptions,
+            mockCommonContainerConfigCliOptions,
+            mockLogger);
+    ContainerBuildPlan buildPlan = containerBuilder.toContainerBuildPlan();
+
+    assertThat(buildPlan.getBaseImage()).isEqualTo("azul/zulu-openjdk:17-jre");
+  }
+
+  @Test
   public void testToJibContainerBuilder_explodedStandard_basicInfo()
       throws IOException, InvalidImageReferenceException {
     when(mockStandardExplodedProcessor.getJavaVersion()).thenReturn(8);

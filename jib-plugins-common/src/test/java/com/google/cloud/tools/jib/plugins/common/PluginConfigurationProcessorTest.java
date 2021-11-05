@@ -891,16 +891,32 @@ public class PluginConfigurationProcessorTest {
   }
 
   @Test
-  public void testGetDefaultBaseImage_projectHigherThanJava11() {
+  public void testGetDefaultBaseImage_chooseJava17BaseImage()
+      throws IncompatibleBaseImageJavaVersionException {
     when(projectProperties.getMajorJavaVersion()).thenReturn(12);
+    assertThat(PluginConfigurationProcessor.getDefaultBaseImage(projectProperties))
+        .isEqualTo("azul/zulu-openjdk:17-jre");
+
+    when(projectProperties.getMajorJavaVersion()).thenReturn(15);
+    assertThat(PluginConfigurationProcessor.getDefaultBaseImage(projectProperties))
+        .isEqualTo("azul/zulu-openjdk:17-jre");
+
+    when(projectProperties.getMajorJavaVersion()).thenReturn(17);
+    assertThat(PluginConfigurationProcessor.getDefaultBaseImage(projectProperties))
+        .isEqualTo("azul/zulu-openjdk:17-jre");
+  }
+
+  @Test
+  public void testGetDefaultBaseImage_projectHigherThanJava17() {
+    when(projectProperties.getMajorJavaVersion()).thenReturn(20);
 
     IncompatibleBaseImageJavaVersionException exception =
         assertThrows(
             IncompatibleBaseImageJavaVersionException.class,
             () -> PluginConfigurationProcessor.getDefaultBaseImage(projectProperties));
 
-    assertThat(exception.getBaseImageMajorJavaVersion()).isEqualTo(11);
-    assertThat(exception.getProjectMajorJavaVersion()).isEqualTo(12);
+    assertThat(exception.getBaseImageMajorJavaVersion()).isEqualTo(17);
+    assertThat(exception.getProjectMajorJavaVersion()).isEqualTo(20);
   }
 
   @Test
@@ -1036,6 +1052,21 @@ public class PluginConfigurationProcessorTest {
     assertThat(exception4.getProjectMajorJavaVersion()).isEqualTo(15);
   }
 
+  @Test
+  public void testGetJavaContainerBuilderWithBaseImage_incompatibleJava17BaseImage() {
+    when(projectProperties.getMajorJavaVersion()).thenReturn(19);
+
+    when(rawConfiguration.getFromImage()).thenReturn(Optional.of("azul/zulu-openjdk:17-jre"));
+    IncompatibleBaseImageJavaVersionException exception4 =
+        assertThrows(
+            IncompatibleBaseImageJavaVersionException.class,
+            () ->
+                PluginConfigurationProcessor.getJavaContainerBuilderWithBaseImage(
+                    rawConfiguration, projectProperties, inferredAuthProvider));
+    assertThat(exception4.getBaseImageMajorJavaVersion()).isEqualTo(17);
+    assertThat(exception4.getProjectMajorJavaVersion()).isEqualTo(19);
+  }
+
   // https://github.com/GoogleContainerTools/jib/issues/1995
   @Test
   public void testGetJavaContainerBuilderWithBaseImage_java12BaseImage()
@@ -1049,8 +1080,8 @@ public class PluginConfigurationProcessorTest {
   }
 
   @Test
-  public void testGetJavaContainerBuilderWithBaseImage_java12NoBaseImage() {
-    when(projectProperties.getMajorJavaVersion()).thenReturn(12);
+  public void testGetJavaContainerBuilderWithBaseImage_java19NoBaseImage() {
+    when(projectProperties.getMajorJavaVersion()).thenReturn(19);
     when(rawConfiguration.getFromImage()).thenReturn(Optional.empty());
     IncompatibleBaseImageJavaVersionException exception =
         assertThrows(
@@ -1058,8 +1089,8 @@ public class PluginConfigurationProcessorTest {
             () ->
                 PluginConfigurationProcessor.getJavaContainerBuilderWithBaseImage(
                     rawConfiguration, projectProperties, inferredAuthProvider));
-    assertThat(exception.getBaseImageMajorJavaVersion()).isEqualTo(11);
-    assertThat(exception.getProjectMajorJavaVersion()).isEqualTo(12);
+    assertThat(exception.getBaseImageMajorJavaVersion()).isEqualTo(17);
+    assertThat(exception.getProjectMajorJavaVersion()).isEqualTo(19);
   }
 
   @Test

@@ -64,13 +64,12 @@ public class ArtifactProcessors {
       CommonContainerConfigCliOptions commonContainerConfigCliOptions)
       throws IOException {
     Integer jarJavaVersion = determineJavaMajorVersion(jarPath);
-    if (jarJavaVersion > 11 && !commonContainerConfigCliOptions.getFrom().isPresent()) {
+    if (jarJavaVersion > 17 && !commonContainerConfigCliOptions.getFrom().isPresent()) {
       throw new IllegalStateException(
-          "The input JAR ("
-              + jarPath
-              + ") is compiled with Java "
-              + jarJavaVersion
-              + ", but the default base image only supports versions up to Java 11. Specify a custom base image with --from.");
+          String.format(
+              "The input JAR (%s) is compiled with Java %d, but the default base image only "
+                  + "supports versions up to Java 17. Specify a custom base image with --from.",
+              jarPath, jarJavaVersion));
     }
     String jarType = determineJarType(jarPath);
     ProcessingMode mode = jarOptions.getMode();
