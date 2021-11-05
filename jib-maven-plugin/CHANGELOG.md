@@ -7,7 +7,7 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
-- Changed the default base image from the `adoptopenjdk` images to the `eclipse-temurin` images on Docker Hub. Note that Temurin (by Adoptium) is the new name of AdoptOpenJDK. ([#xyz](https://github.com/GoogleContainerTools/jib/pull/xyz))
+- Changed the default base image from the `adoptopenjdk` images to the `eclipse-temurin` images on Docker Hub. Note that Temurin (by Adoptium) is the new name of AdoptOpenJDK. ([#3491](https://github.com/GoogleContainerTools/jib/pull/3491))
 
 ### Fixed
 
