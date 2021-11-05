@@ -58,7 +58,7 @@ public class ArtifactProcessorsTest {
   private static final String STANDARD_WITH_INVALID_CLASS = "jar/standard/jarWithInvalidClass.jar";
   private static final String STANDARD_WITH_EMPTY_CLASS_FILE =
       "jar/standard/standardJarWithOnlyClasses.jar";
-  private static final String JAVA_14_JAR = "jar/java14WithModuleInfo.jar";
+  private static final String JAVA_18_JAR = "jar/java18.jar";
 
   @Mock private CacheDirectories mockCacheDirectories;
   @Mock private Jar mockJarCommand;
@@ -125,7 +125,7 @@ public class ArtifactProcessorsTest {
 
   @Test
   public void testFromJar_incompatibleDefaultBaseImage() throws URISyntaxException {
-    Path jarPath = Paths.get(Resources.getResource(JAVA_14_JAR).toURI());
+    Path jarPath = Paths.get(Resources.getResource(JAVA_18_JAR).toURI());
 
     IllegalStateException exception =
         assertThrows(
@@ -139,13 +139,13 @@ public class ArtifactProcessorsTest {
 
     assertThat(exception)
         .hasMessageThat()
-        .startsWith("The input JAR (" + jarPath + ") is compiled with Java 14");
+        .startsWith("The input JAR (" + jarPath + ") is compiled with Java 18");
   }
 
   @Test
   public void testFromJar_incompatibleDefaultBaseImage_baseImageSpecified()
       throws URISyntaxException, IOException {
-    Path jarPath = Paths.get(Resources.getResource(JAVA_14_JAR).toURI());
+    Path jarPath = Paths.get(Resources.getResource(JAVA_18_JAR).toURI());
     when(mockJarCommand.getMode()).thenReturn(ProcessingMode.exploded);
     when(mockCommonContainerConfigCliOptions.getFrom()).thenReturn(Optional.of("base-image"));
 
