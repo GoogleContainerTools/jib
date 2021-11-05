@@ -233,7 +233,7 @@ class PullBaseImageStep implements Callable<ImagesAndRegistryClient> {
             progressDispatcher1.newChildProducer().create("trying mirror " + mirror, 2)) {
           RegistryClient registryClient =
               buildContext.newBaseImageRegistryClientFactory(mirror).newRegistryClient();
-          List<Image> images = pullPublicImages(eventHandlers, registryClient, progressDispatcher2);
+          List<Image> images = pullPublicImages(registryClient, progressDispatcher2);
           eventHandlers.dispatch(LogEvent.info("pulled manifest from mirror " + mirror));
           return Optional.of(new ImagesAndRegistryClient(images, registryClient));
 
@@ -249,9 +249,7 @@ class PullBaseImageStep implements Callable<ImagesAndRegistryClient> {
   }
 
   private List<Image> pullPublicImages(
-      EventHandlers eventHandlers,
-      RegistryClient registryClient,
-      ProgressEventDispatcher progressDispatcher)
+      RegistryClient registryClient, ProgressEventDispatcher progressDispatcher)
       throws IOException, RegistryException, LayerCountMismatchException,
           BadContainerConfigurationFormatException {
     try {

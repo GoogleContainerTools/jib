@@ -846,7 +846,7 @@ public class PluginConfigurationProcessorTest {
     when(projectProperties.isWarProject()).thenReturn(false);
 
     assertThat(PluginConfigurationProcessor.getDefaultBaseImage(projectProperties))
-        .isEqualTo("adoptopenjdk:8-jre");
+        .isEqualTo("eclipse-temurin:8-jre");
   }
 
   @Test
@@ -863,15 +863,15 @@ public class PluginConfigurationProcessorTest {
       throws IncompatibleBaseImageJavaVersionException {
     when(projectProperties.getMajorJavaVersion()).thenReturn(6);
     assertThat(PluginConfigurationProcessor.getDefaultBaseImage(projectProperties))
-        .isEqualTo("adoptopenjdk:8-jre");
+        .isEqualTo("eclipse-temurin:8-jre");
 
     when(projectProperties.getMajorJavaVersion()).thenReturn(7);
     assertThat(PluginConfigurationProcessor.getDefaultBaseImage(projectProperties))
-        .isEqualTo("adoptopenjdk:8-jre");
+        .isEqualTo("eclipse-temurin:8-jre");
 
     when(projectProperties.getMajorJavaVersion()).thenReturn(8);
     assertThat(PluginConfigurationProcessor.getDefaultBaseImage(projectProperties))
-        .isEqualTo("adoptopenjdk:8-jre");
+        .isEqualTo("eclipse-temurin:8-jre");
   }
 
   @Test
@@ -879,15 +879,15 @@ public class PluginConfigurationProcessorTest {
       throws IncompatibleBaseImageJavaVersionException {
     when(projectProperties.getMajorJavaVersion()).thenReturn(9);
     assertThat(PluginConfigurationProcessor.getDefaultBaseImage(projectProperties))
-        .isEqualTo("adoptopenjdk:11-jre");
+        .isEqualTo("eclipse-temurin:11-jre");
 
     when(projectProperties.getMajorJavaVersion()).thenReturn(10);
     assertThat(PluginConfigurationProcessor.getDefaultBaseImage(projectProperties))
-        .isEqualTo("adoptopenjdk:11-jre");
+        .isEqualTo("eclipse-temurin:11-jre");
 
     when(projectProperties.getMajorJavaVersion()).thenReturn(11);
     assertThat(PluginConfigurationProcessor.getDefaultBaseImage(projectProperties))
-        .isEqualTo("adoptopenjdk:11-jre");
+        .isEqualTo("eclipse-temurin:11-jre");
   }
 
   @Test
@@ -969,6 +969,26 @@ public class PluginConfigurationProcessorTest {
                     rawConfiguration, projectProperties, inferredAuthProvider));
     assertThat(exception2.getBaseImageMajorJavaVersion()).isEqualTo(8);
     assertThat(exception2.getProjectMajorJavaVersion()).isEqualTo(11);
+
+    when(rawConfiguration.getFromImage()).thenReturn(Optional.of("eclipse-temurin:8"));
+    IncompatibleBaseImageJavaVersionException exception3 =
+        assertThrows(
+            IncompatibleBaseImageJavaVersionException.class,
+            () ->
+                PluginConfigurationProcessor.getJavaContainerBuilderWithBaseImage(
+                    rawConfiguration, projectProperties, inferredAuthProvider));
+    assertThat(exception3.getBaseImageMajorJavaVersion()).isEqualTo(8);
+    assertThat(exception3.getProjectMajorJavaVersion()).isEqualTo(11);
+
+    when(rawConfiguration.getFromImage()).thenReturn(Optional.of("eclipse-temurin:8-jre"));
+    IncompatibleBaseImageJavaVersionException exception4 =
+        assertThrows(
+            IncompatibleBaseImageJavaVersionException.class,
+            () ->
+                PluginConfigurationProcessor.getJavaContainerBuilderWithBaseImage(
+                    rawConfiguration, projectProperties, inferredAuthProvider));
+    assertThat(exception4.getBaseImageMajorJavaVersion()).isEqualTo(8);
+    assertThat(exception4.getProjectMajorJavaVersion()).isEqualTo(11);
   }
 
   @Test
@@ -994,6 +1014,26 @@ public class PluginConfigurationProcessorTest {
                     rawConfiguration, projectProperties, inferredAuthProvider));
     assertThat(exception2.getBaseImageMajorJavaVersion()).isEqualTo(11);
     assertThat(exception2.getProjectMajorJavaVersion()).isEqualTo(15);
+
+    when(rawConfiguration.getFromImage()).thenReturn(Optional.of("eclipse-temurin:11"));
+    IncompatibleBaseImageJavaVersionException exception3 =
+        assertThrows(
+            IncompatibleBaseImageJavaVersionException.class,
+            () ->
+                PluginConfigurationProcessor.getJavaContainerBuilderWithBaseImage(
+                    rawConfiguration, projectProperties, inferredAuthProvider));
+    assertThat(exception3.getBaseImageMajorJavaVersion()).isEqualTo(11);
+    assertThat(exception3.getProjectMajorJavaVersion()).isEqualTo(15);
+
+    when(rawConfiguration.getFromImage()).thenReturn(Optional.of("eclipse-temurin:11-jre"));
+    IncompatibleBaseImageJavaVersionException exception4 =
+        assertThrows(
+            IncompatibleBaseImageJavaVersionException.class,
+            () ->
+                PluginConfigurationProcessor.getJavaContainerBuilderWithBaseImage(
+                    rawConfiguration, projectProperties, inferredAuthProvider));
+    assertThat(exception4.getBaseImageMajorJavaVersion()).isEqualTo(11);
+    assertThat(exception4.getProjectMajorJavaVersion()).isEqualTo(15);
   }
 
   // https://github.com/GoogleContainerTools/jib/issues/1995

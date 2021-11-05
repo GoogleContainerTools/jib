@@ -146,7 +146,7 @@ public class BuildImageStepTest {
             .call();
     Assert.assertEquals("root", image.getUser());
     Assert.assertEquals(
-        testDescriptorDigest, image.getLayers().asList().get(0).getBlobDescriptor().getDigest());
+        testDescriptorDigest, image.getLayers().get(0).getBlobDescriptor().getDigest());
   }
 
   @Test

@@ -736,8 +736,8 @@ public class PluginConfigurationProcessor {
 
   /**
    * Gets the suitable value for the base image. If the raw base image parameter is null, returns
-   * {@code "jetty"} for WAR projects or {@code "adoptopenjdk:8-jre"} or {@code
-   * "adoptopenjdk:11-jre"} for non-WAR.
+   * {@code "jetty"} for WAR projects or {@code "eclipse-temurin:8-jre"} or {@code
+   * "eclipse-temurin:11-jre"} for non-WAR.
    *
    * @param projectProperties used for providing additional information
    * @return the base image
@@ -752,9 +752,9 @@ public class PluginConfigurationProcessor {
     }
     int javaVersion = projectProperties.getMajorJavaVersion();
     if (javaVersion <= 8) {
-      return "adoptopenjdk:8-jre";
+      return "eclipse-temurin:8-jre";
     } else if (javaVersion <= 11) {
-      return "adoptopenjdk:11-jre";
+      return "eclipse-temurin:11-jre";
     }
     throw new IncompatibleBaseImageJavaVersionException(11, javaVersion);
   }
@@ -1054,7 +1054,8 @@ public class PluginConfigurationProcessor {
    * @return {@code true} if the image is a known Java 8 image
    */
   private static boolean isKnownJava8Image(String imageReference) {
-    return imageReference.startsWith("adoptopenjdk:8");
+    return imageReference.startsWith("adoptopenjdk:8")
+        || imageReference.startsWith("eclipse-temurin:8");
   }
 
   /**
@@ -1064,6 +1065,7 @@ public class PluginConfigurationProcessor {
    * @return {@code true} if the image is a known Java 11 image
    */
   private static boolean isKnownJava11Image(String imageReference) {
-    return imageReference.startsWith("adoptopenjdk:11");
+    return imageReference.startsWith("adoptopenjdk:11")
+        || imageReference.startsWith("eclipse-temurin:11");
   }
 }

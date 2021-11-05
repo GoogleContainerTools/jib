@@ -2,13 +2,13 @@
 
 Specification for building a container image.
 
-Although looking similar, the structure and semantics of similary named properties are different from the Docker/[OCI Image Configuration](https://github.com/opencontainers/image-spec/blob/master/config.md).
+Although looking similar, the structure and semantics of similarly named properties are different from the Docker/[OCI Image Configuration](https://github.com/opencontainers/image-spec/blob/master/config.md).
 
 ## Example
 
 ```
 {
-  "baseImage": "adoptopenjdk:11-jre@sha256:318dc2103fb30d0e02c373d04f7c337229268879af9fb3f77f89c6a9037efcb1",
+  "baseImage": "eclipse-temurin:11-jre@sha256:a3036d6a01859e3fe8cbad4887ccb2e4afd5f5ce8f085ca6bc0302fcbb8601f7",
   "architectureHint": "amd64",
   "osHint": "linux",
   "format": "Docker",

@@ -57,7 +57,7 @@ public class JarFiles {
       ConsoleLogger logger)
       throws IOException, InvalidImageReferenceException {
 
-    // Use AdoptOpenJDK image as the default base image.
+    // Use Adoptium Temurin image as the default base image.
     JibContainerBuilder containerBuilder;
     Optional<String> imageReference = commonContainerConfigCliOptions.getFrom();
     if (imageReference.isPresent()) {
@@ -68,9 +68,9 @@ public class JarFiles {
       containerBuilder =
           (processor.getJavaVersion() <= 8)
               ? ContainerBuilders.create(
-                  "adoptopenjdk:8-jre", Collections.emptySet(), commonCliOptions, logger)
+                  "eclipse-temurin:8-jre", Collections.emptySet(), commonCliOptions, logger)
               : ContainerBuilders.create(
-                  "adoptopenjdk:11-jre", Collections.emptySet(), commonCliOptions, logger);
+                  "eclipse-temurin:11-jre", Collections.emptySet(), commonCliOptions, logger);
     }
 
     List<FileEntriesLayer> layers = processor.createLayers();

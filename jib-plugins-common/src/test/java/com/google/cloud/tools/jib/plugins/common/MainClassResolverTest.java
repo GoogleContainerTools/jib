@@ -92,8 +92,7 @@ public class MainClassResolverTest {
         .thenReturn(
             new DirectoryWalker(
                     Paths.get(Resources.getResource("core/class-finder-tests/multiple").toURI()))
-                .walk()
-                .asList());
+                .walk());
 
     try {
       MainClassResolver.resolveMainClass(null, mockProjectProperties);
@@ -126,8 +125,7 @@ public class MainClassResolverTest {
         .thenReturn(
             new DirectoryWalker(
                     Paths.get(Resources.getResource("core/class-finder-tests/multiple").toURI()))
-                .walk()
-                .asList());
+                .walk());
     try {
       MainClassResolver.resolveMainClass(null, mockProjectProperties);
       Assert.fail();

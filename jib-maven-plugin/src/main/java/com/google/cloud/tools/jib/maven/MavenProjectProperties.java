@@ -356,7 +356,7 @@ public class MavenProjectProperties implements ProjectProperties {
 
   @Override
   public List<Path> getClassFiles() throws IOException {
-    return new DirectoryWalker(Paths.get(project.getBuild().getOutputDirectory())).walk().asList();
+    return new DirectoryWalker(Paths.get(project.getBuild().getOutputDirectory())).walk();
   }
 
   @Override

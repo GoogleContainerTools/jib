@@ -78,7 +78,7 @@ public class JarFilesTest {
             mockLogger);
     ContainerBuildPlan buildPlan = containerBuilder.toContainerBuildPlan();
 
-    assertThat(buildPlan.getBaseImage()).isEqualTo("adoptopenjdk:8-jre");
+    assertThat(buildPlan.getBaseImage()).isEqualTo("eclipse-temurin:8-jre");
   }
 
   @Test
@@ -94,7 +94,7 @@ public class JarFilesTest {
             mockLogger);
     ContainerBuildPlan buildPlan = containerBuilder.toContainerBuildPlan();
 
-    assertThat(buildPlan.getBaseImage()).isEqualTo("adoptopenjdk:11-jre");
+    assertThat(buildPlan.getBaseImage()).isEqualTo("eclipse-temurin:11-jre");
   }
 
   @Test
@@ -123,7 +123,7 @@ public class JarFilesTest {
             mockLogger);
     ContainerBuildPlan buildPlan = containerBuilder.toContainerBuildPlan();
 
-    assertThat(buildPlan.getBaseImage()).isEqualTo("adoptopenjdk:8-jre");
+    assertThat(buildPlan.getBaseImage()).isEqualTo("eclipse-temurin:8-jre");
     assertThat(buildPlan.getPlatforms()).isEqualTo(ImmutableSet.of(new Platform("amd64", "linux")));
     assertThat(buildPlan.getCreationTime()).isEqualTo(Instant.EPOCH);
     assertThat(buildPlan.getFormat()).isEqualTo(ImageFormat.Docker);
@@ -172,7 +172,7 @@ public class JarFilesTest {
             mockLogger);
     ContainerBuildPlan buildPlan = containerBuilder.toContainerBuildPlan();
 
-    assertThat(buildPlan.getBaseImage()).isEqualTo("adoptopenjdk:8-jre");
+    assertThat(buildPlan.getBaseImage()).isEqualTo("eclipse-temurin:8-jre");
     assertThat(buildPlan.getPlatforms()).isEqualTo(ImmutableSet.of(new Platform("amd64", "linux")));
     assertThat(buildPlan.getCreationTime()).isEqualTo(Instant.EPOCH);
     assertThat(buildPlan.getFormat()).isEqualTo(ImageFormat.Docker);
@@ -223,7 +223,7 @@ public class JarFilesTest {
             mockLogger);
     ContainerBuildPlan buildPlan = containerBuilder.toContainerBuildPlan();
 
-    assertThat(buildPlan.getBaseImage()).isEqualTo("adoptopenjdk:8-jre");
+    assertThat(buildPlan.getBaseImage()).isEqualTo("eclipse-temurin:8-jre");
     assertThat(buildPlan.getPlatforms()).isEqualTo(ImmutableSet.of(new Platform("amd64", "linux")));
     assertThat(buildPlan.getCreationTime()).isEqualTo(Instant.EPOCH);
     assertThat(buildPlan.getFormat()).isEqualTo(ImageFormat.Docker);
@@ -272,7 +272,7 @@ public class JarFilesTest {
             mockLogger);
     ContainerBuildPlan buildPlan = containerBuilder.toContainerBuildPlan();
 
-    assertThat(buildPlan.getBaseImage()).isEqualTo("adoptopenjdk:8-jre");
+    assertThat(buildPlan.getBaseImage()).isEqualTo("eclipse-temurin:8-jre");
     assertThat(buildPlan.getPlatforms()).isEqualTo(ImmutableSet.of(new Platform("amd64", "linux")));
     assertThat(buildPlan.getCreationTime()).isEqualTo(Instant.EPOCH);
     assertThat(buildPlan.getFormat()).isEqualTo(ImageFormat.Docker);

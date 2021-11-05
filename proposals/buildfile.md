@@ -9,7 +9,7 @@ kind: Buildfile
 
 # "FROM" with detail for manifest lists or multiple architectures
 from:
-  image: "adoptopenjdk:11-jre"
+  image: "eclipse-temurin:11-jre"
   # optional: if missing, then defaults to `linux/amd64`
   platforms:
     - architecture: "arm"
@@ -18,7 +18,7 @@ from:
       os: darwin
 
 # potentially simple form of "FROM" (based on ability to define schema)
-from: "adoptopenjdk:11-jre"
+from: "eclipse-temurin:11-jre"
 
 creationTime: 0 # millis since epoch or iso8601 creation time
 format: Docker # Docker or OCI
