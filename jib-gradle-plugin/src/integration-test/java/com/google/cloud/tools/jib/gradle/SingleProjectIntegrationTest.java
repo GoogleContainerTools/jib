@@ -58,9 +58,9 @@ public class SingleProjectIntegrationTest {
 
   @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
-  private static boolean isJava11RuntimeOrHigher() {
+  private static boolean isJavaRuntimeAtLeast(int version) {
     Iterable<String> split = Splitter.on(".").split(System.getProperty("java.version"));
-    return Integer.valueOf(split.iterator().next()) >= 11;
+    return Integer.valueOf(split.iterator().next()) >= version;
   }
 
   private static String getWorkingDirectory(String imageReference)
@@ -265,9 +265,21 @@ public class SingleProjectIntegrationTest {
   }
 
   @Test
+  public void testDockerDaemon_simpleOnJava17()
+      throws DigestException, IOException, InterruptedException {
+    Assume.assumeTrue(isJavaRuntimeAtLeast(17));
+
+    String targetImage = "simpleimage:gradle" + System.nanoTime();
+    Assert.assertEquals(
+        "Hello, world. \n1970-01-01T00:00:01Z\n",
+        JibRunHelper.buildToDockerDaemonAndRun(
+            simpleTestProject, targetImage, "build-java17.gradle"));
+  }
+
+  @Test
   public void testDockerDaemon_simpleOnJava11()
       throws DigestException, IOException, InterruptedException {
-    Assume.assumeTrue(isJava11RuntimeOrHigher());
+    Assume.assumeTrue(isJavaRuntimeAtLeast(11));
 
     String targetImage = "simpleimage:gradle" + System.nanoTime();
     Assert.assertEquals(
@@ -279,7 +291,7 @@ public class SingleProjectIntegrationTest {
   @Test
   public void testDockerDaemon_simpleWithIncompatibleJava11()
       throws DigestException, IOException, InterruptedException {
-    Assume.assumeTrue(isJava11RuntimeOrHigher());
+    Assume.assumeTrue(isJavaRuntimeAtLeast(11));
 
     try {
       JibRunHelper.buildToDockerDaemonAndRun(
