@@ -862,20 +862,16 @@ public class PluginConfigurationProcessorTest {
         .isEqualTo("jetty");
   }
 
-  @SuppressWarnings("unused")
-  private static Object[][] javaVersionAndBaseImage() {
-    return new Object[][] {
-      {6, "eclipse-temurin:8-jre"},
-      {8, "eclipse-temurin:8-jre"},
-      {9, "eclipse-temurin:11-jre"},
-      {11, "eclipse-temurin:11-jre"},
-      {13, "azul/zulu-openjdk:17-jre"},
-      {17, "azul/zulu-openjdk:17-jre"},
-    };
-  }
-
   @Test
-  @Parameters(method = "javaVersionAndBaseImage")
+  @Parameters(
+      value = {
+        "6, eclipse-temurin:8-jre",
+        "8, eclipse-temurin:8-jre",
+        "9, eclipse-temurin:11-jre",
+        "11, eclipse-temurin:11-jre",
+        "13, azul/zulu-openjdk:17-jre",
+        "17, azul/zulu-openjdk:17-jre"
+      })
   public void testGetDefaultBaseImage_defaultJavaBaseImage(
       int javaVersion, String expectedBaseImage) throws IncompatibleBaseImageJavaVersionException {
     when(projectProperties.getMajorJavaVersion()).thenReturn(javaVersion);
@@ -939,23 +935,19 @@ public class PluginConfigurationProcessorTest {
     assertThat(result.getTarPath()).isEmpty();
   }
 
-  @SuppressWarnings("unused")
-  private static Object[][] baseImageAndJavaVersions() {
-    return new Object[][] {
-      {"adoptopenjdk:8", 8, 11},
-      {"adoptopenjdk:8-jre", 8, 11},
-      {"eclipse-temurin:8", 8, 11},
-      {"eclipse-temurin:8-jre", 8, 11},
-      {"adoptopenjdk:11", 11, 15},
-      {"adoptopenjdk:11-jre", 11, 15},
-      {"eclipse-temurin:11", 11, 15},
-      {"eclipse-temurin:11-jre", 11, 15},
-      {"azul/zulu-openjdk:17-jr", 17, 19},
-    };
-  }
-
   @Test
-  @Parameters(method = "baseImageAndJavaVersions")
+  @Parameters(
+      value = {
+        "adoptopenjdk:8, 8, 11",
+        "adoptopenjdk:8-jre, 8, 11",
+        "eclipse-temurin:8, 8, 11",
+        "eclipse-temurin:8-jre, 8, 11",
+        "adoptopenjdk:11, 11, 15",
+        "adoptopenjdk:11-jre, 11, 15",
+        "eclipse-temurin:11, 11, 15",
+        "eclipse-temurin:11-jre, 11, 15",
+        "azul/zulu-openjdk:17-jr, 17, 19"
+      })
   public void testGetJavaContainerBuilderWithBaseImage_incompatibleJavaBaseImage(
       String baseImage, int baseImageJavaVersion, int appJavaVersion) {
     when(projectProperties.getMajorJavaVersion()).thenReturn(appJavaVersion);
