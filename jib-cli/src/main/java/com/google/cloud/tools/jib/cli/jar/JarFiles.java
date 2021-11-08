@@ -55,15 +55,7 @@ public class JarFiles {
       CommonContainerConfigCliOptions commonContainerConfigCliOptions,
       ConsoleLogger logger)
       throws IOException, InvalidImageReferenceException {
-    String imageReference =
-        commonContainerConfigCliOptions
-            .getFrom()
-            .orElse(
-                processor.getJavaVersion() <= 8
-                    ? "eclipse-temurin:8-jre"
-                    : processor.getJavaVersion() <= 11
-                        ? "eclipse-temurin:11-jre"
-                        : "azul/zulu-openjdk:17-jre");
+    String imageReference = deriveBaseImage(processor, commonContainerConfigCliOptions);
     JibContainerBuilder containerBuilder =
         ContainerBuilders.create(imageReference, Collections.emptySet(), commonCliOptions, logger);
 
@@ -87,5 +79,17 @@ public class JarFiles {
     commonContainerConfigCliOptions.getCreationTime().ifPresent(containerBuilder::setCreationTime);
 
     return containerBuilder;
+  }
+
+  private static String deriveBaseImage(
+      ArtifactProcessor processor, CommonContainerConfigCliOptions cliOptions) {
+    return cliOptions
+        .getFrom()
+        .orElse(
+            processor.getJavaVersion() <= 8
+                ? "eclipse-temurin:8-jre"
+                : processor.getJavaVersion() <= 11
+                    ? "eclipse-temurin:11-jre"
+                    : "azul/zulu-openjdk:17-jre");
   }
 }

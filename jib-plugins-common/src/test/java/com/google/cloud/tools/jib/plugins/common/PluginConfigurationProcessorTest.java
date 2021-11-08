@@ -66,6 +66,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
 import javax.annotation.Nullable;
+import junitparams.JUnitParamsRunner;
+import junitparams.Parameters;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -76,10 +78,10 @@ import org.mockito.Answers;
 import org.mockito.ArgumentMatcher;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.MockitoAnnotations;
 
 /** Tests for {@link PluginConfigurationProcessor}. */
-@RunWith(MockitoJUnitRunner.class)
+@RunWith(JUnitParamsRunner.class)
 public class PluginConfigurationProcessorTest {
 
   private static class TestPlatformConfiguration implements PlatformConfiguration {
@@ -163,7 +165,9 @@ public class PluginConfigurationProcessorTest {
   private final JibContainerBuilder jibContainerBuilder = Jib.fromScratch();
 
   @Before
-  public void setUp() throws IOException, InvalidImageReferenceException, InferredAuthException {
+  public void setUp() throws Exception {
+    MockitoAnnotations.openMocks(this).close();
+
     when(rawConfiguration.getFromAuth()).thenReturn(authProperty);
     when(rawConfiguration.getEntrypoint()).thenReturn(Optional.empty());
     when(rawConfiguration.getAppRoot()).thenReturn("/app");
@@ -962,109 +966,36 @@ public class PluginConfigurationProcessorTest {
     assertThat(result.getTarPath()).isEmpty();
   }
 
-  @Test
-  public void testGetJavaContainerBuilderWithBaseImage_incompatibleJava8BaseImage() {
-    when(projectProperties.getMajorJavaVersion()).thenReturn(11);
-
-    when(rawConfiguration.getFromImage()).thenReturn(Optional.of("adoptopenjdk:8"));
-    IncompatibleBaseImageJavaVersionException exception1 =
-        assertThrows(
-            IncompatibleBaseImageJavaVersionException.class,
-            () ->
-                PluginConfigurationProcessor.getJavaContainerBuilderWithBaseImage(
-                    rawConfiguration, projectProperties, inferredAuthProvider));
-    assertThat(exception1.getBaseImageMajorJavaVersion()).isEqualTo(8);
-    assertThat(exception1.getProjectMajorJavaVersion()).isEqualTo(11);
-
-    when(rawConfiguration.getFromImage()).thenReturn(Optional.of("adoptopenjdk:8-jre"));
-    IncompatibleBaseImageJavaVersionException exception2 =
-        assertThrows(
-            IncompatibleBaseImageJavaVersionException.class,
-            () ->
-                PluginConfigurationProcessor.getJavaContainerBuilderWithBaseImage(
-                    rawConfiguration, projectProperties, inferredAuthProvider));
-    assertThat(exception2.getBaseImageMajorJavaVersion()).isEqualTo(8);
-    assertThat(exception2.getProjectMajorJavaVersion()).isEqualTo(11);
-
-    when(rawConfiguration.getFromImage()).thenReturn(Optional.of("eclipse-temurin:8"));
-    IncompatibleBaseImageJavaVersionException exception3 =
-        assertThrows(
-            IncompatibleBaseImageJavaVersionException.class,
-            () ->
-                PluginConfigurationProcessor.getJavaContainerBuilderWithBaseImage(
-                    rawConfiguration, projectProperties, inferredAuthProvider));
-    assertThat(exception3.getBaseImageMajorJavaVersion()).isEqualTo(8);
-    assertThat(exception3.getProjectMajorJavaVersion()).isEqualTo(11);
-
-    when(rawConfiguration.getFromImage()).thenReturn(Optional.of("eclipse-temurin:8-jre"));
-    IncompatibleBaseImageJavaVersionException exception4 =
-        assertThrows(
-            IncompatibleBaseImageJavaVersionException.class,
-            () ->
-                PluginConfigurationProcessor.getJavaContainerBuilderWithBaseImage(
-                    rawConfiguration, projectProperties, inferredAuthProvider));
-    assertThat(exception4.getBaseImageMajorJavaVersion()).isEqualTo(8);
-    assertThat(exception4.getProjectMajorJavaVersion()).isEqualTo(11);
+  @SuppressWarnings("unused")
+  private Object[][] paramsBaseImageAndJavaVersions() {
+    return new Object[][] {
+      {"adoptopenjdk:8", 8, 11},
+      {"adoptopenjdk:8-jre", 8, 11},
+      {"eclipse-temurin:8", 8, 11},
+      {"eclipse-temurin:8-jre", 8, 11},
+      {"adoptopenjdk:11", 11, 15},
+      {"adoptopenjdk:11-jre", 11, 15},
+      {"eclipse-temurin:11", 11, 15},
+      {"eclipse-temurin:11-jre", 11, 15},
+      {"azul/zulu-openjdk:17-jr", 17, 19},
+    };
   }
 
   @Test
-  public void testGetJavaContainerBuilderWithBaseImage_incompatibleJava11BaseImage() {
-    when(projectProperties.getMajorJavaVersion()).thenReturn(15);
+  @Parameters(method = "paramsBaseImageAndJavaVersions")
+  public void testGetJavaContainerBuilderWithBaseImage_incompatibleJavaBaseImage(
+      String baseImage, int baseImageJavaVersion, int appJavaVersion) {
+    when(projectProperties.getMajorJavaVersion()).thenReturn(appJavaVersion);
 
-    when(rawConfiguration.getFromImage()).thenReturn(Optional.of("adoptopenjdk:11"));
-    IncompatibleBaseImageJavaVersionException exception1 =
+    when(rawConfiguration.getFromImage()).thenReturn(Optional.of(baseImage));
+    IncompatibleBaseImageJavaVersionException exception =
         assertThrows(
             IncompatibleBaseImageJavaVersionException.class,
             () ->
                 PluginConfigurationProcessor.getJavaContainerBuilderWithBaseImage(
                     rawConfiguration, projectProperties, inferredAuthProvider));
-    assertThat(exception1.getBaseImageMajorJavaVersion()).isEqualTo(11);
-    assertThat(exception1.getProjectMajorJavaVersion()).isEqualTo(15);
-
-    when(rawConfiguration.getFromImage()).thenReturn(Optional.of("adoptopenjdk:11-jre"));
-    IncompatibleBaseImageJavaVersionException exception2 =
-        assertThrows(
-            IncompatibleBaseImageJavaVersionException.class,
-            () ->
-                PluginConfigurationProcessor.getJavaContainerBuilderWithBaseImage(
-                    rawConfiguration, projectProperties, inferredAuthProvider));
-    assertThat(exception2.getBaseImageMajorJavaVersion()).isEqualTo(11);
-    assertThat(exception2.getProjectMajorJavaVersion()).isEqualTo(15);
-
-    when(rawConfiguration.getFromImage()).thenReturn(Optional.of("eclipse-temurin:11"));
-    IncompatibleBaseImageJavaVersionException exception3 =
-        assertThrows(
-            IncompatibleBaseImageJavaVersionException.class,
-            () ->
-                PluginConfigurationProcessor.getJavaContainerBuilderWithBaseImage(
-                    rawConfiguration, projectProperties, inferredAuthProvider));
-    assertThat(exception3.getBaseImageMajorJavaVersion()).isEqualTo(11);
-    assertThat(exception3.getProjectMajorJavaVersion()).isEqualTo(15);
-
-    when(rawConfiguration.getFromImage()).thenReturn(Optional.of("eclipse-temurin:11-jre"));
-    IncompatibleBaseImageJavaVersionException exception4 =
-        assertThrows(
-            IncompatibleBaseImageJavaVersionException.class,
-            () ->
-                PluginConfigurationProcessor.getJavaContainerBuilderWithBaseImage(
-                    rawConfiguration, projectProperties, inferredAuthProvider));
-    assertThat(exception4.getBaseImageMajorJavaVersion()).isEqualTo(11);
-    assertThat(exception4.getProjectMajorJavaVersion()).isEqualTo(15);
-  }
-
-  @Test
-  public void testGetJavaContainerBuilderWithBaseImage_incompatibleJava17BaseImage() {
-    when(projectProperties.getMajorJavaVersion()).thenReturn(19);
-
-    when(rawConfiguration.getFromImage()).thenReturn(Optional.of("azul/zulu-openjdk:17-jre"));
-    IncompatibleBaseImageJavaVersionException exception4 =
-        assertThrows(
-            IncompatibleBaseImageJavaVersionException.class,
-            () ->
-                PluginConfigurationProcessor.getJavaContainerBuilderWithBaseImage(
-                    rawConfiguration, projectProperties, inferredAuthProvider));
-    assertThat(exception4.getBaseImageMajorJavaVersion()).isEqualTo(17);
-    assertThat(exception4.getProjectMajorJavaVersion()).isEqualTo(19);
+    assertThat(exception.getBaseImageMajorJavaVersion()).isEqualTo(baseImageJavaVersion);
+    assertThat(exception.getProjectMajorJavaVersion()).isEqualTo(appJavaVersion);
   }
 
   // https://github.com/GoogleContainerTools/jib/issues/1995

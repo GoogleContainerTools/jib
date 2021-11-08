@@ -739,8 +739,8 @@ public class PluginConfigurationProcessor {
 
   /**
    * Gets the suitable value for the base image. If the raw base image parameter is null, returns
-   * {@code "jetty"} for WAR projects or {@code "eclipse-temurin:8-jre"}, or {@code
-   * "eclipse-temurin:{8|11}-jre"} or {@code "azul/zulu-openjdk:17-jre"} for non-WAR.
+   * {@code "jetty"} for WAR projects, or {@code "eclipse-temurin:{8|11}-jre"} or {@code
+   * "azul/zulu-openjdk:17-jre"} for non-WAR.
    *
    * @param projectProperties used for providing additional information
    * @return the base image
