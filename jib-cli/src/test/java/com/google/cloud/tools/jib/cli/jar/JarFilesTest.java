@@ -40,14 +40,20 @@ import java.nio.file.Paths;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.Optional;
+import junitparams.JUnitParamsRunner;
+import junitparams.Parameters;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnit;
+import org.mockito.junit.MockitoRule;
 
 /** Tests for {@link JarFiles}. */
-@RunWith(MockitoJUnitRunner.class)
+@RunWith(JUnitParamsRunner.class)
 public class JarFilesTest {
+
+  @Rule public final MockitoRule mockitoRule = MockitoJUnit.rule();
 
   @Mock private StandardExplodedProcessor mockStandardExplodedProcessor;
 
@@ -65,26 +71,21 @@ public class JarFilesTest {
 
   @Mock private ConsoleLogger mockLogger;
 
-  @Test
-  public void testToJibContainer_defaultBaseImage_java8()
-      throws IOException, InvalidImageReferenceException {
-    when(mockStandardExplodedProcessor.getJavaVersion()).thenReturn(8);
-    JibContainerBuilder containerBuilder =
-        JarFiles.toJibContainerBuilder(
-            mockStandardExplodedProcessor,
-            mockJarCommand,
-            mockCommonCliOptions,
-            mockCommonContainerConfigCliOptions,
-            mockLogger);
-    ContainerBuildPlan buildPlan = containerBuilder.toContainerBuildPlan();
-
-    assertThat(buildPlan.getBaseImage()).isEqualTo("eclipse-temurin:8-jre");
+  @SuppressWarnings("unused")
+  private Object[][] paramsJavaVersionAndBaseImage() {
+    return new Object[][] {
+      {8, "eclipse-temurin:8-jre"},
+      {9, "eclipse-temurin:11-jre"},
+      {11, "eclipse-temurin:11-jre"},
+      {13, "azul/zulu-openjdk:17-jre"},
+    };
   }
 
   @Test
-  public void testToJibContainer_defaultBaseImage_java9()
+  @Parameters(method = "paramsJavaVersionAndBaseImage")
+  public void testToJibContainer_defaultBaseImage(int javaVersion, String expectedBaseImage)
       throws IOException, InvalidImageReferenceException {
-    when(mockStandardExplodedProcessor.getJavaVersion()).thenReturn(9);
+    when(mockStandardExplodedProcessor.getJavaVersion()).thenReturn(javaVersion);
     JibContainerBuilder containerBuilder =
         JarFiles.toJibContainerBuilder(
             mockStandardExplodedProcessor,
@@ -94,39 +95,7 @@ public class JarFilesTest {
             mockLogger);
     ContainerBuildPlan buildPlan = containerBuilder.toContainerBuildPlan();
 
-    assertThat(buildPlan.getBaseImage()).isEqualTo("eclipse-temurin:11-jre");
-  }
-
-  @Test
-  public void testToJibContainer_defaultBaseImage_java11()
-      throws IOException, InvalidImageReferenceException {
-    when(mockStandardExplodedProcessor.getJavaVersion()).thenReturn(11);
-    JibContainerBuilder containerBuilder =
-        JarFiles.toJibContainerBuilder(
-            mockStandardExplodedProcessor,
-            mockJarCommand,
-            mockCommonCliOptions,
-            mockCommonContainerConfigCliOptions,
-            mockLogger);
-    ContainerBuildPlan buildPlan = containerBuilder.toContainerBuildPlan();
-
-    assertThat(buildPlan.getBaseImage()).isEqualTo("eclipse-temurin:11-jre");
-  }
-
-  @Test
-  public void testToJibContainer_defaultBaseImage_java13()
-      throws IOException, InvalidImageReferenceException {
-    when(mockStandardExplodedProcessor.getJavaVersion()).thenReturn(13);
-    JibContainerBuilder containerBuilder =
-        JarFiles.toJibContainerBuilder(
-            mockStandardExplodedProcessor,
-            mockJarCommand,
-            mockCommonCliOptions,
-            mockCommonContainerConfigCliOptions,
-            mockLogger);
-    ContainerBuildPlan buildPlan = containerBuilder.toContainerBuildPlan();
-
-    assertThat(buildPlan.getBaseImage()).isEqualTo("azul/zulu-openjdk:17-jre");
+    assertThat(buildPlan.getBaseImage()).isEqualTo(expectedBaseImage);
   }
 
   @Test

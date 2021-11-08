@@ -78,7 +78,8 @@ import org.mockito.Answers;
 import org.mockito.ArgumentMatcher;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.MockitoAnnotations;
+import org.mockito.junit.MockitoJUnit;
+import org.mockito.junit.MockitoRule;
 
 /** Tests for {@link PluginConfigurationProcessor}. */
 @RunWith(JUnitParamsRunner.class)
@@ -149,6 +150,7 @@ public class PluginConfigurationProcessorTest {
         .getEntries();
   }
 
+  @Rule public final MockitoRule mockitoRule = MockitoJUnit.rule();
   @Rule public final RestoreSystemProperties systemPropertyRestorer = new RestoreSystemProperties();
   @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
@@ -165,9 +167,7 @@ public class PluginConfigurationProcessorTest {
   private final JibContainerBuilder jibContainerBuilder = Jib.fromScratch();
 
   @Before
-  public void setUp() throws Exception {
-    MockitoAnnotations.openMocks(this).close();
-
+  public void setUp() throws IOException, InvalidImageReferenceException, InferredAuthException {
     when(rawConfiguration.getFromAuth()).thenReturn(authProperty);
     when(rawConfiguration.getEntrypoint()).thenReturn(Optional.empty());
     when(rawConfiguration.getAppRoot()).thenReturn("/app");
