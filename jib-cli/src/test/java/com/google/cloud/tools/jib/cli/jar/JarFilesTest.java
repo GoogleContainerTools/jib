@@ -72,7 +72,7 @@ public class JarFilesTest {
   @Mock private ConsoleLogger mockLogger;
 
   @SuppressWarnings("unused")
-  private static Object[][] paramsJavaVersionAndBaseImage() {
+  private static Object[][] javaVersionAndBaseImage() {
     return new Object[][] {
       {8, "eclipse-temurin:8-jre"},
       {9, "eclipse-temurin:11-jre"},
@@ -83,7 +83,7 @@ public class JarFilesTest {
   }
 
   @Test
-  @Parameters(method = "paramsJavaVersionAndBaseImage")
+  @Parameters(method = "javaVersionAndBaseImage")
   public void testToJibContainer_defaultBaseImage(int javaVersion, String expectedBaseImage)
       throws IOException, InvalidImageReferenceException {
     when(mockStandardExplodedProcessor.getJavaVersion()).thenReturn(javaVersion);

@@ -863,7 +863,7 @@ public class PluginConfigurationProcessorTest {
   }
 
   @SuppressWarnings("unused")
-  private static Object[][] paramsJavaVersionAndBaseImage() {
+  private static Object[][] javaVersionAndBaseImage() {
     return new Object[][] {
       {6, "eclipse-temurin:8-jre"},
       {8, "eclipse-temurin:8-jre"},
@@ -875,7 +875,7 @@ public class PluginConfigurationProcessorTest {
   }
 
   @Test
-  @Parameters(method = "paramsJavaVersionAndBaseImage")
+  @Parameters(method = "javaVersionAndBaseImage")
   public void testGetDefaultBaseImage_defaultJavaBaseImage(
       int javaVersion, String expectedBaseImage) throws IncompatibleBaseImageJavaVersionException {
     when(projectProperties.getMajorJavaVersion()).thenReturn(javaVersion);
@@ -940,7 +940,7 @@ public class PluginConfigurationProcessorTest {
   }
 
   @SuppressWarnings("unused")
-  private static Object[][] paramsBaseImageAndJavaVersions() {
+  private static Object[][] baseImageAndJavaVersions() {
     return new Object[][] {
       {"adoptopenjdk:8", 8, 11},
       {"adoptopenjdk:8-jre", 8, 11},
@@ -955,7 +955,7 @@ public class PluginConfigurationProcessorTest {
   }
 
   @Test
-  @Parameters(method = "paramsBaseImageAndJavaVersions")
+  @Parameters(method = "baseImageAndJavaVersions")
   public void testGetJavaContainerBuilderWithBaseImage_incompatibleJavaBaseImage(
       String baseImage, int baseImageJavaVersion, int appJavaVersion) {
     when(projectProperties.getMajorJavaVersion()).thenReturn(appJavaVersion);
