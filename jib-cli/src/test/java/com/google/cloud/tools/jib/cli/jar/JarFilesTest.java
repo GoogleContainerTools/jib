@@ -53,7 +53,7 @@ import org.mockito.junit.MockitoRule;
 @RunWith(JUnitParamsRunner.class)
 public class JarFilesTest {
 
-  @Rule public final MockitoRule mockitoRule = MockitoJUnit.rule();
+  @Rule public final MockitoRule mockitoRule = MockitoJUnit.rule().silent();
 
   @Mock private StandardExplodedProcessor mockStandardExplodedProcessor;
 
@@ -72,12 +72,13 @@ public class JarFilesTest {
   @Mock private ConsoleLogger mockLogger;
 
   @SuppressWarnings("unused")
-  private Object[][] paramsJavaVersionAndBaseImage() {
+  private static Object[][] paramsJavaVersionAndBaseImage() {
     return new Object[][] {
       {8, "eclipse-temurin:8-jre"},
       {9, "eclipse-temurin:11-jre"},
       {11, "eclipse-temurin:11-jre"},
       {13, "azul/zulu-openjdk:17-jre"},
+      {17, "azul/zulu-openjdk:17-jre"},
     };
   }
 

@@ -150,7 +150,7 @@ public class PluginConfigurationProcessorTest {
         .getEntries();
   }
 
-  @Rule public final MockitoRule mockitoRule = MockitoJUnit.rule();
+  @Rule public final MockitoRule mockitoRule = MockitoJUnit.rule().silent();
   @Rule public final RestoreSystemProperties systemPropertyRestorer = new RestoreSystemProperties();
   @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
@@ -862,52 +862,25 @@ public class PluginConfigurationProcessorTest {
         .isEqualTo("jetty");
   }
 
-  @Test
-  public void testGetDefaultBaseImage_chooseJava8BaseImage()
-      throws IncompatibleBaseImageJavaVersionException {
-    when(projectProperties.getMajorJavaVersion()).thenReturn(6);
-    assertThat(PluginConfigurationProcessor.getDefaultBaseImage(projectProperties))
-        .isEqualTo("eclipse-temurin:8-jre");
-
-    when(projectProperties.getMajorJavaVersion()).thenReturn(7);
-    assertThat(PluginConfigurationProcessor.getDefaultBaseImage(projectProperties))
-        .isEqualTo("eclipse-temurin:8-jre");
-
-    when(projectProperties.getMajorJavaVersion()).thenReturn(8);
-    assertThat(PluginConfigurationProcessor.getDefaultBaseImage(projectProperties))
-        .isEqualTo("eclipse-temurin:8-jre");
+  @SuppressWarnings("unused")
+  private static Object[][] paramsJavaVersionAndBaseImage() {
+    return new Object[][] {
+      {6, "eclipse-temurin:8-jre"},
+      {8, "eclipse-temurin:8-jre"},
+      {9, "eclipse-temurin:11-jre"},
+      {11, "eclipse-temurin:11-jre"},
+      {13, "azul/zulu-openjdk:17-jre"},
+      {17, "azul/zulu-openjdk:17-jre"},
+    };
   }
 
   @Test
-  public void testGetDefaultBaseImage_chooseJava11BaseImage()
-      throws IncompatibleBaseImageJavaVersionException {
-    when(projectProperties.getMajorJavaVersion()).thenReturn(9);
+  @Parameters(method = "paramsJavaVersionAndBaseImage")
+  public void testGetDefaultBaseImage_defaultJavaBaseImage(
+      int javaVersion, String expectedBaseImage) throws IncompatibleBaseImageJavaVersionException {
+    when(projectProperties.getMajorJavaVersion()).thenReturn(javaVersion);
     assertThat(PluginConfigurationProcessor.getDefaultBaseImage(projectProperties))
-        .isEqualTo("eclipse-temurin:11-jre");
-
-    when(projectProperties.getMajorJavaVersion()).thenReturn(10);
-    assertThat(PluginConfigurationProcessor.getDefaultBaseImage(projectProperties))
-        .isEqualTo("eclipse-temurin:11-jre");
-
-    when(projectProperties.getMajorJavaVersion()).thenReturn(11);
-    assertThat(PluginConfigurationProcessor.getDefaultBaseImage(projectProperties))
-        .isEqualTo("eclipse-temurin:11-jre");
-  }
-
-  @Test
-  public void testGetDefaultBaseImage_chooseJava17BaseImage()
-      throws IncompatibleBaseImageJavaVersionException {
-    when(projectProperties.getMajorJavaVersion()).thenReturn(12);
-    assertThat(PluginConfigurationProcessor.getDefaultBaseImage(projectProperties))
-        .isEqualTo("azul/zulu-openjdk:17-jre");
-
-    when(projectProperties.getMajorJavaVersion()).thenReturn(15);
-    assertThat(PluginConfigurationProcessor.getDefaultBaseImage(projectProperties))
-        .isEqualTo("azul/zulu-openjdk:17-jre");
-
-    when(projectProperties.getMajorJavaVersion()).thenReturn(17);
-    assertThat(PluginConfigurationProcessor.getDefaultBaseImage(projectProperties))
-        .isEqualTo("azul/zulu-openjdk:17-jre");
+        .isEqualTo(expectedBaseImage);
   }
 
   @Test
@@ -967,7 +940,7 @@ public class PluginConfigurationProcessorTest {
   }
 
   @SuppressWarnings("unused")
-  private Object[][] paramsBaseImageAndJavaVersions() {
+  private static Object[][] paramsBaseImageAndJavaVersions() {
     return new Object[][] {
       {"adoptopenjdk:8", 8, 11},
       {"adoptopenjdk:8-jre", 8, 11},
