@@ -467,7 +467,7 @@ public class SingleProjectIntegrationTest {
         buildResult, "jibDockerBuild", "Built image to Docker daemon as ");
     JibRunHelper.assertThatExpectedImageDigestAndIdReturned(simpleTestProject.getProjectRoot());
     assertThat(buildResult.getOutput()).contains(targetImage);
-    assertThat(buildResult.getOutput()).contains("Docker load called. value0 value2");
+    assertThat(buildResult.getOutput()).contains("Docker load called. value1 value2");
   }
 
   @Test

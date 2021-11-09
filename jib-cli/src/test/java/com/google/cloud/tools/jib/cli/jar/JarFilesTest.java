@@ -56,19 +56,12 @@ public class JarFilesTest {
   @Rule public final MockitoRule mockitoRule = MockitoJUnit.rule().silent();
 
   @Mock private StandardExplodedProcessor mockStandardExplodedProcessor;
-
   @Mock private StandardPackagedProcessor mockStandardPackagedProcessor;
-
   @Mock private SpringBootExplodedProcessor mockSpringBootExplodedProcessor;
-
   @Mock private SpringBootPackagedProcessor mockSpringBootPackagedProcessor;
-
   @Mock private Jar mockJarCommand;
-
   @Mock private CommonCliOptions mockCommonCliOptions;
-
   @Mock private CommonContainerConfigCliOptions mockCommonContainerConfigCliOptions;
-
   @Mock private ConsoleLogger mockLogger;
 
   @Test
