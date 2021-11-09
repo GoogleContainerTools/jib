@@ -7,6 +7,8 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
+- Changed the default base image from the `adoptopenjdk` images to the [`eclipse-temurin`](https://hub.docker.com/_/eclipse-temurin) (for Java 8 and 11) and [`azul/zulu-openjdk`](https://hub.docker.com/r/azul/zulu-openjdk) (for Java 17) images on Docker Hub. Note that Temurin (by Adoptium) is the new name of AdoptOpenJDK. ([#3491](https://github.com/GoogleContainerTools/jib/pull/3491))
+
 ### Fixed
 
 ## 3.1.4

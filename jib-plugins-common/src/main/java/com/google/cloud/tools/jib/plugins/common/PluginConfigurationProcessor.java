@@ -514,6 +514,9 @@ public class PluginConfigurationProcessor {
     if (isKnownJava11Image(prefixRemoved) && javaVersion > 11) {
       throw new IncompatibleBaseImageJavaVersionException(11, javaVersion);
     }
+    if (isKnownJava17Image(prefixRemoved) && javaVersion > 17) {
+      throw new IncompatibleBaseImageJavaVersionException(17, javaVersion);
+    }
 
     ImageReference baseImageReference = ImageReference.parse(prefixRemoved);
     if (baseImageConfig.startsWith(Jib.DOCKER_DAEMON_IMAGE_PREFIX)) {
@@ -736,8 +739,8 @@ public class PluginConfigurationProcessor {
 
   /**
    * Gets the suitable value for the base image. If the raw base image parameter is null, returns
-   * {@code "jetty"} for WAR projects or {@code "adoptopenjdk:8-jre"} or {@code
-   * "adoptopenjdk:11-jre"} for non-WAR.
+   * {@code "jetty"} for WAR projects, or {@code "eclipse-temurin:{8|11}-jre"} or {@code
+   * "azul/zulu-openjdk:17-jre"} for non-WAR.
    *
    * @param projectProperties used for providing additional information
    * @return the base image
@@ -752,11 +755,13 @@ public class PluginConfigurationProcessor {
     }
     int javaVersion = projectProperties.getMajorJavaVersion();
     if (javaVersion <= 8) {
-      return "adoptopenjdk:8-jre";
+      return "eclipse-temurin:8-jre";
     } else if (javaVersion <= 11) {
-      return "adoptopenjdk:11-jre";
+      return "eclipse-temurin:11-jre";
+    } else if (javaVersion <= 17) {
+      return "azul/zulu-openjdk:17-jre";
     }
-    throw new IncompatibleBaseImageJavaVersionException(11, javaVersion);
+    throw new IncompatibleBaseImageJavaVersionException(17, javaVersion);
   }
 
   /**
@@ -1054,7 +1059,8 @@ public class PluginConfigurationProcessor {
    * @return {@code true} if the image is a known Java 8 image
    */
   private static boolean isKnownJava8Image(String imageReference) {
-    return imageReference.startsWith("adoptopenjdk:8");
+    return imageReference.startsWith("adoptopenjdk:8")
+        || imageReference.startsWith("eclipse-temurin:8");
   }
 
   /**
@@ -1064,6 +1070,17 @@ public class PluginConfigurationProcessor {
    * @return {@code true} if the image is a known Java 11 image
    */
   private static boolean isKnownJava11Image(String imageReference) {
-    return imageReference.startsWith("adoptopenjdk:11");
+    return imageReference.startsWith("adoptopenjdk:11")
+        || imageReference.startsWith("eclipse-temurin:11");
+  }
+
+  /**
+   * Checks if the given image is a known Java 17 image. May return false negative.
+   *
+   * @param imageReference the image reference
+   * @return {@code true} if the image is a known Java 17 image
+   */
+  private static boolean isKnownJava17Image(String imageReference) {
+    return imageReference.startsWith("azul/zulu-openjdk:17");
   }
 }

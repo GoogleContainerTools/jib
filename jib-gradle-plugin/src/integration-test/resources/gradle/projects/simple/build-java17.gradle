@@ -1,0 +1,17 @@
+plugins {
+  id 'java'
+  id 'com.google.cloud.tools.jib'
+}
+
+sourceCompatibility = 17
+targetCompatibility = 17
+
+repositories {
+  mavenCentral()
+}
+
+dependencies {
+  compile files('libs/dependency-1.0.0.jar')
+}
+
+jib.to.image = System.getProperty("_TARGET_IMAGE")
