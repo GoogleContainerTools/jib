@@ -16,6 +16,9 @@
 
 package com.google.cloud.tools.jib.cli.buildfile;
 
+import static com.google.common.truth.Truth.assertThat;
+import static org.junit.Assert.assertThrows;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -23,16 +26,16 @@ import com.fasterxml.jackson.databind.exc.UnrecognizedPropertyException;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.google.cloud.tools.jib.api.buildplan.FilePermissions;
 import java.time.Instant;
-import java.util.Arrays;
-import java.util.Collection;
+import junitparams.JUnitParamsRunner;
+import junitparams.Parameters;
 import org.hamcrest.CoreMatchers;
 import org.hamcrest.MatcherAssert;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
 
 /** Tests for {@link FilePropertiesSpec}. */
+@RunWith(JUnitParamsRunner.class)
 public class FilePropertiesSpecTest {
 
   private static final ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
@@ -116,41 +119,29 @@ public class FilePropertiesSpecTest {
     }
   }
 
-  @RunWith(Parameterized.class)
-  public static class OptionalStringTests {
+  @Test
+  @Parameters(value = {"filePermissions", "directoryPermissions", "user", "group", "timestamp"})
+  public void testFilePropertiesSpec_noEmptyValues(String fieldName) {
+    String data = fieldName + ": ' '";
 
-    @Parameterized.Parameters(name = "{0}")
-    public static Collection<Object[]> data() {
-      return Arrays.asList(
-          new Object[][] {
-            {"filePermissions"}, {"directoryPermissions"}, {"user"}, {"group"}, {"timestamp"}
-          });
-    }
+    Exception exception =
+        assertThrows(
+            JsonProcessingException.class, () -> mapper.readValue(data, FilePropertiesSpec.class));
+    assertThat(exception)
+        .hasCauseThat()
+        .hasMessageThat()
+        .isEqualTo("Property '" + fieldName + "' cannot be an empty string");
+  }
 
-    @Parameterized.Parameter public String fieldName;
+  @Test
+  @Parameters(value = {"filePermissions", "directoryPermissions", "user", "group", "timestamp"})
+  public void testFilePropertiesSpec_nullOkay(String fieldName) throws JsonProcessingException {
+    String data = fieldName + ": null";
 
-    @Test
-    public void testFilePropertiesSpec_noEmptyValues() {
-      String data = fieldName + ": ' '";
-
-      try {
-        mapper.readValue(data, FilePropertiesSpec.class);
-        Assert.fail();
-      } catch (JsonProcessingException ex) {
-        Assert.assertEquals(
-            "Property '" + fieldName + "' cannot be an empty string", ex.getCause().getMessage());
-      }
-    }
-
-    @Test
-    public void testFilePropertiesSpec_nullOkay() throws JsonProcessingException {
-      String data = fieldName + ": null";
-
-      FilePropertiesSpec parsed = mapper.readValue(data, FilePropertiesSpec.class);
-      Assert.assertFalse(parsed.getFilePermissions().isPresent());
-      Assert.assertFalse(parsed.getDirectoryPermissions().isPresent());
-      Assert.assertFalse(parsed.getUser().isPresent());
-      Assert.assertFalse(parsed.getGroup().isPresent());
-    }
+    FilePropertiesSpec parsed = mapper.readValue(data, FilePropertiesSpec.class);
+    Assert.assertFalse(parsed.getFilePermissions().isPresent());
+    Assert.assertFalse(parsed.getDirectoryPermissions().isPresent());
+    Assert.assertFalse(parsed.getUser().isPresent());
+    Assert.assertFalse(parsed.getGroup().isPresent());
   }
 }
