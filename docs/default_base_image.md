@@ -2,7 +2,7 @@
 
 ## Jib Build Plugins 3+
 
-Starting from version 3.2, the default is the official [`eclipse-temurin`](https://hub.docker.com/_/eclipse-temurin) for Java 8 and 11, and [`azul/zulu-openjdk`](https://hub.docker.com/r/azul/zulu-openjdk) for Java 17. Note that Eclipse Temurin by Adoptium is the [successor of AdoptOpenJDK](https://blog.adoptopenjdk.net/2021/08/goodbye-adoptopenjdk-hello-adoptium/) and Azul Systems is a founding member of the Adoptium Working Group.
+Starting from version 3.2, the default is the official [`eclipse-temurin`](https://hub.docker.com/_/eclipse-temurin) for Java 8 and 11, and [`azul/zulu-openjdk`](https://hub.docker.com/r/azul/zulu-openjdk) for Java 17. Note that Eclipse Temurin by Adoptium is the [successor of AdoptOpenJDK](https://blog.adoptopenjdk.net/2021/08/goodbye-adoptopenjdk-hello-adoptium/) and Azul Systems is a [founding member](https://www.azul.com/blog/eclipse-temurin-new-distribution-of-openjdk/) of the Adoptium Working Group.
 
 For versions 3.0 and 3.1, the default base image is the official [`adoptopenjdk`](https://hub.docker.com/_/adoptopenjdk) image on Docker Hub.
 
