@@ -17,6 +17,9 @@
 package com.google.cloud.tools.jib.gradle;
 
 import static com.google.common.truth.Truth.assertThat;
+import static org.junit.Assert.assertThrows;
+import static org.junit.Assume.assumeFalse;
+import static org.junit.Assume.assumeTrue;
 
 import com.google.cloud.tools.jib.Command;
 import com.google.cloud.tools.jib.IntegrationTestingConfiguration;
@@ -33,10 +36,6 @@ import java.security.DigestException;
 import java.time.Instant;
 import org.gradle.testkit.runner.BuildResult;
 import org.gradle.testkit.runner.UnexpectedBuildFailure;
-import org.hamcrest.CoreMatchers;
-import org.hamcrest.MatcherAssert;
-import org.junit.Assert;
-import org.junit.Assume;
 import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Rule;
@@ -117,7 +116,7 @@ public class SingleProjectIntegrationTest {
   }
 
   private static String readDigestFile(Path digestPath) throws IOException, DigestException {
-    Assert.assertTrue(Files.exists(digestPath));
+    assertThat(Files.exists(digestPath)).isTrue();
     String digest = new String(Files.readAllBytes(digestPath), StandardCharsets.UTF_8);
     return DescriptorDigest.fromDigest(digest).toString();
   }
@@ -139,19 +138,19 @@ public class SingleProjectIntegrationTest {
             "-b=complex-build.gradle");
 
     JibRunHelper.assertBuildSuccess(buildResult, "jib", "Built and pushed image as ");
-    MatcherAssert.assertThat(buildResult.getOutput(), CoreMatchers.containsString(imageReference));
+    assertThat(buildResult.getOutput()).contains(imageReference);
 
     targetRegistry.pull(imageReference);
     assertDockerInspect(imageReference);
     String history = new Command("docker", "history", imageReference).run();
-    MatcherAssert.assertThat(history, CoreMatchers.containsString("jib-gradle-plugin"));
+    assertThat(history).contains("jib-gradle-plugin");
 
     String output = new Command("docker", "run", "--rm", imageReference).run();
-    Assert.assertEquals(
-        "Hello, world. An argument.\n1970-01-01T00:00:01Z\nrwxr-xr-x\nrwxrwxrwx\nfoo\ncat\n"
-            + "1970-01-01T00:00:01Z\n1970-01-01T00:00:01Z\n"
-            + "-Xms512m\n-Xdebug\nenvvalue1\nenvvalue2\n",
-        output);
+    assertThat(output)
+        .isEqualTo(
+            "Hello, world. An argument.\n1970-01-01T00:00:01Z\nrwxr-xr-x\nrwxrwxrwx\nfoo\ncat\n"
+                + "1970-01-01T00:00:01Z\n1970-01-01T00:00:01Z\n"
+                + "-Xms512m\n-Xdebug\nenvvalue1\nenvvalue2\n");
     return output;
   }
 
@@ -170,39 +169,37 @@ public class SingleProjectIntegrationTest {
             + System.nanoTime();
 
     // Test empty output error
-    try {
-      simpleTestProject.build(
-          "clean",
-          "jib",
-          "-Djib.useOnlyProjectCache=true",
-          "-Djib.console=plain",
-          "-x=classes",
-          "-D_TARGET_IMAGE=" + targetImage);
-      Assert.fail();
-
-    } catch (UnexpectedBuildFailure ex) {
-      MatcherAssert.assertThat(
-          ex.getMessage(),
-          CoreMatchers.containsString(
-              "No classes files were found - did you compile your project?"));
-    }
+    Exception exception =
+        assertThrows(
+            UnexpectedBuildFailure.class,
+            () ->
+                simpleTestProject.build(
+                    "clean",
+                    "jib",
+                    "-Djib.useOnlyProjectCache=true",
+                    "-Djib.console=plain",
+                    "-x=classes",
+                    "-D_TARGET_IMAGE=" + targetImage));
+    assertThat(exception)
+        .hasMessageThat()
+        .contains("No classes files were found - did you compile your project?");
 
     String output = JibRunHelper.buildAndRun(simpleTestProject, targetImage);
 
-    Assert.assertEquals(
-        "Hello, world. An argument.\n1970-01-01T00:00:01Z\nrw-r--r--\nrw-r--r--\nfoo\ncat\n"
-            + "1970-01-01T00:00:01Z\n1970-01-01T00:00:01Z\n",
-        output);
+    assertThat(output)
+        .isEqualTo(
+            "Hello, world. An argument.\n1970-01-01T00:00:01Z\nrw-r--r--\nrw-r--r--\nfoo\ncat\n"
+                + "1970-01-01T00:00:01Z\n1970-01-01T00:00:01Z\n");
 
     String digest =
         readDigestFile(simpleTestProject.getProjectRoot().resolve("build/jib-image.digest"));
     String imageReferenceWithDigest =
         ImageReference.parse(targetImage).withQualifier(digest).toString();
-    Assert.assertEquals(output, JibRunHelper.pullAndRunBuiltImage(imageReferenceWithDigest));
+    assertThat(JibRunHelper.pullAndRunBuiltImage(imageReferenceWithDigest)).isEqualTo(output);
 
     String id = readDigestFile(simpleTestProject.getProjectRoot().resolve("build/jib-image.id"));
-    Assert.assertNotEquals(digest, id);
-    Assert.assertEquals(output, new Command("docker", "run", "--rm", id).run());
+    assertThat(id).isNotEqualTo(digest);
+    assertThat(new Command("docker", "run", "--rm", id).run()).isEqualTo(output);
 
     assertDockerInspect(targetImage);
     assertThat(JibRunHelper.getCreationTime(targetImage)).isEqualTo(Instant.EPOCH);
@@ -220,11 +217,12 @@ public class SingleProjectIntegrationTest {
         IntegrationTestingConfiguration.getTestRepositoryLocation()
             + "/simplewithdockerdaemonbase:gradle"
             + System.nanoTime();
-    Assert.assertEquals(
-        "Hello, world. An argument.\n1970-01-01T00:00:01Z\nrw-r--r--\nrw-r--r--\nfoo\ncat\n"
-            + "1970-01-01T00:00:01Z\n1970-01-01T00:00:01Z\n",
-        JibRunHelper.buildAndRunFromLocalBase(
-            targetImage, "docker://gcr.io/distroless/java:latest"));
+    assertThat(
+            JibRunHelper.buildAndRunFromLocalBase(
+                targetImage, "docker://gcr.io/distroless/java:latest"))
+        .isEqualTo(
+            "Hello, world. An argument.\n1970-01-01T00:00:01Z\nrw-r--r--\nrw-r--r--\nfoo\ncat\n"
+                + "1970-01-01T00:00:01Z\n1970-01-01T00:00:01Z\n");
   }
 
   @Test
@@ -235,10 +233,10 @@ public class SingleProjectIntegrationTest {
         IntegrationTestingConfiguration.getTestRepositoryLocation()
             + "/simplewithtarbase:gradle"
             + System.nanoTime();
-    Assert.assertEquals(
-        "Hello, world. An argument.\n1970-01-01T00:00:01Z\nrw-r--r--\nrw-r--r--\nfoo\ncat\n"
-            + "1970-01-01T00:00:01Z\n1970-01-01T00:00:01Z\n",
-        JibRunHelper.buildAndRunFromLocalBase(targetImage, "tar://" + path));
+    assertThat(JibRunHelper.buildAndRunFromLocalBase(targetImage, "tar://" + path))
+        .isEqualTo(
+            "Hello, world. An argument.\n1970-01-01T00:00:01Z\nrw-r--r--\nrw-r--r--\nfoo\ncat\n"
+                + "1970-01-01T00:00:01Z\n1970-01-01T00:00:01Z\n");
   }
 
   @Test
@@ -248,76 +246,74 @@ public class SingleProjectIntegrationTest {
             + "/simpleimageoffline:gradle"
             + System.nanoTime();
 
-    try {
-      simpleTestProject.build(
-          "--offline",
-          "clean",
-          "jib",
-          "-Djib.useOnlyProjectCache=true",
-          "-Djib.console=plain",
-          "-D_TARGET_IMAGE=" + targetImage);
-      Assert.fail();
-    } catch (UnexpectedBuildFailure ex) {
-      MatcherAssert.assertThat(
-          ex.getMessage(),
-          CoreMatchers.containsString("Cannot build to a container registry in offline mode"));
-    }
+    Exception exception =
+        assertThrows(
+            UnexpectedBuildFailure.class,
+            () ->
+                simpleTestProject.build(
+                    "--offline",
+                    "clean",
+                    "jib",
+                    "-Djib.useOnlyProjectCache=true",
+                    "-Djib.console=plain",
+                    "-D_TARGET_IMAGE=" + targetImage));
+    assertThat(exception)
+        .hasMessageThat()
+        .contains("Cannot build to a container registry in offline mode");
   }
 
   @Test
   public void testDockerDaemon_simpleOnJava17()
       throws DigestException, IOException, InterruptedException {
-    Assume.assumeTrue(isJavaRuntimeAtLeast(17));
+    assumeTrue(isJavaRuntimeAtLeast(17));
 
     String targetImage = "simpleimage:gradle" + System.nanoTime();
-    Assert.assertEquals(
-        "Hello, world. \n1970-01-01T00:00:01Z\n",
-        JibRunHelper.buildToDockerDaemonAndRun(
-            simpleTestProject, targetImage, "build-java17.gradle"));
+    assertThat(
+            JibRunHelper.buildToDockerDaemonAndRun(
+                simpleTestProject, targetImage, "build-java17.gradle"))
+        .isEqualTo("Hello, world. \n1970-01-01T00:00:01Z\n");
   }
 
   @Test
   public void testDockerDaemon_simpleOnJava11()
       throws DigestException, IOException, InterruptedException {
-    Assume.assumeTrue(isJavaRuntimeAtLeast(11));
+    assumeTrue(isJavaRuntimeAtLeast(11));
 
     String targetImage = "simpleimage:gradle" + System.nanoTime();
-    Assert.assertEquals(
-        "Hello, world. \n1970-01-01T00:00:01Z\n",
-        JibRunHelper.buildToDockerDaemonAndRun(
-            simpleTestProject, targetImage, "build-java11.gradle"));
+    assertThat(
+            JibRunHelper.buildToDockerDaemonAndRun(
+                simpleTestProject, targetImage, "build-java11.gradle"))
+        .isEqualTo("Hello, world. \n1970-01-01T00:00:01Z\n");
   }
 
   @Test
-  public void testDockerDaemon_simpleWithIncompatibleJava11()
-      throws DigestException, IOException, InterruptedException {
-    Assume.assumeTrue(isJavaRuntimeAtLeast(11));
+  public void testDockerDaemon_simpleWithIncompatibleJava11() {
+    assumeTrue(isJavaRuntimeAtLeast(11));
 
-    try {
-      JibRunHelper.buildToDockerDaemonAndRun(
-          simpleTestProject, "willnotbuild", "build-java11-incompatible.gradle");
-      Assert.fail();
-
-    } catch (UnexpectedBuildFailure ex) {
-      MatcherAssert.assertThat(
-          ex.getMessage(),
-          CoreMatchers.containsString(
-              "Your project is using Java 11 but the base image is for Java 8, perhaps you should "
-                  + "configure a Java 11-compatible base image using the 'jib.from.image' "
-                  + "parameter, or set targetCompatibility = 8 or below in your build "
-                  + "configuration"));
-    }
+    Exception exception =
+        assertThrows(
+            UnexpectedBuildFailure.class,
+            () ->
+                JibRunHelper.buildToDockerDaemonAndRun(
+                    simpleTestProject, "willnotbuild", "build-java11-incompatible.gradle"));
+    assertThat(exception)
+        .hasMessageThat()
+        .contains(
+            "Your project is using Java 11 but the base image is for Java 8, perhaps you should "
+                + "configure a Java 11-compatible base image using the 'jib.from.image' parameter, "
+                + "or set targetCompatibility = 8 or below in your build configuration");
   }
 
   @Test
   public void testDockerDaemon_simple_multipleExtraDirectories()
       throws DigestException, IOException, InterruptedException {
     String targetImage = "simpleimage:gradle" + System.nanoTime();
-    Assert.assertEquals(
-        "Hello, world. \n1970-01-01T00:00:01Z\nrw-r--r--\nrw-r--r--\nfoo\ncat\n"
-            + "1970-01-01T00:00:01Z\n1970-01-01T00:00:01Z\n",
-        JibRunHelper.buildToDockerDaemonAndRun(
-            simpleTestProject, targetImage, "build-extra-dirs.gradle"));
+    assertThat(
+            JibRunHelper.buildToDockerDaemonAndRun(
+                simpleTestProject, targetImage, "build-extra-dirs.gradle"))
+        .isEqualTo(
+            "Hello, world. \n1970-01-01T00:00:01Z\nrw-r--r--\nrw-r--r--\nfoo\ncat\n"
+                + "1970-01-01T00:00:01Z\n1970-01-01T00:00:01Z\n");
     assertThat(getLayerSize(targetImage)).isEqualTo(11); // one more than usual
   }
 
@@ -325,11 +321,12 @@ public class SingleProjectIntegrationTest {
   public void testDockerDaemon_simple_multipleExtraDirectoriesWithAlternativeConfig()
       throws DigestException, IOException, InterruptedException {
     String targetImage = "simpleimage:gradle" + System.nanoTime();
-    Assert.assertEquals(
-        "Hello, world. \n1970-01-01T00:00:01Z\nrw-r--r--\nrw-r--r--\nfoo\ncat\n"
-            + "1970-01-01T00:00:01Z\n1970-01-01T00:00:01Z\n",
-        JibRunHelper.buildToDockerDaemonAndRun(
-            simpleTestProject, targetImage, "build-extra-dirs2.gradle"));
+    assertThat(
+            JibRunHelper.buildToDockerDaemonAndRun(
+                simpleTestProject, targetImage, "build-extra-dirs2.gradle"))
+        .isEqualTo(
+            "Hello, world. \n1970-01-01T00:00:01Z\nrw-r--r--\nrw-r--r--\nfoo\ncat\n"
+                + "1970-01-01T00:00:01Z\n1970-01-01T00:00:01Z\n");
     assertThat(getLayerSize(targetImage)).isEqualTo(11); // one more than usual
   }
 
@@ -337,11 +334,12 @@ public class SingleProjectIntegrationTest {
   public void testDockerDaemon_simple_multipleExtraDirectoriesWithClosure()
       throws DigestException, IOException, InterruptedException {
     String targetImage = "simpleimage:gradle" + System.nanoTime();
-    Assert.assertEquals(
-        "Hello, world. \n1970-01-01T00:00:01Z\nrw-r--r--\nrw-r--r--\nfoo\ncat\n"
-            + "1970-01-01T00:00:01Z\n1970-01-01T00:00:01Z\nbaz\n1970-01-01T00:00:01Z\n",
-        JibRunHelper.buildToDockerDaemonAndRun(
-            simpleTestProject, targetImage, "build-extra-dirs3.gradle"));
+    assertThat(
+            JibRunHelper.buildToDockerDaemonAndRun(
+                simpleTestProject, targetImage, "build-extra-dirs3.gradle"))
+        .isEqualTo(
+            "Hello, world. \n1970-01-01T00:00:01Z\nrw-r--r--\nrw-r--r--\nfoo\ncat\n"
+                + "1970-01-01T00:00:01Z\n1970-01-01T00:00:01Z\nbaz\n1970-01-01T00:00:01Z\n");
     assertThat(getLayerSize(targetImage)).isEqualTo(11); // one more than usual
   }
 
@@ -375,13 +373,13 @@ public class SingleProjectIntegrationTest {
     String imageReferenceWithDigest =
         ImageReference.parse(targetImage).withQualifier(digest).toString();
     localRegistry2.pull(imageReferenceWithDigest);
-    Assert.assertEquals(
-        output, new Command("docker", "run", "--rm", imageReferenceWithDigest).run());
+    assertThat(new Command("docker", "run", "--rm", imageReferenceWithDigest).run())
+        .isEqualTo(output);
 
     String id =
         readDigestFile(simpleTestProject.getProjectRoot().resolve("different-jib-image.id"));
-    Assert.assertNotEquals(digest, id);
-    Assert.assertEquals(output, new Command("docker", "run", "--rm", id).run());
+    assertThat(id).isNotEqualTo(digest);
+    assertThat(new Command("docker", "run", "--rm", id).run()).isEqualTo(output);
 
     assertThat(JibRunHelper.getCreationTime(targetImage)).isGreaterThan(beforeBuild);
     assertThat(getWorkingDirectory(targetImage)).isEqualTo("/");
@@ -399,10 +397,11 @@ public class SingleProjectIntegrationTest {
   @Test
   public void testDockerDaemon_simple() throws IOException, InterruptedException, DigestException {
     String targetImage = "simpleimage:gradle" + System.nanoTime();
-    Assert.assertEquals(
-        "Hello, world. An argument.\n1970-01-01T00:00:01Z\nrw-r--r--\nrw-r--r--\nfoo\ncat\n"
-            + "1970-01-01T00:00:01Z\n1970-01-01T00:00:01Z\n",
-        JibRunHelper.buildToDockerDaemonAndRun(simpleTestProject, targetImage, "build.gradle"));
+    assertThat(
+            JibRunHelper.buildToDockerDaemonAndRun(simpleTestProject, targetImage, "build.gradle"))
+        .isEqualTo(
+            "Hello, world. An argument.\n1970-01-01T00:00:01Z\nrw-r--r--\nrw-r--r--\nfoo\ncat\n"
+                + "1970-01-01T00:00:01Z\n1970-01-01T00:00:01Z\n");
     assertThat(JibRunHelper.getCreationTime(targetImage)).isEqualTo(Instant.EPOCH);
     assertDockerInspect(targetImage);
     assertThat(getWorkingDirectory(targetImage)).isEqualTo("/home");
@@ -412,10 +411,10 @@ public class SingleProjectIntegrationTest {
   public void testDockerDaemon_jarContainerization()
       throws DigestException, IOException, InterruptedException {
     String targetImage = "simpleimage:gradle" + System.nanoTime();
-    Assert.assertEquals(
-        "Hello, world. \nImplementation-Title: helloworld\nImplementation-Version: 1\n",
-        JibRunHelper.buildToDockerDaemonAndRun(
-            simpleTestProject, targetImage, "build-jar-containerization.gradle"));
+    assertThat(
+            JibRunHelper.buildToDockerDaemonAndRun(
+                simpleTestProject, targetImage, "build-jar-containerization.gradle"))
+        .isEqualTo("Hello, world. \nImplementation-Title: helloworld\nImplementation-Version: 1\n");
   }
 
   @Test
@@ -426,29 +425,29 @@ public class SingleProjectIntegrationTest {
 
     buildAndRunComplex(targetImage, "testuser2", "testpassword2", localRegistry2);
     // Base image layer tarballs exist.
-    Assert.assertTrue(Files.exists(baseLayersCacheDirectory));
-    Assert.assertTrue(baseLayersCacheDirectory.toFile().list().length >= 2);
+    assertThat(Files.exists(baseLayersCacheDirectory)).isTrue();
+    assertThat(baseLayersCacheDirectory.toFile().list().length >= 2).isTrue();
 
     buildAndRunComplex(targetImage, "testuser2", "testpassword2", localRegistry2);
     // no base layers downloaded after "gradle clean jib ..."
-    Assert.assertFalse(Files.exists(baseLayersCacheDirectory));
+    assertThat(Files.exists(baseLayersCacheDirectory)).isFalse();
   }
 
   @Test
   public void testDockerDaemon_timestampCustom()
       throws DigestException, IOException, InterruptedException {
     String targetImage = "simpleimage:gradle" + System.nanoTime();
-    Assert.assertEquals(
-        "Hello, world. \n2011-12-03T01:15:30Z\n",
-        JibRunHelper.buildToDockerDaemonAndRun(
-            simpleTestProject, targetImage, "build-timestamps-custom.gradle"));
+    assertThat(
+            JibRunHelper.buildToDockerDaemonAndRun(
+                simpleTestProject, targetImage, "build-timestamps-custom.gradle"))
+        .isEqualTo("Hello, world. \n2011-12-03T01:15:30Z\n");
     assertThat(JibRunHelper.getCreationTime(targetImage))
         .isEqualTo(Instant.parse("2013-11-04T21:29:30Z"));
   }
 
   @Test
   public void testBuild_dockerClient() throws IOException, InterruptedException, DigestException {
-    Assume.assumeFalse(System.getProperty("os.name").startsWith("Windows"));
+    assumeFalse(System.getProperty("os.name").startsWith("Windows"));
     new Command(
             "chmod", "+x", simpleTestProject.getProjectRoot().resolve("mock-docker.sh").toString())
         .run();
@@ -467,9 +466,8 @@ public class SingleProjectIntegrationTest {
     JibRunHelper.assertBuildSuccess(
         buildResult, "jibDockerBuild", "Built image to Docker daemon as ");
     JibRunHelper.assertThatExpectedImageDigestAndIdReturned(simpleTestProject.getProjectRoot());
-    MatcherAssert.assertThat(buildResult.getOutput(), CoreMatchers.containsString(targetImage));
-    MatcherAssert.assertThat(
-        buildResult.getOutput(), CoreMatchers.containsString("Docker load called. value1 value2"));
+    assertThat(buildResult.getOutput()).contains(targetImage);
+    assertThat(buildResult.getOutput()).contains("Docker load called. value0 value2");
   }
 
   @Test
@@ -491,13 +489,13 @@ public class SingleProjectIntegrationTest {
             "-D_TARGET_IMAGE=" + targetImage);
 
     JibRunHelper.assertBuildSuccess(buildResult, "jibBuildTar", "Built image tarball at ");
-    MatcherAssert.assertThat(buildResult.getOutput(), CoreMatchers.containsString(outputPath));
+    assertThat(buildResult.getOutput()).contains(outputPath);
 
     new Command("docker", "load", "--input", outputPath).run();
-    Assert.assertEquals(
-        "Hello, world. An argument.\n1970-01-01T00:00:01Z\nrw-r--r--\nrw-r--r--\nfoo\ncat\n"
-            + "1970-01-01T00:00:01Z\n1970-01-01T00:00:01Z\n",
-        new Command("docker", "run", "--rm", targetImage).run());
+    assertThat(new Command("docker", "run", "--rm", targetImage).run())
+        .isEqualTo(
+            "Hello, world. An argument.\n1970-01-01T00:00:01Z\nrw-r--r--\nrw-r--r--\nfoo\ncat\n"
+                + "1970-01-01T00:00:01Z\n1970-01-01T00:00:01Z\n");
     assertDockerInspect(targetImage);
     assertThat(JibRunHelper.getCreationTime(targetImage)).isEqualTo(Instant.EPOCH);
     assertThat(getWorkingDirectory(targetImage)).isEqualTo("/home");
