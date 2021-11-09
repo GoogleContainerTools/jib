@@ -28,7 +28,6 @@ import com.google.cloud.tools.jib.plugins.common.logging.ConsoleLogger;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 
 /** Class to build a container representation from the contents of a jar file. */
 public class JarFiles {
@@ -56,22 +55,10 @@ public class JarFiles {
       CommonContainerConfigCliOptions commonContainerConfigCliOptions,
       ConsoleLogger logger)
       throws IOException, InvalidImageReferenceException {
-
-    // Use Adoptium Temurin image as the default base image.
-    JibContainerBuilder containerBuilder;
-    Optional<String> imageReference = commonContainerConfigCliOptions.getFrom();
-    if (imageReference.isPresent()) {
-      containerBuilder =
-          ContainerBuilders.create(
-              imageReference.get(), Collections.emptySet(), commonCliOptions, logger);
-    } else {
-      containerBuilder =
-          (processor.getJavaVersion() <= 8)
-              ? ContainerBuilders.create(
-                  "eclipse-temurin:8-jre", Collections.emptySet(), commonCliOptions, logger)
-              : ContainerBuilders.create(
-                  "eclipse-temurin:11-jre", Collections.emptySet(), commonCliOptions, logger);
-    }
+    String imageReference =
+        commonContainerConfigCliOptions.getFrom().orElseGet(() -> getDefaultBaseImage(processor));
+    JibContainerBuilder containerBuilder =
+        ContainerBuilders.create(imageReference, Collections.emptySet(), commonCliOptions, logger);
 
     List<FileEntriesLayer> layers = processor.createLayers();
     List<String> customEntrypoint = commonContainerConfigCliOptions.getEntrypoint();
@@ -93,5 +80,15 @@ public class JarFiles {
     commonContainerConfigCliOptions.getCreationTime().ifPresent(containerBuilder::setCreationTime);
 
     return containerBuilder;
+  }
+
+  private static String getDefaultBaseImage(ArtifactProcessor processor) {
+    if (processor.getJavaVersion() <= 8) {
+      return "eclipse-temurin:8-jre";
+    }
+    if (processor.getJavaVersion() <= 11) {
+      return "eclipse-temurin:11-jre";
+    }
+    return "azul/zulu-openjdk:17-jre";
   }
 }
