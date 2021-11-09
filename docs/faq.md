@@ -88,9 +88,9 @@ For more information, see [steps 4-6 of the Kubernetes Engine deployment tutoria
 
 ### Where is bash?
 
-By default, Jib Maven and Gradle plugin versions prior to 3.0 used [`distroless/java`](https://github.com/GoogleContainerTools/distroless/tree/master/java) as the base image, which did not have a shell program (such as `sh`, `bash`, or `dash`). Starting from Jib build plugins 3.0, the default base image is [`adoptopenjdk`](default_base_image.md) (and [`jetty`](https://hub.docker.com/_/jetty) for WAR projects), which contains shell programs.
+By default, Jib Maven and Gradle plugin versions prior to 3.0 used [`distroless/java`](https://github.com/GoogleContainerTools/distroless/tree/master/java) as the base image, which did not have a shell program (such as `sh`, `bash`, or `dash`). However, recent Jib tools use [default base images](default_base_image.md) that come with shell programs: Adoptium Eclipse Temurin (formerly AdoptOpenJDK) for Java 8 and 11, Azul Zulu for Java 17, and Jetty for WAR projects.
 
-Note that you can always set a different base image. Jib's default choice for AdoptOpenJDK does not imply any endorsement to it; you should do your due diligence to choose the right image that works best for you. Also note that the default base image is unpinned (the tag can point to different images over time), so we recommend configuring a base image with a SHA digest for strong reproducibility.
+Note that you can always set a different base image. Jib's default choice for Temurin and Zulu does not imply any endorsement to it; you should do your due diligence to choose the right image that works best for you. Also note that the default base image is unpinned (the tag can point to different images over time), so we recommend configuring a base image with a SHA digest for strong reproducibility.
 
 * Configuring a base image in Maven
    ```xml
@@ -184,7 +184,7 @@ Jib applications are split into the following layers:
 
 ### Which base image (JDK) does Jib use?
 
-[`adoptopenjdk`](https://hub.docker.com/_/adoptopenjdk) and [`jetty`](https://hub.docker.com/_/jetty) (for WAR). See [Default Base Images in Jib](default_base_image.md) for details.
+[`eclipse-temurin`](https://hub.docker.com/_/eclipse-temurin) by Adoptium (formerly [`adoptopenjdk`](https://hub.docker.com/_/adoptopenjdk)) and [`jetty`](https://hub.docker.com/_/jetty) (for WAR). See [Default Base Images in Jib](default_base_image.md) for details.
 
 ### Can I learn more about container images?
 
@@ -461,10 +461,12 @@ jib.to.image = 'gcr.io/my-gcp-project/my-app:' + System.nanoTime()
 A Dockerfile that performs a Jib-like build is shown below:
 
 ```Dockerfile
-# Jib uses AdoptOpenJDK as the default base image
-FROM adoptopenjdk:11-jre
+# Jib uses Adoptium Eclipse Temurin (formerly AdoptOpenJDK) for Java 8 and 11,
+# and Azul Zulu for Java 17 as the default base image.
+FROM eclipse-temurin:11-jre
 
-# Multiple copy statements are used to break the app into layers, allowing for faster rebuilds after small changes
+# Multiple copy statements are used to break the app into layers,
+# allowing for faster rebuilds after small changes
 COPY dependencyJars /app/libs
 COPY snapshotDependencyJars /app/libs
 COPY projectDependencyJars /app/libs
@@ -569,14 +571,14 @@ The Jib build plugins have an extension framework that enables anyone to easily 
 
 See the [Maven](https://github.com/GoogleContainerTools/jib/tree/master/jib-maven-plugin#global-jib-configuration), [Gradle](https://github.com/GoogleContainerTools/jib/tree/master/jib-gradle-plugin#global-jib-configuration) or [Jib CLI](https://github.com/GoogleContainerTools/jib/blob/master/jib-cli/README.md#global-jib-configuration) docs. Note that the example in the docs uses [Google's Docker Hub mirror on `mirror.gcr.io`](https://cloud.google.com/container-registry/docs/pulling-cached-images).
 
-Starting from Jib build plugins 3.0, [the default base image is `adoptopenjdk` and `jetty` on Docker Hub](default_base_image.md), so you may start to encounter the rate limits if you are not explicitly setting a base image.
+Starting from Jib build plugins 3.0, Jib by default uses [base images on Docker Hub](default_base_image.md), so you may start to encounter the rate limits if you are not explicitly setting a base image.
 
 Some other alternatives to get around the rate limits:
 
 * Prevent Jib from accessing Docker Hub (after Jib cached a base image locally).
-   - **Pin to a specific base image using a SHA digest (for example, `jib.from.image='adoptopenjdk:11-jre@sha256:...'`).** If you are not setting a base image with a SHA digest (which is the case if you don't set `jib.from.image` at all), then every time Jib runs, it reaches out to the registry to check if the base image is up-to-date. On the other hand, if you pin to a specific image with a digest, then the image is immutable. Therefore, if Jib has cached the image once (by running Jib online once to fully cache the image), Jib will not reach out the Docker Hub. See [this Stack Overflow answer](https://stackoverflow.com/a/61190005/1701388) for more details.
+   - **Pin to a specific base image using a SHA digest (for example, `jib.from.image='eclipse-temurin:11-jre@sha256:...'`).** If you are not setting a base image with a SHA digest (which is the case if you don't set `jib.from.image` at all), then every time Jib runs, it reaches out to the registry to check if the base image is up-to-date. On the other hand, if you pin to a specific image with a digest, then the image is immutable. Therefore, if Jib has cached the image once (by running Jib online once to fully cache the image), Jib will not reach out the Docker Hub. See [this Stack Overflow answer](https://stackoverflow.com/a/61190005/1701388) for more details.
    - (Maven/Gradle plugins only) **Do offline building.** Pass `--offline` to Maven or Gradle. Before that, you need to run Jib online once to cache the image. However, `--offline` means you cannot push to a remote registry. See [this Stack Overflow answer](https://stackoverflow.com/a/61190005/1701388) for more details.
-   - **Read a base from a local Docker deamon.** Store an image to your local Docker daemon, and set, say, `jib.from.image='docker://adoptopenjdk:11-jre'`. It can be slow for an initial build where Jib has to cache the image in Jib's format. For performance reasons, we usually recommend using an image on a registry.
+   - **Read a base from a local Docker deamon.** Store an image to your local Docker daemon, and set, say, `jib.from.image='docker://eclipse-temurin:11-jre'`. It can be slow for an initial build where Jib has to cache the image in Jib's format. For performance reasons, we usually recommend using an image on a registry.
    - **Set up a local registry, store a base image, and read it from the local registry.** Setting up a local registry is as simple as running `docker run -d -p5000:5000 registry:2`, but nevertheless, the whole process is a bit involved.
 * Retry with increasing backoffs. For example, using the [`retry`](https://github.com/kadwanev/retry) tool.
 

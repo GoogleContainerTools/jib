@@ -260,7 +260,7 @@ Field | Type | Default | Description
 
 Property | Type | Default | Description
 --- | --- | --- | ---
-`image` | string | `adoptopenjdk:{8,11}-jre` (or `jetty` for WAR) | The image reference for the base image. The source type can be specified using a [special type prefix](#setting-the-base-image).
+`image` | string | `temurin-eclipse:{8,11}-jre` or `azul/zulu-openjdk:17-jre` (or `jetty` for WAR) | The image reference for the base image. The source type can be specified using a [special type prefix](#setting-the-base-image).
 `auth` | [`auth`](#auth-object) | *None* | Specifies credentials directly (alternative to `credHelper`).
 `credHelper` | string | *None* | Specifies a credential helper that can authenticate pulling the base image. This parameter can either be configured as an absolute path to the credential helper executable or as a credential helper suffix (following `docker-credential-`).
 `platforms` | list | See [`platform`](#platform-object) | _Incubating feature_: Configures platforms of base images to select from a manifest list.
@@ -460,8 +460,8 @@ There are three different types of base images that Jib accepts: an image from a
 
 Prefix | Example | Type
 --- | --- | ---
-*None* | `adoptopenjdk:11-jre` | Pulls the base image from a registry.
-`registry://` | `registry://adoptopenjdk:11-jre` | Pulls the base image from a registry.
+*None* | `openjdk:11-jre` | Pulls the base image from a registry.
+`registry://` | `registry://eclipse-temurin:11-jre` | Pulls the base image from a registry.
 `docker://` | `docker://busybox` | Retrieves the base image from the Docker daemon.
 `tar://` | `tar:///path/to/file.tar` | Uses an image tarball stored at the specified path as the base image. Also accepts relative paths (e.g. `tar://target/jib-image.tar`).
 
