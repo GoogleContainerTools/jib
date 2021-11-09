@@ -184,7 +184,7 @@ Jib applications are split into the following layers:
 
 ### Which base image (JDK) does Jib use?
 
-[`eclipse-temurin`](https://hub.docker.com/_/eclipse-temurin) by Adoptium (formerly [`adoptopenjdk`](https://hub.docker.com/_/adoptopenjdk)) and [`jetty`](https://hub.docker.com/_/jetty) (for WAR). See [Default Base Images in Jib](default_base_image.md) for details.
+[`eclipse-temurin`](https://hub.docker.com/_/eclipse-temurin) by Adoptium (formerly [`adoptopenjdk`](https://hub.docker.com/_/adoptopenjdk)) for Java 8 and 11, [`azul/zulu-openjdk`](https://hub.docker.com/r/azul/zulu-openjdk`) for Java 17, and [`jetty`](https://hub.docker.com/_/jetty) (for WAR). See [Default Base Images in Jib](default_base_image.md) for details.
 
 ### Can I learn more about container images?
 
