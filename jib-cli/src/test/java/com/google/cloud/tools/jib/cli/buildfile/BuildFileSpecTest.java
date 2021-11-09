@@ -93,7 +93,7 @@ public class BuildFileSpecTest {
   public void testBuildFileSpec_apiVersionRequired() {
     String data = "kind: BuildFile\n";
 
-    JsonProcessingException exception =
+    Exception exception =
         assertThrows(
             JsonProcessingException.class, () -> mapper.readValue(data, BuildFileSpec.class));
     assertThat(exception)
@@ -105,7 +105,7 @@ public class BuildFileSpecTest {
   public void testBuildFileSpec_apiVersionNotNull() {
     String data = "apiVersion: null\n" + "kind: BuildFile\n";
 
-    JsonProcessingException exception =
+    Exception exception =
         assertThrows(
             JsonProcessingException.class, () -> mapper.readValue(data, BuildFileSpec.class));
     assertThat(exception).hasMessageThat().contains("Property 'apiVersion' cannot be null");
@@ -115,7 +115,7 @@ public class BuildFileSpecTest {
   public void testBuildFileSpec_apiVersionNotEmpty() {
     String data = "apiVersion: ''\n" + "kind: BuildFile\n";
 
-    JsonProcessingException exception =
+    Exception exception =
         assertThrows(
             JsonProcessingException.class, () -> mapper.readValue(data, BuildFileSpec.class));
     assertThat(exception)
@@ -127,7 +127,7 @@ public class BuildFileSpecTest {
   public void testBuildFileSpec_kindRequired() {
     String data = "apiVersion: v1alpha1\n";
 
-    JsonProcessingException exception =
+    Exception exception =
         assertThrows(
             JsonProcessingException.class, () -> mapper.readValue(data, BuildFileSpec.class));
     assertThat(exception).hasMessageThat().startsWith("Missing required creator property 'kind'");
@@ -137,7 +137,7 @@ public class BuildFileSpecTest {
   public void testBuildFileSpec_kindMustBeBuildFile() {
     String data = "apiVersion: v1alpha1\n" + "kind: NotBuildFile\n";
 
-    JsonProcessingException exception =
+    Exception exception =
         assertThrows(
             JsonProcessingException.class, () -> mapper.readValue(data, BuildFileSpec.class));
     assertThat(exception)
@@ -149,7 +149,7 @@ public class BuildFileSpecTest {
   public void testBuildFileSpec_kindNotNull() {
     String data = "apiVersion: v1alpha1\n" + "kind: null\n";
 
-    JsonProcessingException exception =
+    Exception exception =
         assertThrows(
             JsonProcessingException.class, () -> mapper.readValue(data, BuildFileSpec.class));
     assertThat(exception).hasMessageThat().contains("Property 'kind' cannot be null");
@@ -174,7 +174,7 @@ public class BuildFileSpecTest {
   public void testBuildFileSpec_noNullEntries(String fieldName) {
     String data = "apiVersion: v1alpha1\n" + "kind: BuildFile\n" + fieldName + ": ['first', null]";
 
-    JsonProcessingException exception =
+    Exception exception =
         assertThrows(
             JsonProcessingException.class, () -> mapper.readValue(data, BuildFileSpec.class));
     assertThat(exception)
@@ -187,7 +187,7 @@ public class BuildFileSpecTest {
   public void testBuildFileSpec_noEmptyEntries(String fieldName) {
     String data = "apiVersion: v1alpha1\n" + "kind: BuildFile\n" + fieldName + ": ['first', ' ']";
 
-    JsonProcessingException exception =
+    Exception exception =
         assertThrows(
             JsonProcessingException.class, () -> mapper.readValue(data, BuildFileSpec.class));
     assertThat(exception)
@@ -227,7 +227,7 @@ public class BuildFileSpecTest {
   @Parameters(value = {"creationTime", "format", "user", "workingDirectory"})
   public void testBuildFileSpec_noEmptyValues(String fieldName) {
     String data = "apiVersion: v1alpha1\n" + "kind: BuildFile\n" + fieldName + ": ' '";
-    JsonProcessingException exception =
+    Exception exception =
         assertThrows(
             JsonProcessingException.class, () -> mapper.readValue(data, BuildFileSpec.class));
     assertThat(exception)
@@ -253,7 +253,7 @@ public class BuildFileSpecTest {
       String fieldName, String input, String errorMessage) {
     String data = "apiVersion: v1alpha1\n" + "kind: BuildFile\n" + fieldName + ":\n" + input;
 
-    JsonProcessingException exception =
+    Exception exception =
         assertThrows(
             JsonProcessingException.class, () -> mapper.readValue(data, BuildFileSpec.class));
     assertThat(exception).hasMessageThat().contains("Property '" + fieldName + errorMessage);

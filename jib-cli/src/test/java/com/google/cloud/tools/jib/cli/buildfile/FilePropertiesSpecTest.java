@@ -28,9 +28,6 @@ import com.google.cloud.tools.jib.api.buildplan.FilePermissions;
 import java.time.Instant;
 import junitparams.JUnitParamsRunner;
 import junitparams.Parameters;
-import org.hamcrest.CoreMatchers;
-import org.hamcrest.MatcherAssert;
-import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -50,38 +47,38 @@ public class FilePropertiesSpecTest {
             + "timestamp: 1\n";
 
     FilePropertiesSpec parsed = mapper.readValue(data, FilePropertiesSpec.class);
-    Assert.assertEquals(FilePermissions.fromOctalString("644"), parsed.getFilePermissions().get());
-    Assert.assertEquals(
-        FilePermissions.fromOctalString("755"), parsed.getDirectoryPermissions().get());
-    Assert.assertEquals("goose", parsed.getUser().get());
-    Assert.assertEquals("birds", parsed.getGroup().get());
-    Assert.assertEquals(Instant.ofEpochMilli(1), parsed.getTimestamp().get());
+    assertThat(parsed.getFilePermissions().get()).isEqualTo(FilePermissions.fromOctalString("644"));
+    assertThat(parsed.getDirectoryPermissions().get())
+        .isEqualTo(FilePermissions.fromOctalString("755"));
+    assertThat(parsed.getUser().get()).isEqualTo("goose");
+    assertThat(parsed.getGroup().get()).isEqualTo("birds");
+    assertThat(parsed.getTimestamp().get()).isEqualTo(Instant.ofEpochMilli(1));
   }
 
   @Test
-  public void testFilePropertiesSpec_badFilePermissions() throws JsonProcessingException {
+  public void testFilePropertiesSpec_badFilePermissions() {
     String data = "filePermissions: 888";
 
-    try {
-      mapper.readValue(data, FilePropertiesSpec.class);
-      Assert.fail();
-    } catch (JsonMappingException ex) {
-      Assert.assertEquals(
-          "octalPermissions must be a 3-digit octal number (000-777)", ex.getCause().getMessage());
-    }
+    Exception exception =
+        assertThrows(
+            JsonMappingException.class, () -> mapper.readValue(data, FilePropertiesSpec.class));
+    assertThat(exception)
+        .hasCauseThat()
+        .hasMessageThat()
+        .isEqualTo("octalPermissions must be a 3-digit octal number (000-777)");
   }
 
   @Test
-  public void testFilePropertiesSpec_badDirectoryPermissions() throws JsonProcessingException {
+  public void testFilePropertiesSpec_badDirectoryPermissions() {
     String data = "directoryPermissions: 888";
 
-    try {
-      mapper.readValue(data, FilePropertiesSpec.class);
-      Assert.fail();
-    } catch (JsonMappingException ex) {
-      Assert.assertEquals(
-          "octalPermissions must be a 3-digit octal number (000-777)", ex.getCause().getMessage());
-    }
+    Exception exception =
+        assertThrows(
+            JsonMappingException.class, () -> mapper.readValue(data, FilePropertiesSpec.class));
+    assertThat(exception)
+        .hasCauseThat()
+        .hasMessageThat()
+        .isEqualTo("octalPermissions must be a 3-digit octal number (000-777)");
   }
 
   @Test
@@ -89,34 +86,32 @@ public class FilePropertiesSpecTest {
     String data = "timestamp: 2020-06-08T14:54:36+00:00";
 
     FilePropertiesSpec parsed = mapper.readValue(data, FilePropertiesSpec.class);
-    Assert.assertEquals(Instant.parse("2020-06-08T14:54:36Z"), parsed.getTimestamp().get());
+    assertThat(parsed.getTimestamp().get()).isEqualTo(Instant.parse("2020-06-08T14:54:36Z"));
   }
 
   @Test
-  public void testFilePropertiesSpec_badTimestamp() throws JsonProcessingException {
+  public void testFilePropertiesSpec_badTimestamp() {
     String data = "timestamp: hi";
 
-    try {
-      mapper.readValue(data, FilePropertiesSpec.class);
-      Assert.fail();
-    } catch (JsonMappingException ex) {
-      Assert.assertEquals(
-          "timestamp must be a number of milliseconds since epoch or an ISO 8601 formatted date",
-          ex.getCause().getMessage());
-    }
+    Exception exception =
+        assertThrows(
+            JsonMappingException.class, () -> mapper.readValue(data, FilePropertiesSpec.class));
+    assertThat(exception)
+        .hasCauseThat()
+        .hasMessageThat()
+        .isEqualTo(
+            "timestamp must be a number of milliseconds since epoch or an ISO 8601 formatted date");
   }
 
   @Test
-  public void testFilePropertiesSpec_failOnUnknown() throws JsonProcessingException {
+  public void testFilePropertiesSpec_failOnUnknown() {
     String data = "badkey: badvalue";
 
-    try {
-      mapper.readValue(data, FilePropertiesSpec.class);
-      Assert.fail();
-    } catch (UnrecognizedPropertyException upe) {
-      MatcherAssert.assertThat(
-          upe.getMessage(), CoreMatchers.containsString("Unrecognized field \"badkey\""));
-    }
+    Exception exception =
+        assertThrows(
+            UnrecognizedPropertyException.class,
+            () -> mapper.readValue(data, FilePropertiesSpec.class));
+    assertThat(exception).hasMessageThat().contains("Unrecognized field \"badkey\"");
   }
 
   @Test
@@ -139,9 +134,9 @@ public class FilePropertiesSpecTest {
     String data = fieldName + ": null";
 
     FilePropertiesSpec parsed = mapper.readValue(data, FilePropertiesSpec.class);
-    Assert.assertFalse(parsed.getFilePermissions().isPresent());
-    Assert.assertFalse(parsed.getDirectoryPermissions().isPresent());
-    Assert.assertFalse(parsed.getUser().isPresent());
-    Assert.assertFalse(parsed.getGroup().isPresent());
+    assertThat(parsed.getFilePermissions().isPresent()).isFalse();
+    assertThat(parsed.getDirectoryPermissions().isPresent()).isFalse();
+    assertThat(parsed.getUser().isPresent()).isFalse();
+    assertThat(parsed.getGroup().isPresent()).isFalse();
   }
 }

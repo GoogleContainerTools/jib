@@ -65,7 +65,7 @@ public class CopySpecTest {
         "src: target/classes\n, Missing required creator property 'dest'"
       })
   public void testCopySpec_required(String data, String errorMessage) {
-    JsonProcessingException exception =
+    Exception exception =
         assertThrows(JsonProcessingException.class, () -> mapper.readValue(data, CopySpec.class));
     assertThat(exception).hasMessageThat().startsWith(errorMessage);
   }
@@ -97,7 +97,7 @@ public class CopySpecTest {
         "src: target/classes\ndest: ''\n, Property 'dest' cannot be an empty string"
       })
   public void testCopySpec_nullEmptyCheck(String data, String errorMessage) {
-    JsonProcessingException exception =
+    Exception exception =
         assertThrows(JsonProcessingException.class, () -> mapper.readValue(data, CopySpec.class));
     assertThat(exception).hasMessageThat().contains(errorMessage);
   }
@@ -117,7 +117,7 @@ public class CopySpecTest {
     String data =
         "src: target/classes\n" + "dest: /app/classes\n" + fieldName + ": ['first', null]";
 
-    JsonProcessingException exception =
+    Exception exception =
         assertThrows(JsonProcessingException.class, () -> mapper.readValue(data, CopySpec.class));
     assertThat(exception)
         .hasCauseThat()
@@ -130,7 +130,7 @@ public class CopySpecTest {
   public void testCopySpec_noEmptyEntries(String fieldName) {
     String data = "src: target/classes\n" + "dest: /app/classes\n" + fieldName + ": ['first', ' ']";
 
-    JsonProcessingException exception =
+    Exception exception =
         assertThrows(JsonProcessingException.class, () -> mapper.readValue(data, CopySpec.class));
     assertThat(exception)
         .hasCauseThat()
