@@ -17,24 +17,22 @@
 package com.google.cloud.tools.jib.cli.buildfile;
 
 import static com.google.common.truth.Truth.assertThat;
+import static com.google.common.truth.Truth8.assertThat;
+import static org.junit.Assert.assertThrows;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.google.cloud.tools.jib.api.buildplan.AbsoluteUnixPath;
-import com.google.common.collect.ImmutableList;
 import java.nio.file.Paths;
 import java.time.Instant;
-import java.util.Arrays;
-import java.util.Collection;
-import org.hamcrest.CoreMatchers;
-import org.hamcrest.MatcherAssert;
-import org.junit.Assert;
+import junitparams.JUnitParamsRunner;
+import junitparams.Parameters;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
 
 /** Tests for {@link CopySpec}. */
+@RunWith(JUnitParamsRunner.class)
 public class CopySpecTest {
 
   private static final ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
@@ -52,37 +50,24 @@ public class CopySpecTest {
             + "  timestamp: 1\n";
 
     CopySpec parsed = mapper.readValue(data, CopySpec.class);
-    Assert.assertEquals(Paths.get("target/classes"), parsed.getSrc());
-    Assert.assertEquals(AbsoluteUnixPath.get("/app/classes"), parsed.getDest());
-    Assert.assertEquals(ImmutableList.of("**/*.in"), parsed.getIncludes());
-    Assert.assertEquals(ImmutableList.of("**/*.ex"), parsed.getExcludes());
-    Assert.assertEquals(Instant.ofEpochMilli(1), parsed.getProperties().get().getTimestamp().get());
+    assertThat(parsed.getSrc()).isEqualTo(Paths.get("target/classes"));
+    assertThat(parsed.getDest()).isEqualTo(AbsoluteUnixPath.get("/app/classes"));
+    assertThat(parsed.getIncludes()).containsExactly("**/*.in");
+    assertThat(parsed.getExcludes()).containsExactly("**/*.ex");
+    assertThat(parsed.getProperties().get().getTimestamp().get())
+        .isEqualTo(Instant.ofEpochMilli(1));
   }
 
   @Test
-  public void testCopySpec_srcRequired() {
-    String data = "dest: /app/classes\n";
-
-    try {
-      mapper.readValue(data, CopySpec.class);
-      Assert.fail();
-    } catch (JsonProcessingException jpe) {
-      MatcherAssert.assertThat(
-          jpe.getMessage(), CoreMatchers.startsWith("Missing required creator property 'src'"));
-    }
-  }
-
-  @Test
-  public void testCopySpec_destRequired() {
-    String data = "src: target/classes\n";
-
-    try {
-      mapper.readValue(data, CopySpec.class);
-      Assert.fail();
-    } catch (JsonProcessingException jpe) {
-      MatcherAssert.assertThat(
-          jpe.getMessage(), CoreMatchers.startsWith("Missing required creator property 'dest'"));
-    }
+  @Parameters(
+      value = {
+        "dest: /app/classes\n, Missing required creator property 'src'",
+        "src: target/classes\n, Missing required creator property 'dest'"
+      })
+  public void testCopySpec_required(String data, String errorMessage) {
+    Exception exception =
+        assertThrows(JsonProcessingException.class, () -> mapper.readValue(data, CopySpec.class));
+    assertThat(exception).hasMessageThat().startsWith(errorMessage);
   }
 
   @Test
@@ -90,8 +75,8 @@ public class CopySpecTest {
     String data = "src: target/classes\n" + "dest: /app/classes/";
 
     CopySpec parsed = mapper.readValue(data, CopySpec.class);
-    Assert.assertEquals(AbsoluteUnixPath.get("/app/classes"), parsed.getDest());
-    Assert.assertTrue(parsed.isDestEndsWithSlash());
+    assertThat(parsed.getDest()).isEqualTo(AbsoluteUnixPath.get("/app/classes"));
+    assertThat(parsed.isDestEndsWithSlash()).isTrue();
   }
 
   @Test
@@ -99,62 +84,22 @@ public class CopySpecTest {
     String data = "src: target/classes\n" + "dest: /app/classes";
 
     CopySpec parsed = mapper.readValue(data, CopySpec.class);
-    Assert.assertEquals(AbsoluteUnixPath.get("/app/classes"), parsed.getDest());
-    Assert.assertFalse(parsed.isDestEndsWithSlash());
+    assertThat(parsed.getDest()).isEqualTo(AbsoluteUnixPath.get("/app/classes"));
+    assertThat(parsed.isDestEndsWithSlash()).isFalse();
   }
 
   @Test
-  public void testCopySpec_srcNotNull() {
-    String data = "src: null\n" + "dest: /app/classes\n";
-
-    try {
-      mapper.readValue(data, CopySpec.class);
-      Assert.fail();
-    } catch (JsonProcessingException jpe) {
-      MatcherAssert.assertThat(
-          jpe.getMessage(), CoreMatchers.containsString("Property 'src' cannot be null"));
-    }
-  }
-
-  @Test
-  public void testCopySpec_srcNotEmpty() {
-    String data = "src: ''\n" + "dest: /app/classes\n";
-
-    try {
-      mapper.readValue(data, CopySpec.class);
-      Assert.fail();
-    } catch (JsonProcessingException jpe) {
-      MatcherAssert.assertThat(
-          jpe.getMessage(),
-          CoreMatchers.containsString("Property 'src' cannot be an empty string"));
-    }
-  }
-
-  @Test
-  public void testCopySpec_destNotNull() {
-    String data = "src: target/classes\n" + "dest: null\n";
-
-    try {
-      mapper.readValue(data, CopySpec.class);
-      Assert.fail();
-    } catch (JsonProcessingException jpe) {
-      MatcherAssert.assertThat(
-          jpe.getMessage(), CoreMatchers.containsString("Property 'dest' cannot be null"));
-    }
-  }
-
-  @Test
-  public void testCopySpec_destNotEmpty() {
-    String data = "src: target/classes\n" + "dest: ''\n";
-
-    try {
-      mapper.readValue(data, CopySpec.class);
-      Assert.fail();
-    } catch (JsonProcessingException jpe) {
-      MatcherAssert.assertThat(
-          jpe.getMessage(),
-          CoreMatchers.containsString("Property 'dest' cannot be an empty string"));
-    }
+  @Parameters(
+      value = {
+        "src: null\ndest: /app/classes\n, Property 'src' cannot be null",
+        "src: ''\ndest: /app/classes\n, Property 'src' cannot be an empty string",
+        "src: target/classes\ndest: null\n, Property 'dest' cannot be null",
+        "src: target/classes\ndest: ''\n, Property 'dest' cannot be an empty string"
+      })
+  public void testCopySpec_nullEmptyCheck(String data, String errorMessage) {
+    Exception exception =
+        assertThrows(JsonProcessingException.class, () -> mapper.readValue(data, CopySpec.class));
+    assertThat(exception).hasMessageThat().contains(errorMessage);
   }
 
   @Test
@@ -162,61 +107,50 @@ public class CopySpecTest {
     String data = "src: target/classes\n" + "dest: /app/classes\n";
 
     CopySpec parsed = mapper.readValue(data, CopySpec.class);
-    Assert.assertEquals(ImmutableList.of(), parsed.getIncludes());
-    Assert.assertEquals(ImmutableList.of(), parsed.getExcludes());
+    assertThat(parsed.getIncludes()).isEmpty();
+    assertThat(parsed.getExcludes()).isEmpty();
   }
 
-  @RunWith(Parameterized.class)
-  public static class OptionalStringCollectionTests {
+  @Test
+  @Parameters(value = {"includes", "excludes"})
+  public void testCopySpec_noNullEntries(String fieldName) {
+    String data =
+        "src: target/classes\n" + "dest: /app/classes\n" + fieldName + ": ['first', null]";
 
-    @Parameterized.Parameters(name = "{0}")
-    public static Collection<Object[]> data() {
-      return Arrays.asList(new Object[][] {{"includes"}, {"excludes"}});
-    }
+    Exception exception =
+        assertThrows(JsonProcessingException.class, () -> mapper.readValue(data, CopySpec.class));
+    assertThat(exception)
+        .hasCauseThat()
+        .hasMessageThat()
+        .isEqualTo("Property '" + fieldName + "' cannot contain null entries");
+  }
 
-    @Parameterized.Parameter public String fieldName;
+  @Test
+  @Parameters(value = {"includes", "excludes"})
+  public void testCopySpec_noEmptyEntries(String fieldName) {
+    String data = "src: target/classes\n" + "dest: /app/classes\n" + fieldName + ": ['first', ' ']";
 
-    @Test
-    public void testCopySpec_noNullEntries() {
-      String data =
-          "src: target/classes\n" + "dest: /app/classes\n" + fieldName + ": ['first', null]";
+    Exception exception =
+        assertThrows(JsonProcessingException.class, () -> mapper.readValue(data, CopySpec.class));
+    assertThat(exception)
+        .hasCauseThat()
+        .hasMessageThat()
+        .isEqualTo("Property '" + fieldName + "' cannot contain empty strings");
+  }
 
-      try {
-        mapper.readValue(data, CopySpec.class);
-        Assert.fail();
-      } catch (JsonProcessingException ex) {
-        Assert.assertEquals(
-            "Property '" + fieldName + "' cannot contain null entries", ex.getCause().getMessage());
-      }
-    }
+  @Test
+  @Parameters(value = {"includes", "excludes"})
+  public void testCopySpec_emptyOkay(String fieldName) throws JsonProcessingException {
+    String data = "src: target/classes\n" + "dest: /app/classes\n" + fieldName + ": []";
 
-    @Test
-    public void testCopySpec_noEmptyEntries() {
-      String data =
-          "src: target/classes\n" + "dest: /app/classes\n" + fieldName + ": ['first', ' ']";
+    assertThat(mapper.readValue(data, CopySpec.class)).isNotNull();
+  }
 
-      try {
-        mapper.readValue(data, CopySpec.class);
-        Assert.fail();
-      } catch (JsonProcessingException ex) {
-        Assert.assertEquals(
-            "Property '" + fieldName + "' cannot contain empty strings",
-            ex.getCause().getMessage());
-      }
-    }
+  @Test
+  @Parameters(value = {"includes", "excludes"})
+  public void testCopySpec_nullOkay(String fieldName) throws JsonProcessingException {
+    String data = "src: target/classes\n" + "dest: /app/classes\n" + fieldName + ": null";
 
-    @Test
-    public void testCopySpec_emptyOkay() throws JsonProcessingException {
-      String data = "src: target/classes\n" + "dest: /app/classes\n" + fieldName + ": []";
-
-      assertThat(mapper.readValue(data, CopySpec.class)).isNotNull();
-    }
-
-    @Test
-    public void testCopySpec_nullOkay() throws JsonProcessingException {
-      String data = "src: target/classes\n" + "dest: /app/classes\n" + fieldName + ": null";
-
-      assertThat(mapper.readValue(data, CopySpec.class)).isNotNull();
-    }
+    assertThat(mapper.readValue(data, CopySpec.class)).isNotNull();
   }
 }
