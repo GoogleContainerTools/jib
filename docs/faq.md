@@ -42,11 +42,11 @@ If a question you have is not answered below, please [submit an issue](/../../is
 [What should I do when the registry responds with UNAUTHORIZED?](#what-should-i-do-when-the-registry-responds-with-unauthorized)\
 [How do I configure a proxy?](#how-do-i-configure-a-proxy)\
 [How can I examine network traffic?](#how-can-i-examine-network-traffic)\
-[How do I view debug logs for Jib?](#how-do-i-view-debug-logs-for-jib)
+[How do I view debug logs for Jib?](#how-do-i-view-debug-logs-for-jib)\
+[I am seeing `Method Not Found` or `Class Not Found` errors when building.](#i-am-seeing-method-not-found-or-class-not-found-errors-when-building)
 
 **Launch Problems**\
 [I am seeing `ImagePullBackoff` on my pods.](#i-am-seeing-imagepullbackoff-on-my-pods-in-minikube)\
-[I am seeing `Method Not Found` or `Class Not Found` errors when building.](#i-am-seeing-method-not-found-or-class-not-found-errors-when-building)\
 [Why won't my container start?](#why-wont-my-container-start)
 
 **Jib CLI**\
@@ -699,12 +699,46 @@ Accept-Encoding: gzip
 Authorization: <Not Logged>
 User-Agent: jib 2.1.1-SNAPSHOT jib-maven-plugin Google-HTTP-Java-Client/1.34.0 (gzip)
 ```
-  
+
 ### How do I view debug logs for Jib?
 
 Maven: use `mvn -X -Djib.serialize=true` to enable more detailed logging and serialize Jib's actions.
 
 Gradle: use `gradle --debug -Djib.serialize=true` to enable more detailed logging and serialize Jib's actions.
+
+### I am seeing `Method Not Found` or `Class Not Found` errors when building.
+
+Sometimes when upgrading your gradle build plugin versions, you may experience errors due to mismatching versions of dependencies pulled in (for example: [issues/2183](https://github.com/GoogleContainerTools/jib/issues/2183)). This can be due to the buildscript classpath loading behavior described [on gradle forums](https://discuss.gradle.org/t/version-is-root-build-gradle-buildscript-is-overriding-subproject-buildscript-dependency-versions/20746/3). 
+
+This commonly appears in multi module gradle projects. A solution to this problem is to define all of your plugins in the base project and apply them selectively in your subprojects as needed. This should help alleviate the problem of the buildscript classpath using older versions of a library.
+
+`build.gradle` (root)
+```groovy
+plugins {
+  id 'com.google.cloud.tools.jib' version 'x.y.z' apply false
+}
+```
+
+`build.gradle` (sub-project)
+```groovy
+plugins {
+  id 'com.google.cloud.tools.jib'
+}
+```
+
+### I am seeting `Unsupported class file major version` when building.
+
+When you're using latest Java versions to write an app (or using an old version of Jib), you may see the error _coming from Jib when building an image_ (not when compiling your code):
+
+```
+Failed to execute goal com.google.cloud.tools:jib-maven-plugin:3.1.4:dockerBuild (default-cli) on project demo: Execution default-cli of goal com.google.cloud.tools:jib-maven-plugin:3.1.4:dockerBuild failed: Unsupported class file major version 61
+```
+
+Jib uses the [ASM library](https://asm.ow2.io/) to examine compiled Java bytecode to automatically infer a main class (in other words, the class that defines `public static void main()` to start your app). In this way, if you have only one such class, Jib can automatically infer and use that class to set an image entrypoint (basically, a command to start your app). When new Java versions come out, often the ASM library version used in Jib doesn't support the new bytecode format. If this is the case, check if you are using the latest Jib. If you still get the error with the latest Jib, file a [bug](https://github.com/GoogleContainerTools/jib/issues/new/choose) to have the Jib team upgarde the ASM library.
+
+**Workaround**: to prevent Jib from doing auto-inference, you can manually set your desired main class via [`<container><mainClass>`](https://github.com/GoogleContainerTools/jib/tree/master/jib-maven-plugin#container-object) (for example, `<container><mainClass>com.example.your.Main</mainClass>`). Note, as with other Jib parameters, the parameter can be set through system and Maven properties or on the command-line (for example, `-Dcontainer.mainClass=...`).
+
+Note that although the ASM library is the common cause of this error coming from Jib, it may be due to other reasons. Always check the full stack (`-e` or `-X` for Maven and `--stacktrace` for Gradle) to see where the error is coming from.
 
 
 ## Launch problems
@@ -739,35 +773,15 @@ kubectl patch serviceaccount default \
 
 See more at [Using Google Container Registry (GCR) with Minikube](https://ryaneschinger.com/blog/using-google-container-registry-gcr-with-minikube/).
 
-### I am seeing `Method Not Found` or `Class Not Found` errors when building.
-
-Sometimes when upgrading your gradle build plugin versions, you may experience errors due to mismatching versions of dependencies pulled in (for example: [issues/2183](https://github.com/GoogleContainerTools/jib/issues/2183)). This can be due to the buildscript classpath loading behavior described [on gradle forums](https://discuss.gradle.org/t/version-is-root-build-gradle-buildscript-is-overriding-subproject-buildscript-dependency-versions/20746/3). 
-
-This commonly appears in multi module gradle projects. A solution to this problem is to define all of your plugins in the base project and apply them selectively in your subprojects as needed. This should help alleviate the problem of the buildscript classpath using older versions of a library.
-
-`build.gradle` (root)
-```groovy
-plugins {
-  id 'com.google.cloud.tools.jib' version 'x.y.z' apply false
-}
-```
-
-`build.gradle` (sub-project)
-```groovy
-plugins {
-  id 'com.google.cloud.tools.jib'
-}
-```
-
 ### Why won't my container start?
 
 There are some common reasons why containers fail on launch.
 
-#### My shell script won't run
- 
+#### My shell script won't run.
+
 Jib Maven and Gradle plugins prior to 3.0 used Distroless Java as the default base image, which does not have a shell. See [Where is bash?](#where-is-bash) for more details.
 
-#### The container fails with `exec` errors 
+#### The container fails with `exec` errors.
 
 A Jib user reported an error launching their container:
 ```
@@ -783,6 +797,7 @@ Solution: The user installed the file in a different location.
 ## Jib CLI 
  
 ### How does the `jar` command support Standard JARs?
+
 The Jib CLI supports both [thin JARs](https://docs.oracle.com/javase/tutorial/deployment/jar/downman.html) (where dependencies are specified in the JAR's manifest) and fat JARs.
 
 The current limitation of using a fat JAR is that the embedded dependencies will not be placed into the designated dependencies layers. They will instead be placed into the classes or resources layer. Therefore, for efficiency, we recommend against containerizing fat JARs (Spring Boot fat JARs are an [exception](#how-does-the-jar-command-support-spring-boot-jars)) if you can prepare thin JARs. We hope to have better support for fat JARs in the future.
@@ -790,6 +805,7 @@ The current limitation of using a fat JAR is that the embedded dependencies will
 A standard JAR can be containerized by the `jar` command in two modes, exploded or packaged. 
 
 #### Exploded Mode (Recommended)
+
 Achieved by calling `jib jar --target ${TARGET_REGISTRY} ${JAR_NAME}.jar`
 
 The default mode for containerizing a JAR. It will open up the JAR and optimally place files into the following layers:  
@@ -802,6 +818,7 @@ The default mode for containerizing a JAR. It will open up the JAR and optimally
 **Entrypoint** : `java -cp /app/dependencies/:/app/explodedJar/ ${MAIN_CLASS}`
 
 #### Packaged Mode
+
 Achieved by calling `jib jar --target ${TARGET_REGISTRY} ${JAR_NAME}.jar --mode packaged`.
 
 It will result in the following layers on the container:
@@ -812,10 +829,12 @@ It will result in the following layers on the container:
 **Entrypoint** : `java -jar ${JAR_NAME}.jar`
 
 ### How does the `jar` command support Spring Boot JARs?
+
 The `jar` command currently supports containerization of Spring Boot fat JARs.
 A Spring-Boot fat JAR can be containerized in two modes, exploded or packaged. 
 
 #### Exploded Mode (Recommended)
+
 Achieved by calling `jib jar --target ${TARGET_REGISTRY} ${JAR_NAME}.jar`
 
 The default mode for containerizing a JAR. It will respect [`layers.idx`](https://spring.io/blog/2020/08/14/creating-efficient-docker-images-with-spring-boot-2-3) in the JAR (if present) or create optimized layers in the following format:
@@ -829,6 +848,7 @@ The default mode for containerizing a JAR. It will respect [`layers.idx`](https:
 **Entrypoint** : `java -cp /app org.springframework.boot.loader.JarLauncher`
 
 #### Packaged Mode
+
 Achieved by calling `jib jar --target ${TARGET_REGISTRY} ${JAR_NAME}.jar --mode packaged`
 
 It will containerize the JAR as is. However, **note** that we highly recommend against using packaged mode for containerizing Spring Boot fat JARs. 
@@ -836,6 +856,7 @@ It will containerize the JAR as is. However, **note** that we highly recommend a
 **Entrypoint**: `java -jar ${JAR_NAME}.jar`
 
 ### How does the `war` command work?
+
 The `war` command currently supports containerization of standard WARs. It uses the official [`jetty`](https://hub.docker.com/_/jetty) on Docker Hub as the default base image and explodes out the WAR into `/var/lib/jetty/webapps/ROOT` on the container. It creates the following layers:
 
 * Other Dependencies Layer
