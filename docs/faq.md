@@ -609,6 +609,8 @@ Depending on registry implementations, it is also possible that the registry act
 
 If the registry returns `401 Unauthorized` or `"code":"UNAUTHORIZED"`, it is often due to credential misconfiguration. Examples:
 
+* The Container Registry API is not yet enabled for your project.
+   - You Enable the API from [Cloud Console](https://console.cloud.google.com/flows/enableapi?apiid=containerregistry.googleapis.com&_ga=2.101495560.861748223.1636407745-651361740.1631828346) or with the following [Cloud SDK](https://cloud.google.com/sdk/docs) command: `gcloud services enable containerregistry.googleapis.com`
 * You did not configure auth information in the default places where Jib searches.
    - `$HOME/.docker/config.json`, [one of the configuration files](https://docs.docker.com/engine/reference/commandline/cli/#configuration-files) for the `docker` command line tool. See [configuration files document](https://docs.docker.com/engine/reference/commandline/cli/#configuration-files), [credential store](https://docs.docker.com/engine/reference/commandline/login/#credentials-store) and [credential helper](https://docs.docker.com/engine/reference/commandline/login/#credential-helpers) sections, and [this](https://github.com/GoogleContainerTools/jib/issues/101) for how to configure auth. For example, you can do `docker login` to save auth in `config.json`, but it is often recommended to configure a credential helper (also configurable in `config.json`).
    - (Starting from Jib 2.2.0) You can set the environment variable `$DOCKER_CONFIG` for the _directory_ containing Docker configuration files. `$DOCKER_CONFIG/config.json` takes precedence over `$HOME/.docker/config.json`.
