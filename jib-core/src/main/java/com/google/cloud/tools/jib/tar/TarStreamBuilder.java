@@ -63,7 +63,7 @@ public class TarStreamBuilder {
    */
   public void addTarArchiveEntry(TarArchiveEntry entry) {
     archiveMap.put(
-        entry, entry.isFile() ? Blobs.from(entry.getPath()) : Blobs.from(ignored -> {}, true));
+        entry, (entry.isFile() && ! entry.isSymbolicLink()) ? Blobs.from(entry.getPath()) : Blobs.from(ignored -> {}, true));
   }
 
   /**

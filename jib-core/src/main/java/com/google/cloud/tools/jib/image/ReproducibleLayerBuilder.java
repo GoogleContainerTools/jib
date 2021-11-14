@@ -25,6 +25,7 @@ import com.google.common.base.Verify;
 import com.google.common.collect.ImmutableList;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -33,6 +34,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
+import org.apache.commons.compress.archivers.tar.TarConstants;
 
 /**
  * Builds a reproducible layer {@link Blob} from files. The reproducibility is implemented by strips
@@ -147,12 +149,21 @@ public class ReproducibleLayerBuilder {
 
     // Adds all the layer entries as tar entries.
     for (FileEntry layerEntry : layerEntries) {
-      // Adds the entries to uniqueTarArchiveEntries, which makes sure all entries are unique and
-      // adds parent directories for each extraction path.
-      TarArchiveEntry entry =
-          new TarArchiveEntry(
-              layerEntry.getSourceFile(), layerEntry.getExtractionPath().toString());
 
+      TarArchiveEntry entry;
+      if (Files.isSymbolicLink(layerEntry.getSourceFile())) {
+        entry =
+                new TarArchiveEntry(
+                        layerEntry.getExtractionPath().toString(), TarConstants.LF_SYMLINK );
+        Path targetPath = Files.readSymbolicLink(layerEntry.getSourceFile());
+        entry.setLinkName(targetPath.toString());
+      } else {
+        // Adds the entries to uniqueTarArchiveEntries, which makes sure all entries are unique and
+        // adds parent directories for each extraction path.
+        entry =
+                new TarArchiveEntry(
+                        layerEntry.getSourceFile(), layerEntry.getExtractionPath().toString());
+      }
       // Sets the entry's permissions by masking out the permission bits from the entry's mode (the
       // lowest 9 bits) then using a bitwise OR to set them to the layerEntry's permissions.
       entry.setMode((entry.getMode() & ~0777) | layerEntry.getPermissions().getPermissionBits());
