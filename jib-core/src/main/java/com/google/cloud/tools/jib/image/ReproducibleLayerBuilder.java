@@ -153,16 +153,15 @@ public class ReproducibleLayerBuilder {
       TarArchiveEntry entry;
       if (Files.isSymbolicLink(layerEntry.getSourceFile())) {
         entry =
-                new TarArchiveEntry(
-                        layerEntry.getExtractionPath().toString(), TarConstants.LF_SYMLINK );
+            new TarArchiveEntry(layerEntry.getExtractionPath().toString(), TarConstants.LF_SYMLINK);
         Path targetPath = Files.readSymbolicLink(layerEntry.getSourceFile());
         entry.setLinkName(targetPath.toString());
       } else {
         // Adds the entries to uniqueTarArchiveEntries, which makes sure all entries are unique and
         // adds parent directories for each extraction path.
         entry =
-                new TarArchiveEntry(
-                        layerEntry.getSourceFile(), layerEntry.getExtractionPath().toString());
+            new TarArchiveEntry(
+                layerEntry.getSourceFile(), layerEntry.getExtractionPath().toString());
       }
       // Sets the entry's permissions by masking out the permission bits from the entry's mode (the
       // lowest 9 bits) then using a bitwise OR to set them to the layerEntry's permissions.

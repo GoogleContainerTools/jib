@@ -40,7 +40,6 @@ import java.nio.file.attribute.FileTime;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
-
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.junit.After;
@@ -51,8 +50,6 @@ import org.junit.rules.TemporaryFolder;
 /** Tests for {@link ReproducibleLayerBuilder}. */
 public class ReproducibleLayerBuilderTest {
 
-
-
   @After
   public void cleanUp() throws IOException, URISyntaxException {
     removeLinks(getLinks());
@@ -62,7 +59,7 @@ public class ReproducibleLayerBuilderTest {
     List<Path> linksList = new ArrayList<>();
     Path blobA = Paths.get(Resources.getResource("core/blobA").toURI());
     String resourceDir = blobA.getParent().toString();
-    Path link1 = Paths.get(   resourceDir,   "blob-link1");
+    Path link1 = Paths.get(resourceDir, "blob-link1");
     linksList.add(link1);
     Path link2 = Paths.get(resourceDir + "/layer/a/b/", "blob-link2");
     linksList.add(link2);
@@ -70,7 +67,7 @@ public class ReproducibleLayerBuilderTest {
   }
 
   private void removeLinks(List<Path> linksList) throws IOException {
-    for (Path path: linksList) {
+    for (Path path : linksList) {
       if (Files.exists(path)) {
         Files.delete(path);
       }
@@ -107,7 +104,9 @@ public class ReproducibleLayerBuilderTest {
    * @throws IOException if an I/O exception occurs
    */
   private static void verifyNextTarArchiveEntryIsLink(
-      TarArchiveInputStream tarArchiveInputStream, String expectedExtractionPath, String expectedLinkName)
+      TarArchiveInputStream tarArchiveInputStream,
+      String expectedExtractionPath,
+      String expectedLinkName)
       throws IOException {
     TarArchiveEntry header = tarArchiveInputStream.getNextTarEntry();
     assertThat(header.getName()).isEqualTo(expectedExtractionPath);
@@ -144,7 +143,10 @@ public class ReproducibleLayerBuilderTest {
 
   private String getExtractPath(String parent, Path layerDirectory, Path target) {
 
-    return parent + target.getParent().toString().replaceAll(layerDirectory.getParent().toString(), "") + "/" + target.getFileName().toString();
+    return parent
+        + target.getParent().toString().replaceAll(layerDirectory.getParent().toString(), "")
+        + "/"
+        + target.getFileName().toString();
   }
 
   @Test
@@ -154,7 +156,7 @@ public class ReproducibleLayerBuilderTest {
 
     List<Path> linksList = getLinks();
     removeLinks(linksList);
-    for (Path path: linksList) {
+    for (Path path : linksList) {
       Files.createSymbolicLink(path, path.getParent().relativize(blobA));
     }
 
@@ -166,8 +168,16 @@ public class ReproducibleLayerBuilderTest {
                         layerDirectory, AbsoluteUnixPath.get("/extract/here/apple/layer"))
                     .addEntry(blobA, AbsoluteUnixPath.get("/extract/here/apple/blobA"))
                     .addEntry(blobA, AbsoluteUnixPath.get("/extract/here/banana/blobA"))
-                    .addEntry(linksList.get(0), AbsoluteUnixPath.get(getExtractPath("/extract/here/apple/", layerDirectory, linksList.get(0) )))
-                    .addEntry(linksList.get(1), AbsoluteUnixPath.get(getExtractPath("/extract/here/apple/", layerDirectory, linksList.get(1) )))
+                    .addEntry(
+                        linksList.get(0),
+                        AbsoluteUnixPath.get(
+                            getExtractPath(
+                                "/extract/here/apple/", layerDirectory, linksList.get(0))))
+                    .addEntry(
+                        linksList.get(1),
+                        AbsoluteUnixPath.get(
+                            getExtractPath(
+                                "/extract/here/apple/", layerDirectory, linksList.get(1))))
                     .build()
                     .getEntries()));
 
@@ -185,7 +195,8 @@ public class ReproducibleLayerBuilderTest {
       verifyNextTarArchiveEntryIsDirectory(tarArchiveInputStream, "extract/");
       verifyNextTarArchiveEntryIsDirectory(tarArchiveInputStream, "extract/here/");
       verifyNextTarArchiveEntryIsDirectory(tarArchiveInputStream, "extract/here/apple/");
-      verifyNextTarArchiveEntryIsLink(tarArchiveInputStream, "extract/here/apple/blob-link1", "blobA");
+      verifyNextTarArchiveEntryIsLink(
+          tarArchiveInputStream, "extract/here/apple/blob-link1", "blobA");
       verifyNextTarArchiveEntry(tarArchiveInputStream, "extract/here/apple/blobA", blobA);
       verifyNextTarArchiveEntryIsDirectory(tarArchiveInputStream, "extract/here/apple/layer/");
       verifyNextTarArchiveEntryIsDirectory(tarArchiveInputStream, "extract/here/apple/layer/a/");
@@ -194,7 +205,8 @@ public class ReproducibleLayerBuilderTest {
           tarArchiveInputStream,
           "extract/here/apple/layer/a/b/bar",
           Paths.get(Resources.getResource("core/layer/a/b/bar").toURI()));
-      verifyNextTarArchiveEntryIsLink(tarArchiveInputStream, "extract/here/apple/layer/a/b/blob-link2", "../../../blobA");
+      verifyNextTarArchiveEntryIsLink(
+          tarArchiveInputStream, "extract/here/apple/layer/a/b/blob-link2", "../../../blobA");
       verifyNextTarArchiveEntryIsDirectory(tarArchiveInputStream, "extract/here/apple/layer/c/");
       verifyNextTarArchiveEntry(
           tarArchiveInputStream,
