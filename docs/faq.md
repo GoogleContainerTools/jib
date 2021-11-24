@@ -214,7 +214,9 @@ spec:
     - name: JAVA_TOOL_OPTIONS
       value: <JVM flags>
 ```
-Note that the `JAVA_TOOL_OPTIONS` environment varible only supports a max length of **1024** characters. Anything longer than this will be cut off by the JVM.
+Note that many JVMs may only support a max length of **1024** characters for the `JAVA_TOOL_OPTIONS` environment variable, and anything longer than this may be cut off by the JVM.
+
+For Java 9+, often you may want to use [`JDK_JAVA_OPTIONS`](https://stackoverflow.com/questions/52986487/what-is-the-difference-between-jdk-java-options-and-java-tool-options-when-using) instead of `JAVA_TOOL_OPTIONS`.
 
 #### Other Environment Variables
 
