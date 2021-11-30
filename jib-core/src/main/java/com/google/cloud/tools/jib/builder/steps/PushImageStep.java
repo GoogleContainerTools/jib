@@ -36,6 +36,7 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.Set;
 import java.util.concurrent.Callable;
+import java.util.stream.Collectors;
 
 /**
  * Pushes a manifest or a manifest list for a tag. If not a manifest list, returns the manifest
@@ -78,8 +79,9 @@ class PushImageStep implements Callable<BuildResult> {
 
       DescriptorDigest manifestDigest = Digests.computeJsonDigest(manifestTemplate);
 
-      Set<String> imageQualifiers =
-          singlePlatform ? tags : Collections.singleton(manifestDigest.toString());
+      boolean configForNewTagFeature = true;
+      Set<String> imageQualifiers = singlePlatform ? tags : getChildTags(builtImage, tags, manifestDigest, configForNewTagFeature);
+
       return imageQualifiers.stream()
           .map(
               qualifier ->
@@ -92,6 +94,15 @@ class PushImageStep implements Callable<BuildResult> {
                       manifestDigest,
                       containerConfigurationDigestAndSize.getDigest()))
           .collect(ImmutableList.toImmutableList());
+    }
+  }
+
+  private static Set<String> getChildTags(Image builtImage, Set<String> tags, DescriptorDigest manifestDigest, boolean newTagFeatureEnabled) {
+    if(newTagFeatureEnabled){
+      String architecture = builtImage.getArchitecture();
+      return tags.stream().map(tag -> tag + "-" + architecture).collect(Collectors.toSet());
+    }else{
+      return Collections.singleton(manifestDigest.toString());
     }
   }
 
