@@ -99,12 +99,12 @@ public class PushImageStepTest {
     }
   }
   @Test
-  public void testMakeList_multiPlatform() throws IOException, RegistryException {
+  public void testMakeList_multiPlatform_enabled() throws IOException, RegistryException {
     Image asd = Image.builder(V22ManifestTemplate.class)
             .setArchitecture("wasm").build();
     ImmutableList<PushImageStep> pushImageStepList =
         PushImageStep.makeList(
-            buildContext, progressDispatcherFactory, registryClient, new BlobDescriptor(mockDescriptorDigest), asd, false);
+            buildContext, progressDispatcherFactory, registryClient, new BlobDescriptor(mockDescriptorDigest), asd, false, true);
 
     ArgumentCaptor<String> tagCAtcher = ArgumentCaptor.forClass(String.class);
     Mockito.when(registryClient.pushManifest(Mockito.any(),tagCAtcher.capture())).thenReturn(null);
@@ -121,6 +121,32 @@ public class PushImageStepTest {
     }
     Set<String> allValues = ImmutableSet.copyOf(tagCAtcher.getAllValues());
     Set<String> expectedTags = ImmutableSet.of("tag1-wasm", "tag2-wasm");
+    Assert.assertEquals(expectedTags, allValues);
+
+  }
+  @Test
+  public void testMakeList_multiPlatform_disabled() throws IOException, RegistryException {
+    Image asd = Image.builder(V22ManifestTemplate.class)
+            .setArchitecture("wasm").build();
+    ImmutableList<PushImageStep> pushImageStepList =
+        PushImageStep.makeList(
+            buildContext, progressDispatcherFactory, registryClient, new BlobDescriptor(mockDescriptorDigest), asd, false, false);
+
+    ArgumentCaptor<String> tagCAtcher = ArgumentCaptor.forClass(String.class);
+    Mockito.when(registryClient.pushManifest(Mockito.any(),tagCAtcher.capture())).thenReturn(null);
+
+    Assert.assertEquals(1, pushImageStepList.size());
+    for (PushImageStep pushImageStep : pushImageStepList) {
+      BuildResult buildResult = pushImageStep.call();
+      Assert.assertEquals(
+          "sha256:0dd75658cf52608fbd72eb95ff5fc5946966258c3676b35d336bfcc7ac5006f1",
+          buildResult.getImageDigest().toString());
+      Assert.assertEquals(
+          "mockDescriptorDigest",
+          buildResult.getImageId().toString());
+    }
+    Set<String> allValues = ImmutableSet.copyOf(tagCAtcher.getAllValues());
+    Set<String> expectedTags = ImmutableSet.of("sha256:0dd75658cf52608fbd72eb95ff5fc5946966258c3676b35d336bfcc7ac5006f1");
     Assert.assertEquals(expectedTags, allValues);
 
   }

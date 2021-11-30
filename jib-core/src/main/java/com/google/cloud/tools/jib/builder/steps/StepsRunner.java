@@ -562,6 +562,7 @@ public class StepsRunner {
           Future<BlobDescriptor> containerConfigPushResult =
               results.baseImagesAndContainerConfigPushResults.get().get(baseImage);
 
+          boolean configForNewTagFeature = true;
           List<Future<BuildResult>> manifestPushResults =
               scheduleCallables(
                   PushImageStep.makeList(
@@ -570,7 +571,8 @@ public class StepsRunner {
                       results.targetRegistryClient.get(),
                       Verify.verifyNotNull(containerConfigPushResult).get(),
                       builtImage.get(),
-                      results.manifestCheckResult.get().isPresent()));
+                      results.manifestCheckResult.get().isPresent(),
+                      configForNewTagFeature));
 
           realizeFutures(manifestPushResults);
           return manifestPushResults.isEmpty()
