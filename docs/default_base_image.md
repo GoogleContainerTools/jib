@@ -83,4 +83,4 @@ For some reason if you have to keep the exact same behavior when using 3.0, you 
 
 ## Jib CLI
 
-For the JAR mode, old versions of Jib CLI has always used AdoptOpenJDK. Newer versions use [`eclipse-temurin`](https://hub.docker.com/_/eclipse-temurin) for Java 8 and 11, and [`azul/zulu-openjdk`](https://hub.docker.com/r/azul/zulu-openjdk) for Java 17. The WAR mode uses `jetty`.
+For the JAR mode, Jib CLI versions prior to 0.8 have always used AdoptOpenJDK. Starting with 0.8, the tool uses [`eclipse-temurin`](https://hub.docker.com/_/eclipse-temurin) for Java 8 and 11, and [`azul/zulu-openjdk`](https://hub.docker.com/r/azul/zulu-openjdk) for Java 17. The WAR mode uses `jetty`.
