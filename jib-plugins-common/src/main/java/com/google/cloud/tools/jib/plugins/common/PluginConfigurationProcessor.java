@@ -931,7 +931,7 @@ public class PluginConfigurationProcessor {
 
         case "USE_CURRENT_TIMESTAMP":
           projectProperties.log(
-              LogEvent.warn(
+              LogEvent.debug(
                   "Setting image creation time to current time; your image may not be reproducible."));
           return Instant.now();
 
