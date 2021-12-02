@@ -102,9 +102,12 @@ public class PushImageStepTest {
   public void testMakeList_multiPlatform_enabled() throws IOException, RegistryException {
     Image asd = Image.builder(V22ManifestTemplate.class)
             .setArchitecture("wasm").build();
+
+    Mockito.when(containerConfig.isPlatformTag()).thenReturn(true);
+
     ImmutableList<PushImageStep> pushImageStepList =
         PushImageStep.makeList(
-            buildContext, progressDispatcherFactory, registryClient, new BlobDescriptor(mockDescriptorDigest), asd, false, true);
+            buildContext, progressDispatcherFactory, registryClient, new BlobDescriptor(mockDescriptorDigest), asd, false);
 
     ArgumentCaptor<String> tagCAtcher = ArgumentCaptor.forClass(String.class);
     Mockito.when(registryClient.pushManifest(Mockito.any(),tagCAtcher.capture())).thenReturn(null);
@@ -128,9 +131,11 @@ public class PushImageStepTest {
   public void testMakeList_multiPlatform_disabled() throws IOException, RegistryException {
     Image asd = Image.builder(V22ManifestTemplate.class)
             .setArchitecture("wasm").build();
+    Mockito.when(containerConfig.isPlatformTag()).thenReturn(false);
+
     ImmutableList<PushImageStep> pushImageStepList =
         PushImageStep.makeList(
-            buildContext, progressDispatcherFactory, registryClient, new BlobDescriptor(mockDescriptorDigest), asd, false, false);
+            buildContext, progressDispatcherFactory, registryClient, new BlobDescriptor(mockDescriptorDigest), asd, false);
 
     ArgumentCaptor<String> tagCAtcher = ArgumentCaptor.forClass(String.class);
     Mockito.when(registryClient.pushManifest(Mockito.any(),tagCAtcher.capture())).thenReturn(null);

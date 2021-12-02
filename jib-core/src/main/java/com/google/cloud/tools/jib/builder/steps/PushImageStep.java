@@ -54,8 +54,7 @@ class PushImageStep implements Callable<BuildResult> {
           RegistryClient registryClient,
           BlobDescriptor containerConfigurationDigestAndSize,
           Image builtImage,
-          boolean manifestAlreadyExists,
-          boolean configForNewTagFeature)
+          boolean manifestAlreadyExists)
       throws IOException {
     boolean singlePlatform = buildContext.getContainerConfiguration().getPlatforms().size() == 1;
     Set<String> tags = buildContext.getAllTargetImageTags();
@@ -80,7 +79,7 @@ class PushImageStep implements Callable<BuildResult> {
 
       DescriptorDigest manifestDigest = Digests.computeJsonDigest(manifestTemplate);
 
-      Set<String> imageQualifiers = singlePlatform ? tags : getChildTags(builtImage, tags, manifestDigest, configForNewTagFeature);
+      Set<String> imageQualifiers = singlePlatform ? tags : getChildTags(builtImage, tags, manifestDigest, buildContext.getContainerConfiguration().isPlatformTag());
 
       return imageQualifiers.stream()
           .map(
