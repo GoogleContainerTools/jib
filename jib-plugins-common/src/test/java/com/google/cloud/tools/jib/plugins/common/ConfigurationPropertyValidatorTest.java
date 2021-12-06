@@ -148,6 +148,12 @@ public class ConfigurationPropertyValidatorTest {
         .containsExactly("abcd", "efg,hi\\,", "\\jkl,", "\\\\,mnop", "")
         .inOrder();
     assertThat(ConfigurationPropertyValidator.parseListProperty("")).containsExactly("");
+
+    assertThat(
+            ConfigurationPropertyValidator.parseListProperty(
+                "-Xmx2g,-agentlib:jdwp=transport=dt_socket\\,server=y\\,address=*:5005"))
+        .containsExactly("-Xmx2g", "-agentlib:jdwp=transport=dt_socket,server=y,address=*:5005")
+        .inOrder();
   }
 
   @Test
