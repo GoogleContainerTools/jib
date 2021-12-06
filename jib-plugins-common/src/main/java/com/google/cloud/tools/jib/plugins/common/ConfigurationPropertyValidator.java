@@ -158,18 +158,23 @@ public class ConfigurationPropertyValidator {
    */
   public static List<String> parseListProperty(String property) {
     List<String> items = new ArrayList<>();
-    int startIndex = 0;
-    for (int endIndex = 0; endIndex < property.length(); endIndex++) {
-      if (property.charAt(endIndex) == ',') {
+    StringBuilder token = new StringBuilder();
+    for (int i = 0; i < property.length(); i++) {
+      if (property.charAt(i) == ',') {
         // Split on non-escaped comma
-        items.add(property.substring(startIndex, endIndex));
-        startIndex = endIndex + 1;
-      } else if (property.charAt(endIndex) == '\\') {
-        // Found a backslash, ignore next character
-        endIndex++;
+        items.add(token.toString());
+        token.setLength(0);
+      } else {
+        if (i + 1 < property.length()
+            && property.charAt(i) == '\\'
+            && property.charAt(i + 1) == ',') {
+          // Found an escaped comma. Add a comma.
+          i++;
+        }
+        token.append(property.charAt(i));
       }
     }
-    items.add(property.substring(startIndex));
+    items.add(token.toString());
     return items;
   }
 

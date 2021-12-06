@@ -11,6 +11,8 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
+- Fixed incorrect parsing with comman escaping when providing Jib list or map property values on the command-line. ([#2224](https://github.com/GoogleContainerTools/jib/issues/2224))
+
 ## 3.1.4
 
 ### Changed
