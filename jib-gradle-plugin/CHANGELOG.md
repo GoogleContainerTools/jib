@@ -12,6 +12,7 @@ All notable changes to this project will be documented in this file.
 ### Fixed
 
 - Fixed `ClassCastException` when using non-`String` value (for example, [`Provider`](https://docs.gradle.org/current/javadoc/org/gradle/api/provider/Provider.html)) for `Main-Class` manifest attribute of the `jar` task. ([#3396](https://github.com/GoogleContainerTools/jib/issues/3396))
+- Fixed incorrect parsing with comman escaping when providing Jib list or map property values on the command-line. ([#2224](https://github.com/GoogleContainerTools/jib/issues/2224))
 
 ## 3.1.4
 
