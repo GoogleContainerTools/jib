@@ -49,12 +49,12 @@ class PushImageStep implements Callable<BuildResult> {
   private static final String DESCRIPTION = "Pushing manifest";
 
   static ImmutableList<PushImageStep> makeList(
-          BuildContext buildContext,
-          ProgressEventDispatcher.Factory progressEventDispatcherFactory,
-          RegistryClient registryClient,
-          BlobDescriptor containerConfigurationDigestAndSize,
-          Image builtImage,
-          boolean manifestAlreadyExists)
+      BuildContext buildContext,
+      ProgressEventDispatcher.Factory progressEventDispatcherFactory,
+      RegistryClient registryClient,
+      BlobDescriptor containerConfigurationDigestAndSize,
+      Image builtImage,
+      boolean manifestAlreadyExists)
       throws IOException {
     boolean singlePlatform = buildContext.getContainerConfiguration().getPlatforms().size() == 1;
     Set<String> tags = buildContext.getAllTargetImageTags();
