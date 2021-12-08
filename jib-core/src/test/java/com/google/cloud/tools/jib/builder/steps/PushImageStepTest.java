@@ -32,6 +32,8 @@ import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
 import com.google.cloud.tools.jib.registry.RegistryClient;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
+import java.io.IOException;
+import java.util.Set;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
@@ -42,9 +44,6 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
-
-import java.io.IOException;
-import java.util.Set;
 
 /** Tests for {@link PushImageStep}. */
 @RunWith(MockitoJUnitRunner.class)
@@ -98,6 +97,7 @@ public class PushImageStepTest {
           buildResult.getImageId().toString());
     }
   }
+
   @Test
   public void testMakeList_multiPlatform_enabled() throws IOException, RegistryException {
     Image asd = Image.builder(V22ManifestTemplate.class)
@@ -127,6 +127,7 @@ public class PushImageStepTest {
     Assert.assertEquals(expectedTags, allValues);
 
   }
+
   @Test
   public void testMakeList_multiPlatform_disabled() throws IOException, RegistryException {
     Image asd = Image.builder(V22ManifestTemplate.class)
