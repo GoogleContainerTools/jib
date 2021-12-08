@@ -294,7 +294,6 @@ public class ContainerConfiguration {
       return this;
     }
 
-
     /**
      * Sets the working directory in the container.
      *
@@ -305,8 +304,6 @@ public class ContainerConfiguration {
       this.platformTag = platformTag;
       return this;
     }
-
-
 
     /**
      * Builds the {@link ContainerConfiguration}.

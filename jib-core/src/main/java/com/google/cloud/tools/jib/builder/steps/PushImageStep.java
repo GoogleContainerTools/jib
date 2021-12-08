@@ -79,7 +79,14 @@ class PushImageStep implements Callable<BuildResult> {
 
       DescriptorDigest manifestDigest = Digests.computeJsonDigest(manifestTemplate);
 
-      Set<String> imageQualifiers = singlePlatform ? tags : getChildTags(builtImage, tags, manifestDigest, buildContext.getContainerConfiguration().isPlatformTag());
+      Set<String> imageQualifiers =
+          singlePlatform
+              ? tags
+              : getChildTags(
+                  builtImage,
+                  tags,
+                  manifestDigest,
+                  buildContext.getContainerConfiguration().isPlatformTag());
 
       return imageQualifiers.stream()
           .map(
@@ -96,7 +103,11 @@ class PushImageStep implements Callable<BuildResult> {
     }
   }
 
-  private static Set<String> getChildTags(Image builtImage, Set<String> tags, DescriptorDigest manifestDigest, boolean newTagFeatureEnabled) {
+  private static Set<String> getChildTags(
+      Image builtImage,
+      Set<String> tags,
+      DescriptorDigest manifestDigest,
+      boolean newTagFeatureEnabled) {
     if (newTagFeatureEnabled) {
       String architecture = builtImage.getArchitecture();
       return tags.stream().map(tag -> tag + "-" + architecture).collect(Collectors.toSet());
