@@ -97,10 +97,10 @@ class PushImageStep implements Callable<BuildResult> {
   }
 
   private static Set<String> getChildTags(Image builtImage, Set<String> tags, DescriptorDigest manifestDigest, boolean newTagFeatureEnabled) {
-    if(newTagFeatureEnabled){
+    if (newTagFeatureEnabled) {
       String architecture = builtImage.getArchitecture();
       return tags.stream().map(tag -> tag + "-" + architecture).collect(Collectors.toSet());
-    }else{
+    } else {
       return Collections.singleton(manifestDigest.toString());
     }
   }
