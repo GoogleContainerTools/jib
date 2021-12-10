@@ -82,11 +82,7 @@ class PushImageStep implements Callable<BuildResult> {
       Set<String> imageQualifiers =
           singlePlatform
               ? tags
-              : getChildTags(
-                  builtImage,
-                  tags,
-                  manifestDigest,
-                  buildContext.getContainerConfiguration().isPlatformTag());
+              : getChildTags(builtImage, tags, manifestDigest, buildContext.isEnablePlatformTags());
 
       return imageQualifiers.stream()
           .map(
@@ -111,9 +107,8 @@ class PushImageStep implements Callable<BuildResult> {
     if (newTagFeatureEnabled) {
       String architecture = builtImage.getArchitecture();
       return tags.stream().map(tag -> tag + "-" + architecture).collect(Collectors.toSet());
-    } else {
-      return Collections.singleton(manifestDigest.toString());
     }
+    return Collections.singleton(manifestDigest.toString());
   }
 
   static ImmutableList<PushImageStep> makeListForManifestList(

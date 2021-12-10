@@ -16,6 +16,8 @@
 
 package com.google.cloud.tools.jib.builder.steps;
 
+import static com.google.common.truth.Truth.assertThat;
+
 import com.google.cloud.tools.jib.api.DescriptorDigest;
 import com.google.cloud.tools.jib.api.RegistryException;
 import com.google.cloud.tools.jib.api.buildplan.Platform;
@@ -33,7 +35,6 @@ import com.google.cloud.tools.jib.registry.RegistryClient;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import java.io.IOException;
-import java.util.Set;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
@@ -101,7 +102,7 @@ public class PushImageStepTest {
   public void testMakeList_multiPlatform_enabled() throws IOException, RegistryException {
     Image asd = Image.builder(V22ManifestTemplate.class).setArchitecture("wasm").build();
 
-    Mockito.when(containerConfig.isPlatformTag()).thenReturn(true);
+    Mockito.when(buildContext.isEnablePlatformTags()).thenReturn(true);
 
     ImmutableList<PushImageStep> pushImageStepList =
         PushImageStep.makeList(
@@ -112,26 +113,20 @@ public class PushImageStepTest {
             asd,
             false);
 
-    ArgumentCaptor<String> tagCAtcher = ArgumentCaptor.forClass(String.class);
-    Mockito.when(registryClient.pushManifest(Mockito.any(), tagCAtcher.capture())).thenReturn(null);
+    ArgumentCaptor<String> tagCatcher = ArgumentCaptor.forClass(String.class);
+    Mockito.when(registryClient.pushManifest(Mockito.any(), tagCatcher.capture())).thenReturn(null);
 
     Assert.assertEquals(2, pushImageStepList.size());
-    for (PushImageStep pushImageStep : pushImageStepList) {
-      BuildResult buildResult = pushImageStep.call();
-      Assert.assertEquals(
-          "sha256:0dd75658cf52608fbd72eb95ff5fc5946966258c3676b35d336bfcc7ac5006f1",
-          buildResult.getImageDigest().toString());
-      Assert.assertEquals("mockDescriptorDigest", buildResult.getImageId().toString());
-    }
-    Set<String> allValues = ImmutableSet.copyOf(tagCAtcher.getAllValues());
-    Set<String> expectedTags = ImmutableSet.of("tag1-wasm", "tag2-wasm");
-    Assert.assertEquals(expectedTags, allValues);
+    pushImageStepList.get(0).call();
+    pushImageStepList.get(1).call();
+
+    assertThat(tagCatcher.getAllValues()).containsExactly("tag1-wasm", "tag2-wasm");
   }
 
   @Test
   public void testMakeList_multiPlatform_disabled() throws IOException, RegistryException {
     Image asd = Image.builder(V22ManifestTemplate.class).setArchitecture("wasm").build();
-    Mockito.when(containerConfig.isPlatformTag()).thenReturn(false);
+    Mockito.when(buildContext.isEnablePlatformTags()).thenReturn(false);
 
     ImmutableList<PushImageStep> pushImageStepList =
         PushImageStep.makeList(
@@ -142,21 +137,13 @@ public class PushImageStepTest {
             asd,
             false);
 
-    ArgumentCaptor<String> tagCAtcher = ArgumentCaptor.forClass(String.class);
-    Mockito.when(registryClient.pushManifest(Mockito.any(), tagCAtcher.capture())).thenReturn(null);
+    ArgumentCaptor<String> tagCatcher = ArgumentCaptor.forClass(String.class);
+    Mockito.when(registryClient.pushManifest(Mockito.any(), tagCatcher.capture())).thenReturn(null);
 
     Assert.assertEquals(1, pushImageStepList.size());
-    for (PushImageStep pushImageStep : pushImageStepList) {
-      BuildResult buildResult = pushImageStep.call();
-      Assert.assertEquals(
-          "sha256:0dd75658cf52608fbd72eb95ff5fc5946966258c3676b35d336bfcc7ac5006f1",
-          buildResult.getImageDigest().toString());
-      Assert.assertEquals("mockDescriptorDigest", buildResult.getImageId().toString());
-    }
-    Set<String> allValues = ImmutableSet.copyOf(tagCAtcher.getAllValues());
-    Set<String> expectedTags =
-        ImmutableSet.of("sha256:0dd75658cf52608fbd72eb95ff5fc5946966258c3676b35d336bfcc7ac5006f1");
-    Assert.assertEquals(expectedTags, allValues);
+    pushImageStepList.get(0).call();
+    assertThat(tagCatcher.getAllValues())
+        .containsExactly("sha256:0dd75658cf52608fbd72eb95ff5fc5946966258c3676b35d336bfcc7ac5006f1");
   }
 
   @Test

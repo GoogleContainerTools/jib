@@ -321,8 +321,7 @@ public class ContainerConfiguration {
           volumes == null ? null : ImmutableSet.copyOf(volumes),
           labels == null ? null : ImmutableMap.copyOf(labels),
           user,
-          workingDirectory,
-          platformTag);
+          workingDirectory);
     }
 
     private Builder() {}
@@ -347,7 +346,6 @@ public class ContainerConfiguration {
   @Nullable private final ImmutableMap<String, String> labels;
   @Nullable private final String user;
   @Nullable private final AbsoluteUnixPath workingDirectory;
-  @Nullable private final boolean platformTag;
 
   private ContainerConfiguration(
       ImmutableSet<Platform> platforms,
@@ -359,8 +357,7 @@ public class ContainerConfiguration {
       @Nullable ImmutableSet<AbsoluteUnixPath> volumes,
       @Nullable ImmutableMap<String, String> labels,
       @Nullable String user,
-      @Nullable AbsoluteUnixPath workingDirectory,
-      boolean platformTag) {
+      @Nullable AbsoluteUnixPath workingDirectory) {
     this.platforms = platforms;
     this.creationTime = creationTime;
     this.entrypoint = entrypoint;
@@ -371,7 +368,6 @@ public class ContainerConfiguration {
     this.labels = labels;
     this.user = user;
     this.workingDirectory = workingDirectory;
-    this.platformTag = platformTag;
   }
 
   public ImmutableSet<Platform> getPlatforms() {
@@ -420,10 +416,6 @@ public class ContainerConfiguration {
   @Nullable
   public AbsoluteUnixPath getWorkingDirectory() {
     return workingDirectory;
-  }
-
-  public boolean isPlatformTag() {
-    return platformTag;
   }
 
   @Override

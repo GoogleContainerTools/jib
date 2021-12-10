@@ -83,6 +83,7 @@ public class BuildContext implements Closeable {
     @Nullable private ExecutorService executorService;
     private boolean alwaysCacheBaseImage = false;
     private ImmutableListMultimap<String, String> registryMirrors = ImmutableListMultimap.of();
+    private boolean enablePlatformTags = false;
 
     private Builder() {}
 
@@ -95,6 +96,15 @@ public class BuildContext implements Closeable {
     public Builder setBaseImageConfiguration(ImageConfiguration imageConfiguration) {
       baseImageConfiguration = imageConfiguration;
       return this;
+    }
+
+    /**
+     * Enables/Disables the platform tags.
+     *
+     * @return this
+     */
+    public void setEnablePlatformTags(boolean enablePlatformTags) {
+      this.enablePlatformTags = enablePlatformTags;
     }
 
     /**
@@ -328,7 +338,8 @@ public class BuildContext implements Closeable {
               executorService == null ? Executors.newCachedThreadPool() : executorService,
               executorService == null, // shutDownExecutorService
               alwaysCacheBaseImage,
-              registryMirrors);
+              registryMirrors,
+              enablePlatformTags);
 
         case 1:
           throw new IllegalStateException(missingFields.get(0) + " is required but not set");
@@ -386,6 +397,7 @@ public class BuildContext implements Closeable {
   private final boolean shutDownExecutorService;
   private final boolean alwaysCacheBaseImage;
   private final ImmutableListMultimap<String, String> registryMirrors;
+  private final boolean enablePlatformTags;
 
   /** Instantiate with {@link #builder}. */
   private BuildContext(
@@ -405,7 +417,8 @@ public class BuildContext implements Closeable {
       ExecutorService executorService,
       boolean shutDownExecutorService,
       boolean alwaysCacheBaseImage,
-      ImmutableListMultimap<String, String> registryMirrors) {
+      ImmutableListMultimap<String, String> registryMirrors,
+      boolean enablePlatformTags) {
     this.baseImageConfiguration = baseImageConfiguration;
     this.targetImageConfiguration = targetImageConfiguration;
     this.additionalTargetImageTags = additionalTargetImageTags;
@@ -423,10 +436,15 @@ public class BuildContext implements Closeable {
     this.shutDownExecutorService = shutDownExecutorService;
     this.alwaysCacheBaseImage = alwaysCacheBaseImage;
     this.registryMirrors = registryMirrors;
+    this.enablePlatformTags = enablePlatformTags;
   }
 
   public ImageConfiguration getBaseImageConfiguration() {
     return baseImageConfiguration;
+  }
+
+  public boolean isEnablePlatformTags() {
+    return enablePlatformTags;
   }
 
   public ImageConfiguration getTargetImageConfiguration() {
