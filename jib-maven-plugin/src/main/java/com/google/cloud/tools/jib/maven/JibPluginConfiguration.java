@@ -37,6 +37,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import org.apache.maven.execution.MavenSession;
@@ -146,6 +147,16 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
     public Optional<String> getArchitectureName() {
       return Optional.ofNullable(architecture);
     }
+
+    private static PlatformParameters ofString(String osArchitecture) {
+      if (osArchitecture == null || !osArchitecture.matches("[^/]+/[^/]+")) {
+        throw new IllegalArgumentException("osArchitecture must be of form os/architecture");
+      }
+      PlatformParameters platformParameters = new PlatformParameters();
+      platformParameters.os = osArchitecture.split("/")[0].trim();
+      platformParameters.architecture = osArchitecture.split("/")[1].trim();
+      return platformParameters;
+    }
   }
 
   /** Configuration for {@code from} parameter. */
@@ -158,10 +169,7 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
 
     /** Constructor for defaults. */
     public FromConfiguration() {
-      PlatformParameters platform = new PlatformParameters();
-      platform.os = "linux";
-      platform.architecture = "amd64";
-      platforms = Collections.singletonList(platform);
+      platforms = Collections.singletonList(PlatformParameters.ofString("linux/amd64"));
     }
   }
 
@@ -354,6 +362,12 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
    * @return the specified platforms
    */
   List<PlatformParameters> getPlatforms() {
+    String property = getProperty(PropertyNames.FROM_PLATFORMS);
+    if (property != null) {
+      return Stream.of(property.split(","))
+          .map(PlatformParameters::ofString)
+          .collect(Collectors.toList());
+    }
     return from.platforms;
   }
 
