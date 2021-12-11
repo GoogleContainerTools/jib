@@ -23,6 +23,7 @@ public class PropertyNames {
   public static final String FROM_CRED_HELPER = "jib.from.credHelper";
   public static final String FROM_AUTH_USERNAME = "jib.from.auth.username";
   public static final String FROM_AUTH_PASSWORD = "jib.from.auth.password";
+  public static final String FROM_PLATFORMS = "jib.from.platforms";
   public static final String TO_IMAGE = "jib.to.image";
   public static final String TO_IMAGE_ALTERNATE = "image";
   public static final String TO_TAGS = "jib.to.tags";
