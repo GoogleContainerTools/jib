@@ -56,21 +56,13 @@ class PushImageStep implements Callable<BuildResult> {
       Image builtImage,
       boolean manifestAlreadyExists)
       throws IOException {
-    boolean singlePlatform = buildContext.getContainerConfiguration().getPlatforms().size() == 1;
-    Set<String> tags = buildContext.getAllTargetImageTags();
-
     // Gets the image manifest to push.
     BuildableManifestTemplate manifestTemplate =
         new ImageToJsonTranslator(builtImage)
             .getManifestTemplate(
                 buildContext.getTargetFormat(), containerConfigurationDigestAndSize);
-
     DescriptorDigest manifestDigest = Digests.computeJsonDigest(manifestTemplate);
-
-    Set<String> imageQualifiers =
-        singlePlatform
-            ? tags
-            : getChildTags(builtImage, tags, manifestDigest, buildContext.getEnablePlatformTags());
+    Set<String> imageQualifiers = getImageQualifiers(buildContext, builtImage, manifestDigest);
 
     EventHandlers eventHandlers = buildContext.getEventHandlers();
     try (TimerEventDispatcher ignored =
@@ -99,12 +91,14 @@ class PushImageStep implements Callable<BuildResult> {
     }
   }
 
-  private static Set<String> getChildTags(
-      Image builtImage,
-      Set<String> tags,
-      DescriptorDigest manifestDigest,
-      boolean enablePlatformTags) {
-    if (enablePlatformTags) {
+  private static Set<String> getImageQualifiers(
+      BuildContext buildContext, Image builtImage, DescriptorDigest manifestDigest) {
+    boolean singlePlatform = buildContext.getContainerConfiguration().getPlatforms().size() == 1;
+    Set<String> tags = buildContext.getAllTargetImageTags();
+    if (singlePlatform) {
+      return tags;
+    }
+    if (buildContext.getEnablePlatformTags()) {
       String architecture = builtImage.getArchitecture();
       return tags.stream().map(tag -> tag + "-" + architecture).collect(Collectors.toSet());
     }
