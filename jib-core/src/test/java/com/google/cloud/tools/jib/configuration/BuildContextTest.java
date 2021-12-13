@@ -128,6 +128,7 @@ public class BuildContextTest {
             .setApplicationLayersCacheDirectory(expectedApplicationLayersCacheDirectory)
             .setBaseImageLayersCacheDirectory(expectedBaseImageLayersCacheDirectory)
             .setTargetFormat(ImageFormat.OCI)
+            .setEnablePlatformTags(true)
             .setAllowInsecureRegistries(true)
             .setLayerConfigurations(expectedLayerConfigurations)
             .setToolName(expectedCreatedBy)
@@ -177,6 +178,7 @@ public class BuildContextTest {
     Assert.assertEquals(expectedCreatedBy, buildContext.getToolName());
     Assert.assertEquals(expectedRegistryMirrors, buildContext.getRegistryMirrors());
     Assert.assertNotNull(buildContext.getExecutorService());
+    Assert.assertTrue(buildContext.getEnablePlatformTags());
   }
 
   @Test
@@ -220,6 +222,7 @@ public class BuildContextTest {
     Assert.assertEquals(Collections.emptyList(), buildContext.getLayerConfigurations());
     Assert.assertEquals("jib", buildContext.getToolName());
     Assert.assertEquals(0, buildContext.getRegistryMirrors().size());
+    Assert.assertFalse(buildContext.getEnablePlatformTags());
   }
 
   @Test
