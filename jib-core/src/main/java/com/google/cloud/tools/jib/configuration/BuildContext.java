@@ -99,18 +99,6 @@ public class BuildContext implements Closeable {
     }
 
     /**
-     * Sets whether to automatically add architecture suffix to tags for platform-specific images
-     * when building multi-platform images. For example, when building amd64 and arm64 images for a
-     * given tag, the final tags will be &lt;tag&gt;-amd64 and &lt;tag&gt;-arm64.
-     *
-     * @return this
-     */
-    public Builder setEnablePlatformTags(boolean enablePlatformTags) {
-      this.enablePlatformTags = enablePlatformTags;
-      return this;
-    }
-
-    /**
      * Sets the target image configuration.
      *
      * @param imageConfiguration the {@link ImageConfiguration} describing the target image
@@ -130,6 +118,19 @@ public class BuildContext implements Closeable {
      */
     public Builder setAdditionalTargetImageTags(Set<String> tags) {
       additionalTargetImageTags = ImmutableSet.copyOf(tags);
+      return this;
+    }
+
+    /**
+     * Sets whether to automatically add architecture suffix to tags for platform-specific images
+     * when building multi-platform images. For example, when building amd64 and arm64 images for a
+     * given tag, the final tags will be {@code <tag>-amd64} and {@code <tag>-arm64}.
+     *
+     * @param enablePlatformTags whether to append architecture suffix to tags
+     * @return this
+     */
+    public Builder setEnablePlatformTags(boolean enablePlatformTags) {
+      this.enablePlatformTags = enablePlatformTags;
       return this;
     }
 

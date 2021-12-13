@@ -37,10 +37,9 @@ import com.google.cloud.tools.jib.image.json.V22ManifestListTemplate;
 import com.google.cloud.tools.jib.image.json.V22ManifestListTemplate.ManifestDescriptorTemplate;
 import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
 import com.google.cloud.tools.jib.registry.RegistryClient;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import java.io.IOException;
-import org.junit.Assert;
+import java.util.List;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -85,29 +84,27 @@ public class PushImageStepTest {
 
   @Test
   public void testMakeListForManifestList() throws IOException, RegistryException {
-    ImmutableList<PushImageStep> pushImageStepList =
+    List<PushImageStep> pushImageStepList =
         PushImageStep.makeListForManifestList(
             buildContext, progressDispatcherFactory, registryClient, manifestList, false);
 
     assertThat(pushImageStepList).hasSize(2);
     for (PushImageStep pushImageStep : pushImageStepList) {
       BuildResult buildResult = pushImageStep.call();
-      Assert.assertEquals(
-          "sha256:64303e82b8a80ef20475dc7f807b81f172cacce1a59191927f3a7ea5222f38ae",
-          buildResult.getImageDigest().toString());
-      Assert.assertEquals(
-          "sha256:64303e82b8a80ef20475dc7f807b81f172cacce1a59191927f3a7ea5222f38ae",
-          buildResult.getImageId().toString());
+      assertThat(buildResult.getImageDigest().toString())
+          .isEqualTo("sha256:64303e82b8a80ef20475dc7f807b81f172cacce1a59191927f3a7ea5222f38ae");
+      assertThat(buildResult.getImageId().toString())
+          .isEqualTo("sha256:64303e82b8a80ef20475dc7f807b81f172cacce1a59191927f3a7ea5222f38ae");
     }
   }
 
   @Test
-  public void testMakeList_multiPlatform_enabled() throws IOException, RegistryException {
+  public void testMakeList_multiPlatform_platformTags() throws IOException, RegistryException {
     Image image = Image.builder(V22ManifestTemplate.class).setArchitecture("wasm").build();
 
     when(buildContext.getEnablePlatformTags()).thenReturn(true);
 
-    ImmutableList<PushImageStep> pushImageStepList =
+    List<PushImageStep> pushImageStepList =
         PushImageStep.makeList(
             buildContext,
             progressDispatcherFactory,
@@ -127,11 +124,11 @@ public class PushImageStepTest {
   }
 
   @Test
-  public void testMakeList_multiPlatform_disabled() throws IOException, RegistryException {
+  public void testMakeList_multiPlatform_nonPlatformTags() throws IOException, RegistryException {
     Image image = Image.builder(V22ManifestTemplate.class).setArchitecture("wasm").build();
     when(buildContext.getEnablePlatformTags()).thenReturn(false);
 
-    ImmutableList<PushImageStep> pushImageStepList =
+    List<PushImageStep> pushImageStepList =
         PushImageStep.makeList(
             buildContext,
             progressDispatcherFactory,
@@ -143,7 +140,7 @@ public class PushImageStepTest {
     ArgumentCaptor<String> tagCatcher = ArgumentCaptor.forClass(String.class);
     when(registryClient.pushManifest(any(), tagCatcher.capture())).thenReturn(null);
 
-    Assert.assertEquals(1, pushImageStepList.size());
+    assertThat(pushImageStepList).hasSize(1);
     pushImageStepList.get(0).call();
     assertThat(tagCatcher.getAllValues())
         .containsExactly("sha256:0dd75658cf52608fbd72eb95ff5fc5946966258c3676b35d336bfcc7ac5006f1");
@@ -154,19 +151,19 @@ public class PushImageStepTest {
     when(containerConfig.getPlatforms())
         .thenReturn(ImmutableSet.of(new Platform("amd64", "linux")));
 
-    ImmutableList<PushImageStep> pushImageStepList =
+    List<PushImageStep> pushImageStepList =
         PushImageStep.makeListForManifestList(
             buildContext, progressDispatcherFactory, registryClient, manifestList, false);
-    Assert.assertEquals(0, pushImageStepList.size());
+    assertThat(pushImageStepList).isEmpty();
   }
 
   @Test
   public void testMakeListForManifestList_manifestListAlreadyExists() throws IOException {
     System.setProperty(JibSystemProperties.SKIP_EXISTING_IMAGES, "true");
 
-    ImmutableList<PushImageStep> pushImageStepList =
+    List<PushImageStep> pushImageStepList =
         PushImageStep.makeListForManifestList(
             buildContext, progressDispatcherFactory, registryClient, manifestList, true);
-    Assert.assertEquals(0, pushImageStepList.size());
+    assertThat(pushImageStepList).isEmpty();
   }
 }
