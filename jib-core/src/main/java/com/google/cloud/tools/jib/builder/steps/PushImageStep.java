@@ -58,31 +58,31 @@ class PushImageStep implements Callable<BuildResult> {
       throws IOException {
     boolean singlePlatform = buildContext.getContainerConfiguration().getPlatforms().size() == 1;
     Set<String> tags = buildContext.getAllTargetImageTags();
-    int numPushers = singlePlatform ? tags.size() : 1;
+
+    // Gets the image manifest to push.
+    BuildableManifestTemplate manifestTemplate =
+        new ImageToJsonTranslator(builtImage)
+            .getManifestTemplate(
+                buildContext.getTargetFormat(), containerConfigurationDigestAndSize);
+
+    DescriptorDigest manifestDigest = Digests.computeJsonDigest(manifestTemplate);
+
+    Set<String> imageQualifiers =
+        singlePlatform
+            ? tags
+            : getChildTags(builtImage, tags, manifestDigest, buildContext.getEnablePlatformTags());
 
     EventHandlers eventHandlers = buildContext.getEventHandlers();
     try (TimerEventDispatcher ignored =
             new TimerEventDispatcher(eventHandlers, "Preparing manifest pushers");
         ProgressEventDispatcher progressDispatcher =
-            progressEventDispatcherFactory.create("launching manifest pushers", numPushers)) {
+            progressEventDispatcherFactory.create(
+                "launching manifest pushers", imageQualifiers.size())) {
 
       if (JibSystemProperties.skipExistingImages() && manifestAlreadyExists) {
         eventHandlers.dispatch(LogEvent.info("Skipping pushing manifest; already exists."));
         return ImmutableList.of();
       }
-
-      // Gets the image manifest to push.
-      BuildableManifestTemplate manifestTemplate =
-          new ImageToJsonTranslator(builtImage)
-              .getManifestTemplate(
-                  buildContext.getTargetFormat(), containerConfigurationDigestAndSize);
-
-      DescriptorDigest manifestDigest = Digests.computeJsonDigest(manifestTemplate);
-
-      Set<String> imageQualifiers =
-          singlePlatform
-              ? tags
-              : getChildTags(builtImage, tags, manifestDigest, buildContext.isEnablePlatformTags());
 
       return imageQualifiers.stream()
           .map(
@@ -103,8 +103,8 @@ class PushImageStep implements Callable<BuildResult> {
       Image builtImage,
       Set<String> tags,
       DescriptorDigest manifestDigest,
-      boolean newTagFeatureEnabled) {
-    if (newTagFeatureEnabled) {
+      boolean enablePlatformTags) {
+    if (enablePlatformTags) {
       String architecture = builtImage.getArchitecture();
       return tags.stream().map(tag -> tag + "-" + architecture).collect(Collectors.toSet());
     }

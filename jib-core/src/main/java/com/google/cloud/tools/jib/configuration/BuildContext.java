@@ -99,12 +99,15 @@ public class BuildContext implements Closeable {
     }
 
     /**
-     * Enables/Disables the platform tags.
+     * Sets whether to automatically add architecture suffix to tags for platform-specific images
+     * when building multi-platform images. For example, when building amd64 and arm64 images for a
+     * given tag, the final tags will be &lt;tag&gt;-amd64 and &lt;tag&gt;-arm64.
      *
      * @return this
      */
-    public void setEnablePlatformTags(boolean enablePlatformTags) {
+    public Builder setEnablePlatformTags(boolean enablePlatformTags) {
       this.enablePlatformTags = enablePlatformTags;
+      return this;
     }
 
     /**
@@ -443,7 +446,7 @@ public class BuildContext implements Closeable {
     return baseImageConfiguration;
   }
 
-  public boolean isEnablePlatformTags() {
+  public boolean getEnablePlatformTags() {
     return enablePlatformTags;
   }
 

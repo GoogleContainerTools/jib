@@ -17,6 +17,11 @@
 package com.google.cloud.tools.jib.builder.steps;
 
 import static com.google.common.truth.Truth.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.when;
 
 import com.google.cloud.tools.jib.api.DescriptorDigest;
 import com.google.cloud.tools.jib.api.RegistryException;
@@ -43,7 +48,6 @@ import org.junit.contrib.java.lang.system.RestoreSystemProperties;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
 /** Tests for {@link PushImageStep}. */
@@ -63,16 +67,15 @@ public class PushImageStepTest {
 
   @Before
   public void setUp() {
-    Mockito.when(buildContext.getAllTargetImageTags()).thenReturn(ImmutableSet.of("tag1", "tag2"));
-    Mockito.when(buildContext.getEventHandlers()).thenReturn(EventHandlers.NONE);
-    Mockito.when(buildContext.getContainerConfiguration()).thenReturn(containerConfig);
-    Mockito.doReturn(V22ManifestTemplate.class).when(buildContext).getTargetFormat();
-    Mockito.when(containerConfig.getPlatforms())
+    when(buildContext.getAllTargetImageTags()).thenReturn(ImmutableSet.of("tag1", "tag2"));
+    when(buildContext.getEventHandlers()).thenReturn(EventHandlers.NONE);
+    when(buildContext.getContainerConfiguration()).thenReturn(containerConfig);
+    doReturn(V22ManifestTemplate.class).when(buildContext).getTargetFormat();
+    when(containerConfig.getPlatforms())
         .thenReturn(
             ImmutableSet.of(new Platform("amd64", "linux"), new Platform("arm64", "windows")));
-    Mockito.when(progressDispatcherFactory.create(Mockito.anyString(), Mockito.anyLong()))
-        .thenReturn(progressDispatcher);
-    Mockito.when(progressDispatcher.newChildProducer()).thenReturn(progressDispatcherFactory);
+    when(progressDispatcherFactory.create(anyString(), anyLong())).thenReturn(progressDispatcher);
+    when(progressDispatcher.newChildProducer()).thenReturn(progressDispatcherFactory);
 
     ManifestDescriptorTemplate manifest = new ManifestDescriptorTemplate();
     manifest.setSize(100);
@@ -86,7 +89,7 @@ public class PushImageStepTest {
         PushImageStep.makeListForManifestList(
             buildContext, progressDispatcherFactory, registryClient, manifestList, false);
 
-    Assert.assertEquals(2, pushImageStepList.size());
+    assertThat(pushImageStepList).hasSize(2);
     for (PushImageStep pushImageStep : pushImageStepList) {
       BuildResult buildResult = pushImageStep.call();
       Assert.assertEquals(
@@ -100,9 +103,9 @@ public class PushImageStepTest {
 
   @Test
   public void testMakeList_multiPlatform_enabled() throws IOException, RegistryException {
-    Image asd = Image.builder(V22ManifestTemplate.class).setArchitecture("wasm").build();
+    Image image = Image.builder(V22ManifestTemplate.class).setArchitecture("wasm").build();
 
-    Mockito.when(buildContext.isEnablePlatformTags()).thenReturn(true);
+    when(buildContext.getEnablePlatformTags()).thenReturn(true);
 
     ImmutableList<PushImageStep> pushImageStepList =
         PushImageStep.makeList(
@@ -110,13 +113,13 @@ public class PushImageStepTest {
             progressDispatcherFactory,
             registryClient,
             new BlobDescriptor(mockDescriptorDigest),
-            asd,
+            image,
             false);
 
     ArgumentCaptor<String> tagCatcher = ArgumentCaptor.forClass(String.class);
-    Mockito.when(registryClient.pushManifest(Mockito.any(), tagCatcher.capture())).thenReturn(null);
+    when(registryClient.pushManifest(any(), tagCatcher.capture())).thenReturn(null);
 
-    Assert.assertEquals(2, pushImageStepList.size());
+    assertThat(pushImageStepList).hasSize(2);
     pushImageStepList.get(0).call();
     pushImageStepList.get(1).call();
 
@@ -125,8 +128,8 @@ public class PushImageStepTest {
 
   @Test
   public void testMakeList_multiPlatform_disabled() throws IOException, RegistryException {
-    Image asd = Image.builder(V22ManifestTemplate.class).setArchitecture("wasm").build();
-    Mockito.when(buildContext.isEnablePlatformTags()).thenReturn(false);
+    Image image = Image.builder(V22ManifestTemplate.class).setArchitecture("wasm").build();
+    when(buildContext.getEnablePlatformTags()).thenReturn(false);
 
     ImmutableList<PushImageStep> pushImageStepList =
         PushImageStep.makeList(
@@ -134,11 +137,11 @@ public class PushImageStepTest {
             progressDispatcherFactory,
             registryClient,
             new BlobDescriptor(mockDescriptorDigest),
-            asd,
+            image,
             false);
 
     ArgumentCaptor<String> tagCatcher = ArgumentCaptor.forClass(String.class);
-    Mockito.when(registryClient.pushManifest(Mockito.any(), tagCatcher.capture())).thenReturn(null);
+    when(registryClient.pushManifest(any(), tagCatcher.capture())).thenReturn(null);
 
     Assert.assertEquals(1, pushImageStepList.size());
     pushImageStepList.get(0).call();
@@ -148,7 +151,7 @@ public class PushImageStepTest {
 
   @Test
   public void testMakeListForManifestList_singlePlatform() throws IOException {
-    Mockito.when(containerConfig.getPlatforms())
+    when(containerConfig.getPlatforms())
         .thenReturn(ImmutableSet.of(new Platform("amd64", "linux")));
 
     ImmutableList<PushImageStep> pushImageStepList =

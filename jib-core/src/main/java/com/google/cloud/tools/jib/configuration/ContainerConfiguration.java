@@ -58,7 +58,6 @@ public class ContainerConfiguration {
     @Nullable private Set<AbsoluteUnixPath> volumes;
     @Nullable private Map<String, String> labels;
     @Nullable private String user;
-    @Nullable private boolean platformTag;
     @Nullable private AbsoluteUnixPath workingDirectory;
 
     /**
@@ -291,17 +290,6 @@ public class ContainerConfiguration {
      */
     public Builder setWorkingDirectory(@Nullable AbsoluteUnixPath workingDirectory) {
       this.workingDirectory = workingDirectory;
-      return this;
-    }
-
-    /**
-     * Sets the working directory in the container.
-     *
-     * @param platformTag tag platforms
-     * @return this
-     */
-    public Builder setPlatformTag(boolean platformTag) {
-      this.platformTag = platformTag;
       return this;
     }
 
