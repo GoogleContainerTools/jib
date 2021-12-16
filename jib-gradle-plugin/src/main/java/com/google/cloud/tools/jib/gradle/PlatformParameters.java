@@ -17,6 +17,7 @@
 package com.google.cloud.tools.jib.gradle;
 
 import com.google.cloud.tools.jib.plugins.common.RawConfiguration.PlatformConfiguration;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -27,7 +28,7 @@ import org.gradle.api.tasks.Internal;
 /** Configuration of a platform. */
 public class PlatformParameters implements PlatformConfiguration {
 
-  static PlatformParameters ofString(String osArchitecture) {
+  static PlatformParameters of(String osArchitecture) {
     Matcher matcher = Pattern.compile("([^/ ]+)/([^/ ]+)").matcher(osArchitecture);
     if (!matcher.matches()) {
       throw new IllegalArgumentException("Platform must be of form os/architecture.");
@@ -71,5 +72,22 @@ public class PlatformParameters implements PlatformConfiguration {
 
   public void setArchitecture(String architecture) {
     this.architecture = architecture;
+  }
+
+  @Override
+  public boolean equals(Object other) {
+    if (this == other) {
+      return true;
+    }
+    if (!(other instanceof PlatformParameters)) {
+      return false;
+    }
+    PlatformParameters otherPlatform = (PlatformParameters) other;
+    return architecture.equals(otherPlatform.getArchitecture()) && os.equals(otherPlatform.getOs());
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(architecture, os);
   }
 }

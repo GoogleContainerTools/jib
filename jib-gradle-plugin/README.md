@@ -213,7 +213,7 @@ Property | Type | Default | Description
 `image` | `String` | `adoptopenjdk:{8,11}-jre` (or `jetty` for WAR) | The image reference for the base image. The source type can be specified using a [special type prefix](#setting-the-base-image).
 `auth` | [`auth`](#auth-closure) | *None* | Specifies credentials directly (alternative to `credHelper`).
 `credHelper` | `String` | *None* | Specifies a credential helper that can authenticate pulling the base image. This parameter can either be configured as an absolute path to the credential helper executable or as a credential helper suffix (following `docker-credential-`).
-`platforms` | [`platforms`](#platforms-closure) | See [`platforms`](#platforms-closure) | _Incubating feature_: Configures platforms of base images to select from a manifest list.
+`platforms` | [`platforms`](#platforms-closure) | See [`platforms`](#platforms-closure) | Configures platforms of base images to select from a manifest list.
 
 <a name="to-closure"></a>`to` is a closure with the following properties:
 

@@ -56,14 +56,14 @@ public class BaseImageParameters {
   @Nested
   @Optional
   public ListProperty<PlatformParameters> getPlatforms() {
-    String platformsProperty = System.getProperty(PropertyNames.FROM_PLATFORMS);
-    if (platformsProperty != null) {
-      List<PlatformParameters> parsedPlatforms =
-          ConfigurationPropertyValidator.parseListProperty(platformsProperty).stream()
-              .map(PlatformParameters::ofString)
+    String property = System.getProperty(PropertyNames.FROM_PLATFORMS);
+    if (property != null) {
+      List<PlatformParameters> parsed =
+          ConfigurationPropertyValidator.parseListProperty(property).stream()
+              .map(PlatformParameters::of)
               .collect(Collectors.toList());
-      if (!parsedPlatforms.equals(platforms.get())) {
-        platforms.set(parsedPlatforms);
+      if (!parsed.equals(platforms.get())) {
+        platforms.set(parsed);
       }
     }
     return platforms;

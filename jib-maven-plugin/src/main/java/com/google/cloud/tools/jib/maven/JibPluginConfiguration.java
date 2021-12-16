@@ -136,7 +136,7 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
   /** Configuration for {@code platform} parameter. */
   public static class PlatformParameters implements PlatformConfiguration {
 
-    private static PlatformParameters ofString(String osArchitecture) {
+    private static PlatformParameters of(String osArchitecture) {
       Matcher matcher = Pattern.compile("([^/ ]+)/([^/ ]+)").matcher(osArchitecture);
       if (!matcher.matches()) {
         throw new IllegalArgumentException("Platform must be of form os/architecture.");
@@ -171,7 +171,7 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
 
     /** Constructor for defaults. */
     public FromConfiguration() {
-      platforms = Collections.singletonList(PlatformParameters.ofString("linux/amd64"));
+      platforms = Collections.singletonList(PlatformParameters.of("linux/amd64"));
     }
   }
 
@@ -367,7 +367,7 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
     String property = getProperty(PropertyNames.FROM_PLATFORMS);
     if (property != null) {
       return ConfigurationPropertyValidator.parseListProperty(property).stream()
-          .map(PlatformParameters::ofString)
+          .map(PlatformParameters::of)
           .collect(Collectors.toList());
     }
     return from.platforms;
