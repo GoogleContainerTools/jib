@@ -16,7 +16,10 @@
 
 package com.google.cloud.tools.jib.gradle;
 
+import com.google.cloud.tools.jib.plugins.common.ConfigurationPropertyValidator;
 import com.google.cloud.tools.jib.plugins.common.PropertyNames;
+import java.util.List;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import org.gradle.api.Action;
@@ -53,6 +56,16 @@ public class BaseImageParameters {
   @Nested
   @Optional
   public ListProperty<PlatformParameters> getPlatforms() {
+    String platformsProperty = System.getProperty(PropertyNames.FROM_PLATFORMS);
+    if (platformsProperty != null) {
+      List<PlatformParameters> parsedPlatforms =
+          ConfigurationPropertyValidator.parseListProperty(platformsProperty).stream()
+              .map(PlatformParameters::ofString)
+              .collect(Collectors.toList());
+      if (!parsedPlatforms.equals(platforms.get())) {
+        platforms.set(parsedPlatforms);
+      }
+    }
     return platforms;
   }
 

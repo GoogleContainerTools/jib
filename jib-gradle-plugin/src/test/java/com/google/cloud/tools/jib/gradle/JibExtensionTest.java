@@ -341,6 +341,15 @@ public class JibExtensionTest {
     System.setProperty("jib.from.credHelper", "credHelper");
     assertThat(testJibExtension.getFrom().getCredHelper()).isEqualTo("credHelper");
 
+    System.setProperty("jib.from.platforms", "linux/amd64,darwin/arm64");
+    assertThat(testJibExtension.getFrom().getPlatforms().get()).hasSize(2);
+    PlatformParameters platform1 = testJibExtension.getFrom().getPlatforms().get().get(0);
+    assertThat(platform1.getOs()).isEqualTo("linux");
+    assertThat(platform1.getArchitecture()).isEqualTo("amd64");
+    PlatformParameters platform2 = testJibExtension.getFrom().getPlatforms().get().get(1);
+    assertThat(platform2.getOs()).isEqualTo("darwin");
+    assertThat(platform2.getArchitecture()).isEqualTo("arm64");
+
     System.setProperty("jib.to.image", "toImage");
     assertThat(testJibExtension.getTo().getImage()).isEqualTo("toImage");
     System.setProperty("jib.to.tags", "tag1,tag2,tag3");
@@ -410,6 +419,12 @@ public class JibExtensionTest {
     assertThat(testJibExtension.getDockerClient().getEnvironment())
         .containsExactly("env1", "val1", "env2", "val2")
         .inOrder();
+  }
+
+  @Test
+  public void testSystemPropertiesWithInvalidPlatform() {
+    System.setProperty("jib.from.platforms", "linux /amd64");
+    assertThrows(IllegalArgumentException.class, testJibExtension.getFrom()::getPlatforms);
   }
 
   @Test

@@ -18,12 +18,26 @@ package com.google.cloud.tools.jib.gradle;
 
 import com.google.cloud.tools.jib.plugins.common.RawConfiguration.PlatformConfiguration;
 import java.util.Optional;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import javax.annotation.Nullable;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.Internal;
 
 /** Configuration of a platform. */
 public class PlatformParameters implements PlatformConfiguration {
+
+  static PlatformParameters ofString(String osArchitecture) {
+    Matcher matcher = Pattern.compile("([^/ ]+)/([^/ ]+)").matcher(osArchitecture);
+    if (!matcher.matches()) {
+      throw new IllegalArgumentException("Platform must be of form os/architecture.");
+    }
+    PlatformParameters platformParameters = new PlatformParameters();
+    platformParameters.os = matcher.group(1);
+    platformParameters.architecture = matcher.group(2);
+    return platformParameters;
+  }
+
   @Nullable private String os;
   @Nullable private String architecture;
 
