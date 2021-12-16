@@ -6,7 +6,7 @@
 
 Jib is a [Gradle](https://gradle.org/) plugin for building Docker and [OCI](https://github.com/opencontainers/image-spec) images for your Java applications.
 
-For the Maven p lugin, see the [jib-maven-plugin project](../jib-maven-plugin).
+For the Maven plugin, see the [jib-maven-plugin project](../jib-maven-plugin).
 
 For information about the project, see the [Jib project README](../README.md).
 
