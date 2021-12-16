@@ -36,8 +36,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import org.apache.maven.execution.MavenSession;
@@ -135,6 +136,17 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
   /** Configuration for {@code platform} parameter. */
   public static class PlatformParameters implements PlatformConfiguration {
 
+    private static PlatformParameters ofString(String osArchitecture) {
+      Matcher matcher = Pattern.compile("([^/ ]+)/([^/ ]+)").matcher(osArchitecture);
+      if (!matcher.matches()) {
+        throw new IllegalArgumentException("osArchitecture must be of form os/architecture");
+      }
+      PlatformParameters platformParameters = new PlatformParameters();
+      platformParameters.os = matcher.group(1);
+      platformParameters.architecture = matcher.group(2);
+      return platformParameters;
+    }
+
     @Nullable @Parameter private String os;
     @Nullable @Parameter private String architecture;
 
@@ -146,16 +158,6 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
     @Override
     public Optional<String> getArchitectureName() {
       return Optional.ofNullable(architecture);
-    }
-
-    private static PlatformParameters ofString(String osArchitecture) {
-      if (osArchitecture == null || !osArchitecture.matches("[^/]+/[^/]+")) {
-        throw new IllegalArgumentException("osArchitecture must be of form os/architecture");
-      }
-      PlatformParameters platformParameters = new PlatformParameters();
-      platformParameters.os = osArchitecture.split("/")[0].trim();
-      platformParameters.architecture = osArchitecture.split("/")[1].trim();
-      return platformParameters;
     }
   }
 
@@ -364,7 +366,7 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
   List<PlatformParameters> getPlatforms() {
     String property = getProperty(PropertyNames.FROM_PLATFORMS);
     if (property != null) {
-      return Stream.of(property.split(","))
+      return ConfigurationPropertyValidator.parseListProperty(property).stream()
           .map(PlatformParameters::ofString)
           .collect(Collectors.toList());
     }
