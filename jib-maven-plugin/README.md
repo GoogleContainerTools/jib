@@ -269,7 +269,7 @@ Property | Type | Default | Description
 
 Property | Type | Default | Description
 --- | --- | --- | ---
-`image` | string | *Required* | The image reference for the target image. This can also be specified via the `-Dimage` command line option.
+`image` | string | *Required* | The image reference for the target image. This can also be specified via the `-Dimage` command line option. If the tag is not present here `:latest` is implied.
 `auth` | [`auth`](#auth-object) | *None* | Specifies credentials directly (alternative to `credHelper`).
 `credHelper` | string | *None* | Specifies a credential helper that can authenticate pushing the target image. This parameter can either be configured as an absolute path to the credential helper executable or as a credential helper suffix (following `docker-credential-`).
 `tags` | list | *None* | Additional tags to push to.
