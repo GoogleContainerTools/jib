@@ -155,13 +155,6 @@ public class JibPluginConfigurationTest {
         testPluginConfiguration.getDockerClientEnvironment());
   }
 
-  @Test
-  public void testSystemPropertiesWithInvalidPlatform() {
-    sessionProperties.put("jib.from.platforms", "linux /amd64");
-    Assert.assertThrows(
-        IllegalArgumentException.class, () -> testPluginConfiguration.getPlatforms());
-  }
-
   private void assertPlatformIs(
       String osName,
       String architecture,
@@ -170,6 +163,12 @@ public class JibPluginConfigurationTest {
     Assert.assertEquals(osName, platformParameters.getOsName().get());
     Assert.assertTrue(platformParameters.getArchitectureName().isPresent());
     Assert.assertEquals(architecture, platformParameters.getArchitectureName().get());
+  }
+
+  @Test
+  public void testSystemPropertiesWithInvalidPlatform() {
+    sessionProperties.put("jib.from.platforms", "linux /amd64");
+    Assert.assertThrows(IllegalArgumentException.class, testPluginConfiguration::getPlatforms);
   }
 
   @Test
