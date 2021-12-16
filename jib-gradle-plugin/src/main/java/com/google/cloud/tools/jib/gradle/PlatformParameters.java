@@ -83,7 +83,8 @@ public class PlatformParameters implements PlatformConfiguration {
       return false;
     }
     PlatformParameters otherPlatform = (PlatformParameters) other;
-    return architecture.equals(otherPlatform.getArchitecture()) && os.equals(otherPlatform.getOs());
+    return Objects.equals(architecture, otherPlatform.getArchitecture())
+        && Objects.equals(os, otherPlatform.getOs());
   }
 
   @Override
