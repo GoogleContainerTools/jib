@@ -5,6 +5,8 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- [`<from><platforms>`](https://github.com/GoogleContainerTools/jib/tree/master/jib-maven-plugin#from-object) parameter for multi-architecture image building can now be configured through Maven and system properties (for example, `-Djib.from.platforms=linux/amd64,linux/arm64` on the command-line). ([#2742](https://github.com/GoogleContainerTools/jib/pull/2742))
+
 ### Changed
 
 - Changed the default base image from the `adoptopenjdk` images to the [`eclipse-temurin`](https://hub.docker.com/_/eclipse-temurin) (for Java 8 and 11) and [`azul/zulu-openjdk`](https://hub.docker.com/r/azul/zulu-openjdk) (for Java 17) images on Docker Hub. Note that Temurin (by Adoptium) is the new name of AdoptOpenJDK. ([#3491](https://github.com/GoogleContainerTools/jib/pull/3491))
