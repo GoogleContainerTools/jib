@@ -139,7 +139,7 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
     private static PlatformParameters ofString(String osArchitecture) {
       Matcher matcher = Pattern.compile("([^/ ]+)/([^/ ]+)").matcher(osArchitecture);
       if (!matcher.matches()) {
-        throw new IllegalArgumentException("osArchitecture must be of form os/architecture");
+        throw new IllegalArgumentException("Platform must be of form os/architecture.");
       }
       PlatformParameters platformParameters = new PlatformParameters();
       platformParameters.os = matcher.group(1);

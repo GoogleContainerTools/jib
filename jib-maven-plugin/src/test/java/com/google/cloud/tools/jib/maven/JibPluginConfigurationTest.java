@@ -89,6 +89,11 @@ public class JibPluginConfigurationTest {
     sessionProperties.put("jib.from.credHelper", "credHelper");
     Assert.assertEquals("credHelper", testPluginConfiguration.getBaseImageCredentialHelperName());
 
+    sessionProperties.put("jib.from.platforms", "linux/amd64,darwin/arm64");
+    Assert.assertEquals(2, testPluginConfiguration.getPlatforms().size());
+    assertPlatformIs("linux", "amd64", testPluginConfiguration.getPlatforms().get(0));
+    assertPlatformIs("darwin", "arm64", testPluginConfiguration.getPlatforms().get(1));
+
     sessionProperties.put("image", "toImage");
     Assert.assertEquals("toImage", testPluginConfiguration.getTargetImage());
     sessionProperties.remove("image");
@@ -148,6 +153,23 @@ public class JibPluginConfigurationTest {
     Assert.assertEquals(
         ImmutableMap.of("env1", "val1", "env2", "val2"),
         testPluginConfiguration.getDockerClientEnvironment());
+  }
+
+  @Test
+  public void testSystemPropertiesWithInvalidPlatform() {
+    sessionProperties.put("jib.from.platforms", "linux /amd64");
+    Assert.assertThrows(
+        IllegalArgumentException.class, () -> testPluginConfiguration.getPlatforms());
+  }
+
+  private void assertPlatformIs(
+      String osName,
+      String architecture,
+      JibPluginConfiguration.PlatformParameters platformParameters) {
+    Assert.assertTrue(platformParameters.getOsName().isPresent());
+    Assert.assertEquals(osName, platformParameters.getOsName().get());
+    Assert.assertTrue(platformParameters.getArchitectureName().isPresent());
+    Assert.assertEquals(architecture, platformParameters.getArchitectureName().get());
   }
 
   @Test
