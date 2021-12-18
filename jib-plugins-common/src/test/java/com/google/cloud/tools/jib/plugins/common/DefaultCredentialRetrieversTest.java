@@ -53,6 +53,10 @@ public class DefaultCredentialRetrieversTest {
   @Mock private CredentialRetriever mockKnownCredentialRetriever;
   @Mock private CredentialRetriever mockInferredCredentialRetriever;
   @Mock private CredentialRetriever mockWellKnownCredentialHelpersCredentialRetriever;
+
+  @Mock private CredentialRetriever mockXdgPrimaryConfigCredentialRetriever;
+  @Mock private CredentialRetriever mockXdgUserConfigCredentialRetriever;
+
   @Mock private CredentialRetriever mockDockerConfigEnvDockerConfigCredentialRetriever;
   @Mock private CredentialRetriever mockDockerConfigEnvKubernetesDockerConfigCredentialRetriever;
   @Mock private CredentialRetriever mockDockerConfigEnvLegacyDockerConfigCredentialRetriever;
@@ -80,7 +84,12 @@ public class DefaultCredentialRetrieversTest {
             "HOME",
             Paths.get("/env/home").toString(),
             "DOCKER_CONFIG",
-            Paths.get("/docker_config").toString());
+            Paths.get("/docker_config").toString(),
+            "XDG_RUNTIME_DIR",
+            Paths.get("/run/user/1000").toString(),
+            "XDG_CONFIG_HOME",
+            Paths.get("/env/home/.config").toString()
+        );
 
     Mockito.when(mockCredentialRetrieverFactory.dockerCredentialHelper(Mockito.anyString()))
         .thenReturn(mockDockerCredentialHelperCredentialRetriever);
@@ -91,6 +100,14 @@ public class DefaultCredentialRetrieversTest {
         .thenReturn(mockInferredCredentialRetriever);
     Mockito.when(mockCredentialRetrieverFactory.wellKnownCredentialHelpers())
         .thenReturn(mockWellKnownCredentialHelpersCredentialRetriever);
+
+    Mockito.when(
+            mockCredentialRetrieverFactory.dockerConfig(Paths.get("/run/user/1000/containers/auth.json")))
+        .thenReturn(mockXdgPrimaryConfigCredentialRetriever);
+    Mockito.when(
+            mockCredentialRetrieverFactory.dockerConfig(Paths.get("/env/home/.config/containers/auth.json")))
+        .thenReturn(mockXdgUserConfigCredentialRetriever);
+
     Mockito.when(
             mockCredentialRetrieverFactory.dockerConfig(Paths.get("/docker_config/config.json")))
         .thenReturn(mockDockerConfigEnvDockerConfigCredentialRetriever);
@@ -136,6 +153,8 @@ public class DefaultCredentialRetrieversTest {
             .asList();
     Assert.assertEquals(
         Arrays.asList(
+            mockXdgPrimaryConfigCredentialRetriever,
+            mockXdgUserConfigCredentialRetriever,
             mockDockerConfigEnvDockerConfigCredentialRetriever,
             mockDockerConfigEnvKubernetesDockerConfigCredentialRetriever,
             mockDockerConfigEnvLegacyDockerConfigCredentialRetriever,
@@ -163,6 +182,8 @@ public class DefaultCredentialRetrieversTest {
             mockKnownCredentialRetriever,
             mockDockerCredentialHelperCredentialRetriever,
             mockInferredCredentialRetriever,
+            mockXdgPrimaryConfigCredentialRetriever,
+            mockXdgUserConfigCredentialRetriever,
             mockDockerConfigEnvDockerConfigCredentialRetriever,
             mockDockerConfigEnvKubernetesDockerConfigCredentialRetriever,
             mockDockerConfigEnvLegacyDockerConfigCredentialRetriever,
@@ -194,6 +215,8 @@ public class DefaultCredentialRetrieversTest {
     Assert.assertEquals(
         Arrays.asList(
             mockDockerCredentialHelperCredentialRetriever,
+            mockXdgPrimaryConfigCredentialRetriever,
+            mockXdgUserConfigCredentialRetriever,
             mockDockerConfigEnvDockerConfigCredentialRetriever,
             mockDockerConfigEnvKubernetesDockerConfigCredentialRetriever,
             mockDockerConfigEnvLegacyDockerConfigCredentialRetriever,
@@ -241,6 +264,8 @@ public class DefaultCredentialRetrieversTest {
             .asList();
     Assert.assertEquals(
         Arrays.asList(
+            mockXdgPrimaryConfigCredentialRetriever,
+            mockXdgUserConfigCredentialRetriever,
             mockDockerConfigEnvDockerConfigCredentialRetriever,
             mockDockerConfigEnvKubernetesDockerConfigCredentialRetriever,
             mockDockerConfigEnvLegacyDockerConfigCredentialRetriever,
@@ -297,6 +322,8 @@ public class DefaultCredentialRetrieversTest {
     Assert.assertEquals(
         Arrays.asList(
             mockDockerCredentialHelperCredentialRetriever,
+            mockXdgPrimaryConfigCredentialRetriever,
+            mockXdgUserConfigCredentialRetriever,
             mockDockerConfigEnvDockerConfigCredentialRetriever,
             mockDockerConfigEnvKubernetesDockerConfigCredentialRetriever,
             mockDockerConfigEnvLegacyDockerConfigCredentialRetriever,
@@ -338,6 +365,8 @@ public class DefaultCredentialRetrieversTest {
     Assert.assertEquals(
         Arrays.asList(
             mockDockerCredentialHelperCredentialRetriever,
+            mockXdgPrimaryConfigCredentialRetriever,
+            mockXdgUserConfigCredentialRetriever,
             mockDockerConfigEnvDockerConfigCredentialRetriever,
             mockDockerConfigEnvKubernetesDockerConfigCredentialRetriever,
             mockDockerConfigEnvLegacyDockerConfigCredentialRetriever,
