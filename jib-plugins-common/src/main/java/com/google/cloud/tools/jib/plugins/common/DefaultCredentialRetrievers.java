@@ -66,7 +66,6 @@ public class DefaultCredentialRetrievers {
   private static final Path DOCKER_DIRECTORY = Paths.get(".docker");
 
   private static final Path XDG_AUTH_FILE = Paths.get("containers/auth.json");
-  private static final Path CONFIG_DIRECTORY = Paths.get(".config");
 
   /**
    * Creates a new {@link DefaultCredentialRetrievers} with a given {@link
