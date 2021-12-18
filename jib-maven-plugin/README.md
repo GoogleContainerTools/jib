@@ -552,7 +552,8 @@ Pushing/pulling from private registries require authorization credentials. These
 
 #### XDG folders
 
-* Jib will search in `$XDG_RUNTIME_DIR/containers/auth.json` and then `$XDG_CONFIG_HOME/containers/auth.json` for a credential file, which is used by [Podman](https://podman.io/).
+* Jib will search in `$XDG_RUNTIME_DIR/containers/auth.json`, `$XDG_CONFIG_HOME/containers/auth.json` and `$HOME/.config/containers/auth.json`
+for a credential file, which is used by [Podman](https://podman.io/).
 See [man containers-auth.json](https://www.mankier.com/5/containers-auth.json) for more details
 
 #### Docker configuration folder

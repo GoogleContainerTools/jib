@@ -41,6 +41,9 @@ import javax.annotation.Nullable;
  *   <li>{@link CredentialRetrieverFactory#known} for known credential, if set
  *   <li>{@link CredentialRetrieverFactory#dockerCredentialHelper} for a known credential helper, if
  *       set
+ *   <li>{@link CredentialRetrieverFactory#dockerConfig} for {@code $XDG_RUNTIME_DIR/containers/auth.json},
+ *   <li>{@link CredentialRetrieverFactory#dockerConfig} for {@code $XDG_CONFIG_HOME/containers/auth.json},
+ *   <li>{@link CredentialRetrieverFactory#dockerConfig} for {@code $HOME/.config/containers/auth.json},
  *   <li>{@link CredentialRetrieverFactory#known} for known inferred credential, if set
  *   <li>{@link CredentialRetrieverFactory#dockerConfig} for {@code $DOCKER_CONFIG/config.json},
  *       {@code $DOCKER_CONFIG/.dockerconfigjson}, {@code $DOCKER_CONFIG/.dockercfg},
@@ -64,8 +67,9 @@ public class DefaultCredentialRetrievers {
   private static final Path KUBERNETES_DOCKER_CONFIG_FILE = Paths.get(".dockerconfigjson");
   private static final Path LEGACY_DOCKER_CONFIG_FILE = Paths.get(".dockercfg");
   private static final Path DOCKER_DIRECTORY = Paths.get(".docker");
-
+  // For Podman https://www.mankier.com/5/containers-auth.json#
   private static final Path XDG_AUTH_FILE = Paths.get("containers/auth.json");
+  private static final Path DOT_CONFIG_DIRECTORY = Paths.get(".config");
 
   /**
    * Creates a new {@link DefaultCredentialRetrievers} with a given {@link
@@ -175,15 +179,38 @@ public class DefaultCredentialRetrievers {
       credentialRetrievers.add(inferredCredentialRetriever);
     }
 
+
     String xdgRuntimeDir = environment.get("XDG_RUNTIME_DIR");
     if (xdgRuntimeDir != null) {
       addXdgFiles(credentialRetrievers, Paths.get(xdgRuntimeDir));
     }
 
-    String xdgConfigHomDir = environment.get("XDG_CONFIG_HOME");
-    if (xdgConfigHomDir != null) {
-      addXdgFiles(credentialRetrievers, Paths.get(xdgConfigHomDir));
+    String xdgConfigHomeDir = environment.get("XDG_CONFIG_HOME");
+    List<Path> checkedXdgHomeDirs = new ArrayList<>();
+    if (xdgConfigHomeDir != null) {
+      Path homeXdgPath = Paths.get(xdgConfigHomeDir);
+      addXdgFiles(credentialRetrievers, homeXdgPath);
+      checkedXdgHomeDirs.add(homeXdgPath);
     }
+
+    String homeProperty = systemProperties.getProperty("user.home");
+    if (homeProperty != null) {
+      Path homeXdgPath = Paths.get(homeProperty).resolve(DOT_CONFIG_DIRECTORY);
+      if (!checkedXdgHomeDirs.contains(homeXdgPath)) {
+        addXdgFiles(credentialRetrievers, homeXdgPath);
+        checkedXdgHomeDirs.add(homeXdgPath);
+      }
+    }
+
+    String homeEnvVar = environment.get("HOME");
+    if (homeEnvVar != null) {
+      Path homeXdgPath = Paths.get(homeEnvVar).resolve(DOT_CONFIG_DIRECTORY);
+      if (!checkedXdgHomeDirs.contains(homeXdgPath)) {
+        addXdgFiles(credentialRetrievers, homeXdgPath);
+        checkedXdgHomeDirs.add(homeXdgPath);
+      }
+    }
+
 
     List<Path> checkedDockerDirs = new ArrayList<>();
     String dockerConfigEnv = environment.get("DOCKER_CONFIG");
@@ -193,7 +220,6 @@ public class DefaultCredentialRetrievers {
       checkedDockerDirs.add(dockerConfigEnvPath);
     }
 
-    String homeProperty = systemProperties.getProperty("user.home");
     if (homeProperty != null) {
       Path homePropertyPath = Paths.get(homeProperty).resolve(DOCKER_DIRECTORY);
       if (!checkedDockerDirs.contains(homePropertyPath)) {
@@ -202,7 +228,6 @@ public class DefaultCredentialRetrievers {
       }
     }
 
-    String homeEnvVar = environment.get("HOME");
     if (homeEnvVar != null) {
       Path homeEnvDockerPath = Paths.get(homeEnvVar).resolve(DOCKER_DIRECTORY);
       if (!checkedDockerDirs.contains(homeEnvDockerPath)) {
@@ -225,8 +250,8 @@ public class DefaultCredentialRetrievers {
             configDir.resolve(LEGACY_DOCKER_CONFIG_FILE)));
   }
 
-  private void addXdgFiles(List<CredentialRetriever> credentialRetrievers, Path xdgRuntimeDir) {
+  private void addXdgFiles(List<CredentialRetriever> credentialRetrievers, Path xdgConfigDir) {
     credentialRetrievers.add(
-        credentialRetrieverFactory.dockerConfig(xdgRuntimeDir.resolve(XDG_AUTH_FILE)));
+        credentialRetrieverFactory.dockerConfig(xdgConfigDir.resolve(XDG_AUTH_FILE)));
   }
 }
