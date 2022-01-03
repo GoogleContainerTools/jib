@@ -14,7 +14,7 @@ See your application's health at http://localhost:8080/admin/healthcheck
 
 ## Extras
 
-FreeMaker templating is setup for [`dropwizard.yml`](src/main/resources/dropwizard.yml) through [`tkrille/dropwizard-template-config`](https://github.com/tkrille/dropwizard-template-config); this allows one to heavily customize the properties file via the container environment with FTL conditional checks and for loops, for example.
+FreeMaker templating is a setup for [`dropwizard.yml`](src/main/resources/dropwizard.yml) through [`tkrille/dropwizard-template-config`](https://github.com/tkrille/dropwizard-template-config); this allows one to heavily customize the properties file via the container environment with FTL conditional checks and for loops, for example.
 
 ## How this example was generated
 
