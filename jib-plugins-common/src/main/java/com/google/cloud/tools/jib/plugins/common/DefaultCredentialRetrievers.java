@@ -41,9 +41,12 @@ import javax.annotation.Nullable;
  *   <li>{@link CredentialRetrieverFactory#known} for known credential, if set
  *   <li>{@link CredentialRetrieverFactory#dockerCredentialHelper} for a known credential helper, if
  *       set
- *   <li>{@link CredentialRetrieverFactory#dockerConfig} for {@code $XDG_RUNTIME_DIR/containers/auth.json},
- *   <li>{@link CredentialRetrieverFactory#dockerConfig} for {@code $XDG_CONFIG_HOME/containers/auth.json},
- *   <li>{@link CredentialRetrieverFactory#dockerConfig} for {@code $HOME/.config/containers/auth.json},
+ *   <li>{@link CredentialRetrieverFactory#dockerConfig} for {@code
+ *       $XDG_RUNTIME_DIR/containers/auth.json},
+ *   <li>{@link CredentialRetrieverFactory#dockerConfig} for {@code
+ *       $XDG_CONFIG_HOME/containers/auth.json},
+ *   <li>{@link CredentialRetrieverFactory#dockerConfig} for {@code
+ *       $HOME/.config/containers/auth.json},
  *   <li>{@link CredentialRetrieverFactory#known} for known inferred credential, if set
  *   <li>{@link CredentialRetrieverFactory#dockerConfig} for {@code $DOCKER_CONFIG/config.json},
  *       {@code $DOCKER_CONFIG/.dockerconfigjson}, {@code $DOCKER_CONFIG/.dockercfg},
@@ -175,10 +178,10 @@ public class DefaultCredentialRetrievers {
             credentialRetrieverFactory.dockerCredentialHelper("docker-credential-" + suffix));
       }
     }
+
     if (inferredCredentialRetriever != null) {
       credentialRetrievers.add(inferredCredentialRetriever);
     }
-
 
     String xdgRuntimeDir = environment.get("XDG_RUNTIME_DIR");
     if (xdgRuntimeDir != null) {
@@ -210,7 +213,6 @@ public class DefaultCredentialRetrievers {
         checkedXdgHomeDirs.add(homeXdgPath);
       }
     }
-
 
     List<Path> checkedDockerDirs = new ArrayList<>();
     String dockerConfigEnv = environment.get("DOCKER_CONFIG");
