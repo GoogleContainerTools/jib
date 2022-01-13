@@ -27,6 +27,7 @@ import com.google.cloud.tools.jib.plugins.common.InvalidAppRootException;
 import com.google.cloud.tools.jib.plugins.common.InvalidContainerVolumeException;
 import com.google.cloud.tools.jib.plugins.common.InvalidContainerizingModeException;
 import com.google.cloud.tools.jib.plugins.common.InvalidCreationTimeException;
+import com.google.cloud.tools.jib.plugins.common.InvalidExtraDirectoryException;
 import com.google.cloud.tools.jib.plugins.common.InvalidFilesModificationTimeException;
 import com.google.cloud.tools.jib.plugins.common.InvalidPlatformException;
 import com.google.cloud.tools.jib.plugins.common.InvalidWorkingDirectoryException;
@@ -165,6 +166,9 @@ public class BuildDockerMojo extends JibPluginConfiguration {
     } catch (BuildStepsExecutionException ex) {
       throw new MojoExecutionException(ex.getMessage(), ex.getCause());
 
+    } catch (InvalidExtraDirectoryException ex) {
+      throw new MojoExecutionException(
+          "<extraDirectories><paths> contain invalid path: " + ex.getInvalidPathValue(), ex);
     } finally {
       tempDirectoryProvider.close();
       MojoCommon.finishUpdateChecker(projectProperties, updateCheckFuture);
