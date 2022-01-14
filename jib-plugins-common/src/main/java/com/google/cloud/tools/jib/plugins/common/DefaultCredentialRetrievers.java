@@ -26,10 +26,13 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 import javax.annotation.Nullable;
 
 /**
@@ -66,13 +69,11 @@ public class DefaultCredentialRetrievers {
    * href="https://docs.docker.com/engine/reference/commandline/login/#privileged-user-requirement">https://docs.docker.com/engine/reference/commandline/login/#privileged-user-requirement</a>.
    */
   private static final Path DOCKER_CONFIG_FILE = Paths.get("config.json");
-  // For Kubernetes: https://github.com/GoogleContainerTools/jib/issues/2260
+  // for Kubernetes: https://github.com/GoogleContainerTools/jib/issues/2260
   private static final Path KUBERNETES_DOCKER_CONFIG_FILE = Paths.get(".dockerconfigjson");
   private static final Path LEGACY_DOCKER_CONFIG_FILE = Paths.get(".dockercfg");
-  private static final Path DOCKER_DIRECTORY = Paths.get(".docker");
-  // For Podman https://www.mankier.com/5/containers-auth.json#
-  private static final Path XDG_AUTH_FILE = Paths.get("containers/auth.json");
-  private static final Path DOT_CONFIG_DIRECTORY = Paths.get(".config");
+  // for Podman: https://www.mankier.com/5/containers-auth.json
+  private static final Path XDG_AUTH_FILE = Paths.get("containers").resolve("auth.json");
 
   /**
    * Creates a new {@link DefaultCredentialRetrievers} with a given {@link
@@ -183,77 +184,53 @@ public class DefaultCredentialRetrievers {
       credentialRetrievers.add(inferredCredentialRetriever);
     }
 
-    String xdgRuntimeDir = environment.get("XDG_RUNTIME_DIR");
-    if (xdgRuntimeDir != null) {
-      addXdgFiles(credentialRetrievers, Paths.get(xdgRuntimeDir));
-    }
+    Set<Path> dockerConfigFiles = new LinkedHashSet<>();
 
-    String xdgConfigHomeDir = environment.get("XDG_CONFIG_HOME");
-    List<Path> checkedXdgHomeDirs = new ArrayList<>();
-    if (xdgConfigHomeDir != null) {
-      Path homeXdgPath = Paths.get(xdgConfigHomeDir);
-      addXdgFiles(credentialRetrievers, homeXdgPath);
-      checkedXdgHomeDirs.add(homeXdgPath);
+    String xdgRuntime = environment.get("XDG_RUNTIME_DIR");
+    if (xdgRuntime != null) {
+      dockerConfigFiles.add(Paths.get(xdgRuntime).resolve(XDG_AUTH_FILE));
     }
-
+    String xdgConfigHome = environment.get("XDG_CONFIG_HOME");
+    if (xdgConfigHome != null) {
+      dockerConfigFiles.add(Paths.get(xdgConfigHome).resolve(XDG_AUTH_FILE));
+    }
     String homeProperty = systemProperties.getProperty("user.home");
     if (homeProperty != null) {
-      Path homeXdgPath = Paths.get(homeProperty).resolve(DOT_CONFIG_DIRECTORY);
-      if (!checkedXdgHomeDirs.contains(homeXdgPath)) {
-        addXdgFiles(credentialRetrievers, homeXdgPath);
-        checkedXdgHomeDirs.add(homeXdgPath);
-      }
+      dockerConfigFiles.add(Paths.get(homeProperty).resolve(".config").resolve(XDG_AUTH_FILE));
     }
-
     String homeEnvVar = environment.get("HOME");
     if (homeEnvVar != null) {
-      Path homeXdgPath = Paths.get(homeEnvVar).resolve(DOT_CONFIG_DIRECTORY);
-      if (!checkedXdgHomeDirs.contains(homeXdgPath)) {
-        addXdgFiles(credentialRetrievers, homeXdgPath);
-        checkedXdgHomeDirs.add(homeXdgPath);
-      }
+      dockerConfigFiles.add(Paths.get(homeEnvVar).resolve(".config").resolve(XDG_AUTH_FILE));
     }
 
-    List<Path> checkedDockerDirs = new ArrayList<>();
     String dockerConfigEnv = environment.get("DOCKER_CONFIG");
     if (dockerConfigEnv != null) {
-      Path dockerConfigEnvPath = Paths.get(dockerConfigEnv);
-      addDockerFiles(credentialRetrievers, Paths.get(dockerConfigEnv));
-      checkedDockerDirs.add(dockerConfigEnvPath);
+      dockerConfigFiles.addAll(getDockerFiles(Paths.get(dockerConfigEnv)));
     }
-
     if (homeProperty != null) {
-      Path homePropertyPath = Paths.get(homeProperty).resolve(DOCKER_DIRECTORY);
-      if (!checkedDockerDirs.contains(homePropertyPath)) {
-        addDockerFiles(credentialRetrievers, homePropertyPath);
-        checkedDockerDirs.add(homePropertyPath);
-      }
+      dockerConfigFiles.addAll(getDockerFiles(Paths.get(homeProperty).resolve(".docker")));
+    }
+    if (homeEnvVar != null) {
+      dockerConfigFiles.addAll(getDockerFiles(Paths.get(homeEnvVar).resolve(".docker")));
     }
 
-    if (homeEnvVar != null) {
-      Path homeEnvDockerPath = Paths.get(homeEnvVar).resolve(DOCKER_DIRECTORY);
-      if (!checkedDockerDirs.contains(homeEnvDockerPath)) {
-        addDockerFiles(credentialRetrievers, homeEnvDockerPath);
-      }
-    }
+    dockerConfigFiles.stream()
+        .map(
+            path ->
+                path.endsWith(LEGACY_DOCKER_CONFIG_FILE)
+                    ? credentialRetrieverFactory.legacyDockerConfig(path)
+                    : credentialRetrieverFactory.dockerConfig(path))
+        .forEach(credentialRetrievers::add);
 
     credentialRetrievers.add(credentialRetrieverFactory.wellKnownCredentialHelpers());
     credentialRetrievers.add(credentialRetrieverFactory.googleApplicationDefaultCredentials());
     return credentialRetrievers;
   }
 
-  private void addDockerFiles(List<CredentialRetriever> credentialRetrievers, Path configDir) {
-    credentialRetrievers.add(
-        credentialRetrieverFactory.dockerConfig(configDir.resolve(DOCKER_CONFIG_FILE)));
-    credentialRetrievers.add(
-        credentialRetrieverFactory.dockerConfig(configDir.resolve(KUBERNETES_DOCKER_CONFIG_FILE)));
-    credentialRetrievers.add(
-        credentialRetrieverFactory.legacyDockerConfig(
-            configDir.resolve(LEGACY_DOCKER_CONFIG_FILE)));
-  }
-
-  private void addXdgFiles(List<CredentialRetriever> credentialRetrievers, Path xdgConfigDir) {
-    credentialRetrievers.add(
-        credentialRetrieverFactory.dockerConfig(xdgConfigDir.resolve(XDG_AUTH_FILE)));
+  private List<Path> getDockerFiles(Path configDir) {
+    return Arrays.asList(
+        configDir.resolve(DOCKER_CONFIG_FILE),
+        configDir.resolve(KUBERNETES_DOCKER_CONFIG_FILE),
+        configDir.resolve(LEGACY_DOCKER_CONFIG_FILE));
   }
 }
