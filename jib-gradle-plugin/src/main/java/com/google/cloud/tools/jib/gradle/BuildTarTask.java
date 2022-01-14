@@ -26,7 +26,7 @@ import com.google.cloud.tools.jib.plugins.common.InvalidAppRootException;
 import com.google.cloud.tools.jib.plugins.common.InvalidContainerVolumeException;
 import com.google.cloud.tools.jib.plugins.common.InvalidContainerizingModeException;
 import com.google.cloud.tools.jib.plugins.common.InvalidCreationTimeException;
-import com.google.cloud.tools.jib.plugins.common.InvalidExtraDirectoryException;
+import com.google.cloud.tools.jib.plugins.common.ExtraDirectoryNotFoundException;
 import com.google.cloud.tools.jib.plugins.common.InvalidFilesModificationTimeException;
 import com.google.cloud.tools.jib.plugins.common.InvalidPlatformException;
 import com.google.cloud.tools.jib.plugins.common.InvalidWorkingDirectoryException;
@@ -198,9 +198,9 @@ public class BuildTarTask extends DefaultTask implements JibTask {
       throw new GradleException(
           HelpfulSuggestions.forInvalidImageReference(ex.getInvalidReference()), ex);
 
-    } catch (InvalidExtraDirectoryException ex) {
+    } catch (ExtraDirectoryNotFoundException ex) {
       throw new GradleException(
-          "extraDirectories.paths contain invalid path: " + ex.getInvalidPathValue(), ex);
+          "extraDirectories.paths contain path that is not found: " + ex.getPathValue(), ex);
     } finally {
       tempDirectoryProvider.close();
       TaskCommon.finishUpdateChecker(projectProperties, updateCheckFuture);

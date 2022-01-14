@@ -17,19 +17,18 @@
 package com.google.cloud.tools.jib.plugins.common;
 
 /**
- * Indicates that the {@code extraDirectories.paths.path} config value is invalid. (The path is not
- * found).
+ * Indicates that the {@code extraDirectories.paths.path} is not found.
  */
-public class InvalidExtraDirectoryException extends Exception {
+public class ExtraDirectoryNotFoundException extends Exception {
 
-  private final String invalidPath;
+  private final String path;
 
-  public InvalidExtraDirectoryException(String message, String invalidPath) {
+  public ExtraDirectoryNotFoundException(String message, String path) {
     super(message);
-    this.invalidPath = invalidPath;
+    this.path = path;
   }
 
-  public String getInvalidPathValue() {
-    return invalidPath;
+  public String getPathValue() {
+    return path;
   }
 }

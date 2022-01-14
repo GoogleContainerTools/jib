@@ -200,7 +200,7 @@ public class PluginConfigurationProcessorTest {
           InvalidContainerVolumeException, IncompatibleBaseImageJavaVersionException,
           NumberFormatException, InvalidContainerizingModeException,
           InvalidFilesModificationTimeException, InvalidCreationTimeException,
-          InvalidExtraDirectoryException {
+      ExtraDirectoryNotFoundException {
     ContainerBuildPlan buildPlan = processCommonConfiguration();
 
     assertThat(buildPlan.getEntrypoint())
@@ -221,7 +221,7 @@ public class PluginConfigurationProcessorTest {
           InvalidAppRootException, IOException, IncompatibleBaseImageJavaVersionException,
           InvalidWorkingDirectoryException, InvalidPlatformException,
           InvalidImageReferenceException, NumberFormatException, InvalidContainerizingModeException,
-          InvalidFilesModificationTimeException, InvalidCreationTimeException, InvalidExtraDirectoryException {
+          InvalidFilesModificationTimeException, InvalidCreationTimeException, ExtraDirectoryNotFoundException {
     Path extraDirectory = Paths.get(Resources.getResource("core/layer").toURI());
     Mockito.<List<?>>when(rawConfiguration.getExtraDirectories())
         .thenReturn(Arrays.asList(new TestExtraDirectoriesConfiguration(extraDirectory)));
@@ -261,12 +261,13 @@ public class PluginConfigurationProcessorTest {
   }
 
   @Test
-  public void testPluginConfigurationProcessor__errorOnInvalidExtraDirectoryPath() throws URISyntaxException, NumberFormatException {
+  public void testPluginConfigurationProcessor__errorOnExtraDirectoryPathNotFound() throws URISyntaxException, NumberFormatException {
     Path extraDirectory = Paths.get(Resources.getResource("core/layer").toURI()).resolve("xyz");
     Mockito.<List<?>>when(rawConfiguration.getExtraDirectories())
         .thenReturn(Arrays.asList(new TestExtraDirectoriesConfiguration(extraDirectory)));
 
-    assertThrows(InvalidExtraDirectoryException.class, this::processCommonConfiguration);
+    ExtraDirectoryNotFoundException exception = assertThrows(ExtraDirectoryNotFoundException.class, this::processCommonConfiguration);
+    assertThat(exception).hasMessageThat().isEqualTo(extraDirectory.toString());
   }
 
   @Test
@@ -275,7 +276,7 @@ public class PluginConfigurationProcessorTest {
           IOException, InvalidWorkingDirectoryException, InvalidPlatformException,
           InvalidImageReferenceException, IncompatibleBaseImageJavaVersionException,
           NumberFormatException, InvalidContainerizingModeException,
-          InvalidFilesModificationTimeException, InvalidCreationTimeException, InvalidExtraDirectoryException {
+          InvalidFilesModificationTimeException, InvalidCreationTimeException, ExtraDirectoryNotFoundException {
     System.setProperty(PropertyNames.BASE_IMAGE_CACHE, "new/base/cache");
     System.setProperty(PropertyNames.APPLICATION_CACHE, "/new/application/cache");
 
@@ -350,7 +351,7 @@ public class PluginConfigurationProcessorTest {
           InvalidAppRootException, InvalidWorkingDirectoryException, InvalidPlatformException,
           InvalidContainerVolumeException, IncompatibleBaseImageJavaVersionException,
           NumberFormatException, InvalidContainerizingModeException,
-          InvalidFilesModificationTimeException, InvalidCreationTimeException, InvalidExtraDirectoryException {
+          InvalidFilesModificationTimeException, InvalidCreationTimeException, ExtraDirectoryNotFoundException {
     when(rawConfiguration.getEntrypoint())
         .thenReturn(Optional.of(Arrays.asList("custom", "entrypoint")));
 
@@ -457,7 +458,7 @@ public class PluginConfigurationProcessorTest {
           InvalidContainerVolumeException, IncompatibleBaseImageJavaVersionException,
           NumberFormatException, InvalidContainerizingModeException,
           InvalidFilesModificationTimeException, InvalidCreationTimeException,
-          InvalidExtraDirectoryException {
+      ExtraDirectoryNotFoundException {
     when(projectProperties.isWarProject()).thenReturn(true);
 
     ContainerBuildPlan buildPlan = processCommonConfiguration();
@@ -475,7 +476,7 @@ public class PluginConfigurationProcessorTest {
           InvalidContainerVolumeException, IncompatibleBaseImageJavaVersionException,
           NumberFormatException, InvalidContainerizingModeException,
           InvalidFilesModificationTimeException, InvalidCreationTimeException,
-          InvalidExtraDirectoryException {
+      ExtraDirectoryNotFoundException {
     when(projectProperties.isWarProject()).thenReturn(false);
 
     ContainerBuildPlan buildPlan = processCommonConfiguration();
@@ -496,7 +497,7 @@ public class PluginConfigurationProcessorTest {
           InvalidContainerVolumeException, IncompatibleBaseImageJavaVersionException,
           NumberFormatException, InvalidContainerizingModeException,
           InvalidFilesModificationTimeException, InvalidCreationTimeException,
-          InvalidExtraDirectoryException {
+      ExtraDirectoryNotFoundException {
     when(rawConfiguration.getExtraClasspath()).thenReturn(Collections.singletonList("/foo"));
     when(projectProperties.isWarProject()).thenReturn(false);
 
@@ -517,7 +518,7 @@ public class PluginConfigurationProcessorTest {
           InvalidAppRootException, IOException, InvalidWorkingDirectoryException,
           InvalidPlatformException, InvalidContainerVolumeException,
           IncompatibleBaseImageJavaVersionException, InvalidContainerizingModeException,
-          InvalidFilesModificationTimeException, InvalidCreationTimeException, InvalidExtraDirectoryException {
+          InvalidFilesModificationTimeException, InvalidCreationTimeException, ExtraDirectoryNotFoundException {
     when(rawConfiguration.getExtraClasspath()).thenReturn(Collections.singletonList("/foo"));
     when(projectProperties.getMajorJavaVersion()).thenReturn(9);
 
@@ -556,7 +557,7 @@ public class PluginConfigurationProcessorTest {
           InvalidAppRootException, IOException, InvalidWorkingDirectoryException,
           InvalidPlatformException, InvalidContainerVolumeException,
           IncompatibleBaseImageJavaVersionException, InvalidContainerizingModeException,
-          InvalidFilesModificationTimeException, InvalidCreationTimeException, InvalidExtraDirectoryException {
+          InvalidFilesModificationTimeException, InvalidCreationTimeException, ExtraDirectoryNotFoundException {
     when(rawConfiguration.getMainClass()).thenReturn(Optional.of("invalid main class"));
     when(rawConfiguration.getEntrypoint()).thenReturn(Optional.of(Arrays.asList("bash")));
 
@@ -592,7 +593,7 @@ public class PluginConfigurationProcessorTest {
           InvalidAppRootException, InvalidWorkingDirectoryException, InvalidPlatformException,
           InvalidContainerVolumeException, IncompatibleBaseImageJavaVersionException,
           NumberFormatException, InvalidContainerizingModeException,
-          InvalidFilesModificationTimeException, InvalidCreationTimeException, InvalidExtraDirectoryException {
+          InvalidFilesModificationTimeException, InvalidCreationTimeException, ExtraDirectoryNotFoundException {
     when(rawConfiguration.getUser()).thenReturn(Optional.of("customUser"));
 
     ContainerBuildPlan buildPlan = processCommonConfiguration();
@@ -605,7 +606,7 @@ public class PluginConfigurationProcessorTest {
           InvalidAppRootException, InvalidWorkingDirectoryException, InvalidPlatformException,
           InvalidContainerVolumeException, IncompatibleBaseImageJavaVersionException,
           NumberFormatException, InvalidContainerizingModeException,
-          InvalidFilesModificationTimeException, InvalidCreationTimeException, InvalidExtraDirectoryException {
+          InvalidFilesModificationTimeException, InvalidCreationTimeException, ExtraDirectoryNotFoundException {
     ContainerBuildPlan buildPlan = processCommonConfiguration();
     assertThat(buildPlan.getUser()).isNull();
   }
@@ -616,7 +617,7 @@ public class PluginConfigurationProcessorTest {
           InvalidAppRootException, InvalidWorkingDirectoryException, InvalidPlatformException,
           InvalidContainerVolumeException, IncompatibleBaseImageJavaVersionException,
           NumberFormatException, InvalidContainerizingModeException,
-          InvalidFilesModificationTimeException, InvalidCreationTimeException, InvalidExtraDirectoryException {
+          InvalidFilesModificationTimeException, InvalidCreationTimeException, ExtraDirectoryNotFoundException {
     when(rawConfiguration.getEntrypoint())
         .thenReturn(Optional.of(Arrays.asList("custom", "entrypoint")));
     when(rawConfiguration.getJvmFlags()).thenReturn(Collections.singletonList("jvmFlag"));
@@ -637,7 +638,7 @@ public class PluginConfigurationProcessorTest {
           InvalidAppRootException, InvalidWorkingDirectoryException, InvalidPlatformException,
           InvalidContainerVolumeException, IncompatibleBaseImageJavaVersionException,
           NumberFormatException, InvalidContainerizingModeException,
-          InvalidFilesModificationTimeException, InvalidCreationTimeException, InvalidExtraDirectoryException {
+          InvalidFilesModificationTimeException, InvalidCreationTimeException, ExtraDirectoryNotFoundException {
     when(rawConfiguration.getEntrypoint())
         .thenReturn(Optional.of(Arrays.asList("custom", "entrypoint")));
     when(rawConfiguration.getMainClass()).thenReturn(Optional.of("java.util.Object"));
@@ -658,7 +659,7 @@ public class PluginConfigurationProcessorTest {
           InvalidAppRootException, InvalidWorkingDirectoryException, InvalidPlatformException,
           InvalidContainerVolumeException, IncompatibleBaseImageJavaVersionException,
           NumberFormatException, InvalidContainerizingModeException,
-          InvalidFilesModificationTimeException, InvalidCreationTimeException, InvalidExtraDirectoryException {
+          InvalidFilesModificationTimeException, InvalidCreationTimeException, ExtraDirectoryNotFoundException {
     when(rawConfiguration.getEntrypoint())
         .thenReturn(Optional.of(Arrays.asList("custom", "entrypoint")));
     when(rawConfiguration.getExpandClasspathDependencies()).thenReturn(true);
@@ -679,7 +680,7 @@ public class PluginConfigurationProcessorTest {
           IncompatibleBaseImageJavaVersionException, InvalidPlatformException,
           InvalidContainerVolumeException, MainClassInferenceException, InvalidAppRootException,
           InvalidWorkingDirectoryException, InvalidFilesModificationTimeException,
-          InvalidContainerizingModeException, InvalidExtraDirectoryException {
+          InvalidContainerizingModeException, ExtraDirectoryNotFoundException {
     when(rawConfiguration.getMainClass()).thenReturn(Optional.of("java.util.Object"));
     when(projectProperties.isWarProject()).thenReturn(true);
 
@@ -701,7 +702,7 @@ public class PluginConfigurationProcessorTest {
           IncompatibleBaseImageJavaVersionException, InvalidPlatformException,
           InvalidContainerVolumeException, MainClassInferenceException, InvalidAppRootException,
           InvalidWorkingDirectoryException, InvalidFilesModificationTimeException,
-          InvalidContainerizingModeException, InvalidExtraDirectoryException {
+          InvalidContainerizingModeException, ExtraDirectoryNotFoundException {
     when(rawConfiguration.getExpandClasspathDependencies()).thenReturn(true);
     when(projectProperties.isWarProject()).thenReturn(true);
 
@@ -723,7 +724,7 @@ public class PluginConfigurationProcessorTest {
           InvalidAppRootException, InvalidWorkingDirectoryException, InvalidPlatformException,
           InvalidContainerVolumeException, IncompatibleBaseImageJavaVersionException,
           NumberFormatException, InvalidContainerizingModeException,
-          InvalidFilesModificationTimeException, InvalidCreationTimeException, InvalidExtraDirectoryException {
+          InvalidFilesModificationTimeException, InvalidCreationTimeException, ExtraDirectoryNotFoundException {
     when(rawConfiguration.getAppRoot()).thenReturn("/my/app");
 
     ContainerBuildPlan buildPlan = processCommonConfiguration();
@@ -740,7 +741,7 @@ public class PluginConfigurationProcessorTest {
           InvalidAppRootException, InvalidWorkingDirectoryException, InvalidPlatformException,
           InvalidContainerVolumeException, IncompatibleBaseImageJavaVersionException,
           NumberFormatException, InvalidContainerizingModeException,
-          InvalidFilesModificationTimeException, InvalidCreationTimeException, InvalidExtraDirectoryException {
+          InvalidFilesModificationTimeException, InvalidCreationTimeException, ExtraDirectoryNotFoundException {
     when(projectProperties.isWarProject()).thenReturn(true);
     when(rawConfiguration.getFromImage()).thenReturn(Optional.of("custom-base-image"));
 
@@ -1180,7 +1181,7 @@ public class PluginConfigurationProcessorTest {
           InvalidContainerVolumeException, IncompatibleBaseImageJavaVersionException,
           NumberFormatException, InvalidContainerizingModeException,
           InvalidFilesModificationTimeException, InvalidCreationTimeException,
-          InvalidExtraDirectoryException {
+      ExtraDirectoryNotFoundException {
     JibContainerBuilder containerBuilder =
         PluginConfigurationProcessor.processCommonConfiguration(
             rawConfiguration, ignored -> Optional.empty(), projectProperties, containerizer);
