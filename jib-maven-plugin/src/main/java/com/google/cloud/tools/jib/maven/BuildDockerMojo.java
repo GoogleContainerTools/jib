@@ -168,7 +168,7 @@ public class BuildDockerMojo extends JibPluginConfiguration {
 
     } catch (ExtraDirectoryNotFoundException ex) {
       throw new MojoExecutionException(
-          "<extraDirectories><paths> contain \"from\" directory that doesn't exist locally: " + ex.getPathValue(), ex);
+          "<extraDirectories><paths> contain \"from\" directory that doesn't exist locally: " + ex.getPath(), ex);
     } finally {
       tempDirectoryProvider.close();
       MojoCommon.finishUpdateChecker(projectProperties, updateCheckFuture);

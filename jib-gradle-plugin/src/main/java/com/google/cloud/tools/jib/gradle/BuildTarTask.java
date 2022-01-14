@@ -200,7 +200,7 @@ public class BuildTarTask extends DefaultTask implements JibTask {
 
     } catch (ExtraDirectoryNotFoundException ex) {
       throw new GradleException(
-          "extraDirectories.paths contain \"from\" directory that doesn't exist locally: " + ex.getPathValue(), ex);
+          "extraDirectories.paths contain \"from\" directory that doesn't exist locally: " + ex.getPath(), ex);
     } finally {
       tempDirectoryProvider.close();
       TaskCommon.finishUpdateChecker(projectProperties, updateCheckFuture);
