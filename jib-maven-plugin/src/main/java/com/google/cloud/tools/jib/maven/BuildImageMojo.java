@@ -182,7 +182,7 @@ public class BuildImageMojo extends JibPluginConfiguration {
 
     } catch (ExtraDirectoryNotFoundException ex) {
       throw new MojoExecutionException(
-          "<extraDirectories><paths> contain path that is not found: " + ex.getPathValue(), ex);
+          "<extraDirectories><paths> contain \"from\" directory that doesn't exist locally: " + ex.getPathValue(), ex);
     } finally {
       tempDirectoryProvider.close();
       MojoCommon.finishUpdateChecker(projectProperties, updateCheckFuture);

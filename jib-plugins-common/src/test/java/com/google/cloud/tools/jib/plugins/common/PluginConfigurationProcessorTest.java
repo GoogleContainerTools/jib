@@ -266,7 +266,7 @@ public class PluginConfigurationProcessorTest {
     Mockito.<List<?>>when(rawConfiguration.getExtraDirectories())
         .thenReturn(Arrays.asList(new TestExtraDirectoriesConfiguration(extraDirectory)));
 
-    ExtraDirectoryNotFoundException exception = assertThrows(ExtraDirectoryNotFoundException.class, this::processCommonConfiguration);
+    Exception exception = assertThrows(ExtraDirectoryNotFoundException.class, this::processCommonConfiguration);
     assertThat(exception).hasMessageThat().isEqualTo(extraDirectory.toString());
   }
 

@@ -183,7 +183,7 @@ public class BuildDockerTask extends DefaultTask implements JibTask {
 
     } catch (ExtraDirectoryNotFoundException ex) {
       throw new GradleException(
-          "extraDirectories.paths contain path that is not found: " + ex.getPathValue(), ex);
+          "extraDirectories.paths contain \"from\" directory that doesn't exist locally: " + ex.getPathValue(), ex);
     } finally {
       tempDirectoryProvider.close();
       TaskCommon.finishUpdateChecker(projectProperties, updateCheckFuture);
