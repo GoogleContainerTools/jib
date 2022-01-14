@@ -448,7 +448,6 @@ public class PluginConfigurationProcessor {
                 rawConfiguration.getExtraDirectoryPermissions(),
                 modificationTimeProvider));
       } else if (!from.endsWith(DEFAULT_JIB_DIR)){
-        // Throw exception if user-provided extraDirectory path is not found (excluding default jib directory)
         throw new ExtraDirectoryNotFoundException(from.toString(), from.toString());
       }
     }
