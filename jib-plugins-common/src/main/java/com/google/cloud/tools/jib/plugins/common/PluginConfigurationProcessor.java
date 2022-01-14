@@ -135,7 +135,7 @@ public class PluginConfigurationProcessor {
           InvalidContainerVolumeException, IncompatibleBaseImageJavaVersionException,
           NumberFormatException, InvalidContainerizingModeException,
           InvalidFilesModificationTimeException, InvalidCreationTimeException,
-      ExtraDirectoryNotFoundException, JibPluginExtensionException {
+          ExtraDirectoryNotFoundException, JibPluginExtensionException {
     ImageReference targetImageReference =
         getGeneratedTargetDockerTag(rawConfiguration, projectProperties, helpfulSuggestions);
     DockerDaemonImage targetImage = DockerDaemonImage.named(targetImageReference);
@@ -447,7 +447,7 @@ public class PluginConfigurationProcessor {
                 extraDirectory.getExcludesList(),
                 rawConfiguration.getExtraDirectoryPermissions(),
                 modificationTimeProvider));
-      } else if (!from.endsWith(DEFAULT_JIB_DIR)){
+      } else if (!from.endsWith(DEFAULT_JIB_DIR)) {
         throw new ExtraDirectoryNotFoundException(from.toString(), from.toString());
       }
     }
@@ -465,7 +465,7 @@ public class PluginConfigurationProcessor {
           InvalidContainerVolumeException, IncompatibleBaseImageJavaVersionException,
           NumberFormatException, InvalidContainerizingModeException,
           InvalidFilesModificationTimeException, InvalidCreationTimeException,
-      ExtraDirectoryNotFoundException {
+          ExtraDirectoryNotFoundException {
     JibSystemProperties.checkHttpTimeoutProperty();
     JibSystemProperties.checkProxyPortProperty();
 

@@ -21,13 +21,13 @@ import com.google.cloud.tools.jib.api.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.docker.DockerClient;
 import com.google.cloud.tools.jib.filesystem.TempDirectoryProvider;
 import com.google.cloud.tools.jib.plugins.common.BuildStepsExecutionException;
+import com.google.cloud.tools.jib.plugins.common.ExtraDirectoryNotFoundException;
 import com.google.cloud.tools.jib.plugins.common.HelpfulSuggestions;
 import com.google.cloud.tools.jib.plugins.common.IncompatibleBaseImageJavaVersionException;
 import com.google.cloud.tools.jib.plugins.common.InvalidAppRootException;
 import com.google.cloud.tools.jib.plugins.common.InvalidContainerVolumeException;
 import com.google.cloud.tools.jib.plugins.common.InvalidContainerizingModeException;
 import com.google.cloud.tools.jib.plugins.common.InvalidCreationTimeException;
-import com.google.cloud.tools.jib.plugins.common.ExtraDirectoryNotFoundException;
 import com.google.cloud.tools.jib.plugins.common.InvalidFilesModificationTimeException;
 import com.google.cloud.tools.jib.plugins.common.InvalidPlatformException;
 import com.google.cloud.tools.jib.plugins.common.InvalidWorkingDirectoryException;
@@ -168,7 +168,9 @@ public class BuildDockerMojo extends JibPluginConfiguration {
 
     } catch (ExtraDirectoryNotFoundException ex) {
       throw new MojoExecutionException(
-          "<extraDirectories><paths> contain \"from\" directory that doesn't exist locally: " + ex.getPath(), ex);
+          "<extraDirectories><paths> contain \"from\" directory that doesn't exist locally: "
+              + ex.getPath(),
+          ex);
     } finally {
       tempDirectoryProvider.close();
       MojoCommon.finishUpdateChecker(projectProperties, updateCheckFuture);

@@ -16,9 +16,7 @@
 
 package com.google.cloud.tools.jib.plugins.common;
 
-/**
- * Indicates that the {@code extraDirectories.paths.path} is not found.
- */
+/** Indicates that the {@code extraDirectories.paths.path} is not found. */
 public class ExtraDirectoryNotFoundException extends Exception {
 
   private final String path;
