@@ -92,6 +92,7 @@ public class PluginConfigurationProcessor {
 
   private static final String JIB_CLASSPATH_FILE = "jib-classpath-file";
   private static final String JIB_MAIN_CLASS_FILE = "jib-main-class-file";
+  private static final String DEFAULT_JIB_DIR = "src/main/jib";
 
   private PluginConfigurationProcessor() {}
 
@@ -446,7 +447,8 @@ public class PluginConfigurationProcessor {
                 extraDirectory.getExcludesList(),
                 rawConfiguration.getExtraDirectoryPermissions(),
                 modificationTimeProvider));
-      } else {
+      } else if (!from.endsWith(DEFAULT_JIB_DIR)){
+        // Throw exception if user-provided extraDirectory path is not found (excluding default jib directory)
         throw new ExtraDirectoryNotFoundException(from.toString(), from.toString());
       }
     }

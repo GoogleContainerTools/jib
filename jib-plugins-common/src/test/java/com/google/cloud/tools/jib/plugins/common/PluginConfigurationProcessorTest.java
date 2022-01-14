@@ -200,7 +200,7 @@ public class PluginConfigurationProcessorTest {
           InvalidContainerVolumeException, IncompatibleBaseImageJavaVersionException,
           NumberFormatException, InvalidContainerizingModeException,
           InvalidFilesModificationTimeException, InvalidCreationTimeException,
-      ExtraDirectoryNotFoundException {
+          ExtraDirectoryNotFoundException {
     ContainerBuildPlan buildPlan = processCommonConfiguration();
 
     assertThat(buildPlan.getEntrypoint())
@@ -458,7 +458,7 @@ public class PluginConfigurationProcessorTest {
           InvalidContainerVolumeException, IncompatibleBaseImageJavaVersionException,
           NumberFormatException, InvalidContainerizingModeException,
           InvalidFilesModificationTimeException, InvalidCreationTimeException,
-      ExtraDirectoryNotFoundException {
+          ExtraDirectoryNotFoundException {
     when(projectProperties.isWarProject()).thenReturn(true);
 
     ContainerBuildPlan buildPlan = processCommonConfiguration();
@@ -476,7 +476,7 @@ public class PluginConfigurationProcessorTest {
           InvalidContainerVolumeException, IncompatibleBaseImageJavaVersionException,
           NumberFormatException, InvalidContainerizingModeException,
           InvalidFilesModificationTimeException, InvalidCreationTimeException,
-      ExtraDirectoryNotFoundException {
+          ExtraDirectoryNotFoundException {
     when(projectProperties.isWarProject()).thenReturn(false);
 
     ContainerBuildPlan buildPlan = processCommonConfiguration();
@@ -497,7 +497,7 @@ public class PluginConfigurationProcessorTest {
           InvalidContainerVolumeException, IncompatibleBaseImageJavaVersionException,
           NumberFormatException, InvalidContainerizingModeException,
           InvalidFilesModificationTimeException, InvalidCreationTimeException,
-      ExtraDirectoryNotFoundException {
+          ExtraDirectoryNotFoundException {
     when(rawConfiguration.getExtraClasspath()).thenReturn(Collections.singletonList("/foo"));
     when(projectProperties.isWarProject()).thenReturn(false);
 
@@ -1181,7 +1181,7 @@ public class PluginConfigurationProcessorTest {
           InvalidContainerVolumeException, IncompatibleBaseImageJavaVersionException,
           NumberFormatException, InvalidContainerizingModeException,
           InvalidFilesModificationTimeException, InvalidCreationTimeException,
-      ExtraDirectoryNotFoundException {
+          ExtraDirectoryNotFoundException {
     JibContainerBuilder containerBuilder =
         PluginConfigurationProcessor.processCommonConfiguration(
             rawConfiguration, ignored -> Optional.empty(), projectProperties, containerizer);
