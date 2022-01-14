@@ -22,7 +22,6 @@
             <paths>
               <path>src/main/jib1</path> <!-- should resolve to this projectRoot -->
               <path>${project.basedir}/src/main/jib2</path> <!-- provided as absolute within project -->
-              <path>/some/random/absolute/path/jib3</path> <!-- provided as absolute outside of project -->
             </paths>
           </extraDirectories>
         </configuration>
