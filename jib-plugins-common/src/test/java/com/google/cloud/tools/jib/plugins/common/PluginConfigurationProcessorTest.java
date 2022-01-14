@@ -869,8 +869,8 @@ public class PluginConfigurationProcessorTest {
         "8, eclipse-temurin:8-jre",
         "9, eclipse-temurin:11-jre",
         "11, eclipse-temurin:11-jre",
-        "13, azul/zulu-openjdk:17-jre",
-        "17, azul/zulu-openjdk:17-jre"
+        "13, eclipse-temurin:17-jre",
+        "17, eclipse-temurin:17-jre"
       })
   public void testGetDefaultBaseImage_defaultJavaBaseImage(
       int javaVersion, String expectedBaseImage) throws IncompatibleBaseImageJavaVersionException {
@@ -946,7 +946,8 @@ public class PluginConfigurationProcessorTest {
         "adoptopenjdk:11-jre, 11, 15",
         "eclipse-temurin:11, 11, 15",
         "eclipse-temurin:11-jre, 11, 15",
-        "azul/zulu-openjdk:17-jr, 17, 19"
+        "eclipse-temurin:17, 17, 19",
+        "eclipse-temurin:17-jre, 17, 19"
       })
   public void testGetJavaContainerBuilderWithBaseImage_incompatibleJavaBaseImage(
       String baseImage, int baseImageJavaVersion, int appJavaVersion) {
