@@ -92,7 +92,7 @@ public class PluginConfigurationProcessor {
 
   private static final String JIB_CLASSPATH_FILE = "jib-classpath-file";
   private static final String JIB_MAIN_CLASS_FILE = "jib-main-class-file";
-  private static final String DEFAULT_JIB_DIR = "src/main/jib";
+  private static final Path DEFAULT_JIB_DIR = Paths.get("src").resolve("main").resolve("jib");
 
   private PluginConfigurationProcessor() {}
 
