@@ -21,6 +21,10 @@ All notable changes to this project will be documented in this file.
 
 ## 0.19.0
 
+### Added
+
+- For Google Artifact Registry (`*-docker.pkg.dev`), Jib now tries [Google Application Default Credentials](https://developers.google.com/identity/protocols/application-default-credentials) last like it has been doing for `gcr.io`. ([#3241](https://github.com/GoogleContainerTools/jib/pull/3241))
+
 ### Changed
 
 - `JavaContainerBuilder#fromDistroless()` and `JavaContainerBuilder#fromDistrolessJetty()` are deprecated. To migrate, check the Javadoc. ([#3123](https://github.com/GoogleContainerTools/jib/pull/3123))
