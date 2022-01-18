@@ -123,8 +123,8 @@ public class PluginConfigurationProcessor {
    *     parsed
    * @throws InvalidCreationTimeException if configured creation time could not be parsed
    * @throws JibPluginExtensionException if an error occurred while running plugin extensions
-   * @throws ExtraDirectoryNotFoundException if the extra directory specified for the build is
-   *     not found
+   * @throws ExtraDirectoryNotFoundException if the extra directory specified for the build is not
+   *     found
    */
   public static JibBuildRunner createJibBuildRunnerForDockerDaemonImage(
       RawConfiguration rawConfiguration,
@@ -197,8 +197,8 @@ public class PluginConfigurationProcessor {
    *     parsed
    * @throws InvalidCreationTimeException if configured creation time could not be parsed
    * @throws JibPluginExtensionException if an error occurred while running plugin extensions
-   * @throws ExtraDirectoryNotFoundException if the extra directory specified for the build is
-   *    not found
+   * @throws ExtraDirectoryNotFoundException if the extra directory specified for the build is not
+   *     found
    */
   public static JibBuildRunner createJibBuildRunnerForTarImage(
       RawConfiguration rawConfiguration,
@@ -265,8 +265,8 @@ public class PluginConfigurationProcessor {
    *     parsed
    * @throws InvalidCreationTimeException if configured creation time could not be parsed
    * @throws JibPluginExtensionException if an error occurred while running plugin extensions
-   * @throws ExtraDirectoryNotFoundException if the extra directory specified for the build is
-   *     not found
+   * @throws ExtraDirectoryNotFoundException if the extra directory specified for the build is not
+   *     found
    */
   public static JibBuildRunner createJibBuildRunnerForRegistryImage(
       RawConfiguration rawConfiguration,
@@ -347,8 +347,8 @@ public class PluginConfigurationProcessor {
    * @throws InvalidFilesModificationTimeException if configured modification time could not be
    *     parsed
    * @throws InvalidCreationTimeException if configured creation time could not be parsed
-   * @throws ExtraDirectoryNotFoundException if the extra directory specified for the build is
-   *     not found
+   * @throws ExtraDirectoryNotFoundException if the extra directory specified for the build is not
+   *     found
    */
   public static String getSkaffoldSyncMap(
       RawConfiguration rawConfiguration, ProjectProperties projectProperties, Set<Path> excludes)
