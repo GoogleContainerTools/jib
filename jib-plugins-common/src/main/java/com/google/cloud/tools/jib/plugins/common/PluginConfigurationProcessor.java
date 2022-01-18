@@ -92,6 +92,7 @@ public class PluginConfigurationProcessor {
 
   private static final String JIB_CLASSPATH_FILE = "jib-classpath-file";
   private static final String JIB_MAIN_CLASS_FILE = "jib-main-class-file";
+  private static final Path DEFAULT_JIB_DIR = Paths.get("src").resolve("main").resolve("jib");
 
   private PluginConfigurationProcessor() {}
 
@@ -122,6 +123,8 @@ public class PluginConfigurationProcessor {
    *     parsed
    * @throws InvalidCreationTimeException if configured creation time could not be parsed
    * @throws JibPluginExtensionException if an error occurred while running plugin extensions
+   * @throws ExtraDirectoryNotFoundException if the extra directory specified for the build is not
+   *     found
    */
   public static JibBuildRunner createJibBuildRunnerForDockerDaemonImage(
       RawConfiguration rawConfiguration,
@@ -134,7 +137,7 @@ public class PluginConfigurationProcessor {
           InvalidContainerVolumeException, IncompatibleBaseImageJavaVersionException,
           NumberFormatException, InvalidContainerizingModeException,
           InvalidFilesModificationTimeException, InvalidCreationTimeException,
-          JibPluginExtensionException {
+          ExtraDirectoryNotFoundException, JibPluginExtensionException {
     ImageReference targetImageReference =
         getGeneratedTargetDockerTag(rawConfiguration, projectProperties, helpfulSuggestions);
     DockerDaemonImage targetImage = DockerDaemonImage.named(targetImageReference);
@@ -194,6 +197,8 @@ public class PluginConfigurationProcessor {
    *     parsed
    * @throws InvalidCreationTimeException if configured creation time could not be parsed
    * @throws JibPluginExtensionException if an error occurred while running plugin extensions
+   * @throws ExtraDirectoryNotFoundException if the extra directory specified for the build is not
+   *     found
    */
   public static JibBuildRunner createJibBuildRunnerForTarImage(
       RawConfiguration rawConfiguration,
@@ -206,7 +211,7 @@ public class PluginConfigurationProcessor {
           InvalidContainerVolumeException, IncompatibleBaseImageJavaVersionException,
           NumberFormatException, InvalidContainerizingModeException,
           InvalidFilesModificationTimeException, InvalidCreationTimeException,
-          JibPluginExtensionException {
+          JibPluginExtensionException, ExtraDirectoryNotFoundException {
     ImageReference targetImageReference =
         getGeneratedTargetDockerTag(rawConfiguration, projectProperties, helpfulSuggestions);
     TarImage targetImage =
@@ -260,6 +265,8 @@ public class PluginConfigurationProcessor {
    *     parsed
    * @throws InvalidCreationTimeException if configured creation time could not be parsed
    * @throws JibPluginExtensionException if an error occurred while running plugin extensions
+   * @throws ExtraDirectoryNotFoundException if the extra directory specified for the build is not
+   *     found
    */
   public static JibBuildRunner createJibBuildRunnerForRegistryImage(
       RawConfiguration rawConfiguration,
@@ -272,7 +279,7 @@ public class PluginConfigurationProcessor {
           InvalidContainerVolumeException, IncompatibleBaseImageJavaVersionException,
           NumberFormatException, InvalidContainerizingModeException,
           InvalidFilesModificationTimeException, InvalidCreationTimeException,
-          JibPluginExtensionException {
+          JibPluginExtensionException, ExtraDirectoryNotFoundException {
     Optional<String> image = rawConfiguration.getToImage();
     Preconditions.checkArgument(image.isPresent());
 
@@ -340,6 +347,8 @@ public class PluginConfigurationProcessor {
    * @throws InvalidFilesModificationTimeException if configured modification time could not be
    *     parsed
    * @throws InvalidCreationTimeException if configured creation time could not be parsed
+   * @throws ExtraDirectoryNotFoundException if the extra directory specified for the build is not
+   *     found
    */
   public static String getSkaffoldSyncMap(
       RawConfiguration rawConfiguration, ProjectProperties projectProperties, Set<Path> excludes)
@@ -347,7 +356,7 @@ public class PluginConfigurationProcessor {
           IncompatibleBaseImageJavaVersionException, InvalidPlatformException,
           InvalidContainerVolumeException, MainClassInferenceException, InvalidAppRootException,
           InvalidWorkingDirectoryException, InvalidFilesModificationTimeException,
-          InvalidContainerizingModeException {
+          InvalidContainerizingModeException, ExtraDirectoryNotFoundException {
     JibContainerBuilder jibContainerBuilder =
         processCommonConfiguration(
             rawConfiguration, ignored -> Optional.empty(), projectProperties);
@@ -406,7 +415,7 @@ public class PluginConfigurationProcessor {
           IncompatibleBaseImageJavaVersionException, IOException, InvalidImageReferenceException,
           InvalidContainerizingModeException, MainClassInferenceException, InvalidPlatformException,
           InvalidContainerVolumeException, InvalidWorkingDirectoryException,
-          InvalidCreationTimeException {
+          InvalidCreationTimeException, ExtraDirectoryNotFoundException {
 
     // Create and configure JibContainerBuilder
     ModificationTimeProvider modificationTimeProvider =
@@ -446,6 +455,8 @@ public class PluginConfigurationProcessor {
                 extraDirectory.getExcludesList(),
                 rawConfiguration.getExtraDirectoryPermissions(),
                 modificationTimeProvider));
+      } else if (!from.endsWith(DEFAULT_JIB_DIR)) {
+        throw new ExtraDirectoryNotFoundException(from.toString(), from.toString());
       }
     }
     return jibContainerBuilder;
@@ -461,7 +472,8 @@ public class PluginConfigurationProcessor {
           IOException, InvalidWorkingDirectoryException, InvalidPlatformException,
           InvalidContainerVolumeException, IncompatibleBaseImageJavaVersionException,
           NumberFormatException, InvalidContainerizingModeException,
-          InvalidFilesModificationTimeException, InvalidCreationTimeException {
+          InvalidFilesModificationTimeException, InvalidCreationTimeException,
+          ExtraDirectoryNotFoundException {
     JibSystemProperties.checkHttpTimeoutProperty();
     JibSystemProperties.checkProxyPortProperty();
 

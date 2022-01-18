@@ -226,7 +226,7 @@ public class DefaultCredentialRetrieversTest {
         .dockerCredentialHelper(fakeCredentialHelperPath.toString());
 
     Files.delete(fakeCredentialHelperPath);
-    Exception ex = assertThrows(FileNotFoundException.class, () -> credentialRetrievers.asList());
+    Exception ex = assertThrows(FileNotFoundException.class, credentialRetrievers::asList);
     assertThat(ex)
         .hasMessageThat()
         .isEqualTo("Specified credential helper was not found: " + fakeCredentialHelperPath);
@@ -294,7 +294,7 @@ public class DefaultCredentialRetrieversTest {
     DefaultCredentialRetrievers credentialRetrievers =
         new DefaultCredentialRetrievers(mockCredentialRetrieverFactory, properties, environment)
             .setCredentialHelper(pathWithoutCmd.toString());
-    Exception ex = assertThrows(FileNotFoundException.class, () -> credentialRetrievers.asList());
+    Exception ex = assertThrows(FileNotFoundException.class, credentialRetrievers::asList);
     assertThat(ex).hasMessageThat().startsWith("Specified credential helper was not found:");
     assertThat(ex).hasMessageThat().endsWith("foo");
 
@@ -333,7 +333,7 @@ public class DefaultCredentialRetrieversTest {
     DefaultCredentialRetrievers credentialRetrievers =
         new DefaultCredentialRetrievers(mockCredentialRetrieverFactory, properties, environment)
             .setCredentialHelper(pathWithoutExe.toString());
-    Exception ex = assertThrows(FileNotFoundException.class, () -> credentialRetrievers.asList());
+    Exception ex = assertThrows(FileNotFoundException.class, credentialRetrievers::asList);
     assertThat(ex).hasMessageThat().startsWith("Specified credential helper was not found:");
     assertThat(ex).hasMessageThat().endsWith("foo");
 

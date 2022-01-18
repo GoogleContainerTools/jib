@@ -126,12 +126,20 @@ public class SyncMapMojoTest {
         generated.get(1));
 
     List<FileTemplate> direct = parsed.getDirect();
-    Assert.assertEquals(1, direct.size());
+    Assert.assertEquals(3, direct.size());
     assertFilePaths(
         m2.resolve(
             "com/google/cloud/tools/tiny-test-lib/0.0.1-SNAPSHOT/tiny-test-lib-0.0.1-SNAPSHOT.jar"),
         AbsoluteUnixPath.get("/app/libs/tiny-test-lib-0.0.1-SNAPSHOT.jar"),
         direct.get(0));
+    assertFilePaths(
+        projectRoot.resolve("complex-service/src/main/jib1/foo"),
+        AbsoluteUnixPath.get("/foo"),
+        direct.get(1));
+    assertFilePaths(
+        projectRoot.resolve("complex-service/src/main/jib2/bar"),
+        AbsoluteUnixPath.get("/bar"),
+        direct.get(2));
   }
 
   @Test

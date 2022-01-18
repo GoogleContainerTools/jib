@@ -11,6 +11,7 @@ All notable changes to this project will be documented in this file.
 ### Changed
 
 - Changed the default base image of the Jib CLI `jar` command from the `adoptopenjdk` images to the [`eclipse-temurin`](https://hub.docker.com/_/eclipse-temurin) on Docker Hub. Note that Temurin (by Adoptium) is the new name of AdoptOpenJDK. ([#3483](https://github.com/GoogleContainerTools/jib/issues/3483))
+- Build will fail if `extraDirectories.paths` contain `from` directory that doesn't exist locally ([#3542](https://github.com/GoogleContainerTools/jib/issues/3542))
 
 ### Fixed
 
