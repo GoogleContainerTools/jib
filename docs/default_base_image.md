@@ -1,12 +1,12 @@
 # Default Base Images in Jib
 
-## Jib Build Plugins 3.0
+## Jib Build Plugins 3+
 
-Starting from version 3.0, the default base image is the official [`adoptopenjdk`](https://hub.docker.com/_/adoptopenjdk) image on Docker Hub. AdoptOpenJDK (which is [being renamed to Adoptium](https://blog.adoptopenjdk.net/2020/06/adoptopenjdk-to-join-the-eclipse-foundation/)) is a popular OpenJDK build also used by [Google Cloud Buildpacks](https://github.com/GoogleCloudPlatform/buildpacks) (for Java) by default.
+Starting from version 3.2, the default base image is the official [`eclipse-temurin`](https://hub.docker.com/_/eclipse-temurin) image on Docker Hub. Note that Eclipse Temurin by Adoptium is the [successor of AdoptOpenJDK](https://blog.adoptopenjdk.net/2021/08/goodbye-adoptopenjdk-hello-adoptium/). (For versions 3.0 and 3.1, the default is the official [`adoptopenjdk`](https://hub.docker.com/_/adoptopenjdk) image.)
 
 For WAR projects, the default is the official [`jetty`](https://hub.docker.com/_/jetty) image on Docker Hub.
 
-Note that Jib's default choice for AdoptOpenJDK and Jetty does not imply any endorsement to them. In fact, for strong reproducibility (which also results in better performance and efficiency), we always recommend configuring [`jib.from.image`](https://github.com/GoogleContainerTools/jib/tree/master/jib-gradle-plugin#from-closure) (Gradle) or [`<from><image>`](https://github.com/GoogleContainerTools/jib/tree/master/jib-maven-plugin#from-object) (Maven) to pin to a specific base image using a digest (or at least a tag). And while doing so, you should do your due diligence to figure out which base image will work best for you.
+Note that Jib's default choice for Temurin, AdoptOpenJDK, and Jetty does not imply any endorsement to them. In fact, for strong reproducibility (which also results in better performance and efficiency), we always recommend configuring [`jib.from.image`](https://github.com/GoogleContainerTools/jib/tree/master/jib-gradle-plugin#from-closure) (Gradle) or [`<from><image>`](https://github.com/GoogleContainerTools/jib/tree/master/jib-maven-plugin#from-object) (Maven) to pin to a specific base image using a digest (or at least a tag). And while doing so, you should do your due diligence to figure out which base image will work best for you.
 
 ### Docker Hub Download Rate Limit
 
@@ -28,7 +28,7 @@ Note that, even after Jib fully cached a base image, Jib still connects to Docke
 Some options:
 * Configure a registry mirror.
 * Prevent Jib from accessing Docker Hub (after Jib cached a base image locally).
-   - Pin to a specific base image using a SHA digest (for example, `jib.from.image='adoptopenjdk:11-jre@sha256:...'`).
+   - Pin to a specific base image using a SHA digest (for example, `jib.from.image='eclipse-temurin:11-jre@sha256:...'`).
    - Do offline building.
    - Read a base from a local Docker deamon.
    - Set up a local registry, store a base image, and read it from the local registry.
@@ -81,4 +81,4 @@ For some reason if you have to keep the exact same behavior when using 3.0, you 
 
 ## Jib CLI
 
-The JAR mode of the Jib CLI has always used AdoptOpenJDK and the WAR mode uses `jetty`.
+For the JAR mode, Jib CLI versions prior to 0.8 have always used AdoptOpenJDK. Starting with 0.8, the tool uses [`eclipse-temurin`](https://hub.docker.com/_/eclipse-temurin). The WAR mode uses `jetty`.
