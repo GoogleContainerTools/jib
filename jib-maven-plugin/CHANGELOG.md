@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+### Changed
+
+### Fixed
+
+## 3.2.0
+
+### Added
+
 - [`<from><platforms>`](https://github.com/GoogleContainerTools/jib/tree/master/jib-maven-plugin#from-object) parameter for multi-architecture image building can now be configured through Maven and system properties (for example, `-Djib.from.platforms=linux/amd64,linux/arm64` on the command-line). ([#2742](https://github.com/GoogleContainerTools/jib/pull/2742))
 - For retrieving credentials, Jib additionally looks for `$XDG_RUNTIME_DIR/containers/auth.json`, `$XDG_CONFIG_HOME/containers/auth.json`, and `$HOME/.config/containers/auth.json`. ([#3524](https://github.com/GoogleContainerTools/jib/issues/3524))
 
@@ -13,10 +21,9 @@ All notable changes to this project will be documented in this file.
 - Changed the default base image of the Jib CLI `jar` command from the `adoptopenjdk` images to the [`eclipse-temurin`](https://hub.docker.com/_/eclipse-temurin) on Docker Hub. Note that Temurin (by Adoptium) is the new name of AdoptOpenJDK. ([#3483](https://github.com/GoogleContainerTools/jib/issues/3483))
 - Build will fail if `<extraDirectories><paths>` contain `from` directory that doesn't exist locally ([#3542](https://github.com/GoogleContainerTools/jib/issues/3542))
 
-
 ### Fixed
 
-- Fixed incorrect parsing with comman escaping when providing Jib list or map property values on the command-line. ([#2224](https://github.com/GoogleContainerTools/jib/issues/2224))
+- Fixed incorrect parsing with comma escaping when providing Jib list or map property values on the command-line. ([#2224](https://github.com/GoogleContainerTools/jib/issues/2224))
 
 ## 3.1.4
 

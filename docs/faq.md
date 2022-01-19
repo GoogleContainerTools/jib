@@ -755,7 +755,7 @@ plugins {
 When you're using latest Java versions to write an app (or using an old version of Jib), you may see the error _coming from Jib when building an image_ (not when compiling your code):
 
 ```
-Failed to execute goal com.google.cloud.tools:jib-maven-plugin:3.1.4:dockerBuild (default-cli) on project demo: Execution default-cli of goal com.google.cloud.tools:jib-maven-plugin:3.1.4:dockerBuild failed: Unsupported class file major version 61
+Failed to execute goal com.google.cloud.tools:jib-maven-plugin:3.2.0:dockerBuild (default-cli) on project demo: Execution default-cli of goal com.google.cloud.tools:jib-maven-plugin:3.2.0:dockerBuild failed: Unsupported class file major version 61
 ```
 
 Jib uses the [ASM library](https://asm.ow2.io/) to examine compiled Java bytecode to automatically infer a main class (in other words, the class that defines `public static void main()` to start your app). In this way, if you have only one such class, Jib can automatically infer and use that class to set an image entrypoint (basically, a command to start your app). When new Java versions come out, often the ASM library version used in Jib doesn't support the new bytecode format. If this is the case, check if you are using the latest Jib. If you still get the error with the latest Jib, file a [bug](https://github.com/GoogleContainerTools/jib/issues/new/choose) to have the Jib team upgarde the ASM library.
