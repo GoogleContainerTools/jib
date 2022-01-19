@@ -2,13 +2,11 @@
 
 ## Jib Build Plugins 3+
 
-Starting from version 3.2, the default is the official [`eclipse-temurin`](https://hub.docker.com/_/eclipse-temurin) for Java 8 and 11, and [`azul/zulu-openjdk`](https://hub.docker.com/r/azul/zulu-openjdk) for Java 17. Note that Eclipse Temurin by Adoptium is the [successor of AdoptOpenJDK](https://blog.adoptopenjdk.net/2021/08/goodbye-adoptopenjdk-hello-adoptium/) and Azul Systems is a [founding member](https://www.azul.com/blog/eclipse-temurin-new-distribution-of-openjdk/) of the Adoptium Working Group.
-
-For versions 3.0 and 3.1, the default base image is the official [`adoptopenjdk`](https://hub.docker.com/_/adoptopenjdk) image on Docker Hub.
+Starting from version 3.2, the default base image is the official [`eclipse-temurin`](https://hub.docker.com/_/eclipse-temurin) image on Docker Hub. Note that Eclipse Temurin by Adoptium is the [successor of AdoptOpenJDK](https://blog.adoptopenjdk.net/2021/08/goodbye-adoptopenjdk-hello-adoptium/). (For versions 3.0 and 3.1, the default is the official [`adoptopenjdk`](https://hub.docker.com/_/adoptopenjdk) image.)
 
 For WAR projects, the default is the official [`jetty`](https://hub.docker.com/_/jetty) image on Docker Hub.
 
-Note that Jib's default choice for Temurin, Zulu, AdoptOpenJDK, and Jetty does not imply any endorsement to them. In fact, for strong reproducibility (which also results in better performance and efficiency), we always recommend configuring [`jib.from.image`](https://github.com/GoogleContainerTools/jib/tree/master/jib-gradle-plugin#from-closure) (Gradle) or [`<from><image>`](https://github.com/GoogleContainerTools/jib/tree/master/jib-maven-plugin#from-object) (Maven) to pin to a specific base image using a digest (or at least a tag). And while doing so, you should do your due diligence to figure out which base image will work best for you.
+Note that Jib's default choice for Temurin, AdoptOpenJDK, and Jetty does not imply any endorsement to them. In fact, for strong reproducibility (which also results in better performance and efficiency), we always recommend configuring [`jib.from.image`](https://github.com/GoogleContainerTools/jib/tree/master/jib-gradle-plugin#from-closure) (Gradle) or [`<from><image>`](https://github.com/GoogleContainerTools/jib/tree/master/jib-maven-plugin#from-object) (Maven) to pin to a specific base image using a digest (or at least a tag). And while doing so, you should do your due diligence to figure out which base image will work best for you.
 
 ### Docker Hub Download Rate Limit
 
@@ -83,4 +81,4 @@ For some reason if you have to keep the exact same behavior when using 3.0, you 
 
 ## Jib CLI
 
-For the JAR mode, Jib CLI versions prior to 0.8 have always used AdoptOpenJDK. Starting with 0.8, the tool uses [`eclipse-temurin`](https://hub.docker.com/_/eclipse-temurin) for Java 8 and 11, and [`azul/zulu-openjdk`](https://hub.docker.com/r/azul/zulu-openjdk) for Java 17. The WAR mode uses `jetty`.
+For the JAR mode, Jib CLI versions prior to 0.8 have always used AdoptOpenJDK. Starting with 0.8, the tool uses [`eclipse-temurin`](https://hub.docker.com/_/eclipse-temurin). The WAR mode uses `jetty`.

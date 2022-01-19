@@ -89,9 +89,9 @@ For more information, see [steps 4-6 of the Kubernetes Engine deployment tutoria
 
 ### Where is bash?
 
-By default, Jib Maven and Gradle plugin versions prior to 3.0 used [`distroless/java`](https://github.com/GoogleContainerTools/distroless/tree/master/java) as the base image, which did not have a shell program (such as `sh`, `bash`, or `dash`). However, recent Jib tools use [default base images](default_base_image.md) that come with shell programs: Adoptium Eclipse Temurin (formerly AdoptOpenJDK) for Java 8 and 11, Azul Zulu for Java 17, and Jetty for WAR projects.
+By default, Jib Maven and Gradle plugin versions prior to 3.0 used [`distroless/java`](https://github.com/GoogleContainerTools/distroless/tree/master/java) as the base image, which did not have a shell program (such as `sh`, `bash`, or `dash`). However, recent Jib tools use [default base images](default_base_image.md) that come with shell programs: Adoptium Eclipse Temurin (formerly AdoptOpenJDK) and Jetty for WAR projects.
 
-Note that you can always set a different base image. Jib's default choice for Temurin and Zulu does not imply any endorsement to it; you should do your due diligence to choose the right image that works best for you. Also note that the default base image is unpinned (the tag can point to different images over time), so we recommend configuring a base image with a SHA digest for strong reproducibility.
+Note that you can always set a different base image. Jib's default choice for Temurin or AdoptOpenJDK does not imply any endorsement to it; you should do your due diligence to choose the right image that works best for you. Also note that the default base image is unpinned (the tag can point to different images over time), so we recommend configuring a base image with a SHA digest for strong reproducibility.
 
 * Configuring a base image in Maven
    ```xml
@@ -185,7 +185,7 @@ Jib applications are split into the following layers:
 
 ### Which base image (JDK) does Jib use?
 
-[`eclipse-temurin`](https://hub.docker.com/_/eclipse-temurin) by Adoptium (formerly [`adoptopenjdk`](https://hub.docker.com/_/adoptopenjdk)) for Java 8 and 11, [`azul/zulu-openjdk`](https://hub.docker.com/r/azul/zulu-openjdk`) for Java 17, and [`jetty`](https://hub.docker.com/_/jetty) (for WAR). See [Default Base Images in Jib](default_base_image.md) for details.
+[`eclipse-temurin`](https://hub.docker.com/_/eclipse-temurin) by Adoptium (formerly [`adoptopenjdk`](https://hub.docker.com/_/adoptopenjdk)) and [`jetty`](https://hub.docker.com/_/jetty) (for WAR). See [Default Base Images in Jib](default_base_image.md) for details.
 
 ### Can I learn more about container images?
 
@@ -465,8 +465,7 @@ jib.to.image = 'gcr.io/my-gcp-project/my-app:' + System.nanoTime()
 A Dockerfile that performs a Jib-like build is shown below:
 
 ```Dockerfile
-# Jib uses Adoptium Eclipse Temurin (formerly AdoptOpenJDK) for Java 8 and 11,
-# and Azul Zulu for Java 17 as the default base image.
+# Jib uses Adoptium Eclipse Temurin (formerly AdoptOpenJDK).
 FROM eclipse-temurin:11-jre
 
 # Multiple copy statements are used to break the app into layers,
