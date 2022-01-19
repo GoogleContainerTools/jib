@@ -9,6 +9,12 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
+## 0.9.0
+
+### Changed
+
+- For Java 17, changed the default base image of the Jib CLI `jar` command from the `azul/zulu-openjdk` to [`eclipse-temurin`](https://hub.docker.com/_/eclipse-temurin). ([#3483](https://github.com/GoogleContainerTools/jib/issues/3483))
+
 ## 0.8.0
 
 ### Added
@@ -19,7 +25,7 @@ All notable changes to this project will be documented in this file.
 ### Changed
 
 - Downgraded Google HTTP libraries to 1.34.0 to resolve network issues. ([#3415](https://github.com/GoogleContainerTools/jib/pull/3415), [#3058](https://github.com/GoogleContainerTools/jib/issues/3058), [#3409](https://github.com/GoogleContainerTools/jib/issues/3409))
-- Changed the default base image of the Jib CLI `jar` command from the `adoptopenjdk` images to the [`eclipse-temurin`](https://hub.docker.com/_/eclipse-temurin) on Docker Hub. Note that Temurin (by Adoptium) is the new name of AdoptOpenJDK. ([#3483](https://github.com/GoogleContainerTools/jib/issues/3483))
+- Changed the default base image of the Jib CLI `jar` command from the `adoptopenjdk` images to the [`eclipse-temurin`](https://hub.docker.com/_/eclipse-temurin) (for Java 8 and 11) and [`azul/zulu-openjdk`](https://hub.docker.com/r/azul/zulu-openjdk) (for Java 17) images on Docker Hub. Note that Temurin (by Adoptium) is the new name of AdoptOpenJDK. ([#3491](https://github.com/GoogleContainerTools/jib/pull/3491))
 
 ## 0.7.0
 
