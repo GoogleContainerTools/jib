@@ -32,6 +32,7 @@ For information about the project, see the [Jib project README](../README.md).
   * [Example](#example)
   * [Adding Arbitrary Files to the Image](#adding-arbitrary-files-to-the-image)
   * [Authentication Methods](#authentication-methods)
+    * [Using Docker configuration files](#using-docker-configuration-files)
     * [Using Docker Credential Helpers](#using-docker-credential-helpers)
     * [Using Specific Credentials](#using-specific-credentials)
     * [Using Maven Settings](#using-maven-settings)
@@ -263,13 +264,13 @@ Property | Type | Default | Description
 `image` | string | `temurin-eclipse:{8,11}-jre` or `azul/zulu-openjdk:17-jre` (or `jetty` for WAR) | The image reference for the base image. The source type can be specified using a [special type prefix](#setting-the-base-image).
 `auth` | [`auth`](#auth-object) | *None* | Specifies credentials directly (alternative to `credHelper`).
 `credHelper` | string | *None* | Specifies a credential helper that can authenticate pulling the base image. This parameter can either be configured as an absolute path to the credential helper executable or as a credential helper suffix (following `docker-credential-`).
-`platforms` | list | See [`platform`](#platform-object) | _Incubating feature_: Configures platforms of base images to select from a manifest list.
+`platforms` | list | See [`platform`](#platform-object) | Configures platforms of base images to select from a manifest list.
 
 <a name="to-object"></a>`to` is an object with the following properties:
 
 Property | Type | Default | Description
 --- | --- | --- | ---
-`image` | string | *Required* | The image reference for the target image. This can also be specified via the `-Dimage` command line option.
+`image` | string | *Required* | The image reference for the target image. This can also be specified via the `-Dimage` command line option. If the tag is not present here `:latest` is implied.
 `auth` | [`auth`](#auth-object) | *None* | Specifies credentials directly (alternative to `credHelper`).
 `credHelper` | string | *None* | Specifies a credential helper that can authenticate pushing the target image. This parameter can either be configured as an absolute path to the credential helper executable or as a credential helper suffix (following `docker-credential-`).
 `tags` | list | *None* | Additional tags to push to.
@@ -546,7 +547,13 @@ You may also specify the target of the copy and include or exclude files:
 
 ### Authentication Methods
 
-Pushing/pulling from private registries require authorization credentials. These can be [retrieved using Docker credential helpers](#using-docker-credential-helpers) or [defined in your Maven settings](#using-maven-settings). If you do not define credentials explicitly, Jib will try to [use credentials defined in your Docker config](/../../issues/101) or infer common credential helpers.
+Pushing/pulling from private registries require authorization credentials.
+
+#### Using Docker configuration files
+
+* Jib looks from credentials from `$XDG_RUNTIME_DIR/containers/auth.json`, `$XDG_CONFIG_HOME/containers/auth.json`, `$HOME/.config/containers/auth.json`, `$DOCKER_CONFIG/config.json`, and `$HOME/.docker/config.json`.
+
+See [this issue](/../../issues/101) and [`man containers-auth.json`](https://www.mankier.com/5/containers-auth.json) for more information about the files.
 
 #### Using Docker Credential Helpers
 

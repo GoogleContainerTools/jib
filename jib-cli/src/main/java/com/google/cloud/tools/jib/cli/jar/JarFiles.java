@@ -89,6 +89,6 @@ public class JarFiles {
     if (processor.getJavaVersion() <= 11) {
       return "eclipse-temurin:11-jre";
     }
-    return "azul/zulu-openjdk:17-jre";
+    return "eclipse-temurin:17-jre";
   }
 }

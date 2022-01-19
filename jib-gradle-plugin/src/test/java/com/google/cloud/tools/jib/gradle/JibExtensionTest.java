@@ -72,13 +72,12 @@ public class JibExtensionTest {
           from.auth(auth -> auth.setUsername("some username"));
           from.auth(auth -> auth.setPassword("some password"));
           from.platforms(
-              platformSpec -> {
-                platformSpec.platform(
-                    platform -> {
-                      platform.setArchitecture("arm");
-                      platform.setOs("windows");
-                    });
-              });
+              platformSpec ->
+                  platformSpec.platform(
+                      platform -> {
+                        platform.setArchitecture("arm");
+                        platform.setOs("windows");
+                      }));
         });
     assertThat(testJibExtension.getFrom().getImage()).isEqualTo("some image");
     assertThat(testJibExtension.getFrom().getCredHelper()).isEqualTo("some cred helper");
@@ -262,11 +261,10 @@ public class JibExtensionTest {
   @Test
   public void testExtraDirectories_fileListForPaths() {
     testJibExtension.extraDirectories(
-        extraDirectories -> {
-          extraDirectories.setPaths(
-              Arrays.asList(
-                  Paths.get("test", "path").toFile(), Paths.get("another", "path").toFile()));
-        });
+        extraDirectories ->
+            extraDirectories.setPaths(
+                Arrays.asList(
+                    Paths.get("test", "path").toFile(), Paths.get("another", "path").toFile())));
 
     assertThat(testJibExtension.getExtraDirectories().getPaths()).hasSize(2);
     assertThat(testJibExtension.getExtraDirectories().getPaths().get(0).getFrom())
@@ -341,6 +339,14 @@ public class JibExtensionTest {
     System.setProperty("jib.from.credHelper", "credHelper");
     assertThat(testJibExtension.getFrom().getCredHelper()).isEqualTo("credHelper");
 
+    System.setProperty("jib.from.platforms", "linux/amd64,darwin/arm64");
+    List<PlatformParameters> platforms = testJibExtension.getFrom().getPlatforms().get();
+    assertThat(platforms).hasSize(2);
+    assertThat(platforms.get(0).getOs()).isEqualTo("linux");
+    assertThat(platforms.get(0).getArchitecture()).isEqualTo("amd64");
+    assertThat(platforms.get(1).getOs()).isEqualTo("darwin");
+    assertThat(platforms.get(1).getArchitecture()).isEqualTo("arm64");
+
     System.setProperty("jib.to.image", "toImage");
     assertThat(testJibExtension.getTo().getImage()).isEqualTo("toImage");
     System.setProperty("jib.to.tags", "tag1,tag2,tag3");
@@ -413,6 +419,12 @@ public class JibExtensionTest {
   }
 
   @Test
+  public void testSystemPropertiesWithInvalidPlatform() {
+    System.setProperty("jib.from.platforms", "linux /amd64");
+    assertThrows(IllegalArgumentException.class, testJibExtension.getFrom()::getPlatforms);
+  }
+
+  @Test
   public void testPropertiesOutputPaths() {
     System.setProperties(new Properties());
     // Absolute paths
@@ -441,10 +453,7 @@ public class JibExtensionTest {
 
   private TargetImageParameters generateTargetImageParametersWithTags(String... tags) {
     HashSet<String> set = new HashSet<>(Arrays.asList(tags));
-    testJibExtension.to(
-        to -> {
-          to.setTags(set);
-        });
+    testJibExtension.to(to -> to.setTags(set));
     return testJibExtension.getTo();
   }
 }

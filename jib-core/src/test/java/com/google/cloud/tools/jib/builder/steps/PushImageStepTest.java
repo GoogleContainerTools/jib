@@ -16,27 +16,37 @@
 
 package com.google.cloud.tools.jib.builder.steps;
 
+import static com.google.common.truth.Truth.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.when;
+
+import com.google.cloud.tools.jib.api.DescriptorDigest;
 import com.google.cloud.tools.jib.api.RegistryException;
 import com.google.cloud.tools.jib.api.buildplan.Platform;
+import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.builder.ProgressEventDispatcher;
 import com.google.cloud.tools.jib.configuration.BuildContext;
 import com.google.cloud.tools.jib.configuration.ContainerConfiguration;
 import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.global.JibSystemProperties;
+import com.google.cloud.tools.jib.image.Image;
 import com.google.cloud.tools.jib.image.json.V22ManifestListTemplate;
 import com.google.cloud.tools.jib.image.json.V22ManifestListTemplate.ManifestDescriptorTemplate;
+import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
 import com.google.cloud.tools.jib.registry.RegistryClient;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import java.io.IOException;
-import org.junit.Assert;
+import java.util.List;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.contrib.java.lang.system.RestoreSystemProperties;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
 /** Tests for {@link PushImageStep}. */
@@ -50,20 +60,21 @@ public class PushImageStepTest {
   @Mock private BuildContext buildContext;
   @Mock private RegistryClient registryClient;
   @Mock private ContainerConfiguration containerConfig;
+  @Mock private DescriptorDigest mockDescriptorDigest;
 
   private final V22ManifestListTemplate manifestList = new V22ManifestListTemplate();
 
   @Before
   public void setUp() {
-    Mockito.when(buildContext.getAllTargetImageTags()).thenReturn(ImmutableSet.of("tag1", "tag2"));
-    Mockito.when(buildContext.getEventHandlers()).thenReturn(EventHandlers.NONE);
-    Mockito.when(buildContext.getContainerConfiguration()).thenReturn(containerConfig);
-    Mockito.when(containerConfig.getPlatforms())
+    when(buildContext.getAllTargetImageTags()).thenReturn(ImmutableSet.of("tag1", "tag2"));
+    when(buildContext.getEventHandlers()).thenReturn(EventHandlers.NONE);
+    when(buildContext.getContainerConfiguration()).thenReturn(containerConfig);
+    doReturn(V22ManifestTemplate.class).when(buildContext).getTargetFormat();
+    when(containerConfig.getPlatforms())
         .thenReturn(
             ImmutableSet.of(new Platform("amd64", "linux"), new Platform("arm64", "windows")));
-    Mockito.when(progressDispatcherFactory.create(Mockito.anyString(), Mockito.anyLong()))
-        .thenReturn(progressDispatcher);
-    Mockito.when(progressDispatcher.newChildProducer()).thenReturn(progressDispatcherFactory);
+    when(progressDispatcherFactory.create(anyString(), anyLong())).thenReturn(progressDispatcher);
+    when(progressDispatcher.newChildProducer()).thenReturn(progressDispatcherFactory);
 
     ManifestDescriptorTemplate manifest = new ManifestDescriptorTemplate();
     manifest.setSize(100);
@@ -73,40 +84,86 @@ public class PushImageStepTest {
 
   @Test
   public void testMakeListForManifestList() throws IOException, RegistryException {
-    ImmutableList<PushImageStep> pushImageStepList =
+    List<PushImageStep> pushImageStepList =
         PushImageStep.makeListForManifestList(
             buildContext, progressDispatcherFactory, registryClient, manifestList, false);
 
-    Assert.assertEquals(2, pushImageStepList.size());
+    assertThat(pushImageStepList).hasSize(2);
     for (PushImageStep pushImageStep : pushImageStepList) {
       BuildResult buildResult = pushImageStep.call();
-      Assert.assertEquals(
-          "sha256:64303e82b8a80ef20475dc7f807b81f172cacce1a59191927f3a7ea5222f38ae",
-          buildResult.getImageDigest().toString());
-      Assert.assertEquals(
-          "sha256:64303e82b8a80ef20475dc7f807b81f172cacce1a59191927f3a7ea5222f38ae",
-          buildResult.getImageId().toString());
+      assertThat(buildResult.getImageDigest().toString())
+          .isEqualTo("sha256:64303e82b8a80ef20475dc7f807b81f172cacce1a59191927f3a7ea5222f38ae");
+      assertThat(buildResult.getImageId().toString())
+          .isEqualTo("sha256:64303e82b8a80ef20475dc7f807b81f172cacce1a59191927f3a7ea5222f38ae");
     }
   }
 
   @Test
+  public void testMakeList_multiPlatform_platformTags() throws IOException, RegistryException {
+    Image image = Image.builder(V22ManifestTemplate.class).setArchitecture("wasm").build();
+
+    when(buildContext.getEnablePlatformTags()).thenReturn(true);
+
+    List<PushImageStep> pushImageStepList =
+        PushImageStep.makeList(
+            buildContext,
+            progressDispatcherFactory,
+            registryClient,
+            new BlobDescriptor(mockDescriptorDigest),
+            image,
+            false);
+
+    ArgumentCaptor<String> tagCatcher = ArgumentCaptor.forClass(String.class);
+    when(registryClient.pushManifest(any(), tagCatcher.capture())).thenReturn(null);
+
+    assertThat(pushImageStepList).hasSize(2);
+    pushImageStepList.get(0).call();
+    pushImageStepList.get(1).call();
+
+    assertThat(tagCatcher.getAllValues()).containsExactly("tag1-wasm", "tag2-wasm");
+  }
+
+  @Test
+  public void testMakeList_multiPlatform_nonPlatformTags() throws IOException, RegistryException {
+    Image image = Image.builder(V22ManifestTemplate.class).setArchitecture("wasm").build();
+    when(buildContext.getEnablePlatformTags()).thenReturn(false);
+
+    List<PushImageStep> pushImageStepList =
+        PushImageStep.makeList(
+            buildContext,
+            progressDispatcherFactory,
+            registryClient,
+            new BlobDescriptor(mockDescriptorDigest),
+            image,
+            false);
+
+    ArgumentCaptor<String> tagCatcher = ArgumentCaptor.forClass(String.class);
+    when(registryClient.pushManifest(any(), tagCatcher.capture())).thenReturn(null);
+
+    assertThat(pushImageStepList).hasSize(1);
+    pushImageStepList.get(0).call();
+    assertThat(tagCatcher.getAllValues())
+        .containsExactly("sha256:0dd75658cf52608fbd72eb95ff5fc5946966258c3676b35d336bfcc7ac5006f1");
+  }
+
+  @Test
   public void testMakeListForManifestList_singlePlatform() throws IOException {
-    Mockito.when(containerConfig.getPlatforms())
+    when(containerConfig.getPlatforms())
         .thenReturn(ImmutableSet.of(new Platform("amd64", "linux")));
 
-    ImmutableList<PushImageStep> pushImageStepList =
+    List<PushImageStep> pushImageStepList =
         PushImageStep.makeListForManifestList(
             buildContext, progressDispatcherFactory, registryClient, manifestList, false);
-    Assert.assertEquals(0, pushImageStepList.size());
+    assertThat(pushImageStepList).isEmpty();
   }
 
   @Test
   public void testMakeListForManifestList_manifestListAlreadyExists() throws IOException {
     System.setProperty(JibSystemProperties.SKIP_EXISTING_IMAGES, "true");
 
-    ImmutableList<PushImageStep> pushImageStepList =
+    List<PushImageStep> pushImageStepList =
         PushImageStep.makeListForManifestList(
             buildContext, progressDispatcherFactory, registryClient, manifestList, true);
-    Assert.assertEquals(0, pushImageStepList.size());
+    assertThat(pushImageStepList).isEmpty();
   }
 }

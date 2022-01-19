@@ -168,6 +168,14 @@ public class MainClassFinder {
           mainClasses.add(reader.getClassName().replace('/', '.'));
         }
 
+      } catch (IllegalArgumentException ex) {
+        throw new UnsupportedOperationException(
+            "Check the full stace trace, and if the root cause is from ASM ClassReader about "
+                + "unsupported class file version, see "
+                + "https://github.com/GoogleContainerTools/jib/blob/master/docs/faq.md"
+                + "#i-am-seeing-unsupported-class-file-major-version-when-building",
+            ex);
+
       } catch (ArrayIndexOutOfBoundsException ignored) {
         // Not a valid class file (thrown by ClassReader if it reads an invalid format)
         logger.accept(LogEvent.warn("Invalid class file found: " + file));

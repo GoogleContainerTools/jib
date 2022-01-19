@@ -17,13 +17,28 @@
 package com.google.cloud.tools.jib.gradle;
 
 import com.google.cloud.tools.jib.plugins.common.RawConfiguration.PlatformConfiguration;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import javax.annotation.Nullable;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.Internal;
 
 /** Configuration of a platform. */
 public class PlatformParameters implements PlatformConfiguration {
+
+  static PlatformParameters of(String osArchitecture) {
+    Matcher matcher = Pattern.compile("([^/ ]+)/([^/ ]+)").matcher(osArchitecture);
+    if (!matcher.matches()) {
+      throw new IllegalArgumentException("Platform must be of form os/architecture.");
+    }
+    PlatformParameters platformParameters = new PlatformParameters();
+    platformParameters.os = matcher.group(1);
+    platformParameters.architecture = matcher.group(2);
+    return platformParameters;
+  }
+
   @Nullable private String os;
   @Nullable private String architecture;
 
@@ -57,5 +72,23 @@ public class PlatformParameters implements PlatformConfiguration {
 
   public void setArchitecture(String architecture) {
     this.architecture = architecture;
+  }
+
+  @Override
+  public boolean equals(Object other) {
+    if (this == other) {
+      return true;
+    }
+    if (!(other instanceof PlatformParameters)) {
+      return false;
+    }
+    PlatformParameters otherPlatform = (PlatformParameters) other;
+    return Objects.equals(architecture, otherPlatform.getArchitecture())
+        && Objects.equals(os, otherPlatform.getOs());
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(architecture, os);
   }
 }

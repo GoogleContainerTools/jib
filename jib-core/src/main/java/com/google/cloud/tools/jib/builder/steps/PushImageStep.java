@@ -36,6 +36,7 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.Set;
 import java.util.concurrent.Callable;
+import java.util.stream.Collectors;
 
 /**
  * Pushes a manifest or a manifest list for a tag. If not a manifest list, returns the manifest
@@ -55,31 +56,26 @@ class PushImageStep implements Callable<BuildResult> {
       Image builtImage,
       boolean manifestAlreadyExists)
       throws IOException {
-    boolean singlePlatform = buildContext.getContainerConfiguration().getPlatforms().size() == 1;
-    Set<String> tags = buildContext.getAllTargetImageTags();
-    int numPushers = singlePlatform ? tags.size() : 1;
+    // Gets the image manifest to push.
+    BuildableManifestTemplate manifestTemplate =
+        new ImageToJsonTranslator(builtImage)
+            .getManifestTemplate(
+                buildContext.getTargetFormat(), containerConfigurationDigestAndSize);
+    DescriptorDigest manifestDigest = Digests.computeJsonDigest(manifestTemplate);
+    Set<String> imageQualifiers = getImageQualifiers(buildContext, builtImage, manifestDigest);
 
     EventHandlers eventHandlers = buildContext.getEventHandlers();
     try (TimerEventDispatcher ignored =
             new TimerEventDispatcher(eventHandlers, "Preparing manifest pushers");
         ProgressEventDispatcher progressDispatcher =
-            progressEventDispatcherFactory.create("launching manifest pushers", numPushers)) {
+            progressEventDispatcherFactory.create(
+                "launching manifest pushers", imageQualifiers.size())) {
 
       if (JibSystemProperties.skipExistingImages() && manifestAlreadyExists) {
         eventHandlers.dispatch(LogEvent.info("Skipping pushing manifest; already exists."));
         return ImmutableList.of();
       }
 
-      // Gets the image manifest to push.
-      BuildableManifestTemplate manifestTemplate =
-          new ImageToJsonTranslator(builtImage)
-              .getManifestTemplate(
-                  buildContext.getTargetFormat(), containerConfigurationDigestAndSize);
-
-      DescriptorDigest manifestDigest = Digests.computeJsonDigest(manifestTemplate);
-
-      Set<String> imageQualifiers =
-          singlePlatform ? tags : Collections.singleton(manifestDigest.toString());
       return imageQualifiers.stream()
           .map(
               qualifier ->
@@ -93,6 +89,20 @@ class PushImageStep implements Callable<BuildResult> {
                       containerConfigurationDigestAndSize.getDigest()))
           .collect(ImmutableList.toImmutableList());
     }
+  }
+
+  private static Set<String> getImageQualifiers(
+      BuildContext buildContext, Image builtImage, DescriptorDigest manifestDigest) {
+    boolean singlePlatform = buildContext.getContainerConfiguration().getPlatforms().size() == 1;
+    Set<String> tags = buildContext.getAllTargetImageTags();
+    if (singlePlatform) {
+      return tags;
+    }
+    if (buildContext.getEnablePlatformTags()) {
+      String architecture = builtImage.getArchitecture();
+      return tags.stream().map(tag -> tag + "-" + architecture).collect(Collectors.toSet());
+    }
+    return Collections.singleton(manifestDigest.toString());
   }
 
   static ImmutableList<PushImageStep> makeListForManifestList(

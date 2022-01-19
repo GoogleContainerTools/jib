@@ -20,6 +20,7 @@ import com.google.cloud.tools.jib.api.CacheDirectoryCreationException;
 import com.google.cloud.tools.jib.api.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.filesystem.TempDirectoryProvider;
 import com.google.cloud.tools.jib.plugins.common.BuildStepsExecutionException;
+import com.google.cloud.tools.jib.plugins.common.ExtraDirectoryNotFoundException;
 import com.google.cloud.tools.jib.plugins.common.HelpfulSuggestions;
 import com.google.cloud.tools.jib.plugins.common.IncompatibleBaseImageJavaVersionException;
 import com.google.cloud.tools.jib.plugins.common.InvalidAppRootException;
@@ -157,6 +158,11 @@ public class BuildTarMojo extends JibPluginConfiguration {
     } catch (BuildStepsExecutionException ex) {
       throw new MojoExecutionException(ex.getMessage(), ex.getCause());
 
+    } catch (ExtraDirectoryNotFoundException ex) {
+      throw new MojoExecutionException(
+          "<extraDirectories><paths> contain \"from\" directory that doesn't exist locally: "
+              + ex.getPath(),
+          ex);
     } finally {
       tempDirectoryProvider.close();
       MojoCommon.finishUpdateChecker(projectProperties, updateCheckFuture);

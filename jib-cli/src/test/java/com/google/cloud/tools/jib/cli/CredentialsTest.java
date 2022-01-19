@@ -17,6 +17,8 @@
 package com.google.cloud.tools.jib.cli;
 
 import static com.google.common.truth.Truth.assertThat;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 import com.google.cloud.tools.jib.api.Credential;
 import com.google.cloud.tools.jib.plugins.common.DefaultCredentialRetrievers;
@@ -30,7 +32,6 @@ import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.ArgumentMatchers;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
 import picocli.CommandLine;
@@ -42,10 +43,9 @@ public class CredentialsTest {
   @Rule public final MockitoRule mockitoJUnit = MockitoJUnit.rule();
   @Mock private DefaultCredentialRetrievers defaultCredentialRetrievers;
 
-  private Object paramsToNone() {
-    return new Object[] {
-      new String[] {"--from-credential-helper=ignored"},
-      new String[] {"--from-username=ignored", "--from-password=ignored"},
+  private String[][] paramsToNone() {
+    return new String[][] {
+      {"--from-credential-helper=ignored"}, {"--from-username=ignored", "--from-password=ignored"},
     };
   }
 
@@ -55,14 +55,13 @@ public class CredentialsTest {
     CommonCliOptions commonCliOptions =
         CommandLine.populateCommand(new CommonCliOptions(), ArrayUtils.addAll(DEFAULT_ARGS, args));
     Credentials.getToCredentialRetrievers(commonCliOptions, defaultCredentialRetrievers);
-    Mockito.verify(defaultCredentialRetrievers).asList();
-    Mockito.verifyNoMoreInteractions(defaultCredentialRetrievers);
+    verify(defaultCredentialRetrievers).asList();
+    verifyNoMoreInteractions(defaultCredentialRetrievers);
   }
 
-  private Object paramsFromNone() {
-    return new Object[] {
-      new String[] {"--to-credential-helper=ignored"},
-      new String[] {"--to-username=ignored", "--to-password=ignored"},
+  private String[][] paramsFromNone() {
+    return new String[][] {
+      {"--to-credential-helper=ignored"}, {"--to-username=ignored", "--to-password=ignored"},
     };
   }
 
@@ -72,18 +71,16 @@ public class CredentialsTest {
     CommonCliOptions commonCliOptions =
         CommandLine.populateCommand(new CommonCliOptions(), ArrayUtils.addAll(DEFAULT_ARGS, args));
     Credentials.getFromCredentialRetrievers(commonCliOptions, defaultCredentialRetrievers);
-    Mockito.verify(defaultCredentialRetrievers).asList();
-    Mockito.verifyNoMoreInteractions(defaultCredentialRetrievers);
+    verify(defaultCredentialRetrievers).asList();
+    verifyNoMoreInteractions(defaultCredentialRetrievers);
   }
 
-  private Object paramsToCredHelper() {
-    return new Object[] {
-      new String[] {"--credential-helper=abc"},
-      new String[] {"--to-credential-helper=abc"},
-      new String[] {"--to-credential-helper=abc", "--from-credential-helper=ignored"},
-      new String[] {
-        "--to-credential-helper=abc", "--from-username=ignored", "--from-password=ignored"
-      },
+  private String[][] paramsToCredHelper() {
+    return new String[][] {
+      {"--credential-helper=abc"},
+      {"--to-credential-helper=abc"},
+      {"--to-credential-helper=abc", "--from-credential-helper=ignored"},
+      {"--to-credential-helper=abc", "--from-username=ignored", "--from-password=ignored"},
     };
   }
 
@@ -93,19 +90,17 @@ public class CredentialsTest {
     CommonCliOptions commonCliOptions =
         CommandLine.populateCommand(new CommonCliOptions(), ArrayUtils.addAll(DEFAULT_ARGS, args));
     Credentials.getToCredentialRetrievers(commonCliOptions, defaultCredentialRetrievers);
-    Mockito.verify(defaultCredentialRetrievers).setCredentialHelper("abc");
-    Mockito.verify(defaultCredentialRetrievers).asList();
-    Mockito.verifyNoMoreInteractions(defaultCredentialRetrievers);
+    verify(defaultCredentialRetrievers).setCredentialHelper("abc");
+    verify(defaultCredentialRetrievers).asList();
+    verifyNoMoreInteractions(defaultCredentialRetrievers);
   }
 
-  private Object paramsFromCredHelper() {
-    return new Object[] {
-      new String[] {"--credential-helper=abc"},
-      new String[] {"--from-credential-helper=abc"},
-      new String[] {"--from-credential-helper=abc", "--to-credential-helper=ignored"},
-      new String[] {
-        "--from-credential-helper=abc", "--to-username=ignored", "--to-password=ignored"
-      },
+  private String[][] paramsFromCredHelper() {
+    return new String[][] {
+      {"--credential-helper=abc"},
+      {"--from-credential-helper=abc"},
+      {"--from-credential-helper=abc", "--to-credential-helper=ignored"},
+      {"--from-credential-helper=abc", "--to-username=ignored", "--to-password=ignored"},
     };
   }
 
@@ -115,9 +110,9 @@ public class CredentialsTest {
     CommonCliOptions commonCliOptions =
         CommandLine.populateCommand(new CommonCliOptions(), ArrayUtils.addAll(DEFAULT_ARGS, args));
     Credentials.getFromCredentialRetrievers(commonCliOptions, defaultCredentialRetrievers);
-    Mockito.verify(defaultCredentialRetrievers).setCredentialHelper("abc");
-    Mockito.verify(defaultCredentialRetrievers).asList();
-    Mockito.verifyNoMoreInteractions(defaultCredentialRetrievers);
+    verify(defaultCredentialRetrievers).setCredentialHelper("abc");
+    verify(defaultCredentialRetrievers).asList();
+    verifyNoMoreInteractions(defaultCredentialRetrievers);
   }
 
   public Object paramsToUsernamePassword() {
@@ -148,11 +143,11 @@ public class CredentialsTest {
         CommandLine.populateCommand(new CommonCliOptions(), ArrayUtils.addAll(DEFAULT_ARGS, args));
     Credentials.getToCredentialRetrievers(commonCliOptions, defaultCredentialRetrievers);
     ArgumentCaptor<Credential> captor = ArgumentCaptor.forClass(Credential.class);
-    Mockito.verify(defaultCredentialRetrievers)
+    verify(defaultCredentialRetrievers)
         .setKnownCredential(captor.capture(), ArgumentMatchers.eq(expectedSource));
     assertThat(captor.getValue()).isEqualTo(Credential.from("abc", "xyz"));
-    Mockito.verify(defaultCredentialRetrievers).asList();
-    Mockito.verifyNoMoreInteractions(defaultCredentialRetrievers);
+    verify(defaultCredentialRetrievers).asList();
+    verifyNoMoreInteractions(defaultCredentialRetrievers);
   }
 
   public Object paramsFromUsernamePassword() {
@@ -188,10 +183,10 @@ public class CredentialsTest {
         CommandLine.populateCommand(new CommonCliOptions(), ArrayUtils.addAll(DEFAULT_ARGS, args));
     Credentials.getFromCredentialRetrievers(commonCliOptions, defaultCredentialRetrievers);
     ArgumentCaptor<Credential> captor = ArgumentCaptor.forClass(Credential.class);
-    Mockito.verify(defaultCredentialRetrievers)
+    verify(defaultCredentialRetrievers)
         .setKnownCredential(captor.capture(), ArgumentMatchers.eq(expectedSource));
     assertThat(captor.getValue()).isEqualTo(Credential.from("abc", "xyz"));
-    Mockito.verify(defaultCredentialRetrievers).asList();
-    Mockito.verifyNoMoreInteractions(defaultCredentialRetrievers);
+    verify(defaultCredentialRetrievers).asList();
+    verifyNoMoreInteractions(defaultCredentialRetrievers);
   }
 }

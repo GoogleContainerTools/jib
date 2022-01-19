@@ -5,15 +5,21 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+### Changed
+
+### Fixed
+
+## 0.8.0
+
+### Added
+
 - Increased robustness in registry communications by retrying HTTP requests (to the effect of retrying image pushes or pulls) on I/O exceptions with exponential backoffs. ([#3351](https://github.com/GoogleContainerTools/jib/pull/3351))
 - Now also supports `username` and `password` properties for the `auths` section in a Docker config (`~/.docker/config.json`). (Previously, only supported was a base64-encoded username and password string of the `auth` property.) ([#3365](https://github.com/GoogleContainerTools/jib/pull/3365))
 
 ### Changed
 
 - Downgraded Google HTTP libraries to 1.34.0 to resolve network issues. ([#3415](https://github.com/GoogleContainerTools/jib/pull/3415), [#3058](https://github.com/GoogleContainerTools/jib/issues/3058), [#3409](https://github.com/GoogleContainerTools/jib/issues/3409))
-- Changed the default base image of the Jib CLI `jar` command from the `adoptopenjdk` images to the [`eclipse-temurin`](https://hub.docker.com/_/eclipse-temurin) (for Java 8 and 11) and [`azul/zulu-openjdk`](https://hub.docker.com/r/azul/zulu-openjdk) (for Java 17) images on Docker Hub. Note that Temurin (by Adoptium) is the new name of AdoptOpenJDK. ([#3491](https://github.com/GoogleContainerTools/jib/pull/3491))
-
-### Fixed
+- Changed the default base image of the Jib CLI `jar` command from the `adoptopenjdk` images to the [`eclipse-temurin`](https://hub.docker.com/_/eclipse-temurin) on Docker Hub. Note that Temurin (by Adoptium) is the new name of AdoptOpenJDK. ([#3483](https://github.com/GoogleContainerTools/jib/issues/3483))
 
 ## 0.7.0
 
