@@ -11,12 +11,12 @@ repositories {
 }
 
 dependencies {
-  compile files('libs/dependency-1.0.0.jar')
+  implementation files('libs/dependency-1.0.0.jar')
 }
 
 jib {
   to {
-    image = System.getProperty("_TARGET_IMAGE")
+    image = System.getProperty('_TARGET_IMAGE')
   }
   extraDirectories {
     paths = file('src/main/custom-extra-dir')

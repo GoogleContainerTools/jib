@@ -12,7 +12,7 @@ repositories {
 
 jib {
   from {
-    image = "scratch"
+    image = 'scratch'
   }
     // only use buildTar
 }

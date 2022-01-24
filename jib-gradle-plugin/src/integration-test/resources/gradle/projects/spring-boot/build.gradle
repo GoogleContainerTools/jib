@@ -18,7 +18,7 @@ dependencies {
 
 jib {
     from.image = 'gcr.io/distroless/java:debug'
-    to.image = System.getProperty("_TARGET_IMAGE")
+    to.image = System.getProperty('_TARGET_IMAGE')
     to.credHelper = 'gcr'
     containerizingMode='packaged'
 }

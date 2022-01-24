@@ -4,12 +4,12 @@ plugins {
 }
 
 dependencies {
-  compile project(':b_dependency')
+  implementation project(':b_dependency')
 }
 
 jib {
     to {
-        image = System.getProperty("_TARGET_IMAGE")
+        image = System.getProperty('_TARGET_IMAGE')
         credHelper = 'gcr'
     }
     container {

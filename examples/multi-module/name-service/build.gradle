@@ -16,7 +16,7 @@ repositories {
 
 dependencies {
   implementation 'org.springframework.boot:spring-boot-starter-web'
-  implementation project(":shared-library")
+  implementation project(':shared-library')
 }
 
 // IMPORTANT: Set the environment variable PROJECT_ID to your own Google Cloud Platform project.
