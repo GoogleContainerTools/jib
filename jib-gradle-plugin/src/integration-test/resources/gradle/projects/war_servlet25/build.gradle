@@ -28,7 +28,7 @@ war {
 
 jib {
   to {
-    image = System.getProperty("_TARGET_IMAGE")
+    image = System.getProperty('_TARGET_IMAGE')
     credHelper = 'gcr'
   }
 }

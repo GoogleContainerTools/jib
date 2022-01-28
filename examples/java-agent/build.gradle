@@ -2,7 +2,7 @@ plugins {
   id 'java'
   id 'com.google.cloud.tools.jib' version '3.2.0'
   id 'de.undercouch.download' version '4.0.0'
-  id "com.gorylenko.gradle-git-properties" version "2.2.0"
+  id 'com.gorylenko.gradle-git-properties' version '2.2.0'
 }
 
 ext {
@@ -24,8 +24,8 @@ repositories {
 }
 
 dependencies {
-  compile "com.sparkjava:spark-core:2.9.1"
-  compile "org.slf4j:slf4j-simple:1.7.28"
+  implementation 'com.sparkjava:spark-core:2.9.1'
+  implementation 'org.slf4j:slf4j-simple:1.7.28'
 }
 
 // Download and extract the Cloud Debugger Java Agent

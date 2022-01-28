@@ -11,21 +11,21 @@ repositories {
 }
 
 dependencies {
-  compile files('libs/dependency-1.0.0.jar')
+  implementation files('libs/dependency-1.0.0.jar')
 }
 
 jib {
   to {
-    image = System.getProperty("_TARGET_IMAGE")
+    image = System.getProperty('_TARGET_IMAGE')
   }
   skaffold {
     watch {
-      buildIncludes = project.file("script.gradle")
-      includes = project.files("other/file.txt")
-      excludes = "src/main/jib/bar/"
+      buildIncludes = project.file('script.gradle')
+      includes = project.files('other/file.txt')
+      excludes = 'src/main/jib/bar/'
     }
     sync {
-      excludes = ["build/classes/java/main/com/test", "src/main/jib/foo"]
+      excludes = ['build/classes/java/main/com/test', 'src/main/jib/foo']
     }
   }
 }

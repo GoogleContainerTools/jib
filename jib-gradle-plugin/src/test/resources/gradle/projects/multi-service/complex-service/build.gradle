@@ -14,13 +14,13 @@ repositories {
   //       -DgroupId=com.google.cloud.tools -DartifactId=tiny-test-lib \
   //       -Dversion=0.0.1-SNAPSHOT -Dpackaging=jar
   maven {
-    url "file:" + project.projectDir + "/local-m2-repo"
+    url 'file:' + project.projectDir + '/local-m2-repo'
   }
 }
 
 jib {
   to {
-    image = System.getProperty("_TARGET_IMAGE")
+    image = System.getProperty('_TARGET_IMAGE')
   }
   extraDirectories {
     paths = file('src/main/other-jib')
@@ -30,13 +30,13 @@ jib {
 sourceSets {
   main {
     resources {
-      srcDirs "src/main/extra-resources-1", "src/main/extra-resources-2"
+      srcDirs 'src/main/extra-resources-1', 'src/main/extra-resources-2'
     }
   }
 }
 
 dependencies {
-  compile project(':lib')
-  compile 'org.apache.commons:commons-io:1.3.2'
-  compile 'com.google.cloud.tools:tiny-test-lib:0.0.1-SNAPSHOT'
+  implementation project(':lib')
+  implementation 'org.apache.commons:commons-io:1.3.2'
+  implementation 'com.google.cloud.tools:tiny-test-lib:0.0.1-SNAPSHOT'
 }

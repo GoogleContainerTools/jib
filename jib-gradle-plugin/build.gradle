@@ -10,7 +10,7 @@ plugins {
 // to install for local testing - do not load this plugin when publishing to plugin portal
 // 'maven-publish' and 'com.gradle.plugin-publish' do not interact well with each other
 // https://discuss.gradle.org/t/debug-an-issue-in-publish-plugin-gradle-plugin-not-being-prepended-to-groupid/32720
-if (version.contains("SNAPSHOT")) {
+if (version.contains('SNAPSHOT')) {
   apply plugin: 'maven-publish'
 
   publishing {

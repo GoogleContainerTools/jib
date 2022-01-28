@@ -401,7 +401,7 @@ subprojects {
     project.afterEvaluate {
       project.configurations.implementation.dependencies.each { dependency ->
         if (dependency instanceof ProjectDependency) {
-          throw new GradleException("disallowed project dependency:" + dependency + ", in project:" + project);
+          throw new GradleException('disallowed project dependency:' + dependency + ', in project:' + project);
         }
       }
     }

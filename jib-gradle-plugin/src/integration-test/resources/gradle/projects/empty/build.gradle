@@ -14,7 +14,7 @@ repositories {
 
 jib {
   to {
-    image = System.getProperty("_TARGET_IMAGE")
+    image = System.getProperty('_TARGET_IMAGE')
     credHelper = 'gcr'
   }
   container {
@@ -24,7 +24,7 @@ jib {
   }
 }
 
-def additionalTag = System.getProperty("_ADDITIONAL_TAG")
+def additionalTag = System.getProperty('_ADDITIONAL_TAG')
 if (additionalTag != null && !additionalTag.isEmpty()) {
-  jib.to.tags = [System.getProperty("_ADDITIONAL_TAG")]
+  jib.to.tags = [System.getProperty('_ADDITIONAL_TAG')]
 }

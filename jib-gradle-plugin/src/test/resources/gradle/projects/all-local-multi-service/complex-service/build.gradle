@@ -8,13 +8,13 @@ targetCompatibility = 1.8
 
 repositories {
   flatDir {
-    dirs "libs"
+    dirs 'libs'
   }
 }
 
 jib {
   from {
-    image = "scratch"
+    image = 'scratch'
   }
   extraDirectories {
     paths = file('src/main/other-jib')
@@ -24,13 +24,13 @@ jib {
 sourceSets {
   main {
     resources {
-      srcDirs "src/main/extra-resources-1", "src/main/extra-resources-2"
+      srcDirs 'src/main/extra-resources-1', 'src/main/extra-resources-2'
     }
   }
 }
 
 dependencies {
-  compile project(':lib')
-  compile name: "dependency-1.0.0"
-  compile name: "dependencyX-1.0.0-SNAPSHOT"
+  implementation project(':lib')
+  implementation name: 'dependency-1.0.0'
+  implementation name: 'dependencyX-1.0.0-SNAPSHOT'
 }

@@ -11,31 +11,31 @@ repositories {
 }
 
 dependencies {
-    compile 'com.google.guava:guava:23.6-jre'
+    implementation 'com.google.guava:guava:23.6-jre'
 }
 
-project.ext.value = "original"
+project.ext.value = 'original'
 
 project.afterEvaluate {
-    project.ext.value = "updated"
+    project.ext.value = 'updated'
 }
 
 jib {
     to {
-        image = project.provider { project.ext.value + "-image" }
-        tags = project.provider { [project.ext.value + "-tag", "tag2"] }
+        image = project.provider { project.ext.value + '-image' }
+        tags = project.provider { [project.ext.value + '-tag', 'tag2'] }
     }
     container {
         labels = project.provider {
             [
-                    firstkey : project.ext.value + "-first-label",
-                    secondKey: project.ext.value + "-second-label"
+                    firstkey : project.ext.value + '-first-label',
+                    secondKey: project.ext.value + '-second-label'
             ]
         }
     }
 }
 
 tasks.register('showlabels') {
-    Map<String, String> prop = project.extensions.getByName("jib")["container"]["labels"].get()
-    println("labels contain values " + prop)
+    Map<String, String> prop = project.extensions.getByName('jib')['container']['labels'].get()
+    println('labels contain values ' + prop)
 }
