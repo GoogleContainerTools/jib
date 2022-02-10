@@ -31,6 +31,7 @@ import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -66,6 +67,21 @@ public class DockerCredentialHelper {
     @VisibleForTesting
     @JsonProperty("Secret")
     String secret;
+  }
+
+  /**
+   * Constructs a new {@link DockerCredentialHelper}.
+   *
+   * @param serverUrl the server URL to pass into the credential helper
+   * @param credentialHelper the path to the credential helper executable
+   */
+  public DockerCredentialHelper(String serverUrl, Path credentialHelper) {
+    this(
+        serverUrl,
+        credentialHelper,
+        System.getProperties(),
+        ProcessBuilder::new,
+        Collections.emptyMap());
   }
 
   /**

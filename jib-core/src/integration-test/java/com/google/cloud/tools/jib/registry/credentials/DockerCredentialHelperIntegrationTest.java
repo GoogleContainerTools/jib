@@ -23,7 +23,6 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.Collections;
 import org.hamcrest.CoreMatchers;
 import org.hamcrest.MatcherAssert;
 import org.junit.Assert;
@@ -44,8 +43,7 @@ public class DockerCredentialHelperIntegrationTest {
         .run(Files.readAllBytes(Paths.get(Resources.getResource("credentials.json").toURI())));
 
     DockerCredentialHelper dockerCredentialHelper =
-        new DockerCredentialHelper(
-            "myregistry", Paths.get(GCR_CREDENTIAL_HELPER), Collections.emptyMap());
+        new DockerCredentialHelper("myregistry", Paths.get(GCR_CREDENTIAL_HELPER));
 
     Credential credentials = dockerCredentialHelper.retrieve();
     Assert.assertEquals("myusername", credentials.getUsername());
@@ -57,7 +55,7 @@ public class DockerCredentialHelperIntegrationTest {
       throws IOException, CredentialHelperUnhandledServerUrlException {
     try {
       DockerCredentialHelper fakeDockerCredentialHelper =
-          new DockerCredentialHelper("", Paths.get("non-existing-helper"), Collections.emptyMap());
+          new DockerCredentialHelper("", Paths.get("non-existing-helper"));
 
       fakeDockerCredentialHelper.retrieve();
 
@@ -73,8 +71,7 @@ public class DockerCredentialHelperIntegrationTest {
       throws IOException, CredentialHelperNotFoundException {
     try {
       DockerCredentialHelper fakeDockerCredentialHelper =
-          new DockerCredentialHelper(
-              "fake.server.url", Paths.get(GCR_CREDENTIAL_HELPER), Collections.emptyMap());
+          new DockerCredentialHelper("fake.server.url", Paths.get(GCR_CREDENTIAL_HELPER));
 
       fakeDockerCredentialHelper.retrieve();
 

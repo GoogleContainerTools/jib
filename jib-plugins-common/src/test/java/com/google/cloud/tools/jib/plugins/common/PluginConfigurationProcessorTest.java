@@ -163,8 +163,8 @@ public class PluginConfigurationProcessorTest {
   @Mock private InferredAuthProvider inferredAuthProvider;
   @Mock private AuthProperty authProperty;
   @Mock private Consumer<LogEvent> logger;
-  @Mock private CredHelperConfiguration fromCredHelperConfig;
-  @Mock private CredHelperConfiguration toCredHelperConfig;
+  @Mock private CredHelperConfiguration fromCredHelper;
+  @Mock private CredHelperConfiguration toCredHelper;
 
   private Path appCacheDirectory;
   private final JibContainerBuilder jibContainerBuilder = Jib.fromScratch();
@@ -179,8 +179,8 @@ public class PluginConfigurationProcessorTest {
     when(rawConfiguration.getFilesModificationTime()).thenReturn("EPOCH_PLUS_SECOND");
     when(rawConfiguration.getCreationTime()).thenReturn("EPOCH");
     when(rawConfiguration.getContainerizingMode()).thenReturn("exploded");
-    when(rawConfiguration.getFromCredHelper()).thenReturn(fromCredHelperConfig);
-    when(rawConfiguration.getToCredHelper()).thenReturn(toCredHelperConfig);
+    when(rawConfiguration.getFromCredHelper()).thenReturn(fromCredHelper);
+    when(rawConfiguration.getToCredHelper()).thenReturn(toCredHelper);
     when(projectProperties.getMajorJavaVersion()).thenReturn(8);
     when(projectProperties.getToolName()).thenReturn("tool");
     when(projectProperties.getToolVersion()).thenReturn("tool-version");

@@ -197,7 +197,7 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
      *
      * @param helper the credential helper
      */
-    public void set(String helper) {
+    public void set(@Nullable String helper) {
       this.helper = helper;
     }
   }
