@@ -28,6 +28,7 @@ import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Properties;
@@ -58,7 +59,7 @@ public class JibExtensionTest {
   @Test
   public void testFrom() {
     assertThat(testJibExtension.getFrom().getImage()).isNull();
-    assertThat(testJibExtension.getFrom().getCredHelper()).isNull();
+    assertThat(testJibExtension.getFrom().getCredHelper().getHelper()).isNull();
 
     List<PlatformParameters> defaultPlatforms = testJibExtension.getFrom().getPlatforms().get();
     assertThat(defaultPlatforms).hasSize(1);
@@ -80,7 +81,8 @@ public class JibExtensionTest {
                       }));
         });
     assertThat(testJibExtension.getFrom().getImage()).isEqualTo("some image");
-    assertThat(testJibExtension.getFrom().getCredHelper()).isEqualTo("some cred helper");
+    assertThat(testJibExtension.getFrom().getCredHelper().getHelper())
+        .isEqualTo("some cred helper");
     assertThat(testJibExtension.getFrom().getAuth().getUsername()).isEqualTo("some username");
     assertThat(testJibExtension.getFrom().getAuth().getPassword()).isEqualTo("some password");
 
@@ -91,9 +93,29 @@ public class JibExtensionTest {
   }
 
   @Test
+  public void testFromCredHelperClosure() {
+    assertThat(testJibExtension.getFrom().getImage()).isNull();
+    assertThat(testJibExtension.getFrom().getCredHelper().getHelper()).isNull();
+
+    testJibExtension.from(
+        from -> {
+          from.setImage("some image");
+          from.credHelper(
+              credHelper -> {
+                credHelper.setHelper("some cred helper");
+                credHelper.setEnvironment(Collections.singletonMap("ENV_VARIABLE", "Value"));
+              });
+        });
+    assertThat(testJibExtension.getFrom().getCredHelper().getHelper())
+        .isEqualTo("some cred helper");
+    assertThat(testJibExtension.getFrom().getCredHelper().getEnvironment())
+        .isEqualTo(Collections.singletonMap("ENV_VARIABLE", "Value"));
+  }
+
+  @Test
   public void testTo() {
     assertThat(testJibExtension.getTo().getImage()).isNull();
-    assertThat(testJibExtension.getTo().getCredHelper()).isNull();
+    assertThat(testJibExtension.getTo().getCredHelper().getHelper()).isNull();
 
     testJibExtension.to(
         to -> {
@@ -103,9 +125,28 @@ public class JibExtensionTest {
           to.auth(auth -> auth.setPassword("some password"));
         });
     assertThat(testJibExtension.getTo().getImage()).isEqualTo("some image");
-    assertThat(testJibExtension.getTo().getCredHelper()).isEqualTo("some cred helper");
+    assertThat(testJibExtension.getTo().getCredHelper().getHelper()).isEqualTo("some cred helper");
     assertThat(testJibExtension.getTo().getAuth().getUsername()).isEqualTo("some username");
     assertThat(testJibExtension.getTo().getAuth().getPassword()).isEqualTo("some password");
+  }
+
+  @Test
+  public void testToCredHelperClosure() {
+    assertThat(testJibExtension.getTo().getImage()).isNull();
+    assertThat(testJibExtension.getTo().getCredHelper().getHelper()).isNull();
+
+    testJibExtension.to(
+        to -> {
+          to.setImage("some image");
+          to.credHelper(
+              credHelper -> {
+                credHelper.setHelper("some cred helper");
+                credHelper.setEnvironment(Collections.singletonMap("ENV_VARIABLE", "Value"));
+              });
+        });
+    assertThat(testJibExtension.getTo().getCredHelper().getHelper()).isEqualTo("some cred helper");
+    assertThat(testJibExtension.getTo().getCredHelper().getEnvironment())
+        .isEqualTo(Collections.singletonMap("ENV_VARIABLE", "Value"));
   }
 
   @Test
@@ -337,7 +378,7 @@ public class JibExtensionTest {
     System.setProperty("jib.from.image", "fromImage");
     assertThat(testJibExtension.getFrom().getImage()).isEqualTo("fromImage");
     System.setProperty("jib.from.credHelper", "credHelper");
-    assertThat(testJibExtension.getFrom().getCredHelper()).isEqualTo("credHelper");
+    assertThat(testJibExtension.getFrom().getCredHelper().getHelper()).isEqualTo("credHelper");
 
     System.setProperty("jib.from.platforms", "linux/amd64,darwin/arm64");
     List<PlatformParameters> platforms = testJibExtension.getFrom().getPlatforms().get();
@@ -352,7 +393,7 @@ public class JibExtensionTest {
     System.setProperty("jib.to.tags", "tag1,tag2,tag3");
     assertThat(testJibExtension.getTo().getTags()).containsExactly("tag1", "tag2", "tag3");
     System.setProperty("jib.to.credHelper", "credHelper");
-    assertThat(testJibExtension.getTo().getCredHelper()).isEqualTo("credHelper");
+    assertThat(testJibExtension.getTo().getCredHelper().getHelper()).isEqualTo("credHelper");
 
     System.setProperty("jib.container.appRoot", "appRoot");
     assertThat(testJibExtension.getContainer().getAppRoot()).isEqualTo("appRoot");

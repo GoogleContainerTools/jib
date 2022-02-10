@@ -1,0 +1,31 @@
+plugins {
+    id 'java'
+    id 'com.google.cloud.tools.jib'
+}
+
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    compile files('libs/dependency-1.0.0.jar')
+}
+
+jib {
+    from {
+        image = 'gcr.io/distroless/java@sha256:2315ed1472a09826c1f31ab93ff13ceaa3a4e7d5482f357d15a296b3db0d1c96'
+        credHelper = 'gcr'
+    }
+    to {
+        image = System.getProperty("_TARGET_IMAGE")
+        credHelper {
+            helper = 'gcr'
+            environment = [
+                ENV_VAR: 'A VAR'
+            ]
+        }
+    }
+}

@@ -23,28 +23,23 @@ import java.util.List;
 import java.util.Set;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
-import org.gradle.api.Action;
 import org.gradle.api.model.ObjectFactory;
-import org.gradle.api.provider.Property;
 import org.gradle.api.provider.Provider;
 import org.gradle.api.provider.SetProperty;
 import org.gradle.api.tasks.Input;
-import org.gradle.api.tasks.Nested;
 import org.gradle.api.tasks.Optional;
 
 /** Object in {@link JibExtension} that configures the target image. */
-public class TargetImageParameters {
+public class TargetImageParameters extends ImageParameters {
 
-  private final AuthParameters auth;
-
-  private Property<String> image;
   private SetProperty<String> tags;
-  @Nullable private String credHelper;
 
   @Inject
   public TargetImageParameters(ObjectFactory objectFactory) {
-    auth = objectFactory.newInstance(AuthParameters.class, "to.auth");
-    image = objectFactory.property(String.class);
+    super(
+        objectFactory,
+        objectFactory.newInstance(AuthParameters.class, "to.auth"),
+        objectFactory.newInstance(CredHelperParameters.class, PropertyNames.TO_CRED_HELPER));
     tags = objectFactory.setProperty(String.class).empty();
   }
 
@@ -52,18 +47,7 @@ public class TargetImageParameters {
   @Nullable
   @Optional
   public String getImage() {
-    if (System.getProperty(PropertyNames.TO_IMAGE) != null) {
-      return System.getProperty(PropertyNames.TO_IMAGE);
-    }
-    return image.getOrNull();
-  }
-
-  public void setImage(String image) {
-    this.image.set(image);
-  }
-
-  public void setImage(Provider<String> image) {
-    this.image.set(image);
+    return getImage(PropertyNames.TO_IMAGE);
   }
 
   @Input
@@ -96,30 +80,5 @@ public class TargetImageParameters {
 
   public void setTags(Provider<Set<String>> tags) {
     this.tags.set(tags);
-  }
-
-  @Input
-  @Nullable
-  @Optional
-  public String getCredHelper() {
-    if (System.getProperty(PropertyNames.TO_CRED_HELPER) != null) {
-      return System.getProperty(PropertyNames.TO_CRED_HELPER);
-    }
-    return credHelper;
-  }
-
-  public void setCredHelper(String credHelper) {
-    this.credHelper = credHelper;
-  }
-
-  @Nested
-  @Optional
-  public AuthParameters getAuth() {
-    // System properties are handled in ConfigurationPropertyValidator
-    return auth;
-  }
-
-  public void auth(Action<? super AuthParameters> action) {
-    action.execute(auth);
   }
 }

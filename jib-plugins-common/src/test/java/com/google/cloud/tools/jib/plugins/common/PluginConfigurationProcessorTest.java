@@ -43,6 +43,7 @@ import com.google.cloud.tools.jib.api.buildplan.FilePermissions;
 import com.google.cloud.tools.jib.api.buildplan.ModificationTimeProvider;
 import com.google.cloud.tools.jib.api.buildplan.Platform;
 import com.google.cloud.tools.jib.configuration.ImageConfiguration;
+import com.google.cloud.tools.jib.plugins.common.RawConfiguration.CredHelperConfiguration;
 import com.google.cloud.tools.jib.plugins.common.RawConfiguration.ExtraDirectoriesConfiguration;
 import com.google.cloud.tools.jib.plugins.common.RawConfiguration.PlatformConfiguration;
 import com.google.common.collect.ImmutableList;
@@ -162,6 +163,8 @@ public class PluginConfigurationProcessorTest {
   @Mock private InferredAuthProvider inferredAuthProvider;
   @Mock private AuthProperty authProperty;
   @Mock private Consumer<LogEvent> logger;
+  @Mock private CredHelperConfiguration fromCredHelperConfig;
+  @Mock private CredHelperConfiguration toCredHelperConfig;
 
   private Path appCacheDirectory;
   private final JibContainerBuilder jibContainerBuilder = Jib.fromScratch();
@@ -176,6 +179,8 @@ public class PluginConfigurationProcessorTest {
     when(rawConfiguration.getFilesModificationTime()).thenReturn("EPOCH_PLUS_SECOND");
     when(rawConfiguration.getCreationTime()).thenReturn("EPOCH");
     when(rawConfiguration.getContainerizingMode()).thenReturn("exploded");
+    when(rawConfiguration.getFromCredHelperConfig()).thenReturn(fromCredHelperConfig);
+    when(rawConfiguration.getToCredHelperConfig()).thenReturn(toCredHelperConfig);
     when(projectProperties.getMajorJavaVersion()).thenReturn(8);
     when(projectProperties.getToolName()).thenReturn("tool");
     when(projectProperties.getToolVersion()).thenReturn("tool-version");

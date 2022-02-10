@@ -500,4 +500,14 @@ public class SingleProjectIntegrationTest {
     assertThat(JibRunHelper.getCreationTime(targetImage)).isEqualTo(Instant.EPOCH);
     assertThat(getWorkingDirectory(targetImage)).isEqualTo("/home");
   }
+
+  @Test
+  public void testCredHelperConfiguration()
+      throws DigestException, IOException, InterruptedException {
+    String targetImage = "simpleimage:gradle" + System.nanoTime();
+    assertThat(
+            JibRunHelper.buildToDockerDaemonAndRun(
+                simpleTestProject, targetImage, "build-cred-helper.gradle"))
+        .isEqualTo("Hello, world. \n1970-01-01T00:00:01Z\n");
+  }
 }

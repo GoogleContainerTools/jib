@@ -18,13 +18,18 @@ package com.google.cloud.tools.jib.registry.credentials;
 
 import com.google.cloud.tools.jib.api.Credential;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.io.ByteStreams;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 import java.util.function.Function;
 import org.junit.Assert;
@@ -86,13 +91,39 @@ public class DockerCredentialHelperTest {
     Mockito.when(processBuilderFactory.apply(command)).thenReturn(processBuilder);
 
     DockerCredentialHelper credentialHelper =
-        new DockerCredentialHelper(
+        dockerCredentialHelper(
             "serverUrl", Paths.get("/foo/bar"), systemProperties, processBuilderFactory);
     Credential credential = credentialHelper.retrieve();
     Assert.assertEquals("myusername", credential.getUsername());
     Assert.assertEquals("mysecret", credential.getPassword());
 
     Mockito.verify(processBuilderFactory).apply(command);
+  }
+
+  @Test
+  public void testRetrieveWithEnvironment()
+      throws CredentialHelperUnhandledServerUrlException, CredentialHelperNotFoundException,
+          IOException {
+    List<String> command = Arrays.asList(Paths.get("/foo/bar").toString(), "get");
+    Mockito.when(processBuilderFactory.apply(command)).thenReturn(processBuilder);
+    Map<String, String> processBuilderEnvironment = Mockito.spy(new HashMap<>());
+    Mockito.when(processBuilder.environment()).thenReturn(processBuilderEnvironment);
+
+    Map<String, String> credHelperEnvironment = ImmutableMap.of("ENV_VARIABLE", "Value");
+    DockerCredentialHelper credentialHelper =
+        dockerCredentialHelper(
+            "serverUrl",
+            Paths.get("/foo/bar"),
+            systemProperties,
+            processBuilderFactory,
+            credHelperEnvironment);
+    Credential credential = credentialHelper.retrieve();
+    Assert.assertEquals("myusername", credential.getUsername());
+    Assert.assertEquals("mysecret", credential.getPassword());
+
+    Mockito.verify(processBuilderFactory).apply(command);
+    Mockito.verify(processBuilderEnvironment).putAll(credHelperEnvironment);
+    Assert.assertEquals(1, processBuilderEnvironment.size());
   }
 
   @Test
@@ -104,7 +135,7 @@ public class DockerCredentialHelperTest {
     Mockito.when(processBuilderFactory.apply(command)).thenReturn(processBuilder);
 
     DockerCredentialHelper credentialHelper =
-        new DockerCredentialHelper(
+        dockerCredentialHelper(
             "serverUrl", Paths.get("/foo/bar"), systemProperties, processBuilderFactory);
     Credential credential = credentialHelper.retrieve();
     Assert.assertEquals("myusername", credential.getUsername());
@@ -122,7 +153,7 @@ public class DockerCredentialHelperTest {
     Mockito.when(processBuilderFactory.apply(command)).thenReturn(processBuilder);
 
     DockerCredentialHelper credentialHelper =
-        new DockerCredentialHelper(
+        dockerCredentialHelper(
             "serverUrl", Paths.get("/foo/bar.CmD"), systemProperties, processBuilderFactory);
     Credential credential = credentialHelper.retrieve();
     Assert.assertEquals("myusername", credential.getUsername());
@@ -140,7 +171,7 @@ public class DockerCredentialHelperTest {
     Mockito.when(processBuilderFactory.apply(command)).thenReturn(processBuilder);
 
     DockerCredentialHelper credentialHelper =
-        new DockerCredentialHelper(
+        dockerCredentialHelper(
             "serverUrl", Paths.get("/foo/bar.eXE"), systemProperties, processBuilderFactory);
     Credential credential = credentialHelper.retrieve();
     Assert.assertEquals("myusername", credential.getUsername());
@@ -162,7 +193,7 @@ public class DockerCredentialHelperTest {
     Mockito.when(processBuilderFactory.apply(command)).thenReturn(processBuilder);
 
     DockerCredentialHelper credentialHelper =
-        new DockerCredentialHelper(
+        dockerCredentialHelper(
             "serverUrl", Paths.get("/foo/bar"), systemProperties, processBuilderFactory);
     Credential credential = credentialHelper.retrieve();
     Assert.assertEquals("myusername", credential.getUsername());
@@ -183,7 +214,7 @@ public class DockerCredentialHelperTest {
                 "CreateProcess error=2, Das System kann die angegebene Datei nicht finden"));
 
     DockerCredentialHelper credentialHelper =
-        new DockerCredentialHelper(
+        dockerCredentialHelper(
             "serverUrl", Paths.get("/ignored"), systemProperties, processBuilderFactory);
     try {
       credentialHelper.retrieve();
@@ -191,5 +222,24 @@ public class DockerCredentialHelperTest {
     } catch (CredentialHelperNotFoundException ex) {
       Assert.assertNotNull(ex.getMessage());
     }
+  }
+
+  private DockerCredentialHelper dockerCredentialHelper(
+      String serverUrl,
+      Path credentialHelper,
+      Properties properties,
+      Function<List<String>, ProcessBuilder> processBuilderFactory) {
+    return dockerCredentialHelper(
+        serverUrl, credentialHelper, properties, processBuilderFactory, Collections.emptyMap());
+  }
+
+  private DockerCredentialHelper dockerCredentialHelper(
+      String serverUrl,
+      Path credentialHelper,
+      Properties properties,
+      Function<List<String>, ProcessBuilder> processBuilderFactory,
+      Map<String, String> environment) {
+    return new DockerCredentialHelper(
+        serverUrl, credentialHelper, properties, processBuilderFactory, environment);
   }
 }

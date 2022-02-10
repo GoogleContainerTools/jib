@@ -57,6 +57,12 @@ public interface RawConfiguration {
     List<String> getExcludesList();
   }
 
+  interface CredHelperConfiguration {
+    Optional<String> getHelperName();
+
+    Map<String, String> getEnvironment();
+  }
+
   Optional<String> getFromImage();
 
   Optional<String> getToImage();
@@ -65,9 +71,9 @@ public interface RawConfiguration {
 
   AuthProperty getToAuth();
 
-  Optional<String> getFromCredHelper();
+  CredHelperConfiguration getFromCredHelperConfig();
 
-  Optional<String> getToCredHelper();
+  CredHelperConfiguration getToCredHelperConfig();
 
   List<? extends PlatformConfiguration> getPlatforms();
 

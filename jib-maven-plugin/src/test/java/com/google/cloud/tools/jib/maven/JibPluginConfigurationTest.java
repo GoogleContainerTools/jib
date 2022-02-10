@@ -26,6 +26,7 @@ import com.google.cloud.tools.jib.maven.JibPluginConfiguration.PlatformParameter
 import java.io.File;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.Optional;
 import java.util.Properties;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.model.Build;
@@ -81,6 +82,13 @@ public class JibPluginConfigurationTest {
     assertThat(testPluginConfiguration.getFilesModificationTime()).isEqualTo("EPOCH_PLUS_SECOND");
     assertThat(testPluginConfiguration.getCreationTime()).isEqualTo("EPOCH");
     assertThat(testPluginConfiguration.getInjectedPluginExtensions()).isEmpty();
+    assertThat(testPluginConfiguration.getBaseImageCredHelperConfig().getHelperName())
+        .isEqualTo(Optional.empty());
+    assertThat(testPluginConfiguration.getBaseImageCredHelperConfig().getEnvironment()).isEmpty();
+    assertThat(testPluginConfiguration.getTargetImageCredentialHelperConfig().getHelperName())
+        .isEqualTo(Optional.empty());
+    assertThat(testPluginConfiguration.getTargetImageCredentialHelperConfig().getEnvironment())
+        .isEmpty();
   }
 
   @Test
@@ -88,7 +96,8 @@ public class JibPluginConfigurationTest {
     sessionProperties.put("jib.from.image", "fromImage");
     assertThat(testPluginConfiguration.getBaseImage()).isEqualTo("fromImage");
     sessionProperties.put("jib.from.credHelper", "credHelper");
-    assertThat(testPluginConfiguration.getBaseImageCredentialHelperName()).isEqualTo("credHelper");
+    assertThat(testPluginConfiguration.getBaseImageCredHelperConfig().getHelperName().get())
+        .isEqualTo("credHelper");
 
     sessionProperties.put("jib.from.platforms", "linux/amd64,darwin/arm64");
     List<PlatformParameters> platforms = testPluginConfiguration.getPlatforms();
@@ -107,7 +116,7 @@ public class JibPluginConfigurationTest {
     assertThat(testPluginConfiguration.getTargetImageAdditionalTags())
         .containsExactly("tag1", "tag2", "tag3");
     sessionProperties.put("jib.to.credHelper", "credHelper");
-    assertThat(testPluginConfiguration.getTargetImageCredentialHelperName())
+    assertThat(testPluginConfiguration.getTargetImageCredentialHelperConfig().getHelperName().get())
         .isEqualTo("credHelper");
 
     sessionProperties.put("jib.container.appRoot", "appRoot");
@@ -217,7 +226,8 @@ public class JibPluginConfigurationTest {
     project.getProperties().setProperty("jib.from.image", "fromImage");
     assertThat(testPluginConfiguration.getBaseImage()).isEqualTo("fromImage");
     project.getProperties().setProperty("jib.from.credHelper", "credHelper");
-    assertThat(testPluginConfiguration.getBaseImageCredentialHelperName()).isEqualTo("credHelper");
+    assertThat(testPluginConfiguration.getBaseImageCredHelperConfig().getHelperName().get())
+        .isEqualTo("credHelper");
 
     project.getProperties().setProperty("image", "toImage");
     assertThat(testPluginConfiguration.getTargetImage()).isEqualTo("toImage");
@@ -228,7 +238,7 @@ public class JibPluginConfigurationTest {
     assertThat(testPluginConfiguration.getTargetImageAdditionalTags())
         .containsExactly("tag1", "tag2", "tag3");
     project.getProperties().setProperty("jib.to.credHelper", "credHelper");
-    assertThat(testPluginConfiguration.getTargetImageCredentialHelperName())
+    assertThat(testPluginConfiguration.getTargetImageCredentialHelperConfig().getHelperName().get())
         .isEqualTo("credHelper");
 
     project.getProperties().setProperty("jib.container.appRoot", "appRoot");

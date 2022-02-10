@@ -19,12 +19,15 @@ package com.google.cloud.tools.jib.maven;
 import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.maven.JibPluginConfiguration.FromAuthConfiguration;
 import com.google.cloud.tools.jib.plugins.common.AuthProperty;
+import com.google.cloud.tools.jib.plugins.common.RawConfiguration.CredHelperConfiguration;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Sets;
 import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Optional;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.settings.Server;
 import org.apache.maven.settings.Settings;
@@ -64,7 +67,22 @@ public class MavenRawConfigurationTest {
     Mockito.when(jibPluginConfiguration.getAppRoot()).thenReturn("/app/root");
     Mockito.when(jibPluginConfiguration.getArgs()).thenReturn(Arrays.asList("--log", "info"));
     Mockito.when(jibPluginConfiguration.getBaseImage()).thenReturn("openjdk:15");
-    Mockito.when(jibPluginConfiguration.getBaseImageCredentialHelperName()).thenReturn("gcr");
+
+    CredHelperConfiguration baseImageCredHelperConfig = Mockito.mock(CredHelperConfiguration.class);
+    Mockito.when(baseImageCredHelperConfig.getHelperName()).thenReturn(Optional.of("gcr"));
+    Mockito.when(baseImageCredHelperConfig.getEnvironment())
+        .thenReturn(Collections.singletonMap("ENV_VARIABLE", "Value1"));
+    Mockito.when(jibPluginConfiguration.getBaseImageCredHelperConfig())
+        .thenReturn(baseImageCredHelperConfig);
+
+    CredHelperConfiguration targetImageCredHelperConfig =
+        Mockito.mock(CredHelperConfiguration.class);
+    Mockito.when(targetImageCredHelperConfig.getHelperName()).thenReturn(Optional.of("gcr"));
+    Mockito.when(targetImageCredHelperConfig.getEnvironment())
+        .thenReturn(Collections.singletonMap("ENV_VARIABLE", "Value2"));
+    Mockito.when(jibPluginConfiguration.getTargetImageCredentialHelperConfig())
+        .thenReturn(targetImageCredHelperConfig);
+
     Mockito.when(jibPluginConfiguration.getEntrypoint()).thenReturn(Arrays.asList("java", "Main"));
     Mockito.when(jibPluginConfiguration.getEnvironment())
         .thenReturn(new HashMap<>(ImmutableMap.of("currency", "dollar")));
@@ -101,7 +119,14 @@ public class MavenRawConfigurationTest {
     Assert.assertEquals(
         new HashMap<>(ImmutableMap.of("currency", "dollar")), rawConfiguration.getEnvironment());
     Assert.assertEquals("/app/root", rawConfiguration.getAppRoot());
-    Assert.assertEquals("gcr", rawConfiguration.getFromCredHelper().get());
+    Assert.assertEquals("gcr", rawConfiguration.getFromCredHelperConfig().getHelperName().get());
+    Assert.assertEquals(
+        Collections.singletonMap("ENV_VARIABLE", "Value1"),
+        rawConfiguration.getFromCredHelperConfig().getEnvironment());
+    Assert.assertEquals("gcr", rawConfiguration.getToCredHelperConfig().getHelperName().get());
+    Assert.assertEquals(
+        Collections.singletonMap("ENV_VARIABLE", "Value2"),
+        rawConfiguration.getToCredHelperConfig().getEnvironment());
     Assert.assertEquals("openjdk:15", rawConfiguration.getFromImage().get());
     Assert.assertEquals(Arrays.asList("-cp", "."), rawConfiguration.getJvmFlags());
     Assert.assertEquals(new HashMap<>(ImmutableMap.of("unit", "cm")), rawConfiguration.getLabels());

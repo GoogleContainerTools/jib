@@ -261,4 +261,14 @@ public class BuildDockerMojoIntegrationTest {
           ex.getMessage(), CoreMatchers.containsString("but is required to be [,1.0]"));
     }
   }
+
+  @Test
+  public void testCredHelperConfiguration()
+      throws DigestException, VerificationException, IOException, InterruptedException {
+    String targetImage = "simpleimage:maven" + System.nanoTime();
+    buildToDockerDaemon(simpleTestProject, targetImage, "pom-cred-helper.xml");
+    Assert.assertEquals(
+        "Hello, world. \n1970-01-01T00:00:01Z\n",
+        new Command("docker", "run", "--rm", "my-artifact-id:1").run());
+  }
 }

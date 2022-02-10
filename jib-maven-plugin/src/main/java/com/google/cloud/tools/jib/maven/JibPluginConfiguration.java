@@ -20,6 +20,7 @@ import com.google.cloud.tools.jib.maven.extension.JibMavenPluginExtension;
 import com.google.cloud.tools.jib.plugins.common.AuthProperty;
 import com.google.cloud.tools.jib.plugins.common.ConfigurationPropertyValidator;
 import com.google.cloud.tools.jib.plugins.common.PropertyNames;
+import com.google.cloud.tools.jib.plugins.common.RawConfiguration.CredHelperConfiguration;
 import com.google.cloud.tools.jib.plugins.common.RawConfiguration.ExtensionConfiguration;
 import com.google.cloud.tools.jib.plugins.common.RawConfiguration.ExtraDirectoriesConfiguration;
 import com.google.cloud.tools.jib.plugins.common.RawConfiguration.PlatformConfiguration;
@@ -31,6 +32,7 @@ import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -161,17 +163,61 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
     }
   }
 
+  /** Configuration for {@code [from|to].credHelper} parameter. */
+  public static class CredHelperParameters implements CredHelperConfiguration {
+    @Nullable @Parameter private String helper;
+    @Parameter private Map<String, String> environment;
+
+    public CredHelperParameters() {
+      this.environment = new HashMap<>();
+    }
+
+    @Override
+    public Optional<String> getHelperName() {
+      return Optional.ofNullable(helper);
+    }
+
+    @Override
+    public Map<String, String> getEnvironment() {
+      return environment;
+    }
+
+    public void setHelper(@Nullable String helper) {
+      this.helper = helper;
+    }
+
+    /**
+     * Default setter for Maven. Makes this syntax possible:
+     *
+     * <pre>{@code
+     * <configuration>
+     *   <to>
+     *     ...
+     *     <credHelper>ecr-login</credHelper>
+     *     ...
+     *   </to>
+     * </configuration>
+     * }</pre>
+     *
+     * @param helper the credential helper
+     */
+    public void set(String helper) {
+      this.helper = helper;
+    }
+  }
+
   /** Configuration for {@code from} parameter. */
   public static class FromConfiguration {
 
     @Nullable @Parameter private String image;
-    @Nullable @Parameter private String credHelper;
+    @Parameter private CredHelperParameters credHelper;
     @Parameter private FromAuthConfiguration auth = new FromAuthConfiguration();
     @Parameter private List<PlatformParameters> platforms;
 
     /** Constructor for defaults. */
     public FromConfiguration() {
       platforms = Collections.singletonList(PlatformParameters.of("linux/amd64"));
+      credHelper = new CredHelperParameters();
     }
   }
 
@@ -180,8 +226,13 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
 
     @Nullable @Parameter private String image;
     @Parameter private List<String> tags = Collections.emptyList();
-    @Nullable @Parameter private String credHelper;
+    @Parameter private CredHelperParameters credHelper;
     @Parameter private ToAuthConfiguration auth = new ToAuthConfiguration();
+
+    /** Constructor for defaults. */
+    public ToConfiguration() {
+      credHelper = new CredHelperParameters();
+    }
 
     public void set(String image) {
       this.image = image;
@@ -388,15 +439,14 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
   }
 
   /**
-   * Gets the base image credential helper.
+   * Gets the base image credential helper configuration.
    *
-   * @return the configured base image credential helper name
+   * @return configuration for the base image credential helper
    */
-  @Nullable
-  String getBaseImageCredentialHelperName() {
+  CredHelperConfiguration getBaseImageCredHelperConfig() {
     String property = getProperty(PropertyNames.FROM_CRED_HELPER);
     if (property != null) {
-      return property;
+      from.credHelper.setHelper(property);
     }
     return from.credHelper;
   }
@@ -441,15 +491,14 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
   }
 
   /**
-   * Gets the target image credential helper.
+   * Gets the target image credential helper configuration.
    *
-   * @return the configured target image credential helper name
+   * @return configuration for the target image credential helper
    */
-  @Nullable
-  String getTargetImageCredentialHelperName() {
+  CredHelperConfiguration getTargetImageCredentialHelperConfig() {
     String property = getProperty(PropertyNames.TO_CRED_HELPER);
     if (property != null) {
-      return property;
+      to.credHelper.setHelper(property);
     }
     return to.credHelper;
   }

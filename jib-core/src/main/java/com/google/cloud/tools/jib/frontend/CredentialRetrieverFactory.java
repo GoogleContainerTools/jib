@@ -45,7 +45,8 @@ public class CredentialRetrieverFactory {
   @VisibleForTesting
   @FunctionalInterface
   interface DockerCredentialHelperFactory {
-    DockerCredentialHelper create(String registry, Path credentialHelper);
+    DockerCredentialHelper create(
+        String registry, Path credentialHelper, Map<String, String> environment);
   }
 
   /** Used for passing in mock {@link GoogleCredentials} for testing. */
@@ -81,24 +82,46 @@ public class CredentialRetrieverFactory {
         imageReference,
         logger,
         DockerCredentialHelper::new,
-        GoogleCredentials::getApplicationDefault);
+        GoogleCredentials::getApplicationDefault,
+        Collections.emptyMap());
+  }
+
+  /**
+   * Creates a new {@link CredentialRetrieverFactory} for an image.
+   *
+   * @param imageReference the image the credential are for
+   * @param logger a consumer for handling log events
+   * @param environment environment variables for credential helper
+   * @return a new {@link CredentialRetrieverFactory}
+   */
+  public static CredentialRetrieverFactory forImage(
+      ImageReference imageReference, Consumer<LogEvent> logger, Map<String, String> environment) {
+    return new CredentialRetrieverFactory(
+        imageReference,
+        logger,
+        DockerCredentialHelper::new,
+        GoogleCredentials::getApplicationDefault,
+        environment);
   }
 
   private final ImageReference imageReference;
   private final Consumer<LogEvent> logger;
   private final DockerCredentialHelperFactory dockerCredentialHelperFactory;
   private final GoogleCredentialsProvider googleCredentialsProvider;
+  private final Map<String, String> environment;
 
   @VisibleForTesting
   CredentialRetrieverFactory(
       ImageReference imageReference,
       Consumer<LogEvent> logger,
       DockerCredentialHelperFactory dockerCredentialHelperFactory,
-      GoogleCredentialsProvider googleCredentialsProvider) {
+      GoogleCredentialsProvider googleCredentialsProvider,
+      Map<String, String> environment) {
     this.imageReference = imageReference;
     this.logger = logger;
     this.dockerCredentialHelperFactory = dockerCredentialHelperFactory;
     this.googleCredentialsProvider = googleCredentialsProvider;
+    this.environment = environment;
   }
 
   /**
@@ -293,7 +316,7 @@ public class CredentialRetrieverFactory {
           IOException {
     Credential credentials =
         dockerCredentialHelperFactory
-            .create(imageReference.getRegistry(), credentialHelper)
+            .create(imageReference.getRegistry(), credentialHelper, environment)
             .retrieve();
     logGotCredentialsFrom("credential helper " + credentialHelper.getFileName().toString());
     return credentials;
