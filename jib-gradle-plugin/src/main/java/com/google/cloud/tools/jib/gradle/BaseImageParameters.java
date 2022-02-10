@@ -25,24 +25,29 @@ import javax.inject.Inject;
 import org.gradle.api.Action;
 import org.gradle.api.model.ObjectFactory;
 import org.gradle.api.provider.ListProperty;
+import org.gradle.api.provider.Property;
+import org.gradle.api.provider.Provider;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.Nested;
 import org.gradle.api.tasks.Optional;
 
 /** Object in {@link JibExtension} that configures the base image. */
-public class BaseImageParameters extends ImageParameters {
+public class BaseImageParameters {
 
+  private final AuthParameters auth;
+  private final Property<String> image;
+  private final CredHelperParameters credHelper;
   private final PlatformParametersSpec platformParametersSpec;
   private final ListProperty<PlatformParameters> platforms;
 
   @Inject
   public BaseImageParameters(ObjectFactory objectFactory) {
-    super(
-        objectFactory,
-        objectFactory.newInstance(AuthParameters.class, "from.auth"),
-        objectFactory.newInstance(CredHelperParameters.class, PropertyNames.FROM_CRED_HELPER));
+    auth = objectFactory.newInstance(AuthParameters.class, "from.auth");
     platforms = objectFactory.listProperty(PlatformParameters.class);
+    image = objectFactory.property(String.class);
     platformParametersSpec = objectFactory.newInstance(PlatformParametersSpec.class, platforms);
+    credHelper =
+        objectFactory.newInstance(CredHelperParameters.class, PropertyNames.FROM_CRED_HELPER);
 
     PlatformParameters amd64Linux = new PlatformParameters();
     amd64Linux.setArchitecture("amd64");
@@ -75,6 +80,42 @@ public class BaseImageParameters extends ImageParameters {
   @Nullable
   @Optional
   public String getImage() {
-    return getImage(PropertyNames.FROM_IMAGE);
+    if (System.getProperty(PropertyNames.FROM_IMAGE) != null) {
+      return System.getProperty(PropertyNames.FROM_IMAGE);
+    }
+    return image.getOrNull();
+  }
+
+  public void setImage(String image) {
+    this.image.set(image);
+  }
+
+  public void setImage(Provider<String> image) {
+    this.image.set(image);
+  }
+
+  @Nested
+  @Optional
+  public CredHelperParameters getCredHelper() {
+    return credHelper;
+  }
+
+  public void setCredHelper(String helper) {
+    this.credHelper.setHelper(helper);
+  }
+
+  public void credHelper(Action<? super CredHelperParameters> action) {
+    action.execute(credHelper);
+  }
+
+  @Nested
+  @Optional
+  public AuthParameters getAuth() {
+    // System properties are handled in ConfigurationPropertyValidator
+    return auth;
+  }
+
+  public void auth(Action<? super AuthParameters> action) {
+    action.execute(auth);
   }
 }

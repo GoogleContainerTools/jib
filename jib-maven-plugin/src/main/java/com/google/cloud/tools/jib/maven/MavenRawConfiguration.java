@@ -51,7 +51,7 @@ public class MavenRawConfiguration implements RawConfiguration {
   }
 
   @Override
-  public CredHelperConfiguration getFromCredHelperConfig() {
+  public CredHelperConfiguration getFromCredHelper() {
     return jibPluginConfiguration.getBaseImageCredHelperConfig();
   }
 
@@ -66,7 +66,7 @@ public class MavenRawConfiguration implements RawConfiguration {
   }
 
   @Override
-  public CredHelperConfiguration getToCredHelperConfig() {
+  public CredHelperConfiguration getToCredHelper() {
     return jibPluginConfiguration.getTargetImageCredentialHelperConfig();
   }
 

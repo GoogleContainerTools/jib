@@ -119,14 +119,14 @@ public class MavenRawConfigurationTest {
     Assert.assertEquals(
         new HashMap<>(ImmutableMap.of("currency", "dollar")), rawConfiguration.getEnvironment());
     Assert.assertEquals("/app/root", rawConfiguration.getAppRoot());
-    Assert.assertEquals("gcr", rawConfiguration.getFromCredHelperConfig().getHelperName().get());
+    Assert.assertEquals("gcr", rawConfiguration.getFromCredHelper().getHelperName().get());
     Assert.assertEquals(
         Collections.singletonMap("ENV_VARIABLE", "Value1"),
-        rawConfiguration.getFromCredHelperConfig().getEnvironment());
-    Assert.assertEquals("gcr", rawConfiguration.getToCredHelperConfig().getHelperName().get());
+        rawConfiguration.getFromCredHelper().getEnvironment());
+    Assert.assertEquals("gcr", rawConfiguration.getToCredHelper().getHelperName().get());
     Assert.assertEquals(
         Collections.singletonMap("ENV_VARIABLE", "Value2"),
-        rawConfiguration.getToCredHelperConfig().getEnvironment());
+        rawConfiguration.getToCredHelper().getEnvironment());
     Assert.assertEquals("openjdk:15", rawConfiguration.getFromImage().get());
     Assert.assertEquals(Arrays.asList("-cp", "."), rawConfiguration.getJvmFlags());
     Assert.assertEquals(new HashMap<>(ImmutableMap.of("unit", "cm")), rawConfiguration.getLabels());

@@ -166,11 +166,7 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
   /** Configuration for {@code [from|to].credHelper} parameter. */
   public static class CredHelperParameters implements CredHelperConfiguration {
     @Nullable @Parameter private String helper;
-    @Parameter private Map<String, String> environment;
-
-    public CredHelperParameters() {
-      this.environment = new HashMap<>();
-    }
+    @Parameter private Map<String, String> environment = new HashMap<>();
 
     @Override
     public Optional<String> getHelperName() {
@@ -210,14 +206,13 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
   public static class FromConfiguration {
 
     @Nullable @Parameter private String image;
-    @Parameter private CredHelperParameters credHelper;
+    @Parameter private CredHelperParameters credHelper = new CredHelperParameters();
     @Parameter private FromAuthConfiguration auth = new FromAuthConfiguration();
     @Parameter private List<PlatformParameters> platforms;
 
     /** Constructor for defaults. */
     public FromConfiguration() {
       platforms = Collections.singletonList(PlatformParameters.of("linux/amd64"));
-      credHelper = new CredHelperParameters();
     }
   }
 
@@ -226,13 +221,8 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
 
     @Nullable @Parameter private String image;
     @Parameter private List<String> tags = Collections.emptyList();
-    @Parameter private CredHelperParameters credHelper;
+    @Parameter private CredHelperParameters credHelper = new CredHelperParameters();
     @Parameter private ToAuthConfiguration auth = new ToAuthConfiguration();
-
-    /** Constructor for defaults. */
-    public ToConfiguration() {
-      credHelper = new CredHelperParameters();
-    }
 
     public void set(String image) {
       this.image = image;

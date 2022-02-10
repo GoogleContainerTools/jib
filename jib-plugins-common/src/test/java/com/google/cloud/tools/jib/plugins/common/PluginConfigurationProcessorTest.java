@@ -179,8 +179,8 @@ public class PluginConfigurationProcessorTest {
     when(rawConfiguration.getFilesModificationTime()).thenReturn("EPOCH_PLUS_SECOND");
     when(rawConfiguration.getCreationTime()).thenReturn("EPOCH");
     when(rawConfiguration.getContainerizingMode()).thenReturn("exploded");
-    when(rawConfiguration.getFromCredHelperConfig()).thenReturn(fromCredHelperConfig);
-    when(rawConfiguration.getToCredHelperConfig()).thenReturn(toCredHelperConfig);
+    when(rawConfiguration.getFromCredHelper()).thenReturn(fromCredHelperConfig);
+    when(rawConfiguration.getToCredHelper()).thenReturn(toCredHelperConfig);
     when(projectProperties.getMajorJavaVersion()).thenReturn(8);
     when(projectProperties.getToolName()).thenReturn("tool");
     when(projectProperties.getToolVersion()).thenReturn("tool-version");

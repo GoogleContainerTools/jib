@@ -20,6 +20,7 @@ import com.google.cloud.tools.jib.registry.credentials.json.DockerConfigTemplate
 import com.google.cloud.tools.jib.registry.credentials.json.DockerConfigTemplate.AuthTemplate;
 import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -102,12 +103,15 @@ class DockerConfig {
     if (firstCredHelperMatch != null) {
       return new DockerCredentialHelper(
           firstCredHelperMatch.getKey(),
-          Paths.get("docker-credential-" + firstCredHelperMatch.getValue()));
+          Paths.get("docker-credential-" + firstCredHelperMatch.getValue()),
+          Collections.emptyMap());
     }
 
     if (dockerConfigTemplate.getCredsStore() != null) {
       return new DockerCredentialHelper(
-          registry, Paths.get("docker-credential-" + dockerConfigTemplate.getCredsStore()));
+          registry,
+          Paths.get("docker-credential-" + dockerConfigTemplate.getCredsStore()),
+          Collections.emptyMap());
     }
 
     return null;

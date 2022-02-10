@@ -289,7 +289,7 @@ public class PluginConfigurationProcessor {
         PropertyNames.TO_AUTH_PASSWORD,
         rawConfiguration.getToAuth(),
         inferredAuthProvider,
-        rawConfiguration.getToCredHelperConfig());
+        rawConfiguration.getToCredHelper());
 
     boolean alwaysCacheBaseImage =
         Boolean.parseBoolean(
@@ -541,7 +541,7 @@ public class PluginConfigurationProcessor {
         PropertyNames.FROM_AUTH_PASSWORD,
         rawConfiguration.getFromAuth(),
         inferredAuthProvider,
-        rawConfiguration.getFromCredHelperConfig());
+        rawConfiguration.getFromCredHelper());
     return JavaContainerBuilder.from(baseImage);
   }
 

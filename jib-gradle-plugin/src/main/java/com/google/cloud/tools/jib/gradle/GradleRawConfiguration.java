@@ -47,7 +47,7 @@ public class GradleRawConfiguration implements RawConfiguration {
   }
 
   @Override
-  public CredHelperConfiguration getFromCredHelperConfig() {
+  public CredHelperConfiguration getFromCredHelper() {
     return jibExtension.getFrom().getCredHelper();
   }
 
@@ -62,7 +62,7 @@ public class GradleRawConfiguration implements RawConfiguration {
   }
 
   @Override
-  public CredHelperConfiguration getToCredHelperConfig() {
+  public CredHelperConfiguration getToCredHelper() {
     return jibExtension.getTo().getCredHelper();
   }
 

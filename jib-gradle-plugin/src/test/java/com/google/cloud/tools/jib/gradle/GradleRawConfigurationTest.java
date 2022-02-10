@@ -115,10 +115,10 @@ public class GradleRawConfigurationTest {
     Assert.assertEquals(Arrays.asList("java", "Main"), rawConfiguration.getEntrypoint().get());
     Assert.assertEquals(
         new HashMap<>(ImmutableMap.of("currency", "dollar")), rawConfiguration.getEnvironment());
-    Assert.assertEquals("gcr", rawConfiguration.getFromCredHelperConfig().getHelperName().get());
+    Assert.assertEquals("gcr", rawConfiguration.getFromCredHelper().getHelperName().get());
     Assert.assertEquals(
         Collections.singletonMap("ENV_VARIABLE", "Value1"),
-        rawConfiguration.getFromCredHelperConfig().getEnvironment());
+        rawConfiguration.getFromCredHelper().getEnvironment());
     Assert.assertEquals("openjdk:15", rawConfiguration.getFromImage().get());
     Assert.assertEquals(Arrays.asList("-cp", "."), rawConfiguration.getJvmFlags());
     Assert.assertEquals(new HashMap<>(ImmutableMap.of("unit", "cm")), rawConfiguration.getLabels());
@@ -129,11 +129,10 @@ public class GradleRawConfigurationTest {
     Assert.assertEquals(
         new HashSet<>(Arrays.asList("additional", "tags")),
         Sets.newHashSet(rawConfiguration.getToTags()));
-    Assert.assertEquals(
-        "ecr-login", rawConfiguration.getToCredHelperConfig().getHelperName().get());
+    Assert.assertEquals("ecr-login", rawConfiguration.getToCredHelper().getHelperName().get());
     Assert.assertEquals(
         Collections.singletonMap("ENV_VARIABLE", "Value2"),
-        rawConfiguration.getToCredHelperConfig().getEnvironment());
+        rawConfiguration.getToCredHelper().getEnvironment());
     Assert.assertEquals("admin:wheel", rawConfiguration.getUser().get());
     Assert.assertEquals("2011-12-03T22:42:05Z", rawConfiguration.getFilesModificationTime());
     Assert.assertEquals(Paths.get("test"), rawConfiguration.getDockerExecutable().get());

@@ -124,6 +124,7 @@ public class DockerCredentialHelperTest {
     Mockito.verify(processBuilderFactory).apply(command);
     Mockito.verify(processBuilderEnvironment).putAll(credHelperEnvironment);
     Assert.assertEquals(1, processBuilderEnvironment.size());
+    Assert.assertEquals("Value", processBuilderEnvironment.get("ENV_VARIABLE"));
   }
 
   @Test

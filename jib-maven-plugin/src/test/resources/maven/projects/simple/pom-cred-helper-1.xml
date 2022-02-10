@@ -28,9 +28,9 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.8.0</version>
                 <configuration>
-                    <release>11</release>
+                    <source>1.8</source>
+                    <target>1.8</target>
                 </configuration>
             </plugin>
 
@@ -41,12 +41,7 @@
                 <configuration>
                     <to>
                         <image>${_TARGET_IMAGE}</image>
-                        <credHelper>
-                            <helper>gcr</helper>
-                            <environment>
-                                <ENV_VAR>A VAR</ENV_VAR>
-                            </environment>
-                        </credHelper>
+                        <credHelper>gcr</credHelper>
                     </to>
                 </configuration>
             </plugin>
