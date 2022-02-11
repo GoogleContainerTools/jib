@@ -36,16 +36,17 @@ import org.gradle.api.tasks.Optional;
 public class TargetImageParameters {
 
   private final AuthParameters auth;
-
-  private Property<String> image;
-  private SetProperty<String> tags;
-  @Nullable private String credHelper;
+  private final Property<String> image;
+  private final SetProperty<String> tags;
+  private final CredHelperParameters credHelper;
 
   @Inject
   public TargetImageParameters(ObjectFactory objectFactory) {
     auth = objectFactory.newInstance(AuthParameters.class, "to.auth");
     image = objectFactory.property(String.class);
     tags = objectFactory.setProperty(String.class).empty();
+    credHelper =
+        objectFactory.newInstance(CredHelperParameters.class, PropertyNames.TO_CRED_HELPER);
   }
 
   @Input
@@ -98,18 +99,18 @@ public class TargetImageParameters {
     this.tags.set(tags);
   }
 
-  @Input
-  @Nullable
+  @Nested
   @Optional
-  public String getCredHelper() {
-    if (System.getProperty(PropertyNames.TO_CRED_HELPER) != null) {
-      return System.getProperty(PropertyNames.TO_CRED_HELPER);
-    }
+  public CredHelperParameters getCredHelper() {
     return credHelper;
   }
 
-  public void setCredHelper(String credHelper) {
-    this.credHelper = credHelper;
+  public void setCredHelper(String helper) {
+    this.credHelper.setHelper(helper);
+  }
+
+  public void credHelper(Action<? super CredHelperParameters> action) {
+    action.execute(credHelper);
   }
 
   @Nested

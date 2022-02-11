@@ -31,6 +31,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collections;
+import java.util.Map;
 import java.util.Optional;
 import java.util.function.Consumer;
 import org.junit.Assert;
@@ -57,7 +58,8 @@ public class CredentialRetrieverFactoryTest {
       throws CredentialHelperUnhandledServerUrlException, CredentialHelperNotFoundException,
           IOException {
     Mockito.when(
-            mockDockerCredentialHelperFactory.create(Mockito.anyString(), Mockito.any(Path.class)))
+            mockDockerCredentialHelperFactory.create(
+                Mockito.anyString(), Mockito.any(Path.class), Mockito.anyMap()))
         .thenReturn(mockDockerCredentialHelper);
     Mockito.when(mockDockerCredentialHelper.retrieve()).thenReturn(FAKE_CREDENTIALS);
     Mockito.when(mockGoogleCredentials.getAccessToken())
@@ -76,7 +78,26 @@ public class CredentialRetrieverFactoryTest {
             .retrieve());
 
     Mockito.verify(mockDockerCredentialHelperFactory)
-        .create("registry", Paths.get("docker-credential-foo"));
+        .create("registry", Paths.get("docker-credential-foo"), Collections.emptyMap());
+    Mockito.verify(mockLogger)
+        .accept(
+            LogEvent.lifecycle("Using credential helper docker-credential-foo for registry/repo"));
+  }
+
+  @Test
+  public void testDockerCredentialHelperWithEnvironment() throws CredentialRetrievalException {
+    Map<String, String> environment = Collections.singletonMap("ENV_VARIABLE", "Value");
+    CredentialRetrieverFactory credentialRetrieverFactory =
+        createCredentialRetrieverFactory("registry", "repo", environment);
+
+    Assert.assertEquals(
+        Optional.of(FAKE_CREDENTIALS),
+        credentialRetrieverFactory
+            .dockerCredentialHelper(Paths.get("docker-credential-foo"))
+            .retrieve());
+
+    Mockito.verify(mockDockerCredentialHelperFactory)
+        .create("registry", Paths.get("docker-credential-foo"), environment);
     Mockito.verify(mockLogger)
         .accept(
             LogEvent.lifecycle("Using credential helper docker-credential-foo for registry/repo"));
@@ -92,7 +113,7 @@ public class CredentialRetrieverFactoryTest {
         credentialRetrieverFactory.wellKnownCredentialHelpers().retrieve());
 
     Mockito.verify(mockDockerCredentialHelperFactory)
-        .create("something.gcr.io", Paths.get("docker-credential-gcr"));
+        .create("something.gcr.io", Paths.get("docker-credential-gcr"), Collections.emptyMap());
     Mockito.verify(mockLogger)
         .accept(
             LogEvent.lifecycle(
@@ -115,7 +136,10 @@ public class CredentialRetrieverFactoryTest {
         credentialRetrieverFactory.wellKnownCredentialHelpers().retrieve().isPresent());
 
     Mockito.verify(mockDockerCredentialHelperFactory)
-        .create("something.amazonaws.com", Paths.get("docker-credential-ecr-login"));
+        .create(
+            "something.amazonaws.com",
+            Paths.get("docker-credential-ecr-login"),
+            Collections.emptyMap());
     Mockito.verify(mockLogger).accept(LogEvent.info("warning"));
     Mockito.verify(mockLogger).accept(LogEvent.info("  Caused by: the root cause"));
   }
@@ -164,7 +188,8 @@ public class CredentialRetrieverFactoryTest {
             mockDockerCredentialHelperFactory,
             () -> {
               throw new IOException("ADC not present");
-            });
+            },
+            Collections.emptyMap());
 
     Assert.assertFalse(
         credentialRetrieverFactory.googleApplicationDefaultCredentials().retrieve().isPresent());
@@ -264,8 +289,17 @@ public class CredentialRetrieverFactoryTest {
 
   private CredentialRetrieverFactory createCredentialRetrieverFactory(
       String registry, String repository) {
+    return createCredentialRetrieverFactory(registry, repository, Collections.emptyMap());
+  }
+
+  private CredentialRetrieverFactory createCredentialRetrieverFactory(
+      String registry, String repository, Map<String, String> environment) {
     ImageReference imageReference = ImageReference.of(registry, repository, null);
     return new CredentialRetrieverFactory(
-        imageReference, mockLogger, mockDockerCredentialHelperFactory, () -> mockGoogleCredentials);
+        imageReference,
+        mockLogger,
+        mockDockerCredentialHelperFactory,
+        () -> mockGoogleCredentials,
+        environment);
   }
 }

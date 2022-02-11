@@ -37,6 +37,7 @@ import com.google.cloud.tools.jib.api.buildplan.ModificationTimeProvider;
 import com.google.cloud.tools.jib.api.buildplan.Platform;
 import com.google.cloud.tools.jib.frontend.CredentialRetrieverFactory;
 import com.google.cloud.tools.jib.global.JibSystemProperties;
+import com.google.cloud.tools.jib.plugins.common.RawConfiguration.CredHelperConfiguration;
 import com.google.cloud.tools.jib.plugins.common.RawConfiguration.ExtraDirectoriesConfiguration;
 import com.google.cloud.tools.jib.plugins.common.RawConfiguration.PlatformConfiguration;
 import com.google.cloud.tools.jib.plugins.common.globalconfig.GlobalConfig;
@@ -295,7 +296,7 @@ public class PluginConfigurationProcessor {
         PropertyNames.TO_AUTH_PASSWORD,
         rawConfiguration.getToAuth(),
         inferredAuthProvider,
-        rawConfiguration.getToCredHelper().orElse(null));
+        rawConfiguration.getToCredHelper());
 
     boolean alwaysCacheBaseImage =
         Boolean.parseBoolean(
@@ -552,7 +553,7 @@ public class PluginConfigurationProcessor {
         PropertyNames.FROM_AUTH_PASSWORD,
         rawConfiguration.getFromAuth(),
         inferredAuthProvider,
-        rawConfiguration.getFromCredHelper().orElse(null));
+        rawConfiguration.getFromCredHelper());
     return JavaContainerBuilder.from(baseImage);
   }
 
@@ -972,11 +973,12 @@ public class PluginConfigurationProcessor {
       String passwordPropertyName,
       AuthProperty rawAuthConfiguration,
       InferredAuthProvider inferredAuthProvider,
-      @Nullable String credHelper)
+      CredHelperConfiguration credHelperConfiguration)
       throws FileNotFoundException {
     DefaultCredentialRetrievers defaultCredentialRetrievers =
         DefaultCredentialRetrievers.init(
-            CredentialRetrieverFactory.forImage(imageReference, projectProperties::log));
+            CredentialRetrieverFactory.forImage(
+                imageReference, projectProperties::log, credHelperConfiguration.getEnvironment()));
     Optional<Credential> optionalCredential =
         ConfigurationPropertyValidator.getImageCredential(
             projectProperties::log,
@@ -1003,7 +1005,8 @@ public class PluginConfigurationProcessor {
       }
     }
 
-    defaultCredentialRetrievers.setCredentialHelper(credHelper);
+    defaultCredentialRetrievers.setCredentialHelper(
+        credHelperConfiguration.getHelperName().orElse(null));
     defaultCredentialRetrievers.asList().forEach(registryImage::addCredentialRetriever);
   }
 

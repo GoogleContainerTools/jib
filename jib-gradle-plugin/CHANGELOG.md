@@ -15,6 +15,18 @@ All notable changes to this project will be documented in this file.
 
 - [`jib.from.platforms`](https://github.com/GoogleContainerTools/jib/tree/master/jib-gradle-plugin#from-closure) parameter for multi-architecture image building can now be configured through Maven and system properties (for example, `-Djib.from.platforms=linux/amd64,linux/arm64` on the command-line). ([#2742](https://github.com/GoogleContainerTools/jib/pull/2742))
 - For retrieving credentials, Jib additionally looks for `$XDG_RUNTIME_DIR/containers/auth.json`, `$XDG_CONFIG_HOME/containers/auth.json`, and `$HOME/.config/containers/auth.json`. ([#3524](https://github.com/GoogleContainerTools/jib/issues/3524))
+- Environment variables can now be used in configuring credential helpers. ([#2814](https://github.com/GoogleContainerTools/jib/issues/2814))
+  ```gradle
+   jib.to {
+      image = 'myimage'
+      credHelper {
+          helper = 'ecr-login'
+          environment = [
+              AWS_PROFILE: 'profile'
+          ]
+      }
+   }
+  ```
 
 ### Changed
 

@@ -30,7 +30,7 @@ import java.util.Set;
  */
 public interface RawConfiguration {
 
-  static interface ExtensionConfiguration {
+  interface ExtensionConfiguration {
 
     String getExtensionClass();
 
@@ -39,14 +39,14 @@ public interface RawConfiguration {
     Optional<Object> getExtraConfiguration();
   }
 
-  static interface PlatformConfiguration {
+  interface PlatformConfiguration {
 
     Optional<String> getOsName();
 
     Optional<String> getArchitectureName();
   }
 
-  static interface ExtraDirectoriesConfiguration {
+  interface ExtraDirectoriesConfiguration {
 
     Path getFrom();
 
@@ -57,6 +57,12 @@ public interface RawConfiguration {
     List<String> getExcludesList();
   }
 
+  interface CredHelperConfiguration {
+    Optional<String> getHelperName();
+
+    Map<String, String> getEnvironment();
+  }
+
   Optional<String> getFromImage();
 
   Optional<String> getToImage();
@@ -65,9 +71,9 @@ public interface RawConfiguration {
 
   AuthProperty getToAuth();
 
-  Optional<String> getFromCredHelper();
+  CredHelperConfiguration getFromCredHelper();
 
-  Optional<String> getToCredHelper();
+  CredHelperConfiguration getToCredHelper();
 
   List<? extends PlatformConfiguration> getPlatforms();
 

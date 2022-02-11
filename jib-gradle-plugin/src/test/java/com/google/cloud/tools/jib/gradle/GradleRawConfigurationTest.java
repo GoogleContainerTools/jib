@@ -24,6 +24,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Optional;
 import org.gradle.api.provider.MapProperty;
 import org.junit.Assert;
 import org.junit.Test;
@@ -48,6 +49,8 @@ public class GradleRawConfigurationTest {
     ContainerParameters containerParameters = Mockito.mock(ContainerParameters.class);
     DockerClientParameters dockerClientParameters = Mockito.mock(DockerClientParameters.class);
     OutputPathsParameters outputPathsParameters = Mockito.mock(OutputPathsParameters.class);
+    CredHelperParameters fromCredHelperParameters = Mockito.mock(CredHelperParameters.class);
+    CredHelperParameters toCredHelperParameters = Mockito.mock(CredHelperParameters.class);
 
     Mockito.when(authParameters.getUsername()).thenReturn("user");
     Mockito.when(authParameters.getPassword()).thenReturn("password");
@@ -62,12 +65,19 @@ public class GradleRawConfigurationTest {
     Mockito.when(jibExtension.getOutputPaths()).thenReturn(outputPathsParameters);
     Mockito.when(jibExtension.getAllowInsecureRegistries()).thenReturn(true);
 
-    Mockito.when(baseImageParameters.getCredHelper()).thenReturn("gcr");
+    Mockito.when(fromCredHelperParameters.getHelperName()).thenReturn(Optional.of("gcr"));
+    Mockito.when(fromCredHelperParameters.getEnvironment())
+        .thenReturn(Collections.singletonMap("ENV_VARIABLE", "Value1"));
+    Mockito.when(baseImageParameters.getCredHelper()).thenReturn(fromCredHelperParameters);
     Mockito.when(baseImageParameters.getImage()).thenReturn("openjdk:15");
     Mockito.when(baseImageParameters.getAuth()).thenReturn(authParameters);
 
     Mockito.when(targetImageParameters.getTags())
         .thenReturn(new HashSet<>(Arrays.asList("additional", "tags")));
+    Mockito.when(toCredHelperParameters.getHelperName()).thenReturn(Optional.of("ecr-login"));
+    Mockito.when(toCredHelperParameters.getEnvironment())
+        .thenReturn(Collections.singletonMap("ENV_VARIABLE", "Value2"));
+    Mockito.when(targetImageParameters.getCredHelper()).thenReturn(toCredHelperParameters);
 
     Mockito.when(containerParameters.getAppRoot()).thenReturn("/app/root");
     Mockito.when(containerParameters.getArgs()).thenReturn(Arrays.asList("--log", "info"));
@@ -105,7 +115,10 @@ public class GradleRawConfigurationTest {
     Assert.assertEquals(Arrays.asList("java", "Main"), rawConfiguration.getEntrypoint().get());
     Assert.assertEquals(
         new HashMap<>(ImmutableMap.of("currency", "dollar")), rawConfiguration.getEnvironment());
-    Assert.assertEquals("gcr", rawConfiguration.getFromCredHelper().get());
+    Assert.assertEquals("gcr", rawConfiguration.getFromCredHelper().getHelperName().get());
+    Assert.assertEquals(
+        Collections.singletonMap("ENV_VARIABLE", "Value1"),
+        rawConfiguration.getFromCredHelper().getEnvironment());
     Assert.assertEquals("openjdk:15", rawConfiguration.getFromImage().get());
     Assert.assertEquals(Arrays.asList("-cp", "."), rawConfiguration.getJvmFlags());
     Assert.assertEquals(new HashMap<>(ImmutableMap.of("unit", "cm")), rawConfiguration.getLabels());
@@ -116,6 +129,10 @@ public class GradleRawConfigurationTest {
     Assert.assertEquals(
         new HashSet<>(Arrays.asList("additional", "tags")),
         Sets.newHashSet(rawConfiguration.getToTags()));
+    Assert.assertEquals("ecr-login", rawConfiguration.getToCredHelper().getHelperName().get());
+    Assert.assertEquals(
+        Collections.singletonMap("ENV_VARIABLE", "Value2"),
+        rawConfiguration.getToCredHelper().getEnvironment());
     Assert.assertEquals("admin:wheel", rawConfiguration.getUser().get());
     Assert.assertEquals("2011-12-03T22:42:05Z", rawConfiguration.getFilesModificationTime());
     Assert.assertEquals(Paths.get("test"), rawConfiguration.getDockerExecutable().get());

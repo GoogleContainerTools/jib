@@ -31,8 +31,10 @@ import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Properties;
 import java.util.function.Function;
 import javax.annotation.Nullable;
@@ -48,7 +50,8 @@ public class DockerCredentialHelper {
   private final String serverUrl;
   private final Path credentialHelper;
   private final Properties systemProperties;
-  private Function<List<String>, ProcessBuilder> processBuilderFactory;
+  private final Function<List<String>, ProcessBuilder> processBuilderFactory;
+  private final Map<String, String> environment;
 
   /** Template for a Docker credential helper output. */
   @VisibleForTesting
@@ -73,7 +76,24 @@ public class DockerCredentialHelper {
    * @param credentialHelper the path to the credential helper executable
    */
   public DockerCredentialHelper(String serverUrl, Path credentialHelper) {
-    this(serverUrl, credentialHelper, System.getProperties(), ProcessBuilder::new);
+    this(
+        serverUrl,
+        credentialHelper,
+        System.getProperties(),
+        ProcessBuilder::new,
+        Collections.emptyMap());
+  }
+
+  /**
+   * Constructs a new {@link DockerCredentialHelper}.
+   *
+   * @param serverUrl the server URL to pass into the credential helper
+   * @param credentialHelper the path to the credential helper executable
+   * @param environment environment variables used in configuring the credential helper
+   */
+  public DockerCredentialHelper(
+      String serverUrl, Path credentialHelper, Map<String, String> environment) {
+    this(serverUrl, credentialHelper, System.getProperties(), ProcessBuilder::new, environment);
   }
 
   @VisibleForTesting
@@ -81,11 +101,13 @@ public class DockerCredentialHelper {
       String serverUrl,
       Path credentialHelper,
       Properties systemProperties,
-      Function<List<String>, ProcessBuilder> processBuilderFactory) {
+      Function<List<String>, ProcessBuilder> processBuilderFactory,
+      Map<String, String> environment) {
     this.serverUrl = serverUrl;
     this.credentialHelper = credentialHelper;
     this.systemProperties = systemProperties;
     this.processBuilderFactory = processBuilderFactory;
+    this.environment = environment;
   }
 
   /**
@@ -131,7 +153,9 @@ public class DockerCredentialHelper {
       throws IOException, CredentialHelperUnhandledServerUrlException,
           CredentialHelperNotFoundException {
     try {
-      Process process = processBuilderFactory.apply(credentialHelperCommand).start();
+      ProcessBuilder processBuilder = processBuilderFactory.apply(credentialHelperCommand);
+      processBuilder.environment().putAll(environment);
+      Process process = processBuilder.start();
 
       try (OutputStream processStdin = process.getOutputStream()) {
         processStdin.write(serverUrl.getBytes(StandardCharsets.UTF_8));
