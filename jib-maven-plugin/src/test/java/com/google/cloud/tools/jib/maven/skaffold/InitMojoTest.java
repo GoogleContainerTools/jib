@@ -63,9 +63,9 @@ public class InitMojoTest {
     verifier.verifyErrorFreeLog();
     Path logFile = Paths.get(verifier.getBasedir()).resolve(verifier.getLogFileName());
     String output = String.join("\n", Files.readAllLines(logFile, StandardCharsets.UTF_8)).trim();
-    MatcherAssert.assertThat(output, CoreMatchers.startsWith("BEGIN JIB JSON"));
+    MatcherAssert.assertThat(output, CoreMatchers.containsString("BEGIN JIB JSON"));
 
-    Pattern pattern = Pattern.compile("BEGIN JIB JSON\r?\n(\\{.*})");
+    Pattern pattern = Pattern.compile(".*BEGIN JIB JSON\r?\n(\\{.*})");
     Matcher matcher = pattern.matcher(output);
     List<String> jsons = new ArrayList<>();
     while (matcher.find()) {
