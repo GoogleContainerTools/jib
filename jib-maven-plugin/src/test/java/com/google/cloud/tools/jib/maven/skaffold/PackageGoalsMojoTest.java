@@ -52,6 +52,9 @@ public class PackageGoalsMojoTest {
     verifier.verifyErrorFreeLog();
     Path logFile = Paths.get(verifier.getBasedir()).resolve(verifier.getLogFileName());
     List<String> log = Files.readAllLines(logFile, StandardCharsets.UTF_8);
+    if (log.size() != 0 && log.get(0).startsWith("Picked up JAVA_TOOL_OPTIONS:")) {
+      log.remove(0);
+    }
 
     Assert.assertEquals(Arrays.asList(expectedGoals), log);
   }
