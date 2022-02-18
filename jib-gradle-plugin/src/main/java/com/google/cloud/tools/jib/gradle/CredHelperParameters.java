@@ -36,7 +36,7 @@ public class CredHelperParameters implements CredHelperConfiguration {
   @Inject
   public CredHelperParameters(ObjectFactory objectFactory, String propertyName) {
     this.propertyName = propertyName;
-    this.environment = objectFactory.mapProperty(String.class, String.class).empty();
+    environment = objectFactory.mapProperty(String.class, String.class).empty();
   }
 
   @Input
@@ -59,6 +59,7 @@ public class CredHelperParameters implements CredHelperConfiguration {
     this.helper = helper;
   }
 
+  @Override
   @Input
   @Optional
   public Map<String, String> getEnvironment() {
