@@ -642,6 +642,17 @@ If you're considering putting credentials in Maven, we highly *recommend* using 
   </servers>
 </settings>
 ```
+And the plugin configuration needs to be matched with the above `id`
+*For example in `pom.xml`:*
+```xml
+<configuration>
+  ...
+  <to>
+    <image>MY_REGISTRY/my-docker-id/my-app</image>
+  </to>
+  ...
+</configuration>
+```
 
 * The `id` field should be the registry server these credentials are for.
 * We *do not* recommend putting your raw password in `settings.xml`.
