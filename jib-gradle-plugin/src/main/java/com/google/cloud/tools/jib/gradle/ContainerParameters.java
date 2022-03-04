@@ -172,6 +172,10 @@ public class ContainerParameters {
   public void setFormat(ImageFormat format) {
     this.format = format;
   }
+  
+  public void setFormat(String format) {
+    this.format = ImageFormat.valueOf(format);
+  }
 
   @Input
   @Optional
