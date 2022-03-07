@@ -5,6 +5,11 @@ set -o xtrace
 
 gcloud components install docker-credential-gcr
 
+# Docker service does not run by default in Big Sur but can be started with the following commands.
+docker-machine create --driver virtualbox default
+docker-machine env default
+eval "$(docker-machine env default)"
+
 # Stops any left-over containers.
 docker stop $(docker ps --all --quiet) || true
 docker kill $(docker ps --all --quiet) || true
