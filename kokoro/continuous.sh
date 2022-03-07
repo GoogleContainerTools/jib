@@ -5,8 +5,14 @@ set -o xtrace
 
 gcloud components install docker-credential-gcr
 
+# Docker service does not run by default in Big Sur but can be started with the following commands.
+docker-machine create --driver virtualbox default
+docker-machine env default
+eval "$(docker-machine env default)"
+
 # docker-credential-gcr uses GOOGLE_APPLICATION_CREDENTIALS as the credentials key file
 export GOOGLE_APPLICATION_CREDENTIALS=${KOKORO_KEYSTORE_DIR}/72743_jib_integration_testing_key
+
 docker-credential-gcr configure-docker
 
 # Stops any left-over containers.
