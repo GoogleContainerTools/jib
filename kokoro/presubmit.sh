@@ -18,6 +18,8 @@ docker kill $(docker ps --all --quiet) || true
 
 cd github/jib
 
+export JAVA_HOME=/Library/Java/JavaVirtualMachines/jdk-1.8.0_221.jdk/Contents/Home
+export PATH=$JAVA_HOME/bin:$PATH
 echo $JAVA_HOME
 
 # we only run integration tests on jib-core for presubmit
