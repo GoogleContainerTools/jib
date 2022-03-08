@@ -13,7 +13,7 @@ eval "$(docker-machine env default)"
 
 echo $JAVA_HOME
 ls /Library/Java/JavaVirtualMachines/
-export JAVA_HOME="/Library/Java/JavaVirtualMachines/jdk-1.8.0_221.jdk/Contents/Home"
+export JAVA_HOME="/Library/Java/JavaVirtualMachines/jdk-8-latest/Contents/Home"
 export PATH=$JAVA_HOME/bin:$PATH
 fi
 
