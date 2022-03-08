@@ -212,6 +212,8 @@ public class JibExtensionTest {
     assertThat(container.getArgs()).containsExactly("arg1", "arg2", "arg3").inOrder();
     assertThat(container.getPorts()).containsExactly("1000", "2000-2010", "3000").inOrder();
     assertThat(container.getFormat()).isSameInstanceAs(ImageFormat.OCI);
+    container.setFormat("Docker");
+    assertThat(container.getFormat()).isSameInstanceAs(ImageFormat.Docker);
     assertThat(container.getAppRoot()).isEqualTo("some invalid appRoot value");
     assertThat(container.getFilesModificationTime()).isEqualTo("some invalid time value");
   }
