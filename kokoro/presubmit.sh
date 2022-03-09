@@ -11,10 +11,9 @@ docker-machine create --driver virtualbox default
 docker-machine env default
 eval "$(docker-machine env default)"
 
-echo $JAVA_HOME
-ls /Library/Java/JavaVirtualMachines/
 export JAVA_HOME="/Library/Java/JavaVirtualMachines/jdk-8-latest/Contents/Home"
 export PATH=$JAVA_HOME/bin:$PATH
+echo $JAVA_HOME
 fi
 
 # Stops any left-over containers.

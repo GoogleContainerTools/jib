@@ -10,6 +10,10 @@ if [ "${KOKORO_JOB_CLUSTER}" = "MACOS_EXTERNAL" ]; then
 docker-machine create --driver virtualbox default
 docker-machine env default
 eval "$(docker-machine env default)"
+
+export JAVA_HOME="/Library/Java/JavaVirtualMachines/jdk-8-latest/Contents/Home"
+export PATH=$JAVA_HOME/bin:$PATH
+echo $JAVA_HOME
 fi
 
 # docker-credential-gcr uses GOOGLE_APPLICATION_CREDENTIALS as the credentials key file
