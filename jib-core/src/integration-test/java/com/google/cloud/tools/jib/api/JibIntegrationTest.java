@@ -77,7 +77,7 @@ public class JibIntegrationTest {
 
   @BeforeClass
   public static void setUpClass() throws IOException, InterruptedException {
-    localRegistry.pullAndPushToLocal("registry.ipv6.docker.com/library/busybox", "busybox");
+    localRegistry.pullAndPushToLocal("busybox", "busybox");
   }
 
   @Before

@@ -91,7 +91,7 @@ public class LocalRegistry extends ExternalResource {
               "-e",
               "REGISTRY_AUTH_HTPASSWD_PATH=/auth/htpasswd"));
     }
-    dockerTokens.add("registry:2");
+    dockerTokens.add("registry.ipv6.docker.com/library/registry:2");
     new Command(dockerTokens).run();
     waitUntilReady();
   }
