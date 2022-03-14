@@ -222,6 +222,7 @@ public class JibExtensionTest {
         container -> {
           container.setFormat("OCI");
         });
+    ContainerParameters container = testJibExtension.getContainer();
     assertThat(container.getFormat()).isSameInstanceAs(ImageFormat.OCI);
   }
 
