@@ -24,7 +24,7 @@ jobs:
         with:
           distribution: 'adopt'
           java-version: ${{ matrix.java }}
-      - uses: actions/cache@v2.1.6
+      - uses: actions/cache@v3
         with:
           path: |
             ~/.m2/repository
