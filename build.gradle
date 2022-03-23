@@ -48,7 +48,7 @@ project.ext.dependencyStrings = [
   JUNIT_PARAMS: 'pl.pragmatists:JUnitParams:1.1.1',
   MAVEN_TESTING_HARNESS: 'org.apache.maven.plugin-testing:maven-plugin-testing-harness:3.3.0',
   MAVEN_VERIFIER: 'org.apache.maven.shared:maven-verifier:1.7.2',
-  MOCKITO_CORE: 'org.mockito:mockito-core:4.3.1',
+  MOCKITO_CORE: 'org.mockito:mockito-core:4.4.0',
   SISU_PLEXUS: 'org.eclipse.sisu:org.eclipse.sisu.plexus:0.3.5',
   SLF4J_API: 'org.slf4j:slf4j-api:1.7.30',
   SLF4J_SIMPLE: 'org.slf4j:slf4j-simple:1.7.36',
