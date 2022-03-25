@@ -217,6 +217,16 @@ public class JibExtensionTest {
   }
 
   @Test
+  public void testSetFormat() {
+    testJibExtension.container(
+        container -> {
+          container.setFormat("OCI");
+        });
+    ContainerParameters container = testJibExtension.getContainer();
+    assertThat(container.getFormat()).isSameInstanceAs(ImageFormat.OCI);
+  }
+
+  @Test
   public void testContainerizingMode() {
     assertThat(testJibExtension.getContainerizingMode()).isEqualTo("exploded");
   }
