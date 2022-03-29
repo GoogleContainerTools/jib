@@ -35,6 +35,7 @@ dependencies {
   implementation project(':jib-plugins-common')
 
   implementation dependencyStrings.COMMONS_TEXT
+  implementation(platform(dependencyStrings.JACKSON_BOM))
   implementation dependencyStrings.JACKSON_DATAFORMAT_YAML
   implementation dependencyStrings.JACKSON_DATABIND
   implementation dependencyStrings.GUAVA
