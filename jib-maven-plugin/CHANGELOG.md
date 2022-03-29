@@ -14,8 +14,6 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
-- Support for configuration of credential helper with environment variables ([#3575](https://github.com/GoogleContainerTools/jib/pull/3575)).
-
 - Environment variables can now be used in configuring credential helpers. ([#2814](https://github.com/GoogleContainerTools/jib/issues/2814))
   ```xml
   <to>
