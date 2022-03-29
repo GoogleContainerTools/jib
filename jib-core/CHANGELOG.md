@@ -9,6 +9,18 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
+
+## 0.21.0
+
+### Added
+- Support for configuration of credential helper with environment variables ([#3575](https://github.com/GoogleContainerTools/jib/pull/3575)).
+- Support architecture suffixes in tags when publishing multi-platform images ([#3523](https://github.com/GoogleContainerTools/jib/pull/3523)).
+
+### Changed
+- Upgraded jackson-databind to 2.13.2.2 ([#3612](https://github.com/GoogleContainerTools/jib/pull/3612)).
+- Added helpful pointers for unsupported class file version exception cause ([#3499](https://github.com/GoogleContainerTools/jib/pull/3499)).
+
+
 ## 0.20.0
 
 ### Added
