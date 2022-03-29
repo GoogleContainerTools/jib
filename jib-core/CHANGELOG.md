@@ -9,6 +9,16 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
+
+## 0.21.0
+
+### Added
+- Support for configuration of credential helper with environment variables ([#3575](https://github.com/GoogleContainerTools/jib/pull/3575)).
+
+### Changed
+- Upgraded jackson-databind to 2.13.2.2 ([#3612](https://github.com/GoogleContainerTools/jib/pull/3612)).
+
+
 ## 0.20.0
 
 ### Added
