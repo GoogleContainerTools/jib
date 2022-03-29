@@ -17,6 +17,7 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 - Upgraded jackson-databind to 2.13.2.2 ([#3612](https://github.com/GoogleContainerTools/jib/pull/3612)).
+- Added helpful pointers for unsupported class file version exception cause ([#3499](https://github.com/GoogleContainerTools/jib/pull/3499)).
 
 
 ## 0.20.0
