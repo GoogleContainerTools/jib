@@ -12,7 +12,6 @@ dependencies {
 
   implementation dependencyStrings.COMMONS_COMPRESS
   implementation dependencyStrings.GUAVA
-  implementation(platform(dependencyStrings.JACKSON_BOM))
   implementation dependencyStrings.JACKSON_DATABIND
   implementation dependencyStrings.JACKSON_DATATYPE_JSR310
   implementation dependencyStrings.ASM
