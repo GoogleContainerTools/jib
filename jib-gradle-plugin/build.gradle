@@ -30,6 +30,8 @@ dependencies {
   sourceProject project(':jib-plugins-common')
   ensureNoProjectDependencies()
 
+  // transitive dependency from jib-core needs version
+  implementation(platform(dependencyStrings.JACKSON_BOM))
   implementation dependencyStrings.GRADLE_EXTENSION
 
   testImplementation dependencyStrings.JUNIT
