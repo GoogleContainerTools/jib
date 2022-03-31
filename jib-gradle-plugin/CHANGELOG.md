@@ -26,6 +26,9 @@ All notable changes to this project will be documented in this file.
    }
   ```
   
+### Changed
+- Upgraded jackson-databind to 2.13.2.2 ([#3612](https://github.com/GoogleContainerTools/jib/pull/3612)).
+
 ### Fixed
 
 - Fixed setting image format in Kotlin ([#3593](https://github.com/GoogleContainerTools/jib/pull/3593)).
