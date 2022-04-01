@@ -9,12 +9,10 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
-## 3.2.0
+## 3.2.1
 
 ### Added
 
-- [`jib.from.platforms`](https://github.com/GoogleContainerTools/jib/tree/master/jib-gradle-plugin#from-closure) parameter for multi-architecture image building can now be configured through Maven and system properties (for example, `-Djib.from.platforms=linux/amd64,linux/arm64` on the command-line). ([#2742](https://github.com/GoogleContainerTools/jib/pull/2742))
-- For retrieving credentials, Jib additionally looks for `$XDG_RUNTIME_DIR/containers/auth.json`, `$XDG_CONFIG_HOME/containers/auth.json`, and `$HOME/.config/containers/auth.json`. ([#3524](https://github.com/GoogleContainerTools/jib/issues/3524))
 - Environment variables can now be used in configuring credential helpers. ([#2814](https://github.com/GoogleContainerTools/jib/issues/2814))
   ```gradle
    jib.to {
@@ -27,6 +25,22 @@ All notable changes to this project will be documented in this file.
       }
    }
   ```
+  
+### Changed
+- Upgraded jackson-databind to 2.13.2.2 ([#3612](https://github.com/GoogleContainerTools/jib/pull/3612)).
+
+### Fixed
+
+- Fixed setting image format in Kotlin ([#3593](https://github.com/GoogleContainerTools/jib/pull/3593)).
+
+
+## 3.2.0
+
+### Added
+
+- [`jib.from.platforms`](https://github.com/GoogleContainerTools/jib/tree/master/jib-gradle-plugin#from-closure) parameter for multi-architecture image building can now be configured through Maven and system properties (for example, `-Djib.from.platforms=linux/amd64,linux/arm64` on the command-line). ([#2742](https://github.com/GoogleContainerTools/jib/pull/2742))
+- For retrieving credentials, Jib additionally looks for `$XDG_RUNTIME_DIR/containers/auth.json`, `$XDG_CONFIG_HOME/containers/auth.json`, and `$HOME/.config/containers/auth.json`. ([#3524](https://github.com/GoogleContainerTools/jib/issues/3524))
+
 
 ### Changed
 
