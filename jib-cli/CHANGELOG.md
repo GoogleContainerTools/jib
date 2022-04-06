@@ -6,6 +6,13 @@ All notable changes to this project will be documented in this file.
 ### Added
 
 ### Changed
+
+### Fixed
+
+## 0.10.0
+
+### Changed
+
 - Upgraded jackson-databind to 2.13.2.2 ([#3612](https://github.com/GoogleContainerTools/jib/issues/3612)).
 
 ### Fixed

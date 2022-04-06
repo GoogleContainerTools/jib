@@ -55,7 +55,7 @@ Most users should download a ZIP archive (Java application). We are working on r
 
 A JRE is required to run this Jib CLI distribution.
 
-Find the [latest jib-cli 0.9.0 release](https://github.com/GoogleContainerTools/jib/releases/tag/v0.9.0-cli) on the [Releases page](https://github.com/GoogleContainerTools/jib/releases), download `jib-jre-<version>.zip`, and unzip it. The zip file contains the `jib` (`jib.bat` for Windows) script at `jib/bin/`. Optionally, add the binary directory to your `$PATH` so that you can call `jib` from anywhere.
+Find the [latest jib-cli 0.10.0 release](https://github.com/GoogleContainerTools/jib/releases/tag/v0.10.0-cli) on the [Releases page](https://github.com/GoogleContainerTools/jib/releases), download `jib-jre-<version>.zip`, and unzip it. The zip file contains the `jib` (`jib.bat` for Windows) script at `jib/bin/`. Optionally, add the binary directory to your `$PATH` so that you can call `jib` from anywhere.
 
 ### Windows: Install with `choco`
 
