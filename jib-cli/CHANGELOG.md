@@ -6,8 +6,11 @@ All notable changes to this project will be documented in this file.
 ### Added
 
 ### Changed
+- Upgraded jackson-databind to 2.13.2.2 ([#3612](https://github.com/GoogleContainerTools/jib/issues/3612)).
 
 ### Fixed
+
+- Incorrect release sha256 file for jib-cli. ([#3584](https://github.com/GoogleContainerTools/jib/issues/3584))
 
 ## 0.9.0
 
