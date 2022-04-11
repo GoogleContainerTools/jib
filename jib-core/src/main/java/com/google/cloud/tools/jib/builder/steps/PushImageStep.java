@@ -180,7 +180,7 @@ class PushImageStep implements Callable<BuildResult> {
       eventHandlers.dispatch(LogEvent.info("Pushing manifest for " + imageQualifier + "..."));
 
       registryClient.pushManifest(manifestTemplate, imageQualifier);
-      return new BuildResult(imageDigest, imageId);
+      return new BuildResult(imageDigest, imageId, true);
     }
   }
 }

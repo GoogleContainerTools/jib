@@ -47,16 +47,17 @@ public class BuildResultTest {
 
   @Test
   public void testCreated() {
-    BuildResult container = new BuildResult(digest1, id);
+    BuildResult container = new BuildResult(digest1, id, true);
     Assert.assertEquals(digest1, container.getImageDigest());
     Assert.assertEquals(id, container.getImageId());
+    Assert.assertTrue(container.isImagePushed());
   }
 
   @Test
   public void testEquality() {
-    BuildResult container1 = new BuildResult(digest1, id);
-    BuildResult container2 = new BuildResult(digest1, id);
-    BuildResult container3 = new BuildResult(digest2, id);
+    BuildResult container1 = new BuildResult(digest1, id, true);
+    BuildResult container2 = new BuildResult(digest1, id, true);
+    BuildResult container3 = new BuildResult(digest2, id, true);
 
     Assert.assertEquals(container1, container2);
     Assert.assertEquals(container1.hashCode(), container2.hashCode());

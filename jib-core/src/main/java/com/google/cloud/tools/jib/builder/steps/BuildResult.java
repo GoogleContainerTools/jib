@@ -46,15 +46,17 @@ public class BuildResult {
             targetFormat, containerConfigurationBlobDescriptor);
     DescriptorDigest imageDigest = Digests.computeJsonDigest(manifestTemplate);
     DescriptorDigest imageId = containerConfigurationBlobDescriptor.getDigest();
-    return new BuildResult(imageDigest, imageId);
+    return new BuildResult(imageDigest, imageId, false);
   }
 
   private final DescriptorDigest imageDigest;
   private final DescriptorDigest imageId;
+  private final Boolean imagePushed;
 
-  BuildResult(DescriptorDigest imageDigest, DescriptorDigest imageId) {
+  BuildResult(DescriptorDigest imageDigest, DescriptorDigest imageId, boolean imagePushed) {
     this.imageDigest = imageDigest;
     this.imageId = imageId;
+    this.imagePushed = imagePushed;
   }
 
   public DescriptorDigest getImageDigest() {
@@ -63,6 +65,10 @@ public class BuildResult {
 
   public DescriptorDigest getImageId() {
     return imageId;
+  }
+
+  public boolean isImagePushed() {
+    return imagePushed;
   }
 
   @Override
@@ -80,6 +86,7 @@ public class BuildResult {
     }
     BuildResult otherBuildResult = (BuildResult) other;
     return imageDigest.equals(otherBuildResult.imageDigest)
-        && imageId.equals(otherBuildResult.imageId);
+        && imageId.equals(otherBuildResult.imageId)
+        && imagePushed.equals(otherBuildResult.imagePushed);
   }
 }

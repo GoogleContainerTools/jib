@@ -576,7 +576,9 @@ public class StepsRunner {
           return manifestPushResults.isEmpty()
               ? new BuildResult(
                   results.manifestCheckResult.get().get().getDigest(),
-                  Verify.verifyNotNull(containerConfigPushResult).get().getDigest())
+                  Verify.verifyNotNull(containerConfigPushResult).get().getDigest(),
+                  !(JibSystemProperties.skipExistingImages()
+                      && results.manifestCheckResult.get().isPresent()))
               // Manifest pushers return the same BuildResult.
               : manifestPushResults.get(0).get();
         });

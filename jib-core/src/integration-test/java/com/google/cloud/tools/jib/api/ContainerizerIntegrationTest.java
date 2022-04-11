@@ -270,6 +270,11 @@ public class ContainerizerIntegrationTest {
     // Test that both images have the same properties.
     Assert.assertEquals(image1.getDigest(), image2.getDigest());
     Assert.assertEquals(image1.getImageId(), image2.getImageId());
+
+    // Test that the first image was pushed...
+    Assert.assertTrue(image1.isImagePushed());
+    // ...while the second one was skipped
+    Assert.assertFalse(image2.isImagePushed());
   }
 
   @Test
