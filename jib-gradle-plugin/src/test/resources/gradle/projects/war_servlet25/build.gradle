@@ -11,9 +11,13 @@ repositories {
   mavenCentral()
 }
 
+configurations {
+  moreLibs
+}
+
 dependencies {
-  compileOnly 'javax.servlet:servlet-api:2.5'
-  implementation 'javax.annotation:javax.annotation-api:1.2'
+  providedCompile 'jakarta.servlet:jakarta.servlet-api:5.0.0'
+  moreLibs 'jakarta.annotation:jakarta.annotation-api:2.1.0' // random extra JAR
 }
 
 jib {

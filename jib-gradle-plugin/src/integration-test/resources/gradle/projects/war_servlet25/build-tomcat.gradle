@@ -16,8 +16,8 @@ configurations {
 }
 
 dependencies {
-  providedCompile 'javax.servlet:servlet-api:2.5'
-  moreLibs 'javax.annotation:javax.annotation-api:1.2' // random extra JAR
+  providedCompile 'jakarta.servlet:jakarta.servlet-api:5.0.0'
+  moreLibs 'jakarta.annotation:jakarta.annotation-api:2.1.0' // random extra JAR
 }
 
 war {
@@ -27,7 +27,7 @@ war {
 }
 
 jib {
-  from.image = 'tomcat:8.5-jre8-alpine'
+  from.image = 'tomcat:10-jre8-temurin'
   to {
     image = System.getProperty("_TARGET_IMAGE")
     credHelper = 'gcr'
