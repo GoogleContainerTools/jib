@@ -45,7 +45,7 @@
         <version>${jib-maven-plugin.version}</version>
         <configuration>
           <from>
-            <image>tomcat:8.5-jre8-alpine</image>
+            <image>tomcat:10-jre8-temurin</image>
           </from>
           <to>
             <image>${_TARGET_IMAGE}</image>
