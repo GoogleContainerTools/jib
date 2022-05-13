@@ -262,6 +262,14 @@ subprojects {
                  'Built-Gradle': gradle.gradleVersion
     }
   }
+  normalization {
+    runtimeClasspath {
+      metaInf {
+        ignoreAttribute("Built-By")
+        ignoreAttribute("Built-Date")
+      }
+    }
+  }
   /* JAR */
 
   /* MAVEN CENTRAL RELEASES */
