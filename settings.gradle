@@ -1,6 +1,3 @@
-buildCache {
-    local { enabled = true }
-}
 include ":jib-build-plan"
 include ":jib-plugins-extension-common"
 include ":jib-gradle-plugin-extension-api"
