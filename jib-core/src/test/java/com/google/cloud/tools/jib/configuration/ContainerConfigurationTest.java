@@ -106,7 +106,7 @@ public class ContainerConfigurationTest {
       ContainerConfiguration.builder().setEnvironment(nullValueMap);
       Assert.fail();
     } catch (IllegalArgumentException ex) {
-      Assert.assertEquals("environment map contains null values", ex.getMessage());
+      Assert.assertEquals("environment map contains null values for key(s): key", ex.getMessage());
     }
   }
 
