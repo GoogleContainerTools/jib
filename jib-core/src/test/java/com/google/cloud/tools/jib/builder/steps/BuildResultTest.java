@@ -58,9 +58,11 @@ public class BuildResultTest {
     BuildResult container1 = new BuildResult(digest1, id, true);
     BuildResult container2 = new BuildResult(digest1, id, true);
     BuildResult container3 = new BuildResult(digest2, id, true);
+    BuildResult container4 = new BuildResult(digest1, id, false);
 
     Assert.assertEquals(container1, container2);
     Assert.assertEquals(container1.hashCode(), container2.hashCode());
+    Assert.assertEquals(container1.hashCode(), container4.hashCode());
     Assert.assertNotEquals(container1, container3);
   }
 

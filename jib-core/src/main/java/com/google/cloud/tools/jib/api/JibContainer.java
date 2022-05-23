@@ -29,7 +29,7 @@ public class JibContainer {
   private final DescriptorDigest imageDigest;
   private final DescriptorDigest imageId;
   private final Set<String> tags;
-  private final Boolean imagePushed;
+  private final boolean imagePushed;
 
   @VisibleForTesting
   JibContainer(
@@ -37,7 +37,7 @@ public class JibContainer {
       DescriptorDigest imageDigest,
       DescriptorDigest imageId,
       Set<String> tags,
-      Boolean imagePushed) {
+      boolean imagePushed) {
     this.targetImage = targetImage;
     this.imageDigest = imageDigest;
     this.imageId = imageId;
@@ -67,7 +67,7 @@ public class JibContainer {
    *
    * @return true if pushed.
    */
-  public Boolean isImagePushed() {
+  public boolean isImagePushed() {
     return imagePushed;
   }
 

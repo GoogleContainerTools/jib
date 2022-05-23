@@ -59,7 +59,7 @@ public class JibContainerTest {
     Assert.assertEquals(digest1, container.getDigest());
     Assert.assertEquals(digest2, container.getImageId());
     Assert.assertEquals(tags1, container.getTags());
-    Assert.assertEquals(true, container.isImagePushed());
+    Assert.assertTrue(container.isImagePushed());
   }
 
   @Test

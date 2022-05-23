@@ -250,5 +250,6 @@ public class JibBuildRunnerTest {
     Assert.assertEquals(imageId, metadataOutput.getImageId());
     Assert.assertEquals(digest, metadataOutput.getImageDigest());
     Assert.assertEquals(tags, ImmutableSet.copyOf(metadataOutput.getTags()));
+    Assert.assertTrue(metadataOutput.isImagePushed());
   }
 }
