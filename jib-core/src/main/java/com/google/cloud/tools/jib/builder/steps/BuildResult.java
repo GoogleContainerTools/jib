@@ -36,8 +36,8 @@ public class BuildResult {
    * @return a new {@link BuildResult} with the image's digest and id
    * @throws IOException if writing the digest or container configuration fails
    */
-  public static BuildResult fromImage(
-      Image image, Class<? extends BuildableManifestTemplate> targetFormat) throws IOException {
+  static BuildResult fromImage(Image image, Class<? extends BuildableManifestTemplate> targetFormat)
+      throws IOException {
     ImageToJsonTranslator imageToJsonTranslator = new ImageToJsonTranslator(image);
     BlobDescriptor containerConfigurationBlobDescriptor =
         Digests.computeDigest(imageToJsonTranslator.getContainerConfiguration());
