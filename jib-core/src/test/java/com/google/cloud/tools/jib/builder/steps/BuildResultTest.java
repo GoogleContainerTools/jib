@@ -31,6 +31,7 @@ public class BuildResultTest {
   private DescriptorDigest digest1;
   private DescriptorDigest digest2;
   private DescriptorDigest id;
+  private DescriptorDigest id2;
 
   @Before
   public void setUp() throws DigestException {
@@ -43,6 +44,10 @@ public class BuildResultTest {
     id =
         DescriptorDigest.fromDigest(
             "sha256:9876543210fedcba9876543210fedcba9876543210fedcba9876543210fedcba");
+
+    id2 =
+        DescriptorDigest.fromDigest(
+            "sha256:1234543210fedcba9876543210fedcba9876543210fedcba9876543210fedcba");
   }
 
   @Test
@@ -59,11 +64,17 @@ public class BuildResultTest {
     BuildResult container2 = new BuildResult(digest1, id, true);
     BuildResult container3 = new BuildResult(digest2, id, true);
     BuildResult container4 = new BuildResult(digest1, id, false);
+    BuildResult container5 = new BuildResult(digest1, id2, false);
 
     Assert.assertEquals(container1, container2);
+    Assert.assertEquals(container1, container1);
+    Assert.assertNotEquals(container1, container5);
+    Assert.assertNotEquals(container1, new Object());
+
     Assert.assertEquals(container1.hashCode(), container2.hashCode());
     Assert.assertEquals(container1.hashCode(), container4.hashCode());
     Assert.assertNotEquals(container1, container3);
+    Assert.assertNotEquals(container1, container4);
   }
 
   @Test

@@ -101,7 +101,7 @@ public class JibContainer {
 
   @Override
   public int hashCode() {
-    return Objects.hash(targetImage, imageDigest, imageId, tags);
+    return Objects.hash(targetImage, imageDigest, imageId, tags, imagePushed);
   }
 
   @Override
@@ -116,6 +116,7 @@ public class JibContainer {
     return targetImage.equals(otherContainer.targetImage)
         && imageDigest.equals(otherContainer.imageDigest)
         && imageId.equals(otherContainer.imageId)
-        && tags.equals(otherContainer.tags);
+        && tags.equals(otherContainer.tags)
+        && imagePushed == otherContainer.imagePushed;
   }
 }

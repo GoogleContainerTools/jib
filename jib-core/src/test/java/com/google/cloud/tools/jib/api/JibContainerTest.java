@@ -16,6 +16,11 @@
 
 package com.google.cloud.tools.jib.api;
 
+import static org.mockito.Mockito.when;
+
+import com.google.cloud.tools.jib.builder.steps.BuildResult;
+import com.google.cloud.tools.jib.configuration.BuildContext;
+import com.google.cloud.tools.jib.configuration.ImageConfiguration;
 import com.google.common.collect.ImmutableSet;
 import java.security.DigestException;
 import java.util.Set;
@@ -24,6 +29,7 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.mockito.Mockito;
 
 /** Tests for {@link JibContainer}. */
 public class JibContainerTest {
@@ -105,5 +111,35 @@ public class JibContainerTest {
 
     Assert.assertNotEquals(container1, container2);
     Assert.assertNotEquals(container1.hashCode(), container2.hashCode());
+  }
+
+  @Test
+  public void testEquality_differentImagePushed() {
+    JibContainer container1 = new JibContainer(targetImage1, digest1, digest1, tags1, true);
+    JibContainer container2 = new JibContainer(targetImage1, digest1, digest1, tags1, false);
+
+    Assert.assertNotEquals(container1, container2);
+    Assert.assertNotEquals(container1.hashCode(), container2.hashCode());
+  }
+
+  @Test
+  public void testCreationViaStaticMethod() {
+    BuildResult buildResult = Mockito.mock(BuildResult.class);
+    BuildContext buildContext = Mockito.mock(BuildContext.class);
+    ImageConfiguration mockTargetConfiguration = Mockito.mock(ImageConfiguration.class);
+
+    when(buildResult.getImageDigest()).thenReturn(digest1);
+    when(buildResult.getImageId()).thenReturn(digest1);
+    when(buildResult.isImagePushed()).thenReturn(true);
+    when(mockTargetConfiguration.getImage()).thenReturn(targetImage1);
+    when(buildContext.getTargetImageConfiguration()).thenReturn(mockTargetConfiguration);
+    when(buildContext.getAllTargetImageTags()).thenReturn(ImmutableSet.copyOf(tags1));
+
+    JibContainer container = JibContainer.from(buildContext, buildResult);
+    Assert.assertEquals(targetImage1, container.getTargetImage());
+    Assert.assertEquals(digest1, container.getDigest());
+    Assert.assertEquals(digest1, container.getImageId());
+    Assert.assertEquals(tags1, container.getTags());
+    Assert.assertTrue(container.isImagePushed());
   }
 }
