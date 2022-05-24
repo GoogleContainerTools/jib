@@ -20,8 +20,11 @@ import com.google.cloud.tools.jib.api.DescriptorDigest;
 import com.google.cloud.tools.jib.builder.ProgressEventDispatcher;
 import com.google.cloud.tools.jib.builder.steps.PullBaseImageStep.ImagesAndRegistryClient;
 import com.google.cloud.tools.jib.configuration.BuildContext;
+import com.google.cloud.tools.jib.global.JibSystemProperties;
 import com.google.cloud.tools.jib.image.DigestOnlyLayer;
 import com.google.cloud.tools.jib.image.Image;
+import com.google.cloud.tools.jib.image.json.ManifestTemplate;
+import com.google.cloud.tools.jib.registry.ManifestAndDigest;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.ForwardingExecutorService;
 import com.google.common.util.concurrent.Futures;
@@ -30,6 +33,7 @@ import com.google.common.util.concurrent.ListeningExecutorService;
 import java.security.DigestException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -147,5 +151,24 @@ public class StepsRunnerTest {
     // Total three threads scheduled for the three unique layers.
     Mockito.verify(executorService, Mockito.times(3))
         .submit(Mockito.any(ObtainBaseImageLayerStep.class));
+  }
+
+  @Test
+  public void testDetermineImageSkipped() {
+    System.setProperty(JibSystemProperties.SKIP_EXISTING_IMAGES, "true");
+
+    // Mock out the entire optional here for we do not care about the actual contents of it
+    Optional<ManifestAndDigest<ManifestTemplate>> manifestResult = Mockito.mock(Optional.class);
+    Mockito.when(manifestResult.isPresent()).thenReturn(true);
+
+    Assert.assertFalse(stepsRunner.determineImagePushed(manifestResult));
+
+    System.setProperty(JibSystemProperties.SKIP_EXISTING_IMAGES, "false");
+    Mockito.when(manifestResult.isPresent()).thenReturn(true);
+    Assert.assertTrue(stepsRunner.determineImagePushed(manifestResult));
+
+    System.setProperty(JibSystemProperties.SKIP_EXISTING_IMAGES, "true");
+    Mockito.when(manifestResult.isPresent()).thenReturn(false);
+    Assert.assertTrue(stepsRunner.determineImagePushed(manifestResult));
   }
 }
