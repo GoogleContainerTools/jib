@@ -573,13 +573,21 @@ public class StepsRunner {
                       results.manifestCheckResult.get().isPresent()));
 
           realizeFutures(manifestPushResults);
+
           return manifestPushResults.isEmpty()
               ? new BuildResult(
                   results.manifestCheckResult.get().get().getDigest(),
-                  Verify.verifyNotNull(containerConfigPushResult).get().getDigest())
+                  Verify.verifyNotNull(containerConfigPushResult).get().getDigest(),
+                  isImagePushed(results.manifestCheckResult.get()))
               // Manifest pushers return the same BuildResult.
               : manifestPushResults.get(0).get();
         });
+  }
+
+  @VisibleForTesting
+  boolean isImagePushed(Optional<ManifestAndDigest<ManifestTemplate>> manifestResult) {
+
+    return !(JibSystemProperties.skipExistingImages() && manifestResult.isPresent());
   }
 
   private void pushManifestList(ProgressEventDispatcher.Factory progressDispatcherFactory) {

@@ -46,17 +46,20 @@ public class ImageMetadataOutput implements JsonTemplate {
   private final String imageId;
   private final String imageDigest;
   private final List<String> tags;
+  private final Boolean imagePushed;
 
   @JsonCreator
   ImageMetadataOutput(
       @JsonProperty(value = "image", required = true) String image,
       @JsonProperty(value = "imageId", required = true) String imageId,
       @JsonProperty(value = "imageDigest", required = true) String imageDigest,
-      @JsonProperty(value = "tags", required = true) List<String> tags) {
+      @JsonProperty(value = "tags", required = true) List<String> tags,
+      @JsonProperty(value = "imagePushed", required = true) Boolean imagePushed) {
     this.image = image;
     this.imageId = imageId;
     this.imageDigest = imageDigest;
     this.tags = tags;
+    this.imagePushed = imagePushed;
   }
 
   @VisibleForTesting
@@ -74,11 +77,12 @@ public class ImageMetadataOutput implements JsonTemplate {
     String image = jibContainer.getTargetImage().toString();
     String imageId = jibContainer.getImageId().toString();
     String imageDigest = jibContainer.getDigest().toString();
+    Boolean imagePushed = jibContainer.isImagePushed();
 
     // Make sure tags always appear in a predictable way, by sorting them into a list
     List<String> tags = ImmutableList.sortedCopyOf(jibContainer.getTags());
 
-    return new ImageMetadataOutput(image, imageId, imageDigest, tags);
+    return new ImageMetadataOutput(image, imageId, imageDigest, tags, imagePushed);
   }
 
   public String getImage() {
@@ -95,6 +99,10 @@ public class ImageMetadataOutput implements JsonTemplate {
 
   public List<String> getTags() {
     return tags;
+  }
+
+  public Boolean isImagePushed() {
+    return imagePushed;
   }
 
   public String toJson() throws IOException {

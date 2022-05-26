@@ -242,6 +242,7 @@ public class JibBuildRunnerTest {
     Mockito.when(mockJibContainer.getTags()).thenReturn(tags);
     Mockito.when(mockJibContainerBuilder.containerize(mockContainerizer))
         .thenReturn(mockJibContainer);
+    Mockito.when(mockJibContainer.isImagePushed()).thenReturn(true);
     testJibBuildRunner.writeImageJson(outputPath).runBuild();
 
     final String outputJson = new String(Files.readAllBytes(outputPath), StandardCharsets.UTF_8);
@@ -250,5 +251,6 @@ public class JibBuildRunnerTest {
     Assert.assertEquals(imageId, metadataOutput.getImageId());
     Assert.assertEquals(digest, metadataOutput.getImageDigest());
     Assert.assertEquals(tags, ImmutableSet.copyOf(metadataOutput.getTags()));
+    Assert.assertTrue(metadataOutput.isImagePushed());
   }
 }
