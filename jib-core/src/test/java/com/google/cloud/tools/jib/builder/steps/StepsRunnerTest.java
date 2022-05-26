@@ -154,21 +154,28 @@ public class StepsRunnerTest {
   }
 
   @Test
-  public void testDetermineImageSkipped() {
-    System.setProperty(JibSystemProperties.SKIP_EXISTING_IMAGES, "true");
-
-    // Mock out the entire optional here for we do not care about the actual contents of it
+  public void testIsImagePushed_skipExistingEnabledAndManifestPresent() {
     Optional<ManifestAndDigest<ManifestTemplate>> manifestResult = Mockito.mock(Optional.class);
     Mockito.when(manifestResult.isPresent()).thenReturn(true);
+    System.setProperty(JibSystemProperties.SKIP_EXISTING_IMAGES, "true");
 
-    Assert.assertFalse(stepsRunner.determineImagePushed(manifestResult));
+    Assert.assertFalse(stepsRunner.isImagePushed(manifestResult));
+  }
 
+  @Test
+  public void testIsImagePushed_skipExistingImageDisabledAndManifestPresent() {
+    Optional<ManifestAndDigest<ManifestTemplate>> manifestResult = Mockito.mock(Optional.class);
     System.setProperty(JibSystemProperties.SKIP_EXISTING_IMAGES, "false");
-    Mockito.when(manifestResult.isPresent()).thenReturn(true);
-    Assert.assertTrue(stepsRunner.determineImagePushed(manifestResult));
 
+    Assert.assertTrue(stepsRunner.isImagePushed(manifestResult));
+  }
+
+  @Test
+  public void testIsImagePushed_skipExistingImageEnabledAndManifestNotPresent() {
+    Optional<ManifestAndDigest<ManifestTemplate>> manifestResult = Mockito.mock(Optional.class);
     System.setProperty(JibSystemProperties.SKIP_EXISTING_IMAGES, "true");
     Mockito.when(manifestResult.isPresent()).thenReturn(false);
-    Assert.assertTrue(stepsRunner.determineImagePushed(manifestResult));
+
+    Assert.assertTrue(stepsRunner.isImagePushed(manifestResult));
   }
 }

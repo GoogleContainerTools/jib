@@ -578,14 +578,14 @@ public class StepsRunner {
               ? new BuildResult(
                   results.manifestCheckResult.get().get().getDigest(),
                   Verify.verifyNotNull(containerConfigPushResult).get().getDigest(),
-                  determineImagePushed(results.manifestCheckResult.get()))
+                  isImagePushed(results.manifestCheckResult.get()))
               // Manifest pushers return the same BuildResult.
               : manifestPushResults.get(0).get();
         });
   }
 
   @VisibleForTesting
-  boolean determineImagePushed(Optional<ManifestAndDigest<ManifestTemplate>> manifestResult) {
+  boolean isImagePushed(Optional<ManifestAndDigest<ManifestTemplate>> manifestResult) {
 
     return !(JibSystemProperties.skipExistingImages() && manifestResult.isPresent());
   }

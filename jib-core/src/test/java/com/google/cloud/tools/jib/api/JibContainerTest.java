@@ -123,7 +123,7 @@ public class JibContainerTest {
   }
 
   @Test
-  public void testCreationViaStaticMethod() {
+  public void testCreation_withBuildContextAndBuildResult() {
     BuildResult buildResult = Mockito.mock(BuildResult.class);
     BuildContext buildContext = Mockito.mock(BuildContext.class);
     ImageConfiguration mockTargetConfiguration = Mockito.mock(ImageConfiguration.class);
