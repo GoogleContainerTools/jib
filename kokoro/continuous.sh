@@ -7,7 +7,7 @@ gcloud components install docker-credential-gcr
 
 # Docker service does not run by default in Big Sur but can be started with the following commands.
 if [ "${KOKORO_JOB_CLUSTER}" = "MACOS_EXTERNAL" ]; then
-docker-machine create --driver virtualbox default
+docker-machine start default
 docker-machine env default
 eval "$(docker-machine env default)"
 
