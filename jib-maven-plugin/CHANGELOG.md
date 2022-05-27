@@ -5,6 +5,8 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- Included `imagePushed` field to image metadata json output file which provides information on whether an image was pushed by Jib. Note that the output file is `build/jib-image.json` by default or configurable with `jib.outputPaths.imageJson`. ([#3641](https://github.com/GoogleContainerTools/jib/pull/3641))
+
 ### Changed
 
 ### Fixed
