@@ -75,7 +75,8 @@ public class LocalRegistry extends ExternalResource {
             port + ":5000",
             "--name",
             containerName,
-            "--network=host");
+            "--network",
+            "host");
     if (username != null && password != null) {
       // Equivalent of "$ htpasswd -nbB username password".
       // https://httpd.apache.org/docs/2.4/misc/password_encryptions.html

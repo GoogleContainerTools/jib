@@ -197,7 +197,7 @@ public class ContainerizerIntegrationTest {
     assertDockerInspect(imageReferenceByDigest);
     Assert.assertEquals(
         "Hello, world. An argument.\n",
-        new Command("docker", "run", "--rm", imageReferenceByDigest, "--network=host").run());
+        new Command("docker", "run", "--rm", imageReferenceByDigest, "--network", "host").run());
   }
 
   @Test
@@ -220,14 +220,14 @@ public class ContainerizerIntegrationTest {
     assertDockerInspect(imageReference2);
     Assert.assertEquals(
         "Hello, world. An argument.\n",
-        new Command("docker", "run", "--rm", imageReference2, "--network=host").run());
+        new Command("docker", "run", "--rm", imageReference2, "--network", "host").run());
 
     String imageReference3 = "localhost:5000/testimage:testtag3";
     localRegistry.pull(imageReference3);
     assertDockerInspect(imageReference3);
     Assert.assertEquals(
         "Hello, world. An argument.\n",
-        new Command("docker", "run", "--rm", imageReference3, "--network=host").run());
+        new Command("docker", "run", "--rm", imageReference3, "--network", "host").run());
   }
 
   @Test
@@ -306,10 +306,10 @@ public class ContainerizerIntegrationTest {
         "Hello, world. An argument.\n", new Command("docker", "run", "--rm", "testdocker").run());
     Assert.assertEquals(
         "Hello, world. An argument.\n",
-        new Command("docker", "run", "--rm", "testdocker:testtag2", "--network=host").run());
+        new Command("docker", "run", "--rm", "testdocker:testtag2", "--network", "host").run());
     Assert.assertEquals(
         "Hello, world. An argument.\n",
-        new Command("docker", "run", "--rm", "testdocker:testtag3", "--network=host").run());
+        new Command("docker", "run", "--rm", "testdocker:testtag3", "--network", "host").run());
   }
 
   @Test
