@@ -156,7 +156,7 @@ public class ContainerizerIntegrationTest {
       throws IOException, InterruptedException, ExecutionException, RegistryException,
           CacheDirectoryCreationException, InvalidImageReferenceException {
     System.setProperty("jib.alwaysCacheBaseImage", "true");
-    String imageReference = "localhost:5001/testimage:testtag";
+    String imageReference = "192.168.99.104:5000/testimage:testtag";
     Path cacheDirectory = temporaryFolder.newFolder().toPath();
     Containerizer containerizer =
         Containerizer.to(RegistryImage.named(imageReference))
