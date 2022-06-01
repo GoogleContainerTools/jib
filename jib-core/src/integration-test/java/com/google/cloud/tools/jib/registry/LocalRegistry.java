@@ -67,14 +67,7 @@ public class LocalRegistry extends ExternalResource {
     // Runs the Docker registry.
     List<String> dockerTokens =
         Lists.newArrayList(
-            "docker",
-            "run",
-            "--rm",
-            "-d",
-            "-p",
-            port + ":5000",
-            "--name",
-            containerName);
+            "docker", "run", "--rm", "-d", "-p", port + ":5000", "--name", containerName);
     if (username != null && password != null) {
       // Equivalent of "$ htpasswd -nbB username password".
       // https://httpd.apache.org/docs/2.4/misc/password_encryptions.html
