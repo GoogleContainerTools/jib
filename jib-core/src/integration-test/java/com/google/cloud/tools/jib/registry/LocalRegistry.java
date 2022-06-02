@@ -38,7 +38,7 @@ public class LocalRegistry extends ExternalResource {
 
   private final String containerName = "registry-" + UUID.randomUUID();
   public final String dockerHost =
-      System.getenv("DOCKER_HOST") != null ? System.getenv("DOCKER_HOST") : "localhost";
+      System.getenv("DOCKER_IP") != null ? System.getenv("DOCKER_IP") : "localhost";
   private final int port;
   @Nullable private final String username;
   @Nullable private final String password;

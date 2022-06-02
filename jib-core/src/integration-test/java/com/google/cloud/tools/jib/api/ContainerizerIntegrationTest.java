@@ -55,7 +55,7 @@ public class ContainerizerIntegrationTest {
 
   @Rule public final RestoreSystemProperties systemPropertyRestorer = new RestoreSystemProperties();
   public final String dockerHost =
-      System.getenv("DOCKER_HOST") != null ? System.getenv("DOCKER_HOST") : "localhost";
+      System.getenv("DOCKER_IP") != null ? System.getenv("DOCKER_IP") : "localhost";
 
   /**
    * Helper class to hold a {@link ProgressEventHandler} and verify that it handles a full progress.
