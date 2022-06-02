@@ -361,7 +361,7 @@ mvn compile resources:copy-resources jib:build
 The same can be accomplished in Gradle by using a `Copy` task. In your `build.gradle`:
 
 ```groovy
-jib.extraDirectories = file('build/extra-directory')
+jib.extraDirectories.paths = ['build/extra-directory']
 
 task setupExtraDir(type: Copy) {
   from file('build/generated/files')
