@@ -54,6 +54,8 @@ import org.slf4j.LoggerFactory;
 public class ContainerizerIntegrationTest {
 
   @Rule public final RestoreSystemProperties systemPropertyRestorer = new RestoreSystemProperties();
+  public final String dockerHost =
+      System.getenv("DOCKER_HOST") != null ? System.getenv("DOCKER_HOST") : "localhost";
 
   /**
    * Helper class to hold a {@link ProgressEventHandler} and verify that it handles a full progress.
@@ -156,7 +158,7 @@ public class ContainerizerIntegrationTest {
       throws IOException, InterruptedException, ExecutionException, RegistryException,
           CacheDirectoryCreationException, InvalidImageReferenceException {
     System.setProperty("jib.alwaysCacheBaseImage", "true");
-    String imageReference = "192.168.99.104:5000/testimage:testtag";
+    String imageReference = dockerHost + ":" + "5000/testimage:testtag";
     Path cacheDirectory = temporaryFolder.newFolder().toPath();
     Containerizer containerizer =
         Containerizer.to(RegistryImage.named(imageReference))
@@ -192,7 +194,7 @@ public class ContainerizerIntegrationTest {
     Assert.assertEquals(
         "Hello, world. An argument.\n", new Command("docker", "run", "--rm", imageReference).run());
 
-    String imageReferenceByDigest = "localhost:5001/testimage@" + image1.getDigest();
+    String imageReferenceByDigest = dockerHost + ":5000/testimage@" + image1.getDigest();
     localRegistry.pull(imageReferenceByDigest);
     assertDockerInspect(imageReferenceByDigest);
     Assert.assertEquals(
@@ -206,23 +208,23 @@ public class ContainerizerIntegrationTest {
           CacheDirectoryCreationException, InvalidImageReferenceException {
     buildImage(
         ImageReference.of("gcr.io", "distroless/java", DISTROLESS_DIGEST),
-        Containerizer.to(RegistryImage.named("localhost:5001/testimage:testtag")),
+        Containerizer.to(RegistryImage.named("localhost:5000/testimage:testtag")),
         Arrays.asList("testtag2", "testtag3"));
 
-    String imageReference = "localhost:5001/testimage:testtag";
+    String imageReference = "localhost:5000/testimage:testtag";
     localRegistry.pull(imageReference);
     assertDockerInspect(imageReference);
     Assert.assertEquals(
         "Hello, world. An argument.\n", new Command("docker", "run", "--rm", imageReference).run());
 
-    String imageReference2 = "localhost:5001/testimage:testtag2";
+    String imageReference2 = "localhost:5000/testimage:testtag2";
     localRegistry.pull(imageReference2);
     assertDockerInspect(imageReference2);
     Assert.assertEquals(
         "Hello, world. An argument.\n",
         new Command("docker", "run", "--rm", imageReference2, "--network", "host").run());
 
-    String imageReference3 = "localhost:5001/testimage:testtag3";
+    String imageReference3 = "localhost:5000/testimage:testtag3";
     localRegistry.pull(imageReference3);
     assertDockerInspect(imageReference3);
     Assert.assertEquals(
