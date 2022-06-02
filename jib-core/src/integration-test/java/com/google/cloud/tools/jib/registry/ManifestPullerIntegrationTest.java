@@ -39,6 +39,8 @@ public class ManifestPullerIntegrationTest {
       "sha256:44cbdb9c24e123882d7894ba78fb6f572d2496889885a47eb4b32241a8c07a00";
 
   @ClassRule public static LocalRegistry localRegistry = new LocalRegistry(5000);
+  public final String dockerHost =
+      System.getenv("DOCKER_IP") != null ? System.getenv("DOCKER_IP") : "localhost";
 
   @BeforeClass
   public static void setUp() throws IOException, InterruptedException {
@@ -50,7 +52,7 @@ public class ManifestPullerIntegrationTest {
   @Test
   public void testPull_v21() throws IOException, RegistryException {
     RegistryClient registryClient =
-        RegistryClient.factory(EventHandlers.NONE, "localhost:5000", "busybox", httpClient)
+        RegistryClient.factory(EventHandlers.NONE, dockerHost + ":5000", "busybox", httpClient)
             .newRegistryClient();
 
     V21ManifestTemplate manifestTemplate =
@@ -109,7 +111,7 @@ public class ManifestPullerIntegrationTest {
   public void testPull_unknownManifest() throws RegistryException, IOException {
     try {
       RegistryClient registryClient =
-          RegistryClient.factory(EventHandlers.NONE, "localhost:5000", "busybox", httpClient)
+          RegistryClient.factory(EventHandlers.NONE, dockerHost + ":5000", "busybox", httpClient)
               .newRegistryClient();
       registryClient.pullManifest("nonexistent-tag");
       Assert.fail("Trying to pull nonexistent image should have errored");
@@ -118,7 +120,7 @@ public class ManifestPullerIntegrationTest {
       MatcherAssert.assertThat(
           ex.getMessage(),
           CoreMatchers.containsString(
-              "pull image manifest for localhost:5000/busybox:nonexistent-tag"));
+              "pull image manifest for " + dockerHost + ":5000/busybox:nonexistent-tag"));
     }
   }
 }
