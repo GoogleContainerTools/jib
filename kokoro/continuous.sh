@@ -11,6 +11,7 @@ docker-machine ls
 docker-machine start default
 docker-machine env default
 eval "$(docker-machine env default)"
+export DOCKET_HOST="$(docker-machine ip default)"
 
 export JAVA_HOME="/Library/Java/JavaVirtualMachines/jdk-8-latest/Contents/Home"
 export PATH=$JAVA_HOME/bin:$PATH
