@@ -43,6 +43,8 @@ public class JarCommandTest {
   @ClassRule
   public static final TestProject springBootProject = new TestProject("jarTest/spring-boot");
 
+  private final String dockerHost =
+      System.getenv("DOCKER_IP") != null ? System.getenv("DOCKER_IP") : "localhost";
   @Nullable private String containerName;
 
   @After
@@ -177,7 +179,7 @@ public class JarCommandTest {
     try (JarFile jarFile = new JarFile(jarPath.toFile())) {
 
       assertThat(jarFile.getEntry("BOOT-INF/layers.idx")).isNotNull();
-      assertThat(getContent(new URL("http://localhost:8080"))).isEqualTo("Hello world");
+      assertThat(getContent(new URL("http://" + dockerHost + ":8080"))).isEqualTo("Hello world");
     }
   }
 
@@ -198,7 +200,7 @@ public class JarCommandTest {
     try (JarFile jarFile = new JarFile(jarPath.toFile())) {
 
       assertThat(jarFile.getEntry("BOOT-INF/layers.idx")).isNull();
-      assertThat(getContent(new URL("http://localhost:8080"))).isEqualTo("Hello world");
+      assertThat(getContent(new URL("http://" + dockerHost + ":8080"))).isEqualTo("Hello world");
     }
   }
 
@@ -222,7 +224,7 @@ public class JarCommandTest {
             .run();
     containerName = output.trim();
 
-    assertThat(getContent(new URL("http://localhost:8080"))).isEqualTo("Hello world");
+    assertThat(getContent(new URL("http://" + dockerHost + ":8080"))).isEqualTo("Hello world");
   }
 
   @Test
