@@ -34,6 +34,8 @@ public class BlobPusherIntegrationTest {
   @ClassRule public static final LocalRegistry localRegistry = new LocalRegistry(5000);
 
   private final FailoverHttpClient httpClient = new FailoverHttpClient(true, false, ignored -> {});
+  private final String dockerHost =
+      System.getenv("DOCKER_IP") != null ? System.getenv("DOCKER_IP") : "localhost";
 
   @Test
   public void testPush() throws DigestException, IOException, RegistryException {
@@ -44,7 +46,7 @@ public class BlobPusherIntegrationTest {
             "52a9e4d4ba4333ce593707f98564fee1e6d898db0d3602408c0b2a6a424d357c");
 
     RegistryClient registryClient =
-        RegistryClient.factory(EventHandlers.NONE, "localhost:5000", "testimage", httpClient)
+        RegistryClient.factory(EventHandlers.NONE, dockerHost + ":5000", "testimage", httpClient)
             .newRegistryClient();
     Assert.assertFalse(registryClient.pushBlob(testBlobDigest, testBlob, null, ignored -> {}));
   }

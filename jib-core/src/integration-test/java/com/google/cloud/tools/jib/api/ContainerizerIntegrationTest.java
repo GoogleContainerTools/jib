@@ -54,7 +54,7 @@ import org.slf4j.LoggerFactory;
 public class ContainerizerIntegrationTest {
 
   @Rule public final RestoreSystemProperties systemPropertyRestorer = new RestoreSystemProperties();
-  public final String dockerHost =
+  private final String dockerHost =
       System.getenv("DOCKER_IP") != null ? System.getenv("DOCKER_IP") : "localhost";
 
   /**

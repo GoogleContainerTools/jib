@@ -9,13 +9,14 @@ gcloud components install docker-credential-gcr
 if [ "${KOKORO_JOB_CLUSTER}" = "MACOS_EXTERNAL" ]; then
 docker-machine ls
 docker-machine start default
-docker-machine ssh default "echo '{ \"insecure-registries\":[\"192.168.99.104:5000\"] }' | sudo tee /etc/docker/daemon.json "
+export DOCKER_IP="$(docker-machine ip default)"
+echo $DOCKER_IP
+docker-machine ssh default "echo '{ \"insecure-registries\":[\"$DOCKER_IP:5000\"] }' | sudo tee /etc/docker/daemon.json "
 docker-machine ssh default "echo 'DOCKER_OPTS=\"--config-file=/etc/docker/daemon.json\"' | sudo tee -a /var/lib/boot2docker/profile "
 docker-machine ssh default "sudo /etc/init.d/docker restart"
 docker-machine env default
 eval "$(docker-machine env default)"
-export DOCKER_IP="$(docker-machine ip default)"
-echo $DOCKER_IP
+
 
 export JAVA_HOME="/Library/Java/JavaVirtualMachines/jdk-8-latest/Contents/Home"
 export PATH=$JAVA_HOME/bin:$PATH
