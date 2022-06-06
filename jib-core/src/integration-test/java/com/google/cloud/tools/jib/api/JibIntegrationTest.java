@@ -274,7 +274,7 @@ public class JibIntegrationTest {
         .setPlatforms(
             ImmutableSet.of(new Platform("arm64", "windows"), new Platform("amd32", "windows")))
         .containerize(
-            Containerizer.to(RegistryImage.named("localhost:5000/jib-scratch:multi-platform"))
+            Containerizer.to(RegistryImage.named(dockerHost + ":5000/jib-scratch:multi-platform"))
                 .setAllowInsecureRegistries(true));
 
     V22ManifestListTemplate manifestList =
@@ -318,7 +318,9 @@ public class JibIntegrationTest {
       Assert.fail();
     } catch (ExecutionException ex) {
       Assert.assertEquals(
-          "Cannot run Jib in offline mode; localhost:5000/busybox not found in local Jib cache",
+          "Cannot run Jib in offline mode; "
+              + dockerHost
+              + ":5000/busybox not found in local Jib cache",
           ex.getCause().getMessage());
     }
 
