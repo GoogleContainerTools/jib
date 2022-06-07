@@ -94,7 +94,9 @@ public class JarCommandTest {
                 "--target",
                 "docker://" + dockerHost + ":5000/exploded-jar",
                 jarPath.toString());
-    String output = new Command("docker", "run", "--rm", dockerHost + ":5000/exploded-jar").run();
+    String output =
+        new Command("docker", "run", "--rm", dockerHost + ":5000/exploded-jar", "--network=host")
+            .run();
     try (JarFile jarFile = new JarFile(jarPath.toFile())) {
       String classPath =
           jarFile.getManifest().getMainAttributes().getValue(Attributes.Name.CLASS_PATH);
