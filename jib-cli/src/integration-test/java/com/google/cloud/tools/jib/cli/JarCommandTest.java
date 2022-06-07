@@ -179,7 +179,7 @@ public class JarCommandTest {
     try (JarFile jarFile = new JarFile(jarPath.toFile())) {
 
       assertThat(jarFile.getEntry("BOOT-INF/layers.idx")).isNotNull();
-      assertThat(getContent(new URL("http://" + dockerHost + ":8080"))).isEqualTo("Hello world");
+      assertThat(getContent(new URL("http://localhost:8080"))).isEqualTo("Hello world");
     }
   }
 
@@ -200,7 +200,7 @@ public class JarCommandTest {
     try (JarFile jarFile = new JarFile(jarPath.toFile())) {
 
       assertThat(jarFile.getEntry("BOOT-INF/layers.idx")).isNull();
-      assertThat(getContent(new URL("http://" + dockerHost + ":8080"))).isEqualTo("Hello world");
+      assertThat(getContent(new URL("http://localhost:8080"))).isEqualTo("Hello world");
     }
   }
 
@@ -224,7 +224,7 @@ public class JarCommandTest {
             .run();
     containerName = output.trim();
 
-    assertThat(getContent(new URL("http://" + dockerHost + ":8080"))).isEqualTo("Hello world");
+    assertThat(getContent(new URL("http://localhost:8080"))).isEqualTo("Hello world");
   }
 
   @Test
