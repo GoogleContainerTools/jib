@@ -93,6 +93,7 @@ public class JarCommandTest {
                 "jar",
                 "--target",
                 "docker://" + dockerHost + ":5000/exploded-jar",
+                "--from=gcr.io/google-appengine/openjdk:8",
                 jarPath.toString());
     try {
       new Command("docker", "run", "--rm", dockerHost + ":5000/exploded-jar", "--network=host")
