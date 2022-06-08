@@ -20,6 +20,7 @@ import static com.google.common.truth.Truth.assertThat;
 
 import com.google.cloud.tools.jib.Command;
 import com.google.cloud.tools.jib.blob.Blobs;
+import com.google.cloud.tools.jib.registry.LocalRegistry;
 import com.google.common.io.Resources;
 import java.io.IOException;
 import java.io.InputStream;
@@ -42,6 +43,8 @@ public class JarCommandTest {
 
   @ClassRule
   public static final TestProject springBootProject = new TestProject("jarTest/spring-boot");
+
+  @ClassRule public static final LocalRegistry localRegistry = new LocalRegistry(5000);
 
   private final String dockerHost =
       System.getenv("DOCKER_IP") != null ? System.getenv("DOCKER_IP") : "localhost";
@@ -92,12 +95,12 @@ public class JarCommandTest {
             .execute(
                 "jar",
                 "--target",
-                "docker://" + dockerHost + ":5000/exploded-jar",
-                "--from=gcr.io/google-appengine/openjdk:8",
+                "docker://exploded-jar",
+                "--from",
+                dockerHost + ":5000/eclipse-temurin:8-jre",
                 jarPath.toString());
     try {
-      new Command("docker", "run", "--rm", dockerHost + ":5000/exploded-jar", "--network=host")
-          .run();
+      new Command("docker", "run", "--rm", "exploded-jar", "--network=host").run();
       assertThat(exitCode).isEqualTo(0);
     } catch (Exception e) {
       System.out.println(e.getMessage());
