@@ -163,7 +163,7 @@ public class JarCommandTest {
                 "docker://packaged-no-dep-jar",
                 jarPath.toString(),
                 "--mode=packaged",
-                "--from=gcr.io/google-appengine/openjdk:8");
+                "--from=eclipse-temurin:8-jre");
     String output = new Command("docker", "run", "--rm", "packaged-no-dep-jar").run();
     try (JarFile jarFile = new JarFile(jarPath.toFile())) {
       String classPath =
@@ -188,7 +188,7 @@ public class JarCommandTest {
                 "--target",
                 "docker://spring-boot-jar-layered",
                 jarPath.toString(),
-                "--from=gcr.io/google-appengine/openjdk:8");
+                "--from=busybox");
     assertThat(exitCode).isEqualTo(0);
 
     String output =
