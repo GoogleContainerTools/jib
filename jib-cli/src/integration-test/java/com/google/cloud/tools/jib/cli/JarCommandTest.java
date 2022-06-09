@@ -92,12 +92,7 @@ public class JarCommandTest {
             .execute("jar", "--target", "docker://exploded-jar", jarPath.toString());
     String output =
         new Command(
-                "docker",
-                "run",
-                "--rm",
-                "exploded-jar",
-                "--network=host",
-                "--from=gcr.io/google-appengine/openjdk:8")
+                "docker", "run", "--rm", "exploded-jar", "--from=gcr.io/google-appengine/openjdk:8")
             .run();
     try (JarFile jarFile = new JarFile(jarPath.toFile())) {
       String classPath =
