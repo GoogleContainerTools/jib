@@ -44,8 +44,6 @@ public class JarCommandTest {
   @ClassRule
   public static final TestProject springBootProject = new TestProject("jarTest/spring-boot");
 
-  @ClassRule public static final LocalRegistry localRegistry = new LocalRegistry(5000);
-
   private final String dockerHost =
       System.getenv("DOCKER_IP") != null ? System.getenv("DOCKER_IP") : "localhost";
   @Nullable private String containerName;
@@ -96,25 +94,17 @@ public class JarCommandTest {
                 "jar",
                 "--target",
                 "docker://exploded-jar",
-                "--from",
-                dockerHost + ":5000/eclipse-temurin:8-jre",
                 jarPath.toString());
-    try {
+    String output =
       new Command("docker", "run", "--rm", "exploded-jar", "--network=host").run();
-      assertThat(exitCode).isEqualTo(0);
-    } catch (Exception e) {
-      System.out.println(e.getMessage());
-      e.printStackTrace();
-    }
+    try (JarFile jarFile = new JarFile(jarPath.toFile())) {
+      String classPath =
+          jarFile.getManifest().getMainAttributes().getValue(Attributes.Name.CLASS_PATH);
 
-    // try (JarFile jarFile = new JarFile(jarPath.toFile())) {
-    //   String classPath =
-    //       jarFile.getManifest().getMainAttributes().getValue(Attributes.Name.CLASS_PATH);
-    //
-    //   assertThat(classPath).isEqualTo("dependency1.jar directory/dependency2.jar");
-    //   assertThat(exitCode).isEqualTo(0);
-    //   assertThat(output).isEqualTo("Hello World");
-    // }
+      assertThat(classPath).isEqualTo("dependency1.jar directory/dependency2.jar");
+      assertThat(exitCode).isEqualTo(0);
+      assertThat(output).isEqualTo("Hello World");
+    }
   }
 
   @Test
