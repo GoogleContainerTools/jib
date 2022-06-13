@@ -90,10 +90,7 @@ public class JarCommandTest {
     Integer exitCode =
         new CommandLine(new JibCli())
             .execute("jar", "--target", "docker://exploded-jar", jarPath.toString());
-    String output =
-        new Command(
-                "docker", "run", "--rm", "exploded-jar", "--from=gcr.io/google-appengine/openjdk:8")
-            .run();
+    String output = new Command("docker", "run", "--rm", "exploded-jar", "--privileged").run();
     try (JarFile jarFile = new JarFile(jarPath.toFile())) {
       String classPath =
           jarFile.getManifest().getMainAttributes().getValue(Attributes.Name.CLASS_PATH);
@@ -110,13 +107,9 @@ public class JarCommandTest {
     Path jarPath = Paths.get(Resources.getResource("jarTest/standard/noDependencyJar.jar").toURI());
     Integer exitCode =
         new CommandLine(new JibCli())
-            .execute(
-                "jar",
-                "--target",
-                "docker://exploded-no-dep-jar",
-                jarPath.toString(),
-                "--from=gcr.io/google-appengine/openjdk:8");
-    String output = new Command("docker", "run", "--rm", "exploded-no-dep-jar").run();
+            .execute("jar", "--target", "docker://exploded-no-dep-jar", jarPath.toString());
+    String output =
+        new Command("docker", "run", "--rm", "exploded-no-dep-jar", "--privileged").run();
     try (JarFile jarFile = new JarFile(jarPath.toFile())) {
       String classPath =
           jarFile.getManifest().getMainAttributes().getValue(Attributes.Name.CLASS_PATH);
@@ -134,13 +127,8 @@ public class JarCommandTest {
     Integer exitCode =
         new CommandLine(new JibCli())
             .execute(
-                "jar",
-                "--target",
-                "docker://packaged-jar",
-                jarPath.toString(),
-                "--mode=packaged",
-                "--from=gcr.io/google-appengine/openjdk:8");
-    String output = new Command("docker", "run", "--rm", "packaged-jar").run();
+                "jar", "--target", "docker://packaged-jar", jarPath.toString(), "--mode=packaged");
+    String output = new Command("docker", "run", "--rm", "packaged-jar", "--privileged").run();
     try (JarFile jarFile = new JarFile(jarPath.toFile())) {
       String classPath =
           jarFile.getManifest().getMainAttributes().getValue(Attributes.Name.CLASS_PATH);
@@ -162,9 +150,9 @@ public class JarCommandTest {
                 "--target",
                 "docker://packaged-no-dep-jar",
                 jarPath.toString(),
-                "--mode=packaged",
-                "--from=eclipse-temurin:8-jre");
-    String output = new Command("docker", "run", "--rm", "packaged-no-dep-jar").run();
+                "--mode=packaged");
+    String output =
+        new Command("docker", "run", "--rm", "packaged-no-dep-jar", "--privileged").run();
     try (JarFile jarFile = new JarFile(jarPath.toFile())) {
       String classPath =
           jarFile.getManifest().getMainAttributes().getValue(Attributes.Name.CLASS_PATH);
@@ -183,16 +171,18 @@ public class JarCommandTest {
 
     Integer exitCode =
         new CommandLine(new JibCli())
-            .execute(
-                "jar",
-                "--target",
-                "docker://spring-boot-jar-layered",
-                jarPath.toString(),
-                "--from=busybox");
+            .execute("jar", "--target", "docker://spring-boot-jar-layered", jarPath.toString());
     assertThat(exitCode).isEqualTo(0);
 
     String output =
-        new Command("docker", "run", "--rm", "--detach", "-p8080:8080", "spring-boot-jar-layered")
+        new Command(
+                "docker",
+                "run",
+                "--rm",
+                "--detach",
+                "-p8080:8080",
+                "spring-boot-jar-layered",
+                "--privileged")
             .run();
     containerName = output.trim();
     try (JarFile jarFile = new JarFile(jarPath.toFile())) {
@@ -210,16 +200,19 @@ public class JarCommandTest {
 
     Integer exitCode =
         new CommandLine(new JibCli())
-            .execute(
-                "jar",
-                "--target",
-                "docker://spring-boot-jar",
-                jarPath.toString(),
-                "--from=gcr.io/google-appengine/openjdk:8");
+            .execute("jar", "--target", "docker://spring-boot-jar", jarPath.toString());
     assertThat(exitCode).isEqualTo(0);
 
     String output =
-        new Command("docker", "run", "--rm", "--detach", "-p8080:8080", "spring-boot-jar").run();
+        new Command(
+                "docker",
+                "run",
+                "--rm",
+                "--detach",
+                "-p8080:8080",
+                "spring-boot-jar",
+                "--privileged")
+            .run();
     containerName = output.trim();
     try (JarFile jarFile = new JarFile(jarPath.toFile())) {
 
@@ -240,12 +233,18 @@ public class JarCommandTest {
                 "--target",
                 "docker://packaged-spring-boot",
                 jarPath.toString(),
-                "--mode=packaged",
-                "--from=gcr.io/google-appengine/openjdk:8");
+                "--mode=packaged");
     assertThat(exitCode).isEqualTo(0);
 
     String output =
-        new Command("docker", "run", "--rm", "--detach", "-p8080:8080", "packaged-spring-boot")
+        new Command(
+                "docker",
+                "run",
+                "--rm",
+                "--detach",
+                "-p8080:8080",
+                "packaged-spring-boot",
+                "--privileged")
             .run();
     containerName = output.trim();
 

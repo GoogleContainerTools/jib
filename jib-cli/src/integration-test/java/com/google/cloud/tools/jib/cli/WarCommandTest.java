@@ -85,15 +85,12 @@ public class WarCommandTest {
     Path warPath = warParentPath.resolve("standard-war.war");
     Integer exitCode =
         new CommandLine(new JibCli())
-            .execute(
-                "war",
-                "--target",
-                "docker://exploded-war",
-                warPath.toString(),
-                "--from=jetty:9.4-jre11");
+            .execute("war", "--target", "docker://exploded-war", warPath.toString());
     assertThat(exitCode).isEqualTo(0);
     String output =
-        new Command("docker", "run", "--rm", "--detach", "-p8080:8080", "exploded-war").run();
+        new Command(
+                "docker", "run", "--rm", "--detach", "-p8080:8080", "exploded-war", "--privileged")
+            .run();
     containerName = output.trim();
 
     assertThat(getContent(new URL("http://" + dockerHost + ":8080/hello")))
