@@ -89,7 +89,14 @@ public class WarCommandTest {
     assertThat(exitCode).isEqualTo(0);
     String output =
         new Command(
-                "docker", "run", "--rm", "--detach", "-p8080:8080", "exploded-war", "--privileged")
+                "docker",
+                "run",
+                "--rm",
+                "--detach",
+                "-p8080:8080",
+                "exploded-war",
+                "--privileged",
+                "--network=host")
             .run();
     containerName = output.trim();
 

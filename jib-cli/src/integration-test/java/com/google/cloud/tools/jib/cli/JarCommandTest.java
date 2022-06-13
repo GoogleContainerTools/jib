@@ -90,7 +90,9 @@ public class JarCommandTest {
     Integer exitCode =
         new CommandLine(new JibCli())
             .execute("jar", "--target", "docker://exploded-jar", jarPath.toString());
-    String output = new Command("docker", "run", "--rm", "exploded-jar", "--privileged").run();
+    String output =
+        new Command("docker", "run", "--rm", "exploded-jar", "--privileged", "--network=host")
+            .run();
     try (JarFile jarFile = new JarFile(jarPath.toFile())) {
       String classPath =
           jarFile.getManifest().getMainAttributes().getValue(Attributes.Name.CLASS_PATH);
@@ -109,7 +111,9 @@ public class JarCommandTest {
         new CommandLine(new JibCli())
             .execute("jar", "--target", "docker://exploded-no-dep-jar", jarPath.toString());
     String output =
-        new Command("docker", "run", "--rm", "exploded-no-dep-jar", "--privileged").run();
+        new Command(
+                "docker", "run", "--rm", "exploded-no-dep-jar", "--privileged", "--network=host")
+            .run();
     try (JarFile jarFile = new JarFile(jarPath.toFile())) {
       String classPath =
           jarFile.getManifest().getMainAttributes().getValue(Attributes.Name.CLASS_PATH);
@@ -128,7 +132,9 @@ public class JarCommandTest {
         new CommandLine(new JibCli())
             .execute(
                 "jar", "--target", "docker://packaged-jar", jarPath.toString(), "--mode=packaged");
-    String output = new Command("docker", "run", "--rm", "packaged-jar", "--privileged").run();
+    String output =
+        new Command("docker", "run", "--rm", "packaged-jar", "--privileged", "--network=host")
+            .run();
     try (JarFile jarFile = new JarFile(jarPath.toFile())) {
       String classPath =
           jarFile.getManifest().getMainAttributes().getValue(Attributes.Name.CLASS_PATH);
@@ -152,7 +158,9 @@ public class JarCommandTest {
                 jarPath.toString(),
                 "--mode=packaged");
     String output =
-        new Command("docker", "run", "--rm", "packaged-no-dep-jar", "--privileged").run();
+        new Command(
+                "docker", "run", "--rm", "packaged-no-dep-jar", "--privileged", "--network=host")
+            .run();
     try (JarFile jarFile = new JarFile(jarPath.toFile())) {
       String classPath =
           jarFile.getManifest().getMainAttributes().getValue(Attributes.Name.CLASS_PATH);
@@ -182,7 +190,8 @@ public class JarCommandTest {
                 "--detach",
                 "-p8080:8080",
                 "spring-boot-jar-layered",
-                "--privileged")
+                "--privileged",
+                "--network=host")
             .run();
     containerName = output.trim();
     try (JarFile jarFile = new JarFile(jarPath.toFile())) {
@@ -211,7 +220,8 @@ public class JarCommandTest {
                 "--detach",
                 "-p8080:8080",
                 "spring-boot-jar",
-                "--privileged")
+                "--privileged",
+                "--network=host")
             .run();
     containerName = output.trim();
     try (JarFile jarFile = new JarFile(jarPath.toFile())) {
@@ -233,7 +243,8 @@ public class JarCommandTest {
                 "--target",
                 "docker://packaged-spring-boot",
                 jarPath.toString(),
-                "--mode=packaged");
+                "--mode=packaged",
+                "--network=host");
     assertThat(exitCode).isEqualTo(0);
 
     String output =
@@ -244,7 +255,8 @@ public class JarCommandTest {
                 "--detach",
                 "-p8080:8080",
                 "packaged-spring-boot",
-                "--privileged")
+                "--privileged",
+                "--network=host")
             .run();
     containerName = output.trim();
 
