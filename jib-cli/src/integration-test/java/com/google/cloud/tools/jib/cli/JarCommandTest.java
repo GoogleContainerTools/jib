@@ -106,7 +106,8 @@ public class JarCommandTest {
     Integer exitCode =
         new CommandLine(new JibCli())
             .execute("jar", "--target", "docker://exploded-no-dep-jar", jarPath.toString());
-    String output = new Command("docker", "run", "--rm", "exploded-no-dep-jar").run();
+    String output =
+        new Command("docker", "-l", "debug", "run", "--rm", "exploded-no-dep-jar").run();
     try (JarFile jarFile = new JarFile(jarPath.toFile())) {
       String classPath =
           jarFile.getManifest().getMainAttributes().getValue(Attributes.Name.CLASS_PATH);
