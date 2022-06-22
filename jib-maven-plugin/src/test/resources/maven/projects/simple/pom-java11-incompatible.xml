@@ -40,7 +40,7 @@
         <version>${jib-maven-plugin.version}</version>
         <configuration>
           <from>
-            <image>gcr.io/distroless/java</image>
+            <image>eclipse-temurin:8-jdk-focal</image>
           </from>
           <to>
             <image>${_TARGET_IMAGE}</image>
