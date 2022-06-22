@@ -27,5 +27,6 @@ jib {
   to {
     image = System.getProperty("_TARGET_IMAGE")
   }
+  from.image = 'eclipse-temurin:11-jdk-focal'
   containerizingMode = 'packaged'
 }

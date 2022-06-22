@@ -14,5 +14,5 @@ dependencies {
   compile files('libs/dependency-1.0.0.jar')
 }
 
-jib.from.image = 'gcr.io/distroless/java'
+jib.from.image = 'eclipse-temurin:8-jdk-focal'
 jib.to.image = System.getProperty("_TARGET_IMAGE")

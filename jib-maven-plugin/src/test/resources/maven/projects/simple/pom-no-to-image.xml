@@ -40,6 +40,11 @@
         <groupId>com.google.cloud.tools</groupId>
         <artifactId>jib-maven-plugin</artifactId>
         <version>${jib-maven-plugin.version}</version>
+        <configuration>
+          <from>
+            <image>eclipse-temurin:11-jdk-focal</image>
+          </from>
+        </configuration>
       </plugin>
     </plugins>
   </build>

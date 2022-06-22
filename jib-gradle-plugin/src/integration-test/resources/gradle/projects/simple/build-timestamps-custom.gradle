@@ -15,6 +15,7 @@ dependencies {
 }
 
 jib {
+  from.image = 'eclipse-temurin:11-jdk-focal'
   to.image = System.getProperty("_TARGET_IMAGE")
   container.filesModificationTime = '2011-12-03T10:15:30+09:00'
   container.creationTime = '2013-11-05T06:29:30+09:00'
