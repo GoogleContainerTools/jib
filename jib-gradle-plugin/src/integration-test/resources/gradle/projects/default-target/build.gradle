@@ -15,6 +15,7 @@ dependencies {
 }
 
 jib {
+  from.image = 'eclipse-temurin:8-jdk-focal'
   container {
     args = ['An argument.']
     ports = ['1000/tcp', '2000-2003/udp']

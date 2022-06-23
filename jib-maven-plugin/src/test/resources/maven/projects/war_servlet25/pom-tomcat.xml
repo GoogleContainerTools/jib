@@ -45,7 +45,7 @@
         <version>${jib-maven-plugin.version}</version>
         <configuration>
           <from>
-            <image>tomcat:10-jre8-temurin</image>
+            <image>tomcat:10-jre8-temurin-focal</image>
           </from>
           <to>
             <image>${_TARGET_IMAGE}</image>

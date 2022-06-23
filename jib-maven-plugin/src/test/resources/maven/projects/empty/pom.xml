@@ -29,6 +29,9 @@
         <artifactId>jib-maven-plugin</artifactId>
         <version>${jib-maven-plugin.version}</version>
         <configuration>
+          <from>
+            <image>eclipse-temurin:11-jdk-focal</image>
+          </from>
           <to>
             <image>${_TARGET_IMAGE}</image>
             <tags>${_ADDITIONAL_TAG}</tags>

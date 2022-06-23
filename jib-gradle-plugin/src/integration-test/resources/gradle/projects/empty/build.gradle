@@ -13,6 +13,7 @@ repositories {
 }
 
 jib {
+  from.image = 'eclipse-temurin:8-jdk-focal'
   to {
     image = System.getProperty('_TARGET_IMAGE')
     credHelper = 'gcr'
