@@ -3,11 +3,11 @@ plugins {
   id 'com.github.sherter.google-java-format' version '0.9' apply false
   id 'net.ltgt.errorprone' version '2.0.2' apply false
   id 'net.researchgate.release' version '2.8.1' apply false
-  id 'com.gradle.plugin-publish' version '0.20.0' apply false
+  id 'com.gradle.plugin-publish' version '0.21.0' apply false
   id 'io.freefair.maven-plugin' version '5.3.3.3' apply false
 
   // apply so that we can collect quality metrics at the root project level
-  id 'org.sonarqube' version '3.3'
+  id 'org.sonarqube' version '3.4.0.2513'
 }
 
 /* PROJECT DEPENDENCY VERSIONS */
@@ -19,7 +19,7 @@ project.ext.dependencyStrings = [
   GOOGLE_HTTP_CLIENT: 'com.google.http-client:google-http-client:1.34.0',
   GOOGLE_HTTP_CLIENT_APACHE_V2: 'com.google.http-client:google-http-client-apache-v2:1.34.0',
   GOOGLE_AUTH_LIBRARY_OAUTH2_HTTP: 'com.google.auth:google-auth-library-oauth2-http:0.18.0',
-  GUAVA: 'com.google.guava:guava:31.0.1-jre',
+  GUAVA: 'com.google.guava:guava:31.1-jre',
   JSR305: 'com.google.code.findbugs:jsr305:3.0.2', // transitively pulled in by GUAVA
 
   // for Build Plan and Jib Plugins Extension API
@@ -30,15 +30,15 @@ project.ext.dependencyStrings = [
 
   COMMONS_COMPRESS: 'org.apache.commons:commons-compress:1.21',
   COMMONS_TEXT: 'org.apache.commons:commons-text:1.9',
-  JACKSON_DATABIND: 'com.fasterxml.jackson.core:jackson-databind:2.13.1',
-  JACKSON_DATAFORMAT_YAML: 'com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.13.1',
-  JACKSON_DATATYPE_JSR310: 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.13.1',
-  ASM: 'org.ow2.asm:asm:9.2',
+  JACKSON_DATABIND: 'com.fasterxml.jackson.core:jackson-databind:2.13.3',
+  JACKSON_DATAFORMAT_YAML: 'com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.13.3',
+  JACKSON_DATATYPE_JSR310: 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.13.3',
+  ASM: 'org.ow2.asm:asm:9.3',
   PICOCLI: 'info.picocli:picocli:4.6.3',
 
-  MAVEN_API: 'org.apache.maven:maven-plugin-api:3.8.4',
-  MAVEN_CORE: 'org.apache.maven:maven-core:3.8.4',
-  MAVEN_COMPAT: 'org.apache.maven:maven-compat:3.8.4',
+  MAVEN_API: 'org.apache.maven:maven-plugin-api:3.8.5',
+  MAVEN_CORE: 'org.apache.maven:maven-core:3.8.5',
+  MAVEN_COMPAT: 'org.apache.maven:maven-compat:3.8.5',
   MAVEN_PLUGIN_ANNOTATIONS: 'org.apache.maven.plugin-tools:maven-plugin-annotations:3.6.4',
 
   //test
@@ -47,8 +47,8 @@ project.ext.dependencyStrings = [
   JUNIT: 'junit:junit:4.13.2',
   JUNIT_PARAMS: 'pl.pragmatists:JUnitParams:1.1.1',
   MAVEN_TESTING_HARNESS: 'org.apache.maven.plugin-testing:maven-plugin-testing-harness:3.3.0',
-  MAVEN_VERIFIER: 'org.apache.maven.shared:maven-verifier:1.7.2',
-  MOCKITO_CORE: 'org.mockito:mockito-core:4.3.1',
+  MAVEN_VERIFIER: 'org.apache.maven.shared:maven-verifier:1.8.0',
+  MOCKITO_CORE: 'org.mockito:mockito-core:4.6.1',
   SISU_PLEXUS: 'org.eclipse.sisu:org.eclipse.sisu.plexus:0.3.5',
   SLF4J_API: 'org.slf4j:slf4j-api:1.7.30',
   SLF4J_SIMPLE: 'org.slf4j:slf4j-simple:1.7.36',
@@ -106,7 +106,7 @@ subprojects {
   /* ERROR PRONE */
   dependencies {
     // NullAway errorprone plugin
-    annotationProcessor 'com.uber.nullaway:nullaway:0.9.5'
+    annotationProcessor 'com.uber.nullaway:nullaway:0.9.7'
     errorprone 'com.google.errorprone:error_prone_core:2.10.0'
     // Using github.com/google/error-prone-javac is required when running on
     // JDK 8. Remove when migrating to JDK 11.
@@ -260,6 +260,14 @@ subprojects {
                  'Built-Date': new Date(),
                  'Built-JDK': System.getProperty('java.version'),
                  'Built-Gradle': gradle.gradleVersion
+    }
+  }
+  normalization {
+    runtimeClasspath {
+      metaInf {
+        ignoreAttribute("Built-By")
+        ignoreAttribute("Built-Date")
+      }
     }
   }
   /* JAR */

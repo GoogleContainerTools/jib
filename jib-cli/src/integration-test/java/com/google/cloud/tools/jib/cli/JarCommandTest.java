@@ -89,10 +89,17 @@ public class JarCommandTest {
     Path jarPath = Paths.get(Resources.getResource("jarTest/standard/jarWithCp.jar").toURI());
     Integer exitCode =
         new CommandLine(new JibCli())
-            .execute("jar", "--target", "docker://exploded-jar", jarPath.toString());
+            .execute(
+                "jar",
+                "--from",
+                "eclipse-temurin:8-jdk-focal",
+                "--target",
+                "docker://exploded-jar",
+                jarPath.toString());
     String output =
         new Command("docker", "run", "--rm", "exploded-jar", "--privileged", "--network=host")
             .run();
+
     try (JarFile jarFile = new JarFile(jarPath.toFile())) {
       String classPath =
           jarFile.getManifest().getMainAttributes().getValue(Attributes.Name.CLASS_PATH);
@@ -109,7 +116,13 @@ public class JarCommandTest {
     Path jarPath = Paths.get(Resources.getResource("jarTest/standard/noDependencyJar.jar").toURI());
     Integer exitCode =
         new CommandLine(new JibCli())
-            .execute("jar", "--target", "docker://exploded-no-dep-jar", jarPath.toString());
+            .execute(
+                "jar",
+                "--from",
+                "eclipse-temurin:8-jdk-focal",
+                "--target",
+                "docker://exploded-no-dep-jar",
+                jarPath.toString());
     String output =
         new Command(
                 "docker", "run", "--rm", "exploded-no-dep-jar", "--privileged", "--network=host")
@@ -131,10 +144,17 @@ public class JarCommandTest {
     Integer exitCode =
         new CommandLine(new JibCli())
             .execute(
-                "jar", "--target", "docker://packaged-jar", jarPath.toString(), "--mode=packaged");
+                "jar",
+                "--from",
+                "eclipse-temurin:8-jdk-focal",
+                "--target",
+                "docker://packaged-jar",
+                jarPath.toString(),
+                "--mode=packaged");
     String output =
         new Command("docker", "run", "--rm", "packaged-jar", "--privileged", "--network=host")
             .run();
+
     try (JarFile jarFile = new JarFile(jarPath.toFile())) {
       String classPath =
           jarFile.getManifest().getMainAttributes().getValue(Attributes.Name.CLASS_PATH);
@@ -153,6 +173,8 @@ public class JarCommandTest {
         new CommandLine(new JibCli())
             .execute(
                 "jar",
+                "--from",
+                "eclipse-temurin:8-jdk-focal",
                 "--target",
                 "docker://packaged-no-dep-jar",
                 jarPath.toString(),
@@ -179,7 +201,13 @@ public class JarCommandTest {
 
     Integer exitCode =
         new CommandLine(new JibCli())
-            .execute("jar", "--target", "docker://spring-boot-jar-layered", jarPath.toString());
+            .execute(
+                "jar",
+                "--from",
+                "eclipse-temurin:8-jdk-focal",
+                "--target",
+                "docker://spring-boot-jar-layered",
+                jarPath.toString());
     assertThat(exitCode).isEqualTo(0);
 
     String output =
@@ -209,7 +237,13 @@ public class JarCommandTest {
 
     Integer exitCode =
         new CommandLine(new JibCli())
-            .execute("jar", "--target", "docker://spring-boot-jar", jarPath.toString());
+            .execute(
+                "jar",
+                "--from",
+                "eclipse-temurin:8-jdk-focal",
+                "--target",
+                "docker://spring-boot-jar",
+                jarPath.toString());
     assertThat(exitCode).isEqualTo(0);
 
     String output =
@@ -240,6 +274,8 @@ public class JarCommandTest {
         new CommandLine(new JibCli())
             .execute(
                 "jar",
+                "--from",
+                "eclipse-temurin:8-jdk-focal",
                 "--target",
                 "docker://packaged-spring-boot",
                 jarPath.toString(),

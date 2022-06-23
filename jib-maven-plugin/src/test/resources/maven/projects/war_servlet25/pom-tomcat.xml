@@ -16,15 +16,15 @@
 
   <dependencies>
     <dependency>
-      <groupId>javax.servlet</groupId>
-      <artifactId>servlet-api</artifactId>
-      <version>2.5</version>
+      <groupId>jakarta.servlet</groupId>
+      <artifactId>jakarta.servlet-api</artifactId>
+      <version>5.0.0</version>
       <scope>provided</scope>
     </dependency>
     <dependency>  <!-- random dependency -->
-      <groupId>javax.annotation</groupId>
-      <artifactId>javax.annotation-api</artifactId>
-      <version>1.2</version>
+      <groupId>jakarta.annotation</groupId>
+      <artifactId>jakarta.annotation-api</artifactId>
+      <version>2.1.0</version>
     </dependency>
   </dependencies>
 
@@ -45,7 +45,7 @@
         <version>${jib-maven-plugin.version}</version>
         <configuration>
           <from>
-            <image>tomcat:8.5-jre8-alpine</image>
+            <image>tomcat:10-jre8-temurin</image>
           </from>
           <to>
             <image>${_TARGET_IMAGE}</image>

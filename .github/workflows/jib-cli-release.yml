@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check out code
-        uses: actions/checkout@v2.4.0
+        uses: actions/checkout@v3
 
       - name: Build project
         run: |
@@ -41,7 +41,8 @@ jobs:
           ./gradlew jib-cli:instDist --stacktrace
 
           cd jib-cli/build/distributions
-          sha256sum jib-${{ github.event.inputs.release_version }}.zip > zip.sha256
+          mv jib-${{ github.event.inputs.release_version }}.zip jib-jre-${{ github.event.inputs.release_version }}.zip
+          sha256sum jib-jre-${{ github.event.inputs.release_version }}.zip > zip.sha256
 
       - name: Create pull request
         uses: repo-sync/pull-request@v2.6
@@ -75,7 +76,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create-release.outputs.upload_url }}
-          asset_path: ./jib-cli/build/distributions/jib-${{ github.event.inputs.release_version }}.zip
+          asset_path: ./jib-cli/build/distributions/jib-jre-${{ github.event.inputs.release_version }}.zip
           asset_name: jib-jre-${{ github.event.inputs.release_version }}.zip
           asset_content_type: application/zip
 

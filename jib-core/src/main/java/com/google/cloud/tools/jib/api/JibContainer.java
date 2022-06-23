@@ -29,17 +29,20 @@ public class JibContainer {
   private final DescriptorDigest imageDigest;
   private final DescriptorDigest imageId;
   private final Set<String> tags;
+  private final boolean imagePushed;
 
   @VisibleForTesting
   JibContainer(
       ImageReference targetImage,
       DescriptorDigest imageDigest,
       DescriptorDigest imageId,
-      Set<String> tags) {
+      Set<String> tags,
+      boolean imagePushed) {
     this.targetImage = targetImage;
     this.imageDigest = imageDigest;
     this.imageId = imageId;
     this.tags = tags;
+    this.imagePushed = imagePushed;
   }
 
   static JibContainer from(BuildContext buildContext, BuildResult buildResult) {
@@ -47,7 +50,7 @@ public class JibContainer {
     DescriptorDigest imageDigest = buildResult.getImageDigest();
     DescriptorDigest imageId = buildResult.getImageId();
     Set<String> tags = buildContext.getAllTargetImageTags();
-    return new JibContainer(targetImage, imageDigest, imageId, tags);
+    return new JibContainer(targetImage, imageDigest, imageId, tags, buildResult.isImagePushed());
   }
 
   /**
@@ -57,6 +60,15 @@ public class JibContainer {
    */
   public ImageReference getTargetImage() {
     return targetImage;
+  }
+
+  /**
+   * Returns true if we pushed this image all the way to a registry.
+   *
+   * @return true if pushed.
+   */
+  public boolean isImagePushed() {
+    return imagePushed;
   }
 
   /**
@@ -89,7 +101,7 @@ public class JibContainer {
 
   @Override
   public int hashCode() {
-    return Objects.hash(targetImage, imageDigest, imageId, tags);
+    return Objects.hash(targetImage, imageDigest, imageId, tags, imagePushed);
   }
 
   @Override
@@ -104,6 +116,7 @@ public class JibContainer {
     return targetImage.equals(otherContainer.targetImage)
         && imageDigest.equals(otherContainer.imageDigest)
         && imageId.equals(otherContainer.imageId)
-        && tags.equals(otherContainer.tags);
+        && tags.equals(otherContainer.tags)
+        && imagePushed == otherContainer.imagePushed;
   }
 }

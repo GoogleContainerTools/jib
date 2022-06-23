@@ -4,10 +4,21 @@ All notable changes to this project will be documented in this file.
 ## [unreleased]
 
 ### Added
+- Included `imagePushed` field to image metadata json output file which provides information on whether an image was pushed by Jib. ([#3641](https://github.com/GoogleContainerTools/jib/pull/3641))
 
 ### Changed
 
 ### Fixed
+
+## 0.10.0
+
+### Changed
+
+- Upgraded jackson-databind to 2.13.2.2 ([#3612](https://github.com/GoogleContainerTools/jib/issues/3612)).
+
+### Fixed
+
+- Incorrect release sha256 file for jib-cli. ([#3584](https://github.com/GoogleContainerTools/jib/issues/3584))
 
 ## 0.9.0
 

@@ -34,6 +34,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
 /** Immutable configuration options for the container. */
@@ -141,9 +142,14 @@ public class ContainerConfiguration {
         Preconditions.checkArgument(
             !Iterables.any(environmentMap.keySet(), Objects::isNull),
             "environment map contains null keys");
+        String nullValuedKeys =
+            environmentMap.entrySet().stream()
+                .filter(entry -> entry.getValue() == null)
+                .map(Map.Entry::getKey)
+                .collect(Collectors.joining(", "));
         Preconditions.checkArgument(
-            !Iterables.any(environmentMap.values(), Objects::isNull),
-            "environment map contains null values");
+            nullValuedKeys.isEmpty(),
+            "environment map contains null values for key(s): " + nullValuedKeys);
         this.environmentMap = new HashMap<>(environmentMap);
       }
       return this;

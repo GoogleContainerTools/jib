@@ -115,7 +115,7 @@ public class WarCommandTest {
                 "war",
                 "--target",
                 "docker://exploded-war-custom-jetty",
-                "--from=jetty:9.4-jre11",
+                "--from=jetty:11.0-jre11-slim-openjdk",
                 warPath.toString());
     assertThat(exitCode).isEqualTo(0);
     String output =
@@ -138,7 +138,7 @@ public class WarCommandTest {
                 "war",
                 "--target",
                 "docker://exploded-war-tomcat",
-                "--from=tomcat:8.5-jre8-alpine",
+                "--from=tomcat:10-jre8-openjdk-slim",
                 "--app-root",
                 "/usr/local/tomcat/webapps/ROOT",
                 warPath.toString());

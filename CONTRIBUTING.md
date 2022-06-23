@@ -125,8 +125,8 @@ To use a local build of the `jib-gradle-plugin`:
   1. Modify your test project's `build.gradle` to use the snapshot version
         ```groovy
         plugins {
-          // id 'com.google.cloud.tools.jib' version '3.2.0'
-          id 'com.google.cloud.tools.jib' version '3.2.1-SNAPSHOT'
+          // id 'com.google.cloud.tools.jib' version '3.2.1'
+          id 'com.google.cloud.tools.jib' version '3.2.2-SNAPSHOT'
         }
 
         ```

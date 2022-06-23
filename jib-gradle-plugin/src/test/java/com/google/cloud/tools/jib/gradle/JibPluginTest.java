@@ -137,7 +137,7 @@ public class JibPluginTest {
     // Gradle tests aren't run from a jar and so don't have an identifiable plugin version
     assertThat(exception)
         .hasMessageThat()
-        .isEqualTo("Failed to apply plugin [id 'com.google.cloud.tools.jib']");
+        .isEqualTo("Failed to apply plugin 'com.google.cloud.tools.jib'.");
     assertThat(exception.getCause())
         .hasMessageThat()
         .isEqualTo("Could not determine Jib plugin version");

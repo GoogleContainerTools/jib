@@ -173,6 +173,10 @@ public class ContainerParameters {
     this.format = format;
   }
 
+  public void setFormat(String format) {
+    this.format = ImageFormat.valueOf(format);
+  }
+
   @Input
   @Optional
   public List<String> getPorts() {

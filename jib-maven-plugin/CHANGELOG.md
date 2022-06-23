@@ -5,16 +5,17 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- Included `imagePushed` field to image metadata json output file which provides information on whether an image was pushed by Jib. Note that the output file is `build/jib-image.json` by default or configurable with `jib.outputPaths.imageJson`. ([#3641](https://github.com/GoogleContainerTools/jib/pull/3641))
+
 ### Changed
 
 ### Fixed
 
-## 3.2.0
+
+## 3.2.1
 
 ### Added
 
-- [`<from><platforms>`](https://github.com/GoogleContainerTools/jib/tree/master/jib-maven-plugin#from-object) parameter for multi-architecture image building can now be configured through Maven and system properties (for example, `-Djib.from.platforms=linux/amd64,linux/arm64` on the command-line). ([#2742](https://github.com/GoogleContainerTools/jib/pull/2742))
-- For retrieving credentials, Jib additionally looks for `$XDG_RUNTIME_DIR/containers/auth.json`, `$XDG_CONFIG_HOME/containers/auth.json`, and `$HOME/.config/containers/auth.json`. ([#3524](https://github.com/GoogleContainerTools/jib/issues/3524))
 - Environment variables can now be used in configuring credential helpers. ([#2814](https://github.com/GoogleContainerTools/jib/issues/2814))
   ```xml
   <to>
@@ -27,6 +28,19 @@ All notable changes to this project will be documented in this file.
       </credHelper>
   </to>
   ```
+
+### Changed
+
+- Upgraded jackson-databind to 2.13.2.2 ([#3612](https://github.com/GoogleContainerTools/jib/pull/3612)).
+
+
+## 3.2.0
+
+### Added
+
+- [`<from><platforms>`](https://github.com/GoogleContainerTools/jib/tree/master/jib-maven-plugin#from-object) parameter for multi-architecture image building can now be configured through Maven and system properties (for example, `-Djib.from.platforms=linux/amd64,linux/arm64` on the command-line). ([#2742](https://github.com/GoogleContainerTools/jib/pull/2742))
+- For retrieving credentials, Jib additionally looks for `$XDG_RUNTIME_DIR/containers/auth.json`, `$XDG_CONFIG_HOME/containers/auth.json`, and `$HOME/.config/containers/auth.json`. ([#3524](https://github.com/GoogleContainerTools/jib/issues/3524))
+
 
 ### Changed
 
