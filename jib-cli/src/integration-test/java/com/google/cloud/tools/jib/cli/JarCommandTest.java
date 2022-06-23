@@ -279,8 +279,7 @@ public class JarCommandTest {
                 "--target",
                 "docker://packaged-spring-boot",
                 jarPath.toString(),
-                "--mode=packaged",
-                "--network=host");
+                "--mode=packaged");
     assertThat(exitCode).isEqualTo(0);
 
     String output =

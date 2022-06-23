@@ -144,7 +144,15 @@ public class WarCommandTest {
                 warPath.toString());
     assertThat(exitCode).isEqualTo(0);
     String output =
-        new Command("docker", "run", "--rm", "--detach", "-p8080:8080", "exploded-war-tomcat")
+        new Command(
+                "docker",
+                "run",
+                "--rm",
+                "--detach",
+                "-p8080:8080",
+                "exploded-war-tomcat",
+                "--privileged",
+                "--network=host")
             .run();
     containerName = output.trim();
 
