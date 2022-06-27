@@ -147,8 +147,7 @@ public class LocalRegistry extends ExternalResource {
               "-u",
               username,
               "--password-stdin",
-              "--privileged",
-              "--netowrk=host")
+              "--privileged")
           .run(password.getBytes(StandardCharsets.UTF_8));
     }
   }
