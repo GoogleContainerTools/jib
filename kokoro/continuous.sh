@@ -7,7 +7,7 @@ gcloud components install docker-credential-gcr
 
 # Docker service does not run by default in Big Sur but can be started with the following commands.
 if [ "${KOKORO_JOB_CLUSTER}" = "MACOS_EXTERNAL" ]; then
-./docker_setup.sh
+sh ./docker_setup.sh
 fi
 
 # docker-credential-gcr uses GOOGLE_APPLICATION_CREDENTIALS as the credentials key file
