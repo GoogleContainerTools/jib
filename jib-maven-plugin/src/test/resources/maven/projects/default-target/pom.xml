@@ -39,6 +39,9 @@
         <artifactId>jib-maven-plugin</artifactId>
         <version>${jib-maven-plugin.version}</version>
         <configuration>
+          <from>
+            <image>eclipse-temurin:8-jdk-focal</image>
+          </from>
           <container>
             <args>An argument.</args>
             <ports>
