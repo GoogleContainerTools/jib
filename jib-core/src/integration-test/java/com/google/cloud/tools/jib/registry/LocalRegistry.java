@@ -37,8 +37,6 @@ import org.mindrot.jbcrypt.BCrypt;
 public class LocalRegistry extends ExternalResource {
 
   private final String containerName = "registry-" + UUID.randomUUID();
-  public final String dockerHost =
-      System.getenv("DOCKER_IP") != null ? System.getenv("DOCKER_IP") : "localhost";
   private final int port;
   @Nullable private final String username;
   @Nullable private final String password;
@@ -133,26 +131,26 @@ public class LocalRegistry extends ExternalResource {
   public void pullAndPushToLocal(String from, String to) throws IOException, InterruptedException {
     login();
     new Command("docker", "pull", from).run();
-    new Command("docker", "tag", from, dockerHost + ":" + port + "/" + to).run();
-    new Command("docker", "push", dockerHost + ":" + port + "/" + to).run();
+    new Command("docker", "tag", from, "localhost:" + port + "/" + to).run();
+    new Command("docker", "push", "localhost:" + port + "/" + to).run();
     logout();
   }
 
   private void login() throws IOException, InterruptedException {
     if (username != null && password != null) {
-      new Command("docker", "login", dockerHost + ":" + port, "-u", username, "--password-stdin")
+      new Command("docker", "login", "localhost:" + port, "-u", username, "--password-stdin")
           .run(password.getBytes(StandardCharsets.UTF_8));
     }
   }
 
   private void logout() throws IOException, InterruptedException {
     if (username != null && password != null) {
-      new Command("docker", "logout", dockerHost + ":" + port).run();
+      new Command("docker", "logout", "localhost:" + port).run();
     }
   }
 
   private void waitUntilReady() throws InterruptedException, MalformedURLException {
-    URL queryUrl = new URL("http://" + dockerHost + ":" + port + "/v2/_catalog");
+    URL queryUrl = new URL("http://localhost:" + port + "/v2/_catalog");
 
     for (int i = 0; i < 40; i++) {
       try {
