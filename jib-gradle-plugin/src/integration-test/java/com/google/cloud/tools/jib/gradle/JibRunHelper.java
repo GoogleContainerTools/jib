@@ -163,8 +163,7 @@ public class JibRunHelper {
       TestProject testProject, String imageReference, String gradleBuildFile)
       throws IOException, InterruptedException, DigestException {
     buildToDockerDaemon(testProject, imageReference, gradleBuildFile);
-    return new Command("docker", "run", "--rm", imageReference, "--privileged", "--network=host")
-        .run();
+    return new Command("docker", "run", "--rm", imageReference).run();
   }
 
   /**
@@ -224,6 +223,8 @@ public class JibRunHelper {
     List<String> command = new ArrayList<>(Arrays.asList("docker", "run", "--rm"));
     command.addAll(Arrays.asList(extraRunArguments));
     command.add(imageReference);
+    command.add("--privileged");
+    command.add("--network=host");
     return new Command(command).run();
   }
 }
