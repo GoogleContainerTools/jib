@@ -97,7 +97,7 @@ public class JibIntegrationTest {
   public void testBasic_helloWorld()
       throws InvalidImageReferenceException, InterruptedException, CacheDirectoryCreationException,
           IOException, RegistryException, ExecutionException {
-    String toImage = "localhost:5000/basic-helloworld";
+    String toImage = dockerHost + ":5000/basic-helloworld";
     JibContainer jibContainer =
         Jib.from(dockerHost + ":5000/busybox")
             .setEntrypoint("echo", "Hello World")
