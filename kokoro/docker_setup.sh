@@ -10,6 +10,8 @@ docker-machine ssh default "sudo /etc/init.d/docker restart"
 docker-machine env default
 eval "$(docker-machine env default)"
 
+docker login 192.168.99.104:5000 -u testuser --password-stdin
+
 export JAVA_HOME="/Library/Java/JavaVirtualMachines/jdk-8-latest/Contents/Home"
 export PATH=$JAVA_HOME/bin:$PATH
 echo $JAVA_HOME
