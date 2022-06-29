@@ -59,7 +59,7 @@ public class JibIntegrationTest {
   private final RegistryClient registryClient =
       RegistryClient.factory(
               EventHandlers.NONE,
-              "localhost:5000",
+              dockerHost + ":5000",
               "jib-scratch",
               new FailoverHttpClient(true, true, ignored -> {}))
           .newRegistryClient();
