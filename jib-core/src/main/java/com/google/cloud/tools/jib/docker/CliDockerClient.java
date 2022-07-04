@@ -16,13 +16,10 @@
 
 package com.google.cloud.tools.jib.docker;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.google.cloud.tools.jib.api.DescriptorDigest;
+import com.google.cloud.tools.jib.api.DockerClient;
 import com.google.cloud.tools.jib.api.ImageReference;
 import com.google.cloud.tools.jib.http.NotifyingOutputStream;
 import com.google.cloud.tools.jib.image.ImageTarball;
-import com.google.cloud.tools.jib.json.JsonTemplate;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
@@ -38,61 +35,15 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.security.DigestException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
 /** Calls out to the {@code docker} CLI. */
-public class DockerClient {
-
-  /**
-   * Contains the size, image ID, and diff IDs of an image inspected with {@code docker inspect}.
-   */
-  @JsonIgnoreProperties(ignoreUnknown = true)
-  public static class DockerImageDetails implements JsonTemplate {
-
-    @JsonIgnoreProperties(ignoreUnknown = true)
-    private static class RootFsTemplate implements JsonTemplate {
-      @JsonProperty("Layers")
-      private final List<String> layers = Collections.emptyList();
-    }
-
-    @JsonProperty("Size")
-    private long size;
-
-    @JsonProperty("Id")
-    private String imageId = "";
-
-    @JsonProperty("RootFS")
-    private final RootFsTemplate rootFs = new RootFsTemplate();
-
-    public long getSize() {
-      return size;
-    }
-
-    public DescriptorDigest getImageId() throws DigestException {
-      return DescriptorDigest.fromDigest(imageId);
-    }
-
-    /**
-     * Return a list of diff ids of the layers in the image.
-     *
-     * @return a list of diff ids
-     * @throws DigestException if a digest is invalid
-     */
-    public List<DescriptorDigest> getDiffIds() throws DigestException {
-      List<DescriptorDigest> processedDiffIds = new ArrayList<>(rootFs.layers.size());
-      for (String diffId : rootFs.layers) {
-        processedDiffIds.add(DescriptorDigest.fromDigest(diffId.trim()));
-      }
-      return processedDiffIds;
-    }
-  }
+public class CliDockerClient implements DockerClient {
 
   /** Default path to the docker executable. */
   public static final Path DEFAULT_DOCKER_CLIENT = Paths.get("docker");
@@ -165,28 +116,23 @@ public class DockerClient {
    * @param dockerExecutable path to {@code docker}
    * @param dockerEnvironment environment variables for {@code docker}
    */
-  public DockerClient(Path dockerExecutable, Map<String, String> dockerEnvironment) {
+  public CliDockerClient(Path dockerExecutable, Map<String, String> dockerEnvironment) {
     this(
         defaultProcessBuilderFactory(
             dockerExecutable.toString(), ImmutableMap.copyOf(dockerEnvironment)));
   }
 
   @VisibleForTesting
-  DockerClient(Function<List<String>, ProcessBuilder> processBuilderFactory) {
+  CliDockerClient(Function<List<String>, ProcessBuilder> processBuilderFactory) {
     this.processBuilderFactory = processBuilderFactory;
   }
 
-  /**
-   * Loads an image tarball into the Docker daemon.
-   *
-   * @see <a
-   *     href="https://docs.docker.com/engine/reference/commandline/load/">https://docs.docker.com/engine/reference/commandline/load</a>
-   * @param imageTarball the built container tarball
-   * @param writtenByteCountListener callback to call when bytes are loaded
-   * @return stdout from {@code docker}
-   * @throws InterruptedException if the 'docker load' process is interrupted
-   * @throws IOException if streaming the blob to 'docker load' fails
-   */
+  @Override
+  public boolean supported(Map<String, String> parameters) {
+    return true;
+  }
+
+  @Override
   public String load(ImageTarball imageTarball, Consumer<Long> writtenByteCountListener)
       throws InterruptedException, IOException {
     // Runs 'docker load'.
@@ -224,17 +170,7 @@ public class DockerClient {
     }
   }
 
-  /**
-   * Saves an image tarball from the Docker daemon.
-   *
-   * @see <a
-   *     href="https://docs.docker.com/engine/reference/commandline/save/">https://docs.docker.com/engine/reference/commandline/save</a>
-   * @param imageReference the image to save
-   * @param outputPath the destination path to save the output tarball
-   * @param writtenByteCountListener callback to call when bytes are saved
-   * @throws InterruptedException if the 'docker save' process is interrupted
-   * @throws IOException if creating the tarball fails
-   */
+  @Override
   public void save(
       ImageReference imageReference, Path outputPath, Consumer<Long> writtenByteCountListener)
       throws InterruptedException, IOException {
@@ -253,14 +189,7 @@ public class DockerClient {
     }
   }
 
-  /**
-   * Gets the size, image ID, and diff IDs of an image in the Docker daemon.
-   *
-   * @param imageReference the image to inspect
-   * @return the size, image ID, and diff IDs of the image
-   * @throws IOException if an I/O exception occurs or {@code docker inspect} failed
-   * @throws InterruptedException if the {@code docker inspect} process was interrupted
-   */
+  @Override
   public DockerImageDetails inspect(ImageReference imageReference)
       throws IOException, InterruptedException {
     Process inspectProcess =

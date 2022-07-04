@@ -17,8 +17,8 @@
 package com.google.cloud.tools.jib.configuration;
 
 import com.google.cloud.tools.jib.api.CredentialRetriever;
+import com.google.cloud.tools.jib.api.DockerClient;
 import com.google.cloud.tools.jib.api.ImageReference;
-import com.google.cloud.tools.jib.docker.DockerClient;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import java.nio.file.Path;

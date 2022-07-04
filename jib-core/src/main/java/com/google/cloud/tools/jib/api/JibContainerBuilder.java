@@ -29,7 +29,8 @@ import com.google.cloud.tools.jib.builder.steps.BuildResult;
 import com.google.cloud.tools.jib.configuration.BuildContext;
 import com.google.cloud.tools.jib.configuration.ContainerConfiguration;
 import com.google.cloud.tools.jib.configuration.ImageConfiguration;
-import com.google.cloud.tools.jib.docker.DockerClient;
+import com.google.cloud.tools.jib.docker.CliDockerClient;
+import com.google.cloud.tools.jib.docker.DockerClientResolver;
 import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Verify;
@@ -39,6 +40,7 @@ import java.nio.file.Path;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -100,7 +102,10 @@ public class JibContainerBuilder {
     this(
         ImageConfiguration.builder(baseImage.getImageReference())
             .setDockerClient(
-                new DockerClient(baseImage.getDockerExecutable(), baseImage.getDockerEnvironment()))
+                DockerClientResolver.resolve(Collections.emptyMap())
+                    .orElse(
+                        new CliDockerClient(
+                            baseImage.getDockerExecutable(), baseImage.getDockerEnvironment())))
             .build(),
         BuildContext.builder());
   }
