@@ -10,6 +10,7 @@ docker-machine ssh default "echo 'DOCKER_OPTS=\"--config-file=/etc/docker/daemon
 docker-machine ssh default 'mkdir /home/docker/auth; docker run --entrypoint htpasswd httpd:2 -Bbn testuser testpassword > /home/docker/auth/htpasswd'
 docker-machine scp -r auth docker@default:/home/docker/auth
 docker-machine ssh default "sudo /etc/init.d/docker restart"
+docker-machine inspect default
 docker-machine env default
 eval "$(docker-machine env default)"
 
