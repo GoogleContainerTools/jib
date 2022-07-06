@@ -9,6 +9,8 @@ docker-machine ssh default "echo '{ \"insecure-registries\":[\"$DOCKER_IP:5000\"
 docker-machine ssh default "echo 'DOCKER_OPTS=\"--config-file=/etc/docker/daemon.json\"' | sudo tee -a /var/lib/boot2docker/profile "
 docker-machine ssh default "mkdir /home/docker/auth; docker run --entrypoint htpasswd httpd:2 -Bbn testuser testpassword > /home/docker/auth/htpasswd"
 docker-machine ssh default "cat /home/docker/auth/htpasswd"
+docker-machine ssh default "pwd"
+docker-machine ssh default "echo $HOME"
 docker-machine ssh default "sudo /etc/init.d/docker restart"
 docker-machine inspect default
 docker-machine env default
