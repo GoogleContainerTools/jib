@@ -16,14 +16,16 @@
 
 package com.google.cloud.tools.jib.builder.steps;
 
+import static com.google.common.truth.Truth.assertThat;
+import static org.junit.Assert.assertThrows;
+
 import com.google.cloud.tools.jib.api.ImageReference;
-import com.google.cloud.tools.jib.api.LogEvent;
 import com.google.cloud.tools.jib.api.buildplan.Platform;
 import com.google.cloud.tools.jib.configuration.BuildContext;
 import com.google.cloud.tools.jib.configuration.ContainerConfiguration;
 import com.google.cloud.tools.jib.configuration.ImageConfiguration;
-import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.image.json.ContainerConfigurationTemplate;
+import com.google.cloud.tools.jib.image.json.PlatformNotFoundInBaseImageException;
 import com.google.common.collect.ImmutableSet;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -40,13 +42,11 @@ public class PlatformCheckerTest {
 
   @Mock private BuildContext buildContext;
   @Mock private ContainerConfiguration containerConfig;
-  @Mock private EventHandlers eventHandlers;
 
   @Before
   public void setUp() {
     Mockito.when(buildContext.getBaseImageConfiguration())
         .thenReturn(ImageConfiguration.builder(ImageReference.scratch()).build());
-    Mockito.when(buildContext.getEventHandlers()).thenReturn(eventHandlers);
     Mockito.when(buildContext.getContainerConfiguration()).thenReturn(containerConfig);
   }
 
@@ -58,39 +58,43 @@ public class PlatformCheckerTest {
     ContainerConfigurationTemplate containerConfigJson = new ContainerConfigurationTemplate();
     containerConfigJson.setArchitecture("actual arch");
     containerConfigJson.setOs("actual OS");
-
-    PlatformChecker.checkManifestPlatform(buildContext, containerConfigJson);
-
-    Mockito.verify(eventHandlers)
-        .dispatch(
-            LogEvent.warn(
-                "the configured platform (configured arch/configured OS) doesn't match the "
-                    + "platform (actual arch/actual OS) of the base image (scratch)"));
+    Exception ex =
+        assertThrows(
+            PlatformNotFoundInBaseImageException.class,
+            () -> PlatformChecker.checkManifestPlatform(buildContext, containerConfigJson));
+    assertThat(ex)
+        .hasMessageThat()
+        .isEqualTo(
+            "the configured platform (configured arch/configured OS) doesn't match the "
+                + "platform (actual arch/actual OS) of the base image (scratch)");
   }
 
   @Test
-  public void testCheckManifestPlatform_noWarningIfDefaultAmd64Linux() {
+  public void testCheckManifestPlatform_noWarningIfDefaultAmd64Linux()
+      throws PlatformNotFoundInBaseImageException {
     Mockito.when(containerConfig.getPlatforms())
         .thenReturn(ImmutableSet.of(new Platform("amd64", "linux")));
 
     ContainerConfigurationTemplate containerConfigJson = new ContainerConfigurationTemplate();
     containerConfigJson.setArchitecture("actual arch");
     containerConfigJson.setOs("actual OS");
-
     PlatformChecker.checkManifestPlatform(buildContext, containerConfigJson);
-
-    Mockito.verifyNoInteractions(eventHandlers);
   }
 
   @Test
   public void testCheckManifestPlatform_multiplePlatformsConfigured() {
     Mockito.when(containerConfig.getPlatforms())
         .thenReturn(ImmutableSet.of(new Platform("amd64", "linux"), new Platform("arch", "os")));
-
-    PlatformChecker.checkManifestPlatform(buildContext, new ContainerConfigurationTemplate());
-
-    Mockito.verify(eventHandlers)
-        .dispatch(LogEvent.warn("platforms configured, but 'scratch' is not a manifest list"));
+    Exception ex =
+        assertThrows(
+            PlatformNotFoundInBaseImageException.class,
+            () ->
+                PlatformChecker.checkManifestPlatform(
+                    buildContext, new ContainerConfigurationTemplate()));
+    assertThat(ex)
+        .hasMessageThat()
+        .isEqualTo(
+            "cannot build for multiple platforms since the base image 'scratch' is not a manifest list.");
   }
 
   @Test
@@ -101,11 +105,17 @@ public class PlatformCheckerTest {
     Mockito.when(containerConfig.getPlatforms())
         .thenReturn(ImmutableSet.of(new Platform("amd64", "linux"), new Platform("arch", "os")));
 
-    PlatformChecker.checkManifestPlatform(buildContext, new ContainerConfigurationTemplate());
-
-    Mockito.verify(eventHandlers)
-        .dispatch(
-            LogEvent.warn(
-                "platforms configured, but '" + tar.toString() + "' is not a manifest list"));
+    Exception ex =
+        assertThrows(
+            PlatformNotFoundInBaseImageException.class,
+            () ->
+                PlatformChecker.checkManifestPlatform(
+                    buildContext, new ContainerConfigurationTemplate()));
+    assertThat(ex)
+        .hasMessageThat()
+        .isEqualTo(
+            "cannot build for multiple platforms since the base image '"
+                + tar
+                + "' is not a manifest list.");
   }
 }

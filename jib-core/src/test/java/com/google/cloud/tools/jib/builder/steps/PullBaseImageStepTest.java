@@ -38,6 +38,7 @@ import com.google.cloud.tools.jib.image.json.BadContainerConfigurationFormatExce
 import com.google.cloud.tools.jib.image.json.ContainerConfigurationTemplate;
 import com.google.cloud.tools.jib.image.json.ImageMetadataTemplate;
 import com.google.cloud.tools.jib.image.json.ManifestAndConfigTemplate;
+import com.google.cloud.tools.jib.image.json.PlatformNotFoundInBaseImageException;
 import com.google.cloud.tools.jib.image.json.UnlistedPlatformInManifestListException;
 import com.google.cloud.tools.jib.image.json.V21ManifestTemplate;
 import com.google.cloud.tools.jib.image.json.V22ManifestListTemplate;
@@ -243,8 +244,8 @@ public class PullBaseImageStepTest {
   @Test
   public void testGetCachedBaseImages_emptyCache()
       throws InvalidImageReferenceException, IOException, CacheCorruptedException,
-          UnlistedPlatformInManifestListException, BadContainerConfigurationFormatException,
-          LayerCountMismatchException {
+          UnlistedPlatformInManifestListException, PlatformNotFoundInBaseImageException,
+          BadContainerConfigurationFormatException, LayerCountMismatchException {
     ImageReference imageReference = ImageReference.parse("cat");
     Mockito.when(buildContext.getBaseImageConfiguration())
         .thenReturn(ImageConfiguration.builder(imageReference).build());
@@ -257,7 +258,7 @@ public class PullBaseImageStepTest {
   public void testGetCachedBaseImages_v21ManifestCached()
       throws InvalidImageReferenceException, IOException, CacheCorruptedException,
           UnlistedPlatformInManifestListException, BadContainerConfigurationFormatException,
-          LayerCountMismatchException, DigestException {
+          LayerCountMismatchException, DigestException, PlatformNotFoundInBaseImageException {
     ImageReference imageReference = ImageReference.parse("cat");
     Mockito.when(buildContext.getBaseImageConfiguration())
         .thenReturn(ImageConfiguration.builder(imageReference).build());
@@ -286,7 +287,7 @@ public class PullBaseImageStepTest {
   public void testGetCachedBaseImages_v22ManifestCached()
       throws InvalidImageReferenceException, IOException, CacheCorruptedException,
           UnlistedPlatformInManifestListException, BadContainerConfigurationFormatException,
-          LayerCountMismatchException {
+          LayerCountMismatchException, PlatformNotFoundInBaseImageException {
     ImageReference imageReference = ImageReference.parse("cat");
     Mockito.when(buildContext.getBaseImageConfiguration())
         .thenReturn(ImageConfiguration.builder(imageReference).build());
@@ -312,7 +313,7 @@ public class PullBaseImageStepTest {
   public void testGetCachedBaseImages_v22ManifestListCached()
       throws InvalidImageReferenceException, IOException, CacheCorruptedException,
           UnlistedPlatformInManifestListException, BadContainerConfigurationFormatException,
-          LayerCountMismatchException {
+          LayerCountMismatchException, PlatformNotFoundInBaseImageException {
     ImageReference imageReference = ImageReference.parse("cat");
     Mockito.when(buildContext.getBaseImageConfiguration())
         .thenReturn(ImageConfiguration.builder(imageReference).build());
@@ -352,7 +353,7 @@ public class PullBaseImageStepTest {
   public void testGetCachedBaseImages_v22ManifestListCached_partialMatches()
       throws InvalidImageReferenceException, IOException, CacheCorruptedException,
           UnlistedPlatformInManifestListException, BadContainerConfigurationFormatException,
-          LayerCountMismatchException {
+          LayerCountMismatchException, PlatformNotFoundInBaseImageException {
     ImageReference imageReference = ImageReference.parse("cat");
     Mockito.when(buildContext.getBaseImageConfiguration())
         .thenReturn(ImageConfiguration.builder(imageReference).build());
@@ -382,8 +383,8 @@ public class PullBaseImageStepTest {
   @Test
   public void testGetCachedBaseImages_v22ManifestListCached_onlyPlatforms()
       throws InvalidImageReferenceException, IOException, CacheCorruptedException,
-          UnlistedPlatformInManifestListException, BadContainerConfigurationFormatException,
-          LayerCountMismatchException {
+          UnlistedPlatformInManifestListException, PlatformNotFoundInBaseImageException,
+          BadContainerConfigurationFormatException, LayerCountMismatchException {
     ImageReference imageReference = ImageReference.parse("cat");
     Mockito.when(buildContext.getBaseImageConfiguration())
         .thenReturn(ImageConfiguration.builder(imageReference).build());
@@ -422,7 +423,8 @@ public class PullBaseImageStepTest {
 
   @Test
   public void testTryMirrors_noMatchingMirrors()
-      throws LayerCountMismatchException, BadContainerConfigurationFormatException {
+      throws LayerCountMismatchException, BadContainerConfigurationFormatException,
+          PlatformNotFoundInBaseImageException {
     Mockito.when(imageConfiguration.getImageRegistry()).thenReturn("registry");
     Mockito.when(buildContext.getRegistryMirrors())
         .thenReturn(ImmutableListMultimap.of("unmatched1", "mirror1", "unmatched2", "mirror2"));
@@ -475,6 +477,8 @@ public class PullBaseImageStepTest {
         .thenReturn(registryClientFactory);
     Mockito.when(registryClient.pullManifest(Mockito.any()))
         .thenThrow(new RegistryException("not found"));
+    Mockito.when(containerConfig.getPlatforms())
+        .thenReturn(ImmutableSet.of(new Platform("amd64", "linux")));
 
     RegistryClient.Factory gcrRegistryClientFactory = setUpWorkingRegistryClientFactory();
     Mockito.when(buildContext.newBaseImageRegistryClientFactory("gcr.io"))
@@ -513,7 +517,8 @@ public class PullBaseImageStepTest {
         .thenReturn(registryClientFactory);
     Mockito.when(registryClient.pullManifest(Mockito.any()))
         .thenThrow(new RegistryException("not found"));
-
+    Mockito.when(containerConfig.getPlatforms())
+        .thenReturn(ImmutableSet.of(new Platform("amd64", "linux")));
     RegistryClient.Factory dockerHubRegistryClientFactory = setUpWorkingRegistryClientFactory();
     Mockito.when(buildContext.newBaseImageRegistryClientFactory())
         .thenReturn(dockerHubRegistryClientFactory);

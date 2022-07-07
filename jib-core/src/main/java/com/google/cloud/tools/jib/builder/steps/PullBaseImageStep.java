@@ -42,6 +42,7 @@ import com.google.cloud.tools.jib.image.json.ImageMetadataTemplate;
 import com.google.cloud.tools.jib.image.json.JsonToImageTranslator;
 import com.google.cloud.tools.jib.image.json.ManifestAndConfigTemplate;
 import com.google.cloud.tools.jib.image.json.ManifestTemplate;
+import com.google.cloud.tools.jib.image.json.PlatformNotFoundInBaseImageException;
 import com.google.cloud.tools.jib.image.json.UnknownManifestFormatException;
 import com.google.cloud.tools.jib.image.json.UnlistedPlatformInManifestListException;
 import com.google.cloud.tools.jib.image.json.V21ManifestTemplate;
@@ -442,7 +443,8 @@ class PullBaseImageStep implements Callable<ImagesAndRegistryClient> {
   @VisibleForTesting
   List<Image> getCachedBaseImages()
       throws IOException, CacheCorruptedException, BadContainerConfigurationFormatException,
-          LayerCountMismatchException, UnlistedPlatformInManifestListException {
+          LayerCountMismatchException, UnlistedPlatformInManifestListException,
+          PlatformNotFoundInBaseImageException {
     ImageReference baseImage = buildContext.getBaseImageConfiguration().getImage();
     Optional<ImageMetadataTemplate> metadata =
         buildContext.getBaseImageLayersCache().retrieveMetadata(baseImage);
