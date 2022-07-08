@@ -86,7 +86,7 @@ public class LocalRegistry extends ExternalResource {
               "-v",
               // Volume mount used for storing credentials
               // tempFolder + ":/auth",
-              "/home/docker/auth",
+              "/home/docker/auth:/auth",
               "-e",
               "REGISTRY_AUTH=htpasswd",
               "-e",
