@@ -142,10 +142,6 @@ public class LocalRegistry extends ExternalResource {
   private void login() throws IOException, InterruptedException {
     System.out.println("LOGIN");
     if (username != null && password != null) {
-      System.out.println("***********USERNAME************");
-      System.out.println(username);
-      System.out.println("***********PASSWORD************");
-      System.out.println(password);
       new Command("docker", "login", dockerHost + ":" + port, "-u", username, "--password-stdin")
           .run(password.getBytes(StandardCharsets.UTF_8));
     }
