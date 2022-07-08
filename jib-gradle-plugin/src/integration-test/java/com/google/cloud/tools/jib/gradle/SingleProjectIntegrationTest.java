@@ -51,7 +51,7 @@ public class SingleProjectIntegrationTest {
 
   @ClassRule
   public static final LocalRegistry localRegistry2 =
-      new LocalRegistry(6000, "testuser2", "testpassword2");
+      new LocalRegistry(6000, "testuser", "testpassword");
 
   @ClassRule public static final TestProject simpleTestProject = new TestProject("simple");
 
@@ -365,7 +365,7 @@ public class SingleProjectIntegrationTest {
       throws IOException, InterruptedException, DigestException, InvalidImageReferenceException {
     String targetImage = "localhost:6000/compleximage:gradle" + System.nanoTime();
     Instant beforeBuild = Instant.now();
-    String output = buildAndRunComplex(targetImage, "testuser2", "testpassword2", localRegistry2);
+    String output = buildAndRunComplex(targetImage, "testuser", "testpassword", localRegistry2);
 
     String digest =
         readDigestFile(
@@ -423,12 +423,12 @@ public class SingleProjectIntegrationTest {
         simpleTestProject.getProjectRoot().resolve("build/jib-base-cache/layers");
     String targetImage = "localhost:6000/simpleimage:gradle" + System.nanoTime();
 
-    buildAndRunComplex(targetImage, "testuser2", "testpassword2", localRegistry2);
+    buildAndRunComplex(targetImage, "testuser", "testpassword", localRegistry2);
     // Base image layer tarballs exist.
     assertThat(Files.exists(baseLayersCacheDirectory)).isTrue();
     assertThat(baseLayersCacheDirectory.toFile().list().length >= 2).isTrue();
 
-    buildAndRunComplex(targetImage, "testuser2", "testpassword2", localRegistry2);
+    buildAndRunComplex(targetImage, "testuser", "testpassword", localRegistry2);
     // no base layers downloaded after "gradle clean jib ..."
     assertThat(Files.exists(baseLayersCacheDirectory)).isFalse();
   }
