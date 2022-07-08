@@ -223,8 +223,6 @@ public class JibRunHelper {
     List<String> command = new ArrayList<>(Arrays.asList("docker", "run", "--rm"));
     command.addAll(Arrays.asList(extraRunArguments));
     command.add(imageReference);
-    command.add("--privileged");
-    command.add("--network=host");
     return new Command(command).run();
   }
 }
