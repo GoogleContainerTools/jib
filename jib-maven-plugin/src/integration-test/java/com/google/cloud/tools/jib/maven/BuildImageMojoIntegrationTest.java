@@ -231,6 +231,7 @@ public class BuildImageMojoIntegrationTest {
       throws VerificationException, IOException, InterruptedException {
     Verifier verifier = new Verifier(simpleTestProject.getProjectRoot().toString());
     verifier.setSystemProperty("jib.useOnlyProjectCache", "true");
+    verifier.setSystemProperty("_DOCKER_HOST", dockerHost);
     verifier.setSystemProperty("_TARGET_IMAGE", imageReference);
     verifier.setSystemProperty("_TARGET_USERNAME", "testuser");
     verifier.setSystemProperty("_TARGET_PASSWORD", "testpassword");
