@@ -11,8 +11,8 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     <jib-maven-plugin.version>@@PluginVersion@@</jib-maven-plugin.version>
-
-    <jib.from.image>localhost:5000/distroless/java</jib.from.image>
+    <dockerHost>System.getenv("DOCKER_IP") != null ? System.getenv("DOCKER_IP") : localhost</dockerHost>
+    <jib.from.image>${dockerHost}:5000/distroless/java</jib.from.image>
     <jib.from.auth.username>testuser</jib.from.auth.username>
     <jib.from.auth.password>testpassword</jib.from.auth.password>
     <jib.to.image>${_TARGET_IMAGE}</jib.to.image>
