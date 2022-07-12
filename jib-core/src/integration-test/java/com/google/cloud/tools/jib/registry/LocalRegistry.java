@@ -79,14 +79,17 @@ public class LocalRegistry extends ExternalResource {
       Path tempFolder = Files.createTempDirectory(Paths.get("/tmp"), "");
       Files.write(
           tempFolder.resolve("htpasswd"), credentialString.getBytes(StandardCharsets.UTF_8));
-
+      boolean isOnKokoroCI =
+          System.getenv("KOKORO_JOB_CLUSTER") != null
+              && System.getenv("KOKORO_JOB_CLUSTER").equals("MACOS_EXTERNAL");
+      String tempAuthFile = tempFolder + ":/auth";
+      String authenticationVolume = isOnKokoroCI ? "/home/docker/auth:/auth" : tempAuthFile;
       // Run the Docker registry
       dockerTokens.addAll(
           Arrays.asList(
               "-v",
               // Volume mount used for storing credentials
-              // tempFolder + ":/auth",
-              "/home/docker/auth:/auth",
+              authenticationVolume,
               "-e",
               "REGISTRY_AUTH=htpasswd",
               "-e",
