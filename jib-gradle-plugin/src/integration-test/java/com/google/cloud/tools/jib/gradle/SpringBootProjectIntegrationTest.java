@@ -34,6 +34,9 @@ public class SpringBootProjectIntegrationTest {
 
   @Nullable private String containerName;
 
+  private final String dockerHost =
+      System.getenv("DOCKER_IP") != null ? System.getenv("DOCKER_IP") : "localhost";
+
   @After
   public void tearDown() throws IOException, InterruptedException {
     if (containerName != null) {
@@ -56,7 +59,8 @@ public class SpringBootProjectIntegrationTest {
             .run();
     Assert.assertEquals("1360 /app/classpath/spring-boot-original.jar\n", output);
 
-    Assert.assertEquals("Hello world", JibRunHelper.getContent(new URL("http://localhost:8080")));
+    Assert.assertEquals(
+        "Hello world", JibRunHelper.getContent(new URL("http://" + dockerHost + ":8080")));
   }
 
   private void buildAndRunWebApp(String label, String gradleBuildFile)

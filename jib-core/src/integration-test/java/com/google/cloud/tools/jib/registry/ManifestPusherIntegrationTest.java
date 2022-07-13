@@ -39,6 +39,8 @@ public class ManifestPusherIntegrationTest {
   @ClassRule public static final LocalRegistry localRegistry = new LocalRegistry(5000);
 
   private final FailoverHttpClient httpClient = new FailoverHttpClient(true, false, ignored -> {});
+  public final String dockerHost =
+      System.getenv("DOCKER_IP") != null ? System.getenv("DOCKER_IP") : "localhost";
 
   @Test
   public void testPush_missingBlobs() throws IOException, RegistryException {
@@ -48,7 +50,7 @@ public class ManifestPusherIntegrationTest {
     ManifestTemplate manifestTemplate = registryClient.pullManifest("latest").getManifest();
 
     registryClient =
-        RegistryClient.factory(EventHandlers.NONE, "localhost:5000", "ignored", httpClient)
+        RegistryClient.factory(EventHandlers.NONE, dockerHost + ":5000", "ignored", httpClient)
             .newRegistryClient();
     try {
       registryClient.pushManifest(manifestTemplate, "latest");
@@ -81,7 +83,7 @@ public class ManifestPusherIntegrationTest {
 
     // Pushes the BLOBs.
     RegistryClient registryClient =
-        RegistryClient.factory(EventHandlers.NONE, "localhost:5000", "testimage", httpClient)
+        RegistryClient.factory(EventHandlers.NONE, dockerHost + ":5000", "testimage", httpClient)
             .newRegistryClient();
     Assert.assertFalse(
         registryClient.pushBlob(testLayerBlobDigest, testLayerBlob, null, ignored -> {}));

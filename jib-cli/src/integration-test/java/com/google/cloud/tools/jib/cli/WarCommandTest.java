@@ -37,6 +37,8 @@ import picocli.CommandLine;
 public class WarCommandTest {
 
   @ClassRule public static final TestProject servletProject = new TestProject("warTest");
+  private final String dockerHost =
+      System.getenv("DOCKER_IP") != null ? System.getenv("DOCKER_IP") : "localhost";
 
   @Nullable private String containerName;
 
@@ -86,10 +88,20 @@ public class WarCommandTest {
             .execute("war", "--target", "docker://exploded-war", warPath.toString());
     assertThat(exitCode).isEqualTo(0);
     String output =
-        new Command("docker", "run", "--rm", "--detach", "-p8080:8080", "exploded-war").run();
+        new Command(
+                "docker",
+                "run",
+                "--rm",
+                "--detach",
+                "-p8080:8080",
+                "exploded-war",
+                "--privileged",
+                "--network=host")
+            .run();
     containerName = output.trim();
 
-    assertThat(getContent(new URL("http://localhost:8080/hello"))).isEqualTo("Hello world");
+    assertThat(getContent(new URL("http://" + dockerHost + ":8080/hello")))
+        .isEqualTo("Hello world");
   }
 
   @Test
@@ -111,7 +123,8 @@ public class WarCommandTest {
             .run();
     containerName = output.trim();
 
-    assertThat(getContent(new URL("http://localhost:8080/hello"))).isEqualTo("Hello world");
+    assertThat(getContent(new URL("http://" + dockerHost + ":8080/hello")))
+        .isEqualTo("Hello world");
   }
 
   @Test
@@ -135,7 +148,8 @@ public class WarCommandTest {
             .run();
     containerName = output.trim();
 
-    assertThat(getContent(new URL("http://localhost:8080/hello"))).isEqualTo("Hello world");
+    assertThat(getContent(new URL("http://" + dockerHost + ":8080/hello")))
+        .isEqualTo("Hello world");
   }
 
   @Nullable

@@ -40,7 +40,7 @@
         <version>${jib-maven-plugin.version}</version>
         <configuration>
           <from>
-            <image>localhost:5000/distroless/java</image>
+            <image>${_DOCKER_HOST}:5000/distroless/java</image>
             <auth>
               <username>testuser</username>
               <password>testpassword</password>

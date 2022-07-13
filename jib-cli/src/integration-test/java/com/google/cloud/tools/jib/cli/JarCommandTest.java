@@ -43,6 +43,8 @@ public class JarCommandTest {
   @ClassRule
   public static final TestProject springBootProject = new TestProject("jarTest/spring-boot");
 
+  private final String dockerHost =
+      System.getenv("DOCKER_IP") != null ? System.getenv("DOCKER_IP") : "localhost";
   @Nullable private String containerName;
 
   @After
@@ -94,7 +96,10 @@ public class JarCommandTest {
                 "--target",
                 "docker://exploded-jar",
                 jarPath.toString());
-    String output = new Command("docker", "run", "--rm", "exploded-jar").run();
+    String output =
+        new Command("docker", "run", "--rm", "exploded-jar", "--privileged", "--network=host")
+            .run();
+
     try (JarFile jarFile = new JarFile(jarPath.toFile())) {
       String classPath =
           jarFile.getManifest().getMainAttributes().getValue(Attributes.Name.CLASS_PATH);
@@ -118,7 +123,10 @@ public class JarCommandTest {
                 "--target",
                 "docker://exploded-no-dep-jar",
                 jarPath.toString());
-    String output = new Command("docker", "run", "--rm", "exploded-no-dep-jar").run();
+    String output =
+        new Command(
+                "docker", "run", "--rm", "exploded-no-dep-jar", "--privileged", "--network=host")
+            .run();
     try (JarFile jarFile = new JarFile(jarPath.toFile())) {
       String classPath =
           jarFile.getManifest().getMainAttributes().getValue(Attributes.Name.CLASS_PATH);
@@ -143,7 +151,10 @@ public class JarCommandTest {
                 "docker://packaged-jar",
                 jarPath.toString(),
                 "--mode=packaged");
-    String output = new Command("docker", "run", "--rm", "packaged-jar").run();
+    String output =
+        new Command("docker", "run", "--rm", "packaged-jar", "--privileged", "--network=host")
+            .run();
+
     try (JarFile jarFile = new JarFile(jarPath.toFile())) {
       String classPath =
           jarFile.getManifest().getMainAttributes().getValue(Attributes.Name.CLASS_PATH);
@@ -168,7 +179,10 @@ public class JarCommandTest {
                 "docker://packaged-no-dep-jar",
                 jarPath.toString(),
                 "--mode=packaged");
-    String output = new Command("docker", "run", "--rm", "packaged-no-dep-jar").run();
+    String output =
+        new Command(
+                "docker", "run", "--rm", "packaged-no-dep-jar", "--privileged", "--network=host")
+            .run();
     try (JarFile jarFile = new JarFile(jarPath.toFile())) {
       String classPath =
           jarFile.getManifest().getMainAttributes().getValue(Attributes.Name.CLASS_PATH);
@@ -197,13 +211,21 @@ public class JarCommandTest {
     assertThat(exitCode).isEqualTo(0);
 
     String output =
-        new Command("docker", "run", "--rm", "--detach", "-p8080:8080", "spring-boot-jar-layered")
+        new Command(
+                "docker",
+                "run",
+                "--rm",
+                "--detach",
+                "-p8080:8080",
+                "spring-boot-jar-layered",
+                "--privileged",
+                "--network=host")
             .run();
     containerName = output.trim();
     try (JarFile jarFile = new JarFile(jarPath.toFile())) {
 
       assertThat(jarFile.getEntry("BOOT-INF/layers.idx")).isNotNull();
-      assertThat(getContent(new URL("http://localhost:8080"))).isEqualTo("Hello world");
+      assertThat(getContent(new URL("http://" + dockerHost + ":8080"))).isEqualTo("Hello world");
     }
   }
 
@@ -225,12 +247,21 @@ public class JarCommandTest {
     assertThat(exitCode).isEqualTo(0);
 
     String output =
-        new Command("docker", "run", "--rm", "--detach", "-p8080:8080", "spring-boot-jar").run();
+        new Command(
+                "docker",
+                "run",
+                "--rm",
+                "--detach",
+                "-p8080:8080",
+                "spring-boot-jar",
+                "--privileged",
+                "--network=host")
+            .run();
     containerName = output.trim();
     try (JarFile jarFile = new JarFile(jarPath.toFile())) {
 
       assertThat(jarFile.getEntry("BOOT-INF/layers.idx")).isNull();
-      assertThat(getContent(new URL("http://localhost:8080"))).isEqualTo("Hello world");
+      assertThat(getContent(new URL("http://" + dockerHost + ":8080"))).isEqualTo("Hello world");
     }
   }
 
@@ -252,11 +283,19 @@ public class JarCommandTest {
     assertThat(exitCode).isEqualTo(0);
 
     String output =
-        new Command("docker", "run", "--rm", "--detach", "-p8080:8080", "packaged-spring-boot")
+        new Command(
+                "docker",
+                "run",
+                "--rm",
+                "--detach",
+                "-p8080:8080",
+                "packaged-spring-boot",
+                "--privileged",
+                "--network=host")
             .run();
     containerName = output.trim();
 
-    assertThat(getContent(new URL("http://localhost:8080"))).isEqualTo("Hello world");
+    assertThat(getContent(new URL("http://" + dockerHost + ":8080"))).isEqualTo("Hello world");
   }
 
   @Test

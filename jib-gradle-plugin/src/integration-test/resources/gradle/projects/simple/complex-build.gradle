@@ -14,9 +14,11 @@ dependencies {
   implementation files('libs/dependency-1.0.0.jar')
 }
 
+
 jib {
   from {
-    image = 'localhost:5000/distroless/java'
+    def dockerHost = System.getenv("DOCKER_IP") != null ? System.getenv("DOCKER_IP") : "localhost"
+    image = dockerHost + ':5000/distroless/java'
     auth {
       username = 'testuser'
       password = 'testpassword'

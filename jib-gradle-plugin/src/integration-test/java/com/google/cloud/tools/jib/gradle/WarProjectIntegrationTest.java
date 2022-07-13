@@ -34,6 +34,9 @@ public class WarProjectIntegrationTest {
 
   @Nullable private String containerName;
 
+  private final String dockerHost =
+      System.getenv("DOCKER_IP") != null ? System.getenv("DOCKER_IP") : "localhost";
+
   @After
   public void tearDown() throws IOException, InterruptedException {
     if (containerName != null) {
@@ -61,6 +64,6 @@ public class WarProjectIntegrationTest {
     containerName = output.trim();
 
     Assert.assertEquals(
-        "Hello world", JibRunHelper.getContent(new URL("http://localhost:8080/hello")));
+        "Hello world", JibRunHelper.getContent(new URL("http://" + dockerHost + ":8080/hello")));
   }
 }
