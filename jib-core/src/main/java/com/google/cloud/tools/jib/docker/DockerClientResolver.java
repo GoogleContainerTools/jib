@@ -26,6 +26,8 @@ public class DockerClientResolver {
   private static final ServiceLoader<DockerClient> dockerClients =
       ServiceLoader.load(DockerClient.class);
 
+  private DockerClientResolver() {}
+
   /**
    * Look for supported DockerClient.
    *
