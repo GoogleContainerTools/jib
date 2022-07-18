@@ -70,7 +70,7 @@ public class PlatformCheckerTest {
   }
 
   @Test
-  public void testCheckManifestPlatform_noWarningIfDefaultAmd64Linux()
+  public void testCheckManifestPlatform_noExceptionIfDefaultAmd64Linux()
       throws PlatformNotFoundInBaseImageException {
     Mockito.when(containerConfig.getPlatforms())
         .thenReturn(ImmutableSet.of(new Platform("amd64", "linux")));
