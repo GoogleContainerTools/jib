@@ -16,16 +16,9 @@
 
 package com.google.cloud.tools.jib.api;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.cloud.tools.jib.image.ImageTarball;
-import com.google.cloud.tools.jib.json.JsonTemplate;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.security.DigestException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 
@@ -75,50 +68,5 @@ public interface DockerClient {
    * @throws IOException if an I/O exception occurs or {@code docker inspect} failed
    * @throws InterruptedException if the {@code docker inspect} process was interrupted
    */
-  DockerImageDetails inspect(ImageReference imageReference)
-      throws IOException, InterruptedException;
-
-  /**
-   * Contains the size, image ID, and diff IDs of an image inspected with {@code docker inspect}.
-   */
-  @JsonIgnoreProperties(ignoreUnknown = true)
-  class DockerImageDetails implements JsonTemplate {
-
-    @JsonIgnoreProperties(ignoreUnknown = true)
-    private static class RootFsTemplate implements JsonTemplate {
-      @JsonProperty("Layers")
-      private final List<String> layers = Collections.emptyList();
-    }
-
-    @JsonProperty("Size")
-    private long size;
-
-    @JsonProperty("Id")
-    private String imageId = "";
-
-    @JsonProperty("RootFS")
-    private final RootFsTemplate rootFs = new RootFsTemplate();
-
-    public long getSize() {
-      return size;
-    }
-
-    public DescriptorDigest getImageId() throws DigestException {
-      return DescriptorDigest.fromDigest(imageId);
-    }
-
-    /**
-     * Return a list of diff ids of the layers in the image.
-     *
-     * @return a list of diff ids
-     * @throws DigestException if a digest is invalid
-     */
-    public List<DescriptorDigest> getDiffIds() throws DigestException {
-      List<DescriptorDigest> processedDiffIds = new ArrayList<>(rootFs.layers.size());
-      for (String diffId : rootFs.layers) {
-        processedDiffIds.add(DescriptorDigest.fromDigest(diffId.trim()));
-      }
-      return processedDiffIds;
-    }
-  }
+  ImageDetails inspect(ImageReference imageReference) throws IOException, InterruptedException;
 }

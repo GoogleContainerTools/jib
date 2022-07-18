@@ -16,10 +16,15 @@
 
 package com.google.cloud.tools.jib.docker;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.cloud.tools.jib.api.DescriptorDigest;
 import com.google.cloud.tools.jib.api.DockerClient;
+import com.google.cloud.tools.jib.api.ImageDetails;
 import com.google.cloud.tools.jib.api.ImageReference;
 import com.google.cloud.tools.jib.http.NotifyingOutputStream;
 import com.google.cloud.tools.jib.image.ImageTarball;
+import com.google.cloud.tools.jib.json.JsonTemplate;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
@@ -35,8 +40,10 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.security.DigestException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
@@ -44,6 +51,53 @@ import java.util.function.Function;
 
 /** Calls out to the {@code docker} CLI. */
 public class CliDockerClient implements DockerClient {
+
+  /**
+   * Contains the size, image ID, and diff IDs of an image inspected with {@code docker inspect}.
+   */
+  @JsonIgnoreProperties(ignoreUnknown = true)
+  public static class DockerImageDetails implements JsonTemplate, ImageDetails {
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    private static class RootFsTemplate implements JsonTemplate {
+      @JsonProperty("Layers")
+      private final List<String> layers = Collections.emptyList();
+    }
+
+    @JsonProperty("Size")
+    private long size;
+
+    @JsonProperty("Id")
+    private String imageId = "";
+
+    @JsonProperty("RootFS")
+    private final RootFsTemplate rootFs = new RootFsTemplate();
+
+    @Override
+    public long getSize() {
+      return size;
+    }
+
+    @Override
+    public DescriptorDigest getImageId() throws DigestException {
+      return DescriptorDigest.fromDigest(imageId);
+    }
+
+    /**
+     * Return a list of diff ids of the layers in the image.
+     *
+     * @return a list of diff ids
+     * @throws DigestException if a digest is invalid
+     */
+    @Override
+    public List<DescriptorDigest> getDiffIds() throws DigestException {
+      List<DescriptorDigest> processedDiffIds = new ArrayList<>(rootFs.layers.size());
+      for (String diffId : rootFs.layers) {
+        processedDiffIds.add(DescriptorDigest.fromDigest(diffId.trim()));
+      }
+      return processedDiffIds;
+    }
+  }
 
   /** Default path to the docker executable. */
   public static final Path DEFAULT_DOCKER_CLIENT = Paths.get("docker");
