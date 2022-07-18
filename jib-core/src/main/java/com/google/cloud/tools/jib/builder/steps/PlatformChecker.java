@@ -16,11 +16,10 @@
 
 package com.google.cloud.tools.jib.builder.steps;
 
-import com.google.cloud.tools.jib.api.LogEvent;
 import com.google.cloud.tools.jib.api.buildplan.Platform;
 import com.google.cloud.tools.jib.configuration.BuildContext;
-import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.image.json.ContainerConfigurationTemplate;
+import com.google.cloud.tools.jib.image.json.PlatformNotFoundInBaseImageException;
 import com.google.common.base.Verify;
 import java.nio.file.Path;
 import java.util.Optional;
@@ -38,8 +37,8 @@ public class PlatformChecker {
    * @param containerConfig container configuration JSON of the base image
    */
   static void checkManifestPlatform(
-      BuildContext buildContext, ContainerConfigurationTemplate containerConfig) {
-    EventHandlers eventHandlers = buildContext.getEventHandlers();
+      BuildContext buildContext, ContainerConfigurationTemplate containerConfig)
+      throws PlatformNotFoundInBaseImageException {
     Optional<Path> path = buildContext.getBaseImageConfiguration().getTarPath();
     String baseImageName =
         path.map(Path::toString)
@@ -49,9 +48,11 @@ public class PlatformChecker {
     Verify.verify(!platforms.isEmpty());
 
     if (platforms.size() != 1) {
-      eventHandlers.dispatch(
-          LogEvent.warn(
-              "platforms configured, but '" + baseImageName + "' is not a manifest list"));
+      String msg =
+          String.format(
+              "cannot build for multiple platforms since the base image '%s' is not a manifest list.",
+              baseImageName);
+      throw new PlatformNotFoundInBaseImageException(msg);
     } else {
       Platform platform = platforms.iterator().next();
       if (!platform.getArchitecture().equals(containerConfig.getArchitecture())
@@ -60,18 +61,15 @@ public class PlatformChecker {
         // Unfortunately, "platforms" has amd64/linux by default even if the user didn't explicitly
         // configure it. Skip reporting to suppress false alarm.
         if (!(platform.getArchitecture().equals("amd64") && platform.getOs().equals("linux"))) {
-          String warning =
-              "the configured platform (%s/%s) doesn't match the platform (%s/%s) of the base "
-                  + "image (%s)";
-          eventHandlers.dispatch(
-              LogEvent.warn(
-                  String.format(
-                      warning,
-                      platform.getArchitecture(),
-                      platform.getOs(),
-                      containerConfig.getArchitecture(),
-                      containerConfig.getOs(),
-                      baseImageName)));
+          String msg =
+              String.format(
+                  "the configured platform (%s/%s) doesn't match the platform (%s/%s) of the base image (%s)",
+                  platform.getArchitecture(),
+                  platform.getOs(),
+                  containerConfig.getArchitecture(),
+                  containerConfig.getOs(),
+                  baseImageName);
+          throw new PlatformNotFoundInBaseImageException(msg);
         }
       }
     }
