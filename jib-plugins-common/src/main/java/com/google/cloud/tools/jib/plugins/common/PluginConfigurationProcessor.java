@@ -1054,6 +1054,8 @@ public class PluginConfigurationProcessor {
                 PropertyNames.APPLICATION_CACHE, projectProperties.getDefaultCacheDirectory()));
 
     rawConfiguration.getToTags().forEach(containerizer::withAdditionalTag);
+
+    containerizer.setEnablePlatformTags(rawConfiguration.getEnablePlatformTags());
   }
 
   /**
