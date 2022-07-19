@@ -399,6 +399,14 @@ public class JibPluginTest {
         .contains("extraDirectories (excludes): [[exclude.txt]]");
   }
 
+  @Test
+  public void testLazyEvalForContainerCreationAndFileModificationTimes() {
+    BuildResult showTimes = testProject.build("showtimes", "-Djib.console=plain");
+    String output = showTimes.getOutput();
+    assertThat(output).contains("creationTime=2022-07-19T10:23:42Z");
+    assertThat(output).contains("filesModificationTime=2022-07-19T11:23:42Z");
+  }
+
   private Project createProject(String... plugins) {
     Project project =
         ProjectBuilder.builder().withProjectDir(testProjectRoot.getRoot()).withName("root").build();

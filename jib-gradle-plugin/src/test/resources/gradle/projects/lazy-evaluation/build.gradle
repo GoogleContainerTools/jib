@@ -15,10 +15,14 @@ dependencies {
 }
 
 project.ext.value = 'original'
+project.ext.jibCreationTime = '1970-01-23T00:23:42Z'
+project.ext.jibFilesModificationTime = '1970-01-23T01:23:42Z'
 
 project.afterEvaluate {
     project.ext.value = 'updated'
     project.ext.getCustomPermissions = { -> return ['/updated': '755'] }
+    project.ext.jibCreationTime = '2022-07-19T10:23:42Z'
+    project.ext.jibFilesModificationTime = '2022-07-19T11:23:42Z'
 }
 
 jib {
@@ -33,6 +37,8 @@ jib {
                     secondKey: project.ext.value + '-second-label'
             ]
         }
+        creationTime = project.provider { project.ext.jibCreationTime }
+        filesModificationTime = project.provider { project.ext.jibFilesModificationTime }
     }
     extraDirectories {
         paths = project.provider { ['src/main/' + project.ext.value + '-custom-extra-dir'] }
@@ -50,4 +56,11 @@ tasks.register('check-extra-directories') {
     Map<String, String> permissions = project.extensions.getByName('jib')['extraDirectories']['permissions'].get()
     println('extraDirectories paths: ' + paths)
     println('extraDirectories permissions: ' + permissions)
+}
+
+tasks.register('showtimes') {
+    String prop = project.extensions.getByName('jib')['container']['creationTime']
+    println('creationTime=' + prop)
+    prop = project.extensions.getByName('jib')['container']['filesModificationTime']
+    println('filesModificationTime=' + prop)
 }

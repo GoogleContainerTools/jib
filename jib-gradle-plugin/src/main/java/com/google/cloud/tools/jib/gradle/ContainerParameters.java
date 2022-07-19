@@ -27,6 +27,8 @@ import javax.annotation.Nullable;
 import javax.inject.Inject;
 import org.gradle.api.model.ObjectFactory;
 import org.gradle.api.provider.MapProperty;
+import org.gradle.api.provider.Property;
+import org.gradle.api.provider.Provider;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.Optional;
 
@@ -50,12 +52,14 @@ public class ContainerParameters {
   private String appRoot = "";
   @Nullable private String user;
   @Nullable private String workingDirectory;
-  private String filesModificationTime = "EPOCH_PLUS_SECOND";
-  private String creationTime = "EPOCH";
+  private Property<String> filesModificationTime;
+  private Property<String> creationTime;
 
   @Inject
   public ContainerParameters(ObjectFactory objectFactory) {
     labels = objectFactory.mapProperty(String.class, String.class).empty();
+    filesModificationTime = objectFactory.property(String.class).value("EPOCH_PLUS_SECOND");
+    creationTime = objectFactory.property(String.class).value("EPOCH");
   }
 
   @Input
@@ -266,11 +270,15 @@ public class ContainerParameters {
     if (System.getProperty(PropertyNames.CONTAINER_FILES_MODIFICATION_TIME) != null) {
       return System.getProperty(PropertyNames.CONTAINER_FILES_MODIFICATION_TIME);
     }
-    return filesModificationTime;
+    return filesModificationTime.getOrNull();
+  }
+
+  public void setFilesModificationTime(Provider<String> filesModificationTime) {
+    this.filesModificationTime.set(filesModificationTime);
   }
 
   public void setFilesModificationTime(String filesModificationTime) {
-    this.filesModificationTime = filesModificationTime;
+    this.filesModificationTime.set(filesModificationTime);
   }
 
   @Input
@@ -279,10 +287,14 @@ public class ContainerParameters {
     if (System.getProperty(PropertyNames.CONTAINER_CREATION_TIME) != null) {
       return System.getProperty(PropertyNames.CONTAINER_CREATION_TIME);
     }
-    return creationTime;
+    return creationTime.getOrNull();
+  }
+
+  public void setCreationTime(Provider<String> creationTime) {
+    this.creationTime.set(creationTime);
   }
 
   public void setCreationTime(String creationTime) {
-    this.creationTime = creationTime;
+    this.creationTime.set(creationTime);
   }
 }
