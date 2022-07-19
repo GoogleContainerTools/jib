@@ -223,6 +223,7 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
     @Parameter private List<String> tags = Collections.emptyList();
     @Parameter private CredHelperParameters credHelper = new CredHelperParameters();
     @Parameter private ToAuthConfiguration auth = new ToAuthConfiguration();
+    @Parameter private boolean enablePlatformTags = false;
 
     public void set(String image) {
       this.image = image;
@@ -865,5 +866,18 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
   @Nullable
   String getProperty(String propertyName) {
     return MavenProjectProperties.getProperty(propertyName, project, session);
+  }
+
+  /**
+   * Returns whether to add platform tags to images.
+   *
+   * @return {@code true} to add platform tags. {@code false} otherwise.
+   */
+  public boolean getEnablePlatformTags() {
+    String property = getProperty(PropertyNames.ENABLE_PLATFORM_TAGS);
+    if (property != null) {
+      return Boolean.valueOf(property);
+    }
+    return to.enablePlatformTags;
   }
 }

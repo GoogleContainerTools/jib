@@ -78,6 +78,7 @@ public class GradleRawConfigurationTest {
     Mockito.when(toCredHelperParameters.getEnvironment())
         .thenReturn(Collections.singletonMap("ENV_VARIABLE", "Value2"));
     Mockito.when(targetImageParameters.getCredHelper()).thenReturn(toCredHelperParameters);
+    Mockito.when(targetImageParameters.getEnablePlatformTags()).thenReturn(true);
 
     Mockito.when(containerParameters.getAppRoot()).thenReturn("/app/root");
     Mockito.when(containerParameters.getArgs()).thenReturn(Arrays.asList("--log", "info"));
@@ -143,5 +144,6 @@ public class GradleRawConfigurationTest {
     Assert.assertEquals(Paths.get("id/path"), rawConfiguration.getImageIdOutputPath());
     Assert.assertEquals(Paths.get("json/path"), rawConfiguration.getImageJsonOutputPath());
     Assert.assertEquals(Paths.get("tar/path"), rawConfiguration.getTarOutputPath());
+    Assert.assertTrue(rawConfiguration.getEnablePlatformTags());
   }
 }

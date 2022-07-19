@@ -224,6 +224,7 @@ Property | Type | Default | Description
 `auth` | [`auth`](#auth-closure) | *None* | Specifies credentials directly (alternative to `credHelper`).
 `credHelper` | `String` | *None* | Specifies a credential helper that can authenticate pushing the target image. This parameter can either be configured as an absolute path to the credential helper executable or as a credential helper suffix (following `docker-credential-`).
 `tags` | `List<String>` | *None* | Additional tags to push to.
+`enablePlatformTags` | `boolean` | `false` | When creating multi-platform images takes the tags, suffixes them with the platform, and tags the image.
 
 <a name="auth-closure"></a>`auth` is a closure with the following properties (see [Using Specific Credentials](#using-specific-credentials)):
 

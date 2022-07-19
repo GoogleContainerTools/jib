@@ -74,6 +74,7 @@ public class ContainerizerTest {
         Paths.get("application/layers"), containerizer.getApplicationLayersCacheDirectory());
     Assert.assertTrue(containerizer.getAllowInsecureRegistries());
     Assert.assertEquals("tool", containerizer.getToolName());
+    Assert.assertFalse(containerizer.getEnablePlatformTags());
   }
 
   @Test
