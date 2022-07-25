@@ -131,6 +131,24 @@ public class Containerizer {
         DESCRIPTION_FOR_TARBALL, imageConfiguration, stepsRunnerFactory, false);
   }
 
+  /**
+   * Gets a new {@link Containerizer} that containerizes to a Docker daemon.
+   *
+   * @param dockerClient the {@link DockerClient} that defines target output file
+   * @param dockerDaemonImage the {@link DockerDaemonImage} that defines target Docker daemon
+   * @return a new {@link Containerizer}
+   */
+  public static Containerizer to(DockerClient dockerClient, DockerDaemonImage dockerDaemonImage) {
+    ImageConfiguration imageConfiguration =
+        ImageConfiguration.builder(dockerDaemonImage.getImageReference()).build();
+
+    Function<BuildContext, StepsRunner> stepsRunnerFactory =
+        buildContext -> StepsRunner.begin(buildContext).dockerLoadSteps(dockerClient);
+
+    return new Containerizer(
+        DESCRIPTION_FOR_DOCKER_DAEMON, imageConfiguration, stepsRunnerFactory, true);
+  }
+
   private final String description;
   private final ImageConfiguration imageConfiguration;
   private final Function<BuildContext, StepsRunner> stepsRunnerFactory;
