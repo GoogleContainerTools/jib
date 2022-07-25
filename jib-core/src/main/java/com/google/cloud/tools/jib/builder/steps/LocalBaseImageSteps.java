@@ -20,7 +20,7 @@ import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.cloud.tools.jib.api.DescriptorDigest;
 import com.google.cloud.tools.jib.api.DockerClient;
-import com.google.cloud.tools.jib.api.DockerClient.DockerImageDetails;
+import com.google.cloud.tools.jib.api.ImageDetails;
 import com.google.cloud.tools.jib.api.ImageReference;
 import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
@@ -109,7 +109,7 @@ public class LocalBaseImageSteps {
               new TimerEventDispatcher(
                   buildContext.getEventHandlers(),
                   "Saving " + imageReference + " from Docker daemon")) {
-        DockerClient.DockerImageDetails dockerImageDetails = dockerClient.inspect(imageReference);
+        ImageDetails dockerImageDetails = dockerClient.inspect(imageReference);
         Optional<LocalImage> cachedImage =
             getCachedDockerImage(buildContext.getBaseImageLayersCache(), dockerImageDetails);
         if (cachedImage.isPresent()) {
@@ -176,8 +176,7 @@ public class LocalBaseImageSteps {
   }
 
   @VisibleForTesting
-  static Optional<LocalImage> getCachedDockerImage(
-      Cache cache, DockerImageDetails dockerImageDetails)
+  static Optional<LocalImage> getCachedDockerImage(Cache cache, ImageDetails dockerImageDetails)
       throws DigestException, IOException, CacheCorruptedException {
     // Get config
     Optional<ContainerConfigurationTemplate> cachedConfig =

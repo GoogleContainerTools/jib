@@ -17,6 +17,7 @@
 package com.google.cloud.tools.jib.docker;
 
 import com.google.cloud.tools.jib.api.DockerClient;
+import com.google.cloud.tools.jib.api.ImageDetails;
 import com.google.cloud.tools.jib.api.ImageReference;
 import com.google.cloud.tools.jib.image.ImageTarball;
 import java.io.IOException;
@@ -42,7 +43,7 @@ public class AnotherDockerClient implements DockerClient {
       throws InterruptedException, IOException {}
 
   @Override
-  public DockerImageDetails inspect(ImageReference imageReference)
+  public ImageDetails inspect(ImageReference imageReference)
       throws IOException, InterruptedException {
     return null;
   }
