@@ -106,5 +106,19 @@ public class Jib {
     return from(ImageReference.scratch());
   }
 
+  /**
+   * Starts building the container from a base image stored in the Docker cache. Requires a running
+   * Docker daemon.
+   *
+   * @param dockerClient the {@link DockerClient} to connect
+   * @param dockerDaemonImage the {@link DockerDaemonImage} that defines the base image and Docker
+   *     client
+   * @return a new {@link JibContainerBuilder} to continue building the container
+   */
+  public static JibContainerBuilder from(
+      DockerClient dockerClient, DockerDaemonImage dockerDaemonImage) {
+    return new JibContainerBuilder(dockerClient, dockerDaemonImage);
+  }
+
   private Jib() {}
 }

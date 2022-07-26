@@ -128,7 +128,7 @@ public class Containerizer {
   /**
    * Gets a new {@link Containerizer} that containerizes to a Docker daemon.
    *
-   * @param dockerClient the {@link DockerClient} that defines target output file
+   * @param dockerClient the {@link DockerClient} to connect
    * @param dockerDaemonImage the {@link DockerDaemonImage} that defines target Docker daemon
    * @return a new {@link Containerizer}
    */
