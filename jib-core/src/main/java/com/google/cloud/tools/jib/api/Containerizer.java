@@ -91,20 +91,14 @@ public class Containerizer {
    * @return a new {@link Containerizer}
    */
   public static Containerizer to(DockerDaemonImage dockerDaemonImage) {
-    ImageConfiguration imageConfiguration =
-        ImageConfiguration.builder(dockerDaemonImage.getImageReference()).build();
-
     DockerClient dockerClient =
         DockerClientResolver.resolve(dockerDaemonImage.getDockerEnvironment())
             .orElse(
                 new CliDockerClient(
                     dockerDaemonImage.getDockerExecutable(),
                     dockerDaemonImage.getDockerEnvironment()));
-    Function<BuildContext, StepsRunner> stepsRunnerFactory =
-        buildContext -> StepsRunner.begin(buildContext).dockerLoadSteps(dockerClient);
 
-    return new Containerizer(
-        DESCRIPTION_FOR_DOCKER_DAEMON, imageConfiguration, stepsRunnerFactory, false);
+    return to(dockerClient, dockerDaemonImage);
   }
 
   /**
@@ -146,7 +140,7 @@ public class Containerizer {
         buildContext -> StepsRunner.begin(buildContext).dockerLoadSteps(dockerClient);
 
     return new Containerizer(
-        DESCRIPTION_FOR_DOCKER_DAEMON, imageConfiguration, stepsRunnerFactory, true);
+        DESCRIPTION_FOR_DOCKER_DAEMON, imageConfiguration, stepsRunnerFactory, false);
   }
 
   private final String description;
