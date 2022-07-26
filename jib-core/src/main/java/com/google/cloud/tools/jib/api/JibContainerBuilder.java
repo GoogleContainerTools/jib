@@ -87,8 +87,6 @@ public class JibContainerBuilder {
   // TODO(chanseok): remove and use containerBuildPlanBuilder instead.
   private List<FileEntriesLayer> layerConfigurations = new ArrayList<>();
 
-  private DockerClient dockerClient;
-
   /** Instantiate with {@link Jib#from}. */
   JibContainerBuilder(RegistryImage baseImage) {
     this(
