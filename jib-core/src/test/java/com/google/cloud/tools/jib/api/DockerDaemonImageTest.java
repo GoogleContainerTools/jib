@@ -16,7 +16,7 @@
 
 package com.google.cloud.tools.jib.api;
 
-import com.google.cloud.tools.jib.docker.DockerClient;
+import com.google.cloud.tools.jib.docker.CliDockerClient;
 import com.google.common.collect.ImmutableMap;
 import java.nio.file.Paths;
 import org.junit.Assert;
@@ -31,7 +31,7 @@ public class DockerDaemonImageTest {
 
     Assert.assertEquals("docker/daemon/image", dockerDaemonImage.getImageReference().toString());
     Assert.assertEquals(
-        DockerClient.DEFAULT_DOCKER_CLIENT, dockerDaemonImage.getDockerExecutable());
+        CliDockerClient.DEFAULT_DOCKER_CLIENT, dockerDaemonImage.getDockerExecutable());
     Assert.assertEquals(0, dockerDaemonImage.getDockerEnvironment().size());
   }
 

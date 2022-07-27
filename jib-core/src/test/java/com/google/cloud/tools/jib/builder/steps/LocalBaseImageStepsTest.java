@@ -17,12 +17,13 @@
 package com.google.cloud.tools.jib.builder.steps;
 
 import com.google.cloud.tools.jib.api.CacheDirectoryCreationException;
+import com.google.cloud.tools.jib.api.ImageDetails;
 import com.google.cloud.tools.jib.builder.ProgressEventDispatcher;
 import com.google.cloud.tools.jib.builder.steps.LocalBaseImageSteps.LocalImage;
 import com.google.cloud.tools.jib.cache.Cache;
 import com.google.cloud.tools.jib.cache.CacheCorruptedException;
 import com.google.cloud.tools.jib.configuration.BuildContext;
-import com.google.cloud.tools.jib.docker.DockerClient.DockerImageDetails;
+import com.google.cloud.tools.jib.docker.CliDockerClient;
 import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.filesystem.TempDirectoryProvider;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
@@ -141,8 +142,8 @@ public class LocalBaseImageStepsTest {
             + "\"RootFS\": { \"Layers\": ["
             + "  \"sha256:5e701122d3347fae0758cd5b7f0692c686fcd07b0e7fd9c4a125fbdbbedc04dd\","
             + "  \"sha256:f1ac3015bcbf0ada4750d728626eb10f0f585199e2b667dcd79e49f0e926178e\" ] } }";
-    DockerImageDetails dockerImageDetails =
-        JsonTemplateMapper.readJson(dockerInspectJson, DockerImageDetails.class);
+    ImageDetails dockerImageDetails =
+        JsonTemplateMapper.readJson(dockerInspectJson, CliDockerClient.DockerImageDetails.class);
     Path cachePath = temporaryFolder.newFolder("cache").toPath();
     Files.createDirectories(cachePath.resolve("local/config"));
     Cache cache = Cache.withDirectory(cachePath);

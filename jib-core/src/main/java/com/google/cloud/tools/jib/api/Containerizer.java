@@ -20,7 +20,8 @@ import com.google.cloud.tools.jib.builder.steps.BuildResult;
 import com.google.cloud.tools.jib.builder.steps.StepsRunner;
 import com.google.cloud.tools.jib.configuration.BuildContext;
 import com.google.cloud.tools.jib.configuration.ImageConfiguration;
-import com.google.cloud.tools.jib.docker.DockerClient;
+import com.google.cloud.tools.jib.docker.CliDockerClient;
+import com.google.cloud.tools.jib.docker.DockerClientResolver;
 import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.filesystem.XdgDirectories;
 import com.google.common.base.Preconditions;
@@ -90,17 +91,14 @@ public class Containerizer {
    * @return a new {@link Containerizer}
    */
   public static Containerizer to(DockerDaemonImage dockerDaemonImage) {
-    ImageConfiguration imageConfiguration =
-        ImageConfiguration.builder(dockerDaemonImage.getImageReference()).build();
-
     DockerClient dockerClient =
-        new DockerClient(
-            dockerDaemonImage.getDockerExecutable(), dockerDaemonImage.getDockerEnvironment());
-    Function<BuildContext, StepsRunner> stepsRunnerFactory =
-        buildContext -> StepsRunner.begin(buildContext).dockerLoadSteps(dockerClient);
+        DockerClientResolver.resolve(dockerDaemonImage.getDockerEnvironment())
+            .orElse(
+                new CliDockerClient(
+                    dockerDaemonImage.getDockerExecutable(),
+                    dockerDaemonImage.getDockerEnvironment()));
 
-    return new Containerizer(
-        DESCRIPTION_FOR_DOCKER_DAEMON, imageConfiguration, stepsRunnerFactory, false);
+    return to(dockerClient, dockerDaemonImage);
   }
 
   /**
@@ -125,6 +123,24 @@ public class Containerizer {
 
     return new Containerizer(
         DESCRIPTION_FOR_TARBALL, imageConfiguration, stepsRunnerFactory, false);
+  }
+
+  /**
+   * Gets a new {@link Containerizer} that containerizes to a Docker daemon.
+   *
+   * @param dockerClient the {@link DockerClient} to connect
+   * @param dockerDaemonImage the {@link DockerDaemonImage} that defines target Docker daemon
+   * @return a new {@link Containerizer}
+   */
+  public static Containerizer to(DockerClient dockerClient, DockerDaemonImage dockerDaemonImage) {
+    ImageConfiguration imageConfiguration =
+        ImageConfiguration.builder(dockerDaemonImage.getImageReference()).build();
+
+    Function<BuildContext, StepsRunner> stepsRunnerFactory =
+        buildContext -> StepsRunner.begin(buildContext).dockerLoadSteps(dockerClient);
+
+    return new Containerizer(
+        DESCRIPTION_FOR_DOCKER_DAEMON, imageConfiguration, stepsRunnerFactory, false);
   }
 
   private final String description;

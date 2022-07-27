@@ -29,7 +29,8 @@ import com.google.cloud.tools.jib.builder.steps.BuildResult;
 import com.google.cloud.tools.jib.configuration.BuildContext;
 import com.google.cloud.tools.jib.configuration.ContainerConfiguration;
 import com.google.cloud.tools.jib.configuration.ImageConfiguration;
-import com.google.cloud.tools.jib.docker.DockerClient;
+import com.google.cloud.tools.jib.docker.CliDockerClient;
+import com.google.cloud.tools.jib.docker.DockerClientResolver;
 import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Verify;
@@ -100,7 +101,10 @@ public class JibContainerBuilder {
     this(
         ImageConfiguration.builder(baseImage.getImageReference())
             .setDockerClient(
-                new DockerClient(baseImage.getDockerExecutable(), baseImage.getDockerEnvironment()))
+                DockerClientResolver.resolve(baseImage.getDockerEnvironment())
+                    .orElse(
+                        new CliDockerClient(
+                            baseImage.getDockerExecutable(), baseImage.getDockerEnvironment())))
             .build(),
         BuildContext.builder());
   }
@@ -111,6 +115,15 @@ public class JibContainerBuilder {
     this(
         ImageConfiguration.builder(baseImage.getImageReference().orElse(ImageReference.scratch()))
             .setTarPath(baseImage.getPath())
+            .build(),
+        BuildContext.builder());
+  }
+
+  /** Instantiate with {@link Jib#from}. */
+  JibContainerBuilder(DockerClient dockerClient, DockerDaemonImage baseImage) {
+    this(
+        ImageConfiguration.builder(baseImage.getImageReference())
+            .setDockerClient(dockerClient)
             .build(),
         BuildContext.builder());
   }

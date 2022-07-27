@@ -17,6 +17,7 @@
 package com.google.cloud.tools.jib.api;
 
 import com.google.cloud.tools.jib.configuration.ImageConfiguration;
+import com.google.cloud.tools.jib.docker.AnotherDockerClient;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.MoreExecutors;
 import java.io.IOException;
@@ -37,10 +38,12 @@ public class ContainerizerTest {
     RegistryImage registryImage = RegistryImage.named("registry/image");
     DockerDaemonImage dockerDaemonImage = DockerDaemonImage.named("daemon/image");
     TarImage tarImage = TarImage.at(Paths.get("ignored")).named("tar/iamge");
+    DockerClient dockerClient = new AnotherDockerClient();
 
     verifyTo(Containerizer.to(registryImage));
     verifyTo(Containerizer.to(dockerDaemonImage));
     verifyTo(Containerizer.to(tarImage));
+    verifyTo(Containerizer.to(dockerClient, dockerDaemonImage));
   }
 
   private void verifyTo(Containerizer containerizer) throws CacheDirectoryCreationException {

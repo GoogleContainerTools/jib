@@ -17,8 +17,9 @@
 package com.google.cloud.tools.jib.docker;
 
 import com.google.cloud.tools.jib.api.DescriptorDigest;
+import com.google.cloud.tools.jib.api.DockerClient;
 import com.google.cloud.tools.jib.api.ImageReference;
-import com.google.cloud.tools.jib.docker.DockerClient.DockerImageDetails;
+import com.google.cloud.tools.jib.docker.CliDockerClient.DockerImageDetails;
 import com.google.cloud.tools.jib.image.ImageTarball;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import com.google.common.collect.ImmutableMap;
@@ -47,9 +48,9 @@ import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.mockito.stubbing.VoidAnswer1;
 
-/** Tests for {@link DockerClient}. */
+/** Tests for {@link CliDockerClient}. */
 @RunWith(MockitoJUnitRunner.class)
-public class DockerClientTest {
+public class CliDockerClientTest {
 
   @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
@@ -70,13 +71,13 @@ public class DockerClientTest {
 
   @Test
   public void testIsDockerInstalled_fail() {
-    Assert.assertFalse(DockerClient.isDockerInstalled(Paths.get("path/to/nonexistent/file")));
+    Assert.assertFalse(CliDockerClient.isDockerInstalled(Paths.get("path/to/nonexistent/file")));
   }
 
   @Test
   public void testLoad() throws IOException, InterruptedException {
     DockerClient testDockerClient =
-        new DockerClient(
+        new CliDockerClient(
             subcommand -> {
               Assert.assertEquals(Collections.singletonList("load"), subcommand);
               return mockProcessBuilder;
@@ -100,7 +101,7 @@ public class DockerClientTest {
 
   @Test
   public void testLoad_stdinFail() throws InterruptedException {
-    DockerClient testDockerClient = new DockerClient(ignored -> mockProcessBuilder);
+    DockerClient testDockerClient = new CliDockerClient(ignored -> mockProcessBuilder);
 
     Mockito.when(mockProcess.getOutputStream())
         .thenReturn(
@@ -125,7 +126,7 @@ public class DockerClientTest {
 
   @Test
   public void testLoad_stdinFail_stderrFail() throws InterruptedException {
-    DockerClient testDockerClient = new DockerClient(ignored -> mockProcessBuilder);
+    DockerClient testDockerClient = new CliDockerClient(ignored -> mockProcessBuilder);
 
     Mockito.when(mockProcess.getOutputStream())
         .thenReturn(
@@ -157,7 +158,7 @@ public class DockerClientTest {
 
   @Test
   public void testLoad_stdoutFail() throws InterruptedException {
-    DockerClient testDockerClient = new DockerClient(ignored -> mockProcessBuilder);
+    DockerClient testDockerClient = new CliDockerClient(ignored -> mockProcessBuilder);
     Mockito.when(mockProcess.waitFor()).thenReturn(1);
 
     Mockito.when(mockProcess.getOutputStream()).thenReturn(ByteStreams.nullOutputStream());
@@ -213,7 +214,7 @@ public class DockerClientTest {
   @Test
   public void testDefaultProcessorBuilderFactory_customExecutable() {
     ProcessBuilder processBuilder =
-        DockerClient.defaultProcessBuilderFactory("docker-executable", ImmutableMap.of())
+        CliDockerClient.defaultProcessBuilderFactory("docker-executable", ImmutableMap.of())
             .apply(Arrays.asList("sub", "command"));
 
     Assert.assertEquals(
@@ -229,7 +230,7 @@ public class DockerClientTest {
     expectedEnvironment.putAll(environment);
 
     ProcessBuilder processBuilder =
-        DockerClient.defaultProcessBuilderFactory("docker", environment)
+        CliDockerClient.defaultProcessBuilderFactory("docker", environment)
             .apply(Collections.emptyList());
 
     Assert.assertEquals(expectedEnvironment, processBuilder.environment());
@@ -238,7 +239,7 @@ public class DockerClientTest {
   @Test
   public void testSize_fail() throws InterruptedException {
     DockerClient testDockerClient =
-        new DockerClient(
+        new CliDockerClient(
             subcommand -> {
               Assert.assertEquals("inspect", subcommand.get(0));
               return mockProcessBuilder;
@@ -317,7 +318,7 @@ public class DockerClientTest {
   }
 
   private DockerClient makeDockerSaveClient() {
-    return new DockerClient(
+    return new CliDockerClient(
         subcommand -> {
           try {
             if (subcommand.contains("{{.Size}}")) {

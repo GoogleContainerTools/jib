@@ -18,7 +18,7 @@ package com.google.cloud.tools.jib.maven;
 
 import com.google.cloud.tools.jib.api.CacheDirectoryCreationException;
 import com.google.cloud.tools.jib.api.InvalidImageReferenceException;
-import com.google.cloud.tools.jib.docker.DockerClient;
+import com.google.cloud.tools.jib.docker.CliDockerClient;
 import com.google.cloud.tools.jib.filesystem.TempDirectoryProvider;
 import com.google.cloud.tools.jib.plugins.common.BuildStepsExecutionException;
 import com.google.cloud.tools.jib.plugins.common.ExtraDirectoryNotFoundException;
@@ -68,8 +68,8 @@ public class BuildDockerMojo extends JibPluginConfiguration {
     Path dockerExecutable = getDockerClientExecutable();
     boolean isDockerInstalled =
         dockerExecutable == null
-            ? DockerClient.isDefaultDockerInstalled()
-            : DockerClient.isDockerInstalled(dockerExecutable);
+            ? CliDockerClient.isDefaultDockerInstalled()
+            : CliDockerClient.isDockerInstalled(dockerExecutable);
     if (!isDockerInstalled) {
       throw new MojoExecutionException(
           HelpfulSuggestions.forDockerNotInstalled(HELPFUL_SUGGESTIONS_PREFIX));
