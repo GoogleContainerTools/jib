@@ -41,6 +41,7 @@ import com.google.cloud.tools.jib.image.json.ContainerConfigurationTemplate;
 import com.google.cloud.tools.jib.image.json.ImageMetadataTemplate;
 import com.google.cloud.tools.jib.image.json.JsonToImageTranslator;
 import com.google.cloud.tools.jib.image.json.ManifestAndConfigTemplate;
+import com.google.cloud.tools.jib.image.json.ManifestListTemplate;
 import com.google.cloud.tools.jib.image.json.ManifestTemplate;
 import com.google.cloud.tools.jib.image.json.PlatformNotFoundInBaseImageException;
 import com.google.cloud.tools.jib.image.json.UnknownManifestFormatException;
@@ -315,8 +316,7 @@ class PullBaseImageStep implements Callable<ImagesAndRegistryClient> {
             JsonToImageTranslator.toImage(imageManifest, containerConfig));
       }
 
-      // TODO: support OciIndexTemplate once AbstractManifestPuller starts to accept it.
-      Verify.verify(manifestTemplate instanceof V22ManifestListTemplate);
+      Verify.verify(manifestTemplate instanceof ManifestListTemplate);
 
       List<ManifestAndConfigTemplate> manifestsAndConfigs = new ArrayList<>();
       ImmutableList.Builder<Image> images = ImmutableList.builder();
@@ -332,7 +332,7 @@ class PullBaseImageStep implements Callable<ImagesAndRegistryClient> {
 
           String manifestDigest =
               lookUpPlatformSpecificImageManifest(
-                  (V22ManifestListTemplate) manifestTemplate, platform);
+                  (ManifestListTemplate) manifestTemplate, platform);
           // TODO: pull multiple manifests (+ container configs) in parallel.
           ManifestAndDigest<?> imageManifestAndDigest = registryClient.pullManifest(manifestDigest);
           progressDispatcher2.dispatchProgress(1);
@@ -360,10 +360,9 @@ class PullBaseImageStep implements Callable<ImagesAndRegistryClient> {
    * Looks through a manifest list for the manifest matching the {@code platform} and returns the
    * digest of the first manifest it finds.
    */
-  // TODO: support OciIndexTemplate once AbstractManifestPuller starts to accept it.
   @VisibleForTesting
   String lookUpPlatformSpecificImageManifest(
-      V22ManifestListTemplate manifestListTemplate, Platform platform)
+      ManifestListTemplate manifestListTemplate, Platform platform)
       throws UnlistedPlatformInManifestListException {
     EventHandlers eventHandlers = buildContext.getEventHandlers();
 

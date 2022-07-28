@@ -105,6 +105,26 @@ public class ManifestPullerTest {
   }
 
   @Test
+  public void testHandleResponse_ociManifest()
+      throws URISyntaxException, IOException, UnknownManifestFormatException {
+    Path ociManifestFile = Paths.get(Resources.getResource("core/json/ocimanifest.json").toURI());
+    InputStream ociManifest = new ByteArrayInputStream(Files.readAllBytes(ociManifestFile));
+
+    DescriptorDigest expectedDigest = Digests.computeDigest(ociManifest).getDigest();
+    ociManifest.reset();
+
+    Mockito.when(mockResponse.getBody()).thenReturn(ociManifest);
+    ManifestAndDigest<?> manifestAndDigest =
+        new ManifestPuller<>(
+                fakeRegistryEndpointRequestProperties, "test-image-tag", OciManifestTemplate.class)
+            .handleResponse(mockResponse);
+
+    MatcherAssert.assertThat(
+        manifestAndDigest.getManifest(), CoreMatchers.instanceOf(OciManifestTemplate.class));
+    Assert.assertEquals(expectedDigest, manifestAndDigest.getDigest());
+  }
+
+  @Test
   public void testHandleResponse_v22ManifestListFailsWhenParsedAsV22Manifest()
       throws URISyntaxException, IOException, UnknownManifestFormatException {
     Path v22ManifestListFile =
@@ -165,6 +185,28 @@ public class ManifestPullerTest {
 
     MatcherAssert.assertThat(
         manifestTemplate, CoreMatchers.instanceOf(V22ManifestListTemplate.class));
+    Assert.assertTrue(manifestTemplate.getManifests().size() > 0);
+    Assert.assertEquals(expectedDigest, manifestAndDigest.getDigest());
+  }
+
+  @Test
+  public void testHandleResponse_OciIndex()
+      throws URISyntaxException, IOException, UnknownManifestFormatException {
+    Path ociIndexFile =
+        Paths.get(Resources.getResource("core/json/ociindex_platforms.json").toURI());
+    InputStream ociIndex = new ByteArrayInputStream(Files.readAllBytes(ociIndexFile));
+
+    DescriptorDigest expectedDigest = Digests.computeDigest(ociIndex).getDigest();
+    ociIndex.reset();
+
+    Mockito.when(mockResponse.getBody()).thenReturn(ociIndex);
+    ManifestAndDigest<OciIndexTemplate> manifestAndDigest =
+        new ManifestPuller<>(
+                fakeRegistryEndpointRequestProperties, "test-image-tag", OciIndexTemplate.class)
+            .handleResponse(mockResponse);
+    OciIndexTemplate manifestTemplate = manifestAndDigest.getManifest();
+
+    MatcherAssert.assertThat(manifestTemplate, CoreMatchers.instanceOf(OciIndexTemplate.class));
     Assert.assertTrue(manifestTemplate.getManifests().size() > 0);
     Assert.assertEquals(expectedDigest, manifestAndDigest.getDigest());
   }
@@ -318,7 +360,8 @@ public class ManifestPullerTest {
             OciManifestTemplate.MANIFEST_MEDIA_TYPE,
             V22ManifestTemplate.MANIFEST_MEDIA_TYPE,
             V21ManifestTemplate.MEDIA_TYPE,
-            V22ManifestListTemplate.MANIFEST_MEDIA_TYPE),
+            V22ManifestListTemplate.MANIFEST_MEDIA_TYPE,
+            OciIndexTemplate.MEDIA_TYPE),
         testManifestPuller.getAccept());
 
     Assert.assertEquals(
@@ -342,6 +385,11 @@ public class ManifestPullerTest {
                 fakeRegistryEndpointRequestProperties,
                 "test-image-tag",
                 V22ManifestListTemplate.class)
+            .getAccept());
+    Assert.assertEquals(
+        Collections.singletonList(OciIndexTemplate.MEDIA_TYPE),
+        new ManifestPuller<>(
+                fakeRegistryEndpointRequestProperties, "test-image-tag", OciIndexTemplate.class)
             .getAccept());
   }
 }

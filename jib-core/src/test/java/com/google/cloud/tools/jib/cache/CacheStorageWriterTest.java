@@ -291,7 +291,7 @@ public class CacheStorageWriterTest {
 
     MatcherAssert.assertThat(
         savedMetadata.getManifestList(), CoreMatchers.instanceOf(OciIndexTemplate.class));
-    List<ContentDescriptorTemplate> savedManifestDescriptors =
+    List<? extends ContentDescriptorTemplate> savedManifestDescriptors =
         ((OciIndexTemplate) savedMetadata.getManifestList()).getManifests();
 
     Assert.assertEquals(1, savedManifestDescriptors.size());

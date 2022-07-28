@@ -80,12 +80,16 @@ abstract class AbstractManifestPuller<T extends ManifestTemplate, R>
     if (manifestTemplateClass.equals(V22ManifestListTemplate.class)) {
       return Collections.singletonList(V22ManifestListTemplate.MANIFEST_MEDIA_TYPE);
     }
+    if (manifestTemplateClass.equals(OciIndexTemplate.class)) {
+      return Collections.singletonList(OciIndexTemplate.MEDIA_TYPE);
+    }
 
     return Arrays.asList(
         OciManifestTemplate.MANIFEST_MEDIA_TYPE,
         V22ManifestTemplate.MANIFEST_MEDIA_TYPE,
         V21ManifestTemplate.MEDIA_TYPE,
-        V22ManifestListTemplate.MANIFEST_MEDIA_TYPE);
+        V22ManifestListTemplate.MANIFEST_MEDIA_TYPE,
+        OciIndexTemplate.MEDIA_TYPE);
   }
 
   /** Parses the response body into a {@link ManifestAndDigest}. */
@@ -173,6 +177,10 @@ abstract class AbstractManifestPuller<T extends ManifestTemplate, R>
       if (V22ManifestListTemplate.MANIFEST_MEDIA_TYPE.equals(mediaType)) {
         return manifestTemplateClass.cast(
             JsonTemplateMapper.readJson(jsonString, V22ManifestListTemplate.class));
+      }
+      if (OciIndexTemplate.MEDIA_TYPE.equals(mediaType)) {
+        return manifestTemplateClass.cast(
+            JsonTemplateMapper.readJson(jsonString, OciIndexTemplate.class));
       }
       throw new UnknownManifestFormatException("Unknown mediaType: " + mediaType);
     }
