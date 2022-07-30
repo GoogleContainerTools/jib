@@ -41,6 +41,7 @@ import com.google.common.io.ByteStreams;
 import com.google.common.io.Resources;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
@@ -50,8 +51,9 @@ import java.security.DigestException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
-import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
+import org.apache.commons.compress.compressors.CompressorException;
+import org.apache.commons.compress.compressors.CompressorStreamFactory;
 import org.hamcrest.CoreMatchers;
 import org.hamcrest.MatcherAssert;
 import org.junit.Assert;
@@ -68,6 +70,7 @@ public class CacheStorageWriterTest {
   }
 
   private static Blob compress(Blob blob) {
+    // Don't use GzipCompressorOutputStream, which has different defaults than GZIPOutputStream
     return Blobs.from(
         outputStream -> {
           try (GZIPOutputStream compressorStream = new GZIPOutputStream(outputStream)) {
@@ -77,8 +80,28 @@ public class CacheStorageWriterTest {
         false);
   }
 
+  private static Blob compress(Blob blob, String compressorName) {
+    return Blobs.from(
+        outputStream -> {
+          try (OutputStream compressorStream =
+              CompressorStreamFactory.getSingleton()
+                  .createCompressorOutputStream(compressorName, outputStream)) {
+            blob.writeTo(compressorStream);
+          } catch (CompressorException e) {
+            throw new RuntimeException(e);
+          }
+        },
+        false);
+  }
+
   private static Blob decompress(Blob blob) throws IOException {
-    return Blobs.from(new GZIPInputStream(new ByteArrayInputStream(Blobs.writeToByteArray(blob))));
+    try {
+      return Blobs.from(
+          CompressorStreamFactory.getSingleton()
+              .createCompressorInputStream(new ByteArrayInputStream(Blobs.writeToByteArray(blob))));
+    } catch (CompressorException e) {
+      throw new IOException(e);
+    }
   }
 
   private static <T extends JsonTemplate> T loadJsonResource(String path, Class<T> jsonClass)
@@ -103,10 +126,27 @@ public class CacheStorageWriterTest {
   @Test
   public void testWriteCompressed() throws IOException {
     Blob uncompressedLayerBlob = Blobs.from("uncompressedLayerBlob");
+    Blob compressedLayerBlob = compress(uncompressedLayerBlob);
+    CachedLayer cachedLayer = cacheStorageWriter.writeCompressed(compressedLayerBlob);
 
-    CachedLayer cachedLayer = cacheStorageWriter.writeCompressed(compress(uncompressedLayerBlob));
+    verifyCachedLayer(cachedLayer, uncompressedLayerBlob, compressedLayerBlob);
+  }
 
-    verifyCachedLayer(cachedLayer, uncompressedLayerBlob);
+  @Test
+  public void testWriteZstdCompressed() throws IOException {
+    Blob uncompressedLayerBlob = Blobs.from("uncompressedLayerBlob");
+    Blob compressedLayerBlob = compress(uncompressedLayerBlob, CompressorStreamFactory.ZSTANDARD);
+
+    CachedLayer cachedLayer = cacheStorageWriter.writeCompressed(compressedLayerBlob);
+
+    verifyCachedLayer(cachedLayer, uncompressedLayerBlob, compressedLayerBlob);
+  }
+
+  @Test(expected = IOException.class)
+  public void testWriteCompressWhenUncompressed() throws IOException {
+    Blob uncompressedLayerBlob = Blobs.from("uncompressedLayerBlob");
+    // The detection of compression algorithm will fail
+    cacheStorageWriter.writeCompressed(uncompressedLayerBlob);
   }
 
   @Test
@@ -117,7 +157,7 @@ public class CacheStorageWriterTest {
 
     CachedLayer cachedLayer = cacheStorageWriter.writeUncompressed(uncompressedLayerBlob, selector);
 
-    verifyCachedLayer(cachedLayer, uncompressedLayerBlob);
+    verifyCachedLayer(cachedLayer, uncompressedLayerBlob, compress(uncompressedLayerBlob));
 
     // Verifies that the files are present.
     Path selectorFile = cacheStorageFiles.getSelectorFile(selector);
@@ -354,9 +394,10 @@ public class CacheStorageWriterTest {
     assertThat(exception.getCause()).hasMessageThat().isEqualTo("foo");
   }
 
-  private void verifyCachedLayer(CachedLayer cachedLayer, Blob uncompressedLayerBlob)
+  private void verifyCachedLayer(
+      CachedLayer cachedLayer, Blob uncompressedLayerBlob, Blob compressedLayerBlob)
       throws IOException {
-    BlobDescriptor layerBlobDescriptor = getDigest(compress(uncompressedLayerBlob));
+    BlobDescriptor layerBlobDescriptor = getDigest(compressedLayerBlob);
     DescriptorDigest layerDiffId = getDigest(uncompressedLayerBlob).getDigest();
 
     // Verifies cachedLayer is correct.

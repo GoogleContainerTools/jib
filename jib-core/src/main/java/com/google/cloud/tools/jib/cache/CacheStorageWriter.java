@@ -50,9 +50,10 @@ import java.nio.file.StandardCopyOption;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
-import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 import javax.annotation.Nullable;
+import org.apache.commons.compress.compressors.CompressorException;
+import org.apache.commons.compress.compressors.CompressorStreamFactory;
 
 /** Writes to the default cache storage engine. */
 class CacheStorageWriter {
@@ -159,9 +160,13 @@ class CacheStorageWriter {
    */
   private static DescriptorDigest getDiffIdByDecompressingFile(Path compressedFile)
       throws IOException {
-    try (InputStream fileInputStream =
-        new BufferedInputStream(new GZIPInputStream(Files.newInputStream(compressedFile)))) {
-      return Digests.computeDigest(fileInputStream).getDigest();
+    try (InputStream in =
+        CompressorStreamFactory.getSingleton()
+            .createCompressorInputStream(
+                new BufferedInputStream(Files.newInputStream(compressedFile)))) {
+      return Digests.computeDigest(in).getDigest();
+    } catch (CompressorException e) {
+      throw new IOException(e);
     }
   }
 
