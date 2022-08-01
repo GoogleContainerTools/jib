@@ -119,7 +119,7 @@ public class LocalBaseImageSteps {
         }
 
         Path tarPath = tempDirectoryProvider.newDirectory().resolve("out.tar");
-        long size = dockerClient.inspect(imageReference).getSize();
+        long size = dockerImageDetails.getSize();
         try (ProgressEventDispatcher dockerProgress =
                 progressEventDispatcher
                     .newChildProducer()
