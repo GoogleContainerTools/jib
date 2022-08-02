@@ -26,8 +26,12 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.attribute.FileAttribute;
+import java.nio.file.attribute.PosixFilePermission;
+import java.nio.file.attribute.PosixFilePermissions;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import javax.annotation.Nullable;
 import org.junit.rules.ExternalResource;
@@ -76,7 +80,9 @@ public class LocalRegistry extends ExternalResource {
       // BCrypt generates hashes using $2a$ algorithm (instead of $2y$ from docs), but this seems
       // to work okay
       String credentialString = username + ":" + BCrypt.hashpw(password, BCrypt.gensalt());
-      Path tempFolder = Files.createTempDirectory(Paths.get("/tmp"), "");
+      FileAttribute<Set<PosixFilePermission>> attrs =
+          PosixFilePermissions.asFileAttribute(PosixFilePermissions.fromString("rwxr-xr-x"));
+      Path tempFolder = Files.createTempDirectory(Paths.get("/tmp"), "", attrs);
       Files.write(
           tempFolder.resolve("htpasswd"), credentialString.getBytes(StandardCharsets.UTF_8));
       boolean isOnKokoroCI =
