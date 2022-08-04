@@ -216,6 +216,7 @@ public class JibRunHelper {
    */
   static String pullAndRunBuiltImage(String imageReference, String... extraRunArguments)
       throws IOException, InterruptedException {
+    System.out.println("pullAndRunBuiltImage: " + imageReference);
     new Command("docker", "pull", imageReference).run();
     String history = new Command("docker", "history", imageReference).run();
     MatcherAssert.assertThat(history, CoreMatchers.containsString("jib-gradle-plugin"));

@@ -171,6 +171,8 @@ public class SingleProjectIntegrationTest {
             + "/simpleimage:gradle"
             + System.nanoTime();
 
+    System.out.println("targetImage: " + targetImage);
+
     // Test empty output error
     Exception exception =
         assertThrows(

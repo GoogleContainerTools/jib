@@ -54,6 +54,7 @@ public class Command {
 
   /** Runs the command and pipes in {@code stdin}. */
   public String run(@Nullable byte[] stdin) throws IOException, InterruptedException {
+    System.out.println("Running command: " + command);
     ProcessBuilder processBuilder = new ProcessBuilder(command);
     if (workingDir != null) {
       processBuilder.directory(workingDir.toFile());
@@ -79,6 +80,7 @@ public class Command {
         throw new RuntimeException("Command '" + String.join(" ", command) + "' failed: " + stderr);
       }
 
+      //      System.out.println("Command: " + command + ", output: " + output);
       return output;
     }
   }

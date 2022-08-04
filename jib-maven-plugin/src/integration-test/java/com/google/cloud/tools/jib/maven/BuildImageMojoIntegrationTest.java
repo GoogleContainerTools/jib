@@ -166,6 +166,8 @@ public class BuildImageMojoIntegrationTest {
   private static String buildAndRunFromLocalBase(
       Path projectRoot, String targetImage, String baseImage, boolean buildTwice)
       throws VerificationException, IOException, InterruptedException {
+    System.out.println(
+        "buildAndRunFromLocalBase: baseImage=" + baseImage + ", targetImage=" + targetImage);
     Verifier verifier = new Verifier(projectRoot.toString());
     verifier.setSystemProperty("jib.useOnlyProjectCache", "true");
     verifier.setSystemProperty("_TARGET_IMAGE", targetImage);
@@ -180,14 +182,18 @@ public class BuildImageMojoIntegrationTest {
       return pullAndRunBuiltImage(targetImage);
     }
 
+    System.out.println("Executing first build");
     verifier.executeGoal("jib:build");
     float timeOne = getBuildTimeFromVerifierLog(verifier);
 
     verifier.resetStreams();
+    System.out.println("Executing second build");
     verifier.executeGoal("jib:build");
     float timeTwo = getBuildTimeFromVerifierLog(verifier);
 
     // The first build should take longer than the second build.
+    System.out.println("timeOne: " + timeOne);
+    System.out.println("timeTwo: " + timeTwo);
     assertThat(timeOne).isGreaterThan(timeTwo);
     return pullAndRunBuiltImage(targetImage);
   }
