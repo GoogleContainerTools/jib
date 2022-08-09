@@ -104,7 +104,6 @@ public class MavenRawConfigurationTest {
     Mockito.when(jibPluginConfiguration.getImageJsonOutputPath())
         .thenReturn(Paths.get("json/path"));
     Mockito.when(jibPluginConfiguration.getTarOutputPath()).thenReturn(Paths.get("tar/path"));
-    Mockito.when(jibPluginConfiguration.getEnablePlatformTags()).thenReturn(true);
 
     MavenRawConfiguration rawConfiguration = new MavenRawConfiguration(jibPluginConfiguration);
 
@@ -148,7 +147,6 @@ public class MavenRawConfigurationTest {
     Assert.assertEquals(Paths.get("id/path"), jibPluginConfiguration.getImageIdOutputPath());
     Assert.assertEquals(Paths.get("json/path"), jibPluginConfiguration.getImageJsonOutputPath());
     Assert.assertEquals(Paths.get("tar/path"), jibPluginConfiguration.getTarOutputPath());
-    Assert.assertTrue(jibPluginConfiguration.getEnablePlatformTags());
 
     Mockito.verifyNoMoreInteractions(eventHandlers);
   }

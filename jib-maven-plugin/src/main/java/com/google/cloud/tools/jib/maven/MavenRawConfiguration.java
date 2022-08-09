@@ -219,9 +219,4 @@ public class MavenRawConfiguration implements RawConfiguration {
   public List<? extends PlatformConfiguration> getPlatforms() {
     return jibPluginConfiguration.getPlatforms();
   }
-
-  @Override
-  public boolean getEnablePlatformTags() {
-    return jibPluginConfiguration.getEnablePlatformTags();
-  }
 }

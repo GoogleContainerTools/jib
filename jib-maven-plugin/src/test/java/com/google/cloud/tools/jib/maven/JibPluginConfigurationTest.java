@@ -89,7 +89,6 @@ public class JibPluginConfigurationTest {
         .isEqualTo(Optional.empty());
     assertThat(testPluginConfiguration.getTargetImageCredentialHelperConfig().getEnvironment())
         .isEmpty();
-    assertThat(testPluginConfiguration.getEnablePlatformTags()).isFalse();
   }
 
   @Test
@@ -174,9 +173,6 @@ public class JibPluginConfigurationTest {
     assertThat(testPluginConfiguration.getDockerClientEnvironment())
         .containsExactly("env1", "val1", "env2", "val2")
         .inOrder();
-
-    sessionProperties.put("jib.to.enablePlatformTags", "true");
-    assertThat(testPluginConfiguration.getEnablePlatformTags()).isTrue();
   }
 
   @Test
@@ -300,9 +296,6 @@ public class JibPluginConfigurationTest {
     assertThat(testPluginConfiguration.getDockerClientEnvironment())
         .containsExactly("env1", "val1", "env2", "val2")
         .inOrder();
-
-    project.getProperties().setProperty("jib.to.enablePlatformTags", "true");
-    assertThat(testPluginConfiguration.getEnablePlatformTags()).isTrue();
   }
 
   @Test
