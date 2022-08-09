@@ -182,12 +182,10 @@ public class BuildImageMojoIntegrationTest {
       return pullAndRunBuiltImage(targetImage);
     }
 
-    System.out.println("Executing first build");
     verifier.executeGoal("jib:build");
     float timeOne = getBuildTimeFromVerifierLog(verifier);
 
     verifier.resetStreams();
-    System.out.println("Executing second build");
     verifier.executeGoal("jib:build");
     float timeTwo = getBuildTimeFromVerifierLog(verifier);
 

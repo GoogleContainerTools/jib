@@ -24,7 +24,6 @@ public class IntegrationTestingConfiguration {
 
   public static String getTestRepositoryLocation() {
     String projectId = System.getenv("JIB_INTEGRATION_TESTING_PROJECT");
-    //    System.out.println("JIB_INTEGRATION_TESTING_PROJECT: " + projectId);
     if (!Strings.isNullOrEmpty(projectId)) {
       return "gcr.io/" + projectId;
     }

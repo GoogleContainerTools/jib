@@ -80,7 +80,6 @@ public class Command {
         throw new RuntimeException("Command '" + String.join(" ", command) + "' failed: " + stderr);
       }
 
-      //      System.out.println("Command: " + command + ", output: " + output);
       return output;
     }
   }
