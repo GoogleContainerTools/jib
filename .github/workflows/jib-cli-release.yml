@@ -41,6 +41,7 @@ jobs:
         run: |
           git checkout v${{ github.event.inputs.release_version }}-cli
           ./gradlew jib-cli:instDist --stacktrace
+
           cd jib-cli/build/distributions
           mv jib-${{ github.event.inputs.release_version }}.zip jib-jre-${{ github.event.inputs.release_version }}.zip
           sha256sum jib-jre-${{ github.event.inputs.release_version }}.zip > zip.sha256
@@ -56,7 +57,7 @@ jobs:
         with:
           # Use a personal token to file a PR as a non-bot author to trigger other workflows (e.g., unit tests):
           # https://docs.github.com/en/actions/reference/events-that-trigger-workflows#triggering-new-workflows-using-a-personal-access-token;
-          github_token: ${{ secrets.GITHUB_TOKEN }}
+          github_token: ${{ secrets.GA_RELEASE_PR_PERSONAL_TOKEN }}
           source_branch: cli-release-v${{ github.event.inputs.release_version }}
           pr_title: "CLI release v${{ github.event.inputs.release_version }}"
           pr_body: "To be merged after the release is complete."
