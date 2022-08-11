@@ -60,10 +60,10 @@ Find the [latest jib-cli 0.10.0 release](https://github.com/GoogleContainerTools
 
 We generate [SLSA3 signatures](slsa.dev) using the OpenSSF's [slsa-framework/slsa-github-generator](https://github.com/slsa-framework/slsa-github-generator) during the release process. To verify a release binary:
 1. Install the verification tool from [slsa-framework/slsa-verifier#installation](https://github.com/slsa-framework/slsa-verifier#installation).
-2. Download the provenance file `attestation.intoto.jsonl` from the [GitHub releases page](https://github.com/GoogleContainerTools/jib/releases/latest).
+2. Download the signature file `attestation.intoto.jsonl` from the [GitHub releases page](https://github.com/GoogleContainerTools/jib/releases/latest).
 3. Run the verifier:
 ```shell
-slsa-verifier -artifact-path <the-zip> -provenance attestation.intoto.jsonl -source github.com/GoogleContainerTools/jib -tag <the-tag>
+slsa-verifier -artifact-path jib-jre-<version>.zip -provenance attestation.intoto.jsonl -source github.com/GoogleContainerTools/jib -tag <the-tag>
 ```
 
 Unzip the zip file. The zip file contains the `jib` (`jib.bat` for Windows) script at `jib/bin/`. Optionally, add the binary directory to your `$PATH` so that you can call `jib` from anywhere.
