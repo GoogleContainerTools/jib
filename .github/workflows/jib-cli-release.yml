@@ -13,6 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       hashes: ${{ steps.hash.outputs.hashes }}
+      upload_url: ${{ steps.create-release.outputs.upload_url }}
     steps:
       - name: Check out code
         uses: actions/checkout@v3
@@ -119,4 +120,23 @@ jobs:
     uses: slsa-framework/slsa-github-generator/.github/workflows/generator_generic_slsa3.yml@v1.2.0
     with:
       base64-subjects: "${{ needs.release.outputs.hashes }}"
-      upload-assets: true # upload to a new release
+
+  upload:
+    needs: [release, provenance]
+    permissions:
+      contents: write
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download attestation
+        uses: actions/download-artifact@v3
+        with:
+          name: "${{ needs.provenance.outputs.attestation-name }}"
+
+      - uses: actions/upload-release-asset@v1.0.2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ needs.release.outputs.upload_url }}
+          asset_path: "${{ needs.provenance.outputs.attestation-name }}"
+          asset_name: "${{ needs.provenance.outputs.attestation-name }}"
+          asset_content_type: application/json
