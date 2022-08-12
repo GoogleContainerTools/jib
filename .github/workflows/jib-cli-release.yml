@@ -11,6 +11,8 @@ jobs:
   release:
     name: Release Jib CLI
     runs-on: ubuntu-latest
+    outputs:
+      hashes: ${{ steps.hash.outputs.hashes }}
     steps:
       - name: Check out code
         uses: actions/checkout@v3
@@ -43,6 +45,11 @@ jobs:
           cd jib-cli/build/distributions
           mv jib-${{ github.event.inputs.release_version }}.zip jib-jre-${{ github.event.inputs.release_version }}.zip
           sha256sum jib-jre-${{ github.event.inputs.release_version }}.zip > zip.sha256
+
+      - name: Generate SLSA subject for Jib CLI release binaries
+        id: hash
+        working-directory: jib-cli/build/distributions
+        run: echo "::set-output name=hashes::$(cat zip.sha256 | base64 -w0)"
 
       - name: Create pull request
         uses: repo-sync/pull-request@v2.6
@@ -103,3 +110,13 @@ jobs:
         with:
           filename: .github/RELEASE_TEMPLATES/cli_release_checklist.md
 
+  provenance:
+    needs: [release]
+    permissions:
+      actions: read # To read the workflow path.
+      id-token: write # To sign the provenance.
+      contents: write # To add assets to a release.
+    uses: slsa-framework/slsa-github-generator/.github/workflows/generator_generic_slsa3.yml@v1.2.0
+    with:
+      base64-subjects: "${{ needs.release.outputs.hashes }}"
+      upload-assets: true # upload to a new release
