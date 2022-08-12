@@ -40,10 +40,8 @@ jobs:
 
       - name: Build Jib CLI release binaries
         run: |
-          # git checkout v${{ github.event.inputs.release_version }}-cli
-          # ./gradlew jib-cli:instDist --stacktrace
-          mkdir -p jib-cli/build/distributions
-          echo some file > jib-cli/build/distributions/jib-${{ github.event.inputs.release_version }}.zip
+          git checkout v${{ github.event.inputs.release_version }}-cli
+          ./gradlew jib-cli:instDist --stacktrace
           cd jib-cli/build/distributions
           mv jib-${{ github.event.inputs.release_version }}.zip jib-jre-${{ github.event.inputs.release_version }}.zip
           sha256sum jib-jre-${{ github.event.inputs.release_version }}.zip > zip.sha256
