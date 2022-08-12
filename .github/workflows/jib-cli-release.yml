@@ -13,35 +13,37 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       hashes: ${{ steps.hash.outputs.hashes }}
+      upload_url: ${{ steps.create-release.outputs.upload_url }}
     steps:
       - name: Check out code
         uses: actions/checkout@v3
 
-      - name: Build project
-        run: |
-          if [[ ! "${{ github.event.inputs.release_version }}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-            echo 'version "${{ github.event.inputs.release_version }}" not in ###.###.### format'
-            exit 1
-          fi
-          # TODO: run integration test? (Requries auth with GCP.)
-          ./gradlew clean build --stacktrace
+      # - name: Build project
+      #   run: |
+      #     if [[ ! "${{ github.event.inputs.release_version }}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+      #       echo 'version "${{ github.event.inputs.release_version }}" not in ###.###.### format'
+      #       exit 1
+      #     fi
+      #     # TODO: run integration test? (Requries auth with GCP.)
+      #     ./gradlew clean build --stacktrace
 
-      - name: Run Gradle release
-        run: |
-          git checkout -b cli-release-v${{ github.event.inputs.release_version }}
-          git config user.email ${{ github.actor }}@users.noreply.github.com
-          git config user.name ${{ github.actor }}
-          # This creates the tag (e.g., "v0.1.0-cli") and pushes the updated
-          # branch (e.g., "cli-release-v0.1.0") and the new tag.
-          ./gradlew jib-cli:release \
-            -Prelease.useAutomaticVersion=true \
-            -Prelease.releaseVersion=${{ github.event.inputs.release_version }}
+      # - name: Run Gradle release
+      #   run: |
+      #     git checkout -b cli-release-v${{ github.event.inputs.release_version }}
+      #     git config user.email ${{ github.actor }}@users.noreply.github.com
+      #     git config user.name ${{ github.actor }}
+      #     # This creates the tag (e.g., "v0.1.0-cli") and pushes the updated
+      #     # branch (e.g., "cli-release-v0.1.0") and the new tag.
+      #     ./gradlew jib-cli:release \
+      #       -Prelease.useAutomaticVersion=true \
+      #       -Prelease.releaseVersion=${{ github.event.inputs.release_version }}
 
       - name: Build Jib CLI release binaries
         run: |
-          git checkout v${{ github.event.inputs.release_version }}-cli
-          ./gradlew jib-cli:instDist --stacktrace
-
+          # git checkout v${{ github.event.inputs.release_version }}-cli
+          # ./gradlew jib-cli:instDist --stacktrace
+          mkdir -p jib-cli/build/distributions
+          echo some file > jib-cli/build/distributions/jib-${{ github.event.inputs.release_version }}.zip
           cd jib-cli/build/distributions
           mv jib-${{ github.event.inputs.release_version }}.zip jib-jre-${{ github.event.inputs.release_version }}.zip
           sha256sum jib-jre-${{ github.event.inputs.release_version }}.zip > zip.sha256
@@ -51,17 +53,17 @@ jobs:
         working-directory: jib-cli/build/distributions
         run: echo "::set-output name=hashes::$(cat zip.sha256 | base64 -w0)"
 
-      - name: Create pull request
-        uses: repo-sync/pull-request@v2.6.2
-        id: create-pr
-        with:
-          # Use a personal token to file a PR as a non-bot author to trigger other workflows (e.g., unit tests):
-          # https://docs.github.com/en/actions/reference/events-that-trigger-workflows#triggering-new-workflows-using-a-personal-access-token;
-          github_token: ${{ secrets.GA_RELEASE_PR_PERSONAL_TOKEN }}
-          source_branch: cli-release-v${{ github.event.inputs.release_version }}
-          pr_title: "CLI release v${{ github.event.inputs.release_version }}"
-          pr_body: "To be merged after the release is complete."
-          pr_label: "PR: Merge After Release"
+      # - name: Create pull request
+      #   uses: repo-sync/pull-request@v2.6.2
+      #   id: create-pr
+      #   with:
+      #     # Use a personal token to file a PR as a non-bot author to trigger other workflows (e.g., unit tests):
+      #     # https://docs.github.com/en/actions/reference/events-that-trigger-workflows#triggering-new-workflows-using-a-personal-access-token;
+      #     github_token: ${{ secrets.GA_RELEASE_PR_PERSONAL_TOKEN }}
+      #     source_branch: cli-release-v${{ github.event.inputs.release_version }}
+      #     pr_title: "CLI release v${{ github.event.inputs.release_version }}"
+      #     pr_body: "To be merged after the release is complete."
+      #     pr_label: "PR: Merge After Release"
 
       - name: Draft GitHub release
         uses: actions/create-release@v1.1.4
@@ -97,18 +99,18 @@ jobs:
           asset_name: jib-jre-${{ github.event.inputs.release_version }}.zip.sha256
           asset_content_type: text/plain
 
-      - name: Create Jib CLI release checklist issue
-        uses: JasonEtco/create-an-issue@v2.6
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          RELEASE_NAME: v${{ github.event.inputs.release_version }}-cli
-          CHANGELOG_URL: https://github.com/GoogleContainerTools/jib/blob/master/jib-cli/CHANGELOG.md
-          README_URL: https://github.com/GoogleContainerTools/jib/blob/master/jib-cli/README.md
-          GCS_UPDATE_SCRIPT: "`./jib-cli/scripts/update_gcs_latest.sh ${{ github.event.inputs.release_version }}`"
-          RELEASE_DRAFT: ${{ steps.create-release.outputs.html_url }}
-          RELEASE_PR: ${{steps.create-pr.outputs.pr_url}}
-        with:
-          filename: .github/RELEASE_TEMPLATES/cli_release_checklist.md
+      # - name: Create Jib CLI release checklist issue
+      #   uses: JasonEtco/create-an-issue@v2.6
+      #   env:
+      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #     RELEASE_NAME: v${{ github.event.inputs.release_version }}-cli
+      #     CHANGELOG_URL: https://github.com/GoogleContainerTools/jib/blob/master/jib-cli/CHANGELOG.md
+      #     README_URL: https://github.com/GoogleContainerTools/jib/blob/master/jib-cli/README.md
+      #     GCS_UPDATE_SCRIPT: "`./jib-cli/scripts/update_gcs_latest.sh ${{ github.event.inputs.release_version }}`"
+      #     RELEASE_DRAFT: ${{ steps.create-release.outputs.html_url }}
+      #     RELEASE_PR: ${{steps.create-pr.outputs.pr_url}}
+      #   with:
+      #     filename: .github/RELEASE_TEMPLATES/cli_release_checklist.md
 
   provenance:
     needs: [release]
@@ -120,3 +122,21 @@ jobs:
     with:
       base64-subjects: "${{ needs.release.outputs.hashes }}"
       upload-assets: true # upload to a new release
+
+  upload:
+    needs: [release, provenance]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download attestation
+        uses: actions/download-artifact@fb598a63ae348fa914e94cd0ff38f362e927b741 # tag=v2.1.0
+        with:
+          name: "${{ needs.provenance.outputs.attestation-name }}"
+
+      - uses: actions/upload-release-asset@v1.0.2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ needs.release.outputs.upload_url }}
+          asset_path: "${{ needs.provenance.outputs.attestation-name }}"
+          asset_name: "${{ needs.provenance.outputs.attestation-name }}"
+          asset_content_type: application/json
