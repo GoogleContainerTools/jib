@@ -22,8 +22,11 @@ import java.nio.file.Paths;
 import java.util.List;
 import javax.inject.Inject;
 import org.gradle.api.Project;
+import org.gradle.api.Transformer;
 import org.gradle.api.model.ObjectFactory;
 import org.gradle.api.provider.ListProperty;
+import org.gradle.api.provider.Property;
+import org.gradle.api.provider.Provider;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.Internal;
 
@@ -31,49 +34,70 @@ import org.gradle.api.tasks.Internal;
 public class ExtraDirectoryParameters implements ExtraDirectoriesConfiguration {
 
   private Project project;
-  private Path from = Paths.get("");
-  private String into = "/";
+  private Property<Path> from;
+  private Property<String> into;
   private ListProperty<String> includes;
   private ListProperty<String> excludes;
 
   @Inject
   public ExtraDirectoryParameters(ObjectFactory objects, Project project) {
     this.project = project;
-    includes = objects.listProperty(String.class).empty();
-    excludes = objects.listProperty(String.class).empty();
+    this.from = objects.property(Path.class).value(Paths.get(""));
+    this.into = objects.property(String.class).value("/");
+    this.includes = objects.listProperty(String.class).empty();
+    this.excludes = objects.listProperty(String.class).empty();
   }
 
   ExtraDirectoryParameters(ObjectFactory objects, Project project, Path from, String into) {
     this(objects, project);
-    this.from = from;
-    this.into = into;
+    this.from = objects.property(Path.class).value(from);
+    this.into = objects.property(String.class).value(into);
   }
 
   @Input
   public String getFromString() {
     // Gradle warns about @Input annotations on File objects, so we have to expose a getter for a
     // String to make them go away.
-    return from.toString();
+    return from.get().toString();
   }
 
   @Override
   @Internal
   public Path getFrom() {
-    return from;
+    return from.get();
   }
 
   public void setFrom(Object from) {
-    this.from = project.file(from).toPath();
+    // TODO: this should also be able support provider of objects convertible by project.file()
+    System.out.println("setFrom object: " + from);
+    this.from.set(project.file(from).toPath());
   }
+
+//  public void setFrom(Provider<String> from) {
+//    this.from.set(
+//            from.map(
+//              new Transformer<Path, Object>() {
+//                @Override
+//                public Path transform(Object from) {
+//                  return project.file(from).toPath();
+//                }
+//              }
+//            )
+//    );
+//  }
 
   @Override
   @Input
   public String getInto() {
-    return into;
+    return into.get();
   }
 
   public void setInto(String into) {
-    this.into = into;
+    this.into.set(into);
+  }
+
+  public void setInto(Provider<String> into) {
+    this.into.set(into);
   }
 
   @Input
