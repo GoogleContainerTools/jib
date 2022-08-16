@@ -4,7 +4,7 @@
 
 [![Chocolatey](https://img.shields.io/chocolatey/v/jib.svg)](https://chocolatey.org/packages/jib)
 [![Chocolatey](https://img.shields.io/chocolatey/dt/jib.svg)](https://chocolatey.org/packages/jib)
-![SLSA 3](https://slsa.dev/images/gh-badge-level3.svg)](https://slsa.dev/images/gh-badge-level3.svg)
+[![SLSA 3](https://slsa.dev/images/gh-badge-level3.svg)](https://slsa.dev)
 
 `jib` is a general-purpose command-line utility for building Docker or [OCI](https://github.com/opencontainers/image-spec) container images from file system content as well as JAR files. Jib CLI builds containers [fast and reproducibly without Docker](https://github.com/GoogleContainerTools/jib#goals) like [other Jib tools](https://github.com/GoogleContainerTools/jib#what-is-jib).
 
@@ -63,7 +63,7 @@ We generate [SLSA3 signatures](slsa.dev) using the OpenSSF's [slsa-framework/sls
 2. Download the signature file `attestation.intoto.jsonl` from the [GitHub releases page](https://github.com/GoogleContainerTools/jib/releases/latest).
 3. Run the verifier:
 ```shell
-slsa-verifier -artifact-path jib-jre-<version>.zip -provenance attestation.intoto.jsonl -source github.com/GoogleContainerTools/jib -tag <the-tag>
+slsa-verifier -artifact-path jib-jre-<version>.zip -provenance attestation.intoto.jsonl -source github.com/GoogleContainerTools/jib -branch master -workflow-input release_version=<version>
 ```
 
 Unzip the zip file. The zip file contains the `jib` (`jib.bat` for Windows) script at `jib/bin/`. Optionally, add the binary directory to your `$PATH` so that you can call `jib` from anywhere.
