@@ -368,6 +368,19 @@ public class JibPluginTest {
             "labels contain values [firstkey:updated-first-label, secondKey:updated-second-label]");
   }
 
+  @Test
+  public void testLazyEvalForExtraDirectories() {
+    // TODO: Add task and test for lazy evaluation
+    System.out.println("testLazyEvalForExtraDirectories");
+    BuildResult checkExtraDirectories = testProject.build("check-extra-directories", "-Djib.console=plain");
+    assertThat(checkExtraDirectories.getOutput())
+            .contains("extraDirectories permissions: [/txt-files/*.txt:755]");
+    assertThat(checkExtraDirectories.getOutput())
+            .contains("extraDirectories paths: [" +
+                    testProject.getRoot().toPath().resolve("updated-custom-extra-dir-1") + ", " +
+                    testProject.getRoot().toPath().resolve("updated-custom-extra-dir-2") + "]");
+  }
+
   private Project createProject(String... plugins) {
     Project project =
         ProjectBuilder.builder().withProjectDir(testProjectRoot.getRoot()).withName("root").build();
