@@ -29,6 +29,7 @@ import org.gradle.api.Action;
 import org.gradle.api.Project;
 import org.gradle.api.model.ObjectFactory;
 import org.gradle.api.provider.ListProperty;
+import org.gradle.api.provider.MapProperty;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.Internal;
 
@@ -40,7 +41,7 @@ public class ExtraDirectoriesParameters {
 
   private ListProperty<ExtraDirectoryParameters> paths;
   private ExtraDirectoryParametersSpec spec;
-  private Map<String, String> permissions = Collections.emptyMap();
+  private MapProperty<String, String> permissions;
 
   @Inject
   public ExtraDirectoriesParameters(ObjectFactory objects, Project project) {
@@ -48,6 +49,7 @@ public class ExtraDirectoriesParameters {
     this.project = project;
     paths = objects.listProperty(ExtraDirectoryParameters.class).empty();
     spec = objects.newInstance(ExtraDirectoryParametersSpec.class, project, paths);
+    permissions = objects.mapProperty(String.class, String.class).empty();
   }
 
   public void paths(Action<? super ExtraDirectoryParametersSpec> action) {
@@ -106,15 +108,14 @@ public class ExtraDirectoriesParameters {
    * @return the permissions map from path on container to file permissions
    */
   @Input
-  public Map<String, String> getPermissions() {
+  public MapProperty<String, String> getPermissions() {
     String property = System.getProperty(PropertyNames.EXTRA_DIRECTORIES_PERMISSIONS);
     if (property != null) {
-      return ConfigurationPropertyValidator.parseMapProperty(property);
+      Map<String, String> parsedPermissions = ConfigurationPropertyValidator.parseMapProperty(property);
+      if (!parsedPermissions.equals(permissions.get())) {
+        permissions.set(parsedPermissions);
+      }
     }
     return permissions;
-  }
-
-  public void setPermissions(Map<String, String> permissions) {
-    this.permissions = permissions;
   }
 }

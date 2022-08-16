@@ -174,7 +174,7 @@ public class GradleRawConfiguration implements RawConfiguration {
 
   @Override
   public Map<String, FilePermissions> getExtraDirectoryPermissions() {
-    return TaskCommon.convertPermissionsMap(jibExtension.getExtraDirectories().getPermissions());
+    return TaskCommon.convertPermissionsMap(jibExtension.getExtraDirectories().getPermissions().get());
   }
 
   @Override
