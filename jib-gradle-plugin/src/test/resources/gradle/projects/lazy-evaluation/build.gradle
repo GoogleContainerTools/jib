@@ -34,15 +34,15 @@ jib {
             ]
         }
     }
-    extraDirectories {
-        paths = project.provider {
-            [
-                    project.ext.value + '-custom-extra-dir-1',
-                    project.ext.value + '-custom-extra-dir-2'
-            ]
-        }
-        permissions = project.provider { -> project.ext.getCustomPermissions() }
-    }
+//    extraDirectories {
+//        paths = project.provider {
+//            [
+//                    project.ext.value + '-custom-extra-dir-1',
+//                    project.ext.value + '-custom-extra-dir-2'
+//            ]
+//        }
+//        permissions = project.provider { -> project.ext.getCustomPermissions() }
+//    }
 }
 
 tasks.register('showlabels') {
@@ -50,9 +50,9 @@ tasks.register('showlabels') {
     println('labels contain values ' + prop)
 }
 
-tasks.register('check-extra-directories') {
-    Map<String, String> permissions = project.extensions.getByName('jib')['extraDirectories']['permissions'].get()
-    List<Object> paths = project.extensions.getByName('jib')['extraDirectories']['paths'].collect{ path -> path['from']};
-    println('extraDirectories permissions: ' + permissions)
-    println('extraDirectories paths: ' + paths)
-}
+//tasks.register('check-extra-directories') {
+//    Map<String, String> permissions = project.extensions.getByName('jib')['extraDirectories']['permissions'].get()
+//    List<Object> paths = project.extensions.getByName('jib')['extraDirectories']['paths'].collect{ path -> path['from']};
+//    println('extraDirectories permissions: ' + permissions)
+//    println('extraDirectories paths: ' + paths)
+//}
