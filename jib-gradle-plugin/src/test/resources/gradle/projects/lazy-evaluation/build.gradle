@@ -34,15 +34,17 @@ jib {
             ]
         }
     }
-//    extraDirectories {
-//        paths = project.provider {
-//            [
-//                    project.ext.value + '-custom-extra-dir-1',
-//                    project.ext.value + '-custom-extra-dir-2'
-//            ]
-//        }
-//        permissions = project.provider { -> project.ext.getCustomPermissions() }
-//    }
+    extraDirectories {
+        // TODO: the following line does not lazy eval - enable in setPaths() and replace
+        // paths = project.provider { ['src/main/' + project.ext.value + '-custom-extra-dir'] }
+        // The following specification currently works:
+        paths {
+            path {
+                from = project.provider { 'src/main/' + project.ext.value + '-custom-extra-dir' }
+            }
+        }
+        permissions = project.provider { -> project.ext.getCustomPermissions() }
+    }
 }
 
 tasks.register('showlabels') {
@@ -50,9 +52,9 @@ tasks.register('showlabels') {
     println('labels contain values ' + prop)
 }
 
-//tasks.register('check-extra-directories') {
-//    Map<String, String> permissions = project.extensions.getByName('jib')['extraDirectories']['permissions'].get()
-//    List<Object> paths = project.extensions.getByName('jib')['extraDirectories']['paths'].collect{ path -> path['from']};
-//    println('extraDirectories permissions: ' + permissions)
-//    println('extraDirectories paths: ' + paths)
-//}
+tasks.register('check-extra-directories') {
+    Map<String, String> permissions = project.extensions.getByName('jib')['extraDirectories']['permissions'].get()
+    List<Object> paths = project.extensions.getByName('jib')['extraDirectories']['paths'].collect{ path -> path['from']};
+    println('extraDirectories permissions: ' + permissions)
+    println('extraDirectories paths: ' + paths)
+}
