@@ -94,6 +94,7 @@ public class ExtraDirectoriesParameters {
    * @param paths paths to set.
    */
   public void setPaths(Object paths) {
+//    System.out.println("setPaths paths: " + paths);
     this.paths.set(
         project.files(paths).getFiles().stream()
             .map(file -> new ExtraDirectoryParameters(objects, project, file.toPath(), "/"))

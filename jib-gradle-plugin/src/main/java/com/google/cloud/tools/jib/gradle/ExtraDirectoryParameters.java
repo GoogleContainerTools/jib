@@ -67,24 +67,39 @@ public class ExtraDirectoryParameters implements ExtraDirectoriesConfiguration {
     return from.get();
   }
 
-  public void setFrom(Object from) {
+  public void setFrom(Object fromObj) {
     // TODO: this should also be able support provider of objects convertible by project.file()
-    System.out.println("setFrom object: " + from);
-    this.from.set(project.file(from).toPath());
+//    System.out.println("setFrom object: " + fromObj);
+    // TODO: if from is a Provider<>, here we need to convert it to a Provider<Path>
+    if (fromObj instanceof Provider) {
+//      System.out.println("object is a provider");
+      Provider fromProvider = (Provider) fromObj;
+      this.from.set(
+              fromProvider.map(
+              new Transformer<Path, Object>() {
+                @Override
+                public Path transform(Object obj) {
+                  return project.file(obj).toPath();
+                }
+              }));
+    } else {
+//      System.out.println("object is not a provider");
+      this.from.set(project.file(fromObj).toPath());
+    }
   }
 
-//  public void setFrom(Provider<String> from) {
-//    this.from.set(
-//            from.map(
-//              new Transformer<Path, Object>() {
-//                @Override
-//                public Path transform(Object from) {
-//                  return project.file(from).toPath();
-//                }
-//              }
-//            )
-//    );
-//  }
+  //  public void setFrom(Provider<String> from) {
+  //    this.from.set(
+  //            from.map(
+  //              new Transformer<Path, Object>() {
+  //                @Override
+  //                public Path transform(Object from) {
+  //                  return project.file(from).toPath();
+  //                }
+  //              }
+  //            )
+  //    );
+  //  }
 
   @Override
   @Input
