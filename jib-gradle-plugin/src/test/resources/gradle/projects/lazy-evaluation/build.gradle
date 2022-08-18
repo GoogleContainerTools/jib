@@ -18,7 +18,7 @@ project.ext.value = 'original'
 
 project.afterEvaluate {
     project.ext.value = 'updated'
-    project.ext.getCustomPermissions = { -> return ['/txt-files/*.txt': '755'] }
+    project.ext.getCustomPermissions = { -> return ['/updated': '755'] }
 }
 
 jib {
@@ -35,14 +35,7 @@ jib {
         }
     }
     extraDirectories {
-        // TODO: the following line does not lazy eval - enable in setPaths() and replace
-        // paths = project.provider { ['src/main/' + project.ext.value + '-custom-extra-dir'] }
-        // The following specification currently works:
-        paths {
-            path {
-                from = project.provider { 'src/main/' + project.ext.value + '-custom-extra-dir' }
-            }
-        }
+        paths = project.provider { ['src/main/' + project.ext.value + '-custom-extra-dir'] }
         permissions = project.provider { -> project.ext.getCustomPermissions() }
     }
 }
@@ -53,8 +46,8 @@ tasks.register('showlabels') {
 }
 
 tasks.register('check-extra-directories') {
+    List<Object> paths = project.extensions.getByName('jib')['extraDirectories']['paths'].collect{ path -> path['from']}
     Map<String, String> permissions = project.extensions.getByName('jib')['extraDirectories']['permissions'].get()
-    List<Object> paths = project.extensions.getByName('jib')['extraDirectories']['paths'].collect{ path -> path['from']};
-    println('extraDirectories permissions: ' + permissions)
     println('extraDirectories paths: ' + paths)
+    println('extraDirectories permissions: ' + permissions)
 }

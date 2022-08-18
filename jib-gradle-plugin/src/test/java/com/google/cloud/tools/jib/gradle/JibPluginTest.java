@@ -373,9 +373,23 @@ public class JibPluginTest {
     BuildResult checkExtraDirectories =
         testProject.build("check-extra-directories", "-Djib.console=plain");
     assertThat(checkExtraDirectories.getOutput())
-        .contains("[/txt-files/*.txt:755]");
+        .contains("[/updated:755]");
     assertThat(checkExtraDirectories.getOutput())
         .contains("src/main/updated-custom-extra-dir");
+  }
+
+  @Test
+  public void testLazyEvalForExtraDirectories_IndividualPaths() {
+    BuildResult checkExtraDirectories =
+            testProject.build("check-extra-directories", "-b=build-extra-dirs.gradle", "-Djib.console=plain");
+    assertThat(checkExtraDirectories.getOutput())
+            .contains("src/main/updated-custom-extra-dir");
+    assertThat(checkExtraDirectories.getOutput())
+            .contains("extraDirectories (into): [/updated-custom-into-dir]");
+    assertThat(checkExtraDirectories.getOutput())
+            .contains("extraDirectories (includes): [[include.txt]]");
+    assertThat(checkExtraDirectories.getOutput())
+            .contains("extraDirectories (excludes): [[exclude.txt]]");
   }
 
   private Project createProject(String... plugins) {
