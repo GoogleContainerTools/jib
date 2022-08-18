@@ -27,9 +27,11 @@ import java.util.stream.Collectors;
 import javax.inject.Inject;
 import org.gradle.api.Action;
 import org.gradle.api.Project;
+import org.gradle.api.Transformer;
 import org.gradle.api.model.ObjectFactory;
 import org.gradle.api.provider.ListProperty;
 import org.gradle.api.provider.MapProperty;
+import org.gradle.api.provider.Provider;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.Internal;
 
@@ -94,11 +96,30 @@ public class ExtraDirectoriesParameters {
    * @param paths paths to set.
    */
   public void setPaths(Object paths) {
-//    System.out.println("setPaths paths: " + paths);
     this.paths.set(
         project.files(paths).getFiles().stream()
             .map(file -> new ExtraDirectoryParameters(objects, project, file.toPath(), "/"))
             .collect(Collectors.toList()));
+  }
+
+  /**
+   * Sets paths, for lazy evaluation where {@code paths} is a {@link Provider} of a suitable object.
+   *
+   * @param paths provider of paths to set
+   * @see #setPaths(Object)
+   */
+  public void setPaths(Provider<Object> paths) {
+    // Convert Provider<Object> to Provider<List<ExtraDirectoryParameters>>
+    this.paths.set(
+        paths.map(
+            new Transformer<List<ExtraDirectoryParameters>, Object>() {
+              @Override
+              public List<ExtraDirectoryParameters> transform(Object obj) {
+                return project.files(paths).getFiles().stream()
+                    .map(file -> new ExtraDirectoryParameters(objects, project, file.toPath(), "/"))
+                    .collect(Collectors.toList());
+              }
+            }));
   }
 
   /**
@@ -112,7 +133,8 @@ public class ExtraDirectoriesParameters {
   public MapProperty<String, String> getPermissions() {
     String property = System.getProperty(PropertyNames.EXTRA_DIRECTORIES_PERMISSIONS);
     if (property != null) {
-      Map<String, String> parsedPermissions = ConfigurationPropertyValidator.parseMapProperty(property);
+      Map<String, String> parsedPermissions =
+          ConfigurationPropertyValidator.parseMapProperty(property);
       if (!parsedPermissions.equals(permissions.get())) {
         permissions.set(parsedPermissions);
       }
