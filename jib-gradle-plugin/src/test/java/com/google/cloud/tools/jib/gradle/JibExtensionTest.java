@@ -249,15 +249,11 @@ public class JibExtensionTest {
     testJibExtension.extraDirectories(
         extraDirectories -> {
           extraDirectories.setPaths("test/path");
-//          extraDirectories.setPermissions(ImmutableMap.of("file1", "123", "file2", "456"));
         });
 
     assertThat(testJibExtension.getExtraDirectories().getPaths()).hasSize(1);
     assertThat(testJibExtension.getExtraDirectories().getPaths().get(0).getFrom())
         .isEqualTo(fakeProject.getProjectDir().toPath().resolve("test/path"));
-//    assertThat(testJibExtension.getExtraDirectories().getPermissions().get())
-//        .containsExactly("file1", "123", "file2", "456")
-//        .inOrder();
   }
 
   @Test
