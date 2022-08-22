@@ -373,7 +373,7 @@ public class JibPluginTest {
     BuildResult checkExtraDirectories =
         testProject.build("check-extra-directories", "-Djib.console=plain");
     assertThat(checkExtraDirectories.getOutput()).contains("[/updated:755]");
-    assertThat(checkExtraDirectories.getOutput()).contains("src/main/updated-custom-extra-dir");
+    assertThat(checkExtraDirectories.getOutput()).contains("updated-custom-extra-dir");
   }
 
   @Test
@@ -381,7 +381,7 @@ public class JibPluginTest {
     BuildResult checkExtraDirectories =
         testProject.build(
             "check-extra-directories", "-b=build-extra-dirs.gradle", "-Djib.console=plain");
-    assertThat(checkExtraDirectories.getOutput()).contains("src/main/updated-custom-extra-dir");
+    assertThat(checkExtraDirectories.getOutput()).contains("updated-custom-extra-dir");
     assertThat(checkExtraDirectories.getOutput())
         .contains("extraDirectories (into): [/updated-custom-into-dir]");
     assertThat(checkExtraDirectories.getOutput())
