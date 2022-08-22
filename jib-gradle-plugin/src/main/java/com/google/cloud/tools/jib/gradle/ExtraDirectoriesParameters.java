@@ -27,7 +27,6 @@ import java.util.stream.Collectors;
 import javax.inject.Inject;
 import org.gradle.api.Action;
 import org.gradle.api.Project;
-import org.gradle.api.Transformer;
 import org.gradle.api.model.ObjectFactory;
 import org.gradle.api.provider.ListProperty;
 import org.gradle.api.provider.MapProperty;
@@ -112,14 +111,10 @@ public class ExtraDirectoriesParameters {
     // Convert Provider<Object> to Provider<List<ExtraDirectoryParameters>>
     this.paths.set(
         paths.map(
-            new Transformer<List<ExtraDirectoryParameters>, Object>() {
-              @Override
-              public List<ExtraDirectoryParameters> transform(Object obj) {
-                return project.files(paths).getFiles().stream()
+            obj ->
+                project.files(paths).getFiles().stream()
                     .map(file -> new ExtraDirectoryParameters(objects, project, file.toPath(), "/"))
-                    .collect(Collectors.toList());
-              }
-            }));
+                    .collect(Collectors.toList())));
   }
 
   /**

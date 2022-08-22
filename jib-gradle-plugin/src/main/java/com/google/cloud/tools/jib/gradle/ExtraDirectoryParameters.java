@@ -22,7 +22,6 @@ import java.nio.file.Paths;
 import java.util.List;
 import javax.inject.Inject;
 import org.gradle.api.Project;
-import org.gradle.api.Transformer;
 import org.gradle.api.model.ObjectFactory;
 import org.gradle.api.provider.ListProperty;
 import org.gradle.api.provider.Property;
@@ -72,15 +71,8 @@ public class ExtraDirectoryParameters implements ExtraDirectoriesConfiguration {
   }
 
   public void setFrom(Provider<Object> from) {
-    this.from.set(
-        // Convert Provider<Object> to Provider<Path>
-        from.map(
-            new Transformer<Path, Object>() {
-              @Override
-              public Path transform(Object obj) {
-                return project.file(obj).toPath();
-              }
-            }));
+    // Convert Provider<Object> to Provider<Path>
+    this.from.set(from.map(obj -> project.file(obj).toPath()));
   }
 
   @Override
