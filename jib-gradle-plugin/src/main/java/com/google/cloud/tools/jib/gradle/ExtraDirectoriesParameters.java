@@ -96,7 +96,7 @@ public class ExtraDirectoriesParameters {
    * @param paths paths to set.
    */
   public void setPaths(Object paths) {
-    this.paths.set(transformObjectToParametersList(paths));
+    this.paths.set(convertToExtraDirectoryParametersList(paths));
   }
 
   /**
@@ -106,7 +106,7 @@ public class ExtraDirectoriesParameters {
    * @see #setPaths(Object)
    */
   public void setPaths(Provider<Object> paths) {
-    this.paths.set(paths.map(this::transformObjectToParametersList));
+    this.paths.set(paths.map(this::convertToExtraDirectoryParametersList));
   }
 
   /**
@@ -114,7 +114,7 @@ public class ExtraDirectoriesParameters {
    * setFrom}.
    */
   @Nonnull
-  private List<ExtraDirectoryParameters> transformObjectToParametersList(Object obj) {
+  private List<ExtraDirectoryParameters> convertToExtraDirectoryParametersList(Object obj) {
     return project.files(obj).getFiles().stream()
         .map(file -> new ExtraDirectoryParameters(objects, project, file.toPath(), "/"))
         .collect(Collectors.toList());
