@@ -24,6 +24,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import javax.annotation.Nonnull;
 import javax.inject.Inject;
 import org.gradle.api.Action;
 import org.gradle.api.Project;
@@ -95,10 +96,7 @@ public class ExtraDirectoriesParameters {
    * @param paths paths to set.
    */
   public void setPaths(Object paths) {
-    this.paths.set(
-        project.files(paths).getFiles().stream()
-            .map(file -> new ExtraDirectoryParameters(objects, project, file.toPath(), "/"))
-            .collect(Collectors.toList()));
+    this.paths.set(transformObjectToParametersList(paths));
   }
 
   /**
@@ -108,13 +106,15 @@ public class ExtraDirectoriesParameters {
    * @see #setPaths(Object)
    */
   public void setPaths(Provider<Object> paths) {
-    // Convert Provider<Object> to Provider<List<ExtraDirectoryParameters>>
-    this.paths.set(
-        paths.map(
-            obj ->
-                project.files(paths).getFiles().stream()
-                    .map(file -> new ExtraDirectoryParameters(objects, project, file.toPath(), "/"))
-                    .collect(Collectors.toList())));
+    this.paths.set(paths.map(this::transformObjectToParametersList));
+  }
+
+  /** Helper method to convert Object to List<ExtraDirectoryParameters> in {@code setFrom} */
+  @Nonnull
+  private List<ExtraDirectoryParameters> transformObjectToParametersList(Object obj) {
+    return project.files(obj).getFiles().stream()
+        .map(file -> new ExtraDirectoryParameters(objects, project, file.toPath(), "/"))
+        .collect(Collectors.toList());
   }
 
   /**

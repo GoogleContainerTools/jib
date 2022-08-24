@@ -71,7 +71,6 @@ public class ExtraDirectoryParameters implements ExtraDirectoriesConfiguration {
   }
 
   public void setFrom(Provider<Object> from) {
-    // Convert Provider<Object> to Provider<Path>
     this.from.set(from.map(obj -> project.file(obj).toPath()));
   }
 
