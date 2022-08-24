@@ -259,7 +259,7 @@ public class JibExtensionTest {
   }
 
   @Test
-  public void testExtraDirectories_lazySetFromInto() {
+  public void testExtraDirectories_lazyEvaluation_setFromInto() {
     testJibExtension.extraDirectories(
         extraDirectories ->
             extraDirectories.paths(
@@ -331,7 +331,7 @@ public class JibExtensionTest {
   }
 
   @Test
-  public void testExtraDirectories_lazyStringListForPaths() {
+  public void testExtraDirectories_lazyEvaluation_StringListForPaths() {
     testJibExtension.extraDirectories(
         extraDirectories -> {
           ProviderFactory providerFactory = fakeProject.getProviders();

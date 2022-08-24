@@ -377,7 +377,7 @@ public class JibPluginTest {
   }
 
   @Test
-  public void testLazyEvalForExtraDirectories_IndividualPaths() {
+  public void testLazyEvalForExtraDirectories_individualPaths() {
     BuildResult checkExtraDirectories =
         testProject.build(
             "check-extra-directories", "-b=build-extra-dirs.gradle", "-Djib.console=plain");
