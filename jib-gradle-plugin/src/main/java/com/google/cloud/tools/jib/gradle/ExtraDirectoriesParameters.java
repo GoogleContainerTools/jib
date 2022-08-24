@@ -109,7 +109,10 @@ public class ExtraDirectoriesParameters {
     this.paths.set(paths.map(this::transformObjectToParametersList));
   }
 
-  /** Helper method to convert Object to List<ExtraDirectoryParameters> in {@code setFrom} */
+  /**
+   * Helper method to convert {@code Object} to {@code List<ExtraDirectoryParameters>} in {@code
+   * setFrom}.
+   */
   @Nonnull
   private List<ExtraDirectoryParameters> transformObjectToParametersList(Object obj) {
     return project.files(obj).getFiles().stream()
