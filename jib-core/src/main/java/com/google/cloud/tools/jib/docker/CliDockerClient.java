@@ -40,6 +40,8 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.attribute.PosixFileAttributes;
+import java.nio.file.attribute.PosixFilePermission;
 import java.security.DigestException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -103,30 +105,27 @@ public class CliDockerClient implements DockerClient {
   public static final Path DEFAULT_DOCKER_CLIENT = Paths.get("docker");
 
   /**
-   * Checks if Docker is installed on the user's system and accessible by running the default {@code
-   * docker} command.
+   * Checks if Docker is installed on the user's system by running the `docker` command.
    *
    * @return {@code true} if Docker is installed on the user's system and accessible
    */
   public static boolean isDefaultDockerInstalled() {
-    return isDockerInstalled(DEFAULT_DOCKER_CLIENT);
-  }
-
-  /**
-   * Checks if Docker is installed on the user's system and accessible by running the given {@code
-   * docker} executable.
-   *
-   * @param dockerExecutable path to the executable to test running
-   * @return {@code true} if Docker is installed on the user's system and accessible
-   */
-  public static boolean isDockerInstalled(Path dockerExecutable) {
     try {
-      new ProcessBuilder(dockerExecutable.toString()).start();
+      new ProcessBuilder(DEFAULT_DOCKER_CLIENT.toString()).start();
       return true;
-
     } catch (IOException ex) {
       return false;
     }
+  }
+
+  /**
+   * Checks if Docker is installed by verifying if the executable passed in exists.
+   *
+   * @param dockerExecutable path to the executable to verify
+   * @return {@code true} if executable exists on the system
+   */
+  public static boolean isDockerInstalled(Path dockerExecutable) {
+    return Files.exists(dockerExecutable);
   }
 
   /**

@@ -341,7 +341,7 @@ Property | Type | Default | Description
 
 Property | Type | Default | Description
 --- | --- | --- | ---
-`executable` | string | `docker` | Sets the path to the Docker executable that is called to load the image into the Docker daemon.
+`executable` | string | `docker` | Sets the path to the Docker executable that is called to load the image into the Docker daemon. **Please note**: Users are responsible for ensuring that the Docker path passed in is valid and has the right permissions to be executed.
 `environment` | map | *None* | Sets environment variables used by the Docker executable.
 
 #### System Properties
