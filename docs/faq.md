@@ -44,7 +44,8 @@ If a question you have is not answered below, please [submit an issue](/../../is
 [How can I examine network traffic?](#how-can-i-examine-network-traffic)\
 [How do I view debug logs for Jib?](#how-do-i-view-debug-logs-for-jib)\
 [I am seeing `Method Not Found` or `Class Not Found` errors when building.](#i-am-seeing-method-not-found-or-class-not-found-errors-when-building)\
-[I am seeing `Unsupported class file major version` when building.](#i-am-seeing-unsupported-class-file-major-version-when-building)
+[I am seeing `Unsupported class file major version` when building.](#i-am-seeing-unsupported-class-file-major-version-when-building)\
+[I am seeing `NoClassDefFoundError: com/github/luben/zstd/ZstdOutputStream` when building.](#i-am-seeing-noclassdeffounderror-comgithublubenzstdzstdoutputstream-when-building)
 
 **Launch Problems**\
 [I am seeing `ImagePullBackoff` on my pods.](#i-am-seeing-imagepullbackoff-on-my-pods-in-minikube)\
@@ -764,6 +765,18 @@ Jib uses the [ASM library](https://asm.ow2.io/) to examine compiled Java bytecod
 
 Note that although the ASM library is the common cause of this error coming from Jib, it may be due to other reasons. Always check the full stack (`-e` or `-X` for Maven and `--stacktrace` for Gradle) to see where the error is coming from.
 
+### I am seeing `NoClassDefFoundError: com/github/luben/zstd/ZstdOutputStream` when building.
+
+Jib supports base image layers with media-type `application/vnd.oci.image.layer.v1.tar+zstd`, i.e. compressed with zstd algorithm instead of gzip.
+
+However, the dependency to zstd is optional, so pulling such layers will result in:
+
+```
+java.lang.NoClassDefFoundError: com/github/luben/zstd/ZstdOutputStream
+at org.apache.commons.compress.compressors.zstandard.ZstdCompressorOutputStream.<init>
+```
+
+This can be solved by adding a dependency to artifact `com.github.luben:zstd-jni:1.5.2-3` to the plugin.
 
 ## Launch problems
 

@@ -29,6 +29,7 @@ project.ext.dependencyStrings = [
   MAVEN_EXTENSION: 'com.google.cloud.tools:jib-maven-plugin-extension-api:0.4.0',
 
   COMMONS_COMPRESS: 'org.apache.commons:commons-compress:1.21',
+  ZSTD_JNI: 'com.github.luben:zstd-jni:1.5.2-3',
   COMMONS_TEXT: 'org.apache.commons:commons-text:1.9',
   JACKSON_DATABIND: 'com.fasterxml.jackson.core:jackson-databind:2.13.3',
   JACKSON_DATAFORMAT_YAML: 'com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.13.3',
