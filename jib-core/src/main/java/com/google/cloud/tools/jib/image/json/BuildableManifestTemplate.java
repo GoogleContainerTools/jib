@@ -59,7 +59,7 @@ public interface BuildableManifestTemplate extends ManifestTemplate {
 
     /** Necessary for Jackson to create from JSON. */
     @SuppressWarnings("unused")
-    private ContentDescriptorTemplate() {}
+    protected ContentDescriptorTemplate() {}
 
     public long getSize() {
       return size;

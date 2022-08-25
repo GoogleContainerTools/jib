@@ -16,6 +16,8 @@
 
 package com.google.cloud.tools.jib.builder.steps;
 
+import static org.mockito.ArgumentMatchers.eq;
+
 import com.google.cloud.tools.jib.api.DescriptorDigest;
 import com.google.cloud.tools.jib.api.ImageReference;
 import com.google.cloud.tools.jib.api.InvalidImageReferenceException;
@@ -38,6 +40,7 @@ import com.google.cloud.tools.jib.image.json.BadContainerConfigurationFormatExce
 import com.google.cloud.tools.jib.image.json.ContainerConfigurationTemplate;
 import com.google.cloud.tools.jib.image.json.ImageMetadataTemplate;
 import com.google.cloud.tools.jib.image.json.ManifestAndConfigTemplate;
+import com.google.cloud.tools.jib.image.json.OciIndexTemplate;
 import com.google.cloud.tools.jib.image.json.PlatformNotFoundInBaseImageException;
 import com.google.cloud.tools.jib.image.json.UnlistedPlatformInManifestListException;
 import com.google.cloud.tools.jib.image.json.V21ManifestTemplate;
@@ -202,7 +205,7 @@ public class PullBaseImageStepTest {
   }
 
   @Test
-  public void testLookUpPlatformSpecificImageManifest()
+  public void testLookUpPlatformSpecificDockerImageManifest()
       throws IOException, UnlistedPlatformInManifestListException {
     String manifestListJson =
         " {\n"
@@ -232,6 +235,46 @@ public class PullBaseImageStepTest {
 
     V22ManifestListTemplate manifestList =
         JsonTemplateMapper.readJson(manifestListJson, V22ManifestListTemplate.class);
+
+    String manifestDigest =
+        pullBaseImageStep.lookUpPlatformSpecificImageManifest(
+            manifestList, new Platform("targetArchitecture", "targetOS"));
+
+    Assert.assertEquals(
+        "sha256:2222222222222222222222222222222222222222222222222222222222222222", manifestDigest);
+  }
+
+  @Test
+  public void testLookUpPlatformSpecificOciManifest()
+      throws IOException, UnlistedPlatformInManifestListException {
+    String manifestListJson =
+        " {\n"
+            + "   \"schemaVersion\": 2,\n"
+            + "   \"mediaType\": \"application/vnd.oci.image.index.v1+json\",\n"
+            + "   \"manifests\": [\n"
+            + "      {\n"
+            + "         \"mediaType\": \"application/vnd.oci.image.manifest.v1+json\",\n"
+            + "         \"size\": 424,\n"
+            + "         \"digest\": \"sha256:1111111111111111111111111111111111111111111111111111111111111111\",\n"
+            + "         \"platform\": {\n"
+            + "            \"architecture\": \"arm64\",\n"
+            + "            \"os\": \"linux\"\n"
+            + "         }\n"
+            + "      },\n"
+            + "      {\n"
+            + "         \"mediaType\": \"application/vnd.oci.image.manifest.v1+json\",\n"
+            + "         \"size\": 425,\n"
+            + "         \"digest\": \"sha256:2222222222222222222222222222222222222222222222222222222222222222\",\n"
+            + "         \"platform\": {\n"
+            + "            \"architecture\": \"targetArchitecture\",\n"
+            + "            \"os\": \"targetOS\"\n"
+            + "         }\n"
+            + "      }\n"
+            + "   ]\n"
+            + "}";
+
+    OciIndexTemplate manifestList =
+        JsonTemplateMapper.readJson(manifestListJson, OciIndexTemplate.class);
 
     String manifestDigest =
         pullBaseImageStep.lookUpPlatformSpecificImageManifest(
@@ -480,7 +523,8 @@ public class PullBaseImageStepTest {
     Mockito.when(containerConfig.getPlatforms())
         .thenReturn(ImmutableSet.of(new Platform("amd64", "linux")));
 
-    RegistryClient.Factory gcrRegistryClientFactory = setUpWorkingRegistryClientFactory();
+    RegistryClient.Factory gcrRegistryClientFactory =
+        setUpWorkingRegistryClientFactoryWithV22ManifestTemplate();
     Mockito.when(buildContext.newBaseImageRegistryClientFactory("gcr.io"))
         .thenReturn(gcrRegistryClientFactory);
 
@@ -519,7 +563,8 @@ public class PullBaseImageStepTest {
         .thenThrow(new RegistryException("not found"));
     Mockito.when(containerConfig.getPlatforms())
         .thenReturn(ImmutableSet.of(new Platform("amd64", "linux")));
-    RegistryClient.Factory dockerHubRegistryClientFactory = setUpWorkingRegistryClientFactory();
+    RegistryClient.Factory dockerHubRegistryClientFactory =
+        setUpWorkingRegistryClientFactoryWithV22ManifestTemplate();
     Mockito.when(buildContext.newBaseImageRegistryClientFactory())
         .thenReturn(dockerHubRegistryClientFactory);
 
@@ -541,7 +586,50 @@ public class PullBaseImageStepTest {
         .dispatch(LogEvent.debug("failed to get manifest from mirror gcr.io: not found"));
   }
 
-  private static RegistryClient.Factory setUpWorkingRegistryClientFactory()
+  @Test
+  public void testCall_ManifestList()
+      throws InvalidImageReferenceException, IOException, RegistryException,
+          LayerPropertyNotFoundException, LayerCountMismatchException,
+          BadContainerConfigurationFormatException, CacheCorruptedException,
+          CredentialRetrievalException {
+    Mockito.when(buildContext.getBaseImageConfiguration())
+        .thenReturn(ImageConfiguration.builder(ImageReference.parse("multiarch")).build());
+    Mockito.when(buildContext.getRegistryMirrors())
+        .thenReturn(ImmutableListMultimap.of("registry", "gcr.io"));
+    Mockito.when(containerConfig.getPlatforms())
+        .thenReturn(ImmutableSet.of(new Platform("amd64", "linux")));
+    RegistryClient.Factory dockerHubRegistryClientFactory =
+        setUpWorkingRegistryClientFactoryWithV22ManifestList();
+    Mockito.when(buildContext.newBaseImageRegistryClientFactory())
+        .thenReturn(dockerHubRegistryClientFactory);
+
+    ImagesAndRegistryClient result = pullBaseImageStep.call();
+    Assert.assertEquals(V22ManifestTemplate.class, result.images.get(0).getImageFormat());
+    Assert.assertEquals("linux", result.images.get(0).getOs());
+    Assert.assertEquals("amd64", result.images.get(0).getArchitecture());
+  }
+
+  @Test(expected = UnlistedPlatformInManifestListException.class)
+  public void testCall_ManifestList_UnknownArchitecture()
+      throws InvalidImageReferenceException, IOException, RegistryException,
+          LayerPropertyNotFoundException, LayerCountMismatchException,
+          BadContainerConfigurationFormatException, CacheCorruptedException,
+          CredentialRetrievalException {
+    Mockito.when(buildContext.getBaseImageConfiguration())
+        .thenReturn(ImageConfiguration.builder(ImageReference.parse("multiarch")).build());
+    Mockito.when(buildContext.getRegistryMirrors())
+        .thenReturn(ImmutableListMultimap.of("registry", "gcr.io"));
+    Mockito.when(containerConfig.getPlatforms())
+        .thenReturn(ImmutableSet.of(new Platform("arm64", "linux")));
+    RegistryClient.Factory dockerHubRegistryClientFactory =
+        setUpWorkingRegistryClientFactoryWithV22ManifestList();
+    Mockito.when(buildContext.newBaseImageRegistryClientFactory())
+        .thenReturn(dockerHubRegistryClientFactory);
+
+    pullBaseImageStep.call();
+  }
+
+  private static RegistryClient.Factory setUpWorkingRegistryClientFactoryWithV22ManifestTemplate()
       throws IOException, RegistryException {
     DescriptorDigest digest = Mockito.mock(DescriptorDigest.class);
     V22ManifestTemplate manifest = new V22ManifestTemplate();
@@ -552,6 +640,39 @@ public class PullBaseImageStepTest {
     Mockito.when(clientFactory.newRegistryClient()).thenReturn(client);
     Mockito.when(client.pullManifest(Mockito.any()))
         .thenReturn(new ManifestAndDigest<>(manifest, digest));
+    // mocking pulling container config json
+    Mockito.when(client.pullBlob(Mockito.any(), Mockito.any(), Mockito.any()))
+        .then(
+            invocation -> {
+              Consumer<Long> blobSizeListener = invocation.getArgument(1);
+              blobSizeListener.accept(1L);
+              return Blobs.from("{}");
+            });
+    return clientFactory;
+  }
+
+  private static RegistryClient.Factory setUpWorkingRegistryClientFactoryWithV22ManifestList()
+      throws IOException, RegistryException {
+    DescriptorDigest digest = Mockito.mock(DescriptorDigest.class);
+    V22ManifestListTemplate manifestList = new V22ManifestListTemplate();
+    V22ManifestListTemplate.ManifestDescriptorTemplate platformManifest =
+        new V22ManifestListTemplate.ManifestDescriptorTemplate();
+    platformManifest.setMediaType(V22ManifestTemplate.MANIFEST_MEDIA_TYPE);
+    platformManifest.setSize(1234);
+    platformManifest.setDigest("sha256:aaaaaaa");
+    platformManifest.setPlatform("amd64", "linux");
+    manifestList.addManifest(platformManifest);
+
+    V22ManifestTemplate manifest = new V22ManifestTemplate();
+    manifest.setContainerConfiguration(1234, digest);
+
+    RegistryClient.Factory clientFactory = Mockito.mock(RegistryClient.Factory.class);
+    RegistryClient client = Mockito.mock(RegistryClient.class);
+    Mockito.when(clientFactory.newRegistryClient()).thenReturn(client);
+    Mockito.when(client.pullManifest(eq("sha256:aaaaaaa")))
+        .thenReturn(new ManifestAndDigest<>(manifest, digest));
+    Mockito.when(client.pullManifest(eq("latest")))
+        .thenReturn(new ManifestAndDigest<>(manifestList, digest));
     // mocking pulling container config json
     Mockito.when(client.pullBlob(Mockito.any(), Mockito.any(), Mockito.any()))
         .then(

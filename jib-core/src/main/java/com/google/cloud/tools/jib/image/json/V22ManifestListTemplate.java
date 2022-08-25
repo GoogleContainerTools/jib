@@ -63,7 +63,7 @@ import javax.annotation.Nullable;
  * @see <a href="https://docs.docker.com/registry/spec/manifest-v2-2/#manifest-list">Image Manifest
  *     Version 2, Schema 2: Manifest List</a>
  */
-public class V22ManifestListTemplate implements ManifestTemplate {
+public class V22ManifestListTemplate implements ManifestListTemplate {
 
   public static final String MANIFEST_MEDIA_TYPE =
       "application/vnd.docker.distribution.manifest.list.v2+json";
@@ -101,14 +101,7 @@ public class V22ManifestListTemplate implements ManifestTemplate {
     return Preconditions.checkNotNull(manifests);
   }
 
-  /**
-   * Returns a list of digests for a specific platform found in the manifest list. see
-   * <a>https://docs.docker.com/registry/spec/manifest-v2-2/#manifest-list</a>
-   *
-   * @param architecture the architecture of the target platform
-   * @param os the os of the target platform
-   * @return a list of matching digests
-   */
+  @Override
   public List<String> getDigestsForPlatform(String architecture, String os) {
     return getManifests().stream()
         .filter(

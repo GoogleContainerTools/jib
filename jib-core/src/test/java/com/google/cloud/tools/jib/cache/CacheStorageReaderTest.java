@@ -297,7 +297,7 @@ public class CacheStorageReaderTest {
 
     MatcherAssert.assertThat(
         metadata.getManifestList(), CoreMatchers.instanceOf(OciIndexTemplate.class));
-    List<ContentDescriptorTemplate> manifestDescriptors =
+    List<? extends ContentDescriptorTemplate> manifestDescriptors =
         ((OciIndexTemplate) metadata.getManifestList()).getManifests();
 
     Assert.assertEquals(1, manifestDescriptors.size());
