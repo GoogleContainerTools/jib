@@ -40,8 +40,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.attribute.PosixFileAttributes;
-import java.nio.file.attribute.PosixFilePermission;
 import java.security.DigestException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -119,10 +117,11 @@ public class CliDockerClient implements DockerClient {
   }
 
   /**
-   * Checks if Docker is installed by verifying if the executable passed in exists.
+   * Checks if Docker is installed on the user's system and by verifying if the executable path
+   * provided has the appropriate permissions.
    *
-   * @param dockerExecutable path to the executable to verify
-   * @return {@code true} if executable exists on the system
+   * @param dockerExecutable path to the executable to test running
+   * @return {@code true} if Docker is installed on the user's system and accessible
    */
   public static boolean isDockerInstalled(Path dockerExecutable) {
     return Files.exists(dockerExecutable);
