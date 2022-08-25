@@ -103,30 +103,28 @@ public class CliDockerClient implements DockerClient {
   public static final Path DEFAULT_DOCKER_CLIENT = Paths.get("docker");
 
   /**
-   * Checks if Docker is installed on the user's system and accessible by running the default {@code
-   * docker} command.
+   * Checks if Docker is installed on the user's system by running the `docker` command.
    *
    * @return {@code true} if Docker is installed on the user's system and accessible
    */
   public static boolean isDefaultDockerInstalled() {
-    return isDockerInstalled(DEFAULT_DOCKER_CLIENT);
+    try {
+      new ProcessBuilder(DEFAULT_DOCKER_CLIENT.toString()).start();
+      return true;
+    } catch (IOException ex) {
+      return false;
+    }
   }
 
   /**
-   * Checks if Docker is installed on the user's system and accessible by running the given {@code
-   * docker} executable.
+   * Checks if Docker is installed on the user's system and by verifying if the executable path
+   * provided has the appropriate permissions.
    *
    * @param dockerExecutable path to the executable to test running
    * @return {@code true} if Docker is installed on the user's system and accessible
    */
   public static boolean isDockerInstalled(Path dockerExecutable) {
-    try {
-      new ProcessBuilder(dockerExecutable.toString()).start();
-      return true;
-
-    } catch (IOException ex) {
-      return false;
-    }
+    return Files.exists(dockerExecutable);
   }
 
   /**
