@@ -459,6 +459,28 @@ Using `paths` as a closure, you may also specify the target of the copy and incl
   }
 ```
 
+You can also configure `paths` and `permissions` through [lazy configuration in Gradle](https://docs.gradle.org/current/userguide/lazy_configuration.html), using providers in `build.gradle`:
+
+```groovy
+extraDirectories {
+   paths = project.provider { 'src/main/custom-extra-dir' }
+   permissions = project.provider { ['/path/on/container/to/fileA': '755'] }
+}
+```
+
+```groovy
+extraDirectories {
+   paths {
+     path { 
+       from = project.provider { 'src/main/custom-extra-dir' }
+       into = project.provider { '/dest-in-container' }
+       includes = project.provider { ['*.txt', '**/*.txt'] }
+       excludes = project.provider { ['hidden.txt'] }
+    }
+  }
+}
+```
+
 ### Authentication Methods
 
 Pushing/pulling from private registries require authorization credentials.

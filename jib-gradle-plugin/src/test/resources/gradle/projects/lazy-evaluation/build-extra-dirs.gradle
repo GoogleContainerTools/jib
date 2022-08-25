@@ -1,0 +1,47 @@
+plugins {
+    id 'java'
+    id 'com.google.cloud.tools.jib'
+}
+
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation 'com.google.guava:guava:23.6-jre'
+}
+
+project.ext.value = 'original'
+
+project.afterEvaluate {
+    project.ext.value = 'updated'
+    project.ext.getCustomIncludes = { -> return ['include.txt'] }
+    project.ext.getCustomExcludes = { -> return ['exclude.txt'] }
+}
+
+jib {
+    extraDirectories {
+        paths {
+            path {
+                from = project.provider { 'src/main/' + project.ext.value + '-custom-extra-dir' }
+                into = project.provider { '/' + project.ext.value + '-custom-into-dir' }
+                includes = project.provider { -> project.ext.getCustomIncludes() }
+                excludes = project.provider { -> project.ext.getCustomExcludes() }
+            }
+        }
+    }
+}
+
+tasks.register('check-extra-directories') {
+    List<Object> from = project.extensions.getByName('jib')['extraDirectories']['paths'].collect{ path -> path['from']}
+    List<Object> into = project.extensions.getByName('jib')['extraDirectories']['paths'].collect{ path -> path['into']}
+    List<Object> includes = project.extensions.getByName('jib')['extraDirectories']['paths'].collect{ path -> path['includes'].get()}
+    List<Object> excludes = project.extensions.getByName('jib')['extraDirectories']['paths'].collect{ path -> path['excludes'].get()}
+    println('extraDirectories (from): ' + from)
+    println('extraDirectories (into): ' + into)
+    println('extraDirectories (includes): ' + includes)
+    println('extraDirectories (excludes): ' + excludes)
+}

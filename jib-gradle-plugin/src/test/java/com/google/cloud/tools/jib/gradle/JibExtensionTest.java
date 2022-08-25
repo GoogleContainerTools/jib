@@ -33,6 +33,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Properties;
 import org.gradle.api.Project;
+import org.gradle.api.provider.Provider;
+import org.gradle.api.provider.ProviderFactory;
 import org.gradle.testfixtures.ProjectBuilder;
 import org.junit.Before;
 import org.junit.Rule;
@@ -241,7 +243,7 @@ public class JibExtensionTest {
     assertThat(testJibExtension.getExtraDirectories().getPaths()).hasSize(1);
     assertThat(testJibExtension.getExtraDirectories().getPaths().get(0).getFrom())
         .isEqualTo(fakeProject.getProjectDir().toPath().resolve("src/main/jib"));
-    assertThat(testJibExtension.getExtraDirectories().getPermissions()).isEmpty();
+    assertThat(testJibExtension.getExtraDirectories().getPermissions().get()).isEmpty();
   }
 
   @Test
@@ -249,15 +251,34 @@ public class JibExtensionTest {
     testJibExtension.extraDirectories(
         extraDirectories -> {
           extraDirectories.setPaths("test/path");
-          extraDirectories.setPermissions(ImmutableMap.of("file1", "123", "file2", "456"));
         });
 
     assertThat(testJibExtension.getExtraDirectories().getPaths()).hasSize(1);
     assertThat(testJibExtension.getExtraDirectories().getPaths().get(0).getFrom())
         .isEqualTo(fakeProject.getProjectDir().toPath().resolve("test/path"));
-    assertThat(testJibExtension.getExtraDirectories().getPermissions())
-        .containsExactly("file1", "123", "file2", "456")
-        .inOrder();
+  }
+
+  @Test
+  public void testExtraDirectories_lazyEvaluation_setFromInto() {
+    testJibExtension.extraDirectories(
+        extraDirectories ->
+            extraDirectories.paths(
+                paths -> {
+                  ProviderFactory providerFactory = fakeProject.getProviders();
+                  Provider<Object> from = providerFactory.provider(() -> "test/path");
+                  Provider<String> into = providerFactory.provider(() -> "/target");
+                  paths.path(
+                      path -> {
+                        path.setFrom(from);
+                        path.setInto(into);
+                      });
+                }));
+
+    assertThat(testJibExtension.getExtraDirectories().getPaths()).hasSize(1);
+    assertThat(testJibExtension.getExtraDirectories().getPaths().get(0).getFrom())
+        .isEqualTo(fakeProject.getProjectDir().toPath().resolve("test/path"));
+    assertThat(testJibExtension.getExtraDirectories().getPaths().get(0).getInto())
+        .isEqualTo("/target");
   }
 
   @Test
@@ -301,6 +322,23 @@ public class JibExtensionTest {
   public void testExtraDirectories_stringListForPaths() {
     testJibExtension.extraDirectories(
         extraDirectories -> extraDirectories.setPaths(Arrays.asList("test/path", "another/path")));
+
+    assertThat(testJibExtension.getExtraDirectories().getPaths()).hasSize(2);
+    assertThat(testJibExtension.getExtraDirectories().getPaths().get(0).getFrom())
+        .isEqualTo(fakeProject.getProjectDir().toPath().resolve("test/path"));
+    assertThat(testJibExtension.getExtraDirectories().getPaths().get(1).getFrom())
+        .isEqualTo(fakeProject.getProjectDir().toPath().resolve("another/path"));
+  }
+
+  @Test
+  public void testExtraDirectories_lazyEvaluation_StringListForPaths() {
+    testJibExtension.extraDirectories(
+        extraDirectories -> {
+          ProviderFactory providerFactory = fakeProject.getProviders();
+          Provider<Object> paths =
+              providerFactory.provider(() -> Arrays.asList("test/path", "another/path"));
+          extraDirectories.setPaths(paths);
+        });
 
     assertThat(testJibExtension.getExtraDirectories().getPaths()).hasSize(2);
     assertThat(testJibExtension.getExtraDirectories().getPaths().get(0).getFrom())
@@ -456,7 +494,7 @@ public class JibExtensionTest {
     assertThat(testJibExtension.getExtraDirectories().getPaths().get(1).getFrom())
         .isEqualTo(Paths.get("/bar/baz"));
     System.setProperty("jib.extraDirectories.permissions", "/foo/bar=707,/baz=456");
-    assertThat(testJibExtension.getExtraDirectories().getPermissions())
+    assertThat(testJibExtension.getExtraDirectories().getPermissions().get())
         .containsExactly("/foo/bar", "707", "/baz", "456")
         .inOrder();
 

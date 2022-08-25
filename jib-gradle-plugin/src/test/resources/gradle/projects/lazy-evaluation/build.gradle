@@ -18,6 +18,7 @@ project.ext.value = 'original'
 
 project.afterEvaluate {
     project.ext.value = 'updated'
+    project.ext.getCustomPermissions = { -> return ['/updated': '755'] }
 }
 
 jib {
@@ -33,9 +34,20 @@ jib {
             ]
         }
     }
+    extraDirectories {
+        paths = project.provider { ['src/main/' + project.ext.value + '-custom-extra-dir'] }
+        permissions = project.provider { -> project.ext.getCustomPermissions() }
+    }
 }
 
 tasks.register('showlabels') {
     Map<String, String> prop = project.extensions.getByName('jib')['container']['labels'].get()
     println('labels contain values ' + prop)
+}
+
+tasks.register('check-extra-directories') {
+    List<Object> paths = project.extensions.getByName('jib')['extraDirectories']['paths'].collect{ path -> path['from']}
+    Map<String, String> permissions = project.extensions.getByName('jib')['extraDirectories']['permissions'].get()
+    println('extraDirectories paths: ' + paths)
+    println('extraDirectories permissions: ' + permissions)
 }

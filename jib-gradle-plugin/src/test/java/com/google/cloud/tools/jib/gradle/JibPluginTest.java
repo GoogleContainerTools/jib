@@ -368,6 +368,37 @@ public class JibPluginTest {
             "labels contain values [firstkey:updated-first-label, secondKey:updated-second-label]");
   }
 
+  @Test
+  public void testLazyEvalForExtraDirectories() {
+    BuildResult checkExtraDirectories =
+        testProject.build("check-extra-directories", "-Djib.console=plain");
+    assertThat(checkExtraDirectories.getOutput()).contains("[/updated:755]");
+    assertThat(checkExtraDirectories.getOutput()).contains("updated-custom-extra-dir");
+  }
+
+  @Test
+  public void testLazyEvalForExtraDirectories_individualPaths() throws IOException {
+    BuildResult checkExtraDirectories =
+        testProject.build(
+            "check-extra-directories", "-b=build-extra-dirs.gradle", "-Djib.console=plain");
+
+    Path extraDirectoryPath =
+        testProject
+            .getProjectRoot()
+            .resolve("src")
+            .resolve("main")
+            .resolve("updated-custom-extra-dir")
+            .toRealPath();
+    assertThat(checkExtraDirectories.getOutput())
+        .contains("extraDirectories (from): [" + extraDirectoryPath + "]");
+    assertThat(checkExtraDirectories.getOutput())
+        .contains("extraDirectories (into): [/updated-custom-into-dir]");
+    assertThat(checkExtraDirectories.getOutput())
+        .contains("extraDirectories (includes): [[include.txt]]");
+    assertThat(checkExtraDirectories.getOutput())
+        .contains("extraDirectories (excludes): [[exclude.txt]]");
+  }
+
   private Project createProject(String... plugins) {
     Project project =
         ProjectBuilder.builder().withProjectDir(testProjectRoot.getRoot()).withName("root").build();
