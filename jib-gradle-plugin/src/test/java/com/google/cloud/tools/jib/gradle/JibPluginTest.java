@@ -377,11 +377,20 @@ public class JibPluginTest {
   }
 
   @Test
-  public void testLazyEvalForExtraDirectories_individualPaths() {
+  public void testLazyEvalForExtraDirectories_individualPaths() throws IOException {
     BuildResult checkExtraDirectories =
         testProject.build(
             "check-extra-directories", "-b=build-extra-dirs.gradle", "-Djib.console=plain");
-    assertThat(checkExtraDirectories.getOutput()).contains("updated-custom-extra-dir");
+
+    Path extraDirectoryPath =
+        testProject
+            .getProjectRoot()
+            .resolve("src")
+            .resolve("main")
+            .resolve("updated-custom-extra-dir")
+            .toRealPath();
+    assertThat(checkExtraDirectories.getOutput())
+        .contains("extraDirectories (from): [" + extraDirectoryPath + "]");
     assertThat(checkExtraDirectories.getOutput())
         .contains("extraDirectories (into): [/updated-custom-into-dir]");
     assertThat(checkExtraDirectories.getOutput())
