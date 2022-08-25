@@ -24,11 +24,13 @@ import com.google.cloud.tools.jib.image.ImageTarball;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.ByteStreams;
+import com.google.common.io.Resources;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Paths;
 import java.security.DigestException;
@@ -72,6 +74,13 @@ public class CliDockerClientTest {
   @Test
   public void testIsDockerInstalled_fail() {
     Assert.assertFalse(CliDockerClient.isDockerInstalled(Paths.get("path/to/nonexistent/file")));
+  }
+
+  @Test
+  public void testIsDockerInstalled_pass() throws URISyntaxException {
+    Assert.assertTrue(
+        CliDockerClient.isDockerInstalled(
+            Paths.get(Resources.getResource("core/docker/emptyFile").toURI())));
   }
 
   @Test
