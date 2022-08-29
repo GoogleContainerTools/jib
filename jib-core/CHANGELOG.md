@@ -4,8 +4,16 @@ All notable changes to this project will be documented in this file.
 ## [unreleased]
 
 ### Added
+- Better error messaging when environment map in `container.environment` contains null values ([#3672](https://github.com/GoogleContainerTools/jib/pull/3672)).
+- DockerClient interface which is used to make calls to the Docker daemon. This allows for custom implementations to be introduced via SPI ([#3703](https://github.com/GoogleContainerTools/jib/pull/3703)). 
+- Support for OCI image index manifests ([#3715](https://github.com/GoogleContainerTools/jib/pull/3715)).
+- Support for base image layer compressed with zstd ([#3717](https://github.com/GoogleContainerTools/jib/pull/3717))
 
 ### Changed
+- Upgraded slf4j-simple and slf4j-api to 2.0.0 ([#3734](https://github.com/GoogleContainerTools/jib/pull/3734), [#3735](https://github.com/GoogleContainerTools/jib/pull/3735)).
+- Upgraded nullaway to 0.9.9. ([#3720](https://github.com/GoogleContainerTools/jib/pull/3720))
+- Jib now throws an exception when the base image doesn't support target platforms during multi-platform build ([#3707](https://github.com/GoogleContainerTools/jib/pull/3707)).
+- Jib now only checks for file existence instead of running the executable passed into `dockerClient.executable` for the purpose of verifying if docker is installed correctly. Users are responsible for ensuring that the docker executable specified through this property is valid and has the correct permissions ([#3744](https://github.com/GoogleContainerTools/jib/pull/3744)).
 
 ### Fixed
 
