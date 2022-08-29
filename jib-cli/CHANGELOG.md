@@ -5,15 +5,17 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 - Included `imagePushed` field to image metadata json output file which provides information on whether an image was pushed by Jib. ([#3641](https://github.com/GoogleContainerTools/jib/pull/3641))
+- Better error messaging when environment map in `container.environment` contains null values ([#3672](https://github.com/GoogleContainerTools/jib/pull/3672)).
 
 ### Changed
+- Upgraded slf4j-api to 2.0.0 ([#3735](https://github.com/GoogleContainerTools/jib/pull/3735)).
+- Upgraded nullaway to 0.9.9 ([#3720](https://github.com/GoogleContainerTools/jib/pull/3720)).
 
 ### Fixed
 
 ## 0.10.0
 
 ### Changed
-
 - Upgraded jackson-databind to 2.13.2.2 ([#3612](https://github.com/GoogleContainerTools/jib/issues/3612)).
 
 ### Fixed
