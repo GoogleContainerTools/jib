@@ -4,8 +4,12 @@ All notable changes to this project will be documented in this file.
 ## [unreleased]
 
 ### Added
+- Better error messaging when environment map in `container.environment` contains null values ([#3672](https://github.com/GoogleContainerTools/jib/pull/3672)).
+- DockerClient interface which is used to make calls to the Docker daemon. This allows for custom implementations to be introduced via SPI ([#3703](https://github.com/GoogleContainerTools/jib/pull/3703)). 
 
 ### Changed
+- Jib now throws an exception when the base image doesn't support target platforms during multi-platform build ([#3707](https://github.com/GoogleContainerTools/jib/pull/3707)).
+- Jib now only checks for file existance instead of running the executable passed into `dockerClient.executable` for the purpose of verifying if docker is installed correctly. Users are responsible for ensuring that the docker executable specified through this property is valid and has the correct permissions ([#3742](https://github.com/GoogleContainerTools/jib/pull/3742)).
 
 ### Fixed
 
