@@ -6,6 +6,8 @@ All notable changes to this project will be documented in this file.
 ### Added
 - Better error messaging when environment map in `container.environment` contains null values ([#3672](https://github.com/GoogleContainerTools/jib/pull/3672)).
 - DockerClient interface which is used to make calls to the Docker daemon. This allows for custom implementations to be introduced via SPI ([#3703](https://github.com/GoogleContainerTools/jib/pull/3703)). 
+- Support for OCI image index manifests ([#3715](https://github.com/GoogleContainerTools/jib/pull/3715)).
+- Support for base image layer compressed with zstd ([#3717](https://github.com/GoogleContainerTools/jib/pull/3717)).
 
 ### Changed
 - Jib now throws an exception when the base image doesn't support target platforms during multi-platform build ([#3707](https://github.com/GoogleContainerTools/jib/pull/3707)).
