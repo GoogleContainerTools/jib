@@ -2,6 +2,7 @@ plugins {
   id 'java'
   id 'eclipse'
   id 'idea'
+  id 'maven-publish'
 }
 
 sourceCompatibility = 1.8
@@ -12,4 +13,27 @@ targetCompatibility = 1.8
 jar {
   preserveFileTimestamps false
   reproducibleFileOrder true
+}
+
+
+publishing {
+  repositories {
+    maven {
+      name = 'GitHub'
+      allowInsecureProtocol true
+      url 'https://maven.pkg.github.com/smvlada/jib'
+      credentials {
+        username 'smvlada'
+        password project.findProperty('GITHUB_TOKEN')
+      }
+    }
+  }
+  publications {
+    maven(MavenPublication) {
+      groupId 'net.example'
+      artifactId "${rootProject.name}-${project.name}"
+      version "${version}"
+      from components.java
+    }
+  }
 }
