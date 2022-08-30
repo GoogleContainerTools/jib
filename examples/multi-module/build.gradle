@@ -7,6 +7,13 @@ plugins {
     id 'net.researchgate.release' version '3.0.1'
 }
 
+ext {
+    release {
+        useAutomaticVersion = true
+        requireBranch = null
+    }
+}
+
 // Lifecycle tasks - BEGIN
 
 // Task to do mavenPublish for all modules where useMavenPublish exists.
