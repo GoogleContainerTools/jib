@@ -4,4 +4,5 @@ plugins {
   id 'io.spring.dependency-management' version '1.0.6.RELEASE' apply false
   id 'com.google.cloud.tools.jib' version '3.2.1' apply false
   id 'maven-publish'
+  id 'net.researchgate.release' version '3.0.1'
 }
