@@ -7,4 +7,6 @@ plugins {
     id 'net.researchgate.release' version '3.0.1'
 }
 
-afterReleaseBuild.dependsOn 'publishMavenPublicationToGitHubRepository'
+tasks.withType(PublishToMavenRepository) { task ->
+    dependsOn(afterReleaseBuild)
+}
