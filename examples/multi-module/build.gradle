@@ -7,6 +7,9 @@ plugins {
     id 'net.researchgate.release' version '3.0.1'
 }
 
+// Lifecycle tasks - BEGIN
+
+// Task to do mavenPublish for all modules where useMavenPublish exists.
 task publishMavenArtifacts {
     subprojects {
         project -> project.afterEvaluate {
@@ -17,6 +20,7 @@ task publishMavenArtifacts {
     }
 }
 
+// Task to do jibImagePublish for all modules where useJib exists.
 task publishJibImages {
     subprojects {
         project -> project.afterEvaluate {
@@ -27,5 +31,8 @@ task publishJibImages {
     }
 }
 
+// Chains tasks as: build -> publishMavenArtifacts -> publishJibImages -> "create tag & update version"
 afterReleaseBuild.dependsOn publishJibImages
 publishJibImages.dependsOn publishMavenArtifacts
+
+// Lifecycle tasks - END
