@@ -8,7 +8,7 @@ plugins {
 }
 
 task publishMavenAndImageInRelease(type: GradleBuild) {
-    tasks = ['publish', 'jib']
+    tasks = ['build', 'publish', 'jib']
 }
 
 afterReleaseBuild.dependsOn publishMavenAndImageInRelease
