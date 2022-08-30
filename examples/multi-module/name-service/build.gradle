@@ -19,7 +19,10 @@ dependencies {
   implementation project(':shared-library')
 }
 
-// IMPORTANT: Set the environment variable PROJECT_ID to your own Google Cloud Platform project.
+ext {
+  useJib = true
+}
+
 jib {
   to {
     image "ghcr.io/${project.findProperty('GITHUB_USER')}/${project.name}:${version}"

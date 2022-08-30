@@ -8,16 +8,20 @@ plugins {
 }
 
 task publishMavenArtifacts {
-    subprojects.each { dependsOn("${it.name}:publish") }
+    subprojects.each {
+        if(it.findProperty('useMavenPublish')) {
+            dependsOn("${it.name}:publish")
+        }
+    }
 }
 
 task publishJibImages {
-    subprojects.each { dependsOn("${it.name}:jib") }
+    subprojects.each {
+        if (it.findProperty('useJib')) {
+            dependsOn("${it.name}:jib")
+        }
+    }
 }
 
 afterReleaseBuild.dependsOn publishJibImages
 publishJibImages.dependsOn publishMavenArtifacts
-
-
-
-
