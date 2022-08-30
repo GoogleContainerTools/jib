@@ -7,11 +7,16 @@ plugins {
     id 'net.researchgate.release' version '3.0.1'
 }
 
-task publishMavenAndImageInRelease(type: GradleBuild) {
-    tasks = ['build', 'publish', 'jib']
+task publishMavenArtifacts {
+    subprojects.each { dependsOn("${it.name}:publish") }
 }
 
-afterReleaseBuild.dependsOn publishMavenAndImageInRelease
+task publishJibImages {
+    subprojects.each { dependsOn("${it.name}:jib") }
+}
+
+afterReleaseBuild.dependsOn publishJibImages
+publishJibImages.dependsOn publishMavenArtifacts
 
 
 
