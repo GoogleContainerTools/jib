@@ -22,9 +22,9 @@ dependencies {
 // IMPORTANT: Set the environment variable PROJECT_ID to your own Google Cloud Platform project.
 jib {
   to {
-    image "ghcr.io/${System.getenv('PROJECT_ID')}/${project.name}:${version}"
+    image "ghcr.io/${project.findProperty('GITHUB_USER')}/${project.name}:${version}"
     auth {
-      username 'smvlada'
+      username project.findProperty('GITHUB_USER')
       password project.findProperty('GITHUB_TOKEN')
     }
   }

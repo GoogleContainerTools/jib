@@ -9,9 +9,9 @@ plugins {
 task publishJarAndImageInRelease {
     subprojects.each {
         dependsOn("${it.name}:publish")
-//        dependsOn("${it.name}:jib")
+        dependsOn("${it.name}:jib")
     }
-    dependsOn(afterReleaseBuild)
+    dependsOn('afterReleaseBuild')
 }
 //afterReleaseBuild.dependsOn 'shared-library:publish'
 
