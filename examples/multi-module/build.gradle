@@ -7,6 +7,4 @@ plugins {
     id 'net.researchgate.release' version '3.0.1'
 }
 
-subprojects {
-    afterReleaseBuild.dependsOn publish
-}
+afterReleaseBuild.dependsOn publishMavenPublicationToGitHubRepository
