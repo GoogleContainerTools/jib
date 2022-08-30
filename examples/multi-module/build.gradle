@@ -7,8 +7,10 @@ plugins {
     id 'net.researchgate.release' version '3.0.1'
 }
 task publishJarAndImageInRelease {
-    subprojects.each { dependsOn("${it.name}:publish") }
-    subprojects.each { dependsOn("${it.name}:jib") }
+    subprojects.each {
+        dependsOn("${it.name}:publish")
+        dependsOn("${it.name}:jib")
+    }
     dependsOn('afterReleaseBuild')
 }
 //afterReleaseBuild.dependsOn 'shared-library:publish'
