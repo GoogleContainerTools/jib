@@ -7,6 +7,8 @@ plugins {
     id 'net.researchgate.release' version '3.0.1'
 }
 
-tasks.withType(PublishToMavenRepository) { task ->
-    dependsOn(afterReleaseBuild)
+subprojects {
+    tasks.withType(PublishToMavenRepository) { task ->
+        dependsOn(afterReleaseBuild)
+    }
 }
