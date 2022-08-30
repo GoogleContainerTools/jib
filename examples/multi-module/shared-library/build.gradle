@@ -2,7 +2,7 @@ plugins {
   id 'java'
   id 'eclipse'
   id 'idea'
-//  id 'maven-publish'
+  id 'maven-publish'
 }
 
 sourceCompatibility = 1.8
@@ -14,8 +14,6 @@ jar {
   preserveFileTimestamps false
   reproducibleFileOrder true
 }
-
-apply plugin: 'maven-publish'
 
 publishing {
   repositories {
@@ -38,3 +36,6 @@ publishing {
     }
   }
 }
+
+afterReleaseBuild.dependsOn publish
+
