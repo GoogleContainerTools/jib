@@ -2,7 +2,7 @@ plugins {
   id 'java'
   id 'eclipse'
   id 'idea'
-  id 'maven-publish'
+//  id 'maven-publish'
 }
 
 sourceCompatibility = 1.8
@@ -15,6 +15,7 @@ jar {
   reproducibleFileOrder true
 }
 
+apply plugin: 'maven-publish'
 
 publishing {
   repositories {
