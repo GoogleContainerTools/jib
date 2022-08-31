@@ -2,6 +2,11 @@
 All notable changes to this project will be documented in this file.
 
 ## [unreleased]
+### Added
+### Changed
+### Fixed
+
+## 0.22.0
 
 ### Added
 - Better error messaging when environment map in `container.environment` contains null values ([#3672](https://github.com/GoogleContainerTools/jib/pull/3672)).
@@ -14,9 +19,6 @@ All notable changes to this project will be documented in this file.
 - Upgraded nullaway to 0.9.9. ([#3720](https://github.com/GoogleContainerTools/jib/pull/3720))
 - Jib now throws an exception when the base image doesn't support target platforms during multi-platform build ([#3707](https://github.com/GoogleContainerTools/jib/pull/3707)).
 - Jib now only checks for file existence instead of running the executable passed into `dockerClient.executable` for the purpose of verifying if docker is installed correctly. Users are responsible for ensuring that the docker executable specified through this property is valid and has the correct permissions ([#3744](https://github.com/GoogleContainerTools/jib/pull/3744)).
-
-### Fixed
-
 
 ## 0.21.0
 
