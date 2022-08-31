@@ -25,6 +25,7 @@ All notable changes to this project will be documented in this file.
 - Jib now only checks for file existence instead of running the executable passed into `dockerClient.executable` for the purpose of verifying if docker is installed correctly. Users are responsible for ensuring that the docker executable specified through this property is valid and has the correct permissions ([#3744](https://github.com/GoogleContainerTools/jib/pull/3744)).
 - Jib now throws an exception when the base image doesn't support target platforms during multi-platform build ([#3707](https://github.com/GoogleContainerTools/jib/pull/3707)).
 
+Thanks to our community contributors @wwadge, @oliver-brm, @rquinio and @gsquared94!
 
 ## 3.2.1
 
