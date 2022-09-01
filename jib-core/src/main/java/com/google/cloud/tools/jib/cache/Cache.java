@@ -229,9 +229,6 @@ public class Cache {
     return cacheStorageReader.retrieve(layerDigest);
   }
 
-  public boolean verify(DescriptorDigest layerDigest) {
-    return cacheStorageReader.verify(layerDigest);
-  }
 
   /**
    * Retrieves a {@link CachedLayer} for a local base image layer with the given diff id.

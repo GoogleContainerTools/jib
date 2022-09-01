@@ -174,11 +174,6 @@ class CacheStorageReader {
     }
   }
 
-  boolean verify(DescriptorDigest layerDigest) {
-    Path layerDirectory = cacheStorageFiles.getLayerDirectory(layerDigest);
-    return Files.exists(layerDirectory);
-  }
-
   /**
    * Retrieves the {@link CachedLayer} for the local base image layer with the given diff ID.
    *
