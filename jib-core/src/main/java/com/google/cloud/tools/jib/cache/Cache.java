@@ -25,6 +25,7 @@ import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
 import com.google.cloud.tools.jib.image.json.ContainerConfigurationTemplate;
 import com.google.cloud.tools.jib.image.json.ImageMetadataTemplate;
 import com.google.cloud.tools.jib.image.json.ManifestAndConfigTemplate;
+import com.google.cloud.tools.jib.image.json.ManifestTemplate;
 import com.google.cloud.tools.jib.image.json.V21ManifestTemplate;
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
@@ -192,6 +193,10 @@ public class Cache {
     return cacheStorageReader.retrieveMetadata(imageReference);
   }
 
+  public boolean verifyCachedLayers(ManifestTemplate manifest) {
+    return cacheStorageReader.allImageLayersExist(manifest);
+  }
+
   /**
    * Retrieves the {@link CachedLayer} that was built from the {@code layerEntries}.
    *
@@ -222,6 +227,10 @@ public class Cache {
   public Optional<CachedLayer> retrieve(DescriptorDigest layerDigest)
       throws IOException, CacheCorruptedException {
     return cacheStorageReader.retrieve(layerDigest);
+  }
+
+  public boolean verify(DescriptorDigest layerDigest) {
+    return cacheStorageReader.verify(layerDigest);
   }
 
   /**

@@ -445,8 +445,8 @@ class PullBaseImageStep implements Callable<ImagesAndRegistryClient> {
           LayerCountMismatchException, UnlistedPlatformInManifestListException,
           PlatformNotFoundInBaseImageException {
     ImageReference baseImage = buildContext.getBaseImageConfiguration().getImage();
-    Optional<ImageMetadataTemplate> metadata =
-        buildContext.getBaseImageLayersCache().retrieveMetadata(baseImage);
+    Cache baseImageLayersCache = buildContext.getBaseImageLayersCache();
+    Optional<ImageMetadataTemplate> metadata = baseImageLayersCache.retrieveMetadata(baseImage);
     if (!metadata.isPresent()) {
       return Collections.emptyList();
     }
@@ -457,6 +457,12 @@ class PullBaseImageStep implements Callable<ImagesAndRegistryClient> {
     if (manifestList == null) {
       Verify.verify(manifestsAndConfigs.size() == 1);
       ManifestTemplate manifest = manifestsAndConfigs.get(0).getManifest();
+
+      if (!baseImageLayersCache.verifyCachedLayers(Verify.verifyNotNull(manifest))) {
+        // Not all layers present in cache
+        return Collections.emptyList();
+      }
+
       if (manifest instanceof V21ManifestTemplate) {
         return Collections.singletonList(
             JsonToImageTranslator.toImage((V21ManifestTemplate) manifest));
@@ -486,6 +492,11 @@ class PullBaseImageStep implements Callable<ImagesAndRegistryClient> {
       }
 
       ManifestTemplate manifest = Verify.verifyNotNull(manifestAndConfigFound.get().getManifest());
+      if (!baseImageLayersCache.verifyCachedLayers(manifest)) {
+        // Not all layers present in cache
+        return Collections.emptyList();
+      }
+
       ContainerConfigurationTemplate containerConfig =
           Verify.verifyNotNull(manifestAndConfigFound.get().getConfig());
       images.add(

@@ -41,6 +41,36 @@ import java.util.stream.Stream;
 /** Reads from the default cache storage engine. */
 class CacheStorageReader {
 
+  boolean allImageLayersExist(ManifestTemplate manifestTemplate) {
+
+    if (manifestTemplate instanceof V21ManifestTemplate) {
+      for (DescriptorDigest layerDigest :
+          ((V21ManifestTemplate) manifestTemplate).getLayerDigests()) {
+        Path layerDirectory = cacheStorageFiles.getLayerDirectory(layerDigest);
+        if (!Files.exists(layerDirectory)) {
+          return false;
+        }
+      }
+      return true;
+
+    } else if (manifestTemplate instanceof BuildableManifestTemplate) {
+      for (BuildableManifestTemplate.ContentDescriptorTemplate layerTemplate :
+          ((BuildableManifestTemplate) manifestTemplate).getLayers()) {
+        DescriptorDigest layerDigest = layerTemplate.getDigest();
+        if (layerDigest == null) {
+          return false;
+        }
+        Path layerDirectory = cacheStorageFiles.getLayerDirectory(layerDigest);
+        if (!Files.exists(layerDirectory)) {
+          return false;
+        }
+      }
+      return true;
+    } else {
+      throw new IllegalArgumentException("Unknown manifest type: " + manifestTemplate);
+    }
+  }
+
   @VisibleForTesting
   static void verifyImageMetadata(ImageMetadataTemplate metadata, Path metadataCacheDirectory)
       throws CacheCorruptedException {
@@ -142,6 +172,11 @@ class CacheStorageReader {
               .setLayerDiffId(cacheStorageFiles.getDigestFromFilename(layerFile))
               .build());
     }
+  }
+
+  boolean verify(DescriptorDigest layerDigest) {
+    Path layerDirectory = cacheStorageFiles.getLayerDirectory(layerDigest);
+    return Files.exists(layerDirectory);
   }
 
   /**
