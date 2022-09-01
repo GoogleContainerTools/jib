@@ -20,7 +20,7 @@ All notable changes to this project will be documented in this file.
 - Upgraded slf4j-api to 2.0.0 ([#3735](https://github.com/GoogleContainerTools/jib/pull/3735)).
 - Upgraded nullaway to 0.9.9 ([#3720](https://github.com/GoogleContainerTools/jib/pull/3720)).
 
-Thanks to our community contributors @wwadge and @oliver-brm!
+Thanks to our community contributors @wwadge @oliver-brm and @laurentsimon!
 
 ## 0.10.0
 
