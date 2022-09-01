@@ -4,14 +4,23 @@ All notable changes to this project will be documented in this file.
 ## [unreleased]
 
 ### Added
+
+### Changed
+
+### Fixed
+
+## 0.11.0
+
+### Added
 - Included `imagePushed` field to image metadata json output file which provides information on whether an image was pushed by Jib. ([#3641](https://github.com/GoogleContainerTools/jib/pull/3641))
 - Better error messaging when environment map in `container.environment` contains null values ([#3672](https://github.com/GoogleContainerTools/jib/pull/3672)).
+- Starting with jib-cli 0.11.0, [SLSA 3 signatures](https://slsa.dev/) will be generated with every release. ([#3762](https://github.com/GoogleContainerTools/jib/pull/3726)).
 
 ### Changed
 - Upgraded slf4j-api to 2.0.0 ([#3735](https://github.com/GoogleContainerTools/jib/pull/3735)).
 - Upgraded nullaway to 0.9.9 ([#3720](https://github.com/GoogleContainerTools/jib/pull/3720)).
 
-### Fixed
+Thanks to our community contributors @wwadge @oliver-brm and @laurentsimon!
 
 ## 0.10.0
 
