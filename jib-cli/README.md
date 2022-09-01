@@ -56,7 +56,7 @@ Most users should download a ZIP archive (Java application). We are working on r
 
 A JRE is required to run this Jib CLI distribution.
 
-Find the [latest jib-cli 0.10.0 release](https://github.com/GoogleContainerTools/jib/releases/latest) on the [Releases page](https://github.com/GoogleContainerTools/jib/releases) and download `jib-jre-<version>.zip`.
+Find the [latest jib-cli 0.11.0 release](https://github.com/GoogleContainerTools/jib/releases/latest) on the [Releases page](https://github.com/GoogleContainerTools/jib/releases) and download `jib-jre-<version>.zip`.
 
 We generate [SLSA3 signatures](slsa.dev) using the OpenSSF's [slsa-framework/slsa-github-generator](https://github.com/slsa-framework/slsa-github-generator) during the release process. To verify a release binary:
 1. Install the verification tool from [slsa-framework/slsa-verifier#installation](https://github.com/slsa-framework/slsa-verifier#installation).
