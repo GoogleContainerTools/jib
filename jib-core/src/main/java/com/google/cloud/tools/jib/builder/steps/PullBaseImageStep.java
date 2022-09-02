@@ -458,8 +458,8 @@ class PullBaseImageStep implements Callable<ImagesAndRegistryClient> {
       Verify.verify(manifestsAndConfigs.size() == 1);
       ManifestTemplate manifest = manifestsAndConfigs.get(0).getManifest();
 
-      if (!baseImageLayersCache.verifyCachedLayers(Verify.verifyNotNull(manifest))) {
-        // Not all layers present in cache
+      // Verify all layers described in manifest are present in cache
+      if (!baseImageLayersCache.allLayersCached(Verify.verifyNotNull(manifest))) {
         return Collections.emptyList();
       }
 
@@ -492,8 +492,8 @@ class PullBaseImageStep implements Callable<ImagesAndRegistryClient> {
       }
 
       ManifestTemplate manifest = Verify.verifyNotNull(manifestAndConfigFound.get().getManifest());
-      if (!baseImageLayersCache.verifyCachedLayers(manifest)) {
-        // Not all layers present in cache
+      // Verify all layers described in manifest are present in cache
+      if (!baseImageLayersCache.allLayersCached(manifest)) {
         return Collections.emptyList();
       }
 

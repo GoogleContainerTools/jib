@@ -41,36 +41,6 @@ import java.util.stream.Stream;
 /** Reads from the default cache storage engine. */
 class CacheStorageReader {
 
-  boolean allImageLayersExist(ManifestTemplate manifestTemplate) {
-
-    if (manifestTemplate instanceof V21ManifestTemplate) {
-      for (DescriptorDigest layerDigest :
-          ((V21ManifestTemplate) manifestTemplate).getLayerDigests()) {
-        Path layerDirectory = cacheStorageFiles.getLayerDirectory(layerDigest);
-        if (!Files.exists(layerDirectory)) {
-          return false;
-        }
-      }
-      return true;
-
-    } else if (manifestTemplate instanceof BuildableManifestTemplate) {
-      for (BuildableManifestTemplate.ContentDescriptorTemplate layerTemplate :
-          ((BuildableManifestTemplate) manifestTemplate).getLayers()) {
-        DescriptorDigest layerDigest = layerTemplate.getDigest();
-        if (layerDigest == null) {
-          return false;
-        }
-        Path layerDirectory = cacheStorageFiles.getLayerDirectory(layerDigest);
-        if (!Files.exists(layerDirectory)) {
-          return false;
-        }
-      }
-      return true;
-    } else {
-      throw new IllegalArgumentException("Unknown manifest type: " + manifestTemplate);
-    }
-  }
-
   @VisibleForTesting
   static void verifyImageMetadata(ImageMetadataTemplate metadata, Path metadataCacheDirectory)
       throws CacheCorruptedException {
@@ -109,6 +79,42 @@ class CacheStorageReader {
 
   CacheStorageReader(CacheStorageFiles cacheStorageFiles) {
     this.cacheStorageFiles = cacheStorageFiles;
+  }
+
+  /**
+   * Returns {@code true} if all image layers described in a manifest have a corresponding file
+   * entry in the cache.
+   *
+   * @param manifest the image manifest
+   * @return a boolean
+   */
+  boolean allLayersCached(ManifestTemplate manifest) {
+
+    if (manifest instanceof V21ManifestTemplate) {
+      for (DescriptorDigest layerDigest : ((V21ManifestTemplate) manifest).getLayerDigests()) {
+        Path layerDirectory = cacheStorageFiles.getLayerDirectory(layerDigest);
+        if (!Files.exists(layerDirectory)) {
+          return false;
+        }
+      }
+      return true;
+
+    } else if (manifest instanceof BuildableManifestTemplate) {
+      for (BuildableManifestTemplate.ContentDescriptorTemplate layerTemplate :
+          ((BuildableManifestTemplate) manifest).getLayers()) {
+        DescriptorDigest layerDigest = layerTemplate.getDigest();
+        if (layerDigest == null) {
+          return false;
+        }
+        Path layerDirectory = cacheStorageFiles.getLayerDirectory(layerDigest);
+        if (!Files.exists(layerDirectory)) {
+          return false;
+        }
+      }
+      return true;
+    } else {
+      throw new IllegalArgumentException("Unknown manifest type: " + manifest);
+    }
   }
 
   /**

@@ -193,8 +193,14 @@ public class Cache {
     return cacheStorageReader.retrieveMetadata(imageReference);
   }
 
-  public boolean verifyCachedLayers(ManifestTemplate manifest) {
-    return cacheStorageReader.allImageLayersExist(manifest);
+  /**
+   * Returns {@code true} if all image layers described in a manifest exist in the cache.
+   *
+   * @param manifest the image manifest
+   * @return a boolean
+   */
+  public boolean allLayersCached(ManifestTemplate manifest) {
+    return cacheStorageReader.allLayersCached(manifest);
   }
 
   /**
@@ -228,7 +234,6 @@ public class Cache {
       throws IOException, CacheCorruptedException {
     return cacheStorageReader.retrieve(layerDigest);
   }
-
 
   /**
    * Retrieves a {@link CachedLayer} for a local base image layer with the given diff id.
