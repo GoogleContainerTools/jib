@@ -40,6 +40,7 @@ import com.google.cloud.tools.jib.image.json.BadContainerConfigurationFormatExce
 import com.google.cloud.tools.jib.image.json.ContainerConfigurationTemplate;
 import com.google.cloud.tools.jib.image.json.ImageMetadataTemplate;
 import com.google.cloud.tools.jib.image.json.ManifestAndConfigTemplate;
+import com.google.cloud.tools.jib.image.json.ManifestTemplate;
 import com.google.cloud.tools.jib.image.json.OciIndexTemplate;
 import com.google.cloud.tools.jib.image.json.PlatformNotFoundInBaseImageException;
 import com.google.cloud.tools.jib.image.json.UnlistedPlatformInManifestListException;
@@ -300,6 +301,25 @@ public class PullBaseImageStepTest {
   }
 
   @Test
+  public void testGetCachedBaseImages_cachedWithoutAllLayers()
+      throws InvalidImageReferenceException, CacheCorruptedException, IOException,
+          LayerCountMismatchException, PlatformNotFoundInBaseImageException,
+          BadContainerConfigurationFormatException, UnlistedPlatformInManifestListException {
+    ImageReference imageReference = ImageReference.parse("cat");
+    Mockito.when(buildContext.getBaseImageConfiguration())
+        .thenReturn(ImageConfiguration.builder(imageReference).build());
+    ManifestTemplate manifest = Mockito.mock(ManifestTemplate.class);
+    ImageMetadataTemplate imageMetadata =
+        new ImageMetadataTemplate(
+            null, Arrays.asList(new ManifestAndConfigTemplate(manifest, null)));
+
+    Mockito.when(cache.retrieveMetadata(imageReference)).thenReturn(Optional.of(imageMetadata));
+    Mockito.when(cache.allLayersCached(manifest)).thenReturn(false);
+
+    Assert.assertEquals(Arrays.asList(), pullBaseImageStep.getCachedBaseImages());
+  }
+
+  @Test
   public void testGetCachedBaseImages_v21ManifestCached()
       throws InvalidImageReferenceException, IOException, CacheCorruptedException,
           UnlistedPlatformInManifestListException, BadContainerConfigurationFormatException,
@@ -385,11 +405,9 @@ public class PullBaseImageStepTest {
                 new ManifestAndConfigTemplate(
                     new V22ManifestTemplate(), containerConfigJson2, "sha256:digest2")));
     Mockito.when(cache.retrieveMetadata(imageReference)).thenReturn(Optional.of(imageMetadata));
-    Mockito.when(
-            cache.allLayersCached(imageMetadata.getManifestsAndConfigs().get(0).getManifest()))
+    Mockito.when(cache.allLayersCached(imageMetadata.getManifestsAndConfigs().get(0).getManifest()))
         .thenReturn(true);
-    Mockito.when(
-            cache.allLayersCached(imageMetadata.getManifestsAndConfigs().get(1).getManifest()))
+    Mockito.when(cache.allLayersCached(imageMetadata.getManifestsAndConfigs().get(1).getManifest()))
         .thenReturn(true);
 
     Mockito.when(containerConfig.getPlatforms())
@@ -426,8 +444,7 @@ public class PullBaseImageStepTest {
                     new ContainerConfigurationTemplate(),
                     "sha256:digest1")));
     Mockito.when(cache.retrieveMetadata(imageReference)).thenReturn(Optional.of(imageMetadata));
-    Mockito.when(
-            cache.allLayersCached(imageMetadata.getManifestsAndConfigs().get(0).getManifest()))
+    Mockito.when(cache.allLayersCached(imageMetadata.getManifestsAndConfigs().get(0).getManifest()))
         .thenReturn(true);
 
     Mockito.when(containerConfig.getPlatforms())

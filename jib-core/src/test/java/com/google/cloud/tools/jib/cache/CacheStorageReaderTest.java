@@ -638,4 +638,52 @@ public class CacheStorageReaderTest {
     CacheStorageReader.verifyImageMetadata(metadata, Paths.get("/cache/dir"));
     // should pass without CacheCorruptedException
   }
+
+  @Test
+  public void testAllLayersCached_v21SingleManifest()
+      throws IOException, CacheCorruptedException, DigestException, URISyntaxException {
+
+    setupCachedMetadataV21(cacheDirectory);
+    ImageMetadataTemplate metadata =
+        cacheStorageReader.retrieveMetadata(ImageReference.of("test", "image", "tag")).get();
+
+    V21ManifestTemplate manifest =
+        (V21ManifestTemplate) metadata.getManifestsAndConfigs().get(0).getManifest();
+    Assert.assertEquals(2, manifest.getLayerDigests().size());
+    ManifestAndConfigTemplate manifestAndConfig =
+        new ManifestAndConfigTemplate(manifest, new ContainerConfigurationTemplate());
+
+    // Create only one of the layer directories.
+    DescriptorDigest firstlayerDigest =
+        DescriptorDigest.fromHash(manifest.getLayerDigests().get(0).getHash());
+    Files.createDirectories(cacheStorageFiles.getLayerDirectory(firstlayerDigest));
+    Assert.assertFalse(cacheStorageReader.allLayersCached(manifestAndConfig.getManifest()));
+
+    // Create the other layer directory.
+    DescriptorDigest secondlayerDigest =
+        DescriptorDigest.fromHash(manifest.getLayerDigests().get(1).getHash());
+    Files.createDirectories(cacheStorageFiles.getLayerDirectory(secondlayerDigest));
+    Assert.assertTrue(cacheStorageReader.allLayersCached(manifestAndConfig.getManifest()));
+  }
+
+  @Test
+  public void testAllLayersCached_v22SingleManifest()
+      throws IOException, CacheCorruptedException, DigestException, URISyntaxException {
+
+    setupCachedMetadataV22(cacheDirectory);
+    ImageMetadataTemplate metadata =
+        cacheStorageReader.retrieveMetadata(ImageReference.of("test", "image", "tag")).get();
+
+    V22ManifestTemplate manifest =
+        (V22ManifestTemplate) metadata.getManifestsAndConfigs().get(0).getManifest();
+    Assert.assertEquals(1, manifest.getLayers().size());
+    ManifestAndConfigTemplate manifestAndConfig =
+        new ManifestAndConfigTemplate(manifest, new ContainerConfigurationTemplate());
+
+    Assert.assertFalse(cacheStorageReader.allLayersCached(manifestAndConfig.getManifest()));
+    // Create the layer directory.
+    DescriptorDigest layerDigest = manifest.getLayers().get(0).getDigest();
+    Files.createDirectories(cacheStorageFiles.getLayerDirectory(layerDigest));
+    Assert.assertTrue(cacheStorageReader.allLayersCached(manifestAndConfig.getManifest()));
+  }
 }
