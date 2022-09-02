@@ -90,31 +90,27 @@ class CacheStorageReader {
    */
   boolean allLayersCached(ManifestTemplate manifest) {
 
-    if (manifest instanceof V21ManifestTemplate) {
-      for (DescriptorDigest layerDigest : ((V21ManifestTemplate) manifest).getLayerDigests()) {
-        Path layerDirectory = cacheStorageFiles.getLayerDirectory(layerDigest);
-        if (!Files.exists(layerDirectory)) {
-          return false;
-        }
-      }
-      return true;
+    List<DescriptorDigest> layerDigests;
 
+    if (manifest instanceof V21ManifestTemplate) {
+      layerDigests = ((V21ManifestTemplate) manifest).getLayerDigests();
     } else if (manifest instanceof BuildableManifestTemplate) {
-      for (BuildableManifestTemplate.ContentDescriptorTemplate layerTemplate :
-          ((BuildableManifestTemplate) manifest).getLayers()) {
-        DescriptorDigest layerDigest = layerTemplate.getDigest();
-        if (layerDigest == null) {
-          return false;
-        }
-        Path layerDirectory = cacheStorageFiles.getLayerDirectory(layerDigest);
-        if (!Files.exists(layerDirectory)) {
-          return false;
-        }
-      }
-      return true;
+      layerDigests =
+          ((BuildableManifestTemplate) manifest)
+              .getLayers().stream()
+                  .map(BuildableManifestTemplate.ContentDescriptorTemplate::getDigest)
+                  .collect(Collectors.toList());
     } else {
       throw new IllegalArgumentException("Unknown manifest type: " + manifest);
     }
+
+    for (DescriptorDigest layerDigest : layerDigests) {
+      Path layerDirectory = cacheStorageFiles.getLayerDirectory(layerDigest);
+      if (!Files.exists(layerDirectory)) {
+        return false;
+      }
+    }
+    return true;
   }
 
   /**
