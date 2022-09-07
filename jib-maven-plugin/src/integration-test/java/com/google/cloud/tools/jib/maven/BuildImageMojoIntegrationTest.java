@@ -357,7 +357,7 @@ public class BuildImageMojoIntegrationTest {
     localRegistry.pullAndPushToLocal("gcr.io/distroless/java:latest", "distroless/java");
 
     // Make sure resource file has a consistent value at the beginning of each test
-    // (testExecute_simple overwrites it)
+    // (testExecute_simple and testBuild_tarBase overwrite it)
     Files.write(
         simpleTestProject
             .getProjectRoot()
@@ -453,11 +453,28 @@ public class BuildImageMojoIntegrationTest {
             + "/simplewithtarbase:maven"
             + System.nanoTime();
 
+    Instant before = Instant.now();
+
+    // The target registry these tests push to would already have all the layers cached from before,
+    // causing this test to fail sometimes with the second build being a bit slower than the first
+    // build. This file change makes sure that a new layer is always pushed the first time to solve
+    // this issue.
+    Files.write(
+        simpleTestProject
+            .getProjectRoot()
+            .resolve("src")
+            .resolve("main")
+            .resolve("resources")
+            .resolve("world"),
+        before.toString().getBytes(StandardCharsets.UTF_8));
+
     assertThat(
             buildAndRunFromLocalBase(
                 simpleTestProject.getProjectRoot(), targetImage, "tar://" + path, true))
         .isEqualTo(
-            "Hello, world. An argument.\n1970-01-01T00:00:01Z\nrw-r--r--\nrw-r--r--\nfoo\ncat\n"
+            "Hello, "
+                + before
+                + ". An argument.\n1970-01-01T00:00:01Z\nrw-r--r--\nrw-r--r--\nfoo\ncat\n"
                 + "1970-01-01T00:00:01Z\n1970-01-01T00:00:01Z\n");
   }
 
