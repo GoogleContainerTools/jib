@@ -121,6 +121,7 @@ public class BuildImageMojoIntegrationTest {
 
     // Builds twice, and checks if the second build took less time.
     verifier.addCliOption("-Djib.alwaysCacheBaseImage=true");
+    verifier.resetStreams();
     verifier.executeGoal("jib:build");
     float timeOne = getBuildTimeFromVerifierLog(verifier);
 
@@ -293,18 +294,23 @@ public class BuildImageMojoIntegrationTest {
   }
 
   private static float getBuildTimeFromVerifierLog(Verifier verifier) throws IOException {
-    Pattern debugPattern = Pattern.compile(": (?<time>.*) ms");
+    Pattern timing = Pattern.compile("TIMING");
+    Pattern timed = Pattern.compile("TIMED");
+    Pattern skipping = Pattern.compile("Skipping");
     Pattern pattern = Pattern.compile("Building and pushing image : (?<time>.*) ms");
 
     for (String line :
         Files.readAllLines(Paths.get(verifier.getBasedir(), verifier.getLogFileName()))) {
-      Matcher debugMatcher = debugPattern.matcher(line);
+      Matcher timingMatcher = timing.matcher(line);
+      Matcher timedMatcher = timed.matcher(line);
+      Matcher skippingMatcher = skipping.matcher(line);
       Matcher matcher = pattern.matcher(line);
-      if (debugMatcher.find()) {
+      // System.out.println(line);
+      if (timingMatcher.find() || timedMatcher.find() || skippingMatcher.find()) {
         System.out.println(line);
-        if (matcher.find()) {
-          return Float.parseFloat(matcher.group("time"));
-        }
+      }
+      if (matcher.find()) {
+        return Float.parseFloat(matcher.group("time"));
       }
     }
 
