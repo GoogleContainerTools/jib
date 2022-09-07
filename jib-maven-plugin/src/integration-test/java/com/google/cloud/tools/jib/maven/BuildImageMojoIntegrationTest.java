@@ -166,8 +166,7 @@ public class BuildImageMojoIntegrationTest {
   private static String buildAndRunFromLocalBase(
       Path projectRoot, String targetImage, String baseImage, boolean buildTwice)
       throws VerificationException, IOException, InterruptedException {
-    System.out.println(
-        "buildAndRunFromLocalBase: baseImage=" + baseImage + ", targetImage=" + targetImage);
+    System.out.println("buildAndRunFromLocalBase:()");
     Verifier verifier = new Verifier(projectRoot.toString());
     verifier.setSystemProperty("jib.useOnlyProjectCache", "true");
     verifier.setSystemProperty("_TARGET_IMAGE", targetImage);
@@ -182,17 +181,21 @@ public class BuildImageMojoIntegrationTest {
       return pullAndRunBuiltImage(targetImage);
     }
 
+    verifier.resetStreams();
     verifier.executeGoal("jib:build");
     float timeOne = getBuildTimeFromVerifierLog(verifier);
+    System.out.println("timeOne: " + timeOne);
 
     verifier.resetStreams();
     verifier.executeGoal("jib:build");
     float timeTwo = getBuildTimeFromVerifierLog(verifier);
+    System.out.println("timeTwo: " + timeTwo);
 
     // The first build should take longer than the second build.
     System.out.println("timeOne: " + timeOne);
     System.out.println("timeTwo: " + timeTwo);
     assertThat(timeOne).isGreaterThan(timeTwo);
+    System.out.println("timeOne is greater than timeTwo");
     return pullAndRunBuiltImage(targetImage);
   }
 
@@ -290,13 +293,18 @@ public class BuildImageMojoIntegrationTest {
   }
 
   private static float getBuildTimeFromVerifierLog(Verifier verifier) throws IOException {
+    Pattern debugPattern = Pattern.compile(": (?<time>.*) ms");
     Pattern pattern = Pattern.compile("Building and pushing image : (?<time>.*) ms");
 
     for (String line :
         Files.readAllLines(Paths.get(verifier.getBasedir(), verifier.getLogFileName()))) {
+      Matcher debugMatcher = debugPattern.matcher(line);
       Matcher matcher = pattern.matcher(line);
-      if (matcher.find()) {
-        return Float.parseFloat(matcher.group("time"));
+      if (debugMatcher.find()) {
+        System.out.println(line);
+        if (matcher.find()) {
+          return Float.parseFloat(matcher.group("time"));
+        }
       }
     }
 
@@ -431,6 +439,7 @@ public class BuildImageMojoIntegrationTest {
 
   @Test
   public void testBuild_tarBase() throws IOException, InterruptedException, VerificationException {
+    System.out.println("testBuild_tarBase()");
     Path path = temporaryFolder.getRoot().toPath().resolve("docker-save-distroless");
     new Command("docker", "save", "gcr.io/distroless/java:latest", "-o", path.toString()).run();
     String targetImage =
