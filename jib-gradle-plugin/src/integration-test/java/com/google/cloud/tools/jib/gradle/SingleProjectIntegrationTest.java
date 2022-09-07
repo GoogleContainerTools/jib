@@ -34,6 +34,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.DigestException;
 import java.time.Instant;
+import java.util.Arrays;
+import java.util.List;
 import org.gradle.testkit.runner.BuildResult;
 import org.gradle.testkit.runner.UnexpectedBuildFailure;
 import org.junit.Before;
@@ -59,6 +61,10 @@ public class SingleProjectIntegrationTest {
 
   private final String dockerHost =
       System.getenv("DOCKER_IP") != null ? System.getenv("DOCKER_IP") : "localhost";
+
+  private static final Boolean IS_KOKORO_RELEASE =
+      System.getenv("KOKORO_JOB_NAME") != null
+          && System.getenv("KOKORO_JOB_NAME").equals("jib/gradle/gcp_ubuntu/release");
 
   private static boolean isJavaRuntimeAtLeast(int version) {
     Iterable<String> split = Splitter.on(".").split(System.getProperty("java.version"));
@@ -149,12 +155,22 @@ public class SingleProjectIntegrationTest {
     assertThat(history).contains("jib-gradle-plugin");
 
     String output = new Command("docker", "run", "--rm", imageReference).run();
-    assertThat(output)
-        .isEqualTo(
-            "Hello, world. An argument.\n1970-01-01T00:00:01Z\nrwxr-xr-x\nrwxrwxrwx\nfoo\ncat\n"
-                + "1970-01-01T00:00:01Z\n1970-01-01T00:00:01Z\n"
-                + "-Xms512m\n-Xdebug\nenvvalue1\nenvvalue2\n");
+    List<String> outputList = Arrays.asList(output.split("\n"));
+    assertThat(outputList)
+        .containsExactlyElementsIn(
+            computeExpectedForLocalOrKokoro(
+                "Hello, world. An argument.\n1970-01-01T00:00:01Z\nrwxr-xr-x\nrwxrwxrwx\nfoo\ncat\n"
+                    + "1970-01-01T00:00:01Z\n1970-01-01T00:00:01Z\n"
+                    + "-Xms512m\n-Xdebug\nenvvalue1\nenvvalue2\n"));
     return output;
+  }
+
+  private static List<String> computeExpectedForLocalOrKokoro(String expected) {
+    List<String> expectedOutputList = Arrays.asList(expected.split("\n"));
+    if (IS_KOKORO_RELEASE) {
+      expectedOutputList.add("-Djavax.net.ssl.trustStore=/var/cache/proxy.crt.jks");
+    }
+    return expectedOutputList;
   }
 
   @Before
@@ -188,11 +204,13 @@ public class SingleProjectIntegrationTest {
         .contains("No classes files were found - did you compile your project?");
 
     String output = JibRunHelper.buildAndRun(simpleTestProject, targetImage);
+    List<String> outputList = Arrays.asList(output.split("\n"));
 
-    assertThat(output)
-        .isEqualTo(
-            "Hello, world. An argument.\n1970-01-01T00:00:01Z\nrw-r--r--\nrw-r--r--\nfoo\ncat\n"
-                + "1970-01-01T00:00:01Z\n1970-01-01T00:00:01Z\n");
+    assertThat(outputList)
+        .containsExactlyElementsIn(
+            computeExpectedForLocalOrKokoro(
+                "Hello, world. An argument.\n1970-01-01T00:00:01Z\nrw-r--r--\nrw-r--r--\nfoo\ncat\n"
+                    + "1970-01-01T00:00:01Z\n1970-01-01T00:00:01Z\n"));
 
     String digest =
         readDigestFile(simpleTestProject.getProjectRoot().resolve("build/jib-image.digest"));
@@ -220,12 +238,15 @@ public class SingleProjectIntegrationTest {
         IntegrationTestingConfiguration.getTestRepositoryLocation()
             + "/simplewithdockerdaemonbase:gradle"
             + System.nanoTime();
-    assertThat(
-            JibRunHelper.buildAndRunFromLocalBase(
-                targetImage, "docker://gcr.io/distroless/java:latest"))
-        .isEqualTo(
-            "Hello, world. An argument.\n1970-01-01T00:00:01Z\nrw-r--r--\nrw-r--r--\nfoo\ncat\n"
-                + "1970-01-01T00:00:01Z\n1970-01-01T00:00:01Z\n");
+    String output =
+        JibRunHelper.buildAndRunFromLocalBase(
+            targetImage, "docker://gcr.io/distroless/java:latest");
+    List<String> outputList = Arrays.asList(output.split("\n"));
+    assertThat(outputList)
+        .containsExactlyElementsIn(
+            computeExpectedForLocalOrKokoro(
+                "Hello, world. An argument.\n1970-01-01T00:00:01Z\nrw-r--r--\nrw-r--r--\nfoo\ncat\n"
+                    + "1970-01-01T00:00:01Z\n1970-01-01T00:00:01Z\n"));
   }
 
   @Test
@@ -236,10 +257,14 @@ public class SingleProjectIntegrationTest {
         IntegrationTestingConfiguration.getTestRepositoryLocation()
             + "/simplewithtarbase:gradle"
             + System.nanoTime();
-    assertThat(JibRunHelper.buildAndRunFromLocalBase(targetImage, "tar://" + path))
-        .isEqualTo(
-            "Hello, world. An argument.\n1970-01-01T00:00:01Z\nrw-r--r--\nrw-r--r--\nfoo\ncat\n"
-                + "1970-01-01T00:00:01Z\n1970-01-01T00:00:01Z\n");
+    String output = JibRunHelper.buildAndRunFromLocalBase(targetImage, "tar://" + path);
+    List<String> outputList = Arrays.asList(output.split("\n"));
+
+    assertThat(outputList)
+        .containsExactlyElementsIn(
+            computeExpectedForLocalOrKokoro(
+                "Hello, world. An argument.\n1970-01-01T00:00:01Z\nrw-r--r--\nrw-r--r--\nfoo\ncat\n"
+                    + "1970-01-01T00:00:01Z\n1970-01-01T00:00:01Z\n"));
   }
 
   @Test
@@ -271,10 +296,13 @@ public class SingleProjectIntegrationTest {
     assumeTrue(isJavaRuntimeAtLeast(17));
 
     String targetImage = "simpleimage:gradle" + System.nanoTime();
-    assertThat(
-            JibRunHelper.buildToDockerDaemonAndRun(
-                simpleTestProject, targetImage, "build-java17.gradle"))
-        .isEqualTo("Hello, world. \n1970-01-01T00:00:01Z\n");
+    String output =
+        JibRunHelper.buildToDockerDaemonAndRun(
+            simpleTestProject, targetImage, "build-java17.gradle");
+    List<String> outputList = Arrays.asList(output.split("\n"));
+    assertThat(outputList)
+        .containsExactlyElementsIn(
+            computeExpectedForLocalOrKokoro("Hello, world. \n1970-01-01T00:00:01Z\n"));
   }
 
   @Test
@@ -283,10 +311,14 @@ public class SingleProjectIntegrationTest {
     assumeTrue(isJavaRuntimeAtLeast(11));
 
     String targetImage = "simpleimage:gradle" + System.nanoTime();
-    assertThat(
+    List<String> output =
+        Arrays.asList(
             JibRunHelper.buildToDockerDaemonAndRun(
-                simpleTestProject, targetImage, "build-java11.gradle"))
-        .isEqualTo("Hello, world. \n1970-01-01T00:00:01Z\n");
+                    simpleTestProject, targetImage, "build-java11.gradle")
+                .split("\n"));
+    assertThat(output)
+        .containsExactlyElementsIn(
+            computeExpectedForLocalOrKokoro("Hello, world. \n1970-01-01T00:00:01Z\n"));
   }
 
   @Test
@@ -311,12 +343,16 @@ public class SingleProjectIntegrationTest {
   public void testDockerDaemon_simple_multipleExtraDirectories()
       throws DigestException, IOException, InterruptedException {
     String targetImage = "simpleimage:gradle" + System.nanoTime();
-    assertThat(
+    List<String> output =
+        Arrays.asList(
             JibRunHelper.buildToDockerDaemonAndRun(
-                simpleTestProject, targetImage, "build-extra-dirs.gradle"))
-        .isEqualTo(
-            "Hello, world. \n1970-01-01T00:00:01Z\nrw-r--r--\nrw-r--r--\nfoo\ncat\n"
-                + "1970-01-01T00:00:01Z\n1970-01-01T00:00:01Z\n");
+                    simpleTestProject, targetImage, "build-extra-dirs.gradle")
+                .split("\n"));
+    assertThat(output)
+        .containsExactlyElementsIn(
+            computeExpectedForLocalOrKokoro(
+                "Hello, world. \n1970-01-01T00:00:01Z\nrw-r--r--\nrw-r--r--\nfoo\ncat\n"
+                    + "1970-01-01T00:00:01Z\n1970-01-01T00:00:01Z\n"));
     assertThat(getLayerSize(targetImage)).isEqualTo(11); // one more than usual
   }
 
@@ -324,12 +360,16 @@ public class SingleProjectIntegrationTest {
   public void testDockerDaemon_simple_multipleExtraDirectoriesWithAlternativeConfig()
       throws DigestException, IOException, InterruptedException {
     String targetImage = "simpleimage:gradle" + System.nanoTime();
-    assertThat(
+    List<String> output =
+        Arrays.asList(
             JibRunHelper.buildToDockerDaemonAndRun(
-                simpleTestProject, targetImage, "build-extra-dirs2.gradle"))
-        .isEqualTo(
-            "Hello, world. \n1970-01-01T00:00:01Z\nrw-r--r--\nrw-r--r--\nfoo\ncat\n"
-                + "1970-01-01T00:00:01Z\n1970-01-01T00:00:01Z\n");
+                    simpleTestProject, targetImage, "build-extra-dirs2.gradle")
+                .split("\n"));
+    assertThat(output)
+        .containsExactlyElementsIn(
+            computeExpectedForLocalOrKokoro(
+                "Hello, world. \n1970-01-01T00:00:01Z\nrw-r--r--\nrw-r--r--\nfoo\ncat\n"
+                    + "1970-01-01T00:00:01Z\n1970-01-01T00:00:01Z\n"));
     assertThat(getLayerSize(targetImage)).isEqualTo(11); // one more than usual
   }
 
@@ -337,12 +377,16 @@ public class SingleProjectIntegrationTest {
   public void testDockerDaemon_simple_multipleExtraDirectoriesWithClosure()
       throws DigestException, IOException, InterruptedException {
     String targetImage = "simpleimage:gradle" + System.nanoTime();
-    assertThat(
+    List<String> output =
+        Arrays.asList(
             JibRunHelper.buildToDockerDaemonAndRun(
-                simpleTestProject, targetImage, "build-extra-dirs3.gradle"))
-        .isEqualTo(
-            "Hello, world. \n1970-01-01T00:00:01Z\nrw-r--r--\nrw-r--r--\nfoo\ncat\n"
-                + "1970-01-01T00:00:01Z\n1970-01-01T00:00:01Z\nbaz\n1970-01-01T00:00:01Z\n");
+                    simpleTestProject, targetImage, "build-extra-dirs3.gradle")
+                .split("\n"));
+    assertThat(output)
+        .containsExactlyElementsIn(
+            computeExpectedForLocalOrKokoro(
+                "Hello, world. \n1970-01-01T00:00:01Z\nrw-r--r--\nrw-r--r--\nfoo\ncat\n"
+                    + "1970-01-01T00:00:01Z\n1970-01-01T00:00:01Z\nbaz\n1970-01-01T00:00:01Z\n"));
     assertThat(getLayerSize(targetImage)).isEqualTo(11); // one more than usual
   }
 
@@ -400,11 +444,15 @@ public class SingleProjectIntegrationTest {
   @Test
   public void testDockerDaemon_simple() throws IOException, InterruptedException, DigestException {
     String targetImage = "simpleimage:gradle" + System.nanoTime();
-    assertThat(
-            JibRunHelper.buildToDockerDaemonAndRun(simpleTestProject, targetImage, "build.gradle"))
-        .isEqualTo(
-            "Hello, world. An argument.\n1970-01-01T00:00:01Z\nrw-r--r--\nrw-r--r--\nfoo\ncat\n"
-                + "1970-01-01T00:00:01Z\n1970-01-01T00:00:01Z\n");
+    List<String> output =
+        Arrays.asList(
+            JibRunHelper.buildToDockerDaemonAndRun(simpleTestProject, targetImage, "build.gradle")
+                .split("\n"));
+    assertThat(output)
+        .containsExactlyElementsIn(
+            computeExpectedForLocalOrKokoro(
+                "Hello, world. An argument.\n1970-01-01T00:00:01Z\nrw-r--r--\nrw-r--r--\nfoo\ncat\n"
+                    + "1970-01-01T00:00:01Z\n1970-01-01T00:00:01Z\n"));
     assertThat(JibRunHelper.getCreationTime(targetImage)).isEqualTo(Instant.EPOCH);
     assertDockerInspect(targetImage);
     assertThat(getWorkingDirectory(targetImage)).isEqualTo("/home");
@@ -414,10 +462,15 @@ public class SingleProjectIntegrationTest {
   public void testDockerDaemon_jarContainerization()
       throws DigestException, IOException, InterruptedException {
     String targetImage = "simpleimage:gradle" + System.nanoTime();
-    assertThat(
+    List<String> output =
+        Arrays.asList(
             JibRunHelper.buildToDockerDaemonAndRun(
-                simpleTestProject, targetImage, "build-jar-containerization.gradle"))
-        .isEqualTo("Hello, world. \nImplementation-Title: helloworld\nImplementation-Version: 1\n");
+                    simpleTestProject, targetImage, "build-jar-containerization.gradle")
+                .split("\n"));
+    assertThat(output)
+        .containsExactlyElementsIn(
+            computeExpectedForLocalOrKokoro(
+                "Hello, world. \nImplementation-Title: helloworld\nImplementation-Version: 1\n"));
   }
 
   @Test
@@ -440,10 +493,14 @@ public class SingleProjectIntegrationTest {
   public void testDockerDaemon_timestampCustom()
       throws DigestException, IOException, InterruptedException {
     String targetImage = "simpleimage:gradle" + System.nanoTime();
-    assertThat(
+    List<String> output =
+        Arrays.asList(
             JibRunHelper.buildToDockerDaemonAndRun(
-                simpleTestProject, targetImage, "build-timestamps-custom.gradle"))
-        .isEqualTo("Hello, world. \n2011-12-03T01:15:30Z\n");
+                    simpleTestProject, targetImage, "build-timestamps-custom.gradle")
+                .split("\n"));
+    assertThat(output)
+        .containsExactlyElementsIn(
+            computeExpectedForLocalOrKokoro("Hello, world. \n2011-12-03T01:15:30Z\n"));
     assertThat(JibRunHelper.getCreationTime(targetImage))
         .isEqualTo(Instant.parse("2013-11-04T21:29:30Z"));
   }
@@ -495,10 +552,13 @@ public class SingleProjectIntegrationTest {
     assertThat(buildResult.getOutput()).contains(outputPath);
 
     new Command("docker", "load", "--input", outputPath).run();
-    assertThat(new Command("docker", "run", "--rm", targetImage).run())
-        .isEqualTo(
-            "Hello, world. An argument.\n1970-01-01T00:00:01Z\nrw-r--r--\nrw-r--r--\nfoo\ncat\n"
-                + "1970-01-01T00:00:01Z\n1970-01-01T00:00:01Z\n");
+    List<String> output =
+        Arrays.asList(new Command("docker", "run", "--rm", targetImage).run().split("\n"));
+    assertThat(output)
+        .containsExactlyElementsIn(
+            computeExpectedForLocalOrKokoro(
+                "Hello, world. An argument.\n1970-01-01T00:00:01Z\nrw-r--r--\nrw-r--r--\nfoo\ncat\n"
+                    + "1970-01-01T00:00:01Z\n1970-01-01T00:00:01Z\n"));
     assertDockerInspect(targetImage);
     assertThat(JibRunHelper.getCreationTime(targetImage)).isEqualTo(Instant.EPOCH);
     assertThat(getWorkingDirectory(targetImage)).isEqualTo("/home");
