@@ -654,15 +654,15 @@ public class CacheStorageReaderTest {
         new ManifestAndConfigTemplate(manifest, new ContainerConfigurationTemplate());
 
     // Create only one of the layer directories.
-    DescriptorDigest firstlayerDigest =
+    DescriptorDigest firstLayerDigest =
         DescriptorDigest.fromHash(manifest.getLayerDigests().get(0).getHash());
-    Files.createDirectories(cacheStorageFiles.getLayerDirectory(firstlayerDigest));
+    Files.createDirectories(cacheStorageFiles.getLayerDirectory(firstLayerDigest));
     Assert.assertFalse(cacheStorageReader.allLayersCached(manifestAndConfig.getManifest()));
 
     // Create the other layer directory.
-    DescriptorDigest secondlayerDigest =
+    DescriptorDigest secondLayerDigest =
         DescriptorDigest.fromHash(manifest.getLayerDigests().get(1).getHash());
-    Files.createDirectories(cacheStorageFiles.getLayerDirectory(secondlayerDigest));
+    Files.createDirectories(cacheStorageFiles.getLayerDirectory(secondLayerDigest));
     Assert.assertTrue(cacheStorageReader.allLayersCached(manifestAndConfig.getManifest()));
   }
 
