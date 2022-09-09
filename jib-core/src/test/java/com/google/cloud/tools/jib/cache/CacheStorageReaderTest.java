@@ -654,23 +654,15 @@ public class CacheStorageReaderTest {
         new ManifestAndConfigTemplate(manifest, new ContainerConfigurationTemplate());
 
     // Create only one of the layer directories.
-    DescriptorDigest firstLayerDigest =
+    DescriptorDigest firstlayerDigest =
         DescriptorDigest.fromHash(manifest.getLayerDigests().get(0).getHash());
-    Files.createDirectories(cacheStorageFiles.getLayerDirectory(firstLayerDigest));
-    try (OutputStream out =
-        Files.newOutputStream(cacheStorageFiles.getLayerFile(firstLayerDigest, layerDigest2))) {
-      out.write("layerBlob".getBytes(StandardCharsets.UTF_8));
-    }
+    Files.createDirectories(cacheStorageFiles.getLayerDirectory(firstlayerDigest));
     Assert.assertFalse(cacheStorageReader.allLayersCached(manifestAndConfig.getManifest()));
 
     // Create the other layer directory.
-    DescriptorDigest secondLayerDigest =
+    DescriptorDigest secondlayerDigest =
         DescriptorDigest.fromHash(manifest.getLayerDigests().get(1).getHash());
-    Files.createDirectories(cacheStorageFiles.getLayerDirectory(secondLayerDigest));
-    try (OutputStream out =
-        Files.newOutputStream(cacheStorageFiles.getLayerFile(secondLayerDigest, layerDigest2))) {
-      out.write("layerBlob".getBytes(StandardCharsets.UTF_8));
-    }
+    Files.createDirectories(cacheStorageFiles.getLayerDirectory(secondlayerDigest));
     Assert.assertTrue(cacheStorageReader.allLayersCached(manifestAndConfig.getManifest()));
   }
 
@@ -691,12 +683,7 @@ public class CacheStorageReaderTest {
     Assert.assertFalse(cacheStorageReader.allLayersCached(manifestAndConfig.getManifest()));
     // Create the layer directory.
     DescriptorDigest layerDigest = manifest.getLayers().get(0).getDigest();
-    manifest.getLayers().get(0);
     Files.createDirectories(cacheStorageFiles.getLayerDirectory(layerDigest));
-    try (OutputStream out =
-        Files.newOutputStream(cacheStorageFiles.getLayerFile(layerDigest, layerDigest2))) {
-      out.write("layerBlob".getBytes(StandardCharsets.UTF_8));
-    }
     Assert.assertTrue(cacheStorageReader.allLayersCached(manifestAndConfig.getManifest()));
   }
 }

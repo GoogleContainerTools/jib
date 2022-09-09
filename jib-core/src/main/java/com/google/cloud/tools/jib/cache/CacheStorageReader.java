@@ -105,18 +105,8 @@ class CacheStorageReader {
     }
 
     for (DescriptorDigest layerDigest : layerDigests) {
-      //      Path layerDirectory = cacheStorageFiles.getLayerDirectory(layerDigest);
-      //      if (!Files.exists(layerDirectory)) {
-      //        return false;
-      //      }
-
-      Optional<CachedLayer> optionalCachedLayer;
-      try {
-        optionalCachedLayer = retrieve(layerDigest);
-      } catch (Exception ex) {
-        return false;
-      }
-      if (!optionalCachedLayer.isPresent()) {
+      Path layerDirectory = cacheStorageFiles.getLayerDirectory(layerDigest);
+      if (!Files.exists(layerDirectory)) {
         return false;
       }
     }
