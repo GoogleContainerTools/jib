@@ -405,9 +405,11 @@ public class PullBaseImageStepTest {
                 new ManifestAndConfigTemplate(
                     new V22ManifestTemplate(), containerConfigJson2, "sha256:digest2")));
     Mockito.when(cache.retrieveMetadata(imageReference)).thenReturn(Optional.of(imageMetadata));
-    Mockito.when(cache.areAllLayersCached(imageMetadata.getManifestsAndConfigs().get(0).getManifest()))
+    Mockito.when(
+            cache.areAllLayersCached(imageMetadata.getManifestsAndConfigs().get(0).getManifest()))
         .thenReturn(true);
-    Mockito.when(cache.areAllLayersCached(imageMetadata.getManifestsAndConfigs().get(1).getManifest()))
+    Mockito.when(
+            cache.areAllLayersCached(imageMetadata.getManifestsAndConfigs().get(1).getManifest()))
         .thenReturn(true);
 
     Mockito.when(containerConfig.getPlatforms())
@@ -444,7 +446,8 @@ public class PullBaseImageStepTest {
                     new ContainerConfigurationTemplate(),
                     "sha256:digest1")));
     Mockito.when(cache.retrieveMetadata(imageReference)).thenReturn(Optional.of(imageMetadata));
-    Mockito.when(cache.areAllLayersCached(imageMetadata.getManifestsAndConfigs().get(0).getManifest()))
+    Mockito.when(
+            cache.areAllLayersCached(imageMetadata.getManifestsAndConfigs().get(0).getManifest()))
         .thenReturn(true);
 
     Mockito.when(containerConfig.getPlatforms())
