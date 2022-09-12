@@ -16,6 +16,8 @@
 
 package com.google.cloud.tools.jib.cache;
 
+import static com.google.common.truth.Truth.assertThat;
+
 import com.google.cloud.tools.jib.api.DescriptorDigest;
 import com.google.cloud.tools.jib.api.ImageReference;
 import com.google.cloud.tools.jib.blob.Blobs;
@@ -645,44 +647,32 @@ public class CacheStorageReaderTest {
     setupCachedMetadataV21(cacheDirectory);
     ImageMetadataTemplate metadata =
         cacheStorageReader.retrieveMetadata(ImageReference.of("test", "image", "tag")).get();
-
     V21ManifestTemplate manifest =
         (V21ManifestTemplate) metadata.getManifestsAndConfigs().get(0).getManifest();
-    Assert.assertEquals(2, manifest.getLayerDigests().size());
-    ManifestAndConfigTemplate manifestAndConfig =
-        new ManifestAndConfigTemplate(manifest, new ContainerConfigurationTemplate());
+    DescriptorDigest firstLayerDigest = manifest.getLayerDigests().get(0);
+    DescriptorDigest secondLayerDigest = manifest.getLayerDigests().get(1);
 
-    // Create only one of the layer directories.
-    DescriptorDigest firstLayerDigest =
-        DescriptorDigest.fromHash(manifest.getLayerDigests().get(0).getHash());
+    // Create only one of the layer directories so that layers are only partially cached.
     Files.createDirectories(cacheStorageFiles.getLayerDirectory(firstLayerDigest));
-    Assert.assertFalse(cacheStorageReader.areAllLayersCached(manifestAndConfig.getManifest()));
-
-    // Create the other layer directory.
-    DescriptorDigest secondLayerDigest =
-        DescriptorDigest.fromHash(manifest.getLayerDigests().get(1).getHash());
+    assertThat(cacheStorageReader.areAllLayersCached(manifest)).isFalse();
+    // Create the other layer directory so that all layers are cached.
     Files.createDirectories(cacheStorageFiles.getLayerDirectory(secondLayerDigest));
-    Assert.assertTrue(cacheStorageReader.areAllLayersCached(manifestAndConfig.getManifest()));
+    assertThat(cacheStorageReader.areAllLayersCached(manifest)).isTrue();
   }
 
   @Test
   public void testAllLayersCached_v22SingleManifest()
       throws IOException, CacheCorruptedException, DigestException, URISyntaxException {
-
     setupCachedMetadataV22(cacheDirectory);
     ImageMetadataTemplate metadata =
         cacheStorageReader.retrieveMetadata(ImageReference.of("test", "image", "tag")).get();
-
     V22ManifestTemplate manifest =
         (V22ManifestTemplate) metadata.getManifestsAndConfigs().get(0).getManifest();
-    Assert.assertEquals(1, manifest.getLayers().size());
-    ManifestAndConfigTemplate manifestAndConfig =
-        new ManifestAndConfigTemplate(manifest, new ContainerConfigurationTemplate());
-
-    Assert.assertFalse(cacheStorageReader.areAllLayersCached(manifestAndConfig.getManifest()));
-    // Create the layer directory.
     DescriptorDigest layerDigest = manifest.getLayers().get(0).getDigest();
+
+    assertThat(cacheStorageReader.areAllLayersCached(manifest)).isFalse();
+    // Create the single layer directory so that all layers are cached.
     Files.createDirectories(cacheStorageFiles.getLayerDirectory(layerDigest));
-    Assert.assertTrue(cacheStorageReader.areAllLayersCached(manifestAndConfig.getManifest()));
+    assertThat(cacheStorageReader.areAllLayersCached(manifest)).isTrue();
   }
 }

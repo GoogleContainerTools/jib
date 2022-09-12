@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.builder.steps;
 
+import static com.google.common.truth.Truth.assertThat;
 import static org.mockito.ArgumentMatchers.eq;
 
 import com.google.cloud.tools.jib.api.DescriptorDigest;
@@ -315,7 +316,7 @@ public class PullBaseImageStepTest {
     Mockito.when(cache.retrieveMetadata(imageReference)).thenReturn(Optional.of(imageMetadata));
     Mockito.when(cache.areAllLayersCached(manifest)).thenReturn(false);
 
-    Assert.assertEquals(Arrays.asList(), pullBaseImageStep.getCachedBaseImages());
+    assertThat(pullBaseImageStep.getCachedBaseImages()).isEmpty();
   }
 
   @Test
