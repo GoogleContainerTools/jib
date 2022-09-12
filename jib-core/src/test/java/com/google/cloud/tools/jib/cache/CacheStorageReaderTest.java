@@ -642,7 +642,6 @@ public class CacheStorageReaderTest {
   @Test
   public void testAllLayersCached_v21SingleManifest()
       throws IOException, CacheCorruptedException, DigestException, URISyntaxException {
-
     setupCachedMetadataV21(cacheDirectory);
     ImageMetadataTemplate metadata =
         cacheStorageReader.retrieveMetadata(ImageReference.of("test", "image", "tag")).get();

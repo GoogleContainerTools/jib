@@ -301,7 +301,7 @@ public class PullBaseImageStepTest {
   }
 
   @Test
-  public void testGetCachedBaseImages_cachedWithoutAllLayers()
+  public void testGetCachedBaseImages_partiallyCached_emptyListReturned()
       throws InvalidImageReferenceException, CacheCorruptedException, IOException,
           LayerCountMismatchException, PlatformNotFoundInBaseImageException,
           BadContainerConfigurationFormatException, UnlistedPlatformInManifestListException {
@@ -312,7 +312,6 @@ public class PullBaseImageStepTest {
     ImageMetadataTemplate imageMetadata =
         new ImageMetadataTemplate(
             null, Arrays.asList(new ManifestAndConfigTemplate(manifest, null)));
-
     Mockito.when(cache.retrieveMetadata(imageReference)).thenReturn(Optional.of(imageMetadata));
     Mockito.when(cache.areAllLayersCached(manifest)).thenReturn(false);
 
