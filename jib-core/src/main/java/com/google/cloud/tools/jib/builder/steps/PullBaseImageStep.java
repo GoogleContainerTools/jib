@@ -456,10 +456,10 @@ class PullBaseImageStep implements Callable<ImagesAndRegistryClient> {
 
     if (manifestList == null) {
       Verify.verify(manifestsAndConfigs.size() == 1);
-      ManifestTemplate manifest = manifestsAndConfigs.get(0).getManifest();
+      ManifestTemplate manifest = Verify.verifyNotNull(manifestsAndConfigs.get(0).getManifest());
 
       // Verify all layers described in manifest are present in cache
-      if (!baseImageLayersCache.areAllLayersCached(Verify.verifyNotNull(manifest))) {
+      if (!baseImageLayersCache.areAllLayersCached(manifest)) {
         return Collections.emptyList();
       }
 
@@ -473,8 +473,7 @@ class PullBaseImageStep implements Callable<ImagesAndRegistryClient> {
       PlatformChecker.checkManifestPlatform(buildContext, containerConfig);
 
       return Collections.singletonList(
-          JsonToImageTranslator.toImage(
-              (BuildableManifestTemplate) Verify.verifyNotNull(manifest), containerConfig));
+          JsonToImageTranslator.toImage((BuildableManifestTemplate) manifest, containerConfig));
     }
 
     // Manifest list cached. Identify matching platforms and check if all of them are cached.
