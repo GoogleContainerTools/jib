@@ -88,7 +88,7 @@ class CacheStorageReader {
    * @param manifest the image manifest
    * @return a boolean
    */
-  boolean allLayersCached(ManifestTemplate manifest) {
+  boolean areAllLayersCached(ManifestTemplate manifest) {
 
     List<DescriptorDigest> layerDigests;
 

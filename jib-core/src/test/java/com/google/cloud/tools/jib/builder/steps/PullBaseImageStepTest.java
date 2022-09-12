@@ -156,7 +156,7 @@ public class PullBaseImageStepTest {
     ImageMetadataTemplate imageMetadata =
         new ImageMetadataTemplate(null, Arrays.asList(manifestAndConfig));
     Mockito.when(cache.retrieveMetadata(imageReference)).thenReturn(Optional.of(imageMetadata));
-    Mockito.when(cache.allLayersCached(manifestAndConfig.getManifest())).thenReturn(true);
+    Mockito.when(cache.areAllLayersCached(manifestAndConfig.getManifest())).thenReturn(true);
 
     ImagesAndRegistryClient result = pullBaseImageStep.call();
     Assert.assertEquals("fat system", result.images.get(0).getOs());
@@ -198,7 +198,7 @@ public class PullBaseImageStepTest {
     ImageMetadataTemplate imageMetadata =
         new ImageMetadataTemplate(null, Arrays.asList(manifestAndConfig));
     Mockito.when(cache.retrieveMetadata(imageReference)).thenReturn(Optional.of(imageMetadata));
-    Mockito.when(cache.allLayersCached(manifestAndConfig.getManifest())).thenReturn(true);
+    Mockito.when(cache.areAllLayersCached(manifestAndConfig.getManifest())).thenReturn(true);
 
     ImagesAndRegistryClient result = pullBaseImageStep.call();
     Assert.assertEquals("fat system", result.images.get(0).getOs());
@@ -314,7 +314,7 @@ public class PullBaseImageStepTest {
             null, Arrays.asList(new ManifestAndConfigTemplate(manifest, null)));
 
     Mockito.when(cache.retrieveMetadata(imageReference)).thenReturn(Optional.of(imageMetadata));
-    Mockito.when(cache.allLayersCached(manifest)).thenReturn(false);
+    Mockito.when(cache.areAllLayersCached(manifest)).thenReturn(false);
 
     Assert.assertEquals(Arrays.asList(), pullBaseImageStep.getCachedBaseImages());
   }
@@ -338,7 +338,7 @@ public class PullBaseImageStepTest {
             null, Arrays.asList(new ManifestAndConfigTemplate(v21Manifest, null)));
 
     Mockito.when(cache.retrieveMetadata(imageReference)).thenReturn(Optional.of(imageMetadata));
-    Mockito.when(cache.allLayersCached(v21Manifest)).thenReturn(true);
+    Mockito.when(cache.areAllLayersCached(v21Manifest)).thenReturn(true);
 
     List<Image> images = pullBaseImageStep.getCachedBaseImages();
 
@@ -367,7 +367,7 @@ public class PullBaseImageStepTest {
     ImageMetadataTemplate imageMetadata =
         new ImageMetadataTemplate(null, Arrays.asList(manifestAndConfig));
     Mockito.when(cache.retrieveMetadata(imageReference)).thenReturn(Optional.of(imageMetadata));
-    Mockito.when(cache.allLayersCached(manifestAndConfig.getManifest())).thenReturn(true);
+    Mockito.when(cache.areAllLayersCached(manifestAndConfig.getManifest())).thenReturn(true);
 
     List<Image> images = pullBaseImageStep.getCachedBaseImages();
 
@@ -405,9 +405,9 @@ public class PullBaseImageStepTest {
                 new ManifestAndConfigTemplate(
                     new V22ManifestTemplate(), containerConfigJson2, "sha256:digest2")));
     Mockito.when(cache.retrieveMetadata(imageReference)).thenReturn(Optional.of(imageMetadata));
-    Mockito.when(cache.allLayersCached(imageMetadata.getManifestsAndConfigs().get(0).getManifest()))
+    Mockito.when(cache.areAllLayersCached(imageMetadata.getManifestsAndConfigs().get(0).getManifest()))
         .thenReturn(true);
-    Mockito.when(cache.allLayersCached(imageMetadata.getManifestsAndConfigs().get(1).getManifest()))
+    Mockito.when(cache.areAllLayersCached(imageMetadata.getManifestsAndConfigs().get(1).getManifest()))
         .thenReturn(true);
 
     Mockito.when(containerConfig.getPlatforms())
@@ -444,7 +444,7 @@ public class PullBaseImageStepTest {
                     new ContainerConfigurationTemplate(),
                     "sha256:digest1")));
     Mockito.when(cache.retrieveMetadata(imageReference)).thenReturn(Optional.of(imageMetadata));
-    Mockito.when(cache.allLayersCached(imageMetadata.getManifestsAndConfigs().get(0).getManifest()))
+    Mockito.when(cache.areAllLayersCached(imageMetadata.getManifestsAndConfigs().get(0).getManifest()))
         .thenReturn(true);
 
     Mockito.when(containerConfig.getPlatforms())
@@ -484,7 +484,7 @@ public class PullBaseImageStepTest {
             Arrays.asList(
                 unrelatedManifestAndConfig, targetManifestAndConfig, unrelatedManifestAndConfig));
     Mockito.when(cache.retrieveMetadata(imageReference)).thenReturn(Optional.of(imageMetadata));
-    Mockito.when(cache.allLayersCached(targetManifestAndConfig.getManifest())).thenReturn(true);
+    Mockito.when(cache.areAllLayersCached(targetManifestAndConfig.getManifest())).thenReturn(true);
 
     Mockito.when(containerConfig.getPlatforms())
         .thenReturn(ImmutableSet.of(new Platform("target-arch", "target-os")));

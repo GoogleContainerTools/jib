@@ -199,8 +199,8 @@ public class Cache {
    * @param manifest the image manifest
    * @return a boolean
    */
-  public boolean allLayersCached(ManifestTemplate manifest) {
-    return cacheStorageReader.allLayersCached(manifest);
+  public boolean areAllLayersCached(ManifestTemplate manifest) {
+    return cacheStorageReader.areAllLayersCached(manifest);
   }
 
   /**
