@@ -404,7 +404,7 @@ layers:
     - name: "images"                 # second layer, inherits file properties from global
       files:
         - src: "images"
-        - dest: "/images"            
+          dest: "/images"            
 ```
 
 #### Layers Behavior
