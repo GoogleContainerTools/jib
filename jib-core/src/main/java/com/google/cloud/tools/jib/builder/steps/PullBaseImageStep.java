@@ -445,8 +445,8 @@ class PullBaseImageStep implements Callable<ImagesAndRegistryClient> {
           LayerCountMismatchException, UnlistedPlatformInManifestListException,
           PlatformNotFoundInBaseImageException {
     ImageReference baseImage = buildContext.getBaseImageConfiguration().getImage();
-    Cache baseImageLayersCache = buildContext.getBaseImageLayersCache();
-    Optional<ImageMetadataTemplate> metadata = baseImageLayersCache.retrieveMetadata(baseImage);
+    Optional<ImageMetadataTemplate> metadata =
+        buildContext.getBaseImageLayersCache().retrieveMetadata(baseImage);
     if (!metadata.isPresent()) {
       return Collections.emptyList();
     }
