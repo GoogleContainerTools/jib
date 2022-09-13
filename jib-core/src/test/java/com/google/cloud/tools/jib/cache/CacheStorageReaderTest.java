@@ -654,10 +654,13 @@ public class CacheStorageReaderTest {
 
     // Create only one of the layer directories so that layers are only partially cached.
     Files.createDirectories(cacheStorageFiles.getLayerDirectory(firstLayerDigest));
-    assertThat(cacheStorageReader.areAllLayersCached(manifest)).isFalse();
+    boolean checkWithPartialLayersCached = cacheStorageReader.areAllLayersCached(manifest);
     // Create the other layer directory so that all layers are cached.
     Files.createDirectories(cacheStorageFiles.getLayerDirectory(secondLayerDigest));
-    assertThat(cacheStorageReader.areAllLayersCached(manifest)).isTrue();
+    boolean checkWithAllLayersCached = cacheStorageReader.areAllLayersCached(manifest);
+
+    assertThat(checkWithPartialLayersCached).isFalse();
+    assertThat(checkWithAllLayersCached).isTrue();
   }
 
   @Test
@@ -670,9 +673,12 @@ public class CacheStorageReaderTest {
         (V22ManifestTemplate) metadata.getManifestsAndConfigs().get(0).getManifest();
     DescriptorDigest layerDigest = manifest.getLayers().get(0).getDigest();
 
-    assertThat(cacheStorageReader.areAllLayersCached(manifest)).isFalse();
+    boolean checkBeforeLayerCached = cacheStorageReader.areAllLayersCached(manifest);
     // Create the single layer directory so that all layers are cached.
     Files.createDirectories(cacheStorageFiles.getLayerDirectory(layerDigest));
-    assertThat(cacheStorageReader.areAllLayersCached(manifest)).isTrue();
+    boolean checkAfterLayerCached = cacheStorageReader.areAllLayersCached(manifest);
+
+    assertThat(checkBeforeLayerCached).isFalse();
+    assertThat(checkAfterLayerCached).isTrue();
   }
 }
