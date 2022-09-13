@@ -460,9 +460,8 @@ class PullBaseImageStep implements Callable<ImagesAndRegistryClient> {
       Optional<Image> cachedImage = getBaseImageIfAllLayersCached(manifestAndConfig, true);
       if (!cachedImage.isPresent()) {
         return Collections.emptyList();
-      } else {
-        return Collections.singletonList(cachedImage.get());
       }
+      return Collections.singletonList(cachedImage.get());
     }
 
     // Manifest list cached. Identify matching platforms and check if all of them are cached.
@@ -482,9 +481,8 @@ class PullBaseImageStep implements Callable<ImagesAndRegistryClient> {
           getBaseImageIfAllLayersCached(manifestAndConfigFound.get(), false);
       if (!cachedImage.isPresent()) {
         return Collections.emptyList();
-      } else {
-        images.add(cachedImage.get());
       }
+      images.add(cachedImage.get());
     }
     return images.build();
   }
