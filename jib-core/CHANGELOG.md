@@ -8,6 +8,7 @@ All notable changes to this project will be documented in this file.
 ### Changed
 
 ### Fixed
+- Fixed partially cached base image authorization issue by adding check for existence of layers in cache ([#3767](https://github.com/GoogleContainerTools/jib/pull/3767))
 
 ## 0.22.0
 
