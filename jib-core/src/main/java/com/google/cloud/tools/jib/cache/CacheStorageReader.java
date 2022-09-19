@@ -82,6 +82,38 @@ class CacheStorageReader {
   }
 
   /**
+   * Returns {@code true} if all image layers described in a manifest have a corresponding file
+   * entry in the cache.
+   *
+   * @param manifest the image manifest
+   * @return a boolean
+   */
+  boolean areAllLayersCached(ManifestTemplate manifest) {
+
+    List<DescriptorDigest> layerDigests;
+
+    if (manifest instanceof V21ManifestTemplate) {
+      layerDigests = ((V21ManifestTemplate) manifest).getLayerDigests();
+    } else if (manifest instanceof BuildableManifestTemplate) {
+      layerDigests =
+          ((BuildableManifestTemplate) manifest)
+              .getLayers().stream()
+                  .map(BuildableManifestTemplate.ContentDescriptorTemplate::getDigest)
+                  .collect(Collectors.toList());
+    } else {
+      throw new IllegalArgumentException("Unknown manifest type: " + manifest);
+    }
+
+    for (DescriptorDigest layerDigest : layerDigests) {
+      Path layerDirectory = cacheStorageFiles.getLayerDirectory(layerDigest);
+      if (!Files.exists(layerDirectory)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  /**
    * Retrieves the cached image metadata (a manifest list and a list of manifest/container
    * configuration pairs) for an image reference.
    *

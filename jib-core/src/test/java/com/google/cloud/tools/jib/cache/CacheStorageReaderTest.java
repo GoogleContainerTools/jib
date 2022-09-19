@@ -16,6 +16,8 @@
 
 package com.google.cloud.tools.jib.cache;
 
+import static com.google.common.truth.Truth.assertThat;
+
 import com.google.cloud.tools.jib.api.DescriptorDigest;
 import com.google.cloud.tools.jib.api.ImageReference;
 import com.google.cloud.tools.jib.blob.Blobs;
@@ -637,5 +639,46 @@ public class CacheStorageReaderTest {
             new OciIndexTemplate(), Arrays.asList(manifestAndConfig, manifestAndConfig));
     CacheStorageReader.verifyImageMetadata(metadata, Paths.get("/cache/dir"));
     // should pass without CacheCorruptedException
+  }
+
+  @Test
+  public void testAllLayersCached_v21SingleManifest()
+      throws IOException, CacheCorruptedException, DigestException, URISyntaxException {
+    setupCachedMetadataV21(cacheDirectory);
+    ImageMetadataTemplate metadata =
+        cacheStorageReader.retrieveMetadata(ImageReference.of("test", "image", "tag")).get();
+    V21ManifestTemplate manifest =
+        (V21ManifestTemplate) metadata.getManifestsAndConfigs().get(0).getManifest();
+    DescriptorDigest firstLayerDigest = manifest.getLayerDigests().get(0);
+    DescriptorDigest secondLayerDigest = manifest.getLayerDigests().get(1);
+
+    // Create only one of the layer directories so that layers are only partially cached.
+    Files.createDirectories(cacheStorageFiles.getLayerDirectory(firstLayerDigest));
+    boolean checkWithPartialLayersCached = cacheStorageReader.areAllLayersCached(manifest);
+    // Create the other layer directory so that all layers are cached.
+    Files.createDirectories(cacheStorageFiles.getLayerDirectory(secondLayerDigest));
+    boolean checkWithAllLayersCached = cacheStorageReader.areAllLayersCached(manifest);
+
+    assertThat(checkWithPartialLayersCached).isFalse();
+    assertThat(checkWithAllLayersCached).isTrue();
+  }
+
+  @Test
+  public void testAllLayersCached_v22SingleManifest()
+      throws IOException, CacheCorruptedException, DigestException, URISyntaxException {
+    setupCachedMetadataV22(cacheDirectory);
+    ImageMetadataTemplate metadata =
+        cacheStorageReader.retrieveMetadata(ImageReference.of("test", "image", "tag")).get();
+    V22ManifestTemplate manifest =
+        (V22ManifestTemplate) metadata.getManifestsAndConfigs().get(0).getManifest();
+    DescriptorDigest layerDigest = manifest.getLayers().get(0).getDigest();
+
+    boolean checkBeforeLayerCached = cacheStorageReader.areAllLayersCached(manifest);
+    // Create the single layer directory so that all layers are cached.
+    Files.createDirectories(cacheStorageFiles.getLayerDirectory(layerDigest));
+    boolean checkAfterLayerCached = cacheStorageReader.areAllLayersCached(manifest);
+
+    assertThat(checkBeforeLayerCached).isFalse();
+    assertThat(checkAfterLayerCached).isTrue();
   }
 }

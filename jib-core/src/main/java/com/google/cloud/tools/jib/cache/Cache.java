@@ -25,6 +25,7 @@ import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
 import com.google.cloud.tools.jib.image.json.ContainerConfigurationTemplate;
 import com.google.cloud.tools.jib.image.json.ImageMetadataTemplate;
 import com.google.cloud.tools.jib.image.json.ManifestAndConfigTemplate;
+import com.google.cloud.tools.jib.image.json.ManifestTemplate;
 import com.google.cloud.tools.jib.image.json.V21ManifestTemplate;
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
@@ -190,6 +191,16 @@ public class Cache {
   public Optional<ImageMetadataTemplate> retrieveMetadata(ImageReference imageReference)
       throws IOException, CacheCorruptedException {
     return cacheStorageReader.retrieveMetadata(imageReference);
+  }
+
+  /**
+   * Returns {@code true} if all image layers described in a manifest exist in the cache.
+   *
+   * @param manifest the image manifest
+   * @return a boolean
+   */
+  public boolean areAllLayersCached(ManifestTemplate manifest) {
+    return cacheStorageReader.areAllLayersCached(manifest);
   }
 
   /**

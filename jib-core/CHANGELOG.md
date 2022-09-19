@@ -9,6 +9,7 @@ All notable changes to this project will be documented in this file.
 - Upgraded Google HTTP libraries to 1.42.2 ([#3745](https://github.com/GoogleContainerTools/jib/pull/3745))
 
 ### Fixed
+- Fixed partially cached base image authorization issue by adding check for existence of layers in cache ([#3767](https://github.com/GoogleContainerTools/jib/pull/3767))
 
 ## 0.22.0
 
