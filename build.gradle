@@ -70,7 +70,13 @@ subprojects {
   group 'com.google.cloud.tools'
 
   repositories {
-    mavenCentral()
+    mavenCentral {
+      metadataSources {
+        mavenPom()
+        artifact()
+        ignoreGradleMetadataRedirection()
+      }
+    }
   }
 
   apply plugin: 'java'
