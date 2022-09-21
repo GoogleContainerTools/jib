@@ -28,7 +28,6 @@ import javax.inject.Inject;
 import org.gradle.api.model.ObjectFactory;
 import org.gradle.api.provider.MapProperty;
 import org.gradle.api.provider.Property;
-import org.gradle.api.provider.Provider;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.Optional;
 
@@ -52,14 +51,14 @@ public class ContainerParameters {
   private String appRoot = "";
   @Nullable private String user;
   @Nullable private String workingDirectory;
-  private Property<String> filesModificationTime;
-  private Property<String> creationTime;
+  private final Property<String> filesModificationTime;
+  private final Property<String> creationTime;
 
   @Inject
   public ContainerParameters(ObjectFactory objectFactory) {
     labels = objectFactory.mapProperty(String.class, String.class).empty();
-    filesModificationTime = objectFactory.property(String.class).value("EPOCH_PLUS_SECOND");
-    creationTime = objectFactory.property(String.class).value("EPOCH");
+    filesModificationTime = objectFactory.property(String.class).convention("EPOCH_PLUS_SECOND");
+    creationTime = objectFactory.property(String.class).convention("EPOCH");
   }
 
   @Input
@@ -266,35 +265,21 @@ public class ContainerParameters {
 
   @Input
   @Optional
-  public String getFilesModificationTime() {
-    if (System.getProperty(PropertyNames.CONTAINER_FILES_MODIFICATION_TIME) != null) {
-      return System.getProperty(PropertyNames.CONTAINER_FILES_MODIFICATION_TIME);
+  public Property<String> getFilesModificationTime() {
+    String property = System.getProperty(PropertyNames.CONTAINER_FILES_MODIFICATION_TIME);
+    if (property != null && !property.equals(filesModificationTime.get())) {
+      filesModificationTime.set(property);
     }
-    return filesModificationTime.getOrNull();
-  }
-
-  public void setFilesModificationTime(Provider<String> filesModificationTime) {
-    this.filesModificationTime.set(filesModificationTime);
-  }
-
-  public void setFilesModificationTime(String filesModificationTime) {
-    this.filesModificationTime.set(filesModificationTime);
+    return filesModificationTime;
   }
 
   @Input
   @Optional
-  public String getCreationTime() {
-    if (System.getProperty(PropertyNames.CONTAINER_CREATION_TIME) != null) {
-      return System.getProperty(PropertyNames.CONTAINER_CREATION_TIME);
+  public Property<String> getCreationTime() {
+    String property = System.getProperty(PropertyNames.CONTAINER_CREATION_TIME);
+    if (property != null && !property.equals(creationTime.get())) {
+      creationTime.set(property);
     }
-    return creationTime.getOrNull();
-  }
-
-  public void setCreationTime(Provider<String> creationTime) {
-    this.creationTime.set(creationTime);
-  }
-
-  public void setCreationTime(String creationTime) {
-    this.creationTime.set(creationTime);
+    return creationTime;
   }
 }

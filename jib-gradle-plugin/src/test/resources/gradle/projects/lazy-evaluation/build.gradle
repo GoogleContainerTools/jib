@@ -59,8 +59,8 @@ tasks.register('check-extra-directories') {
 }
 
 tasks.register('showtimes') {
-    String prop = project.extensions.getByName('jib')['container']['creationTime']
+    String prop = project.extensions.jib.container.creationTime.get()
     println('creationTime=' + prop)
-    prop = project.extensions.getByName('jib')['container']['filesModificationTime']
+    prop = project.extensions.jib.container.filesModificationTime.get()
     println('filesModificationTime=' + prop)
 }

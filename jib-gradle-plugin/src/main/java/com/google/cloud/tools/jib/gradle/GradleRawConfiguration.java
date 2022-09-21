@@ -153,12 +153,12 @@ public class GradleRawConfiguration implements RawConfiguration {
 
   @Override
   public String getFilesModificationTime() {
-    return jibExtension.getContainer().getFilesModificationTime();
+    return jibExtension.getContainer().getFilesModificationTime().get();
   }
 
   @Override
   public String getCreationTime() {
-    return jibExtension.getContainer().getCreationTime();
+    return jibExtension.getContainer().getCreationTime().get();
   }
 
   @Override
