@@ -183,7 +183,7 @@ Then, ```gradle build``` will build and containerize your application.
 
 ### Additional Build Artifacts
 
-As part of an image build, Jib also writes out the _image digest_ and the _image ID_. By default, these are written out to `build/jib-image.digest` and `build/jib-image.id` respectively, but the locations can be configured using the `jib.outputFiles.digest` and `jib.outputFiles.imageId` configuration properties. See [Extended Usage](#outputpaths-closure) for more details.
+As part of an image build, Jib also writes out the _image digest_ and the _image ID_. By default, these are written out to `build/jib-image.digest` and `build/jib-image.id` respectively, but the locations can be configured using the `jib.outputPaths.digest` and `jib.outputPaths.imageId` configuration properties. See [Extended Usage](#outputpaths-closure) for more details.
 
 ## Multi Module Projects
 
