@@ -51,6 +51,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -213,9 +214,9 @@ public class GradleProjectPropertiesTest {
 
   @Test
   public void testGetInputFiles() throws URISyntaxException {
-    List<Path> extraDirectories = new ArrayList<>();
     Path applicationDirectory = getResource("gradle/application");
 
+    List<Path> extraDirectories = Arrays.asList(applicationDirectory.resolve("extra-directory"));
     FileCollection fileCollection =
         GradleProjectProperties.getInputFiles(
             project, extraDirectories, JavaPlugin.RUNTIME_CLASSPATH_CONFIGURATION_NAME);
@@ -231,7 +232,8 @@ public class GradleProjectPropertiesTest {
             applicationDirectory.resolve("dependencies/another/one/dependency-1.0.0.jar"),
             applicationDirectory.resolve("dependencies/libraryA.jar"),
             applicationDirectory.resolve("dependencies/libraryB.jar"),
-            applicationDirectory.resolve("dependencies/library.jarC.jar"));
+            applicationDirectory.resolve("dependencies/library.jarC.jar"),
+            applicationDirectory.resolve("extra-directory"));
   }
 
   @Test
