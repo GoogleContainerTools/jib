@@ -397,8 +397,10 @@ public class GradleProjectProperties implements ProjectProperties {
   }
 
   /**
-   * Returns the input files for a task. These files include the runtimeClasspath of the application
-   * and any extraDirectories defined by the user to include in the container.
+   * Returns the input files for a task. These files include the gradle {@link
+   * org.gradle.api.artifacts.Configuration}, output directories (classes, resources, etc.) of the
+   * main {@link org.gradle.api.tasks.SourceSet}, and any extraDirectories defined by the user to
+   * include in the container.
    *
    * @param project the gradle project
    * @param extraDirectories the image's configured extra directories
@@ -408,6 +410,12 @@ public class GradleProjectProperties implements ProjectProperties {
       Project project, List<Path> extraDirectories, String configurationName) {
     List<FileCollection> dependencyFileCollections = new ArrayList<>();
     dependencyFileCollections.add(project.getConfigurations().getByName(configurationName));
+    // Output directories (classes and resources) from main SourceSet are added
+    // so that BuildTarTask picks up changes in these and do not skip task
+    JavaPluginConvention javaPluginConvention =
+        project.getConvention().getPlugin(JavaPluginConvention.class);
+    SourceSet mainSourceSet = javaPluginConvention.getSourceSets().getByName(MAIN_SOURCE_SET_NAME);
+    dependencyFileCollections.add(mainSourceSet.getOutput());
 
     extraDirectories.stream()
         .filter(Files::exists)
