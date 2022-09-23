@@ -406,6 +406,7 @@ public class GradleProjectProperties implements ProjectProperties {
    * @param extraDirectories the image's configured extra directories
    * @return the input files
    */
+  @VisibleForTesting
   static FileCollection getInputFiles(
       Project project, List<Path> extraDirectories, String configurationName) {
     List<FileCollection> dependencyFileCollections = new ArrayList<>();
