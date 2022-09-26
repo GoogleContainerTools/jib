@@ -33,6 +33,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Properties;
 import org.gradle.api.Project;
+import org.gradle.api.provider.Property;
 import org.gradle.api.provider.Provider;
 import org.gradle.api.provider.ProviderFactory;
 import org.gradle.testfixtures.ProjectBuilder;
@@ -184,9 +185,9 @@ public class JibExtensionTest {
     assertThat(testJibExtension.getContainer().getPorts()).isEmpty();
     assertThat(testJibExtension.getContainer().getLabels().get()).isEmpty();
     assertThat(testJibExtension.getContainer().getAppRoot()).isEmpty();
-    assertThat(testJibExtension.getContainer().getFilesModificationTime())
+    assertThat(testJibExtension.getContainer().getFilesModificationTime().get())
         .isEqualTo("EPOCH_PLUS_SECOND");
-    assertThat(testJibExtension.getContainer().getCreationTime()).isEqualTo("EPOCH");
+    assertThat(testJibExtension.getContainer().getCreationTime().get()).isEqualTo("EPOCH");
 
     testJibExtension.container(
         container -> {
@@ -200,7 +201,8 @@ public class JibExtensionTest {
           container.setPorts(Arrays.asList("1000", "2000-2010", "3000"));
           container.setFormat(ImageFormat.OCI);
           container.setAppRoot("some invalid appRoot value");
-          container.setFilesModificationTime("some invalid time value");
+          container.getFilesModificationTime().set("some invalid time value");
+          container.getCreationTime().set("some other invalid time value");
         });
     ContainerParameters container = testJibExtension.getContainer();
     assertThat(container.getEntrypoint()).containsExactly("foo", "bar", "baz").inOrder();
@@ -215,7 +217,16 @@ public class JibExtensionTest {
     assertThat(container.getPorts()).containsExactly("1000", "2000-2010", "3000").inOrder();
     assertThat(container.getFormat()).isSameInstanceAs(ImageFormat.OCI);
     assertThat(container.getAppRoot()).isEqualTo("some invalid appRoot value");
-    assertThat(container.getFilesModificationTime()).isEqualTo("some invalid time value");
+    assertThat(container.getFilesModificationTime().get()).isEqualTo("some invalid time value");
+    assertThat(container.getCreationTime().get()).isEqualTo("some other invalid time value");
+    testJibExtension.container(
+        extensionContainer -> {
+          extensionContainer.getFilesModificationTime().set((String) null);
+          extensionContainer.getCreationTime().set((String) null);
+        });
+    container = testJibExtension.getContainer();
+    assertThat(container.getFilesModificationTime().get()).isEqualTo("EPOCH_PLUS_SECOND");
+    assertThat(container.getCreationTime().get()).isEqualTo("EPOCH");
   }
 
   @Test
@@ -482,8 +493,16 @@ public class JibExtensionTest {
     System.setProperty("jib.container.user", "myUser");
     assertThat(testJibExtension.getContainer().getUser()).isEqualTo("myUser");
     System.setProperty("jib.container.filesModificationTime", "2011-12-03T22:42:05Z");
-    assertThat(testJibExtension.getContainer().getFilesModificationTime())
+    testJibExtension
+        .getContainer()
+        .getFilesModificationTime()
+        .set("property should override value");
+    assertThat(testJibExtension.getContainer().getFilesModificationTime().get())
         .isEqualTo("2011-12-03T22:42:05Z");
+    System.setProperty("jib.container.creationTime", "2011-12-03T11:42:05Z");
+    testJibExtension.getContainer().getCreationTime().set("property should override value");
+    assertThat(testJibExtension.getContainer().getCreationTime().get())
+        .isEqualTo("2011-12-03T11:42:05Z");
     System.setProperty("jib.containerizingMode", "packaged");
     assertThat(testJibExtension.getContainerizingMode()).isEqualTo("packaged");
 
@@ -505,6 +524,22 @@ public class JibExtensionTest {
     assertThat(testJibExtension.getDockerClient().getEnvironment())
         .containsExactly("env1", "val1", "env2", "val2")
         .inOrder();
+  }
+
+  @Test
+  public void testLazyPropertiesFinalization() {
+    Property<String> filesModificationTime =
+        testJibExtension.getContainer().getFilesModificationTime();
+    filesModificationTime.set((String) null);
+    filesModificationTime.finalizeValue();
+    System.setProperty("jib.container.filesModificationTime", "EPOCH_PLUS_SECOND");
+    assertThat(testJibExtension.getContainer().getFilesModificationTime().get())
+        .isEqualTo("EPOCH_PLUS_SECOND");
+    Property<String> creationTime = testJibExtension.getContainer().getCreationTime();
+    creationTime.set((String) null);
+    creationTime.finalizeValue();
+    System.setProperty("jib.container.creationTime", "EPOCH");
+    assertThat(testJibExtension.getContainer().getCreationTime().get()).isEqualTo("EPOCH");
   }
 
   @Test

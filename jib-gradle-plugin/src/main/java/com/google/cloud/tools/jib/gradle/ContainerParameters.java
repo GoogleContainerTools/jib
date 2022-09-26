@@ -27,6 +27,7 @@ import javax.annotation.Nullable;
 import javax.inject.Inject;
 import org.gradle.api.model.ObjectFactory;
 import org.gradle.api.provider.MapProperty;
+import org.gradle.api.provider.Property;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.Optional;
 
@@ -50,12 +51,14 @@ public class ContainerParameters {
   private String appRoot = "";
   @Nullable private String user;
   @Nullable private String workingDirectory;
-  private String filesModificationTime = "EPOCH_PLUS_SECOND";
-  private String creationTime = "EPOCH";
+  private final Property<String> filesModificationTime;
+  private final Property<String> creationTime;
 
   @Inject
   public ContainerParameters(ObjectFactory objectFactory) {
     labels = objectFactory.mapProperty(String.class, String.class).empty();
+    filesModificationTime = objectFactory.property(String.class).convention("EPOCH_PLUS_SECOND");
+    creationTime = objectFactory.property(String.class).convention("EPOCH");
   }
 
   @Input
@@ -262,27 +265,21 @@ public class ContainerParameters {
 
   @Input
   @Optional
-  public String getFilesModificationTime() {
-    if (System.getProperty(PropertyNames.CONTAINER_FILES_MODIFICATION_TIME) != null) {
-      return System.getProperty(PropertyNames.CONTAINER_FILES_MODIFICATION_TIME);
+  public Property<String> getFilesModificationTime() {
+    String property = System.getProperty(PropertyNames.CONTAINER_FILES_MODIFICATION_TIME);
+    if (property != null && !property.equals(filesModificationTime.get())) {
+      filesModificationTime.set(property);
     }
     return filesModificationTime;
   }
 
-  public void setFilesModificationTime(String filesModificationTime) {
-    this.filesModificationTime = filesModificationTime;
-  }
-
   @Input
   @Optional
-  public String getCreationTime() {
-    if (System.getProperty(PropertyNames.CONTAINER_CREATION_TIME) != null) {
-      return System.getProperty(PropertyNames.CONTAINER_CREATION_TIME);
+  public Property<String> getCreationTime() {
+    String property = System.getProperty(PropertyNames.CONTAINER_CREATION_TIME);
+    if (property != null && !property.equals(creationTime.get())) {
+      creationTime.set(property);
     }
     return creationTime;
-  }
-
-  public void setCreationTime(String creationTime) {
-    this.creationTime = creationTime;
   }
 }
