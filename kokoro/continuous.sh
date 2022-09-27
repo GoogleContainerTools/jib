@@ -13,6 +13,8 @@ fi
 # docker-credential-gcr uses GOOGLE_APPLICATION_CREDENTIALS as the credentials key file
 export GOOGLE_APPLICATION_CREDENTIALS=${KOKORO_KEYSTORE_DIR}/72743_jib_integration_testing_key
 
+# Overrides default search order to check credentials in GOOGLE_APPLICATION_CREDENTIALS
+docker-credential-gcr config --token-source="env"
 docker-credential-gcr configure-docker
 
 # Stops any left-over containers.
