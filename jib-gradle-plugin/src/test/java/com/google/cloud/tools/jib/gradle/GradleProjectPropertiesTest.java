@@ -51,6 +51,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -62,6 +63,7 @@ import java.util.zip.ZipOutputStream;
 import org.gradle.api.JavaVersion;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.dsl.DependencyHandler;
+import org.gradle.api.file.FileCollection;
 import org.gradle.api.java.archives.internal.DefaultManifest;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.plugins.JavaPlugin;
@@ -89,6 +91,8 @@ public class GradleProjectPropertiesTest {
   private static final Correspondence<FileEntry, String> EXTRACTION_PATH_OF =
       Correspondence.transforming(
           entry -> entry.getExtractionPath().toString(), "has extractionPath of");
+  private static final Correspondence<File, Path> FILE_PATH_OF =
+      Correspondence.transforming(File::toPath, "has Path of");
 
   private static final Instant EPOCH_PLUS_32 = Instant.ofEpochSecond(32);
 
@@ -206,6 +210,30 @@ public class GradleProjectPropertiesTest {
   public void testIsWarProject() {
     project.getPlugins().apply("war");
     assertThat(gradleProjectProperties.isWarProject()).isTrue();
+  }
+
+  @Test
+  public void testGetInputFiles() throws URISyntaxException {
+    Path applicationDirectory = getResource("gradle/application");
+
+    List<Path> extraDirectories = Arrays.asList(applicationDirectory.resolve("extra-directory"));
+    FileCollection fileCollection =
+        GradleProjectProperties.getInputFiles(
+            project, extraDirectories, JavaPlugin.RUNTIME_CLASSPATH_CONFIGURATION_NAME);
+
+    assertThat(fileCollection)
+        .comparingElementsUsing(FILE_PATH_OF)
+        .containsExactly(
+            applicationDirectory.resolve("build/classes/java/main"),
+            applicationDirectory.resolve("build/resources/main"),
+            applicationDirectory.resolve("dependencies/dependencyX-1.0.0-SNAPSHOT.jar"),
+            applicationDirectory.resolve("dependencies/dependency-1.0.0.jar"),
+            applicationDirectory.resolve("dependencies/more/dependency-1.0.0.jar"),
+            applicationDirectory.resolve("dependencies/another/one/dependency-1.0.0.jar"),
+            applicationDirectory.resolve("dependencies/libraryA.jar"),
+            applicationDirectory.resolve("dependencies/libraryB.jar"),
+            applicationDirectory.resolve("dependencies/library.jarC.jar"),
+            applicationDirectory.resolve("extra-directory"));
   }
 
   @Test
