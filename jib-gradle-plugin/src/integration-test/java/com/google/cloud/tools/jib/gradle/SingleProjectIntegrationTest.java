@@ -170,19 +170,18 @@ public class SingleProjectIntegrationTest {
   }
 
   /**
-   * Converts output to a list and removes the -Djavax.net.ssl.trustStorejvm argument that is added
-   * by the Kokoro CI environment.
+   * Removes the -Djavax.net.ssl.trustStorejvm argument that is usually added by the Kokoro CI
+   * environment to make test results consistent across different platforms.
    *
    * @param output build output resulting from running a Jib container
    * @return a list containing build output contents
    */
   private static List<String> processOutput(String output) {
-    List<String> outputList = Arrays.asList(output.split("\n"));
     String truststoreJvmArgument = "-Djavax.net.ssl.trustStore=/var/cache/proxy.crt.jks";
-    if (outputList.contains(truststoreJvmArgument)) {
-      outputList.remove(truststoreJvmArgument);
+    if (output.contains(truststoreJvmArgument)) {
+      return Arrays.asList(output.replace(truststoreJvmArgument, "").split("\n"));
     }
-    return outputList;
+    return Arrays.asList(output.split("\n"));
   }
 
   @Before
@@ -621,5 +620,17 @@ public class SingleProjectIntegrationTest {
             JibRunHelper.buildToDockerDaemonAndRun(
                 simpleTestProject, targetImage, "build-cred-helper.gradle"))
         .isEqualTo("Hello, world. \n1970-01-01T00:00:01Z\n");
+  }
+
+  @Test
+  public void testDockerDaemon_containerWithTruststoreJvmArgument()
+      throws DigestException, IOException, InterruptedException {
+    String targetImage = "simpleimagewithenvvar:gradle" + System.nanoTime();
+    String output =
+        JibRunHelper.buildToDockerDaemonAndRun(
+            simpleTestProject, targetImage, "build-truststore-arg.gradle");
+    assertThat(Arrays.asList(output.split("\n"))).containsExactly("Hello, world. ",
+        "1970-01-01T00:00:01Z", "-Djavax.net.ssl.trustStore=/var/cache/proxy.crt.jks");
+    assertThat(processOutput(output)).containsExactly("Hello, world. ", "1970-01-01T00:00:01Z");
   }
 }
