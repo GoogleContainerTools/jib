@@ -625,6 +625,7 @@ public class SingleProjectIntegrationTest {
   @Test
   public void testDockerDaemon_containerWithTruststoreJvmArgument()
       throws DigestException, IOException, InterruptedException {
+    System.out.println("HELLO");
     String targetImage = "simpleimagewithenvvar:gradle" + System.nanoTime();
     String output =
         JibRunHelper.buildToDockerDaemonAndRun(
