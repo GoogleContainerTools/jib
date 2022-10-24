@@ -14,7 +14,7 @@ dependencies {
   compile files('libs/dependency-1.0.0.jar')
 }
 
-jib{
+jib {
   to.image = System.getProperty("_TARGET_IMAGE")
   container {
     environment = [JAVA_TOOL_OPTIONS:'-Djavax.net.ssl.trustStore=/var/cache/proxy.crt.jks']

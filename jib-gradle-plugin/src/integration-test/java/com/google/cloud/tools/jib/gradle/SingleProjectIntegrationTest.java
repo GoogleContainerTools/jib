@@ -629,8 +629,11 @@ public class SingleProjectIntegrationTest {
     String output =
         JibRunHelper.buildToDockerDaemonAndRun(
             simpleTestProject, targetImage, "build-truststore-arg.gradle");
-    assertThat(Arrays.asList(output.split("\n"))).containsExactly("Hello, world. ",
-        "1970-01-01T00:00:01Z", "-Djavax.net.ssl.trustStore=/var/cache/proxy.crt.jks");
+    assertThat(Arrays.asList(output.split("\n")))
+        .containsExactly(
+            "Hello, world. ",
+            "1970-01-01T00:00:01Z",
+            "-Djavax.net.ssl.trustStore=/var/cache/proxy.crt.jks");
     assertThat(processOutput(output)).containsExactly("Hello, world. ", "1970-01-01T00:00:01Z");
   }
 }
