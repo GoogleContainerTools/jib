@@ -14,6 +14,8 @@ fi
 docker stop $(docker ps --all --quiet) || true
 docker kill $(docker ps --all --quiet) || true
 
+docker --version
+
 cd github/jib
 
 # we only run integration tests on jib-core for presubmit
