@@ -10,13 +10,6 @@ if [ "${KOKORO_JOB_CLUSTER}" = "MACOS_EXTERNAL" ]; then
 source github/jib/kokoro/docker_setup.sh
 fi
 
-# docker-credential-gcr uses GOOGLE_APPLICATION_CREDENTIALS as the credentials key file
-export GOOGLE_APPLICATION_CREDENTIALS=${KOKORO_KEYSTORE_DIR}/72743_jib_integration_testing_key
-
-# Overrides default search order to check credentials in GOOGLE_APPLICATION_CREDENTIALS
-docker-credential-gcr config --token-source="env"
-docker-credential-gcr configure-docker
-
 # Stops any left-over containers.
 docker stop $(docker ps --all --quiet) || true
 docker kill $(docker ps --all --quiet) || true
@@ -24,5 +17,4 @@ docker kill $(docker ps --all --quiet) || true
 cd github/jib
 
 # we only run integration tests on jib-core for presubmit
-export JIB_INTEGRATION_TESTING_PROJECT=jib-integration-testing
-./gradlew clean build :jib-gradle-plugin:integrationTest --info --stacktrace
+./gradlew clean build :jib-core:integrationTest --info --stacktrace
