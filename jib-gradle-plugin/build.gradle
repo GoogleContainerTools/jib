@@ -78,7 +78,7 @@ gradlePlugin {
     }
   }
 }
-tasks.publishPlugins.dependsOn integrationTest
+tasks.publishPlugins.dependsOn build
 /* RELEASE */
 
 /* ECLIPSE */
