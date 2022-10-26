@@ -68,7 +68,6 @@ pluginBundle {
 }
 
 gradlePlugin {
-  testSourceSets sourceSets.integrationTest, sourceSets.test
   plugins {
     jibPlugin {
       id = 'com.google.cloud.tools.jib'
@@ -78,7 +77,7 @@ gradlePlugin {
     }
   }
 }
-tasks.publishPlugins.dependsOn integrationTest
+tasks.publishPlugins.dependsOn build
 /* RELEASE */
 
 /* ECLIPSE */
