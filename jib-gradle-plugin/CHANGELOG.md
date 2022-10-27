@@ -4,12 +4,15 @@ All notable changes to this project will be documented in this file.
 ## [unreleased]
 
 ### Added
+- Added lazy evaluation for `jib.container.creationTime` and `jib.container.filesModificationTime` parameters using Gradle Property and Provider. ([#3709](https://github.com/GoogleContainerTools/jib/pull/3709))
 
 ### Changed
 - Upgraded Google HTTP libraries to 1.42.2 ([#3745](https://github.com/GoogleContainerTools/jib/pull/3745))
 
 ### Fixed
 - Fixed issue with `jibBuildTar`'s `UP-TO-DATE` check by adding back main `SourceSet`'s outputs to task dependency ([#3793](https://github.com/GoogleContainerTools/jib/pull/3793))
+
+Thanks to our community contributors @creckord!
 
 ## 3.3.0
 
