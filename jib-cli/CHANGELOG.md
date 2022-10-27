@@ -6,14 +6,10 @@ All notable changes to this project will be documented in this file.
 ### Added
 
 ### Changed
-
-### Fixed
-
-## 0.12.0
-
-### Changed
 - Upgraded Google HTTP libraries to 1.42.2 ([#3745](https://github.com/GoogleContainerTools/jib/pull/3745))
 - Re-synchronized jackson dependencies with BOM to use latest versions ([#3768](https://github.com/GoogleContainerTools/jib/pull/3768))
+
+### Fixed
 
 ## 0.11.0
 
