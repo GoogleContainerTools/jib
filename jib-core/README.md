@@ -22,7 +22,7 @@ Add Jib Core as a dependency using Maven:
 <dependency>
   <groupId>com.google.cloud.tools</groupId>
   <artifactId>jib-core</artifactId>
-  <version>0.22.0</version>
+  <version>0.23.0</version>
 </dependency>
 ```
 
@@ -30,7 +30,7 @@ Add Jib Core as a dependency using Gradle:
 
 ```groovy
 dependencies {
-  compile 'com.google.cloud.tools:jib-core:0.22.0'
+  compile 'com.google.cloud.tools:jib-core:0.23.0'
 }
 ```
 

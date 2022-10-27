@@ -6,9 +6,13 @@ All notable changes to this project will be documented in this file.
 ### Added
 
 ### Changed
-- Upgraded Google HTTP libraries to 1.42.2 ([#3745](https://github.com/GoogleContainerTools/jib/pull/3745))
 
 ### Fixed
+
+## 3.3.1
+
+### Changed
+- Upgraded Google HTTP libraries to 1.42.2 ([#3745](https://github.com/GoogleContainerTools/jib/pull/3745))
 
 ## 3.3.0
 

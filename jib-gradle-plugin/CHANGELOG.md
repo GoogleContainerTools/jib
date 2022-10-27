@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 ## [unreleased]
 
 ### Added
+
+### Changed
+
+### Fixed
+
+## 3.3.1
+
+### Added
 - Added lazy evaluation for `jib.container.creationTime` and `jib.container.filesModificationTime` parameters using Gradle Property and Provider. ([#3709](https://github.com/GoogleContainerTools/jib/pull/3709))
 
 ### Changed
