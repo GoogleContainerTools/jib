@@ -122,11 +122,11 @@ To use a local build of the `jib-gradle-plugin`:
           }
         }
         ```
-  1. Modify your test project's `build.gradle` to use the snapshot version
+  1. Modify your test project's `build.gradle` to use the [latest snapshot version](jib-gradle-plugin/gradle.properties)
         ```groovy
         plugins {
-          // id 'com.google.cloud.tools.jib' version '3.3.1'
-          id 'com.google.cloud.tools.jib' version '3.3.2-SNAPSHOT'
+          // id 'com.google.cloud.tools.jib' version 'major.minor.patch'
+          id 'com.google.cloud.tools.jib' version 'major.minor.patch-SNAPSHOT'
         }
 
         ```
