@@ -1,2 +1,8 @@
+pluginManagement {
+    repositories {
+        mavenCentral()
+        gradlePluginPortal()
+    }
+}
 rootProject.name = 'spring-boot'
 rootProject.buildFileName = 'build-layered.gradle'
