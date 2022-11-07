@@ -76,6 +76,7 @@ subprojects {
       this as MavenArtifactRepository
       metadataSources {
         mavenPom()
+        artifact()
         ignoreGradleMetadataRedirection()
       }
     }
