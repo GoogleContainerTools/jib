@@ -70,22 +70,7 @@ subprojects {
   group 'com.google.cloud.tools'
 
   repositories {
-    mavenCentral {
-      metadataSources {
-        mavenPom()
-        artifact()
-        ignoreGradleMetadataRedirection()
-      }
-    }
-    // Workaround from: https://github.com/gradle/gradle/issues/15406#issuecomment-1020352934
-    gradlePluginPortal {
-      this as MavenArtifactRepository
-      metadataSources {
-        mavenPom()
-        artifact()
-        ignoreGradleMetadataRedirection()
-      }
-    }
+    mavenCentral()
   }
 
   apply plugin: 'java'
