@@ -16,7 +16,6 @@
 
 package com.google.cloud.tools.jib.registry.credentials;
 
-import com.google.api.client.util.Base64;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import com.google.cloud.tools.jib.registry.credentials.json.DockerConfigTemplate;
 import com.google.common.io.Resources;
@@ -25,6 +24,7 @@ import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Base64;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -32,7 +32,7 @@ import org.junit.Test;
 public class DockerConfigTest {
 
   private static String decodeBase64(String base64String) {
-    return new String(Base64.decodeBase64(base64String), StandardCharsets.UTF_8);
+    return new String(Base64.getDecoder().decode(base64String), StandardCharsets.UTF_8);
   }
 
   @Test

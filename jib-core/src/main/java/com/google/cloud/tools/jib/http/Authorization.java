@@ -16,8 +16,8 @@
 
 package com.google.cloud.tools.jib.http;
 
-import com.google.api.client.util.Base64;
 import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 import java.util.Objects;
 
 /**
@@ -38,7 +38,7 @@ public class Authorization {
    */
   public static Authorization fromBasicCredentials(String username, String secret) {
     String credentials = username + ":" + secret;
-    String token = Base64.encodeBase64String(credentials.getBytes(StandardCharsets.UTF_8));
+    String token = Base64.getEncoder().encodeToString(credentials.getBytes(StandardCharsets.UTF_8));
     return new Authorization("Basic", token);
   }
 

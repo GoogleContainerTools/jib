@@ -16,10 +16,10 @@
 
 package com.google.cloud.tools.jib.registry;
 
-import com.google.api.client.util.Base64;
 import com.google.cloud.tools.jib.http.Authorization;
 import com.google.common.collect.Multimap;
 import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -53,8 +53,8 @@ public class DockerRegistryBearerTokenTest {
   @Test
   public void testDecode_nonToken() {
     String base64Text =
-        Base64.encodeBase64String(
-            "something other than a JWT token".getBytes(StandardCharsets.UTF_8));
+        Base64.getEncoder()
+            .encodeToString("something other than a JWT token".getBytes(StandardCharsets.UTF_8));
     Multimap<String, String> decoded = RegistryClient.decodeTokenRepositoryGrants(base64Text);
     Assert.assertNull(decoded);
   }
