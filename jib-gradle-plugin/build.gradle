@@ -45,7 +45,7 @@ dependencies {
   integrationTestImplementation dependencyStrings.JBCRYPT
 
   // only for testing a concrete Spring Boot example in a test (not for test infrastructure)
-  testImplementation 'org.springframework.boot:spring-boot-gradle-plugin:2.2.11.RELEASE'
+  testImplementation 'org.springframework.boot:spring-boot-gradle-plugin:3.0.0'
 }
 
 /* RELEASE */
