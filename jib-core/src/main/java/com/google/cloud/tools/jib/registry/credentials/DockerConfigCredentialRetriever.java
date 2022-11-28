@@ -19,7 +19,6 @@ package com.google.cloud.tools.jib.registry.credentials;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.api.client.util.Base64;
 import com.google.cloud.tools.jib.api.Credential;
 import com.google.cloud.tools.jib.api.LogEvent;
 import com.google.cloud.tools.jib.registry.RegistryAliasGroup;
@@ -31,6 +30,7 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Base64;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Consumer;
@@ -144,7 +144,7 @@ public class DockerConfigCredentialRetriever {
         if (auth.getAuth() != null) {
           // 'auth' is a basic authentication token that should be parsed back into credentials
           String usernameColonPassword =
-              new String(Base64.decodeBase64(auth.getAuth()), StandardCharsets.UTF_8);
+              new String(Base64.getDecoder().decode(auth.getAuth()), StandardCharsets.UTF_8);
           String username = usernameColonPassword.substring(0, usernameColonPassword.indexOf(":"));
           String password = usernameColonPassword.substring(usernameColonPassword.indexOf(":") + 1);
           logger.accept(

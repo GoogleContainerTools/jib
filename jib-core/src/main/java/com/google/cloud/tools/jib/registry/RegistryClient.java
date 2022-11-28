@@ -18,7 +18,6 @@ package com.google.cloud.tools.jib.registry;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.google.api.client.http.HttpStatusCodes;
-import com.google.api.client.util.Base64;
 import com.google.cloud.tools.jib.api.Credential;
 import com.google.cloud.tools.jib.api.DescriptorDigest;
 import com.google.cloud.tools.jib.api.LogEvent;
@@ -44,6 +43,7 @@ import com.google.common.collect.ImmutableSetMultimap;
 import com.google.common.collect.Multimap;
 import java.io.IOException;
 import java.net.URL;
+import java.util.Base64;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
@@ -195,10 +195,10 @@ public class RegistryClient {
     // parts (header, payload, signature), collated with a ".".  The header and payload are
     // JSON objects.
     String[] jwtParts = token.split("\\.", -1);
-    byte[] payloadData;
-    if (jwtParts.length != 3 || (payloadData = Base64.decodeBase64(jwtParts[1])) == null) {
+    if (jwtParts.length != 3) {
       return null;
     }
+    byte[] payloadData = Base64.getDecoder().decode(jwtParts[1]);
 
     // The payload looks like:
     // {
