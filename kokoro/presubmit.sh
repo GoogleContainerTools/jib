@@ -11,14 +11,17 @@ source github/jib/kokoro/docker_setup.sh
 fi
 
 # Try using docker host ip instead of localhost for http requests
-export DOCKER_IP="$(docker-machine ip default)"
+echo "$(docker-machine ip default)"
+export DOCKER_IP=$(hostname -i)
+echo "$DOCKER_IP"
+
+# From default hostname, get id of container to exclude
+CONTAINER_ID=$(hostname)
+echo "$CONTAINER_ID"
 
 # Stops any left-over containers.
-# From default hostname, get id of container to exclude
-DEFAULT_HOSTNAME=$(hostname)
-echo "$DEFAULT_HOSTNAME"
-docker stop $(docker ps --all --quiet | grep -v "$DEFAULT_HOSTNAME") || true
-docker kill $(docker ps --all --quiet | grep -v "$DEFAULT_HOSTNAME") || true
+docker stop $(docker ps --all --quiet | grep -v "$CONTAINER_ID") || true
+docker kill $(docker ps --all --quiet | grep -v "$CONTAINER_ID") || true
 
 cd github/jib
 
