@@ -10,6 +10,9 @@ if [ "${KOKORO_JOB_CLUSTER}" = "MACOS_EXTERNAL" ]; then
 source github/jib/kokoro/docker_setup.sh
 fi
 
+# Try using docker host ip instead of localhost for http requests
+export DOCKER_IP="$(docker-machine ip default)"
+
 # Stops any left-over containers.
 # From default hostname, get id of container to exclude
 DEFAULT_HOSTNAME=$(hostname)
