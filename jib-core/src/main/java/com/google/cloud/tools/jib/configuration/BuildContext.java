@@ -548,8 +548,9 @@ public class BuildContext implements Closeable {
   }
 
   /**
-   * Creates a new {@link com.google.cloud.tools.jib.registry.RegistryClient.Factory} for the base image with fields from the build
-   * configuration. The server URL is derived from the base {@link ImageConfiguration}.
+   * Creates a new {@link com.google.cloud.tools.jib.registry.RegistryClient.Factory} for the base
+   * image with fields from the build configuration. The server URL is derived from the base {@link
+   * ImageConfiguration}.
    *
    * @return a new {@link com.google.cloud.tools.jib.registry.RegistryClient.Factory}
    */
@@ -558,9 +559,9 @@ public class BuildContext implements Closeable {
   }
 
   /**
-   * Creates a new {@link com.google.cloud.tools.jib.registry.RegistryClient.Factory} for the base image repository on the registry
-   * {@code serverUrl}. Compared to @link #newBaseImageRegistryClientFactory()), this method is
-   * useful to try a mirror.
+   * Creates a new {@link com.google.cloud.tools.jib.registry.RegistryClient.Factory} for the base
+   * image repository on the registry {@code serverUrl}. Compared to @link
+   * #newBaseImageRegistryClientFactory()), this method is useful to try a mirror.
    *
    * @param serverUrl the server URL for the registry (for example, {@code gcr.io})
    * @return a new {@link com.google.cloud.tools.jib.registry.RegistryClient.Factory}
@@ -572,8 +573,8 @@ public class BuildContext implements Closeable {
   }
 
   /**
-   * Creates a new {@link com.google.cloud.tools.jib.registry.RegistryClient.Factory} for the target image with fields from the build
-   * configuration.
+   * Creates a new {@link com.google.cloud.tools.jib.registry.RegistryClient.Factory} for the target
+   * image with fields from the build configuration.
    *
    * @return a new {@link com.google.cloud.tools.jib.registry.RegistryClient.Factory}
    */
