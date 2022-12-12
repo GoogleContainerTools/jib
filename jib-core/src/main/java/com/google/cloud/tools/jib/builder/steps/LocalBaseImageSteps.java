@@ -17,7 +17,7 @@
 package com.google.cloud.tools.jib.builder.steps;
 
 import com.fasterxml.jackson.databind.MapperFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.google.cloud.tools.jib.api.DescriptorDigest;
 import com.google.cloud.tools.jib.api.DockerClient;
 import com.google.cloud.tools.jib.api.ImageDetails;
@@ -215,12 +215,15 @@ public class LocalBaseImageSteps {
             "Extracting tar " + tarPath + " into " + destination)) {
       TarExtractor.extract(tarPath, destination);
 
-      InputStream manifestStream = Files.newInputStream(destination.resolve("manifest.json"));
-      DockerManifestEntryTemplate loadManifest =
-          new ObjectMapper()
-              .configure(MapperFeature.ACCEPT_CASE_INSENSITIVE_PROPERTIES, true)
-              .readValue(manifestStream, DockerManifestEntryTemplate[].class)[0];
-      manifestStream.close();
+      DockerManifestEntryTemplate loadManifest;
+      try (InputStream manifestStream =
+          Files.newInputStream(destination.resolve("manifest.json"))) {
+        loadManifest =
+            JsonMapper.builder()
+                .configure(MapperFeature.ACCEPT_CASE_INSENSITIVE_PROPERTIES, true)
+                .build()
+                .readValue(manifestStream, DockerManifestEntryTemplate[].class)[0];
+      }
 
       Path configPath = destination.resolve(loadManifest.getConfig());
       ContainerConfigurationTemplate configurationTemplate =
