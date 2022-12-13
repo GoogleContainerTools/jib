@@ -35,12 +35,11 @@ import com.google.cloud.tools.jib.plugins.common.PluginConfigurationProcessor;
 import com.google.cloud.tools.jib.plugins.common.globalconfig.GlobalConfig;
 import com.google.cloud.tools.jib.plugins.common.globalconfig.InvalidGlobalConfigException;
 import com.google.cloud.tools.jib.plugins.extension.JibPluginExtensionException;
-import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import java.io.IOException;
 import java.util.Optional;
 import java.util.concurrent.Future;
-import javax.annotation.Nullable;
+import javax.inject.Inject;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.GradleException;
 import org.gradle.api.tasks.Nested;
@@ -52,7 +51,7 @@ public class BuildImageTask extends DefaultTask implements JibTask {
 
   private static final String HELPFUL_SUGGESTIONS_PREFIX = "Build image failed";
 
-  @Nullable private JibExtension jibExtension;
+  private final JibExtension jibExtension;
 
   /**
    * This will call the property {@code "jib"} so that it is the same name as the extension. This
@@ -61,7 +60,6 @@ public class BuildImageTask extends DefaultTask implements JibTask {
    * @return the {@link JibExtension}.
    */
   @Nested
-  @Nullable
   public JibExtension getJib() {
     return jibExtension;
   }
@@ -73,7 +71,12 @@ public class BuildImageTask extends DefaultTask implements JibTask {
    */
   @Option(option = "image", description = "The image reference for the target image")
   public void setTargetImage(String targetImage) {
-    Preconditions.checkNotNull(jibExtension).getTo().setImage(targetImage);
+    jibExtension.getTo().setImage(targetImage);
+  }
+
+  @Inject
+  public BuildImageTask(JibExtension jibExtension) {
+    this.jibExtension = jibExtension;
   }
 
   /**
@@ -89,8 +92,6 @@ public class BuildImageTask extends DefaultTask implements JibTask {
   public void buildImage()
       throws IOException, BuildStepsExecutionException, CacheDirectoryCreationException,
           MainClassInferenceException, InvalidGlobalConfigException {
-    // Asserts required @Input parameters are not null.
-    Preconditions.checkNotNull(jibExtension);
     TaskCommon.disableHttpLogging();
     TempDirectoryProvider tempDirectoryProvider = new TempDirectoryProvider();
 
@@ -186,11 +187,5 @@ public class BuildImageTask extends DefaultTask implements JibTask {
       TaskCommon.finishUpdateChecker(projectProperties, updateCheckFuture);
       projectProperties.waitForLoggingThread();
     }
-  }
-
-  @Override
-  public BuildImageTask setJibExtension(JibExtension jibExtension) {
-    this.jibExtension = jibExtension;
-    return this;
   }
 }

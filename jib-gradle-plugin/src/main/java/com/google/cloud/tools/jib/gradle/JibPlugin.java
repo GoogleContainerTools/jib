@@ -96,34 +96,28 @@ public class JibPlugin implements Plugin<Project> {
 
     TaskContainer tasks = project.getTasks();
     TaskProvider<BuildImageTask> buildImageTask =
-        tasks.register(
-            BUILD_IMAGE_TASK_NAME,
-            BuildImageTask.class,
-            task -> {
-              task.setGroup("Jib");
-              task.setDescription("Builds a container image to a registry.");
-              task.setJibExtension(jibExtension);
-            });
+        tasks.register(BUILD_IMAGE_TASK_NAME, BuildImageTask.class, jibExtension);
+    buildImageTask.configure(
+        task -> {
+          task.setGroup("Jib");
+          task.setDescription("Builds a container image to a registry.");
+        });
 
     TaskProvider<BuildDockerTask> buildDockerTask =
-        tasks.register(
-            BUILD_DOCKER_TASK_NAME,
-            BuildDockerTask.class,
-            task -> {
-              task.setGroup("Jib");
-              task.setDescription("Builds a container image to a Docker daemon.");
-              task.setJibExtension(jibExtension);
-            });
+        tasks.register(BUILD_DOCKER_TASK_NAME, BuildDockerTask.class, jibExtension);
+    buildDockerTask.configure(
+        task -> {
+          task.setGroup("Jib");
+          task.setDescription("Builds a container image to a Docker daemon.");
+        });
 
     TaskProvider<BuildTarTask> buildTarTask =
-        tasks.register(
-            BUILD_TAR_TASK_NAME,
-            BuildTarTask.class,
-            task -> {
-              task.setGroup("Jib");
-              task.setDescription("Builds a container image to a tarball.");
-              task.setJibExtension(jibExtension);
-            });
+        tasks.register(BUILD_TAR_TASK_NAME, BuildTarTask.class, jibExtension);
+    buildTarTask.configure(
+        task -> {
+          task.setGroup("Jib");
+          task.setDescription("Builds a container image to a tarball.");
+        });
 
     tasks
         .register(SKAFFOLD_FILES_TASK_V2_NAME, FilesTaskV2.class)
