@@ -23,8 +23,7 @@ import com.google.cloud.tools.jib.gradle.JibExtension;
 import com.google.cloud.tools.jib.plugins.common.ContainerizingMode;
 import com.google.cloud.tools.jib.plugins.common.InvalidContainerizingModeException;
 import com.google.cloud.tools.jib.plugins.common.PluginConfigurationProcessor;
-import com.google.common.base.Preconditions;
-import javax.annotation.Nullable;
+import javax.inject.Inject;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.GradleException;
 import org.gradle.api.tasks.TaskAction;
@@ -37,18 +36,16 @@ import org.gradle.api.tasks.TaskAction;
  */
 public class SyncMapTask extends DefaultTask {
 
-  @Nullable private JibExtension jibExtension;
+  private final JibExtension jibExtension;
 
-  public SyncMapTask setJibExtension(JibExtension jibExtension) {
+  @Inject
+  public SyncMapTask(JibExtension jibExtension) {
     this.jibExtension = jibExtension;
-    return this;
   }
 
   /** Task Action, lists files and container targets. */
   @TaskAction
   public void listFilesAndTargets() {
-    Preconditions.checkNotNull(jibExtension);
-
     try (TempDirectoryProvider tempDirectoryProvider = new TempDirectoryProvider()) {
       GradleProjectProperties projectProperties =
           GradleProjectProperties.getForProject(

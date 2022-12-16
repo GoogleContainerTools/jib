@@ -119,17 +119,10 @@ public class JibPlugin implements Plugin<Project> {
           task.setDescription("Builds a container image to a tarball.");
         });
 
-    tasks
-        .register(SKAFFOLD_FILES_TASK_V2_NAME, FilesTaskV2.class)
-        .configure(task -> task.setJibExtension(jibExtension));
-    tasks
-        .register(SKAFFOLD_INIT_TASK_NAME, InitTask.class)
-        .configure(task -> task.setJibExtension(jibExtension));
+    tasks.register(SKAFFOLD_FILES_TASK_V2_NAME, FilesTaskV2.class, jibExtension);
+    tasks.register(SKAFFOLD_INIT_TASK_NAME, InitTask.class, jibExtension);
     TaskProvider<SyncMapTask> syncMapTask =
-        tasks.register(
-            SKAFFOLD_SYNC_MAP_TASK_NAME,
-            SyncMapTask.class,
-            task -> task.setJibExtension(jibExtension));
+        tasks.register(SKAFFOLD_SYNC_MAP_TASK_NAME, SyncMapTask.class, jibExtension);
 
     // A check to catch older versions of Jib.  This can be removed once we are certain people
     // are using Jib 1.3.1 or later.

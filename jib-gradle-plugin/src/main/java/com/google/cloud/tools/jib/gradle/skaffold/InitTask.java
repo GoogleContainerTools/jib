@@ -18,9 +18,8 @@ package com.google.cloud.tools.jib.gradle.skaffold;
 
 import com.google.cloud.tools.jib.gradle.JibExtension;
 import com.google.cloud.tools.jib.plugins.common.SkaffoldInitOutput;
-import com.google.common.base.Preconditions;
 import java.io.IOException;
-import javax.annotation.Nullable;
+import javax.inject.Inject;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.Project;
 import org.gradle.api.tasks.TaskAction;
@@ -32,11 +31,11 @@ import org.gradle.api.tasks.TaskAction;
  */
 public class InitTask extends DefaultTask {
 
-  @Nullable private JibExtension jibExtension;
+  private final JibExtension jibExtension;
 
-  public InitTask setJibExtension(JibExtension jibExtension) {
+  @Inject
+  public InitTask(JibExtension jibExtension) {
     this.jibExtension = jibExtension;
-    return this;
   }
 
   /**
@@ -52,7 +51,7 @@ public class InitTask extends DefaultTask {
       return;
     }
     SkaffoldInitOutput skaffoldInitOutput = new SkaffoldInitOutput();
-    skaffoldInitOutput.setImage(Preconditions.checkNotNull(jibExtension).getTo().getImage());
+    skaffoldInitOutput.setImage(jibExtension.getTo().getImage());
     if (!project.equals(project.getRootProject())) {
       skaffoldInitOutput.setProject(project.getName());
     }

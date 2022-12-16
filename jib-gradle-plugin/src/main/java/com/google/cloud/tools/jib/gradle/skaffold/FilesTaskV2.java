@@ -19,7 +19,6 @@ package com.google.cloud.tools.jib.gradle.skaffold;
 import com.google.cloud.tools.jib.gradle.ExtraDirectoryParameters;
 import com.google.cloud.tools.jib.gradle.JibExtension;
 import com.google.cloud.tools.jib.plugins.common.SkaffoldFilesOutput;
-import com.google.common.base.Preconditions;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -30,7 +29,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
-import javax.annotation.Nullable;
+import javax.inject.Inject;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Configuration;
@@ -52,11 +51,11 @@ public class FilesTaskV2 extends DefaultTask {
 
   private final SkaffoldFilesOutput skaffoldFilesOutput = new SkaffoldFilesOutput();
 
-  @Nullable private JibExtension jibExtension;
+  private final JibExtension jibExtension;
 
-  public FilesTaskV2 setJibExtension(JibExtension jibExtension) {
+  @Inject
+  public FilesTaskV2(JibExtension jibExtension) {
     this.jibExtension = jibExtension;
-    return this;
   }
 
   /**
@@ -66,7 +65,6 @@ public class FilesTaskV2 extends DefaultTask {
    */
   @TaskAction
   public void listFiles() throws IOException {
-    Preconditions.checkNotNull(jibExtension);
     Project project = getProject();
 
     // If this is not the root project, add the root project's build.gradle and settings.gradle
@@ -187,8 +185,6 @@ public class FilesTaskV2 extends DefaultTask {
    * @return the set of project dependencies
    */
   private Set<ProjectDependency> findProjectDependencies(Project project) {
-    Preconditions.checkNotNull(jibExtension);
-
     Set<ProjectDependency> projectDependencies = new HashSet<>();
     Deque<Project> projects = new ArrayDeque<>();
     projects.push(project);
