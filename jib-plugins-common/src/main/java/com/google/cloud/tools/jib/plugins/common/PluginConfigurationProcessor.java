@@ -595,8 +595,13 @@ public class PluginConfigurationProcessor {
             || !rawConfiguration.getJvmFlags().isEmpty()
             || !rawExtraClasspath.isEmpty()
             || rawConfiguration.getExpandClasspathDependencies())) {
+      // in a multi-module project it is not rare to configure a ton of jvmflags, sometimes
+      // classpath
+      // but having a submodule overriding entrypoint and ignoring all that is intended when such a
+      // config is done
+      // so just log it for user awareness but as an INFO, it is NOT an error
       projectProperties.log(
-          LogEvent.warn(
+          LogEvent.info(
               "mainClass, extraClasspath, jvmFlags, and expandClasspathDependencies are ignored "
                   + "when entrypoint is specified"));
     }
