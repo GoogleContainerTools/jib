@@ -642,7 +642,7 @@ public class PluginConfigurationProcessorTest {
     assertThat(buildPlan.getEntrypoint()).containsExactly("custom", "entrypoint").inOrder();
     verify(projectProperties)
         .log(
-            LogEvent.warn(
+            LogEvent.info(
                 "mainClass, extraClasspath, jvmFlags, and expandClasspathDependencies are ignored "
                     + "when entrypoint is specified"));
   }
@@ -664,7 +664,7 @@ public class PluginConfigurationProcessorTest {
     assertThat(buildPlan.getEntrypoint()).containsExactly("custom", "entrypoint").inOrder();
     verify(projectProperties)
         .log(
-            LogEvent.warn(
+            LogEvent.info(
                 "mainClass, extraClasspath, jvmFlags, and expandClasspathDependencies are ignored "
                     + "when entrypoint is specified"));
   }
@@ -686,7 +686,7 @@ public class PluginConfigurationProcessorTest {
     assertThat(buildPlan.getEntrypoint()).containsExactly("custom", "entrypoint").inOrder();
     verify(projectProperties)
         .log(
-            LogEvent.warn(
+            LogEvent.info(
                 "mainClass, extraClasspath, jvmFlags, and expandClasspathDependencies are ignored "
                     + "when entrypoint is specified"));
   }
