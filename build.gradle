@@ -144,7 +144,11 @@ subprojects {
     def googleChecks = resources.text.fromArchiveEntry(configurations.checkstyle[0], 'google_checks.xml').asString()
 
     // set the location of the suppressions file referenced in google_checks.xml
-    configProperties['org.checkstyle.google.suppressionfilter.config'] = getConfigDirectory().file('checkstyle-suppressions.xml').get().toString()
+    def suppressionsChecks = '''
+        <module name="SuppressionFilter">
+            <property name="file" value="${config_loc}/checkstyle-suppressions.xml"/>
+        </module>
+    '''
 
     // add in copyright header check on only java files (replace the last </module> in file)
     def copyrightChecks = '''
@@ -155,7 +159,7 @@ subprojects {
         </module>
     </module>
     '''
-    googleChecks = googleChecks.substring(0, googleChecks.lastIndexOf('</module>')) + copyrightChecks
+    googleChecks = googleChecks.substring(0, googleChecks.lastIndexOf('</module>')) + suppressionsChecks + copyrightChecks
 
     // this is the actual checkstyle config
     config = resources.text.fromString(googleChecks)
