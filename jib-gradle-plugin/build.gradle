@@ -19,7 +19,7 @@ if (version.contains('SNAPSHOT')) {
     }
   }
 
-  task install {
+  tasks.register("install") {
     dependsOn publishToMavenLocal
   }
 }

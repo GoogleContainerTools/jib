@@ -87,7 +87,7 @@ subprojects {
 
   // Use this to ensure we correctly override transitive dependencies
   // TODO: There might be a plugin that does this
-  task ensureTransitiveDependencyOverrides {
+  tasks.register("ensureTransitiveDependencyOverrides") {
     def dependenciesList = [dependencyStrings.GOOGLE_HTTP_CLIENT, dependencyStrings.GOOGLE_HTTP_CLIENT_APACHE_V2]
     def rules = dependenciesList.collectEntries{[/*name*/ it.split(':')[1], /*version*/ it.split(':')[2]]}
     doLast {
@@ -178,7 +178,7 @@ subprojects {
   }
   // jar to export tests classes for import in other project by doing:
   // testCompile project(path:':project-name', configuration:'tests')
-  task testJar(type: Jar) {
+  tasks.register("testJar", Jar) {
     from sourceSets.test.output.classesDirs
     classifier = 'tests'
   }
@@ -217,14 +217,14 @@ subprojects {
   }
 
   // Integration tests must be run explicitly
-  task integrationTest(type: Test) {
+  tasks.register("integrationTest", Test) {
     testClassesDirs = sourceSets.integrationTest.output.classesDirs
     classpath = sourceSets.integrationTest.runtimeClasspath
     systemProperty '_JIB_DISABLE_USER_AGENT', true
   }
 
 
-  task integrationTestJar(type: Jar) {
+  tasks.register("integrationTestJar", Jar) {
     from sourceSets.integrationTest.output.classesDirs
     classifier = 'integration-tests'
   }
@@ -278,14 +278,15 @@ subprojects {
   // for projects that release to maven central
   project.ext.configureMavenRelease = {
     apply plugin: 'maven-publish'
-    task sourceJar(type: Jar) {
+    tasks.register("sourceJar", Jar) {
       from sourceSets.main.allJava
       classifier 'sources'
     }
 
-    task javadocJar(type: Jar, dependsOn: javadoc) {
+    tasks.register("javadocJar", Jar) {
       from javadoc.destinationDir
       classifier 'javadoc'
+      dependsOn javadoc
     }
 
     publishing {
@@ -345,12 +346,12 @@ subprojects {
       destination = file("${project.buildDir}/pom/${project.name}-${project.version}.pom")
     }
     // define a special install task that handles installing locally for manual testing
-    task install {
+    tasks.register("install") {
       dependsOn publishToMavenLocal
     }
 
     // For kokoro sign and release to maven central
-    task prepareRelease(type: Copy) {
+    tasks.register("prepareRelease", Copy) {
       from jar
       from sourceJar
       from javadocJar
