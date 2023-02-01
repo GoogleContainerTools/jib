@@ -20,7 +20,6 @@ import com.google.cloud.tools.jib.Command;
 import com.google.common.collect.Lists;
 import java.io.IOException;
 import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -41,7 +40,7 @@ import org.mindrot.jbcrypt.BCrypt;
 public class LocalRegistry extends ExternalResource {
 
   private final String containerName = "registry-" + UUID.randomUUID();
-  public final String dockerHost =
+  private final String dockerHost =
       System.getenv("DOCKER_IP") != null ? System.getenv("DOCKER_IP") : "localhost";
   private final int port;
   @Nullable private final String username;
@@ -55,6 +54,17 @@ public class LocalRegistry extends ExternalResource {
     this.port = port;
     this.username = username;
     this.password = password;
+  }
+
+  public String getDockerHost() {
+    if (System.getenv("KOKORO_JOB_CLUSTER") != null
+        && System.getenv("KOKORO_JOB_CLUSTER").equals("GCP_UBUNTU_DOCKER")) {
+      // Since build script will be running inside a container, will need to use
+      // registry container IP to reach local registry through HTTP
+      return getRegistryContainerIp();
+    } else {
+      return dockerHost;
+    }
   }
 
   /** Starts the local registry. */
@@ -119,6 +129,25 @@ public class LocalRegistry extends ExternalResource {
     }
   }
 
+  /** Gets local registry container IP. */
+  public String getRegistryContainerIp() {
+    // Gets local registry container IP
+    List<String> dockerTokens =
+        Lists.newArrayList(
+            "docker",
+            "inspect",
+            "-f",
+            "'{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}'",
+            containerName);
+    try {
+      String result = new Command(dockerTokens).run();
+      // Remove single quotes and LF from result (e.g. '127.0.0.1'\n)
+      return result.replaceAll("['\n]", "");
+    } catch (InterruptedException | IOException ex) {
+      throw new RuntimeException("Could get local registry IP for: " + containerName, ex);
+    }
+  }
+
   /**
    * Pulls an image to a Docker daemon (not to this local registry).
    *
@@ -143,26 +172,27 @@ public class LocalRegistry extends ExternalResource {
   public void pullAndPushToLocal(String from, String to) throws IOException, InterruptedException {
     login();
     new Command("docker", "pull", from).run();
-    new Command("docker", "tag", from, dockerHost + ":" + port + "/" + to).run();
-    new Command("docker", "push", dockerHost + ":" + port + "/" + to).run();
+    new Command("docker", "tag", from, getDockerHost() + ":" + port + "/" + to).run();
+    new Command("docker", "push", getDockerHost() + ":" + port + "/" + to).run();
     logout();
   }
 
   private void login() throws IOException, InterruptedException {
     if (username != null && password != null) {
-      new Command("docker", "login", dockerHost + ":" + port, "-u", username, "--password-stdin")
+      new Command(
+              "docker", "login", getDockerHost() + ":" + port, "-u", username, "--password-stdin")
           .run(password.getBytes(StandardCharsets.UTF_8));
     }
   }
 
   private void logout() throws IOException, InterruptedException {
     if (username != null && password != null) {
-      new Command("docker", "logout", dockerHost + ":" + port).run();
+      new Command("docker", "logout", getDockerHost() + ":" + port).run();
     }
   }
 
-  private void waitUntilReady() throws InterruptedException, MalformedURLException {
-    URL queryUrl = new URL("http://" + dockerHost + ":" + port + "/v2/_catalog");
+  private void waitUntilReady() throws InterruptedException, IOException {
+    URL queryUrl = new URL("http://" + getDockerHost() + ":" + port + "/v2/_catalog");
 
     for (int i = 0; i < 40; i++) {
       try {

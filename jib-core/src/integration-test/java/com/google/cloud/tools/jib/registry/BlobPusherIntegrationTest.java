@@ -34,8 +34,7 @@ public class BlobPusherIntegrationTest {
   @ClassRule public static final LocalRegistry localRegistry = new LocalRegistry(5000);
 
   private final FailoverHttpClient httpClient = new FailoverHttpClient(true, false, ignored -> {});
-  private final String dockerHost =
-      System.getenv("DOCKER_IP") != null ? System.getenv("DOCKER_IP") : "localhost";
+  private final String dockerHost = localRegistry.getDockerHost();
 
   @Test
   public void testPush() throws DigestException, IOException, RegistryException {
