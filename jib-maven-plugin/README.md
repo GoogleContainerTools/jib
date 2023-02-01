@@ -383,7 +383,7 @@ Property | Type | Default | Description
 Some options can be set in the global Jib configuration file. The file is at the following locations on each platform:
 
 * *Linux: `[config root]/google-cloud-tools-java/jib/config.json`, where `[config root]` is `$XDG_CONFIG_HOME` (`$HOME/.config/` if not set)*
-* *Mac: `[config root]/Google/Jib/config.json`, where `[config root]` is `$XDG_CONFIG_HOME` (`$HOME/Library/Preferences/Config/` if not set)*
+* *Mac: `[config root]/Google/Jib/config.json`, where `[config root]` is `$XDG_CONFIG_HOME` (`$HOME/Library/Preferences/` if not set)*
 * *Windows: `[config root]\Google\Jib\Config\config.json`, where `[config root]` is `%XDG_CONFIG_HOME%` (`%LOCALAPPDATA%` if not set)*
 
 #### Properties

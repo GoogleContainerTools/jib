@@ -99,7 +99,7 @@ jobs:
           asset_content_type: text/plain
 
       - name: Create Jib CLI release checklist issue
-        uses: JasonEtco/create-an-issue@v2.8.0
+        uses: JasonEtco/create-an-issue@v2.9.1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           RELEASE_NAME: v${{ github.event.inputs.release_version }}-cli

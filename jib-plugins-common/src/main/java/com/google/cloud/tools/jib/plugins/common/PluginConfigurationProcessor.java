@@ -596,7 +596,7 @@ public class PluginConfigurationProcessor {
             || !rawExtraClasspath.isEmpty()
             || rawConfiguration.getExpandClasspathDependencies())) {
       projectProperties.log(
-          LogEvent.warn(
+          LogEvent.info(
               "mainClass, extraClasspath, jvmFlags, and expandClasspathDependencies are ignored "
                   + "when entrypoint is specified"));
     }
