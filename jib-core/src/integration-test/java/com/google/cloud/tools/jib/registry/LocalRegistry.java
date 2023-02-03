@@ -20,6 +20,7 @@ import com.google.cloud.tools.jib.Command;
 import com.google.common.collect.Lists;
 import java.io.IOException;
 import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -193,7 +194,7 @@ public class LocalRegistry extends ExternalResource {
     }
   }
 
-  private void waitUntilReady() throws InterruptedException, IOException {
+  private void waitUntilReady() throws InterruptedException, MalformedURLException {
     LOGGER.info("DockerHost: " + getDockerHost());
     URL queryUrl = new URL("http://" + getDockerHost() + ":" + port + "/v2/_catalog");
     LOGGER.info("URL: " + queryUrl);
