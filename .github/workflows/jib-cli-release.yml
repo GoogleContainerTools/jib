@@ -50,7 +50,7 @@ jobs:
       - name: Generate SLSA subject for Jib CLI release binaries
         id: hash
         working-directory: jib-cli/build/distributions
-        run: echo "::set-output name=hashes::$(cat zip.sha256 | base64 -w0)"
+        run: echo "hashes=$(cat zip.sha256 | base64 -w0)" >> $GITHUB_OUTPUT
 
       - name: Create pull request
         uses: repo-sync/pull-request@v2.6.2
