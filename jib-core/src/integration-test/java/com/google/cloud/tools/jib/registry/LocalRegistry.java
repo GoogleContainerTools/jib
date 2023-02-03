@@ -32,6 +32,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import java.util.logging.Logger;
 import javax.annotation.Nullable;
 import org.junit.rules.ExternalResource;
 import org.mindrot.jbcrypt.BCrypt;
@@ -39,6 +40,7 @@ import org.mindrot.jbcrypt.BCrypt;
 /** Runs a local registry. */
 public class LocalRegistry extends ExternalResource {
 
+  private static final Logger LOGGER = Logger.getLogger(LocalRegistry.class.getName());
   private final String containerName = "registry-" + UUID.randomUUID();
   private final String dockerHost =
       System.getenv("DOCKER_IP") != null ? System.getenv("DOCKER_IP") : "localhost";
@@ -192,7 +194,9 @@ public class LocalRegistry extends ExternalResource {
   }
 
   private void waitUntilReady() throws InterruptedException, IOException {
+    LOGGER.info("DockerHost: " + getDockerHost());
     URL queryUrl = new URL("http://" + getDockerHost() + ":" + port + "/v2/_catalog");
+    LOGGER.info("URL: " + queryUrl);
 
     for (int i = 0; i < 40; i++) {
       try {
