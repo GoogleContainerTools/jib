@@ -19,6 +19,7 @@ package com.google.cloud.tools.jib.registry.credentials;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.google.cloud.tools.jib.api.Credential;
 import com.google.cloud.tools.jib.api.LogEvent;
 import com.google.cloud.tools.jib.registry.RegistryAliasGroup;
@@ -88,7 +89,9 @@ public class DockerConfigCredentialRetriever {
     }
 
     ObjectMapper objectMapper =
-        new ObjectMapper().configure(MapperFeature.ACCEPT_CASE_INSENSITIVE_PROPERTIES, true);
+        JsonMapper.builder()
+            .configure(MapperFeature.ACCEPT_CASE_INSENSITIVE_PROPERTIES, true)
+            .build();
     try (InputStream fileIn = Files.newInputStream(dockerConfigFile)) {
       if (legacyConfigFormat) {
         // legacy config format is the value of the "auths":{ <map> } block of the new config (i.e.,

@@ -115,28 +115,24 @@ public class ContainerizerIntegrationTest {
 
   private static void assertDockerInspect(String imageReference)
       throws IOException, InterruptedException {
-    String dockerContainerConfig = new Command("docker", "inspect", imageReference).run();
-    MatcherAssert.assertThat(
-        dockerContainerConfig,
-        CoreMatchers.containsString(
-            "            \"ExposedPorts\": {\n"
-                + "                \"1000/tcp\": {},\n"
-                + "                \"2000/tcp\": {},\n"
-                + "                \"2001/tcp\": {},\n"
-                + "                \"2002/tcp\": {},\n"
-                + "                \"3000/udp\": {}"));
-    MatcherAssert.assertThat(
-        dockerContainerConfig,
-        CoreMatchers.containsString(
-            "            \"Labels\": {\n"
-                + "                \"key1\": \"value1\",\n"
-                + "                \"key2\": \"value2\"\n"
-                + "            }"));
+    String dockerInspectExposedPorts =
+        new Command("docker", "inspect", "-f", "'{{json .Config.ExposedPorts}}'", imageReference)
+            .run();
+    String dockerInspectLabels =
+        new Command("docker", "inspect", "-f", "'{{json .Config.Labels}}'", imageReference).run();
     String dockerConfigEnv =
         new Command("docker", "inspect", "-f", "{{.Config.Env}}", imageReference).run();
+    String history = new Command("docker", "history", imageReference).run();
+
+    MatcherAssert.assertThat(
+        dockerInspectExposedPorts,
+        CoreMatchers.containsString(
+            "\"1000/tcp\":{},\"2000/tcp\":{},\"2001/tcp\":{},\"2002/tcp\":{},\"3000/udp\":{}"));
+    MatcherAssert.assertThat(
+        dockerInspectLabels,
+        CoreMatchers.containsString("\"key1\":\"value1\",\"key2\":\"value2\""));
     MatcherAssert.assertThat(dockerConfigEnv, CoreMatchers.containsString("env1=envvalue1"));
     MatcherAssert.assertThat(dockerConfigEnv, CoreMatchers.containsString("env2=envvalue2"));
-    String history = new Command("docker", "history", imageReference).run();
     MatcherAssert.assertThat(history, CoreMatchers.containsString("jib-integration-test"));
     MatcherAssert.assertThat(history, CoreMatchers.containsString("bazel build ..."));
   }
