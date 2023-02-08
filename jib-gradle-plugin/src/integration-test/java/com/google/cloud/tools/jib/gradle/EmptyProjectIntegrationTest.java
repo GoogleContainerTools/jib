@@ -24,6 +24,7 @@ import com.google.cloud.tools.jib.api.InvalidImageReferenceException;
 import java.io.IOException;
 import java.security.DigestException;
 import java.time.Instant;
+import java.util.logging.Logger;
 import org.hamcrest.CoreMatchers;
 import org.hamcrest.MatcherAssert;
 import org.junit.Assert;
@@ -32,6 +33,8 @@ import org.junit.Test;
 
 /** Integration tests for building empty project images. */
 public class EmptyProjectIntegrationTest {
+
+  private static final Logger LOGGER = Logger.getLogger(EmptyProjectIntegrationTest.class.getName());
 
   @ClassRule public static final TestProject emptyTestProject = new TestProject("empty");
 
@@ -44,9 +47,14 @@ public class EmptyProjectIntegrationTest {
    */
   private static void assertDockerInspect(String imageReference)
       throws IOException, InterruptedException {
-    String dockerInspect = new Command("docker", "inspect", imageReference).run();
+    String dockerInspectExposedPorts =
+            new Command("docker", "inspect", "-f", "'{{.Config.ExposedPorts}}'", imageReference).run();
+    String dockerInspectLabels =
+            new Command("docker", "inspect", "-f", "'{{.Config.Labels}}'", imageReference).run();
+    LOGGER.info(dockerInspectExposedPorts);
+    LOGGER.info(dockerInspectLabels);
     MatcherAssert.assertThat(
-        dockerInspect,
+        dockerInspectExposedPorts,
         CoreMatchers.containsString(
             "            \"ExposedPorts\": {\n"
                 + "                \"1000/tcp\": {},\n"
@@ -55,7 +63,7 @@ public class EmptyProjectIntegrationTest {
                 + "                \"2002/udp\": {},\n"
                 + "                \"2003/udp\": {}"));
     MatcherAssert.assertThat(
-        dockerInspect,
+        dockerInspectLabels,
         CoreMatchers.containsString(
             "            \"Labels\": {\n"
                 + "                \"key1\": \"value1\",\n"
