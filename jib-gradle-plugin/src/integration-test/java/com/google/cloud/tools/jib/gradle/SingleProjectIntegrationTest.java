@@ -107,8 +107,7 @@ public class SingleProjectIntegrationTest {
         new Command("docker", "inspect", "-f", "'{{json .Config.Labels}}'", imageReference).run();
 
     MatcherAssert.assertThat(
-        dockerInspectVolumes,
-        CoreMatchers.containsString("\"/var/log\":\"{}\",\"/var/log2\":\"{}\""));
+        dockerInspectVolumes, CoreMatchers.containsString("\"/var/log\":{},\"/var/log2\":{}"));
     MatcherAssert.assertThat(
         dockerInspectExposedPorts,
         CoreMatchers.containsString(
