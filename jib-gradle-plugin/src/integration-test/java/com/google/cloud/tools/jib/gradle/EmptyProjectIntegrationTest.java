@@ -44,23 +44,18 @@ public class EmptyProjectIntegrationTest {
    */
   private static void assertDockerInspect(String imageReference)
       throws IOException, InterruptedException {
-    String dockerInspect = new Command("docker", "inspect", imageReference).run();
+    String dockerInspectExposedPorts =
+        new Command("docker", "inspect", "-f", "'{{json .Config.ExposedPorts}}'", imageReference)
+            .run();
+    String dockerInspectLabels =
+        new Command("docker", "inspect", "-f", "'{{json .Config.Labels}}'", imageReference).run();
     MatcherAssert.assertThat(
-        dockerInspect,
+        dockerInspectExposedPorts,
         CoreMatchers.containsString(
-            "            \"ExposedPorts\": {\n"
-                + "                \"1000/tcp\": {},\n"
-                + "                \"2000/udp\": {},\n"
-                + "                \"2001/udp\": {},\n"
-                + "                \"2002/udp\": {},\n"
-                + "                \"2003/udp\": {}"));
+            "\"1000/tcp\":{},\"2000/udp\":{},\"2001/udp\":{},\"2002/udp\":{},\"2003/udp\":{}"));
     MatcherAssert.assertThat(
-        dockerInspect,
-        CoreMatchers.containsString(
-            "            \"Labels\": {\n"
-                + "                \"key1\": \"value1\",\n"
-                + "                \"key2\": \"value2\"\n"
-                + "            }"));
+        dockerInspectLabels,
+        CoreMatchers.containsString("\"key1\":\"value1\",\"key2\":\"value2\""));
   }
 
   @Test
