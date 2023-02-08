@@ -37,6 +37,8 @@ import java.security.DigestException;
 import java.time.Instant;
 import org.gradle.testkit.runner.BuildResult;
 import org.gradle.testkit.runner.UnexpectedBuildFailure;
+import org.hamcrest.CoreMatchers;
+import org.hamcrest.MatcherAssert;
 import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Rule;
@@ -96,27 +98,24 @@ public class SingleProjectIntegrationTest {
    */
   private static void assertDockerInspect(String imageReference)
       throws IOException, InterruptedException {
-    String dockerInspect = new Command("docker", "inspect", imageReference).run();
-    assertThat(dockerInspect)
-        .contains(
-            "            \"Volumes\": {\n"
-                + "                \"/var/log\": {},\n"
-                + "                \"/var/log2\": {}\n"
-                + "            },");
-    assertThat(dockerInspect)
-        .contains(
-            "            \"ExposedPorts\": {\n"
-                + "                \"1000/tcp\": {},\n"
-                + "                \"2000/udp\": {},\n"
-                + "                \"2001/udp\": {},\n"
-                + "                \"2002/udp\": {},\n"
-                + "                \"2003/udp\": {}");
-    assertThat(dockerInspect)
-        .contains(
-            "            \"Labels\": {\n"
-                + "                \"key1\": \"value1\",\n"
-                + "                \"key2\": \"value2\"\n"
-                + "            }");
+    String dockerInspectVolumes =
+        new Command("docker", "inspect", "-f", "'{{json .Config.Volumes}}'", imageReference).run();
+    String dockerInspectExposedPorts =
+        new Command("docker", "inspect", "-f", "'{{json .Config.ExposedPorts}}'", imageReference)
+            .run();
+    String dockerInspectLabels =
+        new Command("docker", "inspect", "-f", "'{{json .Config.Labels}}'", imageReference).run();
+
+    MatcherAssert.assertThat(
+        dockerInspectVolumes,
+        CoreMatchers.containsString("\"/var/log\":\"{}\",\"/var/log2\":\"{}\""));
+    MatcherAssert.assertThat(
+        dockerInspectExposedPorts,
+        CoreMatchers.containsString(
+            "\"1000/tcp\":{},\"2000/udp\":{},\"2001/udp\":{},\"2002/udp\":{},\"2003/udp\":{}"));
+    MatcherAssert.assertThat(
+        dockerInspectLabels,
+        CoreMatchers.containsString("\"key1\":\"value1\",\"key2\":\"value2\""));
   }
 
   private static String readDigestFile(Path digestPath) throws IOException, DigestException {

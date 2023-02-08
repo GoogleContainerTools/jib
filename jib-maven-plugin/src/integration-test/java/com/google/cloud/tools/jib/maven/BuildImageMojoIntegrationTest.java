@@ -53,6 +53,8 @@ import java.util.regex.Pattern;
 import javax.annotation.Nullable;
 import org.apache.maven.it.VerificationException;
 import org.apache.maven.it.Verifier;
+import org.hamcrest.CoreMatchers;
+import org.hamcrest.MatcherAssert;
 import org.junit.After;
 import org.junit.Assume;
 import org.junit.Before;
@@ -266,22 +268,20 @@ public class BuildImageMojoIntegrationTest {
 
   private static void assertDockerInspectParameters(String imageReference)
       throws IOException, InterruptedException {
-    String dockerInspect = new Command("docker", "inspect", imageReference).run();
-    assertThat(dockerInspect)
-        .contains(
-            "            \"ExposedPorts\": {\n"
-                + "                \"1000/tcp\": {},\n"
-                + "                \"2000/udp\": {},\n"
-                + "                \"2001/udp\": {},\n"
-                + "                \"2002/udp\": {},\n"
-                + "                \"2003/udp\": {}");
-    assertThat(dockerInspect)
-        .contains(
-            "            \"Labels\": {\n"
-                + "                \"key1\": \"value1\",\n"
-                + "                \"key2\": \"value2\"\n"
-                + "            }");
+    String dockerInspectExposedPorts =
+        new Command("docker", "inspect", "-f", "'{{json .Config.ExposedPorts}}'", imageReference)
+            .run();
+    String dockerInspectLabels =
+        new Command("docker", "inspect", "-f", "'{{json .Config.Labels}}'", imageReference).run();
     String history = new Command("docker", "history", imageReference).run();
+
+    MatcherAssert.assertThat(
+        dockerInspectExposedPorts,
+        CoreMatchers.containsString(
+            "\"1000/tcp\":{},\"2000/udp\":{},\"2001/udp\":{},\"2002/udp\":{},\"2003/udp\":{}"));
+    MatcherAssert.assertThat(
+        dockerInspectLabels,
+        CoreMatchers.containsString("\"key1\":\"value1\",\"key2\":\"value2\""));
     assertThat(history).contains("jib-maven-plugin");
   }
 
