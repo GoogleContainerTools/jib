@@ -127,7 +127,7 @@ public class ContainerizerIntegrationTest {
     MatcherAssert.assertThat(
         dockerInspectExposedPorts,
         CoreMatchers.containsString(
-            "\"1000/tcp\":{},\"2000/udp\":{},\"2001/udp\":{},\"2002/udp\":{},\"3000/udp\":{}"));
+            "\"1000/tcp\":{},\"2000/tcp\":{},\"2001/tcp\":{},\"2002/tcp\":{},\"3000/udp\":{}"));
     MatcherAssert.assertThat(
         dockerInspectLabels,
         CoreMatchers.containsString("\"key1\":\"value1\",\"key2\":\"value2\""));
