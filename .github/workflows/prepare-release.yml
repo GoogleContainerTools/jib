@@ -59,7 +59,7 @@ jobs:
             -Prelease.releaseVersion=${{ github.event.inputs.release_version }}
 
       - name: Create pull request
-        uses: repo-sync/pull-request@v2.6.2
+        uses: repo-sync/pull-request@v2.12.1
         id: create-pr
         with:
           # Use a personal token to file a PR to trigger other workflows (e.g., unit tests).
