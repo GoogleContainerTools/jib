@@ -66,7 +66,8 @@ public class LocalRegistry extends ExternalResource {
       String containerIP = getRegistryContainerIp();
       try {
         // Associate container IP to localhost
-        String addHost = new Command("bash", "-c", "echo \"" + containerIP + " localhost\" >> /etc/hosts").run();
+        String addHost =
+            new Command("bash", "-c", "echo \"" + containerIP + " localhost\" >> /etc/hosts").run();
         LOGGER.info(addHost);
         // String listHost = new Command("cat", "/etc/hosts").run();
         // LOGGER.info("cat /etc/hosts: " + listHost);
