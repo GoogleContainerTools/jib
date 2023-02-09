@@ -60,28 +60,7 @@ public class LocalRegistry extends ExternalResource {
   }
 
   public String getDockerHost() {
-    if (System.getenv("KOKORO_JOB_CLUSTER") != null
-        && System.getenv("KOKORO_JOB_CLUSTER").equals("GCP_UBUNTU_DOCKER")) {
-
-      String containerIP = getRegistryContainerIp();
-      try {
-        // Associate container IP to localhost
-        String addHost =
-            new Command("bash", "-c", "echo \"" + containerIP + " localhost\" >> /etc/hosts").run();
-        LOGGER.info(addHost);
-        // String listHost = new Command("cat", "/etc/hosts").run();
-        // LOGGER.info("cat /etc/hosts: " + listHost);
-      } catch (InterruptedException | IOException ex) {
-        throw new RuntimeException("Could not associate container IP to localhost: " + containerIP);
-      }
-      return "localhost";
-
-      // Since build script will be running inside a container, will need to use
-      // registry container IP to reach local registry through HTTP
-      // return getRegistryContainerIp();
-    } else {
-      return dockerHost;
-    }
+    return dockerHost;
   }
 
   /** Starts the local registry. */
@@ -132,6 +111,13 @@ public class LocalRegistry extends ExternalResource {
     }
     dockerTokens.add("registry:2");
     new Command(dockerTokens).run();
+
+    if (System.getenv("KOKORO_JOB_CLUSTER") != null
+        && System.getenv("KOKORO_JOB_CLUSTER").equals("GCP_UBUNTU_DOCKER")) {
+      String containerIp = getAndMapRegistryContainerIp();
+      LOGGER.info("Mapped registry container IP to localhost: " + containerIp);
+    }
+
     waitUntilReady();
   }
 
@@ -147,7 +133,9 @@ public class LocalRegistry extends ExternalResource {
   }
 
   /** Gets local registry container IP. */
-  public String getRegistryContainerIp() {
+  public String getAndMapRegistryContainerIp() {
+    String containerIp;
+
     // Gets local registry container IP
     List<String> dockerTokens =
         Lists.newArrayList(
@@ -159,10 +147,20 @@ public class LocalRegistry extends ExternalResource {
     try {
       String result = new Command(dockerTokens).run();
       // Remove single quotes and LF from result (e.g. '127.0.0.1'\n)
-      return result.replaceAll("['\n]", "");
+      containerIp = result.replaceAll("['\n]", "");
     } catch (InterruptedException | IOException ex) {
       throw new RuntimeException("Could get local registry IP for: " + containerName, ex);
     }
+
+    // Associate container IP with localhost
+    try {
+      String addHost =
+          new Command("bash", "-c", "echo \"" + containerIp + " localhost\" >> /etc/hosts").run();
+    } catch (InterruptedException | IOException ex) {
+      throw new RuntimeException("Could not associate container IP to localhost: " + containerIp);
+    }
+
+    return containerIp;
   }
 
   /**
