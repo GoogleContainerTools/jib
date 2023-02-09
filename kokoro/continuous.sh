@@ -17,9 +17,13 @@ export GOOGLE_APPLICATION_CREDENTIALS=${KOKORO_KEYSTORE_DIR}/72743_jib_integrati
 docker-credential-gcr config --token-source="env"
 docker-credential-gcr configure-docker
 
+# From default hostname, get id of container to exclude
+CONTAINER_ID=$(hostname)
+echo "$CONTAINER_ID"
+
 # Stops any left-over containers.
-docker stop $(docker ps --all --quiet) || true
-docker kill $(docker ps --all --quiet) || true
+docker stop $(docker ps --all --quiet | grep -v "$CONTAINER_ID") || true
+docker kill $(docker ps --all --quiet | grep -v "$CONTAINER_ID") || true
 
 # Sets the integration testing project.
 export JIB_INTEGRATION_TESTING_PROJECT=jib-integration-testing
