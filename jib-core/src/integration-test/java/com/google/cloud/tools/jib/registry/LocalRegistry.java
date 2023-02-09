@@ -62,9 +62,22 @@ public class LocalRegistry extends ExternalResource {
   public String getDockerHost() {
     if (System.getenv("KOKORO_JOB_CLUSTER") != null
         && System.getenv("KOKORO_JOB_CLUSTER").equals("GCP_UBUNTU_DOCKER")) {
+
+      String containerIP = getRegistryContainerIp();
+      try {
+        // Associate container IP to localhost
+        String addHost = new Command("bash", "-c", "echo \"" + containerIP + " localhost\" >> /etc/hosts").run();
+        LOGGER.info(addHost);
+        // String listHost = new Command("cat", "/etc/hosts").run();
+        // LOGGER.info("cat /etc/hosts: " + listHost);
+      } catch (InterruptedException | IOException ex) {
+        throw new RuntimeException("Could not associate container IP to localhost: " + containerIP);
+      }
+      return "localhost";
+
       // Since build script will be running inside a container, will need to use
       // registry container IP to reach local registry through HTTP
-      return getRegistryContainerIp();
+      // return getRegistryContainerIp();
     } else {
       return dockerHost;
     }
