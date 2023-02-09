@@ -10,12 +10,6 @@ if [ "${KOKORO_JOB_CLUSTER}" = "MACOS_EXTERNAL" ]; then
 source github/jib/kokoro/docker_setup.sh
 fi
 
-if [ "${KOKORO_JOB_CLUSTER}" = "GCP_UBUNTU_DOCKER" ]; then
-# Try setting docker host ip instead of localhost for http requests
-export DOCKER_IP="host.docker.internal"
-echo "$DOCKER_IP"
-fi
-
 # From default hostname, get id of container to exclude
 CONTAINER_ID=$(hostname)
 echo "$CONTAINER_ID"
