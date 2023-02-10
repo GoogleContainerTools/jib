@@ -20,5 +20,9 @@ docker kill $(docker ps --all --quiet | grep -v "$CONTAINER_ID") || true
 
 cd github/jib
 
+# temporary: add jib-cli integration tests for easier troubleshooting
+# revert this before merging
+./gradlew clean build :jib-cli:integrationTest --info --stacktrace
+
 # we only run integration tests on jib-core for presubmit
 ./gradlew clean build :jib-core:integrationTest --info --stacktrace
