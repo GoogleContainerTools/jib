@@ -336,6 +336,7 @@ public class JarCommandTest {
     } catch (InterruptedException | IOException ex) {
       throw new RuntimeException("Could get local registry IP for: " + containerName, ex);
     }
+    LOGGER.info("Container IP: " + containerIp);
     return containerIp;
   }
 
