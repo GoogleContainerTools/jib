@@ -237,7 +237,8 @@ public class JarCommandTest {
                 "eclipse-temurin:8-jdk-focal",
                 "--target",
                 "docker://spring-boot-jar",
-                jarPath.toString());
+                jarPath.toString(),
+                "--expose=8080");
     assertThat(exitCode).isEqualTo(0);
 
     runJarInDocker("spring-boot-jar");
@@ -262,6 +263,7 @@ public class JarCommandTest {
                 "--target",
                 "docker://packaged-spring-boot",
                 jarPath.toString(),
+                "--expose=8080",
                 "--mode=packaged");
     assertThat(exitCode).isEqualTo(0);
 
@@ -279,7 +281,8 @@ public class JarCommandTest {
                 "jar",
                 "--target=docker://cli-gcr-base",
                 "--from=gcr.io/google-appengine/openjdk:8",
-                jarPath.toString());
+                jarPath.toString(),
+                "--expose=8080");
     assertThat(exitCode).isEqualTo(0);
     String output = new Command("docker", "run", "--rm", "cli-gcr-base").run();
     assertThat(output).isEqualTo("Hello World");
@@ -357,8 +360,14 @@ public class JarCommandTest {
     //      LOGGER.info("Mapped registry container IP to localhost: " + containerIp);
     //    }
 
+    // Log port info
     String port = new Command("docker", "port", containerName).run();
     LOGGER.info("Port: " + port);
+
+    //    // Log container info
+    //    String dockerInspectOutput = new Command("docker", "inspect", containerName).run();
+    //    LOGGER.info(dockerInspectOutput);
+
     return containerName;
   }
 

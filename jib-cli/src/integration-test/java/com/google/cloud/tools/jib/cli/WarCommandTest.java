@@ -90,7 +90,8 @@ public class WarCommandTest {
     Path warPath = warParentPath.resolve("standard-war.war");
     Integer exitCode =
         new CommandLine(new JibCli())
-            .execute("war", "--target", "docker://exploded-war", warPath.toString());
+            .execute(
+                "war", "--target", "docker://exploded-war", "--expose=8080", warPath.toString());
     assertThat(exitCode).isEqualTo(0);
 
     runWarInDocker("exploded-war");
@@ -110,6 +111,7 @@ public class WarCommandTest {
                 "--target",
                 "docker://exploded-war-custom-jetty",
                 "--from=jetty:11.0-jre11-slim-openjdk",
+                "--expose=8080",
                 warPath.toString());
     assertThat(exitCode).isEqualTo(0);
 
@@ -132,6 +134,7 @@ public class WarCommandTest {
                 "--from=tomcat:10-jre8-openjdk-slim",
                 "--app-root",
                 "/usr/local/tomcat/webapps/ROOT",
+                "--expose=8080",
                 warPath.toString());
     assertThat(exitCode).isEqualTo(0);
 
@@ -212,8 +215,14 @@ public class WarCommandTest {
     //      LOGGER.info("Mapped registry container IP to localhost: " + containerIp);
     //    }
 
+    // Log port info
     String port = new Command("docker", "port", containerName).run();
     LOGGER.info("Port: " + port);
+
+    //    // Log container info
+    //    String dockerInspectOutput = new Command("docker", "inspect", containerName).run();
+    //    LOGGER.info(dockerInspectOutput);
+
     return containerName;
   }
 
