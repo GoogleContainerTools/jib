@@ -30,4 +30,5 @@ export JIB_INTEGRATION_TESTING_PROJECT=jib-integration-testing
 
 cd github/jib
 
-./gradlew clean build integrationTest --info --stacktrace
+# ./gradlew clean build integrationTest --info --stacktrace
+./gradlew clean build :jib-cli:integrationTest --info --stacktrace
