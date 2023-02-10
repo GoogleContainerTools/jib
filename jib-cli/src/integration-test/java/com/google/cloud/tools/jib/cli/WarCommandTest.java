@@ -198,7 +198,8 @@ public class WarCommandTest {
                 "run",
                 "--rm",
                 "--detach",
-                "-p8080:8080",
+                "-p",
+                "8080:8080",
                 name,
                 "--privileged",
                 "--network=host")
@@ -210,6 +211,9 @@ public class WarCommandTest {
     //      String containerIp = getAndMapRegistryContainerIp(containerName);
     //      LOGGER.info("Mapped registry container IP to localhost: " + containerIp);
     //    }
+
+    String port = new Command("docker", "port", containerName).run();
+    LOGGER.info("Port: " + port);
     return containerName;
   }
 
