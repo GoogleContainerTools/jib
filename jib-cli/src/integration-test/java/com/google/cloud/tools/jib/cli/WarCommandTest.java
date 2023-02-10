@@ -158,6 +158,7 @@ public class WarCommandTest {
       } catch (IOException ignored) {
         // ignored
         LOGGER.info("Exception: " + ignored);
+        LOGGER.info(ignored.getStackTrace().toString());
       }
     }
     return null;
