@@ -132,8 +132,8 @@ public class LocalRegistry extends ExternalResource {
     }
   }
 
-  /** Gets local registry container IP. */
-  public String getAndMapRegistryContainerIp() {
+  /** Gets local registry container IP and associates it to localhost. */
+  private String getAndMapRegistryContainerIp() {
     String containerIp;
 
     // Gets local registry container IP
