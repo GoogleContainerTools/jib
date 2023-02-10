@@ -320,7 +320,7 @@ public class JarCommandTest {
     LOGGER.info("Container name: " + containerName);
     if (System.getenv("KOKORO_JOB_CLUSTER") != null
         && System.getenv("KOKORO_JOB_CLUSTER").equals("GCP_UBUNTU_DOCKER")) {
-      String containerIp = getAndMapRegistryContainerIp(name);
+      String containerIp = getAndMapRegistryContainerIp(containerName);
       LOGGER.info("Mapped registry container IP to localhost: " + containerIp);
     }
     return containerName;
