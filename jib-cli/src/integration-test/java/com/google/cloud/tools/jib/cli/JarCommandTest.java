@@ -342,16 +342,7 @@ public class JarCommandTest {
 
   private String runJarInDocker(String name) throws IOException, InterruptedException {
     LOGGER.info("Jar name: " + name);
-    String output =
-        new Command(
-                "docker",
-                "run",
-                "--rm",
-                "--detach",
-                "-p",
-                "8080:8080",
-                name)
-            .run();
+    String output = new Command("docker", "run", "--rm", "--detach", "-p", "8080:8080", name).run();
     containerName = output.trim();
     LOGGER.info("Container name: " + containerName);
     if (System.getenv("KOKORO_JOB_CLUSTER") != null
