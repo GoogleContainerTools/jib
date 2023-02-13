@@ -212,6 +212,8 @@ public class JarCommandTest {
                 "eclipse-temurin:8-jdk-focal",
                 "--target",
                 "docker://spring-boot-jar-layered",
+                "--jvm-flags=-Dserver.address=localhost",
+                "--expose=8080",
                 jarPath.toString());
     assertThat(exitCode).isEqualTo(0);
 
@@ -237,8 +239,9 @@ public class JarCommandTest {
                 "eclipse-temurin:8-jdk-focal",
                 "--target",
                 "docker://spring-boot-jar",
-                jarPath.toString(),
-                "--expose=8080");
+                "--jvm-flags=-Dserver.address=localhost",
+                "--expose=8080",
+                jarPath.toString());
     assertThat(exitCode).isEqualTo(0);
 
     runJarInDocker("spring-boot-jar");
@@ -262,9 +265,10 @@ public class JarCommandTest {
                 "eclipse-temurin:8-jdk-focal",
                 "--target",
                 "docker://packaged-spring-boot",
-                jarPath.toString(),
+                "--mode=packaged",
+                "--jvm-flags=-Dserver.address=localhost",
                 "--expose=8080",
-                "--mode=packaged");
+                jarPath.toString());
     assertThat(exitCode).isEqualTo(0);
 
     runJarInDocker("packaged-spring-boot");
@@ -281,8 +285,9 @@ public class JarCommandTest {
                 "jar",
                 "--target=docker://cli-gcr-base",
                 "--from=gcr.io/google-appengine/openjdk:8",
-                jarPath.toString(),
-                "--expose=8080");
+                "--jvm-flags=-Dserver.address=localhost",
+                "--expose=8080",
+                jarPath.toString());
     assertThat(exitCode).isEqualTo(0);
     String output = new Command("docker", "run", "--rm", "cli-gcr-base").run();
     assertThat(output).isEqualTo("Hello World");
@@ -358,6 +363,10 @@ public class JarCommandTest {
     //    // Log container info
     //    String dockerInspectOutput = new Command("docker", "inspect", containerName).run();
     //    LOGGER.info(dockerInspectOutput);
+
+    // Log container info
+    //    String logs = new Command("docker", "logs", "-f", containerName).run();
+    //    LOGGER.info(logs);
 
     return containerName;
   }

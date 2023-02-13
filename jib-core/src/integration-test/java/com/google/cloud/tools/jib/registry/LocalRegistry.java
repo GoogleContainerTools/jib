@@ -149,7 +149,7 @@ public class LocalRegistry extends ExternalResource {
       // Remove single quotes and LF from result (e.g. '127.0.0.1'\n)
       containerIp = result.replaceAll("['\n]", "");
     } catch (InterruptedException | IOException ex) {
-      throw new RuntimeException("Could get local registry IP for: " + containerName, ex);
+      throw new RuntimeException("Could not get local registry IP for: " + containerName, ex);
     }
 
     // Associate container IP with localhost

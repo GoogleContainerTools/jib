@@ -91,7 +91,12 @@ public class WarCommandTest {
     Integer exitCode =
         new CommandLine(new JibCli())
             .execute(
-                "war", "--target", "docker://exploded-war", "--expose=8080", warPath.toString());
+                "war",
+                "--target",
+                "docker://exploded-war",
+                "--jvm-flags=-Dserver.address=localhost",
+                "--expose=8080",
+                warPath.toString());
     assertThat(exitCode).isEqualTo(0);
 
     runWarInDocker("exploded-war");
@@ -111,6 +116,7 @@ public class WarCommandTest {
                 "--target",
                 "docker://exploded-war-custom-jetty",
                 "--from=jetty:11.0-jre11-slim-openjdk",
+                "--jvm-flags=-Dserver.address=localhost",
                 "--expose=8080",
                 warPath.toString());
     assertThat(exitCode).isEqualTo(0);
@@ -134,6 +140,7 @@ public class WarCommandTest {
                 "--from=tomcat:10-jre8-openjdk-slim",
                 "--app-root",
                 "/usr/local/tomcat/webapps/ROOT",
+                "--jvm-flags=-Dserver.address=localhost",
                 "--expose=8080",
                 warPath.toString());
     assertThat(exitCode).isEqualTo(0);
@@ -212,6 +219,10 @@ public class WarCommandTest {
     //    // Log container info
     //    String dockerInspectOutput = new Command("docker", "inspect", containerName).run();
     //    LOGGER.info(dockerInspectOutput);
+
+    //    // Log container info
+    //    String logs = new Command("docker", "logs", "-f", containerName).run();
+    //    LOGGER.info(logs);
 
     return containerName;
   }
