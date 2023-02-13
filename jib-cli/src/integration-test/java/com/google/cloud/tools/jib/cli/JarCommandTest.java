@@ -350,9 +350,7 @@ public class JarCommandTest {
                 "--detach",
                 "-p",
                 "8080:8080",
-                name,
-                "--privileged",
-                "--network=host")
+                name)
             .run();
     containerName = output.trim();
     LOGGER.info("Container name: " + containerName);
