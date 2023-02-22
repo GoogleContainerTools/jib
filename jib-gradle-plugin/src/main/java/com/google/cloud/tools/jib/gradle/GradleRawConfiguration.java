@@ -98,7 +98,7 @@ public class GradleRawConfiguration implements RawConfiguration {
 
   @Override
   public List<String> getJvmFlags() {
-    return jibExtension.getContainer().getJvmFlags();
+    return jibExtension.getContainer().getJvmFlags().get();
   }
 
   @Override

@@ -175,7 +175,7 @@ public class JibExtensionTest {
 
   @Test
   public void testContainer() {
-    assertThat(testJibExtension.getContainer().getJvmFlags()).isEmpty();
+    assertThat(testJibExtension.getContainer().getJvmFlags().get()).isEmpty();
     assertThat(testJibExtension.getContainer().getEnvironment()).isEmpty();
     assertThat(testJibExtension.getContainer().getExtraClasspath()).isEmpty();
     assertThat(testJibExtension.getContainer().getExpandClasspathDependencies()).isFalse();
@@ -191,7 +191,7 @@ public class JibExtensionTest {
 
     testJibExtension.container(
         container -> {
-          container.setJvmFlags(Arrays.asList("jvmFlag1", "jvmFlag2"));
+          container.getJvmFlags().set(Arrays.asList("jvmFlag1", "jvmFlag2"));
           container.setEnvironment(ImmutableMap.of("var1", "value1", "var2", "value2"));
           container.setEntrypoint(Arrays.asList("foo", "bar", "baz"));
           container.setExtraClasspath(Arrays.asList("/d1", "/d2", "/d3"));
@@ -206,7 +206,7 @@ public class JibExtensionTest {
         });
     ContainerParameters container = testJibExtension.getContainer();
     assertThat(container.getEntrypoint()).containsExactly("foo", "bar", "baz").inOrder();
-    assertThat(container.getJvmFlags()).containsExactly("jvmFlag1", "jvmFlag2").inOrder();
+    assertThat(container.getJvmFlags().get()).containsExactly("jvmFlag1", "jvmFlag2").inOrder();
     assertThat(container.getEnvironment())
         .containsExactly("var1", "value1", "var2", "value2")
         .inOrder();
@@ -477,7 +477,7 @@ public class JibExtensionTest {
     System.setProperty("jib.container.format", "OCI");
     assertThat(testJibExtension.getContainer().getFormat()).isSameInstanceAs(ImageFormat.OCI);
     System.setProperty("jib.container.jvmFlags", "flag1,flag2,flag3");
-    assertThat(testJibExtension.getContainer().getJvmFlags())
+    assertThat(testJibExtension.getContainer().getJvmFlags().get())
         .containsExactly("flag1", "flag2", "flag3")
         .inOrder();
     System.setProperty("jib.container.labels", "label1=val1,label2=val2");

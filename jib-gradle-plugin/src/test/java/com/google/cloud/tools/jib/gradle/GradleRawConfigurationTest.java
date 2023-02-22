@@ -25,6 +25,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Optional;
+import org.gradle.api.provider.ListProperty;
 import org.gradle.api.provider.MapProperty;
 import org.gradle.api.provider.Property;
 import org.junit.Assert;
@@ -40,6 +41,7 @@ public class GradleRawConfigurationTest {
 
   @Mock private MapProperty<String, String> labels;
   @Mock private Property<String> mainClass;
+  @Mock private ListProperty<String> jvmFlags;
 
   @Test
   public void testGetters() {
@@ -88,7 +90,8 @@ public class GradleRawConfigurationTest {
     Mockito.when(containerParameters.getEntrypoint()).thenReturn(Arrays.asList("java", "Main"));
     Mockito.when(containerParameters.getEnvironment())
         .thenReturn(new HashMap<>(ImmutableMap.of("currency", "dollar")));
-    Mockito.when(containerParameters.getJvmFlags()).thenReturn(Arrays.asList("-cp", "."));
+    Mockito.when(jvmFlags.get()).thenReturn(Arrays.asList("-cp", "."));
+    Mockito.when(containerParameters.getJvmFlags()).thenReturn(jvmFlags);
     Mockito.when(labels.get()).thenReturn(Collections.singletonMap("unit", "cm"));
     Mockito.when(containerParameters.getLabels()).thenReturn(labels);
     Mockito.when(mainClass.getOrNull()).thenReturn("com.example.Main");

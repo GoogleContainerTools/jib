@@ -26,6 +26,7 @@ import java.util.Map;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import org.gradle.api.model.ObjectFactory;
+import org.gradle.api.provider.ListProperty;
 import org.gradle.api.provider.MapProperty;
 import org.gradle.api.provider.Property;
 import org.gradle.api.tasks.Input;
@@ -37,7 +38,7 @@ import org.gradle.api.tasks.Optional;
  */
 public class ContainerParameters {
 
-  private List<String> jvmFlags = Collections.emptyList();
+  private final ListProperty<String> jvmFlags;
   private Map<String, String> environment = Collections.emptyMap();
   @Nullable private List<String> entrypoint;
   private List<String> extraClasspath = Collections.emptyList();
@@ -60,6 +61,7 @@ public class ContainerParameters {
     filesModificationTime = objectFactory.property(String.class).convention("EPOCH_PLUS_SECOND");
     creationTime = objectFactory.property(String.class).convention("EPOCH");
     mainClass = objectFactory.property(String.class);
+    jvmFlags = objectFactory.listProperty(String.class).convention(Collections.emptyList());
   }
 
   @Input
@@ -83,16 +85,16 @@ public class ContainerParameters {
 
   @Input
   @Optional
-  public List<String> getJvmFlags() {
-    if (System.getProperty(PropertyNames.CONTAINER_JVM_FLAGS) != null) {
-      return ConfigurationPropertyValidator.parseListProperty(
-          System.getProperty(PropertyNames.CONTAINER_JVM_FLAGS));
+  public ListProperty<String> getJvmFlags() {
+    String jvmFlagsSystemProperty = System.getProperty(PropertyNames.CONTAINER_JVM_FLAGS);
+    if (jvmFlagsSystemProperty != null) {
+      List<String> parsedJvmFlags =
+          ConfigurationPropertyValidator.parseListProperty(jvmFlagsSystemProperty);
+      if (!parsedJvmFlags.equals(jvmFlags.get())) {
+        jvmFlags.set(parsedJvmFlags);
+      }
     }
     return jvmFlags;
-  }
-
-  public void setJvmFlags(List<String> jvmFlags) {
-    this.jvmFlags = jvmFlags;
   }
 
   @Input
