@@ -179,7 +179,7 @@ public class JibExtensionTest {
     assertThat(testJibExtension.getContainer().getEnvironment()).isEmpty();
     assertThat(testJibExtension.getContainer().getExtraClasspath()).isEmpty();
     assertThat(testJibExtension.getContainer().getExpandClasspathDependencies()).isFalse();
-    assertThat(testJibExtension.getContainer().getMainClass()).isNull();
+    assertThat(testJibExtension.getContainer().getMainClass().getOrNull()).isNull();
     assertThat(testJibExtension.getContainer().getArgs()).isNull();
     assertThat(testJibExtension.getContainer().getFormat()).isSameInstanceAs(ImageFormat.Docker);
     assertThat(testJibExtension.getContainer().getPorts()).isEmpty();
@@ -196,7 +196,7 @@ public class JibExtensionTest {
           container.setEntrypoint(Arrays.asList("foo", "bar", "baz"));
           container.setExtraClasspath(Arrays.asList("/d1", "/d2", "/d3"));
           container.setExpandClasspathDependencies(true);
-          container.setMainClass("mainClass");
+          container.getMainClass().set("mainClass");
           container.setArgs(Arrays.asList("arg1", "arg2", "arg3"));
           container.setPorts(Arrays.asList("1000", "2000-2010", "3000"));
           container.setFormat(ImageFormat.OCI);
@@ -212,7 +212,7 @@ public class JibExtensionTest {
         .inOrder();
     assertThat(container.getExtraClasspath()).containsExactly("/d1", "/d2", "/d3").inOrder();
     assertThat(testJibExtension.getContainer().getExpandClasspathDependencies()).isTrue();
-    assertThat(testJibExtension.getContainer().getMainClass()).isEqualTo("mainClass");
+    assertThat(testJibExtension.getContainer().getMainClass().get()).isEqualTo("mainClass");
     assertThat(container.getArgs()).containsExactly("arg1", "arg2", "arg3").inOrder();
     assertThat(container.getPorts()).containsExactly("1000", "2000-2010", "3000").inOrder();
     assertThat(container.getFormat()).isSameInstanceAs(ImageFormat.OCI);
@@ -485,7 +485,7 @@ public class JibExtensionTest {
         .containsExactly("label1", "val1", "label2", "val2")
         .inOrder();
     System.setProperty("jib.container.mainClass", "main");
-    assertThat(testJibExtension.getContainer().getMainClass()).isEqualTo("main");
+    assertThat(testJibExtension.getContainer().getMainClass().get()).isEqualTo("main");
     System.setProperty("jib.container.ports", "port1,port2,port3");
     assertThat(testJibExtension.getContainer().getPorts())
         .containsExactly("port1", "port2", "port3")

@@ -39,6 +39,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 public class GradleRawConfigurationTest {
 
   @Mock private MapProperty<String, String> labels;
+  @Mock private Property<String> mainClass;
 
   @Test
   public void testGetters() {
@@ -90,7 +91,8 @@ public class GradleRawConfigurationTest {
     Mockito.when(containerParameters.getJvmFlags()).thenReturn(Arrays.asList("-cp", "."));
     Mockito.when(labels.get()).thenReturn(Collections.singletonMap("unit", "cm"));
     Mockito.when(containerParameters.getLabels()).thenReturn(labels);
-    Mockito.when(containerParameters.getMainClass()).thenReturn("com.example.Main");
+    Mockito.when(mainClass.getOrNull()).thenReturn("com.example.Main");
+    Mockito.when(containerParameters.getMainClass()).thenReturn(mainClass);
     Mockito.when(containerParameters.getPorts()).thenReturn(Arrays.asList("80/tcp", "0"));
     Mockito.when(containerParameters.getUser()).thenReturn("admin:wheel");
     Mockito.when(containerParameters.getFilesModificationTime()).thenReturn(filesModificationTime);

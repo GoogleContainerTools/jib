@@ -42,7 +42,7 @@ public class ContainerParameters {
   @Nullable private List<String> entrypoint;
   private List<String> extraClasspath = Collections.emptyList();
   private boolean expandClasspathDependencies;
-  @Nullable private String mainClass;
+  private final Property<String> mainClass;
   @Nullable private List<String> args;
   private ImageFormat format = ImageFormat.Docker;
   private List<String> ports = Collections.emptyList();
@@ -59,6 +59,7 @@ public class ContainerParameters {
     labels = objectFactory.mapProperty(String.class, String.class).empty();
     filesModificationTime = objectFactory.property(String.class).convention("EPOCH_PLUS_SECOND");
     creationTime = objectFactory.property(String.class).convention("EPOCH");
+    mainClass = objectFactory.property(String.class);
   }
 
   @Input
@@ -135,17 +136,13 @@ public class ContainerParameters {
   }
 
   @Input
-  @Nullable
   @Optional
-  public String getMainClass() {
-    if (System.getProperty(PropertyNames.CONTAINER_MAIN_CLASS) != null) {
-      return System.getProperty(PropertyNames.CONTAINER_MAIN_CLASS);
+  public Property<String> getMainClass() {
+    String mainClassProperty = System.getProperty(PropertyNames.CONTAINER_MAIN_CLASS);
+    if (mainClassProperty != null && !mainClassProperty.equals(mainClass.getOrNull())) {
+      mainClass.set(mainClassProperty);
     }
     return mainClass;
-  }
-
-  public void setMainClass(String mainClass) {
-    this.mainClass = mainClass;
   }
 
   @Input

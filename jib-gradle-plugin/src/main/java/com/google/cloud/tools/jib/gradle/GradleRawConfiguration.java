@@ -93,7 +93,7 @@ public class GradleRawConfiguration implements RawConfiguration {
 
   @Override
   public Optional<String> getMainClass() {
-    return Optional.ofNullable(jibExtension.getContainer().getMainClass());
+    return Optional.ofNullable(jibExtension.getContainer().getMainClass().getOrNull());
   }
 
   @Override
