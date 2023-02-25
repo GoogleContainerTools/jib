@@ -20,6 +20,7 @@ import com.google.cloud.tools.jib.api.CacheDirectoryCreationException;
 import com.google.cloud.tools.jib.api.buildplan.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.api.buildplan.FileEntriesLayer;
 import com.google.cloud.tools.jib.api.buildplan.FileEntry;
+import com.google.cloud.tools.jib.api.buildplan.LayerObject;
 import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.blob.Blobs;
 import com.google.cloud.tools.jib.builder.ProgressEventDispatcher;
@@ -152,7 +153,8 @@ public class BuildAndCacheApplicationLayerStepTest {
             fakeResourcesLayerConfiguration,
             fakeClassesLayerConfiguration,
             fakeExtraFilesLayerConfiguration);
-    Mockito.when(mockBuildContext.getLayerConfigurations()).thenReturn(fakeLayerConfigurations);
+    ImmutableList<? extends LayerObject> layers = fakeLayerConfigurations;
+    Mockito.when(mockBuildContext.getLayerConfigurations()).thenReturn((ImmutableList<LayerObject>) layers);
 
     // Populates the cache.
     List<Layer> applicationLayers = buildFakeLayersToCache();
@@ -212,7 +214,8 @@ public class BuildAndCacheApplicationLayerStepTest {
             fakeResourcesLayerConfiguration,
             fakeClassesLayerConfiguration,
             emptyLayerConfiguration);
-    Mockito.when(mockBuildContext.getLayerConfigurations()).thenReturn(fakeLayerConfigurations);
+    ImmutableList<? extends LayerObject> layers = fakeLayerConfigurations;
+    Mockito.when(mockBuildContext.getLayerConfigurations()).thenReturn((ImmutableList<LayerObject>) layers);
 
     // Populates the cache.
     List<Layer> applicationLayers = buildFakeLayersToCache();

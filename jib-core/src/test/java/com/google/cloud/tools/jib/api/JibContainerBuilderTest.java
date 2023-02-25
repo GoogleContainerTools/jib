@@ -333,7 +333,7 @@ public class JibContainerBuilderTest {
         "some/base", buildContext.getBaseImageConfiguration().getImage().toString());
     Assert.assertEquals(OciManifestTemplate.class, buildContext.getTargetFormat());
     Assert.assertEquals(1, buildContext.getLayerConfigurations().size());
-    Assert.assertEquals(1, buildContext.getLayerConfigurations().get(0).getEntries().size());
+    Assert.assertEquals(1, ((FileEntriesLayer) buildContext.getLayerConfigurations().get(0)).getEntries().size());
     Assert.assertEquals(
         Arrays.asList(
             new FileEntry(
@@ -341,7 +341,7 @@ public class JibContainerBuilderTest {
                 AbsoluteUnixPath.get("/path/in/container"),
                 FilePermissions.fromOctalString("644"),
                 Instant.ofEpochSecond(1))),
-        buildContext.getLayerConfigurations().get(0).getEntries());
+        ((FileEntriesLayer) buildContext.getLayerConfigurations().get(0)).getEntries());
 
     ContainerConfiguration containerConfiguration = buildContext.getContainerConfiguration();
     Assert.assertEquals(Instant.ofEpochMilli(30), containerConfiguration.getCreationTime());

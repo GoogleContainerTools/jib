@@ -23,6 +23,7 @@ import com.google.cloud.tools.jib.api.buildplan.FileEntry;
 import com.google.cloud.tools.jib.api.buildplan.ImageFormat;
 import com.google.cloud.tools.jib.api.buildplan.LayerObject;
 import com.google.cloud.tools.jib.api.buildplan.Platform;
+import com.google.cloud.tools.jib.api.buildplan.PlatformDependentLayer;
 import com.google.cloud.tools.jib.api.buildplan.Port;
 import com.google.cloud.tools.jib.builder.TimerEventDispatcher;
 import com.google.cloud.tools.jib.builder.steps.BuildResult;
@@ -33,7 +34,6 @@ import com.google.cloud.tools.jib.docker.CliDockerClient;
 import com.google.cloud.tools.jib.docker.DockerClientResolver;
 import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Verify;
 import java.io.IOException;
 import java.net.UnknownHostException;
 import java.nio.file.Path;
@@ -45,8 +45,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
-import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import org.apache.http.conn.HttpHostConnectException;
 
@@ -85,7 +85,7 @@ public class JibContainerBuilder {
 
   private ImageConfiguration baseImageConfiguration;
   // TODO(chanseok): remove and use containerBuildPlanBuilder instead.
-  private List<FileEntriesLayer> layerConfigurations = new ArrayList<>();
+  private List<LayerObject> layerConfigurations = new ArrayList<>();
 
   /** Instantiate with {@link Jib#from}. */
   JibContainerBuilder(RegistryImage baseImage) {
@@ -526,7 +526,7 @@ public class JibContainerBuilder {
    * ignore the given platform and use the platform of the base image or may decide to raise on
    * error.
    *
-   * <p>Note that a new new container builder starts with "amd64/linux" as the default platform. If
+   * <p>Note that a new container builder starts with "amd64/linux" as the default platform. If
    * you want to reset the default platform instead of adding a new one, use {@link
    * #setPlatforms(Set)}.
    *
@@ -628,7 +628,15 @@ public class JibContainerBuilder {
    */
   @Deprecated
   public JibContainerDescription describeContainer() {
-    return new JibContainerDescription(layerConfigurations);
+    return new JibContainerDescription(layerConfigurations.stream().flatMap(layer -> {
+      if (layer instanceof FileEntriesLayer) {
+        return Stream.of(((FileEntriesLayer) layer));
+      } else if (layer instanceof PlatformDependentLayer) {
+        return ((PlatformDependentLayer) layer).getEntries().values().stream();
+      } else {
+        throw new UnsupportedOperationException("Unsupported LayerObject type " + layer.getType());
+      }
+    }).collect(Collectors.toList()));
   }
 
   /**
@@ -694,16 +702,7 @@ public class JibContainerBuilder {
     baseImageConfiguration.getTarPath().ifPresent(builder::setTarPath);
     baseImageConfiguration = builder.build();
 
-    // For now, only FileEntriesLayer is supported in jib-core.
-    Function<LayerObject, FileEntriesLayer> castToFileEntriesLayer =
-        layer -> {
-          Verify.verify(
-              layer instanceof FileEntriesLayer,
-              "layer types other than FileEntriesLayer not yet supported in build plan layers");
-          return (FileEntriesLayer) layer;
-        };
-    layerConfigurations =
-        buildPlan.getLayers().stream().map(castToFileEntriesLayer).collect(Collectors.toList());
+    layerConfigurations = ((List<LayerObject>) buildPlan.getLayers());
 
     buildContextBuilder
         .setTargetFormat(buildPlan.getFormat())
@@ -743,16 +742,24 @@ public class JibContainerBuilder {
     // Logs the different source files used.
     eventHandlers.dispatch(LogEvent.info("Containerizing application with the following files:"));
 
-    for (FileEntriesLayer layer : layerConfigurations) {
-      if (layer.getEntries().isEmpty()) {
-        continue;
+    for (LayerObject layer : layerConfigurations) {
+      if (layer instanceof FileEntriesLayer) {
+        logSources(eventHandlers, ((FileEntriesLayer) layer));
+      } else if (layer instanceof PlatformDependentLayer) {
+        ((PlatformDependentLayer) layer).getEntries().values().forEach(entry -> logSources(eventHandlers, entry));
       }
+    }
+  }
 
-      eventHandlers.dispatch(LogEvent.info("\t" + capitalizeFirstLetter(layer.getName()) + ":"));
+  private void logSources(EventHandlers eventHandlers, FileEntriesLayer layer) {
+    if (layer.getEntries().isEmpty()) {
+      return;
+    }
 
-      for (FileEntry entry : layer.getEntries()) {
-        eventHandlers.dispatch(LogEvent.info("\t\t" + entry.getSourceFile()));
-      }
+    eventHandlers.dispatch(LogEvent.info("\t" + capitalizeFirstLetter(layer.getName()) + ":"));
+
+    for (FileEntry entry : layer.getEntries()) {
+      eventHandlers.dispatch(LogEvent.info("\t\t" + entry.getSourceFile()));
     }
   }
 }

@@ -41,8 +41,11 @@ import java.io.IOException;
 import java.util.Optional;
 import java.util.concurrent.Future;
 import javax.annotation.Nullable;
+import javax.inject.Inject;
+
 import org.gradle.api.DefaultTask;
 import org.gradle.api.GradleException;
+import org.gradle.api.Project;
 import org.gradle.api.tasks.Nested;
 import org.gradle.api.tasks.TaskAction;
 import org.gradle.api.tasks.options.Option;
@@ -53,6 +56,13 @@ public class BuildImageTask extends DefaultTask implements JibTask {
   private static final String HELPFUL_SUGGESTIONS_PREFIX = "Build image failed";
 
   @Nullable private JibExtension jibExtension;
+
+  private final Project project;
+
+  @Inject
+  public BuildImageTask(Project project) {
+    this.project = project;
+  }
 
   /**
    * This will call the property {@code "jib"} so that it is the same name as the extension. This
@@ -96,7 +106,7 @@ public class BuildImageTask extends DefaultTask implements JibTask {
 
     GradleProjectProperties projectProperties =
         GradleProjectProperties.getForProject(
-            getProject(),
+            project,
             getLogger(),
             tempDirectoryProvider,
             jibExtension.getConfigurationName().get());
