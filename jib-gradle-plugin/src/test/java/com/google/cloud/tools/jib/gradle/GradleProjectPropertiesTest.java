@@ -109,14 +109,18 @@ public class GradleProjectPropertiesTest {
       resourcesLayer = getFileEntriesLayerByName(buildContext, LayerType.RESOURCES.getName());
       classesLayer = getFileEntriesLayerByName(buildContext, LayerType.CLASSES.getName());
       dependenciesLayer = getFileEntriesLayerByName(buildContext, LayerType.DEPENDENCIES.getName());
-      snapshotsLayer = getFileEntriesLayerByName(buildContext, LayerType.SNAPSHOT_DEPENDENCIES.getName());
+      snapshotsLayer =
+          getFileEntriesLayerByName(buildContext, LayerType.SNAPSHOT_DEPENDENCIES.getName());
     }
 
-    private static FileEntriesLayer getFileEntriesLayerByName(BuildContext buildContext, String name) {
+    private static FileEntriesLayer getFileEntriesLayerByName(
+        BuildContext buildContext, String name) {
       List<LayerObject> layers = buildContext.getLayerConfigurations();
-      return ((FileEntriesLayer) layers.stream()
-          .filter(layer -> layer.getName().equals(name) && layer instanceof FileEntriesLayer)
-          .findFirst().get());
+      return ((FileEntriesLayer)
+          layers.stream()
+              .filter(layer -> layer.getName().equals(name) && layer instanceof FileEntriesLayer)
+              .findFirst()
+              .get());
     }
   }
 

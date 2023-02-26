@@ -63,10 +63,11 @@ public class JavaContainerBuilderHelperTest {
 
   private static FileEntriesLayer getFileEntriesLayerByName(
       BuildContext buildContext, String name) {
-    return ((FileEntriesLayer) buildContext.getLayerConfigurations().stream()
-        .filter(layer -> layer.getName().equals(name) && layer instanceof FileEntriesLayer)
-        .findFirst()
-        .get());
+    return ((FileEntriesLayer)
+        buildContext.getLayerConfigurations().stream()
+            .filter(layer -> layer.getName().equals(name) && layer instanceof FileEntriesLayer)
+            .findFirst()
+            .get());
   }
 
   @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
