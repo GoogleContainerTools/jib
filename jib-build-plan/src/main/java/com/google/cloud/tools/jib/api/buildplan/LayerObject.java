@@ -23,7 +23,7 @@ import javax.annotation.concurrent.Immutable;
  *
  * <ul>
  *   <li>{@link Type#FILE_ENTRIES} indicates {@link FileEntriesLayer}.
- *   <li>{@link Type#PLATFORM_DEPENDENT} indicates a {@link PlatformDependentLayer}.</li>
+ *   <li>{@link Type#PLATFORM_DEPENDENT} indicates a {@link PlatformDependentLayer}.
  * </ul>
  */
 @Immutable

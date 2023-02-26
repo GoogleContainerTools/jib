@@ -333,7 +333,8 @@ public class JibContainerBuilderTest {
         "some/base", buildContext.getBaseImageConfiguration().getImage().toString());
     Assert.assertEquals(OciManifestTemplate.class, buildContext.getTargetFormat());
     Assert.assertEquals(1, buildContext.getLayerConfigurations().size());
-    Assert.assertEquals(1, ((FileEntriesLayer) buildContext.getLayerConfigurations().get(0)).getEntries().size());
+    Assert.assertEquals(
+        1, ((FileEntriesLayer) buildContext.getLayerConfigurations().get(0)).getEntries().size());
     Assert.assertEquals(
         Arrays.asList(
             new FileEntry(

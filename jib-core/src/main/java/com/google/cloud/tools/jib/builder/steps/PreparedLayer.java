@@ -22,7 +22,6 @@ import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.image.Image;
 import com.google.cloud.tools.jib.image.Layer;
-
 import javax.annotation.Nullable;
 
 /**
@@ -76,7 +75,8 @@ class PreparedLayer implements Layer {
   private final StateInTarget stateInTarget;
   @Nullable private final Platform platform;
 
-  private PreparedLayer(Layer layer, String name, StateInTarget stateInTarget, @Nullable Platform platform) {
+  private PreparedLayer(
+      Layer layer, String name, StateInTarget stateInTarget, @Nullable Platform platform) {
     this.layer = layer;
     this.name = name;
     this.stateInTarget = stateInTarget;
@@ -112,7 +112,8 @@ class PreparedLayer implements Layer {
   }
 
   public boolean appliesTo(Image baseImage) {
-    return platform == null ||
-        (baseImage.getArchitecture().equals(platform.getArchitecture()) && baseImage.getOs().equals(platform.getOs()));
+    return platform == null
+        || (baseImage.getArchitecture().equals(platform.getArchitecture())
+            && baseImage.getOs().equals(platform.getOs()));
   }
 }

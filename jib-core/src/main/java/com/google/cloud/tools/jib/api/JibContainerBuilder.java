@@ -526,9 +526,8 @@ public class JibContainerBuilder {
    * ignore the given platform and use the platform of the base image or may decide to raise on
    * error.
    *
-   * <p>Note that a new container builder starts with "amd64/linux" as the default platform. If
-   * you want to reset the default platform instead of adding a new one, use {@link
-   * #setPlatforms(Set)}.
+   * <p>Note that a new container builder starts with "amd64/linux" as the default platform. If you
+   * want to reset the default platform instead of adding a new one, use {@link #setPlatforms(Set)}.
    *
    * @param architecture architecture (for example, {@code amd64}) to select a base image in case of
    *     a manifest list
@@ -628,15 +627,20 @@ public class JibContainerBuilder {
    */
   @Deprecated
   public JibContainerDescription describeContainer() {
-    return new JibContainerDescription(layerConfigurations.stream().flatMap(layer -> {
-      if (layer instanceof FileEntriesLayer) {
-        return Stream.of(((FileEntriesLayer) layer));
-      } else if (layer instanceof PlatformDependentLayer) {
-        return ((PlatformDependentLayer) layer).getEntries().values().stream();
-      } else {
-        throw new UnsupportedOperationException("Unsupported LayerObject type " + layer.getType());
-      }
-    }).collect(Collectors.toList()));
+    return new JibContainerDescription(
+        layerConfigurations.stream()
+            .flatMap(
+                layer -> {
+                  if (layer instanceof FileEntriesLayer) {
+                    return Stream.of(((FileEntriesLayer) layer));
+                  } else if (layer instanceof PlatformDependentLayer) {
+                    return ((PlatformDependentLayer) layer).getEntries().values().stream();
+                  } else {
+                    throw new UnsupportedOperationException(
+                        "Unsupported LayerObject type " + layer.getType());
+                  }
+                })
+            .collect(Collectors.toList()));
   }
 
   /**
@@ -746,7 +750,10 @@ public class JibContainerBuilder {
       if (layer instanceof FileEntriesLayer) {
         logSources(eventHandlers, ((FileEntriesLayer) layer));
       } else if (layer instanceof PlatformDependentLayer) {
-        ((PlatformDependentLayer) layer).getEntries().values().forEach(entry -> logSources(eventHandlers, entry));
+        ((PlatformDependentLayer) layer)
+            .getEntries()
+            .values()
+            .forEach(entry -> logSources(eventHandlers, entry));
       }
     }
   }

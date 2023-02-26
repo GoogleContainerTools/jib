@@ -154,7 +154,8 @@ public class BuildAndCacheApplicationLayerStepTest {
             fakeClassesLayerConfiguration,
             fakeExtraFilesLayerConfiguration);
     ImmutableList<? extends LayerObject> layers = fakeLayerConfigurations;
-    Mockito.when(mockBuildContext.getLayerConfigurations()).thenReturn((ImmutableList<LayerObject>) layers);
+    Mockito.when(mockBuildContext.getLayerConfigurations())
+        .thenReturn((ImmutableList<LayerObject>) layers);
 
     // Populates the cache.
     List<Layer> applicationLayers = buildFakeLayersToCache();
@@ -215,7 +216,8 @@ public class BuildAndCacheApplicationLayerStepTest {
             fakeClassesLayerConfiguration,
             emptyLayerConfiguration);
     ImmutableList<? extends LayerObject> layers = fakeLayerConfigurations;
-    Mockito.when(mockBuildContext.getLayerConfigurations()).thenReturn((ImmutableList<LayerObject>) layers);
+    Mockito.when(mockBuildContext.getLayerConfigurations())
+        .thenReturn((ImmutableList<LayerObject>) layers);
 
     // Populates the cache.
     List<Layer> applicationLayers = buildFakeLayersToCache();

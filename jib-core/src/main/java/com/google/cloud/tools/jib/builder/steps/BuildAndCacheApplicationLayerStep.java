@@ -68,36 +68,43 @@ class BuildAndCacheApplicationLayerStep implements Callable<PreparedLayer> {
                 buildContext.getEventHandlers(), "Preparing application layer builders")) {
       return layerConfigurations.stream()
           // Skips the layer if empty.
-          .filter(layerConfiguration -> {
-            if (layerConfiguration instanceof FileEntriesLayer) {
-              return !((FileEntriesLayer) layerConfiguration).getEntries().isEmpty();
-            } else if (layerConfiguration instanceof PlatformDependentLayer) {
-              return !((PlatformDependentLayer) layerConfiguration).getEntries().isEmpty();
-            }
-            return true;
-          })
-          .flatMap(layerConfiguration -> {
-            if (layerConfiguration instanceof FileEntriesLayer) {
-              return Stream.of(new BuildAndCacheApplicationLayerStep(
-                  buildContext,
-                  progressEventDispatcher.newChildProducer(),
-                  layerConfiguration.getName(),
-                  (FileEntriesLayer) layerConfiguration,
-                  new Platform("amd64", "linux")));
-            } else if (layerConfiguration instanceof PlatformDependentLayer) {
-              return ((PlatformDependentLayer) layerConfiguration).getEntries().entrySet().stream().map(entry -> {
-                FileEntriesLayer fileLayer = entry.getValue();
-                return new BuildAndCacheApplicationLayerStep(
-                    buildContext,
-                    progressEventDispatcher.newChildProducer(),
-                    fileLayer.getName(),
-                    fileLayer,
-                    entry.getKey());
-              });
-            } else {
-              throw new UnsupportedOperationException("Unsupported LayerObject type " + layerConfiguration.getType());
-            }
-          })
+          .filter(
+              layerConfiguration -> {
+                if (layerConfiguration instanceof FileEntriesLayer) {
+                  return !((FileEntriesLayer) layerConfiguration).getEntries().isEmpty();
+                } else if (layerConfiguration instanceof PlatformDependentLayer) {
+                  return !((PlatformDependentLayer) layerConfiguration).getEntries().isEmpty();
+                }
+                return true;
+              })
+          .flatMap(
+              layerConfiguration -> {
+                if (layerConfiguration instanceof FileEntriesLayer) {
+                  return Stream.of(
+                      new BuildAndCacheApplicationLayerStep(
+                          buildContext,
+                          progressEventDispatcher.newChildProducer(),
+                          layerConfiguration.getName(),
+                          (FileEntriesLayer) layerConfiguration,
+                          new Platform("amd64", "linux")));
+                } else if (layerConfiguration instanceof PlatformDependentLayer) {
+                  return ((PlatformDependentLayer) layerConfiguration)
+                      .getEntries().entrySet().stream()
+                          .map(
+                              entry -> {
+                                FileEntriesLayer fileLayer = entry.getValue();
+                                return new BuildAndCacheApplicationLayerStep(
+                                    buildContext,
+                                    progressEventDispatcher.newChildProducer(),
+                                    fileLayer.getName(),
+                                    fileLayer,
+                                    entry.getKey());
+                              });
+                } else {
+                  throw new UnsupportedOperationException(
+                      "Unsupported LayerObject type " + layerConfiguration.getType());
+                }
+              })
           .collect(ImmutableList.toImmutableList());
     }
   }
@@ -138,7 +145,10 @@ class BuildAndCacheApplicationLayerStep implements Callable<PreparedLayer> {
       // Don't build the layer if it exists already.
       Optional<CachedLayer> optionalCachedLayer = cache.retrieve(layerEntries);
       if (optionalCachedLayer.isPresent()) {
-        return new PreparedLayer.Builder(optionalCachedLayer.get()).setName(layerName).setPlatform(layerPlatform).build();
+        return new PreparedLayer.Builder(optionalCachedLayer.get())
+            .setName(layerName)
+            .setPlatform(layerPlatform)
+            .build();
       }
 
       Blob layerBlob = new ReproducibleLayerBuilder(layerEntries).build();
@@ -146,7 +156,10 @@ class BuildAndCacheApplicationLayerStep implements Callable<PreparedLayer> {
 
       eventHandlers.dispatch(LogEvent.debug(description + " built " + cachedLayer.getDigest()));
 
-      return new PreparedLayer.Builder(cachedLayer).setName(layerName).setPlatform(layerPlatform).build();
+      return new PreparedLayer.Builder(cachedLayer)
+          .setName(layerName)
+          .setPlatform(layerPlatform)
+          .build();
     }
   }
 }

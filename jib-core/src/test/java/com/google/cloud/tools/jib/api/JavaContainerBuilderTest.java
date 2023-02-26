@@ -48,9 +48,10 @@ public class JavaContainerBuilderTest {
         .findFirst()
         .map(
             layerConfiguration ->
-                ((FileEntriesLayer) layerConfiguration).getEntries().stream()
-                    .map(FileEntry::getExtractionPath)
-                    .collect(Collectors.toList()))
+                ((FileEntriesLayer) layerConfiguration)
+                    .getEntries().stream()
+                        .map(FileEntry::getExtractionPath)
+                        .collect(Collectors.toList()))
         .orElse(ImmutableList.of());
   }
 
