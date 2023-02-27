@@ -20,7 +20,7 @@ dependencies {
 
   implementation dependencyStrings.COMMONS_COMPRESS
   zstdSupportImplementation  dependencyStrings.ZSTD_JNI
-  implementation dependencyStrings.GUAVA
+  api dependencyStrings.GUAVA
   implementation(platform(dependencyStrings.JACKSON_BOM))
   implementation dependencyStrings.JACKSON_DATABIND
   implementation dependencyStrings.JACKSON_DATATYPE_JSR310
