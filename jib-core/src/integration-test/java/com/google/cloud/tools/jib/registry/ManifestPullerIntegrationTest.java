@@ -38,6 +38,10 @@ public class ManifestPullerIntegrationTest {
   public static final String KNOWN_MANIFEST_LIST_SHA =
       "sha256:44cbdb9c24e123882d7894ba78fb6f572d2496889885a47eb4b32241a8c07a00";
 
+  /** A known docker manifest schema 2 sha for gcr.io/distroless/base. */
+  public static final String KNOWN_MANIFEST_V22_SHA =
+      "sha256:da5c568e59f3241b09e5699a525a37b3309ce2c182d8d20802b9eaee55711b19";
+
   @ClassRule public static LocalRegistry localRegistry = new LocalRegistry(5000);
   public final String dockerHost =
       System.getenv("DOCKER_IP") != null ? System.getenv("DOCKER_IP") : "localhost";

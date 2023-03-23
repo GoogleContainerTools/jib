@@ -42,7 +42,10 @@ public class BlobPullerIntegrationTest {
         RegistryClient.factory(EventHandlers.NONE, "gcr.io", "distroless/base", httpClient)
             .newRegistryClient();
     V22ManifestTemplate manifestTemplate =
-        registryClient.pullManifest("latest", V22ManifestTemplate.class).getManifest();
+        registryClient
+            .pullManifest(
+                ManifestPullerIntegrationTest.KNOWN_MANIFEST_V22_SHA, V22ManifestTemplate.class)
+            .getManifest();
 
     DescriptorDigest realDigest = manifestTemplate.getLayers().get(0).getDigest();
 
