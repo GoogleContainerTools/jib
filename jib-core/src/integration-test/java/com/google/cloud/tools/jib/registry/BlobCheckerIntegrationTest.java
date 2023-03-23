@@ -20,7 +20,7 @@ import com.google.cloud.tools.jib.api.DescriptorDigest;
 import com.google.cloud.tools.jib.api.RegistryException;
 import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.http.FailoverHttpClient;
-import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
+import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
 import java.io.IOException;
 import java.security.DigestException;
 import org.junit.Assert;
@@ -36,8 +36,8 @@ public class BlobCheckerIntegrationTest {
     RegistryClient registryClient =
         RegistryClient.factory(EventHandlers.NONE, "gcr.io", "distroless/base", httpClient)
             .newRegistryClient();
-    V22ManifestTemplate manifestTemplate =
-        registryClient.pullManifest("latest", V22ManifestTemplate.class).getManifest();
+    BuildableManifestTemplate manifestTemplate =
+        registryClient.pullManifest("latest", BuildableManifestTemplate.class).getManifest();
     DescriptorDigest blobDigest = manifestTemplate.getLayers().get(0).getDigest();
 
     Assert.assertEquals(blobDigest, registryClient.checkBlob(blobDigest).get().getDigest());
