@@ -21,7 +21,7 @@ import com.google.cloud.tools.jib.api.RegistryException;
 import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.http.FailoverHttpClient;
-import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
+import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
 import com.google.common.io.ByteStreams;
 import java.io.IOException;
 import java.security.DigestException;
@@ -41,8 +41,8 @@ public class BlobPullerIntegrationTest {
     RegistryClient registryClient =
         RegistryClient.factory(EventHandlers.NONE, "gcr.io", "distroless/base", httpClient)
             .newRegistryClient();
-    BuildableManifestTemplate manifestTemplate =
-        registryClient.pullManifest("latest", BuildableManifestTemplate.class).getManifest();
+    V22ManifestTemplate manifestTemplate =
+        registryClient.pullManifest("latest", V22ManifestTemplate.class).getManifest();
 
     DescriptorDigest realDigest = manifestTemplate.getLayers().get(0).getDigest();
 
