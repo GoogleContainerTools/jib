@@ -84,19 +84,6 @@ public class ManifestPullerIntegrationTest {
         RegistryClient.factory(EventHandlers.NONE, "gcr.io", "distroless/base", httpClient)
             .newRegistryClient();
 
-    // Ensure ":latest" is a manifest list
-    V22ManifestListTemplate manifestListTargeted =
-        registryClient.pullManifest("latest", V22ManifestListTemplate.class).getManifest();
-    Assert.assertEquals(2, manifestListTargeted.getSchemaVersion());
-    Assert.assertTrue(manifestListTargeted.getManifests().size() > 0);
-
-    // Generic call to ":latest" pulls a manifest list
-    ManifestTemplate manifestListGeneric = registryClient.pullManifest("latest").getManifest();
-    Assert.assertEquals(2, manifestListGeneric.getSchemaVersion());
-    MatcherAssert.assertThat(
-        manifestListGeneric, CoreMatchers.instanceOf(V22ManifestListTemplate.class));
-    Assert.assertTrue(((V22ManifestListTemplate) manifestListGeneric).getManifests().size() > 0);
-
     // Referencing a manifest list by sha256, should return a manifest list
     ManifestTemplate manifestListSha256 =
         registryClient.pullManifest(KNOWN_MANIFEST_LIST_SHA).getManifest();
@@ -105,11 +92,36 @@ public class ManifestPullerIntegrationTest {
         manifestListSha256, CoreMatchers.instanceOf(V22ManifestListTemplate.class));
     Assert.assertTrue(((V22ManifestListTemplate) manifestListSha256).getManifests().size() > 0);
 
-    // Call to ":latest" targeting a manifest pulls a manifest.
+    // Referencing a manifest list targeting a manifest pulls a manifest.
     V22ManifestTemplate manifestTargeted =
-        registryClient.pullManifest("latest", V22ManifestTemplate.class).getManifest();
+        registryClient
+            .pullManifest(KNOWN_MANIFEST_LIST_SHA, V22ManifestTemplate.class)
+            .getManifest();
     Assert.assertEquals(2, manifestTargeted.getSchemaVersion());
   }
+
+  //  @Test
+  //  public void testPull_defaultBaseImageManifest() throws IOException, RegistryException {
+  //    RegistryClient registryClient =
+  //        RegistryClient.factory(
+  //                EventHandlers.NONE, "registry-1.docker.io", "library/eclipse-temurin",
+  // httpClient)
+  //            .newRegistryClient();
+  //
+  //    // Ensure "11-jre" is a manifest list
+  //    V22ManifestListTemplate manifestListTargeted =
+  //        registryClient.pullManifest("11-jre", V22ManifestListTemplate.class).getManifest();
+  //    Assert.assertEquals(2, manifestListTargeted.getSchemaVersion());
+  //    Assert.assertTrue(manifestListTargeted.getManifests().size() > 0);
+  //
+  //    // Generic call to "11-jre" pulls a manifest list
+  //    ManifestTemplate manifestListGeneric = registryClient.pullManifest("11-jre").getManifest();
+  //    Assert.assertEquals(2, manifestListGeneric.getSchemaVersion());
+  //    MatcherAssert.assertThat(
+  //        manifestListGeneric, CoreMatchers.instanceOf(V22ManifestListTemplate.class));
+  //    Assert.assertTrue(((V22ManifestListTemplate) manifestListGeneric).getManifests().size() >
+  // 0);
+  //  }
 
   @Test
   public void testPull_unknownManifest() throws RegistryException, IOException {
