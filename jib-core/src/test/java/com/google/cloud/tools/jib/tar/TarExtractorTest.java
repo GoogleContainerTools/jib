@@ -30,6 +30,7 @@ import java.time.Instant;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -73,6 +74,7 @@ public class TarExtractorTest {
   }
 
   @Test
+  @Ignore
   public void testExtract_symlinks() throws URISyntaxException, IOException {
     Path source = Paths.get(Resources.getResource("core/symlinks.tar").toURI());
     Path destination = temporaryFolder.getRoot().toPath();

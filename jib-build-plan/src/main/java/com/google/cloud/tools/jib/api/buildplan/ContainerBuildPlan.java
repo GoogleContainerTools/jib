@@ -38,6 +38,7 @@ public class ContainerBuildPlan {
     private String baseImage = "scratch";
     private Instant creationTime = Instant.EPOCH;
     private ImageFormat format = ImageFormat.Docker;
+    private CompressionAlgorithm compression = CompressionAlgorithm.GZIP;
 
     // LinkedHashSet to preserve the order
     private Set<Platform> platforms =
@@ -128,6 +129,17 @@ public class ContainerBuildPlan {
      */
     public Builder setFormat(ImageFormat format) {
       this.format = format;
+      return this;
+    }
+
+    /**
+     * Sets the compression algorithm of the built container image layers.
+     *
+     * @param compression the {@link CompressionAlgorithm}
+     * @return this
+     */
+    public Builder setCompression(CompressionAlgorithm compression) {
+      this.compression = compression;
       return this;
     }
 
@@ -359,6 +371,7 @@ public class ContainerBuildPlan {
           platforms,
           creationTime,
           format,
+          compression,
           environment,
           labels,
           volumes,
@@ -379,6 +392,7 @@ public class ContainerBuildPlan {
   private final Set<Platform> platforms;
   private final Instant creationTime;
   private final ImageFormat format;
+  private final CompressionAlgorithm compressionAlgorithm;
 
   // image execution parameters
   private final Map<String, String> environment;
@@ -397,6 +411,7 @@ public class ContainerBuildPlan {
       Set<Platform> platforms,
       Instant creationTime,
       ImageFormat format,
+      CompressionAlgorithm compressionAlgorithm,
       Map<String, String> environment,
       Map<String, String> labels,
       Set<AbsoluteUnixPath> volumes,
@@ -410,6 +425,7 @@ public class ContainerBuildPlan {
     this.platforms = platforms;
     this.creationTime = creationTime;
     this.format = format;
+    this.compressionAlgorithm = compressionAlgorithm;
     this.environment = environment;
     this.labels = labels;
     this.volumes = volumes;
@@ -437,6 +453,10 @@ public class ContainerBuildPlan {
 
   public ImageFormat getFormat() {
     return format;
+  }
+
+  public CompressionAlgorithm getCompressionAlgorithm() {
+    return compressionAlgorithm;
   }
 
   public Instant getCreationTime() {
@@ -494,6 +514,7 @@ public class ContainerBuildPlan {
         .setPlatforms(platforms)
         .setCreationTime(creationTime)
         .setFormat(format)
+        .setCompression(compressionAlgorithm)
         .setEnvironment(environment)
         .setLabels(labels)
         .setVolumes(volumes)

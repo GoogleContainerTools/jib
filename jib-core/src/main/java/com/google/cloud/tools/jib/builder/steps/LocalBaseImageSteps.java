@@ -22,6 +22,7 @@ import com.google.cloud.tools.jib.api.DescriptorDigest;
 import com.google.cloud.tools.jib.api.DockerClient;
 import com.google.cloud.tools.jib.api.ImageDetails;
 import com.google.cloud.tools.jib.api.ImageReference;
+import com.google.cloud.tools.jib.api.buildplan.CompressionAlgorithm;
 import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.blob.Blobs;
@@ -31,6 +32,7 @@ import com.google.cloud.tools.jib.builder.steps.PullBaseImageStep.ImagesAndRegis
 import com.google.cloud.tools.jib.cache.Cache;
 import com.google.cloud.tools.jib.cache.CacheCorruptedException;
 import com.google.cloud.tools.jib.cache.CachedLayer;
+import com.google.cloud.tools.jib.cache.CompressionAlgorithmHelper;
 import com.google.cloud.tools.jib.configuration.BuildContext;
 import com.google.cloud.tools.jib.docker.json.DockerManifestEntryTemplate;
 import com.google.cloud.tools.jib.event.progress.ThrottledAccumulatingConsumer;
@@ -162,7 +164,8 @@ public class LocalBaseImageSteps {
       V22ManifestTemplate v22Manifest = new V22ManifestTemplate();
       for (PreparedLayer layer : layers) {
         BlobDescriptor descriptor = layer.getBlobDescriptor();
-        v22Manifest.addLayer(descriptor.getSize(), descriptor.getDigest());
+        v22Manifest.addLayer(
+            descriptor.getSize(), descriptor.getDigest(), layer.getCompressionAlgorithm());
       }
 
       BlobDescriptor configDescriptor = Digests.computeDigest(configurationTemplate);
@@ -296,7 +299,11 @@ public class LocalBaseImageSteps {
 
       // Just write layers that are already compressed
       if (layersAreCompressed) {
-        return new PreparedLayer.Builder(cache.writeTarLayer(diffId, Blobs.from(layerFile)))
+        return new PreparedLayer.Builder(
+                cache.writeTarLayer(
+                    diffId,
+                    Blobs.from(layerFile),
+                    CompressionAlgorithmHelper.detectCompressionAlgorithm(layerFile)))
             .build();
       }
 
@@ -311,7 +318,9 @@ public class LocalBaseImageSteps {
                 }
               },
               true);
-      return new PreparedLayer.Builder(cache.writeTarLayer(diffId, compressedBlob)).build();
+      return new PreparedLayer.Builder(
+              cache.writeTarLayer(diffId, compressedBlob, CompressionAlgorithm.GZIP))
+          .build();
     }
   }
 }

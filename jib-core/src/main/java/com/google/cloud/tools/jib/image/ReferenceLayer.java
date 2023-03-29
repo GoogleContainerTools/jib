@@ -17,6 +17,7 @@
 package com.google.cloud.tools.jib.image;
 
 import com.google.cloud.tools.jib.api.DescriptorDigest;
+import com.google.cloud.tools.jib.api.buildplan.CompressionAlgorithm;
 import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
 
@@ -32,15 +33,22 @@ public class ReferenceLayer implements Layer {
   /** The digest of the uncompressed layer content. */
   private final DescriptorDigest diffId;
 
+  private final CompressionAlgorithm compressionAlgorithm;
+
   /**
    * Instantiate with a {@link BlobDescriptor} and diff ID.
    *
    * @param blobDescriptor the blob descriptor
    * @param diffId the diff ID
+   * @param compressionAlgorithm the blob compression algorithm
    */
-  public ReferenceLayer(BlobDescriptor blobDescriptor, DescriptorDigest diffId) {
+  public ReferenceLayer(
+      BlobDescriptor blobDescriptor,
+      DescriptorDigest diffId,
+      CompressionAlgorithm compressionAlgorithm) {
     this.blobDescriptor = blobDescriptor;
     this.diffId = diffId;
+    this.compressionAlgorithm = compressionAlgorithm;
   }
 
   @Override
@@ -56,5 +64,10 @@ public class ReferenceLayer implements Layer {
   @Override
   public DescriptorDigest getDiffId() {
     return diffId;
+  }
+
+  @Override
+  public CompressionAlgorithm getCompressionAlgorithm() {
+    return compressionAlgorithm;
   }
 }

@@ -17,6 +17,7 @@
 package com.google.cloud.tools.jib.image;
 
 import com.google.cloud.tools.jib.api.DescriptorDigest;
+import com.google.cloud.tools.jib.api.buildplan.CompressionAlgorithm;
 import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
 
@@ -29,13 +30,18 @@ public class ReferenceNoDiffIdLayer implements Layer {
   /** The {@link BlobDescriptor} of the compressed layer content. */
   private final BlobDescriptor blobDescriptor;
 
+  private final CompressionAlgorithm compressionAlgorithm;
+
   /**
    * Instantiate with a {@link BlobDescriptor} and no diff ID.
    *
    * @param blobDescriptor the blob descriptor
+   * @param compressionAlgorithm the blob compression algorithm
    */
-  public ReferenceNoDiffIdLayer(BlobDescriptor blobDescriptor) {
+  public ReferenceNoDiffIdLayer(
+      BlobDescriptor blobDescriptor, CompressionAlgorithm compressionAlgorithm) {
     this.blobDescriptor = blobDescriptor;
+    this.compressionAlgorithm = compressionAlgorithm;
   }
 
   @Override
@@ -53,5 +59,10 @@ public class ReferenceNoDiffIdLayer implements Layer {
   public DescriptorDigest getDiffId() throws LayerPropertyNotFoundException {
     throw new LayerPropertyNotFoundException(
         "Diff ID not available for reference layer without diff ID");
+  }
+
+  @Override
+  public CompressionAlgorithm getCompressionAlgorithm() {
+    return compressionAlgorithm;
   }
 }

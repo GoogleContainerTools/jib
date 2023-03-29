@@ -18,6 +18,7 @@ package com.google.cloud.tools.jib.builder.steps;
 
 import com.google.cloud.tools.jib.api.CacheDirectoryCreationException;
 import com.google.cloud.tools.jib.api.buildplan.AbsoluteUnixPath;
+import com.google.cloud.tools.jib.api.buildplan.CompressionAlgorithm;
 import com.google.cloud.tools.jib.api.buildplan.FileEntriesLayer;
 import com.google.cloud.tools.jib.api.buildplan.FileEntry;
 import com.google.cloud.tools.jib.blob.Blob;
@@ -123,6 +124,8 @@ public class BuildAndCacheApplicationLayerStepTest {
 
     Mockito.when(mockBuildContext.getEventHandlers()).thenReturn(EventHandlers.NONE);
     Mockito.when(mockBuildContext.getApplicationLayersCache()).thenReturn(cache);
+    Mockito.when(mockBuildContext.getTargetCompressionAlgorithm())
+        .thenReturn(CompressionAlgorithm.GZIP);
   }
 
   private List<Layer> buildFakeLayersToCache()
