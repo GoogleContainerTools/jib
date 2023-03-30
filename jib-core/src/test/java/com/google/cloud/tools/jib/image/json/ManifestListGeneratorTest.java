@@ -32,13 +32,7 @@ public class ManifestListGeneratorTest {
   private ManifestListGenerator manifestListGenerator;
 
   @Before
-  public void setUp() {
-    image1 =
-        Image.builder(V22ManifestTemplate.class).setArchitecture("amd64").setOs("linux").build();
-    image2 =
-        Image.builder(V22ManifestTemplate.class).setArchitecture("arm64").setOs("windows").build();
-    manifestListGenerator = new ManifestListGenerator(Arrays.asList(image1, image2));
-  }
+  public void setUp() {}
 
   @Test
   public void testGetManifestListTemplate() throws IOException {
@@ -68,6 +62,11 @@ public class ManifestListGeneratorTest {
     //    }
     //   ]
     // }
+    image1 =
+        Image.builder(V22ManifestTemplate.class).setArchitecture("amd64").setOs("linux").build();
+    image2 =
+        Image.builder(V22ManifestTemplate.class).setArchitecture("arm64").setOs("windows").build();
+    manifestListGenerator = new ManifestListGenerator(Arrays.asList(image1, image2));
 
     ManifestTemplate manifestTemplate =
         manifestListGenerator.getManifestListTemplate(V22ManifestTemplate.class);
@@ -79,6 +78,53 @@ public class ManifestListGeneratorTest {
         manifestList.getDigestsForPlatform("amd64", "linux"));
     Assert.assertEquals(
         Arrays.asList("sha256:51038a7a91c0e8f747e05dd84c3b0393a7016ec312ce384fc945356778497ae3"),
+        manifestList.getDigestsForPlatform("arm64", "windows"));
+  }
+
+  @Test
+  public void testGetManifestListTemplate_ociIndex() throws IOException {
+
+    // Expected Manifest List JSON
+    //  {
+    //  "schemaVersion":2,
+    //  "mediaType":"application/vnd.oci.image.index.v1+json",
+    //  "manifests":[
+    //    {
+    //      "mediaType":"application/vnd.oci.image.manifest.v1+json",
+    //      "digest":"sha256:835e93ca9c952a5f811fecadbc6337c50415cce1ce4d7a4f9b6347ce4605c1fa",
+    //      "size":248,
+    //      "platform":{
+    //        "architecture":"amd64",
+    //        "os":"linux"
+    //      }
+    //    },
+    //    {
+    //      "mediaType":"application/vnd.oci.image.manifest.v1+json",
+    //      "digest":"sha256:7ad84c70b22af31a7b0cc2218121d7e0a93f822374ccf0a634447921295c795d",
+    //      "size":248,
+    //      "platform":{
+    //        "architecture":"arm64",
+    //        "os":"windows"
+    //      }
+    //    }
+    //   ]
+    // }
+    image1 =
+        Image.builder(OciManifestTemplate.class).setArchitecture("amd64").setOs("linux").build();
+    image2 =
+        Image.builder(OciManifestTemplate.class).setArchitecture("arm64").setOs("windows").build();
+    manifestListGenerator = new ManifestListGenerator(Arrays.asList(image1, image2));
+
+    ManifestTemplate manifestTemplate =
+        manifestListGenerator.getManifestListTemplate(OciManifestTemplate.class);
+    Assert.assertTrue(manifestTemplate instanceof OciIndexTemplate);
+    OciIndexTemplate manifestList = (OciIndexTemplate) manifestTemplate;
+    Assert.assertEquals(2, manifestList.getSchemaVersion());
+    Assert.assertEquals(
+        Arrays.asList("sha256:835e93ca9c952a5f811fecadbc6337c50415cce1ce4d7a4f9b6347ce4605c1fa"),
+        manifestList.getDigestsForPlatform("amd64", "linux"));
+    Assert.assertEquals(
+        Arrays.asList("sha256:7ad84c70b22af31a7b0cc2218121d7e0a93f822374ccf0a634447921295c795d"),
         manifestList.getDigestsForPlatform("arm64", "windows"));
   }
 
@@ -95,12 +141,14 @@ public class ManifestListGeneratorTest {
 
   @Test
   public void testGetManifestListTemplate_unsupportedImageFormat() throws IOException {
+    Class<? extends BuildableManifestTemplate> unknownFormat = BuildableManifestTemplate.class;
     try {
       new ManifestListGenerator(Arrays.asList(image1, image2))
-          .getManifestListTemplate(OciManifestTemplate.class);
+          .getManifestListTemplate(unknownFormat);
       Assert.fail();
     } catch (IllegalArgumentException ex) {
-      Assert.assertEquals("Build an OCI image index is not yet supported", ex.getMessage());
+      Assert.assertEquals(
+          "Unsupported manifestTemplateClass format " + unknownFormat, ex.getMessage());
     }
   }
 }
