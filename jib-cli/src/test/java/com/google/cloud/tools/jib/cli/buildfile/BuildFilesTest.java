@@ -183,9 +183,9 @@ public class BuildFilesTest {
         Paths.get(Resources.getResource("buildfiles/projects/templating/multiLine.yaml").toURI());
 
     String replaceThisMultiline = "replace" + System.lineSeparator() + "this";
-    System.out.println(replaceThisMultiline);
+    System.out.println(replaceThisMultiline.replace("\r", "\\r").replace("\n", "\\n"));
     String replaceThisMultiline2 = "replace" + System.getProperty("line.separator") + "this";
-    System.out.println(replaceThisMultiline2);
+    System.out.println(replaceThisMultiline2.replace("\r", "\\r").replace("\n", "\\n"));
 
     Mockito.when(buildCli.getTemplateParameters())
         .thenReturn(
