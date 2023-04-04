@@ -68,11 +68,11 @@ tasks.register('showtimes') {
 }
 
 tasks.register('showMainClass') {
-    String prop = project.extensions.jib.container.mainClass.get()
+    String prop = project.extensions.jib.container.mainClass
     println('mainClass value ' + prop)
 }
 
 tasks.register('showJvmFlags') {
-    List<String> prop = project.extensions.jib.container.jvmFlags.get()
+    List<String> prop = project.extensions.jib.container.jvmFlags
     println('jvmFlags value ' + prop)
 }

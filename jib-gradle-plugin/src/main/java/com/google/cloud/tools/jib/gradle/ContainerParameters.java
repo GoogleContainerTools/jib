@@ -29,6 +29,7 @@ import org.gradle.api.model.ObjectFactory;
 import org.gradle.api.provider.ListProperty;
 import org.gradle.api.provider.MapProperty;
 import org.gradle.api.provider.Property;
+import org.gradle.api.provider.Provider;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.Optional;
 
@@ -61,7 +62,7 @@ public class ContainerParameters {
     filesModificationTime = objectFactory.property(String.class).convention("EPOCH_PLUS_SECOND");
     creationTime = objectFactory.property(String.class).convention("EPOCH");
     mainClass = objectFactory.property(String.class);
-    jvmFlags = objectFactory.listProperty(String.class).convention(Collections.emptyList());
+    jvmFlags = objectFactory.listProperty(String.class);
   }
 
   @Input
@@ -85,16 +86,20 @@ public class ContainerParameters {
 
   @Input
   @Optional
-  public ListProperty<String> getJvmFlags() {
+  public List<String> getJvmFlags() {
     String jvmFlagsSystemProperty = System.getProperty(PropertyNames.CONTAINER_JVM_FLAGS);
     if (jvmFlagsSystemProperty != null) {
-      List<String> parsedJvmFlags =
-          ConfigurationPropertyValidator.parseListProperty(jvmFlagsSystemProperty);
-      if (!parsedJvmFlags.equals(jvmFlags.get())) {
-        jvmFlags.set(parsedJvmFlags);
-      }
+      return ConfigurationPropertyValidator.parseListProperty(jvmFlagsSystemProperty);
     }
-    return jvmFlags;
+    return jvmFlags.getOrElse(Collections.emptyList());
+  }
+
+  public void setJvmFlags(List<String> jvmFlags) {
+    this.jvmFlags.set(jvmFlags);
+  }
+
+  public void setJvmFlags(Provider<List<String>> jvmFlags) {
+    this.jvmFlags.set(jvmFlags);
   }
 
   @Input
@@ -138,13 +143,22 @@ public class ContainerParameters {
   }
 
   @Input
+  @Nullable
   @Optional
-  public Property<String> getMainClass() {
+  public String getMainClass() {
     String mainClassProperty = System.getProperty(PropertyNames.CONTAINER_MAIN_CLASS);
-    if (mainClassProperty != null && !mainClassProperty.equals(mainClass.getOrNull())) {
-      mainClass.set(mainClassProperty);
+    if (mainClassProperty != null) {
+      return mainClassProperty;
     }
-    return mainClass;
+    return mainClass.getOrNull();
+  }
+
+  public void setMainClass(String mainClass) {
+    this.mainClass.set(mainClass);
+  }
+
+  public void setMainClass(Provider<String> mainClass) {
+    this.mainClass.set(mainClass);
   }
 
   @Input

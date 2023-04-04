@@ -175,11 +175,11 @@ public class JibExtensionTest {
 
   @Test
   public void testContainer() {
-    assertThat(testJibExtension.getContainer().getJvmFlags().get()).isEmpty();
+    assertThat(testJibExtension.getContainer().getJvmFlags()).isEmpty();
     assertThat(testJibExtension.getContainer().getEnvironment()).isEmpty();
     assertThat(testJibExtension.getContainer().getExtraClasspath()).isEmpty();
     assertThat(testJibExtension.getContainer().getExpandClasspathDependencies()).isFalse();
-    assertThat(testJibExtension.getContainer().getMainClass().getOrNull()).isNull();
+    assertThat(testJibExtension.getContainer().getMainClass()).isNull();
     assertThat(testJibExtension.getContainer().getArgs()).isNull();
     assertThat(testJibExtension.getContainer().getFormat()).isSameInstanceAs(ImageFormat.Docker);
     assertThat(testJibExtension.getContainer().getPorts()).isEmpty();
@@ -191,12 +191,12 @@ public class JibExtensionTest {
 
     testJibExtension.container(
         container -> {
-          container.getJvmFlags().set(Arrays.asList("jvmFlag1", "jvmFlag2"));
+          container.setJvmFlags(Arrays.asList("jvmFlag1", "jvmFlag2"));
           container.setEnvironment(ImmutableMap.of("var1", "value1", "var2", "value2"));
           container.setEntrypoint(Arrays.asList("foo", "bar", "baz"));
           container.setExtraClasspath(Arrays.asList("/d1", "/d2", "/d3"));
           container.setExpandClasspathDependencies(true);
-          container.getMainClass().set("mainClass");
+          container.setMainClass("mainClass");
           container.setArgs(Arrays.asList("arg1", "arg2", "arg3"));
           container.setPorts(Arrays.asList("1000", "2000-2010", "3000"));
           container.setFormat(ImageFormat.OCI);
@@ -206,13 +206,13 @@ public class JibExtensionTest {
         });
     ContainerParameters container = testJibExtension.getContainer();
     assertThat(container.getEntrypoint()).containsExactly("foo", "bar", "baz").inOrder();
-    assertThat(container.getJvmFlags().get()).containsExactly("jvmFlag1", "jvmFlag2").inOrder();
+    assertThat(container.getJvmFlags()).containsExactly("jvmFlag1", "jvmFlag2").inOrder();
     assertThat(container.getEnvironment())
         .containsExactly("var1", "value1", "var2", "value2")
         .inOrder();
     assertThat(container.getExtraClasspath()).containsExactly("/d1", "/d2", "/d3").inOrder();
     assertThat(testJibExtension.getContainer().getExpandClasspathDependencies()).isTrue();
-    assertThat(testJibExtension.getContainer().getMainClass().get()).isEqualTo("mainClass");
+    assertThat(testJibExtension.getContainer().getMainClass()).isEqualTo("mainClass");
     assertThat(container.getArgs()).containsExactly("arg1", "arg2", "arg3").inOrder();
     assertThat(container.getPorts()).containsExactly("1000", "2000-2010", "3000").inOrder();
     assertThat(container.getFormat()).isSameInstanceAs(ImageFormat.OCI);
@@ -477,7 +477,7 @@ public class JibExtensionTest {
     System.setProperty("jib.container.format", "OCI");
     assertThat(testJibExtension.getContainer().getFormat()).isSameInstanceAs(ImageFormat.OCI);
     System.setProperty("jib.container.jvmFlags", "flag1,flag2,flag3");
-    assertThat(testJibExtension.getContainer().getJvmFlags().get())
+    assertThat(testJibExtension.getContainer().getJvmFlags())
         .containsExactly("flag1", "flag2", "flag3")
         .inOrder();
     System.setProperty("jib.container.labels", "label1=val1,label2=val2");
@@ -485,7 +485,7 @@ public class JibExtensionTest {
         .containsExactly("label1", "val1", "label2", "val2")
         .inOrder();
     System.setProperty("jib.container.mainClass", "main");
-    assertThat(testJibExtension.getContainer().getMainClass().get()).isEqualTo("main");
+    assertThat(testJibExtension.getContainer().getMainClass()).isEqualTo("main");
     System.setProperty("jib.container.ports", "port1,port2,port3");
     assertThat(testJibExtension.getContainer().getPorts())
         .containsExactly("port1", "port2", "port3")
