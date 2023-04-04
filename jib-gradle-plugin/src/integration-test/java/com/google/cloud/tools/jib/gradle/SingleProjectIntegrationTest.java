@@ -60,9 +60,6 @@ public class SingleProjectIntegrationTest {
 
   @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
-  private final String dockerHost =
-      System.getenv("DOCKER_IP") != null ? System.getenv("DOCKER_IP") : "localhost";
-
   private static boolean isJavaRuntimeAtLeast(int version) {
     Iterable<String> split = Splitter.on(".").split(System.getProperty("java.version"));
     return Integer.valueOf(split.iterator().next()) >= version;
@@ -425,7 +422,8 @@ public class SingleProjectIntegrationTest {
   @Test
   public void testBuild_complex()
       throws IOException, InterruptedException, DigestException, InvalidImageReferenceException {
-    String targetImage = dockerHost + ":6000/compleximage:gradle" + System.nanoTime();
+    String targetImage =
+        localRegistry2.getDockerHost() + ":6000/compleximage:gradle" + System.nanoTime();
     Instant beforeBuild = Instant.now();
     String output = buildAndRunComplex(targetImage, "testuser", "testpassword", localRegistry2);
 
@@ -449,7 +447,8 @@ public class SingleProjectIntegrationTest {
 
   @Test
   public void testBuild_complex_sameFromAndToRegistry() throws IOException, InterruptedException {
-    String targetImage = dockerHost + ":5000/compleximage:gradle" + System.nanoTime();
+    String targetImage =
+        localRegistry1.getDockerHost() + ":5000/compleximage:gradle" + System.nanoTime();
     Instant beforeBuild = Instant.now();
     buildAndRunComplex(targetImage, "testuser", "testpassword", localRegistry1);
     assertThat(JibRunHelper.getCreationTime(targetImage)).isGreaterThan(beforeBuild);
@@ -493,7 +492,8 @@ public class SingleProjectIntegrationTest {
   public void testBuild_skipDownloadingBaseImageLayers() throws IOException, InterruptedException {
     Path baseLayersCacheDirectory =
         simpleTestProject.getProjectRoot().resolve("build/jib-base-cache/layers");
-    String targetImage = dockerHost + ":6000/simpleimage:gradle" + System.nanoTime();
+    String targetImage =
+        localRegistry2.getDockerHost() + ":6000/simpleimage:gradle" + System.nanoTime();
 
     buildAndRunComplex(targetImage, "testuser", "testpassword", localRegistry2);
     // Base image layer tarballs exist.
