@@ -34,7 +34,6 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.io.Resources;
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.nio.charset.Charset;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Instant;
@@ -182,13 +181,6 @@ public class BuildFilesTest {
       throws URISyntaxException, InvalidImageReferenceException, IOException {
     Path buildfile =
         Paths.get(Resources.getResource("buildfiles/projects/templating/multiLine.yaml").toURI());
-
-    String replaceThisMultiline = "replace" + System.lineSeparator() + "this";
-    System.out.println(replaceThisMultiline.replace("\r", "\\r").replace("\n", "\\n"));
-    String replaceThisMultiline2 = "replace" + System.getProperty("line.separator") + "this";
-    System.out.println(replaceThisMultiline2.replace("\r", "\\r").replace("\n", "\\n"));
-    System.out.println(Charset.defaultCharset().displayName());
-
     Mockito.when(buildCli.getTemplateParameters())
         .thenReturn(ImmutableMap.of("replace" + "\n" + "this", "creationTime: 1234"));
     JibContainerBuilder jibContainerBuilder =
