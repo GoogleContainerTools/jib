@@ -94,7 +94,6 @@ public class WarCommandTest {
                 "war",
                 "--target",
                 "docker://exploded-war",
-                "--jvm-flags=-Dserver.address=localhost",
                 "--expose=8080",
                 warPath.toString());
     assertThat(exitCode).isEqualTo(0);
@@ -116,7 +115,6 @@ public class WarCommandTest {
                 "--target",
                 "docker://exploded-war-custom-jetty",
                 "--from=jetty:11.0-jre11-slim-openjdk",
-                "--jvm-flags=-Dserver.address=localhost",
                 "--expose=8080",
                 warPath.toString());
     assertThat(exitCode).isEqualTo(0);
@@ -140,7 +138,6 @@ public class WarCommandTest {
                 "--from=tomcat:10-jre8-openjdk-slim",
                 "--app-root",
                 "/usr/local/tomcat/webapps/ROOT",
-                "--jvm-flags=-Dserver.address=localhost",
                 "--expose=8080",
                 warPath.toString());
     assertThat(exitCode).isEqualTo(0);

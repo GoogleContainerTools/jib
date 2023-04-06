@@ -212,7 +212,6 @@ public class JarCommandTest {
                 "eclipse-temurin:8-jdk-focal",
                 "--target",
                 "docker://spring-boot-jar-layered",
-                "--jvm-flags=-Dserver.address=localhost",
                 "--expose=8080",
                 jarPath.toString());
     assertThat(exitCode).isEqualTo(0);
@@ -239,7 +238,6 @@ public class JarCommandTest {
                 "eclipse-temurin:8-jdk-focal",
                 "--target",
                 "docker://spring-boot-jar",
-                "--jvm-flags=-Dserver.address=localhost",
                 "--expose=8080",
                 jarPath.toString());
     assertThat(exitCode).isEqualTo(0);
@@ -266,7 +264,6 @@ public class JarCommandTest {
                 "--target",
                 "docker://packaged-spring-boot",
                 "--mode=packaged",
-                "--jvm-flags=-Dserver.address=localhost",
                 "--expose=8080",
                 jarPath.toString());
     assertThat(exitCode).isEqualTo(0);
@@ -285,7 +282,6 @@ public class JarCommandTest {
                 "jar",
                 "--target=docker://cli-gcr-base",
                 "--from=gcr.io/google-appengine/openjdk:8",
-                "--jvm-flags=-Dserver.address=localhost",
                 "--expose=8080",
                 jarPath.toString());
     assertThat(exitCode).isEqualTo(0);
