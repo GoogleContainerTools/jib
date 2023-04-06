@@ -181,6 +181,7 @@ public class BuildFilesTest {
       throws URISyntaxException, InvalidImageReferenceException, IOException {
     Path buildfile =
         Paths.get(Resources.getResource("buildfiles/projects/templating/multiLine.yaml").toURI());
+
     Mockito.when(buildCli.getTemplateParameters())
         .thenReturn(ImmutableMap.of("replace" + "\n" + "this", "creationTime: 1234"));
     JibContainerBuilder jibContainerBuilder =
