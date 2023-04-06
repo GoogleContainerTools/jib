@@ -91,11 +91,7 @@ public class WarCommandTest {
     Integer exitCode =
         new CommandLine(new JibCli())
             .execute(
-                "war",
-                "--target",
-                "docker://exploded-war",
-                "--expose=8080",
-                warPath.toString());
+                "war", "--target", "docker://exploded-war", "--expose=8080", warPath.toString());
     assertThat(exitCode).isEqualTo(0);
 
     runWarInDocker("exploded-war");
