@@ -20,7 +20,6 @@ import com.google.api.client.util.Preconditions;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.hash.Digests;
 import com.google.cloud.tools.jib.image.Image;
-import com.google.cloud.tools.jib.image.json.V22ManifestListTemplate.ManifestDescriptorTemplate;
 import java.io.IOException;
 import java.util.List;
 
@@ -44,23 +43,28 @@ public class ManifestListGenerator {
    */
   public <T extends BuildableManifestTemplate> ManifestTemplate getManifestListTemplate(
       Class<T> manifestTemplateClass) throws IOException {
-    Preconditions.checkArgument(
-        manifestTemplateClass == V22ManifestTemplate.class,
-        "Build an OCI image index is not yet supported");
     Preconditions.checkState(!images.isEmpty(), "no images given");
 
+    if (manifestTemplateClass == V22ManifestTemplate.class) {
+      return getV22ManifestListTemplate(manifestTemplateClass);
+
+    } else if (manifestTemplateClass == OciManifestTemplate.class) {
+      return getOciIndexTemplate(manifestTemplateClass);
+    }
+    throw new IllegalArgumentException(
+        "Unsupported manifestTemplateClass format " + manifestTemplateClass);
+  }
+
+  private <T extends BuildableManifestTemplate> V22ManifestListTemplate getV22ManifestListTemplate(
+      Class<T> manifestTemplateClass) throws IOException {
     V22ManifestListTemplate manifestList = new V22ManifestListTemplate();
     for (Image image : images) {
-      ImageToJsonTranslator imageTranslator = new ImageToJsonTranslator(image);
-
-      BlobDescriptor configDescriptor =
-          Digests.computeDigest(imageTranslator.getContainerConfiguration());
-
       BuildableManifestTemplate manifestTemplate =
-          imageTranslator.getManifestTemplate(manifestTemplateClass, configDescriptor);
+          getBuildableManifestTemplate(manifestTemplateClass, image);
       BlobDescriptor manifestDescriptor = Digests.computeDigest(manifestTemplate);
 
-      ManifestDescriptorTemplate manifest = new ManifestDescriptorTemplate();
+      V22ManifestListTemplate.ManifestDescriptorTemplate manifest =
+          new V22ManifestListTemplate.ManifestDescriptorTemplate();
       manifest.setMediaType(manifestTemplate.getManifestMediaType());
       manifest.setSize(manifestDescriptor.getSize());
       manifest.setDigest(manifestDescriptor.getDigest().toString());
@@ -68,5 +72,33 @@ public class ManifestListGenerator {
       manifestList.addManifest(manifest);
     }
     return manifestList;
+  }
+
+  private <T extends BuildableManifestTemplate> OciIndexTemplate getOciIndexTemplate(
+      Class<T> manifestTemplateClass) throws IOException {
+    OciIndexTemplate manifestList = new OciIndexTemplate();
+    for (Image image : images) {
+      BuildableManifestTemplate manifestTemplate =
+          getBuildableManifestTemplate(manifestTemplateClass, image);
+      BlobDescriptor manifestDescriptor = Digests.computeDigest(manifestTemplate);
+
+      OciIndexTemplate.ManifestDescriptorTemplate manifest =
+          new OciIndexTemplate.ManifestDescriptorTemplate(
+              manifestTemplate.getManifestMediaType(),
+              manifestDescriptor.getSize(),
+              manifestDescriptor.getDigest());
+      manifest.setPlatform(image.getArchitecture(), image.getOs());
+      manifestList.addManifest(manifest);
+    }
+    return manifestList;
+  }
+
+  private <T extends BuildableManifestTemplate>
+      BuildableManifestTemplate getBuildableManifestTemplate(
+          Class<T> manifestTemplateClass, Image image) throws IOException {
+    ImageToJsonTranslator imageTranslator = new ImageToJsonTranslator(image);
+    BlobDescriptor configDescriptor =
+        Digests.computeDigest(imageTranslator.getContainerConfiguration());
+    return imageTranslator.getManifestTemplate(manifestTemplateClass, configDescriptor);
   }
 }

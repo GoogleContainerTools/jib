@@ -17,10 +17,12 @@
 package com.google.cloud.tools.jib.api;
 
 import com.google.cloud.tools.jib.Command;
+import com.google.cloud.tools.jib.api.buildplan.ImageFormat;
 import com.google.cloud.tools.jib.api.buildplan.Platform;
 import com.google.cloud.tools.jib.blob.Blobs;
 import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.http.FailoverHttpClient;
+import com.google.cloud.tools.jib.image.json.OciIndexTemplate;
 import com.google.cloud.tools.jib.image.json.V22ManifestListTemplate;
 import com.google.cloud.tools.jib.image.json.V22ManifestListTemplate.ManifestDescriptorTemplate;
 import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
@@ -284,6 +286,32 @@ public class JibIntegrationTest {
     ManifestDescriptorTemplate.Platform platform1 =
         manifestList.getManifests().get(0).getPlatform();
     ManifestDescriptorTemplate.Platform platform2 =
+        manifestList.getManifests().get(1).getPlatform();
+
+    Assert.assertEquals("arm64", platform1.getArchitecture());
+    Assert.assertEquals("windows", platform1.getOs());
+    Assert.assertEquals("amd32", platform2.getArchitecture());
+    Assert.assertEquals("windows", platform2.getOs());
+  }
+
+  @Test
+  public void testScratch_multiPlatformOci()
+      throws IOException, InterruptedException, ExecutionException, RegistryException,
+          CacheDirectoryCreationException, InvalidImageReferenceException {
+    Jib.fromScratch()
+        .setFormat(ImageFormat.OCI)
+        .setPlatforms(
+            ImmutableSet.of(new Platform("arm64", "windows"), new Platform("amd32", "windows")))
+        .containerize(
+            Containerizer.to(RegistryImage.named(dockerHost + ":5000/jib-scratch:multi-platform"))
+                .setAllowInsecureRegistries(true));
+
+    OciIndexTemplate manifestList =
+        (OciIndexTemplate) registryClient.pullManifest("multi-platform").getManifest();
+    Assert.assertEquals(2, manifestList.getManifests().size());
+    OciIndexTemplate.ManifestDescriptorTemplate.Platform platform1 =
+        manifestList.getManifests().get(0).getPlatform();
+    OciIndexTemplate.ManifestDescriptorTemplate.Platform platform2 =
         manifestList.getManifests().get(1).getPlatform();
 
     Assert.assertEquals("arm64", platform1.getArchitecture());
