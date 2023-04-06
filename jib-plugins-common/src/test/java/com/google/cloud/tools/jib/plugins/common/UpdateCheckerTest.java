@@ -70,8 +70,7 @@ public class UpdateCheckerTest {
   @Test
   public void testPerformUpdateCheck_newVersionFound() throws IOException, InterruptedException {
     Instant before = Instant.now();
-    System.out.println("before: " + before.toString());
-    Thread.sleep(500);
+    Thread.sleep(100);
     setupLastUpdateCheck();
     Optional<String> message =
         UpdateChecker.performUpdateCheck(
@@ -82,7 +81,6 @@ public class UpdateCheckerTest {
     String modifiedTime =
         new String(
             Files.readAllBytes(configDir.resolve("lastUpdateCheck")), StandardCharsets.UTF_8);
-    System.out.println("modifiedTime: " + modifiedTime);
     assertThat(Instant.parse(modifiedTime)).isGreaterThan(before);
   }
 
@@ -102,8 +100,9 @@ public class UpdateCheckerTest {
   }
 
   @Test
-  public void testPerformUpdateCheck_onLatest() throws IOException {
+  public void testPerformUpdateCheck_onLatest() throws IOException, InterruptedException {
     Instant before = Instant.now();
+    Thread.sleep(100);
     setupLastUpdateCheck();
     Optional<String> message =
         UpdateChecker.performUpdateCheck(
@@ -118,8 +117,9 @@ public class UpdateCheckerTest {
   }
 
   @Test
-  public void testPerformUpdateCheck_noLastUpdateCheck() throws IOException {
+  public void testPerformUpdateCheck_noLastUpdateCheck() throws IOException, InterruptedException {
     Instant before = Instant.now();
+    Thread.sleep(100);
     Optional<String> message =
         UpdateChecker.performUpdateCheck(
             configDir, "1.0.2", testWebServer.getEndpoint(), "tool-name", ignored -> {});
@@ -136,8 +136,7 @@ public class UpdateCheckerTest {
       throws IOException, InterruptedException {
     Files.createFile(configDir.resolve("lastUpdateCheck"));
     Instant before = Instant.now();
-    System.out.println("before: " + before.toString());
-    Thread.sleep(500);
+    Thread.sleep(100);
     Optional<String> message =
         UpdateChecker.performUpdateCheck(
             configDir, "1.0.2", testWebServer.getEndpoint(), "tool-name", ignored -> {});
@@ -146,7 +145,6 @@ public class UpdateCheckerTest {
     String modifiedTime =
         new String(
             Files.readAllBytes(configDir.resolve("lastUpdateCheck")), StandardCharsets.UTF_8);
-    System.out.println("modifiedTime: " + modifiedTime);
     assertThat(Instant.parse(modifiedTime)).isGreaterThan(before);
   }
 
@@ -171,8 +169,9 @@ public class UpdateCheckerTest {
   }
 
   @Test
-  public void testPerformUpdateCheck_badLastUpdateTime() throws IOException {
+  public void testPerformUpdateCheck_badLastUpdateTime() throws IOException, InterruptedException {
     Instant before = Instant.now();
+    Thread.sleep(100);
     Files.write(
         configDir.resolve("lastUpdateCheck"), "bad timestamp".getBytes(StandardCharsets.UTF_8));
     Optional<String> message =
@@ -224,9 +223,8 @@ public class UpdateCheckerTest {
   }
 
   private void setupLastUpdateCheck() throws IOException {
-    String oldLastUpdateCheck = Instant.now().minus(Duration.ofDays(2)).toString();
-    System.out.println("setUpLastUpdateCheck at time: " + oldLastUpdateCheck);
     Files.write(
-        configDir.resolve("lastUpdateCheck"), oldLastUpdateCheck.getBytes(StandardCharsets.UTF_8));
+        configDir.resolve("lastUpdateCheck"),
+        Instant.now().minus(Duration.ofDays(2)).toString().getBytes(StandardCharsets.UTF_8));
   }
 }

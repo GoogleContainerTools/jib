@@ -89,7 +89,6 @@ public class UpdateChecker {
           String fileContents =
               new String(Files.readAllBytes(lastUpdateCheck), StandardCharsets.UTF_8);
           Instant modifiedTime = Instant.parse(fileContents);
-          System.out.println("parsed lastUpdateCheck time: " + modifiedTime);
           if (modifiedTime.plus(Duration.ofDays(1)).isAfter(Instant.now())) {
             return Optional.empty();
           }
@@ -116,9 +115,7 @@ public class UpdateChecker {
         Path lastUpdateCheckTemp =
             Files.createTempFile(configDir, LAST_UPDATE_CHECK_FILENAME, null);
         lastUpdateCheckTemp.toFile().deleteOnExit();
-        String timeNow = Instant.now().toString();
-        System.out.println("updating lastUpdateCheck file, time now = " + timeNow);
-        Files.write(lastUpdateCheckTemp, timeNow.getBytes(StandardCharsets.UTF_8));
+        Files.write(lastUpdateCheckTemp, Instant.now().toString().getBytes(StandardCharsets.UTF_8));
         Files.move(lastUpdateCheckTemp, lastUpdateCheck, StandardCopyOption.REPLACE_EXISTING);
 
         if (currentVersion.equals(version.latest)) {
