@@ -34,9 +34,6 @@ public class WarProjectIntegrationTest {
 
   @Nullable private String containerName;
 
-  private final String dockerHost =
-      System.getenv("DOCKER_IP") != null ? System.getenv("DOCKER_IP") : "localhost";
-
   @After
   public void tearDown() throws IOException, InterruptedException {
     if (containerName != null) {
@@ -64,6 +61,19 @@ public class WarProjectIntegrationTest {
     containerName = output.trim();
 
     Assert.assertEquals(
-        "Hello world", JibRunHelper.getContent(new URL("http://" + dockerHost + ":8080/hello")));
+        "Hello world",
+        JibRunHelper.getContent(new URL("http://" + getDockerHost() + ":8080/hello")));
+  }
+
+  private String getDockerHost() {
+    if (System.getenv("KOKORO_JOB_CLUSTER") != null
+        && System.getenv("KOKORO_JOB_CLUSTER").equals("MACOS_EXTERNAL")) {
+      return System.getenv("DOCKER_IP");
+    } else if (System.getenv("KOKORO_JOB_CLUSTER") != null
+        && System.getenv("KOKORO_JOB_CLUSTER").equals("GCP_UBUNTU_DOCKER")) {
+      return System.getenv("DOCKER_HOST_IP");
+    } else {
+      return "localhost";
+    }
   }
 }

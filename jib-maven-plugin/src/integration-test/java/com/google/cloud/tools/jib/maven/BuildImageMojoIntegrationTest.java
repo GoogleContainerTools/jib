@@ -83,9 +83,6 @@ public class BuildImageMojoIntegrationTest {
 
   @ClassRule public static final TestProject springBootProject = new TestProject("spring-boot");
 
-  private static final String dockerHost =
-      System.getenv("DOCKER_IP") != null ? System.getenv("DOCKER_IP") : "localhost";
-
   private static String getTestImageReference(String label) {
     String nameBase = IntegrationTestingConfiguration.getTestRepositoryLocation() + '/';
     return nameBase + label + System.nanoTime();
@@ -108,7 +105,7 @@ public class BuildImageMojoIntegrationTest {
     Verifier verifier = new Verifier(projectRoot.toString());
     verifier.setSystemProperty("jib.useOnlyProjectCache", "true");
     verifier.setSystemProperty("_TARGET_IMAGE", imageReference);
-    if (imageReference.startsWith(dockerHost)) {
+    if (imageReference.startsWith(getDockerHost())) {
       verifier.setSystemProperty("jib.allowInsecureRegistries", "true");
     }
     verifier.setAutoclean(false);
@@ -202,7 +199,7 @@ public class BuildImageMojoIntegrationTest {
     verifier.setSystemProperty("jib.useOnlyProjectCache", "true");
     verifier.setSystemProperty("_TARGET_IMAGE", imageReference);
     verifier.setSystemProperty("_ADDITIONAL_TAG", additionalTag);
-    if (imageReference.startsWith(dockerHost)) {
+    if (imageReference.startsWith(getDockerHost())) {
       verifier.setSystemProperty("jib.allowInsecureRegistries", "true");
     }
     verifier.setAutoclean(false);
@@ -233,7 +230,7 @@ public class BuildImageMojoIntegrationTest {
       throws VerificationException, IOException, InterruptedException {
     Verifier verifier = new Verifier(simpleTestProject.getProjectRoot().toString());
     verifier.setSystemProperty("jib.useOnlyProjectCache", "true");
-    verifier.setSystemProperty("_DOCKER_HOST", dockerHost);
+    verifier.setSystemProperty("_DOCKER_HOST", getDockerHost());
     verifier.setSystemProperty("_TARGET_IMAGE", imageReference);
     verifier.setSystemProperty("_TARGET_USERNAME", "testuser");
     verifier.setSystemProperty("_TARGET_PASSWORD", "testpassword");
@@ -566,7 +563,7 @@ public class BuildImageMojoIntegrationTest {
   @Test
   public void testExecute_complex()
       throws IOException, InterruptedException, VerificationException, DigestException {
-    String targetImage = dockerHost + ":5000/compleximage:maven" + System.nanoTime();
+    String targetImage = getDockerHost() + ":5000/compleximage:maven" + System.nanoTime();
     Instant before = Instant.now();
     String output = buildAndRunComplex(targetImage, "pom-complex.xml");
     assertThat(output)
@@ -593,7 +590,7 @@ public class BuildImageMojoIntegrationTest {
   @Test
   public void testExecute_timestampCustom()
       throws IOException, InterruptedException, VerificationException {
-    String targetImage = dockerHost + ":5000/simpleimage:maven" + System.nanoTime();
+    String targetImage = getDockerHost() + ":5000/simpleimage:maven" + System.nanoTime();
     String pom = "pom-timestamps-custom.xml";
     assertThat(buildAndRunComplex(targetImage, pom))
         .isEqualTo(
@@ -606,7 +603,7 @@ public class BuildImageMojoIntegrationTest {
   @Test
   public void testExecute_complex_sameFromAndToRegistry()
       throws IOException, InterruptedException, VerificationException {
-    String targetImage = dockerHost + ":5000/compleximage:maven" + System.nanoTime();
+    String targetImage = getDockerHost() + ":5000/compleximage:maven" + System.nanoTime();
     assertThat(buildAndRunComplex(targetImage, "pom-complex.xml"))
         .isEqualTo(
             "Hello, world. An argument.\n1970-01-01T00:00:01Z\nrwxr-xr-x\nrwxrwxrwx\nfoo\ncat\n"
@@ -618,7 +615,7 @@ public class BuildImageMojoIntegrationTest {
   @Test
   public void testExecute_complexProperties()
       throws InterruptedException, VerificationException, IOException {
-    String targetImage = dockerHost + ":5000/compleximage:maven" + System.nanoTime();
+    String targetImage = getDockerHost() + ":5000/compleximage:maven" + System.nanoTime();
     assertThat(buildAndRunComplex(targetImage, "pom-complex-properties.xml"))
         .isEqualTo(
             "Hello, world. An argument.\n1970-01-01T00:00:01Z\nrwxr-xr-x\nrwxrwxrwx\nfoo\ncat\n"
@@ -639,7 +636,7 @@ public class BuildImageMojoIntegrationTest {
 
   @Test
   public void testExecute_jibRequireVersion_ok() throws VerificationException, IOException {
-    String targetImage = dockerHost + ":5000/simpleimage:maven" + System.nanoTime();
+    String targetImage = getDockerHost() + ":5000/simpleimage:maven" + System.nanoTime();
 
     Verifier verifier = new Verifier(simpleTestProject.getProjectRoot().toString());
     verifier.setSystemProperty("_TARGET_IMAGE", targetImage);
@@ -673,14 +670,16 @@ public class BuildImageMojoIntegrationTest {
   public void testExecute_jettyServlet25()
       throws VerificationException, IOException, InterruptedException {
     buildAndRunWebApp(servlet25Project, "jetty-servlet25:maven", "pom.xml");
-    HttpGetVerifier.verifyBody("Hello world", new URL("http://" + dockerHost + ":8080/hello"));
+    HttpGetVerifier.verifyBody(
+        "Hello world", new URL("http://" + getDockerHostForHttp() + ":8080/hello"));
   }
 
   @Test
   public void testExecute_tomcatServlet25()
       throws VerificationException, IOException, InterruptedException {
     buildAndRunWebApp(servlet25Project, "tomcat-servlet25:maven", "pom-tomcat.xml");
-    HttpGetVerifier.verifyBody("Hello world", new URL("http://" + dockerHost + ":8080/hello"));
+    HttpGetVerifier.verifyBody(
+        "Hello world", new URL("http://" + getDockerHostForHttp() + ":8080/hello"));
   }
 
   @Test
@@ -701,13 +700,14 @@ public class BuildImageMojoIntegrationTest {
     int fileSize = Integer.parseInt(sizeOutput.substring(0, sizeOutput.indexOf(' ')));
     assertThat(fileSize).isLessThan(3000); // should not be a large fat jar
 
-    HttpGetVerifier.verifyBody("Hello world", new URL("http://" + dockerHost + ":8080"));
+    HttpGetVerifier.verifyBody(
+        "Hello world", new URL("http://" + getDockerHostForHttp() + ":8080"));
   }
 
   @Test
   public void testExecute_multiPlatformBuild()
       throws IOException, VerificationException, RegistryException {
-    String targetImage = dockerHost + ":5000/multiplatform:maven" + System.nanoTime();
+    String targetImage = getDockerHost() + ":5000/multiplatform:maven" + System.nanoTime();
 
     Verifier verifier = new Verifier(simpleTestProject.getProjectRoot().toString());
     verifier.setSystemProperty("_TARGET_IMAGE", targetImage);
@@ -725,7 +725,7 @@ public class BuildImageMojoIntegrationTest {
     FailoverHttpClient httpClient = new FailoverHttpClient(true, true, ignored -> {});
     RegistryClient registryClient =
         RegistryClient.factory(
-                EventHandlers.NONE, dockerHost + ":5000", "multiplatform", httpClient)
+                EventHandlers.NONE, getDockerHost() + ":5000", "multiplatform", httpClient)
             .setCredential(Credential.from("testuser", "testpassword"))
             .newRegistryClient();
     registryClient.configureBasicAuth();
@@ -789,7 +789,7 @@ public class BuildImageMojoIntegrationTest {
     Verifier verifier = new Verifier(project.getProjectRoot().toString());
     verifier.setSystemProperty("jib.useOnlyProjectCache", "true");
     verifier.setSystemProperty("_TARGET_IMAGE", targetImage);
-    if (targetImage.startsWith(dockerHost)) {
+    if (targetImage.startsWith(getDockerHost())) {
       verifier.setSystemProperty("jib.allowInsecureRegistries", "true");
     }
     verifier.setAutoclean(false);
@@ -800,5 +800,21 @@ public class BuildImageMojoIntegrationTest {
 
     detachedContainerName =
         new Command("docker", "run", "--rm", "--detach", "-p8080:8080", targetImage).run().trim();
+  }
+
+  private static String getDockerHost() {
+    return System.getenv("DOCKER_IP") != null ? System.getenv("DOCKER_IP") : "localhost";
+  }
+
+  private static String getDockerHostForHttp() {
+    if (System.getenv("KOKORO_JOB_CLUSTER") != null
+        && System.getenv("KOKORO_JOB_CLUSTER").equals("MACOS_EXTERNAL")) {
+      return System.getenv("DOCKER_IP");
+    } else if (System.getenv("KOKORO_JOB_CLUSTER") != null
+        && System.getenv("KOKORO_JOB_CLUSTER").equals("GCP_UBUNTU_DOCKER")) {
+      return System.getenv("DOCKER_HOST_IP");
+    } else {
+      return "localhost";
+    }
   }
 }

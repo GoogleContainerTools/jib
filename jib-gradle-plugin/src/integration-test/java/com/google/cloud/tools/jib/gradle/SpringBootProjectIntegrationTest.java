@@ -34,9 +34,6 @@ public class SpringBootProjectIntegrationTest {
 
   @Nullable private String containerName;
 
-  private final String dockerHost =
-      System.getenv("DOCKER_IP") != null ? System.getenv("DOCKER_IP") : "localhost";
-
   @After
   public void tearDown() throws IOException, InterruptedException {
     if (containerName != null) {
@@ -60,7 +57,7 @@ public class SpringBootProjectIntegrationTest {
     Assert.assertEquals("1360 /app/classpath/spring-boot-original.jar\n", output);
 
     Assert.assertEquals(
-        "Hello world", JibRunHelper.getContent(new URL("http://" + dockerHost + ":8080")));
+        "Hello world", JibRunHelper.getContent(new URL("http://" + getDockerHost() + ":8080")));
   }
 
   private void buildAndRunWebApp(String label, String gradleBuildFile)
@@ -71,5 +68,17 @@ public class SpringBootProjectIntegrationTest {
         JibRunHelper.buildAndRun(
             springBootProject, targetImage, gradleBuildFile, "--detach", "-p8080:8080");
     containerName = output.trim();
+  }
+
+  private String getDockerHost() {
+    if (System.getenv("KOKORO_JOB_CLUSTER") != null
+        && System.getenv("KOKORO_JOB_CLUSTER").equals("MACOS_EXTERNAL")) {
+      return System.getenv("DOCKER_IP");
+    } else if (System.getenv("KOKORO_JOB_CLUSTER") != null
+        && System.getenv("KOKORO_JOB_CLUSTER").equals("GCP_UBUNTU_DOCKER")) {
+      return System.getenv("DOCKER_HOST_IP");
+    } else {
+      return "localhost";
+    }
   }
 }
