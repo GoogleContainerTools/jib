@@ -33,7 +33,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
-import java.util.logging.Logger;
 import javax.annotation.Nullable;
 import org.junit.rules.ExternalResource;
 import org.mindrot.jbcrypt.BCrypt;
@@ -41,9 +40,8 @@ import org.mindrot.jbcrypt.BCrypt;
 /** Runs a local registry. */
 public class LocalRegistry extends ExternalResource {
 
-  private static final Logger LOGGER = Logger.getLogger(LocalRegistry.class.getName());
   private final String containerName = "registry-" + UUID.randomUUID();
-  private final String dockerHost =
+  public final String dockerHost =
       System.getenv("DOCKER_IP") != null ? System.getenv("DOCKER_IP") : "localhost";
   private final int port;
   @Nullable private final String username;
@@ -57,10 +55,6 @@ public class LocalRegistry extends ExternalResource {
     this.port = port;
     this.username = username;
     this.password = password;
-  }
-
-  public String getDockerHost() {
-    return dockerHost;
   }
 
   /** Starts the local registry. */
@@ -111,13 +105,6 @@ public class LocalRegistry extends ExternalResource {
     }
     dockerTokens.add("registry:2");
     new Command(dockerTokens).run();
-
-    if (System.getenv("KOKORO_JOB_CLUSTER") != null
-        && System.getenv("KOKORO_JOB_CLUSTER").equals("GCP_UBUNTU_DOCKER")) {
-      String containerIp = getAndMapRegistryContainerIp();
-      LOGGER.info("Mapped registry container IP to localhost: " + containerIp);
-    }
-
     waitUntilReady();
   }
 
@@ -130,37 +117,6 @@ public class LocalRegistry extends ExternalResource {
     } catch (InterruptedException | IOException ex) {
       throw new RuntimeException("Could not stop local registry fully: " + containerName, ex);
     }
-  }
-
-  /** Gets local registry container IP and associates it to localhost. */
-  private String getAndMapRegistryContainerIp() {
-    String containerIp;
-
-    // Gets local registry container IP
-    List<String> dockerTokens =
-        Lists.newArrayList(
-            "docker",
-            "inspect",
-            "-f",
-            "'{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}'",
-            containerName);
-    try {
-      String result = new Command(dockerTokens).run();
-      // Remove single quotes and LF from result (e.g. '127.0.0.1'\n)
-      containerIp = result.replaceAll("['\n]", "");
-    } catch (InterruptedException | IOException ex) {
-      throw new RuntimeException("Could not get local registry IP for: " + containerName, ex);
-    }
-
-    // Associate container IP with localhost
-    try {
-      String addHost =
-          new Command("bash", "-c", "echo \"" + containerIp + " localhost\" >> /etc/hosts").run();
-    } catch (InterruptedException | IOException ex) {
-      throw new RuntimeException("Could not associate container IP to localhost: " + containerIp);
-    }
-
-    return containerIp;
   }
 
   /**
@@ -187,29 +143,26 @@ public class LocalRegistry extends ExternalResource {
   public void pullAndPushToLocal(String from, String to) throws IOException, InterruptedException {
     login();
     new Command("docker", "pull", from).run();
-    new Command("docker", "tag", from, getDockerHost() + ":" + port + "/" + to).run();
-    new Command("docker", "push", getDockerHost() + ":" + port + "/" + to).run();
+    new Command("docker", "tag", from, dockerHost + ":" + port + "/" + to).run();
+    new Command("docker", "push", dockerHost + ":" + port + "/" + to).run();
     logout();
   }
 
   private void login() throws IOException, InterruptedException {
     if (username != null && password != null) {
-      new Command(
-              "docker", "login", getDockerHost() + ":" + port, "-u", username, "--password-stdin")
+      new Command("docker", "login", dockerHost + ":" + port, "-u", username, "--password-stdin")
           .run(password.getBytes(StandardCharsets.UTF_8));
     }
   }
 
   private void logout() throws IOException, InterruptedException {
     if (username != null && password != null) {
-      new Command("docker", "logout", getDockerHost() + ":" + port).run();
+      new Command("docker", "logout", dockerHost + ":" + port).run();
     }
   }
 
   private void waitUntilReady() throws InterruptedException, MalformedURLException {
-    LOGGER.info("DockerHost: " + getDockerHost());
-    URL queryUrl = new URL("http://" + getDockerHost() + ":" + port + "/v2/_catalog");
-    LOGGER.info("URL: " + queryUrl);
+    URL queryUrl = new URL("http://" + dockerHost + ":" + port + "/v2/_catalog");
 
     for (int i = 0; i < 40; i++) {
       try {

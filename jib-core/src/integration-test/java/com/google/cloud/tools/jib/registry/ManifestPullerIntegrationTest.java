@@ -53,7 +53,8 @@ public class ManifestPullerIntegrationTest {
       "sha256:0477dc38b254096e350a9b605b7355d3cf0d5a844558e6986148ce2a1fe18ba8";
 
   @ClassRule public static LocalRegistry localRegistry = new LocalRegistry(5000);
-  public final String dockerHost = localRegistry.getDockerHost();
+  public final String dockerHost =
+      System.getenv("DOCKER_IP") != null ? System.getenv("DOCKER_IP") : "localhost";
 
   @BeforeClass
   public static void setUp() throws IOException, InterruptedException {

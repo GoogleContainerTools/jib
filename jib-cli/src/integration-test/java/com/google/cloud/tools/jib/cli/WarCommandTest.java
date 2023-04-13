@@ -20,7 +20,6 @@ import static com.google.common.truth.Truth.assertThat;
 
 import com.google.cloud.tools.jib.Command;
 import com.google.cloud.tools.jib.blob.Blobs;
-import com.google.common.collect.Lists;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
@@ -29,8 +28,6 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.List;
-import java.util.logging.Logger;
 import javax.annotation.Nullable;
 import org.junit.After;
 import org.junit.ClassRule;
@@ -38,8 +35,6 @@ import org.junit.Test;
 import picocli.CommandLine;
 
 public class WarCommandTest {
-
-  private static final Logger LOGGER = Logger.getLogger(WarCommandTest.class.getName());
 
   @ClassRule public static final TestProject servletProject = new TestProject("warTest");
   private final String dockerHost =
@@ -90,12 +85,22 @@ public class WarCommandTest {
     Path warPath = warParentPath.resolve("standard-war.war");
     Integer exitCode =
         new CommandLine(new JibCli())
-            .execute(
-                "war", "--target", "docker://exploded-war", "--expose=8080", warPath.toString());
+            .execute("war", "--target", "docker://exploded-war", warPath.toString());
     assertThat(exitCode).isEqualTo(0);
+    String output =
+        new Command(
+                "docker",
+                "run",
+                "--rm",
+                "--detach",
+                "-p8080:8080",
+                "exploded-war",
+                "--privileged",
+                "--network=host")
+            .run();
+    containerName = output.trim();
 
-    runWarInDocker("exploded-war");
-    assertThat(getContent(new URL("http://" + getDockerHost() + ":8080/hello")))
+    assertThat(getContent(new URL("http://" + dockerHost + ":8080/hello")))
         .isEqualTo("Hello world");
   }
 
@@ -111,12 +116,14 @@ public class WarCommandTest {
                 "--target",
                 "docker://exploded-war-custom-jetty",
                 "--from=jetty:11.0-jre11-slim-openjdk",
-                "--expose=8080",
                 warPath.toString());
     assertThat(exitCode).isEqualTo(0);
+    String output =
+        new Command("docker", "run", "--rm", "--detach", "-p8080:8080", "exploded-war-custom-jetty")
+            .run();
+    containerName = output.trim();
 
-    runWarInDocker("exploded-war-custom-jetty");
-    assertThat(getContent(new URL("http://" + getDockerHost() + ":8080/hello")))
+    assertThat(getContent(new URL("http://" + dockerHost + ":8080/hello")))
         .isEqualTo("Hello world");
   }
 
@@ -134,18 +141,19 @@ public class WarCommandTest {
                 "--from=tomcat:10-jre8-openjdk-slim",
                 "--app-root",
                 "/usr/local/tomcat/webapps/ROOT",
-                "--expose=8080",
                 warPath.toString());
     assertThat(exitCode).isEqualTo(0);
+    String output =
+        new Command("docker", "run", "--rm", "--detach", "-p8080:8080", "exploded-war-tomcat")
+            .run();
+    containerName = output.trim();
 
-    runWarInDocker("exploded-war-tomcat");
-    assertThat(getContent(new URL("http://" + getDockerHost() + ":8080/hello")))
+    assertThat(getContent(new URL("http://" + dockerHost + ":8080/hello")))
         .isEqualTo("Hello world");
   }
 
   @Nullable
   private static String getContent(URL url) throws InterruptedException {
-    LOGGER.info("URL: " + url);
     for (int i = 0; i < 40; i++) {
       Thread.sleep(500);
       try {
@@ -157,97 +165,8 @@ public class WarCommandTest {
         }
       } catch (IOException ignored) {
         // ignored
-        LOGGER.info("Exception: " + ignored);
-        ignored.printStackTrace();
       }
     }
     return null;
-  }
-
-  private String getDockerHost() {
-    //    if (System.getenv("KOKORO_JOB_CLUSTER") != null
-    //        && System.getenv("KOKORO_JOB_CLUSTER").equals("GCP_UBUNTU_DOCKER")) {
-    //      return getRegistryContainerIp(containerName);
-    //    }
-    return dockerHost;
-  }
-
-  //  /** Gets local registry container IP. */
-  //  private String getRegistryContainerIp(String containerName) {
-  //    String containerIp;
-  //
-  //    // Gets local registry container IP
-  //    List<String> dockerTokens =
-  //        Lists.newArrayList(
-  //            "docker",
-  //            "inspect",
-  //            "-f",
-  //            "'{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}'",
-  //            containerName);
-  //    try {
-  //      String result = new Command(dockerTokens).run();
-  //      // Remove single quotes and LF from result (e.g. '127.0.0.1'\n)
-  //      containerIp = result.replaceAll("['\n]", "");
-  //    } catch (InterruptedException | IOException ex) {
-  //      throw new RuntimeException("Could get local registry IP for: " + containerName, ex);
-  //    }
-  //    return containerIp;
-  //  }
-
-  private String runWarInDocker(String name) throws IOException, InterruptedException {
-    LOGGER.info("War name: " + name);
-    String output = new Command("docker", "run", "--rm", "--detach", "-p", "8080:8080", name).run();
-    containerName = output.trim();
-    LOGGER.info("Container name: " + containerName);
-    if (System.getenv("KOKORO_JOB_CLUSTER") != null
-        && System.getenv("KOKORO_JOB_CLUSTER").equals("GCP_UBUNTU_DOCKER")) {
-      String containerIp = getAndMapRegistryContainerIp(containerName);
-      LOGGER.info("Mapped registry container IP to localhost: " + containerIp);
-    }
-
-    // Log port info
-    String port = new Command("docker", "port", containerName).run();
-    LOGGER.info("Port: " + port);
-
-    //    // Log container info
-    //    String dockerInspectOutput = new Command("docker", "inspect", containerName).run();
-    //    LOGGER.info(dockerInspectOutput);
-
-    //    // Log container info
-    //    String logs = new Command("docker", "logs", "-f", containerName).run();
-    //    LOGGER.info(logs);
-
-    return containerName;
-  }
-
-  /** Gets local registry container IP and associates it to localhost. */
-  private String getAndMapRegistryContainerIp(String containerName) {
-    String containerIp;
-
-    // Gets local registry container IP
-    List<String> dockerTokens =
-        Lists.newArrayList(
-            "docker",
-            "inspect",
-            "-f",
-            "'{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}'",
-            containerName);
-    try {
-      String result = new Command(dockerTokens).run();
-      // Remove single quotes and LF from result (e.g. '127.0.0.1'\n)
-      containerIp = result.replaceAll("['\n]", "");
-    } catch (InterruptedException | IOException ex) {
-      throw new RuntimeException("Could get local registry IP for: " + containerName, ex);
-    }
-
-    // Associate container IP with localhost
-    try {
-      String addHost =
-          new Command("bash", "-c", "echo \"" + containerIp + " localhost\" >> /etc/hosts").run();
-    } catch (InterruptedException | IOException ex) {
-      throw new RuntimeException("Could not associate container IP to localhost: " + containerIp);
-    }
-
-    return containerIp;
   }
 }

@@ -20,7 +20,6 @@ import static com.google.common.truth.Truth.assertThat;
 
 import com.google.cloud.tools.jib.Command;
 import com.google.cloud.tools.jib.blob.Blobs;
-import com.google.common.collect.Lists;
 import com.google.common.io.Resources;
 import java.io.IOException;
 import java.io.InputStream;
@@ -31,10 +30,8 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.List;
 import java.util.jar.Attributes;
 import java.util.jar.JarFile;
-import java.util.logging.Logger;
 import javax.annotation.Nullable;
 import org.junit.After;
 import org.junit.ClassRule;
@@ -42,8 +39,6 @@ import org.junit.Test;
 import picocli.CommandLine;
 
 public class JarCommandTest {
-
-  private static final Logger LOGGER = Logger.getLogger(JarCommandTest.class.getName());
 
   @ClassRule
   public static final TestProject springBootProject = new TestProject("jarTest/spring-boot");
@@ -212,15 +207,25 @@ public class JarCommandTest {
                 "eclipse-temurin:8-jdk-focal",
                 "--target",
                 "docker://spring-boot-jar-layered",
-                "--expose=8080",
                 jarPath.toString());
     assertThat(exitCode).isEqualTo(0);
 
-    runJarInDocker("spring-boot-jar-layered");
+    String output =
+        new Command(
+                "docker",
+                "run",
+                "--rm",
+                "--detach",
+                "-p8080:8080",
+                "spring-boot-jar-layered",
+                "--privileged",
+                "--network=host")
+            .run();
+    containerName = output.trim();
     try (JarFile jarFile = new JarFile(jarPath.toFile())) {
+
       assertThat(jarFile.getEntry("BOOT-INF/layers.idx")).isNotNull();
-      assertThat(getContent(new URL("http://" + getDockerHost() + ":8080")))
-          .isEqualTo("Hello world");
+      assertThat(getContent(new URL("http://" + dockerHost + ":8080"))).isEqualTo("Hello world");
     }
   }
 
@@ -238,15 +243,25 @@ public class JarCommandTest {
                 "eclipse-temurin:8-jdk-focal",
                 "--target",
                 "docker://spring-boot-jar",
-                "--expose=8080",
                 jarPath.toString());
     assertThat(exitCode).isEqualTo(0);
 
-    runJarInDocker("spring-boot-jar");
+    String output =
+        new Command(
+                "docker",
+                "run",
+                "--rm",
+                "--detach",
+                "-p8080:8080",
+                "spring-boot-jar",
+                "--privileged",
+                "--network=host")
+            .run();
+    containerName = output.trim();
     try (JarFile jarFile = new JarFile(jarPath.toFile())) {
+
       assertThat(jarFile.getEntry("BOOT-INF/layers.idx")).isNull();
-      assertThat(getContent(new URL("http://" + getDockerHost() + ":8080")))
-          .isEqualTo("Hello world");
+      assertThat(getContent(new URL("http://" + dockerHost + ":8080"))).isEqualTo("Hello world");
     }
   }
 
@@ -263,13 +278,24 @@ public class JarCommandTest {
                 "eclipse-temurin:8-jdk-focal",
                 "--target",
                 "docker://packaged-spring-boot",
-                "--mode=packaged",
-                "--expose=8080",
-                jarPath.toString());
+                jarPath.toString(),
+                "--mode=packaged");
     assertThat(exitCode).isEqualTo(0);
 
-    runJarInDocker("packaged-spring-boot");
-    assertThat(getContent(new URL("http://" + getDockerHost() + ":8080"))).isEqualTo("Hello world");
+    String output =
+        new Command(
+                "docker",
+                "run",
+                "--rm",
+                "--detach",
+                "-p8080:8080",
+                "packaged-spring-boot",
+                "--privileged",
+                "--network=host")
+            .run();
+    containerName = output.trim();
+
+    assertThat(getContent(new URL("http://" + dockerHost + ":8080"))).isEqualTo("Hello world");
   }
 
   @Test
@@ -282,7 +308,6 @@ public class JarCommandTest {
                 "jar",
                 "--target=docker://cli-gcr-base",
                 "--from=gcr.io/google-appengine/openjdk:8",
-                "--expose=8080",
                 jarPath.toString());
     assertThat(exitCode).isEqualTo(0);
     String output = new Command("docker", "run", "--rm", "cli-gcr-base").run();
@@ -291,7 +316,6 @@ public class JarCommandTest {
 
   @Nullable
   private static String getContent(URL url) throws InterruptedException {
-    LOGGER.info("URL: " + url);
     for (int i = 0; i < 40; i++) {
       Thread.sleep(500);
       try {
@@ -303,98 +327,8 @@ public class JarCommandTest {
         }
       } catch (IOException ignored) {
         // ignored
-        LOGGER.info("Exception: " + ignored);
-        ignored.printStackTrace();
       }
     }
     return null;
-  }
-
-  private String getDockerHost() {
-    //    if (System.getenv("KOKORO_JOB_CLUSTER") != null
-    //        && System.getenv("KOKORO_JOB_CLUSTER").equals("GCP_UBUNTU_DOCKER")) {
-    //      return getRegistryContainerIp(containerName);
-    //    }
-    return dockerHost;
-  }
-
-  //  /** Gets local registry container IP. */
-  //  private String getRegistryContainerIp(String containerName) {
-  //    String containerIp;
-  //
-  //    // Gets local registry container IP
-  //    List<String> dockerTokens =
-  //        Lists.newArrayList(
-  //            "docker",
-  //            "inspect",
-  //            "-f",
-  //            "'{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}'",
-  //            containerName);
-  //    try {
-  //      String result = new Command(dockerTokens).run();
-  //      // Remove single quotes and LF from result (e.g. '127.0.0.1'\n)
-  //      containerIp = result.replaceAll("['\n]", "");
-  //    } catch (InterruptedException | IOException ex) {
-  //      throw new RuntimeException("Could get local registry IP for: " + containerName, ex);
-  //    }
-  //    LOGGER.info("Container IP: " + containerIp);
-  //    return containerIp;
-  //  }
-
-  private String runJarInDocker(String name) throws IOException, InterruptedException {
-    LOGGER.info("Jar name: " + name);
-    String output = new Command("docker", "run", "--rm", "--detach", "-p", "8080:8080", name).run();
-    containerName = output.trim();
-    LOGGER.info("Container name: " + containerName);
-    if (System.getenv("KOKORO_JOB_CLUSTER") != null
-        && System.getenv("KOKORO_JOB_CLUSTER").equals("GCP_UBUNTU_DOCKER")) {
-      String containerIp = getAndMapRegistryContainerIp(containerName);
-      LOGGER.info("Mapped registry container IP to localhost: " + containerIp);
-    }
-
-    // Log port info
-    String port = new Command("docker", "port", containerName).run();
-    LOGGER.info("Port: " + port);
-
-    //    // Log container info
-    //    String dockerInspectOutput = new Command("docker", "inspect", containerName).run();
-    //    LOGGER.info(dockerInspectOutput);
-
-    // Log container info
-    //    String logs = new Command("docker", "logs", "-f", containerName).run();
-    //    LOGGER.info(logs);
-
-    return containerName;
-  }
-
-  /** Gets local registry container IP and associates it to localhost. */
-  private String getAndMapRegistryContainerIp(String containerName) {
-    String containerIp;
-
-    // Gets local registry container IP
-    List<String> dockerTokens =
-        Lists.newArrayList(
-            "docker",
-            "inspect",
-            "-f",
-            "'{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}'",
-            containerName);
-    try {
-      String result = new Command(dockerTokens).run();
-      // Remove single quotes and LF from result (e.g. '127.0.0.1'\n)
-      containerIp = result.replaceAll("['\n]", "");
-    } catch (InterruptedException | IOException ex) {
-      throw new RuntimeException("Could get local registry IP for: " + containerName, ex);
-    }
-
-    // Associate container IP with localhost
-    try {
-      String addHost =
-          new Command("bash", "-c", "echo \"" + containerIp + " localhost\" >> /etc/hosts").run();
-    } catch (InterruptedException | IOException ex) {
-      throw new RuntimeException("Could not associate container IP to localhost: " + containerIp);
-    }
-
-    return containerIp;
   }
 }

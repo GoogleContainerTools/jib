@@ -10,6 +10,13 @@ if [ "${KOKORO_JOB_CLUSTER}" = "MACOS_EXTERNAL" ]; then
 source github/jib/kokoro/docker_setup.sh
 fi
 
+# In GCP_UBUNTU_DOCKER, the build script runs in a container and requires additional setup
+if [ "${KOKORO_JOB_CLUSTER}" = "GCP_UBUNTU_DOCKER" ]; then
+export DOCKER_HOST_IP="$(/sbin/ip route|awk '/default/ { print $3 }')"
+echo "DOCKER_HOST_IP: ${DOCKER_HOST_IP}"
+echo "${DOCKER_HOST_IP} localhost" >> /etc/hosts
+fi
+
 # docker-credential-gcr uses GOOGLE_APPLICATION_CREDENTIALS as the credentials key file
 export GOOGLE_APPLICATION_CREDENTIALS=${KOKORO_KEYSTORE_DIR}/72743_jib_integration_testing_key
 

@@ -38,7 +38,6 @@ import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import com.google.cloud.tools.jib.registry.LocalRegistry;
 import com.google.cloud.tools.jib.registry.RegistryClient;
 import com.google.common.base.Splitter;
-import com.google.common.collect.Lists;
 import java.io.IOException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
@@ -49,7 +48,6 @@ import java.security.DigestException;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;
-import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.annotation.Nullable;
@@ -68,9 +66,6 @@ import org.junit.rules.TemporaryFolder;
 /** Integration tests for {@link BuildImageMojo}. */
 public class BuildImageMojoIntegrationTest {
 
-  private static final Logger LOGGER =
-      Logger.getLogger(BuildImageMojoIntegrationTest.class.getName());
-
   @ClassRule
   public static final LocalRegistry localRegistry =
       new LocalRegistry(5000, "testuser", "testpassword");
@@ -88,7 +83,8 @@ public class BuildImageMojoIntegrationTest {
 
   @ClassRule public static final TestProject springBootProject = new TestProject("spring-boot");
 
-  private static final String dockerHost = localRegistry.getDockerHost();
+  private static final String dockerHost =
+      System.getenv("DOCKER_IP") != null ? System.getenv("DOCKER_IP") : "localhost";
 
   private static String getTestImageReference(String label) {
     String nameBase = IntegrationTestingConfiguration.getTestRepositoryLocation() + '/';
@@ -267,46 +263,7 @@ public class BuildImageMojoIntegrationTest {
       throws IOException, InterruptedException {
     new Command("docker", "pull", imageReference).run();
     assertDockerInspectParameters(imageReference);
-    String output = new Command("docker", "run", "--rm", imageReference).run();
-    if (System.getenv("KOKORO_JOB_CLUSTER") != null
-        && System.getenv("KOKORO_JOB_CLUSTER").equals("GCP_UBUNTU_DOCKER")) {
-      String containerName = output.trim();
-      LOGGER.info("Container name: " + containerName);
-      String containerIp = getAndMapContainerIp(containerName);
-      LOGGER.info("Mapped container IP to localhost: " + containerIp);
-    }
-    return output;
-  }
-
-  /** Gets container IP and associates it to localhost. */
-  private static String getAndMapContainerIp(String containerName) {
-    String containerIp;
-
-    // Gets local registry container IP
-    List<String> dockerTokens =
-        Lists.newArrayList(
-            "docker",
-            "inspect",
-            "-f",
-            "'{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}'",
-            containerName);
-    try {
-      String result = new Command(dockerTokens).run();
-      // Remove single quotes and LF from result (e.g. '127.0.0.1'\n)
-      containerIp = result.replaceAll("['\n]", "");
-    } catch (InterruptedException | IOException ex) {
-      throw new RuntimeException("Could not get container IP for: " + containerName, ex);
-    }
-
-    // Associate container IP with localhost
-    try {
-      String addHost =
-          new Command("bash", "-c", "echo \"" + containerIp + " localhost\" >> /etc/hosts").run();
-    } catch (InterruptedException | IOException ex) {
-      throw new RuntimeException("Could not associate container IP to localhost: " + containerIp);
-    }
-
-    return containerIp;
+    return new Command("docker", "run", "--rm", imageReference).run();
   }
 
   private static void assertDockerInspectParameters(String imageReference)
