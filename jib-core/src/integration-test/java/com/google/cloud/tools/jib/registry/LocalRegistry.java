@@ -87,10 +87,10 @@ public class LocalRegistry extends ExternalResource {
           tempFolder.resolve("htpasswd"), credentialString.getBytes(StandardCharsets.UTF_8));
       String authenticationVolume = tempFolder + ":/auth";
       if (System.getenv("KOKORO_JOB_CLUSTER") != null
-              && System.getenv("KOKORO_JOB_CLUSTER").equals("MACOS_EXTERNAL")) {
+          && System.getenv("KOKORO_JOB_CLUSTER").equals("MACOS_EXTERNAL")) {
         authenticationVolume = "/home/docker/auth:/auth";
       } else if (System.getenv("KOKORO_JOB_CLUSTER") != null
-              && System.getenv("KOKORO_JOB_CLUSTER").equals("GCP_UBUNTU_DOCKER")) {
+          && System.getenv("KOKORO_JOB_CLUSTER").equals("GCP_UBUNTU_DOCKER")) {
         authenticationVolume = "/tmpfs/auth:/auth";
       }
       // Run the Docker registry
