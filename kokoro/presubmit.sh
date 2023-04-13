@@ -15,6 +15,8 @@ if [ "${KOKORO_JOB_CLUSTER}" = "GCP_UBUNTU_DOCKER" ]; then
 export DOCKER_HOST_IP="$(/sbin/ip route|awk '/default/ { print $3 }')"
 echo "DOCKER_HOST_IP: ${DOCKER_HOST_IP}"
 echo "${DOCKER_HOST_IP} localhost" >> /etc/hosts
+mkdir -p /tmpfs/auth
+docker run --entrypoint htpasswd httpd:2 -Bbn testuser testpassword > /tmpfs/auth/htpasswd
 fi
 
 # From default hostname, get id of container to exclude
