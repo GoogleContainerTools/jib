@@ -15,25 +15,20 @@ You generally only need to submit a CLA once, so if you've already submitted one
 (even if it was for a different project), you probably don't need to do it
 again.
 
-## Building Jib
-
-Jib comes as 3 public components:
-
-  - `jib-core`: a library for building containers
-  - `jib-maven-plugin`: a Maven plugin that uses `jib-core` and `jib-plugins-common`
-  - `jib-gradle-plugin`: a Gradle plugin that uses `jib-core` and `jib-plugins-common`
-
-And 1 internal component:
-
-  - `jib-plugins-common`: a library with helpers for maven/gradle plugins
-
-The project is configured as a single gradle build. Run `./gradlew build` to build the
-whole project. Run `./gradlew install` to install all public components into the
-local maven repository.
-
 ## Code Reviews
 
-1. Set your git user.email property to the address used for step 1. E.g.
+All submissions, including submissions by project members, require review. We
+use Github pull requests for this purpose.
+
+Before submitting a pull request, please make sure to:
+
+- Identify an existing [issue](https://github.com/GoogleContainerTools/jib/issues) to associate
+  with your proposed change, or [file a new issue](https://github.com/GoogleContainerTools/jib/issues/new).
+- Describe any implementation plans in the issue and wait for a review from the repository maintainers.
+
+### Typical Contribution Cycle
+
+1. Set your git user.email property to the address used for signing the CLA. E.g.
    ```
    git config --global user.email "janedoe@google.com"
    ```
@@ -46,6 +41,22 @@ local maven repository.
    * run `./gradlew clean goJF build integrationTest`
 5. Associate the change with an existing issue or file a [new issue](../../issues).
 6. Create a pull request!
+
+## Building Jib
+
+Jib comes as 3 public components:
+
+- `jib-core`: a library for building containers
+- `jib-maven-plugin`: a Maven plugin that uses `jib-core` and `jib-plugins-common`
+- `jib-gradle-plugin`: a Gradle plugin that uses `jib-core` and `jib-plugins-common`
+
+And 1 internal component:
+
+- `jib-plugins-common`: a library with helpers for maven/gradle plugins
+
+The project is configured as a single gradle build. Run `./gradlew build` to build the
+whole project. Run `./gradlew install` to install all public components into the
+local maven repository.
 
 ### Integration Tests
 **Note** that in order to run integration tests, you will need to set one of the

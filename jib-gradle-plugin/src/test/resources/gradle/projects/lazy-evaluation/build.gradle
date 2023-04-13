@@ -39,6 +39,8 @@ jib {
         }
         creationTime = project.provider { project.ext.jibCreationTime }
         filesModificationTime = project.provider { project.ext.jibFilesModificationTime }
+        mainClass = project.provider { project.ext.value }
+        jvmFlags = project.provider { [project.ext.value] }
     }
     extraDirectories {
         paths = project.provider { ['src/main/' + project.ext.value + '-custom-extra-dir'] }
@@ -63,4 +65,14 @@ tasks.register('showtimes') {
     println('creationTime=' + prop)
     prop = project.extensions.jib.container.filesModificationTime.get()
     println('filesModificationTime=' + prop)
+}
+
+tasks.register('showMainClass') {
+    String prop = project.extensions.jib.container.mainClass
+    println('mainClass value ' + prop)
+}
+
+tasks.register('showJvmFlags') {
+    List<String> prop = project.extensions.jib.container.jvmFlags
+    println('jvmFlags value ' + prop)
 }

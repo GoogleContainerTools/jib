@@ -407,6 +407,18 @@ public class JibPluginTest {
     assertThat(output).contains("filesModificationTime=2022-07-19T11:23:42Z");
   }
 
+  @Test
+  public void testLazyEvalForMainClass() {
+    BuildResult showLabels = testProject.build("showMainClass");
+    assertThat(showLabels.getOutput()).contains("mainClass value updated");
+  }
+
+  @Test
+  public void testLazyEvalForJvmFlags() {
+    BuildResult showLabels = testProject.build("showJvmFlags");
+    assertThat(showLabels.getOutput()).contains("jvmFlags value [updated]");
+  }
+
   private Project createProject(String... plugins) {
     Project project =
         ProjectBuilder.builder().withProjectDir(testProjectRoot.getRoot()).withName("root").build();
