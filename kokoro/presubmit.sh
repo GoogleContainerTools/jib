@@ -29,9 +29,14 @@ docker kill $(docker ps --all --quiet | grep -v "$CONTAINER_ID") || true
 
 cd github/jib
 
-# temporary: add jib-cli integration tests for easier troubleshooting
-# revert this before merging
-./gradlew clean build :jib-cli:integrationTest --info --stacktrace
-
 # we only run integration tests on jib-core for presubmit
 ./gradlew clean build :jib-core:integrationTest --info --stacktrace
+
+# temporary: add individual integration tests here for easier troubleshooting
+# TODO: revert this before merging
+./gradlew clean build :jib-cli:integrationTest --tests com.google.cloud.tools.jib.cli.JarCommandTest
+./gradlew clean build :jib-cli:integrationTest --tests com.google.cloud.tools.jib.cli.WarCommandTest
+./gradlew clean build :jib-maven-plugin:integrationTest --tests com.google.cloud.tools.jib.maven.BuildImageMojoIntegrationTest.testExecute_springBootPackaged
+./gradlew clean build :jib-maven-plugin:integrationTest --tests com.google.cloud.tools.jib.maven.BuildImageMojoIntegrationTest.testExecute_tomcatServlet25
+./gradlew clean build :jib-maven-plugin:integrationTest --tests com.google.cloud.tools.jib.maven.BuildImageMojoIntegrationTest.testExecute_jettyServlet25
+./gradlew clean build :jib-cli:integrationTest --info --stacktrace

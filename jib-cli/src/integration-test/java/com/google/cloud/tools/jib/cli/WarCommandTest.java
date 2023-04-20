@@ -164,6 +164,7 @@ public class WarCommandTest {
         }
       } catch (IOException ignored) {
         // ignored
+        System.out.println("Ignored exception: " + ignored.getMessage());
       }
     }
     return null;

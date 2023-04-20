@@ -39,4 +39,9 @@ export JIB_INTEGRATION_TESTING_PROJECT=jib-integration-testing
 
 cd github/jib
 
+# temporary: split up tests for troubleshooting
+# TODO: revert before merging
+./gradlew clean build :jib-gradle-plugin:integrationTest --info --stacktrace
+./gradlew clean build :jib-maven-plugin:integrationTest --info --stacktrace
+
 ./gradlew clean build integrationTest --info --stacktrace
