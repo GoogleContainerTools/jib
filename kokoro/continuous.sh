@@ -41,7 +41,10 @@ cd github/jib
 
 # temporary: split up tests for troubleshooting
 # TODO: revert before merging
-./gradlew clean build :jib-gradle-plugin:integrationTest --info --stacktrace
+./gradlew clean build :jib-maven-plugin:integrationTest --tests com.google.cloud.tools.jib.maven.BuildImageMojoIntegrationTest.testExecute_springBootPackaged
+./gradlew clean build :jib-maven-plugin:integrationTest --tests com.google.cloud.tools.jib.maven.BuildImageMojoIntegrationTest.testExecute_tomcatServlet25
+./gradlew clean build :jib-maven-plugin:integrationTest --tests com.google.cloud.tools.jib.maven.BuildImageMojoIntegrationTest.testExecute_jettyServlet25
 ./gradlew clean build :jib-maven-plugin:integrationTest --info --stacktrace
+./gradlew clean build :jib-gradle-plugin:integrationTest --info --stacktrace
 
 ./gradlew clean build integrationTest --info --stacktrace

@@ -36,7 +36,4 @@ cd github/jib
 # TODO: revert this before merging
 ./gradlew clean build :jib-cli:integrationTest --tests com.google.cloud.tools.jib.cli.JarCommandTest
 ./gradlew clean build :jib-cli:integrationTest --tests com.google.cloud.tools.jib.cli.WarCommandTest
-./gradlew clean build :jib-maven-plugin:integrationTest --tests com.google.cloud.tools.jib.maven.BuildImageMojoIntegrationTest.testExecute_springBootPackaged
-./gradlew clean build :jib-maven-plugin:integrationTest --tests com.google.cloud.tools.jib.maven.BuildImageMojoIntegrationTest.testExecute_tomcatServlet25
-./gradlew clean build :jib-maven-plugin:integrationTest --tests com.google.cloud.tools.jib.maven.BuildImageMojoIntegrationTest.testExecute_jettyServlet25
 ./gradlew clean build :jib-cli:integrationTest --info --stacktrace
