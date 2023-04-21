@@ -57,7 +57,8 @@ public class SpringBootProjectIntegrationTest {
     Assert.assertEquals("1360 /app/classpath/spring-boot-original.jar\n", output);
 
     Assert.assertEquals(
-        "Hello world", JibRunHelper.getContent(new URL("http://" + getDockerHost() + ":8080")));
+        "Hello world",
+        JibRunHelper.getContent(new URL("http://" + getDockerHostForHttpRequest() + ":8080")));
   }
 
   private void buildAndRunWebApp(String label, String gradleBuildFile)
@@ -70,7 +71,7 @@ public class SpringBootProjectIntegrationTest {
     containerName = output.trim();
   }
 
-  private String getDockerHost() {
+  private String getDockerHostForHttpRequest() {
     if (System.getenv("KOKORO_JOB_CLUSTER") != null
         && System.getenv("KOKORO_JOB_CLUSTER").equals("MACOS_EXTERNAL")) {
       return System.getenv("DOCKER_IP");

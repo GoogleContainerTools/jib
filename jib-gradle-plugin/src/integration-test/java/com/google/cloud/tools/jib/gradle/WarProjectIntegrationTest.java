@@ -62,10 +62,11 @@ public class WarProjectIntegrationTest {
 
     Assert.assertEquals(
         "Hello world",
-        JibRunHelper.getContent(new URL("http://" + getDockerHost() + ":8080/hello")));
+        JibRunHelper.getContent(
+            new URL("http://" + getDockerHostForHttpRequest() + ":8080/hello")));
   }
 
-  private String getDockerHost() {
+  private String getDockerHostForHttpRequest() {
     if (System.getenv("KOKORO_JOB_CLUSTER") != null
         && System.getenv("KOKORO_JOB_CLUSTER").equals("MACOS_EXTERNAL")) {
       return System.getenv("DOCKER_IP");

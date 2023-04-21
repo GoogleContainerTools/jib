@@ -671,7 +671,7 @@ public class BuildImageMojoIntegrationTest {
       throws VerificationException, IOException, InterruptedException {
     buildAndRunWebApp(servlet25Project, "jetty-servlet25:maven", "pom.xml");
     HttpGetVerifier.verifyBody(
-        "Hello world", new URL("http://" + getDockerHostForHttp() + ":8080/hello"));
+        "Hello world", new URL("http://" + getDockerHostForHttpRequest() + ":8080/hello"));
   }
 
   @Test
@@ -679,7 +679,7 @@ public class BuildImageMojoIntegrationTest {
       throws VerificationException, IOException, InterruptedException {
     buildAndRunWebApp(servlet25Project, "tomcat-servlet25:maven", "pom-tomcat.xml");
     HttpGetVerifier.verifyBody(
-        "Hello world", new URL("http://" + getDockerHostForHttp() + ":8080/hello"));
+        "Hello world", new URL("http://" + getDockerHostForHttpRequest() + ":8080/hello"));
   }
 
   @Test
@@ -701,7 +701,7 @@ public class BuildImageMojoIntegrationTest {
     assertThat(fileSize).isLessThan(3000); // should not be a large fat jar
 
     HttpGetVerifier.verifyBody(
-        "Hello world", new URL("http://" + getDockerHostForHttp() + ":8080"));
+        "Hello world", new URL("http://" + getDockerHostForHttpRequest() + ":8080"));
   }
 
   @Test
@@ -806,15 +806,12 @@ public class BuildImageMojoIntegrationTest {
     return System.getenv("DOCKER_IP") != null ? System.getenv("DOCKER_IP") : "localhost";
   }
 
-  private static String getDockerHostForHttp() {
+  private static String getDockerHostForHttpRequest() {
     if (System.getenv("KOKORO_JOB_CLUSTER") != null
-        && System.getenv("KOKORO_JOB_CLUSTER").equals("MACOS_EXTERNAL")) {
-      return System.getenv("DOCKER_IP");
-    } else if (System.getenv("KOKORO_JOB_CLUSTER") != null
         && System.getenv("KOKORO_JOB_CLUSTER").equals("GCP_UBUNTU_DOCKER")) {
       return System.getenv("DOCKER_IP_UBUNTU");
     } else {
-      return "localhost";
+      return getDockerHost();
     }
   }
 }

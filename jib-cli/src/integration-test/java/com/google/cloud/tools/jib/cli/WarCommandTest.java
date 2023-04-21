@@ -98,7 +98,7 @@ public class WarCommandTest {
             .run();
     containerName = output.trim();
 
-    assertThat(getContent(new URL("http://" + getDockerHost() + ":8080/hello")))
+    assertThat(getContent(new URL("http://" + getDockerHostForHttpRequest() + ":8080/hello")))
         .isEqualTo("Hello world");
   }
 
@@ -121,7 +121,7 @@ public class WarCommandTest {
             .run();
     containerName = output.trim();
 
-    assertThat(getContent(new URL("http://" + getDockerHost() + ":8080/hello")))
+    assertThat(getContent(new URL("http://" + getDockerHostForHttpRequest() + ":8080/hello")))
         .isEqualTo("Hello world");
   }
 
@@ -146,7 +146,7 @@ public class WarCommandTest {
             .run();
     containerName = output.trim();
 
-    assertThat(getContent(new URL("http://" + getDockerHost() + ":8080/hello")))
+    assertThat(getContent(new URL("http://" + getDockerHostForHttpRequest() + ":8080/hello")))
         .isEqualTo("Hello world");
   }
 
@@ -168,7 +168,7 @@ public class WarCommandTest {
     return null;
   }
 
-  private String getDockerHost() {
+  private String getDockerHostForHttpRequest() {
     if (System.getenv("KOKORO_JOB_CLUSTER") != null
         && System.getenv("KOKORO_JOB_CLUSTER").equals("MACOS_EXTERNAL")) {
       return System.getenv("DOCKER_IP");
