@@ -76,7 +76,7 @@ public class SpringBootProjectIntegrationTest {
       return System.getenv("DOCKER_IP");
     } else if (System.getenv("KOKORO_JOB_CLUSTER") != null
         && System.getenv("KOKORO_JOB_CLUSTER").equals("GCP_UBUNTU_DOCKER")) {
-      return System.getenv("DOCKER_HOST_IP");
+      return System.getenv("DOCKER_IP_UBUNTU");
     } else {
       return "localhost";
     }
