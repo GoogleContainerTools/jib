@@ -317,7 +317,6 @@ public class JarCommandTest {
   @Nullable
   private static String getContent(URL url) throws InterruptedException {
     for (int i = 0; i < 40; i++) {
-      System.out.println("URL: " + url);
       Thread.sleep(500);
       try {
         HttpURLConnection connection = (HttpURLConnection) url.openConnection();
@@ -328,7 +327,6 @@ public class JarCommandTest {
         }
       } catch (IOException ignored) {
         // ignored
-        System.out.println("Ignored exception: " + ignored.getMessage());
       }
     }
     return null;

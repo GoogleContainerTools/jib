@@ -31,9 +31,3 @@ cd github/jib
 
 # we only run integration tests on jib-core for presubmit
 ./gradlew clean build :jib-core:integrationTest --info --stacktrace
-
-# temporary: add individual integration tests here for easier troubleshooting
-# TODO: revert this before merging
-./gradlew clean build :jib-cli:integrationTest --tests com.google.cloud.tools.jib.cli.JarCommandTest
-./gradlew clean build :jib-cli:integrationTest --tests com.google.cloud.tools.jib.cli.WarCommandTest
-./gradlew clean build :jib-cli:integrationTest --info --stacktrace
