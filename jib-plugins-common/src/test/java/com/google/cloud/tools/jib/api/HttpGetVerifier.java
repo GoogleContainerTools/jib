@@ -14,7 +14,7 @@
  * the License.
  */
 
-package com.google.cloud.tools.jib.maven;
+package com.google.cloud.tools.jib.api;
 
 import com.google.cloud.tools.jib.blob.Blobs;
 import java.io.IOException;
@@ -25,18 +25,18 @@ import javax.annotation.Nullable;
 import org.junit.Assert;
 
 /** Verifies the response of HTTP GET. */
-class HttpGetVerifier {
+public class HttpGetVerifier {
 
   /**
    * Verifies the response body. Repeatedly tries {@code url} at the interval of .5 seconds for up
    * to 20 seconds until getting OK HTTP response code.
    */
-  static void verifyBody(String expectedBody, URL url) throws InterruptedException {
+  public static void verifyBody(String expectedBody, URL url) throws InterruptedException {
     Assert.assertEquals(expectedBody, getContent(url));
   }
 
   @Nullable
-  private static String getContent(URL url) throws InterruptedException {
+  public static String getContent(URL url) throws InterruptedException {
     for (int i = 0; i < 40; i++) {
       Thread.sleep(500);
       try {
@@ -52,4 +52,18 @@ class HttpGetVerifier {
     }
     return null;
   }
+
+  public static String fetchDockerHostForHttpRequest() {
+    if (System.getenv("KOKORO_JOB_CLUSTER") != null
+        && System.getenv("KOKORO_JOB_CLUSTER").equals("MACOS_EXTERNAL")) {
+      return System.getenv("DOCKER_IP");
+    } else if (System.getenv("KOKORO_JOB_CLUSTER") != null
+        && System.getenv("KOKORO_JOB_CLUSTER").equals("GCP_UBUNTU_DOCKER")) {
+      return System.getenv("DOCKER_IP_UBUNTU");
+    } else {
+      return "localhost";
+    }
+  }
+
+  private HttpGetVerifier() {}
 }

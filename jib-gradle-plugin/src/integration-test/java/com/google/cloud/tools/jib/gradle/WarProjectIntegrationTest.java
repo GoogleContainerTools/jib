@@ -18,12 +18,12 @@ package com.google.cloud.tools.jib.gradle;
 
 import com.google.cloud.tools.jib.Command;
 import com.google.cloud.tools.jib.IntegrationTestingConfiguration;
+import com.google.cloud.tools.jib.api.HttpGetVerifier;
 import java.io.IOException;
 import java.net.URL;
 import java.security.DigestException;
 import javax.annotation.Nullable;
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.ClassRule;
 import org.junit.Test;
 
@@ -60,21 +60,8 @@ public class WarProjectIntegrationTest {
         JibRunHelper.buildAndRun(project, targetImage, gradleBuildFile, "--detach", "-p8080:8080");
     containerName = output.trim();
 
-    Assert.assertEquals(
+    HttpGetVerifier.verifyBody(
         "Hello world",
-        JibRunHelper.getContent(
-            new URL("http://" + getDockerHostForHttpRequest() + ":8080/hello")));
-  }
-
-  private String getDockerHostForHttpRequest() {
-    if (System.getenv("KOKORO_JOB_CLUSTER") != null
-        && System.getenv("KOKORO_JOB_CLUSTER").equals("MACOS_EXTERNAL")) {
-      return System.getenv("DOCKER_IP");
-    } else if (System.getenv("KOKORO_JOB_CLUSTER") != null
-        && System.getenv("KOKORO_JOB_CLUSTER").equals("GCP_UBUNTU_DOCKER")) {
-      return System.getenv("DOCKER_IP_UBUNTU");
-    } else {
-      return "localhost";
-    }
+        new URL("http://" + HttpGetVerifier.fetchDockerHostForHttpRequest() + ":8080/hello"));
   }
 }

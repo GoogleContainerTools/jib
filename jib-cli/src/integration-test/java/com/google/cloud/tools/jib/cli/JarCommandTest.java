@@ -223,7 +223,7 @@ public class JarCommandTest {
     try (JarFile jarFile = new JarFile(jarPath.toFile())) {
 
       assertThat(jarFile.getEntry("BOOT-INF/layers.idx")).isNotNull();
-      assertThat(getContent(new URL("http://" + getDockerHostForHttpRequest() + ":8080")))
+      assertThat(getContent(new URL("http://" + fetchDockerHostForHttpRequest() + ":8080")))
           .isEqualTo("Hello world");
     }
   }
@@ -260,7 +260,7 @@ public class JarCommandTest {
     try (JarFile jarFile = new JarFile(jarPath.toFile())) {
 
       assertThat(jarFile.getEntry("BOOT-INF/layers.idx")).isNull();
-      assertThat(getContent(new URL("http://" + getDockerHostForHttpRequest() + ":8080")))
+      assertThat(getContent(new URL("http://" + fetchDockerHostForHttpRequest() + ":8080")))
           .isEqualTo("Hello world");
     }
   }
@@ -295,7 +295,7 @@ public class JarCommandTest {
             .run();
     containerName = output.trim();
 
-    assertThat(getContent(new URL("http://" + getDockerHostForHttpRequest() + ":8080")))
+    assertThat(getContent(new URL("http://" + fetchDockerHostForHttpRequest() + ":8080")))
         .isEqualTo("Hello world");
   }
 
@@ -333,7 +333,7 @@ public class JarCommandTest {
     return null;
   }
 
-  private String getDockerHostForHttpRequest() {
+  private String fetchDockerHostForHttpRequest() {
     if (System.getenv("KOKORO_JOB_CLUSTER") != null
         && System.getenv("KOKORO_JOB_CLUSTER").equals("MACOS_EXTERNAL")) {
       return System.getenv("DOCKER_IP");
