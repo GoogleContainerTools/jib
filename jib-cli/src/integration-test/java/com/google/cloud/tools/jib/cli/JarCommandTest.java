@@ -19,13 +19,11 @@ package com.google.cloud.tools.jib.cli;
 import static com.google.common.truth.Truth.assertThat;
 
 import com.google.cloud.tools.jib.Command;
-import com.google.cloud.tools.jib.blob.Blobs;
+import com.google.cloud.tools.jib.api.HttpGetVerifier;
 import com.google.common.io.Resources;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.net.HttpURLConnection;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Path;
@@ -223,8 +221,9 @@ public class JarCommandTest {
     try (JarFile jarFile = new JarFile(jarPath.toFile())) {
 
       assertThat(jarFile.getEntry("BOOT-INF/layers.idx")).isNotNull();
-      assertThat(getContent(new URL("http://" + fetchDockerHostForHttpRequest() + ":8080")))
-          .isEqualTo("Hello world");
+      HttpGetVerifier.verifyBody(
+          "Hello world",
+          new URL("http://" + HttpGetVerifier.fetchDockerHostForHttpRequest() + ":8080"));
     }
   }
 
@@ -260,8 +259,9 @@ public class JarCommandTest {
     try (JarFile jarFile = new JarFile(jarPath.toFile())) {
 
       assertThat(jarFile.getEntry("BOOT-INF/layers.idx")).isNull();
-      assertThat(getContent(new URL("http://" + fetchDockerHostForHttpRequest() + ":8080")))
-          .isEqualTo("Hello world");
+      HttpGetVerifier.verifyBody(
+          "Hello world",
+          new URL("http://" + HttpGetVerifier.fetchDockerHostForHttpRequest() + ":8080"));
     }
   }
 
@@ -295,8 +295,9 @@ public class JarCommandTest {
             .run();
     containerName = output.trim();
 
-    assertThat(getContent(new URL("http://" + fetchDockerHostForHttpRequest() + ":8080")))
-        .isEqualTo("Hello world");
+    HttpGetVerifier.verifyBody(
+        "Hello world",
+        new URL("http://" + HttpGetVerifier.fetchDockerHostForHttpRequest() + ":8080"));
   }
 
   @Test
@@ -313,35 +314,5 @@ public class JarCommandTest {
     assertThat(exitCode).isEqualTo(0);
     String output = new Command("docker", "run", "--rm", "cli-gcr-base").run();
     assertThat(output).isEqualTo("Hello World");
-  }
-
-  @Nullable
-  private static String getContent(URL url) throws InterruptedException {
-    for (int i = 0; i < 40; i++) {
-      Thread.sleep(500);
-      try {
-        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-        if (connection.getResponseCode() == HttpURLConnection.HTTP_OK) {
-          try (InputStream in = connection.getInputStream()) {
-            return Blobs.writeToString(Blobs.from(in));
-          }
-        }
-      } catch (IOException ignored) {
-        // ignored
-      }
-    }
-    return null;
-  }
-
-  private String fetchDockerHostForHttpRequest() {
-    if (System.getenv("KOKORO_JOB_CLUSTER") != null
-        && System.getenv("KOKORO_JOB_CLUSTER").equals("MACOS_EXTERNAL")) {
-      return System.getenv("DOCKER_IP");
-    } else if (System.getenv("KOKORO_JOB_CLUSTER") != null
-        && System.getenv("KOKORO_JOB_CLUSTER").equals("GCP_UBUNTU_DOCKER")) {
-      return System.getenv("DOCKER_IP_UBUNTU");
-    } else {
-      return "localhost";
-    }
   }
 }
