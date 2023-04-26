@@ -35,9 +35,7 @@ public class HttpRequestTester {
     Assert.assertEquals(expectedBody, getContent(url));
   }
 
-  /**
-   * Fetches the host to use for the http request.
-   */
+  /** Fetches the host to use for the http request. */
   public static String fetchDockerHostForHttpRequest() {
     if (System.getenv("KOKORO_JOB_CLUSTER") != null
         && System.getenv("KOKORO_JOB_CLUSTER").equals("MACOS_EXTERNAL")) {
