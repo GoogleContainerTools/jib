@@ -19,12 +19,10 @@ package com.google.cloud.tools.jib.cli;
 import static com.google.common.truth.Truth.assertThat;
 
 import com.google.cloud.tools.jib.Command;
-import com.google.cloud.tools.jib.blob.Blobs;
+import com.google.cloud.tools.jib.api.HttpRequestTester;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -37,8 +35,6 @@ import picocli.CommandLine;
 public class WarCommandTest {
 
   @ClassRule public static final TestProject servletProject = new TestProject("warTest");
-  private final String dockerHost =
-      System.getenv("DOCKER_IP") != null ? System.getenv("DOCKER_IP") : "localhost";
 
   @Nullable private String containerName;
 
@@ -100,8 +96,9 @@ public class WarCommandTest {
             .run();
     containerName = output.trim();
 
-    assertThat(getContent(new URL("http://" + dockerHost + ":8080/hello")))
-        .isEqualTo("Hello world");
+    HttpRequestTester.verifyBody(
+        "Hello world",
+        new URL("http://" + HttpRequestTester.fetchDockerHostForHttpRequest() + ":8080/hello"));
   }
 
   @Test
@@ -123,8 +120,9 @@ public class WarCommandTest {
             .run();
     containerName = output.trim();
 
-    assertThat(getContent(new URL("http://" + dockerHost + ":8080/hello")))
-        .isEqualTo("Hello world");
+    HttpRequestTester.verifyBody(
+        "Hello world",
+        new URL("http://" + HttpRequestTester.fetchDockerHostForHttpRequest() + ":8080/hello"));
   }
 
   @Test
@@ -148,25 +146,8 @@ public class WarCommandTest {
             .run();
     containerName = output.trim();
 
-    assertThat(getContent(new URL("http://" + dockerHost + ":8080/hello")))
-        .isEqualTo("Hello world");
-  }
-
-  @Nullable
-  private static String getContent(URL url) throws InterruptedException {
-    for (int i = 0; i < 40; i++) {
-      Thread.sleep(500);
-      try {
-        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-        if (connection.getResponseCode() == HttpURLConnection.HTTP_OK) {
-          try (InputStream in = connection.getInputStream()) {
-            return Blobs.writeToString(Blobs.from(in));
-          }
-        }
-      } catch (IOException ignored) {
-        // ignored
-      }
-    }
-    return null;
+    HttpRequestTester.verifyBody(
+        "Hello world",
+        new URL("http://" + HttpRequestTester.fetchDockerHostForHttpRequest() + ":8080/hello"));
   }
 }
