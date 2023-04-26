@@ -19,7 +19,7 @@ package com.google.cloud.tools.jib.cli;
 import static com.google.common.truth.Truth.assertThat;
 
 import com.google.cloud.tools.jib.Command;
-import com.google.cloud.tools.jib.api.HttpGetVerifier;
+import com.google.cloud.tools.jib.api.HttpRequestTester;
 import com.google.common.io.Resources;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -221,9 +221,9 @@ public class JarCommandTest {
     try (JarFile jarFile = new JarFile(jarPath.toFile())) {
 
       assertThat(jarFile.getEntry("BOOT-INF/layers.idx")).isNotNull();
-      HttpGetVerifier.verifyBody(
+      HttpRequestTester.verifyBody(
           "Hello world",
-          new URL("http://" + HttpGetVerifier.fetchDockerHostForHttpRequest() + ":8080"));
+          new URL("http://" + HttpRequestTester.fetchDockerHostForHttpRequest() + ":8080"));
     }
   }
 
@@ -259,9 +259,9 @@ public class JarCommandTest {
     try (JarFile jarFile = new JarFile(jarPath.toFile())) {
 
       assertThat(jarFile.getEntry("BOOT-INF/layers.idx")).isNull();
-      HttpGetVerifier.verifyBody(
+      HttpRequestTester.verifyBody(
           "Hello world",
-          new URL("http://" + HttpGetVerifier.fetchDockerHostForHttpRequest() + ":8080"));
+          new URL("http://" + HttpRequestTester.fetchDockerHostForHttpRequest() + ":8080"));
     }
   }
 
@@ -295,9 +295,9 @@ public class JarCommandTest {
             .run();
     containerName = output.trim();
 
-    HttpGetVerifier.verifyBody(
+    HttpRequestTester.verifyBody(
         "Hello world",
-        new URL("http://" + HttpGetVerifier.fetchDockerHostForHttpRequest() + ":8080"));
+        new URL("http://" + HttpRequestTester.fetchDockerHostForHttpRequest() + ":8080"));
   }
 
   @Test

@@ -23,7 +23,7 @@ import com.google.cloud.tools.jib.Command;
 import com.google.cloud.tools.jib.IntegrationTestingConfiguration;
 import com.google.cloud.tools.jib.api.Credential;
 import com.google.cloud.tools.jib.api.DescriptorDigest;
-import com.google.cloud.tools.jib.api.HttpGetVerifier;
+import com.google.cloud.tools.jib.api.HttpRequestTester;
 import com.google.cloud.tools.jib.api.ImageReference;
 import com.google.cloud.tools.jib.api.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.api.RegistryException;
@@ -674,18 +674,18 @@ public class BuildImageMojoIntegrationTest {
   public void testExecute_jettyServlet25()
       throws VerificationException, IOException, InterruptedException {
     buildAndRunWebApp(servlet25Project, "jetty-servlet25:maven", "pom.xml");
-    HttpGetVerifier.verifyBody(
+    HttpRequestTester.verifyBody(
         "Hello world",
-        new URL("http://" + HttpGetVerifier.fetchDockerHostForHttpRequest() + ":8080/hello"));
+        new URL("http://" + HttpRequestTester.fetchDockerHostForHttpRequest() + ":8080/hello"));
   }
 
   @Test
   public void testExecute_tomcatServlet25()
       throws VerificationException, IOException, InterruptedException {
     buildAndRunWebApp(servlet25Project, "tomcat-servlet25:maven", "pom-tomcat.xml");
-    HttpGetVerifier.verifyBody(
+    HttpRequestTester.verifyBody(
         "Hello world",
-        new URL("http://" + HttpGetVerifier.fetchDockerHostForHttpRequest() + ":8080/hello"));
+        new URL("http://" + HttpRequestTester.fetchDockerHostForHttpRequest() + ":8080/hello"));
   }
 
   @Test
@@ -706,9 +706,9 @@ public class BuildImageMojoIntegrationTest {
     int fileSize = Integer.parseInt(sizeOutput.substring(0, sizeOutput.indexOf(' ')));
     assertThat(fileSize).isLessThan(3000); // should not be a large fat jar
 
-    HttpGetVerifier.verifyBody(
+    HttpRequestTester.verifyBody(
         "Hello world",
-        new URL("http://" + HttpGetVerifier.fetchDockerHostForHttpRequest() + ":8080"));
+        new URL("http://" + HttpRequestTester.fetchDockerHostForHttpRequest() + ":8080"));
   }
 
   @Test

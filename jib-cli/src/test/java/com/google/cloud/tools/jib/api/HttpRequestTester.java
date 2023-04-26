@@ -24,8 +24,8 @@ import java.net.URL;
 import javax.annotation.Nullable;
 import org.junit.Assert;
 
-/** Verifies the response of HTTP GET. */
-public class HttpGetVerifier {
+/** Test helpers for making HTTP requests. */
+public class HttpRequestTester {
 
   /**
    * Verifies the response body. Repeatedly tries {@code url} at the interval of .5 seconds for up
@@ -35,8 +35,23 @@ public class HttpGetVerifier {
     Assert.assertEquals(expectedBody, getContent(url));
   }
 
+  /**
+   * Fetches the host to use for the http request.
+   */
+  public static String fetchDockerHostForHttpRequest() {
+    if (System.getenv("KOKORO_JOB_CLUSTER") != null
+        && System.getenv("KOKORO_JOB_CLUSTER").equals("MACOS_EXTERNAL")) {
+      return System.getenv("DOCKER_IP");
+    } else if (System.getenv("KOKORO_JOB_CLUSTER") != null
+        && System.getenv("KOKORO_JOB_CLUSTER").equals("GCP_UBUNTU_DOCKER")) {
+      return System.getenv("DOCKER_IP_UBUNTU");
+    } else {
+      return "localhost";
+    }
+  }
+
   @Nullable
-  public static String getContent(URL url) throws InterruptedException {
+  private static String getContent(URL url) throws InterruptedException {
     for (int i = 0; i < 40; i++) {
       Thread.sleep(500);
       try {
@@ -53,17 +68,5 @@ public class HttpGetVerifier {
     return null;
   }
 
-  public static String fetchDockerHostForHttpRequest() {
-    if (System.getenv("KOKORO_JOB_CLUSTER") != null
-        && System.getenv("KOKORO_JOB_CLUSTER").equals("MACOS_EXTERNAL")) {
-      return System.getenv("DOCKER_IP");
-    } else if (System.getenv("KOKORO_JOB_CLUSTER") != null
-        && System.getenv("KOKORO_JOB_CLUSTER").equals("GCP_UBUNTU_DOCKER")) {
-      return System.getenv("DOCKER_IP_UBUNTU");
-    } else {
-      return "localhost";
-    }
-  }
-
-  private HttpGetVerifier() {}
+  private HttpRequestTester() {}
 }

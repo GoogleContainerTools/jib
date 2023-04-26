@@ -18,7 +18,7 @@ package com.google.cloud.tools.jib.gradle;
 
 import com.google.cloud.tools.jib.Command;
 import com.google.cloud.tools.jib.IntegrationTestingConfiguration;
-import com.google.cloud.tools.jib.api.HttpGetVerifier;
+import com.google.cloud.tools.jib.api.HttpRequestTester;
 import java.io.IOException;
 import java.net.URL;
 import java.security.DigestException;
@@ -60,8 +60,8 @@ public class WarProjectIntegrationTest {
         JibRunHelper.buildAndRun(project, targetImage, gradleBuildFile, "--detach", "-p8080:8080");
     containerName = output.trim();
 
-    HttpGetVerifier.verifyBody(
+    HttpRequestTester.verifyBody(
         "Hello world",
-        new URL("http://" + HttpGetVerifier.fetchDockerHostForHttpRequest() + ":8080/hello"));
+        new URL("http://" + HttpRequestTester.fetchDockerHostForHttpRequest() + ":8080/hello"));
   }
 }

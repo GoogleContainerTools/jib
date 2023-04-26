@@ -19,7 +19,7 @@ package com.google.cloud.tools.jib.cli;
 import static com.google.common.truth.Truth.assertThat;
 
 import com.google.cloud.tools.jib.Command;
-import com.google.cloud.tools.jib.api.HttpGetVerifier;
+import com.google.cloud.tools.jib.api.HttpRequestTester;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -96,9 +96,9 @@ public class WarCommandTest {
             .run();
     containerName = output.trim();
 
-    HttpGetVerifier.verifyBody(
+    HttpRequestTester.verifyBody(
         "Hello world",
-        new URL("http://" + HttpGetVerifier.fetchDockerHostForHttpRequest() + ":8080/hello"));
+        new URL("http://" + HttpRequestTester.fetchDockerHostForHttpRequest() + ":8080/hello"));
   }
 
   @Test
@@ -120,9 +120,9 @@ public class WarCommandTest {
             .run();
     containerName = output.trim();
 
-    HttpGetVerifier.verifyBody(
+    HttpRequestTester.verifyBody(
         "Hello world",
-        new URL("http://" + HttpGetVerifier.fetchDockerHostForHttpRequest() + ":8080/hello"));
+        new URL("http://" + HttpRequestTester.fetchDockerHostForHttpRequest() + ":8080/hello"));
   }
 
   @Test
@@ -146,8 +146,8 @@ public class WarCommandTest {
             .run();
     containerName = output.trim();
 
-    HttpGetVerifier.verifyBody(
+    HttpRequestTester.verifyBody(
         "Hello world",
-        new URL("http://" + HttpGetVerifier.fetchDockerHostForHttpRequest() + ":8080/hello"));
+        new URL("http://" + HttpRequestTester.fetchDockerHostForHttpRequest() + ":8080/hello"));
   }
 }
