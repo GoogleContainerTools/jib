@@ -161,7 +161,7 @@ class CacheStorageWriter {
   private static DescriptorDigest getDiffIdByDecompressingFile(Path compressedFile)
       throws IOException {
     try (InputStream in =
-        CompressorStreamFactory.getSingleton()
+        new CompressorStreamFactory(true)
             .createCompressorInputStream(
                 new BufferedInputStream(Files.newInputStream(compressedFile)))) {
       return Digests.computeDigest(in).getDigest();
