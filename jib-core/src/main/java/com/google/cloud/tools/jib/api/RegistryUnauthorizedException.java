@@ -18,6 +18,7 @@ package com.google.cloud.tools.jib.api;
 
 import com.google.api.client.http.HttpResponseException;
 import com.google.cloud.tools.jib.http.ResponseException;
+import javax.annotation.Nullable;
 
 /** Thrown when a registry request was unauthorized and therefore authentication is needed. */
 public class RegistryUnauthorizedException extends RegistryException {
@@ -43,7 +44,12 @@ public class RegistryUnauthorizedException extends RegistryException {
     return registry + "/" + repository;
   }
 
+  @Nullable
   public HttpResponseException getHttpResponseException() {
-    return (HttpResponseException) getCause().getCause();
+    if (getCause() != null && getCause().getCause() != null) {
+      return (HttpResponseException) getCause().getCause();
+    } else {
+      return null;
+    }
   }
 }

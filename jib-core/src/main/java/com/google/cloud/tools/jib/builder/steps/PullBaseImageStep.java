@@ -172,7 +172,10 @@ class PullBaseImageStep implements Callable<ImagesAndRegistryClient> {
                 .setCredential(credential)
                 .newRegistryClient();
 
-        String wwwAuthenticate = ex.getHttpResponseException().getHeaders().getAuthenticate();
+        String wwwAuthenticate =
+            ex.getHttpResponseException() != null
+                ? ex.getHttpResponseException().getHeaders().getAuthenticate()
+                : null;
         if (wwwAuthenticate != null) {
           eventHandlers.dispatch(
               LogEvent.debug("WWW-Authenticate for " + imageReference + ": " + wwwAuthenticate));

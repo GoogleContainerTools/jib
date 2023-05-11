@@ -170,8 +170,9 @@ public class JibBuildRunner {
       RegistryUnauthorizedException registryUnauthorizedException,
       HelpfulSuggestions helpfulSuggestions)
       throws BuildStepsExecutionException {
-    if (registryUnauthorizedException.getHttpResponseException().getStatusCode()
-        == HttpStatusCodes.STATUS_CODE_FORBIDDEN) {
+    if (registryUnauthorizedException.getHttpResponseException() != null
+        && registryUnauthorizedException.getHttpResponseException().getStatusCode()
+            == HttpStatusCodes.STATUS_CODE_FORBIDDEN) {
       // No permissions for registry/repository.
       throw new BuildStepsExecutionException(
           helpfulSuggestions.forHttpStatusCodeForbidden(
@@ -280,10 +281,14 @@ public class JibBuildRunner {
       throw new BuildStepsExecutionException(message, ex);
 
     } catch (ExecutionException ex) {
-      String message = ex.getCause().getMessage();
-      throw new BuildStepsExecutionException(
-          message == null ? "(null exception message)" : message, ex.getCause());
-
+      if (ex.getCause() != null) {
+        String message =ex.getCause().getMessage();
+        throw new BuildStepsExecutionException(
+                message == null ? "(null exception message)" : message, ex.getCause());
+      } else {
+        // Unknown cause
+        throw new BuildStepsExecutionException(helpfulSuggestions.none(), ex);
+      }
     } catch (InterruptedException ex) {
       Thread.currentThread().interrupt();
       throw new BuildStepsExecutionException(helpfulSuggestions.none(), ex);

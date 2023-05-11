@@ -623,8 +623,9 @@ public class RegistryClient {
             .call();
 
       } catch (RegistryUnauthorizedException ex) {
-        if (ex.getHttpResponseException().getStatusCode()
-                != HttpStatusCodes.STATUS_CODE_UNAUTHORIZED
+        if ((ex.getHttpResponseException() != null
+                && ex.getHttpResponseException().getStatusCode()
+                    != HttpStatusCodes.STATUS_CODE_UNAUTHORIZED)
             || !isBearerAuth(authorization.get())
             || ++bearerTokenRefreshes >= MAX_BEARER_TOKEN_REFRESH_TRIES) {
           throw ex;
@@ -632,7 +633,10 @@ public class RegistryClient {
 
         // Because we successfully did bearer authentication initially, getting 401 here probably
         // means the token was expired.
-        String wwwAuthenticate = ex.getHttpResponseException().getHeaders().getAuthenticate();
+        String wwwAuthenticate =
+            ex.getHttpResponseException() != null
+                ? ex.getHttpResponseException().getHeaders().getAuthenticate()
+                : null;
         authorization.set(refreshBearerAuth(wwwAuthenticate));
       }
     }
