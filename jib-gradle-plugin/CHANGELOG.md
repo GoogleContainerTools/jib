@@ -4,10 +4,14 @@ All notable changes to this project will be documented in this file.
 ## [unreleased]
 
 ### Added
+- Support lazy configuration for `jib.container.mainClass` and `jib.container.jvmFlags` parameters ([#3936](https://github.com/GoogleContainerTools/jib/pull/3936))
 
 ### Changed
+- Log an info instead of warning when entrypoint makes the image to ignore jvm parameters ([#3904](https://github.com/GoogleContainerTools/jib/pull/3904))
 
 ### Fixed
+
+Thanks to our community contributors @rmannibucau, @erdi!
 
 ## 3.3.1
 

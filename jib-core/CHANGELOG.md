@@ -6,9 +6,15 @@ All notable changes to this project will be documented in this file.
 ### Added
 
 ### Changed
-- Replaced usages of `com.google.api.client.util.Base64` with `java.util.Base64` ([#3872](https://github.com/GoogleContainerTools/jib/pull/3872))
+- Replaced deprecated usages of `com.google.api.client.util.Base64` with `java.util.Base64` ([#3872](https://github.com/GoogleContainerTools/jib/pull/3872))
+- Replaced deprecated usages of `ObjectMapper.configure` in jackson ([#3890](https://github.com/GoogleContainerTools/jib/pull/3890))
 
 ### Fixed
+- Fixed `V22ManifestListTemplate` cast to allow pulling an OCI index manifest from cache ([#3974](https://github.com/GoogleContainerTools/jib/pull/3974))
+- Specified `CompressorStreamFactory` to decompress compressed layer until EOF in `CacheStorageWriter` ([#3983](https://github.com/GoogleContainerTools/jib/pull/3983))
+- Fixed multithreading issue from `DockerClientResolver.resolve` by not sharing a static `ServiceLoader` instance ([#3993](https://github.com/GoogleContainerTools/jib/pull/3993))
+
+Thanks to our community contributors @Sineaggi, @rquinio, @patrickpichler, @erdi!
 
 ## 0.23.0
 
