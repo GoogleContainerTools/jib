@@ -93,15 +93,15 @@ public class TarExtractorTest {
     TarExtractor.extract(source, destination);
 
     assertThat(Files.getLastModifiedTime(destination.resolve("file A")))
-        .isEqualTo(FileTime.from(Instant.parse("2019-08-01T16:13:09Z")));
+        .isEqualTo(FileTime.from(Instant.parse("2019-08-01T16:13:09.72Z")));
     assertThat(Files.getLastModifiedTime(destination.resolve("file B")))
-        .isEqualTo(FileTime.from(Instant.parse("2019-08-01T16:12:00Z")));
+        .isEqualTo(FileTime.from(Instant.parse("2019-08-01T16:12:00.797Z")));
     assertThat(Files.getLastModifiedTime(destination.resolve("folder")))
-        .isEqualTo(FileTime.from(Instant.parse("2019-08-01T16:12:33Z")));
+        .isEqualTo(FileTime.from(Instant.parse("2019-08-01T16:12:33.001Z")));
     assertThat(Files.getLastModifiedTime(destination.resolve("folder/nested folder")))
-        .isEqualTo(FileTime.from(Instant.parse("2019-08-01T16:13:30Z")));
+        .isEqualTo(FileTime.from(Instant.parse("2019-08-01T16:13:30.404Z")));
     assertThat(Files.getLastModifiedTime(destination.resolve("folder/nested folder/file C")))
-        .isEqualTo(FileTime.from(Instant.parse("2019-08-01T16:12:21Z")));
+        .isEqualTo(FileTime.from(Instant.parse("2019-08-01T16:12:21.273Z")));
   }
 
   @Test
@@ -120,7 +120,7 @@ public class TarExtractorTest {
     assertThat(Files.getLastModifiedTime(destination.resolve("level-1/level-2/level-3")))
         .isEqualTo(FileTime.fromMillis(1000L));
     assertThat(Files.getLastModifiedTime(destination.resolve("level-1/level-2/level-3/file.txt")))
-        .isEqualTo(FileTime.from(Instant.parse("2021-01-29T21:10:02Z")));
+        .isEqualTo(FileTime.from(Instant.parse("2021-01-29T21:10:02.78Z")));
   }
 
   @Test
