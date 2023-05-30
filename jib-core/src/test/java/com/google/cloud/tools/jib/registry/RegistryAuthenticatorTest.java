@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.registry;
 
+import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth8.assertThat;
 
 import com.google.cloud.tools.jib.api.Credential;
