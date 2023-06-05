@@ -6,6 +6,12 @@ All notable changes to this project will be documented in this file.
 ### Added
 
 ### Changed
+
+### Fixed
+
+## 0.24.0
+
+### Changed
 - Replaced deprecated usages of `com.google.api.client.util.Base64` with `java.util.Base64` ([#3872](https://github.com/GoogleContainerTools/jib/pull/3872))
 - Replaced deprecated usages of `ObjectMapper.configure` in jackson ([#3890](https://github.com/GoogleContainerTools/jib/pull/3890))
 
