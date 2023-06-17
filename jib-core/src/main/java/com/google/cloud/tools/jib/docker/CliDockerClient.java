@@ -32,6 +32,7 @@ import com.google.common.io.ByteStreams;
 import com.google.common.io.CharStreams;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -246,11 +247,21 @@ public class CliDockerClient implements DockerClient {
       throws IOException, InterruptedException {
     Process inspectProcess =
         docker("inspect", "-f", "{{json .}}", "--type", "image", imageReference.toString());
-    if (inspectProcess.waitFor() != 0) {
-      throw new IOException(
-          "'docker inspect' command failed with error: " + getStderrOutput(inspectProcess));
+
+    try (InputStreamReader stdout =
+        new InputStreamReader(inspectProcess.getInputStream(), StandardCharsets.UTF_8)) {
+
+      String output = CharStreams.toString(stdout);
+
+      if (inspectProcess.waitFor() != 0) {
+        throw new IOException(
+            "'docker inspect' command failed with error: " + getStderrOutput(inspectProcess));
+      }
+
+      return JsonTemplateMapper.readJson(
+          new ByteArrayInputStream(output.getBytes(StandardCharsets.UTF_8)),
+          DockerImageDetails.class);
     }
-    return JsonTemplateMapper.readJson(inspectProcess.getInputStream(), DockerImageDetails.class);
   }
 
   /** Runs a {@code docker} command. */
