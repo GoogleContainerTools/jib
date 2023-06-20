@@ -72,9 +72,9 @@ public class RegistryAuthenticator {
       @Nullable String userAgent,
       FailoverHttpClient httpClient)
       throws RegistryAuthenticationFailedException {
-    // If the authentication method starts with 'basic ' (case insensitive), no registry
+    // If the authentication method starts with 'basic' (case insensitive), no registry
     // authentication is needed.
-    if (authenticationMethod.matches("^(?i)(basic) .*")) {
+    if (authenticationMethod.matches("^(?i)(basic).*")) {
       return Optional.empty();
     }
 
