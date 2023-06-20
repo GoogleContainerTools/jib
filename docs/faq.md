@@ -696,12 +696,12 @@ mvn --batch-mode -Djava.util.logging.config.file=path/to/logging.properties -Dji
 ```
 or
 ```sh
-gradle --no-daemon --console=plain -Djava.util.logging.config.file=path/to/logging.properties -Djib.serialize=true ...
+gradle --no-daemon --console=plain --info -Djava.util.logging.config.file=path/to/logging.properties -Djib.serialize=true ...
 ```
 
 **Note**: Jib Gradle plugins prior to version 2.2.0 have an issue generating HTTP logs ([#2356](https://github.com/GoogleContainerTools/jib/issues/2356)).
 
-You may wish to enable the debug logs too (`-X` for Maven, or `--debug --stacktrace` for Gradle).
+You may want to enable the debug logs too (`-X` for Maven, or `--debug --stacktrace` for Gradle).
 
 When configured correctly, you should see logs like this:
 ```
