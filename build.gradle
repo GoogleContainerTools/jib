@@ -42,6 +42,7 @@ project.ext.dependencyStrings = [
   MAVEN_CORE: 'org.apache.maven:maven-core:3.9.1',
   MAVEN_COMPAT: 'org.apache.maven:maven-compat:3.9.2',
   MAVEN_PLUGIN_ANNOTATIONS: 'org.apache.maven.plugin-tools:maven-plugin-annotations:3.8.2',
+  MAVEN_SHARED_UTILS: 'org.apache.maven.shared:maven-shared-utils:3.3.4',
 
   //test
   TRUTH: 'com.google.truth:truth:1.1.3',
@@ -338,6 +339,19 @@ subprojects {
               developerConnection = 'scm:git://github.com/GoogleContainerTools/jib.git'
             }
           }
+          pom.withXml {
+            project.configurations.compileOnly.allDependencies.each { dep ->
+              // Workaround sourceProject() using compileOnly, but jib artifacts shouldn't have provided scope
+              if(dep.group.startsWith("org.apache.maven")) {
+                asNode().dependencies[0].appendNode('dependency').with {
+                  it.appendNode('groupId', dep.group)
+                  it.appendNode('artifactId', dep.name)
+                  it.appendNode('version', dep.version)
+                  it.appendNode('scope', 'provided')
+                }
+              }
+            }
+          }
         }
       }
     }
@@ -368,8 +382,8 @@ subprojects {
   // sourceProject(Project) accepts a project and adds it as a dependency in a special manner:
   // 1. force evaluation of the project first
   // 2. add the project classes as "compileOnly" and make it available to tests in "testImplementation"
-  // 3. add the project's depedencies as "implementation"
-  // 4. remove any transitive reference of any sourceProject depenency that may have appeared
+  // 3. add the project's dependencies as "implementation"
+  // 4. remove any transitive reference of any sourceProject dependency that may have appeared
   // 5. add the project's classes to the final jar
   // Other nice effects (vs shadowJar)
   // 1. Generated poms will be correct
@@ -378,7 +392,7 @@ subprojects {
   project.ext.sourceProject = { Project dependencyProject ->
     // make sure those projects are evaluated first so we know their dependencies
     project.evaluationDependsOn dependencyProject.path
-    // add the sourceProjecect dependency
+    // add the sourceProject dependency
     def dependencyProjectClasses = dependencyProject.sourceSets.main.output
     dependencies {
       // add the dependencyProject classes as compileOnly, make it available to tests

@@ -14,8 +14,9 @@ dependencies {
 
   implementation dependencyStrings.MAVEN_EXTENSION
 
-  implementation dependencyStrings.MAVEN_API
-  implementation dependencyStrings.MAVEN_CORE
+  compileOnly dependencyStrings.MAVEN_API
+  compileOnly dependencyStrings.MAVEN_CORE
+  implementation dependencyStrings.MAVEN_SHARED_UTILS
 
   // compileOnly + testImplementation equivalent to "provided"
   compileOnly dependencyStrings.MAVEN_PLUGIN_ANNOTATIONS

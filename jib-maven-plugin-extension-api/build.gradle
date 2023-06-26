@@ -7,7 +7,7 @@ plugins {
 dependencies {
   api dependencyStrings.BUILD_PLAN
   api dependencyStrings.EXTENSION_COMMON
-  api dependencyStrings.MAVEN_CORE
+  compileOnly dependencyStrings.MAVEN_CORE
 }
 
 jar {
