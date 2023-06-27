@@ -41,7 +41,7 @@ project.ext.dependencyStrings = [
   MAVEN_API: 'org.apache.maven:maven-plugin-api:3.9.1',
   MAVEN_CORE: 'org.apache.maven:maven-core:3.9.1',
   MAVEN_COMPAT: 'org.apache.maven:maven-compat:3.9.2',
-  MAVEN_PLUGIN_ANNOTATIONS: 'org.apache.maven.plugin-tools:maven-plugin-annotations:3.8.2',
+  MAVEN_PLUGIN_ANNOTATIONS: 'org.apache.maven.plugin-tools:maven-plugin-annotations:3.9.0',
 
   //test
   TRUTH: 'com.google.truth:truth:1.1.3',
