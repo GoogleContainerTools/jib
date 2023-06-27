@@ -32,7 +32,6 @@ import com.google.common.io.ByteStreams;
 import com.google.common.io.CharStreams;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -251,6 +250,7 @@ public class CliDockerClient implements DockerClient {
     try (InputStreamReader stdout =
         new InputStreamReader(inspectProcess.getInputStream(), StandardCharsets.UTF_8)) {
 
+      // CharStreams.toString() will block until the end of stream is reached.
       String output = CharStreams.toString(stdout);
 
       if (inspectProcess.waitFor() != 0) {
@@ -258,9 +258,7 @@ public class CliDockerClient implements DockerClient {
             "'docker inspect' command failed with error: " + getStderrOutput(inspectProcess));
       }
 
-      return JsonTemplateMapper.readJson(
-          new ByteArrayInputStream(output.getBytes(StandardCharsets.UTF_8)),
-          DockerImageDetails.class);
+      return JsonTemplateMapper.readJson(output, DockerImageDetails.class);
     }
   }
 
