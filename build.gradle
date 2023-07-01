@@ -19,7 +19,7 @@ project.ext.dependencyStrings = [
   GOOGLE_HTTP_CLIENT: 'com.google.http-client:google-http-client:1.42.2',
   GOOGLE_HTTP_CLIENT_APACHE_V2: 'com.google.http-client:google-http-client-apache-v2:1.42.2',
   GOOGLE_AUTH_LIBRARY_OAUTH2_HTTP: 'com.google.auth:google-auth-library-oauth2-http:1.10.0',
-  GUAVA: 'com.google.guava:guava:31.1-jre',
+  GUAVA: 'com.google.guava:guava:32.0.1-jre',
   JSR305: 'com.google.code.findbugs:jsr305:3.0.2', // transitively pulled in by GUAVA
 
   // for Build Plan and Jib Plugins Extension API
@@ -29,19 +29,19 @@ project.ext.dependencyStrings = [
   MAVEN_EXTENSION: 'com.google.cloud.tools:jib-maven-plugin-extension-api:0.4.0',
 
   COMMONS_COMPRESS: 'org.apache.commons:commons-compress:1.21',
-  ZSTD_JNI: 'com.github.luben:zstd-jni:1.5.5-2',
+  ZSTD_JNI: 'com.github.luben:zstd-jni:1.5.5-4',
   COMMONS_TEXT: 'org.apache.commons:commons-text:1.10.0',
-  JACKSON_BOM: 'com.fasterxml.jackson:jackson-bom:2.15.0',
+  JACKSON_BOM: 'com.fasterxml.jackson:jackson-bom:2.15.2',
   JACKSON_DATABIND: 'com.fasterxml.jackson.core:jackson-databind',
   JACKSON_DATAFORMAT_YAML: 'com.fasterxml.jackson.dataformat:jackson-dataformat-yaml',
   JACKSON_DATATYPE_JSR310: 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310',
   ASM: 'org.ow2.asm:asm:9.5',
   PICOCLI: 'info.picocli:picocli:4.7.3',
 
-  MAVEN_API: 'org.apache.maven:maven-plugin-api:3.9.1',
-  MAVEN_CORE: 'org.apache.maven:maven-core:3.9.1',
+  MAVEN_API: 'org.apache.maven:maven-plugin-api:3.9.2',
+  MAVEN_CORE: 'org.apache.maven:maven-core:3.9.3',
   MAVEN_COMPAT: 'org.apache.maven:maven-compat:3.9.2',
-  MAVEN_PLUGIN_ANNOTATIONS: 'org.apache.maven.plugin-tools:maven-plugin-annotations:3.8.2',
+  MAVEN_PLUGIN_ANNOTATIONS: 'org.apache.maven.plugin-tools:maven-plugin-annotations:3.9.0',
 
   //test
   TRUTH: 'com.google.truth:truth:1.1.3',
