@@ -191,7 +191,8 @@ public class JavaContainerBuilder {
    *     client
    * @return a new {@link JavaContainerBuilder}
    */
-  public static JavaContainerBuilder from(DockerClient dockerClient, DockerDaemonImage dockerDaemonImage) {
+  public static JavaContainerBuilder from(
+      DockerClient dockerClient, DockerDaemonImage dockerDaemonImage) {
     return new JavaContainerBuilder(Jib.from(dockerClient, dockerDaemonImage));
   }
 
