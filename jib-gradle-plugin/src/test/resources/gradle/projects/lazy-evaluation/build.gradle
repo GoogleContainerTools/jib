@@ -37,8 +37,11 @@ jib {
                     secondKey: project.ext.value + '-second-label'
             ]
         }
+        entrypoint = project.provider { [project.ext.value] }
         creationTime = project.provider { project.ext.jibCreationTime }
         filesModificationTime = project.provider { project.ext.jibFilesModificationTime }
+        mainClass = project.provider { project.ext.value }
+        jvmFlags = project.provider { [project.ext.value] }
     }
     extraDirectories {
         paths = project.provider { ['src/main/' + project.ext.value + '-custom-extra-dir'] }
@@ -49,6 +52,11 @@ jib {
 tasks.register('showlabels') {
     Map<String, String> prop = project.extensions.getByName('jib')['container']['labels'].get()
     println('labels contain values ' + prop)
+}
+
+tasks.register('showentrypoint') {
+    List<String> prop = project.extensions.getByName('jib')['container'].getEntrypoint()
+    println('entrypoint contains ' + prop.join(","))
 }
 
 tasks.register('check-extra-directories') {
@@ -63,4 +71,14 @@ tasks.register('showtimes') {
     println('creationTime=' + prop)
     prop = project.extensions.jib.container.filesModificationTime.get()
     println('filesModificationTime=' + prop)
+}
+
+tasks.register('showMainClass') {
+    String prop = project.extensions.jib.container.mainClass
+    println('mainClass value ' + prop)
+}
+
+tasks.register('showJvmFlags') {
+    List<String> prop = project.extensions.jib.container.jvmFlags
+    println('jvmFlags value ' + prop)
 }

@@ -23,6 +23,7 @@ import com.google.cloud.tools.jib.Command;
 import com.google.cloud.tools.jib.IntegrationTestingConfiguration;
 import com.google.cloud.tools.jib.api.Credential;
 import com.google.cloud.tools.jib.api.DescriptorDigest;
+import com.google.cloud.tools.jib.api.HttpRequestTester;
 import com.google.cloud.tools.jib.api.ImageReference;
 import com.google.cloud.tools.jib.api.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.api.RegistryException;
@@ -53,6 +54,8 @@ import java.util.regex.Pattern;
 import javax.annotation.Nullable;
 import org.apache.maven.it.VerificationException;
 import org.apache.maven.it.Verifier;
+import org.hamcrest.CoreMatchers;
+import org.hamcrest.MatcherAssert;
 import org.junit.After;
 import org.junit.Assume;
 import org.junit.Before;
@@ -68,6 +71,9 @@ public class BuildImageMojoIntegrationTest {
   public static final LocalRegistry localRegistry =
       new LocalRegistry(5000, "testuser", "testpassword");
 
+  private static final String dockerHost =
+      System.getenv("DOCKER_IP") != null ? System.getenv("DOCKER_IP") : "localhost";
+
   @ClassRule public static final TestProject simpleTestProject = new TestProject("simple");
 
   @ClassRule public static final TestProject emptyTestProject = new TestProject("empty");
@@ -80,9 +86,6 @@ public class BuildImageMojoIntegrationTest {
   @ClassRule public static final TestProject servlet25Project = new TestProject("war_servlet25");
 
   @ClassRule public static final TestProject springBootProject = new TestProject("spring-boot");
-
-  private static final String dockerHost =
-      System.getenv("DOCKER_IP") != null ? System.getenv("DOCKER_IP") : "localhost";
 
   private static String getTestImageReference(String label) {
     String nameBase = IntegrationTestingConfiguration.getTestRepositoryLocation() + '/';
@@ -266,22 +269,20 @@ public class BuildImageMojoIntegrationTest {
 
   private static void assertDockerInspectParameters(String imageReference)
       throws IOException, InterruptedException {
-    String dockerInspect = new Command("docker", "inspect", imageReference).run();
-    assertThat(dockerInspect)
-        .contains(
-            "            \"ExposedPorts\": {\n"
-                + "                \"1000/tcp\": {},\n"
-                + "                \"2000/udp\": {},\n"
-                + "                \"2001/udp\": {},\n"
-                + "                \"2002/udp\": {},\n"
-                + "                \"2003/udp\": {}");
-    assertThat(dockerInspect)
-        .contains(
-            "            \"Labels\": {\n"
-                + "                \"key1\": \"value1\",\n"
-                + "                \"key2\": \"value2\"\n"
-                + "            }");
+    String dockerInspectExposedPorts =
+        new Command("docker", "inspect", "-f", "'{{json .Config.ExposedPorts}}'", imageReference)
+            .run();
+    String dockerInspectLabels =
+        new Command("docker", "inspect", "-f", "'{{json .Config.Labels}}'", imageReference).run();
     String history = new Command("docker", "history", imageReference).run();
+
+    MatcherAssert.assertThat(
+        dockerInspectExposedPorts,
+        CoreMatchers.containsString(
+            "\"1000/tcp\":{},\"2000/udp\":{},\"2001/udp\":{},\"2002/udp\":{},\"2003/udp\":{}"));
+    MatcherAssert.assertThat(
+        dockerInspectLabels,
+        CoreMatchers.containsString("\"key1\":\"value1\",\"key2\":\"value2\""));
     assertThat(history).contains("jib-maven-plugin");
   }
 
@@ -673,14 +674,18 @@ public class BuildImageMojoIntegrationTest {
   public void testExecute_jettyServlet25()
       throws VerificationException, IOException, InterruptedException {
     buildAndRunWebApp(servlet25Project, "jetty-servlet25:maven", "pom.xml");
-    HttpGetVerifier.verifyBody("Hello world", new URL("http://" + dockerHost + ":8080/hello"));
+    HttpRequestTester.verifyBody(
+        "Hello world",
+        new URL("http://" + HttpRequestTester.fetchDockerHostForHttpRequest() + ":8080/hello"));
   }
 
   @Test
   public void testExecute_tomcatServlet25()
       throws VerificationException, IOException, InterruptedException {
     buildAndRunWebApp(servlet25Project, "tomcat-servlet25:maven", "pom-tomcat.xml");
-    HttpGetVerifier.verifyBody("Hello world", new URL("http://" + dockerHost + ":8080/hello"));
+    HttpRequestTester.verifyBody(
+        "Hello world",
+        new URL("http://" + HttpRequestTester.fetchDockerHostForHttpRequest() + ":8080/hello"));
   }
 
   @Test
@@ -701,7 +706,9 @@ public class BuildImageMojoIntegrationTest {
     int fileSize = Integer.parseInt(sizeOutput.substring(0, sizeOutput.indexOf(' ')));
     assertThat(fileSize).isLessThan(3000); // should not be a large fat jar
 
-    HttpGetVerifier.verifyBody("Hello world", new URL("http://" + dockerHost + ":8080"));
+    HttpRequestTester.verifyBody(
+        "Hello world",
+        new URL("http://" + HttpRequestTester.fetchDockerHostForHttpRequest() + ":8080"));
   }
 
   @Test

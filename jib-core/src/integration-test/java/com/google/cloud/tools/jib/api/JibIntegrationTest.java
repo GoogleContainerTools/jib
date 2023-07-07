@@ -49,6 +49,10 @@ import org.junit.rules.TemporaryFolder;
 /** Integration tests for {@link Jib}. */
 public class JibIntegrationTest {
 
+  /** A known oci index sha for gcr.io/distroless/base. */
+  public static final String KNOWN_OCI_INDEX_SHA =
+      "sha256:2c50b819aa3bfaf6ae72e47682f6c5abc0f647cf3f4224a4a9be97dd30433909";
+
   @ClassRule public static final LocalRegistry localRegistry = new LocalRegistry(5000);
 
   @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
@@ -61,6 +65,14 @@ public class JibIntegrationTest {
               EventHandlers.NONE,
               dockerHost + ":5000",
               "jib-scratch",
+              new FailoverHttpClient(true, true, ignored -> {}))
+          .newRegistryClient();
+
+  private final RegistryClient distrolessRegistryClient =
+      RegistryClient.factory(
+              EventHandlers.NONE,
+              dockerHost + ":5000",
+              "jib-distroless",
               new FailoverHttpClient(true, true, ignored -> {}))
           .newRegistryClient();
 
@@ -290,6 +302,33 @@ public class JibIntegrationTest {
     Assert.assertEquals("windows", platform1.getOs());
     Assert.assertEquals("amd32", platform2.getArchitecture());
     Assert.assertEquals("windows", platform2.getOs());
+  }
+
+  @Test
+  public void testDistroless_ociManifest()
+      throws IOException, InterruptedException, ExecutionException, RegistryException,
+          CacheDirectoryCreationException, InvalidImageReferenceException {
+    Jib.from("gcr.io/distroless/base@" + KNOWN_OCI_INDEX_SHA)
+        .setPlatforms(
+            ImmutableSet.of(new Platform("arm64", "linux"), new Platform("amd64", "linux")))
+        .containerize(
+            Containerizer.to(
+                    RegistryImage.named(dockerHost + ":5000/jib-distroless:multi-platform"))
+                .setAllowInsecureRegistries(true));
+
+    V22ManifestListTemplate manifestList =
+        (V22ManifestListTemplate)
+            distrolessRegistryClient.pullManifest("multi-platform").getManifest();
+    Assert.assertEquals(2, manifestList.getManifests().size());
+    ManifestDescriptorTemplate.Platform platform1 =
+        manifestList.getManifests().get(0).getPlatform();
+    ManifestDescriptorTemplate.Platform platform2 =
+        manifestList.getManifests().get(1).getPlatform();
+
+    Assert.assertEquals("arm64", platform1.getArchitecture());
+    Assert.assertEquals("linux", platform1.getOs());
+    Assert.assertEquals("amd64", platform2.getArchitecture());
+    Assert.assertEquals("linux", platform2.getOs());
   }
 
   @Test

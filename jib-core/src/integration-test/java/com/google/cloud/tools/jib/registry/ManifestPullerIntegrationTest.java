@@ -16,16 +16,18 @@
 
 package com.google.cloud.tools.jib.registry;
 
+import static com.google.common.truth.Truth.assertThat;
+
 import com.google.cloud.tools.jib.api.RegistryException;
 import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.http.FailoverHttpClient;
 import com.google.cloud.tools.jib.image.json.ManifestTemplate;
+import com.google.cloud.tools.jib.image.json.OciIndexTemplate;
+import com.google.cloud.tools.jib.image.json.OciManifestTemplate;
 import com.google.cloud.tools.jib.image.json.V21ManifestTemplate;
 import com.google.cloud.tools.jib.image.json.V22ManifestListTemplate;
 import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
 import java.io.IOException;
-import org.hamcrest.CoreMatchers;
-import org.hamcrest.MatcherAssert;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
@@ -37,6 +39,18 @@ public class ManifestPullerIntegrationTest {
   /** A known manifest list sha for gcr.io/distroless/base. */
   public static final String KNOWN_MANIFEST_LIST_SHA =
       "sha256:44cbdb9c24e123882d7894ba78fb6f572d2496889885a47eb4b32241a8c07a00";
+
+  /** A known OCI image index sha for gcr.io/distroless/base. */
+  public static final String KNOWN_OCI_INDEX_SHA =
+      "sha256:2c50b819aa3bfaf6ae72e47682f6c5abc0f647cf3f4224a4a9be97dd30433909";
+
+  /** A known docker manifest schema 2 sha for gcr.io/distroless/base. */
+  public static final String KNOWN_MANIFEST_V22_SHA =
+      "sha256:da5c568e59f3241b09e5699a525a37b3309ce2c182d8d20802b9eaee55711b19";
+
+  /** A known oci manifest sha for gcr.io/distroless/base. */
+  public static final String KNOWN_OCI_MANIFEST_SHA =
+      "sha256:0477dc38b254096e350a9b605b7355d3cf0d5a844558e6986148ce2a1fe18ba8";
 
   @ClassRule public static LocalRegistry localRegistry = new LocalRegistry(5000);
   public final String dockerHost =
@@ -58,20 +72,38 @@ public class ManifestPullerIntegrationTest {
     V21ManifestTemplate manifestTemplate =
         registryClient.pullManifest("latest", V21ManifestTemplate.class).getManifest();
 
-    Assert.assertEquals(1, manifestTemplate.getSchemaVersion());
-    Assert.assertTrue(manifestTemplate.getFsLayers().size() > 0);
+    assertThat(manifestTemplate.getSchemaVersion()).isEqualTo(1);
+    assertThat(manifestTemplate.getFsLayers()).isNotEmpty();
   }
 
   @Test
   public void testPull_v22() throws IOException, RegistryException {
     RegistryClient registryClient =
-        RegistryClient.factory(EventHandlers.NONE, "gcr.io", "distroless/java", httpClient)
+        RegistryClient.factory(EventHandlers.NONE, "gcr.io", "distroless/base", httpClient)
             .newRegistryClient();
-    ManifestTemplate manifestTemplate = registryClient.pullManifest("latest").getManifest();
 
-    Assert.assertEquals(2, manifestTemplate.getSchemaVersion());
-    V22ManifestTemplate v22ManifestTemplate = (V22ManifestTemplate) manifestTemplate;
-    Assert.assertTrue(v22ManifestTemplate.getLayers().size() > 0);
+    V22ManifestTemplate manifestTemplate =
+        registryClient
+            .pullManifest(KNOWN_MANIFEST_V22_SHA, V22ManifestTemplate.class)
+            .getManifest();
+
+    assertThat(manifestTemplate.getSchemaVersion()).isEqualTo(2);
+    assertThat(manifestTemplate.getLayers()).isNotEmpty();
+  }
+
+  @Test
+  public void testPull_ociManifest() throws IOException, RegistryException {
+    RegistryClient registryClient =
+        RegistryClient.factory(EventHandlers.NONE, "gcr.io", "distroless/base", httpClient)
+            .newRegistryClient();
+
+    OciManifestTemplate manifestTemplate =
+        registryClient
+            .pullManifest(KNOWN_OCI_MANIFEST_SHA, OciManifestTemplate.class)
+            .getManifest();
+
+    assertThat(manifestTemplate.getSchemaVersion()).isEqualTo(2);
+    assertThat(manifestTemplate.getLayers()).isNotEmpty();
   }
 
   @Test
@@ -80,31 +112,40 @@ public class ManifestPullerIntegrationTest {
         RegistryClient.factory(EventHandlers.NONE, "gcr.io", "distroless/base", httpClient)
             .newRegistryClient();
 
-    // Ensure ":latest" is a manifest list
+    // Ensures call to image at the specified SHA returns a manifest list
     V22ManifestListTemplate manifestListTargeted =
-        registryClient.pullManifest("latest", V22ManifestListTemplate.class).getManifest();
-    Assert.assertEquals(2, manifestListTargeted.getSchemaVersion());
-    Assert.assertTrue(manifestListTargeted.getManifests().size() > 0);
+        registryClient
+            .pullManifest(KNOWN_MANIFEST_LIST_SHA, V22ManifestListTemplate.class)
+            .getManifest();
+    assertThat(manifestListTargeted.getSchemaVersion()).isEqualTo(2);
+    assertThat(manifestListTargeted.getManifests()).isNotEmpty();
 
-    // Generic call to ":latest" pulls a manifest list
-    ManifestTemplate manifestListGeneric = registryClient.pullManifest("latest").getManifest();
-    Assert.assertEquals(2, manifestListGeneric.getSchemaVersion());
-    MatcherAssert.assertThat(
-        manifestListGeneric, CoreMatchers.instanceOf(V22ManifestListTemplate.class));
-    Assert.assertTrue(((V22ManifestListTemplate) manifestListGeneric).getManifests().size() > 0);
-
-    // Referencing a manifest list by sha256, should return a manifest list
-    ManifestTemplate manifestListSha256 =
+    // Generic call to image at the specified SHA, should also return a manifest list
+    ManifestTemplate manifestListGeneric =
         registryClient.pullManifest(KNOWN_MANIFEST_LIST_SHA).getManifest();
-    Assert.assertEquals(2, manifestListSha256.getSchemaVersion());
-    MatcherAssert.assertThat(
-        manifestListSha256, CoreMatchers.instanceOf(V22ManifestListTemplate.class));
-    Assert.assertTrue(((V22ManifestListTemplate) manifestListSha256).getManifests().size() > 0);
+    assertThat(manifestListGeneric.getSchemaVersion()).isEqualTo(2);
+    assertThat(manifestListGeneric).isInstanceOf(V22ManifestListTemplate.class);
+    assertThat(((V22ManifestListTemplate) manifestListGeneric).getManifests()).isNotEmpty();
+  }
 
-    // Call to ":latest" targeting a manifest pulls a manifest.
-    V22ManifestTemplate manifestTargeted =
-        registryClient.pullManifest("latest", V22ManifestTemplate.class).getManifest();
-    Assert.assertEquals(2, manifestTargeted.getSchemaVersion());
+  @Test
+  public void testPull_ociIndex() throws IOException, RegistryException {
+    RegistryClient registryClient =
+        RegistryClient.factory(EventHandlers.NONE, "gcr.io", "distroless/base", httpClient)
+            .newRegistryClient();
+
+    // Ensures call to image at the specified SHA returns an OCI index
+    OciIndexTemplate manifestListTargeted =
+        registryClient.pullManifest(KNOWN_OCI_INDEX_SHA, OciIndexTemplate.class).getManifest();
+    assertThat(manifestListTargeted.getSchemaVersion()).isEqualTo(2);
+    assertThat((manifestListTargeted.getManifests().size() > 0)).isTrue();
+
+    // Generic call to image at the specified SHA, should also return an OCI index
+    ManifestTemplate manifestListGeneric =
+        registryClient.pullManifest(KNOWN_OCI_INDEX_SHA).getManifest();
+    assertThat(manifestListGeneric.getSchemaVersion()).isEqualTo(2);
+    assertThat(manifestListGeneric).isInstanceOf(OciIndexTemplate.class);
+    assertThat(((OciIndexTemplate) manifestListGeneric).getManifests()).isNotEmpty();
   }
 
   @Test
@@ -117,10 +158,9 @@ public class ManifestPullerIntegrationTest {
       Assert.fail("Trying to pull nonexistent image should have errored");
 
     } catch (RegistryErrorException ex) {
-      MatcherAssert.assertThat(
-          ex.getMessage(),
-          CoreMatchers.containsString(
-              "pull image manifest for " + dockerHost + ":5000/busybox:nonexistent-tag"));
+      assertThat(ex)
+          .hasMessageThat()
+          .contains("pull image manifest for " + dockerHost + ":5000/busybox:nonexistent-tag");
     }
   }
 }

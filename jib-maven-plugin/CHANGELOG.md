@@ -9,6 +9,13 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
+## 3.3.2
+
+### Changed
+- Log an info instead of warning when entrypoint makes the image to ignore jvm parameters ([#3904](https://github.com/GoogleContainerTools/jib/pull/3904))
+
+Thanks to our community contributors @rmannibucau!
+
 ## 3.3.1
 
 ### Changed
