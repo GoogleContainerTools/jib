@@ -1087,7 +1087,7 @@ public class PluginConfigurationProcessorTest {
   public void testCreateModificationTimeProvider_epochPlusSecond()
       throws InvalidFilesModificationTimeException {
     ModificationTimeProvider timeProvider =
-        PluginConfigurationProcessor.createModificationTimeProvider("EPOCH_PLUS_SECOND");
+        PluginConfigurationProcessor.createModificationTimeProvider(null, "EPOCH_PLUS_SECOND");
     assertThat(timeProvider.get(Paths.get("foo"), AbsoluteUnixPath.get("/bar")))
         .isEqualTo(Instant.ofEpochSecond(1));
   }
@@ -1096,10 +1096,38 @@ public class PluginConfigurationProcessorTest {
   public void testCreateModificationTimeProvider_isoDateTimeValue()
       throws InvalidFilesModificationTimeException {
     ModificationTimeProvider timeProvider =
-        PluginConfigurationProcessor.createModificationTimeProvider("2011-12-03T10:15:30+09:00");
+        PluginConfigurationProcessor.createModificationTimeProvider(
+            null, "2011-12-03T10:15:30+09:00");
     Instant expected = DateTimeFormatter.ISO_DATE_TIME.parse("2011-12-03T01:15:30Z", Instant::from);
     assertThat(timeProvider.get(Paths.get("foo"), AbsoluteUnixPath.get("/bar")))
         .isEqualTo(expected);
+  }
+
+  @Test
+  public void testCreateModificationTimeProvider_numberOnlyFormat()
+      throws InvalidFilesModificationTimeException {
+    ModificationTimeProvider timeProvider =
+        PluginConfigurationProcessor.createModificationTimeProvider(null, "20111203101530");
+    Instant expected = DateTimeFormatter.ISO_DATE_TIME.parse("2011-12-03T10:15:30Z", Instant::from);
+    assertThat(timeProvider.get(null, null)).isEqualTo(expected);
+  }
+
+  @Test
+  public void testCreateModificationTimeProvider_customFormat()
+      throws InvalidFilesModificationTimeException {
+    ModificationTimeProvider timeProvider =
+        PluginConfigurationProcessor.createModificationTimeProvider(null, "20111203{yyyyMMdd}");
+    Instant expected = DateTimeFormatter.ISO_DATE_TIME.parse("2011-12-03T00:00:00Z", Instant::from);
+    assertThat(timeProvider.get(null, null)).isEqualTo(expected);
+  }
+
+  @Test
+  public void testCreateModificationTimeProvider_now()
+      throws InvalidFilesModificationTimeException {
+    final Instant now = Instant.now().minusSeconds(2);
+    ModificationTimeProvider timeProvider =
+        PluginConfigurationProcessor.createModificationTimeProvider(null, "USE_CURRENT_TIMESTAMP");
+    assertThat(timeProvider.get(null, null)).isGreaterThan(now);
   }
 
   @Test
@@ -1107,7 +1135,9 @@ public class PluginConfigurationProcessorTest {
     InvalidFilesModificationTimeException exception =
         assertThrows(
             InvalidFilesModificationTimeException.class,
-            () -> PluginConfigurationProcessor.createModificationTimeProvider("invalid format"));
+            () ->
+                PluginConfigurationProcessor.createModificationTimeProvider(
+                    null, "invalid format"));
     assertThat(exception).hasMessageThat().isEqualTo("invalid format");
     assertThat(exception.getInvalidFilesModificationTime()).isEqualTo("invalid format");
   }
