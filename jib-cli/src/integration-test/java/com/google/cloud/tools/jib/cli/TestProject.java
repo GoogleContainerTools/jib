@@ -72,7 +72,7 @@ public class TestProject extends TemporaryFolder implements Closeable {
     copyProject(testProjectName, projectRoot);
   }
 
-  public void build(String... gradleArguments) throws IOException, InterruptedException {
+  void build(String... gradleArguments) throws IOException, InterruptedException {
     List<String> cmd = new ArrayList<>();
     cmd.add("./gradlew");
     cmd.addAll(Arrays.asList(gradleArguments));

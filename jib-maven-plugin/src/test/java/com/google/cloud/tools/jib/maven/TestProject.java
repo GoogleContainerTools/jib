@@ -17,7 +17,6 @@
 package com.google.cloud.tools.jib.maven;
 
 import com.google.cloud.tools.jib.filesystem.DirectoryWalker;
-import java.io.Closeable;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -25,12 +24,14 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Properties;
 import org.apache.maven.it.util.ResourceExtractor;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.extension.BeforeEachCallback;
+import org.junit.jupiter.api.extension.ExtensionContext;
 
 /** Works with the test Maven projects in the {@code resources/projects} directory. */
-public class TestProject extends TemporaryFolder implements Closeable {
+public class TestProject implements BeforeEachCallback {
 
   private static final String PROJECTS_PATH_IN_RESOURCES = "/maven/projects/";
+  private final Path tempDir;
 
   private static boolean isPomXml(Path path) {
     String filename = path.getFileName().toString();
@@ -42,8 +43,9 @@ public class TestProject extends TemporaryFolder implements Closeable {
   private Path projectRoot;
 
   /** Initialize to a specific project directory. */
-  public TestProject(String projectDir) {
+  public TestProject(String projectDir, Path tempDir) {
     this.projectDir = projectDir;
+    this.tempDir = tempDir;
   }
 
   /** Gets the project root resolved as a real path. */
@@ -52,21 +54,18 @@ public class TestProject extends TemporaryFolder implements Closeable {
   }
 
   @Override
-  public void close() {
-    after();
-  }
-
-  @Override
-  protected void before() throws Throwable {
-    super.before();
-
+  public void beforeEach(ExtensionContext context) throws Exception {
+    projectRoot = this.tempDir;
     copyProject();
   }
 
   private void copyProject() throws IOException {
     projectRoot =
         ResourceExtractor.extractResourcePath(
-                TestProject.class, PROJECTS_PATH_IN_RESOURCES + projectDir, newFolder(), true)
+                TestProject.class,
+                PROJECTS_PATH_IN_RESOURCES + projectDir,
+                Files.createTempDirectory("jib").toFile(),
+                true)
             .toPath();
 
     // Puts the correct plugin version into the test project pom.xml.

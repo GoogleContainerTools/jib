@@ -20,13 +20,13 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /** Tests for {@link com.google.cloud.tools.jib.api.Credential}. */
-public class CredentialTest {
+class CredentialTest {
 
   @Test
-  public void testCredentialsHash() {
+  void testCredentialsHash() {
     Credential credentialA1 = Credential.from("username", "password");
     Credential credentialA2 = Credential.from("username", "password");
     Credential credentialB1 = Credential.from("", "");
@@ -43,7 +43,7 @@ public class CredentialTest {
   }
 
   @Test
-  public void testCredentialsOAuth2RefreshToken() {
+  void testCredentialsOAuth2RefreshToken() {
     Credential oauth2Credential = Credential.from("<token>", "eyJhbGciOi...3gw");
     Assert.assertTrue(
         "Credential should be an auth2 token when username is <token>",

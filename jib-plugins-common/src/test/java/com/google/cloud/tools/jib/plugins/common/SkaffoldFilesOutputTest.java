@@ -20,35 +20,35 @@ import com.google.common.collect.ImmutableList;
 import java.io.IOException;
 import java.nio.file.Paths;
 import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /** Tests for {@link SkaffoldFilesOutput}. */
-public class SkaffoldFilesOutputTest {
+class SkaffoldFilesOutputTest {
 
   private static final String TEST_JSON =
       "{\"build\":[\"buildFile1\",\"buildFile2\"],\"inputs\":[\"input1\",\"input2\"],\"ignore\":[\"ignore1\",\"ignore2\"]}";
 
   @Test
-  public void testGetJsonString() throws IOException {
+  void testGetJsonString() throws IOException {
     SkaffoldFilesOutput skaffoldFilesOutput = new SkaffoldFilesOutput();
     skaffoldFilesOutput.addBuild(Paths.get("buildFile1"));
-    skaffoldFilesOutput.addBuild(Paths.get("buildFile2"));
+    skaffoldFilesOutput.addBuild(Paths.get("buildFile2").toFile());
     skaffoldFilesOutput.addInput(Paths.get("input1"));
-    skaffoldFilesOutput.addInput(Paths.get("input2"));
+    skaffoldFilesOutput.addInput(Paths.get("input2").toFile());
     skaffoldFilesOutput.addIgnore(Paths.get("ignore1"));
-    skaffoldFilesOutput.addIgnore(Paths.get("ignore2"));
+    skaffoldFilesOutput.addIgnore(Paths.get("ignore2").toFile());
     Assert.assertEquals(TEST_JSON, skaffoldFilesOutput.getJsonString());
   }
 
   @Test
-  public void testGetJsonString_empty() throws IOException {
+  void testGetJsonString_empty() throws IOException {
     SkaffoldFilesOutput skaffoldFilesOutput = new SkaffoldFilesOutput();
     Assert.assertEquals(
         "{\"build\":[],\"inputs\":[],\"ignore\":[]}", skaffoldFilesOutput.getJsonString());
   }
 
   @Test
-  public void testConstructor_json() throws IOException {
+  void testConstructor_json() throws IOException {
     SkaffoldFilesOutput skaffoldFilesOutput = new SkaffoldFilesOutput(TEST_JSON);
     Assert.assertEquals(
         ImmutableList.of("buildFile1", "buildFile2"), skaffoldFilesOutput.getBuild());

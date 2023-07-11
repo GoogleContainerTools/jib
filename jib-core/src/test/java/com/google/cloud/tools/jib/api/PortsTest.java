@@ -23,13 +23,13 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /** Tests for {@link Ports}. */
-public class PortsTest {
+class PortsTest {
 
   @Test
-  public void testParse() {
+  void testParse() {
     List<String> goodInputs =
         Arrays.asList("1000", "2000-2003", "3000-3000", "4000/tcp", "5000/udp", "6000-6002/udp");
     ImmutableSet<Port> expected =

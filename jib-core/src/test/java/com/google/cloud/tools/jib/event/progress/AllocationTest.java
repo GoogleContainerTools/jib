@@ -17,16 +17,16 @@
 package com.google.cloud.tools.jib.event.progress;
 
 import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /** Tests for {@link Allocation}. */
-public class AllocationTest {
+class AllocationTest {
 
   /** Error margin for checking equality of two doubles. */
   private static final double DOUBLE_ERROR_MARGIN = 1e-10;
 
   @Test
-  public void testSmoke_linear() {
+  void testSmoke_linear() {
     Allocation root = Allocation.newRoot("root", 1);
     Allocation node1 = root.newChild("node1", 2);
     Allocation node2 = node1.newChild("node2", 3);
@@ -50,7 +50,7 @@ public class AllocationTest {
   }
 
   @Test
-  public void testFractionOfRoot_tree_partial() {
+  void testFractionOfRoot_tree_partial() {
     Allocation root = Allocation.newRoot("ignored", 10);
     Allocation left = root.newChild("ignored", 2);
     Allocation right = root.newChild("ignored", 4);
@@ -70,7 +70,7 @@ public class AllocationTest {
   }
 
   @Test
-  public void testFractionOfRoot_tree_complete() {
+  void testFractionOfRoot_tree_complete() {
     Allocation root = Allocation.newRoot("ignored", 2);
 
     Allocation left = root.newChild("ignored", 3);
@@ -92,7 +92,7 @@ public class AllocationTest {
   }
 
   @Test
-  public void testNonPositiveAllocationUnits() {
+  void testNonPositiveAllocationUnits() {
     Allocation root = Allocation.newRoot("ignored", 2);
 
     Allocation left = root.newChild("ignored", -30);

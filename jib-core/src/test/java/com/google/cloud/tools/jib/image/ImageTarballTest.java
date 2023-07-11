@@ -45,16 +45,19 @@ import java.security.DigestException;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
 /** Tests for {@link ImageTarball}. */
-@RunWith(MockitoJUnitRunner.class)
-public class ImageTarballTest {
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
+class ImageTarballTest {
 
   private Path fileA;
   private Path fileB;
@@ -64,8 +67,8 @@ public class ImageTarballTest {
   @Mock private Layer mockLayer1;
   @Mock private Layer mockLayer2;
 
-  @Before
-  public void setup() throws URISyntaxException, IOException, DigestException {
+  @BeforeEach
+  void setup() throws URISyntaxException, IOException, DigestException {
     fileA = Paths.get(Resources.getResource("core/fileA").toURI());
     fileB = Paths.get(Resources.getResource("core/fileB").toURI());
     long fileASize = Files.size(fileA);
@@ -89,7 +92,7 @@ public class ImageTarballTest {
   }
 
   @Test
-  public void testWriteTo_docker()
+  void testWriteTo_docker()
       throws InvalidImageReferenceException, IOException, LayerPropertyNotFoundException {
     Image testImage =
         Image.builder(V22ManifestTemplate.class).addLayer(mockLayer1).addLayer(mockLayer2).build();
@@ -143,7 +146,7 @@ public class ImageTarballTest {
   }
 
   @Test
-  public void testWriteTo_oci()
+  void testWriteTo_oci()
       throws InvalidImageReferenceException, IOException, LayerPropertyNotFoundException {
     Image testImage =
         Image.builder(OciManifestTemplate.class).addLayer(mockLayer1).addLayer(mockLayer2).build();

@@ -31,7 +31,7 @@ import java.io.IOException;
 import java.security.DigestException;
 import org.junit.Assert;
 import org.junit.ClassRule;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /** Integration tests for {@link ManifestPusher}. */
 public class ManifestPusherIntegrationTest {

@@ -12,7 +12,7 @@ ext {
 // use `installDist` or `distZip` to create an installable application
 application {
   applicationName = 'jib'
-  mainClass = cliMainClass
+  mainClass.set(cliMainClass)
 }
 
 sourceSets.main.java.srcDirs += ["${buildDir}/generated-src"]
@@ -43,8 +43,10 @@ dependencies {
   implementation dependencyStrings.GOOGLE_HTTP_CLIENT
   implementation dependencyStrings.GOOGLE_HTTP_CLIENT_APACHE_V2
 
-  testImplementation dependencyStrings.JUNIT
   testImplementation dependencyStrings.JUNIT_PARAMS
+  testImplementation dependencyStrings.JUNIT_PARAM_TESTS
+  testImplementation dependencyStrings.JUNIT_API
+  testRuntimeOnly dependencyStrings.JUNIT_ENGINE
   testImplementation dependencyStrings.TRUTH
   testImplementation dependencyStrings.TRUTH8
   testImplementation dependencyStrings.MOCKITO_CORE
@@ -61,7 +63,7 @@ release {
     'com.google.cloud.tools:jib-plugins-common',
   ]
   git {
-    requireBranch = /^cli-release-v\d+.*$/  //regex
+    requireBranch.set(/^cli-release-v\d+.*$/)  //regex
   }
 }
 

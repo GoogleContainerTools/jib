@@ -18,20 +18,20 @@ package com.google.cloud.tools.jib.api;
 
 import java.nio.file.Paths;
 import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /** Tests for {@link TarImage}. */
-public class TarImageTest {
+class TarImageTest {
 
   @Test
-  public void testGetters_bothSet() throws InvalidImageReferenceException {
+  void testGetters_bothSet() throws InvalidImageReferenceException {
     TarImage tarImage = TarImage.at(Paths.get("output/file")).named("tar/image");
     Assert.assertEquals("tar/image", tarImage.getImageReference().get().toString());
     Assert.assertEquals(Paths.get("output/file"), tarImage.getPath());
   }
 
   @Test
-  public void testGetters_nameMissing() {
+  void testGetters_nameMissing() {
     TarImage tarImage = TarImage.at(Paths.get("output/file"));
     Assert.assertFalse(tarImage.getImageReference().isPresent());
     Assert.assertEquals(Paths.get("output/file"), tarImage.getPath());

@@ -26,19 +26,23 @@ import com.fasterxml.jackson.databind.exc.UnrecognizedPropertyException;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.google.cloud.tools.jib.api.buildplan.FilePermissions;
 import java.time.Instant;
-import junitparams.JUnitParamsRunner;
-import junitparams.Parameters;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
 /** Tests for {@link FilePropertiesSpec}. */
-@RunWith(JUnitParamsRunner.class)
-public class FilePropertiesSpecTest {
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
+class FilePropertiesSpecTest {
 
   private static final ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
 
   @Test
-  public void testFilePropertiesSpec_full() throws JsonProcessingException {
+  void testFilePropertiesSpec_full() throws JsonProcessingException {
     String data =
         "filePermissions: 644\n"
             + "directoryPermissions: 755\n"
@@ -55,9 +59,9 @@ public class FilePropertiesSpecTest {
     assertThat(parsed.getTimestamp().get()).isEqualTo(Instant.ofEpochMilli(1));
   }
 
-  @Test
-  public void testFilePropertiesSpec_badFilePermissions() {
-    String data = "filePermissions: 888";
+  @ParameterizedTest
+  @CsvSource(value = {"filePermissions: 888", "directoryPermissions: 888"})
+  void testFilePropertiesSpec_badFileOrDirectoryPermissions(String data) {
 
     Exception exception =
         assertThrows(
@@ -69,20 +73,7 @@ public class FilePropertiesSpecTest {
   }
 
   @Test
-  public void testFilePropertiesSpec_badDirectoryPermissions() {
-    String data = "directoryPermissions: 888";
-
-    Exception exception =
-        assertThrows(
-            JsonMappingException.class, () -> mapper.readValue(data, FilePropertiesSpec.class));
-    assertThat(exception)
-        .hasCauseThat()
-        .hasMessageThat()
-        .isEqualTo("octalPermissions must be a 3-digit octal number (000-777)");
-  }
-
-  @Test
-  public void testFilePropertiesSpec_timestampSpecIso8601() throws JsonProcessingException {
+  void testFilePropertiesSpec_timestampSpecIso8601() throws JsonProcessingException {
     String data = "timestamp: 2020-06-08T14:54:36+00:00";
 
     FilePropertiesSpec parsed = mapper.readValue(data, FilePropertiesSpec.class);
@@ -90,7 +81,7 @@ public class FilePropertiesSpecTest {
   }
 
   @Test
-  public void testFilePropertiesSpec_badTimestamp() {
+  void testFilePropertiesSpec_badTimestamp() {
     String data = "timestamp: hi";
 
     Exception exception =
@@ -104,7 +95,7 @@ public class FilePropertiesSpecTest {
   }
 
   @Test
-  public void testFilePropertiesSpec_failOnUnknown() {
+  void testFilePropertiesSpec_failOnUnknown() {
     String data = "badkey: badvalue";
 
     Exception exception =
@@ -114,9 +105,9 @@ public class FilePropertiesSpecTest {
     assertThat(exception).hasMessageThat().contains("Unrecognized field \"badkey\"");
   }
 
-  @Test
-  @Parameters(value = {"filePermissions", "directoryPermissions", "user", "group", "timestamp"})
-  public void testFilePropertiesSpec_noEmptyValues(String fieldName) {
+  @ParameterizedTest
+  @CsvSource(value = {"filePermissions", "directoryPermissions", "user", "group", "timestamp"})
+  void testFilePropertiesSpec_noEmptyValues(String fieldName) {
     String data = fieldName + ": ' '";
 
     Exception exception =
@@ -128,9 +119,9 @@ public class FilePropertiesSpecTest {
         .isEqualTo("Property '" + fieldName + "' cannot be an empty string");
   }
 
-  @Test
-  @Parameters(value = {"filePermissions", "directoryPermissions", "user", "group", "timestamp"})
-  public void testFilePropertiesSpec_nullOkay(String fieldName) throws JsonProcessingException {
+  @ParameterizedTest
+  @CsvSource(value = {"filePermissions", "directoryPermissions", "user", "group", "timestamp"})
+  void testFilePropertiesSpec_nullOkay(String fieldName) throws JsonProcessingException {
     String data = fieldName + ": null";
 
     FilePropertiesSpec parsed = mapper.readValue(data, FilePropertiesSpec.class);

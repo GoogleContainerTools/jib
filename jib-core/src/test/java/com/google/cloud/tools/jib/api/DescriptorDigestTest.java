@@ -20,13 +20,13 @@ import java.security.DigestException;
 import java.util.HashMap;
 import java.util.Map;
 import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /** Tests for {@link DescriptorDigest}. */
-public class DescriptorDigestTest {
+class DescriptorDigestTest {
 
   @Test
-  public void testCreateFromHash_pass() throws DigestException {
+  void testCreateFromHash_pass() throws DigestException {
     String goodHash = createGoodHash('a');
 
     DescriptorDigest descriptorDigest = DescriptorDigest.fromHash(goodHash);
@@ -36,7 +36,7 @@ public class DescriptorDigestTest {
   }
 
   @Test
-  public void testCreateFromHash_fail() {
+  void testCreateFromHash_fail() {
     String badHash = "not a valid hash";
 
     try {
@@ -48,7 +48,7 @@ public class DescriptorDigestTest {
   }
 
   @Test
-  public void testCreateFromHash_failIncorrectLength() {
+  void testCreateFromHash_failIncorrectLength() {
     String badHash = createGoodHash('a') + 'a';
 
     try {
@@ -60,7 +60,7 @@ public class DescriptorDigestTest {
   }
 
   @Test
-  public void testCreateFromDigest_pass() throws DigestException {
+  void testCreateFromDigest_pass() throws DigestException {
     String goodHash = createGoodHash('a');
     String goodDigest = "sha256:" + createGoodHash('a');
 
@@ -71,7 +71,7 @@ public class DescriptorDigestTest {
   }
 
   @Test
-  public void testCreateFromDigest_fail() {
+  void testCreateFromDigest_fail() {
     String badDigest = "sha256:not a valid digest";
 
     try {
@@ -83,7 +83,7 @@ public class DescriptorDigestTest {
   }
 
   @Test
-  public void testUseAsMapKey() throws DigestException {
+  void testUseAsMapKey() throws DigestException {
     DescriptorDigest descriptorDigestA1 = DescriptorDigest.fromHash(createGoodHash('a'));
     DescriptorDigest descriptorDigestA2 = DescriptorDigest.fromHash(createGoodHash('a'));
     DescriptorDigest descriptorDigestA3 =

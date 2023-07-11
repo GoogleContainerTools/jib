@@ -31,21 +31,24 @@ import com.google.cloud.tools.jib.api.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.api.LogEvent;
 import java.util.Optional;
 import java.util.function.Consumer;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
 /** Tests for {@link ConfigurationPropertyValidator}. */
-@RunWith(MockitoJUnitRunner.class)
-public class ConfigurationPropertyValidatorTest {
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
+class ConfigurationPropertyValidatorTest {
 
   @Mock private Consumer<LogEvent> mockLogger;
   @Mock private AuthProperty mockAuth;
   @Mock private RawConfiguration mockConfiguration;
 
   @Test
-  public void testGetImageAuth() {
+  void testGetImageAuth() {
     when(mockAuth.getUsernameDescriptor()).thenReturn("user");
     when(mockAuth.getPasswordDescriptor()).thenReturn("pass");
     when(mockAuth.getUsername()).thenReturn("vwxyz");
@@ -100,7 +103,7 @@ public class ConfigurationPropertyValidatorTest {
   }
 
   @Test
-  public void testGetGeneratedTargetDockerTag() throws InvalidImageReferenceException {
+  void testGetGeneratedTargetDockerTag() throws InvalidImageReferenceException {
     HelpfulSuggestions helpfulSuggestions =
         new HelpfulSuggestions("", "", "to", "--to", "build.txt");
 
@@ -140,7 +143,7 @@ public class ConfigurationPropertyValidatorTest {
   }
 
   @Test
-  public void testParseListProperty() {
+  void testParseListProperty() {
     assertThat(ConfigurationPropertyValidator.parseListProperty("abc")).containsExactly("abc");
     assertThat(
             ConfigurationPropertyValidator.parseListProperty(
@@ -157,7 +160,7 @@ public class ConfigurationPropertyValidatorTest {
   }
 
   @Test
-  public void testParseMapProperty() {
+  void testParseMapProperty() {
     assertThat(ConfigurationPropertyValidator.parseMapProperty("abc=def"))
         .containsExactly("abc", "def");
     assertThat(

@@ -49,14 +49,28 @@ import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import org.junit.Assert;
 import org.junit.Rule;
-import org.junit.Test;
 import org.junit.contrib.java.lang.system.RestoreSystemProperties;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mockito;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
+import uk.org.webcompere.systemstubs.jupiter.SystemStub;
+import uk.org.webcompere.systemstubs.jupiter.SystemStubsExtension;
+import uk.org.webcompere.systemstubs.properties.SystemProperties;
 
 /** Tests for {@link BuildContext}. */
-public class BuildContextTest {
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
+@ExtendWith(SystemStubsExtension.class)
+class BuildContextTest {
 
   @Rule public final RestoreSystemProperties systemPropertyRestorer = new RestoreSystemProperties();
+
+  @SystemStub
+  @SuppressWarnings("unused")
+  private SystemProperties environmentVariables;
 
   private static BuildContext.Builder createBasicTestBuilder() {
     return BuildContext.builder()
@@ -70,7 +84,7 @@ public class BuildContextTest {
   }
 
   @Test
-  public void testBuilder() throws Exception {
+  void testBuilder() throws Exception {
     String expectedBaseImageServerUrl = "someserver";
     String expectedBaseImageName = "baseimage";
     String expectedBaseImageTag = "baseimagetag";
@@ -182,7 +196,7 @@ public class BuildContextTest {
   }
 
   @Test
-  public void testBuilder_default() throws CacheDirectoryCreationException {
+  void testBuilder_default() throws CacheDirectoryCreationException {
     // These are required and don't have defaults.
     String expectedBaseImageServerUrl = "someserver";
     String expectedBaseImageName = "baseimage";
@@ -226,7 +240,7 @@ public class BuildContextTest {
   }
 
   @Test
-  public void testBuilder_missingValues() throws CacheDirectoryCreationException {
+  void testBuilder_missingValues() throws CacheDirectoryCreationException {
     // Target image is missing
     try {
       BuildContext.builder()
@@ -272,7 +286,7 @@ public class BuildContextTest {
   }
 
   @Test
-  public void testBuilder_digestWarning()
+  void testBuilder_digestWarning()
       throws CacheDirectoryCreationException, InvalidImageReferenceException {
     EventHandlers mockEventHandlers = Mockito.mock(EventHandlers.class);
     BuildContext.Builder builder = createBasicTestBuilder().setEventHandlers(mockEventHandlers);
@@ -297,7 +311,7 @@ public class BuildContextTest {
   }
 
   @Test
-  public void testClose_shutDownInternalExecutorService()
+  void testClose_shutDownInternalExecutorService()
       throws IOException, CacheDirectoryCreationException {
 
     BuildContext buildContext = createBasicTestBuilder().build();
@@ -307,7 +321,7 @@ public class BuildContextTest {
   }
 
   @Test
-  public void testClose_doNotShutDownProvidedExecutorService()
+  void testClose_doNotShutDownProvidedExecutorService()
       throws IOException, CacheDirectoryCreationException {
     ExecutorService executorService = MoreExecutors.newDirectExecutorService();
     BuildContext buildContext =
@@ -319,7 +333,7 @@ public class BuildContextTest {
   }
 
   @Test
-  public void testGetUserAgent_unset() throws CacheDirectoryCreationException {
+  void testGetUserAgent_unset() throws CacheDirectoryCreationException {
     BuildContext buildContext = createBasicTestBuilder().build();
 
     String generatedUserAgent = buildContext.makeUserAgent();
@@ -328,7 +342,7 @@ public class BuildContextTest {
   }
 
   @Test
-  public void testGetUserAgent_withValues() throws CacheDirectoryCreationException {
+  void testGetUserAgent_withValues() throws CacheDirectoryCreationException {
     BuildContext buildContext =
         createBasicTestBuilder().setToolName("test-name").setToolVersion("test-version").build();
 
@@ -338,7 +352,7 @@ public class BuildContextTest {
   }
 
   @Test
-  public void testGetUserAgentWithUpstreamClient() throws CacheDirectoryCreationException {
+  void testGetUserAgentWithUpstreamClient() throws CacheDirectoryCreationException {
     System.setProperty(JibSystemProperties.UPSTREAM_CLIENT, "skaffold/0.34.0");
     BuildContext buildContext =
         createBasicTestBuilder().setToolName("test-name").setToolVersion("test-version").build();

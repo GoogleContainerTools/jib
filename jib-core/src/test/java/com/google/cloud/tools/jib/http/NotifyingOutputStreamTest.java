@@ -27,13 +27,13 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Queue;
 import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /** Tests for {@link NotifyingOutputStream}. */
-public class NotifyingOutputStreamTest {
+class NotifyingOutputStreamTest {
 
   @Test
-  public void testCallback_correctSequence() throws IOException {
+  void testCallback_correctSequence() throws IOException {
     ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
 
     List<Long> byteCounts = new ArrayList<>();
@@ -50,7 +50,7 @@ public class NotifyingOutputStreamTest {
   }
 
   @Test
-  public void testDelay() throws IOException {
+  void testDelay() throws IOException {
     ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
 
     List<Long> byteCounts = new ArrayList<>();

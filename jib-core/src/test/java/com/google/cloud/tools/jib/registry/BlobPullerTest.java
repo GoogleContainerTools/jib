@@ -30,15 +30,18 @@ import java.nio.charset.StandardCharsets;
 import java.security.DigestException;
 import java.util.concurrent.atomic.LongAdder;
 import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mockito;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
 /** Tests for {@link BlobPuller}. */
-@RunWith(MockitoJUnitRunner.class)
-public class BlobPullerTest {
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
+class BlobPullerTest {
 
   private final RegistryEndpointRequestProperties fakeRegistryEndpointRequestProperties =
       new RegistryEndpointRequestProperties("someServerUrl", "someImageName");
@@ -50,8 +53,8 @@ public class BlobPullerTest {
 
   private BlobPuller testBlobPuller;
 
-  @Before
-  public void setUpFakes() throws DigestException {
+  @BeforeEach
+  void setUpFakes() throws DigestException {
     fakeDigest =
         DescriptorDigest.fromHash(
             "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
@@ -66,7 +69,7 @@ public class BlobPullerTest {
   }
 
   @Test
-  public void testHandleResponse() throws IOException, UnexpectedBlobDigestException {
+  void testHandleResponse() throws IOException, UnexpectedBlobDigestException {
     InputStream blobContent =
         new ByteArrayInputStream("some BLOB content".getBytes(StandardCharsets.UTF_8));
     DescriptorDigest testBlobDigest = Digests.computeDigest(blobContent).getDigest();
@@ -93,7 +96,7 @@ public class BlobPullerTest {
   }
 
   @Test
-  public void testHandleResponse_unexpectedDigest() throws IOException {
+  void testHandleResponse_unexpectedDigest() throws IOException {
     InputStream blobContent =
         new ByteArrayInputStream("some BLOB content".getBytes(StandardCharsets.UTF_8));
     DescriptorDigest testBlobDigest = Digests.computeDigest(blobContent).getDigest();
@@ -118,31 +121,31 @@ public class BlobPullerTest {
   }
 
   @Test
-  public void testGetApiRoute() throws MalformedURLException {
+  void testGetApiRoute() throws MalformedURLException {
     Assert.assertEquals(
         new URL("http://someApiBase/someImageName/blobs/" + fakeDigest),
         testBlobPuller.getApiRoute("http://someApiBase/"));
   }
 
   @Test
-  public void testGetActionDescription() {
+  void testGetActionDescription() {
     Assert.assertEquals(
         "pull BLOB for someServerUrl/someImageName with digest " + fakeDigest,
         testBlobPuller.getActionDescription());
   }
 
   @Test
-  public void testGetHttpMethod() {
+  void testGetHttpMethod() {
     Assert.assertEquals("GET", testBlobPuller.getHttpMethod());
   }
 
   @Test
-  public void testGetContent() {
+  void testGetContent() {
     Assert.assertNull(testBlobPuller.getContent());
   }
 
   @Test
-  public void testGetAccept() {
+  void testGetAccept() {
     Assert.assertEquals(0, testBlobPuller.getAccept().size());
   }
 }

@@ -58,34 +58,47 @@ import org.hamcrest.CoreMatchers;
 import org.hamcrest.MatcherAssert;
 import org.junit.After;
 import org.junit.Assume;
-import org.junit.Before;
-import org.junit.ClassRule;
 import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junit.jupiter.api.io.TempDir;
 import org.junit.rules.TemporaryFolder;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
 /** Integration tests for {@link BuildImageMojo}. */
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class BuildImageMojoIntegrationTest {
 
-  @ClassRule
+  @RegisterExtension
   public static final LocalRegistry localRegistry =
       new LocalRegistry(5000, "testuser", "testpassword");
 
   private static final String dockerHost =
       System.getenv("DOCKER_IP") != null ? System.getenv("DOCKER_IP") : "localhost";
 
-  @ClassRule public static final TestProject simpleTestProject = new TestProject("simple");
+  @TempDir Path tempDir;
 
-  @ClassRule public static final TestProject emptyTestProject = new TestProject("empty");
+  @RegisterExtension
+  public final TestProject simpleTestProject = new TestProject("simple", tempDir);
 
-  @ClassRule public static final TestProject skippedTestProject = new TestProject("empty");
+  @RegisterExtension public final TestProject emptyTestProject = new TestProject("empty", tempDir);
 
-  @ClassRule
-  public static final TestProject defaultTargetTestProject = new TestProject("default-target");
+  @RegisterExtension
+  public final TestProject skippedTestProject = new TestProject("empty", tempDir);
 
-  @ClassRule public static final TestProject servlet25Project = new TestProject("war_servlet25");
+  @RegisterExtension
+  public final TestProject defaultTargetTestProject = new TestProject("default-target", tempDir);
 
-  @ClassRule public static final TestProject springBootProject = new TestProject("spring-boot");
+  @RegisterExtension
+  public final TestProject servlet25Project = new TestProject("war_servlet25", tempDir);
+
+  @RegisterExtension
+  public final TestProject springBootProject = new TestProject("spring-boot", tempDir);
 
   private static String getTestImageReference(String label) {
     String nameBase = IntegrationTestingConfiguration.getTestRepositoryLocation() + '/';
@@ -230,7 +243,7 @@ public class BuildImageMojoIntegrationTest {
     return output;
   }
 
-  private static String buildAndRunComplex(String imageReference, String pomFile)
+  private String buildAndRunComplex(String imageReference, String pomFile)
       throws VerificationException, IOException, InterruptedException {
     Verifier verifier = new Verifier(simpleTestProject.getProjectRoot().toString());
     verifier.setSystemProperty("jib.useOnlyProjectCache", "true");
@@ -334,7 +347,7 @@ public class BuildImageMojoIntegrationTest {
 
   @Nullable private String detachedContainerName;
 
-  @Before
+  @BeforeEach
   public void setUp() throws IOException, InterruptedException {
     // Pull distroless to local registry so we can test 'from' credentials
     localRegistry.pullAndPushToLocal("gcr.io/distroless/java:latest", "distroless/java");

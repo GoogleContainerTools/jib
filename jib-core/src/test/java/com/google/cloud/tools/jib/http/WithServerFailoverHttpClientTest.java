@@ -33,16 +33,19 @@ import org.hamcrest.CoreMatchers;
 import org.hamcrest.MatcherAssert;
 import org.junit.Assert;
 import org.junit.Rule;
-import org.junit.Test;
 import org.junit.contrib.java.lang.system.RestoreSystemProperties;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
 /** Tests for {@link FailoverHttpClient} using an actual local server. */
-@RunWith(MockitoJUnitRunner.class)
-public class WithServerFailoverHttpClientTest {
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
+class WithServerFailoverHttpClientTest {
 
   @Rule public final RestoreSystemProperties systemPropertyRestorer = new RestoreSystemProperties();
 
@@ -51,7 +54,7 @@ public class WithServerFailoverHttpClientTest {
   private final Request request = new Request.Builder().build();
 
   @Test
-  public void testGet()
+  void testGet()
       throws IOException, InterruptedException, GeneralSecurityException, URISyntaxException {
     FailoverHttpClient insecureHttpClient =
         new FailoverHttpClient(true /*insecure*/, false, logger);
@@ -67,7 +70,7 @@ public class WithServerFailoverHttpClientTest {
   }
 
   @Test
-  public void testSecureConnectionOnInsecureHttpsServer()
+  void testSecureConnectionOnInsecureHttpsServer()
       throws IOException, InterruptedException, GeneralSecurityException, URISyntaxException {
     FailoverHttpClient secureHttpClient =
         new FailoverHttpClient(false /*secure*/, false, logger, false);
@@ -81,7 +84,7 @@ public class WithServerFailoverHttpClientTest {
   }
 
   @Test
-  public void testInsecureConnection_insecureHttpsFailover()
+  void testInsecureConnection_insecureHttpsFailover()
       throws IOException, InterruptedException, GeneralSecurityException, URISyntaxException {
     FailoverHttpClient insecureHttpClient =
         new FailoverHttpClient(true /*insecure*/, false, logger);
@@ -101,7 +104,7 @@ public class WithServerFailoverHttpClientTest {
   }
 
   @Test
-  public void testInsecureConnection_plainHttpFailover()
+  void testInsecureConnection_plainHttpFailover()
       throws IOException, InterruptedException, GeneralSecurityException, URISyntaxException {
     FailoverHttpClient insecureHttpClient =
         new FailoverHttpClient(true /*insecure*/, false, logger);
@@ -125,7 +128,7 @@ public class WithServerFailoverHttpClientTest {
   }
 
   @Test
-  public void testProxyCredentialProperties()
+  void testProxyCredentialProperties()
       throws IOException, InterruptedException, GeneralSecurityException, URISyntaxException {
     String proxyResponse =
         "HTTP/1.1 407 Proxy Authentication Required\n"
@@ -156,7 +159,7 @@ public class WithServerFailoverHttpClientTest {
   }
 
   @Test
-  public void testClosingResourcesMultipleTimes_noErrors()
+  void testClosingResourcesMultipleTimes_noErrors()
       throws IOException, InterruptedException, GeneralSecurityException, URISyntaxException {
     FailoverHttpClient httpClient = new FailoverHttpClient(true /*insecure*/, false, logger);
     try (TestWebServer server = new TestWebServer(false, 2);
@@ -175,7 +178,7 @@ public class WithServerFailoverHttpClientTest {
   }
 
   @Test
-  public void testRedirectionUrls()
+  void testRedirectionUrls()
       throws IOException, InterruptedException, GeneralSecurityException, URISyntaxException {
     // Sample query strings from
     // https://github.com/GoogleContainerTools/jib/issues/1986#issuecomment-547610104

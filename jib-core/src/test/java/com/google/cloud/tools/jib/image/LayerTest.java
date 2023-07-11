@@ -19,21 +19,24 @@ package com.google.cloud.tools.jib.image;
 import com.google.cloud.tools.jib.api.DescriptorDigest;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
 /** Tests for {@link Layer}. */
-@RunWith(MockitoJUnitRunner.class)
-public class LayerTest {
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
+class LayerTest {
 
   @Mock private DescriptorDigest mockDescriptorDigest;
   @Mock private BlobDescriptor mockBlobDescriptor;
   @Mock private DescriptorDigest mockDiffId;
 
   @Test
-  public void testNew_reference() throws LayerPropertyNotFoundException {
+  void testNew_reference() throws LayerPropertyNotFoundException {
     Layer layer = new ReferenceLayer(mockBlobDescriptor, mockDiffId);
 
     try {
@@ -48,7 +51,7 @@ public class LayerTest {
   }
 
   @Test
-  public void testNew_digestOnly() throws LayerPropertyNotFoundException {
+  void testNew_digestOnly() throws LayerPropertyNotFoundException {
     Layer layer = new DigestOnlyLayer(mockDescriptorDigest);
 
     try {

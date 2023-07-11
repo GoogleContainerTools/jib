@@ -27,8 +27,7 @@ import org.gradle.api.tasks.Internal;
 /** Object that configures where Jib should create its build output files. */
 public class OutputPathsParameters {
 
-  private final Project project;
-
+  private final Path projectDir;
   private Path digest;
   private Path tar;
   private Path imageId;
@@ -36,7 +35,7 @@ public class OutputPathsParameters {
 
   @Inject
   public OutputPathsParameters(Project project) {
-    this.project = project;
+    this.projectDir = project.getProjectDir().toPath();
     digest = project.getBuildDir().toPath().resolve("jib-image.digest");
     imageId = project.getBuildDir().toPath().resolve("jib-image.id");
     imageJson = project.getBuildDir().toPath().resolve("jib-image.json");
@@ -102,6 +101,6 @@ public class OutputPathsParameters {
   private Path getRelativeToProjectRoot(Path configuration, String propertyName) {
     String property = System.getProperty(propertyName);
     Path path = property != null ? Paths.get(property) : configuration;
-    return path.isAbsolute() ? path : project.getProjectDir().toPath().resolve(path);
+    return path.isAbsolute() ? path : this.projectDir.resolve(path);
   }
 }

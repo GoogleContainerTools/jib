@@ -35,16 +35,19 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.function.Consumer;
 import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
 /** Tests for {@link CredentialRetrieverFactory}. */
-@RunWith(MockitoJUnitRunner.class)
-public class CredentialRetrieverFactoryTest {
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
+class CredentialRetrieverFactoryTest {
 
   private static final Credential FAKE_CREDENTIALS = Credential.from("username", "password");
 
@@ -53,8 +56,8 @@ public class CredentialRetrieverFactoryTest {
   @Mock private DockerCredentialHelperFactory mockDockerCredentialHelperFactory;
   @Mock private GoogleCredentials mockGoogleCredentials;
 
-  @Before
-  public void setUp()
+  @BeforeEach
+  void setUp()
       throws CredentialHelperUnhandledServerUrlException, CredentialHelperNotFoundException,
           IOException {
     Mockito.when(
@@ -67,7 +70,7 @@ public class CredentialRetrieverFactoryTest {
   }
 
   @Test
-  public void testDockerCredentialHelper() throws CredentialRetrievalException {
+  void testDockerCredentialHelper() throws CredentialRetrievalException {
     CredentialRetrieverFactory credentialRetrieverFactory =
         createCredentialRetrieverFactory("registry", "repo");
 
@@ -85,7 +88,7 @@ public class CredentialRetrieverFactoryTest {
   }
 
   @Test
-  public void testDockerCredentialHelperWithEnvironment() throws CredentialRetrievalException {
+  void testDockerCredentialHelperWithEnvironment() throws CredentialRetrievalException {
     Map<String, String> environment = Collections.singletonMap("ENV_VARIABLE", "Value");
     CredentialRetrieverFactory credentialRetrieverFactory =
         createCredentialRetrieverFactory("registry", "repo", environment);
@@ -104,7 +107,7 @@ public class CredentialRetrieverFactoryTest {
   }
 
   @Test
-  public void testWellKnownCredentialHelpers() throws CredentialRetrievalException {
+  void testWellKnownCredentialHelpers() throws CredentialRetrievalException {
     CredentialRetrieverFactory credentialRetrieverFactory =
         createCredentialRetrieverFactory("something.gcr.io", "repo");
 
@@ -121,8 +124,7 @@ public class CredentialRetrieverFactoryTest {
   }
 
   @Test
-  public void testWellKnownCredentialHelpers_info()
-      throws CredentialRetrievalException, IOException {
+  void testWellKnownCredentialHelpers_info() throws CredentialRetrievalException, IOException {
     CredentialHelperNotFoundException notFoundException =
         Mockito.mock(CredentialHelperNotFoundException.class);
     Mockito.when(notFoundException.getMessage()).thenReturn("warning");
@@ -145,7 +147,7 @@ public class CredentialRetrieverFactoryTest {
   }
 
   @Test
-  public void testDockerConfig() throws IOException, CredentialRetrievalException {
+  void testDockerConfig() throws IOException, CredentialRetrievalException {
     CredentialRetrieverFactory credentialRetrieverFactory =
         createCredentialRetrieverFactory("registry", "repo");
 
@@ -167,7 +169,7 @@ public class CredentialRetrieverFactoryTest {
   }
 
   @Test
-  public void testGoogleApplicationDefaultCredentials_notGoogleContainerRegistry()
+  void testGoogleApplicationDefaultCredentials_notGoogleContainerRegistry()
       throws CredentialRetrievalException {
     CredentialRetrieverFactory credentialRetrieverFactory =
         createCredentialRetrieverFactory("non.gcr.registry", "repository");
@@ -179,8 +181,7 @@ public class CredentialRetrieverFactoryTest {
   }
 
   @Test
-  public void testGoogleApplicationDefaultCredentials_adcNotPresent()
-      throws CredentialRetrievalException {
+  void testGoogleApplicationDefaultCredentials_adcNotPresent() throws CredentialRetrievalException {
     CredentialRetrieverFactory credentialRetrieverFactory =
         new CredentialRetrieverFactory(
             ImageReference.of("awesome.gcr.io", "repository", null),
@@ -199,7 +200,7 @@ public class CredentialRetrieverFactoryTest {
   }
 
   @Test
-  public void testGoogleApplicationDefaultCredentials_refreshFailure()
+  void testGoogleApplicationDefaultCredentials_refreshFailure()
       throws CredentialRetrievalException, IOException {
     Mockito.doThrow(new IOException("refresh failed"))
         .when(mockGoogleCredentials)
@@ -218,7 +219,7 @@ public class CredentialRetrieverFactoryTest {
   }
 
   @Test
-  public void testGoogleApplicationDefaultCredentials_endUserCredentials()
+  void testGoogleApplicationDefaultCredentials_endUserCredentials()
       throws CredentialRetrievalException {
     CredentialRetrieverFactory credentialRetrieverFactory =
         createCredentialRetrieverFactory("awesome.gcr.io", "repo");
@@ -239,7 +240,7 @@ public class CredentialRetrieverFactoryTest {
   }
 
   @Test
-  public void testGoogleApplicationDefaultCredentials_endUserCredentials_artifactRegistry()
+  void testGoogleApplicationDefaultCredentials_endUserCredentials_artifactRegistry()
       throws CredentialRetrievalException {
     CredentialRetrieverFactory credentialRetrieverFactory =
         createCredentialRetrieverFactory("us-docker.pkg.dev", "my-project/repo/my-app");
@@ -261,7 +262,7 @@ public class CredentialRetrieverFactoryTest {
   }
 
   @Test
-  public void testGoogleApplicationDefaultCredentials_serviceAccount()
+  void testGoogleApplicationDefaultCredentials_serviceAccount()
       throws CredentialRetrievalException {
     Mockito.when(mockGoogleCredentials.createScopedRequired()).thenReturn(true);
     Mockito.when(mockGoogleCredentials.createScoped(Mockito.anyCollection()))

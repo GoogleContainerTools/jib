@@ -23,15 +23,15 @@ import com.google.common.collect.ImmutableList;
 import org.hamcrest.CoreMatchers;
 import org.hamcrest.MatcherAssert;
 import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /** Tests for {@link BaseImageSpec}. */
-public class BaseImageSpecTest {
+class BaseImageSpecTest {
 
   private static final ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
 
   @Test
-  public void testBaseImageSpec_full() throws JsonProcessingException {
+  void testBaseImageSpec_full() throws JsonProcessingException {
     String data =
         "image: gcr.io/example/jib\n"
             + "platforms:\n" // trivial platform spec
@@ -45,7 +45,7 @@ public class BaseImageSpecTest {
   }
 
   @Test
-  public void testBaseImageSpec_imageRequired() {
+  void testBaseImageSpec_imageRequired() {
     String data =
         "platforms:\n" // trivial platform spec
             + "  - architecture: amd64\n"
@@ -60,7 +60,7 @@ public class BaseImageSpecTest {
   }
 
   @Test
-  public void testBaseImageSpec_imageNotNull() {
+  void testBaseImageSpec_imageNotNull() {
     String data =
         "image: null\n"
             + "platforms:\n" // trivial platform spec
@@ -76,7 +76,7 @@ public class BaseImageSpecTest {
   }
 
   @Test
-  public void testBaseImageSpec_imageNotEmpty() {
+  void testBaseImageSpec_imageNotEmpty() {
     String data =
         "image: ''\n"
             + "platforms:\n" // trivial platform spec
@@ -93,7 +93,7 @@ public class BaseImageSpecTest {
   }
 
   @Test
-  public void testBaseImageSpec_nullCollections() throws JsonProcessingException {
+  void testBaseImageSpec_nullCollections() throws JsonProcessingException {
     String data = "image: gcr.io/example/jib\n";
 
     BaseImageSpec baseImageSpec = mapper.readValue(data, BaseImageSpec.class);
@@ -101,7 +101,7 @@ public class BaseImageSpecTest {
   }
 
   @Test
-  public void testBaseImageSpec_platformsNoNullEntries() {
+  void testBaseImageSpec_platformsNoNullEntries() {
     String data = "image: gcr.io/example/jib\n" + "platforms: [null]\n";
 
     try {

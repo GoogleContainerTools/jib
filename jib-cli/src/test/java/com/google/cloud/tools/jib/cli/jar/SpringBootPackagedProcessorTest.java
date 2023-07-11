@@ -26,16 +26,16 @@ import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /** Tests for {@link SpringBootPackagedProcessor}. */
-public class SpringBootPackagedProcessorTest {
+class SpringBootPackagedProcessorTest {
 
   private static final String SPRING_BOOT_JAR = "jar/spring-boot/springboot_sample.jar";
   private static final Integer JAR_JAVA_VERSION = 0; // any value
 
   @Test
-  public void testCreateLayers() throws URISyntaxException {
+  void testCreateLayers() throws URISyntaxException {
     Path springBootJar = Paths.get(Resources.getResource(SPRING_BOOT_JAR).toURI());
     SpringBootPackagedProcessor springBootProcessor =
         new SpringBootPackagedProcessor(springBootJar, JAR_JAVA_VERSION);
@@ -53,7 +53,7 @@ public class SpringBootPackagedProcessorTest {
   }
 
   @Test
-  public void testComputeEntrypoint() throws URISyntaxException {
+  void testComputeEntrypoint() throws URISyntaxException {
     Path springBootJar = Paths.get(Resources.getResource(SPRING_BOOT_JAR).toURI());
     SpringBootPackagedProcessor springBootProcessor =
         new SpringBootPackagedProcessor(springBootJar, JAR_JAVA_VERSION);
@@ -66,7 +66,7 @@ public class SpringBootPackagedProcessorTest {
   }
 
   @Test
-  public void testComputeEntrypoint_jvmFlag() throws URISyntaxException {
+  void testComputeEntrypoint_jvmFlag() throws URISyntaxException {
     Path springBootJar = Paths.get(Resources.getResource(SPRING_BOOT_JAR).toURI());
     SpringBootPackagedProcessor springBootProcessor =
         new SpringBootPackagedProcessor(springBootJar, JAR_JAVA_VERSION);
@@ -79,7 +79,7 @@ public class SpringBootPackagedProcessorTest {
   }
 
   @Test
-  public void testGetJavaVersion() {
+  void testGetJavaVersion() {
     SpringBootPackagedProcessor springBootPackagedProcessor =
         new SpringBootPackagedProcessor(Paths.get("ignore"), 8);
     assertThat(springBootPackagedProcessor.getJavaVersion()).isEqualTo(8);

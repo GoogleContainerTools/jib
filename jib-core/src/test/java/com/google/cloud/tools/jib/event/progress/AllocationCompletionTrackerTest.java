@@ -25,10 +25,10 @@ import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /** Tests for {@link AllocationCompletionTracker}. */
-public class AllocationCompletionTrackerTest {
+class AllocationCompletionTrackerTest {
 
   /** {@link Allocation} tree for testing. */
   private static class AllocationTree {
@@ -48,7 +48,7 @@ public class AllocationCompletionTrackerTest {
   }
 
   @Test
-  public void testGetUnfinishedAllocations_singleThread() {
+  void testGetUnfinishedAllocations_singleThread() {
     AllocationCompletionTracker allocationCompletionTracker = new AllocationCompletionTracker();
 
     Assert.assertTrue(allocationCompletionTracker.updateProgress(AllocationTree.root, 0L));
@@ -99,7 +99,7 @@ public class AllocationCompletionTrackerTest {
   }
 
   @Test
-  public void testGetUnfinishedAllocations_multipleThreads()
+  void testGetUnfinishedAllocations_multipleThreads()
       throws InterruptedException, ExecutionException, IOException {
     try (MultithreadedExecutor multithreadedExecutor = new MultithreadedExecutor()) {
       AllocationCompletionTracker allocationCompletionTracker = new AllocationCompletionTracker();
@@ -165,7 +165,7 @@ public class AllocationCompletionTrackerTest {
   }
 
   @Test
-  public void testGetUnfinishedLeafTasks() {
+  void testGetUnfinishedLeafTasks() {
     AllocationCompletionTracker tracker = new AllocationCompletionTracker();
     tracker.updateProgress(AllocationTree.root, 0);
     Assert.assertEquals(Arrays.asList("root"), tracker.getUnfinishedLeafTasks());
@@ -193,7 +193,7 @@ public class AllocationCompletionTrackerTest {
   }
 
   @Test
-  public void testGetUnfinishedLeafTasks_differentUpdateOrder() {
+  void testGetUnfinishedLeafTasks_differentUpdateOrder() {
     AllocationCompletionTracker tracker = new AllocationCompletionTracker();
     tracker.updateProgress(AllocationTree.root, 0);
     Assert.assertEquals(Arrays.asList("root"), tracker.getUnfinishedLeafTasks());

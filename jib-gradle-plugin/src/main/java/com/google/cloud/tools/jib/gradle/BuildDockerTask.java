@@ -44,6 +44,7 @@ import java.util.concurrent.Future;
 import javax.annotation.Nullable;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.GradleException;
+import org.gradle.api.tasks.Internal;
 import org.gradle.api.tasks.Nested;
 import org.gradle.api.tasks.TaskAction;
 import org.gradle.api.tasks.options.Option;
@@ -54,6 +55,7 @@ public class BuildDockerTask extends DefaultTask implements JibTask {
   private static final String HELPFUL_SUGGESTIONS_PREFIX = "Build to Docker daemon failed";
 
   @Nullable private JibExtension jibExtension;
+  @Nullable private GradleProjectProperties projectProperties;
 
   /**
    * This will call the property {@code "jib"} so that it is the same name as the extension. This
@@ -63,8 +65,15 @@ public class BuildDockerTask extends DefaultTask implements JibTask {
    */
   @Nested
   @Nullable
+  @SuppressWarnings("java:S106")
   public JibExtension getJib() {
     return jibExtension;
+  }
+
+  @Nullable
+  @Internal
+  public GradleProjectProperties getProjectProperties() {
+    return projectProperties;
   }
 
   /**
@@ -91,6 +100,7 @@ public class BuildDockerTask extends DefaultTask implements JibTask {
       throws IOException, BuildStepsExecutionException, CacheDirectoryCreationException,
           MainClassInferenceException, InvalidGlobalConfigException {
     Preconditions.checkNotNull(jibExtension);
+    Preconditions.checkNotNull(projectProperties);
 
     // Check deprecated parameters
     Path dockerExecutable = jibExtension.getDockerClient().getExecutablePath();
@@ -104,23 +114,16 @@ public class BuildDockerTask extends DefaultTask implements JibTask {
     }
 
     TaskCommon.disableHttpLogging();
-    TempDirectoryProvider tempDirectoryProvider = new TempDirectoryProvider();
 
-    GradleProjectProperties projectProperties =
-        GradleProjectProperties.getForProject(
-            getProject(),
-            getLogger(),
-            tempDirectoryProvider,
-            jibExtension.getConfigurationName().get());
     GlobalConfig globalConfig = GlobalConfig.readConfig();
     Future<Optional<String>> updateCheckFuture =
-        TaskCommon.newUpdateChecker(projectProperties, globalConfig, getLogger());
-    try {
+        TaskCommon.newUpdateChecker(this.projectProperties, globalConfig, getLogger());
+    try (TempDirectoryProvider tempDirectoryProvider = new TempDirectoryProvider()) {
 
       PluginConfigurationProcessor.createJibBuildRunnerForDockerDaemonImage(
               new GradleRawConfiguration(jibExtension),
               ignored -> java.util.Optional.empty(),
-              projectProperties,
+              this.projectProperties,
               globalConfig,
               new GradleHelpfulSuggestions(HELPFUL_SUGGESTIONS_PREFIX))
           .runBuild();
@@ -187,8 +190,7 @@ public class BuildDockerTask extends DefaultTask implements JibTask {
               + ex.getPath(),
           ex);
     } finally {
-      tempDirectoryProvider.close();
-      TaskCommon.finishUpdateChecker(projectProperties, updateCheckFuture);
+      TaskCommon.finishUpdateChecker(this.projectProperties, updateCheckFuture);
       projectProperties.waitForLoggingThread();
     }
   }
@@ -196,6 +198,12 @@ public class BuildDockerTask extends DefaultTask implements JibTask {
   @Override
   public BuildDockerTask setJibExtension(JibExtension jibExtension) {
     this.jibExtension = jibExtension;
+    this.projectProperties =
+        GradleProjectProperties.getForProject(
+            getProject(),
+            getLogger(),
+            new TempDirectoryProvider(),
+            jibExtension.getConfigurationName().get());
     return this;
   }
 }

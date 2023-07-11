@@ -22,15 +22,15 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import org.hamcrest.CoreMatchers;
 import org.hamcrest.MatcherAssert;
 import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /** Tests for {@link PlatformSpec}. */
-public class PlatformSpecTest {
+class PlatformSpecTest {
 
   private static final ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
 
   @Test
-  public void testPlatformSpec_full() throws JsonProcessingException {
+  void testPlatformSpec_full() throws JsonProcessingException {
     String data = "architecture: amd64\n" + "os: linux\n";
 
     PlatformSpec parsed = mapper.readValue(data, PlatformSpec.class);
@@ -39,7 +39,7 @@ public class PlatformSpecTest {
   }
 
   @Test
-  public void testPlatformSpec_osRequired() {
+  void testPlatformSpec_osRequired() {
     String data = "architecture: amd64\n";
 
     try {
@@ -52,7 +52,7 @@ public class PlatformSpecTest {
   }
 
   @Test
-  public void testPlatformSpec_osNotNull() {
+  void testPlatformSpec_osNotNull() {
     String data = "architecture: amd64\n" + "os: null";
 
     try {
@@ -65,7 +65,7 @@ public class PlatformSpecTest {
   }
 
   @Test
-  public void testPlatformSpec_osNotEmpty() {
+  void testPlatformSpec_osNotEmpty() {
     String data = "architecture: amd64\n" + "os: ''";
 
     try {
@@ -78,7 +78,7 @@ public class PlatformSpecTest {
   }
 
   @Test
-  public void testPlatformSpec_architectureRequired() {
+  void testPlatformSpec_architectureRequired() {
     String data = "os: linux\n";
 
     try {
@@ -92,7 +92,7 @@ public class PlatformSpecTest {
   }
 
   @Test
-  public void testPlatformSpec_architectureNotNull() {
+  void testPlatformSpec_architectureNotNull() {
     String data = "architecture: null\n" + "os: linux";
 
     try {
@@ -105,7 +105,7 @@ public class PlatformSpecTest {
   }
 
   @Test
-  public void testPlatformSpec_architectureNotEmpty() {
+  void testPlatformSpec_architectureNotEmpty() {
     String data = "architecture: ''\n" + "os: linux";
 
     try {

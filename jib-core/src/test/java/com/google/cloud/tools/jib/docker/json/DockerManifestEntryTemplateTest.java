@@ -30,13 +30,13 @@ import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.List;
 import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /** Tests for {@link DockerManifestEntryTemplate}. */
-public class DockerManifestEntryTemplateTest {
+class DockerManifestEntryTemplateTest {
 
   @Test
-  public void testToJson() throws URISyntaxException, IOException {
+  void testToJson() throws URISyntaxException, IOException {
     // Loads the expected JSON string.
     Path jsonFile = Paths.get(Resources.getResource("core/json/loadmanifest.json").toURI());
     String expectedJson = new String(Files.readAllBytes(jsonFile), StandardCharsets.UTF_8);
@@ -53,7 +53,7 @@ public class DockerManifestEntryTemplateTest {
   }
 
   @Test
-  public void testFromJson() throws URISyntaxException, IOException {
+  void testFromJson() throws URISyntaxException, IOException {
     // Loads the expected JSON string.
     Path jsonFile = Paths.get(Resources.getResource("core/json/loadmanifest.json").toURI());
     String sourceJson = new String(Files.readAllBytes(jsonFile), StandardCharsets.UTF_8);

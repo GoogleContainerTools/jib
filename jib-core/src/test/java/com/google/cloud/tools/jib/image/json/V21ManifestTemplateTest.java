@@ -26,13 +26,13 @@ import java.nio.file.Paths;
 import java.security.DigestException;
 import java.util.Arrays;
 import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /** Tests for {@link V21ManifestTemplate}. */
-public class V21ManifestTemplateTest {
+class V21ManifestTemplateTest {
 
   @Test
-  public void testFromJson() throws URISyntaxException, IOException, DigestException {
+  void testFromJson() throws URISyntaxException, IOException, DigestException {
     // Loads the JSON string.
     Path jsonFile = Paths.get(Resources.getResource("core/json/v21manifest.json").toURI());
 

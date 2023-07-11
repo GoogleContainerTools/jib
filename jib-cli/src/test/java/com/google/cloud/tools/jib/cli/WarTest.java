@@ -32,19 +32,25 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import java.nio.file.Paths;
 import java.time.Instant;
-import junitparams.JUnitParamsRunner;
-import junitparams.Parameters;
+import java.util.stream.Stream;
 import org.apache.commons.lang3.ArrayUtils;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import picocli.CommandLine;
 import picocli.CommandLine.MissingParameterException;
 
-@RunWith(JUnitParamsRunner.class)
-public class WarTest {
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
+class WarTest {
 
   @Test
-  public void testParse_missingRequiredParams_targetImage() {
+  void testParse_missingRequiredParams_targetImage() {
     MissingParameterException mpe =
         assertThrows(
             MissingParameterException.class,
@@ -55,7 +61,7 @@ public class WarTest {
   }
 
   @Test
-  public void testParse_missingRequiredParams_warfile() {
+  void testParse_missingRequiredParams_warfile() {
     MissingParameterException mpe =
         assertThrows(
             MissingParameterException.class,
@@ -64,7 +70,8 @@ public class WarTest {
   }
 
   @Test
-  public void testParse_defaults() {
+  @SuppressWarnings("java:S5961")
+  void testParse_defaults() {
     War warCommand = CommandLine.populateCommand(new War(), "-t", "test-image-ref", "my-app.war");
     CommonCliOptions commonCliOptions = warCommand.commonCliOptions;
     CommonContainerConfigCliOptions commonContainerConfigCliOptions =
@@ -101,7 +108,7 @@ public class WarTest {
   }
 
   @Test
-  public void testParse_shortFormParams() {
+  void testParse_shortFormParams() {
     War warCommand = CommandLine.populateCommand(new War(), "-t=test-image-ref", "my-app.war");
     CommonCliOptions commonCliOptions = warCommand.commonCliOptions;
     assertThat(commonCliOptions.getTargetImage()).isEqualTo("test-image-ref");
@@ -125,7 +132,7 @@ public class WarTest {
   }
 
   @Test
-  public void testParse_longFormParams() {
+  void testParse_longFormParams() {
     // this test does not check credential helpers, scroll down for specialized credential helper
     // tests
     War warCommand =
@@ -166,7 +173,7 @@ public class WarTest {
   }
 
   @Test
-  public void testParse_credentialHelper() {
+  void testParse_credentialHelper() {
     War warCommand =
         CommandLine.populateCommand(
             new War(),
@@ -183,7 +190,7 @@ public class WarTest {
   }
 
   @Test
-  public void testParse_toCredentialHelper() {
+  void testParse_toCredentialHelper() {
     War warCommand =
         CommandLine.populateCommand(
             new War(),
@@ -201,7 +208,7 @@ public class WarTest {
   }
 
   @Test
-  public void testParse_fromCredentialHelper() {
+  void testParse_fromCredentialHelper() {
     War warCommand =
         CommandLine.populateCommand(
             new War(),
@@ -219,7 +226,7 @@ public class WarTest {
   }
 
   @Test
-  public void testParse_usernamePassword() {
+  void testParse_usernamePassword() {
     War warCommand =
         CommandLine.populateCommand(
             new War(),
@@ -239,7 +246,7 @@ public class WarTest {
   }
 
   @Test
-  public void testParse_toUsernamePassword() {
+  void testParse_toUsernamePassword() {
     War warCommand =
         CommandLine.populateCommand(
             new War(),
@@ -258,7 +265,7 @@ public class WarTest {
   }
 
   @Test
-  public void testParse_fromUsernamePassword() {
+  void testParse_fromUsernamePassword() {
     War warCommand =
         CommandLine.populateCommand(
             new War(),
@@ -278,7 +285,7 @@ public class WarTest {
   }
 
   @Test
-  public void testParse_toAndFromUsernamePassword() {
+  void testParse_toAndFromUsernamePassword() {
     War warCommand =
         CommandLine.populateCommand(
             new War(),
@@ -301,7 +308,7 @@ public class WarTest {
   }
 
   @Test
-  public void testParse_toAndFromCredentialHelper() {
+  void testParse_toAndFromCredentialHelper() {
     War warCommand =
         CommandLine.populateCommand(
             new War(),
@@ -320,7 +327,7 @@ public class WarTest {
   }
 
   @Test
-  public void testParse_toUsernamePasswordAndFromCredentialHelper() {
+  void testParse_toUsernamePasswordAndFromCredentialHelper() {
     War warCommand =
         CommandLine.populateCommand(
             new War(),
@@ -341,7 +348,7 @@ public class WarTest {
   }
 
   @Test
-  public void testParse_toCredentialHelperAndFromUsernamePassword() {
+  void testParse_toCredentialHelperAndFromUsernamePassword() {
     War warCommand =
         CommandLine.populateCommand(
             new War(),
@@ -361,17 +368,16 @@ public class WarTest {
         .hasValue(Credential.from("test-username", "test-password"));
   }
 
-  private Object usernamePasswordPairs() {
-    return new Object[][] {
-      {"--username", "--password"},
-      {"--to-username", "--to-password"},
-      {"--from-username", "--from-password"}
-    };
+  private static Stream<Arguments> usernamePasswordPairs() {
+    return Stream.of(
+        Arguments.of(new Object[] {"--username", "--password"}),
+        Arguments.of(new Object[] {"--to-username", "--to-password"}),
+        Arguments.of(new Object[] {"--from-username", "--from-password"}));
   }
 
-  @Test
-  @Parameters(method = "usernamePasswordPairs")
-  public void testParse_usernameWithoutPassword(String usernameField, String passwordField) {
+  @ParameterizedTest
+  @MethodSource("usernamePasswordPairs")
+  void testParse_usernameWithoutPassword(String usernameField, String passwordField) {
     MissingParameterException mpe =
         assertThrows(
             MissingParameterException.class,
@@ -387,9 +393,9 @@ public class WarTest {
         .isEqualTo("Error: Missing required argument(s): " + passwordField);
   }
 
-  @Test
-  @Parameters(method = "usernamePasswordPairs")
-  public void testParse_passwordWithoutUsername(String usernameField, String passwordField) {
+  @ParameterizedTest
+  @MethodSource("usernamePasswordPairs")
+  void testParse_passwordWithoutUsername(String usernameField, String passwordField) {
     MissingParameterException mpe =
         assertThrows(
             MissingParameterException.class,
@@ -405,25 +411,44 @@ public class WarTest {
         .isEqualTo("Error: Missing required argument(s): " + usernameField + "=<username>");
   }
 
-  public String[][] incompatibleCredentialOptions() {
-    return new String[][] {
-      {"--credential-helper=x", "--to-credential-helper=x"},
-      {"--credential-helper=x", "--from-credential-helper=x"},
-      {"--credential-helper=x", "--username=x", "--password=x"},
-      {"--credential-helper=x", "--from-username=x", "--from-password=x"},
-      {"--credential-helper=x", "--to-username=x", "--to-password=x"},
-      {"--username=x", "--password=x", "--from-username=x", "--from-password=x"},
-      {"--username=x", "--password=x", "--to-username=x", "--to-password=x"},
-      {"--username=x", "--password=x", "--to-credential-helper=x"},
-      {"--username=x", "--password=x", "--from-credential-helper=x"},
-      {"--from-credential-helper=x", "--from-username=x", "--from-password=x"},
-      {"--to-credential-helper=x", "--to-password=x", "--to-username=x"},
-    };
+  public static Stream<Arguments> incompatibleCredentialOptions() {
+    return Stream.of(
+        Arguments.of((Object) new String[] {"--credential-helper=x", "--to-credential-helper=x"}),
+        Arguments.of((Object) new String[] {"--credential-helper=x", "--from-credential-helper=x"}),
+        Arguments.of(
+            (Object) new String[] {"--credential-helper=x", "--username=x", "--password=x"}),
+        Arguments.of(
+            (Object)
+                new String[] {"--credential-helper=x", "--from-username=x", "--from-password=x"}),
+        Arguments.of(
+            (Object) new String[] {"--credential-helper=x", "--to-username=x", "--to-password=x"}),
+        Arguments.of(
+            (Object)
+                new String[] {
+                  "--username=x", "--password=x", "--from-username=x", "--from-password=x"
+                }),
+        Arguments.of(
+            (Object)
+                new String[] {
+                  "--username=x", "--password=x", "--to-username=x", "--to-password=x"
+                }),
+        Arguments.of(
+            (Object) new String[] {"--username=x", "--password=x", "--to-credential-helper=x"}),
+        Arguments.of(
+            (Object) new String[] {"--username=x", "--password=x", "--from-credential-helper=x"}),
+        Arguments.of(
+            (Object)
+                new String[] {
+                  "--from-credential-helper=x", "--from-username=x", "--from-password=x"
+                }),
+        Arguments.of(
+            (Object)
+                new String[] {"--to-credential-helper=x", "--to-password=x", "--to-username=x"}));
   }
 
-  @Test
-  @Parameters(method = "incompatibleCredentialOptions")
-  public void testParse_incompatibleCredentialOptions(String[] authArgs) {
+  @ParameterizedTest
+  @MethodSource("incompatibleCredentialOptions")
+  void testParse_incompatibleCredentialOptions(String[] authArgs) {
     CommandLine.MutuallyExclusiveArgsException meae =
         assertThrows(
             CommandLine.MutuallyExclusiveArgsException.class,
@@ -436,7 +461,7 @@ public class WarTest {
   }
 
   @Test
-  public void testParse_from() {
+  void testParse_from() {
     War warCommand =
         CommandLine.populateCommand(
             new War(), "--target=test-image-ref", "--from=base-image-ref", "my-app.war");
@@ -444,7 +469,7 @@ public class WarTest {
   }
 
   @Test
-  public void testParse_appRoot() {
+  void testParse_appRoot() {
     War warCommand =
         CommandLine.populateCommand(
             new War(), "--target=test-image-ref", "--app-root=/path/to/app", "my-app.war");
@@ -452,7 +477,7 @@ public class WarTest {
   }
 
   @Test
-  public void testParse_exposedPorts() {
+  void testParse_exposedPorts() {
     War warCommand =
         CommandLine.populateCommand(
             new War(), "--target=test-image-ref", "--expose=8080,3306", "my-app.war");
@@ -461,7 +486,7 @@ public class WarTest {
   }
 
   @Test
-  public void testParse_volumes() {
+  void testParse_volumes() {
     War warCommand =
         CommandLine.populateCommand(
             new War(), "--target=test-image-ref", "--volumes=/volume1,/volume2", "my-app.war");
@@ -471,7 +496,7 @@ public class WarTest {
   }
 
   @Test
-  public void testParse_environment() {
+  void testParse_environment() {
     War warCommand =
         CommandLine.populateCommand(
             new War(),
@@ -483,7 +508,7 @@ public class WarTest {
   }
 
   @Test
-  public void testParse_labels() {
+  void testParse_labels() {
     War warCommand =
         CommandLine.populateCommand(
             new War(),
@@ -495,7 +520,7 @@ public class WarTest {
   }
 
   @Test
-  public void testParse_user() {
+  void testParse_user() {
     War warCommand =
         CommandLine.populateCommand(
             new War(), "--target=test-image-ref", "--user=customUser", "my-app.war");
@@ -503,7 +528,7 @@ public class WarTest {
   }
 
   @Test
-  public void testParse_imageFormat() {
+  void testParse_imageFormat() {
     War warCommand =
         CommandLine.populateCommand(
             new War(), "--target=test-image-ref", "--image-format=OCI", "my-app.war");
@@ -511,7 +536,7 @@ public class WarTest {
   }
 
   @Test
-  public void testParse_invalidImageFormat() {
+  void testParse_invalidImageFormat() {
     CommandLine.ParameterException exception =
         assertThrows(
             CommandLine.ParameterException.class,
@@ -525,7 +550,7 @@ public class WarTest {
   }
 
   @Test
-  public void testParse_programArguments() {
+  void testParse_programArguments() {
     War warCommand =
         CommandLine.populateCommand(
             new War(), "--target=test-image-ref", "--program-args=arg1,arg2", "my-app.war");
@@ -534,7 +559,7 @@ public class WarTest {
   }
 
   @Test
-  public void testParse_entrypoint() {
+  void testParse_entrypoint() {
     War warCommand =
         CommandLine.populateCommand(
             new War(), "--target=test-image-ref", "--entrypoint=java -cp myClass", "my-app.war");
@@ -543,7 +568,7 @@ public class WarTest {
   }
 
   @Test
-  public void testParse_creationTime_milliseconds() {
+  void testParse_creationTime_milliseconds() {
     War warCommand =
         CommandLine.populateCommand(
             new War(), "--target=test-image-ref", "--creation-time=23", "my-app.war");
@@ -552,7 +577,7 @@ public class WarTest {
   }
 
   @Test
-  public void testParse_creationTime_iso8601() {
+  void testParse_creationTime_iso8601() {
     War warCommand =
         CommandLine.populateCommand(
             new War(),
@@ -564,7 +589,7 @@ public class WarTest {
   }
 
   @Test
-  public void testValidate_nameMissingFail() {
+  void testValidate_nameMissingFail() {
     War warCommand =
         CommandLine.populateCommand(new War(), "--target=tar://sometar.tar", "my-app.war");
     CommandLine.ParameterException pex =
@@ -575,7 +600,7 @@ public class WarTest {
   }
 
   @Test
-  public void testValidate_pass() {
+  void testValidate_pass() {
     War warCommand =
         CommandLine.populateCommand(
             new War(), "--target=tar://sometar.tar", "--name=test.io/test/test", "my-app.war");
@@ -584,14 +609,14 @@ public class WarTest {
   }
 
   @Test
-  public void testIsJetty_noCustomBaseImage() throws InvalidImageReferenceException {
+  void testIsJetty_noCustomBaseImage() throws InvalidImageReferenceException {
     War warCommand =
         CommandLine.populateCommand(new War(), "--target=test-image-ref", "my-app.war");
     assertThat(warCommand.commonContainerConfigCliOptions.isJettyBaseimage()).isTrue();
   }
 
   @Test
-  public void testIsJetty_nonJetty() throws InvalidImageReferenceException {
+  void testIsJetty_nonJetty() throws InvalidImageReferenceException {
     War warCommand =
         CommandLine.populateCommand(
             new War(), "--target=test-image-ref", "--from=base-image", "my-app.war");
@@ -599,7 +624,7 @@ public class WarTest {
   }
 
   @Test
-  public void testIsJetty_customJetty() throws InvalidImageReferenceException {
+  void testIsJetty_customJetty() throws InvalidImageReferenceException {
     War warCommand =
         CommandLine.populateCommand(
             new War(), "--target=test-image-ref", "--from=jetty:tag", "my-app.war");

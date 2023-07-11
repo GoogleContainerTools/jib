@@ -20,6 +20,7 @@ import static com.google.common.truth.Truth.assertThat;
 
 import com.google.cloud.tools.jib.Command;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.security.DigestException;
 import java.util.Arrays;
 import org.apache.maven.it.VerificationException;
@@ -28,18 +29,28 @@ import org.hamcrest.CoreMatchers;
 import org.hamcrest.MatcherAssert;
 import org.junit.Assert;
 import org.junit.Assume;
-import org.junit.ClassRule;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junit.jupiter.api.io.TempDir;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
 /** Integration tests for {@link BuildDockerMojo}. */
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class BuildDockerMojoIntegrationTest {
 
-  @ClassRule public static final TestProject simpleTestProject = new TestProject("simple");
+  @TempDir Path tempDir;
 
-  @ClassRule public static final TestProject emptyTestProject = new TestProject("empty");
+  @RegisterExtension
+  public final TestProject simpleTestProject = new TestProject("simple", tempDir);
 
-  @ClassRule
-  public static final TestProject defaultTargetTestProject = new TestProject("default-target");
+  @RegisterExtension public final TestProject emptyTestProject = new TestProject("empty", tempDir);
+
+  @RegisterExtension
+  public final TestProject defaultTargetTestProject = new TestProject("default-target", tempDir);
 
   private static void buildToDockerDaemon(TestProject project, String imageReference, String pomXml)
       throws VerificationException, DigestException, IOException {
@@ -72,7 +83,6 @@ public class BuildDockerMojoIntegrationTest {
             .run();
     String dockerInspectLabels =
         new Command("docker", "inspect", "-f", "'{{json .Config.Labels}}'", imageReference).run();
-    String history = new Command("docker", "history", imageReference).run();
 
     MatcherAssert.assertThat(
         dockerInspectVolumes, CoreMatchers.containsString("\"/var/log\":{},\"/var/log2\":{}"));

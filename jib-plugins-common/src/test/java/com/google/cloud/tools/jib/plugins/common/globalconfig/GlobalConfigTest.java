@@ -25,27 +25,38 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.contrib.java.lang.system.RestoreSystemProperties;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.io.TempDir;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
+import uk.org.webcompere.systemstubs.jupiter.SystemStub;
+import uk.org.webcompere.systemstubs.jupiter.SystemStubsExtension;
+import uk.org.webcompere.systemstubs.properties.SystemProperties;
 
 /** Tests for {@link GlobalConfig}. */
-public class GlobalConfigTest {
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
+@ExtendWith(SystemStubsExtension.class)
+class GlobalConfigTest {
 
-  @Rule public final RestoreSystemProperties systemPropertyRestorer = new RestoreSystemProperties();
-  @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
+  @SystemStub
+  @SuppressWarnings("unused")
+  private SystemProperties restoreSystemProperties;
+
+  @TempDir public Path temporaryFolder;
 
   private Path configDir;
 
-  @Before
-  public void setUp() {
-    configDir = temporaryFolder.getRoot().toPath();
+  @BeforeEach
+  void setUpBeforeEach() {
+    configDir = temporaryFolder;
   }
 
   @Test
-  public void testReadConfig_default() throws IOException, InvalidGlobalConfigException {
+  void testReadConfig_default() throws IOException, InvalidGlobalConfigException {
     GlobalConfig globalConfig = GlobalConfig.readConfig(configDir);
 
     assertThat(globalConfig.isDisableUpdateCheck()).isFalse();
@@ -53,7 +64,7 @@ public class GlobalConfigTest {
   }
 
   @Test
-  public void testReadConfig_newConfigCreated() throws IOException, InvalidGlobalConfigException {
+  void testReadConfig_newConfigCreated() throws IOException, InvalidGlobalConfigException {
     GlobalConfig.readConfig(configDir);
     String configJson =
         new String(Files.readAllBytes(configDir.resolve("config.json")), StandardCharsets.UTF_8);
@@ -61,7 +72,7 @@ public class GlobalConfigTest {
   }
 
   @Test
-  public void testReadConfig_emptyJson() throws IOException, InvalidGlobalConfigException {
+  void testReadConfig_emptyJson() throws IOException, InvalidGlobalConfigException {
     Files.write(configDir.resolve("config.json"), "{}".getBytes(StandardCharsets.UTF_8));
     GlobalConfig globalConfig = GlobalConfig.readConfig(configDir);
 
@@ -70,7 +81,7 @@ public class GlobalConfigTest {
   }
 
   @Test
-  public void testReadConfig() throws IOException, InvalidGlobalConfigException {
+  void testReadConfig() throws IOException, InvalidGlobalConfigException {
     String json =
         "{\"disableUpdateCheck\":true, \"registryMirrors\":["
             + "{ \"registry\": \"registry-1.docker.io\","
@@ -92,7 +103,7 @@ public class GlobalConfigTest {
   }
 
   @Test
-  public void testReadConfig_systemProperties() throws IOException, InvalidGlobalConfigException {
+  void testReadConfig_systemProperties() throws IOException, InvalidGlobalConfigException {
     Files.write(
         configDir.resolve("config.json"),
         "{\"disableUpdateCheck\":false}".getBytes(StandardCharsets.UTF_8));
@@ -103,8 +114,9 @@ public class GlobalConfigTest {
   }
 
   @Test
-  public void testReadConfig_emptyFile() throws IOException {
-    temporaryFolder.newFile("config.json");
+  void testReadConfig_emptyFile() throws IOException {
+    new File(temporaryFolder.toFile(), "config.json").createNewFile();
+
     IOException exception =
         assertThrows(IOException.class, () -> GlobalConfig.readConfig(configDir));
     assertThat(exception)
@@ -117,7 +129,7 @@ public class GlobalConfigTest {
   }
 
   @Test
-  public void testReadConfig_corrupted() throws IOException {
+  void testReadConfig_corrupted() throws IOException {
     Files.write(
         configDir.resolve("config.json"), "corrupt config".getBytes(StandardCharsets.UTF_8));
     IOException exception =
@@ -132,7 +144,7 @@ public class GlobalConfigTest {
   }
 
   @Test
-  public void testReadConfig_missingRegistry() throws IOException {
+  void testReadConfig_missingRegistry() throws IOException {
     String json = "{\"registryMirrors\":[{\"mirrors\":[\"mirror.gcr.io\"]}]}";
     Files.write(configDir.resolve("config.json"), json.getBytes(StandardCharsets.UTF_8));
     InvalidGlobalConfigException exception =
@@ -146,7 +158,7 @@ public class GlobalConfigTest {
   }
 
   @Test
-  public void testReadConfig_missingMirrors() throws IOException {
+  void testReadConfig_missingMirrors() throws IOException {
     String json = "{\"registryMirrors\":[{\"registry\": \"registry\"}]}";
     Files.write(configDir.resolve("config.json"), json.getBytes(StandardCharsets.UTF_8));
     InvalidGlobalConfigException exception =

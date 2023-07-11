@@ -24,10 +24,10 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Instant;
 import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /** Tests for {@link FileEntriesLayer}. */
-public class FileEntriesLayerTest {
+class FileEntriesLayerTest {
 
   private static FileEntry defaultFileEntry(Path source, AbsoluteUnixPath destination) {
     return new FileEntry(
@@ -38,7 +38,7 @@ public class FileEntriesLayerTest {
   }
 
   @Test
-  public void testAddEntryRecursive_defaults() throws IOException, URISyntaxException {
+  void testAddEntryRecursive_defaults() throws IOException, URISyntaxException {
     Path testDirectory = Paths.get(Resources.getResource("core/layer").toURI()).toAbsolutePath();
     Path testFile = Paths.get(Resources.getResource("core/fileA").toURI());
 
@@ -65,8 +65,7 @@ public class FileEntriesLayerTest {
   }
 
   @Test
-  public void testAddEntryRecursive_otherFileEntryProperties()
-      throws IOException, URISyntaxException {
+  void testAddEntryRecursive_otherFileEntryProperties() throws IOException, URISyntaxException {
     Path testDirectory = Paths.get(Resources.getResource("core/layer").toURI()).toAbsolutePath();
     Path testFile = Paths.get(Resources.getResource("core/fileA").toURI());
 

@@ -38,22 +38,25 @@ import java.util.Optional;
 import javax.annotation.Nullable;
 import org.hamcrest.CoreMatchers;
 import org.hamcrest.MatcherAssert;
-import org.junit.After;
 import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentMatcher;
 import org.mockito.ArgumentMatchers;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
 /**
  * Tests for {@link RegistryClient}. More comprehensive tests can be found in the integration tests.
  */
-@RunWith(MockitoJUnitRunner.class)
-public class RegistryClientTest {
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
+class RegistryClientTest {
 
   @Mock private EventHandlers eventHandlers;
 
@@ -62,15 +65,15 @@ public class RegistryClientTest {
   private TestWebServer registry;
   private TestWebServer authServer;
 
-  @Before
-  public void setUp() throws DigestException {
+  @BeforeEach
+  void setUp() throws DigestException {
     digest =
         DescriptorDigest.fromHash(
             "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
   }
 
-  @After
-  public void tearDown() throws IOException {
+  @AfterEach
+  void tearDown() throws IOException {
     if (registry != null) {
       registry.close();
     }
@@ -80,7 +83,7 @@ public class RegistryClientTest {
   }
 
   @Test
-  public void testDoBearerAuth_returnsFalseOnBasicAuth()
+  void testDoBearerAuth_returnsFalseOnBasicAuth()
       throws IOException, InterruptedException, GeneralSecurityException, URISyntaxException,
           RegistryException {
     String basicAuth =
@@ -95,7 +98,7 @@ public class RegistryClientTest {
   }
 
   @Test
-  public void testDoBearerAuth()
+  void testDoBearerAuth()
       throws IOException, InterruptedException, GeneralSecurityException, URISyntaxException,
           RegistryException {
     setUpAuthServerAndRegistry(1, "HTTP/1.1 200 OK\nContent-Length: 1234\n\n");
@@ -111,7 +114,7 @@ public class RegistryClientTest {
   }
 
   @Test
-  public void testAutomaticTokenRefresh()
+  void testAutomaticTokenRefresh()
       throws IOException, InterruptedException, GeneralSecurityException, URISyntaxException,
           RegistryException {
     setUpAuthServerAndRegistry(3, "HTTP/1.1 200 OK\nContent-Length: 5678\n\n");
@@ -133,7 +136,7 @@ public class RegistryClientTest {
   }
 
   @Test
-  public void testAutomaticTokenRefresh_badWwwAuthenticateResponse()
+  void testAutomaticTokenRefresh_badWwwAuthenticateResponse()
       throws IOException, InterruptedException, GeneralSecurityException, URISyntaxException,
           RegistryException {
     String tokenResponse = "HTTP/1.1 200 OK\nContent-Length: 26\n\n{\"token\":\"awesome-token!\"}";
@@ -168,7 +171,7 @@ public class RegistryClientTest {
   }
 
   @Test
-  public void testAutomaticTokenRefresh_refreshLimit()
+  void testAutomaticTokenRefresh_refreshLimit()
       throws IOException, InterruptedException, GeneralSecurityException, URISyntaxException,
           RegistryException {
     String tokenResponse = "HTTP/1.1 200 OK\nContent-Length: 26\n\n{\"token\":\"awesome-token!\"}";
@@ -200,7 +203,7 @@ public class RegistryClientTest {
   }
 
   @Test
-  public void testConfigureBasicAuth()
+  void testConfigureBasicAuth()
       throws IOException, InterruptedException, GeneralSecurityException, URISyntaxException,
           RegistryException {
     String basicAuth = "HTTP/1.1 200 OK\nContent-Length: 56789\n\n";
@@ -215,7 +218,7 @@ public class RegistryClientTest {
   }
 
   @Test
-  public void testAuthPullByWwwAuthenticate_bearerAuth()
+  void testAuthPullByWwwAuthenticate_bearerAuth()
       throws IOException, InterruptedException, GeneralSecurityException, URISyntaxException,
           RegistryException {
     String tokenResponse = "HTTP/1.1 200 OK\nContent-Length: 26\n\n{\"token\":\"awesome-token!\"}";
@@ -234,7 +237,7 @@ public class RegistryClientTest {
   }
 
   @Test
-  public void testAuthPullByWwwAuthenticate_basicAuth()
+  void testAuthPullByWwwAuthenticate_basicAuth()
       throws IOException, InterruptedException, GeneralSecurityException, URISyntaxException,
           RegistryException {
     String blobResponse = "HTTP/1.1 200 OK\nContent-Length: 5678\n\n";
@@ -251,7 +254,7 @@ public class RegistryClientTest {
   }
 
   @Test
-  public void testAuthPullByWwwAuthenticate_basicAuthRequestedButNullCredential()
+  void testAuthPullByWwwAuthenticate_basicAuthRequestedButNullCredential()
       throws IOException, InterruptedException, GeneralSecurityException, URISyntaxException,
           RegistryException {
     String blobResponse = "HTTP/1.1 200 OK\nContent-Length: 5678\n\n";
@@ -268,7 +271,7 @@ public class RegistryClientTest {
   }
 
   @Test
-  public void testAuthPullByWwwAuthenticate_basicAuthRequestedButOAuth2Credential()
+  void testAuthPullByWwwAuthenticate_basicAuthRequestedButOAuth2Credential()
       throws IOException, InterruptedException, GeneralSecurityException, URISyntaxException,
           RegistryException {
     String blobResponse = "HTTP/1.1 200 OK\nContent-Length: 5678\n\n";
@@ -287,7 +290,7 @@ public class RegistryClientTest {
   }
 
   @Test
-  public void testAuthPullByWwwAuthenticate_invalidAuthMethod() {
+  void testAuthPullByWwwAuthenticate_invalidAuthMethod() {
     RegistryClient registryClient =
         RegistryClient.factory(eventHandlers, "server", "foo/bar", null).newRegistryClient();
     try {
@@ -302,7 +305,7 @@ public class RegistryClientTest {
   }
 
   @Test
-  public void testPullManifest()
+  void testPullManifest()
       throws IOException, InterruptedException, GeneralSecurityException, URISyntaxException,
           RegistryException {
     String manifestResponse =
@@ -340,7 +343,7 @@ public class RegistryClientTest {
   }
 
   @Test
-  public void testPullManifest_manifestList()
+  void testPullManifest_manifestList()
       throws IOException, InterruptedException, GeneralSecurityException, URISyntaxException,
           RegistryException {
     String manifestResponse =

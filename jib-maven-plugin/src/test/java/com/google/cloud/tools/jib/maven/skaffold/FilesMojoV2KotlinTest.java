@@ -26,16 +26,19 @@ import org.apache.maven.model.PluginExecution;
 import org.apache.maven.project.MavenProject;
 import org.codehaus.plexus.util.xml.Xpp3Dom;
 import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
 /** Kotlin-related tests for {@link FilesMojoV2}. */
-@RunWith(MockitoJUnitRunner.class)
-public class FilesMojoV2KotlinTest {
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
+class FilesMojoV2KotlinTest {
 
   private final PluginExecution pluginExecution1 = new PluginExecution();
   private final PluginExecution pluginExecution2 = new PluginExecution();
@@ -51,8 +54,8 @@ public class FilesMojoV2KotlinTest {
   @Mock private MavenProject mavenProject;
   @Mock private Plugin kotlinPlugin;
 
-  @Before
-  public void setUp() {
+  @BeforeEach
+  void setUp() {
     Mockito.when(mavenProject.getPlugin("org.jetbrains.kotlin:kotlin-maven-plugin"))
         .thenReturn(kotlinPlugin);
     Mockito.when(mavenProject.getBasedir()).thenReturn(new File("/base"));
@@ -62,13 +65,13 @@ public class FilesMojoV2KotlinTest {
   }
 
   @Test
-  public void getKotlinSourceDirectories_noKotlinPlugin() {
+  void getKotlinSourceDirectories_noKotlinPlugin() {
     Mockito.when(mavenProject.getPlugin(Mockito.anyString())).thenReturn(null);
     Assert.assertEquals(ImmutableSet.of(), FilesMojoV2.getKotlinSourceDirectories(mavenProject));
   }
 
   @Test
-  public void getKotlinSourceDirectories_noExecutions() {
+  void getKotlinSourceDirectories_noExecutions() {
     Mockito.when(kotlinPlugin.getExecutions()).thenReturn(Collections.emptyList());
 
     Assert.assertEquals(
@@ -77,7 +80,7 @@ public class FilesMojoV2KotlinTest {
   }
 
   @Test
-  public void getKotlinSourceDirectories_noConfiguration() {
+  void getKotlinSourceDirectories_noConfiguration() {
     Mockito.when(kotlinPlugin.getExecutions()).thenReturn(Arrays.asList(pluginExecution1));
     pluginExecution1.setConfiguration(null);
 
@@ -87,7 +90,7 @@ public class FilesMojoV2KotlinTest {
   }
 
   @Test
-  public void getKotlinSourceDirectories_noSourceDirs() {
+  void getKotlinSourceDirectories_noSourceDirs() {
     Mockito.when(kotlinPlugin.getExecutions()).thenReturn(Arrays.asList(pluginExecution1));
 
     Assert.assertEquals(
@@ -96,7 +99,7 @@ public class FilesMojoV2KotlinTest {
   }
 
   @Test
-  public void getKotlinSourceDirectories_noSourceDirsChildren() {
+  void getKotlinSourceDirectories_noSourceDirsChildren() {
     Mockito.when(kotlinPlugin.getExecutions()).thenReturn(Arrays.asList(pluginExecution1));
     configuration1.addChild(sourceDirs1);
 
@@ -106,7 +109,7 @@ public class FilesMojoV2KotlinTest {
   }
 
   @Test
-  public void getKotlinSourceDirectories_nullSourceDir() {
+  void getKotlinSourceDirectories_nullSourceDir() {
     Mockito.when(kotlinPlugin.getExecutions()).thenReturn(Arrays.asList(pluginExecution1));
     configuration1.addChild(sourceDirs1);
     sourceDirs1.addChild(sourceDir1);
@@ -117,7 +120,7 @@ public class FilesMojoV2KotlinTest {
   }
 
   @Test
-  public void getKotlinSourceDirectories_emptySourceDir() {
+  void getKotlinSourceDirectories_emptySourceDir() {
     Mockito.when(kotlinPlugin.getExecutions()).thenReturn(Arrays.asList(pluginExecution1));
     configuration1.addChild(sourceDirs1);
     sourceDirs1.addChild(sourceDir1);
@@ -129,7 +132,7 @@ public class FilesMojoV2KotlinTest {
   }
 
   @Test
-  public void getKotlinSourceDirectories_relativePath() {
+  void getKotlinSourceDirectories_relativePath() {
     Mockito.when(kotlinPlugin.getExecutions()).thenReturn(Arrays.asList(pluginExecution1));
     configuration1.addChild(sourceDirs1);
     sourceDirs1.addChild(sourceDir1);
@@ -141,7 +144,7 @@ public class FilesMojoV2KotlinTest {
   }
 
   @Test
-  public void getKotlinSourceDirectories_absolutePath() {
+  void getKotlinSourceDirectories_absolutePath() {
     Mockito.when(kotlinPlugin.getExecutions()).thenReturn(Arrays.asList(pluginExecution1));
     configuration1.addChild(sourceDirs1);
     sourceDirs1.addChild(sourceDir1);
@@ -153,7 +156,7 @@ public class FilesMojoV2KotlinTest {
   }
 
   @Test
-  public void getKotlinSourceDirectories_complex() {
+  void getKotlinSourceDirectories_complex() {
     Mockito.when(kotlinPlugin.getExecutions())
         .thenReturn(Arrays.asList(pluginExecution1, pluginExecution2));
     configuration1.addChild(sourceDirs1);
@@ -178,7 +181,7 @@ public class FilesMojoV2KotlinTest {
   }
 
   @Test
-  public void getKotlinSourceDirectories_noDuplicates() {
+  void getKotlinSourceDirectories_noDuplicates() {
     Mockito.when(kotlinPlugin.getExecutions())
         .thenReturn(Arrays.asList(pluginExecution1, pluginExecution2));
     configuration1.addChild(sourceDirs1);
@@ -198,7 +201,7 @@ public class FilesMojoV2KotlinTest {
   }
 
   @Test
-  public void getKotlinSourceDirectories_excludeTestCompileGoal() {
+  void getKotlinSourceDirectories_excludeTestCompileGoal() {
     Mockito.when(kotlinPlugin.getExecutions())
         .thenReturn(Arrays.asList(pluginExecution1, pluginExecution2));
     pluginExecution1.setGoals(Arrays.asList("compile"));

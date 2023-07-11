@@ -26,18 +26,21 @@ import com.google.cloud.tools.jib.cli.logging.Verbosity;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import java.nio.file.Paths;
+import java.util.stream.Stream;
 import junitparams.JUnitParamsRunner;
-import junitparams.Parameters;
 import org.apache.commons.lang3.ArrayUtils;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.runner.RunWith;
 import picocli.CommandLine;
 import picocli.CommandLine.MissingParameterException;
 
 @RunWith(JUnitParamsRunner.class)
-public class BuildTest {
+class BuildTest {
   @Test
-  public void testParse_missingRequiredParams() {
+  void testParse_missingRequiredParams() {
     MissingParameterException mpe =
         assertThrows(
             MissingParameterException.class, () -> CommandLine.populateCommand(new Build(), ""));
@@ -45,7 +48,7 @@ public class BuildTest {
   }
 
   @Test
-  public void testParse_defaults() {
+  void testParse_defaults() {
     Build buildCommand = CommandLine.populateCommand(new Build(), "-t", "test-image-ref");
     CommonCliOptions commonCliOptions = buildCommand.commonCliOptions;
     assertThat(commonCliOptions.getTargetImage()).isEqualTo("test-image-ref");
@@ -72,7 +75,7 @@ public class BuildTest {
   }
 
   @Test
-  public void testParse_shortFormParams() {
+  void testParse_shortFormParams() {
     Build buildCommand =
         CommandLine.populateCommand(
             new Build(),
@@ -108,7 +111,7 @@ public class BuildTest {
   }
 
   @Test
-  public void testParse_longFormParams() {
+  void testParse_longFormParams() {
     // this test does not check credential helpers, scroll down for specialized credential helper
     // tests
     Build buildCommand =
@@ -157,7 +160,7 @@ public class BuildTest {
   }
 
   @Test
-  public void testParse_buildFileDefaultForContext() {
+  void testParse_buildFileDefaultForContext() {
     Build buildCommand =
         CommandLine.populateCommand(
             new Build(), "--target", "test-image-ref", "--context", "test-context");
@@ -167,7 +170,7 @@ public class BuildTest {
   }
 
   @Test
-  public void testParse_credentialHelper() {
+  void testParse_credentialHelper() {
     Build buildCommand =
         CommandLine.populateCommand(
             new Build(), "--target=test-image-ref", "--credential-helper=test-cred-helper");
@@ -181,7 +184,7 @@ public class BuildTest {
   }
 
   @Test
-  public void testParse_toCredentialHelper() {
+  void testParse_toCredentialHelper() {
     Build buildCommand =
         CommandLine.populateCommand(
             new Build(), "--target=test-image-ref", "--to-credential-helper=test-cred-helper");
@@ -196,7 +199,7 @@ public class BuildTest {
   }
 
   @Test
-  public void testParse_fromCredentialHelper() {
+  void testParse_fromCredentialHelper() {
     Build buildCommand =
         CommandLine.populateCommand(
             new Build(), "--target=test-image-ref", "--from-credential-helper=test-cred-helper");
@@ -211,7 +214,7 @@ public class BuildTest {
   }
 
   @Test
-  public void testParse_usernamePassword() {
+  void testParse_usernamePassword() {
     Build buildCommand =
         CommandLine.populateCommand(
             new Build(),
@@ -230,7 +233,7 @@ public class BuildTest {
   }
 
   @Test
-  public void testParse_toUsernamePassword() {
+  void testParse_toUsernamePassword() {
     Build buildCommand =
         CommandLine.populateCommand(
             new Build(),
@@ -248,7 +251,7 @@ public class BuildTest {
   }
 
   @Test
-  public void testParse_fromUsernamePassword() {
+  void testParse_fromUsernamePassword() {
     Build buildCommand =
         CommandLine.populateCommand(
             new Build(),
@@ -267,7 +270,7 @@ public class BuildTest {
   }
 
   @Test
-  public void testParse_toAndFromUsernamePassword() {
+  void testParse_toAndFromUsernamePassword() {
     Build buildCommand =
         CommandLine.populateCommand(
             new Build(),
@@ -289,7 +292,7 @@ public class BuildTest {
   }
 
   @Test
-  public void testParse_toAndFromCredentialHelper() {
+  void testParse_toAndFromCredentialHelper() {
     Build buildCommand =
         CommandLine.populateCommand(
             new Build(),
@@ -307,7 +310,7 @@ public class BuildTest {
   }
 
   @Test
-  public void testParse_toUsernamePasswordAndFromCredentialHelper() {
+  void testParse_toUsernamePasswordAndFromCredentialHelper() {
     Build buildCommand =
         CommandLine.populateCommand(
             new Build(),
@@ -327,7 +330,7 @@ public class BuildTest {
   }
 
   @Test
-  public void testParse_toCredentialHelperAndFromUsernamePassword() {
+  void testParse_toCredentialHelperAndFromUsernamePassword() {
     Build buildCommand =
         CommandLine.populateCommand(
             new Build(),
@@ -346,17 +349,16 @@ public class BuildTest {
         .hasValue(Credential.from("test-username", "test-password"));
   }
 
-  private Object usernamePasswordPairs() {
-    return new Object[][] {
-      {"--username", "--password"},
-      {"--to-username", "--to-password"},
-      {"--from-username", "--from-password"}
-    };
+  private static Stream<Arguments> usernamePasswordPairs() {
+    return Stream.of(
+        Arguments.of("--username", "--password"),
+        Arguments.of("--to-username", "--to-password"),
+        Arguments.of("--from-username", "--from-password"));
   }
 
-  @Test
-  @Parameters(method = "usernamePasswordPairs")
-  public void testParse_usernameWithoutPassword(String usernameField, String passwordField) {
+  @ParameterizedTest
+  @MethodSource("usernamePasswordPairs")
+  void testParse_usernameWithoutPassword(String usernameField, String passwordField) {
     MissingParameterException mpe =
         assertThrows(
             MissingParameterException.class,
@@ -366,9 +368,9 @@ public class BuildTest {
     assertThat(mpe.getMessage()).isEqualTo("Error: Missing required argument(s): " + passwordField);
   }
 
-  @Test
-  @Parameters(method = "usernamePasswordPairs")
-  public void testParse_passwordWithoutUsername(String usernameField, String passwordField) {
+  @ParameterizedTest
+  @MethodSource("usernamePasswordPairs")
+  void testParse_passwordWithoutUsername(String usernameField, String passwordField) {
     MissingParameterException mpe =
         assertThrows(
             MissingParameterException.class,
@@ -379,25 +381,44 @@ public class BuildTest {
         .isEqualTo("Error: Missing required argument(s): " + usernameField + "=<username>");
   }
 
-  public String[][] incompatibleCredentialOptions() {
-    return new String[][] {
-      {"--credential-helper=x", "--to-credential-helper=x"},
-      {"--credential-helper=x", "--from-credential-helper=x"},
-      {"--credential-helper=x", "--username=x", "--password=x"},
-      {"--credential-helper=x", "--from-username=x", "--from-password=x"},
-      {"--credential-helper=x", "--to-username=x", "--to-password=x"},
-      {"--username=x", "--password=x", "--from-username=x", "--from-password=x"},
-      {"--username=x", "--password=x", "--to-username=x", "--to-password=x"},
-      {"--username=x", "--password=x", "--to-credential-helper=x"},
-      {"--username=x", "--password=x", "--from-credential-helper=x"},
-      {"--from-credential-helper=x", "--from-username=x", "--from-password=x"},
-      {"--to-credential-helper=x", "--to-password=x", "--to-username=x"},
-    };
+  public static Stream<Arguments> incompatibleCredentialOptions() {
+    return Stream.of(
+        Arguments.of((Object) new String[] {"--credential-helper=x", "--to-credential-helper=x"}),
+        Arguments.of((Object) new String[] {"--credential-helper=x", "--from-credential-helper=x"}),
+        Arguments.of(
+            (Object) new String[] {"--credential-helper=x", "--username=x", "--password=x"}),
+        Arguments.of(
+            (Object)
+                new String[] {"--credential-helper=x", "--from-username=x", "--from-password=x"}),
+        Arguments.of(
+            (Object) new String[] {"--credential-helper=x", "--to-username=x", "--to-password=x"}),
+        Arguments.of(
+            (Object)
+                new String[] {
+                  "--username=x", "--password=x", "--from-username=x", "--from-password=x"
+                }),
+        Arguments.of(
+            (Object)
+                new String[] {
+                  "--username=x", "--password=x", "--to-username=x", "--to-password=x"
+                }),
+        Arguments.of(
+            (Object) new String[] {"--username=x", "--password=x", "--to-credential-helper=x"}),
+        Arguments.of(
+            (Object) new String[] {"--username=x", "--password=x", "--from-credential-helper=x"}),
+        Arguments.of(
+            (Object)
+                new String[] {
+                  "--from-credential-helper=x", "--from-username=x", "--from-password=x"
+                }),
+        Arguments.of(
+            (Object)
+                new String[] {"--to-credential-helper=x", "--to-password=x", "--to-username=x"}));
   }
 
-  @Test
-  @Parameters(method = "incompatibleCredentialOptions")
-  public void testParse_incompatibleCredentialOptions(String[] authArgs) {
+  @ParameterizedTest
+  @MethodSource("incompatibleCredentialOptions")
+  void testParse_incompatibleCredentialOptions(String[] authArgs) {
     CommandLine.MutuallyExclusiveArgsException meae =
         assertThrows(
             CommandLine.MutuallyExclusiveArgsException.class,
@@ -410,7 +431,7 @@ public class BuildTest {
   }
 
   @Test
-  public void testValidate_nameMissingFail() {
+  void testValidate_nameMissingFail() {
     Build buildCommand = CommandLine.populateCommand(new Build(), "--target=tar://sometar.tar");
     CommandLine.ParameterException pex =
         assertThrows(CommandLine.ParameterException.class, buildCommand.commonCliOptions::validate);
@@ -419,7 +440,7 @@ public class BuildTest {
   }
 
   @Test
-  public void testValidate_pass() {
+  void testValidate_pass() {
     Build buildCommand =
         CommandLine.populateCommand(
             new Build(), "--target=tar://sometar.tar", "--name=test.io/test/test");

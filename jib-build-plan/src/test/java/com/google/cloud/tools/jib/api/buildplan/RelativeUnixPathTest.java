@@ -18,13 +18,13 @@ package com.google.cloud.tools.jib.api.buildplan;
 
 import com.google.common.collect.ImmutableList;
 import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /** Tests for {@link RelativeUnixPath}. */
-public class RelativeUnixPathTest {
+class RelativeUnixPathTest {
 
   @Test
-  public void testGet_absolute() {
+  void testGet_absolute() {
     try {
       RelativeUnixPath.get("/absolute");
       Assert.fail();
@@ -35,7 +35,7 @@ public class RelativeUnixPathTest {
   }
 
   @Test
-  public void testGet() {
+  void testGet() {
     Assert.assertEquals(
         ImmutableList.of("some", "relative", "path"),
         RelativeUnixPath.get("some/relative///path").getRelativePathComponents());

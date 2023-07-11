@@ -18,7 +18,6 @@ package com.google.cloud.tools.jib.gradle;
 
 import com.google.cloud.tools.jib.filesystem.DirectoryWalker;
 import com.google.common.io.Resources;
-import java.io.Closeable;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
@@ -27,13 +26,16 @@ import java.nio.file.Paths;
 import java.util.List;
 import org.gradle.testkit.runner.BuildResult;
 import org.gradle.testkit.runner.GradleRunner;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.extension.BeforeEachCallback;
+import org.junit.jupiter.api.extension.ExtensionContext;
 
 // TODO: Consolidate with TestProject in jib-maven-plugin.
 /** Works with the test Gradle projects in the {@code resources/projects} directory. */
-public class TestProject extends TemporaryFolder implements Closeable {
+public class TestProject implements BeforeEachCallback {
 
   private static final String PROJECTS_PATH_IN_RESOURCES = "gradle/projects/";
+
+  Path temporaryDir;
 
   /** Copies test project {@code projectName} to {@code destination} folder. */
   private static void copyProject(String projectName, Path destination)
@@ -61,27 +63,9 @@ public class TestProject extends TemporaryFolder implements Closeable {
   private Path projectRoot;
 
   /** Initialize with a specific project directory. */
-  public TestProject(String testProjectName) {
+  public TestProject(String testProjectName, Path temporaryDir) {
     this.testProjectName = testProjectName;
-  }
-
-  @Override
-  public void close() {
-    after();
-  }
-
-  @Override
-  protected void before() throws Throwable {
-    super.before();
-
-    projectRoot = newFolder().toPath();
-    copyProject(testProjectName, projectRoot);
-
-    gradleRunner =
-        GradleRunner.create()
-            .withGradleVersion(gradleVersion)
-            .withProjectDir(projectRoot.toFile())
-            .withPluginClasspath();
+    this.temporaryDir = temporaryDir;
   }
 
   public TestProject withGradleVersion(String version) {
@@ -99,5 +83,17 @@ public class TestProject extends TemporaryFolder implements Closeable {
 
   public Path getProjectRoot() {
     return projectRoot;
+  }
+
+  @Override
+  public void beforeEach(ExtensionContext context) throws Exception {
+    projectRoot = Files.createTempDirectory("jib"); // temporaryDir;
+    copyProject(testProjectName, projectRoot);
+
+    gradleRunner =
+        GradleRunner.create()
+            .withGradleVersion(gradleVersion)
+            .withProjectDir(projectRoot.toFile())
+            .withPluginClasspath();
   }
 }

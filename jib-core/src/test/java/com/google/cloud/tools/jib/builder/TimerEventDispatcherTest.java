@@ -25,22 +25,25 @@ import java.time.Instant;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
 /** Tests for {@link TimerEventDispatcher}. */
-@RunWith(MockitoJUnitRunner.class)
-public class TimerEventDispatcherTest {
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
+class TimerEventDispatcherTest {
 
   private final Deque<TimerEvent> timerEventQueue = new ArrayDeque<>();
 
   @Mock private Clock mockClock;
 
   @Test
-  public void testLogging() {
+  void testLogging() {
     EventHandlers eventHandlers =
         EventHandlers.builder().add(TimerEvent.class, timerEventQueue::add).build();
 

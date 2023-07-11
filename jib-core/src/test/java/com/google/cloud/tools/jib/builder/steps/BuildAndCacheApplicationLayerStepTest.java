@@ -41,18 +41,20 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
 import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.io.TempDir;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
 /** Tests for {@link BuildAndCacheApplicationLayerStep}. */
-@RunWith(MockitoJUnitRunner.class)
-public class BuildAndCacheApplicationLayerStepTest {
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
+class BuildAndCacheApplicationLayerStepTest {
 
   // TODO: Consolidate with BuildStepsIntegrationTest.
   private static final AbsoluteUnixPath EXTRACTION_PATH_ROOT =
@@ -82,7 +84,7 @@ public class BuildAndCacheApplicationLayerStepTest {
     Assert.assertArrayEquals(Blobs.writeToByteArray(expectedBlob), Blobs.writeToByteArray(blob));
   }
 
-  @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
+  @TempDir public Path temporaryFolder;
 
   @Mock private BuildContext mockBuildContext;
 
@@ -95,8 +97,8 @@ public class BuildAndCacheApplicationLayerStepTest {
   private FileEntriesLayer fakeExtraFilesLayerConfiguration;
   private FileEntriesLayer emptyLayerConfiguration;
 
-  @Before
-  public void setUp() throws IOException, URISyntaxException, CacheDirectoryCreationException {
+  @BeforeEach
+  void setUp() throws IOException, URISyntaxException, CacheDirectoryCreationException {
     fakeDependenciesLayerConfiguration =
         makeLayerConfiguration(
             "core/application/dependencies", EXTRACTION_PATH_ROOT.resolve("libs"));
@@ -119,7 +121,7 @@ public class BuildAndCacheApplicationLayerStepTest {
             .build();
     emptyLayerConfiguration = FileEntriesLayer.builder().build();
 
-    cache = Cache.withDirectory(temporaryFolder.newFolder().toPath());
+    cache = Cache.withDirectory(Files.createTempDirectory(temporaryFolder, "jib"));
 
     Mockito.when(mockBuildContext.getEventHandlers()).thenReturn(EventHandlers.NONE);
     Mockito.when(mockBuildContext.getApplicationLayersCache()).thenReturn(cache);
@@ -143,8 +145,7 @@ public class BuildAndCacheApplicationLayerStepTest {
   }
 
   @Test
-  public void testRun()
-      throws LayerPropertyNotFoundException, IOException, CacheCorruptedException {
+  void testRun() throws LayerPropertyNotFoundException, IOException, CacheCorruptedException {
     ImmutableList<FileEntriesLayer> fakeLayerConfigurations =
         ImmutableList.of(
             fakeDependenciesLayerConfiguration,
@@ -204,7 +205,7 @@ public class BuildAndCacheApplicationLayerStepTest {
   }
 
   @Test
-  public void testRun_emptyLayersIgnored() throws IOException, CacheCorruptedException {
+  void testRun_emptyLayersIgnored() throws IOException, CacheCorruptedException {
     ImmutableList<FileEntriesLayer> fakeLayerConfigurations =
         ImmutableList.of(
             fakeDependenciesLayerConfiguration,

@@ -29,10 +29,10 @@ import java.nio.charset.StandardCharsets;
 import java.security.DigestException;
 import java.util.Map;
 import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /** Tests for {@link CountingDigestOutputStream}. */
-public class CountingDigestOutputStreamTest {
+class CountingDigestOutputStreamTest {
 
   private static final ImmutableMap<String, String> KNOWN_SHA256_HASHES =
       ImmutableMap.of(
@@ -44,7 +44,7 @@ public class CountingDigestOutputStreamTest {
           "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855");
 
   @Test
-  public void test_smokeTest() throws IOException, DigestException {
+  void test_smokeTest() throws IOException, DigestException {
     for (Map.Entry<String, String> knownHash : KNOWN_SHA256_HASHES.entrySet()) {
       String toHash = knownHash.getKey();
       String expectedHash = knownHash.getValue();

@@ -25,17 +25,20 @@ import com.google.cloud.tools.jib.configuration.ImageConfiguration;
 import com.google.cloud.tools.jib.registry.RegistryClient;
 import java.io.IOException;
 import java.util.Optional;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Answers;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
 /** Tests for {@link PushBlobStep}. */
-@RunWith(MockitoJUnitRunner.class)
-public class PushBlobStepTest {
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
+class PushBlobStepTest {
 
   @Mock private BlobDescriptor blobDescriptor;
   @Mock private RegistryClient registryClient;
@@ -46,14 +49,14 @@ public class PushBlobStepTest {
   @Mock(answer = Answers.RETURNS_MOCKS)
   private BuildContext buildContext;
 
-  @Before
-  public void setUp() {
+  @BeforeEach
+  void setUp() {
     Mockito.when(buildContext.getTargetImageConfiguration())
         .thenReturn(ImageConfiguration.builder(ImageReference.scratch()).build());
   }
 
   @Test
-  public void testCall_doBlobCheckAndBlobExists() throws IOException, RegistryException {
+  void testCall_doBlobCheckAndBlobExists() throws IOException, RegistryException {
     Mockito.when(registryClient.checkBlob(Mockito.any())).thenReturn(Optional.of(blobDescriptor));
 
     call(false);
@@ -64,7 +67,7 @@ public class PushBlobStepTest {
   }
 
   @Test
-  public void testCall_doBlobCheckAndBlobDoesNotExist() throws IOException, RegistryException {
+  void testCall_doBlobCheckAndBlobDoesNotExist() throws IOException, RegistryException {
     Mockito.when(registryClient.checkBlob(Mockito.any())).thenReturn(Optional.empty());
 
     call(false);
@@ -75,7 +78,7 @@ public class PushBlobStepTest {
   }
 
   @Test
-  public void testCall_forcePushWithNoBlobCheck() throws IOException, RegistryException {
+  void testCall_forcePushWithNoBlobCheck() throws IOException, RegistryException {
     call(true);
 
     Mockito.verify(registryClient, Mockito.never()).checkBlob(Mockito.any());

@@ -22,10 +22,10 @@ import java.util.List;
 import org.hamcrest.CoreMatchers;
 import org.hamcrest.MatcherAssert;
 import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /** Tests for {@link ImageReference}. */
-public class ImageReferenceTest {
+class ImageReferenceTest {
 
   private static final List<String> goodRegistries =
       Arrays.asList("some.domain---name.123.com:8080", "gcr.io", "localhost", null, "");
@@ -49,7 +49,7 @@ public class ImageReferenceTest {
           "domain.name:nonnumberport//:no-repository");
 
   @Test
-  public void testParse_pass() throws InvalidImageReferenceException {
+  void testParse_pass() throws InvalidImageReferenceException {
     for (String goodRegistry : goodRegistries) {
       for (String goodRepository : goodRepositories) {
         for (String goodTag : goodTags) {
@@ -62,7 +62,7 @@ public class ImageReferenceTest {
   }
 
   @Test
-  public void testParse_dockerHub_official() throws InvalidImageReferenceException {
+  void testParse_dockerHub_official() throws InvalidImageReferenceException {
     String imageReferenceString = "busybox";
     ImageReference imageReference = ImageReference.parse(imageReferenceString);
 
@@ -72,7 +72,7 @@ public class ImageReferenceTest {
   }
 
   @Test
-  public void testParse_dockerHub_user() throws InvalidImageReferenceException {
+  void testParse_dockerHub_user() throws InvalidImageReferenceException {
     String imageReferenceString = "someuser/someimage";
     ImageReference imageReference = ImageReference.parse(imageReferenceString);
 
@@ -82,7 +82,7 @@ public class ImageReferenceTest {
   }
 
   @Test
-  public void testParse_invalid() {
+  void testParse_invalid() {
     for (String badImageReference : badImageReferences) {
       try {
         ImageReference.parse(badImageReference);
@@ -95,7 +95,7 @@ public class ImageReferenceTest {
   }
 
   @Test
-  public void testOf_smoke() {
+  void testOf_smoke() {
     String expectedRegistry = "someregistry";
     String expectedRepository = "somerepository";
     String expectedTag = "sometag";
@@ -124,7 +124,7 @@ public class ImageReferenceTest {
   }
 
   @Test
-  public void testToString() throws InvalidImageReferenceException {
+  void testToString() throws InvalidImageReferenceException {
     Assert.assertEquals("someimage", ImageReference.of(null, "someimage", null).toString());
     Assert.assertEquals("someimage", ImageReference.of("", "someimage", "").toString());
     Assert.assertEquals(
@@ -151,7 +151,7 @@ public class ImageReferenceTest {
   }
 
   @Test
-  public void testToStringWithQualifier() {
+  void testToStringWithQualifier() {
     Assert.assertEquals(
         "someimage:latest", ImageReference.of(null, "someimage", null).toStringWithQualifier());
     Assert.assertEquals(
@@ -184,7 +184,7 @@ public class ImageReferenceTest {
   }
 
   @Test
-  public void testIsScratch() throws InvalidImageReferenceException {
+  void testIsScratch() throws InvalidImageReferenceException {
     Assert.assertTrue(ImageReference.parse("scratch").isScratch());
     Assert.assertTrue(ImageReference.scratch().isScratch());
     Assert.assertFalse(ImageReference.of("", "scratch", "").isScratch());
@@ -192,12 +192,12 @@ public class ImageReferenceTest {
   }
 
   @Test
-  public void testToString_scratch() {
+  void testToString_scratch() {
     Assert.assertEquals("scratch", ImageReference.scratch().toString());
   }
 
   @Test
-  public void testGetRegistry() {
+  void testGetRegistry() {
     Assert.assertEquals(
         "registry-1.docker.io", ImageReference.of(null, "someimage", null).getRegistry());
     Assert.assertEquals(
@@ -211,7 +211,7 @@ public class ImageReferenceTest {
   }
 
   @Test
-  public void testEquality() throws InvalidImageReferenceException {
+  void testEquality() throws InvalidImageReferenceException {
     ImageReference image1 = ImageReference.parse("gcr.io/project/image:tag");
     ImageReference image2 = ImageReference.parse("gcr.io/project/image:tag");
 
@@ -220,7 +220,7 @@ public class ImageReferenceTest {
   }
 
   @Test
-  public void testEquality_differentRegistry() throws InvalidImageReferenceException {
+  void testEquality_differentRegistry() throws InvalidImageReferenceException {
     ImageReference image1 = ImageReference.parse("gcr.io/project/image:tag");
     ImageReference image2 = ImageReference.parse("registry-1.docker.io/project/image:tag");
 
@@ -229,7 +229,7 @@ public class ImageReferenceTest {
   }
 
   @Test
-  public void testEquality_differentRepository() throws InvalidImageReferenceException {
+  void testEquality_differentRepository() throws InvalidImageReferenceException {
     ImageReference image1 = ImageReference.parse("gcr.io/project/image:tag");
     ImageReference image2 = ImageReference.parse("gcr.io/project2/image:tag");
 
@@ -238,7 +238,7 @@ public class ImageReferenceTest {
   }
 
   @Test
-  public void testEquality_differentTag() throws InvalidImageReferenceException {
+  void testEquality_differentTag() throws InvalidImageReferenceException {
     ImageReference image1 = ImageReference.parse("gcr.io/project/image:tag1");
     ImageReference image2 = ImageReference.parse("gcr.io/project/image:tag2");
 

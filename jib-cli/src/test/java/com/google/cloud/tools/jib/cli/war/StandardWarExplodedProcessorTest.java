@@ -37,28 +37,28 @@ import java.util.List;
 import java.util.StringJoiner;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
-public class StandardWarExplodedProcessorTest {
+class StandardWarExplodedProcessorTest {
 
   private static final AbsoluteUnixPath APP_ROOT = AbsoluteUnixPath.get("/my/app");
   private static final Correspondence<FileEntry, String> EXTRACTION_PATH_OF =
       Correspondence.transforming(
           entry -> entry.getExtractionPath().toString(), "has extractionPath of");
 
-  @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
+  @TempDir public Path temporaryFolder;
+
+  @TempDir public Path temporaryFolderDestination;
 
   @Test
-  public void testCreateLayers_allLayers_correctExtractionPaths()
-      throws IOException, URISyntaxException {
+  void testCreateLayers_allLayers_correctExtractionPaths() throws IOException, URISyntaxException {
     // Prepare war file for test
-    Path tempDirectory = temporaryFolder.getRoot().toPath();
+    Path tempDirectory = temporaryFolder;
     Path warContents = Paths.get(Resources.getResource("war/standard/allLayers").toURI());
     Path standardWar = zipUpDirectory(warContents, tempDirectory.resolve("standardWar.war"));
 
-    Path explodedWarDestination = temporaryFolder.newFolder("exploded-war").toPath();
+    Path explodedWarDestination = temporaryFolderDestination;
     StandardWarExplodedProcessor processor =
         new StandardWarExplodedProcessor(standardWar, explodedWarDestination, APP_ROOT);
     List<FileEntriesLayer> layers = processor.createLayers();
@@ -91,14 +91,14 @@ public class StandardWarExplodedProcessorTest {
   }
 
   @Test
-  public void testCreateLayers_webInfLibDoesNotExist_correctExtractionPaths()
+  void testCreateLayers_webInfLibDoesNotExist_correctExtractionPaths()
       throws IOException, URISyntaxException {
     // Prepare war file for test
-    Path tempDirectory = temporaryFolder.getRoot().toPath();
+    Path tempDirectory = temporaryFolder;
     Path warContents = Paths.get(Resources.getResource("war/standard/noWebInfLib").toURI());
     Path standardWar = zipUpDirectory(warContents, tempDirectory.resolve("noDependenciesWar.war"));
 
-    Path explodedWarDestination = temporaryFolder.newFolder("exploded-war").toPath();
+    Path explodedWarDestination = temporaryFolderDestination;
     StandardWarExplodedProcessor processor =
         new StandardWarExplodedProcessor(standardWar, explodedWarDestination, APP_ROOT);
     List<FileEntriesLayer> layers = processor.createLayers();
@@ -119,14 +119,14 @@ public class StandardWarExplodedProcessorTest {
   }
 
   @Test
-  public void testCreateLayers_webInfClassesDoesNotExist_correctExtractionPaths()
+  void testCreateLayers_webInfClassesDoesNotExist_correctExtractionPaths()
       throws IOException, URISyntaxException {
     // Prepare war file for test
-    Path tempDirectory = temporaryFolder.getRoot().toPath();
+    Path tempDirectory = temporaryFolder;
     Path warContents = Paths.get(Resources.getResource("war/standard/noWebInfClasses").toURI());
     Path standardWar = zipUpDirectory(warContents, tempDirectory.resolve("noClassesWar.war"));
 
-    Path explodedWarDestination = temporaryFolder.newFolder("exploded-war").toPath();
+    Path explodedWarDestination = temporaryFolderDestination;
     StandardWarExplodedProcessor processor =
         new StandardWarExplodedProcessor(standardWar, explodedWarDestination, APP_ROOT);
     List<FileEntriesLayer> layers = processor.createLayers();
@@ -149,7 +149,7 @@ public class StandardWarExplodedProcessorTest {
   }
 
   @Test
-  public void testComputeEntrypoint() {
+  void testComputeEntrypoint() {
     StandardWarExplodedProcessor processor =
         new StandardWarExplodedProcessor(Paths.get("ignore"), Paths.get("ignore"), APP_ROOT);
     UnsupportedOperationException exception =
@@ -162,7 +162,7 @@ public class StandardWarExplodedProcessorTest {
   }
 
   @Test
-  public void testGetJavaVersion() {
+  void testGetJavaVersion() {
     StandardWarExplodedProcessor processor =
         new StandardWarExplodedProcessor(Paths.get("ignore"), Paths.get("ignore"), APP_ROOT);
     UnsupportedOperationException exception =

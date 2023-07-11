@@ -24,18 +24,17 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import org.junit.Assert;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 /** Tests for {@link FileOperations}. */
-public class FileOperationsTest {
+class FileOperationsTest {
 
-  @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
+  @TempDir public Path temporaryFolder;
 
   @Test
-  public void testCopy() throws IOException, URISyntaxException {
-    Path destDir = temporaryFolder.newFolder().toPath();
+  void testCopy() throws IOException, URISyntaxException {
+    Path destDir = Files.createTempDirectory(temporaryFolder, "jib");
     Path libraryA =
         Paths.get(Resources.getResource("core/application/dependencies/libraryA.jar").toURI());
     Path libraryB =

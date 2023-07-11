@@ -33,21 +33,23 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
 /** Tests for {@link RegistryCredentialRetriever}. */
-@RunWith(MockitoJUnitRunner.class)
-public class RegistryCredentialRetrieverTest {
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
+class RegistryCredentialRetrieverTest {
 
   @Mock private EventHandlers mockEventHandlers;
 
   @Test
-  public void testCall_retrieved()
-      throws CredentialRetrievalException, CacheDirectoryCreationException {
+  void testCall_retrieved() throws CredentialRetrievalException, CacheDirectoryCreationException {
     BuildContext buildContext =
         makeFakeBuildContext(
             Arrays.asList(
@@ -66,7 +68,7 @@ public class RegistryCredentialRetrieverTest {
   }
 
   @Test
-  public void testCall_none() throws CredentialRetrievalException, CacheDirectoryCreationException {
+  void testCall_none() throws CredentialRetrievalException, CacheDirectoryCreationException {
     BuildContext buildContext =
         makeFakeBuildContext(
             Arrays.asList(Optional::empty, Optional::empty), Collections.emptyList());
@@ -84,7 +86,7 @@ public class RegistryCredentialRetrieverTest {
   }
 
   @Test
-  public void testCall_exception() throws CacheDirectoryCreationException {
+  void testCall_exception() throws CacheDirectoryCreationException {
     CredentialRetrievalException credentialRetrievalException =
         Mockito.mock(CredentialRetrievalException.class);
     BuildContext buildContext =

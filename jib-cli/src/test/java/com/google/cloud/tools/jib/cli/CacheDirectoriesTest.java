@@ -19,25 +19,25 @@ package com.google.cloud.tools.jib.cli;
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth8.assertThat;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import org.junit.Assert;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import picocli.CommandLine;
 
-public class CacheDirectoriesTest {
+class CacheDirectoriesTest {
 
-  @Rule public TemporaryFolder temporaryFolder = new TemporaryFolder();
+  @TempDir public Path temporaryFolder;
 
   @Test
-  public void testCacheDirectories_defaults() throws IOException {
+  void testCacheDirectories_defaults() throws IOException {
     CommonCliOptions commonCliOptions =
         CommandLine.populateCommand(new CommonCliOptions(), "-t", "ignored");
-    Path buildContext = temporaryFolder.newFolder("some-context").toPath();
+    Path buildContext = temporaryFolder;
     CacheDirectories cacheDirectories = CacheDirectories.from(commonCliOptions, buildContext);
 
     Path expectedProjectCache =
@@ -54,14 +54,14 @@ public class CacheDirectoriesTest {
   }
 
   @Test
-  public void testCacheDirectories_configuredValuesIgnoresBuildContext() throws IOException {
+  void testCacheDirectories_configuredValuesIgnoresBuildContext() throws IOException {
     CommonCliOptions commonCliOptions =
         CommandLine.populateCommand(
             new CommonCliOptions(),
             "-t=ignored",
             "--base-image-cache=test-base-image-cache",
             "--project-cache=test-project-cache");
-    Path ignoredContext = temporaryFolder.newFolder("ignored").toPath();
+    Path ignoredContext = temporaryFolder;
     CacheDirectories cacheDirectories = CacheDirectories.from(commonCliOptions, ignoredContext);
 
     assertThat(cacheDirectories.getBaseImageCache()).hasValue(Paths.get("test-base-image-cache"));
@@ -73,8 +73,8 @@ public class CacheDirectoriesTest {
   }
 
   @Test
-  public void testCacheDirectories_failIfContextIsNotDirectory() throws IOException {
-    Path badContext = temporaryFolder.newFile().toPath();
+  void testCacheDirectories_failIfContextIsNotDirectory() throws IOException {
+    Path badContext = File.createTempFile("test", "jib", temporaryFolder.toFile()).toPath();
     CommonCliOptions commonCliOptions =
         CommandLine.populateCommand(new CommonCliOptions(), "-t", "ignored");
 
@@ -88,10 +88,10 @@ public class CacheDirectoriesTest {
   }
 
   @Test
-  public void testGetProjectCacheDirectoryFromProject_sameFileDifferentPaths() throws IOException {
-    temporaryFolder.newFolder("ignored");
-    Path path = temporaryFolder.getRoot().toPath();
-    Path indirectPath = temporaryFolder.getRoot().toPath().resolve("ignored").resolve("..");
+  void testGetProjectCacheDirectoryFromProject_sameFileDifferentPaths() throws IOException {
+    new File(temporaryFolder.toFile(), "ignored").mkdirs();
+    Path path = temporaryFolder;
+    Path indirectPath = temporaryFolder.resolve("ignored").resolve("..");
 
     assertThat(path).isNotEqualTo(indirectPath); // the general equality should not hold true
     assertThat(Files.isSameFile(path, indirectPath)).isTrue(); // path equality holds
@@ -102,7 +102,7 @@ public class CacheDirectoriesTest {
   }
 
   @Test
-  public void testGetProjectCacheDirectoryFromProject_different() {
+  void testGetProjectCacheDirectoryFromProject_different() {
     assertThat(CacheDirectories.getProjectCacheDirectoryFromProject(Paths.get("1")))
         .isNotEqualTo(CacheDirectories.getProjectCacheDirectoryFromProject(Paths.get("2")));
   }

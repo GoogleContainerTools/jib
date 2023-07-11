@@ -40,18 +40,21 @@ import com.google.cloud.tools.jib.registry.RegistryClient;
 import com.google.common.collect.ImmutableSet;
 import java.io.IOException;
 import java.util.List;
-import org.junit.Before;
 import org.junit.Rule;
-import org.junit.Test;
 import org.junit.contrib.java.lang.system.RestoreSystemProperties;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
 /** Tests for {@link PushImageStep}. */
-@RunWith(MockitoJUnitRunner.class)
-public class PushImageStepTest {
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
+class PushImageStepTest {
 
   @Rule public final RestoreSystemProperties systemPropertyRestorer = new RestoreSystemProperties();
 
@@ -64,8 +67,8 @@ public class PushImageStepTest {
 
   private final V22ManifestListTemplate manifestList = new V22ManifestListTemplate();
 
-  @Before
-  public void setUp() {
+  @BeforeEach
+  void setUp() {
     when(buildContext.getAllTargetImageTags()).thenReturn(ImmutableSet.of("tag1", "tag2"));
     when(buildContext.getEventHandlers()).thenReturn(EventHandlers.NONE);
     when(buildContext.getContainerConfiguration()).thenReturn(containerConfig);
@@ -83,7 +86,7 @@ public class PushImageStepTest {
   }
 
   @Test
-  public void testMakeListForManifestList() throws IOException, RegistryException {
+  void testMakeListForManifestList() throws IOException, RegistryException {
     List<PushImageStep> pushImageStepList =
         PushImageStep.makeListForManifestList(
             buildContext, progressDispatcherFactory, registryClient, manifestList, false);
@@ -99,7 +102,7 @@ public class PushImageStepTest {
   }
 
   @Test
-  public void testMakeList_multiPlatform_platformTags() throws IOException, RegistryException {
+  void testMakeList_multiPlatform_platformTags() throws IOException, RegistryException {
     Image image = Image.builder(V22ManifestTemplate.class).setArchitecture("wasm").build();
 
     when(buildContext.getEnablePlatformTags()).thenReturn(true);
@@ -124,7 +127,7 @@ public class PushImageStepTest {
   }
 
   @Test
-  public void testMakeList_multiPlatform_nonPlatformTags() throws IOException, RegistryException {
+  void testMakeList_multiPlatform_nonPlatformTags() throws IOException, RegistryException {
     Image image = Image.builder(V22ManifestTemplate.class).setArchitecture("wasm").build();
     when(buildContext.getEnablePlatformTags()).thenReturn(false);
 
@@ -147,7 +150,7 @@ public class PushImageStepTest {
   }
 
   @Test
-  public void testMakeListForManifestList_singlePlatform() throws IOException {
+  void testMakeListForManifestList_singlePlatform() throws IOException {
     when(containerConfig.getPlatforms())
         .thenReturn(ImmutableSet.of(new Platform("amd64", "linux")));
 
@@ -158,7 +161,7 @@ public class PushImageStepTest {
   }
 
   @Test
-  public void testMakeListForManifestList_manifestListAlreadyExists() throws IOException {
+  void testMakeListForManifestList_manifestListAlreadyExists() throws IOException {
     System.setProperty(JibSystemProperties.SKIP_EXISTING_IMAGES, "true");
 
     List<PushImageStep> pushImageStepList =

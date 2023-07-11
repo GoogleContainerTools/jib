@@ -27,7 +27,9 @@ dependencies {
   testImplementation dependencyStrings.SISU_PLEXUS
   testImplementation dependencyStrings.MAVEN_TESTING_HARNESS
 
-  testImplementation dependencyStrings.JUNIT
+  testImplementation dependencyStrings.SYSTEM_RULES_STUB
+  testImplementation dependencyStrings.JUNIT_API
+  testRuntimeOnly dependencyStrings.JUNIT_ENGINE
   testImplementation dependencyStrings.TRUTH
   testImplementation dependencyStrings.TRUTH8
   testImplementation dependencyStrings.MOCKITO_CORE
@@ -37,6 +39,7 @@ dependencies {
   testImplementation dependencyStrings.MAVEN_VERIFIER
   testImplementation dependencyStrings.MAVEN_COMPAT
   testImplementation dependencyStrings.SLF4J_SIMPLE
+  testImplementation dependencyStrings.JUNIT_PARAM_TESTS
 
   integrationTestImplementation dependencyStrings.JBCRYPT
 
@@ -71,7 +74,7 @@ release {
     'com.google.cloud.tools:jib-plugins-common',
   ]
   git {
-    requireBranch = /^maven-release-v\d+.*$/  //regex
+    requireBranch.set(/^maven-release-v\d+.*$/)  //regex
   }
 }
 /* RELEASE */

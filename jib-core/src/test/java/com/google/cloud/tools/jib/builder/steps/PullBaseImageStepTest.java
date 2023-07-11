@@ -63,17 +63,21 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
 import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
 /** Tests for {@link PullBaseImageStep}. */
-@RunWith(MockitoJUnitRunner.class)
-public class PullBaseImageStepTest {
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
+class PullBaseImageStepTest {
 
   @Mock private ProgressEventDispatcher.Factory progressDispatcherFactory;
   @Mock private ProgressEventDispatcher progressDispatcher;
@@ -87,8 +91,8 @@ public class PullBaseImageStepTest {
 
   private PullBaseImageStep pullBaseImageStep;
 
-  @Before
-  public void setUp() {
+  @BeforeEach
+  void setUp() {
     Mockito.when(buildContext.getBaseImageConfiguration()).thenReturn(imageConfiguration);
     Mockito.when(buildContext.getEventHandlers()).thenReturn(eventHandlers);
     Mockito.when(buildContext.getBaseImageLayersCache()).thenReturn(cache);
@@ -106,7 +110,7 @@ public class PullBaseImageStepTest {
   }
 
   @Test
-  public void testCall_scratch_singlePlatform()
+  void testCall_scratch_singlePlatform()
       throws LayerPropertyNotFoundException, IOException, RegistryException,
           LayerCountMismatchException, BadContainerConfigurationFormatException,
           CacheCorruptedException, CredentialRetrievalException {
@@ -120,7 +124,7 @@ public class PullBaseImageStepTest {
   }
 
   @Test
-  public void testCall_scratch_multiplePlatforms()
+  void testCall_scratch_multiplePlatforms()
       throws LayerPropertyNotFoundException, IOException, RegistryException,
           LayerCountMismatchException, BadContainerConfigurationFormatException,
           CacheCorruptedException, CredentialRetrievalException {
@@ -140,7 +144,7 @@ public class PullBaseImageStepTest {
   }
 
   @Test
-  public void testCall_digestBaseImage()
+  void testCall_digestBaseImage()
       throws LayerPropertyNotFoundException, IOException, RegistryException,
           LayerCountMismatchException, BadContainerConfigurationFormatException,
           CacheCorruptedException, CredentialRetrievalException, InvalidImageReferenceException {
@@ -167,7 +171,7 @@ public class PullBaseImageStepTest {
   }
 
   @Test
-  public void testCall_offlineMode_notCached()
+  void testCall_offlineMode_notCached()
       throws LayerPropertyNotFoundException, RegistryException, LayerCountMismatchException,
           BadContainerConfigurationFormatException, CacheCorruptedException,
           CredentialRetrievalException, InvalidImageReferenceException {
@@ -184,7 +188,7 @@ public class PullBaseImageStepTest {
   }
 
   @Test
-  public void testCall_offlineMode_cached()
+  void testCall_offlineMode_cached()
       throws LayerPropertyNotFoundException, RegistryException, LayerCountMismatchException,
           BadContainerConfigurationFormatException, CacheCorruptedException,
           CredentialRetrievalException, InvalidImageReferenceException, IOException {
@@ -211,7 +215,7 @@ public class PullBaseImageStepTest {
   }
 
   @Test
-  public void testLookUpPlatformSpecificDockerImageManifest()
+  void testLookUpPlatformSpecificDockerImageManifest()
       throws IOException, UnlistedPlatformInManifestListException {
     String manifestListJson =
         " {\n"
@@ -251,7 +255,7 @@ public class PullBaseImageStepTest {
   }
 
   @Test
-  public void testLookUpPlatformSpecificOciManifest()
+  void testLookUpPlatformSpecificOciManifest()
       throws IOException, UnlistedPlatformInManifestListException {
     String manifestListJson =
         " {\n"
@@ -291,7 +295,7 @@ public class PullBaseImageStepTest {
   }
 
   @Test
-  public void testGetCachedBaseImages_emptyCache()
+  void testGetCachedBaseImages_emptyCache()
       throws InvalidImageReferenceException, IOException, CacheCorruptedException,
           UnlistedPlatformInManifestListException, PlatformNotFoundInBaseImageException,
           BadContainerConfigurationFormatException, LayerCountMismatchException {
@@ -304,7 +308,7 @@ public class PullBaseImageStepTest {
   }
 
   @Test
-  public void testGetCachedBaseImages_partiallyCached_emptyListReturned()
+  void testGetCachedBaseImages_partiallyCached_emptyListReturned()
       throws InvalidImageReferenceException, CacheCorruptedException, IOException,
           LayerCountMismatchException, PlatformNotFoundInBaseImageException,
           BadContainerConfigurationFormatException, UnlistedPlatformInManifestListException {
@@ -322,7 +326,7 @@ public class PullBaseImageStepTest {
   }
 
   @Test
-  public void testGetCachedBaseImages_v21ManifestCached()
+  void testGetCachedBaseImages_v21ManifestCached()
       throws InvalidImageReferenceException, IOException, CacheCorruptedException,
           UnlistedPlatformInManifestListException, BadContainerConfigurationFormatException,
           LayerCountMismatchException, DigestException, PlatformNotFoundInBaseImageException {
@@ -352,7 +356,7 @@ public class PullBaseImageStepTest {
   }
 
   @Test
-  public void testGetCachedBaseImages_manifestCached()
+  void testGetCachedBaseImages_manifestCached()
       throws InvalidImageReferenceException, IOException, CacheCorruptedException,
           UnlistedPlatformInManifestListException, BadContainerConfigurationFormatException,
           LayerCountMismatchException, PlatformNotFoundInBaseImageException {
@@ -379,7 +383,7 @@ public class PullBaseImageStepTest {
   }
 
   @Test
-  public void testGetCachedBaseImages_manifestListCached()
+  void testGetCachedBaseImages_manifestListCached()
       throws InvalidImageReferenceException, IOException, CacheCorruptedException,
           UnlistedPlatformInManifestListException, BadContainerConfigurationFormatException,
           LayerCountMismatchException, PlatformNotFoundInBaseImageException {
@@ -429,7 +433,7 @@ public class PullBaseImageStepTest {
   }
 
   @Test
-  public void testGetCachedBaseImages_manifestListCached_partialMatches()
+  void testGetCachedBaseImages_manifestListCached_partialMatches()
       throws InvalidImageReferenceException, IOException, CacheCorruptedException,
           UnlistedPlatformInManifestListException, BadContainerConfigurationFormatException,
           LayerCountMismatchException, PlatformNotFoundInBaseImageException {
@@ -463,7 +467,7 @@ public class PullBaseImageStepTest {
   }
 
   @Test
-  public void testGetCachedBaseImages_manifestListCached_onlyPlatforms()
+  void testGetCachedBaseImages_manifestListCached_onlyPlatforms()
       throws InvalidImageReferenceException, IOException, CacheCorruptedException,
           UnlistedPlatformInManifestListException, PlatformNotFoundInBaseImageException,
           BadContainerConfigurationFormatException, LayerCountMismatchException {
@@ -507,7 +511,7 @@ public class PullBaseImageStepTest {
   }
 
   @Test
-  public void testTryMirrors_noMatchingMirrors()
+  void testTryMirrors_noMatchingMirrors()
       throws LayerCountMismatchException, BadContainerConfigurationFormatException,
           PlatformNotFoundInBaseImageException {
     Mockito.when(imageConfiguration.getImageRegistry()).thenReturn("registry");
@@ -525,7 +529,7 @@ public class PullBaseImageStepTest {
   }
 
   @Test
-  public void testTryMirrors_mirrorIoError()
+  void testTryMirrors_mirrorIoError()
       throws LayerCountMismatchException, BadContainerConfigurationFormatException, IOException,
           RegistryException {
     Mockito.when(imageConfiguration.getImageRegistry()).thenReturn("registry");
@@ -550,7 +554,7 @@ public class PullBaseImageStepTest {
   }
 
   @Test
-  public void testTryMirrors_multipleMirrors()
+  void testTryMirrors_multipleMirrors()
       throws LayerCountMismatchException, BadContainerConfigurationFormatException, IOException,
           RegistryException, InvalidImageReferenceException {
     Mockito.when(imageConfiguration.getImage()).thenReturn(ImageReference.parse("registry/repo"));
@@ -589,7 +593,7 @@ public class PullBaseImageStepTest {
   }
 
   @Test
-  public void testCall_allMirrorsFail()
+  void testCall_allMirrorsFail()
       throws InvalidImageReferenceException, IOException, RegistryException,
           LayerPropertyNotFoundException, LayerCountMismatchException,
           BadContainerConfigurationFormatException, CacheCorruptedException,
@@ -629,7 +633,7 @@ public class PullBaseImageStepTest {
   }
 
   @Test
-  public void testCall_ManifestList()
+  void testCall_ManifestList()
       throws InvalidImageReferenceException, IOException, RegistryException,
           LayerPropertyNotFoundException, LayerCountMismatchException,
           BadContainerConfigurationFormatException, CacheCorruptedException,
@@ -651,24 +655,28 @@ public class PullBaseImageStepTest {
     Assert.assertEquals("amd64", result.images.get(0).getArchitecture());
   }
 
-  @Test(expected = UnlistedPlatformInManifestListException.class)
-  public void testCall_ManifestList_UnknownArchitecture()
+  @Test
+  void testCall_ManifestList_UnknownArchitecture()
       throws InvalidImageReferenceException, IOException, RegistryException,
           LayerPropertyNotFoundException, LayerCountMismatchException,
           BadContainerConfigurationFormatException, CacheCorruptedException,
           CredentialRetrievalException {
-    Mockito.when(buildContext.getBaseImageConfiguration())
-        .thenReturn(ImageConfiguration.builder(ImageReference.parse("multiarch")).build());
-    Mockito.when(buildContext.getRegistryMirrors())
-        .thenReturn(ImmutableListMultimap.of("registry", "gcr.io"));
-    Mockito.when(containerConfig.getPlatforms())
-        .thenReturn(ImmutableSet.of(new Platform("arm64", "linux")));
-    RegistryClient.Factory dockerHubRegistryClientFactory =
-        setUpWorkingRegistryClientFactoryWithV22ManifestList();
-    Mockito.when(buildContext.newBaseImageRegistryClientFactory())
-        .thenReturn(dockerHubRegistryClientFactory);
+    Assertions.assertThrows(
+        UnlistedPlatformInManifestListException.class,
+        () -> {
+          Mockito.when(buildContext.getBaseImageConfiguration())
+              .thenReturn(ImageConfiguration.builder(ImageReference.parse("multiarch")).build());
+          Mockito.when(buildContext.getRegistryMirrors())
+              .thenReturn(ImmutableListMultimap.of("registry", "gcr.io"));
+          Mockito.when(containerConfig.getPlatforms())
+              .thenReturn(ImmutableSet.of(new Platform("arm64", "linux")));
+          RegistryClient.Factory dockerHubRegistryClientFactory =
+              setUpWorkingRegistryClientFactoryWithV22ManifestList();
+          Mockito.when(buildContext.newBaseImageRegistryClientFactory())
+              .thenReturn(dockerHubRegistryClientFactory);
 
-    pullBaseImageStep.call();
+          pullBaseImageStep.call();
+        });
   }
 
   private static RegistryClient.Factory setUpWorkingRegistryClientFactoryWithV22ManifestTemplate()

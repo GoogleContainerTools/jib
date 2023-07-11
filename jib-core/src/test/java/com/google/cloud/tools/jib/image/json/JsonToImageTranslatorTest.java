@@ -40,13 +40,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /** Tests for {@link JsonToImageTranslator}. */
-public class JsonToImageTranslatorTest {
+class JsonToImageTranslatorTest {
 
   @Test
-  public void testToImage_v21()
+  void testToImage_v21()
       throws IOException, LayerPropertyNotFoundException, DigestException, URISyntaxException,
           BadContainerConfigurationFormatException {
     // Loads the JSON string.
@@ -72,21 +72,21 @@ public class JsonToImageTranslatorTest {
   }
 
   @Test
-  public void testToImage_v22()
+  void testToImage_v22()
       throws IOException, LayerPropertyNotFoundException, LayerCountMismatchException,
           DigestException, URISyntaxException, BadContainerConfigurationFormatException {
     testToImage_buildable("core/json/v22manifest.json", V22ManifestTemplate.class);
   }
 
   @Test
-  public void testToImage_oci()
+  void testToImage_oci()
       throws IOException, LayerPropertyNotFoundException, LayerCountMismatchException,
           DigestException, URISyntaxException, BadContainerConfigurationFormatException {
     testToImage_buildable("core/json/ocimanifest.json", OciManifestTemplate.class);
   }
 
   @Test
-  public void testToImage_canParseTimestampWithOffset()
+  void testToImage_canParseTimestampWithOffset()
       throws IOException, LayerPropertyNotFoundException, URISyntaxException,
           LayerCountMismatchException, BadContainerConfigurationFormatException {
     Path containerConfigJson =
@@ -109,7 +109,7 @@ public class JsonToImageTranslatorTest {
   }
 
   @Test
-  public void testPortMapToList() throws BadContainerConfigurationFormatException {
+  void testPortMapToList() throws BadContainerConfigurationFormatException {
     ImmutableSortedMap<String, Map<String, String>> input =
         ImmutableSortedMap.of(
             "1000",
@@ -138,7 +138,7 @@ public class JsonToImageTranslatorTest {
   }
 
   @Test
-  public void testVolumeMapToList() throws BadContainerConfigurationFormatException {
+  void testVolumeMapToList() throws BadContainerConfigurationFormatException {
     ImmutableSortedMap<String, Map<String, String>> input =
         ImmutableSortedMap.of(
             "/var/job-result-data", ImmutableMap.of(), "/var/log/my-app-logs", ImmutableMap.of());
@@ -164,7 +164,7 @@ public class JsonToImageTranslatorTest {
   }
 
   @Test
-  public void testJsonToImageTranslatorRegex() {
+  void testJsonToImageTranslatorRegex() {
     assertGoodEnvironmentPattern("NAME=VALUE", "NAME", "VALUE");
     assertGoodEnvironmentPattern("A1203921=www=ww", "A1203921", "www=ww");
     assertGoodEnvironmentPattern("&*%(&#$(*@(%&@$*$(=", "&*%(&#$(*@(%&@$*$(", "");

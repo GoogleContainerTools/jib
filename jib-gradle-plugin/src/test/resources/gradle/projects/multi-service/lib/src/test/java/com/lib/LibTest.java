@@ -17,7 +17,7 @@
 package com.lib;
 
 import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /** Unit test for simple App. */
 public class LibTest {

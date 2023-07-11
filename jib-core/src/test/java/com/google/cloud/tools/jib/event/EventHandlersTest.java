@@ -22,11 +22,11 @@ import java.util.Arrays;
 import java.util.List;
 import javax.annotation.Nullable;
 import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
 /** Tests for {@link EventHandlers}. */
-public class EventHandlersTest {
+class EventHandlersTest {
 
   /** Test {@link JibEvent}. */
   private interface TestJibEvent1 extends JibEvent {
@@ -53,7 +53,7 @@ public class EventHandlersTest {
   private static class TestJibEvent3 implements JibEvent {}
 
   @Test
-  public void testAdd() {
+  void testAdd() {
     int[] counter = new int[1];
     EventHandlers eventHandlers =
         EventHandlers.builder()
@@ -87,7 +87,7 @@ public class EventHandlersTest {
   }
 
   @Test
-  public void testDispatch() {
+  void testDispatch() {
     List<String> emissions = new ArrayList<>();
 
     EventHandlers eventHandlers =

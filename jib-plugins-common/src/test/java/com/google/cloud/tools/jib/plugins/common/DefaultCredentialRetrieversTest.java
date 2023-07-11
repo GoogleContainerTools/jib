@@ -27,6 +27,7 @@ import com.google.cloud.tools.jib.api.Credential;
 import com.google.cloud.tools.jib.api.CredentialRetriever;
 import com.google.cloud.tools.jib.frontend.CredentialRetrieverFactory;
 import com.google.common.collect.ImmutableMap;
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -36,19 +37,21 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.io.TempDir;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
 /** Tests for {@link DefaultCredentialRetrievers}. */
-@RunWith(MockitoJUnitRunner.class)
-public class DefaultCredentialRetrieversTest {
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
+class DefaultCredentialRetrieversTest {
 
-  @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
+  @TempDir public Path temporaryFolder;
 
   @Mock private CredentialRetrieverFactory mockCredentialRetrieverFactory;
   @Mock private CredentialRetriever mockDockerCredentialHelperCredentialRetriever;
@@ -75,8 +78,8 @@ public class DefaultCredentialRetrieversTest {
   private final Credential knownCredential = Credential.from("username", "password");
   private final Credential inferredCredential = Credential.from("username2", "password2");
 
-  @Before
-  public void setUp() {
+  @BeforeEach
+  void setUp() {
     properties = new Properties();
     properties.setProperty("os.name", "unknown");
     properties.setProperty("user.home", Paths.get("/system/home").toString());
@@ -138,7 +141,7 @@ public class DefaultCredentialRetrieversTest {
   }
 
   @Test
-  public void testAsList() throws FileNotFoundException {
+  void testAsList() throws FileNotFoundException {
     List<CredentialRetriever> retriever =
         new DefaultCredentialRetrievers(mockCredentialRetrieverFactory, properties, environment)
             .asList();
@@ -162,7 +165,7 @@ public class DefaultCredentialRetrieversTest {
   }
 
   @Test
-  public void testAsList_all() throws FileNotFoundException {
+  void testAsList_all() throws FileNotFoundException {
     List<CredentialRetriever> retrievers =
         new DefaultCredentialRetrievers(mockCredentialRetrieverFactory, properties, environment)
             .setKnownCredential(knownCredential, "credentialSource")
@@ -197,8 +200,9 @@ public class DefaultCredentialRetrieversTest {
   }
 
   @Test
-  public void testAsList_credentialHelperPath() throws IOException {
-    Path fakeCredentialHelperPath = temporaryFolder.newFile("fake-credHelper").toPath();
+  void testAsList_credentialHelperPath() throws IOException {
+    Path fakeCredentialHelperPath = new File(temporaryFolder.toFile(), "fake-credHelper").toPath();
+    fakeCredentialHelperPath.toFile().createNewFile();
     DefaultCredentialRetrievers credentialRetrievers =
         new DefaultCredentialRetrievers(mockCredentialRetrieverFactory, properties, environment)
             .setCredentialHelper(fakeCredentialHelperPath.toString());
@@ -233,7 +237,7 @@ public class DefaultCredentialRetrieversTest {
   }
 
   @Test
-  public void testDockerConfigRetrievers_undefinedHome() throws FileNotFoundException {
+  void testDockerConfigRetrievers_undefinedHome() throws FileNotFoundException {
     List<CredentialRetriever> retrievers =
         new DefaultCredentialRetrievers(
                 mockCredentialRetrieverFactory, new Properties(), new HashMap<>())
@@ -246,7 +250,7 @@ public class DefaultCredentialRetrieversTest {
   }
 
   @Test
-  public void testDockerConfigRetrievers_noDuplicateRetrievers() throws FileNotFoundException {
+  void testDockerConfigRetrievers_noDuplicateRetrievers() throws FileNotFoundException {
     properties.setProperty("user.home", Paths.get("/env/home").toString());
     List<CredentialRetriever> retrievers =
         new DefaultCredentialRetrievers(mockCredentialRetrieverFactory, properties, environment)
@@ -286,8 +290,10 @@ public class DefaultCredentialRetrieversTest {
   }
 
   @Test
-  public void testCredentialHelper_cmdExtension() throws IOException {
-    Path credHelper = temporaryFolder.newFile("foo.cmd").toPath();
+  void testCredentialHelper_cmdExtension() throws IOException {
+    File f = new File(temporaryFolder.toFile(), "foo.cmd");
+    f.createNewFile();
+    Path credHelper = f.toPath();
     Path pathWithoutCmd = credHelper.getParent().resolve("foo");
     assertThat(credHelper).isEqualTo(pathWithoutCmd.getParent().resolve("foo.cmd"));
 
@@ -325,8 +331,10 @@ public class DefaultCredentialRetrieversTest {
   }
 
   @Test
-  public void testCredentialHelper_exeExtension() throws IOException {
-    Path credHelper = temporaryFolder.newFile("foo.exe").toPath();
+  void testCredentialHelper_exeExtension() throws IOException {
+    File f = new File(temporaryFolder.toFile(), "foo.exe");
+    f.createNewFile();
+    Path credHelper = f.toPath();
     Path pathWithoutExe = credHelper.getParent().resolve("foo");
     assertThat(credHelper).isEqualTo(pathWithoutExe.getParent().resolve("foo.exe"));
 

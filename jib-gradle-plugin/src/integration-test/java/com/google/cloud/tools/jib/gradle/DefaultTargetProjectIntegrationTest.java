@@ -18,19 +18,23 @@ package com.google.cloud.tools.jib.gradle;
 
 import com.google.cloud.tools.jib.Command;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.security.DigestException;
 import org.gradle.testkit.runner.UnexpectedBuildFailure;
 import org.hamcrest.CoreMatchers;
 import org.hamcrest.MatcherAssert;
 import org.junit.Assert;
 import org.junit.ClassRule;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 /** Integration tests for building "default-target" project images. */
-public class DefaultTargetProjectIntegrationTest {
+class DefaultTargetProjectIntegrationTest {
+
+  @TempDir Path tempDir;
 
   @ClassRule
-  public static final TestProject defaultTargetTestProject = new TestProject("default-target");
+  public final TestProject defaultTargetTestProject = new TestProject("default-target", tempDir);
 
   /**
    * Asserts that the test project has the required exposed ports, labels and volumes.
@@ -57,7 +61,7 @@ public class DefaultTargetProjectIntegrationTest {
   }
 
   @Test
-  public void testBuild_defaultTarget() {
+  void testBuild_defaultTarget() {
     // Test error when 'to' is missing
     try {
       defaultTargetTestProject.build(
@@ -74,8 +78,7 @@ public class DefaultTargetProjectIntegrationTest {
   }
 
   @Test
-  public void testDockerDaemon_defaultTarget()
-      throws IOException, InterruptedException, DigestException {
+  void testDockerDaemon_defaultTarget() throws IOException, InterruptedException, DigestException {
     Assert.assertEquals(
         "Hello, world. An argument.\n",
         JibRunHelper.buildToDockerDaemonAndRun(

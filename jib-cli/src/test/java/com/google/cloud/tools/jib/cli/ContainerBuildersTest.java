@@ -33,21 +33,24 @@ import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.Optional;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
 /** Tests for {@link ContainerBuilders}. */
-@RunWith(MockitoJUnitRunner.class)
-public class ContainerBuildersTest {
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
+class ContainerBuildersTest {
 
   @Mock private CommonCliOptions mockCommonCliOptions;
 
   @Mock private ConsoleLogger mockLogger;
 
   @Test
-  public void testCreate_dockerBaseImage()
+  void testCreate_dockerBaseImage()
       throws IOException, InvalidImageReferenceException, CacheDirectoryCreationException {
     JibContainerBuilder containerBuilder =
         ContainerBuilders.create(
@@ -63,7 +66,7 @@ public class ContainerBuildersTest {
   }
 
   @Test
-  public void testCreate_registry()
+  void testCreate_registry()
       throws IOException, InvalidImageReferenceException, CacheDirectoryCreationException {
     JibContainerBuilder containerBuilder =
         ContainerBuilders.create(
@@ -82,7 +85,7 @@ public class ContainerBuildersTest {
   }
 
   @Test
-  public void testCreate_tarBase()
+  void testCreate_tarBase()
       throws IOException, InvalidImageReferenceException, CacheDirectoryCreationException {
     JibContainerBuilder containerBuilder =
         ContainerBuilders.create(
@@ -97,7 +100,7 @@ public class ContainerBuildersTest {
   }
 
   @Test
-  public void testCreate_platforms() throws IOException, InvalidImageReferenceException {
+  void testCreate_platforms() throws IOException, InvalidImageReferenceException {
     JibContainerBuilder containerBuilder =
         ContainerBuilders.create(
             "registry://registry-image-ref",

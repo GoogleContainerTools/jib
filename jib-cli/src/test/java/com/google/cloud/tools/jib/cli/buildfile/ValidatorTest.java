@@ -24,19 +24,19 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /** Tests for {@link Validator}. */
-public class ValidatorTest {
+class ValidatorTest {
 
   @Test
-  public void testCheckNotNullAndNotEmpty_stringPass() {
+  void testCheckNotNullAndNotEmpty_stringPass() {
     Validator.checkNotNullAndNotEmpty("value", "ignored");
     // pass
   }
 
   @Test
-  public void testCheckNotNullAndNotEmpty_stringFailNull() {
+  void testCheckNotNullAndNotEmpty_stringFailNull() {
     try {
       Validator.checkNotNullAndNotEmpty((String) null, "test");
       Assert.fail();
@@ -46,7 +46,7 @@ public class ValidatorTest {
   }
 
   @Test
-  public void testCheckNotNullAndNotEmpty_stringFailEmpty() {
+  void testCheckNotNullAndNotEmpty_stringFailEmpty() {
     try {
       Validator.checkNotNullAndNotEmpty("  ", "test");
       Assert.fail();
@@ -56,17 +56,17 @@ public class ValidatorTest {
   }
 
   @Test
-  public void testCheckNullOrNotEmpty_valuePass() {
+  void testCheckNullOrNotEmpty_valuePass() {
     Validator.checkNullOrNotEmpty("value", "test");
   }
 
   @Test
-  public void testCheckNullOrNotEmpty_nullPass() {
+  void testCheckNullOrNotEmpty_nullPass() {
     Validator.checkNullOrNotEmpty(null, "test");
   }
 
   @Test
-  public void testCheckNullOrNotEmpty_fail() {
+  void testCheckNullOrNotEmpty_fail() {
     try {
       Validator.checkNullOrNotEmpty("   ", "test");
       Assert.fail();
@@ -76,13 +76,13 @@ public class ValidatorTest {
   }
 
   @Test
-  public void testCheckNotEmpty_collectionPass() {
+  void testCheckNotEmpty_collectionPass() {
     Validator.checkNotNullAndNotEmpty(ImmutableList.of("value"), "ignored");
     // pass
   }
 
   @Test
-  public void testCheckNotEmpty_collectionFailNull() {
+  void testCheckNotEmpty_collectionFailNull() {
     try {
       Validator.checkNotNullAndNotEmpty((Collection<?>) null, "test");
       Assert.fail();
@@ -92,7 +92,7 @@ public class ValidatorTest {
   }
 
   @Test
-  public void testCheckNotEmpty_collectionFailEmpty() {
+  void testCheckNotEmpty_collectionFailEmpty() {
     try {
       Validator.checkNotNullAndNotEmpty(ImmutableList.of(), "test");
       Assert.fail();
@@ -102,26 +102,26 @@ public class ValidatorTest {
   }
 
   @Test
-  public void testCheckNullOrNonNullNonEmptyEntries_nullMapPass() {
+  void testCheckNullOrNonNullNonEmptyEntries_nullMapPass() {
     Validator.checkNullOrNonNullNonEmptyEntries((Map<String, String>) null, "test");
     // pass
   }
 
   @Test
-  public void testCheckNullOrNonNullNonEmptyEntries_emptyMapPass() {
+  void testCheckNullOrNonNullNonEmptyEntries_emptyMapPass() {
     Validator.checkNullOrNonNullNonEmptyEntries(ImmutableMap.of(), "test");
     // pass
   }
 
   @Test
-  public void testCheckNullOrNonNullNonEmptyEntries_mapWithValuesPass() {
+  void testCheckNullOrNonNullNonEmptyEntries_mapWithValuesPass() {
     Validator.checkNullOrNonNullNonEmptyEntries(
         ImmutableMap.of("key1", "val1", "key2", "val2"), "test");
     // pass
   }
 
   @Test
-  public void testCheckNullOrNonNullNonEmptyEntries_mapNullKeyFail() {
+  void testCheckNullOrNonNullNonEmptyEntries_mapNullKeyFail() {
     try {
       Validator.checkNullOrNonNullNonEmptyEntries(Collections.singletonMap(null, "val1"), "test");
       Assert.fail();
@@ -131,7 +131,7 @@ public class ValidatorTest {
   }
 
   @Test
-  public void testCheckNullOrNonNullNonEmptyEntries_mapEmptyKeyFail() {
+  void testCheckNullOrNonNullNonEmptyEntries_mapEmptyKeyFail() {
     try {
       Validator.checkNullOrNonNullNonEmptyEntries(Collections.singletonMap(" ", "val1"), "test");
       Assert.fail();
@@ -141,7 +141,7 @@ public class ValidatorTest {
   }
 
   @Test
-  public void testCheckNullOrNonNullNonEmptyEntries_mapNullValueFail() {
+  void testCheckNullOrNonNullNonEmptyEntries_mapNullValueFail() {
     try {
       Validator.checkNullOrNonNullNonEmptyEntries(Collections.singletonMap("key1", null), "test");
       Assert.fail();
@@ -151,7 +151,7 @@ public class ValidatorTest {
   }
 
   @Test
-  public void testCheckNullOrNonNullNonEmptyEntries_mapEmptyValueFail() {
+  void testCheckNullOrNonNullNonEmptyEntries_mapEmptyValueFail() {
     try {
       Validator.checkNullOrNonNullNonEmptyEntries(Collections.singletonMap("key1", " "), "test");
       Assert.fail();
@@ -161,25 +161,25 @@ public class ValidatorTest {
   }
 
   @Test
-  public void testCheckNullOrNonNullNonEmptyEntries_nullPass() {
+  void testCheckNullOrNonNullNonEmptyEntries_nullPass() {
     Validator.checkNullOrNonNullNonEmptyEntries((List<String>) null, "test");
     // pass
   }
 
   @Test
-  public void testCheckNullOrNonNullNonEmptyEntries_emptyPass() {
+  void testCheckNullOrNonNullNonEmptyEntries_emptyPass() {
     Validator.checkNullOrNonNullNonEmptyEntries(ImmutableList.of(), "test");
     // pass
   }
 
   @Test
-  public void testCheckNullNonNullNonEmptyEntries_valuesPass() {
+  void testCheckNullNonNullNonEmptyEntries_valuesPass() {
     Validator.checkNullOrNonNullNonEmptyEntries(ImmutableList.of("first", "second"), "test");
     // pass
   }
 
   @Test
-  public void testCheckNullNonNullNonEmptyEntries_nullValueFail() {
+  void testCheckNullNonNullNonEmptyEntries_nullValueFail() {
     try {
       Validator.checkNullOrNonNullNonEmptyEntries(Arrays.asList("first", null), "test");
       Assert.fail();
@@ -189,7 +189,7 @@ public class ValidatorTest {
   }
 
   @Test
-  public void testCheckNullOrNonNullNonEmptyEntries_emptyValueFail() {
+  void testCheckNullOrNonNullNonEmptyEntries_emptyValueFail() {
     try {
       Validator.checkNullOrNonNullNonEmptyEntries(ImmutableList.of("first", "  "), "test");
       Assert.fail();
@@ -199,25 +199,25 @@ public class ValidatorTest {
   }
 
   @Test
-  public void testCheckNullOrNonNullEntries_nullPass() {
+  void testCheckNullOrNonNullEntries_nullPass() {
     Validator.checkNullOrNonNullEntries(null, "test");
     // pass
   }
 
   @Test
-  public void testCheckNullOrNonNullEntries_emptyPass() {
+  void testCheckNullOrNonNullEntries_emptyPass() {
     Validator.checkNullOrNonNullEntries(ImmutableList.of(), "test");
     // pass
   }
 
   @Test
-  public void testCheckNullOrNonNullEntries_valuesPass() {
+  void testCheckNullOrNonNullEntries_valuesPass() {
     Validator.checkNullOrNonNullEntries(ImmutableList.of(new Object(), new Object()), "test");
     // pass
   }
 
   @Test
-  public void testCheckNullOrNonNullEntries_nullFail() {
+  void testCheckNullOrNonNullEntries_nullFail() {
     try {
       Validator.checkNullOrNonNullEntries(Arrays.asList(new Object(), null), "test");
       Assert.fail();
@@ -228,13 +228,13 @@ public class ValidatorTest {
   }
 
   @Test
-  public void testCheckEquals_pass() {
+  void testCheckEquals_pass() {
     Validator.checkEquals("value", "ignored", "value");
     // pass
   }
 
   @Test
-  public void testCheckEquals_failsNull() {
+  void testCheckEquals_failsNull() {
     try {
       Validator.checkEquals(null, "test", "something");
       Assert.fail();
@@ -244,7 +244,7 @@ public class ValidatorTest {
   }
 
   @Test
-  public void testCheckEquals_failsNotEquals() {
+  void testCheckEquals_failsNotEquals() {
     try {
       Validator.checkEquals("somethingElse", "test", "something");
       Assert.fail();

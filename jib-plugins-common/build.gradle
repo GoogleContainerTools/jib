@@ -13,8 +13,12 @@ dependencies {
 
   implementation dependencyStrings.EXTENSION_COMMON
 
-  testImplementation dependencyStrings.JUNIT
+  testImplementation dependencyStrings.JUNIT_API
+  testRuntimeOnly dependencyStrings.JUNIT_ENGINE
   testImplementation dependencyStrings.JUNIT_PARAMS
+  testImplementation dependencyStrings.JUNIT_PARAM_TESTS
+  testImplementation dependencyStrings.SYSTEM_RULES_STUB
+
   testImplementation dependencyStrings.TRUTH
   testImplementation dependencyStrings.TRUTH8
   testImplementation dependencyStrings.MOCKITO_CORE

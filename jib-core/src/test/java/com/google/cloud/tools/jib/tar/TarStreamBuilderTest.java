@@ -37,11 +37,11 @@ import java.util.zip.GZIPOutputStream;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 /** Tests for {@link TarStreamBuilder}. */
-public class TarStreamBuilderTest {
+class TarStreamBuilderTest {
 
   private Path fileA;
   private Path fileB;
@@ -50,8 +50,8 @@ public class TarStreamBuilderTest {
   private byte[] fileBContents;
   private final TarStreamBuilder testTarStreamBuilder = new TarStreamBuilder();
 
-  @Before
-  public void setup() throws URISyntaxException, IOException {
+  @BeforeEach
+  void setup() throws URISyntaxException, IOException {
     // Gets the test resource files.
     fileA = Paths.get(Resources.getResource("core/fileA").toURI());
     fileB = Paths.get(Resources.getResource("core/fileB").toURI());
@@ -62,43 +62,43 @@ public class TarStreamBuilderTest {
   }
 
   @Test
-  public void testToBlob_tarArchiveEntries() throws IOException {
+  void testToBlob_tarArchiveEntries() throws IOException {
     setUpWithTarEntries();
     verifyBlobWithoutCompression();
   }
 
   @Test
-  public void testToBlob_strings() throws IOException {
+  void testToBlob_strings() throws IOException {
     setUpWithStrings();
     verifyBlobWithoutCompression();
   }
 
   @Test
-  public void testToBlob_stringsAndTarArchiveEntries() throws IOException {
+  void testToBlob_stringsAndTarArchiveEntries() throws IOException {
     setUpWithStringsAndTarEntries();
     verifyBlobWithoutCompression();
   }
 
   @Test
-  public void testToBlob_tarArchiveEntriesWithCompression() throws IOException {
+  void testToBlob_tarArchiveEntriesWithCompression() throws IOException {
     setUpWithTarEntries();
     verifyBlobWithCompression();
   }
 
   @Test
-  public void testToBlob_stringsWithCompression() throws IOException {
+  void testToBlob_stringsWithCompression() throws IOException {
     setUpWithStrings();
     verifyBlobWithCompression();
   }
 
   @Test
-  public void testToBlob_stringsAndTarArchiveEntriesWithCompression() throws IOException {
+  void testToBlob_stringsAndTarArchiveEntriesWithCompression() throws IOException {
     setUpWithStringsAndTarEntries();
     verifyBlobWithCompression();
   }
 
   @Test
-  public void testToBlob_multiByte() throws IOException {
+  void testToBlob_multiByte() throws IOException {
     testTarStreamBuilder.addByteEntry(
         "日本語".getBytes(StandardCharsets.UTF_8), "test", Instant.EPOCH);
     testTarStreamBuilder.addByteEntry(
@@ -137,7 +137,7 @@ public class TarStreamBuilderTest {
   }
 
   @Test
-  public void testToBlob_modificationTime() throws IOException {
+  void testToBlob_modificationTime() throws IOException {
     testTarStreamBuilder.addByteEntry(
         "foo".getBytes(StandardCharsets.UTF_8), "foo", Instant.ofEpochSecond(1234));
     testTarStreamBuilder.addBlobEntry(

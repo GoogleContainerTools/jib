@@ -23,15 +23,15 @@ import java.nio.file.Paths;
 import org.hamcrest.CoreMatchers;
 import org.hamcrest.MatcherAssert;
 import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /** Tests for {@link ArchiveLayerSpec}. */
-public class ArchiveLayerSpecTest {
+class ArchiveLayerSpecTest {
 
   private static final ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
 
   @Test
-  public void testArchiveLayerSpec_full() throws JsonProcessingException {
+  void testArchiveLayerSpec_full() throws JsonProcessingException {
     String data =
         "name: layer name\n" + "archive: out/archive.tgz\n" + "mediaType: test.media.type";
 
@@ -42,7 +42,7 @@ public class ArchiveLayerSpecTest {
   }
 
   @Test
-  public void testArchiveLayerSpec_nameRequired() {
+  void testArchiveLayerSpec_nameRequired() {
     String data = "archive: out/archive";
 
     try {
@@ -55,7 +55,7 @@ public class ArchiveLayerSpecTest {
   }
 
   @Test
-  public void testArchiveLayerSpec_nameNonNull() {
+  void testArchiveLayerSpec_nameNonNull() {
     String data = "name: null\n" + "archive: out/archive";
 
     try {
@@ -68,7 +68,7 @@ public class ArchiveLayerSpecTest {
   }
 
   @Test
-  public void testArchiveLayerSpec_nameNonEmpty() {
+  void testArchiveLayerSpec_nameNonEmpty() {
     String data = "name: ''\n" + "archive: out/archive";
 
     try {
@@ -84,7 +84,7 @@ public class ArchiveLayerSpecTest {
   // With {@link LayerSpec.Deserializer#deserialize} this test seems pointless, but it still helps
   // define the behavior of this class.
   @Test
-  public void testArchiveLayerSpec_archiveRequired() {
+  void testArchiveLayerSpec_archiveRequired() {
     String data = "name: layer name";
 
     try {
@@ -97,7 +97,7 @@ public class ArchiveLayerSpecTest {
   }
 
   @Test
-  public void testArchiveLayerSpec_archiveNonNull() {
+  void testArchiveLayerSpec_archiveNonNull() {
     String data = "name: layer name\n" + "archive: null";
 
     try {
@@ -110,7 +110,7 @@ public class ArchiveLayerSpecTest {
   }
 
   @Test
-  public void testArchiveLayerSpec_archiveNonEmpty() {
+  void testArchiveLayerSpec_archiveNonEmpty() {
     String data = "name: layer name\n" + "archive: ''";
 
     try {
@@ -124,7 +124,7 @@ public class ArchiveLayerSpecTest {
   }
 
   @Test
-  public void testArchiveLayerSpec_mediaTypeNonEmpty() {
+  void testArchiveLayerSpec_mediaTypeNonEmpty() {
     String data = "name: layer name\n" + "archive: out/archive.tgz\n" + "mediaType: ' '";
 
     try {

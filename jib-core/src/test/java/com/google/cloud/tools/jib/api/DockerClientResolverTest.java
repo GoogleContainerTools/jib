@@ -22,13 +22,13 @@ import com.google.cloud.tools.jib.docker.AnotherDockerClient;
 import com.google.cloud.tools.jib.docker.DockerClientResolver;
 import java.util.Collections;
 import java.util.Optional;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /** Tests for {@link DockerClientResolver}. */
-public class DockerClientResolverTest {
+class DockerClientResolverTest {
 
   @Test
-  public void testDockerClientIsReturned() {
+  void testDockerClientIsReturned() {
     Optional<DockerClient> dockerClient =
         DockerClientResolver.resolve(Collections.singletonMap("test", "true"));
     assertThat(dockerClient.get()).isInstanceOf(AnotherDockerClient.class);

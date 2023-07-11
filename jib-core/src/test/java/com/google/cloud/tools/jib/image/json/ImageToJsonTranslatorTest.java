@@ -46,10 +46,10 @@ import java.time.Instant;
 import java.util.Arrays;
 import java.util.Map;
 import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /** Tests for {@link ImageToJsonTranslator}. */
-public class ImageToJsonTranslatorTest {
+class ImageToJsonTranslatorTest {
 
   private ImageToJsonTranslator imageToJsonTranslator;
 
@@ -118,8 +118,7 @@ public class ImageToJsonTranslatorTest {
   }
 
   @Test
-  public void testGetContainerConfiguration()
-      throws IOException, URISyntaxException, DigestException {
+  void testGetContainerConfiguration() throws IOException, URISyntaxException, DigestException {
     setUp(V22ManifestTemplate.class);
 
     // Loads the expected JSON string.
@@ -133,19 +132,19 @@ public class ImageToJsonTranslatorTest {
   }
 
   @Test
-  public void testGetManifest_v22() throws URISyntaxException, IOException, DigestException {
+  void testGetManifest_v22() throws URISyntaxException, IOException, DigestException {
     setUp(V22ManifestTemplate.class);
     testGetManifest(V22ManifestTemplate.class, "core/json/translated_v22manifest.json");
   }
 
   @Test
-  public void testGetManifest_oci() throws URISyntaxException, IOException, DigestException {
+  void testGetManifest_oci() throws URISyntaxException, IOException, DigestException {
     setUp(OciManifestTemplate.class);
     testGetManifest(OciManifestTemplate.class, "core/json/translated_ocimanifest.json");
   }
 
   @Test
-  public void testPortListToMap() {
+  void testPortListToMap() {
     ImmutableSet<Port> input = ImmutableSet.of(Port.tcp(1000), Port.udp(2000));
     ImmutableSortedMap<String, Map<?, ?>> expected =
         ImmutableSortedMap.of("1000/tcp", ImmutableMap.of(), "2000/udp", ImmutableMap.of());
@@ -153,7 +152,7 @@ public class ImageToJsonTranslatorTest {
   }
 
   @Test
-  public void testVolumeListToMap() {
+  void testVolumeListToMap() {
     ImmutableSet<AbsoluteUnixPath> input =
         ImmutableSet.of(
             AbsoluteUnixPath.get("/var/job-result-data"),
@@ -165,7 +164,7 @@ public class ImageToJsonTranslatorTest {
   }
 
   @Test
-  public void testEnvironmentMapToList() {
+  void testEnvironmentMapToList() {
     ImmutableMap<String, String> input = ImmutableMap.of("NAME1", "VALUE1", "NAME2", "VALUE2");
     ImmutableList<String> expected = ImmutableList.of("NAME1=VALUE1", "NAME2=VALUE2");
     Assert.assertEquals(expected, ImageToJsonTranslator.environmentMapToList(input));

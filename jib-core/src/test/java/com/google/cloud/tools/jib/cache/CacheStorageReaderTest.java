@@ -50,14 +50,13 @@ import java.util.Optional;
 import org.hamcrest.CoreMatchers;
 import org.hamcrest.MatcherAssert;
 import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.mockito.Mockito;
 
 /** Tests for {@link CacheStorageReader}. */
-public class CacheStorageReaderTest {
+class CacheStorageReaderTest {
 
   private static void setupCachedMetadataV21(Path cacheDirectory)
       throws IOException, URISyntaxException {
@@ -158,7 +157,7 @@ public class CacheStorageReaderTest {
         Paths.get(Resources.getResource(path).toURI()), jsonClass);
   }
 
-  @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
+  @TempDir public Path temporaryFolder;
 
   private Path cacheDirectory;
   private DescriptorDigest layerDigest1;
@@ -166,9 +165,9 @@ public class CacheStorageReaderTest {
   private CacheStorageFiles cacheStorageFiles;
   private CacheStorageReader cacheStorageReader;
 
-  @Before
-  public void setUp() throws DigestException, IOException {
-    cacheDirectory = temporaryFolder.newFolder().toPath();
+  @BeforeEach
+  void setUp() throws DigestException, IOException {
+    cacheDirectory = Files.createTempDirectory(temporaryFolder, "jib");
     cacheStorageFiles = new CacheStorageFiles(cacheDirectory);
     cacheStorageReader = new CacheStorageReader(cacheStorageFiles);
     layerDigest1 =
@@ -180,7 +179,7 @@ public class CacheStorageReaderTest {
   }
 
   @Test
-  public void testRetrieveMetadata_v21SingleManifest()
+  void testRetrieveMetadata_v21SingleManifest()
       throws IOException, URISyntaxException, CacheCorruptedException {
     setupCachedMetadataV21(cacheDirectory);
 
@@ -203,7 +202,7 @@ public class CacheStorageReaderTest {
   }
 
   @Test
-  public void testRetrieveMetadata_v22SingleManifest()
+  void testRetrieveMetadata_v22SingleManifest()
       throws IOException, URISyntaxException, CacheCorruptedException {
     setupCachedMetadataV22(cacheDirectory);
 
@@ -221,7 +220,7 @@ public class CacheStorageReaderTest {
   }
 
   @Test
-  public void testRetrieveMetadata_v22ManifestList()
+  void testRetrieveMetadata_v22ManifestList()
       throws IOException, URISyntaxException, CacheCorruptedException {
     setupCachedMetadataV22ManifestList(cacheDirectory);
 
@@ -272,7 +271,7 @@ public class CacheStorageReaderTest {
   }
 
   @Test
-  public void testRetrieveMetadata_ociSingleManifest()
+  void testRetrieveMetadata_ociSingleManifest()
       throws IOException, URISyntaxException, CacheCorruptedException {
     setupCachedMetadataOci(cacheDirectory);
 
@@ -290,7 +289,7 @@ public class CacheStorageReaderTest {
   }
 
   @Test
-  public void testRetrieveMetadata_ociImageIndex()
+  void testRetrieveMetadata_ociImageIndex()
       throws IOException, URISyntaxException, CacheCorruptedException {
     setupCachedMetadataOciImageIndex(cacheDirectory);
 
@@ -320,7 +319,7 @@ public class CacheStorageReaderTest {
   }
 
   @Test
-  public void testRetrieveMetadata_containerConfiguration()
+  void testRetrieveMetadata_containerConfiguration()
       throws IOException, URISyntaxException, CacheCorruptedException {
     setupCachedMetadataV22(cacheDirectory);
 
@@ -337,7 +336,7 @@ public class CacheStorageReaderTest {
   }
 
   @Test
-  public void testRetrieve() throws IOException, CacheCorruptedException {
+  void testRetrieve() throws IOException, CacheCorruptedException {
     // Creates the test layer directory.
     DescriptorDigest layerDigest = layerDigest1;
     DescriptorDigest layerDiffId = layerDigest2;
@@ -373,7 +372,7 @@ public class CacheStorageReaderTest {
   }
 
   @Test
-  public void testRetrieveTarLayer() throws IOException, CacheCorruptedException {
+  void testRetrieveTarLayer() throws IOException, CacheCorruptedException {
     // Creates the test layer directory.
     Path localDirectory = cacheStorageFiles.getLocalDirectory();
     DescriptorDigest layerDigest = layerDigest1;
@@ -411,7 +410,7 @@ public class CacheStorageReaderTest {
   }
 
   @Test
-  public void testRetrieveLocalConfig() throws IOException, URISyntaxException, DigestException {
+  void testRetrieveLocalConfig() throws IOException, URISyntaxException, DigestException {
     Path configDirectory = cacheDirectory.resolve("local").resolve("config");
     Files.createDirectories(configDirectory);
     Files.copy(
@@ -436,7 +435,7 @@ public class CacheStorageReaderTest {
   }
 
   @Test
-  public void testSelect_invalidLayerDigest() throws IOException {
+  void testSelect_invalidLayerDigest() throws IOException {
     DescriptorDigest selector = layerDigest1;
     Path selectorFile = cacheStorageFiles.getSelectorFile(selector);
     Files.createDirectories(selectorFile.getParent());
@@ -457,7 +456,7 @@ public class CacheStorageReaderTest {
   }
 
   @Test
-  public void testSelect() throws IOException, CacheCorruptedException {
+  void testSelect() throws IOException, CacheCorruptedException {
     DescriptorDigest selector = layerDigest1;
     Path selectorFile = cacheStorageFiles.getSelectorFile(selector);
     Files.createDirectories(selectorFile.getParent());
@@ -469,7 +468,7 @@ public class CacheStorageReaderTest {
   }
 
   @Test
-  public void testVerifyImageMetadata_manifestCacheEmpty() {
+  void testVerifyImageMetadata_manifestCacheEmpty() {
     ImageMetadataTemplate metadata = new ImageMetadataTemplate(null, Collections.emptyList());
     try {
       CacheStorageReader.verifyImageMetadata(metadata, Paths.get("/cache/dir"));
@@ -480,7 +479,7 @@ public class CacheStorageReaderTest {
   }
 
   @Test
-  public void testVerifyImageMetadata_manifestListMissing() {
+  void testVerifyImageMetadata_manifestListMissing() {
     ManifestAndConfigTemplate manifestAndConfig =
         new ManifestAndConfigTemplate(
             new V22ManifestListTemplate(), new ContainerConfigurationTemplate());
@@ -495,7 +494,7 @@ public class CacheStorageReaderTest {
   }
 
   @Test
-  public void testVerifyImageMetadata_manifestsMissing() {
+  void testVerifyImageMetadata_manifestsMissing() {
     ManifestAndConfigTemplate manifestAndConfig =
         new ManifestAndConfigTemplate(null, new ContainerConfigurationTemplate());
     ImageMetadataTemplate metadata =
@@ -509,7 +508,7 @@ public class CacheStorageReaderTest {
   }
 
   @Test
-  public void testVerifyImageMetadata_schema1ManifestsCorrupted_manifestListExists() {
+  void testVerifyImageMetadata_schema1ManifestsCorrupted_manifestListExists() {
     ManifestAndConfigTemplate manifestAndConfig =
         new ManifestAndConfigTemplate(new V21ManifestTemplate(), null);
     ImageMetadataTemplate metadata =
@@ -524,7 +523,7 @@ public class CacheStorageReaderTest {
   }
 
   @Test
-  public void testVerifyImageMetadata_schema1ManifestsCorrupted_containerConfigExists() {
+  void testVerifyImageMetadata_schema1ManifestsCorrupted_containerConfigExists() {
     ManifestAndConfigTemplate manifestAndConfig =
         new ManifestAndConfigTemplate(
             new V21ManifestTemplate(), new ContainerConfigurationTemplate());
@@ -540,7 +539,7 @@ public class CacheStorageReaderTest {
   }
 
   @Test
-  public void testVerifyImageMetadata_schema2ManifestsCorrupted_nullContainerConfig() {
+  void testVerifyImageMetadata_schema2ManifestsCorrupted_nullContainerConfig() {
     ManifestAndConfigTemplate manifestAndConfig =
         new ManifestAndConfigTemplate(new V22ManifestTemplate(), null, "sha256:digest");
     ImageMetadataTemplate metadata =
@@ -555,7 +554,7 @@ public class CacheStorageReaderTest {
   }
 
   @Test
-  public void testVerifyImageMetadata_schema2ManifestsCorrupted_nullManifestDigest() {
+  void testVerifyImageMetadata_schema2ManifestsCorrupted_nullManifestDigest() {
     ManifestAndConfigTemplate manifestAndConfig =
         new ManifestAndConfigTemplate(
             new V22ManifestTemplate(), new ContainerConfigurationTemplate(), null);
@@ -571,7 +570,7 @@ public class CacheStorageReaderTest {
   }
 
   @Test
-  public void testVerifyImageMetadata_unknownManifestType() {
+  void testVerifyImageMetadata_unknownManifestType() {
     ManifestAndConfigTemplate manifestAndConfig =
         new ManifestAndConfigTemplate(
             Mockito.mock(ManifestTemplate.class), new ContainerConfigurationTemplate());
@@ -586,7 +585,7 @@ public class CacheStorageReaderTest {
   }
 
   @Test
-  public void testVerifyImageMetadata_validV21() throws CacheCorruptedException {
+  void testVerifyImageMetadata_validV21() throws CacheCorruptedException {
     ManifestAndConfigTemplate manifestAndConfig =
         new ManifestAndConfigTemplate(new V21ManifestTemplate(), null);
     ImageMetadataTemplate metadata =
@@ -596,7 +595,7 @@ public class CacheStorageReaderTest {
   }
 
   @Test
-  public void testVerifyImageMetadata_validV22() throws CacheCorruptedException {
+  void testVerifyImageMetadata_validV22() throws CacheCorruptedException {
     ManifestAndConfigTemplate manifestAndConfig =
         new ManifestAndConfigTemplate(
             new V22ManifestTemplate(), new ContainerConfigurationTemplate());
@@ -607,7 +606,7 @@ public class CacheStorageReaderTest {
   }
 
   @Test
-  public void testVerifyImageMetadata_validV22ManifestList() throws CacheCorruptedException {
+  void testVerifyImageMetadata_validV22ManifestList() throws CacheCorruptedException {
     ManifestAndConfigTemplate manifestAndConfig =
         new ManifestAndConfigTemplate(
             new V22ManifestTemplate(), new ContainerConfigurationTemplate(), "sha256:digest");
@@ -619,7 +618,7 @@ public class CacheStorageReaderTest {
   }
 
   @Test
-  public void testVerifyImageMetadata_validOci() throws CacheCorruptedException {
+  void testVerifyImageMetadata_validOci() throws CacheCorruptedException {
     ManifestAndConfigTemplate manifestAndConfig =
         new ManifestAndConfigTemplate(
             new OciManifestTemplate(), new ContainerConfigurationTemplate(), "sha256:digest");
@@ -630,7 +629,7 @@ public class CacheStorageReaderTest {
   }
 
   @Test
-  public void testVerifyImageMetadata_validOciImageIndex() throws CacheCorruptedException {
+  void testVerifyImageMetadata_validOciImageIndex() throws CacheCorruptedException {
     ManifestAndConfigTemplate manifestAndConfig =
         new ManifestAndConfigTemplate(
             new OciManifestTemplate(), new ContainerConfigurationTemplate(), "sha256:digest");
@@ -642,7 +641,7 @@ public class CacheStorageReaderTest {
   }
 
   @Test
-  public void testAllLayersCached_v21SingleManifest()
+  void testAllLayersCached_v21SingleManifest()
       throws IOException, CacheCorruptedException, DigestException, URISyntaxException {
     setupCachedMetadataV21(cacheDirectory);
     ImageMetadataTemplate metadata =
@@ -664,7 +663,7 @@ public class CacheStorageReaderTest {
   }
 
   @Test
-  public void testAllLayersCached_v22SingleManifest()
+  void testAllLayersCached_v22SingleManifest()
       throws IOException, CacheCorruptedException, DigestException, URISyntaxException {
     setupCachedMetadataV22(cacheDirectory);
     ImageMetadataTemplate metadata =

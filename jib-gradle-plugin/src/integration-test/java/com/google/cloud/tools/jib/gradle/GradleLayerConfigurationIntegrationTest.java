@@ -27,17 +27,22 @@ import java.util.zip.GZIPInputStream;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.junit.ClassRule;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
-public class GradleLayerConfigurationIntegrationTest {
+class GradleLayerConfigurationIntegrationTest {
+
+  @TempDir Path tempDir;
+
+  @TempDir Path tempDirSimple;
 
   @ClassRule
-  public static final TestProject multiTestProject = new TestProject("all-local-multi-service");
+  public final TestProject multiTestProject = new TestProject("all-local-multi-service", tempDir);
 
-  @ClassRule public static final TestProject configTestProject = new TestProject("simple");
+  @ClassRule public final TestProject configTestProject = new TestProject("simple", tempDirSimple);
 
   @Test
-  public void testGradleLayerConfiguration_configurationName() throws IOException {
+  void testGradleLayerConfiguration_configurationName() throws IOException {
     configTestProject.build("jibBuildTar", "-b=build-configuration.gradle");
     Path jibTar = configTestProject.getProjectRoot().resolve("build/jib-image.tar");
     List<List<String>> layers = getLayers(jibTar);
@@ -54,7 +59,7 @@ public class GradleLayerConfigurationIntegrationTest {
   }
 
   @Test
-  public void testGradleLayerConfiguration_configurationName_prioritizeSystemProperty()
+  void testGradleLayerConfiguration_configurationName_prioritizeSystemProperty()
       throws IOException {
     configTestProject.build(
         "jibBuildTar",
@@ -76,7 +81,7 @@ public class GradleLayerConfigurationIntegrationTest {
   }
 
   @Test
-  public void testGradleLayerConfiguration_multiModule() throws IOException {
+  void testGradleLayerConfiguration_multiModule() throws IOException {
     multiTestProject.build(":complex-service:jibBuildTar");
 
     Path jibTar = multiTestProject.getProjectRoot().resolve("complex-service/build/jib-image.tar");
@@ -133,7 +138,7 @@ public class GradleLayerConfigurationIntegrationTest {
   }
 
   @Test
-  public void testGradleLayerConfiguration_simpleModule() throws IOException {
+  void testGradleLayerConfiguration_simpleModule() throws IOException {
     multiTestProject.build(":simple-service:jibBuildTar");
 
     Path jibTar = multiTestProject.getProjectRoot().resolve("simple-service/build/jib-image.tar");

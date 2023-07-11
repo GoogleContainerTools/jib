@@ -38,16 +38,19 @@ import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;
 import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
 /** Tests for {@link BuildImageStep}. */
-@RunWith(MockitoJUnitRunner.class)
-public class BuildImageStepTest {
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
+class BuildImageStepTest {
 
   @Mock private ProgressEventDispatcher.Factory mockProgressEventDispatcherFactory;
   @Mock private BuildContext mockBuildContext;
@@ -62,8 +65,8 @@ public class BuildImageStepTest {
   private HistoryEntry nonEmptyLayerHistory;
   private HistoryEntry emptyLayerHistory;
 
-  @Before
-  public void setUp() throws DigestException {
+  @BeforeEach
+  void setUp() throws DigestException {
     testDescriptorDigest =
         DescriptorDigest.fromHash(
             "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
@@ -135,7 +138,7 @@ public class BuildImageStepTest {
   }
 
   @Test
-  public void test_basicCase() {
+  void test_basicCase() {
     Image image =
         new BuildImageStep(
                 mockBuildContext,
@@ -150,7 +153,7 @@ public class BuildImageStepTest {
   }
 
   @Test
-  public void test_propagateBaseImageConfiguration() {
+  void test_propagateBaseImageConfiguration() {
     Mockito.when(mockContainerConfiguration.getEnvironmentMap())
         .thenReturn(ImmutableMap.of("MY_ENV", "MY_ENV_VALUE", "BASE_ENV_2", "NEW_VALUE"));
     Mockito.when(mockContainerConfiguration.getLabels())
@@ -216,7 +219,7 @@ public class BuildImageStepTest {
   }
 
   @Test
-  public void testOverrideWorkingDirectory() {
+  void testOverrideWorkingDirectory() {
     Mockito.when(mockContainerConfiguration.getWorkingDirectory())
         .thenReturn(AbsoluteUnixPath.get("/my/directory"));
 
@@ -233,7 +236,7 @@ public class BuildImageStepTest {
   }
 
   @Test
-  public void test_inheritedUser() {
+  void test_inheritedUser() {
     Mockito.when(mockContainerConfiguration.getUser()).thenReturn(null);
 
     Image image =
@@ -249,7 +252,7 @@ public class BuildImageStepTest {
   }
 
   @Test
-  public void test_inheritedEntrypoint() {
+  void test_inheritedEntrypoint() {
     Mockito.when(mockContainerConfiguration.getEntrypoint()).thenReturn(null);
     Mockito.when(mockContainerConfiguration.getProgramArguments())
         .thenReturn(ImmutableList.of("test"));
@@ -268,7 +271,7 @@ public class BuildImageStepTest {
   }
 
   @Test
-  public void test_inheritedEntrypointAndProgramArguments() {
+  void test_inheritedEntrypointAndProgramArguments() {
     Mockito.when(mockContainerConfiguration.getEntrypoint()).thenReturn(null);
     Mockito.when(mockContainerConfiguration.getProgramArguments()).thenReturn(null);
 
@@ -286,7 +289,7 @@ public class BuildImageStepTest {
   }
 
   @Test
-  public void test_notInheritedProgramArguments() {
+  void test_notInheritedProgramArguments() {
     Mockito.when(mockContainerConfiguration.getEntrypoint())
         .thenReturn(ImmutableList.of("myEntrypoint"));
     Mockito.when(mockContainerConfiguration.getProgramArguments()).thenReturn(null);
@@ -305,7 +308,7 @@ public class BuildImageStepTest {
   }
 
   @Test
-  public void test_generateHistoryObjects() {
+  void test_generateHistoryObjects() {
     Image image =
         new BuildImageStep(
                 mockBuildContext,
@@ -372,7 +375,7 @@ public class BuildImageStepTest {
   }
 
   @Test
-  public void testTruncateLongClasspath_shortClasspath() {
+  void testTruncateLongClasspath_shortClasspath() {
     ImmutableList<String> entrypoint =
         ImmutableList.of(
             "java", "-Dmy-property=value", "-cp", "/app/classes:/app/libs/*", "com.example.Main");
@@ -383,7 +386,7 @@ public class BuildImageStepTest {
   }
 
   @Test
-  public void testTruncateLongClasspath_longClasspath() {
+  void testTruncateLongClasspath_longClasspath() {
     String classpath =
         "/app/resources:/app/classes:/app/libs/spring-boot-starter-web-2.0.3.RELEASE.jar:/app/libs/"
             + "shared-library-0.1.0.jar:/app/libs/spring-boot-starter-json-2.0.3.RELEASE.jar:/app/"

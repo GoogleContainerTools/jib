@@ -26,27 +26,30 @@ import java.nio.file.Paths;
 import org.hamcrest.CoreMatchers;
 import org.hamcrest.MatcherAssert;
 import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
 /** Test for {@link MainClassResolver}. */
-@RunWith(MockitoJUnitRunner.class)
-public class MainClassResolverTest {
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
+class MainClassResolverTest {
 
   @Mock private ProjectProperties mockProjectProperties;
 
-  @Before
-  public void setup() {
+  @BeforeEach
+  void setupBefore() {
     Mockito.when(mockProjectProperties.getPluginName()).thenReturn("jib-plugin");
     Mockito.when(mockProjectProperties.getJarPluginName()).thenReturn("jar-plugin");
   }
 
   @Test
-  public void testResolveMainClass_validMainClassConfigured()
+  void testResolveMainClass_validMainClassConfigured()
       throws MainClassInferenceException, IOException {
     Assert.assertEquals(
         "configured.main.class",
@@ -55,7 +58,7 @@ public class MainClassResolverTest {
   }
 
   @Test
-  public void testResolveMainClass_invalidMainClassConfigured() throws IOException {
+  void testResolveMainClass_invalidMainClassConfigured() throws IOException {
     try {
       MainClassResolver.resolveMainClass("In Val id", mockProjectProperties);
       Assert.fail();
@@ -71,7 +74,7 @@ public class MainClassResolverTest {
   }
 
   @Test
-  public void testResolveMainClass_validMainClassFromJarPlugin()
+  void testResolveMainClass_validMainClassFromJarPlugin()
       throws MainClassInferenceException, IOException {
     Mockito.when(mockProjectProperties.getMainClassFromJarPlugin())
         .thenReturn("main.class.from.jar");
@@ -85,7 +88,7 @@ public class MainClassResolverTest {
   }
 
   @Test
-  public void testResolveMainClass_multipleInferredWithInvalidMainClassFromJarPlugin()
+  void testResolveMainClass_multipleInferredWithInvalidMainClassFromJarPlugin()
       throws URISyntaxException, IOException {
     Mockito.when(mockProjectProperties.getMainClassFromJarPlugin()).thenReturn("${start-class}");
     Mockito.when(mockProjectProperties.getClassFiles())
@@ -119,7 +122,7 @@ public class MainClassResolverTest {
   }
 
   @Test
-  public void testResolveMainClass_multipleInferredWithoutMainClassFromJarPlugin()
+  void testResolveMainClass_multipleInferredWithoutMainClassFromJarPlugin()
       throws URISyntaxException, IOException {
     Mockito.when(mockProjectProperties.getClassFiles())
         .thenReturn(
@@ -148,8 +151,7 @@ public class MainClassResolverTest {
   }
 
   @Test
-  public void testResolveMainClass_noneInferredWithInvalidMainClassFromJarPlugin()
-      throws IOException {
+  void testResolveMainClass_noneInferredWithInvalidMainClassFromJarPlugin() throws IOException {
     Mockito.when(mockProjectProperties.getMainClassFromJarPlugin()).thenReturn("${start-class}");
     Mockito.when(mockProjectProperties.getClassFiles())
         .thenReturn(ImmutableList.of(Paths.get("ignored")));
@@ -176,7 +178,7 @@ public class MainClassResolverTest {
   }
 
   @Test
-  public void testResolveMainClass_noneInferredWithoutMainClassFromJar() throws IOException {
+  void testResolveMainClass_noneInferredWithoutMainClassFromJar() throws IOException {
     Mockito.when(mockProjectProperties.getClassFiles())
         .thenReturn(ImmutableList.of(Paths.get("ignored")));
     try {
@@ -199,7 +201,7 @@ public class MainClassResolverTest {
   }
 
   @Test
-  public void testValidJavaClassRegex() {
+  void testValidJavaClassRegex() {
     Assert.assertTrue(MainClassResolver.isValidJavaClass("my.Class"));
     Assert.assertTrue(MainClassResolver.isValidJavaClass("my.java_Class$valid"));
     Assert.assertTrue(MainClassResolver.isValidJavaClass("multiple.package.items"));

@@ -28,15 +28,18 @@ import java.util.Collections;
 import org.hamcrest.CoreMatchers;
 import org.hamcrest.MatcherAssert;
 import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
 /** Tests for {@link AuthenticationMethodRetriever}. */
-@RunWith(MockitoJUnitRunner.class)
-public class AuthenticationMethodRetrieverTest {
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
+class AuthenticationMethodRetrieverTest {
 
   @Mock private ResponseException mockResponseException;
   @Mock private HttpHeaders mockHeaders;
@@ -49,42 +52,42 @@ public class AuthenticationMethodRetrieverTest {
           fakeRegistryEndpointRequestProperties, "user-agent", httpClient);
 
   @Test
-  public void testGetContent() {
+  void testGetContent() {
     Assert.assertNull(testAuthenticationMethodRetriever.getContent());
   }
 
   @Test
-  public void testGetAccept() {
+  void testGetAccept() {
     Assert.assertEquals(0, testAuthenticationMethodRetriever.getAccept().size());
   }
 
   @Test
-  public void testHandleResponse() {
+  void testHandleResponse() {
     Assert.assertFalse(
         testAuthenticationMethodRetriever.handleResponse(Mockito.mock(Response.class)).isPresent());
   }
 
   @Test
-  public void testGetApiRoute() throws MalformedURLException {
+  void testGetApiRoute() throws MalformedURLException {
     Assert.assertEquals(
         new URL("http://someApiBase/"),
         testAuthenticationMethodRetriever.getApiRoute("http://someApiBase/"));
   }
 
   @Test
-  public void testGetHttpMethod() {
+  void testGetHttpMethod() {
     Assert.assertEquals(HttpMethods.GET, testAuthenticationMethodRetriever.getHttpMethod());
   }
 
   @Test
-  public void testGetActionDescription() {
+  void testGetActionDescription() {
     Assert.assertEquals(
         "retrieve authentication method for someServerUrl",
         testAuthenticationMethodRetriever.getActionDescription());
   }
 
   @Test
-  public void testHandleHttpResponseException_invalidStatusCode() throws RegistryErrorException {
+  void testHandleHttpResponseException_invalidStatusCode() throws RegistryErrorException {
     Mockito.when(mockResponseException.getStatusCode()).thenReturn(-1);
 
     try {
@@ -98,7 +101,7 @@ public class AuthenticationMethodRetrieverTest {
   }
 
   @Test
-  public void testHandleHttpResponseException_noHeader() throws ResponseException {
+  void testHandleHttpResponseException_noHeader() throws ResponseException {
     Mockito.when(mockResponseException.getStatusCode())
         .thenReturn(HttpStatusCodes.STATUS_CODE_UNAUTHORIZED);
     Mockito.when(mockResponseException.getHeaders()).thenReturn(mockHeaders);
@@ -116,7 +119,7 @@ public class AuthenticationMethodRetrieverTest {
   }
 
   @Test
-  public void testHandleHttpResponseException_badAuthenticationMethod() throws ResponseException {
+  void testHandleHttpResponseException_badAuthenticationMethod() throws ResponseException {
     String authenticationMethod = "bad authentication method";
 
     Mockito.when(mockResponseException.getStatusCode())
@@ -138,7 +141,7 @@ public class AuthenticationMethodRetrieverTest {
   }
 
   @Test
-  public void testHandleHttpResponseException_pass()
+  void testHandleHttpResponseException_pass()
       throws RegistryErrorException, ResponseException, MalformedURLException {
     String authenticationMethod =
         "Bearer realm=\"https://somerealm\",service=\"someservice\",scope=\"somescope\"";

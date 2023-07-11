@@ -23,17 +23,17 @@ import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.Optional;
 import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /** Tests for {@link TimerEventHandler}. */
-public class TimerEventHandlerTest {
+class TimerEventHandlerTest {
 
   private final Deque<String> logMessageQueue = new ArrayDeque<>();
 
   private static final TimerEvent.Timer ROOT_TIMER = Optional::empty;
 
   @Test
-  public void testAccept() {
+  void testAccept() {
     TimerEventHandler timerEventHandler = new TimerEventHandler(logMessageQueue::add);
 
     timerEventHandler.accept(

@@ -32,10 +32,10 @@ import java.util.List;
 import org.hamcrest.CoreMatchers;
 import org.hamcrest.MatcherAssert;
 import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /** Tests for {@link JsonTemplateMapper}. */
-public class JsonTemplateMapperTest {
+class JsonTemplateMapperTest {
 
   private static class TestJson implements JsonTemplate {
     private int number;
@@ -54,7 +54,7 @@ public class JsonTemplateMapperTest {
   }
 
   @Test
-  public void testWriteJson() throws DigestException, IOException, URISyntaxException {
+  void testWriteJson() throws DigestException, IOException, URISyntaxException {
     Path jsonFile = Paths.get(Resources.getResource("core/json/basic.json").toURI());
     String expectedJson = new String(Files.readAllBytes(jsonFile), StandardCharsets.UTF_8);
 
@@ -90,7 +90,7 @@ public class JsonTemplateMapperTest {
   }
 
   @Test
-  public void testReadJsonWithLock() throws IOException, URISyntaxException, DigestException {
+  void testReadJsonWithLock() throws IOException, URISyntaxException, DigestException {
     Path jsonFile = Paths.get(Resources.getResource("core/json/basic.json").toURI());
 
     // Deserializes into a metadata JSON object.
@@ -120,7 +120,7 @@ public class JsonTemplateMapperTest {
   }
 
   @Test
-  public void testReadListOfJson() throws IOException, URISyntaxException, DigestException {
+  void testReadListOfJson() throws IOException, URISyntaxException, DigestException {
     Path jsonFile = Paths.get(Resources.getResource("core/json/basic_list.json").toURI());
 
     String jsonString = new String(Files.readAllBytes(jsonFile), StandardCharsets.UTF_8);
@@ -148,7 +148,7 @@ public class JsonTemplateMapperTest {
   }
 
   @Test
-  public void testToBlob_listOfJson() throws IOException, URISyntaxException {
+  void testToBlob_listOfJson() throws IOException, URISyntaxException {
     Path jsonFile = Paths.get(Resources.getResource("core/json/basic_list.json").toURI());
 
     String jsonString = new String(Files.readAllBytes(jsonFile), StandardCharsets.UTF_8);
@@ -158,7 +158,7 @@ public class JsonTemplateMapperTest {
   }
 
   @Test
-  public void testReadJson_inputStream() throws IOException {
+  void testReadJson_inputStream() throws IOException {
     String testJson = "{\"number\":3, \"text\":\"cool\"}";
     ByteArrayInputStream in = new ByteArrayInputStream(testJson.getBytes(StandardCharsets.UTF_8));
     TestJson json = JsonTemplateMapper.readJson(in, TestJson.class);

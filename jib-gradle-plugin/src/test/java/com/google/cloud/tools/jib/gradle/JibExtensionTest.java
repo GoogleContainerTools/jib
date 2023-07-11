@@ -32,26 +32,37 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Properties;
+import java.util.stream.Collectors;
 import org.gradle.api.Project;
 import org.gradle.api.provider.Property;
 import org.gradle.api.provider.Provider;
 import org.gradle.api.provider.ProviderFactory;
 import org.gradle.testfixtures.ProjectBuilder;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.contrib.java.lang.system.RestoreSystemProperties;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
+import uk.org.webcompere.systemstubs.jupiter.SystemStub;
+import uk.org.webcompere.systemstubs.jupiter.SystemStubsExtension;
+import uk.org.webcompere.systemstubs.properties.SystemProperties;
 
 /** Tests for {@link JibExtension}. */
-public class JibExtensionTest {
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
+@ExtendWith(SystemStubsExtension.class)
+class JibExtensionTest {
 
-  @Rule public final RestoreSystemProperties systemPropertyRestorer = new RestoreSystemProperties();
+  @SystemStub
+  @SuppressWarnings("unused")
+  private SystemProperties restoreSystemProperties = new SystemProperties();
 
   private JibExtension testJibExtension;
   private Project fakeProject;
 
-  @Before
-  public void setUp() {
+  @BeforeEach
+  void setUp() {
     fakeProject = ProjectBuilder.builder().build();
     testJibExtension =
         fakeProject
@@ -60,7 +71,7 @@ public class JibExtensionTest {
   }
 
   @Test
-  public void testFrom() {
+  void testFrom() {
     assertThat(testJibExtension.getFrom().getImage()).isNull();
     assertThat(testJibExtension.getFrom().getCredHelper().getHelper()).isNull();
 
@@ -96,7 +107,7 @@ public class JibExtensionTest {
   }
 
   @Test
-  public void testFromCredHelperClosure() {
+  void testFromCredHelperClosure() {
     assertThat(testJibExtension.getFrom().getImage()).isNull();
     assertThat(testJibExtension.getFrom().getCredHelper().getHelper()).isNull();
 
@@ -116,7 +127,7 @@ public class JibExtensionTest {
   }
 
   @Test
-  public void testTo() {
+  void testTo() {
     assertThat(testJibExtension.getTo().getImage()).isNull();
     assertThat(testJibExtension.getTo().getCredHelper().getHelper()).isNull();
 
@@ -134,7 +145,7 @@ public class JibExtensionTest {
   }
 
   @Test
-  public void testToCredHelperClosure() {
+  void testToCredHelperClosure() {
     assertThat(testJibExtension.getTo().getImage()).isNull();
     assertThat(testJibExtension.getTo().getCredHelper().getHelper()).isNull();
 
@@ -153,12 +164,12 @@ public class JibExtensionTest {
   }
 
   @Test
-  public void testToTags_noTagsPropertySet() {
+  void testToTags_noTagsPropertySet() {
     assertThat(testJibExtension.getTo().getTags()).isEmpty();
   }
 
   @Test
-  public void testToTags_containsNullTag() {
+  void testToTags_containsNullTag() {
     TargetImageParameters testToParameters = generateTargetImageParametersWithTags(null, "tag1");
     Exception exception =
         assertThrows(IllegalArgumentException.class, () -> testToParameters.getTags());
@@ -166,7 +177,7 @@ public class JibExtensionTest {
   }
 
   @Test
-  public void testToTags_containsEmptyTag() {
+  void testToTags_containsEmptyTag() {
     TargetImageParameters testToParameters = generateTargetImageParametersWithTags("", "tag1");
     Exception exception =
         assertThrows(IllegalArgumentException.class, () -> testToParameters.getTags());
@@ -174,7 +185,8 @@ public class JibExtensionTest {
   }
 
   @Test
-  public void testContainer() {
+  @SuppressWarnings("java:S5961")
+  void testContainer() {
     assertThat(testJibExtension.getContainer().getJvmFlags()).isEmpty();
     assertThat(testJibExtension.getContainer().getEnvironment()).isEmpty();
     assertThat(testJibExtension.getContainer().getExtraClasspath()).isEmpty();
@@ -230,7 +242,7 @@ public class JibExtensionTest {
   }
 
   @Test
-  public void testSetFormat() {
+  void testSetFormat() {
     testJibExtension.container(
         container -> {
           container.setFormat("OCI");
@@ -240,17 +252,17 @@ public class JibExtensionTest {
   }
 
   @Test
-  public void testContainerizingMode() {
+  void testContainerizingMode() {
     assertThat(testJibExtension.getContainerizingMode()).isEqualTo("exploded");
   }
 
   @Test
-  public void testConfigurationName() {
+  void testConfigurationName() {
     assertThat(testJibExtension.getConfigurationName().get()).isEqualTo("runtimeClasspath");
   }
 
   @Test
-  public void testExtraDirectories_default() {
+  void testExtraDirectories_default() {
     assertThat(testJibExtension.getExtraDirectories().getPaths()).hasSize(1);
     assertThat(testJibExtension.getExtraDirectories().getPaths().get(0).getFrom())
         .isEqualTo(fakeProject.getProjectDir().toPath().resolve("src/main/jib"));
@@ -258,7 +270,7 @@ public class JibExtensionTest {
   }
 
   @Test
-  public void testExtraDirectories() {
+  void testExtraDirectories() {
     testJibExtension.extraDirectories(
         extraDirectories -> {
           extraDirectories.setPaths("test/path");
@@ -270,7 +282,7 @@ public class JibExtensionTest {
   }
 
   @Test
-  public void testExtraDirectories_lazyEvaluation_setFromInto() {
+  void testExtraDirectories_lazyEvaluation_setFromInto() {
     testJibExtension.extraDirectories(
         extraDirectories ->
             extraDirectories.paths(
@@ -293,7 +305,7 @@ public class JibExtensionTest {
   }
 
   @Test
-  public void testExtraDirectories_withTarget() {
+  void testExtraDirectories_withTarget() {
     testJibExtension.extraDirectories(
         extraDirectories ->
             extraDirectories.paths(
@@ -321,7 +333,7 @@ public class JibExtensionTest {
   }
 
   @Test
-  public void testExtraDirectories_fileForPaths() {
+  void testExtraDirectories_fileForPaths() {
     testJibExtension.extraDirectories(
         extraDirectories -> extraDirectories.setPaths(Paths.get("test/path").toFile()));
     assertThat(testJibExtension.getExtraDirectories().getPaths()).hasSize(1);
@@ -330,7 +342,7 @@ public class JibExtensionTest {
   }
 
   @Test
-  public void testExtraDirectories_stringListForPaths() {
+  void testExtraDirectories_stringListForPaths() {
     testJibExtension.extraDirectories(
         extraDirectories -> extraDirectories.setPaths(Arrays.asList("test/path", "another/path")));
 
@@ -342,7 +354,7 @@ public class JibExtensionTest {
   }
 
   @Test
-  public void testExtraDirectories_lazyEvaluation_StringListForPaths() {
+  void testExtraDirectories_lazyEvaluation_StringListForPaths() {
     testJibExtension.extraDirectories(
         extraDirectories -> {
           ProviderFactory providerFactory = fakeProject.getProviders();
@@ -359,7 +371,7 @@ public class JibExtensionTest {
   }
 
   @Test
-  public void testExtraDirectories_fileListForPaths() {
+  void testExtraDirectories_fileListForPaths() {
     testJibExtension.extraDirectories(
         extraDirectories ->
             extraDirectories.setPaths(
@@ -374,7 +386,7 @@ public class JibExtensionTest {
   }
 
   @Test
-  public void testDockerClient() {
+  void testDockerClient() {
     testJibExtension.dockerClient(
         dockerClient -> {
           dockerClient.setExecutable("test-executable");
@@ -389,7 +401,7 @@ public class JibExtensionTest {
   }
 
   @Test
-  public void testOutputFiles() {
+  void testOutputFiles() {
     testJibExtension.outputPaths(
         outputFiles -> {
           outputFiles.setDigest("/path/to/digest");
@@ -406,7 +418,7 @@ public class JibExtensionTest {
   }
 
   @Test
-  public void testSkaffold() {
+  void testSkaffold() {
     testJibExtension.skaffold(
         skaffold -> {
           skaffold.sync(sync -> sync.setExcludes(fakeProject.files("sync1", "sync2")));
@@ -418,20 +430,33 @@ public class JibExtensionTest {
               });
         });
     Path root = fakeProject.getRootDir().toPath();
-    assertThat(testJibExtension.getSkaffold().getSync().getExcludes())
+    assertThat(
+            testJibExtension.getSkaffold().getSync().getExcludes().getFiles().stream()
+                .map(File::toPath)
+                .collect(Collectors.toSet()))
         .containsExactly(
             root.resolve("sync1").toAbsolutePath(), root.resolve("sync2").toAbsolutePath());
-    assertThat(testJibExtension.getSkaffold().getWatch().getBuildIncludes())
+    assertThat(
+            testJibExtension.getSkaffold().getWatch().getBuildIncludes().getFiles().stream()
+                .map(File::toPath)
+                .collect(Collectors.toSet()))
         .containsExactly(
             root.resolve("watch1").toAbsolutePath(), root.resolve("watch2").toAbsolutePath());
-    assertThat(testJibExtension.getSkaffold().getWatch().getIncludes())
+    assertThat(
+            testJibExtension.getSkaffold().getWatch().getIncludes().getFiles().stream()
+                .map(File::toPath)
+                .collect(Collectors.toSet()))
         .containsExactly(root.resolve("watch3").toAbsolutePath());
-    assertThat(testJibExtension.getSkaffold().getWatch().getExcludes())
+    assertThat(
+            testJibExtension.getSkaffold().getWatch().getExcludes().getFiles().stream()
+                .map(File::toPath)
+                .collect(Collectors.toSet()))
         .containsExactly(root.resolve("watch4").toAbsolutePath());
   }
 
   @Test
-  public void testProperties() {
+  @SuppressWarnings("java:S5961")
+  void testProperties() {
     System.setProperties(new Properties());
 
     System.setProperty("jib.from.image", "fromImage");
@@ -527,7 +552,7 @@ public class JibExtensionTest {
   }
 
   @Test
-  public void testLazyPropertiesFinalization() {
+  void testLazyPropertiesFinalization() {
     Property<String> filesModificationTime =
         testJibExtension.getContainer().getFilesModificationTime();
     filesModificationTime.set((String) null);
@@ -543,13 +568,13 @@ public class JibExtensionTest {
   }
 
   @Test
-  public void testSystemPropertiesWithInvalidPlatform() {
+  void testSystemPropertiesWithInvalidPlatform() {
     System.setProperty("jib.from.platforms", "linux /amd64");
     assertThrows(IllegalArgumentException.class, testJibExtension.getFrom()::getPlatforms);
   }
 
   @Test
-  public void testPropertiesOutputPaths() {
+  void testPropertiesOutputPaths() {
     System.setProperties(new Properties());
     // Absolute paths
     System.setProperty("jib.outputPaths.digest", "/digest/path");

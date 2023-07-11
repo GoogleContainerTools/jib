@@ -48,12 +48,11 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 /** Tests for {@link JavaContainerBuilderHelper}. */
-public class JavaContainerBuilderHelperTest {
+class JavaContainerBuilderHelperTest {
 
   private static final Correspondence<FileEntry, Path> SOURCE_FILE_OF =
       Correspondence.transforming(FileEntry::getSourceFile, "has sourceFile of");
@@ -69,10 +68,10 @@ public class JavaContainerBuilderHelperTest {
         .get();
   }
 
-  @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
+  @TempDir public Path temporaryFolder;
 
   @Test
-  public void testExtraDirectoryLayerConfiguration() throws URISyntaxException, IOException {
+  void testExtraDirectoryLayerConfiguration() throws URISyntaxException, IOException {
     Path extraFilesDirectory = Paths.get(Resources.getResource("core/layer").toURI());
     FileEntriesLayer layerConfiguration =
         JavaContainerBuilderHelper.extraDirectoryLayerConfiguration(
@@ -94,8 +93,7 @@ public class JavaContainerBuilderHelperTest {
   }
 
   @Test
-  public void testExtraDirectoryLayerConfiguration_includes()
-      throws URISyntaxException, IOException {
+  void testExtraDirectoryLayerConfiguration_includes() throws URISyntaxException, IOException {
     Path extraFilesDirectory = Paths.get(Resources.getResource("core/layer").toURI());
     FileEntriesLayer layerConfiguration =
         JavaContainerBuilderHelper.extraDirectoryLayerConfiguration(
@@ -112,8 +110,7 @@ public class JavaContainerBuilderHelperTest {
   }
 
   @Test
-  public void testExtraDirectoryLayerConfiguration_excludes()
-      throws URISyntaxException, IOException {
+  void testExtraDirectoryLayerConfiguration_excludes() throws URISyntaxException, IOException {
     Path extraFilesDirectory = Paths.get(Resources.getResource("core/layer").toURI());
     FileEntriesLayer layerConfiguration =
         JavaContainerBuilderHelper.extraDirectoryLayerConfiguration(
@@ -133,7 +130,7 @@ public class JavaContainerBuilderHelperTest {
   }
 
   @Test
-  public void testExtraDirectoryLayerConfiguration_includesAndExcludesEverything()
+  void testExtraDirectoryLayerConfiguration_includesAndExcludesEverything()
       throws URISyntaxException, IOException {
     Path extraFilesDirectory = Paths.get(Resources.getResource("core/layer").toURI());
     FileEntriesLayer layerConfiguration =
@@ -148,7 +145,7 @@ public class JavaContainerBuilderHelperTest {
   }
 
   @Test
-  public void testExtraDirectoryLayerConfiguration_includesAndExcludes()
+  void testExtraDirectoryLayerConfiguration_includesAndExcludes()
       throws URISyntaxException, IOException {
     Path extraFilesDirectory = Paths.get(Resources.getResource("core/layer").toURI());
     FileEntriesLayer layerConfiguration =
@@ -165,7 +162,7 @@ public class JavaContainerBuilderHelperTest {
   }
 
   @Test
-  public void testExtraDirectoryLayerConfiguration_globPermissions()
+  void testExtraDirectoryLayerConfiguration_globPermissions()
       throws URISyntaxException, IOException {
     Path extraFilesDirectory = Paths.get(Resources.getResource("core/layer").toURI());
     Map<String, FilePermissions> permissionsMap =
@@ -204,7 +201,7 @@ public class JavaContainerBuilderHelperTest {
   }
 
   @Test
-  public void testExtraDirectoryLayerConfiguration_overlappingPermissions()
+  void testExtraDirectoryLayerConfiguration_overlappingPermissions()
       throws URISyntaxException, IOException {
     Path extraFilesDirectory = Paths.get(Resources.getResource("core/layer").toURI());
     Map<String, FilePermissions> permissionsMap =
@@ -245,14 +242,14 @@ public class JavaContainerBuilderHelperTest {
   }
 
   @Test
-  public void testFromExplodedWar()
+  void testFromExplodedWar()
       throws URISyntaxException, IOException, InvalidImageReferenceException,
           CacheDirectoryCreationException {
     // Copy test files to a temporary directory that we can safely operate on
     Path resourceExplodedWar =
         Paths.get(Resources.getResource("plugins-common/exploded-war").toURI());
-    FileOperations.copy(ImmutableList.of(resourceExplodedWar), temporaryFolder.getRoot().toPath());
-    Path temporaryExplodedWar = temporaryFolder.getRoot().toPath().resolve("exploded-war");
+    FileOperations.copy(ImmutableList.of(resourceExplodedWar), temporaryFolder);
+    Path temporaryExplodedWar = temporaryFolder.resolve("exploded-war");
     Files.createDirectories(temporaryExplodedWar.resolve("WEB-INF/classes/empty_dir"));
     Files.createFile(temporaryExplodedWar.resolve("WEB-INF/lib/project-dependency-1.0.0.jar"));
     Set<String> projectArtifacts = ImmutableSet.of("project-dependency-1.0.0.jar");

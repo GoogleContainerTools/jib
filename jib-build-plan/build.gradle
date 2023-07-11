@@ -8,7 +8,8 @@ dependencies {
   compileOnly dependencyStrings.JSR305
 
   testImplementation dependencyStrings.GUAVA
-  testImplementation dependencyStrings.JUNIT
+  testImplementation dependencyStrings.JUNIT_API
+  testRuntimeOnly dependencyStrings.JUNIT_ENGINE
   testImplementation dependencyStrings.MOCKITO_CORE
   testImplementation dependencyStrings.SLF4J_API
   testImplementation dependencyStrings.SYSTEM_RULES
@@ -48,7 +49,7 @@ publishing {
 release {
   tagTemplate = 'v$version-build-plan'
   git {
-    requireBranch = /^build-plan-release-v\d+.*$/  //regex
+    requireBranch.set(/^build-plan-release-v\d+.*$/)  //regex
   }
 }
 /* RELEASE */

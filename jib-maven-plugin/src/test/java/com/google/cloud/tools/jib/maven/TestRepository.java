@@ -17,8 +17,6 @@
 package com.google.cloud.tools.jib.maven;
 
 import com.google.common.io.Resources;
-import java.net.MalformedURLException;
-import java.net.URISyntaxException;
 import java.nio.file.Path;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.DefaultArtifact;
@@ -31,35 +29,19 @@ import org.apache.maven.artifact.resolver.ArtifactResolutionRequest;
 import org.apache.maven.artifact.resolver.ArtifactResolutionResult;
 import org.apache.maven.artifact.resolver.ArtifactResolver;
 import org.apache.maven.plugin.testing.MojoRule;
-import org.codehaus.plexus.component.repository.exception.ComponentLookupException;
 import org.junit.Assert;
-import org.junit.rules.ExternalResource;
+import org.junit.jupiter.api.extension.AfterEachCallback;
+import org.junit.jupiter.api.extension.BeforeEachCallback;
+import org.junit.jupiter.api.extension.ExtensionContext;
 
 /** A test helper to resolve artifacts from a local repository in test/resources. */
-public class TestRepository extends ExternalResource {
+class TestRepository implements BeforeEachCallback, AfterEachCallback {
 
   private static final String TEST_M2 = "maven/testM2";
 
   private ArtifactRepository testLocalRepo;
   private ArtifactResolver artifactResolver;
   private ArtifactHandler jarHandler;
-
-  @Override
-  protected void before()
-      throws ComponentLookupException, URISyntaxException, MalformedURLException {
-    MojoRule testHarness = new MojoRule();
-    ArtifactRepositoryFactory artifactRepositoryFactory =
-        testHarness.lookup(ArtifactRepositoryFactory.class);
-    artifactResolver = testHarness.lookup(ArtifactResolver.class);
-    jarHandler = testHarness.lookup(ArtifactHandlerManager.class).getArtifactHandler("jar");
-    testLocalRepo =
-        artifactRepositoryFactory.createArtifactRepository(
-            "test",
-            Resources.getResource(TEST_M2).toURI().toURL().toString(),
-            new DefaultRepositoryLayout(),
-            null,
-            null);
-  }
 
   Artifact findArtifact(String group, String artifact, String version) {
     ArtifactResolutionRequest artifactResolutionRequest = new ArtifactResolutionRequest();
@@ -77,5 +59,24 @@ public class TestRepository extends ExternalResource {
 
   Path artifactPathOnDisk(String group, String artifact, String version) {
     return findArtifact(group, artifact, version).getFile().toPath();
+  }
+
+  @Override
+  public void afterEach(ExtensionContext context) throws Exception {}
+
+  @Override
+  public void beforeEach(ExtensionContext context) throws Exception {
+    MojoRule testHarness = new MojoRule();
+    ArtifactRepositoryFactory artifactRepositoryFactory =
+        testHarness.lookup(ArtifactRepositoryFactory.class);
+    artifactResolver = testHarness.lookup(ArtifactResolver.class);
+    jarHandler = testHarness.lookup(ArtifactHandlerManager.class).getArtifactHandler("jar");
+    testLocalRepo =
+        artifactRepositoryFactory.createArtifactRepository(
+            "test",
+            Resources.getResource(TEST_M2).toURI().toURL().toString(),
+            new DefaultRepositoryLayout(),
+            null,
+            null);
   }
 }

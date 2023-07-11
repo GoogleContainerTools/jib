@@ -32,6 +32,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.DigestException;
 import java.util.Arrays;
@@ -39,29 +40,31 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.io.TempDir;
 import org.mockito.AdditionalAnswers;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.mockito.stubbing.VoidAnswer1;
 
 /** Tests for {@link CliDockerClient}. */
-@RunWith(MockitoJUnitRunner.class)
-public class CliDockerClientTest {
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
+class CliDockerClientTest {
 
-  @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
+  @TempDir public Path temporaryFolder;
 
   @Mock private ProcessBuilder mockProcessBuilder;
   @Mock private Process mockProcess;
   @Mock private ImageTarball imageTarball;
 
-  @Before
-  public void setUp() throws IOException {
+  @BeforeEach
+  void setUp() throws IOException {
     Mockito.when(mockProcessBuilder.start()).thenReturn(mockProcess);
     Mockito.doAnswer(
             AdditionalAnswers.answerVoid(
@@ -72,19 +75,19 @@ public class CliDockerClientTest {
   }
 
   @Test
-  public void testIsDockerInstalled_fail() {
+  void testIsDockerInstalled_fail() {
     Assert.assertFalse(CliDockerClient.isDockerInstalled(Paths.get("path/to/nonexistent/file")));
   }
 
   @Test
-  public void testIsDockerInstalled_pass() throws URISyntaxException {
+  void testIsDockerInstalled_pass() throws URISyntaxException {
     Assert.assertTrue(
         CliDockerClient.isDockerInstalled(
             Paths.get(Resources.getResource("core/docker/emptyFile").toURI())));
   }
 
   @Test
-  public void testLoad() throws IOException, InterruptedException {
+  void testLoad() throws IOException, InterruptedException {
     DockerClient testDockerClient =
         new CliDockerClient(
             subcommand -> {
@@ -109,7 +112,7 @@ public class CliDockerClientTest {
   }
 
   @Test
-  public void testLoad_stdinFail() throws InterruptedException {
+  void testLoad_stdinFail() throws InterruptedException {
     DockerClient testDockerClient = new CliDockerClient(ignored -> mockProcessBuilder);
 
     Mockito.when(mockProcess.getOutputStream())
@@ -134,7 +137,7 @@ public class CliDockerClientTest {
   }
 
   @Test
-  public void testLoad_stdinFail_stderrFail() throws InterruptedException {
+  void testLoad_stdinFail_stderrFail() throws InterruptedException {
     DockerClient testDockerClient = new CliDockerClient(ignored -> mockProcessBuilder);
 
     Mockito.when(mockProcess.getOutputStream())
@@ -154,6 +157,12 @@ public class CliDockerClientTest {
               public int read() throws IOException {
                 throw new IOException();
               }
+
+              @Override
+              public int read(byte[] b, int off, int len) throws IOException {
+                // overridden too to silence a warning
+                throw new IOException();
+              }
             });
 
     try {
@@ -166,7 +175,7 @@ public class CliDockerClientTest {
   }
 
   @Test
-  public void testLoad_stdoutFail() throws InterruptedException {
+  void testLoad_stdoutFail() throws InterruptedException {
     DockerClient testDockerClient = new CliDockerClient(ignored -> mockProcessBuilder);
     Mockito.when(mockProcess.waitFor()).thenReturn(1);
 
@@ -186,14 +195,14 @@ public class CliDockerClientTest {
   }
 
   @Test
-  public void testSave() throws InterruptedException, IOException {
+  void testSave() throws InterruptedException, IOException {
     DockerClient testDockerClient = makeDockerSaveClient();
     Mockito.when(mockProcess.waitFor()).thenReturn(0);
 
     long[] counter = new long[1];
     testDockerClient.save(
         ImageReference.of(null, "testimage", null),
-        temporaryFolder.getRoot().toPath().resolve("out.tar"),
+        temporaryFolder.resolve("out.tar"),
         bytes -> counter[0] += bytes);
 
     // InputStream writes "jib", so 3 bytes of progress should have been counted.
@@ -201,7 +210,7 @@ public class CliDockerClientTest {
   }
 
   @Test
-  public void testSave_fail() throws InterruptedException {
+  void testSave_fail() throws InterruptedException {
     DockerClient testDockerClient = makeDockerSaveClient();
     Mockito.when(mockProcess.waitFor()).thenReturn(1);
 
@@ -211,7 +220,7 @@ public class CliDockerClientTest {
     try {
       testDockerClient.save(
           ImageReference.of(null, "testimage", null),
-          temporaryFolder.getRoot().toPath().resolve("out.tar"),
+          temporaryFolder.resolve("out.tar"),
           ignored -> {});
       Assert.fail("docker save should have failed");
 
@@ -221,7 +230,7 @@ public class CliDockerClientTest {
   }
 
   @Test
-  public void testDefaultProcessorBuilderFactory_customExecutable() {
+  void testDefaultProcessorBuilderFactory_customExecutable() {
     ProcessBuilder processBuilder =
         CliDockerClient.defaultProcessBuilderFactory("docker-executable", ImmutableMap.of())
             .apply(Arrays.asList("sub", "command"));
@@ -232,7 +241,7 @@ public class CliDockerClientTest {
   }
 
   @Test
-  public void testDefaultProcessorBuilderFactory_customEnvironment() {
+  void testDefaultProcessorBuilderFactory_customEnvironment() {
     ImmutableMap<String, String> environment = ImmutableMap.of("Key1", "Value1");
 
     Map<String, String> expectedEnvironment = new HashMap<>(System.getenv());
@@ -246,7 +255,7 @@ public class CliDockerClientTest {
   }
 
   @Test
-  public void testSize_fail() throws InterruptedException {
+  void testSize_fail() throws InterruptedException {
     DockerClient testDockerClient =
         new CliDockerClient(
             subcommand -> {
@@ -268,7 +277,7 @@ public class CliDockerClientTest {
   }
 
   @Test
-  public void testDockerImageDetails() throws DigestException, IOException {
+  void testDockerImageDetails() throws DigestException, IOException {
     String json =
         "{\"Size\":488118507,"
             + "\"Id\":\"sha256:e8d00769c8a805a0656dbfd49d4f91cbc2e36d0199f10343d1beba36ecdcb3fd\","
@@ -294,7 +303,7 @@ public class CliDockerClientTest {
   }
 
   @Test
-  public void testDockerImageDetails_unknownProperties() throws IOException, DigestException {
+  void testDockerImageDetails_unknownProperties() throws IOException, DigestException {
     String json =
         "{\"Unknown\": [ ], \"Structure\": [ { \"Test\": 0 } ], \"Size\": 1234,"
             + "\"Id\": \"sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\","
@@ -314,7 +323,7 @@ public class CliDockerClientTest {
   }
 
   @Test
-  public void testDockerImageDetails_emptyJson() throws IOException, DigestException {
+  void testDockerImageDetails_emptyJson() throws IOException, DigestException {
     DockerImageDetails details = JsonTemplateMapper.readJson("{}", DockerImageDetails.class);
     Assert.assertEquals(0, details.getSize());
     Assert.assertEquals(Collections.emptyList(), details.getDiffIds());

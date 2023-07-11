@@ -41,31 +41,35 @@ import java.util.Map;
 import org.hamcrest.CoreMatchers;
 import org.hamcrest.MatcherAssert;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
-public class BuildFilesTest {
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
+class BuildFilesTest {
 
-  @Rule public final TemporaryFolder tmp = new TemporaryFolder();
   @Rule public final MockitoRule rule = MockitoJUnit.rule();
 
   @Mock private ConsoleLogger consoleLogger;
   @Mock private Build buildCli;
   @Mock private CommonCliOptions commonCliOptions;
 
-  @Before
-  public void setUp() {
+  @BeforeEach
+  void setUp() {
     Mockito.when(buildCli.getTemplateParameters()).thenReturn(ImmutableMap.of());
   }
 
   @Test
-  public void testToJibContainerBuilder_allProperties()
+  void testToJibContainerBuilder_allProperties()
       throws URISyntaxException, IOException, InvalidImageReferenceException {
     Path buildfile =
         Paths.get(Resources.getResource("buildfiles/projects/allProperties/jib.yaml").toURI());
@@ -107,7 +111,7 @@ public class BuildFilesTest {
   }
 
   @Test
-  public void testToJibContainerBuilder_requiredProperties()
+  void testToJibContainerBuilder_requiredProperties()
       throws URISyntaxException, IOException, InvalidImageReferenceException {
     Path buildfile =
         Paths.get(Resources.getResource("buildfiles/projects/allDefaults/jib.yaml").toURI());
@@ -131,7 +135,7 @@ public class BuildFilesTest {
   }
 
   @Test
-  public void testToBuildFileSpec_withTemplating()
+  void testToBuildFileSpec_withTemplating()
       throws URISyntaxException, InvalidImageReferenceException, IOException {
     Path buildfile =
         Paths.get(Resources.getResource("buildfiles/projects/templating/valid.yaml").toURI());
@@ -161,7 +165,7 @@ public class BuildFilesTest {
   }
 
   @Test
-  public void testToBuildFileSpec_failWithMissingTemplateVariable()
+  void testToBuildFileSpec_failWithMissingTemplateVariable()
       throws URISyntaxException, InvalidImageReferenceException, IOException {
     Path buildfile =
         Paths.get(Resources.getResource("buildfiles/projects/templating/missingVar.yaml").toURI());
@@ -177,7 +181,7 @@ public class BuildFilesTest {
   }
 
   @Test
-  public void testToBuildFileSpec_templateMultiLineBehavior()
+  void testToBuildFileSpec_templateMultiLineBehavior()
       throws URISyntaxException, InvalidImageReferenceException, IOException {
     Path buildfile =
         Paths.get(Resources.getResource("buildfiles/projects/templating/multiLine.yaml").toURI());
@@ -192,7 +196,7 @@ public class BuildFilesTest {
   }
 
   @Test
-  public void testToBuildFileSpec_alternativeRootContext()
+  void testToBuildFileSpec_alternativeRootContext()
       throws URISyntaxException, InvalidImageReferenceException, IOException {
     Path buildfile =
         Paths.get(

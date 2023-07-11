@@ -32,13 +32,13 @@ import java.security.DigestException;
 import java.time.Instant;
 import java.util.Arrays;
 import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /** Tests for {@link ContainerConfigurationTemplate}. */
-public class ContainerConfigurationTemplateTest {
+class ContainerConfigurationTemplateTest {
 
   @Test
-  public void testToJson() throws IOException, URISyntaxException, DigestException {
+  void testToJson() throws IOException, URISyntaxException, DigestException {
     // Loads the expected JSON string.
     Path jsonFile = Paths.get(Resources.getResource("core/json/containerconfig.json").toURI());
     String expectedJson = new String(Files.readAllBytes(jsonFile), StandardCharsets.UTF_8);
@@ -94,7 +94,7 @@ public class ContainerConfigurationTemplateTest {
   }
 
   @Test
-  public void testFromJson() throws IOException, URISyntaxException, DigestException {
+  void testFromJson() throws IOException, URISyntaxException, DigestException {
     // Loads the JSON string.
     Path jsonFile = Paths.get(Resources.getResource("core/json/containerconfig.json").toURI());
 

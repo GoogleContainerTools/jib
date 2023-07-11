@@ -19,12 +19,12 @@ package com.google.cloud.tools.jib.cli.buildfile;
 import com.google.cloud.tools.jib.api.buildplan.FilePermissions;
 import java.time.Instant;
 import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-public class FilePropertiesStackTest {
+class FilePropertiesStackTest {
 
   @Test
-  public void testDefaults() {
+  void testDefaults() {
     FilePropertiesStack testStack = new FilePropertiesStack();
 
     Assert.assertEquals(FilePermissions.fromOctalString("644"), testStack.getFilePermissions());
@@ -35,7 +35,7 @@ public class FilePropertiesStackTest {
   }
 
   @Test
-  public void testPush_simple() {
+  void testPush_simple() {
     FilePropertiesStack testStack = new FilePropertiesStack();
 
     testStack.push(new FilePropertiesSpec("111", "111", "1", "1", "1"));
@@ -48,7 +48,7 @@ public class FilePropertiesStackTest {
   }
 
   @Test
-  public void testPush_stacking() {
+  void testPush_stacking() {
     FilePropertiesStack testStack = new FilePropertiesStack();
 
     testStack.push(new FilePropertiesSpec("111", "111", "1", "1", "1"));
@@ -63,7 +63,7 @@ public class FilePropertiesStackTest {
   }
 
   @Test
-  public void testPush_tooMany() {
+  void testPush_tooMany() {
     FilePropertiesStack testStack = new FilePropertiesStack();
 
     testStack.push(new FilePropertiesSpec("111", "111", "1", "1", "1"));
@@ -79,7 +79,7 @@ public class FilePropertiesStackTest {
   }
 
   @Test
-  public void testPop_toZero() {
+  void testPop_toZero() {
     FilePropertiesStack testStack = new FilePropertiesStack();
 
     testStack.push(new FilePropertiesSpec("111", "111", "1", "1", "1"));
@@ -93,7 +93,7 @@ public class FilePropertiesStackTest {
   }
 
   @Test
-  public void testPop_toOlderState() {
+  void testPop_toOlderState() {
     FilePropertiesStack testStack = new FilePropertiesStack();
 
     testStack.push(new FilePropertiesSpec("111", "111", "1", "1", "1"));
@@ -109,7 +109,7 @@ public class FilePropertiesStackTest {
   }
 
   @Test
-  public void testPop_nothingToPop() {
+  void testPop_nothingToPop() {
     FilePropertiesStack testStack = new FilePropertiesStack();
 
     try {
@@ -121,7 +121,7 @@ public class FilePropertiesStackTest {
   }
 
   @Test
-  public void testGetOwnership_onlyUser() {
+  void testGetOwnership_onlyUser() {
     FilePropertiesStack testStack = new FilePropertiesStack();
     testStack.push(new FilePropertiesSpec(null, null, "u", null, null));
 
@@ -129,7 +129,7 @@ public class FilePropertiesStackTest {
   }
 
   @Test
-  public void testGetOwnership_onlyGroup() {
+  void testGetOwnership_onlyGroup() {
     FilePropertiesStack testStack = new FilePropertiesStack();
     testStack.push(new FilePropertiesSpec(null, null, null, "g", null));
 
@@ -137,7 +137,7 @@ public class FilePropertiesStackTest {
   }
 
   @Test
-  public void testGetOwnership_userAndGroup() {
+  void testGetOwnership_userAndGroup() {
     FilePropertiesStack testStack = new FilePropertiesStack();
     testStack.push(new FilePropertiesSpec(null, null, "u", "g", null));
 
@@ -145,7 +145,7 @@ public class FilePropertiesStackTest {
   }
 
   @Test
-  public void testGetOwnership_noUserNoGroup() {
+  void testGetOwnership_noUserNoGroup() {
     FilePropertiesStack testStack = new FilePropertiesStack();
     testStack.push(new FilePropertiesSpec(null, null, null, null, null));
 

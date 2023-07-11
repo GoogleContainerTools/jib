@@ -67,24 +67,28 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
 import javax.annotation.Nullable;
-import junitparams.JUnitParamsRunner;
-import junitparams.Parameters;
-import org.junit.Before;
 import org.junit.Rule;
-import org.junit.Test;
 import org.junit.contrib.java.lang.system.RestoreSystemProperties;
-import org.junit.rules.TemporaryFolder;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.mockito.Answers;
 import org.mockito.ArgumentMatcher;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
 /** Tests for {@link PluginConfigurationProcessor}. */
-@RunWith(JUnitParamsRunner.class)
-public class PluginConfigurationProcessorTest {
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
+class PluginConfigurationProcessorTest {
 
   private static class TestPlatformConfiguration implements PlatformConfiguration {
     @Nullable private final String os;
@@ -153,7 +157,7 @@ public class PluginConfigurationProcessorTest {
 
   @Rule public final MockitoRule mockitoRule = MockitoJUnit.rule().silent();
   @Rule public final RestoreSystemProperties systemPropertyRestorer = new RestoreSystemProperties();
-  @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
+  @TempDir public Path temporaryFolder;
 
   @Mock(answer = Answers.RETURNS_SELF)
   private Containerizer containerizer;
@@ -169,8 +173,8 @@ public class PluginConfigurationProcessorTest {
   private Path appCacheDirectory;
   private final JibContainerBuilder jibContainerBuilder = Jib.fromScratch();
 
-  @Before
-  public void setUp() throws IOException, InvalidImageReferenceException, InferredAuthException {
+  @BeforeEach
+  void setUpBeforeEach() throws IOException, InvalidImageReferenceException, InferredAuthException {
     when(rawConfiguration.getFromAuth()).thenReturn(authProperty);
     when(rawConfiguration.getEntrypoint()).thenReturn(Optional.empty());
     when(rawConfiguration.getAppRoot()).thenReturn("/app");
@@ -192,14 +196,16 @@ public class PluginConfigurationProcessorTest {
     when(projectProperties.getDependencies())
         .thenReturn(Arrays.asList(Paths.get("/repo/foo-1.jar"), Paths.get("/home/libs/bar-2.jar")));
 
-    appCacheDirectory = temporaryFolder.newFolder("jib-cache").toPath();
+    File f = new File(temporaryFolder.toFile(), "jib-cache");
+    f.mkdirs();
+    appCacheDirectory = f.toPath();
     when(projectProperties.getDefaultCacheDirectory()).thenReturn(appCacheDirectory);
 
     when(inferredAuthProvider.inferAuth(any())).thenReturn(Optional.empty());
   }
 
   @Test
-  public void testPluginConfigurationProcessor_defaults()
+  void testPluginConfigurationProcessor_defaults()
       throws InvalidImageReferenceException, IOException, MainClassInferenceException,
           InvalidAppRootException, InvalidWorkingDirectoryException, InvalidPlatformException,
           InvalidContainerVolumeException, IncompatibleBaseImageJavaVersionException,
@@ -221,7 +227,7 @@ public class PluginConfigurationProcessorTest {
   }
 
   @Test
-  public void testPluginConfigurationProcessor_extraDirectory()
+  void testPluginConfigurationProcessor_extraDirectory()
       throws URISyntaxException, InvalidContainerVolumeException, MainClassInferenceException,
           InvalidAppRootException, IOException, IncompatibleBaseImageJavaVersionException,
           InvalidWorkingDirectoryException, InvalidPlatformException,
@@ -267,7 +273,7 @@ public class PluginConfigurationProcessorTest {
   }
 
   @Test
-  public void testPluginConfigurationProcessor__errorOnExtraDirectoryPathNotFound()
+  void testPluginConfigurationProcessor__errorOnExtraDirectoryPathNotFound()
       throws URISyntaxException, NumberFormatException {
     Path extraDirectory = Paths.get(Resources.getResource("core/layer").toURI()).resolve("xyz");
     Mockito.<List<?>>when(rawConfiguration.getExtraDirectories())
@@ -279,7 +285,7 @@ public class PluginConfigurationProcessorTest {
   }
 
   @Test
-  public void testPluginConfigurationProcessor_cacheDirectorySystemProperties()
+  void testPluginConfigurationProcessor_cacheDirectorySystemProperties()
       throws InvalidContainerVolumeException, MainClassInferenceException, InvalidAppRootException,
           IOException, InvalidWorkingDirectoryException, InvalidPlatformException,
           InvalidImageReferenceException, IncompatibleBaseImageJavaVersionException,
@@ -296,7 +302,7 @@ public class PluginConfigurationProcessorTest {
   }
 
   @Test
-  public void testAddJvmArgFilesLayer() throws IOException, InvalidAppRootException {
+  void testAddJvmArgFilesLayer() throws IOException, InvalidAppRootException {
     String classpath = "/extra:/app/classes:/app/libs/dep.jar";
     String mainClass = "com.example.Main";
     PluginConfigurationProcessor.addJvmArgFilesLayer(
@@ -322,8 +328,8 @@ public class PluginConfigurationProcessorTest {
   }
 
   @Test
-  public void testWriteFileConservatively() throws IOException {
-    Path file = temporaryFolder.getRoot().toPath().resolve("file.txt");
+  void testWriteFileConservatively() throws IOException {
+    Path file = temporaryFolder.resolve("file.txt");
 
     PluginConfigurationProcessor.writeFileConservatively(file, "some content");
 
@@ -332,8 +338,9 @@ public class PluginConfigurationProcessorTest {
   }
 
   @Test
-  public void testWriteFileConservatively_updatedContent() throws IOException {
-    Path file = temporaryFolder.newFile().toPath();
+  void testWriteFileConservatively_updatedContent() throws IOException {
+
+    Path file = Files.createTempFile(temporaryFolder, "jib", "test");
 
     PluginConfigurationProcessor.writeFileConservatively(file, "some content");
 
@@ -342,8 +349,8 @@ public class PluginConfigurationProcessorTest {
   }
 
   @Test
-  public void testWriteFileConservatively_noWriteIfUnchanged() throws IOException {
-    Path file = temporaryFolder.newFile().toPath();
+  void testWriteFileConservatively_noWriteIfUnchanged() throws IOException {
+    Path file = Files.createTempFile(temporaryFolder, "jib", "test");
     Files.write(file, "some content".getBytes(StandardCharsets.UTF_8));
     FileTime fileTime = Files.getLastModifiedTime(file);
 
@@ -355,7 +362,7 @@ public class PluginConfigurationProcessorTest {
   }
 
   @Test
-  public void testEntrypoint()
+  void testEntrypoint()
       throws InvalidImageReferenceException, IOException, MainClassInferenceException,
           InvalidAppRootException, InvalidWorkingDirectoryException, InvalidPlatformException,
           InvalidContainerVolumeException, IncompatibleBaseImageJavaVersionException,
@@ -372,7 +379,7 @@ public class PluginConfigurationProcessorTest {
   }
 
   @Test
-  public void testComputeEntrypoint_inheritKeyword()
+  void testComputeEntrypoint_inheritKeyword()
       throws MainClassInferenceException, InvalidAppRootException, IOException,
           InvalidContainerizingModeException {
     when(rawConfiguration.getEntrypoint())
@@ -385,7 +392,7 @@ public class PluginConfigurationProcessorTest {
   }
 
   @Test
-  public void testComputeEntrypoint_inheritKeywordInNonSingletonList()
+  void testComputeEntrypoint_inheritKeywordInNonSingletonList()
       throws MainClassInferenceException, InvalidAppRootException, IOException,
           InvalidContainerizingModeException {
     when(rawConfiguration.getEntrypoint()).thenReturn(Optional.of(Arrays.asList("INHERIT", "")));
@@ -397,7 +404,7 @@ public class PluginConfigurationProcessorTest {
   }
 
   @Test
-  public void testComputeEntrypoint_default()
+  void testComputeEntrypoint_default()
       throws MainClassInferenceException, InvalidAppRootException, IOException,
           InvalidContainerizingModeException {
     assertThat(
@@ -409,7 +416,7 @@ public class PluginConfigurationProcessorTest {
   }
 
   @Test
-  public void testComputeEntrypoint_packaged()
+  void testComputeEntrypoint_packaged()
       throws MainClassInferenceException, InvalidAppRootException, IOException,
           InvalidContainerizingModeException {
     when(rawConfiguration.getContainerizingMode()).thenReturn("packaged");
@@ -421,7 +428,7 @@ public class PluginConfigurationProcessorTest {
   }
 
   @Test
-  public void testComputeEntrypoint_expandClasspathDependencies()
+  void testComputeEntrypoint_expandClasspathDependencies()
       throws MainClassInferenceException, InvalidAppRootException, IOException,
           InvalidContainerizingModeException {
     when(rawConfiguration.getExpandClasspathDependencies()).thenReturn(true);
@@ -436,12 +443,16 @@ public class PluginConfigurationProcessorTest {
         .inOrder();
   }
 
+  @TempDir Path libFoo13Tmp;
+  @TempDir Path libFoo45Tmp;
+
   @Test
-  public void testComputeEntrypoint_expandClasspathDependencies_sizeAddedForDuplicateJars()
+  void testComputeEntrypoint_expandClasspathDependencies_sizeAddedForDuplicateJars()
       throws MainClassInferenceException, InvalidAppRootException, IOException,
           InvalidContainerizingModeException {
-    Path libFoo13 = temporaryFolder.newFolder().toPath().resolve("foo-1.jar");
-    Path libFoo45 = temporaryFolder.newFolder().toPath().resolve("foo-1.jar");
+
+    Path libFoo13 = libFoo13Tmp.resolve("foo-1.jar");
+    Path libFoo45 = libFoo45Tmp.resolve("foo-1.jar");
     Files.write(libFoo13, new byte[13]);
     Files.write(libFoo45, new byte[45]);
 
@@ -462,7 +473,7 @@ public class PluginConfigurationProcessorTest {
   }
 
   @Test
-  public void testEntrypoint_defaultWarPackaging()
+  void testEntrypoint_defaultWarPackaging()
       throws IOException, InvalidImageReferenceException, MainClassInferenceException,
           InvalidAppRootException, InvalidWorkingDirectoryException, InvalidPlatformException,
           InvalidContainerVolumeException, IncompatibleBaseImageJavaVersionException,
@@ -480,7 +491,7 @@ public class PluginConfigurationProcessorTest {
   }
 
   @Test
-  public void testEntrypoint_defaultNonWarPackaging()
+  void testEntrypoint_defaultNonWarPackaging()
       throws IOException, InvalidImageReferenceException, MainClassInferenceException,
           InvalidAppRootException, InvalidWorkingDirectoryException, InvalidPlatformException,
           InvalidContainerVolumeException, IncompatibleBaseImageJavaVersionException,
@@ -501,7 +512,7 @@ public class PluginConfigurationProcessorTest {
   }
 
   @Test
-  public void testEntrypoint_extraClasspathNonWarPackaging()
+  void testEntrypoint_extraClasspathNonWarPackaging()
       throws IOException, InvalidImageReferenceException, MainClassInferenceException,
           InvalidAppRootException, InvalidWorkingDirectoryException, InvalidPlatformException,
           InvalidContainerVolumeException, IncompatibleBaseImageJavaVersionException,
@@ -523,7 +534,7 @@ public class PluginConfigurationProcessorTest {
   }
 
   @Test
-  public void testClasspathArgumentFile()
+  void testClasspathArgumentFile()
       throws NumberFormatException, InvalidImageReferenceException, MainClassInferenceException,
           InvalidAppRootException, IOException, InvalidWorkingDirectoryException,
           InvalidPlatformException, InvalidContainerVolumeException,
@@ -563,7 +574,7 @@ public class PluginConfigurationProcessorTest {
   }
 
   @Test
-  public void testClasspathArgumentFile_mainClassInferenceFailureWithCustomEntrypoint()
+  void testClasspathArgumentFile_mainClassInferenceFailureWithCustomEntrypoint()
       throws NumberFormatException, InvalidImageReferenceException, MainClassInferenceException,
           InvalidAppRootException, IOException, InvalidWorkingDirectoryException,
           InvalidPlatformException, InvalidContainerVolumeException,
@@ -600,7 +611,7 @@ public class PluginConfigurationProcessorTest {
   }
 
   @Test
-  public void testUser()
+  void testUser()
       throws InvalidImageReferenceException, IOException, MainClassInferenceException,
           InvalidAppRootException, InvalidWorkingDirectoryException, InvalidPlatformException,
           InvalidContainerVolumeException, IncompatibleBaseImageJavaVersionException,
@@ -614,7 +625,7 @@ public class PluginConfigurationProcessorTest {
   }
 
   @Test
-  public void testUser_null()
+  void testUser_null()
       throws InvalidImageReferenceException, IOException, MainClassInferenceException,
           InvalidAppRootException, InvalidWorkingDirectoryException, InvalidPlatformException,
           InvalidContainerVolumeException, IncompatibleBaseImageJavaVersionException,
@@ -626,7 +637,7 @@ public class PluginConfigurationProcessorTest {
   }
 
   @Test
-  public void testEntrypoint_warningOnJvmFlags()
+  void testEntrypoint_warningOnJvmFlags()
       throws InvalidImageReferenceException, IOException, MainClassInferenceException,
           InvalidAppRootException, InvalidWorkingDirectoryException, InvalidPlatformException,
           InvalidContainerVolumeException, IncompatibleBaseImageJavaVersionException,
@@ -648,7 +659,7 @@ public class PluginConfigurationProcessorTest {
   }
 
   @Test
-  public void testEntrypoint_warningOnMainclass()
+  void testEntrypoint_warningOnMainclass()
       throws InvalidImageReferenceException, IOException, MainClassInferenceException,
           InvalidAppRootException, InvalidWorkingDirectoryException, InvalidPlatformException,
           InvalidContainerVolumeException, IncompatibleBaseImageJavaVersionException,
@@ -670,7 +681,7 @@ public class PluginConfigurationProcessorTest {
   }
 
   @Test
-  public void testEntrypoint_warningOnExpandClasspathDependencies()
+  void testEntrypoint_warningOnExpandClasspathDependencies()
       throws InvalidImageReferenceException, IOException, MainClassInferenceException,
           InvalidAppRootException, InvalidWorkingDirectoryException, InvalidPlatformException,
           InvalidContainerVolumeException, IncompatibleBaseImageJavaVersionException,
@@ -692,7 +703,7 @@ public class PluginConfigurationProcessorTest {
   }
 
   @Test
-  public void testEntrypoint_warningOnMainclassForWar()
+  void testEntrypoint_warningOnMainclassForWar()
       throws IOException, InvalidCreationTimeException, InvalidImageReferenceException,
           IncompatibleBaseImageJavaVersionException, InvalidPlatformException,
           InvalidContainerVolumeException, MainClassInferenceException, InvalidAppRootException,
@@ -714,7 +725,7 @@ public class PluginConfigurationProcessorTest {
   }
 
   @Test
-  public void testEntrypoint_warningOnExpandClasspathDependenciesForWar()
+  void testEntrypoint_warningOnExpandClasspathDependenciesForWar()
       throws IOException, InvalidCreationTimeException, InvalidImageReferenceException,
           IncompatibleBaseImageJavaVersionException, InvalidPlatformException,
           InvalidContainerVolumeException, MainClassInferenceException, InvalidAppRootException,
@@ -736,7 +747,7 @@ public class PluginConfigurationProcessorTest {
   }
 
   @Test
-  public void testEntrypointClasspath_nonDefaultAppRoot()
+  void testEntrypointClasspath_nonDefaultAppRoot()
       throws InvalidImageReferenceException, IOException, MainClassInferenceException,
           InvalidAppRootException, InvalidWorkingDirectoryException, InvalidPlatformException,
           InvalidContainerVolumeException, IncompatibleBaseImageJavaVersionException,
@@ -754,7 +765,7 @@ public class PluginConfigurationProcessorTest {
   }
 
   @Test
-  public void testWebAppEntrypoint_inheritedFromCustomBaseImage()
+  void testWebAppEntrypoint_inheritedFromCustomBaseImage()
       throws InvalidImageReferenceException, IOException, MainClassInferenceException,
           InvalidAppRootException, InvalidWorkingDirectoryException, InvalidPlatformException,
           InvalidContainerVolumeException, IncompatibleBaseImageJavaVersionException,
@@ -770,16 +781,21 @@ public class PluginConfigurationProcessorTest {
   }
 
   @Test
-  public void testGetAppRootChecked() throws InvalidAppRootException {
+  void testGetAppRootChecked() throws InvalidAppRootException {
     when(rawConfiguration.getAppRoot()).thenReturn("/some/root");
 
     assertThat(PluginConfigurationProcessor.getAppRootChecked(rawConfiguration, projectProperties))
         .isEqualTo(AbsoluteUnixPath.get("/some/root"));
   }
 
-  @Test
-  public void testGetAppRootChecked_errorOnNonAbsolutePath() {
-    when(rawConfiguration.getAppRoot()).thenReturn("relative/path");
+  @ParameterizedTest
+  @CsvSource({
+    "relative/path", // non absolute
+    "\\windows\\path", // windows
+    "C:\\windows\\path" // windows with driver letter
+  })
+  void testGetAppRootChecked_errorOnNonAbsolutePath(String path) {
+    when(rawConfiguration.getAppRoot()).thenReturn(path);
 
     Exception exception =
         assertThrows(
@@ -787,37 +803,11 @@ public class PluginConfigurationProcessorTest {
             () ->
                 PluginConfigurationProcessor.getAppRootChecked(
                     rawConfiguration, projectProperties));
-    assertThat(exception).hasMessageThat().isEqualTo("relative/path");
+    assertThat(exception).hasMessageThat().isEqualTo(path);
   }
 
   @Test
-  public void testGetAppRootChecked_errorOnWindowsPath() {
-    when(rawConfiguration.getAppRoot()).thenReturn("\\windows\\path");
-
-    Exception exception =
-        assertThrows(
-            InvalidAppRootException.class,
-            () ->
-                PluginConfigurationProcessor.getAppRootChecked(
-                    rawConfiguration, projectProperties));
-    assertThat(exception).hasMessageThat().isEqualTo("\\windows\\path");
-  }
-
-  @Test
-  public void testGetAppRootChecked_errorOnWindowsPathWithDriveLetter() {
-    when(rawConfiguration.getAppRoot()).thenReturn("C:\\windows\\path");
-
-    Exception exception =
-        assertThrows(
-            InvalidAppRootException.class,
-            () ->
-                PluginConfigurationProcessor.getAppRootChecked(
-                    rawConfiguration, projectProperties));
-    assertThat(exception).hasMessageThat().isEqualTo("C:\\windows\\path");
-  }
-
-  @Test
-  public void testGetAppRootChecked_defaultNonWarProject() throws InvalidAppRootException {
+  void testGetAppRootChecked_defaultNonWarProject() throws InvalidAppRootException {
     when(rawConfiguration.getAppRoot()).thenReturn("");
     when(projectProperties.isWarProject()).thenReturn(false);
 
@@ -826,7 +816,7 @@ public class PluginConfigurationProcessorTest {
   }
 
   @Test
-  public void testGetAppRootChecked_defaultWarProject() throws InvalidAppRootException {
+  void testGetAppRootChecked_defaultWarProject() throws InvalidAppRootException {
     when(rawConfiguration.getAppRoot()).thenReturn("");
     when(projectProperties.isWarProject()).thenReturn(true);
 
@@ -835,7 +825,7 @@ public class PluginConfigurationProcessorTest {
   }
 
   @Test
-  public void testGetContainerizingModeChecked_packagedWithWar() {
+  void testGetContainerizingModeChecked_packagedWithWar() {
     when(rawConfiguration.getContainerizingMode()).thenReturn("packaged");
     when(projectProperties.isWarProject()).thenReturn(true);
 
@@ -851,7 +841,7 @@ public class PluginConfigurationProcessorTest {
   }
 
   @Test
-  public void testGetWorkingDirectoryChecked() throws InvalidWorkingDirectoryException {
+  void testGetWorkingDirectoryChecked() throws InvalidWorkingDirectoryException {
     when(rawConfiguration.getWorkingDirectory()).thenReturn(Optional.of("/valid/path"));
 
     Optional<AbsoluteUnixPath> checkedPath =
@@ -860,13 +850,13 @@ public class PluginConfigurationProcessorTest {
   }
 
   @Test
-  public void testGetWorkingDirectoryChecked_undefined() throws InvalidWorkingDirectoryException {
+  void testGetWorkingDirectoryChecked_undefined() throws InvalidWorkingDirectoryException {
     when(rawConfiguration.getWorkingDirectory()).thenReturn(Optional.empty());
     assertThat(PluginConfigurationProcessor.getWorkingDirectoryChecked(rawConfiguration)).isEmpty();
   }
 
   @Test
-  public void testGetWorkingDirectoryChecked_notAbsolute() {
+  void testGetWorkingDirectoryChecked_notAbsolute() {
     when(rawConfiguration.getWorkingDirectory()).thenReturn(Optional.of("relative/path"));
 
     InvalidWorkingDirectoryException exception =
@@ -878,8 +868,7 @@ public class PluginConfigurationProcessorTest {
   }
 
   @Test
-  public void testGetDefaultBaseImage_nonWarPackaging()
-      throws IncompatibleBaseImageJavaVersionException {
+  void testGetDefaultBaseImage_nonWarPackaging() throws IncompatibleBaseImageJavaVersionException {
     when(projectProperties.isWarProject()).thenReturn(false);
 
     assertThat(PluginConfigurationProcessor.getDefaultBaseImage(projectProperties))
@@ -887,16 +876,15 @@ public class PluginConfigurationProcessorTest {
   }
 
   @Test
-  public void testGetDefaultBaseImage_warProject()
-      throws IncompatibleBaseImageJavaVersionException {
+  void testGetDefaultBaseImage_warProject() throws IncompatibleBaseImageJavaVersionException {
     when(projectProperties.isWarProject()).thenReturn(true);
 
     assertThat(PluginConfigurationProcessor.getDefaultBaseImage(projectProperties))
         .isEqualTo("jetty");
   }
 
-  @Test
-  @Parameters(
+  @ParameterizedTest
+  @CsvSource(
       value = {
         "6, eclipse-temurin:8-jre",
         "8, eclipse-temurin:8-jre",
@@ -905,15 +893,15 @@ public class PluginConfigurationProcessorTest {
         "13, eclipse-temurin:17-jre",
         "17, eclipse-temurin:17-jre"
       })
-  public void testGetDefaultBaseImage_defaultJavaBaseImage(
-      int javaVersion, String expectedBaseImage) throws IncompatibleBaseImageJavaVersionException {
+  void testGetDefaultBaseImage_defaultJavaBaseImage(int javaVersion, String expectedBaseImage)
+      throws IncompatibleBaseImageJavaVersionException {
     when(projectProperties.getMajorJavaVersion()).thenReturn(javaVersion);
     assertThat(PluginConfigurationProcessor.getDefaultBaseImage(projectProperties))
         .isEqualTo(expectedBaseImage);
   }
 
   @Test
-  public void testGetDefaultBaseImage_projectHigherThanJava17() {
+  void testGetDefaultBaseImage_projectHigherThanJava17() {
     when(projectProperties.getMajorJavaVersion()).thenReturn(20);
 
     IncompatibleBaseImageJavaVersionException exception =
@@ -926,7 +914,7 @@ public class PluginConfigurationProcessorTest {
   }
 
   @Test
-  public void testGetJavaContainerBuilderWithBaseImage_dockerBase()
+  void testGetJavaContainerBuilderWithBaseImage_dockerBase()
       throws IncompatibleBaseImageJavaVersionException, IOException, InvalidImageReferenceException,
           CacheDirectoryCreationException {
     when(rawConfiguration.getFromImage()).thenReturn(Optional.of("docker://ima.ge/name"));
@@ -937,7 +925,7 @@ public class PluginConfigurationProcessorTest {
   }
 
   @Test
-  public void testGetJavaContainerBuilderWithBaseImage_tarBase()
+  void testGetJavaContainerBuilderWithBaseImage_tarBase()
       throws IncompatibleBaseImageJavaVersionException, IOException, InvalidImageReferenceException,
           CacheDirectoryCreationException {
     when(rawConfiguration.getFromImage()).thenReturn(Optional.of("tar:///path/to.tar"));
@@ -947,7 +935,7 @@ public class PluginConfigurationProcessorTest {
   }
 
   @Test
-  public void testGetJavaContainerBuilderWithBaseImage_registry()
+  void testGetJavaContainerBuilderWithBaseImage_registry()
       throws IncompatibleBaseImageJavaVersionException, InvalidImageReferenceException, IOException,
           CacheDirectoryCreationException {
     when(rawConfiguration.getFromImage()).thenReturn(Optional.of("ima.ge/name"));
@@ -958,7 +946,7 @@ public class PluginConfigurationProcessorTest {
   }
 
   @Test
-  public void testGetJavaContainerBuilderWithBaseImage_registryWithPrefix()
+  void testGetJavaContainerBuilderWithBaseImage_registryWithPrefix()
       throws IncompatibleBaseImageJavaVersionException, InvalidImageReferenceException, IOException,
           CacheDirectoryCreationException {
     when(rawConfiguration.getFromImage()).thenReturn(Optional.of("registry://ima.ge/name"));
@@ -968,8 +956,8 @@ public class PluginConfigurationProcessorTest {
     assertThat(result.getTarPath()).isEmpty();
   }
 
-  @Test
-  @Parameters(
+  @ParameterizedTest
+  @CsvSource(
       value = {
         "adoptopenjdk:8, 8, 11",
         "adoptopenjdk:8-jre, 8, 11",
@@ -982,7 +970,7 @@ public class PluginConfigurationProcessorTest {
         "eclipse-temurin:17, 17, 19",
         "eclipse-temurin:17-jre, 17, 19"
       })
-  public void testGetJavaContainerBuilderWithBaseImage_incompatibleJavaBaseImage(
+  void testGetJavaContainerBuilderWithBaseImage_incompatibleJavaBaseImage(
       String baseImage, int baseImageJavaVersion, int appJavaVersion) {
     when(projectProperties.getMajorJavaVersion()).thenReturn(appJavaVersion);
 
@@ -999,7 +987,7 @@ public class PluginConfigurationProcessorTest {
 
   // https://github.com/GoogleContainerTools/jib/issues/1995
   @Test
-  public void testGetJavaContainerBuilderWithBaseImage_java12BaseImage()
+  void testGetJavaContainerBuilderWithBaseImage_java12BaseImage()
       throws InvalidImageReferenceException, IOException, IncompatibleBaseImageJavaVersionException,
           CacheDirectoryCreationException {
     when(projectProperties.getMajorJavaVersion()).thenReturn(12);
@@ -1010,7 +998,7 @@ public class PluginConfigurationProcessorTest {
   }
 
   @Test
-  public void testGetJavaContainerBuilderWithBaseImage_java19NoBaseImage() {
+  void testGetJavaContainerBuilderWithBaseImage_java19NoBaseImage() {
     when(projectProperties.getMajorJavaVersion()).thenReturn(19);
     when(rawConfiguration.getFromImage()).thenReturn(Optional.empty());
     IncompatibleBaseImageJavaVersionException exception =
@@ -1024,7 +1012,7 @@ public class PluginConfigurationProcessorTest {
   }
 
   @Test
-  public void testGetPlatformsSet() throws InvalidPlatformException {
+  void testGetPlatformsSet() throws InvalidPlatformException {
     Mockito.<List<?>>when(rawConfiguration.getPlatforms())
         .thenReturn(Arrays.asList(new TestPlatformConfiguration("testArchitecture", "testOs")));
 
@@ -1033,7 +1021,7 @@ public class PluginConfigurationProcessorTest {
   }
 
   @Test
-  public void testGetPlatformsSet_architectureMissing() {
+  void testGetPlatformsSet_architectureMissing() {
     TestPlatformConfiguration platform = new TestPlatformConfiguration(null, "testOs");
     Mockito.<List<?>>when(rawConfiguration.getPlatforms()).thenReturn(Arrays.asList(platform));
 
@@ -1048,7 +1036,7 @@ public class PluginConfigurationProcessorTest {
   }
 
   @Test
-  public void testGetPlatformsSet_osMissing() {
+  void testGetPlatformsSet_osMissing() {
     TestPlatformConfiguration platform = new TestPlatformConfiguration("testArchitecture", null);
     Mockito.<List<?>>when(rawConfiguration.getPlatforms()).thenReturn(Arrays.asList(platform));
 
@@ -1064,7 +1052,7 @@ public class PluginConfigurationProcessorTest {
   }
 
   @Test
-  public void testGetValidVolumesList() throws InvalidContainerVolumeException {
+  void testGetValidVolumesList() throws InvalidContainerVolumeException {
     when(rawConfiguration.getVolumes()).thenReturn(Collections.singletonList("/some/root"));
 
     assertThat(PluginConfigurationProcessor.getVolumesSet(rawConfiguration))
@@ -1072,7 +1060,7 @@ public class PluginConfigurationProcessorTest {
   }
 
   @Test
-  public void testGetInvalidVolumesList() {
+  void testGetInvalidVolumesList() {
     when(rawConfiguration.getVolumes()).thenReturn(Collections.singletonList("`some/root"));
 
     InvalidContainerVolumeException exception =
@@ -1084,7 +1072,7 @@ public class PluginConfigurationProcessorTest {
   }
 
   @Test
-  public void testCreateModificationTimeProvider_epochPlusSecond()
+  void testCreateModificationTimeProvider_epochPlusSecond()
       throws InvalidFilesModificationTimeException {
     ModificationTimeProvider timeProvider =
         PluginConfigurationProcessor.createModificationTimeProvider("EPOCH_PLUS_SECOND");
@@ -1093,7 +1081,7 @@ public class PluginConfigurationProcessorTest {
   }
 
   @Test
-  public void testCreateModificationTimeProvider_isoDateTimeValue()
+  void testCreateModificationTimeProvider_isoDateTimeValue()
       throws InvalidFilesModificationTimeException {
     ModificationTimeProvider timeProvider =
         PluginConfigurationProcessor.createModificationTimeProvider("2011-12-03T10:15:30+09:00");
@@ -1103,7 +1091,7 @@ public class PluginConfigurationProcessorTest {
   }
 
   @Test
-  public void testCreateModificationTimeProvider_invalidValue() {
+  void testCreateModificationTimeProvider_invalidValue() {
     InvalidFilesModificationTimeException exception =
         assertThrows(
             InvalidFilesModificationTimeException.class,
@@ -1113,13 +1101,13 @@ public class PluginConfigurationProcessorTest {
   }
 
   @Test
-  public void testGetCreationTime_epoch() throws InvalidCreationTimeException {
+  void testGetCreationTime_epoch() throws InvalidCreationTimeException {
     Instant time = PluginConfigurationProcessor.getCreationTime("EPOCH", projectProperties);
     assertThat(time).isEqualTo(Instant.EPOCH);
   }
 
   @Test
-  public void testGetCreationTime_useCurrentTimestamp() throws InvalidCreationTimeException {
+  void testGetCreationTime_useCurrentTimestamp() throws InvalidCreationTimeException {
     Instant now = Instant.now().minusSeconds(2);
     Instant time =
         PluginConfigurationProcessor.getCreationTime("USE_CURRENT_TIMESTAMP", projectProperties);
@@ -1127,7 +1115,7 @@ public class PluginConfigurationProcessorTest {
   }
 
   @Test
-  public void testGetCreationTime_isoDateTimeValue() throws InvalidCreationTimeException {
+  void testGetCreationTime_isoDateTimeValue() throws InvalidCreationTimeException {
     Instant expected = DateTimeFormatter.ISO_DATE_TIME.parse("2011-12-03T01:15:30Z", Instant::from);
     List<String> validTimeStamps =
         ImmutableList.of(
@@ -1146,7 +1134,7 @@ public class PluginConfigurationProcessorTest {
   }
 
   @Test
-  public void testGetCreationTime_isoDateTimeValueTimeZoneRegionOnlyAllowedForMostStrict8601Mode() {
+  void testGetCreationTime_isoDateTimeValueTimeZoneRegionOnlyAllowedForMostStrict8601Mode() {
     List<String> invalidTimeStamps =
         ImmutableList.of(
             "2011-12-03T01:15:30+0900[Asia/Tokyo]", "2011-12-03T01:15:30+09[Asia/Tokyo]");
@@ -1161,7 +1149,7 @@ public class PluginConfigurationProcessorTest {
   }
 
   @Test
-  public void testGetCreationTime_isoDateTimeValueRequiresTimeZone() {
+  void testGetCreationTime_isoDateTimeValueRequiresTimeZone() {
     // getCreationTime should fail if timezone not specified.
     // this is the expected behavior, not specifically designed like this for any reason, feel
     // free to change this behavior and update the test
@@ -1172,7 +1160,7 @@ public class PluginConfigurationProcessorTest {
   }
 
   @Test
-  public void testGetCreationTime_invalidValue() {
+  void testGetCreationTime_invalidValue() {
     InvalidCreationTimeException exception =
         assertThrows(
             InvalidCreationTimeException.class,
@@ -1188,7 +1176,7 @@ public class PluginConfigurationProcessorTest {
     JibContainerBuilder containerBuilder =
         PluginConfigurationProcessor.getJavaContainerBuilderWithBaseImage(
                 rawConfiguration, projectProperties, inferredAuthProvider)
-            .addClasses(temporaryFolder.getRoot().toPath())
+            .addClasses(temporaryFolder)
             .toContainerBuilder();
     return JibContainerBuilderTestHelper.toBuildContext(
             containerBuilder, Containerizer.to(RegistryImage.named("ignored")))
@@ -1209,10 +1197,14 @@ public class PluginConfigurationProcessorTest {
   }
 
   @Test
-  public void getAllFiles_expandsDirectories() throws IOException {
-    File rootFile = temporaryFolder.newFile("file");
-    File folder = temporaryFolder.newFolder("folder");
-    File folderFile = temporaryFolder.newFile("folder/file2");
+  void getAllFiles_expandsDirectories() throws IOException {
+    File rootFile = new File(temporaryFolder.toFile(), "file");
+    rootFile.createNewFile();
+
+    File folder = new File(temporaryFolder.toFile(), "folder");
+    folder.mkdir();
+    File folderFile = new File(temporaryFolder.toFile(), "folder/file2");
+    folderFile.createNewFile();
     assertThat(
             PluginConfigurationProcessor.getAllFiles(
                 ImmutableSet.of(rootFile.toPath(), folder.toPath())))
@@ -1220,7 +1212,7 @@ public class PluginConfigurationProcessorTest {
   }
 
   @Test
-  public void getAllFiles_doesntBreakForNonExistentFiles() throws IOException {
+  void getAllFiles_doesntBreakForNonExistentFiles() throws IOException {
     Path testPath = Paths.get("/a/file/that/doesnt/exist");
     assertThat(Files.exists(testPath)).isFalse();
     assertThat(PluginConfigurationProcessor.getAllFiles(ImmutableSet.of(testPath))).isEmpty();

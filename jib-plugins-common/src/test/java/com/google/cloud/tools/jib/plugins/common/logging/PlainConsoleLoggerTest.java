@@ -25,10 +25,10 @@ import java.util.Collections;
 import java.util.List;
 import java.util.function.Consumer;
 import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /** Tests for {@link PlainConsoleLogger}. */
-public class PlainConsoleLoggerTest {
+class PlainConsoleLoggerTest {
 
   private static final Duration SHUTDOWN_TIMEOUT = Duration.ofSeconds(3);
 
@@ -40,7 +40,7 @@ public class PlainConsoleLoggerTest {
   private PlainConsoleLogger testPlainConsoleLogger;
 
   @Test
-  public void testLog() {
+  void testLog() {
     ImmutableMap.Builder<Level, Consumer<String>> messageConsumers = ImmutableMap.builder();
     for (Level level : Level.values()) {
       messageConsumers.put(level, createMessageConsumer(level));
@@ -67,7 +67,7 @@ public class PlainConsoleLoggerTest {
   }
 
   @Test
-  public void testLog_filterOutColors() {
+  void testLog_filterOutColors() {
     ImmutableMap.Builder<Level, Consumer<String>> messageConsumers = ImmutableMap.builder();
     for (Level level : Level.values()) {
       messageConsumers.put(level, createMessageConsumer(level));
@@ -87,7 +87,7 @@ public class PlainConsoleLoggerTest {
   }
 
   @Test
-  public void testLog_ignoreIfNoMessageConsumer() {
+  void testLog_ignoreIfNoMessageConsumer() {
     testPlainConsoleLogger =
         new PlainConsoleLogger(
             ImmutableMap.of(Level.WARN, createMessageConsumer(Level.WARN)), singleThreadedExecutor);

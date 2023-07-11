@@ -37,13 +37,13 @@ import java.util.Collections;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import org.junit.After;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.junit.rules.TemporaryFolder;
 
 /** Integration tests for {@link Jib}. */
@@ -95,12 +95,12 @@ public class JibIntegrationTest {
     localRegistry.pullAndPushToLocal("busybox", "busybox");
   }
 
-  @Before
+  @BeforeEach
   public void setUp() {
     System.setProperty("sendCredentialsOverHttp", "true");
   }
 
-  @After
+  @AfterEach
   public void tearDown() {
     System.clearProperty("sendCredentialsOverHttp");
   }

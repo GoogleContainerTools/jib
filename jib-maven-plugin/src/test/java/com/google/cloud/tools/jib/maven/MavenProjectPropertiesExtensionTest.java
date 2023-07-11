@@ -42,16 +42,19 @@ import org.apache.maven.project.MavenProject;
 import org.hamcrest.CoreMatchers;
 import org.hamcrest.MatcherAssert;
 import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
 /** Plugin extension test for {@link MavenProjectProperties}. */
-@RunWith(MockitoJUnitRunner.class)
-public class MavenProjectPropertiesExtensionTest {
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
+class MavenProjectPropertiesExtensionTest {
 
   // Interface to conveniently provide the main extension body using lambda.
   @FunctionalInterface
@@ -195,8 +198,8 @@ public class MavenProjectPropertiesExtensionTest {
 
   private MavenProjectProperties mavenProjectProperties;
 
-  @Before
-  public void setUp() {
+  @BeforeEach
+  void setUp() {
     Mockito.when(mockLog.isDebugEnabled()).thenReturn(true);
     Mockito.when(mockLog.isWarnEnabled()).thenReturn(true);
     Mockito.when(mockLog.isErrorEnabled()).thenReturn(true);
@@ -214,7 +217,7 @@ public class MavenProjectPropertiesExtensionTest {
   }
 
   @Test
-  public void testRunPluginExtensions_noExtensionsConfigured() throws JibPluginExtensionException {
+  void testRunPluginExtensions_noExtensionsConfigured() throws JibPluginExtensionException {
     FooExtension extension =
         new FooExtension((buildPlan, properties, extraConfig, mavenData, logger) -> buildPlan);
     loadedExtensions = Arrays.asList(extension);
@@ -228,7 +231,7 @@ public class MavenProjectPropertiesExtensionTest {
   }
 
   @Test
-  public void testRunPluginExtensions_configuredExtensionNotFound() {
+  void testRunPluginExtensions_configuredExtensionNotFound() {
     try {
       mavenProjectProperties.runPluginExtensions(
           Arrays.asList(new FooExtensionConfig()), containerBuilder);
@@ -242,7 +245,7 @@ public class MavenProjectPropertiesExtensionTest {
   }
 
   @Test
-  public void testRunPluginExtensions() throws JibPluginExtensionException {
+  void testRunPluginExtensions() throws JibPluginExtensionException {
     FooExtension extension =
         new FooExtension(
             (buildPlan, properties, extraConfig, mavenData, logger) -> {
@@ -265,7 +268,7 @@ public class MavenProjectPropertiesExtensionTest {
   }
 
   @Test
-  public void testRunPluginExtensions_exceptionFromExtension() {
+  void testRunPluginExtensions_exceptionFromExtension() {
     FileNotFoundException fakeException = new FileNotFoundException();
     FooExtension extension =
         new FooExtension(
@@ -286,7 +289,7 @@ public class MavenProjectPropertiesExtensionTest {
   }
 
   @Test
-  public void testRunPluginExtensions_invalidBaseImageFromExtension() {
+  void testRunPluginExtensions_invalidBaseImageFromExtension() {
     FooExtension extension =
         new FooExtension(
             (buildPlan, properties, extraConfig, mavenData, logger) ->
@@ -305,7 +308,7 @@ public class MavenProjectPropertiesExtensionTest {
   }
 
   @Test
-  public void testRunPluginExtensions_extensionOrder() throws JibPluginExtensionException {
+  void testRunPluginExtensions_extensionOrder() throws JibPluginExtensionException {
     FooExtension fooExtension =
         new FooExtension(
             (buildPlan, properties, extraConfig, mavenData, logger) ->
@@ -328,7 +331,7 @@ public class MavenProjectPropertiesExtensionTest {
   }
 
   @Test
-  public void testRunPluginExtensions_customProperties() throws JibPluginExtensionException {
+  void testRunPluginExtensions_customProperties() throws JibPluginExtensionException {
     FooExtension extension =
         new FooExtension(
             (buildPlan, properties, extraConfig, mavenData, logger) ->
@@ -343,7 +346,7 @@ public class MavenProjectPropertiesExtensionTest {
   }
 
   @Test
-  public void testRunPluginExtensions_extensionDefinedConfigurations_emptyConfig()
+  void testRunPluginExtensions_extensionDefinedConfigurations_emptyConfig()
       throws JibPluginExtensionException {
     FooExtension fooExtension =
         new FooExtension(
@@ -364,8 +367,7 @@ public class MavenProjectPropertiesExtensionTest {
   }
 
   @Test
-  public void testRunPluginExtensions_extensionDefinedConfigurations()
-      throws JibPluginExtensionException {
+  void testRunPluginExtensions_extensionDefinedConfigurations() throws JibPluginExtensionException {
     FooExtension fooExtension =
         new FooExtension(
             (buildPlan, properties, extraConfig, mavenData, logger) -> {
@@ -388,7 +390,7 @@ public class MavenProjectPropertiesExtensionTest {
   }
 
   @Test
-  public void testRunPluginExtensions_wrongExtraConfigType() {
+  void testRunPluginExtensions_wrongExtraConfigType() {
     FooExtension extension =
         new FooExtension((buildPlan, properties, extraConfig, mavenData, logger) -> buildPlan);
     loadedExtensions = Arrays.asList(extension);
@@ -412,8 +414,7 @@ public class MavenProjectPropertiesExtensionTest {
   }
 
   @Test
-  public void testRunPluginExtensions_ignoreUnexpectedExtraConfig()
-      throws JibPluginExtensionException {
+  void testRunPluginExtensions_ignoreUnexpectedExtraConfig() throws JibPluginExtensionException {
     BaseExtension<Void> extension =
         new BaseExtension<>(
             (buildPlan, properties, extraConfig, mavenData, logger) -> buildPlan, null);
@@ -434,7 +435,7 @@ public class MavenProjectPropertiesExtensionTest {
   }
 
   @Test
-  public void testRunPluginExtensions_runtimeExceptionFromExtension() {
+  void testRunPluginExtensions_runtimeExceptionFromExtension() {
     FooExtension extension =
         new FooExtension(
             (buildPlan, properties, extraConfig, mavenData, logger) -> {
@@ -453,7 +454,7 @@ public class MavenProjectPropertiesExtensionTest {
   }
 
   @Test
-  public void testRunPluginExtensions_injected() throws JibPluginExtensionException {
+  void testRunPluginExtensions_injected() throws JibPluginExtensionException {
     FooExtension injectedExtension =
         new FooExtension(
             (buildPlan, properties, extraConfig, mavenData, logger) -> {
@@ -485,7 +486,7 @@ public class MavenProjectPropertiesExtensionTest {
   }
 
   @Test
-  public void testRunPluginExtensions_preferInjectionOverServiceLoader()
+  void testRunPluginExtensions_preferInjectionOverServiceLoader()
       throws JibPluginExtensionException {
     FooExtension injectedExtension =
         new FooExtension(

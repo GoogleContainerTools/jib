@@ -26,19 +26,26 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.google.cloud.tools.jib.api.buildplan.AbsoluteUnixPath;
 import java.nio.file.Paths;
 import java.time.Instant;
-import junitparams.JUnitParamsRunner;
-import junitparams.Parameters;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import java.util.stream.Stream;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.MethodSource;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
 /** Tests for {@link CopySpec}. */
-@RunWith(JUnitParamsRunner.class)
-public class CopySpecTest {
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
+class CopySpecTest {
 
   private static final ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
 
   @Test
-  public void testCopySpec_full() throws JsonProcessingException {
+  void testCopySpec_full() throws JsonProcessingException {
     String data =
         "src: target/classes\n"
             + "dest: /app/classes\n"
@@ -58,20 +65,24 @@ public class CopySpecTest {
         .isEqualTo(Instant.ofEpochMilli(1));
   }
 
-  @Test
-  @Parameters(
-      value = {
-        "dest: /app/classes\n, Missing required creator property 'src'",
-        "src: target/classes\n, Missing required creator property 'dest'"
-      })
-  public void testCopySpec_required(String data, String errorMessage) {
+  public static Stream<Arguments> requiredChecksParams() {
+    return Stream.of(
+        Arguments.of(
+            new Object[] {"dest: /app/classes\n", "Missing required creator property 'src'"}),
+        Arguments.of(
+            new Object[] {"src: target/classes\n", "Missing required creator property 'dest'"}));
+  }
+
+  @ParameterizedTest
+  @MethodSource("requiredChecksParams")
+  void testCopySpec_required(String data, String errorMessage) {
     Exception exception =
         assertThrows(JsonProcessingException.class, () -> mapper.readValue(data, CopySpec.class));
     assertThat(exception).hasMessageThat().startsWith(errorMessage);
   }
 
   @Test
-  public void testCopySpec_destEndsWithSlash() throws JsonProcessingException {
+  void testCopySpec_destEndsWithSlash() throws JsonProcessingException {
     String data = "src: target/classes\n" + "dest: /app/classes/";
 
     CopySpec parsed = mapper.readValue(data, CopySpec.class);
@@ -80,7 +91,7 @@ public class CopySpecTest {
   }
 
   @Test
-  public void testCopySpec_destDoesNotEndWithSlash() throws JsonProcessingException {
+  void testCopySpec_destDoesNotEndWithSlash() throws JsonProcessingException {
     String data = "src: target/classes\n" + "dest: /app/classes";
 
     CopySpec parsed = mapper.readValue(data, CopySpec.class);
@@ -88,22 +99,32 @@ public class CopySpecTest {
     assertThat(parsed.isDestEndsWithSlash()).isFalse();
   }
 
-  @Test
-  @Parameters(
-      value = {
-        "src: null\ndest: /app/classes\n, Property 'src' cannot be null",
-        "src: ''\ndest: /app/classes\n, Property 'src' cannot be an empty string",
-        "src: target/classes\ndest: null\n, Property 'dest' cannot be null",
-        "src: target/classes\ndest: ''\n, Property 'dest' cannot be an empty string"
-      })
-  public void testCopySpec_nullEmptyCheck(String data, String errorMessage) {
+  public static Stream<Arguments> nullChecksParams() {
+    return Stream.of(
+        Arguments.of(
+            new Object[] {"src: null\ndest: /app/classes\n", "Property 'src' cannot be null"}),
+        Arguments.of(
+            new Object[] {
+              "src: ''\ndest: /app/classes\n", "Property 'src' cannot be an empty string"
+            }),
+        Arguments.of(
+            new Object[] {"src: target/classes\ndest: null\n", "Property 'dest' cannot be null"}),
+        Arguments.of(
+            new Object[] {
+              "src: target/classes\ndest: ''\n", "Property 'dest' cannot be an empty string"
+            }));
+  }
+
+  @ParameterizedTest
+  @MethodSource("nullChecksParams")
+  void testCopySpec_nullEmptyCheck(String data, String errorMessage) {
     Exception exception =
         assertThrows(JsonProcessingException.class, () -> mapper.readValue(data, CopySpec.class));
     assertThat(exception).hasMessageThat().contains(errorMessage);
   }
 
   @Test
-  public void testCopySpec_nullCollections() throws JsonProcessingException {
+  void testCopySpec_nullCollections() throws JsonProcessingException {
     String data = "src: target/classes\n" + "dest: /app/classes\n";
 
     CopySpec parsed = mapper.readValue(data, CopySpec.class);
@@ -111,9 +132,9 @@ public class CopySpecTest {
     assertThat(parsed.getExcludes()).isEmpty();
   }
 
-  @Test
-  @Parameters(value = {"includes", "excludes"})
-  public void testCopySpec_noNullEntries(String fieldName) {
+  @ParameterizedTest
+  @CsvSource(value = {"includes", "excludes"})
+  void testCopySpec_noNullEntries(String fieldName) {
     String data =
         "src: target/classes\n" + "dest: /app/classes\n" + fieldName + ": ['first', null]";
 
@@ -125,9 +146,9 @@ public class CopySpecTest {
         .isEqualTo("Property '" + fieldName + "' cannot contain null entries");
   }
 
-  @Test
-  @Parameters(value = {"includes", "excludes"})
-  public void testCopySpec_noEmptyEntries(String fieldName) {
+  @ParameterizedTest
+  @CsvSource(value = {"includes", "excludes"})
+  void testCopySpec_noEmptyEntries(String fieldName) {
     String data = "src: target/classes\n" + "dest: /app/classes\n" + fieldName + ": ['first', ' ']";
 
     Exception exception =
@@ -138,17 +159,17 @@ public class CopySpecTest {
         .isEqualTo("Property '" + fieldName + "' cannot contain empty strings");
   }
 
-  @Test
-  @Parameters(value = {"includes", "excludes"})
-  public void testCopySpec_emptyOkay(String fieldName) throws JsonProcessingException {
+  @ParameterizedTest
+  @CsvSource(value = {"includes", "excludes"})
+  void testCopySpec_emptyOkay(String fieldName) throws JsonProcessingException {
     String data = "src: target/classes\n" + "dest: /app/classes\n" + fieldName + ": []";
 
     assertThat(mapper.readValue(data, CopySpec.class)).isNotNull();
   }
 
-  @Test
-  @Parameters(value = {"includes", "excludes"})
-  public void testCopySpec_nullOkay(String fieldName) throws JsonProcessingException {
+  @ParameterizedTest
+  @CsvSource(value = {"includes", "excludes"})
+  void testCopySpec_nullOkay(String fieldName) throws JsonProcessingException {
     String data = "src: target/classes\n" + "dest: /app/classes\n" + fieldName + ": null";
 
     assertThat(mapper.readValue(data, CopySpec.class)).isNotNull();

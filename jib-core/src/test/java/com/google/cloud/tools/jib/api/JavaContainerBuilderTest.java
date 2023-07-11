@@ -29,10 +29,10 @@ import java.nio.file.Paths;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /** Tests for {@link JavaContainerBuilder}. */
-public class JavaContainerBuilderTest {
+class JavaContainerBuilderTest {
 
   /** Gets a resource file as a {@link Path}. */
   private static Path getResource(String directory) throws URISyntaxException {
@@ -54,7 +54,7 @@ public class JavaContainerBuilderTest {
   }
 
   @Test
-  public void testToJibContainerBuilder_all()
+  void testToJibContainerBuilder_all()
       throws InvalidImageReferenceException, URISyntaxException, IOException,
           CacheDirectoryCreationException {
     BuildContext buildContext =
@@ -136,7 +136,7 @@ public class JavaContainerBuilderTest {
   }
 
   @Test
-  public void testToJibContainerBuilder_missingAndMultipleAdds()
+  void testToJibContainerBuilder_missingAndMultipleAdds()
       throws InvalidImageReferenceException, URISyntaxException, IOException,
           CacheDirectoryCreationException {
     BuildContext buildContext =
@@ -187,7 +187,7 @@ public class JavaContainerBuilderTest {
   }
 
   @Test
-  public void testToJibContainerBuilder_setAppRootLate()
+  void testToJibContainerBuilder_setAppRootLate()
       throws URISyntaxException, IOException, InvalidImageReferenceException,
           CacheDirectoryCreationException {
     BuildContext buildContext =
@@ -239,7 +239,7 @@ public class JavaContainerBuilderTest {
   }
 
   @Test
-  public void testToJibContainerBuilder_mainClassNull()
+  void testToJibContainerBuilder_mainClassNull()
       throws IOException, InvalidImageReferenceException, CacheDirectoryCreationException,
           URISyntaxException {
     BuildContext buildContext =
@@ -264,7 +264,7 @@ public class JavaContainerBuilderTest {
   }
 
   @Test
-  public void testToJibContainerBuilder_classpathEmpty()
+  void testToJibContainerBuilder_classpathEmpty()
       throws IOException, InvalidImageReferenceException {
     try {
       JavaContainerBuilder.from("scratch").setMainClass("Hello").toContainerBuilder();

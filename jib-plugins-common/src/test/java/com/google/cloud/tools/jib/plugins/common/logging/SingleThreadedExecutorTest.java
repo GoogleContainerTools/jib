@@ -24,17 +24,16 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /** Tests for {@link SingleThreadedExecutor}. */
-public class SingleThreadedExecutorTest {
+class SingleThreadedExecutorTest {
 
   private static final Duration SHUTDOWN_TIMEOUT = Duration.ofSeconds(3);
 
   @SuppressWarnings("ThreadPriorityCheck") // use of Thread.yield()
   @Test
-  public void testExecute_mutualExclusion()
-      throws IOException, ExecutionException, InterruptedException {
+  void testExecute_mutualExclusion() throws IOException, ExecutionException, InterruptedException {
     SingleThreadedExecutor singleThreadedExecutor = new SingleThreadedExecutor();
     Lock lock = new ReentrantLock();
 

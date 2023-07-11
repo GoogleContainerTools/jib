@@ -37,14 +37,17 @@ import java.nio.file.Paths;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.Optional;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
 /** Tests for {@link WarFiles}. */
-@RunWith(MockitoJUnitRunner.class)
-public class WarFilesTest {
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
+class WarFilesTest {
 
   @Mock private StandardWarExplodedProcessor mockStandardWarExplodedProcessor;
   @Mock private CommonCliOptions mockCommonCliOptions;
@@ -52,7 +55,7 @@ public class WarFilesTest {
   @Mock private ConsoleLogger mockLogger;
 
   @Test
-  public void testToJibContainerBuilder_explodedStandard_basicInfo()
+  void testToJibContainerBuilder_explodedStandard_basicInfo()
       throws IOException, InvalidImageReferenceException {
     FileEntriesLayer layer =
         FileEntriesLayer.builder()
@@ -89,7 +92,7 @@ public class WarFilesTest {
   }
 
   @Test
-  public void testToJibContainerBuilder_optionalParameters()
+  void testToJibContainerBuilder_optionalParameters()
       throws IOException, InvalidImageReferenceException {
     when(mockCommonContainerConfigCliOptions.getFrom()).thenReturn(Optional.of("base-image"));
     when(mockCommonContainerConfigCliOptions.getExposedPorts())
@@ -133,7 +136,7 @@ public class WarFilesTest {
   }
 
   @Test
-  public void testToJibContainerBuilder_nonJettyBaseImageSpecifiedAndNoEntrypoint()
+  void testToJibContainerBuilder_nonJettyBaseImageSpecifiedAndNoEntrypoint()
       throws IOException, InvalidImageReferenceException {
     JibContainerBuilder containerBuilder =
         WarFiles.toJibContainerBuilder(
@@ -148,7 +151,7 @@ public class WarFilesTest {
   }
 
   @Test
-  public void testToJibContainerBuilder_noProgramArgumentsSpecified()
+  void testToJibContainerBuilder_noProgramArgumentsSpecified()
       throws IOException, InvalidImageReferenceException {
     JibContainerBuilder containerBuilder =
         WarFiles.toJibContainerBuilder(

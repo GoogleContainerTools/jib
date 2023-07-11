@@ -57,13 +57,13 @@ import org.apache.commons.compress.compressors.CompressorStreamFactory;
 import org.hamcrest.CoreMatchers;
 import org.hamcrest.MatcherAssert;
 import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 /** Tests for {@link CacheStorageWriter}. */
-public class CacheStorageWriterTest {
+class CacheStorageWriterTest {
 
   private static BlobDescriptor getDigest(Blob blob) throws IOException {
     return blob.writeTo(ByteStreams.nullOutputStream());
@@ -110,21 +110,21 @@ public class CacheStorageWriterTest {
         Paths.get(Resources.getResource(path).toURI()), jsonClass);
   }
 
-  @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
+  @TempDir public Path temporaryFolder;
 
   private CacheStorageFiles cacheStorageFiles;
   private CacheStorageWriter cacheStorageWriter;
   private Path cacheRoot;
 
-  @Before
-  public void setUp() throws IOException {
-    cacheRoot = temporaryFolder.newFolder().toPath();
+  @BeforeEach
+  void setUp() throws IOException {
+    cacheRoot = Files.createTempDirectory(temporaryFolder, "jib");
     cacheStorageFiles = new CacheStorageFiles(cacheRoot);
     cacheStorageWriter = new CacheStorageWriter(cacheStorageFiles);
   }
 
   @Test
-  public void testWriteCompressed() throws IOException {
+  void testWriteCompressed() throws IOException {
     Blob uncompressedLayerBlob = Blobs.from("uncompressedLayerBlob");
     Blob compressedLayerBlob = compress(uncompressedLayerBlob);
     CachedLayer cachedLayer = cacheStorageWriter.writeCompressed(compressedLayerBlob);
@@ -133,7 +133,7 @@ public class CacheStorageWriterTest {
   }
 
   @Test
-  public void testWriteZstdCompressed() throws IOException {
+  void testWriteZstdCompressed() throws IOException {
     Blob uncompressedLayerBlob = Blobs.from("uncompressedLayerBlob");
     Blob compressedLayerBlob = compress(uncompressedLayerBlob, CompressorStreamFactory.ZSTANDARD);
 
@@ -142,15 +142,19 @@ public class CacheStorageWriterTest {
     verifyCachedLayer(cachedLayer, uncompressedLayerBlob, compressedLayerBlob);
   }
 
-  @Test(expected = IOException.class)
-  public void testWriteCompressWhenUncompressed() throws IOException {
-    Blob uncompressedLayerBlob = Blobs.from("uncompressedLayerBlob");
-    // The detection of compression algorithm will fail
-    cacheStorageWriter.writeCompressed(uncompressedLayerBlob);
+  @Test
+  void testWriteCompressWhenUncompressed() throws IOException {
+    Assertions.assertThrows(
+        IOException.class,
+        () -> {
+          Blob uncompressedLayerBlob = Blobs.from("uncompressedLayerBlob");
+          // The detection of compression algorithm will fail
+          cacheStorageWriter.writeCompressed(uncompressedLayerBlob);
+        });
   }
 
   @Test
-  public void testWriteUncompressed() throws IOException {
+  void testWriteUncompressed() throws IOException {
     Blob uncompressedLayerBlob = Blobs.from("uncompressedLayerBlob");
     DescriptorDigest layerDigest = getDigest(compress(uncompressedLayerBlob)).getDigest();
     DescriptorDigest selector = getDigest(Blobs.from("selector")).getDigest();
@@ -166,7 +170,7 @@ public class CacheStorageWriterTest {
   }
 
   @Test
-  public void testWriteTarLayer() throws IOException {
+  void testWriteTarLayer() throws IOException {
     Blob uncompressedLayerBlob = Blobs.from("uncompressedLayerBlob");
     DescriptorDigest diffId = getDigest(uncompressedLayerBlob).getDigest();
 
@@ -193,7 +197,7 @@ public class CacheStorageWriterTest {
   }
 
   @Test
-  public void testWriteMetadata_v21()
+  void testWriteMetadata_v21()
       throws IOException, URISyntaxException, InvalidImageReferenceException {
     V21ManifestTemplate v21Manifest =
         loadJsonResource("core/json/v21manifest.json", V21ManifestTemplate.class);
@@ -222,7 +226,7 @@ public class CacheStorageWriterTest {
   }
 
   @Test
-  public void testWriteMetadata_v22()
+  void testWriteMetadata_v22()
       throws IOException, URISyntaxException, InvalidImageReferenceException {
     ContainerConfigurationTemplate containerConfig =
         loadJsonResource("core/json/containerconfig.json", ContainerConfigurationTemplate.class);
@@ -305,7 +309,7 @@ public class CacheStorageWriterTest {
   }
 
   @Test
-  public void testWriteMetadata_oci()
+  void testWriteMetadata_oci()
       throws URISyntaxException, IOException, InvalidImageReferenceException {
     ContainerConfigurationTemplate containerConfig =
         loadJsonResource("core/json/containerconfig.json", ContainerConfigurationTemplate.class);
@@ -359,7 +363,7 @@ public class CacheStorageWriterTest {
   }
 
   @Test
-  public void testWriteLocalConfig() throws IOException, URISyntaxException, DigestException {
+  void testWriteLocalConfig() throws IOException, URISyntaxException, DigestException {
     ContainerConfigurationTemplate containerConfigurationTemplate =
         loadJsonResource("core/json/containerconfig.json", ContainerConfigurationTemplate.class);
 
@@ -380,7 +384,7 @@ public class CacheStorageWriterTest {
   }
 
   @Test
-  public void testMoveIfDoesNotExist_exceptionAfterFailure() {
+  void testMoveIfDoesNotExist_exceptionAfterFailure() {
     Exception exception =
         assertThrows(
             IOException.class,

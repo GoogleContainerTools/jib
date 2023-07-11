@@ -28,6 +28,7 @@ import javax.annotation.concurrent.Immutable;
 @Immutable
 public interface LayerObject {
 
+  /** Layer Object Enum type. */
   public static enum Type {
     FILE_ENTRIES,
   }

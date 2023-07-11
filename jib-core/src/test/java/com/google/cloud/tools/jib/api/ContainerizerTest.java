@@ -27,14 +27,14 @@ import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.concurrent.ExecutorService;
 import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
 /** Tests for {@link Containerizer}. */
-public class ContainerizerTest {
+class ContainerizerTest {
 
   @Test
-  public void testTo() throws CacheDirectoryCreationException, InvalidImageReferenceException {
+  void testTo() throws CacheDirectoryCreationException, InvalidImageReferenceException {
     RegistryImage registryImage = RegistryImage.named("registry/image");
     DockerDaemonImage dockerDaemonImage = DockerDaemonImage.named("daemon/image");
     TarImage tarImage = TarImage.at(Paths.get("ignored")).named("tar/image");
@@ -80,7 +80,7 @@ public class ContainerizerTest {
   }
 
   @Test
-  public void testWithAdditionalTag() throws InvalidImageReferenceException {
+  void testWithAdditionalTag() throws InvalidImageReferenceException {
     Containerizer containerizer = Containerizer.to(DockerDaemonImage.named("image"));
 
     containerizer.withAdditionalTag("tag");
@@ -93,7 +93,7 @@ public class ContainerizerTest {
   }
 
   @Test
-  public void testGetImageConfiguration_registryImage() throws InvalidImageReferenceException {
+  void testGetImageConfiguration_registryImage() throws InvalidImageReferenceException {
     CredentialRetriever credentialRetriever = Mockito.mock(CredentialRetriever.class);
     Containerizer containerizer =
         Containerizer.to(
@@ -106,7 +106,7 @@ public class ContainerizerTest {
   }
 
   @Test
-  public void testGetImageConfiguration_dockerDaemonImage() throws InvalidImageReferenceException {
+  void testGetImageConfiguration_dockerDaemonImage() throws InvalidImageReferenceException {
     Containerizer containerizer = Containerizer.to(DockerDaemonImage.named("docker/daemon/image"));
 
     ImageConfiguration imageConfiguration = containerizer.getImageConfiguration();
@@ -115,7 +115,7 @@ public class ContainerizerTest {
   }
 
   @Test
-  public void testGetImageConfiguration_tarImage() throws InvalidImageReferenceException {
+  void testGetImageConfiguration_tarImage() throws InvalidImageReferenceException {
     Containerizer containerizer =
         Containerizer.to(TarImage.at(Paths.get("output/file")).named("tar/image"));
 
@@ -125,7 +125,7 @@ public class ContainerizerTest {
   }
 
   @Test
-  public void testGetApplicationLayersCacheDirectory_defaults()
+  void testGetApplicationLayersCacheDirectory_defaults()
       throws InvalidImageReferenceException, CacheDirectoryCreationException, IOException {
     Containerizer containerizer = Containerizer.to(RegistryImage.named("registry/image"));
     Path applicationLayersCache = containerizer.getApplicationLayersCacheDirectory();

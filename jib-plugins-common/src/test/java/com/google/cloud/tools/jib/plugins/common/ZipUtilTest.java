@@ -20,6 +20,7 @@ import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assert.assertThrows;
 
 import com.google.common.io.Resources;
+import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
@@ -31,30 +32,29 @@ import org.hamcrest.CoreMatchers;
 import org.hamcrest.MatcherAssert;
 import org.junit.Assert;
 import org.junit.Assume;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 /** Tests for {@link ZipUtil}. */
-public class ZipUtilTest {
+class ZipUtilTest {
 
-  @Rule public final TemporaryFolder tempFolder = new TemporaryFolder();
+  @TempDir public Path tempFolder;
 
   @Test
-  public void testUnzip() throws URISyntaxException, IOException {
-    verifyUnzip(tempFolder.getRoot().toPath());
+  void testUnzip() throws URISyntaxException, IOException {
+    verifyUnzip(tempFolder);
   }
 
   @Test
-  public void testUnzip_nonExistingDestination() throws URISyntaxException, IOException {
-    Path destination = tempFolder.getRoot().toPath().resolve("non/exisiting");
+  void testUnzip_nonExistingDestination() throws URISyntaxException, IOException {
+    Path destination = tempFolder.resolve("non/exisiting");
     verifyUnzip(destination);
 
     Assert.assertTrue(Files.exists(destination));
   }
 
   @Test
-  public void testZipSlipVulnerability_windows() throws URISyntaxException {
+  void testZipSlipVulnerability_windows() throws URISyntaxException {
     Assume.assumeTrue(System.getProperty("os.name").startsWith("Windows"));
 
     Path archive =
@@ -63,7 +63,7 @@ public class ZipUtilTest {
   }
 
   @Test
-  public void testZipSlipVulnerability_unix() throws URISyntaxException {
+  void testZipSlipVulnerability_unix() throws URISyntaxException {
     Assume.assumeFalse(System.getProperty("os.name").startsWith("Windows"));
 
     Path archive =
@@ -72,10 +72,10 @@ public class ZipUtilTest {
   }
 
   @Test
-  public void testUnzip_modificationTimePreserved() throws URISyntaxException, IOException {
+  void testUnzip_modificationTimePreserved() throws URISyntaxException, IOException {
     Path archive =
         Paths.get(Resources.getResource("plugins-common/test-archives/test.zip").toURI());
-    Path destination = tempFolder.getRoot().toPath();
+    Path destination = tempFolder;
 
     ZipUtil.unzip(archive, destination);
 
@@ -96,14 +96,14 @@ public class ZipUtilTest {
   }
 
   @Test
-  public void testUnzip_reproducibleTimestampsEnabled() throws URISyntaxException, IOException {
+  void testUnzip_reproducibleTimestampsEnabled() throws URISyntaxException, IOException {
     // The zipfile has only level1/level2/level3/file.txt packaged
     Path archive =
         Paths.get(
             Resources.getResource("plugins-common/test-archives/zip-only-file-packaged.zip")
                 .toURI());
 
-    Path destination = tempFolder.getRoot().toPath();
+    Path destination = tempFolder;
 
     ZipUtil.unzip(archive, destination, true);
 
@@ -118,9 +118,9 @@ public class ZipUtilTest {
   }
 
   @Test
-  public void testUnzip_reproducibleTimestampsEnabled_destinationNotEmpty() throws IOException {
-    Path destination = tempFolder.getRoot().toPath();
-    tempFolder.newFile();
+  void testUnzip_reproducibleTimestampsEnabled_destinationNotEmpty() throws IOException {
+    Path destination = tempFolder;
+    File.createTempFile("jib", "test", tempFolder.toFile());
 
     IllegalStateException exception =
         assertThrows(
@@ -147,7 +147,7 @@ public class ZipUtilTest {
 
   private void verifyZipSlipSafe(Path archive) {
     try {
-      ZipUtil.unzip(archive, tempFolder.getRoot().toPath());
+      ZipUtil.unzip(archive, tempFolder);
       Assert.fail("Should block Zip-Slip");
     } catch (IOException ex) {
       MatcherAssert.assertThat(

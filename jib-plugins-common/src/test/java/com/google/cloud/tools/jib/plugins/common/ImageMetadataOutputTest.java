@@ -19,9 +19,9 @@ package com.google.cloud.tools.jib.plugins.common;
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
 import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-public class ImageMetadataOutputTest {
+class ImageMetadataOutputTest {
 
   private static final String TEST_JSON =
       "{\"image\":"
@@ -35,7 +35,7 @@ public class ImageMetadataOutputTest {
           + "}";
 
   @Test
-  public void testFromJson() throws IOException {
+  void testFromJson() throws IOException {
     ImageMetadataOutput output = ImageMetadataOutput.fromJson(TEST_JSON);
     Assert.assertEquals("gcr.io/project/image:tag", output.getImage());
     Assert.assertEquals(
@@ -50,7 +50,7 @@ public class ImageMetadataOutputTest {
   }
 
   @Test
-  public void testToJson() throws IOException {
+  void testToJson() throws IOException {
     ImageMetadataOutput output = ImageMetadataOutput.fromJson(TEST_JSON);
     Assert.assertEquals(TEST_JSON, output.toJson());
   }

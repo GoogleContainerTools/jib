@@ -49,25 +49,27 @@ import java.util.logging.ConsoleHandler;
 import java.util.logging.Handler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.io.TempDir;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
-@RunWith(MockitoJUnitRunner.class)
-public class JibCliTest {
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
+class JibCliTest {
 
   @Mock private GlobalConfig globalConfig;
   @Mock private ConsoleLogger logger;
 
-  @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
+  @TempDir public Path temporaryFolder;
 
   @Mock private JibContainer mockJibContainer;
 
   @Test
-  public void testConfigureHttpLogging() {
+  void testConfigureHttpLogging() {
     Logger logger = JibCli.configureHttpLogging(Level.ALL);
     assertThat(logger.getName()).isEqualTo("com.google.api.client.http.HttpTransport");
     assertThat(logger.getLevel()).isEqualTo(Level.ALL);
@@ -79,7 +81,7 @@ public class JibCliTest {
   }
 
   @Test
-  public void testLogTerminatingException() {
+  void testLogTerminatingException() {
     JibCli.logTerminatingException(logger, new IOException("test error message"), false);
 
     verify(logger)
@@ -88,7 +90,7 @@ public class JibCliTest {
   }
 
   @Test
-  public void testLogTerminatingException_stackTrace() {
+  void testLogTerminatingException_stackTrace() {
     JibCli.logTerminatingException(logger, new IOException("test error message"), true);
 
     String stackTraceLine =
@@ -100,7 +102,7 @@ public class JibCliTest {
   }
 
   @Test
-  public void testNewUpdateChecker_noUpdateCheck() throws ExecutionException, InterruptedException {
+  void testNewUpdateChecker_noUpdateCheck() throws ExecutionException, InterruptedException {
     when(globalConfig.isDisableUpdateCheck()).thenReturn(true);
     Future<Optional<String>> updateChecker =
         JibCli.newUpdateChecker(globalConfig, Verbosity.info, ignored -> {});
@@ -108,7 +110,7 @@ public class JibCliTest {
   }
 
   @Test
-  public void testFinishUpdateChecker_correctMessageLogged() {
+  void testFinishUpdateChecker_correctMessageLogged() {
     Future<Optional<String>> updateCheckFuture = Futures.immediateFuture(Optional.of("2.0.0"));
     JibCli.finishUpdateChecker(logger, updateCheckFuture);
     verify(logger)
@@ -123,8 +125,7 @@ public class JibCliTest {
   }
 
   @Test
-  public void testWriteImageJson()
-      throws InvalidImageReferenceException, IOException, DigestException {
+  void testWriteImageJson() throws InvalidImageReferenceException, IOException, DigestException {
     String imageId = "sha256:61bb3ec31a47cb730eb58a38bbfa813761a51dca69d10e39c24c3d00a7b2c7a9";
     String digest = "sha256:3f1be7e19129edb202c071a659a4db35280ab2bb1a16f223bfd5d1948657b6fc";
     when(mockJibContainer.getTargetImage())
@@ -133,7 +134,7 @@ public class JibCliTest {
     when(mockJibContainer.getDigest()).thenReturn(DescriptorDigest.fromDigest(digest));
     when(mockJibContainer.getTags()).thenReturn(ImmutableSet.of("latest", "tag-2"));
 
-    Path outputPath = temporaryFolder.getRoot().toPath().resolve("jib-image.json");
+    Path outputPath = temporaryFolder.resolve("jib-image.json");
     JibCli.writeImageJson(Optional.of(outputPath), mockJibContainer);
 
     String outputJson = new String(Files.readAllBytes(outputPath), StandardCharsets.UTF_8);

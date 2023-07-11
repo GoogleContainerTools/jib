@@ -27,9 +27,9 @@ import java.net.URL;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import javax.annotation.Nullable;
-import org.junit.After;
 import org.junit.ClassRule;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Test;
 import picocli.CommandLine;
 
 public class WarCommandTest {
@@ -38,15 +38,15 @@ public class WarCommandTest {
 
   @Nullable private String containerName;
 
-  @After
-  public void tearDown() throws IOException, InterruptedException {
+  @AfterEach
+  void tearDown() throws IOException, InterruptedException {
     if (containerName != null) {
       new Command("docker", "stop", containerName).run();
     }
   }
 
   @Test
-  public void testErrorLogging_fileDoesNotExist() {
+  void testErrorLogging_fileDoesNotExist() {
     StringWriter stringWriter = new StringWriter();
     CommandLine jibCli = new CommandLine(new JibCli()).setErr(new PrintWriter(stringWriter));
 
@@ -58,7 +58,7 @@ public class WarCommandTest {
   }
 
   @Test
-  public void testErrorLogging_directoryGiven() {
+  void testErrorLogging_directoryGiven() {
     StringWriter stringWriter = new StringWriter();
     CommandLine jibCli = new CommandLine(new JibCli()).setErr(new PrintWriter(stringWriter));
 
@@ -75,7 +75,7 @@ public class WarCommandTest {
   }
 
   @Test
-  public void testWar_jetty() throws IOException, InterruptedException {
+  void testWar_jetty() throws IOException, InterruptedException {
     servletProject.build("clean", "war");
     Path warParentPath = servletProject.getProjectRoot().resolve("build").resolve("libs");
     Path warPath = warParentPath.resolve("standard-war.war");
@@ -102,7 +102,7 @@ public class WarCommandTest {
   }
 
   @Test
-  public void testWar_customJettySpecified() throws IOException, InterruptedException {
+  void testWar_customJettySpecified() throws IOException, InterruptedException {
     servletProject.build("clean", "war");
     Path warParentPath = servletProject.getProjectRoot().resolve("build").resolve("libs");
     Path warPath = warParentPath.resolve("standard-war.war");
@@ -126,7 +126,7 @@ public class WarCommandTest {
   }
 
   @Test
-  public void testWar_tomcat() throws IOException, InterruptedException {
+  void testWar_tomcat() throws IOException, InterruptedException {
     servletProject.build("clean", "war");
     Path warParentPath = servletProject.getProjectRoot().resolve("build").resolve("libs");
     Path warPath = warParentPath.resolve("standard-war.war");

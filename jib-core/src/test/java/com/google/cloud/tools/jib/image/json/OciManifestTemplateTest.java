@@ -27,13 +27,13 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.DigestException;
 import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /** Tests for {@link OciManifestTemplate}. */
-public class OciManifestTemplateTest {
+class OciManifestTemplateTest {
 
   @Test
-  public void testToJson() throws DigestException, IOException, URISyntaxException {
+  void testToJson() throws DigestException, IOException, URISyntaxException {
     // Loads the expected JSON string.
     Path jsonFile = Paths.get(Resources.getResource("core/json/ocimanifest.json").toURI());
     String expectedJson = new String(Files.readAllBytes(jsonFile), StandardCharsets.UTF_8);
@@ -56,7 +56,7 @@ public class OciManifestTemplateTest {
   }
 
   @Test
-  public void testFromJson() throws IOException, URISyntaxException, DigestException {
+  void testFromJson() throws IOException, URISyntaxException, DigestException {
     // Loads the JSON string.
     Path jsonFile = Paths.get(Resources.getResource("core/json/ocimanifest.json").toURI());
 
