@@ -17,19 +17,19 @@
 package com.google.cloud.tools.jib.plugins.common;
 
 import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /** Tests for {@link ContainerizingMode}. */
-public class ContainerizingModeTest {
+class ContainerizingModeTest {
 
   @Test
-  public void testFrom_validValues() throws InvalidContainerizingModeException {
+  void testFrom_validValues() throws InvalidContainerizingModeException {
     Assert.assertEquals(ContainerizingMode.EXPLODED, ContainerizingMode.from("exploded"));
     Assert.assertEquals(ContainerizingMode.PACKAGED, ContainerizingMode.from("packaged"));
   }
 
   @Test
-  public void testFrom_invalidCasing() {
+  void testFrom_invalidCasing() {
     try {
       ContainerizingMode.from("PACKAGED");
       Assert.fail();
@@ -40,7 +40,7 @@ public class ContainerizingModeTest {
   }
 
   @Test
-  public void testFrom_invalidValue() {
+  void testFrom_invalidValue() {
     try {
       ContainerizingMode.from("this is wrong");
       Assert.fail();

@@ -29,16 +29,19 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
 import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
 /** Tests for {@link BuildManifestListOrSingleManifest}. */
-@RunWith(MockitoJUnitRunner.class)
-public class BuildManifestListOrSingleManifestStepTest {
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
+class BuildManifestListOrSingleManifestStepTest {
 
   @Mock private ProgressEventDispatcher.Factory progressDispatcherFactory;
   @Mock private BuildContext buildContext;
@@ -47,8 +50,8 @@ public class BuildManifestListOrSingleManifestStepTest {
   private Image image1;
   private Image image2;
 
-  @Before
-  public void setUp() {
+  @BeforeEach
+  void setUp() {
     Mockito.when(buildContext.getEventHandlers()).thenReturn(EventHandlers.NONE);
     Mockito.doReturn(V22ManifestTemplate.class).when(buildContext).getTargetFormat();
     Mockito.when(layer.getBlobDescriptor()).thenReturn(new BlobDescriptor(0, null));
@@ -68,7 +71,7 @@ public class BuildManifestListOrSingleManifestStepTest {
   }
 
   @Test
-  public void testCall_singleManifest() throws IOException {
+  void testCall_singleManifest() throws IOException {
 
     // Expected manifest JSON
     //  {
@@ -105,7 +108,7 @@ public class BuildManifestListOrSingleManifestStepTest {
   }
 
   @Test
-  public void testCall_manifestList() throws IOException {
+  void testCall_manifestList() throws IOException {
 
     // Expected Manifest List JSON
     //  {
@@ -150,7 +153,7 @@ public class BuildManifestListOrSingleManifestStepTest {
   }
 
   @Test
-  public void testCall_emptyImagesList() throws IOException {
+  void testCall_emptyImagesList() throws IOException {
     try {
       new BuildManifestListOrSingleManifestStep(
               buildContext, progressDispatcherFactory, Collections.emptyList())

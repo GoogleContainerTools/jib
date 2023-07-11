@@ -29,29 +29,32 @@ import com.google.cloud.tools.jib.image.json.PlatformNotFoundInBaseImageExceptio
 import com.google.common.collect.ImmutableSet;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
 /** Tests for {@link PlatformChecker}. */
-@RunWith(MockitoJUnitRunner.class)
-public class PlatformCheckerTest {
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
+class PlatformCheckerTest {
 
   @Mock private BuildContext buildContext;
   @Mock private ContainerConfiguration containerConfig;
 
-  @Before
-  public void setUp() {
+  @BeforeEach
+  void setUp() {
     Mockito.when(buildContext.getBaseImageConfiguration())
         .thenReturn(ImageConfiguration.builder(ImageReference.scratch()).build());
     Mockito.when(buildContext.getContainerConfiguration()).thenReturn(containerConfig);
   }
 
   @Test
-  public void testCheckManifestPlatform_mismatch() {
+  void testCheckManifestPlatform_mismatch() {
     Mockito.when(containerConfig.getPlatforms())
         .thenReturn(ImmutableSet.of(new Platform("configured arch", "configured OS")));
 
@@ -70,7 +73,7 @@ public class PlatformCheckerTest {
   }
 
   @Test
-  public void testCheckManifestPlatform_noExceptionIfDefaultAmd64Linux()
+  void testCheckManifestPlatform_noExceptionIfDefaultAmd64Linux()
       throws PlatformNotFoundInBaseImageException {
     Mockito.when(containerConfig.getPlatforms())
         .thenReturn(ImmutableSet.of(new Platform("amd64", "linux")));
@@ -82,7 +85,7 @@ public class PlatformCheckerTest {
   }
 
   @Test
-  public void testCheckManifestPlatform_multiplePlatformsConfigured() {
+  void testCheckManifestPlatform_multiplePlatformsConfigured() {
     Mockito.when(containerConfig.getPlatforms())
         .thenReturn(ImmutableSet.of(new Platform("amd64", "linux"), new Platform("arch", "os")));
     Exception ex =
@@ -98,7 +101,7 @@ public class PlatformCheckerTest {
   }
 
   @Test
-  public void testCheckManifestPlatform_tarBaseImage() {
+  void testCheckManifestPlatform_tarBaseImage() {
     Path tar = Paths.get("/foo/bar.tar");
     Mockito.when(buildContext.getBaseImageConfiguration())
         .thenReturn(ImageConfiguration.builder(ImageReference.scratch()).setTarPath(tar).build());

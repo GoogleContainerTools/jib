@@ -23,35 +23,40 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 import com.google.cloud.tools.jib.api.Credential;
 import com.google.cloud.tools.jib.plugins.common.DefaultCredentialRetrievers;
 import java.io.FileNotFoundException;
-import junitparams.JUnitParamsRunner;
-import junitparams.Parameters;
+import java.util.stream.Stream;
 import org.apache.commons.lang3.ArrayUtils;
 import org.junit.Rule;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.ArgumentMatchers;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import picocli.CommandLine;
 
-@RunWith(JUnitParamsRunner.class)
-public class CredentialsTest {
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
+class CredentialsTest {
 
   private static final String[] DEFAULT_ARGS = {"--target=ignored"};
   @Rule public final MockitoRule mockitoJUnit = MockitoJUnit.rule();
   @Mock private DefaultCredentialRetrievers defaultCredentialRetrievers;
 
-  private String[][] paramsToNone() {
-    return new String[][] {
-      {"--from-credential-helper=ignored"}, {"--from-username=ignored", "--from-password=ignored"},
-    };
+  private static Stream<Arguments> paramsToNone() {
+    return Stream.of(
+        Arguments.of((Object) new String[] {"--from-credential-helper=ignored"}),
+        Arguments.of((Object) new String[] {"--from-username=ignored", "--from-password=ignored"}));
   }
 
-  @Test
-  @Parameters(method = "paramsToNone")
-  public void testGetToCredentialRetriever_none(String[] args) throws FileNotFoundException {
+  @ParameterizedTest
+  @MethodSource("paramsToNone")
+  void testGetToCredentialRetriever_none(String[] args) throws FileNotFoundException {
     CommonCliOptions commonCliOptions =
         CommandLine.populateCommand(new CommonCliOptions(), ArrayUtils.addAll(DEFAULT_ARGS, args));
     Credentials.getToCredentialRetrievers(commonCliOptions, defaultCredentialRetrievers);
@@ -59,15 +64,15 @@ public class CredentialsTest {
     verifyNoMoreInteractions(defaultCredentialRetrievers);
   }
 
-  private String[][] paramsFromNone() {
-    return new String[][] {
-      {"--to-credential-helper=ignored"}, {"--to-username=ignored", "--to-password=ignored"},
-    };
+  private static Stream<Arguments> paramsFromNone() {
+    return Stream.of(
+        Arguments.of((Object) new String[] {"--to-credential-helper=ignored"}),
+        Arguments.of((Object) new String[] {"--to-username=ignored", "--to-password=ignored"}));
   }
 
-  @Test
-  @Parameters(method = "paramsFromNone")
-  public void testGetFromCredentialRetriever_none(String[] args) throws FileNotFoundException {
+  @ParameterizedTest
+  @MethodSource("paramsFromNone")
+  void testGetFromCredentialRetriever_none(String[] args) throws FileNotFoundException {
     CommonCliOptions commonCliOptions =
         CommandLine.populateCommand(new CommonCliOptions(), ArrayUtils.addAll(DEFAULT_ARGS, args));
     Credentials.getFromCredentialRetrievers(commonCliOptions, defaultCredentialRetrievers);
@@ -75,18 +80,23 @@ public class CredentialsTest {
     verifyNoMoreInteractions(defaultCredentialRetrievers);
   }
 
-  private String[][] paramsToCredHelper() {
-    return new String[][] {
-      {"--credential-helper=abc"},
-      {"--to-credential-helper=abc"},
-      {"--to-credential-helper=abc", "--from-credential-helper=ignored"},
-      {"--to-credential-helper=abc", "--from-username=ignored", "--from-password=ignored"},
-    };
+  private static Stream<Arguments> paramsToCredHelper() {
+    return Stream.of(
+        Arguments.of((Object) new String[] {"--credential-helper=abc"}),
+        Arguments.of((Object) new String[] {"--to-credential-helper=abc"}),
+        Arguments.of(
+            (Object)
+                new String[] {"--to-credential-helper=abc", "--from-credential-helper=ignored"}),
+        Arguments.of(
+            (Object)
+                new String[] {
+                  "--to-credential-helper=abc", "--from-username=ignored", "--from-password=ignored"
+                }));
   }
 
-  @Test
-  @Parameters(method = "paramsToCredHelper")
-  public void testGetToCredentialRetriever_credHelper(String[] args) throws FileNotFoundException {
+  @ParameterizedTest
+  @MethodSource("paramsToCredHelper")
+  void testGetToCredentialRetriever_credHelper(String[] args) throws FileNotFoundException {
     CommonCliOptions commonCliOptions =
         CommandLine.populateCommand(new CommonCliOptions(), ArrayUtils.addAll(DEFAULT_ARGS, args));
     Credentials.getToCredentialRetrievers(commonCliOptions, defaultCredentialRetrievers);
@@ -95,18 +105,23 @@ public class CredentialsTest {
     verifyNoMoreInteractions(defaultCredentialRetrievers);
   }
 
-  private String[][] paramsFromCredHelper() {
-    return new String[][] {
-      {"--credential-helper=abc"},
-      {"--from-credential-helper=abc"},
-      {"--from-credential-helper=abc", "--to-credential-helper=ignored"},
-      {"--from-credential-helper=abc", "--to-username=ignored", "--to-password=ignored"},
-    };
+  private static Stream<Arguments> paramsFromCredHelper() {
+    return Stream.of(
+        Arguments.of((Object) new String[] {"--credential-helper=abc"}),
+        Arguments.of((Object) new String[] {"--from-credential-helper=abc"}),
+        Arguments.of(
+            (Object)
+                new String[] {"--from-credential-helper=abc", "--to-credential-helper=ignored"}),
+        Arguments.of(
+            (Object)
+                new String[] {
+                  "--from-credential-helper=abc", "--to-username=ignored", "--to-password=ignored"
+                }));
   }
 
-  @Test
-  @Parameters(method = "paramsFromCredHelper")
-  public void testGetFromCredentialHelper(String[] args) throws FileNotFoundException {
+  @ParameterizedTest
+  @MethodSource("paramsFromCredHelper")
+  void testGetFromCredentialHelper(String[] args) throws FileNotFoundException {
     CommonCliOptions commonCliOptions =
         CommandLine.populateCommand(new CommonCliOptions(), ArrayUtils.addAll(DEFAULT_ARGS, args));
     Credentials.getFromCredentialRetrievers(commonCliOptions, defaultCredentialRetrievers);
@@ -115,29 +130,38 @@ public class CredentialsTest {
     verifyNoMoreInteractions(defaultCredentialRetrievers);
   }
 
-  public Object paramsToUsernamePassword() {
-    return new Object[][] {
-      {"--username/--password", new String[] {"--username=abc", "--password=xyz"}},
-      {"--to-username/--to-password", new String[] {"--to-username=abc", "--to-password=xyz"}},
-      {
-        "--to-username/--to-password",
-        new String[] {
-          "--to-username=abc",
-          "--to-password=xyz",
-          "--from-username=ignored",
-          "--from-password=ignored"
-        }
-      },
-      {
-        "--to-username/--to-password",
-        new String[] {"--to-username=abc", "--to-password=xyz", "--from-credential-helper=ignored"}
-      }
-    };
+  public static Stream<Arguments> paramsToUsernamePassword() {
+    return Stream.of(
+        Arguments.of(
+            new Object[] {
+              "--username/--password", new String[] {"--username=abc", "--password=xyz"}
+            }),
+        Arguments.of(
+            new Object[] {
+              "--to-username/--to-password", new String[] {"--to-username=abc", "--to-password=xyz"}
+            }),
+        Arguments.of(
+            new Object[] {
+              "--to-username/--to-password",
+              new String[] {
+                "--to-username=abc",
+                "--to-password=xyz",
+                "--from-username=ignored",
+                "--from-password=ignored"
+              }
+            }),
+        Arguments.of(
+            new Object[] {
+              "--to-username/--to-password",
+              new String[] {
+                "--to-username=abc", "--to-password=xyz", "--from-credential-helper=ignored"
+              }
+            }));
   }
 
-  @Test
-  @Parameters(method = "paramsToUsernamePassword")
-  public void testGetToUsernamePassword(String expectedSource, String[] args)
+  @ParameterizedTest
+  @MethodSource("paramsToUsernamePassword")
+  void testGetToUsernamePassword(String expectedSource, String[] args)
       throws FileNotFoundException {
     CommonCliOptions commonCliOptions =
         CommandLine.populateCommand(new CommonCliOptions(), ArrayUtils.addAll(DEFAULT_ARGS, args));
@@ -150,34 +174,39 @@ public class CredentialsTest {
     verifyNoMoreInteractions(defaultCredentialRetrievers);
   }
 
-  public Object paramsFromUsernamePassword() {
-    return new Object[][] {
-      {"--username/--password", new String[] {"--username=abc", "--password=xyz"}},
-      {
-        "--from-username/--from-password",
-        new String[] {"--from-username=abc", "--from-password=xyz"}
-      },
-      {
-        "--from-username/--from-password",
-        new String[] {
-          "--from-username=abc",
-          "--from-password=xyz",
-          "--to-username=ignored",
-          "--to-password=ignored"
-        }
-      },
-      {
-        "--from-username/--from-password",
-        new String[] {
-          "--from-username=abc", "--from-password=xyz", "--to-credential-helper=ignored"
-        }
-      },
-    };
+  public static Stream<Arguments> paramsFromUsernamePassword() {
+    return Stream.of(
+        Arguments.of(
+            new Object[] {
+              "--username/--password", new String[] {"--username=abc", "--password=xyz"}
+            }),
+        Arguments.of(
+            new Object[] {
+              "--from-username/--from-password",
+              new String[] {"--from-username=abc", "--from-password=xyz"}
+            }),
+        Arguments.of(
+            new Object[] {
+              "--from-username/--from-password",
+              new String[] {
+                "--from-username=abc",
+                "--from-password=xyz",
+                "--to-username=ignored",
+                "--to-password=ignored"
+              }
+            }),
+        Arguments.of(
+            new Object[] {
+              "--from-username/--from-password",
+              new String[] {
+                "--from-username=abc", "--from-password=xyz", "--to-credential-helper=ignored"
+              }
+            }));
   }
 
-  @Test
-  @Parameters(method = "paramsFromUsernamePassword")
-  public void testGetFromUsernamePassword(String expectedSource, String[] args)
+  @ParameterizedTest
+  @MethodSource("paramsFromUsernamePassword")
+  void testGetFromUsernamePassword(String expectedSource, String[] args)
       throws FileNotFoundException {
     CommonCliOptions commonCliOptions =
         CommandLine.populateCommand(new CommonCliOptions(), ArrayUtils.addAll(DEFAULT_ARGS, args));

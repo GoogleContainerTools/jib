@@ -27,28 +27,31 @@ import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collections;
 import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
 /** Tests for {@link Image}. */
-@RunWith(MockitoJUnitRunner.class)
-public class ImageTest {
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
+class ImageTest {
 
   @Mock private Layer mockLayer;
   @Mock private DescriptorDigest mockDescriptorDigest;
 
-  @Before
-  public void setUp() throws LayerPropertyNotFoundException {
+  @BeforeEach
+  void setUp() throws LayerPropertyNotFoundException {
     Mockito.when(mockLayer.getBlobDescriptor())
         .thenReturn(new BlobDescriptor(mockDescriptorDigest));
   }
 
   @Test
-  public void test_smokeTest() throws LayerPropertyNotFoundException {
+  void test_smokeTest() throws LayerPropertyNotFoundException {
     Image image =
         Image.builder(V22ManifestTemplate.class)
             .setCreated(Instant.ofEpochSecond(10000))
@@ -80,7 +83,7 @@ public class ImageTest {
   }
 
   @Test
-  public void testDefaults() {
+  void testDefaults() {
     Image image = Image.builder(V22ManifestTemplate.class).build();
     Assert.assertEquals("amd64", image.getArchitecture());
     Assert.assertEquals("linux", image.getOs());
@@ -89,7 +92,7 @@ public class ImageTest {
   }
 
   @Test
-  public void testOsArch() {
+  void testOsArch() {
     Image image =
         Image.builder(V22ManifestTemplate.class).setArchitecture("wasm").setOs("js").build();
     Assert.assertEquals("wasm", image.getArchitecture());

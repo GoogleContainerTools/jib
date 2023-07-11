@@ -33,19 +33,25 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import java.nio.file.Paths;
 import java.time.Instant;
-import junitparams.JUnitParamsRunner;
-import junitparams.Parameters;
+import java.util.stream.Stream;
 import org.apache.commons.lang3.ArrayUtils;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import picocli.CommandLine;
 import picocli.CommandLine.MissingParameterException;
 
-@RunWith(JUnitParamsRunner.class)
-public class JarTest {
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
+class JarTest {
 
   @Test
-  public void testParse_missingRequiredParams_targetImage() {
+  void testParse_missingRequiredParams_targetImage() {
     MissingParameterException mpe =
         assertThrows(
             MissingParameterException.class,
@@ -56,7 +62,7 @@ public class JarTest {
   }
 
   @Test
-  public void testParse_missingRequiredParams_jarfile() {
+  void testParse_missingRequiredParams_jarfile() {
     MissingParameterException mpe =
         assertThrows(
             MissingParameterException.class,
@@ -65,7 +71,8 @@ public class JarTest {
   }
 
   @Test
-  public void testParse_defaults() {
+  @SuppressWarnings("java:S5961")
+  void testParse_defaults() {
     Jar jarCommand = CommandLine.populateCommand(new Jar(), "-t", "test-image-ref", "my-app.jar");
     CommonCliOptions commonCliOptions = jarCommand.commonCliOptions;
     CommonContainerConfigCliOptions commonContainerConfigCliOptions =
@@ -103,7 +110,7 @@ public class JarTest {
   }
 
   @Test
-  public void testParse_shortFormParams() {
+  void testParse_shortFormParams() {
     Jar jarCommand = CommandLine.populateCommand(new Jar(), "-t=test-image-ref", "my-app.jar");
     CommonCliOptions commonCliOptions = jarCommand.commonCliOptions;
     assertThat(commonCliOptions.getTargetImage()).isEqualTo("test-image-ref");
@@ -127,7 +134,7 @@ public class JarTest {
   }
 
   @Test
-  public void testParse_longFormParams() {
+  void testParse_longFormParams() {
     // this test does not check credential helpers, scroll down for specialized credential helper
     // tests
     Jar jarCommand =
@@ -168,7 +175,7 @@ public class JarTest {
   }
 
   @Test
-  public void testParse_credentialHelper() {
+  void testParse_credentialHelper() {
     Jar jarCommand =
         CommandLine.populateCommand(
             new Jar(),
@@ -185,7 +192,7 @@ public class JarTest {
   }
 
   @Test
-  public void testParse_toCredentialHelper() {
+  void testParse_toCredentialHelper() {
     Jar jarCommand =
         CommandLine.populateCommand(
             new Jar(),
@@ -203,7 +210,7 @@ public class JarTest {
   }
 
   @Test
-  public void testParse_fromCredentialHelper() {
+  void testParse_fromCredentialHelper() {
     Jar jarCommand =
         CommandLine.populateCommand(
             new Jar(),
@@ -221,7 +228,7 @@ public class JarTest {
   }
 
   @Test
-  public void testParse_usernamePassword() {
+  void testParse_usernamePassword() {
     Jar jarCommand =
         CommandLine.populateCommand(
             new Jar(),
@@ -241,7 +248,7 @@ public class JarTest {
   }
 
   @Test
-  public void testParse_toUsernamePassword() {
+  void testParse_toUsernamePassword() {
     Jar jarCommand =
         CommandLine.populateCommand(
             new Jar(),
@@ -260,7 +267,7 @@ public class JarTest {
   }
 
   @Test
-  public void testParse_fromUsernamePassword() {
+  void testParse_fromUsernamePassword() {
     Jar jarCommand =
         CommandLine.populateCommand(
             new Jar(),
@@ -280,7 +287,7 @@ public class JarTest {
   }
 
   @Test
-  public void testParse_toAndFromUsernamePassword() {
+  void testParse_toAndFromUsernamePassword() {
     Jar jarCommand =
         CommandLine.populateCommand(
             new Jar(),
@@ -303,7 +310,7 @@ public class JarTest {
   }
 
   @Test
-  public void testParse_toAndFromCredentialHelper() {
+  void testParse_toAndFromCredentialHelper() {
     Jar jarCommand =
         CommandLine.populateCommand(
             new Jar(),
@@ -322,7 +329,7 @@ public class JarTest {
   }
 
   @Test
-  public void testParse_toUsernamePasswordAndFromCredentialHelper() {
+  void testParse_toUsernamePasswordAndFromCredentialHelper() {
     Jar jarCommand =
         CommandLine.populateCommand(
             new Jar(),
@@ -343,7 +350,7 @@ public class JarTest {
   }
 
   @Test
-  public void testParse_toCredentialHelperAndFromUsernamePassword() {
+  void testParse_toCredentialHelperAndFromUsernamePassword() {
     Jar jarCommand =
         CommandLine.populateCommand(
             new Jar(),
@@ -363,17 +370,16 @@ public class JarTest {
         .hasValue(Credential.from("test-username", "test-password"));
   }
 
-  private Object usernamePasswordPairs() {
-    return new Object[][] {
-      {"--username", "--password"},
-      {"--to-username", "--to-password"},
-      {"--from-username", "--from-password"}
-    };
+  private static Stream<Arguments> usernamePasswordPairs() {
+    return Stream.of(
+        Arguments.of(new Object[] {"--username", "--password"}),
+        Arguments.of(new Object[] {"--to-username", "--to-password"}),
+        Arguments.of(new Object[] {"--from-username", "--from-password"}));
   }
 
-  @Test
-  @Parameters(method = "usernamePasswordPairs")
-  public void testParse_usernameWithoutPassword(String usernameField, String passwordField) {
+  @ParameterizedTest
+  @MethodSource("usernamePasswordPairs")
+  void testParse_usernameWithoutPassword(String usernameField, String passwordField) {
     MissingParameterException mpe =
         assertThrows(
             MissingParameterException.class,
@@ -389,9 +395,9 @@ public class JarTest {
         .isEqualTo("Error: Missing required argument(s): " + passwordField);
   }
 
-  @Test
-  @Parameters(method = "usernamePasswordPairs")
-  public void testParse_passwordWithoutUsername(String usernameField, String passwordField) {
+  @ParameterizedTest
+  @MethodSource("usernamePasswordPairs")
+  void testParse_passwordWithoutUsername(String usernameField, String passwordField) {
     MissingParameterException mpe =
         assertThrows(
             MissingParameterException.class,
@@ -407,25 +413,44 @@ public class JarTest {
         .isEqualTo("Error: Missing required argument(s): " + usernameField + "=<username>");
   }
 
-  public String[][] incompatibleCredentialOptions() {
-    return new String[][] {
-      {"--credential-helper=x", "--to-credential-helper=x"},
-      {"--credential-helper=x", "--from-credential-helper=x"},
-      {"--credential-helper=x", "--username=x", "--password=x"},
-      {"--credential-helper=x", "--from-username=x", "--from-password=x"},
-      {"--credential-helper=x", "--to-username=x", "--to-password=x"},
-      {"--username=x", "--password=x", "--from-username=x", "--from-password=x"},
-      {"--username=x", "--password=x", "--to-username=x", "--to-password=x"},
-      {"--username=x", "--password=x", "--to-credential-helper=x"},
-      {"--username=x", "--password=x", "--from-credential-helper=x"},
-      {"--from-credential-helper=x", "--from-username=x", "--from-password=x"},
-      {"--to-credential-helper=x", "--to-password=x", "--to-username=x"},
-    };
+  public static Stream<Arguments> incompatibleCredentialOptions() {
+    return Stream.of(
+        Arguments.of((Object) new String[] {"--credential-helper=x", "--to-credential-helper=x"}),
+        Arguments.of((Object) new String[] {"--credential-helper=x", "--from-credential-helper=x"}),
+        Arguments.of(
+            (Object) new String[] {"--credential-helper=x", "--username=x", "--password=x"}),
+        Arguments.of(
+            (Object)
+                new String[] {"--credential-helper=x", "--from-username=x", "--from-password=x"}),
+        Arguments.of(
+            (Object) new String[] {"--credential-helper=x", "--to-username=x", "--to-password=x"}),
+        Arguments.of(
+            (Object)
+                new String[] {
+                  "--username=x", "--password=x", "--from-username=x", "--from-password=x"
+                }),
+        Arguments.of(
+            (Object)
+                new String[] {
+                  "--username=x", "--password=x", "--to-username=x", "--to-password=x"
+                }),
+        Arguments.of(
+            (Object) new String[] {"--username=x", "--password=x", "--to-credential-helper=x"}),
+        Arguments.of(
+            (Object) new String[] {"--username=x", "--password=x", "--from-credential-helper=x"}),
+        Arguments.of(
+            (Object)
+                new String[] {
+                  "--from-credential-helper=x", "--from-username=x", "--from-password=x"
+                }),
+        Arguments.of(
+            (Object)
+                new String[] {"--to-credential-helper=x", "--to-password=x", "--to-username=x"}));
   }
 
-  @Test
-  @Parameters(method = "incompatibleCredentialOptions")
-  public void testParse_incompatibleCredentialOptions(String[] authArgs) {
+  @ParameterizedTest
+  @MethodSource("incompatibleCredentialOptions")
+  void testParse_incompatibleCredentialOptions(String[] authArgs) {
     CommandLine.MutuallyExclusiveArgsException meae =
         assertThrows(
             CommandLine.MutuallyExclusiveArgsException.class,
@@ -438,7 +463,7 @@ public class JarTest {
   }
 
   @Test
-  public void testParse_from() {
+  void testParse_from() {
     Jar jarCommand =
         CommandLine.populateCommand(
             new Jar(), "--target=test-image-ref", "--from=base-image-ref", "my-app.jar");
@@ -446,7 +471,7 @@ public class JarTest {
   }
 
   @Test
-  public void testParse_jvmFlags() {
+  void testParse_jvmFlags() {
     Jar jarCommand =
         CommandLine.populateCommand(
             new Jar(), "--target=test-image-ref", "--jvm-flags=jvm-flag1,jvm-flag2", "my-app.jar");
@@ -454,7 +479,7 @@ public class JarTest {
   }
 
   @Test
-  public void testParse_exposedPorts() {
+  void testParse_exposedPorts() {
     Jar jarCommand =
         CommandLine.populateCommand(
             new Jar(), "--target=test-image-ref", "--expose=8080,3306", "my-app.jar");
@@ -463,7 +488,7 @@ public class JarTest {
   }
 
   @Test
-  public void testParse_volumes() {
+  void testParse_volumes() {
     Jar jarCommand =
         CommandLine.populateCommand(
             new Jar(), "--target=test-image-ref", "--volumes=/volume1,/volume2", "my-app.jar");
@@ -473,7 +498,7 @@ public class JarTest {
   }
 
   @Test
-  public void testParse_environment() {
+  void testParse_environment() {
     Jar jarCommand =
         CommandLine.populateCommand(
             new Jar(),
@@ -485,7 +510,7 @@ public class JarTest {
   }
 
   @Test
-  public void testParse_labels() {
+  void testParse_labels() {
     Jar jarCommand =
         CommandLine.populateCommand(
             new Jar(),
@@ -497,7 +522,7 @@ public class JarTest {
   }
 
   @Test
-  public void testParse_user() {
+  void testParse_user() {
     Jar jarCommand =
         CommandLine.populateCommand(
             new Jar(), "--target=test-image-ref", "--user=customUser", "my-app.jar");
@@ -505,7 +530,7 @@ public class JarTest {
   }
 
   @Test
-  public void testParse_imageFormat() {
+  void testParse_imageFormat() {
     Jar jarCommand =
         CommandLine.populateCommand(
             new Jar(), "--target=test-image-ref", "--image-format=OCI", "my-app.jar");
@@ -513,7 +538,7 @@ public class JarTest {
   }
 
   @Test
-  public void testParse_invalidImageFormat() {
+  void testParse_invalidImageFormat() {
     CommandLine.ParameterException exception =
         assertThrows(
             CommandLine.ParameterException.class,
@@ -527,7 +552,7 @@ public class JarTest {
   }
 
   @Test
-  public void testParse_programArguments() {
+  void testParse_programArguments() {
     Jar jarCommand =
         CommandLine.populateCommand(
             new Jar(), "--target=test-image-ref", "--program-args=arg1,arg2", "my-app.jar");
@@ -536,7 +561,7 @@ public class JarTest {
   }
 
   @Test
-  public void testParse_entrypoint() {
+  void testParse_entrypoint() {
     Jar jarCommand =
         CommandLine.populateCommand(
             new Jar(), "--target=test-image-ref", "--entrypoint=java -cp myClass", "my-app.jar");
@@ -545,7 +570,7 @@ public class JarTest {
   }
 
   @Test
-  public void testParse_creationTime_milliseconds() {
+  void testParse_creationTime_milliseconds() {
     Jar jarCommand =
         CommandLine.populateCommand(
             new Jar(), "--target=test-image-ref", "--creation-time=23", "my-app.jar");
@@ -554,7 +579,7 @@ public class JarTest {
   }
 
   @Test
-  public void testParse_creationTime_iso8601() {
+  void testParse_creationTime_iso8601() {
     Jar jarCommand =
         CommandLine.populateCommand(
             new Jar(),
@@ -566,7 +591,7 @@ public class JarTest {
   }
 
   @Test
-  public void testParse_mode() {
+  void testParse_mode() {
     Jar jarCommand =
         CommandLine.populateCommand(
             new Jar(), "--target=test-image-ref", "--mode=packaged", "my-app.jar");
@@ -574,7 +599,7 @@ public class JarTest {
   }
 
   @Test
-  public void testParse_invalidMode() {
+  void testParse_invalidMode() {
     CommandLine.ParameterException exception =
         assertThrows(
             CommandLine.ParameterException.class,
@@ -588,7 +613,7 @@ public class JarTest {
   }
 
   @Test
-  public void testValidate_nameMissingFail() {
+  void testValidate_nameMissingFail() {
     Jar jarCommand =
         CommandLine.populateCommand(new Jar(), "--target=tar://sometar.tar", "my-app.jar");
     CommandLine.ParameterException pex =
@@ -599,7 +624,7 @@ public class JarTest {
   }
 
   @Test
-  public void testValidate_pass() {
+  void testValidate_pass() {
     Jar jarCommand =
         CommandLine.populateCommand(
             new Jar(), "--target=tar://sometar.tar", "--name=test.io/test/test", "my-app.jar");
@@ -608,14 +633,14 @@ public class JarTest {
   }
 
   @Test
-  public void testIsJetty_noCustomBaseImage() throws InvalidImageReferenceException {
+  void testIsJetty_noCustomBaseImage() throws InvalidImageReferenceException {
     Jar jarCommand =
         CommandLine.populateCommand(new Jar(), "--target=test-image-ref", "my-app.jar");
     assertThat(jarCommand.commonContainerConfigCliOptions.isJettyBaseimage()).isTrue();
   }
 
   @Test
-  public void testIsJetty_nonJetty() throws InvalidImageReferenceException {
+  void testIsJetty_nonJetty() throws InvalidImageReferenceException {
     Jar jarCommand =
         CommandLine.populateCommand(
             new Jar(), "--target=test-image-ref", "--from=base-image", "my-app.jar");
@@ -623,7 +648,7 @@ public class JarTest {
   }
 
   @Test
-  public void testIsJetty_customJetty() throws InvalidImageReferenceException {
+  void testIsJetty_customJetty() throws InvalidImageReferenceException {
     Jar jarCommand =
         CommandLine.populateCommand(
             new Jar(), "--target=test-image-ref", "--from=jetty:tag", "my-app.jar");

@@ -39,7 +39,7 @@ import org.hamcrest.MatcherAssert;
 import org.junit.Assert;
 
 /** Helper class to run integration tests. */
-public class JibRunHelper {
+class JibRunHelper {
 
   static String buildAndRun(TestProject testProject, String imageReference)
       throws IOException, InterruptedException, DigestException {
@@ -70,8 +70,10 @@ public class JibRunHelper {
 
   static String buildAndRunFromLocalBase(String target, String base)
       throws IOException, InterruptedException, DigestException {
+    SingleProjectIntegrationTest spi = new SingleProjectIntegrationTest();
+
     BuildResult buildResult =
-        SingleProjectIntegrationTest.simpleTestProject.build(
+        spi.simpleTestProject.build(
             "clean",
             "jib",
             "-Djib.useOnlyProjectCache=true",
@@ -81,8 +83,7 @@ public class JibRunHelper {
             "-Djib.allowInsecureRegistries=" + target.startsWith("localhost"),
             "-b=" + "build-local-base.gradle");
     assertBuildSuccess(buildResult, "jib", "Built and pushed image as ");
-    assertThatExpectedImageDigestAndIdReturned(
-        SingleProjectIntegrationTest.simpleTestProject.getProjectRoot());
+    assertThatExpectedImageDigestAndIdReturned(spi.simpleTestProject.getProjectRoot());
     MatcherAssert.assertThat(buildResult.getOutput(), CoreMatchers.containsString(target));
     return pullAndRunBuiltImage(target);
   }

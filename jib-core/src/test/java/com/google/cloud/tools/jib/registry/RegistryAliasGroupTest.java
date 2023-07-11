@@ -21,20 +21,20 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /** Tests for {@link RegistryAliasGroup}. */
-public class RegistryAliasGroupTest {
+class RegistryAliasGroupTest {
 
   @Test
-  public void testGetAliasesGroup_noKnownAliases() {
+  void testGetAliasesGroup_noKnownAliases() {
     List<String> singleton = RegistryAliasGroup.getAliasesGroup("something.gcr.io");
     Assert.assertEquals(1, singleton.size());
     Assert.assertEquals("something.gcr.io", singleton.get(0));
   }
 
   @Test
-  public void testGetAliasesGroup_dockerHub() {
+  void testGetAliasesGroup_dockerHub() {
     Set<String> aliases =
         Sets.newHashSet(
             "registry.hub.docker.com", "index.docker.io", "registry-1.docker.io", "docker.io");
@@ -44,13 +44,13 @@ public class RegistryAliasGroupTest {
   }
 
   @Test
-  public void testGetHost_noAlias() {
+  void testGetHost_noAlias() {
     String host = RegistryAliasGroup.getHost("something.gcr.io");
     Assert.assertEquals("something.gcr.io", host);
   }
 
   @Test
-  public void testGetHost_dockerIo() {
+  void testGetHost_dockerIo() {
     String host = RegistryAliasGroup.getHost("docker.io");
     Assert.assertEquals("registry-1.docker.io", host);
   }

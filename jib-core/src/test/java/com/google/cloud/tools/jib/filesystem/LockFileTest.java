@@ -18,27 +18,26 @@ package com.google.cloud.tools.jib.filesystem;
 
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.Assert;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 /** Tests for {@link LockFile}. */
-public class LockFileTest {
+class LockFileTest {
 
-  @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
+  @TempDir public Path temporaryFolder;
 
   @Test
-  public void testLockAndRelease() throws InterruptedException {
+  void testLockAndRelease() throws InterruptedException {
     AtomicInteger atomicInt = new AtomicInteger(0);
 
     // Runnable that would produce a race condition without a lock file
     Runnable procedure =
         () -> {
-          try (LockFile ignored =
-              LockFile.lock(temporaryFolder.getRoot().toPath().resolve("testLock"))) {
-            Assert.assertTrue(Files.exists(temporaryFolder.getRoot().toPath().resolve("testLock")));
+          try (LockFile ignored = LockFile.lock(temporaryFolder.resolve("testLock"))) {
+            Assert.assertTrue(Files.exists(temporaryFolder.resolve("testLock")));
 
             int valueBeforeSleep = atomicInt.intValue();
             Thread.sleep(100);

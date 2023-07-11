@@ -28,13 +28,22 @@ import java.util.List;
 import org.apache.maven.it.VerificationException;
 import org.apache.maven.it.Verifier;
 import org.junit.Assert;
-import org.junit.ClassRule;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junit.jupiter.api.io.TempDir;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
 /** Tests for {@link PackageGoalsMojo}. */
-public class PackageGoalsMojoTest {
+@ExtendWith({MockitoExtension.class})
+@MockitoSettings(strictness = Strictness.LENIENT)
+class PackageGoalsMojoTest {
 
-  @ClassRule public static final TestProject multiTestProject = new TestProject("multi");
+  @TempDir Path tempDir;
+
+  @RegisterExtension public final TestProject multiTestProject = new TestProject("multi", tempDir);
 
   private void verifyGoals(Path projectRoot, String profilesString, String... expectedGoals)
       throws VerificationException, IOException {
@@ -60,25 +69,23 @@ public class PackageGoalsMojoTest {
   }
 
   @Test
-  public void testPackageGoalsMojo_complexServiceDefault()
-      throws VerificationException, IOException {
+  void testPackageGoalsMojo_complexServiceDefault() throws VerificationException, IOException {
     verifyGoals(multiTestProject.getProjectRoot(), null);
   }
 
   @Test
-  public void testPackageGoalsMojo_complexServiceLocalProfile()
-      throws VerificationException, IOException {
+  void testPackageGoalsMojo_complexServiceLocalProfile() throws VerificationException, IOException {
     verifyGoals(multiTestProject.getProjectRoot(), "localJib", "dockerBuild");
   }
 
   @Test
-  public void testPackageGoalsMojo_complexServiceRemoteProfile()
+  void testPackageGoalsMojo_complexServiceRemoteProfile()
       throws VerificationException, IOException {
     verifyGoals(multiTestProject.getProjectRoot(), "remoteJib", "build");
   }
 
   @Test
-  public void testPackageGoalsMojo_complexServiceMultipleProfiles()
+  void testPackageGoalsMojo_complexServiceMultipleProfiles()
       throws VerificationException, IOException {
     verifyGoals(multiTestProject.getProjectRoot(), "localJib,remoteJib", "dockerBuild", "build");
   }

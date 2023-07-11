@@ -22,10 +22,10 @@ import com.google.cloud.tools.jib.event.EventHandlers;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /** Tests for {@link LogEvent}. */
-public class LogEventTest {
+class LogEventTest {
 
   private final Deque<LogEvent> receivedLogEvents = new ArrayDeque<>();
 
@@ -35,7 +35,7 @@ public class LogEventTest {
       EventHandlers.builder().add(LogEvent.class, receivedLogEvents::offer).build();
 
   @Test
-  public void testFactories() {
+  void testFactories() {
     eventHandlers.dispatch(LogEvent.error("error"));
     eventHandlers.dispatch(LogEvent.lifecycle("lifecycle"));
     eventHandlers.dispatch(LogEvent.progress("progress"));

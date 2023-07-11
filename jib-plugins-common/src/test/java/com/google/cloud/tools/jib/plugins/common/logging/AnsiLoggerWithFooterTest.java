@@ -25,10 +25,10 @@ import java.util.Collections;
 import java.util.List;
 import java.util.function.Consumer;
 import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /** Tests for {@link AnsiLoggerWithFooter}. */
-public class AnsiLoggerWithFooterTest {
+class AnsiLoggerWithFooterTest {
 
   private static final Duration SHUTDOWN_TIMEOUT = Duration.ofSeconds(3);
 
@@ -38,7 +38,7 @@ public class AnsiLoggerWithFooterTest {
   private final List<Level> levels = new ArrayList<>();
 
   @Test
-  public void testTruncateToMaxWidth() {
+  void testTruncateToMaxWidth() {
     List<String> lines =
         Arrays.asList(
             "this line of text is way too long and will be truncated",
@@ -51,7 +51,7 @@ public class AnsiLoggerWithFooterTest {
   }
 
   @Test
-  public void testNoLifecycle() {
+  void testNoLifecycle() {
     try {
       new AnsiLoggerWithFooter(ImmutableMap.of(), singleThreadedExecutor, false);
       Assert.fail();
@@ -63,7 +63,7 @@ public class AnsiLoggerWithFooterTest {
   }
 
   @Test
-  public void testLog_noFooter() {
+  void testLog_noFooter() {
     AnsiLoggerWithFooter testAnsiLoggerWithFooter = createTestLogger(false);
     testAnsiLoggerWithFooter.log(Level.LIFECYCLE, "lifecycle");
     testAnsiLoggerWithFooter.log(Level.PROGRESS, "progress");
@@ -83,7 +83,7 @@ public class AnsiLoggerWithFooterTest {
   }
 
   @Test
-  public void testLog_ignoreIfNoMessageConsumer() {
+  void testLog_ignoreIfNoMessageConsumer() {
     AnsiLoggerWithFooter testAnsiLoggerWithFooter =
         new AnsiLoggerWithFooter(
             ImmutableMap.of(Level.LIFECYCLE, createMessageConsumer(Level.LIFECYCLE)),
@@ -104,7 +104,7 @@ public class AnsiLoggerWithFooterTest {
   }
 
   @Test
-  public void testLog_sameFooter() {
+  void testLog_sameFooter() {
     AnsiLoggerWithFooter testAnsiLoggerWithFooter = createTestLogger(false);
     testAnsiLoggerWithFooter.setFooter(Collections.singletonList("footer"));
     testAnsiLoggerWithFooter.log(Level.INFO, "message");
@@ -139,7 +139,7 @@ public class AnsiLoggerWithFooterTest {
   }
 
   @Test
-  public void testLog_sameFooterWithEnableTwoCursorUpJump() {
+  void testLog_sameFooterWithEnableTwoCursorUpJump() {
     AnsiLoggerWithFooter testAnsiLoggerWithFooter = createTestLogger(true);
     testAnsiLoggerWithFooter.setFooter(Collections.singletonList("footer"));
     testAnsiLoggerWithFooter.log(Level.INFO, "message");
@@ -178,7 +178,7 @@ public class AnsiLoggerWithFooterTest {
   }
 
   @Test
-  public void testLog_changingFooter() {
+  void testLog_changingFooter() {
     AnsiLoggerWithFooter testAnsiLoggerWithFooter = createTestLogger(false);
     testAnsiLoggerWithFooter.setFooter(Collections.singletonList("footer"));
     testAnsiLoggerWithFooter.log(Level.WARN, "message");
@@ -224,7 +224,7 @@ public class AnsiLoggerWithFooterTest {
   }
 
   @Test
-  public void testLog_changingFooterWithEnableTwoCursorUpJump() {
+  void testLog_changingFooterWithEnableTwoCursorUpJump() {
     AnsiLoggerWithFooter testAnsiLoggerWithFooter = createTestLogger(true);
     testAnsiLoggerWithFooter.setFooter(Collections.singletonList("footer"));
     testAnsiLoggerWithFooter.log(Level.WARN, "message");

@@ -25,12 +25,12 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-public class V22ManifestListTemplateTest {
+class V22ManifestListTemplateTest {
 
   @Test
-  public void testFromJson() throws IOException, URISyntaxException {
+  void testFromJson() throws IOException, URISyntaxException {
     Path jsonFile = Paths.get(Resources.getResource("core/json/v22manifest_list.json").toURI());
 
     V22ManifestListTemplate manifestListJson =

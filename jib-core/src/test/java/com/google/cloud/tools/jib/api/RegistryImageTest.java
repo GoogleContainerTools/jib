@@ -18,19 +18,22 @@ package com.google.cloud.tools.jib.api;
 
 import com.google.cloud.tools.jib.registry.credentials.CredentialRetrievalException;
 import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
 /** Tests for {@link RegistryImage}. */
-@RunWith(MockitoJUnitRunner.class)
-public class RegistryImageTest {
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
+class RegistryImageTest {
 
   @Mock private CredentialRetriever mockCredentialRetriever;
 
   @Test
-  public void testGetters_default() throws InvalidImageReferenceException {
+  void testGetters_default() throws InvalidImageReferenceException {
     RegistryImage image = RegistryImage.named("registry/image");
 
     Assert.assertEquals("registry/image", image.getImageReference().toString());
@@ -38,7 +41,7 @@ public class RegistryImageTest {
   }
 
   @Test
-  public void testGetters()
+  void testGetters()
       throws InvalidImageReferenceException, AssertionError, CredentialRetrievalException {
     RegistryImage image =
         RegistryImage.named("registry/image")

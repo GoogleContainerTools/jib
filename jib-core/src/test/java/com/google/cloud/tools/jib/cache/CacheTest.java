@@ -37,13 +37,12 @@ import java.util.zip.GZIPOutputStream;
 import org.hamcrest.CoreMatchers;
 import org.hamcrest.MatcherAssert;
 import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 /** Tests for {@link Cache}. */
-public class CacheTest {
+class CacheTest {
 
   /**
    * Gets a {@link Blob} that is {@code blob} compressed. Note that the output stream is closed when
@@ -103,7 +102,7 @@ public class CacheTest {
         FileEntriesLayer.DEFAULT_MODIFICATION_TIME);
   }
 
-  @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
+  @TempDir public Path temporaryFolder;
 
   private Blob layerBlob1;
   private DescriptorDigest layerDigest1;
@@ -117,9 +116,9 @@ public class CacheTest {
   private long layerSize2;
   private ImmutableList<FileEntry> layerEntries2;
 
-  @Before
-  public void setUp() throws IOException {
-    Path directory = temporaryFolder.newFolder().toPath();
+  @BeforeEach
+  void setUp() throws IOException {
+    Path directory = Files.createTempDirectory(temporaryFolder, "jib");
     Files.createDirectory(directory.resolve("source"));
     Files.createFile(directory.resolve("source/file"));
     Files.createDirectories(directory.resolve("another/source"));
@@ -145,8 +144,8 @@ public class CacheTest {
   }
 
   @Test
-  public void testWithDirectory_existsButNotDirectory() throws IOException {
-    Path file = temporaryFolder.newFile().toPath();
+  void testWithDirectory_existsButNotDirectory() throws IOException {
+    Path file = Files.createTempFile(temporaryFolder, "tmp", "jib");
 
     try {
       Cache.withDirectory(file);
@@ -159,9 +158,9 @@ public class CacheTest {
   }
 
   @Test
-  public void testWriteCompressed_retrieveByLayerDigest()
+  void testWriteCompressed_retrieveByLayerDigest()
       throws IOException, CacheDirectoryCreationException, CacheCorruptedException {
-    Cache cache = Cache.withDirectory(temporaryFolder.newFolder().toPath());
+    Cache cache = Cache.withDirectory(Files.createTempDirectory(temporaryFolder, "jib"));
 
     verifyIsLayer1(cache.writeCompressedLayer(compress(layerBlob1)));
     verifyIsLayer1(cache.retrieve(layerDigest1).orElseThrow(AssertionError::new));
@@ -169,9 +168,9 @@ public class CacheTest {
   }
 
   @Test
-  public void testWriteUncompressedWithLayerEntries_retrieveByLayerDigest()
+  void testWriteUncompressedWithLayerEntries_retrieveByLayerDigest()
       throws IOException, CacheDirectoryCreationException, CacheCorruptedException {
-    Cache cache = Cache.withDirectory(temporaryFolder.newFolder().toPath());
+    Cache cache = Cache.withDirectory(Files.createTempDirectory(temporaryFolder, "jib"));
 
     verifyIsLayer1(cache.writeUncompressedLayer(layerBlob1, layerEntries1));
     verifyIsLayer1(cache.retrieve(layerDigest1).orElseThrow(AssertionError::new));
@@ -179,9 +178,9 @@ public class CacheTest {
   }
 
   @Test
-  public void testWriteUncompressedWithLayerEntries_retrieveByLayerEntries()
+  void testWriteUncompressedWithLayerEntries_retrieveByLayerEntries()
       throws IOException, CacheDirectoryCreationException, CacheCorruptedException {
-    Cache cache = Cache.withDirectory(temporaryFolder.newFolder().toPath());
+    Cache cache = Cache.withDirectory(Files.createTempDirectory(temporaryFolder, "jib"));
 
     verifyIsLayer1(cache.writeUncompressedLayer(layerBlob1, layerEntries1));
     verifyIsLayer1(cache.retrieve(layerEntries1).orElseThrow(AssertionError::new));
@@ -194,9 +193,9 @@ public class CacheTest {
   }
 
   @Test
-  public void testRetrieveWithTwoEntriesInCache()
+  void testRetrieveWithTwoEntriesInCache()
       throws IOException, CacheDirectoryCreationException, CacheCorruptedException {
-    Cache cache = Cache.withDirectory(temporaryFolder.newFolder().toPath());
+    Cache cache = Cache.withDirectory(Files.createTempDirectory(temporaryFolder, "jib"));
 
     verifyIsLayer1(cache.writeUncompressedLayer(layerBlob1, layerEntries1));
     verifyIsLayer2(cache.writeUncompressedLayer(layerBlob2, layerEntries2));

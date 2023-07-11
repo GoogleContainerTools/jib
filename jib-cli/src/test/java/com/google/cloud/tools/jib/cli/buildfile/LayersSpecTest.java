@@ -24,15 +24,15 @@ import java.time.Instant;
 import org.hamcrest.CoreMatchers;
 import org.hamcrest.MatcherAssert;
 import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /** Tests for {@link LayersSpec}. */
-public class LayersSpecTest {
+class LayersSpecTest {
 
   private static final ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
 
   @Test
-  public void testLayersSpec_full() throws JsonProcessingException {
+  void testLayersSpec_full() throws JsonProcessingException {
     String data =
         "entries:\n" // trivial layer
             + "  - name: some layer\n"
@@ -48,7 +48,7 @@ public class LayersSpecTest {
   }
 
   @Test
-  public void testLayersSpec_entriesRequired() {
+  void testLayersSpec_entriesRequired() {
     String data =
         "properties:\n" // trivial file properties spec
             + "  timestamp: 1\n";
@@ -63,7 +63,7 @@ public class LayersSpecTest {
   }
 
   @Test
-  public void testLayersSpec_entriesNotNull() {
+  void testLayersSpec_entriesNotNull() {
     String data =
         "entries: null\n"
             + "properties:\n" // trivial file properties spec
@@ -79,7 +79,7 @@ public class LayersSpecTest {
   }
 
   @Test
-  public void testLayersSpec_entriesNotEmpty() {
+  void testLayersSpec_entriesNotEmpty() {
     String data =
         "entries: []\n"
             + "properties:\n" // trivial file properties spec

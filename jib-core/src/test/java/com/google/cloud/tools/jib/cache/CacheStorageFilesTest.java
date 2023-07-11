@@ -25,16 +25,16 @@ import java.security.DigestException;
 import org.hamcrest.CoreMatchers;
 import org.hamcrest.MatcherAssert;
 import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /** Tests for {@link CacheStorageFiles}. */
-public class CacheStorageFilesTest {
+class CacheStorageFilesTest {
 
   private static final CacheStorageFiles TEST_CACHE_STORAGE_FILES =
       new CacheStorageFiles(Paths.get("cache/directory"));
 
   @Test
-  public void testIsLayerFile() {
+  void testIsLayerFile() {
     Assert.assertTrue(
         CacheStorageFiles.isLayerFile(
             Paths.get("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")));
@@ -45,7 +45,7 @@ public class CacheStorageFilesTest {
   }
 
   @Test
-  public void testGetDiffId() throws DigestException, CacheCorruptedException {
+  void testGetDiffId() throws DigestException, CacheCorruptedException {
     Assert.assertEquals(
         DescriptorDigest.fromHash(
             "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"),
@@ -62,7 +62,7 @@ public class CacheStorageFilesTest {
   }
 
   @Test
-  public void testGetDiffId_corrupted() {
+  void testGetDiffId_corrupted() {
     try {
       TEST_CACHE_STORAGE_FILES.getDigestFromFilename(Paths.get("not long enough"));
       Assert.fail("Should have thrown CacheCorruptedException");
@@ -95,7 +95,7 @@ public class CacheStorageFilesTest {
   }
 
   @Test
-  public void testGetLayerFile() throws DigestException {
+  void testGetLayerFile() throws DigestException {
     DescriptorDigest layerDigest =
         DescriptorDigest.fromHash(
             "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
@@ -114,7 +114,7 @@ public class CacheStorageFilesTest {
   }
 
   @Test
-  public void testGetLayerFilename() throws DigestException {
+  void testGetLayerFilename() throws DigestException {
     DescriptorDigest diffId =
         DescriptorDigest.fromHash(
             "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb");
@@ -125,7 +125,7 @@ public class CacheStorageFilesTest {
   }
 
   @Test
-  public void testGetSelectorFile() throws DigestException {
+  void testGetSelectorFile() throws DigestException {
     DescriptorDigest selector =
         DescriptorDigest.fromHash(
             "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc");
@@ -140,13 +140,13 @@ public class CacheStorageFilesTest {
   }
 
   @Test
-  public void testGetLayersDirectory() {
+  void testGetLayersDirectory() {
     Assert.assertEquals(
         Paths.get("cache", "directory", "layers"), TEST_CACHE_STORAGE_FILES.getLayersDirectory());
   }
 
   @Test
-  public void testGetLayerDirectory() throws DigestException {
+  void testGetLayerDirectory() throws DigestException {
     DescriptorDigest layerDigest =
         DescriptorDigest.fromHash(
             "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
@@ -161,19 +161,19 @@ public class CacheStorageFilesTest {
   }
 
   @Test
-  public void testGetTemporaryDirectory() {
+  void testGetTemporaryDirectory() {
     Assert.assertEquals(
         Paths.get("cache/directory/tmp"), TEST_CACHE_STORAGE_FILES.getTemporaryDirectory());
   }
 
   @Test
-  public void testGetImagesDirectory() {
+  void testGetImagesDirectory() {
     Assert.assertEquals(
         Paths.get("cache/directory/images"), TEST_CACHE_STORAGE_FILES.getImagesDirectory());
   }
 
   @Test
-  public void testGetImageDirectory() throws InvalidImageReferenceException {
+  void testGetImageDirectory() throws InvalidImageReferenceException {
     Path imagesDirectory = Paths.get("cache", "directory", "images");
     Assert.assertEquals(imagesDirectory, TEST_CACHE_STORAGE_FILES.getImagesDirectory());
 

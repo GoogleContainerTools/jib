@@ -33,16 +33,27 @@ import org.gradle.testkit.runner.BuildTask;
 import org.gradle.testkit.runner.TaskOutcome;
 import org.gradle.testkit.runner.UnexpectedBuildFailure;
 import org.junit.Assert;
-import org.junit.ClassRule;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junit.jupiter.api.io.TempDir;
 
 /** Tests for {@link SyncMapTask}. */
-public class SyncMapTaskTest {
+class SyncMapTaskTest {
 
-  @ClassRule public static final TestProject simpleTestProject = new TestProject("simple");
-  @ClassRule public static final TestProject skaffoldProject = new TestProject("skaffold-config");
-  @ClassRule public static final TestProject multiTestProject = new TestProject("multi-service");
-  @ClassRule public static final TestProject warProject = new TestProject("war_servlet25");
+  @TempDir Path tempDir1;
+  @TempDir Path tempDir2;
+  @TempDir Path tempDir3;
+  @TempDir Path tempDir4;
+
+  @RegisterExtension public TestProject simpleTestProject = new TestProject("simple", tempDir1);
+
+  @RegisterExtension
+  public TestProject skaffoldProject = new TestProject("skaffold-config", tempDir2);
+
+  @RegisterExtension
+  public TestProject multiTestProject = new TestProject("multi-service", tempDir3);
+
+  @RegisterExtension public TestProject warProject = new TestProject("war_servlet25", tempDir4);
 
   /**
    * Verifies that the sync map task succeeded and returns the parsed json.
@@ -53,7 +64,7 @@ public class SyncMapTaskTest {
    * @return the list of paths printed by the task
    * @throws IOException if the json parser fails
    */
-  private static SkaffoldSyncMapTemplate generateTemplate(
+  private SkaffoldSyncMapTemplate generateTemplate(
       TestProject project, @Nullable String moduleName, @Nullable List<String> params)
       throws IOException {
     String taskName =
@@ -85,7 +96,7 @@ public class SyncMapTaskTest {
   }
 
   @Test
-  public void testSyncMapTask_singleProject() throws IOException {
+  void testSyncMapTask_singleProject() throws IOException {
     Path projectRoot = simpleTestProject.getProjectRoot();
     SkaffoldSyncMapTemplate parsed = generateTemplate(simpleTestProject, null, null);
 
@@ -113,7 +124,7 @@ public class SyncMapTaskTest {
   }
 
   @Test
-  public void testSyncMapTask_multiProjectOutput() throws IOException {
+  void testSyncMapTask_multiProjectOutput() throws IOException {
     Path projectRoot = multiTestProject.getProjectRoot();
     Path complexServiceRoot = projectRoot.resolve("complex-service");
     Path libRoot = projectRoot.resolve("lib");
@@ -152,7 +163,7 @@ public class SyncMapTaskTest {
   }
 
   @Test
-  public void testSyncMapTask_withSkaffoldConfig() throws IOException {
+  void testSyncMapTask_withSkaffoldConfig() throws IOException {
     Path projectRoot = skaffoldProject.getProjectRoot();
     SkaffoldSyncMapTemplate parsed = generateTemplate(skaffoldProject, null, null);
 
@@ -178,7 +189,7 @@ public class SyncMapTaskTest {
   }
 
   @Test
-  public void testSyncMapTask_failIfWar() throws IOException {
+  void testSyncMapTask_failIfWar() throws IOException {
     Path projectRoot = warProject.getProjectRoot();
     try {
       generateTemplate(warProject, null, null);
@@ -194,7 +205,7 @@ public class SyncMapTaskTest {
   }
 
   @Test
-  public void testSyncMapTask_failIfJarContainerizationMode() throws IOException {
+  void testSyncMapTask_failIfJarContainerizationMode() throws IOException {
     Path projectRoot = simpleTestProject.getProjectRoot();
     try {
       generateTemplate(

@@ -34,10 +34,10 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Set;
 import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /** Tests for {@link Layers}. */
-public class LayersTest {
+class LayersTest {
 
   private static final String LAYERS_TEST_RESOURCE_DIR = "buildfiles/layers/";
 
@@ -60,7 +60,7 @@ public class LayersTest {
   }
 
   @Test
-  public void testToLayers_properties() throws IOException, URISyntaxException {
+  void testToLayers_properties() throws IOException, URISyntaxException {
     Path testRoot = getLayersTestRoot("propertiesTest");
     List<FileEntriesLayer> layers = parseLayers(testRoot, 4);
 
@@ -94,7 +94,7 @@ public class LayersTest {
   }
 
   @Test
-  public void testToLayers_includeExcludes() throws IOException, URISyntaxException {
+  void testToLayers_includeExcludes() throws IOException, URISyntaxException {
     Path testRoot = getLayersTestRoot("includesExcludesTest");
     List<FileEntriesLayer> layers = parseLayers(testRoot, 6);
 
@@ -199,7 +199,7 @@ public class LayersTest {
   }
 
   @Test
-  public void testToLayers_file() throws IOException, URISyntaxException {
+  void testToLayers_file() throws IOException, URISyntaxException {
     Path testRoot = getLayersTestRoot("fileTest/default");
     List<FileEntriesLayer> layers = parseLayers(testRoot, 1);
 
@@ -212,7 +212,7 @@ public class LayersTest {
   }
 
   @Test
-  public void testToLayers_fileWithIncludes() throws IOException, URISyntaxException {
+  void testToLayers_fileWithIncludes() throws IOException, URISyntaxException {
     Path testRoot = getLayersTestRoot("fileTest/failWithIncludes");
     try {
       parseLayers(testRoot, 0);
@@ -224,7 +224,7 @@ public class LayersTest {
   }
 
   @Test
-  public void testToLayers_fileWithExcludes() throws IOException, URISyntaxException {
+  void testToLayers_fileWithExcludes() throws IOException, URISyntaxException {
     Path testRoot = getLayersTestRoot("fileTest/failWithExcludes");
     try {
       parseLayers(testRoot, 0);
@@ -282,7 +282,7 @@ public class LayersTest {
   }
 
   @Test
-  public void testToLayers_pathDoesNotExist() throws IOException, URISyntaxException {
+  void testToLayers_pathDoesNotExist() throws IOException, URISyntaxException {
     Path testRoot = getLayersTestRoot("pathDoesNotExist");
     try {
       parseLayers(testRoot, 0);
@@ -296,7 +296,7 @@ public class LayersTest {
   }
 
   @Test
-  public void testToLayers_archiveLayersNotSupported() throws URISyntaxException, IOException {
+  void testToLayers_archiveLayersNotSupported() throws URISyntaxException, IOException {
     Path testRoot = getLayersTestRoot("archiveLayerTest");
     try {
       parseLayers(testRoot, 0);
@@ -307,7 +307,7 @@ public class LayersTest {
   }
 
   @Test
-  public void testToLayers_writeToRoot() throws IOException, URISyntaxException {
+  void testToLayers_writeToRoot() throws IOException, URISyntaxException {
     // this test defines the current behavior of writing to root, perhaps we should ignore
     // root at this level or we should ignore it at the builder level
     Path testRoot = getLayersTestRoot("writeToRoot");

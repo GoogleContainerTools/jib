@@ -20,13 +20,13 @@ import com.google.cloud.tools.jib.docker.CliDockerClient;
 import com.google.common.collect.ImmutableMap;
 import java.nio.file.Paths;
 import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /** Tests for {@link DockerDaemonImage}. */
-public class DockerDaemonImageTest {
+class DockerDaemonImageTest {
 
   @Test
-  public void testGetters_default() throws InvalidImageReferenceException {
+  void testGetters_default() throws InvalidImageReferenceException {
     DockerDaemonImage dockerDaemonImage = DockerDaemonImage.named("docker/daemon/image");
 
     Assert.assertEquals("docker/daemon/image", dockerDaemonImage.getImageReference().toString());
@@ -36,7 +36,7 @@ public class DockerDaemonImageTest {
   }
 
   @Test
-  public void testGetters() throws InvalidImageReferenceException {
+  void testGetters() throws InvalidImageReferenceException {
     DockerDaemonImage dockerDaemonImage =
         DockerDaemonImage.named("docker/daemon/image")
             .setDockerExecutable(Paths.get("docker/binary"))

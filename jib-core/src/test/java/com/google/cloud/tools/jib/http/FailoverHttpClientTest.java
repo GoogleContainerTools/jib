@@ -46,18 +46,21 @@ import java.util.stream.Collectors;
 import javax.net.ssl.SSLException;
 import javax.net.ssl.SSLPeerUnverifiedException;
 import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
 /** Tests for {@link FailoverHttpClient}. */
-@RunWith(MockitoJUnitRunner.class)
-public class FailoverHttpClientTest {
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
+class FailoverHttpClientTest {
 
   @FunctionalInterface
   private interface CallFunction {
@@ -81,29 +84,29 @@ public class FailoverHttpClientTest {
   private final GenericUrl fakeUrl = new GenericUrl("https://crepecake/fake/url");
   private final LongAdder totalByteCount = new LongAdder();
 
-  @Before
-  public void setUp() throws IOException {
+  @BeforeEach
+  void setUp() throws IOException {
     ByteArrayInputStream inStream = new ByteArrayInputStream(new byte[] {'b', 'o', 'd', 'y'});
     Mockito.when(mockHttpResponse.getContent()).thenReturn(inStream);
   }
 
   @Test
-  public void testGet() throws IOException {
+  void testGet() throws IOException {
     verifyCall(HttpMethods.GET, FailoverHttpClient::get);
   }
 
   @Test
-  public void testPost() throws IOException {
+  void testPost() throws IOException {
     verifyCall(HttpMethods.POST, FailoverHttpClient::post);
   }
 
   @Test
-  public void testPut() throws IOException {
+  void testPut() throws IOException {
     verifyCall(HttpMethods.PUT, FailoverHttpClient::put);
   }
 
   @Test
-  public void testHttpTimeout_doNotSetByDefault() throws IOException {
+  void testHttpTimeout_doNotSetByDefault() throws IOException {
     try (Response ignored = newHttpClient(false, false).get(fakeUrl.toURL(), fakeRequest(null))) {
       // intentionally empty
     }
@@ -113,7 +116,7 @@ public class FailoverHttpClientTest {
   }
 
   @Test
-  public void testHttpTimeout() throws IOException {
+  void testHttpTimeout() throws IOException {
     FailoverHttpClient httpClient = newHttpClient(false, false);
     try (Response ignored = httpClient.get(fakeUrl.toURL(), fakeRequest(5982))) {
       // intentionally empty
@@ -124,7 +127,7 @@ public class FailoverHttpClientTest {
   }
 
   @Test
-  public void testGet_nonHttpsServer_insecureConnectionAndFailoverDisabled()
+  void testGet_nonHttpsServer_insecureConnectionAndFailoverDisabled()
       throws MalformedURLException, IOException {
     FailoverHttpClient httpClient = newHttpClient(false, false);
     try (Response response = httpClient.get(new URL("http://plain.http"), fakeRequest(null))) {
@@ -136,7 +139,7 @@ public class FailoverHttpClientTest {
   }
 
   @Test
-  public void testCall_secureClientOnUnverifiableServer() throws IOException {
+  void testCall_secureClientOnUnverifiableServer() throws IOException {
     FailoverHttpClient httpClient = newHttpClient(false, false);
 
     Mockito.when(mockHttpRequest.execute()).thenThrow(new SSLPeerUnverifiedException("unverified"));
@@ -150,7 +153,7 @@ public class FailoverHttpClientTest {
   }
 
   @Test
-  public void testGet_insecureClientOnUnverifiableServer() throws IOException {
+  void testGet_insecureClientOnUnverifiableServer() throws IOException {
     FailoverHttpClient insecureHttpClient = newHttpClient(true, false);
 
     Mockito.when(mockHttpRequest.execute()).thenThrow(new SSLPeerUnverifiedException(""));
@@ -168,7 +171,7 @@ public class FailoverHttpClientTest {
   }
 
   @Test
-  public void testGet_insecureClientOnHttpServer() throws IOException {
+  void testGet_insecureClientOnHttpServer() throws IOException {
     FailoverHttpClient insecureHttpClient = newHttpClient(true, false);
 
     Mockito.when(mockHttpRequest.execute())
@@ -194,7 +197,7 @@ public class FailoverHttpClientTest {
   }
 
   @Test
-  public void testGet_insecureClientOnHttpServerAndNoPortSpecified() throws IOException {
+  void testGet_insecureClientOnHttpServerAndNoPortSpecified() throws IOException {
     FailoverHttpClient insecureHttpClient = newHttpClient(true, false);
 
     Mockito.when(mockHttpRequest.execute())
@@ -216,7 +219,7 @@ public class FailoverHttpClientTest {
   }
 
   @Test
-  public void testGet_secureClientOnNonListeningServerAndNoPortSpecified() throws IOException {
+  void testGet_secureClientOnNonListeningServerAndNoPortSpecified() throws IOException {
     FailoverHttpClient httpClient = newHttpClient(false, false);
 
     Mockito.when(mockHttpRequest.execute())
@@ -235,7 +238,7 @@ public class FailoverHttpClientTest {
   }
 
   @Test
-  public void testGet_insecureClientOnNonListeningServerAndPortSpecified() throws IOException {
+  void testGet_insecureClientOnNonListeningServerAndPortSpecified() throws IOException {
     FailoverHttpClient insecureHttpClient = newHttpClient(true, false);
 
     Mockito.when(mockHttpRequest.execute())
@@ -255,7 +258,7 @@ public class FailoverHttpClientTest {
   }
 
   @Test
-  public void testGet_timeoutFromConnectException() throws IOException {
+  void testGet_timeoutFromConnectException() throws IOException {
     FailoverHttpClient insecureHttpClient = newHttpClient(true, false);
 
     Mockito.when(mockHttpRequest.execute()).thenThrow(new ConnectException("Connection timed out"));
@@ -274,7 +277,7 @@ public class FailoverHttpClientTest {
   }
 
   @Test
-  public void testGet_doNotSendCredentialsOverHttp() throws IOException {
+  void testGet_doNotSendCredentialsOverHttp() throws IOException {
     FailoverHttpClient insecureHttpClient = newHttpClient(true, false);
 
     // make it fall back to HTTP
@@ -297,7 +300,7 @@ public class FailoverHttpClientTest {
   }
 
   @Test
-  public void testGet_sendCredentialsOverHttp() throws IOException {
+  void testGet_sendCredentialsOverHttp() throws IOException {
     FailoverHttpClient insecureHttpClient = newHttpClient(true, true); // sendCredentialsOverHttp
 
     try (Response response =
@@ -313,7 +316,7 @@ public class FailoverHttpClientTest {
   }
 
   @Test
-  public void testGet_originalRequestHeaderUntouchedWhenClearingHeader() throws IOException {
+  void testGet_originalRequestHeaderUntouchedWhenClearingHeader() throws IOException {
     FailoverHttpClient insecureHttpClient = newHttpClient(true, false);
 
     Request request = fakeRequest(null);
@@ -330,7 +333,7 @@ public class FailoverHttpClientTest {
   }
 
   @Test
-  public void testShutDown() throws IOException {
+  void testShutDown() throws IOException {
     FailoverHttpClient secureHttpClient = newHttpClient(false, false);
 
     try (Response response = secureHttpClient.get(fakeUrl.toURL(), fakeRequest(null))) {
@@ -342,7 +345,7 @@ public class FailoverHttpClientTest {
   }
 
   @Test
-  public void testFollowFailoverHistory_insecureHttps() throws IOException {
+  void testFollowFailoverHistory_insecureHttps() throws IOException {
     FailoverHttpClient httpClient = newHttpClient(true, false);
 
     Mockito.when(mockHttpRequest.execute())
@@ -361,7 +364,7 @@ public class FailoverHttpClientTest {
   }
 
   @Test
-  public void testFollowFailoverHistory_httpFailoverByConnectionError() throws IOException {
+  void testFollowFailoverHistory_httpFailoverByConnectionError() throws IOException {
     FailoverHttpClient httpClient = newHttpClient(true, false);
 
     Mockito.when(mockHttpRequest.execute())
@@ -379,7 +382,7 @@ public class FailoverHttpClientTest {
   }
 
   @Test
-  public void testFollowFailoverHistory_httpFailover() throws IOException {
+  void testFollowFailoverHistory_httpFailover() throws IOException {
     FailoverHttpClient httpClient = newHttpClient(true, false);
 
     Mockito.when(mockHttpRequest.execute())
@@ -401,7 +404,7 @@ public class FailoverHttpClientTest {
   }
 
   @Test
-  public void testFollowFailoverHistory_portsDifferent() throws IOException {
+  void testFollowFailoverHistory_portsDifferent() throws IOException {
     FailoverHttpClient httpClient = newHttpClient(true, false);
 
     Mockito.when(mockHttpRequest.execute())
@@ -423,7 +426,7 @@ public class FailoverHttpClientTest {
   }
 
   @Test
-  public void testRetries() throws IOException {
+  void testRetries() throws IOException {
     HttpServer server = HttpServer.create(new InetSocketAddress(0), 1);
     AtomicBoolean failed = new AtomicBoolean();
     server

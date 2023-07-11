@@ -33,31 +33,34 @@ import org.gradle.api.plugins.WarPlugin;
 import org.gradle.api.tasks.TaskProvider;
 import org.gradle.api.tasks.bundling.War;
 import org.gradle.testfixtures.ProjectBuilder;
-import org.junit.Before;
 import org.junit.Rule;
-import org.junit.Test;
 import org.junit.contrib.java.lang.system.RestoreSystemProperties;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.springframework.boot.gradle.plugin.SpringBootPlugin;
 import org.springframework.boot.gradle.tasks.bundling.BootWar;
 
 /** Tests for {@link TaskCommon}. */
-@RunWith(MockitoJUnitRunner.class)
-public class TaskCommonTest {
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
+class TaskCommonTest {
 
   @Rule public final RestoreSystemProperties systemPropertyRestorer = new RestoreSystemProperties();
   @Mock private ProjectProperties mockProjectProperties;
 
-  @Before
-  public void setUp() {
+  @BeforeEach
+  void setUp() {
     System.clearProperty("jib.extraDirectories.paths");
     System.clearProperty("jib.extraDirectories.permissions");
   }
 
   @Test
-  public void testGetWarTask_normalJavaProject() {
+  void testGetWarTask_normalJavaProject() {
     Project project = ProjectBuilder.builder().build();
     project.getPlugins().apply(JavaPlugin.class);
 
@@ -66,7 +69,7 @@ public class TaskCommonTest {
   }
 
   @Test
-  public void testGetWarTask_normalWarProject() {
+  void testGetWarTask_normalWarProject() {
     Project project = ProjectBuilder.builder().build();
     project.getPlugins().apply(WarPlugin.class);
 
@@ -76,7 +79,7 @@ public class TaskCommonTest {
   }
 
   @Test
-  public void testGetBootWarTask_bootWarProject() {
+  void testGetBootWarTask_bootWarProject() {
     Project project = ProjectBuilder.builder().build();
     project.getPlugins().apply(WarPlugin.class);
     project.getPlugins().apply(SpringBootPlugin.class);
@@ -87,7 +90,7 @@ public class TaskCommonTest {
   }
 
   @Test
-  public void testFinishUpdateChecker_correctMessageLogged() {
+  void testFinishUpdateChecker_correctMessageLogged() {
     when(mockProjectProperties.getToolName()).thenReturn("tool-name");
     when(mockProjectProperties.getToolVersion()).thenReturn("2.0.0");
     Future<Optional<String>> updateCheckFuture = Futures.immediateFuture(Optional.of("2.1.0"));

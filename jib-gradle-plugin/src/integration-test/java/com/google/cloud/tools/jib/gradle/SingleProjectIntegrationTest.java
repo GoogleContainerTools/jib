@@ -41,12 +41,11 @@ import org.hamcrest.CoreMatchers;
 import org.hamcrest.MatcherAssert;
 import org.junit.Before;
 import org.junit.ClassRule;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 /** Integration tests for building single project images. */
-public class SingleProjectIntegrationTest {
+class SingleProjectIntegrationTest {
 
   @ClassRule
   public static final LocalRegistry localRegistry1 =
@@ -56,9 +55,9 @@ public class SingleProjectIntegrationTest {
   public static final LocalRegistry localRegistry2 =
       new LocalRegistry(6000, "testuser", "testpassword");
 
-  @ClassRule public static final TestProject simpleTestProject = new TestProject("simple");
+  @TempDir Path tempDir;
 
-  @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
+  @ClassRule public final TestProject simpleTestProject = new TestProject("simple", tempDir);
 
   private final String dockerHost =
       System.getenv("DOCKER_IP") != null ? System.getenv("DOCKER_IP") : "localhost";
@@ -123,7 +122,7 @@ public class SingleProjectIntegrationTest {
     return DescriptorDigest.fromDigest(digest).toString();
   }
 
-  private static String buildAndRunComplex(
+  private String buildAndRunComplex(
       String imageReference, String username, String password, LocalRegistry targetRegistry)
       throws IOException, InterruptedException {
     Path baseCache = simpleTestProject.getProjectRoot().resolve("build/jib-base-cache");
@@ -166,13 +165,13 @@ public class SingleProjectIntegrationTest {
   }
 
   @Before
-  public void setup() throws IOException, InterruptedException {
+  void setup() throws IOException, InterruptedException {
     // Pull distroless and push to local registry so we can test 'from' credentials
     localRegistry1.pullAndPushToLocal("gcr.io/distroless/java:latest", "distroless/java");
   }
 
   @Test
-  public void testBuild_simple()
+  void testBuild_simple()
       throws IOException, InterruptedException, DigestException, InvalidImageReferenceException {
     String targetImage =
         IntegrationTestingConfiguration.getTestRepositoryLocation()
@@ -227,8 +226,7 @@ public class SingleProjectIntegrationTest {
   }
 
   @Test
-  public void testBuild_dockerDaemonBase()
-      throws IOException, InterruptedException, DigestException {
+  void testBuild_dockerDaemonBase() throws IOException, InterruptedException, DigestException {
     String targetImage =
         IntegrationTestingConfiguration.getTestRepositoryLocation()
             + "/simplewithdockerdaemonbase:gradle"
@@ -250,8 +248,8 @@ public class SingleProjectIntegrationTest {
   }
 
   @Test
-  public void testBuild_tarBase() throws IOException, InterruptedException, DigestException {
-    Path path = temporaryFolder.getRoot().toPath().resolve("docker-save-distroless");
+  void testBuild_tarBase() throws IOException, InterruptedException, DigestException {
+    Path path = tempDir.resolve("docker-save-distroless");
     new Command("docker", "save", "gcr.io/distroless/java:latest", "-o", path.toString()).run();
     String targetImage =
         IntegrationTestingConfiguration.getTestRepositoryLocation()
@@ -272,7 +270,7 @@ public class SingleProjectIntegrationTest {
   }
 
   @Test
-  public void testBuild_failOffline() {
+  void testBuild_failOffline() {
     String targetImage =
         IntegrationTestingConfiguration.getTestRepositoryLocation()
             + "/simpleimageoffline:gradle"
@@ -295,8 +293,7 @@ public class SingleProjectIntegrationTest {
   }
 
   @Test
-  public void testDockerDaemon_simpleOnJava17()
-      throws DigestException, IOException, InterruptedException {
+  void testDockerDaemon_simpleOnJava17() throws DigestException, IOException, InterruptedException {
     assumeTrue(isJavaRuntimeAtLeast(17));
 
     String targetImage = "simpleimage:gradle" + System.nanoTime();
@@ -309,8 +306,7 @@ public class SingleProjectIntegrationTest {
   }
 
   @Test
-  public void testDockerDaemon_simpleOnJava11()
-      throws DigestException, IOException, InterruptedException {
+  void testDockerDaemon_simpleOnJava11() throws DigestException, IOException, InterruptedException {
     assumeTrue(isJavaRuntimeAtLeast(11));
 
     String targetImage = "simpleimage:gradle" + System.nanoTime();
@@ -323,7 +319,7 @@ public class SingleProjectIntegrationTest {
   }
 
   @Test
-  public void testDockerDaemon_simpleWithIncompatibleJava11() {
+  void testDockerDaemon_simpleWithIncompatibleJava11() {
     assumeTrue(isJavaRuntimeAtLeast(11));
 
     Exception exception =
@@ -341,7 +337,7 @@ public class SingleProjectIntegrationTest {
   }
 
   @Test
-  public void testDockerDaemon_simple_multipleExtraDirectories()
+  void testDockerDaemon_simple_multipleExtraDirectories()
       throws DigestException, IOException, InterruptedException {
     String targetImage = "simpleimage:gradle" + System.nanoTime();
     String output =
@@ -362,7 +358,7 @@ public class SingleProjectIntegrationTest {
   }
 
   @Test
-  public void testDockerDaemon_simple_multipleExtraDirectoriesWithAlternativeConfig()
+  void testDockerDaemon_simple_multipleExtraDirectoriesWithAlternativeConfig()
       throws DigestException, IOException, InterruptedException {
     String targetImage = "simpleimage:gradle" + System.nanoTime();
     String output =
@@ -383,7 +379,7 @@ public class SingleProjectIntegrationTest {
   }
 
   @Test
-  public void testDockerDaemon_simple_multipleExtraDirectoriesWithClosure()
+  void testDockerDaemon_simple_multipleExtraDirectoriesWithClosure()
       throws DigestException, IOException, InterruptedException {
     String targetImage = "simpleimage:gradle" + System.nanoTime();
     String output =
@@ -406,7 +402,7 @@ public class SingleProjectIntegrationTest {
   }
 
   @Test
-  public void testDockerDaemon_simple_extraDirectoriesFiltering()
+  void testDockerDaemon_simple_extraDirectoriesFiltering()
       throws DigestException, IOException, InterruptedException {
     String targetImage = "simpleimage:gradle" + System.nanoTime();
     JibRunHelper.buildToDockerDaemon(
@@ -423,7 +419,7 @@ public class SingleProjectIntegrationTest {
   }
 
   @Test
-  public void testBuild_complex()
+  void testBuild_complex()
       throws IOException, InterruptedException, DigestException, InvalidImageReferenceException {
     String targetImage = dockerHost + ":6000/compleximage:gradle" + System.nanoTime();
     Instant beforeBuild = Instant.now();
@@ -448,7 +444,7 @@ public class SingleProjectIntegrationTest {
   }
 
   @Test
-  public void testBuild_complex_sameFromAndToRegistry() throws IOException, InterruptedException {
+  void testBuild_complex_sameFromAndToRegistry() throws IOException, InterruptedException {
     String targetImage = dockerHost + ":5000/compleximage:gradle" + System.nanoTime();
     Instant beforeBuild = Instant.now();
     buildAndRunComplex(targetImage, "testuser", "testpassword", localRegistry1);
@@ -457,7 +453,7 @@ public class SingleProjectIntegrationTest {
   }
 
   @Test
-  public void testDockerDaemon_simple() throws IOException, InterruptedException, DigestException {
+  void testDockerDaemon_simple() throws IOException, InterruptedException, DigestException {
     String targetImage = "simpleimage:gradle" + System.nanoTime();
     String output =
         JibRunHelper.buildToDockerDaemonAndRun(simpleTestProject, targetImage, "build.gradle");
@@ -478,7 +474,7 @@ public class SingleProjectIntegrationTest {
   }
 
   @Test
-  public void testDockerDaemon_jarContainerization()
+  void testDockerDaemon_jarContainerization()
       throws DigestException, IOException, InterruptedException {
     String targetImage = "simpleimage:gradle" + System.nanoTime();
     String output =
@@ -490,7 +486,7 @@ public class SingleProjectIntegrationTest {
   }
 
   @Test
-  public void testBuild_skipDownloadingBaseImageLayers() throws IOException, InterruptedException {
+  void testBuild_skipDownloadingBaseImageLayers() throws IOException, InterruptedException {
     Path baseLayersCacheDirectory =
         simpleTestProject.getProjectRoot().resolve("build/jib-base-cache/layers");
     String targetImage = dockerHost + ":6000/simpleimage:gradle" + System.nanoTime();
@@ -506,7 +502,7 @@ public class SingleProjectIntegrationTest {
   }
 
   @Test
-  public void testDockerDaemon_timestampCustom()
+  void testDockerDaemon_timestampCustom()
       throws DigestException, IOException, InterruptedException {
     String targetImage = "simpleimage:gradle" + System.nanoTime();
     String output =
@@ -520,7 +516,7 @@ public class SingleProjectIntegrationTest {
   }
 
   @Test
-  public void testBuild_dockerClient() throws IOException, InterruptedException, DigestException {
+  void testBuild_dockerClient() throws IOException, InterruptedException, DigestException {
     assumeFalse(System.getProperty("os.name").startsWith("Windows"));
     new Command(
             "chmod", "+x", simpleTestProject.getProjectRoot().resolve("mock-docker.sh").toString())
@@ -545,7 +541,7 @@ public class SingleProjectIntegrationTest {
   }
 
   @Test
-  public void testBuildTar_simple() throws IOException, InterruptedException {
+  void testBuildTar_simple() throws IOException, InterruptedException {
     String targetImage = "simpleimage:gradle" + System.nanoTime();
 
     String outputPath =
@@ -584,8 +580,7 @@ public class SingleProjectIntegrationTest {
   }
 
   @Test
-  public void testCredHelperConfiguration()
-      throws DigestException, IOException, InterruptedException {
+  void testCredHelperConfiguration() throws DigestException, IOException, InterruptedException {
     String targetImage = "simpleimage:gradle" + System.nanoTime();
     assertThat(
             JibRunHelper.buildToDockerDaemonAndRun(

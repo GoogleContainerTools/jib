@@ -18,13 +18,13 @@ package com.google.cloud.tools.jib.buildplan;
 
 import com.google.common.collect.ImmutableList;
 import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /** Tests for {@link UnixPathParser}. */
-public class UnixPathParserTest {
+class UnixPathParserTest {
 
   @Test
-  public void testParse() {
+  void testParse() {
     Assert.assertEquals(ImmutableList.of("some", "path"), UnixPathParser.parse("/some/path"));
     Assert.assertEquals(ImmutableList.of("some", "path"), UnixPathParser.parse("some/path/"));
     Assert.assertEquals(ImmutableList.of("some", "path"), UnixPathParser.parse("some///path///"));

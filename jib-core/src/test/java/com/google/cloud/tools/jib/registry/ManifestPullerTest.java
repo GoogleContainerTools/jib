@@ -42,15 +42,18 @@ import java.util.Collections;
 import org.hamcrest.CoreMatchers;
 import org.hamcrest.MatcherAssert;
 import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
 /** Tests for {@link ManifestPuller}. */
-@RunWith(MockitoJUnitRunner.class)
-public class ManifestPullerTest {
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
+class ManifestPullerTest {
 
   private static InputStream stringToInputStreamUtf8(String string) {
     return new ByteArrayInputStream(string.getBytes(StandardCharsets.UTF_8));
@@ -65,7 +68,7 @@ public class ManifestPullerTest {
   @Mock private Response mockResponse;
 
   @Test
-  public void testHandleResponse_v21()
+  void testHandleResponse_v21()
       throws URISyntaxException, IOException, UnknownManifestFormatException {
     Path v21ManifestFile = Paths.get(Resources.getResource("core/json/v21manifest.json").toURI());
     InputStream v21Manifest = new ByteArrayInputStream(Files.readAllBytes(v21ManifestFile));
@@ -85,7 +88,7 @@ public class ManifestPullerTest {
   }
 
   @Test
-  public void testHandleResponse_v22()
+  void testHandleResponse_v22()
       throws URISyntaxException, IOException, UnknownManifestFormatException {
     Path v22ManifestFile = Paths.get(Resources.getResource("core/json/v22manifest.json").toURI());
     InputStream v22Manifest = new ByteArrayInputStream(Files.readAllBytes(v22ManifestFile));
@@ -105,7 +108,7 @@ public class ManifestPullerTest {
   }
 
   @Test
-  public void testHandleResponse_ociManifest()
+  void testHandleResponse_ociManifest()
       throws URISyntaxException, IOException, UnknownManifestFormatException {
     Path ociManifestFile = Paths.get(Resources.getResource("core/json/ocimanifest.json").toURI());
     InputStream ociManifest = new ByteArrayInputStream(Files.readAllBytes(ociManifestFile));
@@ -125,7 +128,7 @@ public class ManifestPullerTest {
   }
 
   @Test
-  public void testHandleResponse_v22ManifestListFailsWhenParsedAsV22Manifest()
+  void testHandleResponse_v22ManifestListFailsWhenParsedAsV22Manifest()
       throws URISyntaxException, IOException, UnknownManifestFormatException {
     Path v22ManifestListFile =
         Paths.get(Resources.getResource("core/json/v22manifest_list.json").toURI());
@@ -143,7 +146,7 @@ public class ManifestPullerTest {
   }
 
   @Test
-  public void testHandleResponse_v22ManifestListFromParentType()
+  void testHandleResponse_v22ManifestListFromParentType()
       throws URISyntaxException, IOException, UnknownManifestFormatException {
     Path v22ManifestListFile =
         Paths.get(Resources.getResource("core/json/v22manifest_list.json").toURI());
@@ -165,7 +168,7 @@ public class ManifestPullerTest {
   }
 
   @Test
-  public void testHandleResponse_v22ManifestList()
+  void testHandleResponse_v22ManifestList()
       throws URISyntaxException, IOException, UnknownManifestFormatException {
     Path v22ManifestListFile =
         Paths.get(Resources.getResource("core/json/v22manifest_list.json").toURI());
@@ -190,7 +193,7 @@ public class ManifestPullerTest {
   }
 
   @Test
-  public void testHandleResponse_OciIndex()
+  void testHandleResponse_OciIndex()
       throws URISyntaxException, IOException, UnknownManifestFormatException {
     Path ociIndexFile =
         Paths.get(Resources.getResource("core/json/ociindex_platforms.json").toURI());
@@ -212,7 +215,7 @@ public class ManifestPullerTest {
   }
 
   @Test
-  public void testHandleResponse_noSchemaVersion() throws IOException {
+  void testHandleResponse_noSchemaVersion() throws IOException {
     Mockito.when(mockResponse.getBody()).thenReturn(stringToInputStreamUtf8("{}"));
     try {
       testManifestPuller.handleResponse(mockResponse);
@@ -224,7 +227,7 @@ public class ManifestPullerTest {
   }
 
   @Test
-  public void testHandleResponse_invalidSchemaVersion() throws IOException {
+  void testHandleResponse_invalidSchemaVersion() throws IOException {
     Mockito.when(mockResponse.getBody())
         .thenReturn(stringToInputStreamUtf8("{\"schemaVersion\":\"not valid\"}"));
     try {
@@ -237,7 +240,7 @@ public class ManifestPullerTest {
   }
 
   @Test
-  public void testHandleResponse_unknownSchemaVersion() throws IOException {
+  void testHandleResponse_unknownSchemaVersion() throws IOException {
     Mockito.when(mockResponse.getBody())
         .thenReturn(stringToInputStreamUtf8("{\"schemaVersion\":0}"));
     try {
@@ -250,7 +253,7 @@ public class ManifestPullerTest {
   }
 
   @Test
-  public void testHandleResponse_ociIndexWithNoMediaType()
+  void testHandleResponse_ociIndexWithNoMediaType()
       throws IOException, UnknownManifestFormatException {
     String ociManifestJson =
         "{\n"
@@ -282,7 +285,7 @@ public class ManifestPullerTest {
   }
 
   @Test
-  public void testHandleResponse_ociManfiestWithNoMediaType()
+  void testHandleResponse_ociManfiestWithNoMediaType()
       throws IOException, UnknownManifestFormatException {
     String ociManifestJson =
         "{\n"
@@ -313,7 +316,7 @@ public class ManifestPullerTest {
   }
 
   @Test
-  public void testHandleResponse_invalidOciManfiest() throws IOException {
+  void testHandleResponse_invalidOciManfiest() throws IOException {
     Mockito.when(mockResponse.getBody())
         .thenReturn(stringToInputStreamUtf8("{\"schemaVersion\": 2}"));
 
@@ -330,31 +333,31 @@ public class ManifestPullerTest {
   }
 
   @Test
-  public void testGetApiRoute() throws MalformedURLException {
+  void testGetApiRoute() throws MalformedURLException {
     Assert.assertEquals(
         new URL("http://someApiBase/someImageName/manifests/test-image-tag"),
         testManifestPuller.getApiRoute("http://someApiBase/"));
   }
 
   @Test
-  public void testGetHttpMethod() {
+  void testGetHttpMethod() {
     Assert.assertEquals("GET", testManifestPuller.getHttpMethod());
   }
 
   @Test
-  public void testGetActionDescription() {
+  void testGetActionDescription() {
     Assert.assertEquals(
         "pull image manifest for someServerUrl/someImageName:test-image-tag",
         testManifestPuller.getActionDescription());
   }
 
   @Test
-  public void testGetContent() {
+  void testGetContent() {
     Assert.assertNull(testManifestPuller.getContent());
   }
 
   @Test
-  public void testGetAccept() {
+  void testGetAccept() {
     Assert.assertEquals(
         Arrays.asList(
             OciManifestTemplate.MANIFEST_MEDIA_TYPE,

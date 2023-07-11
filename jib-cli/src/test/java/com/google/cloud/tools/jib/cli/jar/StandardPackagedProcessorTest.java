@@ -30,10 +30,10 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.stream.Collectors;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /** Tests for {@link StandardPackagedProcessor}. */
-public class StandardPackagedProcessorTest {
+class StandardPackagedProcessorTest {
 
   private static final String STANDARD_JAR_EMPTY = "jar/standard/emptyStandardJar.jar";
   private static final String STANDARD_SINGLE_DEPENDENCY_JAR = "jar/standard/singleDepJar.jar";
@@ -42,7 +42,7 @@ public class StandardPackagedProcessorTest {
   private static final Integer JAR_JAVA_VERSION = 0; // any value
 
   @Test
-  public void testCreateLayers_emptyJar() throws IOException, URISyntaxException {
+  void testCreateLayers_emptyJar() throws IOException, URISyntaxException {
     Path standardJar = Paths.get(Resources.getResource(STANDARD_JAR_EMPTY).toURI());
     StandardPackagedProcessor standardPackagedModeProcessor =
         new StandardPackagedProcessor(standardJar, JAR_JAVA_VERSION);
@@ -59,7 +59,7 @@ public class StandardPackagedProcessorTest {
   }
 
   @Test
-  public void testCreateLayers_withClassPathInManifest() throws IOException, URISyntaxException {
+  void testCreateLayers_withClassPathInManifest() throws IOException, URISyntaxException {
     Path standardJar =
         Paths.get(Resources.getResource(STANDARD_JAR_WITH_CLASS_PATH_MANIFEST).toURI());
     StandardPackagedProcessor standardPackagedModeProcessor =
@@ -99,7 +99,7 @@ public class StandardPackagedProcessorTest {
   }
 
   @Test
-  public void testCreateLayers_dependencyDoesNotExist() throws URISyntaxException {
+  void testCreateLayers_dependencyDoesNotExist() throws URISyntaxException {
     Path standardJar = Paths.get(Resources.getResource(STANDARD_SINGLE_DEPENDENCY_JAR).toURI());
     StandardPackagedProcessor standardPackagedModeProcessor =
         new StandardPackagedProcessor(standardJar, JAR_JAVA_VERSION);
@@ -116,7 +116,7 @@ public class StandardPackagedProcessorTest {
   }
 
   @Test
-  public void testComputeEntrypoint_noMainClass() throws URISyntaxException {
+  void testComputeEntrypoint_noMainClass() throws URISyntaxException {
     Path standardJar = Paths.get(Resources.getResource(STANDARD_JAR_EMPTY).toURI());
     StandardPackagedProcessor standardPackagedModeProcessor =
         new StandardPackagedProcessor(standardJar, JAR_JAVA_VERSION);
@@ -134,7 +134,7 @@ public class StandardPackagedProcessorTest {
   }
 
   @Test
-  public void testComputeEntrypoint_withMainClass() throws IOException, URISyntaxException {
+  void testComputeEntrypoint_withMainClass() throws IOException, URISyntaxException {
     Path standardJar =
         Paths.get(Resources.getResource(STANDARD_JAR_WITH_CLASS_PATH_MANIFEST).toURI());
     StandardPackagedProcessor standardPackagedModeProcessor =
@@ -148,8 +148,7 @@ public class StandardPackagedProcessorTest {
   }
 
   @Test
-  public void testComputeEntrypoint_withMainClass_jvmFlags()
-      throws IOException, URISyntaxException {
+  void testComputeEntrypoint_withMainClass_jvmFlags() throws IOException, URISyntaxException {
     Path standardJar =
         Paths.get(Resources.getResource(STANDARD_JAR_WITH_CLASS_PATH_MANIFEST).toURI());
     StandardPackagedProcessor standardPackagedModeProcessor =
@@ -164,7 +163,7 @@ public class StandardPackagedProcessorTest {
   }
 
   @Test
-  public void testGetJavaVersion() {
+  void testGetJavaVersion() {
     StandardPackagedProcessor standardPackagedProcessor =
         new StandardPackagedProcessor(Paths.get("ignore"), 8);
     assertThat(standardPackagedProcessor.getJavaVersion()).isEqualTo(8);

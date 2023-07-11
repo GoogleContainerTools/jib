@@ -22,19 +22,19 @@ import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
 import java.io.IOException;
 import java.security.DigestException;
 import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 /** Tests for {@link BuildResult}. */
-public class BuildResultTest {
+class BuildResultTest {
 
   private DescriptorDigest digest1;
   private DescriptorDigest digest2;
   private DescriptorDigest id;
   private DescriptorDigest id2;
 
-  @Before
-  public void setUp() throws DigestException {
+  @BeforeEach
+  void setUp() throws DigestException {
     digest1 =
         DescriptorDigest.fromDigest(
             "sha256:abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789");
@@ -51,7 +51,7 @@ public class BuildResultTest {
   }
 
   @Test
-  public void testCreated() {
+  void testCreated() {
     BuildResult container = new BuildResult(digest1, id, true);
     Assert.assertEquals(digest1, container.getImageDigest());
     Assert.assertEquals(id, container.getImageId());
@@ -59,7 +59,7 @@ public class BuildResultTest {
   }
 
   @Test
-  public void testEquality() {
+  void testEquality() {
     BuildResult container1 = new BuildResult(digest1, id, true);
     BuildResult container2 = new BuildResult(digest1, id, true);
     BuildResult container3 = new BuildResult(digest2, id, true);
@@ -78,7 +78,7 @@ public class BuildResultTest {
   }
 
   @Test
-  public void testFromImage() throws IOException {
+  void testFromImage() throws IOException {
     Image image1 = Image.builder(V22ManifestTemplate.class).setUser("user").build();
     Image image2 = Image.builder(V22ManifestTemplate.class).setUser("user").build();
     Image image3 = Image.builder(V22ManifestTemplate.class).setUser("anotherUser").build();

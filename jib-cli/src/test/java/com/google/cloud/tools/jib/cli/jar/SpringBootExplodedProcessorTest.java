@@ -30,12 +30,11 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 /** Tests for {@link SpringBootExplodedProcessor}. */
-public class SpringBootExplodedProcessorTest {
+class SpringBootExplodedProcessorTest {
 
   private static final String SPRING_BOOT_LAYERED = "jar/spring-boot/springboot_layered.jar";
   private static final String SPRING_BOOT_LAYERED_WITH_EMPTY_LAYER =
@@ -45,10 +44,10 @@ public class SpringBootExplodedProcessorTest {
   private static final String SPRING_BOOT_NOT_LAYERED = "jar/spring-boot/springboot_notLayered.jar";
   private static final Integer JAR_JAVA_VERSION = 0; // any value
 
-  @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
+  @TempDir public Path temporaryFolder;
 
   @Test
-  public void testCreateLayers_layered_allListed() throws IOException, URISyntaxException {
+  void testCreateLayers_layered_allListed() throws IOException, URISyntaxException {
     // BOOT-INF/layers.idx for this spring-boot jar is as follows:
     // - "dependencies":
     //   - "BOOT-INF/lib/dependency1.jar"
@@ -61,7 +60,7 @@ public class SpringBootExplodedProcessorTest {
     //   - "BOOT-INF/classes/"
     //   - "META-INF/"
     Path springBootJar = Paths.get(Resources.getResource(SPRING_BOOT_LAYERED).toURI());
-    Path destDir = temporaryFolder.newFolder().toPath();
+    Path destDir = temporaryFolder;
     SpringBootExplodedProcessor springBootExplodedModeProcessor =
         new SpringBootExplodedProcessor(springBootJar, destDir, JAR_JAVA_VERSION);
 
@@ -111,8 +110,7 @@ public class SpringBootExplodedProcessorTest {
   }
 
   @Test
-  public void testCreateLayers_layered_singleEmptyLayerListed()
-      throws IOException, URISyntaxException {
+  void testCreateLayers_layered_singleEmptyLayerListed() throws IOException, URISyntaxException {
     // BOOT-INF/layers.idx for this spring-boot jar is as follows:
     // - "dependencies":
     //   - "BOOT-INF/lib/dependency1.jar"
@@ -125,7 +123,7 @@ public class SpringBootExplodedProcessorTest {
     //   - "META-INF/"
     Path springBootJar =
         Paths.get(Resources.getResource(SPRING_BOOT_LAYERED_WITH_EMPTY_LAYER).toURI());
-    Path destDir = temporaryFolder.newFolder().toPath();
+    Path destDir = temporaryFolder;
     SpringBootExplodedProcessor springBootExplodedModeProcessor =
         new SpringBootExplodedProcessor(springBootJar, destDir, JAR_JAVA_VERSION);
 
@@ -167,8 +165,7 @@ public class SpringBootExplodedProcessorTest {
   }
 
   @Test
-  public void testCreateLayers_layered_allEmptyLayersListed()
-      throws IOException, URISyntaxException {
+  void testCreateLayers_layered_allEmptyLayersListed() throws IOException, URISyntaxException {
     // BOOT-INF/layers.idx for this spring-boot jar is as follows:
     // - "dependencies":
     // - "spring-boot-loader":
@@ -176,7 +173,7 @@ public class SpringBootExplodedProcessorTest {
     // - "application":
     Path springBootJar =
         Paths.get(Resources.getResource(SPRING_BOOT_LAYERED_WITH_ALL_EMPTY_LAYERS_LISTED).toURI());
-    Path destDir = temporaryFolder.newFolder().toPath();
+    Path destDir = temporaryFolder;
     SpringBootExplodedProcessor springBootExplodedModeProcessor =
         new SpringBootExplodedProcessor(springBootJar, destDir, JAR_JAVA_VERSION);
 
@@ -186,9 +183,9 @@ public class SpringBootExplodedProcessorTest {
   }
 
   @Test
-  public void testCreateLayers_nonLayered() throws IOException, URISyntaxException {
+  void testCreateLayers_nonLayered() throws IOException, URISyntaxException {
     Path springBootJar = Paths.get(Resources.getResource(SPRING_BOOT_NOT_LAYERED).toURI());
-    Path destDir = temporaryFolder.newFolder().toPath();
+    Path destDir = temporaryFolder;
     SpringBootExplodedProcessor springBootExplodedModeProcessor =
         new SpringBootExplodedProcessor(springBootJar, destDir, JAR_JAVA_VERSION);
 
@@ -239,7 +236,7 @@ public class SpringBootExplodedProcessorTest {
   }
 
   @Test
-  public void testComputeEntrypoint() {
+  void testComputeEntrypoint() {
     SpringBootExplodedProcessor bootProcessor =
         new SpringBootExplodedProcessor(
             Paths.get("ignored"), Paths.get("ignored"), JAR_JAVA_VERSION);
@@ -250,7 +247,7 @@ public class SpringBootExplodedProcessorTest {
   }
 
   @Test
-  public void testComputeEntrypoint_withJvmFlags() {
+  void testComputeEntrypoint_withJvmFlags() {
     SpringBootExplodedProcessor bootProcessor =
         new SpringBootExplodedProcessor(
             Paths.get("ignored"), Paths.get("ignored"), JAR_JAVA_VERSION);
@@ -263,7 +260,7 @@ public class SpringBootExplodedProcessorTest {
   }
 
   @Test
-  public void testGetJavaVersion() {
+  void testGetJavaVersion() {
     SpringBootExplodedProcessor springBootExplodedProcessor =
         new SpringBootExplodedProcessor(Paths.get("ignore"), Paths.get("ignore"), 8);
     assertThat(springBootExplodedProcessor.getJavaVersion()).isEqualTo(8);

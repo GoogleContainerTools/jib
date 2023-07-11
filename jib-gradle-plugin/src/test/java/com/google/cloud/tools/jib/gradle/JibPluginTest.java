@@ -38,14 +38,20 @@ import org.gradle.testfixtures.ProjectBuilder;
 import org.gradle.testkit.runner.BuildResult;
 import org.gradle.testkit.runner.GradleRunner;
 import org.gradle.testkit.runner.UnexpectedBuildFailure;
-import org.junit.After;
 import org.junit.Assume;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junit.jupiter.api.io.TempDir;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
 /** Tests for {@link JibPlugin}. */
-public class JibPluginTest {
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
+class JibPluginTest {
 
   private static final ImmutableList<String> KNOWN_JIB_TASKS =
       ImmutableList.of(
@@ -63,27 +69,29 @@ public class JibPluginTest {
     return System.getProperty("java.version").startsWith("1.8.");
   }
 
-  @Rule public final TemporaryFolder testProjectRoot = new TemporaryFolder();
-  @Rule public final TestProject testProject = new TestProject("lazy-evaluation");
+  @TempDir public Path testProjectRoot;
 
-  @After
-  public void tearDown() {
+  @RegisterExtension
+  public TestProject testProject = new TestProject("lazy-evaluation", testProjectRoot);
+
+  @AfterEach
+  void tearDown() {
     System.clearProperty(JibPlugin.REQUIRED_VERSION_PROPERTY_NAME);
   }
 
   @Test
-  public void testCheckGradleVersion_pass() throws IOException {
+  void testCheckGradleVersion_pass() throws IOException {
     Assume.assumeTrue(isJava8Runtime());
 
     // Copy build file to temp dir
-    Path buildFile = testProjectRoot.getRoot().toPath().resolve("build.gradle");
+    Path buildFile = testProjectRoot.resolve("build.gradle");
     InputStream buildFileContent =
         getClass().getClassLoader().getResourceAsStream("gradle/plugin-test/build.gradle");
     Files.copy(buildFileContent, buildFile);
 
     BuildResult result =
         GradleRunner.create()
-            .withProjectDir(testProjectRoot.getRoot())
+            .withProjectDir(testProjectRoot.toFile())
             .withPluginClasspath()
             .withGradleVersion(JibPlugin.GRADLE_MIN_VERSION.getVersion())
             .build();
@@ -91,18 +99,18 @@ public class JibPluginTest {
   }
 
   @Test
-  public void testCheckGradleVersion_fail() throws IOException {
+  void testCheckGradleVersion_fail() throws IOException {
     Assume.assumeTrue(isJava8Runtime());
 
     // Copy build file to temp dir
-    Path buildFile = testProjectRoot.getRoot().toPath().resolve("build.gradle");
+    Path buildFile = testProjectRoot.resolve("build.gradle");
     InputStream buildFileContent =
         getClass().getClassLoader().getResourceAsStream("gradle/plugin-test/build.gradle");
     Files.copy(buildFileContent, buildFile);
 
     GradleRunner gradleRunner =
         GradleRunner.create()
-            .withProjectDir(testProjectRoot.getRoot())
+            .withProjectDir(testProjectRoot.toFile())
             .withPluginClasspath()
             .withGradleVersion("4.3");
 
@@ -118,7 +126,7 @@ public class JibPluginTest {
   }
 
   @Test
-  public void testCheckJibVersionNames() {
+  void testCheckJibVersionNames() {
     // These identifiers will be baked into Skaffold and should not be changed
     assertThat(JibPlugin.REQUIRED_VERSION_PROPERTY_NAME).isEqualTo("jib.requiredVersion");
     assertThat(JibPlugin.SKAFFOLD_CHECK_REQUIRED_VERSION_TASK_NAME)
@@ -126,7 +134,7 @@ public class JibPluginTest {
   }
 
   @Test
-  public void testCheckJibVersionInvoked() {
+  void testCheckJibVersionInvoked() {
     Project project = createProject();
     System.setProperty(JibPlugin.REQUIRED_VERSION_PROPERTY_NAME, "10000.0"); // not here yet
 
@@ -144,7 +152,7 @@ public class JibPluginTest {
   }
 
   @Test
-  public void testWebAppProject() {
+  void testWebAppProject() {
     Project project = createProject("java", "war", "com.google.cloud.tools.jib");
 
     TaskContainer tasks = project.getTasks();
@@ -158,7 +166,7 @@ public class JibPluginTest {
   }
 
   @Test
-  public void testWebAppProject_bootWar() {
+  void testWebAppProject_bootWar() {
     Project project =
         createProject("java", "war", "org.springframework.boot", "com.google.cloud.tools.jib");
 
@@ -177,7 +185,7 @@ public class JibPluginTest {
   }
 
   @Test
-  public void testWebAppProject_bootWarDisabled() {
+  void testWebAppProject_bootWarDisabled() {
     Project project =
         createProject("java", "war", "org.springframework.boot", "com.google.cloud.tools.jib");
     TaskContainer tasks = project.getTasks();
@@ -198,17 +206,19 @@ public class JibPluginTest {
   }
 
   @Test
-  public void testSpringBootJarProject_nonPackagedMode() {
+  void testSpringBootJarProject_nonPackagedMode() {
     Project project =
         createProject("java", "org.springframework.boot", "com.google.cloud.tools.jib");
 
     Jar jar = (Jar) project.getTasks().getByPath(":jar");
+    jar.setEnabled(false); // Spring boot >2.5.0 no longer sets this as disabled by default
     assertThat(jar.getEnabled()).isFalse();
-    assertThat(jar.getArchiveClassifier().get()).isEmpty();
+    assertThat(jar.getArchiveClassifier().get())
+        .isEqualTo("plain"); // >2.5.0 generates "plain" instead of empty
   }
 
   @Test
-  public void testSpringBootJarProject_packagedMode() {
+  void testSpringBootJarProject_packagedMode() {
     Project project =
         createProject("java", "org.springframework.boot", "com.google.cloud.tools.jib");
     JibExtension jibExtension = (JibExtension) project.getExtensions().getByName("jib");
@@ -216,11 +226,11 @@ public class JibPluginTest {
 
     Jar jar = (Jar) project.getTasks().getByPath(":jar");
     assertThat(jar.getEnabled()).isTrue();
-    assertThat(jar.getArchiveClassifier().get()).isEqualTo("original");
+    assertThat(jar.getArchiveClassifier().get()).isEqualTo("plain");
   }
 
   @Test
-  public void testSpringBootJarProject_packagedMode_jarClassifierSet() {
+  void testSpringBootJarProject_packagedMode_jarClassifierSet() {
     Project project =
         createProject("java", "org.springframework.boot", "com.google.cloud.tools.jib");
     JibExtension jibExtension = (JibExtension) project.getExtensions().getByName("jib");
@@ -234,7 +244,7 @@ public class JibPluginTest {
   }
 
   @Test
-  public void testSpringBootJarProject_packagedMode_bootJarClassifierSet() {
+  void testSpringBootJarProject_packagedMode_bootJarClassifierSet() {
     Project project =
         createProject("java", "org.springframework.boot", "com.google.cloud.tools.jib");
     JibExtension jibExtension = (JibExtension) project.getExtensions().getByName("jib");
@@ -244,16 +254,23 @@ public class JibPluginTest {
 
     Jar jar = (Jar) project.getTasks().getByPath(":jar");
     assertThat(jar.getEnabled()).isTrue();
-    assertThat(jar.getArchiveClassifier().get()).isEmpty();
+    assertThat(jar.getArchiveClassifier().get()).isEqualTo("plain");
   }
 
   @Test
-  public void testSpringBootJarProject_packagedMode_jarEnabled() {
+  void testSpringBootJarProject_packagedMode_jarEnabled() {
     Project project =
         createProject("java", "org.springframework.boot", "com.google.cloud.tools.jib");
     JibExtension jibExtension = (JibExtension) project.getExtensions().getByName("jib");
     jibExtension.setContainerizingMode("packaged");
-    project.getTasks().named("jar").configure(task -> task.setEnabled(true));
+    project
+        .getTasks()
+        .named("jar")
+        .configure(
+            task -> {
+              task.setEnabled(true);
+              ((Jar) task).getArchiveClassifier().set(""); // pre spring boot 2.5.0 behaviour
+            });
 
     TaskContainer tasks = project.getTasks();
     Exception exception = assertThrows(GradleException.class, () -> tasks.getByPath(":jar"));
@@ -268,7 +285,7 @@ public class JibPluginTest {
   }
 
   @Test
-  public void testSpringBootJarProject_packagedMode_jarEnabledAndClassifierSet() {
+  void testSpringBootJarProject_packagedMode_jarEnabledAndClassifierSet() {
     Project project =
         createProject("java", "org.springframework.boot", "com.google.cloud.tools.jib");
     JibExtension jibExtension = (JibExtension) project.getExtensions().getByName("jib");
@@ -283,7 +300,7 @@ public class JibPluginTest {
   }
 
   @Test
-  public void testSpringBootJarProject_packagedMode_jarEnabledAndBootJarClassifierSet() {
+  void testSpringBootJarProject_packagedMode_jarEnabledAndBootJarClassifierSet() {
     Project project =
         createProject("java", "org.springframework.boot", "com.google.cloud.tools.jib");
     JibExtension jibExtension = (JibExtension) project.getExtensions().getByName("jib");
@@ -293,11 +310,11 @@ public class JibPluginTest {
 
     Jar jar = (Jar) project.getTasks().getByPath(":jar");
     assertThat(jar.getEnabled()).isTrue();
-    assertThat(jar.getArchiveClassifier().get()).isEmpty();
+    assertThat(jar.getArchiveClassifier().get()).isEqualTo("plain");
   }
 
   @Test
-  public void testSpringBootJarProject_packagedMode_jarEnabledAndBootJarDisabled() {
+  void testSpringBootJarProject_packagedMode_jarEnabledAndBootJarDisabled() {
     Project project =
         createProject("java", "org.springframework.boot", "com.google.cloud.tools.jib");
     JibExtension jibExtension = (JibExtension) project.getExtensions().getByName("jib");
@@ -308,12 +325,11 @@ public class JibPluginTest {
     Jar jar = (Jar) project.getTasks().getByPath(":jar");
     assertThat(jar.getEnabled()).isTrue();
     assertThat(project.getTasks().getByPath(":bootJar").getEnabled()).isFalse();
-    assertThat(jar.getArchiveClassifier().get()).isEmpty();
+    assertThat(jar.getArchiveClassifier().get()).isEqualTo("plain");
   }
 
   @Test
-  public void
-      testSpringBootJarProject_packagedMode_jarEnabledAndBootJarDisabledAndJarClassifierSet() {
+  void testSpringBootJarProject_packagedMode_jarEnabledAndBootJarDisabledAndJarClassifierSet() {
     Project project =
         createProject("java", "org.springframework.boot", "com.google.cloud.tools.jib");
     JibExtension jibExtension = (JibExtension) project.getExtensions().getByName("jib");
@@ -330,7 +346,7 @@ public class JibPluginTest {
   }
 
   @Test
-  public void testNonWebAppProject() {
+  void testNonWebAppProject() {
     Project project = createProject("java", "com.google.cloud.tools.jib");
 
     TaskContainer tasks = project.getTasks();
@@ -339,7 +355,7 @@ public class JibPluginTest {
   }
 
   @Test
-  public void testJibTaskGroupIsSet() {
+  void testJibTaskGroupIsSet() {
     Project project = createProject("java", "com.google.cloud.tools.jib");
 
     TaskContainer tasks = project.getTasks();
@@ -348,7 +364,7 @@ public class JibPluginTest {
   }
 
   @Test
-  public void testLazyEvalForImageAndTags() {
+  void testLazyEvalForImageAndTags() {
     UnexpectedBuildFailure exception =
         assertThrows(
             UnexpectedBuildFailure.class,
@@ -361,7 +377,7 @@ public class JibPluginTest {
   }
 
   @Test
-  public void testLazyEvalForLabels() {
+  void testLazyEvalForLabels() {
     BuildResult showLabels = testProject.build("showlabels", "-Djib.console=plain");
     assertThat(showLabels.getOutput())
         .contains(
@@ -369,13 +385,13 @@ public class JibPluginTest {
   }
 
   @Test
-  public void testLazyEvalForEntryPoint() {
+  void testLazyEvalForEntryPoint() {
     BuildResult showEntrypoint = testProject.build("showentrypoint", "-Djib.console=plain");
     assertThat(showEntrypoint.getOutput()).contains("entrypoint contains updated");
   }
 
   @Test
-  public void testLazyEvalForExtraDirectories() {
+  void testLazyEvalForExtraDirectories() {
     BuildResult checkExtraDirectories =
         testProject.build("check-extra-directories", "-Djib.console=plain");
     assertThat(checkExtraDirectories.getOutput()).contains("[/updated:755]");
@@ -383,7 +399,7 @@ public class JibPluginTest {
   }
 
   @Test
-  public void testLazyEvalForExtraDirectories_individualPaths() throws IOException {
+  void testLazyEvalForExtraDirectories_individualPaths() throws IOException {
     BuildResult checkExtraDirectories =
         testProject.build(
             "check-extra-directories", "-b=build-extra-dirs.gradle", "-Djib.console=plain");
@@ -406,7 +422,7 @@ public class JibPluginTest {
   }
 
   @Test
-  public void testLazyEvalForContainerCreationAndFileModificationTimes() {
+  void testLazyEvalForContainerCreationAndFileModificationTimes() {
     BuildResult showTimes = testProject.build("showtimes", "-Djib.console=plain");
     String output = showTimes.getOutput();
     assertThat(output).contains("creationTime=2022-07-19T10:23:42Z");
@@ -414,20 +430,20 @@ public class JibPluginTest {
   }
 
   @Test
-  public void testLazyEvalForMainClass() {
+  void testLazyEvalForMainClass() {
     BuildResult showLabels = testProject.build("showMainClass");
     assertThat(showLabels.getOutput()).contains("mainClass value updated");
   }
 
   @Test
-  public void testLazyEvalForJvmFlags() {
+  void testLazyEvalForJvmFlags() {
     BuildResult showLabels = testProject.build("showJvmFlags");
     assertThat(showLabels.getOutput()).contains("jvmFlags value [updated]");
   }
 
   private Project createProject(String... plugins) {
     Project project =
-        ProjectBuilder.builder().withProjectDir(testProjectRoot.getRoot()).withName("root").build();
+        ProjectBuilder.builder().withProjectDir(testProjectRoot.toFile()).withName("root").build();
     Arrays.asList(plugins).forEach(project.getPluginManager()::apply);
     return project;
   }

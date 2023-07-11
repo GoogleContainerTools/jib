@@ -22,18 +22,22 @@ import com.google.cloud.tools.jib.Command;
 import com.google.cloud.tools.jib.IntegrationTestingConfiguration;
 import com.google.cloud.tools.jib.api.InvalidImageReferenceException;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.security.DigestException;
 import java.time.Instant;
 import org.hamcrest.CoreMatchers;
 import org.hamcrest.MatcherAssert;
 import org.junit.Assert;
 import org.junit.ClassRule;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 /** Integration tests for building empty project images. */
-public class EmptyProjectIntegrationTest {
+class EmptyProjectIntegrationTest {
 
-  @ClassRule public static final TestProject emptyTestProject = new TestProject("empty");
+  @TempDir Path tempDir;
+
+  @ClassRule public final TestProject emptyTestProject = new TestProject("empty", tempDir);
 
   /**
    * Asserts that the test project has the required exposed ports and labels.
@@ -59,7 +63,7 @@ public class EmptyProjectIntegrationTest {
   }
 
   @Test
-  public void testBuild_empty() throws IOException, InterruptedException, DigestException {
+  void testBuild_empty() throws IOException, InterruptedException, DigestException {
     String targetImage =
         IntegrationTestingConfiguration.getTestRepositoryLocation()
             + "/emptyimage:gradle"
@@ -70,7 +74,7 @@ public class EmptyProjectIntegrationTest {
   }
 
   @Test
-  public void testBuild_multipleTags()
+  void testBuild_multipleTags()
       throws IOException, InterruptedException, InvalidImageReferenceException, DigestException {
     String targetImage =
         IntegrationTestingConfiguration.getTestRepositoryLocation()
@@ -82,7 +86,7 @@ public class EmptyProjectIntegrationTest {
   }
 
   @Test
-  public void testDockerDaemon_empty() throws IOException, InterruptedException, DigestException {
+  void testDockerDaemon_empty() throws IOException, InterruptedException, DigestException {
     String targetImage = "emptyimage:gradle" + System.nanoTime();
     Assert.assertEquals(
         "", JibRunHelper.buildToDockerDaemonAndRun(emptyTestProject, targetImage, "build.gradle"));
@@ -91,8 +95,7 @@ public class EmptyProjectIntegrationTest {
   }
 
   @Test
-  public void testDockerDaemon_userNumeric()
-      throws IOException, InterruptedException, DigestException {
+  void testDockerDaemon_userNumeric() throws IOException, InterruptedException, DigestException {
     String targetImage = "emptyimage:gradle" + System.nanoTime();
     JibRunHelper.buildToDockerDaemon(emptyTestProject, targetImage, "build.gradle");
     Assert.assertEquals(
@@ -101,8 +104,7 @@ public class EmptyProjectIntegrationTest {
   }
 
   @Test
-  public void testDockerDaemon_userNames()
-      throws IOException, InterruptedException, DigestException {
+  void testDockerDaemon_userNames() throws IOException, InterruptedException, DigestException {
     String targetImage = "brokenuserimage:gradle" + System.nanoTime();
     JibRunHelper.buildToDockerDaemon(emptyTestProject, targetImage, "build-broken-user.gradle");
     Assert.assertEquals(

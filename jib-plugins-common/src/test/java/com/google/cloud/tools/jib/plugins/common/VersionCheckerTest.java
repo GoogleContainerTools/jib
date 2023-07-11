@@ -17,11 +17,17 @@
 package com.google.cloud.tools.jib.plugins.common;
 
 import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
 /** Tests for {@link VersionChecker}. */
-public class VersionCheckerTest {
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
+class VersionCheckerTest {
   private static class TestVersion implements Comparable<TestVersion> {
     private int[] components;
 
@@ -50,8 +56,8 @@ public class VersionCheckerTest {
 
   private VersionChecker<TestVersion> checker;
 
-  @Before
-  public void setUp() {
+  @BeforeEach
+  void setUpBeforeEach() {
     Assert.assertTrue(new TestVersion("1.0").compareTo(new TestVersion("1.1.1")) < 0);
     Assert.assertTrue(new TestVersion("1.1.1").compareTo(new TestVersion("1.0")) > 0);
     Assert.assertTrue(new TestVersion("1.1").compareTo(new TestVersion("1.1.0.0")) == 0);
@@ -59,35 +65,35 @@ public class VersionCheckerTest {
   }
 
   @Test
-  public void testComparators_LT() {
+  void testComparators_LT() {
     Assert.assertTrue(VersionChecker.lt(0, 1));
     Assert.assertFalse(VersionChecker.lt(1, 1));
     Assert.assertFalse(VersionChecker.lt(2, 1));
   }
 
   @Test
-  public void testComparators_LE() {
+  void testComparators_LE() {
     Assert.assertTrue(VersionChecker.le(0, 1));
     Assert.assertTrue(VersionChecker.le(1, 1));
     Assert.assertFalse(VersionChecker.le(2, 1));
   }
 
   @Test
-  public void testComparators_GE() {
+  void testComparators_GE() {
     Assert.assertFalse(VersionChecker.ge(0, 1));
     Assert.assertTrue(VersionChecker.ge(1, 1));
     Assert.assertTrue(VersionChecker.ge(2, 1));
   }
 
   @Test
-  public void testComparators_GT() {
+  void testComparators_GT() {
     Assert.assertFalse(VersionChecker.gt(0, 1));
     Assert.assertFalse(VersionChecker.gt(1, 1));
     Assert.assertTrue(VersionChecker.gt(2, 1));
   }
 
   @Test
-  public void testRange_leftClosed() {
+  void testRange_leftClosed() {
     Assert.assertFalse(checker.compatibleVersion("[2.3,4.3]", "1.0"));
     Assert.assertFalse(checker.compatibleVersion("[2.3,4.3)", "1.0"));
     Assert.assertFalse(checker.compatibleVersion("[2.3,)", "1.0"));
@@ -95,7 +101,7 @@ public class VersionCheckerTest {
   }
 
   @Test
-  public void testRange_leftClosed_exact() {
+  void testRange_leftClosed_exact() {
     Assert.assertTrue(checker.compatibleVersion("[2.3,4.3]", "2.3"));
     Assert.assertTrue(checker.compatibleVersion("[2.3,4.3)", "2.3"));
     Assert.assertTrue(checker.compatibleVersion("[2.3,)", "2.3"));
@@ -103,7 +109,7 @@ public class VersionCheckerTest {
   }
 
   @Test
-  public void testRange_leftOpen() {
+  void testRange_leftOpen() {
     Assert.assertFalse(checker.compatibleVersion("(2.3,4.3]", "1.0"));
     Assert.assertFalse(checker.compatibleVersion("(2.3,4.3)", "1.0"));
     Assert.assertFalse(checker.compatibleVersion("(2.3,)", "1.0"));
@@ -111,7 +117,7 @@ public class VersionCheckerTest {
   }
 
   @Test
-  public void testRange_leftOpen_exact() {
+  void testRange_leftOpen_exact() {
     Assert.assertFalse(checker.compatibleVersion("(2.3,4.3]", "2.3"));
     Assert.assertFalse(checker.compatibleVersion("(2.3,4.3)", "2.3"));
     Assert.assertFalse(checker.compatibleVersion("(2.3,)", "2.3"));
@@ -119,7 +125,7 @@ public class VersionCheckerTest {
   }
 
   @Test
-  public void testRange_rightClosed() {
+  void testRange_rightClosed() {
     Assert.assertFalse(checker.compatibleVersion("[2.3,4.3]", "5.0"));
     Assert.assertFalse(checker.compatibleVersion("(2.3,4.3]", "5.0"));
     Assert.assertFalse(checker.compatibleVersion("[,4.3]", "5.0"));
@@ -127,7 +133,7 @@ public class VersionCheckerTest {
   }
 
   @Test
-  public void testRange_rightClosed_exact() {
+  void testRange_rightClosed_exact() {
     Assert.assertTrue(checker.compatibleVersion("[2.3,4.3]", "4.3"));
     Assert.assertTrue(checker.compatibleVersion("(2.3,4.3]", "4.3"));
     Assert.assertTrue(checker.compatibleVersion("[,4.3]", "4.3"));
@@ -135,7 +141,7 @@ public class VersionCheckerTest {
   }
 
   @Test
-  public void testRange_between() {
+  void testRange_between() {
     Assert.assertTrue(checker.compatibleVersion("[2.3,4.3]", "2.4"));
     Assert.assertTrue(checker.compatibleVersion("(2.3,4.3]", "4.2"));
     Assert.assertTrue(checker.compatibleVersion("[2.3,4.3)", "2.4"));
@@ -143,7 +149,7 @@ public class VersionCheckerTest {
   }
 
   @Test
-  public void testRange_rightOpen() {
+  void testRange_rightOpen() {
     Assert.assertFalse(checker.compatibleVersion("[2.3,4.3)", "5.0"));
     Assert.assertFalse(checker.compatibleVersion("(2.3,4.3)", "5.0"));
     Assert.assertFalse(checker.compatibleVersion("[,4.3)", "5.0"));
@@ -151,7 +157,7 @@ public class VersionCheckerTest {
   }
 
   @Test
-  public void testRange_rightOpen_exact() {
+  void testRange_rightOpen_exact() {
     Assert.assertFalse(checker.compatibleVersion("[2.3,4.3)", "4.3"));
     Assert.assertFalse(checker.compatibleVersion("(2.3,4.3)", "4.3"));
     Assert.assertFalse(checker.compatibleVersion("[,4.3)", "4.3"));
@@ -159,25 +165,25 @@ public class VersionCheckerTest {
   }
 
   @Test
-  public void testMinimumBound_low() {
+  void testMinimumBound_low() {
     Assert.assertFalse(checker.compatibleVersion("2.3", "1.0"));
     Assert.assertFalse(checker.compatibleVersion("2.3", "2.2"));
   }
 
   @Test
-  public void testMinimumBound_exact() {
+  void testMinimumBound_exact() {
     Assert.assertTrue(checker.compatibleVersion("2.3", "2.3"));
   }
 
   @Test
-  public void testMinimumBound_high() {
+  void testMinimumBound_high() {
     Assert.assertTrue(checker.compatibleVersion("2.3", "2.4"));
     Assert.assertTrue(checker.compatibleVersion("2.3", "4.0"));
   }
 
   // @SuppressWarnings({"TryFailThrowable", "AssertionFailureIgnored"})
   @Test
-  public void testRange_invalid() {
+  void testRange_invalid() {
     for (String rangeSpec :
         new String[] {"[]", "[,]", "(,]", "[,)", "(,)", "[1,2,3]", "[1]", "foo", "{,2.3)", ""}) {
       try {

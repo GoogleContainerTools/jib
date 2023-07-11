@@ -25,18 +25,21 @@ import com.google.cloud.tools.jib.plugins.common.ProjectProperties;
 import com.google.common.util.concurrent.Futures;
 import java.util.Optional;
 import java.util.concurrent.Future;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
-@RunWith(MockitoJUnitRunner.class)
-public class MojoCommonTest {
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
+class MojoCommonTest {
 
   @Mock private ProjectProperties mockProjectProperties;
 
   @Test
-  public void testFinishUpdateChecker_correctMessageLogged() {
+  void testFinishUpdateChecker_correctMessageLogged() {
     when(mockProjectProperties.getToolName()).thenReturn("tool-name");
     when(mockProjectProperties.getToolVersion()).thenReturn("2.0.0");
     Future<Optional<String>> updateCheckFuture = Futures.immediateFuture(Optional.of("2.1.0"));

@@ -34,41 +34,44 @@ import java.time.Instant;
 import java.util.Collections;
 import java.util.Optional;
 import java.util.concurrent.Future;
-import org.junit.After;
-import org.junit.Before;
 import org.junit.Rule;
-import org.junit.Test;
 import org.junit.contrib.java.lang.system.RestoreSystemProperties;
-import org.junit.rules.TemporaryFolder;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.io.TempDir;
 import org.mockito.Mockito;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
 /** Tests for {@link UpdateChecker}. */
-@RunWith(MockitoJUnitRunner.class)
-public class UpdateCheckerTest {
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
+class UpdateCheckerTest {
 
   @Rule public final RestoreSystemProperties systemPropertyRestorer = new RestoreSystemProperties();
-  @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
+  @TempDir public Path temporaryFolder;
 
   private TestWebServer testWebServer;
   private Path configDir;
 
-  @Before
-  public void setUp()
+  @BeforeEach
+  void setUpBeforeEach()
       throws InterruptedException, GeneralSecurityException, URISyntaxException, IOException {
     String response = "HTTP/1.1 200 OK\nContent-Length:18\n\n{\"latest\":\"2.0.0\"}";
     testWebServer = new TestWebServer(false, Collections.singletonList(response), 1);
-    configDir = temporaryFolder.getRoot().toPath();
+    configDir = temporaryFolder;
   }
 
-  @After
-  public void tearDown() throws IOException {
+  @AfterEach
+  void tearDownAfterEach() throws IOException {
     testWebServer.close();
   }
 
   @Test
-  public void testPerformUpdateCheck_newVersionFound() throws IOException, InterruptedException {
+  void testPerformUpdateCheck_newVersionFound() throws IOException, InterruptedException {
     Instant before = Instant.now();
     Thread.sleep(100);
     setupLastUpdateCheck();
@@ -85,7 +88,7 @@ public class UpdateCheckerTest {
   }
 
   @Test
-  public void testPerformUpdateCheck_newJsonField()
+  void testPerformUpdateCheck_newJsonField()
       throws IOException, InterruptedException, GeneralSecurityException, URISyntaxException {
     String response =
         "HTTP/1.1 200 OK\nContent-Length:43\n\n{\"latest\":\"2.0.0\",\"unknownField\":\"unknown\"}";
@@ -100,7 +103,7 @@ public class UpdateCheckerTest {
   }
 
   @Test
-  public void testPerformUpdateCheck_onLatest() throws IOException, InterruptedException {
+  void testPerformUpdateCheck_onLatest() throws IOException, InterruptedException {
     Instant before = Instant.now();
     Thread.sleep(100);
     setupLastUpdateCheck();
@@ -117,7 +120,7 @@ public class UpdateCheckerTest {
   }
 
   @Test
-  public void testPerformUpdateCheck_noLastUpdateCheck() throws IOException, InterruptedException {
+  void testPerformUpdateCheck_noLastUpdateCheck() throws IOException, InterruptedException {
     Instant before = Instant.now();
     Thread.sleep(100);
     Optional<String> message =
@@ -132,8 +135,7 @@ public class UpdateCheckerTest {
   }
 
   @Test
-  public void testPerformUpdateCheck_emptyLastUpdateCheck()
-      throws IOException, InterruptedException {
+  void testPerformUpdateCheck_emptyLastUpdateCheck() throws IOException, InterruptedException {
     Files.createFile(configDir.resolve("lastUpdateCheck"));
     Instant before = Instant.now();
     Thread.sleep(100);
@@ -149,7 +151,7 @@ public class UpdateCheckerTest {
   }
 
   @Test
-  public void testPerformUpdateCheck_lastUpdateCheckTooSoon() throws IOException {
+  void testPerformUpdateCheck_lastUpdateCheckTooSoon() throws IOException {
     FileTime modifiedTime = FileTime.from(Instant.now().minusSeconds(12));
     setupLastUpdateCheck();
     Files.write(
@@ -169,7 +171,7 @@ public class UpdateCheckerTest {
   }
 
   @Test
-  public void testPerformUpdateCheck_badLastUpdateTime() throws IOException, InterruptedException {
+  void testPerformUpdateCheck_badLastUpdateTime() throws IOException, InterruptedException {
     Instant before = Instant.now();
     Thread.sleep(100);
     Files.write(
@@ -186,7 +188,7 @@ public class UpdateCheckerTest {
   }
 
   @Test
-  public void testPerformUpdateCheck_failSilently()
+  void testPerformUpdateCheck_failSilently()
       throws InterruptedException, GeneralSecurityException, URISyntaxException, IOException {
     String response = "HTTP/1.1 400 Bad Request\nContent-Length: 0\n\n";
     try (TestWebServer badServer =
@@ -206,14 +208,14 @@ public class UpdateCheckerTest {
   }
 
   @Test
-  public void testFinishUpdateCheck_success() {
+  void testFinishUpdateCheck_success() {
     Future<Optional<String>> updateCheckFuture = Futures.immediateFuture(Optional.of("Hello"));
     Optional<String> result = UpdateChecker.finishUpdateCheck(updateCheckFuture);
     assertThat(result).hasValue("Hello");
   }
 
   @Test
-  public void testFinishUpdateCheck_notDone() {
+  void testFinishUpdateCheck_notDone() {
     @SuppressWarnings("unchecked")
     Future<Optional<String>> updateCheckFuture = Mockito.mock(Future.class);
     Mockito.when(updateCheckFuture.isDone()).thenReturn(false);

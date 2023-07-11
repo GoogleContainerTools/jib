@@ -40,18 +40,22 @@ import java.nio.file.Paths;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.Optional;
-import junitparams.JUnitParamsRunner;
-import junitparams.Parameters;
 import org.junit.Rule;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
 /** Tests for {@link JarFiles}. */
-@RunWith(JUnitParamsRunner.class)
-public class JarFilesTest {
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
+class JarFilesTest {
 
   @Rule public final MockitoRule mockitoRule = MockitoJUnit.rule().silent();
 
@@ -64,8 +68,8 @@ public class JarFilesTest {
   @Mock private CommonContainerConfigCliOptions mockCommonContainerConfigCliOptions;
   @Mock private ConsoleLogger mockLogger;
 
-  @Test
-  @Parameters(
+  @ParameterizedTest
+  @CsvSource(
       value = {
         "8, eclipse-temurin:8-jre",
         "9, eclipse-temurin:11-jre",
@@ -73,7 +77,7 @@ public class JarFilesTest {
         "13, eclipse-temurin:17-jre",
         "17, eclipse-temurin:17-jre",
       })
-  public void testToJibContainer_defaultBaseImage(int javaVersion, String expectedBaseImage)
+  void testToJibContainer_defaultBaseImage(int javaVersion, String expectedBaseImage)
       throws IOException, InvalidImageReferenceException {
     when(mockStandardExplodedProcessor.getJavaVersion()).thenReturn(javaVersion);
     JibContainerBuilder containerBuilder =
@@ -89,7 +93,7 @@ public class JarFilesTest {
   }
 
   @Test
-  public void testToJibContainerBuilder_explodedStandard_basicInfo()
+  void testToJibContainerBuilder_explodedStandard_basicInfo()
       throws IOException, InvalidImageReferenceException {
     when(mockStandardExplodedProcessor.getJavaVersion()).thenReturn(8);
     FileEntriesLayer layer =
@@ -140,7 +144,7 @@ public class JarFilesTest {
   }
 
   @Test
-  public void testToJibContainerBuilder_packagedStandard_basicInfo()
+  void testToJibContainerBuilder_packagedStandard_basicInfo()
       throws IOException, InvalidImageReferenceException {
     when(mockStandardPackagedProcessor.getJavaVersion()).thenReturn(8);
     FileEntriesLayer layer =
@@ -188,7 +192,7 @@ public class JarFilesTest {
   }
 
   @Test
-  public void testToJibContainerBuilder_explodedLayeredSpringBoot_basicInfo()
+  void testToJibContainerBuilder_explodedLayeredSpringBoot_basicInfo()
       throws IOException, InvalidImageReferenceException {
     when(mockSpringBootExplodedProcessor.getJavaVersion()).thenReturn(8);
     FileEntriesLayer layer =
@@ -240,7 +244,7 @@ public class JarFilesTest {
   }
 
   @Test
-  public void testToJibContainerBuilder_packagedSpringBoot_basicInfo()
+  void testToJibContainerBuilder_packagedSpringBoot_basicInfo()
       throws IOException, InvalidImageReferenceException {
     when(mockSpringBootPackagedProcessor.getJavaVersion()).thenReturn(8);
     FileEntriesLayer layer =
@@ -289,7 +293,7 @@ public class JarFilesTest {
   }
 
   @Test
-  public void testToJibContainerBuilder_optionalParameters()
+  void testToJibContainerBuilder_optionalParameters()
       throws IOException, InvalidImageReferenceException {
     when(mockCommonContainerConfigCliOptions.getFrom()).thenReturn(Optional.of("base-image"));
     when(mockCommonContainerConfigCliOptions.getExposedPorts())

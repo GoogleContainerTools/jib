@@ -23,12 +23,11 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import org.junit.Assert;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 /** Tests for {@link TempDirectoryProvider}. */
-public class TempDirectoryProviderTest {
+class TempDirectoryProviderTest {
 
   private static void createFilesInDirectory(Path directory)
       throws IOException, URISyntaxException {
@@ -38,11 +37,11 @@ public class TempDirectoryProviderTest {
         .walk(path -> Files.copy(path, directory.resolve(testFilesDirectory.relativize(path))));
   }
 
-  @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
+  @TempDir public Path temporaryFolder;
 
   @Test
-  public void testClose_directoriesDeleted() throws IOException, URISyntaxException {
-    Path parent = temporaryFolder.newFolder().toPath();
+  void testClose_directoriesDeleted() throws IOException, URISyntaxException {
+    Path parent = Files.createTempDirectory(temporaryFolder, "jib");
 
     try (TempDirectoryProvider tempDirectoryProvider = new TempDirectoryProvider()) {
       Path directory1 = tempDirectoryProvider.newDirectory(parent);
@@ -57,8 +56,8 @@ public class TempDirectoryProviderTest {
   }
 
   @Test
-  public void testClose_directoryNotDeletedIfMoved() throws IOException, URISyntaxException {
-    Path destinationParent = temporaryFolder.newFolder().toPath();
+  void testClose_directoryNotDeletedIfMoved() throws IOException, URISyntaxException {
+    Path destinationParent = Files.createTempDirectory(temporaryFolder, "jib");
 
     try (TempDirectoryProvider tempDirectoryProvider = new TempDirectoryProvider()) {
       Path directory = tempDirectoryProvider.newDirectory(destinationParent);

@@ -25,7 +25,7 @@ import com.google.cloud.tools.jib.http.FailoverHttpClient;
 import com.google.cloud.tools.jib.image.json.ManifestTemplate;
 import java.io.IOException;
 import java.util.Optional;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /** Integration tests for {@link ManifestChecker}. */
 public class ManifestCheckerIntegrationTest {

@@ -43,16 +43,19 @@ import java.util.function.Consumer;
 import org.hamcrest.CoreMatchers;
 import org.hamcrest.MatcherAssert;
 import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.Spy;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
 /** Tests for {@link JibContainerBuilder}. */
-@RunWith(MockitoJUnitRunner.class)
-public class JibContainerBuilderTest {
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
+class JibContainerBuilderTest {
 
   @Spy private BuildContext.Builder spyBuildContextBuilder;
   @Mock private FileEntriesLayer mockLayerConfiguration1;
@@ -62,7 +65,7 @@ public class JibContainerBuilderTest {
   @Mock private JibEvent mockJibEvent;
 
   @Test
-  public void testToBuildContext_containerConfigurationSet()
+  void testToBuildContext_containerConfigurationSet()
       throws InvalidImageReferenceException, CacheDirectoryCreationException {
     ImageConfiguration imageConfiguration =
         ImageConfiguration.builder(ImageReference.parse("base/image")).build();
@@ -99,7 +102,7 @@ public class JibContainerBuilderTest {
   }
 
   @Test
-  public void testToBuildContext_containerConfigurationAdd()
+  void testToBuildContext_containerConfigurationAdd()
       throws InvalidImageReferenceException, CacheDirectoryCreationException {
     ImageConfiguration imageConfiguration =
         ImageConfiguration.builder(ImageReference.parse("base/image")).build();
@@ -136,7 +139,7 @@ public class JibContainerBuilderTest {
   }
 
   @Test
-  public void testToBuildContext()
+  void testToBuildContext()
       throws InvalidImageReferenceException, CredentialRetrievalException,
           CacheDirectoryCreationException {
     ExecutorService executorService = MoreExecutors.newDirectExecutorService();
@@ -223,7 +226,7 @@ public class JibContainerBuilderTest {
   }
 
   @Test
-  public void testToContainerBuildPlan_default() throws InvalidImageReferenceException {
+  void testToContainerBuildPlan_default() throws InvalidImageReferenceException {
     ImageConfiguration imageConfiguration =
         ImageConfiguration.builder(ImageReference.parse("base/image")).build();
     JibContainerBuilder containerBuilder =
@@ -246,7 +249,7 @@ public class JibContainerBuilderTest {
   }
 
   @Test
-  public void testToContainerBuildPlan() throws InvalidImageReferenceException, IOException {
+  void testToContainerBuildPlan() throws InvalidImageReferenceException, IOException {
     ImageConfiguration imageConfiguration =
         ImageConfiguration.builder(ImageReference.parse("base/image")).build();
     JibContainerBuilder containerBuilder =
@@ -297,7 +300,7 @@ public class JibContainerBuilderTest {
   }
 
   @Test
-  public void setApplyContainerBuildPlan()
+  void setApplyContainerBuildPlan()
       throws InvalidImageReferenceException, CacheDirectoryCreationException {
     FileEntriesLayer layer =
         FileEntriesLayer.builder()

@@ -34,15 +34,28 @@ import java.util.List;
 import org.apache.maven.it.VerificationException;
 import org.apache.maven.it.Verifier;
 import org.junit.Assert;
-import org.junit.ClassRule;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junit.jupiter.api.io.TempDir;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
 /** Tests for {@link SyncMapMojo}. */
-public class SyncMapMojoTest {
+@ExtendWith({MockitoExtension.class})
+@MockitoSettings(strictness = Strictness.LENIENT)
+class SyncMapMojoTest {
 
-  @ClassRule public static final TestProject simpleTestProject = new TestProject("simple");
-  @ClassRule public static final TestProject multiTestProject = new TestProject("multi");
-  @ClassRule public static final TestProject warProject = new TestProject("war_servlet25");
+  @TempDir Path tempDir;
+
+  @RegisterExtension
+  public final TestProject simpleTestProject = new TestProject("simple", tempDir);
+
+  @RegisterExtension public final TestProject multiTestProject = new TestProject("multi", tempDir);
+
+  @RegisterExtension
+  public final TestProject warProject = new TestProject("war_servlet25", tempDir);
 
   private static Path runBuild(Path projectRoot, String module, String pomXml)
       throws VerificationException {
@@ -82,7 +95,7 @@ public class SyncMapMojoTest {
   }
 
   @Test
-  public void testSyncMapMojo_simpleTestProjectOutput() throws IOException, VerificationException {
+  void testSyncMapMojo_simpleTestProjectOutput() throws IOException, VerificationException {
     Path projectRoot = simpleTestProject.getProjectRoot();
     String json = getSyncMapJson(projectRoot, null, null);
     SkaffoldSyncMapTemplate parsed = SkaffoldSyncMapTemplate.from(json);
@@ -111,7 +124,7 @@ public class SyncMapMojoTest {
   }
 
   @Test
-  public void testSyncMapMojo_multiProjectOutput() throws IOException, VerificationException {
+  void testSyncMapMojo_multiProjectOutput() throws IOException, VerificationException {
     Path projectRoot = multiTestProject.getProjectRoot();
     Path m2 = Paths.get(System.getProperty("user.home")).resolve(".m2").resolve("repository");
     String json = getSyncMapJson(projectRoot, "complex-service", null);
@@ -146,7 +159,7 @@ public class SyncMapMojoTest {
   }
 
   @Test
-  public void testSyncMapMojo_skaffoldConfig() throws IOException, VerificationException {
+  void testSyncMapMojo_skaffoldConfig() throws IOException, VerificationException {
     Path projectRoot = simpleTestProject.getProjectRoot();
     String json = getSyncMapJson(projectRoot, null, "pom-skaffold-config.xml");
     SkaffoldSyncMapTemplate parsed = SkaffoldSyncMapTemplate.from(json);
@@ -169,7 +182,7 @@ public class SyncMapMojoTest {
   }
 
   @Test
-  public void testSyncMapMojo_failIfPackagingNotJar() throws IOException {
+  void testSyncMapMojo_failIfPackagingNotJar() throws IOException {
     Path projectRoot = warProject.getProjectRoot();
     VerificationException ve =
         assertThrows(VerificationException.class, () -> runBuild(projectRoot, null, null));
@@ -181,7 +194,7 @@ public class SyncMapMojoTest {
   }
 
   @Test
-  public void testSyncMapMojo_failIfJarContainerizationMode() throws IOException {
+  void testSyncMapMojo_failIfJarContainerizationMode() throws IOException {
     Path projectRoot = simpleTestProject.getProjectRoot();
     VerificationException ve =
         assertThrows(

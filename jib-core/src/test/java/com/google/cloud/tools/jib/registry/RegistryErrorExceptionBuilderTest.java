@@ -19,19 +19,22 @@ package com.google.cloud.tools.jib.registry;
 import com.google.api.client.http.HttpResponseException;
 import com.google.cloud.tools.jib.registry.json.ErrorEntryTemplate;
 import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
 /** Tests for {@link RegistryErrorExceptionBuilder}. */
-@RunWith(MockitoJUnitRunner.class)
-public class RegistryErrorExceptionBuilderTest {
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
+class RegistryErrorExceptionBuilderTest {
 
   @Mock private HttpResponseException mockHttpResponseException;
 
   @Test
-  public void testAddErrorEntry() {
+  void testAddErrorEntry() {
     RegistryErrorExceptionBuilder builder =
         new RegistryErrorExceptionBuilder("do something", mockHttpResponseException)
             .addReason(

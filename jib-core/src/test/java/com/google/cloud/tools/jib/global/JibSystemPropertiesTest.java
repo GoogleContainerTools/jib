@@ -18,22 +18,22 @@ package com.google.cloud.tools.jib.global;
 
 import org.junit.Assert;
 import org.junit.Rule;
-import org.junit.Test;
 import org.junit.contrib.java.lang.system.RestoreSystemProperties;
+import org.junit.jupiter.api.Test;
 
 /** Tests for {@link JibSystemProperties}. */
-public class JibSystemPropertiesTest {
+class JibSystemPropertiesTest {
 
   @Rule public final RestoreSystemProperties systemPropertyRestorer = new RestoreSystemProperties();
 
   @Test
-  public void testCheckHttpTimeoutProperty_okWhenUndefined() throws NumberFormatException {
+  void testCheckHttpTimeoutProperty_okWhenUndefined() throws NumberFormatException {
     System.clearProperty(JibSystemProperties.HTTP_TIMEOUT);
     JibSystemProperties.checkHttpTimeoutProperty();
   }
 
   @Test
-  public void testCheckHttpTimeoutProperty_stringValue() {
+  void testCheckHttpTimeoutProperty_stringValue() {
     System.setProperty(JibSystemProperties.HTTP_TIMEOUT, "random string");
     try {
       JibSystemProperties.checkHttpTimeoutProperty();
@@ -44,14 +44,14 @@ public class JibSystemPropertiesTest {
   }
 
   @Test
-  public void testCheckHttpProxyPortProperty_undefined() throws NumberFormatException {
+  void testCheckHttpProxyPortProperty_undefined() throws NumberFormatException {
     System.clearProperty("http.proxyPort");
     System.clearProperty("https.proxyPort");
     JibSystemProperties.checkProxyPortProperty();
   }
 
   @Test
-  public void testCheckHttpProxyPortProperty() throws NumberFormatException {
+  void testCheckHttpProxyPortProperty() throws NumberFormatException {
     System.setProperty("http.proxyPort", "0");
     System.setProperty("https.proxyPort", "0");
     JibSystemProperties.checkProxyPortProperty();
@@ -70,7 +70,7 @@ public class JibSystemPropertiesTest {
   }
 
   @Test
-  public void testCheckHttpProxyPortProperty_negativeValue() {
+  void testCheckHttpProxyPortProperty_negativeValue() {
     System.setProperty("http.proxyPort", "-1");
     System.clearProperty("https.proxyPort");
     try {
@@ -91,7 +91,7 @@ public class JibSystemPropertiesTest {
   }
 
   @Test
-  public void testCheckHttpProxyPortProperty_over65535() {
+  void testCheckHttpProxyPortProperty_over65535() {
     System.setProperty("http.proxyPort", "65536");
     System.clearProperty("https.proxyPort");
     try {
@@ -112,7 +112,7 @@ public class JibSystemPropertiesTest {
   }
 
   @Test
-  public void testCheckHttpProxyPortProperty_stringValue() {
+  void testCheckHttpProxyPortProperty_stringValue() {
     System.setProperty("http.proxyPort", "some string");
     System.clearProperty("https.proxyPort");
     try {
@@ -133,36 +133,36 @@ public class JibSystemPropertiesTest {
   }
 
   @Test
-  public void testUseBlobMountsPropertyName() {
+  void testUseBlobMountsPropertyName() {
     Assert.assertEquals("jib.blobMounts", JibSystemProperties.CROSS_REPOSITORY_BLOB_MOUNTS);
   }
 
   @Test
-  public void testUseBlobMounts_undefined() {
+  void testUseBlobMounts_undefined() {
     System.clearProperty(JibSystemProperties.CROSS_REPOSITORY_BLOB_MOUNTS);
     Assert.assertTrue(JibSystemProperties.useCrossRepositoryBlobMounts());
   }
 
   @Test
-  public void testUseBlobMounts_true() {
+  void testUseBlobMounts_true() {
     System.setProperty(JibSystemProperties.CROSS_REPOSITORY_BLOB_MOUNTS, "true");
     Assert.assertTrue(JibSystemProperties.useCrossRepositoryBlobMounts());
   }
 
   @Test
-  public void testUseBlobMounts_false() {
+  void testUseBlobMounts_false() {
     System.setProperty(JibSystemProperties.CROSS_REPOSITORY_BLOB_MOUNTS, "false");
     Assert.assertFalse(JibSystemProperties.useCrossRepositoryBlobMounts());
   }
 
   @Test
-  public void testUseBlobMounts_other() {
+  void testUseBlobMounts_other() {
     System.setProperty(JibSystemProperties.CROSS_REPOSITORY_BLOB_MOUNTS, "nonbool");
     Assert.assertFalse(JibSystemProperties.useCrossRepositoryBlobMounts());
   }
 
   @Test
-  public void testSkipExistingImages_undefined() {
+  void testSkipExistingImages_undefined() {
     System.clearProperty(JibSystemProperties.SKIP_EXISTING_IMAGES);
     Assert.assertFalse(JibSystemProperties.skipExistingImages());
   }

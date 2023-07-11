@@ -20,13 +20,13 @@ import com.google.common.collect.ImmutableList;
 import java.time.Duration;
 import java.util.Arrays;
 import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /** Tests for {@link DockerHealthCheck}. */
-public class DockerHealthCheckTest {
+class DockerHealthCheckTest {
 
   @Test
-  public void testBuild() {
+  void testBuild() {
     DockerHealthCheck healthCheck =
         DockerHealthCheck.fromCommand(ImmutableList.of("echo", "hi"))
             .setInterval(Duration.ofNanos(123))
@@ -46,7 +46,7 @@ public class DockerHealthCheckTest {
   }
 
   @Test
-  public void testBuild_invalidCommand() {
+  void testBuild_invalidCommand() {
     try {
       DockerHealthCheck.fromCommand(ImmutableList.of());
       Assert.fail();

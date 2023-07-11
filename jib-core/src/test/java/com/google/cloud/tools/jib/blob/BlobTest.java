@@ -31,33 +31,33 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /** Tests for {@link Blob}. */
-public class BlobTest {
+class BlobTest {
 
   @Test
-  public void testFromInputStream() throws IOException {
+  void testFromInputStream() throws IOException {
     String expected = "crepecake";
     InputStream inputStream = new ByteArrayInputStream(expected.getBytes(StandardCharsets.UTF_8));
     verifyBlobWriteTo(expected, Blobs.from(inputStream));
   }
 
   @Test
-  public void testFromFile() throws IOException, URISyntaxException {
+  void testFromFile() throws IOException, URISyntaxException {
     Path fileA = Paths.get(Resources.getResource("core/fileA").toURI());
     String expected = new String(Files.readAllBytes(fileA), StandardCharsets.UTF_8);
     verifyBlobWriteTo(expected, Blobs.from(fileA));
   }
 
   @Test
-  public void testFromString() throws IOException {
+  void testFromString() throws IOException {
     String expected = "crepecake";
     verifyBlobWriteTo(expected, Blobs.from(expected));
   }
 
   @Test
-  public void testFromWritableContents() throws IOException {
+  void testFromWritableContents() throws IOException {
     String expected = "crepecake";
 
     WritableContents writableContents =

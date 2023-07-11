@@ -41,16 +41,19 @@ import org.apache.http.HttpStatus;
 import org.hamcrest.CoreMatchers;
 import org.hamcrest.MatcherAssert;
 import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
 /** Tests for {@link ManifestPusher}. */
-@RunWith(MockitoJUnitRunner.class)
-public class ManifestPusherTest {
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
+class ManifestPusherTest {
 
   @Mock private Response mockResponse;
   @Mock private EventHandlers mockEventHandlers;
@@ -59,8 +62,8 @@ public class ManifestPusherTest {
   private V22ManifestTemplate fakeManifestTemplate;
   private ManifestPusher testManifestPusher;
 
-  @Before
-  public void setUp() throws URISyntaxException, IOException {
+  @BeforeEach
+  void setUp() throws URISyntaxException, IOException {
     v22manifestJsonFile = Paths.get(Resources.getResource("core/json/v22manifest.json").toURI());
     fakeManifestTemplate =
         JsonTemplateMapper.readJsonFromFile(v22manifestJsonFile, V22ManifestTemplate.class);
@@ -74,7 +77,7 @@ public class ManifestPusherTest {
   }
 
   @Test
-  public void testGetContent() throws IOException {
+  void testGetContent() throws IOException {
     BlobHttpContent body = testManifestPusher.getContent();
 
     Assert.assertNotNull(body);
@@ -89,7 +92,7 @@ public class ManifestPusherTest {
   }
 
   @Test
-  public void testHandleResponse_valid() throws IOException {
+  void testHandleResponse_valid() throws IOException {
     DescriptorDigest expectedDigest = Digests.computeJsonDigest(fakeManifestTemplate);
     Mockito.when(mockResponse.getHeader("Docker-Content-Digest"))
         .thenReturn(Collections.singletonList(expectedDigest.toString()));
@@ -97,7 +100,7 @@ public class ManifestPusherTest {
   }
 
   @Test
-  public void testHandleResponse_noDigest() throws IOException {
+  void testHandleResponse_noDigest() throws IOException {
     DescriptorDigest expectedDigest = Digests.computeJsonDigest(fakeManifestTemplate);
     Mockito.when(mockResponse.getHeader("Docker-Content-Digest"))
         .thenReturn(Collections.emptyList());
@@ -108,7 +111,7 @@ public class ManifestPusherTest {
   }
 
   @Test
-  public void testHandleResponse_multipleDigests() throws IOException {
+  void testHandleResponse_multipleDigests() throws IOException {
     DescriptorDigest expectedDigest = Digests.computeJsonDigest(fakeManifestTemplate);
     Mockito.when(mockResponse.getHeader("Docker-Content-Digest"))
         .thenReturn(Arrays.asList("too", "many"));
@@ -120,7 +123,7 @@ public class ManifestPusherTest {
   }
 
   @Test
-  public void testHandleResponse_invalidDigest() throws IOException {
+  void testHandleResponse_invalidDigest() throws IOException {
     DescriptorDigest expectedDigest = Digests.computeJsonDigest(fakeManifestTemplate);
     Mockito.when(mockResponse.getHeader("Docker-Content-Digest"))
         .thenReturn(Collections.singletonList("not valid"));
@@ -132,32 +135,32 @@ public class ManifestPusherTest {
   }
 
   @Test
-  public void testApiRoute() throws MalformedURLException {
+  void testApiRoute() throws MalformedURLException {
     Assert.assertEquals(
         new URL("http://someApiBase/someImageName/manifests/test-image-tag"),
         testManifestPusher.getApiRoute("http://someApiBase/"));
   }
 
   @Test
-  public void testGetHttpMethod() {
+  void testGetHttpMethod() {
     Assert.assertEquals("PUT", testManifestPusher.getHttpMethod());
   }
 
   @Test
-  public void testGetActionDescription() {
+  void testGetActionDescription() {
     Assert.assertEquals(
         "push image manifest for someServerUrl/someImageName:test-image-tag",
         testManifestPusher.getActionDescription());
   }
 
   @Test
-  public void testGetAccept() {
+  void testGetAccept() {
     Assert.assertEquals(0, testManifestPusher.getAccept().size());
   }
 
   /** Docker Registry 2.0 and 2.1 return 400 / TAG_INVALID. */
   @Test
-  public void testHandleHttpResponseException_dockerRegistry_tagInvalid() throws ResponseException {
+  void testHandleHttpResponseException_dockerRegistry_tagInvalid() throws ResponseException {
     ResponseException exception = Mockito.mock(ResponseException.class);
     Mockito.when(exception.getStatusCode()).thenReturn(HttpStatus.SC_BAD_REQUEST);
     Mockito.when(exception.getContent())
@@ -179,8 +182,7 @@ public class ManifestPusherTest {
 
   /** Docker Registry 2.2 returns a 400 / MANIFEST_INVALID. */
   @Test
-  public void testHandleHttpResponseException_dockerRegistry_manifestInvalid()
-      throws ResponseException {
+  void testHandleHttpResponseException_dockerRegistry_manifestInvalid() throws ResponseException {
     ResponseException exception = Mockito.mock(ResponseException.class);
     Mockito.when(exception.getStatusCode()).thenReturn(HttpStatus.SC_BAD_REQUEST);
     Mockito.when(exception.getContent())
@@ -202,7 +204,7 @@ public class ManifestPusherTest {
 
   /** Quay.io returns an undocumented 415 / MANIFEST_INVALID. */
   @Test
-  public void testHandleHttpResponseException_quayIo() throws ResponseException {
+  void testHandleHttpResponseException_quayIo() throws ResponseException {
     ResponseException exception = Mockito.mock(ResponseException.class);
     Mockito.when(exception.getStatusCode()).thenReturn(HttpStatus.SC_UNSUPPORTED_MEDIA_TYPE);
     Mockito.when(exception.getContent())
@@ -224,7 +226,7 @@ public class ManifestPusherTest {
   }
 
   @Test
-  public void testHandleHttpResponseException_otherError() throws RegistryErrorException {
+  void testHandleHttpResponseException_otherError() throws RegistryErrorException {
     ResponseException exception = Mockito.mock(ResponseException.class);
     Mockito.when(exception.getStatusCode()).thenReturn(HttpStatus.SC_UNAUTHORIZED);
     try {

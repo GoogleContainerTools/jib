@@ -22,20 +22,23 @@ import java.io.IOException;
 import org.hamcrest.CoreMatchers;
 import org.hamcrest.MatcherAssert;
 import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
 /** Tests for {@link CachedLayer}. */
-@RunWith(MockitoJUnitRunner.class)
-public class CachedLayerTest {
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
+class CachedLayerTest {
 
   @Mock private DescriptorDigest mockLayerDigest;
   @Mock private DescriptorDigest mockLayerDiffId;
 
   @Test
-  public void testBuilder_fail() {
+  void testBuilder_fail() {
     try {
       CachedLayer.builder().build();
       Assert.fail("missing required");
@@ -62,7 +65,7 @@ public class CachedLayerTest {
   }
 
   @Test
-  public void testBuilder_pass() throws IOException {
+  void testBuilder_pass() throws IOException {
     CachedLayer.Builder cachedLayerBuilder =
         CachedLayer.builder()
             .setLayerDigest(mockLayerDigest)

@@ -28,20 +28,24 @@ import java.util.Optional;
 import org.gradle.api.provider.MapProperty;
 import org.gradle.api.provider.Property;
 import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
 /** Test for {@link GradleRawConfiguration}. */
-@RunWith(MockitoJUnitRunner.class)
-public class GradleRawConfigurationTest {
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
+class GradleRawConfigurationTest {
 
   @Mock private MapProperty<String, String> labels;
 
   @Test
-  public void testGetters() {
+  @SuppressWarnings("java:S5961")
+  void testGetters() {
     JibExtension jibExtension = Mockito.mock(JibExtension.class);
 
     AuthParameters authParameters = Mockito.mock(AuthParameters.class);

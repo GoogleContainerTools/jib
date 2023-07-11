@@ -25,19 +25,28 @@ import org.apache.maven.settings.crypto.SettingsDecrypter;
 import org.hamcrest.CoreMatchers;
 import org.hamcrest.MatcherAssert;
 import org.junit.Assert;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.contrib.java.lang.system.RestoreSystemProperties;
-import org.junit.runner.RunWith;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
+import uk.org.webcompere.systemstubs.jupiter.SystemStub;
+import uk.org.webcompere.systemstubs.jupiter.SystemStubsExtension;
+import uk.org.webcompere.systemstubs.properties.SystemProperties;
 
 /** Test for {@link MavenSettingsProxyProvider}. */
-@RunWith(MockitoJUnitRunner.class)
-public class MavenSettingsProxyProviderTest {
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
+@ExtendWith(SystemStubsExtension.class)
+class MavenSettingsProxyProviderTest {
 
-  @Rule public final RestoreSystemProperties systemPropertyRestorer = new RestoreSystemProperties();
+  @SystemStub
+  @SuppressWarnings("unused")
+  private SystemProperties restoreSystemProperties = new SystemProperties();
 
   private static Settings noActiveProxiesSettings;
   private static Settings httpOnlyProxySettings;
@@ -47,7 +56,7 @@ public class MavenSettingsProxyProviderTest {
   private static SettingsDecrypter settingsDecrypter;
   private static SettingsDecrypter emptySettingsDecrypter;
 
-  @BeforeClass
+  @BeforeAll
   public static void setUpTestFixtures() {
     noActiveProxiesSettings =
         SettingsFixture.newSettings(
@@ -72,8 +81,8 @@ public class MavenSettingsProxyProviderTest {
             Paths.get("src/test/resources/maven/settings/settings-security.empty.xml"));
   }
 
-  @Before
-  public void setUp() {
+  @BeforeEach
+  void setUpBeforeEach() {
     Arrays.asList(
             "http.proxyHost",
             "http.proxyPort",
@@ -88,76 +97,48 @@ public class MavenSettingsProxyProviderTest {
   }
 
   @Test
-  public void testAreProxyPropertiesSet() {
+  void testAreProxyPropertiesSet() {
     Assert.assertFalse(MavenSettingsProxyProvider.areProxyPropertiesSet("http"));
     Assert.assertFalse(MavenSettingsProxyProvider.areProxyPropertiesSet("https"));
   }
 
   @Test
-  public void testAreProxyPropertiesSet_httpHostSet() {
+  void testAreProxyPropertiesSet_httpHostSet() {
     System.setProperty("http.proxyHost", "host");
     Assert.assertTrue(MavenSettingsProxyProvider.areProxyPropertiesSet("http"));
     Assert.assertFalse(MavenSettingsProxyProvider.areProxyPropertiesSet("https"));
   }
 
-  @Test
-  public void testAreProxyPropertiesSet_httpsHostSet() {
-    System.setProperty("https.proxyHost", "host");
+  @ParameterizedTest
+  @CsvSource({
+    "https.proxyHost, host",
+    "https.proxyPort, port",
+    "https.proxyUser, user",
+    "https.proxyPassword, password"
+  })
+  void testAreProxyPropertiesSet_httpsHostSet(String key, String value) {
+    System.setProperty(key, value);
     Assert.assertFalse(MavenSettingsProxyProvider.areProxyPropertiesSet("http"));
     Assert.assertTrue(MavenSettingsProxyProvider.areProxyPropertiesSet("https"));
   }
 
-  @Test
-  public void testAreProxyPropertiesSet_httpPortSet() {
-    System.setProperty("http.proxyPort", "port");
+  @ParameterizedTest
+  @CsvSource({"http.proxyPort, port", "http.proxyUser, user", "http.proxyPassword, password"})
+  void testAreProxyPropertiesSet_httpPortSet(String key, String value) {
+    System.setProperty(key, value);
     Assert.assertTrue(MavenSettingsProxyProvider.areProxyPropertiesSet("http"));
     Assert.assertFalse(MavenSettingsProxyProvider.areProxyPropertiesSet("https"));
   }
 
   @Test
-  public void testAreProxyPropertiesSet_httpsPortSet() {
-    System.setProperty("https.proxyPort", "port");
-    Assert.assertFalse(MavenSettingsProxyProvider.areProxyPropertiesSet("http"));
-    Assert.assertTrue(MavenSettingsProxyProvider.areProxyPropertiesSet("https"));
-  }
-
-  @Test
-  public void testAreProxyPropertiesSet_httpUserSet() {
-    System.setProperty("http.proxyUser", "user");
-    Assert.assertTrue(MavenSettingsProxyProvider.areProxyPropertiesSet("http"));
-    Assert.assertFalse(MavenSettingsProxyProvider.areProxyPropertiesSet("https"));
-  }
-
-  @Test
-  public void testAreProxyPropertiesSet_httpsUserSet() {
-    System.setProperty("https.proxyUser", "user");
-    Assert.assertFalse(MavenSettingsProxyProvider.areProxyPropertiesSet("http"));
-    Assert.assertTrue(MavenSettingsProxyProvider.areProxyPropertiesSet("https"));
-  }
-
-  @Test
-  public void testAreProxyPropertiesSet_httpPasswordSet() {
-    System.setProperty("http.proxyPassword", "password");
-    Assert.assertTrue(MavenSettingsProxyProvider.areProxyPropertiesSet("http"));
-    Assert.assertFalse(MavenSettingsProxyProvider.areProxyPropertiesSet("https"));
-  }
-
-  @Test
-  public void testAreProxyPropertiesSet_httpsPasswordSet() {
-    System.setProperty("https.proxyPassword", "password");
-    Assert.assertFalse(MavenSettingsProxyProvider.areProxyPropertiesSet("http"));
-    Assert.assertTrue(MavenSettingsProxyProvider.areProxyPropertiesSet("https"));
-  }
-
-  @Test
-  public void testAreProxyPropertiesSet_ignoresHttpNonProxyHosts() {
+  void testAreProxyPropertiesSet_ignoresHttpNonProxyHosts() {
     System.setProperty("http.nonProxyHosts", "non proxy hosts");
     Assert.assertFalse(MavenSettingsProxyProvider.areProxyPropertiesSet("http"));
     Assert.assertFalse(MavenSettingsProxyProvider.areProxyPropertiesSet("https"));
   }
 
   @Test
-  public void testSetProxyProperties() {
+  void testSetProxyProperties() {
     Proxy httpProxy = new Proxy();
     httpProxy.setProtocol("http");
     httpProxy.setHost("host");
@@ -187,7 +168,7 @@ public class MavenSettingsProxyProviderTest {
   }
 
   @Test
-  public void testSetProxyProperties_someValuesUndefined() {
+  void testSetProxyProperties_someValuesUndefined() {
     Proxy httpProxy = new Proxy();
     httpProxy.setProtocol("http");
     httpProxy.setHost("http://host");
@@ -209,7 +190,7 @@ public class MavenSettingsProxyProviderTest {
   }
 
   @Test
-  public void testActivateHttpAndHttpsProxies_noActiveProxy() throws MojoExecutionException {
+  void testActivateHttpAndHttpsProxies_noActiveProxy() throws MojoExecutionException {
 
     MavenSettingsProxyProvider.activateHttpAndHttpsProxies(
         noActiveProxiesSettings, settingsDecrypter);
@@ -219,7 +200,7 @@ public class MavenSettingsProxyProviderTest {
   }
 
   @Test
-  public void testActivateHttpAndHttpsProxies_firstActiveHttpProxy() throws MojoExecutionException {
+  void testActivateHttpAndHttpsProxies_firstActiveHttpProxy() throws MojoExecutionException {
     MavenSettingsProxyProvider.activateHttpAndHttpsProxies(
         httpOnlyProxySettings, settingsDecrypter);
 
@@ -228,8 +209,7 @@ public class MavenSettingsProxyProviderTest {
   }
 
   @Test
-  public void testActivateHttpAndHttpsProxies_firstActiveHttpsProxy()
-      throws MojoExecutionException {
+  void testActivateHttpAndHttpsProxies_firstActiveHttpsProxy() throws MojoExecutionException {
     MavenSettingsProxyProvider.activateHttpAndHttpsProxies(
         httpsOnlyProxySettings, settingsDecrypter);
 
@@ -238,7 +218,7 @@ public class MavenSettingsProxyProviderTest {
   }
 
   @Test
-  public void testActivateHttpAndHttpsProxies_encryptedProxy() throws MojoExecutionException {
+  void testActivateHttpAndHttpsProxies_encryptedProxy() throws MojoExecutionException {
     MavenSettingsProxyProvider.activateHttpAndHttpsProxies(
         mixedProxyEncryptedSettings, settingsDecrypter);
 
@@ -247,8 +227,7 @@ public class MavenSettingsProxyProviderTest {
   }
 
   @Test
-  public void testActivateHttpAndHttpsProxies_dontOverwriteUserHttp()
-      throws MojoExecutionException {
+  void testActivateHttpAndHttpsProxies_dontOverwriteUserHttp() throws MojoExecutionException {
     System.setProperty("http.proxyHost", "host");
     MavenSettingsProxyProvider.activateHttpAndHttpsProxies(
         mixedProxyEncryptedSettings, settingsDecrypter);
@@ -258,8 +237,7 @@ public class MavenSettingsProxyProviderTest {
   }
 
   @Test
-  public void testActivateHttpAndHttpsProxies_dontOverwriteUserHttps()
-      throws MojoExecutionException {
+  void testActivateHttpAndHttpsProxies_dontOverwriteUserHttps() throws MojoExecutionException {
     System.setProperty("https.proxyHost", "host");
     MavenSettingsProxyProvider.activateHttpAndHttpsProxies(
         mixedProxyEncryptedSettings, settingsDecrypter);
@@ -269,7 +247,7 @@ public class MavenSettingsProxyProviderTest {
   }
 
   @Test
-  public void testActivateHttpAndHttpsProxies_decryptionFailure() {
+  void testActivateHttpAndHttpsProxies_decryptionFailure() {
     try {
       MavenSettingsProxyProvider.activateHttpAndHttpsProxies(
           badProxyEncryptedSettings, settingsDecrypter);
@@ -282,7 +260,7 @@ public class MavenSettingsProxyProviderTest {
   }
 
   @Test
-  public void testActivateHttpAndHttpsProxies_emptySettingsDecrypter() {
+  void testActivateHttpAndHttpsProxies_emptySettingsDecrypter() {
     try {
       MavenSettingsProxyProvider.activateHttpAndHttpsProxies(
           mixedProxyEncryptedSettings, emptySettingsDecrypter);

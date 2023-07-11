@@ -30,19 +30,18 @@ import java.time.Instant;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.junit.Assert;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 /** Tests for {@link TarExtractor}. */
-public class TarExtractorTest {
+class TarExtractorTest {
 
-  @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
+  @TempDir public Path temporaryFolder;
 
   @Test
-  public void testExtract() throws URISyntaxException, IOException {
+  void testExtract() throws URISyntaxException, IOException {
     Path source = Paths.get(Resources.getResource("core/extract.tar").toURI());
-    Path destination = temporaryFolder.getRoot().toPath();
+    Path destination = temporaryFolder;
     TarExtractor.extract(source, destination);
 
     Assert.assertTrue(Files.exists(destination.resolve("file A")));
@@ -57,9 +56,9 @@ public class TarExtractorTest {
   }
 
   @Test
-  public void testExtract_missingDirectoryEntries() throws URISyntaxException, IOException {
+  void testExtract_missingDirectoryEntries() throws URISyntaxException, IOException {
     Path source = Paths.get(Resources.getResource("core/extract-missing-dirs.tar").toURI());
-    Path destination = temporaryFolder.getRoot().toPath();
+    Path destination = temporaryFolder;
     TarExtractor.extract(source, destination);
 
     Assert.assertTrue(Files.exists(destination.resolve("world")));
@@ -73,9 +72,9 @@ public class TarExtractorTest {
   }
 
   @Test
-  public void testExtract_symlinks() throws URISyntaxException, IOException {
+  void testExtract_symlinks() throws URISyntaxException, IOException {
     Path source = Paths.get(Resources.getResource("core/symlinks.tar").toURI());
-    Path destination = temporaryFolder.getRoot().toPath();
+    Path destination = temporaryFolder;
     TarExtractor.extract(source, destination);
 
     Assert.assertTrue(Files.isDirectory(destination.resolve("directory1")));
@@ -86,9 +85,9 @@ public class TarExtractorTest {
   }
 
   @Test
-  public void testExtract_modificationTimePreserved() throws URISyntaxException, IOException {
+  void testExtract_modificationTimePreserved() throws URISyntaxException, IOException {
     Path source = Paths.get(Resources.getResource("core/extract.tar").toURI());
-    Path destination = temporaryFolder.getRoot().toPath();
+    Path destination = temporaryFolder;
 
     TarExtractor.extract(source, destination);
 
@@ -105,11 +104,11 @@ public class TarExtractorTest {
   }
 
   @Test
-  public void testExtract_reproducibleTimestampsEnabled() throws URISyntaxException, IOException {
+  void testExtract_reproducibleTimestampsEnabled() throws URISyntaxException, IOException {
     // The tarfile has only level1/level2/level3/file.txt packaged
     Path source = Paths.get(Resources.getResource("core/tarfile-only-file-packaged.tar").toURI());
 
-    Path destination = temporaryFolder.getRoot().toPath();
+    Path destination = temporaryFolder;
 
     TarExtractor.extract(source, destination, true);
 
@@ -124,9 +123,9 @@ public class TarExtractorTest {
   }
 
   @Test
-  public void testExtract_reproducibleTimestampsEnabled_destinationNotEmpty() throws IOException {
-    Path destination = temporaryFolder.getRoot().toPath();
-    temporaryFolder.newFile();
+  void testExtract_reproducibleTimestampsEnabled_destinationNotEmpty() throws IOException {
+    Path destination = temporaryFolder;
+    Files.createTempFile(temporaryFolder, "jib", "test");
 
     IllegalStateException exception =
         assertThrows(

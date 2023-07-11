@@ -16,6 +16,9 @@
 
 package com.google.cloud.tools.jib.registry;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+
 import com.google.cloud.tools.jib.api.DescriptorDigest;
 import com.google.cloud.tools.jib.api.RegistryException;
 import com.google.cloud.tools.jib.event.EventHandlers;
@@ -23,8 +26,7 @@ import com.google.cloud.tools.jib.http.FailoverHttpClient;
 import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
 import java.io.IOException;
 import java.security.DigestException;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /** Integration tests for {@link BlobChecker}. */
 public class BlobCheckerIntegrationTest {
@@ -43,7 +45,7 @@ public class BlobCheckerIntegrationTest {
             .getManifest();
     DescriptorDigest blobDigest = manifestTemplate.getLayers().get(0).getDigest();
 
-    Assert.assertEquals(blobDigest, registryClient.checkBlob(blobDigest).get().getDigest());
+    assertEquals(blobDigest, registryClient.checkBlob(blobDigest).get().getDigest());
   }
 
   @Test
@@ -55,6 +57,6 @@ public class BlobCheckerIntegrationTest {
         DescriptorDigest.fromHash(
             "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
 
-    Assert.assertFalse(registryClient.checkBlob(fakeBlobDigest).isPresent());
+    assertFalse(registryClient.checkBlob(fakeBlobDigest).isPresent());
   }
 }

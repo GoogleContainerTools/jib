@@ -31,20 +31,26 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Optional;
-import org.junit.Before;
 import org.junit.Rule;
-import org.junit.Test;
 import org.junit.contrib.java.lang.system.RestoreSystemProperties;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.io.TempDir;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import picocli.CommandLine;
 
-public class ContainerizersTest {
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
+class ContainerizersTest {
 
-  @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
+  @TempDir public Path temporaryFolder;
   @Rule public final MockitoRule mockitoRule = MockitoJUnit.rule();
   // Containerizers will add system properties based on cli properties
   @Rule
@@ -56,14 +62,14 @@ public class ContainerizersTest {
   private static final Path baseImageCache = Paths.get("base-image-cache-for-test");
   private static final Path applicationCache = Paths.get("application-cache-for-test");
 
-  @Before
-  public void initCaches() {
+  @BeforeEach
+  void initCaches() {
     Mockito.when(cacheDirectories.getBaseImageCache()).thenReturn(Optional.of(baseImageCache));
     Mockito.when(cacheDirectories.getApplicationLayersCache()).thenReturn(applicationCache);
   }
 
   @Test
-  public void testApplyConfiguration_defaults()
+  void testApplyConfiguration_defaults()
       throws InvalidImageReferenceException, FileNotFoundException,
           CacheDirectoryCreationException {
     CommonCliOptions commonCliOptions =
@@ -84,7 +90,7 @@ public class ContainerizersTest {
   }
 
   @Test
-  public void testApplyConfiguration_withValues()
+  void testApplyConfiguration_withValues()
       throws InvalidImageReferenceException, CacheDirectoryCreationException,
           FileNotFoundException {
     CommonCliOptions commonCliOptions =
@@ -108,8 +114,7 @@ public class ContainerizersTest {
   }
 
   @Test
-  public void testFrom_dockerDaemonImage()
-      throws InvalidImageReferenceException, FileNotFoundException {
+  void testFrom_dockerDaemonImage() throws InvalidImageReferenceException, FileNotFoundException {
     CommonCliOptions commonCliOptions =
         CommandLine.populateCommand(
             new CommonCliOptions(), "-t", "docker://gcr.io/test/test-image-ref");
@@ -127,8 +132,8 @@ public class ContainerizersTest {
   }
 
   @Test
-  public void testFrom_tarImage() throws InvalidImageReferenceException, IOException {
-    Path tarPath = temporaryFolder.getRoot().toPath().resolve("test-tar.tar");
+  void testFrom_tarImage() throws InvalidImageReferenceException, IOException {
+    Path tarPath = temporaryFolder.resolve("test-tar.tar");
     CommonCliOptions commonCliOptions =
         CommandLine.populateCommand(
             new CommonCliOptions(),
@@ -148,7 +153,7 @@ public class ContainerizersTest {
   }
 
   @Test
-  public void testFrom_registryImage() throws InvalidImageReferenceException, IOException {
+  void testFrom_registryImage() throws InvalidImageReferenceException, IOException {
     CommonCliOptions commonCliOptions =
         CommandLine.populateCommand(
             new CommonCliOptions(), "-t", "registry://gcr.io/test/test-image-ref");

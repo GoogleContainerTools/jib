@@ -18,6 +18,7 @@ dependencies {
   implementation dependencyStrings.GOOGLE_HTTP_CLIENT_APACHE_V2
   implementation dependencyStrings.GOOGLE_AUTH_LIBRARY_OAUTH2_HTTP
 
+  testImplementation dependencyStrings.SYSTEM_RULES_STUB
   implementation dependencyStrings.COMMONS_COMPRESS
   zstdSupportImplementation  dependencyStrings.ZSTD_JNI
   implementation dependencyStrings.GUAVA
@@ -26,7 +27,9 @@ dependencies {
   implementation dependencyStrings.JACKSON_DATATYPE_JSR310
   implementation dependencyStrings.ASM
 
-  testImplementation dependencyStrings.JUNIT
+  testImplementation dependencyStrings.JUNIT_API
+  testRuntimeOnly dependencyStrings.JUNIT_ENGINE
+  testImplementation dependencyStrings.JUNIT_PARAM_TESTS
   testImplementation dependencyStrings.TRUTH
   testImplementation dependencyStrings.TRUTH8
   testImplementation dependencyStrings.MOCKITO_CORE
@@ -71,7 +74,7 @@ publishing {
 release {
   tagTemplate = 'v$version-core'
   git {
-    requireBranch = /^core-release-v\d+.*$/  //regex
+    requireBranch.set(/^core-release-v\d+.*$/)  //regex
   }
 }
 /* RELEASE */
@@ -79,3 +82,6 @@ release {
 /* ECLIPSE */
 eclipse.classpath.plusConfigurations += [configurations.integrationTestImplementation]
 /* ECLIPSE */
+
+
+

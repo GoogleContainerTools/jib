@@ -32,14 +32,14 @@ import org.apache.maven.execution.MavenSession;
 import org.apache.maven.settings.Server;
 import org.apache.maven.settings.Settings;
 import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
 /** Test for {@link MavenRawConfiguration}. */
-public class MavenRawConfigurationTest {
+class MavenRawConfigurationTest {
 
   @Test
-  public void testGetters() {
+  void testGetters() {
     JibPluginConfiguration jibPluginConfiguration = Mockito.mock(JibPluginConfiguration.class);
     EventHandlers eventHandlers = Mockito.mock(EventHandlers.class);
 

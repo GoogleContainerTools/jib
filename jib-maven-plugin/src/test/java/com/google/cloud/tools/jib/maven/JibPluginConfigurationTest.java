@@ -32,15 +32,20 @@ import org.apache.maven.execution.MavenSession;
 import org.apache.maven.model.Build;
 import org.apache.maven.plugin.logging.Log;
 import org.apache.maven.project.MavenProject;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
 /** Tests for {@link JibPluginConfiguration}. */
-@RunWith(MockitoJUnitRunner.class)
-public class JibPluginConfigurationTest {
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
+class JibPluginConfigurationTest {
 
   private final MavenProject project = new MavenProject();
   private final Properties sessionProperties = new Properties();
@@ -49,8 +54,8 @@ public class JibPluginConfigurationTest {
   @Mock private Build build;
   private JibPluginConfiguration testPluginConfiguration;
 
-  @Before
-  public void setup() {
+  @BeforeEach
+  void setup() {
     when(session.getSystemProperties()).thenReturn(sessionProperties);
     when(build.getDirectory()).thenReturn("/test/directory");
     testPluginConfiguration =
@@ -70,7 +75,7 @@ public class JibPluginConfigurationTest {
   }
 
   @Test
-  public void testDefaults() {
+  void testDefaults() {
     assertThat(testPluginConfiguration.getPlatforms().get(0).getOsName()).hasValue("linux");
     assertThat(testPluginConfiguration.getPlatforms().get(0).getArchitectureName())
         .hasValue("amd64");
@@ -92,7 +97,8 @@ public class JibPluginConfigurationTest {
   }
 
   @Test
-  public void testSystemProperties() {
+  @SuppressWarnings("java:S5961")
+  void testSystemProperties() {
     sessionProperties.put("jib.from.image", "fromImage");
     assertThat(testPluginConfiguration.getBaseImage()).isEqualTo("fromImage");
     sessionProperties.put("jib.from.credHelper", "credHelper");
@@ -176,13 +182,13 @@ public class JibPluginConfigurationTest {
   }
 
   @Test
-  public void testSystemPropertiesWithInvalidPlatform() {
+  void testSystemPropertiesWithInvalidPlatform() {
     sessionProperties.put("jib.from.platforms", "linux /amd64");
     assertThrows(IllegalArgumentException.class, testPluginConfiguration::getPlatforms);
   }
 
   @Test
-  public void testSystemPropertiesExtraDirectories() {
+  void testSystemPropertiesExtraDirectories() {
     sessionProperties.put("jib.extraDirectories.paths", "custom-jib");
     assertThat(testPluginConfiguration.getExtraDirectories()).hasSize(1);
     assertThat(testPluginConfiguration.getExtraDirectories().get(0).getFrom())
@@ -198,7 +204,7 @@ public class JibPluginConfigurationTest {
   }
 
   @Test
-  public void testSystemPropertiesOutputPaths() {
+  void testSystemPropertiesOutputPaths() {
     // Absolute paths
     sessionProperties.put("jib.outputPaths.digest", "/digest/path");
     assertThat(testPluginConfiguration.getDigestOutputPath()).isEqualTo(Paths.get("/digest/path"));
@@ -222,7 +228,7 @@ public class JibPluginConfigurationTest {
   }
 
   @Test
-  public void testPomProperties() {
+  void testPomProperties() {
     project.getProperties().setProperty("jib.from.image", "fromImage");
     assertThat(testPluginConfiguration.getBaseImage()).isEqualTo("fromImage");
     project.getProperties().setProperty("jib.from.credHelper", "credHelper");
@@ -299,7 +305,7 @@ public class JibPluginConfigurationTest {
   }
 
   @Test
-  public void testPomPropertiesExtraDirectories() {
+  void testPomPropertiesExtraDirectories() {
     project.getProperties().setProperty("jib.extraDirectories.paths", "custom-jib");
     assertThat(testPluginConfiguration.getExtraDirectories()).hasSize(1);
     assertThat(testPluginConfiguration.getExtraDirectories().get(0).getFrom())
@@ -317,7 +323,7 @@ public class JibPluginConfigurationTest {
   }
 
   @Test
-  public void testPomPropertiesOutputPaths() {
+  void testPomPropertiesOutputPaths() {
     project.getProperties().setProperty("jib.outputPaths.digest", "/digest/path");
     assertThat(testPluginConfiguration.getDigestOutputPath()).isEqualTo(Paths.get("/digest/path"));
     project.getProperties().setProperty("jib.outputPaths.imageId", "/id/path");
@@ -330,7 +336,7 @@ public class JibPluginConfigurationTest {
   }
 
   @Test
-  public void testEmptyOrNullTags() {
+  void testEmptyOrNullTags() {
     // https://github.com/GoogleContainerTools/jib/issues/1534
     // Maven turns empty tags into null entries, and its possible to have empty tags in jib.to.tags
     sessionProperties.put("jib.to.tags", "a,,b");
@@ -342,7 +348,7 @@ public class JibPluginConfigurationTest {
   }
 
   @Test
-  public void testIsContainerizable_noProperty() {
+  void testIsContainerizable_noProperty() {
     Properties projectProperties = project.getProperties();
 
     projectProperties.remove("jib.containerize");
@@ -352,42 +358,17 @@ public class JibPluginConfigurationTest {
     assertThat(testPluginConfiguration.isContainerizable()).isTrue();
   }
 
-  @Test
-  public void testIsContainerizable_artifactId() {
+  @ParameterizedTest
+  @CsvSource({":artifact, :artifact2", "group:artifact, group:artifact2", "project, project2"})
+  void testIsContainerizable(String artifact1, String artifact2) {
     project.setGroupId("group");
     project.setArtifactId("artifact");
 
     Properties projectProperties = project.getProperties();
-    projectProperties.setProperty("jib.containerize", ":artifact");
+    projectProperties.setProperty("jib.containerize", artifact1);
     assertThat(testPluginConfiguration.isContainerizable()).isTrue();
 
-    projectProperties.setProperty("jib.containerize", ":artifact2");
-    assertThat(testPluginConfiguration.isContainerizable()).isFalse();
-  }
-
-  @Test
-  public void testIsContainerizable_groupAndArtifactId() {
-    project.setGroupId("group");
-    project.setArtifactId("artifact");
-
-    Properties projectProperties = project.getProperties();
-    projectProperties.setProperty("jib.containerize", "group:artifact");
-    assertThat(testPluginConfiguration.isContainerizable()).isTrue();
-
-    projectProperties.setProperty("jib.containerize", "group:artifact2");
-    assertThat(testPluginConfiguration.isContainerizable()).isFalse();
-  }
-
-  @Test
-  public void testIsContainerizable_directory() {
-    project.setGroupId("group");
-    project.setArtifactId("artifact");
-
-    Properties projectProperties = project.getProperties();
-    projectProperties.setProperty("jib.containerize", "project");
-    assertThat(testPluginConfiguration.isContainerizable()).isTrue();
-
-    projectProperties.setProperty("jib.containerize", "project2");
+    projectProperties.setProperty("jib.containerize", artifact2);
     assertThat(testPluginConfiguration.isContainerizable()).isFalse();
   }
 }

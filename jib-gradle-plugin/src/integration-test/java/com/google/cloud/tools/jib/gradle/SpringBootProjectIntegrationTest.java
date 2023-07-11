@@ -21,29 +21,33 @@ import com.google.cloud.tools.jib.IntegrationTestingConfiguration;
 import com.google.cloud.tools.jib.api.HttpRequestTester;
 import java.io.IOException;
 import java.net.URL;
+import java.nio.file.Path;
 import java.security.DigestException;
 import javax.annotation.Nullable;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.ClassRule;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 /** Integration tests for building Spring Boot images. */
-public class SpringBootProjectIntegrationTest {
+class SpringBootProjectIntegrationTest {
 
-  @ClassRule public static final TestProject springBootProject = new TestProject("spring-boot");
+  @TempDir Path tempDir;
+
+  @ClassRule public final TestProject springBootProject = new TestProject("spring-boot", tempDir);
 
   @Nullable private String containerName;
 
   @After
-  public void tearDown() throws IOException, InterruptedException {
+  void tearDown() throws IOException, InterruptedException {
     if (containerName != null) {
       new Command("docker", "stop", containerName).run();
     }
   }
 
   @Test
-  public void testBuild_packagedMode() throws IOException, InterruptedException, DigestException {
+  void testBuild_packagedMode() throws IOException, InterruptedException, DigestException {
     buildAndRunWebApp("springboot:gradle", "build.gradle");
 
     String output =

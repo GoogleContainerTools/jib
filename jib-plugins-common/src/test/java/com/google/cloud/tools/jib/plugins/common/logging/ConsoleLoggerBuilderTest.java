@@ -24,14 +24,17 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.function.Consumer;
 import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
 /** Tests for {@link ConsoleLoggerBuilder}. */
-@RunWith(MockitoJUnitRunner.class)
-public class ConsoleLoggerBuilderTest {
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
+class ConsoleLoggerBuilderTest {
 
   @Mock private Consumer<String> mockLifecycleConsumer;
   @Mock private Consumer<String> mockProgressConsumer;
@@ -41,7 +44,7 @@ public class ConsoleLoggerBuilderTest {
   @Mock private Consumer<String> mockErrorConsumer;
 
   @Test
-  public void testBuild() {
+  void testBuild() {
     List<String> messages = new ArrayList<>();
     List<Level> levels = new ArrayList<>();
 

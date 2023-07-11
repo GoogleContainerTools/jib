@@ -20,20 +20,23 @@ import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
 /** Tests for {@link Timer}. */
-@RunWith(MockitoJUnitRunner.class)
-public class TimerTest {
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
+class TimerTest {
 
   @Mock private Clock mockClock;
 
   @Test
-  public void testLap() {
+  void testLap() {
     Mockito.when(mockClock.instant()).thenReturn(Instant.EPOCH);
     Timer parentTimer = new Timer(mockClock, null);
     Mockito.when(mockClock.instant()).thenReturn(Instant.EPOCH.plusMillis(5));

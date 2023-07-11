@@ -20,13 +20,13 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import java.nio.file.attribute.PosixFilePermission;
 import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /** Tests for {@link FilePermissions}. */
-public class FilePermissionsTest {
+class FilePermissionsTest {
 
   @Test
-  public void testFromOctalString() {
+  void testFromOctalString() {
     Assert.assertEquals(new FilePermissions(0777), FilePermissions.fromOctalString("777"));
     Assert.assertEquals(new FilePermissions(0000), FilePermissions.fromOctalString("000"));
     Assert.assertEquals(new FilePermissions(0123), FilePermissions.fromOctalString("123"));
@@ -46,7 +46,7 @@ public class FilePermissionsTest {
   }
 
   @Test
-  public void testFromPosixFilePermissions() {
+  void testFromPosixFilePermissions() {
     Assert.assertEquals(
         new FilePermissions(0000), FilePermissions.fromPosixFilePermissions(ImmutableSet.of()));
     Assert.assertEquals(

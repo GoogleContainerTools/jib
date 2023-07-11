@@ -31,13 +31,12 @@ import java.nio.file.Path;
 import java.nio.file.attribute.FileTime;
 import java.time.Instant;
 import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 /** Tests for {@link LayerEntriesSelector}. */
-public class LayerEntriesSelectorTest {
+class LayerEntriesSelectorTest {
 
   private static FileEntry defaultLayerEntry(Path source, AbsoluteUnixPath destination) {
     return new FileEntry(
@@ -47,7 +46,7 @@ public class LayerEntriesSelectorTest {
         FileEntriesLayer.DEFAULT_MODIFICATION_TIME);
   }
 
-  @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
+  @TempDir public Path temporaryFolder;
   private ImmutableList<FileEntry> outOfOrderLayerEntries;
   private ImmutableList<FileEntry> inOrderLayerEntries;
 
@@ -60,9 +59,9 @@ public class LayerEntriesSelectorTest {
     return builder.build();
   }
 
-  @Before
-  public void setUp() throws IOException {
-    Path folder = temporaryFolder.newFolder().toPath();
+  @BeforeEach
+  void setUp() throws IOException {
+    Path folder = Files.createTempDirectory(temporaryFolder, "jib");
     Path file1 = Files.createDirectory(folder.resolve("files"));
     Path file2 = Files.createFile(folder.resolve("files").resolve("two"));
     Path file3 = Files.createFile(folder.resolve("gile"));
@@ -103,28 +102,28 @@ public class LayerEntriesSelectorTest {
   }
 
   @Test
-  public void testLayerEntryTemplate_compareTo() throws IOException {
+  void testLayerEntryTemplate_compareTo() throws IOException {
     Assert.assertEquals(
         toLayerEntryTemplates(inOrderLayerEntries),
         ImmutableList.sortedCopyOf(toLayerEntryTemplates(outOfOrderLayerEntries)));
   }
 
   @Test
-  public void testToSortedJsonTemplates() throws IOException {
+  void testToSortedJsonTemplates() throws IOException {
     Assert.assertEquals(
         toLayerEntryTemplates(inOrderLayerEntries),
         LayerEntriesSelector.toSortedJsonTemplates(outOfOrderLayerEntries));
   }
 
   @Test
-  public void testGenerateSelector_empty() throws IOException {
+  void testGenerateSelector_empty() throws IOException {
     DescriptorDigest expectedSelector = Digests.computeJsonDigest(ImmutableList.of());
     Assert.assertEquals(
         expectedSelector, LayerEntriesSelector.generateSelector(ImmutableList.of()));
   }
 
   @Test
-  public void testGenerateSelector() throws IOException {
+  void testGenerateSelector() throws IOException {
     DescriptorDigest expectedSelector =
         Digests.computeJsonDigest(toLayerEntryTemplates(inOrderLayerEntries));
     Assert.assertEquals(
@@ -132,8 +131,8 @@ public class LayerEntriesSelectorTest {
   }
 
   @Test
-  public void testGenerateSelector_sourceModificationTimeChanged() throws IOException {
-    Path layerFile = temporaryFolder.newFile().toPath();
+  void testGenerateSelector_sourceModificationTimeChanged() throws IOException {
+    Path layerFile = Files.createTempFile(temporaryFolder, "jib", "test");
     Files.setLastModifiedTime(layerFile, FileTime.from(Instant.EPOCH));
     FileEntry layerEntry = defaultLayerEntry(layerFile, AbsoluteUnixPath.get("/extraction/path"));
     DescriptorDigest expectedSelector =
@@ -151,8 +150,8 @@ public class LayerEntriesSelectorTest {
   }
 
   @Test
-  public void testGenerateSelector_targetModificationTimeChanged() throws IOException {
-    Path layerFile = temporaryFolder.newFile().toPath();
+  void testGenerateSelector_targetModificationTimeChanged() throws IOException {
+    Path layerFile = Files.createTempFile(temporaryFolder, "jib", "test");
     AbsoluteUnixPath pathInContainer = AbsoluteUnixPath.get("/bar");
     FilePermissions permissions = FilePermissions.fromOctalString("111");
 
@@ -166,8 +165,8 @@ public class LayerEntriesSelectorTest {
   }
 
   @Test
-  public void testGenerateSelector_permissionsModified() throws IOException {
-    Path layerFile = temporaryFolder.newFolder("testFolder").toPath().resolve("file");
+  void testGenerateSelector_permissionsModified() throws IOException {
+    Path layerFile = Files.createTempDirectory(temporaryFolder, "testFolder").resolve("file");
     Files.write(layerFile, "hello".getBytes(StandardCharsets.UTF_8));
     FileEntry layerEntry111 =
         new FileEntry(
@@ -189,8 +188,8 @@ public class LayerEntriesSelectorTest {
   }
 
   @Test
-  public void testGenerateSelector_ownersModified() throws IOException {
-    Path layerFile = temporaryFolder.newFolder("testFolder").toPath().resolve("file");
+  void testGenerateSelector_ownersModified() throws IOException {
+    Path layerFile = Files.createTempDirectory(temporaryFolder, "testFolder").resolve("file");
     Files.write(layerFile, "hello".getBytes(StandardCharsets.UTF_8));
     FileEntry layerEntry111 =
         new FileEntry(

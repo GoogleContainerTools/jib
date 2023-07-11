@@ -17,20 +17,20 @@
 package com.google.cloud.tools.jib.http;
 
 import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /** Tests for {@link Request}. */
-public class RequestTest {
+class RequestTest {
 
   @Test
-  public void testGetHttpTimeout() {
+  void testGetHttpTimeout() {
     Request request = Request.builder().build();
 
     Assert.assertNull(request.getHttpTimeout());
   }
 
   @Test
-  public void testSetHttpTimeout() {
+  void testSetHttpTimeout() {
     Request request = Request.builder().setHttpTimeout(3000).build();
 
     Assert.assertEquals(Integer.valueOf(3000), request.getHttpTimeout());

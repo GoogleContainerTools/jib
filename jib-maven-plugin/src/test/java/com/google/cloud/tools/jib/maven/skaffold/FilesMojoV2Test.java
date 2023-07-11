@@ -30,15 +30,24 @@ import java.util.List;
 import org.apache.maven.it.VerificationException;
 import org.apache.maven.it.Verifier;
 import org.junit.Assert;
-import org.junit.ClassRule;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junit.jupiter.api.io.TempDir;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
 /** Tests for {@link FilesMojoV2}. */
-public class FilesMojoV2Test {
+@ExtendWith({MockitoExtension.class})
+@MockitoSettings(strictness = Strictness.LENIENT)
+class FilesMojoV2Test {
+  @TempDir Path tempDir;
 
-  @ClassRule public static final TestProject simpleTestProject = new TestProject("simple");
+  @RegisterExtension
+  public final TestProject simpleTestProject = new TestProject("simple", tempDir);
 
-  @ClassRule public static final TestProject multiTestProject = new TestProject("multi");
+  @RegisterExtension public final TestProject multiTestProject = new TestProject("multi", tempDir);
 
   private static void verifyFiles(
       Path projectRoot,
@@ -75,7 +84,7 @@ public class FilesMojoV2Test {
   }
 
   @Test
-  public void testFilesMojo_singleModule() throws VerificationException, IOException {
+  void testFilesMojo_singleModule() throws VerificationException, IOException {
     Path projectRoot = simpleTestProject.getProjectRoot();
 
     verifyFiles(
@@ -92,7 +101,7 @@ public class FilesMojoV2Test {
   }
 
   @Test
-  public void testFilesMojo_singleModuleWithMultipleExtraDirectories()
+  void testFilesMojo_singleModuleWithMultipleExtraDirectories()
       throws VerificationException, IOException {
     Path projectRoot = simpleTestProject.getProjectRoot();
 
@@ -111,7 +120,7 @@ public class FilesMojoV2Test {
   }
 
   @Test
-  public void testFilesMojo_multiModuleSimpleService() throws VerificationException, IOException {
+  void testFilesMojo_multiModuleSimpleService() throws VerificationException, IOException {
     Path projectRoot = multiTestProject.getProjectRoot();
     Path simpleServiceRoot = projectRoot.resolve("simple-service");
 
@@ -131,7 +140,7 @@ public class FilesMojoV2Test {
   }
 
   @Test
-  public void testFilesMojo_multiModuleComplexService() throws VerificationException, IOException {
+  void testFilesMojo_multiModuleComplexService() throws VerificationException, IOException {
     Path projectRoot = multiTestProject.getProjectRoot();
     Path complexServiceRoot = projectRoot.resolve("complex-service");
     Path libRoot = projectRoot.resolve("lib");
@@ -162,7 +171,7 @@ public class FilesMojoV2Test {
   }
 
   @Test
-  public void testFilesMojo_extraDirectoriesProperty() throws VerificationException, IOException {
+  void testFilesMojo_extraDirectoriesProperty() throws VerificationException, IOException {
     Path projectRoot = simpleTestProject.getProjectRoot();
 
     verifyFiles(
@@ -181,7 +190,7 @@ public class FilesMojoV2Test {
   }
 
   @Test
-  public void testFilesMojo_skaffoldConfigProperties() throws VerificationException, IOException {
+  void testFilesMojo_skaffoldConfigProperties() throws VerificationException, IOException {
     Path projectRoot = simpleTestProject.getProjectRoot();
 
     verifyFiles(

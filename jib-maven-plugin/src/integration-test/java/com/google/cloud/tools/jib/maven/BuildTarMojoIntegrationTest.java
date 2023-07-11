@@ -18,6 +18,7 @@ package com.google.cloud.tools.jib.maven;
 
 import com.google.cloud.tools.jib.Command;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.security.DigestException;
 import java.util.Arrays;
 import org.apache.maven.it.VerificationException;
@@ -25,14 +26,25 @@ import org.apache.maven.it.Verifier;
 import org.hamcrest.CoreMatchers;
 import org.hamcrest.MatcherAssert;
 import org.junit.Assert;
-import org.junit.ClassRule;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junit.jupiter.api.io.TempDir;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class BuildTarMojoIntegrationTest {
 
-  @ClassRule public static final TestProject simpleTestProject = new TestProject("simple");
+  @TempDir Path tempDir;
 
-  @ClassRule public static final TestProject skippedTestProject = new TestProject("empty");
+  @RegisterExtension
+  public final TestProject simpleTestProject = new TestProject("simple", tempDir);
+
+  @RegisterExtension
+  public final TestProject skippedTestProject = new TestProject("empty", tempDir);
 
   @Test
   public void testExecute_simple()

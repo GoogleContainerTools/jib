@@ -33,22 +33,39 @@ import org.gradle.testkit.runner.TaskOutcome;
 import org.hamcrest.CoreMatchers;
 import org.hamcrest.MatcherAssert;
 import org.junit.Assert;
-import org.junit.ClassRule;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junit.jupiter.api.io.TempDir;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
 /** Tests for {@link FilesTaskV2}. */
-public class FilesTaskV2Test {
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
+class FilesTaskV2Test {
 
-  @ClassRule public static final TestProject simpleTestProject = new TestProject("simple");
+  @TempDir Path tempDir;
 
-  @ClassRule
-  public static final TestProject skaffoldTestProject = new TestProject("skaffold-config");
+  @TempDir Path tempDirSkaffoldTestProject;
 
-  @ClassRule public static final TestProject multiTestProject = new TestProject("multi-service");
+  @TempDir Path tempDirMulti;
 
-  @ClassRule
-  public static final TestProject platformProject =
-      new TestProject("platform").withGradleVersion("5.2");
+  @TempDir Path tempDirPlatform;
+
+  @RegisterExtension public TestProject simpleTestProject = new TestProject("simple", tempDir);
+
+  @RegisterExtension
+  public TestProject skaffoldTestProject =
+      new TestProject("skaffold-config", tempDirSkaffoldTestProject);
+
+  @RegisterExtension
+  public TestProject multiTestProject = new TestProject("multi-service", tempDirMulti);
+
+  @RegisterExtension
+  public TestProject platformProject =
+      new TestProject("platform", tempDirPlatform).withGradleVersion("8.4");
 
   /**
    * Verifies that the files task succeeded and returns the list of paths it prints out.
@@ -60,7 +77,8 @@ public class FilesTaskV2Test {
   private static String verifyTaskSuccess(TestProject project, @Nullable String moduleName) {
     String taskName =
         ":" + (moduleName == null ? "" : moduleName + ":") + JibPlugin.SKAFFOLD_FILES_TASK_V2_NAME;
-    BuildResult buildResult = project.build(taskName, "-q", "-D_TARGET_IMAGE=ignored");
+    BuildResult buildResult =
+        project.build(taskName, "-q", "-D_TARGET_IMAGE=ignored", "--stacktrace");
     BuildTask jibTask = buildResult.task(taskName);
     Assert.assertNotNull(jibTask);
     Assert.assertEquals(TaskOutcome.SUCCESS, jibTask.getOutcome());
@@ -89,7 +107,7 @@ public class FilesTaskV2Test {
   }
 
   @Test
-  public void testFilesTask_singleProject() throws IOException {
+  void testFilesTask_singleProject() throws IOException {
     Path projectRoot = simpleTestProject.getProjectRoot();
     SkaffoldFilesOutput result =
         new SkaffoldFilesOutput(verifyTaskSuccess(simpleTestProject, null));
@@ -105,7 +123,7 @@ public class FilesTaskV2Test {
   }
 
   @Test
-  public void testFilesTask_multiProjectSimpleService() throws IOException {
+  void testFilesTask_multiProjectSimpleService() throws IOException {
     Path projectRoot = multiTestProject.getProjectRoot();
     Path simpleServiceRoot = projectRoot.resolve("simple-service");
     SkaffoldFilesOutput result =
@@ -123,7 +141,7 @@ public class FilesTaskV2Test {
   }
 
   @Test
-  public void testFilesTask_multiProjectComplexService() throws IOException {
+  void testFilesTask_multiProjectComplexService() throws IOException {
     Path projectRoot = multiTestProject.getProjectRoot();
     Path complexServiceRoot = projectRoot.resolve("complex-service");
     Path libRoot = projectRoot.resolve("lib");
@@ -152,7 +170,7 @@ public class FilesTaskV2Test {
   }
 
   @Test
-  public void testFilesTask_platformProject() throws IOException {
+  void testFilesTask_platformProject() throws IOException {
     Path projectRoot = platformProject.getProjectRoot();
     Path platformRoot = projectRoot.resolve("platform");
     Path serviceRoot = projectRoot.resolve("service");
@@ -171,7 +189,7 @@ public class FilesTaskV2Test {
   }
 
   @Test
-  public void testFilesTast_withConfigModifiers() throws IOException {
+  void testFilesTast_withConfigModifiers() throws IOException {
     Path projectRoot = skaffoldTestProject.getProjectRoot();
     SkaffoldFilesOutput result =
         new SkaffoldFilesOutput(verifyTaskSuccess(skaffoldTestProject, null));

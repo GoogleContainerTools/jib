@@ -21,18 +21,18 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
 import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 /** Tests for {@link ManifestListGenerator}. */
-public class ManifestListGeneratorTest {
+class ManifestListGeneratorTest {
 
   private Image image1;
   private Image image2;
   private ManifestListGenerator manifestListGenerator;
 
-  @Before
-  public void setUp() {
+  @BeforeEach
+  void setUp() {
     image1 =
         Image.builder(V22ManifestTemplate.class).setArchitecture("amd64").setOs("linux").build();
     image2 =
@@ -41,7 +41,7 @@ public class ManifestListGeneratorTest {
   }
 
   @Test
-  public void testGetManifestListTemplate() throws IOException {
+  void testGetManifestListTemplate() throws IOException {
 
     // Expected Manifest List JSON
     //  {
@@ -83,7 +83,7 @@ public class ManifestListGeneratorTest {
   }
 
   @Test
-  public void testGetManifestListTemplate_emptyImagesList() throws IOException {
+  void testGetManifestListTemplate_emptyImagesList() throws IOException {
     try {
       new ManifestListGenerator(Collections.emptyList())
           .getManifestListTemplate(V22ManifestTemplate.class);
@@ -94,7 +94,7 @@ public class ManifestListGeneratorTest {
   }
 
   @Test
-  public void testGetManifestListTemplate_unsupportedImageFormat() throws IOException {
+  void testGetManifestListTemplate_unsupportedImageFormat() throws IOException {
     try {
       new ManifestListGenerator(Arrays.asList(image1, image2))
           .getManifestListTemplate(OciManifestTemplate.class);

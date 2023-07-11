@@ -18,10 +18,10 @@ package com.google.cloud.tools.jib.cache;
 
 import java.util.concurrent.TimeUnit;
 import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /** Tests for {@link Retry}. */
-public class RetryTest {
+class RetryTest {
   private int actionCount = 0;
 
   private boolean successfulAction() {
@@ -40,28 +40,28 @@ public class RetryTest {
   }
 
   @Test
-  public void testSuccessfulAction() throws Exception {
+  void testSuccessfulAction() throws Exception {
     boolean result = Retry.action(this::successfulAction).run();
     Assert.assertTrue(result);
     Assert.assertEquals(1, actionCount);
   }
 
   @Test
-  public void testMaximumRetries_default() throws Exception {
+  void testMaximumRetries_default() throws Exception {
     boolean result = Retry.action(this::unsuccessfulAction).run();
     Assert.assertFalse(result);
     Assert.assertEquals(5, actionCount);
   }
 
   @Test
-  public void testMaximumRetries_specified() throws Exception {
+  void testMaximumRetries_specified() throws Exception {
     boolean result = Retry.action(this::unsuccessfulAction).maximumRetries(2).run();
     Assert.assertFalse(result);
     Assert.assertEquals(2, actionCount);
   }
 
   @Test
-  public void testRetryableException() {
+  void testRetryableException() {
     // all exceptions are retryable by default, so should retry 5 times
     try {
       Retry.action(this::exceptionAction).run();
@@ -73,7 +73,7 @@ public class RetryTest {
   }
 
   @Test
-  public void testNonRetryableException() {
+  void testNonRetryableException() {
     // the exception is not ok and so should only try 1 time
     try {
       Retry.action(this::exceptionAction).retryOnException(ex -> false).run();
@@ -85,7 +85,7 @@ public class RetryTest {
   }
 
   @Test
-  public void testInterruptSleep() throws Exception {
+  void testInterruptSleep() throws Exception {
     // interrupt the current thread so as to cause the retry's sleep() to throw
     // an InterruptedException
     Thread.currentThread().interrupt();
@@ -100,7 +100,7 @@ public class RetryTest {
   }
 
   @Test
-  public void testInvalid_maximumRetries() {
+  void testInvalid_maximumRetries() {
     try {
       Retry.action(this::successfulAction).maximumRetries(0);
       Assert.fail();
@@ -110,7 +110,7 @@ public class RetryTest {
   }
 
   @Test
-  public void testInvalid_sleep() {
+  void testInvalid_sleep() {
     try {
       Retry.action(this::successfulAction).sleep(-1, TimeUnit.DAYS);
       Assert.fail();

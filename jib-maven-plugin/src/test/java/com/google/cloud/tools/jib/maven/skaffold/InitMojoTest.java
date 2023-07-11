@@ -32,18 +32,27 @@ import org.apache.maven.it.Verifier;
 import org.hamcrest.CoreMatchers;
 import org.hamcrest.MatcherAssert;
 import org.junit.Assert;
-import org.junit.ClassRule;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junit.jupiter.api.io.TempDir;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
 /** Tests for {@link InitMojo}. */
-public class InitMojoTest {
+@ExtendWith({MockitoExtension.class})
+@MockitoSettings(strictness = Strictness.LENIENT)
+class InitMojoTest {
 
-  @ClassRule public static final TestProject simpleTestProject = new TestProject("simple");
+  @TempDir Path tempDir;
 
-  @ClassRule public static final TestProject multiTestProject = new TestProject("multi");
+  @RegisterExtension public TestProject simpleTestProject = new TestProject("simple", tempDir);
 
-  @ClassRule
-  public static final TestProject springTestProject = new TestProject("spring-boot-multi");
+  @RegisterExtension public TestProject multiTestProject = new TestProject("multi", tempDir);
+
+  @RegisterExtension
+  public TestProject springTestProject = new TestProject("spring-boot-multi", tempDir);
 
   /**
    * Verifies that the files task succeeded and returns the list of JSON strings printed by the
@@ -76,7 +85,7 @@ public class InitMojoTest {
   }
 
   @Test
-  public void testFilesMojo_singleModule() throws IOException, VerificationException {
+  void testFilesMojo_singleModule() throws IOException, VerificationException {
     List<String> outputs = getJsons(simpleTestProject);
     Assert.assertEquals(1, outputs.size());
 
@@ -86,7 +95,7 @@ public class InitMojoTest {
   }
 
   @Test
-  public void testFilesMojo_multiModule() throws IOException, VerificationException {
+  void testFilesMojo_multiModule() throws IOException, VerificationException {
     List<String> outputs = getJsons(multiTestProject);
     Assert.assertEquals(3, outputs.size());
 
@@ -104,8 +113,7 @@ public class InitMojoTest {
   }
 
   @Test
-  public void testFilesMojo_multiModule_differentParent()
-      throws IOException, VerificationException {
+  void testFilesMojo_multiModule_differentParent() throws IOException, VerificationException {
     List<String> outputs = getJsons(springTestProject);
     Assert.assertEquals(2, outputs.size());
 

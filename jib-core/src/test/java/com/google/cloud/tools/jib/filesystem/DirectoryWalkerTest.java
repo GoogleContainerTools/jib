@@ -25,24 +25,24 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 /** Tests for {@link DirectoryWalker}. */
-public class DirectoryWalkerTest {
+class DirectoryWalkerTest {
 
   private final Set<Path> walkedPaths = new HashSet<>();
   private final PathConsumer addToWalkedPaths = walkedPaths::add;
 
   private Path testDir;
 
-  @Before
-  public void setUp() throws URISyntaxException {
+  @BeforeEach
+  void setUp() throws URISyntaxException {
     testDir = Paths.get(Resources.getResource("core/layer").toURI());
   }
 
   @Test
-  public void testWalk() throws IOException {
+  void testWalk() throws IOException {
     new DirectoryWalker(testDir).walk(addToWalkedPaths);
 
     Set<Path> expectedPaths =
@@ -59,7 +59,7 @@ public class DirectoryWalkerTest {
   }
 
   @Test
-  public void testWalk_withFilter() throws IOException {
+  void testWalk_withFilter() throws IOException {
     // Filters to immediate subdirectories of testDir, and foo.
     new DirectoryWalker(testDir)
         .filter(path -> path.getParent().equals(testDir))
@@ -72,7 +72,7 @@ public class DirectoryWalkerTest {
   }
 
   @Test
-  public void testWalk_withFilterRoot() throws IOException {
+  void testWalk_withFilterRoot() throws IOException {
     new DirectoryWalker(testDir).filterRoot().walk(addToWalkedPaths);
 
     Set<Path> expectedPaths =

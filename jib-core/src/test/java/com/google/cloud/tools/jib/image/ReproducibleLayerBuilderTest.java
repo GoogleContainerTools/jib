@@ -40,12 +40,11 @@ import java.nio.file.attribute.FileTime;
 import java.time.Instant;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 /** Tests for {@link ReproducibleLayerBuilder}. */
-public class ReproducibleLayerBuilderTest {
+class ReproducibleLayerBuilderTest {
 
   /**
    * Verifies the correctness of the next {@link TarArchiveEntry} in the {@link
@@ -92,10 +91,10 @@ public class ReproducibleLayerBuilderTest {
         FileEntriesLayer.DEFAULT_MODIFICATION_TIME);
   }
 
-  @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
+  @TempDir public Path temporaryFolder;
 
   @Test
-  public void testBuild() throws URISyntaxException, IOException {
+  void testBuild() throws URISyntaxException, IOException {
     Path layerDirectory = Paths.get(Resources.getResource("core/layer").toURI());
     Path blobA = Paths.get(Resources.getResource("core/blobA").toURI());
 
@@ -112,7 +111,7 @@ public class ReproducibleLayerBuilderTest {
 
     // Writes the layer tar to a temporary file.
     Blob unwrittenBlob = layerBuilder.build();
-    Path temporaryFile = temporaryFolder.newFile().toPath();
+    Path temporaryFile = Files.createTempFile(temporaryFolder, "jib", "test");
     try (OutputStream temporaryFileOutputStream =
         new BufferedOutputStream(Files.newOutputStream(temporaryFile))) {
       unwrittenBlob.writeTo(temporaryFileOutputStream);
@@ -147,8 +146,8 @@ public class ReproducibleLayerBuilderTest {
   }
 
   @Test
-  public void testToBlob_reproducibility() throws IOException {
-    Path testRoot = temporaryFolder.getRoot().toPath();
+  void testToBlob_reproducibility() throws IOException {
+    Path testRoot = temporaryFolder;
     Path root1 = Files.createDirectories(testRoot.resolve("files1"));
     Path root2 = Files.createDirectories(testRoot.resolve("files2"));
 
@@ -186,8 +185,8 @@ public class ReproducibleLayerBuilderTest {
   }
 
   @Test
-  public void testBuild_parentDirBehavior() throws IOException {
-    Path testRoot = temporaryFolder.getRoot().toPath();
+  void testBuild_parentDirBehavior() throws IOException {
+    Path testRoot = temporaryFolder;
 
     // the path doesn't really matter on source files, but these are structured
     Path parent = Files.createDirectories(testRoot.resolve("dirA"));
@@ -227,7 +226,7 @@ public class ReproducibleLayerBuilderTest {
                         Instant.ofEpochSecond(50))))
             .build();
 
-    Path tarFile = temporaryFolder.newFile().toPath();
+    Path tarFile = Files.createTempFile(temporaryFolder, "jib", "test");
     try (OutputStream out = new BufferedOutputStream(Files.newOutputStream(tarFile))) {
       layer.writeTo(out);
     }
@@ -282,15 +281,16 @@ public class ReproducibleLayerBuilderTest {
   }
 
   @Test
-  public void testBuild_timestampDefault() throws IOException {
-    Path file = createFile(temporaryFolder.getRoot().toPath(), "fileA", "some content", 54321);
+  void testBuild_timestampDefault() throws IOException {
+    Path file = createFile(temporaryFolder, "fileA", "some content", 54321);
 
     Blob blob =
         new ReproducibleLayerBuilder(
                 ImmutableList.of(defaultLayerEntry(file, AbsoluteUnixPath.get("/fileA"))))
             .build();
 
-    Path tarFile = temporaryFolder.newFile().toPath();
+    Path tarFile = Files.createTempFile(temporaryFolder, "jib", "test");
+    ;
     try (OutputStream out = new BufferedOutputStream(Files.newOutputStream(tarFile))) {
       blob.writeTo(out);
     }
@@ -303,8 +303,8 @@ public class ReproducibleLayerBuilderTest {
   }
 
   @Test
-  public void testBuild_timestampNonDefault() throws IOException {
-    Path file = createFile(temporaryFolder.getRoot().toPath(), "fileA", "some content", 54321);
+  void testBuild_timestampNonDefault() throws IOException {
+    Path file = createFile(temporaryFolder, "fileA", "some content", 54321);
 
     Blob blob =
         new ReproducibleLayerBuilder(
@@ -316,7 +316,8 @@ public class ReproducibleLayerBuilderTest {
                         Instant.ofEpochSecond(123))))
             .build();
 
-    Path tarFile = temporaryFolder.newFile().toPath();
+    Path tarFile = Files.createTempFile(temporaryFolder, "jib", "test");
+    ;
     try (OutputStream out = new BufferedOutputStream(Files.newOutputStream(tarFile))) {
       blob.writeTo(out);
     }
@@ -329,8 +330,8 @@ public class ReproducibleLayerBuilderTest {
   }
 
   @Test
-  public void testBuild_permissions() throws IOException {
-    Path testRoot = temporaryFolder.getRoot().toPath();
+  void testBuild_permissions() throws IOException {
+    Path testRoot = temporaryFolder;
     Path folder = Files.createDirectories(testRoot.resolve("files1"));
     Path fileA = createFile(testRoot, "fileA", "abc", 54321);
     Path fileB = createFile(testRoot, "fileB", "def", 54321);
@@ -351,7 +352,8 @@ public class ReproducibleLayerBuilderTest {
                         FileEntriesLayer.DEFAULT_MODIFICATION_TIME)))
             .build();
 
-    Path tarFile = temporaryFolder.newFile().toPath();
+    Path tarFile = Files.createTempFile(temporaryFolder, "jib", "test");
+    ;
     try (OutputStream out = new BufferedOutputStream(Files.newOutputStream(tarFile))) {
       blob.writeTo(out);
     }
@@ -369,8 +371,9 @@ public class ReproducibleLayerBuilderTest {
   }
 
   @Test
-  public void testBuild_ownership() throws IOException {
-    Path testRoot = temporaryFolder.getRoot().toPath();
+  @SuppressWarnings("java:S5961")
+  void testBuild_ownership() throws IOException {
+    Path testRoot = temporaryFolder;
     Path someFile = createFile(testRoot, "someFile", "content", 54321);
 
     Blob blob =
@@ -427,7 +430,8 @@ public class ReproducibleLayerBuilderTest {
                         "user:group")))
             .build();
 
-    Path tarFile = temporaryFolder.newFile().toPath();
+    Path tarFile = Files.createTempFile(temporaryFolder, "jib", "test");
+    ;
     try (OutputStream out = new BufferedOutputStream(Files.newOutputStream(tarFile))) {
       blob.writeTo(out);
     }

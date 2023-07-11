@@ -25,6 +25,7 @@ import com.google.cloud.tools.jib.plugins.extension.JibPluginExtensionException;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Optional;
 import javax.annotation.Nullable;
 
 /** Project property methods that require maven/gradle-specific implementations. */
@@ -92,6 +93,15 @@ public interface ProjectProperties {
 
   JibContainerBuilder runPluginExtensions(
       List<? extends ExtensionConfiguration> extensionConfigs,
-      JibContainerBuilder jibContainerBuilder)
+      JibContainerBuilder jibContainerBuilder,
+      Optional<Object> project)
       throws JibPluginExtensionException;
+
+  default JibContainerBuilder runPluginExtensions(
+      List<? extends ExtensionConfiguration> extensionConfigs,
+      JibContainerBuilder jibContainerBuilder)
+      throws JibPluginExtensionException {
+    return runPluginExtensions(
+        extensionConfigs, jibContainerBuilder, Optional.empty()); // for maven
+  }
 }

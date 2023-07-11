@@ -25,78 +25,71 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Properties;
 import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 /** Tests for {@link XdgDirectories}. */
-public class XdgDirectoriesTest {
+class XdgDirectoriesTest {
 
-  @Rule public TemporaryFolder temporaryFolder = new TemporaryFolder();
-
-  private String fakeCacheHome;
-  private String fakeConfigHome;
-
-  @Before
-  public void setUp() throws IOException {
-    fakeCacheHome = temporaryFolder.newFolder().getPath();
-    fakeConfigHome = temporaryFolder.newFolder().getPath();
-  }
+  @TempDir private Path fakeCacheHome;
+  @TempDir private Path fakeConfigHome;
 
   @Test
-  public void testGetCacheHome_hasXdgCacheHome() {
+  void testGetCacheHome_hasXdgCacheHome() {
     Properties fakeProperties = new Properties();
-    fakeProperties.setProperty("user.home", fakeCacheHome);
-    Map<String, String> fakeEnvironment = ImmutableMap.of("XDG_CACHE_HOME", fakeCacheHome);
+    fakeProperties.setProperty("user.home", fakeCacheHome.toString());
+    Map<String, String> fakeEnvironment =
+        ImmutableMap.of("XDG_CACHE_HOME", fakeCacheHome.toString());
 
     fakeProperties.setProperty("os.name", "linux");
     Assert.assertEquals(
-        Paths.get(fakeCacheHome).resolve("google-cloud-tools-java").resolve("jib"),
+        fakeCacheHome.resolve("google-cloud-tools-java").resolve("jib"),
         XdgDirectories.getCacheHome(fakeProperties, fakeEnvironment));
 
     fakeProperties.setProperty("os.name", "windows");
     Assert.assertEquals(
-        Paths.get(fakeCacheHome).resolve("Google").resolve("Jib").resolve("Cache"),
+        fakeCacheHome.resolve("Google").resolve("Jib").resolve("Cache"),
         XdgDirectories.getCacheHome(fakeProperties, fakeEnvironment));
 
     fakeProperties.setProperty("os.name", "mac");
     Assert.assertEquals(
-        Paths.get(fakeCacheHome).resolve("Google").resolve("Jib"),
+        fakeCacheHome.resolve("Google").resolve("Jib"),
         XdgDirectories.getCacheHome(fakeProperties, fakeEnvironment));
   }
 
   @Test
-  public void testGetCacheHome_linux() {
+  void testGetCacheHome_linux() {
     Properties fakeProperties = new Properties();
-    fakeProperties.setProperty("user.home", fakeCacheHome);
+    fakeProperties.setProperty("user.home", fakeCacheHome.toString());
     fakeProperties.setProperty("os.name", "os is LiNuX");
 
     Assert.assertEquals(
-        Paths.get(fakeCacheHome, ".cache").resolve("google-cloud-tools-java").resolve("jib"),
+        Paths.get(fakeCacheHome.toString(), ".cache")
+            .resolve("google-cloud-tools-java")
+            .resolve("jib"),
         XdgDirectories.getCacheHome(fakeProperties, Collections.emptyMap()));
   }
 
   @Test
-  public void testGetCacheHome_windows() {
+  void testGetCacheHome_windows() {
     Properties fakeProperties = new Properties();
     fakeProperties.setProperty("user.home", "nonexistent");
     fakeProperties.setProperty("os.name", "os is WiNdOwS");
 
-    Map<String, String> fakeEnvironment = ImmutableMap.of("LOCALAPPDATA", fakeCacheHome);
+    Map<String, String> fakeEnvironment = ImmutableMap.of("LOCALAPPDATA", fakeCacheHome.toString());
 
     Assert.assertEquals(
-        Paths.get(fakeCacheHome).resolve("Google").resolve("Jib").resolve("Cache"),
+        fakeCacheHome.resolve("Google").resolve("Jib").resolve("Cache"),
         XdgDirectories.getCacheHome(fakeProperties, fakeEnvironment));
   }
 
   @Test
-  public void testGetCacheHome_mac() throws IOException {
-    Path libraryApplicationSupport = Paths.get(fakeCacheHome, "Library", "Caches");
+  void testGetCacheHome_mac() throws IOException {
+    Path libraryApplicationSupport = Paths.get(fakeCacheHome.toString(), "Library", "Caches");
     Files.createDirectories(libraryApplicationSupport);
 
     Properties fakeProperties = new Properties();
-    fakeProperties.setProperty("user.home", fakeCacheHome);
+    fakeProperties.setProperty("user.home", fakeCacheHome.toString());
     fakeProperties.setProperty("os.name", "os is mAc or DaRwIn");
 
     Assert.assertEquals(
@@ -105,58 +98,62 @@ public class XdgDirectoriesTest {
   }
 
   @Test
-  public void testGetConfigHome_hasXdgConfigHome() {
+  void testGetConfigHome_hasXdgConfigHome() {
     Properties fakeProperties = new Properties();
-    fakeProperties.setProperty("user.home", fakeConfigHome);
-    Map<String, String> fakeEnvironment = ImmutableMap.of("XDG_CONFIG_HOME", fakeConfigHome);
+    fakeProperties.setProperty("user.home", fakeConfigHome.toString());
+    Map<String, String> fakeEnvironment =
+        ImmutableMap.of("XDG_CONFIG_HOME", fakeConfigHome.toString());
 
     fakeProperties.setProperty("os.name", "linux");
     Assert.assertEquals(
-        Paths.get(fakeConfigHome).resolve("google-cloud-tools-java").resolve("jib"),
+        fakeConfigHome.resolve("google-cloud-tools-java").resolve("jib"),
         XdgDirectories.getConfigHome(fakeProperties, fakeEnvironment));
 
     fakeProperties.setProperty("os.name", "windows");
     Assert.assertEquals(
-        Paths.get(fakeConfigHome).resolve("Google").resolve("Jib").resolve("Config"),
+        fakeConfigHome.resolve("Google").resolve("Jib").resolve("Config"),
         XdgDirectories.getConfigHome(fakeProperties, fakeEnvironment));
 
     fakeProperties.setProperty("os.name", "mac");
     Assert.assertEquals(
-        Paths.get(fakeConfigHome).resolve("Google").resolve("Jib"),
+        fakeConfigHome.resolve("Google").resolve("Jib"),
         XdgDirectories.getConfigHome(fakeProperties, fakeEnvironment));
   }
 
   @Test
-  public void testGetConfigHome_linux() {
+  void testGetConfigHome_linux() {
     Properties fakeProperties = new Properties();
-    fakeProperties.setProperty("user.home", fakeConfigHome);
+    fakeProperties.setProperty("user.home", fakeConfigHome.toString());
     fakeProperties.setProperty("os.name", "os is LiNuX");
 
     Assert.assertEquals(
-        Paths.get(fakeConfigHome, ".config").resolve("google-cloud-tools-java").resolve("jib"),
+        Paths.get(fakeConfigHome.toString(), ".config")
+            .resolve("google-cloud-tools-java")
+            .resolve("jib"),
         XdgDirectories.getConfigHome(fakeProperties, Collections.emptyMap()));
   }
 
   @Test
-  public void testGetConfigHome_windows() {
+  void testGetConfigHome_windows() {
     Properties fakeProperties = new Properties();
     fakeProperties.setProperty("user.home", "nonexistent");
     fakeProperties.setProperty("os.name", "os is WiNdOwS");
 
-    Map<String, String> fakeEnvironment = ImmutableMap.of("LOCALAPPDATA", fakeConfigHome);
+    Map<String, String> fakeEnvironment =
+        ImmutableMap.of("LOCALAPPDATA", fakeConfigHome.toString());
 
     Assert.assertEquals(
-        Paths.get(fakeConfigHome).resolve("Google").resolve("Jib").resolve("Config"),
+        fakeConfigHome.resolve("Google").resolve("Jib").resolve("Config"),
         XdgDirectories.getConfigHome(fakeProperties, fakeEnvironment));
   }
 
   @Test
-  public void testGetConfigHome_mac() throws IOException {
-    Path libraryApplicationSupport = Paths.get(fakeConfigHome, "Library", "Preferences");
+  void testGetConfigHome_mac() throws IOException {
+    Path libraryApplicationSupport = Paths.get(fakeConfigHome.toString(), "Library", "Preferences");
     Files.createDirectories(libraryApplicationSupport);
 
     Properties fakeProperties = new Properties();
-    fakeProperties.setProperty("user.home", fakeConfigHome);
+    fakeProperties.setProperty("user.home", fakeConfigHome.toString());
     fakeProperties.setProperty("os.name", "os is mAc or DaRwIn");
 
     Assert.assertEquals(

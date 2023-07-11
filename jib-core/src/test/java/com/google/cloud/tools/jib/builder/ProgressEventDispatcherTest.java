@@ -20,21 +20,24 @@ import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.event.events.ProgressEvent;
 import java.util.List;
 import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
 /** Tests for {@link ProgressEventDispatcher}. */
-@RunWith(MockitoJUnitRunner.class)
-public class ProgressEventDispatcherTest {
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
+class ProgressEventDispatcherTest {
 
   @Mock private EventHandlers mockEventHandlers;
 
   @Test
-  public void testDispatch() {
+  void testDispatch() {
     try (ProgressEventDispatcher progressEventDispatcher =
             ProgressEventDispatcher.newRoot(mockEventHandlers, "ignored", 10);
         ProgressEventDispatcher ignored =
@@ -58,7 +61,7 @@ public class ProgressEventDispatcherTest {
   }
 
   @Test
-  public void testDispatch_safeWithtooMuchProgress() {
+  void testDispatch_safeWithtooMuchProgress() {
     try (ProgressEventDispatcher progressEventDispatcher =
         ProgressEventDispatcher.newRoot(mockEventHandlers, "allocation description", 10)) {
       progressEventDispatcher.dispatchProgress(6);
@@ -83,7 +86,7 @@ public class ProgressEventDispatcherTest {
   }
 
   @Test
-  public void testDispatch_safeWithTooManyChildren() {
+  void testDispatch_safeWithTooManyChildren() {
     try (ProgressEventDispatcher progressEventDispatcher =
             ProgressEventDispatcher.newRoot(mockEventHandlers, "allocation description", 1);
         ProgressEventDispatcher ignored1 =

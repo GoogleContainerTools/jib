@@ -20,6 +20,7 @@ import com.google.cloud.tools.jib.gradle.JibPlugin;
 import com.google.cloud.tools.jib.gradle.TestProject;
 import com.google.cloud.tools.jib.plugins.common.SkaffoldInitOutput;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -30,15 +31,21 @@ import org.gradle.testkit.runner.TaskOutcome;
 import org.hamcrest.CoreMatchers;
 import org.hamcrest.MatcherAssert;
 import org.junit.Assert;
-import org.junit.ClassRule;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junit.jupiter.api.io.TempDir;
 
 /** Tests for {@link InitTask}. */
-public class InitTaskTest {
+class InitTaskTest {
 
-  @ClassRule public static final TestProject simpleTestProject = new TestProject("simple");
+  @TempDir Path tempDir;
 
-  @ClassRule public static final TestProject multiTestProject = new TestProject("multi-service");
+  @TempDir Path tempDirMulti;
+
+  @RegisterExtension public TestProject simpleTestProject = new TestProject("simple", tempDir);
+
+  @RegisterExtension
+  public final TestProject multiTestProject = new TestProject("multi-service", tempDirMulti);
 
   /**
    * Verifies that the files task succeeded and returns the list of JSON strings printed by the
@@ -68,7 +75,7 @@ public class InitTaskTest {
   }
 
   @Test
-  public void testFilesTask_singleProject() throws IOException {
+  void testFilesTask_singleProject() throws IOException {
     List<String> outputs = getJsons(simpleTestProject);
     Assert.assertEquals(1, outputs.size());
 
@@ -78,7 +85,7 @@ public class InitTaskTest {
   }
 
   @Test
-  public void testFilesTask_multiProject() throws IOException {
+  void testFilesTask_multiProject() throws IOException {
     List<String> outputs = getJsons(multiTestProject);
     Assert.assertEquals(2, outputs.size());
 

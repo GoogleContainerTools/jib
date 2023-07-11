@@ -30,13 +30,13 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /** Tests for {@link ContainerConfiguration}. */
-public class ContainerConfigurationTest {
+class ContainerConfigurationTest {
 
   @Test
-  public void testBuilder_nullValues() {
+  void testBuilder_nullValues() {
     // Java arguments element should not be null.
     try {
       ContainerConfiguration.builder().setProgramArguments(Arrays.asList("first", null));
@@ -112,7 +112,7 @@ public class ContainerConfigurationTest {
 
   @Test
   @SuppressWarnings("JdkObsolete") // for hashtable
-  public void testBuilder_environmentMapTypes() {
+  void testBuilder_environmentMapTypes() {
     // Can accept empty environment.
     Assert.assertNotNull(
         ContainerConfiguration.builder().setEnvironment(ImmutableMap.of()).build());
@@ -122,20 +122,20 @@ public class ContainerConfigurationTest {
   }
 
   @Test
-  public void testBuilder_user() {
+  void testBuilder_user() {
     ContainerConfiguration configuration = ContainerConfiguration.builder().setUser("john").build();
     Assert.assertEquals("john", configuration.getUser());
   }
 
   @Test
-  public void testBuilder_workingDirectory() {
+  void testBuilder_workingDirectory() {
     ContainerConfiguration configuration =
         ContainerConfiguration.builder().setWorkingDirectory(AbsoluteUnixPath.get("/path")).build();
     Assert.assertEquals(AbsoluteUnixPath.get("/path"), configuration.getWorkingDirectory());
   }
 
   @Test
-  public void testSetPlatforms_emptySet() {
+  void testSetPlatforms_emptySet() {
     try {
       ContainerConfiguration.builder().setPlatforms(Collections.emptySet()).build();
       Assert.fail();
@@ -145,7 +145,7 @@ public class ContainerConfigurationTest {
   }
 
   @Test
-  public void testAddPlatform_duplicatePlatforms() {
+  void testAddPlatform_duplicatePlatforms() {
     ContainerConfiguration configuration =
         ContainerConfiguration.builder()
             .addPlatform("testArchitecture", "testOS")

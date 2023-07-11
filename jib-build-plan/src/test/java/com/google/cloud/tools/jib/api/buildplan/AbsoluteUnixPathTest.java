@@ -16,17 +16,19 @@
 
 package com.google.cloud.tools.jib.api.buildplan;
 
+import static org.junit.jupiter.api.Assertions.assertThrows;
+
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import org.junit.Assert;
 import org.junit.Assume;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /** Test for {@link AbsoluteUnixPath}. */
-public class AbsoluteUnixPathTest {
+class AbsoluteUnixPathTest {
 
   @Test
-  public void testGet_notAbsolute() {
+  void testGet_notAbsolute() {
     try {
       AbsoluteUnixPath.get("not/absolute");
       Assert.fail();
@@ -38,13 +40,13 @@ public class AbsoluteUnixPathTest {
   }
 
   @Test
-  public void testFromPath() {
+  void testFromPath() {
     Assert.assertEquals(
         "/absolute/path", AbsoluteUnixPath.fromPath(Paths.get("/absolute/path")).toString());
   }
 
   @Test
-  public void testFromPath_windows() {
+  void testFromPath_windows() {
     Assume.assumeTrue(System.getProperty("os.name").startsWith("Windows"));
 
     Assert.assertEquals(
@@ -52,7 +54,7 @@ public class AbsoluteUnixPathTest {
   }
 
   @Test
-  public void testEquals() {
+  void testEquals() {
     AbsoluteUnixPath absoluteUnixPath1 = AbsoluteUnixPath.get("/absolute/path");
     AbsoluteUnixPath absoluteUnixPath2 = AbsoluteUnixPath.get("/absolute/path/");
     AbsoluteUnixPath absoluteUnixPath3 = AbsoluteUnixPath.get("/another/path");
@@ -61,7 +63,7 @@ public class AbsoluteUnixPathTest {
   }
 
   @Test
-  public void testResolve_relativeUnixPath() {
+  void testResolve_relativeUnixPath() {
     AbsoluteUnixPath absoluteUnixPath1 = AbsoluteUnixPath.get("/");
     Assert.assertEquals(absoluteUnixPath1, absoluteUnixPath1.resolve(""));
     Assert.assertEquals("/file", absoluteUnixPath1.resolve("file").toString());
@@ -75,16 +77,16 @@ public class AbsoluteUnixPathTest {
   }
 
   @Test
-  public void testResolve_Path_notRelative() {
+  void testResolve_Path_notRelative() {
     AbsoluteUnixPath absoluteUnixPath = AbsoluteUnixPath.get("/");
     Path path = Paths.get("/not/relative");
     IllegalArgumentException exception =
-        Assert.assertThrows(IllegalArgumentException.class, () -> absoluteUnixPath.resolve(path));
+        assertThrows(IllegalArgumentException.class, () -> absoluteUnixPath.resolve(path));
     Assert.assertEquals("Cannot resolve against absolute Path: " + path, exception.getMessage());
   }
 
   @Test
-  public void testResolve_Path() {
+  void testResolve_Path() {
     AbsoluteUnixPath absoluteUnixPath1 = AbsoluteUnixPath.get("/");
     Assert.assertEquals(absoluteUnixPath1, absoluteUnixPath1.resolve(Paths.get("")));
     Assert.assertEquals("/file", absoluteUnixPath1.resolve(Paths.get("file")).toString());

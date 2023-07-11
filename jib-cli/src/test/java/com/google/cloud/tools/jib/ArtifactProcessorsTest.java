@@ -42,16 +42,18 @@ import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Optional;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.io.TempDir;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
 /** Tests for {@link ArtifactProcessors}. */
-@RunWith(MockitoJUnitRunner.class)
-public class ArtifactProcessorsTest {
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
+class ArtifactProcessorsTest {
 
   private static final String SPRING_BOOT = "jar/spring-boot/springboot_sample.jar";
   private static final String STANDARD = "jar/standard/emptyStandardJar.jar";
@@ -65,12 +67,12 @@ public class ArtifactProcessorsTest {
   @Mock private War mockWarCommand;
   @Mock private CommonContainerConfigCliOptions mockCommonContainerConfigCliOptions;
 
-  @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
+  @TempDir public Path temporaryFolder;
 
   @Test
-  public void testFromJar_standardExploded() throws IOException, URISyntaxException {
+  void testFromJar_standardExploded() throws IOException, URISyntaxException {
     Path jarPath = Paths.get(Resources.getResource(STANDARD).toURI());
-    Path explodedJarRoot = temporaryFolder.getRoot().toPath();
+    Path explodedJarRoot = temporaryFolder;
     when(mockCacheDirectories.getExplodedArtifactDirectory()).thenReturn(explodedJarRoot);
     when(mockJarCommand.getMode()).thenReturn(ProcessingMode.exploded);
 
@@ -83,7 +85,7 @@ public class ArtifactProcessorsTest {
   }
 
   @Test
-  public void testFromJar_standardPackaged() throws IOException, URISyntaxException {
+  void testFromJar_standardPackaged() throws IOException, URISyntaxException {
     Path jarPath = Paths.get(Resources.getResource(STANDARD).toURI());
     when(mockJarCommand.getMode()).thenReturn(ProcessingMode.packaged);
 
@@ -96,7 +98,7 @@ public class ArtifactProcessorsTest {
   }
 
   @Test
-  public void testFromJar_springBootPackaged() throws IOException, URISyntaxException {
+  void testFromJar_springBootPackaged() throws IOException, URISyntaxException {
     Path jarPath = Paths.get(Resources.getResource(SPRING_BOOT).toURI());
     when(mockJarCommand.getMode()).thenReturn(ProcessingMode.packaged);
 
@@ -109,9 +111,9 @@ public class ArtifactProcessorsTest {
   }
 
   @Test
-  public void testFromJar_springBootExploded() throws IOException, URISyntaxException {
+  void testFromJar_springBootExploded() throws IOException, URISyntaxException {
     Path jarPath = Paths.get(Resources.getResource(SPRING_BOOT).toURI());
-    Path explodedJarRoot = temporaryFolder.getRoot().toPath();
+    Path explodedJarRoot = temporaryFolder;
     when(mockCacheDirectories.getExplodedArtifactDirectory()).thenReturn(explodedJarRoot);
     when(mockJarCommand.getMode()).thenReturn(ProcessingMode.exploded);
 
@@ -124,7 +126,7 @@ public class ArtifactProcessorsTest {
   }
 
   @Test
-  public void testFromJar_incompatibleDefaultBaseImage() throws URISyntaxException {
+  void testFromJar_incompatibleDefaultBaseImage() throws URISyntaxException {
     Path jarPath = Paths.get(Resources.getResource(JAVA_18_JAR).toURI());
 
     IllegalStateException exception =
@@ -143,7 +145,7 @@ public class ArtifactProcessorsTest {
   }
 
   @Test
-  public void testFromJar_incompatibleDefaultBaseImage_baseImageSpecified()
+  void testFromJar_incompatibleDefaultBaseImage_baseImageSpecified()
       throws URISyntaxException, IOException {
     Path jarPath = Paths.get(Resources.getResource(JAVA_18_JAR).toURI());
     when(mockJarCommand.getMode()).thenReturn(ProcessingMode.exploded);
@@ -158,15 +160,14 @@ public class ArtifactProcessorsTest {
   }
 
   @Test
-  public void testDetermineJavaMajorVersion_versionNotFound()
-      throws URISyntaxException, IOException {
+  void testDetermineJavaMajorVersion_versionNotFound() throws URISyntaxException, IOException {
     Path jarPath = Paths.get(Resources.getResource(STANDARD).toURI());
     Integer version = ArtifactProcessors.determineJavaMajorVersion(jarPath);
     assertThat(version).isEqualTo(0);
   }
 
   @Test
-  public void testDetermineJavaMajorVersion_invalidClassFile() throws URISyntaxException {
+  void testDetermineJavaMajorVersion_invalidClassFile() throws URISyntaxException {
     Path jarPath = Paths.get(Resources.getResource(STANDARD_WITH_INVALID_CLASS).toURI());
     IllegalArgumentException exception =
         assertThrows(
@@ -178,7 +179,7 @@ public class ArtifactProcessorsTest {
   }
 
   @Test
-  public void testDetermineJavaMajorVersion_emptyClassFile() throws URISyntaxException {
+  void testDetermineJavaMajorVersion_emptyClassFile() throws URISyntaxException {
     Path jarPath = Paths.get(Resources.getResource(STANDARD_WITH_EMPTY_CLASS_FILE).toURI());
     IllegalArgumentException exception =
         assertThrows(
@@ -188,7 +189,7 @@ public class ArtifactProcessorsTest {
   }
 
   @Test
-  public void testFromWar_noJettyBaseImageAndNoAppRoot() {
+  void testFromWar_noJettyBaseImageAndNoAppRoot() {
     IllegalArgumentException exception =
         assertThrows(
             IllegalArgumentException.class,
@@ -205,7 +206,7 @@ public class ArtifactProcessorsTest {
   }
 
   @Test
-  public void testFromWar_noJettyBaseImageAndAppRootPresent_success()
+  void testFromWar_noJettyBaseImageAndAppRootPresent_success()
       throws InvalidImageReferenceException {
     when(mockWarCommand.getAppRoot()).thenReturn(Optional.of(AbsoluteUnixPath.get("/app-root")));
     when(mockCacheDirectories.getExplodedArtifactDirectory())
@@ -221,7 +222,7 @@ public class ArtifactProcessorsTest {
   }
 
   @Test
-  public void testFromWar_jettyBaseImageSpecified_success() throws InvalidImageReferenceException {
+  void testFromWar_jettyBaseImageSpecified_success() throws InvalidImageReferenceException {
     when(mockCommonContainerConfigCliOptions.isJettyBaseimage()).thenReturn(true);
 
     ArtifactProcessor processor =

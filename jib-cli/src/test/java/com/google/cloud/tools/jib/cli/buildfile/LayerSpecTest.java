@@ -22,15 +22,15 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import org.hamcrest.CoreMatchers;
 import org.hamcrest.MatcherAssert;
 import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /** Tests for {@link LayerSpec}. */
-public class LayerSpecTest {
+class LayerSpecTest {
 
   private static final ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
 
   @Test
-  public void deserialize_toFileLayer() throws JsonProcessingException {
+  void deserialize_toFileLayer() throws JsonProcessingException {
     String data =
         "name: layer name\n"
             + "files:\n" // trivial copy spec
@@ -42,7 +42,7 @@ public class LayerSpecTest {
   }
 
   @Test
-  public void deserialize_toArchiveLayer() throws JsonProcessingException {
+  void deserialize_toArchiveLayer() throws JsonProcessingException {
     String data = "name: layer name\n" + "archive: out/archive.tgz\n";
 
     LayerSpec layerSpec = mapper.readValue(data, LayerSpec.class);
@@ -50,7 +50,7 @@ public class LayerSpecTest {
   }
 
   @Test
-  public void deserialize_error() {
+  void deserialize_error() {
     String data = "name: layer name\n";
 
     try {
@@ -64,7 +64,7 @@ public class LayerSpecTest {
   }
 
   @Test
-  public void deserialize_nameMissing() {
+  void deserialize_nameMissing() {
     String data = "archive: out/archive.tgz\n";
 
     try {

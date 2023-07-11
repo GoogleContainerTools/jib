@@ -20,12 +20,13 @@ import java.io.File;
 import java.nio.file.Paths;
 import java.time.Instant;
 import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-public class FileEntryTest {
+/** File entry tests. */
+class FileEntryTest {
 
   @Test
-  public void testToString() {
+  void testToString() {
     Assert.assertEquals(
         "{a" + File.separator + "path,/an/absolute/unix/path,333,1970-01-01T00:00:00Z,0:0}",
         new FileEntry(

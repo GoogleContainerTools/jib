@@ -26,17 +26,17 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Base64;
 import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /** Tests for {@link DockerConfig}. */
-public class DockerConfigTest {
+class DockerConfigTest {
 
   private static String decodeBase64(String base64String) {
     return new String(Base64.getDecoder().decode(base64String), StandardCharsets.UTF_8);
   }
 
   @Test
-  public void test_fromJson() throws URISyntaxException, IOException {
+  void test_fromJson() throws URISyntaxException, IOException {
     // Loads the JSON string.
     Path jsonFile = Paths.get(Resources.getResource("core/json/dockerconfig.json").toURI());
 
@@ -65,7 +65,7 @@ public class DockerConfigTest {
   }
 
   @Test
-  public void testGetAuthFor_orderOfMatchPreference() throws URISyntaxException, IOException {
+  void testGetAuthFor_orderOfMatchPreference() throws URISyntaxException, IOException {
     Path json =
         Paths.get(Resources.getResource("core/json/dockerconfig_extra_matches.json").toURI());
 
@@ -85,7 +85,7 @@ public class DockerConfigTest {
   }
 
   @Test
-  public void testGetAuthFor_correctSuffixMatching() throws URISyntaxException, IOException {
+  void testGetAuthFor_correctSuffixMatching() throws URISyntaxException, IOException {
     Path json =
         Paths.get(Resources.getResource("core/json/dockerconfig_extra_matches.json").toURI());
 
@@ -96,8 +96,7 @@ public class DockerConfigTest {
   }
 
   @Test
-  public void testGetCredentialHelperFor_exactMatchInCredHelpers()
-      throws URISyntaxException, IOException {
+  void testGetCredentialHelperFor_exactMatchInCredHelpers() throws URISyntaxException, IOException {
     Path json = Paths.get(Resources.getResource("core/json/dockerconfig.json").toURI());
 
     DockerConfig dockerConfig =
@@ -109,7 +108,7 @@ public class DockerConfigTest {
   }
 
   @Test
-  public void testGetCredentialHelperFor_withHttps() throws URISyntaxException, IOException {
+  void testGetCredentialHelperFor_withHttps() throws URISyntaxException, IOException {
     Path json = Paths.get(Resources.getResource("core/json/dockerconfig.json").toURI());
 
     DockerConfig dockerConfig =
@@ -121,7 +120,7 @@ public class DockerConfigTest {
   }
 
   @Test
-  public void testGetCredentialHelperFor_withSuffix() throws URISyntaxException, IOException {
+  void testGetCredentialHelperFor_withSuffix() throws URISyntaxException, IOException {
     Path json = Paths.get(Resources.getResource("core/json/dockerconfig.json").toURI());
 
     DockerConfig dockerConfig =
@@ -133,8 +132,7 @@ public class DockerConfigTest {
   }
 
   @Test
-  public void testGetCredentialHelperFor_withProtocolAndSuffix()
-      throws URISyntaxException, IOException {
+  void testGetCredentialHelperFor_withProtocolAndSuffix() throws URISyntaxException, IOException {
     Path json = Paths.get(Resources.getResource("core/json/dockerconfig.json").toURI());
 
     DockerConfig dockerConfig =
@@ -149,8 +147,7 @@ public class DockerConfigTest {
   }
 
   @Test
-  public void testGetCredentialHelperFor_correctSuffixMatching()
-      throws URISyntaxException, IOException {
+  void testGetCredentialHelperFor_correctSuffixMatching() throws URISyntaxException, IOException {
     Path json = Paths.get(Resources.getResource("core/json/dockerconfig.json").toURI());
 
     DockerConfig dockerConfig =

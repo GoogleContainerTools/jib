@@ -22,10 +22,10 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Consumer;
 import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /** Tests for {@link ProgressEvent}. */
-public class ProgressEventTest {
+class ProgressEventTest {
 
   /** {@link Allocation} tree for testing. */
   private static class AllocationTree {
@@ -55,7 +55,7 @@ public class ProgressEventTest {
   private double progress = 0.0;
 
   @Test
-  public void testAccumulateProgress() {
+  void testAccumulateProgress() {
     Consumer<ProgressEvent> progressEventConsumer =
         progressEvent -> {
           double fractionOfRoot = progressEvent.getAllocation().getFractionOfRoot();
@@ -80,7 +80,7 @@ public class ProgressEventTest {
   }
 
   @Test
-  public void testSmoke() {
+  void testSmoke() {
     Consumer<ProgressEvent> progressEventConsumer =
         progressEvent -> {
           Allocation allocation = progressEvent.getAllocation();
@@ -113,7 +113,7 @@ public class ProgressEventTest {
   }
 
   @Test
-  public void testType() {
+  void testType() {
     // Used to test whether or not progress event was consumed
     boolean[] called = new boolean[] {false};
     Consumer<ProgressEvent> buildImageConsumer =

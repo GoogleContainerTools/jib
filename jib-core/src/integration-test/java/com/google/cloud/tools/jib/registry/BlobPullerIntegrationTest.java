@@ -29,7 +29,7 @@ import java.util.concurrent.atomic.LongAdder;
 import org.hamcrest.CoreMatchers;
 import org.hamcrest.MatcherAssert;
 import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /** Integration tests for {@link BlobPuller}. */
 public class BlobPullerIntegrationTest {

@@ -31,16 +31,19 @@ import java.security.DigestException;
 import org.hamcrest.CoreMatchers;
 import org.hamcrest.MatcherAssert;
 import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
 /** Tests for {@link BlobChecker}. */
-@RunWith(MockitoJUnitRunner.class)
-public class BlobCheckerTest {
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
+class BlobCheckerTest {
 
   @Mock private Response mockResponse;
 
@@ -50,8 +53,8 @@ public class BlobCheckerTest {
   private BlobChecker testBlobChecker;
   private DescriptorDigest fakeDigest;
 
-  @Before
-  public void setUpFakes() throws DigestException {
+  @BeforeEach
+  void setUpFakes() throws DigestException {
     fakeDigest =
         DescriptorDigest.fromHash(
             "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
@@ -59,7 +62,7 @@ public class BlobCheckerTest {
   }
 
   @Test
-  public void testHandleResponse() throws RegistryErrorException {
+  void testHandleResponse() throws RegistryErrorException {
     Mockito.when(mockResponse.getContentLength()).thenReturn(0L);
     BlobDescriptor expectedBlobDescriptor = new BlobDescriptor(0, fakeDigest);
 
@@ -69,7 +72,7 @@ public class BlobCheckerTest {
   }
 
   @Test
-  public void testHandleResponse_noContentLength() {
+  void testHandleResponse_noContentLength() {
     Mockito.when(mockResponse.getContentLength()).thenReturn(-1L);
 
     try {
@@ -83,7 +86,7 @@ public class BlobCheckerTest {
   }
 
   @Test
-  public void testHandleHttpResponseException() throws IOException {
+  void testHandleHttpResponseException() throws IOException {
     ResponseException mockResponseException = Mockito.mock(ResponseException.class);
     Mockito.when(mockResponseException.getStatusCode())
         .thenReturn(HttpStatusCodes.STATUS_CODE_NOT_FOUND);
@@ -99,7 +102,7 @@ public class BlobCheckerTest {
   }
 
   @Test
-  public void testHandleHttpResponseException_hasOtherErrors() throws IOException {
+  void testHandleHttpResponseException_hasOtherErrors() throws IOException {
     ResponseException mockResponseException = Mockito.mock(ResponseException.class);
     Mockito.when(mockResponseException.getStatusCode())
         .thenReturn(HttpStatusCodes.STATUS_CODE_NOT_FOUND);
@@ -121,7 +124,7 @@ public class BlobCheckerTest {
   }
 
   @Test
-  public void testHandleHttpResponseException_notBlobUnknown() throws IOException {
+  void testHandleHttpResponseException_notBlobUnknown() throws IOException {
     ResponseException mockResponseException = Mockito.mock(ResponseException.class);
     Mockito.when(mockResponseException.getStatusCode())
         .thenReturn(HttpStatusCodes.STATUS_CODE_NOT_FOUND);
@@ -140,7 +143,7 @@ public class BlobCheckerTest {
   }
 
   @Test
-  public void testHandleHttpResponseException_invalidStatusCode() {
+  void testHandleHttpResponseException_invalidStatusCode() {
     ResponseException mockResponseException = Mockito.mock(ResponseException.class);
     Mockito.when(mockResponseException.getStatusCode()).thenReturn(-1);
 
@@ -154,31 +157,31 @@ public class BlobCheckerTest {
   }
 
   @Test
-  public void testGetApiRoute() throws MalformedURLException {
+  void testGetApiRoute() throws MalformedURLException {
     Assert.assertEquals(
         new URL("http://someApiBase/someImageName/blobs/" + fakeDigest),
         testBlobChecker.getApiRoute("http://someApiBase/"));
   }
 
   @Test
-  public void testGetContent() {
+  void testGetContent() {
     Assert.assertNull(testBlobChecker.getContent());
   }
 
   @Test
-  public void testGetAccept() {
+  void testGetAccept() {
     Assert.assertEquals(0, testBlobChecker.getAccept().size());
   }
 
   @Test
-  public void testGetActionDescription() {
+  void testGetActionDescription() {
     Assert.assertEquals(
         "check BLOB exists for someServerUrl/someImageName with digest " + fakeDigest,
         testBlobChecker.getActionDescription());
   }
 
   @Test
-  public void testGetHttpMethod() {
+  void testGetHttpMethod() {
     Assert.assertEquals("HEAD", testBlobChecker.getHttpMethod());
   }
 }

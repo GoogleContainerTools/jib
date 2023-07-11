@@ -32,19 +32,22 @@ import java.security.DigestException;
 import java.util.Optional;
 import java.util.function.Consumer;
 import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.AdditionalAnswers;
 import org.mockito.Answers;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.mockito.stubbing.Answer3;
 
 /** Tests for {@link ObtainBaseImageLayerStep}. */
-@RunWith(MockitoJUnitRunner.class)
-public class ObtainBaseImageLayerStepTest {
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
+class ObtainBaseImageLayerStepTest {
 
   private DescriptorDigest existingLayerDigest;
   private DescriptorDigest freshLayerDigest;
@@ -59,8 +62,8 @@ public class ObtainBaseImageLayerStepTest {
   @Mock(answer = Answers.RETURNS_MOCKS)
   private ProgressEventDispatcher.Factory progressDispatcherFactory;
 
-  @Before
-  public void setUp() throws IOException, RegistryException, DigestException {
+  @BeforeEach
+  void setUp() throws IOException, RegistryException, DigestException {
     existingLayerDigest =
         DescriptorDigest.fromHash(
             "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
@@ -87,7 +90,7 @@ public class ObtainBaseImageLayerStepTest {
   }
 
   @Test
-  public void testForSelectiveDownload_existingLayer()
+  void testForSelectiveDownload_existingLayer()
       throws IOException, CacheCorruptedException, RegistryException {
     ObtainBaseImageLayerStep puller =
         ObtainBaseImageLayerStep.forSelectiveDownload(
@@ -105,7 +108,7 @@ public class ObtainBaseImageLayerStepTest {
   }
 
   @Test
-  public void testForSelectiveDownload_freshLayer()
+  void testForSelectiveDownload_freshLayer()
       throws IOException, CacheCorruptedException, RegistryException {
     ObtainBaseImageLayerStep puller =
         ObtainBaseImageLayerStep.forSelectiveDownload(
@@ -123,7 +126,7 @@ public class ObtainBaseImageLayerStepTest {
   }
 
   @Test
-  public void testForForcedDownload_existingLayer()
+  void testForForcedDownload_existingLayer()
       throws IOException, CacheCorruptedException, RegistryException {
     ObtainBaseImageLayerStep puller =
         ObtainBaseImageLayerStep.forForcedDownload(
@@ -141,7 +144,7 @@ public class ObtainBaseImageLayerStepTest {
   }
 
   @Test
-  public void testForForcedDownload_freshLayer()
+  void testForForcedDownload_freshLayer()
       throws IOException, CacheCorruptedException, RegistryException {
     ObtainBaseImageLayerStep puller =
         ObtainBaseImageLayerStep.forForcedDownload(
@@ -159,8 +162,7 @@ public class ObtainBaseImageLayerStepTest {
   }
 
   @Test
-  public void testLayerMissingInCacheInOfflineMode()
-      throws CacheCorruptedException, RegistryException {
+  void testLayerMissingInCacheInOfflineMode() throws CacheCorruptedException, RegistryException {
     Mockito.when(buildContext.isOffline()).thenReturn(true);
 
     ObtainBaseImageLayerStep puller =

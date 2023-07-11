@@ -31,13 +31,13 @@ import java.security.DigestException;
 import java.util.Arrays;
 import java.util.List;
 import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /** Tests for {@link V22ManifestTemplate}. */
-public class V22ManifestTemplateTest {
+class V22ManifestTemplateTest {
 
   @Test
-  public void testToJson() throws DigestException, IOException, URISyntaxException {
+  void testToJson() throws DigestException, IOException, URISyntaxException {
     // Loads the expected JSON string.
     Path jsonFile = Paths.get(Resources.getResource("core/json/v22manifest.json").toURI());
     String expectedJson = new String(Files.readAllBytes(jsonFile), StandardCharsets.UTF_8);
@@ -60,7 +60,7 @@ public class V22ManifestTemplateTest {
   }
 
   @Test
-  public void testFromJson() throws IOException, URISyntaxException, DigestException {
+  void testFromJson() throws IOException, URISyntaxException, DigestException {
     // Loads the JSON string.
     Path jsonFile = Paths.get(Resources.getResource("core/json/v22manifest.json").toURI());
 
@@ -84,7 +84,7 @@ public class V22ManifestTemplateTest {
   }
 
   @Test
-  public void testFromJson_optionalProperties() throws IOException, URISyntaxException {
+  void testFromJson_optionalProperties() throws IOException, URISyntaxException {
     Path jsonFile =
         Paths.get(Resources.getResource("core/json/v22manifest_optional_properties.json").toURI());
 

@@ -24,17 +24,20 @@ import com.google.cloud.tools.jib.plugins.common.logging.SingleThreadedExecutor;
 import java.io.PrintWriter;
 import java.time.Duration;
 import org.junit.Rule;
-import org.junit.Test;
 import org.junit.contrib.java.lang.system.EnvironmentVariables;
 import org.junit.contrib.java.lang.system.RestoreSystemProperties;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
 /** Tests for {@link CliLogger}. */
-@RunWith(MockitoJUnitRunner.class)
-public class CliLoggerTest {
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
+class CliLoggerTest {
 
   @Rule
   public final RestoreSystemProperties restoreSystemProperties = new RestoreSystemProperties();
@@ -61,7 +64,7 @@ public class CliLoggerTest {
   }
 
   @Test
-  public void testLog_quiet_plainConsole() {
+  void testLog_quiet_plainConsole() {
     createLoggerAndSendMessages(Verbosity.quiet, ConsoleOutput.plain);
 
     Mockito.verifyNoInteractions(mockOut);
@@ -69,7 +72,7 @@ public class CliLoggerTest {
   }
 
   @Test
-  public void testLog_error_plainConsole() {
+  void testLog_error_plainConsole() {
     createLoggerAndSendMessages(Verbosity.error, ConsoleOutput.plain);
 
     Mockito.verify(mockErr).println("[ERROR] error");
@@ -78,7 +81,7 @@ public class CliLoggerTest {
   }
 
   @Test
-  public void testLog_warn_plainConsole() {
+  void testLog_warn_plainConsole() {
     createLoggerAndSendMessages(Verbosity.warn, ConsoleOutput.plain);
 
     Mockito.verify(mockErr).println("[ERROR] error");
@@ -88,7 +91,7 @@ public class CliLoggerTest {
   }
 
   @Test
-  public void testLog_lifecycle_plainConsole() {
+  void testLog_lifecycle_plainConsole() {
     createLoggerAndSendMessages(Verbosity.lifecycle, ConsoleOutput.plain);
 
     Mockito.verify(mockErr).println("[ERROR] error");
@@ -100,7 +103,7 @@ public class CliLoggerTest {
   }
 
   @Test
-  public void testLog_info_plainConsole() {
+  void testLog_info_plainConsole() {
     createLoggerAndSendMessages(Verbosity.info, ConsoleOutput.plain);
 
     Mockito.verify(mockErr).println("[ERROR] error");
@@ -113,7 +116,7 @@ public class CliLoggerTest {
   }
 
   @Test
-  public void testLog_debug_plainConsole() {
+  void testLog_debug_plainConsole() {
     createLoggerAndSendMessages(Verbosity.debug, ConsoleOutput.plain);
 
     Mockito.verify(mockErr).println("[ERROR] error");
@@ -127,7 +130,7 @@ public class CliLoggerTest {
   }
 
   @Test
-  public void testLog_quiet_richConsole() {
+  void testLog_quiet_richConsole() {
     createLoggerAndSendMessages(Verbosity.quiet, ConsoleOutput.rich);
 
     Mockito.verifyNoInteractions(mockOut);
@@ -135,7 +138,7 @@ public class CliLoggerTest {
   }
 
   @Test
-  public void testLog_error_richConsole() {
+  void testLog_error_richConsole() {
     createLoggerAndSendMessages(Verbosity.error, ConsoleOutput.rich);
 
     Mockito.verify(mockErr).println("[ERROR] error");
@@ -144,7 +147,7 @@ public class CliLoggerTest {
   }
 
   @Test
-  public void testLog_warn_richConsole() {
+  void testLog_warn_richConsole() {
     createLoggerAndSendMessages(Verbosity.warn, ConsoleOutput.rich);
 
     Mockito.verify(mockErr).println("[ERROR] error");
@@ -154,7 +157,7 @@ public class CliLoggerTest {
   }
 
   @Test
-  public void testLog_lifecycle_richConsole() {
+  void testLog_lifecycle_richConsole() {
     createLoggerAndSendMessages(Verbosity.lifecycle, ConsoleOutput.rich);
 
     Mockito.verify(mockErr).println("[ERROR] error");
@@ -165,7 +168,7 @@ public class CliLoggerTest {
   }
 
   @Test
-  public void testLog_info_richConsole() {
+  void testLog_info_richConsole() {
     createLoggerAndSendMessages(Verbosity.info, ConsoleOutput.rich);
 
     Mockito.verify(mockErr).println("[ERROR] error");
@@ -177,7 +180,7 @@ public class CliLoggerTest {
   }
 
   @Test
-  public void testLog_debug_richConsole() {
+  void testLog_debug_richConsole() {
     createLoggerAndSendMessages(Verbosity.debug, ConsoleOutput.rich);
 
     Mockito.verify(mockErr).println("[ERROR] error");
@@ -190,28 +193,28 @@ public class CliLoggerTest {
   }
 
   @Test
-  public void testIsRichConsole_true() {
+  void testIsRichConsole_true() {
     assertThat(CliLogger.isRichConsole(ConsoleOutput.rich, HttpTraceLevel.off)).isTrue();
   }
 
   @Test
-  public void testIsRichConsole_falseIfHttpTrace() {
+  void testIsRichConsole_falseIfHttpTrace() {
     assertThat(CliLogger.isRichConsole(ConsoleOutput.rich, HttpTraceLevel.config)).isFalse();
   }
 
   @Test
-  public void testIsRichConsole_false() {
+  void testIsRichConsole_false() {
     assertThat(CliLogger.isRichConsole(ConsoleOutput.plain, HttpTraceLevel.off)).isFalse();
   }
 
   @Test
-  public void testIsRightConsole_autoWindowsTrue() {
+  void testIsRightConsole_autoWindowsTrue() {
     System.setProperty("os.name", "windows");
     assertThat(CliLogger.isRichConsole(ConsoleOutput.auto, HttpTraceLevel.off)).isTrue();
   }
 
   @Test
-  public void testIsRightConsole_autoDumbTermFalse() {
+  void testIsRightConsole_autoDumbTermFalse() {
     environmentVariables.set("TERM", "dumb");
     assertThat(CliLogger.isRichConsole(ConsoleOutput.auto, HttpTraceLevel.off)).isFalse();
   }

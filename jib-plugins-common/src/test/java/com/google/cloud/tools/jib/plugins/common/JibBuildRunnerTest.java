@@ -29,6 +29,7 @@ import com.google.cloud.tools.jib.api.RegistryException;
 import com.google.cloud.tools.jib.api.RegistryUnauthorizedException;
 import com.google.cloud.tools.jib.registry.RegistryCredentialsNotSentException;
 import com.google.common.collect.ImmutableSet;
+import java.io.File;
 import java.io.IOException;
 import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
@@ -38,24 +39,26 @@ import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import org.apache.http.conn.HttpHostConnectException;
 import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.io.TempDir;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
 /** Tests for {@link JibBuildRunner}. */
-@RunWith(MockitoJUnitRunner.class)
-public class JibBuildRunnerTest {
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
+class JibBuildRunnerTest {
 
   private static final HelpfulSuggestions TEST_HELPFUL_SUGGESTIONS =
       new HelpfulSuggestions(
           "messagePrefix", "clearCacheCommand", "toConfig", "toFlag", "buildFile");
 
-  @Rule public TemporaryFolder temporaryFolder = new TemporaryFolder();
+  @TempDir public Path temporaryFolder;
 
   @Mock private JibContainerBuilder mockJibContainerBuilder;
   @Mock private JibContainer mockJibContainer;
@@ -66,8 +69,8 @@ public class JibBuildRunnerTest {
 
   private JibBuildRunner testJibBuildRunner;
 
-  @Before
-  public void setUpMocks() {
+  @BeforeEach
+  void setUpMocks() {
     testJibBuildRunner =
         new JibBuildRunner(
             mockJibContainerBuilder,
@@ -79,14 +82,14 @@ public class JibBuildRunnerTest {
   }
 
   @Test
-  public void testBuildImage_pass()
+  void testBuildImage_pass()
       throws BuildStepsExecutionException, IOException, CacheDirectoryCreationException {
     JibContainer buildResult = testJibBuildRunner.runBuild();
     Assert.assertNull(buildResult);
   }
 
   @Test
-  public void testBuildImage_httpHostConnectException()
+  void testBuildImage_httpHostConnectException()
       throws InterruptedException, IOException, CacheDirectoryCreationException, RegistryException,
           ExecutionException {
     HttpHostConnectException mockHttpHostConnectException =
@@ -105,7 +108,7 @@ public class JibBuildRunnerTest {
   }
 
   @Test
-  public void testBuildImage_unknownHostException()
+  void testBuildImage_unknownHostException()
       throws InterruptedException, IOException, CacheDirectoryCreationException, RegistryException,
           ExecutionException {
     UnknownHostException mockUnknownHostException = Mockito.mock(UnknownHostException.class);
@@ -123,7 +126,7 @@ public class JibBuildRunnerTest {
   }
 
   @Test
-  public void testBuildImage_insecureRegistryException()
+  void testBuildImage_insecureRegistryException()
       throws InterruptedException, IOException, CacheDirectoryCreationException, RegistryException,
           ExecutionException {
     InsecureRegistryException mockInsecureRegistryException =
@@ -142,7 +145,7 @@ public class JibBuildRunnerTest {
   }
 
   @Test
-  public void testBuildImage_registryUnauthorizedException_statusCodeForbidden()
+  void testBuildImage_registryUnauthorizedException_statusCodeForbidden()
       throws InterruptedException, IOException, CacheDirectoryCreationException, RegistryException,
           ExecutionException {
     Mockito.when(mockRegistryUnauthorizedException.getHttpResponseException())
@@ -168,7 +171,7 @@ public class JibBuildRunnerTest {
   }
 
   @Test
-  public void testBuildImage_registryUnauthorizedException_noCredentials()
+  void testBuildImage_registryUnauthorizedException_noCredentials()
       throws InterruptedException, IOException, CacheDirectoryCreationException, RegistryException,
           ExecutionException {
     Mockito.when(mockRegistryUnauthorizedException.getHttpResponseException())
@@ -193,7 +196,7 @@ public class JibBuildRunnerTest {
   }
 
   @Test
-  public void testBuildImage_registryCredentialsNotSentException()
+  void testBuildImage_registryCredentialsNotSentException()
       throws InterruptedException, IOException, CacheDirectoryCreationException, RegistryException,
           ExecutionException {
     Mockito.doThrow(mockRegistryCredentialsNotSentException)
@@ -210,7 +213,7 @@ public class JibBuildRunnerTest {
   }
 
   @Test
-  public void testBuildImage_other()
+  void testBuildImage_other()
       throws InterruptedException, IOException, CacheDirectoryCreationException, RegistryException,
           ExecutionException {
     Mockito.doThrow(new RegistryException("messagePrefix"))
@@ -227,14 +230,16 @@ public class JibBuildRunnerTest {
   }
 
   @Test
-  public void testBuildImage_writesImageJson() throws Exception {
+  void testBuildImage_writesImageJson() throws Exception {
     final ImageReference targetImageReference = ImageReference.parse("gcr.io/distroless/java:11");
     final String imageId =
         "sha256:61bb3ec31a47cb730eb58a38bbfa813761a51dca69d10e39c24c3d00a7b2c7a9";
     final String digest = "sha256:3f1be7e19129edb202c071a659a4db35280ab2bb1a16f223bfd5d1948657b6fc";
     final Set<String> tags = ImmutableSet.of("latest", "0.1.41-69d10e-20200116T101403");
 
-    final Path outputPath = temporaryFolder.newFile("jib-image.json").toPath();
+    File f = new File(temporaryFolder.toFile(), "jib-image.json");
+    f.createNewFile();
+    final Path outputPath = f.toPath();
 
     Mockito.when(mockJibContainer.getTargetImage()).thenReturn(targetImageReference);
     Mockito.when(mockJibContainer.getImageId()).thenReturn(DescriptorDigest.fromDigest(imageId));

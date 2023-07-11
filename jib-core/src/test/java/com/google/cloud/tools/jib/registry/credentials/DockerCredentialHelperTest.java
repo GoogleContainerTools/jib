@@ -33,15 +33,20 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.function.Function;
 import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
-@RunWith(MockitoJUnitRunner.class)
-public class DockerCredentialHelperTest {
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
+class DockerCredentialHelperTest {
 
   private static final String CREDENTIAL_JSON =
       "{\"Username\":\"myusername\",\"Secret\":\"mysecret\"}";
@@ -53,8 +58,8 @@ public class DockerCredentialHelperTest {
 
   private final Properties systemProperties = new Properties();
 
-  @Before
-  public void setUp() throws IOException {
+  @BeforeEach
+  void setUp() throws IOException {
     systemProperties.put("os.name", "unknown");
 
     Mockito.when(process.getInputStream())
@@ -66,7 +71,7 @@ public class DockerCredentialHelperTest {
   }
 
   @Test
-  public void testDockerCredentialsTemplate_read() throws IOException {
+  void testDockerCredentialsTemplate_read() throws IOException {
     DockerCredentialHelper.DockerCredentialsTemplate template =
         JsonTemplateMapper.readJson(
             CREDENTIAL_JSON, DockerCredentialHelper.DockerCredentialsTemplate.class);
@@ -75,7 +80,7 @@ public class DockerCredentialHelperTest {
   }
 
   @Test
-  public void testDockerCredentialsTemplate_canReadNull() throws IOException {
+  void testDockerCredentialsTemplate_canReadNull() throws IOException {
     String input = "{}";
     DockerCredentialHelper.DockerCredentialsTemplate template =
         JsonTemplateMapper.readJson(input, DockerCredentialHelper.DockerCredentialsTemplate.class);
@@ -84,7 +89,7 @@ public class DockerCredentialHelperTest {
   }
 
   @Test
-  public void testRetrieve()
+  void testRetrieve()
       throws CredentialHelperUnhandledServerUrlException, CredentialHelperNotFoundException,
           IOException {
     List<String> command = Arrays.asList(Paths.get("/foo/bar").toString(), "get");
@@ -101,7 +106,7 @@ public class DockerCredentialHelperTest {
   }
 
   @Test
-  public void testRetrieveWithEnvironment()
+  void testRetrieveWithEnvironment()
       throws CredentialHelperUnhandledServerUrlException, CredentialHelperNotFoundException,
           IOException {
     List<String> command = Arrays.asList(Paths.get("/foo/bar").toString(), "get");
@@ -127,17 +132,22 @@ public class DockerCredentialHelperTest {
     Assert.assertEquals("Value", processBuilderEnvironment.get("ENV_VARIABLE"));
   }
 
-  @Test
-  public void testRetrieve_cmdSuffixAddedOnWindows()
+  @ParameterizedTest
+  @CsvSource({
+    "/foo/bar.cmd, /foo/bar", // suffix added on windows
+    "/foo/bar.CmD, /foo/bar.CmD", // suffix already given on Windows
+    "/foo/bar.eXE, /foo/bar.eXE" // exe suffix already given
+  })
+  void testRetrieve_cmdSuffixAddedOnWindows(String cmd, String path)
       throws CredentialHelperUnhandledServerUrlException, CredentialHelperNotFoundException,
           IOException {
     systemProperties.setProperty("os.name", "WINdows");
-    List<String> command = Arrays.asList(Paths.get("/foo/bar.cmd").toString(), "get");
+    List<String> command = Arrays.asList(Paths.get(cmd).toString(), "get");
     Mockito.when(processBuilderFactory.apply(command)).thenReturn(processBuilder);
 
     DockerCredentialHelper credentialHelper =
         dockerCredentialHelper(
-            "serverUrl", Paths.get("/foo/bar"), systemProperties, processBuilderFactory);
+            "serverUrl", Paths.get(path), systemProperties, processBuilderFactory);
     Credential credential = credentialHelper.retrieve();
     Assert.assertEquals("myusername", credential.getUsername());
     Assert.assertEquals("mysecret", credential.getPassword());
@@ -146,43 +156,7 @@ public class DockerCredentialHelperTest {
   }
 
   @Test
-  public void testRetrieve_cmdSuffixAlreadyGivenOnWindows()
-      throws CredentialHelperUnhandledServerUrlException, CredentialHelperNotFoundException,
-          IOException {
-    systemProperties.setProperty("os.name", "WINdows");
-    List<String> command = Arrays.asList(Paths.get("/foo/bar.CmD").toString(), "get");
-    Mockito.when(processBuilderFactory.apply(command)).thenReturn(processBuilder);
-
-    DockerCredentialHelper credentialHelper =
-        dockerCredentialHelper(
-            "serverUrl", Paths.get("/foo/bar.CmD"), systemProperties, processBuilderFactory);
-    Credential credential = credentialHelper.retrieve();
-    Assert.assertEquals("myusername", credential.getUsername());
-    Assert.assertEquals("mysecret", credential.getPassword());
-
-    Mockito.verify(processBuilderFactory).apply(command);
-  }
-
-  @Test
-  public void testRetrieve_exeSuffixAlreadyGivenOnWindows()
-      throws CredentialHelperUnhandledServerUrlException, CredentialHelperNotFoundException,
-          IOException {
-    systemProperties.setProperty("os.name", "WINdows");
-    List<String> command = Arrays.asList(Paths.get("/foo/bar.eXE").toString(), "get");
-    Mockito.when(processBuilderFactory.apply(command)).thenReturn(processBuilder);
-
-    DockerCredentialHelper credentialHelper =
-        dockerCredentialHelper(
-            "serverUrl", Paths.get("/foo/bar.eXE"), systemProperties, processBuilderFactory);
-    Credential credential = credentialHelper.retrieve();
-    Assert.assertEquals("myusername", credential.getUsername());
-    Assert.assertEquals("mysecret", credential.getPassword());
-
-    Mockito.verify(processBuilderFactory).apply(command);
-  }
-
-  @Test
-  public void testRetrieve_cmdSuffixNotFoundOnWindows()
+  void testRetrieve_cmdSuffixNotFoundOnWindows()
       throws CredentialHelperUnhandledServerUrlException, CredentialHelperNotFoundException,
           IOException {
     systemProperties.setProperty("os.name", "WINdows");
@@ -206,7 +180,7 @@ public class DockerCredentialHelperTest {
   }
 
   @Test
-  public void testRetrieve_fileNotFoundExceptionMessage()
+  void testRetrieve_fileNotFoundExceptionMessage()
       throws CredentialHelperUnhandledServerUrlException, IOException {
     Mockito.when(processBuilderFactory.apply(Mockito.any())).thenReturn(processBuilder);
     Mockito.when(processBuilder.start())

@@ -22,20 +22,23 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
 /** Tests for {@link Response}. */
-@RunWith(MockitoJUnitRunner.class)
-public class ResponseTest {
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
+class ResponseTest {
 
   @Mock private HttpResponse httpResponseMock;
 
   @Test
-  public void testGetContent() throws IOException {
+  void testGetContent() throws IOException {
     byte[] expectedResponse = "crepecake\nis\ngood!".getBytes(StandardCharsets.UTF_8);
     ByteArrayInputStream responseInputStream = new ByteArrayInputStream(expectedResponse);
 

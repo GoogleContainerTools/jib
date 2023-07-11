@@ -19,38 +19,38 @@ package com.google.cloud.tools.jib.plugins.common.logging;
 import java.util.Arrays;
 import java.util.Collections;
 import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /** Tests for {@link ProgressDisplayGenerator}. */
-public class ProgressDisplayGeneratorTest {
+class ProgressDisplayGeneratorTest {
 
   private static String getBar(String bar, double value) {
     return String.format("%s %.1f%% complete", bar, value);
   }
 
   @Test
-  public void testGenerateProgressDisplay_progressBar_0() {
+  void testGenerateProgressDisplay_progressBar_0() {
     Assert.assertEquals(
         Arrays.asList("Executing tasks:", getBar("[                              ]", 0.0)),
         ProgressDisplayGenerator.generateProgressDisplay(0, Collections.emptyList()));
   }
 
   @Test
-  public void testGenerateProgressDisplay_progressBar_50() {
+  void testGenerateProgressDisplay_progressBar_50() {
     Assert.assertEquals(
         Arrays.asList("Executing tasks:", getBar("[===============               ]", 50.0)),
         ProgressDisplayGenerator.generateProgressDisplay(0.5, Collections.emptyList()));
   }
 
   @Test
-  public void testGenerateProgressDisplay_progressBar_100() {
+  void testGenerateProgressDisplay_progressBar_100() {
     Assert.assertEquals(
         Arrays.asList("Executing tasks:", getBar("[==============================]", 100.0)),
         ProgressDisplayGenerator.generateProgressDisplay(1, Collections.emptyList()));
   }
 
   @Test
-  public void testGenerateProgressDisplay_unfinishedTasks() {
+  void testGenerateProgressDisplay_unfinishedTasks() {
     Assert.assertEquals(
         Arrays.asList(
             "Executing tasks:",

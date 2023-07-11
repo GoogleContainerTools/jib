@@ -26,10 +26,10 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /** Tests for {@link SkaffoldFilesOutput}. */
-public class SkaffoldSyncMapTemplateTest {
+class SkaffoldSyncMapTemplateTest {
 
   private static final Path GEN_SRC = Paths.get("/gen/src/").toAbsolutePath();
   private static final Path DIR_SRC_1 = Paths.get("/dir/src/").toAbsolutePath();
@@ -80,7 +80,7 @@ public class SkaffoldSyncMapTemplateTest {
   }
 
   @Test
-  public void testFrom_badPropertyName() throws IOException {
+  void testFrom_badPropertyName() throws IOException {
     try {
       SkaffoldSyncMapTemplate.from(FAIL_TEST_JSON_BAD_PROPERTY_NAME);
       Assert.fail();
@@ -90,7 +90,7 @@ public class SkaffoldSyncMapTemplateTest {
   }
 
   @Test
-  public void testFrom_missingField() throws IOException {
+  void testFrom_missingField() throws IOException {
     try {
       SkaffoldSyncMapTemplate.from(FAIL_TEST_JSON_MISSING_FIELD);
       Assert.fail();
@@ -100,7 +100,7 @@ public class SkaffoldSyncMapTemplateTest {
   }
 
   @Test
-  public void testFrom_validEmpty() throws Exception {
+  void testFrom_validEmpty() throws Exception {
     SkaffoldSyncMapTemplate templateEmptyGenerated =
         SkaffoldSyncMapTemplate.from(TEST_JSON_EMPTY_GENERATED);
     SkaffoldSyncMapTemplate templateNoGenerated =
@@ -110,7 +110,7 @@ public class SkaffoldSyncMapTemplateTest {
   }
 
   @Test
-  public void testGetJsonString() throws IOException {
+  void testGetJsonString() throws IOException {
     SkaffoldSyncMapTemplate ssmt = new SkaffoldSyncMapTemplate();
     ssmt.addGenerated(
         new FileEntry(
@@ -134,7 +134,7 @@ public class SkaffoldSyncMapTemplateTest {
   }
 
   @Test
-  public void testGetJsonString_emptyGenerated() throws IOException {
+  void testGetJsonString_emptyGenerated() throws IOException {
     SkaffoldSyncMapTemplate ssmt = new SkaffoldSyncMapTemplate();
     ssmt.addDirect(
         new FileEntry(

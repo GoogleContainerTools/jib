@@ -25,13 +25,13 @@ import java.util.Collections;
 import org.hamcrest.CoreMatchers;
 import org.hamcrest.MatcherAssert;
 import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /** Tests for {@link ContainerBuildPlanTest}. */
-public class ContainerBuildPlanTest {
+class ContainerBuildPlanTest {
 
   @Test
-  public void testDefaults() {
+  void testDefaults() {
     ContainerBuildPlan plan = ContainerBuildPlan.builder().build();
 
     Assert.assertEquals("scratch", plan.getBaseImage());
@@ -50,7 +50,7 @@ public class ContainerBuildPlanTest {
   }
 
   @Test
-  public void testBuilder() {
+  void testBuilder() {
     ContainerBuildPlan plan = createSamplePlan();
 
     Assert.assertEquals("base/image", plan.getBaseImage());
@@ -83,7 +83,7 @@ public class ContainerBuildPlanTest {
   }
 
   @Test
-  public void testToBuilder() {
+  void testToBuilder() {
     ContainerBuildPlan plan = createSamplePlan().toBuilder().build();
 
     Assert.assertEquals("base/image", plan.getBaseImage());
@@ -116,7 +116,7 @@ public class ContainerBuildPlanTest {
   }
 
   @Test
-  public void testAddPlatform_duplicatePlatforms() {
+  void testAddPlatform_duplicatePlatforms() {
     ContainerBuildPlan plan =
         ContainerBuildPlan.builder()
             .addPlatform("testOS", "testArchitecture")
@@ -128,7 +128,7 @@ public class ContainerBuildPlanTest {
   }
 
   @Test
-  public void testSetPlatforms_emptyPlatformsSet() {
+  void testSetPlatforms_emptyPlatformsSet() {
     try {
       ContainerBuildPlan.builder().setPlatforms(Collections.emptySet());
       Assert.fail();

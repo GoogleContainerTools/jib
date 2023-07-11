@@ -18,20 +18,23 @@ package com.google.cloud.tools.jib.registry;
 
 import com.google.cloud.tools.jib.http.ResponseException;
 import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
 /** Test for {@link ErrorReponseUtil}. */
-@RunWith(MockitoJUnitRunner.class)
-public class ErrorResponseUtilTest {
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
+class ErrorResponseUtilTest {
 
   @Mock private ResponseException responseException;
 
   @Test
-  public void testGetErrorCode_knownErrorCode() throws ResponseException {
+  void testGetErrorCode_knownErrorCode() throws ResponseException {
     Mockito.when(responseException.getContent())
         .thenReturn(
             "{\"errors\":[{\"code\":\"MANIFEST_INVALID\",\"message\":\"manifest invalid\",\"detail\":{}}]}");
@@ -42,7 +45,7 @@ public class ErrorResponseUtilTest {
 
   /** An unknown {@link ErrorCodes} should cause original exception to be rethrown. */
   @Test
-  public void testGetErrorCode_unknownErrorCode() {
+  void testGetErrorCode_unknownErrorCode() {
     Mockito.when(responseException.getContent())
         .thenReturn(
             "{\"errors\":[{\"code\":\"INVALID_ERROR_CODE\",\"message\":\"invalid code\",\"detail\":{}}]}");
@@ -56,7 +59,7 @@ public class ErrorResponseUtilTest {
 
   /** Multiple error objects should cause original exception to be rethrown. */
   @Test
-  public void testGetErrorCode_multipleErrors() {
+  void testGetErrorCode_multipleErrors() {
     Mockito.when(responseException.getContent())
         .thenReturn(
             "{\"errors\":["
@@ -73,7 +76,7 @@ public class ErrorResponseUtilTest {
 
   /** An non-error object should cause original exception to be rethrown. */
   @Test
-  public void testGetErrorCode_invalidErrorObject() {
+  void testGetErrorCode_invalidErrorObject() {
     Mockito.when(responseException.getContent())
         .thenReturn("{\"type\":\"other\",\"message\":\"some other object\"}");
     try {

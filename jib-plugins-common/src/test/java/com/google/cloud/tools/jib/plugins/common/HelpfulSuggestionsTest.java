@@ -18,17 +18,17 @@ package com.google.cloud.tools.jib.plugins.common;
 
 import java.nio.file.Paths;
 import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /** Tests for {@link HelpfulSuggestions}. */
-public class HelpfulSuggestionsTest {
+class HelpfulSuggestionsTest {
 
   private static final HelpfulSuggestions TEST_HELPFUL_SUGGESTIONS =
       new HelpfulSuggestions(
           "messagePrefix", "clearCacheCommand", "toProperty", "toFlag", "buildFile");
 
   @Test
-  public void testSuggestions_smoke() {
+  void testSuggestions_smoke() {
     Assert.assertEquals(
         "messagePrefix, perhaps you should make sure your Internet is up and that the registry you are pushing to exists",
         TEST_HELPFUL_SUGGESTIONS.forHttpHostConnect());

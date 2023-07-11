@@ -25,14 +25,14 @@ import com.google.common.collect.ImmutableSet;
 import java.security.DigestException;
 import java.util.Set;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.junit.rules.TemporaryFolder;
 import org.mockito.Mockito;
 
 /** Tests for {@link JibContainer}. */
-public class JibContainerTest {
+class JibContainerTest {
 
   @Rule public TemporaryFolder temporaryDirectory = new TemporaryFolder();
 
@@ -43,8 +43,8 @@ public class JibContainerTest {
   private Set<String> tags1;
   private Set<String> tags2;
 
-  @Before
-  public void setUp() throws DigestException, InvalidImageReferenceException {
+  @BeforeEach
+  void setUp() throws DigestException, InvalidImageReferenceException {
     targetImage1 = ImageReference.parse("gcr.io/project/image:tag");
     targetImage2 = ImageReference.parse("gcr.io/project/image:tag2");
     digest1 =
@@ -58,7 +58,7 @@ public class JibContainerTest {
   }
 
   @Test
-  public void testCreation() {
+  void testCreation() {
     JibContainer container = new JibContainer(targetImage1, digest1, digest2, tags1, true);
 
     Assert.assertEquals(targetImage1, container.getTargetImage());
@@ -69,7 +69,7 @@ public class JibContainerTest {
   }
 
   @Test
-  public void testEquality() {
+  void testEquality() {
     JibContainer container1 = new JibContainer(targetImage1, digest1, digest2, tags1, true);
     JibContainer container2 = new JibContainer(targetImage1, digest1, digest2, tags1, true);
 
@@ -78,7 +78,7 @@ public class JibContainerTest {
   }
 
   @Test
-  public void testEquality_differentTargetImage() {
+  void testEquality_differentTargetImage() {
     JibContainer container1 = new JibContainer(targetImage1, digest1, digest2, tags1, true);
     JibContainer container2 = new JibContainer(targetImage2, digest1, digest2, tags1, true);
 
@@ -87,7 +87,7 @@ public class JibContainerTest {
   }
 
   @Test
-  public void testEquality_differentImageDigest() {
+  void testEquality_differentImageDigest() {
     JibContainer container1 = new JibContainer(targetImage1, digest1, digest2, tags1, true);
     JibContainer container2 = new JibContainer(targetImage1, digest2, digest2, tags1, true);
 
@@ -96,7 +96,7 @@ public class JibContainerTest {
   }
 
   @Test
-  public void testEquality_differentImageId() {
+  void testEquality_differentImageId() {
     JibContainer container1 = new JibContainer(targetImage1, digest1, digest1, tags1, true);
     JibContainer container2 = new JibContainer(targetImage1, digest1, digest2, tags1, true);
 
@@ -105,7 +105,7 @@ public class JibContainerTest {
   }
 
   @Test
-  public void testEquality_differentTags() {
+  void testEquality_differentTags() {
     JibContainer container1 = new JibContainer(targetImage1, digest1, digest1, tags1, true);
     JibContainer container2 = new JibContainer(targetImage1, digest1, digest1, tags2, true);
 
@@ -114,7 +114,7 @@ public class JibContainerTest {
   }
 
   @Test
-  public void testEquality_differentImagePushed() {
+  void testEquality_differentImagePushed() {
     JibContainer container1 = new JibContainer(targetImage1, digest1, digest1, tags1, true);
     JibContainer container2 = new JibContainer(targetImage1, digest1, digest1, tags1, false);
 
@@ -123,7 +123,7 @@ public class JibContainerTest {
   }
 
   @Test
-  public void testCreation_withBuildContextAndBuildResult() {
+  void testCreation_withBuildContextAndBuildResult() {
     BuildResult buildResult = Mockito.mock(BuildResult.class);
     BuildContext buildContext = Mockito.mock(BuildContext.class);
     ImageConfiguration mockTargetConfiguration = Mockito.mock(ImageConfiguration.class);

@@ -18,13 +18,13 @@ package com.google.cloud.tools.jib.registry;
 
 import com.google.cloud.tools.jib.api.RegistryAuthenticationFailedException;
 import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /** Tests for {@link RegistryAuthenticationFailedException}. */
-public class RegistryAuthenticationFailedExceptionTest {
+class RegistryAuthenticationFailedExceptionTest {
 
   @Test
-  public void testRegistryAuthenticationFailedException_message() {
+  void testRegistryAuthenticationFailedException_message() {
     RegistryAuthenticationFailedException exception =
         new RegistryAuthenticationFailedException("serverUrl", "imageName", "message");
     Assert.assertEquals("serverUrl", exception.getServerUrl());
@@ -35,7 +35,7 @@ public class RegistryAuthenticationFailedExceptionTest {
   }
 
   @Test
-  public void testRegistryAuthenticationFailedException_exception() {
+  void testRegistryAuthenticationFailedException_exception() {
     Throwable cause = new Throwable("message");
     RegistryAuthenticationFailedException exception =
         new RegistryAuthenticationFailedException("serverUrl", "imageName", cause);

@@ -25,15 +25,15 @@ import java.time.Instant;
 import org.hamcrest.CoreMatchers;
 import org.hamcrest.MatcherAssert;
 import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /** Tests for {@link FileLayerSpec}. */
-public class FileLayerSpecTest {
+class FileLayerSpecTest {
 
   private static final ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
 
   @Test
-  public void testFileLayerSpec_full() throws JsonProcessingException {
+  void testFileLayerSpec_full() throws JsonProcessingException {
     String data =
         "name: layer name\n"
             + "files:\n" // trivial copy spec
@@ -50,7 +50,7 @@ public class FileLayerSpecTest {
   }
 
   @Test
-  public void testFileLayerSpec_nameRequired() {
+  void testFileLayerSpec_nameRequired() {
     String data = "files:\n" + "  - src: source\n" + "    dest: /dest\n";
 
     try {
@@ -63,7 +63,7 @@ public class FileLayerSpecTest {
   }
 
   @Test
-  public void testFileLayerSpec_nameNotNull() {
+  void testFileLayerSpec_nameNotNull() {
     String data = "name: null\n" + "files:\n" + "  - src: source\n" + "    dest: /dest\n";
 
     try {
@@ -76,7 +76,7 @@ public class FileLayerSpecTest {
   }
 
   @Test
-  public void testFileLayerSpec_nameNotEmpty() {
+  void testFileLayerSpec_nameNotEmpty() {
     String data = "name: ''\n" + "files:\n" + "  - src: source\n" + "    dest: /dest\n";
 
     try {
@@ -90,7 +90,7 @@ public class FileLayerSpecTest {
   }
 
   @Test
-  public void testFileLayerSpec_filesRequired() {
+  void testFileLayerSpec_filesRequired() {
     String data = "name: layer name";
 
     try {
@@ -103,7 +103,7 @@ public class FileLayerSpecTest {
   }
 
   @Test
-  public void testFileLayerSpec_filesNotNull() {
+  void testFileLayerSpec_filesNotNull() {
     String data = "name: layer name\n" + "files: null";
 
     try {
@@ -116,7 +116,7 @@ public class FileLayerSpecTest {
   }
 
   @Test
-  public void testFileLayerSpec_filesNotEmpty() {
+  void testFileLayerSpec_filesNotEmpty() {
     String data = "name: layer name\n" + "files: []\n";
 
     try {

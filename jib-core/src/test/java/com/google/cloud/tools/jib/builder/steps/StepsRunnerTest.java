@@ -39,16 +39,19 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
 /** Tests for {@link StepsRunner}. */
-@RunWith(MockitoJUnitRunner.class)
-public class StepsRunnerTest {
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
+class StepsRunnerTest {
 
   // ListeningExecutorService is annotated with @DoNotMock, so define a concrete class.
   private class MockListeningExecutorService extends ForwardingExecutorService
@@ -86,8 +89,8 @@ public class StepsRunnerTest {
 
   private StepsRunner stepsRunner;
 
-  @Before
-  public void setup() {
+  @BeforeEach
+  void setup() {
     stepsRunner = new StepsRunner(new MockListeningExecutorService(), buildContext);
 
     Mockito.when(progressDispatcherFactory.create(Mockito.anyString(), Mockito.anyLong()))
@@ -95,7 +98,7 @@ public class StepsRunnerTest {
   }
 
   @Test
-  public void testObtainBaseImageLayers_skipObtainingDuplicateLayers()
+  void testObtainBaseImageLayers_skipObtainingDuplicateLayers()
       throws DigestException, InterruptedException, ExecutionException {
     Mockito.when(executorService.submit(Mockito.any(PullBaseImageStep.class)))
         .thenReturn(Futures.immediateFuture(new ImagesAndRegistryClient(null, null)));
@@ -154,7 +157,7 @@ public class StepsRunnerTest {
   }
 
   @Test
-  public void testIsImagePushed_skipExistingEnabledAndManifestPresent() {
+  void testIsImagePushed_skipExistingEnabledAndManifestPresent() {
     Optional<ManifestAndDigest<ManifestTemplate>> manifestResult = Mockito.mock(Optional.class);
     Mockito.when(manifestResult.isPresent()).thenReturn(true);
     System.setProperty(JibSystemProperties.SKIP_EXISTING_IMAGES, "true");
@@ -163,7 +166,7 @@ public class StepsRunnerTest {
   }
 
   @Test
-  public void testIsImagePushed_skipExistingImageDisabledAndManifestPresent() {
+  void testIsImagePushed_skipExistingImageDisabledAndManifestPresent() {
     Optional<ManifestAndDigest<ManifestTemplate>> manifestResult = Mockito.mock(Optional.class);
     System.setProperty(JibSystemProperties.SKIP_EXISTING_IMAGES, "false");
 
@@ -171,7 +174,7 @@ public class StepsRunnerTest {
   }
 
   @Test
-  public void testIsImagePushed_skipExistingImageEnabledAndManifestNotPresent() {
+  void testIsImagePushed_skipExistingImageEnabledAndManifestNotPresent() {
     Optional<ManifestAndDigest<ManifestTemplate>> manifestResult = Mockito.mock(Optional.class);
     System.setProperty(JibSystemProperties.SKIP_EXISTING_IMAGES, "true");
     Mockito.when(manifestResult.isPresent()).thenReturn(false);

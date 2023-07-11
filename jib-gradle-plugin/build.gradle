@@ -32,20 +32,21 @@ dependencies {
 
   implementation dependencyStrings.GRADLE_EXTENSION
 
-  testImplementation dependencyStrings.JUNIT
+  testImplementation dependencyStrings.JUNIT_API
+  testRuntimeOnly dependencyStrings.JUNIT_ENGINE
   testImplementation dependencyStrings.TRUTH
   testImplementation dependencyStrings.TRUTH8
   testImplementation dependencyStrings.MOCKITO_CORE
   testImplementation dependencyStrings.SLF4J_API
   testImplementation dependencyStrings.SYSTEM_RULES
-
+  testImplementation dependencyStrings.SYSTEM_RULES_STUB
   testImplementation project(path:':jib-plugins-common', configuration:'tests')
   integrationTestImplementation project(path:':jib-core', configuration:'integrationTests')
 
   integrationTestImplementation dependencyStrings.JBCRYPT
 
   // only for testing a concrete Spring Boot example in a test (not for test infrastructure)
-  testImplementation 'org.springframework.boot:spring-boot-gradle-plugin:2.2.11.RELEASE'
+  testImplementation 'org.springframework.boot:spring-boot-gradle-plugin:2.7.13'
 }
 
 /* RELEASE */
@@ -57,17 +58,13 @@ release {
     'com.google.cloud.tools:jib-plugins-common',
   ]
   git {
-    requireBranch = /^gradle-release-v\d+.*$/  //regex
+    requireBranch.set(/^gradle-release-v\d+.*$/)  //regex
   }
 }
 // Gradle Plugin Portal releases
-pluginBundle {
+gradlePlugin {
   website = 'https://github.com/GoogleContainerTools/jib/'
   vcsUrl = 'https://github.com/GoogleContainerTools/jib/'
-  tags = ['google', 'java', 'containers', 'docker', 'kubernetes', 'microservices']
-}
-
-gradlePlugin {
   testSourceSets sourceSets.integrationTest, sourceSets.test
   plugins {
     jibPlugin {
@@ -75,6 +72,7 @@ gradlePlugin {
       displayName = 'Jib'
       description = 'Containerize your Java application'
       implementationClass = 'com.google.cloud.tools.jib.gradle.JibPlugin'
+      tags.set(['google', 'java', 'containers', 'docker', 'kubernetes', 'microservices'])
     }
   }
 }

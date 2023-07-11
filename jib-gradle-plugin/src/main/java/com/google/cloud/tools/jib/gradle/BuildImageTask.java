@@ -43,6 +43,7 @@ import java.util.concurrent.Future;
 import javax.annotation.Nullable;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.GradleException;
+import org.gradle.api.tasks.Internal;
 import org.gradle.api.tasks.Nested;
 import org.gradle.api.tasks.TaskAction;
 import org.gradle.api.tasks.options.Option;
@@ -54,6 +55,8 @@ public class BuildImageTask extends DefaultTask implements JibTask {
 
   @Nullable private JibExtension jibExtension;
 
+  @Nullable private GradleProjectProperties projectProperties;
+
   /**
    * This will call the property {@code "jib"} so that it is the same name as the extension. This
    * way, the user would see error messages for missing configuration with the prefix {@code jib.}.
@@ -64,6 +67,12 @@ public class BuildImageTask extends DefaultTask implements JibTask {
   @Nullable
   public JibExtension getJib() {
     return jibExtension;
+  }
+
+  @Nullable
+  @Internal
+  public GradleProjectProperties getProjectProperties() {
+    return projectProperties;
   }
 
   /**
@@ -91,15 +100,9 @@ public class BuildImageTask extends DefaultTask implements JibTask {
           MainClassInferenceException, InvalidGlobalConfigException {
     // Asserts required @Input parameters are not null.
     Preconditions.checkNotNull(jibExtension);
+    Preconditions.checkNotNull(projectProperties);
     TaskCommon.disableHttpLogging();
-    TempDirectoryProvider tempDirectoryProvider = new TempDirectoryProvider();
 
-    GradleProjectProperties projectProperties =
-        GradleProjectProperties.getForProject(
-            getProject(),
-            getLogger(),
-            tempDirectoryProvider,
-            jibExtension.getConfigurationName().get());
     GlobalConfig globalConfig = GlobalConfig.readConfig();
     Future<Optional<String>> updateCheckFuture =
         TaskCommon.newUpdateChecker(projectProperties, globalConfig, getLogger());
@@ -182,15 +185,28 @@ public class BuildImageTask extends DefaultTask implements JibTask {
               + ex.getPath(),
           ex);
     } finally {
-      tempDirectoryProvider.close();
-      TaskCommon.finishUpdateChecker(projectProperties, updateCheckFuture);
-      projectProperties.waitForLoggingThread();
+
+      if (projectProperties != null) {
+        TempDirectoryProvider tempDirectoryProvider = projectProperties.getTempDirectoryProvider();
+        if (tempDirectoryProvider != null) {
+          tempDirectoryProvider.close();
+        }
+        TaskCommon.finishUpdateChecker(projectProperties, updateCheckFuture);
+        projectProperties.waitForLoggingThread();
+      }
     }
   }
 
   @Override
   public BuildImageTask setJibExtension(JibExtension jibExtension) {
     this.jibExtension = jibExtension;
+    this.projectProperties =
+        GradleProjectProperties.getForProject(
+            getProject(),
+            getLogger(),
+            new TempDirectoryProvider(),
+            jibExtension.getConfigurationName().get());
+
     return this;
   }
 }
