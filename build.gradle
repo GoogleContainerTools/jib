@@ -166,8 +166,8 @@ subprojects {
   /* CHECKSTYLE */
 
   /* TEST CONFIG */
-  tasks.withType(Test) {
-    reports.html.setDestination file("${reporting.baseDir}/${name}")
+  tasks.withType(Test).configureEach {
+    reports.html.outputLocation = file("${reporting.baseDir}/${name}")
   }
 
   test {
@@ -180,7 +180,7 @@ subprojects {
   // testCompile project(path:':project-name', configuration:'tests')
   task testJar(type: Jar) {
     from sourceSets.test.output.classesDirs
-    classifier = 'tests'
+    archiveClassifier = 'tests'
   }
   // to import resources do: sourceSets.test.resources.srcDirs project(':project-name').sourceSets.test.resources
 
@@ -198,6 +198,8 @@ subprojects {
     integrationTest {
       java.srcDir file('src/integration-test/java')
       resources.srcDir file('src/integration-test/resources')
+      compileClasspath += sourceSets.main.output + sourceSets.test.output
+      runtimeClasspath += sourceSets.main.output + sourceSets.test.output
     }
   }
 
@@ -205,15 +207,6 @@ subprojects {
     integrationTestImplementation.extendsFrom testImplementation
     integrationTestImplementation.setCanBeResolved(true)
     integrationTestRuntime.extendsFrom testRuntime
-  }
-
-  dependencies {
-    integrationTestImplementation sourceSets.main.output
-    integrationTestImplementation sourceSets.test.output
-    integrationTestImplementation configurations.compile
-    integrationTestImplementation configurations.testImplementation
-    integrationTestImplementation configurations.runtime
-    integrationTestImplementation configurations.testRuntime
   }
 
   // Integration tests must be run explicitly
@@ -226,7 +219,7 @@ subprojects {
 
   task integrationTestJar(type: Jar) {
     from sourceSets.integrationTest.output.classesDirs
-    classifier = 'integration-tests'
+    archiveClassifier = 'integration-tests'
   }
 
   configurations {
@@ -280,12 +273,12 @@ subprojects {
     apply plugin: 'maven-publish'
     task sourceJar(type: Jar) {
       from sourceSets.main.allJava
-      classifier 'sources'
+      archiveClassifier = 'sources'
     }
 
     task javadocJar(type: Jar, dependsOn: javadoc) {
       from javadoc.destinationDir
-      classifier 'javadoc'
+      archiveClassifier = 'javadoc'
     }
 
     publishing {
@@ -420,12 +413,12 @@ subprojects {
   /* TEST COVERAGE */
   jacocoTestReport {
     reports {
-      xml.enabled true
-      html.enabled false
+      xml.required = true
+      html.required = false
     }
   }
   /* TEST COVERAGE */
-  
+
   /* INCLUDED PROJECT DEPENDENCY HELPER */
 
   /* LOCAL DEVELOPMENT HELPER TASKS */
