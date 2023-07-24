@@ -36,7 +36,7 @@ project.ext.dependencyStrings = [
   JACKSON_DATAFORMAT_YAML: 'com.fasterxml.jackson.dataformat:jackson-dataformat-yaml',
   JACKSON_DATATYPE_JSR310: 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310',
   ASM: 'org.ow2.asm:asm:9.5',
-  PICOCLI: 'info.picocli:picocli:4.7.3',
+  PICOCLI: 'info.picocli:picocli:4.7.4',
 
   MAVEN_API: 'org.apache.maven:maven-plugin-api:3.9.3',
   MAVEN_CORE: 'org.apache.maven:maven-core:3.9.3',
