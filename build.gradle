@@ -19,7 +19,7 @@ project.ext.dependencyStrings = [
   GOOGLE_HTTP_CLIENT: 'com.google.http-client:google-http-client:1.42.2',
   GOOGLE_HTTP_CLIENT_APACHE_V2: 'com.google.http-client:google-http-client-apache-v2:1.42.2',
   GOOGLE_AUTH_LIBRARY_OAUTH2_HTTP: 'com.google.auth:google-auth-library-oauth2-http:1.10.0',
-  GUAVA: 'com.google.guava:guava:32.0.1-jre',
+  GUAVA: 'com.google.guava:guava:32.1.1-jre',
   JSR305: 'com.google.code.findbugs:jsr305:3.0.2', // transitively pulled in by GUAVA
 
   // for Build Plan and Jib Plugins Extension API
