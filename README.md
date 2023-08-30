@@ -23,6 +23,7 @@ Jib builds optimized Docker and [OCI](https://github.com/opencontainers/image-sp
 [Gradle](https://gradle.org/): See documentation for [jib-gradle-plugin](jib-gradle-plugin).\
 [Jib Core](jib-core): A general-purpose container-building library for Java.\
 [Jib CLI](jib-cli): A command-line interface for building images that uses Jib Core.
+Google Cloud Build: See documentation [how to use JIB on Google Cloud Build](docs/google-cloud-build.md)
 
 For more information, check out the [official blog post](https://cloudplatform.googleblog.com/2018/07/introducing-jib-build-java-docker-images-better.html) or watch [this talk](https://www.youtube.com/watch?v=H6gR_Cv4yWI) ([slides](https://speakerdeck.com/coollog/build-containers-faster-with-jib-a-google-image-build-tool-for-java-applications)).
 
