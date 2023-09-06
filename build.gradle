@@ -79,6 +79,16 @@ subprojects {
   apply plugin: 'net.ltgt.errorprone'
   apply plugin: 'jacoco'
 
+  // Guava update breaks unit tests. Workaround mentioned in https://github.com/google/guava/issues/6612#issuecomment-1614992368.
+  sourceSets.all {
+    configurations.getByName(runtimeClasspathConfigurationName) {
+      attributes.attribute(Attribute.of("org.gradle.jvm.environment", String), "standard-jvm")
+    }
+    configurations.getByName(compileClasspathConfigurationName) {
+      attributes.attribute(Attribute.of("org.gradle.jvm.environment", String), "standard-jvm")
+    }
+  }
+
   sourceCompatibility = JavaVersion.VERSION_1_8
   targetCompatibility = JavaVersion.VERSION_1_8
   compileJava.options.encoding = 'UTF-8'
