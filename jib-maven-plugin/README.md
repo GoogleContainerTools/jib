@@ -389,7 +389,7 @@ Some options can be set in the global Jib configuration file. The file is at the
 #### Properties
 
 * `disableUpdateCheck`: when set to true, disables the periodic up-to-date version check.
-* `registryMirrors`: a list of mirror settings for each base image registry. In the following example, if the base image configured in Jib is for a Docker Hub image, then `mirror.gcr.io`, `localhost:5000`, and the Docker Hub (`registry-1.docker.io`) are tried in order until Jib can successfuly pull a base image.
+* `registryMirrors`: a list of mirror settings for each base image registry. In the following example, if the base image configured in Jib is for a Docker Hub image, then `mirror.gcr.io`, `localhost:5000`, and the Docker Hub (`registry-1.docker.io`) are tried in order until Jib can successfully pull a base image.
 
 ```json
 {
