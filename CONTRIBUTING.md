@@ -75,10 +75,14 @@ To run select integration tests, use `--tests=<testPattern>`, see [gradle docs](
 
 # Development Tips
 
+## Java version
+
+Use Java 8 or 11 for development. https://sdkman.io/ is a helpful tool to switch between Java versions.
+
 ## Configuring Eclipse
 
 Although jib is a mix of Gradle and Maven projects, we build everything using one
-unifed gradle build. There is special code to include some projects directly as
+unified gradle build. There is special code to include some projects directly as
 source, but importing your project should be pretty straight forward.
 
   1. Ensure you have installed the Gradle tooling for Eclipse, called
