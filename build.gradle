@@ -19,7 +19,7 @@ project.ext.dependencyStrings = [
   GOOGLE_HTTP_CLIENT: 'com.google.http-client:google-http-client:1.42.2',
   GOOGLE_HTTP_CLIENT_APACHE_V2: 'com.google.http-client:google-http-client-apache-v2:1.42.2',
   GOOGLE_AUTH_LIBRARY_OAUTH2_HTTP: 'com.google.auth:google-auth-library-oauth2-http:1.10.0',
-  GUAVA: 'com.google.guava:guava:32.0.1-jre',
+  GUAVA: 'com.google.guava:guava:32.1.2-jre',
   JSR305: 'com.google.code.findbugs:jsr305:3.0.2', // transitively pulled in by GUAVA
 
   // for Build Plan and Jib Plugins Extension API
@@ -29,7 +29,7 @@ project.ext.dependencyStrings = [
   MAVEN_EXTENSION: 'com.google.cloud.tools:jib-maven-plugin-extension-api:0.4.0',
 
   COMMONS_COMPRESS: 'org.apache.commons:commons-compress:1.21',
-  ZSTD_JNI: 'com.github.luben:zstd-jni:1.5.5-4',
+  ZSTD_JNI: 'com.github.luben:zstd-jni:1.5.5-5',
   COMMONS_TEXT: 'org.apache.commons:commons-text:1.10.0',
   JACKSON_BOM: 'com.fasterxml.jackson:jackson-bom:2.15.2',
   JACKSON_DATABIND: 'com.fasterxml.jackson.core:jackson-databind',
@@ -53,7 +53,7 @@ project.ext.dependencyStrings = [
   MOCKITO_CORE: 'org.mockito:mockito-core:4.11.0',
   SISU_PLEXUS: 'org.eclipse.sisu:org.eclipse.sisu.plexus:0.3.5',
   SLF4J_API: 'org.slf4j:slf4j-api:2.0.7',
-  SLF4J_SIMPLE: 'org.slf4j:slf4j-simple:2.0.7',
+  SLF4J_SIMPLE: 'org.slf4j:slf4j-simple:2.0.9',
   SYSTEM_RULES:  'com.github.stefanbirkner:system-rules:1.19.0',
   JBCRYPT: 'org.mindrot:jbcrypt:0.4',
 ]
@@ -78,6 +78,16 @@ subprojects {
   apply plugin: 'com.github.sherter.google-java-format'
   apply plugin: 'net.ltgt.errorprone'
   apply plugin: 'jacoco'
+
+  // Guava update breaks unit tests. Workaround mentioned in https://github.com/google/guava/issues/6612#issuecomment-1614992368.
+  sourceSets.all {
+    configurations.getByName(runtimeClasspathConfigurationName) {
+      attributes.attribute(Attribute.of("org.gradle.jvm.environment", String), "standard-jvm")
+    }
+    configurations.getByName(compileClasspathConfigurationName) {
+      attributes.attribute(Attribute.of("org.gradle.jvm.environment", String), "standard-jvm")
+    }
+  }
 
   sourceCompatibility = JavaVersion.VERSION_1_8
   targetCompatibility = JavaVersion.VERSION_1_8
