@@ -495,7 +495,7 @@ To inspect the image that is produced from the build using Docker, you can use c
 
 ### How do I specify a platform in the manifest list (or OCI index) of a base image?
 
-Newer Jib verisons added an _incubating feature_ that provides support for selecting base images with the desired platforms from a manifest list. For example,
+Newer Jib versions added an _incubating feature_ that provides support for selecting base images with the desired platforms from a manifest list. For example,
 
 ```xml
   <from>
@@ -582,7 +582,7 @@ Some other alternatives to get around the rate limits:
 * Prevent Jib from accessing Docker Hub (after Jib cached a base image locally).
    - **Pin to a specific base image using a SHA digest.** For example, `jib.from.image='eclipse-temurin:11-jre@sha256:...'`. If you are not setting a base image with a SHA digest (which is the case if you don't set `jib.from.image` at all), then every time Jib runs, it reaches out to the registry to check if the base image is up-to-date. On the other hand, if you pin to a specific image with a digest, then the image is immutable. Therefore, if Jib has cached the image once (by running Jib online once to fully cache the image), Jib will not reach out to the Docker Hub. See [this Stack Overflow answer](https://stackoverflow.com/a/61190005/1701388) for more details.
    - (Maven/Gradle plugins only) **Do offline building.** Pass `--offline` to Maven or Gradle. Before that, you need to run Jib online once to cache the image. However, `--offline` means you cannot push to a remote registry. See [this Stack Overflow answer](https://stackoverflow.com/a/61190005/1701388) for more details.
-   - **Retrieve a base image from a local Docker deamon.** Store an image to your local Docker daemon, and set, say, `jib.from.image='docker://eclipse-temurin:11-jre'`. It can be slow for an initial build where Jib has to cache the image in Jib's format. For performance reasons, we usually recommend using an image on a registry.
+   - **Retrieve a base image from a local Docker daemon.** Store an image to your local Docker daemon, and set, say, `jib.from.image='docker://eclipse-temurin:11-jre'`. It can be slow for an initial build where Jib has to cache the image in Jib's format. For performance reasons, we usually recommend using an image on a registry.
    - **Set up a local registry, store a base image, and read it from the local registry.** Setting up a local registry is as simple as running `docker run -d -p5000:5000 registry:2`, but nevertheless, the whole process is a bit involved.
 * Retry with increasing backoffs. For example, using the [`retry`](https://github.com/kadwanev/retry) tool.
 
@@ -696,12 +696,12 @@ mvn --batch-mode -Djava.util.logging.config.file=path/to/logging.properties -Dji
 ```
 or
 ```sh
-gradle --no-daemon --console=plain -Djava.util.logging.config.file=path/to/logging.properties -Djib.serialize=true ...
+gradle --no-daemon --console=plain --info -Djava.util.logging.config.file=path/to/logging.properties -Djib.serialize=true ...
 ```
 
 **Note**: Jib Gradle plugins prior to version 2.2.0 have an issue generating HTTP logs ([#2356](https://github.com/GoogleContainerTools/jib/issues/2356)).
 
-You may wish to enable the debug logs too (`-X` for Maven, or `--debug --stacktrace` for Gradle).
+You may want to enable the debug logs too (`-X` for Maven, or `--debug --stacktrace` for Gradle).
 
 When configured correctly, you should see logs like this:
 ```
@@ -759,7 +759,7 @@ When you're using latest Java versions to write an app (or using an old version 
 Failed to execute goal com.google.cloud.tools:jib-maven-plugin:3.2.0:dockerBuild (default-cli) on project demo: Execution default-cli of goal com.google.cloud.tools:jib-maven-plugin:3.2.0:dockerBuild failed: Unsupported class file major version 61
 ```
 
-Jib uses the [ASM library](https://asm.ow2.io/) to examine compiled Java bytecode to automatically infer a main class (in other words, the class that defines `public static void main()` to start your app). In this way, if you have only one such class, Jib can automatically infer and use that class to set an image entrypoint (basically, a command to start your app). When new Java versions come out, often the ASM library version used in Jib doesn't support the new bytecode format. If this is the case, check if you are using the latest Jib. If you still get the error with the latest Jib, file a [bug](https://github.com/GoogleContainerTools/jib/issues/new/choose) to have the Jib team upgarde the ASM library.
+Jib uses the [ASM library](https://asm.ow2.io/) to examine compiled Java bytecode to automatically infer a main class (in other words, the class that defines `public static void main()` to start your app). In this way, if you have only one such class, Jib can automatically infer and use that class to set an image entrypoint (basically, a command to start your app). When new Java versions come out, often the ASM library version used in Jib doesn't support the new bytecode format. If this is the case, check if you are using the latest Jib. If you still get the error with the latest Jib, file a [bug](https://github.com/GoogleContainerTools/jib/issues/new/choose) to have the Jib team upgrade the ASM library.
 
 **Workaround**: to prevent Jib from doing auto-inference, you can manually set your desired main class via [`<container><mainClass>`](https://github.com/GoogleContainerTools/jib/tree/master/jib-maven-plugin#container-object) (for example, `<container><mainClass>com.example.your.Main</mainClass>`). As with other Jib parameters, it can be set through system/Maven properties or on the command-line (for example, `-Dcontainer.mainClass=...`).
 

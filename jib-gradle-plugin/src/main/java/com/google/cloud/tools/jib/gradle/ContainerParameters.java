@@ -41,7 +41,7 @@ public class ContainerParameters {
 
   private final ListProperty<String> jvmFlags;
   private Map<String, String> environment = Collections.emptyMap();
-  @Nullable private List<String> entrypoint;
+  private ListProperty<String> entrypoint;
   private List<String> extraClasspath = Collections.emptyList();
   private boolean expandClasspathDependencies;
   private final Property<String> mainClass;
@@ -63,6 +63,7 @@ public class ContainerParameters {
     creationTime = objectFactory.property(String.class).convention("EPOCH");
     mainClass = objectFactory.property(String.class);
     jvmFlags = objectFactory.listProperty(String.class);
+    entrypoint = objectFactory.listProperty(String.class);
   }
 
   @Input
@@ -73,15 +74,19 @@ public class ContainerParameters {
       return ConfigurationPropertyValidator.parseListProperty(
           System.getProperty(PropertyNames.CONTAINER_ENTRYPOINT));
     }
-    return entrypoint;
+    return entrypoint.getOrNull();
   }
 
   public void setEntrypoint(List<String> entrypoint) {
-    this.entrypoint = entrypoint;
+    this.entrypoint.set(entrypoint);
+  }
+
+  public void setEntrypoint(Provider<List<String>> entrypoint) {
+    this.entrypoint.set(entrypoint);
   }
 
   public void setEntrypoint(String entrypoint) {
-    this.entrypoint = Collections.singletonList(entrypoint);
+    this.entrypoint.set(Collections.singletonList(entrypoint));
   }
 
   @Input

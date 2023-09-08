@@ -369,6 +369,12 @@ public class JibPluginTest {
   }
 
   @Test
+  public void testLazyEvalForEntryPoint() {
+    BuildResult showEntrypoint = testProject.build("showentrypoint", "-Djib.console=plain");
+    assertThat(showEntrypoint.getOutput()).contains("entrypoint contains updated");
+  }
+
+  @Test
   public void testLazyEvalForExtraDirectories() {
     BuildResult checkExtraDirectories =
         testProject.build("check-extra-directories", "-Djib.console=plain");

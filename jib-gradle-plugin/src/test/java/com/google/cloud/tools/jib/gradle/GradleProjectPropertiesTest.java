@@ -67,7 +67,7 @@ import org.gradle.api.file.FileCollection;
 import org.gradle.api.java.archives.internal.DefaultManifest;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.plugins.JavaPlugin;
-import org.gradle.api.plugins.JavaPluginConvention;
+import org.gradle.api.plugins.JavaPluginExtension;
 import org.gradle.api.provider.Property;
 import org.gradle.api.tasks.bundling.War;
 import org.gradle.jvm.tasks.Jar;
@@ -148,7 +148,7 @@ public class GradleProjectPropertiesTest {
 
     DependencyHandler dependencies = project.getDependencies();
     dependencies.add(
-        "compile",
+        "implementation",
         project.files(
             "dependencies/library.jarC.jar",
             "dependencies/libraryB.jar",
@@ -258,16 +258,15 @@ public class GradleProjectPropertiesTest {
 
   @Test
   public void testGetMajorJavaVersion() {
-    JavaPluginConvention convention =
-        project.getConvention().findPlugin(JavaPluginConvention.class);
+    JavaPluginExtension extension = project.getExtensions().findByType(JavaPluginExtension.class);
 
-    convention.setTargetCompatibility(JavaVersion.VERSION_1_3);
+    extension.setTargetCompatibility(JavaVersion.VERSION_1_3);
     assertThat(gradleProjectProperties.getMajorJavaVersion()).isEqualTo(3);
 
-    convention.setTargetCompatibility(JavaVersion.VERSION_11);
+    extension.setTargetCompatibility(JavaVersion.VERSION_11);
     assertThat(gradleProjectProperties.getMajorJavaVersion()).isEqualTo(11);
 
-    convention.setTargetCompatibility(JavaVersion.VERSION_1_9);
+    extension.setTargetCompatibility(JavaVersion.VERSION_1_9);
     assertThat(gradleProjectProperties.getMajorJavaVersion()).isEqualTo(9);
   }
 
