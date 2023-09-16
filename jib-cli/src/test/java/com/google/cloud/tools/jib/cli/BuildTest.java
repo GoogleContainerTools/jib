@@ -427,7 +427,7 @@ class BuildTest {
                     new Build(), ArrayUtils.add(authArgs, "--target=ignored")));
     assertThat(meae)
         .hasMessageThat()
-        .containsMatch("^Error: (--(from-|to-)?credential-helper|\\[--username)");
+        .containsMatch("^Error: (\\[)*(--(from-|to-)?credential-helper|\\[--(username|password))");
   }
 
   @Test
