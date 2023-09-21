@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file.
 ## [unreleased]
 
 ### Added
+-
+
+### Changed
+-
+
+### Fixed
+-
+
+## 3.4.0
 
 ### Changed
 - deps: bump org.apache.maven:maven-compat from 3.9.1 to 3.9.2. ([#4017](https://github.com/GoogleContainerTools/jib/pull/4017/))
