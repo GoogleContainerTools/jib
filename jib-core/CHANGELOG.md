@@ -2,8 +2,11 @@
 All notable changes to this project will be documented in this file.
 
 ## [unreleased]
-
 ### Added
+### Changed
+### Fixed
+
+## 0.25.0
 
 ### Changed
 - deps: bump com.github.luben:zstd-jni from 1.5.5-2 to 1.5.5-4. ([#4049](https://github.com/GoogleContainerTools/jib/pull/4049/))
