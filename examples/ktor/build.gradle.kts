@@ -1,7 +1,7 @@
 plugins {
     application
     kotlin("jvm") version "1.3.10"
-    id("com.google.cloud.tools.jib") version "3.3.2"
+    id("com.google.cloud.tools.jib") version "3.4.0"
 }
 
 group = "example"

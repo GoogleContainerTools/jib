@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file.
 ## [unreleased]
 
 ### Added
+- 
+
+### Changed
+-
+
+### Fixed
+-
+
+## 3.4.0
+
+### Added
 - feat: support gradle lazy configuration for entrypoint container parameter. ([#4003](https://github.com/GoogleContainerTools/jib/pull/4003))
 
 ### Changed
@@ -15,7 +26,7 @@ All notable changes to this project will be documented in this file.
 ### Fixed
 - fix: fix WWW-Authenticate header parsing for Basic authentication ([#4035](https://github.com/GoogleContainerTools/jib/pull/4035/))
 - Fixed Gradle deprecations for Gradle 8.2. ([#3892](https://github.com/GoogleContainerTools/jib/pull/3892))
-- 
+
 ## 3.3.2
 
 ### Added

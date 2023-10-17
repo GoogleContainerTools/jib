@@ -48,7 +48,7 @@ For information about the project, see the [Jib project README](../README.md).
 You can containerize your application easily with one command:
 
 ```shell
-mvn compile com.google.cloud.tools:jib-maven-plugin:3.3.2:build -Dimage=<MY IMAGE>
+mvn compile com.google.cloud.tools:jib-maven-plugin:3.4.0:build -Dimage=<MY IMAGE>
 ```
 
 This builds and pushes a container image for your application to a container registry. *If you encounter authentication issues, see [Authentication Methods](#authentication-methods).*
@@ -56,7 +56,7 @@ This builds and pushes a container image for your application to a container reg
 To build to a Docker daemon, use:
 
 ```shell
-mvn compile com.google.cloud.tools:jib-maven-plugin:3.3.2:dockerBuild
+mvn compile com.google.cloud.tools:jib-maven-plugin:3.4.0:dockerBuild
 ```
 
 If you would like to set up Jib as part of your Maven build, follow the guide below.
@@ -74,7 +74,7 @@ In your Maven Java project, add the plugin to your `pom.xml`:
       <plugin>
         <groupId>com.google.cloud.tools</groupId>
         <artifactId>jib-maven-plugin</artifactId>
-        <version>3.3.2</version>
+        <version>3.4.0</version>
         <configuration>
           <to>
             <image>myimage</image>
@@ -134,7 +134,7 @@ For example, to build the image `my-docker-id/my-app`, the configuration would b
 </configuration>
 ```
 
-#### Using [JFrog Container Registry (JCR)](https://www.jfrog.com/confluence/display/JFROG/JFrog+Container+Registry/) or [JFrog Artifactory](https://www.jfrog.com/confluence/display/JFROG/Getting+Started+with+Artifactory+as+a+Docker+Registry)...
+#### Using [JFrog Container Registry (JCR)](https://jfrog.com/container-registry) or [JFrog Artifactory](https://jfrog.com/help/r/jfrog-artifactory-documentation/getting-started-with-artifactory-as-a-docker-registry)...
 
 *Make sure you have a [docker-credential-helper](https://github.com/docker/docker-credential-helpers#available-programs) set up. For example, on macOS, the credential helper would be `docker-credential-osxkeychain`. See [Authentication Methods](#authentication-methods) for other ways of authenticating.*
 

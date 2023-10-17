@@ -53,7 +53,7 @@ In your Gradle Java project, add the plugin to your `build.gradle`:
 
 ```groovy
 plugins {
-  id 'com.google.cloud.tools.jib' version '3.3.2'
+  id 'com.google.cloud.tools.jib' version '3.4.0'
 }
 ```
 
@@ -109,7 +109,7 @@ For example, to build the image `my-docker-id/my-app`, the configuration would b
 jib.to.image = 'my-docker-id/my-app'
 ```
 
-#### Using [JFrog Container Registry (JCR)](https://www.jfrog.com/confluence/display/JFROG/JFrog+Container+Registry/) or [JFrog Artifactory](https://www.jfrog.com/confluence/display/JFROG/Getting+Started+with+Artifactory+as+a+Docker+Registry)...
+#### Using [JFrog Container Registry (JCR)](https://jfrog.com/container-registry) or [JFrog Artifactory](https://jfrog.com/help/r/jfrog-artifactory-documentation/getting-started-with-artifactory-as-a-docker-registry)...
 
 *Make sure you have a [docker-credential-helper](https://github.com/docker/docker-credential-helpers#available-programs) set up. For example, on macOS, the credential helper would be `docker-credential-osxkeychain`. See [Authentication Methods](#authentication-methods) for other ways of authenticating.*
 
