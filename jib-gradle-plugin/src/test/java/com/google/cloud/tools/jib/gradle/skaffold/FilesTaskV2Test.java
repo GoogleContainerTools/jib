@@ -65,7 +65,7 @@ class FilesTaskV2Test {
 
   @RegisterExtension
   public TestProject platformProject =
-      new TestProject("platform", tempDirPlatform).withGradleVersion("8.3");
+      new TestProject("platform", tempDirPlatform).withGradleVersion("8.4");
 
   /**
    * Verifies that the files task succeeded and returns the list of paths it prints out.
