@@ -17,6 +17,7 @@
 package com.google.cloud.tools.jib.gradle;
 
 import com.google.cloud.tools.jib.plugins.common.PropertyNames;
+import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import javax.inject.Inject;
@@ -35,11 +36,13 @@ public class OutputPathsParameters {
 
   @Inject
   public OutputPathsParameters(Project project) {
+    File buildDir = project.getLayout().getBuildDirectory().getAsFile().get();
+
     this.projectDir = project.getProjectDir().toPath();
-    digest = project.getBuildDir().toPath().resolve("jib-image.digest");
-    imageId = project.getBuildDir().toPath().resolve("jib-image.id");
-    imageJson = project.getBuildDir().toPath().resolve("jib-image.json");
-    tar = project.getBuildDir().toPath().resolve("jib-image.tar");
+    digest = buildDir.toPath().resolve("jib-image.digest");
+    imageId = buildDir.toPath().resolve("jib-image.id");
+    imageJson = buildDir.toPath().resolve("jib-image.json");
+    tar = buildDir.toPath().resolve("jib-image.tar");
   }
 
   @Input

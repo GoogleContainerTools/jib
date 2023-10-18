@@ -220,7 +220,7 @@ public class GradleProjectProperties implements ProjectProperties {
     this.tempDirectoryProvider = tempDirectoryProvider;
     this.extensionLoader = extensionLoader;
     this.warProject = project.getPlugins().hasPlugin(WarPlugin.class);
-    this.defaultCacheDirectory = project.getBuildDir().toPath().resolve(CACHE_DIRECTORY_NAME);
+    this.defaultCacheDirectory = project.getLayout().getBuildDirectory().getAsFile().get().toPath().resolve(CACHE_DIRECTORY_NAME);
     this.offline = project.getGradle().getStartParameter().isOffline();
     this.version = project.getVersion() != null ? project.getVersion().toString() : "";
     this.objectFactory = project.getObjects();
