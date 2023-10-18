@@ -4,10 +4,25 @@ All notable changes to this project will be documented in this file.
 ## [unreleased]
 
 ### Added
+-
 
 ### Changed
+-
 
 ### Fixed
+-
+
+## 3.4.0
+
+### Changed
+- deps: bump org.apache.maven:maven-compat from 3.9.1 to 3.9.2. ([#4017](https://github.com/GoogleContainerTools/jib/pull/4017/))
+- deps: bump com.github.luben:zstd-jni from 1.5.5-2 to 1.5.5-4. ([#4049](https://github.com/GoogleContainerTools/jib/pull/4049/))
+- deps: bump com.fasterxml.jackson:jackson-bom from 2.15.0 to 2.15.2. ([#4055](https://github.com/GoogleContainerTools/jib/pull/4055))
+- deps: bump com.google.guava:guava from 32.0.1-jre to 32.1.2-jre ([#4078](https://github.com/GoogleContainerTools/jib/pull/4078))
+- deps: bump org.slf4j:slf4j-simple from 2.0.7 to 2.0.9. ([#4098](https://github.com/GoogleContainerTools/jib/pull/4098))
+
+### Fixed
+- fix: fix WWW-Authenticate header parsing for Basic authentication ([#4035](https://github.com/GoogleContainerTools/jib/pull/4035/))
 
 ## 3.3.2
 
