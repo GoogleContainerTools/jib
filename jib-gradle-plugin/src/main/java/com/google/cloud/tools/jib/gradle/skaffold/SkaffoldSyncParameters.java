@@ -17,23 +17,21 @@
 package com.google.cloud.tools.jib.gradle.skaffold;
 
 import java.io.File;
-import java.nio.file.Path;
-import java.util.Collections;
-import java.util.Set;
-import java.util.stream.Collectors;
 import javax.inject.Inject;
 import org.gradle.api.Project;
-import org.gradle.api.tasks.Internal;
+import org.gradle.api.file.ConfigurableFileCollection;
+import org.gradle.api.tasks.InputFiles;
 
 /** Skaffold specific JibExtension parameters for configuring files to sync. */
 public class SkaffoldSyncParameters {
-  private final Project project;
 
-  private Set<Path> excludes = Collections.emptySet();
+  private final ConfigurableFileCollection fileCollection;
+  private ConfigurableFileCollection excludes;
 
   @Inject
   public SkaffoldSyncParameters(Project project) {
-    this.project = project;
+    this.fileCollection = project.getObjects().fileCollection();
+    this.excludes = project.getObjects().fileCollection();
   }
 
   /**
@@ -41,8 +39,8 @@ public class SkaffoldSyncParameters {
    *
    * @return a set of absolute paths
    */
-  @Internal
-  public Set<Path> getExcludes() {
+  @InputFiles
+  public ConfigurableFileCollection getExcludes() {
     return excludes;
   }
 
@@ -53,10 +51,11 @@ public class SkaffoldSyncParameters {
    * @param paths paths to set on excludes
    */
   public void setExcludes(Object paths) {
-    this.excludes =
-        project.files(paths).getFiles().stream()
-            .map(File::toPath)
-            .map(Path::toAbsolutePath)
-            .collect(Collectors.toSet());
+    this.excludes.from(paths);
+  }
+
+  @InputFiles
+  public ConfigurableFileCollection getFileCollection() {
+    return fileCollection;
   }
 }

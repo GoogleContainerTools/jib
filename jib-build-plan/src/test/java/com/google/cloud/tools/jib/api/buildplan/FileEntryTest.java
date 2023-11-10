@@ -22,6 +22,7 @@ import java.time.Instant;
 import org.junit.Assert;
 import org.junit.Test;
 
+/** File entry tests. */
 public class FileEntryTest {
 
   @Test

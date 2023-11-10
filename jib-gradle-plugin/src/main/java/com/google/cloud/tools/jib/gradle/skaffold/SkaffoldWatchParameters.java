@@ -17,26 +17,26 @@
 package com.google.cloud.tools.jib.gradle.skaffold;
 
 import java.io.File;
-import java.nio.file.Path;
-import java.util.Collections;
-import java.util.Set;
-import java.util.stream.Collectors;
 import javax.inject.Inject;
 import org.gradle.api.Project;
+import org.gradle.api.file.ConfigurableFileCollection;
+import org.gradle.api.tasks.InputFiles;
 import org.gradle.api.tasks.Internal;
 
 /** Skaffold specific JibExtension parameters for configuring files to watch. */
 public class SkaffoldWatchParameters {
 
-  private final Project project;
-
-  private Set<Path> buildIncludes = Collections.emptySet();
-  private Set<Path> includes = Collections.emptySet();
-  private Set<Path> excludes = Collections.emptySet();
+  private final ConfigurableFileCollection fileCollection;
+  private ConfigurableFileCollection buildIncludes;
+  private ConfigurableFileCollection includes;
+  private ConfigurableFileCollection excludes;
 
   @Inject
   public SkaffoldWatchParameters(Project project) {
-    this.project = project;
+    this.fileCollection = project.getObjects().fileCollection();
+    this.buildIncludes = project.getObjects().fileCollection();
+    this.includes = project.getObjects().fileCollection();
+    this.excludes = project.getObjects().fileCollection();
   }
 
   /**
@@ -45,7 +45,7 @@ public class SkaffoldWatchParameters {
    * @return a set of absolute paths
    */
   @Internal
-  public Set<Path> getBuildIncludes() {
+  public ConfigurableFileCollection getBuildIncludes() {
     return buildIncludes;
   }
 
@@ -56,11 +56,7 @@ public class SkaffoldWatchParameters {
    * @param paths paths to set on includes
    */
   public void setBuildIncludes(Object paths) {
-    this.buildIncludes =
-        project.files(paths).getFiles().stream()
-            .map(File::toPath)
-            .map(Path::toAbsolutePath)
-            .collect(Collectors.toSet());
+    this.buildIncludes.from(paths);
   }
 
   /**
@@ -68,8 +64,8 @@ public class SkaffoldWatchParameters {
    *
    * @return a set of absolute paths
    */
-  @Internal
-  public Set<Path> getIncludes() {
+  @InputFiles
+  public ConfigurableFileCollection getIncludes() {
     return includes;
   }
 
@@ -80,11 +76,7 @@ public class SkaffoldWatchParameters {
    * @param paths paths to set on includes
    */
   public void setIncludes(Object paths) {
-    this.includes =
-        project.files(paths).getFiles().stream()
-            .map(File::toPath)
-            .map(Path::toAbsolutePath)
-            .collect(Collectors.toSet());
+    this.includes.from(paths);
   }
 
   /**
@@ -92,11 +84,9 @@ public class SkaffoldWatchParameters {
    *
    * @return a set of absolute paths
    */
-  @Internal
-  public Set<Path> getExcludes() {
-    // Gradle warns about @Input annotations on File objects, so we have to expose a getter for a
-    // String to make them go away.
-    return excludes;
+  @InputFiles
+  public ConfigurableFileCollection getExcludes() {
+    return this.excludes;
   }
 
   /**
@@ -106,10 +96,11 @@ public class SkaffoldWatchParameters {
    * @param paths paths to set on excludes
    */
   public void setExcludes(Object paths) {
-    this.excludes =
-        project.files(paths).getFiles().stream()
-            .map(File::toPath)
-            .map(Path::toAbsolutePath)
-            .collect(Collectors.toSet());
+    this.excludes.from(paths);
+  }
+
+  @InputFiles
+  public ConfigurableFileCollection getFileCollection() {
+    return fileCollection;
   }
 }

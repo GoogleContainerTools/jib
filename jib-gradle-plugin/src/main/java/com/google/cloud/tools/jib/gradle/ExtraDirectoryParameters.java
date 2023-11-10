@@ -18,60 +18,51 @@ package com.google.cloud.tools.jib.gradle;
 
 import com.google.cloud.tools.jib.plugins.common.RawConfiguration.ExtraDirectoriesConfiguration;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
 import javax.inject.Inject;
-import org.gradle.api.Project;
+import org.gradle.api.file.ConfigurableFileCollection;
 import org.gradle.api.model.ObjectFactory;
 import org.gradle.api.provider.ListProperty;
 import org.gradle.api.provider.Property;
 import org.gradle.api.provider.Provider;
 import org.gradle.api.tasks.Input;
+import org.gradle.api.tasks.InputFiles;
 import org.gradle.api.tasks.Internal;
 
 /** Configuration of an extra directory. */
 public class ExtraDirectoryParameters implements ExtraDirectoriesConfiguration {
 
-  private Project project;
-  private Property<Path> from;
+  ConfigurableFileCollection from;
   private Property<String> into;
   private ListProperty<String> includes;
   private ListProperty<String> excludes;
 
   @Inject
-  public ExtraDirectoryParameters(ObjectFactory objects, Project project) {
-    this.project = project;
-    this.from = objects.property(Path.class).value(Paths.get(""));
+  public ExtraDirectoryParameters(ObjectFactory objects) {
+    this.from = objects.fileCollection();
     this.into = objects.property(String.class).value("/");
     this.includes = objects.listProperty(String.class).empty();
     this.excludes = objects.listProperty(String.class).empty();
   }
 
-  ExtraDirectoryParameters(ObjectFactory objects, Project project, Path from, String into) {
-    this(objects, project);
-    this.from = objects.property(Path.class).value(from);
+  ExtraDirectoryParameters(ObjectFactory objects, Path from, String into) {
+    this(objects);
+    this.from = objects.fileCollection().from(from);
     this.into = objects.property(String.class).value(into);
   }
 
-  @Input
-  public String getFromString() {
-    // Gradle warns about @Input annotations on File objects, so we have to expose a getter for a
-    // String to make them go away.
-    return from.get().toString();
-  }
-
   @Override
-  @Internal
+  @InputFiles
   public Path getFrom() {
-    return from.get();
+    return from.getSingleFile().toPath();
   }
 
   public void setFrom(Object from) {
-    this.from.set(project.file(from).toPath());
+    this.from.from(from);
   }
 
   public void setFrom(Provider<Object> from) {
-    this.from.set(from.map(obj -> project.file(obj).toPath()));
+    this.from.setFrom(from);
   }
 
   @Override
