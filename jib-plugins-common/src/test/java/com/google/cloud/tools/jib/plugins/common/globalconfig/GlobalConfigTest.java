@@ -74,7 +74,7 @@ public class GlobalConfigTest {
     String json =
         "{\"disableUpdateCheck\":true, \"registryMirrors\":["
             + "{ \"registry\": \"registry-1.docker.io\","
-            + "  \"mirrors\": [\"mirror.gcr.io\", \"localhost:5000\"] },"
+            + "  \"mirrors\": [\"mirror.gcr.io\", \"localhost:5001\"] },"
             + "{ \"registry\": \"another.registry\", \"mirrors\": [\"another.mirror\"] }"
             + "]}";
     Files.write(configDir.resolve("config.json"), json.getBytes(StandardCharsets.UTF_8));
@@ -86,7 +86,7 @@ public class GlobalConfigTest {
             "registry-1.docker.io",
             "mirror.gcr.io",
             "registry-1.docker.io",
-            "localhost:5000",
+            "localhost:5001",
             "another.registry",
             "another.mirror");
   }

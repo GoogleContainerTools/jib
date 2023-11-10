@@ -26,6 +26,7 @@ import java.nio.file.Paths;
 import org.hamcrest.CoreMatchers;
 import org.hamcrest.MatcherAssert;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 
 /** Integration tests for {@link DockerCredentialHelper}. */

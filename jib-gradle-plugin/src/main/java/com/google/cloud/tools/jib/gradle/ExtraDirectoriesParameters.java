@@ -19,6 +19,7 @@ package com.google.cloud.tools.jib.gradle;
 import com.google.cloud.tools.jib.plugins.common.ConfigurationPropertyValidator;
 import com.google.cloud.tools.jib.plugins.common.PropertyNames;
 import java.io.File;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.List;
@@ -33,14 +34,15 @@ import org.gradle.api.provider.ListProperty;
 import org.gradle.api.provider.MapProperty;
 import org.gradle.api.provider.Provider;
 import org.gradle.api.tasks.Input;
-import org.gradle.api.tasks.Internal;
+import org.gradle.api.tasks.Nested;
+import org.gradle.api.tasks.Optional;
 
 /** Object in {@link JibExtension} that configures the extra directories. */
 public class ExtraDirectoriesParameters {
 
   private final ObjectFactory objects;
-  private final Project project;
-
+  private final Path projectPath;
+  private final Provider<String> extraDirPaths;
   private ListProperty<ExtraDirectoryParameters> paths;
   private ExtraDirectoryParametersSpec spec;
   private MapProperty<String, String> permissions;
@@ -48,10 +50,12 @@ public class ExtraDirectoriesParameters {
   @Inject
   public ExtraDirectoriesParameters(ObjectFactory objects, Project project) {
     this.objects = objects;
-    this.project = project;
     paths = objects.listProperty(ExtraDirectoryParameters.class).empty();
     spec = objects.newInstance(ExtraDirectoryParametersSpec.class, project, paths);
     permissions = objects.mapProperty(String.class, String.class).empty();
+    this.projectPath = project.getProjectDir().toPath();
+    this.extraDirPaths =
+        project.getProviders().systemProperty(PropertyNames.EXTRA_DIRECTORIES_PATHS);
   }
 
   public void paths(Action<? super ExtraDirectoryParametersSpec> action) {
@@ -59,32 +63,26 @@ public class ExtraDirectoriesParameters {
   }
 
   @Input
-  public List<String> getPathStrings() {
-    // Gradle warns about @Input annotations on File objects, so we have to expose a getter for a
-    // String to make them go away.
-    return getPaths().stream()
-        .map(extraDirectoryParameters -> extraDirectoryParameters.getFrom().toString())
-        .collect(Collectors.toList());
+  @Optional
+  public Provider<String> getExtraDirPaths() {
+    return extraDirPaths;
   }
 
-  @Internal
+  @Nested
   public List<ExtraDirectoryParameters> getPaths() {
     // Gradle warns about @Input annotations on File objects, so we have to expose a getter for a
     // String to make them go away.
-    String property = System.getProperty(PropertyNames.EXTRA_DIRECTORIES_PATHS);
-    if (property != null) {
-      List<String> pathStrings = ConfigurationPropertyValidator.parseListProperty(property);
+    if (this.extraDirPaths.isPresent()) {
+      List<String> pathStrings =
+          ConfigurationPropertyValidator.parseListProperty(this.extraDirPaths.get());
       return pathStrings.stream()
-          .map(path -> new ExtraDirectoryParameters(objects, project, Paths.get(path), "/"))
+          .map(path -> new ExtraDirectoryParameters(objects, Paths.get(path), "/"))
           .collect(Collectors.toList());
     }
     if (paths.get().isEmpty()) {
       return Collections.singletonList(
           new ExtraDirectoryParameters(
-              objects,
-              project,
-              project.getProjectDir().toPath().resolve("src").resolve("main").resolve("jib"),
-              "/"));
+              objects, projectPath.resolve("src").resolve("main").resolve("jib"), "/"));
     }
     return paths.get();
   }
@@ -115,8 +113,8 @@ public class ExtraDirectoriesParameters {
    */
   @Nonnull
   private List<ExtraDirectoryParameters> convertToExtraDirectoryParametersList(Object obj) {
-    return project.files(obj).getFiles().stream()
-        .map(file -> new ExtraDirectoryParameters(objects, project, file.toPath(), "/"))
+    return this.objects.fileCollection().from(obj).getFiles().stream()
+        .map(file -> new ExtraDirectoryParameters(objects, file.toPath(), "/"))
         .collect(Collectors.toList());
   }
 

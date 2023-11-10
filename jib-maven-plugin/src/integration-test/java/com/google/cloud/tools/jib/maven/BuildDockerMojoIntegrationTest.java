@@ -72,7 +72,6 @@ public class BuildDockerMojoIntegrationTest {
             .run();
     String dockerInspectLabels =
         new Command("docker", "inspect", "-f", "'{{json .Config.Labels}}'", imageReference).run();
-    String history = new Command("docker", "history", imageReference).run();
 
     MatcherAssert.assertThat(
         dockerInspectVolumes, CoreMatchers.containsString("\"/var/log\":{},\"/var/log2\":{}"));

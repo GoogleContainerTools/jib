@@ -84,6 +84,22 @@ public class LocalBaseImageStepsTest {
     tempDirectoryProvider.close();
   }
 
+  public static int getJavaVersion() {
+    String version = System.getProperty("java.version");
+    if (version.startsWith("1.")) {
+      version = version.substring(2);
+    }
+    // Allow these formats:
+    // 1.8.0_72-ea
+    // 9-ea
+    // 9
+    // 9.0.1
+    int dotPos = version.indexOf('.');
+    int dashPos = version.indexOf('-');
+    return Integer.parseInt(
+        version.substring(0, dotPos > -1 ? dotPos : dashPos > -1 ? dashPos : 1));
+  }
+
   @Test
   public void testCacheDockerImageTar_validDocker() throws Exception {
     Path dockerBuild = getResource("core/extraction/docker-save.tar");
@@ -93,17 +109,22 @@ public class LocalBaseImageStepsTest {
 
     Mockito.verify(progressEventDispatcher, Mockito.times(2)).newChildProducer();
     Assert.assertEquals(2, result.layers.size());
+
     Assert.assertEquals(
         "5e701122d3347fae0758cd5b7f0692c686fcd07b0e7fd9c4a125fbdbbedc04dd",
         result.layers.get(0).get().getDiffId().getHash());
     Assert.assertEquals(
-        "0011328ac5dfe3dde40c7c5e0e00c98d1833a3aeae2bfb668cf9eb965c229c7f",
+        getJavaVersion() < 16
+            ? "0011328ac5dfe3dde40c7c5e0e00c98d1833a3aeae2bfb668cf9eb965c229c7f"
+            : "bdc94fe3bba352809859ca87c846872ae2c1157596631e72d7d73e46fae86101",
         result.layers.get(0).get().getBlobDescriptor().getDigest().getHash());
     Assert.assertEquals(
         "f1ac3015bcbf0ada4750d728626eb10f0f585199e2b667dcd79e49f0e926178e",
         result.layers.get(1).get().getDiffId().getHash());
     Assert.assertEquals(
-        "c10ef24a5cef5092bbcb5a5666721cff7b86ce978c203a958d1fc86ee6c19f94",
+        getJavaVersion() < 16
+            ? "c10ef24a5cef5092bbcb5a5666721cff7b86ce978c203a958d1fc86ee6c19f94"
+            : "073d615d78a940951cfe91b1feee2da3c5d21f7df48539921c26aecd23185d5f",
         result.layers.get(1).get().getBlobDescriptor().getDigest().getHash());
     Assert.assertEquals(2, result.configurationTemplate.getLayerCount());
   }

@@ -239,15 +239,15 @@ public class FailoverHttpClientTest {
     FailoverHttpClient insecureHttpClient = newHttpClient(true, false);
 
     Mockito.when(mockHttpRequest.execute())
-        .thenThrow(new ConnectException("my exception")); // server is not listening on 5000
+        .thenThrow(new ConnectException("my exception")); // server is not listening on 5001
 
     try (Response response =
-        insecureHttpClient.get(new URL("https://insecure:5000"), fakeRequest(null))) {
+        insecureHttpClient.get(new URL("https://insecure:5001"), fakeRequest(null))) {
       Assert.fail("Should not fall back to HTTP if port was explicitly given and cannot connect");
     } catch (ConnectException ex) {
       Assert.assertEquals("my exception", ex.getMessage());
 
-      verifyCapturedUrls("https://insecure:5000");
+      verifyCapturedUrls("https://insecure:5001");
 
       Mockito.verify(mockHttpRequest, Mockito.times(1)).execute();
       Mockito.verifyNoInteractions(mockInsecureHttpRequest, logger);

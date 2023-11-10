@@ -20,6 +20,7 @@ import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.annotations.VisibleForTesting;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.Path;
@@ -98,6 +99,15 @@ public class SkaffoldFilesOutput {
   }
 
   /**
+   * Adds a build file/directory.
+   *
+   * @param build the path to the file/directory
+   */
+  public void addBuild(File build) {
+    addBuild(build.toPath());
+  }
+
+  /**
    * Adds an input file/directory.
    *
    * @param inputFile the path to the file/directory
@@ -107,12 +117,30 @@ public class SkaffoldFilesOutput {
   }
 
   /**
+   * Adds an input file/directory.
+   *
+   * @param inputFile the path to the file/directory
+   */
+  public void addInput(File inputFile) {
+    addInput(inputFile.toPath());
+  }
+
+  /**
    * Adds an ignored file/directory.
    *
    * @param ignoreFile the path to the file/directory
    */
   public void addIgnore(Path ignoreFile) {
     skaffoldFilesTemplate.ignore.add(ignoreFile.toString());
+  }
+
+  /**
+   * Adds an ignored file/directory.
+   *
+   * @param ignoreFile the path to the file/directory
+   */
+  public void addIgnore(File ignoreFile) {
+    addIgnore(ignoreFile.toPath());
   }
 
   @VisibleForTesting

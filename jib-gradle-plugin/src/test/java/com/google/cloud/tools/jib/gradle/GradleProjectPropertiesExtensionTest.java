@@ -16,6 +16,8 @@
 
 package com.google.cloud.tools.jib.gradle;
 
+import static org.gradle.api.tasks.SourceSet.MAIN_SOURCE_SET_NAME;
+
 import com.google.cloud.tools.jib.api.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.api.Jib;
 import com.google.cloud.tools.jib.api.JibContainerBuilder;
@@ -35,11 +37,21 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import org.gradle.api.Action;
+import org.gradle.api.JavaVersion;
 import org.gradle.api.Project;
+import org.gradle.api.file.RegularFile;
+import org.gradle.api.internal.provider.DefaultProperty;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.configuration.ConsoleOutput;
 import org.gradle.api.model.ObjectFactory;
+import org.gradle.api.plugins.ExtensionContainer;
 import org.gradle.api.plugins.JavaPlugin;
+import org.gradle.api.plugins.JavaPluginExtension;
+import org.gradle.api.provider.Provider;
+import org.gradle.api.tasks.SourceSet;
+import org.gradle.api.tasks.SourceSetContainer;
+import org.gradle.api.tasks.TaskContainer;
+import org.gradle.jvm.tasks.Jar;
 import org.hamcrest.CoreMatchers;
 import org.hamcrest.MatcherAssert;
 import org.junit.Assert;
@@ -205,6 +217,21 @@ public class GradleProjectPropertiesExtensionTest {
   @Mock private Logger mockLogger;
   @Mock private ObjectFactory mockObjectFactory;
 
+  @Mock private JavaPluginExtension mockJavaPluginExtension;
+  @Mock private SourceSetContainer mockSourceSetContainer;
+
+  @Mock(answer = Answers.RETURNS_DEEP_STUBS)
+  private SourceSet mockSourceSet;
+
+  @Mock private TaskContainer mockReturnContainer;
+
+  @Mock private ExtensionContainer mockExtensionContainer;
+
+  @Mock(answer = Answers.RETURNS_DEEP_STUBS)
+  private Jar mockJarTask;
+
+  @Mock private Provider<RegularFile> mockProviderFile;
+
   @Mock(answer = Answers.RETURNS_DEEP_STUBS)
   private Project mockProject;
 
@@ -219,7 +246,24 @@ public class GradleProjectPropertiesExtensionTest {
     Mockito.when(mockLogger.isInfoEnabled()).thenReturn(true);
     Mockito.when(mockLogger.isWarnEnabled()).thenReturn(true);
     Mockito.when(mockLogger.isErrorEnabled()).thenReturn(true);
+    Mockito.when(mockProject.getExtensions()).thenReturn(mockExtensionContainer);
+    Mockito.when(mockProject.getTasks()).thenReturn(mockReturnContainer);
+    Mockito.when(mockReturnContainer.findByName("jar")).thenReturn(mockJarTask);
+    Mockito.when(mockJarTask.getArchiveFile()).thenReturn(mockProviderFile);
+    Mockito.when(mockProviderFile.isPresent()).thenReturn(true);
 
+    Mockito.when(mockExtensionContainer.getByType(JavaPluginExtension.class))
+        .thenReturn(mockJavaPluginExtension);
+    Mockito.when(mockJavaPluginExtension.getSourceSets()).thenReturn(mockSourceSetContainer);
+    Mockito.when(mockJavaPluginExtension.getTargetCompatibility())
+        .thenReturn(JavaVersion.VERSION_1_8);
+    Mockito.when(mockSourceSetContainer.getByName(MAIN_SOURCE_SET_NAME)).thenReturn(mockSourceSet);
+
+    Mockito.when(mockObjectFactory.property(String.class))
+        .thenReturn(new DefaultProperty<>(null, String.class));
+    //    Mockito.when(mockObjectFactory.fileProperty()).thenReturn(new DefaultRegularFileVar());
+    Mockito.when(mockObjectFactory.property(Boolean.class))
+        .thenReturn(new DefaultProperty<>(null, Boolean.class));
     Mockito.when(mockProject.getGradle().getStartParameter().getConsoleOutput())
         .thenReturn(ConsoleOutput.Plain);
     Mockito.when(mockProject.getObjects()).thenReturn(mockObjectFactory);
@@ -248,7 +292,8 @@ public class GradleProjectPropertiesExtensionTest {
     loadedExtensions = Arrays.asList(extension);
 
     JibContainerBuilder extendedBuilder =
-        gradleProjectProperties.runPluginExtensions(Collections.emptyList(), containerBuilder);
+        gradleProjectProperties.runPluginExtensions(
+            Collections.emptyList(), containerBuilder, Optional.of(mockProject));
     Assert.assertSame(extendedBuilder, containerBuilder);
 
     gradleProjectProperties.waitForLoggingThread();
@@ -259,7 +304,7 @@ public class GradleProjectPropertiesExtensionTest {
   public void testRunPluginExtensions_configuredExtensionNotFound() {
     try {
       gradleProjectProperties.runPluginExtensions(
-          Arrays.asList(new FooExtensionConfig()), containerBuilder);
+          Arrays.asList(new FooExtensionConfig()), containerBuilder, Optional.of(mockProject));
       Assert.fail();
     } catch (JibPluginExtensionException ex) {
       Assert.assertEquals(
@@ -281,7 +326,7 @@ public class GradleProjectPropertiesExtensionTest {
 
     JibContainerBuilder extendedBuilder =
         gradleProjectProperties.runPluginExtensions(
-            Arrays.asList(new FooExtensionConfig()), containerBuilder);
+            Arrays.asList(new FooExtensionConfig()), containerBuilder, Optional.of(mockProject));
     Assert.assertEquals("user from extension", extendedBuilder.toContainerBuildPlan().getUser());
 
     gradleProjectProperties.waitForLoggingThread();
@@ -305,7 +350,7 @@ public class GradleProjectPropertiesExtensionTest {
 
     try {
       gradleProjectProperties.runPluginExtensions(
-          Arrays.asList(new FooExtensionConfig()), containerBuilder);
+          Arrays.asList(new FooExtensionConfig()), containerBuilder, Optional.of(mockProject));
       Assert.fail();
     } catch (JibPluginExtensionException ex) {
       Assert.assertEquals("exception from extension", ex.getMessage());
@@ -323,7 +368,7 @@ public class GradleProjectPropertiesExtensionTest {
 
     try {
       gradleProjectProperties.runPluginExtensions(
-          Arrays.asList(new FooExtensionConfig()), containerBuilder);
+          Arrays.asList(new FooExtensionConfig()), containerBuilder, Optional.of(mockProject));
       Assert.fail();
     } catch (JibPluginExtensionException ex) {
       Assert.assertEquals("invalid base image reference:  in*val+id", ex.getMessage());
@@ -346,12 +391,16 @@ public class GradleProjectPropertiesExtensionTest {
 
     JibContainerBuilder extendedBuilder1 =
         gradleProjectProperties.runPluginExtensions(
-            Arrays.asList(new FooExtensionConfig(), new BarExtensionConfig()), containerBuilder);
+            Arrays.asList(new FooExtensionConfig(), new BarExtensionConfig()),
+            containerBuilder,
+            Optional.of(mockProject));
     Assert.assertEquals("bar", extendedBuilder1.toContainerBuildPlan().getBaseImage());
 
     JibContainerBuilder extendedBuilder2 =
         gradleProjectProperties.runPluginExtensions(
-            Arrays.asList(new BarExtensionConfig(), new FooExtensionConfig()), containerBuilder);
+            Arrays.asList(new BarExtensionConfig(), new FooExtensionConfig()),
+            containerBuilder,
+            Optional.of(mockProject));
     Assert.assertEquals("foo", extendedBuilder2.toContainerBuildPlan().getBaseImage());
   }
 
@@ -366,7 +415,8 @@ public class GradleProjectPropertiesExtensionTest {
     JibContainerBuilder extendedBuilder =
         gradleProjectProperties.runPluginExtensions(
             Arrays.asList(new FooExtensionConfig(ImmutableMap.of("user", "65432"))),
-            containerBuilder);
+            containerBuilder,
+            Optional.of(mockProject));
     Assert.assertEquals("65432", extendedBuilder.toContainerBuildPlan().getUser());
   }
 
@@ -388,7 +438,9 @@ public class GradleProjectPropertiesExtensionTest {
     loadedExtensions = Arrays.asList(fooExtension, barExtension);
 
     gradleProjectProperties.runPluginExtensions(
-        Arrays.asList(new FooExtensionConfig(), new BarExtensionConfig()), containerBuilder);
+        Arrays.asList(new FooExtensionConfig(), new BarExtensionConfig()),
+        containerBuilder,
+        Optional.of(mockProject));
   }
 
   @Test
@@ -412,7 +464,8 @@ public class GradleProjectPropertiesExtensionTest {
         Arrays.asList(
             new FooExtensionConfig(new ExtensionDefinedFooConfig("fooParamValue")),
             new BarExtensionConfig(new ExtensionDefinedBarConfig("barParamValue"))),
-        containerBuilder);
+        containerBuilder,
+        Optional.of(mockProject));
   }
 
   @Test
@@ -427,7 +480,8 @@ public class GradleProjectPropertiesExtensionTest {
         new BaseExtensionConfig<>(
             BaseExtension.class.getName(), Collections.emptyMap(), (ignored) -> {});
     try {
-      gradleProjectProperties.runPluginExtensions(Arrays.asList(extensionConfig), containerBuilder);
+      gradleProjectProperties.runPluginExtensions(
+          Arrays.asList(extensionConfig), containerBuilder, Optional.of(mockProject));
       Assert.fail();
     } catch (IllegalArgumentException ex) {
       Assert.assertEquals(
@@ -448,7 +502,7 @@ public class GradleProjectPropertiesExtensionTest {
 
     try {
       gradleProjectProperties.runPluginExtensions(
-          Arrays.asList(new FooExtensionConfig()), containerBuilder);
+          Arrays.asList(new FooExtensionConfig()), containerBuilder, Optional.of(mockProject));
       Assert.fail();
     } catch (JibPluginExtensionException ex) {
       Assert.assertEquals(FooExtension.class, ex.getExtensionClass());

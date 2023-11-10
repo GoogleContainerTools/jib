@@ -53,7 +53,7 @@ public class JibIntegrationTest {
   public static final String KNOWN_OCI_INDEX_SHA =
       "sha256:2c50b819aa3bfaf6ae72e47682f6c5abc0f647cf3f4224a4a9be97dd30433909";
 
-  @ClassRule public static final LocalRegistry localRegistry = new LocalRegistry(5000);
+  @ClassRule public static final LocalRegistry localRegistry = new LocalRegistry(5001);
 
   @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
@@ -63,7 +63,7 @@ public class JibIntegrationTest {
   private final RegistryClient registryClient =
       RegistryClient.factory(
               EventHandlers.NONE,
-              dockerHost + ":5000",
+              dockerHost + ":5001",
               "jib-scratch",
               new FailoverHttpClient(true, true, ignored -> {}))
           .newRegistryClient();
@@ -71,7 +71,7 @@ public class JibIntegrationTest {
   private final RegistryClient distrolessRegistryClient =
       RegistryClient.factory(
               EventHandlers.NONE,
-              dockerHost + ":5000",
+              dockerHost + ":5001",
               "jib-distroless",
               new FailoverHttpClient(true, true, ignored -> {}))
           .newRegistryClient();
@@ -109,9 +109,9 @@ public class JibIntegrationTest {
   public void testBasic_helloWorld()
       throws InvalidImageReferenceException, InterruptedException, CacheDirectoryCreationException,
           IOException, RegistryException, ExecutionException {
-    String toImage = dockerHost + ":5000/basic-helloworld";
+    String toImage = dockerHost + ":5001/basic-helloworld";
     JibContainer jibContainer =
-        Jib.from(dockerHost + ":5000/busybox")
+        Jib.from(dockerHost + ":5001/busybox")
             .setEntrypoint("echo", "Hello World")
             .containerize(
                 Containerizer.to(RegistryImage.named(toImage)).setAllowInsecureRegistries(true));
@@ -125,9 +125,9 @@ public class JibIntegrationTest {
   public void testBasic_dockerDaemonBaseImage()
       throws IOException, InterruptedException, InvalidImageReferenceException, ExecutionException,
           RegistryException, CacheDirectoryCreationException {
-    String toImage = dockerHost + ":5000/basic-dockerdaemon";
+    String toImage = dockerHost + ":5001/basic-dockerdaemon";
     JibContainer jibContainer =
-        Jib.from("docker://" + dockerHost + ":5000/busybox")
+        Jib.from("docker://" + dockerHost + ":5001/busybox")
             .setEntrypoint("echo", "Hello World")
             .containerize(
                 Containerizer.to(RegistryImage.named(toImage)).setAllowInsecureRegistries(true));
@@ -141,13 +141,13 @@ public class JibIntegrationTest {
   public void testBasic_dockerDaemonBaseImageToDockerDaemon()
       throws IOException, InterruptedException, InvalidImageReferenceException, ExecutionException,
           RegistryException, CacheDirectoryCreationException {
-    Jib.from(DockerDaemonImage.named(dockerHost + ":5000/busybox"))
+    Jib.from(DockerDaemonImage.named(dockerHost + ":5001/busybox"))
         .setEntrypoint("echo", "Hello World")
         .containerize(
-            Containerizer.to(DockerDaemonImage.named(dockerHost + ":5000/docker-to-docker")));
+            Containerizer.to(DockerDaemonImage.named(dockerHost + ":5001/docker-to-docker")));
 
     String output =
-        new Command("docker", "run", "--rm", dockerHost + ":5000/docker-to-docker").run();
+        new Command("docker", "run", "--rm", dockerHost + ":5001/docker-to-docker").run();
     Assert.assertEquals("Hello World\n", output);
   }
 
@@ -156,9 +156,9 @@ public class JibIntegrationTest {
       throws IOException, InterruptedException, InvalidImageReferenceException, ExecutionException,
           RegistryException, CacheDirectoryCreationException {
     Path path = temporaryFolder.getRoot().toPath().resolve("docker-save.tar");
-    new Command("docker", "save", dockerHost + ":5000/busybox", "-o=" + path).run();
+    new Command("docker", "save", dockerHost + ":5001/busybox", "-o=" + path).run();
 
-    String toImage = dockerHost + ":5000/basic-dockersavedcommand";
+    String toImage = dockerHost + ":5001/basic-dockersavedcommand";
     JibContainer jibContainer =
         Jib.from("tar://" + path)
             .setEntrypoint("echo", "Hello World")
@@ -177,7 +177,7 @@ public class JibIntegrationTest {
     // tar saved with 'docker save busybox -o busybox.tar'
     Path path = Paths.get(Resources.getResource("core/busybox-docker.tar").toURI());
 
-    String toImage = dockerHost + ":5000/basic-dockersavedfile";
+    String toImage = dockerHost + ":5001/basic-dockersavedfile";
     JibContainer jibContainer =
         Jib.from(TarImage.at(path).named("ignored"))
             .setEntrypoint("echo", "Hello World")
@@ -194,14 +194,14 @@ public class JibIntegrationTest {
       throws InvalidImageReferenceException, InterruptedException, ExecutionException,
           RegistryException, CacheDirectoryCreationException, IOException, URISyntaxException {
     Path outputPath = temporaryFolder.getRoot().toPath().resolve("jib-image.tar");
-    Jib.from(dockerHost + ":5000/busybox")
+    Jib.from(dockerHost + ":5001/busybox")
         .addLayer(
             Collections.singletonList(Paths.get(Resources.getResource("core/hello").toURI())), "/")
         .containerize(
             Containerizer.to(TarImage.at(outputPath).named("ignored"))
                 .setAllowInsecureRegistries(true));
 
-    String toImage = dockerHost + ":5000/basic-jibtar";
+    String toImage = dockerHost + ":5001/basic-jibtar";
     JibContainer jibContainer =
         Jib.from(TarImage.at(outputPath).named("ignored"))
             .setEntrypoint("cat", "/hello")
@@ -220,7 +220,7 @@ public class JibIntegrationTest {
     // tar saved with Jib.from("busybox").addLayer(...("core/hello")).containerize(TarImage.at...)
     Path path = Paths.get(Resources.getResource("core/busybox-jib.tar").toURI());
 
-    String toImage = dockerHost + ":5000/basic-jibtar-to-docker";
+    String toImage = dockerHost + ":5001/basic-jibtar-to-docker";
     JibContainer jibContainer =
         Jib.from(TarImage.at(path).named("ignored"))
             .setEntrypoint("cat", "/hello")
@@ -238,7 +238,7 @@ public class JibIntegrationTest {
           CacheDirectoryCreationException, InvalidImageReferenceException {
     Jib.fromScratch()
         .containerize(
-            Containerizer.to(RegistryImage.named(dockerHost + ":5000/jib-scratch:default-platform"))
+            Containerizer.to(RegistryImage.named(dockerHost + ":5001/jib-scratch:default-platform"))
                 .setAllowInsecureRegistries(true));
 
     V22ManifestTemplate manifestTemplate =
@@ -262,7 +262,7 @@ public class JibIntegrationTest {
     Jib.fromScratch()
         .setPlatforms(ImmutableSet.of(new Platform("arm64", "windows")))
         .containerize(
-            Containerizer.to(RegistryImage.named(dockerHost + ":5000/jib-scratch:single-platform"))
+            Containerizer.to(RegistryImage.named(dockerHost + ":5001/jib-scratch:single-platform"))
                 .setAllowInsecureRegistries(true));
 
     V22ManifestTemplate manifestTemplate =
@@ -287,7 +287,7 @@ public class JibIntegrationTest {
         .setPlatforms(
             ImmutableSet.of(new Platform("arm64", "windows"), new Platform("amd32", "windows")))
         .containerize(
-            Containerizer.to(RegistryImage.named(dockerHost + ":5000/jib-scratch:multi-platform"))
+            Containerizer.to(RegistryImage.named(dockerHost + ":5001/jib-scratch:multi-platform"))
                 .setAllowInsecureRegistries(true));
 
     V22ManifestListTemplate manifestList =
@@ -313,7 +313,7 @@ public class JibIntegrationTest {
             ImmutableSet.of(new Platform("arm64", "linux"), new Platform("amd64", "linux")))
         .containerize(
             Containerizer.to(
-                    RegistryImage.named(dockerHost + ":5000/jib-distroless:multi-platform"))
+                    RegistryImage.named(dockerHost + ":5001/jib-distroless:multi-platform"))
                 .setAllowInsecureRegistries(true));
 
     V22ManifestListTemplate manifestList =
@@ -338,7 +338,7 @@ public class JibIntegrationTest {
     Path cacheDirectory = temporaryFolder.getRoot().toPath();
 
     JibContainerBuilder jibContainerBuilder =
-        Jib.from(dockerHost + ":5000/busybox").setEntrypoint("echo", "Hello World");
+        Jib.from(dockerHost + ":5001/busybox").setEntrypoint("echo", "Hello World");
 
     // Should fail since Jib can't build to registry offline
     try {
@@ -360,7 +360,7 @@ public class JibIntegrationTest {
       Assert.assertEquals(
           "Cannot run Jib in offline mode; "
               + dockerHost
-              + ":5000/busybox not found in local Jib cache",
+              + ":5001/busybox not found in local Jib cache",
           ex.getCause().getMessage());
     }
 
@@ -372,13 +372,13 @@ public class JibIntegrationTest {
 
     // Run again in offline mode, should succeed this time
     jibContainerBuilder.containerize(
-        Containerizer.to(DockerDaemonImage.named(dockerHost + ":5000/offline"))
+        Containerizer.to(DockerDaemonImage.named(dockerHost + ":5001/offline"))
             .setBaseImageLayersCache(cacheDirectory)
             .setOfflineMode(true));
 
     // Verify output
     Assert.assertEquals(
-        "Hello World\n", new Command("docker", "run", "--rm", dockerHost + ":5000/offline").run());
+        "Hello World\n", new Command("docker", "run", "--rm", dockerHost + ":5001/offline").run());
   }
 
   /** Ensure that a provided executor is not disposed. */
@@ -390,7 +390,7 @@ public class JibIntegrationTest {
     try {
       Jib.fromScratch()
           .containerize(
-              Containerizer.to(RegistryImage.named(dockerHost + ":5000/foo"))
+              Containerizer.to(RegistryImage.named(dockerHost + ":5001/foo"))
                   .setExecutorService(executorService)
                   .setAllowInsecureRegistries(true));
       Assert.assertFalse(executorService.isShutdown());

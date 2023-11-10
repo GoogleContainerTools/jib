@@ -188,8 +188,8 @@ public class CacheStorageFilesTest {
             ImageReference.parse(
                 "reg.istry/repo@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")));
     Assert.assertEquals(
-        imagesDirectory.resolve("reg.istry!5000/repo/sitory!tag"),
+        imagesDirectory.resolve("reg.istry!5001/repo/sitory!tag"),
         TEST_CACHE_STORAGE_FILES.getImageDirectory(
-            ImageReference.parse("reg.istry:5000/repo/sitory:tag")));
+            ImageReference.parse("reg.istry:5001/repo/sitory:tag")));
   }
 }

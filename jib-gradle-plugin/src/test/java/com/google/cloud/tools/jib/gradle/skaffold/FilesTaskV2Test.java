@@ -48,7 +48,7 @@ public class FilesTaskV2Test {
 
   @ClassRule
   public static final TestProject platformProject =
-      new TestProject("platform").withGradleVersion("5.2");
+      new TestProject("platform").withGradleVersion("8.4");
 
   /**
    * Verifies that the files task succeeded and returns the list of paths it prints out.
@@ -60,7 +60,8 @@ public class FilesTaskV2Test {
   private static String verifyTaskSuccess(TestProject project, @Nullable String moduleName) {
     String taskName =
         ":" + (moduleName == null ? "" : moduleName + ":") + JibPlugin.SKAFFOLD_FILES_TASK_V2_NAME;
-    BuildResult buildResult = project.build(taskName, "-q", "-D_TARGET_IMAGE=ignored");
+    BuildResult buildResult =
+        project.build(taskName, "-q", "-D_TARGET_IMAGE=ignored", "--stacktrace");
     BuildTask jibTask = buildResult.task(taskName);
     Assert.assertNotNull(jibTask);
     Assert.assertEquals(TaskOutcome.SUCCESS, jibTask.getOutcome());

@@ -69,7 +69,7 @@ following environment variables:
   - If you're not using a GCP project then set `JIB_INTEGRATION_TESTING_LOCATION` to a specific registry for testing. (For example, you can run `docker run -d -p 9990:5000 registry:2` to set up a local registry and set the variable to `localhost:9990`.)
 
 You will also need Docker installed with the daemon running. Note that the
-integration tests will create local registries on ports 5000 and 6000.
+integration tests will create local registries on ports 5001 and 6000. 
 
 To run select integration tests, use `--tests=<testPattern>`, see [gradle docs](https://docs.gradle.org/current/javadoc/org/gradle/api/tasks/testing/TestFilter.html) for `testPattern` examples.
 

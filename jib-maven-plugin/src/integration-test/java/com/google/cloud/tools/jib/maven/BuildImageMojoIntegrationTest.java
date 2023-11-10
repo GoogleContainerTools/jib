@@ -69,7 +69,7 @@ public class BuildImageMojoIntegrationTest {
 
   @ClassRule
   public static final LocalRegistry localRegistry =
-      new LocalRegistry(5000, "testuser", "testpassword");
+      new LocalRegistry(5001, "testuser", "testpassword");
 
   private static final String dockerHost =
       System.getenv("DOCKER_IP") != null ? System.getenv("DOCKER_IP") : "localhost";
@@ -567,7 +567,7 @@ public class BuildImageMojoIntegrationTest {
   @Test
   public void testExecute_complex()
       throws IOException, InterruptedException, VerificationException, DigestException {
-    String targetImage = dockerHost + ":5000/compleximage:maven" + System.nanoTime();
+    String targetImage = dockerHost + ":5001/compleximage:maven" + System.nanoTime();
     Instant before = Instant.now();
     String output = buildAndRunComplex(targetImage, "pom-complex.xml");
     assertThat(output)
@@ -594,7 +594,7 @@ public class BuildImageMojoIntegrationTest {
   @Test
   public void testExecute_timestampCustom()
       throws IOException, InterruptedException, VerificationException {
-    String targetImage = dockerHost + ":5000/simpleimage:maven" + System.nanoTime();
+    String targetImage = dockerHost + ":5001/simpleimage:maven" + System.nanoTime();
     String pom = "pom-timestamps-custom.xml";
     assertThat(buildAndRunComplex(targetImage, pom))
         .isEqualTo(
@@ -607,7 +607,7 @@ public class BuildImageMojoIntegrationTest {
   @Test
   public void testExecute_complex_sameFromAndToRegistry()
       throws IOException, InterruptedException, VerificationException {
-    String targetImage = dockerHost + ":5000/compleximage:maven" + System.nanoTime();
+    String targetImage = dockerHost + ":5001/compleximage:maven" + System.nanoTime();
     assertThat(buildAndRunComplex(targetImage, "pom-complex.xml"))
         .isEqualTo(
             "Hello, world. An argument.\n1970-01-01T00:00:01Z\nrwxr-xr-x\nrwxrwxrwx\nfoo\ncat\n"
@@ -619,7 +619,7 @@ public class BuildImageMojoIntegrationTest {
   @Test
   public void testExecute_complexProperties()
       throws InterruptedException, VerificationException, IOException {
-    String targetImage = dockerHost + ":5000/compleximage:maven" + System.nanoTime();
+    String targetImage = dockerHost + ":5001/compleximage:maven" + System.nanoTime();
     assertThat(buildAndRunComplex(targetImage, "pom-complex-properties.xml"))
         .isEqualTo(
             "Hello, world. An argument.\n1970-01-01T00:00:01Z\nrwxr-xr-x\nrwxrwxrwx\nfoo\ncat\n"
@@ -640,11 +640,11 @@ public class BuildImageMojoIntegrationTest {
 
   @Test
   public void testExecute_jibRequireVersion_ok() throws VerificationException, IOException {
-    String targetImage = dockerHost + ":5000/simpleimage:maven" + System.nanoTime();
+    String targetImage = dockerHost + ":5001/simpleimage:maven" + System.nanoTime();
 
     Verifier verifier = new Verifier(simpleTestProject.getProjectRoot().toString());
     verifier.setSystemProperty("_TARGET_IMAGE", targetImage);
-    // properties required to push to :5000 for plain pom.xml
+    // properties required to push to :5001 for plain pom.xml
     verifier.setSystemProperty("jib.to.auth.username", "testuser");
     verifier.setSystemProperty("jib.to.auth.password", "testpassword");
     verifier.setSystemProperty("sendCredentialsOverHttp", "true");
@@ -714,7 +714,7 @@ public class BuildImageMojoIntegrationTest {
   @Test
   public void testExecute_multiPlatformBuild()
       throws IOException, VerificationException, RegistryException {
-    String targetImage = dockerHost + ":5000/multiplatform:maven" + System.nanoTime();
+    String targetImage = dockerHost + ":5001/multiplatform:maven" + System.nanoTime();
 
     Verifier verifier = new Verifier(simpleTestProject.getProjectRoot().toString());
     verifier.setSystemProperty("_TARGET_IMAGE", targetImage);
@@ -732,7 +732,7 @@ public class BuildImageMojoIntegrationTest {
     FailoverHttpClient httpClient = new FailoverHttpClient(true, true, ignored -> {});
     RegistryClient registryClient =
         RegistryClient.factory(
-                EventHandlers.NONE, dockerHost + ":5000", "multiplatform", httpClient)
+                EventHandlers.NONE, dockerHost + ":5001", "multiplatform", httpClient)
             .setCredential(Credential.from("testuser", "testpassword"))
             .newRegistryClient();
     registryClient.configureBasicAuth();

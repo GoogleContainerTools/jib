@@ -50,7 +50,7 @@ public class SingleProjectIntegrationTest {
 
   @ClassRule
   public static final LocalRegistry localRegistry1 =
-      new LocalRegistry(5000, "testuser", "testpassword");
+      new LocalRegistry(5001, "testuser", "testpassword");
 
   @ClassRule
   public static final LocalRegistry localRegistry2 =
@@ -449,7 +449,7 @@ public class SingleProjectIntegrationTest {
 
   @Test
   public void testBuild_complex_sameFromAndToRegistry() throws IOException, InterruptedException {
-    String targetImage = dockerHost + ":5000/compleximage:gradle" + System.nanoTime();
+    String targetImage = dockerHost + ":5001/compleximage:gradle" + System.nanoTime();
     Instant beforeBuild = Instant.now();
     buildAndRunComplex(targetImage, "testuser", "testpassword", localRegistry1);
     assertThat(JibRunHelper.getCreationTime(targetImage)).isGreaterThan(beforeBuild);

@@ -36,7 +36,7 @@ import org.junit.Test;
 /** Integration tests for {@link ManifestPusher}. */
 public class ManifestPusherIntegrationTest {
 
-  @ClassRule public static final LocalRegistry localRegistry = new LocalRegistry(5000);
+  @ClassRule public static final LocalRegistry localRegistry = new LocalRegistry(5001);
 
   private final FailoverHttpClient httpClient = new FailoverHttpClient(true, false, ignored -> {});
   public final String dockerHost =
@@ -50,7 +50,7 @@ public class ManifestPusherIntegrationTest {
     ManifestTemplate manifestTemplate = registryClient.pullManifest("latest").getManifest();
 
     registryClient =
-        RegistryClient.factory(EventHandlers.NONE, dockerHost + ":5000", "ignored", httpClient)
+        RegistryClient.factory(EventHandlers.NONE, dockerHost + ":5001", "ignored", httpClient)
             .newRegistryClient();
     try {
       registryClient.pushManifest(manifestTemplate, "latest");
@@ -83,7 +83,7 @@ public class ManifestPusherIntegrationTest {
 
     // Pushes the BLOBs.
     RegistryClient registryClient =
-        RegistryClient.factory(EventHandlers.NONE, dockerHost + ":5000", "testimage", httpClient)
+        RegistryClient.factory(EventHandlers.NONE, dockerHost + ":5001", "testimage", httpClient)
             .newRegistryClient();
     Assert.assertFalse(
         registryClient.pushBlob(testLayerBlobDigest, testLayerBlob, null, ignored -> {}));

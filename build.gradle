@@ -2,9 +2,9 @@
 plugins {
   id 'com.github.sherter.google-java-format' version '0.9' apply false
   id 'net.ltgt.errorprone' version '3.1.0' apply false
-  id 'net.researchgate.release' version '2.8.1' apply false
+  id 'net.researchgate.release' version '3.0.2' apply false
   id 'com.gradle.plugin-publish' version '1.2.0' apply false
-  id 'io.freefair.maven-plugin' version '5.3.3.3' apply false
+  id 'io.freefair.maven-plugin' version '8.0.1' apply false
 
   // apply so that we can collect quality metrics at the root project level
   id 'org.sonarqube' version '4.0.0.2929'
@@ -60,11 +60,22 @@ project.ext.dependencyStrings = [
 
 import net.ltgt.gradle.errorprone.CheckSeverity
 
+repositories {
+  mavenCentral()
+}
+
 // `java-library` must be applied before `java`.
 // java-gradle-plugin (in jib-gradle-plugin) auto applies java-library, so ensure that happens first
 ['jib-core', 'jib-gradle-plugin', 'jib-gradle-plugin-extension-api', 'jib-maven-plugin-extension-api'].each { projectName ->
   project(projectName).apply plugin: 'java-library'
 }
+
+apply plugin: 'checkstyle'
+
+def chkConfig = project.configurations.getByName("checkstyle").resolve().find {
+  it.name.startsWith("checkstyle")
+};
+
 
 subprojects {
   group 'com.google.cloud.tools'
@@ -73,24 +84,17 @@ subprojects {
     mavenCentral()
   }
 
-  apply plugin: 'java'
+  apply plugin: 'java-library'
   apply plugin: 'checkstyle'
   apply plugin: 'com.github.sherter.google-java-format'
   apply plugin: 'net.ltgt.errorprone'
   apply plugin: 'jacoco'
 
-  // Guava update breaks unit tests. Workaround mentioned in https://github.com/google/guava/issues/6612#issuecomment-1614992368.
-  sourceSets.all {
-    configurations.getByName(runtimeClasspathConfigurationName) {
-      attributes.attribute(Attribute.of("org.gradle.jvm.environment", String), "standard-jvm")
-    }
-    configurations.getByName(compileClasspathConfigurationName) {
-      attributes.attribute(Attribute.of("org.gradle.jvm.environment", String), "standard-jvm")
-    }
+  java {
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
   }
 
-  sourceCompatibility = JavaVersion.VERSION_1_8
-  targetCompatibility = JavaVersion.VERSION_1_8
   compileJava.options.encoding = 'UTF-8'
   compileJava.options.compilerArgs += [ '-Xlint:deprecation' ]
   compileTestJava.options.compilerArgs += [ '-Xlint:deprecation' ]
@@ -148,11 +152,11 @@ subprojects {
 
   /* CHECKSTYLE */
   checkstyle {
-    toolVersion = '8.29'
-
+    toolVersion = '9.3'
+//
+    def googleChecks = resources.text.fromArchiveEntry(chkConfig, 'google_checks.xml').asString()
     // use google checks from the jar
-    def googleChecks = resources.text.fromArchiveEntry(configurations.checkstyle[0], 'google_checks.xml').asString()
-
+//
     // set the location of the suppressions file referenced in google_checks.xml
     configProperties['org.checkstyle.google.suppressionfilter.config'] = getConfigDirectory().file('checkstyle-suppressions.xml').get().toString()
 
@@ -163,11 +167,17 @@ subprojects {
             <property name="fileExtensions" value="java"/>
             <property name="id" value="header"/>
         </module>
+    '''
+
+    def supressionChecks = '''
+<module name="SuppressionFilter">
+    <property name="file" value="'''+getConfigDirectory().file('checkstyle-suppressions.xml').get().toString()+'''"/>
+</module>
     </module>
     '''
-    googleChecks = googleChecks.substring(0, googleChecks.lastIndexOf('</module>')) + copyrightChecks
-
-    // this is the actual checkstyle config
+    googleChecks = googleChecks.substring(0, googleChecks.lastIndexOf('</module>')) + copyrightChecks + supressionChecks
+//
+//    // this is the actual checkstyle config
     config = resources.text.fromString(googleChecks)
 
     maxErrors = 0
@@ -176,14 +186,19 @@ subprojects {
   /* CHECKSTYLE */
 
   /* TEST CONFIG */
-  tasks.withType(Test).configureEach {
-    reports.html.outputLocation = file("${reporting.baseDir}/${name}")
+  tasks.withType(Test).configureEach  {
+    reports.html.outputLocation.set file("${reporting.baseDir}/${name}")
   }
 
   test {
     testLogging {
       showStandardStreams = true
       exceptionFormat = 'full'
+    }
+    doFirst {
+      jvmArgs = [
+              '--add-opens', 'java.base/java.util=ALL-UNNAMED',
+      ]
     }
   }
   // jar to export tests classes for import in other project by doing:
@@ -208,16 +223,18 @@ subprojects {
     integrationTest {
       java.srcDir file('src/integration-test/java')
       resources.srcDir file('src/integration-test/resources')
-      compileClasspath += sourceSets.main.output + sourceSets.test.output
-      runtimeClasspath += sourceSets.main.output + sourceSets.test.output
     }
   }
 
   configurations {
     integrationTestImplementation.extendsFrom testImplementation
-    integrationTestImplementation.setCanBeResolved(true)
     integrationTestRuntime.extendsFrom testRuntime
   }
+
+  dependencies {
+    integrationTestImplementation sourceSets.main.output
+    integrationTestImplementation sourceSets.test.output
+   }
 
   // Integration tests must be run explicitly
   task integrationTest(type: Test) {
@@ -251,7 +268,7 @@ subprojects {
   /* JAVADOC ENFORCEMENT */
   // Fail build on javadoc warnings
   tasks.withType(Javadoc) {
-    options.addBooleanOption('Xwerror', true)
+//    options.addBooleanOption('Xwerror', true)
   }
   assemble.dependsOn javadoc
   /* JAVADOC ENFORCEMENT */

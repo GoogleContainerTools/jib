@@ -88,6 +88,22 @@ public class ReproducibleImageTest {
         .containerize(containerizer);
   }
 
+  public static int getJavaVersion() {
+    String version = System.getProperty("java.version");
+    if (version.startsWith("1.")) {
+      version = version.substring(2);
+    }
+    // Allow these formats:
+    // 1.8.0_72-ea
+    // 9-ea
+    // 9
+    // 9.0.1
+    int dotPos = version.indexOf('.');
+    int dashPos = version.indexOf('-');
+    return Integer.parseInt(
+        version.substring(0, dotPos > -1 ? dotPos : dashPos > -1 ? dashPos : 1));
+  }
+
   @Test
   public void testTarballStructure() throws IOException {
     // known content should produce known results
@@ -100,21 +116,39 @@ public class ReproducibleImageTest {
       }
     }
 
-    assertThat(actual)
-        .containsExactly(
-            "c46572ef74f58d95e44dd36c1fbdfebd3752e8b56a794a13c11cfed35a1a6e1c.tar.gz",
-            "6d2763b0f3940d324ea6b55386429e5b173899608abf7d1bff62e25dd2e4dcea.tar.gz",
-            "530c1954a2b087d0b989895ea56435c9dc739a973f2d2b6cb9bb98e55bbea7ac.tar.gz",
-            "config.json",
-            "manifest.json")
-        .inOrder();
+    if (getJavaVersion() < 16) {
+      assertThat(actual)
+          .containsExactly(
+              "c46572ef74f58d95e44dd36c1fbdfebd3752e8b56a794a13c11cfed35a1a6e1c.tar.gz",
+              "6d2763b0f3940d324ea6b55386429e5b173899608abf7d1bff62e25dd2e4dcea.tar.gz",
+              "530c1954a2b087d0b989895ea56435c9dc739a973f2d2b6cb9bb98e55bbea7ac.tar.gz",
+              "config.json",
+              "manifest.json")
+          .inOrder();
+    } else {
+      // JDK 16+ has changed Gzip output, so hash changes
+      // https://bugs.openjdk.org/browse/JDK-8244706
+
+      assertThat(actual)
+          .containsExactly(
+              "d32c6bf16170d213b5f458a7c120288f0fb376015db1943d1e1c411e9b7ec9eb.tar.gz",
+              "eb01acbf8104bd2a8c4b594a1385bab883f27e85a703ee98c2e6cc81e71aea2a.tar.gz",
+              "65738b93774dc833f97dcb5ba806bddce6079163ba54bf51c9f66db9d1ab69d9.tar.gz",
+              "config.json",
+              "manifest.json")
+          .inOrder();
+    }
   }
 
   @Test
   public void testManifest() throws IOException {
     String expectedManifest =
-        "[{\"Config\":\"config.json\",\"RepoTags\":[\"jib-core/reproducible:latest\"],"
-            + "\"Layers\":[\"c46572ef74f58d95e44dd36c1fbdfebd3752e8b56a794a13c11cfed35a1a6e1c.tar.gz\",\"6d2763b0f3940d324ea6b55386429e5b173899608abf7d1bff62e25dd2e4dcea.tar.gz\",\"530c1954a2b087d0b989895ea56435c9dc739a973f2d2b6cb9bb98e55bbea7ac.tar.gz\"]}]";
+        (getJavaVersion() < 16)
+            ? "[{\"Config\":\"config.json\",\"RepoTags\":[\"jib-core/reproducible:latest\"],"
+                + "\"Layers\":[\"c46572ef74f58d95e44dd36c1fbdfebd3752e8b56a794a13c11cfed35a1a6e1c.tar.gz\",\"6d2763b0f3940d324ea6b55386429e5b173899608abf7d1bff62e25dd2e4dcea.tar.gz\",\"530c1954a2b087d0b989895ea56435c9dc739a973f2d2b6cb9bb98e55bbea7ac.tar.gz\"]}]"
+            : "[{\"Config\":\"config.json\",\"RepoTags\":[\"jib-core/reproducible:latest\"],"
+                + "\"Layers\":[\"d32c6bf16170d213b5f458a7c120288f0fb376015db1943d1e1c411e9b7ec9eb.tar.gz\",\"eb01acbf8104bd2a8c4b594a1385bab883f27e85a703ee98c2e6cc81e71aea2a.tar.gz\",\"65738b93774dc833f97dcb5ba806bddce6079163ba54bf51c9f66db9d1ab69d9.tar.gz\"]}]";
+
     String generatedManifest = extractFromTarFileAsString(imageTar, "manifest.json");
     assertThat(generatedManifest).isEqualTo(expectedManifest);
   }
