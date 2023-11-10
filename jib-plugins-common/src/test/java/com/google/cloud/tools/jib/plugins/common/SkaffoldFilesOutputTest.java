@@ -17,6 +17,7 @@
 package com.google.cloud.tools.jib.plugins.common;
 
 import com.google.common.collect.ImmutableList;
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Paths;
 import org.junit.Assert;
@@ -54,5 +55,20 @@ public class SkaffoldFilesOutputTest {
         ImmutableList.of("buildFile1", "buildFile2"), skaffoldFilesOutput.getBuild());
     Assert.assertEquals(ImmutableList.of("input1", "input2"), skaffoldFilesOutput.getInputs());
     Assert.assertEquals(ImmutableList.of("ignore1", "ignore2"), skaffoldFilesOutput.getIgnore());
+  }
+
+  @Test
+  public void testCoverage() throws IOException {
+    SkaffoldFilesOutput skaffoldFilesOutput = new SkaffoldFilesOutput();
+    File f = File.createTempFile("temp", "jib");
+
+    skaffoldFilesOutput.addBuild(f);
+    skaffoldFilesOutput.addInput(f);
+    skaffoldFilesOutput.addIgnore(f);
+
+    Assert.assertEquals(f.getPath(), skaffoldFilesOutput.getIgnore().get(0));
+    Assert.assertEquals(f.getPath(), skaffoldFilesOutput.getBuild().get(0));
+    Assert.assertEquals(f.getPath(), skaffoldFilesOutput.getInputs().get(0));
+    f.delete();
   }
 }

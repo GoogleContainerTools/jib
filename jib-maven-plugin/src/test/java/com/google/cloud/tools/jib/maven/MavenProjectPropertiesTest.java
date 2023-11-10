@@ -576,6 +576,9 @@ public class MavenProjectPropertiesTest {
   @Test
   public void testCreateContainerBuilder_exceptionMessageHasPackageSuggestionIfProjectIsWar()
       throws IOException {
+    when(mockBuild.getDirectory()).thenReturn(Paths.get("/foo/bar").toString());
+    when(mockBuild.getFinalName()).thenReturn("helloworld-1");
+
     String expectedMessage =
         "Obtaining project build output files failed; make sure you have "
             + "packaged your project before trying to build the image. (Did you accidentally run \"mvn clean "

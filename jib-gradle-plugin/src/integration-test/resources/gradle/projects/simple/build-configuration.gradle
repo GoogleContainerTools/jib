@@ -24,8 +24,8 @@ configurations {
 }
 
 dependencies {
-    compile files('libs/dependency-1.0.0.jar')
-    runtime 'com.google.guava:guava:30.1-jre'
+    implementation files('libs/dependency-1.0.0.jar')
+    runtimeOnly 'com.google.guava:guava:30.1-jre'
     myConfiguration files('libs/dependency2')
     otherConfiguration files('libs/dependency3')
 }

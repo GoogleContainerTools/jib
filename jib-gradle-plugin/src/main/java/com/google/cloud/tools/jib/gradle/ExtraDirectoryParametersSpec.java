@@ -19,18 +19,27 @@ package com.google.cloud.tools.jib.gradle;
 import javax.inject.Inject;
 import org.gradle.api.Action;
 import org.gradle.api.Project;
+import org.gradle.api.model.ObjectFactory;
 import org.gradle.api.provider.ListProperty;
+import org.gradle.api.tasks.Input;
+import org.gradle.api.tasks.Nested;
 
 /** Allows to add {@link ExtraDirectoryParameters} objects to the list property of the same type. */
 public class ExtraDirectoryParametersSpec {
 
-  private final Project project;
   private final ListProperty<ExtraDirectoryParameters> paths;
+  private final ObjectFactory objectFactory;
 
+  /**
+   * Spec init.
+   *
+   * @param project Project handle
+   * @param paths Provider for extra dirs
+   */
   @Inject
   public ExtraDirectoryParametersSpec(
       Project project, ListProperty<ExtraDirectoryParameters> paths) {
-    this.project = project;
+    this.objectFactory = project.getObjects();
     this.paths = paths;
   }
 
@@ -41,8 +50,14 @@ public class ExtraDirectoryParametersSpec {
    */
   public void path(Action<? super ExtraDirectoryParameters> action) {
     ExtraDirectoryParameters extraDirectory =
-        project.getObjects().newInstance(ExtraDirectoryParameters.class, project);
+        objectFactory.newInstance(ExtraDirectoryParameters.class);
     action.execute(extraDirectory);
     paths.add(extraDirectory);
+  }
+
+  @Input
+  @Nested
+  public ListProperty<ExtraDirectoryParameters> getPaths() {
+    return paths;
   }
 }

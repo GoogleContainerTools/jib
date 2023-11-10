@@ -17,6 +17,8 @@
 package com.google.cloud.tools.jib.gradle;
 
 import static com.google.common.truth.Truth.assertThat;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThrows;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -144,6 +146,9 @@ public class GradleProjectPropertiesTest {
             .withProjectDir(projectDir.toFile())
             .withGradleUserHomeDir(temporaryFolder.newFolder())
             .build();
+
+    project.getRepositories().add(project.getRepositories().mavenCentral());
+
     project.getPlugins().apply("java");
 
     DependencyHandler dependencies = project.getDependencies();
@@ -161,14 +166,6 @@ public class GradleProjectPropertiesTest {
     // We can't commit an empty directory in Git, so create (if not exist).
     Path emptyDirectory = getResource("gradle/webapp").resolve("WEB-INF/classes/empty_dir");
     Files.createDirectories(emptyDirectory);
-
-    gradleProjectProperties =
-        new GradleProjectProperties(
-            project,
-            mockLogger,
-            mockTempDirectoryProvider,
-            mockExtensionLoader,
-            JavaPlugin.RUNTIME_CLASSPATH_CONFIGURATION_NAME);
   }
 
   @Test
@@ -177,11 +174,14 @@ public class GradleProjectPropertiesTest {
     jar.setManifest(
         new DefaultManifest(null).attributes(ImmutableMap.of("Main-Class", "some.main.class")));
 
+    setupGradleProjectPropertiesInstance();
     assertThat(gradleProjectProperties.getMainClassFromJarPlugin()).isEqualTo("some.main.class");
   }
 
   @Test
   public void testGetMainClassFromJar_missing() {
+    setupGradleProjectPropertiesInstance();
+
     assertThat(gradleProjectProperties.getMainClassFromJarPlugin()).isNull();
   }
 
@@ -193,6 +193,8 @@ public class GradleProjectPropertiesTest {
     Jar jar = project.getTasks().withType(Jar.class).getByName("jar");
     jar.setManifest(new DefaultManifest(null).attributes(ImmutableMap.of("Main-Class", mainClass)));
 
+    setupGradleProjectPropertiesInstance();
+
     assertThat(gradleProjectProperties.getMainClassFromJarPlugin()).isEqualTo("some.main.class");
   }
 
@@ -202,13 +204,15 @@ public class GradleProjectPropertiesTest {
 
     Jar jar = project.getTasks().withType(Jar.class).getByName("jar");
     jar.setManifest(new DefaultManifest(null).attributes(ImmutableMap.of("Main-Class", mainClass)));
-
+    setupGradleProjectPropertiesInstance();
     assertThat(gradleProjectProperties.getMainClassFromJarPlugin()).isNull();
   }
 
   @Test
   public void testIsWarProject() {
     project.getPlugins().apply("war");
+    setupGradleProjectPropertiesInstance();
+
     assertThat(gradleProjectProperties.isWarProject()).isTrue();
   }
 
@@ -258,35 +262,41 @@ public class GradleProjectPropertiesTest {
 
   @Test
   public void testGetMajorJavaVersion() {
-    JavaPluginExtension extension = project.getExtensions().findByType(JavaPluginExtension.class);
+    JavaPluginExtension convention = project.getExtensions().findByType(JavaPluginExtension.class);
 
-    extension.setTargetCompatibility(JavaVersion.VERSION_1_3);
+    convention.setTargetCompatibility(JavaVersion.VERSION_1_3);
+    setupGradleProjectPropertiesInstance();
+
     assertThat(gradleProjectProperties.getMajorJavaVersion()).isEqualTo(3);
 
-    extension.setTargetCompatibility(JavaVersion.VERSION_11);
+    convention.setTargetCompatibility(JavaVersion.VERSION_11);
+    setupGradleProjectPropertiesInstance();
     assertThat(gradleProjectProperties.getMajorJavaVersion()).isEqualTo(11);
 
-    extension.setTargetCompatibility(JavaVersion.VERSION_1_9);
+    convention.setTargetCompatibility(JavaVersion.VERSION_1_9);
+    setupGradleProjectPropertiesInstance();
     assertThat(gradleProjectProperties.getMajorJavaVersion()).isEqualTo(9);
   }
 
   @Test
   public void testGetMajorJavaVersion_jvm8() {
     Assume.assumeThat(JavaVersion.current(), CoreMatchers.is(JavaVersion.VERSION_1_8));
-
+    setupGradleProjectPropertiesInstance();
     assertThat(gradleProjectProperties.getMajorJavaVersion()).isEqualTo(8);
   }
 
   @Test
   public void testGetMajorJavaVersion_jvm11() {
     Assume.assumeThat(JavaVersion.current(), CoreMatchers.is(JavaVersion.VERSION_11));
-
+    setupGradleProjectPropertiesInstance();
     assertThat(gradleProjectProperties.getMajorJavaVersion()).isEqualTo(11);
   }
 
   @Test
   public void testCreateContainerBuilder_correctSourceFiles()
       throws URISyntaxException, InvalidImageReferenceException, CacheDirectoryCreationException {
+    setupGradleProjectPropertiesInstance();
+
     ContainerBuilderLayers layers = new ContainerBuilderLayers(setupBuildContext());
 
     Path applicationDirectory = getResource("gradle/application");
@@ -352,6 +362,7 @@ public class GradleProjectPropertiesTest {
   @Test
   public void testCreateContainerBuilder_correctExtractionPaths()
       throws InvalidImageReferenceException, CacheDirectoryCreationException {
+    setupGradleProjectPropertiesInstance();
     ContainerBuilderLayers layers = new ContainerBuilderLayers(setupBuildContext());
 
     assertThat(layers.dependenciesLayer.getEntries())
@@ -382,6 +393,7 @@ public class GradleProjectPropertiesTest {
       throws URISyntaxException, IOException, InvalidImageReferenceException,
           CacheDirectoryCreationException {
     Path unzipTarget = setUpWarProject(getResource("gradle/webapp"));
+    setupGradleProjectPropertiesInstance();
 
     ContainerBuilderLayers layers = new ContainerBuilderLayers(setupBuildContext());
     assertThat(layers.dependenciesLayer.getEntries())
@@ -444,7 +456,7 @@ public class GradleProjectPropertiesTest {
       throws IOException, InvalidImageReferenceException {
     temporaryFolder.newFolder("WEB-INF", "lib");
     setUpWarProject(temporaryFolder.getRoot().toPath());
-
+    setupGradleProjectPropertiesInstance();
     assertThat(
             gradleProjectProperties.createJibContainerBuilder(
                 JavaContainerBuilder.from("ignored"), ContainerizingMode.EXPLODED))
@@ -456,7 +468,7 @@ public class GradleProjectPropertiesTest {
       throws IOException, InvalidImageReferenceException {
     temporaryFolder.newFolder("WEB-INF", "classes");
     setUpWarProject(temporaryFolder.getRoot().toPath());
-
+    setupGradleProjectPropertiesInstance();
     assertThat(
             gradleProjectProperties.createJibContainerBuilder(
                 JavaContainerBuilder.from("ignored"), ContainerizingMode.EXPLODED))
@@ -467,11 +479,21 @@ public class GradleProjectPropertiesTest {
   public void testCreateContainerBuilder_noErrorIfWebInfDoesNotExist()
       throws IOException, InvalidImageReferenceException {
     setUpWarProject(temporaryFolder.getRoot().toPath());
-
+    setupGradleProjectPropertiesInstance();
     assertThat(
             gradleProjectProperties.createJibContainerBuilder(
                 JavaContainerBuilder.from("ignored"), ContainerizingMode.EXPLODED))
         .isNotNull();
+  }
+
+  private void setupGradleProjectPropertiesInstance() {
+    gradleProjectProperties =
+        new GradleProjectProperties(
+            project,
+            mockLogger,
+            mockTempDirectoryProvider,
+            mockExtensionLoader,
+            JavaPlugin.RUNTIME_CLASSPATH_CONFIGURATION_NAME);
   }
 
   @Test
@@ -479,10 +501,11 @@ public class GradleProjectPropertiesTest {
     Path outputDir = temporaryFolder.newFolder("output").toPath();
 
     project.getPlugins().apply("war");
+    setupGradleProjectPropertiesInstance();
     War war = project.getTasks().withType(War.class).getByName("war");
     war.getDestinationDirectory().set(outputDir.toFile());
 
-    assertThat(gradleProjectProperties.getWarFilePath())
+    assertThat(gradleProjectProperties.getWarFilePath(project))
         .isEqualTo(outputDir.resolve("my-app.war").toString());
   }
 
@@ -494,8 +517,8 @@ public class GradleProjectPropertiesTest {
     project.getPlugins().apply("org.springframework.boot");
     War bootWar = project.getTasks().withType(War.class).getByName("bootWar");
     bootWar.getDestinationDirectory().set(outputDir.toFile());
-
-    assertThat(gradleProjectProperties.getWarFilePath())
+    setupGradleProjectPropertiesInstance();
+    assertThat(gradleProjectProperties.getWarFilePath(project))
         .isEqualTo(outputDir.resolve("my-app.war").toString());
   }
 
@@ -510,12 +533,65 @@ public class GradleProjectPropertiesTest {
     project.getPlugins().apply("org.springframework.boot");
     project.getTasks().getByName("bootWar").setEnabled(false);
 
-    assertThat(gradleProjectProperties.getWarFilePath())
-        .isEqualTo(outputDir.resolve("my-app.war").toString());
+    setupGradleProjectPropertiesInstance();
+    assertThat(gradleProjectProperties.getWarFilePath(project))
+        .isEqualTo(outputDir.resolve("my-app-plain.war").toString());
+  }
+
+  @Test
+  public void testGetSingleThreadedExecutor() {
+    setupGradleProjectPropertiesInstance();
+    assertNotNull(gradleProjectProperties.getSingleThreadedExecutor());
+    gradleProjectProperties.singleThreadedExecutor = null; // pretend running from cache
+    assertNotNull(gradleProjectProperties.getSingleThreadedExecutor());
+  }
+
+  @Test
+  public void testGetConsoleLogger() {
+    setupGradleProjectPropertiesInstance();
+    assertNotNull(gradleProjectProperties.getConsoleLogger());
+  }
+
+  @Test
+  public void testGetClassesOutputDirectory() {
+    setupGradleProjectPropertiesInstance();
+    assertNotNull(gradleProjectProperties.getClassesOutputDirectories());
+    assertFalse(gradleProjectProperties.getClassesOutputDirectories().getFiles().isEmpty());
+  }
+
+  @Test
+  public void testGetResourcesOutputDirectory() {
+    setupGradleProjectPropertiesInstance();
+    assertNotNull(gradleProjectProperties.getResourcesOutputDirectory());
+  }
+
+  @Test
+  public void testGetClassFiles() throws IOException {
+    setupGradleProjectPropertiesInstance();
+    assertFalse(gradleProjectProperties.getClassFiles().isEmpty());
+  }
+
+  @Test
+  public void testGetDefaultCacheDir() throws IOException {
+    setupGradleProjectPropertiesInstance();
+    assertNotNull(gradleProjectProperties.getDefaultCacheDirectory());
+  }
+
+  @Test
+  public void testGetJarPluginName() throws IOException {
+    setupGradleProjectPropertiesInstance();
+    assertNotNull(gradleProjectProperties.getJarPluginName());
+  }
+
+  @Test
+  public void testGetTempProvider() {
+    setupGradleProjectPropertiesInstance();
+    assertNotNull(gradleProjectProperties.getTempDirectoryProvider());
   }
 
   @Test
   public void testGetDependencies() throws URISyntaxException {
+    setupGradleProjectPropertiesInstance();
     assertThat(gradleProjectProperties.getDependencies())
         .containsExactly(
             getResource("gradle/application/dependencies/library.jarC.jar"),
