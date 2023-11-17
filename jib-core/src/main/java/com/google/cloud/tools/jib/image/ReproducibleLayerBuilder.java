@@ -95,15 +95,18 @@ public class ReproducibleLayerBuilder {
     }
   }
 
+  private static void clearTimeHeaders(TarArchiveEntry entry) {
+    entry.addPaxHeader("mtime", "0");
+    entry.addPaxHeader("atime", "0");
+    entry.addPaxHeader("ctime", "0");
+    entry.addPaxHeader("LIBARCHIVE.creationtime", "0");
+  }
+
   private static void setUserAndGroup(TarArchiveEntry entry, FileEntry layerEntry) {
     entry.setUserId(0);
     entry.setGroupId(0);
     entry.setUserName("");
     entry.setGroupName("");
-    entry.addPaxHeader("mtime", "0");
-    entry.addPaxHeader("atime", "0");
-    entry.addPaxHeader("ctime", "0");
-    entry.addPaxHeader("LIBARCHIVE.creationtime", "0");
 
     if (!layerEntry.getOwnership().isEmpty()) {
       // Parse "<user>:<group>" string.
@@ -162,6 +165,7 @@ public class ReproducibleLayerBuilder {
       entry.setMode((entry.getMode() & ~0777) | layerEntry.getPermissions().getPermissionBits());
       entry.setModTime(layerEntry.getModificationTime().toEpochMilli());
       setUserAndGroup(entry, layerEntry);
+      clearTimeHeaders(entry);
 
       uniqueTarArchiveEntries.add(entry);
     }

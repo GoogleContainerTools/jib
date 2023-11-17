@@ -27,6 +27,7 @@ import com.google.cloud.tools.jib.blob.Blobs;
 import com.google.common.collect.ImmutableList;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.Resources;
+
 import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -84,12 +85,12 @@ public class ReproducibleLayerBuilderTest {
     assertThat(extractionPathEntry.getMode()).isEqualTo(TarArchiveEntry.DEFAULT_DIR_MODE);
   }
 
-  private static FileEntry defaultLayerEntry(Path source, AbsoluteUnixPath destination) {
+  private static FileEntry defaultLayerEntry(Path source, AbsoluteUnixPath destination) throws IOException {
     return new FileEntry(
         source,
         destination,
         FileEntriesLayer.DEFAULT_FILE_PERMISSIONS_PROVIDER.get(source, destination),
-        FileEntriesLayer.DEFAULT_MODIFICATION_TIME);
+        Files.getLastModifiedTime(source).toInstant());
   }
 
   @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
