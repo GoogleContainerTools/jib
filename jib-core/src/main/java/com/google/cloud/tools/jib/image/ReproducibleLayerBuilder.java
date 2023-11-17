@@ -81,6 +81,7 @@ public class ReproducibleLayerBuilder {
         dir.setGroupId(0);
         dir.setUserName("");
         dir.setGroupName("");
+        clearTimeHeaders(dir);
         add(dir);
       }
 
