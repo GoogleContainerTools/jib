@@ -100,6 +100,10 @@ public class ReproducibleLayerBuilder {
     entry.setGroupId(0);
     entry.setUserName("");
     entry.setGroupName("");
+    entry.addPaxHeader("mtime", "0");
+    entry.addPaxHeader("atime", "0");
+    entry.addPaxHeader("ctime", "0");
+    entry.addPaxHeader("LIBARCHIVE.creationtime", "0");
 
     if (!layerEntry.getOwnership().isEmpty()) {
       // Parse "<user>:<group>" string.
