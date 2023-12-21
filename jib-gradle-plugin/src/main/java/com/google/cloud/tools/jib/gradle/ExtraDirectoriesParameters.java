@@ -78,8 +78,7 @@ public class ExtraDirectoriesParameters {
       System.out.println("WINDOWS PATH TEST");
       System.out.println(Paths.get(pathStrings.get(0)));
       return pathStrings.stream()
-          .map(path ->
-                  new ExtraDirectoryParameters(objects, Paths.get(path), "/"))
+          .map(path -> new ExtraDirectoryParameters(objects, Paths.get(path), "/"))
           .collect(Collectors.toList());
     }
     if (paths.get().isEmpty()) {
