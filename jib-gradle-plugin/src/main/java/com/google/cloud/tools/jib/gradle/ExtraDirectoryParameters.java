@@ -58,7 +58,8 @@ public class ExtraDirectoryParameters implements ExtraDirectoriesConfiguration {
   public Path getFrom() {
     System.out.println("VALUE OF GET FROM");
     System.out.println(from.getSingleFile().toPath());
-    return from.getSingleFile().toPath();
+    System.out.println(from.getSingleFile().getAbsoluteFile().toPath());
+    return from.getSingleFile().getAbsoluteFile().toPath();
   }
 
   public void setFrom(Object from) {
