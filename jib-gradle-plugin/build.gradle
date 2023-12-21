@@ -72,7 +72,7 @@ gradlePlugin {
       displayName = 'Jib'
       description = 'Containerize your Java application'
       implementationClass = 'com.google.cloud.tools.jib.gradle.JibPlugin'
-      tags.set(['google', 'java', 'containers', 'docker', 'kubernetes', 'microservices'])
+      tags = ['google', 'java', 'containers', 'docker', 'kubernetes', 'microservices']
     }
   }
 }

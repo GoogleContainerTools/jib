@@ -18,43 +18,49 @@ package com.google.cloud.tools.jib.gradle;
 
 import com.google.cloud.tools.jib.plugins.common.RawConfiguration.ExtraDirectoriesConfiguration;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 import javax.inject.Inject;
+
+import org.gradle.api.Project;
 import org.gradle.api.file.ConfigurableFileCollection;
 import org.gradle.api.model.ObjectFactory;
 import org.gradle.api.provider.ListProperty;
 import org.gradle.api.provider.Property;
 import org.gradle.api.provider.Provider;
 import org.gradle.api.tasks.Input;
+import org.gradle.api.tasks.InputFile;
 import org.gradle.api.tasks.InputFiles;
 import org.gradle.api.tasks.Internal;
 
 /** Configuration of an extra directory. */
 public class ExtraDirectoryParameters implements ExtraDirectoriesConfiguration {
 
+  Project project;
   ConfigurableFileCollection from;
   private Property<String> into;
   private ListProperty<String> includes;
   private ListProperty<String> excludes;
 
   @Inject
-  public ExtraDirectoryParameters(ObjectFactory objects) {
+  public ExtraDirectoryParameters(ObjectFactory objects, Project project) {
+    this.project =  project;
     this.from = objects.fileCollection();
     this.into = objects.property(String.class).value("/");
     this.includes = objects.listProperty(String.class).empty();
     this.excludes = objects.listProperty(String.class).empty();
   }
 
-  ExtraDirectoryParameters(ObjectFactory objects, Path from, String into) {
-    this(objects);
-    this.from = objects.fileCollection().from(from);
+  ExtraDirectoryParameters(ObjectFactory objects, Path from, String into, Project project) {
+    this(objects, project);
+    this.from = objects.fileCollection().from(from.toAbsolutePath());
     this.into = objects.property(String.class).value(into);
   }
 
   @Override
-  @InputFiles
+  @InputFile
   public Path getFrom() {
-    return from.getSingleFile().getAbsoluteFile().toPath();
+    return from.getSingleFile().toPath();
   }
 
   public void setFrom(Object from) {

@@ -1,6 +1,6 @@
 plugins {
   id 'java'
-  id 'com.google.cloud.tools.jib' version '3.4.0'
+  id 'com.google.cloud.tools.jib' version '3.4.1-SNAPSHOT'
 }
 
 sourceCompatibility = 1.8
@@ -14,4 +14,4 @@ dependencies {
   implementation 'com.google.guava:guava:23.6-jre'
 }
 
-jib.to.image = 'gcr.io/REPLACE-WITH-YOUR-GCP-PROJECT/image-built-with-jib'
+jib.to.image = 'gcr.io/mpeddada-test/image-built-with-jib'

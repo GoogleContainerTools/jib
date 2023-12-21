@@ -40,6 +40,8 @@ import org.gradle.api.tasks.Optional;
 /** Object in {@link JibExtension} that configures the extra directories. */
 public class ExtraDirectoriesParameters {
 
+  private final Project project;
+
   private final ObjectFactory objects;
   private final Path projectPath;
   private final Provider<String> extraDirPaths;
@@ -49,6 +51,7 @@ public class ExtraDirectoriesParameters {
 
   @Inject
   public ExtraDirectoriesParameters(ObjectFactory objects, Project project) {
+    this.project = project;
     this.objects = objects;
     paths = objects.listProperty(ExtraDirectoryParameters.class).empty();
     spec = objects.newInstance(ExtraDirectoryParametersSpec.class, project, paths);
@@ -75,16 +78,15 @@ public class ExtraDirectoriesParameters {
     if (this.extraDirPaths.isPresent()) {
       List<String> pathStrings =
           ConfigurationPropertyValidator.parseListProperty(this.extraDirPaths.get());
-      System.out.println("WINDOWS PATH TEST");
-      System.out.println(Paths.get(pathStrings.get(0)));
       return pathStrings.stream()
-          .map(path -> new ExtraDirectoryParameters(objects, Paths.get(path), "/"))
+          .map(path ->
+                  new ExtraDirectoryParameters(objects, Paths.get(path), "/", project))
           .collect(Collectors.toList());
     }
     if (paths.get().isEmpty()) {
       return Collections.singletonList(
           new ExtraDirectoryParameters(
-              objects, projectPath.resolve("src").resolve("main").resolve("jib"), "/"));
+              objects, projectPath.resolve("src").resolve("main").resolve("jib"), "/", project));
     }
     return paths.get();
   }
@@ -116,7 +118,7 @@ public class ExtraDirectoriesParameters {
   @Nonnull
   private List<ExtraDirectoryParameters> convertToExtraDirectoryParametersList(Object obj) {
     return this.objects.fileCollection().from(obj).getFiles().stream()
-        .map(file -> new ExtraDirectoryParameters(objects, file.toPath(), "/"))
+        .map(file -> new ExtraDirectoryParameters(objects, file.toPath(), "/", project))
         .collect(Collectors.toList());
   }
 
