@@ -8,6 +8,6 @@ cd github/jib
 REM Stops any left-over containers.
 REM FOR /f "tokens=*" %%i IN ('docker ps -aq') DO docker rm -vf %%i
 
-call gradlew.bat clean build :jib-gradle-plugin:test --info --stacktrace  --tests JibExtensionTest.testProperties
+call gradlew.bat build :jib-gradle-plugin:test --info --stacktrace  --tests JibExtensionTest.testProperties
 
 exit /b %ERRORLEVEL%
