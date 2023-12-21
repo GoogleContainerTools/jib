@@ -48,17 +48,12 @@ public class ExtraDirectoryParameters implements ExtraDirectoriesConfiguration {
   ExtraDirectoryParameters(ObjectFactory objects, Path from, String into) {
     this(objects);
     this.from = objects.fileCollection().from(from);
-    System.out.println("VALUE OF FROM");
-    System.out.println(this.from);
     this.into = objects.property(String.class).value(into);
   }
 
   @Override
   @InputFiles
   public Path getFrom() {
-    System.out.println("VALUE OF GET FROM");
-    System.out.println(from.getSingleFile().toPath());
-    System.out.println(from.getSingleFile().getAbsoluteFile().toPath());
     return from.getSingleFile().getAbsoluteFile().toPath();
   }
 
