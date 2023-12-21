@@ -520,9 +520,10 @@ public class JibExtensionTest {
     assertThat(testJibExtension.getContainerizingMode()).isEqualTo("packaged");
 
     System.setProperty("jib.extraDirectories.paths", "/foo,/bar/baz");
+    Path root = fakeProject.getRootDir().toPath();
     assertThat(testJibExtension.getExtraDirectories().getPaths()).hasSize(2);
     assertThat(testJibExtension.getExtraDirectories().getPaths().get(0).getFrom())
-        .isEqualTo(Paths.get("/foo").toAbsolutePath());
+        .isEqualTo(root.resolve("/foo").toAbsolutePath());
     assertThat(testJibExtension.getExtraDirectories().getPaths().get(1).getFrom())
         .isEqualTo(Paths.get("/bar/baz").toAbsolutePath());
     System.setProperty("jib.extraDirectories.permissions", "/foo/bar=707,/baz=456");
