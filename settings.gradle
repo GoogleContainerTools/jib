@@ -22,3 +22,8 @@ include ":jib-plugins-common"
 include ":jib-gradle-plugin"
 include ":jib-maven-plugin"
 include ":jib-cli"
+
+if (System.getProperty("gradle8") == "true") {
+    rootProject.buildFileName = 'build-8.gradle'
+    project(':jib-gradle-plugin').buildFileName = 'build-8.gradle'
+}

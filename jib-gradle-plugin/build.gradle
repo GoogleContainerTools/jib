@@ -57,9 +57,10 @@ release {
     'com.google.cloud.tools:jib-plugins-common',
   ]
   git {
-    requireBranch = /^gradle-release-v\d+.*$/  //regex
+    requireBranch.set(/^gradle-release-v\d+.*$/)  //regex
   }
 }
+
 // Gradle Plugin Portal releases
 pluginBundle {
   website = 'https://github.com/GoogleContainerTools/jib/'
