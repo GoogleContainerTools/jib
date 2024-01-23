@@ -19,4 +19,13 @@ package com.google.cloud.tools.jib.gradle;
 import org.gradle.api.Task;
 
 /** A task with a {@link JibExtension}. */
-public interface JibTask extends Task {}
+public interface JibTask extends Task {
+
+  /**
+   * Sets the task's {@link JibExtension}.
+   *
+   * @param jibExtension the {@link JibExtension}
+   * @return this
+   */
+  Task setJibExtension(JibExtension jibExtension);
+}

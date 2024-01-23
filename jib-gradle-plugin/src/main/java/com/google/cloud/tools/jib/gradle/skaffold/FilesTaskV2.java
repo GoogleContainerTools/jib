@@ -51,11 +51,16 @@ public class FilesTaskV2 extends DefaultTask {
 
   private final SkaffoldFilesOutput skaffoldFilesOutput = new SkaffoldFilesOutput();
 
-  private final JibExtension jibExtension;
+  private JibExtension jibExtension;
 
   @Inject
   public FilesTaskV2(JibExtension jibExtension) {
     this.jibExtension = jibExtension;
+  }
+
+  public FilesTaskV2 setJibExtension(JibExtension jibExtension) {
+    this.jibExtension = jibExtension;
+    return this;
   }
 
   /**

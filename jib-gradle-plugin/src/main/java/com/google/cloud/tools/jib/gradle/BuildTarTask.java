@@ -56,7 +56,7 @@ public class BuildTarTask extends DefaultTask implements JibTask {
 
   private static final String HELPFUL_SUGGESTIONS_PREFIX = "Building image tarball failed";
 
-  private final JibExtension jibExtension;
+  private JibExtension jibExtension;
 
   /**
    * This will call the property {@code "jib"} so that it is the same name as the extension. This
@@ -209,5 +209,11 @@ public class BuildTarTask extends DefaultTask implements JibTask {
       TaskCommon.finishUpdateChecker(projectProperties, updateCheckFuture);
       projectProperties.waitForLoggingThread();
     }
+  }
+
+  @Override
+  public BuildTarTask setJibExtension(JibExtension jibExtension) {
+    this.jibExtension = jibExtension;
+    return this;
   }
 }

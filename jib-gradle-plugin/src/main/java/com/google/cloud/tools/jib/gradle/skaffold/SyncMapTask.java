@@ -36,11 +36,16 @@ import org.gradle.api.tasks.TaskAction;
  */
 public class SyncMapTask extends DefaultTask {
 
-  private final JibExtension jibExtension;
+  private JibExtension jibExtension;
 
   @Inject
   public SyncMapTask(JibExtension jibExtension) {
     this.jibExtension = jibExtension;
+  }
+
+  public SyncMapTask setJibExtension(JibExtension jibExtension) {
+    this.jibExtension = jibExtension;
+    return this;
   }
 
   /** Task Action, lists files and container targets. */

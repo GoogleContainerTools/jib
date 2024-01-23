@@ -31,11 +31,16 @@ import org.gradle.api.tasks.TaskAction;
  */
 public class InitTask extends DefaultTask {
 
-  private final JibExtension jibExtension;
+  private JibExtension jibExtension;
 
   @Inject
   public InitTask(JibExtension jibExtension) {
     this.jibExtension = jibExtension;
+  }
+
+  public InitTask setJibExtension(JibExtension jibExtension) {
+    this.jibExtension = jibExtension;
+    return this;
   }
 
   /**
