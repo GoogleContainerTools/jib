@@ -27,7 +27,6 @@ import com.google.cloud.tools.jib.blob.Blobs;
 import com.google.common.collect.ImmutableList;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.Resources;
-
 import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
