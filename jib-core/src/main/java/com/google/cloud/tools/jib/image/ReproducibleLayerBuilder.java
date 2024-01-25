@@ -81,7 +81,7 @@ public class ReproducibleLayerBuilder {
         dir.setGroupId(0);
         dir.setUserName("");
         dir.setGroupName("");
-        clearTimeHeaders(dir);
+        clearPaxTimeHeaders(dir);
         add(dir);
       }
 
@@ -96,7 +96,7 @@ public class ReproducibleLayerBuilder {
     }
   }
 
-  private static void clearTimeHeaders(TarArchiveEntry entry) {
+  private static void clearPaxTimeHeaders(TarArchiveEntry entry) {
     entry.addPaxHeader("mtime", "0");
     entry.addPaxHeader("atime", "0");
     entry.addPaxHeader("ctime", "0");
@@ -166,7 +166,7 @@ public class ReproducibleLayerBuilder {
       entry.setMode((entry.getMode() & ~0777) | layerEntry.getPermissions().getPermissionBits());
       entry.setModTime(layerEntry.getModificationTime().toEpochMilli());
       setUserAndGroup(entry, layerEntry);
-      clearTimeHeaders(entry);
+      clearPaxTimeHeaders(entry);
 
       uniqueTarArchiveEntries.add(entry);
     }
