@@ -76,12 +76,11 @@ public class ReproducibleLayerBuilder {
       if (namePath.getParent() != namePath.getRoot()) {
         Path tarArchiveParentDir = Verify.verifyNotNull(namePath.getParent());
         TarArchiveEntry dir = new TarArchiveEntry(DIRECTORY_FILE, tarArchiveParentDir.toString());
-        dir.setModTime(FileEntriesLayer.DEFAULT_MODIFICATION_TIME.toEpochMilli());
         dir.setUserId(0);
         dir.setGroupId(0);
         dir.setUserName("");
         dir.setGroupName("");
-        clearPaxTimeHeaders(dir);
+        clearTimeHeaders(dir); // DEFAULT_MODIFICATION_TIME == EPOCH+1
         add(dir);
       }
 
@@ -96,8 +95,9 @@ public class ReproducibleLayerBuilder {
     }
   }
 
-  private static void clearPaxTimeHeaders(TarArchiveEntry entry) {
-    entry.addPaxHeader("mtime", "1"); // EPOCH plus 1 second
+  private static void clearTimeHeaders(TarArchiveEntry entry) {
+    entry.setModTime(FileEntriesLayer.DEFAULT_MODIFICATION_TIME.toEpochMilli());
+    entry.addPaxHeader("mtime", "1");
     entry.addPaxHeader("atime", "1");
     entry.addPaxHeader("ctime", "1");
     entry.addPaxHeader("LIBARCHIVE.creationtime", "1");
@@ -164,9 +164,8 @@ public class ReproducibleLayerBuilder {
       // Sets the entry's permissions by masking out the permission bits from the entry's mode (the
       // lowest 9 bits) then using a bitwise OR to set them to the layerEntry's permissions.
       entry.setMode((entry.getMode() & ~0777) | layerEntry.getPermissions().getPermissionBits());
-      entry.setModTime(layerEntry.getModificationTime().toEpochMilli());
       setUserAndGroup(entry, layerEntry);
-      clearPaxTimeHeaders(entry);
+      clearTimeHeaders(entry);
 
       uniqueTarArchiveEntries.add(entry);
     }
