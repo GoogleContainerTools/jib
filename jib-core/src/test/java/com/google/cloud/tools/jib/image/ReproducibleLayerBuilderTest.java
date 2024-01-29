@@ -91,7 +91,7 @@ public class ReproducibleLayerBuilderTest {
    * @param entry The archive entry in the layer.
    */
   private static void verifyThatModificationTimeIsReset(ArchiveEntry entry) {
-    assertThat(entry.getLastModifiedDate().toInstant()).isEqualTo(Instant.EPOCH);
+    assertThat(entry.getLastModifiedDate().toInstant()).isEqualTo(FileEntriesLayer.DEFAULT_MODIFICATION_TIME);
   }
 
   private static FileEntry layerEntry(Path source, AbsoluteUnixPath destination, FilePermissions permissions, String ownership) throws IOException {
