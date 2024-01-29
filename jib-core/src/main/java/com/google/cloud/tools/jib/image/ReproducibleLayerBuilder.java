@@ -97,10 +97,10 @@ public class ReproducibleLayerBuilder {
   }
 
   private static void clearPaxTimeHeaders(TarArchiveEntry entry) {
-    entry.addPaxHeader("mtime", "0");
-    entry.addPaxHeader("atime", "0");
-    entry.addPaxHeader("ctime", "0");
-    entry.addPaxHeader("LIBARCHIVE.creationtime", "0");
+    entry.addPaxHeader("mtime", "1"); // EPOCH plus 1 second
+    entry.addPaxHeader("atime", "1");
+    entry.addPaxHeader("ctime", "1");
+    entry.addPaxHeader("LIBARCHIVE.creationtime", "1");
   }
 
   private static void setUserAndGroup(TarArchiveEntry entry, FileEntry layerEntry) {
