@@ -10,7 +10,7 @@ All notable changes to this project will be documented in this file.
 -
 
 ### Fixed
--
+- fix: support parsing manifest JSON containing `LayerSources:` from latest Docker. ([#4171](https://github.com/GoogleContainerTools/jib/pull/4171))
 
 ## 3.4.0
 
@@ -74,7 +74,6 @@ Thanks to our community contributors @wwadge, @oliver-brm, @rquinio and @gsquare
 ### Changed
 
 - Upgraded jackson-databind to 2.13.2.2 ([#3612](https://github.com/GoogleContainerTools/jib/pull/3612)).
-
 
 ## 3.2.0
 
