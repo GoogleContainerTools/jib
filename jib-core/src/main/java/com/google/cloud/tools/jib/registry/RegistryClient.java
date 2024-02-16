@@ -632,8 +632,40 @@ public class RegistryClient {
 
         // Because we successfully did bearer authentication initially, getting 401 here probably
         // means the token was expired.
-        String wwwAuthenticate = ex.getHttpResponseException().getHeaders().getAuthenticate();
-        authorization.set(refreshBearerAuth(wwwAuthenticate));
+        // There may be multiple WWW-Authenticate headers, so we iterate them until
+        // refreshBearerAuth() succeeds
+        List<String> wwwAuthenticateList =
+            ex.getHttpResponseException().getHeaders().getAuthenticateAsList();
+        Authorization auth = null;
+        if (wwwAuthenticateList != null && !wwwAuthenticateList.isEmpty()) {
+          Exception storedEx = null;
+          // try all WWW-Authenticate headers until one succeeds
+          for (String wwwAuthenticate : wwwAuthenticateList) {
+            try {
+              storedEx = null;
+              auth = refreshBearerAuth(wwwAuthenticate);
+              break;
+            } catch (Exception exc) {
+              storedEx = exc;
+            }
+          }
+          // if none of the headers worked, throw the last exception that occurred
+          if (storedEx != null) {
+            if (storedEx instanceof IllegalStateException) {
+              throw (IllegalStateException) storedEx;
+            } else if (storedEx instanceof RegistryException) {
+              throw (RegistryException) storedEx;
+            } else {
+              throw new IllegalStateException(
+                  "unexpected exception during handling of WWW-Authenticate headers: " + storedEx);
+            }
+          }
+        }
+        // if no WWW-Authenticate header was provided, perform a refreshBearerAuth without it anyway
+        if (auth == null) {
+          auth = refreshBearerAuth(null);
+        }
+        authorization.set(auth);
       }
     }
   }
