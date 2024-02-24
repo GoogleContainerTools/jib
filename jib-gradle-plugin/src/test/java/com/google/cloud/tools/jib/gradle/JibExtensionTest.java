@@ -32,6 +32,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Properties;
+import java.util.stream.Collectors;
 import org.gradle.api.Project;
 import org.gradle.api.provider.Property;
 import org.gradle.api.provider.Provider;
@@ -418,15 +419,27 @@ public class JibExtensionTest {
               });
         });
     Path root = fakeProject.getRootDir().toPath();
-    assertThat(testJibExtension.getSkaffold().getSync().getExcludes())
+    assertThat(
+            testJibExtension.getSkaffold().getSync().getExcludes().getFiles().stream()
+                .map(File::toPath)
+                .collect(Collectors.toSet()))
         .containsExactly(
             root.resolve("sync1").toAbsolutePath(), root.resolve("sync2").toAbsolutePath());
-    assertThat(testJibExtension.getSkaffold().getWatch().getBuildIncludes())
+    assertThat(
+            testJibExtension.getSkaffold().getWatch().getBuildIncludes().getFiles().stream()
+                .map(File::toPath)
+                .collect(Collectors.toSet()))
         .containsExactly(
             root.resolve("watch1").toAbsolutePath(), root.resolve("watch2").toAbsolutePath());
-    assertThat(testJibExtension.getSkaffold().getWatch().getIncludes())
+    assertThat(
+            testJibExtension.getSkaffold().getWatch().getIncludes().getFiles().stream()
+                .map(File::toPath)
+                .collect(Collectors.toSet()))
         .containsExactly(root.resolve("watch3").toAbsolutePath());
-    assertThat(testJibExtension.getSkaffold().getWatch().getExcludes())
+    assertThat(
+            testJibExtension.getSkaffold().getWatch().getExcludes().getFiles().stream()
+                .map(File::toPath)
+                .collect(Collectors.toSet()))
         .containsExactly(root.resolve("watch4").toAbsolutePath());
   }
 
@@ -509,9 +522,9 @@ public class JibExtensionTest {
     System.setProperty("jib.extraDirectories.paths", "/foo,/bar/baz");
     assertThat(testJibExtension.getExtraDirectories().getPaths()).hasSize(2);
     assertThat(testJibExtension.getExtraDirectories().getPaths().get(0).getFrom())
-        .isEqualTo(Paths.get("/foo"));
+        .isEqualTo("foo");
     assertThat(testJibExtension.getExtraDirectories().getPaths().get(1).getFrom())
-        .isEqualTo(Paths.get("/bar/baz"));
+        .isEqualTo(fakeProject.getProjectDir().toPath().resolve("bar/baz"));
     System.setProperty("jib.extraDirectories.permissions", "/foo/bar=707,/baz=456");
     assertThat(testJibExtension.getExtraDirectories().getPermissions().get())
         .containsExactly("/foo/bar", "707", "/baz", "456")

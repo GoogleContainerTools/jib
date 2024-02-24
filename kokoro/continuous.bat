@@ -12,6 +12,6 @@ REM Sets the integration testing project.
 set JIB_INTEGRATION_TESTING_PROJECT=jib-integration-testing
 
 REM TODO: Enable integration tests once docker works (b/73345382).
-gradlew.bat clean build --info --stacktrace
+gradlew.bat build --info --stacktrace
 
 exit /b %ERRORLEVEL%

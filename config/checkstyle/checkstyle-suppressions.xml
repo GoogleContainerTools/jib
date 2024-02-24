@@ -11,6 +11,9 @@
 
   <!-- class with jib repo style: although maybe these should be eventually fixed -->
   <suppress files=".*\.java" checks="OverloadMethodsDeclarationOrder"/>
+  <suppress files=".*\.java" checks="MissingJavadocType"/>
+  <suppress files=".*\.java" checks="AtclauseOrder"/>
+  <suppress files=".*\.java" checks="AbbreviationAsWordInName"/>
 
   <!-- temporary suppressions as we work through them -->
   <suppress files=".*\.java" checks="VariableDeclarationUsageDistance"/>
@@ -28,5 +31,10 @@
   <suppress files=".*[\\/]src[\\/]test[\\/].*\.java" checks="MissingJavadocMethod"/>
   <suppress files=".*[\\/]src[\\/]integration-test[\\/].*\.java" checks="MissingJavadocMethod"/>
   <suppress files=".*[\\/]src[\\/]integration-test[\\/].*\.java" checks="VariableDeclarationUsageDistance"/>
+
+  <suppress files=".*[\\/]src[\\/]test[\\/].*\.java" checks="MissingJavadocType"/>
+  <suppress files=".*[\\/]src[\\/]test[\\/].*\.java" checks="AbbreviationAsWordInName"/>
+  <suppress files=".*[\\/]src[\\/]integration-test[\\/].*\.java" checks="MissingJavadocType"/>
+  <suppress files=".*[\\/]src[\\/]integration-test[\\/].*\.java" checks="AbbreviationAsWordInName"/>
 
 </suppressions>

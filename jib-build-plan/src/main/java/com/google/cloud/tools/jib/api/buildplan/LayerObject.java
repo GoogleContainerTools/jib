@@ -28,11 +28,17 @@ import javax.annotation.concurrent.Immutable;
 @Immutable
 public interface LayerObject {
 
-  public static enum Type {
+  /** Allowable types. */
+  enum Type {
     FILE_ENTRIES,
   }
 
-  public Type getType();
+  /**
+   * Returns layer type.
+   *
+   * @return Type of layer
+   */
+  Type getType();
 
-  public String getName();
+  String getName();
 }

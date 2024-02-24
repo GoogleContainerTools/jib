@@ -47,6 +47,7 @@ import org.gradle.api.DefaultTask;
 import org.gradle.api.GradleException;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.tasks.InputFiles;
+import org.gradle.api.tasks.Internal;
 import org.gradle.api.tasks.Nested;
 import org.gradle.api.tasks.OutputFile;
 import org.gradle.api.tasks.TaskAction;
@@ -71,6 +72,8 @@ public class BuildTarTask extends DefaultTask implements JibTask {
     return jibExtension;
   }
 
+  @Nullable private GradleProjectProperties projectProperties;
+
   /**
    * The target image can be overridden with the {@code --image} command line option.
    *
@@ -79,6 +82,12 @@ public class BuildTarTask extends DefaultTask implements JibTask {
   @Option(option = "image", description = "The image reference for the target image")
   public void setTargetImage(String targetImage) {
     Preconditions.checkNotNull(jibExtension).getTo().setImage(targetImage);
+  }
+
+  @Nullable
+  @Internal
+  public GradleProjectProperties getProjectProperties() {
+    return projectProperties;
   }
 
   /**
@@ -122,23 +131,19 @@ public class BuildTarTask extends DefaultTask implements JibTask {
           MainClassInferenceException, InvalidGlobalConfigException {
     // Asserts required @Input parameters are not null.
     Preconditions.checkNotNull(jibExtension);
+    Preconditions.checkNotNull(projectProperties);
     TaskCommon.disableHttpLogging();
-    TempDirectoryProvider tempDirectoryProvider = new TempDirectoryProvider();
 
-    GradleProjectProperties projectProperties =
-        GradleProjectProperties.getForProject(
-            getProject(),
-            getLogger(),
-            tempDirectoryProvider,
-            jibExtension.getConfigurationName().get());
     GlobalConfig globalConfig = GlobalConfig.readConfig();
     Future<Optional<String>> updateCheckFuture =
-        TaskCommon.newUpdateChecker(projectProperties, globalConfig, getLogger());
-    try {
+        TaskCommon.newUpdateChecker(this.projectProperties, globalConfig, getLogger());
+
+    try (TempDirectoryProvider tempDirectoryProvider = new TempDirectoryProvider()) {
+
       PluginConfigurationProcessor.createJibBuildRunnerForTarImage(
               new GradleRawConfiguration(jibExtension),
               ignored -> Optional.empty(),
-              projectProperties,
+              this.projectProperties,
               globalConfig,
               new GradleHelpfulSuggestions(HELPFUL_SUGGESTIONS_PREFIX))
           .runBuild();
@@ -204,7 +209,6 @@ public class BuildTarTask extends DefaultTask implements JibTask {
               + ex.getPath(),
           ex);
     } finally {
-      tempDirectoryProvider.close();
       TaskCommon.finishUpdateChecker(projectProperties, updateCheckFuture);
       projectProperties.waitForLoggingThread();
     }
@@ -213,6 +217,12 @@ public class BuildTarTask extends DefaultTask implements JibTask {
   @Override
   public BuildTarTask setJibExtension(JibExtension jibExtension) {
     this.jibExtension = jibExtension;
+    this.projectProperties =
+        GradleProjectProperties.getForProject(
+            getProject(),
+            getLogger(),
+            new TempDirectoryProvider(),
+            jibExtension.getConfigurationName().get());
     return this;
   }
 }

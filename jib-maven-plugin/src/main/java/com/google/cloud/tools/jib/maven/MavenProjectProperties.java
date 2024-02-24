@@ -597,7 +597,8 @@ public class MavenProjectProperties implements ProjectProperties {
   @Override
   public JibContainerBuilder runPluginExtensions(
       List<? extends ExtensionConfiguration> extensionConfigs,
-      JibContainerBuilder jibContainerBuilder)
+      JibContainerBuilder jibContainerBuilder,
+      Optional<Object> unusedForMaven)
       throws JibPluginExtensionException {
     if (extensionConfigs.isEmpty()) {
       log(LogEvent.debug("No Jib plugin extensions configured to load"));
