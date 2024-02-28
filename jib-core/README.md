@@ -22,7 +22,7 @@ Add Jib Core as a dependency using Maven:
 <dependency>
   <groupId>com.google.cloud.tools</groupId>
   <artifactId>jib-core</artifactId>
-  <version>0.25.0</version>
+  <version>0.26.0</version>
 </dependency>
 ```
 
