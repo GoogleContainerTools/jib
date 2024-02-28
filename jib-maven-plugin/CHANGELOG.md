@@ -10,6 +10,10 @@ All notable changes to this project will be documented in this file.
 -
 
 ### Fixed
+
+## 3.4.1
+
+### Fixed
 - fix: support parsing manifest JSON containing `LayerSources:` from latest Docker. ([#4171](https://github.com/GoogleContainerTools/jib/pull/4171))
 
 ## 3.4.0
