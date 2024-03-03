@@ -81,9 +81,6 @@ public class ReproducibleLayerBuilder {
         dir.setGroupId(0);
         dir.setUserName("");
         dir.setGroupName("");
-        // In this particular place we have to use default modification time (1 second past epoch)
-        // instead the modification time user might've set in JIB settings. That's because we have
-        // no way to find out the modification time user might've set in JIB settings here.
         clearTimeHeaders(dir, FileEntriesLayer.DEFAULT_MODIFICATION_TIME);
         add(dir);
       }

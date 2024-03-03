@@ -38,7 +38,6 @@ import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.FileTime;
 import java.time.Instant;
-import org.apache.commons.compress.archivers.ArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.junit.Rule;
@@ -85,43 +84,12 @@ public class ReproducibleLayerBuilderTest {
     assertThat(extractionPathEntry.getMode()).isEqualTo(TarArchiveEntry.DEFAULT_DIR_MODE);
   }
 
-  /**
-   * Verifies that the modification time has been reset in the PAX headers.
-   *
-   * @param entry The archive entry in the layer.
-   */
-  private static void verifyThatModificationTimeIsReset(ArchiveEntry entry) {
-    assertThat(entry.getLastModifiedDate().toInstant())
-        .isEqualTo(FileEntriesLayer.DEFAULT_MODIFICATION_TIME);
-  }
-
-  private static FileEntry layerEntry(
-      Path source, AbsoluteUnixPath destination, FilePermissions permissions, String ownership)
-      throws IOException {
+  private static FileEntry defaultLayerEntry(Path source, AbsoluteUnixPath destination) {
     return new FileEntry(
         source,
         destination,
-        permissions,
-        // Here we make sure to use a default modification time
-        // since JIB will set modification time for all files to
-        // the one set in JIB settings by a user. In case user
-        // hasn't set it, JIB will use default modification time,
-        // i.e. 1 second past January 1st, 1970 (1 second past epoch).
-        FileEntriesLayer.DEFAULT_MODIFICATION_TIME,
-        ownership);
-  }
-
-  private static FileEntry layerEntry(
-      Path source, AbsoluteUnixPath destination, FilePermissions permissions) throws IOException {
-    return layerEntry(source, destination, permissions, "");
-  }
-
-  private static FileEntry layerEntry(Path source, AbsoluteUnixPath destination)
-      throws IOException {
-    return layerEntry(
-        source,
-        destination,
-        FileEntriesLayer.DEFAULT_FILE_PERMISSIONS_PROVIDER.get(source, destination));
+        FileEntriesLayer.DEFAULT_FILE_PERMISSIONS_PROVIDER.get(source, destination),
+        FileEntriesLayer.DEFAULT_MODIFICATION_TIME);
   }
 
   @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
@@ -201,14 +169,14 @@ public class ReproducibleLayerBuilderTest {
     Blob layer =
         new ReproducibleLayerBuilder(
                 ImmutableList.of(
-                    layerEntry(fileA1, AbsoluteUnixPath.get("/somewhere/fileA")),
-                    layerEntry(fileB1, AbsoluteUnixPath.get("/somewhere/fileB"))))
+                    defaultLayerEntry(fileA1, AbsoluteUnixPath.get("/somewhere/fileA")),
+                    defaultLayerEntry(fileB1, AbsoluteUnixPath.get("/somewhere/fileB"))))
             .build();
     Blob reproduced =
         new ReproducibleLayerBuilder(
                 ImmutableList.of(
-                    layerEntry(fileB2, AbsoluteUnixPath.get("/somewhere/fileB")),
-                    layerEntry(fileA2, AbsoluteUnixPath.get("/somewhere/fileA"))))
+                    defaultLayerEntry(fileB2, AbsoluteUnixPath.get("/somewhere/fileB")),
+                    defaultLayerEntry(fileA2, AbsoluteUnixPath.get("/somewhere/fileA"))))
             .build();
 
     byte[] layerContent = Blobs.writeToByteArray(layer);
@@ -319,7 +287,7 @@ public class ReproducibleLayerBuilderTest {
 
     Blob blob =
         new ReproducibleLayerBuilder(
-                ImmutableList.of(layerEntry(file, AbsoluteUnixPath.get("/fileA"))))
+                ImmutableList.of(defaultLayerEntry(file, AbsoluteUnixPath.get("/fileA"))))
             .build();
 
     Path tarFile = temporaryFolder.newFile().toPath();
@@ -329,7 +297,8 @@ public class ReproducibleLayerBuilderTest {
 
     // Reads the file back.
     try (TarArchiveInputStream in = new TarArchiveInputStream(Files.newInputStream(tarFile))) {
-      verifyThatModificationTimeIsReset(in.getNextEntry());
+      assertThat(in.getNextEntry().getLastModifiedDate().toInstant())
+          .isEqualTo(Instant.EPOCH.plusSeconds(1));
     }
   }
 
@@ -339,7 +308,12 @@ public class ReproducibleLayerBuilderTest {
 
     Blob blob =
         new ReproducibleLayerBuilder(
-                ImmutableList.of(layerEntry(file, AbsoluteUnixPath.get("/fileA"))))
+                ImmutableList.of(
+                    new FileEntry(
+                        file,
+                        AbsoluteUnixPath.get("/fileA"),
+                        FilePermissions.DEFAULT_FILE_PERMISSIONS,
+                        Instant.ofEpochSecond(123))))
             .build();
 
     Path tarFile = temporaryFolder.newFile().toPath();
@@ -349,7 +323,8 @@ public class ReproducibleLayerBuilderTest {
 
     // Reads the file back.
     try (TarArchiveInputStream in = new TarArchiveInputStream(Files.newInputStream(tarFile))) {
-      verifyThatModificationTimeIsReset(in.getNextTarEntry());
+      assertThat(in.getNextEntry().getLastModifiedDate().toInstant())
+          .isEqualTo(Instant.EPOCH.plusSeconds(123));
     }
   }
 
@@ -363,15 +338,17 @@ public class ReproducibleLayerBuilderTest {
     Blob blob =
         new ReproducibleLayerBuilder(
                 ImmutableList.of(
-                    layerEntry(fileA, AbsoluteUnixPath.get("/somewhere/fileA")),
-                    layerEntry(
+                    defaultLayerEntry(fileA, AbsoluteUnixPath.get("/somewhere/fileA")),
+                    new FileEntry(
                         fileB,
                         AbsoluteUnixPath.get("/somewhere/fileB"),
-                        FilePermissions.fromOctalString("123")),
-                    layerEntry(
+                        FilePermissions.fromOctalString("123"),
+                        FileEntriesLayer.DEFAULT_MODIFICATION_TIME),
+                    new FileEntry(
                         folder,
                         AbsoluteUnixPath.get("/somewhere/folder"),
-                        FilePermissions.fromOctalString("456"))))
+                        FilePermissions.fromOctalString("456"),
+                        FileEntriesLayer.DEFAULT_MODIFICATION_TIME)))
             .build();
 
     Path tarFile = temporaryFolder.newFile().toPath();
@@ -399,46 +376,54 @@ public class ReproducibleLayerBuilderTest {
     Blob blob =
         new ReproducibleLayerBuilder(
                 ImmutableList.of(
-                    layerEntry(someFile, AbsoluteUnixPath.get("/file1")),
-                    layerEntry(
+                    defaultLayerEntry(someFile, AbsoluteUnixPath.get("/file1")),
+                    new FileEntry(
                         someFile,
                         AbsoluteUnixPath.get("/file2"),
                         FilePermissions.fromOctalString("123"),
+                        Instant.EPOCH,
                         ""),
-                    layerEntry(
+                    new FileEntry(
                         someFile,
                         AbsoluteUnixPath.get("/file3"),
                         FilePermissions.fromOctalString("123"),
+                        Instant.EPOCH,
                         ":"),
-                    layerEntry(
+                    new FileEntry(
                         someFile,
                         AbsoluteUnixPath.get("/file4"),
                         FilePermissions.fromOctalString("123"),
+                        Instant.EPOCH,
                         "333:"),
-                    layerEntry(
+                    new FileEntry(
                         someFile,
                         AbsoluteUnixPath.get("/file5"),
                         FilePermissions.fromOctalString("123"),
+                        Instant.EPOCH,
                         ":555"),
-                    layerEntry(
+                    new FileEntry(
                         someFile,
                         AbsoluteUnixPath.get("/file6"),
                         FilePermissions.fromOctalString("123"),
+                        Instant.EPOCH,
                         "333:555"),
-                    layerEntry(
+                    new FileEntry(
                         someFile,
                         AbsoluteUnixPath.get("/file7"),
                         FilePermissions.fromOctalString("123"),
+                        Instant.EPOCH,
                         "user:"),
-                    layerEntry(
+                    new FileEntry(
                         someFile,
                         AbsoluteUnixPath.get("/file8"),
                         FilePermissions.fromOctalString("123"),
+                        Instant.EPOCH,
                         ":group"),
-                    layerEntry(
+                    new FileEntry(
                         someFile,
                         AbsoluteUnixPath.get("/file9"),
                         FilePermissions.fromOctalString("123"),
+                        Instant.EPOCH,
                         "user:group")))
             .build();
 
@@ -453,63 +438,54 @@ public class ReproducibleLayerBuilderTest {
       assertThat(entry1.getLongGroupId()).isEqualTo(0);
       assertThat(entry1.getUserName()).isEmpty();
       assertThat(entry1.getGroupName()).isEmpty();
-      verifyThatModificationTimeIsReset(entry1);
 
       TarArchiveEntry entry2 = in.getNextTarEntry();
       assertThat(entry2.getLongUserId()).isEqualTo(0);
       assertThat(entry2.getLongGroupId()).isEqualTo(0);
       assertThat(entry2.getUserName()).isEmpty();
       assertThat(entry2.getGroupName()).isEmpty();
-      verifyThatModificationTimeIsReset(entry2);
 
       TarArchiveEntry entry3 = in.getNextTarEntry();
       assertThat(entry3.getLongUserId()).isEqualTo(0);
       assertThat(entry3.getLongGroupId()).isEqualTo(0);
       assertThat(entry3.getUserName()).isEmpty();
       assertThat(entry3.getGroupName()).isEmpty();
-      verifyThatModificationTimeIsReset(entry3);
 
       TarArchiveEntry entry4 = in.getNextTarEntry();
       assertThat(entry4.getLongUserId()).isEqualTo(333);
       assertThat(entry4.getLongGroupId()).isEqualTo(0);
       assertThat(entry4.getUserName()).isEmpty();
       assertThat(entry4.getGroupName()).isEmpty();
-      verifyThatModificationTimeIsReset(entry4);
 
       TarArchiveEntry entry5 = in.getNextTarEntry();
       assertThat(entry5.getLongUserId()).isEqualTo(0);
       assertThat(entry5.getLongGroupId()).isEqualTo(555);
       assertThat(entry5.getUserName()).isEmpty();
       assertThat(entry5.getGroupName()).isEmpty();
-      verifyThatModificationTimeIsReset(entry5);
 
       TarArchiveEntry entry6 = in.getNextTarEntry();
       assertThat(entry6.getLongUserId()).isEqualTo(333);
       assertThat(entry6.getLongGroupId()).isEqualTo(555);
       assertThat(entry6.getUserName()).isEmpty();
       assertThat(entry6.getGroupName()).isEmpty();
-      verifyThatModificationTimeIsReset(entry6);
 
       TarArchiveEntry entry7 = in.getNextTarEntry();
       assertThat(entry7.getLongUserId()).isEqualTo(0);
       assertThat(entry7.getLongGroupId()).isEqualTo(0);
       assertThat(entry7.getUserName()).isEqualTo("user");
       assertThat(entry7.getGroupName()).isEmpty();
-      verifyThatModificationTimeIsReset(entry7);
 
       TarArchiveEntry entry8 = in.getNextTarEntry();
       assertThat(entry8.getLongUserId()).isEqualTo(0);
       assertThat(entry8.getLongGroupId()).isEqualTo(0);
       assertThat(entry8.getUserName()).isEmpty();
       assertThat(entry8.getGroupName()).isEqualTo("group");
-      verifyThatModificationTimeIsReset(entry8);
 
       TarArchiveEntry entry9 = in.getNextTarEntry();
       assertThat(entry9.getLongUserId()).isEqualTo(0);
       assertThat(entry9.getLongGroupId()).isEqualTo(0);
       assertThat(entry9.getUserName()).isEqualTo("user");
       assertThat(entry9.getGroupName()).isEqualTo("group");
-      verifyThatModificationTimeIsReset(entry9);
     }
   }
 

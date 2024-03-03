@@ -28,7 +28,7 @@ project.ext.dependencyStrings = [
   GRADLE_EXTENSION: 'com.google.cloud.tools:jib-gradle-plugin-extension-api:0.4.0',
   MAVEN_EXTENSION: 'com.google.cloud.tools:jib-maven-plugin-extension-api:0.4.0',
 
-  COMMONS_COMPRESS: 'org.apache.commons:commons-compress:1.21',
+  COMMONS_COMPRESS: 'org.apache.commons:commons-compress:1.26.0',
   ZSTD_JNI: 'com.github.luben:zstd-jni:1.5.5-5',
   COMMONS_TEXT: 'org.apache.commons:commons-text:1.10.0',
   JACKSON_BOM: 'com.fasterxml.jackson:jackson-bom:2.15.2',
