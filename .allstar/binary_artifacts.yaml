@@ -1,0 +1,8 @@
+# Ignore reason: jars are used for testing purposes only
+ignorePaths:
+  - jib-cli/src/integration-test/resources/jarTest/standard/dependency1.jar
+  - jib-cli/src/integration-test/resources/jarTest/standard/directory/dependency2.jar
+  - jib-cli/src/integration-test/resources/jarTest/standard/jarWithCp.jar
+  - jib-cli/src/integration-test/resources/jarTest/standard/noDependencyJar.jar
+  - jib-gradle-plugin/src/integration-test/resources/gradle/projects/default-target/libs/dependency-1.0.0.jar
+  - jib-gradle-plugin/src/integration-test/resources/gradle/projects/simple/libs/dependency-1.0.0.jar
