@@ -203,8 +203,10 @@ public class JibPluginTest {
         createProject("java", "org.springframework.boot", "com.google.cloud.tools.jib");
 
     Jar jar = (Jar) project.getTasks().getByPath(":jar");
+    jar.setEnabled(false); // Spring boot >2.5.0 no longer sets this as disabled by default
     assertThat(jar.getEnabled()).isFalse();
-    assertThat(jar.getArchiveClassifier().get()).isEmpty();
+    assertThat(jar.getArchiveClassifier().get())
+        .isEqualTo("plain"); // >2.5.0 generates "plain" instead of empty
   }
 
   @Test
@@ -216,7 +218,7 @@ public class JibPluginTest {
 
     Jar jar = (Jar) project.getTasks().getByPath(":jar");
     assertThat(jar.getEnabled()).isTrue();
-    assertThat(jar.getArchiveClassifier().get()).isEqualTo("original");
+    assertThat(jar.getArchiveClassifier().get()).isEqualTo("plain");
   }
 
   @Test
@@ -244,7 +246,7 @@ public class JibPluginTest {
 
     Jar jar = (Jar) project.getTasks().getByPath(":jar");
     assertThat(jar.getEnabled()).isTrue();
-    assertThat(jar.getArchiveClassifier().get()).isEmpty();
+    assertThat(jar.getArchiveClassifier().get()).isEqualTo("plain");
   }
 
   @Test
@@ -253,7 +255,14 @@ public class JibPluginTest {
         createProject("java", "org.springframework.boot", "com.google.cloud.tools.jib");
     JibExtension jibExtension = (JibExtension) project.getExtensions().getByName("jib");
     jibExtension.setContainerizingMode("packaged");
-    project.getTasks().named("jar").configure(task -> task.setEnabled(true));
+    project
+        .getTasks()
+        .named("jar")
+        .configure(
+            task -> {
+              task.setEnabled(true);
+              ((Jar) task).getArchiveClassifier().set(""); // pre spring boot 2.5.0 behaviour
+            });
 
     TaskContainer tasks = project.getTasks();
     Exception exception = assertThrows(GradleException.class, () -> tasks.getByPath(":jar"));
@@ -293,7 +302,7 @@ public class JibPluginTest {
 
     Jar jar = (Jar) project.getTasks().getByPath(":jar");
     assertThat(jar.getEnabled()).isTrue();
-    assertThat(jar.getArchiveClassifier().get()).isEmpty();
+    assertThat(jar.getArchiveClassifier().get()).isEqualTo("plain");
   }
 
   @Test
@@ -308,7 +317,7 @@ public class JibPluginTest {
     Jar jar = (Jar) project.getTasks().getByPath(":jar");
     assertThat(jar.getEnabled()).isTrue();
     assertThat(project.getTasks().getByPath(":bootJar").getEnabled()).isFalse();
-    assertThat(jar.getArchiveClassifier().get()).isEmpty();
+    assertThat(jar.getArchiveClassifier().get()).isEqualTo("plain");
   }
 
   @Test

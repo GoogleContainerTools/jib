@@ -16,6 +16,8 @@
 
 package com.google.cloud.tools.jib.gradle;
 
+import static org.gradle.api.tasks.SourceSet.MAIN_SOURCE_SET_NAME;
+
 import com.google.cloud.tools.jib.gradle.skaffold.CheckJibVersionTask;
 import com.google.cloud.tools.jib.gradle.skaffold.FilesTaskV2;
 import com.google.cloud.tools.jib.gradle.skaffold.InitTask;
@@ -30,8 +32,8 @@ import org.gradle.api.GradleException;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
+import org.gradle.api.plugins.JavaPluginExtension;
 import org.gradle.api.tasks.SourceSet;
-import org.gradle.api.tasks.SourceSetContainer;
 import org.gradle.api.tasks.TaskContainer;
 import org.gradle.api.tasks.TaskProvider;
 import org.gradle.api.tasks.bundling.Jar;
@@ -39,7 +41,7 @@ import org.gradle.util.GradleVersion;
 
 public class JibPlugin implements Plugin<Project> {
 
-  @VisibleForTesting static final GradleVersion GRADLE_MIN_VERSION = GradleVersion.version("5.1");
+  @VisibleForTesting static final GradleVersion GRADLE_MIN_VERSION = GradleVersion.version("8.0");
 
   public static final String JIB_EXTENSION_NAME = "jib";
   public static final String BUILD_IMAGE_TASK_NAME = "jib";
@@ -182,11 +184,11 @@ public class JibPlugin implements Plugin<Project> {
             }
           }
 
+          JavaPluginExtension javaPluginExtension =
+              project.getExtensions().getByType(JavaPluginExtension.class);
           SourceSet mainSourceSet =
-              projectAfterEvaluation
-                  .getExtensions()
-                  .getByType(SourceSetContainer.class)
-                  .getByName(SourceSet.MAIN_SOURCE_SET_NAME);
+              javaPluginExtension.getSourceSets().getByName(MAIN_SOURCE_SET_NAME);
+
           jibDependencies.add(mainSourceSet.getRuntimeClasspath());
           jibDependencies.add(
               projectAfterEvaluation

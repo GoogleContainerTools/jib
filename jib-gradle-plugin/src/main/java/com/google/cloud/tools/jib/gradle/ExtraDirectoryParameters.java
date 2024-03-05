@@ -21,7 +21,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 import javax.inject.Inject;
-import org.gradle.api.Project;
 import org.gradle.api.model.ObjectFactory;
 import org.gradle.api.provider.ListProperty;
 import org.gradle.api.provider.Property;
@@ -32,25 +31,31 @@ import org.gradle.api.tasks.Internal;
 /** Configuration of an extra directory. */
 public class ExtraDirectoryParameters implements ExtraDirectoriesConfiguration {
 
-  private Project project;
+  private final ObjectFactory objectFactory;
   private Property<Path> from;
   private Property<String> into;
   private ListProperty<String> includes;
   private ListProperty<String> excludes;
 
   @Inject
-  public ExtraDirectoryParameters(ObjectFactory objects, Project project) {
-    this.project = project;
+  public ExtraDirectoryParameters(ObjectFactory objects) {
+    this.objectFactory = objects;
     this.from = objects.property(Path.class).value(Paths.get(""));
     this.into = objects.property(String.class).value("/");
     this.includes = objects.listProperty(String.class).empty();
     this.excludes = objects.listProperty(String.class).empty();
   }
 
-  ExtraDirectoryParameters(ObjectFactory objects, Project project, Path from, String into) {
-    this(objects, project);
+  ExtraDirectoryParameters(ObjectFactory objects, Path from, String into) {
+    this(objects);
     this.from = objects.property(Path.class).value(from);
     this.into = objects.property(String.class).value(into);
+  }
+
+  @Override
+  @Internal
+  public Path getFrom() {
+    return from.get();
   }
 
   @Input
@@ -60,18 +65,13 @@ public class ExtraDirectoryParameters implements ExtraDirectoriesConfiguration {
     return from.get().toString();
   }
 
-  @Override
-  @Internal
-  public Path getFrom() {
-    return from.get();
-  }
-
   public void setFrom(Object from) {
-    this.from.set(project.file(from).toPath());
+    this.from.set(Paths.get(objectFactory.fileCollection().from(from).getAsPath()));
   }
 
   public void setFrom(Provider<Object> from) {
-    this.from.set(from.map(obj -> project.file(obj).toPath()));
+    this.from.set(
+        from.map(obj -> Paths.get(objectFactory.fileCollection().from(from).getAsPath())));
   }
 
   @Override

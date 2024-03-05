@@ -24,6 +24,8 @@ import com.google.cloud.tools.jib.plugins.common.ContainerizingMode;
 import com.google.cloud.tools.jib.plugins.common.InvalidContainerizingModeException;
 import com.google.cloud.tools.jib.plugins.common.PluginConfigurationProcessor;
 import com.google.common.base.Preconditions;
+import java.io.File;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.GradleException;
@@ -85,7 +87,9 @@ public class SyncMapTask extends DefaultTask {
             PluginConfigurationProcessor.getSkaffoldSyncMap(
                 configuration,
                 projectProperties,
-                jibExtension.getSkaffold().getSync().getExcludes());
+                jibExtension.getSkaffold().getSync().getExcludes().getFiles().stream()
+                    .map(File::toPath)
+                    .collect(Collectors.toSet()));
 
         System.out.println();
         System.out.println("BEGIN JIB JSON: SYNCMAP/1");

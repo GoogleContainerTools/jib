@@ -3,8 +3,10 @@ plugins {
   id 'war'
 }
 
-sourceCompatibility = 1.8
-targetCompatibility = 1.8
+java {
+  sourceCompatibility = JavaVersion.VERSION_1_8
+  targetCompatibility = JavaVersion.VERSION_1_8
+}
 
 repositories {
   mavenCentral()
@@ -15,7 +17,7 @@ configurations {
 }
 
 dependencies {
-  providedCompile 'jakarta.servlet:jakarta.servlet-api:5.0.0'
+  providedCompile 'jakarta.servlet:jakarta.servlet-api:6.0.0'
   moreLibs 'jakarta.annotation:jakarta.annotation-api:2.1.0' // random extra JAR
 }
 

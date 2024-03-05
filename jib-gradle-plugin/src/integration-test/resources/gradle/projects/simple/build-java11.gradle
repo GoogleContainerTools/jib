@@ -11,7 +11,7 @@ repositories {
 }
 
 dependencies {
-  compile files('libs/dependency-1.0.0.jar')
+  implementation files('libs/dependency-1.0.0.jar')
 }
 
 jib.from.image = 'eclipse-temurin:11-jdk-focal'
