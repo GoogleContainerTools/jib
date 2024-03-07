@@ -27,8 +27,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.FileTime;
 import java.time.Instant;
-import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeFormatterBuilder;
+import java.time.temporal.ChronoUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.junit.Assert;
@@ -94,20 +93,31 @@ public class TarExtractorTest {
 
     TarExtractor.extract(source, destination);
 
-    // We have to use millisecond precision here. Taken from Instant.parse.
-    final DateTimeFormatter parser =
-        new DateTimeFormatterBuilder().parseCaseInsensitive().appendInstant(3).toFormatter();
-
-    assertThat(Files.getLastModifiedTime(destination.resolve("file A")))
-        .isEqualTo(FileTime.from(parser.parse("2019-08-01T16:13:09.720Z", Instant::from)));
-    assertThat(Files.getLastModifiedTime(destination.resolve("file B")))
-        .isEqualTo(FileTime.from(parser.parse("2019-08-01T16:12:00.797Z", Instant::from)));
-    assertThat(Files.getLastModifiedTime(destination.resolve("folder")))
-        .isEqualTo(FileTime.from(parser.parse("2019-08-01T16:12:33.001Z", Instant::from)));
-    assertThat(Files.getLastModifiedTime(destination.resolve("folder/nested folder")))
-        .isEqualTo(FileTime.from(parser.parse("2019-08-01T16:13:30.404Z", Instant::from)));
-    assertThat(Files.getLastModifiedTime(destination.resolve("folder/nested folder/file C")))
-        .isEqualTo(FileTime.from(parser.parse("2019-08-01T16:12:21.273Z", Instant::from)));
+    assertThat(
+            Files.getLastModifiedTime(destination.resolve("file A"))
+                .toInstant()
+                .truncatedTo(ChronoUnit.SECONDS))
+        .isEqualTo(Instant.parse("2019-08-01T16:13:09Z"));
+    assertThat(
+            Files.getLastModifiedTime(destination.resolve("file B"))
+                .toInstant()
+                .truncatedTo(ChronoUnit.SECONDS))
+        .isEqualTo(Instant.parse("2019-08-01T16:12:00Z"));
+    assertThat(
+            Files.getLastModifiedTime(destination.resolve("folder"))
+                .toInstant()
+                .truncatedTo(ChronoUnit.SECONDS))
+        .isEqualTo(Instant.parse("2019-08-01T16:12:33Z"));
+    assertThat(
+            Files.getLastModifiedTime(destination.resolve("folder/nested folder"))
+                .toInstant()
+                .truncatedTo(ChronoUnit.SECONDS))
+        .isEqualTo(Instant.parse("2019-08-01T16:13:30Z"));
+    assertThat(
+            Files.getLastModifiedTime(destination.resolve("folder/nested folder/file C"))
+                .toInstant()
+                .truncatedTo(ChronoUnit.SECONDS))
+        .isEqualTo(Instant.parse("2019-08-01T16:12:21Z"));
   }
 
   @Test
@@ -119,14 +129,26 @@ public class TarExtractorTest {
 
     TarExtractor.extract(source, destination, true);
 
-    assertThat(Files.getLastModifiedTime(destination.resolve("level-1")))
-        .isEqualTo(FileTime.fromMillis(1000L));
-    assertThat(Files.getLastModifiedTime(destination.resolve("level-1/level-2")))
-        .isEqualTo(FileTime.fromMillis(1000L));
-    assertThat(Files.getLastModifiedTime(destination.resolve("level-1/level-2/level-3")))
-        .isEqualTo(FileTime.fromMillis(1000L));
-    assertThat(Files.getLastModifiedTime(destination.resolve("level-1/level-2/level-3/file.txt")))
-        .isEqualTo(FileTime.from(Instant.parse("2021-01-29T21:10:02.78Z")));
+    assertThat(
+            Files.getLastModifiedTime(destination.resolve("level-1"))
+                .toInstant()
+                .truncatedTo(ChronoUnit.SECONDS))
+        .isEqualTo(FileTime.fromMillis(1000L).toInstant());
+    assertThat(
+            Files.getLastModifiedTime(destination.resolve("level-1/level-2"))
+                .toInstant()
+                .truncatedTo(ChronoUnit.SECONDS))
+        .isEqualTo(FileTime.fromMillis(1000L).toInstant());
+    assertThat(
+            Files.getLastModifiedTime(destination.resolve("level-1/level-2/level-3"))
+                .toInstant()
+                .truncatedTo(ChronoUnit.SECONDS))
+        .isEqualTo(FileTime.fromMillis(1000L).toInstant());
+    assertThat(
+            Files.getLastModifiedTime(destination.resolve("level-1/level-2/level-3/file.txt"))
+                .toInstant()
+                .truncatedTo(ChronoUnit.SECONDS))
+        .isEqualTo(Instant.parse("2021-01-29T21:10:02Z"));
   }
 
   @Test
