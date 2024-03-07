@@ -102,9 +102,9 @@ public class ReproducibleImageTest {
 
     assertThat(actual)
         .containsExactly(
-            "16d03883198935b4119896dcea0ea14e1bf105b6ac0a35a88820d08bc0263306.tar.gz",
-            "527db49d4e0c4159346119b4971d59016bfedceed874abab2b510ce433f6b15c.tar.gz",
             "98682a867906d9d07cf3c51a4fb9e08e9d5baddd1ca5dc7834f58f434c9cb15c.tar.gz",
+            "527db49d4e0c4159346119b4971d59016bfedceed874abab2b510ce433f6b15c.tar.gz",
+            "16d03883198935b4119896dcea0ea14e1bf105b6ac0a35a88820d08bc0263306.tar.gz",
             "config.json",
             "manifest.json")
         .inOrder();
