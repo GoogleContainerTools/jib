@@ -102,9 +102,9 @@ public class ReproducibleImageTest {
 
     assertThat(actual)
         .containsExactly(
-            "c46572ef74f58d95e44dd36c1fbdfebd3752e8b56a794a13c11cfed35a1a6e1c.tar.gz",
-            "6d2763b0f3940d324ea6b55386429e5b173899608abf7d1bff62e25dd2e4dcea.tar.gz",
-            "530c1954a2b087d0b989895ea56435c9dc739a973f2d2b6cb9bb98e55bbea7ac.tar.gz",
+            "98682a867906d9d07cf3c51a4fb9e08e9d5baddd1ca5dc7834f58f434c9cb15c.tar.gz",
+            "527db49d4e0c4159346119b4971d59016bfedceed874abab2b510ce433f6b15c.tar.gz",
+            "16d03883198935b4119896dcea0ea14e1bf105b6ac0a35a88820d08bc0263306.tar.gz",
             "config.json",
             "manifest.json")
         .inOrder();
@@ -114,7 +114,7 @@ public class ReproducibleImageTest {
   public void testManifest() throws IOException {
     String expectedManifest =
         "[{\"Config\":\"config.json\",\"RepoTags\":[\"jib-core/reproducible:latest\"],"
-            + "\"Layers\":[\"c46572ef74f58d95e44dd36c1fbdfebd3752e8b56a794a13c11cfed35a1a6e1c.tar.gz\",\"6d2763b0f3940d324ea6b55386429e5b173899608abf7d1bff62e25dd2e4dcea.tar.gz\",\"530c1954a2b087d0b989895ea56435c9dc739a973f2d2b6cb9bb98e55bbea7ac.tar.gz\"]}]";
+            + "\"Layers\":[\"98682a867906d9d07cf3c51a4fb9e08e9d5baddd1ca5dc7834f58f434c9cb15c.tar.gz\",\"527db49d4e0c4159346119b4971d59016bfedceed874abab2b510ce433f6b15c.tar.gz\",\"16d03883198935b4119896dcea0ea14e1bf105b6ac0a35a88820d08bc0263306.tar.gz\"]}]";
     String generatedManifest = extractFromTarFileAsString(imageTar, "manifest.json");
     assertThat(generatedManifest).isEqualTo(expectedManifest);
   }
@@ -125,7 +125,7 @@ public class ReproducibleImageTest {
         "{\"created\":\"1970-01-01T00:00:00Z\",\"architecture\":\"amd64\",\"os\":\"linux\","
             + "\"config\":{\"Env\":[],\"Entrypoint\":[\"echo\",\"Hello World\"],\"ExposedPorts\":{},\"Labels\":{},\"Volumes\":{}},"
             + "\"history\":[{\"created\":\"1970-01-01T00:00:00Z\",\"author\":\"Jib\",\"created_by\":\"jib-core:null\",\"comment\":\"\"},{\"created\":\"1970-01-01T00:00:00Z\",\"author\":\"Jib\",\"created_by\":\"jib-core:null\",\"comment\":\"\"},{\"created\":\"1970-01-01T00:00:00Z\",\"author\":\"Jib\",\"created_by\":\"jib-core:null\",\"comment\":\"\"}],"
-            + "\"rootfs\":{\"type\":\"layers\",\"diff_ids\":[\"sha256:18e4f44e6d1835bd968339b166057bd17ab7d4cbb56dc7262a5cafea7cf8d405\",\"sha256:13369c34f073f2b9c1fa6431e23d925f1a8eac65b1726c8cc8fcc2596c69b414\",\"sha256:4f92c507112d7880ca0f504ef8272b7fdee107263270125036a260a741565923\"]}}";
+            + "\"rootfs\":{\"type\":\"layers\",\"diff_ids\":[\"sha256:2fcc2157bf42c89195676ef6e973a96d7b018c9d30ba89db95e9e0722e1c8ef3\",\"sha256:21f521f3217067d277af37512a08c72281d90fdd02d7174db632c8c3a34403bd\",\"sha256:6beba018395265af5061864b7f4678e831eb2daebb1045487c641fc8b142e319\"]}}";
     String generatedConfig = extractFromTarFileAsString(imageTar, "config.json");
     assertThat(generatedConfig).isEqualTo(expectedConfig);
   }
