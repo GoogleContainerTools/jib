@@ -38,8 +38,8 @@ import org.gradle.api.artifacts.Dependency;
 import org.gradle.api.artifacts.ProjectDependency;
 import org.gradle.api.artifacts.PublishArtifact;
 import org.gradle.api.initialization.Settings;
-import org.gradle.api.plugins.JavaPluginConvention;
 import org.gradle.api.tasks.SourceSet;
+import org.gradle.api.tasks.SourceSetContainer;
 import org.gradle.api.tasks.TaskAction;
 
 /**
@@ -162,11 +162,10 @@ public class FilesTaskV2 extends DefaultTask {
     addGradleFiles(project);
 
     // Add sources + resources
-    JavaPluginConvention javaConvention =
-        project.getConvention().findPlugin(JavaPluginConvention.class);
-    if (javaConvention != null) {
-      SourceSet mainSourceSet =
-          javaConvention.getSourceSets().findByName(SourceSet.MAIN_SOURCE_SET_NAME);
+    SourceSetContainer sourceSetContainer =
+        project.getExtensions().findByType(SourceSetContainer.class);
+    if (sourceSetContainer != null) {
+      SourceSet mainSourceSet = sourceSetContainer.findByName(SourceSet.MAIN_SOURCE_SET_NAME);
       if (mainSourceSet != null) {
         mainSourceSet
             .getAllSource()

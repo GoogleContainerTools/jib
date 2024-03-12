@@ -70,10 +70,11 @@ import org.gradle.api.artifacts.ResolvedArtifact;
 import org.gradle.api.artifacts.component.ProjectComponentIdentifier;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.logging.Logger;
-import org.gradle.api.plugins.JavaPluginConvention;
+import org.gradle.api.plugins.JavaPluginExtension;
 import org.gradle.api.plugins.WarPlugin;
 import org.gradle.api.provider.Provider;
 import org.gradle.api.tasks.SourceSet;
+import org.gradle.api.tasks.SourceSetContainer;
 import org.gradle.api.tasks.TaskProvider;
 import org.gradle.jvm.tasks.Jar;
 
@@ -413,9 +414,9 @@ public class GradleProjectProperties implements ProjectProperties {
     dependencyFileCollections.add(project.getConfigurations().getByName(configurationName));
     // Output directories (classes and resources) from main SourceSet are added
     // so that BuildTarTask picks up changes in these and do not skip task
-    JavaPluginConvention javaPluginConvention =
-        project.getConvention().getPlugin(JavaPluginConvention.class);
-    SourceSet mainSourceSet = javaPluginConvention.getSourceSets().getByName(MAIN_SOURCE_SET_NAME);
+    SourceSetContainer sourceSetContainer =
+        project.getExtensions().getByType(SourceSetContainer.class);
+    SourceSet mainSourceSet = sourceSetContainer.getByName(MAIN_SOURCE_SET_NAME);
     dependencyFileCollections.add(mainSourceSet.getOutput());
 
     extraDirectories.stream()
@@ -440,10 +441,10 @@ public class GradleProjectProperties implements ProjectProperties {
   @Override
   public int getMajorJavaVersion() {
     JavaVersion version = JavaVersion.current();
-    JavaPluginConvention javaPluginConvention =
-        project.getConvention().findPlugin(JavaPluginConvention.class);
-    if (javaPluginConvention != null) {
-      version = javaPluginConvention.getTargetCompatibility();
+    JavaPluginExtension javaPluginExtension =
+        project.getExtensions().findByType(JavaPluginExtension.class);
+    if (javaPluginExtension != null) {
+      version = javaPluginExtension.getTargetCompatibility();
     }
     return Integer.valueOf(version.getMajorVersion());
   }
@@ -544,8 +545,8 @@ public class GradleProjectProperties implements ProjectProperties {
   }
 
   private SourceSet getMainSourceSet() {
-    JavaPluginConvention javaPluginConvention =
-        project.getConvention().getPlugin(JavaPluginConvention.class);
-    return javaPluginConvention.getSourceSets().getByName(MAIN_SOURCE_SET_NAME);
+    SourceSetContainer sourceSetContainer =
+        project.getExtensions().getByType(SourceSetContainer.class);
+    return sourceSetContainer.getByName(MAIN_SOURCE_SET_NAME);
   }
 }

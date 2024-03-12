@@ -432,7 +432,7 @@ public class WarTest {
                     new War(), ArrayUtils.addAll(authArgs, "--target=ignored", "my-app.war")));
     assertThat(meae)
         .hasMessageThat()
-        .containsMatch("^Error: (--(from-|to-)?credential-helper|\\[--username)");
+        .containsMatch("^Error: (\\[)*(--(from-|to-)?credential-helper|\\[--(username|password))");
   }
 
   @Test

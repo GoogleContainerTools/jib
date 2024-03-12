@@ -30,7 +30,7 @@ Some options:
 * Prevent Jib from accessing Docker Hub (after Jib cached a base image locally).
    - Pin to a specific base image using a SHA digest (for example, `jib.from.image='eclipse-temurin:11-jre@sha256:...'`).
    - Do offline building.
-   - Read a base from a local Docker deamon.
+   - Read a base from a local Docker daemon.
    - Set up a local registry, store a base image, and read it from the local registry.
 * Retry with increasing backoffs.
 

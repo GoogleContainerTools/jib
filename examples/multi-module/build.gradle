@@ -2,5 +2,5 @@
 plugins {
   id 'org.springframework.boot' version '2.0.3.RELEASE' apply false
   id 'io.spring.dependency-management' version '1.0.6.RELEASE' apply false
-  id 'com.google.cloud.tools.jib' version '3.3.2' apply false
+  id 'com.google.cloud.tools.jib' version '3.4.1' apply false
 }
