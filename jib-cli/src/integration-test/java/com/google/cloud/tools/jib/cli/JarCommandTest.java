@@ -20,6 +20,7 @@ import static com.google.common.truth.Truth.assertThat;
 
 import com.google.cloud.tools.jib.Command;
 import com.google.cloud.tools.jib.api.HttpRequestTester;
+import com.google.common.base.Preconditions;
 import com.google.common.io.Resources;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -58,7 +59,8 @@ public class JarCommandTest {
 
   @BeforeClass
   public static void createJars() throws IOException, URISyntaxException {
-    createJarFile("jarWithCp.jar", "HelloWorld", "dependency1.jar directory/dependency2.jar", "HelloWorld");
+    createJarFile(
+        "jarWithCp.jar", "HelloWorld", "dependency1.jar directory/dependency2.jar", "HelloWorld");
     createJarFile("noDependencyJar.jar", "HelloWorld", null, "HelloWorld");
     createJarFile("dependency1.jar", "dep/A", null, null);
     createJarFile("directory/dependency2.jar", "dep2/B", null, null);
@@ -337,19 +339,22 @@ public class JarCommandTest {
     assertThat(output).isEqualTo("Hello World");
   }
 
-  public static void createJarFile(String name, String className, String classPath, String mainClass) throws IOException, URISyntaxException {
-    Path javaFilePath = Paths.get(Resources.getResource("jarTest/standard/" + className + ".java").toURI());
+  public static void createJarFile(
+      String name, String className, String classPath, String mainClass)
+      throws IOException, URISyntaxException {
+    Path javaFilePath =
+        Paths.get(Resources.getResource("jarTest/standard/" + className + ".java").toURI());
     Path workingDir = Paths.get(Resources.getResource("jarTest/standard/").toURI());
-    System.out.println("Working dir: " + workingDir);
 
     // compile the java file
     JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
-    assertThat(compiler).isNotNull();
+    Preconditions.checkNotNull(compiler);
     StandardJavaFileManager fileManager = compiler.getStandardFileManager(null, null, null);
-    Iterable<? extends JavaFileObject> compilationUnits = fileManager.getJavaFileObjectsFromFiles(
-        Collections.singletonList(javaFilePath.toFile()));
+    Iterable<? extends JavaFileObject> compilationUnits =
+        fileManager.getJavaFileObjectsFromFiles(Collections.singletonList(javaFilePath.toFile()));
     Iterable<String> options = Arrays.asList("-source", "1.8", "-target", "1.8");
-    JavaCompiler.CompilationTask task = compiler.getTask(null, fileManager, null, options, null, compilationUnits);
+    JavaCompiler.CompilationTask task =
+        compiler.getTask(null, fileManager, null, options, null, compilationUnits);
     boolean success = task.call();
     assertThat(success).isTrue();
 
@@ -368,13 +373,12 @@ public class JarCommandTest {
     // Create JAR
     File jarFile = workingDir.resolve(name).toFile();
     jarFile.getParentFile().mkdirs();
-    FileOutputStream fileOutputStream = new FileOutputStream(jarFile);
-    JarOutputStream jarOutputStream = new JarOutputStream(fileOutputStream, manifest);
-    ZipEntry zipEntry = new ZipEntry(className + ".class");
-    jarOutputStream.putNextEntry(zipEntry);
-    jarOutputStream.write(Files.readAllBytes(workingDir.resolve(className + ".class")));
-    jarOutputStream.closeEntry();
-    jarOutputStream.close();
-    fileOutputStream.close();
+    try (FileOutputStream fileOutputStream = new FileOutputStream(jarFile);
+        JarOutputStream jarOutputStream = new JarOutputStream(fileOutputStream, manifest)) {
+      ZipEntry zipEntry = new ZipEntry(className + ".class");
+      jarOutputStream.putNextEntry(zipEntry);
+      jarOutputStream.write(Files.readAllBytes(workingDir.resolve(className + ".class")));
+      jarOutputStream.closeEntry();
+    }
   }
 }
