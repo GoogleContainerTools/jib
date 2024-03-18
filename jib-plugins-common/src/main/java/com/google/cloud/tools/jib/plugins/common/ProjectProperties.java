@@ -90,6 +90,8 @@ public interface ProjectProperties {
 
   boolean isOffline();
 
+  boolean isDisableUpdateCheck();
+
   JibContainerBuilder runPluginExtensions(
       List<? extends ExtensionConfiguration> extensionConfigs,
       JibContainerBuilder jibContainerBuilder)
