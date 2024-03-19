@@ -2,9 +2,20 @@
 All notable changes to this project will be documented in this file.
 
 ## [unreleased]
+
 ### Added
+-
+
 ### Changed
+- deps: bump org.apache.commons:commons-compress from 1.21 to 1.26.0 ([#4204](https://github.com/GoogleContainerTools/jib/pull/4204))
+
 ### Fixed
+- fix: image builds should become reproducible once again ([#4204](https://github.com/GoogleContainerTools/jib/pull/4204))
+
+## 0.26.0
+
+### Fixed
+- fix: support parsing manifest JSON containing `LayerSources:` from latest Docker. ([#4171](https://github.com/GoogleContainerTools/jib/pull/4171))
 
 ## 0.25.0
 

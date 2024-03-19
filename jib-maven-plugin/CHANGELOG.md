@@ -7,10 +7,15 @@ All notable changes to this project will be documented in this file.
 -
 
 ### Changed
--
+- deps: bump org.apache.commons:commons-compress from 1.21 to 1.26.0 ([#4204](https://github.com/GoogleContainerTools/jib/pull/4204))
 
 ### Fixed
--
+- fix: image builds should become reproducible once again ([#4204](https://github.com/GoogleContainerTools/jib/pull/4204))
+
+## 3.4.1
+
+### Fixed
+- fix: support parsing manifest JSON containing `LayerSources:` from latest Docker. ([#4171](https://github.com/GoogleContainerTools/jib/pull/4171))
 
 ## 3.4.0
 
@@ -74,7 +79,6 @@ Thanks to our community contributors @wwadge, @oliver-brm, @rquinio and @gsquare
 ### Changed
 
 - Upgraded jackson-databind to 2.13.2.2 ([#3612](https://github.com/GoogleContainerTools/jib/pull/3612)).
-
 
 ## 3.2.0
 
