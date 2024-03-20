@@ -16,6 +16,8 @@
 
 package com.google.cloud.tools.jib.maven;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -24,7 +26,10 @@ import com.google.cloud.tools.jib.api.LogEvent;
 import com.google.cloud.tools.jib.plugins.common.ProjectProperties;
 import com.google.common.util.concurrent.Futures;
 import java.util.Optional;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import org.apache.maven.monitor.logging.DefaultLog;
+import org.codehaus.plexus.logging.console.ConsoleLogger;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
@@ -59,5 +64,19 @@ public class MojoCommonTest {
                 "Please see "
                     + ProjectInfo.GITHUB_URL
                     + "/blob/master/docs/privacy.md for info on disabling this update check."));
+  }
+
+  @Test
+  public void testUpdateChecker_disabledFromProjectProperties()
+      throws ExecutionException, InterruptedException {
+    when(mockProjectProperties.isDisableUpdateCheck()).thenReturn(true);
+
+    final Future<Optional<String>> future =
+        MojoCommon.newUpdateChecker(
+            mockProjectProperties,
+            null /* not tested since project property disable it before */,
+            new DefaultLog(new ConsoleLogger()));
+    assertEquals("com.google.common.util.concurrent.ImmediateFuture", future.getClass().getName());
+    assertFalse(future.get().isPresent());
   }
 }
