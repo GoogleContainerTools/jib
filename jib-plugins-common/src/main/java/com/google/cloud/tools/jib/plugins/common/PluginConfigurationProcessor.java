@@ -530,6 +530,9 @@ public class PluginConfigurationProcessor {
     if (isKnownJava17Image(prefixRemoved) && javaVersion > 17) {
       throw new IncompatibleBaseImageJavaVersionException(17, javaVersion);
     }
+    if (isKnownJava21Image(prefixRemoved) && javaVersion > 21) {
+      throw new IncompatibleBaseImageJavaVersionException(21, javaVersion);
+    }
 
     ImageReference baseImageReference = ImageReference.parse(prefixRemoved);
     if (baseImageConfig.startsWith(Jib.DOCKER_DAEMON_IMAGE_PREFIX)) {
@@ -772,8 +775,10 @@ public class PluginConfigurationProcessor {
       return "eclipse-temurin:11-jre";
     } else if (javaVersion <= 17) {
       return "eclipse-temurin:17-jre";
+    } else if (javaVersion <= 21) {
+      return "eclipse-temurin:21-jre";
     }
-    throw new IncompatibleBaseImageJavaVersionException(17, javaVersion);
+    throw new IncompatibleBaseImageJavaVersionException(21, javaVersion);
   }
 
   /**
@@ -1096,5 +1101,15 @@ public class PluginConfigurationProcessor {
    */
   private static boolean isKnownJava17Image(String imageReference) {
     return imageReference.startsWith("eclipse-temurin:17");
+  }
+
+  /**
+   * Checks if the given image is a known Java 21 image. May return false negative.
+   *
+   * @param imageReference the image reference
+   * @return {@code true} if the image is a known Java 21 image
+   */
+  private static boolean isKnownJava21Image(String imageReference) {
+    return imageReference.startsWith("eclipse-temurin:21");
   }
 }
