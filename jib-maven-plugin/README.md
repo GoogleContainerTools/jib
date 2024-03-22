@@ -48,7 +48,7 @@ For information about the project, see the [Jib project README](../README.md).
 You can containerize your application easily with one command:
 
 ```shell
-mvn compile com.google.cloud.tools:jib-maven-plugin:3.4.0:build -Dimage=<MY IMAGE>
+mvn compile com.google.cloud.tools:jib-maven-plugin:3.4.1:build -Dimage=<MY IMAGE>
 ```
 
 This builds and pushes a container image for your application to a container registry. *If you encounter authentication issues, see [Authentication Methods](#authentication-methods).*
@@ -56,7 +56,7 @@ This builds and pushes a container image for your application to a container reg
 To build to a Docker daemon, use:
 
 ```shell
-mvn compile com.google.cloud.tools:jib-maven-plugin:3.4.0:dockerBuild
+mvn compile com.google.cloud.tools:jib-maven-plugin:3.4.1:dockerBuild
 ```
 
 If you would like to set up Jib as part of your Maven build, follow the guide below.
@@ -74,7 +74,7 @@ In your Maven Java project, add the plugin to your `pom.xml`:
       <plugin>
         <groupId>com.google.cloud.tools</groupId>
         <artifactId>jib-maven-plugin</artifactId>
-        <version>3.4.0</version>
+        <version>3.4.1</version>
         <configuration>
           <to>
             <image>myimage</image>
@@ -261,7 +261,7 @@ Field | Type | Default | Description
 
 Property | Type | Default | Description
 --- | --- | --- | ---
-`image` | string | `eclipse-temurin:{8,11,17}-jre` (or `jetty` for WAR) | The image reference for the base image. The source type can be specified using a [special type prefix](#setting-the-base-image).
+`image` | string | `eclipse-temurin:{8,11,17,21}-jre` (or `jetty` for WAR) | The image reference for the base image. The source type can be specified using a [special type prefix](#setting-the-base-image).
 `auth` | [`auth`](#auth-object) | *None* | Specifies credentials directly (alternative to `credHelper`).
 `credHelper` | string | *None* | Specifies a credential helper that can authenticate pulling the base image. This parameter can either be configured as an absolute path to the credential helper executable or as a credential helper suffix (following `docker-credential-`).
 `platforms` | list | See [`platform`](#platform-object) | Configures platforms of base images to select from a manifest list.

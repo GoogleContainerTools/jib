@@ -20,18 +20,32 @@ import static com.google.common.truth.Truth.assertThat;
 
 import com.google.cloud.tools.jib.Command;
 import com.google.cloud.tools.jib.api.HttpRequestTester;
+import com.google.common.base.Preconditions;
 import com.google.common.io.Resources;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.jar.Attributes;
 import java.util.jar.JarFile;
+import java.util.jar.JarOutputStream;
+import java.util.jar.Manifest;
+import java.util.zip.ZipEntry;
 import javax.annotation.Nullable;
+import javax.tools.JavaCompiler;
+import javax.tools.JavaFileObject;
+import javax.tools.StandardJavaFileManager;
+import javax.tools.ToolProvider;
 import org.junit.After;
+import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
 import picocli.CommandLine;
@@ -42,6 +56,15 @@ public class JarCommandTest {
   public static final TestProject springBootProject = new TestProject("jarTest/spring-boot");
 
   @Nullable private String containerName;
+
+  @BeforeClass
+  public static void createJars() throws IOException, URISyntaxException {
+    createJarFile(
+        "jarWithCp.jar", "HelloWorld", "dependency1.jar directory/dependency2.jar", "HelloWorld");
+    createJarFile("noDependencyJar.jar", "HelloWorld", null, "HelloWorld");
+    createJarFile("dependency1.jar", "dep/A", null, null);
+    createJarFile("directory/dependency2.jar", "dep2/B", null, null);
+  }
 
   @After
   public void tearDown() throws IOException, InterruptedException {
@@ -314,5 +337,48 @@ public class JarCommandTest {
     assertThat(exitCode).isEqualTo(0);
     String output = new Command("docker", "run", "--rm", "cli-gcr-base").run();
     assertThat(output).isEqualTo("Hello World");
+  }
+
+  public static void createJarFile(
+      String name, String className, String classPath, String mainClass)
+      throws IOException, URISyntaxException {
+    Path javaFilePath =
+        Paths.get(Resources.getResource("jarTest/standard/" + className + ".java").toURI());
+    Path workingDir = Paths.get(Resources.getResource("jarTest/standard/").toURI());
+
+    // compile the java file
+    JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
+    Preconditions.checkNotNull(compiler);
+    StandardJavaFileManager fileManager = compiler.getStandardFileManager(null, null, null);
+    Iterable<? extends JavaFileObject> compilationUnits =
+        fileManager.getJavaFileObjectsFromFiles(Collections.singletonList(javaFilePath.toFile()));
+    Iterable<String> options = Arrays.asList("-source", "1.8", "-target", "1.8");
+    JavaCompiler.CompilationTask task =
+        compiler.getTask(null, fileManager, null, options, null, compilationUnits);
+    boolean success = task.call();
+    assertThat(success).isTrue();
+
+    // Create a manifest file
+    Manifest manifest = new Manifest();
+    Attributes attributes = new Attributes();
+    attributes.putValue("Manifest-Version", "1.0");
+    if (classPath != null) {
+      attributes.putValue("Class-Path", classPath);
+    }
+    if (mainClass != null) {
+      attributes.putValue("Main-Class", mainClass);
+    }
+    manifest.getMainAttributes().putAll(attributes);
+
+    // Create JAR
+    File jarFile = workingDir.resolve(name).toFile();
+    jarFile.getParentFile().mkdirs();
+    try (FileOutputStream fileOutputStream = new FileOutputStream(jarFile);
+        JarOutputStream jarOutputStream = new JarOutputStream(fileOutputStream, manifest)) {
+      ZipEntry zipEntry = new ZipEntry(className + ".class");
+      jarOutputStream.putNextEntry(zipEntry);
+      jarOutputStream.write(Files.readAllBytes(workingDir.resolve(className + ".class")));
+      jarOutputStream.closeEntry();
+    }
   }
 }
