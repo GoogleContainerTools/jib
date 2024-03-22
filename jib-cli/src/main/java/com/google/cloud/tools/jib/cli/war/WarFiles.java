@@ -51,7 +51,7 @@ public class WarFiles {
       CommonContainerConfigCliOptions commonContainerConfigCliOptions,
       ConsoleLogger logger)
       throws IOException, InvalidImageReferenceException {
-    String baseImage = commonContainerConfigCliOptions.getFrom().orElse("jetty");
+    String baseImage = fetchBaseImage(commonContainerConfigCliOptions);
     JibContainerBuilder containerBuilder =
         ContainerBuilders.create(baseImage, Collections.emptySet(), commonCliOptions, logger);
     List<String> programArguments = commonContainerConfigCliOptions.getProgramArguments();
@@ -77,12 +77,24 @@ public class WarFiles {
       CommonContainerConfigCliOptions commonContainerConfigCliOptions)
       throws InvalidImageReferenceException {
     List<String> entrypoint = commonContainerConfigCliOptions.getEntrypoint();
+    String baseImage = fetchBaseImage(commonContainerConfigCliOptions);
     if (!entrypoint.isEmpty()) {
       return entrypoint;
     }
     if (commonContainerConfigCliOptions.isJettyBaseimage()) {
+      // If using jetty 12 or later, then specify deploy module. See
+      // https://eclipse.dev/jetty/documentation/jetty-12/operations-guide/index.html
+      if (baseImage.equals("jetty")) {
+        return ImmutableList.of(
+            "java", "-jar", "/usr/local/jetty/start.jar", "--module=ee10-deploy");
+      }
       return ImmutableList.of("java", "-jar", "/usr/local/jetty/start.jar");
     }
     return null;
+  }
+
+  private static String fetchBaseImage(
+      CommonContainerConfigCliOptions commonContainerConfigCliOptions) {
+    return commonContainerConfigCliOptions.getFrom().orElse("jetty");
   }
 }

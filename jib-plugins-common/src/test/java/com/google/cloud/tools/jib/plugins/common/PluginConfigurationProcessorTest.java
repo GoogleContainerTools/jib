@@ -474,7 +474,7 @@ public class PluginConfigurationProcessorTest {
     ContainerBuildPlan buildPlan = processCommonConfiguration();
 
     assertThat(buildPlan.getEntrypoint())
-        .containsExactly("java", "-jar", "/usr/local/jetty/start.jar")
+        .containsExactly("java", "-jar", "/usr/local/jetty/start.jar", "--module=ee10-deploy")
         .inOrder();
     verifyNoInteractions(logger);
   }
@@ -704,7 +704,7 @@ public class PluginConfigurationProcessorTest {
     ContainerBuildPlan buildPlan = processCommonConfiguration();
 
     assertThat(buildPlan.getEntrypoint())
-        .containsExactly("java", "-jar", "/usr/local/jetty/start.jar")
+        .containsExactly("java", "-jar", "/usr/local/jetty/start.jar", "--module=ee10-deploy")
         .inOrder();
     verify(projectProperties)
         .log(
@@ -726,7 +726,7 @@ public class PluginConfigurationProcessorTest {
     ContainerBuildPlan buildPlan = processCommonConfiguration();
 
     assertThat(buildPlan.getEntrypoint())
-        .containsExactly("java", "-jar", "/usr/local/jetty/start.jar")
+        .containsExactly("java", "-jar", "/usr/local/jetty/start.jar", "--module=ee10-deploy")
         .inOrder();
     verify(projectProperties)
         .log(
