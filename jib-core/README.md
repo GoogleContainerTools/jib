@@ -30,7 +30,7 @@ Add Jib Core as a dependency using Gradle:
 
 ```groovy
 dependencies {
-  compile 'com.google.cloud.tools:jib-core:0.25.0'
+  implementation("com.google.cloud.tools:jib-core:0.25.0")
 }
 ```
 
