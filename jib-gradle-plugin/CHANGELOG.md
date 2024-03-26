@@ -11,7 +11,7 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 - fix: image builds should become reproducible once again ([#4204](https://github.com/GoogleContainerTools/jib/pull/4204))
-
+- fix: (WAR Containerization) modify default entrypoint to `java -jar /usr/local/jetty/start.jar --module=ee10-deploy` for Jetty 12+ compatibility ([#4216](https://github.com/GoogleContainerTools/jib/pull/4216))
 
 ## 3.4.1
 
