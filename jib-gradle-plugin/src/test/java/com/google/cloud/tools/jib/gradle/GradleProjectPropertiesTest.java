@@ -33,6 +33,7 @@ import com.google.cloud.tools.jib.api.buildplan.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.api.buildplan.FileEntriesLayer;
 import com.google.cloud.tools.jib.api.buildplan.FileEntry;
 import com.google.cloud.tools.jib.api.buildplan.FilePermissions;
+import com.google.cloud.tools.jib.api.buildplan.LayerObject;
 import com.google.cloud.tools.jib.configuration.BuildContext;
 import com.google.cloud.tools.jib.filesystem.DirectoryWalker;
 import com.google.cloud.tools.jib.filesystem.TempDirectoryProvider;
@@ -105,15 +106,21 @@ public class GradleProjectPropertiesTest {
     private final FileEntriesLayer snapshotsLayer;
 
     private ContainerBuilderLayers(BuildContext buildContext) {
-      resourcesLayer = getLayerByName(buildContext, LayerType.RESOURCES.getName());
-      classesLayer = getLayerByName(buildContext, LayerType.CLASSES.getName());
-      dependenciesLayer = getLayerByName(buildContext, LayerType.DEPENDENCIES.getName());
-      snapshotsLayer = getLayerByName(buildContext, LayerType.SNAPSHOT_DEPENDENCIES.getName());
+      resourcesLayer = getFileEntriesLayerByName(buildContext, LayerType.RESOURCES.getName());
+      classesLayer = getFileEntriesLayerByName(buildContext, LayerType.CLASSES.getName());
+      dependenciesLayer = getFileEntriesLayerByName(buildContext, LayerType.DEPENDENCIES.getName());
+      snapshotsLayer =
+          getFileEntriesLayerByName(buildContext, LayerType.SNAPSHOT_DEPENDENCIES.getName());
     }
 
-    private static FileEntriesLayer getLayerByName(BuildContext buildContext, String name) {
-      List<FileEntriesLayer> layers = buildContext.getLayerConfigurations();
-      return layers.stream().filter(layer -> layer.getName().equals(name)).findFirst().get();
+    private static FileEntriesLayer getFileEntriesLayerByName(
+        BuildContext buildContext, String name) {
+      List<LayerObject> layers = buildContext.getLayerConfigurations();
+      return ((FileEntriesLayer)
+          layers.stream()
+              .filter(layer -> layer.getName().equals(name) && layer instanceof FileEntriesLayer)
+              .findFirst()
+              .get());
     }
   }
 
