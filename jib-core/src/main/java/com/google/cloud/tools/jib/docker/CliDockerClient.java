@@ -99,8 +99,10 @@ public class CliDockerClient implements DockerClient {
     }
   }
 
-  /** Default path to the docker executable. */
-  public static final Path DEFAULT_DOCKER_CLIENT = Paths.get("docker");
+  /** Default paths to the docker or alternatives executables. */
+  public static final List<Path> DEFAULT_DOCKER_CLIENT = Arrays.asList(
+          Paths.get("docker"), Paths.get("podman")
+  );
 
   /**
    * Checks if Docker is installed on the user's system by running the `docker` command.
@@ -108,12 +110,30 @@ public class CliDockerClient implements DockerClient {
    * @return {@code true} if Docker is installed on the user's system and accessible
    */
   public static boolean isDefaultDockerInstalled() {
-    try {
-      new ProcessBuilder(DEFAULT_DOCKER_CLIENT.toString()).start();
-      return true;
-    } catch (IOException ex) {
-      return false;
+    for (Path dockerClient: DEFAULT_DOCKER_CLIENT) {
+      try {
+        new ProcessBuilder(dockerClient.toString()).start();
+        return true;
+      } catch (IOException ignore) {
+        // wait for all docker clients fails
+      }
     }
+    return false;
+  }
+
+  /**
+   * Get existing Docker (or alternative) executable file.
+   *
+   * @return {@code Path} to Docker or alternative executable file. If both exists returns Docker.
+   * If none - returns first one.
+   */
+  public static Path getExistingDefaultDocker() {
+    for (Path dockerClient : DEFAULT_DOCKER_CLIENT) {
+      if (isDockerInstalled(dockerClient)) {
+        return dockerClient;
+      }
+    }
+    return DEFAULT_DOCKER_CLIENT.get(0);
   }
 
   /**
