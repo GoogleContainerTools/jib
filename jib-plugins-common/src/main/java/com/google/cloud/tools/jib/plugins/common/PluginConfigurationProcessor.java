@@ -530,6 +530,9 @@ public class PluginConfigurationProcessor {
     if (isKnownJava17Image(prefixRemoved) && javaVersion > 17) {
       throw new IncompatibleBaseImageJavaVersionException(17, javaVersion);
     }
+    if (isKnownJava21Image(prefixRemoved) && javaVersion > 21) {
+      throw new IncompatibleBaseImageJavaVersionException(21, javaVersion);
+    }
 
     ImageReference baseImageReference = ImageReference.parse(prefixRemoved);
     if (baseImageConfig.startsWith(Jib.DOCKER_DAEMON_IMAGE_PREFIX)) {
@@ -566,7 +569,8 @@ public class PluginConfigurationProcessor {
    *   <li>null (inheriting from the base image), if the user specified value is {@code INHERIT}
    *   <li>the user specified one, if set
    *   <li>for a WAR project, null (inheriting) if a custom base image is specified, and {@code
-   *       ["java", "-jar", "/usr/local/jetty/start.jar"]} otherwise (default Jetty base image)
+   *       ["java", "-jar", "/usr/local/jetty/start.jar", "--module=ee10-deploy"]} otherwise
+   *       (default Jetty base image)
    *   <li>for a non-WAR project, by resolving the main class
    * </ol>
    *
@@ -619,7 +623,7 @@ public class PluginConfigurationProcessor {
       }
       return rawConfiguration.getFromImage().isPresent()
           ? null // Inherit if a custom base image.
-          : Arrays.asList("java", "-jar", "/usr/local/jetty/start.jar");
+          : Arrays.asList("java", "-jar", "/usr/local/jetty/start.jar", "--module=ee10-deploy");
     }
 
     List<String> classpath = new ArrayList<>(rawExtraClasspath);
@@ -772,8 +776,10 @@ public class PluginConfigurationProcessor {
       return "eclipse-temurin:11-jre";
     } else if (javaVersion <= 17) {
       return "eclipse-temurin:17-jre";
+    } else if (javaVersion <= 21) {
+      return "eclipse-temurin:21-jre";
     }
-    throw new IncompatibleBaseImageJavaVersionException(17, javaVersion);
+    throw new IncompatibleBaseImageJavaVersionException(21, javaVersion);
   }
 
   /**
@@ -1096,5 +1102,15 @@ public class PluginConfigurationProcessor {
    */
   private static boolean isKnownJava17Image(String imageReference) {
     return imageReference.startsWith("eclipse-temurin:17");
+  }
+
+  /**
+   * Checks if the given image is a known Java 21 image. May return false negative.
+   *
+   * @param imageReference the image reference
+   * @return {@code true} if the image is a known Java 21 image
+   */
+  private static boolean isKnownJava21Image(String imageReference) {
+    return imageReference.startsWith("eclipse-temurin:21");
   }
 }

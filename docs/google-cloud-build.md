@@ -13,7 +13,7 @@ Any Java container can be used for building, not only the `gcr.io/cloud-builders
 
 ```yaml
 steps:
-  - name: 'docker.io/library/eclipse-temurin:17'
+  - name: 'docker.io/library/eclipse-temurin:21'
     entrypoint: './gradlew'
     args: ['--console=plain', '--no-daemon', ':server:jib', '-Djib.to.image=gcr.io/$PROJECT_ID/$REPO_NAME:$COMMIT_SHA']
 ```
