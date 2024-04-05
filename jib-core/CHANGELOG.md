@@ -4,13 +4,18 @@ All notable changes to this project will be documented in this file.
 ## [unreleased]
 
 ### Added
--
+
+### Changed
+
+### Fixed
+
+## 0.27.0
 
 ### Changed
 - deps: bump org.apache.commons:commons-compress from 1.21 to 1.26.0 ([#4204](https://github.com/GoogleContainerTools/jib/pull/4204))
 
 ### Fixed
-- fix: image builds should become reproducible once again ([#4204](https://github.com/GoogleContainerTools/jib/pull/4204))
+- fix: set PAX headers to address build reproducibility issue ([#4204](https://github.com/GoogleContainerTools/jib/pull/4204))
 
 ## 0.26.0
 
