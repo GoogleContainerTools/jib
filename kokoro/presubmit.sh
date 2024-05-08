@@ -26,8 +26,8 @@ docker kill $(docker ps --all --quiet | grep -v "$CONTAINER_ID") || true
 cd github/jib
 
 # we only run integration tests on jib-core for presubmit
-./gradlew clean build :jib-core:integrationTest --info --stacktrace
+#./gradlew clean build :jib-core:integrationTest --info --stacktrace
 
 ./gradlew wrapper --gradle-version 8.3
 ./gradlew -v
-./gradlew clean build :jib-core:integrationTest --info --stacktrace
+./gradlew clean build -Dgradle8=true :jib-core:integrationTest --info --stacktrace
