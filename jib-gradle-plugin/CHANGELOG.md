@@ -3,14 +3,25 @@ All notable changes to this project will be documented in this file.
 
 ## [unreleased]
 
-### Added
-- 
+### Added 
 
 ### Changed
--
 
 ### Fixed
--
+
+## 3.4.2
+
+### Changed
+- deps: bump org.apache.commons:commons-compress from 1.21 to 1.26.0 ([#4204](https://github.com/GoogleContainerTools/jib/pull/4204))
+
+### Fixed
+- fix: set PAX headers to address build reproducibility issue ([#4204](https://github.com/GoogleContainerTools/jib/pull/4204))
+- fix: (WAR Containerization) modify default entrypoint to `java -jar /usr/local/jetty/start.jar --module=ee10-deploy` for Jetty 12+ compatibility ([#4216](https://github.com/GoogleContainerTools/jib/pull/4216))
+
+## 3.4.1
+
+### Fixed
+- fix: support parsing manifest JSON containing `LayerSources:` from latest Docker. ([#4171](https://github.com/GoogleContainerTools/jib/pull/4171))
 
 ## 3.4.0
 
@@ -92,7 +103,6 @@ Thanks to our community contributors @wwadge, @oliver-brm, @rquinio and @gsquare
 ### Fixed
 
 - Fixed setting image format in Kotlin ([#3593](https://github.com/GoogleContainerTools/jib/pull/3593)).
-
 
 ## 3.2.0
 
