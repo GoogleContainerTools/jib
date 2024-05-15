@@ -69,4 +69,6 @@ public interface DockerClient {
    * @throws InterruptedException if the {@code docker inspect} process was interrupted
    */
   ImageDetails inspect(ImageReference imageReference) throws IOException, InterruptedException;
+
+  DockerInfoDetails info() throws IOException, InterruptedException;
 }

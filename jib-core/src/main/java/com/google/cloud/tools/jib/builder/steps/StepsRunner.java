@@ -18,6 +18,7 @@ package com.google.cloud.tools.jib.builder.steps;
 
 import com.google.cloud.tools.jib.api.DescriptorDigest;
 import com.google.cloud.tools.jib.api.DockerClient;
+import com.google.cloud.tools.jib.api.DockerInfoDetails;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.builder.ProgressEventDispatcher;
 import com.google.cloud.tools.jib.builder.steps.LocalBaseImageSteps.LocalImage;
@@ -38,11 +39,13 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
+import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -52,6 +55,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.function.Consumer;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
@@ -63,6 +67,8 @@ import javax.annotation.Nullable;
  * on the last step by calling the respective {@code wait...} methods.
  */
 public class StepsRunner {
+
+  Logger logger = Logger.getLogger(StepResults.class.getName());
 
   /** Holds the individual step results. */
   private static class StepResults {
@@ -427,6 +433,7 @@ public class StepsRunner {
                   Image baseImage = entry.getKey();
                   List<Future<PreparedLayer>> baseLayers = entry.getValue();
 
+                  // Image is immutable once built.
                   Future<Image> builtImage =
                       buildImage(baseImage, baseLayers, progressDispatcher.newChildProducer());
                   baseImagesAndBuiltImages.put(baseImage, builtImage);
@@ -616,11 +623,7 @@ public class StepsRunner {
     results.buildResult =
         executorService.submit(
             () -> {
-              Verify.verify(
-                  results.baseImagesAndBuiltImages.get().size() == 1,
-                  "multi-platform image building not supported when pushing to Docker engine");
-              Image builtImage =
-                  results.baseImagesAndBuiltImages.get().values().iterator().next().get();
+              Image builtImage = fetchBaseImageForLocalBuild(dockerClient);
               return new LoadDockerStep(
                       buildContext, progressDispatcherFactory, dockerClient, builtImage)
                   .call();
@@ -646,5 +649,30 @@ public class StepsRunner {
 
   private <E> List<Future<E>> scheduleCallables(ImmutableList<? extends Callable<E>> callables) {
     return callables.stream().map(executorService::submit).collect(Collectors.toList());
+  }
+
+  private String computeArchitecture(String architecture) {
+    if (architecture.equals("x86_64")) {
+      return "amd64";
+    } else if (architecture.equals("aarch64")) {
+      return "arm64";
+    }
+    return architecture;
+  }
+
+  private Image fetchBaseImageForLocalBuild(DockerClient dockerClient)
+      throws IOException, InterruptedException, ExecutionException {
+    DockerInfoDetails dockerInfoDetails = dockerClient.info();
+    String osType = dockerInfoDetails.getOsType();
+    String dockerArchitecture = computeArchitecture(dockerInfoDetails.getArchitecture());
+    Iterator<Future<Image>> imageIterator =
+        results.baseImagesAndBuiltImages.get().values().iterator();
+    while (imageIterator.hasNext()) {
+      Image image = imageIterator.next().get();
+      if (image.getArchitecture().equals(dockerArchitecture) && image.getOs().equals(osType)) {
+        return image;
+      }
+    }
+    return results.baseImagesAndBuiltImages.get().values().iterator().next().get();
   }
 }

@@ -20,6 +20,7 @@ import com.google.cloud.tools.jib.api.DockerClient;
 import com.google.cloud.tools.jib.api.ImageDetails;
 import com.google.cloud.tools.jib.api.ImageReference;
 import com.google.cloud.tools.jib.image.ImageTarball;
+import com.google.cloud.tools.jib.json.JsonTemplate;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Map;
@@ -45,6 +46,11 @@ public class AnotherDockerClient implements DockerClient {
   @Override
   public ImageDetails inspect(ImageReference imageReference)
       throws IOException, InterruptedException {
+    return null;
+  }
+
+  @Override
+  public JsonTemplate info() throws IOException, InterruptedException {
     return null;
   }
 }
