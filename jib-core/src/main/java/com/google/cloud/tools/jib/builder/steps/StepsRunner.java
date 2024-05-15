@@ -45,7 +45,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -665,10 +664,9 @@ public class StepsRunner {
     DockerInfoDetails dockerInfoDetails = dockerClient.info();
     String osType = dockerInfoDetails.getOsType();
     String dockerArchitecture = computeArchitecture(dockerInfoDetails.getArchitecture());
-    Iterator<Future<Image>> imageIterator =
-        results.baseImagesAndBuiltImages.get().values().iterator();
-    while (imageIterator.hasNext()) {
-      Image image = imageIterator.next().get();
+    for (Map.Entry<Image, Future<Image>> imageEntry :
+        results.baseImagesAndBuiltImages.get().entrySet()) {
+      Image image = imageEntry.getValue().get();
       if (image.getArchitecture().equals(dockerArchitecture) && image.getOs().equals(osType)) {
         return image;
       }
