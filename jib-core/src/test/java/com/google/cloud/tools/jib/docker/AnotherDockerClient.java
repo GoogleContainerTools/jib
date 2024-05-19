@@ -48,9 +48,4 @@ public class AnotherDockerClient implements DockerClient {
       throws IOException, InterruptedException {
     return null;
   }
-
-  @Override
-  public JsonTemplate info() throws IOException, InterruptedException {
-    return null;
-  }
 }
