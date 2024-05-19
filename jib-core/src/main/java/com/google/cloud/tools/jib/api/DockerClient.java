@@ -78,6 +78,6 @@ public interface DockerClient {
    * @throws InterruptedException if the {@code docker info} process was interrupted
    */
   default DockerInfoDetails info() throws IOException, InterruptedException {
-    return null;
+    return new DockerInfoDetails();
   }
 }
