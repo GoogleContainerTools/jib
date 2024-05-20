@@ -74,7 +74,7 @@ public interface DockerClient {
    * Gets the os and architecture of the local docker installation.
    *
    * @return the os type and architecture of the image
-   * @throws IOException          if an I/O exception occurs or {@code docker info} failed
+   * @throws IOException if an I/O exception occurs or {@code docker info} failed
    * @throws InterruptedException if the {@code docker info} process was interrupted
    */
   default DockerInfoDetails info() throws IOException, InterruptedException {

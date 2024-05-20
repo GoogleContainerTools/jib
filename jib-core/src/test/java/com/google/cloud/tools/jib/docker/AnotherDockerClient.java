@@ -20,7 +20,6 @@ import com.google.cloud.tools.jib.api.DockerClient;
 import com.google.cloud.tools.jib.api.ImageDetails;
 import com.google.cloud.tools.jib.api.ImageReference;
 import com.google.cloud.tools.jib.image.ImageTarball;
-import com.google.cloud.tools.jib.json.JsonTemplate;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Map;
