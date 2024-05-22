@@ -353,7 +353,7 @@ public class JibIntegrationTest {
                             "busybox@sha256:4f47c01fa91355af2865ac10fef5bf6ec9c7f42ad2321377c21e844427972977"))
                     .setPlatforms(
                         ImmutableSet.of(
-                            new Platform("arm64", "linux"), new Platform("arm", "linux")))
+                            new Platform("s390x", "linux"), new Platform("arm", "linux")))
                     .setEntrypoint("echo", "Hello World")
                     .containerize(
                         Containerizer.to(
