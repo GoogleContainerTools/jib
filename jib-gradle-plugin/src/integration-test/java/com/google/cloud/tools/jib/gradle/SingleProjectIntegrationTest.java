@@ -39,6 +39,7 @@ import org.gradle.testkit.runner.BuildResult;
 import org.gradle.testkit.runner.UnexpectedBuildFailure;
 import org.hamcrest.CoreMatchers;
 import org.hamcrest.MatcherAssert;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Rule;
@@ -591,5 +592,29 @@ public class SingleProjectIntegrationTest {
             JibRunHelper.buildToDockerDaemonAndRun(
                 simpleTestProject, targetImage, "build-cred-helper.gradle"))
         .isEqualTo("Hello, world. \n1970-01-01T00:00:01Z\n");
+  }
+
+  @Test
+  public void testToDockerDaemon_multiPlatform()
+      throws DigestException, IOException, InterruptedException {
+    String targetImage = "multiplatform:gradle" + System.nanoTime();
+    assertThat(
+            JibRunHelper.buildToDockerDaemonAndRun(
+                simpleTestProject, targetImage, "build-multi-platform.gradle"))
+        .isEqualTo("Hello, world. \n1970-01-01T00:00:01Z\n");
+  }
+
+  @Test
+  public void testToDockerDaemon_multiPlatform_invalid() {
+    String targetImage = "multiplatform:gradle" + System.nanoTime();
+    UnexpectedBuildFailure exception =
+        assertThrows(
+            UnexpectedBuildFailure.class,
+            () ->
+                JibRunHelper.buildToDockerDaemonAndRun(
+                    simpleTestProject, targetImage, "build-multi-platform-invalid.gradle"));
+    assertThat(exception)
+        .hasMessageThat()
+        .contains("The configured platforms don't match the Docker Engine's OS and architecture");
   }
 }

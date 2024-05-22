@@ -39,7 +39,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
-import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -67,7 +66,7 @@ import javax.annotation.Nullable;
  */
 public class StepsRunner {
 
-  Logger logger = Logger.getLogger(StepResults.class.getName());
+  private static final Logger LOGGER = Logger.getLogger(StepsRunner.class.getName());
 
   /** Holds the individual step results. */
   private static class StepResults {
@@ -622,9 +621,17 @@ public class StepsRunner {
     results.buildResult =
         executorService.submit(
             () -> {
-              Image builtImage = fetchBaseImageForLocalBuild(dockerClient);
+              DockerInfoDetails dockerInfoDetails = dockerClient.info();
+              String osType = dockerInfoDetails.getOsType();
+              String architecture = computeArchitecture(dockerInfoDetails.getArchitecture());
+              Optional<Image> builtImage = fetchBuiltImageForLocalBuild(osType, architecture);
+              Preconditions.checkState(
+                  builtImage.isPresent(),
+                  String.format(
+                      "The configured platforms don't match the Docker Engine's OS and architecture (%s/%s)",
+                      osType, architecture));
               return new LoadDockerStep(
-                      buildContext, progressDispatcherFactory, dockerClient, builtImage)
+                      buildContext, progressDispatcherFactory, dockerClient, builtImage.get())
                   .call();
             });
   }
@@ -659,18 +666,19 @@ public class StepsRunner {
     return architecture;
   }
 
-  private Image fetchBaseImageForLocalBuild(DockerClient dockerClient)
-      throws IOException, InterruptedException, ExecutionException {
-    DockerInfoDetails dockerInfoDetails = dockerClient.info();
-    String osType = dockerInfoDetails.getOsType();
-    String dockerArchitecture = computeArchitecture(dockerInfoDetails.getArchitecture());
+  private Optional<Image> fetchBuiltImageForLocalBuild(String osType, String architecture)
+      throws InterruptedException, ExecutionException {
+    if (results.baseImagesAndBuiltImages.get().size() > 1) {
+      LOGGER.warning(
+          "Detected multi-platform configuration, only building the one that matches the local Docker Engine's os and architecture");
+    }
     for (Map.Entry<Image, Future<Image>> imageEntry :
         results.baseImagesAndBuiltImages.get().entrySet()) {
       Image image = imageEntry.getValue().get();
-      if (image.getArchitecture().equals(dockerArchitecture) && image.getOs().equals(osType)) {
-        return image;
+      if (image.getArchitecture().equals(architecture) && image.getOs().equals(osType)) {
+        return Optional.of(image);
       }
     }
-    return results.baseImagesAndBuiltImages.get().values().iterator().next().get();
+    return Optional.empty();
   }
 }
