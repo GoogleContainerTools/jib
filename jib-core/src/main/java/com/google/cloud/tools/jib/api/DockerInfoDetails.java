@@ -20,7 +20,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.cloud.tools.jib.json.JsonTemplate;
 
-/** Contains the os and architecture from {@code docker info}. */
+/** Contains docker info details outputted by {@code docker info}. */
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class DockerInfoDetails implements JsonTemplate {
 

@@ -124,6 +124,24 @@ public class CliDockerClientTest {
   }
 
   @Test
+  public void testInfo_returnsUnknownKeys() throws InterruptedException, IOException {
+    String dockerInfoJson = "{ \"unknownOS\": \"windows\"," + "\"unknownArchitecture\": \"arm64\"}";
+    DockerClient testDockerClient =
+        new CliDockerClient(
+            subcommand -> {
+              assertThat(subcommand).containsExactly("info", "-f", "{{json .}}");
+              return mockProcessBuilder;
+            });
+    Mockito.when(mockProcess.waitFor()).thenReturn(0);
+    Mockito.when(mockProcess.getInputStream())
+        .thenReturn(new ByteArrayInputStream(dockerInfoJson.getBytes()));
+
+    DockerInfoDetails infoDetails = testDockerClient.info();
+    assertThat(infoDetails.getArchitecture()).isEmpty();
+    assertThat(infoDetails.getOsType()).isEmpty();
+  }
+
+  @Test
   public void testLoad() throws IOException, InterruptedException {
     DockerClient testDockerClient =
         new CliDockerClient(
