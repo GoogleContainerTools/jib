@@ -17,7 +17,6 @@
 package com.google.cloud.tools.jib.maven;
 
 import static com.google.common.truth.Truth.assertThat;
-import static org.junit.Assert.assertThrows;
 
 import com.google.cloud.tools.jib.Command;
 import java.io.IOException;
@@ -275,30 +274,5 @@ public class BuildDockerMojoIntegrationTest {
     Assert.assertEquals(
         "Hello, world. \n1970-01-01T00:00:01Z\n",
         new Command("docker", "run", "--rm", targetImage).run());
-  }
-
-  @Test
-  public void testMultiPlatform()
-      throws DigestException, VerificationException, IOException, InterruptedException {
-    String targetImage = "multiplatformproject:maven" + System.nanoTime();
-    buildToDockerDaemon(simpleTestProject, targetImage, "pom-multiplatform-build.xml");
-    Assert.assertEquals(
-        "Hello, world. \n1970-01-01T00:00:01Z\n",
-        new Command("docker", "run", "--rm", targetImage).run());
-  }
-
-  @Test
-  public void testMultiPlatform_invalidPlatforms()
-      throws DigestException, VerificationException, IOException, InterruptedException {
-    String targetImage = "multiplatformproject:maven" + System.nanoTime();
-    VerificationException exception =
-        assertThrows(
-            VerificationException.class,
-            () ->
-                buildToDockerDaemon(
-                    simpleTestProject, targetImage, "pom-multiplatform-invalid-platforms.xml"));
-    assertThat(exception)
-        .hasMessageThat()
-        .contains("The configured platforms don't match the Docker Engine's OS and architecture");
   }
 }

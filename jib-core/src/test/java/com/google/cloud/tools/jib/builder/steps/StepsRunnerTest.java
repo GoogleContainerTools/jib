@@ -16,6 +16,9 @@
 
 package com.google.cloud.tools.jib.builder.steps;
 
+import static com.google.common.truth.Truth.assertThat;
+import static org.mockito.Mockito.when;
+
 import com.google.cloud.tools.jib.api.DescriptorDigest;
 import com.google.cloud.tools.jib.builder.ProgressEventDispatcher;
 import com.google.cloud.tools.jib.builder.steps.PullBaseImageStep.ImagesAndRegistryClient;
@@ -26,6 +29,7 @@ import com.google.cloud.tools.jib.image.Image;
 import com.google.cloud.tools.jib.image.json.ManifestTemplate;
 import com.google.cloud.tools.jib.registry.ManifestAndDigest;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.ForwardingExecutorService;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -90,14 +94,14 @@ public class StepsRunnerTest {
   public void setup() {
     stepsRunner = new StepsRunner(new MockListeningExecutorService(), buildContext);
 
-    Mockito.when(progressDispatcherFactory.create(Mockito.anyString(), Mockito.anyLong()))
+    when(progressDispatcherFactory.create(Mockito.anyString(), Mockito.anyLong()))
         .thenReturn(progressDispatcher);
   }
 
   @Test
   public void testObtainBaseImageLayers_skipObtainingDuplicateLayers()
       throws DigestException, InterruptedException, ExecutionException {
-    Mockito.when(executorService.submit(Mockito.any(PullBaseImageStep.class)))
+    when(executorService.submit(Mockito.any(PullBaseImageStep.class)))
         .thenReturn(Futures.immediateFuture(new ImagesAndRegistryClient(null, null)));
     // Pretend that a thread pulling base images returned some (meaningless) result.
     stepsRunner.pullBaseImages(progressDispatcherFactory);
@@ -118,7 +122,7 @@ public class StepsRunnerTest {
     PreparedLayer preparedLayer1 = Mockito.mock(PreparedLayer.class);
     PreparedLayer preparedLayer2 = Mockito.mock(PreparedLayer.class);
     PreparedLayer preparedLayer3 = Mockito.mock(PreparedLayer.class);
-    Mockito.when(executorService.submit(Mockito.any(ObtainBaseImageLayerStep.class)))
+    when(executorService.submit(Mockito.any(ObtainBaseImageLayerStep.class)))
         .thenReturn(Futures.immediateFuture(preparedLayer1))
         .thenReturn(Futures.immediateFuture(preparedLayer2))
         .thenReturn(Futures.immediateFuture(preparedLayer3));
@@ -127,7 +131,7 @@ public class StepsRunnerTest {
 
     // 1. Should schedule two threads to obtain new layers.
     Image image = Mockito.mock(Image.class);
-    Mockito.when(image.getLayers()).thenReturn(ImmutableList.of(layer1, layer2));
+    when(image.getLayers()).thenReturn(ImmutableList.of(layer1, layer2));
 
     stepsRunner.obtainBaseImageLayers(image, true, preparedLayersCache, progressDispatcherFactory);
     Assert.assertEquals(2, preparedLayersCache.size()); // two new layers cached
@@ -141,7 +145,7 @@ public class StepsRunnerTest {
     Assert.assertEquals(preparedLayer2, preparedLayersCache.get(digest2).get());
 
     // 3. Another image with one duplicate layer.
-    Mockito.when(image.getLayers()).thenReturn(ImmutableList.of(layer3, layer2));
+    when(image.getLayers()).thenReturn(ImmutableList.of(layer3, layer2));
     stepsRunner.obtainBaseImageLayers(image, true, preparedLayersCache, progressDispatcherFactory);
     Assert.assertEquals(3, preparedLayersCache.size()); // one new layer cached
     Assert.assertEquals(preparedLayer1, preparedLayersCache.get(digest1).get());
@@ -156,7 +160,7 @@ public class StepsRunnerTest {
   @Test
   public void testIsImagePushed_skipExistingEnabledAndManifestPresent() {
     Optional<ManifestAndDigest<ManifestTemplate>> manifestResult = Mockito.mock(Optional.class);
-    Mockito.when(manifestResult.isPresent()).thenReturn(true);
+    when(manifestResult.isPresent()).thenReturn(true);
     System.setProperty(JibSystemProperties.SKIP_EXISTING_IMAGES, "true");
 
     Assert.assertFalse(stepsRunner.isImagePushed(manifestResult));
@@ -174,8 +178,121 @@ public class StepsRunnerTest {
   public void testIsImagePushed_skipExistingImageEnabledAndManifestNotPresent() {
     Optional<ManifestAndDigest<ManifestTemplate>> manifestResult = Mockito.mock(Optional.class);
     System.setProperty(JibSystemProperties.SKIP_EXISTING_IMAGES, "true");
-    Mockito.when(manifestResult.isPresent()).thenReturn(false);
+    when(manifestResult.isPresent()).thenReturn(false);
 
     Assert.assertTrue(stepsRunner.isImagePushed(manifestResult));
+  }
+
+  @Test
+  public void testFetchBuildImageForLocalBuild_matchingOsAndArch()
+      throws ExecutionException, InterruptedException {
+    Image mockImage1 = Mockito.mock(Image.class);
+    Image mockImage2 = Mockito.mock(Image.class);
+    Image baseImage1 = Mockito.mock(Image.class);
+    Image baseImage2 = Mockito.mock(Image.class);
+    when(mockImage1.getArchitecture()).thenReturn("arch1");
+    when(mockImage1.getOs()).thenReturn("os1");
+    when(mockImage1.getArchitecture()).thenReturn("arch2");
+    when(mockImage1.getOs()).thenReturn("os2");
+
+    when(executorService.submit(Mockito.any(Callable.class)))
+        .thenReturn(
+            Futures.immediateFuture(
+                ImmutableMap.of(
+                    baseImage1,
+                    Futures.immediateFuture(mockImage1),
+                    baseImage2,
+                    Futures.immediateFuture(mockImage2))));
+    stepsRunner.buildImages(progressDispatcherFactory);
+    Optional<Image> expectedImage = stepsRunner.fetchBuiltImageForLocalBuild("os2", "arch2");
+
+    assertThat(expectedImage.get().getOs()).isEqualTo("os2");
+    assertThat(expectedImage.get().getArchitecture()).isEqualTo("arch2");
+  }
+
+  @Test
+  public void testFetchBuildImageForLocalBuild_differentOsAndArch()
+      throws ExecutionException, InterruptedException {
+    Image builtImage1 = Mockito.mock(Image.class);
+    Image builtImage2 = Mockito.mock(Image.class);
+    Image baseImage1 = Mockito.mock(Image.class);
+    Image baseImage2 = Mockito.mock(Image.class);
+    when(builtImage1.getArchitecture()).thenReturn("os1");
+    when(builtImage1.getOs()).thenReturn("arch1");
+    when(builtImage2.getArchitecture()).thenReturn("os2");
+    when(builtImage2.getOs()).thenReturn("arch2");
+    when(executorService.submit(Mockito.any(Callable.class)))
+        .thenReturn(
+            Futures.immediateFuture(
+                ImmutableMap.of(
+                    baseImage1,
+                    Futures.immediateFuture(builtImage1),
+                    baseImage2,
+                    Futures.immediateFuture(builtImage2))));
+    stepsRunner.buildImages(progressDispatcherFactory);
+    Optional<Image> expectedImage = stepsRunner.fetchBuiltImageForLocalBuild("linux", "arm64");
+
+    assertThat(expectedImage.isPresent()).isFalse();
+  }
+
+  @Test
+  public void testFetchBuildImageForLocalBuild_matchingOSDifferentArch()
+      throws ExecutionException, InterruptedException {
+    Image builtImage1 = Mockito.mock(Image.class);
+    Image builtImage2 = Mockito.mock(Image.class);
+    Image baseImage1 = Mockito.mock(Image.class);
+    Image baseImage2 = Mockito.mock(Image.class);
+    when(builtImage1.getArchitecture()).thenReturn("arch1");
+    when(builtImage1.getOs()).thenReturn("os1");
+    when(builtImage2.getArchitecture()).thenReturn("arch2");
+    when(builtImage2.getOs()).thenReturn("os1");
+    when(executorService.submit(Mockito.any(Callable.class)))
+        .thenReturn(
+            Futures.immediateFuture(
+                ImmutableMap.of(
+                    baseImage1,
+                    Futures.immediateFuture(builtImage1),
+                    baseImage2,
+                    Futures.immediateFuture(builtImage2))));
+    stepsRunner.buildImages(progressDispatcherFactory);
+    Optional<Image> expectedImage = stepsRunner.fetchBuiltImageForLocalBuild("os1", "arch3");
+
+    assertThat(expectedImage.isPresent()).isFalse();
+  }
+
+  @Test
+  public void testFetchBuildImageForLocalBuild_differentOSMatchingArch()
+      throws ExecutionException, InterruptedException {
+    Image builtImage1 = Mockito.mock(Image.class);
+    Image builtImage2 = Mockito.mock(Image.class);
+    Image baseImage1 = Mockito.mock(Image.class);
+    Image baseImage2 = Mockito.mock(Image.class);
+    when(builtImage1.getArchitecture()).thenReturn("arch1");
+    when(builtImage1.getOs()).thenReturn("os1");
+    when(builtImage2.getArchitecture()).thenReturn("arch2");
+    when(builtImage2.getOs()).thenReturn("os2");
+    when(executorService.submit(Mockito.any(Callable.class)))
+        .thenReturn(
+            Futures.immediateFuture(
+                ImmutableMap.of(
+                    baseImage1,
+                    Futures.immediateFuture(builtImage1),
+                    baseImage2,
+                    Futures.immediateFuture(builtImage2))));
+    stepsRunner.buildImages(progressDispatcherFactory);
+
+    Optional<Image> expectedImage = stepsRunner.fetchBuiltImageForLocalBuild("os3", "arch1");
+
+    assertThat(expectedImage.isPresent()).isFalse();
+  }
+
+  @Test
+  public void testComputeArchitecture_aarch64() {
+    assertThat(stepsRunner.computeArchitecture("aarch64")).isEqualTo("arm64");
+  }
+
+  @Test
+  public void testComputeArchitecture_x86_64() {
+    assertThat(stepsRunner.computeArchitecture("x86_64")).isEqualTo("amd64");
   }
 }

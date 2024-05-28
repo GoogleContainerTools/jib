@@ -41,7 +41,7 @@
         <version>${jib-maven-plugin.version}</version>
         <configuration>
           <from>
-            <image>eclipse-temurin:11</image>
+            <image>busybox@sha256:4f47c01fa91355af2865ac10fef5bf6ec9c7f42ad2321377c21e844427972977</image>
             <platforms>
               <platform>
                 <architecture>arm64</architecture>

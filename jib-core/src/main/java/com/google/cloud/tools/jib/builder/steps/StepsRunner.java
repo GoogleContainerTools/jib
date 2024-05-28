@@ -417,7 +417,8 @@ public class StepsRunner {
             BuildAndCacheApplicationLayerStep.makeList(buildContext, progressDispatcherFactory));
   }
 
-  private void buildImages(ProgressEventDispatcher.Factory progressDispatcherFactory) {
+  @VisibleForTesting
+  void buildImages(ProgressEventDispatcher.Factory progressDispatcherFactory) {
     results.baseImagesAndBuiltImages =
         executorService.submit(
             () -> {
@@ -431,7 +432,6 @@ public class StepsRunner {
                   Image baseImage = entry.getKey();
                   List<Future<PreparedLayer>> baseLayers = entry.getValue();
 
-                  // Image is immutable once built.
                   Future<Image> builtImage =
                       buildImage(baseImage, baseLayers, progressDispatcher.newChildProducer());
                   baseImagesAndBuiltImages.put(baseImage, builtImage);
@@ -657,7 +657,8 @@ public class StepsRunner {
     return callables.stream().map(executorService::submit).collect(Collectors.toList());
   }
 
-  private String computeArchitecture(String architecture) {
+  @VisibleForTesting
+  String computeArchitecture(String architecture) {
     if (architecture.equals("x86_64")) {
       return "amd64";
     } else if (architecture.equals("aarch64")) {
@@ -666,11 +667,14 @@ public class StepsRunner {
     return architecture;
   }
 
-  private Optional<Image> fetchBuiltImageForLocalBuild(String osType, String architecture)
+  @VisibleForTesting
+  Optional<Image> fetchBuiltImageForLocalBuild(String osType, String architecture)
       throws InterruptedException, ExecutionException {
     if (results.baseImagesAndBuiltImages.get().size() > 1) {
       LOGGER.warning(
-          "Detected multi-platform configuration, only building the one that matches the local Docker Engine's os and architecture");
+          String.format(
+              "Detected multi-platform configuration, only building the one that matches the local Docker Engine's os and architecture (%s/%s)",
+              osType, architecture));
     }
     for (Map.Entry<Image, Future<Image>> imageEntry :
         results.baseImagesAndBuiltImages.get().entrySet()) {
