@@ -659,6 +659,7 @@ public class StepsRunner {
 
   @VisibleForTesting
   String computeArchitecture(String architecture) {
+    // Create mapping based on https://docs.docker.com/engine/install/#supported-platforms
     if (architecture.equals("x86_64")) {
       return "amd64";
     } else if (architecture.equals("aarch64")) {

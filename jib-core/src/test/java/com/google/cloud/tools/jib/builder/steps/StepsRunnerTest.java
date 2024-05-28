@@ -236,7 +236,7 @@ public class StepsRunnerTest {
   }
 
   @Test
-  public void testFetchBuildImageForLocalBuild_matchingOSDifferentArch()
+  public void testFetchBuildImageForLocalBuild_matchingOsDifferentArch()
       throws ExecutionException, InterruptedException {
     Image builtImage1 = Mockito.mock(Image.class);
     Image builtImage2 = Mockito.mock(Image.class);
@@ -261,7 +261,7 @@ public class StepsRunnerTest {
   }
 
   @Test
-  public void testFetchBuildImageForLocalBuild_differentOSMatchingArch()
+  public void testFetchBuildImageForLocalBuild_differentOsMatchingArch()
       throws ExecutionException, InterruptedException {
     Image builtImage1 = Mockito.mock(Image.class);
     Image builtImage2 = Mockito.mock(Image.class);
@@ -294,5 +294,10 @@ public class StepsRunnerTest {
   @Test
   public void testComputeArchitecture_x86_64() {
     assertThat(stepsRunner.computeArchitecture("x86_64")).isEqualTo("amd64");
+  }
+
+  @Test
+  public void testComputeArchitecture_arm() {
+    assertThat(stepsRunner.computeArchitecture("arm")).isEqualTo("arm");
   }
 }
