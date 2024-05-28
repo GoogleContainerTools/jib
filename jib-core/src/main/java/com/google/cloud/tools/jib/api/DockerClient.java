@@ -71,9 +71,9 @@ public interface DockerClient {
   ImageDetails inspect(ImageReference imageReference) throws IOException, InterruptedException;
 
   /**
-   * Gets the os and architecture of the local docker installation.
+   * Gets docker info details of local docker installation.
    *
-   * @return the os type and architecture of the image
+   * @return docker info details.
    * @throws IOException if an I/O exception occurs or {@code docker info} failed
    * @throws InterruptedException if the {@code docker info} process was interrupted
    */
