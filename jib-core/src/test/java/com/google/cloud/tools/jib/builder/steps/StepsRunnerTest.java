@@ -87,10 +87,8 @@ public class StepsRunnerTest {
   @Mock private ProgressEventDispatcher.Factory progressDispatcherFactory;
   @Mock private ProgressEventDispatcher progressDispatcher;
   @Mock private ExecutorService executorService;
-
   @Mock private Image builtArm64AndLinuxImage;
   @Mock private Image builtAmd64AndWindowsImage;
-
   @Mock private Image baseImage1;
   @Mock private Image baseImage2;
 
