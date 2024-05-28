@@ -623,7 +623,7 @@ public class StepsRunner {
             () -> {
               DockerInfoDetails dockerInfoDetails = dockerClient.info();
               String osType = dockerInfoDetails.getOsType();
-              String architecture = computeArchitecture(dockerInfoDetails.getArchitecture());
+              String architecture = normalizeArchitecture(dockerInfoDetails.getArchitecture());
               Optional<Image> builtImage = fetchBuiltImageForLocalBuild(osType, architecture);
               Preconditions.checkState(
                   builtImage.isPresent(),
@@ -658,7 +658,7 @@ public class StepsRunner {
   }
 
   @VisibleForTesting
-  String computeArchitecture(String architecture) {
+  String normalizeArchitecture(String architecture) {
     // Create mapping based on https://docs.docker.com/engine/install/#supported-platforms
     if (architecture.equals("x86_64")) {
       return "amd64";

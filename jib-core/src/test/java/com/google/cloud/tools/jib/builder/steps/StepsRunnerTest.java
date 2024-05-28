@@ -251,17 +251,17 @@ public class StepsRunnerTest {
   }
 
   @Test
-  public void testComputeArchitecture_aarch64() {
-    assertThat(stepsRunner.computeArchitecture("aarch64")).isEqualTo("arm64");
+  public void testNormalizeArchitecture_aarch64() {
+    assertThat(stepsRunner.normalizeArchitecture("aarch64")).isEqualTo("arm64");
   }
 
   @Test
-  public void testComputeArchitecture_x86_64() {
-    assertThat(stepsRunner.computeArchitecture("x86_64")).isEqualTo("amd64");
+  public void testNormalizeArchitecture_x86_64() {
+    assertThat(stepsRunner.normalizeArchitecture("x86_64")).isEqualTo("amd64");
   }
 
   @Test
-  public void testComputeArchitecture_arm() {
-    assertThat(stepsRunner.computeArchitecture("arm")).isEqualTo("arm");
+  public void testNormalizeArchitecture_arm() {
+    assertThat(stepsRunner.normalizeArchitecture("arm")).isEqualTo("arm");
   }
 }
