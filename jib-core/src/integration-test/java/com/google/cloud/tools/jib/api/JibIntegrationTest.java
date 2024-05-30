@@ -16,6 +16,9 @@
 
 package com.google.cloud.tools.jib.api;
 
+import static com.google.common.truth.Truth.assertThat;
+import static org.junit.Assert.assertThrows;
+
 import com.google.cloud.tools.jib.Command;
 import com.google.cloud.tools.jib.api.buildplan.Platform;
 import com.google.cloud.tools.jib.blob.Blobs;
@@ -302,6 +305,65 @@ public class JibIntegrationTest {
     Assert.assertEquals("windows", platform1.getOs());
     Assert.assertEquals("amd32", platform2.getArchitecture());
     Assert.assertEquals("windows", platform2.getOs());
+  }
+
+  @Test
+  public void testBasic_jibImageToDockerDaemon()
+      throws IOException, InterruptedException, InvalidImageReferenceException, ExecutionException,
+          RegistryException, CacheDirectoryCreationException {
+    Jib.from(DockerDaemonImage.named(dockerHost + ":5000/busybox"))
+        .setEntrypoint("echo", "Hello World")
+        .containerize(
+            Containerizer.to(DockerDaemonImage.named(dockerHost + ":5000/docker-to-docker")));
+
+    String output =
+        new Command("docker", "run", "--rm", dockerHost + ":5000/docker-to-docker").run();
+    Assert.assertEquals("Hello World\n", output);
+  }
+
+  @Test
+  public void testBasicMultiPlatform_toDockerDaemon()
+      throws IOException, InterruptedException, ExecutionException, RegistryException,
+          CacheDirectoryCreationException, InvalidImageReferenceException {
+    Jib.from(
+            RegistryImage.named(
+                "busybox@sha256:4f47c01fa91355af2865ac10fef5bf6ec9c7f42ad2321377c21e844427972977"))
+        .setPlatforms(
+            ImmutableSet.of(new Platform("arm64", "linux"), new Platform("amd64", "linux")))
+        .setEntrypoint("echo", "Hello World")
+        .containerize(
+            Containerizer.to(
+                    DockerDaemonImage.named(dockerHost + ":5000/docker-daemon-multi-platform"))
+                .setAllowInsecureRegistries(true));
+
+    String output =
+        new Command("docker", "run", "--rm", dockerHost + ":5000/docker-daemon-multi-platform")
+            .run();
+    Assert.assertEquals("Hello World\n", output);
+  }
+
+  @Test
+  public void testBasicMultiPlatform_toDockerDaemon_noMatchingImage() {
+    ExecutionException exception =
+        assertThrows(
+            ExecutionException.class,
+            () ->
+                Jib.from(
+                        RegistryImage.named(
+                            "busybox@sha256:4f47c01fa91355af2865ac10fef5bf6ec9c7f42ad2321377c21e844427972977"))
+                    .setPlatforms(
+                        ImmutableSet.of(
+                            new Platform("s390x", "linux"), new Platform("arm", "linux")))
+                    .setEntrypoint("echo", "Hello World")
+                    .containerize(
+                        Containerizer.to(
+                                DockerDaemonImage.named(
+                                    dockerHost + ":5000/docker-daemon-multi-platform"))
+                            .setAllowInsecureRegistries(true)));
+    assertThat(exception)
+        .hasCauseThat()
+        .hasMessageThat()
+        .startsWith("The configured platforms don't match the Docker Engine's OS and architecture");
   }
 
   @Test

@@ -20,6 +20,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.cloud.tools.jib.api.DescriptorDigest;
 import com.google.cloud.tools.jib.api.DockerClient;
+import com.google.cloud.tools.jib.api.DockerInfoDetails;
 import com.google.cloud.tools.jib.api.ImageDetails;
 import com.google.cloud.tools.jib.api.ImageReference;
 import com.google.cloud.tools.jib.http.NotifyingOutputStream;
@@ -182,6 +183,17 @@ public class CliDockerClient implements DockerClient {
   @Override
   public boolean supported(Map<String, String> parameters) {
     return true;
+  }
+
+  @Override
+  public DockerInfoDetails info() throws IOException, InterruptedException {
+    // Runs 'docker info'.
+    Process infoProcess = docker("info", "-f", "{{json .}}");
+    if (infoProcess.waitFor() != 0) {
+      throw new IOException(
+          "'docker info' command failed with error: " + getStderrOutput(infoProcess));
+    }
+    return JsonTemplateMapper.readJson(infoProcess.getInputStream(), DockerInfoDetails.class);
   }
 
   @Override
