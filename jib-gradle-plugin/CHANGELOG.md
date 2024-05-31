@@ -9,6 +9,11 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
+## 3.4.3
+
+### Fixed
+- fix: When building to the local docker daemon with multiple platforms configured, Jib will now automatically select the image that matches the OS type and architecture of the local Docker environment. ([#4249](https://github.com/GoogleContainerTools/jib/pull/4249))
+
 ## 3.4.2
 
 ### Changed

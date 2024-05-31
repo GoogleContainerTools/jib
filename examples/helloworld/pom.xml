@@ -9,7 +9,7 @@
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <jib-maven-plugin.version>3.4.2</jib-maven-plugin.version>
+    <jib-maven-plugin.version>3.4.3</jib-maven-plugin.version>
     <maven-compiler-plugin.version>3.8.0</maven-compiler-plugin.version>
   </properties>
 
@@ -39,9 +39,30 @@
         <artifactId>jib-maven-plugin</artifactId>
         <version>${jib-maven-plugin.version}</version>
         <configuration>
-          <to>
-            <image>gcr.io/REPLACE-WITH-YOUR-GCP-PROJECT/image-built-with-jib</image>
-          </to>
+            <from>
+              <image>eclipse-temurin:11</image>
+              <platforms>
+           <!--  If wrong arch/os is used, you get
+             WARNING: The requested image's platform (linux/arm64) does not match the
+             detected host platform (linux/amd64) and no specific platform was requested
+            -->
+<!--                Uncomment to see mvn compile:jibDockerBuild fail -->
+                <platform>
+                  <architecture>arm64</architecture>
+                  <os>linux</os>
+                </platform>
+                <platform>
+                  <architecture>amd64</architecture>
+                  <os>windows</os>
+                </platform>
+              </platforms>
+            </from>
+            <to>
+              <image>my-multi-platform-image</image>
+            </to>
+            <container>
+              <mainClass>example.HelloWorld</mainClass>
+            </container>
         </configuration>
         <executions>
           <execution>
