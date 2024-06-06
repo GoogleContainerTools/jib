@@ -256,8 +256,6 @@ public class StepsRunnerTest {
       throws ExecutionException, InterruptedException {
     when(builtArm64AndLinuxImage.getArchitecture()).thenReturn("arm64");
     when(builtArm64AndLinuxImage.getOs()).thenReturn("linux");
-
-    when(builtAmd64AndWindowsImage.getOs()).thenReturn("linux");
     when(executorService.submit(Mockito.any(Callable.class)))
         .thenReturn(
             Futures.immediateFuture(
