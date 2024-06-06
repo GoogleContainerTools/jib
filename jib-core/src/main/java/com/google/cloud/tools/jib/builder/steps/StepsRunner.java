@@ -624,14 +624,9 @@ public class StepsRunner {
               DockerInfoDetails dockerInfoDetails = dockerClient.info();
               String osType = dockerInfoDetails.getOsType();
               String architecture = normalizeArchitecture(dockerInfoDetails.getArchitecture());
-              Optional<Image> builtImage = fetchBuiltImageForLocalBuild(osType, architecture);
-              Preconditions.checkState(
-                  builtImage.isPresent(),
-                  String.format(
-                      "The configured platforms don't match the Docker Engine's OS and architecture (%s/%s)",
-                      osType, architecture));
+              Image builtImage = fetchBuiltImageForLocalBuild(osType, architecture);
               return new LoadDockerStep(
-                      buildContext, progressDispatcherFactory, dockerClient, builtImage.get())
+                      buildContext, progressDispatcherFactory, dockerClient, builtImage)
                   .call();
             });
   }
@@ -669,21 +664,22 @@ public class StepsRunner {
   }
 
   @VisibleForTesting
-  Optional<Image> fetchBuiltImageForLocalBuild(String osType, String architecture)
+  Image fetchBuiltImageForLocalBuild(String osType, String architecture)
       throws InterruptedException, ExecutionException {
     if (results.baseImagesAndBuiltImages.get().size() > 1) {
       LOGGER.warning(
           String.format(
-              "Detected multi-platform configuration, only building the one that matches the local Docker Engine's os and architecture (%s/%s)",
+              "Detected multi-platform configuration, only building the one that matches the local Docker Engine's os and architecture (%s/%s) or " +
+                      "the first platform specified",
               osType, architecture));
-    }
-    for (Map.Entry<Image, Future<Image>> imageEntry :
-        results.baseImagesAndBuiltImages.get().entrySet()) {
-      Image image = imageEntry.getValue().get();
-      if (image.getArchitecture().equals(architecture) && image.getOs().equals(osType)) {
-        return Optional.of(image);
+      for (Map.Entry<Image, Future<Image>> imageEntry :
+              results.baseImagesAndBuiltImages.get().entrySet()) {
+        Image image = imageEntry.getValue().get();
+        if (image.getArchitecture().equals(architecture) && image.getOs().equals(osType)) {
+          return image;
+        }
       }
     }
-    return Optional.empty();
+    return results.baseImagesAndBuiltImages.get().values().iterator().next().get();
   }
 }

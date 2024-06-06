@@ -343,13 +343,9 @@ public class JibIntegrationTest {
   }
 
   @Test
-  public void testBasicMultiPlatform_toDockerDaemon_noMatchingImage() {
-    ExecutionException exception =
-        assertThrows(
-            ExecutionException.class,
-            () ->
-                Jib.from(
-                        RegistryImage.named(
+  public void testBasicMultiPlatform_toDockerDaemon_pickFirstPlatformWhenNoMatchingImage() throws IOException, InterruptedException, InvalidImageReferenceException, CacheDirectoryCreationException, ExecutionException, RegistryException {
+    Jib.from(
+           RegistryImage.named(
                             "busybox@sha256:4f47c01fa91355af2865ac10fef5bf6ec9c7f42ad2321377c21e844427972977"))
                     .setPlatforms(
                         ImmutableSet.of(
@@ -359,11 +355,15 @@ public class JibIntegrationTest {
                         Containerizer.to(
                                 DockerDaemonImage.named(
                                     dockerHost + ":5000/docker-daemon-multi-platform"))
-                            .setAllowInsecureRegistries(true)));
-    assertThat(exception)
-        .hasCauseThat()
-        .hasMessageThat()
-        .startsWith("The configured platforms don't match the Docker Engine's OS and architecture");
+                            .setAllowInsecureRegistries(true));
+    String os =
+            new Command("docker", "inspect",  dockerHost + ":5000/docker-daemon-multi-platform", "--format", "{{.Os}}")
+                    .run().replace("\n", "");
+    String architecture =
+            new Command("docker", "inspect",  dockerHost + ":5000/docker-daemon-multi-platform", "--format", "{{.Architecture}}")
+                    .run().replace("\n", "");
+    assertThat(os).isEqualTo("linux");
+    assertThat(architecture).isEqualTo("s390x");
   }
 
   @Test
