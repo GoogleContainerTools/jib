@@ -669,11 +669,11 @@ public class StepsRunner {
     if (results.baseImagesAndBuiltImages.get().size() > 1) {
       LOGGER.warning(
           String.format(
-              "Detected multi-platform configuration, only building the one that matches the local Docker Engine's os and architecture (%s/%s) or " +
-                      "the first platform specified",
+              "Detected multi-platform configuration, only building the one that matches the local Docker Engine's os and architecture (%s/%s) or "
+                  + "the first platform specified",
               osType, architecture));
       for (Map.Entry<Image, Future<Image>> imageEntry :
-              results.baseImagesAndBuiltImages.get().entrySet()) {
+          results.baseImagesAndBuiltImages.get().entrySet()) {
         Image image = imageEntry.getValue().get();
         if (image.getArchitecture().equals(architecture) && image.getOs().equals(osType)) {
           return image;

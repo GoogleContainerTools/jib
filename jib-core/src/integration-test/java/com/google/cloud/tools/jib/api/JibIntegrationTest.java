@@ -17,7 +17,6 @@
 package com.google.cloud.tools.jib.api;
 
 import static com.google.common.truth.Truth.assertThat;
-import static org.junit.Assert.assertThrows;
 
 import com.google.cloud.tools.jib.Command;
 import com.google.cloud.tools.jib.api.buildplan.Platform;
@@ -343,25 +342,36 @@ public class JibIntegrationTest {
   }
 
   @Test
-  public void testBasicMultiPlatform_toDockerDaemon_pickFirstPlatformWhenNoMatchingImage() throws IOException, InterruptedException, InvalidImageReferenceException, CacheDirectoryCreationException, ExecutionException, RegistryException {
+  public void testBasicMultiPlatform_toDockerDaemon_pickFirstPlatformWhenNoMatchingImage()
+      throws IOException, InterruptedException, InvalidImageReferenceException,
+          CacheDirectoryCreationException, ExecutionException, RegistryException {
     Jib.from(
-           RegistryImage.named(
-                            "busybox@sha256:4f47c01fa91355af2865ac10fef5bf6ec9c7f42ad2321377c21e844427972977"))
-                    .setPlatforms(
-                        ImmutableSet.of(
-                            new Platform("s390x", "linux"), new Platform("arm", "linux")))
-                    .setEntrypoint("echo", "Hello World")
-                    .containerize(
-                        Containerizer.to(
-                                DockerDaemonImage.named(
-                                    dockerHost + ":5000/docker-daemon-multi-platform"))
-                            .setAllowInsecureRegistries(true));
+            RegistryImage.named(
+                "busybox@sha256:4f47c01fa91355af2865ac10fef5bf6ec9c7f42ad2321377c21e844427972977"))
+        .setPlatforms(ImmutableSet.of(new Platform("s390x", "linux"), new Platform("arm", "linux")))
+        .setEntrypoint("echo", "Hello World")
+        .containerize(
+            Containerizer.to(
+                    DockerDaemonImage.named(dockerHost + ":5000/docker-daemon-multi-platform"))
+                .setAllowInsecureRegistries(true));
     String os =
-            new Command("docker", "inspect",  dockerHost + ":5000/docker-daemon-multi-platform", "--format", "{{.Os}}")
-                    .run().replace("\n", "");
+        new Command(
+                "docker",
+                "inspect",
+                dockerHost + ":5000/docker-daemon-multi-platform",
+                "--format",
+                "{{.Os}}")
+            .run()
+            .replace("\n", "");
     String architecture =
-            new Command("docker", "inspect",  dockerHost + ":5000/docker-daemon-multi-platform", "--format", "{{.Architecture}}")
-                    .run().replace("\n", "");
+        new Command(
+                "docker",
+                "inspect",
+                dockerHost + ":5000/docker-daemon-multi-platform",
+                "--format",
+                "{{.Architecture}}")
+            .run()
+            .replace("\n", "");
     assertThat(os).isEqualTo("linux");
     assertThat(architecture).isEqualTo("s390x");
   }
