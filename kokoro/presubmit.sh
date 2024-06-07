@@ -27,4 +27,4 @@ cd github/jib
 
 # we only run integration tests on jib-core for presubmit
 #./gradlew clean build :jib-core:integrationTest --info --stacktrace
-./gradlew :jib-cli:integrationTest  --tests 'WarCommandTest.testWar_jetty' --info --stacktrace
+./gradlew :jib-cli:integrationTest  --tests 'WarCommandTest.testWar_customJettySpecified' --info --stacktrace
