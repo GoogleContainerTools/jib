@@ -324,9 +324,14 @@ public class JibIntegrationTest {
   public void testBasic_jibImageToDockerDaemon_arm64()
       throws IOException, InterruptedException, InvalidImageReferenceException, ExecutionException,
           RegistryException, CacheDirectoryCreationException {
+    // Use arm64v8/busybox as base image.
     Jib.from(
             RegistryImage.named(
-                "busybox@sha256:eb427d855f82782c110b48b9a398556c629ce4951ae252c6f6751a136e194668"))
+                "busybox@sha256:4f47c01fa91355af2865ac10fef5bf6ec9c7f42ad2321377c21e844427972977")
+            //            RegistryImage.named(
+            //
+            // "busybox@sha256:eb427d855f82782c110b48b9a398556c629ce4951ae252c6f6751a136e194668")
+            )
         .containerize(
             Containerizer.to(
                 DockerDaemonImage.named(dockerHost + ":5000/docker-daemon-mismatched-arch")));
