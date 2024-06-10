@@ -324,34 +324,33 @@ public class JibIntegrationTest {
   public void testBasic_jibImageToDockerDaemon_arm64()
       throws IOException, InterruptedException, InvalidImageReferenceException, ExecutionException,
           RegistryException, CacheDirectoryCreationException {
-    //    Jib.from(
-    //            RegistryImage.named(
-    //
-    // "busybox@sha256:eb427d855f82782c110b48b9a398556c629ce4951ae252c6f6751a136e194668"))
-    //        .containerize(
-    //            Containerizer.to(
-    //                DockerDaemonImage.named(dockerHost + ":5000/docker-daemon-mismatched-arch")));
-    //
-    //    String os =
-    //        new Command(
-    //                "docker",
-    //                "inspect",
-    //                dockerHost + ":5000/docker-daemon-mismatched-arch",
-    //                "--format",
-    //                "{{.Os}}")
-    //            .run()
-    //            .replace("\n", "");
-    //    String architecture =
-    //        new Command(
-    //                "docker",
-    //                "inspect",
-    //                dockerHost + ":5000/docker-daemon-mismatched-arch",
-    //                "--format",
-    //                "{{.Architecture}}")
-    //            .run()
-    //            .replace("\n", "");
-    //    assertThat(os).isEqualTo("linux");
-    //    assertThat(architecture).isEqualTo("arm64");
+    Jib.from(
+            RegistryImage.named(
+                "busybox@sha256:eb427d855f82782c110b48b9a398556c629ce4951ae252c6f6751a136e194668"))
+        .containerize(
+            Containerizer.to(
+                DockerDaemonImage.named(dockerHost + ":5000/docker-daemon-mismatched-arch")));
+
+    String os =
+        new Command(
+                "docker",
+                "inspect",
+                dockerHost + ":5000/docker-daemon-mismatched-arch",
+                "--format",
+                "{{.Os}}")
+            .run()
+            .replace("\n", "");
+    String architecture =
+        new Command(
+                "docker",
+                "inspect",
+                dockerHost + ":5000/docker-daemon-mismatched-arch",
+                "--format",
+                "{{.Architecture}}")
+            .run()
+            .replace("\n", "");
+    assertThat(os).isEqualTo("linux");
+    assertThat(architecture).isEqualTo("arm64");
   }
 
   @Test
