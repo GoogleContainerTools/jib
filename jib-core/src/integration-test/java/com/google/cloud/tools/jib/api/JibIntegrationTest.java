@@ -384,13 +384,14 @@ public class JibIntegrationTest {
         .setPlatforms(ImmutableSet.of(new Platform("s390x", "linux"), new Platform("arm", "linux")))
         .containerize(
             Containerizer.to(
-                    DockerDaemonImage.named(dockerHost + ":5000/docker-daemon-multi-platform"))
+                    DockerDaemonImage.named(
+                        dockerHost + ":5000/docker-daemon-multi-plat-mismatched-configs"))
                 .setAllowInsecureRegistries(true));
     String os =
         new Command(
                 "docker",
                 "inspect",
-                dockerHost + ":5000/docker-daemon-multi-platform",
+                dockerHost + ":5000/docker-daemon-multi-plat-mismatched-configs",
                 "--format",
                 "{{.Os}}")
             .run()
@@ -399,7 +400,7 @@ public class JibIntegrationTest {
         new Command(
                 "docker",
                 "inspect",
-                dockerHost + ":5000/docker-daemon-multi-platform",
+                dockerHost + ":5000/docker-daemon-multi-plat-mismatched-configs",
                 "--format",
                 "{{.Architecture}}")
             .run()
