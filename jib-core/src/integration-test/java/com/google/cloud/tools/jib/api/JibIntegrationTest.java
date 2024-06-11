@@ -321,7 +321,7 @@ public class JibIntegrationTest {
   }
 
   @Test
-  public void testBasic_jibImageToDockerDaemon_arm64BaseImage()
+  public void testBasic_toDockerDaemon_arm64()
       throws IOException, InterruptedException, InvalidImageReferenceException, ExecutionException,
           RegistryException, CacheDirectoryCreationException {
     // Use arm64v8/busybox as base image.
