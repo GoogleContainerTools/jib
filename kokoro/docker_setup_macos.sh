@@ -1,7 +1,6 @@
 #!/bin/bash
 
 docker-machine ls
-docker-machine create --driver virtualbox default
 docker-machine start default
 export DOCKER_IP="$(docker-machine ip default)"
 echo $DOCKER_IP
