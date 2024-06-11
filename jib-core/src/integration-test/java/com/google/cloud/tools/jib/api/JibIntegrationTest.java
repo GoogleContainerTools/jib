@@ -344,7 +344,7 @@ public class JibIntegrationTest {
         new Command(
                 "docker",
                 "inspect",
-                dockerHost + ":5000/docker-daemon-mismatched-arch",
+                dockerHost + ":5000/docker-mismatched-arch",
                 "--format",
                 "{{.Architecture}}")
             .run()
