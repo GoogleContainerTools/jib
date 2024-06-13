@@ -59,6 +59,8 @@ public class JibIntegrationTest {
 
   @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
+  private String imageToDelete;
+
   private final String dockerHost =
       System.getenv("DOCKER_IP") != null ? System.getenv("DOCKER_IP") : "localhost";
 
@@ -103,8 +105,11 @@ public class JibIntegrationTest {
   }
 
   @After
-  public void tearDown() {
+  public void tearDown() throws IOException, InterruptedException {
     System.clearProperty("sendCredentialsOverHttp");
+    if (imageToDelete != null) {
+      new Command("docker", "rmi", imageToDelete).run();
+    }
   }
 
   @Test
@@ -121,6 +126,7 @@ public class JibIntegrationTest {
     Assert.assertEquals("Hello World\n", pullAndRunBuiltImage(toImage));
     Assert.assertEquals(
         "Hello World\n", pullAndRunBuiltImage(toImage + "@" + jibContainer.getDigest()));
+    imageToDelete = toImage;
   }
 
   @Test
@@ -137,20 +143,21 @@ public class JibIntegrationTest {
     Assert.assertEquals("Hello World\n", pullAndRunBuiltImage(toImage));
     Assert.assertEquals(
         "Hello World\n", pullAndRunBuiltImage(toImage + "@" + jibContainer.getDigest()));
+    imageToDelete = toImage;
   }
 
   @Test
   public void testBasic_dockerDaemonBaseImageToDockerDaemon()
       throws IOException, InterruptedException, InvalidImageReferenceException, ExecutionException,
           RegistryException, CacheDirectoryCreationException {
+    String toImage = dockerHost + ":5000/docker-to-docker";
     Jib.from(DockerDaemonImage.named(dockerHost + ":5000/busybox"))
         .setEntrypoint("echo", "Hello World")
-        .containerize(
-            Containerizer.to(DockerDaemonImage.named(dockerHost + ":5000/docker-to-docker")));
+        .containerize(Containerizer.to(DockerDaemonImage.named(toImage)));
 
-    String output =
-        new Command("docker", "run", "--rm", dockerHost + ":5000/docker-to-docker").run();
+    String output = new Command("docker", "run", "--rm", toImage).run();
     Assert.assertEquals("Hello World\n", output);
+    imageToDelete = toImage;
   }
 
   @Test
@@ -170,6 +177,7 @@ public class JibIntegrationTest {
     Assert.assertEquals("Hello World\n", pullAndRunBuiltImage(toImage));
     Assert.assertEquals(
         "Hello World\n", pullAndRunBuiltImage(toImage + "@" + jibContainer.getDigest()));
+    imageToDelete = toImage;
   }
 
   @Test
@@ -232,6 +240,7 @@ public class JibIntegrationTest {
     Assert.assertEquals("Hello World\n", pullAndRunBuiltImage(toImage));
     Assert.assertEquals(
         "Hello World\n", pullAndRunBuiltImage(toImage + "@" + jibContainer.getDigest()));
+    imageToDelete = toImage;
   }
 
   @Test
@@ -310,14 +319,14 @@ public class JibIntegrationTest {
   public void testBasic_jibImageToDockerDaemon()
       throws IOException, InterruptedException, InvalidImageReferenceException, ExecutionException,
           RegistryException, CacheDirectoryCreationException {
+    String toImage = dockerHost + ":5000/docker-to-docker";
     Jib.from(DockerDaemonImage.named(dockerHost + ":5000/busybox"))
         .setEntrypoint("echo", "Hello World")
-        .containerize(
-            Containerizer.to(DockerDaemonImage.named(dockerHost + ":5000/docker-to-docker")));
+        .containerize(Containerizer.to(DockerDaemonImage.named(toImage)));
 
-    String output =
-        new Command("docker", "run", "--rm", dockerHost + ":5000/docker-to-docker").run();
+    String output = new Command("docker", "run", "--rm", toImage).run();
     Assert.assertEquals("Hello World\n", output);
+    imageToDelete = toImage;
   }
 
   @Test
@@ -325,39 +334,28 @@ public class JibIntegrationTest {
       throws IOException, InterruptedException, InvalidImageReferenceException, ExecutionException,
           RegistryException, CacheDirectoryCreationException {
     // Use arm64v8/busybox as base image.
+    String toImage = dockerHost + ":5000/docker-daemon-mismatched-arch";
     Jib.from(
             RegistryImage.named(
                 "busybox@sha256:eb427d855f82782c110b48b9a398556c629ce4951ae252c6f6751a136e194668"))
-        .containerize(
-            Containerizer.to(
-                DockerDaemonImage.named(dockerHost + ":5000/docker-daemon-mismatched-arch")));
+        .containerize(Containerizer.to(DockerDaemonImage.named(toImage)));
 
     String os =
-        new Command(
-                "docker",
-                "inspect",
-                dockerHost + ":5000/docker-daemon-mismatched-arch",
-                "--format",
-                "{{.Os}}")
-            .run()
-            .replace("\n", "");
+        new Command("docker", "inspect", toImage, "--format", "{{.Os}}").run().replace("\n", "");
     String architecture =
-        new Command(
-                "docker",
-                "inspect",
-                dockerHost + ":5000/docker-daemon-mismatched-arch",
-                "--format",
-                "{{.Architecture}}")
+        new Command("docker", "inspect", toImage, "--format", "{{.Architecture}}")
             .run()
             .replace("\n", "");
     assertThat(os).isEqualTo("linux");
     assertThat(architecture).isEqualTo("arm64");
+    imageToDelete = toImage;
   }
 
   @Test
   public void testBasicMultiPlatform_toDockerDaemon()
       throws IOException, InterruptedException, ExecutionException, RegistryException,
           CacheDirectoryCreationException, InvalidImageReferenceException {
+    String toImage = dockerHost + ":5000/docker-daemon-multi-platform";
     Jib.from(
             RegistryImage.named(
                 "busybox@sha256:4f47c01fa91355af2865ac10fef5bf6ec9c7f42ad2321377c21e844427972977"))
@@ -365,49 +363,33 @@ public class JibIntegrationTest {
             ImmutableSet.of(new Platform("arm64", "linux"), new Platform("amd64", "linux")))
         .setEntrypoint("echo", "Hello World")
         .containerize(
-            Containerizer.to(
-                    DockerDaemonImage.named(dockerHost + ":5000/docker-daemon-multi-platform"))
-                .setAllowInsecureRegistries(true));
+            Containerizer.to(DockerDaemonImage.named(toImage)).setAllowInsecureRegistries(true));
 
-    String output =
-        new Command("docker", "run", "--rm", dockerHost + ":5000/docker-daemon-multi-platform")
-            .run();
+    String output = new Command("docker", "run", "--rm", toImage).run();
     Assert.assertEquals("Hello World\n", output);
+    imageToDelete = toImage;
   }
 
   @Test
   public void testBasicMultiPlatform_toDockerDaemon_pickFirstPlatformWhenNoMatchingImage()
       throws IOException, InterruptedException, InvalidImageReferenceException,
           CacheDirectoryCreationException, ExecutionException, RegistryException {
+    String toImage = dockerHost + ":5000/docker-daemon-multi-plat-mismatched-configs";
     Jib.from(
             RegistryImage.named(
                 "busybox@sha256:4f47c01fa91355af2865ac10fef5bf6ec9c7f42ad2321377c21e844427972977"))
         .setPlatforms(ImmutableSet.of(new Platform("s390x", "linux"), new Platform("arm", "linux")))
         .containerize(
-            Containerizer.to(
-                    DockerDaemonImage.named(
-                        dockerHost + ":5000/docker-daemon-multi-plat-mismatched-configs"))
-                .setAllowInsecureRegistries(true));
+            Containerizer.to(DockerDaemonImage.named(toImage)).setAllowInsecureRegistries(true));
     String os =
-        new Command(
-                "docker",
-                "inspect",
-                dockerHost + ":5000/docker-daemon-multi-plat-mismatched-configs",
-                "--format",
-                "{{.Os}}")
-            .run()
-            .replace("\n", "");
+        new Command("docker", "inspect", toImage, "--format", "{{.Os}}").run().replace("\n", "");
     String architecture =
-        new Command(
-                "docker",
-                "inspect",
-                dockerHost + ":5000/docker-daemon-multi-plat-mismatched-configs",
-                "--format",
-                "{{.Architecture}}")
+        new Command("docker", "inspect", toImage, "--format", "{{.Architecture}}")
             .run()
             .replace("\n", "");
     assertThat(os).isEqualTo("linux");
     assertThat(architecture).isEqualTo("s390x");
+    imageToDelete = toImage;
   }
 
   @Test
