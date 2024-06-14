@@ -116,6 +116,7 @@ public class JibIntegrationTest {
   public void testBasic_helloWorld()
       throws InvalidImageReferenceException, InterruptedException, CacheDirectoryCreationException,
           IOException, RegistryException, ExecutionException {
+    System.out.println("testBasic_helloWorld()");
     String toImage = dockerHost + ":5000/basic-helloworld";
     JibContainer jibContainer =
         Jib.from(dockerHost + ":5000/busybox")
@@ -133,6 +134,7 @@ public class JibIntegrationTest {
   public void testBasic_dockerDaemonBaseImage()
       throws IOException, InterruptedException, InvalidImageReferenceException, ExecutionException,
           RegistryException, CacheDirectoryCreationException {
+    System.out.println("testBasic_dockerDaemonBaseImage()");
     String toImage = dockerHost + ":5000/basic-dockerdaemon";
     JibContainer jibContainer =
         Jib.from("docker://" + dockerHost + ":5000/busybox")
@@ -150,6 +152,7 @@ public class JibIntegrationTest {
   public void testBasic_dockerDaemonBaseImageToDockerDaemon()
       throws IOException, InterruptedException, InvalidImageReferenceException, ExecutionException,
           RegistryException, CacheDirectoryCreationException {
+    System.out.println("testBasic_dockerDaemonBaseImageToDockerDaemon()");
     String toImage = dockerHost + ":5000/docker-to-docker";
     Jib.from(DockerDaemonImage.named(dockerHost + ":5000/busybox"))
         .setEntrypoint("echo", "Hello World")
@@ -164,6 +167,8 @@ public class JibIntegrationTest {
   public void testBasic_tarBaseImage_dockerSavedCommand()
       throws IOException, InterruptedException, InvalidImageReferenceException, ExecutionException,
           RegistryException, CacheDirectoryCreationException {
+    System.out.println("testBasic_tarBaseImage_dockerSavedCommand()");
+
     Path path = temporaryFolder.getRoot().toPath().resolve("docker-save.tar");
     new Command("docker", "save", dockerHost + ":5000/busybox", "-o=" + path).run();
 
@@ -184,6 +189,8 @@ public class JibIntegrationTest {
   public void testBasic_tarBaseImage_dockerSavedFile()
       throws IOException, InterruptedException, InvalidImageReferenceException, ExecutionException,
           RegistryException, CacheDirectoryCreationException, URISyntaxException {
+    System.out.println("testBasic_tarBaseImage_dockerSavedFile()");
+
     // tar saved with 'docker save busybox -o busybox.tar'
     Path path = Paths.get(Resources.getResource("core/busybox-docker.tar").toURI());
 
@@ -203,6 +210,8 @@ public class JibIntegrationTest {
   public void testBasic_tarBaseImage_jibImage()
       throws InvalidImageReferenceException, InterruptedException, ExecutionException,
           RegistryException, CacheDirectoryCreationException, IOException, URISyntaxException {
+    System.out.println("testBasic_tarBaseImage_jibImage()");
+
     Path outputPath = temporaryFolder.getRoot().toPath().resolve("jib-image.tar");
     Jib.from(dockerHost + ":5000/busybox")
         .addLayer(
@@ -227,6 +236,8 @@ public class JibIntegrationTest {
   public void testBasic_tarBaseImage_jibImageToDockerDaemon()
       throws InvalidImageReferenceException, InterruptedException, ExecutionException,
           RegistryException, CacheDirectoryCreationException, IOException, URISyntaxException {
+    System.out.println("testBasic_tarBaseImage_jibImageToDockerDaemon()");
+
     // tar saved with Jib.from("busybox").addLayer(...("core/hello")).containerize(TarImage.at...)
     Path path = Paths.get(Resources.getResource("core/busybox-jib.tar").toURI());
 
@@ -247,6 +258,8 @@ public class JibIntegrationTest {
   public void testScratch_defaultPlatform()
       throws IOException, InterruptedException, ExecutionException, RegistryException,
           CacheDirectoryCreationException, InvalidImageReferenceException {
+    System.out.println("testScratch_defaultPlatform()");
+
     Jib.fromScratch()
         .containerize(
             Containerizer.to(RegistryImage.named(dockerHost + ":5000/jib-scratch:default-platform"))
@@ -270,6 +283,8 @@ public class JibIntegrationTest {
   public void testScratch_singlePlatform()
       throws IOException, InterruptedException, ExecutionException, RegistryException,
           CacheDirectoryCreationException, InvalidImageReferenceException {
+    System.out.println("testScratch_singlePlatform()");
+
     Jib.fromScratch()
         .setPlatforms(ImmutableSet.of(new Platform("arm64", "windows")))
         .containerize(
@@ -294,6 +309,8 @@ public class JibIntegrationTest {
   public void testScratch_multiPlatform()
       throws IOException, InterruptedException, ExecutionException, RegistryException,
           CacheDirectoryCreationException, InvalidImageReferenceException {
+    System.out.println("testScratch_multiPlatform()");
+
     Jib.fromScratch()
         .setPlatforms(
             ImmutableSet.of(new Platform("arm64", "windows"), new Platform("amd32", "windows")))
@@ -319,6 +336,8 @@ public class JibIntegrationTest {
   public void testBasic_jibImageToDockerDaemon()
       throws IOException, InterruptedException, InvalidImageReferenceException, ExecutionException,
           RegistryException, CacheDirectoryCreationException {
+    System.out.println("testBasic_jibImageToDockerDaemon()");
+
     String toImage = dockerHost + ":5000/docker-to-docker";
     Jib.from(DockerDaemonImage.named(dockerHost + ":5000/busybox"))
         .setEntrypoint("echo", "Hello World")
@@ -330,9 +349,11 @@ public class JibIntegrationTest {
   }
 
   @Test
-  public void testBasic_jibImageToDockerDaemon_arm64()
+  public void testBasic_jibImageToDockerDaemon_arm64BaseImage()
       throws IOException, InterruptedException, InvalidImageReferenceException, ExecutionException,
           RegistryException, CacheDirectoryCreationException {
+    System.out.println("testBasic_jibImageToDockerDaemon_arm64BaseImage() 2");
+
     // Use arm64v8/busybox as base image.
     String toImage = dockerHost + ":5000/docker-daemon-mismatched-arch";
     Jib.from(
@@ -355,6 +376,8 @@ public class JibIntegrationTest {
   public void testBasicMultiPlatform_toDockerDaemon()
       throws IOException, InterruptedException, ExecutionException, RegistryException,
           CacheDirectoryCreationException, InvalidImageReferenceException {
+    System.out.println("testBasicMultiPlatform_toDockerDaemon()");
+
     String toImage = dockerHost + ":5000/docker-daemon-multi-platform";
     Jib.from(
             RegistryImage.named(
@@ -374,6 +397,9 @@ public class JibIntegrationTest {
   public void testBasicMultiPlatform_toDockerDaemon_pickFirstPlatformWhenNoMatchingImage()
       throws IOException, InterruptedException, InvalidImageReferenceException,
           CacheDirectoryCreationException, ExecutionException, RegistryException {
+    System.out.println(
+        "testBasicMultiPlatform_toDockerDaemon_pickFirstPlatformWhenNoMatchingImage()");
+
     String toImage = dockerHost + ":5000/docker-daemon-multi-plat-mismatched-configs";
     Jib.from(
             RegistryImage.named(
@@ -396,6 +422,8 @@ public class JibIntegrationTest {
   public void testDistroless_ociManifest()
       throws IOException, InterruptedException, ExecutionException, RegistryException,
           CacheDirectoryCreationException, InvalidImageReferenceException {
+    System.out.println("testDistroless_ociManifest()");
+
     Jib.from("gcr.io/distroless/base@" + KNOWN_OCI_INDEX_SHA)
         .setPlatforms(
             ImmutableSet.of(new Platform("arm64", "linux"), new Platform("amd64", "linux")))
@@ -423,6 +451,8 @@ public class JibIntegrationTest {
   public void testOffline()
       throws IOException, InterruptedException, InvalidImageReferenceException, ExecutionException,
           RegistryException, CacheDirectoryCreationException {
+    System.out.println("testOffline");
+
     Path cacheDirectory = temporaryFolder.getRoot().toPath();
 
     JibContainerBuilder jibContainerBuilder =
@@ -474,6 +504,8 @@ public class JibIntegrationTest {
   public void testProvidedExecutorNotDisposed()
       throws InvalidImageReferenceException, InterruptedException, CacheDirectoryCreationException,
           IOException, RegistryException, ExecutionException {
+    System.out.println("testProvidedExecutorNotDisposed");
+
     ExecutorService executorService = Executors.newCachedThreadPool();
     try {
       Jib.fromScratch()
@@ -491,6 +523,8 @@ public class JibIntegrationTest {
   public void testManifestListReferenceByShaDoesNotFail()
       throws InvalidImageReferenceException, IOException, InterruptedException, ExecutionException,
           RegistryException, CacheDirectoryCreationException {
+    System.out.println("testManifestListReferenceByShaDoesNotFail()");
+
     Containerizer containerizer =
         Containerizer.to(TarImage.at(temporaryFolder.newFile("goose").toPath()).named("whatever"));
 
