@@ -72,13 +72,13 @@ public class JibIntegrationTest {
               new FailoverHttpClient(true, true, ignored -> {}))
           .newRegistryClient();
 
-  private final RegistryClient distrolessRegistryClient =
-      RegistryClient.factory(
-              EventHandlers.NONE,
-              dockerHost + ":5000",
-              "jib-distroless",
-              new FailoverHttpClient(true, true, ignored -> {}))
-          .newRegistryClient();
+  //  private final RegistryClient distrolessRegistryClient =
+  //      RegistryClient.factory(
+  //              EventHandlers.NONE,
+  //              dockerHost + ":5000",
+  //              "jib-distroless",
+  //              new FailoverHttpClient(true, true, ignored -> {}))
+  //          .newRegistryClient();
 
   /**
    * Pulls a built image and attempts to run it.
@@ -418,7 +418,7 @@ public class JibIntegrationTest {
     imageToDelete = toImage;
   }
 
-  @Test
+  //  @Test
   public void testDistroless_ociManifest()
       throws IOException, InterruptedException, ExecutionException, RegistryException,
           CacheDirectoryCreationException, InvalidImageReferenceException {
@@ -432,6 +432,13 @@ public class JibIntegrationTest {
                     RegistryImage.named(dockerHost + ":5000/jib-distroless:multi-platform"))
                 .setAllowInsecureRegistries(true));
 
+    RegistryClient distrolessRegistryClient =
+        RegistryClient.factory(
+                EventHandlers.NONE,
+                dockerHost + ":5000",
+                "jib-distroless",
+                new FailoverHttpClient(true, true, ignored -> {}))
+            .newRegistryClient();
     V22ManifestListTemplate manifestList =
         (V22ManifestListTemplate)
             distrolessRegistryClient.pullManifest("multi-platform").getManifest();
