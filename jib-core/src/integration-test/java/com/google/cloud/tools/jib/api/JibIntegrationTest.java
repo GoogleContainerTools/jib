@@ -349,10 +349,10 @@ public class JibIntegrationTest {
   }
 
   @Test
-  public void testBasic_jibImageToDockerDaemon_arm64BaseImage()
+  public void testBasic_jibImageToDockerDaemon_arm64()
       throws IOException, InterruptedException, InvalidImageReferenceException, ExecutionException,
           RegistryException, CacheDirectoryCreationException {
-    System.out.println("testBasic_jibImageToDockerDaemon_arm64BaseImage() 2");
+    System.out.println("testBasic_jibImageToDockerDaemon_arm64");
 
     // Use arm64v8/busybox as base image.
     String toImage = dockerHost + ":5000/docker-daemon-mismatched-arch";
