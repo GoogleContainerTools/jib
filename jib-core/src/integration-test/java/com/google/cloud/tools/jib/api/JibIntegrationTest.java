@@ -360,7 +360,7 @@ public class JibIntegrationTest {
             RegistryImage.named(
                 "busybox@sha256:eb427d855f82782c110b48b9a398556c629ce4951ae252c6f6751a136e194668"))
         .containerize(Containerizer.to(DockerDaemonImage.named(toImage)));
-
+    System.out.println("Verified image creation");
     String os =
         new Command("docker", "inspect", toImage, "--format", "{{.Os}}").run().replace("\n", "");
     String architecture =
