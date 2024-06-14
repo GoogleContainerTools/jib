@@ -356,7 +356,7 @@ public class JibIntegrationTest {
     System.out.println("testBasic_jibImageToDockerDaemon_arm64");
 
     // Use arm64v8/busybox as base image.
-    String toImage = "docker-daemon-mismatched-arch";
+    String toImage = dockerHost + ":5000/docker-daemon-mismatched-arch";
     Jib.from(
             RegistryImage.named(
                 "busybox@sha256:eb427d855f82782c110b48b9a398556c629ce4951ae252c6f6751a136e194668"))
