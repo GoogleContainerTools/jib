@@ -424,7 +424,7 @@ public class JibIntegrationTest {
           CacheDirectoryCreationException, InvalidImageReferenceException {
     System.out.println("testDistroless_ociManifest()");
 
-    Jib.from("gcr.io/distroless/base@" + KNOWN_OCI_INDEX_SHA)
+    Jib.from("alpine")
         .setPlatforms(
             ImmutableSet.of(new Platform("arm64", "linux"), new Platform("amd64", "linux")))
         .containerize(
