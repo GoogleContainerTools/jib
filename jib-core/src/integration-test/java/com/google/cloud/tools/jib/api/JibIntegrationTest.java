@@ -76,7 +76,7 @@ public class JibIntegrationTest {
   private final RegistryClient distrolessRegistryClient =
       RegistryClient.factory(
               EventHandlers.NONE,
-              dockerHost + ":5000",
+              dockerHost + ":6000",
               "jib-distroless",
               new FailoverHttpClient(true, true, ignored -> {}))
           .newRegistryClient();
@@ -419,19 +419,17 @@ public class JibIntegrationTest {
   }
 
   @Test
-  //  @Ignore
   public void testDistroless_ociManifest()
       throws IOException, InterruptedException, ExecutionException, RegistryException,
           CacheDirectoryCreationException, InvalidImageReferenceException {
     System.out.println("testDistroless_ociManifest()");
 
-    Jib.fromScratch()
-        //            .from(dockerHost + ":5000/distroless/base")
+    Jib.from("gcr.io/distroless/base@" + KNOWN_OCI_INDEX_SHA)
         .setPlatforms(
             ImmutableSet.of(new Platform("arm64", "linux"), new Platform("amd64", "linux")))
         .containerize(
             Containerizer.to(
-                    RegistryImage.named(dockerHost + ":5000/jib-distroless:multi-platform"))
+                    RegistryImage.named(dockerHost + ":6000/jib-distroless:multi-platform"))
                 .setAllowInsecureRegistries(true));
 
     V22ManifestListTemplate manifestList =
