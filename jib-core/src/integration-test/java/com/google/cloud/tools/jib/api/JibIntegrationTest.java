@@ -44,7 +44,6 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -57,6 +56,7 @@ public class JibIntegrationTest {
       "sha256:2c50b819aa3bfaf6ae72e47682f6c5abc0f647cf3f4224a4a9be97dd30433909";
 
   @ClassRule public static final LocalRegistry localRegistry = new LocalRegistry(5000);
+  @ClassRule public static final LocalRegistry localRegistry2 = new LocalRegistry(6000);
 
   @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
@@ -73,13 +73,13 @@ public class JibIntegrationTest {
               new FailoverHttpClient(true, true, ignored -> {}))
           .newRegistryClient();
 
-  //  private final RegistryClient distrolessRegistryClient =
-  //      RegistryClient.factory(
-  //              EventHandlers.NONE,
-  //              dockerHost + ":5000",
-  //              "jib-distroless",
-  //              new FailoverHttpClient(true, true, ignored -> {}))
-  //          .newRegistryClient();
+  private final RegistryClient distrolessRegistryClient =
+      RegistryClient.factory(
+              EventHandlers.NONE,
+              dockerHost + ":5000",
+              "jib-distroless",
+              new FailoverHttpClient(true, true, ignored -> {}))
+          .newRegistryClient();
 
   /**
    * Pulls a built image and attempts to run it.
@@ -356,12 +356,11 @@ public class JibIntegrationTest {
     System.out.println("testBasic_jibImageToDockerDaemon_arm64");
 
     // Use arm64v8/busybox as base image.
-    String toImage = dockerHost + ":5000/docker-daemon-mismatched-arch";
+    String toImage = "docker-daemon-mismatched-arch";
     Jib.from(
             RegistryImage.named(
                 "busybox@sha256:eb427d855f82782c110b48b9a398556c629ce4951ae252c6f6751a136e194668"))
         .containerize(Containerizer.to(DockerDaemonImage.named(toImage)));
-    System.out.println("Verified image creation");
     String os =
         new Command("docker", "inspect", toImage, "--format", "{{.Os}}").run().replace("\n", "");
     String architecture =
@@ -420,13 +419,14 @@ public class JibIntegrationTest {
   }
 
   @Test
-  @Ignore
+  //  @Ignore
   public void testDistroless_ociManifest()
       throws IOException, InterruptedException, ExecutionException, RegistryException,
           CacheDirectoryCreationException, InvalidImageReferenceException {
     System.out.println("testDistroless_ociManifest()");
 
-    Jib.from("gcr.io/distroless/base@" + KNOWN_OCI_INDEX_SHA)
+    Jib.fromScratch()
+        //            .from(dockerHost + ":5000/distroless/base")
         .setPlatforms(
             ImmutableSet.of(new Platform("arm64", "linux"), new Platform("amd64", "linux")))
         .containerize(
@@ -434,13 +434,6 @@ public class JibIntegrationTest {
                     RegistryImage.named(dockerHost + ":5000/jib-distroless:multi-platform"))
                 .setAllowInsecureRegistries(true));
 
-    RegistryClient distrolessRegistryClient =
-        RegistryClient.factory(
-                EventHandlers.NONE,
-                dockerHost + ":5000",
-                "jib-distroless",
-                new FailoverHttpClient(true, true, ignored -> {}))
-            .newRegistryClient();
     V22ManifestListTemplate manifestList =
         (V22ManifestListTemplate)
             distrolessRegistryClient.pullManifest("multi-platform").getManifest();
