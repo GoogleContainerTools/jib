@@ -429,7 +429,7 @@ public class JibIntegrationTest {
             ImmutableSet.of(new Platform("arm64", "linux"), new Platform("amd64", "linux")))
         .containerize(
             Containerizer.to(
-                    RegistryImage.named(dockerHost + ":6000/jib-distroless:multi-platform"))
+                    DockerDaemonImage.named(dockerHost + ":6000/jib-distroless:multi-platform"))
                 .setAllowInsecureRegistries(true));
 
     //    V22ManifestListTemplate manifestList =
