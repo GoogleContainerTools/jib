@@ -423,21 +423,32 @@ public class JibIntegrationTest {
       throws IOException, InterruptedException, ExecutionException, RegistryException,
           CacheDirectoryCreationException, InvalidImageReferenceException {
     System.out.println("testDistroless_ociManifest()");
+    System.out.println(Runtime.getRuntime().availableProcessors());
 
     Jib.from("gcr.io/distroless/base@" + KNOWN_OCI_INDEX_SHA)
         .setPlatforms(
             ImmutableSet.of(new Platform("arm64", "linux"), new Platform("amd64", "linux")))
+        // Pushing to registry causes next test to hang.
         .containerize(
             Containerizer.to(
-                    DockerDaemonImage.named(dockerHost + ":6000/jib-distroless:multi-platform"))
+                    RegistryImage.named(dockerHost + ":6000/jib-distroless:multi-platform"))
                 .setAllowInsecureRegistries(true));
 
-    //    V22ManifestListTemplate manifestList =
-    //        (V22ManifestListTemplate)
-    //            distrolessRegistryClient.pullManifest("multi-platform").getManifest();
-    //    Assert.assertEquals(2, manifestList.getManifests().size());
-    //    ManifestDescriptorTemplate.Platform platform1 =
-    //        manifestList.getManifests().get(0).getPlatform();
+    String toImage = dockerHost + ":5000/docker-daemon-mismatched-arch";
+    Jib.from(
+            RegistryImage.named(
+                "busybox@sha256:eb427d855f82782c110b48b9a398556c629ce4951ae252c6f6751a136e194668"))
+        .containerize(Containerizer.to(DockerDaemonImage.named(toImage)));
+    System.out.println("post-build");
+
+    V22ManifestListTemplate manifestList =
+        (V22ManifestListTemplate)
+            distrolessRegistryClient.pullManifest("multi-platform").getManifest();
+    Assert.assertEquals(2, manifestList.getManifests().size());
+    ManifestDescriptorTemplate.Platform platform1 =
+        manifestList.getManifests().get(0).getPlatform();
+    System.out.println(platform1.getArchitecture());
+
     //    ManifestDescriptorTemplate.Platform platform2 =
     //        manifestList.getManifests().get(1).getPlatform();
     //

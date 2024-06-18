@@ -26,4 +26,4 @@ docker kill $(docker ps --all --quiet | grep -v "$CONTAINER_ID") || true
 cd github/jib
 
 # we only run integration tests on jib-core for presubmit
-./gradlew clean build :jib-core:integrationTest --info --stacktrace
+./gradlew clean build :jib-core:integrationTest --tests "com.google.cloud.tools.jib.api.JibIntegrationTest.testDistroless_ociManifest" --info --stacktrace
