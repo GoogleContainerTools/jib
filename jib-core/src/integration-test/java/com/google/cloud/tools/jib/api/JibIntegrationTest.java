@@ -433,6 +433,7 @@ public class JibIntegrationTest {
             Containerizer.to(
                     RegistryImage.named(dockerHost + ":6000/jib-distroless:multi-platform"))
                 .setAllowInsecureRegistries(true));
+    System.out.println("Between builds");
 
     String toImage = dockerHost + ":5000/docker-daemon-mismatched-arch";
     Jib.from(
