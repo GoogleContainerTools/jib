@@ -425,13 +425,6 @@ public class JibIntegrationTest {
     System.out.println("testDistroless_ociManifest()");
     System.out.println(Runtime.getRuntime().availableProcessors());
 
-    String toImage = dockerHost + ":5000/docker-daemon-mismatched-arch";
-    Jib.from(
-            RegistryImage.named(
-                "busybox@sha256:eb427d855f82782c110b48b9a398556c629ce4951ae252c6f6751a136e194668"))
-        .containerize(Containerizer.to(DockerDaemonImage.named(toImage)));
-
-    System.out.println("Between builds");
     Jib.from("gcr.io/distroless/base@" + KNOWN_OCI_INDEX_SHA)
         .setPlatforms(
             ImmutableSet.of(new Platform("arm64", "linux"), new Platform("amd64", "linux")))
@@ -441,6 +434,13 @@ public class JibIntegrationTest {
                     RegistryImage.named(dockerHost + ":6000/jib-distroless:multi-platform"))
                 .setAllowInsecureRegistries(true));
 
+    System.out.println("Between builds");
+    Thread.sleep(2000);
+    String toImage = dockerHost + ":5000/docker-daemon-mismatched-arch";
+    Jib.from(
+            RegistryImage.named(
+                "busybox@sha256:eb427d855f82782c110b48b9a398556c629ce4951ae252c6f6751a136e194668"))
+        .containerize(Containerizer.to(DockerDaemonImage.named(toImage)));
     System.out.println("post-build");
 
     V22ManifestListTemplate manifestList =
