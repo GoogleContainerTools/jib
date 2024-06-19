@@ -435,7 +435,7 @@ public class JibIntegrationTest {
                 .setAllowInsecureRegistries(true));
 
     System.out.println("Between builds");
-    Thread.sleep(2000);
+    Thread.sleep(120000);
     String toImage = dockerHost + ":5000/docker-daemon-mismatched-arch";
     Jib.from(
             RegistryImage.named(
