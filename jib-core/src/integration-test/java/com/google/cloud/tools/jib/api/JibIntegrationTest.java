@@ -435,12 +435,13 @@ public class JibIntegrationTest {
                 .setAllowInsecureRegistries(true));
 
     System.out.println("Between builds");
-    Thread.sleep(120000);
+    // Thread.sleep(120000);
     String toImage = dockerHost + ":5000/docker-daemon-mismatched-arch";
-    Jib.from(
-            RegistryImage.named(
-                "busybox@sha256:eb427d855f82782c110b48b9a398556c629ce4951ae252c6f6751a136e194668"))
-        .containerize(Containerizer.to(DockerDaemonImage.named(toImage)));
+    // Jib.from(
+    //         RegistryImage.named(
+    //
+    // "busybox@sha256:eb427d855f82782c110b48b9a398556c629ce4951ae252c6f6751a136e194668"))
+    Jib.fromScratch().containerize(Containerizer.to(DockerDaemonImage.named(toImage)));
     System.out.println("post-build");
 
     V22ManifestListTemplate manifestList =
