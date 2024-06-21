@@ -65,7 +65,6 @@ public class LocalRegistry extends ExternalResource {
 
   @Override
   protected void after() {
-    System.out.println("tear down");
     stop();
   }
 
