@@ -23,6 +23,7 @@ import com.google.cloud.tools.jib.api.DescriptorDigest;
 import com.google.cloud.tools.jib.builder.ProgressEventDispatcher;
 import com.google.cloud.tools.jib.builder.steps.PullBaseImageStep.ImagesAndRegistryClient;
 import com.google.cloud.tools.jib.configuration.BuildContext;
+import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.global.JibSystemProperties;
 import com.google.cloud.tools.jib.image.DigestOnlyLayer;
 import com.google.cloud.tools.jib.image.Image;
@@ -84,6 +85,7 @@ public class StepsRunnerTest {
   }
 
   @Mock private BuildContext buildContext;
+  @Mock private EventHandlers eventHandlers;
   @Mock private ProgressEventDispatcher.Factory progressDispatcherFactory;
   @Mock private ProgressEventDispatcher progressDispatcher;
   @Mock private ExecutorService executorService;
@@ -203,7 +205,8 @@ public class StepsRunnerTest {
                     Futures.immediateFuture(builtAmd64AndWindowsImage))));
     stepsRunner.buildImages(progressDispatcherFactory);
 
-    Image expectedImage = stepsRunner.fetchBuiltImageForLocalBuild("windows", "amd64");
+    Image expectedImage =
+        stepsRunner.fetchBuiltImageForLocalBuild("windows", "amd64", eventHandlers);
 
     assertThat(expectedImage.getOs()).isEqualTo("windows");
     assertThat(expectedImage.getArchitecture()).isEqualTo("amd64");
@@ -225,7 +228,7 @@ public class StepsRunnerTest {
                     Futures.immediateFuture(builtAmd64AndWindowsImage))));
     stepsRunner.buildImages(progressDispatcherFactory);
 
-    Image expectedImage = stepsRunner.fetchBuiltImageForLocalBuild("os", "arm64");
+    Image expectedImage = stepsRunner.fetchBuiltImageForLocalBuild("os", "arm64", eventHandlers);
 
     assertThat(expectedImage.getOs()).isEqualTo("linux");
     assertThat(expectedImage.getArchitecture()).isEqualTo("arm64");
@@ -246,7 +249,7 @@ public class StepsRunnerTest {
                     Futures.immediateFuture(builtAmd64AndWindowsImage))));
     stepsRunner.buildImages(progressDispatcherFactory);
 
-    Image expectedImage = stepsRunner.fetchBuiltImageForLocalBuild("linux", "arch");
+    Image expectedImage = stepsRunner.fetchBuiltImageForLocalBuild("linux", "arch", eventHandlers);
 
     assertThat(expectedImage.getArchitecture()).isEqualTo("arm64");
   }
@@ -262,7 +265,7 @@ public class StepsRunnerTest {
                 ImmutableMap.of(baseImage1, Futures.immediateFuture(builtArm64AndLinuxImage))));
     stepsRunner.buildImages(progressDispatcherFactory);
 
-    Image expectedImage = stepsRunner.fetchBuiltImageForLocalBuild("linux", "amd64");
+    Image expectedImage = stepsRunner.fetchBuiltImageForLocalBuild("linux", "amd64", eventHandlers);
 
     assertThat(expectedImage.getOs()).isEqualTo("linux");
     assertThat(expectedImage.getArchitecture()).isEqualTo("arm64");

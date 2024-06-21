@@ -25,6 +25,7 @@ import com.google.common.collect.ImmutableSet;
 import java.io.IOException;
 import java.util.concurrent.ExecutionException;
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.ClassRule;
 import org.junit.Test;
 
@@ -48,8 +49,6 @@ public class JibMultiPlatformIntegrationTest {
   public void testBasic_jibImageToDockerDaemon_arm64()
       throws IOException, InterruptedException, InvalidImageReferenceException, ExecutionException,
           RegistryException, CacheDirectoryCreationException {
-    System.out.println("testBasic_jibImageToDockerDaemon_arm64");
-
     // Use arm64v8/busybox as base image.
     String toImage = dockerHost + ":5000/docker-daemon-mismatched-arch";
     Jib.from(
@@ -71,9 +70,6 @@ public class JibMultiPlatformIntegrationTest {
   public void testBasicMultiPlatform_toDockerDaemon_pickFirstPlatformWhenNoMatchingImage()
       throws IOException, InterruptedException, InvalidImageReferenceException,
           CacheDirectoryCreationException, ExecutionException, RegistryException {
-    System.out.println(
-        "testBasicMultiPlatform_toDockerDaemon_pickFirstPlatformWhenNoMatchingImage()");
-
     String toImage = dockerHost + ":5000/docker-daemon-multi-plat-mismatched-configs";
     Jib.from(
             RegistryImage.named(
@@ -89,6 +85,25 @@ public class JibMultiPlatformIntegrationTest {
             .replace("\n", "");
     assertThat(os).isEqualTo("linux");
     assertThat(architecture).isEqualTo("s390x");
+    imageToDelete = toImage;
+  }
+
+  @Test
+  public void testBasicMultiPlatform_toDockerDaemon()
+      throws IOException, InterruptedException, ExecutionException, RegistryException,
+          CacheDirectoryCreationException, InvalidImageReferenceException {
+    String toImage = dockerHost + ":5000/docker-daemon-multi-platform";
+    Jib.from(
+            RegistryImage.named(
+                "busybox@sha256:4f47c01fa91355af2865ac10fef5bf6ec9c7f42ad2321377c21e844427972977"))
+        .setPlatforms(
+            ImmutableSet.of(new Platform("arm64", "linux"), new Platform("amd64", "linux")))
+        .setEntrypoint("echo", "Hello World")
+        .containerize(
+            Containerizer.to(DockerDaemonImage.named(toImage)).setAllowInsecureRegistries(true));
+
+    String output = new Command("docker", "run", "--rm", toImage).run();
+    Assert.assertEquals("Hello World\n", output);
     imageToDelete = toImage;
   }
 }
