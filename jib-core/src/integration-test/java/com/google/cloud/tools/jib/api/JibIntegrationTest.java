@@ -334,7 +334,6 @@ public class JibIntegrationTest {
     Jib.from("gcr.io/distroless/base@" + KNOWN_OCI_INDEX_SHA)
         .setPlatforms(
             ImmutableSet.of(new Platform("arm64", "linux"), new Platform("amd64", "linux")))
-        // Pushing to registry causes next test to hang.
         .containerize(
             Containerizer.to(
                     RegistryImage.named(dockerHost + ":5000/jib-distroless:multi-platform"))
