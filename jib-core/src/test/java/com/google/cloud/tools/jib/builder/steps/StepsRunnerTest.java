@@ -23,6 +23,7 @@ import com.google.cloud.tools.jib.api.DescriptorDigest;
 import com.google.cloud.tools.jib.builder.ProgressEventDispatcher;
 import com.google.cloud.tools.jib.builder.steps.PullBaseImageStep.ImagesAndRegistryClient;
 import com.google.cloud.tools.jib.configuration.BuildContext;
+import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.global.JibSystemProperties;
 import com.google.cloud.tools.jib.image.DigestOnlyLayer;
 import com.google.cloud.tools.jib.image.Image;
@@ -84,6 +85,7 @@ public class StepsRunnerTest {
   }
 
   @Mock private BuildContext buildContext;
+  @Mock private EventHandlers eventHandlers;
   @Mock private ProgressEventDispatcher.Factory progressDispatcherFactory;
   @Mock private ProgressEventDispatcher progressDispatcher;
   @Mock private ExecutorService executorService;
@@ -203,14 +205,15 @@ public class StepsRunnerTest {
                     Futures.immediateFuture(builtAmd64AndWindowsImage))));
     stepsRunner.buildImages(progressDispatcherFactory);
 
-    Optional<Image> expectedImage = stepsRunner.fetchBuiltImageForLocalBuild("windows", "amd64");
+    Image expectedImage =
+        stepsRunner.fetchBuiltImageForLocalBuild("windows", "amd64", eventHandlers);
 
-    assertThat(expectedImage.get().getOs()).isEqualTo("windows");
-    assertThat(expectedImage.get().getArchitecture()).isEqualTo("amd64");
+    assertThat(expectedImage.getOs()).isEqualTo("windows");
+    assertThat(expectedImage.getArchitecture()).isEqualTo("amd64");
   }
 
   @Test
-  public void testFetchBuildImageForLocalBuild_differentOs()
+  public void testFetchBuildImageForLocalBuild_differentOs_buildImageForFirstPlatform()
       throws ExecutionException, InterruptedException {
     when(builtArm64AndLinuxImage.getArchitecture()).thenReturn("arm64");
     when(builtArm64AndLinuxImage.getOs()).thenReturn("linux");
@@ -225,13 +228,14 @@ public class StepsRunnerTest {
                     Futures.immediateFuture(builtAmd64AndWindowsImage))));
     stepsRunner.buildImages(progressDispatcherFactory);
 
-    Optional<Image> expectedImage = stepsRunner.fetchBuiltImageForLocalBuild("os", "arm64");
+    Image expectedImage = stepsRunner.fetchBuiltImageForLocalBuild("os", "arm64", eventHandlers);
 
-    assertThat(expectedImage.isPresent()).isFalse();
+    assertThat(expectedImage.getOs()).isEqualTo("linux");
+    assertThat(expectedImage.getArchitecture()).isEqualTo("arm64");
   }
 
   @Test
-  public void testFetchBuildImageForLocalBuild_differentArch()
+  public void testFetchBuildImageForLocalBuild_differentArch_buildImageForFirstPlatform()
       throws ExecutionException, InterruptedException {
     when(builtArm64AndLinuxImage.getArchitecture()).thenReturn("arm64");
     when(builtAmd64AndWindowsImage.getArchitecture()).thenReturn("amd64");
@@ -245,9 +249,26 @@ public class StepsRunnerTest {
                     Futures.immediateFuture(builtAmd64AndWindowsImage))));
     stepsRunner.buildImages(progressDispatcherFactory);
 
-    Optional<Image> expectedImage = stepsRunner.fetchBuiltImageForLocalBuild("linux", "arch");
+    Image expectedImage = stepsRunner.fetchBuiltImageForLocalBuild("linux", "arch", eventHandlers);
 
-    assertThat(expectedImage.isPresent()).isFalse();
+    assertThat(expectedImage.getArchitecture()).isEqualTo("arm64");
+  }
+
+  @Test
+  public void testFetchBuildImageForLocalBuild_singleImage_imagePlatformDifferentFromDockerEnv()
+      throws ExecutionException, InterruptedException {
+    when(builtArm64AndLinuxImage.getArchitecture()).thenReturn("arm64");
+    when(builtArm64AndLinuxImage.getOs()).thenReturn("linux");
+    when(executorService.submit(Mockito.any(Callable.class)))
+        .thenReturn(
+            Futures.immediateFuture(
+                ImmutableMap.of(baseImage1, Futures.immediateFuture(builtArm64AndLinuxImage))));
+    stepsRunner.buildImages(progressDispatcherFactory);
+
+    Image expectedImage = stepsRunner.fetchBuiltImageForLocalBuild("linux", "amd64", eventHandlers);
+
+    assertThat(expectedImage.getOs()).isEqualTo("linux");
+    assertThat(expectedImage.getArchitecture()).isEqualTo("arm64");
   }
 
   @Test
