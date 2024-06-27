@@ -17,6 +17,7 @@
 package com.google.cloud.tools.jib.image.json;
 
 import com.google.cloud.tools.jib.api.DescriptorDigest;
+import com.google.cloud.tools.jib.api.buildplan.CompressionAlgorithm;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -63,8 +64,11 @@ public class OciManifestTemplate implements BuildableManifestTemplate {
   private static final String CONTAINER_CONFIGURATION_MEDIA_TYPE =
       "application/vnd.oci.image.config.v1+json";
 
-  /** The OCI layer media type. */
-  private static final String LAYER_MEDIA_TYPE = "application/vnd.oci.image.layer.v1.tar+gzip";
+  private static final String LAYER_MEDIA_TYPE = "application/vnd.oci.image.layer.v1.tar";
+
+  private static final String GZIP_LAYER_MEDIA_TYPE = "application/vnd.oci.image.layer.v1.tar+gzip";
+
+  private static final String ZSTD_LAYER_MEDIA_TYPE = "application/vnd.oci.image.layer.v1.tar+zstd";
 
   private final int schemaVersion = 2;
 
@@ -104,7 +108,25 @@ public class OciManifestTemplate implements BuildableManifestTemplate {
   }
 
   @Override
-  public void addLayer(long size, DescriptorDigest digest) {
-    layers.add(new ContentDescriptorTemplate(LAYER_MEDIA_TYPE, size, digest));
+  public void addLayer(
+      long size, DescriptorDigest digest, CompressionAlgorithm compressionAlgorithm) {
+    String layerMediaType;
+    switch (compressionAlgorithm) {
+      case GZIP:
+        layerMediaType = GZIP_LAYER_MEDIA_TYPE;
+        break;
+      case ZSTD:
+        layerMediaType = ZSTD_LAYER_MEDIA_TYPE;
+        break;
+      case NONE:
+        layerMediaType = LAYER_MEDIA_TYPE;
+        break;
+      default:
+        throw new IllegalArgumentException(
+            "Layer compression algorithm "
+                + compressionAlgorithm
+                + " is not supported with OCI manifests");
+    }
+    layers.add(new ContentDescriptorTemplate(layerMediaType, size, digest));
   }
 }

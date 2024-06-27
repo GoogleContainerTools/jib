@@ -17,6 +17,7 @@
 package com.google.cloud.tools.jib.image.json;
 
 import com.google.cloud.tools.jib.api.DescriptorDigest;
+import com.google.cloud.tools.jib.api.buildplan.CompressionAlgorithm;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import com.google.common.io.Resources;
 import java.io.IOException;
@@ -49,7 +50,57 @@ public class OciManifestTemplateTest {
     manifestJson.addLayer(
         1000_000,
         DescriptorDigest.fromHash(
-            "4945ba5011739b0b98c4a41afe224e417f47c7c99b2ce76830999c9a0861b236"));
+            "4945ba5011739b0b98c4a41afe224e417f47c7c99b2ce76830999c9a0861b236"),
+        CompressionAlgorithm.GZIP);
+
+    // Serializes the JSON object.
+    Assert.assertEquals(expectedJson, JsonTemplateMapper.toUtf8String(manifestJson));
+  }
+
+  @Test
+  public void testToJsonZstd() throws DigestException, IOException, URISyntaxException {
+    // Loads the expected JSON string.
+    Path jsonFile = Paths.get(Resources.getResource("core/json/ocimanifest-zstd.json").toURI());
+    String expectedJson = new String(Files.readAllBytes(jsonFile), StandardCharsets.UTF_8);
+
+    // Creates the JSON object to serialize.
+    OciManifestTemplate manifestJson = new OciManifestTemplate();
+
+    manifestJson.setContainerConfiguration(
+        1000,
+        DescriptorDigest.fromDigest(
+            "sha256:8c662931926fa990b41da3c9f42663a537ccd498130030f9149173a0493832ad"));
+
+    manifestJson.addLayer(
+        1000_000,
+        DescriptorDigest.fromHash(
+            "4945ba5011739b0b98c4a41afe224e417f47c7c99b2ce76830999c9a0861b236"),
+        CompressionAlgorithm.ZSTD);
+
+    // Serializes the JSON object.
+    Assert.assertEquals(expectedJson, JsonTemplateMapper.toUtf8String(manifestJson));
+  }
+
+  @Test
+  public void testToJsonNoCompression() throws DigestException, IOException, URISyntaxException {
+    // Loads the expected JSON string.
+    Path jsonFile =
+        Paths.get(Resources.getResource("core/json/ocimanifest-nocompression.json").toURI());
+    String expectedJson = new String(Files.readAllBytes(jsonFile), StandardCharsets.UTF_8);
+
+    // Creates the JSON object to serialize.
+    OciManifestTemplate manifestJson = new OciManifestTemplate();
+
+    manifestJson.setContainerConfiguration(
+        1000,
+        DescriptorDigest.fromDigest(
+            "sha256:8c662931926fa990b41da3c9f42663a537ccd498130030f9149173a0493832ad"));
+
+    manifestJson.addLayer(
+        1000_000,
+        DescriptorDigest.fromHash(
+            "4945ba5011739b0b98c4a41afe224e417f47c7c99b2ce76830999c9a0861b236"),
+        CompressionAlgorithm.NONE);
 
     // Serializes the JSON object.
     Assert.assertEquals(expectedJson, JsonTemplateMapper.toUtf8String(manifestJson));

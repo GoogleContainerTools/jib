@@ -17,6 +17,7 @@
 package com.google.cloud.tools.jib.image;
 
 import com.google.cloud.tools.jib.api.DescriptorDigest;
+import com.google.cloud.tools.jib.api.buildplan.CompressionAlgorithm;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import org.junit.Assert;
 import org.junit.Test;
@@ -34,7 +35,7 @@ public class LayerTest {
 
   @Test
   public void testNew_reference() throws LayerPropertyNotFoundException {
-    Layer layer = new ReferenceLayer(mockBlobDescriptor, mockDiffId);
+    Layer layer = new ReferenceLayer(mockBlobDescriptor, mockDiffId, CompressionAlgorithm.GZIP);
 
     try {
       layer.getBlob();
