@@ -81,7 +81,10 @@ public class WarFiles {
       return entrypoint;
     }
     if (commonContainerConfigCliOptions.isJettyBaseimage()) {
-      return ImmutableList.of("java", "-jar", "/usr/local/jetty/start.jar");
+      // Since we are using Jetty 12 or later as the default, the deploy module needs to be
+      // specified. See
+      // https://eclipse.dev/jetty/documentation/jetty-12/operations-guide/index.html
+      return ImmutableList.of("java", "-jar", "/usr/local/jetty/start.jar", "--module=ee10-deploy");
     }
     return null;
   }

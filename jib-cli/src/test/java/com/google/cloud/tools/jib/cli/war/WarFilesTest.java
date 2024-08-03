@@ -74,7 +74,7 @@ public class WarFilesTest {
 
     assertThat(buildPlan.getBaseImage()).isEqualTo("jetty");
     assertThat(buildPlan.getEntrypoint())
-        .containsExactly("java", "-jar", "/usr/local/jetty/start.jar")
+        .containsExactly("java", "-jar", "/usr/local/jetty/start.jar", "--module=ee10-deploy")
         .inOrder();
     assertThat(buildPlan.getLayers()).hasSize(1);
     assertThat(buildPlan.getLayers().get(0).getName()).isEqualTo("classes");

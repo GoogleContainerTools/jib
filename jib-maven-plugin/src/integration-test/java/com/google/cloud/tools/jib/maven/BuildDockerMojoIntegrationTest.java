@@ -275,4 +275,14 @@ public class BuildDockerMojoIntegrationTest {
         "Hello, world. \n1970-01-01T00:00:01Z\n",
         new Command("docker", "run", "--rm", targetImage).run());
   }
+
+  @Test
+  public void testMultiPlatform()
+      throws DigestException, VerificationException, IOException, InterruptedException {
+    String targetImage = "multiplatformproject:maven" + System.nanoTime();
+    buildToDockerDaemon(simpleTestProject, targetImage, "pom-multiplatform-build.xml");
+    Assert.assertEquals(
+        "Hello, world. \n1970-01-01T00:00:01Z\n",
+        new Command("docker", "run", "--rm", targetImage).run());
+  }
 }

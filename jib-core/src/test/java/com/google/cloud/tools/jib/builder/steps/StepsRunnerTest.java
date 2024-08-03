@@ -16,16 +16,21 @@
 
 package com.google.cloud.tools.jib.builder.steps;
 
+import static com.google.common.truth.Truth.assertThat;
+import static org.mockito.Mockito.when;
+
 import com.google.cloud.tools.jib.api.DescriptorDigest;
 import com.google.cloud.tools.jib.builder.ProgressEventDispatcher;
 import com.google.cloud.tools.jib.builder.steps.PullBaseImageStep.ImagesAndRegistryClient;
 import com.google.cloud.tools.jib.configuration.BuildContext;
+import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.global.JibSystemProperties;
 import com.google.cloud.tools.jib.image.DigestOnlyLayer;
 import com.google.cloud.tools.jib.image.Image;
 import com.google.cloud.tools.jib.image.json.ManifestTemplate;
 import com.google.cloud.tools.jib.registry.ManifestAndDigest;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.ForwardingExecutorService;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -80,9 +85,14 @@ public class StepsRunnerTest {
   }
 
   @Mock private BuildContext buildContext;
+  @Mock private EventHandlers eventHandlers;
   @Mock private ProgressEventDispatcher.Factory progressDispatcherFactory;
   @Mock private ProgressEventDispatcher progressDispatcher;
   @Mock private ExecutorService executorService;
+  @Mock private Image builtArm64AndLinuxImage;
+  @Mock private Image builtAmd64AndWindowsImage;
+  @Mock private Image baseImage1;
+  @Mock private Image baseImage2;
 
   private StepsRunner stepsRunner;
 
@@ -90,14 +100,14 @@ public class StepsRunnerTest {
   public void setup() {
     stepsRunner = new StepsRunner(new MockListeningExecutorService(), buildContext);
 
-    Mockito.when(progressDispatcherFactory.create(Mockito.anyString(), Mockito.anyLong()))
+    when(progressDispatcherFactory.create(Mockito.anyString(), Mockito.anyLong()))
         .thenReturn(progressDispatcher);
   }
 
   @Test
   public void testObtainBaseImageLayers_skipObtainingDuplicateLayers()
       throws DigestException, InterruptedException, ExecutionException {
-    Mockito.when(executorService.submit(Mockito.any(PullBaseImageStep.class)))
+    when(executorService.submit(Mockito.any(PullBaseImageStep.class)))
         .thenReturn(Futures.immediateFuture(new ImagesAndRegistryClient(null, null)));
     // Pretend that a thread pulling base images returned some (meaningless) result.
     stepsRunner.pullBaseImages(progressDispatcherFactory);
@@ -118,7 +128,7 @@ public class StepsRunnerTest {
     PreparedLayer preparedLayer1 = Mockito.mock(PreparedLayer.class);
     PreparedLayer preparedLayer2 = Mockito.mock(PreparedLayer.class);
     PreparedLayer preparedLayer3 = Mockito.mock(PreparedLayer.class);
-    Mockito.when(executorService.submit(Mockito.any(ObtainBaseImageLayerStep.class)))
+    when(executorService.submit(Mockito.any(ObtainBaseImageLayerStep.class)))
         .thenReturn(Futures.immediateFuture(preparedLayer1))
         .thenReturn(Futures.immediateFuture(preparedLayer2))
         .thenReturn(Futures.immediateFuture(preparedLayer3));
@@ -127,7 +137,7 @@ public class StepsRunnerTest {
 
     // 1. Should schedule two threads to obtain new layers.
     Image image = Mockito.mock(Image.class);
-    Mockito.when(image.getLayers()).thenReturn(ImmutableList.of(layer1, layer2));
+    when(image.getLayers()).thenReturn(ImmutableList.of(layer1, layer2));
 
     stepsRunner.obtainBaseImageLayers(image, true, preparedLayersCache, progressDispatcherFactory);
     Assert.assertEquals(2, preparedLayersCache.size()); // two new layers cached
@@ -141,7 +151,7 @@ public class StepsRunnerTest {
     Assert.assertEquals(preparedLayer2, preparedLayersCache.get(digest2).get());
 
     // 3. Another image with one duplicate layer.
-    Mockito.when(image.getLayers()).thenReturn(ImmutableList.of(layer3, layer2));
+    when(image.getLayers()).thenReturn(ImmutableList.of(layer3, layer2));
     stepsRunner.obtainBaseImageLayers(image, true, preparedLayersCache, progressDispatcherFactory);
     Assert.assertEquals(3, preparedLayersCache.size()); // one new layer cached
     Assert.assertEquals(preparedLayer1, preparedLayersCache.get(digest1).get());
@@ -177,5 +187,102 @@ public class StepsRunnerTest {
     System.setProperty(JibSystemProperties.SKIP_EXISTING_IMAGES, "true");
 
     Assert.assertTrue(stepsRunner.isImagePushed(manifestResult));
+  }
+
+  @Test
+  public void testFetchBuildImageForLocalBuild_matchingOsAndArch()
+      throws ExecutionException, InterruptedException {
+    when(builtArm64AndLinuxImage.getArchitecture()).thenReturn("arm64");
+    when(builtAmd64AndWindowsImage.getArchitecture()).thenReturn("amd64");
+    when(builtAmd64AndWindowsImage.getOs()).thenReturn("windows");
+    when(executorService.submit(Mockito.any(Callable.class)))
+        .thenReturn(
+            Futures.immediateFuture(
+                ImmutableMap.of(
+                    baseImage1,
+                    Futures.immediateFuture(builtArm64AndLinuxImage),
+                    baseImage2,
+                    Futures.immediateFuture(builtAmd64AndWindowsImage))));
+    stepsRunner.buildImages(progressDispatcherFactory);
+
+    Image expectedImage =
+        stepsRunner.fetchBuiltImageForLocalBuild("windows", "amd64", eventHandlers);
+
+    assertThat(expectedImage.getOs()).isEqualTo("windows");
+    assertThat(expectedImage.getArchitecture()).isEqualTo("amd64");
+  }
+
+  @Test
+  public void testFetchBuildImageForLocalBuild_differentOs_buildImageForFirstPlatform()
+      throws ExecutionException, InterruptedException {
+    when(builtArm64AndLinuxImage.getArchitecture()).thenReturn("arm64");
+    when(builtArm64AndLinuxImage.getOs()).thenReturn("linux");
+    when(builtAmd64AndWindowsImage.getArchitecture()).thenReturn("amd64");
+    when(executorService.submit(Mockito.any(Callable.class)))
+        .thenReturn(
+            Futures.immediateFuture(
+                ImmutableMap.of(
+                    baseImage1,
+                    Futures.immediateFuture(builtArm64AndLinuxImage),
+                    baseImage2,
+                    Futures.immediateFuture(builtAmd64AndWindowsImage))));
+    stepsRunner.buildImages(progressDispatcherFactory);
+
+    Image expectedImage = stepsRunner.fetchBuiltImageForLocalBuild("os", "arm64", eventHandlers);
+
+    assertThat(expectedImage.getOs()).isEqualTo("linux");
+    assertThat(expectedImage.getArchitecture()).isEqualTo("arm64");
+  }
+
+  @Test
+  public void testFetchBuildImageForLocalBuild_differentArch_buildImageForFirstPlatform()
+      throws ExecutionException, InterruptedException {
+    when(builtArm64AndLinuxImage.getArchitecture()).thenReturn("arm64");
+    when(builtAmd64AndWindowsImage.getArchitecture()).thenReturn("amd64");
+    when(executorService.submit(Mockito.any(Callable.class)))
+        .thenReturn(
+            Futures.immediateFuture(
+                ImmutableMap.of(
+                    baseImage1,
+                    Futures.immediateFuture(builtArm64AndLinuxImage),
+                    baseImage2,
+                    Futures.immediateFuture(builtAmd64AndWindowsImage))));
+    stepsRunner.buildImages(progressDispatcherFactory);
+
+    Image expectedImage = stepsRunner.fetchBuiltImageForLocalBuild("linux", "arch", eventHandlers);
+
+    assertThat(expectedImage.getArchitecture()).isEqualTo("arm64");
+  }
+
+  @Test
+  public void testFetchBuildImageForLocalBuild_singleImage_imagePlatformDifferentFromDockerEnv()
+      throws ExecutionException, InterruptedException {
+    when(builtArm64AndLinuxImage.getArchitecture()).thenReturn("arm64");
+    when(builtArm64AndLinuxImage.getOs()).thenReturn("linux");
+    when(executorService.submit(Mockito.any(Callable.class)))
+        .thenReturn(
+            Futures.immediateFuture(
+                ImmutableMap.of(baseImage1, Futures.immediateFuture(builtArm64AndLinuxImage))));
+    stepsRunner.buildImages(progressDispatcherFactory);
+
+    Image expectedImage = stepsRunner.fetchBuiltImageForLocalBuild("linux", "amd64", eventHandlers);
+
+    assertThat(expectedImage.getOs()).isEqualTo("linux");
+    assertThat(expectedImage.getArchitecture()).isEqualTo("arm64");
+  }
+
+  @Test
+  public void testNormalizeArchitecture_aarch64() {
+    assertThat(stepsRunner.normalizeArchitecture("aarch64")).isEqualTo("arm64");
+  }
+
+  @Test
+  public void testNormalizeArchitecture_x86_64() {
+    assertThat(stepsRunner.normalizeArchitecture("x86_64")).isEqualTo("amd64");
+  }
+
+  @Test
+  public void testNormalizeArchitecture_arm() {
+    assertThat(stepsRunner.normalizeArchitecture("arm")).isEqualTo("arm");
   }
 }
