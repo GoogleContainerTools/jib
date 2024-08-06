@@ -9,6 +9,16 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
+## 0.13.0
+
+### Added
+
+### Changed
+
+### Fixed
+- fix: support parsing manifest JSON containing `LayerSources:` from latest Docker. ([#4171](https://github.com/GoogleContainerTools/jib/pull/4171))
+- fix: (WAR Containerization) modify default entrypoint to `java -jar /usr/local/jetty/start.jar --module=ee10-deploy` for Jetty 12+ compatibility ([#4216](https://github.com/GoogleContainerTools/jib/pull/4216))
+
 ## 0.12.0
 
 ### Changed

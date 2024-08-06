@@ -474,7 +474,7 @@ public class PluginConfigurationProcessorTest {
     ContainerBuildPlan buildPlan = processCommonConfiguration();
 
     assertThat(buildPlan.getEntrypoint())
-        .containsExactly("java", "-jar", "/usr/local/jetty/start.jar")
+        .containsExactly("java", "-jar", "/usr/local/jetty/start.jar", "--module=ee10-deploy")
         .inOrder();
     verifyNoInteractions(logger);
   }
@@ -704,7 +704,7 @@ public class PluginConfigurationProcessorTest {
     ContainerBuildPlan buildPlan = processCommonConfiguration();
 
     assertThat(buildPlan.getEntrypoint())
-        .containsExactly("java", "-jar", "/usr/local/jetty/start.jar")
+        .containsExactly("java", "-jar", "/usr/local/jetty/start.jar", "--module=ee10-deploy")
         .inOrder();
     verify(projectProperties)
         .log(
@@ -726,7 +726,7 @@ public class PluginConfigurationProcessorTest {
     ContainerBuildPlan buildPlan = processCommonConfiguration();
 
     assertThat(buildPlan.getEntrypoint())
-        .containsExactly("java", "-jar", "/usr/local/jetty/start.jar")
+        .containsExactly("java", "-jar", "/usr/local/jetty/start.jar", "--module=ee10-deploy")
         .inOrder();
     verify(projectProperties)
         .log(
@@ -903,7 +903,8 @@ public class PluginConfigurationProcessorTest {
         "9, eclipse-temurin:11-jre",
         "11, eclipse-temurin:11-jre",
         "13, eclipse-temurin:17-jre",
-        "17, eclipse-temurin:17-jre"
+        "17, eclipse-temurin:17-jre",
+        "21, eclipse-temurin:21-jre"
       })
   public void testGetDefaultBaseImage_defaultJavaBaseImage(
       int javaVersion, String expectedBaseImage) throws IncompatibleBaseImageJavaVersionException {
@@ -913,16 +914,16 @@ public class PluginConfigurationProcessorTest {
   }
 
   @Test
-  public void testGetDefaultBaseImage_projectHigherThanJava17() {
-    when(projectProperties.getMajorJavaVersion()).thenReturn(20);
+  public void testGetDefaultBaseImage_projectHigherThanJava21() {
+    when(projectProperties.getMajorJavaVersion()).thenReturn(22);
 
     IncompatibleBaseImageJavaVersionException exception =
         assertThrows(
             IncompatibleBaseImageJavaVersionException.class,
             () -> PluginConfigurationProcessor.getDefaultBaseImage(projectProperties));
 
-    assertThat(exception.getBaseImageMajorJavaVersion()).isEqualTo(17);
-    assertThat(exception.getProjectMajorJavaVersion()).isEqualTo(20);
+    assertThat(exception.getBaseImageMajorJavaVersion()).isEqualTo(21);
+    assertThat(exception.getProjectMajorJavaVersion()).isEqualTo(22);
   }
 
   @Test
@@ -980,7 +981,9 @@ public class PluginConfigurationProcessorTest {
         "eclipse-temurin:11, 11, 15",
         "eclipse-temurin:11-jre, 11, 15",
         "eclipse-temurin:17, 17, 19",
-        "eclipse-temurin:17-jre, 17, 19"
+        "eclipse-temurin:17-jre, 17, 19",
+        "eclipse-temurin:21, 21, 22",
+        "eclipse-temurin:21-jre, 21, 22"
       })
   public void testGetJavaContainerBuilderWithBaseImage_incompatibleJavaBaseImage(
       String baseImage, int baseImageJavaVersion, int appJavaVersion) {
@@ -1010,8 +1013,8 @@ public class PluginConfigurationProcessorTest {
   }
 
   @Test
-  public void testGetJavaContainerBuilderWithBaseImage_java19NoBaseImage() {
-    when(projectProperties.getMajorJavaVersion()).thenReturn(19);
+  public void testGetJavaContainerBuilderWithBaseImage_java22NoBaseImage() {
+    when(projectProperties.getMajorJavaVersion()).thenReturn(22);
     when(rawConfiguration.getFromImage()).thenReturn(Optional.empty());
     IncompatibleBaseImageJavaVersionException exception =
         assertThrows(
@@ -1019,8 +1022,8 @@ public class PluginConfigurationProcessorTest {
             () ->
                 PluginConfigurationProcessor.getJavaContainerBuilderWithBaseImage(
                     rawConfiguration, projectProperties, inferredAuthProvider));
-    assertThat(exception.getBaseImageMajorJavaVersion()).isEqualTo(17);
-    assertThat(exception.getProjectMajorJavaVersion()).isEqualTo(19);
+    assertThat(exception.getBaseImageMajorJavaVersion()).isEqualTo(21);
+    assertThat(exception.getProjectMajorJavaVersion()).isEqualTo(22);
   }
 
   @Test

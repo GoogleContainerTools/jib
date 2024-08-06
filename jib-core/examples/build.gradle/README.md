@@ -14,7 +14,7 @@ buildscript {
     mavenCentral()
   }
   dependencies {
-    classpath 'com.google.cloud.tools:jib-core:0.25.0'
+    classpath 'com.google.cloud.tools:jib-core:0.27.0'
   }
 }
 
