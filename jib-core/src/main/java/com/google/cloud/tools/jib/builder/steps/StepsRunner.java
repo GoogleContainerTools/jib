@@ -19,12 +19,14 @@ package com.google.cloud.tools.jib.builder.steps;
 import com.google.cloud.tools.jib.api.DescriptorDigest;
 import com.google.cloud.tools.jib.api.DockerClient;
 import com.google.cloud.tools.jib.api.DockerInfoDetails;
+import com.google.cloud.tools.jib.api.LogEvent;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.builder.ProgressEventDispatcher;
 import com.google.cloud.tools.jib.builder.steps.LocalBaseImageSteps.LocalImage;
 import com.google.cloud.tools.jib.builder.steps.PullBaseImageStep.ImagesAndRegistryClient;
 import com.google.cloud.tools.jib.configuration.BuildContext;
 import com.google.cloud.tools.jib.configuration.ImageConfiguration;
+import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.filesystem.TempDirectoryProvider;
 import com.google.cloud.tools.jib.global.JibSystemProperties;
 import com.google.cloud.tools.jib.image.Image;
@@ -53,7 +55,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.function.Consumer;
-import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
@@ -65,8 +66,6 @@ import javax.annotation.Nullable;
  * on the last step by calling the respective {@code wait...} methods.
  */
 public class StepsRunner {
-
-  private static final Logger LOGGER = Logger.getLogger(StepsRunner.class.getName());
 
   /** Holds the individual step results. */
   private static class StepResults {
@@ -624,14 +623,11 @@ public class StepsRunner {
               DockerInfoDetails dockerInfoDetails = dockerClient.info();
               String osType = dockerInfoDetails.getOsType();
               String architecture = normalizeArchitecture(dockerInfoDetails.getArchitecture());
-              Optional<Image> builtImage = fetchBuiltImageForLocalBuild(osType, architecture);
-              Preconditions.checkState(
-                  builtImage.isPresent(),
-                  String.format(
-                      "The configured platforms don't match the Docker Engine's OS and architecture (%s/%s)",
-                      osType, architecture));
+              Image builtImage =
+                  fetchBuiltImageForLocalBuild(
+                      osType, architecture, buildContext.getEventHandlers());
               return new LoadDockerStep(
-                      buildContext, progressDispatcherFactory, dockerClient, builtImage.get())
+                      buildContext, progressDispatcherFactory, dockerClient, builtImage)
                   .call();
             });
   }
@@ -669,21 +665,24 @@ public class StepsRunner {
   }
 
   @VisibleForTesting
-  Optional<Image> fetchBuiltImageForLocalBuild(String osType, String architecture)
+  Image fetchBuiltImageForLocalBuild(
+      String osType, String architecture, EventHandlers eventHandlers)
       throws InterruptedException, ExecutionException {
     if (results.baseImagesAndBuiltImages.get().size() > 1) {
-      LOGGER.warning(
-          String.format(
-              "Detected multi-platform configuration, only building the one that matches the local Docker Engine's os and architecture (%s/%s)",
-              osType, architecture));
-    }
-    for (Map.Entry<Image, Future<Image>> imageEntry :
-        results.baseImagesAndBuiltImages.get().entrySet()) {
-      Image image = imageEntry.getValue().get();
-      if (image.getArchitecture().equals(architecture) && image.getOs().equals(osType)) {
-        return Optional.of(image);
+      eventHandlers.dispatch(
+          LogEvent.warn(
+              String.format(
+                  "Detected multi-platform configuration, only building image that matches the local Docker Engine's os and architecture (%s/%s) or "
+                      + "the first platform specified",
+                  osType, architecture)));
+      for (Map.Entry<Image, Future<Image>> imageEntry :
+          results.baseImagesAndBuiltImages.get().entrySet()) {
+        Image image = imageEntry.getValue().get();
+        if (image.getArchitecture().equals(architecture) && image.getOs().equals(osType)) {
+          return image;
+        }
       }
     }
-    return Optional.empty();
+    return results.baseImagesAndBuiltImages.get().values().iterator().next().get();
   }
 }

@@ -62,11 +62,7 @@ jobs:
         uses: repo-sync/pull-request@v2.12.1
         id: create-pr
         with:
-          # Use a personal token to file a PR to trigger other workflows (e.g., unit tests).
-          # Save your access token as GA_RELEASE_PR_PERSONAL_TOKEN.             
-          # https://docs.github.com/en/actions/reference/events-that-trigger-workflows#triggering-new-workflows-using-a-personal-access-token
-          # https://docs.github.com/en/actions/configuring-and-managing-workflows/creating-and-storing-encrypted-secrets
-          github_token: ${{ secrets.GA_RELEASE_PR_PERSONAL_TOKEN }}
+          github_token: ${{ secrets.CLOUD_JAVA_BOT_GITHUB_TOKEN }}
           source_branch: ${{ github.event.inputs.project }}-release-v${{ github.event.inputs.release_version }}
           pr_title: "${{ github.event.inputs.project }} release v${{ github.event.inputs.release_version }}"
           pr_body: "To be merged after the release is complete."
