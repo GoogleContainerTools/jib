@@ -81,7 +81,7 @@ public class CliDockerClient implements DockerClient {
 
     @Override
     public DescriptorDigest getImageId() throws DigestException {
-      return DescriptorDigest.fromDigest(imageId);
+      return DescriptorDigest.fromDigestOrHash(imageId);
     }
 
     /**
