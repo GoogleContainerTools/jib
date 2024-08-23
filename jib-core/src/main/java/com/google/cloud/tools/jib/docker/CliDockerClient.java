@@ -189,11 +189,12 @@ public class CliDockerClient implements DockerClient {
   public DockerInfoDetails info() throws IOException, InterruptedException {
     // Runs 'docker info'.
     Process infoProcess = docker("info", "-f", "{{json .}}");
+    InputStream inputStream = infoProcess.getInputStream();
     if (infoProcess.waitFor() != 0) {
       throw new IOException(
           "'docker info' command failed with error: " + getStderrOutput(infoProcess));
     }
-    return JsonTemplateMapper.readJson(infoProcess.getInputStream(), DockerInfoDetails.class);
+    return JsonTemplateMapper.readJson(inputStream, DockerInfoDetails.class);
   }
 
   @Override
