@@ -17,6 +17,7 @@
 package com.google.cloud.tools.jib.maven;
 
 import static com.google.common.truth.Truth.assertThat;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
 import com.google.cloud.tools.jib.Command;
@@ -714,7 +715,8 @@ public class BuildImageMojoIntegrationTest {
   @Test
   public void testExecute_multiPlatformBuild()
       throws IOException, VerificationException, RegistryException {
-    String targetImage = dockerHost + ":5000/multiplatform:maven" + System.nanoTime();
+    String standardTag = "maven" + System.nanoTime();
+    String targetImage = dockerHost + ":5000/multiplatform:" + standardTag;
 
     Verifier verifier = new Verifier(simpleTestProject.getProjectRoot().toString());
     verifier.setSystemProperty("_TARGET_IMAGE", targetImage);
@@ -723,6 +725,7 @@ public class BuildImageMojoIntegrationTest {
     verifier.setSystemProperty("jib.to.auth.password", "testpassword");
     verifier.setSystemProperty("sendCredentialsOverHttp", "true");
     verifier.setSystemProperty("jib.allowInsecureRegistries", "true");
+    verifier.setSystemProperty("jib.to.enablePlatformTags", "true");
 
     verifier.setAutoclean(false);
     verifier.addCliOption("--file=pom-multiplatform-build.xml");
@@ -773,6 +776,9 @@ public class BuildImageMojoIntegrationTest {
     assertThat(arm64Config).contains("\"architecture\":\"arm64\"");
     assertThat(arm64Config).contains("\"os\":\"linux\"");
 
+    assertEquals(
+        arm64Digest, registryClient.pullManifest(standardTag + "-arm64").getDigest().toString());
+
     // Check amd64/linux container config.
     List<String> amd64Digests = v22ManifestList.getDigestsForPlatform("amd64", "linux");
     assertThat(amd64Digests.size()).isEqualTo(1);
@@ -787,6 +793,9 @@ public class BuildImageMojoIntegrationTest {
     String amd64Config = Blobs.writeToString(amd64ConfigBlob);
     assertThat(amd64Config).contains("\"architecture\":\"amd64\"");
     assertThat(amd64Config).contains("\"os\":\"linux\"");
+
+    assertEquals(
+        amd64Digest, registryClient.pullManifest(standardTag + "-amd64").getDigest().toString());
   }
 
   private void buildAndRunWebApp(TestProject project, String label, String pomXml)

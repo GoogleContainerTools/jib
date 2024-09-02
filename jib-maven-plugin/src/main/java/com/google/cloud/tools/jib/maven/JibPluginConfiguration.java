@@ -223,6 +223,7 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
     @Parameter private List<String> tags = Collections.emptyList();
     @Parameter private CredHelperParameters credHelper = new CredHelperParameters();
     @Parameter private ToAuthConfiguration auth = new ToAuthConfiguration();
+    @Parameter private boolean enablePlatformTags;
 
     public void set(String image) {
       this.image = image;
@@ -809,6 +810,14 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
 
   boolean isSkipped() {
     return skip;
+  }
+
+  boolean getEnablePlatformTags() {
+    final String property = getProperty(PropertyNames.ENABLE_PLATFORM_TAGS);
+    if (property != null) {
+      return Boolean.parseBoolean(property);
+    }
+    return to.enablePlatformTags;
   }
 
   List<ExtensionParameters> getPluginExtensions() {
