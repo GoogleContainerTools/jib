@@ -274,6 +274,7 @@ Property | Type | Default | Description
 `auth` | [`auth`](#auth-object) | *None* | Specifies credentials directly (alternative to `credHelper`).
 `credHelper` | string | *None* | Specifies a credential helper that can authenticate pushing the target image. This parameter can either be configured as an absolute path to the credential helper executable or as a credential helper suffix (following `docker-credential-`).
 `tags` | list | *None* | Additional tags to push to.
+`enablePlatformTags` | `boolean` | `false` | Sets whether to automatically add architecture suffix to tags for platform-specific images when building multi-platform images. For example, when building amd64 and arm64 images for a given tag, the final tags will be `<tag>-amd64` and `<tag>-arm64`.
 
 <a name="auth-object"></a>`auth` is an object with the following properties (see [Using Specific Credentials](#using-specific-credentials)):
 

@@ -135,7 +135,5 @@ public interface RawConfiguration {
 
   List<? extends ExtensionConfiguration> getPluginExtensions();
 
-  default boolean getEnablePlatformTags() {
-    return false;
-  }
+  boolean getEnablePlatformTags();
 }
