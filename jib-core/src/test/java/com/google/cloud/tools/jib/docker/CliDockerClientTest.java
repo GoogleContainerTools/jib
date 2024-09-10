@@ -311,6 +311,9 @@ public class CliDockerClientTest {
               Assert.assertEquals("inspect", subcommand.get(0));
               return mockProcessBuilder;
             });
+
+    Mockito.when(mockProcess.getInputStream()).thenReturn(InputStream.nullInputStream());
+
     Mockito.when(mockProcess.waitFor()).thenReturn(1);
 
     Mockito.when(mockProcess.getErrorStream())
