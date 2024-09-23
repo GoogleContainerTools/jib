@@ -90,7 +90,7 @@ $ ./jib-cli/build/install/jib/bin/jib
 
 ## Supported Commands
 
-The Jib CLI supports two commands:
+The Jib CLI supports three commands:
  1. `build` - containerizes using a [build file](#fully-annotated-build-file-jibyaml).
  2. `jar` - containerizes JAR files.
  3. `war` - containerizes WAR files.
