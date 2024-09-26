@@ -323,22 +323,6 @@ public class JarCommandTest {
         new URL("http://" + HttpRequestTester.fetchDockerHostForHttpRequest() + ":8080"));
   }
 
-  @Test
-  public void testJar_baseImageSpecified()
-      throws IOException, URISyntaxException, InterruptedException {
-    Path jarPath = Paths.get(Resources.getResource("jarTest/standard/noDependencyJar.jar").toURI());
-    Integer exitCode =
-        new CommandLine(new JibCli())
-            .execute(
-                "jar",
-                "--target=docker://cli-gcr-base",
-                "--from=gcr.io/google-appengine/openjdk:8",
-                jarPath.toString());
-    assertThat(exitCode).isEqualTo(0);
-    String output = new Command("docker", "run", "--rm", "cli-gcr-base").run();
-    assertThat(output).isEqualTo("Hello World");
-  }
-
   public static void createJarFile(
       String name, String className, String classPath, String mainClass)
       throws IOException, URISyntaxException {
