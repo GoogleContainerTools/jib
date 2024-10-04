@@ -88,6 +88,7 @@ public class GradleRawConfigurationTest {
     Mockito.when(containerParameters.getArgs()).thenReturn(Arrays.asList("--log", "info"));
     Mockito.when(containerParameters.getEntrypoint()).thenReturn(Arrays.asList("java", "Main"));
     Mockito.when(environment.get()).thenReturn(Collections.singletonMap("currency", "dollar"));
+    Mockito.when(containerParameters.getEnvironment()).thenReturn(environment);
     Mockito.when(containerParameters.getJvmFlags()).thenReturn(Arrays.asList("-cp", "."));
     Mockito.when(labels.get()).thenReturn(Collections.singletonMap("unit", "cm"));
     Mockito.when(containerParameters.getLabels()).thenReturn(labels);
