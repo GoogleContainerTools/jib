@@ -17,12 +17,20 @@ dependencies {
 project.ext.value = 'original'
 project.ext.jibCreationTime = '1970-01-23T00:23:42Z'
 project.ext.jibFilesModificationTime = '1970-01-23T01:23:42Z'
+project.ext.jibEnvrionment = [
+        "var1": "val1",
+        "var2": "val2"
+]
 
 project.afterEvaluate {
     project.ext.value = 'updated'
     project.ext.getCustomPermissions = { -> return ['/updated': '755'] }
     project.ext.jibCreationTime = '2022-07-19T10:23:42Z'
     project.ext.jibFilesModificationTime = '2022-07-19T11:23:42Z'
+    project.ext.jibEnvrionment = [
+            "var1": "val1updated",
+            "var2": "val2updated"
+    ]
 }
 
 jib {
@@ -38,6 +46,7 @@ jib {
             ]
         }
         entrypoint = project.provider { [project.ext.value] }
+        environment = project.provider { project.ext.jibEnvrionment }
         creationTime = project.provider { project.ext.jibCreationTime }
         filesModificationTime = project.provider { project.ext.jibFilesModificationTime }
         mainClass = project.provider { project.ext.value }
@@ -81,4 +90,9 @@ tasks.register('showMainClass') {
 tasks.register('showJvmFlags') {
     List<String> prop = project.extensions.jib.container.jvmFlags
     println('jvmFlags value ' + prop)
+}
+
+tasks.register('showenvironment') {
+    Map<String, String> prop = project.extensions.getByName('jib')['container']['environment'].get()
+    println('environment contains values ' + prop)
 }

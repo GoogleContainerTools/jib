@@ -40,6 +40,8 @@ public class GradleRawConfigurationTest {
 
   @Mock private MapProperty<String, String> labels;
 
+  @Mock private MapProperty<String, String> environment;
+
   @Test
   public void testGetters() {
     JibExtension jibExtension = Mockito.mock(JibExtension.class);
@@ -85,8 +87,7 @@ public class GradleRawConfigurationTest {
     Mockito.when(containerParameters.getAppRoot()).thenReturn("/app/root");
     Mockito.when(containerParameters.getArgs()).thenReturn(Arrays.asList("--log", "info"));
     Mockito.when(containerParameters.getEntrypoint()).thenReturn(Arrays.asList("java", "Main"));
-    Mockito.when(containerParameters.getEnvironment())
-        .thenReturn(new HashMap<>(ImmutableMap.of("currency", "dollar")));
+    Mockito.when(environment.get()).thenReturn(Collections.singletonMap("currency", "dollar"));
     Mockito.when(containerParameters.getJvmFlags()).thenReturn(Arrays.asList("-cp", "."));
     Mockito.when(labels.get()).thenReturn(Collections.singletonMap("unit", "cm"));
     Mockito.when(containerParameters.getLabels()).thenReturn(labels);
