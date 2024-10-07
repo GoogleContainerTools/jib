@@ -370,8 +370,8 @@ public class JibPluginTest {
 
   @Test
   public void testLazyEvalForEnvironment() {
-    BuildResult showLabels = testProject.build("showenvironment", "-Djib.console=plain");
-    assertThat(showLabels.getOutput())
+    BuildResult showEnvironment = testProject.build("showenvironment", "-Djib.console=plain");
+    assertThat(showEnvironment.getOutput())
             .contains(
                     "environment contains values [var1:val1updated, var2:val2updated]");
   }

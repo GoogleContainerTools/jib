@@ -113,10 +113,10 @@ public class ContainerParameters {
   public MapProperty<String, String> getEnvironment() {
     String environmentProperty = System.getProperty(PropertyNames.CONTAINER_ENVIRONMENT);
     if (environmentProperty != null) {
-      Map<String, String> parsedLabels =
+      Map<String, String> parsedEnvironment =
               ConfigurationPropertyValidator.parseMapProperty(environmentProperty);
-      if (!parsedLabels.equals(environment.get())) {
-        environment.set(parsedLabels);
+      if (!parsedEnvironment.equals(environment.get())) {
+        environment.set(parsedEnvironment);
       }
     }
     return environment;
