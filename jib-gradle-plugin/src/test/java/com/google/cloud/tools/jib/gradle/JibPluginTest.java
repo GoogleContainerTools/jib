@@ -373,7 +373,7 @@ public class JibPluginTest {
     BuildResult showEnvironment = testProject.build("showenvironment", "-Djib.console=plain");
     assertThat(showEnvironment.getOutput())
             .contains(
-                    "environment contains values [var1:val1updated, var2:val2updated]");
+                    "environment contains values [var1:updated-first-environment-var, var2:updated-second-environment-var]");
   }
 
   @Test

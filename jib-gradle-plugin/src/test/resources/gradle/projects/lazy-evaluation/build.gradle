@@ -27,10 +27,6 @@ project.afterEvaluate {
     project.ext.getCustomPermissions = { -> return ['/updated': '755'] }
     project.ext.jibCreationTime = '2022-07-19T10:23:42Z'
     project.ext.jibFilesModificationTime = '2022-07-19T11:23:42Z'
-    project.ext.jibEnvrionment = [
-            "var1": "val1updated",
-            "var2": "val2updated"
-    ]
 }
 
 jib {
@@ -46,7 +42,12 @@ jib {
             ]
         }
         entrypoint = project.provider { [project.ext.value] }
-        environment = project.provider { project.ext.jibEnvrionment }
+        environment = project.provider {
+            [
+                    var1 : project.ext.value + '-first-environment-var',
+                    var2: project.ext.value + '-second-environment-var'
+            ]
+        }
         creationTime = project.provider { project.ext.jibCreationTime }
         filesModificationTime = project.provider { project.ext.jibFilesModificationTime }
         mainClass = project.provider { project.ext.value }
