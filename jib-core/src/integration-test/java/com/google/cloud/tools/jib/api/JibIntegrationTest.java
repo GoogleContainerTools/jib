@@ -57,6 +57,8 @@ public class JibIntegrationTest {
 
   @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
+  private String imageToDelete;
+
   private final String dockerHost =
       System.getenv("DOCKER_IP") != null ? System.getenv("DOCKER_IP") : "localhost";
 
@@ -101,8 +103,11 @@ public class JibIntegrationTest {
   }
 
   @After
-  public void tearDown() {
+  public void tearDown() throws IOException, InterruptedException {
     System.clearProperty("sendCredentialsOverHttp");
+    if (imageToDelete != null) {
+      new Command("docker", "rmi", imageToDelete).run();
+    }
   }
 
   @Test
@@ -119,6 +124,7 @@ public class JibIntegrationTest {
     Assert.assertEquals("Hello World\n", pullAndRunBuiltImage(toImage));
     Assert.assertEquals(
         "Hello World\n", pullAndRunBuiltImage(toImage + "@" + jibContainer.getDigest()));
+    imageToDelete = toImage;
   }
 
   @Test
@@ -135,20 +141,21 @@ public class JibIntegrationTest {
     Assert.assertEquals("Hello World\n", pullAndRunBuiltImage(toImage));
     Assert.assertEquals(
         "Hello World\n", pullAndRunBuiltImage(toImage + "@" + jibContainer.getDigest()));
+    imageToDelete = toImage;
   }
 
   @Test
   public void testBasic_dockerDaemonBaseImageToDockerDaemon()
       throws IOException, InterruptedException, InvalidImageReferenceException, ExecutionException,
           RegistryException, CacheDirectoryCreationException {
+    String toImage = dockerHost + ":5000/docker-to-docker";
     Jib.from(DockerDaemonImage.named(dockerHost + ":5000/busybox"))
         .setEntrypoint("echo", "Hello World")
-        .containerize(
-            Containerizer.to(DockerDaemonImage.named(dockerHost + ":5000/docker-to-docker")));
+        .containerize(Containerizer.to(DockerDaemonImage.named(toImage)));
 
-    String output =
-        new Command("docker", "run", "--rm", dockerHost + ":5000/docker-to-docker").run();
+    String output = new Command("docker", "run", "--rm", toImage).run();
     Assert.assertEquals("Hello World\n", output);
+    imageToDelete = toImage;
   }
 
   @Test
@@ -168,6 +175,7 @@ public class JibIntegrationTest {
     Assert.assertEquals("Hello World\n", pullAndRunBuiltImage(toImage));
     Assert.assertEquals(
         "Hello World\n", pullAndRunBuiltImage(toImage + "@" + jibContainer.getDigest()));
+    imageToDelete = toImage;
   }
 
   @Test
@@ -230,6 +238,7 @@ public class JibIntegrationTest {
     Assert.assertEquals("Hello World\n", pullAndRunBuiltImage(toImage));
     Assert.assertEquals(
         "Hello World\n", pullAndRunBuiltImage(toImage + "@" + jibContainer.getDigest()));
+    imageToDelete = toImage;
   }
 
   @Test
@@ -302,6 +311,20 @@ public class JibIntegrationTest {
     Assert.assertEquals("windows", platform1.getOs());
     Assert.assertEquals("amd32", platform2.getArchitecture());
     Assert.assertEquals("windows", platform2.getOs());
+  }
+
+  @Test
+  public void testBasic_jibImageToDockerDaemon()
+      throws IOException, InterruptedException, InvalidImageReferenceException, ExecutionException,
+          RegistryException, CacheDirectoryCreationException {
+    String toImage = dockerHost + ":5000/docker-to-docker";
+    Jib.from(DockerDaemonImage.named(dockerHost + ":5000/busybox"))
+        .setEntrypoint("echo", "Hello World")
+        .containerize(Containerizer.to(DockerDaemonImage.named(toImage)));
+
+    String output = new Command("docker", "run", "--rm", toImage).run();
+    Assert.assertEquals("Hello World\n", output);
+    imageToDelete = toImage;
   }
 
   @Test

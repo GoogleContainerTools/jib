@@ -4,13 +4,23 @@ All notable changes to this project will be documented in this file.
 ## [unreleased]
 
 ### Added
--
+
+### Changed
+
+### Fixed
+
+## 3.4.3
+
+### Fixed
+- fix: When building to the local docker daemon with multiple platforms configured, Jib will now automatically select the image that matches the OS type and architecture of the local Docker environment. ([#4249](https://github.com/GoogleContainerTools/jib/pull/4249))
+
+## 3.4.2
 
 ### Changed
 - deps: bump org.apache.commons:commons-compress from 1.21 to 1.26.0 ([#4204](https://github.com/GoogleContainerTools/jib/pull/4204))
 
 ### Fixed
-- fix: image builds should become reproducible once again ([#4204](https://github.com/GoogleContainerTools/jib/pull/4204))
+- fix: set PAX headers to address build reproducibility issue ([#4204](https://github.com/GoogleContainerTools/jib/pull/4204))
 - fix: (WAR Containerization) modify default entrypoint to `java -jar /usr/local/jetty/start.jar --module=ee10-deploy` for Jetty 12+ compatibility ([#4216](https://github.com/GoogleContainerTools/jib/pull/4216))
 
 ## 3.4.1
