@@ -112,7 +112,7 @@ public class CliDockerClient implements DockerClient {
   /**
    * 10 minute timeout to ensure that Jib doesn't get stuck indefinitely when expecting a docker output
    */
-  public static final Long DOCKER_OUTPUT_TIMEOUT = (long) 10;
+  public static final Long DOCKER_OUTPUT_TIMEOUT = (long) 10 * 60 * 1000;
 
   /**
    * Checks if Docker is installed on the user's system by running the `docker` command.
