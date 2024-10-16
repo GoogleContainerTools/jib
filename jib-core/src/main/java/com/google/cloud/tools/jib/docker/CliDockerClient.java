@@ -110,7 +110,8 @@ public class CliDockerClient implements DockerClient {
   public static final Path DEFAULT_DOCKER_CLIENT = Paths.get("docker");
 
   /**
-   * 10 minute timeout to ensure that Jib doesn't get stuck indefinitely when expecting a docker output
+   * 10 minute timeout to ensure that Jib doesn't get stuck indefinitely when expecting a docker
+   * output.
    */
   public static final Long DOCKER_OUTPUT_TIMEOUT = (long) 10 * 60 * 1000;
 
@@ -293,7 +294,7 @@ public class CliDockerClient implements DockerClient {
     InputStream inputStream = infoProcess.getInputStream();
     if (infoProcess.waitFor() != 0) {
       throw new IOException(
-              "'docker info' command failed with error: " + getStderrOutput(infoProcess));
+          "'docker info' command failed with error: " + getStderrOutput(infoProcess));
     }
     return JsonTemplateMapper.readJson(inputStream, DockerInfoDetails.class);
   }
