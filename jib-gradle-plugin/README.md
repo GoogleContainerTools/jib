@@ -511,6 +511,7 @@ jib {
   from {
     image = 'aws_account_id.dkr.ecr.region.amazonaws.com/my-base-image'
     credHelper = 'ecr-login'
+    // For Kotlin build files, use setCredHelper('ecr-login')
   }
   to {
     image = 'gcr.io/my-gcp-project/my-app'
