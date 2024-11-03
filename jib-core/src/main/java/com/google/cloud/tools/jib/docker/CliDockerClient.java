@@ -277,11 +277,20 @@ public class CliDockerClient implements DockerClient {
       throws IOException, InterruptedException {
     Process inspectProcess =
         docker("inspect", "-f", "{{json .}}", "--type", "image", imageReference.toString());
-    if (inspectProcess.waitFor() != 0) {
-      throw new IOException(
-          "'docker inspect' command failed with error: " + getStderrOutput(inspectProcess));
+
+    try (InputStreamReader stdout =
+        new InputStreamReader(inspectProcess.getInputStream(), StandardCharsets.UTF_8)) {
+
+      // CharStreams.toString() will block until the end of stream is reached.
+      String output = CharStreams.toString(stdout);
+
+      if (inspectProcess.waitFor() != 0) {
+        throw new IOException(
+            "'docker inspect' command failed with error: " + getStderrOutput(inspectProcess));
+      }
+
+      return JsonTemplateMapper.readJson(output, DockerImageDetails.class);
     }
-    return JsonTemplateMapper.readJson(inspectProcess.getInputStream(), DockerImageDetails.class);
   }
 
   /** Runs a {@code docker} command. */
