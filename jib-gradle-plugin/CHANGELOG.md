@@ -8,6 +8,7 @@ All notable changes to this project will be documented in this file.
 ### Changed
 
 ### Fixed
+- fix: support parsing manifest config JSON containing `data:`. ([#4346](https://github.com/GoogleContainerTools/jib/pull/4346))
 
 ## 3.4.4
 - fix: allow pushing images with different arch/os to docker daemon [#4265](https://github.com/GoogleContainerTools/jib/issues/4265)
