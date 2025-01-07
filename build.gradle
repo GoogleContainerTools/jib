@@ -118,7 +118,7 @@ subprojects {
   /* ERROR PRONE */
   dependencies {
     // NullAway errorprone plugin
-    annotationProcessor 'com.uber.nullaway:nullaway:0.10.7'
+    annotationProcessor 'com.uber.nullaway:nullaway:0.12.3'
     errorprone 'com.google.errorprone:error_prone_core:2.10.0'
     // Using github.com/google/error-prone-javac is required when running on
     // JDK 8. Remove when migrating to JDK 11.
