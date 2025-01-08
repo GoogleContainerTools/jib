@@ -43,7 +43,8 @@ import org.mockito.junit.MockitoJUnitRunner;
 public class JibPluginConfigurationTest {
 
   private final MavenProject project = new MavenProject();
-  private final Properties sessionProperties = new Properties();
+  private final Properties sessionUserProperties = new Properties();
+  private final Properties sessionSystemProperties = new Properties();
   @Mock private MavenSession session;
   @Mock private Log log;
   @Mock private Build build;
@@ -51,7 +52,8 @@ public class JibPluginConfigurationTest {
 
   @Before
   public void setup() {
-    when(session.getSystemProperties()).thenReturn(sessionProperties);
+    when(session.getUserProperties()).thenReturn(sessionUserProperties);
+    when(session.getSystemProperties()).thenReturn(sessionSystemProperties);
     when(build.getDirectory()).thenReturn("/test/directory");
     testPluginConfiguration =
         new JibPluginConfiguration() {
@@ -93,13 +95,13 @@ public class JibPluginConfigurationTest {
 
   @Test
   public void testSystemProperties() {
-    sessionProperties.put("jib.from.image", "fromImage");
+    sessionSystemProperties.put("jib.from.image", "fromImage");
     assertThat(testPluginConfiguration.getBaseImage()).isEqualTo("fromImage");
-    sessionProperties.put("jib.from.credHelper", "credHelper");
+    sessionSystemProperties.put("jib.from.credHelper", "credHelper");
     assertThat(testPluginConfiguration.getBaseImageCredHelperConfig().getHelperName().get())
         .isEqualTo("credHelper");
 
-    sessionProperties.put("jib.from.platforms", "linux/amd64,darwin/arm64");
+    sessionSystemProperties.put("jib.from.platforms", "linux/amd64,darwin/arm64");
     List<PlatformParameters> platforms = testPluginConfiguration.getPlatforms();
     assertThat(platforms).hasSize(2);
     assertThat(platforms.get(0).getOsName()).hasValue("linux");
@@ -107,69 +109,69 @@ public class JibPluginConfigurationTest {
     assertThat(platforms.get(1).getOsName()).hasValue("darwin");
     assertThat(platforms.get(1).getArchitectureName()).hasValue("arm64");
 
-    sessionProperties.put("image", "toImage");
+    sessionSystemProperties.put("image", "toImage");
     assertThat(testPluginConfiguration.getTargetImage()).isEqualTo("toImage");
-    sessionProperties.remove("image");
-    sessionProperties.put("jib.to.image", "toImage2");
+    sessionSystemProperties.remove("image");
+    sessionSystemProperties.put("jib.to.image", "toImage2");
     assertThat(testPluginConfiguration.getTargetImage()).isEqualTo("toImage2");
-    sessionProperties.put("jib.to.tags", "tag1,tag2,tag3");
+    sessionSystemProperties.put("jib.to.tags", "tag1,tag2,tag3");
     assertThat(testPluginConfiguration.getTargetImageAdditionalTags())
         .containsExactly("tag1", "tag2", "tag3");
-    sessionProperties.put("jib.to.credHelper", "credHelper");
+    sessionSystemProperties.put("jib.to.credHelper", "credHelper");
     assertThat(testPluginConfiguration.getTargetImageCredentialHelperConfig().getHelperName().get())
         .isEqualTo("credHelper");
 
-    sessionProperties.put("jib.container.appRoot", "appRoot");
+    sessionSystemProperties.put("jib.container.appRoot", "appRoot");
     assertThat(testPluginConfiguration.getAppRoot()).isEqualTo("appRoot");
-    sessionProperties.put("jib.container.args", "arg1,arg2,arg3");
+    sessionSystemProperties.put("jib.container.args", "arg1,arg2,arg3");
     assertThat(testPluginConfiguration.getArgs()).containsExactly("arg1", "arg2", "arg3").inOrder();
-    sessionProperties.put("jib.container.entrypoint", "entry1,entry2,entry3");
+    sessionSystemProperties.put("jib.container.entrypoint", "entry1,entry2,entry3");
     assertThat(testPluginConfiguration.getEntrypoint())
         .containsExactly("entry1", "entry2", "entry3")
         .inOrder();
-    sessionProperties.put("jib.container.environment", "env1=val1,env2=val2");
+    sessionSystemProperties.put("jib.container.environment", "env1=val1,env2=val2");
     assertThat(testPluginConfiguration.getEnvironment())
         .containsExactly("env1", "val1", "env2", "val2")
         .inOrder();
-    sessionProperties.put("jib.container.format", "format");
+    sessionSystemProperties.put("jib.container.format", "format");
     assertThat(testPluginConfiguration.getFormat()).isEqualTo("format");
-    sessionProperties.put("jib.container.jvmFlags", "flag1,flag2,flag3");
+    sessionSystemProperties.put("jib.container.jvmFlags", "flag1,flag2,flag3");
     assertThat(testPluginConfiguration.getJvmFlags())
         .containsExactly("flag1", "flag2", "flag3")
         .inOrder();
-    sessionProperties.put("jib.container.labels", "label1=val1,label2=val2");
+    sessionSystemProperties.put("jib.container.labels", "label1=val1,label2=val2");
     assertThat(testPluginConfiguration.getLabels())
         .containsExactly("label1", "val1", "label2", "val2")
         .inOrder();
-    sessionProperties.put("jib.container.mainClass", "main");
+    sessionSystemProperties.put("jib.container.mainClass", "main");
     assertThat(testPluginConfiguration.getMainClass()).isEqualTo("main");
-    sessionProperties.put("jib.container.ports", "port1,port2,port3");
+    sessionSystemProperties.put("jib.container.ports", "port1,port2,port3");
     assertThat(testPluginConfiguration.getExposedPorts())
         .containsExactly("port1", "port2", "port3")
         .inOrder();
     ;
-    sessionProperties.put("jib.container.user", "myUser");
+    sessionSystemProperties.put("jib.container.user", "myUser");
     assertThat(testPluginConfiguration.getUser()).isEqualTo("myUser");
-    sessionProperties.put("jib.container.workingDirectory", "/working/directory");
+    sessionSystemProperties.put("jib.container.workingDirectory", "/working/directory");
     assertThat(testPluginConfiguration.getWorkingDirectory()).isEqualTo("/working/directory");
-    sessionProperties.put("jib.container.filesModificationTime", "2011-12-03T22:42:05Z");
+    sessionSystemProperties.put("jib.container.filesModificationTime", "2011-12-03T22:42:05Z");
     assertThat(testPluginConfiguration.getFilesModificationTime())
         .isEqualTo("2011-12-03T22:42:05Z");
-    sessionProperties.put("jib.container.creationTime", "2011-12-03T22:42:05Z");
+    sessionSystemProperties.put("jib.container.creationTime", "2011-12-03T22:42:05Z");
     assertThat(testPluginConfiguration.getCreationTime()).isEqualTo("2011-12-03T22:42:05Z");
-    sessionProperties.put("jib.container.extraClasspath", "/foo,/bar");
+    sessionSystemProperties.put("jib.container.extraClasspath", "/foo,/bar");
     assertThat(testPluginConfiguration.getExtraClasspath())
         .containsExactly("/foo", "/bar")
         .inOrder();
-    sessionProperties.put("jib.container.expandClasspathDependencies", "true");
+    sessionSystemProperties.put("jib.container.expandClasspathDependencies", "true");
     assertThat(testPluginConfiguration.getExpandClasspathDependencies()).isTrue();
-    sessionProperties.put("jib.containerizingMode", "packaged");
+    sessionSystemProperties.put("jib.containerizingMode", "packaged");
     assertThat(testPluginConfiguration.getContainerizingMode()).isEqualTo("packaged");
 
-    sessionProperties.put("jib.dockerClient.executable", "test-exec");
+    sessionSystemProperties.put("jib.dockerClient.executable", "test-exec");
     assertThat(testPluginConfiguration.getDockerClientExecutable())
         .isEqualTo(Paths.get("test-exec"));
-    sessionProperties.put("jib.dockerClient.environment", "env1=val1,env2=val2");
+    sessionSystemProperties.put("jib.dockerClient.environment", "env1=val1,env2=val2");
     assertThat(testPluginConfiguration.getDockerClientEnvironment())
         .containsExactly("env1", "val1", "env2", "val2")
         .inOrder();
@@ -177,18 +179,18 @@ public class JibPluginConfigurationTest {
 
   @Test
   public void testSystemPropertiesWithInvalidPlatform() {
-    sessionProperties.put("jib.from.platforms", "linux /amd64");
+    sessionSystemProperties.put("jib.from.platforms", "linux /amd64");
     assertThrows(IllegalArgumentException.class, testPluginConfiguration::getPlatforms);
   }
 
   @Test
   public void testSystemPropertiesExtraDirectories() {
-    sessionProperties.put("jib.extraDirectories.paths", "custom-jib");
+    sessionSystemProperties.put("jib.extraDirectories.paths", "custom-jib");
     assertThat(testPluginConfiguration.getExtraDirectories()).hasSize(1);
     assertThat(testPluginConfiguration.getExtraDirectories().get(0).getFrom())
         .isEqualTo(Paths.get("custom-jib"));
     assertThat(testPluginConfiguration.getExtraDirectories().get(0).getInto()).isEqualTo("/");
-    sessionProperties.put("jib.extraDirectories.permissions", "/test/file1=123,/another/file=456");
+    sessionSystemProperties.put("jib.extraDirectories.permissions", "/test/file1=123,/another/file=456");
     List<PermissionConfiguration> permissions =
         testPluginConfiguration.getExtraDirectoryPermissions();
     assertThat(permissions.get(0).getFile()).hasValue("/test/file1");
@@ -200,23 +202,23 @@ public class JibPluginConfigurationTest {
   @Test
   public void testSystemPropertiesOutputPaths() {
     // Absolute paths
-    sessionProperties.put("jib.outputPaths.digest", "/digest/path");
+    sessionSystemProperties.put("jib.outputPaths.digest", "/digest/path");
     assertThat(testPluginConfiguration.getDigestOutputPath()).isEqualTo(Paths.get("/digest/path"));
-    sessionProperties.put("jib.outputPaths.imageId", "/id/path");
+    sessionSystemProperties.put("jib.outputPaths.imageId", "/id/path");
     assertThat(testPluginConfiguration.getImageIdOutputPath()).isEqualTo(Paths.get("/id/path"));
-    sessionProperties.put("jib.outputPaths.tar", "/tar/path");
+    sessionSystemProperties.put("jib.outputPaths.tar", "/tar/path");
     assertThat(testPluginConfiguration.getTarOutputPath()).isEqualTo(Paths.get("/tar/path"));
     // Relative paths
-    sessionProperties.put("jib.outputPaths.digest", "digest/path");
+    sessionSystemProperties.put("jib.outputPaths.digest", "digest/path");
     assertThat(testPluginConfiguration.getDigestOutputPath())
         .isEqualTo(Paths.get("/repository/project/digest/path"));
-    sessionProperties.put("jib.outputPaths.imageId", "id/path");
+    sessionSystemProperties.put("jib.outputPaths.imageId", "id/path");
     assertThat(testPluginConfiguration.getImageIdOutputPath())
         .isEqualTo(Paths.get("/repository/project/id/path"));
-    sessionProperties.put("jib.outputPaths.imageJson", "json/path");
+    sessionSystemProperties.put("jib.outputPaths.imageJson", "json/path");
     assertThat(testPluginConfiguration.getImageJsonOutputPath())
         .isEqualTo(Paths.get("/repository/project/json/path"));
-    sessionProperties.put("jib.outputPaths.tar", "tar/path");
+    sessionSystemProperties.put("jib.outputPaths.tar", "tar/path");
     assertThat(testPluginConfiguration.getTarOutputPath())
         .isEqualTo(Paths.get("/repository/project/tar/path"));
   }
@@ -330,10 +332,160 @@ public class JibPluginConfigurationTest {
   }
 
   @Test
+  public void testUserProperties() {
+    sessionUserProperties.put("jib.from.image", "fromImage");
+    assertThat(testPluginConfiguration.getBaseImage()).isEqualTo("fromImage");
+    sessionUserProperties.put("jib.from.credHelper", "credHelper");
+    assertThat(testPluginConfiguration.getBaseImageCredHelperConfig().getHelperName().get())
+        .isEqualTo("credHelper");
+
+    sessionUserProperties.put("jib.from.platforms", "linux/amd64,darwin/arm64");
+    List<PlatformParameters> platforms = testPluginConfiguration.getPlatforms();
+    assertThat(platforms).hasSize(2);
+    assertThat(platforms.get(0).getOsName()).hasValue("linux");
+    assertThat(platforms.get(0).getArchitectureName()).hasValue("amd64");
+    assertThat(platforms.get(1).getOsName()).hasValue("darwin");
+    assertThat(platforms.get(1).getArchitectureName()).hasValue("arm64");
+
+    sessionUserProperties.put("image", "toImage");
+    assertThat(testPluginConfiguration.getTargetImage()).isEqualTo("toImage");
+    sessionUserProperties.remove("image");
+    sessionUserProperties.put("jib.to.image", "toImage2");
+    assertThat(testPluginConfiguration.getTargetImage()).isEqualTo("toImage2");
+    sessionUserProperties.put("jib.to.tags", "tag1,tag2,tag3");
+    assertThat(testPluginConfiguration.getTargetImageAdditionalTags())
+        .containsExactly("tag1", "tag2", "tag3");
+    sessionUserProperties.put("jib.to.credHelper", "credHelper");
+    assertThat(testPluginConfiguration.getTargetImageCredentialHelperConfig().getHelperName().get())
+        .isEqualTo("credHelper");
+
+    sessionUserProperties.put("jib.container.appRoot", "appRoot");
+    assertThat(testPluginConfiguration.getAppRoot()).isEqualTo("appRoot");
+    sessionUserProperties.put("jib.container.args", "arg1,arg2,arg3");
+    assertThat(testPluginConfiguration.getArgs()).containsExactly("arg1", "arg2", "arg3").inOrder();
+    sessionUserProperties.put("jib.container.entrypoint", "entry1,entry2,entry3");
+    assertThat(testPluginConfiguration.getEntrypoint())
+        .containsExactly("entry1", "entry2", "entry3")
+        .inOrder();
+    sessionUserProperties.put("jib.container.environment", "env1=val1,env2=val2");
+    assertThat(testPluginConfiguration.getEnvironment())
+        .containsExactly("env1", "val1", "env2", "val2")
+        .inOrder();
+    sessionUserProperties.put("jib.container.format", "format");
+    assertThat(testPluginConfiguration.getFormat()).isEqualTo("format");
+    sessionUserProperties.put("jib.container.jvmFlags", "flag1,flag2,flag3");
+    assertThat(testPluginConfiguration.getJvmFlags())
+        .containsExactly("flag1", "flag2", "flag3")
+        .inOrder();
+    sessionUserProperties.put("jib.container.labels", "label1=val1,label2=val2");
+    assertThat(testPluginConfiguration.getLabels())
+        .containsExactly("label1", "val1", "label2", "val2")
+        .inOrder();
+    sessionUserProperties.put("jib.container.mainClass", "main");
+    assertThat(testPluginConfiguration.getMainClass()).isEqualTo("main");
+    sessionUserProperties.put("jib.container.ports", "port1,port2,port3");
+    assertThat(testPluginConfiguration.getExposedPorts())
+        .containsExactly("port1", "port2", "port3")
+        .inOrder();
+    ;
+    sessionUserProperties.put("jib.container.user", "myUser");
+    assertThat(testPluginConfiguration.getUser()).isEqualTo("myUser");
+    sessionUserProperties.put("jib.container.workingDirectory", "/working/directory");
+    assertThat(testPluginConfiguration.getWorkingDirectory()).isEqualTo("/working/directory");
+    sessionUserProperties.put("jib.container.filesModificationTime", "2011-12-03T22:42:05Z");
+    assertThat(testPluginConfiguration.getFilesModificationTime())
+        .isEqualTo("2011-12-03T22:42:05Z");
+    sessionUserProperties.put("jib.container.creationTime", "2011-12-03T22:42:05Z");
+    assertThat(testPluginConfiguration.getCreationTime()).isEqualTo("2011-12-03T22:42:05Z");
+    sessionUserProperties.put("jib.container.extraClasspath", "/foo,/bar");
+    assertThat(testPluginConfiguration.getExtraClasspath())
+        .containsExactly("/foo", "/bar")
+        .inOrder();
+    sessionUserProperties.put("jib.container.expandClasspathDependencies", "true");
+    assertThat(testPluginConfiguration.getExpandClasspathDependencies()).isTrue();
+    sessionUserProperties.put("jib.containerizingMode", "packaged");
+    assertThat(testPluginConfiguration.getContainerizingMode()).isEqualTo("packaged");
+
+    sessionUserProperties.put("jib.dockerClient.executable", "test-exec");
+    assertThat(testPluginConfiguration.getDockerClientExecutable())
+        .isEqualTo(Paths.get("test-exec"));
+    sessionUserProperties.put("jib.dockerClient.environment", "env1=val1,env2=val2");
+    assertThat(testPluginConfiguration.getDockerClientEnvironment())
+        .containsExactly("env1", "val1", "env2", "val2")
+        .inOrder();
+  }
+
+  @Test
+  public void testUserPropertiesWithInvalidPlatform() {
+    sessionUserProperties.put("jib.from.platforms", "linux /amd64");
+    assertThrows(IllegalArgumentException.class, testPluginConfiguration::getPlatforms);
+  }
+
+  @Test
+  public void testUserPropertiesExtraDirectories() {
+    sessionUserProperties.put("jib.extraDirectories.paths", "custom-jib");
+    assertThat(testPluginConfiguration.getExtraDirectories()).hasSize(1);
+    assertThat(testPluginConfiguration.getExtraDirectories().get(0).getFrom())
+        .isEqualTo(Paths.get("custom-jib"));
+    assertThat(testPluginConfiguration.getExtraDirectories().get(0).getInto()).isEqualTo("/");
+    sessionUserProperties.put("jib.extraDirectories.permissions", "/test/file1=123,/another/file=456");
+    List<PermissionConfiguration> permissions =
+        testPluginConfiguration.getExtraDirectoryPermissions();
+    assertThat(permissions.get(0).getFile()).hasValue("/test/file1");
+    assertThat(permissions.get(0).getMode()).hasValue("123");
+    assertThat(permissions.get(1).getFile()).hasValue("/another/file");
+    assertThat(permissions.get(1).getMode()).hasValue("456");
+  }
+
+  @Test
+  public void testUserPropertiesOutputPaths() {
+    // Absolute paths
+    sessionUserProperties.put("jib.outputPaths.digest", "/digest/path");
+    assertThat(testPluginConfiguration.getDigestOutputPath()).isEqualTo(Paths.get("/digest/path"));
+    sessionUserProperties.put("jib.outputPaths.imageId", "/id/path");
+    assertThat(testPluginConfiguration.getImageIdOutputPath()).isEqualTo(Paths.get("/id/path"));
+    sessionUserProperties.put("jib.outputPaths.tar", "/tar/path");
+    assertThat(testPluginConfiguration.getTarOutputPath()).isEqualTo(Paths.get("/tar/path"));
+    // Relative paths
+    sessionUserProperties.put("jib.outputPaths.digest", "digest/path");
+    assertThat(testPluginConfiguration.getDigestOutputPath())
+        .isEqualTo(Paths.get("/repository/project/digest/path"));
+    sessionUserProperties.put("jib.outputPaths.imageId", "id/path");
+    assertThat(testPluginConfiguration.getImageIdOutputPath())
+        .isEqualTo(Paths.get("/repository/project/id/path"));
+    sessionUserProperties.put("jib.outputPaths.imageJson", "json/path");
+    assertThat(testPluginConfiguration.getImageJsonOutputPath())
+        .isEqualTo(Paths.get("/repository/project/json/path"));
+    sessionUserProperties.put("jib.outputPaths.tar", "tar/path");
+    assertThat(testPluginConfiguration.getTarOutputPath())
+        .isEqualTo(Paths.get("/repository/project/tar/path"));
+  }
+
+  @Test
+  public void testPropertySourcePrecedence() {
+    sessionUserProperties.put("jib.to.image", "to:user");
+    project.getProperties().setProperty("jib.to.image", "to:project");
+    sessionSystemProperties.put("jib.to.image", "to:system");
+    assertThat(testPluginConfiguration.getTargetImage()).isEqualTo("to:user");
+
+    project.getProperties().setProperty("jib.from.image", "from:project");
+    sessionSystemProperties.put("jib.to.image", "from:system");
+    assertThat(testPluginConfiguration.getBaseImage()).isEqualTo("from:project");
+
+    sessionUserProperties.put("jib.outputPaths.tar", "/tar/user");
+    sessionSystemProperties.put("jib.outputPaths.tar", "/tar/system");
+    assertThat(testPluginConfiguration.getTarOutputPath()).isEqualTo(Paths.get("/tar/user"));
+
+    sessionUserProperties.put("jib.outputPaths.imageId", "/image/user");
+    project.getProperties().setProperty("jib.outputPaths.imageId", "/image/project");
+    assertThat(testPluginConfiguration.getImageIdOutputPath()).isEqualTo(Paths.get("/image/user"));
+  }
+
+  @Test
   public void testEmptyOrNullTags() {
     // https://github.com/GoogleContainerTools/jib/issues/1534
     // Maven turns empty tags into null entries, and its possible to have empty tags in jib.to.tags
-    sessionProperties.put("jib.to.tags", "a,,b");
+    sessionSystemProperties.put("jib.to.tags", "a,,b");
     Exception ex =
         assertThrows(
             IllegalArgumentException.class,

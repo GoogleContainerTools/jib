@@ -132,22 +132,26 @@ public class MavenProjectProperties implements ProjectProperties {
   }
 
   /**
-   * Gets a system property with the given name. First checks for a -D commandline argument, then
-   * checks for a property defined in the POM, then returns null if neither are defined.
+   * Gets a property with the given name. First checks for a Maven user property (-D commandline argument), then checks
+   * for a property defined in the POM, then checks for a Maven system property, then returns null if none of those are
+   * defined.
    *
-   * @param propertyName the name of the system property
+   * @param propertyName the name of the property
    * @param project the Maven project
    * @param session the Maven session
-   * @return the value of the system property, or null if not defined
+   * @return the value of the property, or null if not defined
    */
   @Nullable
   public static String getProperty(
       String propertyName, @Nullable MavenProject project, @Nullable MavenSession session) {
-    if (session != null && session.getSystemProperties().containsKey(propertyName)) {
-      return session.getSystemProperties().getProperty(propertyName);
+    if (session != null && session.getUserProperties().containsKey(propertyName)) {
+      return session.getUserProperties().getProperty(propertyName);
     }
     if (project != null && project.getProperties().containsKey(propertyName)) {
       return project.getProperties().getProperty(propertyName);
+    }
+    if (session != null && session.getSystemProperties().containsKey(propertyName)) {
+      return session.getSystemProperties().getProperty(propertyName);
     }
     return null;
   }

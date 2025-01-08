@@ -27,7 +27,7 @@ For information about the project, see the [Jib project README](../README.md).
   * [Additional Build Artifacts](#additional-build-artifacts)
 * [Multi Module Projects](#multi-module-projects)
 * [Extended Usage](#extended-usage)
-  * [System Properties](#system-properties)
+  * [Configuration Properties](#configuration-properties)
   * [Global Jib Configuration](#global-jib-configuration)
   * [Example](#example)
   * [Adding Arbitrary Files to the Image](#adding-arbitrary-files-to-the-image)
@@ -344,9 +344,9 @@ Property | Type | Default | Description
 `executable` | string | `docker` | Sets the path to the Docker executable that is called to load the image into the Docker daemon. **Please note**: Users are responsible for ensuring that the Docker path passed in is valid and has the right permissions to be executed.
 `environment` | map | *None* | Sets environment variables used by the Docker executable.
 
-#### System Properties
+#### Configuration Properties
 
-Each of these parameters is configurable via commandline using system properties. Jib's system properties follow the same naming convention as the configuration parameters, with each level separated by dots (i.e. `-Djib.parameterName[.nestedParameter.[...]]=value`). Some examples are below:
+Each of these parameters is configurable via commandline using properties. Jib's properties follow the same naming convention as the configuration parameters, with each level separated by dots (i.e. `-Djib.parameterName[.nestedParameter.[...]]=value`). Some examples are below:
 ```shell
 mvn compile jib:build \
     -Djib.to.image=myregistry/myimage:latest \
@@ -359,7 +359,7 @@ mvn compile jib:dockerBuild \
     -Djib.container.args=arg1,arg2,arg3
 ```
 
-The following table contains additional system properties that are not available as build configuration parameters:
+The following table contains additional properties that are not available as build configuration parameters:
 
 Property | Type | Default | Description
 --- | --- | --- | ---

@@ -4,6 +4,7 @@ All notable changes to this project will be documented in this file.
 ## [unreleased]
 
 ### Added
+- Check Maven user properties with highest precedence when fetching a property value ([#4344](https://github.com/GoogleContainerTools/jib/issues/4344))
 
 ### Changed
 
