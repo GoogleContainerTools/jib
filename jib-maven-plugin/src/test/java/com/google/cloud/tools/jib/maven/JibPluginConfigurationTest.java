@@ -190,7 +190,8 @@ public class JibPluginConfigurationTest {
     assertThat(testPluginConfiguration.getExtraDirectories().get(0).getFrom())
         .isEqualTo(Paths.get("custom-jib"));
     assertThat(testPluginConfiguration.getExtraDirectories().get(0).getInto()).isEqualTo("/");
-    sessionSystemProperties.put("jib.extraDirectories.permissions", "/test/file1=123,/another/file=456");
+    sessionSystemProperties.put(
+        "jib.extraDirectories.permissions", "/test/file1=123,/another/file=456");
     List<PermissionConfiguration> permissions =
         testPluginConfiguration.getExtraDirectoryPermissions();
     assertThat(permissions.get(0).getFile()).hasValue("/test/file1");
@@ -428,7 +429,8 @@ public class JibPluginConfigurationTest {
     assertThat(testPluginConfiguration.getExtraDirectories().get(0).getFrom())
         .isEqualTo(Paths.get("custom-jib"));
     assertThat(testPluginConfiguration.getExtraDirectories().get(0).getInto()).isEqualTo("/");
-    sessionUserProperties.put("jib.extraDirectories.permissions", "/test/file1=123,/another/file=456");
+    sessionUserProperties.put(
+        "jib.extraDirectories.permissions", "/test/file1=123,/another/file=456");
     List<PermissionConfiguration> permissions =
         testPluginConfiguration.getExtraDirectoryPermissions();
     assertThat(permissions.get(0).getFile()).hasValue("/test/file1");

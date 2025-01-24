@@ -132,9 +132,9 @@ public class MavenProjectProperties implements ProjectProperties {
   }
 
   /**
-   * Gets a property with the given name. First checks for a Maven user property (-D commandline argument), then checks
-   * for a property defined in the POM, then checks for a Maven system property, then returns null if none of those are
-   * defined.
+   * Gets a property with the given name. First checks for a Maven user property (-D commandline
+   * argument), then checks for a property defined in the POM, then checks for a Maven system
+   * property, then returns null if none of those are defined.
    *
    * @param propertyName the name of the property
    * @param project the Maven project
