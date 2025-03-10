@@ -47,6 +47,12 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -102,6 +108,12 @@ public class CliDockerClient implements DockerClient {
 
   /** Default path to the docker executable. */
   public static final Path DEFAULT_DOCKER_CLIENT = Paths.get("docker");
+
+  /**
+   * 10 minute timeout to ensure that Jib doesn't get stuck indefinitely when expecting a docker
+   * output.
+   */
+  public static final Long DOCKER_OUTPUT_TIMEOUT = (long) 10 * 60 * 1000;
 
   /**
    * Checks if Docker is installed on the user's system by running the `docker` command.
@@ -188,13 +200,19 @@ public class CliDockerClient implements DockerClient {
   @Override
   public DockerInfoDetails info() throws IOException, InterruptedException {
     // Runs 'docker info'.
-    Process infoProcess = docker("info", "-f", "{{json .}}");
-    InputStream inputStream = infoProcess.getInputStream();
-    if (infoProcess.waitFor() != 0) {
-      throw new IOException(
-          "'docker info' command failed with error: " + getStderrOutput(infoProcess));
+    ExecutorService executor = Executors.newSingleThreadExecutor();
+    Future<DockerInfoDetails> readerFuture = executor.submit(this::fetchInfoDetails);
+    try {
+      DockerInfoDetails details = readerFuture.get(DOCKER_OUTPUT_TIMEOUT, TimeUnit.MILLISECONDS);
+      return details;
+    } catch (TimeoutException e) {
+      readerFuture.cancel(true); // Interrupt the reader thread
+      throw new IOException("Timeout reached while waiting for 'docker info' output");
+    } catch (ExecutionException e) {
+      throw new IOException("Failed to read output of 'docker info': " + e.getMessage());
+    } finally {
+      executor.shutdownNow();
     }
-    return JsonTemplateMapper.readJson(inputStream, DockerInfoDetails.class);
   }
 
   @Override
@@ -269,5 +287,15 @@ public class CliDockerClient implements DockerClient {
   /** Runs a {@code docker} command. */
   private Process docker(String... subCommand) throws IOException {
     return processBuilderFactory.apply(Arrays.asList(subCommand)).start();
+  }
+
+  private DockerInfoDetails fetchInfoDetails() throws IOException, InterruptedException {
+    Process infoProcess = docker("info", "-f", "{{json .}}");
+    InputStream inputStream = infoProcess.getInputStream();
+    if (infoProcess.waitFor() != 0) {
+      throw new IOException(
+          "'docker info' command failed with error: " + getStderrOutput(infoProcess));
+    }
+    return JsonTemplateMapper.readJson(inputStream, DockerInfoDetails.class);
   }
 }
