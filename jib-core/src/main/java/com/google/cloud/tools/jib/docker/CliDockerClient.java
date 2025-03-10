@@ -277,11 +277,18 @@ public class CliDockerClient implements DockerClient {
       throws IOException, InterruptedException {
     Process inspectProcess =
         docker("inspect", "-f", "{{json .}}", "--type", "image", imageReference.toString());
-    if (inspectProcess.waitFor() != 0) {
-      throw new IOException(
-          "'docker inspect' command failed with error: " + getStderrOutput(inspectProcess));
+
+    try (InputStreamReader stdout =
+        new InputStreamReader(inspectProcess.getInputStream(), StandardCharsets.UTF_8)) {
+      String output = CharStreams.toString(stdout);
+
+      if (inspectProcess.waitFor() != 0) {
+        throw new IOException(
+            "'docker inspect' command failed with error: " + getStderrOutput(inspectProcess));
+      }
+
+      return JsonTemplateMapper.readJson(output, DockerImageDetails.class);
     }
-    return JsonTemplateMapper.readJson(inspectProcess.getInputStream(), DockerImageDetails.class);
   }
 
   /** Runs a {@code docker} command. */
@@ -291,11 +298,17 @@ public class CliDockerClient implements DockerClient {
 
   private DockerInfoDetails fetchInfoDetails() throws IOException, InterruptedException {
     Process infoProcess = docker("info", "-f", "{{json .}}");
-    InputStream inputStream = infoProcess.getInputStream();
-    if (infoProcess.waitFor() != 0) {
-      throw new IOException(
-          "'docker info' command failed with error: " + getStderrOutput(infoProcess));
+
+    try (InputStreamReader stdout =
+        new InputStreamReader(infoProcess.getInputStream(), StandardCharsets.UTF_8)) {
+      String output = CharStreams.toString(stdout);
+
+      if (infoProcess.waitFor() != 0) {
+        throw new IOException(
+            "'docker info' command failed with error: " + getStderrOutput(infoProcess));
+      }
+
+      return JsonTemplateMapper.readJson(output, DockerInfoDetails.class);
     }
-    return JsonTemplateMapper.readJson(inputStream, DockerInfoDetails.class);
   }
 }
