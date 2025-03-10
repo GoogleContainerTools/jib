@@ -113,6 +113,8 @@ public class CliDockerClientTest {
               assertThat(subcommand).containsExactly("info", "-f", "{{json .}}");
               return mockProcessBuilder;
             });
+    Mockito.when(mockProcess.getInputStream())
+        .thenReturn(new ByteArrayInputStream("".getBytes(StandardCharsets.UTF_8)));
     Mockito.when(mockProcess.waitFor()).thenReturn(1);
     Mockito.when(mockProcess.getErrorStream())
         .thenReturn(new ByteArrayInputStream("error".getBytes(StandardCharsets.UTF_8)));
@@ -121,6 +123,29 @@ public class CliDockerClientTest {
     assertThat(exception)
         .hasMessageThat()
         .contains("'docker info' command failed with error: error");
+  }
+
+  @Test
+  public void testInfo_stdinFail() throws InterruptedException {
+    DockerClient testDockerClient =
+        new CliDockerClient(
+            subcommand -> {
+              assertThat(subcommand).containsExactly("info", "-f", "{{json .}}");
+              return mockProcessBuilder;
+            });
+    Mockito.when(mockProcess.getInputStream())
+        .thenReturn(
+            new InputStream() {
+
+              @Override
+              public int read() throws IOException {
+                throw new IOException();
+              }
+            });
+
+    assertThrows(IOException.class, testDockerClient::info);
+
+    Mockito.verify(mockProcess, Mockito.never()).waitFor();
   }
 
   @Test
@@ -311,6 +336,8 @@ public class CliDockerClientTest {
               Assert.assertEquals("inspect", subcommand.get(0));
               return mockProcessBuilder;
             });
+    Mockito.when(mockProcess.getInputStream())
+        .thenReturn(new ByteArrayInputStream("".getBytes(StandardCharsets.UTF_8)));
     Mockito.when(mockProcess.waitFor()).thenReturn(1);
 
     Mockito.when(mockProcess.getErrorStream())
@@ -323,6 +350,30 @@ public class CliDockerClientTest {
     } catch (IOException ex) {
       Assert.assertEquals("'docker inspect' command failed with error: error", ex.getMessage());
     }
+  }
+
+  @Test
+  public void testSize_stdinFail() throws InterruptedException {
+    DockerClient testDockerClient =
+        new CliDockerClient(
+            subcommand -> {
+              Assert.assertEquals("inspect", subcommand.get(0));
+              return mockProcessBuilder;
+            });
+    Mockito.when(mockProcess.getInputStream())
+        .thenReturn(
+            new InputStream() {
+
+              @Override
+              public int read() throws IOException {
+                throw new IOException();
+              }
+            });
+
+    assertThrows(
+        IOException.class, () -> testDockerClient.inspect(ImageReference.of(null, "image", null)));
+
+    Mockito.verify(mockProcess, Mockito.never()).waitFor();
   }
 
   @Test
