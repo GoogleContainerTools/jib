@@ -22,7 +22,7 @@ jobs:
         uses: actions/setup-java@v3
         with:
           java-version: '8'
-          distribution: 'temurin' # or 'adopt'
+          distribution: 'temurin'
       - name: Check input
         run: |
           echo '* input project: "${{ github.event.inputs.project }}"'
