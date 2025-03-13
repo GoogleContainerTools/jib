@@ -18,6 +18,8 @@ jobs:
     steps:
       - name: Check out code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - name: Set up JDK 8
         uses: actions/setup-java@v3
         with:
@@ -42,6 +44,18 @@ jobs:
         run: |
           # TODO: run integration test? (Requries auth with GCP.)
           ./gradlew clean build --stacktrace
+      - name: Configure Git user
+        run: |
+          git config --global user.email "your-bot-email@example.com"
+          git config --global user.name "Your Bot Name"
+
+      - name: Create and push tag
+        run: |
+          TAG_NAME="v$(date +'%Y%m%d-%H%M%S')" # Example: v20231027-153000
+          git tag "$TAG_NAME"
+          git push origin "$TAG_NAME"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # Use GitHub's built-in token
 
       - name: Run Gradle release
         run: |
