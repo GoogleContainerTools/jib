@@ -44,24 +44,22 @@ jobs:
         run: |
           # TODO: run integration test? (Requries auth with GCP.)
           ./gradlew clean build --stacktrace
-      - name: Configure Git user
-        run: |
-          git config --global user.email ${{ github.actor }}@users.noreply.github.com
-          git config --global user.name ${{ github.actor }}
 
       - name: Create and push tag
         run: |
+          git config --global user.email cloud-java-bot@users.noreply.github.com
+          git config --global user.name cloud-java-bot
           TAG_NAME="v$(date +'%Y%m%d-%H%M%S')" # Example: v20231027-153000
           git tag "$TAG_NAME"
           git push origin "$TAG_NAME"
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # Use GitHub's built-in token
+          GITHUB_TOKEN: ${{ secrets.CLOUD_JAVA_BOT_GITHUB_TOKEN }} # Use GitHub's built-in token
 
       - name: Run Gradle release
         run: |
           git checkout -b ${{ github.event.inputs.project }}-release-v${{ github.event.inputs.release_version }}
-          git config user.email ${{ github.actor }}@users.noreply.github.com
-          git config user.name ${{ github.actor }}
+          git config --global user.email cloud-java-bot@users.noreply.github.com
+          git config --global user.name cloud-java-bot
 
           PROJECT=$( case ${{ github.event.inputs.project }} in
             extension-common) echo jib-plugins-extension-common ;;
@@ -76,7 +74,7 @@ jobs:
             -Prelease.useAutomaticVersion=true \
             -Prelease.releaseVersion=${{ github.event.inputs.release_version }}
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN:  ${{ secrets.CLOUD_JAVA_BOT_GITHUB_TOKEN }}
 
       - name: Create pull request
         uses: repo-sync/pull-request@v2.12.1
