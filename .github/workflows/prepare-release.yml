@@ -46,8 +46,8 @@ jobs:
           ./gradlew clean build --stacktrace
       - name: Configure Git user
         run: |
-          git config --global user.email "your-bot-email@example.com"
-          git config --global user.name "Your Bot Name"
+          git config --global user.email ${{ github.actor }}@users.noreply.github.com
+          git config --global user.name ${{ github.actor }}
 
       - name: Create and push tag
         run: |
