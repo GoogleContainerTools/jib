@@ -61,6 +61,8 @@ jobs:
           ./gradlew "${PROJECT}":release \
             -Prelease.useAutomaticVersion=true \
             -Prelease.releaseVersion=${{ github.event.inputs.release_version }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Create pull request
         uses: repo-sync/pull-request@v2.12.1
