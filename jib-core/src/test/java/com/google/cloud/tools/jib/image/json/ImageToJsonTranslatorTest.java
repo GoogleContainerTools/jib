@@ -18,6 +18,7 @@ package com.google.cloud.tools.jib.image.json;
 
 import com.google.cloud.tools.jib.api.DescriptorDigest;
 import com.google.cloud.tools.jib.api.buildplan.AbsoluteUnixPath;
+import com.google.cloud.tools.jib.api.buildplan.CompressionAlgorithm;
 import com.google.cloud.tools.jib.api.buildplan.Port;
 import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
@@ -99,6 +100,12 @@ public class ImageToJsonTranslatorTest {
           @Override
           public DescriptorDigest getDiffId() throws LayerPropertyNotFoundException {
             return fakeDigest;
+          }
+
+          @Override
+          public CompressionAlgorithm getCompressionAlgorithm()
+              throws LayerPropertyNotFoundException {
+            return CompressionAlgorithm.GZIP;
           }
         });
     testImageBuilder.addHistory(
