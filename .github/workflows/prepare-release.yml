@@ -11,6 +11,9 @@ on:
         required: true
         default: (for example, 0.1.0)
 
+permissions:
+  actions:write
+
 jobs:
   release:
     name: Prepare Jib release
@@ -18,8 +21,6 @@ jobs:
     steps:
       - name: Check out code
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
       - name: Set up JDK 8
         uses: actions/setup-java@v3
         with:
@@ -45,16 +46,6 @@ jobs:
           # TODO: run integration test? (Requries auth with GCP.)
           ./gradlew clean build --stacktrace
 
-      - name: Create and push tag
-        run: |
-          git config user.email ${{ github.actor }}@users.noreply.github.com
-          git config user.name ${{ github.actor }}
-          TAG_NAME="v$(date +'%Y%m%d-%H%M%S')" # Example: v20231027-153000
-          git tag "$TAG_NAME"
-          git push origin "$TAG_NAME"
-        env:
-          GITHUB_TOKEN: ${{ secrets.JIB_RELEASE_SECRET }} # Use GitHub's built-in token
-
       - name: Run Gradle release
         run: |
           git checkout -b ${{ github.event.inputs.project }}-release-v${{ github.event.inputs.release_version }}
@@ -73,8 +64,6 @@ jobs:
           ./gradlew "${PROJECT}":release \
             -Prelease.useAutomaticVersion=true \
             -Prelease.releaseVersion=${{ github.event.inputs.release_version }}
-        env:
-          GITHUB_TOKEN:  ${{ secrets.JIB_RELEASE_SECRET }}
 
       - name: Create pull request
         uses: repo-sync/pull-request@v2.12.1
