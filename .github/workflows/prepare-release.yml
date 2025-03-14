@@ -11,8 +11,7 @@ on:
         required: true
         default: (for example, 0.1.0)
 
-permissions:
-  actions:write
+permissions: write-all
 
 jobs:
   release:
