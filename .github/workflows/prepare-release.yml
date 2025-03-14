@@ -11,7 +11,8 @@ on:
         required: true
         default: (for example, 0.1.0)
 
-permissions: write-all
+permissions:
+  contents: write
 
 jobs:
   release:
