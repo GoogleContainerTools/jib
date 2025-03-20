@@ -159,6 +159,7 @@ public class Containerizer {
   @Nullable private String toolVersion = DEFAULT_TOOL_VERSION;
   private boolean alwaysCacheBaseImage = false;
   private ListMultimap<String, String> registryMirrors = ArrayListMultimap.create();
+  private boolean enablePlatformTags = false;
 
   /** Instantiate with {@link #to}. */
   private Containerizer(
@@ -339,6 +340,18 @@ public class Containerizer {
     return this;
   }
 
+  /**
+   * Enables adding platform tags to images.
+   *
+   * @param enablePlatformTags if {@code true}, adds platform tags to images. If {@code false}
+   *     images are not tagged with platform tags.
+   * @return this
+   */
+  public Containerizer setEnablePlatformTags(boolean enablePlatformTags) {
+    this.enablePlatformTags = enablePlatformTags;
+    return this;
+  }
+
   Set<String> getAdditionalTags() {
     return ImmutableSet.copyOf(additionalTags);
   }
@@ -392,6 +405,10 @@ public class Containerizer {
 
   boolean getAlwaysCacheBaseImage() {
     return alwaysCacheBaseImage;
+  }
+
+  boolean getEnablePlatformTags() {
+    return enablePlatformTags;
   }
 
   String getDescription() {
