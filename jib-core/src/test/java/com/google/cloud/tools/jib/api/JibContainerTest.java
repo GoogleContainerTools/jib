@@ -23,7 +23,11 @@ import com.google.cloud.tools.jib.configuration.BuildContext;
 import com.google.cloud.tools.jib.configuration.ImageConfiguration;
 import com.google.common.collect.ImmutableSet;
 import java.security.DigestException;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.Set;
+import java.util.stream.Collectors;
+
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
@@ -141,5 +145,28 @@ public class JibContainerTest {
     Assert.assertEquals(digest1, container.getImageId());
     Assert.assertEquals(tags1, container.getTags());
     Assert.assertTrue(container.isImagePushed());
+  }
+
+  @Test
+  public void testGetImageTagsWithDigest_constructsCorrectImageTagsWithDigest() {
+    JibContainer container = new JibContainer(targetImage1, digest1, digest2, tags1, true);
+
+    Set<String> expectedImageTagsWithDigest = tags1.stream()
+            .map(tag -> {
+              StringBuilder imageTagWithDigest = new StringBuilder()
+                      .append(targetImage1.getRegistry())
+                      .append("/")
+                      .append(targetImage1.getRepository())
+                      .append(":")
+                      .append(tag)
+                      .append("@")
+                      .append(digest1);
+              return imageTagWithDigest.toString();
+            })
+            .collect(Collectors.toSet());
+
+    Set<String> imageTagsWithDigest = container.getImageTagsWithDigest();
+
+    Assert.assertEquals(expectedImageTagsWithDigest, imageTagsWithDigest);
   }
 }
