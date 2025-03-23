@@ -103,6 +103,7 @@ public class GradleRawConfigurationTest {
         .thenReturn(new HashMap<>(ImmutableMap.of("docker", "client")));
 
     Mockito.when(outputPathsParameters.getDigestPath()).thenReturn(Paths.get("digest/path"));
+    Mockito.when(outputPathsParameters.getImageTagDigestPath()).thenReturn(Paths.get("image-tag-digest/path"));
     Mockito.when(outputPathsParameters.getImageIdPath()).thenReturn(Paths.get("id/path"));
     Mockito.when(outputPathsParameters.getImageJsonPath()).thenReturn(Paths.get("json/path"));
     Mockito.when(outputPathsParameters.getTarPath()).thenReturn(Paths.get("tar/path"));
@@ -147,6 +148,7 @@ public class GradleRawConfigurationTest {
         new HashMap<>(ImmutableMap.of("docker", "client")),
         rawConfiguration.getDockerEnvironment());
     Assert.assertEquals(Paths.get("digest/path"), rawConfiguration.getDigestOutputPath());
+    Assert.assertEquals(Paths.get("image-tag-digest/path"), rawConfiguration.getImageTagDigestOutputPath());
     Assert.assertEquals(Paths.get("id/path"), rawConfiguration.getImageIdOutputPath());
     Assert.assertEquals(Paths.get("json/path"), rawConfiguration.getImageJsonOutputPath());
     Assert.assertEquals(Paths.get("tar/path"), rawConfiguration.getTarOutputPath());
