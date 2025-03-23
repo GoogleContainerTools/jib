@@ -322,6 +322,7 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
 
     @Nullable @Parameter private File tar;
     @Nullable @Parameter private File digest;
+    @Nullable @Parameter private File imageTagDigest;
     @Nullable @Parameter private File imageId;
     @Nullable @Parameter private File imageJson;
   }
@@ -774,6 +775,14 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
             ? Paths.get(getProject().getBuild().getDirectory()).resolve("jib-image.digest")
             : outputPaths.digest.toPath();
     return getRelativeToProjectRoot(configuredPath, PropertyNames.OUTPUT_PATHS_DIGEST);
+  }
+
+  Path getImageTagDigestOutputPath() {
+    Path configuredPath =
+            outputPaths.imageTagDigest == null
+                    ? Paths.get(getProject().getBuild().getDirectory()).resolve("jib-image-tag.digest")
+                    : outputPaths.imageTagDigest.toPath();
+    return getRelativeToProjectRoot(configuredPath, PropertyNames.OUTPUT_PATHS_IMAGE_TAG_DIGEST);
   }
 
   Path getImageIdOutputPath() {
