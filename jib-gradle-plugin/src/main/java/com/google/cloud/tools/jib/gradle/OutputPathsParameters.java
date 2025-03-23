@@ -30,6 +30,7 @@ public class OutputPathsParameters {
   private final Project project;
 
   private Path digest;
+  private Path imageTagDigest;
   private Path tar;
   private Path imageId;
   private Path imageJson;
@@ -38,6 +39,7 @@ public class OutputPathsParameters {
   public OutputPathsParameters(Project project) {
     this.project = project;
     digest = project.getBuildDir().toPath().resolve("jib-image.digest");
+    imageTagDigest = project.getBuildDir().toPath().resolve("jib-image-tag.digest");
     imageId = project.getBuildDir().toPath().resolve("jib-image.id");
     imageJson = project.getBuildDir().toPath().resolve("jib-image.json");
     tar = project.getBuildDir().toPath().resolve("jib-image.tar");
@@ -55,6 +57,20 @@ public class OutputPathsParameters {
 
   public void setDigest(String digest) {
     this.digest = Paths.get(digest);
+  }
+
+  @Input
+  public String getImageTagDigest() {
+    return getRelativeToProjectRoot(imageTagDigest, PropertyNames.OUTPUT_PATHS_IMAGE_TAG_DIGEST).toString();
+  }
+
+  @Internal
+  public Path getImageTagDigestPath() {
+    return getRelativeToProjectRoot(imageTagDigest, PropertyNames.OUTPUT_PATHS_IMAGE_TAG_DIGEST);
+  }
+
+  public void setImageTagDigest(String imageTagDigest) {
+    this.imageTagDigest = Paths.get(imageTagDigest);
   }
 
   @Input
