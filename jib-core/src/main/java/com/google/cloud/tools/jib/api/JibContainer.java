@@ -21,6 +21,7 @@ import com.google.cloud.tools.jib.configuration.BuildContext;
 import com.google.common.annotations.VisibleForTesting;
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /** The container built by Jib. */
 public class JibContainer {
@@ -97,6 +98,26 @@ public class JibContainer {
    */
   public Set<String> getTags() {
     return tags;
+  }
+
+  /**
+   * Get the image tags with digest
+   * @return the image tags with digest
+   */
+  public Set<String> getImageTagsWithDigest() {
+    return tags.stream()
+            .map(tag -> {
+              StringBuilder imageTagWithDigest = new StringBuilder()
+                      .append(targetImage.getRegistry())
+                      .append("/")
+                      .append(targetImage.getRepository())
+                      .append(":")
+                      .append(tag)
+                      .append("@")
+                      .append(imageDigest);
+              return imageTagWithDigest.toString();
+            })
+            .collect(Collectors.toSet());
   }
 
   @Override
