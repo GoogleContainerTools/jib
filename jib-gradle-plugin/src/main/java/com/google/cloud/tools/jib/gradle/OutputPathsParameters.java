@@ -61,7 +61,8 @@ public class OutputPathsParameters {
 
   @Input
   public String getImageTagDigest() {
-    return getRelativeToProjectRoot(imageTagDigest, PropertyNames.OUTPUT_PATHS_IMAGE_TAG_DIGEST).toString();
+    return getRelativeToProjectRoot(imageTagDigest, PropertyNames.OUTPUT_PATHS_IMAGE_TAG_DIGEST)
+        .toString();
   }
 
   @Internal

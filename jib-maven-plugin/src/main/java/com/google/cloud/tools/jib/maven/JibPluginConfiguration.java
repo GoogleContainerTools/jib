@@ -779,9 +779,9 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
 
   Path getImageTagDigestOutputPath() {
     Path configuredPath =
-            outputPaths.imageTagDigest == null
-                    ? Paths.get(getProject().getBuild().getDirectory()).resolve("jib-image-tag.digest")
-                    : outputPaths.imageTagDigest.toPath();
+        outputPaths.imageTagDigest == null
+            ? Paths.get(getProject().getBuild().getDirectory()).resolve("jib-image-tag.digest")
+            : outputPaths.imageTagDigest.toPath();
     return getRelativeToProjectRoot(configuredPath, PropertyNames.OUTPUT_PATHS_IMAGE_TAG_DIGEST);
   }
 

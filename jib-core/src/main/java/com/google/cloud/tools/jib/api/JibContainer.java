@@ -101,13 +101,16 @@ public class JibContainer {
   }
 
   /**
-   * Get the image tags with digest
+   * Get the image tags with digest.
+   *
    * @return the image tags with digest
    */
   public Set<String> getImageTagsWithDigest() {
     return tags.stream()
-            .map(tag -> {
-              StringBuilder imageTagWithDigest = new StringBuilder()
+        .map(
+            tag -> {
+              StringBuilder imageTagWithDigest =
+                  new StringBuilder()
                       .append(targetImage.getRegistry())
                       .append("/")
                       .append(targetImage.getRepository())
@@ -117,7 +120,7 @@ public class JibContainer {
                       .append(imageDigest);
               return imageTagWithDigest.toString();
             })
-            .collect(Collectors.toSet());
+        .collect(Collectors.toSet());
   }
 
   @Override
