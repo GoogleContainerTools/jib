@@ -256,23 +256,25 @@ public class JibBuildRunnerTest {
 
   @Test
   public void testBuildImage_writeImageTagDigest() throws Exception {
-    Set<String> imageTagsDigest = ImmutableSet.of(
+    Set<String> imageTagsDigest =
+        ImmutableSet.of(
             "gcr.io/project/image:latest@sha256:abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789",
             "gcr.io/project/image:custom-tag@sha256:abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789");
 
-    String expectedImageTagsDigestOutput = "gcr.io/project/image:latest@sha256:abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789\n" +
-            "gcr.io/project/image:custom-tag@sha256:abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789\n";
+    String expectedImageTagsDigestOutput =
+        "gcr.io/project/image:latest@sha256:abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789\n"
+            + "gcr.io/project/image:custom-tag@sha256:abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789\n";
 
     final Path outputPath = temporaryFolder.newFile("jib-image-tag.digest").toPath();
 
     Mockito.when(mockJibContainer.getImageTagsWithDigest()).thenReturn(imageTagsDigest);
     Mockito.when(mockJibContainerBuilder.containerize(mockContainerizer))
-            .thenReturn(mockJibContainer);
-    Mockito.when(mockJibContainer.isImagePushed()).thenReturn(true);
+        .thenReturn(mockJibContainer);
 
     testJibBuildRunner.writeImageTagDigest(outputPath).runBuild();
 
-    final String imageTagDigestOutput = new String(Files.readAllBytes(outputPath), StandardCharsets.UTF_8);
+    final String imageTagDigestOutput =
+        new String(Files.readAllBytes(outputPath), StandardCharsets.UTF_8);
 
     Assert.assertEquals(expectedImageTagsDigestOutput, imageTagDigestOutput);
   }

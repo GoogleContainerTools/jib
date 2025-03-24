@@ -100,7 +100,8 @@ public class MavenRawConfigurationTest {
     Mockito.when(jibPluginConfiguration.getDockerClientEnvironment())
         .thenReturn(new HashMap<>(ImmutableMap.of("docker", "client")));
     Mockito.when(jibPluginConfiguration.getDigestOutputPath()).thenReturn(Paths.get("digest/path"));
-    Mockito.when(jibPluginConfiguration.getImageTagDigestOutputPath()).thenReturn(Paths.get("image-tag-digest/path"));
+    Mockito.when(jibPluginConfiguration.getImageTagDigestOutputPath())
+        .thenReturn(Paths.get("image-tag-digest/path"));
     Mockito.when(jibPluginConfiguration.getImageIdOutputPath()).thenReturn(Paths.get("id/path"));
     Mockito.when(jibPluginConfiguration.getImageJsonOutputPath())
         .thenReturn(Paths.get("json/path"));
@@ -145,7 +146,8 @@ public class MavenRawConfigurationTest {
         new HashMap<>(ImmutableMap.of("docker", "client")),
         rawConfiguration.getDockerEnvironment());
     Assert.assertEquals(Paths.get("digest/path"), jibPluginConfiguration.getDigestOutputPath());
-    Assert.assertEquals(Paths.get("image-tag-digest/path"), jibPluginConfiguration.getImageTagDigestOutputPath());
+    Assert.assertEquals(
+        Paths.get("image-tag-digest/path"), jibPluginConfiguration.getImageTagDigestOutputPath());
     Assert.assertEquals(Paths.get("id/path"), jibPluginConfiguration.getImageIdOutputPath());
     Assert.assertEquals(Paths.get("json/path"), jibPluginConfiguration.getImageJsonOutputPath());
     Assert.assertEquals(Paths.get("tar/path"), jibPluginConfiguration.getTarOutputPath());

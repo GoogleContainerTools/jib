@@ -207,8 +207,6 @@ public class JibPluginConfigurationTest {
     assertThat(testPluginConfiguration.getDigestOutputPath()).isEqualTo(Paths.get("/digest/path"));
     sessionSystemProperties.put("jib.outputPaths.imageTagDigest", "/image-tag-digest/path");
     assertThat(testPluginConfiguration.getImageTagDigestOutputPath()).isEqualTo(Paths.get("/image-tag-digest/path"));
-    sessionSystemProperties.put("jib.outputPaths.imageTagDigest", "/image-tag-digest/path");
-    assertThat(testPluginConfiguration.getImageTagDigestOutputPath()).isEqualTo(Paths.get("/image-tag-digest/path"));
     sessionSystemProperties.put("jib.outputPaths.imageId", "/id/path");
     assertThat(testPluginConfiguration.getImageIdOutputPath()).isEqualTo(Paths.get("/id/path"));
     sessionSystemProperties.put("jib.outputPaths.tar", "/tar/path");
@@ -331,7 +329,8 @@ public class JibPluginConfigurationTest {
     project.getProperties().setProperty("jib.outputPaths.digest", "/digest/path");
     assertThat(testPluginConfiguration.getDigestOutputPath()).isEqualTo(Paths.get("/digest/path"));
     project.getProperties().setProperty("jib.outputPaths.imageTagDigest", "/image-tag-digest/path");
-    assertThat(testPluginConfiguration.getImageTagDigestOutputPath()).isEqualTo(Paths.get("/image-tag-digest/path"));
+    assertThat(testPluginConfiguration.getImageTagDigestOutputPath())
+        .isEqualTo(Paths.get("/image-tag-digest/path"));
     project.getProperties().setProperty("jib.outputPaths.imageId", "/id/path");
     assertThat(testPluginConfiguration.getImageIdOutputPath()).isEqualTo(Paths.get("/id/path"));
     project.getProperties().setProperty("jib.outputPaths.imageJson", "/json/path");
