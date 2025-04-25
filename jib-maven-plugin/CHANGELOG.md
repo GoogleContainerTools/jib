@@ -9,6 +9,7 @@ All notable changes to this project will be documented in this file.
 - Update retrieval of Maven properties to use the following order: user, project, system [#4344](https://github.com/GoogleContainerTools/jib/issues/4344)
 
 ### Fixed
+- fix: support parsing manifest config JSON containing `data:`. ([#4346](https://github.com/GoogleContainerTools/jib/pull/4346))
 
 ## 3.4.5
 
