@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 ### Added
 
 - Added explicit `toString()` methods to `FileEntry` and `FilePermissions`. ([#2714](https://github.com/GoogleContainerTools/jib/pull/2714))
+- Added explicit `toString()` methods to `Platform`. ([#3942](https://github.com/GoogleContainerTools/jib/pull/3942))
 
 ### Changed
 
