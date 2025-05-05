@@ -7,6 +7,10 @@ on:
         required: true
         default: (for example, 0.1.0)
 
+permissions:
+  contents: write
+  issues: write
+
 jobs:
   release:
     name: Release Jib CLI
@@ -17,6 +21,12 @@ jobs:
     steps:
       - name: Check out code
         uses: actions/checkout@v4
+
+      - name: Set up JDK 8
+        uses: actions/setup-java@v3
+        with:
+          java-version: '8'
+          distribution: 'temurin'
 
       - name: Build project
         run: |

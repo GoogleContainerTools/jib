@@ -6,8 +6,15 @@ All notable changes to this project will be documented in this file.
 ### Added
 
 ### Changed
+- Update retrieval of Maven properties to use the following order: user, project, system [#4344](https://github.com/GoogleContainerTools/jib/issues/4344)
 
 ### Fixed
+
+## 3.4.5
+
+### Fixed
+- fix: address windows deadlock issue when determining docker environment info [#4267](https://github.com/GoogleContainerTools/jib/issues/4267)
+
 
 ## 3.4.4
 - fix: allow pushing images with different arch/os to docker daemon [#4265](https://github.com/GoogleContainerTools/jib/issues/4265)
