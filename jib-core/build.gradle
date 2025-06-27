@@ -13,7 +13,7 @@ java {
 }
 
 dependencies {
-  api dependencyStrings.BUILD_PLAN
+  api project(':jib-build-plan')
   implementation dependencyStrings.GOOGLE_HTTP_CLIENT
   implementation dependencyStrings.GOOGLE_HTTP_CLIENT_APACHE_V2
   implementation dependencyStrings.GOOGLE_AUTH_LIBRARY_OAUTH2_HTTP
