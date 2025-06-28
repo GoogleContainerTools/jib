@@ -486,6 +486,12 @@ public class MavenProjectProperties implements ProjectProperties {
     return session.isOffline();
   }
 
+  @Override
+  public boolean isDisableUpdateCheck() {
+    return Boolean.parseBoolean(
+        project.getProperties().getProperty(PropertyNames.DISABLE_UPDATE_CHECKS));
+  }
+
   @VisibleForTesting
   Path getWarArtifact() {
     Build build = project.getBuild();
