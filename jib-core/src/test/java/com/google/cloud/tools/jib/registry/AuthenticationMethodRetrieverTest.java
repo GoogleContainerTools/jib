@@ -22,6 +22,7 @@ import com.google.api.client.http.HttpStatusCodes;
 import com.google.cloud.tools.jib.http.FailoverHttpClient;
 import com.google.cloud.tools.jib.http.Response;
 import com.google.cloud.tools.jib.http.ResponseException;
+import com.google.common.collect.Lists;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Collections;
@@ -102,7 +103,7 @@ public class AuthenticationMethodRetrieverTest {
     Mockito.when(mockResponseException.getStatusCode())
         .thenReturn(HttpStatusCodes.STATUS_CODE_UNAUTHORIZED);
     Mockito.when(mockResponseException.getHeaders()).thenReturn(mockHeaders);
-    Mockito.when(mockHeaders.getAuthenticate()).thenReturn(null);
+    Mockito.when(mockHeaders.getAuthenticateAsList()).thenReturn(null);
 
     try {
       testAuthenticationMethodRetriever.handleHttpResponseException(mockResponseException);
@@ -122,7 +123,8 @@ public class AuthenticationMethodRetrieverTest {
     Mockito.when(mockResponseException.getStatusCode())
         .thenReturn(HttpStatusCodes.STATUS_CODE_UNAUTHORIZED);
     Mockito.when(mockResponseException.getHeaders()).thenReturn(mockHeaders);
-    Mockito.when(mockHeaders.getAuthenticate()).thenReturn(authenticationMethod);
+    Mockito.when(mockHeaders.getAuthenticateAsList())
+        .thenReturn(Lists.newArrayList(authenticationMethod));
 
     try {
       testAuthenticationMethodRetriever.handleHttpResponseException(mockResponseException);
@@ -133,7 +135,7 @@ public class AuthenticationMethodRetrieverTest {
       MatcherAssert.assertThat(
           ex.getMessage(),
           CoreMatchers.containsString(
-              "Failed get authentication method from 'WWW-Authenticate' header"));
+              "Failed getting supported authentication method from 'WWW-Authenticate' header"));
     }
   }
 
@@ -146,7 +148,30 @@ public class AuthenticationMethodRetrieverTest {
     Mockito.when(mockResponseException.getStatusCode())
         .thenReturn(HttpStatusCodes.STATUS_CODE_UNAUTHORIZED);
     Mockito.when(mockResponseException.getHeaders()).thenReturn(mockHeaders);
-    Mockito.when(mockHeaders.getAuthenticate()).thenReturn(authenticationMethod);
+    Mockito.when(mockHeaders.getAuthenticateAsList())
+        .thenReturn(Lists.newArrayList(authenticationMethod));
+
+    RegistryAuthenticator registryAuthenticator =
+        testAuthenticationMethodRetriever.handleHttpResponseException(mockResponseException).get();
+
+    Assert.assertEquals(
+        new URL("https://somerealm?service=someservice&scope=repository:someImageName:someScope"),
+        registryAuthenticator.getAuthenticationUrl(
+            null, Collections.singletonMap("someImageName", "someScope")));
+  }
+
+  @Test
+  public void testHandleHttpResponseExceptionWithKerberosFirst_pass()
+      throws RegistryErrorException, ResponseException, MalformedURLException {
+    String authenticationMethodNegotiate = "Negotiate";
+    String authenticationMethodBearer =
+        "Bearer realm=\"https://somerealm\",service=\"someservice\",scope=\"somescope\"";
+
+    Mockito.when(mockResponseException.getStatusCode())
+        .thenReturn(HttpStatusCodes.STATUS_CODE_UNAUTHORIZED);
+    Mockito.when(mockResponseException.getHeaders()).thenReturn(mockHeaders);
+    Mockito.when(mockHeaders.getAuthenticateAsList())
+        .thenReturn(Lists.newArrayList(authenticationMethodNegotiate, authenticationMethodBearer));
 
     RegistryAuthenticator registryAuthenticator =
         testAuthenticationMethodRetriever.handleHttpResponseException(mockResponseException).get();
