@@ -246,8 +246,6 @@ public class JibExtension {
 
   @Input
   @Optional
-  @Input
-  @Optional
   public Property<String> getSourceSetName() {
     String property = System.getProperty(PropertyNames.SOURCE_SET_NAME);
     if (property != null && !property.equals(sourceSetName.get())) {
