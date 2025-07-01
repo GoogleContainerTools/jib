@@ -94,9 +94,6 @@ public class GradleProjectProperties implements ProjectProperties {
   /** Used for logging during main class inference. */
   private static final String JAR_PLUGIN_NAME = "'jar' task";
 
-  /** Name of the `main` {@link SourceSet} to use as source files. */
-  private static final String MAIN_SOURCE_SET_NAME = "main";
-
   private static final Duration LOGGING_THREAD_SHUTDOWN_TIMEOUT = Duration.ofSeconds(1);
 
   /**
@@ -107,13 +104,15 @@ public class GradleProjectProperties implements ProjectProperties {
    * @param tempDirectoryProvider for scratch space during the build
    * @param configurationName the configuration of which the dependencies should be packed into the
    *     container
+   * @param sourceSetName the name of the source set which should be packed into the container
    * @return a GradleProjectProperties instance to use in a jib build
    */
   public static GradleProjectProperties getForProject(
       Project project,
       Logger logger,
       TempDirectoryProvider tempDirectoryProvider,
-      String configurationName) {
+      String configurationName,
+      String sourceSetName) {
     Supplier<List<JibGradlePluginExtension<?>>> extensionLoader =
         () -> {
           List<JibGradlePluginExtension<?>> extensions = new ArrayList<>();
@@ -124,7 +123,7 @@ public class GradleProjectProperties implements ProjectProperties {
           return extensions;
         };
     return new GradleProjectProperties(
-        project, logger, tempDirectoryProvider, extensionLoader, configurationName);
+        project, logger, tempDirectoryProvider, extensionLoader, configurationName, sourceSetName);
   }
 
   String getWarFilePath() {
@@ -163,6 +162,7 @@ public class GradleProjectProperties implements ProjectProperties {
   private final TempDirectoryProvider tempDirectoryProvider;
   private final Supplier<List<JibGradlePluginExtension<?>>> extensionLoader;
   private final String configurationName;
+  private final String sourceSetName;
 
   @VisibleForTesting
   GradleProjectProperties(
@@ -170,11 +170,13 @@ public class GradleProjectProperties implements ProjectProperties {
       Logger logger,
       TempDirectoryProvider tempDirectoryProvider,
       Supplier<List<JibGradlePluginExtension<?>>> extensionLoader,
-      String configurationName) {
+      String configurationName,
+      String sourceSetName) {
     this.project = project;
     this.tempDirectoryProvider = tempDirectoryProvider;
     this.extensionLoader = extensionLoader;
     this.configurationName = configurationName;
+    this.sourceSetName = sourceSetName;
     ConsoleLoggerBuilder consoleLoggerBuilder =
         (isProgressFooterEnabled(project)
                 ? ConsoleLoggerBuilder.rich(singleThreadedExecutor, false)
@@ -409,14 +411,17 @@ public class GradleProjectProperties implements ProjectProperties {
    */
   @VisibleForTesting
   static FileCollection getInputFiles(
-      Project project, List<Path> extraDirectories, String configurationName) {
+      Project project,
+      List<Path> extraDirectories,
+      String configurationName,
+      String sourceSetName) {
     List<FileCollection> dependencyFileCollections = new ArrayList<>();
     dependencyFileCollections.add(project.getConfigurations().getByName(configurationName));
     // Output directories (classes and resources) from main SourceSet are added
     // so that BuildTarTask picks up changes in these and do not skip task
     SourceSetContainer sourceSetContainer =
         project.getExtensions().getByType(SourceSetContainer.class);
-    SourceSet mainSourceSet = sourceSetContainer.getByName(MAIN_SOURCE_SET_NAME);
+    SourceSet mainSourceSet = sourceSetContainer.getByName(sourceSetName);
     dependencyFileCollections.add(mainSourceSet.getOutput());
 
     extraDirectories.stream()
@@ -547,6 +552,6 @@ public class GradleProjectProperties implements ProjectProperties {
   private SourceSet getMainSourceSet() {
     SourceSetContainer sourceSetContainer =
         project.getExtensions().getByType(SourceSetContainer.class);
-    return sourceSetContainer.getByName(MAIN_SOURCE_SET_NAME);
+    return sourceSetContainer.getByName(sourceSetName);
   }
 }
