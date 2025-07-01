@@ -27,6 +27,7 @@ import org.gradle.api.provider.Property;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.Nested;
 import org.gradle.api.tasks.Optional;
+import org.gradle.api.tasks.SourceSet;
 
 /**
  * Plugin extension for {@link JibPlugin}.
@@ -96,6 +97,7 @@ public class JibExtension {
   private final Property<Boolean> allowInsecureRegistries;
   private final Property<String> containerizingMode;
   private final Property<String> configurationName;
+  private final Property<String> sourceSetName;
   private final ListProperty<ExtensionParameters> pluginExtensions;
   private final ExtensionParametersSpec extensionParametersSpec;
 
@@ -126,6 +128,7 @@ public class JibExtension {
         objectFactory
             .property(String.class)
             .convention(JavaPlugin.RUNTIME_CLASSPATH_CONFIGURATION_NAME);
+    sourceSetName = objectFactory.property(String.class).convention(SourceSet.MAIN_SOURCE_SET_NAME);
   }
 
   public void from(Action<? super BaseImageParameters> action) {
@@ -239,6 +242,12 @@ public class JibExtension {
       configurationName.set(property);
     }
     return configurationName;
+  }
+
+  @Input
+  @Optional
+  public Property<String> getSourceSetName() {
+    return sourceSetName;
   }
 
   @Nested
