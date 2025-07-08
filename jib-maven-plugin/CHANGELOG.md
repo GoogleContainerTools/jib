@@ -9,6 +9,11 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
+## 3.4.6
+
+### Changed
+- Update retrieval of Maven properties to use the following order: user, project, system [#4344](https://github.com/GoogleContainerTools/jib/issues/4344)
+
 ## 3.4.5
 
 ### Fixed

@@ -27,7 +27,7 @@ For information about the project, see the [Jib project README](../README.md).
   * [Additional Build Artifacts](#additional-build-artifacts)
 * [Multi Module Projects](#multi-module-projects)
 * [Extended Usage](#extended-usage)
-  * [System Properties](#system-properties)
+  * [Configuration Properties](#configuration-properties)
   * [Global Jib Configuration](#global-jib-configuration)
   * [Example](#example)
   * [Adding Arbitrary Files to the Image](#adding-arbitrary-files-to-the-image)
@@ -48,7 +48,7 @@ For information about the project, see the [Jib project README](../README.md).
 You can containerize your application easily with one command:
 
 ```shell
-mvn compile com.google.cloud.tools:jib-maven-plugin:3.4.5:build -Dimage=<MY IMAGE>
+mvn compile com.google.cloud.tools:jib-maven-plugin:3.4.6:build -Dimage=<MY IMAGE>
 ```
 
 This builds and pushes a container image for your application to a container registry. *If you encounter authentication issues, see [Authentication Methods](#authentication-methods).*
@@ -56,7 +56,7 @@ This builds and pushes a container image for your application to a container reg
 To build to a Docker daemon, use:
 
 ```shell
-mvn compile com.google.cloud.tools:jib-maven-plugin:3.4.5:dockerBuild
+mvn compile com.google.cloud.tools:jib-maven-plugin:3.4.6:dockerBuild
 ```
 
 If you would like to set up Jib as part of your Maven build, follow the guide below.
@@ -74,7 +74,7 @@ In your Maven Java project, add the plugin to your `pom.xml`:
       <plugin>
         <groupId>com.google.cloud.tools</groupId>
         <artifactId>jib-maven-plugin</artifactId>
-        <version>3.4.5</version>
+        <version>3.4.6</version>
         <configuration>
           <to>
             <image>myimage</image>
@@ -344,9 +344,9 @@ Property | Type | Default | Description
 `executable` | string | `docker` | Sets the path to the Docker executable that is called to load the image into the Docker daemon. **Please note**: Users are responsible for ensuring that the Docker path passed in is valid and has the right permissions to be executed.
 `environment` | map | *None* | Sets environment variables used by the Docker executable.
 
-#### System Properties
+#### Configuration Properties
 
-Each of these parameters is configurable via commandline using system properties. Jib's system properties follow the same naming convention as the configuration parameters, with each level separated by dots (i.e. `-Djib.parameterName[.nestedParameter.[...]]=value`). Some examples are below:
+Each of these parameters is configurable via commandline using properties. Jib's properties follow the same naming convention as the configuration parameters, with each level separated by dots (i.e. `-Djib.parameterName[.nestedParameter.[...]]=value`). Some examples are below:
 ```shell
 mvn compile jib:build \
     -Djib.to.image=myregistry/myimage:latest \
@@ -359,7 +359,7 @@ mvn compile jib:dockerBuild \
     -Djib.container.args=arg1,arg2,arg3
 ```
 
-The following table contains additional system properties that are not available as build configuration parameters:
+The following table contains additional properties that are not available as build configuration parameters:
 
 Property | Type | Default | Description
 --- | --- | --- | ---
