@@ -81,7 +81,7 @@ subprojects {
 
   // Guava update breaks unit tests. Workaround mentioned in https://github.com/google/guava/issues/6612#issuecomment-1614992368.
   // Temporarily removing this to confirm brakage in Gradle 7+
-  if (gradle.version == "6.9.4")  {
+  if (gradle.gradleVersion == "6.9.4")  {
     sourceSets.all {
       configurations.getByName(runtimeClasspathConfigurationName) {
         attributes.attribute(Attribute.of("org.gradle.jvm.environment", String), "standard-jvm")
