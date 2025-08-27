@@ -13,6 +13,7 @@ jobs:
       fail-fast: false
       matrix:
         java: [8, 11]
+        gradle: [6, 7, 8, 9]
     env:
       # for gradle
       TERM: dumb
@@ -24,15 +25,19 @@ jobs:
         with:
           distribution: 'adopt'
           java-version: ${{ matrix.java }}
+      - run: rm ./gradlew
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: ${{ matrix.gradle }}
       - uses: actions/cache@v4
         with:
           path: |
             ~/.m2/repository
             ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          key: ${{ runner.os }}-gradle-${{ matrix.gradle }}-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
           restore-keys: |
             ${{ runner.os }}-gradle-
       - name: Run tests
         run: |
-          ./gradlew clean build jacocoTestReport --stacktrace
+          gradle clean build jacocoTestReport --stacktrace
