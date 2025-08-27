@@ -12,7 +12,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        java: [8, 11]
+        java: [8, 11, 17]
         gradle: ['6.9.4', '7.6.6', '8.14.3', '9.0.0']
     env:
       # for gradle
