@@ -13,7 +13,7 @@ jobs:
       fail-fast: false
       matrix:
         java: [8, 11]
-        gradle: [6, 7, 8, 9]
+        gradle: ['6', '7', '8', '9']
     env:
       # for gradle
       TERM: dumb
