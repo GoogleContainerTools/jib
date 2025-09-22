@@ -139,11 +139,12 @@ public class FilesTaskV2 extends DefaultTask {
     skaffoldFilesOutput.addBuild(project.getBuildFile().toPath());
 
     // Add settings.gradle
-    if (project.getGradle().getStartParameter().getSettingsFile() != null) {
-      skaffoldFilesOutput.addBuild(
-          project.getGradle().getStartParameter().getSettingsFile().toPath());
-    } else if (Files.exists(projectPath.resolve(Settings.DEFAULT_SETTINGS_FILE))) {
-      skaffoldFilesOutput.addBuild(projectPath.resolve(Settings.DEFAULT_SETTINGS_FILE));
+    Path groovySettings = projectPath.resolve(Settings.DEFAULT_SETTINGS_FILE);
+    Path kotlinSettings = projectPath.resolve("settings.gradle.kts");
+    if (Files.exists(groovySettings)) {
+      skaffoldFilesOutput.addBuild(groovySettings);
+    } else if (Files.exists(kotlinSettings)) {
+      skaffoldFilesOutput.addBuild(kotlinSettings);
     }
 
     // Add gradle.properties
