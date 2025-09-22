@@ -59,7 +59,7 @@ public class ReproducibleLayerBuilderTest {
   private static void verifyNextTarArchiveEntry(
       TarArchiveInputStream tarArchiveInputStream, String expectedExtractionPath, Path expectedFile)
       throws IOException {
-    TarArchiveEntry header = tarArchiveInputStream.getNextTarEntry();
+    TarArchiveEntry header = tarArchiveInputStream.getNextEntry();
     assertThat(header.getName()).isEqualTo(expectedExtractionPath);
 
     byte[] expectedBytes = Files.readAllBytes(expectedFile);
@@ -78,7 +78,7 @@ public class ReproducibleLayerBuilderTest {
   private static void verifyNextTarArchiveEntryIsDirectory(
       TarArchiveInputStream tarArchiveInputStream, String expectedExtractionPath)
       throws IOException {
-    TarArchiveEntry extractionPathEntry = tarArchiveInputStream.getNextTarEntry();
+    TarArchiveEntry extractionPathEntry = tarArchiveInputStream.getNextEntry();
     assertThat(extractionPathEntry.getName()).isEqualTo(expectedExtractionPath);
     assertThat(extractionPathEntry.isDirectory()).isTrue();
     assertThat(extractionPathEntry.getMode()).isEqualTo(TarArchiveEntry.DEFAULT_DIR_MODE);
@@ -234,7 +234,7 @@ public class ReproducibleLayerBuilderTest {
 
     try (TarArchiveInputStream in = new TarArchiveInputStream(Files.newInputStream(tarFile))) {
       // root (default folder permissions)
-      TarArchiveEntry root = in.getNextTarEntry();
+      TarArchiveEntry root = in.getNextEntry();
       assertThat(root.getMode()).isEqualTo(040755);
       assertThat(root.getModTime().toInstant()).isEqualTo(Instant.ofEpochSecond(1));
       assertThat(root.getLongUserId()).isEqualTo(0);
@@ -243,7 +243,7 @@ public class ReproducibleLayerBuilderTest {
       assertThat(root.getGroupName()).isEmpty();
 
       // parentAAA (custom permissions, custom timestamp)
-      TarArchiveEntry rootParentA = in.getNextTarEntry();
+      TarArchiveEntry rootParentA = in.getNextEntry();
       assertThat(rootParentA.getMode()).isEqualTo(040111);
       assertThat(rootParentA.getModTime().toInstant()).isEqualTo(Instant.ofEpochSecond(10));
       assertThat(rootParentA.getLongUserId()).isEqualTo(0);
@@ -252,10 +252,10 @@ public class ReproducibleLayerBuilderTest {
       assertThat(rootParentA.getGroupName()).isEmpty();
 
       // skip over fileA
-      in.getNextTarEntry();
+      in.getNextEntry();
 
       // parentBBB (default permissions - ignored custom permissions, since fileB added first)
-      TarArchiveEntry rootParentB = in.getNextTarEntry();
+      TarArchiveEntry rootParentB = in.getNextEntry();
       // TODO (#1650): we want 040444 here.
       assertThat(rootParentB.getMode()).isEqualTo(040755);
       // TODO (#1650): we want Instant.ofEpochSecond(40) here.
@@ -266,10 +266,10 @@ public class ReproducibleLayerBuilderTest {
       assertThat(rootParentB.getGroupName()).isEmpty();
 
       // skip over fileB
-      in.getNextTarEntry();
+      in.getNextEntry();
 
       // parentCCC (default permissions - no entry provided)
-      TarArchiveEntry rootParentC = in.getNextTarEntry();
+      TarArchiveEntry rootParentC = in.getNextEntry();
       assertThat(rootParentC.getMode()).isEqualTo(040755);
       assertThat(rootParentC.getModTime().toInstant()).isEqualTo(Instant.ofEpochSecond(1));
       assertThat(rootParentC.getLongUserId()).isEqualTo(0);
@@ -358,13 +358,13 @@ public class ReproducibleLayerBuilderTest {
 
     try (TarArchiveInputStream in = new TarArchiveInputStream(Files.newInputStream(tarFile))) {
       // Root folder (default folder permissions)
-      assertThat(in.getNextTarEntry().getMode()).isEqualTo(040755);
+      assertThat(in.getNextEntry().getMode()).isEqualTo(040755);
       // fileA (default file permissions)
-      assertThat(in.getNextTarEntry().getMode()).isEqualTo(0100644);
+      assertThat(in.getNextEntry().getMode()).isEqualTo(0100644);
       // fileB (custom file permissions)
-      assertThat(in.getNextTarEntry().getMode()).isEqualTo(0100123);
+      assertThat(in.getNextEntry().getMode()).isEqualTo(0100123);
       // folder (custom folder permissions)
-      assertThat(in.getNextTarEntry().getMode()).isEqualTo(040456);
+      assertThat(in.getNextEntry().getMode()).isEqualTo(040456);
     }
   }
 
@@ -433,55 +433,55 @@ public class ReproducibleLayerBuilderTest {
     }
 
     try (TarArchiveInputStream in = new TarArchiveInputStream(Files.newInputStream(tarFile))) {
-      TarArchiveEntry entry1 = in.getNextTarEntry();
+      TarArchiveEntry entry1 = in.getNextEntry();
       assertThat(entry1.getLongUserId()).isEqualTo(0);
       assertThat(entry1.getLongGroupId()).isEqualTo(0);
       assertThat(entry1.getUserName()).isEmpty();
       assertThat(entry1.getGroupName()).isEmpty();
 
-      TarArchiveEntry entry2 = in.getNextTarEntry();
+      TarArchiveEntry entry2 = in.getNextEntry();
       assertThat(entry2.getLongUserId()).isEqualTo(0);
       assertThat(entry2.getLongGroupId()).isEqualTo(0);
       assertThat(entry2.getUserName()).isEmpty();
       assertThat(entry2.getGroupName()).isEmpty();
 
-      TarArchiveEntry entry3 = in.getNextTarEntry();
+      TarArchiveEntry entry3 = in.getNextEntry();
       assertThat(entry3.getLongUserId()).isEqualTo(0);
       assertThat(entry3.getLongGroupId()).isEqualTo(0);
       assertThat(entry3.getUserName()).isEmpty();
       assertThat(entry3.getGroupName()).isEmpty();
 
-      TarArchiveEntry entry4 = in.getNextTarEntry();
+      TarArchiveEntry entry4 = in.getNextEntry();
       assertThat(entry4.getLongUserId()).isEqualTo(333);
       assertThat(entry4.getLongGroupId()).isEqualTo(0);
       assertThat(entry4.getUserName()).isEmpty();
       assertThat(entry4.getGroupName()).isEmpty();
 
-      TarArchiveEntry entry5 = in.getNextTarEntry();
+      TarArchiveEntry entry5 = in.getNextEntry();
       assertThat(entry5.getLongUserId()).isEqualTo(0);
       assertThat(entry5.getLongGroupId()).isEqualTo(555);
       assertThat(entry5.getUserName()).isEmpty();
       assertThat(entry5.getGroupName()).isEmpty();
 
-      TarArchiveEntry entry6 = in.getNextTarEntry();
+      TarArchiveEntry entry6 = in.getNextEntry();
       assertThat(entry6.getLongUserId()).isEqualTo(333);
       assertThat(entry6.getLongGroupId()).isEqualTo(555);
       assertThat(entry6.getUserName()).isEmpty();
       assertThat(entry6.getGroupName()).isEmpty();
 
-      TarArchiveEntry entry7 = in.getNextTarEntry();
+      TarArchiveEntry entry7 = in.getNextEntry();
       assertThat(entry7.getLongUserId()).isEqualTo(0);
       assertThat(entry7.getLongGroupId()).isEqualTo(0);
       assertThat(entry7.getUserName()).isEqualTo("user");
       assertThat(entry7.getGroupName()).isEmpty();
 
-      TarArchiveEntry entry8 = in.getNextTarEntry();
+      TarArchiveEntry entry8 = in.getNextEntry();
       assertThat(entry8.getLongUserId()).isEqualTo(0);
       assertThat(entry8.getLongGroupId()).isEqualTo(0);
       assertThat(entry8.getUserName()).isEmpty();
       assertThat(entry8.getGroupName()).isEqualTo("group");
 
-      TarArchiveEntry entry9 = in.getNextTarEntry();
+      TarArchiveEntry entry9 = in.getNextEntry();
       assertThat(entry9.getLongUserId()).isEqualTo(0);
       assertThat(entry9.getLongGroupId()).isEqualTo(0);
       assertThat(entry9.getUserName()).isEqualTo("user");

@@ -95,7 +95,7 @@ public class ReproducibleImageTest {
     try (TarArchiveInputStream input =
         new TarArchiveInputStream(Files.newInputStream(imageTar.toPath()))) {
       TarArchiveEntry imageEntry;
-      while ((imageEntry = input.getNextTarEntry()) != null) {
+      while ((imageEntry = input.getNextEntry()) != null) {
         actual.add(imageEntry.getName());
       }
     }
@@ -218,14 +218,14 @@ public class ReproducibleImageTest {
     try (TarArchiveInputStream input =
         new TarArchiveInputStream(Files.newInputStream(imageTar.toPath()))) {
       TarArchiveEntry imageEntry;
-      while ((imageEntry = input.getNextTarEntry()) != null) {
+      while ((imageEntry = input.getNextEntry()) != null) {
         String imageEntryName = imageEntry.getName();
         // assume all .tar.gz files are layers
         if (imageEntry.isFile() && imageEntryName.endsWith(".tar.gz")) {
           @SuppressWarnings("resource") // must not close sub-streams
           TarArchiveInputStream layer = new TarArchiveInputStream(new GZIPInputStream(input));
           TarArchiveEntry layerEntry;
-          while ((layerEntry = layer.getNextTarEntry()) != null) {
+          while ((layerEntry = layer.getNextEntry()) != null) {
             layerConsumer.accept(imageEntryName, layerEntry);
           }
         }
@@ -238,7 +238,7 @@ public class ReproducibleImageTest {
     try (TarArchiveInputStream input =
         new TarArchiveInputStream(Files.newInputStream(tarFile.toPath()))) {
       TarArchiveEntry imageEntry;
-      while ((imageEntry = input.getNextTarEntry()) != null) {
+      while ((imageEntry = input.getNextEntry()) != null) {
         if (filename.equals(imageEntry.getName())) {
           return CharStreams.toString(new InputStreamReader(input, StandardCharsets.UTF_8));
         }
