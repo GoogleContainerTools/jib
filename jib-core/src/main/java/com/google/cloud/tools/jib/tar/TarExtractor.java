@@ -71,9 +71,9 @@ public class TarExtractor {
     List<TarArchiveEntry> entries = new ArrayList<>();
     try (InputStream in = new BufferedInputStream(Files.newInputStream(source));
         TarArchiveInputStream tarArchiveInputStream = new TarArchiveInputStream(in)) {
-      for (TarArchiveEntry entry = tarArchiveInputStream.getNextTarEntry();
+      for (TarArchiveEntry entry = tarArchiveInputStream.getNextEntry();
           entry != null;
-          entry = tarArchiveInputStream.getNextTarEntry()) {
+          entry = tarArchiveInputStream.getNextEntry()) {
         entries.add(entry);
         Path entryPath = destination.resolve(entry.getName());
 
