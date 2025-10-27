@@ -136,7 +136,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Download attestation
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v6
         with:
           name: "${{ needs.provenance.outputs.attestation-name }}"
 
