@@ -904,7 +904,8 @@ public class PluginConfigurationProcessorTest {
         "11, eclipse-temurin:11-jre",
         "13, eclipse-temurin:17-jre",
         "17, eclipse-temurin:17-jre",
-        "21, eclipse-temurin:21-jre"
+        "21, eclipse-temurin:21-jre",
+        "25, eclipse-temurin:25-jre"
       })
   public void testGetDefaultBaseImage_defaultJavaBaseImage(
       int javaVersion, String expectedBaseImage) throws IncompatibleBaseImageJavaVersionException {
@@ -914,16 +915,16 @@ public class PluginConfigurationProcessorTest {
   }
 
   @Test
-  public void testGetDefaultBaseImage_projectHigherThanJava21() {
-    when(projectProperties.getMajorJavaVersion()).thenReturn(22);
+  public void testGetDefaultBaseImage_projectHigherThanJava25() {
+    when(projectProperties.getMajorJavaVersion()).thenReturn(26);
 
     IncompatibleBaseImageJavaVersionException exception =
         assertThrows(
             IncompatibleBaseImageJavaVersionException.class,
             () -> PluginConfigurationProcessor.getDefaultBaseImage(projectProperties));
 
-    assertThat(exception.getBaseImageMajorJavaVersion()).isEqualTo(21);
-    assertThat(exception.getProjectMajorJavaVersion()).isEqualTo(22);
+    assertThat(exception.getBaseImageMajorJavaVersion()).isEqualTo(25);
+    assertThat(exception.getProjectMajorJavaVersion()).isEqualTo(26);
   }
 
   @Test
@@ -983,7 +984,9 @@ public class PluginConfigurationProcessorTest {
         "eclipse-temurin:17, 17, 19",
         "eclipse-temurin:17-jre, 17, 19",
         "eclipse-temurin:21, 21, 22",
-        "eclipse-temurin:21-jre, 21, 22"
+        "eclipse-temurin:21-jre, 21, 22",
+        "eclipse-temurin:25, 25, 26",
+        "eclipse-temurin:25-jre, 25, 26"
       })
   public void testGetJavaContainerBuilderWithBaseImage_incompatibleJavaBaseImage(
       String baseImage, int baseImageJavaVersion, int appJavaVersion) {
@@ -1013,8 +1016,8 @@ public class PluginConfigurationProcessorTest {
   }
 
   @Test
-  public void testGetJavaContainerBuilderWithBaseImage_java22NoBaseImage() {
-    when(projectProperties.getMajorJavaVersion()).thenReturn(22);
+  public void testGetJavaContainerBuilderWithBaseImage_java26NoBaseImage() {
+    when(projectProperties.getMajorJavaVersion()).thenReturn(26);
     when(rawConfiguration.getFromImage()).thenReturn(Optional.empty());
     IncompatibleBaseImageJavaVersionException exception =
         assertThrows(
@@ -1022,8 +1025,8 @@ public class PluginConfigurationProcessorTest {
             () ->
                 PluginConfigurationProcessor.getJavaContainerBuilderWithBaseImage(
                     rawConfiguration, projectProperties, inferredAuthProvider));
-    assertThat(exception.getBaseImageMajorJavaVersion()).isEqualTo(21);
-    assertThat(exception.getProjectMajorJavaVersion()).isEqualTo(22);
+    assertThat(exception.getBaseImageMajorJavaVersion()).isEqualTo(25);
+    assertThat(exception.getProjectMajorJavaVersion()).isEqualTo(26);
   }
 
   @Test
