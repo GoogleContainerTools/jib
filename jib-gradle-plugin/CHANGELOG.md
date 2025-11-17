@@ -9,6 +9,14 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
+## 3.5.0
+
+### Added
+- feat: add default base image for Java 25 (#4436)
+
+### Changed
+- deps: deps: update `org.ow2.asm:asm` to version 9.8 for java 25 support
+
 ## 3.4.5
 
 ### Fixed
