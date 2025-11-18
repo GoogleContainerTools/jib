@@ -9,6 +9,14 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
+## 0.28.1
+
+### Added
+- feat: support Java 25 main methods
+
+### Changed
+- deps: update `org.ow2.asm:asm` to version 9.9
+
 ## 0.28.0
 
 ### Added
