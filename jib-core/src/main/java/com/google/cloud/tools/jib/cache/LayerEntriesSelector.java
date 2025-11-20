@@ -69,15 +69,17 @@ class LayerEntriesSelector {
     private final Instant targetModificationTime;
     private final String permissions;
     private final String ownership;
+    private final boolean isSymlink;
 
     @VisibleForTesting
-    LayerEntryTemplate(FileEntry layerEntry) throws IOException {
+    LayerEntryTemplate(FileEntry layerEntry, boolean retainSymlinks) throws IOException {
       sourceFile = layerEntry.getSourceFile().toAbsolutePath().toString();
       extractionPath = layerEntry.getExtractionPath().toString();
       sourceModificationTime = Files.getLastModifiedTime(layerEntry.getSourceFile()).toInstant();
       targetModificationTime = layerEntry.getModificationTime();
       permissions = layerEntry.getPermissions().toOctalString();
       ownership = layerEntry.getOwnership();
+      isSymlink = retainSymlinks && Files.isSymbolicLink(layerEntry.getSourceFile());
     }
 
     @Override
@@ -105,7 +107,11 @@ class LayerEntriesSelector {
       if (permissionsComparison != 0) {
         return permissionsComparison;
       }
-      return ownership.compareTo(otherLayerEntryTemplate.ownership);
+      int ownerShipComparison = ownership.compareTo(otherLayerEntryTemplate.ownership);
+      if (ownerShipComparison != 0) {
+    	  return ownerShipComparison;
+      }
+      return Boolean.compare(isSymlink, otherLayerEntryTemplate.isSymlink);
     }
 
     @Override
@@ -122,7 +128,8 @@ class LayerEntriesSelector {
           && sourceModificationTime.equals(otherLayerEntryTemplate.sourceModificationTime)
           && targetModificationTime.equals(otherLayerEntryTemplate.targetModificationTime)
           && permissions.equals(otherLayerEntryTemplate.permissions)
-          && ownership.equals(otherLayerEntryTemplate.ownership);
+          && ownership.equals(otherLayerEntryTemplate.ownership)
+          && isSymlink == otherLayerEntryTemplate.isSymlink;
     }
 
     @Override
@@ -133,7 +140,8 @@ class LayerEntriesSelector {
           sourceModificationTime,
           targetModificationTime,
           permissions,
-          ownership);
+          ownership,
+          isSymlink);
     }
   }
 
@@ -142,15 +150,16 @@ class LayerEntriesSelector {
    * sorted by source file first, then extraction path (see {@link LayerEntryTemplate#compareTo}).
    *
    * @param layerEntries the list of {@link FileEntry} to convert
+   * @param retainSymlinks - Whether symbolic links are to be retained or not.
    * @return list of {@link LayerEntryTemplate} after sorting
    * @throws IOException if checking the file creation time of a layer entry fails
    */
   @VisibleForTesting
-  static List<LayerEntryTemplate> toSortedJsonTemplates(List<FileEntry> layerEntries)
+  static List<LayerEntryTemplate> toSortedJsonTemplates(List<FileEntry> layerEntries, boolean retainSymlinks)
       throws IOException {
     List<LayerEntryTemplate> jsonTemplates = new ArrayList<>();
     for (FileEntry entry : layerEntries) {
-      jsonTemplates.add(new LayerEntryTemplate(entry));
+      jsonTemplates.add(new LayerEntryTemplate(entry, retainSymlinks));
     }
     Collections.sort(jsonTemplates);
     return jsonTemplates;
@@ -161,12 +170,13 @@ class LayerEntriesSelector {
    * set of layer entries, regardless of order. TODO: Should we care about order?
    *
    * @param layerEntries the layer entries
+   * @param retainSymlinks - Whether symbolic links are to be retained or not.
    * @return the selector
    * @throws IOException if an I/O exception occurs
    */
-  static DescriptorDigest generateSelector(ImmutableList<FileEntry> layerEntries)
+  static DescriptorDigest generateSelector(ImmutableList<FileEntry> layerEntries, boolean retainSymlinks)
       throws IOException {
-    return Digests.computeJsonDigest(toSortedJsonTemplates(layerEntries));
+    return Digests.computeJsonDigest(toSortedJsonTemplates(layerEntries, retainSymlinks));
   }
 
   private LayerEntriesSelector() {}
