@@ -158,14 +158,17 @@ public class FilesTaskV2 extends DefaultTask {
    * @param project the project
    */
   private void addProjectFiles(Project project) {
+    Preconditions.checkNotNull(jibExtension);
+
     // Add build config, settings, etc.
     addGradleFiles(project);
 
     // Add sources + resources
     SourceSetContainer sourceSetContainer =
         project.getExtensions().findByType(SourceSetContainer.class);
+    String sourceSetName = jibExtension.getSourceSetName().get();
     if (sourceSetContainer != null) {
-      SourceSet mainSourceSet = sourceSetContainer.findByName(SourceSet.MAIN_SOURCE_SET_NAME);
+      SourceSet mainSourceSet = sourceSetContainer.findByName(sourceSetName);
       if (mainSourceSet != null) {
         mainSourceSet
             .getAllSource()
