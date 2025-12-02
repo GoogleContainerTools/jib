@@ -142,7 +142,8 @@ public class FilesTaskV2 extends DefaultTask {
     skaffoldFilesOutput.addBuild(project.getBuildFile().toPath());
 
     // Add settings.gradle
-    if (GradleVersion.current().compareTo(GRADLE_9) < 0 && project.getGradle().getStartParameter().getSettingsFile() != null) {
+    if (GradleVersion.current().compareTo(GRADLE_9) < 0
+        && project.getGradle().getStartParameter().getSettingsFile() != null) {
       skaffoldFilesOutput.addBuild(
           project.getGradle().getStartParameter().getSettingsFile().toPath());
     } else if (Files.exists(projectPath.resolve(Settings.DEFAULT_SETTINGS_FILE))) {
