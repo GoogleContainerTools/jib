@@ -41,6 +41,7 @@ import org.gradle.api.initialization.Settings;
 import org.gradle.api.tasks.SourceSet;
 import org.gradle.api.tasks.SourceSetContainer;
 import org.gradle.api.tasks.TaskAction;
+import org.gradle.util.GradleVersion;
 
 /**
  * Prints out changing source dependencies on a project.
@@ -49,6 +50,8 @@ import org.gradle.api.tasks.TaskAction;
  * :<subproject>:_jibSkaffoldFilesV2 -q}
  */
 public class FilesTaskV2 extends DefaultTask {
+
+  private static final GradleVersion GRADLE_9 = GradleVersion.version("9.0");
 
   private final SkaffoldFilesOutput skaffoldFilesOutput = new SkaffoldFilesOutput();
 
@@ -139,7 +142,8 @@ public class FilesTaskV2 extends DefaultTask {
     skaffoldFilesOutput.addBuild(project.getBuildFile().toPath());
 
     // Add settings.gradle
-    if (project.getGradle().getStartParameter().getSettingsFile() != null) {
+    if (GradleVersion.current().compareTo(GRADLE_9) < 0
+        && project.getGradle().getStartParameter().getSettingsFile() != null) {
       skaffoldFilesOutput.addBuild(
           project.getGradle().getStartParameter().getSettingsFile().toPath());
     } else if (Files.exists(projectPath.resolve(Settings.DEFAULT_SETTINGS_FILE))) {
