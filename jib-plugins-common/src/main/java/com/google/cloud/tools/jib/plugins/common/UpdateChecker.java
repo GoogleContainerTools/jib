@@ -63,30 +63,53 @@ public class UpdateChecker {
    */
 
   @VisibleForTesting
-  static int compareVersions(String v1, String v2) {
+   static int compareVersions(String v1, String v2) {
     String[] p1 = v1.split("\\.");
     String[] p2 = v2.split("\\.");
 
     int len = Math.max(p1.length, p2.length);
     for (int i = 0; i < len; i++) {
-      int a = i < p1.length ? parsePart(p1[i]) : 0;
-      int b = i < p2.length ? parsePart(p2[i]) : 0;
-      if (a != b) {
-        return Integer.compare(a, b);
+      String s1 = i < p1.length ? p1[i] : "0";
+      String s2 = i < p2.length ? p2[i] : "0";
+
+      int n1 = parseNumericPrefix(s1);
+      int n2 = parseNumericPrefix(s2);
+
+      if (n1 != n2) {
+        return Integer.compare(n1, n2);
+      }
+
+      // Handle suffixes (e.g., "1-SNAPSHOT", "1-beta")
+      String suf1 = suffix(s1);
+      String suf2 = suffix(s2);
+
+      if (!suf1.equals(suf2)) {
+        if (suf1.isEmpty()) return 1;   // no suffix ⇒ stable release ⇒ newer
+        if (suf2.isEmpty()) return -1;  // suffix ⇒ prerelease ⇒ older
+        return suf1.compareTo(suf2);    // both have suffix ⇒ lexicographic
       }
     }
     return 0;
   }
 
-  private static int parsePart(String s) {
+  private static int parseNumericPrefix(String s) {
+    int i = 0;
+    while (i < s.length() && Character.isDigit(s.charAt(i))) i++;
+    if (i == 0) return 0;
     try {
-      // Extract leading numeric portion (e.g., "1-SNAPSHOT" → "1")
-      String digits = s.replaceAll("^(\\d+).*$", "$1");
-      return Integer.parseInt(digits);
-    } catch (NumberFormatException e) {
+      return Integer.parseInt(s.substring(0, i));
+    } catch (NumberFormatException ex) {
       return 0;
     }
   }
+
+  private static String suffix(String s) {
+    int i = 0;
+    while (i < s.length() && Character.isDigit(s.charAt(i))) i++;
+    return s.substring(i); // "" if no suffix
+  }
+
+
 
 
   public static Future<Optional<String>> checkForUpdate(
