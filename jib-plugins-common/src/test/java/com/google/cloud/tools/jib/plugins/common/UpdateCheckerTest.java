@@ -62,6 +62,16 @@ public class UpdateCheckerTest {
     configDir = temporaryFolder.getRoot().toPath();
   }
 
+  @Test
+  public void testCompareVersions() {
+    assertThat(UpdateChecker.compareVersions("3.5.0", "3.4.6")).isGreaterThan(0);
+    assertThat(UpdateChecker.compareVersions("3.4.6", "3.5.0")).isLessThan(0);
+    assertThat(UpdateChecker.compareVersions("3.5.0", "3.5.0")).isEqualTo(0);
+    assertThat(UpdateChecker.compareVersions("3.5", "3.5.0")).isEqualTo(0);
+    assertThat(UpdateChecker.compareVersions("3.5.1", "3.5")).isGreaterThan(0);
+  }
+
+
   @After
   public void tearDown() throws IOException {
     testWebServer.close();

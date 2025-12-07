@@ -61,6 +61,34 @@ public class UpdateChecker {
    * @param log {@link Consumer} used to log messages
    * @return a new {@link UpdateChecker}
    */
+
+  @VisibleForTesting
+  static int compareVersions(String v1, String v2) {
+    String[] p1 = v1.split("\\.");
+    String[] p2 = v2.split("\\.");
+
+    int len = Math.max(p1.length, p2.length);
+    for (int i = 0; i < len; i++) {
+      int a = i < p1.length ? parsePart(p1[i]) : 0;
+      int b = i < p2.length ? parsePart(p2[i]) : 0;
+      if (a != b) {
+        return Integer.compare(a, b);
+      }
+    }
+    return 0;
+  }
+
+  private static int parsePart(String s) {
+    try {
+      // Extract leading numeric portion (e.g., "1-SNAPSHOT" → "1")
+      String digits = s.replaceAll("^(\\d+).*$", "$1");
+      return Integer.parseInt(digits);
+    } catch (NumberFormatException e) {
+      return 0;
+    }
+  }
+
+
   public static Future<Optional<String>> checkForUpdate(
       ExecutorService executorService,
       String versionUrl,
@@ -118,10 +146,16 @@ public class UpdateChecker {
         Files.write(lastUpdateCheckTemp, Instant.now().toString().getBytes(StandardCharsets.UTF_8));
         Files.move(lastUpdateCheckTemp, lastUpdateCheck, StandardCopyOption.REPLACE_EXISTING);
 
-        if (currentVersion.equals(version.latest)) {
+        if (version.latest == null || version.latest.isEmpty()) {
           return Optional.empty();
         }
-        return Optional.of(version.latest);
+
+        if (compareVersions(currentVersion, version.latest) < 0) {
+          return Optional.of(version.latest); // only report if newer
+        }
+
+        return Optional.empty(); // otherwise equal or older
+
       } finally {
         httpClient.shutDown();
       }
