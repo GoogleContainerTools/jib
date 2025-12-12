@@ -1,6 +1,6 @@
 plugins {
     id 'io.vertx.vertx-plugin' version '0.1.0'
-    id 'com.google.cloud.tools.jib' version '3.5.1'
+    id 'com.google.cloud.tools.jib' version '3.5.2'
 }
 
 repositories {
