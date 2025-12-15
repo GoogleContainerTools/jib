@@ -129,6 +129,8 @@ public interface RawConfiguration {
 
   Path getDigestOutputPath();
 
+  Path getImageTagDigestOutputPath();
+
   Path getImageIdOutputPath();
 
   Path getImageJsonOutputPath();
