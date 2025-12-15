@@ -19,6 +19,7 @@ package com.google.cloud.tools.jib.image;
 import com.google.cloud.tools.jib.api.DescriptorDigest;
 import com.google.cloud.tools.jib.api.ImageReference;
 import com.google.cloud.tools.jib.api.InvalidImageReferenceException;
+import com.google.cloud.tools.jib.api.buildplan.CompressionAlgorithm;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.blob.Blobs;
 import com.google.cloud.tools.jib.docker.json.DockerManifestEntryTemplate;
@@ -82,10 +83,12 @@ public class ImageTarballTest {
     Mockito.when(mockLayer1.getBlobDescriptor())
         .thenReturn(new BlobDescriptor(fileASize, fakeDigestA));
     Mockito.when(mockLayer1.getDiffId()).thenReturn(fakeDigestA);
+    Mockito.when(mockLayer1.getCompressionAlgorithm()).thenReturn(CompressionAlgorithm.GZIP);
     Mockito.when(mockLayer2.getBlob()).thenReturn(Blobs.from(fileB));
     Mockito.when(mockLayer2.getBlobDescriptor())
         .thenReturn(new BlobDescriptor(fileBSize, fakeDigestB));
     Mockito.when(mockLayer2.getDiffId()).thenReturn(fakeDigestB);
+    Mockito.when(mockLayer2.getCompressionAlgorithm()).thenReturn(CompressionAlgorithm.GZIP);
   }
 
   @Test
