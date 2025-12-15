@@ -9,6 +9,11 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
+## 3.5.2
+
+### Added
+- feat: Avoid use of StartParameter.getSettingsFile() in jibSkaffoldFilesV2 when Gradle version is 9 or higher
+
 ## 3.5.1
 
 ### Added
