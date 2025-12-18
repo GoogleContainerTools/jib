@@ -28,6 +28,7 @@ The CLI tool is powered by [Jib Core](https://github.com/GoogleContainerTools/ji
   * [Download a Java Application](#download-a-java-application)
   * [Windows: Install with `choco`](#windows-install-with-choco)
   * [Build Yourself from Source (for Advanced Users)](#build-yourself-from-source-for-advanced-users)
+* [Jib CLI JVM options](#jib-cli-jvm-options)
 * [Supported Commands](#supported-commands)
 * [Build Command](#build-command)
   * [Quickstart](#quickstart)
@@ -87,6 +88,12 @@ $ ./gradlew jib-cli:installDist
 # run
 $ ./jib-cli/build/install/jib/bin/jib
 ```
+
+## Jib CLI JVM options
+
+Jib CLI is a Java application built with the [Gradle application plugin](https://docs.gradle.org/current/userguide/application_plugin.html). 
+To configure JVM options for the Jib CLI process itself, you can use the `JIB_OPTS` or `JAVA_OPTS` environment variables.
+This is commonly used to configure settings like a proxy by passing standard Java networking properties, as described in the [proxy configuration FAQ](../docs/faq.md#how-do-i-configure-a-proxy).
 
 ## Supported Commands
 
