@@ -47,6 +47,10 @@ public class FilesTaskV2Test {
   @ClassRule public static final TestProject multiTestProject = new TestProject("multi-service");
 
   @ClassRule
+  public static final TestProject multiTestProjectGradle9 =
+      new TestProject("multi-service").withGradleVersion("9.0");
+
+  @ClassRule
   public static final TestProject platformProject =
       new TestProject("platform").withGradleVersion("5.2");
 
@@ -187,5 +191,34 @@ public class FilesTaskV2Test {
         result.getInputs());
     assertPathListsAreEqual(
         ImmutableList.of(projectRoot.resolve("src/main/jib/bar")), result.getIgnore());
+  }
+
+  @Test
+  public void testFilesTask_multiProjectComplexService_gradle9() throws IOException {
+    Path projectRoot = multiTestProjectGradle9.getProjectRoot();
+    Path complexServiceRoot = projectRoot.resolve("complex-service");
+    Path libRoot = projectRoot.resolve("lib");
+    SkaffoldFilesOutput result =
+        new SkaffoldFilesOutput(verifyTaskSuccess(multiTestProjectGradle9, "complex-service"));
+    assertPathListsAreEqual(
+        ImmutableList.of(
+            projectRoot.resolve("build.gradle"),
+            projectRoot.resolve("settings.gradle"),
+            projectRoot.resolve("gradle.properties"),
+            complexServiceRoot.resolve("build.gradle"),
+            libRoot.resolve("build.gradle")),
+        result.getBuild());
+    assertPathListsAreEqual(
+        ImmutableList.of(
+            complexServiceRoot.resolve("src/main/extra-resources-1"),
+            complexServiceRoot.resolve("src/main/extra-resources-2"),
+            complexServiceRoot.resolve("src/main/java"),
+            complexServiceRoot.resolve("src/main/other-jib"),
+            libRoot.resolve("src/main/resources"),
+            libRoot.resolve("src/main/java"),
+            complexServiceRoot.resolve(
+                "local-m2-repo/com/google/cloud/tools/tiny-test-lib/0.0.1-SNAPSHOT/tiny-test-lib-0.0.1-SNAPSHOT.jar")),
+        result.getInputs());
+    assertThat(result.getIgnore()).isEmpty();
   }
 }
