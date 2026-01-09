@@ -91,16 +91,16 @@ public class FilesTaskV2 extends DefaultTask {
 
     Set<File> projectDependencyJars = new HashSet<>();
     for (ProjectDependency projectDependency : projectDependencies) {
-      addProjectFiles(projectDependency.getDependencyProject());
+      Project dependentProject = getDependentProject(projectDependency);
+      addProjectFiles(dependentProject);
 
       // Keep track of project dependency jars for filtering out later
       String configurationName = projectDependency.getTargetConfiguration();
       if (configurationName == null) {
         configurationName = "default";
       }
-      Project dependencyProject = projectDependency.getDependencyProject();
       for (Configuration targetConfiguration :
-          dependencyProject.getConfigurations().getByName(configurationName).getHierarchy()) {
+          dependentProject.getConfigurations().getByName(configurationName).getHierarchy()) {
         for (PublishArtifact artifact : targetConfiguration.getArtifacts()) {
           projectDependencyJars.add(artifact.getFile());
         }
@@ -142,8 +142,7 @@ public class FilesTaskV2 extends DefaultTask {
     skaffoldFilesOutput.addBuild(project.getBuildFile().toPath());
 
     // Add settings.gradle
-    if (GradleVersion.current().compareTo(GRADLE_9) < 0
-        && project.getGradle().getStartParameter().getSettingsFile() != null) {
+    if (isBeforeGradle9() && project.getGradle().getStartParameter().getSettingsFile() != null) {
       skaffoldFilesOutput.addBuild(
           project.getGradle().getStartParameter().getSettingsFile().toPath());
     } else if (Files.exists(projectPath.resolve(Settings.DEFAULT_SETTINGS_FILE))) {
@@ -212,7 +211,7 @@ public class FilesTaskV2 extends DefaultTask {
               // If this is a project dependency, save it
               ProjectDependency projectDependency = (ProjectDependency) dependency;
               if (!projectDependencies.contains(projectDependency)) {
-                projects.push(projectDependency.getDependencyProject());
+                projects.push(getDependentProject(projectDependency));
                 projectDependencies.add(projectDependency);
               }
             }
@@ -221,5 +220,37 @@ public class FilesTaskV2 extends DefaultTask {
       }
     }
     return projectDependencies;
+  }
+
+  /**
+   * Resolves a {@link ProjectDependency} to its corresponding {@link Project} instance.
+   *
+   * <p>This method handles the removal of {@code ProjectDependency.getDependencyProject()} in
+   * Gradle 9.0 by falling back to {@code getPath()} and resolving it via the project hierarchy.
+   *
+   * @param projectDependency the project dependency to resolve
+   * @return the resolved project
+   * @throws RuntimeException if the dependent project could not be resolved
+   */
+  private Project getDependentProject(ProjectDependency projectDependency) {
+    if (isBeforeGradle9()) {
+      return projectDependency.getDependencyProject();
+    }
+    try {
+      String path =
+          (String) projectDependency.getClass().getMethod("getPath").invoke(projectDependency);
+      return getProject().project(path);
+    } catch (Exception ex) {
+      throw new RuntimeException("Failed to get dependent project from " + projectDependency, ex);
+    }
+  }
+
+  /**
+   * Checks if the current Gradle version is older than 9.0.
+   *
+   * @return {@code true} if the current Gradle version is less than 9.0, {@code false} otherwise
+   */
+  private static boolean isBeforeGradle9() {
+    return GradleVersion.current().compareTo(GRADLE_9) < 0;
   }
 }
