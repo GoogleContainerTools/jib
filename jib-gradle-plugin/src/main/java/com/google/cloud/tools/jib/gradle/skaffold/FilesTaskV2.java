@@ -240,7 +240,7 @@ public class FilesTaskV2 extends DefaultTask {
       String path =
           (String) projectDependency.getClass().getMethod("getPath").invoke(projectDependency);
       return getProject().project(path);
-    } catch (Exception ex) {
+    } catch (ReflectiveOperationException ex) {
       throw new RuntimeException("Failed to get dependent project from " + projectDependency, ex);
     }
   }
