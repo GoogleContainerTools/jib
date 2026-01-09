@@ -175,6 +175,25 @@ public class FilesTaskV2Test {
   }
 
   @Test
+  public void testFilesTast_withConfigModifiers() throws IOException {
+    Path projectRoot = skaffoldTestProject.getProjectRoot();
+    SkaffoldFilesOutput result =
+        new SkaffoldFilesOutput(verifyTaskSuccess(skaffoldTestProject, null));
+    assertPathListsAreEqual(
+        ImmutableList.of(projectRoot.resolve("build.gradle"), projectRoot.resolve("script.gradle")),
+        result.getBuild());
+    assertPathListsAreEqual(
+        ImmutableList.of(
+            projectRoot.resolve("src/main/resources"),
+            projectRoot.resolve("src/main/java"),
+            projectRoot.resolve("src/main/jib"),
+            projectRoot.resolve("other/file.txt")),
+        result.getInputs());
+    assertPathListsAreEqual(
+        ImmutableList.of(projectRoot.resolve("src/main/jib/bar")), result.getIgnore());
+  }
+
+  @Test
   public void testFilesTask_multiProjectComplexService_gradle9() throws IOException {
     Path projectRoot = multiTestProjectGradle9.getProjectRoot();
     Path complexServiceRoot = projectRoot.resolve("complex-service");
@@ -201,24 +220,5 @@ public class FilesTaskV2Test {
                 "local-m2-repo/com/google/cloud/tools/tiny-test-lib/0.0.1-SNAPSHOT/tiny-test-lib-0.0.1-SNAPSHOT.jar")),
         result.getInputs());
     assertThat(result.getIgnore()).isEmpty();
-  }
-
-  @Test
-  public void testFilesTast_withConfigModifiers() throws IOException {
-    Path projectRoot = skaffoldTestProject.getProjectRoot();
-    SkaffoldFilesOutput result =
-        new SkaffoldFilesOutput(verifyTaskSuccess(skaffoldTestProject, null));
-    assertPathListsAreEqual(
-        ImmutableList.of(projectRoot.resolve("build.gradle"), projectRoot.resolve("script.gradle")),
-        result.getBuild());
-    assertPathListsAreEqual(
-        ImmutableList.of(
-            projectRoot.resolve("src/main/resources"),
-            projectRoot.resolve("src/main/java"),
-            projectRoot.resolve("src/main/jib"),
-            projectRoot.resolve("other/file.txt")),
-        result.getInputs());
-    assertPathListsAreEqual(
-        ImmutableList.of(projectRoot.resolve("src/main/jib/bar")), result.getIgnore());
   }
 }
