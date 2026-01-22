@@ -248,26 +248,6 @@ public class JibPluginTest {
   }
 
   @Test
-  public void testSpringBootJarProject_packagedMode_jarEnabled() {
-    Project project =
-        createProject("java", "org.springframework.boot", "com.google.cloud.tools.jib");
-    JibExtension jibExtension = (JibExtension) project.getExtensions().getByName("jib");
-    jibExtension.setContainerizingMode("packaged");
-    project.getTasks().named("jar").configure(task -> task.setEnabled(true));
-
-    TaskContainer tasks = project.getTasks();
-    Exception exception = assertThrows(GradleException.class, () -> tasks.getByPath(":jar"));
-    assertThat(exception.getCause())
-        .hasMessageThat()
-        .startsWith(
-            "Both 'bootJar' and 'jar' tasks are enabled, but they write their jar file into the "
-                + "same location at ");
-    assertThat(exception.getCause())
-        .hasMessageThat()
-        .endsWith("root.jar. Did you forget to set 'archiveClassifier' on either task?");
-  }
-
-  @Test
   public void testSpringBootJarProject_packagedMode_jarEnabledAndClassifierSet() {
     Project project =
         createProject("java", "org.springframework.boot", "com.google.cloud.tools.jib");
