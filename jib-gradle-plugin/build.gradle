@@ -61,19 +61,16 @@ release {
   }
 }
 // Gradle Plugin Portal releases
-pluginBundle {
-  website = 'https://github.com/GoogleContainerTools/jib/'
-  vcsUrl = 'https://github.com/GoogleContainerTools/jib/'
-  tags = ['google', 'java', 'containers', 'docker', 'kubernetes', 'microservices']
-}
-
 gradlePlugin {
   testSourceSets sourceSets.integrationTest, sourceSets.test
+  website = 'https://github.com/GoogleContainerTools/jib/'
+  vcsUrl = 'https://github.com/GoogleContainerTools/jib/'
   plugins {
     jibPlugin {
       id = 'com.google.cloud.tools.jib'
       displayName = 'Jib'
       description = 'Containerize your Java application'
+      tags.set(['google', 'java', 'containers', 'docker', 'kubernetes', 'microservices'])
       implementationClass = 'com.google.cloud.tools.jib.gradle.JibPlugin'
     }
   }
