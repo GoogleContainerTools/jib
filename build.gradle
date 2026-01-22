@@ -67,7 +67,7 @@ import net.ltgt.gradle.errorprone.CheckSeverity
 }
 
 subprojects {
-  group 'com.google.cloud.tools'
+  group='com.google.cloud.tools'
 
   repositories {
     mavenCentral()
