@@ -170,7 +170,7 @@ subprojects {
 
   /* TEST CONFIG */
   tasks.withType(Test).configureEach {
-    reports.html.outputLocation = file("${reporting.baseDir}/${name}")
+    reports.html.outputLocation = reporting.getBaseDirectory().dir(name)
   }
 
   test {
