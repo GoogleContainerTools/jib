@@ -203,8 +203,8 @@ public class JibPluginTest {
         createProject("java", "org.springframework.boot", "com.google.cloud.tools.jib");
 
     Jar jar = (Jar) project.getTasks().getByPath(":jar");
-    assertThat(jar.getEnabled()).isFalse();
-    assertThat(jar.getArchiveClassifier().get()).isEmpty();
+    assertThat(jar.getEnabled()).isTrue();
+    assertThat(jar.getArchiveClassifier().get()).isEqualTo("plain");
   }
 
   @Test
@@ -216,7 +216,7 @@ public class JibPluginTest {
 
     Jar jar = (Jar) project.getTasks().getByPath(":jar");
     assertThat(jar.getEnabled()).isTrue();
-    assertThat(jar.getArchiveClassifier().get()).isEqualTo("original");
+    assertThat(jar.getArchiveClassifier().get()).isEqualTo("plain");
   }
 
   @Test
@@ -244,7 +244,7 @@ public class JibPluginTest {
 
     Jar jar = (Jar) project.getTasks().getByPath(":jar");
     assertThat(jar.getEnabled()).isTrue();
-    assertThat(jar.getArchiveClassifier().get()).isEmpty();
+    assertThat(jar.getArchiveClassifier().get()).isEqualTo("plain");
   }
 
   @Test
@@ -293,7 +293,7 @@ public class JibPluginTest {
 
     Jar jar = (Jar) project.getTasks().getByPath(":jar");
     assertThat(jar.getEnabled()).isTrue();
-    assertThat(jar.getArchiveClassifier().get()).isEmpty();
+    assertThat(jar.getArchiveClassifier().get()).isEqualTo("plain");
   }
 
   @Test
@@ -308,7 +308,7 @@ public class JibPluginTest {
     Jar jar = (Jar) project.getTasks().getByPath(":jar");
     assertThat(jar.getEnabled()).isTrue();
     assertThat(project.getTasks().getByPath(":bootJar").getEnabled()).isFalse();
-    assertThat(jar.getArchiveClassifier().get()).isEmpty();
+    assertThat(jar.getArchiveClassifier().get()).isEqualTo("plain");
   }
 
   @Test
