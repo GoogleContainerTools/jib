@@ -43,4 +43,4 @@ jobs:
           gradle-version: ${{ matrix.gradle-version }}
       - name: Run tests
         run: |
-          gradle clean build jacocoTestReport --stacktrace
+          gradle clean build jacocoTestReport --stacktrace --debug
