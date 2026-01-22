@@ -14,9 +14,11 @@ jobs:
       matrix:
         include:
           - java: 8
+            gradle-version: 6.9.2
           - java: 11
+            gradle-version: 6.9.2
           - java: 17
-            gradle-version: 9.0
+            gradle-version: 9.2.1
     env:
       # for gradle
       TERM: dumb
@@ -38,7 +40,7 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v3
         with:
-          gradle-version: ${{ matrix.gradle-version || 'wrapper' }}
+          gradle-version: ${{ matrix.gradle-version }}
       - name: Run tests
         run: |
           gradle clean build jacocoTestReport --stacktrace
