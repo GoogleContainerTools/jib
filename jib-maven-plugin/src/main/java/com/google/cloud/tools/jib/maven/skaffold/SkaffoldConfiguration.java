@@ -20,6 +20,7 @@ import java.io.File;
 import java.util.Collections;
 import java.util.List;
 import org.apache.maven.plugins.annotations.Parameter;
+import org.apache.maven.project.MavenProject;
 
 /** Skaffold specific Jib plugin configuration options. */
 public class SkaffoldConfiguration {
@@ -38,7 +39,7 @@ public class SkaffoldConfiguration {
 
   /**
    * Watch is unused, but left here to define how to parse it. See {@link
-   * FilesMojoV2#collectWatchParameters}
+   * FilesMojoV2#collectWatchParameters(MavenProject)}
    */
   @Parameter Watch watch = new Watch();
 
