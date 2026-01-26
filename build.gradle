@@ -389,7 +389,10 @@ subprojects {
     sourceProjects += dependencyProject
     // if we find any project dependencies that were brought in transitively, go remove them
     project.configurations.implementation.dependencies.removeAll { d ->
-      return d instanceof ProjectDependency && sourceProjects.contains(d.dependencyProject)
+      if(!(d instanceof ProjectDependency)) {
+        return false
+      }
+      return sourceProjects.any { p -> p.group == d.group && p.name == d.name }
     }
     // adds dependencyProject's classes to jar (fat jar-esque)
     jar {
