@@ -12,7 +12,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        java: [8, 11, 17]
+        java: [8, 11]
     env:
       # for gradle
       TERM: dumb
@@ -36,3 +36,29 @@ jobs:
       - name: Run tests
         run: |
           ./gradlew clean build jacocoTestReport --stacktrace
+
+  unit-tests-java17:
+    runs-on: ubuntu-latest
+    env:
+      # for gradle
+      TERM: dumb
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+      - uses: actions/setup-java@v3
+        with:
+          distribution: 'adopt'
+          java-version: 17
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.m2/repository
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+      - name: Run unit tests only
+        run: |
+          ./gradlew clean build jacocoTestReport -x javadoc --stacktrace
