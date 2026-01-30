@@ -59,6 +59,7 @@ project.ext.dependencyStrings = [
 ]
 
 import net.ltgt.gradle.errorprone.CheckSeverity
+import org.gradle.util.GradleVersion
 
 // `java-library` must be applied before `java`.
 // java-gradle-plugin (in jib-gradle-plugin) auto applies java-library, so ensure that happens first
@@ -80,8 +81,8 @@ subprojects {
   apply plugin: 'jacoco'
 
   // Guava update breaks unit tests. Workaround mentioned in https://github.com/google/guava/issues/6612#issuecomment-1614992368.
-  // Note: This workaround is only compatible with Gradle 6.x. For Gradle 7+, consider upgrading Guava or removing this workaround.
-  if (GradleVersion.current() < GradleVersion.version('7.0')) {
+  // Note: This workaround is only compatible with Gradle 6.x and causes issues with java-gradle-plugin.
+  if (GradleVersion.current() < GradleVersion.version('7.0') && project.name != 'jib-gradle-plugin') {
     sourceSets.all {
       configurations.getByName(runtimeClasspathConfigurationName) {
         attributes.attribute(Attribute.of("org.gradle.jvm.environment", String), "standard-jvm")
