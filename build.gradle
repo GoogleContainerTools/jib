@@ -10,8 +10,6 @@ plugins {
   id 'org.sonarqube' version '4.0.0.2929'
 }
 
-import org.gradle.api.attributes.java.TargetJvmEnvironment
-
 /* PROJECT DEPENDENCY VERSIONS */
 // define all common versioned dependencies here
 project.ext.dependencyStrings = [
@@ -82,13 +80,15 @@ subprojects {
   apply plugin: 'jacoco'
 
   // Guava update breaks unit tests. Workaround mentioned in https://github.com/google/guava/issues/6612#issuecomment-1614992368.
-  // Updated for Gradle 7+ compatibility with proper attribute types
-  sourceSets.all {
-    configurations.getByName(runtimeClasspathConfigurationName) {
-      attributes.attribute(TargetJvmEnvironment.TARGET_JVM_ENVIRONMENT_ATTRIBUTE, objects.named(TargetJvmEnvironment, TargetJvmEnvironment.STANDARD_JVM))
-    }
-    configurations.getByName(compileClasspathConfigurationName) {
-      attributes.attribute(TargetJvmEnvironment.TARGET_JVM_ENVIRONMENT_ATTRIBUTE, objects.named(TargetJvmEnvironment, TargetJvmEnvironment.STANDARD_JVM))
+  // Note: This workaround is only compatible with Gradle 6.x. For Gradle 7+, consider upgrading Guava or removing this workaround.
+  if (GradleVersion.current() < GradleVersion.version('7.0')) {
+    sourceSets.all {
+      configurations.getByName(runtimeClasspathConfigurationName) {
+        attributes.attribute(Attribute.of("org.gradle.jvm.environment", String), "standard-jvm")
+      }
+      configurations.getByName(compileClasspathConfigurationName) {
+        attributes.attribute(Attribute.of("org.gradle.jvm.environment", String), "standard-jvm")
+      }
     }
   }
 
