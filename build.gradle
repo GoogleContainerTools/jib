@@ -81,14 +81,26 @@ subprojects {
   apply plugin: 'jacoco'
 
   // Guava update breaks unit tests. Workaround mentioned in https://github.com/google/guava/issues/6612#issuecomment-1614992368.
-  // Note: This workaround is only compatible with Gradle 6.x and causes issues with java-gradle-plugin.
-  if (GradleVersion.current() < GradleVersion.version('7.0') && project.name != 'jib-gradle-plugin') {
-    sourceSets.all {
-      configurations.getByName(runtimeClasspathConfigurationName) {
-        attributes.attribute(Attribute.of("org.gradle.jvm.environment", String), "standard-jvm")
+  // For jib-gradle-plugin, use dependency constraints instead to avoid conflicts with java-gradle-plugin
+  if (GradleVersion.current() < GradleVersion.version('7.0')) {
+    if (project.name == 'jib-gradle-plugin') {
+      // Use dependency constraints to prefer jre variants
+      configurations.all {
+        resolutionStrategy.dependencySubstitution {
+          substitute(module('com.google.guava:guava'))
+            .using(module('com.google.guava:guava:32.1.2-jre'))
+            .because('Prefer JRE variant for standard JVM environment')
+        }
       }
-      configurations.getByName(compileClasspathConfigurationName) {
-        attributes.attribute(Attribute.of("org.gradle.jvm.environment", String), "standard-jvm")
+    } else {
+      // Apply attribute workaround for other projects
+      sourceSets.all {
+        configurations.getByName(runtimeClasspathConfigurationName) {
+          attributes.attribute(Attribute.of("org.gradle.jvm.environment", String), "standard-jvm")
+        }
+        configurations.getByName(compileClasspathConfigurationName) {
+          attributes.attribute(Attribute.of("org.gradle.jvm.environment", String), "standard-jvm")
+        }
       }
     }
   }
