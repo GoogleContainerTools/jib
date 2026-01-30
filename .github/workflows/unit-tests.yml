@@ -61,4 +61,4 @@ jobs:
             ${{ runner.os }}-gradle-
       - name: Run unit tests only
         run: |
-          ./gradlew clean build jacocoTestReport -x javadoc --stacktrace
+          ./gradlew clean build -x javadoc -x jacocoTestReport --stacktrace
