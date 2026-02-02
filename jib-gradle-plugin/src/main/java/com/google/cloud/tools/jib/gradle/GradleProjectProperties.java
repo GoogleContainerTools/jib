@@ -224,7 +224,8 @@ public class GradleProjectProperties implements ProjectProperties {
       SourceSet mainSourceSet = getMainSourceSet();
       FileCollection classesOutputDirectories =
           mainSourceSet.getOutput().getClassesDirs().filter(File::exists);
-      Path resourcesOutputDirectory = mainSourceSet.getOutput().getResourcesDir().toPath();
+      File resourcesDir = mainSourceSet.getOutput().getResourcesDir();
+      Path resourcesOutputDirectory = resourcesDir != null ? resourcesDir.toPath() : null;
       FileCollection allFiles =
           project.getConfigurations().getByName(configurationName).filter(File::exists);
 
@@ -232,7 +233,7 @@ public class GradleProjectProperties implements ProjectProperties {
           allFiles
               .minus(classesOutputDirectories)
               .minus(projectDependencies)
-              .filter(file -> !file.toPath().equals(resourcesOutputDirectory));
+              .filter(file -> resourcesOutputDirectory == null || !file.toPath().equals(resourcesOutputDirectory));
 
       FileCollection snapshotDependencies =
           nonProjectDependencies.filter(file -> file.getName().contains("SNAPSHOT"));
@@ -254,7 +255,7 @@ public class GradleProjectProperties implements ProjectProperties {
       switch (containerizingMode) {
         case EXPLODED:
           // Adds resource files
-          if (Files.exists(resourcesOutputDirectory)) {
+          if (resourcesOutputDirectory != null && Files.exists(resourcesOutputDirectory)) {
             javaContainerBuilder.addResources(resourcesOutputDirectory);
           }
 
@@ -270,9 +271,11 @@ public class GradleProjectProperties implements ProjectProperties {
         case PACKAGED:
           // Add a JAR
           Jar jarTask = (Jar) project.getTasks().findByName("jar");
-          Path jarPath = jarTask.getArchiveFile().get().getAsFile().toPath();
-          log(LogEvent.debug("Using JAR: " + jarPath));
-          javaContainerBuilder.addToClasspath(jarPath);
+          if (jarTask != null) {
+            Path jarPath = jarTask.getArchiveFile().get().getAsFile().toPath();
+            log(LogEvent.debug("Using JAR: " + jarPath));
+            javaContainerBuilder.addToClasspath(jarPath);
+          }
           break;
 
         default:

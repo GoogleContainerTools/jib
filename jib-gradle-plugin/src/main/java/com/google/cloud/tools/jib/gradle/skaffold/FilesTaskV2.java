@@ -57,6 +57,23 @@ public class FilesTaskV2 extends DefaultTask {
 
   @Nullable private JibExtension jibExtension;
 
+  /**
+   * Gets the dependency project from a ProjectDependency in a Gradle version-compatible way.
+   *
+   * @param projectDependency the project dependency
+   * @return the dependency project
+   */
+  private Project getDependencyProject(ProjectDependency projectDependency) {
+    // Gradle 6.9.2 uses getDependencyProject(), Gradle 9+ uses getPath()
+    try {
+      // Try Gradle 6.9.2 API first
+      return (Project) projectDependency.getClass().getMethod("getDependencyProject").invoke(projectDependency);
+    } catch (Exception e) {
+      // Fall back to Gradle 9+ API
+      return getProject().project(projectDependency.getPath());
+    }
+  }
+
   public FilesTaskV2 setJibExtension(JibExtension jibExtension) {
     this.jibExtension = jibExtension;
     return this;
@@ -91,14 +108,14 @@ public class FilesTaskV2 extends DefaultTask {
 
     Set<File> projectDependencyJars = new HashSet<>();
     for (ProjectDependency projectDependency : projectDependencies) {
-      addProjectFiles(projectDependency.getDependencyProject());
+      addProjectFiles(getDependencyProject(projectDependency));
 
       // Keep track of project dependency jars for filtering out later
       String configurationName = projectDependency.getTargetConfiguration();
       if (configurationName == null) {
         configurationName = "default";
       }
-      Project dependencyProject = projectDependency.getDependencyProject();
+      Project dependencyProject = getDependencyProject(projectDependency);
       for (Configuration targetConfiguration :
           dependencyProject.getConfigurations().getByName(configurationName).getHierarchy()) {
         for (PublishArtifact artifact : targetConfiguration.getArtifacts()) {
@@ -142,11 +159,7 @@ public class FilesTaskV2 extends DefaultTask {
     skaffoldFilesOutput.addBuild(project.getBuildFile().toPath());
 
     // Add settings.gradle
-    if (GradleVersion.current().compareTo(GRADLE_9) < 0
-        && project.getGradle().getStartParameter().getSettingsFile() != null) {
-      skaffoldFilesOutput.addBuild(
-          project.getGradle().getStartParameter().getSettingsFile().toPath());
-    } else if (Files.exists(projectPath.resolve(Settings.DEFAULT_SETTINGS_FILE))) {
+    if (Files.exists(projectPath.resolve(Settings.DEFAULT_SETTINGS_FILE))) {
       skaffoldFilesOutput.addBuild(projectPath.resolve(Settings.DEFAULT_SETTINGS_FILE));
     }
 
@@ -212,7 +225,7 @@ public class FilesTaskV2 extends DefaultTask {
               // If this is a project dependency, save it
               ProjectDependency projectDependency = (ProjectDependency) dependency;
               if (!projectDependencies.contains(projectDependency)) {
-                projects.push(projectDependency.getDependencyProject());
+                projects.push(getDependencyProject(projectDependency));
                 projectDependencies.add(projectDependency);
               }
             }

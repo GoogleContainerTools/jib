@@ -2,8 +2,6 @@
 plugins {
   id 'com.github.sherter.google-java-format' version '0.9' apply false
   id 'net.ltgt.errorprone' version '3.1.0' apply false
-  id 'net.researchgate.release' version '2.8.1' apply false
-  id 'com.gradle.plugin-publish' version '1.2.0' apply false
   id 'io.freefair.maven-plugin' version '5.3.3.3' apply false
 
   // apply so that we can collect quality metrics at the root project level
@@ -79,18 +77,10 @@ subprojects {
   apply plugin: 'net.ltgt.errorprone'
   apply plugin: 'jacoco'
 
-  // Guava update breaks unit tests. Workaround mentioned in https://github.com/google/guava/issues/6612#issuecomment-1614992368.
-  sourceSets.all {
-    configurations.getByName(runtimeClasspathConfigurationName) {
-      attributes.attribute(Attribute.of("org.gradle.jvm.environment", String), "standard-jvm")
-    }
-    configurations.getByName(compileClasspathConfigurationName) {
-      attributes.attribute(Attribute.of("org.gradle.jvm.environment", String), "standard-jvm")
-    }
+  java {
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
   }
-
-  sourceCompatibility = JavaVersion.VERSION_1_8
-  targetCompatibility = JavaVersion.VERSION_1_8
   compileJava.options.encoding = 'UTF-8'
   compileJava.options.compilerArgs += [ '-Xlint:deprecation' ]
   compileTestJava.options.compilerArgs += [ '-Xlint:deprecation' ]
@@ -177,7 +167,7 @@ subprojects {
 
   /* TEST CONFIG */
   tasks.withType(Test).configureEach {
-    reports.html.outputLocation = file("${reporting.baseDir}/${name}")
+    reports.html.outputLocation = file("${project.buildDir}/reports/${name}")
   }
 
   test {
@@ -215,8 +205,7 @@ subprojects {
 
   configurations {
     integrationTestImplementation.extendsFrom testImplementation
-    integrationTestImplementation.setCanBeResolved(true)
-    integrationTestRuntime.extendsFrom testRuntime
+    integrationTestRuntimeOnly.extendsFrom testRuntimeOnly
   }
 
   // Integration tests must be run explicitly
@@ -397,7 +386,12 @@ subprojects {
     sourceProjects += dependencyProject
     // if we find any project dependencies that were brought in transitively, go remove them
     project.configurations.implementation.dependencies.removeAll { d ->
-      return d instanceof ProjectDependency && sourceProjects.contains(d.dependencyProject)
+      if (d instanceof ProjectDependency) {
+        // Gradle 6.9.2 uses dependencyProject, Gradle 9+ uses path
+        def depProject = d.hasProperty('dependencyProject') ? d.dependencyProject : project.project(d.path)
+        return sourceProjects.contains(depProject)
+      }
+      return false
     }
     // adds dependencyProject's classes to jar (fat jar-esque)
     jar {

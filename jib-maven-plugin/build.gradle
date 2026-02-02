@@ -71,7 +71,7 @@ release {
     'com.google.cloud.tools:jib-plugins-common',
   ]
   git {
-    requireBranch = /^maven-release-v\d+.*$/  //regex
+    requireBranch.set(/^maven-release-v\d+.*$/)
   }
 }
 /* RELEASE */
