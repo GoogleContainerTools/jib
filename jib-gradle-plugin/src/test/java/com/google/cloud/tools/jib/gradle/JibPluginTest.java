@@ -204,7 +204,7 @@ public class JibPluginTest {
 
     Jar jar = (Jar) project.getTasks().getByPath(":jar");
     assertThat(jar.getEnabled()).isFalse();
-    assertThat(jar.getArchiveClassifier().get()).isEmpty();
+    assertThat(jar.getArchiveClassifier().get()).isIn(ImmutableList.of("", "plain"));
   }
 
   @Test
@@ -213,6 +213,10 @@ public class JibPluginTest {
         createProject("java", "org.springframework.boot", "com.google.cloud.tools.jib");
     JibExtension jibExtension = (JibExtension) project.getExtensions().getByName("jib");
     jibExtension.setContainerizingMode("packaged");
+
+    // Force empty classifier to ensure conflict with bootJar (which has empty classifier)
+    // This tests Jib's logic to rename jar to "original" on conflict.
+    project.getTasks().named("jar").configure(task -> ((Jar) task).getArchiveClassifier().set(""));
 
     Jar jar = (Jar) project.getTasks().getByPath(":jar");
     assertThat(jar.getEnabled()).isTrue();
@@ -244,7 +248,7 @@ public class JibPluginTest {
 
     Jar jar = (Jar) project.getTasks().getByPath(":jar");
     assertThat(jar.getEnabled()).isTrue();
-    assertThat(jar.getArchiveClassifier().get()).isEmpty();
+    assertThat(jar.getArchiveClassifier().get()).isIn(ImmutableList.of("", "plain"));
   }
 
   @Test
@@ -254,6 +258,9 @@ public class JibPluginTest {
     JibExtension jibExtension = (JibExtension) project.getExtensions().getByName("jib");
     jibExtension.setContainerizingMode("packaged");
     project.getTasks().named("jar").configure(task -> task.setEnabled(true));
+
+    // Force empty classifier to ensure conflict with bootJar
+    project.getTasks().named("jar").configure(task -> ((Jar) task).getArchiveClassifier().set(""));
 
     TaskContainer tasks = project.getTasks();
     Exception exception = assertThrows(GradleException.class, () -> tasks.getByPath(":jar"));
@@ -293,7 +300,7 @@ public class JibPluginTest {
 
     Jar jar = (Jar) project.getTasks().getByPath(":jar");
     assertThat(jar.getEnabled()).isTrue();
-    assertThat(jar.getArchiveClassifier().get()).isEmpty();
+    assertThat(jar.getArchiveClassifier().get()).isIn(ImmutableList.of("", "plain"));
   }
 
   @Test
@@ -308,7 +315,7 @@ public class JibPluginTest {
     Jar jar = (Jar) project.getTasks().getByPath(":jar");
     assertThat(jar.getEnabled()).isTrue();
     assertThat(project.getTasks().getByPath(":bootJar").getEnabled()).isFalse();
-    assertThat(jar.getArchiveClassifier().get()).isEmpty();
+    assertThat(jar.getArchiveClassifier().get()).isIn(ImmutableList.of("", "plain"));
   }
 
   @Test

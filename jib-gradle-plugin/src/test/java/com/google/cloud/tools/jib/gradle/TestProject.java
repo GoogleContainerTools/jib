@@ -25,6 +25,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
+import org.gradle.api.JavaVersion;
 import org.gradle.testkit.runner.BuildResult;
 import org.gradle.testkit.runner.GradleRunner;
 import org.junit.rules.TemporaryFolder;
@@ -55,7 +56,10 @@ public class TestProject extends TemporaryFolder implements Closeable {
   }
 
   private final String testProjectName;
-  private String gradleVersion = JibPlugin.GRADLE_MIN_VERSION.getVersion();
+  private String gradleVersion =
+      Integer.parseInt(JavaVersion.current().getMajorVersion()) >= 16
+          ? "8.5"
+          : JibPlugin.GRADLE_MIN_VERSION.getVersion();
   private GradleRunner gradleRunner;
 
   private Path projectRoot;

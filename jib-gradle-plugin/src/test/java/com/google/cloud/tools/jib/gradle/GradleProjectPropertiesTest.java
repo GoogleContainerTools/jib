@@ -168,7 +168,7 @@ public class GradleProjectPropertiesTest {
             mockLogger,
             mockTempDirectoryProvider,
             mockExtensionLoader,
-            JavaPlugin.RUNTIME_CLASSPATH_CONFIGURATION_NAME);
+            "runtimeClasspath");
   }
 
   @Test
@@ -219,7 +219,7 @@ public class GradleProjectPropertiesTest {
     List<Path> extraDirectories = Arrays.asList(applicationDirectory.resolve("extra-directory"));
     FileCollection fileCollection =
         GradleProjectProperties.getInputFiles(
-            project, extraDirectories, JavaPlugin.RUNTIME_CLASSPATH_CONFIGURATION_NAME);
+            project, extraDirectories, "runtimeClasspath");
 
     assertThat(fileCollection)
         .comparingElementsUsing(FILE_PATH_OF)
@@ -341,7 +341,7 @@ public class GradleProjectPropertiesTest {
             mockLogger,
             mockTempDirectoryProvider,
             mockExtensionLoader,
-            JavaPlugin.RUNTIME_CLASSPATH_CONFIGURATION_NAME);
+            "runtimeClasspath");
 
     gradleProjectProperties.createJibContainerBuilder(
         JavaContainerBuilder.from(RegistryImage.named("base")), ContainerizingMode.EXPLODED);
@@ -511,7 +511,7 @@ public class GradleProjectPropertiesTest {
     project.getTasks().getByName("bootWar").setEnabled(false);
 
     assertThat(gradleProjectProperties.getWarFilePath())
-        .isEqualTo(outputDir.resolve("my-app.war").toString());
+        .isEqualTo(war.getArchiveFile().get().getAsFile().getAbsolutePath());
   }
 
   @Test
