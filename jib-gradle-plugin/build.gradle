@@ -1,22 +1,10 @@
-buildscript {
-  repositories {
-    gradlePluginPortal()
-  }
-  dependencies {
-    // Use Gradle 6.9.2 compatible versions
-    classpath 'net.researchgate:gradle-release:2.8.1'
-    classpath 'com.gradle.publish:plugin-publish-plugin:0.21.0'
-  }
-}
-
 plugins {
   id 'java-gradle-plugin'
+  id 'net.researchgate.release'
+  id 'com.gradle.plugin-publish'
   // for eclipse import modifications
   id 'eclipse'
 }
-
-apply plugin: 'net.researchgate.release'
-apply plugin: 'com.gradle.plugin-publish'
 
 /* LOCAL SNAPSHOT DEV */
 // to install for local testing - do not load this plugin when publishing to plugin portal
