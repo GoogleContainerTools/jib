@@ -3,14 +3,9 @@ buildscript {
     gradlePluginPortal()
   }
   dependencies {
-    // Use version compatible with current Gradle version
-    if (GradleVersion.current() >= GradleVersion.version('7.0')) {
-      classpath 'net.researchgate:gradle-release:3.1.0'
-      classpath 'com.gradle.publish:plugin-publish-plugin:1.2.0'
-    } else {
-      classpath 'net.researchgate:gradle-release:2.8.1'
-      classpath 'com.gradle.publish:plugin-publish-plugin:0.21.0'
-    }
+    // Use Gradle 6.9.2 compatible versions
+    classpath 'net.researchgate:gradle-release:2.8.1'
+    classpath 'com.gradle.publish:plugin-publish-plugin:0.21.0'
   }
 }
 
@@ -68,17 +63,22 @@ dependencies {
 /* RELEASE */
 // Prepare release
 release {
-  tagTemplate = 'v$version-gradle'
+  tagTemplate = 'v$version-gradle-plugin'
   ignoredSnapshotDependencies = [
     'com.google.cloud.tools:jib-core',
     'com.google.cloud.tools:jib-plugins-common',
   ]
   git {
-    requireBranch.set(/^gradle-release-v\d+.*$/)
+    requireBranch = /^gradle-release-v\\d+.*$/  //regex
   }
 }
 // Gradle Plugin Portal releases
-// Try Gradle 7+ syntax first, fall back to Gradle 6 if properties don't exist
+pluginBundle {
+  website = 'https://github.com/GoogleContainerTools/jib/'
+  vcsUrl = 'https://github.com/GoogleContainerTools/jib/'
+  tags = ['google', 'java', 'containers', 'docker', 'kubernetes', 'microservices']
+}
+
 gradlePlugin {
   testSourceSets sourceSets.integrationTest, sourceSets.test
   plugins {
@@ -88,23 +88,6 @@ gradlePlugin {
       description = 'Containerize your Java application'
       implementationClass = 'com.google.cloud.tools.jib.gradle.JibPlugin'
     }
-  }
-}
-try {
-  // Gradle 7+ with plugin-publish 1.x
-  gradlePlugin {
-    website = 'https://github.com/GoogleContainerTools/jib/'
-    vcsUrl = 'https://github.com/GoogleContainerTools/jib/'
-  }
-  gradlePlugin.plugins.jibPlugin {
-    tags = ['google', 'java', 'containers', 'docker', 'kubernetes', 'microservices']
-  }
-} catch (Exception e) {
-  // Gradle 6.x with plugin-publish 0.x
-  pluginBundle {
-    website = 'https://github.com/GoogleContainerTools/jib/'
-    vcsUrl = 'https://github.com/GoogleContainerTools/jib/'
-    tags = ['google', 'java', 'containers', 'docker', 'kubernetes', 'microservices']
   }
 }
 tasks.publishPlugins.dependsOn build

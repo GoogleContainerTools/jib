@@ -44,7 +44,7 @@ publishing {
 release {
   tagTemplate = 'v$version-gradle-extension'
   git {
-    requireBranch.set(/^gradle-extension-release-v\d+.*$/)
+    requireBranch = /^gradle-extension-release-v\d+.*$/  //regex
   }
 }
 /* RELEASE */

@@ -61,7 +61,7 @@ release {
     'com.google.cloud.tools:jib-plugins-common',
   ]
   git {
-    requireBranch.set(/^cli-release-v\d+.*$/)
+    requireBranch = /^cli-release-v\d+.*$/  //regex
   }
 }
 
