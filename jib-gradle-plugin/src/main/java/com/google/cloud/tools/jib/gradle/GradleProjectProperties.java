@@ -387,7 +387,26 @@ public class GradleProjectProperties implements ProjectProperties {
 
   @Override
   public Path getDefaultCacheDirectory() {
-    return project.getBuildDir().toPath().resolve(CACHE_DIRECTORY_NAME);
+    return getBuildDirPath(project).resolve(CACHE_DIRECTORY_NAME);
+  }
+
+  /**
+   * Gets the build directory in a Gradle version-compatible way.
+   * Uses layout.buildDirectory for Gradle 7+ and getBuildDir() for Gradle 6.x.
+   */
+  @SuppressWarnings("deprecation")
+  private static Path getBuildDirPath(Project project) {
+    try {
+      // Try Gradle 7+ API: project.getLayout().getBuildDirectory().get().getAsFile()
+      Object layout = project.getClass().getMethod("getLayout").invoke(project);
+      Object buildDirectory = layout.getClass().getMethod("getBuildDirectory").invoke(layout);
+      Object provider = buildDirectory.getClass().getMethod("get").invoke(buildDirectory);
+      java.io.File file = (java.io.File) provider.getClass().getMethod("getAsFile").invoke(provider);
+      return file.toPath();
+    } catch (Exception e) {
+      // Fall back to Gradle 6.x API
+      return project.getBuildDir().toPath();
+    }
   }
 
   @Override

@@ -51,8 +51,6 @@ import org.gradle.util.GradleVersion;
  */
 public class FilesTaskV2 extends DefaultTask {
 
-  private static final GradleVersion GRADLE_9 = GradleVersion.version("9.0");
-
   private final SkaffoldFilesOutput skaffoldFilesOutput = new SkaffoldFilesOutput();
 
   @Nullable private JibExtension jibExtension;
