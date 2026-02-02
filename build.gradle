@@ -1,3 +1,5 @@
+import org.gradle.util.GradleVersion
+
 // define all versioned plugins here and apply in subprojects as necessary without version
 plugins {
   id 'com.github.sherter.google-java-format' version '0.9' apply false
