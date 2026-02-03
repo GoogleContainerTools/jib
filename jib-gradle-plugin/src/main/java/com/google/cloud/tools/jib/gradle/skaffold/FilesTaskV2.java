@@ -142,9 +142,22 @@ public class FilesTaskV2 extends DefaultTask {
     skaffoldFilesOutput.addBuild(project.getBuildFile().toPath());
 
     // Add settings.gradle
-    if (isBeforeGradle9() && project.getGradle().getStartParameter().getSettingsFile() != null) {
-      skaffoldFilesOutput.addBuild(
-          project.getGradle().getStartParameter().getSettingsFile().toPath());
+    if (isBeforeGradle9()) {
+      // Use reflection to call getSettingsFile() which was removed in Gradle 9
+      try {
+        Object startParameter = project.getGradle().getStartParameter();
+        java.lang.reflect.Method getSettingsFileMethod = 
+            startParameter.getClass().getMethod("getSettingsFile");
+        File settingsFile = (File) getSettingsFileMethod.invoke(startParameter);
+        if (settingsFile != null) {
+          skaffoldFilesOutput.addBuild(settingsFile.toPath());
+        }
+      } catch (Exception e) {
+        // Fall back to default settings file location
+        if (Files.exists(projectPath.resolve(Settings.DEFAULT_SETTINGS_FILE))) {
+          skaffoldFilesOutput.addBuild(projectPath.resolve(Settings.DEFAULT_SETTINGS_FILE));
+        }
+      }
     } else if (Files.exists(projectPath.resolve(Settings.DEFAULT_SETTINGS_FILE))) {
       skaffoldFilesOutput.addBuild(projectPath.resolve(Settings.DEFAULT_SETTINGS_FILE));
     }
@@ -234,7 +247,14 @@ public class FilesTaskV2 extends DefaultTask {
    */
   private Project getDependentProject(ProjectDependency projectDependency) {
     if (isBeforeGradle9()) {
-      return projectDependency.getDependencyProject();
+      // Use reflection to call getDependencyProject() which was removed in Gradle 9
+      try {
+        java.lang.reflect.Method getDependencyProjectMethod = 
+            projectDependency.getClass().getMethod("getDependencyProject");
+        return (Project) getDependencyProjectMethod.invoke(projectDependency);
+      } catch (Exception e) {
+        // Fall through to getPath() approach
+      }
     }
     try {
       String path =
