@@ -55,4 +55,4 @@ jobs:
           gradle-version: 9.2.1
       - name: Run Gradle 9 compatibility test
         run: |
-          gradle :jib-gradle-plugin:test --tests "*FilesTaskV2Test.testFilesTask_multiProjectComplexService_gradle9" -x jacocoTestReport --stacktrace
+          gradle :jib-gradle-plugin:test --tests "*FilesTaskV2Test.testFilesTask_multiProjectComplexService" -x jacocoTestReport --stacktrace
