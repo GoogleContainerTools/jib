@@ -154,7 +154,7 @@ public class FilesTaskV2 extends DefaultTask {
       } else if (Files.exists(projectPath.resolve(Settings.DEFAULT_SETTINGS_FILE))) {
         skaffoldFilesOutput.addBuild(projectPath.resolve(Settings.DEFAULT_SETTINGS_FILE));
       }
-    } catch (Exception e) {
+    } catch (ReflectiveOperationException e) {
       // Fall back to default settings file location if reflection fails
       if (Files.exists(projectPath.resolve(Settings.DEFAULT_SETTINGS_FILE))) {
         skaffoldFilesOutput.addBuild(projectPath.resolve(Settings.DEFAULT_SETTINGS_FILE));
@@ -249,7 +249,7 @@ public class FilesTaskV2 extends DefaultTask {
       java.lang.reflect.Method getDependencyProjectMethod =
           projectDependency.getClass().getMethod("getDependencyProject");
       return (Project) getDependencyProjectMethod.invoke(projectDependency);
-    } catch (Exception e) {
+    } catch (ReflectiveOperationException e) {
       // Fall through to getPath() approach (Gradle 9+)
     }
 
@@ -258,7 +258,7 @@ public class FilesTaskV2 extends DefaultTask {
       java.lang.reflect.Method getPathMethod = projectDependency.getClass().getMethod("getPath");
       String path = (String) getPathMethod.invoke(projectDependency);
       return getProject().project(path);
-    } catch (Exception ex) {
+    } catch (ReflectiveOperationException ex) {
       throw new RuntimeException(
           "Failed to resolve dependent project from " + projectDependency, ex);
     }
