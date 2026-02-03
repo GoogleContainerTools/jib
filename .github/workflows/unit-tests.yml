@@ -40,6 +40,8 @@ jobs:
   gradle9-java17-test:
     name: Gradle 9 compatibility test (Java 17)
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     env:
       TERM: dumb
     steps:
