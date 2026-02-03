@@ -1,9 +1,8 @@
 plugins {
+  id 'net.researchgate.release'
   id 'maven-publish'
   id 'eclipse'
 }
-
-apply plugin: 'net.researchgate.release'
 
 java {
   // Feature to handle base image layers compressed with zstd instead of gzip
