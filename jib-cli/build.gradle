@@ -1,8 +1,9 @@
 plugins {
   id 'application'
-  id 'net.researchgate.release'
   id 'eclipse'
 }
+
+apply plugin: 'net.researchgate.release'
 
 ext {
   cliMainClass = 'com.google.cloud.tools.jib.cli.JibCli'

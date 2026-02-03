@@ -1,11 +1,24 @@
 import org.gradle.util.GradleVersion
 
+// Conditional plugin versions based on Gradle version
+buildscript {
+  ext.isGradle9Plus = GradleVersion.current() >= GradleVersion.version('9.0')
+  ext.releasePluginVersion = isGradle9Plus ? '3.1.0' : '2.8.1'
+  ext.pluginPublishVersion = isGradle9Plus ? '1.2.0' : '0.21.0'
+  
+  repositories {
+    gradlePluginPortal()
+  }
+  dependencies {
+    classpath "net.researchgate:gradle-release:${releasePluginVersion}"
+    classpath "com.gradle.publish:plugin-publish-plugin:${pluginPublishVersion}"
+  }
+}
+
 // define all versioned plugins here and apply in subprojects as necessary without version
 plugins {
   id 'com.github.sherter.google-java-format' version '0.9' apply false
   id 'net.ltgt.errorprone' version '3.1.0' apply false
-  id 'net.researchgate.release' version '2.8.1' apply false
-  id 'com.gradle.plugin-publish' version '0.21.0' apply false
   id 'io.freefair.maven-plugin' version '5.3.3.3' apply false
 
   // apply so that we can collect quality metrics at the root project level
