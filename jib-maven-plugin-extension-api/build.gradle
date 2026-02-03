@@ -1,9 +1,8 @@
 plugins {
+  id 'net.researchgate.release'
   id 'maven-publish'
   id 'eclipse'
 }
-
-apply plugin: 'net.researchgate.release'
 
 dependencies {
   api dependencyStrings.BUILD_PLAN

@@ -1,10 +1,9 @@
 plugins {
   id 'io.freefair.maven-plugin'
+  id 'net.researchgate.release'
   id 'maven-publish'
   id 'eclipse'
 }
-
-apply plugin: 'net.researchgate.release'
 
 // only maven specific dependencies should be versioned, everything else should be defined by constrains in
 // parent build.gradle

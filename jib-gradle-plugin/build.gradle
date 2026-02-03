@@ -2,12 +2,11 @@ import org.gradle.util.GradleVersion
 
 plugins {
   id 'java-gradle-plugin'
+  id 'net.researchgate.release'
+  id 'com.gradle.plugin-publish'
   // for eclipse import modifications
   id 'eclipse'
 }
-
-apply plugin: 'net.researchgate.release'
-apply plugin: 'com.gradle.plugin-publish'
 
 /* LOCAL SNAPSHOT DEV */
 // to install for local testing - do not load this plugin when publishing to plugin portal
@@ -60,7 +59,7 @@ release {
     'com.google.cloud.tools:jib-plugins-common',
   ]
   git {
-    requireBranch = /^gradle-release-v\\d+.*$/  //regex
+    requireBranch = /^gradle-release-v\d+.*$/ //regex
   }
 }
 
