@@ -50,7 +50,7 @@ jobs:
           java-version: 17
       - uses: gradle/gradle-build-action@v2
         with:
-          gradle-version: 9.0
+          gradle-version: 9.2.1
       - name: Run Gradle 9 compatibility test
         run: |
           gradle :jib-gradle-plugin:test --tests "*FilesTaskV2Test.testFilesTask_multiProjectComplexService_gradle9" -x jacocoTestReport --stacktrace
